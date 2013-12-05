@@ -185,7 +185,7 @@ namespace ospray {
   void Glut3DWidget::setWorldBounds(const box3f &worldBounds)
   {
     vec3f center = embree::center(worldBounds);
-    vec3f diag   = size(worldBounds);
+    vec3f diag   = worldBounds.size();
     diag         = max(diag,vec3f(0.3f*length(diag)));
     vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2*diag.y,.8*diag.z);
     vec3f dir    = center - from;
@@ -263,7 +263,7 @@ namespace ospray {
   {
     Glut3DWidget::Camera &cam = widget->camera;
     float fwd = (to.y - from.y) * 4 * widget->cameraSpeed
-      * length(size(widget->worldBounds));
+      * length(widget->worldBounds.size());
     float oldDist = length(cam.at - cam.from);
     float newDist = oldDist - fwd;
     if (newDist < 1e-3f) 
@@ -280,7 +280,7 @@ namespace ospray {
   {
     Glut3DWidget::Camera &cam = widget->camera;
     float fwd = (to.y - from.y) * 4 * widget->cameraSpeed
-      * length(size(widget->worldBounds));
+      * length(widget->worldBounds.size());
     float oldDist = length(cam.at - cam.from);
     float newDist = oldDist - fwd;
     if (newDist < 1e-3f) 

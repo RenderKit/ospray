@@ -1,5 +1,5 @@
 #include "ospray/common/ospray.h"
-#include "embree/math/affinespace.h"
+#include /*embree*/"common/math/affinespace.h"
 
 namespace ospray {
   using embree::AffineSpace3f;
