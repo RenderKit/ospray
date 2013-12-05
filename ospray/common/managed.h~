@@ -1,0 +1,12 @@
+#pragma once
+
+#include "ospray.h"
+
+namespace ospray {
+
+  /*! defines a basic object whose lifetime is managed by ospray */
+  struct ManagedObject : public RefCounted
+  {
+    virtual ~ManagedObject();
+  };
+}

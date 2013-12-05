@@ -1,0 +1,25 @@
+#ifndef OSPRAY_IH
+#define OSPRAY_IH 1
+
+#include "math/math.isph"
+#include "math/veci.isph"
+#include "math/vec3f.isph"
+
+typedef unsigned int8 uchar;
+typedef unsigned int uint;
+typedef unsigned int uint32;
+
+
+#define OPERATORS 0
+
+
+#if OPERATORS
+#define __OPFCT operator*
+#define __OP    *
+#include "math/operator_vec3.ih"
+#define __OPFCT operator+
+#define __OP    +
+#include "math/operator_vec3.ih"
+#endif
+
+#endif

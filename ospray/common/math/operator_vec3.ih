@@ -1,0 +1,15 @@
+/*! we have to use this trick with "#define + #include" rather than
+    using macros altogether because llvm's (and thus, ispc's)
+    preprocessor doesn't allow to use macros that generate 'operator+'
+    etc functions. */
+
+#define __scaT float
+#define __vecT vec3f
+#include "operator_vec3T.ih"
+
+#define __scaT int
+#define __vecT vec3i
+#include "operator_vec3T.ih"
+
+#undef __OPFCT
+#undef __OP

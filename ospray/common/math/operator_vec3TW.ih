@@ -1,0 +1,35 @@
+/*! we have to use this trick with "#define + #include" rather than
+    using macros altogether because llvm's (and thus, ispc's)
+    preprocessor doesn't allow to use macros that generate 'operator+'
+    etc functions. */
+
+inline __RWIDTH __vecT __OPFCT(const __AWIDTH __vecT &a, const __BWIDTH __vecT &b)
+{
+  __RWIDTH __vecT r;
+  r.x = a.x __OP b.x;
+  r.y = a.y __OP b.y;
+  r.z = a.z __OP b.z;
+  return r;
+}
+
+inline __RWIDTH __vecT __OPFCT(const __AWIDTH __vecT &a, const __BWIDTH __scaT &b)
+{
+  __RWIDTH __vecT r;
+  r.x = a.x __OP b;
+  r.y = a.y __OP b;
+  r.z = a.z __OP b;
+  return r;
+}
+
+inline __RWIDTH __vecT __OPFCT(const __AWIDTH __scaT &a, const __BWIDTH __vecT &b)
+{
+  __RWIDTH __vecT r;
+  r.x = a __OP b.x;
+  r.y = a __OP b.y;
+  r.z = a __OP b.z;
+  return r;
+}
+
+#undef __AWIDTH
+#undef __BWIDTH
+#undef __RWIDTH

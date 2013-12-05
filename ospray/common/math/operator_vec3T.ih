@@ -1,0 +1,24 @@
+/*! we have to use this trick with "#define + #include" rather than
+    using macros altogether because llvm's (and thus, ispc's)
+    preprocessor doesn't allow to use macros that generate 'operator+'
+    etc functions. */
+
+#define __AWIDTH varying
+#define __BWIDTH varying
+#define __RWIDTH varying
+#include "operator_vec3TW.ih"
+#define __AWIDTH uniform
+#define __BWIDTH varying
+#define __RWIDTH varying
+#include "operator_vec3TW.ih"
+#define __AWIDTH varying
+#define __BWIDTH uniform
+#define __RWIDTH varying
+#include "operator_vec3TW.ih"
+#define __AWIDTH uniform
+#define __BWIDTH uniform
+#define __RWIDTH uniform
+#include "operator_vec3TW.ih"
+
+#undef __vecT
+#undef __scaT
