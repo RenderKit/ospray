@@ -8,6 +8,5 @@ ADD_EXECUTABLE(test01
 	test01.cpp
 	)
 TARGET_LINK_LIBRARIES(test01
-	OSPRay
-  ${GLUT_LIBRARIES}
+	OSPglut3D
 )

@@ -1,1 +1,5 @@
-ADD_LIBRARY(OSPglut3D glut3D.cpp)
+INCLUDE(../../../cmake/glut.cmake)
+ADD_LIBRARY(OSPglut3D SHARED glut3D.cpp)
+TARGET_LINK_LIBRARIES(OSPglut3D ${GLUT_LIBRARIES})
+
+
