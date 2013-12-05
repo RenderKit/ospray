@@ -9,8 +9,6 @@
 #include <sys/times.h>
 
 namespace ospray {
-  extern bool logAPI;
-
   double getSysTime() {
     struct timeval tp; gettimeofday(&tp,NULL); 
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
@@ -26,8 +24,6 @@ namespace ospray {
       if (parm == "--osp:debug") {
         debugMode = true;
         removeArgs(ac,av,i,1);
-      } else if (parm == "--osp:log-api") {
-        logAPI = true;
       } else {
         ++i;
       }

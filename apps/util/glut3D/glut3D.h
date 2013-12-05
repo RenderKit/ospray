@@ -31,7 +31,7 @@ namespace ospray {
         smooth_nom = smooth_nom * 0.8f + seconds;
         smooth_den = smooth_den * 0.8f + 1.f;
       }
-      double getFPS() const { return smooth_nom / smooth_den; }
+      double getFPS() const { return smooth_den / smooth_nom; }
     };
 
     /*! a GLUT-based 3D viewer widget that includes simple sample code

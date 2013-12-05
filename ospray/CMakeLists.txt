@@ -43,6 +43,6 @@ ADD_SUBDIRECTORY(${EMBREE_DIR}/kernels embree_kernels)
 #	)
 #TARGET_LINK_LIBRARIES(OSPrayCore embree)
 
-
+ADD_SUBDIRECTORY(common)
 ADD_SUBDIRECTORY(api)
 

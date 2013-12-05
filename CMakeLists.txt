@@ -5,7 +5,8 @@ IF(COMMAND cmake_policy)
 ENDIF(COMMAND cmake_policy)
 
 IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING
+		"Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 
@@ -28,16 +29,13 @@ IF (OSPRAY_MIC)
 	ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
 ENDIF()
 
-
-
-
 ##############################################################
-# the ospray library
+# ospray sample apps
 ##############################################################
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
-IF (OSPRAY_MIC)
-	SET (OSPRAY_TARGET "MIC")
-	ADD_SUBDIRECTORY(apps builddir/apps/mic)
-ENDIF()
+#IF (OSPRAY_MIC)
+#	SET (OSPRAY_TARGET "MIC")
+#	ADD_SUBDIRECTORY(apps builddir/apps/mic)
+#ENDIF()
 
