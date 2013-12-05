@@ -8,5 +8,6 @@ CONFIGURE_OSPRAY()
 
 #INCLUDE(${EMBREE_DIR}/common/cmake/icc.cmake)
 
+ADD_SUBDIRECTORY(widgets)
 ADD_SUBDIRECTORY(testing)
 ADD_SUBDIRECTORY(objView)
