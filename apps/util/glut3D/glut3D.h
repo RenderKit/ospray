@@ -1,4 +1,4 @@
-#include "ospray/common/ospray.h"
+#include "ospray/common/ospcommon.h"
 #include /*embree*/"common/math/affinespace.h"
 
 namespace ospray {

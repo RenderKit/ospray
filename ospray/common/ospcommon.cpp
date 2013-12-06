@@ -1,4 +1,4 @@
-#include "ospray.h"
+#include "ospcommon.h"
 // embree:
 #include "embree2/rtcore.h"
 //embree/include/embree.h"

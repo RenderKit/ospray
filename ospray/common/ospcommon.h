@@ -1,6 +1,6 @@
 #pragma once
 
-/*! \file ospray.h Defines common types and classes that _every_
+/*! \file ospcommon.h Defines common types and classes that _every_
     ospray file should know about */
 
 #include "common/math/vec2.h"

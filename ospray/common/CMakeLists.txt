@@ -1,3 +1,3 @@
 
-ADD_LIBRARY(OSPcommon ospray.cpp)
+ADD_LIBRARY(OSPcommon ospcommon.cpp)
 TARGET_LINK_LIBRARIES(OSPcommon embree)
