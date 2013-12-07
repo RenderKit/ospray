@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ospray.h"
+#include "ospcommon.h"
 
 namespace ospray {
 

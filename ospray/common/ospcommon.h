@@ -8,7 +8,8 @@
 #include "common/math/bbox.h"
 #include "common/sys/ref.h"
 
-//! main namespace for all things ospray
+
+//! main namespace for all things ospray (for internal code)
 namespace ospray {
   typedef unsigned char uchar;
   /*! OSPRay's two-int vector class */
@@ -34,6 +35,13 @@ namespace ospray {
 
   /*! remove specified num arguments from an ac/av arglist */
   void removeArgs(int &ac, char **&av, int where, int howMany);
+
+  
+  extern void doAssertion(const char *file, int line, const char *expr);
+#define Assert(expr)                                                    \
+  ((void)((expr) ? 0 : ((void)doAssertion(__FILE__, __LINE__, #expr), 0)))
+#define AssertError(errMsg) \
+  doAssertion(__FILE__,__LINE__, errMsg)
 }
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");

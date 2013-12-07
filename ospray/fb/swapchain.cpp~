@@ -1,0 +1,5 @@
+#include "swapchain.h"
+
+namespace ospray {
+  
+}

@@ -44,5 +44,9 @@ ADD_SUBDIRECTORY(${EMBREE_DIR}/kernels embree_kernels)
 #TARGET_LINK_LIBRARIES(OSPrayCore embree)
 
 ADD_SUBDIRECTORY(common)
+
+ADD_LIBRARY(OSPcore fb/swapchain.cpp fb/framebuffer.cpp)
+TARGET_LINK_LIBRARIES(OSPcore OSPcommon)
+
 ADD_SUBDIRECTORY(api)
 

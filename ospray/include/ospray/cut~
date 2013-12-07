@@ -1,0 +1,13 @@
+  /*! do _not_ allow compression of any frame buffer data under any circumstances */
+#define OSP_FB_COMPRESS_NEVER (0x1)
+  /*! allow compression of framebuffer in transit, but only if
+      lossless (does not _require_ compression) */
+#define OSP_FB_COMPRESS_ALLOW_LOSSLESS (0x1)
+  /*! allow compression of framebuffer in transit, even if compression
+      is lossy (eg, video streaming). Note that though this _allows_
+      compression, it does not _require_ it */
+#define OSP_FB_COMPRESS_ALLOW_LOSSY (0x2)
+  /*! do _NOT_ track a depth buffer */
+#define OSP_FB_DEPTH_NONE
+  /*! track depth buffer
+#define

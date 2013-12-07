@@ -9,6 +9,11 @@
 #include <sys/times.h>
 
 namespace ospray {
+  void doAssertion(const char *file, int line, const char *expr) {
+    fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
+    abort();
+  }
+
   double getSysTime() {
     struct timeval tp; gettimeofday(&tp,NULL); 
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
