@@ -1,6 +1,0 @@
-#pragma once
-
-#include "managedobject.h"
-
-namespace ospray {
-}
