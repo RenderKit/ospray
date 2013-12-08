@@ -46,7 +46,7 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
-    NOTIMPLEMENTED;
+    return ospray::api::Device::current->frameBufferMap(fb);
   }
   
   extern "C" void ospFrameBufferUnmap(const void *mapped,
@@ -55,6 +55,6 @@ namespace ospray {
     ASSERT_DEVICE();
     Assert(fb != NULL);
     Assert(mapped != NULL);
-    NOTIMPLEMENTED;
+    ospray::api::Device::current->frameBufferUnmap(mapped,fb);
   }
 }

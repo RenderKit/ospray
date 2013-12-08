@@ -21,6 +21,24 @@ namespace ospray {
       return (OSPFrameBuffer)sc;
     }
     
+
+      /*! map frame buffer */
+    const void *LocalDevice::frameBufferMap(OSPFrameBuffer fb)
+    {
+      Assert(fb != NULL);
+      SwapChain *sc = (SwapChain *)fb;
+      return sc->map();
+    }
+
+    /*! unmap previously mapped frame buffer */
+    void LocalDevice::frameBufferUnmap(const void *mapped,
+                                       OSPFrameBuffer fb)
+    {
+      Assert(fb != NULL);
+      SwapChain *sc = (SwapChain *)fb;
+      return sc->unmap(mapped);
+    }
+
   }
 }
 

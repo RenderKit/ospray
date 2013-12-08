@@ -14,10 +14,18 @@ namespace ospray {
 
       virtual ~Device() {};
 
+      /*! create a new frame buffer/swap chain of given type */
       virtual OSPFrameBuffer 
       frameBufferCreate(const vec2i &size, 
                         const OSPFrameBufferMode mode,
                         const size_t swapChainDepth) = 0;
+      
+      /*! map frame buffer */
+      virtual const void *frameBufferMap(OSPFrameBuffer fb) = 0;
+
+      /*! unmap previously mapped frame buffer */
+      virtual void frameBufferUnmap(const void *mapped,
+                                    OSPFrameBuffer fb) = 0;
     };
   }
 }

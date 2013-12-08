@@ -10,6 +10,12 @@ namespace ospray {
                                                const OSPFrameBufferMode mode,
                                                const size_t swapChainDepth);
 
+      /*! map frame buffer */
+      virtual const void *frameBufferMap(OSPFrameBuffer fb);
+
+      /*! unmap previously mapped frame buffer */
+      virtual void frameBufferUnmap(const void *mapped,
+                                    OSPFrameBuffer fb);
     };
   }
 }

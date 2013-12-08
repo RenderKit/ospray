@@ -15,9 +15,20 @@ namespace ospray {
     SwapChain(const size_t numFBs, 
               const vec2i &fbSize, 
               FrameBufferFactory fbFactory);
+    const void *map();
+    void unmap(const void *mapped);
 
+    /*! return framebuffer on frontend side (the one we can map on the host) */
+    Ref<FrameBuffer> &getFrontBuffer() 
+    { return swapChain[frontBufferPos]; }
+    /*! return framebuffer on backend side (the one the next renderer will write to) */
+    Ref<FrameBuffer> &getBackBuffer()  
+    { return swapChain[(frontBufferPos+1)%swapChain.size()]; }
+    
     std::vector<Ref<FrameBuffer> > swapChain;
-    const vec2i               fbSize;
-    FrameBufferFactory        fbFactory;
+    std::vector<long>              lastRendered;
+    const vec2i                    fbSize;
+    FrameBufferFactory             fbFactory;
+    int                            frontBufferPos;
   };
 }
