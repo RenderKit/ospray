@@ -11,7 +11,7 @@ namespace ospray {
 
   template<typename PixelType>
   LocalFrameBuffer<PixelType>::LocalFrameBuffer(const vec2i &size) 
-    : FrameBuffer(size), isMapped(false)
+    : FrameBuffer(size), isMapped(false), ispcPtr(NULL)
   { 
     Assert(size.x > 0);
     Assert(size.y > 0);
@@ -22,6 +22,13 @@ namespace ospray {
   LocalFrameBuffer<PixelType>::~LocalFrameBuffer() 
   {
     delete[] pixel; 
+  }
+
+  template<typename PixelType>
+  void *LocalFrameBuffer<PixelType>::inISPC() 
+  {
+    Assert(ispcPtr);
+    return ispcPtr;
   }
 
   template<typename PixelType>

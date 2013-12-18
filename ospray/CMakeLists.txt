@@ -45,7 +45,14 @@ ADD_SUBDIRECTORY(${EMBREE_DIR}/kernels embree_kernels)
 
 ADD_SUBDIRECTORY(common)
 
-ADD_LIBRARY(OSPcore fb/swapchain.cpp fb/framebuffer.cpp)
+ISPC_COMPILE(${OSPRAY_TARGET} render/testrenderer.ispc)
+
+ADD_LIBRARY(OSPcore 
+	fb/swapchain.cpp 
+	fb/framebuffer.cpp
+	render/testrenderer.cpp
+	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
+	)
 TARGET_LINK_LIBRARIES(OSPcore OSPcommon)
 
 ADD_SUBDIRECTORY(api)

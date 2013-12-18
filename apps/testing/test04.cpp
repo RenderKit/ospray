@@ -13,30 +13,29 @@ struct MainWindow : public Glut3DWidget {
   MainWindow() 
     : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE,
                    &Glut3DWidget::INSPECT_CENTER),
-      frameID(0), fb(NULL)
+      fb(NULL), renderer(NULL)
   {};
   virtual void reshape(const ospray::vec2i &newSize) 
   {
     PING; PRINT(newSize);
     Glut3DWidget::reshape(newSize);
-    if (fb) ospFrameBufferDestroy(fb);
-    fb = ospFrameBufferCreate(newSize,OSP_RGBA_I8);
+    if (fb) ospDestroyFrameBuffer(fb);
+    fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
   }
 
   virtual void display() 
   {
-    if (!fb) return;
+    if (!fb || !renderer) return;
 
     fps.startRender();
-    
-    ucharFB = (unsigned int *)ospFrameBufferMap(fb);
-    ospFrameBufferUnmap(ucharFB,fb);
+
+    ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
+    ospUnmapFrameBuffer(ucharFB,fb);
     glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
     
     printf("should be rendering here...\n");
-    glutSwapBuffers();
+    //    glutSwapBuffers();
     
-    ++frameID;
     Glut3DWidget::display();
     fps.doneRender();
     char title[1000];
@@ -47,7 +46,7 @@ struct MainWindow : public Glut3DWidget {
   }
 
   OSPFrameBuffer fb;
-  int frameID;
+  OSPRenderer    renderer;
   ospray::glut3D::FPSCounter fps;
 };
 

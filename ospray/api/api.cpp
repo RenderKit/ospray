@@ -26,30 +26,30 @@ namespace ospray {
 
    due to internal reference counting the framebuffer may or may not be deleted immeidately
   */
-  extern "C" void ospFrameBufferDestroy(OSPFrameBuffer fb)
+  extern "C" void ospDestroyFrameBuffer(OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
     NOTIMPLEMENTED;
   }
 
-  extern "C" OSPFrameBuffer ospFrameBufferCreate(const osp::vec2i &size, 
-                                                 const OSPFrameBufferMode mode,
-                                                 const size_t swapChainDepth)
+  extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
+                                              const OSPFrameBufferMode mode,
+                                              const size_t swapChainDepth)
   {
     ASSERT_DEVICE();
     Assert(swapChainDepth > 0 && swapChainDepth < 4);
     return ospray::api::Device::current->frameBufferCreate(size,mode,swapChainDepth);
   }
 
-  extern "C" const void *ospFrameBufferMap(OSPFrameBuffer fb)
+  extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
     return ospray::api::Device::current->frameBufferMap(fb);
   }
   
-  extern "C" void ospFrameBufferUnmap(const void *mapped,
+  extern "C" void ospUnmapFrameBuffer(const void *mapped,
                                       OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();

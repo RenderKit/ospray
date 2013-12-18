@@ -1,0 +1,35 @@
+/*! \file miniSG.h Implements a minimalistic two-level scene graph */
+
+#include "ospray/common/ospcommon.h"
+
+namespace ospray {
+  namespace miniSG {
+
+    /*! mini 'all-rounder' material that should be able to capture
+        the most common material types such as OBJ wavefront */
+    struct Material {
+      vec3f kd; /*!< diffuse component */
+      vec3f ks; /*!< specular component */
+    };
+
+    struct Triangle {
+      uint v0, v1, v2;
+      uint materialID;
+    };
+
+    /*! default triangle mesh layout */
+    struct Mesh {
+      std::vector<Vec3fa>   vertex;   /*!< vertex positions */
+      std::vector<Vec3fa>   normal;   /*!< vertex normals; empty if none present */
+      std::vector<Vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
+      std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
+    };
+
+    struct Instance {
+      mat4x3f
+    };
+
+    struct Model {
+    };
+  }
+}

@@ -11,6 +11,9 @@ namespace ospray {
     };
     virtual const void *map() = 0;
     virtual void unmap(const void *mappedMem) = 0;
+
+    /*! returns an ISPC-side representation of this class */
+    virtual void *inISPC() = 0;
   };
 
   /*! local frame buffer - frame buffer that exists on local machine */
@@ -25,6 +28,9 @@ namespace ospray {
 
     virtual const void *map();
     virtual void unmap(const void *mappedMem);
+
+    /*! returns an ISPC-side representation of this class */
+    virtual void *inISPC();
   };
 
   FrameBuffer *createLocalFB_RGBA_I8(const vec2i &size);

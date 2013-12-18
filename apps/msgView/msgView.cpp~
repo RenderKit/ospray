@@ -1,0 +1,69 @@
+/*! \file objView.cpp A GLUT-based viewer for Wavefront OBJ files */
+
+// viewer widget
+#include "../util/glut3D/glut3D.h"
+#include "../util/miniSG/miniSG.h"
+#include "ospray/ospray.h"
+
+namespace ospray {
+  using std::cout;
+  using std::endl;
+
+  Ref<miniSG::Scene> msgScene = NULL;
+
+  void error(const std::string &msg)
+  {
+    cout << "ospray::stlViewer fatal error : " << msg << endl;
+    cout << endl;
+    cout << "Proper usage: " << endl;
+    cout << "  ./stlViewer <inFileName>" << endl;
+    cout << endl;
+    exit(1);
+  }
+
+  void stlViewerMain(int &ac, const char **&av)
+  {
+    msgScene = new miniSG::Scene;
+
+    // -------------------------------------------------------
+    // parse cmdline
+    // -------------------------------------------------------
+    for (int i=1;i<ac;i++) {
+      if (av[i][0] == '-') {
+        const std::string arg = av[i];
+
+        error("unkown commandline argument '"+arg+"'");
+      } else {
+        FileName fn = arg;
+        if (fn.endsWith(".stl"))
+          miniSG::importSTL(msgScene);
+        else if (fn.endsWith(".stl"))
+          miniSG::importSTL(msgScene);
+        else
+          error("unrecognized file format in filename '"+arg+"'"
+        stlFileName = av[i];
+      }
+    }
+
+    // -------------------------------------------------------
+    // parse input file
+    // -------------------------------------------------------
+    if (!stlFileName) error("no input file name specified");
+
+    cout << "stlView: loading STL model '" << stlFileName << "'" << endl;
+    loadSTL(stlFileName,model);
+    cout << "stlView: STL model loaded." << endl;
+    cout << "- num triangles : " << model.size() << endl;
+
+    // -------------------------------------------------------
+    // convert to standard mesh
+    // -------------------------------------------------------
+  }
+
+}
+
+
+int main(int ac, const char **av)
+{
+  ospray::stlViewerMain(ac,av);
+}

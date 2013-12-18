@@ -10,6 +10,7 @@ namespace ospray {
     Assert(fbFactory != NULL);
 
     swapChain.resize(numFBs);
+    lastRendered.resize(numFBs);
     for (int i=0;i<numFBs;i++) {
       swapChain[i] = (*fbFactory)(fbSize);
       lastRendered[i] = 0;

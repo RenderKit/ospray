@@ -1,4 +1,9 @@
+# --------------------------------------------
+# include dependencies (glut, glut3dwidget, ...)
+# --------------------------------------------
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 # --------------------------------------------
 # main executable
@@ -6,6 +11,7 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
 ADD_EXECUTABLE(objView 
 	# CPP sources
 	objView.cpp
+	objLoader.cpp
 	)
 TARGET_LINK_LIBRARIES(objView
 	OSPRay

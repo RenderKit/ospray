@@ -6,6 +6,7 @@
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
 #include "common/math/bbox.h"
+#include "common/math/affinespace.h"
 #include "common/sys/ref.h"
 
 
@@ -25,8 +26,12 @@ namespace ospray {
 
   /*! OSPRay's bounding box type for 3D float space */
   typedef embree::BBox3f   box3f;
+  
+  /*! affice space transformation */
+  typedef embree::AffineSpace3f affine3f;
 
   using   embree::Ref;
+  using   embree::RefCount;
 
   /*! return system time in seconds */
   double getSysTime();
