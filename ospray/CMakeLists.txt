@@ -50,6 +50,7 @@ ISPC_COMPILE(${OSPRAY_TARGET} render/testrenderer.ispc)
 ADD_LIBRARY(OSPcore 
 	fb/swapchain.cpp 
 	fb/framebuffer.cpp
+	common/model.cpp
 	render/testrenderer.cpp
 	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
 	)

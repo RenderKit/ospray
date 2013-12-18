@@ -42,6 +42,8 @@ namespace ospray {
       
       Instance(int meshID=0, affine3f xfm=embree::one) : meshID(meshID), xfm(xfm) {};
     };
+    bool operator==(const Instance &a, const Instance &b);
+    bool operator!=(const Instance &a, const Instance &b);
 
     struct Model : public RefCount {
       /*! list of materials - all material IDs of all meshes reference into this list */

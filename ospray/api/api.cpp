@@ -26,7 +26,7 @@ namespace ospray {
 
    due to internal reference counting the framebuffer may or may not be deleted immeidately
   */
-  extern "C" void ospDestroyFrameBuffer(OSPFrameBuffer fb)
+  extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
@@ -53,8 +53,29 @@ namespace ospray {
                                       OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
-    Assert(fb != NULL);
-    Assert(mapped != NULL);
+    Assert(fb != NULL && "invalid frame buffer in ospAddGeometry");
+    Assert(mapped != NULL && "invalid mapped pointer in ospAddGeometry");
     ospray::api::Device::current->frameBufferUnmap(mapped,fb);
   }
+
+  extern "C" OSPModel ospNewModel()
+  {
+    ASSERT_DEVICE();
+    return ospray::api::Device::current->newModel();
+  }
+
+  extern "C" void ospFinalizeModel(OSPModel _model)
+  {
+    ASSERT_DEVICE();
+    return ospray::api::Device::current->finalizeModel(_model);
+  }
+
+  extern "C" void ospAddGeometry(OSPModel _model, OSPGeometry _geometry)
+  {
+    ASSERT_DEVICE();
+    Assert(_model != NULL && "invalid model in ospAddGeometry");
+    Assert(_geometry != NULL && "invalid geometry in ospAddGeometry");
+    return ospray::api::Device::current->addGeometry(_model,_geometry);
+  }
+  
 }

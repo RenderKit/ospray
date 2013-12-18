@@ -9,7 +9,8 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  Ref<miniSG::Model> model = NULL;
+  Ref<miniSG::Model> msgModel = NULL;
+  OSPModel           ospModel = NULL;
 
   void error(const std::string &msg)
   {
@@ -23,7 +24,7 @@ namespace ospray {
 
   void stlViewerMain(int &ac, const char **&av)
   {
-    model = new miniSG::Model;
+    msgModel = new miniSG::Model;
 
     // -------------------------------------------------------
     // parse cmdline
@@ -36,11 +37,11 @@ namespace ospray {
       } else {
         embree::FileName fn = arg;
         if (fn.ext() == "stl")
-          miniSG::importSTL(*model,fn);
+          miniSG::importSTL(*msgModel,fn);
         else if (fn.ext() == "msg")
-          miniSG::importMSG(*model,fn);
+          miniSG::importMSG(*msgModel,fn);
         else if (fn.ext() == "obj")
-          miniSG::importOBJ(*model,fn);
+          miniSG::importOBJ(*msgModel,fn);
         else
           error("unrecognized file format in filename '"+arg+"'");
       }
@@ -49,37 +50,51 @@ namespace ospray {
     // done parsing
     // -------------------------------------------------------
     cout << "done parsing. found model with" << endl;
-    cout << "  - num materials: " << model->material.size() << endl;
-    cout << "  - num meshes: " << model->mesh.size() << " ";
+    cout << "  - num materials: " << msgModel->material.size() << endl;
+    cout << "  - num meshes: " << msgModel->mesh.size() << " ";
     int numUniqueTris = 0;
     int numInstancedTris = 0;
-    for (int i=0;i<model->mesh.size();i++) {
-      cout << "[" << model->mesh[i]->size() << "]";
-      numUniqueTris += model->mesh[i]->size();
+    for (int i=0;i<msgModel->mesh.size();i++) {
+      cout << "[" << msgModel->mesh[i]->size() << "]";
+      numUniqueTris += msgModel->mesh[i]->size();
     }
     cout << endl;
-    cout << "  - num instances: " << model->instance.size() << " ";
-    for (int i=0;i<model->mesh.size();i++) {
-      cout << "[" << model->mesh[model->instance[i].meshID]->size() << "]";
-      numInstancedTris += model->mesh[model->instance[i].meshID]->size();
+    cout << "  - num instances: " << msgModel->instance.size() << " ";
+    for (int i=0;i<msgModel->mesh.size();i++) {
+      cout << "[" << msgModel->mesh[msgModel->instance[i].meshID]->size() << "]";
+      numInstancedTris += msgModel->mesh[msgModel->instance[i].meshID]->size();
     }
     cout << endl;
     cout << "  - num unique triangles   : " << numUniqueTris << endl;
     cout << "  - num instanced triangles: " << numInstancedTris << endl;
 
-    if (model->material.empty()) {
+    if (numInstancedTris == 0) 
+      error("no (valid) input files specified - model contains no triangles");
+
+    if (msgModel->material.empty()) {
       cout << "adding default material" << endl;
-      model->material.push_back(new miniSG::Material);
+      msgModel->material.push_back(new miniSG::Material);
     }
 
     // -------------------------------------------------------
     // create ospray model
     // -------------------------------------------------------
+    ospModel = ospNewModel();
+
+    // code does not yet do instancing ... check that the model doesn't contain instances
+    for (int i=0;i<msgModel->instance.size();i++)
+      if (msgModel->instance[i] != miniSG::Instance(i))
+        error("found a scene that seems to contain instances, "
+              "but msgView does not yet support instancing");
+    
+    for (int i=0;i<msgModel->mesh.size();i++)
+      ospFinalizeModel(ospModel);
   }
 }
 
 
 int main(int ac, const char **av)
 {
+  ospInit(&ac,av);
   ospray::stlViewerMain(ac,av);
 }

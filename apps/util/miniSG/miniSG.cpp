@@ -12,5 +12,11 @@ namespace ospray {
     {
       throw std::runtime_error("ospray::miniSG fatal error : "+err);
     }
+
+    bool operator==(const Instance &a, const Instance &b)
+    { return a.meshID == b.meshID && a.xfm == b.xfm; }
+    bool operator!=(const Instance &a, const Instance &b)
+    { return !(a==b); }
+
   }
 }

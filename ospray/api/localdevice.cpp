@@ -1,5 +1,6 @@
 #include "localdevice.h"
 #include "../fb/swapchain.h"
+#include "../common/model.h"
 
 namespace ospray {
   namespace api {
@@ -37,6 +38,34 @@ namespace ospray {
       Assert(fb != NULL);
       SwapChain *sc = (SwapChain *)fb;
       return sc->unmap(mapped);
+    }
+
+    /*! create a new model */
+    OSPModel LocalDevice::newModel()
+    {
+      Model *model = new Model;
+      model->refInc();
+      return (OSPModel)model;
+    }
+    
+    /*! finalize a newly specified model */
+    void LocalDevice::finalizeModel(OSPModel _model)
+    {
+      Model *model = (Model *)_model;
+      Assert(model && "null model in LocalDevice::finalizeModel()");
+      model->finalize();
+    }
+    
+    /*! add a new geometry to a model */
+    void LocalDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
+    {
+      Model *model = (Model *)_model;
+      Assert(model && "null model in LocalDevice::finalizeModel()");
+
+      Geometry *geometry = (Geometry *)_geometry;
+      Assert(geometry && "null geometry in LocalDevice::finalizeGeometry()");
+
+      model->geometry.push_back(geometry);
     }
 
   }

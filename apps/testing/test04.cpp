@@ -19,7 +19,7 @@ struct MainWindow : public Glut3DWidget {
   {
     PING; PRINT(newSize);
     Glut3DWidget::reshape(newSize);
-    if (fb) ospDestroyFrameBuffer(fb);
+    if (fb) ospFreeFrameBuffer(fb);
     fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
   }
 

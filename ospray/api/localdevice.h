@@ -16,6 +16,15 @@ namespace ospray {
       /*! unmap previously mapped frame buffer */
       virtual void frameBufferUnmap(const void *mapped,
                                     OSPFrameBuffer fb);
+
+      /*! create a new model */
+      virtual OSPModel newModel();
+
+      /*! finalize a newly specified model */
+      virtual void finalizeModel(OSPModel _model);
+
+      /*! add a new geometry to a model */
+      virtual void addGeometry(OSPModel _model, OSPGeometry _geometry);
     };
   }
 }

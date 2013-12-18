@@ -26,7 +26,8 @@ namespace osp {
   struct Renderer     : public ManagedObject {};
   struct Model        : public ManagedObject {};
   struct Data         : public ManagedObject {};
-  struct TriangleMesh : public ManagedObject {};
+  struct Geometry     : public ManagedObject {};
+  struct TriangleMesh : public Geometry {};
 }
 
 
@@ -47,6 +48,7 @@ typedef osp::FrameBuffer  *OSPFrameBuffer;
 typedef osp::Renderer     *OSPRenderer;
 typedef osp::Model        *OSPModel;
 typedef osp::Data         *OSPData;
+typedef osp::Geometry     *OSPGeometry;
 typedef osp::TriangleMesh *OSPTriangleMesh;
 
 /*! \defgroup cplusplus_api Public OSPRay Core API */
@@ -64,8 +66,9 @@ extern "C" {
   OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
                                    const OSPFrameBufferMode mode=OSP_RGBA_I8,
                                    const size_t swapChainDepth=2);
-  /*! destroy a framebuffer */
-  void ospDestroyFrameBuffer(OSPFrameBuffer fb);
+  /*! \brief free a framebuffer \detailed due to refcounting the frame
+      buffer may not immeidately be deleted at this time */
+  void ospFreeFrameBuffer(OSPFrameBuffer fb);
   /*! map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   const void *ospMapFrameBuffer(OSPFrameBuffer fb);
   /*! unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
@@ -92,7 +95,7 @@ extern "C" {
   /*! @} end of ospray_data */
 
   // -------------------------------------------------------
-  /*! \defgroup ospray_trianglemesh Triangle Mesh Handling */
+  /*! \defgroup ospray_geometry Geometry Handling */
   /*! @{ */
 
   /*! \brief create a new triangle mesh. \detailed the mesh doesn't do
@@ -102,10 +105,9 @@ extern "C" {
       vertices and normals in vec3fa, and vec4i for index (fourth
       component is the material ID). */
   OSPTriangleMesh ospNewTriangleMesh();
-  void ospAddTriangleMesh(OSPModel model, OSPTriangleMesh mesh);
+  /*! add an already created geometry to a model */
+  void ospAddGeometry(OSPModel model, OSPGeometry mesh);
   /*! @} end of ospray_trianglemesh */
-
-
 
   // -------------------------------------------------------
   /*! \defgroup ospray_model OSPRay Model Handling 
@@ -119,11 +121,7 @@ extern "C" {
   /*! @{ */
 
   /*! \brief create a new ospray model.  */
-  OSPTriangleMesh ospNewModel();
-  /*! \brief add given triangle mesh to given model. this will not do
-      anything to the model until 'ospFinalizeModel' has been called
-      on that model */
-  void ospAddTriangleMesh(OSPModel model, OSPTriangleMesh mesh);
+  OSPModel ospNewModel();
   void ospFinalizeModel(OSPModel model);
   /*! @} end of ospray_model */
   
