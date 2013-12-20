@@ -29,6 +29,7 @@ namespace ospray {
     // -------------------------------------------------------
     // parse cmdline
     // -------------------------------------------------------
+    cout << "msgView: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
       if (av[i][0] == '-') {
@@ -49,9 +50,9 @@ namespace ospray {
     // -------------------------------------------------------
     // done parsing
     // -------------------------------------------------------
-    cout << "done parsing. found model with" << endl;
+    cout << "msgView: done parsing. found model with" << endl;
     cout << "  - num materials: " << msgModel->material.size() << endl;
-    cout << "  - num meshes: " << msgModel->mesh.size() << " ";
+    cout << "  - num meshes   : " << msgModel->mesh.size() << " ";
     int numUniqueTris = 0;
     int numInstancedTris = 0;
     for (int i=0;i<msgModel->mesh.size();i++) {
@@ -72,7 +73,7 @@ namespace ospray {
       error("no (valid) input files specified - model contains no triangles");
 
     if (msgModel->material.empty()) {
-      cout << "adding default material" << endl;
+      cout << "msgView: adding default material" << endl;
       msgModel->material.push_back(new miniSG::Material);
     }
 
@@ -87,8 +88,27 @@ namespace ospray {
         error("found a scene that seems to contain instances, "
               "but msgView does not yet support instancing");
     
-    for (int i=0;i<msgModel->mesh.size();i++)
-      ospFinalizeModel(ospModel);
+    cout << "msgView: adding parsed geometries to ospray model" << endl;
+    for (int i=0;i<msgModel->mesh.size();i++) {
+      Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
+
+      // create ospray mesh
+      OSPGeometry ospMesh = ospNewTriangleMesh();
+      
+      // add position array to mesh
+      OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
+                                    &msgMesh->position[0]);
+      ospSetData(ospMesh,"position",position);
+      
+      // add triangle index array to mesh
+      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec4i,
+                                 &msgMesh->triangle[0]);
+      ospSetData(ospMesh,"index",index);
+      
+      ospAddGeometry(ospModel,ospMesh);
+    }
+    ospFinalizeModel(ospModel);
+    cout << "msgView: done creating ospray model." << endl;
   }
 }
 

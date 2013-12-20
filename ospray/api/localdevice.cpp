@@ -1,9 +1,22 @@
 #include "localdevice.h"
 #include "../fb/swapchain.h"
 #include "../common/model.h"
+#include "../common/data.h"
+#include "../geometry/trianglemesh.h"
 
 namespace ospray {
   namespace api {
+
+    LocalDevice::LocalDevice()
+    {
+      char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
+      if (logLevelFromEnv) 
+        logLevel = atoi(logLevelFromEnv);
+      else
+        logLevel = 0;
+    }
+
+
     OSPFrameBuffer 
     LocalDevice::frameBufferCreate(const vec2i &size, 
                                    const OSPFrameBufferMode mode,
@@ -35,7 +48,7 @@ namespace ospray {
     void LocalDevice::frameBufferUnmap(const void *mapped,
                                        OSPFrameBuffer fb)
     {
-      Assert(fb != NULL);
+      Assert2(fb != NULL, "invalid framebuffer");
       SwapChain *sc = (SwapChain *)fb;
       return sc->unmap(mapped);
     }
@@ -52,7 +65,7 @@ namespace ospray {
     void LocalDevice::finalizeModel(OSPModel _model)
     {
       Model *model = (Model *)_model;
-      Assert(model && "null model in LocalDevice::finalizeModel()");
+      Assert2(model,"null model in LocalDevice::finalizeModel()");
       model->finalize();
     }
     
@@ -60,14 +73,50 @@ namespace ospray {
     void LocalDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert(model && "null model in LocalDevice::finalizeModel()");
+      Assert2(model,"null model in LocalDevice::finalizeModel()");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert(geometry && "null geometry in LocalDevice::finalizeGeometry()");
+      Assert2(geometry,"null geometry in LocalDevice::finalizeGeometry()");
 
       model->geometry.push_back(geometry);
     }
 
+    /*! create a new data buffer */
+    OSPTriangleMesh LocalDevice::newTriangleMesh()
+    {
+      TriangleMesh *triangleMesh = new TriangleMesh;
+      triangleMesh->refInc();
+      return (OSPTriangleMesh)triangleMesh;
+    }
+
+    /*! create a new data buffer */
+    OSPData LocalDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
+    {
+      Assert2(flags == 0,"unsupported combination of flags");
+      Data *data = new Data(nitems,format,init,flags);
+      data->refInc();
+      return (OSPData)data;
+    }
+    
+    /*! assign (named) data item as a parameter to an object */
+    void LocalDevice::setData(OSPObject _object, const char *bufName, OSPData _data)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Data          *data   = (Data *)_data;
+
+      Assert(data != NULL && "invalid data array handle");
+      Assert(object != NULL && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->setParam(bufName,data);
+    }
+
+      /*! create a new renderer object (out of list of registered renderers) */
+    OSPRenderer LocalDevice::newRenderer(const char *type)
+    {
+      Assert(type != NULL && "invalid render type identifier");
+      return NULL;
+    }
   }
 }
 

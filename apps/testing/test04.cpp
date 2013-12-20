@@ -14,7 +14,10 @@ struct MainWindow : public Glut3DWidget {
     : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE,
                    &Glut3DWidget::INSPECT_CENTER),
       fb(NULL), renderer(NULL)
-  {};
+  {
+    renderer = ospNewRenderer("test_screen");
+    Assert(renderer != NULL && "could not create renderer");
+  };
   virtual void reshape(const ospray::vec2i &newSize) 
   {
     PING; PRINT(newSize);

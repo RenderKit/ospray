@@ -39,25 +39,50 @@ typedef enum {
 } OSPFrameBufferMode;
 
 typedef enum {
-  OSP_INT, OSP_FLOAT, 
-  OSP_vec3fa, OSP_vec3f,
+  // object reference type
+  OSP_OBJECT,
+  // atomic types
+  OSP_INT, 
+  OSP_FLOAT, 
+  // vector types
+  OSP_vec2f,
+  OSP_vec3f,
+  OSP_vec3fa, 
   OSP_vec4i
 } OSPDataType;
 
-typedef osp::FrameBuffer  *OSPFrameBuffer;
-typedef osp::Renderer     *OSPRenderer;
-typedef osp::Model        *OSPModel;
-typedef osp::Data         *OSPData;
-typedef osp::Geometry     *OSPGeometry;
-typedef osp::TriangleMesh *OSPTriangleMesh;
+typedef enum {
+  OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
+  OSP_GENERAL_ERROR /*! unspecified error */
+} OSPResult;
+
+typedef osp::FrameBuffer   *OSPFrameBuffer;
+typedef osp::Renderer      *OSPRenderer;
+typedef osp::Model         *OSPModel;
+typedef osp::Data          *OSPData;
+typedef osp::Geometry      *OSPGeometry;
+typedef osp::TriangleMesh  *OSPTriangleMesh;
+typedef osp::ManagedObject *OSPObject;
 
 /*! \defgroup cplusplus_api Public OSPRay Core API */
 /*! @{ */
 extern "C" {
   /*! initialize the ospray engine (for single-node user application) */
   void ospInit(int *ac, const char **av);
+
+
+  // -------------------------------------------------------
+  /*! \defgroup ospray_render Creating and using Renderers */
+  /*! @{ */
+
   /*! use renderer to render given model into specified frame buffer */
   void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, OSPModel model);
+
+  /*! \brief create a new renderer of given type */
+  /*! \detailed return 'NULL' if that type is not known */
+  OSPRenderer ospNewRenderer(const char *type);
+
+  /*! @} */
 
   // -------------------------------------------------------
   /*! \defgroup ospray_framebuffer Frame Buffer Manipulation API */
@@ -92,6 +117,8 @@ extern "C" {
   /*! @{ */
   /*! create a new data buffer, with optional init data and control flags */
   OSPData ospNewData(size_t numItems, OSPDataType format, void *init=NULL, int flags=0);
+  /*! add a data array to another object */
+  void ospSetData(OSPObject _object, const char *id, OSPData data);
   /*! @} end of ospray_data */
 
   // -------------------------------------------------------

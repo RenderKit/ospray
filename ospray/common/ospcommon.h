@@ -5,6 +5,7 @@
 
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
+#include "common/math/vec4.h"
 #include "common/math/bbox.h"
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
@@ -17,6 +18,8 @@ namespace ospray {
   typedef embree::Vec2i    vec2i;
   /*! OSPRay's three-int vector class */
   typedef embree::Vec3i    vec3i;
+  /*! OSPRay's four-int vector class */
+  typedef embree::Vec4i    vec4i;
   /*! OSPRay's two-float vector class */
   typedef embree::Vec2f    vec2f;
   /*! OSPRay's three-float vector class */
@@ -42,11 +45,15 @@ namespace ospray {
   void removeArgs(int &ac, char **&av, int where, int howMany);
 
   
-  extern void doAssertion(const char *file, int line, const char *expr);
+  extern void doAssertion(const char *file, int line, const char *expr, const char *expl);
 #define Assert(expr)                                                    \
-  ((void)((expr) ? 0 : ((void)doAssertion(__FILE__, __LINE__, #expr), 0)))
-#define AssertError(errMsg) \
-  doAssertion(__FILE__,__LINE__, errMsg)
+  ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, NULL), 0)))
+#define Assert2(expr,expl)                                              \
+  ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, expl), 0)))
+#define AssertError(errMsg)                     \
+  doAssertion(__FILE__,__LINE__, errMsg, NULL)
+
+  extern uint logLevel;
 }
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");

@@ -51,6 +51,8 @@ ADD_LIBRARY(OSPcore
 	fb/swapchain.cpp 
 	fb/framebuffer.cpp
 	common/model.cpp
+	geometry/geometry.cpp
+	geometry/trianglemesh.cpp
 	render/testrenderer.cpp
 	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
 	)

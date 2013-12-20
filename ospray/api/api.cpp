@@ -1,6 +1,12 @@
 #include "ospray/include/ospray/ospray.h"
 #include "localdevice.h"
 
+#if 1
+# define LOG(a) if (logLevel > 2) std::cout << "#ospray: " << a << std::endl;
+#else
+# define LOG(a) /*ignore*/
+#endif
+
 /*! \file api.cpp implements the public ospray api functions by
     routing them to a respective \ref device */
 namespace ospray {
@@ -70,12 +76,50 @@ namespace ospray {
     return ospray::api::Device::current->finalizeModel(_model);
   }
 
-  extern "C" void ospAddGeometry(OSPModel _model, OSPGeometry _geometry)
+  extern "C" void ospAddGeometry(OSPModel model, OSPGeometry geometry)
   {
     ASSERT_DEVICE();
-    Assert(_model != NULL && "invalid model in ospAddGeometry");
-    Assert(_geometry != NULL && "invalid geometry in ospAddGeometry");
-    return ospray::api::Device::current->addGeometry(_model,_geometry);
+    Assert(model != NULL && "invalid model in ospAddGeometry");
+    Assert(geometry != NULL && "invalid geometry in ospAddGeometry");
+    return ospray::api::Device::current->addGeometry(model,geometry);
   }
-  
+
+  /*! create a newa data buffer, with optional init data and control flags */
+  extern "C" OSPTriangleMesh ospNewTriangleMesh()
+  {
+    ASSERT_DEVICE();
+    return ospray::api::Device::current->newTriangleMesh();
+  }
+
+  /*! create a new data buffer, with optional init data and control flags */
+  extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, void *init, int flags)
+  {
+    ASSERT_DEVICE();
+    return ospray::api::Device::current->newData(nitems,format,init,flags);
+  }
+
+  /*! add a data array to another object */
+  extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
+  {
+    ASSERT_DEVICE();
+    LOG("ospSetData(...,\"" << bufName << "\",...)");
+    Assert(object != NULL && "invalid object in ospAddGeometry");
+    Assert(bufName != NULL && "invalid buffer name in ospAddId");
+    return ospray::api::Device::current->setData(object,bufName,data);
+  }
+
+  /*! \brief create a new renderer of given type */
+  /*! \detailed return 'NULL' if that type is not known */
+  extern "C" OSPRenderer ospNewRenderer(const char *type)
+  {
+    ASSERT_DEVICE();
+    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    LOG("ospNewRenderer(" << type << ")");
+    OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
+    if (logLevel > 0)
+      std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
+    return renderer;
+  }
+
+
 }

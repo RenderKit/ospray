@@ -9,8 +9,15 @@
 #include <sys/times.h>
 
 namespace ospray {
-  void doAssertion(const char *file, int line, const char *expr) {
-    fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
+  /*! logging level - '0' means 'no logging at all', increasing
+      numbers mean increasing verbosity of log messages */
+  uint logLevel = 0;
+  
+  void doAssertion(const char *file, int line, const char *expr, const char *expl) {
+    if (expl)
+      fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n(%s)\n", file, line, expr, expl);
+    else
+      fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
     abort();
   }
 
