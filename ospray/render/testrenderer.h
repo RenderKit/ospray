@@ -5,7 +5,7 @@
 namespace ospray {
   /*! test renderer that renders a simple test image using ispc */
   struct TestRenderer : public Renderer {
-    virtual std::string toString() const { return "ospray::Renderer"; }
+    virtual std::string toString() const { return "ospray::TestRenderer"; }
     virtual void renderFrame(FrameBuffer *fb,
                              Model *world);
   private:

@@ -28,5 +28,6 @@ TARGET_LINK_LIBRARIES(test03 OSPglut3D)
 # test02: opens a window, renders a simple test frame
 # ------------------------------------------------------------------
 ADD_EXECUTABLE(test04 test04.cpp)
+LINK_DIRECTORIES(${OSPRAY_BINARY_DIR}/intel64/lib)
 TARGET_LINK_LIBRARIES(test04 OSPglut3D OSPRay)
 

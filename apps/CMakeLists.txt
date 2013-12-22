@@ -1,4 +1,4 @@
-INCLUDE(${EMBREE_DIR}/common/cmake/ispc.cmake)
+#INCLUDE(${EMBREE_DIR}/common/cmake/ispc.cmake)
 INCLUDE_DIRECTORIES(${EMBREE_DIR})
 INCLUDE_DIRECTORIES(${EMBREE_DIR}/common)
 INCLUDE_DIRECTORIES(${EMBREE_DIR}/kernels)

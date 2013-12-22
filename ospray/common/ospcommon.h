@@ -26,6 +26,8 @@ namespace ospray {
   typedef embree::Vec3f    vec3f;
   /*! OSPRay's three-float vector class (aligned to 16b-boundaries) */
   typedef embree::Vec3fa   vec3fa;
+  /*! OSPRay's four-float vector class */
+  typedef embree::Vec4f    vec4f;
 
   /*! OSPRay's bounding box type for 3D float space */
   typedef embree::BBox3f   box3f;

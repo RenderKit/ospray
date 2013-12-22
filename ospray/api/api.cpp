@@ -1,5 +1,6 @@
 #include "ospray/include/ospray/ospray.h"
 #include "localdevice.h"
+#include "ospray/render/renderer.h"
 
 #if 1
 # define LOG(a) if (logLevel > 2) std::cout << "#ospray: " << a << std::endl;
@@ -10,6 +11,9 @@
 /*! \file api.cpp implements the public ospray api functions by
     routing them to a respective \ref device */
 namespace ospray {
+  using std::endl;
+  using std::cout;
+
 #define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
@@ -118,7 +122,19 @@ namespace ospray {
     OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
     if (logLevel > 0)
       std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
+
+    cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
     return renderer;
+  }
+
+  /*! \brief call a renderer to render given model into given framebuffer */
+  /*! \detailed model _may_ be empty (though most framebuffers will expect one!) */
+  extern "C" void ospRenderFrame(OSPFrameBuffer fb, 
+                                 OSPRenderer    renderer, 
+                                 OSPModel       model)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->renderFrame(fb,renderer,model);
   }
 
 

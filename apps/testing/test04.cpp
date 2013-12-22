@@ -13,7 +13,7 @@ struct MainWindow : public Glut3DWidget {
   MainWindow() 
     : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE,
                    &Glut3DWidget::INSPECT_CENTER),
-      fb(NULL), renderer(NULL)
+      fb(NULL), renderer(NULL), model(NULL)
   {
     renderer = ospNewRenderer("test_screen");
     Assert(renderer != NULL && "could not create renderer");
@@ -35,8 +35,7 @@ struct MainWindow : public Glut3DWidget {
     ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
     ospUnmapFrameBuffer(ucharFB,fb);
     glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
-    
-    printf("should be rendering here...\n");
+    ospRenderFrame(fb,renderer,model);
     //    glutSwapBuffers();
     
     Glut3DWidget::display();
@@ -48,6 +47,7 @@ struct MainWindow : public Glut3DWidget {
     glutPostRedisplay();
   }
 
+  OSPModel       model;
   OSPFrameBuffer fb;
   OSPRenderer    renderer;
   ospray::glut3D::FPSCounter fps;

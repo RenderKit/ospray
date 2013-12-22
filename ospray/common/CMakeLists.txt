@@ -1,5 +1,5 @@
 
-ADD_LIBRARY(OSPcommon 
+ADD_LIBRARY(OSPcommon SHARED
 	ospcommon.cpp
 	managed.cpp
 	data.cpp

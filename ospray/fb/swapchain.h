@@ -11,7 +11,7 @@ namespace ospray {
   typedef FrameBuffer *(*FrameBufferFactory)(const vec2i &fbSize);
 
   /*! class that implements a 'swap chain' of frame buffers of a given size */
-  struct SwapChain {
+  struct SwapChain : public ManagedObject {
     SwapChain(const size_t numFBs, 
               const vec2i &fbSize, 
               FrameBufferFactory fbFactory);
@@ -19,12 +19,14 @@ namespace ospray {
     void unmap(const void *mapped);
 
     /*! return framebuffer on frontend side (the one we can map on the host) */
-    Ref<FrameBuffer> &getFrontBuffer() 
-    { return swapChain[frontBufferPos]; }
+    FrameBuffer *getFrontBuffer() 
+    { return swapChain[frontBufferPos].ptr; }
     /*! return framebuffer on backend side (the one the next renderer will write to) */
-    Ref<FrameBuffer> &getBackBuffer()  
-    { return swapChain[(frontBufferPos+1)%swapChain.size()]; }
+    FrameBuffer *getBackBuffer()  
+    { return swapChain[(frontBufferPos+1) % swapChain.size()].ptr; }
     
+    virtual std::string toString() const { return "ospray::SwapChain"; }
+
     std::vector<Ref<FrameBuffer> > swapChain;
     std::vector<long>              lastRendered;
     const vec2i                    fbSize;

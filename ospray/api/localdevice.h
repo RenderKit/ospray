@@ -41,6 +41,11 @@ namespace ospray {
 
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type);
+
+      /*! call a renderer to render a frame buffer */
+      virtual void renderFrame(OSPFrameBuffer fb, 
+                               OSPRenderer renderer, 
+                               OSPModel model);
     };
   }
 }

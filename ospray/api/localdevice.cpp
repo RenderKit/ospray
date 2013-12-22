@@ -3,6 +3,7 @@
 #include "../common/model.h"
 #include "../common/data.h"
 #include "../geometry/trianglemesh.h"
+#include "../render/renderer.h"
 
 namespace ospray {
   namespace api {
@@ -31,6 +32,9 @@ namespace ospray {
         AssertError("frame buffer mode not yet supported");
       }
       SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+      PING;
+      PRINT(sc);
+      PRINT(sc->toString());
       Assert(sc != NULL);
       return (OSPFrameBuffer)sc;
     }
@@ -114,9 +118,28 @@ namespace ospray {
       /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer LocalDevice::newRenderer(const char *type)
     {
+      PING;
       Assert(type != NULL && "invalid render type identifier");
-      return NULL;
+      Renderer *renderer = Renderer::createRenderer(type);
+      return (OSPRenderer)renderer;
     }
+
+      /*! call a renderer to render a frame buffer */
+    void LocalDevice::renderFrame(OSPFrameBuffer _sc, 
+                                  OSPRenderer    _renderer, 
+                                  OSPModel       _model)
+    {
+      SwapChain *sc = (SwapChain *)_sc;
+      Renderer *renderer = (Renderer *)_renderer;
+      Model *model = (Model *)_model;
+
+      Assert(sc != NULL && "invalid frame buffer handle");
+      Assert(renderer != NULL && "invalid renderer handle");
+      
+      FrameBuffer *fb = sc->getBackBuffer();
+      renderer->renderFrame(fb,model);
+    }
+
   }
 }
 

@@ -6,7 +6,7 @@
 
 SET(OSPRAY_ICC ON CACHE BOOL "Use Intel Compiler?")
 SET(OSPRAY_MIC OFF CACHE BOOL "Build OSPRay with MIC Support?")
-SET(OSPRAY_XEON_TARGET "AVX2" CACHE STRING "Target ISA (for non-MIC target)")
+SET(OSPRAY_XEON_TARGET "AVX2" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 
 MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
 MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
@@ -24,6 +24,14 @@ MARK_AS_ADVANCED(EMBREE_DIR)
 MARK_AS_ADVANCED(USE_STAT_COUNTERS)
 
 SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
+
+# -------------------------------------------------------
+# configure ispc
+#
+INCLUDE(${EMBREE_DIR}/common/cmake/ispc.cmake)
+INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
+
+
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *exexecutables* into the (same) build directory, but tag
