@@ -1,0 +1,32 @@
+#ifndef FRAMEBUFFER_ISPH
+#define FRAMEBUFFER_ISPH
+
+#include "../common/ospcommon.ih"
+
+/*! \file framebuffer.isph Defines the abstract base class of an ISPC frame buffer */
+
+struct FrameBuffer;
+
+/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
+typedef void (*SetPixelMethod)(uniform FrameBuffer  *uniform,
+                               const varying vec2i  &pixel,
+                               const varying vec4f &value);
+/*! \brief Fct pointer type for 'virtual' method that queries a pixel */
+typedef varying vec4f (*GetPixelMethod)(uniform FrameBuffer  *uniform,
+                                        const varying vec2i  &pixel);
+/*! \brief destructor callback for this class */
+typedef void (*DestroyFBMethod)(uniform FrameBuffer  *uniform);
+
+struct FrameBuffer 
+{
+  DestroyFBMethod destructor;
+  
+  SetPixelMethod  setPixel;
+  GetPixelMethod  getPixel;
+
+  void *cClassPtr; /*!< pointer back to c++-side of this class */
+
+  vec2i size; /*!< size (width x height) of frame buffer, in pixels */
+};
+
+#endif

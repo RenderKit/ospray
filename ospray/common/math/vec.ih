@@ -1,0 +1,53 @@
+/*! \file math.ih implements common math functionality for ISPC */
+
+#ifndef OSPRAY_VEC_ISPH
+#define OSPRAY_VEC_ISPH
+
+#include "math.isph"
+
+#define __define_ispc_vector2(TYPE,ABB) \
+  struct vec2#ABB {                     \
+    union { TYPE x; TYPE u; TYPE s; };  \
+    union { TYPE y; TYPE v; TYPE t; };  \
+  };                                    \
+  
+#define __define_ispc_vector3(TYPE,ABB) \
+  struct vec3#ABB {                     \
+    union { TYPE x; TYPE r; };          \
+    union { TYPE y; TYPE g; };          \
+    union { TYPE z; TYPE b; };          \
+  };                                    \
+  struct vec3#ABB#a {                   \
+    union { TYPE x; TYPE r; };          \
+    union { TYPE y; TYPE g; };          \
+    union { TYPE z; TYPE b; };          \
+    union { TYPE w; TYPE a; };          \
+  };                                    \
+
+#define __define_ispc_vector4(TYPE,ABB) \
+  struct vec4#ABB {                     \
+    union { TYPE x; TYPE r; };          \
+    union { TYPE y; TYPE g; };          \
+    union { TYPE z; TYPE b; };          \
+    union { TYPE w; TYPE a; };          \
+  };                                    \
+
+__define_ispc_vector2(int,i);
+__define_ispc_vector2(unsigned int,ui);
+__define_ispc_vector2(float,f);
+
+__define_ispc_vector3(int,i);
+__define_ispc_vector3(unsigned int,ui);
+__define_ispc_vector3(float,f);
+
+__define_ispc_vector4(int,i);
+__define_ispc_vector4(unsigned int,ui);
+__define_ispc_vector4(float,f);
+
+#undef __define_ispc_vector2
+#undef __define_ispc_vector3
+#undef __define_ispc_vector4
+
+
+#endif
+

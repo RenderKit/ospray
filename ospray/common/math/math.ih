@@ -1,0 +1,8 @@
+/*! \file math.ih implements common math functionality for ISPC */
+
+#ifndef MATH_ISPH
+#define MATH_ISPH
+
+
+#endif
+
