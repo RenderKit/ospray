@@ -47,8 +47,8 @@ __define_ispc_vector4(float,f);
 
 /*! defines all constructors "make_vec2[T]" for 2-vector type */
 #define __define_ispc_constructors2(UV,TYPE,ABB,ITYPE,IABB) \
-  inline UV vec2f make_vec2##ABB(const UV ITYPE x,          \
-                                 const UV ITYPE y)          \
+  inline UV vec2##ABB make_vec2##ABB(const UV ITYPE x,      \
+                                     const UV ITYPE y)      \
   {                                                         \
     UV vec2##ABB ret;                                       \
     ret.x = x;                                              \
@@ -58,40 +58,49 @@ __define_ispc_vector4(float,f);
   
 /*! defines all constructors "make_vec3[T]" and "make_vec3[T]a" for
   3-vector type */
-#define __define_ispc_constructors3(UV,TYPE,ABB,ITYPE,IABB) \
-  inline UV vec3f make_vec3##ABB(const UV ITYPE x,          \
-                                 const UV ITYPE y,          \
-                                 const UV ITYPE z)          \
-  {                                                         \
-    UV vec3##ABB ret;                                       \
-    ret.x = x;                                              \
-    ret.y = y;                                              \
-    ret.z = z;                                              \
-    return ret;                                             \
-  }                                                         \
-  inline UV vec4f make_vec3##ABB##a(const UV ITYPE x,       \
-                                    const UV ITYPE y,       \
-                                    const UV ITYPE z)       \
-  {                                                         \
-    UV vec3##ABB##a ret;                                    \
-    ret.x = x;                                              \
-    ret.y = y;                                              \
-    ret.z = z;                                              \
-    return ret;                                             \
-  }                                                         \
+#define __define_ispc_constructors3(UV,TYPE,ABB,ITYPE,IABB)   \
+  inline UV vec3##ABB make_vec3##ABB(const UV ITYPE x,        \
+                                     const UV ITYPE y,        \
+                                     const UV ITYPE z)        \
+  {                                                           \
+    UV vec3##ABB ret;                                         \
+    ret.x = x;                                                \
+    ret.y = y;                                                \
+    ret.z = z;                                                \
+    return ret;                                               \
+  }                                                           \
+  inline UV vec3##ABB##a make_vec3##ABB##a(const UV ITYPE x,  \
+                                           const UV ITYPE y,  \
+                                           const UV ITYPE z)  \
+  {                                                           \
+    UV vec3##ABB##a ret;                                      \
+    ret.x = x;                                                \
+    ret.y = y;                                                \
+    ret.z = z;                                                \
+    return ret;                                               \
+  }                                                           \
   
 /*! defines all constructors "make_vec4[T]" for 4-vector type */
 #define __define_ispc_constructors4(UV,TYPE,ABB,ITYPE,IABB) \
-  inline UV vec4f make_vec4f(const UV ITYPE x,              \
-                             const UV ITYPE y,              \
-                             const UV ITYPE z,              \
-                             const UV ITYPE w)              \
+  inline UV vec4##ABB make_vec4##ABB(const UV ITYPE x,      \
+                                     const UV ITYPE y,      \
+                                     const UV ITYPE z,      \
+                                     const UV ITYPE w)      \
   {                                                         \
     UV vec4##ABB ret;                                       \
     ret.x = x;                                              \
     ret.y = y;                                              \
     ret.z = z;                                              \
     ret.w = w;                                              \
+    return ret;                                             \
+  }                                                         \
+  inline UV vec4##ABB make_vec4##ABB(const UV vec4##IABB v) \
+  {                                                         \
+    UV vec4##ABB ret;                                       \
+    ret.x = v.x;                                            \
+    ret.y = v.y;                                            \
+    ret.z = v.z;                                            \
+    ret.w = v.w;                                            \
     return ret;                                             \
   }                                                         \
   

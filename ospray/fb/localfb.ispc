@@ -50,27 +50,41 @@ export void *uniform ispc__createLocalFB_RGBA_F32(const uniform uint size_x,
 // =======================================================
 // vec4uc version of frame buffer 
 // =======================================================
-void localfb_uint32_destruct(uniform FrameBuffer *uniform fb)
-{
-  delete fb;
-}
-void localfb_uint32_setPixel(uniform FrameBuffer *uniform _fb,
-                            const varying vec2i &coord,
-                            const varying uint32 &value)
-{
-  uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
-  uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
-  pixel[coord.x+coord.y*fb->inherited.size.x] = value;
-}
-
 inline float extractUcharChannel(unsigned int pix, uniform const int shift)
 {
   unsigned int i = (pix >> shift) & 255;
   return i * (1.f/255.f);
 }
 
-uint32 localfb_uint32_getPixel(uniform FrameBuffer *uniform _fb,
-                             const varying vec2i &coord)
+inline uint32 cvt_uint32(const float f)
+{
+  return (uint32)(255.f * max(min(f,1.f),0.f));
+}
+
+inline uint32 cvt_uint32(const vec4f &v)
+{
+  return 
+    (cvt_uint32(v.x) << 0)  |
+    (cvt_uint32(v.y) << 8)  |
+    (cvt_uint32(v.z) << 16) |
+    (cvt_uint32(v.w) << 24);
+}
+
+void localfb_uint32_destruct(uniform FrameBuffer *uniform fb)
+{
+  delete fb;
+}
+void localfb_uint32_setPixel(uniform FrameBuffer *uniform _fb,
+                            const varying vec2i &coord,
+                            const varying vec4f &value)
+{
+  uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
+  uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
+  pixel[coord.x+coord.y*fb->inherited.size.x] = cvt_uint32(value);
+}
+
+vec4f localfb_uint32_getPixel(uniform FrameBuffer *uniform _fb,
+                              const varying vec2i &coord)
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
