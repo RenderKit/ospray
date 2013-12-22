@@ -1,6 +1,6 @@
 /*! \file localfb.ispc ISPC-side code for a local frame buffer */
 
-#include "framebuffer.isph"
+#include "framebuffer.ih"
 
 struct LocalFB 
 {

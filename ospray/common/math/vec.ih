@@ -3,34 +3,28 @@
 #ifndef OSPRAY_VEC_ISPH
 #define OSPRAY_VEC_ISPH
 
-#include "math.isph"
+#include "math.ih"
 
-#define __define_ispc_vector2(TYPE,ABB) \
-  struct vec2#ABB {                     \
-    union { TYPE x; TYPE u; TYPE s; };  \
-    union { TYPE y; TYPE v; TYPE t; };  \
-  };                                    \
+struct Foo {
+};
+
+#define __define_ispc_vector2(TYPE,ABB)         \
+  struct vec2##ABB {                            \
+    TYPE x; TYPE y;                             \
+  };                                            \
   
-#define __define_ispc_vector3(TYPE,ABB) \
-  struct vec3#ABB {                     \
-    union { TYPE x; TYPE r; };          \
-    union { TYPE y; TYPE g; };          \
-    union { TYPE z; TYPE b; };          \
-  };                                    \
-  struct vec3#ABB#a {                   \
-    union { TYPE x; TYPE r; };          \
-    union { TYPE y; TYPE g; };          \
-    union { TYPE z; TYPE b; };          \
-    union { TYPE w; TYPE a; };          \
-  };                                    \
-
-#define __define_ispc_vector4(TYPE,ABB) \
-  struct vec4#ABB {                     \
-    union { TYPE x; TYPE r; };          \
-    union { TYPE y; TYPE g; };          \
-    union { TYPE z; TYPE b; };          \
-    union { TYPE w; TYPE a; };          \
-  };                                    \
+#define __define_ispc_vector3(TYPE,ABB)         \
+  struct vec3##ABB {                            \
+    TYPE x,y,z;                                 \
+  };                                            \
+  struct vec3##ABB##a {                         \
+    TYPE x,y,z,a;                               \
+  };                                            \
+  
+#define __define_ispc_vector4(TYPE,ABB)         \
+  struct vec4##ABB {                            \
+    TYPE x,y,z,w;                               \
+  };                                            \
 
 __define_ispc_vector2(int,i);
 __define_ispc_vector2(unsigned int,ui);
@@ -47,6 +41,84 @@ __define_ispc_vector4(float,f);
 #undef __define_ispc_vector2
 #undef __define_ispc_vector3
 #undef __define_ispc_vector4
+
+
+
+
+/*! defines all constructors "make_vec2[T]" for 2-vector type */
+#define __define_ispc_constructors2(UV,TYPE,ABB,ITYPE,IABB) \
+  inline UV vec2f make_vec2##ABB(const UV ITYPE x,          \
+                                 const UV ITYPE y)          \
+  {                                                         \
+    UV vec2##ABB ret;                                       \
+    ret.x = x;                                              \
+    ret.y = y;                                              \
+    return ret;                                             \
+  }                                                         \
+  
+/*! defines all constructors "make_vec3[T]" and "make_vec3[T]a" for
+  3-vector type */
+#define __define_ispc_constructors3(UV,TYPE,ABB,ITYPE,IABB) \
+  inline UV vec3f make_vec3##ABB(const UV ITYPE x,          \
+                                 const UV ITYPE y,          \
+                                 const UV ITYPE z)          \
+  {                                                         \
+    UV vec3##ABB ret;                                       \
+    ret.x = x;                                              \
+    ret.y = y;                                              \
+    ret.z = z;                                              \
+    return ret;                                             \
+  }                                                         \
+  inline UV vec4f make_vec3##ABB##a(const UV ITYPE x,       \
+                                    const UV ITYPE y,       \
+                                    const UV ITYPE z)       \
+  {                                                         \
+    UV vec3##ABB##a ret;                                    \
+    ret.x = x;                                              \
+    ret.y = y;                                              \
+    ret.z = z;                                              \
+    return ret;                                             \
+  }                                                         \
+  
+/*! defines all constructors "make_vec4[T]" for 4-vector type */
+#define __define_ispc_constructors4(UV,TYPE,ABB,ITYPE,IABB) \
+  inline UV vec4f make_vec4f(const UV ITYPE x,              \
+                             const UV ITYPE y,              \
+                             const UV ITYPE z,              \
+                             const UV ITYPE w)              \
+  {                                                         \
+    UV vec4##ABB ret;                                       \
+    ret.x = x;                                              \
+    ret.y = y;                                              \
+    ret.z = z;                                              \
+    ret.w = w;                                              \
+    return ret;                                             \
+  }                                                         \
+  
+#define __define_ispc_constructors_uv_t(UV,OTYPE,OABB,ITYPE,IABB) \
+  __define_ispc_constructors2(UV,OTYPE,OABB,ITYPE,IABB)           \
+  __define_ispc_constructors3(UV,OTYPE,OABB,ITYPE,IABB)           \
+  __define_ispc_constructors4(UV,OTYPE,OABB,ITYPE,IABB)           \
+  
+#define __define_ispc_constructors_uv(UV,TYPE,ABB)              \
+  __define_ispc_constructors_uv_t(UV,TYPE,ABB,int,i)            \
+  __define_ispc_constructors_uv_t(UV,TYPE,ABB,unsigned int,ui)  \
+  __define_ispc_constructors_uv_t(UV,TYPE,ABB,float,f)          \
+  
+#define __define_ispc_constructors(UV)              \
+  __define_ispc_constructors_uv(UV,unsigned int,ui) \
+  __define_ispc_constructors_uv(UV,int,i)           \
+  __define_ispc_constructors_uv(UV,float,f)         \
+  
+__define_ispc_constructors(uniform);
+__define_ispc_constructors(varying);
+
+#undef __define_ispc_constructors2
+#undef __define_ispc_constructors3
+#undef __define_ispc_constructors3a
+#undef __define_ispc_constructors4
+#undef __define_ispc_constructors_uv
+#undef __define_ispc_constructors
 
 
 #endif

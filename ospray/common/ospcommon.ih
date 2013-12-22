@@ -1,35 +1,10 @@
 #ifndef OSPCOMMON_IH
 #define OSPCOMMON_IH 1
 
-// // embree stuff
-// #include "common/math/math.isph"
-// #include "common/math/veci.isph"
-// #include "common/math/vec3f.isph"
-// #include "common/math/vec3fa.isph"
-// #include "common/math/vec4f.isph"
-
-// typedef Vec2i  vec2i;
-// typedef Vec3f  vec3f;
-// typedef Vec3fa vec3fa;
-// typedef Vec4f  vec4f;
-
-#include "vec.isph"
-
 typedef unsigned int8 uchar;
 typedef unsigned int uint;
 typedef unsigned int uint32;
 
-
-#define OPERATORS 0
-
-
-#if OPERATORS
-#define __OPFCT operator*
-#define __OP    *
-#include "math/operator_vec3.ih"
-#define __OPFCT operator+
-#define __OP    +
-#include "math/operator_vec3.ih"
-#endif
+#include "math/vec.ih"
 
 #endif
