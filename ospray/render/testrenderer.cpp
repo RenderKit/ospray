@@ -12,7 +12,6 @@ namespace ospray {
 
   extern "C" Renderer *ospray_create_renderer__test_screen()
   {
-    PING;
     return new TestRenderer;
   }
 };

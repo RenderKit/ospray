@@ -55,7 +55,6 @@ namespace ospray {
   extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
-    Assert(fb != NULL);
     return ospray::api::Device::current->frameBufferMap(fb);
   }
   
@@ -63,7 +62,6 @@ namespace ospray {
                                       OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
-    Assert(fb != NULL && "invalid frame buffer in ospAddGeometry");
     Assert(mapped != NULL && "invalid mapped pointer in ospAddGeometry");
     ospray::api::Device::current->frameBufferUnmap(mapped,fb);
   }

@@ -24,7 +24,7 @@ namespace ospray {
     /*! return framebuffer on backend side (the one the next renderer will write to) */
     FrameBuffer *getBackBuffer()  
     { return swapChain[(frontBufferPos+1) % swapChain.size()].ptr; }
-    
+    void advance() { frontBufferPos = (frontBufferPos+1)%swapChain.size(); }
     virtual std::string toString() const { return "ospray::SwapChain"; }
 
     std::vector<Ref<FrameBuffer> > swapChain;

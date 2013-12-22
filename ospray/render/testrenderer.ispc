@@ -1,37 +1,37 @@
-struct vec3fa {
-  float x;
-  float y;
-  float z;
-  float w;
-};
+/*! \file testrenderer.ispc Defines ISPC side of test frame renderer
+    (that only renders a simple test frame */
 
-task void renderLine(uniform vec3fa *uniform fb,
-                     uniform int size_x,
-                     uniform int size_y,
-                     uniform int frameID)
+#include "../fb/framebuffer.ih"
+#include "../common/math/vec.ih"
+
+task void TestRenderer_renderLine(uniform FrameBuffer *uniform fb,
+                                  uniform int size_x,
+                                  uniform int size_y,
+                                  uniform int frameID)
 {
-  uniform int y = taskIndex;
+  const uniform int y = taskIndex;
   foreach (x = 0...size_x) {
-    int ix = (x+frameID)%size_x;
-    int iy = (y+frameID)%size_y;
-    int iz = (x+y);
-    float fx = ((float)ix)/size_x;
-    float fy = ((float)iy)/size_y;
-    float fz = ((float)iz)/(size_x+size_y);
-    int idx = x + y * size_x;
-    fb[idx].x = fx;
-    fb[idx].y = fy;
-    fb[idx].w = fz;
-    fb[idx].z = 0.f;
+    const int ix = (x+frameID)%size_x;
+    const int iy = (y+frameID)%size_y;
+    const int iz = (x+y);
+    const float fx = ((float)ix)/size_x;
+    const float fy = ((float)iy)/size_y;
+    const float fz = ((float)iz)/(size_x+size_y);
+    const float fw = 1.f; //0.f;
+    fb->setPixel(fb,make_vec2i(x,y),make_vec4f(fx,fy,fz,fw));
   }
 }
 
 
-export void ispc__TestRenderer_renderFrame(uniform vec3fa *uniform fb,
-                                            uniform int size_x, 
-                                            uniform int size_y,
-                                            uniform int frameID)
+/*! \brief entry point for the ISPC-side render frame function for the
+  test frame renderer */
+/* \detailed \note As a publicly exported function the frame buffer
+    parameter for this function actually has to be typed 'void *'
+    because ISPC cannot export any (non-trivial) ISPC-side classes */
+export void ispc__TestRenderer_renderFrame(void *uniform _fb,
+                                           uniform int frameID)
 {
-  launch[size_y] renderLine(fb,size_x,size_y,frameID);
+  uniform FrameBuffer *uniform fb = (uniform FrameBuffer *uniform)_fb;
+  launch[fb->size.y] TestRenderer_renderLine(fb,fb->size.x,fb->size.y,frameID);
 }
 

@@ -80,7 +80,9 @@ void localfb_uint32_setPixel(uniform FrameBuffer *uniform _fb,
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
-  pixel[coord.x+coord.y*fb->inherited.size.x] = cvt_uint32(value);
+
+  const uint ofs = coord.x+coord.y*fb->inherited.size.x;
+  pixel[ofs] = cvt_uint32(value);
 }
 
 vec4f localfb_uint32_getPixel(uniform FrameBuffer *uniform _fb,

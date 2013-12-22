@@ -29,22 +29,22 @@ struct MainWindow : public Glut3DWidget {
   virtual void display() 
   {
     if (!fb || !renderer) return;
-
-    fps.startRender();
-
-    ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
-    ospUnmapFrameBuffer(ucharFB,fb);
-    glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
-    ospRenderFrame(fb,renderer,model);
-    //    glutSwapBuffers();
     
-    Glut3DWidget::display();
+    fps.startRender();
+    ospRenderFrame(fb,renderer,model);
     fps.doneRender();
+    
+    ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
+    frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
+    Glut3DWidget::display();
+    
+    ospUnmapFrameBuffer(ucharFB,fb);
+    
     char title[1000];
     sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
             fps.getFPS());
     setTitle(title);
-    glutPostRedisplay();
+    forceRedraw();
   }
 
   OSPModel       model;

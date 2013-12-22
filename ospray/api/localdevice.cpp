@@ -138,6 +138,11 @@ namespace ospray {
       
       FrameBuffer *fb = sc->getBackBuffer();
       renderer->renderFrame(fb,model);
+
+      // WARNING: I'm doing an *im*plicit swapbuffers here at the end
+      // of renderframe, but to be more opengl-conform we should
+      // actually have the user call an *ex*plicit ospSwapBuffers call...
+      sc->advance();
     }
 
   }
