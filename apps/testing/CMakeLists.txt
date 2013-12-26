@@ -9,25 +9,25 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 # test01: just opens a window, does nothing
 # ------------------------------------------------------------------
 ADD_EXECUTABLE(test01 test01.cpp)
-TARGET_LINK_LIBRARIES(test01 OSPglut3D)
+TARGET_LINK_LIBRARIES(test01 osp_glut3d)
 
 # ------------------------------------------------------------------
 # test02: opens a window, renders a simple test frame
 # ------------------------------------------------------------------
 ADD_EXECUTABLE(test02 test02.cpp)
-TARGET_LINK_LIBRARIES(test02 OSPglut3D)
+TARGET_LINK_LIBRARIES(test02 osp_glut3d)
 
 # ------------------------------------------------------------------
 # test03: same as test02, just uses ISPC for rendering that frame
 # ------------------------------------------------------------------
 ISPC_COMPILE(${OSPRAY_TARGET} test03.ispc)
 ADD_EXECUTABLE(test03 test03.cpp test03.dev${OSPRAY_ISPC_SUFFIX})
-TARGET_LINK_LIBRARIES(test03 OSPglut3D)
+TARGET_LINK_LIBRARIES(test03 osp_glut3d)
 
 # ------------------------------------------------------------------
 # test02: opens a window, renders a simple test frame
 # ------------------------------------------------------------------
 ADD_EXECUTABLE(test04 test04.cpp)
 LINK_DIRECTORIES(${OSPRAY_BINARY_DIR}/intel64/lib)
-TARGET_LINK_LIBRARIES(test04 OSPglut3D OSPRay)
+TARGET_LINK_LIBRARIES(test04 osp_glut3d osp_api)
 

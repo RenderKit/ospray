@@ -13,8 +13,8 @@ ADD_EXECUTABLE(msgView
 	msgView.cpp
 	)
 TARGET_LINK_LIBRARIES(msgView
-	OSPMiniSG
-	OSPRay
+	osp_minisg
+	osp_api
   ${OPENGL_LIBRARY} 
   ${GLUT_LIBRARY}
 )

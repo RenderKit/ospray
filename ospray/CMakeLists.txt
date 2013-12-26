@@ -28,7 +28,7 @@ ISPC_COMPILE(${OSPRAY_TARGET}
 	fb/localfb.ispc
 	)
 
-ADD_LIBRARY(OSPcore${OSPRAY_LIB_SUFFIX} SHARED
+ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
 	fb/swapchain.cpp 
 	fb/framebuffer.cpp
 	common/model.cpp
@@ -39,7 +39,7 @@ ADD_LIBRARY(OSPcore${OSPRAY_LIB_SUFFIX} SHARED
 	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
 	fb/localfb.dev${OSPRAY_ISPC_SUFFIX}
 	)
-TARGET_LINK_LIBRARIES(OSPcore${OSPRAY_LIB_SUFFIX} OSPcommon${OSPRAY_LIB_SUFFIX})
+TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} osp_common${OSPRAY_LIB_SUFFIX})
 
 ADD_SUBDIRECTORY(api)
 
