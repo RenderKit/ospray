@@ -8,7 +8,7 @@
 namespace ospray {
   namespace api {
 
-    LocalDevice::LocalDevice()
+    MPIDevice::MPIDevice()
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv) 
@@ -19,14 +19,14 @@ namespace ospray {
 
 
     OSPFrameBuffer 
-    LocalDevice::frameBufferCreate(const vec2i &size, 
-                                   const OSPFrameBufferMode mode,
-                                   const size_t swapChainDepth)
+    MPIDevice::frameBufferCreate(const vec2i &size, 
+                                 const OSPFrameBufferMode mode,
+                                 const size_t swapChainDepth)
     {
       FrameBufferFactory fbFactory = NULL;
       switch(mode) {
       case OSP_RGBA_I8:
-        fbFactory = createLocalFB_RGBA_I8;
+        fbFactory = createMPIFB_RGBA_I8;
         break;
       default:
         AssertError("frame buffer mode not yet supported");
@@ -38,7 +38,7 @@ namespace ospray {
     
 
       /*! map frame buffer */
-    const void *LocalDevice::frameBufferMap(OSPFrameBuffer fb)
+    const void *MPIDevice::frameBufferMap(OSPFrameBuffer fb)
     {
       Assert(fb != NULL);
       SwapChain *sc = (SwapChain *)fb;
@@ -46,7 +46,7 @@ namespace ospray {
     }
 
     /*! unmap previously mapped frame buffer */
-    void LocalDevice::frameBufferUnmap(const void *mapped,
+    void MPIDevice::frameBufferUnmap(const void *mapped,
                                        OSPFrameBuffer fb)
     {
       Assert2(fb != NULL, "invalid framebuffer");
@@ -55,7 +55,7 @@ namespace ospray {
     }
 
     /*! create a new model */
-    OSPModel LocalDevice::newModel()
+    OSPModel MPIDevice::newModel()
     {
       Model *model = new Model;
       model->refInc();
@@ -63,27 +63,27 @@ namespace ospray {
     }
     
     /*! finalize a newly specified model */
-    void LocalDevice::finalizeModel(OSPModel _model)
+    void MPIDevice::finalizeModel(OSPModel _model)
     {
       Model *model = (Model *)_model;
-      Assert2(model,"null model in LocalDevice::finalizeModel()");
+      Assert2(model,"null model in MPIDevice::finalizeModel()");
       model->finalize();
     }
     
     /*! add a new geometry to a model */
-    void LocalDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
+    void MPIDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert2(model,"null model in LocalDevice::finalizeModel()");
+      Assert2(model,"null model in MPIDevice::finalizeModel()");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(geometry,"null geometry in LocalDevice::finalizeGeometry()");
+      Assert2(geometry,"null geometry in MPIDevice::finalizeGeometry()");
 
       model->geometry.push_back(geometry);
     }
 
     /*! create a new data buffer */
-    OSPTriangleMesh LocalDevice::newTriangleMesh()
+    OSPTriangleMesh MPIDevice::newTriangleMesh()
     {
       TriangleMesh *triangleMesh = new TriangleMesh;
       triangleMesh->refInc();
@@ -91,7 +91,7 @@ namespace ospray {
     }
 
     /*! create a new data buffer */
-    OSPData LocalDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
+    OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
       Assert2(flags == 0,"unsupported combination of flags");
       Data *data = new Data(nitems,format,init,flags);
@@ -100,7 +100,7 @@ namespace ospray {
     }
     
     /*! assign (named) data item as a parameter to an object */
-    void LocalDevice::setData(OSPObject _object, const char *bufName, OSPData _data)
+    void MPIDevice::setData(OSPObject _object, const char *bufName, OSPData _data)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Data          *data   = (Data *)_data;
@@ -113,15 +113,16 @@ namespace ospray {
     }
 
       /*! create a new renderer object (out of list of registered renderers) */
-    OSPRenderer LocalDevice::newRenderer(const char *type)
+    OSPRenderer MPIDevice::newRenderer(const char *type)
     {
+      PING;
       Assert(type != NULL && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
       return (OSPRenderer)renderer;
     }
 
       /*! call a renderer to render a frame buffer */
-    void LocalDevice::renderFrame(OSPFrameBuffer _sc, 
+    void MPIDevice::renderFrame(OSPFrameBuffer _sc, 
                                   OSPRenderer    _renderer, 
                                   OSPModel       _model)
     {

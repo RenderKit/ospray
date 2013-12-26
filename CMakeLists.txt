@@ -4,16 +4,19 @@ IF(COMMAND cmake_policy)
   CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND cmake_policy)
 
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING
-		"Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+# whether to use ICC (vs GCC) for the non-MIC part
+SET(OSPRAY_ICC ON CACHE BOOL "Use Intel Compiler?")
+# whehter to build in MIC/xeon phi support
+SET(OSPRAY_MIC ON CACHE BOOL "Build OSPRay with MIC Support?")
+# the arch we're targeting for the non-MIC/non-xeon phi part of ospray
+SET(OSPRAY_XEON_TARGET "AVX2" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 
 
 ##############################################################
 # modules
 ##############################################################
 
+INCLUDE(cmake/embree.cmake)
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/mpi.cmake)
 INCLUDE(cmake/doxygen.cmake)

@@ -1,7 +1,9 @@
-
-ADD_LIBRARY(OSPcommon SHARED
+CONFIGURE_OSPRAY()
+ADD_LIBRARY(OSPcommon${OSPRAY_LIB_SUFFIX} SHARED
 	ospcommon.cpp
 	managed.cpp
 	data.cpp
 	)
-TARGET_LINK_LIBRARIES(OSPcommon embree)
+# link core to embree. EMBREE_LIB points to either libembree.so or
+# libembree_xeonphi.so, depending on what arch we're building on.
+TARGET_LINK_LIBRARIES(OSPcommon${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})

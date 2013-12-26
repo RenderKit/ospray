@@ -32,6 +32,7 @@ namespace ospray {
     };
 
     virtual std::string toString() const { return "ospray::ManagedObject"; }
+    ManagedObject() : ID(-1) {};
     virtual ~ManagedObject() {};
 
     /*! find a given parameter, or add it if not exists (and so specified) */
@@ -39,6 +40,8 @@ namespace ospray {
     void   setParam(const char *name, Data *data);
 
     std::vector<Param *> paramList;
+    id_t ID; /*!< a global ID that can be used for referencing an
+               object remotely */
   };
 
 }
