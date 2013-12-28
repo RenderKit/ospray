@@ -10,8 +10,5 @@ namespace ospray {
     ispc__TestRenderer_renderFrame(fb->inISPC(),frameID++);
   }
 
-  extern "C" Renderer *ospray_create_renderer__test_screen()
-  {
-    return new TestRenderer;
-  }
+  OSP_REGISTER_RENDERER(TestRenderer,test_screen);
 };

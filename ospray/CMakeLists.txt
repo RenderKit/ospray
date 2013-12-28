@@ -25,6 +25,7 @@ ADD_SUBDIRECTORY(common)
 
 ISPC_COMPILE(${OSPRAY_TARGET} 
 	render/testrenderer.ispc
+	render/raycast.ispc
 	fb/localfb.ispc
 	)
 
