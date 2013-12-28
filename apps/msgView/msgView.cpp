@@ -170,5 +170,6 @@ namespace ospray {
 int main(int ac, const char **av)
 {
   ospInit(&ac,av);
+  ospray::glut3D::initGLUT(&ac,av);
   ospray::stlViewerMain(ac,av);
 }
