@@ -53,11 +53,10 @@ namespace ospray {
 #define Assert2(expr,expl)                                              \
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, expl), 0)))
 #define AssertError(errMsg)                     \
-  doAssertion(__FILE__,__LINE__, errMsg, NULL)
+  doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 
   extern uint logLevel;
 }
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
-
 

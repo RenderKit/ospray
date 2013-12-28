@@ -29,7 +29,7 @@ namespace ospray {
 
     // we're only supporting local rendering for now - network device
     // etc to come.
-    ospray::api::Device::current = new ospray::api::LocalDevice;
+    ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
   }
 
   /*! destroy a given frame buffer. 

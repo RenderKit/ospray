@@ -7,7 +7,7 @@ namespace ospray {
     struct LocalDevice : public Device {
 
       /*! constructor */
-      LocalDevice();
+      LocalDevice(int *_ac=NULL, const char **_av=NULL);
 
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 

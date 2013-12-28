@@ -12,6 +12,10 @@ namespace ospray {
 
     Data(size_t numItems, OSPDataType type, void *data, int flags);
     virtual ~Data();
+
+    /*! return number of items in this data buffer */
+    inline size_t size() const { return numItems; }
+
     void       *data;     /*!< pointer to data */
     size_t      numItems; /*!< number of items */
     size_t      numBytes; /*!< total num bytes (sizeof(type)*numItems) */

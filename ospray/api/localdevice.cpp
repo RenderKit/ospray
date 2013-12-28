@@ -8,13 +8,15 @@
 namespace ospray {
   namespace api {
 
-    LocalDevice::LocalDevice()
+    LocalDevice::LocalDevice(int *_ac, const char **_av)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv) 
         logLevel = atoi(logLevelFromEnv);
       else
         logLevel = 0;
+
+      ospray::init(_ac,&_av);
     }
 
 
