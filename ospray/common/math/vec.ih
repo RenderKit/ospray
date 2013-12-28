@@ -131,22 +131,73 @@ __define_ispc_constructors(varying);
 
 
 // for now, let's implement those manually - should eventually do those via a macro!
+
+// ------------------------------------------------------------------
+// vec3f * float
+// ------------------------------------------------------------------
 inline uniform vec3f operator*(const uniform vec3f &v, const uniform float f)
 { return make_vec3f(v.x*f,v.y*f,v.z*f); }
 inline vec3f operator*(const vec3f &v, const float f)
 { return make_vec3f(v.x*f,v.y*f,v.z*f); }
+// ------------------------------------------------------------------
+// float * vec3f
+// ------------------------------------------------------------------
 inline uniform vec3f operator*(const uniform float f, const uniform vec3f &v)
 { return make_vec3f(v.x*f,v.y*f,v.z*f); }
 inline vec3f operator*(const float f, const vec3f &v)
 { return make_vec3f(v.x*f,v.y*f,v.z*f); }
 
+// ------------------------------------------------------------------
+// operator '-'
+// ------------------------------------------------------------------
+inline vec3f operator-(const vec3f &a, const vec3f &b)               
+{ return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
+inline uniform vec3f operator-(const uniform vec3f &a,               
+                               const uniform vec3f &b)               
+{ return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
+
+// ------------------------------------------------------------------
+// operator '+'
+// ------------------------------------------------------------------
+inline vec3f operator+(const vec3f &a, const vec3f &b)               
+{ return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
+inline uniform vec3f operator+(const uniform vec3f &a,               
+                               const uniform vec3f &b)               
+{ return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
+
+
+// ------------------------------------------------------------------
+// dot product
+// ------------------------------------------------------------------
+/*! computes 3D dot product for *all-uniform* vec3fs */
 inline uniform float dot(const uniform vec3f &a, const uniform vec3f &b)
 { return a.x*b.x+a.y*b.y+a.z*b.z; }
+/*! computes 3D dot product for vec3fs that produce varying results */
 inline float dot(const vec3f &a, const vec3f &b)
 { return a.x*b.x+a.y*b.y+a.z*b.z; }
 
+// ------------------------------------------------------------------
+// cross product
+// ------------------------------------------------------------------
+/*! computes 3D cross product for *all-uniform* vec3fs */
+inline uniform vec3f cross(const uniform vec3f &a, const uniform vec3f &b)
+{ return make_vec3f(a.y*b.z-a.z*b.y,
+                    a.z*b.x-a.x*b.z,
+                    a.x*b.y-a.y*b.x); }
+/*! computes 3D cross product for vec3fs that produce varying results */
+inline vec3f cross(const vec3f &a, const vec3f &b)
+{ return make_vec3f(a.y*b.z-a.z*b.y,
+                    a.z*b.x-a.x*b.z,
+                    a.x*b.y-a.y*b.x); }
+
+
+// ------------------------------------------------------------------
+// normalize
+// ------------------------------------------------------------------
+/*! compute and return normalized version of uniform vec3f passed to this fct */
 inline uniform vec3f normalize(const uniform vec3f &v) 
 { return v * (1.f/sqrt(dot(v,v))); }
+/*! compute and return normalized version of varying vec3f passed to this fct */
 inline vec3f normalize(const vec3f &v) 
 { return v * (1.f/sqrt(dot(v,v))); }
 
