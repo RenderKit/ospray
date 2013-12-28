@@ -130,5 +130,25 @@ __define_ispc_constructors(varying);
 #undef __define_ispc_constructors
 
 
+// for now, let's implement those manually - should eventually do those via a macro!
+inline uniform vec3f operator*(const uniform vec3f &v, const uniform float f)
+{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
+inline vec3f operator*(const vec3f &v, const float f)
+{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
+inline uniform vec3f operator*(const uniform float f, const uniform vec3f &v)
+{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
+inline vec3f operator*(const float f, const vec3f &v)
+{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
+
+inline uniform float dot(const uniform vec3f &a, const uniform vec3f &b)
+{ return a.x*b.x+a.y*b.y+a.z*b.z; }
+inline float dot(const vec3f &a, const vec3f &b)
+{ return a.x*b.x+a.y*b.y+a.z*b.z; }
+
+inline uniform vec3f normalize(const uniform vec3f &v) 
+{ return v * (1.f/sqrt(dot(v,v))); }
+inline vec3f normalize(const vec3f &v) 
+{ return v * (1.f/sqrt(dot(v,v))); }
+
 #endif
 
