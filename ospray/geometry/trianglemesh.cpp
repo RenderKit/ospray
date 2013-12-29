@@ -50,8 +50,12 @@ namespace ospray {
     // memcpy(idxPtr,idxData->data,idxData->numBytes);
     rtcUnmapBuffer(model->eScene,eMesh,RTC_INDEX_BUFFER);
 
+    box3f bounds = embree::empty;
+    for (int i=0;i<posData->size();i++)
+      bounds.extend(((vec3fa*)posPtr)[i]);
     cout << "  created triangle mesh (" << numTris << " tris "
          << ", " << numVerts << " vertices)" << endl;
+    cout << "  mesh bounds " << bounds << endl;
     rtcEnable(model->eScene,eMesh);
   }
 }

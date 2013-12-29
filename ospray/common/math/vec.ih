@@ -142,28 +142,36 @@ inline vec3f operator*(const vec3f &v, const float f)
 // ------------------------------------------------------------------
 // float * vec3f
 // ------------------------------------------------------------------
-inline uniform vec3f operator*(const uniform float f, const uniform vec3f &v)
+inline uniform vec3f operator*(const uniform float f, const uniform vec3f v)
 { return make_vec3f(v.x*f,v.y*f,v.z*f); }
-inline vec3f operator*(const float f, const vec3f &v)
+inline vec3f operator*(const float f, const vec3f v)
 { return make_vec3f(v.x*f,v.y*f,v.z*f); }
 
 // ------------------------------------------------------------------
 // operator '-'
 // ------------------------------------------------------------------
-inline vec3f operator-(const vec3f &a, const vec3f &b)               
+inline vec3f operator-(const vec3f a, const vec3f b)               
 { return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
-inline uniform vec3f operator-(const uniform vec3f &a,               
-                               const uniform vec3f &b)               
+inline uniform vec3f operator-(const uniform vec3f a,               
+                               const uniform vec3f b)               
 { return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
 
 // ------------------------------------------------------------------
 // operator '+'
 // ------------------------------------------------------------------
-inline vec3f operator+(const vec3f &a, const vec3f &b)               
+inline vec3f operator+(const vec3f a, const vec3f b)               
 { return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
-inline uniform vec3f operator+(const uniform vec3f &a,               
-                               const uniform vec3f &b)               
+inline uniform vec3f operator+(const uniform vec3f a,               
+                               const uniform vec3f b)               
 { return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
+// ------------------------------------------------------------------
+// operator '*'
+// ------------------------------------------------------------------
+inline vec3f operator*(const vec3f a, const vec3f b)               
+{ return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
+inline uniform vec3f operator*(const uniform vec3f a,               
+                               const uniform vec3f b)               
+{ return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
 
 
 // ------------------------------------------------------------------
