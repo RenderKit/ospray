@@ -24,8 +24,11 @@ namespace ospray {
       /*! create a new model */
       virtual OSPModel newModel();
 
-      /*! finalize a newly specified model */
-      virtual void finalizeModel(OSPModel _model);
+      // /*! finalize a newly specified model */
+      // virtual void finalizeModel(OSPModel _model);
+
+      /*! commit the given object's outstanding changes */
+      virtual void commit(OSPObject object);
 
       /*! add a new geometry to a model */
       virtual void addGeometry(OSPModel _model, OSPGeometry _geometry);
@@ -34,7 +37,7 @@ namespace ospray {
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
       /*! assign (named) data item as a parameter to an object */
-      virtual void setData(OSPObject object, const char *bufName, OSPData data);
+      virtual void setObject(OSPObject target, const char *bufName, OSPObject value);
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh();
@@ -43,9 +46,8 @@ namespace ospray {
       virtual OSPRenderer newRenderer(const char *type);
 
       /*! call a renderer to render a frame buffer */
-      virtual void renderFrame(OSPFrameBuffer fb, 
-                               OSPRenderer renderer, 
-                               OSPModel model);
+      virtual void renderFrame(OSPFrameBuffer _sc, 
+                               OSPRenderer _renderer);
     };
   }
 }

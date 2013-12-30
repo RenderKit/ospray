@@ -31,7 +31,7 @@ struct MainWindow : public Glut3DWidget {
     if (!fb || !renderer) return;
     
     fps.startRender();
-    ospRenderFrame(fb,renderer,model);
+    ospRenderFrame(fb,renderer);
     fps.doneRender();
     
     ucharFB = (unsigned int *)ospMapFrameBuffer(fb);

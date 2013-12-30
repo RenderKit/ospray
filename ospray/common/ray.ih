@@ -43,4 +43,20 @@ struct Ray {
   int instID;  //!< instance ID
 };
 
+#define infinity (1e20f)
+
+/*! initialize a new ray with given parameters */
+inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir)
+{
+  ray.org = ray_org;
+  ray.dir = ray_dir;
+  ray.t0  = 1e-6f;
+  ray.t   = infinity;
+  ray.time = 0.f;
+  ray.mask = 0;
+  ray.geomID = -1;
+  ray.primID = -1;
+  ray.instID = -1;
+}
+
 #endif

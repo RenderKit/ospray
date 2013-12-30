@@ -3,8 +3,7 @@
 namespace ospray {
   extern "C" void ispc__TestRenderer_renderFrame(void *fb, int frameID);
 
-  void TestRenderer::renderFrame(FrameBuffer *fb,
-                                 Model *world)
+  void TestRenderer::renderFrame(FrameBuffer *fb)
   {
     Assert(fb && "null frame buffer handle");
     ispc__TestRenderer_renderFrame(fb->inISPC(),frameID++);

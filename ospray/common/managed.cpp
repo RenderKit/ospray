@@ -32,8 +32,27 @@ namespace ospray {
     paramList.push_back(new Param(name));
     return paramList[paramList.size()-1];
   }
+
+    /*! \brief find the named parameter, and return its object value if
+        available; else return 'default' value */
+    /*! \detailed The returned managed object will *not* automatically
+        have its refcount increased; it is up to the callee to
+        properly do that (typically by assigning to a proper 'ref'
+        instance */
+  ManagedObject *ManagedObject::getParam(const char *name, 
+                                         ManagedObject *valIfNotFound)
+  {
+    Param *param = findParam(name);
+    if (!param) 
+      return valIfNotFound;
+    if (param->type != OSP_OBJECT) 
+      return valIfNotFound;
+    return param->ptr;
+  }
+
+
   
-  void   ManagedObject::setParam(const char *name, Data *data)
+  void   ManagedObject::setParam(const char *name, ManagedObject *data)
   {
     ManagedObject::Param *p = findParam(name,true);
     p->set(data);

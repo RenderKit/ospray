@@ -25,28 +25,33 @@ namespace ospray {
   using ospray::glut3D::Glut3DWidget;
 
   struct MSGViewer : public Glut3DWidget {
-    MSGViewer() 
+    MSGViewer(OSPModel model) 
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE,
                      &Glut3DWidget::INSPECT_CENTER),
-        fb(NULL), renderer(NULL), model(NULL)
+        fb(NULL), renderer(NULL), model(model)
     {
-      renderer = ospNewRenderer("test_screen");
+      Assert(model && "null model handle");
+      renderer = ospNewRenderer("ray_cast");
+      ospSetParam(renderer,"world",model);
       Assert(renderer != NULL && "could not create renderer");
     };
     virtual void reshape(const ospray::vec2i &newSize) 
     {
-      PING; PRINT(newSize);
+      PING;
       Glut3DWidget::reshape(newSize);
+      PING;
       if (fb) ospFreeFrameBuffer(fb);
+      PING;
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
+      PING;
     }
 
     virtual void display() 
     {
       if (!fb || !renderer) return;
-    
+
       fps.startRender();
-      ospRenderFrame(fb,renderer,model);
+      ospRenderFrame(fb,renderer);
       fps.doneRender();
     
       ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
@@ -153,13 +158,13 @@ namespace ospray {
       
       ospAddGeometry(ospModel,ospMesh);
     }
-    ospFinalizeModel(ospModel);
+    ospCommit(ospModel);
     cout << "msgView: done creating ospray model." << endl;
 
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
-    MSGViewer window;
+    MSGViewer window(ospModel);
     window.create("MSGViewer: OSPRay Mini-Scene Graph test viewer");
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     ospray::glut3D::runGLUT();

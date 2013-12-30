@@ -40,7 +40,7 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
-    NOTIMPLEMENTED;
+    std::cout << "warning: ospFreeFrameBuffer not yet implemented - ignoring (this means there is a memory hole!)" << std::endl;
   }
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
@@ -72,12 +72,6 @@ namespace ospray {
     return ospray::api::Device::current->newModel();
   }
 
-  extern "C" void ospFinalizeModel(OSPModel _model)
-  {
-    ASSERT_DEVICE();
-    return ospray::api::Device::current->finalizeModel(_model);
-  }
-
   extern "C" void ospAddGeometry(OSPModel model, OSPGeometry geometry)
   {
     ASSERT_DEVICE();
@@ -105,9 +99,15 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     LOG("ospSetData(...,\"" << bufName << "\",...)");
-    Assert(object != NULL && "invalid object in ospAddGeometry");
-    Assert(bufName != NULL && "invalid buffer name in ospAddId");
-    return ospray::api::Device::current->setData(object,bufName,data);
+    return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
+  }
+
+  /*! add a data array to another object */
+  extern "C" void ospSetParam(OSPObject target, const char *bufName, OSPObject value)
+  {
+    ASSERT_DEVICE();
+    LOG("ospSetData(...,\"" << bufName << "\",...)");
+    return ospray::api::Device::current->setObject(target,bufName,value);
   }
 
   /*! \brief create a new renderer of given type */
@@ -127,13 +127,19 @@ namespace ospray {
 
   /*! \brief call a renderer to render given model into given framebuffer */
   /*! \detailed model _may_ be empty (though most framebuffers will expect one!) */
-  extern "C" void ospRenderFrame(OSPFrameBuffer fb, 
-                                 OSPRenderer    renderer, 
-                                 OSPModel       model)
+  extern "C" void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
   {
     ASSERT_DEVICE();
-    ospray::api::Device::current->renderFrame(fb,renderer,model);
+    ospray::api::Device::current->renderFrame(fb,renderer);
   }
 
+  /*! add a data array to another object */
+  extern "C" void ospCommit(OSPObject object)
+  {
+    ASSERT_DEVICE();
+    Assert(object && "invalid object handle to commit to");
+    LOG("ospCommit(...)");
+    return ospray::api::Device::current->commit(object);
+  }
 
 }

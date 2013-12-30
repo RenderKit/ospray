@@ -67,22 +67,26 @@ typedef osp::ManagedObject *OSPObject;
 /*! \defgroup cplusplus_api Public OSPRay Core API */
 /*! @{ */
 extern "C" {
-  /*! initialize the ospray engine (for single-node user application) */
+  //! initialize the ospray engine (for single-node user application) 
   void ospInit(int *ac, const char **av);
 
 
-  // -------------------------------------------------------
-  /*! \defgroup ospray_render Creating and using Renderers */
-  /*! @{ */
+  //! use renderer to render a frame. 
+  /*! What input to tuse for rendering the frame is encoded in the
+      renderer's parameters, typically in "world" */
+  void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer);
 
-  /*! use renderer to render given model into specified frame buffer */
-  void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer, OSPModel model);
-
-  /*! \brief create a new renderer of given type */
-  /*! \detailed return 'NULL' if that type is not known */
+  //! create a new renderer of given type 
+  /*! return 'NULL' if that type is not known */
   OSPRenderer ospNewRenderer(const char *type);
 
-  /*! @} */
+  //! create a new camera of given type.  
+  /*! Currently supported camera types are "perspective" (\ref
+      perspective_camera), and "planar" (\ref planar_camera), plus
+      whatever camera may be loaded through plugins. \see builtin_cameras */
+  OSPRenderer ospNewRenderer(const char *type);
+  
+  
 
   // -------------------------------------------------------
   /*! \defgroup ospray_framebuffer Frame Buffer Manipulation API */
@@ -117,6 +121,8 @@ extern "C" {
   /*! @{ */
   /*! create a new data buffer, with optional init data and control flags */
   OSPData ospNewData(size_t numItems, OSPDataType format, void *init=NULL, int flags=0);
+  /*! add a object-typed parameter to another object */
+  void ospSetParam(OSPObject _object, const char *id, OSPObject object);
   /*! add a data array to another object */
   void ospSetData(OSPObject _object, const char *id, OSPData data);
   /*! @} end of ospray_data */
@@ -149,10 +155,10 @@ extern "C" {
 
   /*! \brief create a new ospray model.  */
   OSPModel ospNewModel();
-  void ospFinalizeModel(OSPModel model);
+
   /*! @} end of ospray_model */
   
-
-
+  /*! \brief commit changes to an object */
+  void ospCommit(OSPObject object);
 }
 /*! @} */

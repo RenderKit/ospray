@@ -10,8 +10,7 @@ namespace ospray {
   /*! abstract base class for all ospray renderers. */
   struct Renderer : public ManagedObject {
     virtual std::string toString() const { return "ospray::Renderer"; }
-    virtual void renderFrame(FrameBuffer *fb,
-                             Model *world) = 0;
+    virtual void renderFrame(FrameBuffer *fb) = 0;
 
     static Renderer *createRenderer(const char *identifier);
   };

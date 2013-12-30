@@ -65,11 +65,16 @@ namespace ospray {
     }
     
     /*! finalize a newly specified model */
-    void LocalDevice::finalizeModel(OSPModel _model)
+    void LocalDevice::commit(OSPObject _object)
     {
-      Model *model = (Model *)_model;
-      Assert2(model,"null model in LocalDevice::finalizeModel()");
-      model->finalize();
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert2(object,"null object in LocalDevice::commit()");
+      object->commit();
+
+      // hack, to stay compatible with earlier version
+      Model *model = dynamic_cast<Model *>(object);
+      if (model)
+        model->finalize();
     }
     
     /*! add a new geometry to a model */
@@ -102,16 +107,16 @@ namespace ospray {
     }
     
     /*! assign (named) data item as a parameter to an object */
-    void LocalDevice::setData(OSPObject _object, const char *bufName, OSPData _data)
+    void LocalDevice::setObject(OSPObject _target, const char *bufName, OSPObject _value)
     {
-      ManagedObject *object = (ManagedObject *)_object;
-      Data          *data   = (Data *)_data;
+      ManagedObject *target = (ManagedObject *)_target;
+      ManagedObject *value  = (ManagedObject *)_value;
 
-      Assert(data != NULL && "invalid data array handle");
-      Assert(object != NULL && "invalid object handle");
+      Assert(target != NULL  && "invalid target object handle");
+      Assert(value != NULL   && "invalid value object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
 
-      object->setParam(bufName,data);
+      target->setParam(bufName,value);
     }
 
       /*! create a new renderer object (out of list of registered renderers) */
@@ -124,18 +129,17 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
     void LocalDevice::renderFrame(OSPFrameBuffer _sc, 
-                                  OSPRenderer    _renderer, 
-                                  OSPModel       _model)
+                                  OSPRenderer    _renderer)
     {
       SwapChain *sc = (SwapChain *)_sc;
       Renderer *renderer = (Renderer *)_renderer;
-      Model *model = (Model *)_model;
+      // Model *model = (Model *)_model;
 
       Assert(sc != NULL && "invalid frame buffer handle");
       Assert(renderer != NULL && "invalid renderer handle");
       
       FrameBuffer *fb = sc->getBackBuffer();
-      renderer->renderFrame(fb,model);
+      renderer->renderFrame(fb);
 
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
