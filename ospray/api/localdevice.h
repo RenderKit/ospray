@@ -38,12 +38,17 @@ namespace ospray {
 
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject target, const char *bufName, OSPObject value);
+      /*! assign (named) vec3f parameter to an object */
+      virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh();
 
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type);
+
+      /*! create a new camera object (out of list of registered cameras) */
+      virtual OSPCamera newCamera(const char *type);
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 

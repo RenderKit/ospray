@@ -9,8 +9,7 @@ using ospray::glut3D::Glut3DWidget;
 
 struct MainWindow : public Glut3DWidget {
   MainWindow() 
-    : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_FLOAT,
-                   &Glut3DWidget::INSPECT_CENTER),
+    : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_FLOAT),
       frameID(0)
   {};
   virtual void display() 

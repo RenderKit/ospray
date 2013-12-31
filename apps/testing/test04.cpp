@@ -11,8 +11,7 @@ using ospray::glut3D::Glut3DWidget;
 
 struct MainWindow : public Glut3DWidget {
   MainWindow() 
-    : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE,
-                   &Glut3DWidget::INSPECT_CENTER),
+    : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
       fb(NULL), renderer(NULL), model(NULL)
   {
     renderer = ospNewRenderer("test_screen");

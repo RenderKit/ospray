@@ -27,6 +27,7 @@ ISPC_COMPILE(${OSPRAY_TARGET}
 	render/testrenderer.ispc
 	render/raycast.ispc
 	fb/localfb.ispc
+	camera/perspectivecamera.ispc
 	)
 
 ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
@@ -40,6 +41,9 @@ ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
 	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
 	render/raycast.cpp
 	render/raycast.dev${OSPRAY_ISPC_SUFFIX}
+	camera/camera.cpp
+	camera/perspectivecamera.cpp
+	camera/perspectivecamera.dev${OSPRAY_ISPC_SUFFIX}
 	fb/localfb.dev${OSPRAY_ISPC_SUFFIX}
 	)
 TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} osp_common${OSPRAY_LIB_SUFFIX})

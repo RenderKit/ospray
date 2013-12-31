@@ -1,6 +1,7 @@
 #include "ospray/include/ospray/ospray.h"
 #include "localdevice.h"
 #include "ospray/render/renderer.h"
+#include "ospray/camera/camera.h"
 
 #if 1
 # define LOG(a) if (logLevel > 2) std::cout << "#ospray: " << a << std::endl;
@@ -119,10 +120,27 @@ namespace ospray {
     LOG("ospNewRenderer(" << type << ")");
     OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
     if (logLevel > 0)
-      std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
-
-    cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
+      if (renderer) 
+        cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
+      else
+        std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
     return renderer;
+  }
+
+  /*! \brief create a new camera of given type */
+  /*! \detailed return 'NULL' if that type is not known */
+  extern "C" OSPCamera ospNewCamera(const char *type)
+  {
+    ASSERT_DEVICE();
+    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    LOG("ospNewCamera(" << type << ")");
+    OSPCamera camera = ospray::api::Device::current->newCamera(type);
+    if (logLevel > 0)
+      if (camera) 
+        cout << "ospNewCamera: " << ((ospray::Camera*)camera)->toString() << endl;
+      else
+        std::cerr << "#ospray: could not create camera '" << type << "'" << std::endl;
+    return camera;
   }
 
   /*! \brief call a renderer to render given model into given framebuffer */
@@ -141,5 +159,19 @@ namespace ospray {
     LOG("ospCommit(...)");
     return ospray::api::Device::current->commit(object);
   }
+
+  /*! add a data array to another object */
+  extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec3f(_object,id,v);
+  }
+  /*! add a data array to another object */
+  extern "C" void ospSet3f(OSPObject _object, const char *id, float x, float y, float z)
+  {
+    ASSERT_DEVICE();
+    ospSetVec3f(_object,id,vec3f(x,y,z));
+  }
+
 
 }

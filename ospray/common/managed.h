@@ -94,7 +94,8 @@ namespace ospray {
       void clear();
       /*! set parameter to a 'pointer to object' type, and given pointer */
       void set(ManagedObject *ptr);
-      
+      /*! set parameter to vec3f value and type */
+      void set(const vec3f &v) { clear(); type = OSP_vec3f; (vec3f&)f = v; }
       /*! storage for the various types this parameter could be */
       union {
         float f[4];
@@ -117,8 +118,8 @@ namespace ospray {
     //! commit the model's (or more exactly, the model's parameters') outstanding changes
     virtual void commit() {}
     
-    /*! \brief common function to help printf-debugging \detailed
-        Every derived class should overrride this! */
+    //! \brief common function to help printf-debugging 
+    /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::ManagedObject"; }
     /*! return the ISPC equivalent of this class*/
     void *getIE() const { return ispcEquivalent; }
@@ -128,14 +129,19 @@ namespace ospray {
     /*! set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);
 
+    /*! @{
     /*! \brief find the named parameter, and return its object value if
-        available; else return 'default' value */
-    /*! \detailed The returned managed object will *not* automatically
+        available; else return 'default' value 
+        
+        \detailed The returned managed object will *not* automatically
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
         instance */
-    ManagedObject *getParam(const char *name, 
-                            ManagedObject *valIfNotFound=NULL);
+    ManagedObject *getParam(const char *name, ManagedObject *valIfNotFound);
+    vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
+    vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
+    float  getParamf (const char *name, const float valIfNotFound);
+    /*! @} */
 
     std::vector<Param *> paramList; /*!< list of parameters attached
                                        to this object */

@@ -34,6 +34,47 @@ namespace ospray {
       double getFPS() const { return smooth_den / smooth_nom; }
     };
 
+
+
+    struct Glut3DWidget;
+    
+    struct Manipulator {
+      // this is the fct that gets called when the mouse moved in the
+      // associated window
+      virtual void motion(Glut3DWidget *widget);
+      // this is the fct that gets called when any mouse button got
+      // pressed or released in the associated window
+      virtual void button(Glut3DWidget *widget) {};
+      /*! key press handler - override this fct to catch keyboard */
+      virtual void keypress(Glut3DWidget *widget, const int key);
+    protected:
+
+      // helper functions called from the default 'motion' fct
+      virtual void dragLeft(Glut3DWidget *widget, 
+                            const vec2i &to, const vec2i &from) 
+      {};
+      virtual void dragRight(Glut3DWidget *widget, 
+                             const vec2i &to, const vec2i &from) 
+      {};
+      virtual void dragMiddle(Glut3DWidget *widget, 
+                              const vec2i &to, const vec2i &from)
+      {};
+    };
+    struct InspectCenter : public Manipulator
+    {
+      box3f worldBounds;
+      InspectCenter(const box3f &bounds=box3f(vec3f(0.f),vec3f(1.f)));
+      virtual void dragLeft(Glut3DWidget *widget, 
+                            const vec2i &to, const vec2i &from);
+      virtual void dragRight(Glut3DWidget *widget, 
+                             const vec2i &to, const vec2i &from);
+      virtual void dragMiddle(Glut3DWidget *widget, 
+                              const vec2i &to, const vec2i &from);
+    };
+
+
+
+
     /*! a GLUT-based 3D viewer widget that includes simple sample code
       for manipulating a 3D camera with the mouse.
 
@@ -83,41 +124,10 @@ namespace ospray {
 
         Camera();
       };
+      // static InspectCenter INSPECT_CENTER;
 
-      struct Manipulator {
-        // this is the fct that gets called when the mouse moved in the
-        // associated window
-        virtual void motion(Glut3DWidget *widget);
-        // this is the fct that gets called when any mouse button got
-        // pressed or released in the associated window
-        virtual void button(Glut3DWidget *widget) {};
-        /*! key press handler - override this fct to catch keyboard */
-        virtual void keypress(Glut3DWidget *widget, const int key);
-      protected:
-
-        // helper functions called from the default 'motion' fct
-        virtual void dragLeft(Glut3DWidget *widget, 
-                              const vec2i &to, const vec2i &from) 
-        {};
-        virtual void dragRight(Glut3DWidget *widget, 
-                               const vec2i &to, const vec2i &from) 
-        {};
-        virtual void dragMiddle(Glut3DWidget *widget, 
-                                const vec2i &to, const vec2i &from)
-        {};
-      };
-      struct InspectCenter : public Manipulator
-      {
-        virtual void dragLeft(Glut3DWidget *widget, 
-                              const vec2i &to, const vec2i &from);
-        virtual void dragRight(Glut3DWidget *widget, 
-                               const vec2i &to, const vec2i &from);
-        virtual void dragMiddle(Glut3DWidget *widget, 
-                                const vec2i &to, const vec2i &from);
-      };
-      static InspectCenter INSPECT_CENTER;
-
-      Glut3DWidget(FrameBufferMode frameBufferMode, Manipulator *manipulator);
+      Glut3DWidget(FrameBufferMode frameBufferMode, 
+                   Manipulator *manipulator = new InspectCenter());
 
       /*! set a default camera position that views given bounds from the
         top left front */
@@ -171,7 +181,7 @@ namespace ospray {
       // ------------------------------------------------------------------
       // internal state variables
       // ------------------------------------------------------------------
-    protected:
+    public:
       vec2i lastMousePos; /*! last mouse screen position of mouse before
                             current motion */
       vec2i currMousePos; /*! current screen position of mouse */

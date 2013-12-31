@@ -2,7 +2,9 @@
 
 // viewer widget
 #include "../util/glut3D/glut3D.h"
+// mini scene graph for loading the model
 #include "../util/miniSG/miniSG.h"
+// ospray, for rendering
 #include "ospray/ospray.h"
 
 namespace ospray {
@@ -26,24 +28,30 @@ namespace ospray {
 
   struct MSGViewer : public Glut3DWidget {
     MSGViewer(OSPModel model) 
-      : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE,
-                     &Glut3DWidget::INSPECT_CENTER),
+      : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
         fb(NULL), renderer(NULL), model(model)
     {
       Assert(model && "null model handle");
+      camera = ospNewCamera("perspective");
+      Assert(camera != NULL && "could not create camera");
+      ospSet3f(camera,"pos",-1,1,-1);
+      ospSet3f(camera,"dir",+1,-1,+1);
+      ospCommit(camera);
+      
       renderer = ospNewRenderer("ray_cast");
-      ospSetParam(renderer,"world",model);
       Assert(renderer != NULL && "could not create renderer");
+
+      ospSetParam(renderer,"world",model);
+      ospSetParam(renderer,"camera",camera);
+      ospCommit(camera);
+      ospCommit(renderer);
+
     };
     virtual void reshape(const ospray::vec2i &newSize) 
     {
-      PING;
       Glut3DWidget::reshape(newSize);
-      PING;
       if (fb) ospFreeFrameBuffer(fb);
-      PING;
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
-      PING;
     }
 
     virtual void display() 
@@ -70,6 +78,7 @@ namespace ospray {
     OSPModel       model;
     OSPFrameBuffer fb;
     OSPRenderer    renderer;
+    OSPCamera      camera;
     ospray::glut3D::FPSCounter fps;
   };
 

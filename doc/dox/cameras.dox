@@ -20,21 +20,10 @@
   </dl>
 
   Of course, other parameter types may be loaded through modules.
-*/
 
-/*!
-  \page perspective_camera Perspective Camera ("perspective")
-
-  A simple perspective camera. Supports the following 
-  <pre>
-  vec3f(a) pos;    // camera position
-  vec3f(a) dir;    // camera direction
-  vec3f(a) up;     // up vector
-  float    near;   // camera near plane (not all renderers may support this!)
-  float    far;    // camera far plane (not all renderers may support this!)
-  float    fovy;   // field of view (camera opening angle) in frame's y dimension
-  </pre>
-
+  \internal The actual camera description (incl its parameters) is
+  within the given C file containing this function's class definition.
+  
 */
 
 /*! \page parallel_projection_camera Perspective Camera ("perspective")
@@ -59,5 +48,6 @@
   will be the lower-left pixel, while logical point (1,1) will
   corresponds to the upper-right one.
 */
+
 
 

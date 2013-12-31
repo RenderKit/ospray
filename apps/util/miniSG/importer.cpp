@@ -6,6 +6,7 @@ namespace ospray {
       : model(&model) 
     {
       mesh = new Mesh;
+      mesh->bounds = embree::empty;
     }
 
     void ImportHelper::finalize()
@@ -27,6 +28,7 @@ namespace ospray {
       if (known_positions.find(position) == known_positions.end()) {
         int newID = mesh->position.size();
         mesh->position.push_back(position);
+        mesh->bounds.extend(position);
         known_positions[position] = newID;
         return newID;
       } else

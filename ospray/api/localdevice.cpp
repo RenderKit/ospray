@@ -4,6 +4,7 @@
 #include "../common/data.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
+#include "../camera/camera.h"
 
 namespace ospray {
   namespace api {
@@ -106,6 +107,16 @@ namespace ospray {
       return (OSPData)data;
     }
     
+    /*! assign (named) vec3f parameter to an object */
+    void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(v);
+    }
+
     /*! assign (named) data item as a parameter to an object */
     void LocalDevice::setObject(OSPObject _target, const char *bufName, OSPObject _value)
     {
@@ -113,18 +124,25 @@ namespace ospray {
       ManagedObject *value  = (ManagedObject *)_value;
 
       Assert(target != NULL  && "invalid target object handle");
-      Assert(value != NULL   && "invalid value object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
 
       target->setParam(bufName,value);
     }
 
-      /*! create a new renderer object (out of list of registered renderers) */
+    /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer LocalDevice::newRenderer(const char *type)
     {
       Assert(type != NULL && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
       return (OSPRenderer)renderer;
+    }
+
+    /*! create a new camera object (out of list of registered cameras) */
+    OSPCamera LocalDevice::newCamera(const char *type)
+    {
+      Assert(type != NULL && "invalid render type identifier");
+      Camera *camera = Camera::createCamera(type);
+      return (OSPCamera)camera;
     }
 
       /*! call a renderer to render a frame buffer */

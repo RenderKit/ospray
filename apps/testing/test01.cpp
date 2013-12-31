@@ -13,8 +13,7 @@ int main(int ac, const char **av)
   ospray::glut3D::initGLUT(&ac,av);
 
   ospray::glut3D::Glut3DWidget 
-    widget(ospray::glut3D::Glut3DWidget::FRAMEBUFFER_FLOAT,
-           &ospray::glut3D::Glut3DWidget::INSPECT_CENTER);
+    widget(ospray::glut3D::Glut3DWidget::FRAMEBUFFER_FLOAT);
   widget.create("OSPRay glut3D viewer test app");
 
   printf("Opening a simple ospray Glut3DWidget.");

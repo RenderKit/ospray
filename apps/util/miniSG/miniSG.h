@@ -32,6 +32,8 @@ namespace ospray {
       std::vector<vec3fa>   normal;   /*!< vertex normals; empty if none present */
       std::vector<vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
       std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
+      
+      box3fa bounds; /*!< bounding box of all vertices */
 
       int size() const { return triangle.size(); }
     };

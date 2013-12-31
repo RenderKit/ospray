@@ -11,7 +11,7 @@ namespace ospray {
 
     /*! currently active window */
     Glut3DWidget *Glut3DWidget::activeWindow = NULL;
-    Glut3DWidget::InspectCenter Glut3DWidget::INSPECT_CENTER;
+    // InspectCenter Glut3DWidget::INSPECT_CENTER;
 
 
     // ------------------------------------------------------------------
@@ -243,7 +243,7 @@ namespace ospray {
     // ------------------------------------------------------------------
     // base manipulator
     // ------------------------------------------------------------------
-    void Glut3DWidget::Manipulator::motion(Glut3DWidget *widget)
+    void Manipulator::motion(Glut3DWidget *widget)
     {
       if (widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) {
         dragLeft(widget,widget->currMousePos,widget->lastMousePos);
@@ -260,8 +260,8 @@ namespace ospray {
 
     /*! INSPECT_CENTER::RightButton: move lookfrom/camera positoin
       forward/backward on right mouse button */
-    void Glut3DWidget::InspectCenter::dragRight(Glut3DWidget *widget, 
-                                                const vec2i &to, const vec2i &from) 
+    void InspectCenter::dragRight(Glut3DWidget *widget, 
+                                  const vec2i &to, const vec2i &from) 
     {
       Glut3DWidget::Camera &cam = widget->camera;
       float fwd = (to.y - from.y) * 4 * widget->cameraSpeed
@@ -277,8 +277,8 @@ namespace ospray {
 
     /*! INSPECT_CENTER::MiddleButton: move lookat/center of interest
       forward/backward on middle mouse button */
-    void Glut3DWidget::InspectCenter::dragMiddle(Glut3DWidget *widget, 
-                                                 const vec2i &to, const vec2i &from) 
+    void InspectCenter::dragMiddle(Glut3DWidget *widget, 
+                                   const vec2i &to, const vec2i &from) 
     {
       Glut3DWidget::Camera &cam = widget->camera;
       float fwd = (to.y - from.y) * 4 * widget->cameraSpeed
@@ -291,10 +291,14 @@ namespace ospray {
       cam.modified = true;
     }
 
+    InspectCenter::InspectCenter(const box3f &worldBounds)
+      : worldBounds(worldBounds)
+    {}
+
     /*! INSPECT_CENTER::LeftButton: rotate camera position
       ('camera.from') around center of world bounds */
-    void Glut3DWidget::InspectCenter::dragLeft(Glut3DWidget *widget, 
-                                               const vec2i &to, const vec2i &from) 
+    void InspectCenter::dragLeft(Glut3DWidget *widget, 
+                                 const vec2i &to, const vec2i &from) 
     {
       Glut3DWidget::Camera &cam = widget->camera;
       float du = (to.x - from.x) * widget->cameraSpeed;
@@ -314,7 +318,7 @@ namespace ospray {
     }
 
 
-    void Glut3DWidget::Manipulator::keypress(Glut3DWidget *widget, const int key) 
+    void Manipulator::keypress(Glut3DWidget *widget, const int key) 
     {
       if (key == 'Q') {
         exit(0);

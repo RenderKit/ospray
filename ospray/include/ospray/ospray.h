@@ -24,6 +24,7 @@ namespace osp {
   struct ManagedObject { unsigned long ID; virtual ~ManagedObject() {} };
   struct FrameBuffer  : public ManagedObject {};
   struct Renderer     : public ManagedObject {};
+  struct Camera       : public ManagedObject {};
   struct Model        : public ManagedObject {};
   struct Data         : public ManagedObject {};
   struct Geometry     : public ManagedObject {};
@@ -58,6 +59,7 @@ typedef enum {
 
 typedef osp::FrameBuffer   *OSPFrameBuffer;
 typedef osp::Renderer      *OSPRenderer;
+typedef osp::Camera        *OSPCamera;
 typedef osp::Model         *OSPModel;
 typedef osp::Data          *OSPData;
 typedef osp::Geometry      *OSPGeometry;
@@ -79,6 +81,10 @@ extern "C" {
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
   OSPRenderer ospNewRenderer(const char *type);
+
+  //! create a new camera of given type 
+  /*! return 'NULL' if that type is not known */
+  OSPCamera ospNewCamera(const char *type);
 
   //! create a new camera of given type.  
   /*! Currently supported camera types are "perspective" (\ref
@@ -121,11 +127,21 @@ extern "C" {
   /*! @{ */
   /*! create a new data buffer, with optional init data and control flags */
   OSPData ospNewData(size_t numItems, OSPDataType format, void *init=NULL, int flags=0);
+  /*! @} end of ospray_data */
+
+
+  // -------------------------------------------------------
+  /*! \defgroup ospray_params Assigning parameters to objects */
+  /*! @{ */
   /*! add a object-typed parameter to another object */
   void ospSetParam(OSPObject _object, const char *id, OSPObject object);
   /*! add a data array to another object */
   void ospSetData(OSPObject _object, const char *id, OSPData data);
-  /*! @} end of ospray_data */
+  /*! add 3-float paramter to given object */
+  void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+  /*! add 3-float paramter to given object */
+  void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+  /*! @} end of ospray_params */
 
   // -------------------------------------------------------
   /*! \defgroup ospray_geometry Geometry Handling */
