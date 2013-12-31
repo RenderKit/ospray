@@ -58,6 +58,16 @@ namespace ospray {
     {
       if (!fb || !renderer) return;
 
+      if (viewPort.modified) {
+        Assert2(camera,"ospray camera is null");
+        PRINT(viewPort);
+        ospSetVec3f(camera,"pos",viewPort.from);
+        ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
+        ospSetVec3f(camera,"up",viewPort.up);
+        ospCommit(camera);
+        viewPort.modified = false;
+      }
+
       fps.startRender();
       ospRenderFrame(fb,renderer);
       fps.doneRender();

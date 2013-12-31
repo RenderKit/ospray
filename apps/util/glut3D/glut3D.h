@@ -76,11 +76,11 @@ namespace ospray {
 
 
     /*! a GLUT-based 3D viewer widget that includes simple sample code
-      for manipulating a 3D camera with the mouse.
+      for manipulating a 3D viewPort with the mouse.
 
       This widget should allow users to easily write simple 3D viewers
-      with simple built-in camera motion. In theory, all one hsa to do
-      after creating the window (and initializeing the camera is
+      with simple built-in viewPort motion. In theory, all one hsa to do
+      after creating the window (and initializeing the viewPort is
       implement the respective 'display' callback to do the actual
       rendering, using the widget's infrastructure for the boilerplace
       stuff.
@@ -99,9 +99,9 @@ namespace ospray {
       typedef enum { 
         FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_NONE
       } FrameBufferMode;
-      /*! internal camera class */
-      struct Camera {
-        bool modified; /* the camera will set this flag any time any of
+      /*! internal viewPort class */
+      struct ViewPort {
+        bool modified; /* the viewPort will set this flag any time any of
                           its values get changed. */
 
         vec3f from;
@@ -122,7 +122,7 @@ namespace ospray {
          *not* apply the up-vector after camera manipulation */
         void snapUp();
 
-        Camera();
+        ViewPort();
       };
       // static InspectCenter INSPECT_CENTER;
 
@@ -187,14 +187,14 @@ namespace ospray {
       vec2i currMousePos; /*! current screen position of mouse */
       int lastModifierState, currModifierState;
       int lastButtonState, currButtonState;
-      Camera camera;
-      box3f  worldBounds; /*!< world bounds, to automatically set camera
+      ViewPort viewPort;
+      box3f  worldBounds; /*!< world bounds, to automatically set viewPort
                             lookat, mouse speed, etc */
       Manipulator *manipulator;
       int windowID;
       vec2i windowSize;
       /* camera speed modifier */
-      float cameraSpeed;
+      float motionSpeed;
       FrameBufferMode frameBufferMode;
 
       static Glut3DWidget *activeWindow;
@@ -214,6 +214,8 @@ namespace ospray {
       virtual void keypress(unsigned char key, const vec2f where)
       { if (manipulator) manipulator->keypress(this,key); }
     };
+
+    std::ostream &operator<<(std::ostream &o, const Glut3DWidget::ViewPort &cam);
   }
 }
 
