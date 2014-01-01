@@ -126,13 +126,19 @@ namespace ospray {
     int numUniqueTris = 0;
     int numInstancedTris = 0;
     for (int i=0;i<msgModel->mesh.size();i++) {
-      cout << "[" << msgModel->mesh[i]->size() << "]";
+      if (i < 10)
+        cout << "[" << msgModel->mesh[i]->size() << "]";
+      else 
+        if (i == 10) cout << "...";
       numUniqueTris += msgModel->mesh[i]->size();
     }
     cout << endl;
     cout << "  - num instances: " << msgModel->instance.size() << " ";
-    for (int i=0;i<msgModel->mesh.size();i++) {
-      cout << "[" << msgModel->mesh[msgModel->instance[i].meshID]->size() << "]";
+    for (int i=0;i<msgModel->instance.size();i++) {
+      if (i < 10)
+        cout << "[" << msgModel->mesh[msgModel->instance[i].meshID]->size() << "]";
+      else 
+        if (i == 10) cout << "...";
       numInstancedTris += msgModel->mesh[msgModel->instance[i].meshID]->size();
     }
     cout << endl;
@@ -186,6 +192,7 @@ namespace ospray {
     MSGViewer window(ospModel);
     window.create("MSGViewer: OSPRay Mini-Scene Graph test viewer");
     printf("MSG Viewer created. Press 'Q' to quit.\n");
+    window.setWorldBounds(box3f(msgModel->getBBox()));
     ospray::glut3D::runGLUT();
   }
 }

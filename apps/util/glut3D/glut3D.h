@@ -62,8 +62,6 @@ namespace ospray {
     };
     struct InspectCenter : public Manipulator
     {
-      box3f worldBounds;
-      InspectCenter(const box3f &bounds=box3f(vec3f(0.f),vec3f(1.f)));
       virtual void dragLeft(Glut3DWidget *widget, 
                             const vec2i &to, const vec2i &from);
       virtual void dragRight(Glut3DWidget *widget, 

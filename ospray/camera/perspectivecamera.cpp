@@ -22,12 +22,20 @@ namespace ospray {
     fovy   = getParamf("fovy",60.f);
     aspect = getParamf("aspect",1.f);
 
+    PING;
+    PRINT(pos);
+    PRINT(dir);
+    PRINT(up);
+
     // ------------------------------------------------------------------
     // now, update the local precomptued values
     // ------------------------------------------------------------------
     vec3f dz = normalize(dir);
     vec3f dx = normalize(cross(dz,up));
     vec3f dy = normalize(cross(dx,dz));
+    PRINT(dz);
+    PRINT(dx);
+    PRINT(dy);
 
     float imgPlane_size_x = 2.f*sinf(fovy/2.f*M_PI/180.);
     float imgPlane_size_y = imgPlane_size_x * aspect;

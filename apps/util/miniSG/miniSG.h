@@ -14,8 +14,26 @@ namespace ospray {
     /*! mini 'all-rounder' material that should be able to capture
       the most common material types such as OBJ wavefront */
     struct Material : public RefCount {
-      vec3f kd; /*!< diffuse component */
-      vec3f ks; /*!< specular component */
+      std::string name; /*! symbolic name, if available (can be empty) */
+      std::string type; /*! material type (like "OBJ", or "Phong", if
+                            available (can be empty) */
+
+      float d;
+      float Ns;
+      float Ni;
+      vec3f Ka; /*!< ambient component */
+      vec3f Kd; /*!< diffuse component */
+      vec3f Ks; /*!< specular component */
+      vec3f Tf; 
+
+      std::string map_d;
+      std::string map_Ns;
+      std::string map_Ni;
+      std::string map_Ka;
+      std::string map_Kd;
+      std::string map_Ks;
+      std::string map_Refl;
+      std::string map_Bump;
 
       Material();
     };
@@ -33,9 +51,12 @@ namespace ospray {
       std::vector<vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
       std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
       
-      box3fa bounds; /*!< bounding box of all vertices */
+      box3f bounds; /*!< bounding box of all vertices */
 
       int size() const { return triangle.size(); }
+      Ref<Material> material;
+      box3f getBBox();
+      Mesh() : bounds(embree::empty) {};
     };
 
     struct Instance : public RefCount {
@@ -48,12 +69,21 @@ namespace ospray {
     bool operator!=(const Instance &a, const Instance &b);
 
     struct Model : public RefCount {
-      /*! list of materials - all material IDs of all meshes reference into this list */
+      /*! list of materials - if per-triangle material IDs are used,
+          then all material IDs of all meshes reference into this
+          list */
       std::vector<Ref<Material> > material;
       /*! list of meshes that the scene is composed of */
       std::vector<Ref<Mesh> >     mesh;
       /*! \brief list of instances (if available). */
       std::vector<Instance>      instance;
+
+      //! return number of meshes in this model
+      inline size_t numMeshes() const { return mesh.size(); }
+      //! return number of unique triangles (ie, _ex_ instantiation!) in this model
+      size_t numUniqueTriangles() const;
+      /*! computes and returns the world-space bounding box of the entire model */
+      box3f getBBox();
     };
 
     /*! import a wavefront OBJ file, and add it to the specified model */
@@ -66,5 +96,6 @@ namespace ospray {
     void importMSG(Model &model, const embree::FileName &fileName);
 
     void error(const std::string &err);
+
   }
 }

@@ -58,9 +58,12 @@ namespace ospray {
     // implementation of glut3d::viewPorts
     // ------------------------------------------------------------------
     Glut3DWidget::ViewPort::ViewPort()
-      : from(0,-1,0),
+      : from(0,0,-1),
         at(0,0,0),
-        up(0,0,1),
+        up(0,1,0),
+      // : from(0,-1,0),
+      //   at(0,0,0),
+      //   up(0,0,1),
         aspectRatio(1.f),
         openingAngle(60.f*M_PI/360.f),
         modified(true)
@@ -280,35 +283,27 @@ namespace ospray {
     void InspectCenter::dragMiddle(Glut3DWidget *widget, 
                                    const vec2i &to, const vec2i &from) 
     {
-      Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = (to.y - from.y) * 4 * widget->motionSpeed
-        * length(widget->worldBounds.size());
-      float oldDist = length(cam.at - cam.from);
-      float newDist = oldDist - fwd;
-      if (newDist < 1e-3f) 
-        return;
-      cam.at = cam.from + newDist * cam.frame.l.vy;
-      cam.modified = true;
+      // it's called inspect_***CENTER*** for a reason; this class
+      // will keep the rotation pivot at the center, and not do
+      // anything with center mouse button...
     }
 
-    InspectCenter::InspectCenter(const box3f &worldBounds)
-      : worldBounds(worldBounds)
-    {}
-
-    /*! INSPECT_CENTER::LeftButton: rotate viewPort position
-      ('viewPort.from') around center of world bounds */
     void InspectCenter::dragLeft(Glut3DWidget *widget, 
                                  const vec2i &to, const vec2i &from) 
     {
+      std::cout << "-------------------------------------------------------" << std::endl;
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       float du = (to.x - from.x) * widget->motionSpeed;
       float dv = (to.y - from.y) * widget->motionSpeed;
 
+      vec2i delta_mouse = to - from;
+      PRINT(delta_mouse);
+
       const vec3f pivot = center(widget->worldBounds);
       AffineSpace3f xfm 
         = AffineSpace3f::translate(pivot)
-        * AffineSpace3f::rotate(cam.frame.l.vx,dv)
-        * AffineSpace3f::rotate(cam.frame.l.vz,du)
+        * AffineSpace3f::rotate(cam.frame.l.vx,-dv)
+        * AffineSpace3f::rotate(cam.frame.l.vz,-du)
         * AffineSpace3f::translate(-pivot);
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);

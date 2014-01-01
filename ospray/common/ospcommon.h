@@ -29,8 +29,7 @@ namespace ospray {
   /*! OSPRay's four-float vector class */
   typedef embree::Vec4f    vec4f;
 
-  typedef embree::BBox<vec3f> box3f;
-  typedef embree::BBox3f      box3fa;
+  typedef embree::BBox3f      box3f;
   
   /*! affice space transformation */
   typedef embree::AffineSpace3f affine3f;

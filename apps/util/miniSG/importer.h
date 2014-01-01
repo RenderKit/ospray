@@ -26,6 +26,12 @@ namespace ospray {
 
       /*! find given vertex and return its ID, or add if it doesn't yet exist */
       uint addVertex(const vec3f &position);
+      /*! find given vertex and return its ID, or add if it doesn't yet exist */
+      uint addVertex(const vec3f &position, const vec2f &texcoord);
+      /*! find given vertex and return its ID, or add if it doesn't yet exist */
+      uint addVertex(const vec3f &position, const vec3f &normal, const vec2f &texcoord);
+      /*! find given vertex and return its ID, or add if it doesn't yet exist */
+      uint addVertex(const vec3f &position, const vec3f &normal);
       /*! add new triangle to the mesh. may discard the triangle if it is degenerated. */
       void addTriangle(const miniSG::Triangle &triangle);
 
