@@ -108,6 +108,16 @@ namespace ospray {
     }
     
     /*! assign (named) vec3f parameter to an object */
+    void LocalDevice::setFloat(OSPObject _object, const char *bufName, const float f)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(f);
+    }
+
+    /*! assign (named) vec3f parameter to an object */
     void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;

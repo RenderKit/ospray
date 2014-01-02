@@ -95,6 +95,8 @@ namespace ospray {
       /*! set parameter to a 'pointer to object' type, and given pointer */
       void set(ManagedObject *ptr);
       /*! set parameter to vec3f value and type */
+      void set(const float v) { clear(); type = OSP_FLOAT; (float&)f = v; }
+      /*! set parameter to vec3f value and type */
       void set(const vec3f &v) { clear(); type = OSP_vec3f; (vec3f&)f = v; }
       /*! storage for the various types this parameter could be */
       union {

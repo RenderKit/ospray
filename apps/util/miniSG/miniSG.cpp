@@ -37,8 +37,6 @@ namespace ospray {
       box3f bBox = embree::empty;
       for (int i=0;i<mesh.size();i++)
         bBox.extend(mesh[i]->getBBox());
-      PING;
-      PRINT(bBox);
       return bBox;
     }
 

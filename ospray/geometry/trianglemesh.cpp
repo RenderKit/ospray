@@ -17,6 +17,12 @@ namespace ospray {
 
   void TriangleMesh::finalize(Model *model)
   {
+    static int numPrints = 0;
+    numPrints++;
+    if (numPrints == 5)
+      cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
+    
+    if (numPrints < 5)
     std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
     Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
 
@@ -37,11 +43,13 @@ namespace ospray {
     size_t numVerts = posData->size();
     eMesh = rtcNewTriangleMesh(eScene,RTC_GEOMETRY_STATIC,numTris,numVerts);
 
+    if (numPrints < 5)
     cout << "  writing vertices in 'vec3fa' format" << endl;
     void *posPtr = rtcMapBuffer(model->eScene,eMesh,RTC_VERTEX_BUFFER);
     memcpy(posPtr,posData->data,posData->numBytes);
     rtcUnmapBuffer(model->eScene,eMesh,RTC_VERTEX_BUFFER);
 
+    if (numPrints < 5)
     cout << "  writing indices in 'vec3i' format" << endl;
     void *idxPtr = rtcMapBuffer(model->eScene,eMesh,RTC_INDEX_BUFFER);
     for (int i=0;i<idxData->size();i++)  {
@@ -53,9 +61,12 @@ namespace ospray {
     box3f bounds = embree::empty;
     for (int i=0;i<posData->size();i++)
       bounds.extend(((vec3fa*)posPtr)[i]);
-    cout << "  created triangle mesh (" << numTris << " tris "
-         << ", " << numVerts << " vertices)" << endl;
-    cout << "  mesh bounds " << bounds << endl;
+
+    if (numPrints < 5) {
+      cout << "  created triangle mesh (" << numTris << " tris "
+           << ", " << numVerts << " vertices)" << endl;
+      cout << "  mesh bounds " << bounds << endl;
+    } 
     rtcEnable(model->eScene,eMesh);
   }
 }

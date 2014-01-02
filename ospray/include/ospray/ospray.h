@@ -137,6 +137,8 @@ extern "C" {
   void ospSetParam(OSPObject _object, const char *id, OSPObject object);
   /*! add a data array to another object */
   void ospSetData(OSPObject _object, const char *id, OSPData data);
+  /*! add 1-float paramter to given object */
+  void ospSetf(OSPObject _object, const char *id, float x);
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
   /*! add 3-float paramter to given object */

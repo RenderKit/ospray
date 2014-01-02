@@ -160,6 +160,11 @@ namespace ospray {
     return ospray::api::Device::current->commit(object);
   }
 
+  extern "C" void ospSetf(OSPObject _object, const char *id, float x)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setFloat(_object,id,x);
+  }
   /*! add a data array to another object */
   extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)
   {

@@ -38,6 +38,8 @@ namespace ospray {
 
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject target, const char *bufName, OSPObject value);
+      /*! assign (named) float parameter to an object */
+      virtual void setFloat(OSPObject object, const char *bufName, const float f);
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);
 

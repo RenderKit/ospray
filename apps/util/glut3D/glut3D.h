@@ -108,7 +108,7 @@ namespace ospray {
         /*! opening angle, in radians, along Y direction */
         float openingAngle;
         /*! aspect ration i Y:X */
-        float aspectRatio;
+        float aspect;
         // float focalDistance;
       
         /*! camera frame in which the Y axis is the depth axis, and X

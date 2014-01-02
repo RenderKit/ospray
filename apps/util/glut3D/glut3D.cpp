@@ -64,7 +64,7 @@ namespace ospray {
       // : from(0,-1,0),
       //   at(0,0,0),
       //   up(0,0,1),
-        aspectRatio(1.f),
+        aspect(1.f),
         openingAngle(60.f*M_PI/360.f),
         modified(true)
     {
@@ -145,7 +145,7 @@ namespace ospray {
     void Glut3DWidget::reshape(const vec2i &newSize) 
     { 
       windowSize = newSize; 
-      viewPort.aspectRatio = newSize.x/float(newSize.y);
+      viewPort.aspect = newSize.x/float(newSize.y);
 
       switch (frameBufferMode) {
       case FRAMEBUFFER_UCHAR:
@@ -159,7 +159,6 @@ namespace ospray {
       default:
         break;
       }
-
       forceRedraw();
     }
     void Glut3DWidget::activate()
@@ -291,13 +290,13 @@ namespace ospray {
     void InspectCenter::dragLeft(Glut3DWidget *widget, 
                                  const vec2i &to, const vec2i &from) 
     {
-      std::cout << "-------------------------------------------------------" << std::endl;
+      // std::cout << "-------------------------------------------------------" << std::endl;
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       float du = (to.x - from.x) * widget->motionSpeed;
       float dv = (to.y - from.y) * widget->motionSpeed;
 
       vec2i delta_mouse = to - from;
-      PRINT(delta_mouse);
+      // PRINT(delta_mouse);
 
       const vec3f pivot = center(widget->worldBounds);
       AffineSpace3f xfm 
@@ -327,7 +326,7 @@ namespace ospray {
       o << "  <from>" << cam.from.x << " " << cam.from.y << " " << cam.from.z << "</from>" << std::endl;
       o << "  <at>" << cam.at.x << " " << cam.at.y << " " << cam.at.z << "</at>" << std::endl;
       o << "  <up>" << cam.up.x << " " << cam.up.y << " " << cam.up.z << "</up>" << std::endl;
-      o << "  <aspect>" << cam.aspectRatio << "</aspect>" << std::endl;
+      o << "  <aspect>" << cam.aspect << "</aspect>" << std::endl;
       o << "  <frame.dx>" << cam.frame.l.vx << "</frame.dx>" << std::endl;
       o << "  <frame.dy>" << cam.frame.l.vy << "</frame.dy>" << std::endl;
       o << "  <frame.dz>" << cam.frame.l.vz << "</frame.dz>" << std::endl;
@@ -345,7 +344,7 @@ namespace ospray {
       //   /*! opening angle, in radians, along Y direction */
       //   float openingAngle;
       //   /*! aspect ration i Y:X */
-      //   float aspectRatio;
+      //   float aspect;
       //   // float focalDistance;
       
       //   /*! viewPort frame in which the Y axis is the depth axis, and X

@@ -52,6 +52,8 @@ namespace ospray {
       Glut3DWidget::reshape(newSize);
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
+      ospSetf(camera,"aspect",viewPort.aspect);
+      ospCommit(camera);
     }
 
     virtual void display() 
@@ -60,10 +62,11 @@ namespace ospray {
 
       if (viewPort.modified) {
         Assert2(camera,"ospray camera is null");
-        PRINT(viewPort);
+        // PRINT(viewPort);
         ospSetVec3f(camera,"pos",viewPort.from);
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
         ospSetVec3f(camera,"up",viewPort.up);
+        ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
         viewPort.modified = false;
       }

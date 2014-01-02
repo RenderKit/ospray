@@ -5,18 +5,48 @@
 #include "../fb/framebuffer.ih"
 #include "../camera/perspectivecamera.ih"
 #include "../common/ray.ih"
+#include "util.h"
+
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 
-inline vec3f make_random_color(const int i)
-{
-  const int mx = 13*17*43;
-  const int my = 11*29;
-  const int mz = 7*23*63;
-  const uint g = (i * (3*5*127)+12312314);
-  return make_vec3f((g % mx)*(1.f/(mx-1)),
-                    (g % my)*(1.f/(my-1)),
-                    (g % mz)*(1.f/(mz-1)));
+// #define SHADE(ray,scene) shade_primID(ray)
+// #define SHADE(ray,scene) shade_Ng(ray)
+// #define SHADE(ray,scene) shade_eyeLight(ray)
+#define SHADE(ray,scene) shade_eyeLight_testShadow(ray,scene)
+
+inline vec4f shade_Ng(const Ray &ray)
+{ 
+  if (ray.geomID < 0) return make_vec4f(0.f); 
+  return make_vec4f(abs(normalize(ray.Ng))); 
+}
+
+inline vec4f shade_primID(const Ray &ray)
+{ 
+  return make_vec4f(make_random_color(ray.primID)); 
+}
+
+inline vec4f shade_eyeLight(const Ray &ray)
+{ 
+  if (ray.geomID < 0) return make_vec4f(0.f); 
+  const float c = dot(normalize(ray.Ng),ray.dir); 
+  return make_vec4f(.3f+.8f*abs(c));
+}
+
+inline vec4f shade_eyeLight_testShadow(const Ray &ray, uniform RTCScene scene)
+{ 
+  if (ray.geomID < 0) return make_vec4f(0.f); 
+  float c = dot(normalize(ray.Ng),ray.dir); 
+
+  Ray shadowRay;
+  const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
+  const vec3f L = make_vec3f(-1,2,-.5);
+  setRay(shadowRay,P,L);
+  rtcOccluded(scene,*((varying RTCRay *uniform)&shadowRay));
+  const bool occluded = shadowRay.geomID >= 0;
+  return make_vec4f(occluded 
+                    ? .2f+.2f*abs(c)
+                    : .3f+.8f*abs(c));
 }
 
 task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
@@ -54,15 +84,16 @@ task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
     rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
 #endif
     
-    vec4f col = make_vec4f(0.f);
-
-#if 0
-    if (ray.geomID >= 0) {
-      col = make_vec4f(abs(normalize(ray.Ng)));
-    }
-#else
-    col = make_vec4f(make_random_color(ray.primID));
-#endif
+    const vec4f col = SHADE(ray,scene);
+// #if 0
+//     vec4f col = make_vec4f(make_random_color(ray.primID));
+// #else
+//     vec4f col = make_vec4f(0.f);
+//     if (ray.geomID >= 0) {
+//       col = shade_gNormal(ray);
+//       col = shade_gNormal(ray);
+//     }
+// #endif
 
     fb->setPixel(fb,make_vec2i(x,y),col); //make_vec4f(fx,fy,fz,fw));
   }
