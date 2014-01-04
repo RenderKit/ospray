@@ -1,5 +1,5 @@
 #include <mpi.h>
-#include "device.h"
+#include "../api/device.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
 
@@ -56,6 +56,8 @@ namespace ospray {
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer);
+
+      MPI_Comm service;
     };
   }
 }

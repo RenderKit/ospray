@@ -2,9 +2,6 @@
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
 #include "localdevice.h"
-#if OSPRAY_MPI
-# include "mpidevice.h"
-#endif
 
 #if 1
 # define LOG(a) if (logLevel > 2) std::cout << "#ospray: " << a << std::endl;
@@ -17,6 +14,13 @@
 namespace ospray {
   using std::endl;
   using std::cout;
+
+#if OSPRAY_MPI
+  namespace api {
+    Device *createDevice_MPI(int *ac, const char **av);
+  }
+#endif
+
 
 #define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
     throw std::runtime_error("OSPRay not yet initialized "              \
@@ -35,7 +39,7 @@ namespace ospray {
     // etc to come.
     if (std::string(_av[1]) == "--mpi") {
 #if OSPRAY_MPI
-      ospray::api::Device::current = new ospray::api::MPIDevice(_ac,_av);
+      ospray::api::Device::current = ospray::api::createDevice_MPI(_ac,_av);
 #else
       throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif

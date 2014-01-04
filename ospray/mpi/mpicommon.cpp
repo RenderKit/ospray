@@ -1,9 +1,14 @@
 #include "mpicommon.h"
 
 namespace ospray {
-
-  void MPI::init(int *ac, const char **av)
-  {
-    MPI_Init(ac,av);
+  namespace MPI {
+    
+    void init(int *ac, const char **av)
+    {
+      PING;
+      MPI_Init(ac,(char ***)&av);
+      PING;
+    }
   }
+
 }

@@ -9,6 +9,11 @@
 namespace ospray {
   namespace api {
 
+    Device *createDevice_MPI(int *ac, const char **av)
+    {
+      return new MPIDevice(ac,av);
+    }
+
     MPIDevice::MPIDevice(int *_ac, const char **_av)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
@@ -18,6 +23,19 @@ namespace ospray {
         logLevel = 0;
 
       ospray::init(_ac,&_av);
+
+
+      MPI_Info info;
+      printf("creating info\n");
+      MPI_Info_create(&info);
+      const char *hostlist = "localhost";
+      MPI_Info_set(info,"host",(char*)hostlist); 
+      printf("Spawning!\n");
+
+      MPI_Comm_spawn("osp_mpi_worker", MPI_ARGV_NULL, 2,  
+                     info, 0, MPI_COMM_SELF, &service,  
+                     MPI_ERRCODES_IGNORE); 
+
     }
 
 

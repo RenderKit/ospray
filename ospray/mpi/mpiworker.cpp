@@ -1,6 +1,15 @@
 #include "../mpi/mpicommon.h"
 
+namespace ospray {
+  void MPIworker(int ac, const char **av)
+  {
+    PING;
+    MPI::init(&ac,av);
+    PING;
+  }
+}
+
 int main(int ac, const char **av)
 {
-  MPI::init(ac,av);
+  ospray::MPIworker(ac,av);
 }
