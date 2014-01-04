@@ -50,3 +50,17 @@ TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} osp_common${OSPRAY_LIB_SUFFIX
 
 ADD_SUBDIRECTORY(api)
 
+##################################################################
+# Code that is only included if MPI support is compiled in
+##################################################################
+IF (OSPRAY_MPI)
+	ADD_SUBDIRECTORY(mpi)
+	TARGET_LINK_LIBRARIES(osp_api${OSPRAY_LIB_SUFFIX} osp_mpi${OSPRAY_LIB_SUFFIX})
+ENDIF()
+
+
+
+
+
+
+
