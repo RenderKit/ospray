@@ -1,7 +1,10 @@
 #include "ospray/include/ospray/ospray.h"
-#include "localdevice.h"
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
+#include "localdevice.h"
+#if OSPRAY_MPI
+# include "mpidevice.h"
+#endif
 
 #if 1
 # define LOG(a) if (logLevel > 2) std::cout << "#ospray: " << a << std::endl;
@@ -30,7 +33,15 @@ namespace ospray {
 
     // we're only supporting local rendering for now - network device
     // etc to come.
-    ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
+    if (std::string(_av[1]) == "--mpi") {
+#if OSPRAY_MPI
+      ospray::api::Device::current = new ospray::api::MPIDevice(_ac,_av);
+#else
+      throw std::runtime_error("OSPRay MPI support not compiled in");
+#endif
+    } else {
+      ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
+    }
   }
 
   /*! destroy a given frame buffer. 

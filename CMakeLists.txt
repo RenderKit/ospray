@@ -8,6 +8,8 @@ ENDIF(COMMAND cmake_policy)
 SET(OSPRAY_ICC ON CACHE BOOL "Use Intel Compiler?")
 # whehter to build in MIC/xeon phi support
 SET(OSPRAY_MIC ON CACHE BOOL "Build OSPRay with MIC Support?")
+# whehter to build in MIC/xeon phi support
+SET(OSPRAY_MPI OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
 SET(OSPRAY_XEON_TARGET "AVX2" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 

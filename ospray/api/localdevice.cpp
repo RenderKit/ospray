@@ -40,7 +40,7 @@ namespace ospray {
     }
     
 
-      /*! map frame buffer */
+    /*! map frame buffer */
     const void *LocalDevice::frameBufferMap(OSPFrameBuffer fb)
     {
       Assert(fb != NULL);
@@ -155,7 +155,7 @@ namespace ospray {
       return (OSPCamera)camera;
     }
 
-      /*! call a renderer to render a frame buffer */
+    /*! call a renderer to render a frame buffer */
     void LocalDevice::renderFrame(OSPFrameBuffer _sc, 
                                   OSPRenderer    _renderer)
     {

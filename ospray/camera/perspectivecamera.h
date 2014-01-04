@@ -36,9 +36,9 @@ namespace ospray {
     // ------------------------------------------------------------------
     // the parameters we 'parsed' from our parameters
     // ------------------------------------------------------------------
-    vec3fa pos;
-    vec3fa dir;
-    vec3fa up;
+    vec3f  pos;
+    vec3f  dir;
+    vec3f  up;
     float  near;
     float  far;
     float  fovy;
@@ -47,9 +47,9 @@ namespace ospray {
     // ------------------------------------------------------------------
     // the internal data we preprocessed from our input parameters
     // ------------------------------------------------------------------
-    vec3fa dir_00; //!< the direction to point '(0.f,0.f)' on the image plane
-    vec3fa dir_du; //!< vector spanning x axis of image plane ((0,0)->(1,0))
-    vec3fa dir_dv; //!< vector spanning y axis of image plane ((0,0)->(0,1))
+    vec3f dir_00; //!< the direction to point '(0.f,0.f)' on the image plane
+    vec3f dir_du; //!< vector spanning x axis of image plane ((0,0)->(1,0))
+    vec3f dir_dv; //!< vector spanning y axis of image plane ((0,0)->(0,1))
 
     ::ispc::PerspectiveCamera_Data *ispcData;
   };
