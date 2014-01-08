@@ -15,7 +15,7 @@ namespace ospray {
   
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n(%s)\n", file, line, expr, expl);
+      fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", file, line, expr, expl);
     else
       fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
     abort();

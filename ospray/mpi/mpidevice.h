@@ -1,4 +1,4 @@
-#include <mpi.h>
+#include "mpicommon.h"
 #include "../api/device.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */

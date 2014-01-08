@@ -94,8 +94,13 @@ namespace ospray {
       void clear();
       /*! set parameter to a 'pointer to object' type, and given pointer */
       void set(ManagedObject *ptr);
-      /*! set parameter to vec3f value and type */
+      //! set parameter to a 'c-string' type 
+      /* \internal this function creates and keeps a *copy* of the passed string! */
+      void set(const char *s);
+      /*! set parameter to given float value and type */
       void set(const float v) { clear(); type = OSP_FLOAT; (float&)f = v; }
+      /*! set parameter to given int value and type */
+      void set(const int v) { clear(); type = OSP_INT; (int&)f = v; }
       /*! set parameter to vec3f value and type */
       void set(const vec3f &v) { clear(); type = OSP_vec3f; (vec3f&)f = v; }
       /*! storage for the various types this parameter could be */
@@ -105,6 +110,7 @@ namespace ospray {
         uint  ui[4]; 
         long  l;
         ManagedObject *ptr;
+        const char    *s;
       };
       /*! actual type of this parameter */
       OSPDataType type;
@@ -143,6 +149,7 @@ namespace ospray {
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
     float  getParamf (const char *name, const float valIfNotFound);
+    const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */
 
     std::vector<Param *> paramList; /*!< list of parameters attached

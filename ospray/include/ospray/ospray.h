@@ -19,6 +19,7 @@
 namespace osp {
   typedef embree::Vec2i  vec2i;
   typedef embree::Vec3f  vec3f;
+  typedef embree::Vec3i  vec3i;
   typedef embree::Vec3fa vec3fa;
 
   struct ManagedObject { unsigned long ID; virtual ~ManagedObject() {} };
@@ -28,6 +29,7 @@ namespace osp {
   struct Model        : public ManagedObject {};
   struct Data         : public ManagedObject {};
   struct Geometry     : public ManagedObject {};
+  struct Volume       : public ManagedObject {};
   struct TriangleMesh : public Geometry {};
 }
 
@@ -42,6 +44,8 @@ typedef enum {
 typedef enum {
   // object reference type
   OSP_OBJECT,
+  // c-string (zero-terminated char pointer)
+  OSP_STRING,
   // atomic types
   OSP_INT, 
   OSP_FLOAT, 
@@ -63,6 +67,7 @@ typedef osp::Camera        *OSPCamera;
 typedef osp::Model         *OSPModel;
 typedef osp::Data          *OSPData;
 typedef osp::Geometry      *OSPGeometry;
+typedef osp::Volume        *OSPVolume;
 typedef osp::TriangleMesh  *OSPTriangleMesh;
 typedef osp::ManagedObject *OSPObject;
 
@@ -85,6 +90,10 @@ extern "C" {
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */
   OSPCamera ospNewCamera(const char *type);
+
+  //! create a new volume of given type 
+  /*! return 'NULL' if that type is not known */
+  OSPVolume ospNewVolume(const char *type);
 
   //! create a new camera of given type.  
   /*! Currently supported camera types are "perspective" (\ref
@@ -133,6 +142,8 @@ extern "C" {
   // -------------------------------------------------------
   /*! \defgroup ospray_params Assigning parameters to objects */
   /*! @{ */
+  /*! add a c-string (zero-terminated char *) parameter to another object */
+  void ospSetString(OSPObject _object, const char *id, const char *s);
   /*! add a object-typed parameter to another object */
   void ospSetParam(OSPObject _object, const char *id, OSPObject object);
   /*! add a data array to another object */
@@ -141,8 +152,12 @@ extern "C" {
   void ospSetf(OSPObject _object, const char *id, float x);
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+  /*! add 3-int paramter to given object */
+  void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
   /*! add 3-float paramter to given object */
   void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+  /*! add 3-int paramter to given object */
+  void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
   /*! @} end of ospray_params */
 
   // -------------------------------------------------------

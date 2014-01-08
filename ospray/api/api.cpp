@@ -1,6 +1,7 @@
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
+#include "ospray/volume/volume.h"
 #include "localdevice.h"
 
 #if 1
@@ -34,18 +35,23 @@ namespace ospray {
     if (ospray::api::Device::current) 
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
-
-    // we're only supporting local rendering for now - network device
-    // etc to come.
-    if (std::string(_av[1]) == "--mpi") {
+    
+    if (_ac && _av) {
+      // we're only supporting local rendering for now - network device
+      // etc to come.
+      if (*_ac > 1 && std::string(_av[1]) == "--mpi") {
 #if OSPRAY_MPI
-      ospray::api::Device::current = ospray::api::createDevice_MPI(_ac,_av);
+        removeArgs(*_ac,(char **&)_av,1,1);
+        ospray::api::Device::current = ospray::api::createDevice_MPI(_ac,_av);
 #else
-      throw std::runtime_error("OSPRay MPI support not compiled in");
+        throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-    } else {
-      ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
+      }
     }
+    
+    // no device created on cmd line, yet, so default to localdevice
+    if (ospray::api::Device::current == NULL)
+      ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
   }
 
   /*! destroy a given frame buffer. 
@@ -158,6 +164,22 @@ namespace ospray {
     return camera;
   }
 
+  /*! \brief create a new volume of given type */
+  /*! \detailed return 'NULL' if that type is not known */
+  extern "C" OSPVolume ospNewVolume(const char *type)
+  {
+    ASSERT_DEVICE();
+    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    LOG("ospNewVolume(" << type << ")");
+    OSPVolume volume = ospray::api::Device::current->newVolume(type);
+    if (logLevel > 0)
+      if (volume) 
+        cout << "ospNewVolume: " << ((ospray::WrapperVolume*)volume)->toString() << endl;
+      else
+        std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
+    return volume;
+  }
+
   /*! \brief call a renderer to render given model into given framebuffer */
   /*! \detailed model _may_ be empty (though most framebuffers will expect one!) */
   extern "C" void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
@@ -175,10 +197,20 @@ namespace ospray {
     return ospray::api::Device::current->commit(object);
   }
 
+  extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setString(_object,id,s);
+  }
   extern "C" void ospSetf(OSPObject _object, const char *id, float x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
+  }
+  extern "C" void ospSeti(OSPObject _object, const char *id, int x)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setInt(_object,id,x);
   }
   /*! add a data array to another object */
   extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)
@@ -187,10 +219,22 @@ namespace ospray {
     ospray::api::Device::current->setVec3f(_object,id,v);
   }
   /*! add a data array to another object */
+  extern "C" void ospSetVec3i(OSPObject _object, const char *id, const vec3i &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec3i(_object,id,v);
+  }
+  /*! add a data array to another object */
   extern "C" void ospSet3f(OSPObject _object, const char *id, float x, float y, float z)
   {
     ASSERT_DEVICE();
     ospSetVec3f(_object,id,vec3f(x,y,z));
+  }
+  /*! add a data array to another object */
+  extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
+  {
+    ASSERT_DEVICE();
+    ospSetVec3i(_object,id,vec3f(x,y,z));
   }
 
 

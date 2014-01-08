@@ -213,6 +213,8 @@ namespace ospray {
 
     void Glut3DWidget::setTitle(const char *title) 
     {
+      Assert2(windowID >= 0,"must call Glut3DWidget::create() before calling setTitle()");
+      glutSetWindow(windowID);
       glutSetWindowTitle(title); 
     }
   

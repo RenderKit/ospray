@@ -2,8 +2,8 @@
 #define OSPCOMMON_IH 1
 
 typedef unsigned int8 uchar;
-typedef unsigned int uint;
-typedef unsigned int uint32;
+typedef unsigned int  uint;
+typedef unsigned int  uint32;
 
 #include "math/vec.ih"
 

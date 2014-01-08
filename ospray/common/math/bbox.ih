@@ -1,0 +1,19 @@
+/*! \file bbox.ih implements common bounding box functionality for ISPC */
+
+#ifndef OSPRAY_BBOX_ISPH
+#define OSPRAY_BBOX_ISPH
+
+#include "vec.ih"
+
+struct bbox3f { 
+  vec3f lower;
+  vec3f upper;
+};
+
+inline uniform bbox3f make_bbox3f(const uniform vec3f lo, const uniform vec3f hi)
+{ uniform bbox3f bb; bb.lower = lo; bb.upper = hi; return bb; }
+
+inline bbox3f make_bbox3f(const vec3f lo, const vec3f hi)
+{ bbox3f bb; bb.lower = lo; bb.upper = hi; return bb; }
+#endif
+

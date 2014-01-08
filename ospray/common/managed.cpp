@@ -9,10 +9,18 @@ namespace ospray {
     ptr  = object;
     type = OSP_OBJECT;
   }
+  void ManagedObject::Param::set(const char *str)
+  {
+    clear();
+    this->s  = strdup(str);
+    type     = OSP_STRING;
+  }
   void ManagedObject::Param::clear()
   {
     if (type == OSP_OBJECT && ptr)
       ptr->refDec();
+    if (type == OSP_STRING && ptr)
+      free(ptr);
     type = OSP_OBJECT;
     ptr = NULL;
   }
@@ -54,17 +62,9 @@ namespace ospray {
   define_getparam(vec3f, 3f,OSP_vec3f,f);
   define_getparam(vec3fa,3f,OSP_vec3f,f);
   define_getparam(float, f, OSP_FLOAT, f);
+  define_getparam(const char *, String, OSP_STRING, ptr);
 
-  // ManagedObject *ManagedObject::getParam(const char *name, 
-  //                                        ManagedObject *valIfNotFound)
-  // {
-  //   Param *param = findParam(name);
-  //   if (!param) 
-  //     return valIfNotFound;
-  //   if (param->type != OSP_OBJECT) 
-  //     return valIfNotFound;
-  //   return param->ptr;
-  // }
+#undef define_getparam
 
   /*! @} */
 

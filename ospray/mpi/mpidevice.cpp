@@ -22,20 +22,38 @@ namespace ospray {
       else
         logLevel = 0;
 
+      Assert2(_ac,"no params");
+      Assert2(*_ac > 1, "no service handle specified after '--mpi'");
+      const char *serviceSocket = strdup(_av[1]);
+      removeArgs(*_ac,(char**&)_av,1,1);
+
       ospray::init(_ac,&_av);
+      MPI::init(_ac,_av);
 
+      if (MPI::size !=1) {
+        if (MPI::rank == 0) {
+          throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
+        }
+        exit(1);
+      }
+      Assert(MPI::rank == 0);
+      Assert(MPI::size == 1);
+      
 
-      MPI_Info info;
-      printf("creating info\n");
-      MPI_Info_create(&info);
-      const char *hostlist = "localhost";
-      MPI_Info_set(info,"host",(char*)hostlist); 
-      printf("Spawning!\n");
+      // MPI_Info info;
+      // printf("creating info\n");
+      // MPI_Info_create(&info);
+      // const char *hostlist = "localhost";
+      // MPI_Info_set(info,"host",(char*)hostlist); 
+      // printf("Spawning!\n");
 
-      MPI_Comm_spawn("osp_mpi_worker", MPI_ARGV_NULL, 2,  
-                     info, 0, MPI_COMM_SELF, &service,  
-                     MPI_ERRCODES_IGNORE); 
+      // MPI_Comm_spawn("./ospray_mpi_worker", MPI_ARGV_NULL, 2,  
+      //                info, 0, MPI_COMM_SELF, &service,  
+      //                MPI_ERRCODES_IGNORE); 
 
+      std::cout << "MPI Device connecting to service at " << serviceSocket << std::endl;
+      MPI_Comm_connect((char*)serviceSocket,MPI_INFO_NULL,0,MPI_COMM_WORLD,
+                       &MPI::serviceComm);
     }
 
 

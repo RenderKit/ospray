@@ -6,7 +6,7 @@ namespace ospray {
   void TestRenderer::renderFrame(FrameBuffer *fb)
   {
     Assert(fb && "null frame buffer handle");
-    ispc__TestRenderer_renderFrame(fb->inISPC(),frameID++);
+    ispc__TestRenderer_renderFrame(fb->getIE(),frameID++);
   }
 
   OSP_REGISTER_RENDERER(TestRenderer,test_screen);

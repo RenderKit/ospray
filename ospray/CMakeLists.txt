@@ -26,8 +26,12 @@ ADD_SUBDIRECTORY(common)
 ISPC_COMPILE(${OSPRAY_TARGET} 
 	render/testrenderer.ispc
 	render/raycast.ispc
+	render/dvr.ispc
 	fb/localfb.ispc
 	camera/perspectivecamera.ispc
+	volume/volume.ispc
+	volume/bricked32.ispc
+	volume/naive32.ispc
 	)
 
 ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
@@ -41,6 +45,12 @@ ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
 	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
 	render/raycast.cpp
 	render/raycast.dev${OSPRAY_ISPC_SUFFIX}
+	render/dvr.cpp
+	render/dvr.dev${OSPRAY_ISPC_SUFFIX}
+	volume/volume.cpp
+	volume/volume.dev${OSPRAY_ISPC_SUFFIX}
+	volume/naive32.dev${OSPRAY_ISPC_SUFFIX}
+	volume/bricked32.dev${OSPRAY_ISPC_SUFFIX}
 	camera/camera.cpp
 	camera/perspectivecamera.cpp
 	camera/perspectivecamera.dev${OSPRAY_ISPC_SUFFIX}

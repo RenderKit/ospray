@@ -1,12 +1,9 @@
-/*! \file math.ih implements common math functionality for ISPC */
+/*! \file vec.ih implements common math/vector functionality for ISPC */
 
 #ifndef OSPRAY_VEC_ISPH
 #define OSPRAY_VEC_ISPH
 
 #include "math.ih"
-
-struct Foo {
-};
 
 #define __define_ispc_vector2(TYPE,ABB)         \
   struct vec2##ABB {                            \
@@ -59,6 +56,22 @@ __define_ispc_vector4(float,f);
 /*! defines all constructors "make_vec3[T]" and "make_vec3[T]a" for
   3-vector type */
 #define __define_ispc_constructors3(UV,TYPE,ABB,ITYPE,IABB)   \
+  inline UV vec3##ABB make_vec3##ABB(const UV ITYPE x)        \
+  {                                                           \
+    UV vec3##ABB ret;                                         \
+    ret.x = x;                                                \
+    ret.y = x;                                                \
+    ret.z = x;                                                \
+    return ret;                                               \
+  }                                                           \
+  inline UV vec3##ABB##a make_vec3##ABB##a(const UV ITYPE x)  \
+  {                                                           \
+    UV vec3##ABB##a ret;                                      \
+    ret.x = x;                                                \
+    ret.y = x;                                                \
+    ret.z = x;                                                \
+    return ret;                                               \
+  }                                                           \
   inline UV vec3##ABB make_vec3##ABB(const UV ITYPE x,        \
                                      const UV ITYPE y,        \
                                      const UV ITYPE z)        \
@@ -175,6 +188,21 @@ inline vec3f operator*(const float f, const vec3f v)
 { return make_vec3f(v.x*f,v.y*f,v.z*f); }
 
 // ------------------------------------------------------------------
+// vec4f * float
+// ------------------------------------------------------------------
+inline uniform vec4f operator*(const uniform vec4f &v, const uniform float f)
+{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+inline vec4f operator*(const vec4f &v, const float f)
+{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+// ------------------------------------------------------------------
+// float * vec4f
+// ------------------------------------------------------------------
+inline uniform vec4f operator*(const uniform float f, const uniform vec4f v)
+{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+inline vec4f operator*(const float f, const vec4f v)
+{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+
+// ------------------------------------------------------------------
 // operator '-'
 // ------------------------------------------------------------------
 inline vec3f operator-(const vec3f a, const vec3f b)               
@@ -191,6 +219,12 @@ inline vec3f operator+(const vec3f a, const vec3f b)
 inline uniform vec3f operator+(const uniform vec3f a,               
                                const uniform vec3f b)               
 { return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
+
+inline vec4f operator+(const vec4f a, const vec4f b)               
+{ return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
+inline uniform vec4f operator+(const uniform vec4f a,               
+                               const uniform vec4f b)               
+{ return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
 // ------------------------------------------------------------------
 // operator '*'
 // ------------------------------------------------------------------
@@ -239,7 +273,7 @@ inline vec3f normalize(const vec3f &v)
 
 
 // ------------------------------------------------------------------
-// vector functions (abs,...):
+// vector functions (abs,rcp,...):
 // ------------------------------------------------------------------
 /*! return vector of absolute values of input vector */
 inline uniform vec3f abs(const uniform vec3f v) 
@@ -247,6 +281,12 @@ inline uniform vec3f abs(const uniform vec3f v)
 /*! return vector of absolute values of input vector */
 inline vec3f abs(const vec3f v) 
 { return make_vec3f(abs(v.x),abs(v.y),abs(v.z)); }
+/*! return vector of reciprocals of input vector */
+inline uniform vec3f rcp(const uniform vec3f v) 
+{ return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
+/*! return vector of reciprocals of input vector */
+inline vec3f rcp(const vec3f v) 
+{ return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
 
 #endif
 

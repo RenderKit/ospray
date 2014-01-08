@@ -5,15 +5,15 @@
 #include "../fb/framebuffer.ih"
 #include "../camera/perspectivecamera.ih"
 #include "../common/ray.ih"
-#include "util.h"
+#include "util.ih"
 
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 
 // #define SHADE(ray,scene) shade_primID(ray)
 // #define SHADE(ray,scene) shade_Ng(ray)
-// #define SHADE(ray,scene) shade_eyeLight(ray)
-#define SHADE(ray,scene) shade_eyeLight_testShadow(ray,scene)
+#define SHADE(ray,scene) shade_eyeLight(ray)
+// #define SHADE(ray,scene) shade_eyeLight_testShadow(ray,scene)
 
 inline vec4f shade_Ng(const Ray &ray)
 { 
@@ -49,6 +49,10 @@ inline vec4f shade_eyeLight_testShadow(const Ray &ray, uniform RTCScene scene)
                     : .3f+.8f*abs(c));
 }
 
+//! render a line with ray casting; 
+/*! \internal this should eventually get moved to a tile-based
+  renderer (ideally with load balancer support for distributed
+  rendering), but right now lines is easier */
 task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
                                      uniform RTCScene scene,
                                      uniform Camera *uniform camera)
@@ -57,27 +61,11 @@ task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
   const uniform int size_y = fb->size.y;
   const uniform int y = taskIndex;
   foreach (x = 0...size_x) {
-    // const int ix = (x+frameID)%size_x;
-    // const int iy = (y+frameID)%size_y;
-    // const int iz = (x+y);
-    // const float fx = ((float)ix)/size_x;
-    // const float fy = ((float)iy)/size_y;
-    // const float fz = ((float)iz)/(size_x+size_y);
-    // const float fw = 1.f; //0.f;
-
     const float screen_u = (x+.5f)/size_x;
     const float screen_v = (y+.5f)/size_y;
-    // const vec3f ray_org
-    //   = camera->plane_org
-    //   + screen_u * camera->plane_du
-    //   + screen_v * camera->plane_dv;
-    // const vec3f ray_dir = camera->dir;
-    
     Ray ray;
     camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
-    // setRay(ray,ray_org,ray_dir);
-    // ISPC issue #703. Switch to 'nice' code once ISPC issue 703 is
-    // fixed.
+    // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
 #if 0
     rtcIntersect(scene,(varying RTCRay&)ray);
 #else
@@ -85,17 +73,7 @@ task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
 #endif
     
     const vec4f col = SHADE(ray,scene);
-// #if 0
-//     vec4f col = make_vec4f(make_random_color(ray.primID));
-// #else
-//     vec4f col = make_vec4f(0.f);
-//     if (ray.geomID >= 0) {
-//       col = shade_gNormal(ray);
-//       col = shade_gNormal(ray);
-//     }
-// #endif
-
-    fb->setPixel(fb,make_vec2i(x,y),col); //make_vec4f(fx,fy,fz,fw));
+    fb->setPixel(fb,make_vec2i(x,y),col);
   }
 }
 

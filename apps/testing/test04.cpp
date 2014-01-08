@@ -19,7 +19,6 @@ struct MainWindow : public Glut3DWidget {
   };
   virtual void reshape(const ospray::vec2i &newSize) 
   {
-    PING; PRINT(newSize);
     Glut3DWidget::reshape(newSize);
     if (fb) ospFreeFrameBuffer(fb);
     fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
@@ -28,7 +27,7 @@ struct MainWindow : public Glut3DWidget {
   virtual void display() 
   {
     if (!fb || !renderer) return;
-    
+
     fps.startRender();
     ospRenderFrame(fb,renderer);
     fps.doneRender();
@@ -56,7 +55,6 @@ int main(int ac, const char **av)
 {
   ospInit(&ac,av);
   ospray::glut3D::initGLUT(&ac,av);
-  rtcInit(NULL);
   MainWindow window;
   window.create("OSPRay glut3D viewer test app");
 

@@ -5,6 +5,7 @@
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
+#include "../volume/volume.h"
 
 namespace ospray {
   namespace api {
@@ -107,7 +108,29 @@ namespace ospray {
       return (OSPData)data;
     }
     
-    /*! assign (named) vec3f parameter to an object */
+    /*! assign (named) string parameter to an object */
+    void LocalDevice::setString(OSPObject _object, const char *bufName, const char *s)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      PING;
+      PRINT(bufName);
+      PRINT(s);
+
+      object->findParam(bufName,1)->set(s);
+    }
+    /*! assign (named) int parameter to an object */
+    void LocalDevice::setInt(OSPObject _object, const char *bufName, const int f)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(f);
+    }
+    /*! assign (named) float parameter to an object */
     void LocalDevice::setFloat(OSPObject _object, const char *bufName, const float f)
     {
       ManagedObject *object = (ManagedObject *)_object;
@@ -119,6 +142,15 @@ namespace ospray {
 
     /*! assign (named) vec3f parameter to an object */
     void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(v);
+    }
+    /*! assign (named) vec3i parameter to an object */
+    void LocalDevice::setVec3i(OSPObject _object, const char *bufName, const vec3i &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
@@ -150,9 +182,21 @@ namespace ospray {
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera LocalDevice::newCamera(const char *type)
     {
-      Assert(type != NULL && "invalid render type identifier");
+      Assert(type != NULL && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
       return (OSPCamera)camera;
+    }
+
+    /*! create a new volume object (out of list of registered volumes) */
+    OSPVolume LocalDevice::newVolume(const char *type)
+    {
+      Assert(type != NULL && "invalid volume type identifier");
+      /*! we don't have the volume interface fleshed out, yet, and
+        currently create the proper volume type on-the-fly during
+        commit, so use this wrpper thingy...  \see
+        volview_notes_on_volume_interface */
+      WrapperVolume *volume = new WrapperVolume; 
+      return (OSPVolume)volume;
     }
 
     /*! call a renderer to render a frame buffer */

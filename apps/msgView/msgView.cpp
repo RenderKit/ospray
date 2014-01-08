@@ -1,4 +1,5 @@
-/*! \file objView.cpp A GLUT-based viewer for Wavefront OBJ files */
+/*! \file msgView.cpp A GLUT-based viewer for simple geometry
+    (supports STL and Wavefront OBJ files) */
 
 // viewer widget
 #include "../util/glut3D/glut3D.h"
@@ -16,16 +17,19 @@ namespace ospray {
 
   void error(const std::string &msg)
   {
-    cout << "ospray::stlViewer fatal error : " << msg << endl;
+    cout << "ospray::msgView fatal error : " << msg << endl;
     cout << endl;
     cout << "Proper usage: " << endl;
-    cout << "  ./stlViewer <inFileName>" << endl;
+    cout << "  ./msgView <inFileName>" << endl;
     cout << endl;
     exit(1);
   }
 
   using ospray::glut3D::Glut3DWidget;
 
+  /*! mini scene graph viewer widget. \internal Note that all handling
+      of camera is almost exactly similar to the code in volView;
+      might make sense to move that into a common class! */
   struct MSGViewer : public Glut3DWidget {
     MSGViewer(OSPModel model) 
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
@@ -82,10 +86,11 @@ namespace ospray {
       ospUnmapFrameBuffer(ucharFB,fb);
     
       char title[1000];
-      sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
-              fps.getFPS());
-      setTitle(title);
-      forceRedraw();
+      
+      // sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
+      //         fps.getFPS());
+      // setTitle(title);
+      // forceRedraw();
     }
 
     OSPModel       model;
@@ -95,7 +100,7 @@ namespace ospray {
     ospray::glut3D::FPSCounter fps;
   };
 
-  void stlViewerMain(int &ac, const char **&av)
+  void msgViewMain(int &ac, const char **&av)
   {
     msgModel = new miniSG::Model;
 
@@ -205,5 +210,5 @@ int main(int ac, const char **av)
 {
   ospInit(&ac,av);
   ospray::glut3D::initGLUT(&ac,av);
-  ospray::stlViewerMain(ac,av);
+  ospray::msgViewMain(ac,av);
 }

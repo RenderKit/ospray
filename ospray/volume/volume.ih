@@ -1,0 +1,95 @@
+#ifndef _OSPRAY_VOLUME_IH
+#define _OSPRAY_VOLUME_IH
+
+/*! \file folume.ih 
+
+  \brief Common abstraction for anything 'volume' in OSPRay 
+
+  \internal Still _very_, very basic; needs fleshing out.
+ */
+
+#include "ospray/common/ospcommon.ih"
+
+struct Volume;
+typedef varying float (*Volume_lerpfFct)(uniform Volume *uniform volume,
+                                        const varying vec3f &queryPos);
+typedef varying float (*Volume_gradfFct)(uniform Volume *uniform volume,
+                                        varying vec3f &gradient,
+                                        const varying vec3f &queryPos);
+typedef void (*Volume_setRegionFct)(uniform Volume *uniform volume,
+                                    const uniform vec3i &begin,
+                                    const uniform vec3i &size,
+                                    const void *uniform dataPtr);
+typedef void (*Volume_getRegionFct)(uniform Volume *uniform volume,
+                                    const uniform vec3i &begin,
+                                    const uniform vec3i &size,
+                                    void *uniform dataPtr);
+
+/*! abstract base class for 3D volume data */
+struct Volume {
+  uniform vec3i size;
+  void *uniform data;
+  uniform int64 dataSize;
+
+  /*! value against which we will be clamping any sample position (ie,
+      'size-eps', where eps is chosen such that this is the biggest
+      representable float still smaller than the size value) */
+  vec3f clampSize;
+
+  Volume_setRegionFct setRegion;
+  Volume_getRegionFct getRegion;
+
+  /*! sample, with (tri-)linear interpolation */
+  Volume_lerpfFct     lerpf;
+  /*! compute trilinearly interpolate sample at position, as well as
+    gradient via discrete differences */
+  Volume_gradfFct     gradf;
+};
+typedef uniform Volume *VolumePtr;
+/* need this only because ISPC currently balks at 'export'ing
+   functions that return 'VolumePtr' types */
+typedef struct _Volume *uniform ExtVolumePtr;
+// ------------------------------------------------------------------
+// NAIVE volume format, with 32-bit addressing
+// ------------------------------------------------------------------
+
+#define __defineMethods(volType)                                        \
+  /*! create new 'naive' volume (plain z-order, no bricking etc). */    \
+  extern "C" {                                                          \
+    uniform VolumePtr volType##_create(uniform vec3i &size);            \
+  }                                                                     \
+  extern "C" {                                                          \
+    void volType##_setRegion(uniform VolumePtr volume,                  \
+                             const uniform vec3i &begin,                \
+                             const uniform vec3i &size,                 \
+                             void *uniform data);                       \
+  }                                                                     \
+  extern "C" {                                                          \
+    varying float volType##_lerpf(uniform VolumePtr volume,             \
+                                  const varying vec3f &queryPos);       \
+  }                                                                     \
+  extern "C" {                                                          \
+    varying float volType##_gradf(uniform VolumePtr volume,             \
+                                  varying vec3f &gradient,              \
+                                  const varying vec3f &queryPos);       \
+  }                                                                     \
+  
+__defineMethods(Naive32Volume1uc);
+__defineMethods(Naive32Volume1f);
+__defineMethods(BrickedVolume1uc);
+__defineMethods(BrickedVolume1f);
+
+#undef __defineMethods
+
+/*! helper function that determines the biggest representable float
+    smaller than the given integer. We use this to compute a clamp
+    value for each value that lets us compute a clamp value with which
+    we can clamp sample positions to the largest float position still
+    fully contained within the volume (ie, the maximum sample pos
+    that, when cast to integer voxel coordinates, still produces a
+    voxel coordinate inside the volume) */
+uniform float biggestFloatSmallerThan(const uniform int i);
+
+
+
+#endif

@@ -1,0 +1,24 @@
+/*! \page data_subdir ospray/data: The subdirectory for additional testing data
+
+  ospray/data can be used to include various data items such as SMALL
+  test cases.  Keep in mind that git keeps a copy of everything that
+  ever got added to a repo: even if it HAS been removed later from
+  what gets checked out it WILL nevertheless remain in the repo, and
+  WILL require disk space and downlaod bandwidth. Therefore, please do
+  NOT check in anything larger than a few kilobytes. Bigger data
+  should move to its own repo and/or data disk.
+
+  Currently included:
+
+<dl> 
+
+<dt>buckyball.raw</dt><dd> simple "bucky ball" test data set for
+testing the volume renderer. It's 32^3 entries of char (or: "uint8')
+type. Source: downloaded somewhere off the internet; to my knowledge
+this does not come with any copyrights,disclaimers, or anything of
+that sort.</dd>
+
+</dl>
+
+                                                \
+*/

@@ -8,9 +8,7 @@ namespace ispc {
 
 namespace ospray {
 
-
-  /*! \brief Implements a simple perspective camera (see \subpage perspective_camera)
-
+  /*!
     \page perspective_camera Perspective Camera ("perspective")
     
     A simple perspective camera. Supports the following 
@@ -24,6 +22,8 @@ namespace ospray {
     float    aspect; // aspect ratio (x/y)
     </pre>
   */
+
+  //! Implements a simple perspective camera (see \subpage perspective_camera)
   struct PerspectiveCamera : public Camera {
     /*! \brief constructor \internal also creates the ispc-side data structure */
     PerspectiveCamera();

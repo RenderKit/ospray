@@ -41,6 +41,11 @@ struct Ray {
   int geomID;  //!< geometry ID
   int primID;  //!< primitive ID
   int instID;  //!< instance ID
+
+
+  // -------------------------------------------------------
+  // END OF EMBREE LAYOUT - this is where we can add our own data
+  // -------------------------------------------------------
 };
 
 #define infinity (1e20f)
@@ -50,6 +55,9 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir)
 {
   ray.org = ray_org;
   ray.dir = ray_dir;
+  if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
+  if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
+  if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
   ray.t0  = 1e-6f;
   ray.t   = infinity;
   ray.time = 0.f;

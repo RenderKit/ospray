@@ -41,12 +41,18 @@ namespace ospray {
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags) = 0;
 
+      /*! assign (named) string parameter to an object */
+      virtual void setString(OSPObject object, const char *bufName, const char *s) = 0;
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject object, const char *bufName, OSPObject obj) = 0;
       /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f) = 0;
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v) = 0;
+      /*! assign (named) int parameter to an object */
+      virtual void setInt(OSPObject object, const char *bufName, const int f) = 0;
+      /*! assign (named) vec3i parameter to an object */
+      virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v) = 0;
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh() = 0;
@@ -56,6 +62,9 @@ namespace ospray {
 
       /*! create a new camera object (out of list of registered cameras) */
       virtual OSPCamera newCamera(const char *type) = 0;
+
+      /*! create a new volume object (out of list of registered volumes) */
+      virtual OSPVolume newVolume(const char *type) = 0;
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
