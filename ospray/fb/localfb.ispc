@@ -32,8 +32,8 @@ vec4f localfb_vec4f_getPixel(uniform FrameBuffer *uniform _fb,
   return pixel[coord.x+coord.y*fb->inherited.size.x];
 }
 
-export void *uniform ispc__createLocalFB_RGBA_F32(const uniform uint size_x,
-                                                  const uniform uint size_y,
+export void *uniform ispc__createLocalFB_RGBA_F32(const uniform uint32 size_x,
+                                                  const uniform uint32 size_y,
                                                   void *uniform cClassPtr,
                                                   void *uniform pixelPtr)
 {
@@ -50,9 +50,9 @@ export void *uniform ispc__createLocalFB_RGBA_F32(const uniform uint size_x,
 // =======================================================
 // vec4uc version of frame buffer 
 // =======================================================
-inline float extractUcharChannel(unsigned int pix, uniform const int shift)
+inline float extractUcharChannel(uint32 pix, uniform const int32 shift)
 {
-  unsigned int i = (pix >> shift) & 255;
+  uint32 i = (pix >> shift) & 255;
   return i * (1.f/255.f);
 }
 
@@ -81,7 +81,7 @@ void localfb_uint32_setPixel(uniform FrameBuffer *uniform _fb,
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
 
-  const uint ofs = coord.x+coord.y*fb->inherited.size.x;
+  const uint32 ofs = coord.x+coord.y*fb->inherited.size.x;
   pixel[ofs] = cvt_uint32(value);
 }
 
@@ -97,8 +97,8 @@ vec4f localfb_uint32_getPixel(uniform FrameBuffer *uniform _fb,
                     extractUcharChannel(pix,24));
 }
 
-export void *uniform ispc__createLocalFB_RGBA_I8(const uniform uint size_x,
-                                                 const uniform uint size_y,
+export void *uniform ispc__createLocalFB_RGBA_I8(const uniform uint32 size_x,
+                                                 const uniform uint32 size_y,
                                                  void *uniform cClassPtr,
                                                  void *uniform pixelPtr)
 {

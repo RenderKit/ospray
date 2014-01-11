@@ -18,7 +18,7 @@ namespace ospray {
     // glut event handlers
     // ------------------------------------------------------------------
 
-    void glut3dReshape( int x, int y )
+    void glut3dReshape(int32 x, int32 y)
     {
       if (Glut3DWidget::activeWindow) 
         Glut3DWidget::activeWindow->reshape(vec2i(x,y));
@@ -30,7 +30,7 @@ namespace ospray {
         Glut3DWidget::activeWindow->display();
     }
 
-    void glut3dKeyboard(unsigned char key, int x, int y)
+    void glut3dKeyboard(char key, int32 x, int32 y)
     {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->keypress(key,vec2i(x,y));
@@ -41,13 +41,13 @@ namespace ospray {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->idle();
     }
-    void glut3dMotionFunc(int x, int y)
+    void glut3dMotionFunc(int32 x, int32 y)
     {
       if (Glut3DWidget::activeWindow) 
         Glut3DWidget::activeWindow->motion(vec2i(x,y));
     }
 
-    void glut3dMouseFunc(int whichButton, int released, int x, int y)
+    void glut3dMouseFunc(int32 whichButton, int32 released, int32 x, int32 y)
     {
       if (Glut3DWidget::activeWindow) 
         Glut3DWidget::activeWindow->mouseButton(whichButton,released,vec2i(x,y));
@@ -83,7 +83,7 @@ namespace ospray {
     // ------------------------------------------------------------------
     // implementation of glut3d widget
     // ------------------------------------------------------------------
-    void Glut3DWidget::mouseButton(int whichButton, bool released, const vec2i &pos)
+    void Glut3DWidget::mouseButton(int32 whichButton, bool released, const vec2i &pos)
     {
     
       if (pos != currMousePos)
@@ -150,7 +150,7 @@ namespace ospray {
       switch (frameBufferMode) {
       case FRAMEBUFFER_UCHAR:
         if (ucharFB) delete[] ucharFB;
-        ucharFB = new unsigned int[newSize.x*newSize.y];
+        ucharFB = new uint32[newSize.x*newSize.y];
         break;
       case FRAMEBUFFER_FLOAT:
         if (floatFB) delete[] floatFB;
@@ -238,9 +238,9 @@ namespace ospray {
       glutMainLoop();
     }
 
-    void initGLUT(int *ac, const char **av)
+    void initGLUT(int32 *ac, const char **av)
     {
-      glutInit(ac,(char **)av);
+      glutInit(ac, (char **) av);
     }
 
     // ------------------------------------------------------------------
@@ -313,7 +313,7 @@ namespace ospray {
     }
 
 
-    void Manipulator::keypress(Glut3DWidget *widget, const int key) 
+    void Manipulator::keypress(Glut3DWidget *widget, const int32 key) 
     {
       if (key == 'Q') {
         exit(0);

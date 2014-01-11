@@ -28,7 +28,7 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::SwapChain"; }
 
     std::vector<Ref<FrameBuffer> > swapChain;
-    std::vector<long>              lastRendered;
+    std::vector<int64>             lastRendered;
     const vec2i                    fbSize;
     FrameBufferFactory             fbFactory;
     int                            frontBufferPos;

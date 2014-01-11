@@ -72,7 +72,7 @@ namespace ospray {
       ospRenderFrame(fb,renderer);
       fps.doneRender();
     
-      ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
+      ucharFB = (uint32 *) ospMapFrameBuffer(fb);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();
     

@@ -5,7 +5,7 @@
 #include "rtcore_scene.h"
 #include "rtcore_geometry.h"
 
-#define RTC_INVALID_ID INVALID_GEOMETRY_ID
+#define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
 namespace ospray {
   using std::cout;

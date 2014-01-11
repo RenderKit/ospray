@@ -99,9 +99,9 @@ namespace ospray {
       /*! storage for the various types this parameter could be */
       union {
         float f[4];
-        int   i[4];
-        uint  ui[4]; 
-        long  l;
+        int32 i[4];
+        uint32 ui[4]; 
+        int64  l;
         ManagedObject *ptr;
       };
       /*! actual type of this parameter */

@@ -13,8 +13,8 @@ namespace ospray {
     };
 
     struct Triangle {
-      uint v0, v1, v2;
-      uint materialID;
+      uint32 v0, v1, v2;
+      uint32 materialID;
     };
 
     /*! default triangle mesh layout */

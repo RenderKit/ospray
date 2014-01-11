@@ -11,7 +11,7 @@
 namespace ospray {
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
-  uint logLevel = 0;
+  uint32 logLevel = 0;
   
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)

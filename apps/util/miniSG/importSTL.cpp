@@ -9,7 +9,7 @@ namespace ospray {
     struct STLTriangle {
       vec3f normal;
       vec3f v0, v1, v2;
-      unsigned short attribute;
+      uint16 attribute;
     };
 
     void importSTL(Model &model,
@@ -18,10 +18,10 @@ namespace ospray {
       FILE *file = fopen(fileName.c_str(),"rb");
       if (!file) error("could not open input file");
       char header[80];
-      int rc = fread(header,1,80,file);
+      int32 rc = fread(header,1,80,file);
       if (rc < 80)
         error("could not read header");
-      int numTriangles;
+      int32 numTriangles;
       rc = fread(&numTriangles,sizeof(int),1,file);
       Assert(rc == 1 && "could not read num triangles from STL file");
       cout << "miniSG::importSTL: #tris="
@@ -31,7 +31,7 @@ namespace ospray {
 
       miniSG::Triangle triangle;
       STLTriangle stlTri;
-      for (int i=0;i<numTriangles;i++) {
+      for (int32 i=0 ; i < numTriangles ; i++) {
         rc = fread(&stlTri.normal,sizeof(stlTri.normal),1,file);
         Assert(rc == 1 && "partial or broken STL file!?");
         rc = fread(&stlTri.v0,sizeof(stlTri.v0),1,file);
