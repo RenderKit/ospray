@@ -101,7 +101,7 @@ namespace ospray {
       // sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
       //         fps.getFPS());
       // setTitle(title);
-      // forceRedraw();
+      forceRedraw();
     }
 
     std::string    fileName; /*! volume file name \see volview_notes_on_volume_interface */

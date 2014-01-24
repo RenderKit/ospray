@@ -1,5 +1,6 @@
 CONFIGURE_OSPRAY()
 CONFIGURE_MPI()
+
 ADD_LIBRARY(osp_mpi${OSPRAY_LIB_SUFFIX} SHARED
 	mpidevice.cpp
 	mpicommon.cpp
@@ -18,3 +19,4 @@ TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX}
 	osp_core${OSPRAY_LIB_SUFFIX}
 	${MPI_LIBRARIES}
 	)
+

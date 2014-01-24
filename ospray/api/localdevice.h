@@ -55,6 +55,9 @@ namespace ospray {
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type);
 
+      /*! create a new geometry object (out of list of registered geometrys) */
+      virtual OSPGeometry newGeometry(const char *type);
+
       /*! create a new camera object (out of list of registered cameras) */
       virtual OSPCamera newCamera(const char *type);
 

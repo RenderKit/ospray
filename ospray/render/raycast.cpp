@@ -25,5 +25,6 @@ namespace ospray {
   }
 
   OSP_REGISTER_RENDERER(RayCastRenderer,ray_cast);
+  OSP_REGISTER_RENDERER(RayCastRenderer,raycast);
 };
 

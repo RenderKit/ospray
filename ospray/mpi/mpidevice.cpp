@@ -11,7 +11,9 @@ namespace ospray {
 
     Device *createDevice_MPI(int *ac, const char **av)
     {
-      return new MPIDevice(ac,av);
+      Assert2(false,"MPI Device not yet implemented");
+      return NULL;
+      //      return new MPIDevice(ac,av);
     }
 
     MPIDevice::MPIDevice(int *_ac, const char **_av)

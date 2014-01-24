@@ -29,9 +29,11 @@ INCLUDE(cmake/doxygen.cmake)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
+ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
 	SET (OSPRAY_TARGET "MIC")
 	ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
+	ADD_SUBDIRECTORY(ospray builddir/modules/mic)
 ENDIF()
 
 ##############################################################

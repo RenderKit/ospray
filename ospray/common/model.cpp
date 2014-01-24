@@ -13,7 +13,9 @@ namespace ospray {
     cout << "=======================================================" << endl;
     cout << "Finalizing model, has " << geometry.size() << " geometries" << endl;
 
-    eScene = rtcNewScene(RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
+    eScene = rtcNewScene(
+                         //                         RTC_SCENE_COMPACT|
+                         RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
 #if OSPRAY_SPMD_WIDTH==16
                          RTC_INTERSECT1|RTC_INTERSECT16
 #elif OSPRAY_SPMD_WIDTH==8

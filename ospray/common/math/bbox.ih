@@ -10,6 +10,13 @@ struct bbox3f {
   vec3f upper;
 };
 
+struct bbox3fa { 
+  vec3f lower;
+  int32 align0;
+  vec3f upper;
+  int32 align1;
+};
+
 inline uniform bbox3f make_bbox3f(const uniform vec3f lo, const uniform vec3f hi)
 { uniform bbox3f bb; bb.lower = lo; bb.upper = hi; return bb; }
 

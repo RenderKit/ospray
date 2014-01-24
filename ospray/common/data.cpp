@@ -6,8 +6,10 @@ namespace ospray {
   {
     switch (type) {
     case OSP_OBJECT: return sizeof(Data *);
+    case OSP_FLOAT:  return sizeof(float);
     case OSP_vec2f:  return sizeof(vec2f);
     case OSP_vec3fa: return sizeof(vec3fa);
+    case OSP_vec3i:  return sizeof(vec3i);
     case OSP_vec4i:  return sizeof(vec4i);
     default: break;
     };

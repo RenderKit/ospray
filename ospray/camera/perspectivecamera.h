@@ -8,8 +8,9 @@ namespace ispc {
 
 namespace ospray {
 
-  /*!
-    \page perspective_camera Perspective Camera ("perspective")
+  /*! \page perspective_camera Perspective Camera ("perspective")
+
+    \ingroup builtin_cameras
     
     A simple perspective camera. Supports the following 
     <pre>

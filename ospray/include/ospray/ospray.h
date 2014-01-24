@@ -51,6 +51,7 @@ typedef enum {
   OSP_FLOAT, 
   // vector types
   OSP_vec2f,
+  OSP_vec3i,
   OSP_vec3f,
   OSP_vec3fa, 
   OSP_vec4i
@@ -86,6 +87,10 @@ extern "C" {
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
   OSPRenderer ospNewRenderer(const char *type);
+
+  //! create a new geometry of given type 
+  /*! return 'NULL' if that type is not known */
+  OSPGeometry ospNewGeometry(const char *type);
 
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */

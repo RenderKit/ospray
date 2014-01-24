@@ -179,6 +179,14 @@ namespace ospray {
       return (OSPRenderer)renderer;
     }
 
+    /*! create a new geometry object (out of list of registered geometrys) */
+    OSPGeometry LocalDevice::newGeometry(const char *type)
+    {
+      Assert(type != NULL && "invalid render type identifier");
+      Geometry *geometry = Geometry::createGeometry(type);
+      return (OSPGeometry)geometry;
+    }
+
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera LocalDevice::newCamera(const char *type)
     {

@@ -148,6 +148,22 @@ namespace ospray {
     return renderer;
   }
 
+  /*! \brief create a new geometry of given type */
+  /*! \detailed return 'NULL' if that type is not known */
+  extern "C" OSPGeometry ospNewGeometry(const char *type)
+  {
+    ASSERT_DEVICE();
+    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    LOG("ospNewGeometry(" << type << ")");
+    OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
+    if (logLevel > 0)
+      if (geometry) 
+        cout << "ospNewGeometry: " << ((ospray::Geometry*)geometry)->toString() << endl;
+      else
+        std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
+    return geometry;
+  }
+
   /*! \brief create a new camera of given type */
   /*! \detailed return 'NULL' if that type is not known */
   extern "C" OSPCamera ospNewCamera(const char *type)
@@ -185,7 +201,19 @@ namespace ospray {
   extern "C" void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
   {
     ASSERT_DEVICE();
+#if 1
+    double t0 = ospray::getSysTime();
     ospray::api::Device::current->renderFrame(fb,renderer);
+    double t_frame = ospray::getSysTime() - t0;
+    static double nom = 0.f;
+    static double den = 0.f;
+    den = 0.8f*den + 1.f;
+    nom = 0.8f*nom + t_frame;
+    std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
+#else
+    ospray::api::Device::current->renderFrame(fb,renderer);
+#endif
+
   }
 
   /*! add a data array to another object */

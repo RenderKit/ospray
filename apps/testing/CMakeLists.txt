@@ -25,9 +25,14 @@ ADD_EXECUTABLE(test03 test03.cpp test03.dev${OSPRAY_ISPC_SUFFIX})
 TARGET_LINK_LIBRARIES(test03 osp_glut3d)
 
 # ------------------------------------------------------------------
-# test02: opens a window, renders a simple test frame
+# test04: opens a window, renders a simple test frame
 # ------------------------------------------------------------------
 ADD_EXECUTABLE(test04 test04.cpp)
-LINK_DIRECTORIES(${OSPRAY_BINARY_DIR}/intel64/lib)
 TARGET_LINK_LIBRARIES(test04 osp_glut3d osp_api)
+
+# ------------------------------------------------------------------
+# test05: opens a window, renders (via raycast) a test arrow widget
+# ------------------------------------------------------------------
+ADD_EXECUTABLE(test05 test05.cpp)
+TARGET_LINK_LIBRARIES(test05 osp_glut3d osp_api)
 

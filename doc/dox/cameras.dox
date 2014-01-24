@@ -1,6 +1,7 @@
-/*! \page builtin_cameras OSPRay's Natively Supported Camera Types
+/*! \defgroup builtin_cameras OSPRay's Natively Supported Camera Types
 
-  Currently OSPRay supports the following cameras with the following parametersref
+  OSPRay natively supports the following camera (additional camera
+  types may be defined via plugins):
 
   <dl>
 
@@ -13,41 +14,16 @@
   <dt>"orthogonal"</dt><dd>A camera doing orthogonal projection to a
   specified plane (see \subpage orthogonal_projection_camera)</dd>
 
-
   <dt>"parallel"</dt><dd>A camera doing parallel projection to a
   specified plane (see \subpage parallel_projection_camera)</dd>
 
   </dl>
-
-  Of course, other parameter types may be loaded through modules.
 
   \internal The actual camera description (incl its parameters) is
   within the given C file containing this function's class definition.
   
 */
 
-/*! \page parallel_projection_camera Perspective Camera ("perspective")
-
-  A simple perspective camera. Supports the following 
-  <pre>
-  vec3f(a) plane_org;    // origin of plane to project to
-  vec3f(a) plane_du;     // vector spanning the x axis of the projection plane
-  vec3f(a) plane_dv;     // vector spanning the y axis of the projection plane
-                         // (not necessarily orthogonal to plane_du)
-  vec3f(a) proj_dir;     // vector in which direction we are projecting
-                         // (not necessarily orthogonal to plane_du or plane_dv)
-  float    near;   // camera near plane (not all renderers may support this!)
-  float    far;    // camera far plane (not all renderers may support this!)
-  </pre>
-  Note that the projection direction specifies the direction into which *object*
-  are projected; ie, it is the the exact opposite of the direction rays originating
-  from this camera are being shot.
-
-  plane_{org,du,dv} are spanning a 2D parallelogram that will be
-  mapped to the frame buffer; ie, logical point (0,0) on that plane
-  will be the lower-left pixel, while logical point (1,1) will
-  corresponds to the upper-right one.
-*/
 
 
 

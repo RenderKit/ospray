@@ -4,6 +4,7 @@
 namespace ospray {
   void ManagedObject::Param::set(ManagedObject *object)
   {
+    Assert2(this,"trying to set null parameter");
     clear();
     if (object) object->refInc();
     ptr  = object;
@@ -11,12 +12,14 @@ namespace ospray {
   }
   void ManagedObject::Param::set(const char *str)
   {
+    Assert2(this,"trying to set null parameter");
     clear();
     this->s  = strdup(str);
     type     = OSP_STRING;
   }
   void ManagedObject::Param::clear()
   {
+    Assert2(this,"trying to clear null parameter");
     if (type == OSP_OBJECT && ptr)
       ptr->refDec();
     if (type == OSP_STRING && ptr)

@@ -87,10 +87,10 @@ namespace ospray {
     
       char title[1000];
       
-      // sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
-      //         fps.getFPS());
-      // setTitle(title);
-      // forceRedraw();
+       sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
+               fps.getFPS());
+       setTitle(title);
+       forceRedraw();
     }
 
     OSPModel       model;

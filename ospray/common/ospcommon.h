@@ -10,7 +10,6 @@
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
 
-
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
   typedef unsigned char uchar;
