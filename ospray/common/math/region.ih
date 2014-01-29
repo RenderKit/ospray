@@ -1,0 +1,11 @@
+#ifndef OSPRAY_REGION_IH
+#define OSPRAY_REGION_IH 1
+
+#include "vec.ih"
+
+struct region2i {
+  vec2i lower;
+  vec2i upper;
+};
+
+#endif
