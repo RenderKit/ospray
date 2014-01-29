@@ -258,29 +258,22 @@ namespace ospray {
     /*! finalize a newly specified model */
     void MPIDevice::commit(OSPObject _object)
     {
-      NOTIMPLEMENTED;
-      // ManagedObject *object = (ManagedObject *)_object;
-      // Assert2(object,"null object in LocalDevice::commit()");
-      // object->commit();
-
-      // // hack, to stay compatible with earlier version
-      // Model *model = dynamic_cast<Model *>(object);
-      // if (model)
-      //   model->finalize();
+      Assert(_object);
+      cmd.newCommand(CMD_COMMIT);
+      const mpi::Handle handle = (const mpi::Handle&)_object;
+      cmd.send((const mpi::Handle&)_object);
+      cmd.flush();
     }
-    
     
     /*! add a new geometry to a model */
     void MPIDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
-      NOTIMPLEMENTED;
-      // Model *model = (Model *)_model;
-      // Assert2(model,"null model in MPIDevice::finalizeModel()");
-
-      // Geometry *geometry = (Geometry *)_geometry;
-      // Assert2(geometry,"null geometry in MPIDevice::finalizeGeometry()");
-
-      // model->geometry.push_back(geometry);
+      Assert(_model);
+      Assert(_geometry);
+      cmd.newCommand(CMD_ADD_GEOMETRY);
+      cmd.send((const mpi::Handle &)_model);
+      cmd.send((const mpi::Handle &)_geometry);
+      cmd.flush();
     }
 
     /*! create a new data buffer */
@@ -300,11 +293,19 @@ namespace ospray {
     /*! create a new data buffer */
     OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
-      NOTIMPLEMENTED;
-      // Assert2(flags == 0,"unsupported combination of flags");
-      // Data *data = new Data(nitems,format,init,flags);
-      // data->refInc();
-      // return (OSPData)(int64)data;
+      mpi::Handle handle = mpi::Handle::alloc();
+      cmd.newCommand(CMD_NEW_DATA);
+      cmd.send(handle);
+      cmd.send(nitems);
+      cmd.send((int32)format);
+      cmd.send(flags);
+      size_t size = init?ospray::sizeOf(format)*nitems:0;
+      cmd.send(size);
+      if (init) {
+        cmd.send(init,size);
+      }
+      cmd.flush();
+      return (OSPData)(int64)handle;
     }
     
     
@@ -326,12 +327,13 @@ namespace ospray {
     /*! assign (named) float parameter to an object */
     void MPIDevice::setFloat(OSPObject _object, const char *bufName, const float f)
     {
-      NOTIMPLEMENTED;
-      // ManagedObject *object = (ManagedObject *)_object;
-      // Assert(object != NULL  && "invalid object handle");
-      // Assert(bufName != NULL && "invalid identifier for object parameter");
+      Assert(_object);
+      Assert(bufName);
 
-      // object->findParam(bufName,1)->set(f);
+      cmd.newCommand(CMD_SET_FLOAT);
+      cmd.send((const mpi::Handle &)_object);
+      cmd.send(bufName);
+      cmd.send(f);
     }
 
     /*! assign (named) int parameter to an object */
@@ -348,12 +350,13 @@ namespace ospray {
     /*! assign (named) vec3f parameter to an object */
     void MPIDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
     {
-      NOTIMPLEMENTED;
-      // ManagedObject *object = (ManagedObject *)_object;
-      // Assert(object != NULL  && "invalid object handle");
-      // Assert(bufName != NULL && "invalid identifier for object parameter");
+      Assert(_object);
+      Assert(bufName);
 
-      // object->findParam(bufName,1)->set(v);
+      cmd.newCommand(CMD_SET_VEC3F);
+      cmd.send((const mpi::Handle &)_object);
+      cmd.send(bufName);
+      cmd.send(v);
     }
 
     /*! assign (named) vec3i parameter to an object */
@@ -370,14 +373,16 @@ namespace ospray {
     /*! assign (named) data item as a parameter to an object */
     void MPIDevice::setObject(OSPObject _target, const char *bufName, OSPObject _value)
     {
-      NOTIMPLEMENTED;
-      // ManagedObject *target = (ManagedObject *)_target;
-      // ManagedObject *value  = (ManagedObject *)_value;
+      Assert(_target != NULL);
+      Assert(bufName != NULL);
+      const mpi::Handle tgtHandle = (const mpi::Handle&)_target;
+      const mpi::Handle valHandle = (const mpi::Handle&)_value;
 
-      // Assert(target != NULL  && "invalid target object handle");
-      // Assert(bufName != NULL && "invalid identifier for object parameter");
-
-      // target->setParam(bufName,value);
+      cmd.newCommand(CMD_SET_OBJECT);
+      cmd.send(tgtHandle);
+      cmd.send(bufName);
+      cmd.send(valHandle);
+      cmd.flush();
     }
 
       /*! create a new renderer object (out of list of registered renderers) */
@@ -397,10 +402,15 @@ namespace ospray {
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera MPIDevice::newCamera(const char *type)
     {
-      NOTIMPLEMENTED;
-      // Assert(type != NULL && "invalid render type identifier");
-      // Camera *camera = Camera::createCamera(type);
-      // return (OSPCamera)(int64)camera;
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+
+      cmd.newCommand(CMD_NEW_CAMERA);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPCamera)(int64)handle;
     }
 
     /*! create a new volume object (out of list of registered volumes) */

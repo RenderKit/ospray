@@ -53,7 +53,10 @@ namespace ospray {
 #define AssertError(errMsg)                     \
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 
+  /*! logging level (cmdline: --osp:loglevel <n>) */
   extern uint logLevel;
+  /*! whether we're running in debug mode (cmdline: --osp:debug) */
+  extern bool debugMode;
 }
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");

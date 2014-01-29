@@ -17,14 +17,30 @@ namespace ospray {
         int rc = MPI_Bcast(&tag,1,MPI_INT,MPI_ROOT,mpi::worker.comm); 
         Assert(rc == MPI_SUCCESS); 
       }
+      inline void send(const void *data, const size_t size)
+      {
+        Assert(data);
+        int rc = MPI_Bcast((void*)data,size,MPI_BYTE,MPI_ROOT,mpi::worker.comm);
+        Assert(rc == MPI_SUCCESS); 
+      }
       inline void send(int32 i)
       { 
         int rc = MPI_Bcast(&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);
         Assert(rc == MPI_SUCCESS); 
       }
+      inline void send(size_t i)
+      { 
+        int rc = MPI_Bcast(&i,1,MPI_LONG,MPI_ROOT,mpi::worker.comm);
+        Assert(rc == MPI_SUCCESS); 
+      }
       inline void send(const vec2i &v)
       { 
         int rc = MPI_Bcast((void*)&v,2,MPI_INT,MPI_ROOT,mpi::worker.comm);
+        Assert(rc == MPI_SUCCESS); 
+      }
+      inline void send(const vec3f &v)
+      { 
+        int rc = MPI_Bcast((void*)&v,3,MPI_FLOAT,MPI_ROOT,mpi::worker.comm);
         Assert(rc == MPI_SUCCESS); 
       }
       inline void send(uint32 i)
@@ -57,6 +73,26 @@ namespace ospray {
         Assert(rc == MPI_SUCCESS); 
         return v; 
       }
+      inline size_t get_size_t() 
+      { 
+        int64 v; 
+        int rc = MPI_Bcast(&v,1,MPI_LONG,0,mpi::app.comm); 
+        Assert(rc == MPI_SUCCESS); 
+        return v; 
+      }
+      inline size_t get_data(void *&pointer) 
+      { 
+        int64 size; 
+        int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm); 
+        Assert(rc == MPI_SUCCESS); 
+        if (size == 0) pointer = NULL; 
+        else {
+          pointer = malloc(size);
+          int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
+          Assert(rc == MPI_SUCCESS); 
+        }
+        return size; 
+      }
       inline Handle get_handle() 
       { 
         Handle v; 
@@ -68,6 +104,13 @@ namespace ospray {
       { 
         vec2i v; 
         int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm); 
+        Assert(rc == MPI_SUCCESS); 
+        return v; 
+      }
+      inline vec3f get_vec3f() 
+      { 
+        vec3f v; 
+        int rc = MPI_Bcast(&v,3,MPI_FLOAT,0,mpi::app.comm); 
         Assert(rc == MPI_SUCCESS); 
         return v; 
       }

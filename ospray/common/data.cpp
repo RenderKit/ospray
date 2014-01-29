@@ -2,7 +2,7 @@
 #include <sstream>
 
 namespace ospray {
-  inline size_t sizeOf(OSPDataType type)
+  size_t sizeOf(OSPDataType type)
   {
     switch (type) {
     case OSP_OBJECT: return sizeof(Data *);

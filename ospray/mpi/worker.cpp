@@ -4,6 +4,7 @@
 #include "../fb/swapchain.h"
 #include "../common/model.h"
 #include "../common/data.h"
+#include "../common/model.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
@@ -25,6 +26,14 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av)
     {
       ospray::init(_ac,&_av);
+      // initialize embree. (we need to do this here rather than in
+      // ospray::init() because in mpi-mode the latter is also called
+      // in the host-stubs, where it shouldn't.
+      std::stringstream embreeConfig;
+      if (debugMode)
+        embreeConfig << " threads=1";
+      rtcInit(embreeConfig.str().c_str());
+      assert(rtcGetError() == RTC_NO_ERROR);
 
       CommandStream cmd;
 
@@ -48,6 +57,17 @@ namespace ospray {
           cmd.free(type);
           Assert(renderer);
           handle.assign(renderer);
+        } break;
+        case api::MPIDevice::CMD_NEW_CAMERA: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            cout << "creating new camera \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          Camera *camera = Camera::createCamera(type);
+          cmd.free(type);
+          Assert(camera);
+          handle.assign(camera);
+          cout << "#w: new camera " << handle << endl;
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
           const mpi::Handle handle = cmd.get_handle();
@@ -93,12 +113,74 @@ namespace ospray {
           Model *model = new Model;
           Assert(model);
           handle.assign(model);
+          cout << "#w: new model " << handle << endl;
         } break;
         case api::MPIDevice::CMD_NEW_TRIANGLEMESH: {
           const mpi::Handle handle = cmd.get_handle();
           TriangleMesh *triangleMesh = new TriangleMesh;
           Assert(triangleMesh);
           handle.assign(triangleMesh);
+        } break;
+        case api::MPIDevice::CMD_NEW_DATA: {
+          const mpi::Handle handle = cmd.get_handle();
+          Data *data = NULL;
+          size_t nitems      = cmd.get_size_t();
+          OSPDataType format = (OSPDataType)cmd.get_int32();
+          int flags          = cmd.get_int32();
+          void *init = NULL;
+          size_t nbytes = cmd.get_data(init);
+          data = new Data(nitems,format,init,flags);
+          Assert(data);
+          handle.assign(data);
+        } break;
+        case api::MPIDevice::CMD_ADD_GEOMETRY: {
+          const mpi::Handle modelHandle = cmd.get_handle();
+          const mpi::Handle geomHandle = cmd.get_handle();
+          Model *model = (Model*)modelHandle.lookup();
+          Assert(model);
+          Geometry *geom = (Geometry*)geomHandle.lookup();
+          Assert(geom);
+          model->geometry.push_back(geom);
+        } break;
+        case api::MPIDevice::CMD_COMMIT: {
+          const mpi::Handle handle = cmd.get_handle();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          cout << "#w: committing " << handle << " " << obj->toString() << endl;
+          obj->commit();
+
+          // hack, to stay compatible with earlier version
+          Model *model = dynamic_cast<Model *>(obj);
+          if (model)
+            model->finalize();
+
+        } break;
+        case api::MPIDevice::CMD_SET_OBJECT: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const mpi::Handle val = cmd.get_handle();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->setParam(name,val.lookup());
+          cmd.free(name);
+        } break;
+        case api::MPIDevice::CMD_SET_FLOAT: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const float val = cmd.get_float();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
+        case api::MPIDevice::CMD_SET_VEC3F: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const vec3f val = cmd.get_vec3f();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
         } break;
         default: 
           std::stringstream err;

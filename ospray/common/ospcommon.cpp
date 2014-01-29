@@ -12,7 +12,8 @@ namespace ospray {
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
   uint logLevel = 0;
-  
+  bool debugMode = false;
+
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)
       fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", file, line, expr, expl);
@@ -30,25 +31,19 @@ namespace ospray {
   {
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
-    bool debugMode = false;
+    debugMode = false;
     for (int i=1;i<ac;) {
       std::string parm = av[i];
       if (parm == "--osp:debug") {
         debugMode = true;
         removeArgs(ac,av,i,1);
+      } else if (parm == "--osp:loglevel") {
+        logLevel = atoi(av[i+1]);
+        removeArgs(ac,av,i,2);
       } else {
         ++i;
       }
     }
-
-    // initialize embree:
-    std::stringstream embreeConfig;
-    if (debugMode)
-      embreeConfig << " threads=1";
-    PING;
-    rtcInit(embreeConfig.str().c_str());
-    PING;
-    assert(rtcGetError() == RTC_NO_ERROR);
 
     // if (debugMode) {
     //   embree::rtcStartThreads(0);

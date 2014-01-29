@@ -20,7 +20,7 @@ namespace ospray {
       inline Handle &operator=(const Handle &other) { i64=other.i64; return *this; }
 
       union {
-        struct { int32 owner; int32 ID; } i32;
+        struct { int32 ID; int32 owner; } i32;
         int64 i64;
       };
 
