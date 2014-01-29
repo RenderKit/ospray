@@ -7,6 +7,7 @@ namespace ospray {
   void LocalTiledLoadBalancer::renderFrame(TileRenderer *tiledRenderer,
                                            FrameBuffer *fb)
   {
+    // PING;
     Assert(tiledRenderer);
     Tile tile;
     tile.fbSize = fb->size;
@@ -16,11 +17,11 @@ namespace ospray {
       for (int x0=0;x0<fb->size.x;x0+=TILE_SIZE) {
         tile.region.lower.x = x0;
         tile.region.upper.x = std::min(x0+TILE_SIZE,fb->size.x);
-        // PING; 
-        // PRINT(tile.region.lower);
         tiledRenderer->renderTile(tile);
-        //fb->setTile(tile);
+        fb->setTile(tile);
       }
+      // PING;
     }
+    // PING;
   }
 }

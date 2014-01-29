@@ -32,4 +32,11 @@ namespace ospray {
     }
     return (*creator)();
   }
+
+  void TileRenderer::renderFrame(FrameBuffer *fb)
+  {
+    LocalTiledLoadBalancer lb;
+    lb.renderFrame(this,fb);
+  }
+  
 };

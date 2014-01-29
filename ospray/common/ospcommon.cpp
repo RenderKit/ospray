@@ -43,8 +43,8 @@ namespace ospray {
 
     // initialize embree:
     std::stringstream embreeConfig;
-    // if (debugMode)
-    //   embreeConfig << " threads=1";
+    if (debugMode)
+      embreeConfig << " threads=1";
     PING;
     rtcInit(embreeConfig.str().c_str());
     PING;

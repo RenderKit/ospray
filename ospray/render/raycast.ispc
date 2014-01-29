@@ -103,6 +103,7 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
     const uint frag = i*programCount+programIndex;
     const uint  x     = x0 + (frag % TILE_SIZE);
     const uint  y     = y0 + (frag / TILE_SIZE);
+    // print("frag % x y % %\n",frag,x,y);
     if (x < size_x & y < size_y) {
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
@@ -117,11 +118,13 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
 #endif
       
       const vec4f col = SHADE(ray,scene);
-      tile->r[frag] = col.x;
-      tile->g[frag] = col.y;
-      tile->b[frag] = col.z;
-      tile->a[frag] = col.w;
-      tile->z[frag] = ray.t;
+#if 1
+      tile->r[i] = col.x;
+      tile->g[i] = col.y;
+      tile->b[i] = col.z;
+      tile->a[i] = col.w;
+      tile->z[i] = ray.t;
+#endif
     }
   }
 }

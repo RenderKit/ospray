@@ -213,7 +213,6 @@ namespace ospray {
 #else
     ospray::api::Device::current->renderFrame(fb,renderer);
 #endif
-
   }
 
   /*! add a data array to another object */

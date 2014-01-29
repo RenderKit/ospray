@@ -17,13 +17,8 @@ namespace ospray {
   };
 
   struct TileRenderer : public Renderer {
-    // virtual void renderQuad(Quad &quad) = 0;
     virtual void renderTile(Tile &tile) = 0;
-    virtual void renderFrame(FrameBuffer *fb)
-    {
-      LocalTiledLoadBalancer lb;
-      lb.renderFrame(this,fb);
-    }
+    virtual void renderFrame(FrameBuffer *fb);
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under
