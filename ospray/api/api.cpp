@@ -201,7 +201,7 @@ namespace ospray {
   extern "C" void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
   {
     ASSERT_DEVICE();
-#if 1
+#if 0
     double t0 = ospray::getSysTime();
     ospray::api::Device::current->renderFrame(fb,renderer);
     double t_frame = ospray::getSysTime() - t0;
