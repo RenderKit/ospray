@@ -65,22 +65,22 @@ namespace ospray {
     {
       if (!fb || !renderer) return;
 
-#if 1
-      if (!msgAnimation.empty()) {
-        static int curFrameID = -1;
+// #if 1
+//       if (!msgAnimation.empty()) {
+//         static int curFrameID = -1;
 
-        if (curFrameID == -1) {
-          rtcDeleteGeometry(
-        }
+//         if (curFrameID == -1) {
+//           rtcDeleteGeoe
+//         }
 
-        float t_frame = .4f;
-        double t0 = ospray::getSysTime();
-        int frameID = (unsigned long)(t0 / t_frame) % msgAnimation.size();
-        if (frameID != curFrameID) {
-          curFrameID = frameID;
-        }
-      }
-#endif
+//         float t_frame = .4f;
+//         double t0 = ospray::getSysTime();
+//         int frameID = (unsigned long)(t0 / t_frame) % msgAnimation.size();
+//         if (frameID != curFrameID) {
+//           curFrameID = frameID;
+//         }
+//       }
+// #endif
 
 
       if (viewPort.modified) {
@@ -98,7 +98,9 @@ namespace ospray {
       ospRenderFrame(fb,renderer);
     
       ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
-      fps.doneRender();
+      fps.doneRender(); // _after_ mapbuffer because remote rendering
+                        // will receive fb only in mapfb()
+
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();
     
