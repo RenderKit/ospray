@@ -92,6 +92,9 @@ namespace ospray {
     /*! import a STL file, and add it to the specified model */
     void importSTL(Model &model, const embree::FileName &fileName);
 
+    /*! import a list of STL files */
+    void importSTL(std::vector<Model *> &animation, const embree::FileName &fileName);
+
     /*! import a MiniSG MSG file, and add it to the specified model */
     void importMSG(Model &model, const embree::FileName &fileName);
 

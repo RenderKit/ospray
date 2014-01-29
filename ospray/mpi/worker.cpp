@@ -26,7 +26,7 @@ namespace ospray {
     {
       ospray::init(_ac,&_av);
 
-      MPICommandStream cmd;
+      CommandStream cmd;
 
       char hostname[HOST_NAME_MAX];
       gethostname(hostname,HOST_NAME_MAX);
@@ -40,17 +40,17 @@ namespace ospray {
         usleep(10000);
         switch (command) {
         case api::MPIDevice::CMD_NEW_RENDERER: {
-          const ID_t handle = cmd.get_int32();
+          const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             cout << "creating new renderer \"" << type << "\" ID " << handle << endl;
           Renderer *renderer = Renderer::createRenderer(type);
           cmd.free(type);
           Assert(renderer);
-          mpi::objectByID[handle] = renderer;
+          handle.assign(renderer);
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
-          const ID_t   handle = cmd.get_int32();
+          const mpi::Handle handle = cmd.get_handle();
           const vec2i  size   = cmd.get_vec2i();
           const int32  mode   = cmd.get_int32();
           const size_t swapChainDepth = cmd.get_int32();
@@ -63,22 +63,22 @@ namespace ospray {
             AssertError("frame buffer mode not yet supported");
           } 
           SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
-          mpi::objectByID[handle] = sc;
+          handle.assign(sc);
           Assert(sc != NULL);
         } break;
         case api::MPIDevice::CMD_RENDER_FRAME: {
-          const ID_t swapChainID = cmd.get_int32();
-          const ID_t rendererID  = cmd.get_int32();
-          SwapChain *sc = (SwapChain*)mpi::objectByID[swapChainID].ptr;
+          const mpi::Handle  swapChainHandle = cmd.get_handle();
+          const mpi::Handle  rendererHandle  = cmd.get_handle();
+          SwapChain *sc = (SwapChain*)swapChainHandle.lookup();
           Assert(sc);
-          Renderer *renderer = (Renderer*)mpi::objectByID[rendererID].ptr;
+          Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
           renderer->renderFrame(sc->getBackBuffer());
           sc->advance();
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_MAP: {
-          const ID_t scID = cmd.get_int32();
-          SwapChain *sc = (SwapChain*)mpi::objectByID[scID].ptr;
+          const mpi::Handle handle = cmd.get_handle();
+          SwapChain *sc = (SwapChain*)handle.lookup();
           Assert(sc);
           if (worker.rank == 0) {
             // FrameBuffer *fb = sc->getBackBuffer();
@@ -87,6 +87,18 @@ namespace ospray {
             Assert(rc == MPI_SUCCESS);
             sc->unmap(ptr);
           }
+        } break;
+        case api::MPIDevice::CMD_NEW_MODEL: {
+          const mpi::Handle handle = cmd.get_handle();
+          Model *model = new Model;
+          Assert(model);
+          handle.assign(model);
+        } break;
+        case api::MPIDevice::CMD_NEW_TRIANGLEMESH: {
+          const mpi::Handle handle = cmd.get_handle();
+          TriangleMesh *triangleMesh = new TriangleMesh;
+          Assert(triangleMesh);
+          handle.assign(triangleMesh);
         } break;
         default: 
           std::stringstream err;

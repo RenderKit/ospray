@@ -40,24 +40,9 @@ namespace ospray {
                                            FrameBuffer *fb)
   {
     Assert(tiledRenderer);
-#if 1
     size_t numTiles = divRoundUp(fb->size.x,TILE_SIZE)*divRoundUp(fb->size.y,TILE_SIZE);
     RenderTileTask *renderTask = new RenderTileTask(numTiles,this,tiledRenderer,fb);
     TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, renderTask); //&task_renderTiles)
     renderTask->eventSync.sync();
-#else
-    Tile tile;
-    tile.fbSize = fb->size;
-    for (int y0=0;y0<fb->size.y;y0+=TILE_SIZE) {
-      tile.region.lower.y = y0;
-      tile.region.upper.y = std::min(y0+TILE_SIZE,fb->size.y);
-      for (int x0=0;x0<fb->size.x;x0+=TILE_SIZE) {
-        tile.region.lower.x = x0;
-        tile.region.upper.x = std::min(x0+TILE_SIZE,fb->size.x);
-        tiledRenderer->renderTile(tile);
-        fb->setTile(tile);
-      }
-    }
-#endif
   }
 }

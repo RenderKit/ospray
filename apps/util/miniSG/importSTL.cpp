@@ -12,6 +12,24 @@ namespace ospray {
       unsigned short attribute;
     };
 
+    /*! import a list of STL files */
+    void importSTL(std::vector<Model *> &animation, const embree::FileName &fileName)
+    {
+      FILE *file = fopen(fileName.c_str(),"r");
+      if (!file) error("could not open input file");
+      char line[10000];
+      while (fgets(line,10000,file) && !feof(file)) {
+        char *eol = strstr(line,"\n");
+        if (eol) *eol = 0;
+        Model *model = new Model;
+        animation.push_back(model);
+        importSTL(*model,line);
+      }
+      cout << "done importing STL animation; found " 
+           << animation.size() << " time steps" << endl;
+      fclose(file);
+    }
+
     void importSTL(Model &model,
                    const embree::FileName &fileName)
     {

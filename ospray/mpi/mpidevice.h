@@ -1,28 +1,17 @@
 #include "mpicommon.h"
 #include "../api/device.h"
 #include "command.h"
-#include <map>
 #include "common/managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
 
 namespace ospray {
-  namespace mpi {
-    typedef uint32 ID_t;
-    static const uint32 INVALID_ID = 0;
-    extern ID_t nextFreeID;
-
-    inline ID_t allocID() { return ++nextFreeID; }
-
-    extern std::map<ID_t,Ref<ospray::ManagedObject> > objectByID;
-  }
-
   namespace api {
 
     struct MPIDevice : public Device {
-      typedef ospray::MPICommandStream CommandStream;
+      typedef ospray::mpi::CommandStream CommandStream;
 
-      MPICommandStream cmd;
+      CommandStream cmd;
 
       enum {
         CMD_NEW_RENDERER=0,
@@ -30,6 +19,8 @@ namespace ospray {
         CMD_RENDER_FRAME,
         CMD_FRAMEBUFFER_MAP,
         CMD_FRAMEBUFFER_UNMAP,
+        CMD_NEW_MODEL,
+        CMD_NEW_TRIANGLEMESH,
         CMD_USER
       } CommandTag;
 

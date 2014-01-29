@@ -14,6 +14,7 @@ namespace ospray {
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
+  std::vector<miniSG::Model *> msgAnimation;
 
   void error(const std::string &msg)
   {
@@ -63,6 +64,19 @@ namespace ospray {
     virtual void display() 
     {
       if (!fb || !renderer) return;
+
+#if 1
+      if (!msgAnimation.empty()) {
+        static int curFrameID = -1;
+        float t_frame = .4f;
+        double t0 = ospray::getSysTime();
+        int frameID = (unsigned long)(t0 / t_frame) % msgAnimation.size();
+        if (frameID != curFrameID) {
+          curFrameID = frameID;
+        }
+      }
+#endif
+
 
       if (viewPort.modified) {
         Assert2(camera,"ospray camera is null");
@@ -121,6 +135,8 @@ namespace ospray {
           miniSG::importMSG(*msgModel,fn);
         else if (fn.ext() == "obj")
           miniSG::importOBJ(*msgModel,fn);
+        else if (fn.ext() == "astl")
+          miniSG::importSTL(msgAnimation,fn);
         else
           error("unrecognized file format in filename '"+arg+"'");
       }
@@ -153,7 +169,7 @@ namespace ospray {
     cout << "  - num unique triangles   : " << numUniqueTris << endl;
     cout << "  - num instanced triangles: " << numInstancedTris << endl;
 
-    if (numInstancedTris == 0) 
+    if (numInstancedTris == 0 && msgAnimation.empty()) 
       error("no (valid) input files specified - model contains no triangles");
 
     if (msgModel->material.empty()) {
