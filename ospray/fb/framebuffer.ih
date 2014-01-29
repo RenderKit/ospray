@@ -2,15 +2,40 @@
 #define FRAMEBUFFER_ISPH
 
 #include "../common/ospcommon.ih"
+#include "../common/math/region.ih"
+#include "tilesize.h"
 
 /*! \file framebuffer.isph Defines the abstract base class of an ISPC frame buffer */
 
 struct FrameBuffer;
 
+
+/*! a screen tile. the memory layout of this class has to _exactly_
+  match the (C++-)one in tile.h */
+struct Tile {
+  varying float  r[(TILE_SIZE*TILE_SIZE)/programCount]; /*! red */
+  varying float  g[(TILE_SIZE*TILE_SIZE)/programCount]; /*! green */
+  varying float  b[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< blue */
+  varying float  a[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< alpha */
+  varying float  z[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< depth */
+  // uniform float  r[QUAD_SIZE*QUAD_SIZE]; /*! red */
+  // uniform float  g[QUAD_SIZE*QUAD_SIZE]; /*! green */
+  // uniform float  b[QUAD_SIZE*QUAD_SIZE]; /*!< blue */
+  // uniform float  a[QUAD_SIZE*QUAD_SIZE]; /*!< alpha */
+  // uniform float  z[QUAD_SIZE*QUAD_SIZE]; /*!< depth */
+  uniform region2i region;
+  uniform vec2i    fbSize;
+  uniform vec2f    rcp_fbSize;
+};
+
+
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
 typedef void (*SetPixelMethod)(uniform FrameBuffer  *uniform,
                                const varying vec2i  &pixel,
                                const varying vec4f &value);
+/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
+typedef void (*SetTileMethod)(uniform FrameBuffer  *uniform,
+                              uniform Tile *uniform);
 /*! \brief Fct pointer type for 'virtual' method that queries a pixel */
 typedef varying vec4f (*GetPixelMethod)(uniform FrameBuffer  *uniform,
                                         const varying vec2i  &pixel);
@@ -23,6 +48,7 @@ struct FrameBuffer
   
   SetPixelMethod  setPixel;
   GetPixelMethod  getPixel;
+  SetTileMethod   setTile;
 
   void *cClassPtr; /*!< pointer back to c++-side of this class */
 

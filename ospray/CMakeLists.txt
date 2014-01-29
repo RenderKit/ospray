@@ -41,6 +41,7 @@ ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
 	geometry/geometry.cpp
 	geometry/trianglemesh.cpp
 	render/renderer.cpp
+	render/loadbalancer.cpp
 	render/testrenderer.cpp
 	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
 	render/raycast.cpp

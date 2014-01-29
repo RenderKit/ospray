@@ -21,7 +21,10 @@ namespace ospray {
   template<>
   void *createLocalFrameBufferISPC<vec4f>(const vec2i &size, 
                                           void *classPtr, void *pixelArray)
-  { return ispc__createLocalFB_RGBA_F32(size.x,size.y,classPtr,pixelArray); }
+  { 
+    void *fb = ispc__createLocalFB_RGBA_F32(size.x,size.y,classPtr,pixelArray); 
+    return fb;
+  }
   
   /*! the LocalFrameBuffer constructor uses this method to create an
     ISPC-side frame buffer instance that corresponds to the c-side
@@ -29,7 +32,9 @@ namespace ospray {
   template<>
   void *createLocalFrameBufferISPC<unsigned int>(const vec2i &size, 
                                    void *classPtr, void *pixelArray)
-  { return ispc__createLocalFB_RGBA_I8(size.x,size.y,classPtr,pixelArray); }
+  { 
+    return ispc__createLocalFB_RGBA_I8(size.x,size.y,classPtr,pixelArray); 
+  }
 
   /*! the 'factory' method that the swapchain can use to create new
       instances of this frame buffer type */

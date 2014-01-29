@@ -1,3 +1,4 @@
+#include "mpicommon.h"
 #include "mpidevice.h"
 #include "../fb/swapchain.h"
 #include "../common/model.h"
@@ -5,18 +6,158 @@
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
+#include "../volume/volume.h"
 
 namespace ospray {
-  namespace api {
+  using std::cout;
+  using std::endl;
 
-    Device *createDevice_MPI(int *ac, const char **av)
+  namespace mpi {
+    Group world;
+    Group app;
+    Group worker;
+
+    typedef uint32 ID_t;
+    ID_t nextFreeID = INVALID_ID+1;
+
+    std::map<ID_t,Ref<ospray::ManagedObject> > objectByID;
+
+    //! this runs an ospray worker process. 
+    /*! it's up to the proper init
+      routine to decide which processes call this function and which
+      ones don't. This function will not return. */
+    void runWorker(int *_ac, const char **_av);
+
+    /*! in this mode ("ospray on ranks" mode, or "ranks" mode)
+      - the user has launched mpirun explicitly, and all processes are *already* running
+      - the app is supposed to be running *only* on the root process
+      - ospray is supposed to be running on all ranks *other than* the root
+      - "ranks" means all processes with world.rank >= 1
+      
+      For this function, we assume: 
+      - all *all* MPI_COMM_WORLD processes are going into this function
+    */
+    void initMPI_OSPonRanks(int *ac, const char **av)
     {
-      Assert2(false,"MPI Device not yet implemented");
-      return NULL;
-      //      return new MPIDevice(ac,av);
+      MPI_Status status;
+      mpi::init(ac,av);
+      printf("initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+      MPI_Barrier(MPI_COMM_WORLD);
+
+      Assert(world.size > 1);
+      if (world.rank == 0) {
+        // we're the root
+        MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
+        app.makeIntercomm();
+        printf("app process %i/%i (global %i/%i)\n",app.rank,app.size,world.rank,world.size);
+
+        MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm); 
+        worker.makeIntracomm();
+
+        printf("ping-ponging a test message to every worker...\n");
+        for (int i=0;i<worker.size;i++) {
+          printf("sending tag %i to worker %i\n",i,i);
+          MPI_Send(&i,1,MPI_INT,i,i,worker.comm);
+          int reply;
+          MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
+          Assert(reply == i);
+        }
+      } else {
+        // we're the workers
+        MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
+        worker.makeIntercomm();
+        printf("worker process %i/%i (global %i/%i)\n",worker.rank,worker.size,world.rank,world.size);
+
+        MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm); 
+        app.makeIntracomm();
+        // worker.containsMe = true;
+        // app.containsMe = false;
+
+        // replying to test-message
+        printf("worker %i trying to receive tag %i...\n",worker.rank,worker.rank);
+        int reply;
+        MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
+        MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
+        MPI_Barrier(worker.comm);
+      }
+
+      MPI_Barrier(MPI_COMM_WORLD);
+      // -------------------------------------------------------
+      // at this point, all processes should be set up and synced. in particular
+      // - app has intracommunicator to all workers (and vica versa)
+      // - app process(es) are in one intercomm ("app"); workers all in another ("worker")
+      // - all processes (incl app) have barrier'ed, and thus now in sync.
+
+      // -------------------------------------------------------
+      // now, 
+      // - all workers will enter their worker loop (ie, they will *not* return
+      // - root proc(s) will return, initialize the MPI device, then return to the app
+      if (worker.containsMe)  
+        mpi::runWorker(ac,av);
     }
 
-    MPIDevice::MPIDevice(int *_ac, const char **_av)
+    /*! in this mode ("local cluster" mode)
+      - the user did _not_ launch any MPI explicitly
+      - the app is running on a standalone process
+      - osp will launch multiple worker processes that communicate w/ app throu intercomm
+     */
+    void initMPI_LaunchLocalCluster()
+    {
+      int rc;
+      MPI_Status status;
+
+      Assert(world.size == 1);
+      app.comm = world.comm; 
+      app.makeIntracomm();
+      
+      std::string launchCmd = "/tmp/launchit.sh";
+      
+      std::stringstream systemCmd;
+      systemCmd
+        << launchCmd << " "
+        << endl;
+      FILE *launchOutput = fopen(systemCmd.str().c_str(),"r");
+      Assert(launchOutput);
+      char line[10000];
+      char *listenPort = NULL;
+      const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
+      while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
+        if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
+          listenPort = line + strlen(LAUNCH_HEADER);
+          char *eol = strstr(listenPort,"\n");
+          if (eol) *eol = 0;
+          break;
+        }
+      }
+      fclose(launchOutput);
+      if (!listenPort)
+        throw std::runtime_error("failed to find service port in launch script output");
+
+      rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
+      worker.makeIntercomm();
+    }
+    
+    /*! in this mode
+      - ther user runs a distributed app (a la paraview)
+      - MPI processes have already been launched by user
+      - each process with run its own local instance of the app process
+      - each app will use ospray *locally* (ie, osp will *not* start anything new other 
+        than threads 
+    */
+    void initMPI_DistributedAppWithLocalOSP();
+
+  }
+
+  namespace api {
+    Device *createDevice_MPI_OSPonRanks(int *ac, const char **av)
+    {
+      mpi::initMPI_OSPonRanks(ac,av);
+      // only the app process(es) will still reach this point.
+      return new MPIDevice(ac,av);
+    }
+
+    MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
+                         int *_ac, const char **_av)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv) 
@@ -24,38 +165,21 @@ namespace ospray {
       else
         logLevel = 0;
 
-      Assert2(_ac,"no params");
-      Assert2(*_ac > 1, "no service handle specified after '--mpi'");
-      const char *serviceSocket = strdup(_av[1]);
-      removeArgs(*_ac,(char**&)_av,1,1);
+      // Assert2(_ac,"no params");
+      // Assert2(*_ac > 1, "no service handle specified after '--mpi'");
+      // const char *serviceSocket = strdup(_av[1]);
+      // removeArgs(*_ac,(char**&)_av,1,1);
 
       ospray::init(_ac,&_av);
-      MPI::init(_ac,_av);
+      // mpi::init(_ac,_av);
 
-      if (MPI::size !=1) {
-        if (MPI::rank == 0) {
+      if (mpi::world.size !=1) {
+        if (mpi::world.rank != 0) {
+          PRINT(mpi::world.rank);
+          PRINT(mpi::world.size);
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
         }
-        exit(1);
       }
-      Assert(MPI::rank == 0);
-      Assert(MPI::size == 1);
-      
-
-      // MPI_Info info;
-      // printf("creating info\n");
-      // MPI_Info_create(&info);
-      // const char *hostlist = "localhost";
-      // MPI_Info_set(info,"host",(char*)hostlist); 
-      // printf("Spawning!\n");
-
-      // MPI_Comm_spawn("./ospray_mpi_worker", MPI_ARGV_NULL, 2,  
-      //                info, 0, MPI_COMM_SELF, &service,  
-      //                MPI_ERRCODES_IGNORE); 
-
-      std::cout << "MPI Device connecting to service at " << serviceSocket << std::endl;
-      MPI_Comm_connect((char*)serviceSocket,MPI_INFO_NULL,0,MPI_COMM_WORLD,
-                       &MPI::serviceComm);
     }
 
 
@@ -74,30 +198,53 @@ namespace ospray {
       }
       SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
       Assert(sc != NULL);
-      return (OSPFrameBuffer)sc;
+      
+      mpi::ID_t handle = mpi::allocID();
+      mpi::objectByID[handle] = sc;
+      
+      cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
+      cmd.send(handle);
+      cmd.send(size);
+      cmd.send((int32)mode);
+      cmd.send((int32)swapChainDepth);
+      cmd.flush();
+      return (OSPFrameBuffer)handle;
     }
     
 
       /*! map frame buffer */
     const void *MPIDevice::frameBufferMap(OSPFrameBuffer fb)
     {
-      Assert(fb != NULL);
-      SwapChain *sc = (SwapChain *)fb;
-      return sc->map();
+      int rc; 
+      MPI_Status status;
+
+      int32 scID = (int32)(int64)fb;
+      SwapChain *sc = (SwapChain *)mpi::objectByID[scID].ptr;
+      Assert(sc);
+
+      cmd.newCommand(CMD_FRAMEBUFFER_MAP);
+      cmd.send(scID);
+      cmd.flush();
+      void *ptr = (void*)sc->map();
+      rc = MPI_Recv(ptr,sc->fbSize.x*sc->fbSize.y,MPI_INT,0,0,mpi::worker.comm,&status);
+      Assert(rc == MPI_SUCCESS);
+      return ptr;
     }
 
     /*! unmap previously mapped frame buffer */
     void MPIDevice::frameBufferUnmap(const void *mapped,
                                        OSPFrameBuffer fb)
     {
-      Assert2(fb != NULL, "invalid framebuffer");
-      SwapChain *sc = (SwapChain *)fb;
-      return sc->unmap(mapped);
+      int32 scID = (int32)(int64)fb;
+      SwapChain *sc = (SwapChain *)mpi::objectByID[scID].ptr;
+      Assert(sc);
+      sc->unmap(mapped);
     }
 
     /*! create a new model */
     OSPModel MPIDevice::newModel()
     {
+      NOTIMPLEMENTED;
       Model *model = new Model;
       model->refInc();
       return (OSPModel)model;
@@ -114,6 +261,7 @@ namespace ospray {
     /*! finalize a newly specified model */
     void MPIDevice::commit(OSPObject _object)
     {
+      NOTIMPLEMENTED;
       ManagedObject *object = (ManagedObject *)_object;
       Assert2(object,"null object in LocalDevice::commit()");
       object->commit();
@@ -128,6 +276,7 @@ namespace ospray {
     /*! add a new geometry to a model */
     void MPIDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
+      NOTIMPLEMENTED;
       Model *model = (Model *)_model;
       Assert2(model,"null model in MPIDevice::finalizeModel()");
 
@@ -140,6 +289,7 @@ namespace ospray {
     /*! create a new data buffer */
     OSPTriangleMesh MPIDevice::newTriangleMesh()
     {
+      NOTIMPLEMENTED;
       TriangleMesh *triangleMesh = new TriangleMesh;
       triangleMesh->refInc();
       return (OSPTriangleMesh)triangleMesh;
@@ -148,6 +298,7 @@ namespace ospray {
     /*! create a new data buffer */
     OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
+      NOTIMPLEMENTED;
       Assert2(flags == 0,"unsupported combination of flags");
       Data *data = new Data(nitems,format,init,flags);
       data->refInc();
@@ -155,9 +306,36 @@ namespace ospray {
     }
     
     
-    /*! assign (named) vec3f parameter to an object */
+    /*! assign (named) string parameter to an object */
+    void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
+    {
+      NOTIMPLEMENTED;
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+      
+      PING;
+      PRINT(bufName);
+      PRINT(s);
+
+      object->findParam(bufName,1)->set(s);
+    }
+
+    /*! assign (named) float parameter to an object */
     void MPIDevice::setFloat(OSPObject _object, const char *bufName, const float f)
     {
+      NOTIMPLEMENTED;
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(f);
+    }
+
+    /*! assign (named) int parameter to an object */
+    void MPIDevice::setInt(OSPObject _object, const char *bufName, const int f)
+    {
+      NOTIMPLEMENTED;
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
@@ -168,6 +346,18 @@ namespace ospray {
     /*! assign (named) vec3f parameter to an object */
     void MPIDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
     {
+      NOTIMPLEMENTED;
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(v);
+    }
+
+    /*! assign (named) vec3i parameter to an object */
+    void MPIDevice::setVec3i(OSPObject _object, const char *bufName, const vec3i &v)
+    {
+      NOTIMPLEMENTED;
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
@@ -178,6 +368,7 @@ namespace ospray {
     /*! assign (named) data item as a parameter to an object */
     void MPIDevice::setObject(OSPObject _target, const char *bufName, OSPObject _value)
     {
+      NOTIMPLEMENTED;
       ManagedObject *target = (ManagedObject *)_target;
       ManagedObject *value  = (ManagedObject *)_value;
 
@@ -190,38 +381,57 @@ namespace ospray {
       /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {
-      PING;
-      Assert(type != NULL && "invalid render type identifier");
-      Renderer *renderer = Renderer::createRenderer(type);
-      return (OSPRenderer)renderer;
+      Assert(type != NULL);
+
+      mpi::ID_t handle = mpi::allocID();
+
+      cmd.newCommand(CMD_NEW_RENDERER);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPRenderer)handle;
     }
 
     /*! create a new camera object (out of list of registered cameras) */
     OSPCamera MPIDevice::newCamera(const char *type)
     {
+      NOTIMPLEMENTED;
       Assert(type != NULL && "invalid render type identifier");
       Camera *camera = Camera::createCamera(type);
       return (OSPCamera)camera;
     }
 
+    /*! create a new volume object (out of list of registered volumes) */
+    OSPVolume MPIDevice::newVolume(const char *type)
+    {
+      NOTIMPLEMENTED;
+      Assert(type != NULL && "invalid render type identifier");
+      /*! we don't have the volume interface fleshed out, yet, and
+        currently create the proper volume type on-the-fly during
+        commit, so use this wrpper thingy...  \see
+        volview_notes_on_volume_interface */
+      WrapperVolume *volume = new WrapperVolume; 
+      return (OSPVolume)volume;
+    }
+
+    /*! create a new geometry object (out of list of registered geometrys) */
+    OSPGeometry MPIDevice::newGeometry(const char *type)
+    {
+      NOTIMPLEMENTED;
+      Assert(type != NULL && "invalid render type identifier");
+      Geometry *geometry = Geometry::createGeometry(type);
+      return (OSPGeometry)geometry;
+    }
+
+
     /*! call a renderer to render a frame buffer */
     void MPIDevice::renderFrame(OSPFrameBuffer _sc, 
-                                  OSPRenderer    _renderer)
+                                OSPRenderer    _renderer)
     {
-      SwapChain *sc = (SwapChain *)_sc;
-      Renderer *renderer = (Renderer *)_renderer;
-      // Model *model = (Model *)_model;
-      
-      Assert(sc != NULL && "invalid frame buffer handle");
-      Assert(renderer != NULL && "invalid renderer handle");
-      
-      FrameBuffer *fb = sc->getBackBuffer();
-      renderer->renderFrame(fb);
-      
-      // WARNING: I'm doing an *im*plicit swapbuffers here at the end
-      // of renderframe, but to be more opengl-conform we should
-      // actually have the user call an *ex*plicit ospSwapBuffers call...
-      sc->advance();
+      cmd.newCommand(CMD_RENDER_FRAME);
+      cmd.send((int32)(int64)_sc);
+      cmd.send((int32)(int64)_renderer);
+      cmd.flush();
     }
   }
 }

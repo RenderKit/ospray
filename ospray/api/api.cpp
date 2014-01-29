@@ -18,7 +18,7 @@ namespace ospray {
 
 #if OSPRAY_MPI
   namespace api {
-    Device *createDevice_MPI(int *ac, const char **av);
+    Device *createDevice_MPI_OSPonRanks(int *ac, const char **av);
   }
 #endif
 
@@ -42,7 +42,7 @@ namespace ospray {
       if (*_ac > 1 && std::string(_av[1]) == "--mpi") {
 #if OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,1,1);
-        ospray::api::Device::current = ospray::api::createDevice_MPI(_ac,_av);
+        ospray::api::Device::current = ospray::api::createDevice_MPI_OSPonRanks(_ac,_av);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif

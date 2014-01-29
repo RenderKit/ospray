@@ -1,14 +1,41 @@
 #include "mpicommon.h"
 #include "../api/device.h"
+#include "command.h"
+#include <map>
+#include "common/managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
 
 namespace ospray {
+  namespace mpi {
+    typedef uint32 ID_t;
+    static const uint32 INVALID_ID = 0;
+    extern ID_t nextFreeID;
+
+    inline ID_t allocID() { return ++nextFreeID; }
+
+    extern std::map<ID_t,Ref<ospray::ManagedObject> > objectByID;
+  }
+
   namespace api {
+
     struct MPIDevice : public Device {
+      typedef ospray::MPICommandStream CommandStream;
+
+      MPICommandStream cmd;
+
+      enum {
+        CMD_NEW_RENDERER=0,
+        CMD_FRAMEBUFFER_CREATE,
+        CMD_RENDER_FRAME,
+        CMD_FRAMEBUFFER_MAP,
+        CMD_FRAMEBUFFER_UNMAP,
+        CMD_USER
+      } CommandTag;
 
       /*! constructor */
-      MPIDevice(int *_ac=NULL, const char **_av=NULL);
+      MPIDevice(// AppMode appMode, OSPMode ospMode,
+                int *_ac=NULL, const char **_av=NULL);
 
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
@@ -37,12 +64,18 @@ namespace ospray {
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
+      /*! assign (named) string parameter to an object */
+      virtual void setString(OSPObject object, const char *bufName, const char *s);
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject target, const char *bufName, OSPObject value);
       /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f);
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);
+      /*! assign (named) int parameter to an object */
+      virtual void setInt(OSPObject object, const char *bufName, const int f);
+      /*! assign (named) vec3i parameter to an object */
+      virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh();
@@ -50,8 +83,14 @@ namespace ospray {
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type);
 
+      /*! create a new geometry object (out of list of registered geometrys) */
+      virtual OSPGeometry newGeometry(const char *type);
+
       /*! create a new camera object (out of list of registered cameras) */
       virtual OSPCamera newCamera(const char *type);
+
+      /*! create a new volume object (out of list of registered volumes) */
+      virtual OSPVolume newVolume(const char *type);
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
@@ -59,6 +98,7 @@ namespace ospray {
 
       MPI_Comm service;
     };
+
   }
 }
 

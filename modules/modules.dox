@@ -1,0 +1,21 @@
+/*! \defgroup ospray_plugins OSPRay Plugins 
+
+  \brief Plugins are OSPRays way of adding specialized functionality
+  for certain types of geometries, volumes, cameras, etc without
+  hard-coding all these different variants into the core library.
+
+  Plugins are OSPRays way of adding specialized functionality for
+  certain types of geometries, volumes, cameras, etc without
+  hard-coding all these different variants into the core library. In
+  particular, this allows to extend OSPRay in a modular way.
+
+  Plugins are compiled into OSPRay by linking or copying the
+  respective plugin's code directory into the ospray/plugins
+  directory; the CMake-file in ospray/plugins will automatically build
+  all subdirectories present under this dir. Each plugin should build
+  its own shared library that the OSPRay Plugin Infrastructure will
+  then be able to load upon the respective ospLoadPlugin call (not yet
+  implemented).
+*/
+
+

@@ -74,6 +74,7 @@ void localfb_uint32_destruct(uniform FrameBuffer *uniform fb)
 {
   delete fb;
 }
+
 void localfb_uint32_setPixel(uniform FrameBuffer *uniform _fb,
                             const varying vec2i &coord,
                             const varying vec4f &value)
@@ -83,6 +84,22 @@ void localfb_uint32_setPixel(uniform FrameBuffer *uniform _fb,
 
   const uint ofs = coord.x+coord.y*fb->inherited.size.x;
   pixel[ofs] = cvt_uint32(value);
+}
+
+void localfb_uint32_setTile(uniform FrameBuffer *uniform _fb,
+                            uniform Tile *uniform tile)
+{
+  uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
+  uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
+  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+    const uint  pixID = i*programCount+programIndex;
+    const uint  x     = tile->region.lower.x + (pixID % TILE_SIZE);
+    const uint  y     = tile->region.lower.y + (pixID / TILE_SIZE);
+    const uint  ofs   = y*tile->fbSize.x+x;
+    const vec4f value = make_vec4f(tile->r[i],tile->g[i],tile->b[i],tile->a[i]);
+    if (x < tile->fbSize.x & y < tile->fbSize.y)
+      pixel[ofs]        = cvt_uint32(value);
+  }
 }
 
 vec4f localfb_uint32_getPixel(uniform FrameBuffer *uniform _fb,
@@ -106,10 +123,17 @@ export void *uniform ispc__createLocalFB_RGBA_I8(const uniform uint size_x,
   fb->inherited.destructor = localfb_uint32_destruct;
   fb->inherited.setPixel   = localfb_uint32_setPixel;
   fb->inherited.getPixel   = localfb_uint32_getPixel;
+  fb->inherited.setTile    = localfb_uint32_setTile;
   fb->inherited.cClassPtr  = cClassPtr;
   fb->inherited.size.x     = size_x;
   fb->inherited.size.y     = size_y;
   fb->pixel = pixelPtr;
 }
 
+export void ispc__setTile(void *uniform _fb, void *uniform _tile)
+{
+  uniform Tile *uniform        tile = (uniform Tile *uniform)_tile;
+  uniform FrameBuffer *uniform fb   = (uniform FrameBuffer *uniform)_fb;
+  fb->setTile(fb,tile);
+}
 

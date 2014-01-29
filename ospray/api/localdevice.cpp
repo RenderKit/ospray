@@ -55,7 +55,7 @@ namespace ospray {
     {
       Assert2(fb != NULL, "invalid framebuffer");
       SwapChain *sc = (SwapChain *)fb;
-      return sc->unmap(mapped);
+      sc->unmap(mapped);
     }
 
     /*! create a new model */
@@ -114,13 +114,9 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
-
-      PING;
-      PRINT(bufName);
-      PRINT(s);
-
       object->findParam(bufName,1)->set(s);
     }
+
     /*! assign (named) int parameter to an object */
     void LocalDevice::setInt(OSPObject _object, const char *bufName, const int f)
     {

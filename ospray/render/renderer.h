@@ -2,6 +2,7 @@
 
 #include "../common/model.h"
 #include "../fb/framebuffer.h"
+#include "loadbalancer.h"
 
 /*! \file render.h Defines the base renderer class */
 
@@ -13,6 +14,16 @@ namespace ospray {
     virtual void renderFrame(FrameBuffer *fb) = 0;
 
     static Renderer *createRenderer(const char *identifier);
+  };
+
+  struct TileRenderer : public Renderer {
+    // virtual void renderQuad(Quad &quad) = 0;
+    virtual void renderTile(Tile &tile) = 0;
+    virtual void renderFrame(FrameBuffer *fb)
+    {
+      LocalTiledLoadBalancer lb;
+      lb.renderFrame(this,fb);
+    }
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under

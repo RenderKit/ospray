@@ -148,7 +148,7 @@ namespace ospray {
     ManagedObject *getParam(const char *name, ManagedObject *valIfNotFound);
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
-    float  getParamf (const char *name, const float valIfNotFound);
+    float  getParamf (const char *name, const float  valIfNotFound);
     const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */
 
