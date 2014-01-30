@@ -36,7 +36,7 @@ namespace ospray {
 
   ManagedObject::Param *ManagedObject::findParam(const char *name, bool addIfNotExist)
   {
-    for (unsigned i=0;i<paramList.size();i++) {
+    for (size_t i=0 ; i < paramList.size() ; i++) {
       if (!strcmp(paramList[i]->name,name)) return paramList[i];
     }
     if (!addIfNotExist) return NULL;

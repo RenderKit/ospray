@@ -2,8 +2,8 @@
 
 namespace ospray {
 
-  extern "C" void *ispc__createLocalFB_RGBA_F32(uint,uint,void*,void*);
-  extern "C" void *ispc__createLocalFB_RGBA_I8(uint,uint,void*,void*);
+  extern "C" void *ispc__createLocalFB_RGBA_F32(uint32,uint32,void*,void*);
+  extern "C" void *ispc__createLocalFB_RGBA_I8(uint32,uint32,void*,void*);
 
   /*! the LocalFrameBuffer constructor uses this method to create an
     ISPC-side frame buffer instance that corresponds to the c-side
@@ -30,7 +30,7 @@ namespace ospray {
     ISPC-side frame buffer instance that corresponds to the c-side
     one */
   template<>
-  void *createLocalFrameBufferISPC<unsigned int>(const vec2i &size, 
+  void *createLocalFrameBufferISPC<uint32>(const vec2i &size, 
                                    void *classPtr, void *pixelArray)
   { 
     return ispc__createLocalFB_RGBA_I8(size.x,size.y,classPtr,pixelArray); 
@@ -42,7 +42,7 @@ namespace ospray {
   {
     Assert(size.x > 0);
     Assert(size.y > 0);
-    return new LocalFrameBuffer<unsigned int>(size);
+    return new LocalFrameBuffer<uint32>(size);
   }
 
   template<typename PixelType>

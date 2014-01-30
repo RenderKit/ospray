@@ -10,6 +10,7 @@
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 
+<<<<<<< HEAD
 // #define SHADE(ray,scene) shade_primID(ray)
 // #define SHADE(ray,scene) shade_Ng(ray)
 #define SHADE(ray,scene) shade_eyeLight(ray)
@@ -31,6 +32,17 @@ inline vec4f shade_eyeLight(const Ray &ray)
   if (ray.geomID < 0) return make_vec4f(0.f); 
   const float c = dot(normalize(ray.Ng),ray.dir); 
   return make_vec4f(.3f+.8f*abs(c));
+=======
+inline vec3f make_random_color(const int i)
+{
+  const int mx = 13*17*43;
+  const int my = 11*29;
+  const int mz = 7*23*63;
+  const uint32 g = (i * (3*5*127)+12312314);
+  return make_vec3f((g % mx)*(1.f/(mx-1)),
+                    (g % my)*(1.f/(my-1)),
+                    (g % mz)*(1.f/(mz-1)));
+>>>>>>> e6230d4664312113b687abcc9af63feda416b053
 }
 
 inline vec4f shade_eyeLight_testShadow(const Ray &ray, uniform RTCScene scene)

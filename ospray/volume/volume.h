@@ -43,7 +43,7 @@ namespace ospray {
     {};
 
     virtual std::string toString() const { return "ospray::Volume"; }
-    virtual void setRegion(const vec3i &where,const vec3i &size,const uchar *data)=0;
+    virtual void setRegion(const vec3i &where,const vec3i &size,const uint8 *data)=0;
     virtual void setRegion(const vec3i &where,const vec3i &size,const float *data)=0;
     virtual int layout() const = 0;
     //! return 'properly' typed ispc equivalent 
@@ -60,7 +60,7 @@ namespace ospray {
   struct NaiveVolume : public Volume {
     NaiveVolume(const vec3i &size, const T *internalData=NULL);
 
-    virtual void setRegion(const vec3i &where,const vec3i &size,const uchar *data);
+    virtual void setRegion(const vec3i &where,const vec3i &size,const uint8 *data);
     virtual void setRegion(const vec3i &where,const vec3i &size,const float *data);
     virtual std::string toString() const;
     virtual int layout() const { return NAIVE; };
@@ -70,7 +70,7 @@ namespace ospray {
   struct BrickedVolume : public Volume {
     BrickedVolume(const vec3i &size, const T *internalData=NULL);
 
-    virtual void setRegion(const vec3i &where,const vec3i &size,const uchar *data);
+    virtual void setRegion(const vec3i &where,const vec3i &size,const uint8 *data);
     virtual void setRegion(const vec3i &where,const vec3i &size,const float *data);
     virtual std::string toString() const;
     virtual int layout() const { return BRICKED; };

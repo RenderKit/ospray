@@ -14,13 +14,13 @@ namespace ospray {
   };
 
   template<>
-  NaiveVolume<uchar>::NaiveVolume(const vec3i &size, const uchar *internalData)
+  NaiveVolume<uint8>::NaiveVolume(const vec3i &size, const uint8 *internalData)
     : Volume(size,ospray::UNORM8)
   { 
     ispcPtr = ispc::_Naive32Volume1uc_create((ispc::vec3i&)size,internalData); 
   }
   template<>
-  BrickedVolume<uchar>::BrickedVolume(const vec3i &size, const uchar *internalData)
+  BrickedVolume<uint8>::BrickedVolume(const vec3i &size, const uint8 *internalData)
     : Volume(size,ospray::UNORM8)
   { 
     ispcPtr = ispc::_Bricked32Volume1uc_create((ispc::vec3i&)size,internalData); 
@@ -40,9 +40,9 @@ namespace ospray {
 
 
   template<>
-  std::string NaiveVolume<uchar>::toString() const { return "NaiveVolume<uchar>"; }
+  std::string NaiveVolume<uint8>::toString() const { return "NaiveVolume<uint8>"; }
   template<>
-  std::string BrickedVolume<uchar>::toString() const { return "BrickedVolume<uchar>"; }
+  std::string BrickedVolume<uint8>::toString() const { return "BrickedVolume<uint8>"; }
   template<>
   std::string NaiveVolume<float>::toString() const { return "NaiveVolume<float>"; }
   template<>
@@ -50,40 +50,40 @@ namespace ospray {
 
 
   template<>
-  void NaiveVolume<uchar>::setRegion(const vec3i &where, 
+  void NaiveVolume<uint8>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
                                      const float *data)
   {
-    uchar t[long(size.x)*size.y*size.z];
+    uint8 t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
-      t[i] = uchar(255.999f*data[i]);
+      t[i] = uint8(255.999f*data[i]);
     ispc::_Naive32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,t);
   }
 
   template<>
-  void BrickedVolume<uchar>::setRegion(const vec3i &where, 
+  void BrickedVolume<uint8>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
                                      const float *data)
   {
-    uchar t[long(size.x)*size.y*size.z];
+    uint8 t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
-      t[i] = uchar(255.999f*data[i]);
+      t[i] = uint8(255.999f*data[i]);
     ispc::_Bricked32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,t);
   }
   template<>
-  void NaiveVolume<uchar>::setRegion(const vec3i &where, 
+  void NaiveVolume<uint8>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
-                                     const uchar *data)
+                                     const uint8 *data)
   {
     ispc::_Naive32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,data);
   }
   template<>
-  void BrickedVolume<uchar>::setRegion(const vec3i &where, 
+  void BrickedVolume<uint8>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
-                                     const uchar *data)
+                                     const uint8 *data)
   {
     ispc::_Bricked32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,data);
@@ -96,7 +96,7 @@ namespace ospray {
   template<>
   void NaiveVolume<float>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
-                                     const uchar *data)
+                                     const uint8 *data)
   {
     float t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
@@ -108,7 +108,7 @@ namespace ospray {
   template<>
   void BrickedVolume<float>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
-                                     const uchar *data)
+                                     const uint8 *data)
   {
     float t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
@@ -171,7 +171,7 @@ namespace ospray {
       {
         switch(inputType) {
         case ospray::UNORM8:
-          volume = new NaiveVolume<uchar>(size);
+          volume = new NaiveVolume<uint8>(size);
           loadRaw<unsigned char>(volume,file,size); 
           break;
         default:
@@ -184,7 +184,7 @@ namespace ospray {
       {
         switch(inputType) {
         case ospray::UNORM8:
-          volume = new BrickedVolume<uchar>(size);
+          volume = new BrickedVolume<uint8>(size);
           loadRaw<unsigned char>(volume,file,size); 
           break;
         default:

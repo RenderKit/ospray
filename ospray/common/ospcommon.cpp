@@ -11,12 +11,13 @@
 namespace ospray {
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
-  uint logLevel = 0;
+  uint32 logLevel = 0;
   bool debugMode = false;
 
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", file, line, expr, expl);
+      fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
+              file, line, expr, expl);
     else
       fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
     abort();

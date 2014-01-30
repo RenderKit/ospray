@@ -6,7 +6,7 @@ namespace ospray {
   namespace glut3D {
 
     /*! initialize everything GLUT-related */
-    void initGLUT(int *ac, const char **av);
+    void initGLUT(int32 *ac, const char **av);
     /*! switch over to GLUT for control flow. This functoin will not return */
     void runGLUT();
 
@@ -46,7 +46,7 @@ namespace ospray {
       // pressed or released in the associated window
       virtual void button(Glut3DWidget *widget) {};
       /*! key press handler - override this fct to catch keyboard */
-      virtual void keypress(Glut3DWidget *widget, const int key);
+      virtual void keypress(Glut3DWidget *widget, const int32 key);
     protected:
 
       // helper functions called from the default 'motion' fct
@@ -141,7 +141,7 @@ namespace ospray {
       // event handling - override this to change this widgets behavior
       // to input events
       // ------------------------------------------------------------------
-      virtual void mouseButton(int which, bool released, const vec2i &pos);
+      virtual void mouseButton(int32 which, bool released, const vec2i &pos);
       virtual void motion(const vec2i &pos);
       // /*! mouse moved to this location, with given left/right/middle buttons pressed */
       // virtual void mouseMotion(const vec2i &from, 
@@ -183,13 +183,13 @@ namespace ospray {
       vec2i lastMousePos; /*! last mouse screen position of mouse before
                             current motion */
       vec2i currMousePos; /*! current screen position of mouse */
-      int lastModifierState, currModifierState;
-      int lastButtonState, currButtonState;
+      int32 lastModifierState, currModifierState;
+      int32 lastButtonState, currButtonState;
       ViewPort viewPort;
       box3f  worldBounds; /*!< world bounds, to automatically set viewPort
                             lookat, mouse speed, etc */
       Manipulator *manipulator;
-      int windowID;
+      int32 windowID;
       vec2i windowSize;
       /* camera speed modifier */
       float motionSpeed;
@@ -198,18 +198,18 @@ namespace ospray {
       static Glut3DWidget *activeWindow;
       union {
         /*! uchar[4] RGBA-framebuffer, if applicable */
-        unsigned int *ucharFB;
+        uint32 *ucharFB;
         /*! float[4] RGBA-framebuffer, if applicable */
-        vec3fa       *floatFB;
+        vec3fa *floatFB;
       };
-      friend void glut3dReshape( int x, int y );
-      friend void glut3dDisplay( void );
-      friend void glut3dKeyboard(unsigned char key, int x, int y);
-      friend void glut3dIdle( void );
-      friend void glut3dMotionFunc(int x, int y);
-      friend void glut3dMouseFunc(int whichButton, int released, int x, int y);
+      friend void glut3dReshape(int32 x, int32 y);
+      friend void glut3dDisplay(void);
+      friend void glut3dKeyboard(char key, int32 x, int32 y);
+      friend void glut3dIdle(void);
+      friend void glut3dMotionFunc(int32 x, int32 y);
+      friend void glut3dMouseFunc(int32 whichButton, int32 released, int32 x, int32 y);
 
-      virtual void keypress(unsigned char key, const vec2f where)
+      virtual void keypress(char key, const vec2f where)
       { if (manipulator) manipulator->keypress(this,key); }
     };
 

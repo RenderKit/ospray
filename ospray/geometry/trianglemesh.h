@@ -7,14 +7,15 @@ namespace ospray {
 
   struct TriangleMesh : public Geometry
   {
+
     TriangleMesh();
     virtual std::string toString() const { return "ospray::TriangleMesh"; }
     virtual void finalize(Model *model);
 
     Ref<Data> idxData; /*!< triangle indices (A,B,C,materialID) */
     Ref<Data> posData; /*!< vertex position (vec3fa) */
+    uint32    eMesh;   /*!< embree triangle mesh handle */
 
-    unsigned eMesh; /*!< embree triangle mesh handle */
   };
 
     //! helper fct that creates a tessllated unit arrow

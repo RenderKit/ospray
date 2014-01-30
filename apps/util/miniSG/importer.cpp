@@ -22,7 +22,7 @@ namespace ospray {
     }
 
     /*! find given vertex and return its ID, or add if it doesn't yet exist */
-    uint ImportHelper::addVertex(const vec3f &position)
+    uint32 ImportHelper::addVertex(const vec3f &position)
     {
       Assert(mesh);
       if (known_positions.find(position) == known_positions.end()) {

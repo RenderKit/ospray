@@ -147,16 +147,16 @@ __define_ispc_vector4(float,f);
   __define_ispc_constructors3(UV,OTYPE,OABB,ITYPE,IABB)           \
   __define_ispc_constructors4(UV,OTYPE,OABB,ITYPE,IABB)           \
   
-#define __define_ispc_constructors_uv(UV,TYPE,ABB)              \
-  __define_ispc_constructors_uv_t(UV,TYPE,ABB,int,i)            \
-  __define_ispc_constructors_uv_t(UV,TYPE,ABB,unsigned int,ui)  \
-  __define_ispc_constructors_uv_t(UV,TYPE,ABB,float,f)          \
-  __define_ispc_lift_constructors4(UV,TYPE,ABB)                  \
+#define __define_ispc_constructors_uv(UV,TYPE,ABB)                \
+  __define_ispc_constructors_uv_t(UV,TYPE,ABB,int,i)              \
+  __define_ispc_constructors_uv_t(UV,TYPE,ABB,unsigned int,ui)    \
+  __define_ispc_constructors_uv_t(UV,TYPE,ABB,float,f)            \
+  __define_ispc_lift_constructors4(UV,TYPE,ABB)                   \
   
-#define __define_ispc_constructors(UV)              \
-  __define_ispc_constructors_uv(UV,unsigned int,ui) \
-  __define_ispc_constructors_uv(UV,int,i)           \
-  __define_ispc_constructors_uv(UV,float,f)         \
+#define __define_ispc_constructors(UV)                            \
+  __define_ispc_constructors_uv(UV,unsigned int,ui)               \
+  __define_ispc_constructors_uv(UV,int,i)                         \
+  __define_ispc_constructors_uv(UV,float,f)                       \
   
 __define_ispc_constructors(uniform);
 __define_ispc_constructors(varying);

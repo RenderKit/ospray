@@ -12,7 +12,17 @@
 
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
-  typedef unsigned char uchar;
+
+  /*! basic types */
+  typedef          long long  int64;
+  typedef unsigned long long uint64;
+  typedef                int  int32;
+  typedef unsigned       int uint32;
+  typedef              short  int16;
+  typedef unsigned     short uint16;
+  typedef               char   int8;
+  typedef unsigned      char  uint8;
+
   /*! OSPRay's two-int vector class */
   typedef embree::Vec2i    vec2i;
   /*! OSPRay's three-int vector class */
@@ -54,7 +64,7 @@ namespace ospray {
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 
   /*! logging level (cmdline: --osp:loglevel <n>) */
-  extern uint logLevel;
+  extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
 }
