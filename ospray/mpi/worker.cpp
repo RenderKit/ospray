@@ -9,6 +9,7 @@
 #include "../render/renderer.h"
 #include "../camera/camera.h"
 #include "../volume/volume.h"
+#include "mpiloadbalancer.h"
 
 namespace ospray {
   namespace mpi {
@@ -26,6 +27,7 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av)
     {
       ospray::init(_ac,&_av);
+
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
@@ -39,9 +41,14 @@ namespace ospray {
 
       char hostname[HOST_NAME_MAX];
       gethostname(hostname,HOST_NAME_MAX);
-      printf("running MPI worker process %i/%i on pid %i@%s\n",
+      printf("#w: running MPI worker process %i/%i on pid %i@%s\n",
              worker.rank,worker.size,getpid(),hostname);
       int rc;
+
+
+      TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Slave;
+
+
       while (1) {
         const int command = cmd.get_int32();
         // if (worker.rank == 0)
@@ -52,7 +59,8 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
-            cout << "creating new renderer \"" << type << "\" ID " << handle << endl;
+            if (logLevel > 2)
+              cout << "creating new renderer \"" << type << "\" ID " << handle << endl;
           Renderer *renderer = Renderer::createRenderer(type);
           cmd.free(type);
           Assert(renderer);
@@ -62,12 +70,13 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
-            cout << "creating new camera \"" << type << "\" ID " << (void*)(int64)handle << endl;
+            if (logLevel > 2)
+              cout << "creating new camera \"" << type << "\" ID " << (void*)(int64)handle << endl;
           Camera *camera = Camera::createCamera(type);
           cmd.free(type);
           Assert(camera);
           handle.assign(camera);
-          cout << "#w: new camera " << handle << endl;
+          //          cout << "#w: new camera " << handle << endl;
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
           const mpi::Handle handle = cmd.get_handle();
@@ -113,6 +122,7 @@ namespace ospray {
           Model *model = new Model;
           Assert(model);
           handle.assign(model);
+          if (logLevel > 2)
           cout << "#w: new model " << handle << endl;
         } break;
         case api::MPIDevice::CMD_NEW_TRIANGLEMESH: {
@@ -146,7 +156,8 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          cout << "#w: committing " << handle << " " << obj->toString() << endl;
+          if (logLevel > 2)
+            cout << "#w: committing " << handle << " " << obj->toString() << endl;
           obj->commit();
 
           // hack, to stay compatible with earlier version

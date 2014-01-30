@@ -46,6 +46,7 @@ struct Volume {
   Volume_gradfFct     gradf;
 };
 typedef uniform Volume *VolumePtr;
+
 /* need this only because ISPC currently balks at 'export'ing
    functions that return 'VolumePtr' types */
 typedef struct _Volume *uniform ExtVolumePtr;

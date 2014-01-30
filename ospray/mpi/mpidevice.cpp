@@ -7,6 +7,7 @@
 #include "../render/renderer.h"
 #include "../camera/camera.h"
 #include "../volume/volume.h"
+#include "mpiloadbalancer.h"
 
 namespace ospray {
   using std::cout;
@@ -36,7 +37,7 @@ namespace ospray {
     {
       MPI_Status status;
       mpi::init(ac,av);
-      printf("initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+      printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
       MPI_Barrier(MPI_COMM_WORLD);
 
       Assert(world.size > 1);
@@ -44,14 +45,14 @@ namespace ospray {
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
         app.makeIntercomm();
-        printf("app process %i/%i (global %i/%i)\n",app.rank,app.size,world.rank,world.size);
+        printf("#w: app process %i/%i (global %i/%i)\n",app.rank,app.size,world.rank,world.size);
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm); 
         worker.makeIntracomm();
 
-        printf("ping-ponging a test message to every worker...\n");
+        printf("#m: ping-ponging a test message to every worker...\n");
         for (int i=0;i<worker.size;i++) {
-          printf("sending tag %i to worker %i\n",i,i);
+          printf("#m: sending tag %i to worker %i\n",i,i);
           MPI_Send(&i,1,MPI_INT,i,i,worker.comm);
           int reply;
           MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
@@ -61,7 +62,7 @@ namespace ospray {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
         worker.makeIntercomm();
-        printf("worker process %i/%i (global %i/%i)\n",worker.rank,worker.size,world.rank,world.size);
+        printf("#w: worker process %i/%i (global %i/%i)\n",worker.rank,worker.size,world.rank,world.size);
 
         MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm); 
         app.makeIntracomm();
@@ -69,7 +70,7 @@ namespace ospray {
         // app.containsMe = false;
 
         // replying to test-message
-        printf("worker %i trying to receive tag %i...\n",worker.rank,worker.rank);
+        printf("#w: worker %i trying to receive tag %i...\n",worker.rank,worker.rank);
         int reply;
         MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
         MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
@@ -175,6 +176,9 @@ namespace ospray {
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
         }
       }
+
+      TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Master;
+      PING;
     }
 
 
@@ -440,10 +444,21 @@ namespace ospray {
     void MPIDevice::renderFrame(OSPFrameBuffer _sc, 
                                 OSPRenderer    _renderer)
     {
+      const mpi::Handle handle = (const mpi::Handle&)_sc;
+      SwapChain *sc = (SwapChain *)handle.lookup();
+      Assert(sc);
+
+      FrameBuffer *fb = sc->getBackBuffer();
       cmd.newCommand(CMD_RENDER_FRAME);
       cmd.send((const mpi::Handle&)_sc);
       cmd.send((const mpi::Handle&)_renderer);
       cmd.flush();
+      TiledLoadBalancer::instance->renderFrame(NULL,fb);
+
+      // WARNING: I'm doing an *im*plicit swapbuffers here at the end
+      // of renderframe, but to be more opengl-conform we should
+      // actually have the user call an *ex*plicit ospSwapBuffers call...
+      sc->advance();
     }
   }
 }

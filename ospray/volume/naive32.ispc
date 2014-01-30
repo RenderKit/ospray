@@ -417,7 +417,7 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
 // publicly exported functions at the end
 // ------------------------------------------------------------------
 
-export void __Naive32Volume1uc_setRegion(uniform ExtVolumePtr _volume,
+export void _Naive32Volume1uc_setRegion(uniform ExtVolumePtr _volume,
                                          const uniform vec3i &begin,
                                          const uniform vec3i &size,
                                          const uniform unsigned int8 *uniform data)
@@ -425,7 +425,7 @@ export void __Naive32Volume1uc_setRegion(uniform ExtVolumePtr _volume,
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
   Naive32Volume1uc_setRegion(volume,begin,size,data);
 }
-export void __Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
+export void _Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
                                          const uniform vec3i &begin,
                                          const uniform vec3i &size,
                                          const uniform float *uniform data)
@@ -437,8 +437,12 @@ export void __Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
 
 /* need this workaround because ISPC cannot export pointer to 'Volume'
    type because volume type has function pointers */
-export  uniform ExtVolumePtr __Naive32Volume1uc_create(uniform vec3i &size, const uchar *uniform internal)
+export  uniform ExtVolumePtr _Naive32Volume1uc_create(uniform vec3i &size, const uniform uchar *uniform internal)
 { return (ExtVolumePtr)Naive32Volume1uc_create(size,internal); }
-export  uniform ExtVolumePtr __Naive32Volume1f_create(uniform vec3i &size, const float *uniform internal)
+// extern "C" 
+export uniform ExtVolumePtr _Naive32Volume1f_create(uniform vec3i &size, const uniform float *uniform internal)
 { return (ExtVolumePtr)Naive32Volume1f_create(size,internal); }
+
+
+
 

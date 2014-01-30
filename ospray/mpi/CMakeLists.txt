@@ -4,6 +4,7 @@ CONFIGURE_MPI()
 ADD_LIBRARY(osp_mpi${OSPRAY_LIB_SUFFIX} SHARED
 	mpidevice.cpp
 	mpicommon.cpp
+	mpiloadbalancer.cpp
 	worker.cpp
 	handle.cpp
 	)

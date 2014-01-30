@@ -17,25 +17,25 @@ namespace ospray {
   NaiveVolume<uchar>::NaiveVolume(const vec3i &size, const uchar *internalData)
     : Volume(size,ospray::UNORM8)
   { 
-    ispcPtr = ispc::__Naive32Volume1uc_create((ispc::vec3i&)size,internalData); 
+    ispcPtr = ispc::_Naive32Volume1uc_create((ispc::vec3i&)size,internalData); 
   }
   template<>
   BrickedVolume<uchar>::BrickedVolume(const vec3i &size, const uchar *internalData)
     : Volume(size,ospray::UNORM8)
   { 
-    ispcPtr = ispc::__Bricked32Volume1uc_create((ispc::vec3i&)size,internalData); 
+    ispcPtr = ispc::_Bricked32Volume1uc_create((ispc::vec3i&)size,internalData); 
   }
   template<>
   NaiveVolume<float>::NaiveVolume(const vec3i &size, const float *internalData)
     : Volume(size,ospray::FLOAT)
   { 
-    ispcPtr = ispc::__Naive32Volume1f_create((ispc::vec3i&)size,internalData); 
+    ispcPtr = ispc::_Naive32Volume1f_create((ispc::vec3i&)size,internalData); 
   }
   template<>
   BrickedVolume<float>::BrickedVolume(const vec3i &size, const float *internalData)
     : Volume(size,ospray::FLOAT)
   { 
-    ispcPtr = ispc::__Bricked32Volume1f_create((ispc::vec3i&)size,internalData); 
+    ispcPtr = ispc::_Bricked32Volume1f_create((ispc::vec3i&)size,internalData); 
   }
 
 
@@ -57,7 +57,7 @@ namespace ospray {
     uchar t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
       t[i] = uchar(255.999f*data[i]);
-    ispc::__Naive32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Naive32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,t);
   }
 
@@ -69,7 +69,7 @@ namespace ospray {
     uchar t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
       t[i] = uchar(255.999f*data[i]);
-    ispc::__Bricked32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Bricked32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,t);
   }
   template<>
@@ -77,7 +77,7 @@ namespace ospray {
                                      const vec3i &size, 
                                      const uchar *data)
   {
-    ispc::__Naive32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Naive32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,data);
   }
   template<>
@@ -85,7 +85,7 @@ namespace ospray {
                                      const vec3i &size, 
                                      const uchar *data)
   {
-    ispc::__Bricked32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Bricked32Volume1uc_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,data);
   }
 
@@ -101,7 +101,7 @@ namespace ospray {
     float t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
       t[i] = float(255.999f*data[i]);
-    ispc::__Naive32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Naive32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                       (const ispc::vec3i&)size,t);
   }
 
@@ -113,7 +113,7 @@ namespace ospray {
     float t[long(size.x)*size.y*size.z];
     for (long i=0;i<long(size.x)*size.y*size.z;i++)
       t[i] = float(255.999f*data[i]);
-    ispc::__Bricked32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Bricked32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,t);
   }
   template<>
@@ -121,7 +121,7 @@ namespace ospray {
                                      const vec3i &size, 
                                      const float *data)
   {
-    ispc::__Naive32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Naive32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,data);
   }
   template<>
@@ -129,7 +129,7 @@ namespace ospray {
                                      const vec3i &size, 
                                      const float *data)
   {
-    ispc::__Bricked32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
+    ispc::_Bricked32Volume1f_setRegion(ispcPtr,(const ispc::vec3i&)where,
                                        (const ispc::vec3i&)size,data);
   }
 

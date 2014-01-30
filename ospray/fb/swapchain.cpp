@@ -20,6 +20,8 @@ namespace ospray {
   
   const void *SwapChain::map() 
   {
+
+    getFrontBuffer()->doneRendering.sync();
     return getFrontBuffer()->map();
   }
 

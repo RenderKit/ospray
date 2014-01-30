@@ -65,6 +65,21 @@ namespace ospray {
     {
       if (!fb || !renderer) return;
 
+      static int frameID = 0;
+
+      //{
+      // note that the order of 'start' and 'end' here is
+      // (intentionally) reversed: due to our asynchrounous rendering
+      // you cannot place start() and end() _around_ the renderframe
+      // call (which in itself will not do a lot other than triggering
+      // work), but the average time between ttwo calls is roughly the
+      // frame rate (including display overhead, of course)
+      if (frameID > 0) fps.doneRender(); 
+      fps.startRender();
+      //}
+
+      ++frameID;
+
 // #if 1
 //       if (!msgAnimation.empty()) {
 //         static int curFrameID = -1;
@@ -94,12 +109,9 @@ namespace ospray {
         viewPort.modified = false;
       }
 
-      fps.startRender();
       ospRenderFrame(fb,renderer);
     
       ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
-      fps.doneRender(); // _after_ mapbuffer because remote rendering
-                        // will receive fb only in mapfb()
 
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();

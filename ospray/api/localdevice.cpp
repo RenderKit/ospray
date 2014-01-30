@@ -6,6 +6,7 @@
 #include "../render/renderer.h"
 #include "../camera/camera.h"
 #include "../volume/volume.h"
+#include "../render/loadbalancer.h"
 
 namespace ospray {
   namespace api {
@@ -28,6 +29,7 @@ namespace ospray {
         embreeConfig << " threads=1";
       rtcInit(embreeConfig.str().c_str());
       assert(rtcGetError() == RTC_NO_ERROR);
+      TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }
 
 

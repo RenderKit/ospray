@@ -20,9 +20,11 @@ namespace ospray {
   {
     static int numPrints = 0;
     numPrints++;
+    if (logLevel > 2) 
     if (numPrints == 5)
       cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
     
+    if (logLevel > 2) 
     if (numPrints < 5)
       std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
     Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
@@ -43,18 +45,16 @@ namespace ospray {
     size_t numTris  = idxData->size();
     size_t numVerts = posData->size();
 
-    PING;
-    PRINT(numTris);
-    PRINT(numVerts);
-
     eMesh = rtcNewTriangleMesh(eScene,RTC_GEOMETRY_STATIC,numTris,numVerts);
 
-    if (numPrints < 5)
+    if (logLevel > 2) 
+      if (numPrints < 5)
       cout << "  writing vertices in 'vec3fa' format" << endl;
     void *posPtr = rtcMapBuffer(model->eScene,eMesh,RTC_VERTEX_BUFFER);
     memcpy(posPtr,posData->data,posData->numBytes);
     rtcUnmapBuffer(model->eScene,eMesh,RTC_VERTEX_BUFFER);
 
+    if (logLevel > 2) 
     if (numPrints < 5)
       cout << "  writing indices in 'vec3i' format" << endl;
     switch (idxData->type) {
@@ -72,13 +72,13 @@ namespace ospray {
       Assert2(0,"unsupported triangle array format");
     }
     // memcpy(idxPtr,idxData->data,idxData->numBytes);
-    PING;
     rtcUnmapBuffer(model->eScene,eMesh,RTC_INDEX_BUFFER);
 
     box3f bounds = embree::empty;
     for (int i=0;i<posData->size();i++)
       bounds.extend(((vec3fa*)posPtr)[i]);
 
+    if (logLevel > 2) 
     if (numPrints < 5) {
       cout << "  created triangle mesh (" << numTris << " tris "
            << ", " << numVerts << " vertices)" << endl;

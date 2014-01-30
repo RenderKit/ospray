@@ -57,6 +57,12 @@ typedef enum {
   OSP_vec4i
 } OSPDataType;
 
+/*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
+typedef enum {
+  OSP_DISTRIBUTED_GEOMETRY = (1<<0),
+  OSP_DISTRIBUTED_APP      = (1<<1)
+} OSPGeometryCreationFlags;
+
 typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
   OSP_GENERAL_ERROR /*! unspecified error */
@@ -90,7 +96,7 @@ extern "C" {
 
   //! create a new geometry of given type 
   /*! return 'NULL' if that type is not known */
-  OSPGeometry ospNewGeometry(const char *type);
+  OSPGeometry ospNewGeometry(const char *type, int flags=0);
 
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */

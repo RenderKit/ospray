@@ -1,14 +1,23 @@
 #pragma once
 
+// ospray
 #include "../common/ospcommon.h"
 #include "../common/managed.h"
 #include "tile.h"
+// embree
+#include "common/sys/taskscheduler.h"
 
 namespace ospray {
+  using embree::TaskScheduler;
+
   extern "C" void ispc__setTile(void *_fb, void *_tile);
 
   /*! abstract frame buffer class */
   struct FrameBuffer : public ManagedObject {
+    /*! event that lets us register that 'somebody' is still busy
+        rendering this frame buffer */
+    TaskScheduler::EventSync doneRendering;
+
     const vec2i size;
     FrameBuffer(const vec2i &size) : size(size) {
       Assert(size.x > 0 && size.y > 0);
