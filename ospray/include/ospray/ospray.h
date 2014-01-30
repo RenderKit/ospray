@@ -59,8 +59,10 @@ typedef enum {
 
 /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 typedef enum {
+  /*! experimental: currently used to specify that the app ranks -
+      together - hold a logical piece of geometry, with the back-end
+      ospray workers then fetching that on demand..... */
   OSP_DISTRIBUTED_GEOMETRY = (1<<0),
-  OSP_DISTRIBUTED_APP      = (1<<1)
 } OSPGeometryCreationFlags;
 
 typedef enum {
@@ -96,7 +98,8 @@ extern "C" {
 
   //! create a new geometry of given type 
   /*! return 'NULL' if that type is not known */
-  OSPGeometry ospNewGeometry(const char *type, int flags=0);
+  OSPGeometry ospNewGeometry(const char *type);
+  // OSPGeometry ospNewGeometry(const char *type, int flags=0);
 
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */
