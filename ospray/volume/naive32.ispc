@@ -367,7 +367,7 @@ inline varying float Naive32Volume1f_gradf(uniform VolumePtr volume,
 
   \note eventually this is supposed to return a "VolumePtr", but right
   now ISPC crashes when doing that */
-uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uchar *uniform internal)
+uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uint8 *uniform internal)
 {
   uniform NaiveVolume *uniform volume = uniform new uniform NaiveVolume;
   uniform int64 numElements   = ((int64)size.x) * size.y * size.z;
@@ -437,7 +437,7 @@ export void _Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
 
 /* need this workaround because ISPC cannot export pointer to 'Volume'
    type because volume type has function pointers */
-export  uniform ExtVolumePtr _Naive32Volume1uc_create(uniform vec3i &size, const uniform uchar *uniform internal)
+export  uniform ExtVolumePtr _Naive32Volume1uc_create(uniform vec3i &size, const uniform uint8 *uniform internal)
 { return (ExtVolumePtr)Naive32Volume1uc_create(size,internal); }
 // extern "C" 
 export uniform ExtVolumePtr _Naive32Volume1f_create(uniform vec3i &size, const uniform float *uniform internal)

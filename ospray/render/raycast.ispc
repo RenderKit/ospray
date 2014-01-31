@@ -10,7 +10,6 @@
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 
-<<<<<<< HEAD
 // #define SHADE(ray,scene) shade_primID(ray)
 // #define SHADE(ray,scene) shade_Ng(ray)
 #define SHADE(ray,scene) shade_eyeLight(ray)
@@ -32,17 +31,6 @@ inline vec4f shade_eyeLight(const Ray &ray)
   if (ray.geomID < 0) return make_vec4f(0.f); 
   const float c = dot(normalize(ray.Ng),ray.dir); 
   return make_vec4f(.3f+.8f*abs(c));
-=======
-inline vec3f make_random_color(const int i)
-{
-  const int mx = 13*17*43;
-  const int my = 11*29;
-  const int mz = 7*23*63;
-  const uint32 g = (i * (3*5*127)+12312314);
-  return make_vec3f((g % mx)*(1.f/(mx-1)),
-                    (g % my)*(1.f/(my-1)),
-                    (g % mz)*(1.f/(mz-1)));
->>>>>>> e6230d4664312113b687abcc9af63feda416b053
 }
 
 inline vec4f shade_eyeLight_testShadow(const Ray &ray, uniform RTCScene scene)
@@ -94,33 +82,22 @@ task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
 export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
                                              void *uniform _camera, //uniform Camera *uniform camera,
                                              uniform RTCScene scene)
-// extern "C" 
-// void ispc__RayCastRenderer_renderTile(uniform Tile *uniform tile,
-//                                       uniform Camera *uniform _camera,
-//                                       uniform RTCScene scene)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
 
-  const uniform uint size_x = tile->fbSize.x;
-  const uniform uint size_y = tile->fbSize.y;
-  // const uniform uint quadID = taskIndex;
-  // const uniform uint quad_x = (quadID % (TILE_SIZE/QUAD_SIZE));
-  // const uniform uint quad_y = (quadID / (TILE_SIZE/QUAD_SIZE));
-  const uniform uint x0 = tile->region.lower.x;
-  const uniform uint y0 = tile->region.lower.y;
-  //  print("tile % %\n",x0,y0);
-  for (uniform uint i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-  // foreach (frag=0 ... TILE_SIZE*TILE_SIZE/programCount) {
-    const uint frag = i*programCount+programIndex;
-    const uint  x     = x0 + (frag % TILE_SIZE);
-    const uint  y     = y0 + (frag / TILE_SIZE);
-    // print("frag % x y % %\n",frag,x,y);
+  const uniform uint32 size_x = tile->fbSize.x;
+  const uniform uint32 size_y = tile->fbSize.y;
+  const uniform uint32 x0 = tile->region.lower.x;
+  const uniform uint32 y0 = tile->region.lower.y;
+  for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+    const uint32 frag = i*programCount+programIndex;
+    const uint32  x     = x0 + (frag % TILE_SIZE);
+    const uint32  y     = y0 + (frag / TILE_SIZE);
     if (x < size_x & y < size_y) {
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
       Ray ray;
-      // print("ray % % \n",screen_u,screen_v);
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
       // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
 #if 0

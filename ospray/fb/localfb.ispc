@@ -93,10 +93,10 @@ void localfb_uint32_setTile(uniform FrameBuffer *uniform _fb,
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
   for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint  pixID = i*programCount+programIndex;
-    const uint  x     = tile->region.lower.x + (pixID % TILE_SIZE);
-    const uint  y     = tile->region.lower.y + (pixID / TILE_SIZE);
-    const uint  ofs   = y*tile->fbSize.x+x;
+    const uint32  pixID = i*programCount+programIndex;
+    const uint32  x     = tile->region.lower.x + (pixID % TILE_SIZE);
+    const uint32  y     = tile->region.lower.y + (pixID / TILE_SIZE);
+    const uint32  ofs   = y*tile->fbSize.x+x;
     const vec4f value = make_vec4f(tile->r[i],tile->g[i],tile->b[i],tile->a[i]);
     if (x < tile->fbSize.x & y < tile->fbSize.y) {
       pixel[ofs]        = cvt_uint32(value);

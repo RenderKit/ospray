@@ -94,8 +94,8 @@ void Bricked32Volume1f_setRegion(uniform VolumePtr _volume,
 inline float getVoxel1uc32(uniform BrickedVolume *uniform volume,
                            const vec3i &coord)
 {
-  const uniform uchar *uniform data
-    = (const uniform uchar *uniform )volume->inherited.data;
+  const uniform uint8 *uniform data
+    = (const uniform uint8 *uniform )volume->inherited.data;
   const int idx = BrickedVolume_getCoord(volume,coord);
   return data[idx];
 }
@@ -260,7 +260,7 @@ uniform VolumePtr Bricked32Volume1f_create(uniform vec3i &size, const float *uni
   volume->inherited.gradf     = Bricked32Volume1f_gradf;
   return (uniform VolumePtr)volume;
 }
-uniform VolumePtr Bricked32Volume1uc_create(uniform vec3i &size, const uchar *uniform internal)
+uniform VolumePtr Bricked32Volume1uc_create(uniform vec3i &size, const uint8 *uniform internal)
 {
   print("creating bricked volume, size % % %\n",size.x,size.y,size.z);
   uniform BrickedVolume *uniform volume = uniform new uniform BrickedVolume;
@@ -314,7 +314,7 @@ export void _Bricked32Volume1f_setRegion(uniform ExtVolumePtr _volume,
 
 /* need this workaround because ISPC cannot export pointer to 'Volume'
    type because volume type has function pointers */
-export uniform ExtVolumePtr _Bricked32Volume1uc_create(uniform vec3i &size, const uchar *uniform internal)
+export uniform ExtVolumePtr _Bricked32Volume1uc_create(uniform vec3i &size, const uint8 *uniform internal)
 { return (ExtVolumePtr)Bricked32Volume1uc_create(size,internal); }
 /* need this workaround because ISPC cannot export pointer to 'Volume'
    type because volume type has function pointers */

@@ -8,23 +8,8 @@ namespace ospray {
   extern "C" void ispc__RayCastRenderer_renderFrame(void *camera, void *scene, void *fb);
   extern "C" void ispc__RayCastRenderer_renderTile(void *tile, void *camera, void *scene);
 
-  // void RayCastRenderer::RenderTask::run(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event)
-  // {
-  //   // PING;
-  //   // PING;
-  //   // PING;
-  //   // PRINT(threadIndex);
-  //   // PRINT(threadCount);
-  //   // PRINT(taskIndex);
-  //   // PRINT(taskCount);
-  // }
-
   void RayCastRenderer::renderTile(Tile &tile)
   {
-    // Assert(fb && "null frame buffer handle");
-    // void *_fb = fb->getIE();
-    // Assert2(_fb,"invalid host-side-only frame buffer");
-
     Model *world = (Model *)getParam("world",NULL);
     Assert2(world,"null world handle (did you forget to assign a 'world' parameter to the ray_cast renderer?)");
     void *_scene = (void*)world->eScene;
