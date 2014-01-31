@@ -67,7 +67,7 @@ namespace ospray {
   const void *LocalFrameBuffer<PixelType>::map()
   {
     if (renderTask != NULL) {
-      printf("waiting fr %lx / %lx\n",this,renderTask.ptr);
+      //      printf("waiting fr %lx / %lx\n",this,renderTask.ptr);
       renderTask->done.sync();
       renderTask = NULL;
     }

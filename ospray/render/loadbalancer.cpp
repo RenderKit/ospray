@@ -11,6 +11,7 @@ namespace ospray {
       fb(fb), 
       tiledRenderer(tiledRenderer)
   {
+    refInc();
   }
 
   void LocalTiledLoadBalancer::RenderTask::finish(size_t threadIndex, 
@@ -20,6 +21,7 @@ namespace ospray {
     // release the refcounts:
     fb = NULL; 
     tiledRenderer = NULL;
+    refDec();
   }
 
   void LocalTiledLoadBalancer::RenderTask::run(size_t threadIndex, 
@@ -60,7 +62,7 @@ namespace ospray {
     RenderTask *renderTask = new RenderTask(numTiles,tiledRenderer,fb);
     fb->renderTask = renderTask;
     TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-    printf("scheduling %lx / %lx\n",fb,fb->renderTask.ptr);
+    //    printf("scheduling %lx / %lx\n",fb,fb->renderTask.ptr);
   }
 
   /*! the _local_ tiled load balancer has nothing to do when a tile is

@@ -47,6 +47,7 @@ namespace ospray {
         AssertError("frame buffer mode not yet supported");
       }
       SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+      sc->refInc();
       Assert(sc != NULL);
       return (OSPFrameBuffer)sc;
     }
