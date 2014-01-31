@@ -1,6 +1,12 @@
 #include "ospray/common/ospcommon.h"
 #include /*embree*/"common/math/affinespace.h"
 
+#ifdef __APPLE__
+#include <glut.h>
+#else
+#include <GL/glut.h>
+#endif
+
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
   namespace glut3D {

@@ -3,7 +3,6 @@
  */
 
 #include "../util/glut3D/glut3D.h"
-#include "GL/glut.h"
 #include "rtcore.h"
 
 using ospray::glut3D::Glut3DWidget;
