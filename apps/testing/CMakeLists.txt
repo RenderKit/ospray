@@ -20,7 +20,7 @@ TARGET_LINK_LIBRARIES(test02 osp_glut3d)
 # ------------------------------------------------------------------
 # test03: same as test02, just uses ISPC for rendering that frame
 # ------------------------------------------------------------------
-ISPC_COMPILE(${OSPRAY_TARGET} test03.ispc)
+ISPC_COMPILE(${OSPRAY_ISPC_TARGET} test03.ispc)
 ADD_EXECUTABLE(test03 test03.cpp test03.dev${OSPRAY_ISPC_SUFFIX})
 TARGET_LINK_LIBRARIES(test03 osp_glut3d)
 

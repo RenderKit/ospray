@@ -23,7 +23,7 @@ CMAKE_POLICY(SET CMP0002 OLD)
 
 ADD_SUBDIRECTORY(common)
 
-ISPC_COMPILE(${OSPRAY_TARGET} 
+ISPC_COMPILE(${OSPRAY_ISPC_TARGET} 
 	render/testrenderer.ispc
 	render/raycast.ispc
 	render/dvr.ispc
