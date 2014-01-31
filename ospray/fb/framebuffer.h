@@ -12,11 +12,17 @@ namespace ospray {
 
   extern "C" void ispc__setTile(void *_fb, void *_tile);
 
+  struct RenderFrameEvent : public RefCount {
+    TaskScheduler::EventSync done;
+  };
+
   /*! abstract frame buffer class */
   struct FrameBuffer : public ManagedObject {
     /*! event that lets us register that 'somebody' is still busy
         rendering this frame buffer */
-    TaskScheduler::EventSync doneRendering;
+    
+    // TaskScheduler::EventSync *doneRendering;
+    Ref<RenderFrameEvent> renderTask;
 
     const vec2i size;
     FrameBuffer(const vec2i &size) : size(size) {

@@ -183,6 +183,7 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
+      renderer->refInc();
       return (OSPRenderer)renderer;
     }
 
@@ -191,6 +192,7 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid render type identifier");
       Geometry *geometry = Geometry::createGeometry(type);
+      geometry->refInc();
       return (OSPGeometry)geometry;
     }
 
@@ -199,6 +201,7 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
+      camera->refInc();
       return (OSPCamera)camera;
     }
 
@@ -211,6 +214,7 @@ namespace ospray {
         commit, so use this wrpper thingy...  \see
         volview_notes_on_volume_interface */
       WrapperVolume *volume = new WrapperVolume; 
+      volume->refInc();
       return (OSPVolume)volume;
     }
 
@@ -227,7 +231,6 @@ namespace ospray {
       
       FrameBuffer *fb = sc->getBackBuffer();
       renderer->renderFrame(fb);
-
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
       // actually have the user call an *ex*plicit ospSwapBuffers call...

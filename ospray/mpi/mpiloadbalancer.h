@@ -60,6 +60,7 @@ namespace ospray {
                   FrameBuffer *fb);
         TileRenderer            *tiledRenderer;
         FrameBuffer             *fb;
+        TaskScheduler::EventSync doneRendering;
 
         TASK_RUN_FUNCTION(SlaveTask,run);
       };

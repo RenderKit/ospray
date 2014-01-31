@@ -29,15 +29,19 @@ namespace ospray {
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
     /*! a task for rendering a frame using the global tiled load balancer */
-    struct RenderTileTask : public embree::TaskScheduler::Task {
-      RenderTileTask(size_t numTiles, 
-                     TileRenderer *tiledRenderer,
-                     FrameBuffer *fb);
-      TileRenderer            *tiledRenderer;
-      FrameBuffer             *fb;
-      TASK_RUN_FUNCTION(RenderTileTask,run);
-      TASK_COMPLETE_FUNCTION(RenderTileTask,finish);
+    struct RenderTask : public RenderFrameEvent {
+      RenderTask(size_t numTiles, 
+                 TileRenderer *tiledRenderer,
+                 FrameBuffer *fb);
+      Ref<TileRenderer>         tiledRenderer;
+      Ref<FrameBuffer>          fb;
+      TaskScheduler::EventSync  done;
+      TaskScheduler::Task       task;
+      
+      TASK_RUN_FUNCTION(RenderTask,run);
+      TASK_COMPLETE_FUNCTION(RenderTask,finish);
     };
+
 
     virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
     virtual void returnTile(FrameBuffer *fb, Tile &tile);

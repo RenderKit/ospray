@@ -66,6 +66,11 @@ namespace ospray {
   template<typename PixelType>
   const void *LocalFrameBuffer<PixelType>::map()
   {
+    if (renderTask != NULL) {
+      printf("waiting fr %lx / %lx\n",this,renderTask.ptr);
+      renderTask->done.sync();
+      renderTask = NULL;
+    }
     Assert(!this->isMapped);
     this->refInc();
     this->isMapped = true;

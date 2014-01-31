@@ -19,6 +19,7 @@ namespace ospray {
 #if OSPRAY_MPI
   namespace api {
     Device *createDevice_MPI_OSPonRanks(int *ac, const char **av);
+    Device *createDevice_MPI_LaunchLocalCluster(int *ac, const char **av, const char *launchCmd);
   }
 #endif
 
@@ -39,10 +40,31 @@ namespace ospray {
     if (_ac && _av) {
       // we're only supporting local rendering for now - network device
       // etc to come.
-      if (*_ac > 1 && std::string(_av[1]) == "--mpi") {
+      if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi") {
 #if OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,1,1);
-        ospray::api::Device::current = ospray::api::createDevice_MPI_OSPonRanks(_ac,_av);
+        ospray::api::Device::current
+          = ospray::api::createDevice_MPI_OSPonRanks(_ac,_av);
+#else
+        throw std::runtime_error("OSPRay MPI support not compiled in");
+#endif
+      }
+      if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi-launch") {
+#if OSPRAY_MPI
+        const char *launchCommand = strdup(_av[2]);
+        removeArgs(*_ac,(char **&)_av,1,2);
+        ospray::api::Device::current
+          = ospray::api::createDevice_MPI_LaunchLocalCluster(_ac,_av,launchCommand);
+#else
+        throw std::runtime_error("OSPRay MPI support not compiled in");
+#endif
+      }
+      if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi-listen") {
+#if OSPRAY_MPI
+        const char *launchCommand = NULL;
+        removeArgs(*_ac,(char **&)_av,1,1);
+        ospray::api::Device::current
+          = ospray::api::createDevice_MPI_LaunchLocalCluster(_ac,_av,launchCommand);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif

@@ -97,40 +97,63 @@ namespace ospray {
       - the app is running on a standalone process
       - osp will launch multiple worker processes that communicate w/ app throu intercomm
      */
-    void initMPI_LaunchLocalCluster()
+    void initMPI_LaunchLocalCluster(const char *launchCmd)
     {
+      PING;
       int rc;
       MPI_Status status;
 
+      PRINT(world.size);
+
       Assert(world.size == 1);
       app.comm = world.comm; 
-      app.makeIntracomm();
+      app.makeIntercomm();
       
-      std::string launchCmd = "/tmp/launchit.sh";
+      // std::string launchCmd = "/tmp/launchit.sh";
       
-      std::stringstream systemCmd;
-      systemCmd
-        << launchCmd << " "
-        << endl;
-      FILE *launchOutput = fopen(systemCmd.str().c_str(),"r");
-      Assert(launchOutput);
-      char line[10000];
-      char *listenPort = NULL;
-      const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
-      while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
-        if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
-          listenPort = line + strlen(LAUNCH_HEADER);
-          char *eol = strstr(listenPort,"\n");
-          if (eol) *eol = 0;
-          break;
+      if (launchCmd) {
+        std::stringstream systemCmd;
+        systemCmd
+          << launchCmd << " "
+          << endl;
+        FILE *launchOutput = fopen(systemCmd.str().c_str(),"r");
+        Assert(launchOutput);
+        char line[10000];
+        char *listenPort = NULL;
+        const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
+        while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
+          if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
+            listenPort = line + strlen(LAUNCH_HEADER);
+            char *eol = strstr(listenPort,"\n");
+            if (eol) *eol = 0;
+            break;
+          }
         }
+        fclose(launchOutput);
+        if (!listenPort)
+          throw std::runtime_error("failed to find service port in launch script output");
+        for (char *s = listenPort; *s; ++s)
+          if (*s == '%') *s = '$';
+        rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
+      } else {
+        PING;
+        char appPortName[MPI_MAX_PORT_NAME];
+        rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
+        // fix port name: replace all '$'s by '%'s to allow using it on the cmdline...
+        char *fixedPortName = strdup(appPortName);
+        for (char *s = fixedPortName; *s; ++s)
+          if (*s == '$') *s = '%';
+        PRINT(appPortName);
+        Assert(rc == MPI_SUCCESS);
+        cout << "#a: ------------------------------------------------------" << endl;
+        cout << "#a: ospray app started, waiting for service connect"  << endl;
+        cout << "#a: at port " << fixedPortName << endl;
+        rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
+        PING;
+        // rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,MPI_COMM_WORLD,&worker.comm);
+        Assert(rc == MPI_SUCCESS);
       }
-      fclose(launchOutput);
-      if (!listenPort)
-        throw std::runtime_error("failed to find service port in launch script output");
-
-      rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
-      worker.makeIntercomm();
+      worker.makeIntracomm();
     }
     
     /*! in this mode
@@ -148,6 +171,14 @@ namespace ospray {
     Device *createDevice_MPI_OSPonRanks(int *ac, const char **av)
     {
       mpi::initMPI_OSPonRanks(ac,av);
+      // only the app process(es) will still reach this point.
+      return new MPIDevice(ac,av);
+    }
+    Device *createDevice_MPI_LaunchLocalCluster(int *ac, const char **av,
+                                                const char *launchCmd)
+    {
+      mpi::init(ac,av);
+      mpi::initMPI_LaunchLocalCluster(launchCmd);
       // only the app process(es) will still reach this point.
       return new MPIDevice(ac,av);
     }

@@ -48,7 +48,7 @@ namespace ospray {
     DynamicLoadBalancer_Slave::SlaveTask::SlaveTask(size_t numTiles, 
                                                     TileRenderer *tiledRenderer,
                                                     FrameBuffer *fb)
-      : Task(&fb->doneRendering,_run,this,TaskScheduler::getNumThreads(),NULL,NULL,
+      : Task(&doneRendering,_run,this,TaskScheduler::getNumThreads(),NULL,NULL,
              "DynamicLoadBalancer_Slave::SlaveTask"),
         fb(fb), tiledRenderer(tiledRenderer)
     {
@@ -103,7 +103,8 @@ namespace ospray {
       size_t numTiles = divRoundUp(fb->size.x,TILE_SIZE)*divRoundUp(fb->size.y,TILE_SIZE);
       SlaveTask *renderTask = new SlaveTask(numTiles,tiledRenderer,fb);
       TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, renderTask); 
-      // fb->doneRendering.sync();
+      renderTask->doneRendering.sync();
+      delete renderTask; // does not yet kill itself
     }
 
     void DynamicLoadBalancer_Slave::returnTile(FrameBuffer *fb, Tile &tile)
@@ -114,7 +115,7 @@ namespace ospray {
     void DynamicLoadBalancer_Master::renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb)
     {
       size_t numTiles = divRoundUp(fb->size.x,TILE_SIZE)*divRoundUp(fb->size.y,TILE_SIZE);
-      printf("#m: num tiles %i, num slave threads %i\n",numTiles,numSlaveThreads);
+      printf("#m: num tiles %li, num slave threads %i\n",numTiles,numSlaveThreads);
     }
 
     void DynamicLoadBalancer_Master::returnTile(FrameBuffer *fb, Tile &tile)

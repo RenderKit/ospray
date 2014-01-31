@@ -4,31 +4,29 @@
 namespace ospray {
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
-  LocalTiledLoadBalancer::RenderTileTask::RenderTileTask(size_t numTiles, 
-                                                         TileRenderer *tiledRenderer,
-                                                         FrameBuffer *fb)
-    : Task(&fb->doneRendering,_run,this,numTiles,_finish,this,
-           "LocalTiledLoadBalancer::RenderTileTask"),
-      fb(fb), tiledRenderer(tiledRenderer)
+  LocalTiledLoadBalancer::RenderTask::RenderTask(size_t numTiles, 
+                                                 TileRenderer *tiledRenderer,
+                                                 FrameBuffer *fb)
+    : task(&done,_run,this,numTiles,_finish,this,"LocalTiledLoadBalancer::RenderTask"),
+      fb(fb), 
+      tiledRenderer(tiledRenderer)
   {
-    fb->doneRendering.sync();
-    Assert(fb);
-    fb->doneRendering = TaskScheduler::EventSync();
   }
 
-  void LocalTiledLoadBalancer::RenderTileTask::finish(size_t threadIndex, 
-                                                      size_t threadCount, 
-                                                      TaskScheduler::Event* event) 
+  void LocalTiledLoadBalancer::RenderTask::finish(size_t threadIndex, 
+                                                  size_t threadCount, 
+                                                  TaskScheduler::Event* event) 
   {
-    delete this;
-    printf("frm fini  %li\n",__rdtsc());
+    // release the refcounts:
+    fb = NULL; 
+    tiledRenderer = NULL;
   }
 
-  void LocalTiledLoadBalancer::RenderTileTask::run(size_t threadIndex, 
-                                                   size_t threadCount, 
-                                                   size_t taskIndex, 
-                                                   size_t taskCount, 
-                                                   TaskScheduler::Event* event) 
+  void LocalTiledLoadBalancer::RenderTask::run(size_t threadIndex, 
+                                               size_t threadCount, 
+                                               size_t taskIndex, 
+                                               size_t taskCount, 
+                                               TaskScheduler::Event* event) 
   {
     Tile tile;
     tile.fbSize = fb->size;
@@ -41,8 +39,7 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tiledRenderer->renderTile(tile);
     Assert(TiledLoadBalancer::instance);
-    TiledLoadBalancer::instance->returnTile(fb,tile);
-    //loadBalancer->returnTile(fb,tile);
+    TiledLoadBalancer::instance->returnTile(fb.ptr,tile);
     fb->setTile(tile);
   }
 
@@ -52,12 +49,18 @@ namespace ospray {
   {
     Assert(tiledRenderer);
     Assert(fb);
+
+    if (fb->renderTask) {
+      PING;
+      fb->renderTask->done.sync();
+      fb->renderTask = NULL;
+    }
+    
     size_t numTiles = divRoundUp(fb->size.x,TILE_SIZE)*divRoundUp(fb->size.y,TILE_SIZE);
-    RenderTileTask *renderTask = new RenderTileTask(numTiles,tiledRenderer,fb);
-    TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, renderTask); 
-    fb->doneRendering.sync();
-    printf("done sync %li\n",__rdtsc());
-    // TaskScheduler::waitForEvent(&fb->doneRendering);
+    RenderTask *renderTask = new RenderTask(numTiles,tiledRenderer,fb);
+    fb->renderTask = renderTask;
+    TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
+    printf("scheduling %lx / %lx\n",fb,fb->renderTask.ptr);
   }
 
   /*! the _local_ tiled load balancer has nothing to do when a tile is
@@ -66,9 +69,5 @@ namespace ospray {
       buffer */
   void LocalTiledLoadBalancer::returnTile(FrameBuffer *fb, Tile &tile)
   {
-    // PING;
-    // PRINT(this);
-    // Assert(fb);
-    // fb->setTile(tile);
   }
 }
