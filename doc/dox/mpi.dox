@@ -1,0 +1,53 @@
+/*! \page running_in_mpi Running OSPRay in MPI Mode 
+
+  OSPRay supports various different modes of running MPI-parallel.
+  Here's how to run them:
+
+  \section one_mpi_ring One MPI group; app on rank 0, ospray on ranks 1-N
+
+  <code>
+  mpirun -np N <otherMPIOptions> ./myApp --osp:mpi <otherAppOptions>
+  </code>
+
+  This mode is particularly intended for users wanting to run a
+  single-process vis application in a HPC resource through VNC. We
+  assume that both application and workers are running within the same
+  MPI group / job allocation.
+
+  In this mode we use mpirun to launch N application instances on
+  whatever nodes are specified by the user. The command line flag
+  "--osp:mpi" tells ospray that only rank 0 should run the
+  application; all other ranks will run ospray workers. In addition to
+  the application, rank 0 will also run an ospray coordinator that
+  (dynamically) load-balances the workers. 
+
+  By default this mode will use a local frame buffer on rank 0, and
+  all workers will send pixel tiles to the coordinator. Ergo this mode
+  assumes that rank 0 has reasonably good network connectivity to all
+  rank nodes.
+
+  \section launch_local_cluster Automatically Launching on a Local Cluster
+
+  In this mode we pass the name of an MPI launch script that will
+  launch the actual workers; the app-part of ospray will then
+  automatically connect to these workers.
+
+  To start the app, simply do
+  <code>
+  ./myApp --osp:mpi-launch <launchscript> <otherAppOptions>
+  </code>
+
+  A sample app script might look like this:
+  <code>
+  ibrun-mic2 -np 4 ./ospray_mpi_worker
+  </code>
+
+  The advantage of this method is that the user does not have to
+  specify mpirun explicitly, and, in paritulcar, that since the launch
+  script only runs the 'ospray_mpi_worker' it can also schedule
+  workers onto nodes on which the app itself might not run (eg, the
+  mics do not have opengl, and would not run an opengl app; the
+  ospray_mpi_worker does not have this limitation).
+
+
+ */
