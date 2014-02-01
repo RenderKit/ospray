@@ -85,7 +85,7 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-
+  tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
   const uniform uint32 size_y = tile->fbSize.y;
   const uniform uint32 x0 = tile->region.lower.x;
@@ -113,6 +113,7 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
       tile->b[i] = col.z;
       tile->a[i] = col.w;
       tile->z[i] = ray.t;
+      tile->rgba8[i] = cvt_uint32(col);
 #endif
     }
   }

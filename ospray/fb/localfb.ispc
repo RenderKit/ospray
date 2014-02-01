@@ -58,7 +58,7 @@ inline float extractUcharChannel(uint32 pix, uniform const int32 shift)
 
 inline uint32 cvt_uint32(const float f)
 {
-  return (uint32)(255.f * max(min(f,1.f),0.f));
+  return (uint32)(255.9f * max(min(f,1.f),0.f));
 }
 
 inline uint32 cvt_uint32(const vec4f &v)
@@ -92,14 +92,35 @@ void localfb_uint32_setTile(uniform FrameBuffer *uniform _fb,
 #if 1
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform uint32 *uniform pixel = (uniform uint32 *uniform)fb->pixel;
-  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32  pixID = i*programCount+programIndex;
-    const uint32  x     = tile->region.lower.x + (pixID % TILE_SIZE);
-    const uint32  y     = tile->region.lower.y + (pixID / TILE_SIZE);
-    const uint32  ofs   = y*tile->fbSize.x+x;
-    const vec4f value = make_vec4f(tile->r[i],tile->g[i],tile->b[i],tile->a[i]);
-    if (x < tile->fbSize.x & y < tile->fbSize.y) {
-      pixel[ofs]        = cvt_uint32(value);
+  if (tile->format & TILE_FORMAT_RGBA8) {
+  // print("setting tile, format is %; region % % - % %\n",tile->format,
+  //       tile->region.lower.x,
+  //       tile->region.lower.y,
+  //       tile->region.upper.x,
+  //       tile->region.upper.y
+  //       );
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+      const uint32  pixID = i*programCount+programIndex;
+      const uint32  x     = tile->region.lower.x + (pixID % TILE_SIZE);
+      const uint32  y     = tile->region.lower.y + (pixID / TILE_SIZE);
+      const uint32  ofs   = y*tile->fbSize.x+x;
+      // const vec4f value = make_vec4f(tile->r[i],tile->g[i],tile->b[i],tile->a[i]);
+      if (x < tile->fbSize.x & y < tile->fbSize.y) 
+        pixel[ofs]        = tile->rgba8[i];
+      // print("writing % % val %\n",x,y,tile->rgba8[i]);
+      // if (ofs == 12345)
+      //   print("writing pixel % val % ofs %\n",pixID,tile->rgba8[i],ofs);
+    }
+  } else {
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+      const uint32  pixID = i*programCount+programIndex;
+      const uint32  x     = tile->region.lower.x + (pixID % TILE_SIZE);
+      const uint32  y     = tile->region.lower.y + (pixID / TILE_SIZE);
+      const uint32  ofs   = y*tile->fbSize.x+x;
+      const vec4f value = make_vec4f(tile->r[i],tile->g[i],tile->b[i],tile->a[i]);
+      if (x < tile->fbSize.x & y < tile->fbSize.y) {
+        pixel[ofs]        = cvt_uint32(value);
+      }
     }
   }
 #endif

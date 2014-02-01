@@ -71,6 +71,6 @@ namespace ospray {
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
 
-#define divRoundUp(X,Y) ((X)+(Y)-1)/(Y)
+#define divRoundUp(X,Y) (((X)+(Y)-1)/(Y))
   
 

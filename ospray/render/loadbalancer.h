@@ -42,7 +42,6 @@ namespace ospray {
       TASK_COMPLETE_FUNCTION(RenderTask,finish);
     };
 
-
     virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
     virtual void returnTile(FrameBuffer *fb, Tile &tile);
   };

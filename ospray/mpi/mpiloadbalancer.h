@@ -5,6 +5,69 @@
 
 namespace ospray {
   namespace mpi {
+    
+    // =======================================================
+    // =======================================================
+    // =======================================================
+    namespace staticLoadBalancer {
+      /*! \brief the 'master' in a tile-based master-slave *static*
+          load balancer
+
+          The static load balancer assigns tiles based on a fixed pattern;
+          right now simply based on a round-robin pattern (ie, each client
+          'i' renderss tiles with 'tileID%numWorkers==i'
+      */
+      struct Master : public TiledLoadBalancer
+      {
+        Master();
+        
+        virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
+        virtual void returnTile(FrameBuffer *fb, Tile &tile);
+      };
+
+      /*! \brief the 'slave' in a tile-based master-slave *static*
+          load balancer
+
+          The static load balancer assigns tiles based on a fixed pattern;
+          right now simply based on a round-robin pattern (ie, each client
+          'i' renderss tiles with 'tileID%numWorkers==i'
+      */
+      struct Slave : public TiledLoadBalancer
+      {
+        Slave();
+        
+        /*! a task for rendering a frame using the global tiled load balancer */
+        struct RenderTask : public RenderFrameEvent {
+          RenderTask(size_t numTiles, 
+                    TileRenderer *tiledRenderer,
+                    FrameBuffer *fb);
+          ~RenderTask();
+          
+          Ref<TileRenderer>         tiledRenderer;
+          Ref<FrameBuffer>          fb;
+          TaskScheduler::EventSync  done;
+          TaskScheduler::Task       task;
+          
+          TASK_RUN_FUNCTION(RenderTask,run);
+          // TASK_COMPLETE_FUNCTION(RenderTask,finish);
+        };
+        
+        /*! number of tiles preallocated to this client; we can always
+          render those even without asking for them. */
+        uint32 numPreAllocated; 
+        /*! total number of worker threads across all(!) slaves */
+        int32 numTotalThreads;
+        
+        virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
+        virtual void returnTile(FrameBuffer *fb, Tile &tile);
+      };
+    }
+
+
+    // =======================================================
+    // =======================================================
+    // =======================================================
+
     /*! \brief the 'master' in a tile-based master-slave dynamic load
         balancing in config.
 

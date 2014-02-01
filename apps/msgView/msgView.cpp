@@ -135,7 +135,7 @@ namespace ospray {
   void msgViewMain(int &ac, const char **&av)
   {
     msgModel = new miniSG::Model;
-
+    
     // -------------------------------------------------------
     // parse cmdline
     // -------------------------------------------------------
@@ -208,6 +208,7 @@ namespace ospray {
     
     cout << "msgView: adding parsed geometries to ospray model" << endl;
     for (int i=0;i<msgModel->mesh.size();i++) {
+      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
       // create ospray mesh

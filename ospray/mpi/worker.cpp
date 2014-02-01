@@ -46,14 +46,16 @@ namespace ospray {
       int rc;
 
 
-      TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Slave;
+      // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Slave;
+      TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Slave;
 
 
       while (1) {
         const int command = cmd.get_int32();
-        // if (worker.rank == 0)
-        //   printf("#w: command %i\n",command);
-        usleep(10000);
+#if 0
+        if (worker.rank == 0)
+          printf("#w: command %i\n",command);
+#endif
         switch (command) {
         case api::MPIDevice::CMD_NEW_RENDERER: {
           const mpi::Handle handle = cmd.get_handle();
@@ -156,6 +158,7 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
+          printf("#w%i:c%i",worker.rank,(int)handle);
           if (logLevel > 2)
             cout << "#w: committing " << handle << " " << obj->toString() << endl;
           obj->commit();

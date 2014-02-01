@@ -99,11 +99,8 @@ namespace ospray {
      */
     void initMPI_LaunchLocalCluster(const char *launchCmd)
     {
-      PING;
       int rc;
       MPI_Status status;
-
-      PRINT(world.size);
 
       Assert(world.size == 1);
       app.comm = world.comm; 
@@ -208,7 +205,8 @@ namespace ospray {
         }
       }
 
-      TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Master;
+      TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
+      // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Master;
       PING;
     }
 
@@ -227,6 +225,7 @@ namespace ospray {
         AssertError("frame buffer mode not yet supported");
       }
       SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+      sc->refInc();
       Assert(sc != NULL);
       
       mpi::Handle handle = mpi::Handle::alloc();
@@ -253,12 +252,7 @@ namespace ospray {
       SwapChain *sc = (SwapChain *)handle.lookup();
       Assert(sc);
 
-      cmd.newCommand(CMD_FRAMEBUFFER_MAP);
-      cmd.send(handle);
-      cmd.flush();
       void *ptr = (void*)sc->map();
-      rc = MPI_Recv(ptr,sc->fbSize.x*sc->fbSize.y,MPI_INT,0,0,mpi::worker.comm,&status);
-      Assert(rc == MPI_SUCCESS);
       return ptr;
     }
 
@@ -484,7 +478,10 @@ namespace ospray {
       cmd.send((const mpi::Handle&)_sc);
       cmd.send((const mpi::Handle&)_renderer);
       cmd.flush();
+
+      // printf("#m: rendienrg into fb %lx\n",fb);
       TiledLoadBalancer::instance->renderFrame(NULL,fb);
+      // printf("#m: DONE rendienrg into fb %lx\n",fb);
 
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should

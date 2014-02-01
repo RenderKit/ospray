@@ -13,6 +13,7 @@ struct FrameBuffer;
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
 struct Tile {
+  varying uint32 rgba8[(TILE_SIZE*TILE_SIZE)/programCount];
   varying float  r[(TILE_SIZE*TILE_SIZE)/programCount]; /*! red */
   varying float  g[(TILE_SIZE*TILE_SIZE)/programCount]; /*! green */
   varying float  b[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< blue */
@@ -26,6 +27,7 @@ struct Tile {
   uniform region2i region;
   uniform vec2i    fbSize;
   uniform vec2f    rcp_fbSize;
+  uniform uint32   format;
 };
 
 

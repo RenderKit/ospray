@@ -14,4 +14,18 @@ inline vec3f make_random_color(const int i)
                     (g % mz)*(1.f/(mz-1)));
 }
 
+inline uint32 cvt_uint32(const float f)
+{
+  return (uint32)(255.9f * max(min(f,1.f),0.f));
+}
+
+inline uint32 cvt_uint32(const vec4f &v)
+{
+  return 
+    (cvt_uint32(v.x) << 0)  |
+    (cvt_uint32(v.y) << 8)  |
+    (cvt_uint32(v.z) << 16) |
+    (cvt_uint32(v.w) << 24);
+}
+
 #endif

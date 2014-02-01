@@ -21,15 +21,21 @@ namespace ospray {
       may actually use uchars, but the tile will always store
       floats. */
   struct Tile {
+    uint32 rgba8[TILE_SIZE*TILE_SIZE];
     // 'red' component; in float.
     float r[TILE_SIZE*TILE_SIZE];
+    // 'green' component; in float.
     float g[TILE_SIZE*TILE_SIZE];
+    // 'blue' component; in float.
     float b[TILE_SIZE*TILE_SIZE];
+    // 'alpha' component; in float.
     float a[TILE_SIZE*TILE_SIZE];
+    // 'depth' component; in float.
     float z[TILE_SIZE*TILE_SIZE];
     region2i region; /*!< screen region that this corresponds to */
     vec2i    fbSize; /*!< total frame buffer size, for the camera */
     vec2f    rcp_fbSize;
+    uint32   format; /*! or'ed-together bits describing what format
+                       those pixels have */
   };
-
 }
