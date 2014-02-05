@@ -7,7 +7,7 @@
 #include "../fb/framebuffer.h"
 // embree
 #include "common/sys/taskscheduler.h"
-#include "render/renderer.h"
+#include "render/tilerenderer.h"
 
 namespace ospray {
   using embree::TaskScheduler;

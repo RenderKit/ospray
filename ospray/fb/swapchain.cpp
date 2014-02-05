@@ -20,7 +20,12 @@ namespace ospray {
   
   const void *SwapChain::map() 
   {
-    return getBackBuffer()->map();
+    FrameBuffer *fb = getBackBuffer();
+    if (fb->renderTask) {
+      fb->renderTask->done.sync();
+      fb->renderTask = NULL;
+    }
+    return fb->map();
   }
 
   void SwapChain::unmap(const void *mappedMem) 

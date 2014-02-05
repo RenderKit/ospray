@@ -3,12 +3,14 @@
 /*! \file ospcommon.h Defines common types and classes that _every_
     ospray file should know about */
 
+// embree
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
 #include "common/math/vec4.h"
 #include "common/math/bbox.h"
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
+#include "common/sys/taskscheduler.h"
 
 //! main namespace for all things ospray (for internal code)
 namespace ospray {

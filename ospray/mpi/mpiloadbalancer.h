@@ -37,19 +37,20 @@ namespace ospray {
         Slave();
         
         /*! a task for rendering a frame using the global tiled load balancer */
-        struct RenderTask : public RenderFrameEvent {
-          RenderTask(size_t numTiles, 
-                    TileRenderer *tiledRenderer,
-                    FrameBuffer *fb);
-          ~RenderTask();
-          
-          Ref<TileRenderer>         tiledRenderer;
-          Ref<FrameBuffer>          fb;
-          TaskScheduler::EventSync  done;
-          TaskScheduler::Task       task;
+        struct RenderTask : public FrameBuffer::RenderFrameEvent {
+          RenderTask(FrameBuffer *fb,
+                     TileRenderer::RenderJob *frameRenderJob);
+          Ref<TileRenderer::RenderJob> frameRenderJob;
+          Ref<FrameBuffer>             fb;
+          TaskScheduler::Task          task;
+          size_t                       numTiles_x;
+          size_t                       numTiles_y;
+          vec2i                        fbSize;
           
           TASK_RUN_FUNCTION(RenderTask,run);
-          // TASK_COMPLETE_FUNCTION(RenderTask,finish);
+          TASK_COMPLETE_FUNCTION(RenderTask,finish);
+          
+          virtual ~RenderTask() { }
         };
         
         /*! number of tiles preallocated to this client; we can always
@@ -63,7 +64,7 @@ namespace ospray {
       };
     }
 
-
+#if 0
     // =======================================================
     // =======================================================
     // =======================================================
@@ -137,5 +138,6 @@ namespace ospray {
       virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
       // virtual void returnTile(FrameBuffer *fb, Tile &tile);
     };
+#endif
   }
 }

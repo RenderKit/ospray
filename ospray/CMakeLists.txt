@@ -21,7 +21,16 @@ CMAKE_POLICY(SET CMP0002 OLD)
 #	)
 #TARGET_LINK_LIBRARIES(OSPrayCore embree)
 
-ADD_SUBDIRECTORY(common)
+
+
+IF (ISPC_PLUS)
+	SET(ISPC_BACKEND /home/wald/Projects/ISPC++/backend/${ISPC_PLUS_BACKEND}/${ISPC_PLUS_BACKEND}.cpp)
+ELSE()
+	SET(ISPC_BACKEND "")
+ENDIF()
+
+
+#ADD_SUBDIRECTORY(common)
 
 ISPC_COMPILE(${OSPRAY_ISPC_TARGET} 
 	render/testrenderer.ispc
@@ -35,12 +44,16 @@ ISPC_COMPILE(${OSPRAY_ISPC_TARGET}
 	)
 
 ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
+	common/ospcommon.cpp
+	common/managed.cpp
+	common/data.cpp
 	fb/swapchain.cpp 
 	fb/framebuffer.cpp
 	common/model.cpp
 	geometry/geometry.cpp
 	geometry/trianglemesh.cpp
 	render/renderer.cpp
+	render/tilerenderer.cpp
 	render/loadbalancer.cpp
 	render/testrenderer.cpp
 	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
@@ -56,15 +69,14 @@ ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
 	camera/perspectivecamera.cpp
 	camera/perspectivecamera.dev${OSPRAY_ISPC_SUFFIX}
 	fb/localfb.dev${OSPRAY_ISPC_SUFFIX}
+
+	${ISPC_BACKEND}
 	)
 IF (ISPC_PLUS)
 	SET_TARGET_PROPERTIES(osp_core${OSPRAY_LIB_SUFFIX} PROPERTIES COMPILE_FLAGS "${FLAGS_AVX2}")
-ELSE()
 ENDIF()
-TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} osp_common${OSPRAY_LIB_SUFFIX})
-
-
-
+#TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} osp_common${OSPRAY_LIB_SUFFIX})
+TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
 
 IF (OSPRAY_MPI)
 	ADD_SUBDIRECTORY(mpi)

@@ -23,6 +23,7 @@ namespace ospray {
                                                   TaskScheduler::Event* event) 
   {
     frameRenderJob = NULL;
+    fb = NULL;
     refDec();
   }
 
@@ -32,24 +33,16 @@ namespace ospray {
                                                size_t taskCount, 
                                                TaskScheduler::Event* event) 
   {
-     // printf("tile %i %i\n",taskIndex,taskCount);
     Tile tile;
     tile.fbSize = fb->size;
-    // const size_t numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-    // PRINT(numTiles_x);
-    // PRINT(numTiles_y);
-    // PRINT(taskIndex);
     const size_t tile_y = taskIndex / numTiles_x;
     const size_t tile_x = taskIndex - tile_y*numTiles_x; //taskIndex % numTiles_x;
     tile.region.lower.x = tile_x * TILE_SIZE; //x0;
     tile.region.lower.y = tile_y * TILE_SIZE; //y0;
     tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fbSize.x);
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fbSize.y);
-    // PRINT(tile.region);
     frameRenderJob->renderTile(tile);
     Assert(TiledLoadBalancer::instance);
-    // TiledLoadBalancer::instance->returnTile(fb.ptr,tile);
-    // PRINT(tile.r[0]);
     fb->setTile(tile);
   }
 
@@ -60,16 +53,20 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
+    // if (fb->renderTask) {
+    //   fb->renderTask->done.sync();
+    //   fb->renderTask = NULL;
+    // }
+    // printf("rendering fb %lx\n",fb);
+    RenderTask *renderTask  = new RenderTask(fb,tiledRenderer->createRenderJob(fb));
+
     if (fb->renderTask) {
       fb->renderTask->done.sync();
       fb->renderTask = NULL;
     }
-    // printf("rendering fb %lx\n",fb);
-    RenderTask *renderTask  = new RenderTask(fb,tiledRenderer->createRenderJob(fb));
     fb->renderTask = renderTask;
     TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-    fb->renderTask->done.sync();
-    // printf("done rendering fb %lx\n",fb);
+    //fb->renderTask->done.sync();
   }
 
   // /*! the _local_ tiled load balancer has nothing to do when a tile is

@@ -473,15 +473,20 @@ namespace ospray {
       SwapChain *sc = (SwapChain *)handle.lookup();
       Assert(sc);
 
+      //FrameBuffer *fb = sc->getFrontBuffer();
       FrameBuffer *fb = sc->getBackBuffer();
       cmd.newCommand(CMD_RENDER_FRAME);
       cmd.send((const mpi::Handle&)_sc);
       cmd.send((const mpi::Handle&)_renderer);
       cmd.flush();
 
-      // printf("#m: rendienrg into fb %lx\n",fb);
+      // static long prev_t = 0;
+      // long before = __rdtsc();
+      // printf("#m: rendienrg into fb %lx      time %li\n",fb,before-prev_t);
       TiledLoadBalancer::instance->renderFrame(NULL,fb);
-      // printf("#m: DONE rendienrg into fb %lx\n",fb);
+      // long after = __rdtsc();
+      // printf("#m: DONE rendienrg into fb %lx time %li\n",fb,after-before);
+      // prev_t = after;
 
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should

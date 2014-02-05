@@ -1,9 +1,7 @@
 #pragma once
 
 // ospray
-#include "renderer.h"
-// embree
-#include "common/sys/taskscheduler.h"
+#include "tilerenderer.h"
 
 namespace ospray {
   using embree::TaskScheduler;

@@ -158,7 +158,7 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          printf("#w%i:c%i",worker.rank,(int)handle);
+          //          printf("#w%i:c%i",worker.rank,(int)handle);
           if (logLevel > 2)
             cout << "#w: committing " << handle << " " << obj->toString() << endl;
           obj->commit();
