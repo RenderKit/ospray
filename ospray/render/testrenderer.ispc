@@ -10,7 +10,7 @@ task void TestRenderer_renderLine(uniform FrameBuffer *uniform fb,
                                   uniform int frameID)
 {
   const uniform int y = taskIndex;
-  foreach (x = 0...size_x) {
+  foreach (x = 0 ... size_x) {
     const int ix = (x+frameID)%size_x;
     const int iy = (y+frameID)%size_y;
     const int iz = (x+y);

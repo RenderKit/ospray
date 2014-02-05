@@ -30,7 +30,7 @@ task void resampleVolumeTask(uniform VolumePtr dst, uniform VolumePtr src)
     samplePos.x = (x / (dst->size.x-1.f)) * src->size.x;
     line[x] = src->lerpf(src,samplePos);
   }
-  dst->setRegion(dst,begin,size,line);
+  dst->setRegion(dst,begin,size,&line[0]);
 }
 
 /*! resample 'src' volume to already-allocated 'dst' volume. note that

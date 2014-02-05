@@ -103,6 +103,8 @@ namespace ospray {
       void set(const int v) { clear(); type = OSP_INT; (int&)f = v; }
       /*! set parameter to vec3f value and type */
       void set(const vec3f &v) { clear(); type = OSP_vec3f; (vec3f&)f = v; }
+      /*! set parameter to vec3i value and type */
+      void set(const vec3i &v) { clear(); type = OSP_vec3i; (vec3i&)i = v; }
       /*! storage for the various types this parameter could be */
       union {
         float f[4];
@@ -148,6 +150,7 @@ namespace ospray {
     ManagedObject *getParam(const char *name, ManagedObject *valIfNotFound);
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
+    vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
     float  getParamf (const char *name, const float  valIfNotFound);
     const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */

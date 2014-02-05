@@ -6,6 +6,9 @@ SET(EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree CACHE STRING
 SET(CMAKE_MODULE_PATH ${EMBREE_DIR}/common/cmake ${CMAKE_MODULE_PATH})
 MARK_AS_ADVANCED(EMBREE_DIR)
 
+SET(ISPC_PLUS OFF CACHE BOOL "Use ISPC+?")
+
+
 ##################################################################
 # build embree
 ##################################################################
@@ -32,6 +35,7 @@ IF (${OSPRAY_XEON_TARGET} STREQUAL "AVX2")
 	SET(TARGET_AVX   ON)
 	SET(TARGET_AVX2  ON)
 	SET(ISPC_TARGETS "avx2")
+	SET(ISPC_PLUS_BACKEND "avx8")
 #	message("set AVX2")
 ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "AVX")
 #	SET(TARGET_SSE41 OFF)
@@ -42,6 +46,7 @@ ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "AVX")
 ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "SSE")
 	SET(TARGET_SSE41 ON)
 	SET(ISPC_TARGETS "sse4")
+	SET(ISPC_PLUS_BACKEND "sse4")
 #	SET(TARGET_AVX   OFF)
 #	SET(TARGET_AVX2  OFF)
 #	message("set SSE41")

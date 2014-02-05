@@ -49,7 +49,12 @@ typedef uniform Volume *VolumePtr;
 
 /* need this only because ISPC currently balks at 'export'ing
    functions that return 'VolumePtr' types */
+#if 1
+struct _Volume {};
+typedef uniform _Volume *uniform ExtVolumePtr;
+#else
 typedef struct _Volume *uniform ExtVolumePtr;
+#endif
 // ------------------------------------------------------------------
 // NAIVE volume format, with 32-bit addressing
 // ------------------------------------------------------------------

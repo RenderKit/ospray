@@ -60,7 +60,7 @@ task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
   const uniform int size_x = fb->size.x;
   const uniform int size_y = fb->size.y;
   const uniform int y = taskIndex;
-  foreach (x = 0...size_x) {
+  foreach (x = 0 ... size_x) {
     const float screen_u = (x+.5f)/size_x;
     const float screen_v = (y+.5f)/size_y;
     Ray ray;

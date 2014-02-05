@@ -62,6 +62,7 @@ namespace ospray {
   }
   
   define_getparam(ManagedObject *,,OSP_OBJECT,ptr);
+  define_getparam(vec3i, 3i,OSP_vec3i,i);
   define_getparam(vec3f, 3f,OSP_vec3f,f);
   define_getparam(vec3fa,3f,OSP_vec3f,f);
   define_getparam(float, f, OSP_FLOAT, f);

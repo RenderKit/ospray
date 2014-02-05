@@ -11,6 +11,7 @@ struct NaiveVolume {
 };
 
 
+export void foo(uniform float *uniform ptr) { *ptr = 0; }
 
 // ------------------------------------------------------------------
 // 'internal' functions
@@ -345,6 +346,8 @@ inline varying float Naive32Volume1uc_gradf(uniform VolumePtr volume,
     Naive32Volume1uc_lerpf(volume,pos);
 #endif
 }
+
+
 /*! compute disrete differences gradient, including clamping */
 inline varying float Naive32Volume1f_gradf(uniform VolumePtr volume,            
                                     varying vec3f &grad,            
@@ -376,15 +379,19 @@ uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uint8 *unif
   if (internal == NULL)
     volume->inherited.data = uniform new uniform int8[numElements];
   else
-    volume->inherited.data = internal;
+    volume->inherited.data = (void *uniform) internal;
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
   volume->inherited.setRegion = Naive32Volume1uc_setRegion;
+#if 0
   volume->inherited.lerpf     = Naive32Volume1uc_lerpf;
   volume->inherited.gradf     = Naive32Volume1uc_gradf;
+#endif
   return (uniform Volume *)volume;
 }
+
+#if 1
 /*! 'Constructor' for a naive321f volume.
 
   \note eventually this is supposed to return a "VolumePtr", but right
@@ -402,7 +409,7 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
   if (internal == NULL)
     volume->inherited.data     = uniform new uniform float[numElements];
   else
-    volume->inherited.data = internal;
+    volume->inherited.data = (void *uniform )internal;
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
@@ -434,6 +441,7 @@ export void _Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
   Naive32Volume1f_setRegion(volume,begin,size,data);
 }
 
+export void bar(uniform float *uniform ptr) { *ptr = 0; }
 
 /* need this workaround because ISPC cannot export pointer to 'Volume'
    type because volume type has function pointers */
@@ -446,3 +454,4 @@ export uniform ExtVolumePtr _Naive32Volume1f_create(uniform vec3i &size, const u
 
 
 
+#endif

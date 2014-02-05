@@ -58,10 +58,10 @@ inline vec4f rayCastDVR(const Ray &ray,
 
   if (tenter < texit)
   {
-    vec3f p0, p1; 
+    vec3f p0; //, p1; 
     float t0, t1;
     float f0 = 0.0;
-    float f1;
+    // float f1;
 
     t1 = tenter;
 
@@ -80,24 +80,23 @@ inline vec4f rayCastDVR(const Ray &ray,
     t1 = max(floor(tenter / step_size) * step_size, t1);
 #endif
 
-    p1 = ray.org + t1 * ray.dir;
+    // p1 = ray.org + t1 * ray.dir;
 
     while(t1 < texit && color.w < .97f)
     {
-      p0 = p1;
+      // p0 = p1;
       t1 += step_size;
 #if QUADRATIC_SAMPLING
       step_size += frda;
 #endif
 
-      p1 = ray.org + t1 * ray.dir;
-      f1 = volume->lerpf(volume, p1);
+      const vec3f p1 = ray.org + t1 * ray.dir;
+      const float f1 = volume->lerpf(volume, p1);
 
-      // (iw): ??? why multiply with 1 here !?
-      vec4f color_sample = f1 * make_vec4f(1); //, f1);
-
-      float alpha = 1.0 - exp(-color_sample.w * step_size);
-      float alpha_1msa = alpha * (1.0-color.w);
+      vec4f color_sample = make_vec4f(f1); //f1 * make_vec4f(1); //, f1);
+      
+      const float alpha = 1.0 - exp(-color_sample.w * step_size);
+      const float alpha_1msa = alpha * (1.0-color.w);
     
       color_sample.w = 1.f;
       color = color + color_sample * alpha_1msa;
@@ -125,7 +124,7 @@ task void DVRRenderer_renderLine(uniform FrameBuffer *uniform fb,
   const uniform int size_x = fb->size.x;
   const uniform int size_y = fb->size.y;
   const uniform int y = taskIndex;
-  foreach (x = 0...size_x) {
+  foreach (x = 0 ... size_x) {
     const float screen_u = (x+.5f)/size_x;
     const float screen_v = (y+.5f)/size_y;
     

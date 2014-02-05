@@ -31,9 +31,9 @@ inline int BrickedVolume_getCoord(uniform BrickedVolume *uniform volume,
   const int brickID
     = brick_x + volume->bricks.x * (brick_y + volume->bricks.y * brick_z);
   int coord = brickID;
-  coord = (coord << BRICK_BITS) + ofs_z;
-  coord = (coord << BRICK_BITS) + ofs_y;
-  coord = (coord << BRICK_BITS) + ofs_x;
+  coord = (coord << BRICK_BITS) | ofs_z;
+  coord = (coord << BRICK_BITS) | ofs_y;
+  coord = (coord << BRICK_BITS) | ofs_x;
   return coord;
 }
 
@@ -99,9 +99,19 @@ inline float getVoxel1uc32(uniform BrickedVolume *uniform volume,
   const int idx = BrickedVolume_getCoord(volume,coord);
   return data[idx];
 }
+
+// float gatherFloat(const uniform float *uniform data, const int idx)
+// {
+//   // print("BEFORE");
+//   const float f = data[idx];;
+//   print("ab");
+//   return f;
+// }
+
 /*! get voxel for bricked volume with 1uc data format and 32-bit addressing */
-inline float getVoxel1f32(uniform BrickedVolume *uniform volume,
-                           const vec3i &coord)
+inline 
+float getVoxel1f32(uniform BrickedVolume *uniform volume,
+                   const vec3i &coord)
 {
   const uniform float *uniform data
     = (const uniform float *uniform )volume->inherited.data;
@@ -137,7 +147,8 @@ varying float Bricked32Volume1uc_lerpf(uniform VolumePtr _volume,
   const float v101 = getVoxel1uc32(volume,make_vec3i(x1,y0,z1));
   const float v110 = getVoxel1uc32(volume,make_vec3i(x0,y1,z1));
   const float v111 = getVoxel1uc32(volume,make_vec3i(x1,y1,z1));
-  
+  //#endif
+  // print("bla\n");  
   const float v00 = v000 + fx * (v001-v000);
   const float v01 = v010 + fx * (v011-v010);
   const float v10 = v100 + fx * (v101-v100);
@@ -170,6 +181,43 @@ varying float Bricked32Volume1f_lerpf(uniform VolumePtr _volume,
   const uint32 y1 = y0 + 1;
   const uint32 z1 = z0 + 1;
 
+#if 1
+  const int scale_x = (1<<(3*BRICK_BITS));
+  const int scale_y = scale_x * volume->bricks.x;
+  const int scale_z = scale_y * volume->bricks.y;
+
+  const int brickOfs_x0 = (x0 >> BRICK_BITS)*scale_x;
+  const int brickOfs_y0 = (y0 >> BRICK_BITS)*scale_y;
+  const int brickOfs_z0 = (z0 >> BRICK_BITS)*scale_z;
+  const int brickOfs_x1 = (x1 >> BRICK_BITS)*scale_x;
+  const int brickOfs_y1 = (y1 >> BRICK_BITS)*scale_y;
+  const int brickOfs_z1 = (z1 >> BRICK_BITS)*scale_z;
+
+  // iw: could actually do this a _bit_ faster with blends - we
+  // essentially blend the respect lower bits into the upper bits from
+  // the bricksofs, but that reqiures bit-blends which AVX supports,
+  // but which ISPC doesn't.
+  const int ofs_x0 = brickOfs_x0 + ((x0 & ((1<<BRICK_BITS)-1)));
+  const int ofs_y0 = brickOfs_y0 + ((y0 & ((1<<BRICK_BITS)-1)) << BRICK_BITS);
+  const int ofs_z0 = brickOfs_z0 + ((z0 & ((1<<BRICK_BITS)-1)) << (BRICK_BITS+BRICK_BITS));
+  const int ofs_x1 = brickOfs_x1 + ((x1 & ((1<<BRICK_BITS)-1)));
+  const int ofs_y1 = brickOfs_y1 + ((y1 & ((1<<BRICK_BITS)-1)) << BRICK_BITS);
+  const int ofs_z1 = brickOfs_z1 + ((z1 & ((1<<BRICK_BITS)-1)) << (BRICK_BITS+BRICK_BITS));
+  
+  const uniform float *uniform data
+    = (const uniform float *uniform )volume->inherited.data;
+  const float v000 = data[ofs_x0 + ofs_y0 + ofs_z0];
+  const float v001 = data[ofs_x1 + ofs_y0 + ofs_z0];
+  const float v010 = data[ofs_x0 + ofs_y1 + ofs_z0];
+  const float v011 = data[ofs_x1 + ofs_y1 + ofs_z0];
+  const float v100 = data[ofs_x0 + ofs_y0 + ofs_z1];
+  const float v101 = data[ofs_x1 + ofs_y0 + ofs_z1];
+  const float v110 = data[ofs_x0 + ofs_y1 + ofs_z1];
+  const float v111 = data[ofs_x1 + ofs_y1 + ofs_z1];
+
+#else
+
+  // print("blubb % % %\n",x0,y0,z0);  
   const float v000 = getVoxel1f32(volume,make_vec3i(x0,y0,z0));
   const float v001 = getVoxel1f32(volume,make_vec3i(x1,y0,z0));
   const float v010 = getVoxel1f32(volume,make_vec3i(x0,y1,z0));
@@ -178,6 +226,7 @@ varying float Bricked32Volume1f_lerpf(uniform VolumePtr _volume,
   const float v101 = getVoxel1f32(volume,make_vec3i(x1,y0,z1));
   const float v110 = getVoxel1f32(volume,make_vec3i(x0,y1,z1));
   const float v111 = getVoxel1f32(volume,make_vec3i(x1,y1,z1));
+#endif
   
   const float v00 = v000 + fx * (v001-v000);
   const float v01 = v010 + fx * (v011-v010);
@@ -188,6 +237,7 @@ varying float Bricked32Volume1f_lerpf(uniform VolumePtr _volume,
   const float v1 = v10 + fy * (v11-v10);
 
   const float v = v0 + fz * (v1-v0);
+  // print("DONE blubb % % %\n",x1,y1,z1);  
 
   return v;
 }
@@ -233,13 +283,13 @@ inline uniform int divRoundUp(uniform int nom, uniform int den)
 
 uniform VolumePtr Bricked32Volume1f_create(uniform vec3i &size, const float *uniform internal)
 {
-  print("creating bricked volume, size % % %\n",size.x,size.y,size.z);
+  // print("creating bricked volume, size % % %\n",size.x,size.y,size.z);
   uniform BrickedVolume *uniform volume = uniform new uniform BrickedVolume;
   const uniform int brickRes = 1<<BRICK_BITS;
   volume->bricks.x = divRoundUp(size.x,brickRes);
   volume->bricks.y = divRoundUp(size.y,brickRes);
   volume->bricks.z = divRoundUp(size.z,brickRes);
-  print("num bricks % % %\n",volume->bricks.x,volume->bricks.y,volume->bricks.z);
+  // print("num bricks % % %\n",volume->bricks.x,volume->bricks.y,volume->bricks.z);
   const uniform int64 numBricks
     = ((int64)volume->bricks.x) * volume->bricks.y * volume->bricks.z;
   const uniform int brickSize = brickRes*brickRes*brickRes;
@@ -247,7 +297,7 @@ uniform VolumePtr Bricked32Volume1f_create(uniform vec3i &size, const float *uni
   volume->inherited.size     = size;
   volume->inherited.dataSize = numElements * sizeof(uniform float);
   if (internal)
-    volume->inherited.data = internal;
+    volume->inherited.data = (void *uniform) internal;
   else
   volume->inherited.data     = uniform new uniform float[numElements];
   
@@ -260,15 +310,16 @@ uniform VolumePtr Bricked32Volume1f_create(uniform vec3i &size, const float *uni
   volume->inherited.gradf     = Bricked32Volume1f_gradf;
   return (uniform VolumePtr)volume;
 }
+
 uniform VolumePtr Bricked32Volume1uc_create(uniform vec3i &size, const uint8 *uniform internal)
 {
-  print("creating bricked volume, size % % %\n",size.x,size.y,size.z);
+  // print("creating bricked volume, size % % %\n",size.x,size.y,size.z);
   uniform BrickedVolume *uniform volume = uniform new uniform BrickedVolume;
   const uniform int brickRes = 1<<BRICK_BITS;
   volume->bricks.x = divRoundUp(size.x,brickRes);
   volume->bricks.y = divRoundUp(size.y,brickRes);
   volume->bricks.z = divRoundUp(size.z,brickRes);
-  print("num bricks % % %\n",volume->bricks.x,volume->bricks.y,volume->bricks.z);
+  // print("num bricks % % %\n",volume->bricks.x,volume->bricks.y,volume->bricks.z);
   const uniform int64 numBricks
     = ((int64)volume->bricks.x) * volume->bricks.y * volume->bricks.z;
   const uniform int brickSize = brickRes*brickRes*brickRes;
@@ -276,7 +327,7 @@ uniform VolumePtr Bricked32Volume1uc_create(uniform vec3i &size, const uint8 *un
   volume->inherited.size     = size;
   volume->inherited.dataSize = numElements * sizeof(uniform int8);
   if (internal)
-    volume->inherited.data = internal;
+    volume->inherited.data = (void *uniform) internal;
   else
   volume->inherited.data     = uniform new uniform int8[numElements];
 

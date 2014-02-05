@@ -35,10 +35,10 @@ namespace ospray {
     a common class! */
   struct VolumeViewer : public Glut3DWidget {
     /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
-    VolumeViewer(const vec3i dims, const std::string &fileName) 
+    VolumeViewer(const vec3i dims, const std::string &fileName, int resampleSize=0) 
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
         fb(NULL), renderer(NULL), volume(NULL), 
-        dims(dims), fileName(fileName)
+        dims(dims), fileName(fileName), resampleSize(resampleSize)
     {
       camera = ospNewCamera("perspective");
       Assert2(camera,"could not create camera");
@@ -51,6 +51,7 @@ namespace ospray {
       volume = ospNewVolume("ignoredForNow");
       Assert(volume && "null volume handle");
       ospSet3i(volume,"dimensions",dims.x,dims.y,dims.z);
+      ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
       ospSetString(volume,"filename",fileName.c_str());
       ospCommit(volume);
 
@@ -98,9 +99,9 @@ namespace ospray {
     
       char title[1000];
       
-      // sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
-      //         fps.getFPS());
-      // setTitle(title);
+       sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
+               fps.getFPS());
+       setTitle(title);
       forceRedraw();
     }
 
@@ -110,26 +111,45 @@ namespace ospray {
     OSPFrameBuffer fb;
     OSPRenderer    renderer;
     OSPCamera      camera;
+    int            resampleSize;
     ospray::glut3D::FPSCounter fps;
   };
 
   void ospDVRMain(int &ac, const char **&av)
   {
-    if (ac != 5) 
+    if (ac < 5) 
       error("no input scene specified (or done so in wrong format)");
     
-    const vec3i volDims(atoi(av[1]),
-                        atoi(av[2]),
-                        atoi(av[3]));
-    const std::string volFileName = av[4];
+    vec3i volDims;
+    std::string volFileName;
+    int resample = 0;
+
+    for (int i=1;i<ac;i++) {
+      std::string arg = av[i];
+      if (arg[0] != '-') {
+        volDims.x = atoi(av[i+0]);
+        volDims.y = atoi(av[i+1]);
+        volDims.z = atoi(av[i+2]);
+        volFileName = av[i+3];
+        i += 3;
+      } else if (arg == "--resample") {
+        // resample volume to this size
+        resample = atoi(av[++i]);
+      } else 
+        throw std::runtime_error("unknown parameter "+arg);
+    }
+    // const vec3i volDims(atoi(av[1]),
+    //                     atoi(av[2]),
+    //                     atoi(av[3]));
+    // const std::string volFileName = av[4];
     
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
-    VolumeViewer window(volDims,volFileName);
+    VolumeViewer window(volDims,volFileName,resample);
     window.create("ospDVR: OSPRay miniature DVR volume viewer");
     printf("Viewer created. Press 'Q' to quit.\n");
-    window.setWorldBounds(box3f(vec3f(0.f),vec3f(volDims)));
+    window.setWorldBounds(box3f(vec3f(0.f),vec3f(resample?vec3i(resample):volDims)));
     ospray::glut3D::runGLUT();
   }
 }

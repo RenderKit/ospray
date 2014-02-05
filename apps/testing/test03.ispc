@@ -11,7 +11,7 @@ task void renderLine(uniform vec3fa *uniform fb,
                      uniform int frameID)
 {
   uniform int y = taskIndex;
-  foreach (x = 0...size_x) {
+  foreach (x = 0 ... size_x) {
     int ix = (x+frameID)%size_x;
     int iy = (y+frameID)%size_y;
     int iz = (x+y);

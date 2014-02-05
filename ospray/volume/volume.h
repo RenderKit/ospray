@@ -49,6 +49,9 @@ namespace ospray {
     //! return 'properly' typed ispc equivalent 
     /*! \internal might want to remove and directly use voidptr'ed getIE() */
     ispc::_Volume *inISPC() const { return ispcPtr; }
+
+    //! tri-linear interpolation at given sample location
+    virtual float lerpf(const vec3f &samplePos) = 0;
   protected:
     // void *ispcPtr;
     ispc::_Volume *ispcPtr;
@@ -64,6 +67,9 @@ namespace ospray {
     virtual void setRegion(const vec3i &where,const vec3i &size,const float *data);
     virtual std::string toString() const;
     virtual int layout() const { return NAIVE; };
+
+    //! tri-linear interpolation at given sample location
+    virtual float lerpf(const vec3f &samplePos);
   };
 
   template<typename T>
@@ -74,6 +80,9 @@ namespace ospray {
     virtual void setRegion(const vec3i &where,const vec3i &size,const float *data);
     virtual std::string toString() const;
     virtual int layout() const { return BRICKED; };
+
+    //! tri-linear interpolation at given sample location
+    virtual float lerpf(const vec3f &samplePos);
   };
 
 
