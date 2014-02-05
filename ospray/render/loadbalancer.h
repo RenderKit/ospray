@@ -7,6 +7,7 @@
 #include "../fb/framebuffer.h"
 // embree
 #include "common/sys/taskscheduler.h"
+#include "render/renderer.h"
 
 namespace ospray {
   using embree::TaskScheduler;
@@ -18,7 +19,7 @@ namespace ospray {
     static TiledLoadBalancer *instance;
     virtual void renderFrame(TileRenderer *tiledRenderer,
                              FrameBuffer *fb) = 0;
-    virtual void returnTile(FrameBuffer *fb, Tile &tile) = 0;
+    // virtual void returnTile(FrameBuffer *fb, Tile &tile) = 0;
   };
 
   //! tiled load balancer for local rendering on the given machine
@@ -28,21 +29,28 @@ namespace ospray {
       application ranks each doing local rendering on their own)  */ 
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
-    /*! a task for rendering a frame using the global tiled load balancer */
-    struct RenderTask : public RenderFrameEvent {
-      RenderTask(size_t numTiles, 
-                 TileRenderer *tiledRenderer,
-                 FrameBuffer *fb);
-      Ref<TileRenderer>         tiledRenderer;
-      Ref<FrameBuffer>          fb;
-      TaskScheduler::EventSync  done;
-      TaskScheduler::Task       task;
+    /*! \brief a task for rendering a frame using the global tiled load balancer 
+      
+      if derived from FrameBuffer::RenderFrameEvent to allow us for
+      attaching that as a sync primitive to the farme buffer
+     */
+    struct RenderTask : public FrameBuffer::RenderFrameEvent {
+      RenderTask(FrameBuffer *fb,
+                 TileRenderer::RenderJob *frameRenderJob);
+      Ref<TileRenderer::RenderJob> frameRenderJob;
+      Ref<FrameBuffer>             fb;
+      TaskScheduler::Task          task;
+      size_t                       numTiles_x;
+      size_t                       numTiles_y;
+      vec2i                        fbSize;
       
       TASK_RUN_FUNCTION(RenderTask,run);
       TASK_COMPLETE_FUNCTION(RenderTask,finish);
+
+      virtual ~RenderTask() { }
     };
 
     virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
-    virtual void returnTile(FrameBuffer *fb, Tile &tile);
+    // virtual void returnTile(FrameBuffer *fb, Tile &tile);
   };
 }

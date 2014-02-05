@@ -223,8 +223,8 @@ namespace ospray {
     void LocalDevice::renderFrame(OSPFrameBuffer _sc, 
                                   OSPRenderer    _renderer)
     {
-      SwapChain *sc = (SwapChain *)_sc;
-      Renderer *renderer = (Renderer *)_renderer;
+      SwapChain *sc       = (SwapChain *)_sc;
+      Renderer  *renderer = (Renderer *)_renderer;
       // Model *model = (Model *)_model;
 
       Assert(sc != NULL && "invalid frame buffer handle");

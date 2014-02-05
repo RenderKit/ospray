@@ -22,7 +22,7 @@ namespace ospray {
         Master();
         
         virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
-        virtual void returnTile(FrameBuffer *fb, Tile &tile);
+        // virtual void returnTile(FrameBuffer *fb, Tile &tile);
       };
 
       /*! \brief the 'slave' in a tile-based master-slave *static*
@@ -59,7 +59,7 @@ namespace ospray {
         int32 numTotalThreads;
         
         virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
-        virtual void returnTile(FrameBuffer *fb, Tile &tile);
+        // virtual void returnTile(FrameBuffer *fb, Tile &tile);
       };
     }
 
@@ -102,7 +102,7 @@ namespace ospray {
       int32 numPreAllocated;
       
       virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
-      virtual void returnTile(FrameBuffer *fb, Tile &tile);
+      // virtual void returnTile(FrameBuffer *fb, Tile &tile);
     };
 
     /*! \brief one of the 'slaves' in a tile-based master/slave
@@ -135,7 +135,7 @@ namespace ospray {
       int32 numTotalThreads;
 
       virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
-      virtual void returnTile(FrameBuffer *fb, Tile &tile);
+      // virtual void returnTile(FrameBuffer *fb, Tile &tile);
     };
   }
 }

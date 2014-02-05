@@ -6,6 +6,7 @@
 #include <map>
 // std c stuff
 #include <dlfcn.h>
+#include "loadbalancer.h"
 
 namespace ospray {
   typedef Renderer *(*creatorFct)();
@@ -35,8 +36,6 @@ namespace ospray {
 
   void TileRenderer::renderFrame(FrameBuffer *fb)
   {
-    // LocalTiledLoadBalancer lb;
-    // lb.renderFrame(this,fb);
     TiledLoadBalancer::instance->renderFrame(this,fb);
   }
   

@@ -45,9 +45,9 @@ namespace ospray {
         // printf("#m: master done fb %lx\n",fb);
       }
 
-      void Master::returnTile(FrameBuffer *fb, Tile &tile)
-      {
-      }
+      // void Master::returnTile(FrameBuffer *fb, Tile &tile)
+      // {
+      // }
       
       Slave::RenderTask::RenderTask(size_t numTiles, 
                                     TileRenderer *tiledRenderer,
@@ -130,12 +130,12 @@ namespace ospray {
         // not want to do that but somehow try to help render this frame
         renderTask.done.sync();
       }
-      void Slave::returnTile(FrameBuffer *fb, Tile &tile)
-      {
-        // Assert(tile.format & TILE_FORMAT_RGBA8);
-        // MPI_Send(&tile.region,4,MPI_INT,0,0,app.comm);
-        // MPI_Send(&tile.rgba8,4,MPI_INT,0,0,app.comm);
-      }
+      // void Slave::returnTile(FrameBuffer *fb, Tile &tile)
+      // {
+      //   // Assert(tile.format & TILE_FORMAT_RGBA8);
+      //   // MPI_Send(&tile.region,4,MPI_INT,0,0,app.comm);
+      //   // MPI_Send(&tile.rgba8,4,MPI_INT,0,0,app.comm);
+      // }
 
     }
 
@@ -246,10 +246,10 @@ namespace ospray {
       delete renderTask; // does not yet kill itself
     }
 
-    void DynamicLoadBalancer_Slave::returnTile(FrameBuffer *fb, Tile &tile)
-    {
-      PING;
-    }
+    // void DynamicLoadBalancer_Slave::returnTile(FrameBuffer *fb, Tile &tile)
+    // {
+    //   PING;
+    // }
 
     void DynamicLoadBalancer_Master::renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb)
     {
@@ -257,10 +257,10 @@ namespace ospray {
       printf("#m: num tiles %li, num slave threads %i\n",numTiles,numSlaveThreads);
     }
 
-    void DynamicLoadBalancer_Master::returnTile(FrameBuffer *fb, Tile &tile)
-    {
-      Assert2(0,"the master should never generate any tiles !?");
-    }
+    // void DynamicLoadBalancer_Master::returnTile(FrameBuffer *fb, Tile &tile)
+    // {
+    //   Assert2(0,"the master should never generate any tiles !?");
+    // }
 
   }
 }

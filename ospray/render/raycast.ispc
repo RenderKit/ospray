@@ -94,19 +94,23 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
     const uint32 frag = i*programCount+programIndex;
     const uint32  x     = x0 + (frag % TILE_SIZE);
     const uint32  y     = y0 + (frag / TILE_SIZE);
+    // print("pixel % %\n",x,y);
     if (x < size_x & y < size_y) {
+      // print("+pixel % %\n",x,y);
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
       // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
+      // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
 #if 0
       rtcIntersect(scene,(varying RTCRay&)ray);
 #else
       rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
 #endif
-      
       const vec4f col = SHADE(ray,scene);
+      // if (ray.geomID >= 0)
+      //   print("col % % %\n",col.x,col.y,col.z);
 #if 1
       tile->r[i] = col.x;
       tile->g[i] = col.y;
