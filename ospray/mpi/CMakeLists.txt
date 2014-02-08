@@ -18,6 +18,7 @@ ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX}
 	mpiworker.cpp
 	)
 TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} 
+	ospray${OSPRAY_LIB_SUFFIX}
 	ospray_mpi${OSPRAY_LIB_SUFFIX}
 	embree
 	${MPI_LIBRARIES}

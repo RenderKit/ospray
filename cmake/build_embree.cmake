@@ -40,8 +40,13 @@ IF (${OSPRAY_XEON_TARGET} STREQUAL "AVX2")
 	SET(TARGET_AVX2  ON)
 	# tell embree to build avx2 ispc binding
   SET(ISPC_TARGETS "avx2")
+ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "AVX")
+	# tell embree to build the avx(1) kernels
+	SET(TARGET_AVX  ON)
+	# tell embree to build avx(1) ispc binding
+  SET(ISPC_TARGETS "avx")
 ELSE()
-	message("NOT CONFIGURED...")
+	message("build_emrbre.cmake: target '${OSPRAY_XEON_TARGET}' NOT CONFIGURED...")
 ENDIF()
 
 IF (OSPRAY_MIC) 
