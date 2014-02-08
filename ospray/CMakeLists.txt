@@ -1,13 +1,26 @@
 
-# configure "OSPRAY_LIB_SUFFIX" etc
+# configure this dir for the proper "OSPRAY_LIB_SUFFIX" etc (depending
+# on which target we build for )
 CONFIGURE_OSPRAY()
 
 IF (OSPRAY_MPI)
-	# make sure that we compile with mpiicpc etc
+	# if mpi mode is enabled, we have to configure the right mpi
+	# compiler etc.
 	CONFIGURE_MPI()
+
+	# files to add to libospray - add these *only* if we actually build
+	# for MPI
+	SET(OSPRAY_MPI_COMPONENTS 
+		mpi/mpidevice.cpp
+		mpi/mpicommon.cpp
+		mpi/mpiloadbalancer.cpp
+		mpi/worker.cpp
+		mpi/handle.cpp
+		)
 ENDIF()
 
-# build the ospray library
+# build the ospray library (using flags and compilers as configured by
+# CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ADD_ISPC_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 
 	common/ospcommon.cpp
@@ -44,25 +57,17 @@ ADD_ISPC_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	api/api.cpp
 	api/device.cpp
 	api/localdevice.cpp
+
+	${OSPRAY_MPI_COMPONENTS}
 	)
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
 
+# add a dedicated MPI worker that ospray can launch onto any worker
+# node (including MIC nodes)
 IF (OSPRAY_MPI)
-	ADD_LIBRARY(ospray_mpi${OSPRAY_LIB_SUFFIX} STATIC
-		mpi/mpidevice.cpp
-		mpi/mpicommon.cpp
-		mpi/mpiloadbalancer.cpp
-		mpi/worker.cpp
-		mpi/handle.cpp
-		)
-	TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_mpi${OSPRAY_LIB_SUFFIX})
-
-	# add the worker stub
 	ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/mpiworker.cpp)
 	TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
 ENDIF()
-
-#ADD_SUBDIRECTORY(api)
 
 
 

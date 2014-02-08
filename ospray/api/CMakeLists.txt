@@ -1,6 +1,0 @@
-#CONFIGURE_OSPRAY()
-
-
-
-
-
