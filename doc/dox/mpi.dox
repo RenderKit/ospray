@@ -1,5 +1,6 @@
 /*! \page running_in_mpi Running OSPRay in MPI Mode 
 
+
   OSPRay supports various different modes of running MPI-parallel.
   Here's how to run them:
 
