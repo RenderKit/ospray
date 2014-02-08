@@ -19,10 +19,12 @@ IF (OSPRAY_MPI)
 		)
 ENDIF()
 
+INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
+INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
+
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
-ADD_ISPC_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
-
+OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	common/ospcommon.cpp
 	common/managed.cpp
 	common/data.cpp
