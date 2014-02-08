@@ -3,6 +3,10 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
+INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
+
 IF (OSPRAY_MPI)
 	# if mpi mode is enabled, we have to configure the right mpi
 	# compiler etc.
@@ -18,9 +22,6 @@ IF (OSPRAY_MPI)
 		mpi/handle.cpp
 		)
 ENDIF()
-
-INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
-INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
