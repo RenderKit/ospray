@@ -56,14 +56,19 @@ namespace ospray {
   /*! remove specified num arguments from an ac/av arglist */
   void removeArgs(int &ac, char **&av, int where, int howMany);
 
-  
+#ifdef NDEBUG
+# define Assert(expr) /* nothing */
+# define Assert2(expr,expl) /* nothing */
+# define AssertError(errMsg) /* nothing */
+#else
   extern void doAssertion(const char *file, int line, const char *expr, const char *expl);
-#define Assert(expr)                                                    \
+# define Assert(expr)                                                    \
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, NULL), 0)))
-#define Assert2(expr,expl)                                              \
+# define Assert2(expr,expl)                                              \
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, expl), 0)))
-#define AssertError(errMsg)                     \
+# define AssertError(errMsg)                     \
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
+#endif
 
   /*! logging level (cmdline: --osp:loglevel <n>) */
   extern uint32 logLevel;

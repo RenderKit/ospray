@@ -4,6 +4,19 @@ IF(COMMAND cmake_policy)
   CMAKE_POLICY(SET CMP0003 NEW)
 ENDIF(COMMAND cmake_policy)
 
+IF(NOT CMAKE_BUILD_TYPE)
+  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+ENDIF(NOT CMAKE_BUILD_TYPE)
+
+SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
+
+MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
+MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
+MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
+MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
+
 # whether to use ICC (vs GCC) for the non-MIC part
 SET(OSPRAY_ICC ON CACHE BOOL "Use Intel Compiler?")
 # whehter to build in MIC/xeon phi support
@@ -18,7 +31,9 @@ SET(OSPRAY_XEON_TARGET "AVX2" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 # modules
 ##############################################################
 
-INCLUDE(cmake/embree.cmake)
+INCLUDE(cmake/build_embree.cmake)
+ADD_DEFINITIONS(${OSPRAY_EMBREE_CXX_FLAGS})
+
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/mpi.cmake)
 INCLUDE(cmake/doxygen.cmake)
@@ -29,11 +44,9 @@ INCLUDE(cmake/doxygen.cmake)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
-ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
 	SET (OSPRAY_TARGET "MIC")
 	ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
-	ADD_SUBDIRECTORY(ospray builddir/modules/mic)
 ENDIF()
 
 ##############################################################
@@ -46,3 +59,13 @@ ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 #	ADD_SUBDIRECTORY(apps builddir/apps/mic)
 #ENDIF()
 
+
+##############################################################
+# modules at the end, they may need utilities
+##############################################################
+SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
+ADD_SUBDIRECTORY(modules builddir/modules/intel64)
+IF (OSPRAY_MIC)
+	SET (OSPRAY_TARGET "MIC")
+	ADD_SUBDIRECTORY(modules builddir/modules/mic)
+ENDIF()

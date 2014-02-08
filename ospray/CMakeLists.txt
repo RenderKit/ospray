@@ -1,90 +1,62 @@
-##################################################################
-# Output path configuration
-##################################################################
+
+# configure "OSPRAY_LIB_SUFFIX" etc
 CONFIGURE_OSPRAY()
-CMAKE_POLICY(SET CMP0002 OLD)
 
-##################################################################
-# the actual pieces that build ospray
-##################################################################
-#ADD_SUBDIRECTORY(common)
+ADD_ISPC_LIBRARY(ospray_core${OSPRAY_LIB_SUFFIX} STATIC   
 
-#ADD_SUBDIRECTORY(mpi)
-
-# implements the API (in its different realization: local, service,
-# and collaborative)
-
-#ADD_LIBRARY(OSPrayCore
-#	common/ospray.cpp
-#	fb/framebuffer.cpp
-#	fb/swapchain.cpp
-#	)
-#TARGET_LINK_LIBRARIES(OSPrayCore embree)
-
-
-
-IF (ISPC_PLUS)
-	SET(ISPC_BACKEND /home/wald/Projects/ISPC++/backend/${ISPC_PLUS_BACKEND}/${ISPC_PLUS_BACKEND}.cpp)
-ELSE()
-	SET(ISPC_BACKEND "")
-ENDIF()
-
-
-#ADD_SUBDIRECTORY(common)
-
-ISPC_COMPILE(${OSPRAY_ISPC_TARGET} 
-	render/testrenderer.ispc
-	render/raycast.ispc
-	render/dvr.ispc
-	fb/localfb.ispc
-	camera/perspectivecamera.ispc
-	volume/volume.ispc
-	volume/bricked32.ispc
-	volume/naive32.ispc
-	)
-
-ADD_LIBRARY(osp_core${OSPRAY_LIB_SUFFIX} SHARED
 	common/ospcommon.cpp
 	common/managed.cpp
 	common/data.cpp
+	common/model.cpp
+
 	fb/swapchain.cpp 
 	fb/framebuffer.cpp
-	common/model.cpp
+	fb/localfb.ispc
+
+	camera/camera.cpp
+	camera/perspectivecamera.ispc
+	camera/perspectivecamera.cpp
+
+	volume/volume.ispc
+	volume/bricked32.ispc
+	volume/naive32.ispc
+	volume/volume.cpp
+
 	geometry/geometry.cpp
 	geometry/trianglemesh.cpp
+
 	render/renderer.cpp
+	render/testrenderer.ispc
+	render/raycast.ispc
+	render/dvr.ispc
 	render/tilerenderer.cpp
 	render/loadbalancer.cpp
 	render/testrenderer.cpp
-	render/testrenderer.dev${OSPRAY_ISPC_SUFFIX}
 	render/raycast.cpp
-	render/raycast.dev${OSPRAY_ISPC_SUFFIX}
 	render/dvr.cpp
-	render/dvr.dev${OSPRAY_ISPC_SUFFIX}
-	volume/volume.cpp
-	volume/volume.dev${OSPRAY_ISPC_SUFFIX}
-	volume/naive32.dev${OSPRAY_ISPC_SUFFIX}
-	volume/bricked32.dev${OSPRAY_ISPC_SUFFIX}
-	camera/camera.cpp
-	camera/perspectivecamera.cpp
-	camera/perspectivecamera.dev${OSPRAY_ISPC_SUFFIX}
-	fb/localfb.dev${OSPRAY_ISPC_SUFFIX}
-
-	${ISPC_BACKEND}
 	)
-IF (ISPC_PLUS)
-	SET_TARGET_PROPERTIES(osp_core${OSPRAY_LIB_SUFFIX} PROPERTIES COMPILE_FLAGS "${FLAGS_AVX2}")
-ENDIF()
-#TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} osp_common${OSPRAY_LIB_SUFFIX})
-TARGET_LINK_LIBRARIES(osp_core${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
+TARGET_LINK_LIBRARIES(ospray_core${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
+
+
+ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
+	api/api.cpp
+	api/device.cpp
+	api/localdevice.cpp
+	)
+
 
 IF (OSPRAY_MPI)
 	ADD_SUBDIRECTORY(mpi)
 ENDIF()
 
 
+IF (OSPRAY_MPI)
+	TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_mpi${OSPRAY_LIB_SUFFIX})
+ELSE()
+	TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_core${OSPRAY_LIB_SUFFIX})
+ENDIF()
 
-ADD_SUBDIRECTORY(api)
+#ADD_SUBDIRECTORY(api)
 
 
 

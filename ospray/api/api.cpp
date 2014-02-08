@@ -3,9 +3,10 @@
 #include "ospray/camera/camera.h"
 #include "ospray/volume/volume.h"
 #include "localdevice.h"
+#include "ospray/common/ospcommon.h"
 
 #if 1
-# define LOG(a) if (logLevel > 2) std::cout << "#ospray: " << a << std::endl;
+# define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
 #else
 # define LOG(a) /*ignore*/
 #endif
@@ -17,9 +18,12 @@ namespace ospray {
   using std::cout;
 
 #if OSPRAY_MPI
-  namespace api {
-    Device *createDevice_MPI_OSPonRanks(int *ac, const char **av);
-    Device *createDevice_MPI_LaunchLocalCluster(int *ac, const char **av, const char *launchCmd);
+  namespace mpi {
+    ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av, 
+                                                    const char *fileNameToStorePortIn);
+    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av, 
+                                                     const char *launchCommand);
+    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av);
   }
 #endif
 
@@ -44,27 +48,33 @@ namespace ospray {
 #if OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,1,1);
         ospray::api::Device::current
-          = ospray::api::createDevice_MPI_OSPonRanks(_ac,_av);
+          = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
       }
       if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi-launch") {
 #if OSPRAY_MPI
+        if (*_ac < 3)
+          throw std::runtime_error("--osp:mpi-launch expects an argument");
         const char *launchCommand = strdup(_av[2]);
         removeArgs(*_ac,(char **&)_av,1,2);
         ospray::api::Device::current
-          = ospray::api::createDevice_MPI_LaunchLocalCluster(_ac,_av,launchCommand);
+          = mpi::createMPI_LaunchWorkerGroup(_ac,_av,launchCommand);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
       }
-      if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi-listen") {
+      const char *listenArgName = "--osp:mpi-listen";
+      if (*_ac > 1 && !strncmp(_av[1],listenArgName,strlen(listenArgName))) {
 #if OSPRAY_MPI
-        const char *launchCommand = NULL;
+        const char *fileNameToStorePortIn = NULL;
+        if (strlen(_av[1]) > strlen(listenArgName)) {
+          fileNameToStorePortIn = strdup(_av[1]+strlen(listenArgName)+1);
+        }
         removeArgs(*_ac,(char **&)_av,1,1);
         ospray::api::Device::current
-          = ospray::api::createDevice_MPI_LaunchLocalCluster(_ac,_av,launchCommand);
+          = mpi::createMPI_ListenForWorkers(_ac,_av,fileNameToStorePortIn);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -162,7 +172,7 @@ namespace ospray {
     Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
     LOG("ospNewRenderer(" << type << ")");
     OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
-    if (logLevel > 0)
+    if (ospray::logLevel > 0)
       if (renderer) 
         cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
       else
@@ -178,7 +188,7 @@ namespace ospray {
     Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
     LOG("ospNewGeometry(" << type << ")");
     OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
-    if (logLevel > 0)
+    if (ospray::logLevel > 0)
       if (geometry) 
         cout << "ospNewGeometry: " << ((ospray::Geometry*)geometry)->toString() << endl;
       else
@@ -194,7 +204,7 @@ namespace ospray {
     Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
     LOG("ospNewCamera(" << type << ")");
     OSPCamera camera = ospray::api::Device::current->newCamera(type);
-    if (logLevel > 0)
+    if (ospray::logLevel > 0)
       if (camera) 
         cout << "ospNewCamera: " << ((ospray::Camera*)camera)->toString() << endl;
       else
@@ -210,7 +220,7 @@ namespace ospray {
     Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
     LOG("ospNewVolume(" << type << ")");
     OSPVolume volume = ospray::api::Device::current->newVolume(type);
-    if (logLevel > 0)
+    if (ospray::logLevel > 0)
       if (volume) 
         cout << "ospNewVolume: " << ((ospray::WrapperVolume*)volume)->toString() << endl;
       else

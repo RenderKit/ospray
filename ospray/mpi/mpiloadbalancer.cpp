@@ -98,83 +98,34 @@ namespace ospray {
                                   size_t taskCount, 
                                   TaskScheduler::Event* event) 
       {
-        const size_t tileID = taskIndex;// * worker.size + worker.rank;
+        const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
 
         Tile tile;
         tile.fbSize = fb->size;
         const size_t tile_y = tileID / numTiles_x;
-        const size_t tile_x = tileID - tile_y*numTiles_x; //taskIndex % numTiles_x;
-        tile.region.lower.x = tile_x * TILE_SIZE; //x0;
-        tile.region.lower.y = tile_y * TILE_SIZE; //y0;
+        const size_t tile_x = tileID - tile_y*numTiles_x;
+        tile.region.lower.x = tile_x * TILE_SIZE;
+        tile.region.lower.y = tile_y * TILE_SIZE;
         tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fbSize.x);
         tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fbSize.y);
         frameRenderJob->renderTile(tile);
-        Assert(TiledLoadBalancer::instance);
-        // fb->setTile(tile);
-        
-        // Tile tile;
-        // tile.fbSize = fb->size;
-        // const size_t numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-        // const size_t tileID = taskIndex * worker.size + worker.rank;
-        // const size_t tile_y = tileID / numTiles_x;
-        // const size_t tile_x = tileID % numTiles_x;
 
-        // // printf("tileID %i: %i -> %i, %i\n",taskIndex,tileID,tile_x,tile_y);
-
-        // tile.region.lower.x = tile_x * TILE_SIZE; //x0;
-        // tile.region.lower.y = tile_y * TILE_SIZE; //y0;
-        // // printf("tile %i %i\n",tile_x,tile_y);
-        // tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
-        // tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
-
-        // // printf("tile %i @ %i  : %i %i - %i %i\n",tileID,worker.rank,
-        // //        tile.region.lower.x,tile.region.lower.y,
-        // //        tile.region.upper.x,tile.region.upper.y);
-
-        // // printf("tile %i %i - %i %i\n",
-        // //        tile.region.lower.x,tile.region.lower.y,
-        // //        tile.region.upper.x,tile.region.upper.y);
-        // tiledRenderer->renderTile(tile);
-        
-        // // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
-        // //   tile.rgba8[i] = 0xffffffff;
-        //   // tile.rgba8[i] = 0x778899aa;
-        
-        // Assert(TiledLoadBalancer::instance);
         Assert(tile.format & TILE_FORMAT_RGBA8);
-        // if (taskIndex == 123*27)
-        //   printf("%i: %lx\n",worker.rank,tile.rgba8[0]);
-        // #if 1
+
         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
         MPI_Send(&tile.rgba8,TILE_SIZE*TILE_SIZE,MPI_INT,0,tileID,app.comm);
-        // #else
-        //         TiledLoadBalancer::instance->returnTile(fb.ptr,tile);
-        // #endif
-        // fb->setTile(tile);
       }
       
       void Slave::renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb)
       {
-        // const size_t numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-        // const size_t numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-        // const size_t numTilesTotal= numTiles_x * numTiles_y;
-        // const size_t numTilesThisSlave = 1+(numTilesTotal-worker.rank-1) / worker.size;
-
-        // printf("num tiles on slave %li : %li\n",worker.rank,numTilesThisSlave);
-
-        Ref<RenderTask> renderTask = new RenderTask(fb,tiledRenderer->createRenderJob(fb));//numTilesThisSlave,tiledRenderer,fb);
+        Ref<RenderTask> renderTask
+          = new RenderTask(fb,tiledRenderer->createRenderJob(fb));
         TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
         // this is actually *waiting* for the task to finish... might
         // not want to do that but somehow try to help render this frame
         renderTask->done.sync();
       }
-      // void Slave::returnTile(FrameBuffer *fb, Tile &tile)
-      // {
-      //   // Assert(tile.format & TILE_FORMAT_RGBA8);
-      //   // MPI_Send(&tile.region,4,MPI_INT,0,0,app.comm);
-      //   // MPI_Send(&tile.rgba8,4,MPI_INT,0,0,app.comm);
-      // }
     }
 
 #if 0

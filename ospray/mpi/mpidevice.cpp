@@ -1,3 +1,5 @@
+#undef NDEBUG // do all assertions in this file
+
 #include "mpicommon.h"
 #include "mpidevice.h"
 #include "../fb/swapchain.h"
@@ -23,7 +25,8 @@ namespace ospray {
       routine to decide which processes call this function and which
       ones don't. This function will not return. */
     void runWorker(int *_ac, const char **_av);
-    
+
+
     /*! in this mode ("ospray on ranks" mode, or "ranks" mode)
       - the user has launched mpirun explicitly, and all processes are *already* running
       - the app is supposed to be running *only* on the root process
@@ -33,7 +36,7 @@ namespace ospray {
       For this function, we assume: 
       - all *all* MPI_COMM_WORLD processes are going into this function
     */
-    void initMPI_OSPonRanks(int *ac, const char **av)
+    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
     {
       MPI_Status status;
       mpi::init(ac,av);
@@ -58,6 +61,16 @@ namespace ospray {
           MPI_Recv(&reply,1,MPI_INT,i,i,worker.comm,&status);
           Assert(reply == i);
         }
+        
+        MPI_Barrier(MPI_COMM_WORLD);
+        // -------------------------------------------------------
+        // at this point, all processes should be set up and synced. in particular
+        // - app has intracommunicator to all workers (and vica versa)
+        // - app process(es) are in one intercomm ("app"); workers all in another ("worker")
+        // - all processes (incl app) have barrier'ed, and thus now in sync.
+
+        // now, root proc(s) will return, initialize the MPI device, then return to the app
+        return new api::MPIDevice(ac,av);
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
@@ -74,112 +87,207 @@ namespace ospray {
         int reply;
         MPI_Recv(&reply,1,MPI_INT,0,worker.rank,app.comm,&status);
         MPI_Send(&reply,1,MPI_INT,0,worker.rank,app.comm);
-        MPI_Barrier(worker.comm);
-      }
 
-      MPI_Barrier(MPI_COMM_WORLD);
-      // -------------------------------------------------------
-      // at this point, all processes should be set up and synced. in particular
-      // - app has intracommunicator to all workers (and vica versa)
-      // - app process(es) are in one intercomm ("app"); workers all in another ("worker")
-      // - all processes (incl app) have barrier'ed, and thus now in sync.
+        MPI_Barrier(MPI_COMM_WORLD);
+        // -------------------------------------------------------
+        // at this point, all processes should be set up and synced. in particular
+        // - app has intracommunicator to all workers (and vica versa)
+        // - app process(es) are in one intercomm ("app"); workers all in another ("worker")
+        // - all processes (incl app) have barrier'ed, and thus now in sync.
 
-      // -------------------------------------------------------
-      // now, 
-      // - all workers will enter their worker loop (ie, they will *not* return
-      // - root proc(s) will return, initialize the MPI device, then return to the app
-      if (worker.containsMe)  
+        // now, all workers will enter their worker loop (ie, they will *not* return
         mpi::runWorker(ac,av);
+        /* no return here - 'runWorker' will never return */
+      }
+      // nobody should ever come here ...
+      return NULL;
     }
 
-    /*! in this mode ("local cluster" mode)
-      - the user did _not_ launch any MPI explicitly
-      - the app is running on a standalone process
-      - osp will launch multiple worker processes that communicate w/ app throu intercomm
+
+
+
+
+
+    /*! in this mode ("separate worker group" mode)
+      - the user may or may not have launched MPI explicitly for his app
+      - the app may or may not be running distributed
+      - the ospray frontend (the part linked to the app) will wait for a remote MPI gruop of 
+        workers to connect to this app
+      - the ospray frontend will store the port its waiting on connections for in the
+        filename passed to this function; or will print it to stdout if this is NULL
      */
-    void initMPI_LaunchLocalCluster(const char *launchCmd)
+    ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av, 
+                                                    const char *fileNameToStorePortIn)
     {
+      ospray::init(ac,&av);
+      mpi::init(ac,av);
+
+      if (world.rank < 1) {
+        cout << "=======================================================" << endl;
+        cout << "initializing OSPRay MPI in 'listening for workers' mode" << endl;
+        cout << "=======================================================" << endl;
+      }
       int rc;
       MPI_Status status;
 
-      Assert(world.size == 1);
       app.comm = world.comm; 
       app.makeIntercomm();
       
-      // std::string launchCmd = "/tmp/launchit.sh";
-      
-      if (launchCmd) {
-        std::stringstream systemCmd;
-        systemCmd
-          << launchCmd << " "
-          << endl;
-        FILE *launchOutput = fopen(systemCmd.str().c_str(),"r");
-        Assert(launchOutput);
-        char line[10000];
-        char *listenPort = NULL;
-        const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
-        while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
-          if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
-            listenPort = line + strlen(LAUNCH_HEADER);
-            char *eol = strstr(listenPort,"\n");
-            if (eol) *eol = 0;
-            break;
-          }
-        }
-        fclose(launchOutput);
-        if (!listenPort)
-          throw std::runtime_error("failed to find service port in launch script output");
-        for (char *s = listenPort; *s; ++s)
-          if (*s == '%') *s = '$';
-        rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
-      } else {
-        PING;
-        char appPortName[MPI_MAX_PORT_NAME];
+      char appPortName[MPI_MAX_PORT_NAME];
+      if (world.rank == 0) {
         rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
+        Assert(rc == MPI_SUCCESS);
+        
         // fix port name: replace all '$'s by '%'s to allow using it on the cmdline...
         char *fixedPortName = strdup(appPortName);
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
-        PRINT(appPortName);
-        Assert(rc == MPI_SUCCESS);
-        cout << "#a: ------------------------------------------------------" << endl;
+        
         cout << "#a: ospray app started, waiting for service connect"  << endl;
         cout << "#a: at port " << fixedPortName << endl;
-        rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
-        PING;
-        // rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,MPI_COMM_WORLD,&worker.comm);
-        Assert(rc == MPI_SUCCESS);
+        
+        if (fileNameToStorePortIn) {
+          FILE *file = fopen(fileNameToStorePortIn,"w");
+          Assert2(file,"could not open file to store listen port in");
+          fprintf(file,"%s",fixedPortName);
+          fclose(file);
+          cout << "#a: (ospray port name store in file '" 
+               << fileNameToStorePortIn << "')" << endl;
+        }
       }
+      rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
+      Assert(rc == MPI_SUCCESS);
       worker.makeIntracomm();
+      
+      if (app.rank == 0) {
+        cout << "=======================================================" << endl;
+        cout << "OSPRAY Worker ring connected" << endl;
+        cout << "=======================================================" << endl;
+      }
+      MPI_Barrier(app.comm);
+      
+      if (app.rank == 1) {
+        cout << "WARNING: you're trying to run an mpi-parallel app with ospray; " << endl
+             << " only the root rank is allowed to issue ospray calls" << endl;
+        cout << "=======================================================" << endl;
+      }
+      MPI_Barrier(app.comm);
+
+      if (app.rank >= 1)
+        return NULL;
+      return new api::MPIDevice(ac,av);
     }
-    
-    /*! in this mode
-      - ther user runs a distributed app (a la paraview)
-      - MPI processes have already been launched by user
-      - each process with run its own local instance of the app process
-      - each app will use ospray *locally* (ie, osp will *not* start anything new other 
-        than threads 
-    */
-    void initMPI_DistributedAppWithLocalOSP();
+
+    /*! in this mode ("separate worker group" mode)
+      - the user may or may not have launched MPI explicitly for his app
+      - the app may or may not be running distributed
+      - the ospray frontend (the part linked to the app) will use the specified 
+        'launchCmd' to launch a _new_ MPI group of worker processes. 
+      - the ospray frontend will assume the launched process to output 'OSPRAY_SERVICE_PORT' 
+        stdout, will parse that output for this string, and create an mpi connection to 
+        this port to establish the service
+     */
+    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av, 
+                                                     const char *launchCommand)
+    {
+      int rc;
+      MPI_Status status;
+
+      ospray::init(ac,&av);
+      mpi::init(ac,av);
+
+      Assert(launchCommand);
+
+      app.comm = world.comm; 
+      app.makeIntercomm();
+      
+      char appPortName[MPI_MAX_PORT_NAME];
+      if (world.rank == 0) {
+        rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
+        Assert(rc == MPI_SUCCESS);
+        
+        // fix port name: replace all '$'s by '%'s to allow using it on the cmdline...
+        char *fixedPortName = strdup(appPortName);
+        for (char *s = fixedPortName; *s; ++s)
+          if (*s == '$') *s = '%';
+
+        char systemCommand[10000];
+        sprintf(systemCommand,"%s %s",launchCommand,fixedPortName);
+        if (fork()) {
+          system(systemCommand);
+          cout << "OSPRay worker process has died - killing application" << endl;
+          exit(0);
+        }
+      }
+
+      rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
+      Assert(rc == MPI_SUCCESS);
+      worker.makeIntracomm();
+      if (world.size > 1) {
+        if (world.rank == 1)
+          cout << "ospray:WARNING: you're trying to run an mpi-parallel app with ospray; only the root node is allowed to issue ospray api calls right now!" << endl;
+        return NULL;
+      }
+      return new api::MPIDevice(ac,av);
+
+//       if (mpi::world.rank == 0) {
+// #if 1
+//         if (fork()) {
+//           system(launchCommand);
+//           while(1) sleep(10);
+//         }
+//         //   sleep(10000);
+//         // }
+//         PING;
+//         // sleep(20);
+//         // PING;
+//         sleep(3);
+//         FILE *launchOutput = fopen("/tmp/launch.out","r");
+// #else
+//         PING;
+//         FILE *launchOutput = popen(launchCommand,"r");
+//         PRINT(launchOutput);
+//         sleep(10);
+// #endif
+
+//         Assert(launchOutput);
+//         char line[10000];
+//         char *listenPort = NULL;
+//         const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
+//         PING;
+//         while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
+//           PING;
+//           PRINT(line);
+//           if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
+//             listenPort = line + strlen(LAUNCH_HEADER);
+//             char *eol = strstr(listenPort,"\n");
+//             if (eol) *eol = 0;
+//             break;
+//           }
+//         }
+//         PING;
+//         pclose(launchOutput);
+//         PING;
+//         PRINT(listenPort);
+//         if (!listenPort)
+//           throw std::runtime_error("failed to find service port in launch script output");
+//         for (char *s = listenPort; *s; ++s)
+//           if (*s == '%') *s = '$';
+
+//         PING;
+//         cout << "CONNECTING TO " << listenPort << endl;     
+//         rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
+//         cout << "#######################################################" << endl;
+//         cout << "connected!" << endl;
+//         PING;
+//       }
+//       worker.makeIntracomm();
+//       return new api::MPIDevice(ac,av);
+    }
 
   }
 
   namespace api {
-    Device *createDevice_MPI_OSPonRanks(int *ac, const char **av)
-    {
-      mpi::initMPI_OSPonRanks(ac,av);
-      // only the app process(es) will still reach this point.
-      return new MPIDevice(ac,av);
-    }
-    Device *createDevice_MPI_LaunchLocalCluster(int *ac, const char **av,
-                                                const char *launchCmd)
-    {
-      mpi::init(ac,av);
-      mpi::initMPI_LaunchLocalCluster(launchCmd);
-      // only the app process(es) will still reach this point.
-      return new MPIDevice(ac,av);
-    }
-
     MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
                          int *_ac, const char **_av)
     {

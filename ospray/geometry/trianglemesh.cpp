@@ -1,9 +1,9 @@
 #include "trianglemesh.h"
 #include "../common/model.h"
 // embree stuff
-#include "rtcore.h"
-#include "rtcore_scene.h"
-#include "rtcore_geometry.h"
+#include "embree2/rtcore.h"
+#include "embree2/rtcore_scene.h"
+#include "embree2/rtcore_geometry.h"
 #include "../include/ospray/ospray.h"
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID

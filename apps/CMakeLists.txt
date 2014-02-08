@@ -11,7 +11,7 @@ CONFIGURE_OSPRAY()
 # common utility classes for 3D viewer widget, importers, etc
 ADD_SUBDIRECTORY(util)
 # general testing codes; to be removed at some point in time
-ADD_SUBDIRECTORY(testing)
+#ADD_SUBDIRECTORY(testing)
 # mini-scene graph viewer for _geometry_ (intentionally simple)
 ADD_SUBDIRECTORY(msgView)
 # mini dvr volume viewer (intentionally simple)
