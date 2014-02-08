@@ -9,13 +9,13 @@ message("APPLE: Glut in ${GLUT_INCLUDE_DIR}")
 ELSE(APPLE)
 	FIND_PATH(GLUT_INCLUDE_DIR GL/glut.h 
 		/usr/include # default
-		/opt/apps/freeglut/2.6.0/include/ # TACC
+$ENV{TACC_FREEGLUT_INC}
 		)
   SET (OPENGL_LIBRARY GL)
 	INCLUDE_DIRECTORIES(${GLUT_INCLUDE_DIR})
 	FIND_PATH(GLUT_LINK_DIR libglut.so
 		/usr/lib64 /usr/lib # default
-		/opt/apps/freeglut/2.6.0/lib/ # TACC
+	$ENV{TACC_FREEGLUT_LIB}
 		)
 	LINK_DIRECTORIES(${GLUT_LINK_DIR})
 	FIND_PACKAGE(GLUT REQUIRED)
