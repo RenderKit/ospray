@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 # ------------------------------------------------------------------
 # in case this script get called from within an MPI process we first
 # have to unset all these environment variables before we can call
