@@ -64,6 +64,9 @@ INCLUDE_DIRECTORIES(${EMBREE_DIR}/include)
 # include paths requried for including embree ISPC headers
 INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR})
+                
 ADD_SUBDIRECTORY(${EMBREE_DIR}/common  embree_common)
 ADD_SUBDIRECTORY(${EMBREE_DIR}/kernels embree_kernels)
 
