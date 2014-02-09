@@ -19,15 +19,26 @@ namespace ospray {
       else
         logLevel = 0;
 
+      PING;
       ospray::init(_ac,&_av);
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
       std::stringstream embreeConfig;
+      PING;
       if (debugMode)
         embreeConfig << " threads=1";
+      PRINT(embreeConfig.str());
       rtcInit(embreeConfig.str().c_str());
+
+    // if (debugMode) {
+    //   embree::rtcStartThreads(0);
+    // } else {
+    //   // how many !?
+    //   embree::rtcStartThreads(0);
+    // }
+
       assert(rtcGetError() == RTC_NO_ERROR);
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }

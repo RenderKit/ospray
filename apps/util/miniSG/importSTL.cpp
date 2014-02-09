@@ -58,7 +58,7 @@ namespace ospray {
         Assert(rc == 1 && "partial or broken STL file!?");
         rc = fread(&stlTri.v2,sizeof(stlTri.v2),1,file);
         Assert(rc == 1 && "partial or broken STL file!?");
-        rc = fread(&stlTri.attribute,sizeof(stlTri.attribute),1,file);
+        rc = fread(&stlTri.attribute,sizeof(unsigned short),1,file);
         Assert(rc == 1 && "partial or broken STL file!?");
         
         triangle.v0 = importer.addVertex(stlTri.v0);

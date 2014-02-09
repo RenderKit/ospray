@@ -14,12 +14,6 @@ SET(EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree CACHE STRING
 MARK_AS_ADVANCED(EMBREE_DIR)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${EMBREE_DIR}/common/cmake)
 
-IF(OSPRAY_ICC)
-	INCLUDE(${EMBREE_DIR}/common/cmake/icc.cmake)
-ELSE()
-	INCLUDE(${EMBREE_DIR}/common/cmake/gcc.cmake)
-ENDIF()
-
 ##################################################################
 # build embree - global settings independent of target
 ##################################################################
@@ -31,6 +25,15 @@ ADD_DEFINITIONS(-D__EXPORT_ALL_SYMBOLS__)
 # just to be sure, make sure embree fixes rays
 SET(RTCORE_FIX_RAYS ON)
 ADD_DEFINITIONS(-D__FIX_RAYS__)
+
+
+# this has to be called *AFTER* setting RTCORE_EXPORT_ALL_SYMBOLS
+IF(OSPRAY_ICC)
+	INCLUDE(${EMBREE_DIR}/common/cmake/icc.cmake)
+ELSE()
+	INCLUDE(${EMBREE_DIR}/common/cmake/gcc.cmake)
+ENDIF()
+
 
 ##################################################################
 # build embree - target specific settings
