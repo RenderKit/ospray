@@ -30,7 +30,6 @@ namespace ospray {
 
   void init(int *_ac, const char ***_av)
   {
-    PING;
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
     debugMode = false;
@@ -46,7 +45,6 @@ namespace ospray {
         ++i;
       }
     }
-
   }
 
   void removeArgs(int &ac, char **&av, int where, int howMany)

@@ -202,12 +202,17 @@ namespace ospray {
       app.makeIntercomm();
       
       char appPortName[MPI_MAX_PORT_NAME];
-      if (world.rank == 0) {
+      if (app.rank == 0 || app.size == -1) {
+        cout << "=======================================================" << endl;
+        cout << "initializing OSPRay MPI in 'launching new workers' mode" << endl;
+        cout << "using launch script '" << launchCommand << "'" << endl;
         rc = MPI_Open_port(MPI_INFO_NULL, appPortName);
         Assert(rc == MPI_SUCCESS);
         
         // fix port name: replace all '$'s by '%'s to allow using it on the cmdline...
         char *fixedPortName = strdup(appPortName);
+        cout << "with port " << fixedPortName <<  endl;
+        cout << "=======================================================" << endl;
         for (char *s = fixedPortName; *s; ++s)
           if (*s == '$') *s = '%';
 
@@ -223,11 +228,21 @@ namespace ospray {
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
       Assert(rc == MPI_SUCCESS);
       worker.makeIntracomm();
-      if (world.size > 1) {
-        if (world.rank == 1)
-          cout << "ospray:WARNING: you're trying to run an mpi-parallel app with ospray; only the root node is allowed to issue ospray api calls right now!" << endl;
+      if (app.rank == 0 || app.size == -1) {
+        cout << "OSPRay MPI Worker ring successfully connected." << endl;
+        cout << "found " << worker.size << " workers." << endl;
+        cout << "=======================================================" << endl;
+      }
+      if (app.size > 1) {
+        if (app.rank == 1) {
+          cout << "ospray:WARNING: you're trying to run an mpi-parallel app with ospray\n"
+               << "(only the root node is allowed to issue ospray api calls right now)\n";
+          cout << "=======================================================" << endl;
+        }
+        MPI_Barrier(app.comm);
         return NULL;
       }
+      MPI_Barrier(app.comm);
       return new api::MPIDevice(ac,av);
 
 //       if (mpi::world.rank == 0) {
