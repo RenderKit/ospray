@@ -43,7 +43,7 @@ namespace ospray {
   typedef embree::BBox3f      box3f;
   
   /*! affice space transformation */
-  typedef embree::AffineSpace3f affine3f;
+  typedef embree::AffineSpace3fa affine3f;
 
   using   embree::Ref;
   using   embree::RefCount;

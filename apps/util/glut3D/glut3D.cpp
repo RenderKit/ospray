@@ -68,7 +68,7 @@ namespace ospray {
         openingAngle(60.f*M_PI/360.f),
         modified(true)
     {
-      frame = AffineSpace3f::translate(from) * AffineSpace3f(embree::one);
+      frame = AffineSpace3fa::translate(from) * AffineSpace3fa(embree::one);
     }
 
     void Glut3DWidget::ViewPort::snapUp()
@@ -301,11 +301,11 @@ namespace ospray {
       // PRINT(delta_mouse);
 
       const vec3f pivot = center(widget->worldBounds);
-      AffineSpace3f xfm 
-        = AffineSpace3f::translate(pivot)
-        * AffineSpace3f::rotate(cam.frame.l.vx,-dv)
-        * AffineSpace3f::rotate(cam.frame.l.vz,-du)
-        * AffineSpace3f::translate(-pivot);
+      AffineSpace3fa xfm 
+        = AffineSpace3fa::translate(pivot)
+        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
+        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
+        * AffineSpace3fa::translate(-pivot);
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
@@ -352,7 +352,7 @@ namespace ospray {
       //   /*! viewPort frame in which the Y axis is the depth axis, and X
       //     and Z axes are parallel to the screen X and Y axis. The frame
       //     itself remains normalized. */
-      //   AffineSpace3f frame; 
+      //   AffineSpace3fa frame; 
       
       //   /*! set 'up' vector. if this vector is '0,0,0' the viewer will
       //    *not* apply the up-vector after viewPort manipulation */

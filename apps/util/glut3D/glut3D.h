@@ -17,7 +17,7 @@ namespace ospray {
     void runGLUT();
 
 
-    using embree::AffineSpace3f;
+    using embree::AffineSpace3fa;
 
     /*! helper class that allows for easily computing (smoothed) frame rate */
     struct FPSCounter {
@@ -120,7 +120,7 @@ namespace ospray {
         /*! camera frame in which the Y axis is the depth axis, and X
           and Z axes are parallel to the screen X and Y axis. The frame
           itself remains normalized. */
-        AffineSpace3f frame; 
+        AffineSpace3fa frame; 
       
         /*! set 'up' vector. if this vector is '0,0,0' the viewer will
          *not* apply the up-vector after camera manipulation */
