@@ -35,6 +35,11 @@ namespace ospray {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->keypress(key,vec2i(x,y));
     }
+    void glut3dSpecial(int32 key, int32 x, int32 y)
+    {
+      if (Glut3DWidget::activeWindow)
+        Glut3DWidget::activeWindow->specialkey(key,vec2i(x,y));
+    }
 
     void glut3dIdle( void )
     {
@@ -115,7 +120,9 @@ namespace ospray {
         forceRedraw();
     }
   
-    Glut3DWidget::Glut3DWidget(FrameBufferMode frameBufferMode, Manipulator *manipulator)
+    Glut3DWidget::Glut3DWidget(FrameBufferMode frameBufferMode,
+                               ManipulatorMode initialManipulator,
+                               int allowedManipulators)
       : motionSpeed(.003f),
         windowID(-1),
         lastMousePos(-1,-1),
@@ -126,11 +133,26 @@ namespace ospray {
         lastButtonState(0), 
         currButtonState(0),
         frameBufferMode(frameBufferMode),
-        manipulator(manipulator),
         ucharFB(NULL)
     {
       worldBounds.lower = vec3f(-1);
       worldBounds.upper = vec3f(+1);
+
+      if (allowedManipulators & INSPECT_CENTER_MODE) {
+        inspectCenterManipulator = new InspectCenter(this);
+      }
+      if (allowedManipulators & MOVE_MODE) {
+        moveModeManipulator = new MoveMode(this);
+      }
+      switch(initialManipulator) {
+      case MOVE_MODE:
+        manipulator = moveModeManipulator;
+        break;
+      case INSPECT_CENTER_MODE:
+        manipulator = inspectCenterManipulator;
+        break;
+      }
+      Assert2(manipulator != NULL,"invalid initial manipulator mode")
     }
 
     void Glut3DWidget::setZUp(const vec3f &up)
@@ -226,6 +248,7 @@ namespace ospray {
       glutDisplayFunc( glut3dDisplay );
       glutReshapeFunc( glut3dReshape );  
       glutKeyboardFunc(glut3dKeyboard );
+      glutSpecialFunc( glut3dSpecial );
       glutMotionFunc(  glut3dMotionFunc );
       glutMouseFunc(   glut3dMouseFunc );
       glutIdleFunc(    glut3dIdle );
@@ -261,6 +284,62 @@ namespace ospray {
     // ------------------------------------------------------------------
     // INSPECT_CENTER manipulator
     // ------------------------------------------------------------------
+
+    void InspectCenter::keypress(Glut3DWidget *widget, 
+                                 int32 key)
+    {       
+      switch(key) {
+      case 'a': {
+        rotate(+10.f*widget->motionSpeed,0);
+      } return;
+      case 'd': {
+        rotate(-10.f*widget->motionSpeed,0);
+      } return;
+      case 'w': {
+        rotate(0,+10.f*widget->motionSpeed);
+      } return;
+      case 's': {
+        rotate(0,-10.f*widget->motionSpeed);
+      } return;
+      }
+      
+      Manipulator::keypress(widget,key);
+    }
+    void InspectCenter::rotate(float du, float dv)
+    {
+      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      const vec3f pivot = center(widget->worldBounds);
+      AffineSpace3fa xfm 
+        = AffineSpace3fa::translate(pivot)
+        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
+        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
+        * AffineSpace3fa::translate(-pivot);
+      cam.frame = xfm * cam.frame;
+      cam.from  = xfmPoint(xfm,cam.from);
+      cam.at    = xfmPoint(xfm,cam.at);
+      cam.snapUp();
+      cam.modified = true;
+    }
+
+    void InspectCenter::specialkey(Glut3DWidget *widget, 
+                                   int32 key)
+    {       
+      switch(key) {
+      case GLUT_KEY_LEFT: {
+        rotate(+10.f*widget->motionSpeed,0);
+      } return;
+      case GLUT_KEY_RIGHT: {
+        rotate(-10.f*widget->motionSpeed,0);
+      } return;
+      case GLUT_KEY_UP: {
+        rotate(0,+10.f*widget->motionSpeed);
+      } return;
+      case GLUT_KEY_DOWN: {
+        rotate(0,-10.f*widget->motionSpeed);
+      } return;
+      }
+      Manipulator::specialkey(widget,key);
+    }
 
     /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
       forward/backward on right mouse button */
@@ -314,11 +393,93 @@ namespace ospray {
     }
 
 
+
+    // ------------------------------------------------------------------
+    // INSPECT_CENTER manipulator
+    // ------------------------------------------------------------------
+
+    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
+      forward/backward on right mouse button */
+    void MoveMode::dragRight(Glut3DWidget *widget, 
+                                  const vec2i &to, const vec2i &from) 
+    {
+      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      float fwd = (to.y - from.y) * 4 * widget->motionSpeed
+        * length(widget->worldBounds.size());
+      float oldDist = length(cam.at - cam.from);
+      float newDist = oldDist - fwd;
+      if (newDist < 1e-3f) 
+        return;
+      cam.from = cam.at - newDist * cam.frame.l.vy;
+      cam.frame.p = cam.from;
+      cam.modified = true;
+    }
+    
+    /*! INSPECT_CENTER::MiddleButton: move lookat/center of interest
+      forward/backward on middle mouse button */
+    void MoveMode::dragMiddle(Glut3DWidget *widget, 
+                              const vec2i &to, const vec2i &from) 
+    {
+      // it's called inspect_***CENTER*** for a reason; this class
+      // will keep the rotation pivot at the center, and not do
+      // anything with center mouse button...
+    }
+    
+    void MoveMode::dragLeft(Glut3DWidget *widget, 
+                            const vec2i &to, const vec2i &from) 
+    {
+      // std::cout << "-------------------------------------------------------" << std::endl;
+      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      float du = (to.x - from.x) * widget->motionSpeed;
+      float dv = (to.y - from.y) * widget->motionSpeed;
+
+      vec2i delta_mouse = to - from;
+
+      const vec3f pivot = center(widget->worldBounds);
+      AffineSpace3fa xfm 
+        = AffineSpace3fa::translate(pivot)
+        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
+        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
+        * AffineSpace3fa::translate(-pivot);
+      cam.frame = xfm * cam.frame;
+      cam.from  = xfmPoint(xfm,cam.from);
+      cam.at    = xfmPoint(xfm,cam.at);
+      cam.snapUp();
+      cam.modified = true;
+    }
+
+
+
+
+
+    void Glut3DWidget::specialkey(int32 key, const vec2f where)
+    {       
+      if (manipulator) manipulator->specialkey(this,key); 
+    }
+    void Glut3DWidget::keypress(char key, const vec2f where)
+    {       
+      if (key == 'I' && inspectCenterManipulator) {
+        manipulator = inspectCenterManipulator;
+        return;
+      }
+      if (key == 'M' && moveModeManipulator) {
+        manipulator = moveModeManipulator;
+        return;
+      }
+      if (manipulator) manipulator->keypress(this,key); 
+    }
+    
+
+
+
     void Manipulator::keypress(Glut3DWidget *widget, const int32 key) 
     {
       if (key == 'Q') {
         exit(0);
       }
+    };
+    void Manipulator::specialkey(Glut3DWidget *widget, const int32 key) 
+    {
     };
 
 

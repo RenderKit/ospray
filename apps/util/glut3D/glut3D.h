@@ -53,6 +53,8 @@ namespace ospray {
       virtual void button(Glut3DWidget *widget) {};
       /*! key press handler - override this fct to catch keyboard */
       virtual void keypress(Glut3DWidget *widget, const int32 key);
+      virtual void specialkey(Glut3DWidget *widget, const int32 key);
+      Manipulator(Glut3DWidget *widget) : widget(widget) {};
     protected:
 
       // helper functions called from the default 'motion' fct
@@ -65,6 +67,7 @@ namespace ospray {
       virtual void dragMiddle(Glut3DWidget *widget, 
                               const vec2i &to, const vec2i &from)
       {};
+      Glut3DWidget *widget;
     };
     struct InspectCenter : public Manipulator
     {
@@ -74,6 +77,21 @@ namespace ospray {
                              const vec2i &to, const vec2i &from);
       virtual void dragMiddle(Glut3DWidget *widget, 
                               const vec2i &to, const vec2i &from);
+      virtual void specialkey(Glut3DWidget *widget, const int32 key);
+      virtual void keypress(Glut3DWidget *widget, int32 key);
+      InspectCenter(Glut3DWidget *widget) : Manipulator(widget) {}
+    protected:
+      void rotate(float du, float dv);
+    };
+    struct MoveMode : public Manipulator
+    {
+      virtual void dragLeft(Glut3DWidget *widget, 
+                            const vec2i &to, const vec2i &from);
+      virtual void dragRight(Glut3DWidget *widget, 
+                             const vec2i &to, const vec2i &from);
+      virtual void dragMiddle(Glut3DWidget *widget, 
+                              const vec2i &to, const vec2i &from);
+      MoveMode(Glut3DWidget *widget) : Manipulator(widget) {}
     };
 
 
@@ -103,6 +121,10 @@ namespace ospray {
       typedef enum { 
         FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_NONE
       } FrameBufferMode;
+      typedef enum {
+        MOVE_MODE           =(1<<0),
+        INSPECT_CENTER_MODE =(1<<1)
+      } ManipulatorMode;
       /*! internal viewPort class */
       struct ViewPort {
         bool modified; /* the viewPort will set this flag any time any of
@@ -129,9 +151,14 @@ namespace ospray {
         ViewPort();
       };
       // static InspectCenter INSPECT_CENTER;
+      Manipulator *inspectCenterManipulator;
+      Manipulator *moveModeManipulator;
 
-      Glut3DWidget(FrameBufferMode frameBufferMode, 
-                   Manipulator *manipulator = new InspectCenter());
+      /*! current manipulator */
+      Manipulator *manipulator;
+      Glut3DWidget(FrameBufferMode frameBufferMode,
+                   ManipulatorMode initialManipulator=INSPECT_CENTER_MODE,
+                   int allowedManipulators=INSPECT_CENTER_MODE|MOVE_MODE);
 
       /*! set a default camera position that views given bounds from the
         top left front */
@@ -194,7 +221,6 @@ namespace ospray {
       ViewPort viewPort;
       box3f  worldBounds; /*!< world bounds, to automatically set viewPort
                             lookat, mouse speed, etc */
-      Manipulator *manipulator;
       int32 windowID;
       vec2i windowSize;
       /* camera speed modifier */
@@ -215,8 +241,8 @@ namespace ospray {
       friend void glut3dMotionFunc(int32 x, int32 y);
       friend void glut3dMouseFunc(int32 whichButton, int32 released, int32 x, int32 y);
 
-      virtual void keypress(char key, const vec2f where)
-      { if (manipulator) manipulator->keypress(this,key); }
+      virtual void keypress(char key, const vec2f where);
+      virtual void specialkey(int32 key, const vec2f where);
     };
 
     std::ostream &operator<<(std::ostream &o, const Glut3DWidget::ViewPort &cam);
