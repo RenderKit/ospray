@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../common/managed.h"
+#include "../common/ray.h"
 
 namespace ospray {
   
@@ -12,6 +13,7 @@ namespace ospray {
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::Camera (base class)"; }
     static Camera *createCamera(const char *identifier);
+    virtual void initRay(Ray &ray, const vec2f &sample) = 0;
   };
 
   /*! \brief registers a internal ospray::<ClassName> camera under

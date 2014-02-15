@@ -53,5 +53,7 @@ namespace ospray {
     vec3f dir_dv; //!< vector spanning y axis of image plane ((0,0)->(0,1))
 
     ::ispc::PerspectiveCamera_Data *ispcData;
+
+    virtual void initRay(Ray &ray, const vec2f &sample);
   };
 }

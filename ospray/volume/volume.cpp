@@ -18,6 +18,8 @@ namespace ospray {
     : Volume(size,ospray::UNORM8)
   { 
     ispcPtr = ispc::_Naive32Volume1uc_create((ispc::vec3i&)size,internalData); 
+    int64 dataSize;
+    ispc::getInternalRepresentation(ispcPtr,(long&)dataSize,(void*&)data);
   }
   template<>
   BrickedVolume<uint8>::BrickedVolume(const vec3i &size, const uint8 *internalData)
@@ -30,6 +32,8 @@ namespace ospray {
     : Volume(size,ospray::FLOAT)
   { 
     ispcPtr = ispc::_Naive32Volume1f_create((ispc::vec3i&)size,internalData); 
+    int64 dataSize;
+    ispc::getInternalRepresentation(ispcPtr,(long&)dataSize,(void*&)data);
   }
   template<>
   BrickedVolume<float>::BrickedVolume(const vec3i &size, const float *internalData)
@@ -134,22 +138,63 @@ namespace ospray {
 
 
   template<>
-  float BrickedVolume<float>::lerpf(const vec3f &pos)
+  float BrickedVolume<float>::lerpf(const vec3fa &pos)
   { 
     NOTIMPLEMENTED;
   }
   template<>
-  float BrickedVolume<uint8>::lerpf(const vec3f &pos)
+  float BrickedVolume<uint8>::lerpf(const vec3fa &pos)
   { 
     NOTIMPLEMENTED;
   }
   template<>
-  float NaiveVolume<float>::lerpf(const vec3f &pos)
+  float NaiveVolume<float>::lerpf(const vec3fa &pos)
   { 
-    NOTIMPLEMENTED;
+#ifdef OSPRAY_TARGET_AVX2
+    PING;
+#else
+    float clamped_x = std::max(0.f,std::min(pos.x,size.x-1.0001f));
+    float clamped_y = std::max(0.f,std::min(pos.y,size.y-1.0001f));
+    float clamped_z = std::max(0.f,std::min(pos.z,size.z-1.0001f));
+    // PRINT(pos);
+    uint32 ix = uint32(clamped_x);
+    uint32 iy = uint32(clamped_y);
+    uint32 iz = uint32(clamped_z);
+    
+    const float fx = clamped_x - ix;
+    const float fy = clamped_y - iy;
+    const float fz = clamped_z - iz;
+    // PRINT(ix);
+    // PRINT(iy);
+    // PRINT(iz);
+    uint64 addr = ix + size.x*(iy + size.y*((uint64)iz));
+    // PRINT(addr);
+
+    const float v000 = data[addr];
+    const float v001 = data[addr+1];
+    const float v010 = data[addr+size.x];
+    const float v011 = data[addr+1+size.x];
+
+    const float v100 = data[addr+size.y];
+    const float v101 = data[addr+1+size.y];
+    const float v110 = data[addr+size.x+size.y];
+    const float v111 = data[addr+1+size.x+size.y];
+
+    const float v00 = v000 + fx * (v001-v000);
+    const float v01 = v010 + fx * (v011-v010);
+    const float v10 = v100 + fx * (v101-v100);
+    const float v11 = v110 + fx * (v111-v110);
+    
+    const float v0 = v00 + fy * (v01-v00);
+    const float v1 = v10 + fy * (v11-v10);
+    
+    const float v = v0 + fz * (v1-v0);
+    
+    return v;
+#endif
   }
   template<>
-  float NaiveVolume<uint8>::lerpf(const vec3f &pos)
+  float NaiveVolume<uint8>::lerpf(const vec3fa &pos)
   { 
     NOTIMPLEMENTED;
   }
@@ -265,6 +310,7 @@ namespace ospray {
     else
       volume = new NaiveVolume<uint8>(newSize);
 #else
+    PING;
     if ((flags & Volume::LAYOUT) == Volume::BRICKED)
       volume = new BrickedVolume<float>(newSize);
     else
@@ -344,8 +390,8 @@ namespace ospray {
 
     if (resampleSize.x > 0) {
       std::cout << "resampling volume to new size " << resampleSize << std::endl;
-      internalRep = resampleVolume(internalRep,resampleSize,Volume::BRICKED);
-      // internalRep = resampleVolume(internalRep,resampleSize,Volume::NAIVE);
+      // internalRep = resampleVolume(internalRep,resampleSize,Volume::BRICKED);
+      internalRep = resampleVolume(internalRep,resampleSize,Volume::NAIVE);
     }
     ispcEquivalent = internalRep->inISPC();
   }

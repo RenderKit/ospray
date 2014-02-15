@@ -2,6 +2,7 @@
 #include <limits>
 // ispc-side stuff
 #include "perspectivecamera_ispc.h"
+#include <limits>
 
 namespace ospray {
 
@@ -42,6 +43,29 @@ namespace ospray {
     (vec3f&)ispcData->dir_00 = dir_00;
     (vec3f&)ispcData->dir_du = dir_du;
     (vec3f&)ispcData->dir_dv = dir_dv;
+  }
+
+  void PerspectiveCamera::initRay(Ray &ray, const vec2f &sample)
+  {
+    ray.org = pos;
+    ray.dir = dir_00
+      + sample.x * dir_du
+      + sample.y * dir_dv;
+
+    ray.dir = normalize(ray.dir);
+
+    if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
+    if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
+    if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
+
+
+    ray.t0  = 1e-6f;
+    ray.t   = std::numeric_limits<float>::infinity();
+    ray.time = 0.f;
+    ray.mask = 0;
+    ray.geomID = -1;
+    ray.primID = -1;
+    ray.instID = -1;
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);

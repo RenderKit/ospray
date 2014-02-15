@@ -35,6 +35,7 @@ namespace ospray {
   {
     Tile tile;
     tile.fbSize = fb->size;
+    tile.rcp_fbSize = rcp(vec2f(fb->size));
     const size_t tile_y = taskIndex / numTiles_x;
     const size_t tile_x = taskIndex - tile_y*numTiles_x; //taskIndex % numTiles_x;
     tile.region.lower.x = tile_x * TILE_SIZE; //x0;
@@ -66,7 +67,10 @@ namespace ospray {
     }
     fb->renderTask = renderTask;
     TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-    //fb->renderTask->done.sync();
+#if 1
+    // do synchronous rendering: directly wait after each frame
+    fb->renderTask->done.sync();
+#endif
   }
 
   // /*! the _local_ tiled load balancer has nothing to do when a tile is

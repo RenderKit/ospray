@@ -51,7 +51,7 @@ namespace ospray {
     ispc::_Volume *inISPC() const { return ispcPtr; }
 
     //! tri-linear interpolation at given sample location
-    virtual float lerpf(const vec3f &samplePos) = 0;
+    virtual float lerpf(const vec3fa &samplePos) = 0;
   protected:
     // void *ispcPtr;
     ispc::_Volume *ispcPtr;
@@ -69,7 +69,9 @@ namespace ospray {
     virtual int layout() const { return NAIVE; };
 
     //! tri-linear interpolation at given sample location
-    virtual float lerpf(const vec3f &samplePos);
+    virtual float lerpf(const vec3fa &samplePos);
+
+    const T *data;
   };
 
   template<typename T>
@@ -82,7 +84,7 @@ namespace ospray {
     virtual int layout() const { return BRICKED; };
 
     //! tri-linear interpolation at given sample location
-    virtual float lerpf(const vec3f &samplePos);
+    virtual float lerpf(const vec3fa &samplePos);
   };
 
 
