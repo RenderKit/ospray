@@ -1,0 +1,22 @@
+#ifndef OSPRAY_CAMERA_IH
+#define OSPRAY_CAMERA_IH 1
+
+#include "../common/ray.ih"
+
+
+/*! \file camera.ih Defines the abstract base class of an ISPC-side camera */
+
+struct Camera;
+
+/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
+typedef void (*InitRayMethod)(uniform Camera  *uniform,
+                              varying Ray &ray,
+                              const varying vec2f &sample);
+
+struct Camera
+{
+  InitRayMethod initRay;
+  void *cClassPtr; /*!< pointer back to c++-side of this class */
+};
+
+#endif

@@ -1,0 +1,28 @@
+#ifndef OSPRAY_FB_TILE_IH
+#define OSPRAY_FB_TILE_IH 1
+
+#include "../common/ospcommon.ih"
+#include "../common/math/region.ih"
+#include "tilesize.h"
+
+/*! a screen tile. the memory layout of this class has to _exactly_
+  match the (C++-)one in tile.h */
+struct Tile {
+  varying uint32 rgba8[(TILE_SIZE*TILE_SIZE)/programCount];
+  varying float  r[(TILE_SIZE*TILE_SIZE)/programCount]; /*! red */
+  varying float  g[(TILE_SIZE*TILE_SIZE)/programCount]; /*! green */
+  varying float  b[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< blue */
+  varying float  a[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< alpha */
+  varying float  z[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< depth */
+  // uniform float  r[QUAD_SIZE*QUAD_SIZE]; /*! red */
+  // uniform float  g[QUAD_SIZE*QUAD_SIZE]; /*! green */
+  // uniform float  b[QUAD_SIZE*QUAD_SIZE]; /*!< blue */
+  // uniform float  a[QUAD_SIZE*QUAD_SIZE]; /*!< alpha */
+  // uniform float  z[QUAD_SIZE*QUAD_SIZE]; /*!< depth */
+  uniform region2i region;
+  uniform vec2i    fbSize;
+  uniform vec2f    rcp_fbSize;
+  uniform uint32   format;
+};
+
+#endif
