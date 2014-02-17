@@ -225,12 +225,7 @@ namespace ospray {
     /*! load plugin */
     void LocalDevice::loadPlugin(const char *name)
     {
-#if THIS_IS_MIC
-      // embree automatically puts this into "lib<name>.so" format
-      std::string libName = "ospray_module_"+std::string(name)+"_mic";
-#else
-      std::string libName = "ospray_module_"+std::string(name)+"";
-#endif
+      std::string libName = "ospray_module_"+std::string(name);
       loadLibrary(libName);
       
       std::string initSymName = "ospray_init_module_"+std::string(name);

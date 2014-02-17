@@ -5,8 +5,14 @@
 namespace ospray {
   std::vector<Library*> loadedLibs;
 
-  void  loadLibrary(const std::string &name)
+  void  loadLibrary(const std::string &_name)
   {
+#ifdef OSPRAY_TARGET_MIC
+    std::string name = _name+"_mic";
+#else
+    std::string name = _name;
+#endif
+
     for (int i=0;i<loadedLibs.size();i++)
       if (loadedLibs[i]->name == name)
         // lib already loaded.
