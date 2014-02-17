@@ -60,6 +60,7 @@ namespace ospray {
         case api::MPIDevice::CMD_NEW_RENDERER: {
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
+          PRINT(type);
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new renderer \"" << type << "\" ID " << handle << endl;
@@ -79,6 +80,26 @@ namespace ospray {
           Assert(camera);
           handle.assign(camera);
           //          cout << "#w: new camera " << handle << endl;
+        } break;
+        case api::MPIDevice::CMD_NEW_VOLUME: {
+      Assert(type != NULL && "invalid volume type identifier");
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new volume \"" << type << "\" ID " << (void*)(int64)handle << endl;
+      /*! we don't have the volume interface fleshed out, yet, and
+        currently create the proper volume type on-the-fly during
+        commit, so use this wrpper thingy...  \see
+        volview_notes_on_volume_interface */
+      WrapperVolume *volume = new WrapperVolume; 
+      volume->refInc();
+      // return (OSPVolume)volume;
+      //     Volume *volume = Volume::createVolume(type);
+          cmd.free(type);
+          Assert(volume);
+          handle.assign(volume);
+          //          cout << "#w: new volume " << handle << endl;
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
           const mpi::Handle handle = cmd.get_handle();
@@ -178,6 +199,16 @@ namespace ospray {
           obj->setParam(name,val.lookup());
           cmd.free(name);
         } break;
+        case api::MPIDevice::CMD_SET_STRING: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const char *val  = cmd.get_charPtr();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+          cmd.free(val);
+        } break;
         case api::MPIDevice::CMD_SET_FLOAT: {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
@@ -191,6 +222,15 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const vec3f val = cmd.get_vec3f();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
+        case api::MPIDevice::CMD_SET_VEC3I: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const vec3i val = cmd.get_vec3i();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           obj->findParam(name,1)->set(val);

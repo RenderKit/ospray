@@ -464,16 +464,13 @@ namespace ospray {
     /*! assign (named) string parameter to an object */
     void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
     {
-      NOTIMPLEMENTED;
-      // ManagedObject *object = (ManagedObject *)_object;
-      // Assert(object != NULL  && "invalid object handle");
-      // Assert(bufName != NULL && "invalid identifier for object parameter");
-      
-      // PING;
-      // PRINT(bufName);
-      // PRINT(s);
+      Assert(_object);
+      Assert(bufName);
 
-      // object->findParam(bufName,1)->set(s);
+      cmd.newCommand(CMD_SET_STRING);
+      cmd.send((const mpi::Handle &)_object);
+      cmd.send(bufName);
+      cmd.send(s);
     }
 
     /*! assign (named) float parameter to an object */
@@ -514,7 +511,13 @@ namespace ospray {
     /*! assign (named) vec3i parameter to an object */
     void MPIDevice::setVec3i(OSPObject _object, const char *bufName, const vec3i &v)
     {
-      NOTIMPLEMENTED;
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC3I);
+      cmd.send((const mpi::Handle &)_object);
+      cmd.send(bufName);
+      cmd.send(v);
       // ManagedObject *object = (ManagedObject *)_object;
       // Assert(object != NULL  && "invalid object handle");
       // Assert(bufName != NULL && "invalid identifier for object parameter");
@@ -568,14 +571,15 @@ namespace ospray {
     /*! create a new volume object (out of list of registered volumes) */
     OSPVolume MPIDevice::newVolume(const char *type)
     {
-      NOTIMPLEMENTED;
-      // Assert(type != NULL && "invalid render type identifier");
-      // /*! we don't have the volume interface fleshed out, yet, and
-      //   currently create the proper volume type on-the-fly during
-      //   commit, so use this wrpper thingy...  \see
-      //   volview_notes_on_volume_interface */
-      // WrapperVolume *volume = new WrapperVolume; 
-      // return (OSPVolume)(int64)volume;
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+
+      cmd.newCommand(CMD_NEW_VOLUME);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPVolume)(int64)handle;
     }
 
     /*! create a new geometry object (out of list of registered geometrys) */

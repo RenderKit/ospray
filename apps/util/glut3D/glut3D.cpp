@@ -395,11 +395,10 @@ namespace ospray {
 
 
     // ------------------------------------------------------------------
-    // INSPECT_CENTER manipulator
+    // MOVE_MOVE manipulator - TODO.
     // ------------------------------------------------------------------
 
-    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
-      forward/backward on right mouse button */
+    /*! todo */
     void MoveMode::dragRight(Glut3DWidget *widget, 
                                   const vec2i &to, const vec2i &from) 
     {
@@ -415,8 +414,7 @@ namespace ospray {
       cam.modified = true;
     }
     
-    /*! INSPECT_CENTER::MiddleButton: move lookat/center of interest
-      forward/backward on middle mouse button */
+    /*! todo */
     void MoveMode::dragMiddle(Glut3DWidget *widget, 
                               const vec2i &to, const vec2i &from) 
     {
@@ -425,10 +423,10 @@ namespace ospray {
       // anything with center mouse button...
     }
     
+    /*! todo */
     void MoveMode::dragLeft(Glut3DWidget *widget, 
                             const vec2i &to, const vec2i &from) 
     {
-      // std::cout << "-------------------------------------------------------" << std::endl;
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       float du = (to.x - from.x) * widget->motionSpeed;
       float dv = (to.y - from.y) * widget->motionSpeed;
@@ -458,6 +456,10 @@ namespace ospray {
     }
     void Glut3DWidget::keypress(char key, const vec2f where)
     {       
+      if (key == 'C') {
+        PRINT(viewPort);
+        return;
+      }
       if (key == 'I' && inspectCenterManipulator) {
         manipulator = inspectCenterManipulator;
         return;

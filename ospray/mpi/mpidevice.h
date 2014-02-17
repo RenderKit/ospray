@@ -22,12 +22,16 @@ namespace ospray {
         CMD_NEW_MODEL,
         CMD_NEW_TRIANGLEMESH,
         CMD_NEW_CAMERA,
+        CMD_NEW_VOLUME,
         CMD_NEW_DATA,
         CMD_ADD_GEOMETRY,
         CMD_COMMIT,
+
         CMD_SET_OBJECT,
+        CMD_SET_STRING,
         CMD_SET_FLOAT,
         CMD_SET_VEC3F,
+        CMD_SET_VEC3I,
         CMD_USER
       } CommandTag;
 

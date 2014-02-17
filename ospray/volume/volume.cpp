@@ -150,7 +150,7 @@ namespace ospray {
   template<>
   float NaiveVolume<float>::lerpf(const vec3fa &pos)
   { 
-#ifdef OSPRAY_TARGET_AVX2
+#if 0 && defined(OSPRAY_TARGET_AVX2)
     PING;
 #else
     float clamped_x = std::max(0.f,std::min(pos.x,size.x-1.0001f));
@@ -386,7 +386,12 @@ namespace ospray {
     const char *fileName = getParamString("filename",NULL);
     Assert(fileName);
 
+    PING;
+    PRINT(fileName);
+
     internalRep = loadRaw(fileName,UNORM8,size.x,size.y,size.z,Volume::BRICKED);
+
+    PRINT(resampleSize);
 
     if (resampleSize.x > 0) {
       std::cout << "resampling volume to new size " << resampleSize << std::endl;

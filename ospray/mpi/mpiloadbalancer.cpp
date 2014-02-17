@@ -22,6 +22,7 @@ namespace ospray {
         __align(64) Tile tile;
         tile.format = TILE_FORMAT_RGBA8;
         tile.fbSize = fb->size;
+        tile.rcp_fbSize = rcp(vec2f(fb->size));
         for (int i=0;i<numTiles;i++) {
           // printf("#m: receiving tile %i\n",i);
           rc = MPI_Recv(&tile.region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
@@ -103,6 +104,7 @@ namespace ospray {
 
         Tile tile;
         tile.fbSize = fb->size;
+        tile.rcp_fbSize = rcp(vec2f(fb->size));
         const size_t tile_y = tileID / numTiles_x;
         const size_t tile_x = tileID - tile_y*numTiles_x;
         tile.region.lower.x = tile_x * TILE_SIZE;

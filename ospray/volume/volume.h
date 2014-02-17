@@ -37,7 +37,7 @@ namespace ospray {
     const ScalarType scalarType;
     
     /*! the size, scalar type and flags specify the *internal*
-        layout. */
+      layout. */
     Volume(const vec3i &size, ScalarType scalarType) 
       : size(size), scalarType(scalarType)
     {};
@@ -99,11 +99,13 @@ namespace ospray {
     WrapperVolume() : internalRep(NULL) {}
     virtual void commit();
     Volume *internalRep;
+
+    //    static Volume *createVolume(const char *identifier);
   };
 
 
   /*! load volume in raw format. (eventually to be moved to special
-      importers subdir */
+    importers subdir */
   Volume *loadRaw(const char *fileName, 
                   ScalarType inputType, long sx, long sy, long sz, long flags);
 
@@ -114,4 +116,24 @@ namespace ospray {
   void saveVolume(Volume *volume, const std::string &fileName);
   //! helper - to be (re)moved once no longer needed
   Volume *loadVolume(const std::string &fileName);
+
+
+
+  //   /*! \brief registers a internal ospray::<ClassName> volume under
+  //       the externally accessible name "external_name" 
+      
+  //       \internal This currently works by defining a extern "C" function
+  //       with a given predefined name that creates a new instance of this
+  //       volume. By having this symbol in the shared lib ospray can
+  //       lateron always get a handle to this fct and create an instance
+  //       of this volume.
+  //   */
+  // #define OSP_REGISTER_VOLUME(InternalClassName,external_name)        \
+  //   extern "C" Volume *ospray_create_volume__##external_name()        \
+  //   {                                                                 \
+  //     return new InternalClassName;                                   \
+  //   }                                                               \
+
+
 }
+
