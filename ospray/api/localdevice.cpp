@@ -7,6 +7,8 @@
 #include "../camera/camera.h"
 #include "../volume/volume.h"
 #include "../render/loadbalancer.h"
+#include "../common/library.h"
+// embree stuff
 
 namespace ospray {
   namespace api {
@@ -218,6 +220,25 @@ namespace ospray {
       WrapperVolume *volume = new WrapperVolume; 
       volume->refInc();
       return (OSPVolume)volume;
+    }
+
+    /*! load plugin */
+    void LocalDevice::loadPlugin(const char *name)
+    {
+#if THIS_IS_MIC
+      // embree automatically puts this into "lib<name>.so" format
+      std::string libName = "ospray_module_"+std::string(name)+"_mic";
+#else
+      std::string libName = "ospray_module_"+std::string(name)+"";
+#endif
+      loadLibrary(libName);
+      
+      std::string initSymName = "ospray_init_module_"+std::string(name);
+      void*initSym = getSymbol(initSymName);
+      if (!initSym)
+        throw std::runtime_error("could not find module initializer "+initSymName);
+      void (*initMethod)() = (void(*)())initSym;
+      initMethod();
     }
 
     /*! call a renderer to render a frame buffer */

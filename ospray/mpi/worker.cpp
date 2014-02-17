@@ -4,6 +4,7 @@
 #include "../fb/swapchain.h"
 #include "../common/model.h"
 #include "../common/data.h"
+#include "../common/library.h"
 #include "../common/model.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
@@ -234,6 +235,26 @@ namespace ospray {
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
+        case api::MPIDevice::CMD_LOAD_PLUGIN: {
+          const char *name = cmd.get_charPtr();
+
+#if THIS_IS_MIC
+          // embree automatically puts this into "lib<name>.so" format
+          std::string libName = "ospray_module_"+std::string(name)+"_mic";
+#else
+          std::string libName = "ospray_module_"+std::string(name)+"";
+#endif
+          loadLibrary(libName);
+      
+          std::string initSymName = "ospray_init_module_"+std::string(name);
+          void*initSym = getSymbol(initSymName);
+          if (!initSym)
+            throw std::runtime_error("could not find module initializer "+initSymName);
+          void (*initMethod)() = (void(*)())initSym;
+          initMethod();
+
           cmd.free(name);
         } break;
         default: 

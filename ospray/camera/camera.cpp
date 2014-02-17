@@ -1,11 +1,9 @@
 // ospray stuff
 #include "camera.h"
 // embree stuff
-#include "common/sys/library.h"
+#include "../common/library.h"
 // stl stuff
 #include <map>
-// std c stuff
-#include <dlfcn.h>
 
 namespace ospray {
   typedef Camera *(*creatorFct)();
@@ -23,7 +21,7 @@ namespace ospray {
                 << type << "' for the first time" << std::endl;
 
     std::string creatorName = "ospray_create_camera__"+std::string(type);
-    creatorFct creator = (creatorFct)dlsym(RTLD_DEFAULT,creatorName.c_str());
+    creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
     cameraRegistry[type] = creator;
     if (creator == NULL) {
       if (ospray::logLevel >= 1) 

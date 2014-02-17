@@ -85,9 +85,11 @@ typedef osp::ManagedObject *OSPObject;
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   void ospInit(int *ac, const char **av);
-  //! initialize the ospray engine (for use with MPI-parallel app) 
-  void ospInitMPI(int *ac, const char **av);
+  // //! initialize the ospray engine (for use with MPI-parallel app) 
+  // void ospInitMPI(int *ac, const char **av);
 
+  //! load plugin <name> from shard lib libospray_module_<name>.so, or 
+  void ospLoadPlugin(const char *pluginName);
 
   //! use renderer to render a frame. 
   /*! What input to tuse for rendering the frame is encoded in the

@@ -26,6 +26,7 @@ namespace ospray {
         CMD_NEW_DATA,
         CMD_ADD_GEOMETRY,
         CMD_COMMIT,
+        CMD_LOAD_PLUGIN,
 
         CMD_SET_OBJECT,
         CMD_SET_STRING,
@@ -97,6 +98,9 @@ namespace ospray {
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer);
+
+      /*! load plugin */
+      virtual void loadPlugin(const char *name);
 
       MPI_Comm service;
     };

@@ -30,6 +30,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	common/managed.cpp
 	common/data.cpp
 	common/model.cpp
+	common/library.cpp
 
 	fb/swapchain.cpp 
 	fb/framebuffer.cpp

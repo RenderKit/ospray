@@ -5,6 +5,7 @@
 #include "../fb/swapchain.h"
 #include "../common/model.h"
 #include "../common/data.h"
+#include "../common/library.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
@@ -471,6 +472,28 @@ namespace ospray {
       cmd.send((const mpi::Handle &)_object);
       cmd.send(bufName);
       cmd.send(s);
+    }
+
+    /*! load plugin */
+    void MPIDevice::loadPlugin(const char *name)
+    {
+#if THIS_IS_MIC
+      // embree automatically puts this into "lib<name>.so" format
+      std::string libName = "ospray_module_"+std::string(name)+"_mic";
+#else
+      std::string libName = "ospray_module_"+std::string(name)+"";
+#endif
+      loadLibrary(libName);
+      
+      std::string initSymName = "ospray_init_module_"+std::string(name);
+      void*initSym = getSymbol(initSymName);
+      if (!initSym)
+        throw std::runtime_error("could not find module initializer "+initSymName);
+      void (*initMethod)() = (void(*)())initSym;
+      initMethod();
+
+      cmd.newCommand(CMD_LOAD_PLUGIN);
+      cmd.send(name);
     }
 
     /*! assign (named) float parameter to an object */
