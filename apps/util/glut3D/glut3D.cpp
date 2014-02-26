@@ -152,7 +152,7 @@ namespace ospray {
         manipulator = inspectCenterManipulator;
         break;
       }
-      Assert2(manipulator != NULL,"invalid initial manipulator mode")
+      Assert2(manipulator != NULL,"invalid initial manipulator mode");
     }
 
     void Glut3DWidget::setZUp(const vec3f &up)

@@ -2,6 +2,9 @@
 #include "volume_ispc.h"
 #include "naive32_ispc.h"
 #include "bricked32_ispc.h"
+#ifdef LOW_LEVEL_KERNELS
+# include <immintrin.h>
+#endif
 
 namespace ospray {
   long long volumeMagicCookie = 0x123456789012345LL;
@@ -20,6 +23,20 @@ namespace ospray {
     ispcPtr = ispc::_Naive32Volume1uc_create((ispc::vec3i&)size,internalData); 
     int64 dataSize;
     ispc::getInternalRepresentation(ispcPtr,(long&)dataSize,(void*&)data);
+#ifdef LOW_LEVEL_KERNELS
+    clampSize.x = size.x - 1e-6f;
+    clampSize.y = size.y - 1e-6f;
+    clampSize.z = size.z - 1e-6f;
+
+    voxelOffset[0] = 0;
+    voxelOffset[1] = 1;
+    voxelOffset[2] = size.x;
+    voxelOffset[3] = 1+size.x;
+    voxelOffset[4] = 0+size.x*size.y;
+    voxelOffset[5] = 1+size.x*size.y;
+    voxelOffset[6] = 0+size.x+size.x*size.y;
+    voxelOffset[7] = 1+size.x+size.x*size.y;
+#endif
   }
   template<>
   BrickedVolume<uint8>::BrickedVolume(const vec3i &size, const uint8 *internalData)
@@ -150,8 +167,53 @@ namespace ospray {
   template<>
   float NaiveVolume<float>::lerpf(const vec3fa &pos)
   { 
-#if 0 && defined(OSPRAY_TARGET_AVX2)
-    PING;
+#if LOW_LEVEL_KERNELS && defined(OSPRAY_TARGET_AVX2)
+    const __m128 pos4
+      = _mm_min_ps(_mm_max_ps((__m128&)pos,_mm_setzero_ps()),(__m128&)clampSize);
+    const __m128i idx4 = _mm_cvttps_epi32(pos4);
+    const __m128 f4 = _mm_sub_ps(pos4,_mm_cvtepi32_ps(idx4));
+
+    float clamped_x = ((float*)&pos4)[0];
+    float clamped_y = ((float*)&pos4)[1];
+    float clamped_z = ((float*)&pos4)[2];
+    // PRINT(pos);
+    uint32 ix = ((int*)&idx4)[0];//uint32(clamped_x);
+    uint32 iy = ((int*)&idx4)[1];//uint32(clamped_y);
+    uint32 iz = ((int*)&idx4)[2];//uint32(clamped_z);
+    
+    const float fx = ((float*)&f4)[0];//clamped_x - ix;
+    const float fy = ((float*)&f4)[1];//clamped_y - iy;
+    const float fz = ((float*)&f4)[2];//clamped_z - iz;
+    // PRINT(ix);
+    // PRINT(iy);
+    // PRINT(iz);
+    uint64 addr = ix + size.x*(iy + size.y*((uint64)iz));
+    // PRINT(addr);
+
+    __m256 v8 = _mm256_i32gather_ps((const float*)addr,(__m256i&)voxelOffset,_MM_SCALE_4);
+    // __m256 v000 = _mm256_set1_ps(*(float*)addr);
+    // v = _mm256_sub_ps(v,
+    const float v000 = ((float*)&v8)[0];//(data[addr];
+    const float v001 = ((float*)&v8)[1];//data[addr+1];
+    const float v010 = ((float*)&v8)[2];//data[addr+size.x];
+    const float v011 = ((float*)&v8)[3];//data[addr+1+size.x];
+
+    const float v100 = ((float*)&v8)[4];//data[addr+size.x*size.y];
+    const float v101 = ((float*)&v8)[5];//data[addr+1+size.x*size.y];
+    const float v110 = ((float*)&v8)[6];//data[addr+size.x+size.x*size.y];
+    const float v111 = ((float*)&v8)[7];//data[addr+1+size.x+size.x*size.y];
+
+    const float v00 = v000 + fx * (v001-v000);
+    const float v01 = v010 + fx * (v011-v010);
+    const float v10 = v100 + fx * (v101-v100);
+    const float v11 = v110 + fx * (v111-v110);
+    
+    const float v0 = v00 + fy * (v01-v00);
+    const float v1 = v10 + fy * (v11-v10);
+    
+    const float v = v0 + fz * (v1-v0);
+
+    return v;
 #else
     float clamped_x = std::max(0.f,std::min(pos.x,size.x-1.0001f));
     float clamped_y = std::max(0.f,std::min(pos.y,size.y-1.0001f));
@@ -175,10 +237,10 @@ namespace ospray {
     const float v010 = data[addr+size.x];
     const float v011 = data[addr+1+size.x];
 
-    const float v100 = data[addr+size.y];
-    const float v101 = data[addr+1+size.y];
-    const float v110 = data[addr+size.x+size.y];
-    const float v111 = data[addr+1+size.x+size.y];
+    const float v100 = data[addr+size.x*size.y];
+    const float v101 = data[addr+1+size.x*size.y];
+    const float v110 = data[addr+size.x+size.x*size.y];
+    const float v111 = data[addr+1+size.x+size.x*size.y];
 
     const float v00 = v000 + fx * (v001-v000);
     const float v01 = v010 + fx * (v011-v010);

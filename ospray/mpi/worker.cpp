@@ -83,7 +83,7 @@ namespace ospray {
           //          cout << "#w: new camera " << handle << endl;
         } break;
         case api::MPIDevice::CMD_NEW_VOLUME: {
-      Assert(type != NULL && "invalid volume type identifier");
+          // Assert(type != NULL && "invalid volume type identifier");
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)

@@ -21,6 +21,8 @@ namespace osp {
   typedef embree::Vec3f  vec3f;
   typedef embree::Vec3i  vec3i;
   typedef embree::Vec3fa vec3fa;
+  typedef embree::BBox<embree::Vec2i> box2i;
+  typedef embree::BBox3f box3f;
 
   struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
   struct FrameBuffer  : public ManagedObject {};

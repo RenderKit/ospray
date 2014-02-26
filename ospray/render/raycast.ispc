@@ -1,5 +1,4 @@
-/*! \file testrenderer.ispc Defines ISPC side of test frame renderer
-    (that only renders a simple test frame */
+/*! \file raycast.ispc Defines ISPC side of the ray cast renderer */
 
 // ospray stuff
 #include "../fb/framebuffer.ih"

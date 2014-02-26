@@ -41,6 +41,7 @@ namespace ospray {
   typedef embree::Vec4f    vec4f;
 
   typedef embree::BBox3f      box3f;
+  typedef embree::BBox<embree::Vec4f> box4f;
   
   /*! affice space transformation */
   typedef embree::AffineSpace3fa affine3f;

@@ -6,6 +6,8 @@ namespace ispc {
   struct _Volume;
 };
 
+#define LOW_LEVEL_KERNELS 1
+
 namespace ospray {
   //! possible scalar types to be used in volumes
 
@@ -35,7 +37,10 @@ namespace ospray {
     
     const vec3i      size;
     const ScalarType scalarType;
-    
+#ifdef LOW_LEVEL_KERNELS
+    vec3fa  clampSize;
+    int voxelOffset[8];
+#endif
     /*! the size, scalar type and flags specify the *internal*
       layout. */
     Volume(const vec3i &size, ScalarType scalarType) 

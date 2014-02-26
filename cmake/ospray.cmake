@@ -4,8 +4,14 @@ FILE(WRITE "${CMAKE_BINARY_DIR}/CMakeDefines.h" "#define CMAKE_BUILD_DIR \"${CMA
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
 
+# arch-specific cmd-line flags for various arch and compiler configs
 
 
+# IF(OSPRAY_ICC)
+# 	INCLUDE(icc.cmake)
+# ELSE()
+# 	INCLUDE(gcc.cmake)
+# ENDIF()
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *exexecutables* into the (same) build directory, but tag
@@ -35,9 +41,9 @@ MACRO(CONFIGURE_OSPRAY)
 		SET(THIS_IS_MIC OFF)
 		SET(__XEON__ ON)
 		IF (OSPRAY_ICC)
-			INCLUDE(${EMBREE_DIR}/common/cmake/icc.cmake)
+			INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc.cmake)
 		ELSE()
-			INCLUDE(${EMBREE_DIR}/common/cmake/gcc.cmake)
+			INCLUDE(${PROJECT_SOURCE_DIR}/cmake/gcc.cmake)
 		ENDIF()
 
 		IF (${OSPRAY_XEON_TARGET} STREQUAL "AVX2")
@@ -55,7 +61,7 @@ MACRO(CONFIGURE_OSPRAY)
 		ELSE()
 			MESSAGE("unknown OSPRAY_XEON_TARGET '${OSPRAY_XEON_TARGET}'")
 		ENDIF()
-
+		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
 	ENDIF()
 	
 	IF (OSPRAY_MPI)

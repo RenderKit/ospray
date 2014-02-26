@@ -19,7 +19,7 @@ namespace ospray {
         
         // printf("MASTER: num tiles %li\n",numTiles);
 
-        __align(64) Tile tile;
+        __aligned(64) Tile tile;
         tile.format = TILE_FORMAT_RGBA8;
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
