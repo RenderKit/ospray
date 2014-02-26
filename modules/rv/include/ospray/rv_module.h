@@ -47,7 +47,7 @@ namespace ospray {
     struct Layer {
       //! color to be used when in RENDER_BY_LAYER mode
       vec3f color;
-      float min_z, max_z;
+      float lower_z, upper_z;
     };
     //! color range to be used in RENDER_BY_ATTRIBUTE mode 
     /*! the attribute value of the resistor hit by the ray will be
@@ -152,6 +152,9 @@ namespace ospray {
     const uint32 *mapFB();
     //! unmap previously mapped frame buffer
     void          unmapFB();
+
+    /*! render a frame ... */
+    void renderFrame();
 
     // ------------------------------------------------------------------
     // query interface

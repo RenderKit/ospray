@@ -72,8 +72,8 @@ namespace ospray {
       ospray::rv::Layer *layer = new ospray::rv::Layer[numLayers];
       layerEnable = new int[numLayers];
       for (int i=0;i<numLayers;i++) {
-        layer[i].min_z = layerZ[i][0];
-        layer[i].max_z = layerZ[i][1];
+        layer[i].lower_z = layerZ[i][0];
+        layer[i].upper_z = layerZ[i][1];
         layer[i].color = ospray::makeRandomColor(i+1234567);
       }
       ospray::rv::setLayers(layer,numLayers);
@@ -160,15 +160,14 @@ namespace ospray {
           viewPort.modified = false;
         }
 
-        PING;
-
-        // ospRenderFrame(fb,renderer);
+        ospray::rv::renderFrame();
     
         ucharFB = (unsigned int *)ospray::rv::mapFB();
         frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
         Glut3DWidget::display();
         ospray::rv::unmapFB();
-        // forceRedraw();
+
+        forceRedraw();
       }
 
       void initColorRanges();
@@ -320,7 +319,7 @@ namespace ospray {
     void ResistorViewer::parseModelFile(const std::string &modelFileName)
     {
       Assert(resistorVec.empty());
-      cout << "Parsing resistor model file '" << modelFileName << "'" << endl;
+      cout << "#osp:rv_viewer: parsing resistor model file '" << modelFileName << "'" << endl;
 
       FILE *in = fopen(modelFileName.c_str(),"r");
       Assert(in);
@@ -403,6 +402,7 @@ namespace ospray {
         Assert(attributeVec.size() == attributeName.size()*resistorVec.size());
       }
       cout << "#osp:rv_viewer: found " << resistorVec.size() << " resistors" << endl;
+      specifyResistors();
     }
 
     int viewerMain(int ac, const char **av)
@@ -411,7 +411,6 @@ namespace ospray {
       ospray::glut3D::initGLUT(&ac,av);
       specifyLayers();
       specifyNets();
-      specifyResistors();
 
       if (ac != 2)
         throw std::runtime_error("usage: ./ospRV <rvfile.xml>");
