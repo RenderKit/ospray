@@ -5,6 +5,8 @@
 #include "ospray/rv_module.h"
 // STL
 #include <vector>
+#include <map>
+
 // viewer widget
 #include "../../apps/util/glut3D/glut3D.h"
 // ospray
@@ -387,9 +389,15 @@ namespace ospray {
               if (!strcasecmp(*ln,tok))
                 { res.layerID = ln-layerName; break; }
             if ((int)res.layerID == -1) {
-              throw std::runtime_error("could not find layer "+std::string(tok));
+              static std::map<std::string,bool> alreadyWarned;
+              res.layerID = 0;
+              if (!alreadyWarned[tok]) {
+                cout << "#osp:rv: ***WARNING***: could not find layer "+std::string(tok) << endl;;
+                alreadyWarned[tok] = true;
+              }
+              // throw std::runtime_error("could not find layer "+std::string(tok));
             }
-            Assert((int)res.layerID != -1);
+            // Assert((int)res.layerID != -1);
           }
           else if (attrNum == llxID) res.coordinate.lower.x = atof(tok);
           else if (attrNum == llyID) res.coordinate.lower.y = atof(tok);
