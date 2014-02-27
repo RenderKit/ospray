@@ -170,7 +170,7 @@ namespace ospray {
         Glut3DWidget::display();
         ospray::rv::unmapFB();
 
-        forceRedraw();
+        // forceRedraw();
       }
 
       void initColorRanges();
@@ -290,23 +290,6 @@ namespace ospray {
       }
 
       // -------------------------------------------------------
-      // glui->add_column();
-      GLUI_Panel *layerPanel = glui->add_panel("Model Layers");
-
-      GLUI_Panel *allOnOffPanel = glui->add_panel_to_panel(layerPanel,"all on/off");
-      glui->add_button_to_panel(allOnOffPanel,"all OFF",0,GLUI_CB(allOnOffCB));
-      glui->add_separator_to_panel(allOnOffPanel);
-      glui->add_button_to_panel(allOnOffPanel,"all ON",1,GLUI_CB(allOnOffCB));
-
-      for (int i=0;i<numLayers;i++) {
-        glui->add_checkbox_to_panel(layerPanel,layerName[i],
-                                    &layerEnable[i],
-                                    i,GLUI_CB(glui_layer_toggled));
-      }
-#if 1
-
-
-      // -------------------------------------------------------
       GLUI_Panel *shadeModePanel = glui->add_panel("Shade Mode");
       GLUI_RadioGroup *shadeModeRG
         = glui->add_radiogroup_to_panel(shadeModePanel,&shadeMode,-1,
@@ -314,7 +297,31 @@ namespace ospray {
       glui->add_radiobutton_to_group(shadeModeRG,"by layer");
       glui->add_radiobutton_to_group(shadeModeRG,"by net");
       glui->add_radiobutton_to_group(shadeModeRG,"by attribute");
-#endif
+
+
+
+
+
+
+      // -------------------------------------------------------
+      glui->add_column(true);
+      
+      GLUI_Panel *layerPanel = glui->add_panel("Model Layers");
+
+      glui->add_separator_to_panel(layerPanel);
+
+      // GLUI_Panel *allOnOffPanel = glui->add_panel_to_panel(layerPanel,"all on/off");
+      // glui->add_button_to_panel(allOnOffPanel,"all OFF",0,GLUI_CB(allOnOffCB));
+      // glui->add_separator_to_panel(allOnOffPanel);
+      // glui->add_button_to_panel(allOnOffPanel,"all ON",1,GLUI_CB(allOnOffCB));
+
+      for (int i=0;i<numLayers;i++) {
+        glui->add_checkbox_to_panel(layerPanel,layerName[i],
+                                    &layerEnable[i],
+                                    i,GLUI_CB(glui_layer_toggled));
+      }
+
+
 #endif
       ospray::rv::shadeByLayer();
     }
