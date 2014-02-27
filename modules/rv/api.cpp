@@ -16,6 +16,7 @@
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
 
+extern void *rv_layer;
 
 namespace ospray {
   namespace rv {
@@ -166,6 +167,7 @@ namespace ospray {
 
       numLayers = appNumLayers;
       layer     = new Layer[numLayers];
+      ::rv_layer = layer;
       layerEnabled = new bool[numLayers];
       for (int i=0;i<numLayers;i++) {
         layer[i] = appLayer[i];
@@ -278,7 +280,7 @@ namespace ospray {
     {
       Assert2(numResistors > 0, "empty resistor model!?");
       if (embreeScene == (RTCScene)-1) {
-        embreeScene = rtcNewScene(//RTC_SCENE_COMPACT|
+        embreeScene = rtcNewScene(RTC_SCENE_COMPACT|
                                   RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
 #if OSPRAY_SPMD_WIDTH==16
                                   RTC_INTERSECT1|RTC_INTERSECT16
@@ -291,6 +293,7 @@ namespace ospray {
 #endif
                                   );
         cout << "#osp:rv: scene created." << endl;
+        PRINT(embreeScene);
       }
       id_t ID = rtcNewUserGeometry(embreeScene,numResistors);
       ResistorModel *model

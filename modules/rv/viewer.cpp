@@ -136,6 +136,7 @@ namespace ospray {
       {
         if (!initialized) {
           initialize();
+          setZUp(vec3f(0,0,1));
           initialized = true;
         }
         Glut3DWidget::reshape(newSize);

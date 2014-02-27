@@ -12,13 +12,14 @@
 #include "embree2/rtcore_geometry.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
-void rvIntersect(void* uniform ptr,       /*!< pointer to user data */
-                  varying RTCRay& ray,     /*!< ray to intersect */
-                  uniform size_t item      /*< item to intersect */)
-{
-  print("intersecting %\n",item);
-  ray.primID = item;
-}
+// void rvIntersect1(void* uniform ptr,       /*!< pointer to user data */
+//                   uniform RTCRay1& ray,     /*!< ray to intersect */
+//                   uniform size_t item      /*< item to intersect */)
+// {
+//   print("intersecting %\n",item);
+//   // ray.primID = item;
+// }
+
 
 struct Layer {
   vec3f color;
@@ -54,7 +55,54 @@ void rvGetBounds(void* uniform ptr,              /*!< pointer to user data */
   
   bounds_o.lower_z = rv_layer[res.layerID].lower_z;
   bounds_o.upper_z = rv_layer[res.layerID].upper_z;
+#if 0
+  print("bounds %: lo % % % -",item,
+        bounds_o.lower_x,
+        bounds_o.lower_y,
+        bounds_o.lower_z);
+  print(" hi % % %\n",
+        bounds_o.upper_x,
+        bounds_o.upper_y,
+        bounds_o.upper_z);
+#endif
 }
+
+void rvIntersect(void* uniform ptr,       /*!< pointer to user data */
+                 varying RTCRay& _ray,     /*!< ray to intersect */
+                 // varying Ray &ray,
+                 uniform size_t item      /*< item to intersect */)
+{
+  varying Ray *uniform ray = (varying Ray *uniform)&_ray;
+  // print("INTERSECTING %\n",item);
+  const uniform ResistorModel *uniform model
+    = (const uniform ResistorModel *uniform )ptr;
+  const uniform Resistor &res = model->resistor[item];
+
+  const float x0 = (res.coordinate.lower.x - ray->org.x)*rcp(ray->dir.x);
+  const float y0 = (res.coordinate.lower.y - ray->org.y)*rcp(ray->dir.y);
+  const float z0 = (rv_layer[res.layerID].lower_z - ray->org.z)*rcp(ray->dir.z);
+
+  const float x1 = (res.coordinate.upper.x - ray->org.x)*rcp(ray->dir.x);
+  const float y1 = (res.coordinate.upper.y - ray->org.y)*rcp(ray->dir.y);
+  const float z1 = (rv_layer[res.layerID].upper_z - ray->org.z)*rcp(ray->dir.z);
+
+  const float t0 = max(max(ray->t0, 
+                           min(x0,x1)),
+                       max(min(y0,y1),
+                           min(z0,z1)));
+  
+  const float t1 = min(min(ray->t, 
+                           max(x0,x1)),
+                       min(max(y0,y1),
+                           max(z0,z1)));
+  
+  if (t0 <= t1)  {
+    //    ray->geomID = 
+    ray->primID = item;
+    ray->t = t0;
+  }
+}
+
 
 // export void ispc__rv__setIntersectFct(uniform RTCScene scene,
 //                                       uniform unsigned int geomID)
@@ -62,12 +110,34 @@ void rvGetBounds(void* uniform ptr,              /*!< pointer to user data */
 //   rtcSetIntersectFunction(scene,geomID,rvIntersect);
 // }
 export void ispc__rv__createModel(uniform RTCScene embreeScene,
-                                  uniform uint32 ID,
+                                  uniform uint32 geomID,
                                   uniform uint32 numResistors,
                                   uniform Resistor *uniform resistor,
                                   uniform float *uniform attribute)
 {
+  uniform ResistorModel *uniform model = uniform new uniform ResistorModel;
+  model->numResistors = numResistors;
+  model->resistor = resistor;
+  model->attribute = attribute;
+  rtcSetUserData(embreeScene,geomID,model);
+  rtcSetBoundsFunction(embreeScene,geomID,rvGetBounds);
+  rtcEnable(embreeScene,geomID);
+
+  // void *uniform ptr = (void*uniform)&rvIntersect;
+  // print("setting intersect fct IN MODULE % %, scene %\n",geomID,(void*uniform)ptr,embreeScene);
+  rtcSetIntersectFunction(embreeScene,geomID,rvIntersect);
+  // rtcSetIntersectFunction1(embreeScene,geomID,rvIntersect1);
+  print("#osp:rv: (ISPC) model created\n");
 }
+
+vec4f shade(const Ray &ray)
+{
+  if (ray.primID < 0) return make_vec4f(0.f);
+  return make_vec4f(make_random_color(ray.primID)); 
+}
+
+const uniform float rv_pixel_x[4] = { 0.f, 0.5f, 0.25f, 0.75f };
+const uniform float rv_pixel_y[4] = { 0.f, 1.f/3.f, 2.f/3.f, 1.f/9.f };
 
 export void ispc__RVRenderer_renderTile(void *uniform _tile, 
                                         void *uniform _camera, 
@@ -80,38 +150,31 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile,
   const uniform uint32 size_y = tile->fbSize.y;
   const uniform uint32 x0 = tile->region.lower.x;
   const uniform uint32 y0 = tile->region.lower.y;
+  const float inv_size_x = rcp(size_x);
+  const float inv_size_y = rcp(size_y);
   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
     const uint32 frag = i*programCount+programIndex;
     const uint32  x     = x0 + (frag % TILE_SIZE);
     const uint32  y     = y0 + (frag / TILE_SIZE);
     if (x < size_x & y < size_y) {
+      Ray ray;
+#if 1
+      vec4f col = make_vec4f(0.f);
+      for (int i=0;i<4;i++) {
+        const float screen_u = (x+rv_pixel_x[i])*inv_size_x;
+        const float screen_v = (y+rv_pixel_y[i])*inv_size_y;
+        camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+        rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
+        col = col + shade(ray);
+      }
+      col = 0.25f * col;
+#else
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
-      Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
-      // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-      // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
-
-
-      // print("org_x %\n",ray.org.x);
-      // print("org_y %\n",ray.org.y);
-      // print("org_z %\n",ray.org.z);
-      // print("dir_x %\n",ray.dir.x);
-      // print("dir_y %\n",ray.dir.y);
-      // print("dir_z %\n",ray.dir.z);
-
-#if 0
-      rtcIntersect(scene,(varying RTCRay&)ray);
-#else
       rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
+      vec4f col = shade(ray); 
 #endif
-      const vec4f col = make_vec4f(0.f);
-      if (ray.primID >= 0) {
-        print("hit %\n",ray.primID);
-        make_vec4f(make_random_color(ray.primID)); 
-      }
-      // if (ray.geomID >= 0)
-      //   print("col % % %\n",col.x,col.y,col.z);
       tile->r[i] = col.x;
       tile->g[i] = col.y;
       tile->b[i] = col.z;
