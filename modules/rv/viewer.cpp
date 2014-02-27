@@ -15,7 +15,7 @@
 #define TOK "\t ()\n\r"
 
 #define USE_GLUI 1
-#ifdef USE_GLUI
+#if USE_GLUI
 #include <GL/glui.h>
 #endif
 
