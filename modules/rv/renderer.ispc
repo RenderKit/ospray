@@ -24,6 +24,36 @@ typedef enum {
   RENDER_BY_ATTRIBUTE
 } RenderMode;
 
+struct Resistor {
+  box2f  coordinate;   //!< coordinates, in nm
+  uint32 layerID;      //!< layer ID that this resistor is in - provides y coords
+  uint32 netID;        //!< net that this resistor is in
+};
+
+struct ResistorModel {
+  uniform Resistor *uniform resistor;
+  uniform float    *uniform attribute;
+
+  uniform uint32            numResistors;
+  uniform uint32            numAttributesPerResistor;
+  uniform uint32            numAttributesTotal; // == numResistors * numAttributesPerResistor...
+  uniform int32             geomID;
+};
+
+// "inherit" from ospray::ray
+struct RVRay {
+  Ray inherited;
+  // the model we've hit
+  const uniform ResistorModel *varying model;
+};
+
+struct ColorRange {
+  vec3f lo_color;
+  float lo_value;
+  vec3f hi_color;
+  float hi_value;
+};
+
 /*! @{ \note These variable(s) are used on both C++ and ISPC
     side. Since ISPC doesn't know about namespaces we have to make
     them global, and add a namespace-like "rv_"-prefix to all
@@ -32,6 +62,8 @@ typedef enum {
     C++-side definitions of the respective classes (eg, "Layer" are
     exactly the same) */
 
+//! num attributes per resistor
+uniform uint32           rv_numAttributesPerResistor;
 //! num layers
 uniform uint64           rv_numLayers = -1;
 //! list of layers
@@ -44,19 +76,13 @@ uniform bool    *uniform rv_layerEnabled = NULL;
 uniform RTCScene         rv_scene = NULL;
 //! shade mode
 uniform RenderMode       rv_shadeMode = RENDER_BY_LAYER;
+//! for shade by attrib mode: ID of attribute to use for shading
+uniform uint32           rv_shadeByAttrib_attribID = 0;
+//! for shade by attrib mode: color range to be used for shading
+uniform ColorRange       rv_shadeByAttrib_colorRange;
+
 /*! @} */
 
-struct Resistor {
-  box2f  coordinate;   //!< coordinates, in nm
-  uint32 layerID;      //!< layer ID that this resistor is in - provides y coords
-  uint32 netID;        //!< net that this resistor is in
-};
-
-struct ResistorModel {
-  uniform uint32 numResistors;
-  uniform Resistor *uniform resistor;
-  uniform float *uniform attribute;
-};
 
 
 void rvGetBounds(void* uniform ptr,              /*!< pointer to user data */
@@ -115,6 +141,9 @@ void rvIntersect(void* uniform ptr,       /*!< pointer to user data */
                            max(z0,z1)));
   
   if (t0 <= t1)  {
+    varying RVRay *uniform rvray = (varying RVRay *uniform)&_ray;
+    rvray->model  = model;
+
     //    ray->geomID = 
     ray->primID = item;
     ray->t = t0;
@@ -144,10 +173,40 @@ export void ispc__rv__createModel(uniform uint32 geomID,
   print("#osp:rv: (ISPC) model created\n");
 }
 
-vec4f shade(const Ray &ray)
+vec4f shade(const RVRay &ray)
 {
-  if (ray.primID < 0) return make_vec4f(0.f);
-  return make_vec4f(make_random_color(ray.primID)); 
+  if (ray.inherited.primID < 0) return make_vec4f(0.f);
+
+  const uniform ResistorModel *model = ray.model;
+  const int resID = ray.inherited.primID;
+  const Resistor *res = &model->resistor[resID];
+
+  // first, need a normal: take normal of side where we're closest to
+  const vec3f hitPos = ray.inherited.org + ray.inherited.t * ray.inherited.dir;
+  const float dist_x = min(hitPos.x-res->coordinate.lower.x,
+                           hitPos.x-res->coordinate.upper.x);
+  const float dist_y = min(hitPos.y-res->coordinate.lower.y,
+                           hitPos.y-res->coordinate.upper.y);
+  const float dist_z = min(hitPos.z-rv_layer[res->layerID].lower_z,
+                           hitPos.z-rv_layer[res->layerID].upper_z);
+  vec3f normal = make_vec3f(1.f,0.f,0.f);
+  if (dist_y < min(dist_x,dist_z)) 
+    normal = make_vec3f(0.f,1.f,0.f);
+  if (dist_z < min(dist_x,dist_y)) 
+    normal = make_vec3f(0.f,0.f,1.f);
+
+  if (rv_shadeMode == RENDER_BY_LAYER) {
+    return make_vec4f(rv_layer[res->layerID].color); 
+  } else if (rv_shadeMode == RENDER_BY_NET) {
+    return make_vec4f(rv_layer[res->netID].color); 
+  } else /* RENDER_BY_ATTRIBUTE */ {
+    const int attrNo = rv_shadeByAttrib_attribID + resID*rv_numAttributesPerResistor;
+    const float attrib = model->attribute[attrNo];
+    uniform ColorRange &range = rv_shadeByAttrib_colorRange;
+    const float f = (attrib - range.lo_value)*rcp(range.hi_value-range.lo_value+1e-6f);
+    const vec3f col = (1.f-f)*range.lo_color + f*(range.hi_color);
+    return make_vec4f(col); //ray.inherited.primID)); 
+  }
 }
 
 const uniform float rv_pixel_x[4] = { 0.f, 0.5f, 0.25f, 0.75f };
@@ -169,13 +228,13 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile)
     const uint32  x     = x0 + (frag % TILE_SIZE);
     const uint32  y     = y0 + (frag / TILE_SIZE);
     if (x < size_x & y < size_y) {
-      Ray ray;
+      RVRay ray;
 #if 1
       vec4f col = make_vec4f(0.f);
       for (int i=0;i<4;i++) {
         const float screen_u = (x+rv_pixel_x[i])*inv_size_x;
         const float screen_v = (y+rv_pixel_y[i])*inv_size_y;
-        camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+        camera->initRay(camera,ray.inherited,make_vec2f(screen_u,screen_v));
         rtcIntersect(rv_scene,*((varying RTCRay *uniform)&ray));
         col = col + shade(ray);
       }
@@ -191,7 +250,7 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile)
       tile->g[i] = col.y;
       tile->b[i] = col.z;
       tile->a[i] = col.w;
-      tile->z[i] = ray.t;
+      tile->z[i] = ray.inherited.t;
       tile->rgba8[i] = cvt_uint32(col);
     }
   }  

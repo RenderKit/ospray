@@ -4,7 +4,7 @@
 #undef NDEBUG
 
 // module
-#include "ospray/rv_module.h"
+#include "model.h"
 // ospray 
 #include "common/ospcommon.h"
 #include "ospray/camera/camera.h"
@@ -15,6 +15,7 @@
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
+
 
 /*! @{ \note These variable(s) are used on both C++ and ISPC
     side. Since ISPC doesn't know about namespaces we have to make
@@ -34,8 +35,17 @@ extern void              *rv_camera;
 extern uint64             rv_numLayers;
 //! embree scene we-re rendering
 extern RTCScene           rv_scene;
+//! number of attributes specified 
+extern uint32             rv_numAttributesPerResistor;
 //! shade mode
 extern ospray::rv::RenderMode rv_shadeMode;
+//! list of models   
+extern ospray::rv::ResistorModel *rv_model;
+//! for shade by attrib mode: ID of attribute to use for shading
+extern uint32     rv_shadeByAttrib_attribID;
+//! for shade by attrib mode: color range to be used for shading
+extern ospray::rv::ColorRange rv_shadeByAttrib_colorRange;
+
 /*! @} */
 
 namespace ospray {
@@ -77,22 +87,6 @@ namespace ospray {
     //! set to true every time the scene has changed
     bool     sceneModified = true;
 
-    struct ResistorModel {
-      const size_t          numResistors;
-      const Resistor *const resistor;
-      const float    *const attribute;
-      const id_t            ID;
-      ResistorModel(const id_t ID,
-                    const size_t   numResistors, 
-                    const Resistor resistor[],
-                    const float    attribute[])
-        : ID(ID),
-          numResistors(numResistors),
-          resistor(resistor),
-          attribute(attribute)
-      {}
-    };
-
     std::map<id_t,ResistorModel *> resistorModel;
 
 
@@ -130,6 +124,11 @@ namespace ospray {
       Assert2(renderer,"could not load renderer");
     }
 
+    void setNumAttributesPerResistor(uint32 numAttributesPerResistor)
+    {
+      rv_numAttributesPerResistor = numAttributesPerResistor;
+      cout << "#osp:rv: num attributes per resistor specified (" << rv_numAttributesPerResistor << ")" << endl;
+    }
 
     /*! \brief specify the set of nets we will be using. must be called exactly once
 
@@ -205,6 +204,9 @@ namespace ospray {
     {
       shadedAttributeRange = range;
       shadedAttributeID    = attribID;
+      rv_shadeByAttrib_attribID   = attribID;
+      rv_shadeByAttrib_colorRange = range;
+
       rv_shadeMode = RENDER_BY_ATTRIBUTE;
       resetAccum();
     }
@@ -303,7 +305,7 @@ namespace ospray {
     {
       if (rv_scene == NULL) 
         throw std::runtime_error("rendering a frame without having created any resistor models!?");
-      cout << "#osp:rv: committed embree scene " << rv_scene << endl;
+      cout << "#osp:rv: committed embree scene" << endl;
       rtcCommit(rv_scene);
       sceneModified = false;
     }
@@ -311,6 +313,7 @@ namespace ospray {
     /*! render a frame ... */
     void renderFrame()
     {
+      Assert2(rv_numAttributesPerResistor > 0, "number of attributes not specified");
       if (sceneModified)
         updateEmbreeGeometry();
 

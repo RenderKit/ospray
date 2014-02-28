@@ -230,7 +230,7 @@ namespace ospray {
     }
     void glui_shadeMode_changed(int ID)
     {
-      switch(ID) {
+      switch(shadeMode) {
       case 0: {
         ospray::rv::shadeByLayer();
       } break;
@@ -372,6 +372,7 @@ namespace ospray {
       for (int i=0;i<attributeName.size();i++)
         cout << "[" << attributeName[i] << "]";
       cout << endl;
+      ospray::rv::setNumAttributesPerResistor(attributeName.size());
 
       Assert(llxID >= 0);
       Assert(llyID >= 0);
