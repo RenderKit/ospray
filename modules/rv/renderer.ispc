@@ -183,12 +183,12 @@ vec4f shade(const RVRay &ray)
 
   // first, need a normal: take normal of side where we're closest to
   const vec3f hitPos = ray.inherited.org + ray.inherited.t * ray.inherited.dir;
-  const float dist_x = min(hitPos.x-res->coordinate.lower.x,
-                           hitPos.x-res->coordinate.upper.x);
-  const float dist_y = min(hitPos.y-res->coordinate.lower.y,
-                           hitPos.y-res->coordinate.upper.y);
-  const float dist_z = min(hitPos.z-rv_layer[res->layerID].lower_z,
-                           hitPos.z-rv_layer[res->layerID].upper_z);
+  const float dist_x = min(abs(hitPos.x-res->coordinate.lower.x),
+                           abs(hitPos.x-res->coordinate.upper.x));
+  const float dist_y = min(abs(hitPos.y-res->coordinate.lower.y),
+                           abs(hitPos.y-res->coordinate.upper.y));
+  const float dist_z = min(abs(hitPos.z-rv_layer[res->layerID].lower_z),
+                           abs(hitPos.z-rv_layer[res->layerID].upper_z));
   vec3f normal = make_vec3f(1.f,0.f,0.f);
   if (dist_y < min(dist_x,dist_z)) 
     normal = make_vec3f(0.f,1.f,0.f);
