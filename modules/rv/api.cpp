@@ -113,18 +113,6 @@ namespace ospray {
       bounds_o.upper_z = rv_layer[res.layerID].upper_z;
     }
     
-    // /*! Type of intersect function pointer for single rays. */
-    //  void rvIntersect(void* ptr,           /*!< pointer to user data */
-    //                         RTCRay& ray,         /*!< ray to intersect */
-    //                         size_t item          /*!< item to intersect */)
-    // {
-    //   NOTIMPLEMENTED;
-    // }
-
-
-
-
-
     /*! \brief inititalize the RV module. 
 
       has to be called *exactly* once, at the beginning 
@@ -285,7 +273,7 @@ namespace ospray {
                           const float    attribute[])
     {
       Assert2(numResistors > 0, "empty resistor model!?");
-      if (rv_scene == (RTCScene)-1) {
+      if (rv_scene == NULL) {
         rv_scene = rtcNewScene(RTC_SCENE_COMPACT|
                                RTC_SCENE_STATIC,//|RTC_SCENE_HIGH_QUALITY,
 #if OSPRAY_SPMD_WIDTH==16
@@ -303,12 +291,7 @@ namespace ospray {
       id_t ID = rtcNewUserGeometry(rv_scene,numResistors);
       ResistorModel *model
         = new ResistorModel(ID,numResistors,resistor,attribute);
-      //resistorModel.push_back(model);
       ispc__rv__createModel(ID,numResistors,resistor,attribute);
-      // rtcSetUserData(embreeScene,ID,model);
-      // rtcSetBoundsFunction(embreeScene,ID,rvGetBounds);
-      //      rtcSetIntersectFunction(embreeScene,ID,rvIntersect);
-      // ispc__rv__setIntersectFct(embreeScene,ID);//RTCScene scene, uint32 ID);
 
       resistorModel[ID] = model;
       sceneModified = true;

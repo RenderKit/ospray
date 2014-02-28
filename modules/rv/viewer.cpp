@@ -170,7 +170,7 @@ namespace ospray {
         Glut3DWidget::display();
         ospray::rv::unmapFB();
 
-        // forceRedraw();
+        forceRedraw();
       }
 
       void initColorRanges();

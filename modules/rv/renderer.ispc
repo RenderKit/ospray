@@ -87,14 +87,14 @@ void rvGetBounds(void* uniform ptr,              /*!< pointer to user data */
 
 void rvIntersect(void* uniform ptr,       /*!< pointer to user data */
                  varying RTCRay& _ray,     /*!< ray to intersect */
-                 // varying Ray &ray,
                  uniform size_t item      /*< item to intersect */)
 {
   varying Ray *uniform ray = (varying Ray *uniform)&_ray;
-  // print("INTERSECTING %\n",item);
   const uniform ResistorModel *uniform model
     = (const uniform ResistorModel *uniform )ptr;
   const uniform Resistor &res = model->resistor[item];
+
+  if (!rv_layerEnabled[res.layerID]) return;
 
   const float x0 = (res.coordinate.lower.x - ray->org.x)*rcp(ray->dir.x);
   const float y0 = (res.coordinate.lower.y - ray->org.y)*rcp(ray->dir.y);
@@ -140,10 +140,7 @@ export void ispc__rv__createModel(uniform uint32 geomID,
   rtcSetBoundsFunction(rv_scene,geomID,rvGetBounds);
   rtcEnable(rv_scene,geomID);
 
-  // void *uniform ptr = (void*uniform)&rvIntersect;
-  // print("setting intersect fct IN MODULE % %, scene %\n",geomID,(void*uniform)ptr,embreeScene);
   rtcSetIntersectFunction(rv_scene,geomID,rvIntersect);
-  // rtcSetIntersectFunction1(embreeScene,geomID,rvIntersect1);
   print("#osp:rv: (ISPC) model created\n");
 }
 
