@@ -194,18 +194,19 @@ vec4f shade(const RVRay &ray)
     normal = make_vec3f(0.f,1.f,0.f);
   if (dist_z < min(dist_x,dist_y)) 
     normal = make_vec3f(0.f,0.f,1.f);
+  const float shadeFactor = 0.3f+0.8f*abs(dot(normal,ray.inherited.dir));
 
   if (rv_shadeMode == RENDER_BY_LAYER) {
-    return make_vec4f(rv_layer[res->layerID].color); 
+    return shadeFactor*make_vec4f(rv_layer[res->layerID].color); 
   } else if (rv_shadeMode == RENDER_BY_NET) {
-    return make_vec4f(rv_layer[res->netID].color); 
+    return shadeFactor*make_vec4f(rv_layer[res->netID].color); 
   } else /* RENDER_BY_ATTRIBUTE */ {
     const int attrNo = rv_shadeByAttrib_attribID + resID*rv_numAttributesPerResistor;
     const float attrib = model->attribute[attrNo];
     uniform ColorRange &range = rv_shadeByAttrib_colorRange;
     const float f = (attrib - range.lo_value)*rcp(range.hi_value-range.lo_value+1e-6f);
     const vec3f col = (1.f-f)*range.lo_color + f*(range.hi_color);
-    return make_vec4f(col); //ray.inherited.primID)); 
+    return shadeFactor*make_vec4f(col); //ray.inherited.primID)); 
   }
 }
 
