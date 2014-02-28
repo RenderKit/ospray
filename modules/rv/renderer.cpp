@@ -6,22 +6,21 @@
 
 namespace ospray {
   namespace rv {
-    extern "C" void ispc__RVRenderer_renderTile(void *tile, void *camera, void *volume);
+    extern "C" void ispc__RVRenderer_renderTile(void *tile);
 
-    extern void *ispc_camera;
     extern RTCScene embreeScene;
 
     TileRenderer::RenderJob *RVRenderer::createRenderJob(FrameBuffer *fb)
     {
       TileJob *tj = new TileJob;
-      tj->ispc_camera = ispc_camera;
-      tj->ispc_scene  = embreeScene;
+      // tj->ispc_camera = ispc_camera;
+      // tj->ispc_scene  = embreeScene;
       return tj;
     }
 
     void RVRenderer::TileJob::renderTile(Tile &tile)
     {
-      ispc__RVRenderer_renderTile(&tile,ispc_camera,ispc_scene);
+      ispc__RVRenderer_renderTile(&tile);
     }
 
     OSP_REGISTER_RENDERER(RVRenderer,rv);

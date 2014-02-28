@@ -12,21 +12,39 @@
 #include "embree2/rtcore_geometry.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
-// void rvIntersect1(void* uniform ptr,       /*!< pointer to user data */
-//                   uniform RTCRay1& ray,     /*!< ray to intersect */
-//                   uniform size_t item      /*< item to intersect */)
-// {
-//   print("intersecting %\n",item);
-//   // ray.primID = item;
-// }
-
-
-struct Layer {
+/*! describes a layer. *MUST* be identical in data layout to ospray::rv::Layer class */
+struct RVLayer {
   vec3f color;
   float lower_z, upper_z;
 };
 
-uniform Layer *uniform rv_layer;
+typedef enum {
+  RENDER_BY_LAYER,
+  RENDER_BY_NET,
+  RENDER_BY_ATTRIBUTE
+} RenderMode;
+
+/*! @{ \note These variable(s) are used on both C++ and ISPC
+    side. Since ISPC doesn't know about namespaces we have to make
+    them global, and add a namespace-like "rv_"-prefix to all
+    variables to resolve naming conflicts. Also, for this 'sharing' of
+    data to work we have to make *absolutely* sure that the ISPC- and
+    C++-side definitions of the respective classes (eg, "Layer" are
+    exactly the same) */
+
+//! num layers
+uniform uint64           rv_numLayers = -1;
+//! list of layers
+uniform RVLayer *uniform rv_layer = NULL;
+//! camera 
+uniform Camera  *uniform rv_camera = NULL;
+//! layer enable flags
+uniform bool    *uniform rv_layerEnabled = NULL;
+//! embree scene
+uniform RTCScene         rv_scene = NULL;
+//! shade mode
+uniform RenderMode       rv_shadeMode = RENDER_BY_LAYER;
+/*! @} */
 
 struct Resistor {
   box2f  coordinate;   //!< coordinates, in nm
@@ -109,8 +127,7 @@ void rvIntersect(void* uniform ptr,       /*!< pointer to user data */
 // {
 //   rtcSetIntersectFunction(scene,geomID,rvIntersect);
 // }
-export void ispc__rv__createModel(uniform RTCScene embreeScene,
-                                  uniform uint32 geomID,
+export void ispc__rv__createModel(uniform uint32 geomID,
                                   uniform uint32 numResistors,
                                   uniform Resistor *uniform resistor,
                                   uniform float *uniform attribute)
@@ -119,13 +136,13 @@ export void ispc__rv__createModel(uniform RTCScene embreeScene,
   model->numResistors = numResistors;
   model->resistor = resistor;
   model->attribute = attribute;
-  rtcSetUserData(embreeScene,geomID,model);
-  rtcSetBoundsFunction(embreeScene,geomID,rvGetBounds);
-  rtcEnable(embreeScene,geomID);
+  rtcSetUserData(rv_scene,geomID,model);
+  rtcSetBoundsFunction(rv_scene,geomID,rvGetBounds);
+  rtcEnable(rv_scene,geomID);
 
   // void *uniform ptr = (void*uniform)&rvIntersect;
   // print("setting intersect fct IN MODULE % %, scene %\n",geomID,(void*uniform)ptr,embreeScene);
-  rtcSetIntersectFunction(embreeScene,geomID,rvIntersect);
+  rtcSetIntersectFunction(rv_scene,geomID,rvIntersect);
   // rtcSetIntersectFunction1(embreeScene,geomID,rvIntersect1);
   print("#osp:rv: (ISPC) model created\n");
 }
@@ -139,12 +156,10 @@ vec4f shade(const Ray &ray)
 const uniform float rv_pixel_x[4] = { 0.f, 0.5f, 0.25f, 0.75f };
 const uniform float rv_pixel_y[4] = { 0.f, 1.f/3.f, 2.f/3.f, 1.f/9.f };
 
-export void ispc__RVRenderer_renderTile(void *uniform _tile, 
-                                        void *uniform _camera, 
-                                        uniform RTCScene scene)
+export void ispc__RVRenderer_renderTile(void *uniform _tile)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+  uniform Camera *uniform camera = rv_camera; ///(uniform Camera *uniform)_camera;
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
   const uniform uint32 size_y = tile->fbSize.y;
@@ -164,7 +179,7 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile,
         const float screen_u = (x+rv_pixel_x[i])*inv_size_x;
         const float screen_v = (y+rv_pixel_y[i])*inv_size_y;
         camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
-        rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
+        rtcIntersect(rv_scene,*((varying RTCRay *uniform)&ray));
         col = col + shade(ray);
       }
       col = 0.25f * col;
@@ -172,7 +187,7 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile,
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
-      rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
+      rtcIntersect(rv_scene,*((varying RTCRay *uniform)&ray));
       vec4f col = shade(ray); 
 #endif
       tile->r[i] = col.x;

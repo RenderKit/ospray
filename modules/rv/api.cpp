@@ -16,14 +16,32 @@
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
 
-extern void *rv_layer;
+/*! @{ \note These variable(s) are used on both C++ and ISPC
+    side. Since ISPC doesn't know about namespaces we have to make
+    them global, and add a namespace-like "rv_"-prefix to all
+    variables to resolve naming conflicts. Also, for this 'sharing' of
+    data to work we have to make *absolutely* sure that the ISPC- and
+    C++-side definitions of the respective classes (eg, "Layer" are
+    exactly the same) */
+
+//! list of layers
+extern ospray::rv::Layer *rv_layer;
+//! list of layer enable flags
+extern bool              *rv_layerEnabled;
+//! camera to be used during rendering
+extern void              *rv_camera;
+//! num layers to be used during rendering
+extern uint64             rv_numLayers;
+//! embree scene we-re rendering
+extern RTCScene           rv_scene;
+//! shade mode
+extern ospray::rv::RenderMode rv_shadeMode;
+/*! @} */
 
 namespace ospray {
   namespace rv {
     using std::cout;
     using std::endl;
-
-    void *ispc_camera = NULL;
 
     /*! Type of bounding function. */
     // extern void rvGetBounds(void* ptr,              /*!< pointer to user data */
@@ -35,18 +53,10 @@ namespace ospray {
 //                             RTCRay& ray,         /*!< ray to intersect */
 //                             size_t item          /*!< item to intersect */);
 
-    extern "C" void ispc__rv__createModel(RTCScene embreeScene,
-                                          uint32 ID,
+    extern "C" void ispc__rv__createModel(uint32 ID,
                                           uint32 numResistors,
                                           const Resistor *resistor,
                                           const float *attribute);
-
-    //! array of layers to be used during rendering
-    Layer *layer     = NULL;
-    //! num layers to be used during rendering
-    size_t numLayers = -1;
-    //! whether the given layer is enabled
-    bool *layerEnabled;
 
     //! array of nets to be used during rendering
     Net   *net     = NULL;
@@ -61,12 +71,9 @@ namespace ospray {
     OSPFrameBuffer fb     = NULL;
     const void    *mappedFB = NULL;
 
-    RenderMode shadeMode = RENDER_BY_LAYER;
     ColorRange shadedAttributeRange;
     int        shadedAttributeID = -1;
 
-    /*! the embree scene handle */
-    RTCScene embreeScene = (RTCScene)-1;
     //! set to true every time the scene has changed
     bool     sceneModified = true;
 
@@ -102,8 +109,8 @@ namespace ospray {
       bounds_o.upper_x = res.coordinate.upper.x;
       bounds_o.upper_y = res.coordinate.upper.y;
 
-      bounds_o.lower_z = layer[res.layerID].lower_z;
-      bounds_o.upper_z = layer[res.layerID].upper_z;
+      bounds_o.lower_z = rv_layer[res.layerID].lower_z;
+      bounds_o.upper_z = rv_layer[res.layerID].upper_z;
     }
     
     // /*! Type of intersect function pointer for single rays. */
@@ -161,17 +168,16 @@ namespace ospray {
     */
     void setLayers(const Layer appLayer[], const size_t appNumLayers)
     {
-      Assert2(ospray::rv::layer == NULL, "Layers specified more than once");
+      Assert2(rv_layer == NULL, "Layers specified more than once");
       Assert2(appLayer != NULL, "App specified invalid layers");
       Assert2(appNumLayers > 0, "App specified invalid layers");
 
-      numLayers = appNumLayers;
-      layer     = new Layer[numLayers];
-      ::rv_layer = layer;
-      layerEnabled = new bool[numLayers];
-      for (int i=0;i<numLayers;i++) {
-        layer[i] = appLayer[i];
-        layerEnabled[i] = 1;
+      rv_numLayers = appNumLayers;
+      rv_layer     = new Layer[rv_numLayers];
+      rv_layerEnabled = new bool[rv_numLayers];
+      for (int i=0;i<rv_numLayers;i++) {
+        rv_layer[i] = appLayer[i];
+        rv_layerEnabled[i] = 1;
       }
       cout << "#osp:rv: layers specified." << endl;
     }
@@ -179,10 +185,10 @@ namespace ospray {
     //! set visibilty for given layer
     void setLayerVisibility(const id_t layerID, bool visible)
     {
-      Assert2(ospray::rv::layer != NULL, "Layers not yet defined");
-      Assert2(ospray::rv::layerEnabled != NULL, "Layers not yet defined");
-      Assert2(layerID >= 0 && layerID < numLayers, "invalid layer ID");
-      layerEnabled[layerID] = visible;
+      Assert2(rv_layer != NULL, "Layers not yet defined");
+      Assert2(rv_layerEnabled != NULL, "Layers not yet defined");
+      Assert2(layerID >= 0 && layerID < rv_numLayers, "invalid layer ID");
+      rv_layerEnabled[layerID] = visible;
     }
 
     void resetAccum()
@@ -192,13 +198,13 @@ namespace ospray {
     //! set shade mode to shade by network
     void shadeByNet()
     {
-      shadeMode = RENDER_BY_NET;
+      rv_shadeMode = RENDER_BY_NET;
       resetAccum();
     }
     //! set shade mode to shade by layer
     void shadeByLayer()
     {
-      shadeMode = RENDER_BY_LAYER;
+      rv_shadeMode = RENDER_BY_LAYER;
       resetAccum();
     }
     //! set shade mode to shade by attribute
@@ -211,7 +217,7 @@ namespace ospray {
     {
       shadedAttributeRange = range;
       shadedAttributeID    = attribID;
-      shadeMode = RENDER_BY_ATTRIBUTE;
+      rv_shadeMode = RENDER_BY_ATTRIBUTE;
       resetAccum();
     }
 
@@ -239,7 +245,7 @@ namespace ospray {
       ospSetVec3f(camera,"angle",angle);
       ospSetVec3f(camera,"aspect",aspect);
       ospCommit(camera);
-      ispc_camera = ((ospray::Camera*)camera)->getIE();
+      ::rv_camera = ((ospray::Camera*)camera)->getIE();
     }
     
 
@@ -279,26 +285,26 @@ namespace ospray {
                           const float    attribute[])
     {
       Assert2(numResistors > 0, "empty resistor model!?");
-      if (embreeScene == (RTCScene)-1) {
-        embreeScene = rtcNewScene(RTC_SCENE_COMPACT|
-                                  RTC_SCENE_STATIC,//|RTC_SCENE_HIGH_QUALITY,
+      if (rv_scene == (RTCScene)-1) {
+        rv_scene = rtcNewScene(RTC_SCENE_COMPACT|
+                               RTC_SCENE_STATIC,//|RTC_SCENE_HIGH_QUALITY,
 #if OSPRAY_SPMD_WIDTH==16
-                                  RTC_INTERSECT1|RTC_INTERSECT16
+                               RTC_INTERSECT1|RTC_INTERSECT16
 #elif OSPRAY_SPMD_WIDTH==8
-                                  RTC_INTERSECT1|RTC_INTERSECT8
+                               RTC_INTERSECT1|RTC_INTERSECT8
 #elif OSPRAY_SPMD_WIDTH==4
-                                  RTC_INTERSECT1|RTC_INTERSECT4
+                               RTC_INTERSECT1|RTC_INTERSECT4
 #else
 #  error("invalid OSPRAY_SPMD_WIDTH value")
 #endif
                                   );
         cout << "#osp:rv: scene created." << endl;
       }
-      id_t ID = rtcNewUserGeometry(embreeScene,numResistors);
+      id_t ID = rtcNewUserGeometry(rv_scene,numResistors);
       ResistorModel *model
         = new ResistorModel(ID,numResistors,resistor,attribute);
       //resistorModel.push_back(model);
-      ispc__rv__createModel(embreeScene,ID,numResistors,resistor,attribute);
+      ispc__rv__createModel(ID,numResistors,resistor,attribute);
       // rtcSetUserData(embreeScene,ID,model);
       // rtcSetBoundsFunction(embreeScene,ID,rvGetBounds);
       //      rtcSetIntersectFunction(embreeScene,ID,rvIntersect);
@@ -312,10 +318,10 @@ namespace ospray {
 
     void updateEmbreeGeometry()
     {
-      if (embreeScene == (RTCScene)-1) 
+      if (rv_scene == NULL) 
         throw std::runtime_error("rendering a frame without having created any resistor models!?");
-      cout << "#osp:rv: committed embree scene " << embreeScene << endl;
-      rtcCommit(embreeScene);
+      cout << "#osp:rv: committed embree scene " << rv_scene << endl;
+      rtcCommit(rv_scene);
       sceneModified = false;
     }
 
