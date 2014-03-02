@@ -1,5 +1,5 @@
 
-ADD_LIBRARY(osp_minisg 
+ADD_LIBRARY(ospray_minisg 
 	miniSG.cpp
 	importer.cpp
 	importOBJ.cpp

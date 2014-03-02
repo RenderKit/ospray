@@ -11,7 +11,7 @@ ADD_EXECUTABLE(ospDVR
 	ospDVR.cpp
 	)
 TARGET_LINK_LIBRARIES(ospDVR
-	osp_glut3d
+	ospray_glut3d
 	ospray
   ${OPENGL_LIBRARY} 
   ${GLUT_LIBRARY}

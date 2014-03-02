@@ -20,6 +20,6 @@ IF (MODULE_RV)
 		ADD_EXECUTABLE(ospRV
 			viewer.cpp
 			)
-		TARGET_LINK_LIBRARIES(ospRV ospray_module_rv osp_glut3d glui)
+		TARGET_LINK_LIBRARIES(ospRV ospray_module_rv ospray_glut3d glui)
 	ENDIF()
 ENDIF()
