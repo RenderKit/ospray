@@ -36,8 +36,8 @@ namespace ospray {
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
-      /*! load plugin */
-      virtual void loadPlugin(const char *name);
+      /*! load module */
+      virtual void loadModule(const char *name);
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);

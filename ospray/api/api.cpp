@@ -106,11 +106,11 @@ namespace ospray {
     return ospray::api::Device::current->frameBufferCreate(size,mode,swapChainDepth);
   }
 
-    //! load plugin <name> from shard lib libospray_module_<name>.so, or 
-  extern "C" void ospLoadPlugin(const char *pluginName)
+    //! load module <name> from shard lib libospray_module_<name>.so, or 
+  extern "C" void ospLoadModule(const char *moduleName)
   {
     ASSERT_DEVICE();
-    return ospray::api::Device::current->loadPlugin(pluginName);
+    return ospray::api::Device::current->loadModule(moduleName);
   }
 
   extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb)

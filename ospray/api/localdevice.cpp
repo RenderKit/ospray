@@ -222,8 +222,8 @@ namespace ospray {
       return (OSPVolume)volume;
     }
 
-    /*! load plugin */
-    void LocalDevice::loadPlugin(const char *name)
+    /*! load module */
+    void LocalDevice::loadModule(const char *name)
     {
       std::string libName = "ospray_module_"+std::string(name);
       loadLibrary(libName);

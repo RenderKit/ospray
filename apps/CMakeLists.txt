@@ -14,6 +14,8 @@ CONFIGURE_OSPRAY()
 ADD_SUBDIRECTORY(util)
 # general testing codes; to be removed at some point in time
 #ADD_SUBDIRECTORY(testing)
+# mpi testing codes; to be removed at some point in time
+ADD_SUBDIRECTORY(mpi-testing)
 # mini-scene graph viewer for _geometry_ (intentionally simple)
 ADD_SUBDIRECTORY(msgView)
 # mini dvr volume viewer (intentionally simple)

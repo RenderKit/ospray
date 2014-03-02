@@ -474,8 +474,8 @@ namespace ospray {
       cmd.send(s);
     }
 
-    /*! load plugin */
-    void MPIDevice::loadPlugin(const char *name)
+    /*! load module */
+    void MPIDevice::loadModule(const char *name)
     {
 #if THIS_IS_MIC
       // embree automatically puts this into "lib<name>.so" format
@@ -492,7 +492,7 @@ namespace ospray {
       void (*initMethod)() = (void(*)())initSym;
       initMethod();
 
-      cmd.newCommand(CMD_LOAD_PLUGIN);
+      cmd.newCommand(CMD_LOAD_MODULE);
       cmd.send(name);
     }
 

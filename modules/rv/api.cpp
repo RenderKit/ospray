@@ -119,7 +119,7 @@ namespace ospray {
       ospInit(ac,av);
       cout << "#osp:rv: rv module initialized." << endl;
 
-      ospLoadPlugin("rv");
+      ospLoadModule("rv");
       renderer = ospNewRenderer("rv");
       Assert2(renderer,"could not load renderer");
     }

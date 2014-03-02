@@ -237,7 +237,7 @@ namespace ospray {
           obj->findParam(name,1)->set(val);
           cmd.free(name);
         } break;
-        case api::MPIDevice::CMD_LOAD_PLUGIN: {
+        case api::MPIDevice::CMD_LOAD_MODULE: {
           const char *name = cmd.get_charPtr();
 
 #if THIS_IS_MIC

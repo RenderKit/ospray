@@ -32,8 +32,8 @@ namespace ospray {
       /*! create a new model */
       virtual OSPModel newModel() = 0;
 
-      /*! load plugin */
-      virtual void loadPlugin(const char *name) = 0;
+      /*! load module */
+      virtual void loadModule(const char *name) = 0;
 
       /*! commit the given object's outstanding changes */
       virtual void commit(OSPObject object) = 0;

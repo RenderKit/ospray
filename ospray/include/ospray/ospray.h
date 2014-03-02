@@ -91,7 +91,7 @@ extern "C" {
   // void ospInitMPI(int *ac, const char **av);
 
   //! load plugin <name> from shard lib libospray_module_<name>.so, or 
-  void ospLoadPlugin(const char *pluginName);
+  void ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame. 
   /*! What input to tuse for rendering the frame is encoded in the
