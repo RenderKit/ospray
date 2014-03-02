@@ -5,7 +5,7 @@
 int main(int ac, const char **av)
 {
   ospInit(&ac,av);
-  ospLoadModule("mpiTest");
+  ospLoadModule("MPItest");
   std::cout << "done mpitest" << std::endl;
 }
 
