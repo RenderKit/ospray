@@ -12,7 +12,7 @@
 // embree
 #include "kernels/common/ray8.h"
 
-#if 1
+#if 0
 # define COMPUTEOVERLAP(a,b,c) computeOverlap_outer((a),(b),(c))
 # define BOUNDS(a) a.bounds_outer()
 #else
@@ -26,7 +26,7 @@ namespace ospray {
     FILE *file = NULL;
 
     const int try_leaf_threshold = 2000;
-    const float hairlet_threshold_in_avg_radius = 5.f;
+    const float hairlet_threshold_in_avg_radius = 4.f;
     const float hairlet_max_depth = 30;
 
     size_t numSegsProcessed = 0;
@@ -563,8 +563,9 @@ namespace ospray {
         float dom_lo = hairlet->bounds.lower[dim];
         float dom_hi = hairlet->bounds.upper[dim];
 
-        int quant_lo = int(floorf((255*(in_lo-dom_lo))/(dom_hi-dom_lo)));
-        int quant_hi = int(ceilf((255*(in_hi-dom_lo))/(dom_hi-dom_lo)));
+        int quant_lo = int(floor((255.*((in_lo-dom_lo))/double(dom_hi-dom_lo))));
+        int quant_hi = int(ceil((255.*((in_hi-dom_lo))/double(dom_hi-dom_lo))));
+        if (quant_hi > 255) quant_hi = 255;
 #if QUAD_NODE_AOS
         out.set(dim,childID,quant_lo,quant_hi);
 #else

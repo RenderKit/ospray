@@ -15,9 +15,113 @@
 #include "kernels/xeon/bvh4/bvh4.h"
 #include "kernels/xeon/bvh4/bvh4_intersector8_hybrid.h"
 
+//#define REAL_INTERSECTION 1
+
 namespace ospray {
   namespace hair {
     using namespace embree;
+
+    // void intersectSegment1(const Segment &seg,
+    //                        const size_t k,
+    //                        Ray8 &ray,
+    //                        int subdivDepth=3)
+    // {
+    //   if (subdivDepth == 0) {
+    //   } else {
+    //     Segment s0, s1;
+    //     seg.subdivide(s0,s1);
+    //   }
+    // }
+
+    void intersectRec(Ray8 &ray,
+                      const size_t k,
+                      int startVertex,
+                      const vec3f &v0,
+                      const vec3f &v1,
+                      const vec3f &v2,
+                      const vec3f &v3,
+                      const float maxRad,
+                      int remainingDepth=1
+                      )
+    {
+      box3f bounds = embree::empty;
+      bounds.extend(v0);
+      bounds.extend(v1);
+      bounds.extend(v2);
+      bounds.extend(v3);
+      
+      if (bounds.upper.x < -maxRad) return;
+      if (bounds.upper.y < -maxRad) return;
+
+      if (bounds.lower.x > +maxRad) return;
+      if (bounds.lower.y > +maxRad) return;
+
+        const vec3f v00 = v0;
+        const vec3f v01 = v1;
+        const vec3f v02 = v2;
+        const vec3f v03 = v3;
+
+        const vec3f v10 = 0.5f*(v00+v01);
+        const vec3f v11 = 0.5f*(v01+v02);
+        const vec3f v12 = 0.5f*(v02+v03);
+
+        const vec3f v20 = 0.5f*(v10+v11);
+        const vec3f v21 = 0.5f*(v11+v12);
+
+        const vec3f v30 = 0.5f*(v20+v21);
+
+      if (remainingDepth > 0) {
+        intersectRec(ray,k,startVertex,v00,v10,v20,v30,maxRad,remainingDepth-1);
+        intersectRec(ray,k,startVertex,v30,v21,v12,v03,maxRad,remainingDepth-1);
+      } else {
+        // if (max(v0.x,v1.x) < -maxRad) return;
+        // if (max(v0.y,v1.y) < -maxRad) return;
+        // if (max(v1.x,v2.x) < -maxRad) return;
+        // if (max(v1.y,v2.y) < -maxRad) return;
+        // if (max(v2.x,v3.x) < -maxRad) return;
+        // if (max(v2.y,v3.y) < -maxRad) return;
+
+        // if (min(v0.x,v1.x) > +maxRad) return;
+        // if (min(v0.y,v1.y) > +maxRad) return;
+        // if (min(v1.x,v2.x) > +maxRad) return;
+        // if (min(v1.y,v2.y) > +maxRad) return;
+        // if (min(v2.x,v3.x) > +maxRad) return;
+        // if (min(v2.y,v3.y) > +maxRad) return;
+        
+        const float z = v30.z;
+        if (z > ray.tfar[k]) return;
+
+        ray.primID[k] = (startVertex*13)>>4;
+        ray.geomID[k] = (startVertex*13)>>4;
+        ray.tfar[k]   = z;
+      }
+    }
+      // vec3f v0(dot(seg.v0.x
+
+    void intersectSegment1(const AffineSpace3f &space,
+                           const vec3f &org,
+                           const Hairlet *hl, //const BVH4* bvh, 
+                           const uint32 &startVertex,
+                           const size_t k,
+                           Ray8 &ray)
+    {
+      Segment seg = hl->hg->getSegment(startVertex);
+      // vec3f org(ray.org.x[k],ray.org.y[k],ray.org.z[k]);
+      // vec3f dir(ray.dir.x[k],ray.dir.y[k],ray.dir.z[k]);
+
+      const vec3f _v0 = seg.v0.pos - org;
+      const vec3f _v1 = seg.v1.pos - org;
+      const vec3f _v2 = seg.v2.pos - org;
+      const vec3f _v3 = seg.v3.pos - org;
+      
+      const vec3f v0(dot(_v0,space.l.vx),dot(_v0,space.l.vy),dot(_v0,space.l.vz));
+      const vec3f v1(dot(_v1,space.l.vx),dot(_v1,space.l.vy),dot(_v1,space.l.vz));
+      const vec3f v2(dot(_v2,space.l.vx),dot(_v2,space.l.vy),dot(_v2,space.l.vz));
+      const vec3f v3(dot(_v3,space.l.vx),dot(_v3,space.l.vy),dot(_v3,space.l.vz));
+
+      float maxRad = max(max(max(seg.v0.radius,seg.v1.radius),seg.v2.radius),seg.v3.radius);
+      intersectRec(ray,k,startVertex,v0,v1,v2,v3,maxRad);
+    }
 
     __forceinline 
     void hairIntersect1(const int hairletID,
@@ -33,7 +137,24 @@ namespace ospray {
                         const avx3i& nearXYZ
                         )
     {
+#if REAL_INTERSECTION
+      uint mailbox[32];
+      ((avxi*)mailbox)[0] = avxi(-1);
+      ((avxi*)mailbox)[1] = avxi(-1);
+#endif
+
 #if 0
+      vec3f dir_k(ray_dir.x[k],ray_dir.y[k],ray_dir.z[k]);
+      AffineSpace3f space = embree::frame(dir_k);
+      space.l.vx = normalize(space.l.vx);
+      space.l.vy = normalize(space.l.vy);
+      space.l.vz = normalize(space.l.vz);
+
+      // test all segments in this hairlet!
+      for (int i=0;i<hl->segStart.size();i++) {
+        intersectSegment1(space,hl,hl->segStart[i],k,ray);
+      }
+#elif 0
       // just test hailet bounds ...
       const sse3f org(ray_org.x[k], ray_org.y[k], ray_org.z[k]);
       const sse3f rdir(ray_rdir.x[k], ray_rdir.y[k], ray_rdir.z[k]);
@@ -78,6 +199,16 @@ namespace ospray {
       // bvh4 traversal...
       const sse3f org(ray_org.x[k], ray_org.y[k], ray_org.z[k]);
       const sse3f rdir(ray_rdir.x[k], ray_rdir.y[k], ray_rdir.z[k]);
+
+#if REAL_INTERSECTION
+      vec3f dir_k(ray_dir.x[k],ray_dir.y[k],ray_dir.z[k]);
+      vec3f org_k(ray_org.x[k],ray_org.y[k],ray_org.z[k]);
+      AffineSpace3f space = embree::frame(dir_k);
+      space.l.vx = normalize(space.l.vx);
+      space.l.vy = normalize(space.l.vy);
+      space.l.vz = normalize(space.l.vz);
+#endif
+
       const sse3f org_rdir(org*rdir);
       const ssef  ray_t0(ray_tnear[k]);
       ssef  ray_t1(ray_tfar[k]);
@@ -206,12 +337,13 @@ namespace ospray {
           // PRINT(world_hi_y);
           // PRINT(world_hi_z);
           
-          const ssef t_lo_x = msub(world_lo_x,rdir.x,org_rdir.x);
-          const ssef t_lo_y = msub(world_lo_y,rdir.y,org_rdir.y);
-          const ssef t_lo_z = msub(world_lo_z,rdir.z,org_rdir.z);
-          const ssef t_hi_x = msub(world_hi_x,rdir.x,org_rdir.x);
-          const ssef t_hi_y = msub(world_hi_y,rdir.y,org_rdir.y);
-          const ssef t_hi_z = msub(world_hi_z,rdir.z,org_rdir.z);
+          const ssef maxRad(hl->maxRadius);
+          const ssef t_lo_x = msub(world_lo_x-maxRad,rdir.x,org_rdir.x);
+          const ssef t_lo_y = msub(world_lo_y-maxRad,rdir.y,org_rdir.y);
+          const ssef t_lo_z = msub(world_lo_z-maxRad,rdir.z,org_rdir.z);
+          const ssef t_hi_x = msub(world_hi_x+maxRad,rdir.x,org_rdir.x);
+          const ssef t_hi_y = msub(world_hi_y+maxRad,rdir.y,org_rdir.y);
+          const ssef t_hi_z = msub(world_hi_z+maxRad,rdir.z,org_rdir.z);
           
           const ssef t0_x = min(t_lo_x,t_hi_x);
           const ssef t0_y = min(t_lo_y,t_hi_y);
@@ -303,6 +435,22 @@ namespace ospray {
         // PrimitiveIntersector8::intersect(ray, k, prim, num, bvh->geometry);
         // rayFar = ray.tfar[k];
         // PRINT(cur);
+        
+#if REAL_INTERSECTION 
+        while (1) {
+          uint segID = hl->leaf[cur].hairID;// hl->segStart[;
+          
+          // mailboxing
+          uint *mb = &mailbox[segID%32];
+          if (*mb != segID) {
+            const int startVertex = hl->segStart[segID];
+            *mb = segID;
+            intersectSegment1(space,org_k,hl,startVertex,k,ray);
+          }
+          if (hl->leaf[cur].eol) break;
+          ++cur;
+        }
+#else
         const float hit_dist = *(float*)&stackPtr[-1].dist;
         if (hit_dist < ray.tfar[k]) {
           ray.tfar[k] =  hit_dist; //cur.dist; //t0[0];
@@ -314,6 +462,7 @@ namespace ospray {
           ray.geomID[k] = (long(segID)*13)>>4;
           ray_t1 = hit_dist;//ray.tfar[k];
         }
+#endif
       }
 #endif
     }
@@ -327,19 +476,23 @@ namespace ospray {
       avxb valid = *(avxb*)_valid;
 
       Hairlet *hl = ((HairBVH*)ptr)->hairlet[item];
-#if 1
       avx3f ray_org = ray.org, ray_dir = ray.dir;
       avxf ray_tnear = ray.tnear, ray_tfar  = ray.tfar;
       const avx3f rdir = rcp_safe(ray_dir);
       const avx3f org(ray_org), org_rdir = org * rdir;
-      // ray_tnear = select(valid,ray_tnear,avxf(pos_inf));
-      // ray_tfar  = select(valid,ray_tfar ,avxf(neg_inf));
-      // const avxf inf = avxf(pos_inf);
+
       /* compute near/far per ray */
+      // iw: not yet using this optimization ...
       avx3i nearXYZ;
-      nearXYZ.x = select(rdir.x >= 0.0f,avxi(0*(int)sizeof(ssef)),avxi(1*(int)sizeof(ssef)));
-      nearXYZ.y = select(rdir.y >= 0.0f,avxi(2*(int)sizeof(ssef)),avxi(3*(int)sizeof(ssef)));
-      nearXYZ.z = select(rdir.z >= 0.0f,avxi(4*(int)sizeof(ssef)),avxi(5*(int)sizeof(ssef)));
+      nearXYZ.x = select(rdir.x >= 0.0f,
+                         avxi(0*(int)sizeof(ssef)),
+                         avxi(1*(int)sizeof(ssef)));
+      nearXYZ.y = select(rdir.y >= 0.0f,
+                         avxi(2*(int)sizeof(ssef)),
+                         avxi(3*(int)sizeof(ssef)));
+      nearXYZ.z = select(rdir.z >= 0.0f,
+                         avxi(4*(int)sizeof(ssef)),
+                         avxi(5*(int)sizeof(ssef)));
 
       size_t bits = movemask(valid);
       if (bits==0) return;
@@ -349,37 +502,6 @@ namespace ospray {
                        i, ray, ray_org, ray_dir, rdir, ray_tnear, ray_tfar, nearXYZ);
         ray_tfar = ray.tfar;
       }
-      //   continue;
-      // }
-#else
-      avxf _x0 = (avxf(hl->bounds.lower.x)-ray.org.x)*rcp(ray.dir.x);
-      avxf _x1 = (avxf(hl->bounds.upper.x)-ray.org.x)*rcp(ray.dir.x);
-
-      avxf _y0 = (avxf(hl->bounds.lower.y)-ray.org.y)*rcp(ray.dir.y);
-      avxf _y1 = (avxf(hl->bounds.upper.y)-ray.org.y)*rcp(ray.dir.y);
-
-      avxf _z0 = (avxf(hl->bounds.lower.z)-ray.org.z)*rcp(ray.dir.z);
-      avxf _z1 = (avxf(hl->bounds.upper.z)-ray.org.z)*rcp(ray.dir.z);
-
-      avxf x0 = min(_x0,_x1);
-      avxf y0 = min(_y0,_y1);
-      avxf z0 = min(_z0,_z1);
-      avxf x1 = max(_x0,_x1);
-      avxf y1 = max(_y0,_y1);
-      avxf z1 = max(_z0,_z1);
-
-      avxf t0 = max(max(ray.tnear,x0),max(y0,z0));
-      avxf t1 = min(min(ray.tfar,x1),min(y1,z1));
-
-      valid &= (t0 <= t1);
-      if (none(valid)) return;
-
-      store8f(valid,&ray.tfar,t0);
-      store8i(valid,&ray.geomID,avxi(item));
-      store8i(valid,&ray.primID,avxi(item));
-#endif
-      // ray.geomID = embree::avxi(item);
-      // ray.primID = embree::avxi(item);
     }
   }
 }

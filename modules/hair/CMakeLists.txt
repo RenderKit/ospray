@@ -16,11 +16,6 @@ IF (MODULE_HAIR)
 			)
 		TARGET_LINK_LIBRARIES(ospray_module_hair ospray)
 
-#		ADD_EXECUTABLE(hair_tessellate
-#			tessellate.cpp
-#			)
-#		TARGET_LINK_LIBRARIES(hair_tessellate ospray)
-
 		ADD_EXECUTABLE(txt2hg
 			txt2hg.cpp
 			)
@@ -31,10 +26,10 @@ IF (MODULE_HAIR)
 			)
 		TARGET_LINK_LIBRARIES(hkdtest ospray_module_hair)
 
-		ADD_EXECUTABLE(hbvhtest
-			hbvhtest.cpp
+		ADD_EXECUTABLE(hg2hbvh
+			hg2hbvh.cpp
 			)
-		TARGET_LINK_LIBRARIES(hbvhtest ospray_module_hair)
+		TARGET_LINK_LIBRARIES(hg2hbvh ospray_module_hair)
 
 		ADD_EXECUTABLE(hgstat
 			hgstat.cpp
