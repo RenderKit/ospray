@@ -48,6 +48,11 @@ ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "AVX")
 	SET(TARGET_AVX  ON)
 	# tell embree to build avx(1) ispc binding
   SET(ISPC_TARGETS "avx")
+ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "SSE")
+	# tell embree to build the avx(1) kernels
+	SET(TARGET_SSE41  ON)
+	# tell embree to build avx(1) ispc binding
+  SET(ISPC_TARGETS "sse4")
 ELSE()
 	message("build_emrbre.cmake: target '${OSPRAY_XEON_TARGET}' NOT CONFIGURED...")
 ENDIF()

@@ -44,6 +44,8 @@ typedef enum {
 } OSPFrameBufferMode;
 
 typedef enum {
+  // void poitner type - only allowed for local rendering
+  OSP_VOID_PTR,
   // object reference type
   OSP_OBJECT,
   // c-string (zero-terminated char pointer)
@@ -170,6 +172,10 @@ extern "C" {
   void ospSetData(OSPObject _object, const char *id, OSPData data);
   /*! add 1-float paramter to given object */
   void ospSetf(OSPObject _object, const char *id, float x);
+  /*! add 1-float paramter to given object */
+  void ospSet1f(OSPObject _object, const char *id, float x);
+  /*! add 1-int paramter to given object */
+  void ospSet1i(OSPObject _object, const char *id, int32 x);
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
   /*! add 3-int paramter to given object */
@@ -178,6 +184,8 @@ extern "C" {
   void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
   /*! add 3-int paramter to given object */
   void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
+  /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+  void ospSetVoidPtr(OSPObject _object, const char *id, void *v);
   /*! @} end of ospray_params */
 
   // -------------------------------------------------------

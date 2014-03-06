@@ -460,8 +460,13 @@ namespace ospray {
       cmd.flush();
       return (OSPData)(int64)handle;
     }
-    
-    
+        
+    /*! assign (named) string parameter to an object */
+    void MPIDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
+    {
+      throw std::runtime_error("setting a void pointer as parameter to an object is not allowed in MPI mode");
+    }
+
     /*! assign (named) string parameter to an object */
     void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
     {

@@ -17,6 +17,13 @@ namespace ospray {
     this->s  = strdup(str);
     type     = OSP_STRING;
   }
+  void ManagedObject::Param::set(void *ptr)
+  {
+    Assert2(this,"trying to set null parameter");
+    clear();
+    (void*&)this->ptr = ptr;
+    type     = OSP_VOID_PTR;
+  }
   void ManagedObject::Param::clear()
   {
     Assert2(this,"trying to clear null parameter");
@@ -33,6 +40,14 @@ namespace ospray {
     Assert(name);
     if (name) this->name = strdup(name);
   };
+
+  void *ManagedObject::getVoidPtr(const char *name, void * valIfNotFound) 
+  {
+    Param *param = findParam(name);                                     
+    if (!param) return valIfNotFound;                                   
+    if (param->type != OSP_VOID_PTR) return valIfNotFound;                
+    return (void*)param->ptr;                                            
+  }
 
   ManagedObject::Param *ManagedObject::findParam(const char *name, bool addIfNotExist)
   {
@@ -62,6 +77,7 @@ namespace ospray {
   }
   
   define_getparam(ManagedObject *,,OSP_OBJECT,ptr);
+  define_getparam(int32, 1i,OSP_INT,i);
   define_getparam(vec3i, 3i,OSP_vec3i,i);
   define_getparam(vec3f, 3f,OSP_vec3f,f);
   define_getparam(vec3fa,3f,OSP_vec3f,f);

@@ -9,7 +9,16 @@ namespace ospray {
   struct Camera;
   struct Model;
 
+  enum { 
+    RC_EYELIGHT=0,
+    RC_PRIMID,
+    RC_GEOMID,
+    RC_INSTID,
+    RC_GNORMAL
+  } RC_SHADEMODE;
+
   /*! test renderer that renders a simple test image using ispc */
+  template<int SHADE_MODE=RC_EYELIGHT>
   struct RayCastRenderer : public TileRenderer {
     virtual std::string toString() const { return "ospray::RayCastRenderer"; }
 

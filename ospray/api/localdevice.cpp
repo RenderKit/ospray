@@ -132,6 +132,15 @@ namespace ospray {
       object->findParam(bufName,1)->set(s);
     }
 
+    /*! assign (named) string parameter to an object */
+    void LocalDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+      object->findParam(bufName,1)->set(v);
+    }
+
     /*! assign (named) int parameter to an object */
     void LocalDevice::setInt(OSPObject _object, const char *bufName, const int f)
     {
@@ -187,6 +196,7 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
+      if (!renderer) return NULL;
       renderer->refInc();
       return (OSPRenderer)renderer;
     }
@@ -196,6 +206,7 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid render type identifier");
       Geometry *geometry = Geometry::createGeometry(type);
+      if (!geometry) return NULL;
       geometry->refInc();
       return (OSPGeometry)geometry;
     }
@@ -205,6 +216,7 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
+      if (!camera) return NULL;
       camera->refInc();
       return (OSPCamera)camera;
     }
@@ -218,6 +230,7 @@ namespace ospray {
         commit, so use this wrpper thingy...  \see
         volview_notes_on_volume_interface */
       WrapperVolume *volume = new WrapperVolume; 
+      if (!volume) return NULL;
       volume->refInc();
       return (OSPVolume)volume;
     }

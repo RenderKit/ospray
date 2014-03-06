@@ -5,21 +5,24 @@
 #include "common/sys/sync/atomic.h"
 
 namespace ospray {
-  extern "C" void ispc__RayCastRenderer_renderFrame(void *camera, void *scene, void *fb);
-  extern "C" void ispc__RayCastRenderer_renderTile(void *tile, void *camera, void *scene);
+  // extern "C" void ispc__RayCastRenderer_renderFrame(void *camera, void *scene, void *fb);
+  extern "C" void ispc__RayCastRenderer_renderTile(void *tile, void *camera, void *scene, 
+                                                   int shadeMode);
 
-  void RayCastRenderer::RenderTask::renderTile(Tile &tile)
+  template<int SHADE_MODE>
+  void RayCastRenderer<SHADE_MODE>::RenderTask::renderTile(Tile &tile)
   {
     // PING;
     // PRINT(tile.region);
     // PRINT(tile.region);
-    ispc__RayCastRenderer_renderTile(&tile,_camera,_scene);
+    ispc__RayCastRenderer_renderTile(&tile,_camera,_scene,SHADE_MODE);
     // PRINT(tile.r[0]);
     // PRINT(tile.g[0]);
     // PRINT(tile.b[0]);
   }
 
-  TileRenderer::RenderJob *RayCastRenderer::createRenderJob(FrameBuffer *fb)
+  template<int SHADE_MODE>
+  TileRenderer::RenderJob *RayCastRenderer<SHADE_MODE>::createRenderJob(FrameBuffer *fb)
   {
     RenderTask *frame = new RenderTask;
     frame->world = (Model *)getParam("world",NULL);
@@ -35,7 +38,13 @@ namespace ospray {
     return frame;
   }
 
-  OSP_REGISTER_RENDERER(RayCastRenderer,ray_cast);
-  OSP_REGISTER_RENDERER(RayCastRenderer,raycast);
+  typedef RayCastRenderer<RC_EYELIGHT> RayCastRenderer_EyeLight;
+  typedef RayCastRenderer<RC_PRIMID> RayCastRenderer_PrimID;
+  typedef RayCastRenderer<RC_GEOMID> RayCastRenderer_GeomID;
+
+  OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,ray_cast);
+  OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast);
+  OSP_REGISTER_RENDERER(RayCastRenderer_PrimID,raycast_primID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_GeomID,raycast_geomID);
 };
 

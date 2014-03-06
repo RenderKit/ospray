@@ -62,7 +62,7 @@ namespace ospray {
     ray.t0  = 1e-6f;
     ray.t   = std::numeric_limits<float>::infinity();
     ray.time = 0.f;
-    ray.mask = 0;
+    ray.mask = -1;
     ray.geomID = -1;
     ray.primID = -1;
     ray.instID = -1;

@@ -27,8 +27,12 @@ namespace ospray {
 
   /*! OSPRay's two-int vector class */
   typedef embree::Vec2i    vec2i;
-  /*! OSPRay's three-int vector class */
-  typedef embree::Vec3i    vec3i;
+  /*! OSPRay's three-unsigned char vector class */
+  typedef embree::Vec3<uint8> vec3uc;
+  /*! OSPRay's 3x uin32 vector class */
+  typedef embree::Vec3<uint32> vec3ui;
+  /*! OSPRay's 3x int32 vector class */
+  typedef embree::Vec3<int32>  vec3i;
   /*! OSPRay's four-int vector class */
   typedef embree::Vec4i    vec4i;
   /*! OSPRay's two-float vector class */
@@ -40,8 +44,9 @@ namespace ospray {
   /*! OSPRay's four-float vector class */
   typedef embree::Vec4f    vec4f;
 
-  typedef embree::BBox3f      box3f;
-  typedef embree::BBox<embree::Vec4f> box4f;
+  typedef embree::BBox3f       box3f;
+  typedef embree::BBox<vec3uc> box3uc;
+  typedef embree::BBox<vec4f>  box4f;
   
   /*! affice space transformation */
   typedef embree::AffineSpace3fa affine3f;

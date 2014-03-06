@@ -25,6 +25,11 @@ inline vec4f shade_primID(const Ray &ray)
   return make_vec4f(make_random_color(ray.primID)); 
 }
 
+inline vec4f shade_geomID(const Ray &ray)
+{ 
+  return make_vec4f(make_random_color(ray.geomID)); 
+}
+
 inline vec4f shade_eyeLight(const Ray &ray)
 { 
   if (ray.geomID < 0) return make_vec4f(0.f); 
@@ -48,39 +53,53 @@ inline vec4f shade_eyeLight_testShadow(const Ray &ray, uniform RTCScene scene)
                     : .3f+.8f*abs(c));
 }
 
-//! render a line with ray casting; 
-/*! \internal this should eventually get moved to a tile-based
-  renderer (ideally with load balancer support for distributed
-  rendering), but right now lines is easier */
-task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
-                                     uniform RTCScene scene,
-                                     uniform Camera *uniform camera)
+inline vec4f shade(const uniform int shadeMode, const Ray &ray, uniform RTCScene scene)
 {
-  const uniform int size_x = fb->size.x;
-  const uniform int size_y = fb->size.y;
-  const uniform int y = taskIndex;
-  foreach (x = 0 ... size_x) {
-    const float screen_u = (x+.5f)/size_x;
-    const float screen_v = (y+.5f)/size_y;
-    Ray ray;
-    camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
-    // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-#if 0
-    rtcIntersect(scene,(varying RTCRay&)ray);
-#else
-    rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
-#endif
-    
-    const vec4f col = SHADE(ray,scene);
-    fb->setPixel(fb,make_vec2i(x,y),col);
-  }
+  if (shadeMode == 0)
+    return shade_eyeLight(ray);
+  if (shadeMode == 1)
+    return shade_primID(ray);
+  if (shadeMode == 2)
+    return shade_geomID(ray);
+  else
+    print("unknown shade mode % in raycast renderer",shadeMode);
 }
+
+// //! render a line with ray casting; 
+// /*! \internal this should eventually get moved to a tile-based
+//   renderer (ideally with load balancer support for distributed
+//   rendering), but right now lines is easier */
+// task void RayCastRenderer_renderLine(uniform FrameBuffer *uniform fb,
+//                                      uniform RTCScene scene,
+//                                      uniform Camera *uniform camera,
+//                                      const uniform int shadeMode)
+// {
+//   const uniform int size_x = fb->size.x;
+//   const uniform int size_y = fb->size.y;
+//   const uniform int y = taskIndex;
+//   foreach (x = 0 ... size_x) {
+//     const float screen_u = (x+.5f)/size_x;
+//     const float screen_v = (y+.5f)/size_y;
+//     Ray ray;
+//     camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+//     // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
+// #if 0
+//     rtcIntersect(scene,(varying RTCRay&)ray);
+// #else
+//     rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
+// #endif
+    
+//     const vec4f col = shade(shadeMode,ray,scene);
+//     fb->setPixel(fb,make_vec2i(x,y),col);
+//   }
+// }
 
 
 
 export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
                                              void *uniform _camera, //uniform Camera *uniform camera,
-                                             uniform RTCScene scene)
+                                             uniform RTCScene scene,
+                                             const uniform int shadeMode)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
@@ -107,7 +126,7 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
 #else
       rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
 #endif
-      const vec4f col = SHADE(ray,scene);
+      const vec4f col = shade(shadeMode,ray,scene);
       // if (ray.geomID >= 0)
       //   print("col % % %\n",col.x,col.y,col.z);
 #if 1

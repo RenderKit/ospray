@@ -273,6 +273,16 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
   }
+  extern "C" void ospSet1f(OSPObject _object, const char *id, float x)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setFloat(_object,id,x);
+  }
+  extern "C" void ospSet1i(OSPObject _object, const char *id, int32 x)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setInt(_object,id,x);
+  }
   extern "C" void ospSeti(OSPObject _object, const char *id, int x)
   {
     ASSERT_DEVICE();
@@ -301,6 +311,12 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     ospSetVec3i(_object,id,vec3f(x,y,z));
+  }
+  /*! add a data array to another object */
+  extern "C" void ospSetVoidPtr(OSPObject _object, const char *id, void *v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVoidPtr(_object,id,v);
   }
 
 

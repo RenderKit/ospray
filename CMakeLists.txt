@@ -57,10 +57,10 @@ ENDIF()
 ##############################################################
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
-#IF (OSPRAY_MIC)
-#	SET (OSPRAY_TARGET "MIC")
-#	ADD_SUBDIRECTORY(apps builddir/apps/mic)
-#ENDIF()
+IF (OSPRAY_MIC)
+	SET (OSPRAY_TARGET "MIC")
+	ADD_SUBDIRECTORY(apps builddir/apps/mic)
+ENDIF()
 
 
 ##############################################################
