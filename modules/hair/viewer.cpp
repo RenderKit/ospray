@@ -51,8 +51,8 @@ namespace ospray {
       ospSet3f(camera,"dir",+1,-1,+1);
       ospCommit(camera);
       
-      // renderer = ospNewRenderer("ray_cast");
-      renderer = ospNewRenderer("raycast_geomID");
+      renderer = ospNewRenderer("ray_cast");
+      // renderer = ospNewRenderer("raycast_primID");
       Assert(renderer != NULL && "could not create renderer");
 
       ospSetParam(renderer,"world",model);

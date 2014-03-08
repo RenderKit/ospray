@@ -78,28 +78,21 @@ namespace ospray {
     };
 
     __forceinline 
-    bool hitSegment(const ssef &v0,
-                    const ssef &v1,
-                    const ssef &v2,
-                    const ssef &v3)
+    bool finalLineTest(const ssef &a, const ssef &b,
+                       Ray8 &ray8,const size_t k)
     {
-      const ssef min01 = min(v0,v1);
-      const ssef max01 = max(v0,v1);
-      const ssef min12 = min(v1,v2);
-      const ssef max12 = max(v1,v2);
-      const ssef min23 = min(v2,v3);
-      const ssef max23 = max(v2,v3);
-      const ssef rad01 = shuffle<3,3,3,3>(max01);
-      const ssef rad12 = shuffle<3,3,3,3>(max12);
-      const ssef rad23 = shuffle<3,3,3,3>(max23);
-      
-      const size_t miss01 = movemask((min01 > rad01) | (max01 < -rad01));
-      if ((miss01 & 0x3) == 0) return true;
-      const size_t miss12 = movemask((min12 > rad12) | (max12 < -rad12));
-      if ((miss12 & 0x3) == 0) return true;
-      const size_t miss23 = movemask((min23 > rad23) | (max23 < -rad23));
-      if ((miss23 & 0x3) == 0) return true;
-      return false;
+      const ssef minP = min(a,b);
+      const ssef maxP = max(a,b);
+      const ssef maxR = shuffle<3,3,3,3>(maxP);
+      if (movemask((minP > maxR) | (maxP < -maxR)) & 0x3) return false;
+
+      const float z = minP[2];
+      if (z >= ray8.tfar[k]) return false;
+      ray8.tfar[k] = z;
+      ray8.Ng.x[k] = b[0] - a[0];
+      ray8.Ng.y[k] = b[1] - a[1];
+      ray8.Ng.z[k] = b[2] - a[2];
+      return true;
     }
 
     __forceinline 
@@ -108,46 +101,32 @@ namespace ospray {
                           const ssef &v2,
                           const ssef &v3,
                           Ray8 &ray8,
-                          const size_t k,
-                          float &z)
+                          const size_t k)
     {
-      const ssef min01 = min(v0,v1);
-      const ssef max01 = max(v0,v1);
-      const ssef min12 = min(v1,v2);
-      const ssef max12 = max(v1,v2);
-      const ssef min23 = min(v2,v3);
-      const ssef max23 = max(v2,v3);
-      const ssef rad01 = shuffle<3,3,3,3>(max01);
-      const ssef rad12 = shuffle<3,3,3,3>(max12);
-      const ssef rad23 = shuffle<3,3,3,3>(max23);
-      
-      const size_t miss01 = movemask((min01 > rad01) | (max01 < -rad01));
-      if ((miss01 & 0x3) == 0) {
-        z = min01[3];
-        return true;
-      }
+      return 
+        finalLineTest(v0,v1,ray8,k) |
+        finalLineTest(v1,v2,ray8,k) |
+        finalLineTest(v2,v3,ray8,k);
+    }
 
-      const size_t miss12 = movemask((min12 > rad12) | (max12 < -rad12));
-      if ((miss12 & 0x3) == 0) {
-        z = min12[3];
-        return true;
-      }
-
-      const size_t miss23 = movemask((min23 > rad23) | (max23 < -rad23));
-      if ((miss23 & 0x3) == 0) {
-        z = min23[3];
-        return true;
-      }
-
-      // const size_t miss12 = movemask((min12 > rad12) | (max12 < -rad12));
-      // const size_t miss23 = movemask((min23 > rad23) | (max23 < -rad23));
-      // if (miss01 && miss12 && miss23)
-      //   return false;
-      return false;
+    __forceinline 
+    bool segmentTest(const ssef &v0,
+                     const ssef &v1,
+                     const ssef &v2,
+                     const ssef &v3,
+                     const Ray8 &ray8,
+                     const size_t k)
+    {
+      const ssef min4 = min(v0,v1,v2,v3);
+      const ssef max4 = max(v0,v1,v2,v3);
+      const ssef maxR = shuffle<3,3,3,3>(max4);
+      if (movemask((min4 > maxR) | (max4 < -maxR)) & 3) return false;
+      if (min4[2] > ray8.tfar[k]) return false;
+      return true;
     }
 
     __forceinline
-    void intersectSegment1(const LinearSpace3<vec3fa> &space,
+    bool intersectSegment1(const LinearSpace3<vec3fa> &space,
                            const vec3fa &org,
                            const Hairlet *hl, //const BVH4* bvh, 
                            const uint32 startVertex,
@@ -155,23 +134,6 @@ namespace ospray {
                            Ray8 &ray)
     {
       STATS(numIsecs++);
-#if 0
-      const Segment &seg = (const Segment &)hl->hg->vertex[startVertex];
-      // const Segment seg = hl->hg->getSegment(startVertex);
-
-      const vec3fa _v0 = (const vec3fa &)seg.v0.pos - org;
-      const vec3fa _v1 = (const vec3fa &)seg.v1.pos - org;
-      const vec3fa _v2 = (const vec3fa &)seg.v2.pos - org;
-      const vec3fa _v3 = (const vec3fa &)seg.v3.pos - org;
-      
-      const vec3f v0(dot(_v0,space.vx),dot(_v0,space.vy),dot(_v0,space.vz));
-      const vec3f v1(dot(_v1,space.vx),dot(_v1,space.vy),dot(_v1,space.vz));
-      const vec3f v2(dot(_v2,space.vx),dot(_v2,space.vy),dot(_v2,space.vz));
-      const vec3f v3(dot(_v3,space.vx),dot(_v3,space.vy),dot(_v3,space.vz));
-
-      float maxRad = max(max(max(seg.v0.radius,seg.v1.radius),seg.v2.radius),seg.v3.radius);
-      intersectRec(ray,k,startVertex,v0,v1,v2,v3,maxRad,hl);
-#else
       const Segment &seg = (const Segment &)hl->hg->vertex[startVertex];
       // const ssef _org = (const ssef &)org;
       
@@ -189,10 +151,11 @@ namespace ospray {
       ssef v1 = (const ssef &)__v1;
       ssef v2 = (const ssef &)__v2;
       ssef v3 = (const ssef &)__v3;
-      int depth = 5;
+      int depth = 2;
       SegStack stack[20];
       SegStack *stackPtr = stack;
       const ssef half = 0.5f;
+      bool foundHit = false;
       goto start;
       while (1) {
         if (stackPtr <= stack) break;
@@ -203,7 +166,7 @@ namespace ospray {
         v3 = stackPtr->v3;
         depth = stackPtr->depth;
       start:
-        if (!hitSegment(v0,v1,v2,v3))
+        if (!segmentTest(v0,v1,v2,v3,ray,k))
           continue;
 
         const ssef v10 = half*(v0+v1);
@@ -215,19 +178,17 @@ namespace ospray {
 
         const ssef v30 = half*(v20+v21);
         if (depth == 0) {
-          float z;
-          if (finalSegmentTest(v0,v10,v20,v30,ray,k,z) && z < ray.tfar[k]) {
-            ray.primID[k] = (long(hl)*13)>>4;
-            ray.geomID[k] = (long(hl)*13)>>4;
-            ray.tfar[k] = z;
-          }
-          if (finalSegmentTest(v30,v21,v12,v3,ray,k,z) && z < ray.tfar[k]) {
-            ray.primID[k] = (long(hl)*13)>>4;
-            ray.geomID[k] = (long(hl)*13)>>4;
-            ray.tfar[k] = z;
-          }
+          foundHit |= finalSegmentTest(v0,v10,v20,v30,ray,k);
+          foundHit |= finalSegmentTest(v30,v21,v12,v3,ray,k);
+          //   ray.primID[k] = (long(startVertex)*13)>>4;
+          //   ray.geomID[k] = (long(startVertex)*13)>>4;
+
+          //   vec3f N
+          //     = space.vx * ray.Ng.x[k] 
+          //     + space.vy * ray.Ng.y[k] 
+          //     + space.vz * ray.Ng.z[k];
+          // }
         } else {
-#if 1
           stackPtr[0].v0 = v3;
           stackPtr[0].v1 = v12;
           stackPtr[0].v2 = v21;
@@ -242,47 +203,9 @@ namespace ospray {
           v3 = v30;
           depth = depth-1;
           goto start;
-#else
-          stackPtr[0].v0 = v0;
-          stackPtr[0].v1 = v10;
-          stackPtr[0].v2 = v20;
-          stackPtr[0].v3 = v30;
-          stackPtr[0].depth = depth-1;
-          
-          stackPtr[1].v0 = v3;
-          stackPtr[1].v1 = v12;
-          stackPtr[1].v2 = v21;
-          stackPtr[1].v3 = v30;
-          stackPtr[1].depth = depth-1;
-          
-          stackPtr += 2;
-#endif
         }
       }
-      // sse3f v4;
-      // ssef vrad;
-      // embree::transpose(_v0,_v1,_v2,_v3,v4.x,v4.y,v4.z,vrad);
-
-
-      // const vec3f v0(dot((const vec3fa&)_v0,space.vx),dot((const vec3fa&)_v0,space.vy),dot((const vec3fa&)_v0,space.vz));
-      // const vec3f v1(dot((const vec3fa&)_v1,space.vx),dot((const vec3fa&)_v1,space.vy),dot((const vec3fa&)_v1,space.vz));
-      // const vec3f v2(dot((const vec3fa&)_v2,space.vx),dot((const vec3fa&)_v2,space.vy),dot((const vec3fa&)_v2,space.vz));
-      // const vec3f v3(dot((const vec3fa&)_v3,space.vx),dot((const vec3fa&)_v3,space.vy),dot((const vec3fa&)_v3,space.vz));
-
-      // float maxRad = max(max(max(seg.v0.radius,seg.v1.radius),seg.v2.radius),seg.v3.radius);
-      // intersectRec(ray,k,startVertex,v0,v1,v2,v3,maxRad,hl);
-
-      // const ssef maxRad = shuffle<3,3,3,3>(max(_v0,_v1,_v2,_v3));
-
-      // const ssef du = (const ssef&)space.vx;
-      // const ssef dv = (const ssef&)space.vy;
-      // const ssef dz = (const ssef&)space.vz;
-      // const vec3f v0(reduce_add(du * _v0),reduce_add(dv * _v0),reduce_add(dz * _v0));
-      // const vec3f v1(reduce_add(du * _v1),reduce_add(dv * _v1),reduce_add(dz * _v1));
-      // const vec3f v2(reduce_add(du * _v2),reduce_add(dv * _v2),reduce_add(dz * _v2));
-      // const vec3f v3(reduce_add(du * _v3),reduce_add(dv * _v3),reduce_add(dz * _v3));
-      // intersectRec(ray,k,startVertex,v0,v1,v2,v3,(float&)maxRad);
-#endif
+      return foundHit;
     }
 
     __forceinline 
@@ -294,46 +217,10 @@ namespace ospray {
                         const avx3f &ray_org, 
                         const avx3f &ray_dir, 
                         const avx3f &ray_rdir, 
-                        const avxf &ray_tnear, 
-                        const avxf &ray_tfar, 
-                        const avx3i& nearXYZ,
                         const embree::LinearSpace3<avx3f> &ray_space
                         )
     {
       STATS(numHairletTravs++);
-#if 0
-      // just test hailet bounds ...
-      const sse3f org(ray_org.x[k], ray_org.y[k], ray_org.z[k]);
-      const sse3f rdir(ray_rdir.x[k], ray_rdir.y[k], ray_rdir.z[k]);
-      const sse3f org_rdir(org*rdir);
-      const ssef  ray_t0(ray_tnear[k]);
-      ssef  ray_t1(ray_tfar[k]);
-
-      ssef _x0 = (ssef(hl->bounds.lower.x)-org.x)*(rdir.x);
-      ssef _x1 = (ssef(hl->bounds.upper.x)-org.x)*(rdir.x);
-
-      ssef _y0 = (ssef(hl->bounds.lower.y)-org.y)*(rdir.y);
-      ssef _y1 = (ssef(hl->bounds.upper.y)-org.y)*(rdir.y);
-
-      ssef _z0 = (ssef(hl->bounds.lower.z)-org.z)*(rdir.z);
-      ssef _z1 = (ssef(hl->bounds.upper.z)-org.z)*(rdir.z);
-
-      ssef x0 = min(_x0,_x1);
-      ssef y0 = min(_y0,_y1);
-      ssef z0 = min(_z0,_z1);
-      ssef x1 = max(_x0,_x1);
-      ssef y1 = max(_y0,_y1);
-      ssef z1 = max(_z0,_z1);
-
-      ssef t0 = max(max(ray_t0,x0),max(y0,z0));
-      ssef t1 = min(min(ray_t1,x1),min(y1,z1));
-
-      if (!none(t0<=t1)) {
-        ray.tfar[k] = t0[0];
-        ray.primID[k] = (long(hl)*13)>>4;
-        ray.geomID[k] = (long(hl)*13)>>4;
-      }
-#else
       static const int stackSizeSingle = 400;
       typedef int64 NodeRef;
 
@@ -348,18 +235,6 @@ namespace ospray {
       // bvh4 traversal...
       const sse3f org(ray_org.x[k], ray_org.y[k], ray_org.z[k]);
       const sse3f rdir(ray_rdir.x[k], ray_rdir.y[k], ray_rdir.z[k]);
-      // const sse3f raySpace(ssef(ray_space.vx.x[k],
-      //                           ray_space.vx.y[k],
-      //                           ray_space.vx.z[k],
-      //                           0.f),
-      //                      ssef(ray_space.vy.x[k],
-      //                           ray_space.vy.y[k],
-      //                           ray_space.vy.z[k],
-      //                           0.f),
-      //                      ssef(ray_space.vz.x[k],
-      //                           ray_space.vz.y[k],
-      //                           ray_space.vz.z[k],
-      //                           0.f));
       LinearSpace3<vec3fa> raySpace(vec3fa(ray_space.vx.x[k],
                                            ray_space.vx.y[k],
                                            ray_space.vx.z[k]),
@@ -373,17 +248,9 @@ namespace ospray {
       const vec3fa dir_k(ray_dir.x[k],ray_dir.y[k],ray_dir.z[k]);
       const vec3fa org_k(ray_org.x[k],ray_org.y[k],ray_org.z[k]);
 
-      // AffineSpace3fa space = embree::frame(dir_k);
-      // PRINT(space.l.vx);
-      // PRINT(raySpace.vx);
-
-      // PRINT(space.l.vy);
-      // PRINT(raySpace.vy);
-      // for normalized rays this is already normalized
-
       const sse3f org_rdir(org*rdir);
-      const ssef  ray_t0(ray_tnear[k]);
-      ssef  ray_t1(ray_tfar[k]);
+      const ssef  ray_t0(ray.tnear[k]);
+      ssef  ray_t1(ray.tfar[k]);
       
       const ssef hl_bounds_min = *(ssef*)&hl->bounds.lower;
       const ssef hl_bounds_max = *(ssef*)&hl->bounds.upper;
@@ -411,7 +278,7 @@ namespace ospray {
         cur = NodeRef(stackPtr->ptr);
 
         /*! if popped node is too far, pop next one */
-        if (unlikely(*(float*)&stackPtr->dist > ray_tfar[k]))//ray.tfar[k]))
+        if (unlikely(*(float*)&stackPtr->dist > ray.tfar[k]))//ray.tfar[k]))
           continue;
         
         /* downtraversal loop */
@@ -566,8 +433,21 @@ namespace ospray {
           if (*mb != segID) {
             const uint32 startVertex = segID; //hl->segStart[segID];
             *mb = segID;
-            intersectSegment1(raySpace,org_k,hl,startVertex,k,ray);
-            ray_t1 = ray.tfar[k];
+            if (intersectSegment1(raySpace,org_k,hl,startVertex,k,ray)) {
+              ray.primID[k] = (long(segID)*13)>>4;
+              ray.geomID[k] = (long(segID)*13)>>4;
+
+              // vec3fa N = vec3fa((ray.Ng.x[k],ray.Ng.y[k],ray.Ng.z[k]));
+              vec3fa N 
+                = ray.Ng.x[k] * raySpace.vx
+                + ray.Ng.y[k] * raySpace.vy
+                + ray.Ng.z[k] * raySpace.vz;
+              ray.Ng.x[k] = N.x;
+              ray.Ng.y[k] = N.y;
+              ray.Ng.z[k] = N.z;
+
+              ray_t1 = ray.tfar[k];
+            }
           }
           if (hl->leaf[cur].eol) break;
           ++cur;
@@ -586,7 +466,7 @@ namespace ospray {
         }
 #endif
       }
-#endif
+// #endif
     }
 
 
@@ -599,7 +479,7 @@ namespace ospray {
 
       Hairlet *hl = ((HairBVH*)ptr)->hairlet[item];
       avx3f ray_org = ray.org, ray_dir = ray.dir;
-      avxf ray_tnear = ray.tnear, ray_tfar  = ray.tfar;
+      // avxf ray_tnear = ray.tnear, ray.tfar  = ray.tfar;
       const avx3f rdir = rcp_safe(ray_dir);
       const avx3f org(ray_org), org_rdir = org * rdir;
 
@@ -622,9 +502,9 @@ namespace ospray {
       if (bits==0) return;
       for (size_t i=__bsf(bits); bits!=0; bits=__btc(bits,i), i=__bsf(bits)) {
         hairIntersect1(item,hl,
-                       i, ray, ray_org, ray_dir, rdir, ray_tnear, ray_tfar, nearXYZ,
+                       i, ray, ray_org, ray_dir, rdir, //ray_tnear, ray_tfar, nearXYZ,
                        raySpace);
-        ray_tfar = ray.tfar;
+        // ray_tfar = ray.tfar;
       }
     }
   }

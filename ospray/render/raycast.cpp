@@ -41,10 +41,12 @@ namespace ospray {
   typedef RayCastRenderer<RC_EYELIGHT> RayCastRenderer_EyeLight;
   typedef RayCastRenderer<RC_PRIMID> RayCastRenderer_PrimID;
   typedef RayCastRenderer<RC_GEOMID> RayCastRenderer_GeomID;
+  typedef RayCastRenderer<RC_GNORMAL> RayCastRenderer_Ng;
 
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,ray_cast);
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast);
   OSP_REGISTER_RENDERER(RayCastRenderer_PrimID,raycast_primID);
   OSP_REGISTER_RENDERER(RayCastRenderer_GeomID,raycast_geomID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_Ng,cast_Ng);
 };
 

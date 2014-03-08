@@ -55,12 +55,20 @@ inline vec4f shade_eyeLight_testShadow(const Ray &ray, uniform RTCScene scene)
 
 inline vec4f shade(const uniform int shadeMode, const Ray &ray, uniform RTCScene scene)
 {
+// #if 1
+//   if (ray.geomID < 0) return make_vec4f(0.f); 
+//   vec3f N = normalize(ray.Ng);
+//   // print("N % % %\n",N.x,N.y,N.z);
+//   return make_vec4f(abs(dot(N,ray.dir)));
+// #endif
   if (shadeMode == 0)
     return shade_eyeLight(ray);
   if (shadeMode == 1)
     return shade_primID(ray);
   if (shadeMode == 2)
     return shade_geomID(ray);
+  if (shadeMode == 4)
+    return shade_Ng(ray);
   else
     print("unknown shade mode % in raycast renderer",shadeMode);
 }
