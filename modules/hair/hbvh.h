@@ -20,12 +20,11 @@ namespace ospray {
       box3f bounds;
       // this is what is stored in the leaves
       struct Fragment {
-        uint16 eol:1;     //! end of list indicator
-        uint16 hairID:15; //!< 16 bits to reference to a hair itself
+        uint32 eol:1;     //! end of list indicator
+        uint32 hairID:31; //!< 31 bits to reference to a hair itself
       };
       // a (compressed) quad-node of a quad-BVH
       struct QuadNode {
-#if QUAD_NODE_AOS
         uint8 lo_x[4];
         uint8 lo_y[4];
         uint8 lo_z[4];
@@ -45,28 +44,20 @@ namespace ospray {
           for (int i=0;i<4;i++) hi_x[i] = hi_y[i] = hi_z[i] = 0;
           for (int i=0;i<4;i++) child[i] = (uint16)-1;
         }
-#else
-        box3uc  bounds[4]; // 4x3x2=24b;
-        uint16   child[4];  // 4x2=8b
-        void clear() { 
-          for (int i=0;i<4;i++) bounds[i] = embree::empty;
-          for (int i=0;i<4;i++) child[i] = (uint16)-1;
-        }
-#endif
       };
       std::vector<QuadNode> node;
       std::vector<Fragment> leaf;
 
       HairGeom *hg;
 
-      float maxRadius;
+      // float maxRadius;
       std::vector<int> segStart;
 
       void save(FILE *file);
       static Hairlet *load(HairGeom *hg, FILE *file);
       Hairlet(HairGeom *hg, std::vector<int> &segStart);
       Hairlet(HairGeom *hg) : hg(hg) {}
-      void build();
+      void build(const box3f &domain);
     };
 
     struct HairBVH : public ospray::Geometry {
@@ -74,8 +65,8 @@ namespace ospray {
       HairGeom *hg;
       HairBVH(HairGeom *hg=NULL) : hg(hg) {};
       void build(FILE *file);
-      void buildRec(std::vector<int> &segID);
-      Hairlet *makeHairlet(std::vector<int> &segStart);
+      void buildRecSpatial(std::vector<int> &segID, const box3f &domain);
+      Hairlet *makeHairlet(std::vector<int> &segStart, const box3f &domain);
       void load(const std::string &fileName, uint32 maxHairletsToLoad=(uint32)-1);
 
       // inherited from Geometry:

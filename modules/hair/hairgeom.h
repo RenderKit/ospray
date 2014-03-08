@@ -24,6 +24,8 @@ namespace ospray {
       Vertex v0, v1, v2, v3;
 
       void subdivide(Segment &l, Segment &r, const float f = 0.5f) const;
+      box4f bounds() const { return bounds_outer(); };
+      box3f bounds3f() const { return bounds3f_outer(); };
       box4f bounds_inner() const;
       box3f bounds3f_inner() const;
       box4f bounds_outer() const;
@@ -41,7 +43,21 @@ namespace ospray {
     int computeOverlap_outer(const Segment &seg, 
                        const box4f &bounds, 
                        box4f &overlap,
+                             int depth=0);
+    inline int computeOverlap(const Segment &seg, 
+                              const box4f &bounds, 
+                              box4f &overlap,
+                              int depth=0)
+    { return computeOverlap_outer(seg,bounds,overlap,depth); }
+
+    int computeOverlap(const Segment &seg, 
+                       const box3f &bounds, 
+                       box3f &overlap,
                        int depth=0);
+
+    //! tests for overlap, return true if overlaps, false if not
+    inline bool overlaps(const Segment &seg, const box3f &bounds, int depth = 0)
+    { return overlaps_outer(seg,bounds,depth); }
 
     //! tests for overlap, return true if overlaps, false if not
     bool overlaps_inner(const Segment &seg, const box3f &bounds, int depth = 0);

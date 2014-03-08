@@ -9,12 +9,20 @@
 #include "hairgeom.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
+// emnbree
+#include "tutorial/tutorial.h"
 
 namespace ospray {
   using std::cout;
   using std::endl;
 
   OSPModel           ospModel = NULL;
+
+  namespace hair {
+    extern long numIsecs;
+    extern long numIsecRecs;
+    extern long numHairletTravs;
+  }
   
   void error(const std::string &msg)
   {
@@ -105,6 +113,16 @@ namespace ospray {
       sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
               fps.getFPS());
       setTitle(title);
+
+      if (hair::numIsecs) {
+        PRINT(hair::numIsecs);
+        PRINT(hair::numIsecRecs);
+        PRINT(hair::numHairletTravs);
+      }
+      hair::numIsecs = 0;
+      hair::numIsecRecs = 0;
+      hair::numHairletTravs = 0;
+
       forceRedraw();
     }
 
@@ -140,10 +158,12 @@ namespace ospray {
     //       error("unrecognized file format in filename '"+arg+"'");
     //   }
     // }
-    if (ac != 3)
-      error("hairViewer file.hg file.hbvh");
-    const char *hgFileName = av[1];
-    const char *hbvhFileName = av[2];
+    if (ac != 2)
+      error("hairViewer file.hbvh");
+    const char *hbvhFileName = av[1];
+    embree::FileName hgFileName = embree::FileName(hbvhFileName).setExt(".hg");//av[1];
+    PRINT(hbvhFileName);
+    PRINT(hgFileName);
     // -------------------------------------------------------
     // done parsing
     // -------------------------------------------------------

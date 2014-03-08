@@ -18,7 +18,11 @@ namespace ospray {
       vec4f rad(v.radius,v.radius,v.radius,0.f);
       return box4f((vec4f)v-rad,(vec4f)v+rad);
     }
-
+    float volume3f(const box4f &b)
+    {
+      vec4f size = b.size();
+      return reduce_mul((vec3fa&)size);
+    }
 
 
 
@@ -81,7 +85,9 @@ namespace ospray {
       box4f lineBounds = embree::empty;
       lineBounds.extend(vertexBounds_inner(v0));
       lineBounds.extend(vertexBounds_inner(v1));
-      if (embree::disjoint(bounds,lineBounds))
+      if (embree::disjoint(bounds,lineBounds)
+          ||
+          volume3f(embree::intersect(bounds,lineBounds)) <= 0.f)
         return false;
       overlap = embree::merge(overlap,embree::intersect(bounds,lineBounds));
       return true;
@@ -120,11 +126,14 @@ namespace ospray {
       box4f lineBounds = embree::empty;
       lineBounds.extend(vertexBounds_outer(v0));
       lineBounds.extend(vertexBounds_outer(v1));
-      if (embree::disjoint(bounds,lineBounds))
+      if (embree::disjoint(bounds,lineBounds)
+          ||
+          volume3f(embree::intersect(bounds,lineBounds)) <= 0.f)
         return false;
       overlap = embree::merge(overlap,embree::intersect(bounds,lineBounds));
       return true;
     }
+
 
     int computeOverlap_outer(const Segment &seg, 
                              const box4f &bounds, 
@@ -147,6 +156,52 @@ namespace ospray {
           computeOverlap_outer(seg.v2,seg.v3,bounds,overlap);
       }
     }
+
+    bool computeOverlap(const Vertex &v0,
+                        const Vertex &v1,
+                        const box3f &bounds, 
+                        box3f &overlap)
+    {
+      box3f lineBounds = embree::empty;
+      lineBounds.extend(vertexBounds3f_outer(v0));
+      lineBounds.extend(vertexBounds3f_outer(v1));
+      
+      if (embree::disjoint(bounds,lineBounds)
+          ||
+          embree::volume(embree::intersect(bounds,lineBounds)) <= 0.f)
+        return false;
+      overlap = embree::merge(overlap,embree::intersect(bounds,lineBounds));
+      return true;
+    }
+
+    int computeOverlap(const Segment &seg, 
+                       const box3f &domain, 
+                       box3f &overlap,
+                       int depth)
+    {
+      box3f segBounds = seg.bounds3f_outer();
+      if (embree::disjoint(domain,segBounds)) {
+        return 0;
+      }
+      box3f isec = embree::intersect(domain,segBounds);
+      float vol = embree::volume(isec);
+      if (vol <= 0.f) {
+        return 0;
+      }
+      if (depth < NUM_SUBDIVS_FOR_LEAFTEST) {
+        Segment s0,s1;
+        seg.subdivide(s0,s1);
+        return
+          computeOverlap(s0,domain,overlap,depth+1) +
+          computeOverlap(s1,domain,overlap,depth+1);
+      } else {
+        return
+          computeOverlap(seg.v0,seg.v1,domain,overlap) +
+          computeOverlap(seg.v1,seg.v2,domain,overlap) +
+          computeOverlap(seg.v2,seg.v3,domain,overlap);
+      }
+    }
+
 
     box4f Segment::bounds_inner() const 
     {

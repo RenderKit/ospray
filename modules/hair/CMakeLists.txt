@@ -7,6 +7,7 @@ IF (MODULE_HAIR)
 		INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 		INCLUDE_DIRECTORIES(${EMBREE_DIR}/kernels/xeon/)
+		INCLUDE_DIRECTORIES(${EMBREE_DIR}/tutorials/common)
 
 		ADD_LIBRARY(ospray_module_hair SHARED
 			hairgeom.cpp

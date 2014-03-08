@@ -12,20 +12,20 @@
 // embree
 #include "kernels/common/ray8.h"
 
-#if 0
-# define COMPUTEOVERLAP(a,b,c) computeOverlap_outer((a),(b),(c))
-# define BOUNDS(a) a.bounds_outer()
-#else
-# define COMPUTEOVERLAP(a,b,c) computeOverlap_inner((a),(b),(c))
-# define BOUNDS(a) a.bounds_inner()
-#endif
+// #if 1
+// # define COMPUTEOVERLAP(a,b,c) computeOverlap_outer((a),(b),(c))
+// # define BOUNDS(a) a.bounds_outer()
+// #else
+// # define COMPUTEOVERLAP(a,b,c) computeOverlap_inner((a),(b),(c))
+// # define BOUNDS(a) a.bounds_inner()
+// #endif
 
 namespace ospray {
   namespace hair {
 
     FILE *file = NULL;
 
-    const int try_leaf_threshold = 2000;
+    const int try_leaf_threshold = 10000;
     const float hairlet_threshold_in_avg_radius = 4.f;
     const float hairlet_max_depth = 30;
 
@@ -56,7 +56,7 @@ namespace ospray {
     /*! tmpnodes are used for temporarily computing a binary BVH in a hairlet */
     struct TmpNode {
       std::vector<int> segStart;
-      box4f bounds;
+      box3f bounds;
       TmpNode *l, *r;
 
       TmpNode *&operator[](int i) { return i?r:l; }
@@ -64,7 +64,7 @@ namespace ospray {
       bool isLeaf() const { return !segStart.empty(); }
 
       TmpNode() : bounds(embree::empty), l(NULL), r(NULL) {}
-      TmpNode(std::vector<int> &segStart, const box4f &bounds) 
+      TmpNode(std::vector<int> &segStart, const box3f &bounds) 
         : segStart(segStart), bounds(bounds), l(NULL), r(NULL)
       {}
       ~TmpNode() {
@@ -75,7 +75,7 @@ namespace ospray {
       {
         if (depthRemaining <= 0) return; // cannot split ...
 
-        vec4f size = bounds.size();
+        vec3f size = bounds.size();
         int dim = 0;
         if (size[1] > size[dim]) dim = 1;
         if (size[2] > size[dim]) dim = 2;
@@ -85,7 +85,7 @@ namespace ospray {
         l = new TmpNode;
         r = new TmpNode;
         
-        box4f lSpace=bounds,rSpace=bounds;
+        box3f lSpace=bounds,rSpace=bounds;
         float split = center(bounds)[dim];
         lSpace.upper[dim] = std::min(lSpace.upper[dim],split);
         rSpace.lower[dim] = std::max(rSpace.lower[dim],split);
@@ -93,14 +93,14 @@ namespace ospray {
         // ... and partition, computing the childrens' IDs and bounds
         for (int i=0;i<segStart.size();i++) {
           Segment seg = hairlet->hg->getSegment(segStart[i]);
-          box4f segBounds = BOUNDS(seg);
-          box4f lOverlap = embree::empty;
-          box4f rOverlap = embree::empty;
-          if (COMPUTEOVERLAP(seg,lSpace,lOverlap)) {
+          box3f segBounds = seg.bounds3f_outer();
+          box3f lOverlap = embree::empty;
+          box3f rOverlap = embree::empty;
+          if (computeOverlap(seg,lSpace,lOverlap)) {
             l->segStart.push_back(segStart[i]);
             l->bounds.extend(lOverlap);
           }
-          if (COMPUTEOVERLAP(seg,rSpace,rOverlap)) {
+          if (computeOverlap(seg,rSpace,rOverlap)) {
             r->segStart.push_back(segStart[i]);
             r->bounds.extend(rOverlap);
           }
@@ -122,7 +122,7 @@ namespace ospray {
 
     inline float area(TmpNode *node)
     {
-      vec4f size = node->bounds.size();
+      vec3f size = node->bounds.size();
       return size.x*size.y+size.y*size.z+size.x*size.z;
     }
 
@@ -131,13 +131,18 @@ namespace ospray {
       const vec4f size = bounds.size();
       return size.x*size.y+size.y*size.z+size.x*size.z;
     }
+    inline float area(const box3f &bounds)
+    {
+      const vec3f size = bounds.size();
+      return size.x*size.y+size.y*size.z+size.x*size.z;
+    }
 
 
 
     struct TmpQuadNode {
       struct Node {
         TmpNode *src;
-        box4f bounds;
+        box3f bounds;
         std::vector<int> segStart; // for leaf node
         TmpQuadNode *ptr; // for inner node
 
@@ -184,8 +189,8 @@ namespace ospray {
         // PRINT(size);
         // for (int i=0;i<4;i++)
         //   PRINT(child[i].ptr);
-      //   // for (int i=0;i<4;i++)
-      //   //   if (child[i].ptr) delete child[i].ptr; 
+        //   // for (int i=0;i<4;i++)
+        //   //   if (child[i].ptr) delete child[i].ptr; 
       }
     };
 
@@ -354,7 +359,7 @@ namespace ospray {
 
           float newSiblingArea = grandChildArea;
           float newGrandChildArea = siblingArea;
-          box4f newChildBounds = embree::merge(grandSibling->bounds,sibling->bounds);
+          box3f newChildBounds = embree::merge(grandSibling->bounds,sibling->bounds);
           float newChildArea = area(newChildBounds);
           float newGrandSiblingArea = grandSiblingArea; // grand sibling stays...
 
@@ -601,8 +606,7 @@ namespace ospray {
       nodeList.push_back(Hairlet::QuadNode());
       idStack.push(0);
       nodeStack.push(qnRoot);
-      std::map<int,int> startID;
-      std::vector<int> localSegStart;
+      // std::vector<int> localSegStart;
       
       while (!nodeStack.empty()) {
         TmpQuadNode *qn = nodeStack.top(); nodeStack.pop();
@@ -617,17 +621,8 @@ namespace ospray {
             nodeList[nodeID].child[cID] = fragList.size();
             for (int i=0;i<qn->child[cID].segStart.size();i++) {
               Hairlet::Fragment frag;
-              frag.eol = (i==(qn->child[cID].segStart.size()-1));
-              int start = qn->child[cID].segStart[i];
-              if (startID.find(start) == startID.end()) {
-                int newID = localSegStart.size();
-                localSegStart.push_back(start);
-
-                startID[start] = newID;
-                frag.hairID = newID;
-              }
-              else 
-                frag.hairID = startID[start];
+              frag.eol    = (i==(qn->child[cID].segStart.size()-1));
+              frag.hairID = qn->child[cID].segStart[i];
               fragList.push_back(frag);
             }
           } else {
@@ -638,36 +633,43 @@ namespace ospray {
           }
         }
       }
-      if (nodeList.size() >= (1<<15)) { return "too many nodes"; }
-      if (fragList.size() >= (1<<15)) { return "too many frags"; }
-      if (localSegStart.size() >= (1<<15)) { return "too many segments for this hairlet"; }
+      if (nodeList.size() >= (1UL<<15)) { return "too many nodes"; }
+      if (fragList.size() >= (1UL<<15)) { return "too many frags"; }
+      // if (localSegStart.size() >= (1<<15)) { return "too many segments for this hairlet"; }
 
-      hairlet->segStart = localSegStart;
+      // hairlet->segStart = localSegStart;
       hairlet->node = nodeList;
       hairlet->leaf = fragList;
       return NULL;
     }
-    void Hairlet::build()
+    void Hairlet::build(const box3f &domain)
     {
-      box4f centBounds=embree::empty,bounds=embree::empty;
-      bounds=embree::empty;
+      this->bounds = domain;
+      // box3f bounds=embree::empty;
+      // bounds=embree::empty;
+      // for (int i=0;i<segStart.size();i++) {
+      //   Segment seg = hg->getSegment(segStart[i]);
+      //   box3f segBounds = seg.bounds3f();
+      //   bounds.extend(segBounds);
+      // }
+      // this->bounds.lower = (const vec3f&)bounds.lower;
+      // this->bounds.upper = (const vec3f&)bounds.upper;
+      // // this->bounds.upper.x += 1e-6f;
+      // // this->bounds.upper.y += 1e-6f;
+      // // this->bounds.upper.z += 1e-6f;
+      // vec3ui numCells;
+      // numCells.x = int(bounds.size().x/avgRadius+.9999f);
+      // numCells.y = int(bounds.size().y/avgRadius+.9999f);
+      // numCells.z = int(bounds.size().z/avgRadius+.9999f);
+
+      float maxRadius = 0;
       for (int i=0;i<segStart.size();i++) {
-        Segment seg = hg->getSegment(segStart[i]);
-        box4f segBounds = seg.bounds_inner();
-        // box4f segBounds = seg.bounds_outer();
-        centBounds.extend(center(segBounds));
-        bounds.extend(segBounds);
+        int startVertex = segStart[i];
+        maxRadius = std::max(maxRadius,hg->vertex[startVertex+0].radius);
+        maxRadius = std::max(maxRadius,hg->vertex[startVertex+1].radius);
+        maxRadius = std::max(maxRadius,hg->vertex[startVertex+2].radius);
+        maxRadius = std::max(maxRadius,hg->vertex[startVertex+3].radius);
       }
-      this->bounds.lower = (const vec3f&)bounds.lower;
-      this->bounds.upper = (const vec3f&)bounds.upper;
-      // this->bounds.upper.x += 1e-6f;
-      // this->bounds.upper.y += 1e-6f;
-      // this->bounds.upper.z += 1e-6f;
-      this->maxRadius = bounds.upper.w;
-      vec3ui numCells;
-      numCells.x = int(bounds.size().x/avgRadius+.9999f);
-      numCells.y = int(bounds.size().y/avgRadius+.9999f);
-      numCells.z = int(bounds.size().z/avgRadius+.9999f);
 
       TmpNode *root = new TmpNode;
       root->bounds = bounds;
@@ -717,14 +719,14 @@ namespace ospray {
       // cout << "done deleting root" << endl;
     }
 
-    Hairlet *HairBVH::makeHairlet(std::vector<int> &segStart)
+    Hairlet *HairBVH::makeHairlet(std::vector<int> &segStart, const box3f &domain)
     {
       // if we need more than 15 bits we can't encode, anyway
       if (segStart.size() >= (1<<15)) return NULL;
 
       Hairlet *hairlet = new Hairlet(hg,segStart);
       try {
-        hairlet->build();
+        hairlet->build(domain);
       } catch (...) {
         delete hairlet;
         return NULL;
@@ -741,8 +743,8 @@ namespace ospray {
         
         rc = fread(&hl->bounds,sizeof(hl->bounds),1,file);
         if (rc != 1) throw 1;
-        rc = fread(&hl->maxRadius,sizeof(hl->maxRadius),1,file);
-        if (rc != 1) throw 1;
+        // rc = fread(&hl->maxRadius,sizeof(hl->maxRadius),1,file);
+        // if (rc != 1) throw 1;
 
         int num_node;
         rc = fread(&num_node,sizeof(num_node),1,file);
@@ -758,12 +760,12 @@ namespace ospray {
         rc = fread(&hl->leaf[0],sizeof(hl->leaf[0]),num_leaf,file);
         if (rc != num_leaf) throw 1;
 
-        int num_segStart;
-        rc = fread(&num_segStart,sizeof(num_segStart),1,file);
-        if (rc != 1) throw 1;
-        hl->segStart.resize(num_segStart);
-        rc = fread(&hl->segStart[0],sizeof(hl->segStart[0]),num_segStart,file);
-        if (rc != num_segStart) throw 1;
+        // int num_segStart;
+        // rc = fread(&num_segStart,sizeof(num_segStart),1,file);
+        // if (rc != 1) throw 1;
+        // hl->segStart.resize(num_segStart);
+        // rc = fread(&hl->segStart[0],sizeof(hl->segStart[0]),num_segStart,file);
+        // if (rc != num_segStart) throw 1;
         return hl;
       } catch (... ) {
         delete hl;
@@ -775,7 +777,7 @@ namespace ospray {
     {
       if (!file) return;
       fwrite(&bounds,sizeof(bounds),1,file);
-      fwrite(&maxRadius,sizeof(maxRadius),1,file);
+      // fwrite(&maxRadius,sizeof(maxRadius),1,file);
 
       int num_node = node.size();
       fwrite(&num_node,sizeof(num_node),1,file);
@@ -785,9 +787,12 @@ namespace ospray {
       fwrite(&num_leaf,sizeof(num_leaf),1,file);
       fwrite(&leaf[0],sizeof(leaf[0]),num_leaf,file);
 
-      int num_segStart = segStart.size();
-      fwrite(&num_segStart,sizeof(num_segStart),1,file);
-      fwrite(&segStart[0],sizeof(segStart[0]),num_segStart,file);
+      // int num_segStart = segStart.size();
+      // fwrite(&num_segStart,sizeof(num_segStart),1,file);
+      // fwrite(&segStart[0],sizeof(segStart[0]),num_segStart,file);
+
+      // PRINT(leaf.size());
+      // PRINT(node.size());
 
       static long numWritten = 0;
       static long numHairletsWritten = 0;
@@ -796,11 +801,14 @@ namespace ospray {
       long pos = ftell(file);
       cout << "done hairlet #" << numHairletsWritten << ", #seg=" << numWritten << ", size/seg = " << (pos/float(numWritten)) << endl;
     }
-    void HairBVH::buildRec(std::vector<int> &segStart)
+
+    void HairBVH::buildRecSpatial(std::vector<int> &segStart, const box3f &domain)
     {
+      if (segStart.empty()) return;
+
       Assert(!segStart.empty());
       if (segStart.size() <= try_leaf_threshold) {
-        Hairlet *hairlet = makeHairlet(segStart);
+        Hairlet *hairlet = makeHairlet(segStart,domain);
         if (hairlet) {
           this->hairlet.push_back(hairlet);
 
@@ -809,45 +817,48 @@ namespace ospray {
             hairlet->save(file);
             delete hairlet;
           }
-
-      // PRINT(double(sumInitialNodes)/numSegsProcessed);
-      // PRINT(double(sumInitialRefs)/numSegsProcessed);
-      // PRINT(double(sumCollapsedNodes)/numSegsProcessed);
-      // PRINT(double(sumCollapsedRefs)/numSegsProcessed);
-      // PRINT(double(sumInitialNodes)/sumCollapsedNodes);
-      // PRINT(double(sumInitialRefs)/sumCollapsedRefs);
-
           segStart.clear();
           return;
         }
       }
-      box4f centBounds=embree::empty, bounds=embree::empty;
-      for (int i=0;i<segStart.size();i++) {
-        Segment seg = hg->getSegment(segStart[i]);
-        box4f segBounds = seg.bounds_inner();
-        centBounds.extend(center(segBounds));
-        bounds.extend(segBounds);
-      }
-
       std::vector<int> lSegStart, rSegStart;
-      vec4f size = centBounds.size();
+      vec3f size = domain.size();
       int dim = 0;
       if (size[1] > size[dim]) dim = 1;
       if (size[2] > size[dim]) dim = 2;
-      float split = center(centBounds)[dim];
+
+      box3f lSpace=domain,rSpace=domain;
+      float split = center(domain)[dim];
+      lSpace.upper[dim] = std::min(lSpace.upper[dim],split);
+      rSpace.lower[dim] = std::max(rSpace.lower[dim],split);
+
+      box3f lDomain = embree::empty, rDomain = embree::empty;
+
       for (int i=0;i<segStart.size();i++) {
         Segment seg = hg->getSegment(segStart[i]);
-        box4f segBounds = seg.bounds_inner();
-        if (center(segBounds)[dim] >= split)
-          rSegStart.push_back(segStart[i]);
-        else
+        box3f lOverlap = embree::empty;
+        box3f rOverlap = embree::empty;
+        // Hairlet *l = new Hairlet(hg);
+        // Hairlet *r = new Hairlet(hg);
+        // cout << "--------------------------------------------" << endl;
+        if (computeOverlap(seg,lSpace,lOverlap)) {
           lSegStart.push_back(segStart[i]);
+          // l->bounds.extend(lOverlap);
+          lDomain.extend(lOverlap);
+        }
+        if (computeOverlap(seg,rSpace,rOverlap)) {
+          rSegStart.push_back(segStart[i]);
+          // r->bounds.extend(rOverlap);
+          rDomain.extend(rOverlap);
+        }
       }
-      Assert(!lSegStart.empty());
-      Assert(!rSegStart.empty());
+      cout << segStart.size() << " -> " << lSegStart.size() << " + " << rSegStart.size() << endl;
+      // Assert(!lSegStart.empty());
+      // Assert(!rSegStart.empty());
       segStart.clear();
-      buildRec(lSegStart);
-      buildRec(rSegStart);
+
+      buildRecSpatial(lSegStart,embree::intersect(lDomain,lSpace));
+      buildRecSpatial(rSegStart,embree::intersect(rDomain,rSpace));
     }
 
     void HairBVH::load(const std::string &fileName, uint32 maxHairletsToLoad)
@@ -906,7 +917,11 @@ namespace ospray {
 
       size_t numSegs = segStart.size();
       cout << "num *segments* found: " << segStart.size() << endl;
-      buildRec(segStart);
+      box3f rootBounds((vec3f&)hg->bounds.lower,(vec3f&)hg->bounds.upper);
+      PING;
+      PRINT(segStart.size());
+      buildRecSpatial(segStart,rootBounds);
+      // buildRec(segStart);
       cout << "done building. num hairlets: " << hairlet.size() << endl;
     }
 
