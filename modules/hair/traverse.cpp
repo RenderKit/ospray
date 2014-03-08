@@ -1,4 +1,4 @@
-#undef NDEBUG
+//#undef NDEBUG
 
 // hair
 #include "hbvh.h"
@@ -17,60 +17,6 @@ namespace ospray {
     long numIsecs = 0;
     long numIsecRecs = 0;
     long numHairletTravs = 0;
-
-    __noinline void intersectRec(Ray8 &ray,
-                                 const size_t k,
-                                 int startVertex,
-                                 const vec3fa &v0,
-                                 const vec3fa &v1,
-                                 const vec3fa &v2,
-                                 const vec3fa &v3,
-                                 const float maxRad,
-                                 const Hairlet *hl,
-                                 int remainingDepth=5
-                                 )
-    {
-      STATS(numIsecRecs++);
-      box3f bounds = embree::empty;
-      bounds.extend(v0);
-      bounds.extend(v1);
-      bounds.extend(v2);
-      bounds.extend(v3);
-      
-      if (bounds.upper.x < -maxRad) return;
-      if (bounds.upper.y < -maxRad) return;
-
-      if (bounds.lower.x > +maxRad) return;
-      if (bounds.lower.y > +maxRad) return;
-
-      const vec3fa v00 = v0;
-      const vec3fa v01 = v1;
-      const vec3fa v02 = v2;
-      const vec3fa v03 = v3;
-
-      const vec3fa v10 = 0.5f*(v00+v01);
-      const vec3fa v11 = 0.5f*(v01+v02);
-      const vec3fa v12 = 0.5f*(v02+v03);
-
-      const vec3fa v20 = 0.5f*(v10+v11);
-      const vec3fa v21 = 0.5f*(v11+v12);
-
-      const vec3fa v30 = 0.5f*(v20+v21);
-
-      if (remainingDepth > 0) {
-        intersectRec(ray,k,startVertex,v00,v10,v20,v30,maxRad,hl,remainingDepth-1);
-        intersectRec(ray,k,startVertex,v30,v21,v12,v03,maxRad,hl,remainingDepth-1);
-      } else {
-        const float z = v30.z;
-        if (z > ray.tfar[k]) return;
-
-        ray.primID[k] = (((long)hl)*13)>>4;
-        ray.geomID[k] = (((long)hl)*13)>>4;
-        // ray.primID[k] = (startVertex*13)>>4;
-        // ray.geomID[k] = (startVertex*13)>>4;
-        ray.tfar[k]   = z;
-      }
-    }
 
     struct SegStack {
       ssef v0,v1,v2,v3;
@@ -125,7 +71,8 @@ namespace ospray {
       return true;
     }
 
-    __forceinline
+__noinline
+//__forceinline
     bool intersectSegment1(const LinearSpace3<vec3fa> &space,
                            const vec3fa &org,
                            const Hairlet *hl, //const BVH4* bvh, 

@@ -39,9 +39,9 @@ namespace ospray {
   }
 
   typedef RayCastRenderer<RC_EYELIGHT> RayCastRenderer_EyeLight;
-  typedef RayCastRenderer<RC_PRIMID> RayCastRenderer_PrimID;
-  typedef RayCastRenderer<RC_GEOMID> RayCastRenderer_GeomID;
-  typedef RayCastRenderer<RC_GNORMAL> RayCastRenderer_Ng;
+  typedef RayCastRenderer<RC_PRIMID>   RayCastRenderer_PrimID;
+  typedef RayCastRenderer<RC_GEOMID>   RayCastRenderer_GeomID;
+  typedef RayCastRenderer<RC_GNORMAL>  RayCastRenderer_Ng;
 
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,ray_cast);
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast);
