@@ -211,7 +211,6 @@ __noinline
       const ssef hl_bounds_min_y = ssef(hl_bounds_min[1]);
       const ssef hl_bounds_min_z = ssef(hl_bounds_min[2]);
 
-
       //      --stackPtr;
       NodeRef cur = NodeRef(0); //stackPtr->ptr);
       goto firstStepStartsHere;
@@ -219,6 +218,7 @@ __noinline
       /* pop loop */
       while (true) {
       pop:
+
         /*! pop next node */
         if (unlikely(stackPtr == stack)) break;
         stackPtr--;
@@ -235,7 +235,6 @@ __noinline
         firstStepStartsHere:
 
           const Hairlet::QuadNode *node = &hl->node[-cur];
-          const ssei shift(0,8,16,24);
           const ssei bitMask(255);
 
           // PRINT(hairletID);
@@ -252,6 +251,8 @@ __noinline
           const ssei _node_hi_y = ssei((uint32&)node->hi_y[0]);
           const ssei _node_hi_z = ssei((uint32&)node->hi_z[0]);
 
+#if OSPRAY_TARGET_AVX2
+          const ssei shift(0,8,16,24);
           const ssei node_lo_x 
             = ssei(_mm_srav_epi32(_node_lo_x,shift)) & bitMask;
           const ssei node_lo_y 
@@ -265,8 +266,22 @@ __noinline
           const ssei node_hi_z
             = ssei(_mm_srav_epi32(_node_hi_z,shift)) & bitMask;
           
+#else
+          const ssei shlScale((1<<24),(1<<16),(1<<8),1);
+          const ssei node_lo_x
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_lo_x,shlScale),24));
+          const ssei node_lo_y
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_lo_y,shlScale),24));
+          const ssei node_lo_z
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_lo_z,shlScale),24));
+          const ssei node_hi_x
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_hi_x,shlScale),24));
+          const ssei node_hi_y
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_hi_y,shlScale),24));
+          const ssei node_hi_z
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_hi_z,shlScale),24));
+#endif
           const sseb box_valid = (node_lo_x <= node_hi_x);
-          
           // const sseb box_valid
           //   = (node_lo_x <= node_hi_x)
           //   & (node_lo_y <= node_hi_y)
@@ -277,7 +292,6 @@ __noinline
           // the boxes are built over the axis, not the tubes. may
           // change that soon.
           // const ssef maxRad(hl->maxRadius);
-
 
           // ideally, bake that into a ray transformation ...
           const ssef world_lo_x
