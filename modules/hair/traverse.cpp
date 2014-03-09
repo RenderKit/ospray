@@ -3,12 +3,19 @@
 // hair
 #include "hbvh.h"
 // embree
+//#include "kernels/common/globals.h"
 #include "kernels/common/ray8.h"
 #include "kernels/xeon/bvh4/bvh4.h"
 #include "kernels/xeon/bvh4/bvh4_intersector8_hybrid.h"
 
 #define REAL_INTERSECTION 1
 #define STATS(a) 
+
+namespace embree
+{
+  extern avxf coeff0[4];
+  extern avxf coeff1[4];
+}
 
 namespace ospray {
   namespace hair {
@@ -30,10 +37,21 @@ namespace ospray {
       const ssef minP = min(a,b);
       const ssef maxP = max(a,b);
       const ssef maxR = shuffle<3,3,3,3>(maxP);
+      // test the box over "line seg plus maxR"
       if (movemask((minP > maxR) | (maxP < -maxR)) & 0x3) return false;
 
+      // actual line distance test (in 2D)
+      const vec2f Nl(b[1]-a[1],a[0]-b[0]);
+      const vec2f Pl(a[0],a[1]);
+      if (sqr(dot(Pl,Nl)) > sqr(maxR[3])*dot(Nl,Nl))
+      // const float dist2 = sqr(dot(Pl,Nl)) / dot(Nl,Nl);
+      // if (dist2 > sqr(maxR[3]))
+        return false;
+
+      // depth test
       const float z = minP[2];
       if (z >= ray8.tfar[k]) return false;
+
       ray8.tfar[k] = z;
       ray8.Ng.x[k] = b[0] - a[0];
       ray8.Ng.y[k] = b[1] - a[1];
@@ -80,6 +98,77 @@ __noinline
                            const size_t k,
                            Ray8 &ray)
     {
+#if 1
+      STATS(numIsecs++);
+      const Segment &seg = (const Segment &)hl->hg->vertex[startVertex];
+
+      // const ssef orgv = (const ssef &)org;
+        ssef orgv = (const ssef &)org; orgv[3] = 0.f;
+      const ssef v0v = (const ssef &)seg.v0.pos - orgv;
+      const ssef v1v = (const ssef &)seg.v1.pos - orgv;
+      const ssef v2v = (const ssef &)seg.v2.pos - orgv;
+      const ssef v3v = (const ssef &)seg.v3.pos - orgv;
+      // now, have four control points (shifted by origin) in AoS.
+      ssef vx4, vy4, vz4, vr4;
+      transpose(v0v,v1v,v2v,v3v,vx4,vy4,vz4,vr4);
+      // now, have the four control points in AoS format (4 x's together, etc)
+
+      const ssef vu4 = vx4 * space.vx.x + vy4 * space.vx.y + vz4 * space.vx.z;
+      const ssef vv4 = vx4 * space.vy.x + vy4 * space.vy.y + vz4 * space.vy.z;
+      const ssef vt4 = vx4 * space.vz.x + vy4 * space.vz.y + vz4 * space.vz.z;
+
+      // compute 8 line segments' start and end positions
+      const avx4f v0(vu4[0],vv4[0],vt4[0],vr4[0]);
+      const avx4f v1(vu4[1],vv4[1],vt4[1],vr4[1]);
+      const avx4f v2(vu4[2],vv4[2],vt4[2],vr4[2]);
+      const avx4f v3(vu4[3],vv4[3],vt4[3],vr4[3]);
+      const avx4f p0
+        = embree::coeff0[0] * v0 
+        + embree::coeff0[1] * v1
+        + embree::coeff0[2] * v2
+        + embree::coeff0[3] * v3;
+      const avx4f p1
+        = embree::coeff1[0] * v0 
+        + embree::coeff1[1] * v1
+        + embree::coeff1[2] * v2
+        + embree::coeff1[3] * v3;
+
+      // PRINT(p0.x);
+      // PRINT(p0.y);
+      // PRINT(p0.z);
+      // PRINT(p0.w);
+
+      // PRINT(p1.x);
+      // PRINT(p1.y);
+      // PRINT(p1.z);
+      // PRINT(p1.w);
+
+      /* approximative intersection with cone */
+      const avx4f v = p1-p0;
+      const avx4f w = -p0;
+      const avxf d0 = w.x*v.x + w.y*v.y;
+      const avxf d1 = v.x*v.x + v.y*v.y;
+      const avxf u = clamp(d0*rcp(d1),avxf(zero),avxf(one));
+      const avx4f p = p0 + u*v;
+      const avxf t = p.z;
+
+      const avxf d2 = p.x*p.x + p.y*p.y; 
+      const avxf r = p.w; //max(p.w,ray.org.w+ray.dir.w*t);
+      const avxf r2 = r*r;
+      avxb valid = (d2 <= r2) & (avxf(ray.tnear[k]) < t) & (t < avxf(ray.tfar[k]));
+
+      if (unlikely(none(valid))) {
+        return false;
+      }
+      const float one_over_8 = 1.0f/8.0f;
+      size_t i = select_min(valid,t);
+      ray.tfar[k] = t[i];
+      ray.u[k] = (float(i)+u[i])*one_over_8;
+      ray.Ng.x[k] = v.x[i];
+      ray.Ng.y[k] = v.y[i];
+      ray.Ng.z[k] = v.z[i];
+      return true;
+#else
       STATS(numIsecs++);
       const Segment &seg = (const Segment &)hl->hg->vertex[startVertex];
       // const ssef _org = (const ssef &)org;
@@ -98,6 +187,7 @@ __noinline
       ssef v1 = (const ssef &)__v1;
       ssef v2 = (const ssef &)__v2;
       ssef v3 = (const ssef &)__v3;
+
       int depth = 2;
       SegStack stack[20];
       SegStack *stackPtr = stack;
@@ -153,6 +243,7 @@ __noinline
         }
       }
       return foundHit;
+#endif
     }
 
     __forceinline 
@@ -168,7 +259,7 @@ __noinline
                         )
     {
       STATS(numHairletTravs++);
-      static const int stackSizeSingle = 400;
+      static const int stackSizeSingle = 80;
       typedef int64 NodeRef;
 
       StackItemInt32<NodeRef> stack[stackSizeSingle];  //!< stack of nodes 
@@ -178,6 +269,8 @@ __noinline
       uint mailbox[32];
       ((avxi*)mailbox)[0] = avxi(-1);
       ((avxi*)mailbox)[1] = avxi(-1);
+      ((avxi*)mailbox)[2] = avxi(-1);
+      ((avxi*)mailbox)[3] = avxi(-1);
 
       // bvh4 traversal...
       const sse3f org(ray_org.x[k], ray_org.y[k], ray_org.z[k]);
