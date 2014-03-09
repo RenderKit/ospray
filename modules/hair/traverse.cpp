@@ -8,8 +8,10 @@
 #include "kernels/xeon/bvh4/bvh4.h"
 #include "kernels/xeon/bvh4/bvh4_intersector8_hybrid.h"
 
-#define REAL_INTERSECTION 1
 #define STATS(a) 
+
+// do not use: for some reason it isn't working yet !?
+//#define OFFSETS 1
 
 namespace embree
 {
@@ -255,6 +257,7 @@ __noinline
                         const avx3f &ray_org, 
                         const avx3f &ray_dir, 
                         const avx3f &ray_rdir, 
+                        // const avx3i &nearXYZ,
                         const embree::LinearSpace3<avx3f> &ray_space
                         )
     {
@@ -265,6 +268,21 @@ __noinline
       StackItemInt32<NodeRef> stack[stackSizeSingle];  //!< stack of nodes 
       StackItemInt32<NodeRef>* stackPtr = stack; // + 1;        //!< current stack pointer
       StackItemInt32<NodeRef>* stackEnd = stack + stackSizeSingle;
+
+#if OFFSETS
+      const size_t nearOfsX = ray_dir.x[k] > 0.f ? 0 : 5;
+      const size_t nearOfsY = ray_dir.y[k] > 0.f ? 0 : 5;
+      const size_t nearOfsZ = ray_dir.z[k] > 0.f ? 0 : 5;
+#endif
+
+      // data for decoding
+#ifdef OSPRAY_TARGET_AVX2
+      const ssei shift(0,8,16,24);
+#else
+      const ssei shlScale((1<<24),(1<<16),(1<<8),1);
+#endif
+      const ssei bitMask(255);
+
 
       uint mailbox[32];
       ((avxi*)mailbox)[0] = avxi(-1);
@@ -285,8 +303,8 @@ __noinline
                                            ray_space.vz.y[k],
                                            ray_space.vz.z[k]));
 
-      const vec3fa dir_k(ray_dir.x[k],ray_dir.y[k],ray_dir.z[k]);
-      const vec3fa org_k(ray_org.x[k],ray_org.y[k],ray_org.z[k]);
+      const vec3fa dir_k(ray.dir.x[k],ray.dir.y[k],ray.dir.z[k]);
+      const vec3fa org_k(ray.org.x[k],ray.org.y[k],ray.org.z[k]);
 
       const sse3f org_rdir(org*rdir);
       const ssef  ray_t0(ray.tnear[k]);
@@ -328,15 +346,70 @@ __noinline
         firstStepStartsHere:
 
           const Hairlet::QuadNode *node = &hl->node[-cur];
-          const ssei bitMask(255);
+#if OFFSETS
+          const uint32 *nodeData = (const uint32*)&node->lo_x[0];
+          const ssei _node_nr_x = ssei(nodeData[0+nearOfsX]);
+          const ssei _node_nr_y = ssei(nodeData[1+nearOfsY]);
+          const ssei _node_nr_z = ssei(nodeData[2+nearOfsZ]);
+          const ssei _node_fr_x = ssei(nodeData[5-nearOfsX]);
+          const ssei _node_fr_y = ssei(nodeData[6-nearOfsY]);
+          const ssei _node_fr_z = ssei(nodeData[7-nearOfsZ]);
 
-          // PRINT(hairletID);
-           // PRINT((int*)(uint32&)node->lo_x[0]);
-           // PRINT((int*)(uint32&)node->lo_y[0]);
-           // PRINT((int*)(uint32&)node->lo_z[0]);
-           // PRINT((int*)(uint32&)node->hi_x[0]);
-           // PRINT((int*)(uint32&)node->hi_y[0]);
-           // PRINT((int*)(uint32&)node->hi_z[0]);
+#if OSPRAY_TARGET_AVX2
+          const ssei node_nr_x 
+            = ssei(_mm_srav_epi32(_node_nr_x,shift)) & bitMask;
+          const ssei node_nr_y 
+            = ssei(_mm_srav_epi32(_node_nr_y,shift)) & bitMask;
+          const ssei node_nr_z
+            = ssei(_mm_srav_epi32(_node_nr_z,shift)) & bitMask;
+          const ssei node_fr_x 
+            = ssei(_mm_srav_epi32(_node_fr_x,shift)) & bitMask;
+          const ssei node_fr_y 
+            = ssei(_mm_srav_epi32(_node_fr_y,shift)) & bitMask;
+          const ssei node_fr_z
+            = ssei(_mm_srav_epi32(_node_fr_z,shift)) & bitMask;
+#else
+          const ssei node_nr_x
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_nr_x,shlScale),24));
+          const ssei node_nr_y
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_nr_y,shlScale),24));
+          const ssei node_nr_z
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_nr_z,shlScale),24));
+          const ssei node_fr_x
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_fr_x,shlScale),24));
+          const ssei node_fr_y
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_fr_y,shlScale),24));
+          const ssei node_fr_z
+            = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_fr_z,shlScale),24));
+#endif
+          const sseb box_valid = (node_nr_x <= node_fr_x);
+
+          const ssef world_nr_x
+            = madd(ssef(node_nr_x), hl_bounds_scale_x, hl_bounds_min_x);//-maxRad;
+          const ssef world_nr_y
+            = madd(ssef(node_nr_y), hl_bounds_scale_y, hl_bounds_min_y);//-maxRad;
+          const ssef world_nr_z
+            = madd(ssef(node_nr_z), hl_bounds_scale_z, hl_bounds_min_z);//-maxRad;
+          const ssef world_fr_x
+            = madd(ssef(node_fr_x), hl_bounds_scale_x, hl_bounds_min_x);//+maxRad;
+          const ssef world_fr_y
+            = madd(ssef(node_fr_y), hl_bounds_scale_y, hl_bounds_min_y);//+maxRad;
+          const ssef world_fr_z
+            = madd(ssef(node_fr_z), hl_bounds_scale_z, hl_bounds_min_z);//+maxRad;
+
+          // PRINT(maxRad);
+          const ssef t_nr_x = msub(world_nr_x,rdir.x,org_rdir.x);
+          const ssef t_nr_y = msub(world_nr_y,rdir.y,org_rdir.y);
+          const ssef t_nr_z = msub(world_nr_z,rdir.z,org_rdir.z);
+          const ssef t_fr_x = msub(world_fr_x,rdir.x,org_rdir.x);
+          const ssef t_fr_y = msub(world_fr_y,rdir.y,org_rdir.y);
+          const ssef t_fr_z = msub(world_fr_z,rdir.z,org_rdir.z);
+          
+          const ssef t0 = max(t_nr_x,t_nr_y,t_nr_z,ray_t0);
+          const ssef t1 = min(t_fr_x,t_fr_y,t_fr_z,ray_t1);
+
+
+#else
           const ssei _node_lo_x = ssei((uint32&)node->lo_x[0]);
           const ssei _node_lo_y = ssei((uint32&)node->lo_y[0]);
           const ssei _node_lo_z = ssei((uint32&)node->lo_z[0]);
@@ -345,7 +418,6 @@ __noinline
           const ssei _node_hi_z = ssei((uint32&)node->hi_z[0]);
 
 #if OSPRAY_TARGET_AVX2
-          const ssei shift(0,8,16,24);
           const ssei node_lo_x 
             = ssei(_mm_srav_epi32(_node_lo_x,shift)) & bitMask;
           const ssei node_lo_y 
@@ -357,10 +429,8 @@ __noinline
           const ssei node_hi_y 
             = ssei(_mm_srav_epi32(_node_hi_y,shift)) & bitMask;
           const ssei node_hi_z
-            = ssei(_mm_srav_epi32(_node_hi_z,shift)) & bitMask;
-          
+            = ssei(_mm_srav_epi32(_node_hi_z,shift)) & bitMask;          
 #else
-          const ssei shlScale((1<<24),(1<<16),(1<<8),1);
           const ssei node_lo_x
             = ssei(_mm_srli_epi32(_mm_mullo_epi32(_node_lo_x,shlScale),24));
           const ssei node_lo_y
@@ -417,6 +487,7 @@ __noinline
           
           const ssef t0 = max(t0_x,t0_y,t0_z,ray_t0);
           const ssef t1 = min(t1_x,t1_y,t1_z,ray_t1);
+#endif
           const sseb vmask = (t0 <= t1) & box_valid;
           size_t mask = movemask(vmask);
 
@@ -478,7 +549,6 @@ __noinline
         }
         
         // /*! this is a leaf node */
-#if REAL_INTERSECTION 
         while (1) {
           uint segID = hl->leaf[cur].hairID;// hl->segStart[;
           
@@ -488,8 +558,8 @@ __noinline
             const uint32 startVertex = segID; //hl->segStart[segID];
             *mb = segID;
             if (intersectSegment1(raySpace,org_k,hl,startVertex,k,ray)) {
-              ray.primID[k] = (long(segID)*13)>>4;
-              ray.geomID[k] = (long(segID)*13)>>4;
+              ray.primID[k] = startVertex; //(long(segID)*13)>>4;
+              ray.geomID[k] = 0; //(long(segID)*13)>>4;
 
               // vec3fa N = vec3fa((ray.Ng.x[k],ray.Ng.y[k],ray.Ng.z[k]));
               vec3fa N 
@@ -506,19 +576,6 @@ __noinline
           if (hl->leaf[cur].eol) break;
           ++cur;
         }
-#else
-        const float hit_dist = *(float*)&stackPtr[-1].dist;
-        if (hit_dist < ray.tfar[k]) {
-          ray.tfar[k] =  hit_dist;
-
-          int segID = hl->leaf[cur].hairID;
-          // ray.primID[k] = (long(hl)*13)>>4;
-          // ray.geomID[k] = (long(hl)*13)>>4;
-          ray.primID[k] = (long(segID)*13)>>4;
-          ray.geomID[k] = (long(segID)*13)>>4;
-          ray_t1 = hit_dist;
-        }
-#endif
       }
 // #endif
     }
@@ -541,22 +598,23 @@ __noinline
 
       /* compute near/far per ray */
       // iw: not yet using this optimization ...
-      avx3i nearXYZ;
-      nearXYZ.x = select(rdir.x >= 0.0f,
-                         avxi(0*(int)sizeof(ssef)),
-                         avxi(1*(int)sizeof(ssef)));
-      nearXYZ.y = select(rdir.y >= 0.0f,
-                         avxi(2*(int)sizeof(ssef)),
-                         avxi(3*(int)sizeof(ssef)));
-      nearXYZ.z = select(rdir.z >= 0.0f,
-                         avxi(4*(int)sizeof(ssef)),
-                         avxi(5*(int)sizeof(ssef)));
+      // avx3i nearXYZ;
+      // nearXYZ.x = select(rdir.x >= 0.0f,
+      //                    avxi(0*(int)sizeof(ssef)),
+      //                    avxi(1*(int)sizeof(ssef)));
+      // nearXYZ.y = select(rdir.y >= 0.0f,
+      //                    avxi(2*(int)sizeof(ssef)),
+      //                    avxi(3*(int)sizeof(ssef)));
+      // nearXYZ.z = select(rdir.z >= 0.0f,
+      //                    avxi(4*(int)sizeof(ssef)),
+      //                    avxi(5*(int)sizeof(ssef)));
 
       size_t bits = movemask(valid);
       if (bits==0) return;
       for (size_t i=__bsf(bits); bits!=0; bits=__btc(bits,i), i=__bsf(bits)) {
         hairIntersect1(item,hl,
-                       i, ray, ray_org, ray_dir, rdir, //ray_tnear, ray_tfar, nearXYZ,
+                       i, ray, ray_org, ray_dir, rdir, //ray_tnear, ray_tfar, 
+                       // nearXYZ,
                        raySpace);
         // ray_tfar = ray.tfar;
       }

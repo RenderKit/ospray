@@ -26,7 +26,7 @@ namespace ospray {
     FILE *file = NULL;
 
     const int try_leaf_threshold = 10000;
-    const float hairlet_threshold_in_avg_radius = 4.f;
+    float hairlet_threshold_in_max_radius = 3.f;
     const float hairlet_max_depth = 30;
 
     size_t numSegsProcessed = 0;
@@ -344,8 +344,8 @@ namespace ospray {
           delete node->r;
           node->l = NULL;
           node->r = NULL;
-          std::copy(node->segStart.begin(),node->segStart.end(),
-                    std::inserter(parentColl,parentColl.begin()));
+          // std::copy(node->segStart.begin(),node->segStart.end(),
+          //           std::inserter(parentColl,parentColl.begin()));
           std::copy(collapsed.begin(),collapsed.end(),
                     std::inserter(parentColl,parentColl.begin()));
           return collapsedCost;
@@ -702,7 +702,7 @@ namespace ospray {
       TmpNode *root = new TmpNode;
       root->bounds = bounds;
       root->segStart = segStart;
-      const float voxel_max_width = maxRadius * hairlet_threshold_in_avg_radius;
+      const float voxel_max_width = maxRadius * hairlet_threshold_in_max_radius;
       root->split(this,hairlet_max_depth,voxel_max_width);
 
       numSegsProcessed += segStart.size();
