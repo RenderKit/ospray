@@ -168,7 +168,7 @@ __noinline
                         )
     {
       STATS(numHairletTravs++);
-      static const int stackSizeSingle = 400;
+      static const int stackSizeSingle = 80;
       typedef int64 NodeRef;
 
       StackItemInt32<NodeRef> stack[stackSizeSingle];  //!< stack of nodes 
@@ -178,6 +178,8 @@ __noinline
       uint mailbox[32];
       ((avxi*)mailbox)[0] = avxi(-1);
       ((avxi*)mailbox)[1] = avxi(-1);
+      ((avxi*)mailbox)[2] = avxi(-1);
+      ((avxi*)mailbox)[3] = avxi(-1);
 
       // bvh4 traversal...
       const sse3f org(ray_org.x[k], ray_org.y[k], ray_org.z[k]);

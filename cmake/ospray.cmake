@@ -3,7 +3,7 @@ FILE(WRITE "${CMAKE_BINARY_DIR}/CMakeDefines.h" "#define CMAKE_BUILD_DIR \"${CMA
 #include bindir - that's where ispc puts generated header files
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
-
+SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 

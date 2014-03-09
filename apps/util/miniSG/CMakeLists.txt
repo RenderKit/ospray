@@ -1,3 +1,9 @@
+INCLUDE_DIRECTORIES(${OSPRAY_DIR}/ospray)
+
+
+ADD_EXECUTABLE(its2obj
+	its2obj.cpp
+)
 
 ADD_LIBRARY(ospray_minisg 
 	miniSG.cpp

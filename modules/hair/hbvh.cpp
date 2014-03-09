@@ -105,15 +105,43 @@ namespace ospray {
             r->bounds.extend(rOverlap);
           }
         }
+
+        l->bounds = intersect(l->bounds,lSpace);
+        r->bounds = intersect(r->bounds,rSpace);
+
+        if (l->segStart.empty() && r->segStart.empty()) {
+          cout << "BOTH HALVES EMPTY AFTER SPLITTING!" << endl;
+          exit(0);
+        }
+
+        if (l->segStart.empty()) {
+          cout << "left half is empty .. restarting!" << endl;
+          TmpNode *oldl = l; l = NULL;
+          TmpNode *oldr = r; r = NULL;
+          this->bounds = r->bounds;
+          this->split(hairlet,depthRemaining,maxWidth);
+          delete oldl;
+          delete oldr;
+          return;
+        }
+        if (r->segStart.empty()) {
+          cout << "left half is empty .. restarting!" << endl;
+          TmpNode *oldl = l; l = NULL;
+          TmpNode *oldr = r; r = NULL;
+          this->bounds = l->bounds;
+          this->split(hairlet,depthRemaining,maxWidth);
+          delete oldl;
+          delete oldr;
+          return;
+        }
+
+
         Assert(!l->segStart.empty());
         Assert(!r->segStart.empty());
         // now, have partitioned input geometry and have *actual*
         // boudns in children.  since we do spatial partitioning we
         // can now clamp those boudns to the spatial boudns we're
         // building over
-        l->bounds = intersect(l->bounds,lSpace);
-        r->bounds = intersect(r->bounds,rSpace);
-
         segStart.clear();
         l->split(hairlet,depthRemaining-1,maxWidth);
         r->split(hairlet,depthRemaining-1,maxWidth);
