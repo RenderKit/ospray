@@ -91,8 +91,8 @@ namespace ospray {
       return true;
     }
 
-__noinline
-//__forceinline
+    //__noinline
+    __forceinline
     bool intersectSegment1(const LinearSpace3<vec3fa> &space,
                            const vec3fa &org,
                            const Hairlet *hl, //const BVH4* bvh, 
@@ -105,7 +105,8 @@ __noinline
       const Segment &seg = (const Segment &)hl->hg->vertex[startVertex];
 
       // const ssef orgv = (const ssef &)org;
-        ssef orgv = (const ssef &)org; orgv[3] = 0.f;
+      const ssef orgv = select(sseb(-1,-1,-1,0),(const ssef &)org,ssef(zero));
+      // ssef orgv = (const ssef &)org; orgv[3] = 0.f;
       const ssef v0v = (const ssef &)seg.v0.pos - orgv;
       const ssef v1v = (const ssef &)seg.v1.pos - orgv;
       const ssef v2v = (const ssef &)seg.v2.pos - orgv;
@@ -115,9 +116,12 @@ __noinline
       transpose(v0v,v1v,v2v,v3v,vx4,vy4,vz4,vr4);
       // now, have the four control points in AoS format (4 x's together, etc)
 
-      const ssef vu4 = vx4 * space.vx.x + vy4 * space.vx.y + vz4 * space.vx.z;
-      const ssef vv4 = vx4 * space.vy.x + vy4 * space.vy.y + vz4 * space.vy.z;
-      const ssef vt4 = vx4 * space.vz.x + vy4 * space.vz.y + vz4 * space.vz.z;
+      const ssef vu4 = madd(vx4,space.vx.x,madd(vy4,space.vx.y,vz4 * space.vx.z));
+      const ssef vv4 = madd(vx4,space.vy.x,madd(vy4,space.vy.y,vz4 * space.vy.z));
+      const ssef vt4 = madd(vx4,space.vz.x,madd(vy4,space.vz.y,vz4 * space.vz.z));
+      // const ssef vu4 = vx4 * space.vx.x + vy4 * space.vx.y + vz4 * space.vx.z;
+      // const ssef vv4 = vx4 * space.vy.x + vy4 * space.vy.y + vz4 * space.vy.z;
+      // const ssef vt4 = vx4 * space.vz.x + vy4 * space.vz.y + vz4 * space.vz.z;
 
       // compute 8 line segments' start and end positions
       const avx4f v0(vu4[0],vv4[0],vt4[0],vr4[0]);
@@ -134,16 +138,6 @@ __noinline
         + embree::coeff1[1] * v1
         + embree::coeff1[2] * v2
         + embree::coeff1[3] * v3;
-
-      // PRINT(p0.x);
-      // PRINT(p0.y);
-      // PRINT(p0.z);
-      // PRINT(p0.w);
-
-      // PRINT(p1.x);
-      // PRINT(p1.y);
-      // PRINT(p1.z);
-      // PRINT(p1.w);
 
       /* approximative intersection with cone */
       const avx4f v = p1-p0;
@@ -165,7 +159,8 @@ __noinline
       const float one_over_8 = 1.0f/8.0f;
       size_t i = select_min(valid,t);
       ray.tfar[k] = t[i];
-      ray.u[k] = (float(i)+u[i])*one_over_8;
+      (int32&)ray.u[k] = i; //(float(i)+u[i])*one_over_8;
+      // ray.u[k] = (float(i)+u[i])*one_over_8;
       ray.Ng.x[k] = v.x[i];
       ray.Ng.y[k] = v.y[i];
       ray.Ng.z[k] = v.z[i];
@@ -278,10 +273,10 @@ __noinline
       // data for decoding
 #ifdef OSPRAY_TARGET_AVX2
       const ssei shift(0,8,16,24);
+      const ssei bitMask(255);
 #else
       const ssei shlScale((1<<24),(1<<16),(1<<8),1);
 #endif
-      const ssei bitMask(255);
 
 
       uint mailbox[32];
@@ -303,7 +298,7 @@ __noinline
                                            ray_space.vz.y[k],
                                            ray_space.vz.z[k]));
 
-      const vec3fa dir_k(ray.dir.x[k],ray.dir.y[k],ray.dir.z[k]);
+      // const vec3fa dir_k(ray.dir.x[k],ray.dir.y[k],ray.dir.z[k]);
       const vec3fa org_k(ray.org.x[k],ray.org.y[k],ray.org.z[k]);
 
       const sse3f org_rdir(org*rdir);
@@ -347,6 +342,7 @@ __noinline
 
           const Hairlet::QuadNode *node = &hl->node[-cur];
 #if OFFSETS
+          // do not use - something's broken!
           const uint32 *nodeData = (const uint32*)&node->lo_x[0];
           const ssei _node_nr_x = ssei(nodeData[0+nearOfsX]);
           const ssei _node_nr_y = ssei(nodeData[1+nearOfsY]);
@@ -410,6 +406,7 @@ __noinline
 
 
 #else
+          // non-offset based code - working!
           const ssei _node_lo_x = ssei((uint32&)node->lo_x[0]);
           const ssei _node_lo_y = ssei((uint32&)node->lo_y[0]);
           const ssei _node_lo_z = ssei((uint32&)node->lo_z[0]);
@@ -589,10 +586,11 @@ __noinline
       avxb valid = *(avxb*)_valid;
 
       Hairlet *hl = ((HairBVH*)ptr)->hairlet[item];
-      avx3f ray_org = ray.org, ray_dir = ray.dir;
+      const avx3f ray_org = ray.org, ray_dir = ray.dir;
       // avxf ray_tnear = ray.tnear, ray.tfar  = ray.tfar;
       const avx3f rdir = rcp_safe(ray_dir);
-      const avx3f org(ray_org), org_rdir = org * rdir;
+      const avx3f // org(ray_org), 
+        org_rdir = ray_org * rdir;
 
       const embree::LinearSpace3<avx3f> raySpace = embree::frame(ray_dir);
 
