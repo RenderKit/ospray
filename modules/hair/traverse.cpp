@@ -279,11 +279,15 @@ namespace ospray {
 #endif
 
 
-      uint mailbox[32];
+      uint mailbox[64];
       ((avxi*)mailbox)[0] = avxi(-1);
       ((avxi*)mailbox)[1] = avxi(-1);
       ((avxi*)mailbox)[2] = avxi(-1);
       ((avxi*)mailbox)[3] = avxi(-1);
+      ((avxi*)mailbox)[4] = avxi(-1);
+      ((avxi*)mailbox)[5] = avxi(-1);
+      ((avxi*)mailbox)[6] = avxi(-1);
+      ((avxi*)mailbox)[7] = avxi(-1);
 
       // bvh4 traversal...
       const sse3f org(ray_org.x[k], ray_org.y[k], ray_org.z[k]);
@@ -550,7 +554,7 @@ namespace ospray {
           uint segID = hl->leaf[cur].hairID;// hl->segStart[;
           
           // mailboxing
-          uint *mb = &mailbox[segID%32];
+          uint *mb = &mailbox[(segID*13)%64];
           if (*mb != segID) {
             const uint32 startVertex = segID; //hl->segStart[segID];
             *mb = segID;
