@@ -79,6 +79,21 @@ namespace ospray {
           if (frameID > 0) fps.doneRender();
           fps.startRender();
       //}
+          static double benchStart=0;
+          static double fpsSum=0;
+          if (g_benchFrames > 0 && frameID == g_benchWarmup)
+          {
+            benchStart = ospray::getSysTime();
+          }
+          if (g_benchFrames > 0 && frameID >= g_benchWarmup)
+            fpsSum += fps.getFPS();
+          if (g_benchFrames > 0 && frameID== g_benchWarmup+g_benchFrames)
+          {
+            double time = ospray::getSysTime()-benchStart;
+            double avgFps = fpsSum/double(frameID-g_benchWarmup);
+            printf("Benchmark: time: %f avg fps: %f avg frame time: %f\n", time, avgFps, time/double(frameID-g_benchWarmup));
+            exit(0);
+          }
 
           ++frameID;
 
@@ -176,7 +191,7 @@ namespace ospray {
               }
             }     
           }
-          else if (arg == "-model")// || ((i == ac-1) && (arg[0] != '-')))
+          else if (arg == "-model" || ((i == ac-1) && (arg[0] != '-')))
           {
             std::string arg2 = arg;
             if (++i < ac)
