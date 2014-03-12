@@ -480,7 +480,7 @@ namespace ospray {
     }
 
     /*! load module */
-    void MPIDevice::loadModule(const char *name)
+    int MPIDevice::loadModule(const char *name)
     {
 #if THIS_IS_MIC
       // embree automatically puts this into "lib<name>.so" format
@@ -499,6 +499,9 @@ namespace ospray {
 
       cmd.newCommand(CMD_LOAD_MODULE);
       cmd.send(name);
+      
+      // FIXME: actually we should return an error code here...
+      return 0;
     }
 
     /*! assign (named) float parameter to an object */

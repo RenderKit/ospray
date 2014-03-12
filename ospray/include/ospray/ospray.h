@@ -84,6 +84,9 @@ typedef osp::Volume        *OSPVolume;
 typedef osp::TriangleMesh  *OSPTriangleMesh;
 typedef osp::ManagedObject *OSPObject;
 
+/*! an error type. '0' means 'no error' */
+typedef int32 error_t;
+
 /*! \defgroup cplusplus_api Public OSPRay Core API */
 /*! @{ */
 extern "C" {
@@ -92,8 +95,9 @@ extern "C" {
   // //! initialize the ospray engine (for use with MPI-parallel app) 
   // void ospInitMPI(int *ac, const char **av);
 
-  //! load plugin <name> from shard lib libospray_module_<name>.so, or 
-  void ospLoadModule(const char *pluginName);
+  //! load plugin <name> from shard lib libospray_module_<name>.so
+  /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
+  error_t ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame. 
   /*! What input to tuse for rendering the frame is encoded in the

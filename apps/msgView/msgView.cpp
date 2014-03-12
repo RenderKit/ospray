@@ -14,6 +14,10 @@ namespace ospray {
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
+
+  //! the renderer we're about to use
+  std::string rendererType = "ray_cast";
+
   std::vector<miniSG::Model *> msgAnimation;
 
   void error(const std::string &msg)
@@ -43,10 +47,15 @@ namespace ospray {
       ospSet3f(camera,"dir",+1,-1,+1);
       ospCommit(camera);
       
-      renderer = ospNewRenderer("ray_cast");
+      renderer = ospNewRenderer(rendererType.c_str());
+      if (!renderer)
+        throw std::runtime_error("could not create renderer '"+rendererType+"'");
       Assert(renderer != NULL && "could not create renderer");
 
+      PRINT(renderer);
+      PRINT(model);
       ospSetParam(renderer,"world",model);
+      ospSetParam(renderer,"model",model);
       ospSetParam(renderer,"camera",camera);
       ospCommit(camera);
       ospCommit(renderer);
@@ -142,8 +151,15 @@ namespace ospray {
     cout << "msgView: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
-      if (av[i][0] == '-') {
-
+      if (arg == "--renderer") {
+        assert(i+1 < ac);
+        rendererType = av[++i];
+      } else if (arg == "--module" || arg == "--plugin") {
+        assert(i+1 < ac);
+        const char *moduleName = av[++i];
+        cout << "loading ospray module '" << moduleName << "'" << endl;
+        ospLoadModule(moduleName);
+      } else if (av[i][0] == '-') {
         error("unkown commandline argument '"+arg+"'");
       } else {
         embree::FileName fn = arg;

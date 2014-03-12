@@ -102,7 +102,7 @@ namespace ospray {
                                OSPRenderer _renderer);
 
       /*! load module */
-      virtual void loadModule(const char *name);
+      virtual int loadModule(const char *name);
 
       //      MPI_Comm service;
     };

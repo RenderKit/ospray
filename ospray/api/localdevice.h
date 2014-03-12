@@ -37,7 +37,7 @@ namespace ospray {
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
       /*! load module */
-      virtual void loadModule(const char *name);
+      virtual int loadModule(const char *name);
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);

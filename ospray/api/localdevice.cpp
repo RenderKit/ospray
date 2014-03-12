@@ -236,7 +236,7 @@ namespace ospray {
     }
 
     /*! load module */
-    void LocalDevice::loadModule(const char *name)
+    int LocalDevice::loadModule(const char *name)
     {
       std::string libName = "ospray_module_"+std::string(name);
       loadLibrary(libName);
@@ -244,9 +244,17 @@ namespace ospray {
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
-        throw std::runtime_error("could not find module initializer "+initSymName);
+        //        throw std::runtime_error("could not find module initializer "+initSymName);
+        return 1;
       void (*initMethod)() = (void(*)())initSym;
-      initMethod();
+      if (!initMethod) 
+        return 2;
+      try {
+        initMethod();
+      } catch (...) {
+        return 3;
+      }
+      return 0;
     }
 
     /*! call a renderer to render a frame buffer */

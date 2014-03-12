@@ -107,7 +107,7 @@ namespace ospray {
   }
 
     //! load module <name> from shard lib libospray_module_<name>.so, or 
-  extern "C" void ospLoadModule(const char *moduleName)
+  extern "C" error_t ospLoadModule(const char *moduleName)
   {
     ASSERT_DEVICE();
     return ospray::api::Device::current->loadModule(moduleName);
