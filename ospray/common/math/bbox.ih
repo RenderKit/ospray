@@ -5,22 +5,32 @@
 
 #include "vec.ih"
 
-struct bbox3f { 
+struct box2f {
+  vec2f lower;
+  vec2f upper;
+};
+
+struct box2i {
+  vec2i lower;
+  vec2i upper;
+};
+
+struct box3f { 
   vec3f lower;
   vec3f upper;
 };
 
-struct bbox3fa { 
+struct box3fa { 
   vec3f lower;
   int32 align0;
   vec3f upper;
   int32 align1;
 };
 
-inline uniform bbox3f make_bbox3f(const uniform vec3f lo, const uniform vec3f hi)
-{ uniform bbox3f bb; bb.lower = lo; bb.upper = hi; return bb; }
+inline uniform box3f make_box3f(const uniform vec3f lo, const uniform vec3f hi)
+{ uniform box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
 
-inline bbox3f make_bbox3f(const vec3f lo, const vec3f hi)
-{ bbox3f bb; bb.lower = lo; bb.upper = hi; return bb; }
+inline box3f make_box3f(const vec3f lo, const vec3f hi)
+{ box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
 #endif
 

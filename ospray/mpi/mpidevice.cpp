@@ -460,8 +460,13 @@ namespace ospray {
       cmd.flush();
       return (OSPData)(int64)handle;
     }
-    
-    
+        
+    /*! assign (named) string parameter to an object */
+    void MPIDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
+    {
+      throw std::runtime_error("setting a void pointer as parameter to an object is not allowed in MPI mode");
+    }
+
     /*! assign (named) string parameter to an object */
     void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
     {
@@ -474,8 +479,8 @@ namespace ospray {
       cmd.send(s);
     }
 
-    /*! load plugin */
-    void MPIDevice::loadPlugin(const char *name)
+    /*! load module */
+    int MPIDevice::loadModule(const char *name)
     {
 #if THIS_IS_MIC
       // embree automatically puts this into "lib<name>.so" format
@@ -492,8 +497,11 @@ namespace ospray {
       void (*initMethod)() = (void(*)())initSym;
       initMethod();
 
-      cmd.newCommand(CMD_LOAD_PLUGIN);
+      cmd.newCommand(CMD_LOAD_MODULE);
       cmd.send(name);
+      
+      // FIXME: actually we should return an error code here...
+      return 0;
     }
 
     /*! assign (named) float parameter to an object */

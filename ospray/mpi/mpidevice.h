@@ -26,7 +26,7 @@ namespace ospray {
         CMD_NEW_DATA,
         CMD_ADD_GEOMETRY,
         CMD_COMMIT,
-        CMD_LOAD_PLUGIN,
+        CMD_LOAD_MODULE,
 
         CMD_SET_OBJECT,
         CMD_SET_STRING,
@@ -79,6 +79,8 @@ namespace ospray {
       virtual void setInt(OSPObject object, const char *bufName, const int f);
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
+      /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+      virtual void setVoidPtr(OSPObject object, const char *bufName, void *v);
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh();
@@ -99,10 +101,10 @@ namespace ospray {
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer);
 
-      /*! load plugin */
-      virtual void loadPlugin(const char *name);
+      /*! load module */
+      virtual int loadModule(const char *name);
 
-      MPI_Comm service;
+      //      MPI_Comm service;
     };
 
   }

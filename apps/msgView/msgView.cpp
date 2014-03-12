@@ -16,6 +16,10 @@ namespace ospray {
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
+
+  //! the renderer we're about to use
+  std::string rendererType = "ray_cast";
+
   std::vector<miniSG::Model *> msgAnimation;
 
   void error(const std::string &msg)
@@ -37,6 +41,7 @@ namespace ospray {
         MSGViewer(OSPModel model)
         : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
         fb(NULL), renderer(NULL), model(model)
+<<<<<<< HEAD
         {
           Assert(model && "null model handle");
           camera = ospNewCamera("perspective");
@@ -44,6 +49,38 @@ namespace ospray {
           ospSet3f(camera,"pos",-1,1,-1);
           ospSet3f(camera,"dir",+1,-1,+1);
           ospCommit(camera);
+=======
+    {
+      Assert(model && "null model handle");
+      camera = ospNewCamera("perspective");
+      Assert(camera != NULL && "could not create camera");
+      ospSet3f(camera,"pos",-1,1,-1);
+      ospSet3f(camera,"dir",+1,-1,+1);
+      ospCommit(camera);
+      
+      renderer = ospNewRenderer(rendererType.c_str());
+      if (!renderer)
+        throw std::runtime_error("could not create renderer '"+rendererType+"'");
+      Assert(renderer != NULL && "could not create renderer");
+
+      PRINT(renderer);
+      PRINT(model);
+      ospSetParam(renderer,"world",model);
+      ospSetParam(renderer,"model",model);
+      ospSetParam(renderer,"camera",camera);
+      ospCommit(camera);
+      ospCommit(renderer);
+
+    };
+    virtual void reshape(const ospray::vec2i &newSize) 
+    {
+      Glut3DWidget::reshape(newSize);
+      if (fb) ospFreeFrameBuffer(fb);
+      fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
+      ospSetf(camera,"aspect",viewPort.aspect);
+      ospCommit(camera);
+    }
+>>>>>>> 5b30effde5438376ae23b00a85445e3e4d2aed27
 
           renderer = ospNewRenderer("ray_cast");
           Assert(renderer != NULL && "could not create renderer");
@@ -155,6 +192,7 @@ namespace ospray {
     //-------------------------------------------------------
     // parse cmdline
     // -------------------------------------------------------
+<<<<<<< HEAD
         cout << "msgView: starting to process cmdline arguments" << endl;
         for (int i=1;i<ac;i++) {
           const std::string arg = av[i];
@@ -211,6 +249,35 @@ namespace ospray {
               // error("unrecognized file format in filename '"+arg2+"'");
           }
         }
+=======
+    cout << "msgView: starting to process cmdline arguments" << endl;
+    for (int i=1;i<ac;i++) {
+      const std::string arg = av[i];
+      if (arg == "--renderer") {
+        assert(i+1 < ac);
+        rendererType = av[++i];
+      } else if (arg == "--module" || arg == "--plugin") {
+        assert(i+1 < ac);
+        const char *moduleName = av[++i];
+        cout << "loading ospray module '" << moduleName << "'" << endl;
+        ospLoadModule(moduleName);
+      } else if (av[i][0] == '-') {
+        error("unkown commandline argument '"+arg+"'");
+      } else {
+        embree::FileName fn = arg;
+        if (fn.ext() == "stl")
+          miniSG::importSTL(*msgModel,fn);
+        else if (fn.ext() == "msg")
+          miniSG::importMSG(*msgModel,fn);
+        else if (fn.ext() == "obj")
+          miniSG::importOBJ(*msgModel,fn);
+        else if (fn.ext() == "astl")
+          miniSG::importSTL(msgAnimation,fn);
+        else
+          error("unrecognized file format in filename '"+arg+"'");
+      }
+    }
+>>>>>>> 5b30effde5438376ae23b00a85445e3e4d2aed27
     // -------------------------------------------------------
     // done parsing
     // -------------------------------------------------------]

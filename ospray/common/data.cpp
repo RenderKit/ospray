@@ -5,6 +5,7 @@ namespace ospray {
   size_t sizeOf(OSPDataType type)
   {
     switch (type) {
+    case OSP_VOID_PTR: return sizeof(void *);
     case OSP_OBJECT: return sizeof(Data *);
     case OSP_FLOAT:  return sizeof(float);
     case OSP_vec2f:  return sizeof(vec2f);

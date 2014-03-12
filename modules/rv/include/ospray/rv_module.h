@@ -47,17 +47,17 @@ namespace ospray {
     struct Layer {
       //! color to be used when in RENDER_BY_LAYER mode
       vec3f color;
-      float min_z, max_z;
+      float lower_z, upper_z;
     };
     //! color range to be used in RENDER_BY_ATTRIBUTE mode 
     /*! the attribute value of the resistor hit by the ray will be
      used to linearly interpolate between the 'lo' and 'hi'
      values. essentially this is a linear transfer function */
     struct ColorRange {
-      float lo_value;
       vec3f lo_color;
-      float hi_value;
+      float lo_value;
       vec3f hi_color;
+      float hi_value;
     };
 
     //! set shade mode to shade by network
@@ -95,6 +95,11 @@ namespace ospray {
         mem after this call.
     */
     void setLayers(const Layer layer[], const size_t numLayers);
+
+    /*! \brief specify number of attributes stored per resistor. 
+      value *must* be specified before rendering the first frame; value
+      must be the same for all models used in rendering that frame */
+    void setNumAttributesPerResistor(uint32 numAttributesPerResistor);
 
     /*! \brief specify the set of nets we will be using. must be called exactly once
 
@@ -152,6 +157,9 @@ namespace ospray {
     const uint32 *mapFB();
     //! unmap previously mapped frame buffer
     void          unmapFB();
+
+    /*! render a frame ... */
+    void renderFrame();
 
     // ------------------------------------------------------------------
     // query interface

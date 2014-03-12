@@ -6,6 +6,7 @@ IF (MODULE_RV)
 		INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include/)
 		INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/include/)
 		INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+		INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
 		INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
 		OSPRAY_ADD_LIBRARY(ospray_module_rv SHARED
@@ -19,6 +20,6 @@ IF (MODULE_RV)
 		ADD_EXECUTABLE(ospRV
 			viewer.cpp
 			)
-		TARGET_LINK_LIBRARIES(ospRV ospray_module_rv osp_glut3d glui)
+		TARGET_LINK_LIBRARIES(ospRV ospray_module_rv ospray_glut3d glui)
 	ENDIF()
 ENDIF()

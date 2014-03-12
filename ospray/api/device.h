@@ -32,8 +32,8 @@ namespace ospray {
       /*! create a new model */
       virtual OSPModel newModel() = 0;
 
-      /*! load plugin */
-      virtual void loadPlugin(const char *name) = 0;
+      /*! load module */
+      virtual int loadModule(const char *name) = 0;
 
       /*! commit the given object's outstanding changes */
       virtual void commit(OSPObject object) = 0;
@@ -56,6 +56,8 @@ namespace ospray {
       virtual void setInt(OSPObject object, const char *bufName, const int f) = 0;
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v) = 0;
+      /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+      virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) = 0;
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh() = 0;

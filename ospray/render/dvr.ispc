@@ -12,7 +12,7 @@
 //! performs a ray-box intersection test, and returns intersection interval [t0,t1]
 inline void boxtest(const Ray &ray,
                     const vec3f &rdir,
-                    const uniform bbox3f &box,
+                    const uniform box3f &box,
                     float& t0,
                     float& t1)
 {
@@ -37,13 +37,13 @@ inline void boxtest(const Ray &ray,
 inline vec4f rayCastDVR(const Ray &ray, 
                         uniform Volume *uniform volume)
 {
-  const uniform bbox3f bbox = make_bbox3f(make_vec3f(0.f),volume->clampSize);
+  const uniform box3f box = make_box3f(make_vec3f(0.f),volume->clampSize);
   const vec3f rdir = rcp(ray.dir);
   
   vec4f color = make_vec4f(0.f);
 
   float tenter, texit;
-  boxtest(ray, rdir, bbox, tenter, texit);
+  boxtest(ray, rdir, box, tenter, texit);
   if (tenter >= texit) return color;
 
   float step_size = .5;

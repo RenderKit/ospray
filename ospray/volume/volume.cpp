@@ -21,8 +21,8 @@ namespace ospray {
     : Volume(size,ospray::UNORM8)
   { 
     ispcPtr = ispc::_Naive32Volume1uc_create((ispc::vec3i&)size,internalData); 
-    int64 dataSize;
-    ispc::getInternalRepresentation(ispcPtr,(long&)dataSize,(void*&)data);
+    int64_t dataSize;
+    ispc::getInternalRepresentation(ispcPtr,dataSize,(void*&)data);
 #ifdef LOW_LEVEL_KERNELS
     clampSize.x = size.x - 1e-6f;
     clampSize.y = size.y - 1e-6f;
@@ -49,8 +49,8 @@ namespace ospray {
     : Volume(size,ospray::FLOAT)
   { 
     ispcPtr = ispc::_Naive32Volume1f_create((ispc::vec3i&)size,internalData); 
-    int64 dataSize;
-    ispc::getInternalRepresentation(ispcPtr,(long&)dataSize,(void*&)data);
+    int64_t dataSize;
+    ispc::getInternalRepresentation(ispcPtr,dataSize,(void*&)data);
   }
   template<>
   BrickedVolume<float>::BrickedVolume(const vec3i &size, const float *internalData)

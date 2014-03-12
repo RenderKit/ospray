@@ -25,15 +25,15 @@ namespace ospray {
     'intersect' functions */
   struct Ray {
     /* ray input data */
-    vec3f org;  /*!< ray origin */
-    vec3f dir;  /*!< ray direction */
+    vec3fa org;  /*!< ray origin */
+    vec3fa dir;  /*!< ray direction */
     float t0;   /*!< start of valid ray interval */
     float t;    /*!< end of valid ray interval, or distance to hit point after 'intersect' */
     float time; //!< Time of this ray for motion blur
     int32 mask; //!< Used to mask out objects during traversal
   
     /* hit data */
-    vec3f Ng;    /*! geometry normal. may or may not be set by geometry intersectors */
+    vec3fa Ng;    /*! geometry normal. may or may not be set by geometry intersectors */
   
     float u;     //!< Barycentric u coordinate of hit
     float v;     //!< Barycentric v coordinate of hit

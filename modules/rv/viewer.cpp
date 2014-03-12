@@ -5,6 +5,8 @@
 #include "ospray/rv_module.h"
 // STL
 #include <vector>
+#include <map>
+
 // viewer widget
 #include "../../apps/util/glut3D/glut3D.h"
 // ospray
@@ -13,7 +15,7 @@
 #define TOK "\t ()\n\r"
 
 #define USE_GLUI 1
-#ifdef USE_GLUI
+#if USE_GLUI
 #include <GL/glui.h>
 #endif
 
@@ -72,8 +74,8 @@ namespace ospray {
       ospray::rv::Layer *layer = new ospray::rv::Layer[numLayers];
       layerEnable = new int[numLayers];
       for (int i=0;i<numLayers;i++) {
-        layer[i].min_z = layerZ[i][0];
-        layer[i].max_z = layerZ[i][1];
+        layer[i].lower_z = layerZ[i][0];
+        layer[i].upper_z = layerZ[i][1];
         layer[i].color = ospray::makeRandomColor(i+1234567);
       }
       ospray::rv::setLayers(layer,numLayers);
@@ -136,6 +138,7 @@ namespace ospray {
       {
         if (!initialized) {
           initialize();
+          setZUp(vec3f(0,0,1));
           initialized = true;
         }
         Glut3DWidget::reshape(newSize);
@@ -160,15 +163,14 @@ namespace ospray {
           viewPort.modified = false;
         }
 
-        PING;
-
-        // ospRenderFrame(fb,renderer);
+        ospray::rv::renderFrame();
     
         ucharFB = (unsigned int *)ospray::rv::mapFB();
         frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
         Glut3DWidget::display();
         ospray::rv::unmapFB();
-        // forceRedraw();
+
+        forceRedraw();
       }
 
       void initColorRanges();
@@ -228,7 +230,7 @@ namespace ospray {
     }
     void glui_shadeMode_changed(int ID)
     {
-      switch(ID) {
+      switch(shadeMode) {
       case 0: {
         ospray::rv::shadeByLayer();
       } break;
@@ -288,23 +290,6 @@ namespace ospray {
       }
 
       // -------------------------------------------------------
-      // glui->add_column();
-      GLUI_Panel *layerPanel = glui->add_panel("Model Layers");
-
-      GLUI_Panel *allOnOffPanel = glui->add_panel_to_panel(layerPanel,"all on/off");
-      glui->add_button_to_panel(allOnOffPanel,"all OFF",0,GLUI_CB(allOnOffCB));
-      glui->add_separator_to_panel(allOnOffPanel);
-      glui->add_button_to_panel(allOnOffPanel,"all ON",1,GLUI_CB(allOnOffCB));
-
-      for (int i=0;i<numLayers;i++) {
-        glui->add_checkbox_to_panel(layerPanel,layerName[i],
-                                    &layerEnable[i],
-                                    i,GLUI_CB(glui_layer_toggled));
-      }
-#if 1
-
-
-      // -------------------------------------------------------
       GLUI_Panel *shadeModePanel = glui->add_panel("Shade Mode");
       GLUI_RadioGroup *shadeModeRG
         = glui->add_radiogroup_to_panel(shadeModePanel,&shadeMode,-1,
@@ -312,7 +297,31 @@ namespace ospray {
       glui->add_radiobutton_to_group(shadeModeRG,"by layer");
       glui->add_radiobutton_to_group(shadeModeRG,"by net");
       glui->add_radiobutton_to_group(shadeModeRG,"by attribute");
-#endif
+
+
+
+
+
+
+      // -------------------------------------------------------
+      glui->add_column(true);
+      
+      GLUI_Panel *layerPanel = glui->add_panel("Model Layers");
+
+      glui->add_separator_to_panel(layerPanel);
+
+      // GLUI_Panel *allOnOffPanel = glui->add_panel_to_panel(layerPanel,"all on/off");
+      // glui->add_button_to_panel(allOnOffPanel,"all OFF",0,GLUI_CB(allOnOffCB));
+      // glui->add_separator_to_panel(allOnOffPanel);
+      // glui->add_button_to_panel(allOnOffPanel,"all ON",1,GLUI_CB(allOnOffCB));
+
+      for (int i=0;i<numLayers;i++) {
+        glui->add_checkbox_to_panel(layerPanel,layerName[i],
+                                    &layerEnable[i],
+                                    i,GLUI_CB(glui_layer_toggled));
+      }
+
+
 #endif
       ospray::rv::shadeByLayer();
     }
@@ -320,7 +329,7 @@ namespace ospray {
     void ResistorViewer::parseModelFile(const std::string &modelFileName)
     {
       Assert(resistorVec.empty());
-      cout << "Parsing resistor model file '" << modelFileName << "'" << endl;
+      cout << "#osp:rv_viewer: parsing resistor model file '" << modelFileName << "'" << endl;
 
       FILE *in = fopen(modelFileName.c_str(),"r");
       Assert(in);
@@ -363,6 +372,7 @@ namespace ospray {
       for (int i=0;i<attributeName.size();i++)
         cout << "[" << attributeName[i] << "]";
       cout << endl;
+      ospray::rv::setNumAttributesPerResistor(attributeName.size());
 
       Assert(llxID >= 0);
       Assert(llyID >= 0);
@@ -387,9 +397,15 @@ namespace ospray {
               if (!strcasecmp(*ln,tok))
                 { res.layerID = ln-layerName; break; }
             if ((int)res.layerID == -1) {
-              throw std::runtime_error("could not find layer "+std::string(tok));
+              static std::map<std::string,bool> alreadyWarned;
+              res.layerID = 0;
+              if (!alreadyWarned[tok]) {
+                cout << "#osp:rv: ***WARNING***: could not find layer "+std::string(tok) << endl;;
+                alreadyWarned[tok] = true;
+              }
+              // throw std::runtime_error("could not find layer "+std::string(tok));
             }
-            Assert((int)res.layerID != -1);
+            // Assert((int)res.layerID != -1);
           }
           else if (attrNum == llxID) res.coordinate.lower.x = atof(tok);
           else if (attrNum == llyID) res.coordinate.lower.y = atof(tok);
@@ -403,6 +419,7 @@ namespace ospray {
         Assert(attributeVec.size() == attributeName.size()*resistorVec.size());
       }
       cout << "#osp:rv_viewer: found " << resistorVec.size() << " resistors" << endl;
+      specifyResistors();
     }
 
     int viewerMain(int ac, const char **av)
@@ -411,7 +428,6 @@ namespace ospray {
       ospray::glut3D::initGLUT(&ac,av);
       specifyLayers();
       specifyNets();
-      specifyResistors();
 
       if (ac != 2)
         throw std::runtime_error("usage: ./ospRV <rvfile.xml>");

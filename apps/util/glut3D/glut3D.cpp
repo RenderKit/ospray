@@ -12,6 +12,7 @@ namespace ospray {
     /*! currently active window */
     Glut3DWidget *Glut3DWidget::activeWindow = NULL;
 
+<<<<<<< HEAD
     int g_width = 1024, g_height = 768;
 
     void error(const std::string &msg)
@@ -24,6 +25,10 @@ namespace ospray {
       exit(1);
     }
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
+=======
+    /*! viewport as specified on the command line */
+    Glut3DWidget::ViewPort *viewPortFromCmdLine = NULL;
+>>>>>>> 5b30effde5438376ae23b00a85445e3e4d2aed27
 
 
     // ------------------------------------------------------------------
@@ -165,6 +170,21 @@ namespace ospray {
         break;
       }
       Assert2(manipulator != NULL,"invalid initial manipulator mode");
+
+      if (viewPortFromCmdLine) {
+        viewPort = *viewPortFromCmdLine;
+
+        if (length(viewPort.up) < 1e-3f)
+          viewPort.up = vec3f(0,0,1.f);
+
+        this->worldBounds = worldBounds;
+        viewPort.frame.l.vy = normalize(viewPort.at - viewPort.from);
+        viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,viewPort.up));
+        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+        viewPort.frame.p    = viewPort.from;
+        viewPort.snapUp();
+        viewPort.modified = true;
+      }
     }
 
     void Glut3DWidget::setZUp(const vec3f &up)
@@ -229,20 +249,22 @@ namespace ospray {
       vec3f dir    = center - from;
       vec3f up     = viewPort.up;
 
-      viewPort.at    = center;
-      viewPort.from  = from;
-      viewPort.up    = up;
+      if (!viewPortFromCmdLine) {
+        viewPort.at    = center;
+        viewPort.from  = from;
+        viewPort.up    = up;
 
-      if (length(up) < 1e-3f)
-        up = vec3f(0,0,1.f);
+        if (length(up) < 1e-3f)
+          up = vec3f(0,0,1.f);
 
-      this->worldBounds = worldBounds;
-      viewPort.frame.l.vy = normalize(dir);
-      viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
-      viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
-      viewPort.frame.p    = from;
-      viewPort.snapUp();
-      viewPort.modified = true;
+        this->worldBounds = worldBounds;
+        viewPort.frame.l.vy = normalize(dir);
+        viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
+        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+        viewPort.frame.p    = from;
+        viewPort.snapUp();
+        viewPort.modified = true;
+      }
     }
 
     void Glut3DWidget::setTitle(const char *title)
@@ -277,6 +299,7 @@ namespace ospray {
     void initGLUT(int32 *ac, const char **av)
     {
       glutInit(ac, (char **) av);
+<<<<<<< HEAD
       for(int i = 1; i < *ac;i++)
       {
         std::string arg(av[i]);
@@ -325,6 +348,38 @@ namespace ospray {
         else
         {
           //error("unknown commandline arg");
+=======
+      for (int i=1;i<*ac;i++) {
+        if (!strcmp(av[i],"-vu")) {
+          if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+          viewPortFromCmdLine->up.x = atof(av[i+1]);
+          viewPortFromCmdLine->up.y = atof(av[i+2]);
+          viewPortFromCmdLine->up.z = atof(av[i+3]);
+          assert(i+3 < *ac);
+          removeArgs(*ac,(char **&)av,i,4);
+          --i;
+          continue;
+        }
+        if (!strcmp(av[i],"-vp")) {
+          if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+          viewPortFromCmdLine->from.x = atof(av[i+1]);
+          viewPortFromCmdLine->from.y = atof(av[i+2]);
+          viewPortFromCmdLine->from.z = atof(av[i+3]);
+          assert(i+3 < *ac);
+          removeArgs(*ac,(char **&)av,i,4);
+          --i;
+          continue;
+        }
+        if (!strcmp(av[i],"-vi")) {
+          if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+          viewPortFromCmdLine->at.x = atof(av[i+1]);
+          viewPortFromCmdLine->at.y = atof(av[i+2]);
+          viewPortFromCmdLine->at.z = atof(av[i+3]);
+          assert(i+3 < *ac);
+          removeArgs(*ac,(char **&)av,i,4);
+          --i;
+          continue;
+>>>>>>> 5b30effde5438376ae23b00a85445e3e4d2aed27
         }
       }
     }
@@ -549,6 +604,11 @@ namespace ospray {
 
     std::ostream &operator<<(std::ostream &o, const Glut3DWidget::ViewPort &cam)
     {
+      o << "// "
+        << " -vp " << cam.from.x << " " << cam.from.y << " " << cam.from.z 
+        << " -vi " << cam.at.x << " " << cam.at.y << " " << cam.at.z 
+        << " -vu " << cam.up.x << " " << cam.up.y << " " << cam.up.z 
+        << std::endl;
       o << "<viewPort>" << std::endl;
       o << "  <from>" << cam.from.x << " " << cam.from.y << " " << cam.from.z << "</from>" << std::endl;
       o << "  <at>" << cam.at.x << " " << cam.at.y << " " << cam.at.z << "</at>" << std::endl;

@@ -106,11 +106,11 @@ namespace ospray {
     return ospray::api::Device::current->frameBufferCreate(size,mode,swapChainDepth);
   }
 
-    //! load plugin <name> from shard lib libospray_module_<name>.so, or 
-  extern "C" void ospLoadPlugin(const char *pluginName)
+    //! load module <name> from shard lib libospray_module_<name>.so, or 
+  extern "C" error_t ospLoadModule(const char *moduleName)
   {
     ASSERT_DEVICE();
-    return ospray::api::Device::current->loadPlugin(pluginName);
+    return ospray::api::Device::current->loadModule(moduleName);
   }
 
   extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb)
@@ -273,6 +273,16 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
   }
+  extern "C" void ospSet1f(OSPObject _object, const char *id, float x)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setFloat(_object,id,x);
+  }
+  extern "C" void ospSet1i(OSPObject _object, const char *id, int32 x)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setInt(_object,id,x);
+  }
   extern "C" void ospSeti(OSPObject _object, const char *id, int x)
   {
     ASSERT_DEVICE();
@@ -301,6 +311,12 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     ospSetVec3i(_object,id,vec3f(x,y,z));
+  }
+  /*! add a data array to another object */
+  extern "C" void ospSetVoidPtr(OSPObject _object, const char *id, void *v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVoidPtr(_object,id,v);
   }
 
 
