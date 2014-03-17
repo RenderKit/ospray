@@ -267,7 +267,7 @@ inline vec3f cross(const vec3f &a, const vec3f &b)
 inline uniform vec3f normalize(const uniform vec3f &v) 
 { return v * (1.f/sqrt(dot(v,v))); }
 /*! compute and return normalized version of varying vec3f passed to this fct */
-inline vec3f normalize(const vec3f &v) 
+inline vec3f normalize(const vec3f v) 
 { return v * (1.f/sqrt(dot(v,v))); }
 
 

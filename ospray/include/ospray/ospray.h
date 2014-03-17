@@ -1,4 +1,14 @@
+/*! \defgroup ospray_api OSPRay Core API
+
+  \ingroup ospray
+
+  \brief Defines the public API for the OSPRay core 
+
+ */
+
 /*! \file ospray/ospray.h Public OSPRay API definition file (core components)
+
+  \ingroup ospray_api
 
   This file defines the public API for the OSPRay core. Since many of
   OSPRays components are intentionally realized in specific modules
@@ -14,6 +24,8 @@
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
 #include "common/math/bbox.h"
+
+/*! @{ \ingroup ospray_api */
 
 /*! namespace for classes in the public core API */
 namespace osp {
@@ -87,8 +99,6 @@ typedef osp::ManagedObject *OSPObject;
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
 
-/*! \defgroup cplusplus_api Public OSPRay Core API */
-/*! @{ */
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   void ospInit(int *ac, const char **av);

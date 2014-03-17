@@ -1,0 +1,35 @@
+/*! \defgroup mhtk_module Multi-Hit Traversal Kernel (MHTK) Module 
+
+  \ingroup ospray_modules
+
+  \brief Experimental module to provide some intial 'multi-hit traversal
+  kernel' for certain kinds of simulations that do not want to find
+  only the 'nearest' hit -- or 'any hit' -- along a ray, but rather
+  need the nearest 'N' such hit points along a ray. 
+  
+  \section Introduction
+
+  Experimental module to provide some intial 'multi-hit traversal
+  kernel' for certain kinds of simulations that do not want to find
+  only the 'nearest' hit -- or 'any hit' -- along a ray, but rather
+  need the nearest 'N' such hit points along a ray.
+
+  This module comes as a loadable plugin that provides:
+
+  - a interface and implementation for a multi-hit kernel
+    functionality, for both C and ISPC (see
+    multihit_kernel.[h,ih,cpp,ispc])
+
+  - a simple 'xray' viewer that demonstrates the use of the multi-hit
+    kernel by using it to find N hitpoints along each ray, and doing
+    some kind of volume rendering effect; again in both C and ISPC
+    variants (see xray_renderer.[h,ih,cpp,iscp])
+
+  - a loadable module (libospray_module_mhtk) that can be used
+    together with the msgView demo app, and that exports the renderers
+    'mhtk_xray_scalar' and 'mhtk_xray_ispc'. Call via
+    <code>
+    ./msgView --module mhtk <objfile> --renderer mhtk_xray_scalar
+    </code>
+
+ */
