@@ -13,6 +13,10 @@ namespace ospray {
   
   namespace mhtk {
 
+    /*! \defgroup mhtk_module_xray "XRay" Test Renderer for MHTK Module 
+      @ingroup mhtk_module
+      @{ */
+
     /*! \brief Scalar variant of the sample "XRay" renderer to test
         the multi-hit traversal kernel (\ref mhtk_module) */
     struct ScalarXRayRenderer : public TileRenderer {
@@ -53,5 +57,6 @@ namespace ospray {
       };
     };
 
+    /*! @} */
   }
 }

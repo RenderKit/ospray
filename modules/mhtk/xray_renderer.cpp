@@ -12,6 +12,8 @@
 namespace ospray {
   namespace mhtk {
 
+    /*! \addtogroup mhtk_module_xray
+      @{ */
     STATS(int64 numTotalFound=-1);
     STATS(int64 maxFound=-1);
     STATS(int64 numAnyFound=-1);
@@ -123,11 +125,9 @@ namespace ospray {
 
     OSP_REGISTER_RENDERER(ISPCXRayRenderer,mhtk_xray_ispc);
     OSP_REGISTER_RENDERER(ScalarXRayRenderer,mhtk_xray_scalar);
+
+    /*! @} */
   }
 
-  extern "C" void ospray_init_module_mhtk() 
-  {
-    printf("Loaded 'multi-hit traversal kernel' (mhtk) plugin ...\n");
-  }
 };
 

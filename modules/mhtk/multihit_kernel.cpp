@@ -21,12 +21,10 @@ namespace ospray {
   namespace mhtk {
     using namespace embree;
 
-    /*! \addtogroup mhtk_module_c
-     * @{ */
-
-
-
-    /*! Intersect a ray with the 4 triangles, and update hit array */
+    /*! \brief Intersect a ray with the 4 triangles, and update hit array 
+      
+     \ingroup mhtk_module_c 
+    */
     static __forceinline void MultiHit_intersect1(embree::Ray     &ray, 
                                                   const Triangle4 &tri, 
                                                   void            *geom,
@@ -34,14 +32,6 @@ namespace ospray {
                                                   HitInfo         *hitArray,
                                                   size_t           hitArraySize)
     {
-// #if 1
-// #else
-//         // original embree code
-//         ray_far = ray.tfar;
-//         PRINT(ray_far);
-// #endif
-
-
       /* calculate denominator */
       STAT3(normal.trav_prims,1,1,1);
       const sse3f O = sse3f(ray.org);
@@ -120,53 +110,20 @@ namespace ospray {
         hitArray[insertPos].primID = primID;
         hitArray[insertPos].geomID = geomID;
         hitArray[insertPos].Ng = Ng;
-
-          // for (int i=0;i<numHitsFound;i++)
-          //   for (int j=i+1;j<numHitsFound;j++)
-          //     if (hitArray[i].primID == hitArray[j].primID &&
-          //         hitArray[i].geomID == hitArray[j].geomID) {
-          //       PING;
-          //     }
       }
     }
 
 
 
-    /*! \brief scalar single-ray implementation of the multi-hit kernel */
+    /*! \brief scalar single-ray implementation of the multi-hit kernel
+
+      \ingroup mhtk_module_c  */
     size_t multiHitKernel(RTCScene      _scene,
                           Ray          &_ray,
                           HitInfo      *hitArray,
                           size_t        hitArraySize)
     {
-// #if 1
-//       float t0 = ray.tnear;
-//       float t1 = ray.tfar;
-//       size_t numHitsFound = 0;
-//       while (1) {
-//         rtcIntersect(scene,(RTCRay&)ray);
-//         if (ray.primID == -1)
-//           return numHitsFound;
-//         hitArray[numHitsFound].primID = ray.primID;
-//         hitArray[numHitsFound].geomID = ray.geomID;
-//         hitArray[numHitsFound].u = ray.u;
-//         hitArray[numHitsFound].v = ray.v;
-//         hitArray[numHitsFound].t = ray.tfar;
-//         hitArray[numHitsFound].Ng = ray.Ng;
-//         numHitsFound++;
-//         if (numHitsFound == hitArraySize) 
-//           return numHitsFound;
-//         ray.tnear = (ray.tfar*1.00001f) + 1e-6f;
-//         ray.tfar = t1;
-//         if (ray.tnear >= ray.tfar) 
-//           return numHitsFound;
-//         ray.primID = -1;
-//         ray.geomID = -1;
-//         ray.instID = -1;
-//       }
-//       return 0;
-// #endif      
       typedef embree::Triangle4Intersector1MoellerTrumbore PrimitiveIntersector;
-      // typedef PrimitiveIntersector::Precalculations Precalculations;
       typedef PrimitiveIntersector::Primitive Primitive;
       typedef BVH4::NodeRef NodeRef;
       typedef BVH4::Node Node;
@@ -194,22 +151,6 @@ namespace ospray {
       const size_t nearY = ray.dir.y >= 0.0f ? 2*sizeof(ssef) : 3*sizeof(ssef);
       const size_t nearZ = ray.dir.z >= 0.0f ? 4*sizeof(ssef) : 5*sizeof(ssef);
       
-// #if 0 // FIXME: why is this slower
-//       /*! load the ray */
-//       Vec3fa ray_org = ray.org;
-//       Vec3fa ray_dir = ray.dir;
-//       ssef ray_near  = max(ray.tnear,FLT_MIN); // we do not support negative tnear values in this kernel due to integer optimizations
-//       ssef ray_far   = ray.tfar; 
-// #if defined(__FIX_RAYS__)
-//       const float float_range = 0.1f*FLT_MAX;
-//       ray_org = clamp(ray_org,Vec3fa(-float_range),Vec3fa(+float_range));
-//       ray_dir = clamp(ray_dir,Vec3fa(-float_range),Vec3fa(+float_range));
-//       ray_far = min(ray_far,float(inf)); 
-// #endif
-//       const Vec3fa ray_rdir = rcp_safe(ray_dir);
-//       const sse3f org(ray_org), dir(ray_dir);
-//       const sse3f norg(-ray_org), rdir(ray_rdir), org_rdir(ray_org*ray_rdir);
-// #else
       /*! load the ray into SIMD registers */
       const sse3f norg(-ray.org.x,-ray.org.y,-ray.org.z);
       const Vec3fa ray_rdir = rcp_safe(ray.dir);
@@ -218,7 +159,6 @@ namespace ospray {
       const sse3f org_rdir(ray_org_rdir.x,ray_org_rdir.y,ray_org_rdir.z);
       const ssef  ray_near(ray.tnear);
       ssef ray_far(ray.tfar);
-// #endif
 
       /* pop loop */
       while (true) pop:
@@ -325,43 +265,18 @@ namespace ospray {
         STAT3(normal.trav_leaves,1,1,1);
         size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
         for (int pi=0;pi<num;pi++)
-          MultiHit_intersect1(//pre,
-                              ray,prim[pi],bvh->geometry,
+          MultiHit_intersect1(ray,prim[pi],bvh->geometry,
                               numHitsFound,hitArray,hitArraySize);
-        // PrimitiveIntersector::intersect(pre,ray,prim,num,bvh->geometry);
-// #if 1
-//         size_t insertPos = numHitsFound-1;
-//         ++numHitsFound;
-//         if (numHitsFound >= hitArraySize) {
-//           std::cerr << "too many hits in multi-hit kernel" << std::endl;
-//           exit(1);
-//         }
-//         while ((insertPos > 0) && (hitArray[insertPos].t > ray.tfar)) {
-//           hitArray[insertPos] = hitArray[insertPos-1];
-//           --insertPos;
-//         }
-//         hitArray[insertPos].t = ray.tfar;
-//         hitArray[insertPos].u = ray.u;
-//         hitArray[insertPos].v = ray.v;
-//         hitArray[insertPos].primID = ray.primID;
-//         hitArray[insertPos].geomID = ray.geomID;
-//         hitArray[insertPos].Ng = ray.Ng;
-//         ray.tfar = org_ray_far;
-//         numHitsFound++;
-// #else
-//         // original embree code
-//         ray_far = ray.tfar;
-//         PRINT(ray_far);
-// #endif
       }
       AVX_ZERO_UPPER();
 
       return numHitsFound;
     }
 
-    //! 8-wide version of ISPC MHTKHit */
-    struct MHTKHit8 {
-      avxf t; //!< distance along the ray
+    /*! \brief 8-wide version of ISPC MHTKHit
+      \ingroup mhtk_module_c  */
+    struct HitInfo8 {
+      avxf t; 
       avxf u;
       avxf v;
       avxi primID;
@@ -372,7 +287,9 @@ namespace ospray {
     /*! \brief hand-optimized version of the 8-wide multi-hit kernel
 
       For 8-wide AVX/AVX2 targets, the ISPC multihit kernel will call
-      back into this function */
+      back into this function
+
+      \ingroup mhtk_module_c  */
     extern "C" 
     void handcoded_multiHitKernel8(void * _valid, 
                                    void * _retValue,
@@ -384,7 +301,7 @@ namespace ospray {
       avxb &valid = *(avxb*)_valid;
       avxi &retValue = *(avxi*)_retValue;
       HitInfo hitArray1[hitArraySize];
-      MHTKHit8 *hitArray8 = (MHTKHit8 *)_hitArray;
+      HitInfo8 *hitArray8 = (HitInfo8 *)_hitArray;
       ospray::Ray  ray1;
       embree::Ray8 ray8 = *(embree::Ray8*)_ray;
       
@@ -416,5 +333,11 @@ namespace ospray {
       }
     }
     
+    /*! \brief module initialization function \ingroup module_mhtk */
+    extern "C" void ospray_init_module_mhtk() 
+    {
+      printf("Loaded 'multi-hit traversal kernel' (mhtk) plugin ...\n");
+    }
+
   }
 }
