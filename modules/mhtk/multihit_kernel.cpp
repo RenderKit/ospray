@@ -4,7 +4,11 @@
 #include "multihit_kernel.h"
 // embree (simd classes, data structures)
 #include "common/simd/avxf.h"
+#ifdef __AVX2__
 #include "common/simd/avxi.h"
+#else
+#include "common/simd/avxi_emu.h"
+#endif
 #include "common/simd/avxb.h"
 #include "common/scene.h"
 #include "kernels/xeon/bvh4/bvh4_intersector8_hybrid.h"
@@ -12,8 +16,11 @@
 #include "kernels/xeon/geometry/triangle4_intersector8_moeller.h"
 #include "kernels/xeon/geometry/triangle1_intersector1_moeller.h"
 
+#ifdef __AVX2__
 typedef embree::avx2::BVH4Intersector8Hybrid<embree::Triangle4Intersector8MoellerTrumbore> MyIsec;
-
+#else
+typedef embree::avx::BVH4Intersector8Hybrid<embree::Triangle4Intersector8MoellerTrumbore> MyIsec;
+#endif
 
 #define SWITCH_THRESHOLD 6
 

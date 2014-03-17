@@ -7,7 +7,7 @@
 // ospray stuff
 #include "../../ospray/common/ray.h"
 
-#define STATS(a)  
+#define STATS(a)   a
 
 namespace ospray {
   namespace mhtk {
