@@ -31,7 +31,7 @@ PROJECT_NAME           = "OSPRay"
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = "V0.0.2, Jan 8, 2014"
+PROJECT_NUMBER         = "V0.1.0, Mar 17, 2014"
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.

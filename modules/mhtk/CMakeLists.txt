@@ -2,7 +2,8 @@ SET(MODULE_MHTK OFF CACHE BOOL "Build 'MHTK' module")
 
 IF (MODULE_MHTK)
 	CONFIGURE_OSPRAY()
-	if (NOT THIS_IS_MIC)
+	IF ((${OSPRAY_TARGET} STREQUAL "AVX") OR (${OSPRAY_TARGET} STREQUAL "AVX2"))
+#	if (NOT THIS_IS_MIC)
 		INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
 		INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
@@ -20,5 +21,7 @@ IF (MODULE_MHTK)
 			xray_renderer.ispc
 			)
 		TARGET_LINK_LIBRARIES(ospray_module_mhtk ospray)
+	ELSE()
+		MESSAGE("MHTK module right now only works under AVX or AVX2 targets")
 	ENDIF()
 ENDIF()

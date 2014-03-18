@@ -5,10 +5,11 @@
 // embree (simd classes, data structures)
 #include "common/simd/avxf.h"
 #ifdef __AVX2__
-#include "common/simd/avxi.h"
+# include "common/simd/avxi.h"
 #else
-#include "common/simd/avxi_emu.h"
+# include "common/simd/avxi_emu.h"
 #endif
+
 #include "common/simd/avxb.h"
 #include "common/scene.h"
 #include "kernels/xeon/bvh4/bvh4_intersector8_hybrid.h"
@@ -22,7 +23,13 @@ typedef embree::avx2::BVH4Intersector8Hybrid<embree::Triangle4Intersector8Moelle
 typedef embree::avx::BVH4Intersector8Hybrid<embree::Triangle4Intersector8MoellerTrumbore> MyIsec;
 #endif
 
-#define SWITCH_THRESHOLD 6
+/*! if defined, the multihit kernel will do some additional checks
+  that we'll never add the same triangle twice, even if spatial
+  splits are enabled. if 'RTC_SCENE_HIGH_QUALITY' is not specified
+  (see ospray/common/model.cpp) this is not required, and only
+  introduces overhead. */
+//#define TOLERATE_SPATIAL_SPLIT_BVHS 1
+
 
 namespace ospray {
   namespace mhtk {
@@ -30,7 +37,7 @@ namespace ospray {
 
     /*! \brief Intersect a ray with the 4 triangles, and update hit array 
       
-     \ingroup mhtk_module_c 
+      \ingroup mhtk_module_c 
     */
     static __forceinline void MultiHit_intersect1(embree::Ray     &ray, 
                                                   const Triangle4 &tri, 
@@ -83,8 +90,9 @@ namespace ospray {
 
         const int geomID = tri.geomID[triID];
         const int primID = tri.primID[triID];
+        const float ti = t[triID];
 
-#if 1
+#if TOLERATE_SPATIAL_SPLIT_BVHS
         // BUGFIX: SEEMS BVH4 HAS SAME PRIM/GEOM MULTIPLE TIMES. FIX TEMPORARILY HERE!
         bool alreadyFound = false;
         for (int i=0;i<numHitsFound;i++) 
@@ -93,33 +101,45 @@ namespace ospray {
           }
         if (alreadyFound) continue;
 #endif       
-
-        ++numHitsFound;
-        if (numHitsFound >= hitArraySize) {
-          std::cerr << "too many hits in multi-hit kernel" << std::endl;
-          exit(1);
-        }
-
-        size_t insertPos = numHitsFound-1;
-        const float ti = t[triID];
-        while ((insertPos > 0) && (ti < hitArray[insertPos-1].t)) {
-            // (avxf&)hitArray[insertPos] = (avxf&)hitArray[insertPos-1];
-          hitArray[insertPos] = hitArray[insertPos-1];
-          --insertPos;
-        }
-
+        
         const Vec3fa Ng = Vec3fa(tri.Ng.x[triID],tri.Ng.y[triID],tri.Ng.z[triID]);
-
-        /* update hit array */
-        hitArray[insertPos].t = ti;
-        hitArray[insertPos].u = u[triID];
-        hitArray[insertPos].v = v[triID];
-        hitArray[insertPos].primID = primID;
-        hitArray[insertPos].geomID = geomID;
-        hitArray[insertPos].Ng = Ng;
+        if (numHitsFound == hitArraySize) {
+          // array is already full, check if we have to add this one at all!
+          if (ti < hitArray[hitArraySize-1].t) {
+            // OK, we have to add...
+            size_t insertPos = hitArraySize-1;
+            while ((insertPos > 0) && (ti < hitArray[insertPos-1].t)) {
+              hitArray[insertPos] = hitArray[insertPos-1];
+              --insertPos;
+            }
+            
+            if (insertPos < hitArraySize) {
+              /* update hit array */
+              hitArray[insertPos].u = u[triID];
+              hitArray[insertPos].v = v[triID];
+              hitArray[insertPos].primID = primID;
+              hitArray[insertPos].geomID = geomID;
+              hitArray[insertPos].Ng = Ng;
+            }
+          }
+        } else {
+          size_t insertPos = numHitsFound;
+          ++numHitsFound;
+          while ((insertPos > 0) && (ti < hitArray[insertPos-1].t)) {
+            hitArray[insertPos] = hitArray[insertPos-1];
+            --insertPos;
+          }
+          
+          /* update hit array */
+          hitArray[insertPos].u = u[triID];
+          hitArray[insertPos].v = v[triID];
+          hitArray[insertPos].primID = primID;
+          hitArray[insertPos].geomID = geomID;
+          hitArray[insertPos].Ng = Ng;
+        }
       }
     }
-
+    
 
 
     /*! \brief scalar single-ray implementation of the multi-hit kernel
@@ -169,112 +189,112 @@ namespace ospray {
 
       /* pop loop */
       while (true) pop:
-      {
-        /*! pop next node */
-        if (unlikely(stackPtr == stack)) break;
-        stackPtr--;
-        NodeRef cur = NodeRef(stackPtr->ptr);
-        
-        /*! if popped node is too far, pop next one */
-        if (unlikely(*(float*)&stackPtr->dist > ray.tfar))
-          continue;
-        
-        /* downtraversal loop */
-        while (true)
         {
-          /*! stop if we found a leaf */
-          if (unlikely(cur.isLeaf())) break;
-          STAT3(normal.trav_nodes,1,1,1);
+          /*! pop next node */
+          if (unlikely(stackPtr == stack)) break;
+          stackPtr--;
+          NodeRef cur = NodeRef(stackPtr->ptr);
+        
+          /*! if popped node is too far, pop next one */
+          if (unlikely(*(float*)&stackPtr->dist > ray.tfar))
+            continue;
+        
+          /* downtraversal loop */
+          while (true)
+            {
+              /*! stop if we found a leaf */
+              if (unlikely(cur.isLeaf())) break;
+              STAT3(normal.trav_nodes,1,1,1);
           
-          /*! single ray intersection with 4 boxes */
-          const Node* node = cur.node();
-          const size_t farX  = nearX ^ 16, farY  = nearY ^ 16, farZ  = nearZ ^ 16;
+              /*! single ray intersection with 4 boxes */
+              const Node* node = cur.node();
+              const size_t farX  = nearX ^ 16, farY  = nearY ^ 16, farZ  = nearZ ^ 16;
 #if defined (__AVX2__)
-          const ssef tNearX = msub(load4f((const char*)node+nearX), rdir.x, org_rdir.x);
-          const ssef tNearY = msub(load4f((const char*)node+nearY), rdir.y, org_rdir.y);
-          const ssef tNearZ = msub(load4f((const char*)node+nearZ), rdir.z, org_rdir.z);
-          const ssef tFarX  = msub(load4f((const char*)node+farX ), rdir.x, org_rdir.x);
-          const ssef tFarY  = msub(load4f((const char*)node+farY ), rdir.y, org_rdir.y);
-          const ssef tFarZ  = msub(load4f((const char*)node+farZ ), rdir.z, org_rdir.z);
+              const ssef tNearX = msub(load4f((const char*)node+nearX), rdir.x, org_rdir.x);
+              const ssef tNearY = msub(load4f((const char*)node+nearY), rdir.y, org_rdir.y);
+              const ssef tNearZ = msub(load4f((const char*)node+nearZ), rdir.z, org_rdir.z);
+              const ssef tFarX  = msub(load4f((const char*)node+farX ), rdir.x, org_rdir.x);
+              const ssef tFarY  = msub(load4f((const char*)node+farY ), rdir.y, org_rdir.y);
+              const ssef tFarZ  = msub(load4f((const char*)node+farZ ), rdir.z, org_rdir.z);
 #else
-          const ssef tNearX = (norg.x + load4f((const char*)node+nearX)) * rdir.x;
-          const ssef tNearY = (norg.y + load4f((const char*)node+nearY)) * rdir.y;
-          const ssef tNearZ = (norg.z + load4f((const char*)node+nearZ)) * rdir.z;
-          const ssef tFarX  = (norg.x + load4f((const char*)node+farX )) * rdir.x;
-          const ssef tFarY  = (norg.y + load4f((const char*)node+farY )) * rdir.y;
-          const ssef tFarZ  = (norg.z + load4f((const char*)node+farZ )) * rdir.z;
+              const ssef tNearX = (norg.x + load4f((const char*)node+nearX)) * rdir.x;
+              const ssef tNearY = (norg.y + load4f((const char*)node+nearY)) * rdir.y;
+              const ssef tNearZ = (norg.z + load4f((const char*)node+nearZ)) * rdir.z;
+              const ssef tFarX  = (norg.x + load4f((const char*)node+farX )) * rdir.x;
+              const ssef tFarY  = (norg.y + load4f((const char*)node+farY )) * rdir.y;
+              const ssef tFarZ  = (norg.z + load4f((const char*)node+farZ )) * rdir.z;
 #endif
 
 #if defined(__SSE4_1__)
-          const ssef tNear = maxi(maxi(tNearX,tNearY),maxi(tNearZ,ray_near));
-          const ssef tFar  = mini(mini(tFarX ,tFarY ),mini(tFarZ ,ray_far ));
-          const sseb vmask = cast(tNear) > cast(tFar);
-          size_t mask = movemask(vmask)^0xf;
+              const ssef tNear = maxi(maxi(tNearX,tNearY),maxi(tNearZ,ray_near));
+              const ssef tFar  = mini(mini(tFarX ,tFarY ),mini(tFarZ ,ray_far ));
+              const sseb vmask = cast(tNear) > cast(tFar);
+              size_t mask = movemask(vmask)^0xf;
 #else
-          const ssef tNear = max(tNearX,tNearY,tNearZ,ray_near);
-          const ssef tFar  = min(tFarX ,tFarY ,tFarZ ,ray_far);
-          const sseb vmask = tNear <= tFar;
-          size_t mask = movemask(vmask);
+              const ssef tNear = max(tNearX,tNearY,tNearZ,ray_near);
+              const ssef tFar  = min(tFarX ,tFarY ,tFarZ ,ray_far);
+              const sseb vmask = tNear <= tFar;
+              size_t mask = movemask(vmask);
 #endif
           
-          /*! if no child is hit, pop next node */
-          if (unlikely(mask == 0))
-            goto pop;
+              /*! if no child is hit, pop next node */
+              if (unlikely(mask == 0))
+                goto pop;
           
-          /*! one child is hit, continue with that child */
-          size_t r = __bscf(mask);
-          if (likely(mask == 0)) {
-            cur = node->child(r); cur.prefetch();
-            assert(cur != BVH4::emptyNode);
-            continue;
-          }
+              /*! one child is hit, continue with that child */
+              size_t r = __bscf(mask);
+              if (likely(mask == 0)) {
+                cur = node->child(r); cur.prefetch();
+                assert(cur != BVH4::emptyNode);
+                continue;
+              }
           
-          /*! two children are hit, push far child, and continue with closer child */
-          NodeRef c0 = node->child(r); c0.prefetch(); const unsigned int d0 = ((unsigned int*)&tNear)[r];
-          r = __bscf(mask);
-          NodeRef c1 = node->child(r); c1.prefetch(); const unsigned int d1 = ((unsigned int*)&tNear)[r];
-          assert(c0 != BVH4::emptyNode);
-          assert(c1 != BVH4::emptyNode);
-          if (likely(mask == 0)) {
-            assert(stackPtr < stackEnd); 
-            if (d0 < d1) { stackPtr->ptr = c1; stackPtr->dist = d1; stackPtr++; cur = c0; continue; }
-            else         { stackPtr->ptr = c0; stackPtr->dist = d0; stackPtr++; cur = c1; continue; }
-          }
+              /*! two children are hit, push far child, and continue with closer child */
+              NodeRef c0 = node->child(r); c0.prefetch(); const unsigned int d0 = ((unsigned int*)&tNear)[r];
+              r = __bscf(mask);
+              NodeRef c1 = node->child(r); c1.prefetch(); const unsigned int d1 = ((unsigned int*)&tNear)[r];
+              assert(c0 != BVH4::emptyNode);
+              assert(c1 != BVH4::emptyNode);
+              if (likely(mask == 0)) {
+                assert(stackPtr < stackEnd); 
+                if (d0 < d1) { stackPtr->ptr = c1; stackPtr->dist = d1; stackPtr++; cur = c0; continue; }
+                else         { stackPtr->ptr = c0; stackPtr->dist = d0; stackPtr++; cur = c1; continue; }
+              }
           
-          /*! Here starts the slow path for 3 or 4 hit children. We push
-           *  all nodes onto the stack to sort them there. */
-          assert(stackPtr < stackEnd); 
-          stackPtr->ptr = c0; stackPtr->dist = d0; stackPtr++;
-          assert(stackPtr < stackEnd); 
-          stackPtr->ptr = c1; stackPtr->dist = d1; stackPtr++;
+              /*! Here starts the slow path for 3 or 4 hit children. We push
+               *  all nodes onto the stack to sort them there. */
+              assert(stackPtr < stackEnd); 
+              stackPtr->ptr = c0; stackPtr->dist = d0; stackPtr++;
+              assert(stackPtr < stackEnd); 
+              stackPtr->ptr = c1; stackPtr->dist = d1; stackPtr++;
           
-          /*! three children are hit, push all onto stack and sort 3 stack items, continue with closest child */
-          assert(stackPtr < stackEnd); 
-          r = __bscf(mask);
-          NodeRef c = node->child(r); c.prefetch(); unsigned int d = ((unsigned int*)&tNear)[r]; stackPtr->ptr = c; stackPtr->dist = d; stackPtr++;
-          assert(c != BVH4::emptyNode);
-          if (likely(mask == 0)) {
-            sort(stackPtr[-1],stackPtr[-2],stackPtr[-3]);
-            cur = (NodeRef) stackPtr[-1].ptr; stackPtr--;
-            continue;
-          }
+              /*! three children are hit, push all onto stack and sort 3 stack items, continue with closest child */
+              assert(stackPtr < stackEnd); 
+              r = __bscf(mask);
+              NodeRef c = node->child(r); c.prefetch(); unsigned int d = ((unsigned int*)&tNear)[r]; stackPtr->ptr = c; stackPtr->dist = d; stackPtr++;
+              assert(c != BVH4::emptyNode);
+              if (likely(mask == 0)) {
+                sort(stackPtr[-1],stackPtr[-2],stackPtr[-3]);
+                cur = (NodeRef) stackPtr[-1].ptr; stackPtr--;
+                continue;
+              }
           
-          /*! four children are hit, push all onto stack and sort 4 stack items, continue with closest child */
-          assert(stackPtr < stackEnd); 
-          r = __bscf(mask);
-          c = node->child(r); c.prefetch(); d = *(unsigned int*)&tNear[r]; stackPtr->ptr = c; stackPtr->dist = d; stackPtr++;
-          assert(c != BVH4::emptyNode);
-          sort(stackPtr[-1],stackPtr[-2],stackPtr[-3],stackPtr[-4]);
-          cur = (NodeRef) stackPtr[-1].ptr; stackPtr--;
-        }
+              /*! four children are hit, push all onto stack and sort 4 stack items, continue with closest child */
+              assert(stackPtr < stackEnd); 
+              r = __bscf(mask);
+              c = node->child(r); c.prefetch(); d = *(unsigned int*)&tNear[r]; stackPtr->ptr = c; stackPtr->dist = d; stackPtr++;
+              assert(c != BVH4::emptyNode);
+              sort(stackPtr[-1],stackPtr[-2],stackPtr[-3],stackPtr[-4]);
+              cur = (NodeRef) stackPtr[-1].ptr; stackPtr--;
+            }
         
-        /*! this is a leaf node */
-        STAT3(normal.trav_leaves,1,1,1);
-        size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
-        for (int pi=0;pi<num;pi++)
-          MultiHit_intersect1(ray,prim[pi],bvh->geometry,
-                              numHitsFound,hitArray,hitArraySize);
-      }
+          /*! this is a leaf node */
+          STAT3(normal.trav_leaves,1,1,1);
+          size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
+          for (int pi=0;pi<num;pi++)
+            MultiHit_intersect1(ray,prim[pi],bvh->geometry,
+                                numHitsFound,hitArray,hitArraySize);
+        }
       AVX_ZERO_UPPER();
 
       return numHitsFound;

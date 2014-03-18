@@ -8,13 +8,13 @@
 #include "render/util.ih"
 #include "multihit_kernel.ih"
 
-#define MAX_HITS_PER_TRACE 400
+#define MAX_HITS_PER_TRACE 100
 
 inline vec4f XRayRenderer_trace(Ray &ray, RTCScene scene)
 {
   MHTKHit hitArray[MAX_HITS_PER_TRACE];
   const int32 numHits = multiHitKernel(scene,ray,hitArray,MAX_HITS_PER_TRACE);
-#if 1
+#if 0
   return make_vec4f(make_random_color(numHits));
 #else
   float color = 0.f;
