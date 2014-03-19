@@ -21,6 +21,8 @@ IF (MODULE_MHTK)
 			xray_renderer.ispc
 			)
 		TARGET_LINK_LIBRARIES(ospray_module_mhtk ospray)
+	ELSEIF(THIS_IS_MIC)
+		# no warning for MIC - not built on MIC riht now
 	ELSE()
 		MESSAGE("MHTK module right now only works under AVX or AVX2 targets")
 	ENDIF()
