@@ -17,7 +17,7 @@ namespace ospray {
        parameter. at some point we probably want to have voluems
        embedded in models - possibly with transformation attached to
        them - but for now let's do this as simple as possible */
-    WrapperVolume *volume = (WrapperVolume *)getParam("volume",NULL);
+    Volume *volume = (Volume *)getParam("volume",NULL);
     Assert(volume && "null volume handle in 'dvr' renderer "
            "(did you forget to assign a 'volume' parameter to the renderer?)");
     void *_volume = (void*)volume->getIE();
@@ -47,7 +47,7 @@ namespace ospray {
        parameter. at some point we probably want to have voluems
        embedded in models - possibly with transformation attached to
        them - but for now let's do this as simple as possible */
-    WrapperVolume *volume = (WrapperVolume *)getParam("volume",NULL);
+    Volume *volume = (Volume *)getParam("volume",NULL);
     Assert(volume && "null volume handle in 'dvr' renderer "
            "(did you forget to assign a 'volume' parameter to the renderer?)");
 
@@ -57,7 +57,7 @@ namespace ospray {
 
     TileJob *tj = new TileJob;
     tj->camera = camera;
-    tj->volume = volume->internalRep;
+    tj->volume = volume; //volume->getIE();
     return tj;
   }
 
@@ -96,8 +96,8 @@ inline void boxtest(const Ray &ray,
                            Volume *volume)
   {
     // PING;
-    const box3f bbox = box3f(vec3f(0.f),vec3f(volume->size)*.99999f);
-    const vec3f rdir  = rcp((const vec3f&)ray.dir);
+    const box3f bbox = box3f(vec3f(0.f),vec3f(.99999f));
+    const vec3f rdir = rcp((const vec3f&)ray.dir);
     // PRINT(bbox);
     // PRINT(ray.org);
     // PRINT(rdir);

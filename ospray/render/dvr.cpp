@@ -15,7 +15,7 @@ namespace ospray {
        parameter. at some point we probably want to have voluems
        embedded in models - possibly with transformation attached to
        them - but for now let's do this as simple as possible */
-    WrapperVolume *volume = (WrapperVolume *)getParam("volume",NULL);
+    Volume *volume = (Volume *)getParam("volume",NULL);
     Assert(volume && "null volume handle in 'dvr' renderer "
            "(did you forget to assign a 'volume' parameter to the renderer?)");
     void *_volume = (void*)volume->getIE();

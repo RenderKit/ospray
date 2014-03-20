@@ -49,14 +49,12 @@ namespace ospray {
       ospCommit(camera);
       ospCommit(camera);
 
-
-      volume = ospNewVolume("ignoredForNow");
+      volume = ospNewVolume("naive32-float");
       Assert(volume && "null volume handle");
       ospSet3i(volume,"dimensions",dims.x,dims.y,dims.z);
-      ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
+      // ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
       ospSetString(volume,"filename",fileName.c_str());
       ospCommit(volume);
-
 
       renderer = ospNewRenderer(renderType);
       Assert2(renderer,"could not create renderer");

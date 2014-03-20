@@ -41,9 +41,12 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	camera/perspectivecamera.cpp
 
 	volume/volume.ispc
-	volume/bricked32.ispc
+#	volume/bricked32.ispc
 	volume/naive32.ispc
 	volume/volume.cpp
+#	volume/bricked32.cpp
+	volume/naive32.cpp
+#	volume/importers.cpp
 
 	geometry/geometry.cpp
 	geometry/trianglemesh.cpp

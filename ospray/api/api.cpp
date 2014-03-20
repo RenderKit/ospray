@@ -229,7 +229,7 @@ namespace ospray {
     OSPVolume volume = ospray::api::Device::current->newVolume(type);
     if (ospray::logLevel > 0)
       if (volume) 
-        cout << "ospNewVolume: " << ((ospray::WrapperVolume*)volume)->toString() << endl;
+        cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
       else
         std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
     return volume;
