@@ -35,9 +35,10 @@ inline void boxtest(const Ray &ray,
 //! do direct volume rendering via ray casting 
 /*! \internal this is code adapted from some earlier code that was mostly written by aaron knoll */
 inline vec4f traceRayDVR(const Ray &ray, 
-                        uniform Volume *uniform volume)
+                         uniform Volume *uniform volume,
+                         uniform float dt)
 {
-  const uniform box3f box = make_box3f(make_vec3f(0.f),volume->clampSize);
+  const uniform box3f box = make_box3f(make_vec3f(0.f),make_vec3f(1.f)); //volume->clampSize);
   const vec3f rdir = rcp(ray.dir);
   
   vec4f color = make_vec4f(0.f);
@@ -48,7 +49,7 @@ inline vec4f traceRayDVR(const Ray &ray,
   // print("texit %\n",texit);
   if (tenter >= texit) return color;
 
-  float step_size = .5;
+  float step_size = dt;//.5;
 
   float t0, t1;
   float f0 = 0.0;
@@ -59,7 +60,7 @@ inline vec4f traceRayDVR(const Ray &ray,
     // print("t %\n",t1);
     t1 += step_size;
 
-    const vec3f p1 = ray.org + t1 * ray.dir;
+    const vec3f p1 = volume->clampSize * (ray.org + t1 * ray.dir);
     const float f1 = volume->lerpf(volume, p1);
 
     vec4f color_sample = make_vec4f(f1); //f1 * make_vec4f(1); //, f1);
@@ -75,7 +76,8 @@ inline vec4f traceRayDVR(const Ray &ray,
 
 export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
                                              void *uniform _camera,
-                                             void *uniform _volume)
+                                             void *uniform _volume,
+                                             uniform float dt)
 {
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
@@ -99,7 +101,7 @@ export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
 
-      const vec4f col = traceRayDVR(ray,volume);
+      const vec4f col = traceRayDVR(ray,volume,dt);
       // print("org \n% \n% \n%\n",ray.org.x,ray.org.y,ray.org.z);
       // print("dir \n% \n% \n%\n",ray.dir.x,ray.dir.y,ray.dir.z);
 #if 1

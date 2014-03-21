@@ -5,7 +5,10 @@
 #include "../../ospray/common/ray.h"
 
 namespace ospray {
-  extern "C" void ispc__ISPCDVRRenderer_renderTile(void *tile, void *camera, void *volume);
+  extern "C" void ispc__ISPCDVRRenderer_renderTile(void *tile, 
+                                                   void *camera, 
+                                                   void *volume, 
+                                                   float dt);
 
   TileRenderer::RenderJob *ISPCDVRRenderer::createRenderJob(FrameBuffer *fb)
   {
@@ -65,7 +68,7 @@ namespace ospray {
 
   void ISPCDVRRenderer::TileJob::renderTile(Tile &tile)
   {
-    ispc__ISPCDVRRenderer_renderTile(&tile,ispc_camera,ispc_volume);
+    ispc__ISPCDVRRenderer_renderTile(&tile,ispc_camera,ispc_volume,dt);
   }
 
 
