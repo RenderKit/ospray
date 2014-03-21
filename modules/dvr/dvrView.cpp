@@ -57,6 +57,8 @@ namespace ospray {
       ospCommit(volume);
 
       renderer = ospNewRenderer(renderType);
+      ospSet1f(renderer,"dt",0.5f/std::max(dims.x,std::max(dims.y,dims.z)));
+
       Assert2(renderer,"could not create renderer");
       ospSetParam(renderer,"volume",volume);
       ospSetParam(renderer,"camera",camera);
