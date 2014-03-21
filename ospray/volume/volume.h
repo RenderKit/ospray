@@ -31,6 +31,7 @@ namespace ospray {
 
     //! tri-linear interpolation at given sample location
     virtual float lerpf(const vec3fa &samplePos) = 0;
+    //! gradient at given sample location
     virtual vec3f gradf(const vec3fa &samplePos) = 0;
 
     static Volume *createVolume(const char *identifier);

@@ -16,14 +16,13 @@ namespace ospray {
       : StructuredVolume<T>(size,data)
     {}
     
-    // void setRegion(const vec3i &where,const vec3i &size,const uint8 *data);
-    // void setRegion(const vec3i &where,const vec3i &size,const float *data);
     virtual void setRegion(const vec3i &where,const vec3i &size,const T *data);
     virtual std::string toString() const { return "NaiveVolume<T>"; };
     virtual ispc::_Volume *createIE();
 
     //! tri-linear interpolation at given sample location; for single, individual sample
     virtual float lerpf(const vec3fa &samplePos);
+    //! gradient at given sample location
     virtual vec3f gradf(const vec3fa &samplePos) { NOTIMPLEMENTED; };
 
     void allocate();

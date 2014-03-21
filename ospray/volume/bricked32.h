@@ -5,30 +5,31 @@
 namespace ospray {
 
   /*! \brief "Bricked32": Implements a volume with bricking, and at
-      most 32bits of addressing
+    most 32bits of addressing
 
-      \note Knowing that this has only 32 bits of addressing allows
-      for using vector gather instructions in ISPC mode
+    \note Knowing that this has only 32 bits of addressing allows
+    for using vector gather instructions in ISPC mode
   */
   template<typename T>
-  struct BrickedVolumeSampler : public StructuredVolumeSampler<T> {
-    BrickedVolumeSampler();
-    //BrickedVolume(const vec3i &size, const T *internalData=NULL);
+  struct BrickedVolume : public StructuredVolume<T> {
+    BrickedVolume() {}
 
-    // virtual void setRegion(const vec3i &where,const vec3i &size,const uint8 *data);
-    // virtual void setRegion(const vec3i &where,const vec3i &size,const float *data);
     void setRegion(const vec3i &where,const vec3i &size,const T *data);
-    virtual std::string toString() const { return "BrickedVolumeSampler<T>"; };
+    virtual std::string toString() const { return "BrickedVolume<T>"; };
+    virtual ispc::_Volume *createIE();
 
     //! tri-linear interpolation at given sample location; for single, individual sample
     virtual float lerpf(const vec3fa &samplePos);
+    //! gradient at given sample location
+    virtual vec3f gradf(const vec3fa &samplePos);
 
-    const vec3i      size;
+    void allocate();
+
+    vec3i bricks;
 #ifdef LOW_LEVEL_KERNELS
     vec3fa  clampSize;
     int voxelOffset[8];
 #endif
   };
-
   
 }

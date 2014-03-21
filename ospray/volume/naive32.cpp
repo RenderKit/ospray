@@ -1,6 +1,5 @@
 #include "naive32.h"
 #include "naive32_ispc.h"
-#include "importers.h"
 
 namespace ospray {
   template<typename T>
@@ -12,33 +11,6 @@ namespace ospray {
     Assert(size.z > 0);
     this->data = new T[int64(this->size.x)*int64(this->size.y)*int64(this->size.z)];
   }
-
-  // template<typename T>
-  // void NaiveVolume<T>::commit()
-  // {
-  //   size = getParam3i("dimensions",vec3i(-1));
-  //   allocate();
-  //   Assert(size.x > 0);
-  //   Assert(size.y > 0);
-  //   Assert(size.z > 0);
-  //   const char *fileName = getParamString("filename",NULL);
-  //   if (fileName) {
-  //     loadRAW(fileName,this);
-  //     return;
-  //   }
-  // }
-
-  // template<>
-  // void NaiveVolume<uint8>::setRegion(const vec3i &where, 
-  //                                           const vec3i &size, 
-  //                                           const float *data)
-  // {
-  //   uint8 t[long(size.x)*size.y*size.z];
-  //   for (long i=0;i<long(size.x)*size.y*size.z;i++)
-  //     t[i] = uint8(255.999f*data[i]);
-  //   ispc::_Naive32Volume1uc_setRegion(getIE(),(const ispc::vec3i&)where,
-  //                                      (const ispc::vec3i&)size,t);
-  // }
   
   template<>
   ispc::_Volume *NaiveVolume<uint8>::createIE()
@@ -216,10 +188,6 @@ namespace ospray {
     
     return v;
   }
-
-  template struct StructuredVolume<uint8>;
-  template struct StructuredVolume<float>;
-
 
   typedef NaiveVolume<uint8> NaiveVolume_uint8;
   typedef NaiveVolume<float> NaiveVolume_float;

@@ -1,6 +1,5 @@
 #include "volume.ih"
-
-#define BRICK_BITS 2
+#include "bricked32.ih"
 
 // ------------------------------------------------------------------
 // the data structure itself
@@ -329,7 +328,7 @@ uniform VolumePtr Bricked32Volume1uc_create(uniform vec3i &size, const uint8 *un
   if (internal)
     volume->inherited.data = (void *uniform) internal;
   else
-  volume->inherited.data     = uniform new uniform int8[numElements];
+    volume->inherited.data     = uniform new uniform int8[numElements];
 
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
