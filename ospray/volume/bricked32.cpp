@@ -95,6 +95,7 @@ namespace ospray {
   typedef BrickedVolume<uint8> BrickedVolume_uint8;
   typedef BrickedVolume<float> BrickedVolume_float;
 
-  OSP_REGISTER_VOLUME(BrickedVolume_float,bricked_float);
-  OSP_REGISTER_VOLUME(BrickedVolume_float,bricked_float32);
+  OSP_REGISTER_VOLUME(BrickedVolume_uint8,bricked32_uint8);
+  OSP_REGISTER_VOLUME(BrickedVolume_float,bricked32_float);
+  OSP_REGISTER_VOLUME(BrickedVolume_float,bricked32_float32);
 }
