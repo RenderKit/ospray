@@ -1,5 +1,6 @@
 /*! \file ospDVR.cpp A GLUT-based viewer for Wavefront OBJ files */
 
+#undef NDEBUG
 // viewer widget
 #include "../../apps/util/glut3D/glut3D.h"
 // ospray, for rendering

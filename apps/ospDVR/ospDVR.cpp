@@ -1,5 +1,7 @@
 /*! \file ospDVR.cpp A GLUT-based viewer for Wavefront OBJ files */
 
+#undef NDEBUG
+
 // viewer widget
 #include "../util/glut3D/glut3D.h"
 // ospray, for rendering
@@ -57,6 +59,7 @@ namespace ospray {
 
 
       renderer = ospNewRenderer("dvr");
+      ospSet1f(renderer,"dt",0.5f/std::max(dims.x,std::max(dims.y,dims.z)));
       Assert2(renderer,"could not create renderer");
       ospSetParam(renderer,"volume",volume);
       ospSetParam(renderer,"camera",camera);
