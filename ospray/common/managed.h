@@ -158,6 +158,7 @@ namespace ospray {
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
     vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
     int32  getParam1i(const char *name, const int32  valIfNotFound);
+    float  getParam1f(const char *name, const float  valIfNotFound);
     float  getParamf (const char *name, const float  valIfNotFound);
     void  *getVoidPtr(const char *name, void *valIfNotFound);
     const char  *getParamString(const char *name, const char *valIfNotFound);

@@ -34,6 +34,7 @@ namespace ospray {
     TileJob *tj = new TileJob;
     tj->ispc_camera = _camera;
     tj->ispc_volume = _volume;
+    tj->dt          = getParam1f("dt",.0025f);
     return tj;
   }
 
@@ -57,7 +58,8 @@ namespace ospray {
 
     TileJob *tj = new TileJob;
     tj->camera = camera;
-    tj->volume = volume; //volume->getIE();
+    tj->volume = volume;
+    tj->dt     = getParam1f("dt",.025f);
     return tj;
   }
 
@@ -93,7 +95,8 @@ inline void boxtest(const Ray &ray,
   //! do direct volume rendering via ray casting 
   /*! \internal this is code adapted from some earlier code that was mostly written by aaron knoll */
   inline vec4f traceRayDVR(const Ray &ray, 
-                           Volume *volume)
+                           Volume *volume,
+                           const float dt)
   {
     // PING;
     const box3f bbox = box3f(vec3f(0.f),vec3f(.99999f));
@@ -111,7 +114,7 @@ inline void boxtest(const Ray &ray,
     // PRINT(texit);
     if (tenter >= texit) return color;
 
-    float step_size = .5;
+    float step_size = dt;
 
     float t0, t1;
     float f0 = 0.0;
@@ -154,7 +157,7 @@ inline void boxtest(const Ray &ray,
         const float screen_v = (y+.5f)*tile.rcp_fbSize.y;
         Ray ray;
         camera->initRay(ray,vec2f(screen_u,screen_v));
-        const vec4f col = traceRayDVR(ray,volume);
+        const vec4f col = traceRayDVR(ray,volume,dt);
         tile.r[frag] = col.x;
         tile.g[frag] = col.y;
         tile.b[frag] = col.z;

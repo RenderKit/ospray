@@ -36,6 +36,7 @@ namespace ospray {
 
       void *ispc_volume;
       void *ispc_camera;
+      float dt;
     };
   };
 
@@ -43,13 +44,14 @@ namespace ospray {
   struct ScalarDVRRenderer : public TileRenderer {
     virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
     virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
-    
+
     struct TileJob : public TileRenderer::RenderJob {
       /*! \brief render given tile */
       virtual void renderTile(Tile &tile);
       
       Camera *camera;
       Volume *volume;
+      float dt;
     };
   };
 }

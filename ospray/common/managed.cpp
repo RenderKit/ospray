@@ -81,6 +81,7 @@ namespace ospray {
   define_getparam(vec3i, 3i,OSP_vec3i,i);
   define_getparam(vec3f, 3f,OSP_vec3f,f);
   define_getparam(vec3fa,3f,OSP_vec3f,f);
+  define_getparam(float, 1f,OSP_FLOAT, f);
   define_getparam(float, f, OSP_FLOAT, f);
   define_getparam(const char *, String, OSP_STRING, ptr);
 

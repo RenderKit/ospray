@@ -49,7 +49,7 @@ namespace ospray {
       ospCommit(camera);
       ospCommit(camera);
 
-      volume = ospNewVolume("naive32-float");
+      volume = ospNewVolume("naive32-uint8");
       Assert(volume && "null volume handle");
       ospSet3i(volume,"dimensions",dims.x,dims.y,dims.z);
       // ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
@@ -159,7 +159,8 @@ namespace ospray {
     VolumeViewer window(volDims,volFileName,resample);
     window.create("ospDVR: OSPRay miniature DVR volume viewer");
     printf("Viewer created. Press 'Q' to quit.\n");
-    window.setWorldBounds(box3f(vec3f(0.f),vec3f(resample?vec3i(resample):volDims)));
+    window.setWorldBounds(box3f(vec3f(0.f),vec3f(1.f)));
+    // window.setWorldBounds(box3f(vec3f(0.f),vec3f(resample?vec3i(resample):volDims)));
     ospray::glut3D::runGLUT();
   }
 }

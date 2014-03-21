@@ -29,6 +29,8 @@ namespace ospray {
     assert(file);
     assert(size.x > 0);
     this->size = size;
+    allocate();
+    createIE();
     T t[this->size.x];
     for (int z=0;z<this->size.z;z++)
       for (int y=0;y<this->size.y;y++) {

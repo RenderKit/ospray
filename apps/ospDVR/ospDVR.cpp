@@ -48,10 +48,10 @@ namespace ospray {
       ospCommit(camera);
 
 
-      volume = ospNewVolume("ignoredForNow");
+      volume = ospNewVolume("naive32-uint8");
       Assert(volume && "null volume handle");
       ospSet3i(volume,"dimensions",dims.x,dims.y,dims.z);
-      ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
+      // ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
       ospSetString(volume,"filename",fileName.c_str());
       ospCommit(volume);
 
