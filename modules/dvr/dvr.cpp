@@ -38,6 +38,7 @@ namespace ospray {
            "(did you forget to assign a 'camera' parameter to the renderer?)");
 
     Data *xfData = (Data *)getParam("transferFunction",NULL);
+    /*! \todo Add 'real' transfer function code to DVRRenderer(s) */
     if (xfData) {
       transferFct = new TransferFct(xfData);
     } else {

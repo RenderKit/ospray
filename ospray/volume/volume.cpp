@@ -1,6 +1,7 @@
 // ospray stuff
 #include "volume.h"
 #include "../common/library.h"
+#include "naive32.h"
 // embree stuff
 #include "common/sys/library.h"
 // STL
@@ -43,27 +44,62 @@ namespace ospray {
 
 
   template<typename T>
+  T floatToT(T t, float f);
+  template<>
+  float floatToT(float t, float f)
+  { return f; }
+  uint8 floatToT(uint8 t, float f)
+  { return 255.f*f; }
+
+  /*! resample form another volume - mostly for testing */
+  template<typename T>
+  void StructuredVolume<T>::resampleFrom(Volume *source)
+  {
+    vec3f pos;
+    for (int z=0;z<size.z;z++) {
+      pos.z = z / float(size.z-1);
+      for (int y=0;y<size.y;y++) {
+        pos.y = y / float(size.y-1);
+        T t[size.x];
+        for (int x=0;x<size.x;x++) {
+          pos.x = x / float(size.x-1);
+          t[x] = floatToT(t[x],lerpf(pos));
+        }
+        setRegion(vec3f(0,y,z),vec3f(size.x,1,1),t);
+      }
+    }
+  }
+
+  template<typename T>
   void StructuredVolume<T>::commit()
   {
     const vec3i size = getParam3i("dimensions",vec3i(-1));
-    // const vec3i resampleSize = getParam3i("resample_dimensions",vec3i(-1));
     Assert(size.x > 0);
     Assert(size.y > 0);
     Assert(size.z > 0);
     const char *fileName = getParamString("filename",NULL);
     Assert(fileName);
 
-    PING;
-    PRINT(fileName);
+#if 0
     loadRAW(size,fileName);
-    
+#else
+    const vec3i resampleSize = getParam3i("resample_dimensions",vec3i(-1));
+    if (resampleSize.x > 0) {
+      StructuredVolume<T> *tmp = new NaiveVolume<T>;
+      tmp->size = size;
+      tmp->loadRAW(size,fileName);
+      this->size = resampleSize;
+      allocate();
+      resampleFrom(tmp);
+      // std::cout << "resampling volume to new size " << resampleSize << std::endl;
+      // internalRep = resampleVolume(internalRep,resampleSize,Volume::BRICKED);
+      // internalRep = resampleVolume(internalRep,resampleSize,Volume::NAIVE);
+    } else {
+      loadRAW(size,fileName);
+    }
+#endif    
     // PRINT(resampleSize);
 
-    // if (resampleSize.x > 0) {
-    //   std::cout << "resampling volume to new size " << resampleSize << std::endl;
-    //   // internalRep = resampleVolume(internalRep,resampleSize,Volume::BRICKED);
-    //   internalRep = resampleVolume(internalRep,resampleSize,Volume::NAIVE);
-    // }
     
     // ispcEquivalent = internalRep->inISPC();
   }

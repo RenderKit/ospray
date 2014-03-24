@@ -383,7 +383,7 @@ uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uint8 *unif
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
-  volume->inherited.setRegion = Naive32Volume1uc_setRegion;
+  // volume->inherited.setRegion = Naive32Volume1uc_setRegion;
   volume->inherited.lerpf     = Naive32Volume1uc_lerpf;
   volume->inherited.gradf     = Naive32Volume1uc_gradf;
   return (uniform Volume *)volume;
@@ -411,7 +411,7 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
-  volume->inherited.setRegion = Naive32Volume1f_setRegion;
+  // volume->inherited.setRegion = Naive32Volume1f_setRegion;
   volume->inherited.lerpf     = Naive32Volume1f_lerpf;
   volume->inherited.gradf     = Naive32Volume1f_gradf;
   return (uniform Volume *)volume;
@@ -423,17 +423,17 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
 // ------------------------------------------------------------------
 
 export void _Naive32Volume1uc_setRegion(uniform ExtVolumePtr _volume,
-                                         const uniform vec3i &begin,
-                                         const uniform vec3i &size,
-                                         const uniform unsigned int8 *uniform data)
+                                        const uniform vec3i &begin,
+                                        const uniform vec3i &size,
+                                        const uniform unsigned int8 *uniform data)
 { 
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
   Naive32Volume1uc_setRegion(volume,begin,size,data);
 }
 export void _Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
-                                         const uniform vec3i &begin,
-                                         const uniform vec3i &size,
-                                         const uniform float *uniform data)
+                                       const uniform vec3i &begin,
+                                       const uniform vec3i &size,
+                                       const uniform float *uniform data)
 { 
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
   Naive32Volume1f_setRegion(volume,begin,size,data);

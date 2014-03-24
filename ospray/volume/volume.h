@@ -56,7 +56,10 @@ namespace ospray {
     virtual void setRegion(const vec3i &where,const vec3i &size,const T *data)=0;
     //! helper function load files from RAW format (assuming same scalar type
     void loadRAW(const vec3i &size, const char *fileName);
-    
+
+    /*! resample form another volume - mostly for testing */
+    virtual void resampleFrom(Volume *source);
+
     vec3i       size;
     vec3f       f_size; /*! translation from [(0,0,0)-(1,1,1)] to cell
                           coordinate space */
