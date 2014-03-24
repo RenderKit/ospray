@@ -50,11 +50,11 @@ namespace ospray {
       ospCommit(camera);
       ospCommit(camera);
 
-      // volume = ospNewVolume("bricked32-uint8");
+      //volume = ospNewVolume("bricked32-uint8");
       volume = ospNewVolume("naive32-uint8");
       Assert(volume && "null volume handle");
       ospSet3i(volume,"dimensions",dims.x,dims.y,dims.z);
-      // ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
+      ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
       ospSetString(volume,"filename",fileName.c_str());
       ospCommit(volume);
 

@@ -90,10 +90,8 @@ namespace ospray {
       tmp->loadRAW(size,fileName);
       this->size = resampleSize;
       allocate();
+      createIE();
       resampleFrom(tmp);
-      // std::cout << "resampling volume to new size " << resampleSize << std::endl;
-      // internalRep = resampleVolume(internalRep,resampleSize,Volume::BRICKED);
-      // internalRep = resampleVolume(internalRep,resampleSize,Volume::NAIVE);
     } else {
       loadRAW(size,fileName);
     }
