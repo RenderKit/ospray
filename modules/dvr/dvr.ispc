@@ -102,8 +102,6 @@ export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
 
       const vec4f col = traceRayDVR(ray,volume,dt);
-      // print("org \n% \n% \n%\n",ray.org.x,ray.org.y,ray.org.z);
-      // print("dir \n% \n% \n%\n",ray.dir.x,ray.dir.y,ray.dir.z);
 #if 1
       tile->r[i] = col.x;
       tile->g[i] = col.y;
@@ -111,7 +109,6 @@ export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
       tile->a[i] = col.w;
       tile->z[i] = ray.t;
       tile->rgba8[i] = cvt_uint32(col);
-      // print("rgba %\n",tile->rgba8[i]);
 #endif
     }
   }
