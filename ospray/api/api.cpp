@@ -106,7 +106,7 @@ namespace ospray {
     return ospray::api::Device::current->frameBufferCreate(size,mode,swapChainDepth);
   }
 
-    //! load module <name> from shard lib libospray_module_<name>.so, or 
+  //! load module \<name\> from shard lib libospray_module_\<name\>.so, or 
   extern "C" error_t ospLoadModule(const char *moduleName)
   {
     ASSERT_DEVICE();
@@ -171,8 +171,9 @@ namespace ospray {
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
 
-  /*! \brief create a new renderer of given type */
-  /*! \detailed return 'NULL' if that type is not known */
+  /*! \brief create a new renderer of given type 
+
+   return 'NULL' if that type is not known */
   extern "C" OSPRenderer ospNewRenderer(const char *type)
   {
     ASSERT_DEVICE();
@@ -187,8 +188,9 @@ namespace ospray {
     return renderer;
   }
 
-  /*! \brief create a new geometry of given type */
-  /*! \detailed return 'NULL' if that type is not known */
+  /*! \brief create a new geometry of given type 
+
+    return 'NULL' if that type is not known */
   extern "C" OSPGeometry ospNewGeometry(const char *type)
   {
     ASSERT_DEVICE();
@@ -203,8 +205,9 @@ namespace ospray {
     return geometry;
   }
 
-  /*! \brief create a new camera of given type */
-  /*! \detailed return 'NULL' if that type is not known */
+  /*! \brief create a new camera of given type 
+
+  return 'NULL' if that type is not known */
   extern "C" OSPCamera ospNewCamera(const char *type)
   {
     ASSERT_DEVICE();
@@ -219,8 +222,9 @@ namespace ospray {
     return camera;
   }
 
-  /*! \brief create a new volume of given type */
-  /*! \detailed return 'NULL' if that type is not known */
+  /*! \brief create a new volume of given type 
+    
+    return 'NULL' if that type is not known */
   extern "C" OSPVolume ospNewVolume(const char *type)
   {
     ASSERT_DEVICE();
@@ -235,8 +239,9 @@ namespace ospray {
     return volume;
   }
 
-  /*! \brief call a renderer to render given model into given framebuffer */
-  /*! \detailed model _may_ be empty (though most framebuffers will expect one!) */
+  /*! \brief call a renderer to render given model into given framebuffer 
+    
+    model _may_ be empty (though most framebuffers will expect one!) */
   extern "C" void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
   {
     ASSERT_DEVICE();

@@ -13,7 +13,7 @@ namespace ospray {
 
   /*! \brief defines a basic object whose lifetime is managed by ospray 
 
-    \detailed One of the core concepts of ospray is that all logical
+    One of the core concepts of ospray is that all logical
     objects in ospray --- renderers, geometries, models, camera, data
     buffers, volumes, etc --- are all derived from the same absic
     class that provides a certain kind of common, shared
@@ -149,7 +149,7 @@ namespace ospray {
     /*! \brief find the named parameter, and return its object value if
         available; else return 'default' value 
         
-        \detailed The returned managed object will *not* automatically
+        The returned managed object will *not* automatically
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
         instance */
