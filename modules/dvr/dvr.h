@@ -25,34 +25,68 @@ namespace ospray {
   struct Model;
   struct Volume;
 
-  /*! test renderer that renders a simple test image using ispc */
-  struct ISPCDVRRenderer : public TileRenderer {
-    virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
-    virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+  /*! \brief a transfer fct for classifying (float) scalar values to RGBA color values
 
-    struct TileJob : public TileRenderer::RenderJob {
-      /*! \brief render given tile */
-      virtual void renderTile(Tile &tile);
+    at some point in time we'll probably want a higher-level
+    abstraction for that; for now we'll only support a uniform
+    transfer fct texture */
+  struct TransferFct : public ManagedObject {
+    Ref<Data> data; //!< the data array containing the xfer fct (if obtained from data)
+    vec4f *colorPerBin;
+    int    numBins;
 
-      void *ispc_volume;
-      void *ispc_camera;
-      float dt;
-    };
+    TransferFct(Data *data);
+    TransferFct();
   };
 
-  /*! test renderer that renders a simple test image using ispc */
-  struct ScalarDVRRenderer : public TileRenderer {
-    virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
+  /*! abstract DVR renderer that includes shared functionality for
+      both ispc and scalar rendering */
+  struct DVRRendererBase : public TileRenderer {
+    virtual void commit();
+
+    Ref<TransferFct> transferFct;
+    Ref<Camera>      camera;
+    Ref<Volume>      volume;
+
     virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
 
-    struct TileJob : public TileRenderer::RenderJob {
+    struct RenderJob : public TileRenderer::RenderJob {
       /*! \brief render given tile */
       virtual void renderTile(Tile &tile);
       
-      Camera *camera;
-      Volume *volume;
+      Ref<Camera>      camera;
+      Ref<Volume>      volume;
+      Ref<TransferFct> transferFct;
+      Ref<DVRRendererBase> renderer;
       float dt;
     };
+    virtual void renderTileDVR(Tile &tile, RenderJob *job) = 0;
+  };
+
+  /*! test renderer that renders a simple test image using ispc */
+  struct ISPCDVRRenderer : public DVRRendererBase {
+    virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
+    virtual void renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *job);
+
+    // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+    // struct TileJob : public TileRenderer::RenderJob {
+    //   /*! \brief render given tile */
+    //   virtual void renderTile(Tile &tile);
+
+    //   void *ispc_volume;
+    //   void *ispc_camera;
+    //   Ref<TransferFct> transferFct;
+    //   float dt;
+    // };
+  };
+
+  /*! test renderer that renders a simple test image using ispc */
+  struct ScalarDVRRenderer : public DVRRendererBase {
+    virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
+    virtual void renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *job);
+
+    // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+    // Ref<TransferFct> transferFct;
   };
 }
 /*! @} */

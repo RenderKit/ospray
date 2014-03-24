@@ -3,6 +3,7 @@
 #include "../volume/volume.h"
 // ospray stuff
 #include "../../ospray/common/ray.h"
+#include "../../ospray/common/data.h"
 
 namespace ospray {
   extern "C" void ispc__ISPCDVRRenderer_renderTile(void *tile, 
@@ -10,65 +11,104 @@ namespace ospray {
                                                    void *volume, 
                                                    float dt);
 
-  TileRenderer::RenderJob *ISPCDVRRenderer::createRenderJob(FrameBuffer *fb)
-  {
-    Assert(fb && "null frame buffer handle");
-    void *_fb = fb->getIE();
-    Assert(_fb && "invalid host-side-only frame buffer");
+  TransferFct::TransferFct(Data *data)
+    : data(data),
+      colorPerBin((vec4f*)data->data),
+      numBins(data->numItems)
+  {}
 
+  TransferFct::TransferFct()
+    : data(NULL),
+      colorPerBin(NULL),
+      numBins(NULL)
+  {}
+
+  void DVRRendererBase::commit()
+  {
     /* for now, let's get the volume data from the renderer
        parameter. at some point we probably want to have voluems
        embedded in models - possibly with transformation attached to
        them - but for now let's do this as simple as possible */
-    Volume *volume = (Volume *)getParam("volume",NULL);
+    volume = (Volume *)this->getParam("volume",NULL);
     Assert(volume && "null volume handle in 'dvr' renderer "
            "(did you forget to assign a 'volume' parameter to the renderer?)");
-    void *_volume = (void*)volume->getIE();
-    Assert(_volume && "invalid volume without a ISPC-side volume "
-           "(did you forget to finalize/'commit' the volume?)");
 
-    Camera *camera = (Camera *)getParam("camera",NULL);
+    camera = (Camera *)getParam("camera",NULL);
     Assert(camera && "null camera handle in 'dvr' renderer "
            "(did you forget to assign a 'camera' parameter to the renderer?)");
-    void *_camera = (void*)camera->getIE();
-    Assert(_camera && "invalid camera without a ISPC-side camera "
-           "(did you forget to finalize/'commit' the camera?)");
 
-    TileJob *tj = new TileJob;
-    tj->ispc_camera = _camera;
-    tj->ispc_volume = _volume;
+    Data *xfData = (Data *)getParam("transferFunction",NULL);
+    if (xfData) {
+      transferFct = new TransferFct(xfData);
+    } else {
+    }
+  }
+
+
+  // void ISPCDVRRenderer::commit()
+  // {
+  //   /* for now, let's get the volume data from the renderer
+  //      parameter. at some point we probably want to have voluems
+  //      embedded in models - possibly with transformation attached to
+  //      them - but for now let's do this as simple as possible */
+  //   Volume *volume = (Volume *)getParam("volume",NULL);
+  //   Assert(volume && "null volume handle in 'dvr' renderer "
+  //          "(did you forget to assign a 'volume' parameter to the renderer?)");
+  //   void *_volume = (void*)volume->getIE();
+  //   Assert(_volume && "invalid volume without a ISPC-side volume "
+  //          "(did you forget to finalize/'commit' the volume?)");
+
+  //   Camera *camera = (Camera *)getParam("camera",NULL);
+  //   Assert(camera && "null camera handle in 'dvr' renderer "
+  //          "(did you forget to assign a 'camera' parameter to the renderer?)");
+  //   void *_camera = (void*)camera->getIE();
+  //   Assert(_camera && "invalid camera without a ISPC-side camera "
+  //          "(did you forget to finalize/'commit' the camera?)");
+
+  // }
+
+  TileRenderer::RenderJob *DVRRendererBase::createRenderJob(FrameBuffer *fb)
+  {
+    RenderJob *tj = new RenderJob;
+    // tj->ispc_camera = _camera;
+    // tj->ispc_volume = _volume;
+    tj->camera      = camera;
+    tj->volume      = volume;
     tj->dt          = getParam1f("dt",.0025f);
+    tj->transferFct = transferFct;
+    tj->renderer    = this;
     return tj;
   }
+  // TileRenderer::RenderJob *ISPCDVRRenderer::createRenderJob(FrameBuffer *fb)
+  // {
+  //   RenderJob *tj = new RenderJob;
+  //   tj->ispc_camera = _camera;
+  //   tj->ispc_volume = _volume;
+  //   tj->dt          = getParam1f("dt",.0025f);
+  //   tj->transferFct = transferFct;
+  //   return tj;
+  // }
 
-  TileRenderer::RenderJob *ScalarDVRRenderer::createRenderJob(FrameBuffer *fb)
+  // TileRenderer::RenderJob *ScalarDVRRenderer::createRenderJob(FrameBuffer *fb)
+  // {
+
+  //   RenderJob *tj = new RenderJob;
+  //   tj->camera = camera;
+  //   tj->volume = volume;
+  //   tj->dt     = getParam1f("dt",.025f);
+  //   tj->transferFct = transferFct;
+  //   return tj;
+  // }
+
+  void DVRRendererBase::RenderJob::renderTile(Tile &tile)
   {
-    Assert(fb && "null frame buffer handle");
-    void *_fb = fb->getIE();
-    Assert(_fb && "invalid host-side-only frame buffer");
-
-    /* for now, let's get the volume data from the renderer
-       parameter. at some point we probably want to have voluems
-       embedded in models - possibly with transformation attached to
-       them - but for now let's do this as simple as possible */
-    Volume *volume = (Volume *)getParam("volume",NULL);
-    Assert(volume && "null volume handle in 'dvr' renderer "
-           "(did you forget to assign a 'volume' parameter to the renderer?)");
-
-    Camera *camera = (Camera *)getParam("camera",NULL);
-    Assert(camera && "null camera handle in 'dvr' renderer "
-           "(did you forget to assign a 'camera' parameter to the renderer?)");
-
-    TileJob *tj = new TileJob;
-    tj->camera = camera;
-    tj->volume = volume;
-    tj->dt     = getParam1f("dt",.025f);
-    return tj;
+    this->renderer->renderTileDVR(tile,this);
+    // ispc__ISPCDVRRenderer_renderTile(&tile,camera->getIE(),volume->getIE(),dt); //ispc_camera
+    // ,ispc_volume,dt);
   }
-
-  void ISPCDVRRenderer::TileJob::renderTile(Tile &tile)
+  void ISPCDVRRenderer::renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *tj)
   {
-    ispc__ISPCDVRRenderer_renderTile(&tile,ispc_camera,ispc_volume,dt);
+    ispc__ISPCDVRRenderer_renderTile(&tile,tj->camera->getIE(),tj->volume->getIE(),tj->dt); //ispc_camera,ispc_volume,dt);
   }
 
 
@@ -144,7 +184,7 @@ inline void boxtest(const Ray &ray,
     return color;
   }
 
-  void ScalarDVRRenderer::TileJob::renderTile(Tile &tile)
+  void ScalarDVRRenderer::renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *tj)
   {
     tile.format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
     const uint32 size_x = tile.fbSize.x;
@@ -159,8 +199,8 @@ inline void boxtest(const Ray &ray,
         const float screen_u = (x+.5f)*tile.rcp_fbSize.x;
         const float screen_v = (y+.5f)*tile.rcp_fbSize.y;
         Ray ray;
-        camera->initRay(ray,vec2f(screen_u,screen_v));
-        const vec4f col = traceRayDVR(ray,volume,dt);
+        tj->camera->initRay(ray,vec2f(screen_u,screen_v));
+        const vec4f col = traceRayDVR(ray,tj->volume.ptr,tj->dt);
         tile.r[frag] = col.x;
         tile.g[frag] = col.y;
         tile.b[frag] = col.z;
