@@ -5,6 +5,18 @@
 
 namespace ospray {
 
+
+  /*! \brief A Triangle Mesh / Indexed Face Set Geometry
+
+    A Triangle Mesh is a geometry registered under the name
+    "trianglemesh", and has two parameters to specify its contained
+    triangles; both specified via data arrays of the proper form: a
+    "position" array (Data<vec3f> type), and a "index" array
+    (Data<vec3i> or Data<vec3ia> type); indices specified in the
+    'index' array refer into the vertex array; each value is the index
+    of a _vertex_ (it, not a byte-offset, nor an index into a float
+    array, but an index into an array of vertices).
+   */
   struct TriangleMesh : public Geometry
   {
 
