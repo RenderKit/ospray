@@ -1,5 +1,9 @@
+// ospray
 #include "streamlines.h"
 #include "common/data.h"
+#include "common/model.h"
+// ispc-generated files
+#include "streamlines_ispc.h"
 
 namespace ospray {
 
@@ -22,7 +26,10 @@ namespace ospray {
               << "#verts=" << numVertices << ", "
               << "#segments=" << numSegments << std::endl;
     
-    
+    ispc::ispc_createStreamLineGeometry((ispc::__RTCScene*)model->eScene,
+                                        this,radius,
+                                        (ispc::vec3fa*)vertex,numVertices,
+                                        (uint32_t*)index,numSegments);
   }
 
 }
