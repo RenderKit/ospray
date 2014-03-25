@@ -3,6 +3,7 @@
 #ifndef MATH_ISPH
 #define MATH_ISPH
 
+#include "common/ospcommon.ih"
 
 #endif
 
