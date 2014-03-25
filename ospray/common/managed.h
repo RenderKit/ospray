@@ -154,6 +154,8 @@ namespace ospray {
         properly do that (typically by assigning to a proper 'ref'
         instance */
     ManagedObject *getParam(const char *name, ManagedObject *valIfNotFound);
+    Data *getParamData(const char *name, Data *valIfNotFound)
+    { return (Data*)getParam(name,(ManagedObject*)valIfNotFound); }
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
     vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
