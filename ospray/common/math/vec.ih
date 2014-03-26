@@ -55,43 +55,51 @@ __define_ispc_vector4(float,f);
   
 /*! defines all constructors "make_vec3[T]" and "make_vec3[T]a" for
   3-vector type */
-#define __define_ispc_constructors3(UV,TYPE,ABB,ITYPE,IABB)   \
-  inline UV vec3##ABB make_vec3##ABB(const UV ITYPE x)        \
-  {                                                           \
-    UV vec3##ABB ret;                                         \
-    ret.x = x;                                                \
-    ret.y = x;                                                \
-    ret.z = x;                                                \
-    return ret;                                               \
-  }                                                           \
-  inline UV vec3##ABB##a make_vec3##ABB##a(const UV ITYPE x)  \
-  {                                                           \
-    UV vec3##ABB##a ret;                                      \
-    ret.x = x;                                                \
-    ret.y = x;                                                \
-    ret.z = x;                                                \
-    return ret;                                               \
-  }                                                           \
-  inline UV vec3##ABB make_vec3##ABB(const UV ITYPE x,        \
-                                     const UV ITYPE y,        \
-                                     const UV ITYPE z)        \
-  {                                                           \
-    UV vec3##ABB ret;                                         \
-    ret.x = x;                                                \
-    ret.y = y;                                                \
-    ret.z = z;                                                \
-    return ret;                                               \
-  }                                                           \
-  inline UV vec3##ABB##a make_vec3##ABB##a(const UV ITYPE x,  \
-                                           const UV ITYPE y,  \
-                                           const UV ITYPE z)  \
-  {                                                           \
-    UV vec3##ABB##a ret;                                      \
-    ret.x = x;                                                \
-    ret.y = y;                                                \
-    ret.z = z;                                                \
-    return ret;                                               \
-  }                                                           \
+#define __define_ispc_constructors3(UV,TYPE,ABB,ITYPE,IABB)     \
+  inline UV vec3##ABB make_vec3##ABB(const UV ITYPE x)          \
+  {                                                             \
+    UV vec3##ABB ret;                                           \
+    ret.x = x;                                                  \
+    ret.y = x;                                                  \
+    ret.z = x;                                                  \
+    return ret;                                                 \
+  }                                                             \
+  inline UV vec3##ABB make_vec3##ABB(const UV vec3##IABB##a v)  \
+  {                                                             \
+    UV vec3##ABB ret;                                           \
+    ret.x = v.x;                                                \
+    ret.y = v.y;                                                \
+    ret.z = v.z;                                                \
+    return ret;                                                 \
+  }                                                             \
+  inline UV vec3##ABB##a make_vec3##ABB##a(const UV ITYPE x)    \
+  {                                                             \
+    UV vec3##ABB##a ret;                                        \
+    ret.x = x;                                                  \
+    ret.y = x;                                                  \
+    ret.z = x;                                                  \
+    return ret;                                                 \
+  }                                                             \
+  inline UV vec3##ABB make_vec3##ABB(const UV ITYPE x,          \
+                                     const UV ITYPE y,          \
+                                     const UV ITYPE z)          \
+  {                                                             \
+    UV vec3##ABB ret;                                           \
+    ret.x = x;                                                  \
+    ret.y = y;                                                  \
+    ret.z = z;                                                  \
+    return ret;                                                 \
+  }                                                             \
+  inline UV vec3##ABB##a make_vec3##ABB##a(const UV ITYPE x,    \
+                                           const UV ITYPE y,    \
+                                           const UV ITYPE z)    \
+  {                                                             \
+    UV vec3##ABB##a ret;                                        \
+    ret.x = x;                                                  \
+    ret.y = y;                                                  \
+    ret.z = z;                                                  \
+    return ret;                                                 \
+  }                                                             \
   
 /*! defines all constructors "make_vec4[T]" for 4-vector type */
 #define __define_ispc_constructors4(UV,TYPE,ABB,ITYPE,IABB) \
@@ -169,6 +177,21 @@ __define_ispc_constructors(varying);
 #undef __define_ispc_constructors_uv
 #undef __define_ispc_constructors
 
+
+// =======================================================
+// define 'lifted' binary operators (min/max/...)
+
+#define __lift_binaryFct(FCT,T)                 \
+  inline uniform vec3##T FCT(const uniform vec3##T a, const uniform vec3##T b) \
+  {  return make_vec3##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }                           \
+
+
+__lift_binaryFct(min,f)
+__lift_binaryFct(max,f)
+
+#undef __lift_binaryFct3
+
+// =======================================================
 
 // for now, let's implement those manually - should eventually do those via a macro!
 

@@ -1,5 +1,6 @@
 // ospray
 #include "common/math/vec.ih"
+#include "common/math/bbox.ih"
 #include "common/ray.ih"
 // embree
 #include "embree2/rtcore.isph"
@@ -17,8 +18,15 @@ struct StreamLines {
   int32           numSegments;
 };
 
-void StreamLines_bounds()
+void StreamLines_bounds(uniform StreamLines *uniform geometry,
+                        uniform size_t primID,
+                        uniform box3fa &bbox)
 {
+  uniform uint32 index = geometry->index[primID];
+  const uniform vec3f A = make_vec3f(geometry->vertex[index]);
+  const uniform vec3f B = make_vec3f(geometry->vertex[index+1]);
+  bbox.lower = min(A,B)-make_vec3f(geometry->radius);
+  bbox.upper = min(A,B)-make_vec3f(geometry->radius);
 }
 
 void StreamLines_intersect()

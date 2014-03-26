@@ -17,9 +17,9 @@ namespace ospray {
     Assert(vertexData != NULL);
     Assert(indexData != NULL);
 
-    index = (const uint32*)indexData->data;
+    index       = (const uint32*)indexData->data;
     numSegments = indexData->numItems;
-    vertex = (const vec3fa*)vertexData->data;
+    vertex      = (const vec3fa*)vertexData->data;
     numVertices = vertexData->numItems;
 
     std::cout << "#osp: creating streamlines geometry, "

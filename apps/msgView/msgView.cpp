@@ -89,24 +89,6 @@ namespace ospray {
 
       ++frameID;
 
-// #if 1
-//       if (!msgAnimation.empty()) {
-//         static int curFrameID = -1;
-
-//         if (curFrameID == -1) {
-//           rtcDeleteGeoe
-//         }
-
-//         float t_frame = .4f;
-//         double t0 = ospray::getSysTime();
-//         int frameID = (unsigned long)(t0 / t_frame) % msgAnimation.size();
-//         if (frameID != curFrameID) {
-//           curFrameID = frameID;
-//         }
-//       }
-// #endif
-
-
       if (viewPort.modified) {
         Assert2(camera,"ospray camera is null");
         // PRINT(viewPort);
