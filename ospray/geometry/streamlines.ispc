@@ -29,6 +29,66 @@ void StreamLines_bounds(uniform StreamLines *uniform geometry,
   bbox.upper = max(A,B)+make_vec3f(geometry->radius);
 }
 
+#if 1
+inline float sqr(float f) { return f*f; }
+
+void StreamLines_intersect(uniform StreamLines *uniform geometry,
+                           varying Ray &ray,
+                           uniform size_t primID)
+{
+  const uniform uint32 idx = geometry->index[primID];
+  const vec3f p_a = make_vec3f(geometry->vertex[idx]);
+  const vec3f v_a_org = make_vec3f(geometry->vertex[idx+1]) - p_a;
+  const float length = sqrt(dot(v_a_org,v_a_org));
+  const vec3f v_a = v_a_org * rcp(length);
+
+  const vec3f Avec = ray.dir-dot(ray.dir,v_a)*v_a;
+  const vec3f delta_p = ray.org - p_a;
+  const vec3f Cvec = delta_p-dot(delta_p,v_a)*v_a;
+  const float A = dot(Avec,Avec);
+  const float B = 2.f*dot(Avec,Cvec);
+  const float C = dot(Cvec,Cvec)-sqr(geometry->radius);
+
+  const float radical = B*B - 4.f*A*C;
+  if (radical < 0.f || A==0.f) 
+    return;
+  const float sqrtf_radical = sqrt(radical);
+  const float den = rcp(A+A);
+  const float t0 = (-sqrtf_radical-B) * den;  
+  if (t0 > ray.t0 && 
+      t0 < ray.t) {
+    const vec3f P = ray.org + t0*ray.dir;
+    const float d = dot(P-p_a,v_a);
+    // (iw): adding .1f*radius to stick at front and back to avoid
+    // cracks. "proper" solution would be to add real spheres, but
+    // this one's OK for starters.
+    if (0.f <= d+.1f*geometry->radius && d-.1f*geometry->radius <= length) {
+      ray.t = t0;
+      ray.geomID = 0;
+      ray.primID = primID;
+      ray.Ng = P-(p_a+d*v_a);
+      return;
+    }
+  }
+
+  const float t1 = ( sqrtf_radical-B) * den;
+  if (t1 > ray.t0 && t1 < ray.t) {
+    const vec3f P = ray.org + t1*ray.dir;
+    const float d = dot(P-p_a,v_a);
+    // (iw): adding .1f*radius to stick at front and back to avoid
+    // cracks. "proper" solution would be to add real spheres, but
+    // this one's OK for starters.
+    if (0.f <= d+.1f*geometry->radius && d-.1f*geometry->radius <= length) {
+      ray.t = t1;
+      ray.geomID = 0;
+      ray.primID = primID;
+      ray.Ng = P-(p_a+d*v_a);
+      return;
+    }
+  }
+}
+
+#else
 void StreamLines_intersect(uniform StreamLines *uniform geometry,
                            varying Ray &ray,
                            uniform size_t primID)
@@ -49,7 +109,10 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   const float d = dot(u,w0);
   const float e = dot(v,w0);
   
-  const float t = (b*e - c*d) / (a*c - b*b);
+  float t = (b*e - c*d) / (a*c - b*b);
+  if (t < ray.t0) t = ray.t0;
+  if (t > ray.t)  t = ray.t;
+
   float f = (a*e - b*d) / (a*c - b*b); 
   if (f < 0.f) f = 0.f;
   if (f > 1.f) f = 1.f;
@@ -69,6 +132,7 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   ray.t = t;
   ray.Ng = P-Q;
 }
+#endif
 
 export void *uniform 
 ispc_createStreamLineGeometry(RTCScene        uniform scene,
