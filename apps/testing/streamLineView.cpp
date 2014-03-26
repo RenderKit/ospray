@@ -35,7 +35,7 @@ namespace ospray {
     std::vector<int>    index;
     float radius;
 
-    StreamLines() : radius(.1f) {};
+    StreamLines() : radius(.0004f) {};
 
     void parsePNT(const embree::FileName &fn)
     {

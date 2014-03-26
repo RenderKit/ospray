@@ -57,7 +57,8 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   const vec3f P = P0 + t * u;
 
   float dist2 = dot(P-Q,P-Q);
-  if (dist2 > geometry->radius*geometry->radius)
+  const float rad2 = geometry->radius*geometry->radius;
+  if (dist2 > rad2)
     return;
 
   if (t > ray.t)
@@ -87,7 +88,8 @@ ispc_createStreamLineGeometry(RTCScene        uniform scene,
   obj->numVertices = numVertices;
   obj->geomID = geomID;
   obj->scene = scene;
-  obj->radius = .001f; //radius;
+  obj->radius = radius;
+  print("radius in ispc: %\n",radius);
   rtcSetUserData(scene,geomID,obj);
   rtcSetBoundsFunction(scene,geomID,(uniform RTCBoundsFunc)&StreamLines_bounds);
   rtcSetIntersectFunction(scene,geomID,(uniform RTCIntersectFuncVarying)&StreamLines_intersect);
