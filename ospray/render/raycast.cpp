@@ -47,6 +47,6 @@ namespace ospray {
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast);
   OSP_REGISTER_RENDERER(RayCastRenderer_PrimID,raycast_primID);
   OSP_REGISTER_RENDERER(RayCastRenderer_GeomID,raycast_geomID);
-  OSP_REGISTER_RENDERER(RayCastRenderer_Ng,cast_Ng);
+  OSP_REGISTER_RENDERER(RayCastRenderer_Ng,raycast_Ng);
 };
 

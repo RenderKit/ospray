@@ -64,6 +64,7 @@ typedef enum {
   OSP_STRING,
   // atomic types
   OSP_INT, 
+  OSP_uint32=OSP_INT,
   OSP_FLOAT, 
   // vector types
   OSP_vec2f,

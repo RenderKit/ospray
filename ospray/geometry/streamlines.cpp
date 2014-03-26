@@ -1,3 +1,5 @@
+#undef NDEGBUG
+
 // ospray
 #include "streamlines.h"
 #include "common/data.h"
@@ -9,6 +11,7 @@ namespace ospray {
 
   void StreamLines::finalize(Model *model) 
   {
+    PING;
     radius = getParam1f("radius",0.f);
     vertexData = getParamData("vertex",NULL);
     indexData = getParamData("index",NULL);
@@ -26,10 +29,13 @@ namespace ospray {
               << "#verts=" << numVertices << ", "
               << "#segments=" << numSegments << std::endl;
     
+    PING;
     ispc::ispc_createStreamLineGeometry((ispc::__RTCScene*)model->eScene,
                                         this,radius,
                                         (ispc::vec3fa*)vertex,numVertices,
                                         (uint32_t*)index,numSegments);
+    PING;
   }
 
+  OSP_REGISTER_GEOMETRY(StreamLines,streamlines);
 }

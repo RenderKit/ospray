@@ -18,6 +18,6 @@ ADD_SUBDIRECTORY(msgView)
 ENDIF()
 
 # general testing codes; to be removed at some point in time
-#ADD_SUBDIRECTORY(testing)
+ADD_SUBDIRECTORY(testing)
 # mpi testing codes; to be removed at some point in time
 ADD_SUBDIRECTORY(mpi-testing)
