@@ -60,6 +60,7 @@ namespace ospray {
   float NaiveVolume<float>::lerpf(const vec3fa &pos)
   { 
 #if LOW_LEVEL_KERNELS && defined(OSPRAY_TARGET_AVX2)
+    adfafjdk;
     const __m128 pos4
       = _mm_min_ps(_mm_max_ps((__m128&)pos,_mm_setzero_ps()),(__m128&)clampSize);
     const __m128i idx4 = _mm_cvttps_epi32(pos4);
@@ -107,9 +108,12 @@ namespace ospray {
 
     return v;
 #else
-    float clamped_x = std::max(0.f,std::min(pos.x,size.x-1.0001f));
-    float clamped_y = std::max(0.f,std::min(pos.y,size.y-1.0001f));
-    float clamped_z = std::max(0.f,std::min(pos.z,size.z-1.0001f));
+    float clamped_x = std::max(0.f,std::min(pos.x*size.x,size.x-1.0001f));
+    float clamped_y = std::max(0.f,std::min(pos.y*size.y,size.y-1.0001f));
+    float clamped_z = std::max(0.f,std::min(pos.z*size.z,size.z-1.0001f));
+    // float clamped_x = std::max(0.f,std::min(pos.x,size.x-1.0001f));
+    // float clamped_y = std::max(0.f,std::min(pos.y,size.y-1.0001f));
+    // float clamped_z = std::max(0.f,std::min(pos.z,size.z-1.0001f));
     // PRINT(pos);
     uint32 ix = uint32(clamped_x);
     uint32 iy = uint32(clamped_y);

@@ -12,7 +12,7 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  const char *renderType = "raycast";
+  const char *rendererType = "raycast";
 
   OSPModel model = NULL;
 
@@ -35,7 +35,7 @@ namespace ospray {
     std::vector<int>    index;
     float radius;
 
-    StreamLines() : radius(.0004f) {};
+    StreamLines() : radius(0.001f) {};
 
     void parsePNT(const embree::FileName &fn)
     {
@@ -98,7 +98,7 @@ namespace ospray {
       ospCommit(camera);
       ospCommit(camera);
 
-      renderer = ospNewRenderer(renderType);
+      renderer = ospNewRenderer(rendererType);
       model = ospNewModel();
       OSPGeometry geom = ospNewGeometry("streamlines");
       Assert(geom);
@@ -175,7 +175,11 @@ namespace ospray {
       std::string arg = av[i];
       if (arg[0] != '-') {
         streamLines->parse(arg);
-      } else 
+      } else if (arg == "--renderer") {
+        rendererType = av[++i];
+      } else if (arg == "--radius") {
+        streamLines->radius = atof(av[++i]);
+      } else
         throw std::runtime_error("unknown parameter "+arg);
     }
     // -------------------------------------------------------

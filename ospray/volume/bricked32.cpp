@@ -70,16 +70,88 @@ namespace ospray {
                                        (const ispc::vec3i&)size,data);
   }
 
-  template<>
-  float BrickedVolume<float>::lerpf(const vec3fa &pos)
-  { 
-    NOTIMPLEMENTED;
+
+  template<typename T>
+  inline int BrickedVolume_getCoord(BrickedVolume<T> *volume,
+                                    const vec3i &pos)
+  {
+    const int brick_x = pos.x >> BRICK_BITS;
+    const int brick_y = pos.y >> BRICK_BITS;
+    const int brick_z = pos.z >> BRICK_BITS;
+    
+    const int ofs_x = pos.x & ((1<<BRICK_BITS)-1);
+    const int ofs_y = pos.y & ((1<<BRICK_BITS)-1);
+    const int ofs_z = pos.z & ((1<<BRICK_BITS)-1);
+    
+    const int brickID
+      = brick_x + volume->bricks.x * (brick_y + volume->bricks.y * brick_z);
+    int coord = brickID;
+    coord = (coord << BRICK_BITS) | ofs_z;
+    coord = (coord << BRICK_BITS) | ofs_y;
+    coord = (coord << BRICK_BITS) | ofs_x;
+    return coord;
   }
-  template<>
-  float BrickedVolume<uint8>::lerpf(const vec3fa &pos)
-  { 
-    NOTIMPLEMENTED;
+
+
+  template<typename T>
+  inline float getVoxel(BrickedVolume<T> *volume,
+                            const vec3i &coord)
+  {
+    const T *data = volume->data;
+    const int idx = BrickedVolume_getCoord(volume,coord);
+    return data[idx];
   }
+
+  template<typename T>
+  float BrickedVolume<T>::lerpf(const vec3fa &pos)
+  { 
+    float clamped_x = std::max(0.f,std::min(pos.x*this->size.x,this->size.x-1.0001f));
+    float clamped_y = std::max(0.f,std::min(pos.y*this->size.y,this->size.y-1.0001f));
+    float clamped_z = std::max(0.f,std::min(pos.z*this->size.z,this->size.z-1.0001f));
+
+    const int32 x0 = (int)(clamped_x);
+    const int32 y0 = (int)(clamped_y);
+    const int32 z0 = (int)(clamped_z);
+
+    const float fx = clamped_x - (float)x0;
+    const float fy = clamped_y - (float)y0;
+    const float fz = clamped_z - (float)z0;
+    
+    const uint32 x1 = x0 + 1;
+    const uint32 y1 = y0 + 1;
+    const uint32 z1 = z0 + 1;
+
+    const float v000 = getVoxel(this,vec3i(x0,y0,z0));
+    const float v001 = getVoxel(this,vec3i(x1,y0,z0));
+    const float v010 = getVoxel(this,vec3i(x0,y1,z0));
+    const float v011 = getVoxel(this,vec3i(x1,y1,z0));
+    const float v100 = getVoxel(this,vec3i(x0,y0,z1));
+    const float v101 = getVoxel(this,vec3i(x1,y0,z1));
+    const float v110 = getVoxel(this,vec3i(x0,y1,z1));
+    const float v111 = getVoxel(this,vec3i(x1,y1,z1));
+    
+    const float v00 = v000 + fx * (v001-v000);
+    const float v01 = v010 + fx * (v011-v010);
+    const float v10 = v100 + fx * (v101-v100);
+    const float v11 = v110 + fx * (v111-v110);
+    
+    const float v0 = v00 + fy * (v01-v00);
+    const float v1 = v10 + fy * (v11-v10);
+    
+    const float v = v0 + fz * (v1-v0);
+    
+    return v;
+  }
+  // template<>
+  // float BrickedVolume<float>::lerpf(const vec3fa &pos)
+  // { 
+  //   NOTIMPLEMENTED;
+  // }
+  // template<>
+  // float BrickedVolume<uint8>::lerpf(const vec3fa &pos)
+  // { 
+  //   NOTIMPLEMENTED;
+  // }
 
   template<>
   vec3f BrickedVolume<float>::gradf(const vec3fa &pos)

@@ -7,6 +7,30 @@
 // STL
 #include <map>
 
+
+/*
+
+currnet performance (dvr, HSW)
+
+-------------------------------------------------------
+resampled to float:300
+
+naive: ispc 12.5 / scalar 2.95
+
+bricked: ispc 13.7 / scalar 2.67
+
+
+
+-------------------------------------------------------
+resampled to float:800
+
+naive: ispc 5.9  / scalar 2.25
+
+bricked: ispc 7.3 / scalar 2.25
+
+
+ */
+
 namespace ospray {
   long long volumeMagicCookie = 0x123456789012345LL;
 
@@ -42,7 +66,6 @@ namespace ospray {
       }
   }
 
-
   template<typename T>
   T floatToT(T t, float f);
   template<>
@@ -63,7 +86,7 @@ namespace ospray {
         T t[size.x];
         for (int x=0;x<size.x;x++) {
           pos.x = x / float(size.x-1);
-          t[x] = floatToT(t[x],lerpf(pos));
+          t[x] = floatToT(t[x],source->lerpf(pos));
         }
         setRegion(vec3f(0,y,z),vec3f(size.x,1,1),t);
       }
@@ -77,25 +100,42 @@ namespace ospray {
     Assert(size.x > 0);
     Assert(size.y > 0);
     Assert(size.z > 0);
-    const char *fileName = getParamString("filename",NULL);
-    Assert(fileName);
+    this->size = size;
 
-#if 0
-    loadRAW(size,fileName);
-#else
-    const vec3i resampleSize = getParam3i("resample_dimensions",vec3i(-1));
-    if (resampleSize.x > 0) {
-      StructuredVolume<T> *tmp = new NaiveVolume<T>;
-      tmp->size = size;
-      tmp->loadRAW(size,fileName);
-      this->size = resampleSize;
+    const char *fileName = getParamString("filename",NULL);
+    if (fileName) {
+      loadRAW(size,fileName);
+      return;
+    } 
+    
+    Volume *resampleSource = (Volume*)getParamData("resample_source",NULL);
+    if (resampleSource) {
       allocate();
       createIE();
-      resampleFrom(tmp);
-    } else {
-      loadRAW(size,fileName);
+      resampleFrom(resampleSource);
+      return;
     }
-#endif    
+
+    throw std::runtime_error("unknown way of initializing a volume...");
+    
+// #if 0
+//     loadRAW(size,fileName);
+// #else
+//     const vec3i resampleSize = getParam3i("resample_dimensions",vec3i(-1));
+//     if (resampleSize.x > 0) {
+//       const char *inputFormat  = getParamString("input_format",NULL);
+//       Assert(inputFormat != NULL);
+//       StructuredVolume<T> *tmp = new NaiveVolume<T>;
+//       tmp->size = size;
+//       tmp->loadRAW(size,fileName);
+//       this->size = resampleSize;
+//       allocate();
+//       createIE();
+//       resampleFrom(tmp);
+//     } else {
+//       loadRAW(size,fileName);
+//     }
+// #endif    
     // PRINT(resampleSize);
 
     

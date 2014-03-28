@@ -6,7 +6,7 @@
     respective sections.
   */ 
 
-#define BRICK_BITS 2
+#define BRICK_BITS 4
 
 #ifdef __cplusplus
 // C++ definitions here

@@ -6,7 +6,7 @@ namespace ispc {
   struct _Volume;
 };
 
-#define LOW_LEVEL_KERNELS 1
+// #define LOW_LEVEL_KERNELS 1
 
 namespace ospray {
   /*! \brief a volume _sampler_ is the abstraction for the actul thing
