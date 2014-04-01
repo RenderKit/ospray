@@ -13,6 +13,7 @@ namespace ospray {
 
   struct Model : public ManagedObject
   {
+    //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Model"; }
     virtual void finalize();
 

@@ -1,7 +1,8 @@
 /*! \file ospDVR.cpp A GLUT-based viewer for Wavefront OBJ files */
 
+#undef NDEBUG
 // viewer widget
-#include "../util/glut3D/glut3D.h"
+#include "../../apps/util/glut3D/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
 
@@ -9,6 +10,11 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  const char *renderType = "dvr_ispc";
+  const char *volumeLayout = "naive32";
+  const char *inputFormat = "uint8";
+  const char *resampleFormat = NULL;
+  int         resampleSize = -1;
   /*! \page volview_notes_on_volume_interface Internal Notes on Volume Interface
 
     Right now i'm using a trivially simple interface to ospray's
@@ -22,7 +28,13 @@ namespace ospray {
     cout << "ospray::ospDVR fatal error : " << vol << endl;
     cout << endl;
     cout << "Proper usage: " << endl;
-    cout << "  ./ospDVR <sizex> <sizey> <sizez> volFile.raw" << std::endl;
+    cout << "  ./ospDVR uint8|float <sizex> <sizey> <sizez> volFile.raw [options]" << std::endl;
+    cout << "options:" << endl;
+    cout << " --ispc                      : use ISPC renderer" << endl;
+    cout << " --scalar                    : use scalar renderer" << endl;
+    cout << " --naive                     : use naive z-order data layout" << endl;
+    cout << " --bricked                   : use bricked data layout" << endl;
+    cout << " --resample uint8|float size : resample to given format and size^3" << endl;
     cout << endl;
     exit(1);
   }
@@ -35,10 +47,10 @@ namespace ospray {
     a common class! */
   struct VolumeViewer : public Glut3DWidget {
     /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
-    VolumeViewer(const vec3i dims, const std::string &fileName, int resampleSize=0) 
+    VolumeViewer(const vec3i dims, const std::string &fileName) 
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
         fb(NULL), renderer(NULL), volume(NULL), 
-        dims(dims), fileName(fileName), resampleSize(resampleSize)
+        dims(dims), fileName(fileName)
     {
       camera = ospNewCamera("perspective");
       Assert2(camera,"could not create camera");
@@ -47,16 +59,40 @@ namespace ospray {
       ospCommit(camera);
       ospCommit(camera);
 
+      if (resampleFormat) {
+        std::string volumeType 
+          = std::string("naive32")
+          + "_"
+          + std::string(inputFormat);
+        PRINT(volumeType);
+        OSPVolume tmp = ospNewVolume(volumeType.c_str());
+        ospSet3i(tmp,"dimensions",dims.x,dims.y,dims.z);
+        ospSetString(tmp,"filename",fileName.c_str());
+        ospCommit(tmp);
+        PRINT(tmp);
+        volumeType 
+          = std::string(volumeLayout)
+          + "_"
+          + std::string(resampleFormat);
+        volume = ospNewVolume(volumeType.c_str());
+        PRINT(resampleSize);
+        ospSet3i(volume,"dimensions",resampleSize,resampleSize,resampleSize);
+        ospSetParam(volume,"resample_source",tmp);
+        ospCommit(volume);
+      } else {
+        std::string volumeType 
+          = std::string(volumeLayout)
+          + "_"
+          + std::string(inputFormat);
+        volume = ospNewVolume(volumeType.c_str());
+        ospSet3i(volume,"dimensions",dims.x,dims.y,dims.z);
+        ospSetString(volume,"filename",fileName.c_str());
+        ospCommit(volume);
+      }
 
-      volume = ospNewVolume("ignoredForNow");
-      Assert(volume && "null volume handle");
-      ospSet3i(volume,"dimensions",dims.x,dims.y,dims.z);
-      ospSet3i(volume,"resample_dimensions",resampleSize,resampleSize,resampleSize);
-      ospSetString(volume,"filename",fileName.c_str());
-      ospCommit(volume);
+      renderer = ospNewRenderer(renderType);
+      ospSet1f(renderer,"dt",0.5f/std::max(dims.x,std::max(dims.y,dims.z)));
 
-
-      renderer = ospNewRenderer("dvr");
       Assert2(renderer,"could not create renderer");
       ospSetParam(renderer,"volume",volume);
       ospSetParam(renderer,"camera",camera);
@@ -78,7 +114,9 @@ namespace ospray {
 
       if (viewPort.modified) {
         Assert2(camera,"ospray camera is null");
+        
         // PRINT(viewPort);
+        
         ospSetVec3f(camera,"pos",viewPort.from);
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
         ospSetVec3f(camera,"up",viewPort.up);
@@ -111,30 +149,44 @@ namespace ospray {
     OSPFrameBuffer fb;
     OSPRenderer    renderer;
     OSPCamera      camera;
-    int            resampleSize;
     ospray::glut3D::FPSCounter fps;
   };
 
   void ospDVRMain(int &ac, const char **&av)
   {
+    ospLoadModule("dvr");
+
     if (ac < 5) 
       error("no input scene specified (or done so in wrong format)");
     
     vec3i volDims;
     std::string volFileName;
-    int resample = 0;
 
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
       if (arg[0] != '-') {
-        volDims.x = atoi(av[i+0]);
-        volDims.y = atoi(av[i+1]);
-        volDims.z = atoi(av[i+2]);
-        volFileName = av[i+3];
-        i += 3;
+        inputFormat = strdup(av[i+0]);
+        volDims.x = atoi(av[i+1]);
+        volDims.y = atoi(av[i+2]);
+        volDims.z = atoi(av[i+3]);
+        volFileName = av[i+4];
+        i += 4;
       } else if (arg == "--resample") {
         // resample volume to this size
-        resample = atoi(av[++i]);
+        resampleFormat = strdup(av[++i]);
+        resampleSize   = atoi(av[++i]);
+      } else if (arg == "--ispc") {
+        // resample volume to this size
+        renderType = "dvr_ispc";
+      } else if (arg == "--scalar") {
+        // resample volume to this size
+        renderType = "dvr_scalar";
+      } else if (arg == "--naive") {
+        // use naive32 volume layout
+        volumeLayout = "naive32";
+      } else if (arg == "--bricked") {
+        // use bricked32 volume layout
+        volumeLayout = "bricked32";
       } else 
         throw std::runtime_error("unknown parameter "+arg);
     }
@@ -146,10 +198,11 @@ namespace ospray {
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
-    VolumeViewer window(volDims,volFileName,resample);
+    VolumeViewer window(volDims,volFileName);
     window.create("ospDVR: OSPRay miniature DVR volume viewer");
     printf("Viewer created. Press 'Q' to quit.\n");
-    window.setWorldBounds(box3f(vec3f(0.f),vec3f(resample?vec3i(resample):volDims)));
+    window.setWorldBounds(box3f(vec3f(0.f),vec3f(1.f)));
+    // window.setWorldBounds(box3f(vec3f(0.f),vec3f(resample?vec3i(resample):volDims)));
     ospray::glut3D::runGLUT();
   }
 }

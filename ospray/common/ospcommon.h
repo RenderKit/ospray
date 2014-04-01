@@ -76,7 +76,7 @@ namespace ospray {
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 #endif
 
-  /*! logging level (cmdline: --osp:loglevel <n>) */
+  /*! logging level (cmdline: --osp:loglevel \<n\>) */
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;

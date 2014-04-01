@@ -1,0 +1,35 @@
+/*! \file multihit_kernel.ih \brief Defines the public (ISPC-side) interface for
+    the multi-hit kernel */
+
+// ospray
+#include "common/ospcommon.ih"
+#include "common/ray.ih"
+// embree
+#include "embree2/rtcore.isph"
+
+/*! \defgroup mhtk_module_ispc Multi-hit Traversal Kernel (MHTK) module (ISPC)
+  \ingroup mhtk_module
+  \brief ISPC side of the Multi-hit Traversal Kernel (MHTK) module
+  @{ */
+
+/* ISPC-side definition of a hit along a ray (as used by the multihit kernel) */
+struct MHTKHit
+{
+  float t; //!< distance along the ray
+  float u;
+  float v;
+  int primID;
+  int geomID;
+  vec3f Ng;
+};
+
+/*! \brief ISPC-side interface to the multi hit traversal kernel
+
+  find intersections along the given ray, and return the (up to)
+  'hitArraySize' closest hits along that ray, in sorted order. The ray
+  itself may or may not be modified. */
+size_t multiHitKernel(RTCScene                 scene,
+                      varying Ray             &ray,
+                      varying MHTKHit *uniform hitArray,
+                      const uniform uint32     hitArraySize);
+/*! @} */

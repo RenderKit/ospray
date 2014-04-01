@@ -7,7 +7,8 @@ namespace ospray {
 
   size_t sizeOf(OSPDataType type);
 
-  /*! defines a data array (aka "buffer") type that contains 'n' items of a given type */
+  /*! \brief defines a data array (aka "buffer") type that contains
+      'n' items of a given type */
   struct Data : public ManagedObject
   {
     virtual std::string toString() const { return "ospray::Data"; }

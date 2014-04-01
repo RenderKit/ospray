@@ -44,19 +44,26 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	volume/bricked32.ispc
 	volume/naive32.ispc
 	volume/volume.cpp
+	volume/bricked32.cpp
+	volume/naive32.cpp
 
 	geometry/geometry.cpp
 	geometry/trianglemesh.cpp
+	geometry/streamlines.cpp
+	geometry/streamlines.ispc
 
-	render/renderer.cpp
-	render/testrenderer.ispc
-	render/raycast.ispc
-	render/dvr.ispc
 	render/tilerenderer.cpp
 	render/loadbalancer.cpp
-	render/testrenderer.cpp
+
+	render/renderer.cpp
 	render/raycast.cpp
+	render/raycast.ispc
+	render/ao16.cpp
+	render/ao16.ispc
 	render/dvr.cpp
+	render/dvr.ispc
+	render/testrenderer.cpp
+	render/testrenderer.ispc
 
 	api/api.cpp
 	api/device.cpp

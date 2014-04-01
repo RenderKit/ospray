@@ -41,11 +41,11 @@
   \section components OSPRay Components
 
   OSPRay consists of three main components: the OSPray library itself
-  (located in the 'ospray' directory); a number of modules to realize
-  various components not included in the main ospray infrastructure;
-  and a set of sample applications (in the 'apps' directory) that show
-  how OSPray (and/or the modules) are used. These apps often build
-  around some common
+  (located in the 'ospray' directory); a number of demand-loadable
+  modules (see \ref ospray_modules) that allow to extend ospray's functionality in a
+  plug-and-play manner; and a set of sample applications (in the
+  'apps' directory) that show how OSPray (and/or the modules) are
+  used. These apps often build around some common
 
 
   \section embree Dependence on Embree

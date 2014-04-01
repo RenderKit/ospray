@@ -196,7 +196,12 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
-      if (!renderer) return NULL;
+      if (!renderer) {
+        if (ospray::debugMode) 
+          throw std::runtime_error("unknown renderer type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
       renderer->refInc();
       return (OSPRenderer)renderer;
     }
@@ -216,7 +221,12 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
-      if (!camera) return NULL;
+      if (!camera) {
+        if (ospray::debugMode) 
+          throw std::runtime_error("unknown camera type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
       camera->refInc();
       return (OSPCamera)camera;
     }
@@ -225,12 +235,13 @@ namespace ospray {
     OSPVolume LocalDevice::newVolume(const char *type)
     {
       Assert(type != NULL && "invalid volume type identifier");
-      /*! we don't have the volume interface fleshed out, yet, and
-        currently create the proper volume type on-the-fly during
-        commit, so use this wrpper thingy...  \see
-        volview_notes_on_volume_interface */
-      WrapperVolume *volume = new WrapperVolume; 
-      if (!volume) return NULL;
+      Volume *volume = Volume::createVolume(type);
+      if (!volume) {
+        if (ospray::debugMode) 
+          throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
       volume->refInc();
       return (OSPVolume)volume;
     }

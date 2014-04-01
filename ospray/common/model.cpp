@@ -16,8 +16,15 @@ namespace ospray {
     }
 
     eScene = rtcNewScene(
-                         //                         RTC_SCENE_COMPACT|
-                         RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
+                         //RTC_SCENE_COMPACT|
+                         RTC_SCENE_STATIC 
+                         /* iw: do not use RTC_HIGH_QUALITY -
+                            currently this introdcues spatial splits,
+                            which cause all kinds of issues in part
+                            for the MHTK module, but also intersection
+                            filters etcpp */
+                         //|RTC_SCENE_HIGH_QUALITY
+                         ,
 #if OSPRAY_SPMD_WIDTH==16
                          RTC_INTERSECT1|RTC_INTERSECT16
 #elif OSPRAY_SPMD_WIDTH==8

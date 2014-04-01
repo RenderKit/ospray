@@ -1,4 +1,8 @@
-/*! file haroon.h \brief Defines the domain-specific API for the Haroon module (\ref haroon_module) */
+/*! \file haroon.h
+  
+  \brief Defines the domain-specific API for the Haroon module (\ref haroon_module) 
+
+*/
 
 #pragma once
 

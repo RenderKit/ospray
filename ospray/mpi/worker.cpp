@@ -89,14 +89,10 @@ namespace ospray {
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new volume \"" << type << "\" ID " << (void*)(int64)handle << endl;
-      /*! we don't have the volume interface fleshed out, yet, and
-        currently create the proper volume type on-the-fly during
-        commit, so use this wrpper thingy...  \see
-        volview_notes_on_volume_interface */
-      WrapperVolume *volume = new WrapperVolume; 
-      volume->refInc();
-      // return (OSPVolume)volume;
-      //     Volume *volume = Volume::createVolume(type);
+          Volume *volume = Volume::createVolume(type);
+          if (!volume) 
+            throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
+          volume->refInc();
           cmd.free(type);
           Assert(volume);
           handle.assign(volume);
@@ -147,7 +143,7 @@ namespace ospray {
           Assert(model);
           handle.assign(model);
           if (logLevel > 2)
-          cout << "#w: new model " << handle << endl;
+            cout << "#w: new model " << handle << endl;
         } break;
         case api::MPIDevice::CMD_NEW_TRIANGLEMESH: {
           const mpi::Handle handle = cmd.get_handle();

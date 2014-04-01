@@ -31,7 +31,7 @@ PROJECT_NAME           = "OSPRay"
 # This could be handy for archiving the generated documentation or
 # if some version control system is used.
 
-PROJECT_NUMBER         = "V0.0.2, Jan 8, 2014"
+PROJECT_NUMBER         = "V0.1.0, Mar 17, 2014"
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute)
 # base path where the generated documentation will be put.
@@ -584,7 +584,7 @@ WARN_LOGFILE           =
 INPUT                  = \
    @CMAKE_CURRENT_SOURCE_DIR@/doc/dox    \					
    @CMAKE_CURRENT_SOURCE_DIR@/ospray/ 	 \							
-   @CMAKE_CURRENT_SOURCE_DIR@/plugins/ 	 \							
+   @CMAKE_CURRENT_SOURCE_DIR@/modules/ 	 \							
    @CMAKE_CURRENT_SOURCE_DIR@/data/ 	 \							
    @CMAKE_CURRENT_SOURCE_DIR@/apps/ 
 
@@ -604,7 +604,7 @@ INPUT_ENCODING         = UTF-8
 # *.hxx *.hpp *.h++ *.idl *.odl *.cs *.php *.php3 *.inc *.m *.mm *.dox *.py
 # *.f90 *.f *.vhd *.vhdl
 
-FILE_PATTERNS          = *.cpp *.h *.dox *.ispc *.ih
+FILE_PATTERNS          = *.dox *.cpp *.h *.ispc *.ih
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories
 # should be searched for input files as well. Possible values are YES and NO.

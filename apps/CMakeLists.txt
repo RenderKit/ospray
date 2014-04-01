@@ -14,10 +14,10 @@ ADD_SUBDIRECTORY(util)
 # mini-scene graph viewer for _geometry_ (intentionally simple)
 ADD_SUBDIRECTORY(msgView)
 # mini dvr volume viewer (intentionally simple)
-ADD_SUBDIRECTORY(ospDVR)
+# ADD_SUBDIRECTORY(ospDVR) --> moved to modules/dvr for now
 ENDIF()
 
 # general testing codes; to be removed at some point in time
-#ADD_SUBDIRECTORY(testing)
+ADD_SUBDIRECTORY(testing)
 # mpi testing codes; to be removed at some point in time
 ADD_SUBDIRECTORY(mpi-testing)

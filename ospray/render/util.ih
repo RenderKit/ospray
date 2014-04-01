@@ -28,4 +28,12 @@ inline uint32 cvt_uint32(const vec4f &v)
     (cvt_uint32(v.w) << 24);
 }
 
+inline uint32 cvt_uint32(const vec3f &v)
+{
+  return 
+    (cvt_uint32(v.x) << 0)  |
+    (cvt_uint32(v.y) << 8)  |
+    (cvt_uint32(v.z) << 16);
+}
+
 #endif

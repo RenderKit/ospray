@@ -1,6 +1,5 @@
 #include "volume.ih"
-
-#define BRICK_BITS 2
+#include "bricked32.ih"
 
 // ------------------------------------------------------------------
 // the data structure itself
@@ -89,6 +88,9 @@ void Bricked32Volume1f_setRegion(uniform VolumePtr _volume,
       dst[dst_idx] = src[src_idx];
     }
 }
+
+
+
 
 /*! get voxel for bricked volume with 1uc data format and 32-bit addressing */
 inline float getVoxel1uc32(uniform BrickedVolume *uniform volume,
@@ -305,7 +307,7 @@ uniform VolumePtr Bricked32Volume1f_create(uniform vec3i &size, const float *uni
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
   
-  volume->inherited.setRegion = Bricked32Volume1f_setRegion;
+  // volume->inherited.setRegion = Bricked32Volume1f_setRegion;
   volume->inherited.lerpf     = Bricked32Volume1f_lerpf;
   volume->inherited.gradf     = Bricked32Volume1f_gradf;
   return (uniform VolumePtr)volume;
@@ -329,13 +331,13 @@ uniform VolumePtr Bricked32Volume1uc_create(uniform vec3i &size, const uint8 *un
   if (internal)
     volume->inherited.data = (void *uniform) internal;
   else
-  volume->inherited.data     = uniform new uniform int8[numElements];
+    volume->inherited.data     = uniform new uniform int8[numElements];
 
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
   
-  volume->inherited.setRegion = Bricked32Volume1uc_setRegion;
+  // volume->inherited.setRegion = Bricked32Volume1uc_setRegion;
   volume->inherited.lerpf     = Bricked32Volume1uc_lerpf;
   volume->inherited.gradf     = Bricked32Volume1uc_gradf;
   return (uniform VolumePtr)volume;
@@ -353,6 +355,7 @@ export void _Bricked32Volume1uc_setRegion(uniform ExtVolumePtr _volume,
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
   Bricked32Volume1uc_setRegion(volume,begin,size,data);
 }
+
 export void _Bricked32Volume1f_setRegion(uniform ExtVolumePtr _volume,
                                          const uniform vec3i &begin,
                                          const uniform vec3i &size,

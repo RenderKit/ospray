@@ -6,7 +6,7 @@
 namespace ospray {
   /*! \brief ospray *scalar* ray class 
 
-    \detailed This impelment the base ospray ray class; it is 'derived'
+    This impelment the base ospray ray class; it is 'derived'
     from Embree's ray class, but can have additional members that embree
     does not care about. For convenience we do not actually use the
     embree's RTCRay class itself, and instead use our own ray class that
@@ -14,7 +14,7 @@ namespace ospray {
     emulate the exact layout of embree's rtcray class, and therefore can
     simply typecast it before calling embree's intersectors.
 
-    \important Since we do call embree's intersectors on this class the
+    Since we do call embree's intersectors on this class the
     layout of the class members HAS to (exactly!) match the layout of
     emrbee's RTCRay class (as defined in
     emrbee/include/embree2/rtcore_ray.isph). We can add additional
