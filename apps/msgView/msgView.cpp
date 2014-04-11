@@ -149,6 +149,8 @@ namespace ospray {
           miniSG::importSTL(*msgModel,fn);
         else if (fn.ext() == "msg")
           miniSG::importMSG(*msgModel,fn);
+        else if (fn.ext() == "xml")
+          miniSG::importRIVL(*msgModel,fn);
         else if (fn.ext() == "obj")
           miniSG::importOBJ(*msgModel,fn);
         else if (fn.ext() == "astl")
@@ -214,12 +216,12 @@ namespace ospray {
       
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
-                                    &msgMesh->position[0]);
+                                    &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"position",position);
       
       // add triangle index array to mesh
-      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec4i,
-                                 &msgMesh->triangle[0]);
+      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
+                                 &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"index",index);
       
       ospAddGeometry(ospModel,ospMesh);

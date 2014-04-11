@@ -5,10 +5,10 @@ namespace ospray {
   template<typename T>
   void NaiveVolume<T>::allocate() 
   {
-    Assert(data == NULL);
-    Assert(size.x > 0);
-    Assert(size.y > 0);
-    Assert(size.z > 0);
+    Assert(this->data == NULL);
+    Assert(this->size.x > 0);
+    Assert(this->size.y > 0);
+    Assert(this->size.z > 0);
     this->data = new T[int64(this->size.x)*int64(this->size.y)*int64(this->size.z)];
   }
   

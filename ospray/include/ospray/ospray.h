@@ -74,13 +74,18 @@ typedef enum {
   OSP_vec4i
 } OSPDataType;
 
-/*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
+// /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
+// typedef enum {
+//   /*! experimental: currently used to specify that the app ranks -
+//       together - hold a logical piece of geometry, with the back-end
+//       ospray workers then fetching that on demand..... */
+//   OSP_DISTRIBUTED_GEOMETRY = (1<<0),
+// } OSPGeometryCreationFlags;
+
+/*! flags that can be passed to OSPNewData; can be OR'ed together */
 typedef enum {
-  /*! experimental: currently used to specify that the app ranks -
-      together - hold a logical piece of geometry, with the back-end
-      ospray workers then fetching that on demand..... */
-  OSP_DISTRIBUTED_GEOMETRY = (1<<0),
-} OSPGeometryCreationFlags;
+  OSP_DATA_SHARED_BUFFER = (1<<0),
+} OSPDataCreationFlags;
 
 typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
@@ -148,7 +153,13 @@ extern "C" {
 
     \{ 
   */
-  /*! create a new data buffer, with optional init data and control flags */
+  /*! create a new data buffer, with optional init data and control flags 
+
+    Valid flags that can be or'ed together into the flags value:
+    - OSP_DATA_SHARED_BUFFER: indicates that the buffer can be shared with the app.
+      In this case the calling program guarantees that the 'init' pointer will remain
+      valid for the duration that this data array is being used.
+   */
   OSPData ospNewData(size_t numItems, OSPDataType format, void *init=NULL, int flags=0);
 
   /*! \} */

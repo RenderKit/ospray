@@ -16,7 +16,7 @@ namespace ospray {
   template<typename T>
   void BrickedVolume<T>::allocate() 
   {
-    Assert(data == NULL);
+    Assert(this->data == NULL);
     Assert(this->size.x > 0);
     Assert(this->size.y > 0);
     Assert(this->size.z > 0);

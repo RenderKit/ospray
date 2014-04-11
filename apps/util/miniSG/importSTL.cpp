@@ -64,7 +64,7 @@ namespace ospray {
         triangle.v0 = importer.addVertex(stlTri.v0);
         triangle.v1 = importer.addVertex(stlTri.v1);
         triangle.v2 = importer.addVertex(stlTri.v2);
-        triangle.materialID = -1;
+        // triangle.materialID = -1;
         importer.addTriangle(triangle);
       }
       importer.finalize();

@@ -117,7 +117,6 @@ namespace ospray {
     /*! create a new data buffer */
     OSPData LocalDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
-      Assert2(flags == 0,"unsupported combination of flags");
       Data *data = new Data(nitems,format,init,flags);
       data->refInc();
       return (OSPData)data;

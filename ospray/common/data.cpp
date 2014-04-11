@@ -10,6 +10,7 @@ namespace ospray {
     case OSP_FLOAT:  return sizeof(float);
     case OSP_INT:    return sizeof(int32);
     case OSP_vec2f:  return sizeof(vec2f);
+    case OSP_vec3f:  return sizeof(vec3f);
     case OSP_vec3fa: return sizeof(vec3fa);
     case OSP_vec3i:  return sizeof(vec3i);
     case OSP_vec4i:  return sizeof(vec4i);
@@ -23,14 +24,21 @@ namespace ospray {
   Data::Data(size_t numItems, OSPDataType type, void *init, int flags)
     : numItems(numItems), numBytes(numItems*sizeOf(type)), type(type), flags(flags)
   {
-    Assert(flags == 0); // nothing else implemented yet ...
-    data = new unsigned char[numBytes]; //malloc(numBytes); iw: switch
-                                        //to embree::new due to
-                                        //alignment
-    if (init)
-      memcpy(data,init,numBytes);
-    else if (type == OSP_OBJECT)
-      bzero(data,numBytes);
+    /* two notes here:
+       a) i'm using embree's 'new' to enforce alignment
+       b) i'm adding 16 bytes to size to enforce 4-float padding (which embree
+          requires in some buffers 
+    */
+    if (flags & OSP_DATA_SHARED_BUFFER) {
+      Assert2(init != NULL, "shared buffer is NULL");
+      data = init;
+    } else {
+      data = new unsigned char[numBytes+16]; 
+      if (init)
+        memcpy(data,init,numBytes);
+      else if (type == OSP_OBJECT)
+        bzero(data,numBytes);
+    }
   }
 
   Data::~Data() 

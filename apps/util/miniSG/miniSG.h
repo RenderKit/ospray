@@ -40,7 +40,9 @@ namespace ospray {
 
     struct Triangle {
       uint32 v0, v1, v2;
-      uint32 materialID;
+      //      uint32 materialID; // iw, 1/11/14: disabled materialID
+      //      per triangle, emrbee cannot do buffer sharing with this
+      //      format.
     };
 
     /*! default triangle mesh layout */
@@ -88,6 +90,9 @@ namespace ospray {
 
     /*! import a wavefront OBJ file, and add it to the specified model */
     void importOBJ(Model &model, const embree::FileName &fileName);
+
+    /*! import a wavefront OBJ file, and add it to the specified model */
+    void importRIVL(Model &model, const embree::FileName &fileName);
 
     /*! import a STL file, and add it to the specified model */
     void importSTL(Model &model, const embree::FileName &fileName);
