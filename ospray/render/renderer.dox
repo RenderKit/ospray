@@ -1,6 +1,8 @@
-/*! \defgroup ospray_supported_renderers Supported Renderer Types
+/*! \defgroup ospray_supported_renderers Built-in Renderer Types
 
   \ingroup ospray_supported_functionality
+
+  \brief Lists and documents the types of renderers implemented in this version of OSPRay.
 
   \section renderer_definition What is a OSPRay renderer?
 

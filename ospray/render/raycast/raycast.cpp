@@ -1,6 +1,6 @@
 // ospray
 #include "raycast.h"
-#include "../camera/perspectivecamera.h"
+#include "ospray/camera/perspectivecamera.h"
 // embree
 #include "common/sys/sync/atomic.h"
 
@@ -43,10 +43,10 @@ namespace ospray {
   typedef RayCastRenderer<RC_GEOMID>   RayCastRenderer_GeomID;
   typedef RayCastRenderer<RC_GNORMAL>  RayCastRenderer_Ng;
 
-  OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,ray_cast);
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast);
-  OSP_REGISTER_RENDERER(RayCastRenderer_PrimID,raycast_primID);
-  OSP_REGISTER_RENDERER(RayCastRenderer_GeomID,raycast_geomID);
-  OSP_REGISTER_RENDERER(RayCastRenderer_Ng,raycast_Ng);
+  OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast_eyelight);
+  OSP_REGISTER_RENDERER(RayCastRenderer_PrimID,  raycast_primID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_GeomID,  raycast_geomID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_Ng,      raycast_Ng);
 };
 

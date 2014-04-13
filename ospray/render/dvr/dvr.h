@@ -1,9 +1,9 @@
 #pragma once
 
-#include "renderer.h"
+#include "ospray/render/renderer.h"
 
 namespace ospray {
-  /*! test renderer that renders a simple test image using ispc */
+  /*! \brief Implements a simple "Direct Volume (ray casting) Renderer" (DVR) */
   struct DVRRenderer : public Renderer {
     virtual std::string toString() const { return "ospray::DVRRenderer"; }
     virtual void renderFrame(FrameBuffer *fb);

@@ -1,10 +1,10 @@
 /*! \file raycast.ispc Defines ISPC side of the ray cast renderer */
 
 // ospray stuff
-#include "../fb/framebuffer.ih"
-#include "../camera/perspectivecamera.ih"
-#include "../common/ray.ih"
-#include "util.ih"
+#include "../../fb/framebuffer.ih"
+#include "../../camera/perspectivecamera.ih"
+#include "../../common/ray.ih"
+#include "../util.ih"
 
 // embree stuff
 #include "embree2/rtcore_scene.isph"

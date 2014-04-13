@@ -1,6 +1,6 @@
 #pragma once
 
-#include "camera.h"
+#include "ospray/camera/camera.h"
 
 namespace ispc {  
   struct PerspectiveCamera_Data;

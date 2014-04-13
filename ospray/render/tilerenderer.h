@@ -1,6 +1,6 @@
 #pragma once
 
-/*! \file renderer.h Defines the base class for any tile-based renderer */
+/*! \file tilerenderer.h Defines the base class for any tile-based renderer */
 
 #include "renderer.h"
 

@@ -1,6 +1,6 @@
 #pragma once
 
-/*! \file render.h Defines the base renderer class */
+/*! \file renderer.h Defines the base renderer class */
 
 #include "../common/model.h"
 #include "../fb/framebuffer.h"

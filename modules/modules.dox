@@ -25,7 +25,7 @@
   will then be able to load upon the respective \ref ospLoadModule
   call (in order for ospLoadModule to find the respective module the
   shared library has to follow a certain naming scheme, see detailed
-  comments for \ospLoadModule).
+  comments for \ref ospLoadModule).
 
   Modules can extend ospray in a variety of forms: Each module can
   implement one or multiple new geometry types, new camera types, new

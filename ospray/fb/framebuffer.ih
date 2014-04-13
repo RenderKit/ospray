@@ -2,7 +2,7 @@
 #define FRAMEBUFFER_ISPH
 
 #include "tile.ih"
-/*! \file framebuffer.isph Defines the abstract base class of an ISPC frame buffer */
+/*! \file framebuffer.ih Defines the abstract base class of an ISPC frame buffer */
 
 struct FrameBuffer;
 

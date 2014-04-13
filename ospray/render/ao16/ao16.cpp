@@ -1,6 +1,6 @@
 // ospray
 #include "ao16.h"
-#include "../camera/perspectivecamera.h"
+#include "ospray/camera/camera.h"
 // embree
 #include "common/sys/sync/atomic.h"
 

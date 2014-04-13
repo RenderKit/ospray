@@ -7,7 +7,7 @@
   \section one_mpi_ring One MPI group; app on rank 0, ospray on ranks 1-N
 
   <code>
-  mpirun -np N <otherMPIOptions> ./myApp --osp:mpi <otherAppOptions>
+  mpirun -np N \<otherMPIOptions\> ./myApp --osp:mpi \<otherAppOptions\>
   </code>
 
   This mode is particularly intended for users wanting to run a

@@ -1,6 +1,6 @@
 #include "dvr.h"
-#include "../camera/perspectivecamera.h"
-#include "../volume/volume.h"
+#include "ospray/camera/camera.h"
+#include "ospray/volume/volume.h"
 
 namespace ospray {
   extern "C" void ispc__DVRRenderer_renderFrame(void *camera, void *scene, void *fb);

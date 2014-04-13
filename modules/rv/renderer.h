@@ -1,6 +1,6 @@
 #pragma once
 
-#include "render/tilerenderer.h"
+#include "ospray/render/tilerenderer.h"
 
 namespace ospray {
   struct Camera;
