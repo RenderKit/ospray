@@ -11,5 +11,8 @@ namespace ospray {
     //! \brief common function to help printf-debugging 
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::Material"; }
+
+    //! \brief commit the material's parameters
+    virtual void commit() {}
   };
 }

@@ -63,6 +63,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	render/dvr/dvr.cpp
 	render/dvr/dvr.ispc
 	render/obj/objrenderer.cpp
+	render/obj/objmaterial.cpp
 
 	api/api.cpp
 	api/device.cpp
