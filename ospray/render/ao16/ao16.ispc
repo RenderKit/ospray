@@ -1,4 +1,4 @@
-/*! \file raycast.ispc Defines ISPC side of the ray cast renderer */
+/*! \file raycast.ispc Defines ISPC side of the AO16 renderer */
 
 // ospray stuff
 #include "../fb/framebuffer.ih"

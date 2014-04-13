@@ -1,29 +1,8 @@
-/*! \defgroup builtin_cameras OSPRay's Natively Supported Camera Types
+/*! \defgroup ospray_supported_cameras OSPRay's Built-in Camera Types
 
-  OSPRay natively supports the following camera (additional camera
-  types may be defined via plugins):
+  \brief Lists and documents the types of cameras implemented in this version of OSPRay.
 
-  <dl>
-
-  <dt>"perspective"</dt><dd>A simple persepctive camera. (see \subpage
-  perspective_camera)</dd>
-
-  <dt>"dof"</dt><dd>A perspective camera capable of doing depth of
-  field and motion blur (see \subpage dof_camera)</dd>
-  
-  <dt>"orthogonal"</dt><dd>A camera doing orthogonal projection to a
-  specified plane (see \subpage orthogonal_projection_camera)</dd>
-
-  <dt>"parallel"</dt><dd>A camera doing parallel projection to a
-  specified plane (see \subpage parallel_projection_camera)</dd>
-
-  </dl>
-
-  \internal The actual camera description (incl its parameters) is
-  within the given C file containing this function's class definition.
+  \ingroup ospray_supported_functionality
   
 */
-
-
-
 

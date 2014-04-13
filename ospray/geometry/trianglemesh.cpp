@@ -65,11 +65,11 @@ namespace ospray {
     }
 
     if (logLevel > 2) 
-    if (numPrints < 5) {
-      cout << "  created triangle mesh (" << numTris << " tris "
-           << ", " << numVerts << " vertices)" << endl;
-      cout << "  mesh bounds " << bounds << endl;
-    } 
+      if (numPrints < 5) {
+        cout << "  created triangle mesh (" << numTris << " tris "
+             << ", " << numVerts << " vertices)" << endl;
+        cout << "  mesh bounds " << bounds << endl;
+      } 
     rtcEnable(model->eScene,eMesh);
   }
 

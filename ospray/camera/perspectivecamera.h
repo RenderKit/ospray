@@ -8,11 +8,17 @@ namespace ispc {
 
 namespace ospray {
 
-  /*! \page perspective_camera Perspective Camera ("perspective")
+  /*! \defgroup perspective_camera The Perspective Camera ("perspective")
 
-    \ingroup builtin_cameras
+    \brief Implements a straightforward perspective (or "pinhole"
+    camera) for perspective rendering, without support for Depth of Field or Motion Blur
+
+    \ingroup ospray_supported_cameras
     
-    A simple perspective camera. Supports the following 
+    A simple perspective camera. This camera type is loaded by passing
+    the type string "perspective" to \ref ospNewCamera
+
+    The perspective camera supports the following parameters
     <pre>
     vec3f(a) pos;    // camera position
     vec3f(a) dir;    // camera direction
@@ -22,6 +28,9 @@ namespace ospray {
     float    fovy;   // field of view (camera opening angle) in frame's y dimension
     float    aspect; // aspect ratio (x/y)
     </pre>
+
+    The functionality for a perspective camera is implemented via the
+    \ref ospray::PerspectiveCamera class.
   */
 
   //! Implements a simple perspective camera (see \subpage perspective_camera)

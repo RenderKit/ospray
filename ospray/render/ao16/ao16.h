@@ -1,5 +1,15 @@
 #pragma once
 
+/*! \group ospray_render_ao16 Simple 16-sample Ambient Occlusion Renderer
+  
+  \ingroup ospray_renderer
+
+  Implements a simple renderer that shoots 16 rays (generated using a
+  hard-coded set of random numbers) to compute a trivially simple and
+  coarse ambient occlusion effect 
+
+*/
+
 // ospray
 #include "tilerenderer.h"
 
@@ -9,7 +19,7 @@ namespace ospray {
   struct Camera;
   struct Model;
 
-  /*! test renderer that renders a simple test image using ispc */
+  /*! Simple 16-sample Ambient Occlusion Renderer */
   struct AO16Renderer : public TileRenderer {
     virtual std::string toString() const { return "ospray::AO16Renderer"; }
 

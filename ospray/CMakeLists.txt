@@ -56,14 +56,12 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	render/loadbalancer.cpp
 
 	render/renderer.cpp
-	render/raycast.cpp
-	render/raycast.ispc
-	render/ao16.cpp
-	render/ao16.ispc
-	render/dvr.cpp
-	render/dvr.ispc
-	render/testrenderer.cpp
-	render/testrenderer.ispc
+	render/raycast/raycast.cpp
+	render/raycast/raycast.ispc
+	render/ao16/ao16.cpp
+	render/ao16/ao16.ispc
+	render/dvr/dvr.cpp
+	render/dvr/dvr.ispc
 
 	api/api.cpp
 	api/device.cpp

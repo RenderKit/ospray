@@ -111,7 +111,7 @@ extern "C" {
   // //! initialize the ospray engine (for use with MPI-parallel app) 
   // void ospInitMPI(int *ac, const char **av);
 
-  //! load plugin <name> from shard lib libospray_module_<name>.so
+  //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
   error_t ospLoadModule(const char *pluginName);
 
@@ -138,9 +138,10 @@ extern "C" {
   OSPVolume ospNewVolume(const char *type);
 
   //! create a new camera of given type.  
-  /*! Currently supported camera types are "perspective" (\ref
-      perspective_camera), and "planar" (\ref planar_camera), plus
-      whatever camera may be loaded through plugins. \see builtin_cameras */
+  /*! The default camera type supported in all ospray versions is
+      "perspective" (\ref perspective_camera).  For a list of
+      supported camera type in this version of ospray, see \ref
+      ospray_supported_cameras */
   OSPRenderer ospNewRenderer(const char *type);
   
 

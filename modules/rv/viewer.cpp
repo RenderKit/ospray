@@ -1,4 +1,4 @@
-/*! \file viewer.cpp Implements a *sample* viewer for the haroon plugin */
+/*! \file viewer.cpp Implements a *sample* viewer for the \ref rv_plugin */
 
 #undef NDEBUG
 

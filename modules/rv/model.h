@@ -4,7 +4,7 @@
 
 namespace ospray {
   namespace rv {
-    /*! a ressitor geometry 'model': one set of resistors with attribtues etc */
+    /*! a resitor geometry 'model': one set of resistors with attribtues etc */
     struct ResistorModel {
       const Resistor *const resistor;
       const float    *const attribute;

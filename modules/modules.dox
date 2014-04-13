@@ -1,9 +1,3 @@
-/*! \defgroup ospray OSPRay
-
-  \brief The collection of all things ospray 
-
- */
-
 /*! \defgroup ospray_modules OSPRay Modules 
 
   \ingroup ospray
