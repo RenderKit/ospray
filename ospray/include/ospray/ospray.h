@@ -43,6 +43,7 @@ namespace osp {
   struct Model        : public ManagedObject {};
   struct Data         : public ManagedObject {};
   struct Geometry     : public ManagedObject {};
+  struct Material     : public ManagedObject {};
   struct Volume       : public ManagedObject {};
   struct TriangleMesh : public Geometry {};
 }
@@ -98,6 +99,7 @@ typedef osp::Camera        *OSPCamera;
 typedef osp::Model         *OSPModel;
 typedef osp::Data          *OSPData;
 typedef osp::Geometry      *OSPGeometry;
+typedef osp::Material      *OSPMaterial;
 typedef osp::Volume        *OSPVolume;
 typedef osp::TriangleMesh  *OSPTriangleMesh;
 typedef osp::ManagedObject *OSPObject;
@@ -127,7 +129,12 @@ extern "C" {
   //! create a new geometry of given type 
   /*! return 'NULL' if that type is not known */
   OSPGeometry ospNewGeometry(const char *type);
-  // OSPGeometry ospNewGeometry(const char *type, int flags=0);
+
+  //! let given renderer create a new material of given type
+  OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type);
+  
+  //! assign given material to given geometry
+  void ospSetMaterial(OSPGeometry geometry, OSPMaterial material);
 
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */

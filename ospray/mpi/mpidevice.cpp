@@ -613,14 +613,19 @@ namespace ospray {
       return (OSPVolume)(int64)handle;
     }
 
-    /*! create a new geometry object (out of list of registered geometrys) */
+    /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry MPIDevice::newGeometry(const char *type)
     {
       NOTIMPLEMENTED;
-      // Assert(type != NULL && "invalid render type identifier");
-      // Geometry *geometry = Geometry::createGeometry(type);
-      // return (OSPGeometry)geometry;
     }
+    
+    /*! have given renderer create a new material */
+    OSPMaterial MPIDevice::newMaterial(OSPRenderer _renderer, const char *type)
+    {
+      NOTIMPLEMENTED;
+    }
+
+
 
 
     /*! call a renderer to render a frame buffer */

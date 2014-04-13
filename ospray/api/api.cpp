@@ -1,6 +1,7 @@
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
+#include "ospray/common/material.h"
 #include "ospray/volume/volume.h"
 #include "localdevice.h"
 #include "ospray/common/ospcommon.h"
@@ -203,6 +204,24 @@ namespace ospray {
       else
         std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
     return geometry;
+  }
+
+  /*! \brief create a new geometry of given type 
+
+    return 'NULL' if that type is not known */
+  extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
+  {
+    ASSERT_DEVICE();
+    Assert2(renderer != NULL, "invalid renderer handle in ospNewMaterial");
+    Assert2(type != NULL, "invalid material type identifier in ospNewMaterial");
+    LOG("ospNewMaterial(" << renderer << ", " << type << ")");
+    OSPMaterial material = ospray::api::Device::current->newMaterial(renderer,type);
+    if (ospray::logLevel > 0)
+      if (material) 
+        cout << "ospNewMaterial: " << ((ospray::Material*)material)->toString() << endl;
+      else
+        std::cerr << "#ospray: could not create material '" << type << "'" << std::endl;
+    return material;
   }
 
   /*! \brief create a new camera of given type 

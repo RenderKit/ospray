@@ -7,6 +7,7 @@
 #include "../camera/camera.h"
 #include "../volume/volume.h"
 #include "../render/loadbalancer.h"
+#include "../common/material.h"
 #include "../common/library.h"
 // embree stuff
 
@@ -213,6 +214,18 @@ namespace ospray {
       if (!geometry) return NULL;
       geometry->refInc();
       return (OSPGeometry)geometry;
+    }
+
+      /*! have given renderer create a new material */
+    OSPMaterial LocalDevice::newMaterial(OSPRenderer _renderer, const char *type)
+    {
+      Assert2(type != NULL, "invalid material type identifier");
+      Assert2(_renderer != NULL, "invalid renderer");
+      Renderer *renderer = (Renderer *)_renderer;
+      Material *material = renderer->createMaterial(type);
+      if (!material) return NULL;
+      material->refInc();
+      return (OSPMaterial)material;
     }
 
     /*! create a new camera object (out of list of registered cameras) */

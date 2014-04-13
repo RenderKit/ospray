@@ -6,7 +6,9 @@
 #include "../fb/framebuffer.h"
 
 namespace ospray {
-  
+
+  struct Material;
+
   /*! \brief abstract base class for all ospray renderers. 
 
     the base renderer only knows about 'rendering a frame'; most
@@ -20,6 +22,9 @@ namespace ospray {
     /*! \brief produce one frame, and put it into given frame
         buffer */
     virtual void renderFrame(FrameBuffer *fb) = 0;
+
+    /*! \brief create a material of given type */
+    virtual Material *createMaterial(const std::string &type) { return NULL; }
 
     static Renderer *createRenderer(const char *identifier);
   };
