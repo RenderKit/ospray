@@ -5,6 +5,8 @@
 
 namespace ospray {
   namespace obj {
+    typedef vec3f Color;
+    
     /*! implements the Material used by the \ref ospray_render_obj */
     struct OBJMaterial : public Material {
       Ref<Texture> map_d;   float d;     /*! opacity: 0 (transparent), 1 (opaque)                */

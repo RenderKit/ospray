@@ -28,6 +28,8 @@ namespace ospray {
         virtual ~RenderTask() {}
       };
       virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+      /*! \brief create a material of given type */
+      virtual Material *createMaterial(const std::string &type);
     };
 
   }

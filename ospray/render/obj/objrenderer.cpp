@@ -1,5 +1,6 @@
-// header
+// obj
 #include "objrenderer.h"
+#include "objmaterial.h"
 // ospray
 #include "ospray/common/model.h"
 #include "embree2/rtcore.h"
@@ -29,6 +30,13 @@ namespace ospray {
       return frame;
     }
     
+    /*! \brief create a material of given type */
+    Material *OBJRenderer::createMaterial(const std::string &type)
+    {
+      Assert2(type == "OBJ" || type == "obj","unsupported material type for OBJ Renderer");
+      return new OBJMaterial;
+    }
+
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);
   }
 }
