@@ -7,22 +7,23 @@
 // obj renderer
 
 namespace ospray {
+  struct Camera;
+  struct Model;
+
   namespace obj {
     using embree::TaskScheduler;
-
-    struct Camera;
-    struct Model;
 
     /*! \brief Renderer for the OBJ Wavefront Material/Lighting format 
 
       See \ref ospray_render_obj
     */
     struct OBJRenderer : public TileRenderer {
-      virtual std::string toString() const { return "ospray::AO16Renderer"; }
+      virtual std::string toString() const { return "ospray::OBJRenderer"; }
 
       struct RenderTask : public TileRenderer::RenderJob {
-        Model  *world;
-        Camera *camera;
+        Model   *world;
+        RTCScene scene;
+        Camera  *camera;
         virtual void renderTile(Tile &tile);
         virtual ~RenderTask() {}
       };
