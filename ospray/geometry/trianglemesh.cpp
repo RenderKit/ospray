@@ -30,7 +30,7 @@ namespace ospray {
     Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
     
     Assert(model && "invalid model pointer");
-    RTCScene eScene = model->eScene;
+    RTCScene embreeSceneHandle = model->embreeSceneHandle;
 
     Param *posParam = findParam("position");
     Assert2(posParam != NULL, "triangle mesh geometry does not have a 'position' array");
@@ -47,11 +47,11 @@ namespace ospray {
     size_t numTris  = idxData->size();
     size_t numVerts = posData->size();
 
-    eMesh = rtcNewTriangleMesh(eScene,RTC_GEOMETRY_STATIC,numTris,numVerts);
+    eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,numTris,numVerts);
 
-    rtcSetBuffer(eScene,eMesh,RTC_VERTEX_BUFFER,
+    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
                  posData->data,0,ospray::sizeOf(posData->type));
-    rtcSetBuffer(eScene,eMesh,RTC_INDEX_BUFFER,
+    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
                  idxData->data,0,ospray::sizeOf(idxData->type));
 
     box3f bounds = embree::empty;
@@ -70,7 +70,7 @@ namespace ospray {
              << ", " << numVerts << " vertices)" << endl;
         cout << "  mesh bounds " << bounds << endl;
       } 
-    rtcEnable(model->eScene,eMesh);
+    rtcEnable(model->embreeSceneHandle,eMesh);
   }
 
   //! helper fct that creates a tessllated unit arrow

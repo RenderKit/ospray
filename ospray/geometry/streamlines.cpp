@@ -30,7 +30,7 @@ namespace ospray {
               << "#segments=" << numSegments << std::endl;
     
     PRINT(radius);
-    ispc::ispc_createStreamLineGeometry((ispc::__RTCScene*)model->eScene,
+    ispc::ispc_createStreamLineGeometry((ispc::__RTCScene*)model->embreeSceneHandle,
                                         this,radius,
                                         (ispc::vec3fa*)vertex,numVertices,
                                         (uint32_t*)index,numSegments);

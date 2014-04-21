@@ -9,7 +9,7 @@ namespace ospray {
 
   void AO16Renderer::RenderTask::renderTile(Tile &tile)
   {
-    ispc_AO16Renderer_renderTile(&tile,camera->getIE(),world->eScene);
+    ispc_AO16Renderer_renderTile(&tile,camera->getIE(),world->embreeSceneHandle);
   }
 
   TileRenderer::RenderJob *AO16Renderer::createRenderJob(FrameBuffer *fb)

@@ -42,7 +42,7 @@ namespace ospray {
       Assert2(camera,"null camera handle in 'xray' renderer "
              "(did you forget to assign a 'camera' parameter to the renderer?)");
     
-      return new TileJob(camera,model->eScene);
+      return new TileJob(camera,model->embreeSceneHandle);
     }
 
     /*! \brief create render job for ispc-based mhtk::xray renderer */
@@ -56,7 +56,7 @@ namespace ospray {
       Assert2(camera,"null camera handle in 'xray' renderer "
              "(did you forget to assign a 'camera' parameter to the renderer?)");
     
-      return new TileJob(camera,model->eScene);
+      return new TileJob(camera,model->embreeSceneHandle);
     }
 
     /*! \brief perform the actual multihit kernel based xray tracing

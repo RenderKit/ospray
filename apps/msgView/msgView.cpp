@@ -16,7 +16,7 @@ namespace ospray {
   OSPModel           ospModel = NULL;
 
   //! the renderer we're about to use
-  std::string rendererType = "ray_cast";
+  std::string rendererType = "raycast_eyelight";
 
   std::vector<miniSG::Model *> msgAnimation;
 
@@ -123,6 +123,11 @@ namespace ospray {
     ospray::glut3D::FPSCounter fps;
   };
 
+  void createMaterial(OSPGeometry ospMesh, miniSG::Material *material)
+  {
+  }
+  
+
   void msgViewMain(int &ac, const char **&av)
   {
     msgModel = new miniSG::Model;
@@ -224,6 +229,8 @@ namespace ospray {
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"index",index);
       
+      createMaterial(ospMesh, msgMesh->material.ptr);
+
       ospAddGeometry(ospModel,ospMesh);
     }
     ospCommit(ospModel);

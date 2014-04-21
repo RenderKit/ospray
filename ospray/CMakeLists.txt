@@ -4,7 +4,8 @@
 CONFIGURE_OSPRAY()
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
+#INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
+INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
 INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
 IF (OSPRAY_MPI)
@@ -30,6 +31,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	common/managed.cpp
 	common/data.cpp
 	common/model.cpp
+	common/model.ispc
 	common/library.cpp
 
 	fb/swapchain.cpp 
@@ -64,6 +66,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	render/dvr/dvr.ispc
 	render/obj/objrenderer.cpp
 	render/obj/objmaterial.cpp
+	render/obj/objrenderer.ispc
 
 	api/api.cpp
 	api/device.cpp

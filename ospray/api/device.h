@@ -64,16 +64,16 @@ namespace ospray {
 
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type) = 0;
-
-      /*! create a new geometry object (out of list of registered geometrys) */
+      
+      /*! create a new geometry object (out of list of registered geometries) */
       virtual OSPGeometry newGeometry(const char *type) = 0;
-
+      
       /*! create a new camera object (out of list of registered cameras) */
       virtual OSPCamera newCamera(const char *type) = 0;
-
+      
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type) = 0;
-
+      
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
 

@@ -3,11 +3,8 @@
 // ospray stuff
 #include "../../fb/framebuffer.ih"
 #include "../../camera/perspectivecamera.ih"
-#include "../../common/ray.ih"
+#include "ospray/common/model.ih"
 #include "../util.ih"
-
-// embree stuff
-#include "embree2/rtcore_scene.isph"
 
 // #define SHADE(ray,scene) shade_primID(ray)
 // #define SHADE(ray,scene) shade_Ng(ray)
@@ -147,39 +144,5 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
 #endif
     }
   }
-}
-
-// extern "C" void ispc__RayCastRenderer_renderTile(void *uniform _tile, 
-//                                              void *uniform _camera, 
-//                                              uniform RTCScene scene
-//                                              )
-// {
-//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-//   uniform Tile *uniform tile = (uniform Tile *uniform)_tile;
-//   launch[(TILE_SIZE/QUAD_SIZE)*(TILE_SIZE/QUAD_SIZE)] 
-//     RayCastRenderer_renderQuad(tile,camera,scene);
-// }
-
-
-
-/*! \brief entry point for the ISPC-side render frame function for the
-  test frame renderer 
-  
-  \detailed \note As a publicly exported function the frame buffer
-  parameter for this function actually has to be typed 'void *'
-  because ISPC cannot export any (non-trivial) ISPC-side classes 
-  
-  \internal the reason we pass 'void*' typed parameters here is that the current
-  ISPC version cannot export the base classes for the pointers 
-*/
-export void ispc__RayCastRenderer_renderFrame(void *uniform _camera,
-                                              uniform RTCScene scene,
-                                              void *uniform _fb
-                                              )
-{
-  // uniform FrameBuffer *uniform fb = (uniform FrameBuffer *uniform)_fb;
-  // uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-
-  // launch[fb->size.y] RayCastRenderer_renderLine(fb,scene,camera);
 }
 

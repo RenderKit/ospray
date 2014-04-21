@@ -1,0 +1,17 @@
+#ifndef OSPRAY_MODEL_IH
+#define OSPRAY_MODEL_IH
+
+// ospray stuff
+#include "ospray/common/ray.ih"
+// embree stuff
+#include "embree2/rtcore_scene.isph"
+
+struct Model {
+  /*! the scene handle we can use to tell embree to trace rays against 
+    this scene */
+  RTCScene embreeSceneHandle;
+  /*! pointer to the c++-equivalent class of this entity */
+  void    *cppEquivalent;
+};
+
+#endif
