@@ -3,6 +3,7 @@
 
 // ospray stuff
 #include "ospray/common/ray.ih"
+#include "ospray/geometry/geometry.ih"
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 
@@ -12,6 +13,11 @@ struct Model {
   RTCScene embreeSceneHandle;
   /*! pointer to the c++-equivalent class of this entity */
   void    *cppEquivalent;
+
+  //! number of geometries in this model (usually set by C++ side)
+  uniform int32 numGeometries;
+  //! array of (pointers to) geometries contained in this model
+  uniform Geometry *uniform *uniform geometry;
 };
 
 #endif

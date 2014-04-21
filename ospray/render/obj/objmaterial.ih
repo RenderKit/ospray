@@ -1,0 +1,16 @@
+#ifndef OSPRAY_OBJMATERIAL_IH
+#define OSPRAY_OBJMATERIAL_IH
+
+#include "ospray/common/math/vec.ih"
+#include "ospray/common/material.ih"
+
+//! ispc-equivalent of ospray::obj::OBJMaterial
+struct OBJMaterial {
+  uniform Material base; //!< inherited material properties
+  vec3f Kd;
+  vec3f Ks;
+  float Ns;
+  float d;
+};
+
+#endif

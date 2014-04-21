@@ -4,17 +4,14 @@
 // ospray stuff
 #include "../../fb/framebuffer.ih"
 #include "../../camera/perspectivecamera.ih"
-#include "../../common/ray.ih"
 #include "../util.ih"
+#include "ospray/common/model.ih"
 
-// embree stuff
-#include "embree2/rtcore_scene.isph"
-
-inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform RTCScene scene)
+inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 { 
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
   // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
-  rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
+  rtcIntersect(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
   if (ray.geomID < 0)
     return make_vec3f(0.f);
 
@@ -24,7 +21,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform RTCScene scene)
   const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
   const vec3f L = make_vec3f(-1,2,-.5);
   setRay(shadowRay,P,L);
-  rtcOccluded(scene,*((varying RTCRay *uniform)&shadowRay));
+  rtcOccluded(model->embreeSceneHandle,*((varying RTCRay *uniform)&shadowRay));
   const bool occluded = shadowRay.geomID >= 0;
   return make_vec3f(occluded 
                     ? .2f+.2f*abs(c)
@@ -33,7 +30,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform RTCScene scene)
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
                                          void *uniform _camera, //uniform Camera *uniform camera,
-                                         uniform RTCScene scene)
+                                         uniform Model *uniform model)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
@@ -53,7 +50,7 @@ export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *un
       const float screen_v = (y+.5f)/size_y;
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
-      const vec3f col = OBJRenderer_shadeRay(ray,scene);
+      const vec3f col = OBJRenderer_shadeRay(ray,model);
 #if 1
       tile->r[i] = col.x;
       tile->g[i] = col.y;
