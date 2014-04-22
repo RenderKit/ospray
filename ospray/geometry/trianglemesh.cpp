@@ -16,7 +16,10 @@ namespace ospray {
 
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
-  {}
+  {
+    cout << "creating new ispc-side trianglemesh!" << endl;
+    this->ispcEquivalent = ispc::TriangleMesh_create(this);
+  }
 
   void TriangleMesh::finalize(Model *model)
   {
@@ -71,12 +74,10 @@ namespace ospray {
       } 
     rtcEnable(model->embreeSceneHandle,eMesh);
 
-    if (getIE())
-      ispc::TriangleMesh_destroy(getIE());
-    ispcEquivalent = ispc::TriangleMesh_create(this,model->getIE(),eMesh,
-                                               numTris,
-                                               (ispc::vec3i*)index,
-                                               (ispc::vec3fa*)vertex);
+    ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
+                           numTris,
+                           (ispc::vec3i*)index,
+                           (ispc::vec3fa*)vertex);
   }
 
   //! helper fct that creates a tessllated unit arrow

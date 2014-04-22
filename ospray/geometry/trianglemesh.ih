@@ -1,0 +1,26 @@
+#ifndef OSPRAY_TRIANGLEMESH_IH
+#define OSPRAY_TRIANGLEMESH_IH
+
+#include "geometry.ih"
+
+//! ispc-equivalent of the ospray::TriangleMesh geometry
+struct TriangleMesh {
+  uniform Geometry geometry; //!< inherited geometry fields
+  uniform int32    numTriangles; //!< number of triangles
+  uniform vec3i   *index;  //!< mesh's triangle index array
+  uniform vec3fa  *vertex; //!< mesh's vertex array
+};
+
+//! constructor for ispc-side TriangleMesh object
+extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
+                                     void *uniform cppEquivalent,
+                                     uniform Model *uniform model,
+                                     uniform int32  geomID,
+                                     uniform int32  numTriangles,
+                                     uniform vec3i  *uniform index,
+                                     uniform vec3fa *uniform vertex);
+//! destructor for ispc-side TriangleMesh object
+extern void TriangleMesh_Destructor(uniform TriangleMesh *uniform mesh);
+
+
+#endif
