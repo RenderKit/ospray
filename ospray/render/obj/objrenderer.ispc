@@ -30,9 +30,9 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   setRay(shadowRay,P,L);
   rtcOccluded(model->embreeSceneHandle,*((varying RTCRay *uniform)&shadowRay));
   const bool occluded = shadowRay.geomID >= 0;
-  return make_vec3f(occluded 
-                    ? .2f+.2f*abs(c)
-                    : .3f+.8f*abs(c));
+  return Kd * make_vec3f(occluded 
+                         ? .2f+.2f*abs(c)
+                         : .3f+.8f*abs(c));
 }
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
