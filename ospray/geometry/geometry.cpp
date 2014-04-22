@@ -25,8 +25,9 @@ namespace ospray {
     material = mat;
     if (!getIE()) 
       std::cout << "#osp: warning - geometry does not have an ispc equivalent!" << std::endl;
-    else
-      ispc::Geometry_setMaterial(this->getIE(),mat?mat->getIE():mat);
+    else {
+      ispc::Geometry_setMaterial(this->getIE(),mat?mat->getIE():NULL);
+    }
   }
 
 

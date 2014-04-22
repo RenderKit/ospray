@@ -9,7 +9,8 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                               uniform vec3i  *uniform index,
                               uniform vec3fa *uniform vertex)
 {
-  Geometry_Constructor(&mesh->geometry,cppEquivalent,model,geomID);
+  Geometry_Constructor(&mesh->geometry,cppEquivalent,model,geomID,
+                       mesh->geometry.material);
   mesh->numTriangles = numTriangles;
   mesh->index        = index;
   mesh->vertex       = vertex;
@@ -45,6 +46,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
   uniform Model *uniform model = (uniform Model *uniform)_model;
-  TriangleMesh_Constructor(mesh,mesh->geometry.cppEquivalent,model,geomID,numTriangles,index,vertex);
+  TriangleMesh_Constructor(mesh,mesh->geometry.cppEquivalent,model,geomID,
+                           numTriangles,index,vertex);
 }
 

@@ -10,11 +10,13 @@ export void Geometry_setMaterial(void *uniform _geo, void *uniform _mat)
 static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
                                  uniform Model *uniform model,
-                                 uniform int32  geomID)
+                                 uniform int32  geomID,
+                                 uniform Material *uniform material
+                                 )
 {
   geometry->cppEquivalent = cppEquivalent;
   geometry->model    = model;
-  geometry->material = NULL;
+  geometry->material = material;
   geometry->geomID   = geomID;
 }
 

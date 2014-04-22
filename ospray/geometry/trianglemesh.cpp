@@ -17,7 +17,7 @@ namespace ospray {
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
   {
-    cout << "creating new ispc-side trianglemesh!" << endl;
+    //    cout << "creating new ispc-side trianglemesh!" << endl;
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
 

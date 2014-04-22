@@ -24,7 +24,7 @@ export void OBJMaterial_set(void *uniform _mat,
   //       Kd.x,Kd.y,Kd.z);
   uniform OBJMaterial *uniform mat = (uniform OBJMaterial *uniform)_mat;
   mat->Kd = Kd;
-  mat->Kd = Ks;
+  mat->Ks = Ks;
   mat->Ns = Ns;
   mat->d  = d;
 }

@@ -36,5 +36,6 @@ namespace ospray {
     }
 
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);
+    OSP_REGISTER_RENDERER(OBJRenderer,obj);
   }
 }

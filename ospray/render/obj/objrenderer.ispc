@@ -19,22 +19,22 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   uniform Material *material = model->geometry[ray.geomID]->material;
   uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
-  // const OBJMaterial mat = *objMaterial;
-  print("getting material %\n",objMaterial);
-  const vec3f Kd = objMaterial->Kd;
-  print("GOT material % % %\n",Kd.x,Kd.y,Kd.z);
+  vec3f Kd = make_vec3f(0,1,0);
+  if (objMaterial) {
+    Kd = objMaterial->Kd;
+  }
 
   float c = dot(normalize(ray.Ng),ray.dir); 
 
   Ray shadowRay;
   const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
-  const vec3f L = make_vec3f(-1,2,-.5);
+  const vec3f L = make_vec3f(+1,1.3,-.5);
   setRay(shadowRay,P,L);
   rtcOccluded(model->embreeSceneHandle,*((varying RTCRay *uniform)&shadowRay));
   const bool occluded = shadowRay.geomID >= 0;
   return Kd * make_vec3f(occluded 
                          ? .2f+.2f*abs(c)
-                         : .3f+.8f*abs(c));
+                         : .3f+1.2f*abs(c));
 }
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
