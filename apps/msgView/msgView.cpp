@@ -1,5 +1,5 @@
 /*! \file msgView.cpp A GLUT-based viewer for simple geometry
-    (supports STL and Wavefront OBJ files) */
+  (supports STL and Wavefront OBJ files) */
 
 // viewer widget
 #include "../util/glut3D/glut3D.h"
@@ -11,6 +11,8 @@
 namespace ospray {
   using std::cout;
   using std::endl;
+
+  int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
@@ -25,18 +27,18 @@ namespace ospray {
     cout << "ospray::msgView fatal error : " << msg << endl;
     cout << endl;
     cout << "Proper usage: " << endl;
-    cout << "  ./msgView <inFileName>" << endl;
+    cout << "  ./msgView [-bench <warmpup>x<numFrames>] [-model] <inFileName>" << endl;
     cout << endl;
     exit(1);
   }
 
   using ospray::glut3D::Glut3DWidget;
-
+  
   /*! mini scene graph viewer widget. \internal Note that all handling
-      of camera is almost exactly similar to the code in volView;
-      might make sense to move that into a common class! */
+    of camera is almost exactly similar to the code in volView;
+    might make sense to move that into a common class! */
   struct MSGViewer : public Glut3DWidget {
-    MSGViewer(OSPModel model) 
+    MSGViewer(OSPModel model)
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
         fb(NULL), renderer(NULL), model(model)
     {
@@ -46,7 +48,7 @@ namespace ospray {
       ospSet3f(camera,"pos",-1,1,-1);
       ospSet3f(camera,"dir",+1,-1,+1);
       ospCommit(camera);
-      
+
       renderer = ospNewRenderer(rendererType.c_str());
       if (!renderer)
         throw std::runtime_error("could not create renderer '"+rendererType+"'");
@@ -59,9 +61,10 @@ namespace ospray {
       ospSetParam(renderer,"camera",camera);
       ospCommit(camera);
       ospCommit(renderer);
-
+      
     };
-    virtual void reshape(const ospray::vec2i &newSize) 
+
+    virtual void reshape(const ospray::vec2i &newSize)
     {
       Glut3DWidget::reshape(newSize);
       if (fb) ospFreeFrameBuffer(fb);
@@ -69,13 +72,13 @@ namespace ospray {
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
     }
-
-    virtual void display() 
+    
+    virtual void display()
     {
       if (!fb || !renderer) return;
-
+      
       static int frameID = 0;
-
+      
       //{
       // note that the order of 'start' and 'end' here is
       // (intentionally) reversed: due to our asynchrounous rendering
@@ -83,15 +86,29 @@ namespace ospray {
       // call (which in itself will not do a lot other than triggering
       // work), but the average time between ttwo calls is roughly the
       // frame rate (including display overhead, of course)
-      if (frameID > 0) fps.doneRender(); 
+      if (frameID > 0) fps.doneRender();
       fps.startRender();
       //}
-
+      static double benchStart=0;
+      static double fpsSum=0;
+      if (g_benchFrames > 0 && frameID == g_benchWarmup)
+        {
+          benchStart = ospray::getSysTime();
+        }
+      if (g_benchFrames > 0 && frameID >= g_benchWarmup)
+        fpsSum += fps.getFPS();
+      if (g_benchFrames > 0 && frameID== g_benchWarmup+g_benchFrames)
+        {
+          double time = ospray::getSysTime()-benchStart;
+          double avgFps = fpsSum/double(frameID-g_benchWarmup);
+          printf("Benchmark: time: %f avg fps: %f avg frame time: %f\n", time, avgFps, time/double(frameID-g_benchWarmup));
+          exit(0);
+        }
+      
       ++frameID;
-
+      
       if (viewPort.modified) {
         Assert2(camera,"ospray camera is null");
-        // PRINT(viewPort);
         ospSetVec3f(camera,"pos",viewPort.from);
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
         ospSetVec3f(camera,"up",viewPort.up);
@@ -99,15 +116,15 @@ namespace ospray {
         ospCommit(camera);
         viewPort.modified = false;
       }
-
+      
       ospRenderFrame(fb,renderer);
-    
+      
       ucharFB = (uint32 *) ospMapFrameBuffer(fb);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();
-    
+      
       ospUnmapFrameBuffer(ucharFB,fb);
-
+      
       char title[1000];
       
       sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
@@ -115,14 +132,14 @@ namespace ospray {
       setTitle(title);
       forceRedraw();
     }
-
+    
     OSPModel       model;
     OSPFrameBuffer fb;
     OSPRenderer    renderer;
     OSPCamera      camera;
     ospray::glut3D::FPSCounter fps;
   };
-
+  
   void createMaterial(OSPGeometry ospMesh, 
                       OSPRenderer renderer,
                       miniSG::Material *mat)
@@ -153,9 +170,6 @@ namespace ospray {
   {
     msgModel = new miniSG::Model;
     
-    // -------------------------------------------------------
-    // parse cmdline
-    // -------------------------------------------------------
     cout << "msgView: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
@@ -167,6 +181,32 @@ namespace ospray {
         const char *moduleName = av[++i];
         cout << "loading ospray module '" << moduleName << "'" << endl;
         ospLoadModule(moduleName);
+      } else if (arg == "-win") {
+        if (++i < ac)
+          {
+            std::string arg2(av[i]);
+            size_t pos = arg2.find("x");
+            if (pos != std::string::npos)
+              {
+                arg2.replace(pos, 1, " ");
+                std::stringstream ss(arg2);
+                ss >> g_width >> g_height;
+              }
+          }
+        else
+          error("missing commandline param");
+      } else if (arg == "-bench") {
+        if (++i < ac)
+          {
+            std::string arg2(av[i]);
+            size_t pos = arg2.find("x");
+            if (pos != std::string::npos)
+              {
+                arg2.replace(pos, 1, " ");
+                std::stringstream ss(arg2);
+                ss >> g_benchWarmup >> g_benchFrames;
+              }
+          }
       } else if (av[i][0] == '-') {
         error("unkown commandline argument '"+arg+"'");
       } else {
@@ -181,13 +221,11 @@ namespace ospray {
           miniSG::importOBJ(*msgModel,fn);
         else if (fn.ext() == "astl")
           miniSG::importSTL(msgAnimation,fn);
-        else
-          error("unrecognized file format in filename '"+arg+"'");
       }
     }
     // -------------------------------------------------------
     // done parsing
-    // -------------------------------------------------------
+    // -------------------------------------------------------]
     cout << "msgView: done parsing. found model with" << endl;
     cout << "  - num materials: " << msgModel->material.size() << endl;
     cout << "  - num meshes   : " << msgModel->mesh.size() << " ";
@@ -196,7 +234,7 @@ namespace ospray {
     for (int i=0;i<msgModel->mesh.size();i++) {
       if (i < 10)
         cout << "[" << msgModel->mesh[i]->size() << "]";
-      else 
+      else
         if (i == 10) cout << "...";
       numUniqueTris += msgModel->mesh[i]->size();
     }
@@ -205,7 +243,7 @@ namespace ospray {
     for (int i=0;i<msgModel->instance.size();i++) {
       if (i < 10)
         cout << "[" << msgModel->mesh[msgModel->instance[i].meshID]->size() << "]";
-      else 
+      else
         if (i == 10) cout << "...";
       numInstancedTris += msgModel->mesh[msgModel->instance[i].meshID]->size();
     }
@@ -213,7 +251,7 @@ namespace ospray {
     cout << "  - num unique triangles   : " << numUniqueTris << endl;
     cout << "  - num instanced triangles: " << numInstancedTris << endl;
 
-    if (numInstancedTris == 0 && msgAnimation.empty()) 
+    if (numInstancedTris == 0 && msgAnimation.empty())
       error("no (valid) input files specified - model contains no triangles");
 
     if (msgModel->material.empty()) {
@@ -231,7 +269,7 @@ namespace ospray {
       if (msgModel->instance[i] != miniSG::Instance(i))
         error("found a scene that seems to contain instances, "
               "but msgView does not yet support instancing");
-    
+
     cout << "msgView: adding parsed geometries to ospray model" << endl;
     for (int i=0;i<msgModel->mesh.size();i++) {
       //      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
@@ -239,7 +277,7 @@ namespace ospray {
 
       // create ospray mesh
       OSPGeometry ospMesh = ospNewTriangleMesh();
-      
+
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);

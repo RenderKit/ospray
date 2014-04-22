@@ -27,6 +27,14 @@ void StreamLines_bounds(uniform StreamLines *uniform geometry,
   const uniform vec3f B = make_vec3f(geometry->vertex[index+1]);
   bbox.lower = min(A,B)-make_vec3f(geometry->radius);
   bbox.upper = max(A,B)+make_vec3f(geometry->radius);
+  // print("bounds % : % % % - % % %\n",primID,
+  //       bbox.lower.x,
+  //       bbox.lower.y,
+  //       bbox.lower.z,
+  //       bbox.upper.x,
+  //       bbox.upper.y,
+  //       bbox.upper.z
+  //       );
 }
 
 #if 1
@@ -36,6 +44,7 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
                            varying Ray &ray,
                            uniform size_t primID)
 {
+  print("isec %\n",primID);
   const uniform uint32 idx = geometry->index[primID];
   const vec3f p_a = make_vec3f(geometry->vertex[idx]);
   const vec3f v_a_org = make_vec3f(geometry->vertex[idx+1]) - p_a;
@@ -135,7 +144,7 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
 #endif
 
 export void *uniform 
-ispc_createStreamLineGeometry(RTCScene        uniform scene,
+StreamLineGeometry_create(RTCScene        uniform scene,
                               void           *uniform cppEquivalent,
                               float           uniform radius,
                               uniform vec3fa *uniform vertex,

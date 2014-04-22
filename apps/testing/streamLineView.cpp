@@ -12,7 +12,7 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  const char *rendererType = "raycast";
+  const char *rendererType = "raycast_eyelight";
 
   OSPModel model = NULL;
 
@@ -188,6 +188,7 @@ namespace ospray {
     StreamLineViewer window(streamLines);
     window.create("ospDVR: OSPRay miniature stream line viewer");
     printf("Viewer created. Press 'Q' to quit.\n");
+    PRINT(streamLines->getBounds());
     window.setWorldBounds(streamLines->getBounds());
     ospray::glut3D::runGLUT();
   }
