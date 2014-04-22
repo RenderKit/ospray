@@ -52,6 +52,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 
 	geometry/geometry.ispc
 	geometry/geometry.cpp
+	geometry/trianglemesh.ispc
 	geometry/trianglemesh.cpp
 	geometry/streamlines.cpp
 	geometry/streamlines.ispc

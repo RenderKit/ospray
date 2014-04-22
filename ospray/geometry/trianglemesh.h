@@ -24,10 +24,12 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::TriangleMesh"; }
     virtual void finalize(Model *model);
 
+    const vec3i  *index;  //!< mesh's triangle index array
+    const vec3fa *vertex; //!< mesh's vertex array
+
     Ref<Data> idxData; /*!< triangle indices (A,B,C,materialID) */
     Ref<Data> posData; /*!< vertex position (vec3fa) */
     uint32    eMesh;   /*!< embree triangle mesh handle */
-
   };
 
     //! helper fct that creates a tessllated unit arrow

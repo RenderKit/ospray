@@ -5,6 +5,8 @@
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
 #include "../include/ospray/ospray.h"
+// ispc side
+#include "trianglemesh_ispc.h"
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
@@ -37,12 +39,14 @@ namespace ospray {
     posData = dynamic_cast<Data*>(posParam->ptr);
     Assert2(posData != NULL,"invalid position array");
     Assert2(posData->type == OSP_vec3fa, "invalid triangle mesh vertex format");
+    this->vertex = (vec3fa*)posData->data;
 
     Param *idxParam = findParam("index");
     Assert2(idxParam != NULL, "triangle mesh geometry does not have a 'index' array");
     idxData = dynamic_cast<Data*>(idxParam->ptr);
     Assert2(idxData != NULL, "invalid index array");
     Assert2(idxData->type == OSP_vec3i, "invalid triangle index format");
+    this->index = (vec3i*)idxData->data;
 
     size_t numTris  = idxData->size();
     size_t numVerts = posData->size();
@@ -56,13 +60,8 @@ namespace ospray {
 
     box3f bounds = embree::empty;
     
-    if (posData->type == OSP_vec3fa) {
-      for (int i=0;i<posData->size();i++) 
-        bounds.extend(((vec3fa*)posData->data)[i]);
-    } else {
-      for (int i=0;i<posData->size();i++)
-        bounds.extend(((vec3f*)posData->data)[i]);
-    }
+    for (int i=0;i<posData->size();i++) 
+      bounds.extend(vertex[i]);
 
     if (logLevel > 2) 
       if (numPrints < 5) {
@@ -72,9 +71,12 @@ namespace ospray {
       } 
     rtcEnable(model->embreeSceneHandle,eMesh);
 
-    // if (getIE())
-    //   ispc::TriangleMesh_destroy(getIE());
-    // ispcEquivalent = ispc::TriangleMesh_create(
+    if (getIE())
+      ispc::TriangleMesh_destroy(getIE());
+    ispcEquivalent = ispc::TriangleMesh_create(this,model->getIE(),eMesh,
+                                               numTris,
+                                               (ispc::vec3i*)index,
+                                               (ispc::vec3fa*)vertex);
   }
 
   //! helper fct that creates a tessllated unit arrow
