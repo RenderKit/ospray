@@ -355,4 +355,12 @@ namespace ospray {
     ospray::api::Device::current->release(_object);
   }
 
+  //! assign given material to given geometry
+  extern "C" void ospSetMaterial(OSPGeometry geometry, OSPMaterial material)
+  {
+    ASSERT_DEVICE();
+    Assert2(geometry,"NULL geometry passed to ospSetMaterial");
+    ospray::api::Device::current->setMaterial(geometry,material);
+  }
+
 }

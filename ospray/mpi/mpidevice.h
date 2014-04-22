@@ -28,6 +28,7 @@ namespace ospray {
         CMD_COMMIT,
         CMD_LOAD_MODULE,
         CMD_RELEASE,
+        CMD_SET_MATERIAL,
 
         CMD_SET_OBJECT,
         CMD_SET_STRING,
@@ -119,6 +120,9 @@ namespace ospray {
         after this assignation release its refcount; the material will
         stay 'alive' as long as the given geometry requires it. */
       virtual void release(OSPObject _obj);
+
+      //! assign given material to given geometry
+      virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat);
 
       //      MPI_Comm service;
     };

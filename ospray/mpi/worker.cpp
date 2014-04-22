@@ -196,6 +196,19 @@ namespace ospray {
           obj->setParam(name,val.lookup());
           cmd.free(name);
         } break;
+        case api::MPIDevice::CMD_RELEASE: {
+          const mpi::Handle handle = cmd.get_handle();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          handle.freeObject();
+        } break;
+        case api::MPIDevice::CMD_SET_MATERIAL: {
+          const mpi::Handle geoHandle = cmd.get_handle();
+          const mpi::Handle matHandle = cmd.get_handle();
+          Geometry *geo = (Geometry*)geoHandle.lookup();
+          Material *mat = (Material*)matHandle.lookup();
+          geo->material = mat;
+        } break;
         case api::MPIDevice::CMD_SET_STRING: {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();

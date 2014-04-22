@@ -29,7 +29,14 @@ namespace ospray {
     {
       objectByHandle[*this] = (ManagedObject*)object;
     }
-
+    void Handle::freeObject() const
+    {
+      std::map<int64,Ref<ManagedObject> >::iterator it = 
+        objectByHandle.find(i64);
+      Assert(it != objectByHandle.end());
+      it->second = NULL;
+      objectByHandle.erase(it);
+    }
     bool Handle::defined() const 
     {
       std::map<int64,Ref<ManagedObject> >::const_iterator it = 

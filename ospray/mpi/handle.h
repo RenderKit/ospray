@@ -32,6 +32,8 @@ namespace ospray {
       static void assign(const Handle &handle, const ManagedObject *object);
       /*! define the given handle to refer to given object */
       void assign(const ManagedObject *object) const;
+      //! free the given object
+      void freeObject() const;
       /*! returns the owner's rank */
       inline int32 owner() const { return i32.owner; }
       /*! returns the local ID to reference this object on the owner rank */

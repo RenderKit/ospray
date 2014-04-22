@@ -220,7 +220,6 @@ namespace ospray {
     OSPMaterial LocalDevice::newMaterial(OSPRenderer _renderer, const char *type)
     {
       Assert2(type != NULL, "invalid material type identifier");
-      Assert2(_renderer != NULL, "invalid renderer");
 
       // -------------------------------------------------------
       // first, check if there's a renderer that we can ask to create the material.
@@ -240,11 +239,7 @@ namespace ospray {
       Material *material = Material::createMaterial(type);
       if (!material) return NULL;
       material->refInc();
-
-      // -------------------------------------------------------
-      // couldn't create this material, return NULL
-      //
-      return NULL;
+      return (OSPMaterial)material;
     }
 
     /*! create a new camera object (out of list of registered cameras) */
@@ -334,6 +329,17 @@ namespace ospray {
       ManagedObject *obj = (ManagedObject *)_obj;
       obj->refDec();
     }
+
+
+
+    //! assign given material to given geometry
+    void LocalDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
+    {
+      Geometry *geometry = (Geometry*)_geometry;
+      Material *material = (Material*)_material;
+      geometry->material = material;
+    }
+
   }
 }
 

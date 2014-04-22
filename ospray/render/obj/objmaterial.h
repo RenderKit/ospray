@@ -21,6 +21,9 @@ namespace ospray {
 
       //! \brief commit the material's parameters
       virtual void commit();
+
+      //! desctructor, to clean up
+      virtual ~OBJMaterial();
     };
   }
 }

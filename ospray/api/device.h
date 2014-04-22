@@ -93,6 +93,9 @@ namespace ospray {
         after this assignation release its refcount; the material will
         stay 'alive' as long as the given geometry requires it. */
       virtual void release(OSPObject _obj) = 0;
+
+      //! assign given material to given geometry
+      virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat) = 0;
     };
   }
 }

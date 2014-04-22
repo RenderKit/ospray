@@ -24,7 +24,13 @@ namespace ospray {
                             (ispc::vec3f&)Ks,
                             Ns,d);
     }
+
+    OBJMaterial::~OBJMaterial()
+    {
+      if (getIE() != NULL)
+        ispc::OBJMaterial_destroy(getIE());
+    }
     
-    OSP_REGISTER_MATERIAL(OBJMaterial,OBJ);
+    OSP_REGISTER_MATERIAL(OBJMaterial,OBJMaterial);
   }
 }

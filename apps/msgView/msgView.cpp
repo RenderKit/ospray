@@ -127,16 +127,22 @@ namespace ospray {
                       OSPRenderer renderer,
                       miniSG::Material *mat)
   {
-    PING;
-    OSPMaterial ospMat = ospNewMaterial(renderer,"OBJ");
+    OSPMaterial ospMat = ospNewMaterial(renderer,"OBJMaterial");
     if (!ospMat)  {
-      cout << "given renderer does not know material type 'OBJ'" << endl;
+      cout << "given renderer does not know material type 'OBJMaterial'" << endl;
       return;
     }
-    ospSet3fv(ospMat,"Kd",&mat->Kd.x);
-    ospSet3fv(ospMat,"Ks",&mat->Ks.x);
-    ospSet1f(ospMat,"Ns",mat->Ns);
-    ospSet1f(ospMat,"d", mat->d);
+
+    if (!mat) {
+      cout << "WARNING: mesh does not have a material! (assigning default)" << endl;
+      ospSet3f(ospMat,"Kd",1.f,0.f,0.f);
+    } else {
+      ospSet3fv(ospMat,"Kd",&mat->Kd.x);
+      ospSet3fv(ospMat,"Ks",&mat->Ks.x);
+      ospSet1f(ospMat,"Ns",mat->Ns);
+      ospSet1f(ospMat,"d", mat->d);
+    }
+
     ospCommit(ospMat);
     ospSetMaterial(ospMesh,ospMat);
     ospRelease(ospMat);
@@ -244,7 +250,7 @@ namespace ospray {
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"index",index);
       
-      // createMaterial(ospMesh, window.renderer, msgMesh->material.ptr);
+      createMaterial(ospMesh, NULL, msgMesh->material.ptr);
 
       ospAddGeometry(ospModel,ospMesh);
     }

@@ -674,6 +674,16 @@ namespace ospray {
       cmd.send((const mpi::Handle&)_obj);
       cmd.flush();
     }
+
+    //! assign given material to given geometry
+    void MPIDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
+    {
+      cmd.newCommand(CMD_SET_MATERIAL);
+      cmd.send((const mpi::Handle&)_geometry);
+      cmd.send((const mpi::Handle&)_material);
+      cmd.flush();
+    }
+
   }
 }
 

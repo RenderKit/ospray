@@ -2,6 +2,7 @@
 
 #include "../common/managed.h"
 #include "../common/ospcommon.h"
+#include "ospray/common/material.h"
 
 namespace ospray {
   struct Model;
@@ -18,6 +19,9 @@ namespace ospray {
     that together form a single model with a single accel structure */
   struct Geometry : public ManagedObject
   {
+    //! material associated to this geometry
+    Ref<Material> material;
+
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Geometry"; }
     /*! \brief integrates this geometry's primitives into the respective

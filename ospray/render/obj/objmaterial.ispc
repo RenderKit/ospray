@@ -1,10 +1,16 @@
 #include "objmaterial.ih"
 
-export void *uniform OBJMaterial_create(void *uniform foo)
+export void *uniform OBJMaterial_create(void *uniform cppE)
 {
   uniform OBJMaterial *uniform mat = uniform new uniform OBJMaterial;
-  mat->base.cppEquivalent = foo;
+  mat->base.cppEquivalent = cppE;
   return mat;
+}
+
+export void OBJMaterial_destroy(void *uniform _mat)
+{
+  uniform OBJMaterial *uniform mat = (uniform OBJMaterial *uniform)_mat;
+  delete(mat);
 }
 
 export void OBJMaterial_set(void *uniform _mat, 
@@ -14,8 +20,8 @@ export void OBJMaterial_set(void *uniform _mat,
                             const uniform float &d
                             )
 {
-  print("created ispc-side obj material (kd=% % %)\n",
-        Kd.x,Kd.y,Kd.z);
+  // print("created ispc-side obj material (kd=% % %)\n",
+  //       Kd.x,Kd.y,Kd.z);
   uniform OBJMaterial *uniform mat = (uniform OBJMaterial *uniform)_mat;
   mat->Kd = Kd;
   mat->Kd = Ks;
