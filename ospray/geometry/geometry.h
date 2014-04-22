@@ -19,9 +19,15 @@ namespace ospray {
     that together form a single model with a single accel structure */
   struct Geometry : public ManagedObject
   {
-    //! material associated to this geometry
-    Ref<Material> material;
-
+    //! set given geometry's material. 
+    /*! all material assignations should go through this function; the
+        'material' field itself is private). This allows the
+        respective geometry's derived instance to always properly set
+        the material field of the ISCP-equivalent whenever the
+        c++-side's material gets changed */
+    virtual void setMaterial(Material *mat);
+    //! get material assigned to this geometry 
+    virtual Material *getMaterial() const { return material.ptr; };
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Geometry"; }
     /*! \brief integrates this geometry's primitives into the respective
@@ -35,6 +41,12 @@ namespace ospray {
       geometry types specified in special modules, make sure to call
       ospLoadModule first. */
     static Geometry *createGeometry(const char *type); 
+
+  private:
+    //! material associated to this geometry
+    /*! this field is private to make sure it is only set through
+        'setMaterial' (see comment there) */
+    Ref<Material> material;
   };
 
   /*! \brief registers a internal ospray::<ClassName> geometry under

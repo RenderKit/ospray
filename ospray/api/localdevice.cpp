@@ -337,7 +337,7 @@ namespace ospray {
     {
       Geometry *geometry = (Geometry*)_geometry;
       Material *material = (Material*)_material;
-      geometry->material = material;
+      geometry->setMaterial(material);
     }
 
   }

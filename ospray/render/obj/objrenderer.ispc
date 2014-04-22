@@ -20,7 +20,9 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
   // const OBJMaterial mat = *objMaterial;
+  print("getting material %\n",objMaterial);
   const vec3f Kd = objMaterial->Kd;
+  print("GOT material % % %\n",Kd.x,Kd.y,Kd.z);
 
   float c = dot(normalize(ray.Ng),ray.dir); 
 

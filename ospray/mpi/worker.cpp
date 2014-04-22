@@ -207,7 +207,7 @@ namespace ospray {
           const mpi::Handle matHandle = cmd.get_handle();
           Geometry *geo = (Geometry*)geoHandle.lookup();
           Material *mat = (Material*)matHandle.lookup();
-          geo->material = mat;
+          geo->setMaterial(mat);
         } break;
         case api::MPIDevice::CMD_SET_STRING: {
           const mpi::Handle handle = cmd.get_handle();

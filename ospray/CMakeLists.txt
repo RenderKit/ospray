@@ -50,6 +50,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	volume/bricked32.cpp
 	volume/naive32.cpp
 
+	geometry/geometry.ispc
 	geometry/geometry.cpp
 	geometry/trianglemesh.cpp
 	geometry/streamlines.cpp

@@ -71,6 +71,10 @@ namespace ospray {
         cout << "  mesh bounds " << bounds << endl;
       } 
     rtcEnable(model->embreeSceneHandle,eMesh);
+
+    // if (getIE())
+    //   ispc::TriangleMesh_destroy(getIE());
+    // ispcEquivalent = ispc::TriangleMesh_create(
   }
 
   //! helper fct that creates a tessllated unit arrow
