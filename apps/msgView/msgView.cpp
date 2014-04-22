@@ -123,9 +123,18 @@ namespace ospray {
     ospray::glut3D::FPSCounter fps;
   };
 
-  void createMaterial(OSPGeometry ospMesh, miniSG::Material *material)
-  {
-  }
+  // void createMaterial(OSPGeometry ospMesh, 
+  //                     OSPRenderer renderer,
+  //                     miniSG::Material *material)
+  // {
+  //   PING;
+  //   PRINT(material->Kd);
+  //   OSPMaterial mat = ospNewMaterial(renderer,"OBJ");
+  //   if (!mat)  {
+  //     cout << "given renderer does not know material type 'OBJ'" << endl;
+  //     return;
+  //   }
+  // }
   
 
   void msgViewMain(int &ac, const char **&av)
@@ -229,7 +238,7 @@ namespace ospray {
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"index",index);
       
-      createMaterial(ospMesh, msgMesh->material.ptr);
+      // createMaterial(ospMesh, window.renderer, msgMesh->material.ptr);
 
       ospAddGeometry(ospModel,ospMesh);
     }

@@ -122,13 +122,13 @@ void rvIntersect(void* uniform ptr,       /*!< pointer to user data */
 
   if (!rv_layerEnabled[res.layerID]) return;
 
-  const float x0 = (res.coordinate.lower.x - ray->org.x)*rcp(ray->dir.x);
-  const float y0 = (res.coordinate.lower.y - ray->org.y)*rcp(ray->dir.y);
-  const float z0 = (rv_layer[res.layerID].lower_z - ray->org.z)*rcp(ray->dir.z);
+  const float x0 = (res.coordinate.lower.x - ray->org.x)*rcpf(ray->dir.x);
+  const float y0 = (res.coordinate.lower.y - ray->org.y)*rcpf(ray->dir.y);
+  const float z0 = (rv_layer[res.layerID].lower_z - ray->org.z)*rcpf(ray->dir.z);
 
-  const float x1 = (res.coordinate.upper.x - ray->org.x)*rcp(ray->dir.x);
-  const float y1 = (res.coordinate.upper.y - ray->org.y)*rcp(ray->dir.y);
-  const float z1 = (rv_layer[res.layerID].upper_z - ray->org.z)*rcp(ray->dir.z);
+  const float x1 = (res.coordinate.upper.x - ray->org.x)*rcpf(ray->dir.x);
+  const float y1 = (res.coordinate.upper.y - ray->org.y)*rcpf(ray->dir.y);
+  const float z1 = (rv_layer[res.layerID].upper_z - ray->org.z)*rcpf(ray->dir.z);
 
   const float t0 = max(max(ray->t0, 
                            min(x0,x1)),
@@ -204,7 +204,7 @@ vec4f shade(const RVRay &ray)
     const int attrNo = rv_shadeByAttrib_attribID + resID*rv_numAttributesPerResistor;
     const float attrib = model->attribute[attrNo];
     uniform ColorRange &range = rv_shadeByAttrib_colorRange;
-    const float f = (attrib - range.lo_value)*rcp(range.hi_value-range.lo_value+1e-6f);
+    const float f = (attrib - range.lo_value)*rcpf(range.hi_value-range.lo_value+1e-6f);
     const vec3f col = (1.f-f)*range.lo_color + f*(range.hi_color);
     return shadeFactor*make_vec4f(col); //ray.inherited.primID)); 
   }
@@ -222,8 +222,8 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile)
   const uniform uint32 size_y = tile->fbSize.y;
   const uniform uint32 x0 = tile->region.lower.x;
   const uniform uint32 y0 = tile->region.lower.y;
-  const float inv_size_x = rcp(size_x);
-  const float inv_size_y = rcp(size_y);
+  const float inv_size_x = rcpf(size_x);
+  const float inv_size_y = rcpf(size_y);
   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
     const uint32 frag = i*programCount+programIndex;
     const uint32  x     = x0 + (frag % TILE_SIZE);

@@ -14,5 +14,13 @@ namespace ospray {
 
     //! \brief commit the material's parameters
     virtual void commit() {}
+
+    /*! \brief creates an abstract material class of given type 
+
+      The respective material type must be a registered material type
+      in either ospray proper or any already loaded module. For
+      material types specified in special modules, make sure to call
+      ospLoadModule first. */
+    static Material *createMaterial(const char *identifier);
   };
 }

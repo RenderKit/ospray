@@ -32,6 +32,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	common/data.cpp
 	common/model.cpp
 	common/model.ispc
+	common/material.cpp
 	common/library.cpp
 
 	fb/swapchain.cpp 

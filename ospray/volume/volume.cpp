@@ -1,9 +1,7 @@
 // ospray stuff
 #include "volume.h"
-#include "../common/library.h"
 #include "naive32.h"
-// embree stuff
-#include "common/sys/library.h"
+#include "common/library.h"
 // STL
 #include <map>
 
@@ -117,31 +115,14 @@ namespace ospray {
     }
 
     throw std::runtime_error("unknown way of initializing a volume...");
-    
-// #if 0
-//     loadRAW(size,fileName);
-// #else
-//     const vec3i resampleSize = getParam3i("resample_dimensions",vec3i(-1));
-//     if (resampleSize.x > 0) {
-//       const char *inputFormat  = getParamString("input_format",NULL);
-//       Assert(inputFormat != NULL);
-//       StructuredVolume<T> *tmp = new NaiveVolume<T>;
-//       tmp->size = size;
-//       tmp->loadRAW(size,fileName);
-//       this->size = resampleSize;
-//       allocate();
-//       createIE();
-//       resampleFrom(tmp);
-//     } else {
-//       loadRAW(size,fileName);
-//     }
-// #endif    
-    // PRINT(resampleSize);
-
-    
-    // ispcEquivalent = internalRep->inISPC();
   }
 
+  /*! \brief creates an abstract volume class of given type 
+    
+    The respective volume type must be a registered volume type
+    in either ospray proper or any already loaded module. For
+    volume types specified in special modules, make sure to call
+    ospLoadModule first. */
   Volume *Volume::createVolume(const char *_type)
   {
     char type[strlen(_type)+2];

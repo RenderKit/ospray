@@ -14,6 +14,8 @@ export void OBJMaterial_set(void *uniform _mat,
                             const uniform float &d
                             )
 {
+  print("created ispc-side obj material (kd=% % %)\n",
+        Kd.x,Kd.y,Kd.z);
   uniform OBJMaterial *uniform mat = (uniform OBJMaterial *uniform)_mat;
   mat->Kd = Kd;
   mat->Kd = Ks;

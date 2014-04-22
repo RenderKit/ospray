@@ -26,6 +26,12 @@ namespace ospray {
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const std::string &type) { return NULL; }
 
+    /*! \brief creates an abstract renderer class of given type 
+
+      The respective renderer type must be a registered renderer type
+      in either ospray proper or any already loaded module. For
+      renderer types specified in special modules, make sure to call
+      ospLoadModule first. */
     static Renderer *createRenderer(const char *identifier);
   };
 

@@ -1,0 +1,16 @@
+#ifndef OSPRAY_GEOMETRY_IH
+#define OSPRAY_GEOMETRY_IH
+
+#include "ospray/common/material.ih"
+
+struct Model;
+
+/*! ispc-side equivalent of a geometry */
+struct Geometry {
+  void *uniform cppEquivalent; //! pointer back to the C++-equivalent of this class
+  uniform Material *uniform material;//!< material attached to this geometry
+  uniform Model    *uniform model;   //!< model that this geometry is part of
+  uniform int32             geomID;  //!< ID that 'model' knows this geometry under
+};
+
+#endif

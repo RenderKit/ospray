@@ -7,5 +7,10 @@
 
 # define M_PI		3.14159265358979323846f	/* pi */
 
+/*! c-style reciprocal. required since ispc 1.7 due to type changes in this version */
+inline float rcpf(const float f) { return rcp(f); }
+/*! c-style reciprocal. required since ispc 1.7 due to type changes in this version */
+inline uniform float rcpf(const uniform float f) { return rcp(f); }
+
 #endif
 

@@ -6,6 +6,7 @@
 #include "../../camera/perspectivecamera.ih"
 #include "../util.ih"
 #include "ospray/common/model.ih"
+#include "objmaterial.ih"
 
 inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 { 
@@ -14,6 +15,12 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   rtcIntersect(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
   if (ray.geomID < 0)
     return make_vec3f(0.f);
+
+  uniform Material *material = model->geometry[ray.geomID]->material;
+  uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
+
+  // const OBJMaterial mat = *objMaterial;
+  const vec3f Kd = objMaterial->Kd;
 
   float c = dot(normalize(ray.Ng),ray.dir); 
 

@@ -34,6 +34,12 @@ namespace ospray {
     //! gradient at given sample location
     virtual vec3f gradf(const vec3fa &samplePos) = 0;
 
+    /*! \brief creates an abstract volume class of given type 
+
+      The respective volume type must be a registered volume type
+      in either ospray proper or any already loaded module. For
+      volume types specified in special modules, make sure to call
+      ospLoadModule first. */
     static Volume *createVolume(const char *identifier);
 
     // ispc::_Volume *ispcEquivalent;
