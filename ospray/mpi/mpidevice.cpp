@@ -656,6 +656,24 @@ namespace ospray {
       // actually have the user call an *ex*plicit ospSwapBuffers call...
       sc->advance();
     }
+
+    //! release (i.e., reduce refcount of) given object
+    /*! note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. instead, each object is created
+      with a refcount of 1, and this refcount will be
+      increased/decreased every time another object refers to this
+      object resp releases its hold on it; if the refcount is 0 the
+      object will automatically get deleted. For example, you can
+      create a new material, assign it to a geometry, and immediately
+      after this assignation release its refcount; the material will
+      stay 'alive' as long as the given geometry requires it. */
+    void MPIDevice::release(OSPObject _obj)
+    {
+      if (!_obj) return;
+      cmd.newCommand(CMD_RELEASE);
+      cmd.send((const mpi::Handle&)_obj);
+      cmd.flush();
+    }
   }
 }
 

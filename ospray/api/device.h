@@ -80,6 +80,19 @@ namespace ospray {
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer) = 0;
+
+  
+      //! release (i.e., reduce refcount of) given object
+      /*! note that all objects in ospray are refcounted, so one cannot
+        explicitly "delete" any object. instead, each object is created
+        with a refcount of 1, and this refcount will be
+        increased/decreased every time another object refers to this
+        object resp releases its hold on it; if the refcount is 0 the
+        object will automatically get deleted. For example, you can
+        create a new material, assign it to a geometry, and immediately
+        after this assignation release its refcount; the material will
+        stay 'alive' as long as the given geometry requires it. */
+      virtual void release(OSPObject _obj) = 0;
     };
   }
 }

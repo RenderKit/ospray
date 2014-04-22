@@ -25,5 +25,6 @@ namespace ospray {
                             Ns,d);
     }
     
+    OSP_REGISTER_MATERIAL(OBJMaterial,OBJ);
   }
 }

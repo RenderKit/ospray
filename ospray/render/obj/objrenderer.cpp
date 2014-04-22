@@ -30,9 +30,8 @@ namespace ospray {
     }
     
     /*! \brief create a material of given type */
-    Material *OBJRenderer::createMaterial(const std::string &type)
+    Material *OBJRenderer::createMaterial(const char *type)
     {
-      Assert2(type == "OBJ" || type == "obj","unsupported material type for OBJ Renderer");
       return new OBJMaterial;
     }
 

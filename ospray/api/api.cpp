@@ -212,7 +212,7 @@ namespace ospray {
   extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
   {
     ASSERT_DEVICE();
-    Assert2(renderer != NULL, "invalid renderer handle in ospNewMaterial");
+    // Assert2(renderer != NULL, "invalid renderer handle in ospNewMaterial");
     Assert2(type != NULL, "invalid material type identifier in ospNewMaterial");
     LOG("ospNewMaterial(" << renderer << ", " << type << ")");
     OSPMaterial material = ospray::api::Device::current->newMaterial(renderer,type);
@@ -331,6 +331,12 @@ namespace ospray {
     ospSetVec3f(_object,id,vec3f(x,y,z));
   }
   /*! add a data array to another object */
+  extern "C" void ospSet3fv(OSPObject _object, const char *id, const float *xyz)
+  {
+    ASSERT_DEVICE();
+    ospSetVec3f(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
+  }
+  /*! add a data array to another object */
   extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
   {
     ASSERT_DEVICE();
@@ -342,6 +348,11 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVoidPtr(_object,id,v);
   }
-
+  extern "C" void ospRelease(OSPObject _object)
+  {
+    ASSERT_DEVICE();
+    if (!_object) return;
+    ospray::api::Device::current->release(_object);
+  }
 
 }

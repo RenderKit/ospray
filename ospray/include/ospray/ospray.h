@@ -133,6 +133,18 @@ extern "C" {
   //! let given renderer create a new material of given type
   OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type);
   
+  //! release (i.e., reduce refcount of) given object
+  /*! note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. instead, each object is created
+      with a refcount of 1, and this refcount will be
+      increased/decreased every time another object refers to this
+      object resp releases its hold on it; if the refcount is 0 the
+      object will automatically get deleted. For example, you can
+      create a new material, assign it to a geometry, and immediately
+      after this assignation release its refcount; the material will
+      stay 'alive' as long as the given geometry requires it. */
+  void ospRelease(OSPObject obj);
+  
   //! assign given material to given geometry
   void ospSetMaterial(OSPGeometry geometry, OSPMaterial material);
 
@@ -224,6 +236,8 @@ extern "C" {
   void ospSet1i(OSPObject _object, const char *id, int32 x);
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+  /*! add 3-float paramter to given object */
+  void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
   /*! add 3-int paramter to given object */
   void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
   /*! add 3-float paramter to given object */

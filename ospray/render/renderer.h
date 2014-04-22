@@ -24,7 +24,7 @@ namespace ospray {
     virtual void renderFrame(FrameBuffer *fb) = 0;
 
     /*! \brief create a material of given type */
-    virtual Material *createMaterial(const std::string &type) { return NULL; }
+    virtual Material *createMaterial(const char *type) { return NULL; }
 
     /*! \brief creates an abstract renderer class of given type 
 

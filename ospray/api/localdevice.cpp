@@ -221,11 +221,30 @@ namespace ospray {
     {
       Assert2(type != NULL, "invalid material type identifier");
       Assert2(_renderer != NULL, "invalid renderer");
+
+      // -------------------------------------------------------
+      // first, check if there's a renderer that we can ask to create the material.
+      //
       Renderer *renderer = (Renderer *)_renderer;
-      Material *material = renderer->createMaterial(type);
+      if (renderer) {
+        Material *material = renderer->createMaterial(type);
+        if (material) {
+          material->refInc();
+          return (OSPMaterial)material;
+        }
+      }
+
+      // -------------------------------------------------------
+      // if there was no renderer, check if there's a loadable material by that name
+      //
+      Material *material = Material::createMaterial(type);
       if (!material) return NULL;
       material->refInc();
-      return (OSPMaterial)material;
+
+      // -------------------------------------------------------
+      // couldn't create this material, return NULL
+      //
+      return NULL;
     }
 
     /*! create a new camera object (out of list of registered cameras) */
@@ -299,6 +318,22 @@ namespace ospray {
       sc->advance();
     }
 
+    //! release (i.e., reduce refcount of) given object
+    /*! note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. instead, each object is created
+      with a refcount of 1, and this refcount will be
+      increased/decreased every time another object refers to this
+      object resp releases its hold on it; if the refcount is 0 the
+      object will automatically get deleted. For example, you can
+      create a new material, assign it to a geometry, and immediately
+      after this assignation release its refcount; the material will
+      stay 'alive' as long as the given geometry requires it. */
+    void LocalDevice::release(OSPObject _obj)
+    {
+      if (!_obj) return;
+      ManagedObject *obj = (ManagedObject *)_obj;
+      obj->refDec();
+    }
   }
 }
 

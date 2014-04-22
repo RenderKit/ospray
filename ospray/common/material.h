@@ -23,4 +23,22 @@ namespace ospray {
       ospLoadModule first. */
     static Material *createMaterial(const char *identifier);
   };
+
+
+  /*! \brief registers a internal ospray::<ClassName> material under
+      the externally accessible name "external_name" 
+      
+      \internal This currently works by defining a extern "C" function
+      with a given predefined name that creates a new instance of this
+      material. By having this symbol in the shared lib ospray can
+      lateron always get a handle to this fct and create an instance
+      of this material.
+  */
+#define OSP_REGISTER_MATERIAL(InternalClassName,external_name)      \
+  extern "C" Material *ospray_create_material__##external_name()    \
+  {                                                                 \
+    return new InternalClassName;                                   \
+  }                                                                 \
+  
+
 }
