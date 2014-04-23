@@ -1,11 +1,8 @@
 // ospray stuff
 #include "geometry.h"
-// embree stuff
-#include "common/sys/library.h"
+#include "ospray/common/library.h"
 // stl stuff
 #include <map>
-// std c stuff
-#include <dlfcn.h>
 // ISPC-side
 #include "geometry_ispc.h"
 
@@ -14,12 +11,12 @@ namespace ospray {
 
   std::map<std::string, creatorFct> geometryRegistry;
 
-    //! set given geometry's material. 
-    /*! all material assignations should go through this function; the
-        'material' field itself is private). This allows the
-        respective geometry's derived instance to always properly set
-        the material field of the ISCP-equivalent whenever the
-        c++-side's material gets changed */
+  //! set given geometry's material. 
+  /*! all material assignations should go through this function; the
+    'material' field itself is private). This allows the
+    respective geometry's derived instance to always properly set
+    the material field of the ISCP-equivalent whenever the
+    c++-side's material gets changed */
   void Geometry::setMaterial(Material *mat)
   {
     material = mat;
@@ -48,7 +45,7 @@ namespace ospray {
                 << type << "' for the first time" << std::endl;
 
     std::string creatorName = "ospray_create_geometry__"+std::string(type);
-    creatorFct creator = (creatorFct)dlsym(RTLD_DEFAULT,creatorName.c_str());
+    creatorFct creator = (creatorFct)getSymbol(creatorName);
     geometryRegistry[type] = creator;
     if (creator == NULL) {
       if (ospray::logLevel >= 1) 

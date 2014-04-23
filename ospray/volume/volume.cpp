@@ -1,7 +1,7 @@
 // ospray stuff
 #include "volume.h"
 #include "naive32.h"
-#include "common/library.h"
+#include "ospray/common/library.h"
 // STL
 #include <map>
 
@@ -139,7 +139,7 @@ namespace ospray {
                 << type << "' for the first time" << std::endl;
 
     std::string creatorName = "ospray_create_volume__"+std::string(type);
-    creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
+    creatorFct creator = (creatorFct)getSymbol(creatorName);
     volumeRegistry[type] = creator;
     if (creator == NULL) {
       if (ospray::logLevel >= 1) 
