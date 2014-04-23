@@ -330,8 +330,6 @@ namespace ospray {
       obj->refDec();
     }
 
-
-
     //! assign given material to given geometry
     void LocalDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {

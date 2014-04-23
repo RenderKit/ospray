@@ -28,8 +28,6 @@ namespace ospray {
 
     \brief Geometry representing stream lines of a fixed radius
 
-    \image html sl2.jpg
-
     Implements a geometry consisinting of stream lines
     consisting of connected (and rounded) cylinder segments. Each
     stream line is specified by a set of vec3fa control points; all
@@ -70,6 +68,9 @@ namespace ospray {
 
     The functionality for this geometry is implemented via the
     \ref ospray::TriangleMesh class.
+
+    \image html sl2.jpg
+
   */
 
 

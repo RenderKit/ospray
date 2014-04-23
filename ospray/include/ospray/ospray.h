@@ -26,6 +26,7 @@
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
 #include "common/math/bbox.h"
+#include "common/math/affinespace.h"
 
 /*! namespace for classes in the public core API */
 namespace osp {
@@ -35,6 +36,7 @@ namespace osp {
   typedef embree::Vec3fa vec3fa;
   typedef embree::BBox<embree::Vec2i> box2i;
   typedef embree::BBox3f box3f;
+  typedef embree::AffineSpace3fa affine3f;
 
   struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
   struct FrameBuffer  : public ManagedObject {};
@@ -266,6 +268,13 @@ extern "C" {
   /*! add an already created geometry to a model */
   void ospAddGeometry(OSPModel model, OSPGeometry mesh);
   /*! \} end of ospray_trianglemesh */
+
+
+  /*! \brief create a new instance geometry that instantiates another
+    model.  the resulting geometry still has to be added to another
+    model via ospAddGeometry */
+  OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
+                             const osp::affine3f &xfm);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_model OSPRay Model Handling 

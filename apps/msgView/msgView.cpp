@@ -265,12 +265,13 @@ namespace ospray {
     ospModel = ospNewModel();
 
     // code does not yet do instancing ... check that the model doesn't contain instances
+    bool doesInstancing = false; //true;
     for (int i=0;i<msgModel->instance.size();i++)
       if (msgModel->instance[i] != miniSG::Instance(i))
-        error("found a scene that seems to contain instances, "
-              "but msgView does not yet support instancing");
+        doesInstancing = true;
 
     cout << "msgView: adding parsed geometries to ospray model" << endl;
+    std::vector<OSPModel> instanceModels;
     for (int i=0;i<msgModel->mesh.size();i++) {
       //      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
@@ -290,7 +291,21 @@ namespace ospray {
       
       createMaterial(ospMesh, NULL, msgMesh->material.ptr);
 
-      ospAddGeometry(ospModel,ospMesh);
+      if (doesInstancing) {
+        OSPModel model_i = ospNewModel();
+        ospAddGeometry(model_i,ospMesh);
+        ospCommit(model_i);
+        instanceModels.push_back(model_i);
+      } else
+        ospAddGeometry(ospModel,ospMesh);
+    }
+
+    if (doesInstancing) {
+      for (int i=0;i<msgModel->instance.size();i++) {
+        OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
+                                          msgModel->instance[i].xfm);
+        ospAddGeometry(ospModel,inst);
+      }
     }
     ospCommit(ospModel);
     cout << "msgView: done creating ospray model." << endl;

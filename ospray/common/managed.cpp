@@ -76,7 +76,7 @@ namespace ospray {
   return (T&)param->FIELD;                                            \
   }
   
-  define_getparam(ManagedObject *,,OSP_OBJECT,ptr);
+  define_getparam(ManagedObject *,Object,OSP_OBJECT,ptr);
   define_getparam(int32, 1i,OSP_INT,i);
   define_getparam(vec3i, 3i,OSP_vec3i,i);
   define_getparam(vec3f, 3f,OSP_vec3f,f);

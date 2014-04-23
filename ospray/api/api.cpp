@@ -371,4 +371,21 @@ namespace ospray {
     ospray::api::Device::current->setMaterial(geometry,material);
   }
 
+  /*! \brief create a new instance geometry that instantiates another
+    model.  the resulting geometry still has to be added to another
+    model via ospAddGeometry */
+  extern "C" OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
+                                        const osp::affine3f &xfm)
+  {
+    ASSERT_DEVICE();
+    // return ospray::api::Device::current->newInstance(modelToInstantiate,xfm);
+    OSPGeometry geom = ospNewGeometry("instance");
+    ospSet3fv(geom,"xfm.l.vx",&xfm.l.vx.x);
+    ospSet3fv(geom,"xfm.l.vy",&xfm.l.vy.x);
+    ospSet3fv(geom,"xfm.l.vz",&xfm.l.vz.x);
+    ospSet3fv(geom,"xfm.p",&xfm.p.x);
+    ospSetParam(geom,"model",modelToInstantiate);
+    return geom;
+  }
+
 }

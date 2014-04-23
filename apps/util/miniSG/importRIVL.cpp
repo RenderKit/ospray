@@ -87,22 +87,22 @@ namespace ospray {
       virtual string toString() const;
       TriangleMesh();
 
-      /*! \brief data handle to vertex data array. 
+      // /*! \brief data handle to vertex data array. 
         
-        can be null if user set the 'vertex' pointer manually */
-      Ref<ospray::Data> vertexData;
-      /*! \brief data handle to normal data array. 
+      //   can be null if user set the 'vertex' pointer manually */
+      // Ref<ospray::Data> vertexData;
+      // /*! \brief data handle to normal data array. 
 
-        can be null if user set the 'normal' pointer manually */
-      Ref<ospray::Data> normalData;
-      /*! \brief data handle to txcoord data array. 
+      //   can be null if user set the 'normal' pointer manually */
+      // Ref<ospray::Data> normalData;
+      // /*! \brief data handle to txcoord data array. 
 
-        can be null if user set the 'txcoord' pointer manually */
-      Ref<ospray::Data> texCoordData;
-      /*! \brief data handle to index data array. 
+      //   can be null if user set the 'txcoord' pointer manually */
+      // Ref<ospray::Data> texCoordData;
+      // /*! \brief data handle to index data array. 
 
-        can be null if user set the 'index' pointer manually */
-      Ref<ospray::Data> indexData;
+      //   can be null if user set the 'index' pointer manually */
+      // Ref<ospray::Data> indexData;
 
       vec4i *triangle;
       size_t numTriangles;
@@ -110,7 +110,7 @@ namespace ospray {
       size_t numVertices;
       vec3f *normal;
       size_t numNormals;
-      vec3f *texCoord;
+      vec2f *texCoord;
       size_t numTexCoords;
     };
 
@@ -244,6 +244,8 @@ namespace ospray {
                 }       
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
+              mesh->numVertices = num;
+              mesh->vertex = (vec3f*)(binBasePtr+ofs);
             } else if (childType == "normal") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
@@ -260,6 +262,8 @@ namespace ospray {
                 }       
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
+              mesh->numNormals = num;
+              mesh->normal = (vec3f*)(binBasePtr+ofs);
             } else if (childType == "texcoord") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
@@ -276,6 +280,8 @@ namespace ospray {
                 }       
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
+              mesh->numTexCoords = num;
+              mesh->texCoord = (vec2f*)(binBasePtr+ofs);
             } else if (childType == "prim") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
@@ -356,12 +362,15 @@ namespace ospray {
       
       xmlDocPtr doc; /* the resulting document tree */
       
-      doc = xmlReadFile(xmlFileName.c_str(), NULL, 0);
+      PRINT(xmlFileName);
+      doc = xmlReadFile(xmlFileName.c_str(), NULL, XML_PARSE_HUGE|XML_PARSE_RECOVER);
       if (doc == NULL) 
         throw std::runtime_error("could not open/parse xml file '"
                                  +xmlFileName+"'");
 
       xmlNode * root_element = xmlDocGetRootElement(doc);
+      if (!root_element)
+        throw std::runtime_error("importRIVL: could not find root element");
       Ref<Node> node = parseBGFscene(root_element);
 
       xmlFreeDoc(doc);
@@ -377,9 +386,34 @@ namespace ospray {
         return;
       }
 
+      Transform *xf = dynamic_cast<Transform *>(node.ptr);
+      if (xf) {
+        traverseSG(model,xf->child,xfm*xf->xfm);
+        return;
+      }
+
       TriangleMesh *tm = dynamic_cast<TriangleMesh *>(node.ptr);
       if (tm) {
-        throw std::runtime_error("meshes not yet implemented in importRIVL");
+        static std::map<TriangleMesh *, int> meshIDs;
+        if (meshIDs.find(tm) == meshIDs.end()) {
+          meshIDs[tm] = model.mesh.size();
+          Mesh *mesh = new Mesh;
+          mesh->position.resize(tm->numVertices);
+          mesh->triangle.resize(tm->numTriangles);
+          for (int i=0;i<tm->numTriangles;i++) {
+            (vec3i&)mesh->triangle[i] = (vec3i&)tm->triangle[i];
+          }
+          for (int i=0;i<tm->numVertices;i++) {
+            (vec3f&)mesh->position[i] = (vec3f&)tm->vertex[i];
+          }
+          model.mesh.push_back(mesh);
+        }
+        
+        int meshID = meshIDs[tm];
+        model.instance.push_back(Instance(meshID,xfm));
+        
+        return;
+        // throw std::runtime_error("meshes not yet implemented in importRIVL");
       }
 
       throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");
@@ -390,8 +424,6 @@ namespace ospray {
     {
       Ref<miniSG::Node> sg = importRIVL(fileName);
       traverseSG(model,sg);
-
-      NOTIMPLEMENTED;
     }
     
   }

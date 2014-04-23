@@ -35,8 +35,28 @@ namespace ospray {
     {
       // this does not yet properly support instancing with transforms!
       box3f bBox = embree::empty;
-      for (int i=0;i<mesh.size();i++)
-        bBox.extend(mesh[i]->getBBox());
+      if (!instance.empty()) {
+        std::vector<box3f> meshBounds;
+        for (int i=0;i<mesh.size();i++)
+          meshBounds.push_back(mesh[i]->getBBox());
+        for (int i=0;i<instance.size();i++) {
+          box3f b_i = meshBounds[instance[i].meshID];
+          vec3f corner;
+          for (int iz=0;iz<2;iz++) {
+            corner.z = iz?b_i.upper.z:b_i.lower.z;
+            for (int iy=0;iy<2;iy++) {
+              corner.y = iy?b_i.upper.y:b_i.lower.y;
+              for (int ix=0;ix<2;ix++) {
+                corner.x = ix?b_i.upper.x:b_i.lower.x;
+                bBox.extend(xfmPoint(instance[i].xfm,corner));
+              }
+            }
+          }
+        }
+      } else {
+        for (int i=0;i<mesh.size();i++)
+          bBox.extend(mesh[i]->getBBox());
+      }
       return bBox;
     }
 

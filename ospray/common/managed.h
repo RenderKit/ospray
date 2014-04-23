@@ -153,9 +153,9 @@ namespace ospray {
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
         instance */
-    ManagedObject *getParam(const char *name, ManagedObject *valIfNotFound);
+    ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound);
     Data *getParamData(const char *name, Data *valIfNotFound)
-    { return (Data*)getParam(name,(ManagedObject*)valIfNotFound); }
+    { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
     vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);

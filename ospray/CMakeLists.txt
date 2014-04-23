@@ -56,6 +56,8 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	geometry/trianglemesh.cpp
 	geometry/streamlines.cpp
 	geometry/streamlines.ispc
+	geometry/instance.ispc
+	geometry/instance.cpp
 
 	render/tilerenderer.cpp
 	render/loadbalancer.cpp

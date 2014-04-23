@@ -96,6 +96,16 @@ namespace ospray {
 
       //! assign given material to given geometry
       virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat) = 0;
+
+      /*! \brief create a new instance geometry that instantiates another
+        model.  the resulting geometry still has to be added to another
+        model via ospAddGeometry */
+      virtual OSPGeometry newInstance(OSPModel modelToInstantiate,
+                                      const osp::affine3f &xfm)
+      {
+        throw "instances not implemented";
+      }
+
     };
   }
 }

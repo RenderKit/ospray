@@ -19,11 +19,11 @@ namespace ospray {
     TileRenderer::RenderJob *OBJRenderer::createRenderJob(FrameBuffer *fb)
     {
       RenderTask *frame = new RenderTask;
-      frame->world = (Model *)getParam("world",NULL);
+      frame->world = (Model *)getParamObject("world",NULL);
       Assert2(frame->world,"null world handle (did you forget to assign a "
               "'world' parameter to the ray_cast renderer?)");
 
-      frame->camera = (Camera *)getParam("camera",NULL);
+      frame->camera = (Camera *)getParamObject("camera",NULL);
       Assert2(frame->camera,"null camera handle (did you forget to assign a "
               "'camera' parameter to the ray_cast renderer?)");
       return frame;

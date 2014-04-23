@@ -15,14 +15,14 @@ namespace ospray {
        parameter. at some point we probably want to have voluems
        embedded in models - possibly with transformation attached to
        them - but for now let's do this as simple as possible */
-    Volume *volume = (Volume *)getParam("volume",NULL);
+    Volume *volume = (Volume *)getParamObject("volume",NULL);
     Assert(volume && "null volume handle in 'dvr' renderer "
            "(did you forget to assign a 'volume' parameter to the renderer?)");
     void *_volume = (void*)volume->getIE();
     Assert(_volume && "invalid volume without a ISPC-side volume "
            "(did you forget to finalize/'commit' the volume?)");
 
-    Camera *camera = (Camera *)getParam("camera",NULL);
+    Camera *camera = (Camera *)getParamObject("camera",NULL);
     Assert(camera && "null camera handle in 'dvr' renderer "
            "(did you forget to assign a 'camera' parameter to the renderer?)");
     void *_camera = (void*)camera->getIE();
