@@ -5,6 +5,27 @@
 
 namespace ospray {
 
+  /*! \defgroup geometry_trianglemesh Triangle Meshes ("trianglemesh") 
+
+    \brief Implements a traditional triangle mesh (indexed face set) geometry
+
+    \ingroup ospray_supported_geometries
+
+    A triangle mesh is created via \ref ospNewTriangleMesh, or via
+    calling \ref ospNewGeometry with type string \"trianglemesh\".
+
+    Once created, a trianglemesh recognizes the following parameters
+    <pre>
+    data<vec3fa> "position"  // vertex array
+    data<vec3i>  "index"     // index array (three int32 values per triangles)
+                             // each int32 value is index into 'position' array
+    </pre>
+
+    The functionality for this geometry is implemented via the
+    \ref ospray::TriangleMesh class.
+  */
+
+
 
   /*! \brief A Triangle Mesh / Indexed Face Set Geometry
 

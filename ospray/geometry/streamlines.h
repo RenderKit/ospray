@@ -22,7 +22,26 @@
 /*! @{ \ingroup ospray_module_streamlines */
 namespace ospray {
 
-  /*! \brief A geometry for stream line curves
+  /*! \defgroup geometry_streamlines Stream Lines ("streamlines") 
+
+    \ingroup ospray_supported_geometries
+
+    \brief Geometry representing stream lines of a fixed radius
+
+    \image html sl2.jpg
+
+    Implements a geometry consisinting of stream lines
+    consisting of connected (and rounded) cylinder segments. Each
+    stream line is specified by a set of vec3fa control points; all
+    vertices belonging to to the same logiical stream line are
+    connected via cylinders of a fixed radius, with additional spheres
+    at each vertex to make for a smooth transition between the
+    cylinders. A "streamline" geometry can contain multiple disjoint
+    stream lines; all such stream lines use the same radius that is
+    specified for this geometry.
+
+    A stream line geometry is created via \ref ospNewGeometry with
+     type string "streamlines".
 
     Each streamline is specified as a list of linear segments, where
     each segment is pretty much a cylinder with rounded ends. The
@@ -43,11 +62,22 @@ namespace ospray {
     value
 
     Parameters:
-    <ul>
-    <li><code>float        radius</code> Radius to be used for all stream lines</li>
-    <li><code>Data<vec3fa> vertex</code> Vertices of stream line segments</li>
-    <li><code>Data<int32>  index </code> Start indices of each segment</li>
-    </ul>
+    <dl>
+    <dt><code>float        radius</code></dt><dd> Radius to be used for all stream lines</dd>
+    <dt><li><code>Data<vec3fa> vertex</code></dt><dd> Array of all vertices for *all* curves in this geometry, one curve's vertices stored after another.</dd>
+    <dt><li><code>Data<int32>  index </code></dt><dd> index[i] specifies the index of the first vertex of the i'th curve. The curve then uses all following vertices in the 'vertex' array until either the next curve starts, or the array's end is reached.</dd>
+    </dl>
+
+    The functionality for this geometry is implemented via the
+    \ref ospray::TriangleMesh class.
+  */
+
+
+
+  /*! \brief A geometry for stream line curves
+
+    Implements the \ref geometry_streamlines geometry
+
   */
   struct StreamLines : public Geometry {
     //! \brief common function to help printf-debugging 
