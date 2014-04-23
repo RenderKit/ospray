@@ -20,7 +20,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
   vec3f Kd = make_vec3f(0,1,0);
-  if (objMaterial) {
+  if (objMaterial != NULL) {
     Kd = objMaterial->Kd;
   }
 

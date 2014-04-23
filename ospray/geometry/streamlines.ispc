@@ -161,5 +161,7 @@ StreamLineGeometry_set(void           *uniform _geom,
                        (uniform RTCBoundsFunc)&StreamLines_bounds);
   rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
                           (uniform RTCIntersectFuncVarying)&StreamLines_intersect);
+  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
+                          (uniform RTCOccludedFuncVarying)&StreamLines_intersect);
   rtcEnable(model->embreeSceneHandle,geomID);
 }

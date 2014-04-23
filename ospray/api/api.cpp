@@ -175,11 +175,19 @@ namespace ospray {
   /*! \brief create a new renderer of given type 
 
    return 'NULL' if that type is not known */
-  extern "C" OSPRenderer ospNewRenderer(const char *type)
+  extern "C" OSPRenderer ospNewRenderer(const char *_type)
   {
     ASSERT_DEVICE();
-    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
-    LOG("ospNewRenderer(" << type << ")");
+    Assert2(_type,"invalid render type identifier in ospAddGeometry");
+    LOG("ospNewRenderer(" << _type << ")");
+    int L = strlen(_type);
+    char type[L+1];
+    for (int i=0;i<=L;i++) {
+      char c = _type[i];
+      if (c == '-' || c == ':') c = '_';
+      type[i] = c;
+    }
+    PRINT(type);
     OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
     if (ospray::logLevel > 0)
       if (renderer) 
