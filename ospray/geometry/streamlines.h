@@ -64,6 +64,8 @@ namespace ospray {
     const uint32 *index;
     size_t        numSegments;
     float         radius;
+
+    StreamLines();
   };
 }
 /*! @} */

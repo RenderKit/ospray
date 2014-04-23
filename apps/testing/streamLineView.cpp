@@ -77,7 +77,7 @@ namespace ospray {
     }
     box3f getBounds() const 
     {
-      box3f bounds;
+      box3f bounds = embree::empty;
       for (int i=0;i<vertex.size();i++)
         bounds.extend(vertex[i]);
       return bounds;
@@ -131,8 +131,6 @@ namespace ospray {
 
       if (viewPort.modified) {
         Assert2(camera,"ospray camera is null");
-        
-        // PRINT(viewPort);
         
         ospSetVec3f(camera,"pos",viewPort.from);
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
@@ -188,7 +186,6 @@ namespace ospray {
     StreamLineViewer window(streamLines);
     window.create("ospDVR: OSPRay miniature stream line viewer");
     printf("Viewer created. Press 'Q' to quit.\n");
-    PRINT(streamLines->getBounds());
     window.setWorldBounds(streamLines->getBounds());
     ospray::glut3D::runGLUT();
   }

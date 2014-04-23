@@ -2,15 +2,15 @@
 #include "common/math/vec.ih"
 #include "common/math/bbox.ih"
 #include "common/ray.ih"
+#include "ospray/geometry/geometry.ih"
+#include "ospray/common/model.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
 struct StreamLines {
-  RTCScene        scene;
-  uint32          geomID;
-  void           *cppEquivalent;
+  uniform Geometry geometry; //!< inherited geometry fields
   float           radius;
   uniform vec3fa *vertex;
   int32           numVertices;
@@ -27,143 +27,139 @@ void StreamLines_bounds(uniform StreamLines *uniform geometry,
   const uniform vec3f B = make_vec3f(geometry->vertex[index+1]);
   bbox.lower = min(A,B)-make_vec3f(geometry->radius);
   bbox.upper = max(A,B)+make_vec3f(geometry->radius);
-  // print("bounds % : % % % - % % %\n",primID,
-  //       bbox.lower.x,
-  //       bbox.lower.y,
-  //       bbox.lower.z,
-  //       bbox.upper.x,
-  //       bbox.upper.y,
-  //       bbox.upper.z
-  //       );
 }
 
-#if 1
-inline float sqr(float f) { return f*f; }
-
-void StreamLines_intersect(uniform StreamLines *uniform geometry,
-                           varying Ray &ray,
-                           uniform size_t primID)
+inline bool intersectShiftedSphere(varying Ray &ray,
+                                   const vec3f &A, 
+                                   const uniform float r,
+                                   const uniform int32 primIDtoStore)
 {
-  print("isec %\n",primID);
-  const uniform uint32 idx = geometry->index[primID];
-  const vec3f p_a = make_vec3f(geometry->vertex[idx]);
-  const vec3f v_a_org = make_vec3f(geometry->vertex[idx+1]) - p_a;
-  const float length = sqrt(dot(v_a_org,v_a_org));
-  const vec3f v_a = v_a_org * rcp(length);
-
-  const vec3f Avec = ray.dir-dot(ray.dir,v_a)*v_a;
-  const vec3f delta_p = ray.org - p_a;
-  const vec3f Cvec = delta_p-dot(delta_p,v_a)*v_a;
-  const float A = dot(Avec,Avec);
-  const float B = 2.f*dot(Avec,Cvec);
-  const float C = dot(Cvec,Cvec)-sqr(geometry->radius);
-
-  const float radical = B*B - 4.f*A*C;
-  if (radical < 0.f || A==0.f) 
-    return;
-  const float sqrtf_radical = sqrt(radical);
-  const float den = rcp(A+A);
-  const float t0 = (-sqrtf_radical-B) * den;  
-  if (t0 > ray.t0 && 
-      t0 < ray.t) {
-    const vec3f P = ray.org + t0*ray.dir;
-    const float d = dot(P-p_a,v_a);
-    // (iw): adding .1f*radius to stick at front and back to avoid
-    // cracks. "proper" solution would be to add real spheres, but
-    // this one's OK for starters.
-    if (0.f <= d+.1f*geometry->radius && d-.1f*geometry->radius <= length) {
-      ray.t = t0;
-      ray.geomID = 0;
-      ray.primID = primID;
-      ray.Ng = P-(p_a+d*v_a);
-      return;
-    }
-  }
-
-  const float t1 = ( sqrtf_radical-B) * den;
-  if (t1 > ray.t0 && t1 < ray.t) {
-    const vec3f P = ray.org + t1*ray.dir;
-    const float d = dot(P-p_a,v_a);
-    // (iw): adding .1f*radius to stick at front and back to avoid
-    // cracks. "proper" solution would be to add real spheres, but
-    // this one's OK for starters.
-    if (0.f <= d+.1f*geometry->radius && d-.1f*geometry->radius <= length) {
-      ray.t = t1;
-      ray.geomID = 0;
-      ray.primID = primID;
-      ray.Ng = P-(p_a+d*v_a);
-      return;
-    }
-  }
-}
-
-#else
-void StreamLines_intersect(uniform StreamLines *uniform geometry,
-                           varying Ray &ray,
-                           uniform size_t primID)
-{
-  const uniform uint32 idx = geometry->index[primID];
-  const uniform vec3fa A = geometry->vertex[idx];
-  const uniform vec3fa B = geometry->vertex[idx+1];
-
-  const vec3f P0 = ray.org;
-  const vec3f u  = ray.dir;
-  const vec3f Q0 = make_vec3f(A);
-  const vec3f v  = make_vec3f(B)-make_vec3f(A);
-
-  const vec3f w0 = P0-Q0;
-  const float a = dot(u,u);
-  const float b = dot(u,v);
-  const float c = dot(v,v);
-  const float d = dot(u,w0);
-  const float e = dot(v,w0);
+  const float a = dot(ray.dir,ray.dir);
+  const float b = -2.f*dot(ray.dir,A);
+  const float c = dot(A,A)-r*r;
   
-  float t = (b*e - c*d) / (a*c - b*b);
-  if (t < ray.t0) t = ray.t0;
-  if (t > ray.t)  t = ray.t;
+  const float radical = b*b-4.f*a*c;
+  if (radical < 0.f) return false;
 
-  float f = (a*e - b*d) / (a*c - b*b); 
-  if (f < 0.f) f = 0.f;
-  if (f > 1.f) f = 1.f;
-  const vec3f Q = Q0 + f * v;
-  const vec3f P = P0 + t * u;
+  const float srad = sqrt(radical);
 
-  float dist2 = dot(P-Q,P-Q);
-  const float rad2 = geometry->radius*geometry->radius;
-  if (dist2 > rad2)
-    return;
+  const float t_in = (- b - srad) *rcpf(2.f*a);
+  const float t_out= (- b + srad) *rcpf(2.f*a);
 
-  if (t > ray.t)
-    return;
-
-  ray.primID = primID;
-  ray.geomID = 0;
-  ray.t = t;
-  ray.Ng = P-Q;
+  if (t_in > ray.t0 && t_in < ray.t) {
+    ray.primID = primIDtoStore;
+    ray.t = t_in;
+    return true;
+  } else if (t_out > ray.t0 && t_out < ray.t) {
+    ray.primID = primIDtoStore;
+    ray.t = t_out;
+    return true;
+  }
+  return false;
 }
-#endif
+
+inline bool intersectShiftedCylinder(varying Ray &ray,
+                                     const vec3f &A, const vec3f &B,
+                                     const uniform float r,
+                                     const uniform int32 primIDtoStore)
+{
+  const vec3f O = make_vec3f(0.f);
+  const vec3f V = ray.dir;
+
+  const vec3f AB = B - A;
+  const vec3f AO = O - A;
+  
+  const vec3f AOxAB  = cross(AO,AB); // cross product
+  const vec3f VxAB   = cross(V,AB); // cross product
+  const float ab2    = dot(AB,AB); // dot product
+  const float a      = dot(VxAB,VxAB); // dot product
+  const float b      = 2 * dot(VxAB,AOxAB); // dot product
+  const float c      = dot(AOxAB,AOxAB) - (r*r * ab2);
+
+  // clip to near and far cap of cylinder
+  const float tA = dot(AB,A) * rcp(dot(V,AB));
+  const float tB = dot(AB,B) * rcp(dot(V,AB));
+  const float tAB0 = max(ray.t0,min(tA,tB));
+  const float tAB1 = min(ray.t, max(tA,tB));
+
+  // ------------------------------------------------------------------
+  // abc formula: t0,1 = (-b +- sqrt(b^2-4*a*c)) / 2a
+  //
+  const float radical = b*b-4.f*a*c;
+  if (radical < 0.f) return false;
+  
+  const float srad = sqrt(radical);
+
+  const float t_in = (- b - srad) *rcpf(2.f*a);
+  const float t_out= (- b + srad) *rcpf(2.f*a);
+
+  if (t_in >= tAB0 && t_in <= tAB1) {
+    ray.primID = primIDtoStore;
+    ray.t = t_in;
+    return true;
+  } else if (t_out >= tAB0 && t_out <= tAB1) {
+    ray.primID = primIDtoStore;
+    ray.t = t_out;
+    return true;
+  }
+  return false;
+}
+
+void StreamLines_intersect(uniform StreamLines *uniform geometry,
+                           varying Ray &ray,
+                           uniform size_t primID)
+{
+  const uniform uint32 idx = geometry->index[primID];
+  const vec3f A = make_vec3f(geometry->vertex[idx])   - ray.org;
+  const vec3f B = make_vec3f(geometry->vertex[idx+1]) - ray.org;
+
+  bool hit = 0;
+  
+  hit |= intersectShiftedCylinder(ray,A,B,geometry->radius,primID);
+  hit |= intersectShiftedSphere(ray,A,geometry->radius,primID | (1<<29));
+  hit |= intersectShiftedSphere(ray,B,geometry->radius,primID | (1<<30));
+
+  if (hit) {
+    ray.geomID = 0;
+    const vec3f P = ray.t * ray.dir;
+    float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
+    s = min(max(s,0.f),1.f);
+    const vec3f PonAxis = A + s * (B-A);
+    ray.Ng = normalize(P-PonAxis);
+  }
+}
+
+export void *uniform StreamLineGeometry_create(void           *uniform cppEquivalent)
+{
+  uniform StreamLines *uniform geom = uniform new uniform StreamLines;
+  Geometry_Constructor(&geom->geometry,cppEquivalent,NULL,0,NULL);
+  return geom;
+}
 
 export void *uniform 
-StreamLineGeometry_create(RTCScene        uniform scene,
-                              void           *uniform cppEquivalent,
-                              float           uniform radius,
-                              uniform vec3fa *uniform vertex,
-                              int32           uniform numVertices,
-                              uniform uint32 *uniform index,
-                              int32           uniform numSegments)
+StreamLineGeometry_set(void           *uniform _geom,
+                       void           *uniform _model,
+                       float           uniform radius,
+                       uniform vec3fa *uniform vertex,
+                       int32           uniform numVertices,
+                       uniform uint32 *uniform index,
+                       int32           uniform numSegments)
 {
-  uniform uint32 geomID = rtcNewUserGeometry(scene,numSegments);
-  uniform StreamLines *uniform obj = uniform new uniform StreamLines;
-  obj->cppEquivalent = cppEquivalent;
-  obj->vertex = vertex;
-  obj->index = index;
-  obj->numSegments = numSegments;
-  obj->numVertices = numVertices;
-  obj->geomID = geomID;
-  obj->scene = scene;
-  obj->radius = radius;
-  print("radius in ispc: %\n",radius);
-  rtcSetUserData(scene,geomID,obj);
-  rtcSetBoundsFunction(scene,geomID,(uniform RTCBoundsFunc)&StreamLines_bounds);
-  rtcSetIntersectFunction(scene,geomID,(uniform RTCIntersectFuncVarying)&StreamLines_intersect);
+  uniform StreamLines *uniform geom = (uniform StreamLines *uniform)_geom;
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSegments);
+
+  geom->geometry.model  = model;
+  geom->geometry.geomID = geomID;
+  geom->vertex = vertex;
+  geom->index = index;
+  geom->numSegments = numSegments;
+  geom->numVertices = numVertices;
+  geom->radius = radius;
+  rtcSetUserData(model->embreeSceneHandle,geomID,geom);
+  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
+                       (uniform RTCBoundsFunc)&StreamLines_bounds);
+  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
+                          (uniform RTCIntersectFuncVarying)&StreamLines_intersect);
+  rtcEnable(model->embreeSceneHandle,geomID);
 }

@@ -9,12 +9,17 @@
 
 namespace ospray {
 
+  StreamLines::StreamLines()
+  {
+    this->ispcEquivalent = ispc::StreamLineGeometry_create(this);
+  }
+
   void StreamLines::finalize(Model *model) 
   {
     PING;
-    radius = getParam1f("radius",0.01f);
+    radius     = getParam1f("radius",0.01f);
     vertexData = getParamData("vertex",NULL);
-    indexData = getParamData("index",NULL);
+    indexData  = getParamData("index",NULL);
 
     Assert(radius > 0.f);
     Assert(vertexData != NULL);
@@ -27,13 +32,12 @@ namespace ospray {
 
     std::cout << "#osp: creating streamlines geometry, "
               << "#verts=" << numVertices << ", "
-              << "#segments=" << numSegments << std::endl;
+              << "#segments=" << numSegments << ", "
+              << "radius=" << radius << std::endl;
     
-    PRINT(radius);
-    ispc::StreamLineGeometry_create((ispc::__RTCScene*)model->embreeSceneHandle,
-                                    this,radius,
-                                    (ispc::vec3fa*)vertex,numVertices,
-                                    (uint32_t*)index,numSegments);
+    ispc::StreamLineGeometry_set(getIE(),model->getIE(),radius,
+                                 (ispc::vec3fa*)vertex,numVertices,
+                                 (uint32_t*)index,numSegments);
   }
 
   OSP_REGISTER_GEOMETRY(StreamLines,streamlines);
