@@ -29,15 +29,15 @@ namespace ospray {
        parameter. at some point we probably want to have voluems
        embedded in models - possibly with transformation attached to
        them - but for now let's do this as simple as possible */
-    volume = (Volume *)this->getParam("volume",NULL);
+    volume = (Volume *)this->getParamObject("volume",NULL);
     Assert(volume && "null volume handle in 'dvr' renderer "
            "(did you forget to assign a 'volume' parameter to the renderer?)");
 
-    camera = (Camera *)getParam("camera",NULL);
+    camera = (Camera *)getParamObject("camera",NULL);
     Assert(camera && "null camera handle in 'dvr' renderer "
            "(did you forget to assign a 'camera' parameter to the renderer?)");
 
-    Data *xfData = (Data *)getParam("transferFunction",NULL);
+    Data *xfData = (Data *)getParamObject("transferFunction",NULL);
     /*! \todo Add 'real' transfer function code to DVRRenderer(s) */
     if (xfData) {
       transferFct = new TransferFct(xfData);

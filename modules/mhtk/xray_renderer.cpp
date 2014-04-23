@@ -34,11 +34,11 @@ namespace ospray {
       STATS(maxFound=0);
       STATS(numAnyFound=0);
 
-      Model *model = (Model *)getParam("model",NULL);
+      Model *model = (Model *)getParamObject("model",NULL);
       Assert2(model,"null model handle in 'xray' renderer "
              "(did you forget to assign a 'model' parameter to the renderer?)");
 
-      Camera *camera = (Camera *)getParam("camera",NULL);
+      Camera *camera = (Camera *)getParamObject("camera",NULL);
       Assert2(camera,"null camera handle in 'xray' renderer "
              "(did you forget to assign a 'camera' parameter to the renderer?)");
     
@@ -48,11 +48,11 @@ namespace ospray {
     /*! \brief create render job for ispc-based mhtk::xray renderer */
     TileRenderer::RenderJob *ISPCXRayRenderer::createRenderJob(FrameBuffer *fb)
     {
-      Model *model = (Model *)getParam("model",NULL);
+      Model *model = (Model *)getParamObject("model",NULL);
       Assert2(model,"null model handle in 'xray' renderer "
              "(did you forget to assign a 'model' parameter to the renderer?)");
 
-      Camera *camera = (Camera *)getParam("camera",NULL);
+      Camera *camera = (Camera *)getParamObject("camera",NULL);
       Assert2(camera,"null camera handle in 'xray' renderer "
              "(did you forget to assign a 'camera' parameter to the renderer?)");
     

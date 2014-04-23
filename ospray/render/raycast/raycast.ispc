@@ -27,6 +27,11 @@ inline vec4f shade_geomID(const Ray &ray)
   return make_vec4f(make_random_color(ray.geomID)); 
 }
 
+inline vec4f shade_instID(const Ray &ray)
+{ 
+  return make_vec4f(make_random_color(ray.instID)); 
+}
+
 inline vec4f shade_eyeLight(const Ray &ray)
 { 
   if (ray.geomID < 0) return make_vec4f(0.f); 
@@ -64,6 +69,8 @@ inline vec4f shade(const uniform int shadeMode, const Ray &ray, uniform RTCScene
     return shade_primID(ray);
   if (shadeMode == 2)
     return shade_geomID(ray);
+  if (shadeMode == 3)
+    return shade_instID(ray);
   if (shadeMode == 4)
     return shade_Ng(ray);
   else
