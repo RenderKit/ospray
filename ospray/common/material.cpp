@@ -30,7 +30,7 @@ namespace ospray {
     
     if (ospray::logLevel >= 2) 
       std::cout << "#ospray: trying to look up material type '" 
-                << type << "' for the first time" << std::endl;
+                << type << "' for the first time..." << std::endl;
 
     std::string creatorName = "ospray_create_material__"+std::string(type);
     creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());

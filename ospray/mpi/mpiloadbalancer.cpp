@@ -24,12 +24,12 @@ namespace ospray {
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
         for (int i=0;i<numTiles;i++) {
-          // printf("#m: receiving tile %i\n",i);
+	  // printf("#m: receiving tile %i\n",i);
           rc = MPI_Recv(&tile.region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
                         mpi::worker.comm,&status); 
           Assert(rc == MPI_SUCCESS); 
-          // printf("#m: received tile %i (%i,%i) from %i\n",i,
-          //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
+           // printf("#m: received tile %i (%i,%i) from %i\n",i,
+           //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
           rc = MPI_Recv(&tile.rgba8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
                         status.MPI_SOURCE,status.MPI_TAG,mpi::worker.comm,&status);
           Assert(rc == MPI_SUCCESS);
@@ -232,9 +232,6 @@ namespace ospray {
       SlaveTask *renderTask = new SlaveTask(numTiles,tiledRenderer,fb);
       TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, renderTask); 
       renderTask->doneRendering.sync();
-      PING;
-      PING;
-      PING;
       delete renderTask; // does not yet kill itself
     }
 

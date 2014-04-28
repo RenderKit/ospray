@@ -98,6 +98,44 @@ namespace ospray {
           handle.assign(volume);
           //          cout << "#w: new volume " << handle << endl;
         } break;
+        case api::MPIDevice::CMD_NEW_MATERIAL: {
+          // Assert(type != NULL && "invalid volume type identifier");
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new material \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          Material *material = Material::createMaterial(type);
+          if (!material) 
+            throw std::runtime_error("unknown material type '"+std::string(type)+"'");
+          material->refInc();
+          cmd.free(type);
+          Assert(material);
+          handle.assign(material);
+          if (worker.rank == 0)
+            if (logLevel > 2)
+	      cout << "#w: new material " << handle << " " << material->toString() << endl;
+        } break;
+
+        case api::MPIDevice::CMD_NEW_GEOMETRY: {
+          // Assert(type != NULL && "invalid volume type identifier");
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new geometry \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          Geometry *geometry = Geometry::createGeometry(type);
+          if (!geometry) 
+            throw std::runtime_error("unknown geometry type '"+std::string(type)+"'");
+          geometry->refInc();
+          cmd.free(type);
+          Assert(geometry);
+          handle.assign(geometry);
+          if (worker.rank == 0)
+            if (logLevel > 2)
+	      cout << "#w: new geometry " << handle << " " << geometry->toString() << endl;
+        } break;
+
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
           const mpi::Handle handle = cmd.get_handle();
           const vec2i  size   = cmd.get_vec2i();

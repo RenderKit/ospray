@@ -331,7 +331,6 @@ namespace ospray {
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
       // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Master;
-      PING;
     }
 
 
@@ -449,7 +448,7 @@ namespace ospray {
       mpi::Handle handle = mpi::Handle::alloc();
       cmd.newCommand(CMD_NEW_DATA);
       cmd.send(handle);
-      cmd.send(nitems);
+      cmd.send((size_t)nitems);
       cmd.send((int32)format);
       cmd.send(flags);
       size_t size = init?ospray::sizeOf(format)*nitems:0;
@@ -616,13 +615,30 @@ namespace ospray {
     /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry MPIDevice::newGeometry(const char *type)
     {
-      NOTIMPLEMENTED;
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+      
+      cmd.newCommand(CMD_NEW_GEOMETRY);
+      cmd.send((const mpi::Handle&)handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPGeometry)(int64)handle;
     }
     
     /*! have given renderer create a new material */
     OSPMaterial MPIDevice::newMaterial(OSPRenderer _renderer, const char *type)
     {
-      NOTIMPLEMENTED;
+      Assert(type != NULL);
+      Assert(_renderer == NULL); // not implemented...
+
+      mpi::Handle handle = mpi::Handle::alloc();
+      
+      cmd.newCommand(CMD_NEW_MATERIAL);
+      cmd.send((const mpi::Handle&)handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPMaterial)(int64)handle;
     }
 
 

@@ -187,16 +187,16 @@ namespace ospray {
       if (c == '-' || c == ':') c = '_';
       type[i] = c;
     }
-    PRINT(type);
     OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
-    if (ospray::logLevel > 0)
-      if (renderer) 
-        cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
-      else
-        std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
+    // cant typecast on MPI device!
+    // if (ospray::logLevel > 0)
+    //   if (renderer) 
+    //     cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
+    //   else
+    //     std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
     return renderer;
   }
-
+  
   /*! \brief create a new geometry of given type 
 
     return 'NULL' if that type is not known */
@@ -206,15 +206,15 @@ namespace ospray {
     Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
     LOG("ospNewGeometry(" << type << ")");
     OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
-    if (ospray::logLevel > 0)
-      if (geometry) 
-        cout << "ospNewGeometry: " << ((ospray::Geometry*)geometry)->toString() << endl;
-      else
-        std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
+    // if (ospray::logLevel > 0)
+    //   if (geometry) 
+    //     cout << "ospNewGeometry: " << ((ospray::Geometry*)geometry)->toString() << endl;
+    //   else
+    //     std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
     return geometry;
   }
 
-  /*! \brief create a new geometry of given type 
+  /*! \brief create a new material of given type 
 
     return 'NULL' if that type is not known */
   extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
@@ -224,11 +224,13 @@ namespace ospray {
     Assert2(type != NULL, "invalid material type identifier in ospNewMaterial");
     LOG("ospNewMaterial(" << renderer << ", " << type << ")");
     OSPMaterial material = ospray::api::Device::current->newMaterial(renderer,type);
-    if (ospray::logLevel > 0)
-      if (material) 
-        cout << "ospNewMaterial: " << ((ospray::Material*)material)->toString() << endl;
-      else
-        std::cerr << "#ospray: could not create material '" << type << "'" << std::endl;
+    // PING;
+    // if (ospray::logLevel > 0)
+    //   if (material) 
+    //     cout << "ospNewMaterial: " << ((ospray::Material*)material)->toString() << endl;
+    //   else
+    //     std::cerr << "#ospray: could not create material '" << type << "'" << std::endl;
+    // PING;
     return material;
   }
 
@@ -241,11 +243,11 @@ namespace ospray {
     Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
     LOG("ospNewCamera(" << type << ")");
     OSPCamera camera = ospray::api::Device::current->newCamera(type);
-    if (ospray::logLevel > 0)
-      if (camera) 
-        cout << "ospNewCamera: " << ((ospray::Camera*)camera)->toString() << endl;
-      else
-        std::cerr << "#ospray: could not create camera '" << type << "'" << std::endl;
+    // if (ospray::logLevel > 0 )
+    //   if (camera) 
+    //     cout << "ospNewCamera: " << ((ospray::Camera*)camera)->toString() << endl;
+    //   else
+    //     std::cerr << "#ospray: could not create camera '" << type << "'" << std::endl;
     return camera;
   }
 

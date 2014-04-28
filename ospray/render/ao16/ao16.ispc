@@ -116,7 +116,7 @@ inline vec3f shade_ao16(const Ray &ray, uniform RTCScene scene,
   if (ray.geomID < 0)
     return make_vec3f(0.f);
 
-  const vec3f P = ray.org + ray.t * ray.dir;
+  const vec3f P = ray.org + (0.9999f*ray.t) * ray.dir;
   const vec3f N = getShadingNormal(ray);
 
   int hits = 0;
@@ -131,14 +131,14 @@ inline vec3f shade_ao16(const Ray &ray, uniform RTCScene scene,
       Ray ao_ray;
       setRay(ao_ray,P,ao_dir);
       ao_ray.t0 = EPS;
-      ao_ray.t = .1f;
-      if (dot(ao_ray.dir,N) < 0.1f || isOccluded(scene,ao_ray))
+      ao_ray.t = 1.f;
+      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(scene,ao_ray))
         hits++;
     }
 	vec3f rgb = make_vec3f(.98f); 
   float diffuse = -dot(N,ray.dir);
   float frac_visible = (16.f-hits) * (1.0f/16.0f);
-  return rgb * make_vec3f(diffuse * (.2f + .8f * frac_visible));
+  return rgb * make_vec3f(diffuse * (.01f + 1.1f * frac_visible));
 }
 
 inline vec3f shade_eyeLight(const Ray &ray, uniform RTCScene scene)

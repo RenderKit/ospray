@@ -1773,6 +1773,16 @@ __gather_base_offsets32_double(uint8_t *base, uint32_t scale, __vec16_i32 offset
     return ret;
 }
 
+/*! gather vector of 64-bit ints from addresses pointing to uniform ints */
+static FORCEINLINE __vec16_i64
+__gather_base_offsets32_i64(uint8_t *base, uint32_t scale, __vec16_i32 offsets, 
+                            __vec16_i1 mask) {
+    return _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, 
+                                          base, _MM_UPCONV_EPI32_NONE, scale,
+                                          _MM_HINT_NONE);
+}
+
+
 /*! gather with 64-bit offsets.
 
   \todo add optimization that falls back to 32-bit offset gather if
