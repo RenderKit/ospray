@@ -215,6 +215,8 @@ namespace ospray {
           miniSG::importSTL(*msgModel,fn);
         else if (fn.ext() == "msg")
           miniSG::importMSG(*msgModel,fn);
+        else if (fn.ext() == "tri")
+          miniSG::importTRI(*msgModel,fn);
         else if (fn.ext() == "xml")
           miniSG::importRIVL(*msgModel,fn);
         else if (fn.ext() == "obj")

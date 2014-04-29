@@ -91,6 +91,9 @@ namespace ospray {
     /*! import a wavefront OBJ file, and add it to the specified model */
     void importOBJ(Model &model, const embree::FileName &fileName);
 
+    /*! import a TRI file (format:vec3fa[3][numTris]), and add it to the specified model */
+    void importTRI(Model &model, const embree::FileName &fileName);
+
     /*! import a wavefront OBJ file, and add it to the specified model */
     void importRIVL(Model &model, const embree::FileName &fileName);
 

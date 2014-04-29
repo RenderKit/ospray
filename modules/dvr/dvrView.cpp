@@ -12,9 +12,11 @@ namespace ospray {
 
   const char *renderType = "dvr_ispc";
   const char *volumeLayout = "naive32";
-  const char *inputFormat = "uint8";
+  std::string inputFormat = "uint8";
   const char *resampleFormat = NULL;
   int         resampleSize = -1;
+  float       cmdLine_dt = 0.f; // dt as set from cmdline; '0.f' means auto-generate
+
   /*! \page volview_notes_on_volume_interface Internal Notes on Volume Interface
 
     Right now i'm using a trivially simple interface to ospray's
@@ -35,6 +37,7 @@ namespace ospray {
     cout << " --naive                     : use naive z-order data layout" << endl;
     cout << " --bricked                   : use bricked data layout" << endl;
     cout << " --resample uint8|float size : resample to given format and size^3" << endl;
+    cout << " -dt <dt>                    : use ray cast sample step size 'dt'" << endl;
     cout << endl;
     exit(1);
   }
@@ -91,7 +94,12 @@ namespace ospray {
       }
 
       renderer = ospNewRenderer(renderType);
-      ospSet1f(renderer,"dt",0.5f/std::max(dims.x,std::max(dims.y,dims.z)));
+      PRINT(cmdLine_dt);
+      if (cmdLine_dt != 0.f) {
+        cout << "using step size " << cmdLine_dt << endl;
+        ospSet1f(renderer,"dt",cmdLine_dt);
+      } else
+        ospSet1f(renderer,"dt",0.5f/std::max(dims.x,std::max(dims.y,dims.z)));
 
       Assert2(renderer,"could not create renderer");
       ospSetParam(renderer,"volume",volume);
@@ -166,11 +174,17 @@ namespace ospray {
       std::string arg = av[i];
       if (arg[0] != '-') {
         inputFormat = strdup(av[i+0]);
+        if (inputFormat != "uint8" && inputFormat != "float")
+          error("unknown raw folume file scalar type '"+std::string(inputFormat)+"'");
         volDims.x = atoi(av[i+1]);
         volDims.y = atoi(av[i+2]);
         volDims.z = atoi(av[i+3]);
         volFileName = av[i+4];
         i += 4;
+      } else if (arg == "-dt") {
+        cmdLine_dt = atof(av[i+1]);
+        PRINT(av[i+1]);
+        i += 1;
       } else if (arg == "--resample") {
         // resample volume to this size
         resampleFormat = strdup(av[++i]);

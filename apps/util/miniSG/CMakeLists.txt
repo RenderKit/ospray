@@ -22,6 +22,7 @@ IF (NOT THIS_IS_MIC)
 		importOBJ.cpp
 		importSTL.cpp
 		importMSG.cpp
+		importTRI.cpp
 		importRIVL.cpp
 		)
 	TARGET_LINK_LIBRARIES(ospray_minisg ${LIBXML2_LIBRARIES})

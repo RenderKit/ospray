@@ -53,6 +53,7 @@ namespace ospray {
     tj->camera      = camera;
     tj->volume      = volume;
     tj->dt          = getParam1f("dt",.0025f);
+    PRINT(tj->dt);
     tj->transferFct = transferFct;
     tj->renderer    = this;
     return tj;
