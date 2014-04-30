@@ -73,6 +73,8 @@ inline vec4f shade(const uniform int shadeMode, const Ray &ray, uniform RTCScene
     return shade_instID(ray);
   if (shadeMode == 4)
     return shade_Ng(ray);
+  if (shadeMode == 5)
+    return shade_eyeLight_testShadow(ray,scene);
   else
     print("unknown shade mode % in raycast renderer",shadeMode);
 }

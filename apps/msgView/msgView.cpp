@@ -16,6 +16,7 @@ namespace ospray {
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
+  bool alwaysRedraw = false;
 
   //! the renderer we're about to use
   std::string rendererType = "raycast_eyelight";
@@ -126,11 +127,16 @@ namespace ospray {
       ospUnmapFrameBuffer(ucharFB,fb);
       
       char title[1000];
-      
-      sprintf(title,"Test04: GlutWidget+ospray API rest (%f fps)",
-              fps.getFPS());
-      setTitle(title);
-      forceRedraw();
+
+      if (alwaysRedraw) {
+        sprintf(title,"OSPRay MSGView (%f fps)",
+                fps.getFPS());
+        setTitle(title);
+        forceRedraw();
+      } else {
+        sprintf(title,"OSPRay MSGView");
+        setTitle(title);
+      }
     }
     
     OSPModel       model;

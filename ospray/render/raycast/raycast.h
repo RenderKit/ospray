@@ -45,7 +45,7 @@ namespace ospray {
     RC_GEOMID,
     RC_INSTID,
     RC_GNORMAL,
-    // RC_TESTSHADOW,
+    RC_TESTSHADOW,
   } RC_SHADEMODE;
 
   /*! \brief Implements the family of simple ray cast renderers */
