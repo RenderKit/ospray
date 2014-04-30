@@ -5,21 +5,12 @@
 #include "common/sys/sync/atomic.h"
 
 namespace ospray {
-  volatile int globalCounter = 0;
-  __thread int counter = 0;
-  __thread int initialized = 0;
-
   extern "C" void ispc__RayCastRenderer_renderTile(void *tile, void *camera, void *scene, 
                                                    int shadeMode);
 
   template<int SHADE_MODE>
   void RayCastRenderer<SHADE_MODE>::RenderTask::renderTile(Tile &tile)
   {
-    if (!initialized) {
-      counter = ++globalCounter;
-      initialized = true;
-    }
-    printf("rendertile %i\n",counter);
     ispc__RayCastRenderer_renderTile(&tile,_camera,_scene,SHADE_MODE);
   }
 

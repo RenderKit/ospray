@@ -41,7 +41,6 @@ namespace ospray {
     if (ospray::api::Device::current) 
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
-    
     if (_ac && _av) {
       // we're only supporting local rendering for now - network device
       // etc to come.

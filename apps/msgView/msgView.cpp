@@ -332,7 +332,9 @@ namespace ospray {
 
 int main(int ac, const char **av)
 {
+  PING;
   ospInit(&ac,av);
+  PING;
   ospray::glut3D::initGLUT(&ac,av);
   ospray::msgViewMain(ac,av);
 }

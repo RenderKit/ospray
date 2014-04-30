@@ -90,10 +90,8 @@ int main(int ac, const char **av)
 {
   ospInit(&ac,av);
   ospLoadModule("MPItest");
-  
-  PING;
-  PING;
-  PING;
+
+  system("hostname");
   ospray::mpiTest();
 
   std::cout << "done mpitest" << std::endl;

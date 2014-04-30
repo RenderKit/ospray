@@ -46,7 +46,13 @@ unset PMI_FD
 echo "launching to port "$1
 
 export I_MPI_FABRICS="tcp:tcp"
-mpirun -np 2 ./ospray_mpi_worker --osp:connect $1 > /tmp/launch.out 
+#export I_MPI_FABRICS=tmi
+echo "" > /tmp/adfdadfa
+echo "mic0" >> /tmp/adfdadfa
+echo "mic1" >> /tmp/adfdadfa
+mpirun \
+ -genv I_MPI_DEBUG 5 \
+ -perhost 1 -np 2 -hostfile /tmp/adfdadfa ./ospray_mpi_worker --osp:connect $1 > /tmp/launch.out 
 #mpiexec.hydra -np 2 ./ospray_mpi_worker > /tmp/launch.out &
 
 
