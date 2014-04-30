@@ -5,12 +5,21 @@
 #include "common/sys/sync/atomic.h"
 
 namespace ospray {
+  volatile int globalCounter = 0;
+  __thread int counter = 0;
+  __thread int initialized = 0;
+
   extern "C" void ispc__RayCastRenderer_renderTile(void *tile, void *camera, void *scene, 
                                                    int shadeMode);
 
   template<int SHADE_MODE>
   void RayCastRenderer<SHADE_MODE>::RenderTask::renderTile(Tile &tile)
   {
+    if (!initialized) {
+      counter = ++globalCounter;
+      initialized = true;
+    }
+    printf("rendertile %i\n",counter);
     ispc__RayCastRenderer_renderTile(&tile,_camera,_scene,SHADE_MODE);
   }
 
@@ -36,6 +45,7 @@ namespace ospray {
   typedef RayCastRenderer<RC_GEOMID>   RayCastRenderer_GeomID;
   typedef RayCastRenderer<RC_INSTID>   RayCastRenderer_InstID;
   typedef RayCastRenderer<RC_GNORMAL>  RayCastRenderer_Ng;
+  typedef RayCastRenderer<RC_TESTSHADOW>  RayCastRenderer_Shadow;
 
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast);
   OSP_REGISTER_RENDERER(RayCastRenderer_EyeLight,raycast_eyelight);
@@ -43,5 +53,6 @@ namespace ospray {
   OSP_REGISTER_RENDERER(RayCastRenderer_GeomID,  raycast_geomID);
   OSP_REGISTER_RENDERER(RayCastRenderer_InstID,  raycast_instID);
   OSP_REGISTER_RENDERER(RayCastRenderer_Ng,      raycast_Ng);
+  OSP_REGISTER_RENDERER(RayCastRenderer_Shadow,  raycast_shadow);
 };
 
