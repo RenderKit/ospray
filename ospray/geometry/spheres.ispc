@@ -41,10 +41,39 @@ void Spheres_bounds(uniform Spheres *uniform geometry,
 }
 
 void Spheres_intersect(uniform Spheres *uniform geometry,
-                           varying Ray &ray,
-                           uniform size_t primID)
+                       varying Ray &ray,
+                       uniform size_t primID)
 {
-  // print("isec %i\n",primID);
+  uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*primID;
+  uniform float radius = geometry->radius;
+  if (geometry->offset_radius >= 0) {
+    radius = *((uniform float *)(spherePtr+geometry->offset_radius));
+  }
+  uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
+  const vec3f A = center - ray.org;
+
+  const float a = dot(ray.dir,ray.dir);
+  const float b = -2.f*dot(ray.dir,A);
+  const float c = dot(A,A)-r*r;
+  
+  const float radical = b*b-4.f*a*c;
+  if (radical < 0.f) return false;
+
+  const float srad = sqrt(radical);
+
+  const float t_in = (- b - srad) *rcpf(2.f*a);
+  const float t_out= (- b + srad) *rcpf(2.f*a);
+
+  if (t_in > ray.t0 && t_in < ray.t) {
+    ray.primID = primIDtoStore;
+    ray.t = t_in;
+    return;
+  } else if (t_out > ray.t0 && t_out < ray.t) {
+    ray.primID = primIDtoStore;
+    ray.t = t_out;
+    return;
+  }
+  return;
 }
 
 
