@@ -54,10 +54,10 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
 
   const float a = dot(ray.dir,ray.dir);
   const float b = -2.f*dot(ray.dir,A);
-  const float c = dot(A,A)-r*r;
+  const float c = dot(A,A)-radius*radius;
   
   const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return false;
+  if (radical < 0.f) return;
 
   const float srad = sqrt(radical);
 
@@ -65,12 +65,16 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
   const float t_out= (- b + srad) *rcpf(2.f*a);
 
   if (t_in > ray.t0 && t_in < ray.t) {
-    ray.primID = primIDtoStore;
+    ray.primID = primID;
+    ray.geomID = geometry->geometry.geomID;
     ray.t = t_in;
+    ray.Ng = ray.org + ray.t*ray.dir - center;
     return;
   } else if (t_out > ray.t0 && t_out < ray.t) {
-    ray.primID = primIDtoStore;
+    ray.primID = primID;
+    ray.geomID = geometry->geometry.geomID;
     ray.t = t_out;
+    ray.Ng = ray.org + ray.t*ray.dir - center;
     return;
   }
   return;

@@ -16,7 +16,7 @@ namespace ospray {
 
   void Spheres::finalize(Model *model) 
   {
-    radius            = getParam1f("radius",0.1f);
+    radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
     bytesPerSphere    = getParam1i("bytes_per_sphere",4*sizeof(float));
     offset_center     = getParam1i("offset_center",0);

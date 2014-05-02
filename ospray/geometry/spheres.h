@@ -38,9 +38,9 @@ namespace ospray {
     <dl>
     <dt><code>float        radius = 0.f</code></dt><dd>Base radius common to all spheres</dd>
     <dt><code>float        materialID = 0.f</code></dt><dd>Base radius common to all spheres</dd>
-    <dt><code>int32        radius_offset = -1</code></dt><dd>Offset of each sphere's 'float radius' value within each sphere. Setting this value to -1 means that there is no per-sphere radius value, and that all spheres should use the (shared) 'base_radius' value instead</dd>
-    <dt><code>int32        stride = 4*sizeof(flaot)</code></dt><dd>Size (in bytes) of each sphere in the data array.</dd>
-    <dt><code>int32        radius_offset = -1</code></dt><dd>Offset of each sphere's 'float radius' value within each sphere. Setting this value to -1 means that there is no per-sphere radius value, and that all spheres should use the (shared) 'base_radius' value instead</dd>
+    <dt><code>int32        offset_radius = -1</code></dt><dd>Offset of each sphere's 'float radius' value within each sphere. Setting this value to -1 means that there is no per-sphere radius value, and that all spheres should use the (shared) 'base_radius' value instead</dd>
+    <dt><code>int32        bytes_per_sphere = 4*sizeof(flaot)</code></dt><dd>Size (in bytes) of each sphere in the data array.</dd>
+    <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset of each sphere's 'int mateiralID' value within each sphere. Setting this value to -1 means that there is no per-sphere material ID, and that all spheres share the same er-geomtetry materialID</dd>
     <dt><code>int32        center_offset = 0</code></dt><dd>Offset (in bytes) of each sphere's 'vec3f center' value within the sphere</dd>
     <dt><li><code>Data<float> data</code></dt><dd> Array of data elements.</dd>
     </dl>

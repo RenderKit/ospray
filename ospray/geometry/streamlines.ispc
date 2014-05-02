@@ -120,7 +120,7 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   hit |= intersectShiftedSphere(ray,B,geometry->radius,primID | (1<<30));
 
   if (hit) {
-    ray.geomID = 0;
+    ray.geomID = geometry->geometry.geomID;
     const vec3f P = ray.t * ray.dir;
     float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
     s = min(max(s,0.f),1.f);

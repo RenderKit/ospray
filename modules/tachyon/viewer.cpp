@@ -12,7 +12,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    const char *renderType = "raycast_primID";
+    const char *renderType = "raycast_eyelight";
     float defaultRadius = .1f;
     tachyon::Model tachModel;
   
@@ -37,12 +37,10 @@ namespace ospray {
       OSPModel ospModel = ospNewModel();
     
       if (tm.numSpheres()) {
-        PING;
         OSPData  sphereData = ospNewData(tm.numSpheres()*sizeof(Sphere)/sizeof(float),
                                          OSP_FLOAT,tm.getSpherePtr());
         ospCommit(sphereData);
         OSPGeometry sphereGeom = ospNewGeometry("spheres");
-        PING;
         ospSetData(sphereGeom,"spheres",sphereData);
         ospSet1i(sphereGeom,"bytes_per_sphere",sizeof(Sphere));
         ospSet1i(sphereGeom,"offset_materialID",0*sizeof(float));
@@ -50,29 +48,42 @@ namespace ospray {
         ospSet1i(sphereGeom,"offset_radius",4*sizeof(float));
         ospCommit(sphereGeom);
         ospAddGeometry(ospModel,sphereGeom);
-        PING;
-      }
-      PING;
-
-#if 0
-      if (tm.numTriangles()) {
-        OSPData  triangleData = ospNewData(tm.numTriangles()*sizeof(Triangle)/sizeof(float),OSP_FLOAT,
-                                         tm.getTrianglePtr());
-        OSPGeometry triangleGeom = ospNewGeometry("tachyon_triangles");
-        ospSetData(triangleGeom,"triangles",triangleData);
-        ospCommit(triangleGeom);
-        ospAddGeometry(ospModel,triangleGeom);
       }
 
       if (tm.numCylinders()) {
-        OSPData  cylinderData = ospNewData(tm.numCylinders()*sizeof(Cylinder)/sizeof(float),OSP_FLOAT,
-                                         tm.getCylinderPtr());
-        OSPGeometry cylinderGeom = ospNewGeometry("tachyon_cylinders");
+        OSPData  cylinderData = ospNewData(tm.numCylinders()*sizeof(Cylinder)/sizeof(float),
+                                           OSP_FLOAT,tm.getCylinderPtr());
+        ospCommit(cylinderData);
+        OSPGeometry cylinderGeom = ospNewGeometry("cylinders");
         ospSetData(cylinderGeom,"cylinders",cylinderData);
+        ospSet1i(cylinderGeom,"bytes_per_cylinder",sizeof(Cylinder));
+        ospSet1i(cylinderGeom,"offset_materialID",0*sizeof(float));
+        ospSet1i(cylinderGeom,"offset_v0",1*sizeof(float));
+        ospSet1i(cylinderGeom,"offset_v1",4*sizeof(float));
+        ospSet1i(cylinderGeom,"offset_radius",7*sizeof(float));
         ospCommit(cylinderGeom);
         ospAddGeometry(ospModel,cylinderGeom);
       }
-#endif
+
+// #if 0
+//       if (tm.numTriangles()) {
+//         OSPData  triangleData = ospNewData(tm.numTriangles()*sizeof(Triangle)/sizeof(float),OSP_FLOAT,
+//                                          tm.getTrianglePtr());
+//         OSPGeometry triangleGeom = ospNewGeometry("tachyon_triangles");
+//         ospSetData(triangleGeom,"triangles",triangleData);
+//         ospCommit(triangleGeom);
+//         ospAddGeometry(ospModel,triangleGeom);
+//       }
+
+//       if (tm.numCylinders()) {
+//         OSPData  cylinderData = ospNewData(tm.numCylinders()*sizeof(Cylinder)/sizeof(float),OSP_FLOAT,
+//                                          tm.getCylinderPtr());
+//         OSPGeometry cylinderGeom = ospNewGeometry("tachyon_cylinders");
+//         ospSetData(cylinderGeom,"cylinders",cylinderData);
+//         ospCommit(cylinderGeom);
+//         ospAddGeometry(ospModel,cylinderGeom);
+//       }
+// #endif
       ospCommit(ospModel);
       return ospModel;
     }

@@ -99,6 +99,9 @@ namespace ospray {
       fgets(line,LINESZ,file); // Texture
       rc = sscanf(line,"  Rad %f",
                   &cylinder.rad);
+
+      cylinder.rad *= .1f;
+
       if (rc != 1)
         error("cannot parse cylinder line "+std::string(line));
       
@@ -178,8 +181,57 @@ namespace ospray {
       // model.triangle.push_back(tri);
     }
 
+    void importGRO(tachyon::Model &model, const std::string &fileName)
+    {
+      int rc;
+      PING;
+      FILE *file = fopen(fileName.c_str(),"r");
+      if (!file) error("could not open '"+fileName+"'");
+      char name[1000];
+      rc = fscanf(file,"%s\n",name);
+      assert(rc == 1);
+      PRINT(name);
+
+      int numAtoms;
+      rc = fscanf(file,"%i\n",&numAtoms);
+      assert(rc == 1);
+      PRINT(numAtoms);
+
+      tachyon::Sphere sphere;
+      for (int i=0;i<numAtoms;i++) {
+        int radicalID;
+        char radicalName[100];
+        char atomType[100];
+        int atomID;
+        vec3f v0,v1;
+        char line[10000];
+        char *_line = fgets(line,10000,file);
+        if (!_line || feof(file)) {
+          cout << "looks like an incomplete file ... !?" << endl;
+          break;
+        }
+        
+        rc = sscanf(line,"%i%s %s %i %f %f %f %f %f %f\n",
+                    &radicalID,radicalName,atomType,&atomID,
+                    &v0.x,&v0.y,&v0.z,
+                    &v1.x,&v1.y,&v1.z);
+        if (rc != 10)
+          error("could not parse line...");
+
+        sphere.textureID = 0;
+        sphere.center = v0;
+        sphere.rad = .03f;
+        model.addSphere(sphere);
+      }
+      fclose(file);
+    }
+
     void importFile(tachyon::Model &model, const std::string &fileName)
     {
+      if (fileName.substr(fileName.find_last_of(".")) == ".gro") {
+        importGRO(model,fileName);
+        return;
+      }
       FILE *file = fopen(fileName.c_str(),"r");
       if (!file) error("could not open '"+fileName+"'");
       char line[LINESZ+1];

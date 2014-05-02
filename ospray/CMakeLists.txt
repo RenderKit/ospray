@@ -60,6 +60,8 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	geometry/instance.cpp
 	geometry/spheres.cpp
 	geometry/spheres.ispc
+	geometry/cylinders.cpp
+	geometry/cylinders.ispc
 
 	render/tilerenderer.cpp
 	render/loadbalancer.cpp
