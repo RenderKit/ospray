@@ -182,7 +182,7 @@ extern "C" {
       In this case the calling program guarantees that the 'init' pointer will remain
       valid for the duration that this data array is being used.
    */
-  OSPData ospNewData(size_t numItems, OSPDataType format, void *init=NULL, int flags=0);
+  OSPData ospNewData(size_t numItems, OSPDataType format, const void *init=NULL, int flags=0);
 
   /*! \} */
 

@@ -1,0 +1,95 @@
+// ospray
+#include "common/math/vec.ih"
+#include "common/math/bbox.ih"
+#include "common/ray.ih"
+#include "ospray/geometry/geometry.ih"
+#include "ospray/common/model.ih"
+// embree
+#include "embree2/rtcore.isph"
+#include "embree2/rtcore_scene.isph"
+#include "embree2/rtcore_geometry_user.isph"
+
+struct Spheres {
+  uniform Geometry geometry; //!< inherited geometry fields
+
+  uniform uint8 *uniform data;
+
+  float           radius;
+  int             materialID;
+  int             offset_center;
+  int             offset_radius;
+  int             offset_materialID;
+  int32           numSpheres;
+  int32           bytesPerSphere;
+};
+
+typedef uniform float uniform_float;
+
+void Spheres_bounds(uniform Spheres *uniform geometry,
+                    uniform size_t primID,
+                    uniform box3fa &bbox)
+{
+  uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*primID;
+  uniform float radius = geometry->radius;
+  if (geometry->offset_radius >= 0) {
+    radius = *((uniform float *)(spherePtr+geometry->offset_radius));
+  }
+  uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
+  bbox.lower = center-make_vec3f(radius);
+  bbox.upper = center+make_vec3f(radius);
+  // print_box(bbox);
+}
+
+void Spheres_intersect(uniform Spheres *uniform geometry,
+                           varying Ray &ray,
+                           uniform size_t primID)
+{
+  // print("isec %i\n",primID);
+}
+
+
+export void *uniform Spheres_create(void           *uniform cppEquivalent)
+{
+  uniform Spheres *uniform geom = uniform new uniform Spheres;
+  Geometry_Constructor(&geom->geometry,cppEquivalent,NULL,0,NULL);
+  return geom;
+}
+
+export void SpheresGeometry_set(void           *uniform _geom,
+                                void           *uniform _model,
+                                void           *uniform data,
+                                int             uniform numSpheres,
+                                int             uniform bytesPerSphere,
+                                float           uniform radius,
+                                int             uniform materialID,
+                                int             uniform offset_center,
+                                int             uniform offset_radius,
+                                int             uniform offset_materialID)
+{
+  uniform Spheres *uniform geom = (uniform Spheres *uniform)_geom;
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+
+  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,numSpheres);
+  
+  geom->geometry.model = model;
+  geom->geometry.geomID = geomID;
+  geom->numSpheres = numSpheres;
+  geom->radius = radius;
+  geom->data = (uniform uint8 *uniform)data;
+  geom->materialID = materialID;
+  geom->bytesPerSphere = bytesPerSphere;
+
+  geom->offset_center     = offset_center;
+  geom->offset_radius     = offset_radius;
+  geom->offset_materialID = offset_materialID;
+
+  rtcSetUserData(model->embreeSceneHandle,geomID,geom);
+  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
+                       (uniform RTCBoundsFunc)&Spheres_bounds);
+  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
+                          (uniform RTCIntersectFuncVarying)&Spheres_intersect);
+  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
+                          (uniform RTCOccludedFuncVarying)&Spheres_intersect);
+  rtcEnable(model->embreeSceneHandle,geomID);
+
+}

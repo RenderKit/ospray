@@ -1,3 +1,5 @@
+#undef NDEBUG
+
 // ospray
 #include "raycast.h"
 #include "ospray/camera/perspectivecamera.h"
@@ -19,6 +21,7 @@ namespace ospray {
   {
     RenderTask *frame = new RenderTask;
     frame->world = (Model *)getParamObject("world",NULL);
+    frame->world = (Model *)getParamObject("model",frame->world);
     Assert2(frame->world,"null world handle (did you forget to assign a 'world' parameter to the ray_cast renderer?)");
     frame->_scene = (void*)frame->world->embreeSceneHandle;
     Assert2(frame->_scene,"invalid model without an embree scene (did you forget to finalize/'commit' the model?)");

@@ -149,10 +149,10 @@ namespace ospray {
   }
 
   /*! create a new data buffer, with optional init data and control flags */
-  extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, void *init, int flags)
+  extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, int flags)
   {
     ASSERT_DEVICE();
-    return ospray::api::Device::current->newData(nitems,format,init,flags);
+    return ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
   }
 
   /*! add a data array to another object */
