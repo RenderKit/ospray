@@ -26,7 +26,7 @@ namespace ospray {
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
     /*! viewport as specified on the command line */
     Glut3DWidget::ViewPort *viewPortFromCmdLine = NULL;
-
+    vec3f upVectorFromCmdLine(0,1,0);
 
     // ------------------------------------------------------------------
     // glut event handlers
@@ -79,7 +79,7 @@ namespace ospray {
     Glut3DWidget::ViewPort::ViewPort()
     : from(0,0,-1),
     at(0,0,0),
-    up(0,1,0),
+    up(upVectorFromCmdLine),
       // : from(0,-1,0),
       //   at(0,0,0),
       //   up(0,0,1),
@@ -175,13 +175,18 @@ namespace ospray {
           viewPort.up = vec3f(0,0,1.f);
 
         this->worldBounds = worldBounds;
-        viewPort.frame.l.vy = normalize(viewPort.at - viewPort.from);
-        viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,viewPort.up));
-        viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
-        viewPort.frame.p    = viewPort.from;
-        viewPort.snapUp();
-        viewPort.modified = true;
+        computeFrame();
       }
+    }
+
+    void Glut3DWidget::computeFrame()
+    {
+      viewPort.frame.l.vy = normalize(viewPort.at - viewPort.from);
+      viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,viewPort.up));
+      viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+      viewPort.frame.p    = viewPort.from;
+      viewPort.snapUp();
+      viewPort.modified = true;
     }
 
     void Glut3DWidget::setZUp(const vec3f &up)
@@ -253,6 +258,7 @@ namespace ospray {
 
         if (length(up) < 1e-3f)
           up = vec3f(0,0,1.f);
+        PRINT(up);
 
         this->worldBounds = worldBounds;
         viewPort.frame.l.vy = normalize(dir);
@@ -317,10 +323,15 @@ namespace ospray {
             error("missing commandline param");
         }
         if (arg == "-vu") {
-          if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
-          viewPortFromCmdLine->up.x = atof(av[i+1]);
-          viewPortFromCmdLine->up.y = atof(av[i+2]);
-          viewPortFromCmdLine->up.z = atof(av[i+3]);
+          // if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+          // viewPortFromCmdLine->up.x = atof(av[i+1]);
+          // viewPortFromCmdLine->up.y = atof(av[i+2]);
+          // viewPortFromCmdLine->up.z = atof(av[i+3]);
+          upVectorFromCmdLine.x = atof(av[i+1]);
+          upVectorFromCmdLine.y = atof(av[i+2]);
+          upVectorFromCmdLine.z = atof(av[i+3]);
+          if (viewPortFromCmdLine) 
+            viewPortFromCmdLine->up = upVectorFromCmdLine;
           assert(i+3 < *ac);
           removeArgs(*ac,(char **&)av,i,4);
           --i;

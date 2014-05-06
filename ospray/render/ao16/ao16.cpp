@@ -15,7 +15,8 @@ namespace ospray {
   TileRenderer::RenderJob *AO16Renderer::createRenderJob(FrameBuffer *fb)
   {
     RenderTask *frame = new RenderTask;
-    frame->world  = (Model  *)getParamObject("world",NULL);
+    frame->world  = (Model  *)getParamObject("world",NULL); // old naming
+    frame->world  = (Model  *)getParamObject("model",frame->world); // new naming
     frame->camera = (Camera *)getParamObject("camera",NULL);
     return frame;
   }

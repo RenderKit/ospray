@@ -227,6 +227,10 @@ namespace ospray {
       float motionSpeed;
       FrameBufferMode frameBufferMode;
 
+      /*! recompute current viewPort's frame from cameras 'from',
+          'at', 'up' values. */
+      void computeFrame();
+
       static Glut3DWidget *activeWindow;
       union {
         /*! uchar[4] RGBA-framebuffer, if applicable */

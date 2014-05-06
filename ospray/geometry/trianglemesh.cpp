@@ -37,15 +37,17 @@ namespace ospray {
     Assert(model && "invalid model pointer");
     RTCScene embreeSceneHandle = model->embreeSceneHandle;
 
-    Param *posParam = findParam("position");
+    Param *posParam = findParam("position",NULL);
+    posParam = findParam("vertex",posParam);
     Assert2(posParam != NULL, "triangle mesh geometry does not have a 'position' array");
     posData = dynamic_cast<Data*>(posParam->ptr);
     Assert2(posData != NULL,"invalid position array");
     Assert2(posData->type == OSP_vec3fa, "invalid triangle mesh vertex format");
     this->vertex = (vec3fa*)posData->data;
 
-    Param *idxParam = findParam("index");
-    Assert2(idxParam != NULL, "triangle mesh geometry does not have a 'index' array");
+    Param *idxParam = findParam("index",NULL);
+    idxParam = findParam("triangle",idxParam);
+    Assert2(idxParam != NULL, "triangle mesh geometry does not have a 'index' or 'triangle' data array");
     idxData = dynamic_cast<Data*>(idxParam->ptr);
     Assert2(idxData != NULL, "invalid index array");
     Assert2(idxData->type == OSP_vec3i, "invalid triangle index format");

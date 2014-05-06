@@ -13,6 +13,7 @@ namespace ospray {
     using std::endl;
 
     const char *renderType = "raycast_eyelight";
+    // const char *renderType = "ao16";
     float defaultRadius = .1f;
     tachyon::Model tachModel;
   
@@ -64,6 +65,36 @@ namespace ospray {
         ospCommit(cylinderGeom);
         ospAddGeometry(ospModel,cylinderGeom);
       }
+
+      cout << "#osp:tach: creating " << tm.numVertexArrays() << " vertex arrays" << endl;
+      for (int vaID=0;vaID<tm.numVertexArrays();vaID++) {
+        const VertexArray *va = tm.getVertexArray(vaID);
+        Assert(va);
+        OSPGeometry geom = ospNewTriangleMesh();
+        if (va->triangle.size()) {
+          OSPData data = ospNewData(va->triangle.size(),OSP_vec3i,&va->triangle[0]);
+          ospCommit(data);
+          ospSetData(geom,"triangle",data);
+        }
+        if (va->coord.size()) {
+          OSPData data = ospNewData(va->coord.size(),OSP_vec3fa,&va->coord[0]);
+          ospCommit(data);
+          ospSetData(geom,"vertex",data);
+        }
+        if (va->normal.size()) {
+          OSPData data = ospNewData(va->normal.size(),OSP_vec3fa,&va->normal[0]);
+          ospCommit(data);
+          ospSetData(geom,"vertex_normal",data);
+        }
+        if (va->color.size()) {
+          OSPData data = ospNewData(va->color.size(),OSP_vec3fa,&va->color[0]);
+          ospCommit(data);
+          ospSetData(geom,"vertex_color",data);
+        }
+        ospCommit(geom);
+        ospAddGeometry(ospModel,geom);
+      }
+
 
 // #if 0
 //       if (tm.numTriangles()) {
@@ -184,9 +215,16 @@ namespace ospray {
       // create viewer window
       // -------------------------------------------------------
       TACHViewer window(model);
-      window.create("ospTACH: OSPRay miniature Balls-and-sticks viewer");
+      window.create("ospTACH: OSPRay Tachyon-model viewer");
       printf("Viewer created. Press 'Q' to quit.\n");
       window.setWorldBounds(tachModel.getBounds());
+      if (tachModel.getCamera()) {
+        ospray::tachyon::Camera *camera = tachModel.getCamera();
+        window.viewPort.from = camera->center;
+        window.viewPort.at = camera->center+camera->viewDir;
+        window.viewPort.up = camera->upDir;
+        window.computeFrame();
+      }
       ospray::glut3D::runGLUT();
     }
   }

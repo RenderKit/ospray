@@ -252,6 +252,15 @@ namespace ospray {
 
           if (!cur) throw std::runtime_error("invalid material file: newmtl expected first");
 
+          if (!strncmp(token, "illum_4",7)) { 
+            /*! iw: hack for VMD-exported OBJ files, working ardouna
+                bug in VMD's OBJ exporter (VMD writes "illum_4" (with
+                an underscore) rather than "illum 4" (with a
+                whitespace) */
+            parseSep(token += 7);  
+            continue; 
+          }
+
           if (!strncmp(token, "illum", 5)) { parseSep(token += 5);  continue; }
 
           if (!strncmp(token, "d",  1)) { parseSep(token += 1);  cur->d = getFloat(token);  continue; }
