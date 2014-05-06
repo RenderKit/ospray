@@ -23,7 +23,7 @@ namespace ospray {
     }
 
     Texture::Texture()
-      : ambient(0), diffuse(.8), specular(0), opacity(1)
+      : ambient(0), diffuse(.8), specular(0), opacity(1), texFunc(0)
     {
     }
     Texture::~Texture()
@@ -31,7 +31,7 @@ namespace ospray {
     }
 
     Phong::Phong()
-      : plastic(0), size(0), color(1,1,1), texFunc(0)
+      : plastic(0), size(0), color(1,1,1)
     {}
 
     Camera::Camera()

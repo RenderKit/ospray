@@ -10,13 +10,13 @@ namespace ospray {
       float plastic;
       float size;
       vec3f color;
-      int texFunc;
         // Phong Plastic 0.5 Phong_size 40 Color 1 0 0 TexFunc 0
       Phong();
     };
     struct Texture {
       float ambient, diffuse, specular, opacity;
       Phong phong;
+      int texFunc;
       Texture();
       ~Texture();
     };

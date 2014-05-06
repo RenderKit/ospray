@@ -227,12 +227,18 @@ texture
 
 texture_body 
 : /* eol */ { $$ = new ospray::tachyon::Texture; }
-| texture_body TOKEN_Ambient Float { $$ = $1; }
-| texture_body TOKEN_Diffuse Float { $$ = $1; }
-| texture_body TOKEN_Specular Float { $$ = $1; }
-| texture_body TOKEN_Opacity Float { $$ = $1; }
-| texture_body TOKEN_Phong TOKEN_Plastic Float TOKEN_Phong_size Float TOKEN_Color Float Float Float  { $$ = $1; }
-| texture_body TOKEN_TexFunc Int { $$ = $1; }
+| texture_body TOKEN_Ambient  Float { $$ = $1; $$->ambient  = $3; }
+| texture_body TOKEN_Diffuse  Float { $$ = $1; $$->diffuse  = $3; }
+| texture_body TOKEN_Specular Float { $$ = $1; $$->specular = $3; }
+| texture_body TOKEN_Opacity  Float { $$ = $1; $$->opacity  = $3; }
+| texture_body TOKEN_Phong TOKEN_Plastic Float TOKEN_Phong_size Float TOKEN_Color Float Float Float  
+{
+  $$ = $1; 
+  $$->phong.plastic = $4;
+  $$->phong.size = $6;
+  $$->phong.color = vec3f($8,$9,$10);
+}
+| texture_body TOKEN_TexFunc Int { $$ = $1; $$->texFunc = $3; }
 | texture_body TOKEN_TransMode TOKEN_R3D { $$ = $1; }
 ;
 
