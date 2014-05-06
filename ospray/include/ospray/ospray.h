@@ -66,6 +66,8 @@ typedef enum {
   // c-string (zero-terminated char pointer)
   OSP_STRING,
   // atomic types
+  OSP_uint8,
+  OSP_int8,
   OSP_INT, 
   OSP_uint32=OSP_INT,
   OSP_FLOAT, 

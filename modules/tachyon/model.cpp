@@ -45,6 +45,7 @@ namespace ospray {
       : bounds(embree::empty),
         camera(NULL),
         smoothTrisVA(NULL),
+        backgroundColor(.1f),
         resolution(-1)
     {
     }

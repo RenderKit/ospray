@@ -20,7 +20,6 @@ namespace ospray {
       Texture();
       ~Texture();
     };
-
     struct Camera {
       vec3f center;
       vec3f upDir;
@@ -62,7 +61,8 @@ namespace ospray {
       box3f getBounds() const;
 
       vec2i resolution;
-      
+      vec3f backgroundColor;
+
       int addTexture(Texture *texture);
       void addTriangle(const Triangle &triangle);
       void addSphere(const Sphere &sphere);
@@ -71,10 +71,12 @@ namespace ospray {
       size_t numCylinders() const { return cylinder.size(); };
       size_t numSpheres()   const { return sphere.size(); };
       size_t numTriangles() const { return triangle.size(); };
+      size_t numTextures()  const { return allTextures.size(); };
       size_t numVertexArrays() const { return vertexArray.size(); };
       const void  *getTrianglePtr() const { return &triangle[0]; }
       const void  *getSpherePtr()   const { return &sphere[0]; }
       const void  *getCylinderPtr() const { return &cylinder[0]; }
+      const void  *getTexturesPtr() const { return &allTextures[0]; }
       VertexArray *getVertexArray(int i) const { return vertexArray[i]; }
       Camera *getCamera(bool create=false) { if (camera == NULL && create) camera = new Camera; return camera; }
       VertexArray *getSTriVA(bool create=false);

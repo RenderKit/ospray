@@ -9,6 +9,8 @@ namespace ospray {
     case OSP_OBJECT: return sizeof(Data *);
     case OSP_FLOAT:  return sizeof(float);
     case OSP_INT:    return sizeof(int32);
+    case OSP_uint8:  return sizeof(uint8);
+    case OSP_int8:   return sizeof(int8);
     case OSP_vec2f:  return sizeof(vec2f);
     case OSP_vec3f:  return sizeof(vec3f);
     case OSP_vec3fa: return sizeof(vec3fa);

@@ -12,7 +12,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    const char *renderType = "raycast_eyelight";
+    const char *renderType = "tachyon";
     // const char *renderType = "ao16";
     float defaultRadius = .1f;
     tachyon::Model tachModel;
@@ -84,15 +84,30 @@ namespace ospray {
         if (va->normal.size()) {
           OSPData data = ospNewData(va->normal.size(),OSP_vec3fa,&va->normal[0]);
           ospCommit(data);
-          ospSetData(geom,"vertex_normal",data);
+          ospSetData(geom,"vertex.normal",data);
         }
         if (va->color.size()) {
           OSPData data = ospNewData(va->color.size(),OSP_vec3fa,&va->color[0]);
           ospCommit(data);
-          ospSetData(geom,"vertex_color",data);
+          ospSetData(geom,"vertex.color",data);
+        }
+        if (va->perTriTextureID.size()) {
+          OSPData data = ospNewData(va->perTriTextureID.size(),OSP_uint32,
+                                    &va->perTriTextureID[0]);
+          ospCommit(data);
+          ospSetData(geom,"triangle.materialID",data);
         }
         ospCommit(geom);
         ospAddGeometry(ospModel,geom);
+      }
+
+
+      cout << "Specifying " << tachModel.numTextures() << " materials..." << endl;
+      {
+        OSPData data = ospNewData(tachModel.numTextures(),OSP_uint8,
+                                  tachModel.getTexturesPtr());
+        ospCommit(data);
+        ospSetData(ospModel,"textureArray",data);
       }
 
 
@@ -194,7 +209,7 @@ namespace ospray {
 
     void ospTACHMain(int &ac, const char **&av)
     {
-      ospLoadModule("tach");
+      ospLoadModule("tachyon");
 
     
       for (int i=1;i<ac;i++) {

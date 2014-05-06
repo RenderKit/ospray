@@ -74,7 +74,7 @@ scene
 | scene camera 
 | scene directional_light 
 | scene fog 
-| scene background { PING; }
+| scene background
 | scene fcylinder
 | scene stri 
 | scene sphere
@@ -239,6 +239,7 @@ texture_body
 
 background
 : TOKEN_Background Float Float Float
+{ ospray::tachyon::parserModel->backgroundColor = vec3f($2,$3,$4); }
 ;
 
 background_gradient
