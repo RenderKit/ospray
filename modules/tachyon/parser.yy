@@ -64,7 +64,11 @@ extern char *yytext;
 %start world
 %%
 
-world: TOKEN_BEGIN_SCENE scene TOKEN_END_SCENE
+world: TOKEN_BEGIN_SCENE scene TOKEN_END_SCENE { 
+  char *exportEmbree = getenv("OSPRAY_EXPORT_EMBREE");
+  if (exportEmbree) // && atoi(exportEmbree))
+    ospray::tachyon::parserModel->exportToEmbree(exportEmbree);
+ }
 ;
 
 scene

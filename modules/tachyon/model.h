@@ -73,6 +73,7 @@ namespace ospray {
       size_t numTriangles() const { return triangle.size(); };
       size_t numTextures()  const { return allTextures.size(); };
       size_t numVertexArrays() const { return vertexArray.size(); };
+      const Texture *getTexture(size_t ID) const { return &allTextures[ID]; }
       const void  *getTrianglePtr() const { return &triangle[0]; }
       const void  *getSpherePtr()   const { return &sphere[0]; }
       const void  *getCylinderPtr() const { return &cylinder[0]; }
@@ -80,6 +81,7 @@ namespace ospray {
       VertexArray *getVertexArray(int i) const { return vertexArray[i]; }
       Camera *getCamera(bool create=false) { if (camera == NULL && create) camera = new Camera; return camera; }
       VertexArray *getSTriVA(bool create=false);
+      void exportToEmbree(const std::string &fileName);
     private:
       box3f bounds;
       std::vector<Triangle> triangle;
@@ -99,6 +101,5 @@ namespace ospray {
 
     void importFile(tachyon::Model &model, const std::string &fileName);
     void error(const std::string &vol);
-
   }
 }
