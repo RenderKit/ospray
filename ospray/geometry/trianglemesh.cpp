@@ -68,8 +68,8 @@ namespace ospray {
       throw std::runtime_error("unsupported trianglemesh.index data type");
     }
     switch (vertexData->type) {
-    case OSP_float:  numVerts = vertexData->size() / 4; break;
-    case OSP_vec3f:  numVerts = vertexData->size(); break;
+    case OSP_float:   numVerts = vertexData->size() / 4; break;
+    case OSP_vec3fa:  numVerts = vertexData->size(); break;
     default:
       throw std::runtime_error("unsupported trianglemesh.vertex data type");
     }
