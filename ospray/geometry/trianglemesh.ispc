@@ -21,6 +21,15 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       + ray.v * make_vec3f(normal[index.z]);
   }
 
+  uniform vec4f *uniform color = THIS->color;
+  if ((flags & DG_NS) && color) {
+    const vec3i index = THIS->index[ray.primID];
+    dg.color
+      = (1.f-ray.u-ray.v) * (color[index.x])
+      + ray.u * (color[index.y])
+      + ray.v * (color[index.z]);
+  }
+
   if (flags & DG_MATERIALID) {
     if (THIS->prim_materialID) 
       dg.materialID = THIS->prim_materialID[ray.primID];
@@ -50,7 +59,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform vec3i  *uniform index,
                                      uniform vec3fa *uniform vertex,
                                      uniform vec3fa *uniform normal,
-                                     uniform vec3fa *uniform color,
+                                     uniform vec4f  *uniform color,
                                      uniform int32   geom_materialID,
                                      uniform uint32 *uniform prim_materialID
                                      )
@@ -98,7 +107,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform vec3i  *uniform index,
                                       uniform vec3fa *uniform vertex,
                                       uniform vec3fa *uniform normal,
-                                      uniform vec3fa *uniform color,
+                                      uniform vec4f  *uniform color,
                                       uniform int32   geom_materialID,
                                       uniform uint32 *uniform prim_materialID
                                       )

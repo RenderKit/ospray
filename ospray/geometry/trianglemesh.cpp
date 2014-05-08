@@ -55,7 +55,7 @@ namespace ospray {
     this->index = (vec3i*)indexData->data;
     this->vertex = (vec3fa*)vertexData->data;
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;
-    this->color  = colorData ? (vec3fa*)colorData->data : NULL;
+    this->color  = colorData ? (vec4f*)colorData->data : NULL;
     this->prim_materialID  = materialIDData ? (uint32*)materialIDData->data : NULL;
 
     size_t numTris  = -1;
@@ -102,7 +102,7 @@ namespace ospray {
                            (ispc::vec3i*)index,
                            (ispc::vec3fa*)vertex,
                            (ispc::vec3fa*)normal,
-                           (ispc::vec3fa*)color,
+                           (ispc::vec4f*)color,
                            geom_materialID,
                            (uint32*)prim_materialID
                            );

@@ -24,7 +24,7 @@ inline vec3f shade(const Ray &ray, uniform Model *uniform model,
   DifferentialGeometry dg;
   postIntersect(model,dg,ray,
                 DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
-                |DG_MATERIALID
+                |DG_MATERIALID|DG_COLOR
                 );
 
   float c = dot(dg.Ns,ray.dir);
@@ -36,11 +36,13 @@ inline vec3f shade(const Ray &ray, uniform Model *uniform model,
   // }
 
   vec3f matCol = make_vec3f(1.f);
-  if (dg.materialID >= 0) {
+  if (dg.color.x >= 0.f)
+    matCol = make_vec3f(dg.color);
+  else if (dg.materialID >= 0) {
     matCol = textureArray[dg.materialID].phong.color;
     // if (dg.materialID != 5) {
-      // print("matID %\n",dg.materialID);
-      // print("color\n %\n %\n %\n",matCol.x,matCol.y,matCol.z);
+    // print("matID %\n",dg.materialID);
+    // print("color\n %\n %\n %\n",matCol.x,matCol.y,matCol.z);
     // }
   } else {
     matCol = make_vec3f(1.f,1.f,1.f);

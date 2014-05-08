@@ -48,7 +48,7 @@ namespace ospray {
     const vec3i  *index;  //!< mesh's triangle index array
     const vec3fa *vertex; //!< mesh's vertex array
     const vec3fa *normal; //!< mesh's vertex normal array
-    const vec3fa *color;  //!< mesh's vertex color array
+    const vec4f  *color;  //!< mesh's vertex color array
     const uint32 *prim_materialID; // per-primitive material ID
     int geom_materialID;
 
