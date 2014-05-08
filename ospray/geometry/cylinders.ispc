@@ -131,14 +131,15 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
 }
 
 
-static void Cylinders_postIntersect(uniform Geometry *uniform THIS,
+static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
                                        uniform Model *uniform model,
                                        varying DifferentialGeometry &dg,
                                        const varying Ray &ray,
                                        uniform int64 flags)
 {
-  dg.geometry = THIS;
-  dg.material = THIS->material;
+  uniform Cylinders *uniform THIS = (uniform Cylinders *uniform)geometry;
+  dg.geometry = geometry;
+  dg.material = geometry->material;
   vec3f Ng = ray.Ng;
   vec3f Ns = Ng;
 
@@ -150,6 +151,17 @@ static void Cylinders_postIntersect(uniform Geometry *uniform THIS,
     if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
     if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
   }
+  if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
+    uniform uint8 *cylinderPtr = 
+      THIS->data + THIS->bytesPerCylinder*ray.primID;
+    // print("mat ofs % % %\n",THIS->offset_materialID,THIS->bytesPerCylinder,ray.primID);
+    dg.materialID = *((uniform uint32 *varying)(cylinderPtr+THIS->offset_materialID));
+    // if (dg.materialID != 5) dg.materialID = 0;
+    // print("-> % %\n",cylinderPtr,dg.materialID);
+    // print("-> %\n",dg.materialID);
+  }
+  dg.Ng = Ng;
+  dg.Ns = Ns;
 }
 
 export void *uniform Cylinders_create(void           *uniform cppEquivalent)

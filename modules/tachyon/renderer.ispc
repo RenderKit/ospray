@@ -10,30 +10,62 @@ struct Phong {
   float plastic;
   float size;
   vec3f color;
-  int texFunc;
 };
 struct Texture {
   float ambient, diffuse, specular, opacity;
   Phong phong;
+  int texFunc;
 };
 
-inline vec4f shade(const Ray &ray, uniform Model *uniform model)
+inline vec3f shade(const Ray &ray, uniform Model *uniform model,
+                   uniform Texture *uniform textureArray)
 { 
-  if (ray.geomID < 0) return make_vec4f(0.f); 
+  if (ray.geomID < 0) return make_vec3f(0.f); 
   DifferentialGeometry dg;
-  postIntersect(model,dg,ray,DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD);
+  postIntersect(model,dg,ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
+                |DG_MATERIALID
+                );
 
-  float c = dot(dg.Ns,ray.dir); 
+  float c = dot(dg.Ns,ray.dir);
 
+
+  // for (uniform int i=0;i<6;i++){
+  //   uniform vec3f matCol = textureArray[i].phong.color;
+  //   // print("color\n %\n %\n %\n",matCol.x,matCol.y,matCol.z);
+  // }
+
+  vec3f matCol = make_vec3f(1.f);
+  if (dg.materialID >= 0) {
+    matCol = textureArray[dg.materialID].phong.color;
+    // if (dg.materialID != 5) {
+      // print("matID %\n",dg.materialID);
+      // print("color\n %\n %\n %\n",matCol.x,matCol.y,matCol.z);
+    // }
+  } else {
+    matCol = make_vec3f(1.f,1.f,1.f);
+  }
+  
   Ray shadowRay;
   const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
-  const vec3f L = make_vec3f(-1,2,-.5);
+  const vec3f L = make_vec3f(-1,-2,-4.5);
 
   setRay(shadowRay,P,L);
   const bool occluded = isOccluded(model,shadowRay);
-  return make_vec4f(occluded 
-                    ? .2f+.2f*abs(c)
-                    : .3f+.8f*abs(c));
+  vec3f retColor = matCol*(occluded 
+                           ? .2f+.2f*abs(c)
+                           : .2f+.8f*abs(c));
+
+  float alpha = 1.f-textureArray[dg.materialID].opacity;
+  if (alpha > .1f) {
+    Ray alphaRay;
+    setRay(alphaRay,P+0.001f*ray.dir,ray.dir);
+    traceRay(model,alphaRay);
+    if (alphaRay.geomID >= 0) {
+      retColor = (1.f-alpha) * retColor + (alpha) * shade(alphaRay,model,textureArray);
+    }
+  }
+  return retColor;
 }
 
 export void TachyonRenderer_renderTile(void *uniform _tile,
@@ -62,7 +94,7 @@ export void TachyonRenderer_renderTile(void *uniform _tile,
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
       traceRay(model,ray);
-      const vec4f col = shade(ray,model);
+      const vec4f col = make_vec4f(shade(ray,model,textureArray));
       tile->r[i] = col.x;
       tile->g[i] = col.y;
       tile->b[i] = col.z;

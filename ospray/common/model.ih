@@ -54,6 +54,7 @@ inline void postIntersect(uniform Model *uniform model,
                           uniform int64 flags)
 {
   // iw: note - this code does not yet work with instances
+  dg.materialID = -1; // make sure this is properly initialized
   foreach_unique(geomID in ray.geomID) {
     uniform Geometry *uniform geom = model->geometry[geomID];
     geom->postIntersect(geom,model,

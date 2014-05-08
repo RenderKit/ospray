@@ -15,7 +15,8 @@ namespace ospray {
   {
     ispc::TachyonRenderer_renderTile(&tile,
                                      camera->getIE(),world->getIE(),
-                                     textureData->getIE());
+                                     textureData->data//->getIE()
+                                     );
   }
 
   TileRenderer::RenderJob *TachyonRenderer::createRenderJob(FrameBuffer *fb)

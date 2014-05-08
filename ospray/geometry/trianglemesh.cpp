@@ -42,7 +42,9 @@ namespace ospray {
     normalData = getParamData("vertex.normal",getParamData("normal"));
     colorData  = getParamData("vertex.color",getParamData("color"));
     indexData  = getParamData("index",getParamData("triangle"));
-    
+    materialIDData = getParamData("prim.materialID");
+    geom_materialID = getParam1i("geom.materialID",-1);
+
     Assert2(vertexData != NULL, 
             "triangle mesh geometry does not have either 'position'"
             " or 'vertex' array");
@@ -54,6 +56,7 @@ namespace ospray {
     this->vertex = (vec3fa*)vertexData->data;
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;
     this->color  = colorData ? (vec3fa*)colorData->data : NULL;
+    this->prim_materialID  = materialIDData ? (uint32*)materialIDData->data : NULL;
 
     size_t numTris  = -1;
     size_t numVerts = -1;
@@ -94,13 +97,14 @@ namespace ospray {
       } 
     rtcEnable(model->embreeSceneHandle,eMesh);
 
-    PRINT(normal);
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
                            (ispc::vec3i*)index,
                            (ispc::vec3fa*)vertex,
                            (ispc::vec3fa*)normal,
-                           (ispc::vec3fa*)color
+                           (ispc::vec3fa*)color,
+                           geom_materialID,
+                           (uint32*)prim_materialID
                            );
   }
 

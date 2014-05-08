@@ -25,14 +25,15 @@ struct Spheres {
 
 typedef uniform float uniform_float;
 
-static void Spheres_postIntersect(uniform Geometry *uniform THIS,
-                                       uniform Model *uniform model,
-                                       varying DifferentialGeometry &dg,
-                                       const varying Ray &ray,
-                                       uniform int64 flags)
+static void Spheres_postIntersect(uniform Geometry *uniform geometry,
+                                  uniform Model *uniform model,
+                                  varying DifferentialGeometry &dg,
+                                  const varying Ray &ray,
+                                  uniform int64 flags)
 {
-  dg.geometry = THIS;
-  dg.material = THIS->material;
+  uniform Spheres *uniform THIS = (uniform Spheres *uniform)geometry;
+  dg.geometry = geometry;
+  dg.material = geometry->material;
   vec3f Ng = ray.Ng;
   vec3f Ns = Ng;
 
@@ -44,6 +45,13 @@ static void Spheres_postIntersect(uniform Geometry *uniform THIS,
     if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
     if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
   }
+  if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
+    uniform uint8 *spherePtr = 
+      THIS->data + THIS->bytesPerSphere*ray.primID;
+    dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
+  }
+  dg.Ng = Ng;
+  dg.Ns = Ns;
 }
 
 void Spheres_bounds(uniform Spheres *uniform geometry,

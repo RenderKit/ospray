@@ -102,7 +102,9 @@ namespace ospray {
         if (*texture == allTextures[i])
           return i;
       allTextures.push_back(*texture);
-      return allTextures.size()-1;
+      int ID = allTextures.size()-1;
+      cout << "New texture[" << ID << " " << texture->phong.color << endl;
+      return ID;
     }
 
 

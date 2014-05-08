@@ -69,6 +69,8 @@ namespace ospray {
       cout << "#osp:tach: creating " << tm.numVertexArrays() << " vertex arrays" << endl;
       for (int vaID=0;vaID<tm.numVertexArrays();vaID++) {
         const VertexArray *va = tm.getVertexArray(vaID);
+        // if (va != tm.getSTriVA())
+        //   continue;
         Assert(va);
         OSPGeometry geom = ospNewTriangleMesh();
         if (va->triangle.size()) {
@@ -95,20 +97,27 @@ namespace ospray {
           OSPData data = ospNewData(va->perTriTextureID.size(),OSP_uint32,
                                     &va->perTriTextureID[0]);
           ospCommit(data);
-          ospSetData(geom,"triangle.materialID",data);
+          PING;
+          ospSetData(geom,"prim.materialID",data);
+        } else {
+          PING;
+          PRINT(va->textureID);
+          ospSet1i(geom,"geom.materialID",va->textureID);
         }
         ospCommit(geom);
         ospAddGeometry(ospModel,geom);
       }
 
 
+
       cout << "Specifying " << tachModel.numTextures() << " materials..." << endl;
       {
-        OSPData data = ospNewData(tachModel.numTextures(),OSP_uint8,
-                                  tachModel.getTexturesPtr());
+        OSPData data = ospNewData(tachModel.numTextures()*sizeof(Texture),
+                                  OSP_uint8,tachModel.getTexturesPtr());
         ospCommit(data);
         ospSetData(ospModel,"textureArray",data);
       }
+
 
 
 // #if 0
@@ -226,6 +235,7 @@ namespace ospray {
       if (tachModel.empty())
         error("no input geometry specifies!?");
       OSPModel model = specifyModel(tachModel);
+
       // -------------------------------------------------------
       // create viewer window
       // -------------------------------------------------------

@@ -228,6 +228,8 @@ texture
   s.rad    = $11;
 
   ospray::tachyon::Texture *texture = $12;
+  // PING;
+  // PRINT(texture->phong.color);
   s.textureID = ospray::tachyon::parserModel->addTexture(texture);
   delete texture;
   ospray::tachyon::parserModel->addCylinder(s);

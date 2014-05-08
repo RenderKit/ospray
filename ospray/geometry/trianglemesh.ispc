@@ -21,6 +21,13 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       + ray.v * make_vec3f(normal[index.z]);
   }
 
+  if (flags & DG_MATERIALID) {
+    if (THIS->prim_materialID) 
+      dg.materialID = THIS->prim_materialID[ray.primID];
+    else
+      dg.materialID = THIS->geom_materialID;
+  }
+
   if (flags & DG_NORMALIZE) {
     Ng = normalize(Ng);
     Ns = normalize(Ns);
@@ -43,7 +50,9 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform vec3i  *uniform index,
                                      uniform vec3fa *uniform vertex,
                                      uniform vec3fa *uniform normal,
-                                     uniform vec3fa *uniform color
+                                     uniform vec3fa *uniform color,
+                                     uniform int32   geom_materialID,
+                                     uniform uint32 *uniform prim_materialID
                                      )
 {
   Geometry_Constructor(&mesh->geometry,cppEquivalent,
@@ -55,6 +64,8 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->vertex       = vertex;
   mesh->normal       = normal;
   mesh->color        = color;
+  mesh->prim_materialID = prim_materialID;
+  mesh->geom_materialID = geom_materialID;
 }
 
 
@@ -76,7 +87,7 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
   TriangleMesh_Constructor(mesh,cppEquivalent,
-                           NULL,0,0,NULL,NULL,NULL,NULL);
+                           NULL,0,0,NULL,NULL,NULL,NULL,-1,NULL);
   return mesh;
 }
 
@@ -87,12 +98,15 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform vec3i  *uniform index,
                                       uniform vec3fa *uniform vertex,
                                       uniform vec3fa *uniform normal,
-                                      uniform vec3fa *uniform color
+                                      uniform vec3fa *uniform color,
+                                      uniform int32   geom_materialID,
+                                      uniform uint32 *uniform prim_materialID
                                       )
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
   uniform Model *uniform model = (uniform Model *uniform)_model;
   TriangleMesh_Constructor(mesh,mesh->geometry.cppEquivalent,model,geomID,
-                           numTriangles,index,vertex,normal,color);
+                           numTriangles,index,vertex,normal,color,
+                           geom_materialID,prim_materialID);
 }
 
