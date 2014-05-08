@@ -46,7 +46,7 @@ extern char *yytext;
 %token TOKEN_STri TOKEN_V0 TOKEN_V1 TOKEN_V2 TOKEN_N0 TOKEN_N1 TOKEN_N2
 %token TOKEN_Sphere
 %token TOKEN_VertexArray TOKEN_End_VertexArray TOKEN_Numverts
-%token TOKEN_Colors TOKEN_Coords TOKEN_Normals TOKEN_TriStrip
+%token TOKEN_Colors TOKEN_Coords TOKEN_Normals TOKEN_TriStrip TOKEN_TriMesh
 %token TOKEN_Ambient_Color TOKEN_Rescale_Direct TOKEN_Samples TOKEN_Ambient_Occlusion
 %token TOKEN_Background_Gradient TOKEN_UpDir TOKEN_TopVal TOKEN_BottomVal TOKEN_TopColor TOKEN_BottomColor
 %token TOKEN_Light TOKEN_Attenuation TOKEN_linear TOKEN_quadratic TOKEN_constant
@@ -131,11 +131,20 @@ vertexarray_body
 { $$ = $1; $1->color = *$3; delete $3; }
 | vertexarray_body texture  
 { $$ = $1; $1->textureID = ospray::tachyon::parserModel->addTexture($2); }
-| vertexarray_body TOKEN_TriStrip Int int_vector 
+| vertexarray_body TOKEN_TriStrip Int int_vector
 {
   $$ = $1; 
   for (int i=2;i<$4->size();i++) {
     vec3i tri((*$4)[i-2],(*$4)[i-1],(*$4)[i]);
+    $1->triangle.push_back(tri); 
+  }
+  delete $4; 
+}
+| vertexarray_body TOKEN_TriMesh Int int_vector
+{
+  $$ = $1; 
+  for (int i=0;i<$4->size();i+=3) {
+    vec3i tri((*$4)[i],(*$4)[i+1],(*$4)[i+2]);
     $1->triangle.push_back(tri); 
   }
   delete $4; 

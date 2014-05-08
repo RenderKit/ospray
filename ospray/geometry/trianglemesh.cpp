@@ -1,5 +1,6 @@
 #include "trianglemesh.h"
 #include "../common/model.h"
+#include "include/ospray/ospray.h"
 // embree stuff
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
@@ -24,6 +25,7 @@ namespace ospray {
   void TriangleMesh::finalize(Model *model)
   {
     static int numPrints = 0;
+    PING;
     numPrints++;
     if (logLevel > 2) 
       if (numPrints == 5)
@@ -37,35 +39,55 @@ namespace ospray {
     Assert(model && "invalid model pointer");
     RTCScene embreeSceneHandle = model->embreeSceneHandle;
 
-    Param *posParam = findParam("position",NULL);
-    posParam = findParam("vertex",posParam);
-    Assert2(posParam != NULL, "triangle mesh geometry does not have a 'position' array");
-    posData = dynamic_cast<Data*>(posParam->ptr);
-    Assert2(posData != NULL,"invalid position array");
-    Assert2(posData->type == OSP_vec3fa, "invalid triangle mesh vertex format");
-    this->vertex = (vec3fa*)posData->data;
+    vertexData = getParamData("vertex",getParamData("position"));
+    normalData = getParamData("vertex.normal",getParamData("normal"));
+    colorData  = getParamData("vertex.color",getParamData("color"));
+    indexData  = getParamData("index",getParamData("triangle"));
+    PING;
+    
+    Assert2(vertexData != NULL, 
+            "triangle mesh geometry does not have either 'position'"
+            " or 'vertex' array");
+    Assert2(indexData != NULL, 
+            "triangle mesh geometry does not have either 'index'"
+            " or 'triangle' array");
 
-    Param *idxParam = findParam("index",NULL);
-    idxParam = findParam("triangle",idxParam);
-    Assert2(idxParam != NULL, "triangle mesh geometry does not have a 'index' or 'triangle' data array");
-    idxData = dynamic_cast<Data*>(idxParam->ptr);
-    Assert2(idxData != NULL, "invalid index array");
-    Assert2(idxData->type == OSP_vec3i, "invalid triangle index format");
-    this->index = (vec3i*)idxData->data;
+    this->index = (vec3i*)indexData->data;
+    this->vertex = (vec3fa*)vertexData->data;
+    this->normal = normalData ? (vec3fa*)normalData->data : NULL;
+    this->color  = colorData ? (vec3fa*)colorData->data : NULL;
 
-    size_t numTris  = idxData->size();
-    size_t numVerts = posData->size();
+    size_t numTris  = -1;
+    size_t numVerts = -1;
+    switch (indexData->type) {
+    case OSP_int32:  numTris = indexData->size() / 3; break;
+    case OSP_uint32: numTris = indexData->size() / 3; break;
+    case OSP_vec3i:  numTris = indexData->size(); break;
+    case OSP_vec3ui: numTris = indexData->size(); break;
+    default:
+      throw std::runtime_error("unsupported trianglemesh.index data type");
+    }
+    switch (vertexData->type) {
+    case OSP_float:  numVerts = vertexData->size() / 4; break;
+    case OSP_vec3f:  numVerts = vertexData->size(); break;
+    default:
+      throw std::runtime_error("unsupported trianglemesh.vertex data type");
+    }
 
-    eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,numTris,numVerts);
-
+    PING;
+    eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
+                               numTris,numVerts);
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
-                 posData->data,0,ospray::sizeOf(posData->type));
+                 (void*)this->vertex,0,
+                 ospray::sizeOf(vertexData->type));
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
-                 idxData->data,0,ospray::sizeOf(idxData->type));
+                 (void*)this->index,0,
+                 ospray::sizeOf(indexData->type));
 
+    PING;
     box3f bounds = embree::empty;
     
-    for (int i=0;i<posData->size();i++) 
+    for (int i=0;i<vertexData->size();i++) 
       bounds.extend(vertex[i]);
 
     if (logLevel > 2) 
@@ -76,10 +98,15 @@ namespace ospray {
       } 
     rtcEnable(model->embreeSceneHandle,eMesh);
 
+    PING;
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
                            (ispc::vec3i*)index,
-                           (ispc::vec3fa*)vertex);
+                           (ispc::vec3fa*)vertex,
+                           (ispc::vec3fa*)normal,
+                           (ispc::vec3fa*)color
+                           );
+    PING;
   }
 
   //! helper fct that creates a tessllated unit arrow

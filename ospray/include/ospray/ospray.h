@@ -69,11 +69,15 @@ typedef enum {
   OSP_uint8,
   OSP_int8,
   OSP_INT, 
-  OSP_uint32=OSP_INT,
+  OSP_int32=OSP_INT,
+  OSP_UINT, 
+  OSP_uint32=OSP_UINT,
   OSP_FLOAT, 
+  OSP_float=OSP_FLOAT,
   // vector types
   OSP_vec2f,
   OSP_vec3i,
+  OSP_vec3ui,
   OSP_vec3f,
   OSP_vec3fa, 
   OSP_vec4i

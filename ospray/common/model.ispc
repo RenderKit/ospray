@@ -2,7 +2,9 @@
 
 typedef uniform Geometry *uniform uniGeomPtr;
 
-export uniform Model *uniform Model_create(void *uniform cppE, uniform int32 numGeometries)
+// ISPC bug: can't export pointer to model because model contains (through N indirections) a function pointer that has a varying parameter ...
+//export uniform Model *uniform
+export void *uniform Model_create(void *uniform cppE, uniform int32 numGeometries)
 {
   uniform Model *uniform model = uniform new uniform Model;
   model->embreeSceneHandle = rtcNewScene(RTC_SCENE_STATIC,
@@ -27,3 +29,10 @@ export void Model_setGeometry(void *uniform _model,
   uniform Geometry *uniform geom = (uniform Geometry *uniform)_geom;
   model->geometry[geomID] = geom;
 }
+
+// void postIntersect(uniform Model *uniform model,
+//                    varying Ray &ray,
+//                    uniform int64 flags)
+// {
+//   print("pi\n");
+// }

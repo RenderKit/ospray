@@ -131,10 +131,33 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
 }
 
 
+static void Cylinders_postIntersect(uniform Geometry *uniform THIS,
+                                       uniform Model *uniform model,
+                                       varying DifferentialGeometry &dg,
+                                       const varying Ray &ray,
+                                       uniform int64 flags)
+{
+  dg.geometry = THIS;
+  dg.material = THIS->material;
+  vec3f Ng = ray.Ng;
+  vec3f Ns = Ng;
+
+  if (flags & DG_NORMALIZE) {
+    Ng = normalize(Ng);
+    Ns = normalize(Ns);
+  }
+  if (flags & DG_FACEFORWARD) {
+    if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
+    if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
+  }
+}
+
 export void *uniform Cylinders_create(void           *uniform cppEquivalent)
 {
   uniform Cylinders *uniform geom = uniform new uniform Cylinders;
-  Geometry_Constructor(&geom->geometry,cppEquivalent,NULL,0,NULL);
+  Geometry_Constructor(&geom->geometry,cppEquivalent,
+                       Cylinders_postIntersect,
+                       NULL,0,NULL);
   return geom;
 }
 

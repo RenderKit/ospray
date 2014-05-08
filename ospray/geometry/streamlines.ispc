@@ -129,10 +129,21 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   }
 }
 
+static void StreamLines_postIntersect(uniform Geometry *uniform THIS,
+                                       uniform Model *uniform model,
+                                       varying DifferentialGeometry &dg,
+                                       const varying Ray &ray,
+                                       uniform int64 flags)
+{
+  print("StreamLines postintersect not implemented\n");
+}
+
 export void *uniform StreamLineGeometry_create(void           *uniform cppEquivalent)
 {
   uniform StreamLines *uniform geom = uniform new uniform StreamLines;
-  Geometry_Constructor(&geom->geometry,cppEquivalent,NULL,0,NULL);
+  Geometry_Constructor(&geom->geometry,cppEquivalent,
+                       StreamLines_postIntersect,
+                       NULL,0,NULL);
   return geom;
 }
 

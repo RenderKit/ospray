@@ -93,6 +93,7 @@ Colors          { return TOKEN_Colors;}
 Coords          { return TOKEN_Coords;}
 Normals         { return TOKEN_Normals;}
 TriStrip        { return TOKEN_TriStrip; }
+TriMesh         { return TOKEN_TriMesh; }
 Ambient_Occlusion { return TOKEN_Ambient_Occlusion; }
 Ambient_Color     { return TOKEN_Ambient_Color; }
 Rescale_Direct    { return TOKEN_Rescale_Direct; }

@@ -25,6 +25,27 @@ struct Spheres {
 
 typedef uniform float uniform_float;
 
+static void Spheres_postIntersect(uniform Geometry *uniform THIS,
+                                       uniform Model *uniform model,
+                                       varying DifferentialGeometry &dg,
+                                       const varying Ray &ray,
+                                       uniform int64 flags)
+{
+  dg.geometry = THIS;
+  dg.material = THIS->material;
+  vec3f Ng = ray.Ng;
+  vec3f Ns = Ng;
+
+  if (flags & DG_NORMALIZE) {
+    Ng = normalize(Ng);
+    Ns = normalize(Ns);
+  }
+  if (flags & DG_FACEFORWARD) {
+    if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
+    if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
+  }
+}
+
 void Spheres_bounds(uniform Spheres *uniform geometry,
                     uniform size_t primID,
                     uniform box3fa &bbox)
@@ -84,7 +105,9 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
 export void *uniform Spheres_create(void           *uniform cppEquivalent)
 {
   uniform Spheres *uniform geom = uniform new uniform Spheres;
-  Geometry_Constructor(&geom->geometry,cppEquivalent,NULL,0,NULL);
+  Geometry_Constructor(&geom->geometry,cppEquivalent,
+                       Spheres_postIntersect,
+                       NULL,0,NULL);
   return geom;
 }
 

@@ -39,9 +39,10 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
                                          void *uniform _camera, //uniform Camera *uniform camera,
-                                         uniform Model *uniform model)
+                                         void *uniform _model)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
+  uniform Model   *uniform model   = (uniform Model *uniform)_model;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;

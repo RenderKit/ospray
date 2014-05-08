@@ -17,7 +17,9 @@ struct Instance {
 };
 
 
-export uniform Instance *uniform InstanceGeometry_create(void *uniform cppE)
+// ISPC bug: can't export pointer to model because instance contains (through N indirections) a function pointer that has a varying parameter ...
+//export uniform Instance
+export void *uniform InstanceGeometry_create(void *uniform cppE)
 {
   uniform Instance *uniform inst = uniform new uniform Instance;
   inst->geometry.cppEquivalent = cppE;

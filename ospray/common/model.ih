@@ -18,6 +18,47 @@ struct Model {
   uniform int32 numGeometries;
   //! array of (pointers to) geometries contained in this model
   uniform Geometry *uniform *uniform geometry;
+
 };
+
+/*! trace a ray (using embree where possible) */
+inline void traceRay(uniform Model *uniform model,
+                     varying Ray &ray)
+{
+  // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
+#if 0
+  rtcIntersect(model->embreeSceneHandle,(varying RTCRay&)ray);
+#else
+  rtcIntersect(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
+#endif
+}
+
+/*! determine if ray is occluded (using embree where possible) */
+inline bool isOccluded(uniform Model *uniform model,
+                     varying Ray &ray)
+{
+  // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
+#if 0
+  rtcOccluded(model->embreeSceneHandle,(varying RTCRay&)ray);
+#else
+  rtcOccluded(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
+#endif
+  return ray.geomID >= 0;
+}
+
+/*! perform post-intersect computations. should only get called for
+    rays that actually hit that given model. */
+inline void postIntersect(uniform Model *uniform model,
+                          varying DifferentialGeometry &dg,
+                          const varying Ray &ray,
+                          uniform int64 flags)
+{
+  // iw: note - this code does not yet work with instances
+  foreach_unique(geomID in ray.geomID) {
+    uniform Geometry *uniform geom = model->geometry[geomID];
+    geom->postIntersect(geom,model,
+                        dg,ray,flags);
+  }
+}
 
 #endif

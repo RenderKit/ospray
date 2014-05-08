@@ -47,9 +47,13 @@ namespace ospray {
 
     const vec3i  *index;  //!< mesh's triangle index array
     const vec3fa *vertex; //!< mesh's vertex array
+    const vec3fa *normal; //!< mesh's vertex normal array
+    const vec3fa *color;  //!< mesh's vertex color array
 
-    Ref<Data> idxData; /*!< triangle indices (A,B,C,materialID) */
-    Ref<Data> posData; /*!< vertex position (vec3fa) */
+    Ref<Data> indexData;  /*!< triangle indices (A,B,C,materialID) */
+    Ref<Data> vertexData; /*!< vertex position (vec3fa) */
+    Ref<Data> normalData; /*!< vertex normal array (vec3fa) */
+    Ref<Data> colorData;  /*!< vertex color array (vec3fa) */
     uint32    eMesh;   /*!< embree triangle mesh handle */
   };
 

@@ -195,6 +195,9 @@ __lift_binaryFct(max,f)
 
 // for now, let's implement those manually - should eventually do those via a macro!
 
+inline vec3f neg(const vec3f v)
+{ return make_vec3f(-v.x,-v.y,-v.z); }
+
 // ------------------------------------------------------------------
 // vec3f * float
 // ------------------------------------------------------------------

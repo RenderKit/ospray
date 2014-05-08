@@ -9,6 +9,7 @@ export void Geometry_setMaterial(void *uniform _geo, void *uniform _mat)
 //! constructor for ispc-side Geometry object
 static void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,
+                                 uniform Geometry_postIntersectFct postIntersect,
                                  uniform Model *uniform model,
                                  uniform int32  geomID,
                                  uniform Material *uniform material
@@ -18,6 +19,7 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
   geometry->model    = model;
   geometry->material = material;
   geometry->geomID   = geomID;
+  geometry->postIntersect = postIntersect;
 }
 
 //! destructor for ispc-side Geometry object
