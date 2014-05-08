@@ -20,14 +20,14 @@ struct Texture {
 inline vec4f shade(const Ray &ray, uniform Model *uniform model)
 { 
   if (ray.geomID < 0) return make_vec4f(0.f); 
-  float c = dot(normalize(ray.Ng),ray.dir); 
+  DifferentialGeometry dg;
+  postIntersect(model,dg,ray,DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD);
+
+  float c = dot(dg.Ns,ray.dir); 
 
   Ray shadowRay;
   const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
   const vec3f L = make_vec3f(-1,2,-.5);
-
-  DifferentialGeometry dg;
-  postIntersect(model,dg,ray,0);
 
   setRay(shadowRay,P,L);
   const bool occluded = isOccluded(model,shadowRay);

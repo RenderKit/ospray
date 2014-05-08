@@ -25,7 +25,6 @@ namespace ospray {
   void TriangleMesh::finalize(Model *model)
   {
     static int numPrints = 0;
-    PING;
     numPrints++;
     if (logLevel > 2) 
       if (numPrints == 5)
@@ -43,7 +42,6 @@ namespace ospray {
     normalData = getParamData("vertex.normal",getParamData("normal"));
     colorData  = getParamData("vertex.color",getParamData("color"));
     indexData  = getParamData("index",getParamData("triangle"));
-    PING;
     
     Assert2(vertexData != NULL, 
             "triangle mesh geometry does not have either 'position'"
@@ -74,7 +72,6 @@ namespace ospray {
       throw std::runtime_error("unsupported trianglemesh.vertex data type");
     }
 
-    PING;
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
@@ -84,7 +81,6 @@ namespace ospray {
                  (void*)this->index,0,
                  ospray::sizeOf(indexData->type));
 
-    PING;
     box3f bounds = embree::empty;
     
     for (int i=0;i<vertexData->size();i++) 
@@ -98,7 +94,7 @@ namespace ospray {
       } 
     rtcEnable(model->embreeSceneHandle,eMesh);
 
-    PING;
+    PRINT(normal);
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
                            (ispc::vec3i*)index,
@@ -106,7 +102,6 @@ namespace ospray {
                            (ispc::vec3fa*)normal,
                            (ispc::vec3fa*)color
                            );
-    PING;
   }
 
   //! helper fct that creates a tessllated unit arrow

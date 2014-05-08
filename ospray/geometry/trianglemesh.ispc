@@ -12,8 +12,13 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   vec3f Ng = ray.Ng;
   vec3f Ns = Ng;
 
-  if ((flags & DG_NS) && THIS->normal) {
-    print("HAS vertex normals!\n");
+  uniform vec3fa *uniform normal = THIS->normal;
+  if ((flags & DG_NS) && normal) {
+    const vec3i index = THIS->index[ray.primID];
+    Ns
+      = (1.f-ray.u-ray.v) * make_vec3f(normal[index.x])
+      + ray.u * make_vec3f(normal[index.y])
+      + ray.v * make_vec3f(normal[index.z]);
   }
 
   if (flags & DG_NORMALIZE) {
@@ -24,6 +29,8 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
     if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
     if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
   }
+  dg.Ns = Ns;
+  dg.Ng = Ng;
 }
 
 
