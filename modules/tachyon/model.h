@@ -26,6 +26,18 @@ namespace ospray {
       vec3f viewDir;
       Camera();
     };
+    struct PointLight {
+      vec3f center;
+      vec3f color;
+      struct Attenuation {
+        float constant, linear, quadratic;
+      } atten;
+    };
+    struct DirectionalLight {
+      vec3f color;
+      vec3f direction;
+    };
+
     struct Primitive {
       int textureID;
     };
@@ -82,6 +94,9 @@ namespace ospray {
       Camera *getCamera(bool create=false) { if (camera == NULL && create) camera = new Camera; return camera; }
       VertexArray *getSTriVA(bool create=false);
       void exportToEmbree(const std::string &fileName);
+      
+      std::vector<DirectionalLight> directionalLight;
+      std::vector<PointLight> pointLight;
     private:
       box3f bounds;
       std::vector<Triangle> triangle;

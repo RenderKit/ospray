@@ -28,12 +28,14 @@ extern char *yytext;
   int                intVal;
   float              floatVal;
   char              *identifierVal;
-  std::vector<ospray::vec3fa>    *vec3fVector;
-  std::vector<int>               *intVector;
-  ospray::tachyon::VertexArray   *vertexArray;
+  std::vector<ospray::vec3fa>       *vec3fVector;
+  std::vector<int>                  *intVector;
+  ospray::tachyon::VertexArray      *vertexArray;
 	// PolyMesh           *poly;
-  ospray::tachyon::Texture       *texture;
-  ospray::vec3f                  *Vec3f;
+  ospray::tachyon::Texture          *texture;
+  ospray::tachyon::DirectionalLight *directionalLight;
+  ospray::tachyon::PointLight       *pointLight;
+  ospray::vec3f                     *Vec3f;
 }
 
 // DUMMY
@@ -61,6 +63,11 @@ extern char *yytext;
 %type <intVector> int_vector
 %type <vertexArray> vertexarray_body
 %type <texture> texture texture_body
+%type <directionalLight> directional_light_body
+%type <pointLight> light_body
+
+%type <Vec3f> vec3f
+
 %start world
 %%
 
@@ -113,11 +120,25 @@ vertexarray: TOKEN_VertexArray TOKEN_Numverts Int vertexarray_body TOKEN_End_Ver
 
 
 light
-: TOKEN_Light
-TOKEN_Center Float Float Float
-TOKEN_Rad Float
-TOKEN_Attenuation TOKEN_constant Float TOKEN_linear Float TOKEN_quadratic Float
-TOKEN_Color Float Float Float
+: TOKEN_Light light_body
+{ ospray::tachyon::parserModel->pointLight.push_back(*$2); delete $2; }
+;
+
+light_body
+: /* eol */ { $$ = new ospray::tachyon::PointLight; }
+| light_body TOKEN_Center vec3f 
+{ $$ = $1; $1->center = *$3; delete $3; }
+| light_body TOKEN_Color vec3f 
+{ $$ = $1; $1->color = *$3; delete $3; }
+| light_body TOKEN_Rad Float 
+{ $$ = $1; $1->color = $3; }
+| light_body TOKEN_Attenuation TOKEN_constant Float TOKEN_linear Float TOKEN_quadratic Float
+{ 
+  $$ = $1;
+  $$->atten.constant  = $4;
+  $$->atten.linear    = $6;
+  $$->atten.quadratic = $8;
+}
 ;
 
 
@@ -293,22 +314,30 @@ camera_body
 | camera_body TOKEN_Aspectratio Float
 | camera_body TOKEN_Antialiasing Int
 | camera_body TOKEN_Raydepth Int 
-| camera_body TOKEN_Center  Float Float Float 
-{ ospray::tachyon::parserModel->getCamera(true)->center  = vec3f($3,$4,$5); }
-| camera_body TOKEN_Viewdir Float Float Float 
-{ ospray::tachyon::parserModel->getCamera(true)->viewDir = vec3f($3,$4,$5); }
-| camera_body TOKEN_Updir   Float Float Float 
-{ ospray::tachyon::parserModel->getCamera(true)->upDir   = vec3f($3,$4,$5); }
+| camera_body TOKEN_Center  vec3f
+{ ospray::tachyon::parserModel->getCamera(true)->center  = *$3; delete $3; }
+| camera_body TOKEN_Viewdir vec3f 
+{ ospray::tachyon::parserModel->getCamera(true)->viewDir = *$3; delete $3; }
+| camera_body TOKEN_Updir   vec3f 
+{ ospray::tachyon::parserModel->getCamera(true)->upDir   = *$3; delete $3; }
 ;
 
 directional_light
-: TOKEN_Directional_Light directional_light_body
+: TOKEN_Directional_Light directional_light_body 
+{ ospray::tachyon::parserModel->directionalLight.push_back(*$2); delete $2; }
 ;
 
 directional_light_body
-: /* eol */
-| TOKEN_Direction Float Float Float directional_light_body
-| TOKEN_Color Float Float Float directional_light_body
+: /* eol */ { $$ = new ospray::tachyon::DirectionalLight; }
+| directional_light_body TOKEN_Direction vec3f  
+{ $$ = $1; $$->direction = *$3; delete $3; }
+| directional_light_body TOKEN_Color vec3f  
+{ $$ = $1; $$->color = *$3; delete $3; }
+;
+
+vec3f
+: Float Float Float
+{ $$ = new vec3f($1,$2,$3); }
 ;
 
 shader_mode
