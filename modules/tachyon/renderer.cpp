@@ -7,6 +7,7 @@
 #include "common/data.h"
 // embree
 #include "common/sys/sync/atomic.h"
+#include "model.h"
 
 namespace ospray {
   // extern "C" void ispc__TachyonRenderer_renderTile(void *tile, void *camera, void *model);
@@ -15,7 +16,9 @@ namespace ospray {
   {
     ispc::TachyonRenderer_renderTile(&tile,
                                      camera->getIE(),world->getIE(),
-                                     textureData->data//->getIE()
+                                     textureData->data,
+                                     pointLightArray,numPointLights,
+                                     dirLightArray,numDirLights
                                      );
   }
 
@@ -32,6 +35,28 @@ namespace ospray {
     frame->textureData = (Data*)model->getParamObject("textureArray",NULL);
     if (!frame->textureData)
       throw std::runtime_error("#osp:tachyon::renderer: no texture data specified");
+
+    frame->pointLightData = (Data*)model->getParamObject("pointLights",NULL);
+    frame->pointLightArray
+      = frame->pointLightData
+      ? frame->pointLightData->data
+      : NULL;
+    frame->numPointLights
+      = frame->pointLightData
+      ? frame->pointLightData->size()/sizeof(ospray::tachyon::PointLight)
+      : 0;
+
+
+    frame->dirLightData = (Data*)model->getParamObject("dirLights",NULL);
+    frame->dirLightArray
+      = frame->dirLightData
+      ? frame->dirLightData->data
+      : NULL;
+    frame->numDirLights
+      = frame->dirLightData
+      ? frame->dirLightData->size()/sizeof(ospray::tachyon::DirLight)
+      : 0;
+
 
     frame->camera = (Camera *)getParamObject("camera",NULL);
     return frame;

@@ -9,13 +9,13 @@ namespace ospray {
     struct Phong {
       float plastic;
       float size;
-      vec3f color;
         // Phong Plastic 0.5 Phong_size 40 Color 1 0 0 TexFunc 0
       Phong();
     };
     struct Texture {
       float ambient, diffuse, specular, opacity;
       Phong phong;
+      vec3f color;
       int texFunc;
       Texture();
       ~Texture();
@@ -33,7 +33,7 @@ namespace ospray {
         float constant, linear, quadratic;
       } atten;
     };
-    struct DirectionalLight {
+    struct DirLight {
       vec3f color;
       vec3f direction;
     };
@@ -80,29 +80,42 @@ namespace ospray {
       void addSphere(const Sphere &sphere);
       void addCylinder(const Cylinder &cylinder);
       void addVertexArray(VertexArray *va);
-      size_t numCylinders() const { return cylinder.size(); };
-      size_t numSpheres()   const { return sphere.size(); };
-      size_t numTriangles() const { return triangle.size(); };
-      size_t numTextures()  const { return allTextures.size(); };
-      size_t numVertexArrays() const { return vertexArray.size(); };
-      const Texture *getTexture(size_t ID) const { return &allTextures[ID]; }
-      const void  *getTrianglePtr() const { return &triangle[0]; }
-      const void  *getSpherePtr()   const { return &sphere[0]; }
-      const void  *getCylinderPtr() const { return &cylinder[0]; }
-      const void  *getTexturesPtr() const { return &allTextures[0]; }
-      VertexArray *getVertexArray(int i) const { return vertexArray[i]; }
-      Camera *getCamera(bool create=false) { if (camera == NULL && create) camera = new Camera; return camera; }
+      void addPointLight(const PointLight &pointLight);
+      void addDirLight(const DirLight &dirLight);
+
+      const Texture *getTexture(size_t ID) const { return &textureVec[ID]; }
+      VertexArray *getVertexArray(int i)   const { return vertexArrayVec[i]; }
+      Camera *getCamera(bool create=false) 
+      { if (camera == NULL && create) camera = new Camera; return camera; }
       VertexArray *getSTriVA(bool create=false);
+
+      const void  *getTrianglesPtr()       const { return &triangleVec[0]; }
+      const void  *getSpheresPtr()         const { return &sphereVec[0]; }
+      const void  *getPointLightsPtr()     const { return &pointLightVec[0]; }
+      const void  *getDirLightsPtr()       const { return &dirLightVec[0]; }
+      const void  *getCylindersPtr()       const { return &cylinderVec[0]; }
+      const void  *getTexturesPtr()        const { return &textureVec[0]; }
+
+      size_t numCylinders()    const { return cylinderVec.size(); };
+      size_t numSpheres()      const { return sphereVec.size(); };
+      size_t numPointLights()  const { return pointLightVec.size(); };
+      size_t numDirLights()    const { return dirLightVec.size(); };
+      size_t numTriangles()    const { return triangleVec.size(); };
+      size_t numTextures()     const { return textureVec.size(); };
+      size_t numVertexArrays() const { return vertexArrayVec.size(); };
+
       void exportToEmbree(const std::string &fileName);
       
-      std::vector<DirectionalLight> directionalLight;
-      std::vector<PointLight> pointLight;
     private:
       box3f bounds;
-      std::vector<Triangle> triangle;
-      std::vector<Cylinder> cylinder;
-      std::vector<Sphere>   sphere;
-      std::vector<VertexArray *> vertexArray;
+      std::vector<Triangle>      triangleVec;
+      std::vector<Cylinder>      cylinderVec;
+      std::vector<Sphere>        sphereVec;
+      std::vector<VertexArray *> vertexArrayVec;
+      std::vector<DirLight>      dirLightVec;
+      std::vector<PointLight>    pointLightVec;
+      std::vector<Texture>       textureVec;
+
       Camera *camera;
 
       /*! "STri" (smooth triangle) constructs have vertex normals, but
@@ -111,7 +124,6 @@ namespace ospray {
           VA */
       VertexArray *smoothTrisVA;
 
-      std::vector<Texture> allTextures;
     };
 
     void importFile(tachyon::Model &model, const std::string &fileName);

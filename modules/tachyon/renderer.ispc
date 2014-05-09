@@ -9,83 +9,213 @@
 struct Phong {
   float plastic;
   float size;
-  vec3f color;
 };
 struct Texture {
   float ambient, diffuse, specular, opacity;
   Phong phong;
+  vec3f color;
   int texFunc;
 };
+struct PointLight 
+{
+  vec3f center;
+  vec3f color;
+  struct {
+    float constant, linear, quadratic;
+  } att;
+};
+struct DirLight 
+{
+  vec3f color;
+  vec3f dir;
+};
 
-inline vec3f shade(const Ray &ray, uniform Model *uniform model,
-                   uniform Texture *uniform textureArray)
+struct Tachyon {
+  uniform Model *model;
+  uniform Texture *textureArray;
+  uniform PointLight *pointLight;
+  uint32  numPointLights;
+  uniform DirLight *dirLight;
+  uint32  numDirLights;
+};
+
+#define EPS (1e-6f)
+
+inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
+
+inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon)
+{
+  return 1.f;
+}
+
+inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
 { 
-  if (ray.geomID < 0) return make_vec3f(0.f); 
-  DifferentialGeometry dg;
-  postIntersect(model,dg,ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
-                |DG_MATERIALID|DG_COLOR
-                );
-
-  float c = dot(dg.Ns,ray.dir);
-
-
-  // for (uniform int i=0;i<6;i++){
-  //   uniform vec3f matCol = textureArray[i].phong.color;
-  //   // print("color\n %\n %\n %\n",matCol.x,matCol.y,matCol.z);
-  // }
-
-  vec3f matCol = make_vec3f(1.f);
-  if (dg.color.x >= 0.f)
-    matCol = make_vec3f(dg.color);
-  else if (dg.materialID >= 0) {
-    matCol = textureArray[dg.materialID].phong.color;
-    // if (dg.materialID != 5) {
-    // print("matID %\n",dg.materialID);
-    // print("color\n %\n %\n %\n",matCol.x,matCol.y,matCol.z);
-    // }
-  } else {
-    matCol = make_vec3f(1.f,1.f,1.f);
-  }
-  
-  Ray shadowRay;
-  const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
-  const vec3f L = make_vec3f(-1,-2,-4.5);
-
-  setRay(shadowRay,P,L);
-  const bool occluded = isOccluded(model,shadowRay);
-  vec3f retColor = matCol*(occluded 
-                           ? .2f+.2f*abs(c)
-                           : .2f+.8f*abs(c));
-
-  float alpha = 1.f-textureArray[dg.materialID].opacity;
-  if (alpha > .1f) {
-    Ray alphaRay;
-    setRay(alphaRay,P+0.001f*ray.dir,ray.dir);
-    traceRay(model,alphaRay);
-    if (alphaRay.geomID >= 0) {
-      retColor = (1.f-alpha) * retColor + (alpha) * shade(alphaRay,model,textureArray);
+  vec3f color = make_vec3f(0.f);
+  float path_opacity = 1.f;
+  uniform int max_depth = 2; // max number of rays to be traced...
+  while (1) {
+    traceRay(tachyon->model,ray);
+    if (ray.geomID < 0) {
+      vec3f bgColor = make_vec3f(0.f);
+      color = color + path_opacity * bgColor;
+      break;
     }
+
+    vec3f localShadeColor = make_vec3f(0.f);
+    DifferentialGeometry dg;
+    postIntersect(tachyon->model,dg,ray,
+                  DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
+                  |DG_MATERIALID|DG_COLOR
+                  );
+    if (dg.materialID < 0)
+      dg.materialID = 0;
+    const float material_opacity = tachyon->textureArray[dg.materialID].opacity;
+    const float local_opacity = path_opacity * material_opacity;
+    
+    if (local_opacity > .01f) {
+      // enough weight here to shade at all ...
+        // print("INVALID MATERIAL ID!\n");
+
+      Texture texture = tachyon->textureArray[dg.materialID];
+      if (dg.color.x >= 0.f)
+        texture.color = make_vec3f(dg.color);
+
+      // reflective direction, for phong highlight
+      const vec3f R = ray.dir - (2.f*dot(ray.dir,dg.Ns))*dg.Ns;
+
+      // -------------------------------------------------------
+      // ambient
+      // -------------------------------------------------------
+      const vec3f P = ray.org+(ray.t*(ray.dir*(1.f-EPS))+EPS*dg.Ng);
+      color = color + local_opacity * texture.ambient * texture.color;
+
+#if 0
+      // -------------------------------------------------------
+      // point lights
+      // -------------------------------------------------------
+      for (uniform int i=0;i<tachyon->numPointLights;i++) {
+        uniform PointLight *uniform l = &tachyon->pointLight[i];
+        float dist;
+        const vec3f L = normalize(l->center - P,dist);
+        const float attenuation
+          = l->att.constant+dist*(l->att.linear+dist*l->att.quadratic);
+        
+        const float cosNL = abs(dot(L,dg.Ns));
+        const float cosLR = max(0.f,dot(L,R));
+        const float diffuse  = texture.diffuse * cosNL;
+        const float specular = (texture.specular+texture.phong.plastic)* powf(cosLR,texture.phong.size);
+        const vec3f unshaded_light_contrib
+          = local_opacity
+          * (diffuse*texture.color+make_vec3f(specular))
+          * l->color * rcpf(attenuation);
+        
+        if (reduce_max(unshaded_light_contrib) < .01f)
+          continue;
+        
+        Ray shadowRay;
+        setRay(shadowRay,P,L,EPS,dist*(1.f-EPS)-EPS);
+        const float light_alpha = lightAlpha(shadowRay,tachyon);
+
+        localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
+      }
+#endif
+      // -------------------------------------------------------
+      // dir lights
+      // -------------------------------------------------------
+      for (uniform int i=0;i<tachyon->numDirLights;i++) {
+        uniform DirLight *uniform l = &tachyon->dirLight[i];
+        const vec3f L = normalize(neg(l->dir));
+        
+        const float cosNL = abs(dot(L,dg.Ns));
+        const float cosLR = max(0.f,dot(L,R));
+        // print("cosLR %\n",cosLR);
+        const float diffuse  = texture.diffuse * cosNL;
+        const float specular = (texture.specular+texture.phong.plastic)* powf(cosLR,texture.phong.size);
+        const vec3f unshaded_light_contrib
+          = local_opacity
+          * (diffuse*texture.color+make_vec3f(specular))
+          * l->color;
+        
+        if (reduce_max(unshaded_light_contrib) < .01f)
+          continue;
+        
+        Ray shadowRay;
+        setRay(shadowRay,P,L,EPS,infinity);
+        const float light_alpha = lightAlpha(shadowRay,tachyon);
+
+        localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
+      }
+
+      color = color + path_opacity * localShadeColor;
+    }
+
+    // done shading this hitpoint, determine opacity of remaing path ...
+    path_opacity = path_opacity * (1.f-material_opacity);
+    if (path_opacity < .01f) 
+      // kill path if remaining contribution too low.
+      break;
+
+    max_depth--;
+    if (max_depth <= 0) 
+      break;
+
+    ray.t0 = ray.t+EPS;
+    ray.t  = infinity;
+    ray.primID = -1;
+    ray.geomID = -1;
+    ray.instID = -1;
   }
-  return retColor;
+
+  //  return make_random_color(max_depth);
+  return color;
+  
+  // Ray shadowRay;
+  // const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
+  // const vec3f L = make_vec3f(-1,-2,-4.5);
+
+  // setRay(shadowRay,P,L);
+  // const bool occluded = isOccluded(model,shadowRay);
+  // vec3f retColor = matCol*(occluded 
+  //                          ? .2f+.2f*abs(c)
+  //                          : .2f+.8f*abs(c));
+
+  // float alpha = 1.f-textureArray[dg.materialID].opacity;
+  // if (alpha > .1f) {
+  //   Ray alphaRay;
+  //   setRay(alphaRay,P+0.001f*ray.dir,ray.dir);
+  //   traceRay(model,alphaRay);
+  //   if (alphaRay.geomID >= 0) {
+  //     retColor = (1.f-alpha) * retColor + (alpha) * shade(alphaRay,model,textureArray);
+  //   }
+  // }
+  // return retColor;
 }
 
 export void TachyonRenderer_renderTile(void *uniform _tile,
-                                             void *uniform _camera,
-                                             void *uniform _model,
-                                             void *uniform _textureArray)
+                                       void *uniform _camera,
+                                       void *uniform _model,
+                                       void *uniform _textureArray,
+                                       void *uniform _pointLight,
+                                       uniform uint32 numPointLights,
+                                       void *uniform _dirLight,
+                                       uniform uint32 numDirLights)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-  uniform Model  *uniform model  = (uniform Model *uniform)_model;
-  uniform Texture *uniform textureArray = (uniform Texture *uniform)_textureArray;
+
+  uniform Tachyon tachyon;
+  tachyon.textureArray = (uniform Texture *uniform)_textureArray;
+  tachyon.model   = (uniform Model *uniform)_model;
+  tachyon.numPointLights = numPointLights;
+  tachyon.pointLight = (uniform PointLight *uniform)_pointLight;
+  tachyon.numDirLights = numDirLights;
+  tachyon.dirLight = (uniform DirLight *uniform)_dirLight;
 
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
   const uniform uint32 size_y = tile->fbSize.y;
   const uniform uint32 x0 = tile->region.lower.x;
   const uniform uint32 y0 = tile->region.lower.y;
-  uniform RTCScene scene = model->embreeSceneHandle;
   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
     const uint32 frag = i*programCount+programIndex;
     const uint32  x     = x0 + (frag % TILE_SIZE);
@@ -95,8 +225,7 @@ export void TachyonRenderer_renderTile(void *uniform _tile,
       const float screen_v = (y+.5f)/size_y;
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
-      traceRay(model,ray);
-      const vec4f col = make_vec4f(shade(ray,model,textureArray));
+      const vec4f col = make_vec4f(shade(ray,&tachyon));
       tile->r[i] = col.x;
       tile->g[i] = col.y;
       tile->b[i] = col.z;

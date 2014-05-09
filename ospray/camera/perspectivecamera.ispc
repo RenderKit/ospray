@@ -14,7 +14,7 @@ void PerspectiveCamera_initRay(uniform Camera *uniform camera,
   const vec3f dir = _this->data.dir_00
     + sample.x * _this->data.dir_du
     + sample.y * _this->data.dir_dv;
-  setRay(ray,org,dir);
+  setRay(ray,org,normalize(dir));
 }
 
 /*! create a new ispc-side version of a perspectivecamera - with given

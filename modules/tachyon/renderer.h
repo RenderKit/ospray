@@ -34,6 +34,12 @@ namespace ospray {
       Model  *world;
       Camera *camera;
       Data   *textureData;
+      Data   *pointLightData;
+      void   *pointLightArray;
+      uint32  numPointLights;
+      Data   *dirLightData;
+      void   *dirLightArray;
+      uint32  numDirLights;
 
       virtual void renderTile(Tile &tile);
       virtual ~RenderTask() {}

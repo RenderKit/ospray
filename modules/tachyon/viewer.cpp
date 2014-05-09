@@ -39,7 +39,7 @@ namespace ospray {
     
       if (tm.numSpheres()) {
         OSPData  sphereData = ospNewData(tm.numSpheres()*sizeof(Sphere)/sizeof(float),
-                                         OSP_FLOAT,tm.getSpherePtr());
+                                         OSP_FLOAT,tm.getSpheresPtr());
         ospCommit(sphereData);
         OSPGeometry sphereGeom = ospNewGeometry("spheres");
         ospSetData(sphereGeom,"spheres",sphereData);
@@ -53,7 +53,7 @@ namespace ospray {
 
       if (tm.numCylinders()) {
         OSPData  cylinderData = ospNewData(tm.numCylinders()*sizeof(Cylinder)/sizeof(float),
-                                           OSP_FLOAT,tm.getCylinderPtr());
+                                           OSP_FLOAT,tm.getCylindersPtr());
         ospCommit(cylinderData);
         OSPGeometry cylinderGeom = ospNewGeometry("cylinders");
         ospSetData(cylinderGeom,"cylinders",cylinderData);
@@ -97,11 +97,8 @@ namespace ospray {
           OSPData data = ospNewData(va->perTriTextureID.size(),OSP_uint32,
                                     &va->perTriTextureID[0]);
           ospCommit(data);
-          PING;
           ospSetData(geom,"prim.materialID",data);
         } else {
-          PING;
-          PRINT(va->textureID);
           ospSet1i(geom,"geom.materialID",va->textureID);
         }
         ospCommit(geom);
@@ -118,27 +115,26 @@ namespace ospray {
         ospSetData(ospModel,"textureArray",data);
       }
 
+      cout << "Specifying " << tachModel.numPointLights()
+           << " point lights..." << endl;
+      {
+        OSPData data
+          = ospNewData(tachModel.numPointLights()*sizeof(PointLight),
+                       OSP_uint8,tachModel.getPointLightsPtr());
+        ospCommit(data);
+        ospSetData(ospModel,"pointLights",data);
+      }
 
+      cout << "Specifying " << tachModel.numDirLights()
+           << " dir lights..." << endl;
+      {
+        OSPData data
+          = ospNewData(tachModel.numDirLights()*sizeof(DirLight),
+                       OSP_uint8,tachModel.getDirLightsPtr());
+        ospCommit(data);
+        ospSetData(ospModel,"dirLights",data);
+      }
 
-// #if 0
-//       if (tm.numTriangles()) {
-//         OSPData  triangleData = ospNewData(tm.numTriangles()*sizeof(Triangle)/sizeof(float),OSP_FLOAT,
-//                                          tm.getTrianglePtr());
-//         OSPGeometry triangleGeom = ospNewGeometry("tachyon_triangles");
-//         ospSetData(triangleGeom,"triangles",triangleData);
-//         ospCommit(triangleGeom);
-//         ospAddGeometry(ospModel,triangleGeom);
-//       }
-
-//       if (tm.numCylinders()) {
-//         OSPData  cylinderData = ospNewData(tm.numCylinders()*sizeof(Cylinder)/sizeof(float),OSP_FLOAT,
-//                                          tm.getCylinderPtr());
-//         OSPGeometry cylinderGeom = ospNewGeometry("tachyon_cylinders");
-//         ospSetData(cylinderGeom,"cylinders",cylinderData);
-//         ospCommit(cylinderGeom);
-//         ospAddGeometry(ospModel,cylinderGeom);
-//       }
-// #endif
       ospCommit(ospModel);
       return ospModel;
     }

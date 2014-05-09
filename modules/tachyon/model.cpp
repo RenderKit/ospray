@@ -29,7 +29,8 @@ namespace ospray {
     }
 
     Texture::Texture()
-      : ambient(0), diffuse(.8), specular(0), opacity(1), texFunc(0)
+      : ambient(0), diffuse(.8), specular(0), opacity(1), texFunc(0),
+        color(1,1,1)
     {
     }
     Texture::~Texture()
@@ -37,7 +38,7 @@ namespace ospray {
     }
 
     Phong::Phong()
-      : plastic(0), size(0), color(1,1,1)
+      : plastic(0), size(0)
     {}
 
     Camera::Camera()
@@ -63,33 +64,41 @@ namespace ospray {
     VertexArray *Model::getSTriVA(bool create) {
       if (!smoothTrisVA && create) {
         smoothTrisVA = new VertexArray();
-        vertexArray.push_back(smoothTrisVA);
+        vertexArrayVec.push_back(smoothTrisVA);
       }
       return smoothTrisVA;
     }
 
     void Model::addTriangle(const Triangle &triangle)
     {
-      this->triangle.push_back(triangle);
+      this->triangleVec.push_back(triangle);
       bounds.extend(triangle.v0);
       bounds.extend(triangle.v1);
       bounds.extend(triangle.v2);
     }
     void Model::addVertexArray(VertexArray *va)
     {
-      this->vertexArray.push_back(va);
+      this->vertexArrayVec.push_back(va);
       for (int i=0;i<va->coord.size();i++)
         bounds.extend(va->coord[i]);
     }
     void Model::addSphere(const Sphere &sphere)
     {
-      this->sphere.push_back(sphere);
+      this->sphereVec.push_back(sphere);
       bounds.extend(sphere.center - sphere.rad);
       bounds.extend(sphere.center + sphere.rad);
     }
+    void Model::addDirLight(const DirLight &dirLight)
+    {
+      this->dirLightVec.push_back(dirLight);
+    }
+    void Model::addPointLight(const PointLight &pointLight)
+    {
+      this->pointLightVec.push_back(pointLight);
+    }
     void Model::addCylinder(const Cylinder &cylinder)
     {
-      this->cylinder.push_back(cylinder);
+      this->cylinderVec.push_back(cylinder);
       bounds.extend(cylinder.base + cylinder.rad);
       bounds.extend(cylinder.base - cylinder.rad);
       bounds.extend(cylinder.apex + cylinder.rad);
@@ -98,12 +107,12 @@ namespace ospray {
     int Model::addTexture(Texture *texture)
     {
       assert(texture);
-      for (int i=allTextures.size()-1;i>=0;--i)
-        if (*texture == allTextures[i])
+      for (int i=textureVec.size()-1;i>=0;--i)
+        if (*texture == textureVec[i])
           return i;
-      allTextures.push_back(*texture);
-      int ID = allTextures.size()-1;
-      cout << "New texture[" << ID << " " << texture->phong.color << endl;
+      textureVec.push_back(*texture);
+      int ID = textureVec.size()-1;
+      cout << "New texture[" << ID << " " << texture->color << endl;
       return ID;
     }
 
@@ -122,7 +131,7 @@ namespace ospray {
       xml << "    <environment>0</environment>" << endl;
 
 #if 1
-      vec3f Kd = texture->phong.color * texture->diffuse;
+      vec3f Kd = texture->color * texture->diffuse;
       vec3f Ks = texture->specular;
       float Ns = texture->phong.size;
       xml << "    <material>" << endl;
@@ -326,20 +335,20 @@ namespace ospray {
       xml << " <Group>" << endl;
       {
         cout << "exporting vertex arrays:";
-        for (int vaID=0;vaID<vertexArray.size();vaID++) {
+        for (int vaID=0;vaID<vertexArrayVec.size();vaID++) {
           cout << "[" << vaID << "]" << std::flush;
-          exportArray(xml,bin,*this,vertexArray[vaID]);
+          exportArray(xml,bin,*this,vertexArrayVec[vaID]);
         }
         cout << endl;
       }
       {
         cout << "exporting spheres (by material)...";
-        exportSpheres(xml,bin,*this,sphere);
+        exportSpheres(xml,bin,*this,sphereVec);
         cout << endl;
       }
       {
         cout << "exporting cylinders (by material)...";
-        exportCylinders(xml,bin,*this,cylinder);
+        exportCylinders(xml,bin,*this,cylinderVec);
         cout << endl;
       }
       xml << " </Group>" << endl;

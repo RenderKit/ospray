@@ -33,7 +33,7 @@ extern char *yytext;
   ospray::tachyon::VertexArray      *vertexArray;
 	// PolyMesh           *poly;
   ospray::tachyon::Texture          *texture;
-  ospray::tachyon::DirectionalLight *directionalLight;
+  ospray::tachyon::DirLight *dirLight;
   ospray::tachyon::PointLight       *pointLight;
   ospray::vec3f                     *Vec3f;
 }
@@ -63,7 +63,7 @@ extern char *yytext;
 %type <intVector> int_vector
 %type <vertexArray> vertexarray_body
 %type <texture> texture texture_body
-%type <directionalLight> directional_light_body
+%type <dirLight> directional_light_body
 %type <pointLight> light_body
 
 %type <Vec3f> vec3f
@@ -75,6 +75,19 @@ world: TOKEN_BEGIN_SCENE scene TOKEN_END_SCENE {
   char *exportEmbree = getenv("OSPRAY_EXPORT_EMBREE");
   if (exportEmbree) // && atoi(exportEmbree))
     ospray::tachyon::parserModel->exportToEmbree(exportEmbree);
+
+#if 0
+  std::cout << "-------------------------------------------------------" << std::endl;
+  std::cout << "#osp:tachy (parser): Adding glow-light into middle of model..." << std::endl;
+  std::cout << "-------------------------------------------------------" << std::endl;
+  ospray::tachyon::PointLight pl;
+  pl.color = 1.f;
+  pl.center = 0.f;
+  pl.atten.constant = 0;
+  pl.atten.linear = 1;
+  pl.atten.quadratic = 0;
+  ospray::tachyon::parserModel->addPointLight(pl);
+#endif
  }
 ;
 
@@ -121,7 +134,7 @@ vertexarray: TOKEN_VertexArray TOKEN_Numverts Int vertexarray_body TOKEN_End_Ver
 
 light
 : TOKEN_Light light_body
-{ ospray::tachyon::parserModel->pointLight.push_back(*$2); delete $2; }
+{ ospray::tachyon::parserModel->addPointLight(*$2); delete $2; }
 ;
 
 light_body
@@ -267,12 +280,12 @@ texture_body
 | texture_body TOKEN_Diffuse  Float { $$ = $1; $$->diffuse  = $3; }
 | texture_body TOKEN_Specular Float { $$ = $1; $$->specular = $3; }
 | texture_body TOKEN_Opacity  Float { $$ = $1; $$->opacity  = $3; }
-| texture_body TOKEN_Phong TOKEN_Plastic Float TOKEN_Phong_size Float TOKEN_Color Float Float Float  
+| texture_body TOKEN_Phong TOKEN_Plastic Float TOKEN_Phong_size Float TOKEN_Color vec3f
 {
   $$ = $1; 
   $$->phong.plastic = $4;
   $$->phong.size = $6;
-  $$->phong.color = vec3f($8,$9,$10);
+  $$->color = *$8; delete $8;
 }
 | texture_body TOKEN_TexFunc Int { $$ = $1; $$->texFunc = $3; }
 | texture_body TOKEN_TransMode TOKEN_R3D { $$ = $1; }
@@ -324,11 +337,11 @@ camera_body
 
 directional_light
 : TOKEN_Directional_Light directional_light_body 
-{ ospray::tachyon::parserModel->directionalLight.push_back(*$2); delete $2; }
+{ ospray::tachyon::parserModel->addDirLight(*$2); delete $2; }
 ;
 
 directional_light_body
-: /* eol */ { $$ = new ospray::tachyon::DirectionalLight; }
+: /* eol */ { $$ = new ospray::tachyon::DirLight; }
 | directional_light_body TOKEN_Direction vec3f  
 { $$ = $1; $$->direction = *$3; delete $3; }
 | directional_light_body TOKEN_Color vec3f  
