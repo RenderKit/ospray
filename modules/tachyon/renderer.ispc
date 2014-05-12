@@ -39,26 +39,60 @@ struct Tachyon {
   uint32  numDirLights;
 };
 
-#define EPS (1e-6f)
+#define EPS (1e-4f)
+#define ALPHA_THRESHOLD (.05f)
 
 inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
 
-inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon)
+inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon, const float weight)
 {
-  return 1.f;
+  // return 1.f; 
+
+  float alpha = 1.f;
+  int max_depth = 8; // max number of rays to be traced...
+  float org_t_max = ray.t;
+  while (1) {
+    traceRay(tachyon->model,ray);
+    if (ray.geomID < 0) 
+      return alpha;
+    
+    DifferentialGeometry dg;
+    postIntersect(tachyon->model,dg,ray,
+                  DG_MATERIALID
+                  );
+    const float material_opacity = tachyon->textureArray[dg.materialID].opacity;
+    alpha = alpha * (1.f-material_opacity);
+
+    // if (material_opacity > .6f) {
+    //   int one = 1;
+    //   print("opacity %\n %\n %\n",one,material_opacity,alpha);
+    // }
+
+    if (alpha * weight < ALPHA_THRESHOLD) return alpha;
+
+    max_depth--;
+    if (max_depth <= 0)
+      return alpha;
+    
+    ray.t0 = ray.t+EPS;
+    ray.t  = org_t_max;
+    ray.primID = -1;
+    ray.geomID = -1;
+    ray.instID = -1;
+  }
 }
 
 inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
 { 
   vec3f color = make_vec3f(0.f);
   float path_opacity = 1.f;
-  uniform int max_depth = 2; // max number of rays to be traced...
+  int max_depth = 10; // max number of rays to be traced...
   while (1) {
     traceRay(tachyon->model,ray);
     if (ray.geomID < 0) {
       vec3f bgColor = make_vec3f(0.f);
       color = color + path_opacity * bgColor;
-      break;
+      return color;
     }
 
     vec3f localShadeColor = make_vec3f(0.f);
@@ -67,8 +101,6 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
                   DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
                   |DG_MATERIALID|DG_COLOR
                   );
-    if (dg.materialID < 0)
-      dg.materialID = 0;
     const float material_opacity = tachyon->textureArray[dg.materialID].opacity;
     const float local_opacity = path_opacity * material_opacity;
     
@@ -89,7 +121,7 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
       const vec3f P = ray.org+(ray.t*(ray.dir*(1.f-EPS))+EPS*dg.Ng);
       color = color + local_opacity * texture.ambient * texture.color;
 
-#if 0
+#if 1
       // -------------------------------------------------------
       // point lights
       // -------------------------------------------------------
@@ -109,12 +141,13 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
           * (diffuse*texture.color+make_vec3f(specular))
           * l->color * rcpf(attenuation);
         
-        if (reduce_max(unshaded_light_contrib) < .01f)
+        const float max_contrib = reduce_max(unshaded_light_contrib);
+        if (max_contrib < .01f)
           continue;
         
         Ray shadowRay;
         setRay(shadowRay,P,L,EPS,dist*(1.f-EPS)-EPS);
-        const float light_alpha = lightAlpha(shadowRay,tachyon);
+        const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
 
         localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
       }
@@ -136,28 +169,29 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
           * (diffuse*texture.color+make_vec3f(specular))
           * l->color;
         
-        if (reduce_max(unshaded_light_contrib) < .01f)
+        const float max_contrib = reduce_max(unshaded_light_contrib);
+        if (max_contrib < .01f)
           continue;
         
         Ray shadowRay;
         setRay(shadowRay,P,L,EPS,infinity);
-        const float light_alpha = lightAlpha(shadowRay,tachyon);
+        const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
 
         localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
       }
 
-      color = color + path_opacity * localShadeColor;
+      color = color + localShadeColor;
     }
 
     // done shading this hitpoint, determine opacity of remaing path ...
     path_opacity = path_opacity * (1.f-material_opacity);
     if (path_opacity < .01f) 
       // kill path if remaining contribution too low.
-      break;
+      return color;
 
     max_depth--;
     if (max_depth <= 0) 
-      break;
+      return color;
 
     ray.t0 = ray.t+EPS;
     ray.t  = infinity;
@@ -166,29 +200,7 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
     ray.instID = -1;
   }
 
-  //  return make_random_color(max_depth);
   return color;
-  
-  // Ray shadowRay;
-  // const vec3f P = ray.org + (ray.t *.999f) * ray.dir;
-  // const vec3f L = make_vec3f(-1,-2,-4.5);
-
-  // setRay(shadowRay,P,L);
-  // const bool occluded = isOccluded(model,shadowRay);
-  // vec3f retColor = matCol*(occluded 
-  //                          ? .2f+.2f*abs(c)
-  //                          : .2f+.8f*abs(c));
-
-  // float alpha = 1.f-textureArray[dg.materialID].opacity;
-  // if (alpha > .1f) {
-  //   Ray alphaRay;
-  //   setRay(alphaRay,P+0.001f*ray.dir,ray.dir);
-  //   traceRay(model,alphaRay);
-  //   if (alphaRay.geomID >= 0) {
-  //     retColor = (1.f-alpha) * retColor + (alpha) * shade(alphaRay,model,textureArray);
-  //   }
-  // }
-  // return retColor;
 }
 
 export void TachyonRenderer_renderTile(void *uniform _tile,

@@ -147,9 +147,9 @@ namespace ospray {
       a common class! */
     struct TACHViewer : public Glut3DWidget {
       /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
-      TACHViewer(OSPModel model) 
+      TACHViewer(OSPModel model, const std::string &modelName) 
         : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
-          fb(NULL), renderer(NULL), model(model)
+          fb(NULL), renderer(NULL), model(model), modelName(modelName)
       {
         camera = ospNewCamera("perspective");
         Assert2(camera,"could not create camera");
@@ -202,6 +202,13 @@ namespace ospray {
     
         ospUnmapFrameBuffer(ucharFB,fb);
     
+#if 1
+        char title[10000];
+        sprintf(title,"ospray Tachyon viewer (%s) [%f fps]",
+               modelName.c_str(),fps.getFPS());
+        setTitle(title);
+#endif
+
         forceRedraw();
       }
 
@@ -210,20 +217,24 @@ namespace ospray {
       OSPRenderer    renderer;
       OSPCamera      camera;
       ospray::glut3D::FPSCounter fps;
+      std::string modelName;
     };
 
     void ospTACHMain(int &ac, const char **&av)
     {
       ospLoadModule("tachyon");
 
-    
+      std::string modelName = "";
       for (int i=1;i<ac;i++) {
         std::string arg = av[i];
         if (arg[0] != '-') {
-          importFile(tachModel,arg);
+          modelName = arg;
         } else 
           throw std::runtime_error("unknown parameter "+arg);
       }
+
+      importFile(tachModel,modelName);
+
 
       // -------------------------------------------------------
       // parse and set up input(s)
@@ -235,7 +246,7 @@ namespace ospray {
       // -------------------------------------------------------
       // create viewer window
       // -------------------------------------------------------
-      TACHViewer window(model);
+      TACHViewer window(model,modelName);
       window.create("ospTACH: OSPRay Tachyon-model viewer");
       printf("Viewer created. Press 'Q' to quit.\n");
       window.setWorldBounds(tachModel.getBounds());

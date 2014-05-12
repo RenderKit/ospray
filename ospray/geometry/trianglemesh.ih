@@ -12,7 +12,7 @@ struct TriangleMesh {
   uniform vec3fa  *normal; //!< mesh's vertex normal array
   uniform vec4f   *color;  //!< mesh's vertex color array
   uniform uint32  *prim_materialID; // per-primitive material ID
-  uniform uint32   geom_materialID; // per-primitive material ID
+  uniform int32    geom_materialID; // per-primitive material ID
 };
 
 //! constructor for ispc-side TriangleMesh object

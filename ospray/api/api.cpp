@@ -27,6 +27,11 @@ namespace ospray {
     ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av);
   }
 #endif
+#if OSPRAY_MIC_COI
+  namespace coi {
+    ospray::api::Device *createCoiDevice(int *ac, const char **av);
+  }
+#endif
 
 
 #define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
@@ -53,6 +58,18 @@ namespace ospray {
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
       }
+      if (*_ac > 1 && std::string(_av[1]) == "--osp:coi") {
+#if OSPRAY_TARGET_MIC
+        throw std::runtime_error("The COI device can only be created on the host");
+#elif OSPRAY_MIC_COI
+        removeArgs(*_ac,(char **&)_av,1,1);
+        ospray::api::Device::current
+          = ospray::coi::createCoiDevice(_ac,_av);
+#else
+        throw std::runtime_error("OSPRay's COI support not compiled in");
+#endif
+      }
+
       if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi-launch") {
 #if OSPRAY_MPI
         if (*_ac < 3)

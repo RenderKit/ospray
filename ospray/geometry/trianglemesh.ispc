@@ -33,8 +33,13 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   if (flags & DG_MATERIALID) {
     if (THIS->prim_materialID) 
       dg.materialID = THIS->prim_materialID[ray.primID];
-    else
+    else {
       dg.materialID = THIS->geom_materialID;
+      // if (dg.materialID < 0) {
+      //   print("trimesh has neither prim_mateiralID _NOR_ geom_materialID!!!!");
+      //   print("TRIMESH: % %\n",THIS->geom_materialID,THIS->prim_materialID);
+      // }
+    }
   }
 
   if (flags & DG_NORMALIZE) {

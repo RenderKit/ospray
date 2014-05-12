@@ -701,6 +701,13 @@ static FORCEINLINE __vec16_i64 __shl(__vec16_i64 a, __vec16_i64 b) {
     return __vec16_i64(lo, hi);
 }
 
+static FORCEINLINE __vec16_i64 __shl(__vec16_i64 a, unsigned long long b) {
+  __vec16_i32 hi = _mm512_or_epi32(_mm512_slli_epi32(a.v_hi, b), 
+                                   _mm512_srli_epi32(a.v_lo, 32-b));
+  __vec16_i32 lo = _mm512_slli_epi32(a.v_lo, b);
+  return __vec16_i64(lo, hi);
+}
+
 static FORCEINLINE __vec16_i64 __lshr(__vec16_i64 a, __vec16_i64 b) {
     __vec16_i32 shift = _mm512_sub_epi32(__ispc_thirty_two, b.v_lo);
     __vec16_i32 xfer = _mm512_and_epi32(_mm512_sllv_epi32(__ispc_ffffffff, shift), _mm512_sllv_epi32(a.v_hi, shift));
@@ -719,6 +726,20 @@ static FORCEINLINE __vec16_i64 __ashr(__vec16_i64 a, __vec16_i64 b) {
     __vec16_i32 hi = _mm512_srav_epi32(a.v_hi, b.v_lo);
     __vec16_i32 lo = _mm512_or_epi32(xfer, _mm512_srlv_epi32(a.v_lo, b.v_lo));
     return __vec16_i64(lo, hi);
+}
+
+static FORCEINLINE __vec16_i64 __ashr(__vec16_i64 a, unsigned long long b) {
+  __vec16_i32 xfer
+    = _mm512_slli_epi32(_mm512_and_epi32(a.v_hi, 
+                                         _mm512_set1_epi32((1<<b)-1)),
+                                         // _mm512_sub_epi32(_mm512_sllv_epi32(__ispc_one, 
+                                         //                                    b.v_lo), 
+                                         //                  __ispc_one)), 
+                        32-b);
+                        // _mm512_sub_epi32(__ispc_thirty_two, b.v_lo));
+  __vec16_i32 hi = _mm512_srai_epi32(a.v_hi, b);
+  __vec16_i32 lo = _mm512_or_epi32(xfer, _mm512_srli_epi32(a.v_lo, b));
+  return __vec16_i64(lo, hi);
 }
 
 static FORCEINLINE __vec16_i1 __equal_i64(const __vec16_i64 &a, const __vec16_i64 &b) {
@@ -1637,17 +1658,9 @@ static FORCEINLINE __vec16_i8 __masked_load_i8(void *p, __vec16_i1 mask) {
 }
 template <int ALIGN> static FORCEINLINE __vec16_i8 __load(const __vec16_i8 *p) {
   return *p;
-  // __vec16_i8 ret;
-  // __vec16_i32 tmp = _mm512_extload_epi32(p,_MM_UPCONV_EPI32_SINT8, 
-  //                                        _MM_BROADCAST32_NONE, _MM_HINT_NONE);
-  // _mm512_extstore_epi32(&ret, tmp, _MM_DOWNCONV_EPI32_SINT8,_MM_HINT_NONE);
-  // return ret;
 }
 template <int ALIGN> static FORCEINLINE void __store(__vec16_i8 *p, __vec16_i8 v) {
   *p = v;
-  // __vec16_i32 tmp = _mm512_extload_epi32(&v,_MM_UPCONV_EPI32_SINT8, 
-  //                                        _MM_BROADCAST32_NONE, _MM_HINT_NONE);
-  // _mm512_extstore_epi32(p, tmp, _MM_DOWNCONV_EPI32_SINT8,_MM_HINT_NONE);
 }
 static FORCEINLINE void
 __scatter_base_offsets32_i8(uint8_t *b, uint32_t scale, __vec16_i32 offsets,
@@ -1658,6 +1671,11 @@ __scatter_base_offsets32_i8(uint8_t *b, uint32_t scale, __vec16_i32 offsets,
   _mm512_mask_i32extscatter_epi32(b, mask, offsets, tmp, 
                                   _MM_DOWNCONV_EPI32_SINT8, scale, 
                                   _MM_HINT_NONE);
+}
+static FORCEINLINE void __masked_store_i64(void *p, const __vec16_i64 &val, __vec16_i1 mask) {
+  // assumes aligned memory
+  _mm512_mask_store_epi32(((__m512i*)p)+0, mask, val.v_hi);
+  _mm512_mask_store_epi32(((__m512i*)p)+1, mask, val.v_lo);
 }
 #else
 // not implemented
