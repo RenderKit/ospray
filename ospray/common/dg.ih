@@ -1,0 +1,44 @@
+#ifndef OSPRAY_DG_IH
+
+#include "common/math/vec.ih"
+
+struct Geometry;
+struct Model;
+struct Material;
+
+typedef enum {
+  DG_FACEFORWARD = (1<<0), /*!< normalize normals */
+  DG_NORMALIZE   = (1<<1), /*!< face-forward normals */
+  DG_WORLD_SPACE = (1<<2), /*!< when doing instancing, transform
+                             points and normals to world-space */
+  DG_NG          = (1<<3), /*!< need geometry normal */
+  DG_NS          = (1<<4), /*!< need shading normal */
+  DG_MATERIAL    = (1<<5), /*!< need material pointer */
+  DG_GEOMETRY    = (1<<6), /*!< need geometry pointer */
+  DG_MATERIALID  = (1<<7), /*!< hack for now - return materialID as
+                              stored in "prim.materialID" array */
+  DG_COLOR       = (1<<8), /*!< hack for now - interpolated vertex color */
+  DG_EOL /*! end of list */
+} DG_PostIntersectFlags;
+
+/*! differential geometry information that gives more detailed
+    information on the actual geometry that a ray has hit */
+struct DifferentialGeometry {
+  vec3f P;  //!< location of the hit-point
+  vec3f Ng; /*!< geometry normal, possibly not
+               normalized/facefordwarded if DG_NORMALIZE and/or
+               DG_FACEFORWARD weren't specified */
+  vec3f Ns; /*!< shading normal, possibly not
+               normalized/facefordwarded if DG_NORMALIZE and/or
+               DG_FACEFORWARD weren't specified */
+  vec4f color; /*! interpolated vertex color (rgba), if available; vec3f(-1)
+                 if queried but not present in geometry */
+  int32 materialID; /*!< hack for now - the materialID as stored in
+                      "prim.materialID" array (-1 if that value isn't
+                      specified) */
+  
+  uniform Geometry *geometry; /*! pointer to hit-point's geometry */
+  uniform Material *material; /*! pointer to hit-point's material */
+};
+
+#endif
