@@ -117,6 +117,7 @@ namespace ospray {
 
       cout << "Specifying " << tachModel.numPointLights()
            << " point lights..." << endl;
+      if (tachModel.numPointLights() > 0)
       {
         OSPData data
           = ospNewData(tachModel.numPointLights()*sizeof(PointLight),
@@ -127,6 +128,7 @@ namespace ospray {
 
       cout << "Specifying " << tachModel.numDirLights()
            << " dir lights..." << endl;
+      if (tachModel.numDirLights() > 0)
       {
         OSPData data
           = ospNewData(tachModel.numDirLights()*sizeof(DirLight),

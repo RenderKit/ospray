@@ -311,7 +311,25 @@ namespace ospray {
 
     int COIDevice::loadModule(const char *name) 
     { 
-      cout << "#osp:coi: loading module '" << name << "' not implemented... ignoring" << endl;
+      // cout << "#osp:coi: loading module '" << name << "' not implemented... ignoring" << endl;
+      DataStream args;
+      args.write(name);
+
+      std::string libName = "libospray_module_"+std::string(name)+"_mic.so";
+      PRINT(libName);
+
+      COIRESULT result;
+      for (int i=0;i<engine.size();i++) {
+        COILIBRARY coiLibrary;
+        result = COIProcessLoadLibraryFromFile(engine[i]->coiProcess,
+                                               libName.c_str(),
+                                               NULL,NULL,
+                                               // 0,
+                                               &coiLibrary);
+        if (result != COI_SUCCESS)
+          coiError(result,"could not load device library "+libName);
+        Assert(result == COI_SUCCESS);
+      }
       return 0; 
     }
 
