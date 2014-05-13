@@ -45,6 +45,7 @@ export void *uniform ispc__createLocalFB_RGBA_F32(const uniform uint32 size_x,
   fb->inherited.size.x     = size_x;
   fb->inherited.size.y     = size_y;
   fb->pixel = pixelPtr;
+  return fb;
 }
 
 // =======================================================
@@ -152,6 +153,7 @@ export void *uniform ispc__createLocalFB_RGBA_I8(const uniform uint32 size_x,
   fb->inherited.size.x     = size_x;
   fb->inherited.size.y     = size_y;
   fb->pixel = pixelPtr;
+  return fb;
 }
 
 export void ispc__setTile(void *uniform _fb, void *uniform _tile)

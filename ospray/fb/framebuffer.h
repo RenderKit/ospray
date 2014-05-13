@@ -48,8 +48,9 @@ namespace ospray {
   struct LocalFrameBuffer : public FrameBuffer {
     PixelType *pixel;
     bool       isMapped;
+    bool       pixelArrayIsMine;
 
-    LocalFrameBuffer(const vec2i &size);
+    LocalFrameBuffer(const vec2i &size, void *pixelMem = NULL);
     virtual ~LocalFrameBuffer();
 
     virtual const void *map();
@@ -58,5 +59,5 @@ namespace ospray {
 
   };
 
-  FrameBuffer *createLocalFB_RGBA_I8(const vec2i &size);
+  FrameBuffer *createLocalFB_RGBA_I8(const vec2i &size, void *mem);
 }

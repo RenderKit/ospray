@@ -3,7 +3,7 @@
 
 namespace ospray {
 
-  namespace mpi {
+  namespace api {
     std::map<int64,Ref<ospray::ManagedObject> > objectByHandle;
     
     //! next unassigned ID on this node
@@ -15,7 +15,7 @@ namespace ospray {
     Handle Handle::alloc()
     {
       Handle h;
-      h.i32.owner = app.rank;
+      //      h.i32.owner = app.rank;
       h.i32.ID = nextFreeLocalID++;
       return h;
     }

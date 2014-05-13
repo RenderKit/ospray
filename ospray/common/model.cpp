@@ -17,6 +17,8 @@ namespace ospray {
 
   void Model::finalize()
   {
+    PING;
+
     if (logLevel > 2) {
       cout << "=======================================================" << endl;
       cout << "Finalizing model, has " << geometry.size() << " geometries" << endl;

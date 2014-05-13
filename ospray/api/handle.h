@@ -1,10 +1,12 @@
 #pragma once
 
-#include "mpicommon.h"
-#include "../common/managed.h"
+/*! \todo move to api - it's also used in coi, and not mpi specific */
+
+#include "common/ospcommon.h"
+#include "common/managed.h"
 
 namespace ospray {
-  namespace mpi {
+  namespace api {
 
     //! (local) handle to a (remote) managed object
     /*! abstraction for a remotely-held 'managed object'. the handle

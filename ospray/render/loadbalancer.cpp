@@ -61,7 +61,6 @@ namespace ospray {
     // printf("rendering fb %lx\n",fb);
     TileRenderer::RenderJob *job = tiledRenderer->createRenderJob(fb);
     RenderTask *renderTask  = new RenderTask(fb,job);
-
     if (fb->renderTask) {
       fb->renderTask->done.sync();
       fb->renderTask = NULL;

@@ -20,12 +20,12 @@ IF (OSPRAY_MPI)
 		mpi/mpicommon.cpp
 		mpi/mpiloadbalancer.cpp
 		mpi/worker.cpp
-		mpi/handle.cpp
 		)
 ENDIF()
 
 IF (OSPRAY_MIC_COI)
 	ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
+	INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
 	IF (THIS_IS_MIC)
 		ADD_DEFINITIONS(-DOSPRAY_COI_DEV=1)
 		ADD_DEFINITIONS(-DOSPRAY_COI_HOST=0)
@@ -96,6 +96,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	api/api.cpp
 	api/device.cpp
 	api/localdevice.cpp
+	api/handle.cpp
 
 	${OSPRAY_MPI_COMPONENTS}
 
@@ -110,6 +111,25 @@ IF (OSPRAY_MPI)
 	TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
 ENDIF()
 
+
+IF (OSPRAY_MIC_COI)
+	IF (THIS_IS_MIC)
+#		LINK_DIRECTORIES(/opt/intel/mic/coi/device-linux-release/lib)
+#		TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} coi_device)
+		TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+			/opt/intel/mic/coi/device-linux-release/lib/libcoi_device.so
+			)
+		ADD_EXECUTABLE(ospray_coi_worker.mic api/coidevice_worker.cpp)
+		TARGET_LINK_LIBRARIES(ospray_coi_worker.mic 
+			ospray${OSPRAY_LIB_SUFFIX}
+			/opt/intel/mic/coi/device-linux-release/lib/libcoi_device.so)
+	ELSE()
+#		LINK_DIRECTORIES(/opt/intel/mic/coi/host-linux-release/lib)
+		TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
+			/opt/intel/mic/coi/host-linux-release/lib/libcoi_host.so
+			)
+	ENDIF()
+ENDIF()
 
 
 

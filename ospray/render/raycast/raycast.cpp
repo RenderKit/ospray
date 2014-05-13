@@ -28,6 +28,8 @@ namespace ospray {
 
     frame->camera = (Camera *)getParamObject("camera",NULL);
     Assert2(frame->camera,"null camera handle (did you forget to assign a 'camera' parameter to the ray_cast renderer?)");
+
+    PRINT(((PerspectiveCamera*)frame->camera)->pos);
     frame->_camera = (void*)frame->camera->getIE();
     Assert2(frame->_camera,"invalid model without a ISPC-side camera "
             "(did you forget to finalize/'commit' the camera?)");

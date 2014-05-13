@@ -12,7 +12,7 @@ namespace ospray {
     swapChain.resize(numFBs);
     lastRendered.resize(numFBs);
     for (int i=0;i<numFBs;i++) {
-      swapChain[i] = (*fbFactory)(fbSize);
+      swapChain[i] = (*fbFactory)(fbSize,NULL);
       lastRendered[i] = 0;
       Assert(swapChain[i] != NULL);
     }

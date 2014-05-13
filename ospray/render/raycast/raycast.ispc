@@ -115,6 +115,10 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
                                              uniform RTCScene scene,
                                              const uniform int shadeMode)
 {
+#if 0
+  print("render tile \n");
+  return;
+#else
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
@@ -128,21 +132,34 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
     const uint32  y     = y0 + (frag / TILE_SIZE);
     // print("pixel % %\n",x,y);
     if (x < size_x & y < size_y) {
+      // uniform bool dbg = any(x==512 && y==512);
+
       // print("+pixel % %\n",x,y);
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
       // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-      // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
+      // if (dbg)
+      //  print("ray.dir\n %\n %\n %\n",ray.dir.x,ray.dir.y,ray.dir.z);
 #if 0
       rtcIntersect(scene,(varying RTCRay&)ray);
 #else
       rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
 #endif
-      const vec4f col = shade(shadeMode,ray,scene);
+      // if (dbg)
+      //   print("hit\n %\n %\n %\n",ray.primID,ray.geomID,ray.instID);
+      vec4f col = shade(shadeMode,ray,scene);
+      // if (dbg)
+      //   print("col\n %\n %\n %\n",col.x,col.y,col.z);
+
       // if (ray.geomID >= 0)
       //   print("col % % %\n",col.x,col.y,col.z);
+
+
+
+      // col = make_vec4f(make_random_color(i));
+
 #if 1
       tile->r[i] = col.x;
       tile->g[i] = col.y;
@@ -153,5 +170,6 @@ export void ispc__RayCastRenderer_renderTile(void *uniform _tile, //uniform Tile
 #endif
     }
   }
+#endif
 }
 

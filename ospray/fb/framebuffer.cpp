@@ -11,7 +11,11 @@ namespace ospray {
   template<class PixelType>
   void *createLocalFrameBufferISPC(const vec2i &size, 
                                    void *classPtr, void *pixelArray)
-  { Assert(false && "creating ispc frame buffer not yet implemented for this pixel type"); return NULL; }
+  { 
+    PING;
+    Assert(false && "creating ispc frame buffer not yet implemented for this pixel type"); 
+    return NULL; 
+  }
 
   struct foo { float x, y, z; };
 
@@ -38,20 +42,22 @@ namespace ospray {
 
   /*! the 'factory' method that the swapchain can use to create new
       instances of this frame buffer type */
-  FrameBuffer *createLocalFB_RGBA_I8(const vec2i &size)
+  FrameBuffer *createLocalFB_RGBA_I8(const vec2i &size, void *pixel)
   {
     Assert(size.x > 0);
     Assert(size.y > 0);
-    return new LocalFrameBuffer<uint32>(size);
+    return new LocalFrameBuffer<uint32>(size,pixel);
   }
 
   template<typename PixelType>
-  LocalFrameBuffer<PixelType>::LocalFrameBuffer(const vec2i &size) 
+  LocalFrameBuffer<PixelType>::LocalFrameBuffer(const vec2i &size,
+                                                void *pixelMem) 
     : FrameBuffer(size), isMapped(false)
   { 
     Assert(size.x > 0);
     Assert(size.y > 0);
-    pixel = new PixelType[size.x*size.y]; 
+    pixel = pixelMem ? (PixelType*)pixelMem : new PixelType[size.x*size.y]; 
+    pixelArrayIsMine = pixelMem ? 0 : 1;
     Assert(pixel);
     ispcEquivalent = createLocalFrameBufferISPC<PixelType>(size,(void*)this,(void*)pixel);
     Assert(ispcEquivalent && "frame buffer class of this type not yet implemented in ISPC");
@@ -60,7 +66,8 @@ namespace ospray {
   template<typename PixelType>
   LocalFrameBuffer<PixelType>::~LocalFrameBuffer() 
   {
-    delete[] pixel; 
+    if (pixelArrayIsMine)
+      delete[] pixel; 
   }
 
   template<typename PixelType>

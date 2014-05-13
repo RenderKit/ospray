@@ -90,7 +90,8 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
     ray.primID = primID;
     ray.geomID = geometry->geometry.geomID;
     ray.t = t_in;
-    const vec3f P = ray.t*ray.dir - A;
+    const vec3f P = ray.org+ray.t*ray.dir - v0;
+    // const vec3f P = ray.t*ray.dir - A;
     const vec3f V = cross(P,AB);
     ray.Ng = cross(AB,V);
     return;

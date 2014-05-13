@@ -110,7 +110,7 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
 
       Texture texture = tachyon->textureArray[dg.materialID];
       if (dg.color.x >= 0.f)
-        texture.color = make_vec3f(dg.color);
+        texture.color = texture.color * make_vec3f(dg.color);
 
       // reflective direction, for phong highlight
       const vec3f R = ray.dir - (2.f*dot(ray.dir,dg.Ns))*dg.Ns;
@@ -135,7 +135,8 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
         const float cosNL = abs(dot(L,dg.Ns));
         const float cosLR = max(0.f,dot(L,R));
         const float diffuse  = texture.diffuse * cosNL;
-        const float specular = (texture.specular+texture.phong.plastic)* powf(cosLR,texture.phong.size);
+        const float specular = (texture.specular//+texture.phong.plastic
+                                )* powf(cosLR,texture.phong.size);
         const vec3f unshaded_light_contrib
           = local_opacity
           * (diffuse*texture.color+make_vec3f(specular))
@@ -147,7 +148,8 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
         
         Ray shadowRay;
         setRay(shadowRay,P,L,EPS,dist*(1.f-EPS)-EPS);
-        const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
+        const float light_alpha = lightAlpha(shadowRay,tachyon,max_contrib);
+        // const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
 
         localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
       }
@@ -175,7 +177,8 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
         
         Ray shadowRay;
         setRay(shadowRay,P,L,EPS,infinity);
-        const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
+        const float light_alpha = lightAlpha(shadowRay,tachyon,max_contrib);
+        // const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
 
         localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
       }

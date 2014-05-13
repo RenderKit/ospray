@@ -65,6 +65,8 @@ namespace ospray {
         removeArgs(*_ac,(char **&)_av,1,1);
         ospray::api::Device::current
           = ospray::coi::createCoiDevice(_ac,_av);
+        PING;
+        PRINT(ospray::api::Device::current);
 #else
         throw std::runtime_error("OSPRay's COI support not compiled in");
 #endif
@@ -98,6 +100,7 @@ namespace ospray {
       }
     }
     
+    PING;
     // no device created on cmd line, yet, so default to localdevice
     if (ospray::api::Device::current == NULL)
       ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);

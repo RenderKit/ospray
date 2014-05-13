@@ -8,7 +8,7 @@ namespace ospray {
   struct FrameBuffer;
 
   /*! typedef for a 'factory' function that returns frame buffers of a given type */
-  typedef FrameBuffer *(*FrameBufferFactory)(const vec2i &fbSize);
+  typedef FrameBuffer *(*FrameBufferFactory)(const vec2i &fbSize, void *mem);
 
   /*! class that implements a 'swap chain' of frame buffers of a given size */
   struct SwapChain : public ManagedObject {
