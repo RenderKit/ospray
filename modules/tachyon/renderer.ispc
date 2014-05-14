@@ -89,13 +89,18 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
   vec3f color = make_vec3f(0.f);
   float path_opacity = 1.f;
   int max_depth = 10; // max number of rays to be traced...
+  uniform int depth = 0;
   while (1) {
     traceRay(tachyon->model,ray);
     if (ray.geomID < 0) {
-      vec3f bgColor = make_vec3f(0.f);
+      vec3f bgColor = make_vec3f(1.f);
+      // if (depth == 0)
+      //   return bgColor;
+
       color = color + path_opacity * bgColor;
       return color;
     }
+    ++depth;
 
     vec3f localShadeColor = make_vec3f(0.f);
     DifferentialGeometry dg;

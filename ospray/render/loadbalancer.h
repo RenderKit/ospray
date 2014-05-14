@@ -24,16 +24,16 @@ namespace ospray {
 
   //! tiled load balancer for local rendering on the given machine
   /*! a tiled load balancer that orchestrates (multi-threaded)
-      rendering on a local machine, without any cross-node
-      communication/load balancing at all (even if there are multiple
-      application ranks each doing local rendering on their own)  */ 
+    rendering on a local machine, without any cross-node
+    communication/load balancing at all (even if there are multiple
+    application ranks each doing local rendering on their own)  */ 
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
     /*! \brief a task for rendering a frame using the global tiled load balancer 
       
       if derived from FrameBuffer::RenderFrameEvent to allow us for
       attaching that as a sync primitive to the farme buffer
-     */
+    */
     struct RenderTask : public FrameBuffer::RenderFrameEvent {
       RenderTask(FrameBuffer *fb,
                  TileRenderer::RenderJob *frameRenderJob);
@@ -51,6 +51,52 @@ namespace ospray {
     };
 
     virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
-    // virtual void returnTile(FrameBuffer *fb, Tile &tile);
+  };
+
+  //! tiled load balancer for local rendering on the given machine
+  /*! a tiled load balancer that orchestrates (multi-threaded)
+    rendering on a local machine, without any cross-node
+    communication/load balancing at all (even if there are multiple
+    application ranks each doing local rendering on their own)  */ 
+  struct InterleavedTiledLoadBalancer : public TiledLoadBalancer
+  {
+    size_t deviceID;
+    size_t numDevices;
+
+    InterleavedTiledLoadBalancer(size_t deviceID, size_t numDevices)
+      : deviceID(deviceID), numDevices(numDevices)
+    {}
+
+    /*! \brief a task for rendering a frame using the global tiled load balancer 
+      
+      if derived from FrameBuffer::RenderFrameEvent to allow us for
+      attaching that as a sync primitive to the farme buffer
+    */
+    struct RenderTask : public FrameBuffer::RenderFrameEvent {
+      RenderTask(FrameBuffer *fb,
+                 TileRenderer::RenderJob *frameRenderJob,
+                 size_t numTiles_x,
+                 size_t numTiles_y,
+                 size_t numTiles_mine,
+                 size_t deviceID,
+                 size_t numDevices);
+      size_t numTiles_x;
+      size_t numTiles_y;
+      size_t numTiles_mine;
+      size_t deviceID;
+      size_t numDevices;
+
+      Ref<TileRenderer::RenderJob> frameRenderJob;
+      Ref<FrameBuffer>             fb;
+      TaskScheduler::Task          task;
+      vec2i                        fbSize;
+      
+      TASK_RUN_FUNCTION(RenderTask,run);
+      TASK_COMPLETE_FUNCTION(RenderTask,finish);
+      
+      virtual ~RenderTask() { }
+    };
+    
+    virtual void renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb);
   };
 }

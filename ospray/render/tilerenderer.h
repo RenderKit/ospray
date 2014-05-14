@@ -37,6 +37,8 @@ namespace ospray {
     virtual void renderFrame(FrameBuffer *fb);
   };
 
+  struct InterleavedTileRenderer : public TileRenderer {
+  };
 }
 
 
