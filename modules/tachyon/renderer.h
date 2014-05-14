@@ -40,6 +40,7 @@ namespace ospray {
       Data   *dirLightData;
       void   *dirLightArray;
       uint32  numDirLights;
+      bool    doShadows;
 
       virtual void renderTile(Tile &tile);
       virtual ~RenderTask() {}

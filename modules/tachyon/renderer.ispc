@@ -37,6 +37,7 @@ struct Tachyon {
   uint32  numPointLights;
   uniform DirLight *dirLight;
   uint32  numDirLights;
+  bool    doShadows;
 };
 
 #define EPS (1e-4f)
@@ -46,7 +47,8 @@ inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
 
 inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon, const float weight)
 {
-  // return 1.f; 
+  if (!tachyon->doShadows)
+    return 1.f; 
 
   float alpha = 1.f;
   int max_depth = 8; // max number of rays to be traced...
@@ -213,7 +215,8 @@ export void TachyonRenderer_renderTile(void *uniform _tile,
                                        void *uniform _pointLight,
                                        uniform uint32 numPointLights,
                                        void *uniform _dirLight,
-                                       uniform uint32 numDirLights)
+                                       uniform uint32 numDirLights,
+                                       uniform bool doShadows)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
@@ -225,6 +228,7 @@ export void TachyonRenderer_renderTile(void *uniform _tile,
   tachyon.pointLight = (uniform PointLight *uniform)_pointLight;
   tachyon.numDirLights = numDirLights;
   tachyon.dirLight = (uniform DirLight *uniform)_dirLight;
+  tachyon.doShadows = doShadows;
 
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;

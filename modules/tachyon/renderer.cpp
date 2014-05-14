@@ -18,12 +18,14 @@ namespace ospray {
                                      camera->getIE(),world->getIE(),
                                      textureData->data,
                                      pointLightArray,numPointLights,
-                                     dirLightArray,numDirLights
+                                     dirLightArray,numDirLights,doShadows
                                      );
   }
 
   TileRenderer::RenderJob *TachyonRenderer::createRenderJob(FrameBuffer *fb)
   {
+    /*! iw - actually, shoudl do all this parsing in 'commit', not in createrenderjob */
+
     RenderTask *frame = new RenderTask;
     // should actually do that in 'commit', not ever frame ...
     Model *model = (Model *)getParamObject("world",NULL);
@@ -31,6 +33,8 @@ namespace ospray {
     if (!model)
       throw std::runtime_error("#osp:tachyon::renderer: no model specified");
     frame->world = model;
+
+    frame->doShadows = getParam1i("do_shadows",0);
 
     frame->textureData = (Data*)model->getParamObject("textureArray",NULL);
     if (!frame->textureData)

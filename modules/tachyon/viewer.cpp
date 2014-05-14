@@ -16,7 +16,8 @@ namespace ospray {
     // const char *renderType = "ao16";
     float defaultRadius = .1f;
     tachyon::Model tachModel;
-  
+    bool doShadows = true;
+
     void error(const std::string &vol)
     {
       if (vol != "") {
@@ -165,9 +166,25 @@ namespace ospray {
         Assert2(renderer,"could not create renderer");
         ospSetParam(renderer,"model",model);
         ospSetParam(renderer,"camera",camera);
+        ospSet1i(renderer,"do_shadows",doShadows);
         ospCommit(renderer);
 
       };
+
+      virtual void keypress(char key, const vec2f where)
+      {
+        switch (key) {
+        case 'S':
+          doShadows = !doShadows;
+          cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;
+          ospSet1i(renderer,"do_shadows",doShadows);
+          ospCommit(renderer);
+          break;
+        default:
+          Glut3DWidget::keypress(key,where);
+        }
+      }
+
       virtual void reshape(const ospray::vec2i &newSize) 
       {
         Glut3DWidget::reshape(newSize);
