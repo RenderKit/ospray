@@ -1,5 +1,10 @@
 #undef NDEBUG
 
+// O_LARGEFILE is a GNU extension.
+#ifdef __APPLE__
+#define  O_LARGEFILE  0
+#endif
+
 // header
 #include "ospray/common/managed.h"
 #include "ospray/common/data.h"
