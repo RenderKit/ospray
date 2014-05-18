@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "render/tilerenderer.h"
+#include "ospray/render/tilerenderer.h"
 
 /*! @{ \ingroup ospray_module_dvr */
 namespace ospray {

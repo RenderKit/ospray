@@ -2,8 +2,8 @@
     the multi-hit kernel */
 
 // ospray
-#include "common/ospcommon.ih"
-#include "common/ray.ih"
+#include "ospray/common/ospcommon.ih"
+#include "ospray/common/ray.ih"
 // embree
 #include "embree2/rtcore.isph"
 

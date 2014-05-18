@@ -1,11 +1,11 @@
 /*! \file raycast.ispc Defines ISPC side of the AO16 renderer */
 
 // ospray stuff
-#include "../../fb/framebuffer.ih"
-#include "../../camera/camera.ih"
-#include "../../common/ray.ih"
-#include "../util.ih"
-#include "../../common/math/math.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/camera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/render/util.ih"
+#include "ospray/math/math.ih"
 
 // embree stuff
 #include "embree2/rtcore_scene.isph"

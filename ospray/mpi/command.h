@@ -1,10 +1,12 @@
 #pragma once
 
 #include "mpicommon.h"
-#include "handle.h"
+#include "ospray/api/handle.h"
 
 namespace ospray {
   namespace mpi {
+    using api::Handle;
+
     /*! \brief abstraction for a binary command stream */
     /*! abstracts the concept of the mpi device writing commands and
       parameters, and the respective worker reading and unpacking

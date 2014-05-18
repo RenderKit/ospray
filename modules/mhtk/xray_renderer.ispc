@@ -2,10 +2,10 @@
   function for ospray::mhtk::XRayRenderer */
 
 // ospray stuff
-#include "fb/framebuffer.ih"
-#include "camera/perspectivecamera.ih"
-#include "common/ray.ih"
-#include "render/util.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/render/util.ih"
 #include "multihit_kernel.ih"
 
 #define MAX_HITS_PER_TRACE 100

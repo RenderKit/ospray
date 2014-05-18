@@ -2,12 +2,12 @@
     (that only renders a simple test frame */
 
 // ospray stuff
-#include "fb/framebuffer.ih"
-#include "camera/perspectivecamera.ih"
-#include "common/ray.ih"
-#include "common/math/bbox.ih"
-#include "volume/volume.ih"
-#include "render/util.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/math/bbox.ih"
+#include "ospray/volume/volume.ih"
+#include "ospray/render/util.ih"
 
 //! performs a ray-box intersection test, and returns intersection interval [t0,t1]
 inline void boxtest(const Ray &ray,

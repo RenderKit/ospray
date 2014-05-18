@@ -6,6 +6,6 @@ typedef unsigned int32 uint32;
 typedef unsigned int16 uint16;
 typedef unsigned int8  uint8;
 
-#include "math/vec.ih"
+#include "ospray/math/vec.ih"
 
 #endif

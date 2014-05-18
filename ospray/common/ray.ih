@@ -2,7 +2,7 @@
 #define OSPRAY_COMMON_RAY_IH
 
  // ospray stuff
-#include "math/vec.ih"
+#include "ospray/math/vec.ih"
 
 /*! \brief ospray ray class 
 

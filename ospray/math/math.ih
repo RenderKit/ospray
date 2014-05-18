@@ -3,7 +3,7 @@
 #ifndef MATH_ISPH
 #define MATH_ISPH
 
-#include "common/ospcommon.ih"
+#include "ospray/common/ospcommon.ih"
 
 # define M_PI		3.14159265358979323846f	/* pi */
 

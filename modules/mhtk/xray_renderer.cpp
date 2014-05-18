@@ -2,10 +2,10 @@
 
 #include "multihit_kernel.h"
 #include "xray_renderer.h"
-#include "../camera/perspectivecamera.h"
-#include "../volume/volume.h"
+#include "ospray/camera/perspectivecamera.h"
+#include "ospray/volume/volume.h"
 // ospray stuff
-#include "../../ospray/common/ray.h"
+#include "ospray/common/ray.h"
 
 #define STATS(a) 
 

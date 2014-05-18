@@ -1,11 +1,11 @@
 /*! \file renderer.ispc Defines ISPC side of RV module renderer */
 
 // ospray stuff
-#include "fb/framebuffer.ih"
-#include "camera/perspectivecamera.ih"
-#include "common/ray.ih"
-#include "render/util.ih"
-#include "common/math/bbox.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/render/util.ih"
+#include "ospray/math/bbox.ih"
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 #include "embree2/rtcore_ray.isph"

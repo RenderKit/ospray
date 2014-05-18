@@ -1,11 +1,11 @@
 /*! \file dvr.ispc Defines ISPC side of "Direct Volume (ray casting) Renderer" (DVR) */
 
 // ospray stuff
-#include "../../fb/framebuffer.ih"
-#include "../../camera/perspectivecamera.ih"
-#include "../../common/ray.ih"
-#include "../../common/math/bbox.ih"
-#include "../../volume/volume.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/math/bbox.ih"
+#include "ospray/volume/volume.ih"
 
 
 //! performs a ray-box intersection test, and returns intersection interval [t0,t1]

@@ -1,6 +1,6 @@
 #ifndef OSPRAY_DG_IH
 
-#include "common/math/vec.ih"
+#include "ospray/math/vec.ih"
 
 struct Geometry;
 struct Model;

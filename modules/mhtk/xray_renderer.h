@@ -1,7 +1,7 @@
 #pragma once
 
 // ospray
-#include "render/tilerenderer.h"
+#include "ospray/render/tilerenderer.h"
 // embree
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"

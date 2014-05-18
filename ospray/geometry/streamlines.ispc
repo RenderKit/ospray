@@ -1,7 +1,7 @@
 // ospray
-#include "common/math/vec.ih"
-#include "common/math/bbox.ih"
-#include "common/ray.ih"
+#include "ospray/math/vec.ih"
+#include "ospray/math/bbox.ih"
+#include "ospray/common/ray.ih"
 #include "ospray/geometry/geometry.ih"
 #include "ospray/common/model.ih"
 // embree

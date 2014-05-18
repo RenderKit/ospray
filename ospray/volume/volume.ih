@@ -8,7 +8,7 @@
   \internal Still _very_, very basic; needs fleshing out.
  */
 
-#include "common/ospcommon.ih"
+#include "ospray/common/ospcommon.ih"
 
 struct Volume;
 typedef varying float (*Volume_lerpfFct)(uniform Volume *uniform volume,

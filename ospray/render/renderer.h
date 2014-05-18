@@ -2,8 +2,8 @@
 
 /*! \file renderer.h Defines the base renderer class */
 
-#include "../common/model.h"
-#include "../fb/framebuffer.h"
+#include "ospray/common/model.h"
+#include "ospray/fb/framebuffer.h"
 
 namespace ospray {
 
