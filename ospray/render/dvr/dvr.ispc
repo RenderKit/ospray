@@ -128,7 +128,8 @@ task void DVRRenderer_renderLine(uniform FrameBuffer *uniform fb,
     const float screen_v = (y+.5f)/size_y;
     
     Ray ray;
-    camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+    camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+                    (varying vec2f)make_vec2f(0.f,0.f));
 
     const vec4f col = rayCastDVR(ray,volume);
     fb->setPixel(fb,make_vec2i(x,y),col); //make_vec4f(fx,fy,fz,fw));

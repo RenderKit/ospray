@@ -1,4 +1,4 @@
-#ifndef OSPRAY_DG_IH
+#pragma once
 
 #include "ospray/math/vec.ih"
 
@@ -41,4 +41,3 @@ struct DifferentialGeometry {
   uniform Material *material; /*! pointer to hit-point's material */
 };
 
-#endif

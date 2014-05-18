@@ -6,14 +6,16 @@ typedef void *uniform uniVoidPtr;
 
 void PerspectiveCamera_initRay(uniform Camera *uniform camera,
                                varying Ray &ray,
-                               const varying vec2f &sample)
+                               const varying vec2f &screen,
+                               const varying vec2f &lens
+                               )
 {
   uniform PerspectiveCamera *uniform _this = 
     (uniform PerspectiveCamera *uniform)camera;
   const vec3f org = _this->data.org;
   const vec3f dir = _this->data.dir_00
-    + sample.x * _this->data.dir_du
-    + sample.y * _this->data.dir_dv;
+    + screen.x * _this->data.dir_du
+    + screen.y * _this->data.dir_dv;
   setRay(ray,org,normalize(dir));
 }
 

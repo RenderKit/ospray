@@ -99,7 +99,8 @@ export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
       const float screen_u = (x+.5f)*tile->rcp_fbSize.x;
       const float screen_v = (y+.5f)*tile->rcp_fbSize.y;
       Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+                      (varying vec2f)make_vec2f(0.f,0.f));
 
       const vec4f col = 10 * traceRayDVR(ray,volume,dt);
 #if 1
