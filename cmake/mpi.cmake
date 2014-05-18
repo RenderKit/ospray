@@ -66,4 +66,8 @@ IF (OSPRAY_MPI)
 #	ELSE()
 #		set(MPI_LIBRARIES_XEON ${MPI_LIBRARIES_XEON})
 #	ENDIF()
+ELSE()
+	MACRO(CONFIGURE_MPI)
+		# nothing to do w/o mpi mode
+	ENDMACRO()
 ENDIF()

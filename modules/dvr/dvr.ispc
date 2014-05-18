@@ -101,7 +101,7 @@ export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
 
-      const vec4f col = traceRayDVR(ray,volume,dt);
+      const vec4f col = 10 * traceRayDVR(ray,volume,dt);
 #if 1
       tile->r[i] = col.x;
       tile->g[i] = col.y;
