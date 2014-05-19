@@ -29,25 +29,13 @@ namespace ospray {
 
   template<>
   void NaiveVolume<uint8>::setRegion(const vec3i &where, 
-                                            const vec3i &size, 
-                                            const uint8 *data)
+                                     const vec3i &size, 
+                                     const uint8 *data)
   {
     ispc::_Naive32Volume1uc_setRegion((ispc::_Volume*)getIE(),(const ispc::vec3i&)where,
                                       (const ispc::vec3i&)size,data);
   }
   
-  // template<>
-  // void NaiveVolume<float>::setRegion(const vec3i &where, 
-  //                                    const vec3i &size, 
-  //                                    const uint8 *data)
-  // {
-  //   float t[long(size.x)*size.y*size.z];
-  //   for (long i=0;i<long(size.x)*size.y*size.z;i++)
-  //     t[i] = float(255.999f*data[i]);
-  //   ispc::_Naive32Volume1f_setRegion(getIE(),(const ispc::vec3i&)where,
-  //                                     (const ispc::vec3i&)size,t);
-  // }
-
   template<>
   void NaiveVolume<float>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
@@ -69,7 +57,7 @@ namespace ospray {
     float clamped_x = ((float*)&pos4)[0];
     float clamped_y = ((float*)&pos4)[1];
     float clamped_z = ((float*)&pos4)[2];
-    // PRINT(pos);
+
     uint32 ix = ((int*)&idx4)[0];//uint32(clamped_x);
     uint32 iy = ((int*)&idx4)[1];//uint32(clamped_y);
     uint32 iz = ((int*)&idx4)[2];//uint32(clamped_z);
@@ -77,15 +65,10 @@ namespace ospray {
     const float fx = ((float*)&f4)[0];//clamped_x - ix;
     const float fy = ((float*)&f4)[1];//clamped_y - iy;
     const float fz = ((float*)&f4)[2];//clamped_z - iz;
-    // PRINT(ix);
-    // PRINT(iy);
-    // PRINT(iz);
     uint64 addr = ix + this->size.x*(iy + this->size.y*((uint64)iz));
-    // PRINT(addr);
 
     __m256 v8 = _mm256_i32gather_ps((const float*)addr,(__m256i&)voxelOffset,_MM_SCALE_4);
-    // __m256 v000 = _mm256_set1_ps(*(float*)addr);
-    // v = _mm256_sub_ps(v,
+
     const float v000 = ((float*)&v8)[0];//(data[addr];
     const float v001 = ((float*)&v8)[1];//data[addr+1];
     const float v010 = ((float*)&v8)[2];//data[addr+size.x];
@@ -111,10 +94,7 @@ namespace ospray {
     float clamped_x = std::max(0.f,std::min(pos.x*size.x,size.x-1.0001f));
     float clamped_y = std::max(0.f,std::min(pos.y*size.y,size.y-1.0001f));
     float clamped_z = std::max(0.f,std::min(pos.z*size.z,size.z-1.0001f));
-    // float clamped_x = std::max(0.f,std::min(pos.x,size.x-1.0001f));
-    // float clamped_y = std::max(0.f,std::min(pos.y,size.y-1.0001f));
-    // float clamped_z = std::max(0.f,std::min(pos.z,size.z-1.0001f));
-    // PRINT(pos);
+
     uint32 ix = uint32(clamped_x);
     uint32 iy = uint32(clamped_y);
     uint32 iz = uint32(clamped_z);
@@ -122,11 +102,8 @@ namespace ospray {
     const float fx = clamped_x - ix;
     const float fy = clamped_y - iy;
     const float fz = clamped_z - iz;
-    // PRINT(ix);
-    // PRINT(iy);
-    // PRINT(iz);
+
     uint64 addr = ix + size.x*(iy + size.y*((uint64)iz));
-    // PRINT(addr);
 
     const float v000 = data[addr];
     const float v001 = data[addr+1];

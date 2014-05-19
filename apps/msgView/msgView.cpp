@@ -16,7 +16,7 @@ namespace ospray {
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
-  bool alwaysRedraw = false;
+  bool alwaysRedraw = true;
 
   //! the renderer we're about to use
   std::string rendererType = "raycast_eyelight";

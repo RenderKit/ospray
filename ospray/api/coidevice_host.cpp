@@ -14,6 +14,12 @@
 //std
 #include <map>
 
+
+#include "../fb/tilesize.h"
+
+
+//#define FORCE_SINGLE_DEVICE 1
+
 namespace ospray {
   namespace coi {
 
@@ -35,11 +41,13 @@ namespace ospray {
       OSPCOI_NEW_MATERIAL,
       OSPCOI_SET_MATERIAL,
       OSPCOI_NEW_CAMERA,
+      OSPCOI_NEW_VOLUME,
       OSPCOI_NEW_RENDERER,
       OSPCOI_NEW_GEOMETRY,
       OSPCOI_ADD_GEOMETRY,
       OSPCOI_NEW_FRAMEBUFFER,
       OSPCOI_RENDER_FRAME,
+      OSPCOI_RENDER_FRAME_SYNC,
       OSPCOI_NUM_FUNCTIONS
     } RemoteFctID;
     const char *coiFctName[] = {
@@ -51,11 +59,13 @@ namespace ospray {
       "ospray_coi_new_material",
       "ospray_coi_set_material",
       "ospray_coi_new_camera",
+      "ospray_coi_new_volume",
       "ospray_coi_new_renderer",
       "ospray_coi_new_geometry",
       "ospray_coi_add_geometry",
       "ospray_coi_new_framebuffer",
       "ospray_coi_render_frame",
+      "ospray_coi_render_frame_sync",
       NULL
     };
     
@@ -66,6 +76,7 @@ namespace ospray {
       // COIDEVICE       coiDevice;   // COI device handle
       COI_ENGINE_INFO coiInfo;
       size_t          engineID;
+      COIEVENT        event;
       
       COIDevice *osprayDevice;
       COIFUNCTION coiFctHandle[OSPCOI_NUM_FUNCTIONS];
@@ -119,7 +130,7 @@ namespace ospray {
       virtual int loadModule(const char *name);
 
       /*! assign (named) string parameter to an object */
-      virtual void setString(OSPObject object, const char *bufName, const char *s) { NOTIMPLEMENTED; }
+      virtual void setString(OSPObject object, const char *bufName, const char *s);
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject target, const char *bufName, OSPObject value);
       /*! assign (named) float parameter to an object */
@@ -129,7 +140,7 @@ namespace ospray {
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
       /*! assign (named) vec3i parameter to an object */
-      virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v) { NOTIMPLEMENTED; }
+      virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) { NOTIMPLEMENTED; }
 
@@ -146,7 +157,7 @@ namespace ospray {
       virtual OSPCamera newCamera(const char *type);
 
       /*! create a new volume object (out of list of registered volumes) */
-      virtual OSPVolume newVolume(const char *type) { NOTIMPLEMENTED; }
+      virtual OSPVolume newVolume(const char *type);
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
@@ -239,26 +250,34 @@ namespace ospray {
 
     void COIEngine::callFunction(RemoteFctID ID, const DataStream &data, bool sync)
     {
-      // if (sync) {
-        COIEVENT event; bzero(&event,sizeof(event));
+      // double t0 = ospray::getSysTime();
+      if (sync) {
+        bzero(&event,sizeof(event));
         COIRESULT result = COIPipelineRunFunction(coiPipe,coiFctHandle[ID],
                                                   0,NULL,NULL,//buffers
                                                   0,NULL,//dependencies
                                                   data.buf,data.ofs,//data
                                                   NULL,0,
                                                   &event);
-        Assert(result == COI_SUCCESS);
+        if (result != COI_SUCCESS) {
+          coiError(result,"error in coipipelinerunfct");
+        }
         COIEventWait(1,&event,-1,1,NULL,NULL);
-        // SLEEP_DELAY;
-      // } else { 
-      //   COIRESULT result = COIPipelineRunFunction(coiPipe,coiFctHandle[ID],
-      //                                             0,NULL,NULL,//buffers
-      //                                             0,NULL,//dependencies
-      //                                             data.buf,data.ofs,//data
-      //                                             NULL,0,
-      //                                             NULL);
-      //   Assert(result == COI_SUCCESS);
-      // }
+      } else {
+        bzero(&event,sizeof(event));
+        COIRESULT result = COIPipelineRunFunction(coiPipe,coiFctHandle[ID],
+                                                  0,NULL,NULL,//buffers
+                                                  0,NULL,//dependencies
+                                                  data.buf,data.ofs,//data
+                                                  NULL,0,
+                                                  &event);
+        if (result != COI_SUCCESS) {
+          coiError(result,"error in coipipelinerunfct");
+        // COIEventWait(1,&event,-1,1,NULL,NULL);
+        }
+      }
+      // double t1 = ospray::getSysTime();
+      // cout << "fct " << ID << "@" << engineID << " : " << (t1-t0) << "s" << endl;
     }
 
     
@@ -291,8 +310,10 @@ namespace ospray {
       if (numEngines == 0) {
         coiError(result,"no coi devices found");
       }
+#if FORCE_SINGLE_DEVICE
       cout << "FORCING AT MOST ONE ENGINE" << endl;
       numEngines = 1;
+#endif
 
       Assert(result == COI_SUCCESS);
       cout << "#osp:coi: found " << numEngines << " COI engines" << endl;
@@ -311,12 +332,12 @@ namespace ospray {
 
     int COIDevice::loadModule(const char *name) 
     { 
+      cout << "#osp:coi: loading module " << name << endl;
       // cout << "#osp:coi: loading module '" << name << "' not implemented... ignoring" << endl;
       DataStream args;
       args.write(name);
 
       std::string libName = "libospray_module_"+std::string(name)+"_mic.so";
-      PRINT(libName);
 
       COIRESULT result;
       for (int i=0;i<engine.size();i++) {
@@ -415,7 +436,12 @@ namespace ospray {
       DataStream args;
       args.write((Handle&)_sc);
       args.write((Handle&)_renderer);
-      callFunction(OSPCOI_RENDER_FRAME,args);
+#if FORCE_SINGLE_DEVICE
+      callFunction(OSPCOI_RENDER_FRAME,args,true);
+#else
+      callFunction(OSPCOI_RENDER_FRAME,args,false);
+      callFunction(OSPCOI_RENDER_FRAME_SYNC,args,true);
+#endif
    }
 
 
@@ -481,6 +507,18 @@ namespace ospray {
       args.write(type);
       callFunction(OSPCOI_NEW_CAMERA,args);
       return (OSPCamera)(int64)handle;
+    }
+
+    /*! create a new volume object (out of list of registered volumes) */
+    OSPVolume COIDevice::newVolume(const char *type)
+    {
+      Assert(type);
+      Handle handle = Handle::alloc();
+      DataStream args;
+      args.write(handle);
+      args.write(type);
+      callFunction(OSPCOI_NEW_VOLUME,args);
+      return (OSPVolume)(int64)handle;
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
@@ -554,12 +592,63 @@ namespace ospray {
       Handle handle = (Handle &)_fb;
       COIFrameBuffer *fb = fbList[handle];//(COIFrameBuffer *)_fb;
       
+#if FORCE_SINGLE_DEVICE
       COIEVENT event; bzero(&event,sizeof(event));
+      // double t0 = ospray::getSysTime();
       result = COIBufferRead(fb->coiBuffer[0],0,fb->hostMem,
                              fb->size.x*fb->size.y*sizeof(int32),
                              COI_COPY_USE_DMA,0,NULL,&event);
       Assert(result == COI_SUCCESS);
       COIEventWait(1,&event,-1,1,NULL,NULL);
+      // double t1 = ospray::getSysTime();
+      // double t_read_buffer = t1 - t0;
+      // PRINT(t_read_buffer);
+#else
+      const int numEngines = engine.size();
+      int32 *devBuffer[numEngines];
+      COIEVENT doneCopy[numEngines];
+      // -------------------------------------------------------
+      // trigger N copies...
+      // -------------------------------------------------------
+      for (int i=0;i<numEngines;i++) {
+        bzero(&doneCopy[i],sizeof(COIEVENT));
+        devBuffer[i] = new int32[fb->size.x*fb->size.y];
+        result = COIBufferRead(fb->coiBuffer[i],0,devBuffer[i],
+                               fb->size.x*fb->size.y*sizeof(int32),
+                               COI_COPY_USE_DMA,0,NULL,&doneCopy[i]);
+        Assert(result == COI_SUCCESS);
+      }
+      // -------------------------------------------------------
+      // do 50 assemblies...
+      // -------------------------------------------------------
+      for (int engineID=0;engineID<numEngines;engineID++) {
+        const size_t sizeX = fb->size.x;
+        const size_t sizeY = fb->size.y;
+        COIEventWait(1,&doneCopy[engineID],-1,1,NULL,NULL);
+        uint32 *src = (uint32*)devBuffer[engineID];
+        uint32 *dst = (uint32*)fb->hostMem;
+
+        const size_t numTilesX = divRoundUp(sizeX,TILE_SIZE);
+        const size_t numTilesY = divRoundUp(sizeY,TILE_SIZE);
+        for (size_t tileY=0;tileY<numTilesY;tileY++)
+          for (size_t tileX=0;tileX<numTilesX;tileX++) {
+            const size_t tileID = tileX+numTilesX*tileY;
+            if (engineID != (tileID % numEngines)) 
+              continue;
+            const size_t x0 = tileX*TILE_SIZE;            
+            const size_t x1 = std::min(x0+TILE_SIZE,sizeX);
+            const size_t y0 = tileY*TILE_SIZE;            
+            const size_t y1 = std::min(y0+TILE_SIZE,sizeY);
+            for (size_t y=y0;y<y1;y++)
+              for (size_t x=x0;x<x1;x++) {
+                const size_t idx = x+y*sizeX;
+                dst[idx] = src[idx];
+              }
+          }
+
+        delete[] devBuffer[engineID];
+      }
+#endif
       return fb->hostMem;
     }
 
@@ -585,6 +674,18 @@ namespace ospray {
       callFunction(OSPCOI_SET_VALUE,args);
     }
 
+    /*! assign (named) data item as a parameter to an object */
+    void COIDevice::setString(OSPObject target, const char *bufName, const char *s)
+    {
+      Assert(bufName);
+
+      DataStream args;
+      args.write((Handle&)target);
+      args.write(bufName);
+      args.write(OSP_STRING);
+      args.write(s);
+      callFunction(OSPCOI_SET_VALUE,args);
+    }
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setFloat(OSPObject target, const char *bufName, const float f)
     {
@@ -618,6 +719,18 @@ namespace ospray {
       args.write((Handle&)target);
       args.write(bufName);
       args.write(OSP_vec3f);
+      args.write(v);
+      callFunction(OSPCOI_SET_VALUE,args);
+    }
+    /*! assign (named) data item as a parameter to an object */
+    void COIDevice::setVec3i(OSPObject target, const char *bufName, const vec3i &v)
+    {
+      Assert(bufName);
+
+      DataStream args;
+      args.write((Handle&)target);
+      args.write(bufName);
+      args.write(OSP_vec3i);
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
     }

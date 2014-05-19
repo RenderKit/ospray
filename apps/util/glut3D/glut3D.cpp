@@ -258,7 +258,6 @@ namespace ospray {
 
         if (length(up) < 1e-3f)
           up = vec3f(0,0,1.f);
-        PRINT(up);
 
         this->worldBounds = worldBounds;
         viewPort.frame.l.vy = normalize(dir);
@@ -305,7 +304,6 @@ namespace ospray {
       for(int i = 1; i < *ac;i++)
       {
         std::string arg(av[i]);
-        printf("commandline arg: %s\n", arg.c_str());
         if (arg == "-win")
         {
           if (++i < *ac)

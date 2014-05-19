@@ -48,20 +48,27 @@ namespace ospray {
   void StructuredVolume<T>::loadRAW(const vec3i &size, const char *fileName)
   {
     assert(fileName);
-    FILE *file = fopen(fileName,"rb");
     assert(file);
     assert(size.x > 0);
+    FILE *file = fopen(fileName,"rb");
+    if (!file) {
+      std::cout << "#osp:dvr: Could now fopen file " << fileName << " in loadRAW()" << std::endl;
+      throw std::runtime_error("unable to open file");
+    }
     this->size = size;
     allocate();
     createIE();
-    T t[this->size.x];
+    T *t = new T[this->size.x];
     for (int z=0;z<this->size.z;z++)
       for (int y=0;y<this->size.y;y++) {
         int n = fread(t,sizeof(T),this->size.x,file);
-        if (n != this->size.x)
+        if (n != this->size.x) {
+          
           throw std::runtime_error("ospray::loadRaw: read incomplete data");
+        }
         this->setRegion(vec3i(0,y,z),vec3i(this->size.x,1,1),t);
       }
+    delete[] t;
   }
 
   template<typename T>

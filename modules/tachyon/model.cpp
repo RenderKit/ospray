@@ -112,7 +112,7 @@ namespace ospray {
           return i;
       textureVec.push_back(*texture);
       int ID = textureVec.size()-1;
-      cout << "New texture[" << ID << " " << texture->color << endl;
+      // cout << "New texture[" << ID << " " << texture->color << endl;
       return ID;
     }
 
