@@ -70,6 +70,8 @@ inline vec4f traceRayDVR(const Ray &ray,
     
     color_sample.w = 1.f;
     color = color + color_sample * alpha_1msa;
+    if (min(min(color.x,color.y),color.z) >= 1.f)
+      break;
   }
   return color;
 }

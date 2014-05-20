@@ -53,7 +53,7 @@ void Naive32Volume1uc_setRegion(uniform VolumePtr _volume,
     = (uniform Volume *uniform)_volume;
   unsigned int8 *uniform dst = (unsigned int8 *uniform)volume->data;
   unsigned int8 *uniform src = (unsigned int8 *uniform)data;
-  print("SRC % DST %\n",src,dst);
+  // print("SRC % DST %\n",src,dst);
   foreach (sz = 0 ... size.z, 
            sy = 0 ... size.y, 
            sx = 0 ... size.x) 
@@ -78,7 +78,7 @@ inline float getVoxel(const uniform unsigned int8 *uniform voxel,
                      uniform uint32 iOfs, varying uint32 vOfs)
 {
   const uniform unsigned int8 *uniform p = voxel + iOfs;
-  print("ofs % % v %\n",iOfs,iOfs+vOfs,p);
+  // print("ofs % % v %\n",iOfs,iOfs+vOfs,p);
   
   return p[vOfs];
 }

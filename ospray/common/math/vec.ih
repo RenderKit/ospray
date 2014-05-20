@@ -64,6 +64,14 @@ __define_ispc_vector4(float,f);
     ret.z = x;                                                    \
     return ret;                                                   \
   }                                                               \
+  inline UV vec3##ABB make_vec3##ABB(const UV vec3##IABB v)            \
+  {                                                               \
+    UV vec3##ABB ret;                                             \
+    ret.x = v.x;                                                    \
+    ret.y = v.y;                                                    \
+    ret.z = v.z;                                                    \
+    return ret;                                                   \
+  }                                                               \
   inline UV vec3##ABB make_vec3##ABB(const UV vec3##IABB##a v)    \
   {                                                               \
     UV vec3##ABB ret;                                             \
