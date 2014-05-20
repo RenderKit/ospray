@@ -322,7 +322,7 @@ namespace ospray {
 
       char *maxEnginesFromEnv = getenv("OSPRAY_COI_MAX_ENGINES");
       if (maxEnginesFromEnv) {
-        numEngines = max(numEngines,atoi(maxEnginesFromEnv));
+        numEngines = std::min((int)numEngines,(int)atoi(maxEnginesFromEnv));
         cout << "#osp:coi: max engines after considering 'OSPRAY_COI_MAX_ENGINES' : " << numEngines << endl;
       }
 
