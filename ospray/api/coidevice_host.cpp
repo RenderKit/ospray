@@ -26,7 +26,7 @@ namespace ospray {
 #define SLEEP_DELAY
     //#define SLEEP_DELAY usleep(1000);
 
-    const char *coiWorker = "/home/wald/Projects/ospray/bin/ospray_coi_worker.mic";
+    const char *coiWorker = "./ospray_coi_worker.mic";
 
     void coiError(COIRESULT result, const std::string &err);
 
