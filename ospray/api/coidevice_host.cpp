@@ -310,6 +310,7 @@ namespace ospray {
       if (numEngines == 0) {
         coiError(result,"no coi devices found");
       }
+
 #if FORCE_SINGLE_DEVICE
       cout << "FORCING AT MOST ONE ENGINE" << endl;
       numEngines = 1;
@@ -318,6 +319,13 @@ namespace ospray {
       Assert(result == COI_SUCCESS);
       cout << "#osp:coi: found " << numEngines << " COI engines" << endl;
       Assert(numEngines > 0);
+
+      char *maxEnginesFromEnv = getenv("OSPRAY_COI_MAX_ENGINES");
+      if (maxEnginesFromEnv) {
+        numEngines = max(numEngines,atoi(maxEnginesFromEnv));
+        cout << "#osp:coi: max engines after considering 'OSPRAY_COI_MAX_ENGINES' : " << numEngines << endl;
+      }
+
 
       for (int i=0;i<numEngines;i++)
         engine.push_back(new COIEngine(this,i));
