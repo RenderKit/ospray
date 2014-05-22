@@ -214,67 +214,146 @@ __lift_binaryFct(max,f)
 inline vec3f neg(const vec3f v)
 { return make_vec3f(-v.x,-v.y,-v.z); }
 
-// ------------------------------------------------------------------
-// vec3f * float
-// ------------------------------------------------------------------
-inline uniform vec3f operator*(const uniform vec3f &v, const uniform float f)
-{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
-inline vec3f operator*(const vec3f &v, const float f)
-{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
-// ------------------------------------------------------------------
-// float * vec3f
-// ------------------------------------------------------------------
-inline uniform vec3f operator*(const uniform float f, const uniform vec3f v)
-{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
-inline vec3f operator*(const float f, const vec3f v)
-{ return make_vec3f(v.x*f,v.y*f,v.z*f); }
 
-// ------------------------------------------------------------------
-// vec4f * float
-// ------------------------------------------------------------------
-inline uniform vec4f operator*(const uniform vec4f &v, const uniform float f)
-{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
-inline vec4f operator*(const vec4f &v, const float f)
-{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
-// ------------------------------------------------------------------
-// float * vec4f
-// ------------------------------------------------------------------
-inline uniform vec4f operator*(const uniform float f, const uniform vec4f v)
-{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
-inline vec4f operator*(const float f, const vec4f v)
-{ return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
 
-// ------------------------------------------------------------------
-// operator '-'
-// ------------------------------------------------------------------
-inline vec3f operator-(const vec3f a, const vec3f b)               
-{ return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
-inline uniform vec3f operator-(const uniform vec3f a,               
-                               const uniform vec3f b)               
-{ return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
 
-// ------------------------------------------------------------------
-// operator '+'
-// ------------------------------------------------------------------
-inline vec3f operator+(const vec3f a, const vec3f b)               
-{ return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
-inline uniform vec3f operator+(const uniform vec3f a,               
-                               const uniform vec3f b)               
-{ return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
+#define def_binary_operator(opname,op)                                  \
+  /* vec2f */                                                           \
+  inline uniform vec2f opname (const uniform vec2f a,                   \
+                               const uniform vec2f b) {                 \
+    return make_vec2f(a.x op b.x, a.y op b.y);                          \
+  }                                                                     \
+  inline vec2f opname (const vec2f a, const vec2f b) {                  \
+    return make_vec2f(a.x op b.x, a.y op b.y);                          \
+  }                                                                     \
+  inline uniform vec2f opname (const uniform vec2f a,                   \
+                               const uniform float b) {                 \
+    return make_vec2f(a.x op b, a.y op b);                              \
+  }                                                                     \
+  inline vec2f opname (const vec2f a, const float b) {                  \
+    return make_vec2f(a.x op b, a.y op b);                              \
+  }                                                                     \
+  inline uniform vec2f opname (const uniform float a,                   \
+                               const uniform vec2f b) {                 \
+    return make_vec2f(a op b.x, a op b.y);                              \
+  }                                                                     \
+  inline vec2f opname (const float a, const vec2f b) {                  \
+    return make_vec2f(a op b.x, a op b.y);                              \
+  }                                                                     \
+  /* vec3f */                                                           \
+  inline uniform vec3f opname (const uniform vec3f a,                   \
+                               const uniform vec3f b) {                 \
+    return make_vec3f(a.x op b.x, a.y op b.y, a.z op b.z);              \
+  }                                                                     \
+  inline vec3f opname (const vec3f a, const vec3f b) {                  \
+    return make_vec3f(a.x op b.x, a.y op b.y, a.z op b.z);              \
+  }                                                                     \
+  inline uniform vec3f opname (const uniform vec3f a,                   \
+                               const uniform float b) {                 \
+    return make_vec3f(a.x op b, a.y op b, a.z op b);                    \
+  }                                                                     \
+  inline vec3f opname (const vec3f a, const float b) {                  \
+    return make_vec3f(a.x op b, a.y op b, a.z op b);                    \
+  }                                                                     \
+  inline uniform vec3f opname (const uniform float a,                   \
+                               const uniform vec3f b) {                 \
+    return make_vec3f(a op b.x, a op b.y, a op b.z);                    \
+  }                                                                     \
+  inline vec3f opname (const float a, const vec3f b) {                  \
+    return make_vec3f(a op b.x, a op b.y, a op b.z);                    \
+  }                                                                     \
+  /* vec4f */                                                           \
+  inline uniform vec4f opname (const uniform vec4f a,                   \
+                               const uniform vec4f b) {                 \
+    return make_vec4f(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w);  \
+  }                                                                     \
+  inline vec4f opname (const vec4f a, const vec4f b) {                  \
+    return make_vec4f(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w);  \
+  }                                                                     \
+  inline uniform vec4f opname (const uniform vec4f a,                   \
+                               const uniform float b) {                 \
+    return make_vec4f(a.x op b, a.y op b, a.z op b, a.w op b);          \
+  }                                                                     \
+  inline vec4f opname (const vec4f a, const float b) {                  \
+    return make_vec4f(a.x op b, a.y op b, a.z op b, a.w op b);          \
+  }                                                                     \
+  inline uniform vec4f opname (const uniform float a,                   \
+                               const uniform vec4f b) {                 \
+    return make_vec4f(a op b.x, a op b.y, a op b.z, a op b.w);          \
+  }                                                                     \
+  inline vec4f opname (const float a, const vec4f b) {                  \
+    return make_vec4f(a op b.x, a op b.y, a op b.z, a op b.w);          \
+  }                                                                     \
 
-inline vec4f operator+(const vec4f a, const vec4f b)               
-{ return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
-inline uniform vec4f operator+(const uniform vec4f a,               
-                               const uniform vec4f b)               
-{ return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
-// ------------------------------------------------------------------
-// operator '*'
-// ------------------------------------------------------------------
-inline vec3f operator*(const vec3f a, const vec3f b)               
-{ return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
-inline uniform vec3f operator*(const uniform vec3f a,               
-                               const uniform vec3f b)               
-{ return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
+  
+def_binary_operator( operator+, + );
+def_binary_operator( operator-, - );
+def_binary_operator( operator*, * );
+def_binary_operator( operator/, / );
+
+#undef def_binary_operator
+
+// // ------------------------------------------------------------------
+// // vec3f * float
+// // ------------------------------------------------------------------
+// inline uniform vec3f operator*(const uniform vec3f &v, const uniform float f)
+// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
+// inline vec3f operator*(const vec3f &v, const float f)
+// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
+// // ------------------------------------------------------------------
+// // float * vec3f
+// // ------------------------------------------------------------------
+// inline uniform vec3f operator*(const uniform float f, const uniform vec3f v)
+// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
+// inline vec3f operator*(const float f, const vec3f v)
+// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
+
+// // ------------------------------------------------------------------
+// // vec4f * float
+// // ------------------------------------------------------------------
+// inline uniform vec4f operator*(const uniform vec4f &v, const uniform float f)
+// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+// inline vec4f operator*(const vec4f &v, const float f)
+// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+// // ------------------------------------------------------------------
+// // float * vec4f
+// // ------------------------------------------------------------------
+// inline uniform vec4f operator*(const uniform float f, const uniform vec4f v)
+// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+// inline vec4f operator*(const float f, const vec4f v)
+// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
+
+// // ------------------------------------------------------------------
+// // operator '-'
+// // ------------------------------------------------------------------
+// inline vec3f operator-(const vec3f a, const vec3f b)               
+// { return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
+// inline uniform vec3f operator-(const uniform vec3f a,               
+//                                const uniform vec3f b)               
+// { return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
+
+// // ------------------------------------------------------------------
+// // operator '+'
+// // ------------------------------------------------------------------
+// inline vec3f operator+(const vec3f a, const vec3f b)               
+// { return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
+// inline uniform vec3f operator+(const uniform vec3f a,               
+//                                const uniform vec3f b)               
+// { return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
+
+// inline vec4f operator+(const vec4f a, const vec4f b)               
+// { return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
+// inline uniform vec4f operator+(const uniform vec4f a,               
+//                                const uniform vec4f b)               
+// { return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
+// // ------------------------------------------------------------------
+// // operator '*'
+// // ------------------------------------------------------------------
+// inline vec3f operator*(const vec3f a, const vec3f b)               
+// { return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
+// inline uniform vec3f operator*(const uniform vec3f a,               
+//                                const uniform vec3f b)               
+// { return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
 
 
 // ------------------------------------------------------------------
