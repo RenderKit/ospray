@@ -48,7 +48,6 @@ namespace ospray {
   void StructuredVolume<T>::loadRAW(const vec3i &size, const char *fileName)
   {
     assert(fileName);
-    assert(file);
     assert(size.x > 0);
     FILE *file = fopen(fileName,"rb");
     if (!file) {
