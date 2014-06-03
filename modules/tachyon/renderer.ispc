@@ -43,7 +43,7 @@ struct Tachyon {
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
 
-inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
+//inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
 
 inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon, const float weight)
 {

@@ -50,6 +50,14 @@ struct Ray {
 
 #define infinity (1e20f)
 
+/*! returns whether a ray has hit anything or not */
+inline bool noHit(const Ray &ray) 
+{ return ray.primID < 0; }
+
+/*! returns whether a ray has hit anything or not */
+inline bool hadHit(const Ray &ray) 
+{ return !noHit(ray); }
+
 /*! initialize a new ray with given parameters */
 inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir)
 {

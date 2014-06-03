@@ -56,11 +56,43 @@ inline void postIntersect(uniform Model *uniform model,
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
   dg.color.x    = -1;
+
+#if 1
+  // a first hack for instancing: problem is that ospray assumes that
+  // 'ray.geomid' specifies the respective sub-geometry of a model
+  // that was hit, but for instances embree actually stores this value
+  // in ray.instID, so the model would have to know if it's a model
+  // over instances or a model over geometries, which is kind of ugly
+  // ... will eventually ahve to fix this properly by implementing
+  // instances directly in ospray, but for now let's try this hack
+  // here:
+  if (ray.instID < 0) {
+    // a regular geometry
+    foreach_unique(geomID in ray.geomID) {
+      uniform Geometry *uniform geom = model->geometry[geomID];
+      geom->postIntersect(geom,model,
+                          dg,ray,flags);
+    }
+  } else {
+    // instanced geometry: create copy of ray, iterate over
+    // ray.instIDs, and remove that instancing info from the ray (so
+    // the next level of model doesn't get confused by it)
+    Ray newRay = ray;
+    foreach_unique(instID in ray.instID) {
+      uniform Geometry *uniform instGeom = model->geometry[instID];
+      newRay.instID = -1;
+      instGeom->postIntersect(instGeom,model,
+                              dg,newRay,flags);
+      // this does not yet do proper normal back-transforms!
+    }
+  }
+#else
   foreach_unique(geomID in ray.geomID) {
     uniform Geometry *uniform geom = model->geometry[geomID];
     geom->postIntersect(geom,model,
                         dg,ray,flags);
   }
+#endif
 }
 
 #endif

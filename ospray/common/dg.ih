@@ -31,6 +31,7 @@ struct DifferentialGeometry {
   vec3f Ns; /*!< shading normal, possibly not
                normalized/facefordwarded if DG_NORMALIZE and/or
                DG_FACEFORWARD weren't specified */
+  vec2f st; //!< texture coordinates
   vec4f color; /*! interpolated vertex color (rgba), if available; vec3f(-1)
                  if queried but not present in geometry */
   int32 materialID; /*!< hack for now - the materialID as stored in

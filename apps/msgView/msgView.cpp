@@ -16,6 +16,7 @@ namespace ospray {
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
+  OSPRenderer        ospRenderer = NULL;
   bool alwaysRedraw = false;
 
   //! the renderer we're about to use
@@ -39,9 +40,9 @@ namespace ospray {
     of camera is almost exactly similar to the code in volView;
     might make sense to move that into a common class! */
   struct MSGViewer : public Glut3DWidget {
-    MSGViewer(OSPModel model)
+    MSGViewer(OSPModel model, OSPRenderer renderer)
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
-        fb(NULL), renderer(NULL), model(model)
+        fb(NULL), renderer(renderer), model(model)
     {
       Assert(model && "null model handle");
       camera = ospNewCamera("perspective");
@@ -49,11 +50,6 @@ namespace ospray {
       ospSet3f(camera,"pos",-1,1,-1);
       ospSet3f(camera,"dir",+1,-1,+1);
       ospCommit(camera);
-
-      renderer = ospNewRenderer(rendererType.c_str());
-      if (!renderer)
-        throw std::runtime_error("could not create renderer '"+rendererType+"'");
-      Assert(renderer != NULL && "could not create renderer");
 
       PRINT(renderer);
       PRINT(model);
@@ -157,7 +153,9 @@ namespace ospray {
     }
 
     if (!mat) {
-      cout << "WARNING: mesh does not have a material! (assigning default)" << endl;
+      static int numWarnings = 0;
+      if (++numWarnings < 10)
+        cout << "WARNING: mesh does not have a material! (assigning default)" << endl;
       ospSet3f(ospMat,"Kd",1.f,0.f,0.f);
     } else {
       ospSet3fv(ospMat,"Kd",&mat->Kd.x);
@@ -263,7 +261,9 @@ namespace ospray {
       error("no (valid) input files specified - model contains no triangles");
 
     if (msgModel->material.empty()) {
-      cout << "msgView: adding default material" << endl;
+      static int numWarnings = 0;
+      if (++numWarnings < 10)
+        cout << "msgView: adding default material (only reporting first 10 times)" << endl;
       msgModel->material.push_back(new miniSG::Material);
     }
 
@@ -271,6 +271,14 @@ namespace ospray {
     // create ospray model
     // -------------------------------------------------------
     ospModel = ospNewModel();
+
+
+    ospRenderer = ospNewRenderer(rendererType.c_str());
+    if (!ospRenderer)
+      throw std::runtime_error("could not create ospRenderer '"+rendererType+"'");
+    Assert(ospRenderer != NULL && "could not create ospRenderer");
+    
+
 
     // code does not yet do instancing ... check that the model doesn't contain instances
     bool doesInstancing = false; //true;
@@ -295,9 +303,20 @@ namespace ospray {
       // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
+      assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
-      
-      createMaterial(ospMesh, NULL, msgMesh->material.ptr);
+
+      // add normal array to mesh
+      if (!msgMesh->normal.empty()) {
+        OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
+                                    &msgMesh->normal[0],OSP_DATA_SHARED_BUFFER);
+        assert(msgMesh->normal.size() > 0);
+        ospSetData(ospMesh,"vertex.normal",normal);
+      } else {
+        cout << "no vertex normals!" << endl;
+      }
+
+      createMaterial(ospMesh, ospRenderer, msgMesh->material.ptr);
 
       if (doesInstancing) {
         OSPModel model_i = ospNewModel();
@@ -321,7 +340,7 @@ namespace ospray {
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
-    MSGViewer window(ospModel);
+    MSGViewer window(ospModel,ospRenderer);
     window.create("MSGViewer: OSPRay Mini-Scene Graph test viewer");
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(box3f(msgModel->getBBox()));

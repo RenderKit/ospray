@@ -19,6 +19,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       = (1.f-ray.u-ray.v) * make_vec3f(normal[index.x])
       + ray.u * make_vec3f(normal[index.y])
       + ray.v * make_vec3f(normal[index.z]);
+    // print("normal interpolation!");
   }
 
   uniform vec4f *uniform color = THIS->color;

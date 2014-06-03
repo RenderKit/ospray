@@ -211,13 +211,15 @@ __lift_binaryFct(max,f)
 
 // for now, let's implement those manually - should eventually do those via a macro!
 
+inline uniform vec3f neg(const uniform vec3f v)
+{ return make_vec3f(-v.x,-v.y,-v.z); }
 inline vec3f neg(const vec3f v)
 { return make_vec3f(-v.x,-v.y,-v.z); }
 
 
 
 
-#define def_binary_operator(opname,op)                                  \
+#define __define_binary_operator(opname,op)                                  \
   /* vec2f */                                                           \
   inline uniform vec2f opname (const uniform vec2f a,                   \
                                const uniform vec2f b) {                 \
@@ -285,13 +287,40 @@ inline vec3f neg(const vec3f v)
     return make_vec4f(a op b.x, a op b.y, a op b.z, a op b.w);          \
   }                                                                     \
 
-  
-def_binary_operator( operator+, + );
-def_binary_operator( operator-, - );
-def_binary_operator( operator*, * );
-def_binary_operator( operator/, / );
+// define 'regular' operators  
+__define_binary_operator( operator+, + );
+__define_binary_operator( operator-, - );
+__define_binary_operator( operator*, * );
+__define_binary_operator( operator/, / );
 
-#undef def_binary_operator
+// define old functional operators as used in the embree path tracer
+__define_binary_operator( add, + );
+__define_binary_operator( sub, - );
+__define_binary_operator( mul, * );
+
+#undef __define_binary_operator
+
+inline float reduce_max(const vec3f v)
+{ return max(max(v.x,v.y),v.z); }
+
+inline uniform bool eq(const uniform vec2f a, const uniform vec2f b)
+{ return a.x==b.x && a.y==b.y; }
+inline bool eq(const vec2f a, const vec2f b)
+{ return a.x==b.x & a.y==b.y; }
+inline uniform bool eq(const uniform vec3f a, const uniform vec3f b)
+{ return a.x==b.x && a.y==b.y && a.z==b.z; }
+inline bool eq(const vec3f a, const vec3f b)
+{ return a.x==b.x & a.y==b.y & a.z==b.z; }
+
+inline uniform bool ne(const uniform vec2f a, const uniform vec2f b)
+{ return !eq(a,b); }
+inline bool ne(const vec2f a, const vec2f b)
+{ return !eq(a,b); }
+inline uniform bool ne(const uniform vec3f a, const uniform vec3f b)
+{ return !eq(a,b); }
+inline bool ne(const vec3f a, const vec3f b)
+{ return !eq(a,b); }
+
 
 // // ------------------------------------------------------------------
 // // vec3f * float
