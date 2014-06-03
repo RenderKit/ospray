@@ -535,9 +535,19 @@ namespace ospray {
     void MoveMode::dragMiddle(Glut3DWidget *widget,
       const vec2i &to, const vec2i &from)
     {
-      // it's called inspect_***CENTER*** for a reason; this class
-      // will keep the rotation pivot at the center, and not do
-      // anything with center mouse button...
+      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      float du = (to.x - from.x);
+      float dv = (to.y - from.y);
+
+      vec2i delta_mouse = to - from;
+
+      AffineSpace3fa xfm = AffineSpace3fa::translate( dv * cam.frame.l.vz )
+        * AffineSpace3fa::translate( -1.0 * du * cam.frame.l.vx );
+
+      cam.frame = xfm * cam.frame;
+      cam.from = xfmPoint(xfm, cam.from);
+      cam.at = xfmPoint(xfm, cam.at);
+      cam.modified = true;
     }
 
     /*! todo */
