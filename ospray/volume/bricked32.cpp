@@ -8,11 +8,6 @@
 
 namespace ospray {
 
-  // inline int divRoundUp(int nom, int den)
-  // {
-  //   return (nom + den - 1)/den;
-  // }
-
   template<typename T>
   void BrickedVolume<T>::allocate() 
   {

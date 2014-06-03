@@ -62,11 +62,13 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	camera/perspectivecamera.cpp
 
 	volume/volume.ispc
-	volume/bricked32.ispc
-	volume/naive32.ispc
 	volume/volume.cpp
-	volume/bricked32.cpp
+	volume/naive32.ispc
 	volume/naive32.cpp
+	volume/bricked32.ispc
+	volume/bricked32.cpp
+	volume/bricked64.ispc
+	volume/bricked64.cpp
 
 	geometry/geometry.ispc
 	geometry/geometry.cpp

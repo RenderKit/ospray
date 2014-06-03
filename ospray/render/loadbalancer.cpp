@@ -102,6 +102,7 @@ namespace ospray {
     frameRenderJob = NULL;
     fb = NULL;
     refDec();
+    // PRINT(__rdtsc());
   }
   
   void InterleavedTiledLoadBalancer::RenderTask::run(size_t threadIndex, 
@@ -147,17 +148,19 @@ namespace ospray {
                                              numTiles_mine,deviceID,numDevices);
     
     // wait for old render task to finish
-    if (fb->renderTask) {
-      fb->renderTask->done.sync();
-      fb->renderTask = NULL;
+    Ref<RenderTask> oldRT = (RenderTask*)fb->renderTask.ptr;
+    if (oldRT) {
+      oldRT->done.sync();
+      oldRT = NULL;
     }
 
     // and start new render task
     fb->renderTask = renderTask;
     TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-#if 1
+#if 0
     // do synchronous rendering: directly wait after each frame
     fb->renderTask->done.sync();
 #endif
+    // PRINT(__rdtsc());
   }
 }

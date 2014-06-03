@@ -48,12 +48,9 @@ namespace ospray {
   TileRenderer::RenderJob *DVRRendererBase::createRenderJob(FrameBuffer *fb)
   {
     RenderJob *tj = new RenderJob;
-    // tj->ispc_camera = _camera;
-    // tj->ispc_volume = _volume;
     tj->camera      = camera;
     tj->volume      = volume;
     tj->dt          = getParam1f("dt",.0025f);
-    PRINT(tj->dt);
     tj->transferFct = transferFct;
     tj->renderer    = this;
     return tj;

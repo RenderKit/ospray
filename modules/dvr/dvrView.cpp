@@ -15,7 +15,7 @@ namespace ospray {
   std::string inputFormat = "uint8";
   const char *resampleFormat = NULL;
   int         resampleSize = -1;
-  float       cmdLine_dt = 0.f; // dt as set from cmdline; '0.f' means auto-generate
+  float       dt = 0.f; // dt as set from cmdline; '0.f' means auto-generate
 
   /*! \page volview_notes_on_volume_interface Internal Notes on Volume Interface
 
@@ -36,6 +36,7 @@ namespace ospray {
     cout << " --scalar                    : use scalar renderer" << endl;
     cout << " --naive                     : use naive z-order data layout" << endl;
     cout << " --bricked                   : use bricked data layout" << endl;
+    cout << " --page-bricked              : use paged-and-bricked data layout" << endl;
     cout << " --resample uint8|float size : resample to given format and size^3" << endl;
     cout << " -dt <dt>                    : use ray cast sample step size 'dt'" << endl;
     cout << endl;
@@ -94,12 +95,13 @@ namespace ospray {
       }
 
       renderer = ospNewRenderer(renderType);
-      PRINT(cmdLine_dt);
-      if (cmdLine_dt != 0.f) {
-        cout << "using step size " << cmdLine_dt << endl;
-        ospSet1f(renderer,"dt",cmdLine_dt);
-      } else
-        ospSet1f(renderer,"dt",0.5f/std::max(dims.x,std::max(dims.y,dims.z)));
+      if (dt != 0.f) {
+        cout << "using step size " << dt << endl;
+      } else {
+        dt = 0.5f/256;//1f/std::max(dims.x,std::max(dims.y,dims.z)));
+        cout << "using default step size " << dt << endl;
+      }
+      ospSet1f(renderer,"dt",dt);
 
       Assert2(renderer,"could not create renderer");
       ospSetParam(renderer,"volume",volume);
@@ -107,6 +109,25 @@ namespace ospray {
       ospCommit(renderer);
 
     };
+    virtual void keypress(char key, const vec2f where)
+    {
+      switch (key) {
+      case '>':
+        dt /= 1.5f;
+        cout << "#osp:dvr: new step size " << dt << endl;
+        ospSet1f(renderer,"dt",dt);
+        ospCommit(renderer);
+        break;
+      case '<':
+        dt *= 1.5f;
+        cout << "#osp:dvr: new step size " << dt << endl;
+        ospSet1f(renderer,"dt",dt);
+        ospCommit(renderer);
+        break;
+      default:
+        Glut3DWidget::keypress(key,where);
+      }
+    }
     virtual void reshape(const ospray::vec2i &newSize) 
     {
       Glut3DWidget::reshape(newSize);
@@ -182,8 +203,7 @@ namespace ospray {
         volFileName = av[i+4];
         i += 4;
       } else if (arg == "-dt") {
-        cmdLine_dt = atof(av[i+1]);
-        PRINT(av[i+1]);
+        dt = atof(av[i+1]);
         i += 1;
       } else if (arg == "--resample") {
         // resample volume to this size
@@ -201,6 +221,9 @@ namespace ospray {
       } else if (arg == "--bricked") {
         // use bricked32 volume layout
         volumeLayout = "bricked32";
+      } else if (arg == "--page-bricked") {
+        // use bricked32 volume layout
+        volumeLayout = "pageBricked64";
       } else 
         throw std::runtime_error("unknown parameter "+arg);
     }

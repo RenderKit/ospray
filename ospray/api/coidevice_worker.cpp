@@ -13,6 +13,7 @@
 #include "common/data.h"
 #include "geometry/trianglemesh.h"
 #include "camera/camera.h"
+#include "volume/volume.h"
 #include "render/renderer.h"
 #include "render/tilerenderer.h"
 #include "render/loadbalancer.h"
@@ -44,6 +45,8 @@ namespace ospray {
 
       cout << "!osp:coi: initializing device #" << deviceID
            << " (" << (deviceID+1) << "/" << numDevices << ")" << endl;
+
+      ospray::TiledLoadBalancer::instance = new ospray::InterleavedTiledLoadBalancer(deviceID,numDevices);
     }
 
     COINATIVELIBEXPORT
@@ -111,13 +114,6 @@ namespace ospray {
       Data *data = new Data(nitems,(OSPDataType)format,bufferPtr[0],flags|OSP_DATA_SHARED_BUFFER);
       handle.assign(data);
 
-      // PING;
-      // PRINT(nitems);
-      // PRINT(format);
-      // if (format == OSP_vec3f || format == OSP_vec3fa) {
-      //   PING;
-      //   PRINT(((vec3f*)bufferPtr)[0]);
-      // }
       COIProcessProxyFlush();
     }
 
@@ -155,8 +151,7 @@ namespace ospray {
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       vec2i size = args.get<vec2i>();
-      cout << "!osp:coi: new framebuffer " << handle.ID() << endl;
-      PRINT(size);
+      // cout << "!osp:coi: new framebuffer " << handle.ID() << endl;
       int32 *pixelArray = (int32*)bufferPtr[0];
       FrameBuffer *fb = createLocalFB_RGBA_I8(size,pixelArray);
       handle.assign(fb);
@@ -177,9 +172,30 @@ namespace ospray {
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
-      cout << "!osp:coi: new camera " << handle.ID() << " " << type << endl;
+      // cout << "!osp:coi: new camera " << handle.ID() << " " << type << endl;
 
       Camera *geom = Camera::createCamera(type);
+      handle.assign(geom);
+
+      COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_new_volume(uint32_t         numBuffers,
+                                 void**           bufferPtr,
+                                 uint64_t*        bufferSize,
+                                 void*            argsPtr,
+                                 uint16_t         argsSize,
+                                 void*            retVal,
+                                 uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      // OSPModel *model = ospNewModel();
+      Handle handle = args.get<Handle>();
+      const char *type = args.getString();
+      cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
+
+      Volume *geom = Volume::createVolume(type);
       handle.assign(geom);
 
       COIProcessProxyFlush();
@@ -309,18 +325,28 @@ namespace ospray {
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
       r->renderFrame(fb);
-      // PING;
-      // cout << "DEV:WAITING" << endl;
-      // usleep(10000000);
-      // PING;
-      // usleep(10000);
+      // if (fb->renderTask) {
+      //   fb->renderTask->done.sync();
+      //   fb->renderTask = NULL;
+      // }
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_render_frame_sync(uint32_t         numBuffers,
+                                      void**           bufferPtr,
+                                      uint64_t*        bufferSize,
+                                      void*            argsPtr,
+                                      uint16_t         argsSize,
+                                      void*            retVal,
+                                      uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      Handle _fb       = args.get<Handle>();
+      FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       if (fb->renderTask) {
         fb->renderTask->done.sync();
         fb->renderTask = NULL;
       }
-      
-      // PING;
-      // COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -351,24 +377,21 @@ namespace ospray {
       case OSP_vec3f:
         obj->findParam(name,1)->set(args.get<vec3f>());
         break;
+      case OSP_vec3i:
+        obj->findParam(name,1)->set(args.get<vec3i>());
+        break;
+      case OSP_STRING:
+        obj->findParam(name,1)->set(args.getString());
+        break;
       case OSP_OBJECT: {
-        // PING;
-        // PRINT(obj->toString());
-        // PRINT(name);
-        
         ManagedObject *val = args.get<Handle>().lookup();
-        // PRINT(val->toString());
-          
         obj->setParam(name,val);
       } break;
       default:
         PRINT((int)type);
         throw "ospray_coi_set_value no timplemented for given data type";
       }
-
-      // COIProcessProxyFlush();
     }
-
   }
 }
 
@@ -382,12 +405,8 @@ int main(int ac, char **av)
   std::stringstream embreeConfig;
   rtcInit(NULL);
 
-  // PRINT(rtcGetError());
   assert(rtcGetError() == RTC_NO_ERROR);
-  ospray::TiledLoadBalancer::instance = new ospray::InterleavedTiledLoadBalancer(0,1);
-  // ospray::TiledLoadBalancer::instance = new ospray::LocalTiledLoadBalancer;
-
-  cout << "embree initialized, load balancer initialized" << endl;
+  ospray::TiledLoadBalancer::instance = NULL;
 
   COIPipelineStartExecutingRunFunctions();
   COIProcessProxyFlush();

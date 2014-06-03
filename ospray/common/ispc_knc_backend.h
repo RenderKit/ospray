@@ -43,6 +43,14 @@
 #include <iostream> // for operator<<(m512[i])
 #include <iomanip>  // for operator<<(m512[i])
 
+#define STRING(x) #x
+#define TOSTRING(x) STRING(x)
+#define PING std::cout << __FILE__ << " (" << __LINE__ << "): " << __FUNCTION__ << std::endl
+#define PRINT(x) std::cout << STRING(x) << " = " << (x) << std::endl
+#define PRINT2(x,y) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << std::endl
+#define PRINT3(x,y,z) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << std::endl
+#define PRINT4(x,y,z,w) std::cout << STRING(x) << " = " << (x) << ", " << STRING(y) << " = " << (y) << ", " << STRING(z) << " = " << (z) << ", " << STRING(w) << " = " << (w) << std::endl
+
 
 #define FORCEINLINE __forceinline
 #ifdef _MSC_VER
@@ -209,6 +217,17 @@ inline std::ostream &operator<<(std::ostream &out, const __m512 &v)
   out << "[";
   for (int i=0;i<16;i++)  
     out << (i?",":"") << ((float*)&v)[i];
+  
+  out << "]" << std::flush;
+  return out;
+}
+
+inline std::ostream &operator<<(std::ostream &out, const __vec16_i8 &v)
+{
+  out << "[";
+  for (int i=0;i<16;i++)  
+    out << (i?",":"") << std::dec << std::setw(8) << (int)((unsigned char*)&v)[i] << std::dec;
+    // out << (i?",":"") << std::hex << std::setw(8) << ((int*)&v)[i] << std::dec;
   
   out << "]" << std::flush;
   return out;
@@ -1645,10 +1664,17 @@ static FORCEINLINE __vec16_d __masked_load_double(void *p, __vec16_i1 mask) {
 
 #ifdef ISPC_FORCE_ALIGNED_MEMORY
 static FORCEINLINE void __masked_store_i8(void *p, const __vec16_i8 &val, __vec16_i1 mask) {
+  PING;
+  PRINT(mask);
+  PRINT(p);
+  PRINT(val);
   __vec16_i32 tmp = _mm512_extload_epi32(&val, _MM_UPCONV_EPI32_SINT8, _MM_BROADCAST32_NONE, _MM_HINT_NONE);
+  PING;
   _mm512_mask_extstore_epi32(p, mask, tmp, _MM_DOWNCONV_EPI32_SINT8,_MM_HINT_NONE);
+  PING;
 }
 static FORCEINLINE __vec16_i8 __masked_load_i8(void *p, __vec16_i1 mask) {
+  PING;
   __vec16_i8 ret;
   __vec16_i32 tmp = _mm512_mask_extload_epi32(_mm512_undefined_epi32(),mask,p,
                                               _MM_UPCONV_EPI32_SINT8, 
@@ -1668,6 +1694,7 @@ __scatter_base_offsets32_i8(uint8_t *b, uint32_t scale, __vec16_i32 offsets,
 {
   __vec16_i32 tmp = _mm512_extload_epi32(&val,_MM_UPCONV_EPI32_SINT8, 
                                          _MM_BROADCAST32_NONE, _MM_HINT_NONE);
+  printf("__scatter_base_offsets32_i8\n");
   _mm512_mask_i32extscatter_epi32(b, mask, offsets, tmp, 
                                   _MM_DOWNCONV_EPI32_SINT8, scale, 
                                   _MM_HINT_NONE);
@@ -1751,6 +1778,8 @@ static FORCEINLINE void __masked_store_blend_float(void *p, __vec16_f val,
 static FORCEINLINE __vec16_i8
 __gather_base_offsets32_i8(uint8_t *base, uint32_t scale, __vec16_i32 offsets, 
                            __vec16_i1 mask) {
+  std::cout << "BLA" << std::endl;
+   printf("__gather_base_offsets32_i8\n");
     // (iw): need to temporarily store as int because gathers can only return ints.
     __vec16_i32 tmp = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, base, 
                                                      _MM_UPCONV_EPI32_SINT8, scale,
@@ -1916,6 +1945,8 @@ static FORCEINLINE __vec16_i8
 __gather_base_offsets64_i8(uint8_t *_base, uint32_t scale, __vec16_i64 offsets,
                            __vec16_i1 mask) 
 { 
+  printf("__gather_base_offsets64_i8\n");
+  std::cout << "BLA" << std::endl;
     __vec16_i1 still_to_do = mask;
     __vec16_i32 tmp;
     while (still_to_do) {

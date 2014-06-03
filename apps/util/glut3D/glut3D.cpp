@@ -258,7 +258,6 @@ namespace ospray {
 
         if (length(up) < 1e-3f)
           up = vec3f(0,0,1.f);
-        PRINT(up);
 
         this->worldBounds = worldBounds;
         viewPort.frame.l.vy = normalize(dir);

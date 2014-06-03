@@ -65,8 +65,6 @@ namespace ospray {
         removeArgs(*_ac,(char **&)_av,1,1);
         ospray::api::Device::current
           = ospray::coi::createCoiDevice(_ac,_av);
-        PING;
-        PRINT(ospray::api::Device::current);
 #else
         throw std::runtime_error("OSPRay's COI support not compiled in");
 #endif
@@ -100,7 +98,6 @@ namespace ospray {
       }
     }
     
-    PING;
     // no device created on cmd line, yet, so default to localdevice
     if (ospray::api::Device::current == NULL)
       ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
@@ -243,13 +240,6 @@ namespace ospray {
     Assert2(type != NULL, "invalid material type identifier in ospNewMaterial");
     LOG("ospNewMaterial(" << renderer << ", " << type << ")");
     OSPMaterial material = ospray::api::Device::current->newMaterial(renderer,type);
-    // PING;
-    // if (ospray::logLevel > 0)
-    //   if (material) 
-    //     cout << "ospNewMaterial: " << ((ospray::Material*)material)->toString() << endl;
-    //   else
-    //     std::cerr << "#ospray: could not create material '" << type << "'" << std::endl;
-    // PING;
     return material;
   }
 
@@ -262,11 +252,6 @@ namespace ospray {
     Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
     LOG("ospNewCamera(" << type << ")");
     OSPCamera camera = ospray::api::Device::current->newCamera(type);
-    // if (ospray::logLevel > 0 )
-    //   if (camera) 
-    //     cout << "ospNewCamera: " << ((ospray::Camera*)camera)->toString() << endl;
-    //   else
-    //     std::cerr << "#ospray: could not create camera '" << type << "'" << std::endl;
     return camera;
   }
 

@@ -15,7 +15,17 @@ namespace ospray {
     const char *renderType = "tachyon";
     // const char *renderType = "ao16";
     float defaultRadius = .1f;
-    tachyon::Model tachModel;
+
+    struct TimeStep {
+      std::string modelName;
+      tachyon::Model tm; // tachyon model
+      OSPModel       om; // ospray model
+
+      TimeStep(const std::string &modelName) : modelName(modelName), om(NULL) {};
+    };
+
+    std::vector<TimeStep *> timeStep;
+    int timeStepID = 0;
     bool doShadows = true;
 
     void error(const std::string &vol)
@@ -67,7 +77,7 @@ namespace ospray {
         ospAddGeometry(ospModel,cylinderGeom);
       }
 
-      cout << "#osp:tach: creating " << tm.numVertexArrays() << " vertex arrays" << endl;
+      cout << "#osp:tachyon: creating " << tm.numVertexArrays() << " vertex arrays" << endl;
       for (int vaID=0;vaID<tm.numVertexArrays();vaID++) {
         const VertexArray *va = tm.getVertexArray(vaID);
         // if (va != tm.getSTriVA())
@@ -108,32 +118,32 @@ namespace ospray {
 
 
 
-      cout << "Specifying " << tachModel.numTextures() << " materials..." << endl;
+      cout << "#osp:tachyon: specifying " << tm.numTextures() << " materials..." << endl;
       {
-        OSPData data = ospNewData(tachModel.numTextures()*sizeof(Texture),
-                                  OSP_uint8,tachModel.getTexturesPtr());
+        OSPData data = ospNewData(tm.numTextures()*sizeof(Texture),
+                                  OSP_uint8,tm.getTexturesPtr());
         ospCommit(data);
         ospSetData(ospModel,"textureArray",data);
       }
 
-      cout << "Specifying " << tachModel.numPointLights()
+      cout << "#osp:tachyon: specifying " << tm.numPointLights()
            << " point lights..." << endl;
-      if (tachModel.numPointLights() > 0)
+      if (tm.numPointLights() > 0)
       {
         OSPData data
-          = ospNewData(tachModel.numPointLights()*sizeof(PointLight),
-                       OSP_uint8,tachModel.getPointLightsPtr());
+          = ospNewData(tm.numPointLights()*sizeof(PointLight),
+                       OSP_uint8,tm.getPointLightsPtr());
         ospCommit(data);
         ospSetData(ospModel,"pointLights",data);
       }
 
-      cout << "Specifying " << tachModel.numDirLights()
+      cout << "#osp:tachyon: specifying " << tm.numDirLights()
            << " dir lights..." << endl;
-      if (tachModel.numDirLights() > 0)
+      if (tm.numDirLights() > 0)
       {
         OSPData data
-          = ospNewData(tachModel.numDirLights()*sizeof(DirLight),
-                       OSP_uint8,tachModel.getDirLightsPtr());
+          = ospNewData(tm.numDirLights()*sizeof(DirLight),
+                       OSP_uint8,tm.getDirLightsPtr());
         ospCommit(data);
         ospSetData(ospModel,"dirLights",data);
       }
@@ -180,10 +190,28 @@ namespace ospray {
           ospSet1i(renderer,"do_shadows",doShadows);
           ospCommit(renderer);
           break;
+        case '<':
+          setTimeStep((timeStepID+timeStep.size()-1)%timeStep.size());
+          break;
+        case '>':
+          setTimeStep((timeStepID+1)%timeStep.size());
+          break;
         default:
           Glut3DWidget::keypress(key,where);
         }
       }
+
+      void setTimeStep(size_t newTSID)
+      {
+        timeStepID = newTSID;
+        modelName = timeStep[timeStepID]->modelName;
+        cout << "#osp:tachyon: switching to time step " << timeStepID
+             << " (" << modelName << ")" << endl;
+        model = timeStep[timeStepID]->om;
+        ospSetParam(renderer,"model",model);
+        ospCommit(renderer);
+      }
+
 
       virtual void reshape(const ospray::vec2i &newSize) 
       {
@@ -243,34 +271,40 @@ namespace ospray {
     {
       ospLoadModule("tachyon");
 
-      std::string modelName = "";
       for (int i=1;i<ac;i++) {
         std::string arg = av[i];
-        if (arg[0] != '-') {
-          modelName = arg;
+        if (arg[0] != '-') {                    
+          timeStep.push_back(new TimeStep(arg));
         } else 
           throw std::runtime_error("unknown parameter "+arg);
       }
 
-      importFile(tachModel,modelName);
+      if (timeStep.empty())
+        error("no input geometry specifies!?");
+
+      std::vector<OSPModel> modelHandle;
+      for (int i=0;i<timeStep.size();i++) {
+        TimeStep *ts = timeStep[i];
+        importFile(ts->tm,ts->modelName);
+        if (ts->tm.empty())
+          error(ts->modelName+": no input geometry specified!?");
+        ts->om = specifyModel(ts->tm);
+      }
 
 
       // -------------------------------------------------------
       // parse and set up input(s)
       // -------------------------------------------------------
-      if (tachModel.empty())
-        error("no input geometry specifies!?");
-      OSPModel model = specifyModel(tachModel);
 
       // -------------------------------------------------------
       // create viewer window
       // -------------------------------------------------------
-      TACHViewer window(model,modelName);
+      TACHViewer window(timeStep[0]->om,timeStep[0]->modelName);
       window.create("ospTACH: OSPRay Tachyon-model viewer");
       printf("Viewer created. Press 'Q' to quit.\n");
-      window.setWorldBounds(tachModel.getBounds());
-      if (tachModel.getCamera()) {
-        ospray::tachyon::Camera *camera = tachModel.getCamera();
+      window.setWorldBounds(timeStep[0]->tm.getBounds());
+      ospray::tachyon::Camera *camera = timeStep[0]->tm.getCamera();
+      if (camera) {
         window.viewPort.from = camera->center;
         window.viewPort.at = camera->center+camera->viewDir;
         window.viewPort.up = camera->upDir;
