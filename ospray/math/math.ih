@@ -3,7 +3,7 @@
 #ifndef MATH_ISPH
 #define MATH_ISPH
 
-#include "common/ospcommon.ih"
+#include "ospray/common/ospcommon.ih"
 
 # define M_PI		3.14159265358979323846f	/* pi */
 
@@ -17,9 +17,29 @@ inline float sqrtf(const float f) { return sqrt(f); }
 /*! c-style square root */
 inline uniform float sqrtf(const uniform float f) { return sqrt(f); }
 
+/*! c-style square.  */
+inline float sqrf(const float f) { return f*f; }
+/*! c-style square */
+inline uniform float sqrf(const uniform float f) { return f*f; }
+
 /*! c-style pow function.  */
 inline float powf(const float a, const float b) { return pow(a,b); }
 /*! c-style pow function */
 inline uniform float powf(const uniform float a, const uniform float b) { return pow(a,b); }
+
+
+/*! c-style cos.  */
+inline float cosf(const float f) { return cos(f); }
+/*! c-style cos */
+inline uniform float cosf(const uniform float f) { return cosf(f); }
+
+/*! c-style sin.  */
+inline float sinf(const float f) { return sin(f); }
+/*! c-style sin */
+inline uniform float sinf(const uniform float f) { return sinf(f); }
+
+
+inline float clamp(const float f) { return max(min(1.f,f),0.f); }
+
 #endif
 

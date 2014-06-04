@@ -206,7 +206,7 @@ extern "C" {
   /*! \brief create a new framebuffer (actual format is internal to ospray) */
   OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
                                    const OSPFrameBufferMode mode=OSP_RGBA_I8,
-                                   const size_t swapChainDepth=2);
+                                   const size_t swapChainDepth=1);
 
   /*! \brief free a framebuffer 
 

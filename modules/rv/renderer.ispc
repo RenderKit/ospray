@@ -1,11 +1,11 @@
 /*! \file renderer.ispc Defines ISPC side of RV module renderer */
 
 // ospray stuff
-#include "fb/framebuffer.ih"
-#include "camera/perspectivecamera.ih"
-#include "common/ray.ih"
-#include "render/util.ih"
-#include "common/math/bbox.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/render/util.ih"
+#include "ospray/math/bbox.ih"
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 #include "embree2/rtcore_ray.isph"
@@ -235,7 +235,8 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile)
       for (int i=0;i<4;i++) {
         const float screen_u = (x+rv_pixel_x[i])*inv_size_x;
         const float screen_v = (y+rv_pixel_y[i])*inv_size_y;
-        camera->initRay(camera,ray.inherited,make_vec2f(screen_u,screen_v));
+        camera->initRay(camera,ray.inherited,make_vec2f(screen_u,screen_v),
+                        (varying vec2f)make_vec2f(0.f,0.f));
         rtcIntersect(rv_scene,*((varying RTCRay *uniform)&ray));
         col = col + shade(ray);
       }
@@ -243,7 +244,8 @@ export void ispc__RVRenderer_renderTile(void *uniform _tile)
 #else
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+                      (varying vec2f)make_vec2f(0.f,0.f));
       rtcIntersect(rv_scene,*((varying RTCRay *uniform)&ray));
       vec4f col = shade(ray); 
 #endif

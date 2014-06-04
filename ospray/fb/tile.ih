@@ -1,8 +1,8 @@
 #ifndef OSPRAY_FB_TILE_IH
 #define OSPRAY_FB_TILE_IH 1
 
-#include "../common/ospcommon.ih"
-#include "../common/math/region.ih"
+#include "ospray/common/ospcommon.ih"
+#include "ospray/math/region.ih"
 #include "tilesize.h"
 
 /*! a screen tile. the memory layout of this class has to _exactly_

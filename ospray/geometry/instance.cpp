@@ -27,9 +27,9 @@ namespace ospray {
                     RTC_MATRIX_COLUMN_MAJOR_ALIGNED16,
                     (const float *)&xfm);
     rtcEnable(model->embreeSceneHandle,embreeGeomID);
-    // ispc::InstanceGeometry_set(getIE(),model->getIE(),radius,
-    //                              (ispc::vec3fa*)vertex,numVertices,
-    //                              (uint32_t*)index,numSegments);
+    ispc::InstanceGeometry_set(getIE(),
+                               (ispc::AffineSpace3f&)xfm,
+                               instancedScene->getIE());
   }
 
   OSP_REGISTER_GEOMETRY(Instance,instance);

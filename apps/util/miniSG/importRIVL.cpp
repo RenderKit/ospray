@@ -318,7 +318,7 @@ namespace ospray {
               throw std::runtime_error("unknown child node type '"+childType+"' for mesh node");
             }
           }
-
+          // std::cout << "Found mesh " << mesh->toString() << std::endl;
           lastNode = mesh.ptr;
           // -------------------------------------------------------
         } else if (nodeName == "Group") {
@@ -327,13 +327,17 @@ namespace ospray {
           nodeList.push_back(group.ptr);
 
           xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
-          for(char *s=strtok((char*)value," \t\n");s;s=strtok(NULL," \t\n")) {
-            size_t childID = atoi(s);
-            miniSG::Node *child = nodeList[childID].ptr;
-            assert(child);
-            group->child.push_back(child);
+          if (value == NULL)
+            std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
+          else {
+            for(char *s=strtok((char*)value," \t\n");s;s=strtok(NULL," \t\n")) {
+              size_t childID = atoi(s);
+              miniSG::Node *child = nodeList[childID].ptr;
+              assert(child);
+              group->child.push_back(child);
+            }
+            xmlFree(value);
           }
-          xmlFree(value);
           lastNode = group.ptr;
         } else {
           throw std::runtime_error("unknown node type '"+nodeName+"' in RIVL model");
@@ -410,6 +414,13 @@ namespace ospray {
           }
           for (int i=0;i<tm->numVertices;i++) {
             (vec3f&)mesh->position[i] = (vec3f&)tm->vertex[i];
+          }
+          if (tm->numNormals > 0) {
+            assert(tm->numNormals == tm->numVertices);
+            mesh->normal.resize(tm->numVertices);
+            for (int i=0;i<tm->numNormals;i++) {
+              (vec3f&)mesh->normal[i] = (vec3f&)tm->normal[i];
+            }
           }
           model.mesh.push_back(mesh);
         }

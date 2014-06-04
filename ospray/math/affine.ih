@@ -1,0 +1,30 @@
+#ifndef OSPRAY_MATH_AFFINE_IH
+#define OSPRAY_MATH_AFFINE_IH
+
+#include "linearspace.ih"
+
+// struct LinearSpace3f {
+//   vec3fa vx;
+//   vec3fa vy;
+//   vec3fa vz;
+// };
+
+struct AffineSpace3f {
+  LinearSpace3f l;
+  vec3f         p;
+};
+
+inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
+                                                const uniform vec3f vy,
+                                                const uniform vec3f vz,
+                                                const uniform vec3f p)
+{ 
+  uniform AffineSpace3f xfm;
+  xfm.l.vx = vx;
+  xfm.l.vy = vy;
+  xfm.l.vz = vz;
+  xfm.p    = p;
+  return xfm;
+}
+
+#endif

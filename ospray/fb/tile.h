@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/ospcommon.h"
+#include "ospray/common/ospcommon.h"
 #include "tilesize.h"
 
 namespace ospray {

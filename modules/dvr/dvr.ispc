@@ -2,12 +2,12 @@
     (that only renders a simple test frame */
 
 // ospray stuff
-#include "fb/framebuffer.ih"
-#include "camera/perspectivecamera.ih"
-#include "common/ray.ih"
-#include "common/math/bbox.ih"
-#include "volume/volume.ih"
-#include "render/util.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/math/bbox.ih"
+#include "ospray/volume/volume.ih"
+#include "ospray/render/util.ih"
 
 //! performs a ray-box intersection test, and returns intersection interval [t0,t1]
 inline void boxtest(const Ray &ray,
@@ -101,9 +101,10 @@ export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
       const float screen_u = (x+.5f)*tile->rcp_fbSize.x;
       const float screen_v = (y+.5f)*tile->rcp_fbSize.y;
       Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+                      (varying vec2f)make_vec2f(0.f,0.f));
 
-      const vec4f col = traceRayDVR(ray,volume,dt);
+      const vec4f col = 10 * traceRayDVR(ray,volume,dt);
 #if 1
       tile->r[i] = col.x;
       tile->g[i] = col.y;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../common/managed.h"
+#include "ospray/common/managed.h"
 
 namespace ispc {
   struct _Volume;

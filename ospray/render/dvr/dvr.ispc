@@ -1,11 +1,11 @@
 /*! \file dvr.ispc Defines ISPC side of "Direct Volume (ray casting) Renderer" (DVR) */
 
 // ospray stuff
-#include "../../fb/framebuffer.ih"
-#include "../../camera/perspectivecamera.ih"
-#include "../../common/ray.ih"
-#include "../../common/math/bbox.ih"
-#include "../../volume/volume.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/math/bbox.ih"
+#include "ospray/volume/volume.ih"
 
 
 //! performs a ray-box intersection test, and returns intersection interval [t0,t1]
@@ -128,7 +128,8 @@ task void DVRRenderer_renderLine(uniform FrameBuffer *uniform fb,
     const float screen_v = (y+.5f)/size_y;
     
     Ray ray;
-    camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+    camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+                    (varying vec2f)make_vec2f(0.f,0.f));
 
     const vec4f col = rayCastDVR(ray,volume);
     fb->setPixel(fb,make_vec2i(x,y),col); //make_vec4f(fx,fy,fz,fw));

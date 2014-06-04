@@ -10,11 +10,6 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  // extern "C" void *ispc_createModel(Model *cppModel, 
-  //                                   int32 numGeometries,
-  //                                   RTCScene *embreeHandle);
-  // extern "C" void ispc_setModelGeometry(void *model, int32 gID, void *geometry);
-
   void Model::finalize()
   {
     if (logLevel > 2) {

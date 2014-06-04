@@ -43,7 +43,7 @@ struct Tachyon {
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
 
-inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
+//inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
 
 inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon, const float weight)
 {
@@ -248,7 +248,8 @@ export void TachyonRenderer_renderTile(void *uniform _tile,
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
       Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+                      (varying vec2f)make_vec2f(0.f,0.f));
       const vec4f col = make_vec4f(shade(ray,&tachyon));
       tile->r[i] = col.x;
       tile->g[i] = col.y;

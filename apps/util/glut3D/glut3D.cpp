@@ -304,21 +304,20 @@ namespace ospray {
       for(int i = 1; i < *ac;i++)
       {
         std::string arg(av[i]);
-        if (arg == "-win")
-        {
-          if (++i < *ac)
-          {
-            std::string arg2(av[i]);
-            size_t pos = arg2.find("x");
-            if (pos != std::string::npos)
-            {
-              arg2.replace(pos, 1, " ");
-              std::stringstream ss(arg2);
-              ss >> g_width >> g_height;
-            }
+        if (arg == "-win") {
+          std::string arg2(av[i+1]);
+          size_t pos = arg2.find("x");
+          if (pos != std::string::npos) {
+            arg2.replace(pos, 1, " ");
+            std::stringstream ss(arg2);
+            ss >> g_width >> g_height;
+            removeArgs(*ac,(char **&)av,i,2);
+          } else {
+            g_width = atoi(av[i+1]);
+            g_height = atoi(av[i+1]);
+            removeArgs(*ac,(char **&)av,i,3);
           }
-          else
-            error("missing commandline param");
+          continue;
         }
         if (arg == "-vu") {
           // if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;

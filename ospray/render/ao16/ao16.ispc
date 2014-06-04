@@ -1,11 +1,11 @@
 /*! \file raycast.ispc Defines ISPC side of the AO16 renderer */
 
 // ospray stuff
-#include "../../fb/framebuffer.ih"
-#include "../../camera/camera.ih"
-#include "../../common/ray.ih"
-#include "../util.ih"
-#include "../../common/math/math.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/camera.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/render/util.ih"
+#include "ospray/math/math.ih"
 
 // embree stuff
 #include "embree2/rtcore_scene.isph"
@@ -173,7 +173,8 @@ export void ispc_AO16Renderer_renderTile(void *uniform _tile,//uniform Tile   *u
       const float screen_u = (x+.5f)/size_x;
       const float screen_v = (y+.5f)/size_y;
       Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v));
+      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+                      (varying vec2f)make_vec2f(0.f,0.f));
       // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
 #if 0
       rtcIntersect(scene,(varying RTCRay&)ray);
