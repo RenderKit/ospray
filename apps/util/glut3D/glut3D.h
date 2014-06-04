@@ -80,7 +80,6 @@ namespace ospray {
       virtual void specialkey(Glut3DWidget *widget, const int32 key);
       virtual void keypress(Glut3DWidget *widget, int32 key);
       InspectCenter(Glut3DWidget *widget) : Manipulator(widget) {}
-    protected:
       void rotate(float du, float dv);
     };
     struct MoveMode : public Manipulator
@@ -199,6 +198,15 @@ namespace ospray {
         but glut will not do anything else with this window before
         'run' got called */
       void create(const char *title, bool fullScreen = false);
+
+      /*! clear the frame buffer color and depth bits */
+      void clearPixels();
+
+      /*! draw uint32 pixels into the GLUT window (assumes window and buffer dimensions are equal) */
+      void drawPixels(const uint32 *framebuffer);
+
+      /*! draw float4 pixels into the GLUT window (assumes window and buffer dimensions are equal) */
+      void drawPixels(const vec3fa *framebuffer);
 
       // ------------------------------------------------------------------
       // camera helper code

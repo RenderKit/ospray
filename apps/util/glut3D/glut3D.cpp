@@ -14,6 +14,8 @@ namespace ospray {
 
     int g_width = 1024, g_height = 768;
 
+    bool animating = false;
+
     void error(const std::string &msg)
     {
       std::cout << "ospray::glut3D fatal error : " << msg << std::endl;
@@ -40,6 +42,10 @@ namespace ospray {
 
     void glut3dDisplay( void )
     {
+      if (animating && Glut3DWidget::activeWindow && Glut3DWidget::activeWindow->inspectCenterManipulator) {
+        InspectCenter *hack = (InspectCenter *) Glut3DWidget::activeWindow->inspectCenterManipulator;
+        hack->rotate(-10.f * Glut3DWidget::activeWindow->motionSpeed, 0);
+      }
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->display();
     }
@@ -217,12 +223,12 @@ namespace ospray {
       }
       forceRedraw();
     }
+
     void Glut3DWidget::activate()
     {
       activeWindow = this;
       glutSetWindow(windowID);
     }
-
 
     void Glut3DWidget::forceRedraw()
     {
@@ -239,6 +245,25 @@ namespace ospray {
         glClearColor(0.f,0.f,0.f,1.f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
       }
+      glutSwapBuffers();
+    }
+
+    void Glut3DWidget::clearPixels()
+    {
+      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+      glutSwapBuffers();
+    }
+
+    void Glut3DWidget::drawPixels(const uint32 *framebuffer)
+    {
+      glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
+      glutSwapBuffers();
+    }
+
+    void Glut3DWidget::drawPixels(const vec3fa *framebuffer)
+    {
+      glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, framebuffer);
       glutSwapBuffers();
     }
 
@@ -592,6 +617,10 @@ namespace ospray {
       }
       if (key == 'M' && moveModeManipulator) {
         manipulator = moveModeManipulator;
+        return;
+      }
+      if (key == 'A' && inspectCenterManipulator) {
+        animating = !animating;
         return;
       }
       if (manipulator) manipulator->keypress(this,key);
