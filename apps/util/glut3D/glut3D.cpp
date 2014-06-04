@@ -14,6 +14,8 @@ namespace ospray {
 
     int g_width = 1024, g_height = 768;
 
+    bool animating = false;
+
     void error(const std::string &msg)
     {
       std::cout << "ospray::glut3D fatal error : " << msg << std::endl;
@@ -40,6 +42,10 @@ namespace ospray {
 
     void glut3dDisplay( void )
     {
+      if (animating && Glut3DWidget::activeWindow && Glut3DWidget::activeWindow->inspectCenterManipulator) {
+        InspectCenter *hack = (InspectCenter *) Glut3DWidget::activeWindow->inspectCenterManipulator;
+        hack->rotate(-10.f * Glut3DWidget::activeWindow->motionSpeed, 0);
+      }
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->display();
     }
@@ -602,6 +608,10 @@ namespace ospray {
       }
       if (key == 'M' && moveModeManipulator) {
         manipulator = moveModeManipulator;
+        return;
+      }
+      if (key == 'A' && inspectCenterManipulator) {
+        animating = !animating;
         return;
       }
       if (manipulator) manipulator->keypress(this,key);

@@ -80,7 +80,6 @@ namespace ospray {
       virtual void specialkey(Glut3DWidget *widget, const int32 key);
       virtual void keypress(Glut3DWidget *widget, int32 key);
       InspectCenter(Glut3DWidget *widget) : Manipulator(widget) {}
-    protected:
       void rotate(float du, float dv);
     };
     struct MoveMode : public Manipulator
