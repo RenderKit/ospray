@@ -12,6 +12,8 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   vec3f Ng = ray.Ng;
   vec3f Ns = Ng;
 
+  dg.P = ray.org + ray.t * ray.dir;
+
   uniform vec3fa *uniform normal = THIS->normal;
   if ((flags & DG_NS) && normal) {
     const vec3i index = THIS->index[ray.primID];

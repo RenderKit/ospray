@@ -1,0 +1,34 @@
+#pragma once
+
+// ospray
+#include "common/ospcommon.ih"
+#include "common/model.ih"
+
+// path tracer
+#include "materials/medium.ih"
+#include "materials/material.ih"
+#include "lights/light.ih"
+
+struct Scene {
+  uniform Light *uniform *uniform allLights;
+  uniform uint32 num_allLights;
+  uniform Model *uniform model;
+  uniform EnvironmentLight *uniform *uniform envLights;
+  uniform uint32 num_envLights;
+};
+
+inline void postIntersect(const uniform Scene *uniform scene,
+                          Ray &ray,DifferentialGeometry &dg)
+{
+  // print("HIT.geomID: %\n",ray.geomID);
+  // print("HIT.primID: %\n",ray.primID);
+  // print("HIT.instID: %\n",ray.instID);
+
+  if (hadHit(ray))
+    postIntersect(scene->model,dg,ray,
+                  DG_MATERIAL|DG_MATERIALID|
+                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE
+                  // |DG_P
+                  );
+}
+
