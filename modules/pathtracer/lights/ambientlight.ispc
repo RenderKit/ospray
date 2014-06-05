@@ -37,7 +37,8 @@ varying vec3f AmbientLight__sample(const uniform Light* uniform _this,
                                    varying const vec2f& s) 
 {
   const uniform AmbientLight* uniform this = (const uniform AmbientLight* uniform)_this;
-  wi = cosineSampleHemisphere(s.x, s.y, 
+  wi = cosineSampleHemisphere(//.5f,.5f,
+                              s.x, s.y, 
                               dg.Ns);
   tMax = 1e20f;
   return this->L;

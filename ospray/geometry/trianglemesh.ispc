@@ -15,6 +15,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   dg.P = ray.org + ray.t * ray.dir;
 
   uniform vec3fa *uniform normal = THIS->normal;
+#if 1
   if ((flags & DG_NS) && normal) {
     const vec3i index = THIS->index[ray.primID];
     Ns
@@ -23,9 +24,10 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       + ray.v * make_vec3f(normal[index.z]);
     // print("normal interpolation!");
   }
+#endif
 
   uniform vec4f *uniform color = THIS->color;
-  if ((flags & DG_NS) && color) {
+  if ((flags & DG_COLOR) && color) {
     const vec3i index = THIS->index[ray.primID];
     dg.color
       = (1.f-ray.u-ray.v) * (color[index.x])
@@ -45,14 +47,17 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
     }
   }
 
-  if (flags & DG_NORMALIZE) {
-    Ng = normalize(Ng);
-    Ns = normalize(Ns);
-  }
-  if (flags & DG_FACEFORWARD) {
-    if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
-    if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
-  }
+  // if (flags & DG_NORMALIZE) {
+  //   Ng = normalize(Ng);
+  //   Ns = normalize(Ns);
+  // }
+  // // if (flags & DG_FACEFORWARD) {
+  //   if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
+  //   if (dot(ray.dir,Ns) >= 0.f) { 
+  //     Ns = neg(Ns);
+  //     // print("face-forwarded ! % % %\n",Ns.x,Ns.y,Ns.z);
+  //   }
+  // }
   dg.Ns = Ns;
   dg.Ng = Ng;
 }

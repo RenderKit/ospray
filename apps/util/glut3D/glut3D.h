@@ -231,8 +231,12 @@ namespace ospray {
                             lookat, mouse speed, etc */
       int32 windowID;
       vec2i windowSize;
-      /* camera speed modifier */
+      /*! camera speed modifier - affects how many units the camera
+         _moves_ with each unit on the screen */
       float motionSpeed;
+      /*! camera rotation speed modifier - affects how many units the
+         camera _rotates_ with each unit on the screen */
+      float rotateSpeed;
       FrameBufferMode frameBufferMode;
 
       /*! recompute current viewPort's frame from cameras 'from',

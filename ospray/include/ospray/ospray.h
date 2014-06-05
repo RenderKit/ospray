@@ -36,7 +36,7 @@ namespace osp {
   typedef embree::Vec3fa vec3fa;
   typedef embree::BBox<embree::Vec2i> box2i;
   typedef embree::BBox3f box3f;
-  typedef embree::AffineSpace3fa affine3f;
+  typedef embree::AffineSpace3f affine3f;
 
   struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
   struct FrameBuffer  : public ManagedObject {};

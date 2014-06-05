@@ -149,7 +149,16 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
 #endif
 // #endif
 
-    // L = abs(dg.Ns);
+#if 1
+     // if (dot(dg.Ns,lightPath.ray.dir) > 0.f) 
+     //   print("NOT FACEFORWARDED! % % %\n",dg.Ns.x,dg.Ns.y,dg.Ns.z);
+    // iw: visualize just the shading normal ...
+    // L = (dg.Ns);
+    L = abs((dg.Ns));
+    // L = abs(normalize(dg.Ns));
+    return L;
+#endif
+
     // L = make_vec3f(abs(dot(lightPath.ray.dir,dg.Ns)));
 
 #if 0
@@ -158,7 +167,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     if (!lightPath.ignoreVisibleLights) {
       foreach_unique(geomID in lightPath.ray.geomID) {
         const uniform AreaLight* uniform l = scene->model->geometry[geomID]->light;
-        if (l != NULL) L = add(L, mul(Lw, l->Le(l,dg,wo)));
+        if (l != NULL)
+          // L = add(L, mul(Lw, l->Le(l,dg,wo)));
+          L = L + Lw * l->Le(l,dg,wo);
       }
     }
 #endif
@@ -194,11 +205,15 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING) 
           continue;
 
+#if 0
+        // iw: hard-code BRDF to make sure the bug isn't in 'eval()'
+        vec3f brdf = make_vec3f(.1f);
+#else
         /*! Evaluate BRDF */
         vec3f brdf = CompositedBRDF__eval(&brdfs,wo,dg,ls.wi.v,directLightingBRDFTypes);
         if (reduce_max(brdf) <= 0.0f)
           continue;
-        
+#endif   
         /*! Test for shadows. */
         numRays++;
         Ray shadow_ray; 

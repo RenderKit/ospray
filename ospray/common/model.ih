@@ -82,8 +82,7 @@ inline void postIntersect(uniform Model *uniform model,
       uniform Geometry *uniform instGeom = model->geometry[instID];
       newRay.instID = -1;
       instGeom->postIntersect(instGeom,model,
-                              dg,newRay,flags);
-      // this does not yet do proper normal back-transforms!
+                              dg,newRay,flags & ~(DG_NORMALIZE|DG_FACEFORWARD));
     }
   }
 #else
@@ -93,6 +92,17 @@ inline void postIntersect(uniform Model *uniform model,
                         dg,ray,flags);
   }
 #endif
+
+  if (flags & DG_NORMALIZE) {
+    dg.Ng = normalize(dg.Ng);
+    dg.Ns = normalize(dg.Ns);
+  }
+  if (flags & DG_FACEFORWARD) {
+    if (flags & DG_NG)
+      if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);
+    if (flags & DG_NS)
+      if (dot(ray.dir,dg.Ns) >= 0.f) dg.Ns = neg(dg.Ns);
+  }
 }
 
 #endif

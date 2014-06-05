@@ -143,7 +143,7 @@ namespace ospray {
     Glut3DWidget::Glut3DWidget(FrameBufferMode frameBufferMode,
      ManipulatorMode initialManipulator,
      int allowedManipulators)
-    : motionSpeed(.003f),
+    : motionSpeed(.003f),rotateSpeed(.003f),
     windowID(-1),
     lastMousePos(-1,-1),
     currMousePos(-1,-1),
@@ -292,6 +292,8 @@ namespace ospray {
         viewPort.snapUp();
         viewPort.modified = true;
       }
+      motionSpeed = length(diag) * .001f;
+      std::cout << "glut3d: setting world bounds " << worldBounds << ", motion speed " << motionSpeed << std::endl;
     }
 
     void Glut3DWidget::setTitle(const char *title)
@@ -431,16 +433,16 @@ namespace ospray {
     {
       switch(key) {
         case 'a': {
-          rotate(+10.f*widget->motionSpeed,0);
+          rotate(+10.f*widget->rotateSpeed,0);
         } return;
         case 'd': {
-          rotate(-10.f*widget->motionSpeed,0);
+          rotate(-10.f*widget->rotateSpeed,0);
         } return;
         case 'w': {
-          rotate(0,+10.f*widget->motionSpeed);
+          rotate(0,+10.f*widget->rotateSpeed);
         } return;
         case 's': {
-          rotate(0,-10.f*widget->motionSpeed);
+          rotate(0,-10.f*widget->rotateSpeed);
         } return;
       }
 
@@ -467,16 +469,16 @@ namespace ospray {
     {
       switch(key) {
         case GLUT_KEY_LEFT: {
-          rotate(+10.f*widget->motionSpeed,0);
+          rotate(+10.f*widget->rotateSpeed,0);
         } return;
         case GLUT_KEY_RIGHT: {
-          rotate(-10.f*widget->motionSpeed,0);
+          rotate(-10.f*widget->rotateSpeed,0);
         } return;
         case GLUT_KEY_UP: {
-          rotate(0,+10.f*widget->motionSpeed);
+          rotate(0,+10.f*widget->rotateSpeed);
         } return;
         case GLUT_KEY_DOWN: {
-          rotate(0,-10.f*widget->motionSpeed);
+          rotate(0,-10.f*widget->rotateSpeed);
         } return;
       }
       Manipulator::specialkey(widget,key);
@@ -488,8 +490,8 @@ namespace ospray {
       const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = (to.y - from.y) * 4 * widget->motionSpeed
-      * length(widget->worldBounds.size());
+      float fwd = (to.y - from.y) * 4 * widget->motionSpeed;
+      // * length(widget->worldBounds.size());
       float oldDist = length(cam.at - cam.from);
       float newDist = oldDist - fwd;
       if (newDist < 1e-3f)
@@ -514,8 +516,8 @@ namespace ospray {
     {
       // std::cout << "-------------------------------------------------------" << std::endl;
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float du = (to.x - from.x) * widget->motionSpeed;
-      float dv = (to.y - from.y) * widget->motionSpeed;
+      float du = (to.x - from.x) * widget->rotateSpeed;
+      float dv = (to.y - from.y) * widget->rotateSpeed;
 
       vec2i delta_mouse = to - from;
       // PRINT(delta_mouse);
@@ -544,8 +546,8 @@ namespace ospray {
       const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = (to.y - from.y) * 4 * widget->motionSpeed
-      * length(widget->worldBounds.size());
+      float fwd = (to.y - from.y) * 4 * widget->motionSpeed;
+      // * length(widget->worldBounds.size());
       float oldDist = length(cam.at - cam.from);
       float newDist = oldDist - fwd;
       if (newDist < 1e-3f)
@@ -579,8 +581,8 @@ namespace ospray {
       const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float du = (to.x - from.x) * widget->motionSpeed;
-      float dv = (to.y - from.y) * widget->motionSpeed;
+      float du = (to.x - from.x) * widget->rotateSpeed;
+      float dv = (to.y - from.y) * widget->rotateSpeed;
 
       vec2i delta_mouse = to - from;
 
@@ -622,6 +624,16 @@ namespace ospray {
       if (key == 'A' && inspectCenterManipulator) {
         animating = !animating;
         return;
+      }
+      if (key == '+') { 
+        motionSpeed *= 1.5f; 
+        std::cout << "glut3d: new motion speed " << motionSpeed << std:: endl;
+        return; 
+      }
+      if (key == '-') { 
+        motionSpeed /= 1.5f; 
+        std::cout << "glut3d: new motion speed " << motionSpeed << std:: endl;
+        return; 
       }
       if (manipulator) manipulator->keypress(this,key);
     }

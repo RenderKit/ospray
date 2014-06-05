@@ -209,20 +209,25 @@ namespace ospray {
 
           // parse xfm matrix
           xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
-          sscanf((char*)value,"%f %f %f\n%f %f %f\n%f %f %f\n%f %f %f",
-                 &xfm->xfm.l.vx.x,
-                 &xfm->xfm.l.vx.y,
-                 &xfm->xfm.l.vx.z,
-                 &xfm->xfm.l.vy.x,
-                 &xfm->xfm.l.vy.y,
-                 &xfm->xfm.l.vy.z,
-                 &xfm->xfm.l.vz.x,
-                 &xfm->xfm.l.vz.y,
-                 &xfm->xfm.l.vz.z,
-                 &xfm->xfm.p.x,
-                 &xfm->xfm.p.y,
-                 &xfm->xfm.p.z);
+          int numRead = sscanf((char*)value,
+                               "%f %f %f\n%f %f %f\n%f %f %f\n%f %f %f",
+                               &xfm->xfm.l.vx.x,
+                               &xfm->xfm.l.vx.y,
+                               &xfm->xfm.l.vx.z,
+                               &xfm->xfm.l.vy.x,
+                               &xfm->xfm.l.vy.y,
+                               &xfm->xfm.l.vy.z,
+                               &xfm->xfm.l.vz.x,
+                               &xfm->xfm.l.vz.y,
+                               &xfm->xfm.l.vz.z,
+                               &xfm->xfm.p.x,
+                               &xfm->xfm.p.y,
+                               &xfm->xfm.p.z);
           xmlFree(value);
+          if (numRead != 12)  {
+            PRINT(numRead);
+            FATAL("invalid number of elements in RIVL transform node");
+          }
 
           // -------------------------------------------------------
         } else if (nodeName == "Mesh") {

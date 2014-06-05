@@ -22,7 +22,7 @@ namespace ospray {
     \ref ospray::Instance class.
   */
 
-
+  typedef affine3f AffineSpace3f;
 
   /*! \brief A Single Instance
 
@@ -33,7 +33,7 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Instance"; }
     virtual void finalize(Model *model);
 
-    affine3f   xfm;
+    AffineSpace3f   xfm;
     Ref<Model> instancedScene;
     uint32     embreeGeomID; 
   };
