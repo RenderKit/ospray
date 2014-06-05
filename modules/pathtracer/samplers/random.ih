@@ -2,7 +2,7 @@
 
 #include "default.ih"
 
-#define TABLE_SIZE 32      
+#define TABLE_SIZE 32
 #define WARMUP_ITERATIONS 7
 
 struct Random
@@ -96,10 +96,10 @@ inline void Random__Constructor(varying Random* uniform this, const int seed/* =
 inline varying int Random__getInt(varying Random* uniform this)
 {
   const varying int a = 16807;
-  const varying int m = 2147483647;
+  const varying int m = 2147483647UL;
   const varying int q = 127773;
   const varying int r = 2836;
-  const varying int f = 1 + 2147483647 / TABLE_SIZE;
+  const varying int f = 1 + 2147483647UL / TABLE_SIZE;
   
   varying int k = this->seed / q;
   this->seed = a*(this->seed - k*q) - r*k;

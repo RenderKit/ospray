@@ -3,31 +3,31 @@
 
 
 #define PDF_CULLING 0.0f 
-#if 0
+// #if 0
 
-#include "renderer.isph"
-#include "materials/medium.isph"
-#include "materials/material.isph"
-#include "lights/light.isph"
-#include "brdfs/compositedbrdf.isph"
-#include "textures/image.isph"
-#include "framebuffers/framebuffer.isph"
+// #include "renderer.isph"
+// #include "materials/medium.isph"
+// #include "materials/material.isph"
+// #include "lights/light.isph"
+// #include "brdfs/compositedbrdf.isph"
+// #include "textures/image.isph"
+// #include "framebuffers/framebuffer.isph"
 
-#if defined (ISPC_TARGET_SSE2) || defined (ISPC_TARGET_SSE4)
-#  define PACKET_WIDTH 2
-#  define PACKET_HEIGHT 2
-#elif defined (ISPC_TARGET_AVX) || defined(ISPC_TARGET_AVX2)
-#  define PACKET_WIDTH 4
-#  define PACKET_HEIGHT 2
-#else
-#  define PACKET_WIDTH 4
-#  define PACKET_HEIGHT 4
-#endif
+// #if defined (ISPC_TARGET_SSE2) || defined (ISPC_TARGET_SSE4)
+// #  define PACKET_WIDTH 2
+// #  define PACKET_HEIGHT 2
+// #elif defined (ISPC_TARGET_AVX) || defined(ISPC_TARGET_AVX2)
+// #  define PACKET_WIDTH 4
+// #  define PACKET_HEIGHT 2
+// #else
+// #  define PACKET_WIDTH 4
+// #  define PACKET_HEIGHT 4
+// #endif
 
-#define TILE_SIZE_X 8
-#define TILE_SIZE_Y 8
+// #define TILE_SIZE_X 8
+// #define TILE_SIZE_Y 8
 
-#endif
+// #endif
 
 //////////////////////////////////////////////////////////////////
 // LightPath
@@ -149,7 +149,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
 #endif
 // #endif
 
-#if 1
+#if 0
      // if (dot(dg.Ns,lightPath.ray.dir) > 0.f) 
      //   print("NOT FACEFORWARDED! % % %\n",dg.Ns.x,dg.Ns.y,dg.Ns.z);
     // iw: visualize just the shading normal ...
@@ -233,10 +233,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       }
     }
 
-    // iw: force exit here
-    return L;
+    // // iw: force exit here
+    // return L;
 
-#if 0
 
     /*! Global illumination. Pick one BRDF component and sample it. */
     if (lightPath.depth >= THIS->maxDepth) 
@@ -248,6 +247,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     float ss = PrecomputedSample__getFloat(sample_,THIS->firstScatterTypeSampleID + lightPath.depth);
     vec3f c = CompositedBRDF__sample(&brdfs,wo,dg,wi,type,s,ss,giBRDFTypes);
     
+#if 1
     /*! Continue only if we hit something valid. */
     if (reduce_max(c) <= 0.0f | wi.pdf <= PDF_CULLING) 
       return L;
@@ -255,7 +255,8 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     /*! Compute  simple volumetric effect. */
     const vec3f transmission = lightPath.lastMedium.transmission;
     if (ne(transmission,make_vec3f(1.f)))
-      c = mul(c, pow(transmission,lightPath.ray.tfar));
+      // c = mul(c, pow(transmission,lightPath.ray.t));
+      c = c * powf(transmission,lightPath.ray.t);
     
     /*! Tracking medium if we hit a medium interface. */
     if (type & TRANSMISSION) {
@@ -263,16 +264,21 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       foreach_unique(m in material) 
         if (m != NULL)  m->selectNextMedium(m,lightPath.lastMedium);
 #else
-      foreach_unique(geomID in lightPath.ray.id0) {
-        uniform Material* uniform m = scene->geometry[geomID]->material;
+      foreach_unique(uniMat in dg.material) {
+        uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL)  m->selectNextMedium(m,lightPath.lastMedium);
       }
+      // foreach_unique(geomID in lightPath.ray.geomID) {
+      //   uniform Material* uniform m = scene->geometry[geomID]->material;
+      //   if (m != NULL)  m->selectNextMedium(m,lightPath.lastMedium);
+      // }
 #endif
     }
     
     /*! Continue the path. */
     extend_fast(lightPath, 
-           dg.P,wi.v,dg.error*THIS->epsilon,inf,
+                dg.P,wi.v,//dg.error*
+                THIS->epsilon,inf,
            c,(type & directLightingBRDFTypes) != NONE);
 
     Lw = mul(mul(Lw,c),rcp(wi.pdf));
@@ -647,8 +653,9 @@ export void PathTracer_renderTile(uniform Tile &tile,
   const uniform uint32 tile_y = y0 / TILE_SIZE;
 
   uniform Random rnd; 
-  uniform int uniqueID = tile_x * 917 + tile_y * 81551; // iw: commented out + 3433*g_serverID;
+  uniform int uniqueID = tile_x * 917*13*17 + tile_y * 81551*19*23; // iw: commented out + 3433*g_serverID;
   Random__setSeed(&rnd,uniqueID); // expensive
+
 
   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
     const uint32 frag = i*programCount+programIndex;

@@ -450,6 +450,12 @@ inline vec3f rcp(const vec3f v)
 { return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
 
 
+inline vec3f powf(const vec3f v, const float f)
+{
+  return make_vec3f(powf(v.x,f),
+                    powf(v.y,f),
+                    powf(v.z,f));
+}
 
 
 
