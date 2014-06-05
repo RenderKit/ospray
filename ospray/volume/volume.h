@@ -42,6 +42,8 @@ namespace ospray {
       ospLoadModule first. */
     static Volume *createVolume(const char *identifier);
 
+    static Volume *createVolume(const char *filename, const char *type);
+
     // ispc::_Volume *ispcEquivalent;
   };
 

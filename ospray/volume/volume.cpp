@@ -155,6 +155,8 @@ namespace ospray {
     return (*creator)();
   }
 
+  Volume *Volume::createVolume(const char *filename, const char *type) { return(NULL); }
+
   template struct StructuredVolume<uint8>;
   template struct StructuredVolume<float>;
 }

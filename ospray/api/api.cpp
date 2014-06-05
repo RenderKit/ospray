@@ -272,6 +272,23 @@ namespace ospray {
     return volume;
   }
 
+  /*! \brief create a new volume of the given type from data in the given file
+    return 'NULL' if the type is not known or the file cannot be found */
+  extern "C" OSPVolume ospNewVolumeFromFile(const char *filename, const char *type)
+  {
+    ASSERT_DEVICE();
+    Assert(type != NULL && "invalid volume type identifier in ospNewVolumeFromFile");
+    Assert(filename != NULL && "no file name specified in ospNewVolumeFromFile");
+    LOG("ospNewVolumeFromFile(" << filename << ", " << type << ")");
+    OSPVolume volume = ospray::api::Device::current->newVolumeFromFile(filename, type);
+    if (ospray::logLevel > 0)
+      if (volume)
+        cout << "ospNewVolumeFromFile: " << ((ospray::Volume *) volume)->toString() << endl;
+      else
+        std::cerr << "#ospray: could not create volume of type '" << type << "' from file '" << filename << "'" << std::endl;
+    return volume;
+  }
+
   /*! \brief call a renderer to render given model into given framebuffer 
     
     model _may_ be empty (though most framebuffers will expect one!) */

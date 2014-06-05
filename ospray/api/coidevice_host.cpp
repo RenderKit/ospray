@@ -42,6 +42,7 @@ namespace ospray {
       OSPCOI_SET_MATERIAL,
       OSPCOI_NEW_CAMERA,
       OSPCOI_NEW_VOLUME,
+      OSPCOI_NEW_VOLUME_FROM_FILE,
       OSPCOI_NEW_RENDERER,
       OSPCOI_NEW_GEOMETRY,
       OSPCOI_ADD_GEOMETRY,
@@ -50,6 +51,7 @@ namespace ospray {
       OSPCOI_RENDER_FRAME_SYNC,
       OSPCOI_NUM_FUNCTIONS
     } RemoteFctID;
+
     const char *coiFctName[] = {
       "ospray_coi_new_model",
       "ospray_coi_new_data",
@@ -60,6 +62,7 @@ namespace ospray {
       "ospray_coi_set_material",
       "ospray_coi_new_camera",
       "ospray_coi_new_volume",
+      "ospray_coi_new_volume_from_file",
       "ospray_coi_new_renderer",
       "ospray_coi_new_geometry",
       "ospray_coi_add_geometry",
@@ -158,6 +161,9 @@ namespace ospray {
 
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type);
+
+      /*! create a new volume object (out of list of registered volume types) with data from a file */
+      virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
@@ -529,6 +535,18 @@ namespace ospray {
       return (OSPVolume)(int64)handle;
     }
 
+    /*! create a new volume object (out of list of registered volume types) with data from a file */
+    OSPVolume COIDevice::newVolumeFromFile(const char *filename, const char *type)
+    {
+      Assert(type);
+      Handle handle = Handle::alloc();
+      DataStream args;
+      args.write(handle);
+      args.write(type);
+      callFunction(OSPCOI_NEW_VOLUME_FROM_FILE, args);
+      return (OSPVolume)(int64) handle;
+    }
+
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer COIDevice::newRenderer(const char *type)
     {
@@ -540,8 +558,6 @@ namespace ospray {
       callFunction(OSPCOI_NEW_RENDERER,args);
       return (OSPRenderer)(int64)handle;
     }
-
-
 
     struct COIFrameBuffer {
       COIBUFFER *coiBuffer; // one per engine

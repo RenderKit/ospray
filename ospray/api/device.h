@@ -74,6 +74,9 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type) = 0;
       
+      /*! create a new volume object (out of list of registered volume types) with data from a file */
+      virtual OSPVolume newVolumeFromFile(const char *filename, const char *type) = 0;
+
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
 

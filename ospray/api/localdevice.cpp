@@ -272,6 +272,22 @@ namespace ospray {
       return (OSPVolume)volume;
     }
 
+    /*! create a new volume object (out of list of registered volume types) with data from a file */
+    OSPVolume LocalDevice::newVolumeFromFile(const char *filename, const char *type)
+    {
+      Assert(type != NULL && "invalid volume type identifier");
+      Assert(filename != NULL && "no file name specified for volume");
+      Volume *volume = Volume::createVolume(filename, type);
+      if (!volume) {
+        if (ospray::debugMode)
+          throw std::runtime_error("could not create volume of type '" + std::string(type) + "' from file '" + std::string(filename) + "'");
+        else
+          return NULL;
+      }
+      volume->refInc();
+      return (OSPVolume)volume;
+    }
+
     /*! load module */
     int LocalDevice::loadModule(const char *name)
     {
