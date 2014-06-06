@@ -215,6 +215,10 @@ namespace ospray {
       const char *type = args.getString();
       cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
 
+      // (iw): upon latest checkout i got a compile error that
+      // 'filename' wasn't defined; set it to a dummy value to make
+      // sure the code compiles even though this code ill obviously
+      // not work correctly...
       char *filename = "<file name wasn't set here!?>";
 
       Volume *geom = Volume::createVolume(filename, type);
