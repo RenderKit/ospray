@@ -541,18 +541,52 @@ namespace ospray {
     // MOVE_MOVE manipulator - TODO.
     // ------------------------------------------------------------------
 
-    /*! todo */
+
+    void MoveMode::keypress(Glut3DWidget *widget,
+                            int32 key)
+    {
+      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      switch(key) {
+      case 'w': {
+        float fwd = 8 * widget->motionSpeed;
+        cam.from = cam.from + fwd * cam.frame.l.vy;
+        cam.at   = cam.at   + fwd * cam.frame.l.vy;
+        cam.frame.p = cam.from;
+        cam.modified = true;
+      } return;
+      case 's': {
+        float fwd = 8 * widget->motionSpeed;
+        cam.from = cam.from - fwd * cam.frame.l.vy;
+        cam.at   = cam.at   - fwd * cam.frame.l.vy;
+        cam.frame.p = cam.from;
+        cam.modified = true;
+      } return;
+      case 'd': {
+        float fwd = 8 * widget->motionSpeed;
+        cam.from = cam.from + fwd * cam.frame.l.vx;
+        cam.at   = cam.at   + fwd * cam.frame.l.vx;
+        cam.frame.p = cam.from;
+        cam.modified = true;
+      } return;
+      case 'a': {
+        float fwd = 8 * widget->motionSpeed;
+        cam.from = cam.from - fwd * cam.frame.l.vx;
+        cam.at   = cam.at   - fwd * cam.frame.l.vx;
+        cam.frame.p = cam.from;
+        cam.modified = true;
+      } return;
+      }
+
+      Manipulator::keypress(widget,key);
+    }
+
     void MoveMode::dragRight(Glut3DWidget *widget,
       const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = (to.y - from.y) * 4 * widget->motionSpeed;
-      // * length(widget->worldBounds.size());
-      float oldDist = length(cam.at - cam.from);
-      float newDist = oldDist - fwd;
-      if (newDist < 1e-3f)
-        return;
-      cam.from = cam.at - newDist * cam.frame.l.vy;
+      float fwd = -(to.y - from.y) * 4 * widget->motionSpeed;
+      cam.from = cam.from + fwd * cam.frame.l.vy;
+      cam.at   = cam.at   + fwd * cam.frame.l.vy;
       cam.frame.p = cam.from;
       cam.modified = true;
     }
@@ -586,7 +620,7 @@ namespace ospray {
 
       vec2i delta_mouse = to - from;
 
-      const vec3f pivot = center(widget->worldBounds);
+      const vec3f pivot = cam.from; //center(widget->worldBounds);
       AffineSpace3fa xfm
       = AffineSpace3fa::translate(pivot)
       * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)

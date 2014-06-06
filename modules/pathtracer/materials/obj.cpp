@@ -12,9 +12,9 @@ namespace ospray {
       virtual void commit() {
         if (getIE() == NULL) {
           void* map_d = NULL;
-          const float d = 1.f;
+          const float d = getParam1f("d",getParam1f("alpha",1.f));
           void* map_Kd = NULL;
-          const vec3f Kd = vec3f(1.f);
+          const vec3f Kd = getParam3f("Kd",getParam3f("kd",getParam3f("color",vec3f(1.f))));
           void* map_Ks = NULL;
           const vec3f Ks = vec3f(1.f);
           void* map_Ns = NULL;

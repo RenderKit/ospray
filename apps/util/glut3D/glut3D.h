@@ -90,6 +90,7 @@ namespace ospray {
                              const vec2i &to, const vec2i &from);
       virtual void dragMiddle(Glut3DWidget *widget, 
                               const vec2i &to, const vec2i &from);
+      virtual void keypress(Glut3DWidget *widget, int32 key);
       MoveMode(Glut3DWidget *widget) : Manipulator(widget) {}
     };
 

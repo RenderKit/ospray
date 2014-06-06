@@ -313,7 +313,7 @@ namespace ospray {
         assert(msgMesh->normal.size() > 0);
         ospSetData(ospMesh,"vertex.normal",normal);
       } else {
-        cout << "no vertex normals!" << endl;
+        // cout << "no vertex normals!" << endl;
       }
 
       createMaterial(ospMesh, ospRenderer, msgMesh->material.ptr);

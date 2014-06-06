@@ -10,7 +10,7 @@ namespace ospray {
     const int32 maxDepth = 20;
     const float minContribution = .01f;
     const float epsilon = 1e-3f;
-    const int32 numSPP = 128;
+    const int32 numSPP = 8;
     void *backplate = NULL;
     ispcEquivalent = ispc::PathTracer_create(maxDepth,minContribution,epsilon,
                                              numSPP,backplate);
@@ -22,8 +22,11 @@ namespace ospray {
   { 
     std::string ptType = std::string("PathTracer_")+type;
     Material *material = Material::createMaterial(ptType.c_str());
-    if (!material) 
-      throw std::runtime_error("invalid path tracer material "+std::string(type)); 
+    if (!material) {
+      material = Material::createMaterial("PathTracer_OBJMaterial");
+      
+      // throw std::runtime_error("invalid path tracer material "+std::string(type)); 
+    }
     material->refInc();
     return material;
   }
