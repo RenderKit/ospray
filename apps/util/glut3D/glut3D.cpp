@@ -541,7 +541,16 @@ namespace ospray {
     // MOVE_MOVE manipulator - TODO.
     // ------------------------------------------------------------------
 
+    /*! \brief key press events for move mode
 
+      Right now, recognizes the following move modes:
+
+      - w : move forward
+      - s : move backward
+      - a : pan left
+      - d : pan right
+
+    */
     void MoveMode::keypress(Glut3DWidget *widget,
                             int32 key)
     {
