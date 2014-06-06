@@ -215,6 +215,8 @@ namespace ospray {
       const char *type = args.getString();
       cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
 
+      char *filename = "<file name wasn't set here!?>";
+
       Volume *geom = Volume::createVolume(filename, type);
       handle.assign(geom);
 

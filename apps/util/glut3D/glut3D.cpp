@@ -565,10 +565,10 @@ namespace ospray {
       float du = (to.x - from.x);
       float dv = (to.y - from.y);
 
-      vec2i delta_mouse = to - from;
+      vec2i delta_mouse = (to - from);
 
-      AffineSpace3fa xfm = AffineSpace3fa::translate( dv * cam.frame.l.vz )
-        * AffineSpace3fa::translate( -1.0 * du * cam.frame.l.vx );
+      AffineSpace3fa xfm = AffineSpace3fa::translate( widget->motionSpeed * dv * cam.frame.l.vz )
+        * AffineSpace3fa::translate( -1.0 * widget->motionSpeed * du * cam.frame.l.vx );
 
       cam.frame = xfm * cam.frame;
       cam.from = xfmPoint(xfm, cam.from);
