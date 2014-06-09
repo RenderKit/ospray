@@ -7,22 +7,39 @@
 #include "../util.ih"
 #include "ospray/common/model.ih"
 #include "objmaterial.ih"
+#include "ospray/texture/texture.ih"
+
+struct OBJRenderer {
+  uniform Model *model;
+  //uniform Texture *textureArray;
+  uniform OBJMaterial *materialArray;
+};
 
 inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 { 
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
   // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
-  rtcIntersect(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
+  //rtcIntersect(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
+  traceRay(model,ray);
+
   if (ray.geomID < 0)
     return make_vec3f(0.f);
 
-  uniform Material *material = model->geometry[ray.geomID]->material;
+  DifferentialGeometry dg;
+  postIntersect(model,
+                dg,
+                ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR);
+  
+  uniform Material *material = dg.material;
   uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
   vec3f Kd = make_vec3f(0,1,0);
   if (objMaterial != NULL) {
     Kd = objMaterial->Kd;
   }
+
+  //print("% % %\n", Kd.x, Kd.y, Kd.z);
 
   float c = dot(normalize(ray.Ng),ray.dir); 
 
@@ -39,11 +56,13 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
                                          void *uniform _camera, //uniform Camera *uniform camera,
-                                         void *uniform _model)
+                                         void *uniform _model,
+                                         void *uniform _textureArray)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Model   *uniform model   = (uniform Model *uniform)_model;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+  uniform Texture *uniform textureArray = (uniform Texture *uniform)_textureArray;
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
   const uniform uint32 size_y = tile->fbSize.y;

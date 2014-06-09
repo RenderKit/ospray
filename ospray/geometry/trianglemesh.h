@@ -49,7 +49,8 @@ namespace ospray {
     const vec3fa *vertex; //!< mesh's vertex array
     const vec3fa *normal; //!< mesh's vertex normal array
     const vec4f  *color;  //!< mesh's vertex color array
-    const uint32 *prim_materialID; // per-primitive material ID
+    const uint32 *prim_materialID; //!< per-primitive material ID
+    Material **prim_material_list; //!< per-primitive material list
     int geom_materialID;
 
     Ref<Data> indexData;  /*!< triangle indices (A,B,C,materialID) */
@@ -57,7 +58,10 @@ namespace ospray {
     Ref<Data> normalData; /*!< vertex normal array (vec3fa) */
     Ref<Data> colorData;  /*!< vertex color array (vec3fa) */
     Ref<Data> materialIDData;  /*!< data array for per-prim material ID (uint32) */
+    Ref<Data> primMaterialList; /*!< data array for per-prim materials */
     uint32    eMesh;   /*!< embree triangle mesh handle */
+
+    void** ispcMaterialPtrs; /*!< pointers to ISPC equivalent materials */
   };
 
     //! helper fct that creates a tessllated unit arrow

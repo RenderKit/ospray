@@ -1,6 +1,7 @@
 #include "model.ih"
 
 typedef uniform Geometry *uniform uniGeomPtr;
+typedef uniform Material *uniform uniMaterialPtr;
 
 // ISPC bug: can't export pointer to model because model contains (through N indirections) a function pointer that has a varying parameter ...
 //export uniform Model *uniform

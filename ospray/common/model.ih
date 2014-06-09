@@ -18,7 +18,6 @@ struct Model {
   uniform int32 numGeometries;
   //! array of (pointers to) geometries contained in this model
   uniform Geometry *uniform *uniform geometry;
-
 };
 
 /*! trace a ray (using embree where possible) */

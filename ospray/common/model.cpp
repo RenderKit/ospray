@@ -17,15 +17,15 @@ namespace ospray {
       cout << "Finalizing model, has " << geometry.size() << " geometries" << endl;
     }
 
-    this->ispcEquivalent = ispc::Model_create(this,geometry.size());
+    this->ispcEquivalent = ispc::Model_create(this, geometry.size());
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 
     // for now, only implement triangular geometry...
-    for (int i=0;i<geometry.size();i++) {
+    for (size_t i=0; i < geometry.size(); i++) {
       geometry[i]->finalize(this);
-      ispc::Model_setGeometry(getIE(),i,geometry[i]->getIE());
+      ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
-    
+
     rtcCommit(embreeSceneHandle);
   }
 }

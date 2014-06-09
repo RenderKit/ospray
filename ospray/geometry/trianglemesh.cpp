@@ -1,6 +1,5 @@
 #include "trianglemesh.h"
 #include "../common/model.h"
-#include "include/ospray/ospray.h"
 // embree stuff
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
@@ -43,6 +42,7 @@ namespace ospray {
     colorData  = getParamData("vertex.color",getParamData("color"));
     indexData  = getParamData("index",getParamData("triangle"));
     materialIDData = getParamData("prim.materialID");
+    primMaterialList = getParamData("materials");
     geom_materialID = getParam1i("geom.materialID",-1);
 
     Assert2(vertexData != NULL, 
@@ -57,6 +57,13 @@ namespace ospray {
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;
     this->color  = colorData ? (vec4f*)colorData->data : NULL;
     this->prim_materialID  = materialIDData ? (uint32*)materialIDData->data : NULL;
+    this->prim_material_list = primMaterialList ? (Material**)primMaterialList->data : NULL;
+    //Get ISPC pointers
+    const int num_materials = primMaterialList->numItems;
+    ispcMaterialPtrs = new void*[num_materials];
+    for (int i = 0; i < num_materials; i++) {
+      this->ispcMaterialPtrs[i] = this->prim_material_list[i]->getIE();
+    }
 
     size_t numTris  = -1;
     size_t numVerts = -1;
@@ -104,8 +111,8 @@ namespace ospray {
                            (ispc::vec3fa*)normal,
                            (ispc::vec4f*)color,
                            geom_materialID,
-                           (uint32*)prim_materialID
-                           );
+                           &ispcMaterialPtrs[0],
+                           (uint32*)prim_materialID);
   }
 
   //! helper fct that creates a tessllated unit arrow

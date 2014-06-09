@@ -23,6 +23,8 @@ namespace ospray {
       struct RenderTask : public TileRenderer::RenderJob {
         Model   *world;
         Camera  *camera;
+        Data    *materialData;
+        Data    *textureData;
         virtual void renderTile(Tile &tile);
         virtual ~RenderTask() {}
       };

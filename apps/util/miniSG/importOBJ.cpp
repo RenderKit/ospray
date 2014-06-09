@@ -263,23 +263,23 @@ namespace ospray {
 
           if (!strncmp(token, "illum", 5)) { parseSep(token += 5);  continue; }
 
-          if (!strncmp(token, "d",  1)) { parseSep(token += 1);  cur->d = getFloat(token);  continue; }
-          if (!strncmp(token, "Ns", 2)) { parseSep(token += 2);  cur->Ns = getFloat(token);  continue; }
-          if (!strncmp(token, "Ni", 2)) { parseSep(token += 2);  cur->Ni = getFloat(token);  continue; }
+          if (!strncmp(token, "d",  1)) { parseSep(token += 1);  cur->setParam("d", getFloat(token));  continue; }
+          if (!strncmp(token, "Ns", 2)) { parseSep(token += 2);  cur->setParam("Ns", getFloat(token));  continue; }
+          if (!strncmp(token, "Ni", 2)) { parseSep(token += 2);  cur->setParam("Ni", getFloat(token));  continue; }
 
-          if (!strncmp(token, "Ka", 2)) { parseSep(token += 2);  cur->Ka = getVec3f(token); continue; }
-          if (!strncmp(token, "Kd", 2)) { parseSep(token += 2);  cur->Kd = getVec3f(token); continue; }
-          if (!strncmp(token, "Ks", 2)) { parseSep(token += 2);  cur->Ks = getVec3f(token); continue; }
-          if (!strncmp(token, "Tf", 2)) { parseSep(token += 2);  cur->Tf = getVec3f(token); continue; }
+          if (!strncmp(token, "Ka", 2)) { parseSep(token += 2);  cur->setParam("Ka", getVec3f(token)); continue; }
+          if (!strncmp(token, "Kd", 2)) { parseSep(token += 2);  cur->setParam("Kd", getVec3f(token)); continue; }
+          if (!strncmp(token, "Ks", 2)) { parseSep(token += 2);  cur->setParam("Ks", getVec3f(token)); continue; }
+          if (!strncmp(token, "Tf", 2)) { parseSep(token += 2);  cur->setParam("Tf", getVec3f(token)); continue; }
           
-          if (!strncmp(token, "map_d" , 5)) { parseSepOpt(token += 5);  cur->map_d = (path + std::string(token));  continue; }
-          if (!strncmp(token, "map_Ns" , 5)) { parseSepOpt(token += 5);  cur->map_Ns = (path + std::string(token));  continue; }
-          if (!strncmp(token, "map_Ka" , 5)) { parseSepOpt(token += 5);  cur->map_Ka = (path + std::string(token));  continue; }
-          if (!strncmp(token, "map_Kd" , 5)) { parseSepOpt(token += 5);  cur->map_Kd = (path + std::string(token));  continue; }
-          if (!strncmp(token, "map_Ks" , 5)) { parseSepOpt(token += 5);  cur->map_Ks = (path + std::string(token));  continue; }
+          if (!strncmp(token, "map_d" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_d", (path + std::string(token)).c_str());  continue; }
+          if (!strncmp(token, "map_Ns" , 5)) { parseSepOpt(token += 5); cur->setParam("map_Ns", (path + std::string(token)).c_str());  continue; }
+          if (!strncmp(token, "map_Ka" , 5)) { parseSepOpt(token += 5); cur->setParam("map_Ka", (path + std::string(token)).c_str());  continue; }
+          if (!strncmp(token, "map_Kd" , 5)) { parseSepOpt(token += 5); cur->setParam("map_Kd", (path + std::string(token)).c_str());  continue; }
+          if (!strncmp(token, "map_Ks" , 5)) { parseSepOpt(token += 5); cur->setParam("map_Ks", (path + std::string(token)).c_str());  continue; }
           /*! the following are extensions to the standard */
-          if (!strncmp(token, "map_Refl" , 5)) { parseSepOpt(token += 5);  cur->map_Refl = (path + std::string(token));  continue; }
-          if (!strncmp(token, "map_Bump" , 5)) { parseSepOpt(token += 5);  cur->map_Bump = (path + std::string(token));  continue; }
+          if (!strncmp(token, "map_Refl" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_Refl", (path + std::string(token)).c_str());  continue; }
+          if (!strncmp(token, "map_Bump" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_Bump", (path + std::string(token)).c_str());  continue; }
         }
       // if (cur) g_device->rtCommit(cur);
       cin.close();
