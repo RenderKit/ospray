@@ -327,18 +327,25 @@ namespace ospray {
               for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
                 if (!strcmp((const char*)attr->name, "num")) {
                   xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  assert(value);
                   num = atol((const char*)value);
                   xmlFree(value);
                 }
               }
 
               xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
-              char *s =  NULL;strtok((char*)value, " \t\n");
-              int i = 0;
-              for( i = 0, s = strtok((char*)value, " \t\n"); s && i < num; i++, s = NEXT_TOK ) {
-                int texID = atoi(s);
-                RIVLTexture * tex = nodeList[texID].cast<RIVLTexture>().ptr;
-                mat->textures.push_back(tex->texData);
+              if (value == NULL) {
+                // empty texture node ....
+              } else {
+                char *s =  NULL;
+                assert(value);
+                strtok((char*)value, " \t\n");
+                int i = 0;
+                for( i = 0, s = strtok((char*)value, " \t\n"); s && i < num; i++, s = NEXT_TOK ) {
+                  int texID = atoi(s);
+                  RIVLTexture * tex = nodeList[texID].cast<RIVLTexture>().ptr;
+                  mat->textures.push_back(tex->texData);
+                }
               }
             }
           }
