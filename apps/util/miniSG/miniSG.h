@@ -74,7 +74,7 @@ namespace ospray {
           assert(this && "Tried to clear a null parameter");
           switch( type ) {
             case STRING:
-              free((void*)s);
+              if (s) free((void*)s);
               break;
             case DATA:
               ptr = NULL;
@@ -110,6 +110,10 @@ namespace ospray {
         void set(vec3ui v) { clear(); type = UINT_3; i[0] = v.x; i[1] = v.y; i[2] = v.z; }
         void set(vec4ui v) { clear(); type = UINT_3; i[0] = v.x; i[1] = v.y; i[2] = v.z; i[3] = v.w; }
 
+        Param() {
+          s = NULL;
+          type = INT;
+        }
         union {
           float      f[4];
           int32      i[4];
