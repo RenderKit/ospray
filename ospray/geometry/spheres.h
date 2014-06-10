@@ -42,7 +42,7 @@ namespace ospray {
     <dt><code>int32        bytes_per_sphere = 4*sizeof(flaot)</code></dt><dd>Size (in bytes) of each sphere in the data array.</dd>
     <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset of each sphere's 'int mateiralID' value within each sphere. Setting this value to -1 means that there is no per-sphere material ID, and that all spheres share the same er-geomtetry materialID</dd>
     <dt><code>int32        center_offset = 0</code></dt><dd>Offset (in bytes) of each sphere's 'vec3f center' value within the sphere</dd>
-    <dt><li><code>Data<float> data</code></dt><dd> Array of data elements.</dd>
+    <dt><li><code>Data<float> spheres</code></dt><dd> Array of data elements.</dd>
     </dl>
 
     The functionality for this geometry is implemented via the

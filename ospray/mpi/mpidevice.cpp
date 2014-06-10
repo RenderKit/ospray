@@ -598,6 +598,14 @@ namespace ospray {
       return (OSPCamera)(int64)handle;
     }
 
+    /*! create a new volume object (out of list of registered volume
+        types) with data from a file */
+    OSPVolume MPIDevice::newVolumeFromFile(const char *filename, const char *type)
+    {
+      // iw: added this to make sure we at least compile.
+      NOTIMPLEMENTED;
+    }
+
     /*! create a new volume object (out of list of registered volumes) */
     OSPVolume MPIDevice::newVolume(const char *type)
     {
