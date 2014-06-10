@@ -75,6 +75,7 @@ namespace ospray {
           switch( type ) {
             case STRING:
               if (s) free((void*)s);
+              s = NULL;
               break;
             case DATA:
               ptr = NULL;
