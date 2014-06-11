@@ -45,14 +45,15 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       //   print("TRIMESH: % %\n",THIS->geom_materialID,THIS->prim_materialID);
       // }
     }
+
+    if( THIS->prim_material_list) {
+      //FIXME: crash here -- material pointers are bad
+      dg.material = THIS->prim_material_list[dg.materialID];
+    } else {
+      dg.material = geom->material;
+  }
   }
 
-  if( THIS->prim_materialID) {
-    //FIXME: crash here -- material pointers are bad
-    dg.material = THIS->prim_material_list[dg.materialID];
-  } else {
-    dg.material = geom->material;
-  }
 
 
   // if (flags & DG_NORMALIZE) {

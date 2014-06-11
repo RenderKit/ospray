@@ -57,12 +57,17 @@ namespace ospray {
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;
     this->color  = colorData ? (vec4f*)colorData->data : NULL;
     this->prim_materialID  = materialIDData ? (uint32*)materialIDData->data : NULL;
-    this->prim_material_list = primMaterialList ? (Material**)primMaterialList->data : NULL;
-    //Get ISPC pointers
-    const int num_materials = primMaterialList->numItems;
-    ispcMaterialPtrs = new void*[num_materials];
-    for (int i = 0; i < num_materials; i++) {
-      this->ispcMaterialPtrs[i] = this->prim_material_list[i]->getIE();
+    if (primMaterialList) {
+      this->prim_material_list = (Material**)primMaterialList->data;
+      //Get ISPC pointers
+      const int num_materials = primMaterialList->numItems;
+      ispcMaterialPtrs = new void*[num_materials];
+      for (int i = 0; i < num_materials; i++) {
+        this->ispcMaterialPtrs[i] = this->prim_material_list[i]->getIE();
+      }
+    } else {
+      this->prim_material_list = NULL;
+      this->ispcMaterialPtrs = NULL;
     }
 
     size_t numTris  = -1;
