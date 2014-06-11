@@ -142,31 +142,80 @@ namespace ospray {
     ospray::glut3D::FPSCounter fps;
   };
   
-  void createMaterial(OSPGeometry ospMesh, 
-                      OSPRenderer renderer,
-                      miniSG::Material *mat)
+  OSPMaterial createMaterial(OSPRenderer renderer,
+                             miniSG::Material *mat)
   {
-    OSPMaterial ospMat = ospNewMaterial(renderer,"OBJMaterial");
-    if (!ospMat)  {
-      cout << "given renderer does not know material type 'OBJMaterial'" << endl;
-      return;
-    }
-
-    if (!mat) {
+    if (mat == NULL) {
       static int numWarnings = 0;
       if (++numWarnings < 10)
-        cout << "WARNING: mesh does not have a material! (assigning default)" << endl;
-      ospSet3f(ospMat,"Kd",1.f,0.f,0.f);
-    } else {
-      ospSet3fv(ospMat,"Kd",&mat->getParam("kd", vec3f(1.f)).x);
-      ospSet3fv(ospMat,"Ks",&mat->getParam("Ks", vec3f(0.f)).x);
-      ospSet1f(ospMat,"Ns",mat->getParam("Ns", 0.f));
-      ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
+        cout << "WARNING: model does not have materials! (assigning default)" << endl;
+      OSPMaterial ospMat = ospNewMaterial(renderer,"OBJMaterial");
+      if (!ospMat)  {
+        cout << "given renderer does not know material type 'OBJMaterial'" << endl;
+        return NULL;
+      }
+      ospSet3f(ospMat, "Kd", .8f, 0.f, 0.f);
+      ospCommit(ospMat);
+      return ospMat;
     }
 
+    static std::map<miniSG::Material *,OSPMaterial> alreadyCreatedMaterials;
+    if (alreadyCreatedMaterials.find(mat) != alreadyCreatedMaterials.end())
+      return alreadyCreatedMaterials[mat];
+
+    const char *type = mat->getParam("type","OBJMaterial");
+    assert(type);
+    OSPMaterial ospMat = alreadyCreatedMaterials[mat] = ospNewMaterial(renderer,type);
+    if (!ospMat)  {
+      cout << "coul not create material type '"<<type<<"'" << endl;
+      return NULL;
+    }
+    
+    for (miniSG::Material::ParamMap::const_iterator it =  mat->params.begin();
+         it !=  mat->params.end(); ++it) {
+      const char *name = it->first.c_str();
+      const miniSG::Material::Param *p = it->second.ptr;
+      switch(p->type) {
+      case miniSG::Material::Param::INT:
+        ospSet1i(ospMat,name,p->i[0]);
+        break;
+      case miniSG::Material::Param::FLOAT:
+        ospSet1f(ospMat,name,p->f[0]);
+        break;
+      case miniSG::Material::Param::FLOAT_3:
+        ospSet3fv(ospMat,name,p->f);
+        break;
+      case miniSG::Material::Param::STRING:
+        ospSetString(ospMat,name,p->s);
+        break;
+      case miniSG::Material::Param::DATA:
+        cout << "WARNING: material has 'data' parameter, but don't know what that actually is!?" << endl;
+        break;
+      default: 
+        PRINT(p->type); 
+        throw std::runtime_error("unkonwn material parameter type");
+      };
+    }
+    
     ospCommit(ospMat);
-    ospSetMaterial(ospMesh,ospMat);
-    ospRelease(ospMat);
+    return ospMat;
+
+
+    // if (!mat) {
+    //   static int numWarnings = 0;
+    //   if (++numWarnings < 10)
+    //     cout << "WARNING: mesh does not have a material! (assigning default)" << endl;
+    //   ospSet3f(ospMat,"Kd",1.f,0.f,0.f);
+    // } else {
+    //   ospSet3fv(ospMat,"Kd",&mat->getParam("kd", vec3f(1.f)).x);
+    //   ospSet3fv(ospMat,"Ks",&mat->getParam("Ks", vec3f(0.f)).x);
+    //   ospSet1f(ospMat,"Ns",mat->getParam("Ns", 0.f));
+    //   ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
+    // }
+
+    // ospCommit(ospMat);
+    // ospSetMaterial(ospMesh,ospMat);
+    // ospRelease(ospMat);
   }
 
   void msgViewMain(int &ac, const char **&av)
@@ -300,16 +349,17 @@ namespace ospray {
       ospSetData(ospMesh,"position",position);
       
       // add triangle index array to mesh
+      if (!msgMesh->triangleMaterialId.empty()) {
+        OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
+                                       &msgMesh->triangleMaterialId[0],OSP_DATA_SHARED_BUFFER);
+        ospSetData(ospMesh,"prim.materialID",primMatID);
+      }
+
+      // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
-
-      // add triangle material id array to mesh
-      OSPData materialIDs = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
-                                 &msgMesh->triangleMaterialId[0], OSP_DATA_SHARED_BUFFER);
-      assert(msgMesh->triangleMaterialId.size() > 0);
-      ospSetData(ospMesh,"prim.materialID",materialIDs);
 
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
@@ -321,64 +371,47 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
-      //FIXME: This is BAD code, we are making a copy of the materials for every instance. We can do better!
-      //Add all materials to the triangle mesh
-      //The object material
-      createMaterial(ospMesh, ospRenderer, msgMesh->material.ptr);
-      //The per primitive materials
-      std::vector<OSPMaterial> materials;
-      for(size_t i =0; i < msgModel->material.size(); i++) {
-        miniSG::Material *mat = msgModel->material[i].ptr;
-        OSPMaterial ospMat = ospNewMaterial(ospRenderer, mat->getParam("type", "OBJMaterial"));
-        if (!ospMat) {
-          cout << "given renderer does not know material type '" << mat->getParam("type", "OBJMaterial") << "'" << endl;
-          return;
-        }
-
-        if (!mat) {
-          static int numWarnings = 0;
-          if (++numWarnings < 10)
-            cout << "WARNING: model does not have materials! (assigning default)" << endl;
-          ospSet3f(ospMat, "Kd", .8f, 0.f, 0.f);
-        } else {
-          for (miniSG::Material::ParamMap::const_iterator it =  mat->params.begin();
-               it !=  mat->params.end(); ++it) {
-            const char *name = it->first.c_str();
-            const miniSG::Material::Param *p = it->second.ptr;
-            switch(p->type) {
-            case miniSG::Material::Param::INT:
-              ospSet1i(ospMat,name,p->i[0]);
-              break;
-            case miniSG::Material::Param::FLOAT:
-              ospSet1f(ospMat,name,p->f[0]);
-              break;
-            case miniSG::Material::Param::FLOAT_3:
-              ospSet3fv(ospMat,name,p->f);
-              break;
-            case miniSG::Material::Param::STRING:
-              ospSetString(ospMat,name,p->s);
-              break;
-            case miniSG::Material::Param::DATA:
-              cout << "WARNING: material has 'data' parameter, but don't know what that actually is!?" << endl;
-              break;
-            default: 
-              PRINT(p->type); 
-              throw std::runtime_error("unkonwn material parameter type");
-            };
-          }
-
-          // ospSet3fv(ospMat, "Kd", &mat->getParam("kd", vec3f(1.f)).x);
-          // ospSet3fv(ospMat, "Ks", &mat->getParam("Ks", vec3f(0.f)).x);
-          // ospSet1f(ospMat, "Ns", mat->getParam("Ns", 0.f));
-          // ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
-        }
-
-        ospCommit(ospMat);
-        materials.push_back(ospMat);
+      // add triangle material id array to mesh
+      if (msgMesh->materialList.empty()) {
+        // we have a single material for this mesh...
+        ospSetMaterial(ospMesh,createMaterial(ospRenderer, msgMesh->material.ptr));
+      } else {
+        // we have an entire material list, assign that list
+        std::vector<OSPMaterial > materialList;
+        for (int i=0;i<msgMesh->materialList.size();i++)
+          materialList.push_back(createMaterial(ospRenderer, msgMesh->materialList[i].ptr));
+        OSPData ospMaterialList = ospNewData(materialList.size(), OSP_OBJECT, &materialList[0], 0);
+        ospSetData(ospMesh,"materialList",ospMaterialList);
       }
-      OSPData ospMaterials = ospNewData(materials.size(), OSP_OBJECT, &materials[0], 0);
-      ospSetData(ospMesh, "materials", ospMaterials);
-      //END material buffer
+
+
+      // // //FIXME: This is BAD code, we are making a copy of the materials for every instance. We can do better!
+      // // //Add all materials to the triangle mesh
+      // // //The object material
+      // // createMaterial(ospMesh, ospRenderer, msgMesh->material.ptr);
+      // // //The per primitive materials
+      // // std::vector<OSPMaterial> materials;
+      // // for(size_t i =0; i < msgModel->material.size(); i++) {
+      // //   miniSG::Material *mat = msgModel->material[i].ptr;
+      // //   OSPMaterial ospMat = ospNewMaterial(ospRenderer, mat->getParam("type", "OBJMaterial"));
+      // //   if (!ospMat) {
+      // //     cout << "given renderer does not know material type '" << mat->getParam("type", "OBJMaterial") << "'" << endl;
+      // //     return;
+      // //   }
+
+
+      //     // ospSet3fv(ospMat, "Kd", &mat->getParam("kd", vec3f(1.f)).x);
+      //     // ospSet3fv(ospMat, "Ks", &mat->getParam("Ks", vec3f(0.f)).x);
+      //     // ospSet1f(ospMat, "Ns", mat->getParam("Ns", 0.f));
+      //     // ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
+      // //        }
+
+      //   ospCommit(ospMat);
+      //   materials.push_back(ospMat);
+      // }
+      // OSPData ospMaterials = ospNewData(materials.size(), OSP_OBJECT, &materials[0], 0);
+      // ospSetData(ospMesh, "materials", ospMaterials);
+      // //END material buffer
 
       ospCommit(ospMesh);
 

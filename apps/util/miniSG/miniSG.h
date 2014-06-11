@@ -182,7 +182,22 @@ namespace ospray {
       std::vector<vec3fa>   normal;   /*!< vertex normals; empty if none present */
       std::vector<vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
       std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
+      std::vector<Ref<Material> > materialList; /*!< entire list of
+                                             materials, in case the
+                                             mesh has per-primitive
+                                             material IDs (list may be
+                                             empty, in which case the
+                                             'material' field
+                                             applies */
+
+      /*! per-primitive material ID, if applicable. if empty every
+          triangle uses the 'material' field of the mesh; if not emtpy
+          the ID in here refers as a index into the
+          'materialList'. Will eventually get merged into the foruth
+          component of the triangle, but right now ospray/embree do
+          not yet allow this ... */
       std::vector<uint32> triangleMaterialId;
+      
       
       box3f bounds; /*!< bounding box of all vertices */
 

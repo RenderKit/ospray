@@ -576,10 +576,15 @@ namespace ospray {
           mesh->position.resize(tm->numVertices);
           mesh->triangle.resize(tm->numTriangles);
           mesh->triangleMaterialId.resize(tm->numTriangles);
+          bool anyNotZero = false;
           for (int i=0;i<tm->numTriangles;i++) {
             (vec3i&)mesh->triangle[i] = (vec3i&)tm->triangle[i];
             mesh->triangleMaterialId[i] = tm->triangle[i].w >>16;
+            if (mesh->triangleMaterialId[i]) anyNotZero = true;
           }
+          if (!anyNotZero)
+            mesh->triangleMaterialId.clear();
+
           for (int i=0;i<tm->numVertices;i++) {
             (vec3f&)mesh->position[i] = (vec3f&)tm->vertex[i];
           }
