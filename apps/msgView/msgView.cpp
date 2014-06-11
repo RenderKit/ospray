@@ -158,17 +158,16 @@ namespace ospray {
         cout << "WARNING: mesh does not have a material! (assigning default)" << endl;
       ospSet3f(ospMat,"Kd",1.f,0.f,0.f);
     } else {
-      ospSet3fv(ospMat,"Kd",&mat->Kd.x);
-      ospSet3fv(ospMat,"Ks",&mat->Ks.x);
-      ospSet1f(ospMat,"Ns",mat->Ns);
-      ospSet1f(ospMat,"d", mat->d);
+      ospSet3fv(ospMat,"Kd",&mat->getParam("kd", vec3f(1.f)).x);
+      ospSet3fv(ospMat,"Ks",&mat->getParam("Ks", vec3f(0.f)).x);
+      ospSet1f(ospMat,"Ns",mat->getParam("Ns", 0.f));
+      ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
     }
 
     ospCommit(ospMat);
     ospSetMaterial(ospMesh,ospMat);
     ospRelease(ospMat);
   }
-  
 
   void msgViewMain(int &ac, const char **&av)
   {
@@ -306,6 +305,12 @@ namespace ospray {
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
 
+      // add triangle material id array to mesh
+      OSPData materialIDs = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
+                                 &msgMesh->triangleMaterialId[0], OSP_DATA_SHARED_BUFFER);
+      assert(msgMesh->triangleMaterialId.size() > 0);
+      ospSetData(ospMesh,"prim.materialID",materialIDs);
+
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
         OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
@@ -316,7 +321,40 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
+      //FIXME: This is BAD code, we are making a copy of the materials for every instance. We can do better!
+      //Add all materials to the triangle mesh
+      //The object material
       createMaterial(ospMesh, ospRenderer, msgMesh->material.ptr);
+      //The per primitive materials
+      std::vector<OSPMaterial> materials;
+      for(size_t i =0; i < msgModel->material.size(); i++) {
+        miniSG::Material *mat = msgModel->material[i].ptr;
+        OSPMaterial ospMat = ospNewMaterial(ospRenderer, mat->getParam("type", "OBJMaterial"));
+        if (!ospMat) {
+          cout << "given renderer does not know material type '" << mat->getParam("type", "OBJMaterial") << "'" << endl;
+          return;
+        }
+
+        if (!mat) {
+          static int numWarnings = 0;
+          if (++numWarnings < 10)
+            cout << "WARNING: model does not have materials! (assigning default)" << endl;
+          ospSet3f(ospMat, "Kd", 1.f, 0.f, 0.f);
+        } else {
+          ospSet3fv(ospMat, "Kd", &mat->getParam("kd", vec3f(1.f)).x);
+          ospSet3fv(ospMat, "Ks", &mat->getParam("Ks", vec3f(0.f)).x);
+          ospSet1f(ospMat, "Ns", mat->getParam("Ns", 0.f));
+          ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
+        }
+
+        ospCommit(ospMat);
+        materials.push_back(ospMat);
+      }
+      OSPData ospMaterials = ospNewData(materials.size(), OSP_OBJECT, &materials[0], 0);
+      ospSetData(ospMesh, "materials", ospMaterials);
+      //END material buffer
+
+      ospCommit(ospMesh);
 
       if (doesInstancing) {
         OSPModel model_i = ospNewModel();
@@ -325,6 +363,7 @@ namespace ospray {
         instanceModels.push_back(model_i);
       } else
         ospAddGeometry(ospModel,ospMesh);
+
     }
 
     if (doesInstancing) {

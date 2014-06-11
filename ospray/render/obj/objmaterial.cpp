@@ -19,6 +19,9 @@ namespace ospray {
       Ns = this->getParam1f("Ns",Ns);
       d  = this->getParam1f("d", d);
 
+      //std::cout << "\n";
+      //std::cout << "Kd " << Kd.x << " " << Kd.y << " " << Kd.z << "\n";
+
       ispc::OBJMaterial_set(getIE(),
                             (ispc::vec3f&)Kd,
                             (ispc::vec3f&)Ks,

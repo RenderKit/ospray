@@ -1,4 +1,5 @@
 #include "trianglemesh.ih"
+#include "ospray/common/model.ih"
 
 static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
                                        uniform Model *uniform model,
@@ -8,7 +9,6 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
 {
   uniform TriangleMesh *uniform THIS = (uniform TriangleMesh *uniform)geom;
   dg.geometry = geom;
-  dg.material = geom->material;
   vec3f Ng = ray.Ng;
   vec3f Ns = Ng;
 
@@ -47,6 +47,14 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
     }
   }
 
+  if( THIS->prim_materialID) {
+    //FIXME: crash here -- material pointers are bad
+    dg.material = THIS->prim_material_list[dg.materialID];
+  } else {
+    dg.material = geom->material;
+  }
+
+
   // if (flags & DG_NORMALIZE) {
   //   Ng = normalize(Ng);
   //   Ns = normalize(Ns);
@@ -74,6 +82,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform vec3fa *uniform normal,
                                      uniform vec4f  *uniform color,
                                      uniform int32   geom_materialID,
+                                     uniform Material *uniform *uniform prim_material_list,
                                      uniform uint32 *uniform prim_materialID
                                      )
 {
@@ -87,6 +96,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->normal       = normal;
   mesh->color        = color;
   mesh->prim_materialID = prim_materialID;
+  mesh->prim_material_list = prim_material_list;
   mesh->geom_materialID = geom_materialID;
 }
 
@@ -108,8 +118,8 @@ export void TriangleMesh_destroy(void *uniform _mesh)
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
-  TriangleMesh_Constructor(mesh,cppEquivalent,
-                           NULL,0,0,NULL,NULL,NULL,NULL,-1,NULL);
+  TriangleMesh_Constructor(mesh, cppEquivalent, 
+                           NULL, 0, 0, NULL, NULL, NULL, NULL, -1, NULL, NULL);
   return mesh;
 }
 
@@ -122,13 +132,24 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform vec3fa *uniform normal,
                                       uniform vec4f  *uniform color,
                                       uniform int32   geom_materialID,
+                                      void *uniform _prim_material_list,
                                       uniform uint32 *uniform prim_materialID
                                       )
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
   uniform Model *uniform model = (uniform Model *uniform)_model;
-  TriangleMesh_Constructor(mesh,mesh->geometry.cppEquivalent,model,geomID,
-                           numTriangles,index,vertex,normal,color,
-                           geom_materialID,prim_materialID);
+  uniform Material *uniform *uniform prim_material_list = (uniform Material *uniform *uniform)_prim_material_list;
+ TriangleMesh_Constructor(mesh,
+                          mesh->geometry.cppEquivalent,
+                          model,
+                          geomID, 
+                          numTriangles,
+                          index,
+                          vertex,
+                          normal,
+                          color, 
+                          geom_materialID,
+                          prim_material_list,
+                          prim_materialID);
 }
 

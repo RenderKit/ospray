@@ -542,6 +542,7 @@ namespace ospray {
       Handle handle = Handle::alloc();
       DataStream args;
       args.write(handle);
+      args.write(filename);
       args.write(type);
       callFunction(OSPCOI_NEW_VOLUME_FROM_FILE, args);
       return (OSPVolume)(int64) handle;

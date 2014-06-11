@@ -53,6 +53,7 @@ namespace ospray {
       the respective mateiral type) */
     struct RIVLMaterial : public miniSG::Node {
       virtual string toString() const { return "ospray::miniSG::RIVLMaterial"; } 
+      Ref<miniSG::Material> general;
     };
 
     /*! Scene graph grouping node */
@@ -64,14 +65,15 @@ namespace ospray {
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
     struct Geometry : public miniSG::Node {
-      std::vector<Ref<miniSG::RIVLMaterial> > material;
+      std::vector<Ref<RIVLMaterial> > material;
       virtual string toString() const { return "ospray::miniSG::Geometry"; } 
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
       anything that defines some sort of geometric surface */
-    struct Texture : public miniSG::Node {
+    struct RIVLTexture : public miniSG::Node {
       virtual string toString() const { return "ospray::miniSG::Texture"; } 
+      Ref<miniSG::Texture> texData;
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
@@ -173,23 +175,181 @@ namespace ospray {
           // -------------------------------------------------------
         } else if (nodeName == "Texture2D") {
           // -------------------------------------------------------
-          Ref<miniSG::Texture> txt = new miniSG::Texture;
+          Ref<miniSG::RIVLTexture> txt = new miniSG::RIVLTexture;
+          txt.ptr->texData = new miniSG::Texture;
           nodeList.push_back(txt.ptr);
 
-          static int warnCount = 0;
-          if (!warnCount++)
-            std::cout << "warning: parsing RIVL Texture2D not yet implemented "
-              "- creating dummy texture" << std::endl;
+          int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
+          std::string format;
+
+          for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
+            if (!strcmp( (const char*)attr->name, "ofs" )) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              ofs = atol((char*)value);
+              xmlFree(value);
+            } else if (!strcmp((const char*)attr->name, "width")) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              width = atol((char*)value);
+              xmlFree(value);
+            } else if (!strcmp((const char*)attr->name, "height")) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              height = atol((char*)value);
+              xmlFree(value);
+            } else if (!strcmp((const char*)attr->name, "channels")) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              channels = atol((char*)value);
+              xmlFree(value);
+            } else if (!strcmp((const char*)attr->name, "depth")) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              depth = atol((char*)value);
+              xmlFree(value);
+            } else if (!strcmp((const char*)attr->name, "format")) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              format = std::string((char*)value);
+              xmlFree(value);
+            }
+          }
+
+          assert(ofs != size_t(-1) && "Offset not properly parsed for Texture2D nodes");
+          assert(width != size_t(-1) && "Width not properly parsed for Texture2D nodes");
+          assert(height != size_t(-1) && "Height not properly parsed for Texture2D nodes");
+          assert(channels != size_t(-1) && "Channel count not properly parsed for Texture2D nodes");
+          assert(depth != size_t(-1) && "Depth not properly parsed for Texture2D nodes");
+          assert( strcmp(format.c_str(), "") != 0 && "Format not properly parsed for Texture2D nodes");
+
+          txt.ptr->texData->channels = channels;
+          txt.ptr->texData->depth = depth;
+          txt.ptr->texData->width = width;
+          txt.ptr->texData->height = height;
+          txt.ptr->texData->data = (char*)(binBasePtr+ofs);
           // -------------------------------------------------------
         } else if (nodeName == "Material") {
           // -------------------------------------------------------
-          Ref<miniSG::RIVLMaterial> mat = new miniSG::RIVLMaterial;
-          nodeList.push_back(mat.ptr);
+          Ref<miniSG::RIVLMaterial> RIVLmat = new miniSG::RIVLMaterial;
+          RIVLmat.ptr->general = new miniSG::Material;
+          nodeList.push_back(RIVLmat.ptr);
 
-          static int warnCount = 0;
-          if (!warnCount++)
-            std::cout << "warning: parsing RIVL Material not yet implemented "
-              "- creating dummy material" << std::endl;
+          miniSG::Material *mat = RIVLmat.ptr->general.ptr;
+
+          std::string name;
+          std::string type;
+
+          for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
+            if (!strcmp((const char*)attr->name, "name" )) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              name = (const char*)value;
+              mat->setParam("name", name.c_str());
+              xmlFree(value);
+            } else if (!strcmp((const char*)attr->name, "type")) {
+              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              type = (const char*)value;
+              mat->setParam("type", type.c_str());
+              xmlFree(value);
+            }
+          }
+
+          for (xmlNode *child=node->children; child; child=child->next) {
+            std::string childNodeType = (char*)child->name;
+
+            if (!childNodeType.compare("param")) {
+              std::string childName;
+              std::string childType;
+
+              for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
+                if (!strcmp((const char*)attr->name, "name")) {
+                  xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  childName = (const char*)value;
+                  xmlFree(value);
+                } else if (!strcmp((const char*)attr->name, "type")) {
+                  xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  childType = (const char*)value;
+                  xmlFree(value);
+                }
+              }
+
+              //Get the data out of the node
+              xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
+#define NEXT_TOK strtok(NULL, " \t\n")
+              char *s = strtok((char*)value, " \t\n");
+              //TODO: UGLY! Find a better way.
+              if (!childType.compare("float")) {
+                mat->setParam(childName.c_str(), (float)atof(s));
+              } else if (!childType.compare("float2")) {
+                float x = atof(s);
+                s = NEXT_TOK;
+                float y = atof(s);
+                mat->setParam(childName.c_str(), vec2f(x,y));
+              } else if (!childType.compare("float3")) {
+                float x = atof(s);
+                s = NEXT_TOK;
+                float y = atof(s);
+                s = NEXT_TOK;
+                float z = atof(s);
+                mat->setParam(childName.c_str(), vec3f(x,y,z));
+              } else if (!childType.compare("float4")) {
+                float x = atof(s);
+                s = NEXT_TOK;
+                float y = atof(s);
+                s = NEXT_TOK;
+                float z = atof(s);
+                s = NEXT_TOK;
+                float w = atof(s);
+                mat->setParam(childName.c_str(), vec4f(x,y,z,w));
+              } else if (!childType.compare("int")) {
+                mat->setParam(childName.c_str(), (int32)atol(s));
+              } else if (!childType.compare("int2")) {
+                int32 x = atol(s);
+                s = NEXT_TOK;
+                int32 y = atol(s);
+                mat->setParam(childName.c_str(), vec2i(x,y));
+              } else if (!childType.compare("int3")) {
+                int32 x = atol(s);
+                s = NEXT_TOK;
+                int32 y = atol(s);
+                s = NEXT_TOK;
+                int32 z = atol(s);
+                mat->setParam(childName.c_str(), vec3i(x,y,z));
+              } else if (!childType.compare("int4")) {
+                int32 x = atol(s);
+                s = NEXT_TOK;
+                int32 y = atol(s);
+                s = NEXT_TOK;
+                int32 z = atol(s);
+                s = NEXT_TOK;
+                int32 w = atol(s);
+                mat->setParam(childName.c_str(), vec4i(x,y,z,w));
+              } else {
+                //error!
+                throw std::runtime_error("unknown parameter type '" + childType + "' when parsing RIVL materials.");
+              }
+            } else if (!childNodeType.compare("textures")) {
+              int num = -1;
+              for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
+                if (!strcmp((const char*)attr->name, "num")) {
+                  xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  assert(value);
+                  num = atol((const char*)value);
+                  xmlFree(value);
+                }
+              }
+
+              xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
+              if (value == NULL) {
+                // empty texture node ....
+              } else {
+                char *s =  NULL;
+                assert(value);
+                strtok((char*)value, " \t\n");
+                int i = 0;
+                for( i = 0, s = strtok((char*)value, " \t\n"); s && i < num; i++, s = NEXT_TOK ) {
+                  int texID = atoi(s);
+                  RIVLTexture * tex = nodeList[texID].cast<RIVLTexture>().ptr;
+                  mat->textures.push_back(tex->texData);
+                }
+              }
+            }
+          }
+#undef NEXT_TOK
           // -------------------------------------------------------
         } else if (nodeName == "Transform") {
           // -------------------------------------------------------
@@ -311,11 +471,12 @@ namespace ospray {
               mesh->numTriangles = num;
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
-              xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
+              xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);
               for(char *s=strtok((char*)value," \t\n");s;s=strtok(NULL," \t\n")) {
                 size_t matID = atoi(s);
-                miniSG::RIVLMaterial *mat = nodeList[matID].cast<miniSG::RIVLMaterial>().ptr;
-                assert(mat);
+                Ref<RIVLMaterial> mat = nodeList[matID].cast<miniSG::RIVLMaterial>();
+                mat.ptr->refInc();
+                assert(mat.ptr);
                 mesh->material.push_back(mat);
               }
               xmlFree(value);
@@ -414,8 +575,10 @@ namespace ospray {
           Mesh *mesh = new Mesh;
           mesh->position.resize(tm->numVertices);
           mesh->triangle.resize(tm->numTriangles);
+          mesh->triangleMaterialId.resize(tm->numTriangles);
           for (int i=0;i<tm->numTriangles;i++) {
             (vec3i&)mesh->triangle[i] = (vec3i&)tm->triangle[i];
+            mesh->triangleMaterialId[i] = tm->triangle[i].w >>16;
           }
           for (int i=0;i<tm->numVertices;i++) {
             (vec3f&)mesh->position[i] = (vec3f&)tm->vertex[i];
@@ -428,13 +591,23 @@ namespace ospray {
             }
           }
           model.mesh.push_back(mesh);
+
+          for (size_t i = 0; i < tm->material.size(); i++) {
+            model.material.push_back(tm->material[i].ptr->general);
+          }
         }
-        
+
         int meshID = meshIDs[tm];
         model.instance.push_back(Instance(meshID,xfm));
         
         return;
         // throw std::runtime_error("meshes not yet implemented in importRIVL");
+      }
+
+      RIVLMaterial *mt = dynamic_cast<RIVLMaterial *>(node.ptr);
+      if (mt) {
+        model.material.push_back(mt->general);
+        return;
       }
 
       throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");

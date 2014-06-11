@@ -3,17 +3,22 @@
 #include "objmaterial.h"
 // ospray
 #include "ospray/common/model.h"
-#include "embree2/rtcore.h"
+#include "ospray/common/data.h"
 #include "ospray/camera/camera.h"
+//embree
+#include "embree2/rtcore.h"
 
 namespace ospray {
   namespace obj {
 
-    extern "C" void ispc__OBJRenderer_renderTile(void *tile, void *camera, void *model);
+    extern "C" void ispc__OBJRenderer_renderTile(void *tile, void *camera, void *model, void *textureArray);
 
     void OBJRenderer::RenderTask::renderTile(Tile &tile)
     {
-      ispc__OBJRenderer_renderTile(&tile,camera->getIE(),world->getIE());
+      ispc__OBJRenderer_renderTile(&tile,
+                                   camera->getIE(),
+                                   world->getIE(),
+                                   NULL/*textureData->data*/); //textures NYI
     }
     
     TileRenderer::RenderJob *OBJRenderer::createRenderJob(FrameBuffer *fb)
@@ -26,6 +31,9 @@ namespace ospray {
       frame->camera = (Camera *)getParamObject("camera",NULL);
       Assert2(frame->camera,"null camera handle (did you forget to assign a "
               "'camera' parameter to the ray_cast renderer?)");
+
+      frame->textureData = (Data*)frame->world->getParamObject("textureArray", NULL);
+
       return frame;
     }
     
