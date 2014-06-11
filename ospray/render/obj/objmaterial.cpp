@@ -13,11 +13,11 @@ namespace ospray {
       if (ispcEquivalent == NULL)
         ispcEquivalent = ispc::OBJMaterial_create(this);
 
-      Kd = this->getParam3f("Kd",Kd);
-      Ks = this->getParam3f("Ks",Ks);
+      Kd = this->getParam3f("Kd",vec3f(.8f));
+      Ks = this->getParam3f("Ks",vec3f(0.f));
 
-      Ns = this->getParam1f("Ns",Ns);
-      d  = this->getParam1f("d", d);
+      Ns = this->getParam1f("Ns",0.f);
+      d  = this->getParam1f("d", .5f);
 
       //std::cout << "\n";
       //std::cout << "Kd " << Kd.x << " " << Kd.y << " " << Kd.z << "\n";

@@ -51,8 +51,6 @@ namespace ospray {
       ospSet3f(camera,"dir",+1,-1,+1);
       ospCommit(camera);
 
-      PRINT(renderer);
-      PRINT(model);
       ospSetParam(renderer,"world",model);
       ospSetParam(renderer,"model",model);
       ospSetParam(renderer,"camera",camera);
@@ -141,7 +139,30 @@ namespace ospray {
     OSPCamera      camera;
     ospray::glut3D::FPSCounter fps;
   };
-  
+
+  void warnMaterial(const std::string &type)
+  {
+    static std::map<std::string,int> numOccurances;
+    if (numOccurances[type] == 0)
+      cout << "could not create material type '"<<type<<"'. Replacing with default material." << endl;
+    numOccurances[type]++;
+  }
+
+  OSPMaterial createDefaultMaterial(OSPRenderer renderer)
+  {
+    static OSPMaterial ospMat = NULL;
+    if (ospMat) return ospMat;
+    
+    ospMat = ospNewMaterial(renderer,"OBJMaterial");
+    if (!ospMat)  {
+      throw std::runtime_error("could not create default material 'OBJMaterial'");
+      // cout << "given renderer does not know material type 'OBJMaterial'" << endl;
+    }
+    ospSet3f(ospMat, "Kd", .8f, 0.f, 0.f);
+    ospCommit(ospMat);
+    return ospMat;
+  }
+
   OSPMaterial createMaterial(OSPRenderer renderer,
                              miniSG::Material *mat)
   {
@@ -149,14 +170,7 @@ namespace ospray {
       static int numWarnings = 0;
       if (++numWarnings < 10)
         cout << "WARNING: model does not have materials! (assigning default)" << endl;
-      OSPMaterial ospMat = ospNewMaterial(renderer,"OBJMaterial");
-      if (!ospMat)  {
-        cout << "given renderer does not know material type 'OBJMaterial'" << endl;
-        return NULL;
-      }
-      ospSet3f(ospMat, "Kd", .8f, 0.f, 0.f);
-      ospCommit(ospMat);
-      return ospMat;
+      return createDefaultMaterial(renderer);
     }
 
     static std::map<miniSG::Material *,OSPMaterial> alreadyCreatedMaterials;
@@ -167,8 +181,8 @@ namespace ospray {
     assert(type);
     OSPMaterial ospMat = alreadyCreatedMaterials[mat] = ospNewMaterial(renderer,type);
     if (!ospMat)  {
-      cout << "coul not create material type '"<<type<<"'" << endl;
-      return NULL;
+      warnMaterial(type);
+      return createDefaultMaterial(renderer);
     }
     
     for (miniSG::Material::ParamMap::const_iterator it =  mat->params.begin();
@@ -281,7 +295,7 @@ namespace ospray {
     // done parsing
     // -------------------------------------------------------]
     cout << "msgView: done parsing. found model with" << endl;
-    cout << "  - num materials: " << msgModel->material.size() << endl;
+    // cout << "  - num materials: " << msgModel->material.size() << endl;
     cout << "  - num meshes   : " << msgModel->mesh.size() << " ";
     int numUniqueTris = 0;
     int numInstancedTris = 0;
@@ -308,12 +322,12 @@ namespace ospray {
     if (numInstancedTris == 0 && msgAnimation.empty())
       error("no (valid) input files specified - model contains no triangles");
 
-    if (msgModel->material.empty()) {
-      static int numWarnings = 0;
-      if (++numWarnings < 10)
-        cout << "msgView: adding default material (only reporting first 10 times)" << endl;
-      msgModel->material.push_back(new miniSG::Material);
-    }
+    // if (msgModel->material.empty()) {
+    //   static int numWarnings = 0;
+    //   if (++numWarnings < 10)
+    //     cout << "msgView: adding default material (only reporting first 10 times)" << endl;
+    //   msgModel->material.push_back(new miniSG::Material);
+    // }
 
     // -------------------------------------------------------
     // create ospray model
@@ -374,7 +388,8 @@ namespace ospray {
       // add triangle material id array to mesh
       if (msgMesh->materialList.empty()) {
         // we have a single material for this mesh...
-        ospSetMaterial(ospMesh,createMaterial(ospRenderer, msgMesh->material.ptr));
+        OSPMaterial singleMaterial = createMaterial(ospRenderer, msgMesh->material.ptr);
+        ospSetMaterial(ospMesh,singleMaterial);
       } else {
         // we have an entire material list, assign that list
         std::vector<OSPMaterial > materialList;

@@ -12,7 +12,7 @@ struct TriangleMesh {
   uniform vec3fa   *normal; //!< mesh's vertex normal array
   uniform vec4f    *color;  //!< mesh's vertex color array
   uniform uint32   *prim_materialID;     // per-primitive material ID
-  uniform Material *uniform *prim_material_list;  // per-primitive material list
+  uniform Material *uniform *materialList;  // list of materials, if multiple materials are assigned to this mesh.
   uniform int32     geom_materialID;     // per-object material ID
 };
 
@@ -27,7 +27,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform vec3fa *uniform normal,
                                      uniform vec4f  *uniform color,
                                      uniform int32   geom_materialID,
-                                     uniform Material *uniform *uniform prim_material_list,
+                                     uniform Material *uniform *uniform materialList,
                                      uniform uint32 *uniform prim_materialID);
 //! destructor for ispc-side TriangleMesh object
 extern void TriangleMesh_Destructor(uniform TriangleMesh *uniform mesh);

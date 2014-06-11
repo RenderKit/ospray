@@ -40,7 +40,8 @@ namespace ospray {
     /*! \brief create a material of given type */
     Material *OBJRenderer::createMaterial(const char *type)
     {
-      return new OBJMaterial;
+      Material *mat = new OBJMaterial;
+      return mat;
     }
 
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);

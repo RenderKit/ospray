@@ -36,9 +36,11 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   }
 
   if (flags & DG_MATERIALID) {
+    // print("trimesh:postisec\n");
+    // print("primid %\n",ray.primID);
     if (THIS->prim_materialID) {
       dg.materialID = THIS->prim_materialID[ray.primID];
-      // print("% : primID % -> matID %\n",THIS->prim_material_list,ray.primID,dg.materialID);
+      // print("% : primID % -> matID %\n",THIS->materialList,ray.primID,dg.materialID);
     }
     else {
       dg.materialID = THIS->geom_materialID;
@@ -48,27 +50,19 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       // }
     }
 
-    if( THIS->prim_material_list) {
+    // print("bla\n");
+    if( THIS->materialList) {
       //FIXME: crash here -- material pointers are bad
-      dg.material = THIS->prim_material_list[dg.materialID];
+      // print("material INTO material list %\n",dg.materialID);
+      dg.material = THIS->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+      // print("material fom material list %\n",dg.material);
     } else {
+      // print("material FROM GEOM %\n",geom);
       dg.material = geom->material;
+      // print("material fom geometry %\n",dg.material);
     }
   }
 
-
-
-  // if (flags & DG_NORMALIZE) {
-  //   Ng = normalize(Ng);
-  //   Ns = normalize(Ns);
-  // }
-  // // if (flags & DG_FACEFORWARD) {
-  //   if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
-  //   if (dot(ray.dir,Ns) >= 0.f) { 
-  //     Ns = neg(Ns);
-  //     // print("face-forwarded ! % % %\n",Ns.x,Ns.y,Ns.z);
-  //   }
-  // }
   dg.Ns = Ns;
   dg.Ng = Ng;
 }
@@ -85,7 +79,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform vec3fa *uniform normal,
                                      uniform vec4f  *uniform color,
                                      uniform int32   geom_materialID,
-                                     uniform Material *uniform *uniform prim_material_list,
+                                     uniform Material *uniform *uniform materialList,
                                      uniform uint32 *uniform prim_materialID
                                      )
 {
@@ -99,7 +93,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->normal       = normal;
   mesh->color        = color;
   mesh->prim_materialID = prim_materialID;
-  mesh->prim_material_list = prim_material_list;
+  mesh->materialList = materialList;
   mesh->geom_materialID = geom_materialID;
 }
 
@@ -135,13 +129,13 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform vec3fa *uniform normal,
                                       uniform vec4f  *uniform color,
                                       uniform int32   geom_materialID,
-                                      void *uniform _prim_material_list,
+                                      void *uniform _materialList,
                                       uniform uint32 *uniform prim_materialID
                                       )
 {
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
   uniform Model *uniform model = (uniform Model *uniform)_model;
-  uniform Material *uniform *uniform prim_material_list = (uniform Material *uniform *uniform)_prim_material_list;
+  uniform Material *uniform *uniform materialList = (uniform Material *uniform *uniform)_materialList;
  TriangleMesh_Constructor(mesh,
                           mesh->geometry.cppEquivalent,
                           model,
@@ -152,7 +146,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                           normal,
                           color, 
                           geom_materialID,
-                          prim_material_list,
+                          materialList,
                           prim_materialID);
 
  // if (prim_materialID) {

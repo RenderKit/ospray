@@ -244,7 +244,7 @@ namespace ospray {
             // if (cur) g_device->rtCommit(cur);
             std::string name(token);
             material[name] = cur = new Material; //g_device->rtNewMaterial("obj");
-            model.material.push_back(cur);
+            //            model.material.push_back(cur);
             cur->name = name;
             cur->type = "OBJ";
             continue;

@@ -41,11 +41,11 @@ namespace ospray {
     normalData = getParamData("vertex.normal",getParamData("normal"));
     colorData  = getParamData("vertex.color",getParamData("color"));
     indexData  = getParamData("index",getParamData("triangle"));
-    materialIDData = getParamData("prim.materialID");
-    primMaterialList = getParamData("materialList");
+    prim_materialIDData = getParamData("prim.materialID");
+    materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
-    Assert2(vertexData != NULL, 
+    Assert2(vertexData != NULL,
             "triangle mesh geometry does not have either 'position'"
             " or 'vertex' array");
     Assert2(indexData != NULL, 
@@ -56,17 +56,16 @@ namespace ospray {
     this->vertex = (vec3fa*)vertexData->data;
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;
     this->color  = colorData ? (vec4f*)colorData->data : NULL;
-    this->prim_materialID  = materialIDData ? (uint32*)materialIDData->data : NULL;
-    if (primMaterialList) {
-      this->prim_material_list = (Material**)primMaterialList->data;
-      //Get ISPC pointers
-      const int num_materials = primMaterialList->numItems;
+    this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
+    this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
+
+    if (materialList) {
+      const int num_materials = materialListData->numItems;
       ispcMaterialPtrs = new void*[num_materials];
       for (int i = 0; i < num_materials; i++) {
-        this->ispcMaterialPtrs[i] = this->prim_material_list[i]->getIE();
+        this->ispcMaterialPtrs[i] = this->materialList[i]->getIE();
       }
     } else {
-      this->prim_material_list = NULL;
       this->ispcMaterialPtrs = NULL;
     }
 
@@ -123,7 +122,7 @@ namespace ospray {
                            (ispc::vec3fa*)normal,
                            (ispc::vec4f*)color,
                            geom_materialID,
-                           &ispcMaterialPtrs[0],
+                           ispcMaterialPtrs,
                            (uint32*)prim_materialID);
   }
 

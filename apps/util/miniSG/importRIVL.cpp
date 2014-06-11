@@ -597,8 +597,14 @@ namespace ospray {
           }
           model.mesh.push_back(mesh);
 
-          for (size_t i = 0; i < tm->material.size(); i++) {
-            model.material.push_back(tm->material[i].ptr->general);
+          if (tm->material.size() == 1) {
+            PING;
+            PRINT(tm->material[0]);
+            mesh->material = tm->material[0].ptr->general;
+          } else {
+            for (size_t i = 0; i < tm->material.size(); i++) {
+              mesh->materialList.push_back(tm->material[i].ptr->general);
+            }
           }
         }
 
@@ -611,7 +617,7 @@ namespace ospray {
 
       RIVLMaterial *mt = dynamic_cast<RIVLMaterial *>(node.ptr);
       if (mt) {
-        model.material.push_back(mt->general);
+        // model.material.push_back(mt->general);
         return;
       }
 
