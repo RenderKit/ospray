@@ -339,12 +339,38 @@ namespace ospray {
           static int numWarnings = 0;
           if (++numWarnings < 10)
             cout << "WARNING: model does not have materials! (assigning default)" << endl;
-          ospSet3f(ospMat, "Kd", 1.f, 0.f, 0.f);
+          ospSet3f(ospMat, "Kd", .8f, 0.f, 0.f);
         } else {
-          ospSet3fv(ospMat, "Kd", &mat->getParam("kd", vec3f(1.f)).x);
-          ospSet3fv(ospMat, "Ks", &mat->getParam("Ks", vec3f(0.f)).x);
-          ospSet1f(ospMat, "Ns", mat->getParam("Ns", 0.f));
-          ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
+          for (miniSG::Material::ParamMap::const_iterator it =  mat->params.begin();
+               it !=  mat->params.end(); ++it) {
+            const char *name = it->first.c_str();
+            const miniSG::Material::Param *p = it->second.ptr;
+            switch(p->type) {
+            case miniSG::Material::Param::INT:
+              ospSet1i(ospMat,name,p->i[0]);
+              break;
+            case miniSG::Material::Param::FLOAT:
+              ospSet1f(ospMat,name,p->f[0]);
+              break;
+            case miniSG::Material::Param::FLOAT_3:
+              ospSet3fv(ospMat,name,p->f);
+              break;
+            case miniSG::Material::Param::STRING:
+              ospSetString(ospMat,name,p->s);
+              break;
+            case miniSG::Material::Param::DATA:
+              cout << "WARNING: material has 'data' parameter, but don't know what that actually is!?" << endl;
+              break;
+            default: 
+              PRINT(p->type); 
+              throw std::runtime_error("unkonwn material parameter type");
+            };
+          }
+
+          // ospSet3fv(ospMat, "Kd", &mat->getParam("kd", vec3f(1.f)).x);
+          // ospSet3fv(ospMat, "Ks", &mat->getParam("Ks", vec3f(0.f)).x);
+          // ospSet1f(ospMat, "Ns", mat->getParam("Ns", 0.f));
+          // ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
         }
 
         ospCommit(ospMat);

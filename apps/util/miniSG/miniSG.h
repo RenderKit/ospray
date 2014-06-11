@@ -66,7 +66,7 @@ namespace ospray {
           FLOAT_2,
           FLOAT_3,
           FLOAT_4,
-          DATA,
+          DATA, // iw: don't thikn we should have data as a void pointer - there's no way we could pass that through the api without knowing that kind of type (and size) is behind that pointer ...
           STRING,
         } DataType;
 
@@ -88,10 +88,11 @@ namespace ospray {
 
         void set(const char *v) { 
           clear();
+          s = strdup(v);
           type = STRING;
-          char *str = (char*)malloc(strlen(v));
-          strcpy(str, v);
-          s = str;
+          // char *str = (char*)malloc(strlen(v));
+          // strcpy(str, v);
+          // s = str;
         }
 
         void set(void *v) { clear(); type = DATA; ptr = v; }
