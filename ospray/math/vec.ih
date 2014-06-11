@@ -397,11 +397,18 @@ inline bool ne(const vec3f a, const vec3f b)
 // dot product
 // ------------------------------------------------------------------
 /*! computes 3D dot product for *all-uniform* vec3fs */
-inline uniform float dot(const uniform vec3f &a, const uniform vec3f &b)
+inline uniform float dot(const uniform vec3f a, const uniform vec3f b)
 { return a.x*b.x+a.y*b.y+a.z*b.z; }
 /*! computes 3D dot product for vec3fs that produce varying results */
-inline float dot(const vec3f &a, const vec3f &b)
+inline float dot(const vec3f a, const vec3f b)
 { return a.x*b.x+a.y*b.y+a.z*b.z; }
+
+inline uniform float length(const uniform vec3f a) { return sqrtf(dot(a,a)); }
+inline varying float length(const varying vec3f a) { return sqrtf(dot(a,a)); }
+
+inline uniform float distance(const uniform vec3f a, const uniform vec3f b) { return length(sub(a,b)); }
+inline varying float distance(const varying vec3f a, const uniform vec3f b) { return length(sub(a,b)); }
+
 
 // ------------------------------------------------------------------
 // cross product

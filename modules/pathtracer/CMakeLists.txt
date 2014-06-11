@@ -17,8 +17,10 @@ IF (MODULE_PATHTRACER)
 		materials/obj.ispc
 		materials/obj.cpp
 		materials/material.ispc
-		lights/ambientlight.ispc
 		lights/light.ispc
+		lights/ambientlight.ispc
+		lights/pointlight.ispc
+		lights/spotlight.ispc
 		)
 	TARGET_LINK_LIBRARIES(
 		ospray_module_pathtracer${OSPRAY_LIB_SUFFIX} 

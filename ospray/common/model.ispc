@@ -7,7 +7,10 @@ typedef uniform Geometry *uniform uniGeomPtr;
 export void *uniform Model_create(void *uniform cppE, uniform int32 numGeometries)
 {
   uniform Model *uniform model = uniform new uniform Model;
-  model->embreeSceneHandle = rtcNewScene(RTC_SCENE_STATIC,
+  model->embreeSceneHandle = rtcNewScene(//RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
+                                         //RTC_SCENE_STATIC|RTC_SCENE_COMPACT,
+                                         RTC_SCENE_DYNAMIC,
+                                         //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
                                          RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING);
   model->cppEquivalent     = cppE;
   model->geometry = uniform new uniform uniGeomPtr[numGeometries];

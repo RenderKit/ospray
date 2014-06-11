@@ -16,7 +16,6 @@ namespace ospray {
 
   void Spheres::finalize(Model *model) 
   {
-    PING;
     radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
     bytesPerSphere    = getParam1i("bytes_per_sphere",4*sizeof(float));
@@ -24,7 +23,6 @@ namespace ospray {
     offset_radius     = getParam1i("offset_radius",-1); //3*sizeof(float));
     offset_materialID = getParam1i("offset_materialID",-1);
     data              = getParamData("spheres",NULL);
-    PING;
     
     if (data == NULL) 
       throw std::runtime_error("#ospray:geometry/spheres: no 'spheres' data specified");

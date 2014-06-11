@@ -1,21 +1,8 @@
-// ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
-#include "light.isph"
-#include "samplers/shapesampler.isph"
+// pathtracer
+#include "light.ih"
+#include "samplers/shapesampler.ih"
+// ospray
+#include "math/affine.ih"
 
 struct SpotLight
 {
@@ -77,7 +64,8 @@ void SpotLight__Constructor (uniform SpotLight *uniform this,
                              const uniform float angleMin,
                              const uniform float angleMax)
 {
-  Light__Constructor(&this->base,Light__Destructor,NORMAL_LIGHT,
+  Light__Constructor(&this->base,//Light__Destructor,
+                     NORMAL_LIGHT,
                      SpotLight__transform,NULL,SpotLight__eval,SpotLight__sample);
   this->P = P;
   this->D = normalize(D);
