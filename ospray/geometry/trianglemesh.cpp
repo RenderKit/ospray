@@ -42,7 +42,7 @@ namespace ospray {
     colorData  = getParamData("vertex.color",getParamData("color"));
     indexData  = getParamData("index",getParamData("triangle"));
     materialIDData = getParamData("prim.materialID");
-    primMaterialList = getParamData("materials");
+    primMaterialList = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
     Assert2(vertexData != NULL, 
