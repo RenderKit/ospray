@@ -1,26 +1,10 @@
-// ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
-#include "material.isph"
-#include "brdfs/conductor.isph"
-#include "brdfs/microfacet_metal.isph"
+#include "material.ih"
+#include "brdfs/conductor.ih"
+#include "brdfs/microfacet_metal.ih"
 
 struct Metal
 {
-  Material base;
+  PathTraceMaterial base;
   float roughness;
   Conductor conductor;
   MicrofacetMetal microfacetMetal;
@@ -29,7 +13,7 @@ struct Metal
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-void Metal__shade(const uniform Material *uniform _this,
+void Metal__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,       
                   const Medium&               currentMedium,
                   const DifferentialGeometry& dg,           
@@ -46,7 +30,8 @@ void Metal__Constructor(uniform Metal *uniform this,
                         const uniform vec3f& k,
                         const uniform float roughness)
 {
-  Material__Constructor(&this->base,Material__Destructor,Metal__shade,NULL);
+  PathTraceMaterial__Constructor(&this->base,// PathTraceMaterial__Destructor,
+                                 Metal__shade,NULL);
   this->roughness = roughness;
   Conductor__Constructor(&this->conductor,reflectance, eta, k);
   MicrofacetMetal__Constructor(&this->microfacetMetal,
@@ -58,10 +43,10 @@ void Metal__Constructor(uniform Metal *uniform this,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform Metal__new(const uniform vec3f& reflectance,
-                                const uniform vec3f& eta,
-                                const uniform vec3f& k,
-                                const uniform float roughness)
+export void* uniform PathTracer_Metal_create(const uniform vec3f& reflectance,
+                                             const uniform vec3f& eta,
+                                             const uniform vec3f& k,
+                                             const uniform float roughness)
 {
   uniform Metal *uniform this = uniform new uniform Metal;
   Metal__Constructor(this,reflectance,eta,k,roughness);

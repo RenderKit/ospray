@@ -14,13 +14,19 @@ IF (MODULE_PATHTRACER)
 	OSPRAY_ADD_LIBRARY(ospray_module_pathtracer${OSPRAY_LIB_SUFFIX} SHARED
 		pathtracer.ispc
 		pathtracer.cpp
-		materials/obj.ispc
-		materials/obj.cpp
-		materials/material.ispc
+
 		lights/light.ispc
 		lights/ambientlight.ispc
 		lights/pointlight.ispc
 		lights/spotlight.ispc
+		
+		materials/material.ispc
+		materials/obj.ispc
+		materials/obj.cpp
+		materials/velvet.ispc
+		materials/velvet.cpp
+		materials/metal.ispc
+		materials/metal.cpp
 		)
 	TARGET_LINK_LIBRARIES(
 		ospray_module_pathtracer${OSPRAY_LIB_SUFFIX} 
