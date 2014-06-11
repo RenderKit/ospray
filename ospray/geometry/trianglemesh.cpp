@@ -70,6 +70,13 @@ namespace ospray {
       this->ispcMaterialPtrs = NULL;
     }
 
+    // if (this->prim_material_list)
+    //   for (int i=0;i<num_materials;i++) {
+    //     PRINT(this->prim_material_list[i]);
+    //     PRINT(this->ispcMaterialPtrs[i]);
+    //   }
+
+
     size_t numTris  = -1;
     size_t numVerts = -1;
     switch (indexData->type) {

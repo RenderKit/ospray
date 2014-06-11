@@ -36,8 +36,10 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   }
 
   if (flags & DG_MATERIALID) {
-    if (THIS->prim_materialID) 
+    if (THIS->prim_materialID) {
       dg.materialID = THIS->prim_materialID[ray.primID];
+      // print("% : primID % -> matID %\n",THIS->prim_material_list,ray.primID,dg.materialID);
+    }
     else {
       dg.materialID = THIS->geom_materialID;
       // if (dg.materialID < 0) {
@@ -51,7 +53,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       dg.material = THIS->prim_material_list[dg.materialID];
     } else {
       dg.material = geom->material;
-  }
+    }
   }
 
 
@@ -152,5 +154,11 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                           geom_materialID,
                           prim_material_list,
                           prim_materialID);
+
+ // if (prim_materialID) {
+ //   for (int i=50;i<60;i++)
+ //     print("list %, mat %\n",mesh->prim_materialID,mesh->prim_materialID[i]);
+ // }
+
 }
 

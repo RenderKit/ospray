@@ -66,7 +66,7 @@ namespace ospray {
           FLOAT_2,
           FLOAT_3,
           FLOAT_4,
-          DATA,
+          DATA, // iw: don't thikn we should have data as a void pointer - there's no way we could pass that through the api without knowing that kind of type (and size) is behind that pointer ...
           STRING,
         } DataType;
 
@@ -88,10 +88,11 @@ namespace ospray {
 
         void set(const char *v) { 
           clear();
+          s = strdup(v);
           type = STRING;
-          char *str = (char*)malloc(strlen(v));
-          strcpy(str, v);
-          s = str;
+          // char *str = (char*)malloc(strlen(v));
+          // strcpy(str, v);
+          // s = str;
         }
 
         void set(void *v) { clear(); type = DATA; ptr = v; }
@@ -181,7 +182,22 @@ namespace ospray {
       std::vector<vec3fa>   normal;   /*!< vertex normals; empty if none present */
       std::vector<vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
       std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
+      std::vector<Ref<Material> > materialList; /*!< entire list of
+                                             materials, in case the
+                                             mesh has per-primitive
+                                             material IDs (list may be
+                                             empty, in which case the
+                                             'material' field
+                                             applies */
+
+      /*! per-primitive material ID, if applicable. if empty every
+          triangle uses the 'material' field of the mesh; if not emtpy
+          the ID in here refers as a index into the
+          'materialList'. Will eventually get merged into the foruth
+          component of the triangle, but right now ospray/embree do
+          not yet allow this ... */
       std::vector<uint32> triangleMaterialId;
+      
       
       box3f bounds; /*!< bounding box of all vertices */
 

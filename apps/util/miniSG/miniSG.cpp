@@ -13,9 +13,9 @@ namespace ospray {
 
     Material::Material()
     {
-      setParam( "Kd", vec3f(.7f) );
-      setParam( "Ks", vec3f(0.f) );
-      setParam( "Ka", vec3f(0.f) );
+      // setParam( "Kd", vec3f(.7f) );
+      // setParam( "Ks", vec3f(0.f) );
+      // setParam( "Ka", vec3f(0.f) );
     }
 
     float Material::getParam(const char *name, float defaultVal) {
