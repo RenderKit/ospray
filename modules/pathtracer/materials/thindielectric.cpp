@@ -25,5 +25,6 @@ namespace ospray {
     };
 
     OSP_REGISTER_MATERIAL(ThinDielectric,PathTracer_ThinDielectric);
+    OSP_REGISTER_MATERIAL(ThinDielectric,PathTracer_ThinGlass);
   }
 }
