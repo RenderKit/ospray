@@ -51,12 +51,27 @@ inline uniform float powf(const uniform float a, const uniform float b) { return
 /*! c-style cos.  */
 inline float cosf(const float f) { return cos(f); }
 /*! c-style cos */
-inline uniform float cosf(const uniform float f) { return cosf(f); }
+inline uniform float cosf(const uniform float f) { return cos(f); }
 
 /*! c-style sin.  */
 inline float sinf(const float f) { return sin(f); }
 /*! c-style sin */
-inline uniform float sinf(const uniform float f) { return sinf(f); }
+inline uniform float sinf(const uniform float f) { return sin(f); }
+
+/*! c-style exp.  */
+inline float expf(const float f) { return exp(f); }
+/*! c-style exp */
+inline uniform float expf(const uniform float f) { return exp(f); }
+
+/*! c-style log.  */
+inline float logf(const float f) { return log(f); }
+/*! c-style log */
+inline uniform float logf(const uniform float f) { return log(f); }
+
+/*! c-style abs.  */
+inline float absf(const float f) { return abs(f); }
+/*! c-style abs */
+inline uniform float absf(const uniform float f) { return abs(f); }
 
 
 // inline float clamp(const float f) { return max(min(1.f,f),0.f); }

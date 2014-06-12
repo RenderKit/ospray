@@ -23,6 +23,10 @@ inline void operator delete[](void* ptr) throw() { embree::alignedFree(ptr); }
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
+  using embree::one;
+  using embree::empty;
+  using embree::zero;
+
   /*! basic types */
   typedef          long long  int64;
   typedef unsigned long long uint64;

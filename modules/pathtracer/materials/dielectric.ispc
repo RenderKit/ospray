@@ -1,26 +1,10 @@
-// ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
-#include "material.isph"
-#include "brdfs/dielectric_reflection.isph"
-#include "brdfs/dielectric_transmission.isph"
+#include "material.ih"
+#include "brdfs/dielectric_reflection.ih"
+#include "brdfs/dielectric_transmission.ih"
 
 struct Dielectric
 {
-  Material base;
+  PathTraceMaterial base;
   Medium mediumOutside;
   Medium mediumInside;
   DielectricReflection reflection_io;
@@ -32,7 +16,7 @@ struct Dielectric
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-void Dielectric__shade(const uniform Material *uniform _this,
+void Dielectric__shade(const uniform PathTraceMaterial *uniform _this,
                        const Ray&                  ray,      
                        const Medium&               currentMedium,
                        const DifferentialGeometry& dg,           
@@ -53,7 +37,7 @@ void Dielectric__shade(const uniform Material *uniform _this,
   }
 }
 
-void Dielectric__selectNextMedium(const uniform Material *uniform _this,
+void Dielectric__selectNextMedium(const uniform PathTraceMaterial *uniform _this,
                                   varying Medium &lastMedium) 
 {
   const uniform Dielectric *uniform this = (const uniform Dielectric *uniform)_this;
@@ -68,7 +52,8 @@ void Dielectric__Constructor(uniform Dielectric* uniform this,
                              const uniform float etaInside,
                              const uniform vec3f& transmissionInside) 
 {
-  Material__Constructor(&this->base,Material__Destructor,Dielectric__shade,Dielectric__selectNextMedium);
+  PathTraceMaterial__Constructor(&this->base,// PathTraceMaterial__Destructor,
+                                 Dielectric__shade,Dielectric__selectNextMedium);
   this->mediumOutside.eta          = etaOutside;
   this->mediumOutside.transmission = transmissionOutside;
   this->mediumInside.eta           = etaInside;
@@ -82,7 +67,7 @@ void Dielectric__Constructor(uniform Dielectric* uniform this,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform Dielectric__new(const uniform float etaOutside,
+export void* uniform PathTracer_Dielectric_create(const uniform float etaOutside,
                                      const uniform vec3f& transmissionOutside,
                                      const uniform float etaInside,
                                      const uniform vec3f& transmissionInside) 

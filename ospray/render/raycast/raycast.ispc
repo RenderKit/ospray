@@ -14,7 +14,7 @@
 inline vec4f shade_Ng(const Ray &ray)
 { 
   if (ray.geomID < 0) return make_vec4f(0.f); 
-  return make_vec4f(abs(normalize(ray.Ng))); 
+  return make_vec4f(absf(normalize(ray.Ng))); 
 }
 
 inline vec4f shade_primID(const Ray &ray)
