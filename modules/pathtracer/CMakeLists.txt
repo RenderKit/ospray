@@ -27,6 +27,16 @@ IF (MODULE_PATHTRACER)
 		materials/velvet.cpp
 		materials/metal.ispc
 		materials/metal.cpp
+		materials/thindielectric.ispc
+		materials/thindielectric.cpp
+		materials/dielectric.ispc
+		materials/dielectric.cpp
+		materials/metallicpaint.ispc
+		materials/metallicpaint.cpp
+		materials/plastic.ispc
+		materials/plastic.cpp
+		materials/matte.ispc
+		materials/matte.cpp
 		)
 	TARGET_LINK_LIBRARIES(
 		ospray_module_pathtracer${OSPRAY_LIB_SUFFIX} 

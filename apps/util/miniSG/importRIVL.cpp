@@ -494,7 +494,9 @@ namespace ospray {
 
           xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
           if (value == NULL)
-            std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
+            // empty group...
+            ;
+            // std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
           else {
             for(char *s=strtok((char*)value," \t\n");s;s=strtok(NULL," \t\n")) {
               size_t childID = atoi(s);
@@ -598,8 +600,6 @@ namespace ospray {
           model.mesh.push_back(mesh);
 
           if (tm->material.size() == 1) {
-            PING;
-            PRINT(tm->material[0]);
             mesh->material = tm->material[0].ptr->general;
           } else {
             for (size_t i = 0; i < tm->material.size(); i++) {

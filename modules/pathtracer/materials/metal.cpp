@@ -19,7 +19,7 @@ namespace ospray {
         const vec3f& k
           = getParam3f("k",vec3f(1.f)); //3.06,2.4,1.88));
         const float roughness
-          = getParamf("roughhness",0.01f);
+          = getParamf("roughness",0.01f);
         
         ispcEquivalent = ispc::PathTracer_Metal_create
           ((const ispc::vec3f&)reflectance,

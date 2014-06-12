@@ -440,29 +440,45 @@ inline vec3f normalize(const vec3f v, float &len)
 
 
 
-// ------------------------------------------------------------------
-// vector functions (abs,rcp,...):
-// ------------------------------------------------------------------
-/*! return vector of absolute values of input vector */
-inline uniform vec3f abs(const uniform vec3f v) 
-{ return make_vec3f(abs(v.x),abs(v.y),abs(v.z)); }
-/*! return vector of absolute values of input vector */
-inline vec3f abs(const vec3f v) 
-{ return make_vec3f(abs(v.x),abs(v.y),abs(v.z)); }
-/*! return vector of reciprocals of input vector */
-inline uniform vec3f rcp(const uniform vec3f v) 
-{ return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
-/*! return vector of reciprocals of input vector */
-inline vec3f rcp(const vec3f v) 
-{ return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
+#define __lift_unary_fct(F)                     \
+  inline uniform vec3f F(const uniform vec3f v) \
+  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }  \
+  inline vec3f F(const vec3f v)                 \
+  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }
+
+__lift_unary_fct(absf)
+__lift_unary_fct(rcpf)
+__lift_unary_fct(expf)
+__lift_unary_fct(logf)
+
+__lift_unary_fct(rcp)
+__lift_unary_fct(exp)
+
+#undef __lift_unary_fct
+
+
+// // ------------------------------------------------------------------
+// // vector functions (abs,rcp,...):
+// // ------------------------------------------------------------------
+// /*! return vector of absolute values of input vector */
+// inline uniform vec3f abs(const uniform vec3f v) 
+// { return make_vec3f(abs(v.x),abs(v.y),abs(v.z)); }
+// /*! return vector of absolute values of input vector */
+// inline vec3f abs(const vec3f v) 
+// { return make_vec3f(abs(v.x),abs(v.y),abs(v.z)); }
+// /*! return vector of reciprocals of input vector */
+// inline uniform vec3f rcp(const uniform vec3f v) 
+// { return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
+// /*! return vector of reciprocals of input vector */
+// inline vec3f rcp(const vec3f v) 
+// { return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
 
 
 inline vec3f powf(const vec3f v, const float f)
-{
-  return make_vec3f(powf(v.x,f),
-                    powf(v.y,f),
-                    powf(v.z,f));
-}
+{ return make_vec3f(powf(v.x,f),powf(v.y,f),powf(v.z,f)); }
+
+inline uniform vec3f powf(const uniform vec3f v, const uniform float f)
+{ return make_vec3f(powf(v.x,f),powf(v.y,f),powf(v.z,f)); }
 
 
 

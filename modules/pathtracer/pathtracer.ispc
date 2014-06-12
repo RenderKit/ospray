@@ -481,7 +481,7 @@ uniform Scene *uniform createScene()
   // we don't have lights, yet, so use a hardcoded envlight for now!
   print("#osp:pt: adding hard-coded envlight for now!\n");
   scene->envLights = uniform new uniform EnvLightPtr[1];
-  scene->envLights[0] = AmbientLight__New(make_vec3f(1.f));
+  scene->envLights[0] = AmbientLight__New(make_vec3f(.8f));
   scene->num_envLights = 1;
 
   scene->allLights = uniform new uniform LightPtr[1];

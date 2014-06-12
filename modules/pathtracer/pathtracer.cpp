@@ -3,6 +3,8 @@
 // ospray
 #include "pathtracer.h"
 #include "pathtracer_ispc.h"
+// std
+#include <map>
 
 namespace ospray {
   PathTracer::PathTracer()
@@ -10,7 +12,7 @@ namespace ospray {
     const int32 maxDepth = 20;
     const float minContribution = .01f;
     const float epsilon = 1e-3f;
-    const int32 numSPP = 1;
+    const int32 numSPP = 8;
     void *backplate = NULL;
     ispcEquivalent = ispc::PathTracer_create(maxDepth,minContribution,epsilon,
                                              numSPP,backplate);
@@ -23,8 +25,13 @@ namespace ospray {
     std::string ptType = std::string("PathTracer_")+type;
     Material *material = Material::createMaterial(ptType.c_str());
     if (!material) {
+      std::map<std::string,int> numOccurrances;
+      const std::string T = type;
+      if (numOccurrances[T] == 0) 
+        std::cout << "#osp:pt: do not know material type '" << type << "'" << 
+          " (replacing with OBJMaterial)" << std::endl;
+      numOccurrances[T] ++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
-      
       // throw std::runtime_error("invalid path tracer material "+std::string(type)); 
     }
     material->refInc();

@@ -1,27 +1,11 @@
-// ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
-#include "material.isph"
-#include "brdfs/dielectric_reflection.isph"
-#include "brdfs/dielectriclayer_lambertian.isph"
-#include "brdfs/dielectriclayer_microfacet_metal.isph"
+#include "material.ih"
+#include "brdfs/dielectric_reflection.ih"
+#include "brdfs/dielectriclayer_lambertian.ih"
+#include "brdfs/dielectriclayer_microfacet_metal.ih"
 
 struct MetallicPaint
 {
-  Material base;
+  PathTraceMaterial base;
   DielectricReflection              reflection;
   DielectricLayerLambertian         paint;
   DielectricLayerMicrofacetMetal    glitter;
@@ -31,7 +15,7 @@ struct MetallicPaint
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-void MetallicPaint__shade(const uniform Material *uniform _this,
+void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
                           const Ray&                  ray,             
                           const Medium&               currentMedium,   
                           const DifferentialGeometry& dg,              
@@ -49,7 +33,8 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
                                        const uniform float glitterSpread,
                                        const uniform float eta)
 {
-  Material__Constructor(&this->base,Material__Destructor,MetallicPaint__shade,NULL);
+  PathTraceMaterial__Constructor(&this->base,// PathTraceMaterial__Destructor,
+                                 MetallicPaint__shade,NULL);
   DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
   DielectricLayerLambertian__Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambertian(shadeColor));
 
@@ -66,10 +51,10 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform MetallicPaint__new(const uniform vec3f& shadeColor,
-                                        const uniform vec3f& glitterColor,
-                                        const uniform float glitterSpread,
-                                        const uniform float eta)
+export void* uniform PathTracer_MetallicPaint_create(const uniform vec3f& shadeColor,
+                                                     const uniform vec3f& glitterColor,
+                                                     const uniform float glitterSpread,
+                                                     const uniform float eta)
 {
   uniform MetallicPaint *uniform this = uniform new uniform MetallicPaint;
   MetallicPaint__Constructor(this,shadeColor,glitterColor,glitterSpread,eta);

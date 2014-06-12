@@ -242,6 +242,12 @@ namespace ospray {
       if (arg == "--renderer") {
         assert(i+1 < ac);
         rendererType = av[++i];
+      } else if (arg == "--pt") {
+        // shortcut for '--module pathtracer --renderer pathtracer'
+        const char *moduleName = "pathtracer";
+        cout << "loading ospray module '" << moduleName << "'" << endl;
+        ospLoadModule(moduleName);
+        rendererType = moduleName;
       } else if (arg == "--module" || arg == "--plugin") {
         assert(i+1 < ac);
         const char *moduleName = av[++i];
