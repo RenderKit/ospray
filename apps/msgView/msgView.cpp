@@ -163,6 +163,38 @@ namespace ospray {
     return ospMat;
   }
 
+  OSPTexture2D createTexture2D(miniSG::Texture2D *msgTex)
+  {
+    if(msgTex == NULL) {
+      static int numWarnings = 0;
+      if (++numWarnings < 10)
+        cout << "WARNING: material does not have Textures (only warning for the first 10 times)!" << endl;
+      return NULL;
+    }
+
+    static std::map<miniSG::Texture2D*, OSPTexture2D> alreadyCreatedTextures;
+    if (alreadyCreatedTextures.find(msgTex) != alreadyCreatedTextures.end())
+      return alreadyCreatedTextures[msgTex];
+
+    //TODO: We need to come up with a better way to handle different possible pixel layouts
+    OSPDataType type = OSP_VOID_PTR;
+    if (msgTex->depth == 1) {
+      if( msgTex->channels == 3 ) type = OSP_vec3uc;
+      if( msgTex->channels == 4 ) type = OSP_vec4uc;
+    } else if (msgTex->depth == 4) {
+      if( msgTex->channels == 3 ) type = OSP_vec3f;
+      if( msgTex->channels == 4 ) type = OSP_vec3fa;
+    }
+
+    OSPTexture2D ospTex = alreadyCreatedTextures[msgTex] = ospNewTexture2D( msgTex->width,
+                                                                            msgTex->height,
+                                                                            type,
+                                                                            msgTex->data,
+                                                                            0);
+
+    return ospTex;
+  }
+
   OSPMaterial createMaterial(OSPRenderer renderer,
                              miniSG::Material *mat)
   {
