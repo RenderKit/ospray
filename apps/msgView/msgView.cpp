@@ -192,6 +192,7 @@ namespace ospray {
                                                                             msgTex->data,
                                                                             0);
 
+    ospCommit(ospTex);
     return ospTex;
   }
 
