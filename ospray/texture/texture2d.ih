@@ -1,0 +1,20 @@
+#pragma once
+
+#include "ospray/common/default"
+#include "math/vec.ih"
+
+struct Texture2D;
+
+typedef varying vec3f (*Texture2D__get)(const uniform Texture2D *uniform this,
+                                        const varying vec2f &p);
+
+struct Texture2D {
+  Texture2D__get get;
+}
+
+export inline void Texture2D__Constructor( uniform Texture2D *uniform THIS,
+                                    uniform Texture2D_get get) 
+{
+  LOG(print("Texture2D__Constructor\n"));
+  THIS->get = get;
+}
