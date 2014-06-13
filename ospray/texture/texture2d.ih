@@ -10,7 +10,7 @@ typedef varying vec3f (*Texture2D__get)(const uniform Texture2D *uniform this,
 
 struct Texture2D {
   Texture2D__get get;
-}
+};
 
 export inline void Texture2D__Constructor( uniform Texture2D *uniform THIS,
                                     uniform Texture2D_get get) 
