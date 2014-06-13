@@ -243,6 +243,13 @@ namespace ospray {
         throw std::runtime_error("unkonwn material parameter type");
       };
     }
+
+    std::vector<OSPTexture2D> textures;
+    for (size_t i = 0; i < mat->textures.size(); i++) {
+      textures.push_back(createTexture2D(mat->textures[i].ptr));
+    }
+    OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], OSP_DATA_SHARED_BUFFER);
+    ospSetData(ospMat, "textures", textureArray);
     
     ospCommit(ospMat);
     return ospMat;
