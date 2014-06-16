@@ -597,6 +597,13 @@ namespace ospray {
               (vec3f&)mesh->normal[i] = (vec3f&)tm->normal[i];
             }
           }
+          if (tm->numTexCoords > 0) {
+            assert(tm->numTexCoords == tm->numVertices);
+            mesh->texcoord.resize(tm->numVertices);
+            for (int i=0; i<tm->numTexCoords; i++) {
+              (vec2f&)mesh->texcoord[i] = (vec2f&)tm->texCoord[i];
+            }
+          }
           model.mesh.push_back(mesh);
 
           if (tm->material.size() == 1) {
