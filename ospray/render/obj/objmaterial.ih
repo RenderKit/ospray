@@ -3,15 +3,21 @@
 
 #include "ospray/math/vec.ih"
 #include "ospray/common/material.ih"
+#include "ospray/texture/texture2d.ih"
 
 //! ispc-equivalent of ospray::obj::OBJMaterial
 struct OBJMaterial 
 {
   uniform Material base; //!< inherited material properties
-  vec3f Kd;
-  vec3f Ks;
-  float Ns;
+  const uniform Texture2D *map_d;
   float d;
+  const uniform Texture2D *map_Kd;
+  vec3f Kd;
+  const uniform Texture2D *map_Ks; 
+  vec3f Ks;
+  const uniform Texture2D *map_Ns; 
+  float Ns;
+  const uniform Texture2D *map_Bump;
 };
 
 #endif
