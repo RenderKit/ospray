@@ -251,8 +251,10 @@ namespace ospray {
 
     if (!textures.empty()) {
       OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], 0);
-      ospSetData(ospMat, "textures", textureArray);
+      ospSetData(ospMat, "textures.list", textureArray);
     }
+
+    ospSet1i(ospMat, "textures.count", textures.size());
     
     ospCommit(ospMat);
     return ospMat;
@@ -432,6 +434,14 @@ namespace ospray {
         ospSetData(ospMesh,"vertex.normal",normal);
       } else {
         // cout << "no vertex normals!" << endl;
+      }
+
+      // add texcoord array to mesh
+      if (!msgMesh->texcoord.empty()) {
+        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_vec2f,
+                                      &msgMesh->texcoord[0], OSP_DATA_SHARED_BUFFER);
+        assert(msgMesh->texcoord.size() > 0);
+        ospSetData(ospMesh,"vertex.texcoord",texcoord);
       }
 
       // add triangle material id array to mesh
