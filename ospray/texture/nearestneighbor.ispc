@@ -14,16 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "texture.isph"
-#include "textures/image.isph"
+#include "texture2d.ih"
+#include "image.isph"
 
 struct NearestNeighbor
 {
-  Texture base;
+  Texture2D base;
   Image* image;
 };
 
-varying vec3f NearestNeighbor__get(const uniform Texture *uniform _this, const varying vec2f& p)
+varying vec3f NearestNeighbor__get(const uniform Texture2D *uniform _this, const varying vec2f& p)
 {
   const uniform NearestNeighbor* uniform this = (const uniform NearestNeighbor* uniform) _this;
   const uniform Image* uniform image = this->image;
@@ -37,17 +37,17 @@ varying vec3f NearestNeighbor__get(const uniform Texture *uniform _this, const v
   return image->get_nearest_varying(image,x3,y3);
 }
 
-void NearestNeighbor__Destructor(uniform RefCount* uniform _this)
+void NearestNeighbor__Destructor(uniform NearestNeighbor* uniform _this)
 {
-  uniform NearestNeighbor* uniform this = (uniform NearestNeighbor* uniform) _this;
-  RefCount__DecRef(&this->image->base);
-  Texture__Destructor(_this);
+  uniform NearestNeighbor* uniform this = /*(uniform NearestNeighbor* uniform)*/ _this;
+  //RefCount__DecRef(&this->image->base);
+  Texture2D__Destructor(&_this->base);
 }
 
 void NearestNeighbor__Constructor(uniform NearestNeighbor *uniform this, uniform Image* uniform image)
 {
-  Texture__Constructor(&this->base,NearestNeighbor__Destructor,NearestNeighbor__get);
-  RefCount__IncRef(&image->base);
+  Texture2D__Constructor(&this->base, NearestNeighbor__get);
+  //RefCount__IncRef(&image->base);
   this->image = image;
 }
 
