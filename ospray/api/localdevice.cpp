@@ -10,6 +10,7 @@
 #include "../common/material.h"
 #include "../common/library.h"
 #include "../texture/texture2d.h"
+#include "../lights/light.h"
 // embree stuff
 
 namespace ospray {
@@ -298,6 +299,24 @@ namespace ospray {
       }
       volume->refInc();
       return (OSPVolume)volume;
+    }
+
+    /*! have given renderer create a new Light */
+    OSPLight LocalDevice::newLight(OSPRenderer _renderer, const char *type) {
+      Renderer  *renderer = (Renderer *)_renderer;
+      if (renderer) {
+        Light *light = renderer->createLight(type);
+        if (light) {
+          light->refInc();
+          return (OSPLight)light;
+        }
+      }
+
+      //If there was no renderer try to see if there is a loadable light by that name
+      Light *light = Light::createLight(type);
+      if (!light) return NULL;
+      light->refInc();
+      return (OSPLight)light;
     }
 
     /*! create a new Texture2D object */

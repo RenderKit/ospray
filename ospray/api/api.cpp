@@ -241,8 +241,14 @@ namespace ospray {
     // Assert2(renderer != NULL, "invalid renderer handle in ospNewMaterial");
     Assert2(type != NULL, "invalid material type identifier in ospNewMaterial");
     LOG("ospNewMaterial(" << renderer << ", " << type << ")");
-    OSPMaterial material = ospray::api::Device::current->newMaterial(renderer,type);
+    OSPMaterial material = ospray::api::Device::current->newMaterial(renderer, type);
     return material;
+  }
+
+  extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
+  {
+    ASSERT_DEVICE();
+    return ospray::api::Device::current->newLight(renderer, type);
   }
 
   /*! \brief create a new camera of given type 

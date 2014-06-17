@@ -74,6 +74,9 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volume types) with data from a file */
       virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
 
+      /*! have given renderer create a new Light */
+      virtual OSPLight newLight(OSPRenderer _renderer, const char *type);
+
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags);
 

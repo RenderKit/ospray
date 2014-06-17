@@ -48,6 +48,7 @@ namespace osp {
   struct Material     : public ManagedObject {};
   struct Volume       : public ManagedObject {};
   struct Texture2D    : public ManagedObject {};
+  struct Light        : public ManagedObject {};
   struct TriangleMesh : public Geometry {};
 }
 
@@ -115,6 +116,7 @@ typedef osp::Volume        *OSPVolume;
 typedef osp::Texture2D     *OSPTexture2D;
 typedef osp::TriangleMesh  *OSPTriangleMesh;
 typedef osp::ManagedObject *OSPObject;
+typedef osp::Light         *OSPLight;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -144,6 +146,9 @@ extern "C" {
 
   //! let given renderer create a new material of given type
   OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type);
+
+  //! let given renderer create a new light of given type
+  OSPLight ospNewLight(OSPRenderer renderer, const char *type);
   
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot

@@ -82,6 +82,9 @@ namespace ospray {
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags) = 0;
 
+      /*! have given renderer create a new Light */
+      virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
+
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer) = 0;
