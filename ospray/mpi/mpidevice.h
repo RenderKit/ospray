@@ -20,8 +20,8 @@ namespace ospray {
         CMD_FRAMEBUFFER_MAP,
         CMD_FRAMEBUFFER_UNMAP,
         CMD_NEW_MODEL,
-	CMD_NEW_GEOMETRY,
-	CMD_NEW_MATERIAL,
+        CMD_NEW_GEOMETRY,
+        CMD_NEW_MATERIAL,
         CMD_NEW_TRIANGLEMESH,
         CMD_NEW_CAMERA,
         CMD_NEW_VOLUME,
@@ -129,7 +129,10 @@ namespace ospray {
       //! assign given material to given geometry
       virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat);
 
-      //      MPI_Comm service;
+      /*! create a new Texture2D object */
+      virtual OSPTexture2D newTexture2D(int width, int height, 
+                                        OSPDataType type, void *data, int flags)
+      { NOTIMPLEMENTED; }
     };
 
   }
