@@ -664,6 +664,7 @@ namespace ospray {
       mpi::Handle handle = mpi::Handle::alloc();
       
       cmd.newCommand(CMD_NEW_MATERIAL);
+      cmd.send((const mpi::Handle&)_renderer);
       cmd.send((const mpi::Handle&)handle);
       cmd.send(type);
       cmd.flush();

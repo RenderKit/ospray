@@ -99,21 +99,37 @@ namespace ospray {
         } break;
         case api::MPIDevice::CMD_NEW_MATERIAL: {
           // Assert(type != NULL && "invalid volume type identifier");
+          const mpi::Handle rendererHandle = cmd.get_handle();
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new material \"" << type << "\" ID " << (void*)(int64)handle << endl;
-          Material *material = Material::createMaterial(type);
+
+          Renderer *renderer = (Renderer *)rendererHandle.lookup();
+          Material *material = NULL;
+          if (renderer) {
+            material = renderer->createMaterial(type);
+            if (material) {
+              material->refInc();
+            }
+          }
+
+          if (material == NULL) 
+            // no renderer present, or renderer didn't intercept this material.
+            material = Material::createMaterial(type);
+          
           if (!material) 
+            // neither renderer not ospray know this material: throw an error.
             throw std::runtime_error("unknown material type '"+std::string(type)+"'");
+
           material->refInc();
           cmd.free(type);
           Assert(material);
           handle.assign(material);
           if (worker.rank == 0)
             if (logLevel > 2)
-	      cout << "#w: new material " << handle << " " << material->toString() << endl;
+              cout << "#w: new material " << handle << " " << material->toString() << endl;
         } break;
 
         case api::MPIDevice::CMD_NEW_GEOMETRY: {
