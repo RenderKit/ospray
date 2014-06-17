@@ -152,8 +152,8 @@ namespace ospray {
       Handle handle = args.get<Handle>();
       vec2i size = args.get<vec2i>();
       // cout << "!osp:coi: new framebuffer " << handle.ID() << endl;
-      int32 *pixelArray = (int32*)bufferPtr[0];
-      FrameBuffer *fb = createLocalFB_RGBA_I8(size,pixelArray);
+      // int32 *pixelArray = (int32*)bufferPtr[0];
+      FrameBuffer *fb = new LocalFrameBuffer<uint32>(size,pixelArray); //createLocalFB_RGBA_I8(size,pixelArray);
       handle.assign(fb);
 
       COIProcessProxyFlush();

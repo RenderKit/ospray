@@ -13,7 +13,7 @@
 #endif
 
 /*! \file api.cpp implements the public ospray api functions by
-    routing them to a respective \ref device */
+  routing them to a respective \ref device */
 namespace ospray {
   using std::endl;
   using std::cout;
@@ -34,10 +34,10 @@ namespace ospray {
 #endif
 
 
-#define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
-    throw std::runtime_error("OSPRay not yet initialized "              \
-                             "(most likely this means you tried to "    \
-                             "call an ospray API function before "      \
+#define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)     \
+    throw std::runtime_error("OSPRay not yet initialized "            \
+                             "(most likely this means you tried to "  \
+                             "call an ospray API function before "    \
                              "first calling ospInit())");
 
   
@@ -46,55 +46,59 @@ namespace ospray {
     if (ospray::api::Device::current) 
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
+
     if (_ac && _av) {
       // we're only supporting local rendering for now - network device
       // etc to come.
-      if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi") {
-#if OSPRAY_MPI
-        removeArgs(*_ac,(char **&)_av,1,1);
-        ospray::api::Device::current
-          = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
-#else
-        throw std::runtime_error("OSPRay MPI support not compiled in");
-#endif
-      }
-      if (*_ac > 1 && std::string(_av[1]) == "--osp:coi") {
-#if OSPRAY_TARGET_MIC
-        throw std::runtime_error("The COI device can only be created on the host");
-#elif OSPRAY_MIC_COI
-        removeArgs(*_ac,(char **&)_av,1,1);
-        ospray::api::Device::current
-          = ospray::coi::createCoiDevice(_ac,_av);
-#else
-        throw std::runtime_error("OSPRay's COI support not compiled in");
-#endif
-      }
+      for (int i=1;i<*_ac;i++) {
 
-      if (*_ac > 1 && std::string(_av[1]) == "--osp:mpi-launch") {
+        if (std::string(_av[i]) == "--osp:mpi") {
 #if OSPRAY_MPI
-        if (*_ac < 3)
-          throw std::runtime_error("--osp:mpi-launch expects an argument");
-        const char *launchCommand = strdup(_av[2]);
-        removeArgs(*_ac,(char **&)_av,1,2);
-        ospray::api::Device::current
-          = mpi::createMPI_LaunchWorkerGroup(_ac,_av,launchCommand);
+          removeArgs(*_ac,(char **&)_av,i,1);
+          ospray::api::Device::current
+            = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
 #else
-        throw std::runtime_error("OSPRay MPI support not compiled in");
+          throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-      }
-      const char *listenArgName = "--osp:mpi-listen";
-      if (*_ac > 1 && !strncmp(_av[1],listenArgName,strlen(listenArgName))) {
-#if OSPRAY_MPI
-        const char *fileNameToStorePortIn = NULL;
-        if (strlen(_av[1]) > strlen(listenArgName)) {
-          fileNameToStorePortIn = strdup(_av[1]+strlen(listenArgName)+1);
         }
-        removeArgs(*_ac,(char **&)_av,1,1);
-        ospray::api::Device::current
-          = mpi::createMPI_ListenForWorkers(_ac,_av,fileNameToStorePortIn);
+        if (std::string(_av[i]) == "--osp:coi") {
+#if OSPRAY_TARGET_MIC
+          throw std::runtime_error("The COI device can only be created on the host");
+#elif OSPRAY_MIC_COI
+          removeArgs(*_ac,(char **&)_av,i,1);
+          ospray::api::Device::current
+            = ospray::coi::createCoiDevice(_ac,_av);
 #else
-        throw std::runtime_error("OSPRay MPI support not compiled in");
+          throw std::runtime_error("OSPRay's COI support not compiled in");
 #endif
+        }
+
+        if (std::string(_av[i]) == "--osp:mpi-launch") {
+#if OSPRAY_MPI
+          if (i+2 >= *_ac)
+            throw std::runtime_error("--osp:mpi-launch expects an argument");
+          const char *launchCommand = strdup(_av[i+1]);
+          removeArgs(*_ac,(char **&)_av,i,2);
+          ospray::api::Device::current
+            = mpi::createMPI_LaunchWorkerGroup(_ac,_av,launchCommand);
+#else
+          throw std::runtime_error("OSPRay MPI support not compiled in");
+#endif
+        }
+        const char *listenArgName = "--osp:mpi-listen";
+        if (!strncmp(_av[i],listenArgName,strlen(listenArgName))) {
+#if OSPRAY_MPI
+          const char *fileNameToStorePortIn = NULL;
+          if (strlen(_av[i]) > strlen(listenArgName)) {
+            fileNameToStorePortIn = strdup(_av[i]+strlen(listenArgName)+1);
+          }
+          removeArgs(*_ac,(char **&)_av,i,1);
+          ospray::api::Device::current
+            = mpi::createMPI_ListenForWorkers(_ac,_av,fileNameToStorePortIn);
+#else
+          throw std::runtime_error("OSPRay MPI support not compiled in");
+#endif
+        }
       }
     }
     
@@ -105,7 +109,7 @@ namespace ospray {
 
   /*! destroy a given frame buffer. 
 
-   due to internal reference counting the framebuffer may or may not be deleted immeidately
+    due to internal reference counting the framebuffer may or may not be deleted immeidately
   */
   extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
   {
@@ -115,12 +119,10 @@ namespace ospray {
   }
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                              const OSPFrameBufferMode mode,
-                                              const size_t swapChainDepth)
+                                              const OSPFrameBufferMode mode)
   {
     ASSERT_DEVICE();
-    Assert(swapChainDepth > 0 && swapChainDepth < 4);
-    return ospray::api::Device::current->frameBufferCreate(size,mode,swapChainDepth);
+    return ospray::api::Device::current->frameBufferCreate(size,mode);
   }
 
   //! load module \<name\> from shard lib libospray_module_\<name\>.so, or 
@@ -190,7 +192,7 @@ namespace ospray {
 
   /*! \brief create a new renderer of given type 
 
-   return 'NULL' if that type is not known */
+    return 'NULL' if that type is not known */
   extern "C" OSPRenderer ospNewRenderer(const char *_type)
   {
     ASSERT_DEVICE();
@@ -245,7 +247,7 @@ namespace ospray {
 
   /*! \brief create a new camera of given type 
 
-  return 'NULL' if that type is not known */
+    return 'NULL' if that type is not known */
   extern "C" OSPCamera ospNewCamera(const char *type)
   {
     ASSERT_DEVICE();

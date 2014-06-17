@@ -46,8 +46,7 @@ namespace ospray {
 
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
-                                               const OSPFrameBufferMode mode,
-                                               const size_t swapChainDepth);
+                                               const OSPFrameBufferMode mode);
 
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb);
