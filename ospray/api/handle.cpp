@@ -50,5 +50,7 @@ namespace ospray {
       Assert(it != objectByHandle.end());
       return it->second.ptr;
     }
+    
+    const Handle Handle::nullHandle(0);
   }
 }

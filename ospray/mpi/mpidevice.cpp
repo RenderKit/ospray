@@ -463,6 +463,15 @@ namespace ospray {
       cmd.send(size);
       if (init) {
         cmd.send(init,size);
+        if (format == OSP_OBJECT) {
+          // no need to do anything special here: while we have to
+          // encode objects as handles for network transfer, the host
+          // _already_ has only handles, so whatever data was written
+          // into the dta array are already handles.
+
+          // note: we _might_, in fact, have to increaes the data
+          // array entries' refcount here !?
+        }
       }
       cmd.flush();
       return (OSPData)(int64)handle;
@@ -524,14 +533,15 @@ namespace ospray {
     }
 
     /*! assign (named) int parameter to an object */
-    void MPIDevice::setInt(OSPObject _object, const char *bufName, const int f)
+    void MPIDevice::setInt(OSPObject _object, const char *bufName, const int i)
     {
-      NOTIMPLEMENTED;
-      // ManagedObject *object = (ManagedObject *)_object;
-      // Assert(object != NULL  && "invalid object handle");
-      // Assert(bufName != NULL && "invalid identifier for object parameter");
+      Assert(_object);
+      Assert(bufName);
 
-      // object->findParam(bufName,1)->set(f);
+      cmd.newCommand(CMD_SET_INT);
+      cmd.send((const mpi::Handle &)_object);
+      cmd.send(bufName);
+      cmd.send(i);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -645,8 +655,11 @@ namespace ospray {
     /*! have given renderer create a new material */
     OSPMaterial MPIDevice::newMaterial(OSPRenderer _renderer, const char *type)
     {
-      Assert(type != NULL);
-      Assert(_renderer == NULL); // not implemented...
+      if (type == NULL)
+        throw std::runtime_error("#osp:mpi:newMaterial: NULL material type");
+      
+      if (_renderer == NULL) 
+        throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
 
       mpi::Handle handle = mpi::Handle::alloc();
       

@@ -34,6 +34,7 @@ namespace ospray {
 
         CMD_SET_OBJECT,
         CMD_SET_STRING,
+        CMD_SET_INT,
         CMD_SET_FLOAT,
         CMD_SET_VEC3F,
         CMD_SET_VEC3I,

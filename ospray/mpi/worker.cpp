@@ -61,7 +61,6 @@ namespace ospray {
         case api::MPIDevice::CMD_NEW_RENDERER: {
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          PRINT(type);
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new renderer \"" << type << "\" ID " << handle << endl;
@@ -200,11 +199,30 @@ namespace ospray {
           size_t nitems      = cmd.get_size_t();
           OSPDataType format = (OSPDataType)cmd.get_int32();
           int flags          = cmd.get_int32();
-          void *init = NULL;
-          size_t nbytes = cmd.get_data(init);
-          data = new Data(nitems,format,init,flags);
+          data = new Data(nitems,format,NULL,flags & ~OSP_DATA_SHARED_BUFFER);
           Assert(data);
           handle.assign(data);
+
+          size_t hasInitData = cmd.get_size_t();
+          if (hasInitData) {
+            cmd.get_data(nitems*sizeOf(format),data->data);
+            if (format==OSP_OBJECT) {
+              /* translating handles to managedobject pointers: if a
+                 data array has 'object' or 'data' entry types, then
+                 what the host sends are _handles_, not pointers, but
+                 what the core expects are pointers; to make the core
+                 happy we translate all data items back to pointers at
+                 this stage */
+              mpi::Handle    *asHandle = (mpi::Handle    *)data->data;
+              ManagedObject **asObjPtr = (ManagedObject **)data->data;
+              for (int i=0;i<nitems;i++) {
+                if (asHandle[i] != NULL_HANDLE) {
+                  asObjPtr[i] = asHandle[i].lookup();
+                  asObjPtr[i]->refInc();
+                }
+              }
+            }
+          }
         } break;
         case api::MPIDevice::CMD_ADD_GEOMETRY: {
           const mpi::Handle modelHandle = cmd.get_handle();
@@ -261,6 +279,15 @@ namespace ospray {
           obj->findParam(name,1)->set(val);
           cmd.free(name);
           cmd.free(val);
+        } break;
+        case api::MPIDevice::CMD_SET_INT: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const int val = cmd.get_int();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
         } break;
         case api::MPIDevice::CMD_SET_FLOAT: {
           const mpi::Handle handle = cmd.get_handle();
