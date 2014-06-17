@@ -1,0 +1,23 @@
+#ifndef OSPRAY_POINT_LIGHT_IH
+#define OSPRAY_POINT_LIGHT_IH
+
+#include "light.ih"
+#include "ospray/math/vec.ih"
+
+struct PointLight {
+  uniform Light base;     //!< inherited light fields
+
+  uniform vec3f position; //!< light position
+  uniform vec3f color;    //!< light color
+
+  uniform float range;  //!< max range at which the light will have an effect
+};
+
+extern void PointLight_Constructor( uniform PointLight *uniform THIS,
+                                    const uniform vec3f &position,
+                                    const uniform vec3f &color,
+                                    const uniform float range);
+
+extern void PointLight_Destructor(uniform PointLight *uniform THIS);
+
+#endif
