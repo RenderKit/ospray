@@ -40,6 +40,7 @@ namespace ospray {
     vertexData = getParamData("vertex",getParamData("position"));
     normalData = getParamData("vertex.normal",getParamData("normal"));
     colorData  = getParamData("vertex.color",getParamData("color"));
+    texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
     indexData  = getParamData("index",getParamData("triangle"));
     prim_materialIDData = getParamData("prim.materialID");
     materialListData = getParamData("materialList");
@@ -56,6 +57,7 @@ namespace ospray {
     this->vertex = (vec3fa*)vertexData->data;
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;
     this->color  = colorData ? (vec4f*)colorData->data : NULL;
+    this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
     this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
 
@@ -114,6 +116,7 @@ namespace ospray {
                            (ispc::vec3fa*)vertex,
                            (ispc::vec3fa*)normal,
                            (ispc::vec4f*)color,
+                           (ispc::vec2f*)texcoord,
                            geom_materialID,
                            ispcMaterialPtrs,
                            (uint32*)prim_materialID);

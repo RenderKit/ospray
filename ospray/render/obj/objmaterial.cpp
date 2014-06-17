@@ -1,5 +1,6 @@
 #include "objmaterial.h"
 #include "objmaterial_ispc.h"
+#include "../../common/data.h"
 
 namespace ospray {
   namespace obj {
@@ -13,19 +14,42 @@ namespace ospray {
       if (ispcEquivalent == NULL)
         ispcEquivalent = ispc::OBJMaterial_create(this);
 
-      Kd = this->getParam3f("kd",vec3f(.8f));
-      Ks = this->getParam3f("ks",vec3f(0.f));
+      Ref<Data> textureData = getParamData("textures.list",NULL);
+      int32 num_textures = getParam1i("textures.count",0);
 
-      Ns = this->getParam1f("ns",0.f);
-      d  = this->getParam1f("d", .5f);
+      if(textureData && num_textures > 0) {
+        Texture2D **textures = (ospray::Texture2D**)textureData->data;
+        int map_d_idx = getParam1i("map_d", num_textures+1);
+        int map_Kd_idx = getParam1i("map_Kd", getParam1i("map_kd",num_textures+1));
+        int map_Ks_idx = getParam1i("map_Ks", getParam1i("map_ks",num_textures+1));
+        int map_Ns_idx = getParam1i("map_Ns", getParam1i("map_ns",num_textures+1));
+        int map_Bump_idx = getParam1i("map_Bump", getParam1i("map_bump",num_textures+1));
 
-      //std::cout << "\n";
-      //std::cout << "Kd " << Kd.x << " " << Kd.y << " " << Kd.z << "\n";
+        map_d = map_d_idx < num_textures ? textures[map_d_idx] : NULL;
+        map_Kd =    map_Kd_idx < num_textures ? textures[map_Kd_idx] : NULL;
+        map_Ks =    map_Ks_idx < num_textures ? textures[map_Ks_idx] : NULL;
+        map_Ns =    map_Ns_idx < num_textures ? textures[map_Ns_idx] : NULL;
+        map_Bump =  map_Bump_idx < num_textures ? textures[map_Bump_idx] : NULL;
+
+      } else {
+        map_d = map_Kd = map_Ks = map_Ns = map_Bump = NULL;
+      }
+
+      d  = getParam1f("d", .5f);
+      Kd = getParam3f("kd",vec3f(.8f));
+      Ks = getParam3f("ks",vec3f(0.f));
+      Ns = getParam1f("ns",0.f);
 
       ispc::OBJMaterial_set(getIE(),
+                            map_d ? map_d->getIE() : NULL,
+                            d,
+                            map_Kd ? map_Kd->getIE() : NULL,
                             (ispc::vec3f&)Kd,
+                            map_Ks ? map_Ks->getIE() : NULL,
                             (ispc::vec3f&)Ks,
-                            Ns,d);
+                            map_Ns ? map_Ns->getIE() : NULL,
+                            Ns,
+                            map_Bump != NULL ? map_Bump->getIE() : NULL );
     }
 
     OBJMaterial::~OBJMaterial()

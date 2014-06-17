@@ -79,9 +79,13 @@ namespace ospray {
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
 
+      /*! create a new Texture2D object */
+      virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags) = 0;
+
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer) = 0;
+
 
   
       //! release (i.e., reduce refcount of) given object

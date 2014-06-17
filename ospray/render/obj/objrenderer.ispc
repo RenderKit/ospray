@@ -7,7 +7,7 @@
 #include "../util.ih"
 #include "ospray/common/model.ih"
 #include "objmaterial.ih"
-#include "ospray/texture/texture.ih"
+#include "ospray/texture/texture2d.ih"
 
 struct OBJRenderer {
   uniform Model *model;
@@ -29,14 +29,22 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   postIntersect(model,
                 dg,
                 ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR);
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
   
   uniform Material *material = dg.material;
   uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
   vec3f Kd = make_vec3f(0,1,0);
-  if (objMaterial != NULL) {
-    Kd = objMaterial->Kd;
+  foreach_unique(mat in objMaterial) {
+    if (mat) {
+      if (mat->map_Kd) {
+        //print("% %\n", dg.st.x, dg.st.y);
+        Kd = mat->map_Kd->get(mat->map_Kd, dg.st);
+      }
+      else {
+        Kd = mat->Kd;
+      }
+    }
   }
 
   //print("% % %\n", Kd.x, Kd.y, Kd.z);
@@ -50,8 +58,8 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   rtcOccluded(model->embreeSceneHandle,*((varying RTCRay *uniform)&shadowRay));
   const bool occluded = shadowRay.geomID >= 0;
   return Kd * make_vec3f(occluded 
-                         ? .2f+.2f*abs(c)
-                         : .3f+1.2f*abs(c));
+      ? .2f+.2f*abs(c)
+      : .3f+1.2f*abs(c));
 }
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
@@ -62,7 +70,7 @@ export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *un
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Model   *uniform model   = (uniform Model *uniform)_model;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-  uniform Texture *uniform textureArray = (uniform Texture *uniform)_textureArray;
+  uniform Texture2D *uniform textureArray = (uniform Texture2D *uniform)_textureArray;
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
   const uniform uint32 size_y = tile->fbSize.y;

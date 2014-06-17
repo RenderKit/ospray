@@ -25,14 +25,17 @@
 
 __define_ispc_vector2(int,i);
 __define_ispc_vector2(unsigned int,ui);
+__define_ispc_vector2(unsigned int8,uc);
 __define_ispc_vector2(float,f);
 
 __define_ispc_vector3(int,i);
 __define_ispc_vector3(unsigned int,ui);
+__define_ispc_vector3(unsigned int8,uc);
 __define_ispc_vector3(float,f);
 
 __define_ispc_vector4(int,i);
 __define_ispc_vector4(unsigned int,ui);
+__define_ispc_vector4(unsigned int8,uc);
 __define_ispc_vector4(float,f);
 
 #undef __define_ispc_vector2
@@ -182,13 +185,15 @@ __define_ispc_vector4(float,f);
 #define __define_ispc_constructors_uv(UV,TYPE,ABB)              \
   __define_ispc_constructors_uv_t(UV,TYPE,ABB,int,i)            \
   __define_ispc_constructors_uv_t(UV,TYPE,ABB,unsigned int,ui)  \
+  __define_ispc_constructors_uv_t(UV,TYPE,ABB,unsigned int8,uc) \
   __define_ispc_constructors_uv_t(UV,TYPE,ABB,float,f)          \
   __define_ispc_lift_constructors4(UV,TYPE,ABB)                 \
   
-#define __define_ispc_constructors(UV)              \
-  __define_ispc_constructors_uv(UV,unsigned int,ui) \
-  __define_ispc_constructors_uv(UV,int,i)           \
-  __define_ispc_constructors_uv(UV,float,f)         \
+#define __define_ispc_constructors(UV)               \
+  __define_ispc_constructors_uv(UV,unsigned int,ui)  \
+  __define_ispc_constructors_uv(UV,unsigned int8,uc) \
+  __define_ispc_constructors_uv(UV,int,i)            \
+  __define_ispc_constructors_uv(UV,float,f)          \
   
 __define_ispc_constructors(uniform);
 __define_ispc_constructors(varying);
@@ -473,6 +478,65 @@ __lift_unary_fct(exp)
 // inline vec3f rcp(const vec3f v) 
 // { return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
 
+#define __define_lerp2(ABB) \
+inline uniform vec2##ABB lerp(uniform float factor, const uniform vec2##ABB a, const uniform vec2##ABB b) \
+{                                                                                                 \
+  return make_vec2##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y));                          \
+}                                                                                                 \
+inline vec2##ABB lerp(float factor, const vec2##ABB a, const vec2##ABB b)                         \
+{                                                                                                 \
+  return make_vec2##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y));                          \
+}
+
+#define __define_lerp3(ABB) \
+inline uniform vec3##ABB lerp(uniform float factor, const uniform vec3##ABB a, const uniform vec3##ABB b) \
+{                                                                                                 \
+  return make_vec3##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z));  \
+}                                                                                                 \
+inline vec3##ABB lerp(float factor, const vec3##ABB a, const vec3##ABB b)                         \
+{                                                                                                 \
+  return make_vec3##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z));  \
+}                                                                                                 \
+
+#define __define_lerp3a(ABB)\
+inline uniform vec3##ABB##a lerp(uniform float factor, const uniform vec3##ABB##a a, const uniform vec3##ABB##a b)                    \
+{                                                                                                                                     \
+  return make_vec3##ABB##a(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.a, b.a));           \
+}                                                                                                                                     \
+inline vec3##ABB##a lerp(float factor, const vec3##ABB##a a, const vec3##ABB##a b)                                                    \
+{                                                                                                                                     \
+  return make_vec3##ABB##a(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z));                                   \
+}
+
+#define __define_lerp4(ABB) \
+inline uniform vec4##ABB lerp(uniform float factor, const uniform vec4##ABB a, const uniform vec4##ABB b)                          \
+{                                                                                                                                  \
+  return make_vec4##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.w, b.w));           \
+}                                                                                                                                  \
+inline vec4##ABB lerp(float factor, const vec4##ABB a, const vec4##ABB b)                                                          \
+{                                                                                                                                  \
+  return make_vec4##ABB(lerp(factor, a.x, b.x), lerp(factor, a.y, b.y), lerp(factor, a.z, b.z), lerp(factor, a.w, b.w));           \
+}
+
+__define_lerp2(f)
+__define_lerp2(i)
+__define_lerp2(ui)
+__define_lerp2(uc)
+__define_lerp3(f)
+__define_lerp3(i)
+__define_lerp3(ui)
+__define_lerp3(uc)
+//__define_lerp3a(i)
+//__define_lerp3a(ui)
+//__define_lerp3a(uc)
+__define_lerp4(f)
+__define_lerp4(i)
+__define_lerp4(ui)
+__define_lerp4(uc)
+
+#undef __define_lerp2
+#undef __define_lerp3
+#undef __define_lerp4
 
 inline vec3f powf(const vec3f v, const float f)
 { return make_vec3f(powf(v.x,f),powf(v.y,f),powf(v.z,f)); }

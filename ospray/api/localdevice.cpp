@@ -9,6 +9,7 @@
 #include "../render/loadbalancer.h"
 #include "../common/material.h"
 #include "../common/library.h"
+#include "../texture/texture2d.h"
 // embree stuff
 
 namespace ospray {
@@ -297,6 +298,15 @@ namespace ospray {
       }
       volume->refInc();
       return (OSPVolume)volume;
+    }
+
+    /*! create a new Texture2D object */
+    OSPTexture2D LocalDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags) {
+      Assert(width > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
+      Assert(height > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
+      Texture2D *tx = Texture2D::createTexture(width, height, type, data, flags);
+      if(tx) tx->refInc();
+      return (OSPTexture2D)tx;
     }
 
     /*! load module */

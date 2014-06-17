@@ -49,6 +49,7 @@ namespace ospray {
     const vec3fa *vertex; //!< mesh's vertex array
     const vec3fa *normal; //!< mesh's vertex normal array
     const vec4f  *color;  //!< mesh's vertex color array
+    const vec2f  *texcoord; //!< mesh's vertex texcoord array
     const uint32 *prim_materialID; //!< per-primitive material ID
     Material **materialList; //!< per-primitive material list
     int geom_materialID;
@@ -57,6 +58,7 @@ namespace ospray {
     Ref<Data> vertexData; /*!< vertex position (vec3fa) */
     Ref<Data> normalData; /*!< vertex normal array (vec3fa) */
     Ref<Data> colorData;  /*!< vertex color array (vec3fa) */
+    Ref<Data> texcoordData; /*!< vertex texcoord array (vec2f) */
     Ref<Data> prim_materialIDData;  /*!< data array for per-prim material ID (uint32) */
     Ref<Data> materialListData; /*!< data array for per-prim materials */
     uint32    eMesh;   /*!< embree triangle mesh handle */

@@ -47,6 +47,7 @@ namespace osp {
   struct Geometry     : public ManagedObject {};
   struct Material     : public ManagedObject {};
   struct Volume       : public ManagedObject {};
+  struct Texture2D    : public ManagedObject {};
   struct TriangleMesh : public Geometry {};
 }
 
@@ -78,9 +79,11 @@ typedef enum {
   OSP_vec2f,
   OSP_vec3i,
   OSP_vec3ui,
+  OSP_vec3uc,
   OSP_vec3f,
   OSP_vec3fa, 
-  OSP_vec4i
+  OSP_vec4i,
+  OSP_vec4uc,
 } OSPDataType;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
@@ -109,6 +112,7 @@ typedef osp::Data          *OSPData;
 typedef osp::Geometry      *OSPGeometry;
 typedef osp::Material      *OSPMaterial;
 typedef osp::Volume        *OSPVolume;
+typedef osp::Texture2D     *OSPTexture2D;
 typedef osp::TriangleMesh  *OSPTriangleMesh;
 typedef osp::ManagedObject *OSPObject;
 
@@ -171,6 +175,10 @@ extern "C" {
       ospray_supported_cameras */
   OSPRenderer ospNewRenderer(const char *type);
   
+  //! create a new Texture2D with the given parameters
+  /*! return 'NULL' if the texture could not be created with the given parameters */
+  OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
+
 
 
 

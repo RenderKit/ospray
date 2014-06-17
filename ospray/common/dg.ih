@@ -18,6 +18,7 @@ typedef enum {
   DG_MATERIALID  = (1<<7), /*!< hack for now - return materialID as
                               stored in "prim.materialID" array */
   DG_COLOR       = (1<<8), /*!< hack for now - interpolated vertex color */
+  DG_TEXCOORD    = (1<<9), /*!< calculate texture coords */
   DG_EOL /*! end of list */
 } DG_PostIntersectFlags;
 

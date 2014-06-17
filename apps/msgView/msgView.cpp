@@ -163,6 +163,39 @@ namespace ospray {
     return ospMat;
   }
 
+  OSPTexture2D createTexture2D(miniSG::Texture2D *msgTex)
+  {
+    if(msgTex == NULL) {
+      static int numWarnings = 0;
+      if (++numWarnings < 10)
+        cout << "WARNING: material does not have Textures (only warning for the first 10 times)!" << endl;
+      return NULL;
+    }
+
+    static std::map<miniSG::Texture2D*, OSPTexture2D> alreadyCreatedTextures;
+    if (alreadyCreatedTextures.find(msgTex) != alreadyCreatedTextures.end())
+      return alreadyCreatedTextures[msgTex];
+
+    //TODO: We need to come up with a better way to handle different possible pixel layouts
+    OSPDataType type = OSP_VOID_PTR;
+    if (msgTex->depth == 1) {
+      if( msgTex->channels == 3 ) type = OSP_vec3uc;
+      if( msgTex->channels == 4 ) type = OSP_vec4uc;
+    } else if (msgTex->depth == 4) {
+      if( msgTex->channels == 3 ) type = OSP_vec3f;
+      if( msgTex->channels == 4 ) type = OSP_vec3fa;
+    }
+
+    OSPTexture2D ospTex = alreadyCreatedTextures[msgTex] = ospNewTexture2D( msgTex->width,
+                                                                            msgTex->height,
+                                                                            type,
+                                                                            msgTex->data,
+                                                                            0);
+
+    ospCommit(ospTex);
+    return ospTex;
+  }
+
   OSPMaterial createMaterial(OSPRenderer renderer,
                              miniSG::Material *mat)
   {
@@ -210,6 +243,18 @@ namespace ospray {
         throw std::runtime_error("unkonwn material parameter type");
       };
     }
+
+    std::vector<OSPTexture2D> textures;
+    for (size_t i = 0; i < mat->textures.size(); i++) {
+      textures.push_back(createTexture2D(mat->textures[i].ptr));
+    }
+
+    if (!textures.empty()) {
+      OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], 0);
+      ospSetData(ospMat, "textures.list", textureArray);
+    }
+
+    ospSet1i(ospMat, "textures.count", textures.size());
     
     ospCommit(ospMat);
     return ospMat;
@@ -389,6 +434,14 @@ namespace ospray {
         ospSetData(ospMesh,"vertex.normal",normal);
       } else {
         // cout << "no vertex normals!" << endl;
+      }
+
+      // add texcoord array to mesh
+      if (!msgMesh->texcoord.empty()) {
+        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_vec2f,
+                                      &msgMesh->texcoord[0], OSP_DATA_SHARED_BUFFER);
+        assert(msgMesh->texcoord.size() > 0);
+        ospSetData(ospMesh,"vertex.texcoord",texcoord);
       }
 
       // add triangle material id array to mesh

@@ -257,6 +257,18 @@ namespace ospray {
     return camera;
   }
 
+  extern "C" OSPTexture2D ospNewTexture2D(int width,
+      int height,
+      OSPDataType type,
+      void *data = NULL,
+      int flags = 0)
+  {
+    ASSERT_DEVICE();
+    Assert2(width > 0, "Width must be greater than 0 in ospNewTexture2D");
+    Assert2(height > 0, "Height must be greater than 0 in ospNewTexture2D");
+    LOG("ospNewTexture2D( " << width << ", " << height << ", " << type << ", " << data << ", " << flags << ")");
+    return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
+  }
   /*! \brief create a new volume of given type 
     
     return 'NULL' if that type is not known */

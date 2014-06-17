@@ -19,7 +19,7 @@
 struct Image3ca
 {
   Image base;
-  uint* data;
+  uint32* data;
   bool owned;
 };
 
@@ -27,10 +27,10 @@ inline uniform vec3f Image3ca__get_nearest_uniform(const uniform Image *uniform 
 { 
   const uniform Image3ca *uniform this = (const uniform Image3ca *uniform)_this;
   const uniform float one_over_255 = (1.f/255.f);
-  const uniform uint c = this->data[x+this->base.size.x*y]; 
-  const uniform uint r = c         & 255;
-  const uniform uint g = (c >>  8) & 255;
-  const uniform uint b = (c >> 16) & 255;
+  const uniform uint32 c = this->data[x+this->base.size.x*y]; 
+  const uniform uint32 r = c         & 255;
+  const uniform uint32 g = (c >>  8) & 255;
+  const uniform uint32 b = (c >> 16) & 255;
   return make_vec3f(r*one_over_255, g*one_over_255, b*one_over_255);
 }
 
@@ -38,11 +38,11 @@ inline varying vec3f Image3ca__get_nearest_varying(const uniform Image *uniform 
 { 
   const uniform Image3ca *uniform this = (const uniform Image3ca *uniform)_this;
   const uniform float one_over_255 = (1.f/255.f);
-  const varying uint idx = x+this->base.size.x*y;
-  const varying uint c = this->data[idx]; 
-  const varying uint r = c         & 255;
-  const varying uint g = (c >>  8) & 255;
-  const varying uint b = (c >> 16) & 255;
+  const varying uint32 idx = x+this->base.size.x*y;
+  const varying uint32 c = this->data[idx]; 
+  const varying uint32 r = c         & 255;
+  const varying uint32 g = (c >>  8) & 255;
+  const varying uint32 b = (c >> 16) & 255;
   return make_vec3f(r*one_over_255, g*one_over_255, b*one_over_255);
 }
 
@@ -75,18 +75,19 @@ varying vec3f Image3ca__get_bilinear_varying(const uniform Image *uniform _this,
               lerp(sx,c01,c11));
 }
 
-void Image3ca__Destructor(uniform RefCount* uniform _this)
+void Image3ca__Destructor(uniform Image3ca* uniform _this)
 {
   uniform Image3ca* uniform this = (uniform Image3ca* uniform) _this;
   if (this->owned) delete[] this->data;
-  Image__Destructor(_this);
+  Image__Destructor(&_this->base);
 }
 
 void Image3ca__Constructor(uniform Image3ca* uniform this, const uniform vec2ui size, 
-						   uniform uint *uniform data, uniform bool owned)
+						   uniform uint32 *uniform data, uniform bool owned)
 {
   Image__Constructor(&this->base,
-                     Image3ca__Destructor,size,
+                     //Image3ca__Destructor,
+                     size,
                      Image3ca__get_nearest_uniform,
                      Image3ca__get_nearest_varying,
                      Image3ca__get_bilinear_varying);
@@ -94,12 +95,12 @@ void Image3ca__Constructor(uniform Image3ca* uniform this, const uniform vec2ui 
   this->owned = owned;
 }
 
-export void* uniform Image3ca__new(const uniform int size_x, const uniform int size_y, uniform uint *uniform data, const uniform bool copy)
+export void* uniform Image3ca__new(const uniform int size_x, const uniform int size_y, uniform uint32 *uniform data, const uniform bool copy)
 {
   uniform Image3ca *uniform this = uniform new uniform Image3ca;
   if (copy) {
-    uniform uint* uniform local = uniform new uniform uint[size_x*size_y];
-    memcpy(local,data,size_x*size_y*sizeof(uniform uint));
+    uniform uint32* uniform local = uniform new uniform uint32[size_x*size_y];
+    memcpy(local,data,size_x*size_y*sizeof(uniform uint32));
     Image3ca__Constructor(this,make_vec2ui(size_x,size_y),local,copy);
   } else {
     Image3ca__Constructor(this,make_vec2ui(size_x,size_y),data,copy);

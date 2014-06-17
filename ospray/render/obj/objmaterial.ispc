@@ -13,18 +13,25 @@ export void OBJMaterial_destroy(void *uniform _mat)
   delete(mat);
 }
 
-export void OBJMaterial_set(void *uniform _mat, 
+export void OBJMaterial_set(void *uniform _mat,
+                            const void *uniform map_d, 
+                            const uniform float &d,
+                            const void *uniform map_Kd,
                             const uniform vec3f &Kd,
+                            const void *uniform map_Ks,
                             const uniform vec3f &Ks,
+                            const void *uniform map_Ns,
                             const uniform float &Ns,
-                            const uniform float &d
-                            )
+                            const void *uniform map_Bump)
 {
-  // print("created ispc-side obj material (kd=% % %)\n",
-  //       Kd.x,Kd.y,Kd.z);
-  uniform OBJMaterial *uniform mat = (uniform OBJMaterial *uniform)_mat;
-  mat->Kd = Kd;
-  mat->Ks = Ks;
-  mat->Ns = Ns;
-  mat->d  = d;
+  uniform OBJMaterial *uniform THIS = (uniform OBJMaterial *uniform)_mat;
+  THIS->map_d = (uniform Texture2D *uniform)map_d;
+  THIS->d = d;
+  THIS->map_Kd = (uniform Texture2D *uniform)map_Kd;
+  THIS->Kd = Kd;
+  THIS->map_Ks = (uniform Texture2D *uniform)map_Ks;
+  THIS->Ks = Ks;
+  THIS->map_Ns = (uniform Texture2D *uniform)map_Ns;
+  THIS->Ns = Ns;
+  THIS->map_Bump = (uniform Texture2D *uniform)map_Bump;
 }

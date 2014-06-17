@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ospray/common/material.h"
-#include "ospray/common/texture.h"
+#include "ospray/texture/texture2d.h"
 
 namespace ospray {
   namespace obj {
@@ -9,11 +9,11 @@ namespace ospray {
     
     /*! implements the Material used by the \ref ospray_render_obj */
     struct OBJMaterial : public Material {
-      Ref<Texture> map_d;   float d;     /*! opacity: 0 (transparent), 1 (opaque)                */
-      Ref<Texture> map_Kd;  Color Kd;    /*! diffuse  reflectance: 0 (none), 1 (full)            */
-      Ref<Texture> map_Ks;  Color Ks;    /*! specular reflectance: 0 (none), 1 (full)            */
-      Ref<Texture> map_Ns;  float Ns;    /*! specular exponent: 0 (diffuse), infinity (specular) */
-      Ref<Texture> map_Bump;             /*! bump map */
+      Texture2D *map_d;   float d;     /*! opacity: 0 (transparent), 1 (opaque)                */
+      Texture2D *map_Kd;  Color Kd;    /*! diffuse  reflectance: 0 (none), 1 (full)            */
+      Texture2D *map_Ks;  Color Ks;    /*! specular reflectance: 0 (none), 1 (full)            */
+      Texture2D *map_Ns;  float Ns;    /*! specular exponent: 0 (diffuse), infinity (specular) */
+      Texture2D *map_Bump;             /*! bump map */
 
       //! \brief common function to help printf-debugging 
       /*! Every derived class should overrride this! */
