@@ -83,6 +83,8 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	geometry/cylinders.cpp
 	geometry/cylinders.ispc
 
+  lights/light.cpp
+
   texture/nearestneighbor.ispc
   texture/image3c.ispc
   texture/image3ca.ispc
