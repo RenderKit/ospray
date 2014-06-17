@@ -6,6 +6,8 @@ namespace ospray {
 
   struct Light : public ManagedObject {
     static Light *createLight(const char *type);
+
+    virtual void commit(){}
   };
 
 #define OSP_REGISTER_LIGHT(InternalClassName, external_name)        \
