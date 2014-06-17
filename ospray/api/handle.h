@@ -8,17 +8,25 @@
 namespace ospray {
   namespace api {
 
+#define NULL_HANDLE (Handle(0))
+
     //! (local) handle to a (remote) managed object
     /*! abstraction for a remotely-held 'managed object'. the handle
       refers to both 'owner' (the machine that has it) as well as to a
       local ID (by which that owner can look it up). Note that other
-      ranks may also have copies of that object. */
+      ranks may also have copies of that object. 
+
+      note that the 'null handle' is '0', not -1. This allows an app
+      to test the handled resturend from ospNewXXX calls for null just
+      as if they were pointers (and thus, 'null' objects are
+      consistent between local and mpi rendering)
+    */
     struct Handle {
       static Handle alloc();
       void free();
 
-      inline Handle() : i64(-1) {};
-      inline Handle(const Handle &other) : i64(other.i64) {};
+      inline Handle(const int64 i) : i64(i) {};
+      inline Handle(const Handle &other=NULL_HANDLE) : i64(other.i64) {};
       inline Handle &operator=(const Handle &other) { i64=other.i64; return *this; }
 
       union {
@@ -42,6 +50,11 @@ namespace ospray {
       inline int32 ID() const { return i32.ID; }
       /*! cast to int64 to allow fast operations with this type */
       inline operator int64() const { return i64; }
+
+      static const Handle nullHandle;
     };
+
+    inline bool operator==(const Handle &a, const Handle &b) { return a.i64==b.i64; }
+    inline bool operator!=(const Handle &a, const Handle &b) { return a.i64!=b.i64; }
   }
 }

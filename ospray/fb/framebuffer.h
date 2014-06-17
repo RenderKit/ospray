@@ -59,5 +59,5 @@ namespace ospray {
 
   };
 
-  FrameBuffer *createLocalFB_RGBA_I8(const vec2i &size, void *mem);
+  // FrameBuffer *createLocalFB_RGBA_I8(const vec2i &size, void *mem);
 }
