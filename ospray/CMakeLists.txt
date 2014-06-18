@@ -109,6 +109,8 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	render/obj/objmaterial.ispc
 	render/obj/objrenderer.cpp
 	render/obj/objmaterial.cpp
+  render/obj/objpointlight.ispc
+  render/obj/objpointlight.cpp
 
 	api/api.cpp
 	api/device.cpp

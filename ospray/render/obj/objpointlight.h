@@ -13,6 +13,10 @@ namespace ospray {
 
       //! destructor, to clean up
       virtual ~OBJPointLight();
+
+      float constantAttenuation;
+      float linearAttenuation;
+      float quadraticAttenuation;
     };
   }
 }

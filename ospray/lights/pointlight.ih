@@ -14,6 +14,7 @@ struct PointLight {
 };
 
 extern void PointLight_Constructor( uniform PointLight *uniform THIS,
+                                    void *uniform cppEquivalent,
                                     const uniform vec3f &position,
                                     const uniform vec3f &color,
                                     const uniform float range);

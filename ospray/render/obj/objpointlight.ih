@@ -1,0 +1,25 @@
+#ifndef OSPRAY_OBJ_POINT_LIGHT_IH
+#define OSPRAY_OBJ_POINT_LIGHT_IH
+
+#include "ospray/lights/pointlight.ih"
+
+struct OBJPointLight {
+  uniform PointLight base;    //!< inherited point light fields
+
+  uniform float constantAttenuation;
+  uniform float linearAttenuation;
+  uniform float quadraticAttenuation;
+};
+
+extern void OBJPointLight_Constructor(uniform OBJPointLight *uniform THIS,
+                                      void *uniform cppEquivalent,
+                                      const uniform vec3f &position,
+                                      const uniform vec3f &color,
+                                      const uniform float range,
+                                      const uniform float constantAttenuation,
+                                      const uniform float linearAttenuation,
+                                      const uniform float quadraticAttenuation);
+
+extern void OBJPointLight_Destructor(uniform OBJPointLight *uniform THIS);
+
+#endif
