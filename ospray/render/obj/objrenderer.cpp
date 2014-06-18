@@ -1,6 +1,7 @@
 // obj
 #include "objrenderer.h"
 #include "objmaterial.h"
+#include "objpointlight.h"
 // ospray
 #include "ospray/common/model.h"
 #include "ospray/common/data.h"
@@ -42,6 +43,16 @@ namespace ospray {
     {
       Material *mat = new OBJMaterial;
       return mat;
+    }
+
+    /*! \brief create a light of given type */
+    Light *OBJRenderer::createLight(const char *type)
+    {
+      if(!strcmp("PointLight", type)) {
+        Light *light = new OBJPointLight;
+        return light;
+      }
+      return NULL;
     }
 
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);

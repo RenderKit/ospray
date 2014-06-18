@@ -31,6 +31,8 @@ namespace ospray {
       virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
       /*! \brief create a material of given type */
       virtual Material *createMaterial(const char *type);
+      /*! \brief create a light of given type */
+      virtual Light *createLight(const char *type);
     };
 
   }
