@@ -32,8 +32,6 @@ namespace ospray {
       Assert2(frame->camera,"null camera handle (did you forget to assign a "
               "'camera' parameter to the ray_cast renderer?)");
 
-      frame->textureData = (Data*)frame->world->getParamObject("textureArray", NULL);
-
       return frame;
     }
     
