@@ -458,35 +458,6 @@ namespace ospray {
         ospSetData(ospMesh,"materialList",ospMaterialList);
       }
 
-
-      // // //FIXME: This is BAD code, we are making a copy of the materials for every instance. We can do better!
-      // // //Add all materials to the triangle mesh
-      // // //The object material
-      // // createMaterial(ospMesh, ospRenderer, msgMesh->material.ptr);
-      // // //The per primitive materials
-      // // std::vector<OSPMaterial> materials;
-      // // for(size_t i =0; i < msgModel->material.size(); i++) {
-      // //   miniSG::Material *mat = msgModel->material[i].ptr;
-      // //   OSPMaterial ospMat = ospNewMaterial(ospRenderer, mat->getParam("type", "OBJMaterial"));
-      // //   if (!ospMat) {
-      // //     cout << "given renderer does not know material type '" << mat->getParam("type", "OBJMaterial") << "'" << endl;
-      // //     return;
-      // //   }
-
-
-      //     // ospSet3fv(ospMat, "Kd", &mat->getParam("kd", vec3f(1.f)).x);
-      //     // ospSet3fv(ospMat, "Ks", &mat->getParam("Ks", vec3f(0.f)).x);
-      //     // ospSet1f(ospMat, "Ns", mat->getParam("Ns", 0.f));
-      //     // ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
-      // //        }
-
-      //   ospCommit(ospMat);
-      //   materials.push_back(ospMat);
-      // }
-      // OSPData ospMaterials = ospNewData(materials.size(), OSP_OBJECT, &materials[0], 0);
-      // ospSetData(ospMesh, "materials", ospMaterials);
-      // //END material buffer
-
       ospCommit(ospMesh);
 
       if (doesInstancing) {
