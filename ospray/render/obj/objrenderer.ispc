@@ -2,12 +2,15 @@
 /*! \file raycast.ispc Defines ISPC side of the ray cast renderer */
 
 // ospray stuff
-#include "../../fb/framebuffer.ih"
-#include "../../camera/perspectivecamera.ih"
-#include "../util.ih"
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/render/util.ih"
 #include "ospray/common/model.ih"
-#include "objmaterial.ih"
 #include "ospray/texture/texture2d.ih"
+#include "ospray/lights/light.ih"
+// obj renderer
+#include "objmaterial.ih"
+#include "objpointlight.ih"
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
