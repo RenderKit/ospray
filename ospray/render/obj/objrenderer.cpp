@@ -12,14 +12,13 @@
 namespace ospray {
   namespace obj {
 
-    extern "C" void ispc__OBJRenderer_renderTile(void *tile, void *camera, void *model, void *textureArray);
+    extern "C" void ispc__OBJRenderer_renderTile(void *tile, void *camera, void *model);
 
     void OBJRenderer::RenderTask::renderTile(Tile &tile)
     {
       ispc__OBJRenderer_renderTile(&tile,
                                    camera->getIE(),
-                                   world->getIE(),
-                                   NULL/*textureData->data*/); //textures NYI
+                                   world->getIE());
     }
     
     TileRenderer::RenderJob *OBJRenderer::createRenderJob(FrameBuffer *fb)

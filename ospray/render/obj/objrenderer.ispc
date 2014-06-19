@@ -9,12 +9,6 @@
 #include "objmaterial.ih"
 #include "ospray/texture/texture2d.ih"
 
-struct OBJRenderer {
-  uniform Model *model;
-  //uniform Texture *textureArray;
-  uniform OBJMaterial *materialArray;
-};
-
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
 
@@ -152,13 +146,11 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
                                          void *uniform _camera, //uniform Camera *uniform camera,
-                                         void *uniform _model,
-                                         void *uniform _textureArray)
+                                         void *uniform _model)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Model   *uniform model   = (uniform Model *uniform)_model;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-  uniform Texture2D *uniform textureArray = (uniform Texture2D *uniform)_textureArray;
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
   const uniform uint32 size_y = tile->fbSize.y;
