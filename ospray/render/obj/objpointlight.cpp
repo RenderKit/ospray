@@ -1,7 +1,12 @@
 #include "objpointlight.h"
+#include "objpointlight_ispc.h"
 
 namespace ospray {
   namespace obj {
+
+    OBJPointLight::OBJPointLight() {
+      ispcEquivalent = ispc::OBJPointLight_create(this);
+    }
 
     void OBJPointLight::commit() {
       //commit inherited params
@@ -13,7 +18,16 @@ namespace ospray {
       //quadraticAttenuation
       quadraticAttenuation = getParam1f("attenuation.quadratic", 0.f);
 
-      //TODO: set ispc side
+      //PRINT(constantAttenuation);
+      //PRINT(linearAttenuation);
+      //PRINT(quadraticAttenuation);
+      ispc::OBJPointLight_set(getIE(),
+                              (ispc::vec3f&)position,
+                              (ispc::vec3f&)color,
+                              range,
+                              constantAttenuation,
+                              linearAttenuation,
+                              quadraticAttenuation);
     }
 
     OBJPointLight::~OBJPointLight(){}

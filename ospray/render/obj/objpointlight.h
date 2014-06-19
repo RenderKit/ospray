@@ -5,6 +5,7 @@
 namespace ospray {
   namespace obj {
     struct OBJPointLight : public PointLight {
+      OBJPointLight();
       //! \brief common function to help printf-debugging
       virtual std::string toString() const { return "ospray::objrenderer::OBJPointLight"; }
 
