@@ -30,6 +30,7 @@
 
 /*! namespace for classes in the public core API */
 namespace osp {
+  typedef embree::Vec2f  vec2f;
   typedef embree::Vec2i  vec2i;
   typedef embree::Vec3f  vec3f;
   typedef embree::Vec3i  vec3i;

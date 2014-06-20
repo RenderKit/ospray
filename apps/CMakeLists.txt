@@ -21,3 +21,10 @@ ENDIF()
 ADD_SUBDIRECTORY(testing)
 # mpi testing codes; to be removed at some point in time
 ADD_SUBDIRECTORY(mpi-testing)
+
+# volume viewer application
+OPTION(BUILD_VOLUMEVIEWER "Build volume viewer application" OFF)
+
+IF(BUILD_VOLUMEVIEWER)
+    ADD_SUBDIRECTORY(volumeViewer)
+ENDIF()
