@@ -516,14 +516,15 @@ namespace ospray {
     /*! create a new texture2D */
     OSPTexture2D COIDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags)
     {
-      assert(false && __func__ " not yet implemented for COIDevice");
+      assert(false && "COIDevice::newTexture2D() not yet implemented for COIDevice");
       return NULL;
     }
 
     /*! have given renderer create a new light */
     OSPLight COIDevice::newLight(OSPRenderer _renderer, const char *type)
     {
-      assert(false && __func__ " not yet implemented for COIDevice");
+      assert(false && "COIDevice::newLight() not yet implemented for COIDevice");
+      return NULL;
     }
 
     /*! create a new geometry object (out of list of registered geometrys) */
@@ -609,8 +610,7 @@ namespace ospray {
 
       /*! create a new frame buffer */
     OSPFrameBuffer COIDevice::frameBufferCreate(const vec2i &size, 
-                                                const OSPFrameBufferMode mode,
-                                                const size_t swapChainDepth)
+                                                const OSPFrameBufferMode mode)
     {
       COIRESULT result;
       Handle handle = Handle::alloc();
