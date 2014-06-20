@@ -17,6 +17,8 @@
 #include "render/renderer.h"
 #include "render/tilerenderer.h"
 #include "render/loadbalancer.h"
+#include "texture/texture2d.h"
+#include "lights/light.h"
 
 using namespace std;
 
@@ -282,6 +284,30 @@ namespace ospray {
       handle.assign(mat);
 
       COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_new_texture2d(uint32_t         numBuffers,
+                                  void**           bufferPtr,
+                                  uint64_t*        bufferSize,
+                                  void*            argsPtr,
+                                  uint16_t         argsSize,
+                                  void*            retVal,
+                                  uint16_t         retValSize)
+    {
+      assert(false && __func__ " not yet implemented in " __FILE__);
+    }
+                                
+    COINATIVELIBEXPORT
+    void ospray_coi_new_light(uint32_t         numBuffers,
+                              void**           bufferPtr,
+                              uint64_t*        bufferSize,
+                              void*            argsPtr,
+                              uint16_t         argsSize,
+                              void*            retVal,
+                              uint16_t         retValSize)
+    {
+      assert(false && __func__ " not yet implemented in " __FILE__);
     }
 
     COINATIVELIBEXPORT

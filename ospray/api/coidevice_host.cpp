@@ -50,7 +50,9 @@ namespace ospray {
       OSPCOI_NEW_FRAMEBUFFER,
       OSPCOI_RENDER_FRAME,
       OSPCOI_RENDER_FRAME_SYNC,
-      OSPCOI_NUM_FUNCTIONS
+      OSPCOI_NEW_TEXTURE2D,
+      OSPCOI_NEW_LIGHT,
+      OSPCOI_NUM_FUNCTIONS,
     } RemoteFctID;
 
     const char *coiFctName[] = {
@@ -71,6 +73,8 @@ namespace ospray {
       "ospray_coi_new_framebuffer",
       "ospray_coi_render_frame",
       "ospray_coi_render_frame_sync",
+      "ospray_coi_new_texture2d",
+      "ospray_coi_new_light",
       NULL
     };
     
@@ -169,6 +173,12 @@ namespace ospray {
       /*! create a new transfer function object (out of list of registered transfer function types) */
       virtual OSPTransferFunction newTransferFunction(const char *type);
 
+      /*! have given renderer create a new Light */
+      virtual OSPLight newLight(OSPRenderer _renderer, const char *type);
+
+      /*! create a new Texture2D object */
+      virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags);
+      
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer);
@@ -501,6 +511,19 @@ namespace ospray {
       args.write(type);
       callFunction(OSPCOI_NEW_MATERIAL,args);
       return (OSPMaterial)(int64)handle;
+    }
+
+    /*! create a new texture2D */
+    OSPTexture2D COIDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags)
+    {
+      assert(false && __func__ " not yet implemented for COIDevice");
+      return NULL;
+    }
+
+    /*! have given renderer create a new light */
+    OSPLight COIDevice::newLight(OSPRenderer _renderer, const char *type)
+    {
+      assert(false && __func__ " not yet implemented for COIDevice");
     }
 
     /*! create a new geometry object (out of list of registered geometrys) */
