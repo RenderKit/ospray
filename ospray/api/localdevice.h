@@ -74,6 +74,9 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volume types) with data from a file */
       virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
 
+      /*! create a new transfer function object (out of list of registered transfer function types) */
+      virtual OSPTransferFunction newTransferFunction(const char *type);
+
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type);
 

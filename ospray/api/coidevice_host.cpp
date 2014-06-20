@@ -43,6 +43,7 @@ namespace ospray {
       OSPCOI_NEW_CAMERA,
       OSPCOI_NEW_VOLUME,
       OSPCOI_NEW_VOLUME_FROM_FILE,
+      OSPCOI_NEW_TRANSFER_FUNCTION,
       OSPCOI_NEW_RENDERER,
       OSPCOI_NEW_GEOMETRY,
       OSPCOI_ADD_GEOMETRY,
@@ -63,6 +64,7 @@ namespace ospray {
       "ospray_coi_new_camera",
       "ospray_coi_new_volume",
       "ospray_coi_new_volume_from_file",
+      "ospray_coi_new_transfer_function",
       "ospray_coi_new_renderer",
       "ospray_coi_new_geometry",
       "ospray_coi_add_geometry",
@@ -163,6 +165,9 @@ namespace ospray {
 
       /*! create a new volume object (out of list of registered volume types) with data from a file */
       virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
+
+      /*! create a new transfer function object (out of list of registered transfer function types) */
+      virtual OSPTransferFunction newTransferFunction(const char *type);
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
@@ -545,6 +550,18 @@ namespace ospray {
       args.write(type);
       callFunction(OSPCOI_NEW_VOLUME_FROM_FILE, args);
       return (OSPVolume)(int64) handle;
+    }
+
+    /*! create a new transfer function object (out of list of registered transfer function types) */
+    OSPTransferFunction COIDevice::newTransferFunction(const char *type)
+    {
+      Assert(type);
+      Handle handle = Handle::alloc();
+      DataStream args;
+      args.write(handle);
+      args.write(type);
+      callFunction(OSPCOI_NEW_TRANSFER_FUNCTION, args);
+      return (OSPTransferFunction)(int64) handle;
     }
 
     /*! create a new renderer object (out of list of registered renderers) */

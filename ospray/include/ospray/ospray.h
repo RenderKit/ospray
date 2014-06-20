@@ -39,17 +39,18 @@ namespace osp {
   typedef embree::AffineSpace3f affine3f;
 
   struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
-  struct FrameBuffer  : public ManagedObject {};
-  struct Renderer     : public ManagedObject {};
-  struct Camera       : public ManagedObject {};
-  struct Model        : public ManagedObject {};
-  struct Data         : public ManagedObject {};
-  struct Geometry     : public ManagedObject {};
-  struct Material     : public ManagedObject {};
-  struct Volume       : public ManagedObject {};
-  struct Texture2D    : public ManagedObject {};
-  struct Light        : public ManagedObject {};
-  struct TriangleMesh : public Geometry {};
+  struct FrameBuffer      : public ManagedObject {};
+  struct Renderer         : public ManagedObject {};
+  struct Camera           : public ManagedObject {};
+  struct Model            : public ManagedObject {};
+  struct Data             : public ManagedObject {};
+  struct Geometry         : public ManagedObject {};
+  struct Material         : public ManagedObject {};
+  struct Volume           : public ManagedObject {};
+  struct TransferFunction : public ManagedObject {};
+  struct Texture2D        : public ManagedObject {};
+  struct Light            : public ManagedObject {};
+  struct TriangleMesh     : public Geometry {};
 }
 
 
@@ -105,18 +106,19 @@ typedef enum {
   OSP_GENERAL_ERROR /*! unspecified error */
 } OSPResult;
 
-typedef osp::FrameBuffer   *OSPFrameBuffer;
-typedef osp::Renderer      *OSPRenderer;
-typedef osp::Camera        *OSPCamera;
-typedef osp::Model         *OSPModel;
-typedef osp::Data          *OSPData;
-typedef osp::Geometry      *OSPGeometry;
-typedef osp::Material      *OSPMaterial;
-typedef osp::Volume        *OSPVolume;
-typedef osp::Texture2D     *OSPTexture2D;
-typedef osp::TriangleMesh  *OSPTriangleMesh;
-typedef osp::ManagedObject *OSPObject;
-typedef osp::Light         *OSPLight;
+typedef osp::FrameBuffer       *OSPFrameBuffer;
+typedef osp::Renderer          *OSPRenderer;
+typedef osp::Camera            *OSPCamera;
+typedef osp::Model             *OSPModel;
+typedef osp::Data              *OSPData;
+typedef osp::Geometry          *OSPGeometry;
+typedef osp::Material          *OSPMaterial;
+typedef osp::Volume            *OSPVolume;
+typedef osp::TransferFunction  *OSPTransferFunction;
+typedef osp::Texture2D         *OSPTexture2D;
+typedef osp::TriangleMesh      *OSPTriangleMesh;
+typedef osp::ManagedObject     *OSPObject;
+typedef osp::Light             *OSPLight;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -172,6 +174,10 @@ extern "C" {
   //! create a new volume of given type 
   /*! return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
+
+  //! create a new transfer function of given type
+  /*! return 'NULL' if that type is not known */
+  OSPTransferFunction ospNewTransferFunction(const char * type);
 
   //! create a new camera of given type.  
   /*! The default camera type supported in all ospray versions is

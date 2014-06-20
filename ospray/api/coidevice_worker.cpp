@@ -223,6 +223,26 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
+    void ospray_coi_new_transfer_function(uint32_t         numBuffers,
+                                 void**           bufferPtr,
+                                 uint64_t*        bufferSize,
+                                 void*            argsPtr,
+                                 uint16_t         argsSize,
+                                 void*            retVal,
+                                 uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      Handle handle = args.get<Handle>();
+      const char *type = args.getString();
+      cout << "!osp:coi: new transfer function " << handle.ID() << " " << type << endl;
+
+      TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
+      handle.assign(transferFunction);
+
+      COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
     void ospray_coi_new_renderer(uint32_t         numBuffers,
                                  void**           bufferPtr,
                                  uint64_t*        bufferSize,

@@ -6,6 +6,7 @@
 #include "../render/renderer.h"
 #include "../camera/camera.h"
 #include "../volume/volume.h"
+#include "../transferfunction/TransferFunction.h"
 #include "../render/loadbalancer.h"
 #include "../common/material.h"
 #include "../common/library.h"
@@ -299,6 +300,21 @@ namespace ospray {
       }
       volume->refInc();
       return (OSPVolume)volume;
+    }
+
+    /*! create a new volume object (out of list of registered volumes) */
+    OSPTransferFunction LocalDevice::newTransferFunction(const char *type)
+    {
+      Assert(type != NULL && "invalid transfer function type identifier");
+      TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
+      if (!transferFunction) {
+        if (ospray::debugMode)
+          throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
+      transferFunction->refInc();
+      return (OSPTransferFunction)transferFunction;
     }
 
     /*! have given renderer create a new Light */

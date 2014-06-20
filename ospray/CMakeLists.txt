@@ -70,6 +70,10 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	volume/bricked64.ispc
 	volume/bricked64.cpp
 
+	transferfunction/TransferFunction.cpp
+	transferfunction/TransferFunctionPiecewiseLinear.ispc
+	transferfunction/TransferFunctionPiecewiseLinear.cpp
+
 	geometry/geometry.ispc
 	geometry/geometry.cpp
 	geometry/trianglemesh.ispc

@@ -3,6 +3,7 @@
 #include "ospray/camera/camera.h"
 #include "ospray/common/material.h"
 #include "ospray/volume/volume.h"
+#include "ospray/transferfunction/TransferFunction.h"
 #include "localdevice.h"
 #include "ospray/common/ospcommon.h"
 
@@ -307,6 +308,22 @@ namespace ospray {
       else
         std::cerr << "#ospray: could not create volume of type '" << type << "' from file '" << filename << "'" << std::endl;
     return volume;
+  }
+
+  /*! \brief create a new transfer function of given type
+    return 'NULL' if that type is not known */
+  extern "C" OSPTransferFunction ospNewTransferFunction(const char *type)
+  {
+    ASSERT_DEVICE();
+    Assert(type != NULL && "invalid transfer function type identifier in ospNewTransferFunction");
+    LOG("ospNewTransferFunction(" << type << ")");
+    OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
+    if(ospray::logLevel > 0)
+      if(transferFunction)
+        cout << "ospNewTransferFunction: " << ((ospray::TransferFunction*)transferFunction)->toString() << endl;
+      else
+        std::cerr << "#ospray: could not create transfer function '" << type << "'" << std::endl;
+    return transferFunction;
   }
 
   /*! \brief call a renderer to render given model into given framebuffer 
