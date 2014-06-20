@@ -480,6 +480,23 @@ namespace ospray {
     ospCommit(ospModel);
     cout << "msgView: done creating ospray model." << endl;
 
+    //begin light test
+    std::vector<OSPLight> pointLights;
+    cout << "msgView: Adding a hard coded point light as the sun." << endl;
+    OSPLight ospLight = ospNewLight(ospRenderer, "PointLight");
+    ospSetString(ospLight, "name", "sun" );
+    ospSet3f(ospLight, "position", 0, 2500000, 0);
+    ospSet3f(ospLight, "color", 1, 1, 1);
+    ospSet1f(ospLight, "range", 5000000);
+    ospSet1f(ospLight, "attenuation.constant", .0000000000003);
+    ospSet1f(ospLight, "attenuation.linear", .0000000000003);
+    ospSet1f(ospLight, "attenuation.quadratic", .0000000000003);
+    ospCommit(ospLight);
+    pointLights.push_back(ospLight);
+    OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);
+    ospSetData(ospRenderer, "pointLights", pointLightArray);
+    //end light test
+
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------

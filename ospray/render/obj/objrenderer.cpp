@@ -8,17 +8,25 @@
 #include "ospray/camera/camera.h"
 //embree
 #include "embree2/rtcore.h"
+//sys
+#include <vector>
 
 namespace ospray {
   namespace obj {
 
-    extern "C" void ispc__OBJRenderer_renderTile(void *tile, void *camera, void *model);
+    extern "C" void ispc__OBJRenderer_renderTile( void *tile,
+                                                  void *camera,
+                                                  void *model,
+                                                  int num_point_lights,
+                                                  void **_point_lights);
 
     void OBJRenderer::RenderTask::renderTile(Tile &tile)
     {
       ispc__OBJRenderer_renderTile(&tile,
                                    camera->getIE(),
-                                   world->getIE());
+                                   world->getIE(),
+                                   numPointLights,
+                                   pointLightArray);
     }
     
     TileRenderer::RenderJob *OBJRenderer::createRenderJob(FrameBuffer *fb)
@@ -31,6 +39,17 @@ namespace ospray {
       frame->camera = (Camera *)getParamObject("camera",NULL);
       Assert2(frame->camera,"null camera handle (did you forget to assign a "
               "'camera' parameter to the ray_cast renderer?)");
+
+      frame->pointLightData = (Data*)getParamData("pointLights",NULL);
+
+      if (frame->pointLightData && pointLightArray.empty()) {
+        for (int i = 0; i < frame->pointLightData->size(); i++) {
+          pointLightArray.push_back(((Light**)frame->pointLightData->data)[i]->getIE());
+        }
+      }
+      frame->pointLightArray = &pointLightArray[0];
+
+      frame->numPointLights = pointLightArray.size();
 
       return frame;
     }

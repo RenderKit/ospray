@@ -14,6 +14,13 @@
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
+#define FAKE_LIGHT
+
+struct OBJRenderer {
+  uniform Model *model;
+  const uniform OBJPointLight *uniform *uniform pointLights;
+  uint32        numPointLights;
+};
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight) {
   float alpha = 1.f;
@@ -52,7 +59,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
   }
 }
 
-inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
+inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform renderer) 
 { 
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
   // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
@@ -62,7 +69,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
   uniform int depth = 0;
 
   while (1) {
-    traceRay(model,ray);
+    traceRay(renderer->model,ray);
 
     if (ray.geomID < 0) {
       const vec3f bg_color = make_vec3f(0.f);
@@ -74,7 +81,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
     vec3f local_shade_color = make_vec3f(0.f);
 
     DifferentialGeometry dg;
-    postIntersect(model,
+    postIntersect(renderer->model,
         dg,
         ray,
         DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
@@ -113,10 +120,32 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
       const vec3f P = ray.org + (ray.t * ray.dir * (1.f - EPS)) + EPS * dg.Ng;
 
       //Some fake hard coded ambient light
-      color = color + local_opacity * Kd * .2;
+      color = color + local_opacity * Kd * .25;
 
-      //Hard coded point light calc
-      //TODO: Real lights
+#ifndef FAKE_LIGHT
+      for (uniform int i = 0; i < renderer->numPointLights; i++) {
+        const uniform OBJPointLight *uniform l = (const uniform OBJPointLight *uniform)renderer->pointLights[i];
+        float dist;
+        const vec3f L = normalize(l->base.position - P, dist);
+        if (dist > l->base.range) continue;
+        const float attenuation = l->constantAttenuation
+                                + l->linearAttenuation * dist
+                                + l->quadraticAttenuation * dist * dist;
+        const float cosNL = abs(dot(L,dg.Ns));
+        const float cosLR = max(0.f,dot(L,R));
+        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->base.color * rcpf(attenuation);
+        const float max_contrib = reduce_max(unshaded_light_contrib);
+        if (max_contrib > .01f) {
+
+          Ray shadowRay;
+          setRay(shadowRay,P,L);
+          const float light_alpha = lightAlpha(shadowRay, renderer->model, max_contrib);
+
+          local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
+
+        }
+      }
+#else
       const vec3f L = make_vec3f(1, 1.3, -.5);
       const float cosNL = abs(dot(L,dg.Ns));
       const float cosLR = max(0.f,dot(L,R));
@@ -126,12 +155,12 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 
         Ray shadowRay;
         setRay(shadowRay,P,L);
-        const float light_alpha = lightAlpha(shadowRay, model, max_contrib);
+        const float light_alpha = lightAlpha(shadowRay, renderer->model, max_contrib);
 
         local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
-
-        color = color + local_shade_color;
       }
+#endif
+      color = color + local_shade_color;
     }
 
     path_opacity = path_opacity * (1.f - d);
@@ -149,11 +178,18 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, uniform Model *uniform model)
 
 export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
                                          void *uniform _camera, //uniform Camera *uniform camera,
-                                         void *uniform _model)
+                                         void *uniform _model,
+                                         uniform int num_point_lights,
+                                         void *uniform *uniform _point_lights)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-  uniform Model   *uniform model   = (uniform Model *uniform)_model;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+
+  uniform OBJRenderer renderer;
+  renderer.model   = (uniform Model *uniform)_model;
+  renderer.pointLights = (const uniform OBJPointLight *uniform *uniform)_point_lights;
+  renderer.numPointLights = num_point_lights;
+
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
   const uniform uint32 size_y = tile->fbSize.y;
@@ -171,7 +207,7 @@ export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *un
       Ray ray;
       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
                       (varying vec2f)make_vec2f(0.f,0.f));
-      const vec3f col = OBJRenderer_shadeRay(ray,model);
+      const vec3f col = OBJRenderer_shadeRay(ray,&renderer);
 #if 1
       tile->r[i] = col.x;
       tile->g[i] = col.y;

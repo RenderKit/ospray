@@ -6,7 +6,6 @@ namespace ospray {
     , color(1.f, 1.f, 1.f)
     , range(-1.f)
   {
-    this->ispcEquivalent = NULL;
   }
 
   void PointLight::commit() {
