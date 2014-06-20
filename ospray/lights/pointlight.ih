@@ -13,12 +13,14 @@ struct PointLight {
   uniform float range;  //!< max range at which the light will have an effect
 };
 
+//! Construct a new ispc-side PointLight object
 extern void PointLight_Constructor( uniform PointLight *uniform THIS,
                                     void *uniform cppEquivalent,
                                     const uniform vec3f &position,
                                     const uniform vec3f &color,
                                     const uniform float range);
 
+//! Destroy an ispc-side PointLight object
 extern void PointLight_Destructor(uniform PointLight *uniform THIS);
 
 #endif

@@ -10,6 +10,7 @@ namespace ospray {
   typedef std::map<std::string, creatorFct> LightRegistry;
   LightRegistry lightRegistry;
 
+  //! Create a new Light object of given type
   Light *Light::createLight(const char *type) {
     LightRegistry::const_iterator it = lightRegistry.find(type);
 

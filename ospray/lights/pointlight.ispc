@@ -1,5 +1,6 @@
 #include "pointlight.ih"
 
+//! Construct an ispc-side PointLight object
 void PointLight_Constructor( uniform PointLight *uniform THIS,
                              void *uniform cppEquivalent,
                              const uniform vec3f &position,
@@ -12,11 +13,13 @@ void PointLight_Constructor( uniform PointLight *uniform THIS,
   THIS->range = range;
 }
 
+//! Destroy an ispc-side PointLight object and its base object
 void PointLight_Destructor(uniform PointLight *uniform THIS)
 {
   Light_Destructor(&THIS->base);
 }
 
+//! Create an ispc-side PointLight object (called from c++ side)
 export void *uniform PointLight_create(void *uniform cppEquivalent)
 {
   uniform PointLight *uniform light = uniform new uniform PointLight;
@@ -24,6 +27,7 @@ export void *uniform PointLight_create(void *uniform cppEquivalent)
   return light;
 }
 
+//! Destroy an ispc-side PointLight object (called from c++ side)
 export void PointLight_destroy(void *uniform _light)
 {
   uniform PointLight *uniform light = uniform new uniform PointLight;
@@ -31,6 +35,7 @@ export void PointLight_destroy(void *uniform _light)
   delete light;
 }
 
+//! Set the parameters of an ispc-side PointLight object (called from c++ side)
 export void PointLight_set(void *uniform _light,
                            const uniform vec3f &position,
                            const uniform vec3f &color,

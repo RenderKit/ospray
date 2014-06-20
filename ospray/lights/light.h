@@ -4,9 +4,12 @@
 
 namespace ospray {
 
+  //! Base class for Light objects
   struct Light : public ManagedObject {
+    //!Create a light of the given type
     static Light *createLight(const char *type);
 
+    //!Copy understood parameters into class members
     virtual void commit(){}
   };
 
