@@ -3,6 +3,7 @@
 
 #include "ospray/lights/pointlight.ih"
 
+//! ISPC implementation of an OBJPointLight
 struct OBJPointLight {
   uniform PointLight base;    //!< inherited point light fields
 
@@ -11,6 +12,7 @@ struct OBJPointLight {
   uniform float quadraticAttenuation;
 };
 
+//! Construct a new ispc-side OBJPointLight
 extern void OBJPointLight_Constructor(uniform OBJPointLight *uniform THIS,
                                       void *uniform cppEquivalent,
                                       const uniform vec3f &position,
@@ -20,6 +22,7 @@ extern void OBJPointLight_Constructor(uniform OBJPointLight *uniform THIS,
                                       const uniform float linearAttenuation,
                                       const uniform float quadraticAttenuation);
 
+//! Destroy an ispc-side OBJPointLight
 extern void OBJPointLight_Destructor(uniform OBJPointLight *uniform THIS);
 
 #endif

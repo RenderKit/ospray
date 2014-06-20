@@ -4,6 +4,7 @@
 
 namespace ospray {
   namespace obj {
+    //! OBJ renderer specific implementation of PointLights
     struct OBJPointLight : public PointLight {
       OBJPointLight();
       //! \brief common function to help printf-debugging
@@ -15,9 +16,10 @@ namespace ospray {
       //! destructor, to clean up
       virtual ~OBJPointLight();
 
-      float constantAttenuation;
-      float linearAttenuation;
-      float quadraticAttenuation;
+      //Attenuation will be calculated as 1/( constantAttenuation + linearAttenuation * distance + quadraticAttenuation * distance * distance )
+      float constantAttenuation;    //! Constant light attenuation
+      float linearAttenuation;      //! Linear light attenuation
+      float quadraticAttenuation;   //! Quadratic light attenuation
     };
   }
 }

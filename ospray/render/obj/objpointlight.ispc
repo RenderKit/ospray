@@ -1,5 +1,6 @@
 #include "objpointlight.ih"
 
+//! Construct a new ispc-side OBJPointLight
 void OBJPointLight_Constructor(uniform OBJPointLight *uniform THIS,
                                void *uniform cppEquivalent,
                                const uniform vec3f &position,
@@ -15,11 +16,13 @@ void OBJPointLight_Constructor(uniform OBJPointLight *uniform THIS,
   THIS->quadraticAttenuation = quadraticAttenuation;
 }
 
+//! Destroy an ispc-side OBJPointLight
 void OBJPointLight_Destructor(uniform OBJPointLight *uniform THIS)
 {
   PointLight_Destructor(&THIS->base);
 }
 
+//! Create a new ispc-side OBJPointLight (called from c++-side)
 export void *uniform OBJPointLight_create(void *uniform cppEquivalent)
 {
   uniform OBJPointLight *uniform light = uniform new uniform OBJPointLight;
@@ -34,12 +37,14 @@ export void *uniform OBJPointLight_create(void *uniform cppEquivalent)
   return light;
 }
 
+//! Destroy an ispc-side OBJPointLight (called from c++-side)
 export void OBJPointLight_destroy(void *uniform _light)
 {
   uniform OBJPointLight *uniform light = (uniform OBJPointLight *uniform)_light;
   OBJPointLight_Destructor(light);
 }
 
+//! Set members of an ispc-side OBJPointLight (called from c++-side)
 export void OBJPointLight_set( void *uniform _light,
                                const uniform vec3f &position,
                                const uniform vec3f &color,
