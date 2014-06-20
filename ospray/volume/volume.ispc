@@ -88,6 +88,10 @@ export void getInternalRepresentation(uniform ExtVolumePtr _vol,
   dataPtr  = vol->data;
 }
 
+export void _Volume_setTransferFunction(uniform ExtVolumePtr _volume, uniform ExtTransferFunctionPtr _transferFunction)
+{
+    uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
+    uniform TransferFunction *uniform transferFunction = (uniform TransferFunction *uniform)_transferFunction;
 
-
-
+    volume->transferFunction = transferFunction;
+}

@@ -63,9 +63,20 @@ inline vec4f traceRayDVR(const Ray &ray,
     const vec3f p1 = volume->clampSize * (ray.org + t1 * ray.dir);
     const float f1 = volume->lerpf(volume, p1);
 
-    vec4f color_sample = make_vec4f(f1); //f1 * make_vec4f(1); //, f1);
-      
-    const float alpha = 1.0 - exp(-f1 * step_size);
+    vec4f color_sample = make_vec4f(1.);
+    float a = 1.;
+
+    if(volume->transferFunction != NULL)
+    {
+        vec3f colorLookup = volume->transferFunction->lookupColor(volume->transferFunction, f1);
+        a = volume->transferFunction->lookupAlpha(volume->transferFunction, f1);
+
+        color_sample.x = colorLookup.x;
+        color_sample.y = colorLookup.y;
+        color_sample.z = colorLookup.z;
+    }
+
+    const float alpha = 1.0 - exp(-a * step_size);
     const float alpha_1msa = alpha * (1.0-color.w);
     
     color_sample.w = 1.f;

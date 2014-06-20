@@ -1,5 +1,6 @@
 // ospray stuff
 #include "volume.h"
+#include "volume_ispc.h"
 #include "naive32.h"
 #include "ospray/common/library.h"
 // STL
@@ -109,6 +110,14 @@ namespace ospray {
     const char *fileName = getParamString("filename",NULL);
     if (fileName) {
       loadRAW(size,fileName);
+
+      TransferFunction * transferFunction = (TransferFunction *)getParamObject("transferFunction", NULL);
+
+      if(transferFunction != NULL)
+      {
+          setTransferFunction(transferFunction);
+      }
+
       return;
     } 
     
@@ -156,6 +165,17 @@ namespace ospray {
   }
 
   Volume *Volume::createVolume(const char *filename, const char *type) { return(NULL); }
+
+  void Volume::setTransferFunction(TransferFunction * _transferFunction)
+  {
+      if(_transferFunction->getIE() == NULL)
+      {
+          throw std::runtime_error("transfer function must be committed before committing volume...");
+      }
+
+      transferFunction = _transferFunction;
+      ispc::_Volume_setTransferFunction((ispc::_Volume*)getIE(), (ispc::_TransferFunction*)(transferFunction->getIE()));
+  }
 
   template struct StructuredVolume<uint8>;
   template struct StructuredVolume<float>;
