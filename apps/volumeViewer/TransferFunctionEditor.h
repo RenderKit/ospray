@@ -19,17 +19,14 @@ signals:
 
 public slots:
 
-    void transferFunctionAlphaChanged();
+    void transferFunctionAlphasChanged();
 
 protected slots:
 
     void setColorMapIndex(int index);
 
-    void setColorValueMin(double value);
-    void setColorValueMax(double value);
-
-    void setAlphaValueMin(double value);
-    void setAlphaValueMax(double value);
+    void setDataValueMin(double value);
+    void setDataValueMax(double value);
 
 protected:
 
