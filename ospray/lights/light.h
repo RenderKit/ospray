@@ -11,6 +11,9 @@ namespace ospray {
 
     //!Copy understood parameters into class members
     virtual void commit(){}
+
+    //!toString is used to aid in printf debugging
+    virtual std::string toString() const { return "ospray::Light"; }
   };
 
 #define OSP_REGISTER_LIGHT(InternalClassName, external_name)        \

@@ -4,6 +4,7 @@
 
 namespace ospray {
 
+  //! Base class for PointLight objects, inherits from Light
   struct PointLight : public Light {
     protected:
       //!Construct a new point light. Protected to keep the class 'abstract'
