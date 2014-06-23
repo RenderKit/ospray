@@ -31,11 +31,15 @@ namespace ospray {
         uint32    numPointLights;
         Data     *pointLightData;
         void    **pointLightArray;
+        uint32    numDirLights;
+        Data     *dirLightData;
+        void    **dirLightArray;
         virtual void renderTile(Tile &tile);
         virtual ~RenderTask() {}
       };
 
       std::vector<void*> pointLightArray;
+      std::vector<void*> dirLightArray;
 
       virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
       /*! \brief create a material of given type */

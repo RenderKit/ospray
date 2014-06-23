@@ -18,7 +18,9 @@ namespace ospray {
                                                   void *camera,
                                                   void *model,
                                                   int num_point_lights,
-                                                  void **_point_lights);
+                                                  void **_point_lights,
+                                                  int num_dir_lights,
+                                                  void **_dir_lights);
 
     void OBJRenderer::RenderTask::renderTile(Tile &tile)
     {
@@ -26,7 +28,9 @@ namespace ospray {
                                    camera->getIE(),
                                    world->getIE(),
                                    numPointLights,
-                                   pointLightArray);
+                                   pointLightArray,
+                                   numDirLights,
+                                   dirLightArray);
     }
     
     TileRenderer::RenderJob *OBJRenderer::createRenderJob(FrameBuffer *fb)
@@ -47,9 +51,22 @@ namespace ospray {
           pointLightArray.push_back(((Light**)frame->pointLightData->data)[i]->getIE());
         }
       }
+
       frame->pointLightArray = &pointLightArray[0];
 
       frame->numPointLights = pointLightArray.size();
+
+      frame->dirLightData = (Data*)getParamData("directionalLights", NULL);
+
+      if (frame->dirLightData && dirLightArray.empty()) {
+        for (int i = 0; i < frame->dirLightData->size(); i++) {
+          dirLightArray.push_back(((Light**)frame->dirLightData->data)[i]->getIE());
+        }
+      }
+
+      frame->dirLightArray = &dirLightArray[0];
+
+      frame->numDirLights = dirLightArray.size();
 
       return frame;
     }

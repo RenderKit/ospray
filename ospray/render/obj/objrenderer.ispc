@@ -8,18 +8,20 @@
 #include "ospray/common/model.ih"
 #include "ospray/texture/texture2d.ih"
 #include "ospray/lights/light.ih"
+#include "ospray/lights/directionallight.ih"
 // obj renderer
 #include "objmaterial.ih"
 #include "objpointlight.ih"
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
-#define FAKE_LIGHT
 
 struct OBJRenderer {
   uniform Model *model;
   const uniform OBJPointLight *uniform *uniform pointLights;
   uint32        numPointLights;
+  const uniform DirectionalLight *uniform *uniform dirLights;
+  uint32        numDirLights;
 };
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight) {
@@ -122,8 +124,8 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
       //Some fake hard coded ambient light
       color = color + local_opacity * Kd * .25;
 
-#ifndef FAKE_LIGHT
-      for (uniform int i = 0; i < renderer->numPointLights; i++) {
+      //calculate shading for point lights
+      for (uniform int i = 0; i < renderer->numPointLights && renderer->pointLights; i++) {
         const uniform OBJPointLight *uniform l = (const uniform OBJPointLight *uniform)renderer->pointLights[i];
         float dist;
         const vec3f L = normalize(l->base.position - P, dist);
@@ -136,30 +138,34 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
         const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->base.color * rcpf(attenuation);
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib > .01f) {
-
           Ray shadowRay;
           setRay(shadowRay,P,L);
           const float light_alpha = lightAlpha(shadowRay, renderer->model, max_contrib);
 
           local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
-
         }
       }
-#else
-      const vec3f L = make_vec3f(1, 1.3, -.5);
-      const float cosNL = abs(dot(L,dg.Ns));
-      const float cosLR = max(0.f,dot(L,R));
-      vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns));
-      const float max_contrib = reduce_max(unshaded_light_contrib);
-      if (max_contrib > .01f) {
 
-        Ray shadowRay;
-        setRay(shadowRay,P,L);
-        const float light_alpha = lightAlpha(shadowRay, renderer->model, max_contrib);
+      //calculate shading for directional lights
+      for (uniform int i = 0; i < renderer->numDirLights && renderer->dirLights; i++) {
+        const uniform DirectionalLight *uniform l = (const uniform DirectionalLight *uniform)renderer->dirLights[i];
+        const vec3f L = normalize(neg(l->direction));
 
-        local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
+        const float cosNL = abs(dot(L, dg.Ns));
+        const float cosLR = max(0.f, dot(L,R));
+
+        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->color;
+
+        const float max_contrib = reduce_max(unshaded_light_contrib);
+        if (max_contrib > .01f) {
+          Ray shadowRay;
+          setRay(shadowRay,P,L);
+          const float light_alpha = lightAlpha(shadowRay, renderer->model, max_contrib);
+
+          local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
+        }
       }
-#endif
+
       color = color + local_shade_color;
     }
 
@@ -180,7 +186,9 @@ export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *un
                                          void *uniform _camera, //uniform Camera *uniform camera,
                                          void *uniform _model,
                                          uniform int num_point_lights,
-                                         void *uniform *uniform _point_lights)
+                                         void *uniform *uniform _point_lights,
+                                         uniform int num_dir_lights,
+                                         void *uniform *uniform _dir_lights)
 {
   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
@@ -189,6 +197,8 @@ export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *un
   renderer.model   = (uniform Model *uniform)_model;
   renderer.pointLights = (const uniform OBJPointLight *uniform *uniform)_point_lights;
   renderer.numPointLights = num_point_lights;
+  renderer.dirLights = (const uniform DirectionalLight *uniform *uniform)_dir_lights;
+  renderer.numDirLights = num_dir_lights;
 
   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
   const uniform uint32 size_x = tile->fbSize.x;
