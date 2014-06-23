@@ -42,6 +42,7 @@ export void OBJPointLight_destroy(void *uniform _light)
 {
   uniform OBJPointLight *uniform light = (uniform OBJPointLight *uniform)_light;
   OBJPointLight_Destructor(light);
+  delete light;
 }
 
 //! Set members of an ispc-side OBJPointLight (called from c++-side)
