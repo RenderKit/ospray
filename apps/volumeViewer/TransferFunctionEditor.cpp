@@ -36,41 +36,29 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 
     connect(colorMapComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
 
-    // color value range
-    QDoubleSpinBox * colorValueMinSpinBox = new QDoubleSpinBox();
-    QDoubleSpinBox * colorValueMaxSpinBox = new QDoubleSpinBox();
-    colorValueMinSpinBox->setRange(-999999., 999999.);
-    colorValueMaxSpinBox->setRange(-999999., 999999.);
-    colorValueMinSpinBox->setValue(0.);
-    colorValueMaxSpinBox->setValue(1.);
-    formLayout->addRow("Color value min", colorValueMinSpinBox);
-    formLayout->addRow("Color value max", colorValueMaxSpinBox);
+    // data value range, used as the domain for both color and opacity components of the transfer function
+    QDoubleSpinBox * dataValueMinSpinBox = new QDoubleSpinBox();
+    QDoubleSpinBox * dataValueMaxSpinBox = new QDoubleSpinBox();
+    dataValueMinSpinBox->setRange(-999999., 999999.);
+    dataValueMaxSpinBox->setRange(-999999., 999999.);
+    dataValueMinSpinBox->setValue(0.);
+    dataValueMaxSpinBox->setValue(1.);
+    formLayout->addRow("Data value min", dataValueMinSpinBox);
+    formLayout->addRow("Data value max", dataValueMaxSpinBox);
 
-    connect(colorValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setColorValueMin(double)));
-    connect(colorValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setColorValueMax(double)));
+    connect(dataValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
+    connect(dataValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
 
-    // alpha value range
-    QDoubleSpinBox * alphaValueMinSpinBox = new QDoubleSpinBox();
-    QDoubleSpinBox * alphaValueMaxSpinBox = new QDoubleSpinBox();
-    alphaValueMinSpinBox->setRange(-999999., 999999.);
-    alphaValueMaxSpinBox->setRange(-999999., 999999.);
-    alphaValueMinSpinBox->setValue(0.);
-    alphaValueMaxSpinBox->setValue(1.);
-    formLayout->addRow("Opacity value min", alphaValueMinSpinBox);
-    formLayout->addRow("Opacity value max", alphaValueMaxSpinBox);
-
-    connect(alphaValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setAlphaValueMin(double)));
-    connect(alphaValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setAlphaValueMax(double)));
-
-    // alpha transfer function
+    // opacity transfer function widget
     layout->addWidget(&transferFunctionAlphaWidget_);
 
-    connect(&transferFunctionAlphaWidget_, SIGNAL(transferFunctionChanged()), this, SLOT(transferFunctionAlphaChanged()));
+    connect(&transferFunctionAlphaWidget_, SIGNAL(transferFunctionChanged()), this, SLOT(transferFunctionAlphasChanged()));
 }
 
-void TransferFunctionEditor::transferFunctionAlphaChanged()
+void TransferFunctionEditor::transferFunctionAlphasChanged()
 {
-    std::vector<float> transferFunctionAlphas = transferFunctionAlphaWidget_.getInterpolatedValuesOverInterval(64); ////// 64??
+    // default to 256 discretizations of the opacities over the domain
+    std::vector<float> transferFunctionAlphas = transferFunctionAlphaWidget_.getInterpolatedValuesOverInterval(256);
 
     OSPData transferFunctionAlphasData = ospNewData(transferFunctionAlphas.size(), OSP_FLOAT, transferFunctionAlphas.data());
     ospSetData(transferFunction_, "alphas", transferFunctionAlphasData);
@@ -96,26 +84,10 @@ void TransferFunctionEditor::setColorMapIndex(int index)
     emit transferFunctionChanged();
 }
 
-void TransferFunctionEditor::setColorValueMin(double value)
+void TransferFunctionEditor::setDataValueMin(double value)
 {
+    // set as the minimum value in the domain for both color and opacity components of the transfer function
     ospSetf(transferFunction_, "colorValueMin", float(value));
-
-    // commit and emit signal
-    ospCommit(transferFunction_);
-    emit transferFunctionChanged();
-}
-
-void TransferFunctionEditor::setColorValueMax(double value)
-{
-    ospSetf(transferFunction_, "colorValueMax", float(value));
-
-    // commit and emit signal
-    ospCommit(transferFunction_);
-    emit transferFunctionChanged();
-}
-
-void TransferFunctionEditor::setAlphaValueMin(double value)
-{
     ospSetf(transferFunction_, "alphaValueMin", float(value));
 
     // commit and emit signal
@@ -123,8 +95,10 @@ void TransferFunctionEditor::setAlphaValueMin(double value)
     emit transferFunctionChanged();
 }
 
-void TransferFunctionEditor::setAlphaValueMax(double value)
+void TransferFunctionEditor::setDataValueMax(double value)
 {
+    // set as the maximum value in the domain for both color and opacity components of the transfer function
+    ospSetf(transferFunction_, "colorValueMax", float(value));
     ospSetf(transferFunction_, "alphaValueMax", float(value));
 
     // commit and emit signal
