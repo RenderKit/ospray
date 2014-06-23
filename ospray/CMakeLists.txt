@@ -93,6 +93,8 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   lights/pointlight.ispc
   lights/directionallight.cpp
   lights/directionallight.ispc
+  lights/spotlight.cpp
+  lights/spotlight.ispc
 
   texture/nearestneighbor.ispc
   texture/image3c.ispc
