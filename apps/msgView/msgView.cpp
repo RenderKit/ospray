@@ -487,7 +487,7 @@ namespace ospray {
     OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
     ospSetString(ospLight, "name", "sun" );
     ospSet3f(ospLight, "color", 1, 1, 1);
-    ospSet3f(ospLight, "direction", 0, -1, 0);
+    ospSet3f(ospLight, "direction", 0, -1, .4);
     ospCommit(ospLight);
     pointLights.push_back(ospLight);
     OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);
