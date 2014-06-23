@@ -23,6 +23,9 @@ namespace ospray
         //! Constructor.
         TransferFunctionPiecewiseLinear();
 
+        //! Destructor.
+        virtual ~TransferFunctionPiecewiseLinear();
+
         //! A string description of this class.
         virtual std::string toString() const { return "ospray::TransferFunctionPiecewiseLinear"; }
 

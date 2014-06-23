@@ -87,6 +87,23 @@ export uniform ExtTransferFunctionPtr _TransferFunctionPiecewiseLinear_create()
     return (ExtTransferFunctionPtr)TransferFunctionPiecewiseLinear_create();
 }
 
+export void _TransferFunctionPiecewiseLinear_destroy(uniform ExtTransferFunctionPtr _transferFunction)
+{
+    uniform TransferFunctionPiecewiseLinear * uniform transferFunction = (uniform TransferFunctionPiecewiseLinear * uniform)_transferFunction;
+
+    if(transferFunction->colors != NULL)
+    {
+        delete[] transferFunction->colors;
+    }
+
+    if(transferFunction->alphas != NULL)
+    {
+        delete[] transferFunction->alphas;
+    }
+
+    delete transferFunction;
+}
+
 export void _TransferFunctionPiecewiseLinear_setColors(uniform ExtTransferFunctionPtr _transferFunction, const uniform size_t &numColors, uniform vec3f * uniform colors)
 {
     uniform TransferFunctionPiecewiseLinear * uniform transferFunction = (uniform TransferFunctionPiecewiseLinear * uniform)_transferFunction;

@@ -31,6 +31,15 @@ namespace ospray
         alphaValueMax_ = 1.;
     }
 
+    TransferFunctionPiecewiseLinear::~TransferFunctionPiecewiseLinear()
+    {
+        // destroy ISPC equivalent if it exists
+        if(getIE() != NULL)
+        {
+            ispc::_TransferFunctionPiecewiseLinear_destroy((ispc::_TransferFunction*)getIE());
+        }
+    }
+
     void TransferFunctionPiecewiseLinear::commit()
     {
         if(ispcEquivalent == NULL)
