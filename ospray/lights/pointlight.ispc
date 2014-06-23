@@ -30,7 +30,7 @@ export void *uniform PointLight_create(void *uniform cppEquivalent)
 //! Destroy an ispc-side PointLight object (called from c++ side)
 export void PointLight_destroy(void *uniform _light)
 {
-  uniform PointLight *uniform light = uniform new uniform PointLight;
+  uniform PointLight *uniform light = (uniform PointLight *uniform)_light;
   PointLight_Destructor(light);
   delete light;
 }
