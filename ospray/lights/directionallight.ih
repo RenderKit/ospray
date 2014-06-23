@@ -1,0 +1,23 @@
+#ifndef OSPRAY_DIRECTIONAL_LIGHT_IH
+#define OSPRAY_DIRECTIONAL_LIGHT_IH
+
+#include "light.ih"
+#include "ospray/math/vec.ih"
+
+struct DirectionalLight {
+  uniform Light base;       //!< inherited light fields
+
+  uniform vec3f color;      //!< light RGB color
+  uniform vec3f direction;  //!< direction of emitted light rays
+};
+
+//!< Construct a new ispc-side DirectionalLight object
+extern void DirectionalLight_Constructor( uniform DirectionalLight *uniform THIS,
+                                          void *uniform cppEquivalent,
+                                          const uniform vec3f &color,
+                                          const uniform vec3f &direction);
+
+//!< Destroy an ispc-side DirectionLight object
+extern void DirectionalLight_Destructor(uniform DirectionalLight *uniform THIS);
+
+#endif
