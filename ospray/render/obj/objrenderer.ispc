@@ -92,7 +92,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
     uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
     if (!objMaterial) {
-      color = color + path_opacity * make_vec3f(1.f);
+      color = color + path_opacity * make_vec3f(dg.color);
       return color;
     }
 
