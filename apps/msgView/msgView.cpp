@@ -163,6 +163,39 @@ namespace ospray {
     return ospMat;
   }
 
+  OSPTexture2D createTexture2D(miniSG::Texture2D *msgTex)
+  {
+    if(msgTex == NULL) {
+      static int numWarnings = 0;
+      if (++numWarnings < 10)
+        cout << "WARNING: material does not have Textures (only warning for the first 10 times)!" << endl;
+      return NULL;
+    }
+
+    static std::map<miniSG::Texture2D*, OSPTexture2D> alreadyCreatedTextures;
+    if (alreadyCreatedTextures.find(msgTex) != alreadyCreatedTextures.end())
+      return alreadyCreatedTextures[msgTex];
+
+    //TODO: We need to come up with a better way to handle different possible pixel layouts
+    OSPDataType type = OSP_VOID_PTR;
+    if (msgTex->depth == 1) {
+      if( msgTex->channels == 3 ) type = OSP_vec3uc;
+      if( msgTex->channels == 4 ) type = OSP_vec4uc;
+    } else if (msgTex->depth == 4) {
+      if( msgTex->channels == 3 ) type = OSP_vec3f;
+      if( msgTex->channels == 4 ) type = OSP_vec3fa;
+    }
+
+    OSPTexture2D ospTex = alreadyCreatedTextures[msgTex] = ospNewTexture2D( msgTex->width,
+                                                                            msgTex->height,
+                                                                            type,
+                                                                            msgTex->data,
+                                                                            0);
+
+    ospCommit(ospTex);
+    return ospTex;
+  }
+
   OSPMaterial createMaterial(OSPRenderer renderer,
                              miniSG::Material *mat)
   {
@@ -210,6 +243,18 @@ namespace ospray {
         throw std::runtime_error("unkonwn material parameter type");
       };
     }
+
+    std::vector<OSPTexture2D> textures;
+    for (size_t i = 0; i < mat->textures.size(); i++) {
+      textures.push_back(createTexture2D(mat->textures[i].ptr));
+    }
+
+    if (!textures.empty()) {
+      OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], 0);
+      ospSetData(ospMat, "textures.list", textureArray);
+    }
+
+    ospSet1i(ospMat, "textures.count", textures.size());
     
     ospCommit(ospMat);
     return ospMat;
@@ -391,6 +436,14 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
+      // add texcoord array to mesh
+      if (!msgMesh->texcoord.empty()) {
+        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_vec2f,
+                                      &msgMesh->texcoord[0], OSP_DATA_SHARED_BUFFER);
+        assert(msgMesh->texcoord.size() > 0);
+        ospSetData(ospMesh,"vertex.texcoord",texcoord);
+      }
+
       // add triangle material id array to mesh
       if (msgMesh->materialList.empty()) {
         // we have a single material for this mesh...
@@ -404,35 +457,6 @@ namespace ospray {
         OSPData ospMaterialList = ospNewData(materialList.size(), OSP_OBJECT, &materialList[0], 0);
         ospSetData(ospMesh,"materialList",ospMaterialList);
       }
-
-
-      // // //FIXME: This is BAD code, we are making a copy of the materials for every instance. We can do better!
-      // // //Add all materials to the triangle mesh
-      // // //The object material
-      // // createMaterial(ospMesh, ospRenderer, msgMesh->material.ptr);
-      // // //The per primitive materials
-      // // std::vector<OSPMaterial> materials;
-      // // for(size_t i =0; i < msgModel->material.size(); i++) {
-      // //   miniSG::Material *mat = msgModel->material[i].ptr;
-      // //   OSPMaterial ospMat = ospNewMaterial(ospRenderer, mat->getParam("type", "OBJMaterial"));
-      // //   if (!ospMat) {
-      // //     cout << "given renderer does not know material type '" << mat->getParam("type", "OBJMaterial") << "'" << endl;
-      // //     return;
-      // //   }
-
-
-      //     // ospSet3fv(ospMat, "Kd", &mat->getParam("kd", vec3f(1.f)).x);
-      //     // ospSet3fv(ospMat, "Ks", &mat->getParam("Ks", vec3f(0.f)).x);
-      //     // ospSet1f(ospMat, "Ns", mat->getParam("Ns", 0.f));
-      //     // ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
-      // //        }
-
-      //   ospCommit(ospMat);
-      //   materials.push_back(ospMat);
-      // }
-      // OSPData ospMaterials = ospNewData(materials.size(), OSP_OBJECT, &materials[0], 0);
-      // ospSetData(ospMesh, "materials", ospMaterials);
-      // //END material buffer
 
       ospCommit(ospMesh);
 
@@ -455,6 +479,20 @@ namespace ospray {
     }
     ospCommit(ospModel);
     cout << "msgView: done creating ospray model." << endl;
+
+    //TODO: Need to figure out where we're going to read lighting data from
+    //begin light test
+    std::vector<OSPLight> pointLights;
+    cout << "msgView: Adding a hard coded directional light as the sun." << endl;
+    OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
+    ospSetString(ospLight, "name", "sun" );
+    ospSet3f(ospLight, "color", 1, 1, 1);
+    ospSet3f(ospLight, "direction", 0, -1, .4);
+    ospCommit(ospLight);
+    pointLights.push_back(ospLight);
+    OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);
+    ospSetData(ospRenderer, "directionalLights", pointLightArray);
+    //end light test
 
     // -------------------------------------------------------
     // create viewer window

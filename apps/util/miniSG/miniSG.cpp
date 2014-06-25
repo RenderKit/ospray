@@ -3,7 +3,7 @@
 namespace ospray {
   namespace miniSG {
 
-    Texture::Texture()
+    Texture2D::Texture2D()
       : channels(0)
       , depth(0)
       , width(0)

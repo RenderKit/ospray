@@ -36,8 +36,8 @@ namespace ospray {
       = dz
       - (.5f * imgPlane_size_x) * dx
       - (.5f * imgPlane_size_y) * dy;
-    dir_du = dx * aspect;
-    dir_dv = dy;
+    dir_du = dx * imgPlane_size_x;
+    dir_dv = dy * imgPlane_size_y;
 
     (vec3f&)ispcData->org    = pos;
     (vec3f&)ispcData->dir_00 = dir_00;

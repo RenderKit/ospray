@@ -35,6 +35,27 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       + ray.v * (color[index.z]);
   }
 
+  if (flags & DG_TEXCOORD && THIS->texcoord) {
+    //calculate texture coordinate using barycentric coordinates
+    const uniform vec3fa *uniform vertex = THIS->vertex;
+    const uniform vec2f  *uniform texcoord = THIS->texcoord;
+    assert(vertex); assert(texcoord);
+    const vec3i idx = THIS->index[ray.primID];
+    const vec3f p1 = make_vec3f(vertex[idx.x]) - dg.P;
+    const vec3f p2 = make_vec3f(vertex[idx.y]) - dg.P;
+    const vec3f p3 = make_vec3f(vertex[idx.z]) - dg.P;
+
+    const float a = length(cross( make_vec3f(vertex[idx.x]) - make_vec3f(vertex[idx.y]),
+                                  make_vec3f(vertex[idx.x]) - make_vec3f(vertex[idx.z])));
+    const float a1 = length(cross(p2,p3)) / a;
+    const float a2 = length(cross(p3,p1)) / a;
+    const float a3 = length(cross(p1,p2)) / a;
+
+    dg.st = texcoord[idx.x] * a1 + texcoord[idx.y] * a2 + texcoord[idx.z] * a3;
+  } else {
+    dg.st = make_vec2f(0.0f, 0.0f);
+  }
+
   if (flags & DG_MATERIALID) {
     // print("trimesh:postisec\n");
     // print("primid %\n",ray.primID);
@@ -78,6 +99,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform vec3fa *uniform vertex,
                                      uniform vec3fa *uniform normal,
                                      uniform vec4f  *uniform color,
+                                     uniform vec2f  *uniform texcoord,
                                      uniform int32   geom_materialID,
                                      uniform Material *uniform *uniform materialList,
                                      uniform uint32 *uniform prim_materialID
@@ -92,6 +114,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->vertex       = vertex;
   mesh->normal       = normal;
   mesh->color        = color;
+  mesh->texcoord     = texcoord;
   mesh->prim_materialID = prim_materialID;
   mesh->materialList = materialList;
   mesh->geom_materialID = geom_materialID;
@@ -116,7 +139,7 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
   TriangleMesh_Constructor(mesh, cppEquivalent, 
-                           NULL, 0, 0, NULL, NULL, NULL, NULL, -1, NULL, NULL);
+                           NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL);
   return mesh;
 }
 
@@ -128,6 +151,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform vec3fa *uniform vertex,
                                       uniform vec3fa *uniform normal,
                                       uniform vec4f  *uniform color,
+                                      uniform vec2f  *uniform texcoord,
                                       uniform int32   geom_materialID,
                                       void *uniform _materialList,
                                       uniform uint32 *uniform prim_materialID
@@ -145,6 +169,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                           vertex,
                           normal,
                           color, 
+                          texcoord,
                           geom_materialID,
                           materialList,
                           prim_materialID);

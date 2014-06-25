@@ -418,6 +418,7 @@ uniform VolumePtr Bricked32Volume1f_create(uniform vec3i &size, const float *uni
     = ((int64)volume->bricks.x) * volume->bricks.y * volume->bricks.z;
   const uniform int brickSize = brickRes*brickRes*brickRes;
   const uniform int numElements = numBricks * brickSize;
+  volume->inherited.transferFunction = NULL;
   volume->inherited.size     = size;
   volume->inherited.dataSize = numElements * sizeof(uniform float);
   if (internal)

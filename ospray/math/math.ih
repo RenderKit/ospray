@@ -95,5 +95,23 @@ inline varying float deg2rad (const varying float x)  { return x * 1.74532925199
 inline uniform float rad2deg (const uniform float x)  { return x * 5.72957795130823208768e1f; }
 inline varying float rad2deg (const varying float x)  { return x * 5.72957795130823208768e1f; }
 
+#define __define_lerp(TYPE)                                                     \
+inline TYPE lerp(float factor, TYPE a, TYPE b)                                  \
+{                                                                               \
+  return (1-factor)* a + factor * b;                                            \
+}                                                                               \
+inline uniform TYPE lerp(uniform float factor, uniform TYPE a, uniform TYPE b)  \
+{                                                                               \
+  return (1-factor)* a + factor * b;                                            \
+}
+
+__define_lerp(int8)
+__define_lerp(int32)
+__define_lerp(float)
+__define_lerp(uint8)
+__define_lerp(uint32)
+
+#undef __define_lerp
+
 #endif
 

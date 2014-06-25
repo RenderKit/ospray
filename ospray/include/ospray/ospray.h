@@ -30,6 +30,7 @@
 
 /*! namespace for classes in the public core API */
 namespace osp {
+  typedef embree::Vec2f  vec2f;
   typedef embree::Vec2i  vec2i;
   typedef embree::Vec3f  vec3f;
   typedef embree::Vec3i  vec3i;
@@ -39,15 +40,18 @@ namespace osp {
   typedef embree::AffineSpace3f affine3f;
 
   struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
-  struct FrameBuffer  : public ManagedObject {};
-  struct Renderer     : public ManagedObject {};
-  struct Camera       : public ManagedObject {};
-  struct Model        : public ManagedObject {};
-  struct Data         : public ManagedObject {};
-  struct Geometry     : public ManagedObject {};
-  struct Material     : public ManagedObject {};
-  struct Volume       : public ManagedObject {};
-  struct TriangleMesh : public Geometry {};
+  struct FrameBuffer      : public ManagedObject {};
+  struct Renderer         : public ManagedObject {};
+  struct Camera           : public ManagedObject {};
+  struct Model            : public ManagedObject {};
+  struct Data             : public ManagedObject {};
+  struct Geometry         : public ManagedObject {};
+  struct Material         : public ManagedObject {};
+  struct Volume           : public ManagedObject {};
+  struct TransferFunction : public ManagedObject {};
+  struct Texture2D        : public ManagedObject {};
+  struct Light            : public ManagedObject {};
+  struct TriangleMesh     : public Geometry {};
 }
 
 
@@ -78,9 +82,11 @@ typedef enum {
   OSP_vec2f,
   OSP_vec3i,
   OSP_vec3ui,
+  OSP_vec3uc,
   OSP_vec3f,
   OSP_vec3fa, 
-  OSP_vec4i
+  OSP_vec4i,
+  OSP_vec4uc,
 } OSPDataType;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
@@ -101,16 +107,19 @@ typedef enum {
   OSP_GENERAL_ERROR /*! unspecified error */
 } OSPResult;
 
-typedef osp::FrameBuffer   *OSPFrameBuffer;
-typedef osp::Renderer      *OSPRenderer;
-typedef osp::Camera        *OSPCamera;
-typedef osp::Model         *OSPModel;
-typedef osp::Data          *OSPData;
-typedef osp::Geometry      *OSPGeometry;
-typedef osp::Material      *OSPMaterial;
-typedef osp::Volume        *OSPVolume;
-typedef osp::TriangleMesh  *OSPTriangleMesh;
-typedef osp::ManagedObject *OSPObject;
+typedef osp::FrameBuffer       *OSPFrameBuffer;
+typedef osp::Renderer          *OSPRenderer;
+typedef osp::Camera            *OSPCamera;
+typedef osp::Model             *OSPModel;
+typedef osp::Data              *OSPData;
+typedef osp::Geometry          *OSPGeometry;
+typedef osp::Material          *OSPMaterial;
+typedef osp::Volume            *OSPVolume;
+typedef osp::TransferFunction  *OSPTransferFunction;
+typedef osp::Texture2D         *OSPTexture2D;
+typedef osp::TriangleMesh      *OSPTriangleMesh;
+typedef osp::ManagedObject     *OSPObject;
+typedef osp::Light             *OSPLight;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -140,6 +149,9 @@ extern "C" {
 
   //! let given renderer create a new material of given type
   OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type);
+
+  //! let given renderer create a new light of given type
+  OSPLight ospNewLight(OSPRenderer renderer, const char *type);
   
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot
@@ -164,6 +176,10 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
 
+  //! create a new transfer function of given type
+  /*! return 'NULL' if that type is not known */
+  OSPTransferFunction ospNewTransferFunction(const char * type);
+
   //! create a new camera of given type.  
   /*! The default camera type supported in all ospray versions is
       "perspective" (\ref perspective_camera).  For a list of
@@ -171,6 +187,10 @@ extern "C" {
       ospray_supported_cameras */
   OSPRenderer ospNewRenderer(const char *type);
   
+  //! create a new Texture2D with the given parameters
+  /*! return 'NULL' if the texture could not be created with the given parameters */
+  OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
+
 
 
 
@@ -205,8 +225,7 @@ extern "C" {
 
   /*! \brief create a new framebuffer (actual format is internal to ospray) */
   OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                   const OSPFrameBufferMode mode=OSP_RGBA_I8,
-                                   const size_t swapChainDepth=1);
+                                   const OSPFrameBufferMode mode=OSP_RGBA_I8);
 
   /*! \brief free a framebuffer 
 

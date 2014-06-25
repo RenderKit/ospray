@@ -8,6 +8,7 @@
 namespace ospray {
 
   struct Material;
+  struct Light;
 
   /*! \brief abstract base class for all ospray renderers. 
 
@@ -25,6 +26,9 @@ namespace ospray {
 
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type) { return NULL; }
+
+    /*! \brief create a light of given type */
+    virtual Light *createLight(const char *type) { return NULL; }
 
     /*! \brief creates an abstract renderer class of given type 
 

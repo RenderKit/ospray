@@ -335,6 +335,7 @@ export void *uniform PagedBrickedVolume1f_create(uniform vec3ui &size,
   volume->numPages.z = divRoundUp(size.z,pageRes);
   const uniform int64 numPages
     = ((int64)volume->numPages.x) * volume->numPages.y * volume->numPages.z;
+  volume->inherited.transferFunction = NULL;
   volume->inherited.size     = make_vec3i(size);
   volume->inherited.dataSize = numPages * sizeof(PBPage1f);
   if (internal)

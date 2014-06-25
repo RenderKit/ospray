@@ -70,6 +70,10 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	volume/bricked64.ispc
 	volume/bricked64.cpp
 
+	transferfunction/TransferFunction.cpp
+	transferfunction/TransferFunctionPiecewiseLinear.ispc
+	transferfunction/TransferFunctionPiecewiseLinear.cpp
+
 	geometry/geometry.ispc
 	geometry/geometry.cpp
 	geometry/trianglemesh.ispc
@@ -82,6 +86,22 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	geometry/spheres.ispc
 	geometry/cylinders.cpp
 	geometry/cylinders.ispc
+
+  lights/light.cpp
+  lights/light.ispc
+  lights/pointlight.cpp
+  lights/pointlight.ispc
+  lights/directionallight.cpp
+  lights/directionallight.ispc
+  lights/spotlight.cpp
+  lights/spotlight.ispc
+
+  texture/nearestneighbor.ispc
+  texture/image3c.ispc
+  texture/image3ca.ispc
+  texture/image3f.ispc
+  texture/image3fa.ispc
+  texture/texture2d.cpp
 
 	render/tilerenderer.cpp
 	render/loadbalancer.cpp
@@ -97,6 +117,8 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	render/obj/objmaterial.ispc
 	render/obj/objrenderer.cpp
 	render/obj/objmaterial.cpp
+  render/obj/objpointlight.ispc
+  render/obj/objpointlight.cpp
 
 	api/api.cpp
 	api/device.cpp

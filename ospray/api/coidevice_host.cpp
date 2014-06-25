@@ -43,13 +43,16 @@ namespace ospray {
       OSPCOI_NEW_CAMERA,
       OSPCOI_NEW_VOLUME,
       OSPCOI_NEW_VOLUME_FROM_FILE,
+      OSPCOI_NEW_TRANSFER_FUNCTION,
       OSPCOI_NEW_RENDERER,
       OSPCOI_NEW_GEOMETRY,
       OSPCOI_ADD_GEOMETRY,
       OSPCOI_NEW_FRAMEBUFFER,
       OSPCOI_RENDER_FRAME,
       OSPCOI_RENDER_FRAME_SYNC,
-      OSPCOI_NUM_FUNCTIONS
+      OSPCOI_NEW_TEXTURE2D,
+      OSPCOI_NEW_LIGHT,
+      OSPCOI_NUM_FUNCTIONS,
     } RemoteFctID;
 
     const char *coiFctName[] = {
@@ -63,12 +66,15 @@ namespace ospray {
       "ospray_coi_new_camera",
       "ospray_coi_new_volume",
       "ospray_coi_new_volume_from_file",
+      "ospray_coi_new_transfer_function",
       "ospray_coi_new_renderer",
       "ospray_coi_new_geometry",
       "ospray_coi_add_geometry",
       "ospray_coi_new_framebuffer",
       "ospray_coi_render_frame",
       "ospray_coi_render_frame_sync",
+      "ospray_coi_new_texture2d",
+      "ospray_coi_new_light",
       NULL
     };
     
@@ -104,8 +110,7 @@ namespace ospray {
 
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
-                                               const OSPFrameBufferMode mode,
-                                               const size_t swapChainDepth);
+                                               const OSPFrameBufferMode mode);
 
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb);
@@ -165,6 +170,15 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volume types) with data from a file */
       virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
 
+      /*! create a new transfer function object (out of list of registered transfer function types) */
+      virtual OSPTransferFunction newTransferFunction(const char *type);
+
+      /*! have given renderer create a new Light */
+      virtual OSPLight newLight(OSPRenderer _renderer, const char *type);
+
+      /*! create a new Texture2D object */
+      virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags);
+      
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer);
@@ -499,6 +513,20 @@ namespace ospray {
       return (OSPMaterial)(int64)handle;
     }
 
+    /*! create a new texture2D */
+    OSPTexture2D COIDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags)
+    {
+      assert(false && "COIDevice::newTexture2D() not yet implemented for COIDevice");
+      return NULL;
+    }
+
+    /*! have given renderer create a new light */
+    OSPLight COIDevice::newLight(OSPRenderer _renderer, const char *type)
+    {
+      assert(false && "COIDevice::newLight() not yet implemented for COIDevice");
+      return NULL;
+    }
+
     /*! create a new geometry object (out of list of registered geometrys) */
     OSPGeometry COIDevice::newGeometry(const char *type)
     {
@@ -548,6 +576,18 @@ namespace ospray {
       return (OSPVolume)(int64) handle;
     }
 
+    /*! create a new transfer function object (out of list of registered transfer function types) */
+    OSPTransferFunction COIDevice::newTransferFunction(const char *type)
+    {
+      Assert(type);
+      Handle handle = Handle::alloc();
+      DataStream args;
+      args.write(handle);
+      args.write(type);
+      callFunction(OSPCOI_NEW_TRANSFER_FUNCTION, args);
+      return (OSPTransferFunction)(int64) handle;
+    }
+
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer COIDevice::newRenderer(const char *type)
     {
@@ -570,8 +610,7 @@ namespace ospray {
 
       /*! create a new frame buffer */
     OSPFrameBuffer COIDevice::frameBufferCreate(const vec2i &size, 
-                                                const OSPFrameBufferMode mode,
-                                                const size_t swapChainDepth)
+                                                const OSPFrameBufferMode mode)
     {
       COIRESULT result;
       Handle handle = Handle::alloc();

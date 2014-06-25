@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ospray/common/managed.h"
+#include "../transferfunction/TransferFunction.h"
 
 namespace ispc {
   struct _Volume;
@@ -20,7 +21,7 @@ namespace ospray {
   */
   struct Volume : public ManagedObject
   {
-    Volume() {};
+    Volume() : transferFunction(NULL) {};
 
     virtual std::string toString() const
     { return "ospray::Volume(abstract base class)"; }
@@ -45,6 +46,10 @@ namespace ospray {
     static Volume *createVolume(const char *filename, const char *type);
 
     // ispc::_Volume *ispcEquivalent;
+
+    virtual void setTransferFunction(TransferFunction * _transferFunction);
+
+    TransferFunction * transferFunction;
   };
 
   template<typename T>

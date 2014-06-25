@@ -1,14 +1,17 @@
 #include "localdevice.h"
-#include "../fb/swapchain.h"
+// #include "../fb/swapchain.h"
 #include "../common/model.h"
 #include "../common/data.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
 #include "../volume/volume.h"
+#include "../transferfunction/TransferFunction.h"
 #include "../render/loadbalancer.h"
 #include "../common/material.h"
 #include "../common/library.h"
+#include "../texture/texture2d.h"
+#include "../lights/light.h"
 // embree stuff
 
 namespace ospray {
@@ -39,39 +42,50 @@ namespace ospray {
 
     OSPFrameBuffer 
     LocalDevice::frameBufferCreate(const vec2i &size, 
-                                   const OSPFrameBufferMode mode,
-                                   const size_t swapChainDepth)
+                                   const OSPFrameBufferMode mode)
     {
-      FrameBufferFactory fbFactory = NULL;
-      switch(mode) {
-      case OSP_RGBA_I8:
-        fbFactory = createLocalFB_RGBA_I8;
-        break;
-      default:
-        AssertError("frame buffer mode not yet supported");
-      }
-      SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
-      sc->refInc();
-      Assert(sc != NULL);
-      return (OSPFrameBuffer)sc;
+      // FrameBufferFactory fbFactory = NULL;
+      // switch(mode) {
+      // case OSP_RGBA_I8:
+      //   fbFactory = createLocalFB_RGBA_I8;
+      //   break;
+      // default:
+      //   AssertError("frame buffer mode not yet supported");
+      // }
+      
+      FrameBuffer *fb = new LocalFrameBuffer<uint32>(size);
+      fb->refInc();
+      return (OSPFrameBuffer)fb;
+      // SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+      // sc->refInc();
+      // Assert(sc != NULL);
+      // return (OSPFrameBuffer)sc;
     }
     
 
     /*! map frame buffer */
-    const void *LocalDevice::frameBufferMap(OSPFrameBuffer fb)
+    const void *LocalDevice::frameBufferMap(OSPFrameBuffer _fb)
     {
-      Assert(fb != NULL);
-      SwapChain *sc = (SwapChain *)fb;
-      return sc->map();
+      Assert(_fb != NULL);
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      if (fb->renderTask) {
+        fb->renderTask->done.sync();
+        fb->renderTask = NULL;
+      }
+      return fb->map();
+      // SwapChain *sc = (SwapChain *)_fb;
+      // return sc->map();
     }
 
     /*! unmap previously mapped frame buffer */
     void LocalDevice::frameBufferUnmap(const void *mapped,
-                                       OSPFrameBuffer fb)
+                                       OSPFrameBuffer _fb)
     {
-      Assert2(fb != NULL, "invalid framebuffer");
-      SwapChain *sc = (SwapChain *)fb;
-      sc->unmap(mapped);
+      Assert2(_fb != NULL, "invalid framebuffer");
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      fb->unmap(mapped);
+      // SwapChain *sc = (SwapChain *)fb;
+      // sc->unmap(mapped);
     }
 
     /*! create a new model */
@@ -288,6 +302,48 @@ namespace ospray {
       return (OSPVolume)volume;
     }
 
+    /*! create a new volume object (out of list of registered volumes) */
+    OSPTransferFunction LocalDevice::newTransferFunction(const char *type)
+    {
+      Assert(type != NULL && "invalid transfer function type identifier");
+      TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
+      if (!transferFunction) {
+        if (ospray::debugMode)
+          throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
+      transferFunction->refInc();
+      return (OSPTransferFunction)transferFunction;
+    }
+
+    /*! have given renderer create a new Light */
+    OSPLight LocalDevice::newLight(OSPRenderer _renderer, const char *type) {
+      Renderer  *renderer = (Renderer *)_renderer;
+      if (renderer) {
+        Light *light = renderer->createLight(type);
+        if (light) {
+          light->refInc();
+          return (OSPLight)light;
+        }
+      }
+
+      //If there was no renderer try to see if there is a loadable light by that name
+      Light *light = Light::createLight(type);
+      if (!light) return NULL;
+      light->refInc();
+      return (OSPLight)light;
+    }
+
+    /*! create a new Texture2D object */
+    OSPTexture2D LocalDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags) {
+      Assert(width > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
+      Assert(height > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
+      Texture2D *tx = Texture2D::createTexture(width, height, type, data, flags);
+      if(tx) tx->refInc();
+      return (OSPTexture2D)tx;
+    }
+
     /*! load module */
     int LocalDevice::loadModule(const char *name)
     {
@@ -311,22 +367,24 @@ namespace ospray {
     }
 
     /*! call a renderer to render a frame buffer */
-    void LocalDevice::renderFrame(OSPFrameBuffer _sc, 
+    void LocalDevice::renderFrame(OSPFrameBuffer _fb, 
                                   OSPRenderer    _renderer)
     {
-      SwapChain *sc       = (SwapChain *)_sc;
+      FrameBuffer *fb       = (FrameBuffer *)_fb;
+      // SwapChain *sc       = (SwapChain *)_sc;
       Renderer  *renderer = (Renderer *)_renderer;
       // Model *model = (Model *)_model;
 
-      Assert(sc != NULL && "invalid frame buffer handle");
+      Assert(fb != NULL && "invalid frame buffer handle");
+      // Assert(sc != NULL && "invalid frame buffer handle");
       Assert(renderer != NULL && "invalid renderer handle");
       
-      FrameBuffer *fb = sc->getBackBuffer();
+      // FrameBuffer *fb = sc->getBackBuffer();
       renderer->renderFrame(fb);
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
       // actually have the user call an *ex*plicit ospSwapBuffers call...
-      sc->advance();
+      // sc->advance();
     }
 
     //! release (i.e., reduce refcount of) given object

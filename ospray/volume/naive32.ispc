@@ -378,6 +378,7 @@ uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uint8 *unif
 {
   uniform NaiveVolume *uniform volume = uniform new uniform NaiveVolume;
   uniform int64 numElements   = ((int64)size.x) * size.y * size.z;
+  volume->inherited.transferFunction = NULL;
   volume->inherited.size     = size;
   volume->inherited.dataSize = numElements * sizeof(uniform int8);
   if (internal == NULL)

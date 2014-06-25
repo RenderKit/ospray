@@ -13,14 +13,14 @@
 namespace ospray {
   namespace miniSG {
 
-    struct Texture : public RefCount {
-      Texture();
+    struct Texture2D : public RefCount {
+      Texture2D();
 
-      int channels;
-      int depth;
-      int width;
-      int height;
-      char *data;
+      int channels; //Number of color channels per pixel
+      int depth;    //Bytes per color channel
+      int width;    //Pixels per row
+      int height;   //Pixels per column
+      void *data;   //Pointer to binary texture data
     };
     
 #if 0
@@ -162,7 +162,7 @@ namespace ospray {
       std::string toString() const { return "miniSG::Material"; }
 
       ParamMap params;
-      std::vector<Ref<Texture> > textures;
+      std::vector<Ref<Texture2D> > textures;
       std::string name;
       std::string type;
     };

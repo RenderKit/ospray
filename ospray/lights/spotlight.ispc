@@ -1,0 +1,67 @@
+#include "spotlight.ih"
+
+//!< Construct a new ispc-side SpotLight object
+extern void SpotLight_Constructor(uniform SpotLight *uniform THIS,
+                                  void *uniform cppEquivalent,
+                                  const uniform vec3f &position,
+                                  const uniform vec3f &direction,
+                                  const uniform vec3f &color,
+                                  const uniform float range,
+                                  const uniform float halfAngle,
+                                  const uniform float angularDropOff)
+{
+  Light_Constructor(&THIS->base, cppEquivalent);
+  THIS->position        = position;
+  THIS->direction       = direction;
+  THIS->color           = color;
+  THIS->range           = range;
+  THIS->halfAngle       = halfAngle;
+  THIS->angularDropOff  = angularDropOff;
+}
+
+//!< Destruct an ispc-side SpotLight object
+extern void SpotLight_Destructor(uniform SpotLight *uniform THIS)
+{
+  Light_Destructor(&THIS->base);
+}
+
+//!< Create an ispc-side SpotLight object (called from c++)
+export void *uniform SpotLight_create(void *uniform cppEquivalent)
+{
+  uniform SpotLight *uniform light = uniform new uniform SpotLight;
+  SpotLight_Constructor(light,
+                        cppEquivalent,
+                        make_vec3f(0.f, 0.f, 0.f),
+                        make_vec3f(1.f, 1.f, 1.f),
+                        make_vec3f(1.f, 1.f, 1.f),
+                        -1.f,
+                        -1.f,
+                        -1.f);
+  return light;
+}
+
+//!< Destroy an ispc-side SpotLight object (called from c++)
+export void SpotLight_destroy(void *uniform _light)
+{
+  uniform SpotLight *uniform light = (uniform SpotLight *uniform)_light;
+  SpotLight_Destructor(light);
+  delete light;
+}
+
+//! Set the parameters of an ispc-side SpotLight object (called from c++)
+export void SpotLight_set(void *uniform _light,
+                          const uniform vec3f &position,
+                          const uniform vec3f &direction,
+                          const uniform vec3f &color,
+                          const uniform float range,
+                          const uniform float halfAngle,
+                          const uniform float angularDropOff)
+{
+  uniform SpotLight *uniform light = (uniform SpotLight *uniform)_light;
+  light->position       = position;
+  light->direction      = direction;
+  light->color          = color;
+  light->range          = range;
+  light->halfAngle      = halfAngle;
+  light->angularDropOff = angularDropOff;
+}

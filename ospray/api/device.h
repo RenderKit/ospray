@@ -19,8 +19,7 @@ namespace ospray {
       /*! create a new frame buffer/swap chain of given type */
       virtual OSPFrameBuffer 
       frameBufferCreate(const vec2i &size, 
-                        const OSPFrameBufferMode mode,
-                        const size_t swapChainDepth) = 0;
+                        const OSPFrameBufferMode mode) = 0;
       
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb) = 0;
@@ -77,12 +76,22 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volume types) with data from a file */
       virtual OSPVolume newVolumeFromFile(const char *filename, const char *type) = 0;
 
+      /*! create a new transfer function object (out of list of registered transfer function types) */
+      virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
+
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
+
+      /*! create a new Texture2D object */
+      virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags) = 0;
+
+      /*! have given renderer create a new Light */
+      virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
                                OSPRenderer _renderer) = 0;
+
 
   
       //! release (i.e., reduce refcount of) given object

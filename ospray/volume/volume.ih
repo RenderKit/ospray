@@ -9,6 +9,7 @@
  */
 
 #include "ospray/common/ospcommon.ih"
+#include "../transferfunction/TransferFunction.ih"
 
 struct Volume;
 typedef varying float (*Volume_lerpfFct)(uniform Volume *uniform volume,
@@ -31,6 +32,7 @@ typedef varying float (*Volume_gradfFct)(uniform Volume *uniform volume,
 
 /*! abstract base class for 3D volume data */
 struct Volume {
+  uniform TransferFunction * uniform transferFunction;
   uniform vec3i size;
   void *uniform data;
   uniform int64 dataSize;

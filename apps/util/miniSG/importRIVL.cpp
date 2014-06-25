@@ -73,7 +73,7 @@ namespace ospray {
       anything that defines some sort of geometric surface */
     struct RIVLTexture : public miniSG::Node {
       virtual string toString() const { return "ospray::miniSG::Texture"; } 
-      Ref<miniSG::Texture> texData;
+      Ref<miniSG::Texture2D> texData;
     };
 
     /*! scene graph node that contains an ospray geometry type (i.e.,
@@ -176,7 +176,7 @@ namespace ospray {
         } else if (nodeName == "Texture2D") {
           // -------------------------------------------------------
           Ref<miniSG::RIVLTexture> txt = new miniSG::RIVLTexture;
-          txt.ptr->texData = new miniSG::Texture;
+          txt.ptr->texData = new miniSG::Texture2D;
           nodeList.push_back(txt.ptr);
 
           int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
@@ -595,6 +595,13 @@ namespace ospray {
             mesh->normal.resize(tm->numVertices);
             for (int i=0;i<tm->numNormals;i++) {
               (vec3f&)mesh->normal[i] = (vec3f&)tm->normal[i];
+            }
+          }
+          if (tm->numTexCoords > 0) {
+            assert(tm->numTexCoords == tm->numVertices);
+            mesh->texcoord.resize(tm->numVertices);
+            for (int i=0; i<tm->numTexCoords; i++) {
+              (vec2f&)mesh->texcoord[i] = (vec2f&)tm->texCoord[i];
             }
           }
           model.mesh.push_back(mesh);

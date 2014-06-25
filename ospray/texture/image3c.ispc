@@ -69,18 +69,19 @@ varying vec3f Image3c__get_bilinear_varying(const uniform Image *uniform _this, 
               lerp(sx,c01,c11));
 }
 
-void Image3c__Destructor(uniform RefCount* uniform _this) 
+void Image3c__Destructor(uniform Image3c* uniform _this) 
 {
   uniform Image3c* uniform this = (uniform Image3c* uniform) _this;
   if (this->owned) delete[] this->data;
-  Image__Destructor(_this);
+  Image__Destructor(&_this->base);
 }
 
 void Image3c__Constructor(uniform Image3c* uniform this, const uniform vec2ui size, 
 						  uniform vec3uc *uniform data, uniform bool owned)
 {
   Image__Constructor(&this->base,
-                     Image3c__Destructor,size,
+                     //Image3c__Destructor,
+                     size,
                      Image3c__get_nearest_uniform,
                      Image3c__get_nearest_varying,
                      Image3c__get_bilinear_varying);
