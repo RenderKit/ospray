@@ -99,6 +99,30 @@ namespace ospray {
       ospCommit(camera);
 
       renderer = ospNewRenderer(rendererType);
+
+#if 0
+      OSPMaterial mat = ospNewMaterial(renderer,"Plastic");
+      ospSet3f(mat,"pigmentColor",.1,.1,.8);          // for OBJ renderer, Plastic
+      ospSet1f(mat,"eta",3);
+#endif
+
+#if 0
+      OSPMaterial mat = ospNewMaterial(renderer,"Matte");
+      ospSet3fv(mat,"reflectance",&rd.x); // for path tracer, Matte
+      vec3f rd = .7f;
+#endif
+
+#if 1
+      OSPMaterial mat = ospNewMaterial(renderer,"MetallicPaint");
+      ospSet1f(mat,"eta",1.45);
+      ospSet3f(mat,"glitterColor",.5,.44,.3);
+      ospSet3f(mat,"shadeColor",.4,.34,.7);
+      ospSet1f(mat,"glitterSpread",.01f);
+#endif
+
+      ospSet3f(mat,"kd",.7,.7,.7); // OBJ renderer, default ...
+      ospCommit(mat);
+
       model = ospNewModel();
       OSPGeometry geom = ospNewGeometry("streamlines");
       Assert(geom);
@@ -107,6 +131,7 @@ namespace ospray {
       ospSetParam(geom,"vertex",vertex);
       ospSetParam(geom,"index",index);
       ospSet1f(geom,"radius",sl->radius);
+      ospSetMaterial(geom,mat);
       ospAddGeometry(model,geom);
       ospCommit(model);
 
@@ -173,6 +198,8 @@ namespace ospray {
       std::string arg = av[i];
       if (arg[0] != '-') {
         streamLines->parse(arg);
+      } else if (arg == "--module") {
+	ospLoadModule(av[++i]);
       } else if (arg == "--renderer") {
         rendererType = av[++i];
       } else if (arg == "--radius") {

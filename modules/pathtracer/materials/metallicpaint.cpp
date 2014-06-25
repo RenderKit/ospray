@@ -20,7 +20,7 @@ namespace ospray {
         const float glitterSpread
           = getParamf("glitterSpread",0.f);
         const float eta
-          = getParamf("eta",0.01f);
+          = getParamf("eta",1.45f);
         
         ispcEquivalent = ispc::PathTracer_MetallicPaint_create
           ((const ispc::vec3f&)shadeColor,(const ispc::vec3f&)glitterColor,

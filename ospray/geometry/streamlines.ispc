@@ -129,13 +129,33 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
   }
 }
 
-static void StreamLines_postIntersect(uniform Geometry *uniform THIS,
+static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
                                        uniform Model *uniform model,
                                        varying DifferentialGeometry &dg,
                                        const varying Ray &ray,
                                        uniform int64 flags)
 {
-  print("StreamLines postintersect not implemented\n");
+  uniform StreamLines *uniform THIS = (uniform StreamLines *uniform)geometry;
+  dg.geometry = geometry;
+  dg.material = geometry->material;
+  vec3f Ng = ray.Ng;
+  vec3f Ns = Ng;
+
+  if (flags & DG_NORMALIZE) {
+    Ng = normalize(Ng);
+    Ns = normalize(Ns);
+  }
+  if (flags & DG_FACEFORWARD) {
+    if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
+    if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
+  }
+  // if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
+  //   uniform uint8 *spherePtr = 
+  //     THIS->data + THIS->bytesPerSphere*ray.primID;
+  //   dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
+  // }
+  dg.Ng = Ng;
+  dg.Ns = Ns;
 }
 
 export void *uniform StreamLineGeometry_create(void           *uniform cppEquivalent)
