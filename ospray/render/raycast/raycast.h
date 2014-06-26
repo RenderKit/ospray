@@ -46,6 +46,8 @@ namespace ospray {
     RC_INSTID,
     RC_GNORMAL,
     RC_TESTSHADOW,
+    RC_GEOMID_EYELIGHT,
+    RC_PRIMID_EYELIGHT,
   } RC_SHADEMODE;
 
   /*! \brief Implements the family of simple ray cast renderers */

@@ -10,7 +10,7 @@
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 
-#define EPS 1e-5f
+#define EPS 1e-4f
 
 uniform float SimpleAO__randomU[16][16] = {
   {0, 0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, 0.0625, 0.5625, 0.3125, 0.8125, 0.1875, 0.6875, 0.4375, 0.9375},

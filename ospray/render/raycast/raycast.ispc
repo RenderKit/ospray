@@ -32,6 +32,20 @@ inline vec4f shade_instID(const Ray &ray)
   return make_vec4f(make_random_color(ray.instID)); 
 }
 
+inline vec4f shade_geomID_eyeLight(const Ray &ray)
+{ 
+  if (ray.geomID < 0) return make_vec4f(1.f); 
+  const float c = dot(normalize(ray.Ng),ray.dir); 
+  return make_vec4f(make_random_color(ray.geomID)*(.3f+.8f*abs(c)));
+}
+
+inline vec4f shade_primID_eyeLight(const Ray &ray)
+{ 
+  if (ray.geomID < 0) return make_vec4f(1.f); 
+  const float c = dot(normalize(ray.Ng),ray.dir); 
+  return make_vec4f(make_random_color(ray.primID)*(.3f+.8f*abs(c)));
+}
+
 inline vec4f shade_eyeLight(const Ray &ray)
 { 
   if (ray.geomID < 0) return make_vec4f(0.f); 
@@ -75,6 +89,10 @@ inline vec4f shade(const uniform int shadeMode, const Ray &ray, uniform RTCScene
     return shade_Ng(ray);
   if (shadeMode == 5)
     return shade_eyeLight_testShadow(ray,scene);
+  if (shadeMode == 6)
+    return shade_geomID_eyeLight(ray);
+  if (shadeMode == 7)
+    return shade_primID_eyeLight(ray);
   else
     print("unknown shade mode % in raycast renderer",shadeMode);
 }

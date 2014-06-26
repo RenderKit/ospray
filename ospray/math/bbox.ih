@@ -30,6 +30,9 @@ struct box3fa {
 inline uniform box3f make_box3f(const uniform vec3f lo, const uniform vec3f hi)
 { uniform box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
 
+inline uniform box3fa make_box3fa(const uniform box3f &b)
+{ uniform box3fa bb; bb.lower = make_vec3f(b.lower); bb.upper = make_vec3f(b.upper); return bb; }
+
 inline box3f make_box3f(const vec3f lo, const vec3f hi)
 { box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
 

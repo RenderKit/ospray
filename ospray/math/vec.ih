@@ -549,7 +549,11 @@ inline uniform vec3f powf(const uniform vec3f v, const uniform float f)
 
 
 
+inline uniform vec3fa make_vec3fa(const uniform vec3f v)
+{ return make_vec3fa(v.x,v.y,v.z); }
 
+inline vec3fa make_vec3fa(const vec3f v)
+{ return make_vec3fa(v.x,v.y,v.z); }
 
 
 
