@@ -35,7 +35,7 @@ namespace ospray {
         map_d = map_Kd = map_Ks = map_Ns = map_Bump = NULL;
       }
 
-      d  = getParam1f("d", .5f);
+      d  = getParam1f("d", 1.f);
       Kd = getParam3f("kd",vec3f(.8f));
       Ks = getParam3f("ks",vec3f(0.f));
       Ns = getParam1f("ns",0.f);

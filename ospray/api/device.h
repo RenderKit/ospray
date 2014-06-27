@@ -19,10 +19,12 @@ namespace ospray {
       /*! create a new frame buffer/swap chain of given type */
       virtual OSPFrameBuffer 
       frameBufferCreate(const vec2i &size, 
-                        const OSPFrameBufferMode mode) = 0;
+                        const OSPFrameBufferMode mode,
+                        const uint32 channels) = 0;
       
       /*! map frame buffer */
-      virtual const void *frameBufferMap(OSPFrameBuffer fb) = 0;
+      virtual const void *frameBufferMap(OSPFrameBuffer fb, 
+                                         OSPFrameBufferChannel) = 0;
 
       /*! unmap previously mapped frame buffer */
       virtual void frameBufferUnmap(const void *mapped,

@@ -54,6 +54,11 @@ namespace osp {
   struct TriangleMesh     : public Geometry {};
 }
 
+typedef enum {
+  OSP_COLOR_BUFFER=(1<<0),
+  OSP_DEPTH_BUFFER=(1<<1),
+  OSP_ACCUM_BUFFER=(1<<2)
+} OSPFrameBufferChannel;
 
 /*! OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
@@ -225,7 +230,8 @@ extern "C" {
 
   /*! \brief create a new framebuffer (actual format is internal to ospray) */
   OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                   const OSPFrameBufferMode mode=OSP_RGBA_I8);
+                                   const OSPFrameBufferMode mode=OSP_RGBA_I8,
+                                   const int channels=OSP_COLOR_BUFFER);
 
   /*! \brief free a framebuffer 
 
@@ -234,7 +240,8 @@ extern "C" {
   void ospFreeFrameBuffer(OSPFrameBuffer fb);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
-  const void *ospMapFrameBuffer(OSPFrameBuffer fb);
+  const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
+                                OSPFrameBufferChannel=OSP_COLOR_BUFFER);
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer fb);

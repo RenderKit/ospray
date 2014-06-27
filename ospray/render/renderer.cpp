@@ -5,6 +5,10 @@
 #include "common/sys/library.h"
 // stl stuff
 #include <map>
+// ispc exports
+#include "renderer_ispc.h"
+// ospray
+#include "loadbalancer.h"
 
 namespace ospray {
   typedef Renderer *(*creatorFct)();
@@ -30,6 +34,27 @@ namespace ospray {
       return NULL;
     }
     return (*creator)();
+  }
+
+  void Renderer::renderTile(Tile &tile)
+  {
+    ispc::Renderer_renderTile(getIE(),(ispc::Tile&)tile);
+  }
+
+  void Renderer::beginFrame(FrameBuffer *fb) 
+  {
+    this->currentFB = fb;
+    ispc::Renderer_beginFrame(getIE(),fb->getIE());
+  }
+
+  void Renderer::endFrame()
+  {
+    ispc::Renderer_endFrame(getIE());
+  }
+  
+  void Renderer::renderFrame(FrameBuffer *fb)
+  {
+    TiledLoadBalancer::instance->renderFrame(this,fb);
   }
 
 };

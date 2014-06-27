@@ -3,22 +3,17 @@
 #include "ospray/camera/camera.h"
 // embree
 #include "common/sys/sync/atomic.h"
+// ispc exports
+#include "ao16_ispc.h"
 
 namespace ospray {
-  extern "C" void ispc_AO16Renderer_renderTile(void *tile, void *camera, RTCScene scene);
-
-  void AO16Renderer::RenderTask::renderTile(Tile &tile)
+  
+  void AO16Renderer::commit()
   {
-    ispc_AO16Renderer_renderTile(&tile,camera->getIE(),world->embreeSceneHandle);
-  }
-
-  TileRenderer::RenderJob *AO16Renderer::createRenderJob(FrameBuffer *fb)
-  {
-    RenderTask *frame = new RenderTask;
-    frame->world  = (Model  *)getParamObject("world",NULL); // old naming
-    frame->world  = (Model  *)getParamObject("model",frame->world); // new naming
-    frame->camera = (Camera *)getParamObject("camera",NULL);
-    return frame;
+    model  = (Model  *)getParamObject("model",NULL); // old naming
+    model  = (Model  *)getParamObject("model",model); // new naming
+    camera = (Camera *)getParamObject("camera",NULL);
+    ispcEquivalent = ispc::AO16Renderer_create(this,model,camera);
   }
 
   OSP_REGISTER_RENDERER(AO16Renderer,ao16);

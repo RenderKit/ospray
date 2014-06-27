@@ -120,10 +120,11 @@ namespace ospray {
   }
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                              const OSPFrameBufferMode mode)
+                                              const OSPFrameBufferMode mode,
+                                              const int channels)
   {
     ASSERT_DEVICE();
-    return ospray::api::Device::current->frameBufferCreate(size,mode);
+    return ospray::api::Device::current->frameBufferCreate(size,mode,channels);
   }
 
   //! load module \<name\> from shard lib libospray_module_\<name\>.so, or 
@@ -133,10 +134,11 @@ namespace ospray {
     return ospray::api::Device::current->loadModule(moduleName);
   }
 
-  extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb)
+  extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
+                                           OSPFrameBufferChannel channel)
   {
     ASSERT_DEVICE();
-    return ospray::api::Device::current->frameBufferMap(fb);
+    return ospray::api::Device::current->frameBufferMap(fb,channel);
   }
   
   extern "C" void ospUnmapFrameBuffer(const void *mapped,

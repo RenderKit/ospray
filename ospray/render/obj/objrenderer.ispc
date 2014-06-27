@@ -9,6 +9,7 @@
 #include "ospray/texture/texture2d.ih"
 #include "ospray/lights/light.ih"
 #include "ospray/lights/directionallight.ih"
+#include "ospray/render/renderer.ih"
 // obj renderer
 #include "objmaterial.ih"
 #include "objpointlight.ih"
@@ -17,7 +18,10 @@
 #define ALPHA_THRESHOLD (.05f)
 
 struct OBJRenderer {
-  uniform Model *model;
+  Renderer inherited;
+  // //uniform Texture *textureArray;
+  // uniform OBJMaterial *materialArray;
+
   const uniform OBJPointLight *uniform *uniform pointLights;
   uint32        numPointLights;
   const uniform DirectionalLight *uniform *uniform dirLights;
@@ -71,7 +75,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
   uniform int depth = 0;
 
   while (1) {
-    traceRay(renderer->model,ray);
+    traceRay(renderer->inherited.model,ray);
 
     if (ray.geomID < 0) {
       const vec3f bg_color = make_vec3f(0.f);
@@ -83,7 +87,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
     vec3f local_shade_color = make_vec3f(0.f);
 
     DifferentialGeometry dg;
-    postIntersect(renderer->model,
+    postIntersect(renderer->inherited.model,
         dg,
         ray,
         DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
@@ -140,7 +144,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
         if (max_contrib > .01f) {
           Ray shadowRay;
           setRay(shadowRay,P,L);
-          const float light_alpha = lightAlpha(shadowRay, renderer->model, max_contrib);
+          const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
 
           local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
         }
@@ -160,7 +164,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
         if (max_contrib > .01f) {
           Ray shadowRay;
           setRay(shadowRay,P,L);
-          const float light_alpha = lightAlpha(shadowRay, renderer->model, max_contrib);
+          const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
 
           local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
         }
@@ -182,51 +186,95 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
   return color;
 }
 
-export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
-                                         void *uniform _camera, //uniform Camera *uniform camera,
-                                         void *uniform _model,
-                                         uniform int num_point_lights,
-                                         void *uniform *uniform _point_lights,
-                                         uniform int num_dir_lights,
-                                         void *uniform *uniform _dir_lights)
+void OBJRenderer_renderSample(uniform Renderer *uniform _renderer,
+                               varying ScreenSample &sample)
 {
-  uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-
-  uniform OBJRenderer renderer;
-  renderer.model   = (uniform Model *uniform)_model;
-  renderer.pointLights = (const uniform OBJPointLight *uniform *uniform)_point_lights;
-  renderer.numPointLights = num_point_lights;
-  renderer.dirLights = (const uniform DirectionalLight *uniform *uniform)_dir_lights;
-  renderer.numDirLights = num_dir_lights;
-
-  tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
-  const uniform uint32 size_x = tile->fbSize.x;
-  const uniform uint32 size_y = tile->fbSize.y;
-  const uniform uint32 x0 = tile->region.lower.x;
-  const uniform uint32 y0 = tile->region.lower.y;
-  for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32 frag = i*programCount+programIndex;
-    const uint32  x     = x0 + (frag % TILE_SIZE);
-    const uint32  y     = y0 + (frag / TILE_SIZE);
-    // print("pixel % %\n",x,y);
-    if (x < size_x & y < size_y) {
-      // print("+pixel % %\n",x,y);
-      const float screen_u = (x+.5f)/size_x;
-      const float screen_v = (y+.5f)/size_y;
-      Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-                      (varying vec2f)make_vec2f(0.f,0.f));
-      const vec3f col = OBJRenderer_shadeRay(ray,&renderer);
-#if 1
-      tile->r[i] = col.x;
-      tile->g[i] = col.y;
-      tile->b[i] = col.z;
-      tile->a[i] = 1.f;
-      tile->z[i] = ray.t;
-      tile->rgba8[i] = cvt_uint32(col);
-#endif
-    }
-  }
+  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
+  // print("sample.ray.org.x %\n",sample.ray.org.x);
+  sample.rgb = OBJRenderer_shadeRay(sample.ray,renderer);
+  // print("sample.x %\n",sample.rgb.x);
 }
+
+
+export void *uniform OBJRenderer_create(void *uniform cppE)
+{
+  uniform OBJRenderer *uniform renderer = uniform new uniform OBJRenderer;
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
+  renderer->inherited.renderSample = OBJRenderer_renderSample;
+  return renderer;
+}
+
+export void OBJRenderer_set(void *uniform _renderer,
+                            void *uniform _model,
+                            void *uniform _camera,
+                            void **uniform pointLights,
+                            uniform int32  numPointLights,
+                            void **uniform dirLights,
+                            uniform int32  numDirLights)
+{
+  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
+  renderer->inherited.model  = (uniform Model *uniform)_model;
+  renderer->inherited.camera = (uniform Camera *uniform)_camera;
+
+  renderer->numPointLights = numPointLights;
+  renderer->pointLights = (const uniform OBJPointLight *uniform *uniform)pointLights;
+  
+  renderer->numDirLights = numDirLights;
+  renderer->dirLights = (const uniform DirectionalLight *uniform *uniform)dirLights;
+}
+
+
+export void OBJRenderer_destroy(void *uniform _renderer)
+{
+  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
+  delete renderer;
+}
+
+// export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
+//                                          void *uniform _camera, //uniform Camera *uniform camera,
+//                                          void *uniform _model,
+//                                          uniform int num_point_lights,
+//                                          void *uniform *uniform _point_lights,
+//                                          uniform int num_dir_lights,
+//                                          void *uniform *uniform _dir_lights)
+// {
+//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
+//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+
+//   uniform OBJRenderer renderer;
+//   renderer.model   = (uniform Model *uniform)_model;
+//   renderer.pointLights = (const uniform OBJPointLight *uniform *uniform)_point_lights;
+//   renderer.numPointLights = num_point_lights;
+//   renderer.dirLights = (const uniform DirectionalLight *uniform *uniform)_dir_lights;
+//   renderer.numDirLights = num_dir_lights;
+
+//   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
+//   const uniform uint32 size_x = tile->fbSize.x;
+//   const uniform uint32 size_y = tile->fbSize.y;
+//   const uniform uint32 x0 = tile->region.lower.x;
+//   const uniform uint32 y0 = tile->region.lower.y;
+//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+//     const uint32 frag = i*programCount+programIndex;
+//     const uint32  x     = x0 + (frag % TILE_SIZE);
+//     const uint32  y     = y0 + (frag / TILE_SIZE);
+//     // print("pixel % %\n",x,y);
+//     if (x < size_x & y < size_y) {
+//       // print("+pixel % %\n",x,y);
+//       const float screen_u = (x+.5f)/size_x;
+//       const float screen_v = (y+.5f)/size_y;
+//       Ray ray;
+//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+//                       (varying vec2f)make_vec2f(0.f,0.f));
+//       const vec3f col = OBJRenderer_shadeRay(ray,&renderer);
+// #if 1
+//       tile->r[i] = col.x;
+//       tile->g[i] = col.y;
+//       tile->b[i] = col.z;
+//       tile->a[i] = 1.f;
+//       tile->z[i] = ray.t;
+//       tile->rgba8[i] = cvt_uint32(col);
+// #endif
+//     }
+//   }
+// }
 

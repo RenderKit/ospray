@@ -31,7 +31,7 @@
  */
 
 // ospray
-#include "../tilerenderer.h"
+#include "ospray/render/renderer.h"
 
 namespace ospray {
   using embree::TaskScheduler;
@@ -46,26 +46,18 @@ namespace ospray {
     RC_INSTID,
     RC_GNORMAL,
     RC_TESTSHADOW,
-    RC_GEOMID_EYELIGHT,
-    RC_PRIMID_EYELIGHT,
   } RC_SHADEMODE;
 
   /*! \brief Implements the family of simple ray cast renderers */
   template<int SHADE_MODE=RC_EYELIGHT>
-  struct RayCastRenderer : public TileRenderer {
+  struct RayCastRenderer : public Renderer {
+    RayCastRenderer() : model(NULL), camera(NULL) {};
     virtual std::string toString() const { return "ospray::RayCastRenderer"; }
 
-    struct RenderTask : public TileRenderer::RenderJob {
-      Model  *world;
-      void   *_scene;
-      Camera *camera;
-      void   *_camera;
-      virtual void renderTile(Tile &tile);
-      virtual ~RenderTask() {}
-    };
-    virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
-  private:
-    /*! used internally to produce a slightly different image every frame */
-    int frameID;
+    Model  *model;
+    Camera *camera;
+    
+    // virtual void renderTile(Tile &tile, FrameBuffer *fb);
+    virtual void commit();
   };
 };

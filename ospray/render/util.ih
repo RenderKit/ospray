@@ -1,7 +1,39 @@
-#ifndef _OSPRAY_UTIL_IH
-#define _OSPRAY_UTIL_IH
+#pragma once
+
+#include "ospray/common/ospcommon.ih"
+#include "ospray/math/vec.ih"
 
 /*! \file ospray/render/util.ih \brief Utility-functions for shaders */
+
+
+/*! number of precomputed halton values, must be a power of 2 */
+#define NUM_PRECOMPUTED_HALTON_VALUES 256
+
+/*! precomputed base-2, base-3, and base-5 halton sequence values, for
+    NUM_PRECOMPUTED_HALTON_VALUES values */
+extern uniform float precomputedHalton[3][NUM_PRECOMPUTED_HALTON_VALUES];
+extern uniform bool precomputedHalton_initialized;
+extern void precomputedHalton_create();
+
+inline precomputedHalton2(uint32 sampleID) 
+{ 
+  if (!precomputedHalton_initialized) precomputedHalton_create(); 
+  return precomputedHalton[0][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
+}
+
+inline precomputedHalton3(uint32 sampleID) 
+{ 
+  if (!precomputedHalton_initialized) precomputedHalton_create(); 
+  return precomputedHalton[1][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
+}
+
+inline precomputedHalton5(uint32 sampleID) 
+{ 
+  if (!precomputedHalton_initialized) precomputedHalton_create(); 
+  return precomputedHalton[2][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
+}
+
+
 
 inline vec3f make_random_color(const int i)
 {
@@ -36,4 +68,3 @@ inline uint32 cvt_uint32(const vec3f &v)
     (cvt_uint32(v.z) << 16);
 }
 
-#endif

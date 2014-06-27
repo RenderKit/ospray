@@ -6,11 +6,10 @@
 #include "ospray/common/ray.ih"
 #include "ospray/render/util.ih"
 #include "ospray/math/math.ih"
+#include "ospray/common/model.ih"
+#include "ospray/render/renderer.ih"
 
-// embree stuff
-#include "embree2/rtcore_scene.isph"
-
-#define EPS 1e-4f
+#define EPS 1e-5f
 
 uniform float SimpleAO__randomU[16][16] = {
   {0, 0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, 0.0625, 0.5625, 0.3125, 0.8125, 0.1875, 0.6875, 0.4375, 0.9375},
@@ -54,6 +53,9 @@ uniform float SimpleAO__randomV[16][16] = {
 uniform vec3f AO16_directions[16][16];
 uniform bool AO16_directions_initialized = false;
 
+struct AO16Renderer {
+  uniform Renderer inherited;
+};
 
 inline vec3f getShadingNormal(const Ray &ray)
 {
@@ -72,11 +74,11 @@ void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
   biNorm0 = normalize(cross(biNorm1,gNormal));
 }
 
-inline bool isOccluded(uniform RTCScene scene, Ray &ray)
-{
-  rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
-  return ray.geomID >= 0;
-}
+// inline bool isOccluded(uniform RTCScene scene, Ray &ray)
+// {
+//   rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
+//   return ray.geomID >= 0;
+// }
 
 
 vec3f getRandomDir(const int j, const uniform int i, 
@@ -110,7 +112,7 @@ vec3f getRandomDir(const int j, const uniform int i,
 }
 
 
-inline vec3f shade_ao16(const Ray &ray, uniform RTCScene scene,
+inline vec3f shade_ao16(const Ray &ray, uniform Model *uniform model,
                         const int32 pixel_x, const int32 pixel_y)
 {
   if (ray.geomID < 0)
@@ -132,7 +134,7 @@ inline vec3f shade_ao16(const Ray &ray, uniform RTCScene scene,
       setRay(ao_ray,P,ao_dir);
       ao_ray.t0 = EPS;
       ao_ray.t = 1.f;
-      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(scene,ao_ray))
+      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(model,ao_ray))
         hits++;
     }
 	vec3f rgb = make_vec3f(.98f); 
@@ -141,56 +143,77 @@ inline vec3f shade_ao16(const Ray &ray, uniform RTCScene scene,
   return rgb * make_vec3f(diffuse * (.01f + 1.1f * frac_visible));
 }
 
-inline vec3f shade_eyeLight(const Ray &ray, uniform RTCScene scene)
-{
-  if (ray.geomID < 0)
-    return make_vec3f(0.f);
+// inline vec3f shade_eyeLight(const Ray &ray, uniform RTCScene scene)
+// {
+//   if (ray.geomID < 0)
+//     return make_vec3f(0.f);
 
-  const vec3f P = ray.org + ray.t * ray.dir;
-  const vec3f N = getShadingNormal(ray);
-  float c = -dot(normalize(ray.dir),N);
-  return make_vec3f(c);
+//   const vec3f P = ray.org + ray.t * ray.dir;
+//   const vec3f N = getShadingNormal(ray);
+//   float c = -dot(normalize(ray.dir),N);
+//   return make_vec3f(c);
+// }
+
+// export void AO16Renderer_renderTile(void *uniform _tile,//uniform Tile   *uniform tile,
+//                                     void *uniform _fb,
+//                                     void *uniform _camera,//uniform Camera *uniform camera,
+//                                     void *uniform _model)
+// {
+//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
+//   uniform FrameBuffer *uniform fb   = (uniform FrameBuffer *uniform)_fb;
+//   uniform Model  *uniform model  = (uniform Model *uniform)_model;
+//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+//   const uniform uint32 size_x = fb->size.x;
+//   const uniform uint32 size_y = fb->size.y;
+//   const uniform uint32 x0 = tile->region.lower.x;
+//   const uniform uint32 y0 = tile->region.lower.y;
+//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+//     const uint32 frag = i*programCount+programIndex;
+//     const uint32  x     = x0 + (frag % TILE_SIZE);
+//     const uint32  y     = y0 + (frag / TILE_SIZE);
+//     // print("pixel % %\n",x,y);
+//     if (x < tile->region.upper.x & y < tile->region.upper.y) {
+//       // print("+pixel % %\n",x,y);
+//       const float screen_u = (x+.5f)/size_x;
+//       const float screen_v = (y+.5f)/size_y;
+//       Ray ray;
+//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+//                       (varying vec2f)make_vec2f(0.f,0.f));
+//       // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
+//       traceRay(model,ray);
+//       setRGBA(tile,i,shade_ao16(ray,model,x,y));
+//     }
+//   }
+// }
+
+
+void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
+                               varying ScreenSample &sample)
+{
+  uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
+  traceRay(renderer->inherited.model,sample.ray);
+  sample.z     = sample.ray.t;
+  sample.alpha = 1.f;
+  sample.rgb   = shade_ao16(sample.ray,
+                            renderer->inherited.model,
+                            sample.sampleID.x,
+                            sample.sampleID.y);
 }
 
-export void ispc_AO16Renderer_renderTile(void *uniform _tile,//uniform Tile   *uniform tile,
-                                         void *uniform _camera,//uniform Camera *uniform camera,
-                                         uniform RTCScene scene)
+
+export void *uniform AO16Renderer_create(void *uniform cppE,
+                                  void *uniform _model,
+                                  void *uniform _camera)
 {
-  uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-  tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
-  const uniform uint32 size_x = tile->fbSize.x;
-  const uniform uint32 size_y = tile->fbSize.y;
-  const uniform uint32 x0 = tile->region.lower.x;
-  const uniform uint32 y0 = tile->region.lower.y;
-  for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32 frag = i*programCount+programIndex;
-    const uint32  x     = x0 + (frag % TILE_SIZE);
-    const uint32  y     = y0 + (frag / TILE_SIZE);
-    // print("pixel % %\n",x,y);
-    if (x < size_x & y < size_y) {
-      // print("+pixel % %\n",x,y);
-      const float screen_u = (x+.5f)/size_x;
-      const float screen_v = (y+.5f)/size_y;
-      Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-                      (varying vec2f)make_vec2f(0.f,0.f));
-      // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-#if 0
-      rtcIntersect(scene,(varying RTCRay&)ray);
-#else
-      rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
-#endif
-      const vec3f col = shade_ao16(ray,scene,x,y);
-#if 1
-      tile->r[i] = col.x;
-      tile->g[i] = col.y;
-      tile->b[i] = col.z;
-      tile->a[i] = 0.f;
-      tile->z[i] = ray.t;
-      tile->rgba8[i] = cvt_uint32(make_vec4f(col));
-#endif
-    }
-  }
+  uniform AO16Renderer *uniform renderer = uniform new uniform AO16Renderer;
+  Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
+  renderer->inherited.renderSample = AO16Renderer_renderSample;
+  return renderer;
+}
+
+export void AO16Renderer_destroy(void *uniform _renderer)
+{
+  uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
+  delete renderer;
 }
 

@@ -8,18 +8,28 @@
 
 struct Camera;
 
+/*! input parameters to a 'initRay' method. Specifield the time,
+    pixel, and lens samples the camera is to generate a ray for */
+struct CameraSample {
+  vec2f screen; /*! screen sample, from [(0,0)-frameSize] */
+  vec2f lens;   /*!< may be left un-initialized if 'camera.doesDOF' is false */
+  float time;   /*!< time */
+};
+
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-typedef void (*InitRayMethod)(uniform Camera  *uniform,
-                              varying Ray &ray,
-                              const varying vec2f &pixel,
-                              const varying vec2f &lens);
-                              // const varying vec2f &sample,
-                              // const varying vec2f);
+typedef void (*Camera_initRay)(uniform Camera  *uniform,
+                               varying Ray &ray,
+                               const CameraSample &sample);
+
 
 struct Camera
 {
-  InitRayMethod initRay;
-  void *cClassPtr; /*!< pointer back to c++-side of this class */
+  Camera_initRay initRay;
+  bool doesDOF; /*!< indicates whether this camera does depth-of-field
+                    (DOF). If so, the 'CameraSample' passed to initRay
+                    has to have properly initialized 'lens' value; if
+                    not, this value can remain unused. */
+  void *cppEquivalent; /*!< pointer back to c++-side of this class */
 };
 
 #endif

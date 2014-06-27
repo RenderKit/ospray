@@ -16,7 +16,7 @@
 */
 
 // ospray
-#include "ospray/render/tilerenderer.h"
+#include "ospray/render/renderer.h"
 
 namespace ospray {
   using embree::TaskScheduler;
@@ -25,15 +25,14 @@ namespace ospray {
   struct Model;
 
   /*! \brief Simple 16-sample Ambient Occlusion Renderer */
-  struct AO16Renderer : public TileRenderer {
+  struct AO16Renderer : public Renderer {
+    AO16Renderer() : model(NULL), camera(NULL) {};
+
     virtual std::string toString() const { return "ospray::AO16Renderer"; }
 
-    struct RenderTask : public TileRenderer::RenderJob {
-      Model  *world;
-      Camera *camera;
-      virtual void renderTile(Tile &tile);
-      virtual ~RenderTask() {}
-    };
-    virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+    Model  *model;
+    Camera *camera;
+
+    virtual void commit();
   };
 };

@@ -22,13 +22,19 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Renderer"; }
     /*! \brief produce one frame, and put it into given frame
         buffer */
-    virtual void renderFrame(FrameBuffer *fb) = 0;
+    virtual void renderFrame(FrameBuffer *fb);
 
+    virtual void beginFrame(FrameBuffer *fb);
+    virtual void endFrame();
+    virtual void renderTile(Tile &tile);
+    
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type) { return NULL; }
 
     /*! \brief create a light of given type */
     virtual Light *createLight(const char *type) { return NULL; }
+
+    FrameBuffer *currentFB;
 
     /*! \brief creates an abstract renderer class of given type 
 

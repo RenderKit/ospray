@@ -21,7 +21,6 @@ namespace ospray {
       may actually use uchars, but the tile will always store
       floats. */
   struct Tile {
-    uint32 rgba8[TILE_SIZE*TILE_SIZE];
     // 'red' component; in float.
     float r[TILE_SIZE*TILE_SIZE];
     // 'green' component; in float.

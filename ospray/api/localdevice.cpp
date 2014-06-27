@@ -42,39 +42,30 @@ namespace ospray {
 
     OSPFrameBuffer 
     LocalDevice::frameBufferCreate(const vec2i &size, 
-                                   const OSPFrameBufferMode mode)
+                                   const OSPFrameBufferMode mode,
+                                   const uint32 channels)
     {
-      // FrameBufferFactory fbFactory = NULL;
-      // switch(mode) {
-      // case OSP_RGBA_I8:
-      //   fbFactory = createLocalFB_RGBA_I8;
-      //   break;
-      // default:
-      //   AssertError("frame buffer mode not yet supported");
-      // }
+      FrameBuffer::ColorBufferFormat colorBufferFormat = FrameBuffer::RGBA_UINT8;//FLOAT32;
+      bool hasDepthBuffer = (channels&OSP_DEPTH_BUFFER)!=0;
+      bool hasAccumBuffer = (channels&OSP_ACCUM_BUFFER)!=0;
       
-      FrameBuffer *fb = new LocalFrameBuffer<uint32>(size);
+      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
+                                             hasDepthBuffer,hasAccumBuffer);
       fb->refInc();
       return (OSPFrameBuffer)fb;
-      // SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
-      // sc->refInc();
-      // Assert(sc != NULL);
-      // return (OSPFrameBuffer)sc;
     }
     
 
     /*! map frame buffer */
-    const void *LocalDevice::frameBufferMap(OSPFrameBuffer _fb)
+    const void *LocalDevice::frameBufferMap(OSPFrameBuffer _fb,
+                                            OSPFrameBufferChannel channel)
     {
-      Assert(_fb != NULL);
-      FrameBuffer *fb = (FrameBuffer *)_fb;
-      if (fb->renderTask) {
-        fb->renderTask->done.sync();
-        fb->renderTask = NULL;
+      LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
+      switch (channel) {
+      case OSP_COLOR_BUFFER: return fb->mapColorBuffer();
+      case OSP_DEPTH_BUFFER: return fb->mapDepthBuffer();
+      default: return NULL;
       }
-      return fb->map();
-      // SwapChain *sc = (SwapChain *)_fb;
-      // return sc->map();
     }
 
     /*! unmap previously mapped frame buffer */
@@ -84,8 +75,6 @@ namespace ospray {
       Assert2(_fb != NULL, "invalid framebuffer");
       FrameBuffer *fb = (FrameBuffer *)_fb;
       fb->unmap(mapped);
-      // SwapChain *sc = (SwapChain *)fb;
-      // sc->unmap(mapped);
     }
 
     /*! create a new model */

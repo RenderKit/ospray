@@ -54,6 +54,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	common/library.cpp
 
 	fb/swapchain.cpp 
+	fb/framebuffer.ispc
 	fb/framebuffer.cpp
 	fb/localfb.ispc
 
@@ -103,16 +104,17 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   texture/image3fa.ispc
   texture/texture2d.cpp
 
-	render/tilerenderer.cpp
+#	render/tilerenderer.cpp
+ 
 	render/loadbalancer.cpp
 
+	render/renderer.ispc
 	render/renderer.cpp
+	render/util.ispc
 	render/raycast/raycast.cpp
 	render/raycast/raycast.ispc
 	render/ao16/ao16.cpp
 	render/ao16/ao16.ispc
-	render/dvr/dvr.cpp
-	render/dvr/dvr.ispc
 	render/obj/objrenderer.ispc
 	render/obj/objmaterial.ispc
 	render/obj/objrenderer.cpp
