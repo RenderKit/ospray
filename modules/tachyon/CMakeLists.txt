@@ -59,8 +59,8 @@ IF (MODULE_TACHYON)
 		LEX_FILE(lexer.ll)
 
 		OSPRAY_ADD_LIBRARY(ospray_module_tachyon${OSPRAY_LIB_SUFFIX} SHARED
-			renderer.cpp
-			renderer.ispc
+			tachyonRenderer.cpp
+			tachyonRenderer.ispc
 			)
 		TARGET_LINK_LIBRARIES(ospray_module_tachyon${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
 

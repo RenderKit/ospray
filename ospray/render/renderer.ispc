@@ -54,24 +54,18 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
     const uint32 frag = i*programCount+programIndex;
     screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
     screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
-    if ((screenSample.sampleID.x >= fb->size.x) | (screenSample.sampleID.y >= fb->size.y)) {
-      setRGBA(tile,i,make_vec3f(1,0,0));
-      continue;
-    }
+    if ((screenSample.sampleID.x >= fb->size.x) | 
+        (screenSample.sampleID.y >= fb->size.y)) 
+      {
+        setRGBA(tile,i,make_vec3f(1,0,0));
+        continue;
+      }
 
     cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
     cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
     
-    // print("initreay %\n",camera);
     camera->initRay(camera,screenSample.ray,cameraSample);
-    
-    // print("rendersample\n");
     renderer->renderSample(renderer,screenSample);
-    // print("write\n");
-    // print("pixel % %\n",screenSample.sampleID.x,screenSample.sampleID.y);
-    // if (screenSample.rgb.x > 0)
-    //   print("result % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
-
     setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
   }
 }
@@ -95,11 +89,8 @@ export void Renderer_renderTile(void *uniform _renderer,
                                 uniform Tile &tile)
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
-  // print("starting tile\n");
   renderer->renderTile(renderer,tile);
-  // print("done tile\n");
   renderer->fb->setTile(renderer->fb,tile);
-  // print("written tile\n");
 }
 
 export void Renderer_beginFrame(void *uniform _renderer,

@@ -9,10 +9,10 @@
  */
 
 // ospray
-#include "ospray/render/tilerenderer.h"
+#include "ospray/render/renderer.h"
 
 namespace ospray {
-  using embree::TaskScheduler;
+  // using embree::TaskScheduler;
 
   struct Camera;
   struct Model;
@@ -27,12 +27,12 @@ namespace ospray {
   } RC_SHADEMODE;
 
   /*! \brief Implements the family of simple ray cast renderers */
-  struct TachyonRenderer : public TileRenderer {
+  struct TachyonRenderer : public Renderer {
     TachyonRenderer();
     virtual void commit();
     virtual std::string toString() const { return "ospray::TachyonRenderer"; }
 
-      Model  *world;
+      Model  *model;
       Camera *camera;
       Data   *textureData;
       Data   *pointLightData;

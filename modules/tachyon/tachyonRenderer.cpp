@@ -1,12 +1,14 @@
 #undef NDEBUG
 
 // ospray
-#include "renderer.h"
+#include "tachyonRenderer.h"
 #include "renderer_ispc.h"
 #include "ospray/camera/perspectivecamera.h"
 #include "common/data.h"
+// tachyon
+#include "model.h"
 // ispc imports
-#include "renderer_ispc.h"
+#include "tachyonRenderer_ispc.h"
 
 namespace ospray {
   // extern "C" void ispc__TachyonRenderer_renderTile(void *tile, void *camera, void *model);
@@ -22,11 +24,15 @@ namespace ospray {
   // }
   TachyonRenderer::TachyonRenderer()
   {
-    this->ispcEquivalent(ispc::TachyonRenderer_create(this);
+    PING;
+    this->ispcEquivalent = ispc::TachyonRenderer_create(this);
+    PRINT(this->ispcEquivalent);
+    PING;
   }
 
   void TachyonRenderer::commit()
   {
+    PING;
     model = (Model *)getParamObject("world",NULL);
     model = (Model *)getParamObject("model",model);
     if (!model)
@@ -58,11 +64,20 @@ namespace ospray {
       ? dirLightData->size()/sizeof(ospray::tachyon::DirLight)
       : 0;
 
+    bool doShadows = getParam1i("do_shadows",0);
+
     camera = (Camera *)getParamObject("camera",NULL);
-    ispc::TachyonRenderer_set(getIE(),camera->getIE(),model->getIE(),
-                              textureArray,
+    PING;
+    PRINT(model);
+    PRINT(camera);
+    PRINT(textureData);
+    ispc::TachyonRenderer_set(getIE(),
+                              model->getIE(),
+                              camera->getIE(),
+                              textureData->data,
                               pointLightArray,numPointLights,
-                              dirLightArray,numDirLights);
+                              dirLightArray,numDirLights,
+                              doShadows);
   }
 
   // TileRenderer::RenderJob *TachyonRenderer::createRenderJob(FrameBuffer *fb)
