@@ -10,12 +10,14 @@ struct Phong {
   float plastic;
   float size;
 };
+
 struct Texture {
   float ambient, diffuse, specular, opacity;
   Phong phong;
   vec3f color;
   int texFunc;
 };
+
 struct PointLight 
 {
   vec3f center;
@@ -24,6 +26,7 @@ struct PointLight
     float constant, linear, quadratic;
   } att;
 };
+
 struct DirLight 
 {
   vec3f color;
