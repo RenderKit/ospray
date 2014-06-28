@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "ospray/render/tilerenderer.h"
+#include "ospray/render/renderer.h"
 
 /*! @{ \ingroup ospray_module_dvr */
 namespace ospray {
@@ -41,32 +41,35 @@ namespace ospray {
 
   /*! abstract DVR renderer that includes shared functionality for
       both ispc and scalar rendering */
-  struct DVRRendererBase : public TileRenderer {
+  struct DVRRendererBase : public Renderer {
     virtual void commit();
 
     Ref<TransferFct> transferFct;
     Ref<Camera>      camera;
     Ref<Volume>      volume;
+    float dt;
 
-    virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+    // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
 
-    struct RenderJob : public TileRenderer::RenderJob {
-      /*! \brief render given tile */
-      virtual void renderTile(Tile &tile);
+    // struct RenderJob : public TileRenderer::RenderJob {
+    //   /*! \brief render given tile */
+    //   virtual void renderTile(Tile &tile);
       
-      Ref<Camera>      camera;
-      Ref<Volume>      volume;
-      Ref<TransferFct> transferFct;
-      Ref<DVRRendererBase> renderer;
-      float dt;
-    };
-    virtual void renderTileDVR(Tile &tile, RenderJob *job) = 0;
+    //   Ref<Camera>      camera;
+    //   Ref<Volume>      volume;
+    //   Ref<TransferFct> transferFct;
+    //   Ref<DVRRendererBase> renderer;
+    //   float dt;
+    // };
+    // virtual void renderTileDVR(Tile &tile, RenderJob *job) = 0;
   };
 
   /*! test renderer that renders a simple test image using ispc */
   struct ISPCDVRRenderer : public DVRRendererBase {
+    ISPCDVRRenderer();
     virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
-    virtual void renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *job);
+    virtual void commit();
+    // virtual void renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *job);
 
     // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
     // struct TileJob : public TileRenderer::RenderJob {
@@ -80,14 +83,14 @@ namespace ospray {
     // };
   };
 
-  /*! test renderer that renders a simple test image using ispc */
-  struct ScalarDVRRenderer : public DVRRendererBase {
-    virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
-    virtual void renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *job);
+  // /*! test renderer that renders a simple test image using ispc */
+  // struct ScalarDVRRenderer : public DVRRendererBase {
+  //   virtual std::string toString() const { return "ospray::ISPCDVRRenderer"; }
+  //   virtual void renderTileDVR(Tile &tile, DVRRendererBase::RenderJob *job);
 
-    // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
-    // Ref<TransferFct> transferFct;
-  };
+  //   // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+  //   // Ref<TransferFct> transferFct;
+  // };
 }
 /*! @} */
 
