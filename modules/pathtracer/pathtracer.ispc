@@ -503,17 +503,18 @@ inline vec3f PathTracer_renderPixel(uniform PathTracer *uniform THIS,
                                     const uint32 ix, 
                                     const uint32 iy)
 {
+  uniform FrameBuffer *uniform fb = THIS->inherited.fb;
+
   uint32 numRays = 0;
   vec3f L = make_vec3f(0.f);
   uniform int set = Random__getInt(&rnd);
   uniform Camera *uniform camera = THIS->inherited.camera;
-  uniform FrameBuffer *uniform fb = THIS->inherited.fb;
   CameraSample cameraSample;
   ScreenSample screenSample;
 
   screenSample.sampleID.x        = ix;
   screenSample.sampleID.y        = iy;
-
+  
   for (uniform int s=0; s<THIS->spp; s++) {
     screenSample.sampleID.z        = THIS->iteration*THIS->spp+s;
     uniform PrecomputedSample* uniform sample = 
@@ -536,12 +537,12 @@ inline vec3f PathTracer_renderPixel(uniform PathTracer *uniform THIS,
     
     // L = L + abs(ray.dir);
     // L = L + make_vec3f(lensSample.x, lensSample.y, 0.f);
-// vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
-//                              const vec2f &pixel,
-//                              LightPath &lightPath, 
-//                              const uniform Scene *uniform scene,
-//                              const uniform PrecomputedSample* uniform sample_,
-//                              uint32 &numRays)
+    // vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
+    //                              const vec2f &pixel,
+    //                              LightPath &lightPath, 
+    //                              const uniform Scene *uniform scene,
+    //                              const uniform PrecomputedSample* uniform sample_,
+    //                              uint32 &numRays)
     L = L+PathTraceIntegrator_Li(THIS,cameraSample.screen,lightPath,
                                  THIS->scene,sample,numRays);
   }
@@ -573,6 +574,7 @@ void PathTracer_beginFrame(uniform Renderer *uniform renderer,
 {
   uniform PathTracer* uniform THIS = (uniform PathTracer* uniform) renderer;
   if (PrecomputedSampler__empty(&THIS->sampler)) PathTracer__initSampler(THIS,THIS->scene);
+  THIS->inherited.fb = fb;
 }
 
 
@@ -649,18 +651,20 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
   
   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
     const uint32 frag = i*programCount+programIndex;
-    screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
-    screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
-    if ((screenSample.sampleID.x >= fb->size.x) | 
-        (screenSample.sampleID.y >= fb->size.y)) 
-      {
-        continue;
-      }
-
-    cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-    cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+    const uint32 ix = tile.region.lower.x + (frag % TILE_SIZE);
+    const uint32 iy = tile.region.lower.y + (frag / TILE_SIZE);
+    if (ix >= fb->size.x || iy >= fb->size.y) 
+      continue;
+//     screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
+//     screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
+//     if ((screenSample.sampleID.x >= fb->size.x) | 
+//         (screenSample.sampleID.y >= fb->size.y)) 
+//       continue;
+// a
+    // cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+    // cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
     
-    camera->initRay(camera,screenSample.ray,cameraSample);
+    // camera->initRay(camera,screenSample.ray,cameraSample);
 
     // vec3f L = PathTracer_renderPixel(pt,tile,rnd,
     //                                  uniform PathTracer *uniform THIS,
@@ -679,6 +683,7 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
 // //                              uint32 &numRays)
 //     PathTracer_Li(pt,
     // renderer->renderSample(renderer,screenSample);
+    screenSample.rgb = PathTracer_renderPixel(pt,tile,rnd,ix,iy);
      setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
   }
 }
