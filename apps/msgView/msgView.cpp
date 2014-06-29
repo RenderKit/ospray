@@ -13,6 +13,7 @@ namespace ospray {
   using std::endl;
 
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
+  int accumID = -1;
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
@@ -110,6 +111,8 @@ namespace ospray {
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
         viewPort.modified = false;
+        accumID=0;
+        // ospAccum(OSP_ACCUM_CLEAR);
       }
       
       ospRenderFrame(fb,renderer);
