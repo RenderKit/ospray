@@ -14,7 +14,7 @@ namespace ospray {
     const float epsilon = 1e-3f;
     const int32 numSPP = 128;
     void *backplate = NULL;
-    ispcEquivalent = ispc::PathTracer_create(maxDepth,minContribution,epsilon,
+    ispcEquivalent = ispc::PathTracer_create(this,maxDepth,minContribution,epsilon,
                                              numSPP,backplate);
 
   }
@@ -38,11 +38,11 @@ namespace ospray {
     return material;
   }
 
-  void PathTracer::RenderTask::renderTile(Tile &tile)
-  {
-    ispc::PathTracer_renderTile((ispc::Tile &)tile,
-                                pathtracer->getIE());
-  }
+  // void PathTracer::RenderTask::renderTile(Tile &tile)
+  // {
+  //   ispc::PathTracer_renderTile((ispc::Tile &)tile,
+  //                               pathtracer->getIE());
+  // }
 
   void PathTracer::commit() 
   {
@@ -57,11 +57,11 @@ namespace ospray {
       throw std::runtime_error("path tracer doesn't have a camera");
     ispc::PathTracer_setCamera(getIE(),camera->getIE());
   }
-  TileRenderer::RenderJob *PathTracer::createRenderJob(FrameBuffer *fb)
-  { 
-    ispc::PathTracer_renderFrameInit(getIE());
-    return new RenderTask(this); 
-  }
+  // TileRenderer::RenderJob *PathTracer::createRenderJob(FrameBuffer *fb)
+  // { 
+  //   ispc::PathTracer_renderFrameInit(getIE());
+  //   return new RenderTask(this); 
+  // }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
 };
