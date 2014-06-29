@@ -13,6 +13,9 @@ namespace ospray {
       accumID(-1)
   {
     Assert(size.x > 0 && size.y > 0);
+    PING;
+    PRINT(this);
+    PRINT(accumID);
   };
 
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,

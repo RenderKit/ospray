@@ -24,21 +24,19 @@ namespace ospray {
   // }
   TachyonRenderer::TachyonRenderer()
   {
-    PING;
     this->ispcEquivalent = ispc::TachyonRenderer_create(this);
-    PRINT(this->ispcEquivalent);
-    PING;
   }
 
   void TachyonRenderer::commit()
   {
-    PING;
     model = (Model *)getParamObject("world",NULL);
     model = (Model *)getParamObject("model",model);
     if (!model)
       throw std::runtime_error("#osp:tachyon::renderer: no model specified");
 
     doShadows = getParam1i("do_shadows",0);
+    
+    float lightScale = getParam1f("lightScale",1.f);
 
     textureData = (Data*)model->getParamObject("textureArray",NULL);
     if (!textureData)
@@ -67,17 +65,14 @@ namespace ospray {
     bool doShadows = getParam1i("do_shadows",0);
 
     camera = (Camera *)getParamObject("camera",NULL);
-    PING;
-    PRINT(model);
-    PRINT(camera);
-    PRINT(textureData);
     ispc::TachyonRenderer_set(getIE(),
                               model->getIE(),
                               camera->getIE(),
                               textureData->data,
                               pointLightArray,numPointLights,
                               dirLightArray,numDirLights,
-                              doShadows);
+                              doShadows,
+                              lightScale);
   }
 
   // TileRenderer::RenderJob *TachyonRenderer::createRenderJob(FrameBuffer *fb)

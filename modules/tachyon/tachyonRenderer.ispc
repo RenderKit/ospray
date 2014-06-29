@@ -44,6 +44,7 @@ struct TachyonRenderer {
   uniform DirLight   *dirLight;
   uint32  numDirLights;
   bool    doShadows;
+  float   lightScale;
 };
 
 
@@ -154,7 +155,7 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
         const vec3f unshaded_light_contrib
           = local_opacity
           * (diffuse*texture.color+make_vec3f(specular))
-          * l->color * rcpf(attenuation);
+          * tachyon->lightScale * l->color * rcpf(attenuation);
         
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib < .01f)
@@ -183,7 +184,7 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
         const vec3f unshaded_light_contrib
           = local_opacity
           * (diffuse*texture.color+make_vec3f(specular))
-          * l->color;
+          * tachyon->lightScale * l->color;
         
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib < .01f)
@@ -243,10 +244,10 @@ export void TachyonRenderer_set(void *uniform _renderer,
                                 uniform int32  numPointLights,
                                 void *uniform _dirLight,
                                 uniform int32  numDirLights,
-                                uniform bool   doShadows)
+                                uniform bool   doShadows,
+                                uniform float  lightScale)
 {
   uniform TachyonRenderer *uniform renderer = (uniform TachyonRenderer *uniform)_renderer;
-  print("setting tachy %\n",renderer);
   renderer->inherited.model  = (uniform Model *uniform)_model;
   renderer->inherited.camera = (uniform Camera *uniform)_camera;
 
@@ -256,6 +257,8 @@ export void TachyonRenderer_set(void *uniform _renderer,
   renderer->numDirLights = numDirLights;
   renderer->dirLight = (uniform DirLight *uniform)_dirLight;
   renderer->doShadows = doShadows;
+  renderer->lightScale = lightScale;
+  print("lightscale %\n",lightScale);
 }
 
 // export void TachyonRenderer_renderTile(void *uniform _tile,

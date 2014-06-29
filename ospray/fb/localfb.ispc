@@ -168,8 +168,9 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              void *uniform accumBuffer)
 {
   uniform LocalFB *uniform fb = uniform new uniform LocalFB;
-  fb->inherited.setTile   = LocalFrameBuffer_setTile;
-  fb->inherited.accumTile   = LocalFrameBuffer_accumTile;
+  fb->inherited.setTile    = LocalFrameBuffer_setTile;
+  fb->inherited.accumTile  = LocalFrameBuffer_accumTile;
+  fb->inherited.accumID    = -1;
   fb->inherited.size.x     = size_x;
   fb->inherited.size.y     = size_y;
   fb->inherited.rcpSize.x  = 1.f/size_x;

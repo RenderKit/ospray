@@ -6,6 +6,8 @@
 #include "ospray/volume/volume.h"
 // ospray stuff
 #include "ospray/common/ray.h"
+// ispc exports
+#include "xray_renderer_ispc.h"
 
 #define STATS(a) 
 
@@ -18,35 +20,42 @@ namespace ospray {
     STATS(int64 maxFound=-1);
     STATS(int64 numAnyFound=-1);
 
-    // declaration of ispc-side kernel
-    extern "C" void ispc__mhtk_XRayRenderer_renderTile(void *_tile,
-                                                       void *_camera,
-                                                       RTCScene scene);
+    // // declaration of ispc-side kernel
+    // extern "C" void ispc__mhtk_XRayRenderer_renderTile(void *_tile,
+    //                                                    void *_camera,
+    //                                                    RTCScene scene);
     
-    /*! \brief create render job for scalar mhtk::xray renderer */
-    TileRenderer::RenderJob *ScalarXRayRenderer::createRenderJob(FrameBuffer *fb)
-    {
-      STATS(PRINT(numTotalFound));
-      STATS(PRINT(numAnyFound));
-      STATS(PRINT(maxFound));
-      STATS(PRINT(numTotalFound/float(numAnyFound)));
-      STATS(numTotalFound=0);
-      STATS(maxFound=0);
-      STATS(numAnyFound=0);
+    // /*! \brief create render job for scalar mhtk::xray renderer */
+    // TileRenderer::RenderJob *ScalarXRayRenderer::createRenderJob(FrameBuffer *fb)
+    // {
+    //   STATS(PRINT(numTotalFound));
+    //   STATS(PRINT(numAnyFound));
+    //   STATS(PRINT(maxFound));
+    //   STATS(PRINT(numTotalFound/float(numAnyFound)));
+    //   STATS(numTotalFound=0);
+    //   STATS(maxFound=0);
+    //   STATS(numAnyFound=0);
 
-      Model *model = (Model *)getParamObject("model",NULL);
-      Assert2(model,"null model handle in 'xray' renderer "
-             "(did you forget to assign a 'model' parameter to the renderer?)");
+    //   Model *model = (Model *)getParamObject("model",NULL);
+    //   Assert2(model,"null model handle in 'xray' renderer "
+    //          "(did you forget to assign a 'model' parameter to the renderer?)");
 
-      Camera *camera = (Camera *)getParamObject("camera",NULL);
-      Assert2(camera,"null camera handle in 'xray' renderer "
-             "(did you forget to assign a 'camera' parameter to the renderer?)");
+    //   Camera *camera = (Camera *)getParamObject("camera",NULL);
+    //   Assert2(camera,"null camera handle in 'xray' renderer "
+    //          "(did you forget to assign a 'camera' parameter to the renderer?)");
     
-      return new TileJob(camera,model->embreeSceneHandle);
+    //   return new TileJob(camera,model->embreeSceneHandle);
+    // }
+
+    ISPCXRayRenderer::ISPCXRayRenderer()
+    { 
+      ispcEquivalent = ispc::XRayRenderer_create(this); 
+      PING;
+      PRINT(ispcEquivalent);
     }
 
     /*! \brief create render job for ispc-based mhtk::xray renderer */
-    TileRenderer::RenderJob *ISPCXRayRenderer::createRenderJob(FrameBuffer *fb)
+    void ISPCXRayRenderer::commit()
     {
       Model *model = (Model *)getParamObject("model",NULL);
       Assert2(model,"null model handle in 'xray' renderer "
@@ -56,7 +65,9 @@ namespace ospray {
       Assert2(camera,"null camera handle in 'xray' renderer "
              "(did you forget to assign a 'camera' parameter to the renderer?)");
     
-      return new TileJob(camera,model->embreeSceneHandle);
+      PING;
+      PRINT(this->getIE());
+      ispc::XRayRenderer_set(getIE(),model->getIE(),camera->getIE());
     }
 
     /*! \brief perform the actual multihit kernel based xray tracing
@@ -83,11 +94,23 @@ namespace ospray {
       return vec4f(color);
     }
 
+    void ScalarXRayRenderer::commit()
+    {
+      model = (Model *)getParamObject("model",NULL);
+      Assert2(model,"null model handle in 'xray' renderer "
+              "(did you forget to assign a 'model' parameter to the renderer?)");
+      
+      camera = (Camera *)getParamObject("camera",NULL);
+      Assert2(camera,"null camera handle in 'xray' renderer "
+              "(did you forget to assign a 'camera' parameter to the renderer?)");
+
+      embreeSceneHandle = model->embreeSceneHandle;
+    }
+
     /*! \brief rendertile callback for scalar multi-hit kernel xray
         renderer */
-    void ScalarXRayRenderer::TileJob::renderTile(Tile &tile)
+    void ScalarXRayRenderer::renderTile(Tile &tile)
     {
-      tile.format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
       const uint32 size_x = tile.fbSize.x;
       const uint32 size_y = tile.fbSize.y;
       const uint32 x0 = tile.region.lower.x;
@@ -100,27 +123,13 @@ namespace ospray {
           const float screen_v = (y+.5f)*tile.rcp_fbSize.y;
           Ray ray;
           camera->initRay(ray,vec2f(screen_u,screen_v));
-          const vec4f col = traceRayXRay(ray,scene);
+          const vec4f col = traceRayXRay(ray,embreeSceneHandle);
           tile.r[frag] = col.x;
           tile.g[frag] = col.y;
           tile.b[frag] = col.z;
           tile.a[frag] = col.w;
-        
-          unsigned char *rgba = (unsigned char *)&tile.rgba8[frag];
-          rgba[0] = (int)(col.x*255.f);
-          rgba[1] = (int)(col.y*255.f);
-          rgba[2] = (int)(col.z*255.f);
-          rgba[3] = (int)(col.w*255.f);
         }
       }
-    }
-
-    /*! \brief rendertile callback for scalar multi-hit kernel xray
-        renderer */
-    void ISPCXRayRenderer::TileJob::renderTile(Tile &tile)
-    {
-      tile.format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
-      ispc__mhtk_XRayRenderer_renderTile((void*)&tile,camera->getIE(),scene);
     }
 
     OSP_REGISTER_RENDERER(ISPCXRayRenderer,mhtk_xray_ispc);

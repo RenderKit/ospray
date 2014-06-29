@@ -1,5 +1,4 @@
-#ifndef OSPRAY_MODEL_IH
-#define OSPRAY_MODEL_IH
+#pragma once
 
 // ospray stuff
 #include "ospray/common/ray.ih"
@@ -24,24 +23,14 @@ struct Model {
 inline void traceRay(uniform Model *uniform model,
                      varying Ray &ray)
 {
-  // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-#if 0
   rtcIntersect(model->embreeSceneHandle,(varying RTCRay&)ray);
-#else
-  rtcIntersect(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
-#endif
 }
 
 /*! determine if ray is occluded (using embree where possible) */
 inline bool isOccluded(uniform Model *uniform model,
                      varying Ray &ray)
 {
-  // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-#if 0
   rtcOccluded(model->embreeSceneHandle,(varying RTCRay&)ray);
-#else
-  rtcOccluded(model->embreeSceneHandle,*((varying RTCRay *uniform)&ray));
-#endif
   return ray.geomID >= 0;
 }
 
@@ -104,4 +93,3 @@ inline void postIntersect(uniform Model *uniform model,
   }
 }
 
-#endif

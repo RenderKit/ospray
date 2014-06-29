@@ -19,6 +19,10 @@ void Renderer_default_beginFrame(uniform Renderer *uniform renderer,
                          uniform FrameBuffer *uniform fb)
 {
   renderer->fb = fb;
+  if (renderer->camera == NULL)
+    print("warning: ispc-side renderer % does not have a camera\n",renderer);
+  if (renderer->fb == NULL)
+    print("warning: ispc-side renderer % does not have a frame buffer\n",renderer);
 }
 
 void Renderer_default_endFrame(uniform Renderer *uniform renderer)
@@ -28,21 +32,20 @@ void Renderer_default_endFrame(uniform Renderer *uniform renderer)
 
 
 void Renderer_default_renderTile(uniform Renderer *uniform renderer,
-                                     uniform Tile &tile)
+                                 uniform Tile &tile)
 {
   uniform FrameBuffer *uniform fb     = renderer->fb;
-  // print("rendetile, fb=%\n",fb);
   uniform Camera      *uniform camera = renderer->camera;
 
   float pixel_du = .5f, pixel_dv = .5f;
   float lens_du = 0.f, lens_dv = 0.f;
+
   if (fb->accumID >= 0) {
     // compute 
     pixel_du = precomputedHalton2(fb->accumID);
     pixel_dv = precomputedHalton3(fb->accumID);
   }
   
-  // print("du,dv %/%\n",pixel_du,pixel_dv);
   ScreenSample screenSample;
   screenSample.sampleID.z = fb->accumID;
   screenSample.z = inf;
@@ -56,14 +59,12 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
     screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
     if ((screenSample.sampleID.x >= fb->size.x) | 
         (screenSample.sampleID.y >= fb->size.y)) 
-      {
-        setRGBA(tile,i,make_vec3f(1,0,0));
-        continue;
-      }
+      continue;
 
     cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
     cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
     
+
     camera->initRay(camera,screenSample.ray,cameraSample);
     renderer->renderSample(renderer,screenSample);
     setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
