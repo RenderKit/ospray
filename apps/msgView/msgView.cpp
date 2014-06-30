@@ -485,16 +485,37 @@ namespace ospray {
 
     //TODO: Need to figure out where we're going to read lighting data from
     //begin light test
-    std::vector<OSPLight> pointLights;
+    std::vector<OSPLight> dirLights;
     cout << "msgView: Adding a hard coded directional light as the sun." << endl;
     OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
     ospSetString(ospLight, "name", "sun" );
     ospSet3f(ospLight, "color", 1, 1, 1);
     ospSet3f(ospLight, "direction", 0, -1, .4);
     ospCommit(ospLight);
-    pointLights.push_back(ospLight);
-    OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);
-    ospSetData(ospRenderer, "directionalLights", pointLightArray);
+    dirLights.push_back(ospLight);
+    OSPData dirLightArray = ospNewData(dirLights.size(), OSP_OBJECT, &dirLights[0], 0);
+    ospSetData(ospRenderer, "directionalLights", dirLightArray);
+
+#if 0
+    //spot light
+    std::vector<OSPLight> spotLights;
+    cout << "msgView: Adding a hard coded spotlight for test." << endl;
+    OSPLight ospSpot = ospNewLight(ospRenderer, "OBJ_SpotLight");
+    ospSetString(ospSpot, "name", "spot_test");
+    ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
+    ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
+    ospSet3f(ospSpot, "color", 1.f, 1.f, 1.f);
+    ospSet1f(ospSpot, "range", 1000.f);
+    ospSet1f(ospSpot, "halfAngle", 15.f);
+    ospSet1f(ospSpot, "angularDropOff", 6.f);//Unused, delete?
+    ospSet1f(ospSpot, "attenuation.constant", .15f);
+    ospSet1f(ospSpot, "attenuation.linear", .15f);
+    ospSet1f(ospSpot, "attenuation.quadratic", .15f);
+    ospCommit(ospSpot);
+    spotLights.push_back(ospSpot);
+    OSPData spotLightArray = ospNewData(spotLights.size(), OSP_OBJECT, &spotLights[0], 0);
+    ospSetData(ospRenderer, "spotLights", spotLightArray);
+#endif
     //end light test
 
     // -------------------------------------------------------
