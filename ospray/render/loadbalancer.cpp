@@ -32,7 +32,7 @@ namespace ospray {
   }
 
   /*! render a frame via the tiled load balancer */
-  void LocalTiledLoadBalancer::renderFrame(Renderer *renderer,
+  void LocalTiledLoadBalancer::renderFrame(Renderer *tiledRenderer,
                                            FrameBuffer *fb)
   {
     Assert(tiledRenderer);
@@ -40,10 +40,10 @@ namespace ospray {
 
     Ref<RenderTask> renderTask = new RenderTask;
     renderTask->fb = fb;
-    renderTask->renderer = renderer;
+    renderTask->renderer = tiledRenderer;
     renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
     renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-    renderer->beginFrame(fb);
+    tiledRenderer->beginFrame(fb);
 
     /*! iw: using a local sync event for now; "in theory" we should be
         able to attach something like a sync event to the frame
