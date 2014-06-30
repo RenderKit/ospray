@@ -16,47 +16,17 @@
 
 #pragma once
 
-#include "ospray/render/tilerenderer.h"
+#include "ospray/render/renderer.h"
 #include "ospray/common/model.h"
 #include "ospray/camera/camera.h"
 
-//#include "api/parms.h"
-//#include "pathtracer_ispc.h"
-
-// namespace embree
-// {
-
-//   struct PathTracer
-//   {
-//     static void* create(const Parms& parms)
-//     {
-//       const int maxDepth = parms.getInt("maxDepth",10);
-//       const float minContribution = parms.getFloat("minContribution",0.01f);
-//       const float epsilon = parms.getFloat("epsilon",32.0f)*float(ulp);
-//       const int spp = max(1,parms.getInt("sampler.spp",1));
-//       ISPCRef backplate = parms.getImage("backplate");
-//       return ispc::PathTracer__new(maxDepth,minContribution,epsilon,spp,backplate.ptr);
-//     }
-//   };
-// }
-
 namespace ospray {
-  struct PathTracer : public TileRenderer {
+  struct PathTracer : public Renderer {
     virtual std::string toString() const
     { return "ospray::pathtracer::PathTracer"; }
 
-    struct RenderTask : public TileRenderer::RenderJob {
-      RenderTask(PathTracer *pathtracer) : pathtracer(pathtracer) {}
-
-      virtual ~RenderTask() {}
-      virtual void renderTile(Tile &tile);
-
-      Ref<PathTracer> pathtracer;
-    };
-
     PathTracer();
     virtual void commit();
-    virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type);
 

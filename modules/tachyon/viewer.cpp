@@ -12,6 +12,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    float lightScale = 1.f;
     const char *renderType = "tachyon";
     // const char *renderType = "ao16";
     float defaultRadius = .1f;
@@ -78,12 +79,14 @@ namespace ospray {
       }
 
       cout << "#osp:tachyon: creating " << tm.numVertexArrays() << " vertex arrays" << endl;
+      long numTriangles = 0;
       for (int vaID=0;vaID<tm.numVertexArrays();vaID++) {
         const VertexArray *va = tm.getVertexArray(vaID);
         // if (va != tm.getSTriVA())
         //   continue;
         Assert(va);
         OSPGeometry geom = ospNewTriangleMesh();
+        numTriangles += va->triangle.size();
         if (va->triangle.size()) {
           OSPData data = ospNewData(va->triangle.size(),OSP_vec3i,&va->triangle[0]);
           ospCommit(data);
@@ -117,7 +120,6 @@ namespace ospray {
       }
 
 
-
       cout << "#osp:tachyon: specifying " << tm.numTextures() << " materials..." << endl;
       {
         OSPData data = ospNewData(tm.numTextures()*sizeof(Texture),
@@ -147,6 +149,14 @@ namespace ospray {
         ospCommit(data);
         ospSetData(ospModel,"dirLights",data);
       }
+
+      std::cout << "=======================================" << std::endl;
+      std::cout << "Tachyon Renderer: Done specifying model" << std::endl;
+      std::cout << "num spheres: " << tm.numSpheres() << std::endl;
+      std::cout << "num cylinders: " << tm.numCylinders() << std::endl;
+      std::cout << "num triangles: " << numTriangles << std::endl;
+      std::cout << "=======================================" << std::endl;
+
 
       ospCommit(ospModel);
       return ospModel;
@@ -188,6 +198,20 @@ namespace ospray {
           doShadows = !doShadows;
           cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;
           ospSet1i(renderer,"do_shadows",doShadows);
+          ospCommit(renderer);
+          break;
+        case 'L':
+          lightScale *= 1.5f;
+          ospSet1f(renderer,"lightScale",lightScale);
+          PRINT(lightScale);
+          PRINT(renderer);
+          ospCommit(renderer);
+          break;
+        case 'l':
+          lightScale /= 1.5f;
+          PRINT(lightScale);
+          PRINT(renderer);
+          ospSet1f(renderer,"lightScale",lightScale);
           ospCommit(renderer);
           break;
         case '<':

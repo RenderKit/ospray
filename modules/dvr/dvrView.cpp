@@ -214,7 +214,8 @@ namespace ospray {
         renderType = "dvr_ispc";
       } else if (arg == "--scalar") {
         // resample volume to this size
-        renderType = "dvr_scalar";
+        throw std::runtime_error("scalar dvr renderer currently disabled; use ispc variant");
+        //renderType = "dvr_scalar";
       } else if (arg == "--naive") {
         // use naive32 volume layout
         volumeLayout = "naive32";

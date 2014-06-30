@@ -5,17 +5,20 @@
 #include "ospray/camera/perspectivecamera.ih"
 #include "ospray/common/model.ih"
 #include "ospray/render/util.ih"
+#include "ospray/render/renderer.ih"
 
 struct Phong {
   float plastic;
   float size;
 };
+
 struct Texture {
   float ambient, diffuse, specular, opacity;
   Phong phong;
   vec3f color;
   int texFunc;
 };
+
 struct PointLight 
 {
   vec3f center;
@@ -24,28 +27,33 @@ struct PointLight
     float constant, linear, quadratic;
   } att;
 };
+
 struct DirLight 
 {
   vec3f color;
   vec3f dir;
 };
 
-struct Tachyon {
-  uniform Model *model;
-  uniform Texture *textureArray;
+struct TachyonRenderer {
+  Renderer inherited;
+
+  // uniform Model *model;
+  uniform Texture    *textureArray;
   uniform PointLight *pointLight;
   uint32  numPointLights;
-  uniform DirLight *dirLight;
+  uniform DirLight   *dirLight;
   uint32  numDirLights;
   bool    doShadows;
+  float   lightScale;
 };
+
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
 
 //inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
 
-inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon, const float weight)
+inline float lightAlpha(Ray &ray, uniform TachyonRenderer *uniform tachyon, const float weight)
 {
   if (!tachyon->doShadows)
     return 1.f; 
@@ -54,12 +62,12 @@ inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon, const float 
   int max_depth = 8; // max number of rays to be traced...
   float org_t_max = ray.t;
   while (1) {
-    traceRay(tachyon->model,ray);
+    traceRay(tachyon->inherited.model,ray);
     if (ray.geomID < 0) 
       return alpha;
     
     DifferentialGeometry dg;
-    postIntersect(tachyon->model,dg,ray,
+    postIntersect(tachyon->inherited.model,dg,ray,
                   DG_MATERIALID
                   );
     const float material_opacity = tachyon->textureArray[dg.materialID].opacity;
@@ -84,14 +92,14 @@ inline float lightAlpha(Ray &ray, uniform Tachyon *uniform tachyon, const float 
   }
 }
 
-inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
+inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
 { 
   vec3f color = make_vec3f(0.f);
   float path_opacity = 1.f;
   int max_depth = 10; // max number of rays to be traced...
   uniform int depth = 0;
   while (1) {
-    traceRay(tachyon->model,ray);
+    traceRay(tachyon->inherited.model,ray);
     if (ray.geomID < 0) {
       vec3f bgColor = make_vec3f(1.f);
       // if (depth == 0)
@@ -104,7 +112,7 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
 
     vec3f localShadeColor = make_vec3f(0.f);
     DifferentialGeometry dg;
-    postIntersect(tachyon->model,dg,ray,
+    postIntersect(tachyon->inherited.model,dg,ray,
                   DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
                   |DG_MATERIALID|DG_COLOR
                   );
@@ -147,7 +155,7 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
         const vec3f unshaded_light_contrib
           = local_opacity
           * (diffuse*texture.color+make_vec3f(specular))
-          * l->color * rcpf(attenuation);
+          * tachyon->lightScale * l->color * rcpf(attenuation);
         
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib < .01f)
@@ -170,13 +178,13 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
         
         const float cosNL = abs(dot(L,dg.Ns));
         const float cosLR = max(0.f,dot(L,R));
-        // print("cosLR %\n",cosLR);
         const float diffuse  = texture.diffuse * cosNL;
-        const float specular = (texture.specular+texture.phong.plastic)* powf(cosLR,texture.phong.size);
+        const float specular = (texture.specular+texture.phong.plastic)
+          * powf(cosLR,texture.phong.size);
         const vec3f unshaded_light_contrib
           = local_opacity
           * (diffuse*texture.color+make_vec3f(specular))
-          * l->color;
+          * tachyon->lightScale * l->color;
         
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib < .01f)
@@ -213,51 +221,91 @@ inline vec3f shade(Ray &ray, uniform Tachyon *uniform tachyon)
   return color;
 }
 
-export void TachyonRenderer_renderTile(void *uniform _tile,
-                                       void *uniform _camera,
-                                       void *uniform _model,
-                                       void *uniform _textureArray,
-                                       void *uniform _pointLight,
-                                       uniform uint32 numPointLights,
-                                       void *uniform _dirLight,
-                                       uniform uint32 numDirLights,
-                                       uniform bool doShadows)
+void TachyonRenderer_renderSample(uniform Renderer *uniform _renderer,
+                               varying ScreenSample &sample)
 {
-  uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-
-  uniform Tachyon tachyon;
-  tachyon.textureArray = (uniform Texture *uniform)_textureArray;
-  tachyon.model   = (uniform Model *uniform)_model;
-  tachyon.numPointLights = numPointLights;
-  tachyon.pointLight = (uniform PointLight *uniform)_pointLight;
-  tachyon.numDirLights = numDirLights;
-  tachyon.dirLight = (uniform DirLight *uniform)_dirLight;
-  tachyon.doShadows = doShadows;
-
-  tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
-  const uniform uint32 size_x = tile->fbSize.x;
-  const uniform uint32 size_y = tile->fbSize.y;
-  const uniform uint32 x0 = tile->region.lower.x;
-  const uniform uint32 y0 = tile->region.lower.y;
-  for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32 frag = i*programCount+programIndex;
-    const uint32  x     = x0 + (frag % TILE_SIZE);
-    const uint32  y     = y0 + (frag / TILE_SIZE);
-    if (x < size_x & y < size_y) {
-      const float screen_u = (x+.5f)/size_x;
-      const float screen_v = (y+.5f)/size_y;
-      Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-                      (varying vec2f)make_vec2f(0.f,0.f));
-      const vec4f col = make_vec4f(shade(ray,&tachyon));
-      tile->r[i] = col.x;
-      tile->g[i] = col.y;
-      tile->b[i] = col.z;
-      tile->a[i] = col.w;
-      tile->z[i] = ray.t;
-      tile->rgba8[i] = cvt_uint32(col);
-    }
-  }
+  uniform TachyonRenderer *uniform renderer = (uniform TachyonRenderer *uniform)_renderer;
+  sample.rgb = shade(sample.ray,renderer);
 }
+
+export void *uniform TachyonRenderer_create(void *uniform cppE)
+{
+  uniform TachyonRenderer *uniform renderer = uniform new uniform TachyonRenderer;
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
+  renderer->inherited.renderSample = TachyonRenderer_renderSample;
+  return renderer;
+}
+
+export void TachyonRenderer_set(void *uniform _renderer,
+                                void *uniform _model,
+                                void *uniform _camera,
+                                void *uniform _textureArray,
+                                void *uniform _pointLight,
+                                uniform int32  numPointLights,
+                                void *uniform _dirLight,
+                                uniform int32  numDirLights,
+                                uniform bool   doShadows,
+                                uniform float  lightScale)
+{
+  uniform TachyonRenderer *uniform renderer = (uniform TachyonRenderer *uniform)_renderer;
+  renderer->inherited.model  = (uniform Model *uniform)_model;
+  renderer->inherited.camera = (uniform Camera *uniform)_camera;
+
+  renderer->textureArray = (uniform Texture *uniform)_textureArray;
+  renderer->numPointLights = numPointLights;
+  renderer->pointLight = (uniform PointLight *uniform)_pointLight;
+  renderer->numDirLights = numDirLights;
+  renderer->dirLight = (uniform DirLight *uniform)_dirLight;
+  renderer->doShadows = doShadows;
+  renderer->lightScale = lightScale;
+  print("lightscale %\n",lightScale);
+}
+
+// export void TachyonRenderer_renderTile(void *uniform _tile,
+//                                        void *uniform _camera,
+//                                        void *uniform _model,
+//                                        void *uniform _textureArray,
+//                                        void *uniform _pointLight,
+//                                        uniform uint32 numPointLights,
+//                                        void *uniform _dirLight,
+//                                        uniform uint32 numDirLights,
+//                                        uniform bool doShadows)
+// {
+//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
+//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+
+//   uniform TachyonRenderer ytachyon;
+//   tachyon.textureArray = (uniform Texture *uniform)_textureArray;
+//   tachyon.model   = (uniform Model *uniform)_model;
+//   tachyon.numPointLights = numPointLights;
+//   tachyon.pointLight = (uniform PointLight *uniform)_pointLight;
+//   tachyon.numDirLights = numDirLights;
+//   tachyon.dirLight = (uniform DirLight *uniform)_dirLight;
+//   tachyon.doShadows = doShadows;
+
+//   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
+//   const uniform uint32 size_x = tile->fbSize.x;
+//   const uniform uint32 size_y = tile->fbSize.y;
+//   const uniform uint32 x0 = tile->region.lower.x;
+//   const uniform uint32 y0 = tile->region.lower.y;
+//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+//     const uint32 frag = i*programCount+programIndex;
+//     const uint32  x     = x0 + (frag % TILE_SIZE);
+//     const uint32  y     = y0 + (frag / TILE_SIZE);
+//     if (x < size_x & y < size_y) {
+//       const float screen_u = (x+.5f)/size_x;
+//       const float screen_v = (y+.5f)/size_y;
+//       Ray ray;
+//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+//                       (varying vec2f)make_vec2f(0.f,0.f));
+//       const vec4f col = make_vec4f(shade(ray,&tachyon));
+//       tile->r[i] = col.x;
+//       tile->g[i] = col.y;
+//       tile->b[i] = col.z;
+//       tile->a[i] = col.w;
+//       tile->z[i] = ray.t;
+//       tile->rgba8[i] = cvt_uint32(col);
+//     }
+//   }
+// }
 

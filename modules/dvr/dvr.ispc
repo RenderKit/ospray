@@ -8,6 +8,13 @@
 #include "ospray/math/bbox.ih"
 #include "ospray/volume/volume.ih"
 #include "ospray/render/util.ih"
+#include "ospray/render/renderer.ih"
+
+struct DVRRenderer {
+  Renderer inherited;
+  uniform Volume *uniform volume;
+  uniform float dt;
+};
 
 //! performs a ray-box intersection test, and returns intersection interval [t0,t1]
 inline void boxtest(const Ray &ray,
@@ -74,7 +81,8 @@ inline vec4f traceRayDVR(const Ray &ray,
         color_sample.x = colorLookup.x;
         color_sample.y = colorLookup.y;
         color_sample.z = colorLookup.z;
-    }
+    } else
+      a = f1;
 
     const float alpha = 1.0 - exp(-a * step_size);
     const float alpha_1msa = alpha * (1.0-color.w);
@@ -87,44 +95,80 @@ inline vec4f traceRayDVR(const Ray &ray,
   return color;
 }
 
-export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
-                                             void *uniform _camera,
-                                             void *uniform _volume,
-                                             uniform float dt)
+
+void DVRRenderer_renderSample(uniform Renderer *uniform _renderer,
+                                  varying ScreenSample &sample)
 {
-  uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
-  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-  uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-
-  tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
-  const uniform uint32 size_x = tile->fbSize.x;
-  const uniform uint32 size_y = tile->fbSize.y;
-  const uniform uint32 x0 = tile->region.lower.x;
-  const uniform uint32 y0 = tile->region.lower.y;
-  for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32 frag = i*programCount+programIndex;
-    const uint32  x     = x0 + (frag % TILE_SIZE);
-    const uint32  y     = y0 + (frag / TILE_SIZE);
-    // print("pixel % %\n",x,y);
-    if (x < size_x & y < size_y) {
-      // print("+pixel % %\n",x,y);
-      
-      const float screen_u = (x+.5f)*tile->rcp_fbSize.x;
-      const float screen_v = (y+.5f)*tile->rcp_fbSize.y;
-      Ray ray;
-      camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-                      (varying vec2f)make_vec2f(0.f,0.f));
-
-      const vec4f col = 10 * traceRayDVR(ray,volume,dt);
-#if 1
-      tile->r[i] = col.x;
-      tile->g[i] = col.y;
-      tile->b[i] = col.z;
-      tile->a[i] = col.w;
-      tile->z[i] = ray.t;
-      tile->rgba8[i] = cvt_uint32(col);
-#endif
-    }
-  }
-
+  uniform DVRRenderer *uniform renderer = (uniform DVRRenderer *uniform)_renderer;
+  // print("sample.ray.org.x %\n",sample.ray.org.x);
+  vec4f rgba = traceRayDVR(sample.ray,renderer->volume,renderer->dt);
+  sample.rgb.x = rgba.x;
+  sample.rgb.y = rgba.y;
+  sample.rgb.z = rgba.z;
+  sample.alpha = rgba.w;
 }
+
+// export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
+//                                              void *uniform _camera,
+//                                              void *uniform _volume,
+//                                              uniform float dt)
+// {
+//   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
+//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
+
+//   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
+//   const uniform uint32 size_x = tile->fbSize.x;
+//   const uniform uint32 size_y = tile->fbSize.y;
+//   const uniform uint32 x0 = tile->region.lower.x;
+//   const uniform uint32 y0 = tile->region.lower.y;
+//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+//     const uint32 frag = i*programCount+programIndex;
+//     const uint32  x     = x0 + (frag % TILE_SIZE);
+//     const uint32  y     = y0 + (frag / TILE_SIZE);
+//     // print("pixel % %\n",x,y);
+//     if (x < size_x & y < size_y) {
+//       // print("+pixel % %\n",x,y);
+      
+//       const float screen_u = (x+.5f)*tile->rcp_fbSize.x;
+//       const float screen_v = (y+.5f)*tile->rcp_fbSize.y;
+//       Ray ray;
+//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+//                       (varying vec2f)make_vec2f(0.f,0.f));
+
+//       const vec4f col = 10 * traceRayDVR(ray,volume,dt);
+// #if 1
+//       tile->r[i] = col.x;
+//       tile->g[i] = col.y;
+//       tile->b[i] = col.z;
+//       tile->a[i] = col.w;
+//       tile->z[i] = ray.t;
+//       tile->rgba8[i] = cvt_uint32(col);
+// #endif
+//     }
+//   }
+
+// }
+
+
+export void *uniform DVRRenderer_create(void *uniform cppE)
+{
+  uniform DVRRenderer *uniform renderer = uniform new uniform DVRRenderer;
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
+  renderer->inherited.renderSample = DVRRenderer_renderSample;
+  return renderer;
+}
+
+
+export void DVRRenderer_set(void *uniform _renderer,
+                            void *uniform _camera,
+                            void *uniform _volume,
+                            uniform float dt)
+{
+  uniform DVRRenderer *uniform renderer = (uniform DVRRenderer *uniform)_renderer;
+  renderer->inherited.model  = NULL;
+  renderer->inherited.camera = (uniform Camera *uniform)_camera;
+  renderer->volume = (uniform Volume *uniform)_volume;
+  renderer->dt = dt;
+}
+

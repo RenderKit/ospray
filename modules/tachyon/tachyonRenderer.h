@@ -9,10 +9,10 @@
  */
 
 // ospray
-#include "ospray/render/tilerenderer.h"
+#include "ospray/render/renderer.h"
 
 namespace ospray {
-  using embree::TaskScheduler;
+  // using embree::TaskScheduler;
 
   struct Camera;
   struct Model;
@@ -27,11 +27,12 @@ namespace ospray {
   } RC_SHADEMODE;
 
   /*! \brief Implements the family of simple ray cast renderers */
-  struct TachyonRenderer : public TileRenderer {
+  struct TachyonRenderer : public Renderer {
+    TachyonRenderer();
+    virtual void commit();
     virtual std::string toString() const { return "ospray::TachyonRenderer"; }
 
-    struct RenderTask : public TileRenderer::RenderJob {
-      Model  *world;
+      Model  *model;
       Camera *camera;
       Data   *textureData;
       Data   *pointLightData;
@@ -41,11 +42,22 @@ namespace ospray {
       void   *dirLightArray;
       uint32  numDirLights;
       bool    doShadows;
+    // struct RenderTask : public TileRenderer::RenderJob {
+    //   Model  *world;
+    //   Camera *camera;
+    //   Data   *textureData;
+    //   Data   *pointLightData;
+    //   void   *pointLightArray;
+    //   uint32  numPointLights;
+    //   Data   *dirLightData;
+    //   void   *dirLightArray;
+    //   uint32  numDirLights;
+    //   bool    doShadows;
 
-      virtual void renderTile(Tile &tile);
-      virtual ~RenderTask() {}
-    };
-    virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
-  private:
+    //   virtual void renderTile(Tile &tile);
+    //   virtual ~RenderTask() {}
+    // };
+    // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
+  // private:
   };
 };

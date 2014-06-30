@@ -1,9 +1,8 @@
-#ifndef OSPRAY_GEOMETRY_IH
-#define OSPRAY_GEOMETRY_IH
+#pragma once
 
 #include "ospray/common/material.ih"
 #include "ospray/common/ray.ih"
-#include "common/dg.ih"
+#include "ospray/common/dg.ih"
 
 typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
                                           uniform Model *uniform model,
@@ -33,4 +32,3 @@ extern void Geometry_Constructor(uniform Geometry *uniform geometry,
 //! destructor for ispc-side Geometry object
 extern void Geometry_Destructor(uniform Geometry *uniform mesh);
 
-#endif

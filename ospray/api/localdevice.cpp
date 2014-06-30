@@ -159,8 +159,9 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
-
-      object->findParam(bufName,1)->set(f);
+      
+      ManagedObject::Param *param = object->findParam(bufName,1);
+      param->set(f);
     }
 
     /*! assign (named) vec3f parameter to an object */

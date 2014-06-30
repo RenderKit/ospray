@@ -5,6 +5,7 @@
 #include "ospray/fb/framebuffer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/ray.ih"
+#include "ospray/render/renderer.ih"
 
 // path tracer stuff
 #include "samplers/precomputed_sampler.ih"
@@ -26,7 +27,7 @@ struct Image
 };
 
 struct PathTracer {
-  // uniform Renderer base;
+  uniform Renderer inherited;
   uniform int32 numRays;
   uniform int32 maxDepth;
   uniform float minContribution;
@@ -50,7 +51,7 @@ struct PathTracer {
   uniform int32 precomputedLightSampleID[MAX_LIGHTS]; //!< ID of precomputed light samples for lights that need precomputations.
   uniform PrecomputedSampler sampler;
 
-  uniform Camera *camera;
+  // uniform Camera *camera;
 };
 
 
