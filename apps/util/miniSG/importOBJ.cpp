@@ -329,13 +329,13 @@ namespace ospray {
       if (isnan(v[i.v].x) || isnan(v[i.v].y) || isnan(v[i.v].z))
         return -1;
 
-      if (i.vn >= 0 && (isnan(mesh->normal[i.vn].x) ||
-                        isnan(mesh->normal[i.vn].y) ||
-                        isnan(mesh->normal[i.vn].z)))
+      if (i.vn >= 0 && (isnan(vn[i.vn].x) ||
+                        isnan(vn[i.vn].y) ||
+                        isnan(vn[i.vn].z)))
         return -1;
 
-      if (i.vt >= 0 && (isnan(mesh->texcoord[i.vt].x) ||
-                        isnan(mesh->texcoord[i.vt].y)))
+      if (i.vt >= 0 && (isnan(vt[i.vt].x) ||
+                        isnan(vt[i.vt].y)))
         return -1;
 
       mesh->position.push_back(v[i.v]);
