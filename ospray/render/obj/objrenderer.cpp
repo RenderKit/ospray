@@ -2,6 +2,7 @@
 #include "objrenderer.h"
 #include "objmaterial.h"
 #include "objpointlight.h"
+#include "objspotlight.h"
 // ospray
 #include "ospray/common/model.h"
 #include "ospray/common/data.h"
@@ -34,8 +35,6 @@ namespace ospray {
         }
       }
 
-      // pointLightArray = &pointLightArray[0];
-
       dirLightData = (Data*)getParamData("directionalLights", NULL);
 
       PING;
@@ -44,13 +43,22 @@ namespace ospray {
           dirLightArray.push_back(((Light**)dirLightData->data)[i]->getIE());
         }
       }
+
+      spotLightData = (Data*)getParamData("spotLights", NULL);
+      PING;
+      if( spotLightData && spotLightArray.empty()) {
+        for (int i =0; i < spotLightData->size(); i++) {
+          spotLightArray.push_back(((Light**)spotLightData->data)[i]->getIE());
+        }
+      }
       
       PING;
       ispc::OBJRenderer_set(getIE(),
                             world->getIE(),
                             camera->getIE(),
-                            &pointLightArray[0],pointLightArray.size(),
-                            &dirLightArray[0],dirLightArray.size());
+                            &pointLightArray[0], pointLightArray.size(),
+                            &dirLightArray[0], dirLightArray.size(),
+                            &spotLightArray[0], spotLightArray.size());
       PING;
     }
     
@@ -69,11 +77,15 @@ namespace ospray {
     /*! \brief create a light of given type */
     Light *OBJRenderer::createLight(const char *type)
     {
-      if(!strcmp("PointLight", type)) {
-        Light *light = new OBJPointLight;
-        return light;
+      Light *light = NULL;
+
+      if (strcmp("PointLight", type) == 0) {
+        light = new OBJPointLight;
+      } else if (strcmp("SpotLight", type) == 0) {
+        light = new OBJSpotLight;
       }
-      return NULL;
+
+      return light;
     }
 
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);

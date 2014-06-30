@@ -12,7 +12,6 @@ struct SpotLight {
   uniform vec3f color;            //!< RGB color of the SpotLight
   uniform float range;            //!< Max influence range of the SpotLight
   uniform float halfAngle;        //!< Half angle of spot light. If angle from intersection to light is greater than this, the light does not influence shading for that intersection
-  uniform float angularDropOff;   //!< This gives the drop off of light intensity as angle between intersection point and light position increases
 };
 
 //!< Construct a new ispc-side SpotLight object
@@ -22,8 +21,7 @@ extern void SpotLight_Constructor(uniform SpotLight *uniform THIS,
                                   const uniform vec3f &direction,
                                   const uniform vec3f &color,
                                   const uniform float range,
-                                  const uniform float halfAngle,
-                                  const uniform float angularDropOff);
+                                  const uniform float halfAngle);
 
 //!< Destruct an ispc-side SpotLight object
 extern void SpotLight_Destructor(uniform SpotLight *uniform THIS);

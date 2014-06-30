@@ -13,6 +13,7 @@
 // obj renderer
 #include "objmaterial.ih"
 #include "objpointlight.ih"
+#include "objspotlight.ih"
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
@@ -26,6 +27,8 @@ struct OBJRenderer {
   uint32        numPointLights;
   const uniform DirectionalLight *uniform *uniform dirLights;
   uint32        numDirLights;
+  const uniform OBJSpotLight *uniform *uniform spotLights;
+  uint32        numSpotLights;
 };
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight) {
@@ -163,10 +166,42 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib > .01f) {
           Ray shadowRay;
-          setRay(shadowRay,P,L);
+          setRay(shadowRay, P, L);
           const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
 
           local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
+        }
+      }
+
+      //calculate shading for spot lights
+      for (uniform int i = 0; i < renderer->numSpotLights && renderer->spotLights; i++) {
+        const uniform OBJSpotLight *uniform l = (const uniform OBJSpotLight *uniform)renderer->spotLights[i];
+        float dist;
+        const vec3f L = normalize(l->base.position - P, dist);
+        if (dist > l->base.range) continue;
+        const vec3f D = neg(l->base.direction);
+        const float cosLD = dot(L,D);
+        const float cosHalfAngleRads = cos((l->base.halfAngle * M_PI) / 180.0f);
+
+        if (cosLD > cosHalfAngleRads) {  //Inside the cone
+          const float cosNL = abs(dot(L, dg.Ns));
+          const float cosLR = max(0.f, dot(L,R));
+
+          const float attenuation = l->constantAttenuation
+                                    + l->linearAttenuation * dist
+                                    + l->quadraticAttenuation * dist * dist;
+
+          const float angleAttenuation = (cosLD - cosHalfAngleRads) / (1 - cosHalfAngleRads);
+
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->base.color * rcpf(attenuation) * angleAttenuation;
+          const float max_contrib = reduce_max(unshaded_light_contrib);
+          if (max_contrib > .01f) {
+            Ray shadowRay;
+            setRay(shadowRay, P, L);
+            const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
+
+            local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
+          }
         }
       }
 
@@ -210,7 +245,9 @@ export void OBJRenderer_set(void *uniform _renderer,
                             void **uniform pointLights,
                             uniform int32  numPointLights,
                             void **uniform dirLights,
-                            uniform int32  numDirLights)
+                            uniform int32  numDirLights,
+                            void **uniform spotLights,
+                            uniform int32  numSpotLights)
 {
   uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
   renderer->inherited.model  = (uniform Model *uniform)_model;
@@ -221,6 +258,9 @@ export void OBJRenderer_set(void *uniform _renderer,
   
   renderer->numDirLights = numDirLights;
   renderer->dirLights = (const uniform DirectionalLight *uniform *uniform)dirLights;
+
+  renderer->numSpotLights = numSpotLights;
+  renderer->spotLights = (const uniform OBJSpotLight *uniform *uniform)spotLights;
 }
 
 

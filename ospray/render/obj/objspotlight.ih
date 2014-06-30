@@ -1,0 +1,29 @@
+#ifndef OSPRAY_OBJ_SPOT_LIGHT_IH
+#define OSPRAY_OBJ_SPOT_LIGHT_IH
+
+#include "ospray/lights/spotlight.ih"
+
+//! ISPC implementation of an OBJSpotLight
+struct OBJSpotLight {
+  uniform SpotLight base;   //!< inherited SpotLight fields
+
+  uniform float constantAttenuation;
+  uniform float linearAttenuation;
+  uniform float quadraticAttenuation;
+};
+
+//! Construct a new ispc-side OBJSpotLight
+extern void OBJSpotLight_Constructor( uniform OBJSpotLight *uniform THIS,
+                                      void *uniform cppEquivalent,
+                                      const uniform vec3f &position,
+                                      const uniform vec3f &direction,
+                                      const uniform vec3f &color,
+                                      const uniform float range,
+                                      const uniform float halfAngle,
+                                      const uniform float linearAttenuation,
+                                      const uniform float quadraticAttenuation);
+
+//! Destruct an ispc-side OBJSpotLight
+extern void OBJSpotLight_Destructor(uniform OBJSpotLight *uniform THIS);
+
+#endif
