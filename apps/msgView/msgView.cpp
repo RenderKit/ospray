@@ -15,6 +15,9 @@ namespace ospray {
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   int accumID = -1;
 
+  /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
+  vec3f defaultDirLight_direction(-.3, -1, .4);
+
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
   OSPRenderer        ospRenderer = NULL;
@@ -296,6 +299,10 @@ namespace ospray {
         cout << "loading ospray module '" << moduleName << "'" << endl;
         ospLoadModule(moduleName);
         rendererType = moduleName;
+      } else if (arg == "--sun-dir") {
+        defaultDirLight_direction.x = atof(av[++i]);
+        defaultDirLight_direction.y = atof(av[++i]);
+        defaultDirLight_direction.z = atof(av[++i]);
       } else if (arg == "--module" || arg == "--plugin") {
         assert(i+1 < ac);
         const char *moduleName = av[++i];
@@ -492,7 +499,7 @@ namespace ospray {
     OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
     ospSetString(ospLight, "name", "sun" );
     ospSet3f(ospLight, "color", 1, 1, 1);
-    ospSet3f(ospLight, "direction", -.3, -1, .4);
+    ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
     ospCommit(ospLight);
     pointLights.push_back(ospLight);
     OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);
