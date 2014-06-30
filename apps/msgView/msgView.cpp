@@ -301,6 +301,8 @@ namespace ospray {
         const char *moduleName = av[++i];
         cout << "loading ospray module '" << moduleName << "'" << endl;
         ospLoadModule(moduleName);
+      } else if (arg == "--1k") {
+        g_width = g_height = 1024;
       } else if (arg == "-win") {
         if (++i < ac)
           {
@@ -490,7 +492,7 @@ namespace ospray {
     OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
     ospSetString(ospLight, "name", "sun" );
     ospSet3f(ospLight, "color", 1, 1, 1);
-    ospSet3f(ospLight, "direction", 0, -1, .4);
+    ospSet3f(ospLight, "direction", -.3, -1, .4);
     ospCommit(ospLight);
     pointLights.push_back(ospLight);
     OSPData pointLightArray = ospNewData(pointLights.size(), OSP_OBJECT, &pointLights[0], 0);

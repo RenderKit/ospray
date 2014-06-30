@@ -2,7 +2,6 @@
 
 // ospray
 #include "tachyonRenderer.h"
-#include "renderer_ispc.h"
 #include "ospray/camera/perspectivecamera.h"
 #include "common/data.h"
 // tachyon

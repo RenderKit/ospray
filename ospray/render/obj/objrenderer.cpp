@@ -37,20 +37,24 @@ namespace ospray {
       // pointLightArray = &pointLightArray[0];
 
       dirLightData = (Data*)getParamData("directionalLights", NULL);
-
       PING;
+      PRINT(dirLightData);
+
       if (dirLightData && dirLightArray.empty()) {
         for (int i = 0; i < dirLightData->size(); i++) {
-          dirLightArray.push_back(((Light**)dirLightData->data)[i]->getIE());
+          Light *light_i = ((Light**)dirLightData->data)[i];
+          PRINT(light_i);
+          dirLightArray.push_back(light_i->getIE());
         }
       }
-      
-      PING;
+
+      void **pointLightPtr = pointLightArray.empty() ? NULL : &pointLightArray[0];
+      void **dirLightPtr = dirLightArray.empty() ? NULL : &dirLightArray[0];
       ispc::OBJRenderer_set(getIE(),
-                            world->getIE(),
-                            camera->getIE(),
-                            &pointLightArray[0],pointLightArray.size(),
-                            &dirLightArray[0],dirLightArray.size());
+                            world?world->getIE():NULL,
+                            camera?camera->getIE():NULL,
+                            pointLightPtr,pointLightArray.size(),
+                            dirLightPtr,dirLightArray.size());
       PING;
     }
     

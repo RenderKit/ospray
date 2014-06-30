@@ -33,6 +33,7 @@ namespace ospray {
       Camera   *camera;
       Data     *pointLightData;
       Data     *dirLightData;
+
       uint32    numDirLights;
       
       virtual void commit();

@@ -326,6 +326,18 @@ namespace ospray {
       const std::map<Vertex, uint32>::iterator& entry = vertexMap.find(i);
       if (entry != vertexMap.end()) return(entry->second);
 
+      if (isnan(v[i.v].x) || isnan(v[i.v].y) || isnan(v[i.v].z))
+        return -1;
+
+      if (i.vn >= 0 && (isnan(mesh->normal[i.vn].x) ||
+                        isnan(mesh->normal[i.vn].y) ||
+                        isnan(mesh->normal[i.vn].z)))
+        return -1;
+
+      if (i.vt >= 0 && (isnan(mesh->texcoord[i.vt].x) ||
+                        isnan(mesh->texcoord[i.vt].y)))
+        return -1;
+
       mesh->position.push_back(v[i.v]);
       if (i.vn >= 0) mesh->normal.push_back(vn[i.vn]);
       if (i.vt >= 0) mesh->texcoord.push_back(vt[i.vt]);
@@ -357,9 +369,11 @@ namespace ospray {
           /* triangulate the face with a triangle fan */
           for (size_t k=2; k < face.size(); k++) {
             i1 = i2; i2 = face[k];
-            uint32 v0 = getVertex(vertexMap, mesh, i0);
-            uint32 v1 = getVertex(vertexMap, mesh, i1);
-            uint32 v2 = getVertex(vertexMap, mesh, i2);
+            int32 v0 = getVertex(vertexMap, mesh, i0);
+            int32 v1 = getVertex(vertexMap, mesh, i1);
+            int32 v2 = getVertex(vertexMap, mesh, i2);
+            if (v0 < 0 || v1 < 0 || v2 < 0)
+              continue;
             Triangle tri;
             tri.v0 = v0;
             tri.v1 = v1;

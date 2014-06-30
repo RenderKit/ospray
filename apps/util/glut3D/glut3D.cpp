@@ -346,6 +346,11 @@ namespace ospray {
           }
           continue;
         }
+        if (arg == "--1k") {
+          g_width = g_height = 1024;
+          removeArgs(*ac,(char **&)av,i,1);
+          continue;
+        }
         if (arg == "-vu") {
           // if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
           // viewPortFromCmdLine->up.x = atof(av[i+1]);

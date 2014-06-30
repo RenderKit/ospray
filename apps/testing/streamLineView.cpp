@@ -21,7 +21,7 @@ namespace ospray {
     cout << "ospray::ospDVR fatal error : " << err << endl;
     cout << endl;
     cout << "Proper usage: " << endl;
-    cout << "  ./streamLineView <file1.pnt> <file2.pnt> ...." << std::endl;
+    cout << "  ./streamLineView <file1.pnt> <file2.pnt> ....<fileN.sv>" << std::endl;
     cout << "or" << endl;
     cout << "  ./streamLineView <listOfPntFiles.pntlist> ...." << std::endl;
     cout << endl;
@@ -29,6 +29,43 @@ namespace ospray {
   }
 
   using ospray::glut3D::Glut3DWidget;
+
+  struct Triangles {
+    std::vector<vec3fa> vertex;
+    std::vector<vec3fa> color; // vertex color, from sv's 'v' value
+    std::vector<vec3i>  index;
+
+    struct SVVertex {
+      float v;
+      vec3f pos; //float x,y,z;
+    };
+
+    struct SVTriangle {
+      SVVertex vertex[3];
+    };
+
+    void parseSV(const embree::FileName &fn)
+    {
+      FILE *file = fopen(fn.str().c_str(),"rb");
+      if (!file) return;
+      SVTriangle triangle;
+      while (fread(&triangle,sizeof(triangle),1,file)) {
+        //        ::triangle.push_back(triangle);
+        index.push_back(vec3i(0,1,2)+vec3i(vertex.size()));
+        vertex.push_back(vec3fa(triangle.vertex[0].pos));
+        vertex.push_back(vec3fa(triangle.vertex[1].pos));
+        vertex.push_back(vec3fa(triangle.vertex[2].pos));
+        color.push_back(vec3f(triangle.vertex[0].v));
+        color.push_back(vec3f(triangle.vertex[1].v));
+        color.push_back(vec3f(triangle.vertex[2].v));
+      }
+      fclose(file);
+      PING;
+      PRINT(vertex.size());
+      PRINT(index.size());
+      PRINT(color.size());
+    }
+  };
 
   struct StreamLines {
     std::vector<vec3fa> vertex;
@@ -47,7 +84,7 @@ namespace ospray {
       vec3fa pnt;
       static size_t totalSegments = 0;
       size_t segments = 0;
-      cout << "parsing file " << fn << ":" << std::flush;
+      // cout << "parsing file " << fn << ":" << std::flush;
       int rc = fscanf(file,"%f %f %f\n",&pnt.x,&pnt.y,&pnt.z);
       vertex.push_back(pnt);
       Assert(rc == 3);
@@ -57,9 +94,20 @@ namespace ospray {
         segments++;
       }
       totalSegments += segments;
-      cout << " " << segments << " segments (" << totalSegments << " total)" << endl;
+      // cout << " " << segments << " segments (" << totalSegments << " total)" << endl;
       fclose(file);
     }
+    void parsePNTlist(const embree::FileName &fn)
+    {
+      FILE *file = fopen(fn.c_str(),"r");
+      Assert(file);
+      for (char line[10000]; fgets(line,10000,file) && !feof(file); ) {
+        char *eol = strstr(line,"\n"); if (eol) *eol = 0;
+        parsePNT(line);
+      }
+      fclose(file);
+    }
+
     void parse(const embree::FileName &fn)
     {
       if (fn.ext() == "pnt") 
@@ -86,10 +134,10 @@ namespace ospray {
 
   struct StreamLineViewer : public Glut3DWidget {
     /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
-    StreamLineViewer(StreamLines *sl) 
+    StreamLineViewer(StreamLines *sl, Triangles *tris) 
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
         fb(NULL), renderer(NULL), 
-        sl(sl)
+        sl(sl), tris(tris)
     {
       camera = ospNewCamera("perspective");
       Assert2(camera,"could not create camera");
@@ -99,6 +147,27 @@ namespace ospray {
       ospCommit(camera);
 
       renderer = ospNewRenderer(rendererType);
+
+      OSPMaterial mat = ospNewMaterial(renderer,"default");
+      ospSet3f(mat,"kd",.7,.7,.7); // OBJ renderer, default ...
+      ospCommit(mat);
+      
+      PRINT(rendererType);
+      if (std::string(rendererType) == "obj") {
+        PING;
+        OSPLight topLight = ospNewLight(renderer,"DirectionalLight");
+        ospSet3f(topLight,"direction",-1,-2,1);
+        ospSet3f(topLight,"color",1,1,1);
+        ospCommit(topLight);
+        PRINT(topLight);
+        OSPData lights = ospNewData(1,OSP_OBJECT,&topLight);
+        ospCommit(lights);
+        PRINT(lights);
+        ospSetData(renderer,"directionalLights",lights);
+        ospCommit(renderer);
+      } 
+
+
 
 #if 0
       OSPMaterial mat = ospNewMaterial(renderer,"Plastic");
@@ -112,7 +181,7 @@ namespace ospray {
       vec3f rd = .7f;
 #endif
 
-#if 1
+#if 0
       OSPMaterial mat = ospNewMaterial(renderer,"MetallicPaint");
       ospSet1f(mat,"eta",1.45);
       ospSet3f(mat,"glitterColor",.5,.44,.3);
@@ -120,20 +189,37 @@ namespace ospray {
       ospSet1f(mat,"glitterSpread",.01f);
 #endif
 
-      ospSet3f(mat,"kd",.7,.7,.7); // OBJ renderer, default ...
-      ospCommit(mat);
-
       model = ospNewModel();
-      OSPGeometry geom = ospNewGeometry("streamlines");
-      Assert(geom);
-      OSPData vertex = ospNewData(sl->vertex.size(),OSP_vec3fa,&sl->vertex[0]);
-      OSPData index  = ospNewData(sl->index.size(),OSP_uint32,&sl->index[0]);
-      ospSetParam(geom,"vertex",vertex);
-      ospSetParam(geom,"index",index);
-      ospSet1f(geom,"radius",sl->radius);
-      ospSetMaterial(geom,mat);
-      ospAddGeometry(model,geom);
+
+      {
+        OSPGeometry geom = ospNewGeometry("streamlines");
+        Assert(geom);
+        OSPData vertex = ospNewData(sl->vertex.size(),OSP_vec3fa,&sl->vertex[0]);
+        OSPData index  = ospNewData(sl->index.size(),OSP_uint32,&sl->index[0]);
+        ospSetParam(geom,"vertex",vertex);
+        ospSetParam(geom,"index",index);
+        ospSet1f(geom,"radius",sl->radius);
+        ospSetMaterial(geom,mat);
+        ospCommit(geom);
+        ospAddGeometry(model,geom);
+      }
+
+      if (tris && !tris->index.empty()) {
+        OSPGeometry geom = ospNewTriangleMesh();
+        Assert(geom);
+        OSPData vertex = ospNewData(tris->vertex.size(),OSP_vec3fa,&tris->vertex[0]);
+        OSPData index  = ospNewData(tris->index.size(),OSP_vec3i,&tris->index[0]);
+        OSPData color  = ospNewData(tris->color.size(),OSP_vec3fa,&tris->color[0]);
+        ospSetParam(geom,"vertex",vertex);
+        ospSetParam(geom,"index",index);
+        ospSetParam(geom,"vertex.color",color);
+        ospSetMaterial(geom,mat);
+        ospCommit(geom);
+        ospAddGeometry(model,geom);
+      }
+
       ospCommit(model);
+      PING;
 
       Assert2(renderer,"could not create renderer");
       ospSetParam(renderer,"world",model);
@@ -189,15 +275,25 @@ namespace ospray {
     int            resampleSize;
     ospray::glut3D::FPSCounter fps;
     StreamLines *sl;
+    Triangles *tris;
   };
 
   void ospDVRMain(int &ac, const char **&av)
   {
     StreamLines *streamLines = new StreamLines;
+    Triangles   *triangles = new Triangles;
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
       if (arg[0] != '-') {
-        streamLines->parse(arg);
+        const embree::FileName fn = arg;
+        if (fn.ext() == "pnt")
+          streamLines->parsePNT(fn);
+        else if (fn.ext() == "pntlist")
+          streamLines->parsePNTlist(fn);
+        else if (fn.ext() == "sv") 
+          triangles->parseSV(fn);
+        else
+          throw std::runtime_error("unknown file format "+fn.str());
       } else if (arg == "--module") {
 	ospLoadModule(av[++i]);
       } else if (arg == "--renderer") {
@@ -210,7 +306,7 @@ namespace ospray {
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
-    StreamLineViewer window(streamLines);
+    StreamLineViewer window(streamLines,triangles);
     window.create("ospDVR: OSPRay miniature stream line viewer");
     printf("Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(streamLines->getBounds());

@@ -182,7 +182,7 @@ namespace ospray {
 
     ospray::TriangleMesh *mesh = new TriangleMesh;
     mesh->findParam("index",1)->set(new Data(idx.size(),OSP_vec3i,&idx[0],0));
-    mesh->findParam("position",1)->set(new Data(vtx.size(),OSP_vec3fa,&vtx[0],0));
+    mesh->findParam("vertex",1)->set(new Data(vtx.size(),OSP_vec3fa,&vtx[0],0));
     // mesh->commit();
     return mesh;
   }
