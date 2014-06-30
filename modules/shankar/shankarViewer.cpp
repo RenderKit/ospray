@@ -20,7 +20,7 @@ namespace ospray {
     bool alwaysRedraw = 1;
 
     //! the renderer we're about to use
-    std::string rendererType = "raycast_primID_eyeLight";
+    std::string rendererType = "primID";
     float radius = 3.f;
 
     void error(const std::string &shankar)
@@ -28,7 +28,7 @@ namespace ospray {
       cout << "ospray::shankarView fatal error : " << shankar << endl;
       cout << endl;
       cout << "Proper usage: " << endl;
-      cout << "  ./shankarView <inFileName.xyz>" << endl;
+      cout << "  ./shankarView <inputfile.tree>" << endl;
       cout << endl;
       exit(1);
     }
