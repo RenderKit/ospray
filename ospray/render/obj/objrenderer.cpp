@@ -52,10 +52,13 @@ namespace ospray {
         }
       }
       
+      vec3f bgColor;
+      bgColor = getParam3f("bgColor", vec3f(0));
       PING;
       ispc::OBJRenderer_set(getIE(),
                             world->getIE(),
                             camera->getIE(),
+                            (ispc::vec3f&)bgColor,
                             &pointLightArray[0], pointLightArray.size(),
                             &dirLightArray[0], dirLightArray.size(),
                             &spotLightArray[0], spotLightArray.size());

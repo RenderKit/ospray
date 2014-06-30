@@ -29,6 +29,7 @@ struct OBJRenderer {
   uint32        numDirLights;
   const uniform OBJSpotLight *uniform *uniform spotLights;
   uint32        numSpotLights;
+  vec3f         bgColor;
 };
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight) {
@@ -81,9 +82,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
     traceRay(renderer->inherited.model,ray);
 
     if (ray.geomID < 0) {
-      const vec3f bg_color = make_vec3f(0.f);
-
-      color = color + path_opacity * bg_color;
+      color = color + path_opacity * renderer->bgColor;
       return color;
     }
 
@@ -242,6 +241,7 @@ export void *uniform OBJRenderer_create(void *uniform cppE)
 export void OBJRenderer_set(void *uniform _renderer,
                             void *uniform _model,
                             void *uniform _camera,
+                            const uniform vec3f &bgColor,
                             void **uniform pointLights,
                             uniform int32  numPointLights,
                             void **uniform dirLights,
@@ -252,6 +252,8 @@ export void OBJRenderer_set(void *uniform _renderer,
   uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
   renderer->inherited.model  = (uniform Model *uniform)_model;
   renderer->inherited.camera = (uniform Camera *uniform)_camera;
+
+  renderer->bgColor = bgColor;
 
   renderer->numPointLights = numPointLights;
   renderer->pointLights = (const uniform OBJPointLight *uniform *uniform)pointLights;
