@@ -20,7 +20,7 @@ namespace ospray {
     bool alwaysRedraw = 1;
 
     //! the renderer we're about to use
-    std::string rendererType = "primID";
+    std::string rendererType = "geomID";
     float radius = 3.f;
 
     void error(const std::string &shankar)

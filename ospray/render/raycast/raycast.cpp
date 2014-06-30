@@ -61,18 +61,18 @@ namespace ospray {
 
   typedef RayCastRenderer<ispc::RayCastRenderer_create_eyeLight_primID>
   RayCastRenderer_eyeLight_primID;
-  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,eyeLight_primID);
-  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,primID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_primID,eyeLight_primID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_primID,primID);
 
   typedef RayCastRenderer<ispc::RayCastRenderer_create_eyeLight_instID>
   RayCastRenderer_eyeLight_instID;
-  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,eyeLight_instID);
-  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,instID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_instID,eyeLight_instID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_instID,instID);
 
   typedef RayCastRenderer<ispc::RayCastRenderer_create_eyeLight_geomID>
   RayCastRenderer_eyeLight_geomID;
-  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,eyeLight_geomID);
-  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,geomID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_geomID,eyeLight_geomID);
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_geomID,geomID);
 
 };
 
