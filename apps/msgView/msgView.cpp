@@ -14,6 +14,7 @@ namespace ospray {
 
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   int accumID = -1;
+  int spp = 1; /*! number of samples per pixel */
 
   /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
   vec3f defaultDirLight_direction(-.3, -1, .4);
@@ -58,6 +59,7 @@ namespace ospray {
       ospSetParam(renderer,"world",model);
       ospSetParam(renderer,"model",model);
       ospSetParam(renderer,"camera",camera);
+      ospSet1i(renderer,"spp",spp);
       ospCommit(camera);
       ospCommit(renderer);
       
@@ -277,6 +279,8 @@ namespace ospray {
       if (arg == "--renderer") {
         assert(i+1 < ac);
         rendererType = av[++i];
+      } else if (arg == "--spp") {
+        spp = atoi(av[++i]);
       } else if (arg == "--pt") {
         // shortcut for '--module pathtracer --renderer pathtracer'
         const char *moduleName = "pathtracer";

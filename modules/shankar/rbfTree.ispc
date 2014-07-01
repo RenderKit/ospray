@@ -146,7 +146,7 @@ struct State {
 inline void clipAccelPlane(varying Range &range, const varying Ray &ray, 
                            uniform Node *uniform node)
 {
-#if 1
+#if 0
   const float rcpCosND = rcp(dot(ray.dir,node->normal));
   const float t_plane_lo
     = (node->lower + dot(node->center-ray.org,node->normal)) * rcpCosND;
@@ -165,7 +165,7 @@ inline bool intersectSurface(uniform State &state,
   clipAccelPlane(range,*state.ray,node);
   if (isEmpty(range)) return false;
   
-  const uniform int numSegments = 4;
+  const uniform int numSegments = 16;
   const float dt = (range.end - range.begin)*(1.f/(float)numSegments);
   
   float t0 = range.begin;

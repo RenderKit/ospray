@@ -10,16 +10,28 @@
 
 namespace ospray {
 
-  template<void *(*ISPC_CREATE)(void*,void*,void*)>
+  template<void *(*ISPC_CREATE)(void*)>
+  RayCastRenderer<ISPC_CREATE>::RayCastRenderer()
+    : model(NULL), camera(NULL) 
+  {
+    PING;
+    ispcEquivalent = ISPC_CREATE(this);
+    PING;
+  }
+
+
+  template<void *(*ISPC_CREATE)(void*)>
   void RayCastRenderer<ISPC_CREATE>::commit()
   {
-    if (getIE()) ispc::RayCastRenderer_destroy(getIE());
+    PING;
+    Renderer::commit();
+    PING;
 
     model = (Model *)getParamObject("world",NULL);
     model = (Model *)getParamObject("model",model);
     camera = (Camera *)getParamObject("camera",NULL);
 
-    ispcEquivalent = ISPC_CREATE(this->getIE(),model->getIE(),camera->getIE()); 
+    ispc::RayCastRenderer_set(getIE(),model->getIE(),camera->getIE());
     // switch(SHADE_MODE) {
     // case RC_EYELIGHT:
     //   ispcEquivalent = ispc::RayCastRenderer_create_eyeLight(this->getIE(),model->getIE(),camera->getIE()); 
