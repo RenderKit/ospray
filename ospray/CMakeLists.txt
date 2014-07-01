@@ -97,12 +97,13 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   lights/spotlight.cpp
   lights/spotlight.ispc
 
-  texture/nearestneighbor.ispc
-  texture/image3c.ispc
-  texture/image3ca.ispc
-  texture/image3f.ispc
-  texture/image3fa.ispc
+#  texture/nearestneighbor.ispc
+#  texture/image3c.ispc
+#  texture/image3ca.ispc
+#  texture/image3f.ispc
+#  texture/image3fa.ispc
   texture/texture2d.cpp
+	texture/texture2d.ispc
 
 #	render/tilerenderer.cpp
  

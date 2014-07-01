@@ -662,10 +662,16 @@ namespace ospray {
         return;
       }
       if (key == 'I' && inspectCenterManipulator) {
+        // 'i'nspect mode
         manipulator = inspectCenterManipulator;
         return;
       }
       if (key == 'M' && moveModeManipulator) {
+        manipulator = moveModeManipulator;
+        return;
+      }
+      if (key == 'F' && moveModeManipulator) {
+        // 'f'ly mode
         manipulator = moveModeManipulator;
         return;
       }

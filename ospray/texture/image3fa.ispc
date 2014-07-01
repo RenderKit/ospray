@@ -1,19 +1,3 @@
-// ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
 #include "image.isph"
 
 struct Image3fa
@@ -23,20 +7,20 @@ struct Image3fa
   bool owned;
 };
 
-inline uniform vec3f Image3fa__get_nearest_uniform(const uniform Image *uniform _this, const uniform int x, const uniform int y) 
+inline uniform vec4f Image3fa__get_nearest_uniform(const uniform Image *uniform _this, const uniform int x, const uniform int y) 
 {
   const uniform Image3fa *uniform this = (const uniform Image3fa *uniform)_this;
   return make_vec3f(this->data[x+this->base.size.x*y]);
 }
 
-inline varying vec3f Image3fa__get_nearest_varying(const uniform Image *uniform _this, const varying int x, const varying int y) 
+inline varying vec4f Image3fa__get_nearest_varying(const uniform Image *uniform _this, const varying int x, const varying int y) 
 {
   const uniform Image3fa *uniform this = (const uniform Image3fa *uniform)_this;
   const varying int idx = x+this->base.size.x*y;
   return make_vec3f(this->data[idx]);
 }
 
-varying vec3f Image3fa__get_bilinear_varying(const uniform Image *uniform _this, const varying float x, const varying float y) 
+varying vec4f Image3fa__get_bilinear_varying(const uniform Image *uniform _this, const varying float x, const varying float y) 
 { 
   const uniform Image3fa *uniform this = (const uniform Image3fa *uniform)_this;
 
@@ -54,10 +38,10 @@ varying vec3f Image3fa__get_bilinear_varying(const uniform Image *uniform _this,
   const int x1 = x0+1 == this->base.size.x ? 0 : x0+1;
   const int y1 = y0+1 == this->base.size.y ? 0 : y0+1;
 
-  const vec3f c00 = Image3fa__get_nearest_varying(_this,x0,y0);
-  const vec3f c01 = Image3fa__get_nearest_varying(_this,x0,y1);
-  const vec3f c10 = Image3fa__get_nearest_varying(_this,x1,y0);
-  const vec3f c11 = Image3fa__get_nearest_varying(_this,x1,y1);
+  const vec4f c00 = Image3fa__get_nearest_varying(_this,x0,y0);
+  const vec4f c01 = Image3fa__get_nearest_varying(_this,x0,y1);
+  const vec4f c10 = Image3fa__get_nearest_varying(_this,x1,y0);
+  const vec4f c11 = Image3fa__get_nearest_varying(_this,x1,y1);
   
   /* interpolate texels */
   return lerp(sy,

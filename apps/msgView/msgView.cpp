@@ -184,6 +184,7 @@ namespace ospray {
 
     //TODO: We need to come up with a better way to handle different possible pixel layouts
     OSPDataType type = OSP_VOID_PTR;
+
     if (msgTex->depth == 1) {
       if( msgTex->channels == 3 ) type = OSP_vec3uc;
       if( msgTex->channels == 4 ) type = OSP_vec4uc;
@@ -192,11 +193,13 @@ namespace ospray {
       if( msgTex->channels == 4 ) type = OSP_vec3fa;
     }
 
-    OSPTexture2D ospTex = alreadyCreatedTextures[msgTex] = ospNewTexture2D( msgTex->width,
-                                                                            msgTex->height,
-                                                                            type,
-                                                                            msgTex->data,
-                                                                            0);
+    OSPTexture2D ospTex = ospNewTexture2D( msgTex->width,
+                                           msgTex->height,
+                                           type,
+                                           msgTex->data,
+                                           0);
+    
+    alreadyCreatedTextures[msgTex] = ospTex;
 
     ospCommit(ospTex);
     return ospTex;
@@ -223,7 +226,7 @@ namespace ospray {
       warnMaterial(type);
       return createDefaultMaterial(renderer);
     }
-    
+
     for (miniSG::Material::ParamMap::const_iterator it =  mat->params.begin();
          it !=  mat->params.end(); ++it) {
       const char *name = it->first.c_str();
@@ -245,42 +248,23 @@ namespace ospray {
         cout << "WARNING: material has 'data' parameter, but don't know what that actually is!?" << endl;
         break;
       default: 
-        PRINT(p->type); 
         throw std::runtime_error("unkonwn material parameter type");
       };
     }
 
     std::vector<OSPTexture2D> textures;
     for (size_t i = 0; i < mat->textures.size(); i++) {
-      textures.push_back(createTexture2D(mat->textures[i].ptr));
+      OSPTexture2D tex = createTexture2D(mat->textures[i].ptr);
+      textures.push_back(tex);
     }
 
     if (!textures.empty()) {
       OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], 0);
-      ospSetData(ospMat, "textures.list", textureArray);
+      ospSetData(ospMat, "textureArray", textureArray);
     }
 
-    ospSet1i(ospMat, "textures.count", textures.size());
-    
     ospCommit(ospMat);
     return ospMat;
-
-
-    // if (!mat) {
-    //   static int numWarnings = 0;
-    //   if (++numWarnings < 10)
-    //     cout << "WARNING: mesh does not have a material! (assigning default)" << endl;
-    //   ospSet3f(ospMat,"Kd",1.f,0.f,0.f);
-    // } else {
-    //   ospSet3fv(ospMat,"Kd",&mat->getParam("kd", vec3f(1.f)).x);
-    //   ospSet3fv(ospMat,"Ks",&mat->getParam("Ks", vec3f(0.f)).x);
-    //   ospSet1f(ospMat,"Ns",mat->getParam("Ns", 0.f));
-    //   ospSet1f(ospMat,"d", mat->getParam("d", 1.f));
-    // }
-
-    // ospCommit(ospMat);
-    // ospSetMaterial(ospMesh,ospMat);
-    // ospRelease(ospMat);
   }
 
   void msgViewMain(int &ac, const char **&av)

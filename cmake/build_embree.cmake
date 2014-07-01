@@ -40,11 +40,14 @@ ENDIF()
 ##################################################################
 IF (${OSPRAY_XEON_TARGET} STREQUAL "AVX2")
 	# tell embree to build the avx2 kernels
+	SET(TARGET_SSE41  ON)
+	SET(TARGET_AVX  ON)
 	SET(TARGET_AVX2  ON)
 	# tell embree to build avx2 ispc binding
   SET(ISPC_TARGETS "avx2")
 ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "AVX")
 	# tell embree to build the avx(1) kernels
+	SET(TARGET_SSE41  ON)
 	SET(TARGET_AVX  ON)
 	# tell embree to build avx(1) ispc binding
   SET(ISPC_TARGETS "avx")

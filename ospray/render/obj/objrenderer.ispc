@@ -45,9 +45,19 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
     float material_opacity = 1;
+
     foreach_unique( mat in objMaterial ) {
-      const vec3f opacity_map = mat->map_d ? mat->map_d->get(mat->map_d, dg.st) : make_vec3f(1.f);
-      material_opacity = mat->map_d ? opacity_map.x : mat->d;
+      if (mat->map_d != NULL) {
+        vec4f d_map;
+        mat->map_d->get(mat->map_d, d_map, dg.st);
+        material_opacity = d_map.x;
+      } else if (mat->map_Kd != NULL) {
+        // todo: might want to do this only if map has a alpha channel
+        // (need to tag texture2d to even know that)
+        vec4f kd_map;
+        mat->map_Kd->get(mat->map_Kd,kd_map,dg.st);
+        material_opacity = 1.f-kd_map.w;
+      }
     }
 
     alpha = alpha * (1.f - material_opacity );
@@ -107,13 +117,21 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
     vec3f bump = make_vec3f(0.f);
 
     foreach_unique (mat in objMaterial) {
-      const vec3f opacity_map = mat->map_d ? mat->map_d->get(mat->map_d, dg.st) : make_vec3f(1.f);
-      d = mat->map_d ? opacity_map.x : mat->d;
-      Kd = mat->map_Kd ? mat->map_Kd->get(mat->map_Kd, dg.st) : mat->Kd;
-      Ks = mat->map_Ks ? mat->map_Ks->get(mat->map_Ks, dg.st) : mat->Ks;
-      const vec3f spec_exp_map = mat->map_Ns ? mat->map_Ns->get(mat->map_Ns, dg.st) : make_vec3f(0.f);
-      Ns = mat->map_Ns ? spec_exp_map.x : mat->Ns;
-      bump = mat->map_Bump ? mat->map_Bump->get(mat->map_Bump, dg.st) : make_vec3f(0.f);
+      // should those with-map/without-map material values get
+      // *multiplied* rather than used alternatively
+      d = mat->map_d ? get1f(mat->map_d,dg.st) : mat->d;
+      if (mat->map_Kd) {
+        vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
+        Kd = make_vec3f(Kd_from_map);
+        d *= 1.f-Kd_from_map.w;
+      } else
+        Kd = mat->Kd;
+      Ks = get3f(mat->map_Ks,dg.st,mat->Ks);
+      // Kd = mat->map_Kd ? mat->map_Kd->get(mat->map_Kd, dg.st) : mat->Kd;
+      // Ks = mat->map_Ks ? mat->map_Ks->get(mat->map_Ks, dg.st) : mat->Ks;
+      // const vec4f spec_exp_map = mat->map_Ns ? mat->map_Ns->get(mat->map_Ns, dg.st) : make_vec3f(0.f);
+      Ns = mat->map_Ns ? get1f(mat->map_Ns,dg.st) : mat->Ns;
+      bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
     }
 
     const float local_opacity = path_opacity * d;

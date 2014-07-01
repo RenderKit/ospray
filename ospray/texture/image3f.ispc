@@ -1,19 +1,3 @@
-// ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
-//                                                                          //
-// Licensed under the Apache License, Version 2.0 (the "License");          //
-// you may not use this file except in compliance with the License.         //
-// You may obtain a copy of the License at                                  //
-//                                                                          //
-//     http://www.apache.org/licenses/LICENSE-2.0                           //
-//                                                                          //
-// Unless required by applicable law or agreed to in writing, software      //
-// distributed under the License is distributed on an "AS IS" BASIS,        //
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
-// See the License for the specific language governing permissions and      //
-// limitations under the License.                                           //
-// ======================================================================== //
-
 #include "image.isph"
 
 struct Image3f
@@ -23,20 +7,20 @@ struct Image3f
   bool owned;
 };
 
-inline uniform vec3f Image3f__get_nearest_uniform(const uniform Image *uniform _this, const uniform int x, const uniform int y) 
+inline uniform vec4f Image3f__get_nearest_uniform(const uniform Image *uniform _this, const uniform int x, const uniform int y) 
 {
   const uniform Image3f *uniform this = (const uniform Image3f *uniform)_this;
   return this->data[x+this->base.size.x*y];
 }
 
-inline varying vec3f Image3f__get_nearest_varying(const uniform Image *uniform _this, const varying int x, const varying int y) 
+inline varying vec4f Image3f__get_nearest_varying(const uniform Image *uniform _this, const varying int x, const varying int y) 
 {
   const uniform Image3f *uniform this = (const uniform Image3f *uniform)_this;
   const int idx = x+this->base.size.x*y;
   return this->data[idx];
 }
 
-varying vec3f Image3f__get_bilinear_varying(const uniform Image *uniform _this, const varying float x, const varying float y) 
+varying vec4f Image3f__get_bilinear_varying(const uniform Image *uniform _this, const varying float x, const varying float y) 
 { 
   const uniform Image3f *uniform this = (const uniform Image3f *uniform)_this;
 

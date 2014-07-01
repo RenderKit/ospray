@@ -37,8 +37,6 @@ namespace ospray {
       // pointLightArray = &pointLightArray[0];
 
       dirLightData = (Data*)getParamData("directionalLights", NULL);
-      PING;
-      PRINT(dirLightData);
 
       if (dirLightData && dirLightArray.empty()) {
         for (int i = 0; i < dirLightData->size(); i++) {
@@ -55,7 +53,6 @@ namespace ospray {
                             camera?camera->getIE():NULL,
                             pointLightPtr,pointLightArray.size(),
                             dirLightPtr,dirLightArray.size());
-      PING;
     }
     
     OBJRenderer::OBJRenderer()

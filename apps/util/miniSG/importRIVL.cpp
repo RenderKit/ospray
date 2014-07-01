@@ -25,6 +25,8 @@ namespace ospray {
   namespace miniSG {
 
     using std::string;
+    using std::cout;
+    using std::endl;
 
     //! base pointer to mmapped binary file (that all offsets are relative to)
     unsigned char *binBasePtr = NULL;
@@ -239,6 +241,7 @@ namespace ospray {
               xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
               name = (const char*)value;
               mat->setParam("name", name.c_str());
+              mat->name = name;
               xmlFree(value);
             } else if (!strcmp((const char*)attr->name, "type")) {
               xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
@@ -269,8 +272,8 @@ namespace ospray {
 
               //Get the data out of the node
               xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
-#define NEXT_TOK strtok(NULL, " \t\n")
-              char *s = strtok((char*)value, " \t\n");
+#define NEXT_TOK strtok(NULL, " \t\n\r")
+              char *s = strtok((char*)value, " \t\n\r");
               //TODO: UGLY! Find a better way.
               if (!childType.compare("float")) {
                 mat->setParam(childName.c_str(), (float)atof(s));
@@ -334,19 +337,25 @@ namespace ospray {
               }
 
               xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
+
               if (value == NULL) {
                 // empty texture node ....
               } else {
-                char *s =  NULL;
+                char *tokenBuffer = strdup((char*)value);
+                xmlFree(value); 
+
                 assert(value);
-                strtok((char*)value, " \t\n");
-                int i = 0;
-                for( i = 0, s = strtok((char*)value, " \t\n"); s && i < num; i++, s = NEXT_TOK ) {
+                char *s = strtok(tokenBuffer, " \t\n\r");
+                while (s) {
                   int texID = atoi(s);
                   RIVLTexture * tex = nodeList[texID].cast<RIVLTexture>().ptr;
                   mat->textures.push_back(tex->texData);
+                  s = NEXT_TOK;
                 }
+                free(tokenBuffer);
               }
+              if (mat->textures.size() != num)
+                FATAL("invalid number of textures in material (found either more or less than the 'num' field specifies");
             }
           }
 #undef NEXT_TOK
@@ -472,7 +481,7 @@ namespace ospray {
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
               xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);
-              for(char *s=strtok((char*)value," \t\n");s;s=strtok(NULL," \t\n")) {
+              for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
                 size_t matID = atoi(s);
                 Ref<RIVLMaterial> mat = nodeList[matID].cast<miniSG::RIVLMaterial>();
                 mat.ptr->refInc();
@@ -498,7 +507,7 @@ namespace ospray {
             ;
             // std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
           else {
-            for(char *s=strtok((char*)value," \t\n");s;s=strtok(NULL," \t\n")) {
+            for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
               size_t childID = atoi(s);
               miniSG::Node *child = nodeList[childID].ptr;
               assert(child);

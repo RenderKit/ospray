@@ -40,35 +40,21 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
     const uniform vec3fa *uniform vertex = THIS->vertex;
     const uniform vec2f  *uniform texcoord = THIS->texcoord;
     assert(vertex); assert(texcoord);
-    const vec3i idx = THIS->index[ray.primID];
-    const vec3f p1 = make_vec3f(vertex[idx.x]) - dg.P;
-    const vec3f p2 = make_vec3f(vertex[idx.y]) - dg.P;
-    const vec3f p3 = make_vec3f(vertex[idx.z]) - dg.P;
-
-    const float a = length(cross( make_vec3f(vertex[idx.x]) - make_vec3f(vertex[idx.y]),
-                                  make_vec3f(vertex[idx.x]) - make_vec3f(vertex[idx.z])));
-    const float a1 = length(cross(p2,p3)) / a;
-    const float a2 = length(cross(p3,p1)) / a;
-    const float a3 = length(cross(p1,p2)) / a;
-
-    dg.st = texcoord[idx.x] * a1 + texcoord[idx.y] * a2 + texcoord[idx.z] * a3;
+    const vec3i index = THIS->index[ray.primID];
+    dg.st
+      = (1.f-ray.u-ray.v) * (texcoord[index.x])
+      + ray.u * (texcoord[index.y])
+      + ray.v * (texcoord[index.z]);
   } else {
     dg.st = make_vec2f(0.0f, 0.0f);
   }
 
   if (flags & DG_MATERIALID) {
-    // print("trimesh:postisec\n");
-    // print("primid %\n",ray.primID);
     if (THIS->prim_materialID) {
       dg.materialID = THIS->prim_materialID[ray.primID];
-      // print("% : primID % -> matID %\n",THIS->materialList,ray.primID,dg.materialID);
     }
     else {
       dg.materialID = THIS->geom_materialID;
-      // if (dg.materialID < 0) {
-      //   print("trimesh has neither prim_mateiralID _NOR_ geom_materialID!!!!");
-      //   print("TRIMESH: % %\n",THIS->geom_materialID,THIS->prim_materialID);
-      // }
     }
 
     // print("bla\n");

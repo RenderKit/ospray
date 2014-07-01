@@ -58,6 +58,7 @@ namespace ospray {
   typedef RayCastRenderer<ispc::RayCastRenderer_create_eyeLight> RayCastRenderer_eyeLight;
   OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,raycast);
   OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,eyeLight);
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight,raycast_eyelight);
 
   typedef RayCastRenderer<ispc::RayCastRenderer_create_eyeLight_primID>
   RayCastRenderer_eyeLight_primID;
