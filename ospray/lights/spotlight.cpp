@@ -8,7 +8,6 @@ namespace ospray {
     , color(1.f, 1.f, 1.f)
     , range(-1.f)
     , halfAngle(-1.f)
-    , angularDropOff(-1.f)
   {}
 
   //!< Copy understood parameters into class members
@@ -18,6 +17,5 @@ namespace ospray {
     color = getParam3f("color", vec3f(1.f, 1.f, 1.f));
     range = getParam1f("range", -1.f);
     halfAngle = getParam1f("halfAngle", -1.f);
-    angularDropOff = getParam1f("angularDropOff", -1.f);
   }
 }

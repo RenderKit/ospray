@@ -28,13 +28,13 @@ namespace ospray {
 
       std::vector<void*> pointLightArray; // the 'IE's of the 'pointLightData'
       std::vector<void*> dirLightArray;   // the 'IE's of the 'dirLightData'
+      std::vector<void*> spotLightArray;  // the 'IE's of the 'spotLightData'
 
       Model    *world;
       Camera   *camera;
       Data     *pointLightData;
       Data     *dirLightData;
-
-      uint32    numDirLights;
+      Data     *spotLightData;
       
       virtual void commit();
 

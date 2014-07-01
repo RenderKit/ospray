@@ -2,6 +2,7 @@
 #include "objrenderer.h"
 #include "objmaterial.h"
 #include "objpointlight.h"
+#include "objspotlight.h"
 // ospray
 #include "ospray/common/model.h"
 #include "ospray/common/data.h"
@@ -34,8 +35,6 @@ namespace ospray {
         }
       }
 
-      // pointLightArray = &pointLightArray[0];
-
       dirLightData = (Data*)getParamData("directionalLights", NULL);
 
       if (dirLightData && dirLightArray.empty()) {
@@ -46,13 +45,26 @@ namespace ospray {
         }
       }
 
+      spotLightData = (Data*)getParamData("spotLights", NULL);
+      if( spotLightData && spotLightArray.empty()) {
+        for (int i =0; i < spotLightData->size(); i++) {
+          spotLightArray.push_back(((Light**)spotLightData->data)[i]->getIE());
+        }
+      }
+      
       void **pointLightPtr = pointLightArray.empty() ? NULL : &pointLightArray[0];
       void **dirLightPtr = dirLightArray.empty() ? NULL : &dirLightArray[0];
+      void **spotLightPtr = spotLightArray.empty() ? NULL : &spotLightArray[0];
+
+      vec3f bgColor;
+      bgColor = getParam3f("bgColor", vec3f(0));
       ispc::OBJRenderer_set(getIE(),
-                            world?world->getIE():NULL,
-                            camera?camera->getIE():NULL,
-                            pointLightPtr,pointLightArray.size(),
-                            dirLightPtr,dirLightArray.size());
+                            world->getIE(),
+                            camera->getIE(),
+                            (ispc::vec3f&)bgColor,
+                            pointLightPtr, pointLightArray.size(),
+                            dirLightPtr,   dirLightArray.size(),
+                            spotLightPtr,  spotLightArray.size());
     }
     
     OBJRenderer::OBJRenderer()
@@ -70,11 +82,15 @@ namespace ospray {
     /*! \brief create a light of given type */
     Light *OBJRenderer::createLight(const char *type)
     {
-      if(!strcmp("PointLight", type)) {
-        Light *light = new OBJPointLight;
-        return light;
+      Light *light = NULL;
+
+      if (strcmp("PointLight", type) == 0) {
+        light = new OBJPointLight;
+      } else if (strcmp("SpotLight", type) == 0) {
+        light = new OBJSpotLight;
       }
-      return NULL;
+
+      return light;
     }
 
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);
