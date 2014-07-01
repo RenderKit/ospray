@@ -1,0 +1,21 @@
+/*! \page ospray_apps_msgView The OSPRay 'miniSG' model Viewer
+
+  \ingroup ospray_apps
+
+  usage: ./msgView <args> models
+  
+  supported model formats: OBJ (.obj/.mtl), rivl (.xml/.bin)
+  
+  supported parameters:
+
+  -vp x y z : specify camera point of origin
+  -vi x y z : specify camera point of interest
+  -vu x y z : specify up-vector
+  --sun-dir x y z : specify direction of automatic 'sun' dir-light
+
+  parameters inherited from ospray 
+  --osp:debug : run ospray in single-threaded 'debug' mode
+  --osp:coi : run ospray in coi mode (MUST BE FIRST CMDLINE PARAMETER)
+  */
+
+
