@@ -12,6 +12,8 @@
   -vi x y z : specify camera point of interest
   -vu x y z : specify up-vector
   --sun-dir x y z : specify direction of automatic 'sun' dir-light
+  --spp n : number of samples per pixel (for renderers that respect the 'spp' parameter)
+  --renderer <rendertype> : where rendertype is one of raycast,obj,geomID,primID, or any loaded renderer
 
   parameters inherited from ospray 
   --osp:debug : run ospray in single-threaded 'debug' mode
