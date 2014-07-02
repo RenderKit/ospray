@@ -85,9 +85,24 @@ namespace ospray {
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags);
 
+      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        '0,0,0,0'.  
+
+        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        +inf.  
+
+        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        and reset accumID.
+      */
+      virtual void frameBufferClear(OSPFrameBuffer _fb,
+                                    const uint32 fbChannelFlags); 
+
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
-                               OSPRenderer _renderer);
+                               OSPRenderer _renderer, 
+                               const uint32 fbChannelFlags);
 
       //! release (i.e., reduce refcount of) given object
       /*! note that all objects in ospray are refcounted, so one cannot

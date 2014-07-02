@@ -3,7 +3,7 @@
 uniform float precomputedHalton[3][NUM_PRECOMPUTED_HALTON_VALUES];
 uniform bool  precomputedHalton_initialized = false;
 
-inline uint32 radicalInverse(const uint32 _v, const uint32 prime)  
+inline float radicalInverse(const uint32 _v, const uint32 prime)  
 {
   uint32 v = _v;
   float nom = 0.f;

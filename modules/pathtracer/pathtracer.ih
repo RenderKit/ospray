@@ -32,7 +32,6 @@ struct PathTracer {
   uniform int32 maxDepth;
   uniform float minContribution;
   uniform float epsilon;
-  uniform int32 spp;
   uniform int32 iteration;
   uniform Image* uniform backplate;
   uniform Scene *uniform scene; /*! iw: since ospray doesn't have the

@@ -41,7 +41,8 @@ typedef void (*Renderer_RenderTileFct)(uniform Renderer *uniform renderer,
                                     uniform Tile &tile);
 typedef void (*Renderer_BeginFrameFct)(uniform Renderer *uniform renderer,
                                        uniform FrameBuffer *uniform fb);
-typedef void (*Renderer_EndFrameFct)(uniform Renderer *uniform renderer);
+typedef void (*Renderer_EndFrameFct)(uniform Renderer *uniform renderer, 
+                                     const uniform int32 newAccumID);
 
 struct Renderer {
   Renderer_RenderSampleFct renderSample;

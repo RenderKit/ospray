@@ -115,10 +115,10 @@ namespace ospray {
         ospCommit(camera);
         viewPort.modified = false;
         accumID=0;
-        // ospAccum(OSP_ACCUM_CLEAR);
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
       }
       
-      ospRenderFrame(fb,renderer);
+      ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       
       ucharFB = (uint32 *) ospMapFrameBuffer(fb);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;

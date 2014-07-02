@@ -15,19 +15,19 @@ extern uniform float precomputedHalton[3][NUM_PRECOMPUTED_HALTON_VALUES];
 extern uniform bool precomputedHalton_initialized;
 extern void precomputedHalton_create();
 
-inline precomputedHalton2(uint32 sampleID) 
+inline float precomputedHalton2(uint32 sampleID) 
 { 
   if (!precomputedHalton_initialized) precomputedHalton_create(); 
   return precomputedHalton[0][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
 }
 
-inline precomputedHalton3(uint32 sampleID) 
+inline float precomputedHalton3(uint32 sampleID) 
 { 
   if (!precomputedHalton_initialized) precomputedHalton_create(); 
   return precomputedHalton[1][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 
 }
 
-inline precomputedHalton5(uint32 sampleID) 
+inline float precomputedHalton5(uint32 sampleID) 
 { 
   if (!precomputedHalton_initialized) precomputedHalton_create(); 
   return precomputedHalton[2][sampleID & (NUM_PRECOMPUTED_HALTON_VALUES-1)]; 

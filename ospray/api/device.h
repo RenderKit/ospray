@@ -90,9 +90,24 @@ namespace ospray {
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;
 
+      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        '0,0,0,0'.  
+
+        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        +inf.  
+
+        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        and reset accumID.
+      */
+      virtual void frameBufferClear(OSPFrameBuffer _fb,
+                                    const uint32 fbChannelFlags) = 0; 
+
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
-                               OSPRenderer _renderer) = 0;
+                               OSPRenderer _renderer, 
+                               const uint32 fbChannelFlags) = 0;
 
 
   

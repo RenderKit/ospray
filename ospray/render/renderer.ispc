@@ -25,8 +25,10 @@ void Renderer_default_beginFrame(uniform Renderer *uniform renderer,
     print("warning: ispc-side renderer % does not have a frame buffer\n",renderer);
 }
 
-void Renderer_default_endFrame(uniform Renderer *uniform renderer)
+void Renderer_default_endFrame(uniform Renderer *uniform renderer, 
+                               const uniform int32 accumID)
 {
+  if (renderer->fb) renderer->fb->accumID = accumID;
   renderer->fb = NULL;
 }
 
@@ -103,8 +105,8 @@ export void Renderer_beginFrame(void *uniform _renderer,
 }
 
 
-export void Renderer_endFrame(void *uniform _renderer)
+export void Renderer_endFrame(void *uniform _renderer, const uniform int32 newAccumID)
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
-  renderer->endFrame(renderer);
+  renderer->endFrame(renderer,newAccumID);
 }

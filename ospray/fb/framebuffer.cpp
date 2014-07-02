@@ -18,6 +18,11 @@ namespace ospray {
     PRINT(accumID);
   };
 
+  void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
+  {
+    PING;
+  }
+
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
                                      ColorBufferFormat colorBufferFormat,
                                      bool hasDepthBuffer,

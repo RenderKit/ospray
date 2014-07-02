@@ -328,10 +328,20 @@ namespace ospray {
     return transferFunction;
   }
 
+  extern "C" void ospFrameBufferClear(OSPFrameBuffer fb, 
+                                      const uint32 fbChannelFlags)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->frameBufferClear(fb,fbChannelFlags);
+  }
+
   /*! \brief call a renderer to render given model into given framebuffer 
     
     model _may_ be empty (though most framebuffers will expect one!) */
-  extern "C" void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer)
+  extern "C" void ospRenderFrame(OSPFrameBuffer fb, 
+                                 OSPRenderer renderer, 
+                                 const uint32 fbChannelFlags=OSP_FB_COLOR
+                                 )
   {
     ASSERT_DEVICE();
 #if 0
@@ -344,7 +354,7 @@ namespace ospray {
     nom = 0.8f*nom + t_frame;
     std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
 #else
-    ospray::api::Device::current->renderFrame(fb,renderer);
+    ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
 #endif
   }
 

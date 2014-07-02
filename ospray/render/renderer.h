@@ -23,10 +23,11 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Renderer"; }
     /*! \brief produce one frame, and put it into given frame
         buffer */
-    virtual void renderFrame(FrameBuffer *fb);
+    virtual void renderFrame(FrameBuffer *fb,
+                             const uint32 fbChannelFlags);
 
     virtual void beginFrame(FrameBuffer *fb);
-    virtual void endFrame();
+    virtual void endFrame(const int32 fbChannelFlags);
     virtual void renderTile(Tile &tile);
     
     /*! \brief create a material of given type */

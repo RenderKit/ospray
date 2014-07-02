@@ -55,16 +55,17 @@ namespace osp {
 }
 
 typedef enum {
-  OSP_COLOR_BUFFER=(1<<0),
-  OSP_DEPTH_BUFFER=(1<<1),
-  OSP_ACCUM_BUFFER=(1<<2)
+  OSP_FB_COLOR=(1<<0),
+  OSP_FB_DEPTH=(1<<1),
+  OSP_FB_ACCUM=(1<<2),
+  OSP_FB_ALPHA=(1<<3)
 } OSPFrameBufferChannel;
 
 /*! OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
   OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
+  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
-  OSP_RGBZ_F32, /*!< one float4 per pixel: rgb+depth, each one float */ 
 } OSPFrameBufferMode;
 
 typedef enum {
@@ -141,8 +142,10 @@ extern "C" {
 
   //! use renderer to render a frame. 
   /*! What input to tuse for rendering the frame is encoded in the
-      renderer's parameters, typically in "world" */
-  void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer);
+      renderer's parameters, typically in "world". */
+  void ospRenderFrame(OSPFrameBuffer fb, 
+                      OSPRenderer renderer, 
+                      const uint32 fbChannelFlags=OSP_FB_COLOR);
 
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
@@ -197,7 +200,13 @@ extern "C" {
   OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
 
 
+  /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
+    if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
+    if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
+    if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID
+  */
+  void ospFrameBufferClear(OSPFrameBuffer fb, const uint32 whichChannel);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_data Data Buffer Handling 
@@ -228,10 +237,48 @@ extern "C" {
       \{ 
   */
 
-  /*! \brief create a new framebuffer (actual format is internal to ospray) */
+  /*! \brief create a new framebuffer (actual format is internal to ospray) 
+
+    Creates a new frame buffer of given size, externalFormat, and channel type(s).
+
+    \param externalFormat describes the format the color buffer has
+    *on the host*, and the format that 'ospMapFrameBuffer' will
+    eventually return. Valid values are OSP_FB_RBGA_FLOAT,
+    OSP_FB_RBGA_I8, OSP_FB_RGB_I8, and OSP_FB_NONE (note that
+    OSP_FB_NONE is a perfectly reasonably choice for a framebuffer
+    that will be used only internally, see notes below).
+
+    \param channelFlags specifies which channels the frame buffer has,
+    and is or'ed together from the values OSP_FB_COLOR,
+    OSP_FB_DEPTH, and/or OSP_FB_ACCUM. If a certain buffer
+    value is _not_ specified, the given buffer will not be present
+    (see notes below).
+    
+    \param size size (in pixels) of frame buffer.
+
+    Note that ospray makes a very clear distinction between the
+    _external_ format of the frame buffer, and the internal one(s):
+    The external format is the format the user specifies in the
+    'externalFormat' parameter; it specifies what format ospray will
+    _return_ the frame buffer to the application (up a
+    ospMapFrameBuffer() call): no matter what ospray uses internally,
+    it will simply return a 2D array of pixels of that format, with
+    possibly all kinds of reformatting, compression/decompression,
+    etc, going on in-between the generation of the _internal_ frame
+    buffer and the mapping of the externally visible one.
+
+    In particular, OSP_FB_NONE is a perfectly valid pixel format for a
+    frame buffer that an application will never map. For example, a
+    application using multiple render passes (e.g., 'pathtrace' and
+    'tone map') may well generate a intermediate frame buffer to store
+    the result of the 'pathtrace' stage, but will only ever display
+    the output of the tone mapper. In this case, when using a pixel
+    format of OSP_FB_NONE the pixels from the path tracing stage will
+    never ever be transferred to the application.
+   */
   OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                   const OSPFrameBufferMode mode=OSP_RGBA_I8,
-                                   const int channels=OSP_COLOR_BUFFER);
+                                   const OSPFrameBufferMode externalFormat=OSP_RGBA_I8,
+                                   const int channelFlags=OSP_FB_COLOR);
 
   /*! \brief free a framebuffer 
 
@@ -241,7 +288,7 @@ extern "C" {
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
-                                OSPFrameBufferChannel=OSP_COLOR_BUFFER);
+                                OSPFrameBufferChannel=OSP_FB_COLOR);
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer fb);
