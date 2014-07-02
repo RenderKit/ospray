@@ -19,6 +19,8 @@ IF (MODULE_SHANKARVIEW)
 			rbfTree.cpp
 			)
 
+		TARGET_LINK_LIBRARIES(ospray_module_shankar${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+
 		IF (NOT THIS_IS_MIC)
 			ADD_EXECUTABLE(ospShankarViewer 
 				shankarViewer.cpp
