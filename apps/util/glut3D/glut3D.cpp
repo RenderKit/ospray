@@ -9,6 +9,8 @@ namespace ospray {
 
   namespace glut3D {
 
+    //#define INVERT_RMB 
+
     /*! currently active window */
     Glut3DWidget *Glut3DWidget::activeWindow = NULL;
 
@@ -495,7 +497,12 @@ namespace ospray {
       const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = - (to.y - from.y) * 4 * widget->motionSpeed;
+      float fwd = 
+#ifdef INVERT_RMB
+#else
+        - 
+#endif
+        (to.y - from.y) * 4 * widget->motionSpeed;
       // * length(widget->worldBounds.size());
       float oldDist = length(cam.at - cam.from);
       float newDist = oldDist - fwd;
@@ -598,7 +605,12 @@ namespace ospray {
       const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = -(to.y - from.y) * 4 * widget->motionSpeed;
+      float fwd = 
+#ifdef INVERT_RMB
+#else
+        - 
+#endif
+        (to.y - from.y) * 4 * widget->motionSpeed;
       cam.from = cam.from + fwd * cam.frame.l.vy;
       cam.at   = cam.at   + fwd * cam.frame.l.vy;
       cam.frame.p = cam.from;

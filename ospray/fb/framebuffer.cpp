@@ -20,7 +20,10 @@ namespace ospray {
 
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
   {
-    PING;
+    if (fbChannelFlags & OSP_FB_ACCUM) {
+      ispc::LocalFrameBuffer_clearAccum(getIE());
+      accumID = 0;
+    }
   }
 
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
@@ -52,10 +55,11 @@ namespace ospray {
       accumBuffer = new vec4f[size.x*size.y];
     else
       accumBuffer = NULL;
-    
     ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
                                                    colorBufferFormat,
-                                                   colorBuffer,depthBuffer,accumBuffer);
+                                                   colorBuffer,
+                                                   depthBuffer,
+                                                   accumBuffer);
   }
   
   LocalFrameBuffer::~LocalFrameBuffer() 

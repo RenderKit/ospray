@@ -501,7 +501,9 @@ inline vec3f PathTracer_renderPixel(uniform PathTracer *uniform THIS,
                                     uniform Tile &tile, 
                                     uniform Random& rnd,
                                     const uint32 ix, 
-                                    const uint32 iy)
+                                    const uint32 iy,
+                                    const float du,
+                                    const float dv)
 {
   uniform FrameBuffer *uniform fb = THIS->inherited.fb;
 
@@ -572,7 +574,7 @@ void PathTracer__initSampler(uniform PathTracer* uniform THIS, const uniform Sce
 void PathTracer_beginFrame(uniform Renderer *uniform renderer,
                            uniform FrameBuffer *uniform fb)
 {
-  print("pathtracer new frame %\n",fb->accumID);
+  // print("pathtracer new frame %\n",fb->accumID);
   uniform PathTracer* uniform THIS = (uniform PathTracer* uniform) renderer;
   if (PrecomputedSampler__empty(&THIS->sampler)) PathTracer__initSampler(THIS,THIS->scene);
   THIS->inherited.fb = fb;
@@ -633,7 +635,10 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
   const uniform uint32 tile_y = y0 / TILE_SIZE;
 
   uniform Random rnd; 
-  uniform int uniqueID = tile_x * 917*13*17 + tile_y * 81551*19*23; // iw: commented out + 3433*g_serverID;
+  uniform int uniqueID
+    = tile_x * 917*13*17 + tile_y * 81551*19*23
+    + fb->accumID * 511 * 1023
+    ; // iw: commented out + 3433*g_serverID;
   Random__setSeed(&rnd,uniqueID); // expensive
 
   float pixel_du = .5f, pixel_dv = .5f;

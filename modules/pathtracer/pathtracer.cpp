@@ -39,6 +39,7 @@ namespace ospray {
 
   void PathTracer::commit() 
   {
+    Renderer::commit();
     model = (Model*)getParamObject("world",NULL);
     model = (Model*)getParamObject("model",model.ptr);
     if (!model) 
