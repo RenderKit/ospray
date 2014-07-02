@@ -12,10 +12,9 @@ namespace ospray {
     const int32 maxDepth = 20;
     const float minContribution = .01f;
     const float epsilon = 1e-3f;
-    const int32 numSPP = 1;
     void *backplate = NULL;
     ispcEquivalent = ispc::PathTracer_create(this,maxDepth,minContribution,epsilon,
-                                             numSPP,backplate);
+                                             backplate);
 
   }
 
@@ -40,6 +39,7 @@ namespace ospray {
 
   void PathTracer::commit() 
   {
+    Renderer::commit();
     model = (Model*)getParamObject("world",NULL);
     model = (Model*)getParamObject("model",model.ptr);
     if (!model) 

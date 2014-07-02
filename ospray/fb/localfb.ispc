@@ -13,6 +13,24 @@ struct LocalFB
   
 };
 
+task void LocalFrameBuffer_clearAccum_task(uniform LocalFB *uniform fb)
+{
+  uniform float *uniform line
+    = (uniform float *uniform)&fb->accumBuffer[taskIndex*fb->inherited.size.x].x;
+  foreach (x=0 ... 4*fb->inherited.size.x)
+    line[x] = 0.f;
+}
+
+export void LocalFrameBuffer_clearAccum(void *uniform _fb)
+{
+  uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
+
+  fb->inherited.accumID = 0;
+
+  if (fb->accumBuffer)
+    launch[fb->inherited.size.y] LocalFrameBuffer_clearAccum_task(fb);
+}
+
 // =======================================================
 // float4 version of frame buffer 
 // =======================================================
@@ -98,8 +116,20 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
   // print("setting tile % %, %\n",tile.region.lower.x,tile.region.lower.y,tile.r[0]);
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform bool hasDepth = (fb->depthBuffer != NULL);
+  const float accScale = 1.f/(fb->inherited.accumID+1);
   if (fb->inherited.colorBufferFormat == ColorBufferFormat_RGBA_FLOAT32) {
-    uniform vec4f *uniform dst = (uniform vec4f *uniform)fb->colorBuffer;
+    uniform vec4f *uniform color
+      = fb->colorBuffer 
+      ? (uniform vec4f *uniform)fb->colorBuffer
+      : NULL;
+    uniform vec4f *uniform accum
+      = fb->accumBuffer
+      ? (uniform vec4f *uniform)fb->accumBuffer
+      : NULL;
+    uniform float *uniform depth
+      = fb->depthBuffer 
+      ? (uniform float *uniform)fb->depthBuffer
+      : NULL;
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       const uint32  pixID = i*programCount+programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
@@ -107,13 +137,32 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       const uint32  ofs   = y*fb->inherited.size.x+x;
       const vec4f value = getRGBA(tile,i);
       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
-        dst[ofs]        = value;
-        if (hasDepth)
+        if (accum) {
+          vec4f acc = accum[ofs]+value;
+          accum[ofs] = acc;
+          if (color) {
+            color[ofs] = acc * accScale;
+          }
+        } else
+          if (color)
+            color[ofs] = value;
+        if (depth)
           fb->depthBuffer[ofs] = tile.z[i];
       }
     }
   } else if (fb->inherited.colorBufferFormat == ColorBufferFormat_RGBA_UINT8) {
-    uniform uint32 *uniform dst = (uniform uint32 *uniform)fb->colorBuffer;
+    uniform uint32 *uniform color
+      = fb->colorBuffer 
+      ? (uniform uint32 *uniform)fb->colorBuffer
+      : NULL;
+    uniform vec4f *uniform accum
+      = fb->accumBuffer
+      ? (uniform vec4f *uniform)fb->accumBuffer
+      : NULL;
+    uniform float *uniform depth
+      = fb->depthBuffer 
+      ? (uniform float *uniform)fb->depthBuffer
+      : NULL;
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       const uint32  pixID = i*programCount+programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
@@ -121,8 +170,17 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       const uint32  ofs   = y*fb->inherited.size.x+x;
       const vec4f value = getRGBA(tile,i);
       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
-        dst[ofs]        = cvt_uint32(value);
-        if (hasDepth)
+        //        dst[ofs]        = cvt_uint32(value);
+        if (accum) {
+          vec4f acc = accum[ofs]+value;
+          accum[ofs] = acc;
+          if (color) {
+            color[ofs] = cvt_uint32(acc * accScale);
+          }
+        } else
+          if (color)
+            color[ofs] = cvt_uint32(value);
+        if (depth)
           fb->depthBuffer[ofs] = tile.z[i];
       }
     }

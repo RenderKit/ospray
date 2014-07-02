@@ -501,7 +501,9 @@ inline vec3f PathTracer_renderPixel(uniform PathTracer *uniform THIS,
                                     uniform Tile &tile, 
                                     uniform Random& rnd,
                                     const uint32 ix, 
-                                    const uint32 iy)
+                                    const uint32 iy,
+                                    const float du,
+                                    const float dv)
 {
   uniform FrameBuffer *uniform fb = THIS->inherited.fb;
 
@@ -515,10 +517,10 @@ inline vec3f PathTracer_renderPixel(uniform PathTracer *uniform THIS,
   screenSample.sampleID.x        = ix;
   screenSample.sampleID.y        = iy;
   
-  for (uniform int s=0; s<THIS->spp; s++) {
-    screenSample.sampleID.z        = THIS->iteration*THIS->spp+s;
+  for (uniform int s=0; s<THIS->inherited.spp; s++) {
+    screenSample.sampleID.z        = THIS->iteration*THIS->inherited.spp+s;
     uniform PrecomputedSample* uniform sample = 
-      PrecomputedSampler__get(&THIS->sampler,set,THIS->iteration*THIS->spp+s);
+      PrecomputedSampler__get(&THIS->sampler,set,THIS->iteration*THIS->inherited.spp+s);
 
     const vec2f pixelSample = PrecomputedSample__getPixel(sample);
     const vec2f lensSample  = PrecomputedSample__getLens(sample);
@@ -546,7 +548,7 @@ inline vec3f PathTracer_renderPixel(uniform PathTracer *uniform THIS,
     L = L+PathTraceIntegrator_Li(THIS,cameraSample.screen,lightPath,
                                  THIS->scene,sample,numRays);
   }
-  return L * rcpf(THIS->spp);
+  return L * rcpf(THIS->inherited.spp);
 }
 
 
@@ -572,6 +574,7 @@ void PathTracer__initSampler(uniform PathTracer* uniform THIS, const uniform Sce
 void PathTracer_beginFrame(uniform Renderer *uniform renderer,
                            uniform FrameBuffer *uniform fb)
 {
+  // print("pathtracer new frame %\n",fb->accumID);
   uniform PathTracer* uniform THIS = (uniform PathTracer* uniform) renderer;
   if (PrecomputedSampler__empty(&THIS->sampler)) PathTracer__initSampler(THIS,THIS->scene);
   THIS->inherited.fb = fb;
@@ -618,6 +621,7 @@ void PathTracer_beginFrame(uniform Renderer *uniform renderer,
 void PathTracer_renderTile(uniform Renderer *uniform renderer,
                            uniform Tile &tile)
 {
+  
   uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
   uniform FrameBuffer *uniform fb     = renderer->fb;
   uniform Camera      *uniform camera = renderer->camera;
@@ -631,7 +635,10 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
   const uniform uint32 tile_y = y0 / TILE_SIZE;
 
   uniform Random rnd; 
-  uniform int uniqueID = tile_x * 917*13*17 + tile_y * 81551*19*23; // iw: commented out + 3433*g_serverID;
+  uniform int uniqueID
+    = tile_x * 917*13*17 + tile_y * 81551*19*23
+    + fb->accumID * 511 * 1023
+    ; // iw: commented out + 3433*g_serverID;
   Random__setSeed(&rnd,uniqueID); // expensive
 
   float pixel_du = .5f, pixel_dv = .5f;
@@ -683,7 +690,7 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
 // //                              uint32 &numRays)
 //     PathTracer_Li(pt,
     // renderer->renderSample(renderer,screenSample);
-    screenSample.rgb = PathTracer_renderPixel(pt,tile,rnd,ix,iy);
+    screenSample.rgb = PathTracer_renderPixel(pt,tile,rnd,ix,iy,pixel_du,pixel_dv);
      setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
   }
 }
@@ -693,7 +700,6 @@ void PathTracer__Constructor(void *uniform cppE,
                              const uniform int& maxDepth, 
                              const uniform float& minContribution,
                              const uniform float& epsilon,
-                             const uniform int& spp,
                              uniform Image* uniform backplate)
 {
   // Renderer__Constructor(&THIS->inherited,PathTracer__Destructor,PathTracer_renderFrameInit,PathTracer_renderFrame);
@@ -712,7 +718,6 @@ void PathTracer__Constructor(void *uniform cppE,
 
   THIS->minContribution = minContribution;
   THIS->epsilon = epsilon;
-  THIS->spp = spp;
   THIS->iteration = 0;
   // RefCount__IncRef(&backplate->base);
   THIS->backplate = backplate;
@@ -728,11 +733,10 @@ export void* uniform PathTracer_create(void *uniform cppE,
                                        const uniform int32& maxDepth, 
                                        const uniform float& minContribution,
                                        const uniform float& epsilon,
-                                       const uniform int32& spp,
                                        void* uniform backplate)
 {
   uniform PathTracer *uniform THIS = uniform new uniform PathTracer;
-  PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,epsilon,spp,
+  PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,epsilon,
                           (uniform Image* uniform) backplate);
   
   THIS->scene = createScene();

@@ -9,7 +9,7 @@ namespace ospray {
                                                   size_t threadCount, 
                                                   TaskScheduler::Event* event) 
   {
-    renderer->endFrame();
+    renderer->endFrame(channelFlags);
     renderer = NULL;
     fb = NULL;
     // refDec();
@@ -33,7 +33,8 @@ namespace ospray {
 
   /*! render a frame via the tiled load balancer */
   void LocalTiledLoadBalancer::renderFrame(Renderer *tiledRenderer,
-                                           FrameBuffer *fb)
+                                           FrameBuffer *fb,
+                                           const uint32 channelFlags)
   {
     Assert(tiledRenderer);
     Assert(fb);
@@ -43,6 +44,7 @@ namespace ospray {
     renderTask->renderer = tiledRenderer;
     renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
     renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+    renderTask->channelFlags = channelFlags;
     tiledRenderer->beginFrame(fb);
 
     /*! iw: using a local sync event for now; "in theory" we should be

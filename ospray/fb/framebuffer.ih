@@ -5,7 +5,6 @@
 
 struct FrameBuffer;
 
-
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
 typedef void (*SetTileMethod)(uniform FrameBuffer  *uniform,
                               uniform Tile &);

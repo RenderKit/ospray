@@ -18,7 +18,8 @@ namespace ospray {
   {
     static TiledLoadBalancer *instance;
     virtual void renderFrame(Renderer *tiledRenderer,
-                             FrameBuffer *fb) = 0;
+                             FrameBuffer *fb,
+                             const uint32 channelFlags) = 0;
     // virtual void returnTile(FrameBuffer *fb, Tile &tile) = 0;
   };
 
@@ -35,13 +36,16 @@ namespace ospray {
       
       size_t                       numTiles_x;
       size_t                       numTiles_y;
+      uint32                       channelFlags;
       embree::TaskScheduler::Task  task;
 
       TASK_RUN_FUNCTION(RenderTask,run);
       TASK_COMPLETE_FUNCTION(RenderTask,finish);
     };
 
-    virtual void renderFrame(Renderer *tiledRenderer, FrameBuffer *fb);
+    virtual void renderFrame(Renderer *tiledRenderer, 
+                             FrameBuffer *fb,
+                             const uint32 channelFlags);
   };
 
 // #if 0

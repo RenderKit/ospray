@@ -18,6 +18,14 @@ namespace ospray {
     PRINT(accumID);
   };
 
+  void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
+  {
+    if (fbChannelFlags & OSP_FB_ACCUM) {
+      ispc::LocalFrameBuffer_clearAccum(getIE());
+      accumID = 0;
+    }
+  }
+
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
                                      ColorBufferFormat colorBufferFormat,
                                      bool hasDepthBuffer,
@@ -47,10 +55,11 @@ namespace ospray {
       accumBuffer = new vec4f[size.x*size.y];
     else
       accumBuffer = NULL;
-    
     ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
                                                    colorBufferFormat,
-                                                   colorBuffer,depthBuffer,accumBuffer);
+                                                   colorBuffer,
+                                                   depthBuffer,
+                                                   accumBuffer);
   }
   
   LocalFrameBuffer::~LocalFrameBuffer() 

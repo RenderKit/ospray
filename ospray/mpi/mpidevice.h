@@ -111,7 +111,8 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
-                               OSPRenderer _renderer);
+                               OSPRenderer _renderer, 
+                               const uint32 fbChannelFlags);
 
       /*! load module */
       virtual int loadModule(const char *name);

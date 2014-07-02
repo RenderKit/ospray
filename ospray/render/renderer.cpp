@@ -53,14 +53,16 @@ namespace ospray {
     ispc::Renderer_beginFrame(getIE(),fb->getIE());
   }
 
-  void Renderer::endFrame()
+  void Renderer::endFrame(const int32 fbChannelFlags)
   {
-    ispc::Renderer_endFrame(getIE());
+    FrameBuffer *fb = this->currentFB;
+    fb->accumID++;
+    ispc::Renderer_endFrame(getIE(),fb->accumID);
   }
   
-  void Renderer::renderFrame(FrameBuffer *fb)
+  void Renderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
   {
-    TiledLoadBalancer::instance->renderFrame(this,fb);
+    TiledLoadBalancer::instance->renderFrame(this,fb,channelFlags);
   }
 
 };

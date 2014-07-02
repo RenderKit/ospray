@@ -48,8 +48,8 @@ namespace ospray {
                                    const uint32 channels)
     {
       FrameBuffer::ColorBufferFormat colorBufferFormat = FrameBuffer::RGBA_UINT8;//FLOAT32;
-      bool hasDepthBuffer = (channels&OSP_DEPTH_BUFFER)!=0;
-      bool hasAccumBuffer = (channels&OSP_ACCUM_BUFFER)!=0;
+      bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
+      bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
       
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
                                              hasDepthBuffer,hasAccumBuffer);
@@ -58,14 +58,33 @@ namespace ospray {
     }
     
 
+      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        '0,0,0,0'.  
+
+        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        +inf.  
+
+        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        and reset accumID.
+      */
+    void LocalDevice::frameBufferClear(OSPFrameBuffer _fb,
+                                       const uint32 fbChannelFlags)
+    {
+      LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
+      fb->clear(fbChannelFlags);
+    }
+
+
     /*! map frame buffer */
     const void *LocalDevice::frameBufferMap(OSPFrameBuffer _fb,
                                             OSPFrameBufferChannel channel)
     {
       LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
       switch (channel) {
-      case OSP_COLOR_BUFFER: return fb->mapColorBuffer();
-      case OSP_DEPTH_BUFFER: return fb->mapDepthBuffer();
+      case OSP_FB_COLOR: return fb->mapColorBuffer();
+      case OSP_FB_DEPTH: return fb->mapDepthBuffer();
       default: return NULL;
       }
     }
@@ -384,7 +403,8 @@ namespace ospray {
 
     /*! call a renderer to render a frame buffer */
     void LocalDevice::renderFrame(OSPFrameBuffer _fb, 
-                                  OSPRenderer    _renderer)
+                                  OSPRenderer    _renderer, 
+                                  const uint32 fbChannelFlags)
     {
       FrameBuffer *fb       = (FrameBuffer *)_fb;
       // SwapChain *sc       = (SwapChain *)_sc;
@@ -396,7 +416,7 @@ namespace ospray {
       Assert(renderer != NULL && "invalid renderer handle");
       
       // FrameBuffer *fb = sc->getBackBuffer();
-      renderer->renderFrame(fb);
+      renderer->renderFrame(fb,fbChannelFlags);
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
       // actually have the user call an *ex*plicit ospSwapBuffers call...
