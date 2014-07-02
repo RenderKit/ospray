@@ -163,6 +163,14 @@ namespace ospray {
     return ospray::api::Device::current->addGeometry(model,geometry);
   }
 
+  extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
+  {
+    ASSERT_DEVICE();
+    Assert(model != NULL && "invalid model in ospRemoveGeometry");
+    Assert(geometry != NULL && "invalid geometry in ospRemoveGeometry");
+    return ospray::api::Device::current->removeGeometry(model, geometry);
+  }
+
   /*! create a newa data buffer, with optional init data and control flags */
   extern "C" OSPTriangleMesh ospNewTriangleMesh()
   {

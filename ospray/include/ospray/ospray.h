@@ -301,6 +301,9 @@ extern "C" {
   void ospAddGeometry(OSPModel model, OSPGeometry mesh);
   /*! \} end of ospray_trianglemesh */
 
+  /*! \brief remove an existing geometry from a model */
+  void ospRemoveGeometry(OSPModel model, OSPGeometry mesh);
+
 
   /*! \brief create a new instance geometry that instantiates another
     model.  the resulting geometry still has to be added to another

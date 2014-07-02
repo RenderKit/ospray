@@ -13,6 +13,8 @@
 #include "../texture/texture2d.h"
 #include "../lights/light.h"
 // embree stuff
+// system
+#include <algorithm>
 
 namespace ospray {
   namespace api {
@@ -102,12 +104,36 @@ namespace ospray {
     void LocalDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert2(model,"null model in LocalDevice::finalizeModel()");
+      Assert2(model,"null model in LocalDevice::addModel()");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(geometry,"null geometry in LocalDevice::finalizeGeometry()");
+      Assert2(geometry,"null geometry in LocalDevice::addGeometry()");
 
       model->geometry.push_back(geometry);
+    }
+
+    /*! remove an existing geometry from a model */
+    struct GeometryLocator {
+      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+        return ptr == &*g;
+      }
+      Geometry *ptr;
+    };
+
+    void LocalDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
+    {
+      Model *model = (Model *)_model;
+      Assert2(model, "null model in LocalDevice::removeGeometry");
+
+      Geometry *geometry = (Geometry *)_geometry;
+      Assert2(model, "null geometry in LocalDevice::removeGeometry");
+
+      GeometryLocator locator;
+      locator.ptr = geometry;
+      Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+      if(it != model->geometry.end()) {
+        model->geometry.erase(it);
+      }
     }
 
     /*! create a new data buffer */

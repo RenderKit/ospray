@@ -24,7 +24,8 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Model"; }
     virtual void finalize();
 
-    std::vector<Ref<Geometry> > geometry;
+    typedef std::vector<Ref<Geometry> > GeometryVector;
+    GeometryVector geometry;
 
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle; 
