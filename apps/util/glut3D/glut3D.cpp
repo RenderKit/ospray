@@ -495,7 +495,7 @@ namespace ospray {
       const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = (to.y - from.y) * 4 * widget->motionSpeed;
+      float fwd = - (to.y - from.y) * 4 * widget->motionSpeed;
       // * length(widget->worldBounds.size());
       float oldDist = length(cam.at - cam.from);
       float newDist = oldDist - fwd;

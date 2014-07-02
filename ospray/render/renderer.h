@@ -18,7 +18,9 @@ namespace ospray {
     projection/splatting based approaches
    */
   struct Renderer : public ManagedObject {
-    virtual void commit() {};
+    uint32 spp;
+    Renderer() : spp(1) {};
+    virtual void commit();
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Renderer"; }
     /*! \brief produce one frame, and put it into given frame

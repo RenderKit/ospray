@@ -16,7 +16,6 @@ inline float radicalInverse(const uint32 _v, const uint32 prime)
     den = den * prime;
   }
   float ret = nom / den;
-  // print("radicalInverse(%,%)=%\n",_v,prime,ret);
   return ret;
 }
 

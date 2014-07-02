@@ -56,6 +56,17 @@ struct RayCastRenderer
 //                     : .3f+.8f*abs(c));
 // }
 
+export void RayCastRenderer_set(void *uniform _renderer,
+                                void *uniform _model,
+                                void *uniform _camera)
+{
+  uniform RayCastRenderer *uniform renderer = (uniform RayCastRenderer *uniform)_renderer;
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+  renderer->inherited.model = model;
+  renderer->inherited.camera = camera;
+}
+
 void RayCastRenderer_renderSample_eyeLight(uniform Renderer *uniform _renderer,
                                            varying ScreenSample &sample)
 {
@@ -124,42 +135,34 @@ void RayCastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _ren
   }
 }
 
-export void *uniform RayCastRenderer_create_eyeLight(void *uniform cppE,
-                                                     void *uniform _model,
-                                                     void *uniform _camera)
+export void *uniform RayCastRenderer_create_eyeLight(void *uniform cppE)
 {
   uniform RayCastRenderer *uniform renderer = uniform new uniform RayCastRenderer;
-  Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
   renderer->inherited.renderSample = RayCastRenderer_renderSample_eyeLight;
   return renderer;
 }
 
-export void *uniform RayCastRenderer_create_eyeLight_instID(void *uniform cppE,
-                                                            void *uniform _model,
-                                                            void *uniform _camera)
+export void *uniform RayCastRenderer_create_eyeLight_instID(void *uniform cppE)
 {
   uniform RayCastRenderer *uniform renderer = uniform new uniform RayCastRenderer;
-  Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
   renderer->inherited.renderSample = RayCastRenderer_renderSample_eyeLight_instID;
   return renderer;
 }
 
-export void *uniform RayCastRenderer_create_eyeLight_geomID(void *uniform cppE,
-                                                            void *uniform _model,
-                                                            void *uniform _camera)
+export void *uniform RayCastRenderer_create_eyeLight_geomID(void *uniform cppE)
 {
   uniform RayCastRenderer *uniform renderer = uniform new uniform RayCastRenderer;
-  Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
   renderer->inherited.renderSample = RayCastRenderer_renderSample_eyeLight_geomID;
   return renderer;
 }
 
-export void *uniform RayCastRenderer_create_eyeLight_primID(void *uniform cppE,
-                                                            void *uniform _model,
-                                                            void *uniform _camera)
+export void *uniform RayCastRenderer_create_eyeLight_primID(void *uniform cppE)
 {
   uniform RayCastRenderer *uniform renderer = uniform new uniform RayCastRenderer;
-  Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
   renderer->inherited.renderSample = RayCastRenderer_renderSample_eyeLight_primID;
   return renderer;
 }

@@ -19,6 +19,8 @@ namespace ospray {
 
     void OBJRenderer::commit()
     {
+      Renderer::commit();
+
       world = (Model *)getParamObject("world",NULL);
       Assert2(world,"null world handle (did you forget to assign a "
               "'world' parameter to the ray_cast renderer?)");

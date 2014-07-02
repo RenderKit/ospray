@@ -57,6 +57,7 @@ struct Renderer {
   Model       *model; 
   Camera      *camera;
   void        *cppEquivalent;
+  uint32       spp; // number of samples per pixel
 };
 
 void Renderer_constructor(uniform Renderer *uniform renderer,

@@ -15,6 +15,12 @@ namespace ospray {
 
   std::map<std::string, creatorFct> rendererRegistry;
 
+  void Renderer::commit()
+  {
+    spp = getParam1i("spp",1);
+    ispc::Renderer_setSPP(this->getIE(),spp);
+  }
+
   Renderer *Renderer::createRenderer(const char *type)
   {
     std::map<std::string, Renderer *(*)()>::iterator it = rendererRegistry.find(type);

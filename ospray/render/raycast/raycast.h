@@ -50,9 +50,9 @@ namespace ospray {
 
   /*! \brief Implements the family of simple ray cast renderers */
   // template<int SHADE_MODE=RC_EYELIGHT>
-  template<void *(*SHADE_MODE)(void*,void*,void*)>
+  template<void *(*SHADE_MODE)(void*)>
   struct RayCastRenderer : public Renderer {
-    RayCastRenderer() : model(NULL), camera(NULL) {};
+    RayCastRenderer();
     virtual std::string toString() const { return "ospray::RayCastRenderer"; }
 
     Model  *model;

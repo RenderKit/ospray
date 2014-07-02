@@ -41,35 +41,73 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
 
   float pixel_du = .5f, pixel_dv = .5f;
   float lens_du = 0.f, lens_dv = 0.f;
+  uniform int32 spp = renderer->spp;
 
-  if (fb->accumID >= 0) {
-    // compute 
-    pixel_du = precomputedHalton2(fb->accumID);
-    pixel_dv = precomputedHalton3(fb->accumID);
-  }
-  
-  ScreenSample screenSample;
-  screenSample.sampleID.z = fb->accumID;
-  screenSample.z = inf;
-  screenSample.alpha = 0.f;
-  
-  CameraSample cameraSample;
-  
-  for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32 frag = i*programCount+programIndex;
-    screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
-    screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
-    if ((screenSample.sampleID.x >= fb->size.x) | 
-        (screenSample.sampleID.y >= fb->size.y)) 
-      continue;
-
-    cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-    cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+  if (spp > 1) {
+    int startSampleID = max(fb->accumID,0)*spp;
     
+    ScreenSample screenSample;
+    screenSample.z = inf;
+    screenSample.alpha = 0.f;
+  
+    CameraSample cameraSample;
+  
+    for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+      const uint32 frag = i*programCount+programIndex;
+      screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
+      screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
+      if ((screenSample.sampleID.x >= fb->size.x) | 
+          (screenSample.sampleID.y >= fb->size.y)) 
+        continue;
 
-    camera->initRay(camera,screenSample.ray,cameraSample);
-    renderer->renderSample(renderer,screenSample);
-    setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
+      vec3f col = make_vec3f(0);
+      for (uniform uint32 s = 0; s<renderer->spp; s++) {
+        pixel_du = precomputedHalton2(startSampleID+s);
+        pixel_dv = precomputedHalton3(startSampleID+s);
+        screenSample.sampleID.z = startSampleID+s;
+        
+        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      
+        camera->initRay(camera,screenSample.ray,cameraSample);
+        renderer->renderSample(renderer,screenSample);
+        col = col + screenSample.rgb;
+      }
+      col = col * (1.f/spp);
+      setRGBAZ(tile,i,col,screenSample.alpha,screenSample.z);
+    }
+  } else {
+    if (fb->accumID >= 0) {
+      // compute 
+      pixel_du = precomputedHalton2(fb->accumID);
+      pixel_dv = precomputedHalton3(fb->accumID);
+    }
+    
+    ScreenSample screenSample;
+    screenSample.sampleID.z = fb->accumID;
+    screenSample.z = inf;
+    screenSample.alpha = 0.f;
+  
+    CameraSample cameraSample;
+  
+    for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+      const uint32 frag = i*programCount+programIndex;
+      screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
+      screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
+      if ((screenSample.sampleID.x >= fb->size.x) | 
+          (screenSample.sampleID.y >= fb->size.y)) 
+        continue;
+
+      for (uniform uint32 s = 0; s<renderer->spp; s++) {
+        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      
+      
+        camera->initRay(camera,screenSample.ray,cameraSample);
+        renderer->renderSample(renderer,screenSample);
+        setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
+      }
+    }
   }
 }
 
@@ -109,4 +147,10 @@ export void Renderer_endFrame(void *uniform _renderer, const uniform int32 newAc
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->endFrame(renderer,newAccumID);
+}
+
+export void Renderer_setSPP(void *uniform _renderer, uniform uint32 spp)
+{
+  uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
+  renderer->spp = spp;
 }

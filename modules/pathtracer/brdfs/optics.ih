@@ -3,9 +3,6 @@
 #include "../samplers/sample.ih"
 #include "../samplers/shapesampler.ih"
 
-/*! \addtogroup rivl_render_embree_ivl */
-/*! @{ */
-
 /*! Reflects a viewing vector V at a normal N. */
 inline Sample3f reflect(const vec3f &V, const vec3f &N) {
   float cosi = dot(V,N);
@@ -130,4 +127,3 @@ inline uniform PowerCosineDistribution make_PowerCosineDistribution(const unifor
   uniform PowerCosineDistribution m; m.exp = _exp; return m;
 }
 
-/*! @} */
