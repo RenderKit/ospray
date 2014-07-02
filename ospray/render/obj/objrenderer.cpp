@@ -60,10 +60,14 @@ namespace ospray {
 
       vec3f bgColor;
       bgColor = getParam3f("bgColor", vec3f(0));
+
+      bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
+
       ispc::OBJRenderer_set(getIE(),
                             world->getIE(),
                             camera->getIE(),
                             (ispc::vec3f&)bgColor,
+                            shadowsEnabled,
                             pointLightPtr, pointLightArray.size(),
                             dirLightPtr,   dirLightArray.size(),
                             spotLightPtr,  spotLightArray.size());
