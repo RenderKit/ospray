@@ -35,6 +35,7 @@ namespace ospray {
     Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
     
     Assert(model && "invalid model pointer");
+
     RTCScene embreeSceneHandle = model->embreeSceneHandle;
 
     vertexData = getParamData("vertex",getParamData("position"));
@@ -53,6 +54,16 @@ namespace ospray {
             "triangle mesh geometry does not have either 'index'"
             " or 'triangle' array");
 
+    // PING;
+    // PRINT(indexData);
+    // PRINT(normalData);
+    // PRINT(colorData);
+    // PRINT(texcoordData);
+    // PRINT(prim_materialIDData);
+    // PRINT(materialListData);
+    // PRINT(indexData->data);
+    // PRINT(vertexData->data);
+    
     this->index = (vec3i*)indexData->data;
     this->vertex = (vec3fa*)vertexData->data;
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;

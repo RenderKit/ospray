@@ -13,7 +13,7 @@
 #include "../texture/texture2d.h"
 #include "../lights/light.h"
 // embree stuff
-// system
+// stl
 #include <algorithm>
 
 namespace ospray {

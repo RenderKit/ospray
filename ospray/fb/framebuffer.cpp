@@ -13,9 +13,6 @@ namespace ospray {
       accumID(-1)
   {
     Assert(size.x > 0 && size.y > 0);
-    PING;
-    PRINT(this);
-    PRINT(accumID);
   };
 
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
@@ -29,21 +26,26 @@ namespace ospray {
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
                                      ColorBufferFormat colorBufferFormat,
                                      bool hasDepthBuffer,
-                                     bool hasAccumBuffer)
+                                     bool hasAccumBuffer, 
+                                     void *colorBufferToUse)
     : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer)
   { 
     Assert(size.x > 0);
     Assert(size.y > 0);
-    switch(colorBufferFormat) {
-    case FrameBuffer::NONE:
-      colorBuffer = NULL;
-      break;
-    case FrameBuffer::RGBA_FLOAT32:
-      colorBuffer = new vec4f[size.x*size.y];
-      break;
-    case FrameBuffer::RGBA_UINT8:
-      colorBuffer = new uint32[size.x*size.y];
-      break;
+    if (colorBufferToUse)
+      colorBuffer = colorBufferToUse;
+    else {
+      switch(colorBufferFormat) {
+      case FrameBuffer::NONE:
+        colorBuffer = NULL;
+        break;
+      case FrameBuffer::RGBA_FLOAT32:
+        colorBuffer = new vec4f[size.x*size.y];
+        break;
+      case FrameBuffer::RGBA_UINT8:
+        colorBuffer = new uint32[size.x*size.y];
+        break;
+      }
     }
 
     if (hasDepthBuffer)

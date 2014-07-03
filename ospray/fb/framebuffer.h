@@ -76,7 +76,8 @@ namespace ospray {
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,
                      bool hasDepthBuffer,
-                     bool hasAccumBuffer);
+                     bool hasAccumBuffer, 
+                     void *colorBufferToUse=NULL);
     virtual ~LocalFrameBuffer();
     
     virtual const void *mapColorBuffer();

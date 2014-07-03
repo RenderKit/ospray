@@ -15,15 +15,18 @@
 #include "camera/camera.h"
 #include "volume/volume.h"
 #include "render/renderer.h"
-#include "render/tilerenderer.h"
+#include "render/renderer.h"
 #include "render/loadbalancer.h"
 #include "texture/texture2d.h"
 #include "lights/light.h"
+// stl
+#include <algorithm>
 
 using namespace std;
 
 namespace ospray {
   namespace coi {
+
     COINATIVELIBEXPORT
     void ospray_coi_initialize(uint32_t         in_BufferCount,
                                void**           in_ppBufferPointers,
@@ -113,9 +116,29 @@ namespace ospray {
       // PRINT((int*)*(int64*)init);
 
       COIBufferAddRef(bufferPtr[0]);
-      Data *data = new Data(nitems,(OSPDataType)format,bufferPtr[0],flags|OSP_DATA_SHARED_BUFFER);
-      handle.assign(data);
 
+      if (format == OSP_STRING)
+        throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
+
+      if (format == OSP_OBJECT) {
+        cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
+        Handle *in = (Handle *)bufferPtr[0];
+        ManagedObject **out = (ManagedObject **)bufferPtr[0];
+        for (int i=0;i<nitems;i++) {
+          if (in[i]) {
+            out[i] = in[i].lookup();
+            out[i]->refInc();
+          } else
+            out[i] = 0;
+        }
+        Data *data = new Data(nitems,(OSPDataType)format,
+                              out,flags|OSP_DATA_SHARED_BUFFER);
+        handle.assign(data);
+      } else {
+        Data *data = new Data(nitems,(OSPDataType)format,
+                              bufferPtr[0],flags|OSP_DATA_SHARED_BUFFER);
+        handle.assign(data);
+      }
       COIProcessProxyFlush();
     }
 
@@ -153,12 +176,59 @@ namespace ospray {
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       vec2i size = args.get<vec2i>();
-      // cout << "!osp:coi: new framebuffer " << handle.ID() << endl;
+      uint32 mode = args.get<uint32>();
+      uint32 channels = args.get<uint32>();
+
       int32 *pixelArray = (int32*)bufferPtr[0];
-      FrameBuffer *fb = new LocalFrameBuffer<uint32>(size,pixelArray); //createLocalFB_RGBA_I8(size,pixelArray);
+
+      FrameBuffer::ColorBufferFormat colorBufferFormat = (FrameBuffer::ColorBufferFormat)mode;
+      //FrameBuffer::RGBA_UINT8;//FLOAT32;
+      assert(colorBufferFormat == FrameBuffer::RGBA_UINT8);
+
+      bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
+      bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+      
+      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
+                                             hasDepthBuffer,hasAccumBuffer,
+                                             pixelArray);
+      // fb->refInc();
+      // return (OSPFrameBuffer)fb;
+
+
+
+      // // cout << "!osp:coi: new framebuffer " << handle.ID() << endl;
+      // int32 *pixelArray = (int32*)bufferPtr[0];
+      // FrameBuffer *fb = new LocalFrameBuffer<uint32>(size,pixelArray); //createLocalFB_RGBA_I8(size,pixelArray);
       handle.assign(fb);
 
+      // FrameBuffer::ColorBufferFormat colorBufferFormat = FrameBuffer::RGBA_UINT8;//FLOAT32;
+      // bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
+      // bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+      
+      // FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
+      //                                        hasDepthBuffer,hasAccumBuffer);
+      // fb->refInc();
+      // return (OSPFrameBuffer)fb;
+
+
       COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_framebuffer_clear(uint32_t         numBuffers,
+                                      void**           bufferPtr,
+                                      uint64_t*        bufferSize,
+                                      void*            argsPtr,
+                                      uint16_t         argsSize,
+                                      void*            retVal,
+                                      uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      // OSPModel *model = ospNewModel();
+      Handle _fb = args.get<Handle>();
+      FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
+      const uint32 channel = args.get<uint32>();
+      fb->clear(channel);
     }
 
     COINATIVELIBEXPORT
@@ -287,6 +357,35 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
+    void ospray_coi_new_light(uint32_t         numBuffers,
+                              void**           bufferPtr,
+                              uint64_t*        bufferSize,
+                              void*            argsPtr,
+                              uint16_t         argsSize,
+                              void*            retVal,
+                              uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      // OSPModel *model = ospNewModel();
+      Handle handle = args.get<Handle>();
+      Handle _renderer = args.get<Handle>();
+      const char *type = args.getString();
+      Renderer *renderer = (Renderer *)_renderer.lookup();
+
+      Light *light = NULL;
+      COIProcessProxyFlush(); 
+
+      if (renderer)
+        light = renderer->createLight(type);
+      if (!light)
+        light = Light::createLight(type);
+      assert(light);
+      handle.assign(light);
+
+      COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
     void ospray_coi_new_texture2d(uint32_t         numBuffers,
                                   void**           bufferPtr,
                                   uint64_t*        bufferSize,
@@ -298,18 +397,6 @@ namespace ospray {
       assert(false && __func__ " not yet implemented in " __FILE__);
     }
                                 
-    COINATIVELIBEXPORT
-    void ospray_coi_new_light(uint32_t         numBuffers,
-                              void**           bufferPtr,
-                              uint64_t*        bufferSize,
-                              void*            argsPtr,
-                              uint16_t         argsSize,
-                              void*            retVal,
-                              uint16_t         retValSize)
-    {
-      assert(false && __func__ " not yet implemented in " __FILE__);
-    }
-
     COINATIVELIBEXPORT
     void ospray_coi_add_geometry(uint32_t         numBuffers,
                                  void**           bufferPtr,
@@ -358,20 +445,51 @@ namespace ospray {
                            uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
-      // cout << "!osp:coi: commit " << handle.ID() << endl;
 
       ManagedObject *obj = handle.lookup();
       Assert(obj);
       obj->commit();
 
-
       // hack, to stay compatible with earlier version
       Model *model = dynamic_cast<Model *>(obj);
-      if (model)
+      if (model) {
         model->finalize();
+      }
 
+      COIProcessProxyFlush();
+    }
+
+    /*! remove an existing geometry from a model */
+    struct GeometryLocator {
+      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+        return ptr == &*g;
+      }
+      Geometry *ptr;
+    };
+
+    COINATIVELIBEXPORT
+    void ospray_coi_remove_geometry(uint32_t         numBuffers,
+                                    void**           bufferPtr,
+                                    uint64_t*        bufferSize,
+                                    void*            argsPtr,
+                                    uint16_t         argsSize,
+                                    void*            retVal,
+                                    uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      Handle _model = args.get<Handle>();
+      Handle _geometry = args.get<Handle>();
+
+      Model *model = (Model*)_model.lookup();
+      Geometry *geometry = (Geometry*)_geometry.lookup();
+
+      GeometryLocator locator;
+      locator.ptr = geometry;
+      Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+      if(it != model->geometry.end()) {
+        model->geometry.erase(it);
+      }
 
       COIProcessProxyFlush();
     }
@@ -388,10 +506,11 @@ namespace ospray {
       DataStream args(argsPtr);
       Handle _fb       = args.get<Handle>();
       Handle renderer = args.get<Handle>();
+      uint32 channelFlags = args.get<uint32>();
       // cout << "!osp:coi: renderframe " << _fb.ID() << " " << renderer.ID() << endl;
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
-      r->renderFrame(fb);
+      r->renderFrame(fb,channelFlags);
       // if (fb->renderTask) {
       //   fb->renderTask->done.sync();
       //   fb->renderTask = NULL;
@@ -407,13 +526,15 @@ namespace ospray {
                                       void*            retVal,
                                       uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
-      Handle _fb       = args.get<Handle>();
-      FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
-      if (fb->renderTask) {
-        fb->renderTask->done.sync();
-        fb->renderTask = NULL;
-      }
+      // currently all rendering is synchronous, anyway ....
+
+      // DataStream args(argsPtr);
+      // Handle _fb       = args.get<Handle>();
+      // FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
+      // if (fb->renderTask) {
+      //   fb->renderTask->done.sync();
+      //   fb->renderTask = NULL;
+      // }
     }
 
     COINATIVELIBEXPORT
@@ -455,7 +576,6 @@ namespace ospray {
         obj->setParam(name,val);
       } break;
       default:
-        PRINT((int)type);
         throw "ospray_coi_set_value no timplemented for given data type";
       }
     }

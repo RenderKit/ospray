@@ -102,10 +102,18 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
         cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
       
-      
+        // print("initray % % %\n",camera,cameraSample.screen.x,cameraSample.screen.y);
         camera->initRay(camera,screenSample.ray,cameraSample);
+        // print("rendersample %\n",renderer);
         renderer->renderSample(renderer,screenSample);
+        // print("setrgba % %\n",&tile,i);
+        // if (screenSample.rgb.x != 0) {
+        //   print("r %\n",screenSample.rgb.x);
+        //   print("g %\n",screenSample.rgb.y);
+        //   print("b %\n",screenSample.rgb.z);
+        // }
         setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
+        // print("DONE setrgba % %\n",&tile,i);
       }
     }
   }

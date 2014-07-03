@@ -63,6 +63,7 @@ export void RayCastRenderer_set(void *uniform _renderer,
   uniform RayCastRenderer *uniform renderer = (uniform RayCastRenderer *uniform)_renderer;
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+  print("=======================================================\nsetting camera % model %\n",_camera,_model);
   renderer->inherited.model = model;
   renderer->inherited.camera = camera;
 }

@@ -63,6 +63,7 @@ typedef enum {
 
 /*! OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
+  OSP_RGBA_NONE,
   OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */

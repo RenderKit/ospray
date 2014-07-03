@@ -14,6 +14,7 @@ namespace ospray {
 
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   int accumID = -1;
+  int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
 
   /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
@@ -22,7 +23,7 @@ namespace ospray {
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
   OSPRenderer        ospRenderer = NULL;
-  bool alwaysRedraw = true;
+  bool alwaysRedraw = false;
 
   //! the renderer we're about to use
   std::string rendererType = "raycast_eyelight";
@@ -121,6 +122,7 @@ namespace ospray {
       }
       
       ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
+      ++accumID;
       
       ucharFB = (uint32 *) ospMapFrameBuffer(fb);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
@@ -135,9 +137,11 @@ namespace ospray {
                 fps.getFPS());
         setTitle(title);
         forceRedraw();
+      } else if (accumID < maxAccum) {
+        forceRedraw();
       } else {
-        sprintf(title,"OSPRay MSGView");
-        setTitle(title);
+        // sprintf(title,"OSPRay Model Viewer");
+        // setTitle(title);
       }
     }
     
@@ -279,12 +283,15 @@ namespace ospray {
       if (arg == "--renderer") {
         assert(i+1 < ac);
         rendererType = av[++i];
+      } else if (arg == "--always-redraw") {
+        alwaysRedraw = true;
       } else if (arg == "--spp") {
         spp = atoi(av[++i]);
       } else if (arg == "--pt") {
         // shortcut for '--module pathtracer --renderer pathtracer'
         const char *moduleName = "pathtracer";
         cout << "loading ospray module '" << moduleName << "'" << endl;
+        maxAccum = 1024;
         ospLoadModule(moduleName);
         rendererType = moduleName;
       } else if (arg == "--sun-dir") {
@@ -387,6 +394,7 @@ namespace ospray {
 
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
+    ospCommit(ospRenderer);
     if (!ospRenderer)
       throw std::runtime_error("could not create ospRenderer '"+rendererType+"'");
     Assert(ospRenderer != NULL && "could not create ospRenderer");
@@ -478,6 +486,7 @@ namespace ospray {
       }
     }
     ospCommit(ospModel);
+    PING;
     cout << "msgView: done creating ospray model." << endl;
 
     //TODO: Need to figure out where we're going to read lighting data from
@@ -485,6 +494,7 @@ namespace ospray {
     std::vector<OSPLight> dirLights;
     cout << "msgView: Adding a hard coded directional light as the sun." << endl;
     OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
+    PING;
     ospSetString(ospLight, "name", "sun" );
     ospSet3f(ospLight, "color", 1, 1, 1);
     ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
@@ -492,7 +502,6 @@ namespace ospray {
     dirLights.push_back(ospLight);
     OSPData dirLightArray = ospNewData(dirLights.size(), OSP_OBJECT, &dirLights[0], 0);
     ospSetData(ospRenderer, "directionalLights", dirLightArray);
-
 #if 0
     //spot light
     std::vector<OSPLight> spotLights;
@@ -514,6 +523,7 @@ namespace ospray {
     ospSetData(ospRenderer, "spotLights", spotLightArray);
 #endif
     //end light test
+    ospCommit(ospRenderer);
 
     // -------------------------------------------------------
     // create viewer window

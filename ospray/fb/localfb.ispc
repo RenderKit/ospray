@@ -113,7 +113,6 @@ export void LocalFrameBuffer_clearAccum(void *uniform _fb)
 void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
                               uniform Tile &tile)
 {
-  // print("setting tile % %, %\n",tile.region.lower.x,tile.region.lower.y,tile.r[0]);
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform bool hasDepth = (fb->depthBuffer != NULL);
   const float accScale = 1.f/(fb->inherited.accumID+1);
@@ -184,6 +183,8 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           fb->depthBuffer[ofs] = tile.z[i];
       }
     }
+  } else {
+    print("format UNKONWN\n");
   }
 }
 

@@ -96,6 +96,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
       return color;
     }
 
+    
     vec3f local_shade_color = make_vec3f(0.f);
 
     DifferentialGeometry dg;
@@ -243,6 +244,7 @@ void OBJRenderer_renderSample(uniform Renderer *uniform _renderer,
 {
   uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
   // print("sample.ray.org.x %\n",sample.ray.org.x);
+  // sample.rgb = absf(sample.ray.dir);
   sample.rgb = OBJRenderer_shadeRay(sample.ray,renderer);
   // print("sample.x %\n",sample.rgb.x);
 }

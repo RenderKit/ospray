@@ -31,7 +31,12 @@ namespace ospray {
     model = (Model *)getParamObject("model",model);
     camera = (Camera *)getParamObject("camera",NULL);
 
-    ispc::RayCastRenderer_set(getIE(),model->getIE(),camera->getIE());
+    PING;
+    PRINT(model);
+    PRINT(camera);
+    ispc::RayCastRenderer_set(getIE(),
+                              model?model->getIE():NULL,
+                              camera?camera->getIE():NULL);
     // switch(SHADE_MODE) {
     // case RC_EYELIGHT:
     //   ispcEquivalent = ispc::RayCastRenderer_create_eyeLight(this->getIE(),model->getIE(),camera->getIE()); 

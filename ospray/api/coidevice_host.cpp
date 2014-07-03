@@ -52,7 +52,9 @@ namespace ospray {
       OSPCOI_RENDER_FRAME_SYNC,
       OSPCOI_NEW_TEXTURE2D,
       OSPCOI_NEW_LIGHT,
-      OSPCOI_NUM_FUNCTIONS,
+      OSPCOI_REMOVE_GEOMETRY,
+      OSPCOI_FRAMEBUFFER_CLEAR,
+      OSPCOI_NUM_FUNCTIONS
     } RemoteFctID;
 
     const char *coiFctName[] = {
@@ -75,6 +77,8 @@ namespace ospray {
       "ospray_coi_render_frame_sync",
       "ospray_coi_new_texture2d",
       "ospray_coi_new_light",
+      "ospray_coi_remove_geometry",
+      "ospray_coi_framebuffer_clear",
       NULL
     };
     
@@ -113,6 +117,21 @@ namespace ospray {
                                                const OSPFrameBufferMode mode,
                                                const uint32 channels);
 
+
+      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        '0,0,0,0'.  
+
+        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        +inf.  
+
+        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        and reset accumID.
+      */
+      virtual void frameBufferClear(OSPFrameBuffer _fb,
+                                    const uint32 fbChannelFlags); 
+
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb, 
                                 OSPFrameBufferChannel);
@@ -129,6 +148,8 @@ namespace ospray {
 
       /*! commit the given object's outstanding changes */
       virtual void commit(OSPObject object);
+      /*! remove an existing geometry from a model */
+      virtual void removeGeometry(OSPModel _model, OSPGeometry _geometry);
 
       /*! add a new geometry to a model */
       virtual void addGeometry(OSPModel _model, OSPGeometry _geometry);
@@ -462,11 +483,13 @@ namespace ospray {
 
       /*! call a renderer to render a frame buffer */
     void COIDevice::renderFrame(OSPFrameBuffer _sc, 
-                               OSPRenderer _renderer)
+                                OSPRenderer _renderer, 
+                                const uint32 fbChannelFlags)
     {
       DataStream args;
       args.write((Handle&)_sc);
       args.write((Handle&)_renderer);
+      args.write((uint32&)fbChannelFlags);
 #if FORCE_SINGLE_DEVICE
       callFunction(OSPCOI_RENDER_FRAME,args,true);
 #else
@@ -483,6 +506,27 @@ namespace ospray {
       args.write(handle);
       callFunction(OSPCOI_COMMIT,args);
     }
+
+    void COIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
+    {
+      DataStream args;
+      args.write((Handle&)_model);
+      args.write((Handle&)_geometry);
+      callFunction(OSPCOI_REMOVE_GEOMETRY,args);
+      // Model *model = (Model *)_model;
+      // Assert2(model, "null model in LocalDevice::removeGeometry");
+
+      // Geometry *geometry = (Geometry *)_geometry;
+      // Assert2(model, "null geometry in LocalDevice::removeGeometry");
+
+      // GeometryLocator locator;
+      // locator.ptr = geometry;
+      // Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+      // if(it != model->geometry.end()) {
+      //   model->geometry.erase(it);
+      // }
+    }
+
 
     /*! add a new geometry to a model */
     void COIDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
@@ -526,8 +570,20 @@ namespace ospray {
     /*! have given renderer create a new light */
     OSPLight COIDevice::newLight(OSPRenderer _renderer, const char *type)
     {
-      assert(false && "COIDevice::newLight() not yet implemented for COIDevice");
-      return NULL;
+      Assert(type);
+      Handle handle = Handle::alloc();
+      DataStream args;
+      PING;
+      
+      PRINT(_renderer);
+      PRINT(type);
+      
+      args.write(handle);
+      args.write((Handle&)_renderer);
+      args.write(type);
+      PRINT(coiFctName[OSPCOI_NEW_LIGHT]);
+      callFunction(OSPCOI_NEW_LIGHT,args);
+      return (OSPLight)(int64)handle;
     }
 
     /*! create a new geometry object (out of list of registered geometrys) */
@@ -613,13 +669,16 @@ namespace ospray {
 
       /*! create a new frame buffer */
     OSPFrameBuffer COIDevice::frameBufferCreate(const vec2i &size, 
-                                                const OSPFrameBufferMode mode)
+                                                const OSPFrameBufferMode mode,
+                                                const uint32 channels)
     {
       COIRESULT result;
       Handle handle = Handle::alloc();
       DataStream args;
       args.write(handle);
       args.write(size);
+      args.write((uint32)mode);
+      args.write(channels);
 
       Assert(mode == OSP_RGBA_I8);
       COIFrameBuffer *fb = new COIFrameBuffer;
@@ -653,8 +712,11 @@ namespace ospray {
     }
 
       /*! map frame buffer */
-    const void *COIDevice::frameBufferMap(OSPFrameBuffer _fb)
+    const void *COIDevice::frameBufferMap(OSPFrameBuffer _fb,
+                                          OSPFrameBufferChannel channel)
     {
+      if (channel != OSP_FB_COLOR)
+        throw std::runtime_error("can only map color buffers on coi devices");
       COIRESULT result;
       Handle handle = (Handle &)_fb;
       COIFrameBuffer *fb = fbList[handle];//(COIFrameBuffer *)_fb;
@@ -800,6 +862,25 @@ namespace ospray {
       args.write(OSP_vec3i);
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
+    }
+      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        '0,0,0,0'.  
+
+        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        +inf.  
+
+        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        and reset accumID.
+      */
+    void COIDevice::frameBufferClear(OSPFrameBuffer _fb,
+                                     const uint32 fbChannelFlags)
+    {
+      DataStream args;
+      args.write((Handle&)_fb);
+      args.write(fbChannelFlags);
+      callFunction(OSPCOI_FRAMEBUFFER_CLEAR,args);
     }
   }
 }
