@@ -30,6 +30,7 @@ struct OBJRenderer {
   const uniform OBJSpotLight *uniform *uniform spotLights;
   uint32        numSpotLights;
   vec3f         bgColor;
+  bool          shadowsEnabled;
 };
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight) {
@@ -165,7 +166,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
         if (max_contrib > .01f) {
           Ray shadowRay;
           setRay(shadowRay,P,L);
-          const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
+          const float light_alpha = renderer->shadowsEnabled ? lightAlpha(shadowRay, renderer->inherited.model, max_contrib) : 1.;
 
           local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
         }
@@ -185,7 +186,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
         if (max_contrib > .01f) {
           Ray shadowRay;
           setRay(shadowRay, P, L);
-          const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
+          const float light_alpha = renderer->shadowsEnabled ? lightAlpha(shadowRay, renderer->inherited.model, max_contrib) : 1.;
 
           local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
         }
@@ -216,7 +217,7 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
           if (max_contrib > .01f) {
             Ray shadowRay;
             setRay(shadowRay, P, L);
-            const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
+            const float light_alpha = renderer->shadowsEnabled ? lightAlpha(shadowRay, renderer->inherited.model, max_contrib) : 1.;
 
             local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
           }
@@ -262,6 +263,7 @@ export void OBJRenderer_set(void *uniform _renderer,
                             void *uniform _model,
                             void *uniform _camera,
                             const uniform vec3f &bgColor,
+                            const uniform bool &shadowsEnabled,
                             void **uniform pointLights,
                             uniform int32  numPointLights,
                             void **uniform dirLights,
@@ -274,6 +276,8 @@ export void OBJRenderer_set(void *uniform _renderer,
   renderer->inherited.camera = (uniform Camera *uniform)_camera;
 
   renderer->bgColor = bgColor;
+
+  renderer->shadowsEnabled = shadowsEnabled;
 
   renderer->numPointLights = numPointLights;
   renderer->pointLights = (const uniform OBJPointLight *uniform *uniform)pointLights;
