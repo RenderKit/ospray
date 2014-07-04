@@ -120,7 +120,7 @@ namespace ospray {
   }
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                              const OSPFrameBufferMode mode,
+                                              const OSPFrameBufferFormat mode,
                                               const int channels)
   {
     ASSERT_DEVICE();

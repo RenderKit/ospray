@@ -67,7 +67,7 @@ typedef enum {
   OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
-} OSPFrameBufferMode;
+} OSPFrameBufferFormat;
 
 typedef enum {
   // void poitner type - only allowed for local rendering
@@ -278,7 +278,7 @@ extern "C" {
     never ever be transferred to the application.
    */
   OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                   const OSPFrameBufferMode externalFormat=OSP_RGBA_I8,
+                                   const OSPFrameBufferFormat externalFormat=OSP_RGBA_I8,
                                    const int channelFlags=OSP_FB_COLOR);
 
   /*! \brief free a framebuffer 

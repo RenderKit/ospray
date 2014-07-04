@@ -11,7 +11,7 @@ namespace ospray {
 
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
-                                               const OSPFrameBufferMode mode,
+                                               const OSPFrameBufferFormat mode,
                                                const uint32 channels);
 
       /*! map frame buffer */

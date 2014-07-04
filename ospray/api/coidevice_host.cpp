@@ -114,7 +114,7 @@ namespace ospray {
 
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
-                                               const OSPFrameBufferMode mode,
+                                               const OSPFrameBufferFormat mode,
                                                const uint32 channels);
 
 
@@ -669,7 +669,7 @@ namespace ospray {
 
       /*! create a new frame buffer */
     OSPFrameBuffer COIDevice::frameBufferCreate(const vec2i &size, 
-                                                const OSPFrameBufferMode mode,
+                                                const OSPFrameBufferFormat mode,
                                                 const uint32 channels)
     {
       COIRESULT result;

@@ -36,13 +36,13 @@ namespace ospray {
       colorBuffer = colorBufferToUse;
     else {
       switch(colorBufferFormat) {
-      case FrameBuffer::NONE:
+      case OSP_RGBA_NONE:
         colorBuffer = NULL;
         break;
-      case FrameBuffer::RGBA_FLOAT32:
+      case OSP_RGBA_F32:
         colorBuffer = new vec4f[size.x*size.y];
         break;
-      case FrameBuffer::RGBA_UINT8:
+      case OSP_RGBA_I8:
         colorBuffer = new uint32[size.x*size.y];
         break;
       }

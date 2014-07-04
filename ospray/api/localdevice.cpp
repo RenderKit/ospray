@@ -44,10 +44,10 @@ namespace ospray {
 
     OSPFrameBuffer 
     LocalDevice::frameBufferCreate(const vec2i &size, 
-                                   const OSPFrameBufferMode mode,
+                                   const OSPFrameBufferFormat mode,
                                    const uint32 channels)
     {
-      FrameBuffer::ColorBufferFormat colorBufferFormat = FrameBuffer::RGBA_UINT8;//FLOAT32;
+      FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
       
