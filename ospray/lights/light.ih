@@ -1,0 +1,17 @@
+#ifndef OSPRAY_LIGHT_IH
+#define OSPRAY_LIGHT_IH
+
+/*! ispc-side equivalent of a light */
+
+struct Light {
+  void *uniform cppEquivalent;  //! pointer back to the C++-equivalent of this class
+};
+
+//! constructor for ispc-side light object
+extern void Light_Constructor(uniform Light *uniform light,
+                              void *uniform cppEquivalent);
+
+//! destructor for ispc-side light object
+extern void Light_Destructor(uniform Light *uniform light);
+
+#endif

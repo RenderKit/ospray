@@ -12,8 +12,20 @@
 #include "common/sys/ref.h"
 #include "common/sys/taskscheduler.h"
 
+
+
+inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
+inline void operator delete(void* ptr) throw() { embree::alignedFree(ptr); }      
+inline void* operator new[](size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }  
+inline void operator delete[](void* ptr) throw() { embree::alignedFree(ptr); }    
+
+
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
+
+  using embree::one;
+  using embree::empty;
+  using embree::zero;
 
   /*! basic types */
   typedef          long long  int64;
@@ -27,8 +39,16 @@ namespace ospray {
 
   /*! OSPRay's two-int vector class */
   typedef embree::Vec2i    vec2i;
-  /*! OSPRay's three-int vector class */
-  typedef embree::Vec3i    vec3i;
+  /*! OSPRay's three-unsigned char vector class */
+  typedef embree::Vec3<uint8> vec3uc;
+  /*! OSPRay's 2x uint32 vector class */
+  typedef embree::Vec2<uint32> vec2ui;
+  /*! OSPRay's 3x uint32 vector class */
+  typedef embree::Vec3<uint32> vec3ui;
+  /*! OSPRay's 4x uint32 vector class */
+  typedef embree::Vec4<uint32> vec4ui;
+  /*! OSPRay's 3x int32 vector class */
+  typedef embree::Vec3<int32>  vec3i;
   /*! OSPRay's four-int vector class */
   typedef embree::Vec4i    vec4i;
   /*! OSPRay's two-float vector class */
@@ -40,11 +60,15 @@ namespace ospray {
   /*! OSPRay's four-float vector class */
   typedef embree::Vec4f    vec4f;
 
-  typedef embree::BBox3f      box3f;
-  typedef embree::BBox<embree::Vec4f> box4f;
+  typedef embree::BBox3f       box3f;
+  typedef embree::BBox<vec3uc> box3uc;
+  typedef embree::BBox<vec4f>  box4f;
   
   /*! affice space transformation */
-  typedef embree::AffineSpace3fa affine3f;
+  typedef embree::AffineSpace3f affine3f;
+  typedef embree::AffineSpace3fa affine3fa;
+  typedef embree::AffineSpace3f AffineSpace3f;
+  typedef embree::AffineSpace3fa AffineSpace3fa;
 
   using   embree::Ref;
   using   embree::RefCount;
@@ -71,7 +95,7 @@ namespace ospray {
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 #endif
 
-  /*! logging level (cmdline: --osp:loglevel <n>) */
+  /*! logging level (cmdline: --osp:loglevel \<n\>) */
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;

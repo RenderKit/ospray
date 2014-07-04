@@ -1,14 +1,20 @@
 #include "localdevice.h"
-#include "../fb/swapchain.h"
+// #include "../fb/swapchain.h"
 #include "../common/model.h"
 #include "../common/data.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
 #include "../volume/volume.h"
+#include "../transferfunction/TransferFunction.h"
 #include "../render/loadbalancer.h"
+#include "../common/material.h"
 #include "../common/library.h"
+#include "../texture/texture2d.h"
+#include "../lights/light.h"
 // embree stuff
+// stl
+#include <algorithm>
 
 namespace ospray {
   namespace api {
@@ -39,38 +45,57 @@ namespace ospray {
     OSPFrameBuffer 
     LocalDevice::frameBufferCreate(const vec2i &size, 
                                    const OSPFrameBufferMode mode,
-                                   const size_t swapChainDepth)
+                                   const uint32 channels)
     {
-      FrameBufferFactory fbFactory = NULL;
-      switch(mode) {
-      case OSP_RGBA_I8:
-        fbFactory = createLocalFB_RGBA_I8;
-        break;
-      default:
-        AssertError("frame buffer mode not yet supported");
-      }
-      SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
-      sc->refInc();
-      Assert(sc != NULL);
-      return (OSPFrameBuffer)sc;
+      FrameBuffer::ColorBufferFormat colorBufferFormat = FrameBuffer::RGBA_UINT8;//FLOAT32;
+      bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
+      bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+      
+      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
+                                             hasDepthBuffer,hasAccumBuffer);
+      fb->refInc();
+      return (OSPFrameBuffer)fb;
     }
     
 
-    /*! map frame buffer */
-    const void *LocalDevice::frameBufferMap(OSPFrameBuffer fb)
+      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        '0,0,0,0'.  
+
+        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        +inf.  
+
+        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        and reset accumID.
+      */
+    void LocalDevice::frameBufferClear(OSPFrameBuffer _fb,
+                                       const uint32 fbChannelFlags)
     {
-      Assert(fb != NULL);
-      SwapChain *sc = (SwapChain *)fb;
-      return sc->map();
+      LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
+      fb->clear(fbChannelFlags);
+    }
+
+
+    /*! map frame buffer */
+    const void *LocalDevice::frameBufferMap(OSPFrameBuffer _fb,
+                                            OSPFrameBufferChannel channel)
+    {
+      LocalFrameBuffer *fb = (LocalFrameBuffer*)_fb;
+      switch (channel) {
+      case OSP_FB_COLOR: return fb->mapColorBuffer();
+      case OSP_FB_DEPTH: return fb->mapDepthBuffer();
+      default: return NULL;
+      }
     }
 
     /*! unmap previously mapped frame buffer */
     void LocalDevice::frameBufferUnmap(const void *mapped,
-                                       OSPFrameBuffer fb)
+                                       OSPFrameBuffer _fb)
     {
-      Assert2(fb != NULL, "invalid framebuffer");
-      SwapChain *sc = (SwapChain *)fb;
-      sc->unmap(mapped);
+      Assert2(_fb != NULL, "invalid framebuffer");
+      FrameBuffer *fb = (FrameBuffer *)_fb;
+      fb->unmap(mapped);
     }
 
     /*! create a new model */
@@ -98,12 +123,36 @@ namespace ospray {
     void LocalDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       Model *model = (Model *)_model;
-      Assert2(model,"null model in LocalDevice::finalizeModel()");
+      Assert2(model,"null model in LocalDevice::addModel()");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(geometry,"null geometry in LocalDevice::finalizeGeometry()");
+      Assert2(geometry,"null geometry in LocalDevice::addGeometry()");
 
       model->geometry.push_back(geometry);
+    }
+
+    /*! remove an existing geometry from a model */
+    struct GeometryLocator {
+      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+        return ptr == &*g;
+      }
+      Geometry *ptr;
+    };
+
+    void LocalDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
+    {
+      Model *model = (Model *)_model;
+      Assert2(model, "null model in LocalDevice::removeGeometry");
+
+      Geometry *geometry = (Geometry *)_geometry;
+      Assert2(model, "null geometry in LocalDevice::removeGeometry");
+
+      GeometryLocator locator;
+      locator.ptr = geometry;
+      Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+      if(it != model->geometry.end()) {
+        model->geometry.erase(it);
+      }
     }
 
     /*! create a new data buffer */
@@ -117,7 +166,6 @@ namespace ospray {
     /*! create a new data buffer */
     OSPData LocalDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
-      Assert2(flags == 0,"unsupported combination of flags");
       Data *data = new Data(nitems,format,init,flags);
       data->refInc();
       return (OSPData)data;
@@ -130,6 +178,15 @@ namespace ospray {
       Assert(object != NULL  && "invalid object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
       object->findParam(bufName,1)->set(s);
+    }
+
+    /*! assign (named) string parameter to an object */
+    void LocalDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+      object->findParam(bufName,1)->set(v);
     }
 
     /*! assign (named) int parameter to an object */
@@ -147,8 +204,9 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
-
-      object->findParam(bufName,1)->set(f);
+      
+      ManagedObject::Param *param = object->findParam(bufName,1);
+      param->set(f);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -187,6 +245,12 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
+      if (!renderer) {
+        if (ospray::debugMode) 
+          throw std::runtime_error("unknown renderer type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
       renderer->refInc();
       return (OSPRenderer)renderer;
     }
@@ -196,8 +260,35 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid render type identifier");
       Geometry *geometry = Geometry::createGeometry(type);
+      if (!geometry) return NULL;
       geometry->refInc();
       return (OSPGeometry)geometry;
+    }
+
+      /*! have given renderer create a new material */
+    OSPMaterial LocalDevice::newMaterial(OSPRenderer _renderer, const char *type)
+    {
+      Assert2(type != NULL, "invalid material type identifier");
+
+      // -------------------------------------------------------
+      // first, check if there's a renderer that we can ask to create the material.
+      //
+      Renderer *renderer = (Renderer *)_renderer;
+      if (renderer) {
+        Material *material = renderer->createMaterial(type);
+        if (material) {
+          material->refInc();
+          return (OSPMaterial)material;
+        }
+      }
+
+      // -------------------------------------------------------
+      // if there was no renderer, check if there's a loadable material by that name
+      //
+      Material *material = Material::createMaterial(type);
+      if (!material) return NULL;
+      material->refInc();
+      return (OSPMaterial)material;
     }
 
     /*! create a new camera object (out of list of registered cameras) */
@@ -205,6 +296,12 @@ namespace ospray {
     {
       Assert(type != NULL && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
+      if (!camera) {
+        if (ospray::debugMode) 
+          throw std::runtime_error("unknown camera type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
       camera->refInc();
       return (OSPCamera)camera;
     }
@@ -213,17 +310,77 @@ namespace ospray {
     OSPVolume LocalDevice::newVolume(const char *type)
     {
       Assert(type != NULL && "invalid volume type identifier");
-      /*! we don't have the volume interface fleshed out, yet, and
-        currently create the proper volume type on-the-fly during
-        commit, so use this wrpper thingy...  \see
-        volview_notes_on_volume_interface */
-      WrapperVolume *volume = new WrapperVolume; 
+      Volume *volume = Volume::createVolume(type);
+      if (!volume) {
+        if (ospray::debugMode) 
+          throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
       volume->refInc();
       return (OSPVolume)volume;
     }
 
-    /*! load plugin */
-    void LocalDevice::loadPlugin(const char *name)
+    /*! create a new volume object (out of list of registered volume types) with data from a file */
+    OSPVolume LocalDevice::newVolumeFromFile(const char *filename, const char *type)
+    {
+      Assert(type != NULL && "invalid volume type identifier");
+      Assert(filename != NULL && "no file name specified for volume");
+      Volume *volume = Volume::createVolume(filename, type);
+      if (!volume) {
+        if (ospray::debugMode)
+          throw std::runtime_error("could not create volume of type '" + std::string(type) + "' from file '" + std::string(filename) + "'");
+        else
+          return NULL;
+      }
+      volume->refInc();
+      return (OSPVolume)volume;
+    }
+
+    /*! create a new volume object (out of list of registered volumes) */
+    OSPTransferFunction LocalDevice::newTransferFunction(const char *type)
+    {
+      Assert(type != NULL && "invalid transfer function type identifier");
+      TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
+      if (!transferFunction) {
+        if (ospray::debugMode)
+          throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");
+        else
+          return NULL;
+      }
+      transferFunction->refInc();
+      return (OSPTransferFunction)transferFunction;
+    }
+
+    /*! have given renderer create a new Light */
+    OSPLight LocalDevice::newLight(OSPRenderer _renderer, const char *type) {
+      Renderer  *renderer = (Renderer *)_renderer;
+      if (renderer) {
+        Light *light = renderer->createLight(type);
+        if (light) {
+          light->refInc();
+          return (OSPLight)light;
+        }
+      }
+
+      //If there was no renderer try to see if there is a loadable light by that name
+      Light *light = Light::createLight(type);
+      if (!light) return NULL;
+      light->refInc();
+      return (OSPLight)light;
+    }
+
+    /*! create a new Texture2D object */
+    OSPTexture2D LocalDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags) {
+      Assert(width > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
+      Assert(height > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
+      Texture2D *tx = Texture2D::createTexture(width, height, type, data, flags);
+      if(tx) tx->refInc();
+      return (OSPTexture2D)tx;
+    }
+
+    /*! load module */
+    int LocalDevice::loadModule(const char *name)
     {
       std::string libName = "ospray_module_"+std::string(name);
       loadLibrary(libName);
@@ -231,28 +388,64 @@ namespace ospray {
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
-        throw std::runtime_error("could not find module initializer "+initSymName);
+        //        throw std::runtime_error("could not find module initializer "+initSymName);
+        return 1;
       void (*initMethod)() = (void(*)())initSym;
-      initMethod();
+      if (!initMethod) 
+        return 2;
+      try {
+        initMethod();
+      } catch (...) {
+        return 3;
+      }
+      return 0;
     }
 
     /*! call a renderer to render a frame buffer */
-    void LocalDevice::renderFrame(OSPFrameBuffer _sc, 
-                                  OSPRenderer    _renderer)
+    void LocalDevice::renderFrame(OSPFrameBuffer _fb, 
+                                  OSPRenderer    _renderer, 
+                                  const uint32 fbChannelFlags)
     {
-      SwapChain *sc       = (SwapChain *)_sc;
+      FrameBuffer *fb       = (FrameBuffer *)_fb;
+      // SwapChain *sc       = (SwapChain *)_sc;
       Renderer  *renderer = (Renderer *)_renderer;
       // Model *model = (Model *)_model;
 
-      Assert(sc != NULL && "invalid frame buffer handle");
+      Assert(fb != NULL && "invalid frame buffer handle");
+      // Assert(sc != NULL && "invalid frame buffer handle");
       Assert(renderer != NULL && "invalid renderer handle");
       
-      FrameBuffer *fb = sc->getBackBuffer();
-      renderer->renderFrame(fb);
+      // FrameBuffer *fb = sc->getBackBuffer();
+      renderer->renderFrame(fb,fbChannelFlags);
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
       // actually have the user call an *ex*plicit ospSwapBuffers call...
-      sc->advance();
+      // sc->advance();
+    }
+
+    //! release (i.e., reduce refcount of) given object
+    /*! note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. instead, each object is created
+      with a refcount of 1, and this refcount will be
+      increased/decreased every time another object refers to this
+      object resp releases its hold on it; if the refcount is 0 the
+      object will automatically get deleted. For example, you can
+      create a new material, assign it to a geometry, and immediately
+      after this assignation release its refcount; the material will
+      stay 'alive' as long as the given geometry requires it. */
+    void LocalDevice::release(OSPObject _obj)
+    {
+      if (!_obj) return;
+      ManagedObject *obj = (ManagedObject *)_obj;
+      obj->refDec();
+    }
+
+    //! assign given material to given geometry
+    void LocalDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
+    {
+      Geometry *geometry = (Geometry*)_geometry;
+      Material *material = (Material*)_material;
+      geometry->setMaterial(material);
     }
 
   }

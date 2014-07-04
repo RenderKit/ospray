@@ -1,6 +1,6 @@
 #pragma once
 
-#include "common/ospcommon.h"
+#include "ospray/common/ospcommon.h"
 #include "tilesize.h"
 
 namespace ospray {
@@ -20,8 +20,7 @@ namespace ospray {
       agree on which fields will be set. Similarly, the frame buffer
       may actually use uchars, but the tile will always store
       floats. */
-  struct Tile {
-    uint32 rgba8[TILE_SIZE*TILE_SIZE];
+  struct __aligned(64) Tile {
     // 'red' component; in float.
     float r[TILE_SIZE*TILE_SIZE];
     // 'green' component; in float.

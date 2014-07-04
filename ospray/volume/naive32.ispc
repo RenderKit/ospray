@@ -38,10 +38,6 @@ void Naive32Volume1f_setRegion(uniform VolumePtr _volume,
       const int dz = begin.z + sz;
       const int src_idx = sx + size.x * (sy + size.y * sz);
       const int dst_idx = dx + volume->size.x * (dy + volume->size.y * dz);
-      // print("volume->size % % %\n",volume->size.x,volume->size.y,volume->size.z);
-      // print("size % % %\n",size.x,size.y,size.z);
-      // print("dxyz % % %\n",dx,dy,dz);
-      // print("src % dst %\n",src_idx,dst_idx);
       dst[dst_idx] = src[src_idx];
     }
 }
@@ -57,6 +53,7 @@ void Naive32Volume1uc_setRegion(uniform VolumePtr _volume,
     = (uniform Volume *uniform)_volume;
   unsigned int8 *uniform dst = (unsigned int8 *uniform)volume->data;
   unsigned int8 *uniform src = (unsigned int8 *uniform)data;
+  // print("SRC % DST %\n",src,dst);
   foreach (sz = 0 ... size.z, 
            sy = 0 ... size.y, 
            sx = 0 ... size.x) 
@@ -66,22 +63,29 @@ void Naive32Volume1uc_setRegion(uniform VolumePtr _volume,
       const int dz = begin.z + sz;
       const int src_idx = sx + size.x * (sy + size.y * sz);
       const int dst_idx = dx + volume->size.x * (dy + volume->size.y * dz);
+      // print("% -> %\n",src_idx,dst_idx);
       dst[dst_idx] = src[src_idx];
+      // print("DONE % -> %\n",src_idx,dst_idx);
     }
+  // print("DONE\n\n");
+  // print("DONE\n\n");
+  // print("DONE\n\n");
+  // print("DONE\n\n");
 }
 
 // workaround to cover ISPC issue #606, see below
 inline float getVoxel(const uniform unsigned int8 *uniform voxel, 
-                     uniform int iOfs, varying int vOfs)
+                     uniform uint32 iOfs, varying uint32 vOfs)
 {
   const uniform unsigned int8 *uniform p = voxel + iOfs;
+  // print("ofs % % v %\n",iOfs,iOfs+vOfs,p);
+  
   return p[vOfs];
 }
 // workaround to cover ISPC issue #606, see below
 inline float getVoxel(const uniform float *uniform voxel, 
                      uniform int iOfs, varying int vOfs)
 {
-  // print("getvoxel % % %\n",voxel,iOfs,vOfs);
   const uniform float *uniform p = voxel + iOfs;
   const float v = p[vOfs];
   // print("ofs % v %\n",iOfs+vOfs,v);
@@ -374,6 +378,7 @@ uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uint8 *unif
 {
   uniform NaiveVolume *uniform volume = uniform new uniform NaiveVolume;
   uniform int64 numElements   = ((int64)size.x) * size.y * size.z;
+  volume->inherited.transferFunction = NULL;
   volume->inherited.size     = size;
   volume->inherited.dataSize = numElements * sizeof(uniform int8);
   if (internal == NULL)
@@ -383,11 +388,9 @@ uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uint8 *unif
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
-  volume->inherited.setRegion = Naive32Volume1uc_setRegion;
-#if 0
+  // volume->inherited.setRegion = Naive32Volume1uc_setRegion;
   volume->inherited.lerpf     = Naive32Volume1uc_lerpf;
   volume->inherited.gradf     = Naive32Volume1uc_gradf;
-#endif
   return (uniform Volume *)volume;
 }
 
@@ -413,7 +416,7 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
-  volume->inherited.setRegion = Naive32Volume1f_setRegion;
+  // volume->inherited.setRegion = Naive32Volume1f_setRegion;
   volume->inherited.lerpf     = Naive32Volume1f_lerpf;
   volume->inherited.gradf     = Naive32Volume1f_gradf;
   return (uniform Volume *)volume;
@@ -425,23 +428,21 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
 // ------------------------------------------------------------------
 
 export void _Naive32Volume1uc_setRegion(uniform ExtVolumePtr _volume,
-                                         const uniform vec3i &begin,
-                                         const uniform vec3i &size,
-                                         const uniform unsigned int8 *uniform data)
+                                        const uniform vec3i &begin,
+                                        const uniform vec3i &size,
+                                        const uniform unsigned int8 *uniform data)
 { 
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
   Naive32Volume1uc_setRegion(volume,begin,size,data);
 }
 export void _Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
-                                         const uniform vec3i &begin,
-                                         const uniform vec3i &size,
-                                         const uniform float *uniform data)
+                                       const uniform vec3i &begin,
+                                       const uniform vec3i &size,
+                                       const uniform float *uniform data)
 { 
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
   Naive32Volume1f_setRegion(volume,begin,size,data);
 }
-
-export void bar(uniform float *uniform ptr) { *ptr = 0; }
 
 /* need this workaround because ISPC cannot export pointer to 'Volume'
    type because volume type has function pointers */

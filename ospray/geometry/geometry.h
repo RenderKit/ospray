@@ -2,16 +2,51 @@
 
 #include "../common/managed.h"
 #include "../common/ospcommon.h"
+#include "ospray/common/material.h"
 
 namespace ospray {
   struct Model;
 
+  /*! \brief abstract base class for geometries.
+
+    Geometries are container objects that store primitives (like
+    triangles); multiple geometries together can form a model, which
+    is generally a set of geometries that logically go together (and
+    that usually share the same acceleration structures). I.e., in the
+    context of polygonal geometry a polygonal model might be specified
+    as a set of individual triangle meshes that each have a different
+    material (and their own connectivity and vertex sharing info), but
+    that together form a single model with a single accel structure */
   struct Geometry : public ManagedObject
   {
+    //! set given geometry's material. 
+    /*! all material assignations should go through this function; the
+        'material' field itself is private). This allows the
+        respective geometry's derived instance to always properly set
+        the material field of the ISCP-equivalent whenever the
+        c++-side's material gets changed */
+    virtual void setMaterial(Material *mat);
+    //! get material assigned to this geometry 
+    virtual Material *getMaterial() const { return material.ptr; };
+    //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Geometry"; }
+    /*! \brief integrates this geometry's primitives into the respective
+        model's acceleration structure */
     virtual void finalize(Model *model) {}
 
-    static Geometry *createGeometry(const char *identifier);
+    /*! \brief creates an abstract geometry class of given type 
+
+      The respective geometry type must be a registered geometry type
+      in either ospray proper or any already loaded module. For
+      geometry types specified in special modules, make sure to call
+      ospLoadModule first. */
+    static Geometry *createGeometry(const char *type); 
+
+  private:
+    //! material associated to this geometry
+    /*! this field is private to make sure it is only set through
+        'setMaterial' (see comment there) */
+    Ref<Material> material;
   };
 
   /*! \brief registers a internal ospray::<ClassName> geometry under

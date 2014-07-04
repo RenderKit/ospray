@@ -1,12 +1,12 @@
 #pragma once
 
 // ospray stuff
-#include "common/ospcommon.h"
+#include "ospray/common/ospcommon.h"
 
 namespace ospray {
   /*! \brief ospray *scalar* ray class 
 
-    \detailed This impelment the base ospray ray class; it is 'derived'
+    This impelment the base ospray ray class; it is 'derived'
     from Embree's ray class, but can have additional members that embree
     does not care about. For convenience we do not actually use the
     embree's RTCRay class itself, and instead use our own ray class that
@@ -14,7 +14,7 @@ namespace ospray {
     emulate the exact layout of embree's rtcray class, and therefore can
     simply typecast it before calling embree's intersectors.
 
-    \important Since we do call embree's intersectors on this class the
+    Since we do call embree's intersectors on this class the
     layout of the class members HAS to (exactly!) match the layout of
     emrbee's RTCRay class (as defined in
     emrbee/include/embree2/rtcore_ray.isph). We can add additional
@@ -25,15 +25,15 @@ namespace ospray {
     'intersect' functions */
   struct Ray {
     /* ray input data */
-    vec3f org;  /*!< ray origin */
-    vec3f dir;  /*!< ray direction */
+    vec3fa org;  /*!< ray origin */
+    vec3fa dir;  /*!< ray direction */
     float t0;   /*!< start of valid ray interval */
     float t;    /*!< end of valid ray interval, or distance to hit point after 'intersect' */
     float time; //!< Time of this ray for motion blur
     int32 mask; //!< Used to mask out objects during traversal
   
     /* hit data */
-    vec3f Ng;    /*! geometry normal. may or may not be set by geometry intersectors */
+    vec3fa Ng;    /*! geometry normal. may or may not be set by geometry intersectors */
   
     float u;     //!< Barycentric u coordinate of hit
     float v;     //!< Barycentric v coordinate of hit

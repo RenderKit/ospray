@@ -2,11 +2,11 @@
 #define OSPRAY_COMMON_RAY_IH
 
  // ospray stuff
-#include "math/vec.ih"
+#include "ospray/math/vec.ih"
 
 /*! \brief ospray ray class 
 
-  \detailed This impelment the base ospray ray class; it is 'derived'
+  This impelment the base ospray ray class; it is 'derived'
   from Embree's ray class, but can have additional members that embree
   does not care about. For convenience we do not actually use the
   embree's RTCRay class itself, and instead use our own ray class that
@@ -14,7 +14,7 @@
   emulate the exact layout of embree's rtcray class, and therefore can
   simply typecast it before calling embree's intersectors.
 
-  \important Since we do call embree's intersectors on this class the
+  Since we do call embree's intersectors on this class the
   layout of the class members HAS to (exactly!) match the layout of
   emrbee's RTCRay class (as defined in
   emrbee/include/embree2/rtcore_ray.isph). We can add additional
@@ -50,6 +50,14 @@ struct Ray {
 
 #define infinity (1e20f)
 
+/*! returns whether a ray has hit anything or not */
+inline bool noHit(const Ray &ray) 
+{ return ray.primID < 0; }
+
+/*! returns whether a ray has hit anything or not */
+inline bool hadHit(const Ray &ray) 
+{ return !noHit(ray); }
+
 /*! initialize a new ray with given parameters */
 inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir)
 {
@@ -61,7 +69,25 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir)
   ray.t0  = 1e-6f;
   ray.t   = infinity;
   ray.time = 0.f;
-  ray.mask = 0;
+  ray.mask = -1;
+  ray.geomID = -1;
+  ray.primID = -1;
+  ray.instID = -1;
+}
+
+/*! initialize a new ray with given parameters */
+inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir, 
+                   const float t0, const float t1)
+{
+  ray.org = ray_org;
+  ray.dir = ray_dir;
+  if (ray.dir.x == 0.f) ray.dir.x = 1e-6f;
+  if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
+  if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
+  ray.t0  = t0;
+  ray.t   = t1;
+  ray.time = 0.f;
+  ray.mask = -1;
   ray.geomID = -1;
   ray.primID = -1;
   ray.instID = -1;

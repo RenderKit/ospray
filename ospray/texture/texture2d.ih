@@ -1,0 +1,102 @@
+#pragma once
+
+#include "ospray/common/default.ih"
+#include "math/vec.ih"
+
+struct Texture2D;
+
+typedef void (*Texture2D_get)(const uniform Texture2D *uniform this,
+                              // use a retvalue ptr here, that's faster than copying
+                              varying vec4f &retValue,
+                              const varying vec2f &p);
+
+struct Texture2D {
+  vec2ui        size;
+  vec2f         f_size;   // size, in floats
+  vec2f         f_size_1; // size - 1 : maximum valid pixel ID (to clamp against)
+  Texture2D_get get;
+  void         *data;
+};
+
+
+/*! helper function that returns the sampled value for the first
+    channel of the given texture
+
+    Right now, this function always asks the texture for all four
+    channels, and then discards all but one; later implementations may
+    have specialized 'get1f' methods with the texture
+
+    \note tex may NOT be NULL!
+ */
+inline float get1f(const uniform Texture2D *uniform tex,
+                   const varying vec2f where)
+{
+  vec4f ret;
+  tex->get(tex,ret,where);
+  return ret.x;
+}
+
+/*! helper function that returns the sampled value for the first three
+    channels of the given texture
+
+    Right now, this function always asks the texture for all four
+    channels, and then discards all but one; later implementations may
+    have specialized 'get3f' methods with the texture
+
+    \note tex may NOT be NULL!
+ */
+inline vec3f get3f(const uniform Texture2D *uniform tex,
+                   const varying vec2f where)
+{
+  vec4f ret;
+  tex->get(tex,ret,where);
+  return make_vec3f(ret);
+}
+
+/*! helper function that returns the sampled value of the four
+    channels of the given texture.
+
+    Note that it's up to the texture to define clearly what happens if
+    we ask for four channels even if the texture has less physical
+    channels.
+
+    \note tex may NOT be NULL!
+ */
+inline vec4f get4f(const uniform Texture2D *uniform tex,
+                          const varying vec2f where)
+{
+  vec4f ret;
+  tex->get(tex,ret,where);
+  return ret;
+}
+
+
+
+
+/*! helper function: get4f() with a default value if the texture is NULL */
+inline float get1f(const uniform Texture2D *uniform tex,
+                   const varying vec2f where,
+                   const varying float defaultValue)
+{
+  if (tex == NULL) return defaultValue;
+  else return get1f(tex,where);
+}
+
+/*! helper function: get4f() with a default value if the texture is NULL */
+inline vec3f get3f(const uniform Texture2D *uniform tex,
+                   const varying vec2f where,
+                   const varying vec3f defaultValue)
+{
+  if (tex == NULL) return defaultValue;
+  else return get3f(tex,where);
+}
+
+/*! helper function: get4f() with a default value if the texture is NULL */
+inline vec4f get4f(const uniform Texture2D *uniform tex,
+                   const varying vec2f where,
+                   const varying vec4f defaultValue)
+{
+  if (tex == NULL) return defaultValue;
+  else return get4f(tex,where);
+}
+

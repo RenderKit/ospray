@@ -2,7 +2,7 @@
 
 #include "mpicommon.h"
 #include "mpidevice.h"
-#include "../fb/swapchain.h"
+//#include "../fb/swapchain.h"
 #include "../common/model.h"
 #include "../common/data.h"
 #include "../common/library.h"
@@ -331,63 +331,70 @@ namespace ospray {
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
       // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Master;
-      PING;
     }
 
 
     OSPFrameBuffer 
     MPIDevice::frameBufferCreate(const vec2i &size, 
-                                 const OSPFrameBufferMode mode,
-                                 const size_t swapChainDepth)
+                                 const OSPFrameBufferMode mode)
     {
-      FrameBufferFactory fbFactory = NULL;
-      switch(mode) {
-      case OSP_RGBA_I8:
-        fbFactory = createLocalFB_RGBA_I8;
-        break;
-      default:
-        AssertError("frame buffer mode not yet supported");
-      }
-      SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
-      sc->refInc();
-      Assert(sc != NULL);
+      // FrameBufferFactory fbFactory = NULL;
+      // switch(mode) {
+      // case OSP_RGBA_I8:
+      //   fbFactory = createLocalFB_RGBA_I8;
+      //   break;
+      // default:
+      //   AssertError("frame buffer mode not yet supported");
+      // }
+      // SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+      
+      FrameBuffer *fb = new LocalFrameBuffer<uint32>(size);
+      fb->refInc();
+
+      // sc->refInc();
+      // Assert(sc != NULL);
       
       mpi::Handle handle = mpi::Handle::alloc();
-      mpi::Handle::assign(handle,sc);
+      mpi::Handle::assign(handle,fb);
+      // mpi::Handle::assign(handle,sc);
       // mpi::objectByID[handle] = sc;
       
       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
       cmd.send(handle);
       cmd.send(size);
       cmd.send((int32)mode);
-      cmd.send((int32)swapChainDepth);
+      // cmd.send((int32)swapChainDepth);
       cmd.flush();
       return (OSPFrameBuffer)(int64)handle;
     }
     
 
       /*! map frame buffer */
-    const void *MPIDevice::frameBufferMap(OSPFrameBuffer fb)
+    const void *MPIDevice::frameBufferMap(OSPFrameBuffer _fb)
     {
       int rc; 
       MPI_Status status;
 
-      mpi::Handle handle = (const mpi::Handle &)fb;
-      SwapChain *sc = (SwapChain *)handle.lookup();
-      Assert(sc);
+      mpi::Handle handle = (const mpi::Handle &)_fb;
+      FrameBuffer *fb = (FrameBuffer *)handle.lookup();
+      // SwapChain *sc = (SwapChain *)handle.lookup();
+      // Assert(sc);
 
-      void *ptr = (void*)sc->map();
+      void *ptr = (void*)fb->map();
+      // void *ptr = (void*)sc->map();
       return ptr;
     }
 
     /*! unmap previously mapped frame buffer */
     void MPIDevice::frameBufferUnmap(const void *mapped,
-                                       OSPFrameBuffer fb)
+                                       OSPFrameBuffer _fb)
     {
-      mpi::Handle handle = (const mpi::Handle &)fb;
-      SwapChain *sc = (SwapChain *)handle.lookup();
-      Assert(sc);
-      sc->unmap(mapped);
+      mpi::Handle handle = (const mpi::Handle &)_fb;
+      // SwapChain *sc = (SwapChain *)handle.lookup();
+      FrameBuffer *fb = (FrameBuffer *)handle.lookup();
+      // Assert(sc);
+      fb->unmap(mapped);
+      // sc->unmap(mapped);
     }
 
     /*! create a new model */
@@ -449,19 +456,33 @@ namespace ospray {
       mpi::Handle handle = mpi::Handle::alloc();
       cmd.newCommand(CMD_NEW_DATA);
       cmd.send(handle);
-      cmd.send(nitems);
+      cmd.send((size_t)nitems);
       cmd.send((int32)format);
       cmd.send(flags);
       size_t size = init?ospray::sizeOf(format)*nitems:0;
       cmd.send(size);
       if (init) {
         cmd.send(init,size);
+        if (format == OSP_OBJECT) {
+          // no need to do anything special here: while we have to
+          // encode objects as handles for network transfer, the host
+          // _already_ has only handles, so whatever data was written
+          // into the dta array are already handles.
+
+          // note: we _might_, in fact, have to increaes the data
+          // array entries' refcount here !?
+        }
       }
       cmd.flush();
       return (OSPData)(int64)handle;
     }
-    
-    
+        
+    /*! assign (named) string parameter to an object */
+    void MPIDevice::setVoidPtr(OSPObject _object, const char *bufName, void *v)
+    {
+      throw std::runtime_error("setting a void pointer as parameter to an object is not allowed in MPI mode");
+    }
+
     /*! assign (named) string parameter to an object */
     void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
     {
@@ -474,8 +495,8 @@ namespace ospray {
       cmd.send(s);
     }
 
-    /*! load plugin */
-    void MPIDevice::loadPlugin(const char *name)
+    /*! load module */
+    int MPIDevice::loadModule(const char *name)
     {
 #if THIS_IS_MIC
       // embree automatically puts this into "lib<name>.so" format
@@ -492,8 +513,11 @@ namespace ospray {
       void (*initMethod)() = (void(*)())initSym;
       initMethod();
 
-      cmd.newCommand(CMD_LOAD_PLUGIN);
+      cmd.newCommand(CMD_LOAD_MODULE);
       cmd.send(name);
+      
+      // FIXME: actually we should return an error code here...
+      return 0;
     }
 
     /*! assign (named) float parameter to an object */
@@ -509,14 +533,15 @@ namespace ospray {
     }
 
     /*! assign (named) int parameter to an object */
-    void MPIDevice::setInt(OSPObject _object, const char *bufName, const int f)
+    void MPIDevice::setInt(OSPObject _object, const char *bufName, const int i)
     {
-      NOTIMPLEMENTED;
-      // ManagedObject *object = (ManagedObject *)_object;
-      // Assert(object != NULL  && "invalid object handle");
-      // Assert(bufName != NULL && "invalid identifier for object parameter");
+      Assert(_object);
+      Assert(bufName);
 
-      // object->findParam(bufName,1)->set(f);
+      cmd.newCommand(CMD_SET_INT);
+      cmd.send((const mpi::Handle &)_object);
+      cmd.send(bufName);
+      cmd.send(i);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -591,6 +616,14 @@ namespace ospray {
       return (OSPCamera)(int64)handle;
     }
 
+    /*! create a new volume object (out of list of registered volume
+        types) with data from a file */
+    OSPVolume MPIDevice::newVolumeFromFile(const char *filename, const char *type)
+    {
+      // iw: added this to make sure we at least compile.
+      NOTIMPLEMENTED;
+    }
+
     /*! create a new volume object (out of list of registered volumes) */
     OSPVolume MPIDevice::newVolume(const char *type)
     {
@@ -605,28 +638,56 @@ namespace ospray {
       return (OSPVolume)(int64)handle;
     }
 
-    /*! create a new geometry object (out of list of registered geometrys) */
+    /*! create a new geometry object (out of list of registered geometries) */
     OSPGeometry MPIDevice::newGeometry(const char *type)
     {
-      NOTIMPLEMENTED;
-      // Assert(type != NULL && "invalid render type identifier");
-      // Geometry *geometry = Geometry::createGeometry(type);
-      // return (OSPGeometry)geometry;
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+      
+      cmd.newCommand(CMD_NEW_GEOMETRY);
+      cmd.send((const mpi::Handle&)handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPGeometry)(int64)handle;
+    }
+    
+    /*! have given renderer create a new material */
+    OSPMaterial MPIDevice::newMaterial(OSPRenderer _renderer, const char *type)
+    {
+      if (type == NULL)
+        throw std::runtime_error("#osp:mpi:newMaterial: NULL material type");
+      
+      if (_renderer == NULL) 
+        throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
+
+      mpi::Handle handle = mpi::Handle::alloc();
+      
+      cmd.newCommand(CMD_NEW_MATERIAL);
+      cmd.send((const mpi::Handle&)_renderer);
+      cmd.send((const mpi::Handle&)handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPMaterial)(int64)handle;
     }
 
 
+
+
     /*! call a renderer to render a frame buffer */
-    void MPIDevice::renderFrame(OSPFrameBuffer _sc, 
+    void MPIDevice::renderFrame(OSPFrameBuffer _fb, 
                                 OSPRenderer    _renderer)
     {
-      const mpi::Handle handle = (const mpi::Handle&)_sc;
-      SwapChain *sc = (SwapChain *)handle.lookup();
-      Assert(sc);
+      const mpi::Handle handle = (const mpi::Handle&)_fb;
+      // const mpi::Handle handle = (const mpi::Handle&)_sc;
+      // SwapChain *sc = (SwapChain *)handle.lookup();
+      FrameBuffer *fb = (FrameBuffer *)handle.lookup();
+      // Assert(sc);
 
       //FrameBuffer *fb = sc->getFrontBuffer();
-      FrameBuffer *fb = sc->getBackBuffer();
+      // FrameBuffer *fb = sc->getBackBuffer();
       cmd.newCommand(CMD_RENDER_FRAME);
-      cmd.send((const mpi::Handle&)_sc);
+      cmd.send((const mpi::Handle&)_fb);
       cmd.send((const mpi::Handle&)_renderer);
       cmd.flush();
 
@@ -641,8 +702,36 @@ namespace ospray {
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
       // actually have the user call an *ex*plicit ospSwapBuffers call...
-      sc->advance();
+      // sc->advance();
     }
+
+    //! release (i.e., reduce refcount of) given object
+    /*! note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. instead, each object is created
+      with a refcount of 1, and this refcount will be
+      increased/decreased every time another object refers to this
+      object resp releases its hold on it; if the refcount is 0 the
+      object will automatically get deleted. For example, you can
+      create a new material, assign it to a geometry, and immediately
+      after this assignation release its refcount; the material will
+      stay 'alive' as long as the given geometry requires it. */
+    void MPIDevice::release(OSPObject _obj)
+    {
+      if (!_obj) return;
+      cmd.newCommand(CMD_RELEASE);
+      cmd.send((const mpi::Handle&)_obj);
+      cmd.flush();
+    }
+
+    //! assign given material to given geometry
+    void MPIDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
+    {
+      cmd.newCommand(CMD_SET_MATERIAL);
+      cmd.send((const mpi::Handle&)_geometry);
+      cmd.send((const mpi::Handle&)_material);
+      cmd.flush();
+    }
+
   }
 }
 

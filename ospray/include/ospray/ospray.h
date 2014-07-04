@@ -1,9 +1,21 @@
 /*! \file ospray/ospray.h Public OSPRay API definition file (core components)
 
+  \ingroup ospray_api
+
   This file defines the public API for the OSPRay core. Since many of
   OSPRays components are intentionally realized in specific modules
   this file will *only* define the very *core* components, with all
   extensions/modules implemented in the respective modules.
+
+ */
+
+/*! \defgroup ospray_api OSPRay Core API
+
+  \ingroup ospray
+
+  \brief Defines the public API for the OSPRay core 
+
+  \{
  */
 
 #pragma once
@@ -14,89 +26,127 @@
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
 #include "common/math/bbox.h"
+#include "common/math/affinespace.h"
 
 /*! namespace for classes in the public core API */
 namespace osp {
+  typedef embree::Vec2f  vec2f;
   typedef embree::Vec2i  vec2i;
   typedef embree::Vec3f  vec3f;
   typedef embree::Vec3i  vec3i;
   typedef embree::Vec3fa vec3fa;
   typedef embree::BBox<embree::Vec2i> box2i;
   typedef embree::BBox3f box3f;
+  typedef embree::AffineSpace3f affine3f;
 
   struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
-  struct FrameBuffer  : public ManagedObject {};
-  struct Renderer     : public ManagedObject {};
-  struct Camera       : public ManagedObject {};
-  struct Model        : public ManagedObject {};
-  struct Data         : public ManagedObject {};
-  struct Geometry     : public ManagedObject {};
-  struct Volume       : public ManagedObject {};
-  struct TriangleMesh : public Geometry {};
+  struct FrameBuffer      : public ManagedObject {};
+  struct Renderer         : public ManagedObject {};
+  struct Camera           : public ManagedObject {};
+  struct Model            : public ManagedObject {};
+  struct Data             : public ManagedObject {};
+  struct Geometry         : public ManagedObject {};
+  struct Material         : public ManagedObject {};
+  struct Volume           : public ManagedObject {};
+  struct TransferFunction : public ManagedObject {};
+  struct Texture2D        : public ManagedObject {};
+  struct Light            : public ManagedObject {};
+  struct TriangleMesh     : public Geometry {};
 }
 
-
-/* OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
+  OSP_FB_COLOR=(1<<0),
+  OSP_FB_DEPTH=(1<<1),
+  OSP_FB_ACCUM=(1<<2),
+  OSP_FB_ALPHA=(1<<3)
+} OSPFrameBufferChannel;
+
+/*! OSPRay constants for Frame Buffer creation ('and' ed together) */
+typedef enum {
+  OSP_RGBA_NONE,
   OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
+  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
-  OSP_RGBZ_F32, /*!< one float4 per pixel: rgb+depth, each one float */ 
 } OSPFrameBufferMode;
 
 typedef enum {
+  // void poitner type - only allowed for local rendering
+  OSP_VOID_PTR,
   // object reference type
   OSP_OBJECT,
   // c-string (zero-terminated char pointer)
   OSP_STRING,
   // atomic types
+  OSP_uint8,
+  OSP_int8,
   OSP_INT, 
+  OSP_int32=OSP_INT,
+  OSP_UINT, 
+  OSP_uint32=OSP_UINT,
   OSP_FLOAT, 
+  OSP_float=OSP_FLOAT,
   // vector types
   OSP_vec2f,
   OSP_vec3i,
+  OSP_vec3ui,
+  OSP_vec3uc,
   OSP_vec3f,
   OSP_vec3fa, 
-  OSP_vec4i
+  OSP_vec4i,
+  OSP_vec4uc,
 } OSPDataType;
 
-/*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
+// /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
+// typedef enum {
+//   /*! experimental: currently used to specify that the app ranks -
+//       together - hold a logical piece of geometry, with the back-end
+//       ospray workers then fetching that on demand..... */
+//   OSP_DISTRIBUTED_GEOMETRY = (1<<0),
+// } OSPGeometryCreationFlags;
+
+/*! flags that can be passed to OSPNewData; can be OR'ed together */
 typedef enum {
-  /*! experimental: currently used to specify that the app ranks -
-      together - hold a logical piece of geometry, with the back-end
-      ospray workers then fetching that on demand..... */
-  OSP_DISTRIBUTED_GEOMETRY = (1<<0),
-} OSPGeometryCreationFlags;
+  OSP_DATA_SHARED_BUFFER = (1<<0),
+} OSPDataCreationFlags;
 
 typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
   OSP_GENERAL_ERROR /*! unspecified error */
 } OSPResult;
 
-typedef osp::FrameBuffer   *OSPFrameBuffer;
-typedef osp::Renderer      *OSPRenderer;
-typedef osp::Camera        *OSPCamera;
-typedef osp::Model         *OSPModel;
-typedef osp::Data          *OSPData;
-typedef osp::Geometry      *OSPGeometry;
-typedef osp::Volume        *OSPVolume;
-typedef osp::TriangleMesh  *OSPTriangleMesh;
-typedef osp::ManagedObject *OSPObject;
+typedef osp::FrameBuffer       *OSPFrameBuffer;
+typedef osp::Renderer          *OSPRenderer;
+typedef osp::Camera            *OSPCamera;
+typedef osp::Model             *OSPModel;
+typedef osp::Data              *OSPData;
+typedef osp::Geometry          *OSPGeometry;
+typedef osp::Material          *OSPMaterial;
+typedef osp::Volume            *OSPVolume;
+typedef osp::TransferFunction  *OSPTransferFunction;
+typedef osp::Texture2D         *OSPTexture2D;
+typedef osp::TriangleMesh      *OSPTriangleMesh;
+typedef osp::ManagedObject     *OSPObject;
+typedef osp::Light             *OSPLight;
 
-/*! \defgroup cplusplus_api Public OSPRay Core API */
-/*! @{ */
+/*! an error type. '0' means 'no error' */
+typedef int32 error_t;
+
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   void ospInit(int *ac, const char **av);
   // //! initialize the ospray engine (for use with MPI-parallel app) 
   // void ospInitMPI(int *ac, const char **av);
 
-  //! load plugin <name> from shard lib libospray_module_<name>.so, or 
-  void ospLoadPlugin(const char *pluginName);
+  //! load plugin 'name' from shard lib libospray_module_<name>.so
+  /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
+  error_t ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame. 
   /*! What input to tuse for rendering the frame is encoded in the
-      renderer's parameters, typically in "world" */
-  void ospRenderFrame(OSPFrameBuffer fb, OSPRenderer renderer);
+      renderer's parameters, typically in "world". */
+  void ospRenderFrame(OSPFrameBuffer fb, 
+                      OSPRenderer renderer, 
+                      const uint32 fbChannelFlags=OSP_FB_COLOR);
 
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
@@ -105,7 +155,27 @@ extern "C" {
   //! create a new geometry of given type 
   /*! return 'NULL' if that type is not known */
   OSPGeometry ospNewGeometry(const char *type);
-  // OSPGeometry ospNewGeometry(const char *type, int flags=0);
+
+  //! let given renderer create a new material of given type
+  OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type);
+
+  //! let given renderer create a new light of given type
+  OSPLight ospNewLight(OSPRenderer renderer, const char *type);
+  
+  //! release (i.e., reduce refcount of) given object
+  /*! note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. instead, each object is created
+      with a refcount of 1, and this refcount will be
+      increased/decreased every time another object refers to this
+      object resp releases its hold on it; if the refcount is 0 the
+      object will automatically get deleted. For example, you can
+      create a new material, assign it to a geometry, and immediately
+      after this assignation release its refcount; the material will
+      stay 'alive' as long as the given geometry requires it. */
+  void ospRelease(OSPObject obj);
+  
+  //! assign given material to given geometry
+  void ospSetMaterial(OSPGeometry geometry, OSPMaterial material);
 
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */
@@ -115,53 +185,125 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
 
+  //! create a new transfer function of given type
+  /*! return 'NULL' if that type is not known */
+  OSPTransferFunction ospNewTransferFunction(const char * type);
+
   //! create a new camera of given type.  
-  /*! Currently supported camera types are "perspective" (\ref
-      perspective_camera), and "planar" (\ref planar_camera), plus
-      whatever camera may be loaded through plugins. \see builtin_cameras */
+  /*! The default camera type supported in all ospray versions is
+      "perspective" (\ref perspective_camera).  For a list of
+      supported camera type in this version of ospray, see \ref
+      ospray_supported_cameras */
   OSPRenderer ospNewRenderer(const char *type);
   
+  //! create a new Texture2D with the given parameters
+  /*! return 'NULL' if the texture could not be created with the given parameters */
+  OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
+
+
+  /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+
+    if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
+    if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
+    if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID
+  */
+  void ospFrameBufferClear(OSPFrameBuffer fb, const uint32 whichChannel);
+
+  // -------------------------------------------------------
+  /*! \defgroup ospray_data Data Buffer Handling 
+
+    \ingroup ospray_api
+
+    \{ 
+  */
+  /*! create a new data buffer, with optional init data and control flags 
+
+    Valid flags that can be or'ed together into the flags value:
+    - OSP_DATA_SHARED_BUFFER: indicates that the buffer can be shared with the app.
+      In this case the calling program guarantees that the 'init' pointer will remain
+      valid for the duration that this data array is being used.
+   */
+  OSPData ospNewData(size_t numItems, OSPDataType format, const void *init=NULL, int flags=0);
+
+  /*! \} */
+
+
   
 
   // -------------------------------------------------------
-  /*! \defgroup ospray_framebuffer Frame Buffer Manipulation API */
-  /*! @{ */
-  /*! create a new framebuffer (actual format is internal to ospray) */
+  /*! \defgroup ospray_framebuffer Frame Buffer Manipulation 
+
+      \ingroup ospray_api 
+      
+      \{ 
+  */
+
+  /*! \brief create a new framebuffer (actual format is internal to ospray) 
+
+    Creates a new frame buffer of given size, externalFormat, and channel type(s).
+
+    \param externalFormat describes the format the color buffer has
+    *on the host*, and the format that 'ospMapFrameBuffer' will
+    eventually return. Valid values are OSP_FB_RBGA_FLOAT,
+    OSP_FB_RBGA_I8, OSP_FB_RGB_I8, and OSP_FB_NONE (note that
+    OSP_FB_NONE is a perfectly reasonably choice for a framebuffer
+    that will be used only internally, see notes below).
+
+    \param channelFlags specifies which channels the frame buffer has,
+    and is or'ed together from the values OSP_FB_COLOR,
+    OSP_FB_DEPTH, and/or OSP_FB_ACCUM. If a certain buffer
+    value is _not_ specified, the given buffer will not be present
+    (see notes below).
+    
+    \param size size (in pixels) of frame buffer.
+
+    Note that ospray makes a very clear distinction between the
+    _external_ format of the frame buffer, and the internal one(s):
+    The external format is the format the user specifies in the
+    'externalFormat' parameter; it specifies what format ospray will
+    _return_ the frame buffer to the application (up a
+    ospMapFrameBuffer() call): no matter what ospray uses internally,
+    it will simply return a 2D array of pixels of that format, with
+    possibly all kinds of reformatting, compression/decompression,
+    etc, going on in-between the generation of the _internal_ frame
+    buffer and the mapping of the externally visible one.
+
+    In particular, OSP_FB_NONE is a perfectly valid pixel format for a
+    frame buffer that an application will never map. For example, a
+    application using multiple render passes (e.g., 'pathtrace' and
+    'tone map') may well generate a intermediate frame buffer to store
+    the result of the 'pathtrace' stage, but will only ever display
+    the output of the tone mapper. In this case, when using a pixel
+    format of OSP_FB_NONE the pixels from the path tracing stage will
+    never ever be transferred to the application.
+   */
   OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                   const OSPFrameBufferMode mode=OSP_RGBA_I8,
-                                   const size_t swapChainDepth=2);
-  /*! \brief free a framebuffer \detailed due to refcounting the frame
-      buffer may not immeidately be deleted at this time */
+                                   const OSPFrameBufferMode externalFormat=OSP_RGBA_I8,
+                                   const int channelFlags=OSP_FB_COLOR);
+
+  /*! \brief free a framebuffer 
+
+    due to refcounting the frame buffer may not immeidately be deleted
+    at this time */
   void ospFreeFrameBuffer(OSPFrameBuffer fb);
-  /*! map app-side content of a framebuffer (see \ref frame_buffer_handling) */
-  const void *ospMapFrameBuffer(OSPFrameBuffer fb);
-  /*! unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
+
+  /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
+  const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
+                                OSPFrameBufferChannel=OSP_FB_COLOR);
+
+  /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer fb);
 
-  // /*! (not implemented yet) add a additional dedicated channel to a
-  //   frame buffer. ie, add a (OSPint:"ID0") channel for ID rendering,
-  //   or a "OSPFloat:"depth" depth channel (in addition to the primary
-  //   RGBA_F32 buffer), etc). Note that the channel inherits the
-  //   framebuffer's default compression mode (with the data type
-  //   indicating the best compression mode) */
-  // void ospFrameBufferChannelAdd(const char *which, OSPDataType data);
-  // /*! (not implemented yet) map a specific (non-default) frame buffer
-  //     channel by name */
-  // const void *ospFrameBufferChannelMap(OSPFrameBuffer fb, const char *channel);
-  /*! @} end of ospray_framebuffer */
+  /*! \} */
 
 
   // -------------------------------------------------------
-  /*! \defgroup ospray_data Data Buffer Handling */
-  /*! @{ */
-  /*! create a new data buffer, with optional init data and control flags */
-  OSPData ospNewData(size_t numItems, OSPDataType format, void *init=NULL, int flags=0);
-  /*! @} end of ospray_data */
+  /*! \defgroup ospray_params Assigning parameters to objects 
 
+    \ingroup ospray_api
 
-  // -------------------------------------------------------
-  /*! \defgroup ospray_params Assigning parameters to objects */
-  /*! @{ */
+    @{ 
+  */
   /*! add a c-string (zero-terminated char *) parameter to another object */
   void ospSetString(OSPObject _object, const char *id, const char *s);
   /*! add a object-typed parameter to another object */
@@ -170,48 +312,73 @@ extern "C" {
   void ospSetData(OSPObject _object, const char *id, OSPData data);
   /*! add 1-float paramter to given object */
   void ospSetf(OSPObject _object, const char *id, float x);
+  /*! add 1-float paramter to given object */
+  void ospSet1f(OSPObject _object, const char *id, float x);
+  /*! add 1-int paramter to given object */
+  void ospSet1i(OSPObject _object, const char *id, int32 x);
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+  /*! add 3-float paramter to given object */
+  void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
   /*! add 3-int paramter to given object */
   void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
   /*! add 3-float paramter to given object */
   void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
   /*! add 3-int paramter to given object */
   void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
+  /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+  void ospSetVoidPtr(OSPObject _object, const char *id, void *v);
   /*! @} end of ospray_params */
 
   // -------------------------------------------------------
-  /*! \defgroup ospray_geometry Geometry Handling */
-  /*! @{ */
+  /*! \defgroup ospray_geometry Geometry Handling 
+    \ingroup ospray_api
+    
+    \{ 
+  */
 
-  /*! \brief create a new triangle mesh. \detailed the mesh doesn't do
-      anything 'til it is added to a model. to set the model's
-      vertices etc, set the respective data arrays for "position",
-      "index", "normal", "texcoord", "color", etc. Data format for
-      vertices and normals in vec3fa, and vec4i for index (fourth
-      component is the material ID). */
+  /*! \brief create a new triangle mesh. 
+
+    the mesh doesn't do anything 'til it is added to a model. to set
+    the model's vertices etc, set the respective data arrays for
+    "position", "index", "normal", "texcoord", "color", etc. Data
+    format for vertices and normals in vec3fa, and vec4i for index
+    (fourth component is the material ID). */
   OSPTriangleMesh ospNewTriangleMesh();
   /*! add an already created geometry to a model */
   void ospAddGeometry(OSPModel model, OSPGeometry mesh);
-  /*! @} end of ospray_trianglemesh */
+  /*! \} end of ospray_trianglemesh */
+
+  /*! \brief remove an existing geometry from a model */
+  void ospRemoveGeometry(OSPModel model, OSPGeometry mesh);
+
+
+  /*! \brief create a new instance geometry that instantiates another
+    model.  the resulting geometry still has to be added to another
+    model via ospAddGeometry */
+  OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
+                             const osp::affine3f &xfm);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_model OSPRay Model Handling 
+    \ingroup ospray_api
+
+    models are the equivalent of 'scenes' in embree (ie,
+    they consist of one or more pieces of content that share a
+    single logical acceleration structure); however, models can
+    contain more than just embree triangle meshes - they can also
+    contain cameras, materials, volume data, etc, as well as
+    references to (and instances of) other models.
     
-    \detailed models are the equivalent of 'scenes' in embree (ie,
-      they consist of one or more pieces of content that share a
-      single logical acceleration structure); however, models can
-      contain more than just embree triangle meshes - they can also
-      contain cameras, materials, volume data, etc, as well as
-      references to (and instances of) other models.*/
-  /*! @{ */
+    \{ 
+  */
 
   /*! \brief create a new ospray model.  */
   OSPModel ospNewModel();
 
-  /*! @} end of ospray_model */
+  /*! \} */
   
   /*! \brief commit changes to an object */
   void ospCommit(OSPObject object);
 }
-/*! @} */
+/*! \} */

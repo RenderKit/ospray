@@ -1,28 +1,69 @@
-#ifndef OSPRAY_FB_TILE_IH
-#define OSPRAY_FB_TILE_IH 1
+#pragma once
 
-#include "../common/ospcommon.ih"
-#include "../common/math/region.ih"
+#include "ospray/common/ospcommon.ih"
+#include "ospray/math/region.ih"
 #include "tilesize.h"
 
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
 struct Tile {
-  varying uint32 rgba8[(TILE_SIZE*TILE_SIZE)/programCount];
   varying float  r[(TILE_SIZE*TILE_SIZE)/programCount]; /*! red */
   varying float  g[(TILE_SIZE*TILE_SIZE)/programCount]; /*! green */
   varying float  b[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< blue */
   varying float  a[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< alpha */
   varying float  z[(TILE_SIZE*TILE_SIZE)/programCount]; /*!< depth */
-  // uniform float  r[QUAD_SIZE*QUAD_SIZE]; /*! red */
-  // uniform float  g[QUAD_SIZE*QUAD_SIZE]; /*! green */
-  // uniform float  b[QUAD_SIZE*QUAD_SIZE]; /*!< blue */
-  // uniform float  a[QUAD_SIZE*QUAD_SIZE]; /*!< alpha */
-  // uniform float  z[QUAD_SIZE*QUAD_SIZE]; /*!< depth */
   uniform region2i region;
   uniform vec2i    fbSize;
   uniform vec2f    rcp_fbSize;
-  uniform uint32   format;
 };
 
-#endif
+inline vec4f setRGBA(uniform Tile &tile, uniform uint32 i, const vec4f rgba)
+{ 
+  tile.r[i] = rgba.x;
+  tile.g[i] = rgba.y;
+  tile.b[i] = rgba.z;
+  tile.a[i] = rgba.w;
+}
+
+inline void setRGBA(uniform Tile &tile, const uniform uint32 i,
+                    const varying vec3f rgb, const float alpha=0.f)
+{
+  tile.r[i] = rgb.x;
+  tile.g[i] = rgb.y;
+  tile.b[i] = rgb.z;
+  tile.a[i] = alpha;
+}
+
+inline void setRGBAZ(uniform Tile &tile, const uniform uint32 i,
+                     const varying vec3f rgb, 
+                     const varying float alpha,
+                     const varying float z)
+{
+  // print("rgb.r %\n",rgb.x);
+  // print("rgb.g %\n",rgb.y);
+  // print("rgb.b %\n",rgb.z);
+  // print("rgb.a %\n",alpha);
+  // print("rgb.z %\n",z);
+  // print("i %\n",i);
+  // print("&tile %\n",&tile);
+  // print("&r[i] %\n",&tile.r[i]);
+  tile.r[i] = rgb.x;
+  tile.g[i] = rgb.y;
+  tile.b[i] = rgb.z;
+  tile.a[i] = alpha;
+  tile.z[i] = z;
+}
+
+inline void setRGBA(uniform Tile &tile, const uniform uint32 i,
+                    const varying vec4f rgba)
+{
+  tile.r[i] = rgba.x;
+  tile.g[i] = rgba.y;
+  tile.b[i] = rgba.z;
+  tile.a[i] = rgba.w;
+}
+
+inline varying vec4f getRGBA(uniform Tile &tile, const uniform uint32 i)
+{ return make_vec4f(tile.r[i],tile.g[i],tile.b[i],tile.a[i]); }
+
+

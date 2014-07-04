@@ -1,4 +1,8 @@
-/*! file haroon.h \brief Defines the domain-specific API for the Haroon module (\ref haroon_module) */
+/*! \file rv_module.h
+
+  \brief Defines the domain-specific API for the Haroon module (\ref ospray_module_rv)
+
+*/
 
 #pragma once
 
@@ -54,10 +58,10 @@ namespace ospray {
      used to linearly interpolate between the 'lo' and 'hi'
      values. essentially this is a linear transfer function */
     struct ColorRange {
-      float lo_value;
       vec3f lo_color;
-      float hi_value;
+      float lo_value;
       vec3f hi_color;
+      float hi_value;
     };
 
     //! set shade mode to shade by network
@@ -95,6 +99,11 @@ namespace ospray {
         mem after this call.
     */
     void setLayers(const Layer layer[], const size_t numLayers);
+
+    /*! \brief specify number of attributes stored per resistor. 
+      value *must* be specified before rendering the first frame; value
+      must be the same for all models used in rendering that frame */
+    void setNumAttributesPerResistor(uint32 numAttributesPerResistor);
 
     /*! \brief specify the set of nets we will be using. must be called exactly once
 

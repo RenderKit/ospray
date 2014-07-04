@@ -1,0 +1,12 @@
+#ifndef OSPRAY_TACHYON_GEOMETRY_IH
+#define OSPRAY_TACHYON_GEOMETRY_IH 1
+
+// ospray
+#include "ospray/geometry/geometry.ih"
+
+struct TachyonSpheres {
+  uniform Geometry geometry;
+};
+
+
+#endif

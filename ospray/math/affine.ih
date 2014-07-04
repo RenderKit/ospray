@@ -1,0 +1,38 @@
+#ifndef OSPRAY_MATH_AFFINE_IH
+#define OSPRAY_MATH_AFFINE_IH
+
+#include "linearspace.ih"
+
+struct AffineSpace3f {
+  LinearSpace3f l;
+  vec3f         p;
+};
+
+inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
+                                                const uniform vec3f vy,
+                                                const uniform vec3f vz,
+                                                const uniform vec3f p)
+{ 
+  uniform AffineSpace3f xfm;
+  xfm.l.vx = vx;
+  xfm.l.vy = vy;
+  xfm.l.vz = vz;
+  xfm.p    = p;
+  return xfm;
+}
+
+inline uniform vec3f xfmPoint(const uniform AffineSpace3f a, const uniform vec3f v)
+{ return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+inline varying vec3f xfmPoint(const uniform AffineSpace3f a, const varying vec3f v) 
+{ return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+inline varying vec3f xfmPoint(const varying AffineSpace3f a, const varying vec3f v) 
+{ return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+
+inline uniform vec3f xfmVector(const uniform AffineSpace3f a, const uniform vec3f v)
+{ return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+inline varying vec3f xfmVector(const uniform AffineSpace3f a, const varying vec3f v) 
+{ return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+inline varying vec3f xfmVector(const varying AffineSpace3f a, const varying vec3f v) 
+{ return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+
+#endif

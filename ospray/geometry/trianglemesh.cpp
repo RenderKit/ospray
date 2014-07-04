@@ -5,6 +5,8 @@
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
 #include "../include/ospray/ospray.h"
+// ispc side
+#include "trianglemesh_ispc.h"
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
@@ -14,77 +16,121 @@ namespace ospray {
 
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
-  {}
+  {
+    //    cout << "creating new ispc-side trianglemesh!" << endl;
+    this->ispcEquivalent = ispc::TriangleMesh_create(this);
+  }
 
   void TriangleMesh::finalize(Model *model)
   {
     static int numPrints = 0;
     numPrints++;
     if (logLevel > 2) 
-    if (numPrints == 5)
-      cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
+      if (numPrints == 5)
+        cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
     
     if (logLevel > 2) 
-    if (numPrints < 5)
-      std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
-    Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
-
-    Assert(model && "invalid model pointer");
-    RTCScene eScene = model->eScene;
-
-    Param *posParam = findParam("position");
-    Assert(posParam != NULL && "triangle mesh geometry does not have a 'position' array");
-    posData = dynamic_cast<Data*>(posParam->ptr);
-    Assert(posData != NULL && "invalid position array");
-
-    Param *idxParam = findParam("index");
-    Assert(idxParam != NULL && "triangle mesh geometry does not have a 'index' array");
-    idxData = dynamic_cast<Data*>(idxParam->ptr);
-    Assert(idxData != NULL && "invalid index array");
-
-    size_t numTris  = idxData->size();
-    size_t numVerts = posData->size();
-
-    eMesh = rtcNewTriangleMesh(eScene,RTC_GEOMETRY_STATIC,numTris,numVerts);
-
-    if (logLevel > 2) 
       if (numPrints < 5)
-      cout << "  writing vertices in 'vec3fa' format" << endl;
-    void *posPtr = rtcMapBuffer(model->eScene,eMesh,RTC_VERTEX_BUFFER);
-    memcpy(posPtr,posData->data,posData->numBytes);
-    rtcUnmapBuffer(model->eScene,eMesh,RTC_VERTEX_BUFFER);
+        std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
+    Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
+    
+    Assert(model && "invalid model pointer");
 
-    if (logLevel > 2) 
-    if (numPrints < 5)
-      cout << "  writing indices in 'vec3i' format" << endl;
-    switch (idxData->type) {
-    case OSP_vec4i: {
-      void *idxPtr = rtcMapBuffer(model->eScene,eMesh,RTC_INDEX_BUFFER);
-      for (int i=0;i<idxData->size();i++)  
-        ((vec3i*)idxPtr)[i] = (vec3i&)((vec4i*)idxData->data)[i];
-    } break;
-    case OSP_vec3i: {
-      void *idxPtr = rtcMapBuffer(model->eScene,eMesh,RTC_INDEX_BUFFER);
-      for (int i=0;i<idxData->size();i++)  
-        ((vec3i*)idxPtr)[i] = (vec3i&)((vec3i*)idxData->data)[i];
-    } break;
-    default:
-      Assert2(0,"unsupported triangle array format");
+    RTCScene embreeSceneHandle = model->embreeSceneHandle;
+
+    vertexData = getParamData("vertex",getParamData("position"));
+    normalData = getParamData("vertex.normal",getParamData("normal"));
+    colorData  = getParamData("vertex.color",getParamData("color"));
+    texcoordData = getParamData("vertex.texcoord",getParamData("texcoord"));
+    indexData  = getParamData("index",getParamData("triangle"));
+    prim_materialIDData = getParamData("prim.materialID");
+    materialListData = getParamData("materialList");
+    geom_materialID = getParam1i("geom.materialID",-1);
+
+    Assert2(vertexData != NULL,
+            "triangle mesh geometry does not have either 'position'"
+            " or 'vertex' array");
+    Assert2(indexData != NULL, 
+            "triangle mesh geometry does not have either 'index'"
+            " or 'triangle' array");
+
+    // PING;
+    // PRINT(indexData);
+    // PRINT(normalData);
+    // PRINT(colorData);
+    // PRINT(texcoordData);
+    // PRINT(prim_materialIDData);
+    // PRINT(materialListData);
+    // PRINT(indexData->data);
+    // PRINT(vertexData->data);
+    
+    this->index = (vec3i*)indexData->data;
+    this->vertex = (vec3fa*)vertexData->data;
+    this->normal = normalData ? (vec3fa*)normalData->data : NULL;
+    this->color  = colorData ? (vec4f*)colorData->data : NULL;
+    this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
+    this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
+    this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
+
+    if (materialList) {
+      const int num_materials = materialListData->numItems;
+      ispcMaterialPtrs = new void*[num_materials];
+      for (int i = 0; i < num_materials; i++) {
+        this->ispcMaterialPtrs[i] = this->materialList[i]->getIE();
+      }
+    } else {
+      this->ispcMaterialPtrs = NULL;
     }
-    // memcpy(idxPtr,idxData->data,idxData->numBytes);
-    rtcUnmapBuffer(model->eScene,eMesh,RTC_INDEX_BUFFER);
+
+    size_t numTris  = -1;
+    size_t numVerts = -1;
+    switch (indexData->type) {
+    case OSP_int32:  numTris = indexData->size() / 3; break;
+    case OSP_uint32: numTris = indexData->size() / 3; break;
+    case OSP_vec3i:  numTris = indexData->size(); break;
+    case OSP_vec3ui: numTris = indexData->size(); break;
+    default:
+      throw std::runtime_error("unsupported trianglemesh.index data type");
+    }
+    switch (vertexData->type) {
+    case OSP_float:   numVerts = vertexData->size() / 4; break;
+    case OSP_vec3fa:  numVerts = vertexData->size(); break;
+    default:
+      throw std::runtime_error("unsupported trianglemesh.vertex data type");
+    }
+
+    eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
+                               numTris,numVerts);
+    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
+                 (void*)this->vertex,0,
+                 ospray::sizeOf(vertexData->type));
+    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
+                 (void*)this->index,0,
+                 ospray::sizeOf(indexData->type));
 
     box3f bounds = embree::empty;
-    for (int i=0;i<posData->size();i++)
-      bounds.extend(((vec3fa*)posPtr)[i]);
+    
+    for (int i=0;i<vertexData->size();i++) 
+      bounds.extend(vertex[i]);
 
     if (logLevel > 2) 
-    if (numPrints < 5) {
-      cout << "  created triangle mesh (" << numTris << " tris "
-           << ", " << numVerts << " vertices)" << endl;
-      cout << "  mesh bounds " << bounds << endl;
-    } 
-    rtcEnable(model->eScene,eMesh);
+      if (numPrints < 5) {
+        cout << "  created triangle mesh (" << numTris << " tris "
+             << ", " << numVerts << " vertices)" << endl;
+        cout << "  mesh bounds " << bounds << endl;
+      } 
+    rtcEnable(model->embreeSceneHandle,eMesh);
+
+    ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
+                           numTris,
+                           (ispc::vec3i*)index,
+                           (ispc::vec3fa*)vertex,
+                           (ispc::vec3fa*)normal,
+                           (ispc::vec4f*)color,
+                           (ispc::vec2f*)texcoord,
+                           geom_materialID,
+                           ispcMaterialPtrs,
+                           (uint32*)prim_materialID);
   }
 
   //! helper fct that creates a tessllated unit arrow
@@ -147,7 +193,7 @@ namespace ospray {
 
     ospray::TriangleMesh *mesh = new TriangleMesh;
     mesh->findParam("index",1)->set(new Data(idx.size(),OSP_vec3i,&idx[0],0));
-    mesh->findParam("position",1)->set(new Data(vtx.size(),OSP_vec3fa,&vtx[0],0));
+    mesh->findParam("vertex",1)->set(new Data(vtx.size(),OSP_vec3fa,&vtx[0],0));
     // mesh->commit();
     return mesh;
   }

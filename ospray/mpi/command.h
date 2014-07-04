@@ -1,10 +1,12 @@
 #pragma once
 
 #include "mpicommon.h"
-#include "handle.h"
+#include "ospray/api/handle.h"
 
 namespace ospray {
   namespace mpi {
+    using api::Handle;
+
     /*! \brief abstraction for a binary command stream */
     /*! abstracts the concept of the mpi device writing commands and
       parameters, and the respective worker reading and unpacking
@@ -85,19 +87,27 @@ namespace ospray {
         Assert(rc == MPI_SUCCESS); 
         return v; 
       }
-      inline size_t get_data(void *&pointer) 
+      inline void get_data(size_t size, void *pointer) 
       { 
-        int64 size; 
-        int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm); 
+        // int64 size; 
+        // int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm); 
+        // Assert(rc == MPI_SUCCESS); 
+        int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
         Assert(rc == MPI_SUCCESS); 
-        if (size == 0) pointer = NULL; 
-        else {
-          pointer = malloc(size);
-          int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
-          Assert(rc == MPI_SUCCESS); 
-        }
-        return size; 
       }
+      // inline size_t get_data(void *pointer) 
+      // { 
+      //   int64 size; 
+      //   int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm); 
+      //   Assert(rc == MPI_SUCCESS); 
+      //   if (size == 0) pointer = NULL; 
+      //   else {
+      //     pointer = malloc(size);
+      //     int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
+      //     Assert(rc == MPI_SUCCESS); 
+      //   }
+      //   return size; 
+      // }
       inline Handle get_handle() 
       { 
         Handle v; 
@@ -130,6 +140,13 @@ namespace ospray {
       { 
         float v; 
         int rc = MPI_Bcast(&v,1,MPI_FLOAT,0,mpi::app.comm); 
+        Assert(rc == MPI_SUCCESS); 
+        return v; 
+      }
+      inline int get_int() 
+      { 
+        float v; 
+        int rc = MPI_Bcast(&v,1,MPI_INT,0,mpi::app.comm); 
         Assert(rc == MPI_SUCCESS); 
         return v; 
       }

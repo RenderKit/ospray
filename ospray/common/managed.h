@@ -13,7 +13,7 @@ namespace ospray {
 
   /*! \brief defines a basic object whose lifetime is managed by ospray 
 
-    \detailed One of the core concepts of ospray is that all logical
+    One of the core concepts of ospray is that all logical
     objects in ospray --- renderers, geometries, models, camera, data
     buffers, volumes, etc --- are all derived from the same absic
     class that provides a certain kind of common, shared
@@ -97,6 +97,12 @@ namespace ospray {
       //! set parameter to a 'c-string' type 
       /* \internal this function creates and keeps a *copy* of the passed string! */
       void set(const char *s);
+      //! set parameter to a 'c-string' type 
+      /* \internal this function does *not* copy whatever data this
+         pointer points to (it doesn't have the info to do so), so
+         this pointer belongs to the application, and it can not be
+         used remotely */
+      void set(void *v);
       /*! set parameter to given float value and type */
       void set(const float v) { clear(); type = OSP_FLOAT; (float&)f = v; }
       /*! set parameter to given int value and type */
@@ -143,15 +149,20 @@ namespace ospray {
     /*! \brief find the named parameter, and return its object value if
         available; else return 'default' value 
         
-        \detailed The returned managed object will *not* automatically
+        The returned managed object will *not* automatically
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
         instance */
-    ManagedObject *getParam(const char *name, ManagedObject *valIfNotFound);
+    ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound);
+    Data *getParamData(const char *name, Data *valIfNotFound=NULL)
+    { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
     vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
+    int32  getParam1i(const char *name, const int32  valIfNotFound);
+    float  getParam1f(const char *name, const float  valIfNotFound);
     float  getParamf (const char *name, const float  valIfNotFound);
+    void  *getVoidPtr(const char *name, void *valIfNotFound);
     const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */
 

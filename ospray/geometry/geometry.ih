@@ -1,0 +1,34 @@
+#pragma once
+
+#include "ospray/common/material.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/common/dg.ih"
+
+typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
+                                          uniform Model *uniform model,
+                                          varying DifferentialGeometry &dg,
+                                          const varying Ray &ray,
+                                          uniform int64 flags);
+
+/*! ispc-side equivalent of a geometry */
+struct Geometry {
+  void *uniform cppEquivalent; //! pointer back to the C++-equivalent of this class
+  uniform Material *uniform material;//!< material attached to this geometry
+  uniform Model    *uniform model;   //!< model that this geometry is part of
+  uniform int32             geomID;  //!< ID that 'model' knows this geometry under
+  Geometry_postIntersectFct postIntersect; /*! postintersect function
+                                               that fills in a
+                                               differentialgeometry
+                                               struct */
+};
+ 
+//! constructor for ispc-side Geometry object
+extern void Geometry_Constructor(uniform Geometry *uniform geometry,
+                                 void *uniform cppEquivalent,
+                                 uniform Geometry_postIntersectFct postIntersect,
+                                 uniform Model *uniform model,
+                                 uniform int32  geomID,
+                                 uniform Material *uniform material);
+//! destructor for ispc-side Geometry object
+extern void Geometry_Destructor(uniform Geometry *uniform mesh);
+

@@ -8,7 +8,8 @@
   \internal Still _very_, very basic; needs fleshing out.
  */
 
-#include "common/ospcommon.ih"
+#include "ospray/common/ospcommon.ih"
+#include "../transferfunction/TransferFunction.ih"
 
 struct Volume;
 typedef varying float (*Volume_lerpfFct)(uniform Volume *uniform volume,
@@ -16,17 +17,22 @@ typedef varying float (*Volume_lerpfFct)(uniform Volume *uniform volume,
 typedef varying float (*Volume_gradfFct)(uniform Volume *uniform volume,
                                         varying vec3f &gradient,
                                         const varying vec3f &queryPos);
-typedef void (*Volume_setRegionFct)(uniform Volume *uniform volume,
-                                    const uniform vec3i &begin,
-                                    const uniform vec3i &size,
-                                    const void *uniform dataPtr);
-typedef void (*Volume_getRegionFct)(uniform Volume *uniform volume,
-                                    const uniform vec3i &begin,
-                                    const uniform vec3i &size,
-                                    void *uniform dataPtr);
+// typedef void (*Volume_setRegionFct)(uniform Volume *uniform volume,
+//                                     const uniform vec3i &begin,
+//                                     const uniform vec3i &size,
+//                                     const void *uniform dataPtr);
+// typedef void (*Volume_setRegionFloatFct)(uniform Volume *uniform volume,
+//                                          const uniform vec3i &begin,
+//                                          const uniform vec3i &size,
+//                                          const uniform float *uniform dataPtr);
+// typedef void (*Volume_getRegionFct)(uniform Volume *uniform volume,
+//                                     const uniform vec3i &begin,
+//                                     const uniform vec3i &size,
+//                                     void *uniform dataPtr);
 
 /*! abstract base class for 3D volume data */
 struct Volume {
+  uniform TransferFunction * uniform transferFunction;
   uniform vec3i size;
   void *uniform data;
   uniform int64 dataSize;
@@ -36,8 +42,8 @@ struct Volume {
       representable float still smaller than the size value) */
   vec3f clampSize;
 
-  Volume_setRegionFct setRegion;
-  Volume_getRegionFct getRegion;
+  // Volume_setRegionFct setRegion;
+  // Volume_getRegionFct getRegion;
 
   /*! sample, with (tri-)linear interpolation */
   Volume_lerpfFct     lerpf;
@@ -65,12 +71,6 @@ typedef struct _Volume *uniform ExtVolumePtr;
     uniform VolumePtr volType##_create(uniform vec3i &size);            \
   }                                                                     \
   extern "C" {                                                          \
-    void volType##_setRegion(uniform VolumePtr volume,                  \
-                             const uniform vec3i &begin,                \
-                             const uniform vec3i &size,                 \
-                             void *uniform data);                       \
-  }                                                                     \
-  extern "C" {                                                          \
     varying float volType##_lerpf(uniform VolumePtr volume,             \
                                   const varying vec3f &queryPos);       \
   }                                                                     \
@@ -79,6 +79,14 @@ typedef struct _Volume *uniform ExtVolumePtr;
                                   varying vec3f &gradient,              \
                                   const varying vec3f &queryPos);       \
   }                                                                     \
+
+// extern "C" {                                                            \
+//   void volType##_setRegion(uniform VolumePtr volume,                    \
+//                            const uniform vec3i &begin,                  \
+//                            const uniform vec3i &size,                   \
+//                            void *uniform data);                         \
+// }                                                                       \
+
   
 __defineMethods(Naive32Volume1uc);
 __defineMethods(Naive32Volume1f);

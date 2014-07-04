@@ -1,0 +1,15 @@
+/*! \file bricked32.ih \brief publicly exported symbols and constants
+    of ispc code for bricked32 volume data layout
+
+    \note This file gets included by both ispc and c++ header files,
+    make sure to put the respective langauge-specific code in the
+    respective sections.
+  */ 
+
+#define BRICK_BITS 4
+
+#ifdef __cplusplus
+// C++ definitions here
+#else
+// ISPC definitions here
+#endif

@@ -11,8 +11,8 @@ ADD_EXECUTABLE(msgView
 	msgView.cpp
 	)
 TARGET_LINK_LIBRARIES(msgView
-	osp_minisg
-	osp_glut3d
+	ospray_minisg
+	ospray_glut3d
 	ospray
   ${OPENGL_LIBRARY} 
   ${GLUT_LIBRARY}

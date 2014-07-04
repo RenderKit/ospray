@@ -20,16 +20,21 @@ namespace ospray {
         CMD_FRAMEBUFFER_MAP,
         CMD_FRAMEBUFFER_UNMAP,
         CMD_NEW_MODEL,
+        CMD_NEW_GEOMETRY,
+        CMD_NEW_MATERIAL,
         CMD_NEW_TRIANGLEMESH,
         CMD_NEW_CAMERA,
         CMD_NEW_VOLUME,
         CMD_NEW_DATA,
         CMD_ADD_GEOMETRY,
         CMD_COMMIT,
-        CMD_LOAD_PLUGIN,
+        CMD_LOAD_MODULE,
+        CMD_RELEASE,
+        CMD_SET_MATERIAL,
 
         CMD_SET_OBJECT,
         CMD_SET_STRING,
+        CMD_SET_INT,
         CMD_SET_FLOAT,
         CMD_SET_VEC3F,
         CMD_SET_VEC3I,
@@ -43,10 +48,11 @@ namespace ospray {
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
                                                const OSPFrameBufferMode mode,
-                                               const size_t swapChainDepth);
+                                               const uint32 channels);
 
       /*! map frame buffer */
-      virtual const void *frameBufferMap(OSPFrameBuffer fb);
+      virtual const void *frameBufferMap(OSPFrameBuffer fb, 
+                                OSPFrameBufferChannel);
 
       /*! unmap previously mapped frame buffer */
       virtual void frameBufferUnmap(const void *mapped,
@@ -79,6 +85,8 @@ namespace ospray {
       virtual void setInt(OSPObject object, const char *bufName, const int f);
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
+      /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
+      virtual void setVoidPtr(OSPObject object, const char *bufName, void *v);
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh();
@@ -89,20 +97,45 @@ namespace ospray {
       /*! create a new geometry object (out of list of registered geometrys) */
       virtual OSPGeometry newGeometry(const char *type);
 
+      /*! have given renderer create a new material */
+      virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type);
+
       /*! create a new camera object (out of list of registered cameras) */
       virtual OSPCamera newCamera(const char *type);
+
+      /*! create a new volume object (out of list of registered volume types) with data from a file */
+      virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
 
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type);
 
       /*! call a renderer to render a frame buffer */
       virtual void renderFrame(OSPFrameBuffer _sc, 
-                               OSPRenderer _renderer);
+                               OSPRenderer _renderer, 
+                               const uint32 fbChannelFlags);
 
-      /*! load plugin */
-      virtual void loadPlugin(const char *name);
+      /*! load module */
+      virtual int loadModule(const char *name);
 
-      MPI_Comm service;
+      //! release (i.e., reduce refcount of) given object
+      /*! note that all objects in ospray are refcounted, so one cannot
+        explicitly "delete" any object. instead, each object is created
+        with a refcount of 1, and this refcount will be
+        increased/decreased every time another object refers to this
+        object resp releases its hold on it; if the refcount is 0 the
+        object will automatically get deleted. For example, you can
+        create a new material, assign it to a geometry, and immediately
+        after this assignation release its refcount; the material will
+        stay 'alive' as long as the given geometry requires it. */
+      virtual void release(OSPObject _obj);
+
+      //! assign given material to given geometry
+      virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat);
+
+      /*! create a new Texture2D object */
+      virtual OSPTexture2D newTexture2D(int width, int height, 
+                                        OSPDataType type, void *data, int flags)
+      { NOTIMPLEMENTED; }
     };
 
   }

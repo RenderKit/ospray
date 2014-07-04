@@ -3,7 +3,7 @@ FILE(WRITE "${CMAKE_BINARY_DIR}/CMakeDefines.h" "#define CMAKE_BUILD_DIR \"${CMA
 #include bindir - that's where ispc puts generated header files
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR})
 SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
-
+SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 
@@ -22,7 +22,6 @@ MACRO(CONFIGURE_OSPRAY)
 	SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 	SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 	LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
-	
 
 	IF (OSPRAY_TARGET STREQUAL "MIC")
 		SET(OSPRAY_EXE_SUFFIX ".mic")
@@ -70,7 +69,12 @@ MACRO(CONFIGURE_OSPRAY)
 
 	IF (THIS_IS_MIC)
 		INCLUDE(${EMBREE_DIR}/common/cmake/icc_xeonphi.cmake)
+		
 		SET(EMBREE_LIB embree_xeonphi)
+
+		# whehter to build in MIC/xeon phi support
+		SET(OSPRAY_MIC_COI OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
+
 	ELSE()
 		SET(EMBREE_LIB embree)
 	ENDIF()

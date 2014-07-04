@@ -1,0 +1,32 @@
+SET(MODULE_ONGSANDBOX OFF CACHE BOOL "Build 'ongsandbox' (Sandbox for Oil-and-gas workloads) module")
+
+IF (MODULE_ONGSANDBOX)
+	
+	CONFIGURE_OSPRAY()
+	CONFIGURE_MPI()
+	
+	INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+	INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+	INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
+	INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
+	INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
+	
+	OSPRAY_ADD_LIBRARY(ospray_module_ongsandbox${OSPRAY_LIB_SUFFIX} SHARED
+		renderer.ispc
+		renderer.cpp
+		)
+	TARGET_LINK_LIBRARIES(
+		ospray_module_ongsandbox${OSPRAY_LIB_SUFFIX} 
+		ospray${OSPRAY_LIB_SUFFIX}
+		)
+	IF (NOT THIS_IS_MIC)
+		ADD_EXECUTABLE(ospONGViewer
+			ongViewer.cpp
+			)
+		TARGET_LINK_LIBRARIES(ospONGViewer 
+			ospray${OSPRAY_LIB_SUFFIX} 
+			ospray_minisg${OSPRAY_LIB_SUFFIX}
+			ospray_glut3d${OSPRAY_LIB_SUFFIX}
+			)
+	ENDIF()
+ENDIF()

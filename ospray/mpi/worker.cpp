@@ -1,7 +1,7 @@
 #include "mpicommon.h"
 #include "mpidevice.h"
 #include "command.h"
-#include "../fb/swapchain.h"
+//#include "../fb/swapchain.h"
 #include "../common/model.h"
 #include "../common/data.h"
 #include "../common/library.h"
@@ -61,7 +61,6 @@ namespace ospray {
         case api::MPIDevice::CMD_NEW_RENDERER: {
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
-          PRINT(type);
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new renderer \"" << type << "\" ID " << handle << endl;
@@ -89,56 +88,111 @@ namespace ospray {
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new volume \"" << type << "\" ID " << (void*)(int64)handle << endl;
-      /*! we don't have the volume interface fleshed out, yet, and
-        currently create the proper volume type on-the-fly during
-        commit, so use this wrpper thingy...  \see
-        volview_notes_on_volume_interface */
-      WrapperVolume *volume = new WrapperVolume; 
-      volume->refInc();
-      // return (OSPVolume)volume;
-      //     Volume *volume = Volume::createVolume(type);
+          Volume *volume = Volume::createVolume(type);
+          if (!volume) 
+            throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
+          volume->refInc();
           cmd.free(type);
           Assert(volume);
           handle.assign(volume);
           //          cout << "#w: new volume " << handle << endl;
         } break;
+        case api::MPIDevice::CMD_NEW_MATERIAL: {
+          // Assert(type != NULL && "invalid volume type identifier");
+          const mpi::Handle rendererHandle = cmd.get_handle();
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new material \"" << type << "\" ID " << (void*)(int64)handle << endl;
+
+          Renderer *renderer = (Renderer *)rendererHandle.lookup();
+          Material *material = NULL;
+          if (renderer) {
+            material = renderer->createMaterial(type);
+            if (material) {
+              material->refInc();
+            }
+          }
+
+          if (material == NULL) 
+            // no renderer present, or renderer didn't intercept this material.
+            material = Material::createMaterial(type);
+          
+          if (!material) 
+            // neither renderer not ospray know this material: throw an error.
+            throw std::runtime_error("unknown material type '"+std::string(type)+"'");
+
+          material->refInc();
+          cmd.free(type);
+          Assert(material);
+          handle.assign(material);
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "#w: new material " << handle << " " << material->toString() << endl;
+        } break;
+
+        case api::MPIDevice::CMD_NEW_GEOMETRY: {
+          // Assert(type != NULL && "invalid volume type identifier");
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new geometry \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          Geometry *geometry = Geometry::createGeometry(type);
+          if (!geometry) 
+            throw std::runtime_error("unknown geometry type '"+std::string(type)+"'");
+          geometry->refInc();
+          cmd.free(type);
+          Assert(geometry);
+          handle.assign(geometry);
+          if (worker.rank == 0)
+            if (logLevel > 2)
+	      cout << "#w: new geometry " << handle << " " << geometry->toString() << endl;
+        } break;
+
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
           const mpi::Handle handle = cmd.get_handle();
           const vec2i  size   = cmd.get_vec2i();
           const int32  mode   = cmd.get_int32();
-          const size_t swapChainDepth = cmd.get_int32();
-          FrameBufferFactory fbFactory = NULL;
-          switch(mode) {
-          case OSP_RGBA_I8:
-            fbFactory = createLocalFB_RGBA_I8;
-            break;
-          default:
-            AssertError("frame buffer mode not yet supported");
-          } 
-          SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
-          handle.assign(sc);
-          Assert(sc != NULL);
+          //          const size_t swapChainDepth = cmd.get_int32();
+          // FrameBufferFactory fbFactory = NULL;
+          // switch(mode) {
+          // case OSP_RGBA_I8:
+          //   fbFactory = createLocalFB_RGBA_I8;
+          //   break;
+          // default:
+          //   AssertError("frame buffer mode not yet supported");
+          // } 
+          FrameBuffer *fb = new LocalFrameBuffer<uint32>(size);
+          // SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+          handle.assign(fb);
+          // Assert(sc != NULL);
         } break;
         case api::MPIDevice::CMD_RENDER_FRAME: {
-          const mpi::Handle  swapChainHandle = cmd.get_handle();
+          const mpi::Handle  fbHandle = cmd.get_handle();
+          // const mpi::Handle  swapChainHandle = cmd.get_handle();
           const mpi::Handle  rendererHandle  = cmd.get_handle();
-          SwapChain *sc = (SwapChain*)swapChainHandle.lookup();
-          Assert(sc);
+          FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
+          // SwapChain *sc = (SwapChain*)swapChainHandle.lookup();
+          // Assert(sc);
           Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
-          renderer->renderFrame(sc->getBackBuffer());
-          sc->advance();
+          renderer->renderFrame(fb); //sc->getBackBuffer());
+          // sc->advance();
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_MAP: {
           const mpi::Handle handle = cmd.get_handle();
-          SwapChain *sc = (SwapChain*)handle.lookup();
-          Assert(sc);
+          FrameBuffer *fb = (FrameBuffer*)handle.lookup();
+          // SwapChain *sc = (SwapChain*)handle.lookup();
+          // Assert(sc);
           if (worker.rank == 0) {
             // FrameBuffer *fb = sc->getBackBuffer();
-            void *ptr = (void*)sc->map();
-            rc = MPI_Send(ptr,sc->fbSize.x*sc->fbSize.y,MPI_INT,0,0,mpi::app.comm);
+            void *ptr = (void*)fb->map();
+            // void *ptr = (void*)sc->map();
+            rc = MPI_Send(ptr,fb->size.x*fb->size.y,MPI_INT,0,0,mpi::app.comm);
             Assert(rc == MPI_SUCCESS);
-            sc->unmap(ptr);
+            fb->unmap(ptr);
           }
         } break;
         case api::MPIDevice::CMD_NEW_MODEL: {
@@ -147,7 +201,7 @@ namespace ospray {
           Assert(model);
           handle.assign(model);
           if (logLevel > 2)
-          cout << "#w: new model " << handle << endl;
+            cout << "#w: new model " << handle << endl;
         } break;
         case api::MPIDevice::CMD_NEW_TRIANGLEMESH: {
           const mpi::Handle handle = cmd.get_handle();
@@ -161,11 +215,30 @@ namespace ospray {
           size_t nitems      = cmd.get_size_t();
           OSPDataType format = (OSPDataType)cmd.get_int32();
           int flags          = cmd.get_int32();
-          void *init = NULL;
-          size_t nbytes = cmd.get_data(init);
-          data = new Data(nitems,format,init,flags);
+          data = new Data(nitems,format,NULL,flags & ~OSP_DATA_SHARED_BUFFER);
           Assert(data);
           handle.assign(data);
+
+          size_t hasInitData = cmd.get_size_t();
+          if (hasInitData) {
+            cmd.get_data(nitems*sizeOf(format),data->data);
+            if (format==OSP_OBJECT) {
+              /* translating handles to managedobject pointers: if a
+                 data array has 'object' or 'data' entry types, then
+                 what the host sends are _handles_, not pointers, but
+                 what the core expects are pointers; to make the core
+                 happy we translate all data items back to pointers at
+                 this stage */
+              mpi::Handle    *asHandle = (mpi::Handle    *)data->data;
+              ManagedObject **asObjPtr = (ManagedObject **)data->data;
+              for (int i=0;i<nitems;i++) {
+                if (asHandle[i] != NULL_HANDLE) {
+                  asObjPtr[i] = asHandle[i].lookup();
+                  asObjPtr[i]->refInc();
+                }
+              }
+            }
+          }
         } break;
         case api::MPIDevice::CMD_ADD_GEOMETRY: {
           const mpi::Handle modelHandle = cmd.get_handle();
@@ -200,6 +273,19 @@ namespace ospray {
           obj->setParam(name,val.lookup());
           cmd.free(name);
         } break;
+        case api::MPIDevice::CMD_RELEASE: {
+          const mpi::Handle handle = cmd.get_handle();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          handle.freeObject();
+        } break;
+        case api::MPIDevice::CMD_SET_MATERIAL: {
+          const mpi::Handle geoHandle = cmd.get_handle();
+          const mpi::Handle matHandle = cmd.get_handle();
+          Geometry *geo = (Geometry*)geoHandle.lookup();
+          Material *mat = (Material*)matHandle.lookup();
+          geo->setMaterial(mat);
+        } break;
         case api::MPIDevice::CMD_SET_STRING: {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
@@ -209,6 +295,15 @@ namespace ospray {
           obj->findParam(name,1)->set(val);
           cmd.free(name);
           cmd.free(val);
+        } break;
+        case api::MPIDevice::CMD_SET_INT: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const int val = cmd.get_int();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
         } break;
         case api::MPIDevice::CMD_SET_FLOAT: {
           const mpi::Handle handle = cmd.get_handle();
@@ -237,7 +332,7 @@ namespace ospray {
           obj->findParam(name,1)->set(val);
           cmd.free(name);
         } break;
-        case api::MPIDevice::CMD_LOAD_PLUGIN: {
+        case api::MPIDevice::CMD_LOAD_MODULE: {
           const char *name = cmd.get_charPtr();
 
 #if THIS_IS_MIC

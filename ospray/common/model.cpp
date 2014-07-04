@@ -3,6 +3,8 @@
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
+// ispc side
+#include "model_ispc.h"
 
 namespace ospray {
   using std::cout;
@@ -15,24 +17,15 @@ namespace ospray {
       cout << "Finalizing model, has " << geometry.size() << " geometries" << endl;
     }
 
-    eScene = rtcNewScene(
-                         //                         RTC_SCENE_COMPACT|
-                         RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
-#if OSPRAY_SPMD_WIDTH==16
-                         RTC_INTERSECT1|RTC_INTERSECT16
-#elif OSPRAY_SPMD_WIDTH==8
-                         RTC_INTERSECT1|RTC_INTERSECT8
-#elif OSPRAY_SPMD_WIDTH==4
-                         RTC_INTERSECT1|RTC_INTERSECT4
-#else
-#  error("invalid OSPRAY_SPMD_WIDTH value")
-#endif
-                         );
+    this->ispcEquivalent = ispc::Model_create(this, geometry.size());
+    embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
+
     // for now, only implement triangular geometry...
-    for (int i=0;i<geometry.size();i++) {
+    for (size_t i=0; i < geometry.size(); i++) {
       geometry[i]->finalize(this);
+      ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
-    
-    rtcCommit(eScene);
+
+    rtcCommit(embreeSceneHandle);
   }
 }

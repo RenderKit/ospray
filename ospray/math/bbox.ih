@@ -1,0 +1,56 @@
+/*! \file bbox.ih implements common bounding box functionality for ISPC */
+
+#ifndef OSPRAY_BBOX_ISPH
+#define OSPRAY_BBOX_ISPH
+
+#include "vec.ih"
+
+struct box2f {
+  vec2f lower;
+  vec2f upper;
+};
+
+struct box2i {
+  vec2i lower;
+  vec2i upper;
+};
+
+struct box3f { 
+  vec3f lower;
+  vec3f upper;
+};
+
+struct box3fa { 
+  vec3f lower;
+  int32 align0;
+  vec3f upper;
+  int32 align1;
+};
+
+inline uniform box3f make_box3f(const uniform vec3f lo, const uniform vec3f hi)
+{ uniform box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
+
+inline uniform box3fa make_box3fa(const uniform box3f &b)
+{ uniform box3fa bb; bb.lower = make_vec3f(b.lower); bb.upper = make_vec3f(b.upper); return bb; }
+
+inline box3f make_box3f(const vec3f lo, const vec3f hi)
+{ box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
+
+inline void print_box(const uniform box3f &bbox)
+{ print("[(%f %f %f)-(%f %f %f)]",
+        bbox.lower.x,
+        bbox.lower.y,
+        bbox.lower.z,
+        bbox.upper.x,
+        bbox.upper.y,
+        bbox.upper.z); }
+inline void print_box(const uniform box3fa &bbox)
+{ print("[(%f %f %f)-(%f %f %f)]",
+        bbox.lower.x,
+        bbox.lower.y,
+        bbox.lower.z,
+        bbox.upper.x,
+        bbox.upper.y,
+        bbox.upper.z); }
+#endif
+

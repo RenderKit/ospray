@@ -1,144 +1,130 @@
 #pragma once
 
-#include "../common/managed.h"
+#include "ospray/common/managed.h"
+#include "../transferfunction/TransferFunction.h"
 
 namespace ispc {
   struct _Volume;
 };
 
-#define LOW_LEVEL_KERNELS 1
+// #define LOW_LEVEL_KERNELS 1
 
 namespace ospray {
-  //! possible scalar types to be used in volumes
+  /*! \brief a volume _sampler_ is the abstraction for the actul thing
+      that returns actual samples
 
-  /* \internal this should probably get merged with what's in the
-     public ospray.h */
-  typedef enum { UNORM8, FLOAT, DOUBLE, UNSPECIFIED } ScalarType;
-
-  /*! literal names of the scalar types */
-  extern const char *scalarTypeName[];
-
-  //! base abstraction class for anything 'volume'
-  /*! the C++ interface to the volume class is purely generic. All
-    specialization (bricked vs naive, largemem vs smallmem, etc) are
-    passed to the single volume class, which internally switches to
-    the different ISPC variants that then internally use function
-    pointers) 
-
-    \internal eventually this class shoul dbe merged with
-    WrapperVolume; see notes there
+      This is an *abstraction* - the actual data layout or source of
+      those samples isn't specified: it can be a strucured volume, and
+      unstructured one, RBFs, whatever. Begin this general, we do not
+      even specify the 'dimensions' of the volume, as this may simply
+      not make sense for something like an RBF.
   */
-  struct Volume {
-    typedef enum { 
-      BRICKED  = 0x1,
-      NAIVE    = 0x2,
-      LAYOUT   = (BRICKED|NAIVE),
-    } FlagValues;
-    
-    const vec3i      size;
-    const ScalarType scalarType;
-#ifdef LOW_LEVEL_KERNELS
-    vec3fa  clampSize;
-    int voxelOffset[8];
-#endif
-    /*! the size, scalar type and flags specify the *internal*
-      layout. */
-    Volume(const vec3i &size, ScalarType scalarType) 
-      : size(size), scalarType(scalarType)
-    {};
+  struct Volume : public ManagedObject
+  {
+    Volume() : transferFunction(NULL) {};
 
-    virtual std::string toString() const { return "ospray::Volume"; }
-    virtual void setRegion(const vec3i &where,const vec3i &size,const uint8 *data)=0;
-    virtual void setRegion(const vec3i &where,const vec3i &size,const float *data)=0;
-    virtual int layout() const = 0;
-    //! return 'properly' typed ispc equivalent 
-    /*! \internal might want to remove and directly use voidptr'ed getIE() */
-    ispc::_Volume *inISPC() const { return ispcPtr; }
+    virtual std::string toString() const
+    { return "ospray::Volume(abstract base class)"; }
+
+    /*! create an ISPC-equivalent for this type of class */
+    virtual ispc::_Volume *createIE() { return NULL; };
+    // ispc::_Volume *getIE() { return ispcEquivalent; };
 
     //! tri-linear interpolation at given sample location
     virtual float lerpf(const vec3fa &samplePos) = 0;
-  protected:
-    // void *ispcPtr;
-    ispc::_Volume *ispcPtr;
-    /*! pointer to the ISPC-side "class" written with
-      function pointers etc */
+    //! gradient at given sample location
+    virtual vec3f gradf(const vec3fa &samplePos) = 0;
+
+    /*! \brief creates an abstract volume class of given type 
+
+      The respective volume type must be a registered volume type
+      in either ospray proper or any already loaded module. For
+      volume types specified in special modules, make sure to call
+      ospLoadModule first. */
+    static Volume *createVolume(const char *identifier);
+
+    static Volume *createVolume(const char *filename, const char *type);
+
+    // ispc::_Volume *ispcEquivalent;
+
+    virtual void setTransferFunction(TransferFunction * _transferFunction);
+
+    TransferFunction * transferFunction;
   };
 
   template<typename T>
-  struct NaiveVolume : public Volume {
-    NaiveVolume(const vec3i &size, const T *internalData=NULL);
-
-    virtual void setRegion(const vec3i &where,const vec3i &size,const uint8 *data);
-    virtual void setRegion(const vec3i &where,const vec3i &size,const float *data);
-    virtual std::string toString() const;
-    virtual int layout() const { return NAIVE; };
-
-    //! tri-linear interpolation at given sample location
-    virtual float lerpf(const vec3fa &samplePos);
-
-    const T *data;
-  };
-
-  template<typename T>
-  struct BrickedVolume : public Volume {
-    BrickedVolume(const vec3i &size, const T *internalData=NULL);
-
-    virtual void setRegion(const vec3i &where,const vec3i &size,const uint8 *data);
-    virtual void setRegion(const vec3i &where,const vec3i &size,const float *data);
-    virtual std::string toString() const;
-    virtual int layout() const { return BRICKED; };
-
-    //! tri-linear interpolation at given sample location
-    virtual float lerpf(const vec3fa &samplePos);
-  };
-
-
-  /*  we don't have the volume interface fleshed out, yet, and
-      currently create the proper volume type on-the-fly during
-      commit, so use this wrpper thingy... ( \see
-      volview_notes_on_volume_interface ). eventually this class
-      should be the base class for whatever actual volume clssses we
-      have above */
-  struct WrapperVolume : public ospray::ManagedObject 
+  struct StructuredVolume : public Volume
   {
-    WrapperVolume() : internalRep(NULL) {}
-    virtual void commit();
-    Volume *internalRep;
+    typedef T ScalarType;
+    StructuredVolume(const vec3i &size=vec3i(-1), const T *data=NULL) 
+      : size(size), data(data) 
+    {}
+    virtual std::string toString() const
+    { return "ospray::StructuredVolumeSampler<internalformat>"; }
+    virtual float lerpf(const vec3fa &samplePos)=0;
+    virtual vec3f gradf(const vec3fa &samplePos)=0;
+    virtual void commit(); 
+    
+    virtual void allocate() = 0;
+    virtual void setRegion(const vec3i &where,const vec3i &size,const T *data)=0;
+    //! helper function load files from RAW format (assuming same scalar type
+    void loadRAW(const vec3i &size, const char *fileName);
 
-    //    static Volume *createVolume(const char *identifier);
+    /*! resample form another volume - mostly for testing */
+    virtual void resampleFrom(Volume *source);
+
+    vec3i       size;
+    vec3f       f_size; /*! translation from [(0,0,0)-(1,1,1)] to cell
+                          coordinate space */
+    vec3f       f_clampSize; /*! clamp to the largest valid float
+                               coordinate still inside the voluem
+                               (i.e., f_size-ulp */
+    const T    *data;
   };
 
 
-  /*! load volume in raw format. (eventually to be moved to special
-    importers subdir */
-  Volume *loadRaw(const char *fileName, 
-                  ScalarType inputType, long sx, long sy, long sz, long flags);
 
-  /*! compute new (float-)volume resampled from given 'src' volume */
-  Volume *resampleVolume(Volume *src, const vec3i &newSize, const long flags);
+  // //! base abstraction class for anything 'volume'
+  // /*! this is separate from the sampler because a complex volume class
+  //     like an AMR volume may consist of multiple different samplers */
+  // struct Volume : public ManagedObject {
+  //   VolumeSampler *sampler;
 
-  //! helper - to be (re)moved once no longer needed
-  void saveVolume(Volume *volume, const std::string &fileName);
-  //! helper - to be (re)moved once no longer needed
-  Volume *loadVolume(const std::string &fileName);
+  //   Volume(VolumeSampler *sampler = NULL) : sampler(sampler) {};
 
+  //   virtual std::string toString() const { return "ospray::VolumeObject()"; }
 
+  //   static Volume *createVolume(const char *identifier);
+  // };
 
-  //   /*! \brief registers a internal ospray::<ClassName> volume under
-  //       the externally accessible name "external_name" 
-      
-  //       \internal This currently works by defining a extern "C" function
-  //       with a given predefined name that creates a new instance of this
-  //       volume. By having this symbol in the shared lib ospray can
-  //       lateron always get a handle to this fct and create an instance
-  //       of this volume.
-  //   */
-  // #define OSP_REGISTER_VOLUME(InternalClassName,external_name)        \
-  //   extern "C" Volume *ospray_create_volume__##external_name()        \
-  //   {                                                                 \
-  //     return new InternalClassName;                                   \
-  //   }                                                               \
+  /*! a special class of volume object that contains a structured
+      volume sampler
 
+      Structured volumes right now have special load/store functions
+  */
+  // template<typename StructuredSampler>
+  // struct StructuredVolume : public Volume 
+  // {
+  //   StructuredSampler *structured;
+  //   StructuredVolume() : structured(NULL) {};
+  //   virtual ~StructuredVolume() {};
+  //   virtual void commit(); 
+  // };
 
+  /*! \brief registers a internal ospray::<ClassName> volume under
+    the externally accessible name "external_name" 
+    
+    \internal This currently works by defining a extern "C" function
+    with a given predefined name that creates a new instance of this
+    volume. By having this symbol in the shared lib ospray can
+    lateron always get a handle to this fct and create an instance
+    of this volume.
+  */
+#define OSP_REGISTER_VOLUME(InternalClassName,external_name)          \
+  extern "C" Volume *ospray_create_volume__##external_name()          \
+  {                                                                   \
+    return new InternalClassName;                                     \
+  }                                                                   \
+  
 }
 

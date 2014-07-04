@@ -80,7 +80,6 @@ namespace ospray {
       virtual void specialkey(Glut3DWidget *widget, const int32 key);
       virtual void keypress(Glut3DWidget *widget, int32 key);
       InspectCenter(Glut3DWidget *widget) : Manipulator(widget) {}
-    protected:
       void rotate(float du, float dv);
     };
     struct MoveMode : public Manipulator
@@ -91,6 +90,7 @@ namespace ospray {
                              const vec2i &to, const vec2i &from);
       virtual void dragMiddle(Glut3DWidget *widget, 
                               const vec2i &to, const vec2i &from);
+      virtual void keypress(Glut3DWidget *widget, int32 key);
       MoveMode(Glut3DWidget *widget) : Manipulator(widget) {}
     };
 
@@ -200,6 +200,15 @@ namespace ospray {
         'run' got called */
       void create(const char *title, bool fullScreen = false);
 
+      /*! clear the frame buffer color and depth bits */
+      void clearPixels();
+
+      /*! draw uint32 pixels into the GLUT window (assumes window and buffer dimensions are equal) */
+      void drawPixels(const uint32 *framebuffer);
+
+      /*! draw float4 pixels into the GLUT window (assumes window and buffer dimensions are equal) */
+      void drawPixels(const vec3fa *framebuffer);
+
       // ------------------------------------------------------------------
       // camera helper code
       // ------------------------------------------------------------------
@@ -223,9 +232,17 @@ namespace ospray {
                             lookat, mouse speed, etc */
       int32 windowID;
       vec2i windowSize;
-      /* camera speed modifier */
+      /*! camera speed modifier - affects how many units the camera
+         _moves_ with each unit on the screen */
       float motionSpeed;
+      /*! camera rotation speed modifier - affects how many units the
+         camera _rotates_ with each unit on the screen */
+      float rotateSpeed;
       FrameBufferMode frameBufferMode;
+
+      /*! recompute current viewPort's frame from cameras 'from',
+          'at', 'up' values. */
+      void computeFrame();
 
       static Glut3DWidget *activeWindow;
       union {

@@ -1,0 +1,12 @@
+/*! \defgroup ospray_module_rv The "Resistor Visualizer" (RV) Module 
+
+  This module was initially written for a simple resistor
+  visualization application, and is currently actually used in
+  production for this task.
+
+  \ingroup ospray_modules
+
+  */
+
+
+

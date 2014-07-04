@@ -50,7 +50,11 @@ export I_MPI_FABRICS="tcp:tcp"
 HOSTFILENAME=/tmp/.ospray.$USER
 rm $HOSTFILENAME
 echo mic0 >> $HOSTFILENAME
-mpirun -perhost 1 -np 1 -f $HOSTFILENAME ./ospray_mpi_worker --osp:connect $1 > /tmp/launch.out 
+#mpirun -perhost 1 -np 1 -f $HOSTFILENAME ./ospray_mpi_worker --osp:connect $1 > /tmp/launch.out 
+#export I_MPI_FABRICS=tmi
+mpirun \
+ -genv I_MPI_DEBUG 5 \
+ -perhost 1 -np 2 -hostfile $HOSTFILENAME ./ospray_mpi_worker --osp:connect $1 > /tmp/ospray.launch.$user.out 
 #mpiexec.hydra -np 2 ./ospray_mpi_worker > /tmp/launch.out &
 
 

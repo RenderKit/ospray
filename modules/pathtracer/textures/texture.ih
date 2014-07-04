@@ -1,0 +1,29 @@
+#pragma once
+
+#include "default.ih"
+
+struct Texture;
+
+typedef varying vec3f (*Texture__get)(const uniform Texture *uniform this, 
+                                      const varying vec2f& p);
+
+struct Texture 
+{
+  // RefCount base;
+  Texture__get get;
+};
+
+// inline void Texture__Destructor(uniform RefCount* uniform this) {
+//   LOG(print("Texture__Destructor\n"));
+//   RefCount__Destructor(this);
+// }
+
+inline void Texture__Constructor(uniform Texture* uniform THIS,
+                                 // uniform DestructorFunc destructor,
+                                 uniform Texture__get get)
+{
+  LOG(print("Texture__Constructor\n"));
+  // RefCount__Constructor(&THIS->base// ,destructor
+  //                       );
+  THIS->get = get;
+}

@@ -1,0 +1,117 @@
+/*! \file math.ih implements common math functionality for ISPC */
+
+#ifndef MATH_ISPH
+#define MATH_ISPH
+
+#include "ospray/common/ospcommon.ih"
+
+////////////////////////////////////////////////////////////////////////////////
+/// Constants
+////////////////////////////////////////////////////////////////////////////////
+
+#define inf     floatbits(0x7F800000)
+#define pos_inf floatbits(0x7F800000)
+#define neg_inf floatbits(0xFF800000)
+
+#define M_PI     3.14159265358979323846f
+#define pi       3.14159265358979323846f
+#define two_pi   6.283185307179586232f
+#define four_pi 12.566370614359172464f
+
+#define one_over_pi      0.31830988618379069122f
+#define one_over_two_pi  0.15915494309189534561f
+#define one_over_four_pi 0.079577471545947672804f
+
+/*! c-style reciprocal. required since ispc 1.7 due to type changes in this version */
+inline float rcpf(const float f) { return rcp(f); }
+/*! c-style reciprocal. required since ispc 1.7 due to type changes in this version */
+inline uniform float rcpf(const uniform float f) { return rcp(f); }
+
+/*! c-style square root.  */
+inline float sqrtf(const float f) { return sqrt(f); }
+/*! c-style square root */
+inline uniform float sqrtf(const uniform float f) { return sqrt(f); }
+
+/*! c-style reciprocal square root.  */
+inline float rsqrtf(const float f) { return rcpf(sqrtf(f)); }
+/*! c-style reciprocal square root */
+inline uniform float rsqrtf(const uniform float f) { return rcpf(sqrtf(f)); }
+
+/*! c-style square.  */
+inline float sqrf(const float f) { return f*f; }
+/*! c-style square */
+inline uniform float sqrf(const uniform float f) { return f*f; }
+
+/*! c-style pow function.  */
+inline float powf(const float a, const float b) { return pow(a,b); }
+/*! c-style pow function */
+inline uniform float powf(const uniform float a, const uniform float b) { return pow(a,b); }
+
+
+/*! c-style cos.  */
+inline float cosf(const float f) { return cos(f); }
+/*! c-style cos */
+inline uniform float cosf(const uniform float f) { return cos(f); }
+
+/*! c-style sin.  */
+inline float sinf(const float f) { return sin(f); }
+/*! c-style sin */
+inline uniform float sinf(const uniform float f) { return sin(f); }
+
+/*! c-style exp.  */
+inline float expf(const float f) { return exp(f); }
+/*! c-style exp */
+inline uniform float expf(const uniform float f) { return exp(f); }
+
+/*! c-style log.  */
+inline float logf(const float f) { return log(f); }
+/*! c-style log */
+inline uniform float logf(const uniform float f) { return log(f); }
+
+/*! c-style abs.  */
+inline float absf(const float f) { return abs(f); }
+/*! c-style abs */
+inline uniform float absf(const uniform float f) { return abs(f); }
+
+
+// inline float clamp(const float f) { return max(min(1.f,f),0.f); }
+
+
+inline uniform float rcp_safe(uniform float f) { return rcpf((abs(f) < 1e-8f) ? 1e-8f : f); }
+inline varying float rcp_safe(varying float f) { return rcpf((abs(f) < 1e-8f) ? 1e-8f : f); }
+
+inline uniform float clamp (const uniform float v) { return max(0.0f,min(v,1.0f)); }
+inline varying float clamp (const varying float v) { return max(0.0f,min(v,1.0f)); }
+
+inline uniform float clamp (const uniform float v, const uniform float lower, const uniform float upper) { return max(lower,min(v,upper)); }
+inline varying float clamp (const varying float v, const varying float lower, const varying float upper) { return max(lower,min(v,upper)); }
+
+inline uniform int clamp (const uniform int v, const uniform int lower, const uniform int upper) { return max(lower,min(v,upper)); }
+inline varying int clamp (const varying int v, const varying int lower, const varying int upper) { return max(lower,min(v,upper)); }
+
+inline uniform float deg2rad (const uniform float x)  { return x * 1.74532925199432957692e-2f; }
+inline varying float deg2rad (const varying float x)  { return x * 1.74532925199432957692e-2f; }
+
+inline uniform float rad2deg (const uniform float x)  { return x * 5.72957795130823208768e1f; }
+inline varying float rad2deg (const varying float x)  { return x * 5.72957795130823208768e1f; }
+
+#define __define_lerp(TYPE)                                                     \
+inline TYPE lerp(float factor, TYPE a, TYPE b)                                  \
+{                                                                               \
+  return (1-factor)* a + factor * b;                                            \
+}                                                                               \
+inline uniform TYPE lerp(uniform float factor, uniform TYPE a, uniform TYPE b)  \
+{                                                                               \
+  return (1-factor)* a + factor * b;                                            \
+}
+
+__define_lerp(int8)
+__define_lerp(int32)
+__define_lerp(float)
+__define_lerp(uint8)
+__define_lerp(uint32)
+
+#undef __define_lerp
+
+#endif
+

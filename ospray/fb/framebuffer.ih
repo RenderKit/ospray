@@ -1,36 +1,40 @@
-#ifndef FRAMEBUFFER_ISPH
-#define FRAMEBUFFER_ISPH
+#pragma once
 
 #include "tile.ih"
-/*! \file framebuffer.isph Defines the abstract base class of an ISPC frame buffer */
+/*! \file framebuffer.ih Defines the abstract base class of an ISPC frame buffer */
 
 struct FrameBuffer;
 
-
-/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-typedef void (*SetPixelMethod)(uniform FrameBuffer  *uniform,
-                               const varying vec2i  &pixel,
-                               const varying vec4f &value);
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
 typedef void (*SetTileMethod)(uniform FrameBuffer  *uniform,
-                              uniform Tile *uniform);
-/*! \brief Fct pointer type for 'virtual' method that queries a pixel */
-typedef varying vec4f (*GetPixelMethod)(uniform FrameBuffer  *uniform,
-                                        const varying vec2i  &pixel);
-/*! \brief destructor callback for this class */
-typedef void (*DestroyFBMethod)(uniform FrameBuffer  *uniform);
+                              uniform Tile &);
+/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
+typedef void (*AccumTileMethod)(uniform FrameBuffer  *uniform,
+                                uniform Tile &);
+
+/*! app-mappable format of the color buffer. make sure that this
+  matches the definition on the ISPC side */
+typedef enum { 
+  ColorBufferFormat_NONE, /*!< app will never map the color buffer (e.g., for a
+                            framebuffer attached to a display wall that will likely
+                            have a different res that the app has...) */
+  ColorBufferFormat_RGBA_UINT8, /*! app will map in RGBA, one uint8 per channel */
+  ColorBufferFormat_RGB_UINT8, /*! app will map in RGBA, one uint8 per channel */
+  ColorBufferFormat_RGBA_FLOAT32, /*! app will map in RBGA, one float per channel */
+} FrameBuffer_ColorBufferFormat;
+    
 
 struct FrameBuffer 
 {
-  DestroyFBMethod destructor;
-  
-  SetPixelMethod  setPixel;
-  GetPixelMethod  getPixel;
-  SetTileMethod   setTile;
-
-  void *cClassPtr; /*!< pointer back to c++-side of this class */
+  SetTileMethod     setTile;
+  AccumTileMethod   accumTile;
 
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
+  vec2f rcpSize; /*! one over size (precomputed) */
+  int32 accumID;
+
+  FrameBuffer_ColorBufferFormat colorBufferFormat;
+
+  void *cClassPtr; /*!< pointer back to c++-side of this class */
 };
 
-#endif

@@ -1,0 +1,29 @@
+#ifndef OSPRAY_SPOT_LIGHT_IH
+#define OSPRAY_SPOT_LIGHT_IH
+
+#include "light.ih"
+#include "ospray/math/vec.ih"
+
+struct SpotLight {
+  uniform Light base;
+
+  uniform vec3f position;         //!< Position of the SpotLight
+  uniform vec3f direction;        //!< Direction that the SpotLight is pointing
+  uniform vec3f color;            //!< RGB color of the SpotLight
+  uniform float range;            //!< Max influence range of the SpotLight
+  uniform float halfAngle;        //!< Half angle of spot light. If angle from intersection to light is greater than this, the light does not influence shading for that intersection
+};
+
+//!< Construct a new ispc-side SpotLight object
+extern void SpotLight_Constructor(uniform SpotLight *uniform THIS,
+                                  void *uniform cppEquivalent,
+                                  const uniform vec3f &position,
+                                  const uniform vec3f &direction,
+                                  const uniform vec3f &color,
+                                  const uniform float range,
+                                  const uniform float halfAngle);
+
+//!< Destruct an ispc-side SpotLight object
+extern void SpotLight_Destructor(uniform SpotLight *uniform THIS);
+
+#endif

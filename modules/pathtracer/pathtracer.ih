@@ -1,0 +1,56 @@
+#include "ospray/math/vec.ih"
+#include "ospray/common/model.ih"
+#include "ospray/camera/camera.ih"
+
+#include "ospray/fb/framebuffer.ih"
+#include "ospray/render/util.ih"
+#include "ospray/common/ray.ih"
+#include "ospray/render/renderer.ih"
+
+// path tracer stuff
+#include "samplers/precomputed_sampler.ih"
+#include "scene.ih"
+
+#define MAX_LIGHTS 1000
+
+/*! DUMMY FOR NOW, JUST SO THE PATH TRACER CLASS CAN HAVE ONE OF THOSE! */
+struct Image;
+typedef vec3f (*get_nearest_varying_fct)(uniform Image *uniform image, 
+                                         const float u, const float v);
+//   inline vec3f get_nearest_varying(uniform Image *uniform image, 
+//                                  const float u, const float v)
+// { return make_vec3f(0.f,1.f,0.f); }
+struct Image
+{
+  vec2ui size;
+  get_nearest_varying_fct get_nearest_varying;
+};
+
+struct PathTracer {
+  uniform Renderer inherited;
+  uniform int32 numRays;
+  uniform int32 maxDepth;
+  uniform float minContribution;
+  uniform float epsilon;
+  uniform int32 iteration;
+  uniform Image* uniform backplate;
+  uniform Scene *uniform scene; /*! iw: since ospray doesn't have the
+                                    concept of a 'scene' in the sense
+                                    of the original embree path tracer
+                                    (it's somewhat related to a
+                                    'model', but not just) i'm adding
+                                    it here for now; we'll eventually
+                                    have to change that with a better
+                                    abstraction model for scenes */
+  
+  /*! Random variables. */
+  uniform int32 lightSampleID;            //!< 2D random variable to sample the light source.
+  uniform int32 firstScatterSampleID;     //!< 2D random variable to sample the BRDF.
+  uniform int32 firstScatterTypeSampleID; //!< 1D random variable to sample the BRDF type to choose.
+  uniform int32 precomputedLightSampleID[MAX_LIGHTS]; //!< ID of precomputed light samples for lights that need precomputations.
+  uniform PrecomputedSampler sampler;
+
+  // uniform Camera *camera;
+};
+
+

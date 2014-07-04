@@ -1,6 +1,6 @@
 #pragma once
 
-#include "render/tilerenderer.h"
+#include "ospray/render/tilerenderer.h"
 
 namespace ospray {
   struct Camera;
@@ -17,8 +17,8 @@ namespace ospray {
         /*! \brief render given tile */
         virtual void renderTile(Tile &tile);
 
-        void *ispc_camera;
-        void *ispc_scene;
+        // void *ispc_camera;
+        // void *ispc_scene;
       };
     };
   }

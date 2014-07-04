@@ -12,35 +12,68 @@ uniform float biggestFloatSmallerThan(const uniform int i)
 
 
 
-task void resampleVolumeTask(uniform VolumePtr dst, uniform VolumePtr src)
-{
-  // uniform Volume *uniform dst = (uniform Volume *uniform)_dst;
-  // uniform Volume *uniform src = (uniform Volume *uniform)_src;
-  uniform int tID = taskIndex;
+// #define DEFINE_RESAMPLER(FCT,T,floatToT,setRegionFct)                   \
+//   task void FCT#Task(uniform VolumePtr dst,                             \
+//                      uniform VolumePtr src)                             \
+//   {                                                                     \
+//     uniform int tID = taskIndex;                                        \
+//                                                                         \
+//     const uniform vec3i begin                                           \
+//       = make_vec3i(0,tID % dst->size.y,tID / dst->size.y);              \
+//     const uniform vec3i size  = make_vec3i(dst->size.x,1,1);            \
+//                                                                         \
+//     vec3f samplePos;                                                    \
+//     samplePos.y = (begin.y / (dst->size.y-1.f)) * src->size.y;          \
+//     samplePos.z = (begin.z / (dst->size.z-1.f)) * src->size.z;          \
+//                                                                         \
+//     uniform T line[16*4096];                                            \
+//     foreach (x=0 ... dst->size.x) {                                     \
+//       samplePos.x = (x / (dst->size.x-1.f)) * src->size.x;              \
+//       float f = src->lerpf(src,samplePos);                              \
+//       line[x] = floatToT(f);                                            \
+//     }                                                                   \
+//     setRegionFct(dst,begin,size,&line[0]);                              \
+//   }                                                                     \
+//                                                                         \
+//   export void FCT(uniform ExtVolumePtr _dst,                            \
+//                   uniform ExtVolumePtr _src)                            \
+//   {                                                                     \
+//     uniform Volume *uniform dst = (uniform Volume *uniform)_dst;        \
+//     uniform Volume *uniform src = (uniform Volume *uniform)_src;        \
+//     launch[dst->size.y*dst->size.z] resampleVolumeTask(dst,src);        \
+//   }
 
-  const uniform vec3i begin = make_vec3i(0,tID % dst->size.y,tID / dst->size.y);
-  const uniform vec3i size  = make_vec3i(dst->size.x,1,1);
+// DEFINE_RESAMPLER(resample_naive32_float,float,,Naive32
 
-  vec3f samplePos;
-  samplePos.y = (begin.y / (dst->size.y-1.f)) * src->size.y;
-  samplePos.z = (begin.z / (dst->size.z-1.f)) * src->size.z;
+// task void resampleVolumeTask(uniform VolumePtr dst, uniform VolumePtr src)
+// {
+//   // uniform Volume *uniform dst = (uniform Volume *uniform)_dst;
+//   // uniform Volume *uniform src = (uniform Volume *uniform)_src;
+//   uniform int tID = taskIndex;
+
+//   const uniform vec3i begin = make_vec3i(0,tID % dst->size.y,tID / dst->size.y);
+//   const uniform vec3i size  = make_vec3i(dst->size.x,1,1);
+
+//   vec3f samplePos;
+//   samplePos.y = (begin.y / (dst->size.y-1.f)) * src->size.y;
+//   samplePos.z = (begin.z / (dst->size.z-1.f)) * src->size.z;
   
-  uniform float line[16*1024];
-  foreach (x=0 ... dst->size.x) {
-    samplePos.x = (x / (dst->size.x-1.f)) * src->size.x;
-    line[x] = src->lerpf(src,samplePos);
-  }
-  dst->setRegion(dst,begin,size,&line[0]);
-}
+//   uniform float line[16*1024];
+//   foreach (x=0 ... dst->size.x) {
+//     samplePos.x = (x / (dst->size.x-1.f)) * src->size.x;
+//     line[x] = src->lerpf(src,samplePos);
+//   }
+//   dst->setRegion(dst,begin,size,&line[0]);
+// }
 
-/*! resample 'src' volume to already-allocated 'dst' volume. note that
-    'dst' *must* be a float volume right now */
-export void resampleVolume(uniform ExtVolumePtr _dst, uniform ExtVolumePtr _src)
-{
-  uniform Volume *uniform dst = (uniform Volume *uniform)_dst;
-  uniform Volume *uniform src = (uniform Volume *uniform)_src;
-  launch[dst->size.y*dst->size.z] resampleVolumeTask(dst,src);
-};
+// /*! resample 'src' volume to already-allocated 'dst' volume. note that
+//     'dst' *must* be a float volume right now */
+// export void resampleVolume(uniform ExtVolumePtr _dst, uniform ExtVolumePtr _src)
+// {
+//   uniform Volume *uniform dst = (uniform Volume *uniform)_dst;
+//   uniform Volume *uniform src = (uniform Volume *uniform)_src;
+//   launch[dst->size.y*dst->size.z] resampleVolumeTask(dst,src);
+// };
 
 
 // workaround ispc bug #620.
@@ -55,6 +88,10 @@ export void getInternalRepresentation(uniform ExtVolumePtr _vol,
   dataPtr  = vol->data;
 }
 
+export void _Volume_setTransferFunction(uniform ExtVolumePtr _volume, uniform ExtTransferFunctionPtr _transferFunction)
+{
+    uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
+    uniform TransferFunction *uniform transferFunction = (uniform TransferFunction *uniform)_transferFunction;
 
-
-
+    volume->transferFunction = transferFunction;
+}
