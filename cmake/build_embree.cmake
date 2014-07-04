@@ -62,6 +62,7 @@ ENDIF()
 
 IF (OSPRAY_MIC) 
 	SET(TARGET_XEON_PHI ON)
+	SET(XEON_PHI_ISA ON)
 ENDIF()
 
 INCLUDE(${EMBREE_DIR}/common/cmake/ispc.cmake)

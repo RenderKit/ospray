@@ -27,7 +27,7 @@ ENDIF()
 
 IF (OSPRAY_MIC_COI)
 	ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
-#	INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
+        INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
 	INCLUDE_DIRECTORIES(/usr/include/intel-coi)
 	IF (THIS_IS_MIC)
 		ADD_DEFINITIONS(-DOSPRAY_COI_DEV=1)
