@@ -317,6 +317,13 @@ static FORCEINLINE bool __extract_element(__vec16_i1 mask, uint32_t index) {
     return (mask & (1 << index)) ? true : false;
 }
 
+
+
+
+
+
+
+
 /*
 static FORCEINLINE void __insert_element(__vec16_i1 *vec, int index, 
                                          bool val) {
@@ -613,9 +620,29 @@ template <> static FORCEINLINE void __store<64>(__vec16_i32 *p, __vec16_i32 v) {
     _mm512_store_epi32(p, v);
 }
 
-///////////////////////////////////////////////////////////////////////////
+// ==================================================================
 // int64
-///////////////////////////////////////////////////////////////////////////
+// =======================================================
+static FORCEINLINE 
+void __masked_store_i64(void *p, const __vec16_i64 &val, __vec16_i1 mask) 
+{
+    __m512i v1;
+    __m512i v2;
+    v1 = _mm512_mask_permutevar_epi32(_mm512_undefined_epi32(), 0xAAAA,
+                                      _mm512_set_16to16_pi(15,15,14,14,13,13,12,12,11,11,10,10,9,9,8,8),
+                                      v.v_hi);
+    v1 = _mm512_mask_permutevar_epi32(v1, 0x5555,
+                                      _mm512_set_16to16_pi(15,15,14,14,13,13,12,12,11,11,10,10,9,9,8,8),
+                                      v.v_lo);
+    v2 = _mm512_mask_permutevar_epi32(_mm512_undefined_epi32(), 0xAAAA,
+                                      _mm512_set_16to16_pi(7,7,6,6,5,5,4,4,3,3,2,2,1,1,0,0),
+                                      v.v_hi);
+    v2 = _mm512_mask_permutevar_epi32(v2, 0x5555,
+                                      _mm512_set_16to16_pi(7,7,6,6,5,5,4,4,3,3,2,2,1,1,0,0),
+                                      v.v_lo);
+    _mm512_mask_store_epi64(p, mask, v2);
+    _mm512_mask_store_epi64(((uint8_t*)p)+64, mask, v1);
+}
 
 static FORCEINLINE int64_t __extract_element(__vec16_i64 v, uint32_t index) {
     return (uint64_t(((int32_t *)&v.v_hi)[index])<<32) | (uint64_t(((int32_t *)&v.v_lo)[index]));
@@ -730,9 +757,6 @@ static FORCEINLINE __vec16_i64 __shl(__vec16_i64 a, unsigned long long b) {
 static FORCEINLINE __vec16_i64 __lshr(__vec16_i64 a, __vec16_i64 b) {
     __vec16_i32 shift = _mm512_sub_epi32(__ispc_thirty_two, b.v_lo);
     __vec16_i32 xfer = _mm512_and_epi32(_mm512_sllv_epi32(__ispc_ffffffff, shift), _mm512_sllv_epi32(a.v_hi, shift));
-    //__vec16_i32 xfer = _mm512_sllv_epi32(_mm512_and_epi32(a.v_hi, 
-    //                                                      _mm512_sub_epi32(_mm512_sllv_epi32(__ispc_one, b.v_lo), __ispc_one)), 
-    //                                     _mm512_sub_epi32(__ispc_thirty_two, b.v_lo));
     __vec16_i32 hi = _mm512_srlv_epi32(a.v_hi, b.v_lo);
     __vec16_i32 lo = _mm512_or_epi32(xfer, _mm512_srlv_epi32(a.v_lo, b.v_lo));
     return __vec16_i64(lo, hi);
@@ -751,11 +775,7 @@ static FORCEINLINE __vec16_i64 __ashr(__vec16_i64 a, unsigned long long b) {
   __vec16_i32 xfer
     = _mm512_slli_epi32(_mm512_and_epi32(a.v_hi, 
                                          _mm512_set1_epi32((1<<b)-1)),
-                                         // _mm512_sub_epi32(_mm512_sllv_epi32(__ispc_one, 
-                                         //                                    b.v_lo), 
-                                         //                  __ispc_one)), 
                         32-b);
-                        // _mm512_sub_epi32(__ispc_thirty_two, b.v_lo));
   __vec16_i32 hi = _mm512_srai_epi32(a.v_hi, b);
   __vec16_i32 lo = _mm512_or_epi32(xfer, _mm512_srli_epi32(a.v_lo, b));
   return __vec16_i64(lo, hi);
@@ -768,49 +788,50 @@ static FORCEINLINE __vec16_i1 __equal_i64(const __vec16_i64 &a, const __vec16_i6
 
 static FORCEINLINE __vec16_i1 __equal_i64_and_mask(const __vec16_i64 &a, const __vec16_i64 &b,
                                                    __vec16_i1 mask) {
-    __mmask16 lo_match = _mm512_cmpeq_epi32_mask(a.v_lo,b.v_lo);
-    __mmask16 full_match = _mm512_mask_cmpeq_epi32_mask(lo_match,a.v_hi,b.v_hi);
-    return _mm512_kand(full_match, (__mmask16)mask);
+  __mmask16 lo_match = _mm512_mask_cmpeq_epi32_mask((__mmask16)mask, a.v_lo,b.v_lo);
+  __mmask16 full_match = _mm512_mask_cmpeq_epi32_mask(lo_match,a.v_hi,b.v_hi);
+  return _full_match;
 }
 
 static FORCEINLINE __vec16_i1 __not_equal_i64(const __vec16_i64 &a, const __vec16_i64 &b) {
-    return __not(__equal_i64(a,b));
+  return __not(__equal_i64(a,b));
 }
 
 static FORCEINLINE __vec16_i1 __not_equal_i64_and_mask(const __vec16_i64 &a, const __vec16_i64 &b,
                                                        __vec16_i1 mask) {
-    return __and(__not(__equal_i64(a,b)), mask);
+  return __and(__not(__equal_i64(a,b)), mask);
 }
 
 static FORCEINLINE __vec16_i64 __select(__vec16_i1 mask,
                                         __vec16_i64 a, __vec16_i64 b) {
-    __vec16_i64 ret;
-    ret.v_hi = _mm512_mask_mov_epi32(b.v_hi, mask, a.v_hi);
-    ret.v_lo = _mm512_mask_mov_epi32(b.v_lo, mask, a.v_lo);
-    return ret;
+  __vec16_i64 ret;
+  ret.v_hi = _mm512_mask_mov_epi32(b.v_hi, mask, a.v_hi);
+  ret.v_lo = _mm512_mask_mov_epi32(b.v_lo, mask, a.v_lo);
+  return ret;
 }
 
 static FORCEINLINE int64_t __extract_element(const __vec16_i64 &v, uint32_t index)
 {
-    uint *src = (uint *)&v;
-    return src[index+16] | (int64_t(src[index]) << 32);
+  uint *src = (uint *)&v;
+  return src[index+16] | (int64_t(src[index]) << 32);
 }
 
 template <class RetVecType> RetVecType __smear_i64(const int64_t &l);
 template <> FORCEINLINE  __vec16_i64 __smear_i64<__vec16_i64>(const int64_t &l) {
-    const int *i = (const int*)&l;
-    return __vec16_i64(_mm512_set1_epi32(i[0]), _mm512_set1_epi32(i[1]));
+  const int *i = (const int*)&l;
+  return __vec16_i64(_mm512_set1_epi32(i[0]), _mm512_set1_epi32(i[1]));
 }
 
 template <int ALIGN> static FORCEINLINE __vec16_i64 __load(const __vec16_i64 *p) {
-    __vec16_i32 v1;
-    __vec16_i32 v2;
-    v2 = _mm512_extloadunpacklo_epi32(v2, p, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
-    v2 = _mm512_extloadunpackhi_epi32(v2, (uint8_t*)p+64, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
-    v1 = _mm512_extloadunpacklo_epi32(v1, (uint8_t*)p+64, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
-    v1 = _mm512_extloadunpackhi_epi32(v1, (uint8_t*)p+128, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
-
-    __vec16_i64 ret;
+  __vec16_i32 v1;
+  __vec16_i32 v2;
+  const uint8_t*ptr = (const uint8_t*)p;
+  v2 = _mm512_extloadunpacklo_epi32(v2, ptr, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
+  v2 = _mm512_extloadunpackhi_epi32(v2, ptr+64, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
+  v1 = _mm512_extloadunpacklo_epi32(v1, ptr+64, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
+  v1 = _mm512_extloadunpackhi_epi32(v1, ptr+128, _MM_UPCONV_EPI32_NONE, _MM_HINT_NONE);
+  
+  __vec16_i64 ret;
     ret.v_hi = _mm512_mask_permutevar_epi32(ret.v_hi, 0xFF00,
                                             _mm512_set_16to16_pi(15,13,11,9,7,5,3,1,14,12,10,8,6,4,2,0),
                                             v1);
@@ -892,6 +913,88 @@ template <> static FORCEINLINE void __store<64>(__vec16_i64 *p, __vec16_i64 v) {
 template <> static FORCEINLINE void __store<128>(__vec16_i64 *p, __vec16_i64 v) {
     __store<64>(p, v);
 }
+
+static FORCEINLINE __vec16_i64 __cast_sext(const __vec16_i64 &, const __vec16_i32 &val)
+{
+    return __vec16_i64(val.v,_mm512_srai_epi32(val.v,31));
+}
+
+static FORCEINLINE __vec16_i64 __cast_zext(const __vec16_i64 &, const __vec16_i32 &val)
+{
+    return __vec16_i64(val.v, _mm512_setzero_epi32());
+}
+
+static FORCEINLINE __vec16_i64 __cast_bits(__vec16_i64, __vec16_d val) {
+    return *(__vec16_i64*)&val;
+}
+
+static FORCEINLINE __vec16_d __cast_bits(__vec16_d, __vec16_i64 val) {
+    return *(__vec16_d*)&val;
+}
+
+/*! gather vector of 64-bit ints from addresses pointing to uniform ints 
+
+  (iw) WARNING: THIS CODE ONLY WORKS FOR GATHERS FROM ARRAYS OF
+  ***UNIFORM*** INT64's/POINTERS.  (problem is that ispc doesn't
+  expose whether it's from array of uniform or array of varying
+  poitners, so in here there's no way to tell - only thing we can do
+  is pick one...
+ */
+static FORCEINLINE __vec16_i64
+__gather_base_offsets32_i64(uint8_t *base, uint32_t scale, __vec16_i32 offsets, 
+                            __vec16_i1 mask) {
+  __vec16_i64 ret;
+  ret.v_lo = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, 
+                                            base, _MM_UPCONV_EPI32_NONE, scale,
+                                            _MM_HINT_NONE);
+  ret.v_hi = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, 
+                                            base+64, _MM_UPCONV_EPI32_NONE, scale,
+                                            _MM_HINT_NONE);
+  return ret;
+}
+
+/*! gather vector of 64-bit ints from addresses pointing to uniform ints 
+
+  (iw) WARNING: THIS CODE ONLY WORKS FOR GATHERS FROM ARRAYS OF
+  ***UNIFORM*** INT64's/POINTERS.  (problem is that ispc doesn't
+  expose whether it's from array of uniform or array of varying
+  poitners, so in here there's no way to tell - only thing we can do
+  is pick one...
+ */
+static FORCEINLINE __vec16_i64
+__gather64_i64(__vec16_i64 addr, 
+               __vec16_i1 mask) 
+{
+  __vec16_i64 ret;
+
+  // There is no gather instruction with 64-bit offsets in KNC.
+  // We have to manually iterate over the upper 32 bits ;-)
+  __vec16_i1 still_to_do = mask;
+  __m512i offsets = addr.v_lo;
+  while (still_to_do) {
+    int first_active_lane = _mm_tzcnt_32((int)still_to_do);
+    const uint32_t &hi32 = ((uint*)&addr.v_hi)[first_active_lane];
+    __vec16_i1 match = _mm512_mask_cmp_epi32_mask(still_to_do,addr.v_hi,
+                                                  __smear_i32<__vec16_i32>((int32_t)hi32),
+                                                  _MM_CMPINT_EQ);
+      
+    const uint8_t * base = (const uint8_t*)((uint64_t)hi32 << 32);
+    ret.v_lo = _mm512_mask_i32extgather_epi32(ret.v_lo, match, offsets, 
+                                              base, _MM_UPCONV_EPI32_NONE, 1,
+                                              _MM_HINT_NONE);
+    ret.v_hi = _mm512_mask_i32extgather_epi32(ret.v_hi, match, offsets, 
+                                              base+64, _MM_UPCONV_EPI32_NONE, 1,
+                                              _MM_HINT_NONE);
+      
+    still_to_do = _mm512_kxor(match, still_to_do);
+  }
+    
+  return ret;
+}
+
+
+
+
 
 ///////////////////////////////////////////////////////////////////////////
 // float
@@ -1290,16 +1393,6 @@ template <> static FORCEINLINE void __store<128>(__vec16_d *p, __vec16_d v) {
 // casts
 ///////////////////////////////////////////////////////////////////////////
 
-static FORCEINLINE __vec16_i64 __cast_sext(const __vec16_i64 &, const __vec16_i32 &val)
-{
-    return __vec16_i64(val.v,_mm512_srai_epi32(val.v,31));
-}
-
-static FORCEINLINE __vec16_i64 __cast_zext(const __vec16_i64 &, const __vec16_i32 &val)
-{
-    return __vec16_i64(val.v, _mm512_setzero_epi32());
-}
-
 static FORCEINLINE __vec16_i32 __cast_sext(const __vec16_i32 &, const __vec16_i1 &val)
 {
   __vec16_i32 ret = _mm512_setzero_epi32();
@@ -1393,14 +1486,6 @@ static FORCEINLINE __vec16_i32 __cast_bits(__vec16_i32, __vec16_f val) {
     return _mm512_castps_si512(val);
 }
 
-
-static FORCEINLINE __vec16_i64 __cast_bits(__vec16_i64, __vec16_d val) {
-    return *(__vec16_i64*)&val;
-}
-
-static FORCEINLINE __vec16_d __cast_bits(__vec16_d, __vec16_i64 val) {
-    return *(__vec16_d*)&val;
-}
 
 ///////////////////////////////////////////////////////////////////////////
 // various math functions
@@ -1699,14 +1784,6 @@ __scatter_base_offsets32_i8(uint8_t *b, uint32_t scale, __vec16_i32 offsets,
                                   _MM_DOWNCONV_EPI32_SINT8, scale, 
                                   _MM_HINT_NONE);
 }
-static FORCEINLINE void __masked_store_i64(void *p, const __vec16_i64 &val, __vec16_i1 mask) {
-  // assumes aligned memory
-  _mm512_mask_store_epi32(((__m512i*)p)+0, mask, val.v_hi);
-  _mm512_mask_store_epi32(((__m512i*)p)+1, mask, val.v_lo);
-}
-#else
-// not implemented
-#endif
 
 static FORCEINLINE void __masked_store_i32(void *p, __vec16_i32 val, __vec16_i1 mask) {
 #ifdef ISPC_FORCE_ALIGNED_MEMORY
@@ -1818,66 +1895,6 @@ __gather_base_offsets32_double(uint8_t *base, uint32_t scale, __vec16_i32 offset
                                        base, _MM_UPCONV_PD_NONE, scale,
                                        _MM_HINT_NONE); 
     return ret;
-}
-
-/*! gather vector of 64-bit ints from addresses pointing to uniform ints 
-
-  (iw) WARNING: THIS CODE ONLY WORKS FOR GATHERS FROM ARRAYS OF
-  ***UNIFORM*** INT64's/POINTERS.  (problem is that ispc doesn't
-  expose whether it's from array of uniform or array of varying
-  poitners, so in here there's no way to tell - only thing we can do
-  is pick one...
- */
-static FORCEINLINE __vec16_i64
-__gather_base_offsets32_i64(uint8_t *base, uint32_t scale, __vec16_i32 offsets, 
-                            __vec16_i1 mask) {
-  __vec16_i64 ret;
-  ret.v_lo = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, 
-                                            base, _MM_UPCONV_EPI32_NONE, scale,
-                                            _MM_HINT_NONE);
-  ret.v_hi = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, 
-                                            base+4, _MM_UPCONV_EPI32_NONE, scale,
-                                            _MM_HINT_NONE);
-  return ret;
-}
-
-/*! gather vector of 64-bit ints from addresses pointing to uniform ints 
-
-  (iw) WARNING: THIS CODE ONLY WORKS FOR GATHERS FROM ARRAYS OF
-  ***UNIFORM*** INT64's/POINTERS.  (problem is that ispc doesn't
-  expose whether it's from array of uniform or array of varying
-  poitners, so in here there's no way to tell - only thing we can do
-  is pick one...
- */
-static FORCEINLINE __vec16_i64
-__gather64_i64(__vec16_i64 addr, 
-               __vec16_i1 mask) 
-{
-  __vec16_i64 ret;
-
-  // There is no gather instruction with 64-bit offsets in KNC.
-  // We have to manually iterate over the upper 32 bits ;-)
-  __vec16_i1 still_to_do = mask;
-  __m512i offsets = addr.v_lo;
-  while (still_to_do) {
-    int first_active_lane = _mm_tzcnt_32((int)still_to_do);
-    const uint &hi32 = ((uint*)&addr.v_hi)[first_active_lane];
-    __vec16_i1 match = _mm512_mask_cmp_epi32_mask(still_to_do,addr.v_hi,
-                                                  __smear_i32<__vec16_i32>((int32_t)hi32),
-                                                  _MM_CMPINT_EQ);
-      
-    uint8_t * base = (uint8_t*)((unsigned long)hi32 << 32);
-    ret.v_lo = _mm512_mask_i32extgather_epi32(ret.v_lo, match, offsets, 
-                                              base, _MM_UPCONV_EPI32_NONE, 1,
-                                              _MM_HINT_NONE);
-    ret.v_hi = _mm512_mask_i32extgather_epi32(ret.v_hi, match, offsets, 
-                                              base+4, _MM_UPCONV_EPI32_NONE, 1,
-                                              _MM_HINT_NONE);
-      
-    still_to_do = _mm512_kxor(match, still_to_do);
-  }
-    
-  return ret;
 }
 
 static FORCEINLINE __vec16_f
