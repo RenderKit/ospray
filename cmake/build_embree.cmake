@@ -65,6 +65,7 @@ IF (OSPRAY_MIC)
 	SET(XEON_PHI_ISA ON)
 ENDIF()
 
+ADD_DEFINITIONS(-DEMBREE_DISABLE_HAIR=1)
 INCLUDE(${EMBREE_DIR}/common/cmake/ispc.cmake)
 
 # include paths requried for including embree headers

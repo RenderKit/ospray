@@ -1,7 +1,7 @@
 #include "spotlight.ih"
 
 //!< Construct a new ispc-side SpotLight object
-extern void SpotLight_Constructor(uniform SpotLight *uniform THIS,
+void SpotLight_Constructor(uniform SpotLight *uniform THIS,
                                   void *uniform cppEquivalent,
                                   const uniform vec3f &position,
                                   const uniform vec3f &direction,
@@ -18,7 +18,7 @@ extern void SpotLight_Constructor(uniform SpotLight *uniform THIS,
 }
 
 //!< Destruct an ispc-side SpotLight object
-extern void SpotLight_Destructor(uniform SpotLight *uniform THIS)
+void SpotLight_Destructor(uniform SpotLight *uniform THIS)
 {
   Light_Destructor(&THIS->base);
 }

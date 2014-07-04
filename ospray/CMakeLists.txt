@@ -145,22 +145,31 @@ ENDIF()
 
 
 IF (OSPRAY_MIC_COI)
+FIND_LIBRARY(LIBCOI_DEVICE libcoi_device.so
+PATHS
+/opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
+/opt/intel/mic/coi/device-linux-release/lib
+)
+FIND_LIBRARY(LIBCOI_HOST libcoi_host.so
+PATHS
+/opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
+/opt/intel/mic/coi/host-linux-release/lib
+)
 	IF (THIS_IS_MIC)
 #		LINK_DIRECTORIES(/opt/intel/mic/coi/device-linux-release/lib)
 #		TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} coi_device)
 		TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
-#			/opt/intel/mic/coi/device-linux-release/lib/libcoi_device.so
+			${LIBCOI_DEVICE}
 			)
 		ADD_EXECUTABLE(ospray_coi_worker.mic api/coidevice_worker.cpp)
 		TARGET_LINK_LIBRARIES(ospray_coi_worker.mic 
 			ospray${OSPRAY_LIB_SUFFIX}
-#			/opt/intel/mic/coi/device-linux-release/lib/libcoi_device.so
-/opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64/libcoi_device.so
-)
+			${LIBCOI_DEVICE}
+			)
 	ELSE()
 #		LINK_DIRECTORIES(/opt/intel/mic/coi/host-linux-release/lib)
 		TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
-			/opt/intel/mic/coi/host-linux-release/lib/libcoi_host.so
+			${LIBCOI_HOST}
 			)
 	ENDIF()
 ENDIF()
