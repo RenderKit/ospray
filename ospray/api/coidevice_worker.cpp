@@ -121,7 +121,7 @@ namespace ospray {
         throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
 
       if (format == OSP_OBJECT) {
-        cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
+        //cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
         Handle *in = (Handle *)bufferPtr[0];
         ManagedObject **out = (ManagedObject **)bufferPtr[0];
         for (int i=0;i<nitems;i++) {
@@ -404,7 +404,7 @@ namespace ospray {
 
       COIBufferAddRef(bufferPtr[0]);
 
-      Texture2D *tx = Texture2D::createTexture(width, height, type, bufferPtr[0], flags);
+      Texture2D *tx = Texture2D::createTexture(width, height, (OSPDataType)type, bufferPtr[0], flags);
 
       handle.assign(tx);
       COIProcessProxyFlush();

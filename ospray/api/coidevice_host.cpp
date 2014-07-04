@@ -565,7 +565,7 @@ namespace ospray {
       DataStream args;
       Handle ID = Handle::alloc();
 
-      if (width * height > 0) {
+      if (width * height == 0) {
         throw std::runtime_error("cowardly refusing to create empty texture...");
       }
 
@@ -578,9 +578,10 @@ namespace ospray {
       for (int i=0;i<engine.size();i++) {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
-        result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_MAP_READ,
+        result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_MAP_READ_ONLY,
                                  data,1,&engine[i]->coiProcess,&coiBuffer);
         Assert(result == COI_SUCCESS);
+	COIEVENT event;
         bzero(&event,sizeof(event));
         COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
         result = COIPipelineRunFunction(engine[i]->coiPipe,
@@ -593,7 +594,7 @@ namespace ospray {
         Assert(result == COI_SUCCESS);
         COIEventWait(1,&event,-1,1,NULL,NULL);
       }
-      return (OSPData)(int64)ID;
+      return (OSPTexture2D)(int64)ID;
     }
 
     /*! have given renderer create a new light */

@@ -17,6 +17,7 @@ namespace ospray {
     case OSP_vec3fa:  return sizeof(vec3fa);
     case OSP_vec3i:   return sizeof(vec3i);
     case OSP_vec3ui:  return sizeof(vec3ui);
+    case OSP_vec4uc:  return sizeof(uint32);
     case OSP_vec4i:   return sizeof(vec4i);
     default: break;
     };
