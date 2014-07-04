@@ -19,9 +19,7 @@ namespace ospray {
 
     void OBJRenderer::commit()
     {
-      PING;
       Renderer::commit();
-      PING;
 
       world = (Model *)getParamObject("world",NULL);
       Assert2(world,"null world handle (did you forget to assign a "
@@ -44,7 +42,6 @@ namespace ospray {
       if (dirLightData && dirLightArray.empty()) {
         for (int i = 0; i < dirLightData->size(); i++) {
           Light *light_i = ((Light**)dirLightData->data)[i];
-          PRINT(light_i);
           dirLightArray.push_back(light_i->getIE());
         }
       }
@@ -56,12 +53,10 @@ namespace ospray {
         }
       }
       
-      PING;
       void **pointLightPtr = pointLightArray.empty() ? NULL : &pointLightArray[0];
       void **dirLightPtr = dirLightArray.empty() ? NULL : &dirLightArray[0];
       void **spotLightPtr = spotLightArray.empty() ? NULL : &spotLightArray[0];
 
-      PING;
       vec3f bgColor;
       bgColor = getParam3f("bgColor", vec3f(0));
 
@@ -75,7 +70,6 @@ namespace ospray {
                             pointLightPtr, pointLightArray.size(),
                             dirLightPtr,   dirLightArray.size(),
                             spotLightPtr,  spotLightArray.size());
-      PING;
     }
     
     OBJRenderer::OBJRenderer()

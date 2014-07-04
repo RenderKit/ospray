@@ -233,6 +233,18 @@ inline std::ostream &operator<<(std::ostream &out, const __vec16_i8 &v)
   return out;
 }
 
+inline std::ostream &operator<<(std::ostream &out, const __vec16_i64 &v)
+{
+  out << "[";
+	uint32_t *ptr = (uint32_t*)&v;
+  for (int i=0;i<16;i++) {
+uint64_t val = (uint64_t(ptr[i])<<32)+ptr[i+16];
+    out << (i?",":"") << ((int*)val);
+}  
+  out << "]" << std::flush;
+  return out;
+}
+
 
 ///////////////////////////////////////////////////////////////////////////
 // macros...
@@ -641,7 +653,7 @@ void __masked_store_i64(void *p, const __vec16_i64 &v, __vec16_i1 mask)
                                       _mm512_set_16to16_pi(7,7,6,6,5,5,4,4,3,3,2,2,1,1,0,0),
                                       v.v_lo);
     _mm512_mask_store_epi64(p, mask, v2);
-    _mm512_mask_store_epi64(((uint8_t*)p)+64, mask, v1);
+    _mm512_mask_store_epi64(((uint8_t*)p)+64, mask>>8, v1);
 }
 
 static FORCEINLINE int64_t __extract_element(__vec16_i64 v, uint32_t index) {
@@ -948,7 +960,7 @@ __gather_base_offsets32_i64(uint8_t *base, uint32_t scale, __vec16_i32 offsets,
                                             base, _MM_UPCONV_EPI32_NONE, scale,
                                             _MM_HINT_NONE);
   ret.v_hi = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, 
-                                            base+64, _MM_UPCONV_EPI32_NONE, scale,
+                                            base+4, _MM_UPCONV_EPI32_NONE, scale,
                                             _MM_HINT_NONE);
   return ret;
 }
@@ -983,7 +995,7 @@ __gather64_i64(__vec16_i64 addr,
                                               base, _MM_UPCONV_EPI32_NONE, 1,
                                               _MM_HINT_NONE);
     ret.v_hi = _mm512_mask_i32extgather_epi32(ret.v_hi, match, offsets, 
-                                              base+64, _MM_UPCONV_EPI32_NONE, 1,
+                                              base+4, _MM_UPCONV_EPI32_NONE, 1,
                                               _MM_HINT_NONE);
       
     still_to_do = _mm512_kxor(match, still_to_do);

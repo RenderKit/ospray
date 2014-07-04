@@ -60,13 +60,15 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
     // print("bla\n");
     if( THIS->materialList) {
       //FIXME: crash here -- material pointers are bad
-      // print("material INTO material list %\n",dg.materialID);
+  //     print("materialID INTO material list %\n",dg.materialID);
+//print("materialList = %\n",THIS->materialList);
+//print("materialList[0] = %\n",THIS->materialList[0]);
       dg.material = THIS->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-      // print("material fom material list %\n",dg.material);
+ //      print("material fom material list %\n",dg.material);
     } else {
-      // print("material FROM GEOM %\n",geom);
+   //    print("material FROM GEOM %\n",geom);
       dg.material = geom->material;
-      // print("material fom geometry %\n",dg.material);
+    //   print("material fom geometry %\n",dg.material);
     }
   }
 
