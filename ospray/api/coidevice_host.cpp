@@ -475,8 +475,6 @@ namespace ospray {
         
         Assert(result == COI_SUCCESS);
         COIEventWait(1,&event,-1,1,NULL,NULL);
-        SLEEP_DELAY;
-        // usleep(10000000);
       }
       return (OSPData)(int64)ID;
     }
@@ -563,8 +561,39 @@ namespace ospray {
     /*! create a new texture2D */
     OSPTexture2D COIDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags)
     {
-      assert(false && "COIDevice::newTexture2D() not yet implemented for COIDevice");
-      return NULL;
+      COIRESULT result;
+      DataStream args;
+      Handle ID = Handle::alloc();
+
+      if (width * height > 0) {
+        throw std::runtime_error("cowardly refusing to create empty texture...");
+      }
+
+      args.write(ID);
+      args.write((int32)width);
+      args.write((int32)height);
+      args.write((int32)type);
+      args.write((int32)flags);
+      int64 numBytes = sizeOf(type)*width*height;
+      for (int i=0;i<engine.size();i++) {
+        COIBUFFER coiBuffer;
+        // PRINT(nitems);
+        result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_MAP_READ,
+                                 data,1,&engine[i]->coiProcess,&coiBuffer);
+        Assert(result == COI_SUCCESS);
+        bzero(&event,sizeof(event));
+        COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
+        result = COIPipelineRunFunction(engine[i]->coiPipe,
+                                        engine[i]->coiFctHandle[OSPCOI_NEW_TEXTURE2D],
+                                        1,&coiBuffer,&coiBufferFlags,//buffers
+                                        0,NULL,//dependencies
+                                        args.buf,args.ofs,//data
+                                        NULL,0,
+                                        &event);
+        Assert(result == COI_SUCCESS);
+        COIEventWait(1,&event,-1,1,NULL,NULL);
+      }
+      return (OSPData)(int64)ID;
     }
 
     /*! have given renderer create a new light */
@@ -706,7 +735,6 @@ namespace ospray {
                                         &event);
         Assert(result == COI_SUCCESS);
         COIEventWait(1,&event,-1,1,NULL,NULL);
-        SLEEP_DELAY;
       }
       return (OSPFrameBuffer)(int64)handle;
     }

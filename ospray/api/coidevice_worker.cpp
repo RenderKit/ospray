@@ -394,7 +394,20 @@ namespace ospray {
                                   void*            retVal,
                                   uint16_t         retValSize)
     {
-      assert(false && __func__ " not yet implemented in " __FILE__);
+      DataStream args(argsPtr);
+      // OSPModel *model = ospNewModel();
+      Handle handle = args.get<Handle>();
+      int    width = args.get<int32>(); 
+      int    height = args.get<int32>(); 
+      int    type = args.get<int32>(); 
+      int    flags  = args.get<int32>(); 
+
+      COIBufferAddRef(bufferPtr[0]);
+
+      Texture2D *tx = Texture2D::createTexture(width, height, type, bufferPtr[0], flags);
+
+      handle.assign(tx);
+      COIProcessProxyFlush();
     }
                                 
     COINATIVELIBEXPORT
