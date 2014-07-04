@@ -624,7 +624,7 @@ template <> static FORCEINLINE void __store<64>(__vec16_i32 *p, __vec16_i32 v) {
 // int64
 // =======================================================
 static FORCEINLINE 
-void __masked_store_i64(void *p, const __vec16_i64 &val, __vec16_i1 mask) 
+void __masked_store_i64(void *p, const __vec16_i64 &v, __vec16_i1 mask) 
 {
     __m512i v1;
     __m512i v2;
@@ -790,7 +790,7 @@ static FORCEINLINE __vec16_i1 __equal_i64_and_mask(const __vec16_i64 &a, const _
                                                    __vec16_i1 mask) {
   __mmask16 lo_match = _mm512_mask_cmpeq_epi32_mask((__mmask16)mask, a.v_lo,b.v_lo);
   __mmask16 full_match = _mm512_mask_cmpeq_epi32_mask(lo_match,a.v_hi,b.v_hi);
-  return _full_match;
+  return full_match;
 }
 
 static FORCEINLINE __vec16_i1 __not_equal_i64(const __vec16_i64 &a, const __vec16_i64 &b) {
@@ -1747,7 +1747,6 @@ static FORCEINLINE __vec16_d __masked_load_double(void *p, __vec16_i1 mask) {
 #endif
 }
 
-#ifdef ISPC_FORCE_ALIGNED_MEMORY
 static FORCEINLINE void __masked_store_i8(void *p, const __vec16_i8 &val, __vec16_i1 mask) {
   PING;
   PRINT(mask);
@@ -1758,6 +1757,7 @@ static FORCEINLINE void __masked_store_i8(void *p, const __vec16_i8 &val, __vec1
   _mm512_mask_extstore_epi32(p, mask, tmp, _MM_DOWNCONV_EPI32_SINT8,_MM_HINT_NONE);
   PING;
 }
+
 static FORCEINLINE __vec16_i8 __masked_load_i8(void *p, __vec16_i1 mask) {
   PING;
   __vec16_i8 ret;
