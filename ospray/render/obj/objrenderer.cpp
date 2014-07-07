@@ -22,12 +22,8 @@ namespace ospray {
       Renderer::commit();
 
       world = (Model *)getParamObject("world",NULL);
-      Assert2(world,"null world handle (did you forget to assign a "
-              "'world' parameter to the ray_cast renderer?)");
-
+      world = (Model *)getParamObject("model",world);
       camera = (Camera *)getParamObject("camera",NULL);
-      Assert2(camera,"null camera handle (did you forget to assign a "
-              "'camera' parameter to the ray_cast renderer?)");
 
       pointLightData = (Data*)getParamData("pointLights",NULL);
 
