@@ -14,39 +14,22 @@ namespace ospray {
   RayCastRenderer<ISPC_CREATE>::RayCastRenderer()
     : model(NULL), camera(NULL) 
   {
-    PING;
     ispcEquivalent = ISPC_CREATE(this);
-    PING;
   }
 
 
   template<void *(*ISPC_CREATE)(void*)>
   void RayCastRenderer<ISPC_CREATE>::commit()
   {
-    PING;
     Renderer::commit();
-    PING;
 
     model = (Model *)getParamObject("world",NULL);
     model = (Model *)getParamObject("model",model);
     camera = (Camera *)getParamObject("camera",NULL);
 
-    PING;
-    PRINT(model);
-    PRINT(camera);
     ispc::RayCastRenderer_set(getIE(),
                               model?model->getIE():NULL,
                               camera?camera->getIE():NULL);
-    // switch(SHADE_MODE) {
-    // case RC_EYELIGHT:
-    //   ispcEquivalent = ispc::RayCastRenderer_create_eyeLight(this->getIE(),model->getIE(),camera->getIE()); 
-    //   break;
-    // case RC_EYELIGHT_GEOMID:
-    //   ispcEquivalent = ispc::RayCastRenderer_create_eyeLight_geomID(this->getIE(),model->getIE(),camera->getIE()); 
-    //   break;
-    // default:
-    //   throw std::runtime_error("shade mode not implemented...");
-    // };
   }
 
 #if 0

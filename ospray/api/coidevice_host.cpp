@@ -20,11 +20,10 @@
 
 //#define FORCE_SINGLE_DEVICE 1
 
+#define MAX_ENGINES 100
+
 namespace ospray {
   namespace coi {
-
-#define SLEEP_DELAY
-    //#define SLEEP_DELAY usleep(1000);
 
     const char *coiWorker = "./ospray_coi_worker.mic";
 
@@ -109,8 +108,45 @@ namespace ospray {
 
       COIDevice();
 
-      void callFunction(RemoteFctID ID, const DataStream &data, bool sync=true)
-      { for (int i=0;i<engine.size();i++) engine[i]->callFunction(ID,data,sync); }
+      void callFunction(RemoteFctID ID, const DataStream &data, bool sync=false)
+      { 
+        double t0 = getSysTime();
+#if 1
+        static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
+        static bool firstTime = 0;
+        assert(engine.size() < MAX_ENGINES);
+        for (int i=0;i<engine.size();i++) {
+          if (firstTime) {
+            bzero(&event[i],sizeof(event[i]));
+            firstTime = false;
+          }
+          COIRESULT result = COIPipelineRunFunction(engine[i]->coiPipe,
+                                                    engine[i]->coiFctHandle[ID],
+                                                    0,NULL,NULL,//buffers
+                                                    0,NULL,//dependencies
+                                                    data.buf,data.ofs,//data
+                                                    NULL,0,
+                                                    &event[i]);
+          if (result != COI_SUCCESS) {
+            coiError(result,"error in coipipelinerunfct");
+          }
+        }
+        if (sync)
+          for (int i=0;i<engine.size();i++) {
+            COIEventWait(1,&event[i],-1,1/*wait for all*/,NULL,NULL);
+          }
+#else
+        for (int i=0;i<engine.size();i++) engine[i]->callFunction(ID,data,sync); 
+#endif
+        double t1 = getSysTime();
+        static double sum_t = 0;
+        sum_t += (t1-t0);
+        static long lastPing = 0;
+        long numSecs = long(sum_t);
+        if (numSecs > lastPing)
+          cout << "#osp:coi: time spent in callfunctions (general) " << sum_t << " secs" << endl;
+        lastPing = numSecs;
+      }
 
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
@@ -314,7 +350,7 @@ namespace ospray {
                                                   0,NULL,//dependencies
                                                   data.buf,data.ofs,//data
                                                   NULL,0,
-                                                  &event);
+                                                  NULL); //&event);
         if (result != COI_SUCCESS) {
           coiError(result,"error in coipipelinerunfct");
         // COIEventWait(1,&event,-1,1,NULL,NULL);
@@ -412,7 +448,9 @@ namespace ospray {
       Handle ID = Handle::alloc();
       DataStream args;
       args.write(ID);
+
       callFunction(OSPCOI_NEW_TRIANGLEMESH,args);
+
       return (OSPTriangleMesh)(int64)ID;
     }
 
@@ -445,6 +483,47 @@ namespace ospray {
       // PRINT(nitems);
       // PRINT(format);
 
+#if 1
+      double t0 = getSysTime();
+      COIEVENT event[engine.size()];
+      COIBUFFER coiBuffer[engine.size()];
+      for (int i=0;i<engine.size();i++) {
+        // PRINT(nitems);
+        result = COIBufferCreate(nitems*ospray::sizeOf(format),
+                                 COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
+                                 init,1,&engine[i]->coiProcess,&coiBuffer[i]);
+        Assert(result == COI_SUCCESS);
+
+        // if (init) {
+        //   bzero(&event,sizeof(event));
+        //   result = COIBufferWrite(coiBuffer,//engine[i]->coiProcess,
+        //                           0,init,nitems*ospray::sizeOf(format),
+        //                  COI_COPY_USE_DMA,0,NULL,COI_EVENT_ASYNC);
+        //   Assert(result == COI_SUCCESS);
+        // }
+      }
+
+      for (int i=0;i<engine.size();i++) {
+        bzero(&event[i],sizeof(event[i]));
+        COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
+        result = COIPipelineRunFunction(engine[i]->coiPipe,
+                                        engine[i]->coiFctHandle[OSPCOI_NEW_DATA],
+                                        1,&coiBuffer[i],&coiBufferFlags,//buffers
+                                        0,NULL,//dependencies
+                                        args.buf,args.ofs,//data
+                                        NULL,0,
+                                        &event[i]);
+        
+        Assert(result == COI_SUCCESS);
+      }
+      for (int i=0;i<engine.size();i++) {
+        COIEventWait(1,&event[i],-1,1,NULL,NULL);
+      }
+      double t1 = getSysTime();
+      static double sum_t = 0;
+      sum_t += (t1-t0);
+      //      cout << "time spent in buffercreate " << (t1-t0) << " total " << sum_t << endl;
+#else
       for (int i=0;i<engine.size();i++) {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
@@ -476,6 +555,7 @@ namespace ospray {
         Assert(result == COI_SUCCESS);
         COIEventWait(1,&event,-1,1,NULL,NULL);
       }
+#endif
       return (OSPData)(int64)ID;
     }
 
@@ -575,6 +655,7 @@ namespace ospray {
       args.write((int32)type);
       args.write((int32)flags);
       int64 numBytes = sizeOf(type)*width*height;
+      // double t0 = getSysTime();
       for (int i=0;i<engine.size();i++) {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
@@ -594,6 +675,10 @@ namespace ospray {
         Assert(result == COI_SUCCESS);
         COIEventWait(1,&event,-1,1,NULL,NULL);
       }
+      // double t1 = getSysTime();
+      // static double sum_t = 0;
+      // sum_t += (t1-t0);
+      //      cout << "time spent in createtexture2d " << (t1-t0) << " total " << sum_t << endl;
       return (OSPTexture2D)(int64)ID;
     }
 
@@ -603,15 +688,10 @@ namespace ospray {
       Assert(type);
       Handle handle = Handle::alloc();
       DataStream args;
-      PING;
-      
-      PRINT(_renderer);
-      PRINT(type);
       
       args.write(handle);
       args.write((Handle&)_renderer);
       args.write(type);
-      PRINT(coiFctName[OSPCOI_NEW_LIGHT]);
       callFunction(OSPCOI_NEW_LIGHT,args);
       return (OSPLight)(int64)handle;
     }
