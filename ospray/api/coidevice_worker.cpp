@@ -173,7 +173,6 @@ namespace ospray {
                                     uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       vec2i size = args.get<vec2i>();
       uint32 mode = args.get<uint32>();
@@ -181,35 +180,15 @@ namespace ospray {
 
       int32 *pixelArray = (int32*)bufferPtr[0];
 
-      FrameBuffer::ColorBufferFormat colorBufferFormat = (FrameBuffer::ColorBufferFormat)mode;
-      //FrameBuffer::RGBA_UINT8;//FLOAT32;
-      assert(colorBufferFormat == FrameBuffer::RGBA_UINT8);
-
+      FrameBuffer::ColorBufferFormat colorBufferFormat
+        = (FrameBuffer::ColorBufferFormat)mode;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
       
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
                                              hasDepthBuffer,hasAccumBuffer,
                                              pixelArray);
-      // fb->refInc();
-      // return (OSPFrameBuffer)fb;
-
-
-
-      // // cout << "!osp:coi: new framebuffer " << handle.ID() << endl;
-      // int32 *pixelArray = (int32*)bufferPtr[0];
-      // FrameBuffer *fb = new LocalFrameBuffer<uint32>(size,pixelArray); //createLocalFB_RGBA_I8(size,pixelArray);
       handle.assign(fb);
-
-      // FrameBuffer::ColorBufferFormat colorBufferFormat = FrameBuffer::RGBA_UINT8;//FLOAT32;
-      // bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
-      // bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
-      
-      // FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-      //                                        hasDepthBuffer,hasAccumBuffer);
-      // fb->refInc();
-      // return (OSPFrameBuffer)fb;
-
 
       COIProcessProxyFlush();
     }
@@ -348,10 +327,18 @@ namespace ospray {
       const char *type = args.getString();
 
       Renderer *renderer = (Renderer*)_renderer.lookup();
-      Material *mat = renderer->createMaterial(type);
+      Material *mat = NULL;
+      if (renderer)
+        mat = renderer->createMaterial(type);
       if (!mat)
         mat = Material::createMaterial(type);
-      handle.assign(mat);
+      
+      if (mat) {
+        *(int*)retVal = true;
+        handle.assign(mat);
+      } else {
+        *(int*)retVal = false;
+      }
 
       COIProcessProxyFlush();
     }
@@ -563,10 +550,11 @@ namespace ospray {
                               uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-
       Handle target = args.get<Handle>();
       const char *name = args.getString();
       ManagedObject *obj = target.lookup();
+      if (!obj) return;
+    
       Assert(obj);
 
       OSPDataType type = args.get<OSPDataType>();
@@ -586,7 +574,7 @@ namespace ospray {
       case OSP_FLOAT2: obj->set(name,args.get<vec2f>()); break;
       case OSP_FLOAT3: obj->set(name,args.get<vec3f>()); break;
       case OSP_FLOAT4: obj->set(name,args.get<vec4f>()); break;
-
+        
       case OSP_STRING: obj->set(name,args.getString()); break;
       case OSP_OBJECT: obj->set(name,args.get<Handle>().lookup()); break;
 

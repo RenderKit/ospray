@@ -99,7 +99,7 @@ namespace ospray {
       /*! load ospray worker onto device, and initialize basic ospray
         service */
       void loadOSPRay(); 
-      void callFunction(RemoteFctID ID, const DataStream &data, bool sync);
+      // void callFunction(RemoteFctID ID, const DataStream &data, int *returnValue, bool sync);
     };
 
     struct COIDevice : public ospray::api::Device {
@@ -108,7 +108,9 @@ namespace ospray {
 
       COIDevice();
 
-      void callFunction(RemoteFctID ID, const DataStream &data, bool sync=true)
+      void callFunction(RemoteFctID ID, const DataStream &data, 
+                        int *returnValue=NULL, 
+                        bool sync=true)
       { 
         double t0 = getSysTime();
 #if 1
@@ -124,14 +126,15 @@ namespace ospray {
                                                     0,NULL,NULL,//buffers
                                                     0,NULL,//dependencies
                                                     data.buf,data.ofs,//data
-                                                    NULL,0,
+                                                    returnValue?returnValue:NULL,
+                                                    returnValue?sizeof(int):0,
                                                     &event[i]);
           if (result != COI_SUCCESS) {
             coiError(result,"error in coipipelinerunfct");
           }
         }
         numEventsOutstanding++;
-        if (sync) {
+        if (sync || returnValue) {
           for (int i=0;i<engine.size();i++) {
             COIEventWait(1,&event[i],-1,1/*wait for all*/,NULL,NULL);
           }
@@ -330,37 +333,37 @@ namespace ospray {
       
     }
 
-    void COIEngine::callFunction(RemoteFctID ID, const DataStream &data, bool sync)
-    {
-      // double t0 = ospray::getSysTime();
-      if (sync) {
-        bzero(&event,sizeof(event));
-        COIRESULT result = COIPipelineRunFunction(coiPipe,coiFctHandle[ID],
-                                                  0,NULL,NULL,//buffers
-                                                  0,NULL,//dependencies
-                                                  data.buf,data.ofs,//data
-                                                  NULL,0,
-                                                  &event);
-        if (result != COI_SUCCESS) {
-          coiError(result,"error in coipipelinerunfct");
-        }
-        COIEventWait(1,&event,-1,1,NULL,NULL);
-      } else {
-        bzero(&event,sizeof(event));
-        COIRESULT result = COIPipelineRunFunction(coiPipe,coiFctHandle[ID],
-                                                  0,NULL,NULL,//buffers
-                                                  0,NULL,//dependencies
-                                                  data.buf,data.ofs,//data
-                                                  NULL,0,
-                                                  NULL); //&event);
-        if (result != COI_SUCCESS) {
-          coiError(result,"error in coipipelinerunfct");
-          // COIEventWait(1,&event,-1,1,NULL,NULL);
-        }
-      }
-      // double t1 = ospray::getSysTime();
-      // cout << "fct " << ID << "@" << engineID << " : " << (t1-t0) << "s" << endl;
-    }
+    // void COIEngine::callFunction(RemoteFctID ID, const DataStream &data, bool sync)
+    // {
+    //   // double t0 = ospray::getSysTime();
+    //   if (sync) {
+    //     bzero(&event,sizeof(event));
+    //     COIRESULT result = COIPipelineRunFunction(coiPipe,coiFctHandle[ID],
+    //                                               0,NULL,NULL,//buffers
+    //                                               0,NULL,//dependencies
+    //                                               data.buf,data.ofs,//data
+    //                                               NULL,0,
+    //                                               &event);
+    //     if (result != COI_SUCCESS) {
+    //       coiError(result,"error in coipipelinerunfct");
+    //     }
+    //     COIEventWait(1,&event,-1,1,NULL,NULL);
+    //   } else {
+    //     bzero(&event,sizeof(event));
+    //     COIRESULT result = COIPipelineRunFunction(coiPipe,coiFctHandle[ID],
+    //                                               0,NULL,NULL,//buffers
+    //                                               0,NULL,//dependencies
+    //                                               data.buf,data.ofs,//data
+    //                                               NULL,0,
+    //                                               NULL); //&event);
+    //     if (result != COI_SUCCESS) {
+    //       coiError(result,"error in coipipelinerunfct");
+    //       // COIEventWait(1,&event,-1,1,NULL,NULL);
+    //     }
+    //   }
+    //   // double t1 = ospray::getSysTime();
+    //   // cout << "fct " << ID << "@" << engineID << " : " << (t1-t0) << "s" << endl;
+    // }
 
     
     void coiError(COIRESULT result, const std::string &err)
@@ -568,10 +571,10 @@ namespace ospray {
       args.write((Handle&)_renderer);
       args.write((uint32&)fbChannelFlags);
 #if FORCE_SINGLE_DEVICE
-      callFunction(OSPCOI_RENDER_FRAME,args,true);
+      callFunction(OSPCOI_RENDER_FRAME,args,NULL,true);
 #else
-      callFunction(OSPCOI_RENDER_FRAME,args,false);
-      callFunction(OSPCOI_RENDER_FRAME_SYNC,args,true);
+      callFunction(OSPCOI_RENDER_FRAME,args,NULL,false);
+      callFunction(OSPCOI_RENDER_FRAME_SYNC,args,NULL,true);
 #endif
     }
 
@@ -634,8 +637,17 @@ namespace ospray {
       args.write(handle);
       args.write(_renderer);
       args.write(type);
-      callFunction(OSPCOI_NEW_MATERIAL,args);
-      return (OSPMaterial)(int64)handle;
+      int retValue = -1;
+      callFunction(OSPCOI_NEW_MATERIAL,args,&retValue);
+      PRINT(retValue);
+      if (retValue)
+        // could create material ...
+        return (OSPMaterial)(int64)handle;
+      else {
+        // could NOT create materail 
+        handle.free();
+        return (OSPMaterial)NULL;
+      }
     }
 
     /*! create a new texture2D */

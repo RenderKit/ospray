@@ -1,22 +1,33 @@
 #include "handle.h"
 #include <map>
+#include <stack>
 
 namespace ospray {
 
   namespace api {
     std::map<int64,Ref<ospray::ManagedObject> > objectByHandle;
-    
+    std::stack<int64> freedHandles;
+
     //! next unassigned ID on this node
     /*! we start numbering with 1 to make sure that "0:0" is an
         invalid handle (so we can typecast between (64-bit) handles
         and (64-bit)OSPWhatEver pointers */
     int32 nextFreeLocalID = 1;
     
+    void Handle::free()
+    {
+      freedHandles.push((int64)*this);
+    }
     Handle Handle::alloc()
     {
       Handle h;
-      //      h.i32.owner = app.rank;
-      h.i32.ID = nextFreeLocalID++;
+      if (freedHandles.empty()) {
+        //      h.i32.owner = app.rank;
+        h.i32.ID = nextFreeLocalID++;
+      } else {
+        h = freedHandles.top();
+        freedHandles.pop();
+      }
       return h;
     }
 
@@ -45,6 +56,8 @@ namespace ospray {
     }
     ManagedObject *Handle::lookup() const
     {
+      if (i64 == 0) return NULL;
+
       std::map<int64,Ref<ManagedObject> >::const_iterator it = 
         objectByHandle.find(i64);
       Assert(it != objectByHandle.end());

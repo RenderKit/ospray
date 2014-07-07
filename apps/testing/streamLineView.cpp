@@ -62,7 +62,6 @@ namespace ospray {
       if (!file) return;
       SVTriangle triangle;
       while (fread(&triangle,sizeof(triangle),1,file)) {
-        //        ::triangle.push_back(triangle);
         index.push_back(vec3i(0,1,2)+vec3i(vertex.size()));
         vertex.push_back(vec3fa(triangle.vertex[0].pos));
         vertex.push_back(vec3fa(triangle.vertex[1].pos));
@@ -164,41 +163,19 @@ namespace ospray {
       
       if (std::string(rendererType) == "obj") {
         OSPLight topLight = ospNewLight(renderer,"DirectionalLight");
-        ospSet3f(topLight,"direction",-1,-2,1);
-        ospSet3f(topLight,"color",1,1,1);
-        ospCommit(topLight);
-        PRINT(topLight);
-        OSPData lights = ospNewData(1,OSP_OBJECT,&topLight);
-        ospCommit(lights);
-        PRINT(lights);
-        ospSetData(renderer,"directionalLights",lights);
-        ospCommit(renderer);
+        if (topLight) {
+          ospSet3f(topLight,"direction",-1,-2,1);
+          ospSet3f(topLight,"color",1,1,1);
+          ospCommit(topLight);
+          OSPData lights = ospNewData(1,OSP_OBJECT,&topLight);
+          ospCommit(lights);
+          ospSetData(renderer,"directionalLights",lights);
+        }
       } 
 
-
-
-#if 0
-      OSPMaterial mat = ospNewMaterial(renderer,"Plastic");
-      ospSet3f(mat,"pigmentColor",.1,.1,.8);          // for OBJ renderer, Plastic
-      ospSet1f(mat,"eta",3);
-#endif
-
-#if 0
-      OSPMaterial mat = ospNewMaterial(renderer,"Matte");
-      ospSet3fv(mat,"reflectance",&rd.x); // for path tracer, Matte
-      vec3f rd = .7f;
-#endif
-
-#if 0
-      OSPMaterial mat = ospNewMaterial(renderer,"MetallicPaint");
-      ospSet1f(mat,"eta",1.45);
-      ospSet3f(mat,"glitterColor",.5,.44,.3);
-      ospSet3f(mat,"shadeColor",.4,.34,.7);
-      ospSet1f(mat,"glitterSpread",.01f);
-#endif
+      ospCommit(renderer);
 
       model = ospNewModel();
-
       {
         OSPGeometry geom = ospNewGeometry("streamlines");
         Assert(geom);
@@ -207,7 +184,8 @@ namespace ospray {
         ospSetParam(geom,"vertex",vertex);
         ospSetParam(geom,"index",index);
         ospSet1f(geom,"radius",sl->radius);
-        ospSetMaterial(geom,mat);
+        if (mat)
+          ospSetMaterial(geom,mat);
         ospCommit(geom);
         ospAddGeometry(model,geom);
       }
