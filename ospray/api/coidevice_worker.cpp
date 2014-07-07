@@ -324,10 +324,8 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
-      cout << "!osp:coi: new renderer " << handle.ID() << " " << type << endl;
 
       Renderer *geom = Renderer::createRenderer(type);
       handle.assign(geom);
@@ -345,10 +343,8 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
-      // cout << "!osp:coi: new material " << handle.ID() << " " << type << endl;
 
       Material *mat = Material::createMaterial(type);
       handle.assign(mat);
@@ -366,7 +362,6 @@ namespace ospray {
                               uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       Handle _renderer = args.get<Handle>();
       const char *type = args.getString();
@@ -395,11 +390,10 @@ namespace ospray {
                                   uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
-      int    width = args.get<int32>(); 
+      int    width  = args.get<int32>(); 
       int    height = args.get<int32>(); 
-      int    type = args.get<int32>(); 
+      int    type   = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
 
       COIBufferAddRef(bufferPtr[0]);
@@ -422,7 +416,6 @@ namespace ospray {
       DataStream args(argsPtr);
       Handle model = args.get<Handle>();
       Handle geom  = args.get<Handle>();
-      // cout << "!osp:coi: add geometry " << geom.ID() << " to " << model.ID() << endl;
 
       Model *m = (Model*)model.lookup();
       m->geometry.push_back((Geometry*)geom.lookup());
@@ -441,7 +434,6 @@ namespace ospray {
       DataStream args(argsPtr);
       Handle geom = args.get<Handle>();
       Handle mat  = args.get<Handle>();
-      // cout << "!osp:coi: set geometry " << mat.ID() << " for " << geom.ID() << endl;
 
       Geometry *g = (Geometry*)geom.lookup();
       g->setMaterial((Material*)mat.lookup());
