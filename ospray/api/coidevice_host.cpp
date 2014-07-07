@@ -172,7 +172,7 @@ namespace ospray {
 
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb, 
-                                OSPFrameBufferChannel);
+                                         OSPFrameBufferChannel);
 
       /*! unmap previously mapped frame buffer */
       virtual void frameBufferUnmap(const void *mapped,
@@ -355,7 +355,7 @@ namespace ospray {
                                                   NULL); //&event);
         if (result != COI_SUCCESS) {
           coiError(result,"error in coipipelinerunfct");
-        // COIEventWait(1,&event,-1,1,NULL,NULL);
+          // COIEventWait(1,&event,-1,1,NULL,NULL);
         }
       }
       // double t1 = ospray::getSysTime();
@@ -536,7 +536,7 @@ namespace ospray {
           bzero(&event,sizeof(event));
           result = COIBufferWrite(coiBuffer,//engine[i]->coiProcess,
                                   0,init,nitems*ospray::sizeOf(format),
-                         COI_COPY_USE_DMA,0,NULL,&event);
+                                  COI_COPY_USE_DMA,0,NULL,&event);
           Assert(result == COI_SUCCESS);
           COIEventWait(1,&event,-1,1,NULL,NULL);
         }
@@ -558,7 +558,7 @@ namespace ospray {
       return (OSPData)(int64)ID;
     }
 
-      /*! call a renderer to render a frame buffer */
+    /*! call a renderer to render a frame buffer */
     void COIDevice::renderFrame(OSPFrameBuffer _sc, 
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
@@ -573,7 +573,7 @@ namespace ospray {
       callFunction(OSPCOI_RENDER_FRAME,args,false);
       callFunction(OSPCOI_RENDER_FRAME_SYNC,args,true);
 #endif
-   }
+    }
 
 
     void COIDevice::commit(OSPObject obj)
@@ -655,7 +655,6 @@ namespace ospray {
       args.write((int32)type);
       args.write((int32)flags);
       int64 numBytes = sizeOf(type)*width*height;
-      PRINT(numBytes);
       // double t0 = getSysTime();
       for (int i=0;i<engine.size();i++) {
         COIBUFFER coiBuffer;
@@ -663,7 +662,7 @@ namespace ospray {
         result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_MAP_READ_ONLY,
                                  data,1,&engine[i]->coiProcess,&coiBuffer);
         Assert(result == COI_SUCCESS);
-	COIEVENT event;
+        COIEVENT event;
         bzero(&event,sizeof(event));
         COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
         result = COIPipelineRunFunction(engine[i]->coiPipe,
@@ -778,7 +777,7 @@ namespace ospray {
 
     std::map<int64,COIFrameBuffer *> fbList;
 
-      /*! create a new frame buffer */
+    /*! create a new frame buffer */
     OSPFrameBuffer COIDevice::frameBufferCreate(const vec2i &size, 
                                                 const OSPFrameBufferFormat mode,
                                                 const uint32 channels)
@@ -821,7 +820,7 @@ namespace ospray {
       return (OSPFrameBuffer)(int64)handle;
     }
 
-      /*! map frame buffer */
+    /*! map frame buffer */
     const void *COIDevice::frameBufferMap(OSPFrameBuffer _fb,
                                           OSPFrameBufferChannel channel)
     {
@@ -891,7 +890,7 @@ namespace ospray {
       return fb->hostMem;
     }
 
-      /*! unmap previously mapped frame buffer */
+    /*! unmap previously mapped frame buffer */
     void COIDevice::frameBufferUnmap(const void *mapped,
                                      OSPFrameBuffer fb)
     {
@@ -972,17 +971,17 @@ namespace ospray {
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
     }
-      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+    /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
         
-        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.  
+      if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+      '0,0,0,0'.  
 
-        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.  
+      if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+      +inf.  
 
-        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
-        and reset accumID.
-      */
+      if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+      and reset accumID.
+    */
     void COIDevice::frameBufferClear(OSPFrameBuffer _fb,
                                      const uint32 fbChannelFlags)
     {
