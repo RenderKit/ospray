@@ -111,8 +111,7 @@ namespace ospray {
       void callFunction(RemoteFctID ID, const DataStream &data, bool sync=true)
       { 
         double t0 = getSysTime();
-#if 1
-        PRINT(coiFctName[ID]);
+#if 0
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;
         assert(engine.size() < MAX_ENGINES);
@@ -962,18 +961,12 @@ namespace ospray {
     {
       Assert(bufName);
 
-      PING;
-      PRINT(target);
-      PRINT(bufName);
-      PRINT(v);
-
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
       args.write(OSP_vec3f);
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
-      PING;
     }
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setVec3i(OSPObject target, const char *bufName, const vec3i &v)

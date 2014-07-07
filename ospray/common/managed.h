@@ -110,7 +110,7 @@ namespace ospray {
       void set(const uint  &v) { clear(); type = OSP_UINT;  ui[0] = v; }
 
       void set(const vec2f &v) { clear(); type = OSP_vec2f; (vec2f&)f[0] = v; }
-      void set(const vec3f &v) { PING; PRINT(v); clear(); type = OSP_vec3f; (vec3f&)f[0] = v; PING; PRINT(v); }
+      void set(const vec3f &v) { clear(); type = OSP_vec3f; (vec3f&)f[0] = v; }
       void set(const vec4f &v) { clear(); type = OSP_vec4f; (vec4f&)f[0] = v; }
 
       void set(const vec2i &v) { clear(); type = OSP_vec2i; (vec2i&)i[0] = v; }
@@ -157,13 +157,7 @@ namespace ospray {
 
     /*! set a parameter with given name to given value, create param if not existing */
     template<typename T>
-    inline void set(const char *name, const T &t) { 
-      PING; PRINT(name); PRINT(t);
-      Param *p = findParam(name,1);
-      PRINT(p);
-      p->set(t); 
-      PING;
-    }
+    inline void set(const char *name, const T &t) { findParam(name,1)->set(t); }
 
     /*! @{
     /*! \brief find the named parameter, and return its object value if

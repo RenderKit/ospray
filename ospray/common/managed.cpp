@@ -55,19 +55,11 @@ namespace ospray {
 
   ManagedObject::Param *ManagedObject::findParam(const char *name, bool addIfNotExist)
   {
-    PING;
-    PRINT(this);
-    PRINT(this->toString());
-    PRINT(paramList.size());
     for (size_t i=0 ; i < paramList.size() ; i++) {
-      PRINT(name);
-      PRINT(paramList[i]->name);
       if (!strcmp(paramList[i]->name,name)) return paramList[i];
     }
     if (!addIfNotExist) return NULL;
-    PING;
     paramList.push_back(new Param(name));
-    PING;
     return paramList[paramList.size()-1];
   }
 
