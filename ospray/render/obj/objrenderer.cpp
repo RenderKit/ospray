@@ -58,7 +58,7 @@ namespace ospray {
       void **spotLightPtr = spotLightArray.empty() ? NULL : &spotLightArray[0];
 
       vec3f bgColor;
-      bgColor = getParam3f("bgColor", vec3f(0));
+      bgColor = getParam3f("bgColor", vec3f(1.f));
 
       bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
 

@@ -600,14 +600,14 @@ namespace ospray {
             (vec3f&)mesh->position[i] = (vec3f&)tm->vertex[i];
           }
           if (tm->numNormals > 0) {
-            assert(tm->numNormals == tm->numVertices);
+            // assert(tm->numNormals == tm->numVertices);
             mesh->normal.resize(tm->numVertices);
             for (int i=0;i<tm->numNormals;i++) {
               (vec3f&)mesh->normal[i] = (vec3f&)tm->normal[i];
             }
           }
           if (tm->numTexCoords > 0) {
-            assert(tm->numTexCoords == tm->numVertices);
+            // assert(tm->numTexCoords == tm->numVertices);
             mesh->texcoord.resize(tm->numVertices);
             for (int i=0; i<tm->numTexCoords; i++) {
               (vec2f&)mesh->texcoord[i] = (vec2f&)tm->texCoord[i];

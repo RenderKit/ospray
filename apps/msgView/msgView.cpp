@@ -26,7 +26,8 @@ namespace ospray {
   bool alwaysRedraw = false;
 
   //! the renderer we're about to use
-  std::string rendererType = "raycast_eyelight";
+  std::string rendererType = "obj";
+  // std::string rendererType = "raycast_eyelight";
 
   std::vector<miniSG::Model *> msgAnimation;
 
@@ -129,7 +130,7 @@ namespace ospray {
       Glut3DWidget::display();
       
       ospUnmapFrameBuffer(ucharFB,fb);
-      
+
       char title[1000];
 
       if (alwaysRedraw) {
@@ -486,7 +487,6 @@ namespace ospray {
       }
     }
     ospCommit(ospModel);
-    PING;
     cout << "msgView: done creating ospray model." << endl;
 
     //TODO: Need to figure out where we're going to read lighting data from
@@ -494,7 +494,6 @@ namespace ospray {
     std::vector<OSPLight> dirLights;
     cout << "msgView: Adding a hard coded directional light as the sun." << endl;
     OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
-    PING;
     ospSetString(ospLight, "name", "sun" );
     ospSet3f(ospLight, "color", 1, 1, 1);
     ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);

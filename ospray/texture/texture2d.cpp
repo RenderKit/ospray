@@ -28,6 +28,16 @@ namespace ospray {
       //   bpp = 3;
       //   img = ispc::Image3c__new(width, height, (ispc::vec3uc*)data, true);
       //   break;
+    case OSP_vec3uc:
+      tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,data);
+      bpp = 3;
+      // tx->ispcEquivalent = ispc::Texture2D_3ca_bilinear_create(this,img);
+      // img = ispc::Image3ca__new(width, height, (uint32_t*)data, true);
+      break;
+      // case OSP_vec3uc:
+      //   bpp = 3;
+      //   img = ispc::Image3c__new(width, height, (ispc::vec3uc*)data, true);
+      //   break;
     case OSP_vec3f:
       tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,data);
       bpp = 3 * sizeof(float);

@@ -45,7 +45,6 @@ namespace ospray {
     Ref<RenderTask> renderTask = new RenderTask;
     renderTask->fb = fb;
     renderTask->renderer = tiledRenderer;
-    cout << "new rendertask " << fb->size.x << " " << fb->size.y << endl;
     renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
     renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
     renderTask->channelFlags = channelFlags;

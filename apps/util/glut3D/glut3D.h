@@ -1,3 +1,5 @@
+#pragma once
+
 #include "ospray/common/ospcommon.h"
 #include /*embree*/"common/math/affinespace.h"
 
@@ -118,6 +120,9 @@ namespace ospray {
     */
     struct Glut3DWidget
     {
+      /*! size we'll create a window at */
+      static vec2i defaultInitSize;
+
       typedef enum { 
         FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_NONE
       } FrameBufferMode;
@@ -198,7 +203,9 @@ namespace ospray {
       /*! create this window. Note that this just *creates* the window,
         but glut will not do anything else with this window before
         'run' got called */
-      void create(const char *title, bool fullScreen = false);
+      void create(const char *title,                               
+                  const vec2i &size=defaultInitSize,
+                  bool fullScreen = false);
 
       /*! clear the frame buffer color and depth bits */
       void clearPixels();
@@ -256,7 +263,8 @@ namespace ospray {
       friend void glut3dKeyboard(char key, int32 x, int32 y);
       friend void glut3dIdle(void);
       friend void glut3dMotionFunc(int32 x, int32 y);
-      friend void glut3dMouseFunc(int32 whichButton, int32 released, int32 x, int32 y);
+      friend void glut3dMouseFunc(int32 whichButton, int32 released, 
+                                  int32 x, int32 y);
 
       virtual void keypress(char key, const vec2f where);
       virtual void specialkey(int32 key, const vec2f where);

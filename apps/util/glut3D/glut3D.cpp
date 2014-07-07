@@ -5,6 +5,10 @@
 #include "GL/glut.h"
 #endif
 
+#ifdef OSP_ENABLE_REMOTE_GLUT3D
+#include "remoteGlut3D.h"
+#endif
+
 namespace ospray {
 
   namespace glut3D {
@@ -13,8 +17,7 @@ namespace ospray {
 
     /*! currently active window */
     Glut3DWidget *Glut3DWidget::activeWindow = NULL;
-
-    int g_width = 1024, g_height = 768;
+    vec2i Glut3DWidget::defaultInitSize(1024,768);
 
     bool animating = false;
 
@@ -85,15 +88,15 @@ namespace ospray {
     // implementation of glut3d::viewPorts
     // ------------------------------------------------------------------
     Glut3DWidget::ViewPort::ViewPort()
-    : from(0,0,-1),
-    at(0,0,0),
-    up(upVectorFromCmdLine),
-      // : from(0,-1,0),
-      //   at(0,0,0),
-      //   up(0,0,1),
-    aspect(1.f),
-    openingAngle(60.f*M_PI/360.f),
-    modified(true)
+      : from(0,0,-1),
+        at(0,0,0),
+        up(upVectorFromCmdLine),
+        // : from(0,-1,0),
+        //   at(0,0,0),
+        //   up(0,0,1),
+        aspect(1.f),
+        openingAngle(60.f*M_PI/360.f),
+        modified(true)
     {
       frame = AffineSpace3fa::translate(from) * AffineSpace3fa(embree::one);
     }
@@ -143,19 +146,19 @@ namespace ospray {
     }
 
     Glut3DWidget::Glut3DWidget(FrameBufferMode frameBufferMode,
-     ManipulatorMode initialManipulator,
-     int allowedManipulators)
-    : motionSpeed(.003f),rotateSpeed(.003f),
-    windowID(-1),
-    lastMousePos(-1,-1),
-    currMousePos(-1,-1),
-    windowSize(-1,-1),
-    lastModifierState(0),
-    currModifierState(0),
-    lastButtonState(0),
-    currButtonState(0),
-    frameBufferMode(frameBufferMode),
-    ucharFB(NULL)
+                               ManipulatorMode initialManipulator,
+                               int allowedManipulators)
+      : motionSpeed(.003f),rotateSpeed(.003f),
+        windowID(-1),
+        lastMousePos(-1,-1),
+        currMousePos(-1,-1),
+        windowSize(-1,-1),
+        lastModifierState(0),
+        currModifierState(0),
+        lastButtonState(0),
+        currButtonState(0),
+        frameBufferMode(frameBufferMode),
+        ucharFB(NULL)
     {
       worldBounds.lower = vec3f(-1);
       worldBounds.upper = vec3f(+1);
@@ -167,10 +170,10 @@ namespace ospray {
         moveModeManipulator = new MoveMode(this);
       }
       switch(initialManipulator) {
-        case MOVE_MODE:
+      case MOVE_MODE:
         manipulator = moveModeManipulator;
         break;
-        case INSPECT_CENTER_MODE:
+      case INSPECT_CENTER_MODE:
         manipulator = inspectCenterManipulator;
         break;
       }
@@ -212,15 +215,15 @@ namespace ospray {
       viewPort.aspect = newSize.x/float(newSize.y);
 
       switch (frameBufferMode) {
-        case FRAMEBUFFER_UCHAR:
+      case FRAMEBUFFER_UCHAR:
         if (ucharFB) delete[] ucharFB;
         ucharFB = new uint32[newSize.x*newSize.y];
         break;
-        case FRAMEBUFFER_FLOAT:
+      case FRAMEBUFFER_FLOAT:
         if (floatFB) delete[] floatFB;
         floatFB = new vec3fa[newSize.x*newSize.y];
         break;
-        default:
+      default:
         break;
       }
       forceRedraw();
@@ -234,11 +237,23 @@ namespace ospray {
 
     void Glut3DWidget::forceRedraw()
     {
-      glutPostRedisplay();
+#ifdef OSP_ENABLE_REMOTE_GLUT3D
+      if (RemoteGlut3D::instance)  
+        RemoteGlut3D::instance->postRedisplay();
+      else
+#endif
+        glutPostRedisplay();
     }
 
     void Glut3DWidget::display()
     {
+#ifdef OSP_ENABLE_REMOTE_GLUT3D 
+     if (RemoteGlut3D::instance)  {
+        activeWindow = this;
+        RemoteGlut3D::instance->drawPixels(windowSize,ucharFB);
+        return;
+      }
+#endif
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
       } else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
@@ -259,12 +274,14 @@ namespace ospray {
 
     void Glut3DWidget::drawPixels(const uint32 *framebuffer)
     {
+      PING;
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
       glutSwapBuffers();
     }
 
     void Glut3DWidget::drawPixels(const vec3fa *framebuffer)
     {
+      PING;
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, framebuffer);
       glutSwapBuffers();
     }
@@ -305,9 +322,18 @@ namespace ospray {
       glutSetWindowTitle(title);
     }
 
-    void Glut3DWidget::create(const char *title, bool fullScreen)
+    void Glut3DWidget::create(const char *title, 
+                              const vec2i &size,
+                              bool fullScreen)
     {
-      glutInitWindowSize( g_width, g_height );
+#ifdef OSP_ENABLE_REMOTE_GLUT3D
+      if (RemoteGlut3D::instance)  {
+        activeWindow = this;
+        RemoteGlut3D::instance->createWindow(title,size,fullScreen);
+        return;
+      }
+#endif
+      glutInitWindowSize( size.x, size.y );
       windowID = glutCreateWindow(title);
       activeWindow = this;
       glutDisplayFunc( glut3dDisplay );
@@ -324,97 +350,85 @@ namespace ospray {
 
     void runGLUT()
     {
-      glutMainLoop();
+#ifdef OSP_ENABLE_REMOTE_GLUT3D
+      if (RemoteGlut3D::instance)  
+        RemoteGlut3D::instance->mainLoop();
+      else
+#endif
+        glutMainLoop();
     }
 
     void initGLUT(int32 *ac, const char **av)
     {
       glutInit(ac, (char **) av);
       for(int i = 1; i < *ac;i++)
-      {
-        std::string arg(av[i]);
-        if (arg == "-win") {
-          std::string arg2(av[i+1]);
-          size_t pos = arg2.find("x");
-          if (pos != std::string::npos) {
-            arg2.replace(pos, 1, " ");
-            std::stringstream ss(arg2);
-            ss >> g_width >> g_height;
-            removeArgs(*ac,(char **&)av,i,2);
-          } else {
-            g_width = atoi(av[i+1]);
-            g_height = atoi(av[i+1]);
-            removeArgs(*ac,(char **&)av,i,3);
-          }
-          continue;
-        }
-        if (arg == "--1k") {
-          g_width = g_height = 1024;
-          removeArgs(*ac,(char **&)av,i,1);
-          continue;
-        }
-        if (arg == "-vu") {
-          // if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
-          // viewPortFromCmdLine->up.x = atof(av[i+1]);
-          // viewPortFromCmdLine->up.y = atof(av[i+2]);
-          // viewPortFromCmdLine->up.z = atof(av[i+3]);
-          upVectorFromCmdLine.x = atof(av[i+1]);
-          upVectorFromCmdLine.y = atof(av[i+2]);
-          upVectorFromCmdLine.z = atof(av[i+3]);
-          if (viewPortFromCmdLine) 
-            viewPortFromCmdLine->up = upVectorFromCmdLine;
-          assert(i+3 < *ac);
-          removeArgs(*ac,(char **&)av,i,4);
-          --i;
-          continue;
-        }
-        if (arg == "-vp") {
-          if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
-          viewPortFromCmdLine->from.x = atof(av[i+1]);
-          viewPortFromCmdLine->from.y = atof(av[i+2]);
-          viewPortFromCmdLine->from.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,(char **&)av,i,4);
-          --i;
-          continue;
-        }
-        if (arg == "-vi") {
-          if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
-          viewPortFromCmdLine->at.x = atof(av[i+1]);
-          viewPortFromCmdLine->at.y = atof(av[i+2]);
-          viewPortFromCmdLine->at.z = atof(av[i+3]);
-          assert(i+3 < *ac);
-          removeArgs(*ac,(char **&)av,i,4);
-          --i;
-          continue;
-        }
-
-        /*else if (arg == "-vp")
         {
-          float x,y,z;
-          if (++i < *ac)
-          {
-            std::stringstream ss(av[i]);
-            ss >> x;
+          std::string arg(av[i]);
+          if (arg == "-win") {
+            std::string arg2(av[i+1]);
+            size_t pos = arg2.find("x");
+            if (pos != std::string::npos) {
+              arg2.replace(pos, 1, " ");
+              std::stringstream ss(arg2);
+              ss >> Glut3DWidget::defaultInitSize.x >> Glut3DWidget::defaultInitSize.y;
+              removeArgs(*ac,(char **&)av,i,2);
+            } else {
+              Glut3DWidget::defaultInitSize.x = atoi(av[i+1]);
+              Glut3DWidget::defaultInitSize.y = atoi(av[i+1]);
+              removeArgs(*ac,(char **&)av,i,3);
+            }
+            continue;
           }
-          if (++i < *ac)
-          {
-            std::stringstream ss(av[i]);
-            ss >> y;
+          if (arg == "--osp:remote-glut") {
+#ifdef OSP_ENABLE_REMOTE_GLUT3D
+            removeArgs(*ac,(char **&)av,i,1);
+            RemoteGlut3D::instance = new RemoteGlut3D;
+#else
+            throw std::runtime_error("Remote glut 3D support not compiled in");
+#endif
+            continue;
           }
-          if (++i < *ac)
-          {
-            std::stringstream ss(av[i]);
-            ss >> z;
+          if (arg == "--1k") {
+            Glut3DWidget::defaultInitSize.x = Glut3DWidget::defaultInitSize.y = 1024;
+            removeArgs(*ac,(char **&)av,i,1);
+            continue;
           }
-          if (Glut3DWidget::activeWindow)
-          {
-            Glut3DWidget::ViewPort &cam = Glut3DWidget::activeWindow->viewPort;
-            cam.from = vec3f(x,y,z);
-            cam.modified = true;
+          if (arg == "-vu") {
+            // if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+            // viewPortFromCmdLine->up.x = atof(av[i+1]);
+            // viewPortFromCmdLine->up.y = atof(av[i+2]);
+            // viewPortFromCmdLine->up.z = atof(av[i+3]);
+            upVectorFromCmdLine.x = atof(av[i+1]);
+            upVectorFromCmdLine.y = atof(av[i+2]);
+            upVectorFromCmdLine.z = atof(av[i+3]);
+            if (viewPortFromCmdLine) 
+              viewPortFromCmdLine->up = upVectorFromCmdLine;
+            assert(i+3 < *ac);
+            removeArgs(*ac,(char **&)av,i,4);
+            --i;
+            continue;
           }
-        }*/
-      }
+          if (arg == "-vp") {
+            if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+            viewPortFromCmdLine->from.x = atof(av[i+1]);
+            viewPortFromCmdLine->from.y = atof(av[i+2]);
+            viewPortFromCmdLine->from.z = atof(av[i+3]);
+            assert(i+3 < *ac);
+            removeArgs(*ac,(char **&)av,i,4);
+            --i;
+            continue;
+          }
+          if (arg == "-vi") {
+            if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
+            viewPortFromCmdLine->at.x = atof(av[i+1]);
+            viewPortFromCmdLine->at.y = atof(av[i+2]);
+            viewPortFromCmdLine->at.z = atof(av[i+3]);
+            assert(i+3 < *ac);
+            removeArgs(*ac,(char **&)av,i,4);
+            --i;
+            continue;
+          }
+        }
     }
 
     // ------------------------------------------------------------------
@@ -434,23 +448,22 @@ namespace ospray {
     // ------------------------------------------------------------------
     // INSPECT_CENTER manipulator
     // ------------------------------------------------------------------
-
     void InspectCenter::keypress(Glut3DWidget *widget,
-     int32 key)
+                                 int32 key)
     {
       switch(key) {
-        case 'a': {
-          rotate(+10.f*widget->rotateSpeed,0);
-        } return;
-        case 'd': {
-          rotate(-10.f*widget->rotateSpeed,0);
-        } return;
-        case 'w': {
-          rotate(0,+10.f*widget->rotateSpeed);
-        } return;
-        case 's': {
-          rotate(0,-10.f*widget->rotateSpeed);
-        } return;
+      case 'a': {
+        rotate(+10.f*widget->rotateSpeed,0);
+      } return;
+      case 'd': {
+        rotate(-10.f*widget->rotateSpeed,0);
+      } return;
+      case 'w': {
+        rotate(0,+10.f*widget->rotateSpeed);
+      } return;
+      case 's': {
+        rotate(0,-10.f*widget->rotateSpeed);
+      } return;
       }
 
       Manipulator::keypress(widget,key);
@@ -460,10 +473,10 @@ namespace ospray {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       const vec3f pivot = center(widget->worldBounds);
       AffineSpace3fa xfm
-      = AffineSpace3fa::translate(pivot)
-      * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
-      * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
-      * AffineSpace3fa::translate(-pivot);
+        = AffineSpace3fa::translate(pivot)
+        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
+        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
+        * AffineSpace3fa::translate(-pivot);
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
@@ -472,21 +485,21 @@ namespace ospray {
     }
 
     void InspectCenter::specialkey(Glut3DWidget *widget,
-     int32 key)
+                                   int32 key)
     {
       switch(key) {
-        case GLUT_KEY_LEFT: {
-          rotate(+10.f*widget->rotateSpeed,0);
-        } return;
-        case GLUT_KEY_RIGHT: {
-          rotate(-10.f*widget->rotateSpeed,0);
-        } return;
-        case GLUT_KEY_UP: {
-          rotate(0,+10.f*widget->rotateSpeed);
-        } return;
-        case GLUT_KEY_DOWN: {
-          rotate(0,-10.f*widget->rotateSpeed);
-        } return;
+      case GLUT_KEY_LEFT: {
+        rotate(+10.f*widget->rotateSpeed,0);
+      } return;
+      case GLUT_KEY_RIGHT: {
+        rotate(-10.f*widget->rotateSpeed,0);
+      } return;
+      case GLUT_KEY_UP: {
+        rotate(0,+10.f*widget->rotateSpeed);
+      } return;
+      case GLUT_KEY_DOWN: {
+        rotate(0,-10.f*widget->rotateSpeed);
+      } return;
       }
       Manipulator::specialkey(widget,key);
     }
@@ -494,7 +507,7 @@ namespace ospray {
     /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
       forward/backward on right mouse button */
     void InspectCenter::dragRight(Glut3DWidget *widget,
-      const vec2i &to, const vec2i &from)
+                                  const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       float fwd = 
@@ -516,7 +529,7 @@ namespace ospray {
     /*! INSPECT_CENTER::MiddleButton: move lookat/center of interest
       forward/backward on middle mouse button */
     void InspectCenter::dragMiddle(Glut3DWidget *widget,
-     const vec2i &to, const vec2i &from)
+                                   const vec2i &to, const vec2i &from)
     {
       // it's called inspect_***CENTER*** for a reason; this class
       // will keep the rotation pivot at the center, and not do
@@ -524,7 +537,7 @@ namespace ospray {
     }
 
     void InspectCenter::dragLeft(Glut3DWidget *widget,
-     const vec2i &to, const vec2i &from)
+                                 const vec2i &to, const vec2i &from)
     {
       // std::cout << "-------------------------------------------------------" << std::endl;
       Glut3DWidget::ViewPort &cam = widget->viewPort;
@@ -536,10 +549,10 @@ namespace ospray {
 
       const vec3f pivot = center(widget->worldBounds);
       AffineSpace3fa xfm
-      = AffineSpace3fa::translate(pivot)
-      * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
-      * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
-      * AffineSpace3fa::translate(-pivot);
+        = AffineSpace3fa::translate(pivot)
+        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
+        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
+        * AffineSpace3fa::translate(-pivot);
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
@@ -602,7 +615,7 @@ namespace ospray {
     }
 
     void MoveMode::dragRight(Glut3DWidget *widget,
-      const vec2i &to, const vec2i &from)
+                             const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       float fwd = 
@@ -619,7 +632,7 @@ namespace ospray {
 
     /*! todo */
     void MoveMode::dragMiddle(Glut3DWidget *widget,
-      const vec2i &to, const vec2i &from)
+                              const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       float du = (to.x - from.x);
@@ -636,9 +649,8 @@ namespace ospray {
       cam.modified = true;
     }
 
-    /*! todo */
     void MoveMode::dragLeft(Glut3DWidget *widget,
-      const vec2i &to, const vec2i &from)
+                            const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       float du = (to.x - from.x) * widget->rotateSpeed;
@@ -648,20 +660,16 @@ namespace ospray {
 
       const vec3f pivot = cam.from; //center(widget->worldBounds);
       AffineSpace3fa xfm
-      = AffineSpace3fa::translate(pivot)
-      * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
-      * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
-      * AffineSpace3fa::translate(-pivot);
+        = AffineSpace3fa::translate(pivot)
+        * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
+        * AffineSpace3fa::rotate(cam.frame.l.vz,-du)
+        * AffineSpace3fa::translate(-pivot);
       cam.frame = xfm * cam.frame;
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
       cam.snapUp();
       cam.modified = true;
     }
-
-
-
-
 
     void Glut3DWidget::specialkey(int32 key, const vec2f where)
     {
@@ -737,30 +745,6 @@ namespace ospray {
       o << "</viewPort>";
       return o;
     }
-      // struct ViewPort {
-      //   bool modified; /* the viewPort will set this flag any time any of
-      //                     its values get changed. */
-
-      //   vec3f from;
-      //   vec3f up;
-      //   vec3f at;
-      //   /*! opening angle, in radians, along Y direction */
-      //   float openingAngle;
-      //   /*! aspect ration i Y:X */
-      //   float aspect;
-      //   // float focalDistance;
-
-      //   /*! viewPort frame in which the Y axis is the depth axis, and X
-      //     and Z axes are parallel to the screen X and Y axis. The frame
-      //     itself remains normalized. */
-      //   AffineSpace3fa frame;
-
-      //   /*! set 'up' vector. if this vector is '0,0,0' the viewer will
-      //    *not* apply the up-vector after viewPort manipulation */
-      //   void snapUp();
-
-
-
   }
 }
 
