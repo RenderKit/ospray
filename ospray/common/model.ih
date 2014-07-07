@@ -43,7 +43,9 @@ inline void postIntersect(uniform Model *uniform model,
 {
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
-  dg.color.x    = -1;
+  //  dg.color.x    = -1;
+  if (flags & DG_COLOR)
+    dg.color = make_vec4f(1.f);
 
 #if 1
   // a first hack for instancing: problem is that ospray assumes that

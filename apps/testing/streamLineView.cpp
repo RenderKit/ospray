@@ -44,6 +44,18 @@ namespace ospray {
       SVVertex vertex[3];
     };
 
+    vec3f lerpf(float x, float x0,float x1,vec3f y0, vec3f y1)
+    {
+      float f = (x-x0)/(x1-x0);
+      return f*y1+(1-f)*y0;
+    }
+    vec3f colorOf(const float f)
+    {
+      if (f < .5f)
+        return vec3f(lerpf(f, 0.f,.5f,vec3f(0),vec3f(0,1,0)));
+      else
+        return vec3f(lerpf(f, .5f,1.f,vec3f(0,1,0),vec3f(1,0,0)));
+    }
     void parseSV(const embree::FileName &fn)
     {
       FILE *file = fopen(fn.str().c_str(),"rb");
@@ -55,9 +67,9 @@ namespace ospray {
         vertex.push_back(vec3fa(triangle.vertex[0].pos));
         vertex.push_back(vec3fa(triangle.vertex[1].pos));
         vertex.push_back(vec3fa(triangle.vertex[2].pos));
-        color.push_back(vec3f(triangle.vertex[0].v));
-        color.push_back(vec3f(triangle.vertex[1].v));
-        color.push_back(vec3f(triangle.vertex[2].v));
+        color.push_back(colorOf(triangle.vertex[0].v));
+        color.push_back(colorOf(triangle.vertex[1].v));
+        color.push_back(colorOf(triangle.vertex[2].v));
       }
       fclose(file);
     }

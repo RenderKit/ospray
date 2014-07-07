@@ -26,13 +26,18 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   }
 #endif
 
-  uniform vec4f *uniform color = THIS->color;
-  if ((flags & DG_COLOR) && color) {
-    const vec3i index = THIS->index[ray.primID];
-    dg.color
-      = (1.f-ray.u-ray.v) * (color[index.x])
-      + ray.u * (color[index.y])
-      + ray.v * (color[index.z]);
+  if ((flags & DG_COLOR)) {
+    uniform vec4f *uniform color = THIS->color;
+    if (color) {
+      const vec3i index = THIS->index[ray.primID];
+      dg.color
+        = (1.f-ray.u-ray.v) * (color[index.x])
+        + ray.u * (color[index.y])
+        + ray.v * (color[index.z]);
+      // print("color % % %\n",dg.color.x,dg.color.y,dg.color.z);
+    }
+    else
+      dg.color = make_vec4f(1.f);
   }
 
   if (flags & DG_TEXCOORD && THIS->texcoord) {
