@@ -17,6 +17,7 @@
 
 // ospray
 #include "ospray/render/renderer.h"
+#include "ospray/texture/texture.h"
 
 namespace ospray {
   using embree::TaskScheduler;
@@ -24,12 +25,20 @@ namespace ospray {
   struct Camera;
   struct Model;
 
+  struct AO16Material : public Material {
+    AO16Material();
+    virtual void commit();
+
+    vec3f Kd; /*! diffuse material component, that's all we care for */
+    Ref<Texture> map_Kd;
+  };
+  
   /*! \brief Simple 16-sample Ambient Occlusion Renderer */
   struct AO16Renderer : public Renderer {
-    AO16Renderer() : model(NULL), camera(NULL) {};
+    AO16Renderer();
 
     virtual std::string toString() const { return "ospray::AO16Renderer"; }
-
+    virtual Material *createMaterial(const char *type) { return new AO16Material; }
     Model  *model;
     Camera *camera;
 

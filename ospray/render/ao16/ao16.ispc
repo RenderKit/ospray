@@ -8,6 +8,7 @@
 #include "ospray/math/math.ih"
 #include "ospray/common/model.ih"
 #include "ospray/render/renderer.ih"
+#include "ospray/texture/texture.ih"
 
 #define EPS 1e-5f
 
@@ -80,6 +81,28 @@ void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
 //   return ray.geomID >= 0;
 // }
 
+struct AO16Material {
+  Material inherited;
+  vec3f Kd;
+  uniform Texture *uniform map_Kd;
+};
+
+export void *uniform AO16Material_create(void *uniform cppE)
+{
+  uniform AO16Material *uniform mat = uniform new uniform AO16Material;
+  mat->inherited.cppEquivalent = cppE;
+  return mat;
+}
+
+export void AO16Material_set(void *uniform _mat, 
+                             const uniform vec3f &Kd,
+                             void *uniform _map_Kd
+                             )
+{
+  uniform AO16Material *uniform mat = (uniform AO16Material *uniform)_mat;
+  mat->Kd = Kd;
+  mat->map_Kd = (uniform Texture *uniform)_map_Kd;
+}
 
 vec3f getRandomDir(const int j, const uniform int i, 
                    const vec3f biNorm0,
@@ -112,15 +135,34 @@ vec3f getRandomDir(const int j, const uniform int i,
 }
 
 
-inline vec3f shade_ao16(const Ray &ray, uniform Model *uniform model,
+inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
+                        const Ray &ray, 
                         const int32 pixel_x, const int32 pixel_y)
 {
   if (ray.geomID < 0)
     return make_vec3f(0.f);
 
-  const vec3f P = ray.org + (0.9999f*ray.t) * ray.dir;
-  const vec3f N = getShadingNormal(ray);
+  // print("shade at16\n");
+  DifferentialGeometry dg;
+  postIntersect(renderer->inherited.model,
+                dg,
+                ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
+  const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
+  
+  const vec3f N = dg.Ns; //getShadingNormal(ray);
+
+  // print("shade at16 %\n",N.x,N.y,N.z);
+
+  uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
+  vec3f baseColor = mat->Kd; // * make_vec3f(dg.color);
+  foreach_unique(tex in mat->map_Kd) {
+    if (tex) {
+      baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
+    }
+  }
+  
   int hits = 0;
   vec3f biNormU,biNormV;
   getBinormals(biNormU,biNormV,N);
@@ -133,14 +175,16 @@ inline vec3f shade_ao16(const Ray &ray, uniform Model *uniform model,
       Ray ao_ray;
       setRay(ao_ray,P,ao_dir);
       ao_ray.t0 = EPS;
-      ao_ray.t = 1.f;
-      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(model,ao_ray))
+      ao_ray.t = 1e20f; //inf; //1.f;
+      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(renderer->inherited.model,ao_ray))
         hits++;
+      // print("sample %\n",ao_ray.geomID);
     }
-	vec3f rgb = make_vec3f(.98f); 
-  float diffuse = -dot(N,ray.dir);
+  float diffuse = absf(dot(N,ray.dir));
   float frac_visible = (16.f-hits) * (1.0f/16.0f);
-  return rgb * make_vec3f(diffuse * (.01f + 1.1f * frac_visible));
+	vec3f rgb = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
+  // print("rgb %\n",rgb.x,rgb.y,rgb.z);
+  return rgb;
 }
 
 // inline vec3f shade_eyeLight(const Ray &ray, uniform RTCScene scene)
@@ -194,8 +238,8 @@ void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
   traceRay(renderer->inherited.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
-  sample.rgb   = shade_ao16(sample.ray,
-                            renderer->inherited.model,
+  sample.rgb   = shade_ao16(renderer,
+                            sample.ray,
                             sample.sampleID.x,
                             sample.sampleID.y);
 }
@@ -209,6 +253,15 @@ export void *uniform AO16Renderer_create(void *uniform cppE,
   Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
   renderer->inherited.renderSample = AO16Renderer_renderSample;
   return renderer;
+}
+
+export void AO16Renderer_set(void *uniform _renderer,
+                             void *uniform _model,
+                             void *uniform _camera)
+{
+  uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
+  renderer->inherited.model = (uniform Model*)_model;
+  renderer->inherited.camera = (uniform Camera*)_camera;
 }
 
 export void AO16Renderer_destroy(void *uniform _renderer)

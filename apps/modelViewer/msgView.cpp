@@ -18,7 +18,8 @@ namespace ospray {
   int spp = 1; /*! number of samples per pixel */
 
   /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
-  vec3f defaultDirLight_direction(-.3, -1, .4);
+  //  vec3f defaultDirLight_direction(-.3, -1, .4);
+  vec3f defaultDirLight_direction(.3, -1, -.2);
 
   Ref<miniSG::Model> msgModel = NULL;
   OSPModel           ospModel = NULL;
