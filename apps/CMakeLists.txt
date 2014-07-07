@@ -12,7 +12,7 @@ IF(NOT THIS_IS_MIC)
 # common utility classes for 3D viewer widget, importers, etc
 ADD_SUBDIRECTORY(util)
 # mini-scene graph viewer for _geometry_ (intentionally simple)
-ADD_SUBDIRECTORY(msgView)
+ADD_SUBDIRECTORY(modelViewer)
 # mini dvr volume viewer (intentionally simple)
 # ADD_SUBDIRECTORY(ospDVR) --> moved to modules/dvr for now
 ENDIF()

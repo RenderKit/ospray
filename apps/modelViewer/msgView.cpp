@@ -4,7 +4,7 @@
 // viewer widget
 #include "../util/glut3D/glut3D.h"
 // mini scene graph for loading the model
-#include "../util/miniSG/miniSG.h"
+#include "miniSG/miniSG.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
 
@@ -229,7 +229,6 @@ namespace ospray {
     const char *type = mat->getParam("type","OBJMaterial");
     assert(type);
     OSPMaterial ospMat = alreadyCreatedMaterials[mat] = ospNewMaterial(renderer,type);
-    PRINT(type);
     if (!ospMat)  {
       warnMaterial(type);
       return createDefaultMaterial(renderer);

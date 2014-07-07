@@ -3,14 +3,16 @@
 # --------------------------------------------
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
+ADD_SUBDIRECTORY(miniSG)
+
 # --------------------------------------------
 # main executable
 # --------------------------------------------
-ADD_EXECUTABLE(msgView 
+ADD_EXECUTABLE(ospModelViewer
 	# CPP sources
 	msgView.cpp
 	)
-TARGET_LINK_LIBRARIES(msgView
+TARGET_LINK_LIBRARIES(ospModelViewer
 	ospray_minisg
 	ospray_glut3d
 	ospray
