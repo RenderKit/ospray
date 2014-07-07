@@ -37,9 +37,14 @@ inline varying vec3f TransferFunctionPiecewiseLinear_lookupColor(uniform Transfe
         return transferFunction->colors[transferFunction->numColors - 1];
     else
     {
-        float index = (value - transferFunction->colorValueMin) / (transferFunction->colorValueMax - transferFunction->colorValueMin) * (float)(transferFunction->numColors - 1);
+        float val = (value - transferFunction->colorValueMin) / (transferFunction->colorValueMax - transferFunction->colorValueMin) * (float)(transferFunction->numColors - 1);
 
-        return transferFunction->colors[(int)index] + (index - floor(index)) * transferFunction->colors[(int)(index + 1)];
+        int index = floor(val);
+        float f = val - index;
+        
+        return 
+          (1.f-f)* transferFunction->colors[index]
+          + (f)  * transferFunction->colors[min(index + 1,transferFunction->numColors - 1)];
     }
 }
 
@@ -56,9 +61,14 @@ inline varying float TransferFunctionPiecewiseLinear_lookupAlpha(uniform Transfe
         return transferFunction->alphas[transferFunction->numAlphas - 1];
     else
     {
-        float index = (value - transferFunction->alphaValueMin) / (transferFunction->alphaValueMax - transferFunction->alphaValueMin) * (float)(transferFunction->numAlphas - 1);
+        float val = (value - transferFunction->alphaValueMin) / (transferFunction->alphaValueMax - transferFunction->alphaValueMin) * (float)(transferFunction->numAlphas - 1);
 
-        return transferFunction->alphas[(int)index] + (index - floor(index)) * transferFunction->alphas[(int)(index + 1)];
+        int index = floor(val);
+        float f = val - index;
+        
+        return 
+          (1.f-f)*transferFunction->alphas[index] 
+          + f    *transferFunction->alphas[min(index + 1,transferFunction->numColors - 1)];
     }
 }
 

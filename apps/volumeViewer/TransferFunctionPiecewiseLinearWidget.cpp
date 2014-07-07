@@ -1,4 +1,5 @@
 #include "TransferFunctionPiecewiseLinearWidget.h"
+#include <algorithm>
 
 float TransferFunctionPiecewiseLinearWidget::pointPixelRadius_ = 8.;
 float TransferFunctionPiecewiseLinearWidget::linePixelWidth_ = 2.;
@@ -16,7 +17,7 @@ TransferFunctionPiecewiseLinearWidget::TransferFunctionPiecewiseLinearWidget() :
     backgroundImage_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
 
     // default background color
-    backgroundImage_.fill(QColor::fromRgbF(1,1,1,1));
+    // backgroundImage_.fill(QColor::fromRgbF(1,1,1,1));
 
     // default transfer function points
     points_.push_back(osp::vec2f(0.,0.));

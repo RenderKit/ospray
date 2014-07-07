@@ -70,8 +70,8 @@ inline vec4f traceRayDVR(const Ray &ray,
     const vec3f p1 = volume->clampSize * (ray.org + t1 * ray.dir);
     const float f1 = volume->lerpf(volume, p1);
 
-    vec4f color_sample = make_vec4f(1.);
-    float a = 1.;
+    vec4f color_sample = make_vec4f(1.f);
+    float a = 1.f;
 
     if(volume->transferFunction != NULL)
     {

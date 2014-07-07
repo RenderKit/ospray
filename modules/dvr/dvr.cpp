@@ -28,6 +28,8 @@ namespace ospray {
 
   void DVRRendererBase::commit()
   {
+    Renderer::commit();
+
     /* for now, let's get the volume data from the renderer
        parameter. at some point we probably want to have voluems
        embedded in models - possibly with transformation attached to

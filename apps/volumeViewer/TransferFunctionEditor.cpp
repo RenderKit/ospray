@@ -110,7 +110,7 @@ void TransferFunctionEditor::loadColorMaps()
 {
     // default color map
     std::vector<osp::vec3f> defaultColors;
-    defaultColors.push_back(osp::vec3f(0         , 0           , 0           ));
+    defaultColors.push_back(osp::vec3f(0         , 1           , 0           ));
     defaultColors.push_back(osp::vec3f(0         , 0.120394    , 0.302678    ));
     defaultColors.push_back(osp::vec3f(0         , 0.216587    , 0.524575    ));
     defaultColors.push_back(osp::vec3f(0.0552529 , 0.345022    , 0.659495    ));
@@ -126,7 +126,8 @@ void TransferFunctionEditor::loadColorMaps()
     defaultColors.push_back(osp::vec3f(0.672862  , 0.139086    , 0.00270085  ));
     defaultColors.push_back(osp::vec3f(0.508812  , 0           , 0           ));
     defaultColors.push_back(osp::vec3f(0.299413  , 0.000366217 , 0.000549325 ));
-    defaultColors.push_back(osp::vec3f(0.0157473 , 0.00332647  , 0           ));
+    // defaultColors.push_back(osp::vec3f(0.0157473 , 0.00332647  , 0           ));
+    defaultColors.push_back(osp::vec3f(0.0157473 , 0.00332647  , 1           ));
 
     colorMaps_.push_back(ColorMap("default", defaultColors));
 
