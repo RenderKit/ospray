@@ -639,7 +639,6 @@ namespace ospray {
       args.write(type);
       int retValue = -1;
       callFunction(OSPCOI_NEW_MATERIAL,args,&retValue);
-      PRINT(retValue);
       if (retValue)
         // could create material ...
         return (OSPMaterial)(int64)handle;
