@@ -140,14 +140,14 @@ namespace ospray {
 #else
         for (int i=0;i<engine.size();i++) engine[i]->callFunction(ID,data,sync); 
 #endif
-        double t1 = getSysTime();
-        static double sum_t = 0;
-        sum_t += (t1-t0);
-        static long lastPing = 0;
-        long numSecs = long(sum_t);
-        if (numSecs > lastPing)
-          cout << "#osp:coi: time spent in callfunctions (general) " << sum_t << " secs" << endl;
-        lastPing = numSecs;
+        // double t1 = getSysTime();
+        // static double sum_t = 0;
+        // sum_t += (t1-t0);
+        // static long lastPing = 0;
+        // long numSecs = long(sum_t);
+        // if (numSecs > lastPing)
+        //   cout << "#osp:coi: time spent in callfunctions (general) " << sum_t << " secs" << endl;
+        // lastPing = numSecs;
       }
 
       /*! create a new frame buffer */
@@ -332,9 +332,6 @@ namespace ospray {
 
     void COIEngine::callFunction(RemoteFctID ID, const DataStream &data, bool sync)
     {
-      PING;
-      PRINT(coiFctName[ID]);
-
       // double t0 = ospray::getSysTime();
       if (sync) {
         bzero(&event,sizeof(event));
@@ -484,9 +481,6 @@ namespace ospray {
       args.write((int32)nitems);
       args.write((int32)format);
       args.write((int32)flags);
-      // PING;
-      // PRINT(nitems);
-      // PRINT(format);
 
 #if 1
       double t0 = getSysTime();
@@ -901,7 +895,6 @@ namespace ospray {
     void COIDevice::frameBufferUnmap(const void *mapped,
                                      OSPFrameBuffer fb)
     {
-      // PING; // nothing to do!?
     }
 
 

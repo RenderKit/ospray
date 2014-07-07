@@ -56,6 +56,7 @@ uniform bool AO16_directions_initialized = false;
 
 struct AO16Renderer {
   uniform Renderer inherited;
+  uniform vec3f bgColor;
 };
 
 inline vec3f getShadingNormal(const Ray &ray)
@@ -140,7 +141,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
                         const int32 pixel_x, const int32 pixel_y)
 {
   if (ray.geomID < 0)
-    return make_vec3f(0.f);
+    return renderer->bgColor;
 
   // print("shade at16\n");
   DifferentialGeometry dg;
@@ -156,12 +157,14 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   // print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
-  vec3f baseColor = mat->Kd; // * make_vec3f(dg.color);
-  foreach_unique(tex in mat->map_Kd) {
-    if (tex) {
-      baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
-    }
-  }
+  vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
+  foreach_unique(m in mat)
+    baseColor = m->Kd;
+  // foreach_unique(tex in mat->map_Kd) {
+  //   if (tex) {
+  //     baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
+  //   }
+  // }
   
   int hits = 0;
   vec3f biNormU,biNormV;
@@ -246,8 +249,8 @@ void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
 
 
 export void *uniform AO16Renderer_create(void *uniform cppE,
-                                  void *uniform _model,
-                                  void *uniform _camera)
+                                         void *uniform _model,
+                                         void *uniform _camera)
 {
   uniform AO16Renderer *uniform renderer = uniform new uniform AO16Renderer;
   Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
@@ -256,10 +259,12 @@ export void *uniform AO16Renderer_create(void *uniform cppE,
 }
 
 export void AO16Renderer_set(void *uniform _renderer,
+                             const uniform vec3f &bgColor,
                              void *uniform _model,
                              void *uniform _camera)
 {
   uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
+  renderer->bgColor = bgColor;
   renderer->inherited.model = (uniform Model*)_model;
   renderer->inherited.camera = (uniform Camera*)_camera;
 }

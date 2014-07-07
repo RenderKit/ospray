@@ -512,6 +512,9 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
+      // PING;
+      // COIProcessProxyFlush();
+
       DataStream args(argsPtr);
       Handle _fb       = args.get<Handle>();
       Handle renderer = args.get<Handle>();
@@ -524,6 +527,10 @@ namespace ospray {
       //   fb->renderTask->done.sync();
       //   fb->renderTask = NULL;
       // }
+
+      // PING;
+      // COIProcessProxyFlush();
+
     }
 
     COINATIVELIBEXPORT

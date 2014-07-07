@@ -16,7 +16,8 @@ namespace ospray {
   void AO16Material::commit() {
     Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
     map_Kd = NULL; //(Texture*)getParam("map_Kd",NULL);
-    ispc::AO16Material_set(getIE(),(const ispc::vec3f&)Kd,
+    ispc::AO16Material_set(getIE(),
+                           (const ispc::vec3f&)Kd,
                            map_Kd!=NULL?map_Kd->getIE():NULL);
   }
   
@@ -33,7 +34,9 @@ namespace ospray {
     model  = (Model  *)getParamObject("world",NULL); // old naming
     model  = (Model  *)getParamObject("model",model); // new naming
     camera = (Camera *)getParamObject("camera",NULL);
+    bgColor = getParam3f("bgColor",vec3f(1.f));
     ispc::AO16Renderer_set(getIE(),
+                           (const ispc::vec3f&)bgColor,                           
                            model?model->getIE():NULL,
                            camera?camera->getIE():NULL);
   }

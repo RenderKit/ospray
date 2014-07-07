@@ -1867,16 +1867,14 @@ static FORCEINLINE void __masked_store_blend_float(void *p, __vec16_f val,
 static FORCEINLINE __vec16_i8
 __gather_base_offsets32_i8(uint8_t *base, uint32_t scale, __vec16_i32 offsets, 
                            __vec16_i1 mask) {
-  std::cout << "BLA" << std::endl;
-   printf("__gather_base_offsets32_i8\n");
-    // (iw): need to temporarily store as int because gathers can only return ints.
-    __vec16_i32 tmp = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, base, 
-                                                     _MM_UPCONV_EPI32_SINT8, scale,
-                                                     _MM_HINT_NONE);
-    // now, downconverting to chars into temporary char vector
-    __vec16_i8 ret;
-    _mm512_extstore_epi32(ret.v,tmp,_MM_DOWNCONV_EPI32_SINT8,_MM_HINT_NONE);
-    return ret;
+  // (iw): need to temporarily store as int because gathers can only return ints.
+  __vec16_i32 tmp = _mm512_mask_i32extgather_epi32(_mm512_undefined_epi32(), mask, offsets, base, 
+                                                   _MM_UPCONV_EPI32_SINT8, scale,
+                                                   _MM_HINT_NONE);
+  // now, downconverting to chars into temporary char vector
+  __vec16_i8 ret;
+  _mm512_extstore_epi32(ret.v,tmp,_MM_DOWNCONV_EPI32_SINT8,_MM_HINT_NONE);
+  return ret;
 }
 
 static FORCEINLINE __vec16_i32

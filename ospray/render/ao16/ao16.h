@@ -41,6 +41,8 @@ namespace ospray {
     virtual Material *createMaterial(const char *type) { return new AO16Material; }
     Model  *model;
     Camera *camera;
+    // background color
+    vec3f bgColor; 
 
     virtual void commit();
   };
