@@ -241,7 +241,7 @@ namespace ospray {
       {
         Glut3DWidget::reshape(newSize);
         if (fb) ospFreeFrameBuffer(fb);
-        fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8);
+        fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
       }
@@ -261,10 +261,11 @@ namespace ospray {
           ospSetf(camera,"aspect",viewPort.aspect);
           ospCommit(camera);
           viewPort.modified = false;
+          ospFrameBufferClear(fb,OSP_FB_COLOR|OSP_FB_ACCUM);
         }
 
         fps.startRender();
-        ospRenderFrame(fb,renderer);
+        ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
         fps.doneRender();
     
         ucharFB = (unsigned int *)ospMapFrameBuffer(fb);

@@ -28,20 +28,20 @@ namespace ospray {
 
   void TachyonRenderer::commit()
   {
+    Renderer::commit();
+
     model = (Model *)getParamObject("world",NULL);
     model = (Model *)getParamObject("model",model);
-    if (!model)
-      throw std::runtime_error("#osp:tachyon::renderer: no model specified");
 
     doShadows = getParam1i("do_shadows",0);
     
     float lightScale = getParam1f("lightScale",1.f);
 
-    textureData = (Data*)model->getParamObject("textureArray",NULL);
+    textureData = (Data*)(model ? model->getParamObject("textureArray",NULL) : NULL);
     if (!textureData)
       throw std::runtime_error("#osp:tachyon::renderer: no texture data specified");
 
-    pointLightData = (Data*)model->getParamObject("pointLights",NULL);
+    pointLightData = (Data*)(model ? model->getParamObject("pointLights",NULL) : NULL);
     pointLightArray
       = pointLightData
       ? pointLightData->data
@@ -51,7 +51,7 @@ namespace ospray {
       ? pointLightData->size()/sizeof(ospray::tachyon::PointLight)
       : 0;
 
-    dirLightData = (Data*)model->getParamObject("dirLights",NULL);
+    dirLightData = (Data*)(model ? model->getParamObject("dirLights",NULL) : NULL);
     dirLightArray
       = dirLightData
       ? dirLightData->data
@@ -65,9 +65,9 @@ namespace ospray {
 
     camera = (Camera *)getParamObject("camera",NULL);
     ispc::TachyonRenderer_set(getIE(),
-                              model->getIE(),
-                              camera->getIE(),
-                              textureData->data,
+                              model?model->getIE():NULL,
+                              camera?camera->getIE():NULL,
+                              textureData?textureData->data:NULL,
                               pointLightArray,numPointLights,
                               dirLightArray,numDirLights,
                               doShadows,

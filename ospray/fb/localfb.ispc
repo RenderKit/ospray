@@ -238,7 +238,6 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   fb->depthBuffer = (uniform float *uniform)depthBuffer;
   fb->accumBuffer = (uniform vec4f *uniform)accumBuffer;
   fb->inherited.colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
-  print("format %\n",colorBufferFormat);
   return fb;
 }
 

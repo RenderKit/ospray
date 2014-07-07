@@ -16,7 +16,6 @@ namespace ospray {
 
   void StreamLines::finalize(Model *model) 
   {
-    PING;
     radius     = getParam1f("radius",0.01f);
     vertexData = getParamData("vertex",NULL);
     indexData  = getParamData("index",NULL);
