@@ -111,7 +111,7 @@ namespace ospray {
       void callFunction(RemoteFctID ID, const DataStream &data, bool sync=true)
       { 
         double t0 = getSysTime();
-#if 0
+#if 1
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;
         assert(engine.size() < MAX_ENGINES);
@@ -332,6 +332,9 @@ namespace ospray {
 
     void COIEngine::callFunction(RemoteFctID ID, const DataStream &data, bool sync)
     {
+      PING;
+      PRINT(coiFctName[ID]);
+
       // double t0 = ospray::getSysTime();
       if (sync) {
         bzero(&event,sizeof(event));
@@ -658,6 +661,7 @@ namespace ospray {
       args.write((int32)type);
       args.write((int32)flags);
       int64 numBytes = sizeOf(type)*width*height;
+      PRINT(numBytes);
       // double t0 = getSysTime();
       for (int i=0;i<engine.size();i++) {
         COIBUFFER coiBuffer;
@@ -932,17 +936,12 @@ namespace ospray {
     {
       Assert(bufName);
 
-      PING;
-      PRINT(f);
-      PRINT(bufName);
-
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
       args.write(OSP_float);
       args.write(f);
       callFunction(OSPCOI_SET_VALUE,args);
-      PING;
     }
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setInt(OSPObject target, const char *bufName, const int32 i)
