@@ -56,7 +56,8 @@ namespace ospray {
   void Renderer::endFrame(const int32 fbChannelFlags)
   {
     FrameBuffer *fb = this->currentFB;
-    fb->accumID++;
+    if (fbChannelFlags & OSP_FB_ACCUM)
+      fb->accumID++;
     ispc::Renderer_endFrame(getIE(),fb->accumID);
   }
   

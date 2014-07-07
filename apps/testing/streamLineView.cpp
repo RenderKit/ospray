@@ -60,10 +60,6 @@ namespace ospray {
         color.push_back(vec3f(triangle.vertex[2].v));
       }
       fclose(file);
-      PING;
-      PRINT(vertex.size());
-      PRINT(index.size());
-      PRINT(color.size());
     }
   };
 
@@ -149,12 +145,12 @@ namespace ospray {
       renderer = ospNewRenderer(rendererType);
 
       OSPMaterial mat = ospNewMaterial(renderer,"default");
-      ospSet3f(mat,"kd",.7,.7,.7); // OBJ renderer, default ...
-      ospCommit(mat);
+      if (mat) {
+        ospSet3f(mat,"kd",.7,.7,.7); // OBJ renderer, default ...
+        ospCommit(mat);
+      }
       
-      PRINT(rendererType);
       if (std::string(rendererType) == "obj") {
-        PING;
         OSPLight topLight = ospNewLight(renderer,"DirectionalLight");
         ospSet3f(topLight,"direction",-1,-2,1);
         ospSet3f(topLight,"color",1,1,1);
@@ -219,7 +215,6 @@ namespace ospray {
       }
 
       ospCommit(model);
-      PING;
 
       Assert2(renderer,"could not create renderer");
       ospSetParam(renderer,"world",model);
@@ -252,7 +247,8 @@ namespace ospray {
       }
 
       fps.startRender();
-      ospRenderFrame(fb,renderer);
+      ospRenderFrame(fb,renderer//,OSP_FB_COLOR|OSP_FB_ACCUM
+                     );
       fps.doneRender();
     
       ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
