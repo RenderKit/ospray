@@ -10,6 +10,10 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  Model::Model()
+  {
+    this->ispcEquivalent = ispc::Model_create(this);
+  }
   void Model::finalize()
   {
     if (logLevel > 2) {
@@ -17,15 +21,15 @@ namespace ospray {
       cout << "Finalizing model, has " << geometry.size() << " geometries" << endl;
     }
 
-    this->ispcEquivalent = ispc::Model_create(this, geometry.size());
+    ispc::Model_init(getIE(), geometry.size());
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
-
+    
     // for now, only implement triangular geometry...
     for (size_t i=0; i < geometry.size(); i++) {
       geometry[i]->finalize(this);
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
-
+    
     rtcCommit(embreeSceneHandle);
   }
 }

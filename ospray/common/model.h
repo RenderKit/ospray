@@ -20,6 +20,8 @@ namespace ospray {
     ray/model intersection) */
   struct Model : public ManagedObject
   {
+    Model();
+
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Model"; }
     virtual void finalize();
