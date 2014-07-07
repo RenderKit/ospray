@@ -229,6 +229,7 @@ namespace ospray {
     const char *type = mat->getParam("type","OBJMaterial");
     assert(type);
     OSPMaterial ospMat = alreadyCreatedMaterials[mat] = ospNewMaterial(renderer,type);
+    PRINT(type);
     if (!ospMat)  {
       warnMaterial(type);
       return createDefaultMaterial(renderer);

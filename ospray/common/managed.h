@@ -103,15 +103,25 @@ namespace ospray {
          this pointer belongs to the application, and it can not be
          used remotely */
       void set(void *v);
-      /*! set parameter to given float value and type */
-      void set(const float v) { clear(); type = OSP_FLOAT; (float&)f = v; }
-      /*! set parameter to given int value and type */
-      void set(const int v) { clear(); type = OSP_INT; (int&)f = v; }
-      /*! set parameter to vec3f value and type */
-      void set(const vec3f &v) { clear(); type = OSP_vec3f; (vec3f&)f = v; }
-      /*! set parameter to vec3i value and type */
-      void set(const vec3i &v) { clear(); type = OSP_vec3i; (vec3i&)i = v; }
-      /*! storage for the various types this parameter could be */
+      /*! set parameter to given value and type 
+        @{ */
+      void set(const float &v) { clear(); type = OSP_FLOAT; f[0] = v; }
+      void set(const int   &v) { clear(); type = OSP_INT;   i[0] = v; }
+      void set(const uint  &v) { clear(); type = OSP_UINT;  ui[0] = v; }
+
+      void set(const vec2f &v) { clear(); type = OSP_vec2f; (vec2f&)f[0] = v; }
+      void set(const vec3f &v) { PING; PRINT(v); clear(); type = OSP_vec3f; (vec3f&)f[0] = v; PING; PRINT(v); }
+      void set(const vec4f &v) { clear(); type = OSP_vec4f; (vec4f&)f[0] = v; }
+
+      void set(const vec2i &v) { clear(); type = OSP_vec2i; (vec2i&)i[0] = v; }
+      void set(const vec3i &v) { clear(); type = OSP_vec3i; (vec3i&)i[0] = v; }
+      void set(const vec4i &v) { clear(); type = OSP_vec4i; (vec4i&)i[0] = v; }
+
+      void set(const vec2ui &v) { clear(); type = OSP_vec2i; (vec2ui&)ui[0] = v; }
+      void set(const vec3ui &v) { clear(); type = OSP_vec3i; (vec3ui&)ui[0] = v; }
+      void set(const vec4ui &v) { clear(); type = OSP_vec4i; (vec4ui&)ui[0] = v; }
+      /*! @} */
+
       union {
         float f[4];
         int32 i[4];
@@ -145,6 +155,16 @@ namespace ospray {
     /*! set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);
 
+    /*! set a parameter with given name to given value, create param if not existing */
+    template<typename T>
+    inline void set(const char *name, const T &t) { 
+      PING; PRINT(name); PRINT(t);
+      Param *p = findParam(name,1);
+      PRINT(p);
+      p->set(t); 
+      PING;
+    }
+
     /*! @{
     /*! \brief find the named parameter, and return its object value if
         available; else return 'default' value 
@@ -162,6 +182,8 @@ namespace ospray {
     int32  getParam1i(const char *name, const int32  valIfNotFound);
     float  getParam1f(const char *name, const float  valIfNotFound);
     float  getParamf (const char *name, const float  valIfNotFound);
+
+
     void  *getVoidPtr(const char *name, void *valIfNotFound);
     const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */

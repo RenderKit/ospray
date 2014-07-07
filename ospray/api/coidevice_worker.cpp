@@ -344,11 +344,16 @@ namespace ospray {
     {
       DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
+      Handle _renderer = args.get<Handle>();
       const char *type = args.getString();
 
-      Material *mat = Material::createMaterial(type);
+      Renderer *renderer = (Renderer*)_renderer.lookup();
+      Material *mat = renderer->createMaterial(type);
+      if (!mat)
+        mat = Material::createMaterial(type);
       handle.assign(mat);
 
+      cout << "MATERIAL " << handle << " is " << type << " / " << mat << endl;
       COIProcessProxyFlush();
     }
 
@@ -553,36 +558,79 @@ namespace ospray {
     {
       DataStream args(argsPtr);
 
+      PING;
+      COIProcessProxyFlush();
+
+
       Handle target = args.get<Handle>();
-      // cout << "!osp:coi: set value " << target.ID() << endl;
+      PRINT(target);
       const char *name = args.getString();
       ManagedObject *obj = target.lookup();
+      PRINT(obj);
+      if (obj == NULL)
+        cout << "SET_VALUE ON NULL OBJECT!!!!" << endl;
       Assert(obj);
 
       OSPDataType type = args.get<OSPDataType>();
+
+      cout << "!osp:coi: set value " << name << " " << (int)type << endl; 
+      COIProcessProxyFlush(); 
+
       switch (type) {
-      case OSP_int32:
-        obj->findParam(name,1)->set(args.get<int32>());
+      case OSP_INT : obj->set(name,args.get<int32>()); break;
+      case OSP_INT2: obj->set(name,args.get<vec2i>()); break;
+      case OSP_INT3: obj->set(name,args.get<vec3i>()); break;
+      case OSP_INT4: obj->set(name,args.get<vec4i>()); break;
+
+      case OSP_UINT : obj->set(name,args.get<uint32>()); break;
+      case OSP_UINT2: obj->set(name,args.get<vec2ui>()); break;
+      case OSP_UINT3: obj->set(name,args.get<vec3ui>()); break;
+      case OSP_UINT4: obj->set(name,args.get<vec4ui>()); break;
+
+      case OSP_FLOAT : obj->set(name,args.get<float>()); break;
+      case OSP_FLOAT2: obj->set(name,args.get<vec2f>()); break;
+      case OSP_FLOAT3: 
+        cout << "!osp:coi: set FLOAT3 value " << name << " " << (int)type << endl; 
+        COIProcessProxyFlush(); 
+        obj->set(name,args.get<vec3f>()); 
+        cout << "!osp:coi: DONE set FLOAT3 value " << name << " " << (int)type << endl; 
+        COIProcessProxyFlush(); 
         break;
-      case OSP_float:
-        obj->findParam(name,1)->set(args.get<float>());
-        break;
-      case OSP_vec3f:
-        obj->findParam(name,1)->set(args.get<vec3f>());
-        break;
-      case OSP_vec3i:
-        obj->findParam(name,1)->set(args.get<vec3i>());
-        break;
-      case OSP_STRING:
-        obj->findParam(name,1)->set(args.getString());
-        break;
-      case OSP_OBJECT: {
-        ManagedObject *val = args.get<Handle>().lookup();
-        obj->setParam(name,val);
-      } break;
+      case OSP_FLOAT4: obj->set(name,args.get<vec4f>()); break;
+
+      case OSP_STRING: obj->set(name,args.getString()); break;
+      case OSP_OBJECT: obj->set(name,args.get<Handle>().lookup()); break;
+
+      // case OSP_int32: 
+      //   obj->findParam(name,1)->set(args.get<int32>());
+      //   break;
+      // case OSP_float: obj->findParam(name,1)->set(args.get<float>());
+      //   break;
+      // case OSP_vec3f:
+      //   obj->findParam(name,1)->set(args.get<vec3f>());
+      //   break;
+      // case OSP_vec2f:
+      //   obj->findParam(name,1)->set(args.get<vec2f>());
+      //   break;
+      // case OSP_vec2i:
+      //   obj->findParam(name,1)->set(args.get<vec2i>());
+      //   break;
+      // case OSP_vec3i:
+      //   obj->findParam(name,1)->set(args.get<vec3i>());
+      //   break;
+      // case OSP_STRING:
+      //   obj->findParam(name,1)->set(args.getString());
+      //   break;
+      // case OSP_OBJECT: {
+      //   ManagedObject *val = args.get<Handle>().lookup();
+      //   obj->setParam(name,val);
+      // } break;
       default:
         throw "ospray_coi_set_value no timplemented for given data type";
       }
+
+      cout << "!osp:coi: DONE set value " << name << " " << (int)type << endl; 
+      COIProcessProxyFlush(); 
     }
   }
 }

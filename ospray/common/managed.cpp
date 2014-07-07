@@ -35,9 +35,13 @@ namespace ospray {
     ptr = NULL;
   }
   ManagedObject::Param::Param(const char *name)  
-    : name(NULL), type(OSP_OBJECT), ptr(NULL) 
+    : name(NULL), type(OSP_FLOAT), ptr(NULL) 
   {
     Assert(name);
+    f[0] = 0;
+    f[1] = 0;
+    f[2] = 0;
+    f[3] = 0;
     if (name) this->name = strdup(name);
   };
 
@@ -51,11 +55,19 @@ namespace ospray {
 
   ManagedObject::Param *ManagedObject::findParam(const char *name, bool addIfNotExist)
   {
+    PING;
+    PRINT(this);
+    PRINT(this->toString());
+    PRINT(paramList.size());
     for (size_t i=0 ; i < paramList.size() ; i++) {
+      PRINT(name);
+      PRINT(paramList[i]->name);
       if (!strcmp(paramList[i]->name,name)) return paramList[i];
     }
     if (!addIfNotExist) return NULL;
+    PING;
     paramList.push_back(new Param(name));
+    PING;
     return paramList[paramList.size()-1];
   }
 

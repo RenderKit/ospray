@@ -108,17 +108,17 @@ namespace ospray {
 
       COIDevice();
 
-      void callFunction(RemoteFctID ID, const DataStream &data, bool sync=false)
+      void callFunction(RemoteFctID ID, const DataStream &data, bool sync=true)
       { 
         double t0 = getSysTime();
 #if 1
+        PRINT(coiFctName[ID]);
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
-        static bool firstTime = 0;
+        static long numEventsOutstanding = 0;
         assert(engine.size() < MAX_ENGINES);
         for (int i=0;i<engine.size();i++) {
-          if (firstTime) {
+          if (numEventsOutstanding == 0) {
             bzero(&event[i],sizeof(event[i]));
-            firstTime = false;
           }
           COIRESULT result = COIPipelineRunFunction(engine[i]->coiPipe,
                                                     engine[i]->coiFctHandle[ID],
@@ -131,10 +131,13 @@ namespace ospray {
             coiError(result,"error in coipipelinerunfct");
           }
         }
-        if (sync)
+        numEventsOutstanding++;
+        if (sync) {
           for (int i=0;i<engine.size();i++) {
             COIEventWait(1,&event[i],-1,1/*wait for all*/,NULL,NULL);
           }
+          numEventsOutstanding = 0;
+        }
 #else
         for (int i=0;i<engine.size();i++) engine[i]->callFunction(ID,data,sync); 
 #endif
@@ -633,6 +636,7 @@ namespace ospray {
       Handle handle = Handle::alloc();
       DataStream args;
       args.write(handle);
+      args.write(_renderer);
       args.write(type);
       callFunction(OSPCOI_NEW_MATERIAL,args);
       return (OSPMaterial)(int64)handle;
@@ -929,12 +933,17 @@ namespace ospray {
     {
       Assert(bufName);
 
+      PING;
+      PRINT(f);
+      PRINT(bufName);
+
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
       args.write(OSP_float);
       args.write(f);
       callFunction(OSPCOI_SET_VALUE,args);
+      PING;
     }
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setInt(OSPObject target, const char *bufName, const int32 i)
@@ -953,12 +962,18 @@ namespace ospray {
     {
       Assert(bufName);
 
+      PING;
+      PRINT(target);
+      PRINT(bufName);
+      PRINT(v);
+
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
       args.write(OSP_vec3f);
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
+      PING;
     }
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setVec3i(OSPObject target, const char *bufName, const vec3i &v)

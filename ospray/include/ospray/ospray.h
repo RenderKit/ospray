@@ -76,24 +76,32 @@ typedef enum {
   OSP_OBJECT,
   // c-string (zero-terminated char pointer)
   OSP_STRING,
-  // atomic types
-  OSP_uint8,
-  OSP_int8,
-  OSP_INT, 
-  OSP_int32=OSP_INT,
-  OSP_UINT, 
-  OSP_uint32=OSP_UINT,
-  OSP_FLOAT, 
-  OSP_float=OSP_FLOAT,
-  // vector types
-  OSP_vec2f,
-  OSP_vec3i,
-  OSP_vec3ui,
-  OSP_vec3uc,
-  OSP_vec3f,
-  OSP_vec3fa, 
-  OSP_vec4i,
-  OSP_vec4uc,
+
+  // actual numeric data types
+  OSP_CHAR,   OSP_int8   = OSP_CHAR,
+
+  OSP_UCHAR,  OSP_uint8  = OSP_UCHAR,
+  OSP_UCHAR2, OSP_vec2uc = OSP_UCHAR2,
+  OSP_UCHAR3, OSP_vec3uc = OSP_UCHAR3,
+  OSP_UCHAR4, OSP_vec4uc = OSP_UCHAR4,
+
+  OSP_INT,    OSP_int32  = OSP_INT,
+  OSP_INT2,   OSP_vec2i  = OSP_INT2, 
+  OSP_INT3,   OSP_vec3i  = OSP_INT3,
+  OSP_INT4,   OSP_vec4i  = OSP_INT4,
+
+  OSP_UINT,   OSP_uint32 = OSP_UINT,
+  OSP_UINT2,  OSP_vec2ui = OSP_UINT2,
+  OSP_UINT3,  OSP_vec3ui = OSP_UINT3,
+  OSP_UINT4,  OSP_vec4ui = OSP_UINT4,
+
+  OSP_FLOAT,  OSP_float  = OSP_FLOAT,
+  OSP_FLOAT2, OSP_vec2f  = OSP_FLOAT2,
+  OSP_FLOAT3, OSP_vec3f  = OSP_FLOAT3,
+  OSP_FLOAT4, OSP_vec4f  = OSP_FLOAT4,
+  OSP_FLOAT3A,OSP_vec3fa = OSP_FLOAT3A,
+
+  // not yet adapted to the new naming scheme:
 } OSPDataType;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */

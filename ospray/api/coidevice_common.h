@@ -38,15 +38,7 @@ namespace ospray {
         memcpy(buf+ofs,mem,bytes);
         ofs+=bytes;
       }
-      // void write(const int32 &ID) {
-      //   write(&ID,sizeof(ID));
-      // }
-      // void write(const int64 &ID) {
-      //   write(&ID,sizeof(ID));
-      // }
-      // void write(const uint64 &ID) {
-      //   write(&ID,sizeof(ID));
-      // }
+
       template<typename T>
       inline void write(const T &t) {
         write(&t,sizeof(t));
@@ -55,9 +47,6 @@ namespace ospray {
         int32 len = strlen(s);
         write(s,len+1);
       }
-      // void write(const Handle &handle) {
-      //   write(&handle,sizeof(handle));
-      // }
 
       template<typename T>
       inline T get() {
@@ -72,20 +61,6 @@ namespace ospray {
         ofs += (strlen(s)+1);
         return s;
       }
-
-      // inline int32 getInt() {
-      //   int32 h;
-      //   memcpy(&h,buf+ofs,sizeof(h));
-      //   ofs += sizeof(h);
-      //   return h;
-      // }
-
-      // inline Handle getHandle() {
-      //   Handle h;
-      //   memcpy(&h,buf+ofs,sizeof(h));
-      //   ofs += sizeof(h);
-      //   return h;
-      // }
     };
   }
 }
