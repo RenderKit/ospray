@@ -9,7 +9,9 @@ VolumeViewer::VolumeViewer() : renderer_(NULL), volume_(NULL), transferFunction_
     // create renderer for volume viewer
     ospLoadModule("dvr");
     renderer_ = ospNewRenderer("dvr_ispc");
-    assert(renderer_);
+
+    if(!renderer_)
+        throw std::runtime_error("could not create renderer type 'dvr_ispc'");
 
     // create transfer function
     createTransferFunction();
@@ -35,8 +37,9 @@ void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dim
 {
     std::string volumeType = layout + "_" + format;
     volume_ = ospNewVolume(volumeType.c_str());
-    if (!volume_) 
-      throw std::runtime_error("could not create volume type '"+format+"'");
+
+    if(!volume_)
+        throw std::runtime_error("could not create volume type '" + volumeType + "'");
 
     ospSetString(volume_, "filename", filename.c_str());
     ospSet3i(volume_, "dimensions", dimensions.x, dimensions.y, dimensions.z);
@@ -70,7 +73,9 @@ void VolumeViewer::createTransferFunction()
 {
     // create transfer function
     transferFunction_ = ospNewTransferFunction("TransferFunctionPiecewiseLinear");
-    assert(transferFunction_ != NULL);
+
+    if(!transferFunction_)
+        throw std::runtime_error("could not create transfer function type 'TransferFunctionPiecewiseLinear'");
 
     ospCommit(transferFunction_);
 }

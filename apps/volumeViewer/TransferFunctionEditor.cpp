@@ -2,7 +2,10 @@
 
 TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunction)
 {
-    assert(transferFunction);
+    // assign transfer function
+    if(!transferFunction)
+        throw std::runtime_error("must be constructed with an existing transfer function");
+
     transferFunction_ = transferFunction;
 
     // load color maps
