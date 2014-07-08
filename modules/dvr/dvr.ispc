@@ -101,7 +101,8 @@ void DVRRenderer_renderSample(uniform Renderer *uniform _renderer,
 {
   uniform DVRRenderer *uniform renderer = (uniform DVRRenderer *uniform)_renderer;
   // print("sample.ray.org.x %\n",sample.ray.org.x);
-  vec4f rgba = traceRayDVR(sample.ray,renderer->volume,renderer->dt);
+  // scale the color value; this should be handled differently
+  vec4f rgba = 5.f * traceRayDVR(sample.ray,renderer->volume,renderer->dt);
   sample.rgb.x = rgba.x;
   sample.rgb.y = rgba.y;
   sample.rgb.z = rgba.z;
