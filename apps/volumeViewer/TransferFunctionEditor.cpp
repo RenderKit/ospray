@@ -108,33 +108,58 @@ void TransferFunctionEditor::setDataValueMax(double value)
 
 void TransferFunctionEditor::loadColorMaps()
 {
-    // default color map
-    std::vector<osp::vec3f> defaultColors;
-    defaultColors.push_back(osp::vec3f(0         , 1           , 0           ));
-    defaultColors.push_back(osp::vec3f(0         , 0.120394    , 0.302678    ));
-    defaultColors.push_back(osp::vec3f(0         , 0.216587    , 0.524575    ));
-    defaultColors.push_back(osp::vec3f(0.0552529 , 0.345022    , 0.659495    ));
-    defaultColors.push_back(osp::vec3f(0.128054  , 0.492592    , 0.720287    ));
-    defaultColors.push_back(osp::vec3f(0.188952  , 0.641306    , 0.792096    ));
-    defaultColors.push_back(osp::vec3f(0.327672  , 0.784939    , 0.873426    ));
-    defaultColors.push_back(osp::vec3f(0.60824   , 0.892164    , 0.935546    ));
-    defaultColors.push_back(osp::vec3f(0.881376  , 0.912184    , 0.818097    ));
-    defaultColors.push_back(osp::vec3f(0.9514    , 0.835615    , 0.449271    ));
-    defaultColors.push_back(osp::vec3f(0.904479  , 0.690486    , 0           ));
-    defaultColors.push_back(osp::vec3f(0.854063  , 0.510857    , 0           ));
-    defaultColors.push_back(osp::vec3f(0.777096  , 0.330175    , 0.000885023 ));
-    defaultColors.push_back(osp::vec3f(0.672862  , 0.139086    , 0.00270085  ));
-    defaultColors.push_back(osp::vec3f(0.508812  , 0           , 0           ));
-    defaultColors.push_back(osp::vec3f(0.299413  , 0.000366217 , 0.000549325 ));
-    // defaultColors.push_back(osp::vec3f(0.0157473 , 0.00332647  , 0           ));
-    defaultColors.push_back(osp::vec3f(0.0157473 , 0.00332647  , 1           ));
+    // color maps based on ParaView default color maps
 
-    colorMaps_.push_back(ColorMap("default", defaultColors));
+    std::vector<osp::vec3f> colors;
 
-    // monochrome
-    std::vector<osp::vec3f> monochromeColors;
-    monochromeColors.push_back(osp::vec3f(0.));
-    monochromeColors.push_back(osp::vec3f(1.));
+    // jet
+    colors.clear();
+    colors.push_back(osp::vec3f(0         , 0           , 0.562493   ));
+    colors.push_back(osp::vec3f(0         , 0           , 1          ));
+    colors.push_back(osp::vec3f(0         , 1           , 1          ));
+    colors.push_back(osp::vec3f(0.500008  , 1           , 0.500008   ));
+    colors.push_back(osp::vec3f(1         , 1           , 0          ));
+    colors.push_back(osp::vec3f(1         , 0           , 0          ));
+    colors.push_back(osp::vec3f(0.500008  , 0           , 0          ));
+    colorMaps_.push_back(ColorMap("Jet", colors));
 
-    colorMaps_.push_back(ColorMap("monochrome", monochromeColors));
+    // ice / fire
+    colors.clear();
+    colors.push_back(osp::vec3f(0         , 0           , 0           ));
+    colors.push_back(osp::vec3f(0         , 0.120394    , 0.302678    ));
+    colors.push_back(osp::vec3f(0         , 0.216587    , 0.524575    ));
+    colors.push_back(osp::vec3f(0.0552529 , 0.345022    , 0.659495    ));
+    colors.push_back(osp::vec3f(0.128054  , 0.492592    , 0.720287    ));
+    colors.push_back(osp::vec3f(0.188952  , 0.641306    , 0.792096    ));
+    colors.push_back(osp::vec3f(0.327672  , 0.784939    , 0.873426    ));
+    colors.push_back(osp::vec3f(0.60824   , 0.892164    , 0.935546    ));
+    colors.push_back(osp::vec3f(0.881376  , 0.912184    , 0.818097    ));
+    colors.push_back(osp::vec3f(0.9514    , 0.835615    , 0.449271    ));
+    colors.push_back(osp::vec3f(0.904479  , 0.690486    , 0           ));
+    colors.push_back(osp::vec3f(0.854063  , 0.510857    , 0           ));
+    colors.push_back(osp::vec3f(0.777096  , 0.330175    , 0.000885023 ));
+    colors.push_back(osp::vec3f(0.672862  , 0.139086    , 0.00270085  ));
+    colors.push_back(osp::vec3f(0.508812  , 0           , 0           ));
+    colors.push_back(osp::vec3f(0.299413  , 0.000366217 , 0.000549325 ));
+    colors.push_back(osp::vec3f(0.0157473 , 0.00332647  , 0           ));
+    colorMaps_.push_back(ColorMap("Ice / Fire", colors));
+
+    // cool to warm
+    colors.clear();
+    colors.push_back(osp::vec3f(0.231373  , 0.298039    , 0.752941    ));
+    colors.push_back(osp::vec3f(0.865003  , 0.865003    , 0.865003    ));
+    colors.push_back(osp::vec3f(0.705882  , 0.0156863   , 0.14902     ));
+    colorMaps_.push_back(ColorMap("Cool to Warm", colors));
+
+    // blue to red rainbow
+    colors.clear();
+    colors.push_back(osp::vec3f(0         , 0           , 1           ));
+    colors.push_back(osp::vec3f(1         , 0           , 0           ));
+    colorMaps_.push_back(ColorMap("Blue to Red Rainbow", colors));
+
+    // grayscale
+    colors.clear();
+    colors.push_back(osp::vec3f(0.));
+    colors.push_back(osp::vec3f(1.));
+    colorMaps_.push_back(ColorMap("Grayscale", colors));
 }
