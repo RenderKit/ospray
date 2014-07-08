@@ -105,9 +105,9 @@ namespace ospray {
       void set(void *v);
       /*! set parameter to given value and type 
         @{ */
-      void set(const float &v) { clear(); type = OSP_FLOAT; f[0] = v; }
-      void set(const int   &v) { clear(); type = OSP_INT;   i[0] = v; }
-      void set(const uint  &v) { clear(); type = OSP_UINT;  ui[0] = v; }
+      void set(const float  &v) { clear(); type = OSP_FLOAT; f[0] = v; }
+      void set(const int    &v) { clear(); type = OSP_INT;   i[0] = v; }
+      void set(const uint32 &v) { clear(); type = OSP_UINT;  ui[0] = v; }
 
       void set(const vec2f &v) { clear(); type = OSP_vec2f; (vec2f&)f[0] = v; }
       void set(const vec3f &v) { clear(); type = OSP_vec3f; (vec3f&)f[0] = v; }
