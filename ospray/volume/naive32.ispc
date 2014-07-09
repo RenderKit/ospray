@@ -11,8 +11,6 @@ struct NaiveVolume {
 };
 
 
-export void foo(uniform float *uniform ptr) { *ptr = 0; }
-
 // ------------------------------------------------------------------
 // 'internal' functions
 // ------------------------------------------------------------------
@@ -213,7 +211,7 @@ inline varying float Naive32Volume1uc_lerpf(uniform VolumePtr _volume,
   return v * (1.f/255);
 }
 
-float lerp(const float fx, const float fy, const float fz,
+inline float lerp(const float fx, const float fy, const float fz,
            const float v111,
            const float v112,
            const float v121,

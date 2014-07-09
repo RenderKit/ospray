@@ -36,7 +36,7 @@ void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dim
     std::string volumeType = layout + "_" + format;
     volume_ = ospNewVolume(volumeType.c_str());
     if (!volume_) 
-      throw std::runtime_error("could not create volume type '"+format+"'");
+      throw std::runtime_error("could not create volume type '"+volumeType+"'");
 
     ospSetString(volume_, "filename", filename.c_str());
     ospSet3i(volume_, "dimensions", dimensions.x, dimensions.y, dimensions.z);
