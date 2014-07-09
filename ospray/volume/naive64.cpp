@@ -1,9 +1,9 @@
-#include "naive32.h"
-#include "naive32_ispc.h"
+#include "naive64.h"
+#include "naive64_ispc.h"
 
 namespace ospray {
   template<typename T>
-  void NaiveVolume<T>::allocate() 
+  void Naive64Volume<T>::allocate() 
   {
     Assert(this->data == NULL);
     Assert(this->size.x > 0);
@@ -13,47 +13,47 @@ namespace ospray {
   }
   
   template<>
-  ispc::_Volume *NaiveVolume<uint8>::createIE()
+  ispc::_Volume *Naive64Volume<uint8>::createIE()
   {
     assert(ispcEquivalent == NULL);
-    this->ispcEquivalent = ispc::_Naive32Volume1uc_create((ispc::vec3i&)size,data);
+    this->ispcEquivalent = ispc::_Naive64Volume1uc_create((ispc::vec3i&)size,data);
     return (ispc::_Volume*)this->ispcEquivalent;
   }
   template<>
-  ispc::_Volume *NaiveVolume<float>::createIE()
+  ispc::_Volume *Naive64Volume<float>::createIE()
   {
     assert(ispcEquivalent == NULL);
-    this->ispcEquivalent = ispc::_Naive32Volume1f_create((ispc::vec3i&)size,data);
+    this->ispcEquivalent = ispc::_Naive64Volume1f_create((ispc::vec3i&)size,data);
     return (ispc::_Volume*)this->ispcEquivalent;
   }
 
   template<>
-  void NaiveVolume<uint8>::setRegion(const vec3i &where, 
+  void Naive64Volume<uint8>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
                                      const uint8 *data)
   {
-    ispc::_Naive32Volume1uc_setRegion((ispc::_Volume*)getIE(),(const ispc::vec3i&)where,
+    ispc::_Naive64Volume1uc_setRegion((ispc::_Volume*)getIE(),(const ispc::vec3i&)where,
                                       (const ispc::vec3i&)size,data);
   }
   
   template<>
-  void NaiveVolume<float>::setRegion(const vec3i &where, 
+  void Naive64Volume<float>::setRegion(const vec3i &where, 
                                      const vec3i &size, 
                                      const float *data)
   {
-    ispc::_Naive32Volume1f_setRegion((ispc::_Volume*)getIE(),(const ispc::vec3i&)where,
+    ispc::_Naive64Volume1f_setRegion((ispc::_Volume*)getIE(),(const ispc::vec3i&)where,
                                      (const ispc::vec3i&)size,data);
   }
   template<>
-  float NaiveVolume<float>::lerpf(const vec3fa &pos)
+  float Naive64Volume<float>::lerpf(const vec3fa &pos)
   { 
     float clamped_x = std::max(0.f,std::min(pos.x*size.x,size.x-1.0001f));
     float clamped_y = std::max(0.f,std::min(pos.y*size.y,size.y-1.0001f));
     float clamped_z = std::max(0.f,std::min(pos.z*size.z,size.z-1.0001f));
 
-    uint32 ix = uint32(clamped_x);
-    uint32 iy = uint32(clamped_y);
-    uint32 iz = uint32(clamped_z);
+    uint64 ix = uint64(clamped_x);
+    uint64 iy = uint64(clamped_y);
+    uint64 iz = uint64(clamped_z);
     
     const float fx = clamped_x - ix;
     const float fy = clamped_y - iy;
@@ -84,14 +84,14 @@ namespace ospray {
     return v;
   }
   template<>
-  float NaiveVolume<uint8>::lerpf(const vec3fa &pos)
+  float Naive64Volume<uint8>::lerpf(const vec3fa &pos)
   { 
     float clamped_x = std::max(0.f,std::min(pos.x*size.x,size.x-1.0001f));
     float clamped_y = std::max(0.f,std::min(pos.y*size.y,size.y-1.0001f));
     float clamped_z = std::max(0.f,std::min(pos.z*size.z,size.z-1.0001f));
-    uint32 ix = uint32(clamped_x);
-    uint32 iy = uint32(clamped_y);
-    uint32 iz = uint32(clamped_z);
+    uint64 ix = uint64(clamped_x);
+    uint64 iy = uint64(clamped_y);
+    uint64 iz = uint64(clamped_z);
     
     const float fx = clamped_x - ix;
     const float fy = clamped_y - iy;
@@ -125,11 +125,11 @@ namespace ospray {
     return v;
   }
 
-  typedef NaiveVolume<uint8> NaiveVolume_uint8;
-  typedef NaiveVolume<float> NaiveVolume_float;
+  typedef Naive64Volume<uint8> Naive64Volume_uint8;
+  typedef Naive64Volume<float> Naive64Volume_float;
 
-  OSP_REGISTER_VOLUME(NaiveVolume_uint8,naive32_uint8);
-  OSP_REGISTER_VOLUME(NaiveVolume_float,naive32_float);
-  OSP_REGISTER_VOLUME(NaiveVolume_float,naive32_float32);
+  OSP_REGISTER_VOLUME(Naive64Volume_uint8,naive64_uint8);
+  OSP_REGISTER_VOLUME(Naive64Volume_float,naive64_float);
+  OSP_REGISTER_VOLUME(Naive64Volume_float,naive64_float32);
 }
 

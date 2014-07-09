@@ -17,11 +17,13 @@ namespace ospray {
         CMD_NEW_RENDERER=0,
         CMD_FRAMEBUFFER_CREATE,
         CMD_RENDER_FRAME,
+        CMD_FRAMEBUFFER_CLEAR,
         CMD_FRAMEBUFFER_MAP,
         CMD_FRAMEBUFFER_UNMAP,
         CMD_NEW_MODEL,
         CMD_NEW_GEOMETRY,
         CMD_NEW_MATERIAL,
+        CMD_NEW_LIGHT,
         CMD_NEW_TRIANGLEMESH,
         CMD_NEW_CAMERA,
         CMD_NEW_VOLUME,
@@ -46,17 +48,42 @@ namespace ospray {
                 int *_ac=NULL, const char **_av=NULL);
 
       /*! create a new frame buffer */
-      virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
-                                               const OSPFrameBufferMode mode,
-                                               const uint32 channels);
+      virtual OSPFrameBuffer
+      frameBufferCreate(const vec2i &size, 
+                        const OSPFrameBufferFormat mode,
+                        const uint32 channels);
+
+      /*! create a new transfer function object (out of list of 
+        registered transfer function types) */
+      virtual OSPTransferFunction newTransferFunction(const char *type);
+
+      /*! remove an existing geometry from a model */
+      virtual void removeGeometry(OSPModel _model, OSPGeometry _geometry);
+
+      /*! have given renderer create a new Light */
+      virtual OSPLight newLight(OSPRenderer _renderer, const char *type);
 
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb, 
-                                OSPFrameBufferChannel);
+                                         OSPFrameBufferChannel channel);
 
       /*! unmap previously mapped frame buffer */
       virtual void frameBufferUnmap(const void *mapped,
                                     OSPFrameBuffer fb);
+
+      /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+        if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+        '0,0,0,0'.  
+
+        if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+        +inf.  
+
+        if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+        and reset accumID.
+      */
+      virtual void frameBufferClear(OSPFrameBuffer _fb,
+                                    const uint32 fbChannelFlags); 
 
       /*! create a new model */
       virtual OSPModel newModel();

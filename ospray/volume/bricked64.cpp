@@ -11,7 +11,7 @@ namespace ospray {
     Assert(this->size.x > 0);
     Assert(this->size.y > 0);
     Assert(this->size.z > 0);
-    
+
     const int pageRes = PAGE_BRICK_RES;
     this->numPages.x = divRoundUp(this->size.x,pageRes);
     this->numPages.y = divRoundUp(this->size.y,pageRes);
@@ -19,19 +19,20 @@ namespace ospray {
 
     const int64 numPages
       = ((int64)this->numPages.x) * this->numPages.y * this->numPages.z;
-    const int pageSize   = pageRes*pageRes*pageRes;
-    const int numElements = numPages * pageSize;
+    const int64 pageSize   = pageRes*pageRes*pageRes;
+    const int64 numElements = numPages * pageSize;
 
-    this->data = new T[numElements];
+    if (numElements)
+      this->data = new T[numElements];
+    else 
+      this->data = NULL;
   }
 
   template<>
-  ispc::_Volume *PagedBrickedVolume<uint8>::createIE()
+  ispc::_Volume *PagedBrickedVolume<unsigned char>::createIE()
   {
-    NOTIMPLEMENTED;
-    // assert(ispcEquivalent == NULL);
-    // this->ispcEquivalent = ispc::PagedBricked64Volume1uc_create((ispc::vec3i&)size,data);
-    // return (ispc::_Volume*)this->ispcEquivalent;
+    ispcEquivalent = PagedBricked64Volume1uc_create((ispc::vec3i&)size,data);
+    return (ispc::_Volume*)this->ispcEquivalent;
   }
 
   template<>
@@ -43,15 +44,23 @@ namespace ospray {
     
   }
 
+  extern "C" void cSideLargeMemMalloc(void **ptr, int64 *numBytes)
+  {
+    PING;
+    PRINT(ptr);
+    PRINT(*numBytes);
+    *ptr = malloc(*numBytes);
+    PRINT(*ptr);
+  }
+
   template<>
   void PagedBrickedVolume<uint8>::setRegion(const vec3i &where, 
                                               const vec3i &size, 
                                               const uint8 *data)
   {
-    NOTIMPLEMENTED;
-    // ispc::PagedBricked64Volume1uc_setRegion((ispc::_Volume*)getIE(),
-    //                                         (const ispc::vec3i&)where,
-    //                                         (const ispc::vec3i&)size,data);
+    ispc::PagedBricked64Volume1uc_setRegion((ispc::_Volume*)getIE(),
+                                            (const ispc::vec3i&)where,
+                                            (const ispc::vec3i&)size,data);
   }
                                 
 
@@ -163,4 +172,6 @@ namespace ospray {
 
   OSP_REGISTER_VOLUME(PagedBrickedVolume_uint8,pageBricked64_uint8);
   OSP_REGISTER_VOLUME(PagedBrickedVolume_float,pageBricked64_float);
+  OSP_REGISTER_VOLUME(PagedBrickedVolume_uint8,bricked64_uint8);
+  OSP_REGISTER_VOLUME(PagedBrickedVolume_float,bricked64_float);
 }

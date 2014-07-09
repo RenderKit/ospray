@@ -10,6 +10,8 @@ struct NaiveVolume {
   Volume inherited;
 };
 
+extern "C" void cSideLargeMemMalloc(void *uniform *uniform ptr,
+                                    uniform int64 *uniform numBytes);
 
 // ------------------------------------------------------------------
 // 'internal' functions
@@ -18,7 +20,7 @@ struct NaiveVolume {
 /*! set given region to voxel data specified in 'data'. The region
     *must* be inside the volume, and the 'data' type must match the
     internal data format */
-void Naive32Volume1f_setRegion(uniform VolumePtr _volume,             
+void Naive64Volume1f_setRegion(uniform VolumePtr _volume,             
                                 const uniform vec3i &begin,                 
                                 const uniform vec3i &size,                  
                                 const void *uniform data)
@@ -42,7 +44,7 @@ void Naive32Volume1f_setRegion(uniform VolumePtr _volume,
 /*! set given region to voxel data specified in 'data'. The region
     *must* be inside the volume, and the 'data' type must match the
     internal data format */
-void Naive32Volume1uc_setRegion(uniform VolumePtr _volume,             
+void Naive64Volume1uc_setRegion(uniform VolumePtr _volume,             
                                 const uniform vec3i &begin,                 
                                 const uniform vec3i &size,                  
                                 const void *uniform data)
@@ -56,11 +58,14 @@ void Naive32Volume1uc_setRegion(uniform VolumePtr _volume,
            sy = 0 ... size.y, 
            sx = 0 ... size.x) 
     {
-      const int dx = begin.x + sx;
-      const int dy = begin.y + sy;
-      const int dz = begin.z + sz;
-      const int src_idx = sx + size.x * (sy + size.y * sz);
-      const int dst_idx = dx + volume->size.x * (dy + volume->size.y * dz);
+      const int32 dx = begin.x + sx;
+      const int32 dy = begin.y + sy;
+      const int32 dz = begin.z + sz;
+      const int64 src_idx = sx + size.x * (sy + size.y * ((int64)sz));
+      const int64 dst_idx = dx + volume->size.x * (dy + volume->size.y * ((int64)dz));
+      // bool b0 = (dz >= 512);
+      //  if (any(b0))
+      //    print("% % %\ndst_idex % %\n",dx,dy,sz,dst_idx,src_idx);
       // print("% -> %\n",src_idx,dst_idx);
       dst[dst_idx] = src[src_idx];
       // print("DONE % -> %\n",src_idx,dst_idx);
@@ -73,27 +78,35 @@ void Naive32Volume1uc_setRegion(uniform VolumePtr _volume,
 
 // workaround to cover ISPC issue #606, see below
 inline float getVoxel(const uniform unsigned int8 *uniform voxel, 
-                     uniform uint32 iOfs, varying uint32 vOfs)
+                     uniform uint64 iOfs, varying uint64 vOfs)
 {
+#if 1
+  return voxel[iOfs+vOfs];
+#else
   const uniform unsigned int8 *uniform p = voxel + iOfs;
   // print("ofs % % v %\n",iOfs,iOfs+vOfs,p);
   
   return p[vOfs];
+#endif
 }
 // workaround to cover ISPC issue #606, see below
 inline float getVoxel(const uniform float *uniform voxel, 
-                     uniform int iOfs, varying int vOfs)
+                     uniform int64 iOfs, varying int64 vOfs)
 {
+#if 1
+  return voxel[iOfs+vOfs];
+#else
   const uniform float *uniform p = voxel + iOfs;
   const float v = p[vOfs];
   // print("ofs % v %\n",iOfs+vOfs,v);
   return v;
+#endif
 }
 
 /*! compute trilineratly interpolated volume sample in floating point
     accuracy. (sample values outside the volume will be clamped to the
     nearest positoin inside the volume) */
-inline varying float Naive32Volume1f_lerpf(uniform VolumePtr _volume,            
+inline varying float Naive64Volume1f_lerpf(uniform VolumePtr _volume,            
                                            const varying vec3f &pos)
 {
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
@@ -116,7 +129,7 @@ inline varying float Naive32Volume1f_lerpf(uniform VolumePtr _volume,
   const uniform int dz = dy * volume->size.y;
 
 
-  const int ofs = x0 + volume->size.x * (y0 + volume->size.y * z0);
+  const int ofs = x0 + volume->size.x * (y0 + volume->size.y * ((int64)z0));
   // print("size % % %\n",volume->size.x,volume->size.y,volume->size.z);
   // print("xyz % % % -> ofs %\n",x0,y0,z0,ofs);
 #if 1
@@ -155,7 +168,7 @@ inline varying float Naive32Volume1f_lerpf(uniform VolumePtr _volume,
 /*! compute trilineratly interpolated volume sample in floating point
     accuracy. (sample values outside the volume will be clamped to the
     nearest positoin inside the volume) */
-inline varying float Naive32Volume1uc_lerpf(uniform VolumePtr _volume,            
+inline varying float Naive64Volume1uc_lerpf(uniform VolumePtr _volume,            
                                     const varying vec3f &pos)
 {
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
@@ -177,7 +190,7 @@ inline varying float Naive32Volume1uc_lerpf(uniform VolumePtr _volume,
   const uniform int dy = volume->size.x;
   const uniform int dz = dy * volume->size.y;
 
-  const int ofs = x0 + volume->size.x * (y0 + volume->size.y * z0);
+  const int64 ofs = x0 + volume->size.x * (y0 + volume->size.y * ((int64)z0));
 #if 1
   // workaround to cover ISPC bug #606
   const float v000 = getVoxel(voxel,0,ofs);
@@ -236,7 +249,7 @@ inline float lerp(const float fx, const float fy, const float fz,
 
 
 /*! compute disrete differences gradient, including clamping */
-inline varying float Naive32Volume1uc_gradf(uniform VolumePtr volume,            
+inline varying float Naive64Volume1uc_gradf(uniform VolumePtr volume,            
                                     varying vec3f &grad,            
                                     const varying vec3f &pos)
 {
@@ -336,75 +349,80 @@ inline varying float Naive32Volume1uc_gradf(uniform VolumePtr volume,
   return v * (1.f/255);
 #else
   grad.x
-    = Naive32Volume1uc_lerpf(volume,make_vec3f(pos.x+1.f,pos.y,pos.z))
-    - Naive32Volume1uc_lerpf(volume,make_vec3f(pos.x-1.f,pos.y,pos.z));
+    = Naive64Volume1uc_lerpf(volume,make_vec3f(pos.x+1.f,pos.y,pos.z))
+    - Naive64Volume1uc_lerpf(volume,make_vec3f(pos.x-1.f,pos.y,pos.z));
   grad.y
-    = Naive32Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y+1.f,pos.z))
-    - Naive32Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y-1.f,pos.z));
+    = Naive64Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y+1.f,pos.z))
+    - Naive64Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y-1.f,pos.z));
   grad.z
-    = Naive32Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z+1.f))
-    - Naive32Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z-1.f));
+    = Naive64Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z+1.f))
+    - Naive64Volume1uc_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z-1.f));
   return 
-    Naive32Volume1uc_lerpf(volume,pos);
+    Naive64Volume1uc_lerpf(volume,pos);
 #endif
 }
 
 
 /*! compute disrete differences gradient, including clamping */
-inline varying float Naive32Volume1f_gradf(uniform VolumePtr volume,            
+inline varying float Naive64Volume1f_gradf(uniform VolumePtr volume,            
                                     varying vec3f &grad,            
                                     const varying vec3f &pos)
 {
   grad.x
-    = Naive32Volume1f_lerpf(volume,make_vec3f(pos.x+1.f,pos.y,pos.z))
-    - Naive32Volume1f_lerpf(volume,make_vec3f(pos.x-1.f,pos.y,pos.z));
+    = Naive64Volume1f_lerpf(volume,make_vec3f(pos.x+1.f,pos.y,pos.z))
+    - Naive64Volume1f_lerpf(volume,make_vec3f(pos.x-1.f,pos.y,pos.z));
   grad.y
-    = Naive32Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y+1.f,pos.z))
-    - Naive32Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y-1.f,pos.z));
+    = Naive64Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y+1.f,pos.z))
+    - Naive64Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y-1.f,pos.z));
   grad.z
-    = Naive32Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z+1.f))
-    - Naive32Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z-1.f));
+    = Naive64Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z+1.f))
+    - Naive64Volume1f_lerpf(volume,make_vec3f(pos.x,pos.y,pos.z-1.f));
   return 
-    Naive32Volume1f_lerpf(volume,pos);
+    Naive64Volume1f_lerpf(volume,pos);
 }
 
-/*! 'Constructor' for a naive321uc volume.
+/*! 'Constructor' for a naive641uc volume.
 
   \note eventually this is supposed to return a "VolumePtr", but right
   now ISPC crashes when doing that */
-uniform VolumePtr Naive32Volume1uc_create(uniform vec3i &size, const uint8 *uniform internal)
+uniform VolumePtr Naive64Volume1uc_create(uniform vec3i &size, const uint8 *uniform internal)
 {
   uniform NaiveVolume *uniform volume = uniform new uniform NaiveVolume;
   uniform int64 numElements   = ((int64)size.x) * size.y * size.z;
   volume->inherited.transferFunction = NULL;
   volume->inherited.size     = size;
   volume->inherited.dataSize = numElements * sizeof(uniform int8);
-  if (internal == NULL)
-    volume->inherited.data = uniform new uniform int8[numElements];
-  else
+  if (internal == NULL) {
+    // volume->inherited.data = uniform new uniform int8[numElements];
+    cSideLargeMemMalloc(&volume->inherited.data,&volume->inherited.dataSize);
+    uniform int64 ofs = size.x-1;
+    ofs *= (size.y-1);
+    ofs *= (size.z-1);
+    ((uniform uint8*uniform)volume->inherited.data)[ofs] = 0;
+  } else
     volume->inherited.data = (void *uniform) internal;
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
-  // volume->inherited.setRegion = Naive32Volume1uc_setRegion;
-  volume->inherited.lerpf     = Naive32Volume1uc_lerpf;
-  volume->inherited.gradf     = Naive32Volume1uc_gradf;
+  // volume->inherited.setRegion = Naive64Volume1uc_setRegion;
+  volume->inherited.lerpf     = Naive64Volume1uc_lerpf;
+  volume->inherited.gradf     = Naive64Volume1uc_gradf;
   return (uniform Volume *)volume;
 }
 
 #if 1
-/*! 'Constructor' for a naive321f volume.
+/*! 'Constructor' for a naive641f volume.
 
   \note eventually this is supposed to return a "VolumePtr", but right
   now ISPC crashes when doing that */
-uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *uniform internal)
+uniform VolumePtr Naive64Volume1f_create(uniform vec3i &size, const float *uniform internal)
 {
   uniform NaiveVolume *uniform volume = uniform new uniform NaiveVolume;
   uniform int64 numElements   = ((int64)size.x) * size.y * size.z;
   volume->inherited.size     = size;
   volume->inherited.dataSize = numElements * sizeof(uniform float);
-  if (volume->inherited.dataSize >= (1ULL<<32)) {
-    print("ispc::Naive32Volume1f_create: size too big for 32-bit volume!");
+  if (volume->inherited.dataSize >= (1ULL<<64)) {
+    print("ispc::Naive64Volume1f_create: size too big for 64-bit volume!");
     return NULL;
   }
   if (internal == NULL)
@@ -414,9 +432,9 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
   volume->inherited.clampSize.x = biggestFloatSmallerThan(size.x-1);
   volume->inherited.clampSize.y = biggestFloatSmallerThan(size.y-1);
   volume->inherited.clampSize.z = biggestFloatSmallerThan(size.z-1);
-  // volume->inherited.setRegion = Naive32Volume1f_setRegion;
-  volume->inherited.lerpf     = Naive32Volume1f_lerpf;
-  volume->inherited.gradf     = Naive32Volume1f_gradf;
+  // volume->inherited.setRegion = Naive64Volume1f_setRegion;
+  volume->inherited.lerpf     = Naive64Volume1f_lerpf;
+  volume->inherited.gradf     = Naive64Volume1f_gradf;
   return (uniform Volume *)volume;
 }
 
@@ -425,30 +443,30 @@ uniform VolumePtr Naive32Volume1f_create(uniform vec3i &size, const float *unifo
 // publicly exported functions at the end
 // ------------------------------------------------------------------
 
-export void _Naive32Volume1uc_setRegion(uniform ExtVolumePtr _volume,
+export void _Naive64Volume1uc_setRegion(uniform ExtVolumePtr _volume,
                                         const uniform vec3i &begin,
                                         const uniform vec3i &size,
                                         const uniform unsigned int8 *uniform data)
 { 
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
-  Naive32Volume1uc_setRegion(volume,begin,size,data);
+  Naive64Volume1uc_setRegion(volume,begin,size,data);
 }
-export void _Naive32Volume1f_setRegion(uniform ExtVolumePtr _volume,
+export void _Naive64Volume1f_setRegion(uniform ExtVolumePtr _volume,
                                        const uniform vec3i &begin,
                                        const uniform vec3i &size,
                                        const uniform float *uniform data)
 { 
   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
-  Naive32Volume1f_setRegion(volume,begin,size,data);
+  Naive64Volume1f_setRegion(volume,begin,size,data);
 }
 
 /* need this workaround because ISPC cannot export pointer to 'Volume'
    type because volume type has function pointers */
-export  uniform ExtVolumePtr _Naive32Volume1uc_create(uniform vec3i &size, const uniform uint8 *uniform internal)
-{ return (ExtVolumePtr)Naive32Volume1uc_create(size,internal); }
+export  uniform ExtVolumePtr _Naive64Volume1uc_create(uniform vec3i &size, const uniform uint8 *uniform internal)
+{ return (ExtVolumePtr)Naive64Volume1uc_create(size,internal); }
 // extern "C" 
-export uniform ExtVolumePtr _Naive32Volume1f_create(uniform vec3i &size, const uniform float *uniform internal)
-{ return (ExtVolumePtr)Naive32Volume1f_create(size,internal); }
+export uniform ExtVolumePtr _Naive64Volume1f_create(uniform vec3i &size, const uniform float *uniform internal)
+{ return (ExtVolumePtr)Naive64Volume1f_create(size,internal); }
 
 
 

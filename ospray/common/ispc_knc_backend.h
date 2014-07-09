@@ -83,7 +83,40 @@ typedef int64_t __vec1_i64;
 
 struct __vec16_i32;
 
+#if 1
+typedef struct __vec16_i1 {
+  FORCEINLINE operator __mmask16() const { return m; }
+  FORCEINLINE __vec16_i1() {} // : v(0) {};
+  FORCEINLINE __vec16_i1(const __mmask16 &in) : m(in) {}
+  FORCEINLINE __vec16_i1(const __vec16_i1 &o) : m(o.m) {}
+  FORCEINLINE __vec16_i1& operator =(const __vec16_i1 &o) { m=o.m; return *this; }
+  FORCEINLINE __vec16_i1(int v00, int v01, int v02, int v03, 
+                         int v04, int v05, int v06, int v07,
+                         int v08, int v09, int v10, int v11,
+                         int v12, int v13, int v14, int v15) {
+    m = (v00 << 0)
+      | (v01 << 1)
+      | (v02 << 2)
+      | (v03 << 3)
+      | (v04 << 4)
+      | (v05 << 5)
+      | (v06 << 6)
+      | (v07 << 7)
+      | (v08 << 8)
+      | (v09 << 9)
+      | (v10 << 10)
+      | (v11 << 11)
+      | (v12 << 12)
+      | (v13 << 13)
+      | (v14 << 14)
+      | (v15 << 15);
+    }
+  __mmask16 m;
+} __vec16_i;
+
+#else
 typedef __mmask16 POST_ALIGN(2) __vec16_i1;
+#endif
 
 typedef struct PRE_ALIGN(64) __vec16_f {
     FORCEINLINE operator __m512() const { return v; }
@@ -174,14 +207,19 @@ struct vec16 {
 
 PRE_ALIGN(16) struct __vec16_i8   : public vec16<int8_t> { 
     FORCEINLINE __vec16_i8() { }
+    FORCEINLINE __vec16_i8(const int  v0, const int  v1, 
+                           const int  v2, const int  v3, 
+                           const int  v4, const int  v5, 
+                           const int  v6, const int  v7,
+                           const int  v8, const int  v9, 
+                           const int  v10, const int  v11, 
+                           const int  v12, const int  v13, 
+                           const int  v14, const int  v15)
+        : vec16<int8_t>(v0, v1, v2, v3, v4, v5, v6, v7,
+                        v8, v9, v10, v11, v12, v13, v14, v15) 
+  { }
     FORCEINLINE __vec16_i8(const __vec16_i8 &o);
     FORCEINLINE __vec16_i8& operator =(const __vec16_i8 &o);
-    FORCEINLINE __vec16_i8(int8_t v0, int8_t v1, int8_t v2, int8_t v3, 
-                           int8_t v4, int8_t v5, int8_t v6, int8_t v7,
-                           int8_t v8, int8_t v9, int8_t v10, int8_t v11, 
-                           int8_t v12, int8_t v13, int8_t v14, int8_t v15)
-        : vec16<int8_t>(v0, v1, v2, v3, v4, v5, v6, v7,
-                        v8, v9, v10, v11, v12, v13, v14, v15) { }
 } POST_ALIGN(16);
 
 PRE_ALIGN(32) struct __vec16_i16  : public vec16<int16_t> { 
@@ -592,6 +630,10 @@ template <> static FORCEINLINE __vec16_i32 __undef_i32<__vec16_i32>() {
 static FORCEINLINE __vec16_i32 __broadcast_i32(__vec16_i32 v, int index) {
     int32_t val = __extract_element(v, index & 0xf);
     return _mm512_set1_epi32(val);
+}
+
+static FORCEINLINE __vec16_i32 __cast_trunc(__vec16_i32, const __vec16_i64 i64) {
+  return __vec16_i32(i64.v_lo);
 }
 
 static FORCEINLINE __vec16_i32 __rotate_i32(__vec16_i32 v, int index) {
@@ -2040,6 +2082,33 @@ __scatter_base_offsets64_i32(uint8_t *_base, uint32_t scale, __vec16_i64 offsets
     }
 }
 
+static FORCEINLINE void
+__scatter_base_offsets64_i8(uint8_t *_base, uint32_t scale, __vec16_i64 offsets,
+                            __vec16_i8 value,
+                            __vec16_i1 mask) { 
+    __vec16_i1 still_to_do = mask;
+
+  __vec16_i32 tmp = _mm512_extload_epi32(&value, _MM_UPCONV_EPI32_SINT8,
+                                         _MM_BROADCAST32_NONE, _MM_HINT_NONE);
+  // PING;
+  // _mm512_mask_extstore_epi32(p, mask, tmp, _MM_DOWNCONV_EPI32_SINT8,_MM_HINT_NONE);
+
+    while (still_to_do) {
+        int first_active_lane = _mm_tzcnt_32((int)still_to_do);
+        const uint &hi32 = ((uint*)&offsets.v_hi)[first_active_lane];
+        __vec16_i1 match = _mm512_mask_cmp_epi32_mask(mask,offsets.v_hi,
+                                                      __smear_i32<__vec16_i32>((int32_t)hi32),
+                                                      _MM_CMPINT_EQ);
+    
+        void * base = (void*)((unsigned long)_base  +
+                              ((scale*(unsigned long)hi32) << 32));    
+        _mm512_mask_i32extscatter_epi32(base, match, offsets.v_lo, 
+                                        tmp,
+                                        _MM_DOWNCONV_EPI32_SINT8, scale,
+                                        _MM_HINT_NONE);
+        still_to_do = _mm512_kxor(match,still_to_do);
+    }
+}
 
 
 static FORCEINLINE __vec16_i32

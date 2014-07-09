@@ -113,10 +113,10 @@ namespace ospray {
       - the user may or may not have launched MPI explicitly for his app
       - the app may or may not be running distributed
       - the ospray frontend (the part linked to the app) will wait for a remote MPI gruop of 
-        workers to connect to this app
+      workers to connect to this app
       - the ospray frontend will store the port its waiting on connections for in the
-        filename passed to this function; or will print it to stdout if this is NULL
-     */
+      filename passed to this function; or will print it to stdout if this is NULL
+    */
     ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av, 
                                                     const char *fileNameToStorePortIn)
     {
@@ -183,11 +183,11 @@ namespace ospray {
       - the user may or may not have launched MPI explicitly for his app
       - the app may or may not be running distributed
       - the ospray frontend (the part linked to the app) will use the specified 
-        'launchCmd' to launch a _new_ MPI group of worker processes. 
+      'launchCmd' to launch a _new_ MPI group of worker processes. 
       - the ospray frontend will assume the launched process to output 'OSPRAY_SERVICE_PORT' 
-        stdout, will parse that output for this string, and create an mpi connection to 
-        this port to establish the service
-     */
+      stdout, will parse that output for this string, and create an mpi connection to 
+      this port to establish the service
+    */
     ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av, 
                                                      const char *launchCommand)
     {
@@ -246,59 +246,59 @@ namespace ospray {
       MPI_Barrier(app.comm);
       return new api::MPIDevice(ac,av);
 
-//       if (mpi::world.rank == 0) {
-// #if 1
-//         if (fork()) {
-//           system(launchCommand);
-//           while(1) sleep(10);
-//         }
-//         //   sleep(10000);
-//         // }
-//         PING;
-//         // sleep(20);
-//         // PING;
-//         sleep(3);
-//         FILE *launchOutput = fopen("/tmp/launch.out","r");
-// #else
-//         PING;
-//         FILE *launchOutput = popen(launchCommand,"r");
-//         PRINT(launchOutput);
-//         sleep(10);
-// #endif
+      //       if (mpi::world.rank == 0) {
+      // #if 1
+      //         if (fork()) {
+      //           system(launchCommand);
+      //           while(1) sleep(10);
+      //         }
+      //         //   sleep(10000);
+      //         // }
+      //         PING;
+      //         // sleep(20);
+      //         // PING;
+      //         sleep(3);
+      //         FILE *launchOutput = fopen("/tmp/launch.out","r");
+      // #else
+      //         PING;
+      //         FILE *launchOutput = popen(launchCommand,"r");
+      //         PRINT(launchOutput);
+      //         sleep(10);
+      // #endif
 
-//         Assert(launchOutput);
-//         char line[10000];
-//         char *listenPort = NULL;
-//         const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
-//         PING;
-//         while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
-//           PING;
-//           PRINT(line);
-//           if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
-//             listenPort = line + strlen(LAUNCH_HEADER);
-//             char *eol = strstr(listenPort,"\n");
-//             if (eol) *eol = 0;
-//             break;
-//           }
-//         }
-//         PING;
-//         pclose(launchOutput);
-//         PING;
-//         PRINT(listenPort);
-//         if (!listenPort)
-//           throw std::runtime_error("failed to find service port in launch script output");
-//         for (char *s = listenPort; *s; ++s)
-//           if (*s == '%') *s = '$';
+      //         Assert(launchOutput);
+      //         char line[10000];
+      //         char *listenPort = NULL;
+      //         const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
+      //         PING;
+      //         while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
+      //           PING;
+      //           PRINT(line);
+      //           if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
+      //             listenPort = line + strlen(LAUNCH_HEADER);
+      //             char *eol = strstr(listenPort,"\n");
+      //             if (eol) *eol = 0;
+      //             break;
+      //           }
+      //         }
+      //         PING;
+      //         pclose(launchOutput);
+      //         PING;
+      //         PRINT(listenPort);
+      //         if (!listenPort)
+      //           throw std::runtime_error("failed to find service port in launch script output");
+      //         for (char *s = listenPort; *s; ++s)
+      //           if (*s == '%') *s = '$';
 
-//         PING;
-//         cout << "CONNECTING TO " << listenPort << endl;     
-//         rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
-//         cout << "#######################################################" << endl;
-//         cout << "connected!" << endl;
-//         PING;
-//       }
-//       worker.makeIntracomm();
-//       return new api::MPIDevice(ac,av);
+      //         PING;
+      //         cout << "CONNECTING TO " << listenPort << endl;     
+      //         rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
+      //         cout << "#######################################################" << endl;
+      //         cout << "connected!" << endl;
+      //         PING;
+      //       }
+      //       worker.makeIntracomm();
+      //       return new api::MPIDevice(ac,av);
     }
 
   }
@@ -336,58 +336,52 @@ namespace ospray {
 
     OSPFrameBuffer 
     MPIDevice::frameBufferCreate(const vec2i &size, 
-                                 const OSPFrameBufferMode mode)
+                                 const OSPFrameBufferFormat mode,
+                                 const uint32 channels)
     {
-      // FrameBufferFactory fbFactory = NULL;
-      // switch(mode) {
-      // case OSP_RGBA_I8:
-      //   fbFactory = createLocalFB_RGBA_I8;
-      //   break;
-      // default:
-      //   AssertError("frame buffer mode not yet supported");
-      // }
-      // SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+      FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
+      bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
+      bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
       
-      FrameBuffer *fb = new LocalFrameBuffer<uint32>(size);
+      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
+                                             hasDepthBuffer,hasAccumBuffer);
       fb->refInc();
-
-      // sc->refInc();
-      // Assert(sc != NULL);
       
       mpi::Handle handle = mpi::Handle::alloc();
       mpi::Handle::assign(handle,fb);
-      // mpi::Handle::assign(handle,sc);
-      // mpi::objectByID[handle] = sc;
       
       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
       cmd.send(handle);
       cmd.send(size);
       cmd.send((int32)mode);
-      // cmd.send((int32)swapChainDepth);
+      cmd.send((int32)channels);
       cmd.flush();
       return (OSPFrameBuffer)(int64)handle;
     }
     
 
-      /*! map frame buffer */
-    const void *MPIDevice::frameBufferMap(OSPFrameBuffer _fb)
+    /*! map frame buffer */
+    const void *MPIDevice::frameBufferMap(OSPFrameBuffer _fb, 
+                                          OSPFrameBufferChannel channel)
     {
       int rc; 
       MPI_Status status;
 
       mpi::Handle handle = (const mpi::Handle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-      // SwapChain *sc = (SwapChain *)handle.lookup();
-      // Assert(sc);
 
-      void *ptr = (void*)fb->map();
-      // void *ptr = (void*)sc->map();
-      return ptr;
+      LocalFrameBuffer *lfb = (LocalFrameBuffer*)fb;
+
+      switch (channel) {
+      case OSP_FB_COLOR: return fb->mapColorBuffer();
+      case OSP_FB_DEPTH: return fb->mapDepthBuffer();
+      default: return NULL;
+      }
     }
 
     /*! unmap previously mapped frame buffer */
     void MPIDevice::frameBufferUnmap(const void *mapped,
-                                       OSPFrameBuffer _fb)
+                                     OSPFrameBuffer _fb)
     {
       mpi::Handle handle = (const mpi::Handle &)_fb;
       // SwapChain *sc = (SwapChain *)handle.lookup();
@@ -588,7 +582,7 @@ namespace ospray {
       cmd.flush();
     }
 
-      /*! create a new renderer object (out of list of registered renderers) */
+    /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {
       Assert(type != NULL);
@@ -617,7 +611,7 @@ namespace ospray {
     }
 
     /*! create a new volume object (out of list of registered volume
-        types) with data from a file */
+      types) with data from a file */
     OSPVolume MPIDevice::newVolumeFromFile(const char *filename, const char *type)
     {
       // iw: added this to make sure we at least compile.
@@ -666,17 +660,93 @@ namespace ospray {
       cmd.newCommand(CMD_NEW_MATERIAL);
       cmd.send((const mpi::Handle&)_renderer);
       cmd.send((const mpi::Handle&)handle);
+
       cmd.send(type);
       cmd.flush();
-      return (OSPMaterial)(int64)handle;
+
+      // int MPI_Allreduce(void* , void*, int, MPI_Datatype, MPI_Op, MPI_Comm);
+      int numFails = 0;
+      MPI_Status status;
+      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      if (numFails == 0)
+        return (OSPMaterial)(int64)handle;
+      else {
+        handle.free();
+        return (OSPMaterial)NULL;
+      }
+    }
+
+      /*! create a new transfer function object (out of list of 
+        registered transfer function types) */
+    OSPTransferFunction MPIDevice::newTransferFunction(const char *type)
+    {
+      PING;
+      return NULL;
     }
 
 
+    /*! have given renderer create a new Light */
+    OSPLight MPIDevice::newLight(OSPRenderer _renderer, const char *type)
+    {
+      if (type == NULL)
+        throw std::runtime_error("#osp:mpi:newLight: NULL light type");
+      
+      if (_renderer == NULL) 
+        throw std::runtime_error("#osp:mpi:newLight: NULL renderer handle");
+
+      mpi::Handle handle = mpi::Handle::alloc();
+      
+      cmd.newCommand(CMD_NEW_LIGHT);
+      cmd.send((const mpi::Handle&)_renderer);
+      cmd.send((const mpi::Handle&)handle);
+
+      cmd.send(type);
+      cmd.flush();
+
+      // int MPI_Allreduce(void* , void*, int, MPI_Datatype, MPI_Op, MPI_Comm);
+      int numFails = 0;
+      MPI_Status status;
+      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      if (numFails==0)
+        return (OSPLight)(int64)handle;
+      else {
+        handle.free();
+        return (OSPLight)NULL;
+      }
+      return NULL;
+    }
+
+    /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+        
+      if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
+      '0,0,0,0'.  
+
+      if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
+      +inf.  
+
+      if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
+      and reset accumID.
+    */
+    void MPIDevice::frameBufferClear(OSPFrameBuffer _fb,
+                                     const uint32 fbChannelFlags)
+    {
+      cmd.newCommand(CMD_FRAMEBUFFER_CLEAR);
+      cmd.send((const mpi::Handle&)_fb);
+      cmd.send((int32)fbChannelFlags);
+      cmd.flush();
+    }
+
+    /*! remove an existing geometry from a model */
+    void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
+    {
+      PING;
+    }
 
 
     /*! call a renderer to render a frame buffer */
     void MPIDevice::renderFrame(OSPFrameBuffer _fb, 
-                                OSPRenderer    _renderer)
+                                OSPRenderer _renderer, 
+                                const uint32 fbChannelFlags)
     {
       const mpi::Handle handle = (const mpi::Handle&)_fb;
       // const mpi::Handle handle = (const mpi::Handle&)_sc;
@@ -689,12 +759,13 @@ namespace ospray {
       cmd.newCommand(CMD_RENDER_FRAME);
       cmd.send((const mpi::Handle&)_fb);
       cmd.send((const mpi::Handle&)_renderer);
+      cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
       // static long prev_t = 0;
       // long before = __rdtsc();
       // printf("#m: rendienrg into fb %lx      time %li\n",fb,before-prev_t);
-      TiledLoadBalancer::instance->renderFrame(NULL,fb);
+      TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
       // long after = __rdtsc();
       // printf("#m: DONE rendienrg into fb %lx time %li\n",fb,after-before);
       // prev_t = after;

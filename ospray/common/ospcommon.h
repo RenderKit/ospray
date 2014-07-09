@@ -60,14 +60,18 @@ namespace ospray {
   /*! OSPRay's four-float vector class */
   typedef embree::Vec4f    vec4f;
 
-  typedef embree::BBox3f       box3f;
-  typedef embree::BBox<vec3uc> box3uc;
-  typedef embree::BBox<vec4f>  box4f;
+  typedef embree::BBox<vec2ui>   box2ui;
+  typedef embree::BBox<vec2i>    region2i;
+  typedef embree::BBox<vec2ui>   region2ui;
+  
+  typedef embree::BBox3f         box3f;
+  typedef embree::BBox<vec3uc>   box3uc;
+  typedef embree::BBox<vec4f>    box4f;
   
   /*! affice space transformation */
-  typedef embree::AffineSpace3f affine3f;
+  typedef embree::AffineSpace3f  affine3f;
   typedef embree::AffineSpace3fa affine3fa;
-  typedef embree::AffineSpace3f AffineSpace3f;
+  typedef embree::AffineSpace3f  AffineSpace3f;
   typedef embree::AffineSpace3fa AffineSpace3fa;
 
   using   embree::Ref;
