@@ -32,7 +32,5 @@ namespace ospray {
     region2i region; /*!< screen region that this corresponds to */
     vec2i    fbSize; /*!< total frame buffer size, for the camera */
     vec2f    rcp_fbSize;
-    uint32   format; /*! or'ed-together bits describing what format
-                       those pixels have */
   };
 }

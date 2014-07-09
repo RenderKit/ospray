@@ -145,7 +145,7 @@ namespace ospray {
       }
       inline int get_int() 
       { 
-        float v; 
+        int v; 
         int rc = MPI_Bcast(&v,1,MPI_INT,0,mpi::app.comm); 
         Assert(rc == MPI_SUCCESS); 
         return v; 

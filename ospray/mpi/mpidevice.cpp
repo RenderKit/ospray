@@ -354,6 +354,7 @@ namespace ospray {
       cmd.send(handle);
       cmd.send(size);
       cmd.send((int32)mode);
+      cmd.send((int32)channels);
       cmd.flush();
       return (OSPFrameBuffer)(int64)handle;
     }
@@ -368,6 +369,8 @@ namespace ospray {
 
       mpi::Handle handle = (const mpi::Handle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
+
+      LocalFrameBuffer *lfb = (LocalFrameBuffer*)fb;
 
       switch (channel) {
       case OSP_FB_COLOR: return fb->mapColorBuffer();
@@ -657,9 +660,20 @@ namespace ospray {
       cmd.newCommand(CMD_NEW_MATERIAL);
       cmd.send((const mpi::Handle&)_renderer);
       cmd.send((const mpi::Handle&)handle);
+
       cmd.send(type);
       cmd.flush();
-      return (OSPMaterial)(int64)handle;
+
+      // int MPI_Allreduce(void* , void*, int, MPI_Datatype, MPI_Op, MPI_Comm);
+      int numFails = 0;
+      MPI_Status status;
+      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      if (numFails == 0)
+        return (OSPMaterial)(int64)handle;
+      else {
+        handle.free();
+        return (OSPMaterial)NULL;
+      }
     }
 
       /*! create a new transfer function object (out of list of 
@@ -674,7 +688,31 @@ namespace ospray {
     /*! have given renderer create a new Light */
     OSPLight MPIDevice::newLight(OSPRenderer _renderer, const char *type)
     {
-      PING;
+      if (type == NULL)
+        throw std::runtime_error("#osp:mpi:newLight: NULL light type");
+      
+      if (_renderer == NULL) 
+        throw std::runtime_error("#osp:mpi:newLight: NULL renderer handle");
+
+      mpi::Handle handle = mpi::Handle::alloc();
+      
+      cmd.newCommand(CMD_NEW_LIGHT);
+      cmd.send((const mpi::Handle&)_renderer);
+      cmd.send((const mpi::Handle&)handle);
+
+      cmd.send(type);
+      cmd.flush();
+
+      // int MPI_Allreduce(void* , void*, int, MPI_Datatype, MPI_Op, MPI_Comm);
+      int numFails = 0;
+      MPI_Status status;
+      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+      if (numFails==0)
+        return (OSPLight)(int64)handle;
+      else {
+        handle.free();
+        return (OSPLight)NULL;
+      }
       return NULL;
     }
 
@@ -692,7 +730,10 @@ namespace ospray {
     void MPIDevice::frameBufferClear(OSPFrameBuffer _fb,
                                      const uint32 fbChannelFlags)
     {
-      PING;
+      cmd.newCommand(CMD_FRAMEBUFFER_CLEAR);
+      cmd.send((const mpi::Handle&)_fb);
+      cmd.send((int32)fbChannelFlags);
+      cmd.flush();
     }
 
     /*! remove an existing geometry from a model */

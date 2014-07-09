@@ -2,14 +2,15 @@
 #include "mpidevice.h"
 #include "command.h"
 //#include "../fb/swapchain.h"
-#include "../common/model.h"
-#include "../common/data.h"
-#include "../common/library.h"
-#include "../common/model.h"
-#include "../geometry/trianglemesh.h"
-#include "../render/renderer.h"
-#include "../camera/camera.h"
-#include "../volume/volume.h"
+#include "ospray/common/model.h"
+#include "ospray/common/data.h"
+#include "ospray/common/library.h"
+#include "ospray/common/model.h"
+#include "ospray/geometry/trianglemesh.h"
+#include "ospray/render/renderer.h"
+#include "ospray/camera/camera.h"
+#include "ospray/volume/volume.h"
+#include "ospray/lights/light.h"
 #include "mpiloadbalancer.h"
 
 namespace ospray {
@@ -53,6 +54,8 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
+        // PING;
+        // PRINT(command);sleep(1);
 #if 0
         if (worker.rank == 0)
           printf("#w: command %i\n",command);
@@ -114,22 +117,82 @@ namespace ospray {
               material->refInc();
             }
           }
-
           if (material == NULL) 
             // no renderer present, or renderer didn't intercept this material.
             material = Material::createMaterial(type);
           
-          if (!material) 
-            // neither renderer not ospray know this material: throw an error.
-            throw std::runtime_error("unknown material type '"+std::string(type)+"'");
+          int myFail = (material == NULL);
+          int sumFail = 0;
+          rc = MPI_Allreduce(&myFail,&sumFail,1,MPI_INT,MPI_SUM,worker.comm);
+          if (sumFail == 0) {
+            material->refInc();
+            cmd.free(type);
+            Assert(material);
+            handle.assign(material);
+            if (worker.rank == 0) {
+              if (logLevel > 2)
+                cout << "#w: new material " << handle << " " 
+                     << material->toString() << endl;
+              MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
+            }
+          } else { 
+            // at least one client could not load/create material ...
+            if (material) material->refDec();
+            if (worker.rank == 0) {
+              if (logLevel > 2)
+                cout << "#w: could not create material " << handle << " " 
+                     << material->toString() << endl;
+              MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
+            }
+          }
+        } break;
 
-          material->refInc();
-          cmd.free(type);
-          Assert(material);
-          handle.assign(material);
+        case api::MPIDevice::CMD_NEW_LIGHT: {
+          PING;
+          // Assert(type != NULL && "invalid volume type identifier");
+          const mpi::Handle rendererHandle = cmd.get_handle();
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
-              cout << "#w: new material " << handle << " " << material->toString() << endl;
+              cout << "creating new light \"" << type << "\" ID " << (void*)(int64)handle << endl;
+
+          Renderer *renderer = (Renderer *)rendererHandle.lookup();
+          Light *light = NULL;
+          if (renderer) {
+            light = renderer->createLight(type);
+            if (light) {
+              light->refInc();
+            }
+          }
+          if (light == NULL) 
+            // no renderer present, or renderer didn't intercept this light.
+            light = Light::createLight(type);
+
+          int myFail = (light == NULL);
+          int sumFail = 0;
+          rc = MPI_Allreduce(&myFail,&sumFail,1,MPI_INT,MPI_SUM,worker.comm);
+          if (sumFail == 0) {
+            light->refInc();
+            cmd.free(type);
+            Assert(light);
+            handle.assign(light);
+            if (worker.rank == 0) {
+              if (logLevel > 2)
+                cout << "#w: new light " << handle << " " 
+                     << light->toString() << endl;
+              MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
+            }
+          } else { 
+            // at least one client could not load/create light ...
+            if (light) light->refDec();
+            if (worker.rank == 0) {
+              if (logLevel > 2)
+                cout << "#w: could not create light " << handle << " " 
+                     << light->toString() << endl;
+              MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
+            }
+          }
         } break;
 
         case api::MPIDevice::CMD_NEW_GEOMETRY: {
@@ -160,6 +223,12 @@ namespace ospray {
           bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
           FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);
           handle.assign(fb);
+        } break;
+        case api::MPIDevice::CMD_FRAMEBUFFER_CLEAR: {
+          const mpi::Handle handle = cmd.get_handle();
+          const uint32 channelFlags       = cmd.get_int32();
+          FrameBuffer *fb = (FrameBuffer*)handle.lookup();
+          fb->clear(channelFlags);
         } break;
         case api::MPIDevice::CMD_RENDER_FRAME: {
           const mpi::Handle  fbHandle = cmd.get_handle();
@@ -247,7 +316,7 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
-          //          printf("#w%i:c%i",worker.rank,(int)handle);
+          // printf("#w%i:c%i obj %lx\n",worker.rank,(int)handle,obj);
           if (logLevel > 2)
             cout << "#w: committing " << handle << " " << obj->toString() << endl;
           obj->commit();
@@ -256,7 +325,6 @@ namespace ospray {
           Model *model = dynamic_cast<Model *>(obj);
           if (model)
             model->finalize();
-
         } break;
         case api::MPIDevice::CMD_SET_OBJECT: {
           const mpi::Handle handle = cmd.get_handle();
