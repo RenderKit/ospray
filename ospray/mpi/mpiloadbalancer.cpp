@@ -1,12 +1,15 @@
 #include "mpiloadbalancer.h"
-#include "../render/renderer.h"
+#include "ospray/render/renderer.h"
+#include "ospray/fb/framebuffer.h"
 
 namespace ospray {
   namespace mpi {
     namespace staticLoadBalancer {
       Master::Master() {
       }
-      void Master::renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb)
+      void Master::renderFrame(Renderer *tiledRenderer,
+                               FrameBuffer *fb,
+                               const uint32 channelFlags)
       {
         int rc; MPI_Status status;
 
@@ -19,18 +22,20 @@ namespace ospray {
         
         // printf("MASTER: num tiles %li\n",numTiles);
 
-        __aligned(64) Tile tile;
-        tile.format = TILE_FORMAT_RGBA8;
-        tile.fbSize = fb->size;
-        tile.rcp_fbSize = rcp(vec2f(fb->size));
+        // tile.format = TILE_FORMAT_RGBA8;
+        // tile.fbSize = fb->size;
+        // tile.rcp_fbSize = rcp(vec2f(fb->size));
+        assert(fb->colorBufferFormat == OSP_RGBA_I8);
+        uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
         for (int i=0;i<numTiles;i++) {
+          box2ui region;
 	  // printf("#m: receiving tile %i\n",i);
-          rc = MPI_Recv(&tile.region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
+          rc = MPI_Recv(&region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
                         mpi::worker.comm,&status); 
           Assert(rc == MPI_SUCCESS); 
            // printf("#m: received tile %i (%i,%i) from %i\n",i,
            //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
-          rc = MPI_Recv(&tile.rgba8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
+          rc = MPI_Recv(&rgba_i8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
                         status.MPI_SOURCE,status.MPI_TAG,mpi::worker.comm,&status);
           Assert(rc == MPI_SUCCESS);
           // if (taskIndex == 123*27)
@@ -42,7 +47,13 @@ namespace ospray {
           //        status.MPI_SOURCE);
 
           // printf("tile %i/%i\n",i,numTiles);
-          fb->setTile(tile);
+          // fb->setTile(tile);
+
+          ospray::LocalFrameBuffer *lfb = (ospray::LocalFrameBuffer *)fb;
+          for (int iy=region.lower.y;iy<region.upper.y;iy++)
+            for (int ix=region.lower.x;ix<region.upper.x;ix++)
+              ((uint32*)lfb->colorBuffer)[ix+iy*lfb->size.x] 
+                = rgba_i8[iy-region.lower.y][ix-region.lower.x];
         }
         // printf("#m: master done fb %lx\n",fb);
       }
@@ -51,26 +62,27 @@ namespace ospray {
       // {
       // }
       
-      Slave::RenderTask::RenderTask(FrameBuffer *fb,
-                                    TileRenderer::RenderJob *frameRenderJob)
-        : fb(fb),
-          numTiles_x(divRoundUp(fb->size.x,TILE_SIZE)),
-          numTiles_y(divRoundUp(fb->size.y,TILE_SIZE)),
-          fbSize(fb->size),
-          task(&done,_run,this,
-               divRoundUp(fb->size.x,TILE_SIZE)*divRoundUp(fb->size.y,TILE_SIZE),
-               _finish,this,
-               "MPILoadBalancer::Slave::RenderTask"),
-          frameRenderJob(frameRenderJob)
-      {
-        // refInc();
-      }
+      // Slave::RenderTask::RenderTask(FrameBuffer *fb,
+      //                               TileRenderer::RenderJob *frameRenderJob)
+      //   : fb(fb),
+      //     numTiles_x(divRoundUp(fb->size.x,TILE_SIZE)),
+      //     numTiles_y(divRoundUp(fb->size.y,TILE_SIZE)),
+      //     fbSize(fb->size),
+      //     task(&done,_run,this,
+      //          divRoundUp(fb->size.x,TILE_SIZE)*divRoundUp(fb->size.y,TILE_SIZE),
+      //          _finish,this,
+      //          "MPILoadBalancer::Slave::RenderTask"),
+      //     frameRenderJob(frameRenderJob)
+      // {
+      //   // refInc();
+      // }
 
       void Slave::RenderTask::finish(size_t threadIndex, 
                                      size_t threadCount, 
                                      TaskScheduler::Event* event) 
       {
-        frameRenderJob = NULL;
+        renderer->endFrame(channelFlags);
+        renderer = NULL;
         fb = NULL;
         // refDec();
       }
@@ -103,30 +115,58 @@ namespace ospray {
         if ((tileID % worker.size) != worker.rank) return;
 
         Tile tile;
-        tile.fbSize = fb->size;
-        tile.rcp_fbSize = rcp(vec2f(fb->size));
         const size_t tile_y = tileID / numTiles_x;
         const size_t tile_x = tileID - tile_y*numTiles_x;
-        tile.region.lower.x = tile_x * TILE_SIZE;
-        tile.region.lower.y = tile_y * TILE_SIZE;
-        tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fbSize.x);
-        tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fbSize.y);
-        frameRenderJob->renderTile(tile);
+        region2ui region;
+        region.lower.x = tile_x * TILE_SIZE;
+        region.lower.y = tile_y * TILE_SIZE;
+        region.upper.x = std::min(region.lower.x+TILE_SIZE,(uint32)fb->size.x);
+        region.upper.y = std::min(region.lower.y+TILE_SIZE,(uint32)fb->size.y);
+        renderer->renderTile(tile);
 
-        Assert(tile.format & TILE_FORMAT_RGBA8);
-
-        MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
-        MPI_Send(&tile.rgba8,TILE_SIZE*TILE_SIZE,MPI_INT,0,tileID,app.comm);
+        ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
+        uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
+        for (int iy=region.lower.y;iy<region.upper.y;iy++)
+          for (int ix=region.lower.x;ix<region.upper.x;ix++)
+            rgba_i8[iy-region.lower.y][ix-region.lower.x] 
+              = ((uint32*)localFB->colorBuffer)[ix+iy*localFB->size.x];
+        
+        MPI_Send(&region,4,MPI_INT,0,tileID,app.comm);
+        MPI_Send(&rgba_i8,TILE_SIZE*TILE_SIZE,MPI_INT,0,tileID,app.comm);
       }
       
-      void Slave::renderFrame(TileRenderer *tiledRenderer, FrameBuffer *fb)
+      void Slave::renderFrame(Renderer *tiledRenderer, 
+                              FrameBuffer *fb,
+                              const uint32 channelFlags
+                              )
       {
         Ref<RenderTask> renderTask
-          = new RenderTask(fb,tiledRenderer->createRenderJob(fb));
+          = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
+        renderTask->fb = fb;
+        renderTask->renderer = tiledRenderer;
+        renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+        renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+        renderTask->channelFlags = channelFlags;
+        
+        /*! iw: using a local sync event for now; "in theory" we should be
+          able to attach something like a sync event to the frame
+          buffer, just trigger the task here, and let somebody else sync
+          on the framebuffer once it is needed; alas, I'm currently
+          running into some issues with the embree taks system when
+          trying to do so, and thus am reverting to this
+          fully-synchronous version for now */
+        
+        // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
+        TaskScheduler::EventSync sync;
+        renderTask->task = embree::TaskScheduler::Task
+          (&sync,
+           // (&renderTask->fb->frameIsReadyEvent,
+           renderTask->_run,renderTask.ptr,
+           renderTask->numTiles_x*renderTask->numTiles_y,
+           renderTask->_finish,renderTask.ptr,
+           "LocalTiledLoadBalancer::RenderTask");
         TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-        // this is actually *waiting* for the task to finish... might
-        // not want to do that but somehow try to help render this frame
-        renderTask->done.sync();
+        sync.sync();
       }
     }
 

@@ -153,47 +153,41 @@ namespace ospray {
 
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
           const mpi::Handle handle = cmd.get_handle();
-          const vec2i  size   = cmd.get_vec2i();
-          const int32  mode   = cmd.get_int32();
-          //          const size_t swapChainDepth = cmd.get_int32();
-          // FrameBufferFactory fbFactory = NULL;
-          // switch(mode) {
-          // case OSP_RGBA_I8:
-          //   fbFactory = createLocalFB_RGBA_I8;
-          //   break;
-          // default:
-          //   AssertError("frame buffer mode not yet supported");
-          // } 
-          FrameBuffer *fb = new LocalFrameBuffer<uint32>(size);
-          // SwapChain *sc = new SwapChain(swapChainDepth,size,fbFactory);
+          const vec2i  size               = cmd.get_vec2i();
+          const OSPFrameBufferFormat mode = (OSPFrameBufferFormat)cmd.get_int32();
+          const uint32 channelFlags       = cmd.get_int32();
+          bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
+          bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
+          FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);
           handle.assign(fb);
-          // Assert(sc != NULL);
         } break;
         case api::MPIDevice::CMD_RENDER_FRAME: {
           const mpi::Handle  fbHandle = cmd.get_handle();
           // const mpi::Handle  swapChainHandle = cmd.get_handle();
           const mpi::Handle  rendererHandle  = cmd.get_handle();
+          const uint32 channelFlags          = cmd.get_int32();
           FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
           // SwapChain *sc = (SwapChain*)swapChainHandle.lookup();
           // Assert(sc);
           Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
-          renderer->renderFrame(fb); //sc->getBackBuffer());
+          renderer->renderFrame(fb,channelFlags); //sc->getBackBuffer());
           // sc->advance();
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_MAP: {
-          const mpi::Handle handle = cmd.get_handle();
-          FrameBuffer *fb = (FrameBuffer*)handle.lookup();
-          // SwapChain *sc = (SwapChain*)handle.lookup();
-          // Assert(sc);
-          if (worker.rank == 0) {
-            // FrameBuffer *fb = sc->getBackBuffer();
-            void *ptr = (void*)fb->map();
-            // void *ptr = (void*)sc->map();
-            rc = MPI_Send(ptr,fb->size.x*fb->size.y,MPI_INT,0,0,mpi::app.comm);
-            Assert(rc == MPI_SUCCESS);
-            fb->unmap(ptr);
-          }
+          FATAL("should never get called on worker!?");
+          // const mpi::Handle handle = cmd.get_handle();
+          // FrameBuffer *fb = (FrameBuffer*)handle.lookup();
+          // // SwapChain *sc = (SwapChain*)handle.lookup();
+          // // Assert(sc);
+          // if (worker.rank == 0) {
+          //   // FrameBuffer *fb = sc->getBackBuffer();
+          //   void *ptr = (void*)fb->map();
+          //   // void *ptr = (void*)sc->map();
+          //   rc = MPI_Send(ptr,fb->size.x*fb->size.y,MPI_INT,0,0,mpi::app.comm);
+          //   Assert(rc == MPI_SUCCESS);
+          //   fb->unmap(ptr);
+          // }
         } break;
         case api::MPIDevice::CMD_NEW_MODEL: {
           const mpi::Handle handle = cmd.get_handle();

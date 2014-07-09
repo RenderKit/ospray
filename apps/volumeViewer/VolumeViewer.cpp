@@ -1,3 +1,4 @@
+
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
 
@@ -9,7 +10,9 @@ VolumeViewer::VolumeViewer() : renderer_(NULL), volume_(NULL), transferFunction_
     // create renderer for volume viewer
     ospLoadModule("dvr");
     renderer_ = ospNewRenderer("dvr_ispc");
-    assert(renderer_);
+
+    if(!renderer_)
+        throw std::runtime_error("could not create renderer type 'dvr_ispc'");
 
     // create transfer function
     createTransferFunction();
@@ -70,7 +73,9 @@ void VolumeViewer::createTransferFunction()
 {
     // create transfer function
     transferFunction_ = ospNewTransferFunction("TransferFunctionPiecewiseLinear");
-    assert(transferFunction_ != NULL);
+
+    if(!transferFunction_)
+        throw std::runtime_error("could not create transfer function type 'TransferFunctionPiecewiseLinear'");
 
     ospCommit(transferFunction_);
 }

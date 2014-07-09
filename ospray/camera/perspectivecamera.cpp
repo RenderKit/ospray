@@ -36,8 +36,8 @@ namespace ospray {
       = dz
       - (.5f * imgPlane_size_x) * dx
       - (.5f * imgPlane_size_y) * dy;
-    dir_du = dx * aspect;
-    dir_dv = dy;
+    dir_du = dx * imgPlane_size_x;
+    dir_dv = dy * imgPlane_size_y;
 
     ispc::PerspectiveCamera_set(getIE(),
                                 (const ispc::vec3f&)pos,

@@ -632,6 +632,10 @@ static FORCEINLINE __vec16_i32 __broadcast_i32(__vec16_i32 v, int index) {
     return _mm512_set1_epi32(val);
 }
 
+static FORCEINLINE __vec16_i32 __cast_trunc(__vec16_i32, const __vec16_i64 i64) {
+  return __vec16_i32(i64.v_lo);
+}
+
 static FORCEINLINE __vec16_i32 __rotate_i32(__vec16_i32 v, int index) {
     __vec16_i32 idx = __smear_i32<__vec16_i32>(index);
     __vec16_i32 shuffle = _mm512_and_epi32(_mm512_add_epi32(__ispc_stride1, idx),  __smear_i32<__vec16_i32>(0x7));

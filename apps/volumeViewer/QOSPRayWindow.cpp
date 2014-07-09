@@ -3,12 +3,16 @@
 QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : renderingEnabled_(false), frameBuffer_(NULL), renderer_(NULL), camera_(NULL)
 {
     // assign renderer
-    assert(renderer);
+    if(!renderer)
+        throw std::runtime_error("must be constructed with an existing renderer");
+
     renderer_ = renderer;
 
     // setup camera
     camera_ = ospNewCamera("perspective");
-    assert(camera_ != NULL);
+
+    if(!camera_)
+        throw std::runtime_error("could not create camera type 'perspective'");
 
     float distance = 0.5;
     osp::vec3f pos(-distance, distance, -distance);

@@ -5,8 +5,6 @@
 
 namespace ospray {
 
-  typedef embree::BBox<embree::Vec2i> region2i;
-
   //! a tile of pixels used by any tile-based renderer
   /*! pixels in the tile are in a row-major TILE_SIZE x TILE_SIZE
       pattern. the 'region' specifies which part of the screen this

@@ -16,16 +16,7 @@ namespace ospray {
   struct FrameBuffer : public ManagedObject {
     /*! app-mappable format of the color buffer. make sure that this
         matches the definition on the ISPC side */
-    // typedef enum { 
-    //   NONE, /*!< app will never map the color buffer (e.g., for a
-    //            framebuffer attached to a display wall that will likely
-    //            have a different res that the app has...) */
-    //   RGBA_FLOAT32, /*! app will map in RBGA, one float per channel */
-    //   RGBA_UINT8, /*! app will map in RGBA, one uint8 per channel */
-    // } ColorBufferFormat;
     typedef OSPFrameBufferFormat ColorBufferFormat;
-    // the event that triggers when this task is done
-    // embree::TaskScheduler::EventSync *frameIsReadyEvent;
     
     const vec2i size;
     FrameBuffer(const vec2i &size,
@@ -72,7 +63,7 @@ namespace ospray {
                                NULL */
     float     *depthBuffer; /*!< one float per pixel, may be NULL */
     vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
-    
+
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,
                      bool hasDepthBuffer,
