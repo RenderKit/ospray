@@ -20,6 +20,9 @@ VolumeViewer::VolumeViewer() : renderer_(NULL), volume_(NULL), transferFunction_
     osprayWindow_ = new QOSPRayWindow(renderer_);
     setCentralWidget(osprayWindow_);
 
+    // set world bounds on OSPRay window. for volumes this is always (0,0,0) to (1,1,1).
+    osprayWindow_->setWorldBounds(osp::box3f(osp::vec3f(0.f), osp::vec3f(1.f)));
+
     // create transfer function editor dock widget
     // the transfer function editor will modify the transfer function directly
     QDockWidget * transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
