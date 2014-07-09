@@ -66,8 +66,8 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 	volume/volume.cpp
 	volume/naive32.ispc
 	volume/naive32.cpp
-	volume/naive64.ispc
-	volume/naive64.cpp
+#	volume/naive64.ispc
+#	volume/naive64.cpp
 	volume/bricked32.ispc
 	volume/bricked32.cpp
 	volume/bricked64.ispc
