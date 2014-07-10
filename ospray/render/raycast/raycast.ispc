@@ -77,10 +77,10 @@ void RayCastRenderer_renderSample_eyeLight(uniform Renderer *uniform _renderer,
   sample.alpha = 1.f;
 
   if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(0.f); 
+    sample.rgb = make_vec3f(1.f); 
   else {
     const float c = dot(normalize(sample.ray.Ng),sample.ray.dir); 
-    sample.rgb = make_vec3f(.3f+.8f*abs(c));
+    sample.rgb = make_vec3f(.2f+.8f*abs(c));
   }
 }
 

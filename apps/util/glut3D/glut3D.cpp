@@ -371,17 +371,17 @@ namespace ospray {
               arg2.replace(pos, 1, " ");
               std::stringstream ss(arg2);
               ss >> Glut3DWidget::defaultInitSize.x >> Glut3DWidget::defaultInitSize.y;
-              removeArgs(*ac,(char **&)av,i,2);
+              removeArgs(*ac,(char **&)av,i,2); --i;
             } else {
               Glut3DWidget::defaultInitSize.x = atoi(av[i+1]);
               Glut3DWidget::defaultInitSize.y = atoi(av[i+1]);
-              removeArgs(*ac,(char **&)av,i,3);
+              removeArgs(*ac,(char **&)av,i,3); --i;
             }
             continue;
           }
           if (arg == "--osp:remote-glut") {
 #ifdef OSP_ENABLE_REMOTE_GLUT3D
-            removeArgs(*ac,(char **&)av,i,1);
+            removeArgs(*ac,(char **&)av,i,1); --i;
             RemoteGlut3D::instance = new RemoteGlut3D;
 #else
             throw std::runtime_error("Remote glut 3D support not compiled in");
@@ -390,7 +390,7 @@ namespace ospray {
           }
           if (arg == "--1k") {
             Glut3DWidget::defaultInitSize.x = Glut3DWidget::defaultInitSize.y = 1024;
-            removeArgs(*ac,(char **&)av,i,1);
+            removeArgs(*ac,(char **&)av,i,1); --i;
             continue;
           }
           if (arg == "-vu") {
@@ -404,8 +404,7 @@ namespace ospray {
             if (viewPortFromCmdLine) 
               viewPortFromCmdLine->up = upVectorFromCmdLine;
             assert(i+3 < *ac);
-            removeArgs(*ac,(char **&)av,i,4);
-            --i;
+            removeArgs(*ac,(char **&)av,i,4); --i;
             continue;
           }
           if (arg == "-vp") {
@@ -414,8 +413,7 @@ namespace ospray {
             viewPortFromCmdLine->from.y = atof(av[i+2]);
             viewPortFromCmdLine->from.z = atof(av[i+3]);
             assert(i+3 < *ac);
-            removeArgs(*ac,(char **&)av,i,4);
-            --i;
+            removeArgs(*ac,(char **&)av,i,4); --i;
             continue;
           }
           if (arg == "-vi") {
@@ -424,8 +422,7 @@ namespace ospray {
             viewPortFromCmdLine->at.y = atof(av[i+2]);
             viewPortFromCmdLine->at.z = atof(av[i+3]);
             assert(i+3 < *ac);
-            removeArgs(*ac,(char **&)av,i,4);
-            --i;
+            removeArgs(*ac,(char **&)av,i,4); --i;
             continue;
           }
         }

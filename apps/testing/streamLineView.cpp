@@ -1,5 +1,10 @@
 /*! \file ospDVR.cpp A GLUT-based viewer for Wavefront OBJ files */
 
+
+/*
+ mm -C ~/Projects/ospray/bin/ && ~/Projects/ospray/bin/streamLineView ~/models/NASA/B-field-sun/ext/*pnt ~/models/NASA/B-field-sun/original/temp\=6400k.sv   --renderer obj --1k -vp 0.897989 0.588022 -0.800192 -vi 0.0106688 -0.212129 -0.029311 -vu 0 1 0 
+*/
+
 #undef NDEBUG
 // viewer widget
 #include "../../apps/util/glut3D/glut3D.h"
@@ -13,6 +18,7 @@ namespace ospray {
   using std::endl;
 
   const char *rendererType = "raycast_eyelight";
+  bool doShadows = 1;
 
   OSPModel model = NULL;
 
@@ -221,6 +227,20 @@ namespace ospray {
       ospCommit(camera);
     }
 
+    virtual void keypress(char key, const vec2f where)
+    {
+      switch (key) {
+      case 'S':
+        doShadows = !doShadows;
+        cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;
+        ospSet1i(renderer,"shadowsEnabled",doShadows);
+        ospCommit(renderer);
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        break;
+      default:
+        Glut3DWidget::keypress(key,where);
+      }
+    }
     virtual void display() 
     {
       if (!fb || !renderer) return;

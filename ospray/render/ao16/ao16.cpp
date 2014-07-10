@@ -42,5 +42,6 @@ namespace ospray {
   }
 
   OSP_REGISTER_RENDERER(AO16Renderer,ao16);
+  OSP_REGISTER_RENDERER(AO16Renderer,ao);
 };
 

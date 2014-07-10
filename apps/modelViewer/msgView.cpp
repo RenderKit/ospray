@@ -11,6 +11,7 @@
 namespace ospray {
   using std::cout;
   using std::endl;
+  bool doShadows = 1;
 
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   int accumID = -1;
@@ -77,6 +78,20 @@ namespace ospray {
       ospCommit(camera);
     }
     
+    virtual void keypress(char key, const vec2f where)
+    {
+      switch (key) {
+      case 'S':
+        doShadows = !doShadows;
+        cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;
+        ospSet1i(renderer,"shadowsEnabled",doShadows);
+        ospCommit(renderer);
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        break;
+      default:
+        Glut3DWidget::keypress(key,where);
+      }
+    }
     virtual void display()
     {
       if (!fb || !renderer) return;
