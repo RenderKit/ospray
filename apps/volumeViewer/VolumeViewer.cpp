@@ -1,6 +1,6 @@
-
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
+#include <algorithm>
 
 VolumeViewer::VolumeViewer() : renderer_(NULL), volume_(NULL), transferFunction_(NULL), osprayWindow_(NULL)
 {
@@ -37,12 +37,13 @@ VolumeViewer::VolumeViewer() : renderer_(NULL), volume_(NULL), transferFunction_
     show();
 }
 
-void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout)
+void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout, const float dt)
 {
     std::string volumeType = layout + "_" + format;
     volume_ = ospNewVolume(volumeType.c_str());
+
     if (!volume_) 
-      throw std::runtime_error("could not create volume type '"+volumeType+"'");
+        throw std::runtime_error("could not create volume type '" + volumeType + "'");
 
     ospSetString(volume_, "filename", filename.c_str());
     ospSet3i(volume_, "dimensions", dimensions.x, dimensions.y, dimensions.z);
@@ -55,6 +56,16 @@ void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dim
 
     // and set the volume on the renderer
     ospSetParam(renderer_, "volume", volume_);
+
+    // set the dt value; auto-set based on volume dimensions if dt == 0
+    if(dt != 0.f)
+    {
+        ospSet1f(renderer_, "dt", dt);
+    }
+    else
+    {
+        ospSet1f(renderer_, "dt", 1.f / float(std::max(std::max(dimensions.x, dimensions.y), dimensions.z)));
+    }
 
     // at this point all required parameters of the renderer are set, so commit it
     ospCommit(renderer_);
