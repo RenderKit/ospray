@@ -55,8 +55,9 @@
   well. CMake will automatically look for a source version of embree
   in the same directory in which OSPray is located. You do not have to
   build embree itself; OSPray will include all relevant parts
-  individually. This version of OSPray requires Embree v2.1 off the
-  embree github repo (see https://github.com/embree/embree).
+  individually. This version of OSPray requires Embree off the
+  embree github repo (see https://github.com/embree/embree); currently
+  tested version of Embree is Embree 2.3.
 
   \section building Building OSPray
 
