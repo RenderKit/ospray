@@ -1,5 +1,5 @@
-#include "common/ospcommon.h"
-#include "../api/handle.h"
+#include "ospray/common/ospcommon.h"
+#include "ospray/api/handle.h"
 
 namespace ospray {
   namespace coi {
