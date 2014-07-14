@@ -11,7 +11,7 @@ public:
 
     VolumeViewer();
 
-    void loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout);
+    void loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout, const float dt);
 
 public slots:
 
