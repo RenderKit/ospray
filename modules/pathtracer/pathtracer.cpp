@@ -42,14 +42,13 @@ namespace ospray {
     Renderer::commit();
     model = (Model*)getParamObject("world",NULL);
     model = (Model*)getParamObject("model",model.ptr);
-    if (!model) 
-      throw std::runtime_error("path tracer doesn't have a model");
-    ispc::PathTracer_setModel(getIE(),model->getIE());
+
+    if (model)
+      ispc::PathTracer_setModel(getIE(),model->getIE());
 
     camera = (Camera*)getParamObject("camera",NULL);
-    if (!camera) 
-      throw std::runtime_error("path tracer doesn't have a camera");
-    ispc::PathTracer_setCamera(getIE(),camera->getIE());
+    if (camera) 
+      ispc::PathTracer_setCamera(getIE(),camera->getIE());
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
