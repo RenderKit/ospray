@@ -19,8 +19,6 @@ ENDIF()
 
 TARGET_LINK_LIBRARIES(ospray_glut3d ospray ${GLUT_LIBRARIES})
 # ------------------------------------------------------------
-INSTALL(DIRECTORY include/ospray 
-  DESTINATION include FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray_glut3d${OSPRAY_LIB_SUFFIX} 
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION 2)
 INSTALL(TARGETS ospray_glut3d${OSPRAY_LIB_SUFFIX} DESTINATION lib)
