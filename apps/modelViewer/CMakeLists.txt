@@ -9,13 +9,15 @@ ADD_SUBDIRECTORY(miniSG)
 # main executable
 # --------------------------------------------
 ADD_EXECUTABLE(ospModelViewer
-	# CPP sources
-	msgView.cpp
-	)
+  # CPP sources
+  msgView.cpp
+  )
 TARGET_LINK_LIBRARIES(ospModelViewer
-	ospray_minisg
-	ospray_glut3d
-	ospray
+  ospray_minisg
+  ospray_glut3d
+  ospray
   ${OPENGL_LIBRARY} 
   ${GLUT_LIBRARY}
-)
+  )
+# ------------------------------------------------------------
+INSTALL(TARGETS ospModelViewer DESTINATION bin)

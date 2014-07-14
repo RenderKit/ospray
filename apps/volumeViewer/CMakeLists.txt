@@ -1,39 +1,37 @@
-# build volume viewer ONLY for the host-side
-IF (NOT THIS_IS_MIC)
+# OSPRay includes
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-  # OSPRay includes
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+# setup dependencies
+SET(LIBS ${LIBS} ospray)
 
-  # setup dependencies
-  SET(LIBS ${LIBS} ospray)
+FIND_PACKAGE(Qt4 REQUIRED) 
+SET(QT_USE_QTOPENGL TRUE)
+INCLUDE(${QT_USE_FILE})
+SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
-  FIND_PACKAGE(Qt4 REQUIRED) 
-  SET(QT_USE_QTOPENGL TRUE)
-  INCLUDE(${QT_USE_FILE})
-  SET(LIBS ${LIBS} ${QT_LIBRARIES})
+FIND_PACKAGE(OpenGL REQUIRED)
+INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIRS})
+SET(LIBS ${LIBS} ${OPENGL_LIBRARIES})
 
-  FIND_PACKAGE(OpenGL REQUIRED)
-  INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIRS})
-  SET(LIBS ${LIBS} ${OPENGL_LIBRARIES})
+SET(SRCS ${SRCS}
+  main.cpp
+  ColorMap.cpp
+  QOSPRayWindow.cpp
+  TransferFunctionEditor.cpp
+  TransferFunctionPiecewiseLinearWidget.cpp
+  VolumeViewer.cpp
+  )
 
-  SET(SRCS ${SRCS}
-    main.cpp
-    ColorMap.cpp
-    QOSPRayWindow.cpp
-    TransferFunctionEditor.cpp
-    TransferFunctionPiecewiseLinearWidget.cpp
-    VolumeViewer.cpp
-    )
+SET(MOC_HEADERS
+  TransferFunctionEditor.h
+  TransferFunctionPiecewiseLinearWidget.h
+  VolumeViewer.h
+  )
 
-  SET(MOC_HEADERS
-    TransferFunctionEditor.h
-    TransferFunctionPiecewiseLinearWidget.h
-    VolumeViewer.h
-    )
+QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
-  QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
-
-  ADD_EXECUTABLE(volumeViewer ${SRCS} ${MOC_OUTFILES})
-
-  TARGET_LINK_LIBRARIES(volumeViewer ${LIBS})
-ENDIF()
+ADD_EXECUTABLE(ospQtVolumeViewer ${SRCS} ${MOC_OUTFILES})
+TARGET_LINK_LIBRARIES(ospQtVolumeViewer ${LIBS})
+# ------------------------------------------------------------
+INSTALL(TARGETS ospQtVolumeViewer DESTINATION bin)
+# ------------------------------------------------------------

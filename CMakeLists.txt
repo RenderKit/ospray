@@ -6,6 +6,7 @@ IF(COMMAND cmake_policy)
 ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
+SET(OSPRAY_VERSION 0.5.0)
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
@@ -26,15 +27,15 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # whether to use ICC (vs GCC) for the non-MIC part
 SET(OSPRAY_USE_INTEL_COMPILER ON CACHE BOOL "Use Intel Compiler?")
 # whether to build in MIC/xeon phi support
-SET(OSPRAY_ENABLE_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
+SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
 # whehter to build in MIC/xeon phi support
-SET(OSPRAY_ENABLE_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
+SET(OSPRAY_BUILD_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
 MARK_AS_ADVANCED(OSPRAY_MPI)
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
 SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 
-SET(OSPRAY_MIC ${OSPRAY_ENABLE_MIC_SUPPORT})
-SET(OSPRAY_MPI ${OSPRAY_ENABLE_MPI_DEVICE})
+SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
+SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 SET(OSPRAY_ICC ${OSPRAY_USE_INTEL_COMPILER})
 
 ##############################################################
@@ -47,6 +48,12 @@ ADD_DEFINITIONS(${OSPRAY_EMBREE_CXX_FLAGS})
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/mpi.cmake)
 INCLUDE(cmake/doxygen.cmake)
+
+SET(OSPRAY_INSTALL_TARGET ospray-${CMAKE_SYSTEM_NAME}-${OSPRAY_XEON_TARGET})
+STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
+SET(CMAKE_INSTALL_PREFIX 
+  ${CMAKE_BINARY_DIR}/release/${OSPRAY_INSTALL_TARGET_LC})
+
 ##############################################################
 # the ospray library
 ##############################################################
