@@ -3,48 +3,14 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+SET(OSPRAY_VERSION 0.5.0)
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 
-#INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
 INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
 INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
-IF (OSPRAY_MPI)
-  # if mpi mode is enabled, we have to configure the right mpi
-  # compiler etc.
-  CONFIGURE_MPI()
-
-  # files to add to libospray - add these *only* if we actually build
-  # for MPI
-  SET(OSPRAY_MPI_COMPONENTS 
-    mpi/mpidevice.cpp
-    mpi/mpicommon.cpp
-    mpi/mpiloadbalancer.cpp
-    mpi/worker.cpp
-    )
-ENDIF()
-
-IF (OSPRAY_BUILD_COI_DEVICE)
-  ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
-  INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
-  INCLUDE_DIRECTORIES(/usr/include/intel-coi)
-  IF (THIS_IS_MIC)
-    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=1)
-    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=0)
-    SET(OSPRAY_COI_COMPONENTS api/coidevice_dev.cpp)
-  ELSE()
-    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=0)
-    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=1)
-    SET(OSPRAY_COI_COMPONENTS api/coidevice_host.cpp)
-  ENDIF()
-ELSE()
-  SET(OSPRAY_COI_COMPONENTS "")
-ENDIF()
-
-# build the ospray library (using flags and compilers as configured by
-# CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
-OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
+SET(OSPRAY_SOURCES
   common/ospcommon.cpp
   common/managed.cpp
   common/data.cpp
@@ -99,18 +65,10 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   lights/spotlight.cpp
   lights/spotlight.ispc
 
-  #  texture/nearestneighbor.ispc
-  #  texture/image3c.ispc
-  #  texture/image3ca.ispc
-  #  texture/image3f.ispc
-  #  texture/image3fa.ispc
   texture/texture2d.cpp
   texture/texture2d.ispc
-
-  #	render/tilerenderer.cpp
   
   render/loadbalancer.cpp
-
   render/renderer.ispc
   render/renderer.cpp
   render/util.ispc
@@ -131,21 +89,33 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   api/device.cpp
   api/localdevice.cpp
   api/handle.cpp
-
-  ${OSPRAY_MPI_COMPONENTS}
-
-  ${OSPRAY_COI_COMPONENTS}
   )
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
 
-# add a dedicated MPI worker that ospray can launch onto any worker
-# node (including MIC nodes)
+# -------------------------------------------------------
+# additional code components for MPI device (if built)
+# -------------------------------------------------------
+SET(OSPRAY_MPI_COMPONENTS
+  )
+
+# -------------------------------------------------------
+# MPI components
+# -------------------------------------------------------
 IF (OSPRAY_MPI)
-  ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/mpiworker.cpp)
-  TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+  # if mpi mode is enabled, we have to configure the right mpi
+  # compiler etc.
+  CONFIGURE_MPI()
+
+  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}   
+    mpi/mpidevice.cpp
+    mpi/mpicommon.cpp
+    mpi/mpiloadbalancer.cpp
+    mpi/worker.cpp
+    )
 ENDIF()
 
-
+# -------------------------------------------------------
+# COI components
+# -------------------------------------------------------
 IF (OSPRAY_BUILD_COI_DEVICE)
   FIND_LIBRARY(LIBCOI_DEVICE libcoi_device.so
     PATHS
@@ -157,24 +127,80 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     /opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
     /opt/intel/mic/coi/host-linux-release/lib
     )
+  ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
+  INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
+  INCLUDE_DIRECTORIES(/usr/include/intel-coi)
   IF (THIS_IS_MIC)
-    #		LINK_DIRECTORIES(/opt/intel/mic/coi/device-linux-release/lib)
-    #		TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} coi_device)
+    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=1)
+    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=0)
+    SET(OSPRAY_COI_COMPONENTS api/coidevice_dev.cpp)
+  ELSE()
+    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=0)
+    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=1)
+    SET(OSPRAY_COI_COMPONENTS api/coidevice_host.cpp)
+  ENDIF()
+ELSE()
+  SET(OSPRAY_COI_COMPONENTS "")
+ENDIF()
+
+##############################################################
+# build the ospray library (using flags and compilers as configured by
+# CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
+##############################################################
+OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
+# ------------------------------------------------------------
+INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
+SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX} 
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION 2)
+INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+##############################################################
+
+
+
+##############################################################
+# MPI DEVICE - mpi worker
+##############################################################
+IF (OSPRAY_MPI)
+  ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/mpiworker.cpp)
+  TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+  # ------------------------------------------------------------
+  INSTALL(TARGETS ospray_mpi_worker${OSPRAY_EXE_SUFFIX} DESTINATION bin)
+ENDIF()
+
+
+##############################################################
+# COI DEVICE
+##############################################################
+IF (OSPRAY_BUILD_COI_DEVICE)
+  IF (THIS_IS_MIC)
+    # ------------------------------------------------------------
+    # dev-side of COI device: lib dev-side libospray to coi dev libs,...
+    # ------------------------------------------------------------
     TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
       )
+    # ... and add the coi worker executable
     ADD_EXECUTABLE(ospray_coi_worker.mic api/coidevice_worker.cpp)
     TARGET_LINK_LIBRARIES(ospray_coi_worker.mic 
       ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
       )
+    # ------------------------------------------------------------
+    INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+    INSTALL(TARGETS ospray_coi_worker.mic DESTINATION bin)
   ELSE()
-    #		LINK_DIRECTORIES(/opt/intel/mic/coi/host-linux-release/lib)
+    # ------------------------------------------------------------
+    # host-side of COI device: just link libospray to coi host libs
+    # ------------------------------------------------------------
     TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
       ${LIBCOI_HOST}
       )
+    # note: no need to add the host-side libcoi to the install
+    # targets; it's already done above
   ENDIF()
 ENDIF()
+
 
 
 

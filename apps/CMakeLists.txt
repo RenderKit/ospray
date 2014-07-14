@@ -18,8 +18,8 @@ IF(NOT THIS_IS_MIC)
   ADD_SUBDIRECTORY(streamLineViewer)
 
   # volume viewer application
-  OPTION(BUILD_VOLUMEVIEWER "Build volume viewer application" OFF)
-  IF(BUILD_VOLUMEVIEWER)
+  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build volume viewer application" OFF)
+  IF(OSPRAY_APPS_VOLUMEVIEWER)
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
 ENDIF()

@@ -11,6 +11,8 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
+MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
+
 SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
@@ -22,15 +24,18 @@ MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # whether to use ICC (vs GCC) for the non-MIC part
-SET(OSPRAY_ICC ON CACHE BOOL "Use Intel Compiler?")
+SET(OSPRAY_USE_INTEL_COMPILER ON CACHE BOOL "Use Intel Compiler?")
 # whether to build in MIC/xeon phi support
-SET(OSPRAY_MIC ON CACHE BOOL "Build OSPRay with MIC Support?")
+SET(OSPRAY_ENABLE_MIC_SUPPORT ON CACHE BOOL "Build OSPRay with MIC Support?")
 # whehter to build in MIC/xeon phi support
-SET(OSPRAY_MPI OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
+SET(OSPRAY_ENABLE_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
 MARK_AS_ADVANCED(OSPRAY_MPI)
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
 SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 
+SET(OSPRAY_MIC ${OSPRAY_ENABLE_MIC_SUPPORT})
+SET(OSPRAY_MPI ${OSPRAY_ENABLE_MPI_DEVICE})
+SET(OSPRAY_ICC ${OSPRAY_USE_INTEL_COMPILER})
 
 ##############################################################
 # modules
@@ -50,8 +55,8 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
 IF (OSPRAY_MIC)
-	SET (OSPRAY_TARGET "MIC")
-	ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
+  SET (OSPRAY_TARGET "MIC")
+  ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
 ENDIF()
 
 ##############################################################
@@ -60,8 +65,8 @@ ENDIF()
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 IF (OSPRAY_MIC)
-	SET (OSPRAY_TARGET "MIC")
-	ADD_SUBDIRECTORY(apps builddir/apps/mic)
+  SET (OSPRAY_TARGET "MIC")
+  ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()
 
 
