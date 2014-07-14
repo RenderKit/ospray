@@ -83,8 +83,14 @@ typedef int64_t __vec1_i64;
 
 struct __vec16_i32;
 
-#if 1
-typedef struct __vec16_i1 {
+#if 0
+/* (iw) actually, this *SHOULD* be the right implementation for a
+   vec16_i1: this one is a class that can have a constructor (which
+   ISPC sometimes emits for these vectors...), while the version below
+   is a __mmask that won't compile if ispc emits constructos. That
+   said, the version doesn't work with embree's ISPC bindings,
+   probably because embree still uses the 'wrong' implementation */
+typedef struct PRE_ALIGN(2) __vec16_i1 {
   FORCEINLINE operator __mmask16() const { return m; }
   FORCEINLINE __vec16_i1() {} // : v(0) {};
   FORCEINLINE __vec16_i1(const __mmask16 &in) : m(in) {}
@@ -112,7 +118,7 @@ typedef struct __vec16_i1 {
       | (v15 << 15);
     }
   __mmask16 m;
-} __vec16_i;
+}  POST_ALIGN(2) __vec16_i;
 
 #else
 typedef __mmask16 POST_ALIGN(2) __vec16_i1;

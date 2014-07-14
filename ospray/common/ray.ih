@@ -67,7 +67,7 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir)
   if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
   if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
   ray.t0  = 1e-6f;
-  ray.t   = infinity;
+  ray.t   = 1e10f;//infinity;
   ray.time = 0.f;
   ray.mask = -1;
   ray.geomID = -1;

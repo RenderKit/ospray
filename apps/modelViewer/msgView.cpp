@@ -81,6 +81,10 @@ namespace ospray {
     virtual void keypress(char key, const vec2f where)
     {
       switch (key) {
+      case 'F':
+        alwaysRedraw = !alwaysRedraw; 
+        forceRedraw();
+        break;
       case 'S':
         doShadows = !doShadows;
         cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;

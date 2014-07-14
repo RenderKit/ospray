@@ -3,7 +3,7 @@
 // OSPRay
 #include "device.h"
 #include "coidevice_common.h"
-#include "common/data.h"
+#include "ospray/common/data.h"
 // COI
 #include "common/COIResult_common.h"
 #include "source/COIEngine_source.h"
@@ -25,7 +25,7 @@
 namespace ospray {
   namespace coi {
 
-    const char *coiWorker = "./ospray_coi_worker.mic";
+    // const char *coiWorker = "./ospray_coi_worker.mic";
 
     void coiError(COIRESULT result, const std::string &err);
 
@@ -292,6 +292,19 @@ namespace ospray {
     void COIEngine::loadOSPRay()
     {
       COIRESULT result;
+      const char *coiWorker = getenv("OSPRAY_COI_WORKER");
+      if (coiWorker == NULL) {
+        std::cerr << "OSPRAY_COI_WORKER not defined." << std::endl;
+        std::cerr << "Note: In order to run the OSPray COI device on the Xeon Phis it needs to know the full path of the 'osp_coi_worker.mic' executable that contains the respective ospray xeon worker binary. Please define an environment variabel named 'OSPRAY_COI_WORKER' to contain the filename - with full directory path - of this executable." << std::endl;
+        exit(1);
+      }
+      const char *sinkLDPath = getenv("SINK_LD_LIBRARY_PATH");
+      if (coiWorker == NULL) {
+        std::cerr << "SINK_LD_LIBRARY_PATH not defined." << std::endl;
+        std::cerr << "Note: In order for the COI version of OSPRay to find all the shared libraries (ospray, plus whatever modules the application way want to load) you have to specify the search path where COI is supposed to find those libraries on the HOST filesystem (it will then load them onto the device as required)." << std::endl;
+        std::cerr << "Please define an environment variable named SINK_LD_LIBRARY_PATH that points to the directory containing the respective ospray mic libraries." << std::endl;
+        exit(1);
+      }
       result = COIProcessCreateFromFile(coiEngine,
                                         coiWorker,0,NULL,0,NULL,1/*proxy!*/,
                                         NULL,0,NULL,
@@ -879,7 +892,9 @@ namespace ospray {
 
         const size_t numTilesX = divRoundUp(sizeX,TILE_SIZE);
         const size_t numTilesY = divRoundUp(sizeY,TILE_SIZE);
-        for (size_t tileY=0;tileY<numTilesY;tileY++)
+// #pragma omp parallel for
+        for (size_t tileY=0;tileY<numTilesY;tileY++) {
+// #pragma omp parallel for
           for (size_t tileX=0;tileX<numTilesX;tileX++) {
             const size_t tileID = tileX+numTilesX*tileY;
             if (engineID != (tileID % numEngines)) 
@@ -894,6 +909,7 @@ namespace ospray {
                 dst[idx] = src[idx];
               }
           }
+        }
 
         delete[] devBuffer[engineID];
       }

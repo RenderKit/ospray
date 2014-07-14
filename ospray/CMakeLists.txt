@@ -90,12 +90,6 @@ SET(OSPRAY_SOURCES
   )
 
 # -------------------------------------------------------
-# additional code components for MPI device (if built)
-# -------------------------------------------------------
-SET(OSPRAY_MPI_COMPONENTS
-  )
-
-# -------------------------------------------------------
 # MPI components
 # -------------------------------------------------------
 IF (OSPRAY_MPI)
@@ -137,6 +131,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     ADD_DEFINITIONS(-DOSPRAY_COI_HOST=1)
     SET(OSPRAY_COI_COMPONENTS api/coidevice_host.cpp)
   ENDIF()
+  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES} ${OSPRAY_COI_COMPONENTS})
 ELSE()
   SET(OSPRAY_COI_COMPONENTS "")
 ENDIF()

@@ -104,6 +104,23 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       
         // print("initray % % %\n",camera,cameraSample.screen.x,cameraSample.screen.y);
         camera->initRay(camera,screenSample.ray,cameraSample);
+
+        // if (any(screenSample.sampleID.y == 128 && screenSample.sampleID.x == 512)) {
+        //   print("screen.x %\n",cameraSample.screen.x);
+        //   print("screen.y %\n",cameraSample.screen.y);
+        //   print("ray.org.x %\n",screenSample.ray.org.x);
+        //   print("ray.org.y %\n",screenSample.ray.org.y);
+        //   print("ray.org.z %\n",screenSample.ray.org.z);
+        //   print("ray.dir.x %\n",screenSample.ray.dir.x);
+        //   print("ray.dir.y %\n",screenSample.ray.dir.y);
+        //   print("ray.dir.z %\n",screenSample.ray.dir.z);
+        //   print("ray.t0 %\n",screenSample.ray.t0);
+        //   print("ray.t %\n",screenSample.ray.t);
+        //   screenSample.ray.Ng.x = 1.f;
+        // } else {
+        //   screenSample.ray.Ng.x = 0.f;
+        // }
+
         // print("rendersample %\n",renderer);
         renderer->renderSample(renderer,screenSample);
         // print("setrgba % %\n",&tile,i);
@@ -112,6 +129,19 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
         //   print("g %\n",screenSample.rgb.y);
         //   print("b %\n",screenSample.rgb.z);
         // }
+        // if (any(screenSample.sampleID.y == 128 && screenSample.sampleID.x == 512)) {
+        //   print("ray.org.x %\n",screenSample.ray.org.x);
+        //   print("ray.org.y %\n",screenSample.ray.org.y);
+        //   print("ray.org.z %\n",screenSample.ray.org.z);
+        //   print("ray.dir.x %\n",screenSample.ray.dir.x);
+        //   print("ray.dir.y %\n",screenSample.ray.dir.y);
+        //   print("ray.dir.z %\n",screenSample.ray.dir.z);
+        //   print("ray.t %\n",screenSample.ray.t);
+        //   print("ray.primID %\n",screenSample.ray.primID);
+        //   print("ray.geomID %\n",screenSample.ray.geomID);
+        //    print("rgb %\n",screenSample.rgb.x);
+        // }
+
         setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
         // print("DONE setrgba % %\n",&tile,i);
       }

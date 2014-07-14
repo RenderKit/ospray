@@ -19,7 +19,7 @@ inline float radicalInverse(const uint32 _v, const uint32 prime)
   return ret;
 }
 
-inline void precomputedHalton_create() {
+static void precomputedHalton_create() {
   if (precomputedHalton_initialized) 
     return;
   foreach (i=0 ... NUM_PRECOMPUTED_HALTON_VALUES) {
