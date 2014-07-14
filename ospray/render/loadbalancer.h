@@ -3,11 +3,11 @@
 /*! \file loadbalancer.h Implements the abstracion layer for a (tiled) load balancer */
 
 // ospray
-#include "../common/ospcommon.h"
-#include "../fb/framebuffer.h"
+#include "ospray/common/ospcommon.h"
+#include "ospray/fb/framebuffer.h"
+#include "ospray/render/renderer.h"
 // embree
 #include "common/sys/taskscheduler.h"
-#include "render/renderer.h"
 
 namespace ospray {
   using embree::TaskScheduler;

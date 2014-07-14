@@ -2,8 +2,8 @@
 
 // ospray
 #include "cylinders.h"
-#include "common/data.h"
-#include "common/model.h"
+#include "ospray/common/data.h"
+#include "ospray/common/model.h"
 // ispc-generated files
 #include "cylinders_ispc.h"
 

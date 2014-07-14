@@ -26,7 +26,7 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # whether to use ICC (vs GCC) for the non-MIC part
 SET(OSPRAY_USE_INTEL_COMPILER ON CACHE BOOL "Use Intel Compiler?")
 # whether to build in MIC/xeon phi support
-SET(OSPRAY_ENABLE_MIC_SUPPORT ON CACHE BOOL "Build OSPRay with MIC Support?")
+SET(OSPRAY_ENABLE_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
 # whehter to build in MIC/xeon phi support
 SET(OSPRAY_ENABLE_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
 MARK_AS_ADVANCED(OSPRAY_MPI)

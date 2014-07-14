@@ -2,8 +2,8 @@
 
 /*! \todo move to api - it's also used in coi, and not mpi specific */
 
-#include "common/ospcommon.h"
-#include "common/managed.h"
+#include "ospray/common/ospcommon.h"
+#include "ospray/common/managed.h"
 
 namespace ospray {
   namespace api {

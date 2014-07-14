@@ -2,7 +2,7 @@
 
 // ospray
 #include "instance.h"
-#include "common/model.h"
+#include "ospray/common/model.h"
 // ispc-generated files
 #include "instance_ispc.h"
 

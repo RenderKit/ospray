@@ -1,6 +1,6 @@
 // ospray
 #include "material.h"
-#include "common/library.h"
+#include "ospray/common/library.h"
 // stl
 #include <map>
 

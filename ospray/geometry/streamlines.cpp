@@ -2,8 +2,8 @@
 
 // ospray
 #include "streamlines.h"
-#include "common/data.h"
-#include "common/model.h"
+#include "ospray/common/data.h"
+#include "ospray/common/model.h"
 // ispc-generated files
 #include "streamlines_ispc.h"
 
