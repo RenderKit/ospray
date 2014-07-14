@@ -63,7 +63,8 @@ inline vec4f traceRayDVR(const Ray &ray,
 
   t1 = max(floor(tenter / step_size) * step_size, tenter);
 
-  while(t1 < texit && color.w < .97f) {
+  while(t1 < texit// && color.w < .97f
+        ) {
     // print("t %\n",t1);
     t1 += step_size;
 
@@ -102,7 +103,7 @@ void DVRRenderer_renderSample(uniform Renderer *uniform _renderer,
   uniform DVRRenderer *uniform renderer = (uniform DVRRenderer *uniform)_renderer;
   // print("sample.ray.org.x %\n",sample.ray.org.x);
   // scale the color value; this should be handled differently
-  vec4f rgba = 5.f * traceRayDVR(sample.ray,renderer->volume,renderer->dt);
+  vec4f rgba = 30.f * traceRayDVR(sample.ray,renderer->volume,renderer->dt);
   sample.rgb.x = rgba.x;
   sample.rgb.y = rgba.y;
   sample.rgb.z = rgba.z;

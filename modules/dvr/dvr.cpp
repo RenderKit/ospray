@@ -42,7 +42,7 @@ namespace ospray {
     Assert(camera && "null camera handle in 'dvr' renderer "
            "(did you forget to assign a 'camera' parameter to the renderer?)");
 
-    dt = getParam1f("dt",.01f);
+    dt = getParam1f("dt",1.f/2048.f);
 
     Data *xfData = (Data *)getParamObject("transferFunction",NULL);
     /*! \todo Add 'real' transfer function code to DVRRenderer(s) */
