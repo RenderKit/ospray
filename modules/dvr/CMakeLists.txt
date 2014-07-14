@@ -20,7 +20,7 @@ IF (OSPRAY_MODULE_DVR)
   TARGET_LINK_LIBRARIES(ospray_module_dvr${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
   # ------------------------------------------------------------
   SET_TARGET_PROPERTIES(ospray_module_dvr${OSPRAY_LIB_SUFFIX}
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION 2)
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
   INSTALL(TARGETS ospray_module_dvr${OSPRAY_LIB_SUFFIX} DESTINATION lib)
   # ------------------------------------------------------------
 

@@ -23,7 +23,7 @@ IF (NOT THIS_IS_MIC)
   TARGET_LINK_LIBRARIES(ospray_minisg ${LIBXML2_LIBRARIES})
   # ------------------------------------------------------------
   SET_TARGET_PROPERTIES(ospray_minisg${OSPRAY_LIB_SUFFIX} 
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION 2)
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})
   INSTALL(TARGETS ospray_minisg${OSPRAY_LIB_SUFFIX} DESTINATION lib)
   # ------------------------------------------------------------
 

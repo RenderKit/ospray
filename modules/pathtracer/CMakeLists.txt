@@ -43,6 +43,8 @@ IF (OSPRAY_MODULE_PATHTRACER)
     ospray${OSPRAY_LIB_SUFFIX}
     )
   # ------------------------------------------------------------
+  SET_TARGET_PROPERTIES(ospray_module_pathtracer${OSPRAY_LIB_SUFFIX}
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})
   INSTALL(TARGETS ospray_module_pathtracer${OSPRAY_LIB_SUFFIX}
     DESTINATION lib)
 ENDIF()

@@ -145,7 +145,7 @@ TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX} 
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION 2)
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 ##############################################################
 
