@@ -422,10 +422,10 @@ namespace ospray {
 
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
-    ospCommit(ospRenderer);
     if (!ospRenderer)
       throw std::runtime_error("could not create ospRenderer '"+rendererType+"'");
     Assert(ospRenderer != NULL && "could not create ospRenderer");
+    ospCommit(ospRenderer);
     
 
 

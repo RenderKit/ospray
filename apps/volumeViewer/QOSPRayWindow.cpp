@@ -7,9 +7,8 @@
  ********************************************************************* */
 
 #include "QOSPRayWindow.h"
-#include <QtGui>
 
-QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : renderingEnabled_(false), frameBuffer_(NULL), renderer_(NULL), camera_(NULL)
+QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : frameCount_(0), renderingEnabled_(false), rotationRate_(0.f), benchmarkWarmUpFrames_(0), benchmarkFrames_(0), frameBuffer_(NULL), renderer_(NULL), camera_(NULL)
 {
     // assign renderer
     if(!renderer)
@@ -54,6 +53,17 @@ void QOSPRayWindow::setRenderingEnabled(bool renderingEnabled)
     }
 }
 
+void QOSPRayWindow::setRotationRate(float rotationRate)
+{
+    rotationRate_ = rotationRate;
+}
+
+void QOSPRayWindow::setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames)
+{
+    benchmarkWarmUpFrames_ = benchmarkWarmUpFrames;
+    benchmarkFrames_ = benchmarkFrames;
+}
+
 void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
 {
     worldBounds_ = worldBounds;
@@ -79,6 +89,13 @@ void QOSPRayWindow::paintGL()
         return;
     }
 
+    // if we're benchmarking and we've completed the required number of warm-up frames, start the timer
+    if(benchmarkFrames_ > 0 && frameCount_ == benchmarkWarmUpFrames_)
+    {
+        std::cout << "starting benchmark timer" << std::endl;
+        benchmarkTimer_.start();
+    }
+
     // update OSPRay camera if viewport has been modified
     if(viewport_.modified)
     {
@@ -100,6 +117,31 @@ void QOSPRayWindow::paintGL()
     glDrawPixels(windowSize_.x, windowSize_.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFrameBuffer);
 
     ospUnmapFrameBuffer(mappedFrameBuffer, frameBuffer_);
+
+    // automatic rotation
+    if(rotationRate_ != 0.f)
+    {
+        rotateCenter(rotationRate_, 0.f);
+    }
+
+    // increment frame counter
+    frameCount_++;
+
+    // quit if we're benchmarking and have exceeded the needed number of frames
+    if(benchmarkFrames_ > 0 && frameCount_ >= benchmarkWarmUpFrames_ + benchmarkFrames_)
+    {
+        float elapsedSeconds = float(benchmarkTimer_.elapsed()) / 1000.f;
+
+        std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> " << float(benchmarkFrames_) / elapsedSeconds << " fps" << std::endl;
+
+        QCoreApplication::quit();
+    }
+
+    // force continuous rendering if we have automatic rotation or benchmarking enabled
+    if(rotationRate_ != 0.f || benchmarkFrames_ > 0)
+    {
+        update();
+    }
 }
 
 void QOSPRayWindow::resizeGL(int width, int height)
@@ -146,19 +188,7 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
         float du = dx * rotationSpeed;
         float dv = dy * rotationSpeed;
 
-        const osp::vec3f pivot = center(worldBounds_);
-
-        osp::affine3f xfm = osp::affine3f::translate(pivot)
-                          * osp::affine3f::rotate(viewport_.frame.l.vx, -dv)
-                          * osp::affine3f::rotate(viewport_.frame.l.vz, -du)
-                          * osp::affine3f::translate(-pivot);
-
-        viewport_.frame = xfm * viewport_.frame;
-        viewport_.from  = xfmPoint(xfm, viewport_.from);
-        viewport_.at    = xfmPoint(xfm, viewport_.at);
-        viewport_.snapUp();
-
-        viewport_.modified = true;
+        rotateCenter(du, dv);
     }
     else if(event->buttons() & Qt::RightButton)
     {
@@ -181,4 +211,21 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
     lastMousePosition_ = event->pos();
 
     updateGL();
+}
+
+void QOSPRayWindow::rotateCenter(float du, float dv)
+{
+    const osp::vec3f pivot = center(worldBounds_);
+
+    osp::affine3f xfm = osp::affine3f::translate(pivot)
+                      * osp::affine3f::rotate(viewport_.frame.l.vx, -dv)
+                      * osp::affine3f::rotate(viewport_.frame.l.vz, -du)
+                      * osp::affine3f::translate(-pivot);
+
+    viewport_.frame = xfm * viewport_.frame;
+    viewport_.from  = xfmPoint(xfm, viewport_.from);
+    viewport_.at    = xfmPoint(xfm, viewport_.at);
+    viewport_.snapUp();
+
+    viewport_.modified = true;
 }
