@@ -18,7 +18,7 @@ namespace ospray {
   void Renderer::commit()
   {
     spp = getParam1i("spp",1);
-    ispc::Renderer_setSPP(this->getIE(),spp);
+    if(this->getIE()) ispc::Renderer_setSPP(this->getIE(),spp);
   }
 
   Renderer *Renderer::createRenderer(const char *type)
