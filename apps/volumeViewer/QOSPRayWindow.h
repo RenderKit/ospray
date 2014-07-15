@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QtGui>
 #include <QGLWidget>
 #include <ospray/ospray.h>
 
@@ -55,7 +56,8 @@ public:
     virtual ~QOSPRayWindow();
 
     void setRenderingEnabled(bool renderingEnabled);
-
+    void setRotationRate(float rotationRate);
+    void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
     virtual void setWorldBounds(const osp::box3f &worldBounds);
 
     OSPFrameBuffer getFrameBuffer();
@@ -68,8 +70,26 @@ protected:
     virtual void mouseReleaseEvent(QMouseEvent * event);
     virtual void mouseMoveEvent(QMouseEvent * event);
 
+    /*! rotate about center point */
+    virtual void rotateCenter(float du, float dv);
+
+    /*! frame counter */
+    long frameCount_;
+
     /*! only render when this flag is true. this allows the window to be created before all required components are ospCommit()'d. */
     bool renderingEnabled_;
+
+    /*! rotation rate to automatically rotate view. */
+    float rotationRate_;
+
+    /*! benchmarking: number of warm-up frames */
+    int benchmarkWarmUpFrames_;
+
+    /*! benchmarking: number of frames over which to measure frame rate */
+    int benchmarkFrames_;
+
+    /*! benchmarking: timer to measure elapsed time over benchmark frames */
+    QTime benchmarkTimer_;
 
     osp::vec2i windowSize_;
     Viewport viewport_;

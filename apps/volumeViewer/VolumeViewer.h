@@ -11,6 +11,8 @@ public:
 
     VolumeViewer();
 
+    QOSPRayWindow * getQOSPRayWindow() { return osprayWindow_; }
+
     void loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout, const float dt);
 
 public slots:
