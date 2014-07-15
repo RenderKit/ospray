@@ -19,6 +19,7 @@ int main(int argc, char * argv[])
         std::cerr << "  -dt <dt>                             : use ray cast sample step size 'dt'" << std::endl;
         std::cerr << "  -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
         std::cerr << "  -benchmark <warm-up frames> <frames> : run benchmark and report overall frame rate" << std::endl;
+        std::cerr << "  -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'" << std::endl;
 
         return 1;
     }
@@ -40,6 +41,8 @@ int main(int argc, char * argv[])
     float rotationRate = 0.f;
     int benchmarkWarmUpFrames = 0;
     int benchmarkFrames = 0;
+    int viewSizeWidth = 0;
+    int viewSizeHeight = 0;
 
     for(int i=7; i<argc; i++)
     {
@@ -79,6 +82,31 @@ int main(int argc, char * argv[])
 
             std::cout << "got benchmarkWarmUpFrames = " << benchmarkWarmUpFrames << ", benchmarkFrames = " << benchmarkFrames << std::endl;
         }
+        else if(arg == "-viewsize")
+        {
+            if(i+1 >= argc)
+            {
+                throw std::runtime_error("missing <width>x<height> argument");
+            }
+
+            std::string arg2(argv[++i]);
+
+            size_t pos = arg2.find("x");
+
+            if(pos != std::string::npos)
+            {
+                arg2.replace(pos, 1, " ");
+
+                std::stringstream ss(arg2);
+                ss >> viewSizeWidth >> viewSizeHeight;
+
+                std::cout << "got viewSizeWidth = " << viewSizeWidth << ", viewSizeHeight = " << viewSizeHeight << std::endl;
+            }
+            else
+            {
+                throw std::runtime_error("improperly formatted <width>x<height> argument");
+            }
+        }
         else
         {
             throw std::runtime_error("unknown parameter " + arg);
@@ -96,6 +124,12 @@ int main(int argc, char * argv[])
 
     // set benchmarking parameters
     volumeViewer->getQOSPRayWindow()->setBenchmarkParameters(benchmarkWarmUpFrames, benchmarkFrames);
+
+    // set OSPRay view size if specified
+    if(viewSizeWidth != 0 && viewSizeHeight != 0)
+    {
+        volumeViewer->getQOSPRayWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
+    }
 
     // enter Qt event loop
     app->exec();
