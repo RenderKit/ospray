@@ -1,10 +1,12 @@
-/*! \file bricked32.ih \brief publicly exported symbols and constants
-    of ispc code for bricked32 volume data layout
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
 
-    \note This file gets included by both ispc and c++ header files,
-    make sure to put the respective langauge-specific code in the
-    respective sections.
-  */ 
+ 
 
 #define CACHE_BRICK_BITS 3
 #define PAGE_BRICK_BITS  7

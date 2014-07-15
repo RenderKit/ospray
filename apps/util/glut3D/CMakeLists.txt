@@ -1,4 +1,11 @@
-#INCLUDE(../../../cmake/glut.cmake)
+# #####################################################################
+# INTEL CORPORATION PROPRIETARY INFORMATION                            
+# This software is supplied under the terms of a license agreement or  
+# nondisclosure agreement with Intel Corporation and may not be copied 
+# or disclosed except in accordance with the terms of that agreement.  
+# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+# #####################################################################
+
 
 SET(ENABLE_REMOTE_GLUT3D OFF CACHE BOOL "Enable remote glut3D support (experimental)")
 MARK_AS_ADVANCED(ENABLE_REMOTE_GLUT3D)

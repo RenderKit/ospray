@@ -1,6 +1,12 @@
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
 
-/*! \file shankarView.cpp A GLUT-based viewer for simple geometry
-  (supports STL and Wavefront OBJ files) */
+
 
 // viewer widget
 #include "glut3D/glut3D.h"

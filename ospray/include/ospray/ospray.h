@@ -1,13 +1,12 @@
-/*! \file ospray/ospray.h Public OSPRay API definition file (core components)
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
 
-  \ingroup ospray_api
 
-  This file defines the public API for the OSPRay core. Since many of
-  OSPRays components are intentionally realized in specific modules
-  this file will *only* define the very *core* components, with all
-  extensions/modules implemented in the respective modules.
-
- */
 
 /*! \defgroup ospray_api OSPRay Core API
 

@@ -1,3 +1,11 @@
+# #####################################################################
+# INTEL CORPORATION PROPRIETARY INFORMATION                            
+# This software is supplied under the terms of a license agreement or  
+# nondisclosure agreement with Intel Corporation and may not be copied 
+# or disclosed except in accordance with the terms of that agreement.  
+# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+# #####################################################################
+
 
 # configure this dir for the proper "OSPRAY_LIB_SUFFIX" etc (depending
 # on which target we build for )
@@ -112,6 +120,8 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   FIND_LIBRARY(LIBCOI_DEVICE libcoi_device.so
     PATHS
     /opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
+    /opt/mpss/3.2.2/sysroots/k1om-mpss-linux/usr/lib64
+    /opt/mpss/3.2.3/sysroots/k1om-mpss-linux/usr/lib64
     /opt/intel/mic/coi/device-linux-release/lib
     )
   FIND_LIBRARY(LIBCOI_HOST libcoi_host.so
