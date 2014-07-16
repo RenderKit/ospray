@@ -1,3 +1,11 @@
+# #####################################################################
+# INTEL CORPORATION PROPRIETARY INFORMATION                            
+# This software is supplied under the terms of a license agreement or  
+# nondisclosure agreement with Intel Corporation and may not be copied 
+# or disclosed except in accordance with the terms of that agreement.  
+# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+# #####################################################################
+
 PROJECT(OSPRay)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
@@ -7,6 +15,7 @@ ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 SET(OSPRAY_VERSION 0.5.0)
+SET(OSPRAY_SOVERSION 0)
 
 IF(NOT CMAKE_BUILD_TYPE)
   SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)

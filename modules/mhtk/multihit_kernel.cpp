@@ -1,4 +1,12 @@
-/*! \file multihit_kernel.cpp Implements the single-ray multi-hit traversal kernel (on top of embree data structures */
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
+
+
 
 // this module
 #include "multihit_kernel.h"

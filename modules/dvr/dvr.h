@@ -1,19 +1,12 @@
-/*! \defgroup ospray_module_dvr Experimental Direct Volume Rendering (DVR) Module
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
 
-  \ingroup ospray_modules
 
-  \brief Experimental direct volume rendering (DVR) functionality 
-
-  Implements both scalar and ISPC-vectorized DVR renderers for various
-  volume data layouts. Much of that functionality will eventually flow
-  back into the ospray core (some already has); this module is mostly
-  for experimental code (e.g., different variants of data structures
-  or sample codes) that we do not (yet) want to have in the main
-  ospray codebase (being a module allows this code to be conditionally
-  enabled/disabled, and allows ospray to be built even if the dvr
-  module for some reason doesn't build).
-
-*/
 
 #pragma once
 

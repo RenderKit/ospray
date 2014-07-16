@@ -1,3 +1,11 @@
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
+
 #include "QOSPRayWindow.h"
 
 QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : frameCount_(0), renderingEnabled_(false), rotationRate_(0.f), benchmarkWarmUpFrames_(0), benchmarkFrames_(0), frameBuffer_(NULL), renderer_(NULL), camera_(NULL)

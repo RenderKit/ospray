@@ -1,3 +1,11 @@
+# #####################################################################
+# INTEL CORPORATION PROPRIETARY INFORMATION                            
+# This software is supplied under the terms of a license agreement or  
+# nondisclosure agreement with Intel Corporation and may not be copied 
+# or disclosed except in accordance with the terms of that agreement.  
+# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+# #####################################################################
+
 IF (NOT THIS_IS_MIC)
   INCLUDE_DIRECTORIES(${OSPRAY_DIR}/ospray)
   
@@ -23,7 +31,7 @@ IF (NOT THIS_IS_MIC)
   TARGET_LINK_LIBRARIES(ospray_minisg ${LIBXML2_LIBRARIES})
   # ------------------------------------------------------------
   SET_TARGET_PROPERTIES(ospray_minisg${OSPRAY_LIB_SUFFIX} 
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION 2)
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})
   INSTALL(TARGETS ospray_minisg${OSPRAY_LIB_SUFFIX} DESTINATION lib)
   # ------------------------------------------------------------
 

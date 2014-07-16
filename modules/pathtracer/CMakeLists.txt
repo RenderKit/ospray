@@ -1,3 +1,11 @@
+# #####################################################################
+# INTEL CORPORATION PROPRIETARY INFORMATION                            
+# This software is supplied under the terms of a license agreement or  
+# nondisclosure agreement with Intel Corporation and may not be copied 
+# or disclosed except in accordance with the terms of that agreement.  
+# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+# #####################################################################
+
 SET(OSPRAY_MODULE_PATHTRACER ON CACHE BOOL "Build 'pathtracer' (Embree Path Tracer) module")
 
 IF (OSPRAY_MODULE_PATHTRACER)
@@ -43,6 +51,8 @@ IF (OSPRAY_MODULE_PATHTRACER)
     ospray${OSPRAY_LIB_SUFFIX}
     )
   # ------------------------------------------------------------
+  SET_TARGET_PROPERTIES(ospray_module_pathtracer${OSPRAY_LIB_SUFFIX}
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})
   INSTALL(TARGETS ospray_module_pathtracer${OSPRAY_LIB_SUFFIX}
     DESTINATION lib)
 ENDIF()
