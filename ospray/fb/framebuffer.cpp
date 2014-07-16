@@ -8,6 +8,7 @@ namespace ospray {
                            bool hasDepthBuffer,
                            bool hasAccumBuffer)
     : size(size),
+      colorBufferFormat(colorBufferFormat),
       hasDepthBuffer(hasDepthBuffer),
       hasAccumBuffer(hasAccumBuffer),
       accumID(-1)
