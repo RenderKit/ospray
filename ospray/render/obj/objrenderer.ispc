@@ -87,8 +87,9 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
   }
 }
 
-inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform renderer) 
+inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OBJRenderer *uniform renderer) 
 { 
+  Ray &ray = sample.ray;
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
   // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
   vec3f color = make_vec3f(0.f);
@@ -101,10 +102,12 @@ inline vec3f OBJRenderer_shadeRay(Ray &ray, const uniform OBJRenderer *uniform r
 
     if (ray.geomID < 0) {
       color = color + path_opacity * renderer->bgColor;
+      sample.z = 1;
       return color;
     }
 
-    
+    sample.z = log(ray.t) / 10;
+
     vec3f local_shade_color = make_vec3f(0.f);
 
     DifferentialGeometry dg;
@@ -253,7 +256,7 @@ void OBJRenderer_renderSample(uniform Renderer *uniform _renderer,
   uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
   // print("sample.ray.org.x %\n",sample.ray.org.x);
   // sample.rgb = absf(sample.ray.dir);
-  sample.rgb = OBJRenderer_shadeRay(sample.ray,renderer);
+  sample.rgb = OBJRenderer_shadeRay(sample,renderer);
   // print("sample.x %\n",sample.rgb.x);
 }
 
