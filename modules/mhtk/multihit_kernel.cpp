@@ -26,9 +26,9 @@
 #include "kernels/xeon/geometry/triangle1_intersector1_moeller.h"
 
 #ifdef __AVX2__
-typedef embree::avx2::BVH4Intersector8Hybrid<embree::Triangle4Intersector8MoellerTrumbore> MyIsec;
+typedef embree::avx2::BVH4Intersector8Hybrid<embree::Triangle4Intersector8MoellerTrumbore<false> > MyIsec;
 #else
-typedef embree::avx::BVH4Intersector8Hybrid<embree::Triangle4Intersector8MoellerTrumbore> MyIsec;
+typedef embree::avx::BVH4Intersector8Hybrid<embree::Triangle4Intersector8MoellerTrumbore<false> > MyIsec;
 #endif
 
 /*! if defined, the multihit kernel will do some additional checks
