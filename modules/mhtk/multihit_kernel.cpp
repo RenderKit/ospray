@@ -54,6 +54,8 @@ namespace ospray {
                                                   HitInfo         *hitArray,
                                                   size_t           hitArraySize)
     {
+        PING;
+
       /* calculate denominator */
       STAT3(normal.trav_prims,1,1,1);
       const sse3f O = sse3f(ray.org);
@@ -111,6 +113,8 @@ namespace ospray {
 #endif       
         
         const Vec3fa Ng = Vec3fa(tri.Ng.x[triID],tri.Ng.y[triID],tri.Ng.z[triID]);
+        PING;
+        PRINT(numHitsFound);
         if (numHitsFound == hitArraySize) {
           // array is already full, check if we have to add this one at all!
           if (ti < hitArray[hitArraySize-1].t) {
@@ -158,6 +162,9 @@ namespace ospray {
                           HitInfo      *hitArray,
                           size_t        hitArraySize)
     {
+      PING;
+      PRINT(hitArraySize);
+
       typedef embree::Triangle4Intersector1MoellerTrumbore PrimitiveIntersector;
       typedef PrimitiveIntersector::Primitive Primitive;
       typedef BVH4::NodeRef NodeRef;
@@ -181,11 +188,6 @@ namespace ospray {
       stack[0].ptr = bvh->root;
       stack[0].dist = neg_inf;
       
-      /*! offsets to select the side that becomes the lower or upper bound */
-      const size_t nearX = ray.dir.x >= 0.0f ? 0*sizeof(ssef) : 1*sizeof(ssef);
-      const size_t nearY = ray.dir.y >= 0.0f ? 2*sizeof(ssef) : 3*sizeof(ssef);
-      const size_t nearZ = ray.dir.z >= 0.0f ? 4*sizeof(ssef) : 5*sizeof(ssef);
-      
       /*! load the ray into SIMD registers */
       const sse3f norg(-ray.org.x,-ray.org.y,-ray.org.z);
       const Vec3fa ray_rdir = rcp_safe(ray.dir);
@@ -195,6 +197,11 @@ namespace ospray {
       const ssef  ray_near(ray.tnear);
       ssef ray_far(ray.tfar);
 
+      /*! offsets to select the side that becomes the lower or upper bound */
+      const size_t nearX = ray_rdir.x >= 0.0f ? 0*sizeof(ssef) : 1*sizeof(ssef);
+      const size_t nearY = ray_rdir.y >= 0.0f ? 2*sizeof(ssef) : 3*sizeof(ssef);
+      const size_t nearZ = ray_rdir.z >= 0.0f ? 4*sizeof(ssef) : 5*sizeof(ssef);
+      
       /* pop loop */
       while (true) pop:
         {
@@ -216,7 +223,7 @@ namespace ospray {
           
               /*! single ray intersection with 4 boxes */
               const Node* node = cur.node();
-              const size_t farX  = nearX ^ 16, farY  = nearY ^ 16, farZ  = nearZ ^ 16;
+              const size_t farX  = nearX ^ sizeof(ssef), farY  = nearY ^ sizeof(ssef), farZ  = nearZ ^ sizeof(ssef);
 #if defined (__AVX2__)
               const ssef tNearX = msub(load4f((const char*)node+nearX), rdir.x, org_rdir.x);
               const ssef tNearY = msub(load4f((const char*)node+nearY), rdir.y, org_rdir.y);
@@ -353,6 +360,7 @@ namespace ospray {
         ray1.geomID = -1;
         ray1.t0     = ray8.tnear[lane];
         ray1.t      = ray8.tfar[lane];
+        ray1.mask   = -1;
         size_t numHits = multiHitKernel(_scene,ray1,hitArray1,hitArraySize);
         for (int i=0;i<numHits;i++) {
           hitArray8[i].t[lane] = hitArray1[i].t;
