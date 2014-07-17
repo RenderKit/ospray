@@ -295,7 +295,7 @@ namespace ospray {
       const char *coiWorker = getenv("OSPRAY_COI_WORKER");
       if (coiWorker == NULL) {
         std::cerr << "OSPRAY_COI_WORKER not defined." << std::endl;
-        std::cerr << "Note: In order to run the OSPray COI device on the Xeon Phis it needs to know the full path of the 'osp_coi_worker.mic' executable that contains the respective ospray xeon worker binary. Please define an environment variabel named 'OSPRAY_COI_WORKER' to contain the filename - with full directory path - of this executable." << std::endl;
+        std::cerr << "Note: In order to run the OSPray COI device on the Xeon Phis it needs to know the full path of the 'ospray_coi_worker.mic' executable that contains the respective ospray xeon worker binary. Please define an environment variabel named 'OSPRAY_COI_WORKER' to contain the filename - with full directory path - of this executable." << std::endl;
         exit(1);
       }
       const char *sinkLDPath = getenv("SINK_LD_LIBRARY_PATH");
