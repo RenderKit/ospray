@@ -140,10 +140,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
         d *= 1.f-Kd_from_map.w;
       } else
         Kd = mat->Kd;
-      Ks = get3f(mat->map_Ks,dg.st,mat->Ks);
-      // Kd = mat->map_Kd ? mat->map_Kd->get(mat->map_Kd, dg.st) : mat->Kd;
-      // Ks = mat->map_Ks ? mat->map_Ks->get(mat->map_Ks, dg.st) : mat->Ks;
-      // const vec4f spec_exp_map = mat->map_Ns ? mat->map_Ns->get(mat->map_Ns, dg.st) : make_vec3f(0.f);
+      Ks = mat->map_Ks ? get3f(mat->map_Ks,dg.st,mat->Ks) : mat->Ks;
       Ns = mat->map_Ns ? get1f(mat->map_Ns,dg.st) : mat->Ns;
       bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
     }

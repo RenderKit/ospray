@@ -22,6 +22,7 @@ namespace ospray {
       if (ispcEquivalent == NULL)
         ispcEquivalent = ispc::OBJMaterial_create(this);
 
+#if 0
       Ref<Data> textureArrayData = getParamData("textureArray",NULL);
       int32 num_textures = textureArrayData ? textureArrayData->numItems : 0;
 
@@ -43,6 +44,19 @@ namespace ospray {
       } else {
         map_d = map_Kd = map_Ks = map_Ns = map_Bump = NULL;
       }
+#else
+      Data* map_d_data = getParamData("map_d", NULL);
+      Data* map_Kd_data = getParamData("map_Kd", getParamData("map_kd", NULL));
+      Data* map_Ks_data = getParamData("map_Ks", getParamData("map_ks", NULL));
+      Data* map_Ns_data = getParamData("map_Ns", getParamData("map_ns", NULL));
+      Data* map_Bump_data = getParamData("map_Bump", getParamData("map_bump", NULL));
+
+      map_d  = map_d_data ? (Texture2D*)map_d_data->data : NULL;
+      map_Kd = map_Kd_data ? (Texture2D*)map_Kd_data->data : NULL;
+      map_Ks = map_Ks_data ? (Texture2D*)map_Ks_data->data : NULL;
+      map_Ns = map_Ns_data ? (Texture2D*)map_Ns_data->data : NULL;
+      map_Bump = map_Bump_data ? (Texture2D*)map_Bump_data->data : NULL;
+#endif
 
       d  = getParam1f("d", 1.f);
       Kd = getParam3f("kd", getParam3f("Kd", vec3f(.8f)));
