@@ -132,7 +132,7 @@ namespace ospray {
       static vec2i defaultInitSize;
 
       typedef enum { 
-        FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_NONE
+        FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_DEPTH,FRAMEBUFFER_NONE
       } FrameBufferMode;
       typedef enum {
         MOVE_MODE           =(1<<0),
@@ -265,6 +265,8 @@ namespace ospray {
         uint32 *ucharFB;
         /*! float[4] RGBA-framebuffer, if applicable */
         vec3fa *floatFB;
+        /*! floating point depth framebuffer, if applicable */
+        float *depthFB;
       };
       friend void glut3dReshape(int32 x, int32 y);
       friend void glut3dDisplay(void);
