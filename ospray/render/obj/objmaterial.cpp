@@ -45,17 +45,11 @@ namespace ospray {
         map_d = map_Kd = map_Ks = map_Ns = map_Bump = NULL;
       }
 #else
-      Data* map_d_data = getParamData("map_d", NULL);
-      Data* map_Kd_data = getParamData("map_Kd", getParamData("map_kd", NULL));
-      Data* map_Ks_data = getParamData("map_Ks", getParamData("map_ks", NULL));
-      Data* map_Ns_data = getParamData("map_Ns", getParamData("map_ns", NULL));
-      Data* map_Bump_data = getParamData("map_Bump", getParamData("map_bump", NULL));
-
-      map_d  = map_d_data ? (Texture2D*)map_d_data->data : NULL;
-      map_Kd = map_Kd_data ? (Texture2D*)map_Kd_data->data : NULL;
-      map_Ks = map_Ks_data ? (Texture2D*)map_Ks_data->data : NULL;
-      map_Ns = map_Ns_data ? (Texture2D*)map_Ns_data->data : NULL;
-      map_Bump = map_Bump_data ? (Texture2D*)map_Bump_data->data : NULL;
+      map_d  = (Texture2D*)getParamObject("map_d", NULL);
+      map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd", NULL));
+      map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks", NULL));
+      map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", NULL));
+      map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", NULL));
 #endif
 
       d  = getParam1f("d", 1.f);

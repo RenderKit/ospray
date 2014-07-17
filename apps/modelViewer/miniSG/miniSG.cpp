@@ -160,7 +160,7 @@ namespace ospray {
     void *Material::getParam(const char *name, void *defaultVal) {
         ParamMap::iterator it = params.find(name);
         if (it != params.end()) {
-          assert( it->second->type == Param::DATA && "Param type mismatch" );
+          assert( it->second->type == Param::TEXTURE /*|| other 'data' types*/&& "Param type mismatch" );
           return it->second->ptr;
         }
 

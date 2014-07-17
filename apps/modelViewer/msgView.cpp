@@ -295,8 +295,9 @@ namespace ospray {
         else {
           miniSG::Texture2D *tex = mat->textures[p->i[0]].ptr;
           OSPTexture2D ospTex = createTexture2D(tex);
-          OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
-          ospSetData(ospMat, name, data);
+          //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
+          //ospSetData(ospMat, name, data);
+          ospSetParam(ospMat, name, ospTex);
         }
         break;
       case miniSG::Material::Param::FLOAT:
@@ -308,13 +309,12 @@ namespace ospray {
       case miniSG::Material::Param::STRING:
         ospSetString(ospMat,name,p->s);
         break;
-      case miniSG::Material::Param::DATA:
-        //cout << "WARNING: material has 'data' parameter, but don't know what that actually is!?" << endl;
-        //Only 'DATA' used by any of the importers is a texture pointer
+      case miniSG::Material::Param::TEXTURE:
         {
-        OSPData data = ospNewData(1, OSP_OBJECT, p->ptr, OSP_DATA_SHARED_BUFFER);
-        ospSetData(ospMat, name, data);
-        break;
+          miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
+          OSPTexture2D ospTex = createTexture2D(tex);
+          ospSetParam(ospMat, name, ospTex);
+          break;
         }
       default: 
         throw std::runtime_error("unkonwn material parameter type");

@@ -307,7 +307,13 @@ namespace ospray {
                 float w = atof(s);
                 mat->setParam(childName.c_str(), vec4f(x,y,z,w));
               } else if (!childType.compare("int")) {
-                mat->setParam(childName.c_str(), (int32)atol(s));
+                //This *could* be a texture, handle it!
+                if(childName.find("map_") == std::string::npos) {
+                  mat->setParam(childName.c_str(), (int32)atol(s));
+                } else {
+                  Texture2D* tex = mat->textures[(int32)atol(s)].ptr;
+                  mat->setParam(childName.c_str(), (void*)tex, Material::Param::TEXTURE);
+                }
               } else if (!childType.compare("int2")) {
                 int32 x = atol(s);
                 s = NEXT_TOK;
