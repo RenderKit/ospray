@@ -266,6 +266,9 @@ namespace ospray {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
       } else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, floatFB);
+      }
+      else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_DEPTH && depthFB) {
+        glDrawPixels(windowSize.x, windowSize.y, GL_LUMINANCE, GL_FLOAT, depthFB);
       } else {
         glClearColor(0.f,0.f,0.f,1.f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );

@@ -25,6 +25,8 @@ namespace ospray {
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
 
+  glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
+
   /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
   //  vec3f defaultDirLight_direction(-.3, -1, .4);
   vec3f defaultDirLight_direction(.3, -1, -.2);
@@ -80,7 +82,7 @@ namespace ospray {
     {
       Glut3DWidget::reshape(newSize);
       if (fb) ospFreeFrameBuffer(fb);
-      fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
+      fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
     }
@@ -98,6 +100,17 @@ namespace ospray {
         ospSet1i(renderer,"shadowsEnabled",doShadows);
         ospCommit(renderer);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        break;
+      case 'D':
+        switch(g_frameBufferMode) {
+          case Glut3DWidget::FRAMEBUFFER_DEPTH:
+            g_frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
+            break;
+          case Glut3DWidget::FRAMEBUFFER_UCHAR:
+            g_frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
+            break;
+        }
+        forceRedraw();
         break;
       default:
         Glut3DWidget::keypress(key,where);
@@ -149,14 +162,23 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
       }
       
-      ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
+      
+      ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
       ++accumID;
       
-      ucharFB = (uint32 *) ospMapFrameBuffer(fb);
-      frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-      Glut3DWidget::display();
-      
-      ospUnmapFrameBuffer(ucharFB,fb);
+      frameBufferMode = g_frameBufferMode;
+      switch(frameBufferMode) {
+        case Glut3DWidget::FRAMEBUFFER_DEPTH:
+          depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
+          Glut3DWidget::display();
+          ospUnmapFrameBuffer(depthFB,fb);
+          break;
+        case Glut3DWidget::FRAMEBUFFER_UCHAR:
+          ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          Glut3DWidget::display();
+          ospUnmapFrameBuffer(ucharFB,fb);
+          break;
+      }
 
       char title[1000];
 
