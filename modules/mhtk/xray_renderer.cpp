@@ -58,24 +58,18 @@ namespace ospray {
     ISPCXRayRenderer::ISPCXRayRenderer()
     { 
       ispcEquivalent = ispc::XRayRenderer_create(this); 
-      PING;
-      PRINT(ispcEquivalent);
     }
 
     /*! \brief create render job for ispc-based mhtk::xray renderer */
     void ISPCXRayRenderer::commit()
     {
-      Model *model = (Model *)getParamObject("model",NULL);
-      Assert2(model,"null model handle in 'xray' renderer "
-             "(did you forget to assign a 'model' parameter to the renderer?)");
+      Renderer::commit();
 
+      Model *model = (Model *)getParamObject("model",NULL);
       Camera *camera = (Camera *)getParamObject("camera",NULL);
-      Assert2(camera,"null camera handle in 'xray' renderer "
-             "(did you forget to assign a 'camera' parameter to the renderer?)");
-    
-      PING;
-      PRINT(this->getIE());
-      ispc::XRayRenderer_set(getIE(),model->getIE(),camera->getIE());
+
+      if (model && camera)
+        ispc::XRayRenderer_set(getIE(),model->getIE(),camera->getIE());
     }
 
     /*! \brief perform the actual multihit kernel based xray tracing
@@ -139,6 +133,7 @@ namespace ospray {
         }
       }
     }
+
 
     OSP_REGISTER_RENDERER(ISPCXRayRenderer,mhtk_xray_ispc);
     OSP_REGISTER_RENDERER(ScalarXRayRenderer,mhtk_xray_scalar);
