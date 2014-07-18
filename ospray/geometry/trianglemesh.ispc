@@ -6,8 +6,11 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
+// ospray
 #include "trianglemesh.ih"
 #include "ospray/common/model.ih"
+// embree
+#include "embree2/rtcore_geometry.isph"
 
 static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
                                        uniform Model *uniform model,
@@ -121,6 +124,25 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   mesh->geom_materialID = geom_materialID;
 }
 
+#ifdef OSPRAY_INTERSECTION_FILTER
+void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
+                        varying RTCRay& ray  /*!< intersection to filter */)
+{
+  uniform Geometry *uniform geom = (uniform Geometry *uniform)ptr;
+  if (ptr->intersectionFilter) {
+    print("FOUND dummy filter N\n");
+  }
+}
+#endif
+
+void uniDummyIsecFilter(void* uniform ptr,   /*!< pointer to user data */
+                     uniform RTCRay1& ray  /*!< intersection to filter */)
+{
+  print("dummy filter 1\n");
+}
+
+
+
 
 //! destructor for ispc-side TriangleMesh object
 extern void TriangleMesh_Destructor(uniform TriangleMesh *uniform mesh)
@@ -174,11 +196,8 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                           geom_materialID,
                           materialList,
                           prim_materialID);
-
- // if (prim_materialID) {
- //   for (int i=50;i<60;i++)
- //     print("list %, mat %\n",mesh->prim_materialID,mesh->prim_materialID[i]);
- // }
-
+#ifdef OSPRAY_INTERSECTION_FILTER
+ rtcSetIntersectionFilterFunction(model->embreeSceneHandle,geomID,&intersectionFilter);
+#endif
 }
 

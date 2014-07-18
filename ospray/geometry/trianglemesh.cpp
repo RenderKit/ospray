@@ -29,6 +29,7 @@ namespace ospray {
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
 
+
   void TriangleMesh::finalize(Model *model)
   {
     static int numPrints = 0;

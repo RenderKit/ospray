@@ -60,12 +60,33 @@ namespace ospray {
       ispcEquivalent = ispc::XRayRenderer_create(this); 
     }
 
+    void ISPCXRayRenderer::beginFrame(FrameBuffer *fb) 
+    {
+      Renderer::beginFrame(fb);
+      // this->currentFB = fb;
+      // ispc::Renderer_beginFrame(getIE(),fb->getIE());
+      if (this->model) {
+        // PING;
+        ispc::setMultiHitFilter(model->getIE());
+        // PING;
+        // rtcCommit(model->embreeSceneHandle);
+      }
+    }
+    
+    void ISPCXRayRenderer::endFrame(const int32 fbChannelFlags)
+    {
+      Renderer::endFrame(fbChannelFlags);
+      // if (model)
+      //   ispc::unsetMultiHitFilter(model->getIE());
+    }
+      
+
     /*! \brief create render job for ispc-based mhtk::xray renderer */
     void ISPCXRayRenderer::commit()
     {
       Renderer::commit();
 
-      Model *model = (Model *)getParamObject("model",NULL);
+      model = (Model *)getParamObject("model",NULL);
       Camera *camera = (Camera *)getParamObject("camera",NULL);
 
       if (model && camera)

@@ -42,20 +42,60 @@ struct XRayRenderer {
   RTCScene embreeSceneHandle;
 };
 
+struct MultiHitInfo {
+  MHTKHit hitArray[MAX_HITS_PER_TRACE];
+  int32 numHits;
+};
+
+
+// /*! Intersection filter function for uniform rays. */
+// typedef void (*uniform RTCFilterFuncUniform)(void* uniform ptr,    /*!< pointer to user data */
+//                                      uniform RTCRay1& ray  /*!< intersection to filter */);
+
+/*! Intersection filter function for varying rays. */
+void multiHitFilter(void* uniform ptr,   /*!< pointer to user data */
+                    varying RTCRay& ray  /*!< intersection to filter */)
+{
+  print("filter ...\n");
+}
+
+export void setMultiHitFilter(void *uniform _model)
+{
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+  for (uniform int i=0;i<model->numGeometries;i++) {
+    print("setting filter for geometry %/%\n",i,model->numGeometries);
+    rtcSetIntersectionFilterFunction(model->embreeSceneHandle,i,multiHitFilter);
+  }
+}
+
+
+export void unsetMultiHitFilter(void *uniform _model)
+{
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+  for (uniform int i=0;i<model->numGeometries;i++) {
+    rtcSetIntersectionFilterFunction(model->embreeSceneHandle,i,NULL);
+  }
+}
+
 void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
                                varying ScreenSample &sample)
 {
   uniform XRayRenderer *uniform renderer = (uniform XRayRenderer *uniform)_renderer;
 
-  MHTKHit hitArray[MAX_HITS_PER_TRACE];
-  const int32 numHits = multiHitKernel(renderer->embreeSceneHandle,
-                                       sample.ray,hitArray,MAX_HITS_PER_TRACE);
-  print("num %\n",numHits);
+  MultiHitInfo mhi;
+  mhi.numHits = 0;
+
+  sample.ray.userData = &mhi;
+  traceRay(renderer->inherited.model,sample.ray);
+  // MHTKHit hitArray[MAX_HITS_PER_TRACE];
+  // const int32 numHits = multiHitKernel(renderer->embreeSceneHandle,
+  //                                      sample.ray,hitArray,MAX_HITS_PER_TRACE);
+  // print("num %\n",mhi.numHits);
 
   float color = 0.f;
   float addtl = .5f;
-  for (int i=0;i<numHits;i++) {
-    vec3f N = normalize(hitArray[i].Ng);
+  for (int i=0;i<mhi.numHits;i++) {
+    vec3f N = normalize(mhi.hitArray[i].Ng);
     color += (addtl*abs(dot(sample.ray.dir,N)));
     addtl *= .5f;
   }

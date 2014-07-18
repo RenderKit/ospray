@@ -55,9 +55,14 @@ namespace ospray {
     struct ISPCXRayRenderer : public Renderer {
       ISPCXRayRenderer();
 
+      virtual void beginFrame(FrameBuffer *fb);
+      virtual void endFrame(const int32 fbChannelFlags);
+
       virtual std::string toString() const { return "ospray::mhtk::ISPCXRayRenderer"; }
       // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
       virtual void commit();
+
+      Model   *model;
       
       // /*! \brief render job for the ispc xray renderer
       //   Will call ispc-variant of the respective renderile function */

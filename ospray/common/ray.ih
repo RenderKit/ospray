@@ -54,6 +54,7 @@ struct Ray {
   // -------------------------------------------------------
   // END OF EMBREE LAYOUT - this is where we can add our own data
   // -------------------------------------------------------
+  void *uniform userData;
 };
 
 #define infinity (1e20f)

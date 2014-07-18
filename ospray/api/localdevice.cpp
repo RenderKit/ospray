@@ -42,7 +42,7 @@ namespace ospray {
       // in the host-stubs, where it shouldn't.
       std::stringstream embreeConfig;
       if (debugMode)
-        embreeConfig << " threads=1";
+        embreeConfig << " threads=1,verbose=2";
       rtcInit(embreeConfig.str().c_str());
 
       assert(rtcGetError() == RTC_NO_ERROR);
