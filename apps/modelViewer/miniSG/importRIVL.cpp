@@ -572,7 +572,6 @@ namespace ospray {
       if (!root_element)
         throw std::runtime_error("importRIVL: could not find root element");
       Ref<Node> node = parseBGFscene(root_element);
-
       xmlFreeDoc(doc);
       return node;
     }
@@ -657,6 +656,7 @@ namespace ospray {
     /*! import a wavefront OBJ file, and add it to the specified model */
     void importRIVL(Model &model, const embree::FileName &fileName)
     {
+      nodeList.clear();
       Ref<miniSG::Node> sg = importRIVL(fileName);
       traverseSG(model,sg);
     }

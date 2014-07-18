@@ -31,7 +31,7 @@ namespace ospray {
 
     ispc::Model_init(getIE(), geometry.size());
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
-    
+
     // for now, only implement triangular geometry...
     for (size_t i=0; i < geometry.size(); i++) {
       geometry[i]->finalize(this);
