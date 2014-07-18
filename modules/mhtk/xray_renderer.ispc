@@ -17,7 +17,7 @@
 #include "ospray/common/model.ih"
 #include "multihit_kernel.ih"
 
-#define MAX_HITS_PER_TRACE 100
+#define MAX_HITS_PER_TRACE 2
 
 // inline vec4f XRayRenderer_trace(Ray &ray, RTCScene scene)
 // {
@@ -50,6 +50,7 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   MHTKHit hitArray[MAX_HITS_PER_TRACE];
   const int32 numHits = multiHitKernel(renderer->embreeSceneHandle,
                                        sample.ray,hitArray,MAX_HITS_PER_TRACE);
+  print("num %\n",numHits);
 
   float color = 0.f;
   float addtl = .5f;

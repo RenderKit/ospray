@@ -21,12 +21,12 @@
 #include "common/sys/taskscheduler.h"
 
 
-
+#ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
 inline void operator delete(void* ptr) throw() { embree::alignedFree(ptr); }      
 inline void* operator new[](size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }  
 inline void operator delete[](void* ptr) throw() { embree::alignedFree(ptr); }    
-
+#endif
 
 //! main namespace for all things ospray (for internal code)
 namespace ospray {

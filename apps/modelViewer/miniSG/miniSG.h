@@ -74,8 +74,9 @@ namespace ospray {
           FLOAT_2,
           FLOAT_3,
           FLOAT_4,
-          DATA, // iw: don't thikn we should have data as a void pointer - there's no way we could pass that through the api without knowing that kind of type (and size) is behind that pointer ...
+          TEXTURE,
           STRING,
+          UNKNOWN,
         } DataType;
 
         void clear() {
@@ -85,11 +86,11 @@ namespace ospray {
               if (s) free((void*)s);
               s = NULL;
               break;
-            case DATA:
+            case TEXTURE:
               ptr = NULL;
               break;
             default:
-              type = DATA;
+              type = TEXTURE;
               ptr = NULL;
           };
         }
@@ -103,7 +104,7 @@ namespace ospray {
           // s = str;
         }
 
-        void set(void *v) { clear(); type = DATA; ptr = v; }
+        void set(void *v, DataType t = UNKNOWN) { clear(); type = t; ptr = v; }
 
         void set(float v) { clear(); type = FLOAT; f[0] = v; }
         void set(vec2f v) { clear(); type = FLOAT_2; f[0] = v.x; f[1] = v.y; }
@@ -162,10 +163,19 @@ namespace ospray {
         void setParam(const char *name, T v) {
           //Clean up old parameter
           ParamMap::iterator it = params.find(name);
+          if(it != params.end() ) params.erase(it);
           Param *p = new Param;
           p->set(v);
           params[name] = p;
         }
+
+      void setParam(const char *name, void *v, Param::DataType t = Param::TEXTURE) {
+        ParamMap::iterator it = params.find(name);
+        if(it != params.end() ) params.erase(it);
+        Param *p = new Param;
+        p->set(v, t);
+        params[name] = p;
+      }
 
       std::string toString() const { return "miniSG::Material"; }
 

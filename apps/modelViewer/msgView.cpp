@@ -83,6 +83,7 @@ namespace ospray {
       Glut3DWidget::reshape(newSize);
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+      ospFrameBufferClear(fb,OSP_FB_ACCUM);
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
     }
@@ -289,7 +290,16 @@ namespace ospray {
       const miniSG::Material::Param *p = it->second.ptr;
       switch(p->type) {
       case miniSG::Material::Param::INT:
-        ospSet1i(ospMat,name,p->i[0]);
+        if(strstr(name, "map_") == NULL) {
+          ospSet1i(ospMat,name,p->i[0]);
+        }
+        else {
+          miniSG::Texture2D *tex = mat->textures[p->i[0]].ptr;
+          OSPTexture2D ospTex = createTexture2D(tex);
+          //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
+          //ospSetData(ospMat, name, data);
+          ospSetParam(ospMat, name, ospTex);
+        }
         break;
       case miniSG::Material::Param::FLOAT:
         ospSet1f(ospMat,name,p->f[0]);
@@ -300,14 +310,19 @@ namespace ospray {
       case miniSG::Material::Param::STRING:
         ospSetString(ospMat,name,p->s);
         break;
-      case miniSG::Material::Param::DATA:
-        cout << "WARNING: material has 'data' parameter, but don't know what that actually is!?" << endl;
-        break;
+      case miniSG::Material::Param::TEXTURE:
+        {
+          miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
+          OSPTexture2D ospTex = createTexture2D(tex);
+          ospSetParam(ospMat, name, ospTex);
+          break;
+        }
       default: 
         throw std::runtime_error("unkonwn material parameter type");
       };
     }
 
+    /*
     std::vector<OSPTexture2D> textures;
     for (size_t i = 0; i < mat->textures.size(); i++) {
       OSPTexture2D tex = createTexture2D(mat->textures[i].ptr);
@@ -318,6 +333,7 @@ namespace ospray {
       OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], 0);
       ospSetData(ospMat, "textureArray", textureArray);
     }
+    */
 
     ospCommit(ospMat);
     return ospMat;

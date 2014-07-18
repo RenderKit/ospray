@@ -27,6 +27,7 @@ size_t multiHitKernel(RTCScene                 scene,
                       varying MHTKHit *uniform hitArray,
                       const uniform uint32     hitArraySize)
 {
+  print("kernel\n");
   varying bool mask = __mask;
   unmasked {
     varying int imask = mask ? -1 : 0;
