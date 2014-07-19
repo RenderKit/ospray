@@ -128,7 +128,7 @@ namespace ospray {
              << ", " << numVerts << " vertices)" << endl;
         cout << "  mesh bounds " << bounds << endl;
       } 
-    rtcEnable(model->embreeSceneHandle,eMesh);
+    // rtcEnable(model->embreeSceneHandle,eMesh);
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
