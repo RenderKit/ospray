@@ -105,6 +105,10 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
 
 export void *uniform XRayRenderer_create(void *uniform cppE)
 {
+#ifndef OSPRAY_INTERSECTION_FILTER
+  print("MultiHit XRay-Renderer REQUIRES OSPRAY_INTERSECTION_FILTER TO BE TURNED ON!\n");
+  return NULL;
+#endif
   uniform XRayRenderer *uniform renderer = uniform new uniform XRayRenderer;
   Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
   renderer->inherited.renderSample = XRayRenderer_renderSample;

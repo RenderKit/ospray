@@ -612,7 +612,6 @@ namespace ospray {
     window.create("MSGViewer: OSPRay Mini-Scene Graph test viewer");
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(box3f(msgModel->getBBox()));
-    PING;
     ospray::glut3D::runGLUT();
   }
 }
