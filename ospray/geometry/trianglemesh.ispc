@@ -10,7 +10,9 @@
 #include "trianglemesh.ih"
 #include "ospray/common/model.ih"
 // embree
+#include "embree2/rtcore.isph"
 #include "embree2/rtcore_geometry.isph"
+#include "embree2/rtcore_geometry_user.isph"
 
 static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
                                        uniform Model *uniform model,
@@ -126,22 +128,14 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
 
 #ifdef OSPRAY_INTERSECTION_FILTER
 void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
-                        varying RTCRay& ray  /*!< intersection to filter */)
+                        varying Ray &ray  /*!< intersection to filter */)
 {
   uniform Geometry *uniform geom = (uniform Geometry *uniform)ptr;
-  if (ptr->intersectionFilter) {
-    print("FOUND dummy filter N\n");
+  if (ray.intersectionFilter) {
+    ray.intersectionFilter(geom,(varying Ray &)ray);
   }
 }
 #endif
-
-void uniDummyIsecFilter(void* uniform ptr,   /*!< pointer to user data */
-                     uniform RTCRay1& ray  /*!< intersection to filter */)
-{
-  print("dummy filter 1\n");
-}
-
-
 
 
 //! destructor for ispc-side TriangleMesh object
@@ -197,7 +191,9 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                           materialList,
                           prim_materialID);
 #ifdef OSPRAY_INTERSECTION_FILTER
- rtcSetIntersectionFilterFunction(model->embreeSceneHandle,geomID,&intersectionFilter);
+ rtcSetUserData(model->embreeSceneHandle,geomID,mesh);
+ rtcSetIntersectionFilterFunction(model->embreeSceneHandle,geomID,
+                                  (uniform RTCFilterFuncVarying)&intersectionFilter);
 #endif
 }
 

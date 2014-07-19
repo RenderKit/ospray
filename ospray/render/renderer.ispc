@@ -147,7 +147,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
         //   print("ray.t %\n",screenSample.ray.t);
         //   print("ray.primID %\n",screenSample.ray.primID);
         //   print("ray.geomID %\n",screenSample.ray.geomID);
-        //    print("rgb %\n",screenSample.rgb.x);
+        // print("rgb %\n",screenSample.rgb.x);
         // }
 
         setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);

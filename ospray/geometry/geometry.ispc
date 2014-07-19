@@ -28,9 +28,6 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
   geometry->material = material;
   geometry->geomID   = geomID;
   geometry->postIntersect = postIntersect;
-#ifdef OSPRAY_INTERSECTION_FILTER
-  geometry->intersectionFilter = NULL;
-#endif
 }
 
 //! destructor for ispc-side Geometry object

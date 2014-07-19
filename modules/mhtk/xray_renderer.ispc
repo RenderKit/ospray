@@ -53,28 +53,16 @@ struct MultiHitInfo {
 //                                      uniform RTCRay1& ray  /*!< intersection to filter */);
 
 /*! Intersection filter function for varying rays. */
-void multiHitFilter(void* uniform ptr,   /*!< pointer to user data */
-                    varying RTCRay& ray  /*!< intersection to filter */)
+void multiHitFilter(uniform Geometry *uniform geom,
+                    varying Ray& ray  /*!< intersection to filter */)
 {
-  print("filter ...\n");
-}
+  if (ray.geomID < 0) return;
 
-export void setMultiHitFilter(void *uniform _model)
-{
-  uniform Model *uniform model = (uniform Model *uniform)_model;
-  for (uniform int i=0;i<model->numGeometries;i++) {
-    print("setting filter for geometry %/%\n",i,model->numGeometries);
-    rtcSetIntersectionFilterFunction(model->embreeSceneHandle,i,multiHitFilter);
-  }
-}
+  varying MultiHitInfo *uniform mhi = (varying MultiHitInfo *uniform)ray.userData;
 
+  mhi->numHits++;
 
-export void unsetMultiHitFilter(void *uniform _model)
-{
-  uniform Model *uniform model = (uniform Model *uniform)_model;
-  for (uniform int i=0;i<model->numGeometries;i++) {
-    rtcSetIntersectionFilterFunction(model->embreeSceneHandle,i,NULL);
-  }
+  ray.geomID = -1; // -> discard this hit, we want them all ;-)
 }
 
 void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
@@ -85,8 +73,15 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   MultiHitInfo mhi;
   mhi.numHits = 0;
 
+#ifdef OSPRAY_INTERSECTION_FILTER
+  sample.ray.intersectionFilter = multiHitFilter;
+#endif
   sample.ray.userData = &mhi;
   traceRay(renderer->inherited.model,sample.ray);
+
+
+  sample.rgb = make_random_color(mhi.numHits);
+  return;
   // MHTKHit hitArray[MAX_HITS_PER_TRACE];
   // const int32 numHits = multiHitKernel(renderer->embreeSceneHandle,
   //                                      sample.ray,hitArray,MAX_HITS_PER_TRACE);
@@ -99,6 +94,11 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
     color += (addtl*abs(dot(sample.ray.dir,N)));
     addtl *= .5f;
   }
+   // print("col % % %\n",
+   //       sample.rgb.x,
+   //       sample.rgb.y,
+   //       sample.rgb.z
+   //       );
   sample.rgb = make_vec3f(color);
   sample.alpha = 0.f;
 }

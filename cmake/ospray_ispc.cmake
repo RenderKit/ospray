@@ -6,22 +6,19 @@
 # Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
 # #####################################################################
 
+SET (ISPC_DEFINES "")
+MACRO (ADD_DEFINITIONS_ISPC)
+  SET (ISPC_DEFINES ${ISPC_DEFINES} ${ARGN})
+ENDMACRO ()
+
 SET (ISPC_INCLUDE_DIR "")
 MACRO (INCLUDE_DIRECTORIES_ISPC)
   SET (ISPC_INCLUDE_DIR ${ISPC_INCLUDE_DIR} ${ARGN})
 ENDMACRO ()
 
-SET(ISPC_PLUS OFF CACHE BOOL
-  "Use ISPC+?")
-MARK_AS_ADVANCED(ISPC_PLUS)
-
 SET(ISPC_ADDRESSING 32 CACHE INT
   "32vs64 bit addressing in ispc")
 MARK_AS_ADVANCED(ISPC_ADDRESSING)
-
-IF(ISPC_PLUS)
-  INCLUDE_DIRECTORIES(/home/wald/Projects/ISPC++/)
-ENDIF()
 
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 MACRO (ispc_compile)
@@ -39,8 +36,6 @@ MACRO (ispc_compile)
   IF (THIS_IS_MIC)
     SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ispc_knc_backend.h  --addressing=${ISPC_ADDRESSING})
     #${ISPC_DIR}/examples/intrinsics/knc.h)
-    SET(ISPC_TARGET_EXT ".dev.cpp")
-  ELSEIF (ISPC_PLUS)
     SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()
     SET(CMAKE_ISPC_FLAGS --target ${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING})
@@ -83,42 +78,25 @@ MACRO (ispc_compile)
 	ENDFOREACH()
       ENDIF()
     ENDIF()
-    IF (ISPC_PLUS)
-      ADD_CUSTOM_COMMAND(
-	OUTPUT ${results} ${outdirh}/${fname}_ispc.h
-	COMMAND mkdir -p ${outdir} \; /home/wald/Projects/ISPC++/bin/ispc++
-	-I ${CMAKE_CURRENT_SOURCE_DIR} 
-	-I /home/wald/Projects/ISPC++/include
-	${ISPC_INCLUDE_DIR_PARMS}
-	--target avx
-	${CMAKE_ISPC_FLAGS}
-	-h ${outdirh}/${fname}_ispc.h
-	-MMM  ${outdir}/${fname}.dev.idep 
-	-o ${outdir}/${fname}${ISPC_TARGET_EXT}
-	${CMAKE_CURRENT_SOURCE_DIR}/${src} 
-	\;
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${src}
-	${deps})
-    ELSE()
-      ADD_CUSTOM_COMMAND(
-	OUTPUT ${results} ${outdirh}/${fname}_ispc.h
-	COMMAND mkdir -p ${outdir} \; ispc
-	-I ${CMAKE_CURRENT_SOURCE_DIR} 
-	${ISPC_INCLUDE_DIR_PARMS}
-	--arch=${ISPC_ARCHITECTURE}
-	--pic
-	-O3
-	--woff
-	${CMAKE_ISPC_FLAGS}
-	--opt=fast-math
-	-h ${outdirh}/${fname}_ispc.h
-	-MMM  ${outdir}/${fname}.dev.idep 
-	-o ${outdir}/${fname}${ISPC_TARGET_EXT}
-	${CMAKE_CURRENT_SOURCE_DIR}/${src} 
-	\;
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${src}
-	${deps})
-    ENDIF()
+    ADD_CUSTOM_COMMAND(
+      OUTPUT ${results} ${outdirh}/${fname}_ispc.h
+      COMMAND mkdir -p ${outdir} \; ispc
+      -I ${CMAKE_CURRENT_SOURCE_DIR} 
+      ${ISPC_INCLUDE_DIR_PARMS}
+      ${ISPC_DEFINES}
+      --arch=${ISPC_ARCHITECTURE}
+      --pic
+      -O3
+      --woff
+      ${CMAKE_ISPC_FLAGS}
+      --opt=fast-math
+      -h ${outdirh}/${fname}_ispc.h
+      -MMM  ${outdir}/${fname}.dev.idep 
+      -o ${outdir}/${fname}${ISPC_TARGET_EXT}
+      ${CMAKE_CURRENT_SOURCE_DIR}/${src} 
+      \;
+      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${src}
+      ${deps})
     SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${results})
 
   ENDFOREACH()

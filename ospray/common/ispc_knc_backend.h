@@ -351,6 +351,12 @@ static FORCEINLINE bool __extract_element(__vec16_i1 mask, uint32_t index) {
 }
 
 
+static FORCEINLINE int64_t __extract_element(const __vec16_i64 &v, uint32_t index)
+{
+  const uint *src = (const uint *)&v;
+  return src[index+16] | (uint64_t(src[index]) << 32);
+}
+
 
 
 
@@ -681,10 +687,6 @@ void __masked_store_i64(void *p, const __vec16_i64 &v, __vec16_i1 mask)
     _mm512_mask_store_epi64(((uint8_t*)p)+64, mask>>8, v1);
 }
 
-static FORCEINLINE int64_t __extract_element(__vec16_i64 v, uint32_t index) {
-    return (uint64_t(((int32_t *)&v.v_hi)[index])<<32) | (uint64_t(((int32_t *)&v.v_lo)[index]));
-}
-
 static FORCEINLINE void __insert_element(__vec16_i64 *v, uint32_t index, int64_t val) {
     ((int32_t *)&v->v_hi)[index] = val>>32;
     ((int32_t *)&v->v_lo)[index] = val;
@@ -847,11 +849,9 @@ static FORCEINLINE __vec16_i64 __select(__vec16_i1 mask,
   return ret;
 }
 
-static FORCEINLINE int64_t __extract_element(const __vec16_i64 &v, uint32_t index)
-{
-  uint *src = (uint *)&v;
-  return src[index+16] | (int64_t(src[index]) << 32);
-}
+// static FORCEINLINE int64_t __extract_element(__vec16_i64 v, uint32_t index) {
+//     return (uint64_t(((int32_t *)&v.v_hi)[index])<<32) | (uint64_t(((int32_t *)&v.v_lo)[index]));
+// }
 
 template <class RetVecType> RetVecType __smear_i64(const int64_t &l);
 template <> FORCEINLINE  __vec16_i64 __smear_i64<__vec16_i64>(const int64_t &l) {
