@@ -518,9 +518,25 @@ namespace ospray {
 
       for (int i=0;i<engine.size();i++) {
         // PRINT(nitems);
+#if 1
+        result = COIBufferCreate(nitems*ospray::sizeOf(format)+128,
+                                 COI_BUFFER_NORMAL,COI_MAP_WRITE_ENTIRE_BUFFER,
+                                 NULL,1,&engine[i]->coiProcess,&coiBuffer[i]);
+
+        size_t size = nitems*ospray::sizeOf(format);
+        size_t delta = 128*1024*1024;
+        for (size_t ofs=0;ofs<size;ofs+=delta) {
+          COIEVENT done;
+          bzero(&done,sizeof(done));
+          COIBufferWrite(coiBuffer[i],ofs,init+ofs,min(size-ofs,delta),
+                         COI_COPY_USE_DMA,0,NULL,&done);
+          COIEventWait(1,&done,-1,1,NULL,NULL);
+        }
+#else
         result = COIBufferCreate(nitems*ospray::sizeOf(format)+128,
                                  COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
                                  init,1,&engine[i]->coiProcess,&coiBuffer[i]);
+#endif
         Assert(result == COI_SUCCESS);
 
         // if (init) {
