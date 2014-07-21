@@ -6,6 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
+#if 0
 
 
 // this module
@@ -384,3 +385,5 @@ namespace ospray {
 
   }
 }
+
+#endif
