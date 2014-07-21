@@ -38,7 +38,8 @@ namespace ospray {
       geometry[i]->finalize(this);
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
-    
+
+    sleep(1);
     cout << "calling rtcCommit(" << embreeSceneHandle << ")" << endl;
     rtcCommit(embreeSceneHandle);
     PING;
