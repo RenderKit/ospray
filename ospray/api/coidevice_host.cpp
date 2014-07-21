@@ -513,7 +513,7 @@ namespace ospray {
 
       cout << "checksum before uploading data" << endl;
       PRINT(nitems*ospray::sizeOf(format));
-      PRINT((int*)computeCheckSum(init,nitems*ospray::sizeOf(format));
+      PRINT((int*)computeCheckSum(init,nitems*ospray::sizeOf(format)));
 
 
       for (int i=0;i<engine.size();i++) {
