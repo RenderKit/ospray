@@ -41,6 +41,7 @@ namespace ospray {
     }
     
     cout << "committing" << endl;
+
     rtcCommit(embreeSceneHandle);
     cout << "commited and built." << endl;
     cout << "Printing checksums of triangle geometries after build ... see if they still match!" << endl;
