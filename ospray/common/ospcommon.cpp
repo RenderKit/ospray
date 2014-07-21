@@ -23,7 +23,7 @@ namespace ospray {
   bool debugMode = false;
 
   /*! for debugging. compute a checksum for given area range... */
-  long computeCheckSum(const void *ptr, size_t numBytes)
+  void *computeCheckSum(const void *ptr, size_t numBytes)
   {
     long *end = (long *)((char *)ptr + (numBytes - (numBytes%8)));
     long *mem = (long *)ptr;
@@ -34,7 +34,7 @@ namespace ospray {
       ++i;
       ++mem;
     }
-    return sum;
+    return (void *)sum;
   }
 
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
