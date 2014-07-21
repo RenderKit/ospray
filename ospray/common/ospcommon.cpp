@@ -28,11 +28,18 @@ namespace ospray {
     long *end = (long *)((char *)ptr + (numBytes - (numBytes%8)));
     long *mem = (long *)ptr;
     long sum = 0;
-    long i = 13;
+    long i = 0;
+
+int nextPing = 1;
     while (mem < end) {
-      sum += i * *mem;
+      sum += (i+13) * *mem;
       ++i;
       ++mem;
+
+	if (i==nextPing) { 
+	 std::cout << "checksum after " << (i*8) << " bytes: " << (int*)sum << std::endl;
+	  nextPing += nextPing;
+	}
     }
     return (void *)sum;
   }

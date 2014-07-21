@@ -505,6 +505,7 @@ namespace ospray {
       
       // add triangle index array to mesh
       if (!msgMesh->triangleMaterialId.empty()) {
+      cout << "MATERIALID" << endl;
         OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
                                        &msgMesh->triangleMaterialId[0],OSP_DATA_SHARED_BUFFER);
         ospSetData(ospMesh,"prim.materialID",primMatID);
@@ -519,6 +520,7 @@ namespace ospray {
 
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
+      cout << "NORMAL" << endl;
         OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
                                     &msgMesh->normal[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->normal.size() > 0);
