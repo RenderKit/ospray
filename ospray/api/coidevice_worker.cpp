@@ -601,7 +601,11 @@ int main(int ac, char **av)
   // ospray::init() because in mpi-mode the latter is also called
   // in the host-stubs, where it shouldn't.
   std::stringstream embreeConfig;
-  rtcInit(NULL);
+  rtcInit("verbose=2");
+  //rtcInit("verbose=2,traverser=single,threads=1");
+  //rtcInit("verbose=2,traverser=chunk");
+
+  //rtcInit(NULL);
 
   assert(rtcGetError() == RTC_NO_ERROR);
   ospray::TiledLoadBalancer::instance = NULL;

@@ -27,7 +27,7 @@ export void Model_init(void *uniform _model, uniform int32 numGeometries)
   if (model->embreeSceneHandle)
     print("#osp/model: warning - creating new copy of object without deleting old one..\n");
   model->embreeSceneHandle = rtcNewScene(//RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
-                                         RTC_SCENE_STATIC|RTC_SCENE_COMPACT,
+					 RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
                                          //RTC_SCENE_DYNAMIC,
                                          //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
                                          RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING);
