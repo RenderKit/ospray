@@ -1,0 +1,39 @@
+#ifndef OSPRAY_ALPHA_AWARE_TRIANGLE_MESH_IH
+#define OSPRAY_ALPHA_AWARE_TRIANGLE_MESH_IH
+
+#include "ospray/geometry/trianglemesh.ih"
+#include "ospray/texture/texture2d.ih"
+
+//Used to specify where to look in the alpha map for the actual alpha value
+enum AlphaComponent {
+  R,
+  G,
+  B,
+  A,
+  /* ISPC doesn't support this syntax?
+  X = R,
+  Y = G,
+  Z = B,
+  W = A,
+  */
+};
+
+//Used to specify if we should use 1-alpha or direct alpha.
+enum AlphaType {
+  ALPHA,
+  OPACITY,
+};
+
+struct AlphaAwareTriangleMesh
+{
+  TriangleMesh base;
+  float globalAlpha;
+  Texture2D *map;
+  AlphaComponent alphaComponent;
+  AlphaType alphaType;
+};
+
+//TODO: exported create, destroy, and initialize functions
+
+#endif//OSPRAY_ALPHA_AWARE_TRIANGLE_MESH_IH
+
