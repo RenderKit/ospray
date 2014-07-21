@@ -9,7 +9,7 @@
 #include "mpicommon.h"
 #include "../api/device.h"
 #include "command.h"
-#include "common/managed.h"
+#include "ospray/common/managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
 
