@@ -93,7 +93,7 @@ namespace ospray {
   /*! remove specified num arguments from an ac/av arglist */
   void removeArgs(int &ac, char **&av, int where, int howMany);
   /*! for debugging. compute a checksum for given area range... */
-  long computeCheckSum(void *ptr, size_t numBytes);
+  long computeCheckSum(const void *ptr, size_t numBytes);
 
 #ifdef NDEBUG
 # define Assert(expr) /* nothing */

@@ -23,7 +23,7 @@ namespace ospray {
   bool debugMode = false;
 
   /*! for debugging. compute a checksum for given area range... */
-  long computeCheckSum(void *ptr, size_t numBytes)
+  long computeCheckSum(const void *ptr, size_t numBytes)
   {
     long *end = (long *)((char *)ptr + (numBytes - (numBytes%8)));
     long *mem = (long *)ptr;
