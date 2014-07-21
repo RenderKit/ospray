@@ -34,6 +34,8 @@ MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # whether to use ICC (vs GCC) for the non-MIC part
+SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
+# whether to use ICC (vs GCC) for the non-MIC part
 SET(OSPRAY_USE_INTEL_COMPILER ON CACHE BOOL "Use Intel Compiler?")
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")

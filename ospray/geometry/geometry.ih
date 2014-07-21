@@ -18,11 +18,6 @@ typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
                                           const varying Ray &ray,
                                           uniform int64 flags);
 
-#ifdef OSPRAY_INTERSECTION_FILTER
-typedef void (*Geometry_intersectionFilter)(uniform Geometry *uniform THIS,
-                                            varying Ray &ray);
-#endif
-
 /*! ispc-side equivalent of a geometry */
 struct Geometry {
   void *uniform cppEquivalent; //! pointer back to the C++-equivalent of this class
@@ -33,9 +28,6 @@ struct Geometry {
                                                that fills in a
                                                differentialgeometry
                                                struct */
-#ifdef OSPRAY_INTERSECTION_FILTER
-  Geometry_intersectionFilter intersectionFilter;
-#endif
 };
  
 //! constructor for ispc-side Geometry object

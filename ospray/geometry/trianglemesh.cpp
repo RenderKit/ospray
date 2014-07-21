@@ -22,6 +22,11 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  inline bool inRange(int64 i, int64 i0, int64 i1)
+  {
+    return i >= i0 && i < i1;
+  }
+
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
   {
@@ -63,16 +68,6 @@ namespace ospray {
             "triangle mesh geometry does not have either 'index'"
             " or 'triangle' array");
 
-    // PING;
-    // PRINT(indexData);
-    // PRINT(normalData);
-    // PRINT(colorData);
-    // PRINT(texcoordData);
-    // PRINT(prim_materialIDData);
-    // PRINT(materialListData);
-    // PRINT(indexData->data);
-    // PRINT(vertexData->data);
-    
     this->index = (vec3i*)indexData->data;
     this->vertex = (vec3fa*)vertexData->data;
     this->normal = normalData ? (vec3fa*)normalData->data : NULL;
@@ -110,6 +105,26 @@ namespace ospray {
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
+
+#ifndef NDEBUG
+    {
+      cout << "#osp/trimesh: Verifying index buffer ... " << endl;
+      for (int i=0;i<numTris;i++) {
+        if (!inRange(index[i].x,0,numVerts) || 
+            !inRange(index[i].y,0,numVerts) || 
+            !inRange(index[i].z,0,numVerts))
+          throw std::runtime_error("vertex index not in range! (broken input model, refusing to handle that)");
+      }
+      cout << "#osp/trimesh: Verifying vertex buffer ... " << endl;
+      for (int i=0;i<numVerts;i++) {
+        if (isnan(vertex[i].x) || 
+            isnan(vertex[i].y) || 
+            isnan(vertex[i].z))
+          throw std::runtime_error("NaN in vertex coordinate! (broken input model, refusing to handle that)");
+      }
+    }    
+#endif
+
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
                  (void*)this->vertex,0,
                  ospray::sizeOf(vertexData->type));
@@ -128,7 +143,7 @@ namespace ospray {
              << ", " << numVerts << " vertices)" << endl;
         cout << "  mesh bounds " << bounds << endl;
       } 
-    rtcEnable(model->embreeSceneHandle,eMesh);
+    // rtcEnable(model->embreeSceneHandle,eMesh);
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,

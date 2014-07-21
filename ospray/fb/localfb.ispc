@@ -170,6 +170,8 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       = fb->depthBuffer 
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
+
+
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       const uint32  pixID = i*programCount+programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
@@ -181,6 +183,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
         if (accum) {
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
+
           if (color) {
             color[ofs] = cvt_uint32(acc * accScale);
           }

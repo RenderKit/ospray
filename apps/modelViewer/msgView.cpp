@@ -25,6 +25,8 @@ namespace ospray {
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
 
+  /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
+  bool showDepthBuffer = 0;
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
 
   /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
@@ -103,14 +105,16 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         break;
       case 'D':
-        switch(g_frameBufferMode) {
-          case Glut3DWidget::FRAMEBUFFER_DEPTH:
-            g_frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-            break;
-          case Glut3DWidget::FRAMEBUFFER_UCHAR:
-            g_frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
-            break;
-        }
+        showDepthBuffer = !showDepthBuffer;
+        // switch(g_frameBufferMode) {
+        //   case Glut3DWidget::FRAMEBUFFER_DEPTH:
+        //     g_frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
+        //     break;
+        //   case Glut3DWidget::FRAMEBUFFER_UCHAR:
+        //     g_frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
+        //     break;
+        // }
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
       default:
@@ -164,22 +168,33 @@ namespace ospray {
       }
       
       
-      ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+      ospRenderFrame(fb,renderer,OSP_FB_COLOR|(showDepthBuffer?OSP_FB_DEPTH:0)|OSP_FB_ACCUM);
       ++accumID;
-      
-      frameBufferMode = g_frameBufferMode;
-      switch(frameBufferMode) {
-        case Glut3DWidget::FRAMEBUFFER_DEPTH:
+
+      if (showDepthBuffer) {
           depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
+          frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
           Glut3DWidget::display();
           ospUnmapFrameBuffer(depthFB,fb);
-          break;
-        case Glut3DWidget::FRAMEBUFFER_UCHAR:
+      } else {
           ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
           Glut3DWidget::display();
           ospUnmapFrameBuffer(ucharFB,fb);
-          break;
       }
+      // frameBufferMode = g_frameBufferMode;
+      // switch(frameBufferMode) {
+      //   case Glut3DWidget::FRAMEBUFFER_DEPTH:
+      //     depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
+      //     Glut3DWidget::display();
+      //     ospUnmapFrameBuffer(depthFB,fb);
+      //     break;
+      //   case Glut3DWidget::FRAMEBUFFER_UCHAR:
+      //     ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+      //     Glut3DWidget::display();
+      //     ospUnmapFrameBuffer(ucharFB,fb);
+      //     break;
+      // }
 
       char title[1000];
 
@@ -551,6 +566,7 @@ namespace ospray {
         ospAddGeometry(ospModel,inst);
       }
     }
+    cout << "msgView: committing model" << endl;
     ospCommit(ospModel);
     cout << "msgView: done creating ospray model." << endl;
 
