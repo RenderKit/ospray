@@ -22,6 +22,21 @@ namespace ospray {
   uint32 logLevel = 0;
   bool debugMode = false;
 
+  /*! for debugging. compute a checksum for given area range... */
+  long computeCheckSum(void *ptr, size_t numBytes)
+  {
+    long *end = (long *)((char *)ptr + (numBytes - (numBytes%8)));
+    long *mem = (long *)ptr;
+    long sum = 0;
+    long i = 13;
+    while (mem < end) {
+      sum += i * *mem;
+      ++i;
+      ++mem;
+    }
+    return sum;
+  }
+
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)
       fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", 

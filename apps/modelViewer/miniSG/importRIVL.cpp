@@ -492,6 +492,7 @@ namespace ospray {
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numTriangles = num;
+              PRINT(mesh->numTriangles);
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
               xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);
@@ -602,7 +603,11 @@ namespace ospray {
           mesh->triangleMaterialId.resize(tm->numTriangles);
           bool anyNotZero = false;
           for (int i=0;i<tm->numTriangles;i++) {
-            (vec3i&)mesh->triangle[i] = (vec3i&)tm->triangle[i];
+            Triangle t;
+            t.v0 = tm->triangle[i].x;
+            t.v1 = tm->triangle[i].y;
+            t.v2 = tm->triangle[i].z;
+            mesh->triangle[i] = t;
             mesh->triangleMaterialId[i] = tm->triangle[i].w >>16;
             if (mesh->triangleMaterialId[i]) anyNotZero = true;
           }
@@ -610,13 +615,19 @@ namespace ospray {
             mesh->triangleMaterialId.clear();
 
           for (int i=0;i<tm->numVertices;i++) {
-            (vec3f&)mesh->position[i] = (vec3f&)tm->vertex[i];
+            mesh->position[i].x = tm->vertex[i].x;
+            mesh->position[i].y = tm->vertex[i].y;
+            mesh->position[i].z = tm->vertex[i].z;
+            mesh->position[i].w = 0;
           }
           if (tm->numNormals > 0) {
             // assert(tm->numNormals == tm->numVertices);
             mesh->normal.resize(tm->numVertices);
             for (int i=0;i<tm->numNormals;i++) {
-              (vec3f&)mesh->normal[i] = (vec3f&)tm->normal[i];
+              mesh->normal[i].x = tm->normal[i].x;
+              mesh->normal[i].y = tm->normal[i].y;
+              mesh->normal[i].z = tm->normal[i].z;
+              mesh->normal[i].w = 0;
             }
           }
           if (tm->numTexCoords > 0) {

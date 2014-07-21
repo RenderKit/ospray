@@ -510,9 +510,15 @@ namespace ospray {
       double t0 = getSysTime();
       COIEVENT event[engine.size()];
       COIBUFFER coiBuffer[engine.size()];
+
+      cout << "checksum before uploading data" << endl;
+      PRINT(nitems*ospray::sizeOf(format));
+      PRINT((int*)computeCheckSum(init,nitems*ospray::sizeOf(format)));
+
+
       for (int i=0;i<engine.size();i++) {
         // PRINT(nitems);
-        result = COIBufferCreate(nitems*ospray::sizeOf(format),
+        result = COIBufferCreate(nitems*ospray::sizeOf(format)+128,
                                  COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
                                  init,1,&engine[i]->coiProcess,&coiBuffer[i]);
         Assert(result == COI_SUCCESS);
