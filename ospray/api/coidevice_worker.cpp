@@ -39,6 +39,9 @@ namespace ospray {
     std::vector<size_t> alreadyCreated_size;
     std::vector<void *> alreadyCreated_checkSum;
 
+    // only used if manual buffer uploads are turned on ...
+    void *uploadBuffer = NULL;
+
     // void PRINT_BUFFERS_BEFORE()
     // {
     //   cout << "--------------- BEFORE ------------------" << endl;
@@ -215,6 +218,116 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
+    void ospray_coi_upload_data_done(uint32_t         numBuffers,
+                                     void**           bufferPtr,
+                                     uint64_t*        bufferSize,
+                                     void*            argsPtr,
+                                     uint16_t         argsSize,
+                                     void*            retVal,
+                                     uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      Handle handle = args.get<Handle>();
+      int    nitems = args.get<int32>(); 
+      int    format = args.get<int32>(); 
+      int    flags  = args.get<int32>(); 
+
+      Data *data = (Data*)handle.lookup();
+
+      size_t size = nitems * sizeOf((OSPDataType)format);
+      void *checkSum= computeCheckSum(data->data,size);
+      cout << "checksum of entire data on DEVICE " << checkSum << endl;
+
+      PRINT_BUFFERS_AFTER();
+      alreadyCreated_ptr.push_back(data->data);
+      alreadyCreated_size.push_back(size);
+      alreadyCreated_checkSum.push_back(checkSum);
+      PRINT_BUFFERS_AFTER();
+      
+
+      if (format == OSP_STRING)
+        throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
+
+      if (format == OSP_OBJECT) {
+        cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
+        COIProcessProxyFlush();
+        Handle *in = (Handle *)data->data;
+        ManagedObject **out = (ManagedObject **)data->data;
+        for (int i=0;i<nitems;i++) {
+          if (in[i]) {
+            out[i] = in[i].lookup();
+            out[i]->refInc();
+          } else
+            out[i] = 0;
+        }
+        PING;
+      COIProcessProxyFlush();
+      }
+      
+      COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_upload_data_chunk(uint32_t         numBuffers,
+                                void**           bufferPtr,
+                                uint64_t*        bufferSize,
+                                void*            argsPtr,
+                                uint16_t         argsSize,
+                                void*            retVal,
+                                uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      Handle handle = args.get<Handle>();
+      int64  begin = args.get<int64>(); 
+      int64  size = args.get<int64>(); 
+
+      // PRINT(uploadBuffer);
+      // cout << "dev: first int64 of uploaded data: " << (int*)*(int*)uploadBuffer << endl;
+      // COIProcessProxyFlush();
+
+      Data *data = (Data*)handle.lookup();
+      // PRINT(begin);
+      // PRINT(size);
+      cout << "checksum of BLOCK on device: " << computeCheckSum(uploadBuffer,size) << endl;
+      memcpy((char*)data->data + begin, uploadBuffer, size);
+      
+      COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_create_new_empty_data(uint32_t         numBuffers,
+                                   void**           bufferPtr,
+                                   uint64_t*        bufferSize,
+                                   void*            argsPtr,
+                                   uint16_t         argsSize,
+                                   void*            retVal,
+                                   uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      // OSPModel *model = ospNewModel();
+      Handle handle = args.get<Handle>();
+      int    nitems = args.get<int32>(); 
+      int    format = args.get<int32>(); 
+      int    flags  = args.get<int32>(); 
+
+      cout << "=======================================================" << endl;
+      cout << "!osp:coi: new data " << handle.ID() << endl;
+      
+      if (format == OSP_STRING)
+        throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
+
+      size_t size = nitems * sizeOf((OSPDataType)format);
+      PING;
+      PRINT(size);
+      void *mem = new char[size];
+      bzero(mem,size);
+      Data *data = new Data(nitems,(OSPDataType)format,
+                            mem,flags|OSP_DATA_SHARED_BUFFER);
+      handle.assign(data);
+      COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
     void ospray_coi_new_geometry(uint32_t         numBuffers,
                                  void**           bufferPtr,
                                  uint64_t*        bufferSize,
@@ -381,6 +494,24 @@ namespace ospray {
       Renderer *geom = Renderer::createRenderer(type);
       handle.assign(geom);
 
+      COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_pin_upload_buffer(uint32_t         numBuffers,
+                                  void**           bufferPtr,
+                                  uint64_t*        bufferSize,
+                                  void*            argsPtr,
+                                  uint16_t         argsSize,
+                                  void*            retVal,
+                                  uint16_t         retValSize)
+    {
+      PING;
+      cout << "=======================================================" << endl;
+      void *buffer = bufferPtr[0];
+      // COIBufferAddRef(buffer);
+      uploadBuffer = buffer;
+      PRINT(uploadBuffer);
       COIProcessProxyFlush();
     }
 
