@@ -129,7 +129,7 @@ namespace ospray {
       cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
       for (int i=0;i<alreadyCreated_ptr.size();i++) {
         cout << "checksum data " << i << endl;
-        PRINT(checkSum(alreadyCreated_ptr[i],alreadyCreated_size[i]));
+        PRINT(computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]));
       }
       alreadyCreated_ptr.push_back(bufferPtr[0]);
       alreadyCreated_size.push_back(bufferSize[0]);
