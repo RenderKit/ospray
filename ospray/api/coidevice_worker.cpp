@@ -37,22 +37,35 @@ namespace ospray {
 
     std::vector<void *> alreadyCreated_ptr;
     std::vector<size_t> alreadyCreated_size;
+    std::vector<void *> alreadyCreated_checkSum;
+
     void PRINT_BUFFERS_BEFORE()
     {
       cout << "--------------- BEFORE ------------------" << endl;
       cout <<
       cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
       for (int i=0;i<alreadyCreated_ptr.size();i++) {
-        cout << "checksum data " << i << " : " << computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]) << endl;
+        cout << "----- buffer " << i << endl;
+        cout << "buffer SIZE(hex) " << i << " : " << (int*)alreadyCreated_size[i] << endl;
+        cout << "buffer DTA_BEGIN " << i << " : " << alreadyCreated_ptr[i] << endl;
+        cout << "buffer DTA_END   " << i << " : " << (int*)((char*)alreadyCreated_ptr[i]+alreadyCreated_size[i]) << endl;
+      }
+        
+      for (int i=0;i<alreadyCreated_ptr.size();i++) {
+        void *cs = computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]);
+        cout << "FOUND checksum " << i << " : " << cs << endl;
+        if (cs != alreadyCreated_checkSum[i])
+          FATAL("CHECKSUM MISMATCH!!!");
+        
       }
     }
     void PRINT_BUFFERS_AFTER()
     {
-      cout << "--------------- AFTER CREATING DATA ------------------" << endl;
+      cout << "--------------- AFTER ------------------" << endl;
       cout <<
         cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
       for (int i=0;i<alreadyCreated_ptr.size();i++) {
-        cout << "checksum data " << i << " : " << computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]) << endl;
+        cout << "FOUND checksum " << i << " : " << computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]) << endl;
       }
     }
 
@@ -92,12 +105,29 @@ namespace ospray {
                               void*            retVal,
                               uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       //      cout << "!osp:coi: new model " << handle.ID() << endl;
       Model *model = new Model;
       handle.assign(model);
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_print_checksums(uint32_t         numBuffers,
+                                    void**           bufferPtr,
+                                    uint64_t*        bufferSize,
+                                    void*            argsPtr,
+                                    uint16_t         argsSize,
+                                    void*            retVal,
+                                    uint16_t         retValSize)
+    {
+      cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
+      PING; 
+      if (numBuffers) {
+        cout << "Buffer passed to print_checksums : " << bufferPtr[0] << endl;
+      }
       PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
@@ -110,7 +140,7 @@ namespace ospray {
                                      void*            retVal,
                                      uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       // cout << "!osp:coi: new trimesh " << handle.ID() << endl;
       TriangleMesh *mesh = new TriangleMesh;
@@ -129,7 +159,7 @@ namespace ospray {
                              uint16_t         retValSize)
     {
 
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       int    nitems = args.get<int32>(); 
@@ -139,17 +169,21 @@ namespace ospray {
       cout << "=======================================================" << endl;
       cout << "!osp:coi: new data " << handle.ID() << endl;
       PRINT(numBuffers);
-      PRINT(bufferPtr);
-      PRINT(bufferSize);
-      PRINT(bufferPtr[0]);
-      PRINT(bufferSize[0]);
-      void *init = bufferPtr[0];\
+      cout << "pointer of buffer " << bufferPtr[0] << endl;
+      cout << "size of buffer " << bufferSize[0] << endl;
+      void *init = bufferPtr[0];
 
       PRINT_BUFFERS_BEFORE();
       
       // PRINT((int*)*(int64*)init);
 
-      COIBufferAddRef(bufferPtr[0]);
+      COIRESULT res = COIBufferAddRef(bufferPtr[0]);
+      if (res != COI_SUCCESS) {
+        PING;
+        PRINT(res);
+        PRINT(COIResultGetName(res));
+        FATAL("error in pinning buffer!");
+      }
 
       if (format == OSP_STRING)
         throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
@@ -177,7 +211,7 @@ namespace ospray {
       PRINT_BUFFERS_AFTER();
       alreadyCreated_ptr.push_back(bufferPtr[0]);
       alreadyCreated_size.push_back(bufferSize[0]);
-
+      alreadyCreated_checkSum.push_back(computeCheckSum(bufferPtr[0],bufferSize[0]));
 
       PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
@@ -191,7 +225,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
@@ -212,7 +246,7 @@ namespace ospray {
                                     void*            retVal,
                                     uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       vec2i size = args.get<vec2i>();
       uint32 mode = args.get<uint32>();
@@ -242,7 +276,7 @@ namespace ospray {
                                       void*            retVal,
                                       uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       // OSPModel *model = ospNewModel();
       Handle _fb = args.get<Handle>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
@@ -259,7 +293,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
@@ -280,7 +314,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
@@ -301,7 +335,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       const char *filename = args.getString();
       const char *type = args.getString();
@@ -322,7 +356,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
       cout << "!osp:coi: new transfer function " << handle.ID() << " " << type << endl;
@@ -342,7 +376,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
 
@@ -361,7 +395,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       Handle _renderer = args.get<Handle>();
       const char *type = args.getString();
@@ -392,7 +426,7 @@ namespace ospray {
                               void*            retVal,
                               uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       Handle _renderer = args.get<Handle>();
       const char *type = args.getString();
@@ -420,7 +454,7 @@ namespace ospray {
                                   void*            retVal,
                                   uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       int    width  = args.get<int32>(); 
       int    height = args.get<int32>(); 
@@ -444,7 +478,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle model = args.get<Handle>();
       Handle geom  = args.get<Handle>();
 
@@ -462,7 +496,7 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle geom = args.get<Handle>();
       Handle mat  = args.get<Handle>();
 
@@ -480,7 +514,7 @@ namespace ospray {
                            void*            retVal,
                            uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
 
       ManagedObject *obj = handle.lookup();
@@ -519,7 +553,7 @@ namespace ospray {
                                     void*            retVal,
                                     uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle _model = args.get<Handle>();
       Handle _geometry = args.get<Handle>();
 
@@ -548,7 +582,7 @@ namespace ospray {
       // PING;
       // PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
 
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle _fb       = args.get<Handle>();
       Handle renderer = args.get<Handle>();
       uint32 channelFlags = args.get<uint32>();
@@ -577,7 +611,7 @@ namespace ospray {
     {
       // currently all rendering is synchronous, anyway ....
 
-      // DataStream args(argsPtr);
+      // PING; DataStream args(argsPtr);
       // Handle _fb       = args.get<Handle>();
       // FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       // if (fb->renderTask) {
@@ -595,7 +629,7 @@ namespace ospray {
                               void*            retVal,
                               uint16_t         retValSize)
     {
-      DataStream args(argsPtr);
+      PING; DataStream args(argsPtr);
       Handle target = args.get<Handle>();
       const char *name = args.getString();
       ManagedObject *obj = target.lookup();
