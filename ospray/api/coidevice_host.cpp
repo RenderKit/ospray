@@ -528,7 +528,7 @@ namespace ospray {
         for (size_t ofs=0;ofs<size;ofs+=delta) {
           COIEVENT done;
           bzero(&done,sizeof(done));
-          COIBufferWrite(coiBuffer[i],ofs,init+ofs,min(size-ofs,delta),
+          COIBufferWrite(coiBuffer[i],ofs,((char*)init)+ofs,min(size-ofs,delta),
                          COI_COPY_USE_DMA,0,NULL,&done);
           COIEventWait(1,&done,-1,1,NULL,NULL);
         }

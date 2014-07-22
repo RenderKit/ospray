@@ -106,6 +106,7 @@ namespace ospray {
                              void*            retVal,
                              uint16_t         retValSize)
     {
+
       DataStream args(argsPtr);
       // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
@@ -113,14 +114,26 @@ namespace ospray {
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
 
-      // cout << "=======================================================" << endl;
-      // cout << "!osp:coi: new data " << handle.ID() << endl;
-      // PRINT(bufferPtr);
-      // PRINT(bufferSize);
-      // PRINT(bufferPtr[0]);
-      // PRINT(bufferSize[0]);
-      // void *init = bufferPtr[0];\
+      cout << "=======================================================" << endl;
+      cout << "!osp:coi: new data " << handle.ID() << endl;
+      PRINT(numBuffers);
+      PRINT(bufferPtr);
+      PRINT(bufferSize);
+      PRINT(bufferPtr[0]);
+      PRINT(bufferSize[0]);
+      void *init = bufferPtr[0];\
 
+      static std::vector<void *> alreadyCreated_ptr;
+      static std::vector<size_t> alreadyCreated_size;
+      cout << "---------------------------------" << endl;
+      cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
+      for (int i=0;i<alreadyCreated_ptr.size();i++) {
+        cout << "checksum data " << i << endl;
+        PRINT(checkSum(alreadyCreated_ptr[i],alreadyCreated_size[i]));
+      }
+      alreadyCreated_ptr.push_back(bufferPtr[0]);
+      alreadyCreated_size.push_back(bufferSize[0]);
+      
       // PRINT((int*)*(int64*)init);
 
       COIBufferAddRef(bufferPtr[0]);
