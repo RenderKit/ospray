@@ -492,7 +492,6 @@ namespace ospray {
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numTriangles = num;
-              PRINT(mesh->numTriangles);
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
               xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);

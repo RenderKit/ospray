@@ -121,6 +121,8 @@ namespace ospray {
                         bool sync=true)
       { 
         double t0 = getSysTime();
+        PING;
+        PRINT(coiFctName[ID]);
 #if 1
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;
@@ -518,7 +520,7 @@ namespace ospray {
 
       for (int i=0;i<engine.size();i++) {
         // PRINT(nitems);
-#if 1
+#if 0
         result = COIBufferCreate(nitems*ospray::sizeOf(format)+128,
                                  COI_BUFFER_NORMAL,COI_MAP_WRITE_ENTIRE_BUFFER,
                                  NULL,1,&engine[i]->coiProcess,&coiBuffer[i]);
@@ -528,7 +530,7 @@ namespace ospray {
         for (size_t ofs=0;ofs<size;ofs+=delta) {
           COIEVENT done;
           bzero(&done,sizeof(done));
-          COIBufferWrite(coiBuffer[i],ofs,init+ofs,min(size-ofs,delta),
+          COIBufferWrite(coiBuffer[i],ofs,((char*)init)+ofs,std::min(size-ofs,delta),
                          COI_COPY_USE_DMA,0,NULL,&done);
           COIEventWait(1,&done,-1,1,NULL,NULL);
         }
