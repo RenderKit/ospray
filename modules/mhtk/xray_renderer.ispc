@@ -17,7 +17,7 @@
 #include "ospray/common/model.ih"
 #include "multihit_kernel.ih"
 
-#define MAX_HITS_PER_TRACE 2
+#define MAX_HITS_PER_TRACE 256
 
 // inline vec4f XRayRenderer_trace(Ray &ray, RTCScene scene)
 // {
@@ -47,7 +47,6 @@ struct MultiHitInfo {
   int32 numHits;
 };
 
-
 // /*! Intersection filter function for uniform rays. */
 // typedef void (*uniform RTCFilterFuncUniform)(void* uniform ptr,    /*!< pointer to user data */
 //                                      uniform RTCRay1& ray  /*!< intersection to filter */);
@@ -60,9 +59,17 @@ void multiHitFilter(uniform Geometry *uniform geom,
 
   varying MultiHitInfo *uniform mhi = (varying MultiHitInfo *uniform)ray.userData;
 
+  // Save hitpoint information
+  mhi->hitArray[mhi->numHits].primID = ray.primID;
+  mhi->hitArray[mhi->numHits].geomID = ray.geomID;
+  mhi->hitArray[mhi->numHits].t      = ray.t;
+  mhi->hitArray[mhi->numHits].Ng.x   = ray.Ng.x;
+  mhi->hitArray[mhi->numHits].Ng.y   = ray.Ng.y;
+  mhi->hitArray[mhi->numHits].Ng.z   = ray.Ng.z;
+
   mhi->numHits++;
 
-  ray.geomID = -1; // -> discard this hit, we want them all ;-)
+  ray.geomID = RTC_INVALID_GEOMETRY_ID; // -> discard this hit, we want them all ;-)
 }
 
 void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
@@ -79,9 +86,40 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   sample.ray.userData = &mhi;
   traceRay(renderer->inherited.model,sample.ray);
 
+  /* sort the hitpoints (only for measuring performance) */
+  for (uniform int i = 0; i < mhi.numHits - 1; ++i)
+  {
+    float d = mhi.hitArray[i].t;
+    int pos = i;
+    bool doSwap = false;
+    for (int j = i+1; j < mhi.numHits; ++j)
+    {
+      if(mhi.hitArray[j].t < d)
+      {
+        doSwap = true;
+        pos = j;
+        d = mhi.hitArray[j].t;
+      }
+    }
 
-  sample.rgb = make_random_color(mhi.numHits);
+    if (doSwap)
+    {
+      varying MHTKHit tmp = mhi.hitArray[i];
+      mhi.hitArray[i]     = mhi.hitArray[pos];
+      mhi.hitArray[pos]   = tmp;
+    }
+  }
+
+#if 1
+  if (mhi.numHits > 0)
+    sample.rgb = make_random_color(mhi.numHits);
+  else
+    sample.rgb = make_vec3f(1);
+#else
+  sample.rgb = make_random_color(mhi.numSwapped);
+#endif
   return;
+#if 0
   // MHTKHit hitArray[MAX_HITS_PER_TRACE];
   // const int32 numHits = multiHitKernel(renderer->embreeSceneHandle,
   //                                      sample.ray,hitArray,MAX_HITS_PER_TRACE);
@@ -101,6 +139,7 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
    //       );
   sample.rgb = make_vec3f(color);
   sample.alpha = 0.f;
+#endif
 }
 
 export void *uniform XRayRenderer_create(void *uniform cppE)
