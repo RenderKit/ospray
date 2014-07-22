@@ -121,6 +121,8 @@ namespace ospray {
                         bool sync=true)
       { 
         double t0 = getSysTime();
+        PING;
+        PRINT(coiFctName[ID]);
 #if 1
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;

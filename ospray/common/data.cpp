@@ -59,11 +59,9 @@ namespace ospray {
         bzero(data,numBytes);
     }
 
-    std::cout << "checksum when creating data array" << std::endl;
-    PRINT(numBytes);
-    PRINT((int*)computeCheckSum(init,numBytes));
-
-
+    // std::cout << "checksum when creating data array" << std::endl;
+    // PRINT(numBytes);
+    // PRINT((int*)computeCheckSum(init,numBytes));
   }
 
   Data::~Data() 

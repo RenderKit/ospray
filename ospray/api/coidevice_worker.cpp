@@ -35,6 +35,27 @@ using namespace std;
 namespace ospray {
   namespace coi {
 
+    std::vector<void *> alreadyCreated_ptr;
+    std::vector<size_t> alreadyCreated_size;
+    void PRINT_BUFFERS_BEFORE()
+    {
+      cout << "--------------- BEFORE ------------------" << endl;
+      cout <<
+      cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
+      for (int i=0;i<alreadyCreated_ptr.size();i++) {
+        cout << "checksum data " << i << " : " << computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]) << endl;
+      }
+    }
+    void PRINT_BUFFERS_AFTER()
+    {
+      cout << "--------------- AFTER CREATING DATA ------------------" << endl;
+      cout <<
+        cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
+      for (int i=0;i<alreadyCreated_ptr.size();i++) {
+        cout << "checksum data " << i << " : " << computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]) << endl;
+      }
+    }
+
     COINATIVELIBEXPORT
     void ospray_coi_initialize(uint32_t         in_BufferCount,
                                void**           in_ppBufferPointers,
@@ -77,7 +98,7 @@ namespace ospray {
       //      cout << "!osp:coi: new model " << handle.ID() << endl;
       Model *model = new Model;
       handle.assign(model);
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -94,8 +115,9 @@ namespace ospray {
       // cout << "!osp:coi: new trimesh " << handle.ID() << endl;
       TriangleMesh *mesh = new TriangleMesh;
       handle.assign(mesh);
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
+
 
     COINATIVELIBEXPORT
     void ospray_coi_new_data(uint32_t         numBuffers,
@@ -123,16 +145,7 @@ namespace ospray {
       PRINT(bufferSize[0]);
       void *init = bufferPtr[0];\
 
-      static std::vector<void *> alreadyCreated_ptr;
-      static std::vector<size_t> alreadyCreated_size;
-      cout << "---------------------------------" << endl;
-      cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
-      for (int i=0;i<alreadyCreated_ptr.size();i++) {
-        cout << "checksum data " << i << endl;
-        PRINT(computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]));
-      }
-      alreadyCreated_ptr.push_back(bufferPtr[0]);
-      alreadyCreated_size.push_back(bufferSize[0]);
+      PRINT_BUFFERS_BEFORE();
       
       // PRINT((int*)*(int64*)init);
 
@@ -142,7 +155,7 @@ namespace ospray {
         throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
 
       if (format == OSP_OBJECT) {
-        //cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
+        cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
         Handle *in = (Handle *)bufferPtr[0];
         ManagedObject **out = (ManagedObject **)bufferPtr[0];
         for (int i=0;i<nitems;i++) {
@@ -160,7 +173,13 @@ namespace ospray {
                               bufferPtr[0],flags|OSP_DATA_SHARED_BUFFER);
         handle.assign(data);
       }
-      COIProcessProxyFlush();
+
+      PRINT_BUFFERS_AFTER();
+      alreadyCreated_ptr.push_back(bufferPtr[0]);
+      alreadyCreated_size.push_back(bufferSize[0]);
+
+
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -181,7 +200,7 @@ namespace ospray {
       Geometry *geom = Geometry::createGeometry(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -211,7 +230,7 @@ namespace ospray {
                                              pixelArray);
       handle.assign(fb);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -249,7 +268,7 @@ namespace ospray {
       Camera *geom = Camera::createCamera(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -270,7 +289,7 @@ namespace ospray {
       Volume *geom = Volume::createVolume(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -291,7 +310,7 @@ namespace ospray {
       Volume *geom = Volume::createVolume(filename, type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -311,7 +330,7 @@ namespace ospray {
       TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
       handle.assign(transferFunction);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -330,7 +349,7 @@ namespace ospray {
       Renderer *geom = Renderer::createRenderer(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -361,7 +380,7 @@ namespace ospray {
         *(int*)retVal = false;
       }
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -380,7 +399,7 @@ namespace ospray {
       Renderer *renderer = (Renderer *)_renderer.lookup();
 
       Light *light = NULL;
-      COIProcessProxyFlush(); 
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush(); 
 
       if (renderer)
         light = renderer->createLight(type);
@@ -389,7 +408,7 @@ namespace ospray {
       assert(light);
       handle.assign(light);
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -413,7 +432,7 @@ namespace ospray {
       Texture2D *tx = Texture2D::createTexture(width, height, (OSPDataType)type, bufferPtr[0], flags);
 
       handle.assign(tx);
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
                                 
     COINATIVELIBEXPORT
@@ -431,7 +450,7 @@ namespace ospray {
 
       Model *m = (Model*)model.lookup();
       m->geometry.push_back((Geometry*)geom.lookup());
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -449,7 +468,7 @@ namespace ospray {
 
       Geometry *g = (Geometry*)geom.lookup();
       g->setMaterial((Material*)mat.lookup());
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -468,13 +487,19 @@ namespace ospray {
       Assert(obj);
       obj->commit();
 
+
+      PING;
+      PRINT(obj->toString());
+      PRINT_BUFFERS_BEFORE();
+
       // hack, to stay compatible with earlier version
       Model *model = dynamic_cast<Model *>(obj);
       if (model) {
         model->finalize();
       }
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     /*! remove an existing geometry from a model */
@@ -508,7 +533,7 @@ namespace ospray {
         model->geometry.erase(it);
       }
 
-      COIProcessProxyFlush();
+      PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -521,7 +546,7 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       // PING;
-      // COIProcessProxyFlush();
+      // PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
 
       DataStream args(argsPtr);
       Handle _fb       = args.get<Handle>();
@@ -537,7 +562,7 @@ namespace ospray {
       // }
 
       // PING;
-      // COIProcessProxyFlush();
+      // PRINT_BUFFERS_AFTER(); COIProcessProxyFlush();
 
     }
 

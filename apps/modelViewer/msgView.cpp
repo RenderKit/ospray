@@ -498,20 +498,20 @@ namespace ospray {
       OSPGeometry ospMesh = ospNewTriangleMesh();
 
       // add position array to mesh
-      cout << "POSITIONS" << endl;
+      // cout << "POSITIONS" << endl;
       OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"position",position);
       
       // add triangle index array to mesh
       if (!msgMesh->triangleMaterialId.empty()) {
-      cout << "MATERIALID" << endl;
+      // cout << "MATERIALID" << endl;
         OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
                                        &msgMesh->triangleMaterialId[0],OSP_DATA_SHARED_BUFFER);
         ospSetData(ospMesh,"prim.materialID",primMatID);
       }
 
-      cout << "INDEX" << endl;
+      // cout << "INDEX" << endl;
       // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
@@ -520,7 +520,7 @@ namespace ospray {
 
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
-      cout << "NORMAL" << endl;
+      // cout << "NORMAL" << endl;
         OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
                                     &msgMesh->normal[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->normal.size() > 0);
