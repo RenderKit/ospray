@@ -123,9 +123,9 @@ namespace ospray {
                         bool sync=true)
       { 
         double t0 = getSysTime();
-        cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-        cout << "calling coi function " << coiFctName[ID] << endl;
-        cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+        // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+        // cout << "calling coi function " << coiFctName[ID] << endl;
+        // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 #if 1
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;
@@ -516,13 +516,13 @@ namespace ospray {
       COIEVENT event[engine.size()];
       COIBUFFER coiBuffer[engine.size()];
 
-      cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-      cout << "HOST: NEW DATA" << endl;
-      PRINT(nitems);
-      PRINT(format);
-      PRINT(nitems*ospray::sizeOf(format));
-      cout << "checksum before uploading data" << computeCheckSum(init,nitems*ospray::sizeOf(format)) << endl;
-      cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+      // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+      // cout << "HOST: NEW DATA" << endl;
+      // PRINT(nitems);
+      // PRINT(format);
+      // PRINT(nitems*ospray::sizeOf(format));
+      // cout << "checksum before uploading data" << computeCheckSum(init,nitems*ospray::sizeOf(format)) << endl;
+      // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
 
       for (int i=0;i<engine.size();i++) {
@@ -550,16 +550,13 @@ namespace ospray {
           callFunction(OSPCOI_PRINT_CHECKSUMS,args);
         }
         
-        result = COIBufferCreate(nitems*ospray::sizeOf(format)// +128
-                                 ,
-                                 COI_BUFFER_NORMAL,COI_MAP_READ_WRITE
-                                 // |COI_OPTIMIZE_HUGE_PAGE_SIZE
-                                 ,
-                                 // IW: Try MAP_WRITE_ENTIRE
-                                 // IW: try OPTIMIZE_LARGE_PAGE
+        size_t size = nitems*ospray::sizeOf(format);
+                                 
+        result = COIBufferCreate(size,COI_BUFFER_NORMAL,
+                                 size>128*1024*1024?COI_OPTIMIZE_HUGE_PAGE_SIZE:0,
                                  init,1,&engine[i]->coiProcess,&coiBuffer[i]);
         if (result != COI_SUCCESS) {
-          PING;
+          cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
           FATAL("error in allocating coi buffer");
         }
 
@@ -625,7 +622,7 @@ namespace ospray {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
         result = COIBufferCreate(nitems*ospray::sizeOf(format),
-                                 COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
+                                 COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_WRITE,
                                  init,1,&engine[i]->coiProcess,&coiBuffer);
         Assert(result == COI_SUCCESS);
 
@@ -765,7 +762,7 @@ namespace ospray {
       for (int i=0;i<engine.size();i++) {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
-        result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_MAP_READ_ONLY,
+        result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_ONLY,
                                  data,1,&engine[i]->coiProcess,&coiBuffer);
         Assert(result == COI_SUCCESS);
         COIEVENT event;
@@ -904,7 +901,7 @@ namespace ospray {
       fb->size = size;
       for (int i=0;i<engine.size();i++) {
         result = COIBufferCreate(size.x*size.y*sizeof(int32),
-                                 COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
+                                 COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_WRITE,
                                  NULL,1,&engine[i]->coiProcess,&fb->coiBuffer[i]);
         Assert(result == COI_SUCCESS);
         
