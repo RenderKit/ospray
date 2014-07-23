@@ -181,7 +181,6 @@ namespace ospray {
       for (xmlNode *node = root->children; node; node = node->next) {
         std::string nodeName = (char*)node->name;
         if (nodeName == "text") {
-          //PRINT(nodeName);
           // -------------------------------------------------------
         } else if (nodeName == "Texture2D") {
           // -------------------------------------------------------
@@ -492,7 +491,6 @@ namespace ospray {
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numTriangles = num;
-              PRINT(mesh->numTriangles);
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
               xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);

@@ -24,7 +24,9 @@ namespace ospray {
   int accumID = -1;
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
-
+  unsigned int maxObjectsToConsider = (uint32)-1;
+  // if turned on, we'll put each triangle mesh into its own instance, no matter what
+  bool forceInstancing = false;
   /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
   bool showDepthBuffer = 0;
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
@@ -366,6 +368,8 @@ namespace ospray {
         rendererType = av[++i];
       } else if (arg == "--always-redraw") {
         alwaysRedraw = true;
+      } else if (arg == "--max-objects") {
+        maxObjectsToConsider = atoi(av[++i]);
       } else if (arg == "--spp") {
         spp = atoi(av[++i]);
       } else if (arg == "--pt") {
@@ -480,16 +484,29 @@ namespace ospray {
     Assert(ospRenderer != NULL && "could not create ospRenderer");
     ospCommit(ospRenderer);
     
-
-
     // code does not yet do instancing ... check that the model doesn't contain instances
-    bool doesInstancing = false; //true;
+    bool doesInstancing = forceInstancing;
     for (int i=0;i<msgModel->instance.size();i++)
       if (msgModel->instance[i] != miniSG::Instance(i))
         doesInstancing = true;
 
+    if (doesInstancing) {
+      if (msgModel->instance.size() > maxObjectsToConsider) {
+        cout << "cutting down on the number of meshes as requested on cmdline..." << endl;
+        msgModel->instance.resize(maxObjectsToConsider);
+      }
+    } else {
+      if (msgModel->instance.size() > maxObjectsToConsider) {
+        cout << "cutting down on the number of meshes as requested on cmdline..." << endl;
+        msgModel->instance.resize(maxObjectsToConsider);
+        msgModel->mesh.resize(maxObjectsToConsider);
+      }
+    }
+
+
     cout << "msgView: adding parsed geometries to ospray model" << endl;
     std::vector<OSPModel> instanceModels;
+
     for (int i=0;i<msgModel->mesh.size();i++) {
       //      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
@@ -498,14 +515,12 @@ namespace ospray {
       OSPGeometry ospMesh = ospNewTriangleMesh();
 
       // add position array to mesh
-      cout << "POSITIONS" << endl;
       OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"position",position);
       
       // add triangle index array to mesh
       if (!msgMesh->triangleMaterialId.empty()) {
-      cout << "MATERIALID" << endl;
         OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
                                        &msgMesh->triangleMaterialId[0],OSP_DATA_SHARED_BUFFER);
         ospSetData(ospMesh,"prim.materialID",primMatID);
@@ -520,7 +535,6 @@ namespace ospray {
 
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
-      cout << "NORMAL" << endl;
         OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
                                     &msgMesh->normal[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->normal.size() > 0);
