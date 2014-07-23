@@ -20,6 +20,11 @@
 #include "../common/library.h"
 #include "../texture/texture2d.h"
 #include "../lights/light.h"
+
+#ifdef OSPRAY_ALPHA_AWARE_GEOMETRY
+#include "../../modules/alpha_aware_geometry/alpha_triangle_mesh.h"
+#endif
+
 // embree stuff
 // stl
 #include <algorithm>
@@ -166,7 +171,18 @@ namespace ospray {
     /*! create a new data buffer */
     OSPTriangleMesh LocalDevice::newTriangleMesh()
     {
+#ifndef OSPRAY_ALPHA_AWARE_GEOMETRY
       TriangleMesh *triangleMesh = new TriangleMesh;
+#else
+      //autoload the module since it's guaranteed we're trying to use it (based on the ifdefs)
+      loadLibrary("ospray_module_alpha_aware");
+
+      typedef AlphaAwareTriangleMesh*(*CtorType)();
+      CtorType ctor = (CtorType)getSymbol("createAlphaAwareTriangleMesh");
+
+      if(ctor == NULL) throw std::runtime_error("Could not load symbol createAlphaAwareTriangleMesh");
+      AlphaAwareTriangleMesh *triangleMesh = ctor();
+#endif
       triangleMesh->refInc();
       return (OSPTriangleMesh)triangleMesh;
     }

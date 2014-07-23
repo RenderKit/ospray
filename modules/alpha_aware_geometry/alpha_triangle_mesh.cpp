@@ -2,8 +2,10 @@
 #include "alpha_triangle_mesh.h"
 #include "ospray/common/data.h"
 #include "ospray/common/model.h"
+#include "ospray/texture/texture2d.h"
 
 //ispc
+#include "alpha_triangle_mesh_ispc.h"
 
 // embree
 #include "embree2/rtcore.h"
@@ -24,13 +26,12 @@ namespace ospray {
     : TriangleMesh()
   {
     //TODO: ISPC side
-    //this->ispcEquivalent = ispc::AlphaAwareTriangleMesh_create(this);
+    this->ispcEquivalent = ispc::AlphaAwareTriangleMesh_create(this);
   }
 
   void AlphaAwareTriangleMesh::finalize(Model *model)
   {
     using namespace std;
-
     static int numPrints = 0;
     numPrints++;
     if (logLevel > 2) 
@@ -54,9 +55,6 @@ namespace ospray {
     materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
 
-    Ref<Data> textureData = getParamData("alpha_texture", NULL);
-    string alpha_type = getParamString("alpha_type", "alpha");
-    string alpha_slot = getParamString("alpha_component", "a");
 
     Assert2(vertexData != NULL,
             "triangle mesh geometry does not have either 'position'"
@@ -64,8 +62,6 @@ namespace ospray {
     Assert2(indexData != NULL, 
             "triangle mesh geometry does not have either 'index'"
             " or 'triangle' array");
-    Assert2(textureData != NULL,
-            "triangle mesh geometry does not have a 'alpha_texture'");
     
     this->index = (vec3i*)indexData->data;
     this->vertex = (vec3fa*)vertexData->data;
@@ -74,6 +70,59 @@ namespace ospray {
     this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
     this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
+
+    if (materialList) {
+      num_materials = materialListData->numItems;
+      ispcMaterialPtrs = new void*[num_materials];
+      for (int i = 0; i < num_materials; i++) {
+        this->ispcMaterialPtrs[i] = this->materialList[i]->getIE();
+      }
+    } else {
+      this->ispcMaterialPtrs = NULL;
+    }
+
+    size_t numTris  = -1;
+    size_t numVerts = -1;
+    switch (indexData->type) {
+    case OSP_int32:  numTris = indexData->size() / 3; break;
+    case OSP_uint32: numTris = indexData->size() / 3; break;
+    case OSP_vec3i:  numTris = indexData->size(); break;
+    case OSP_vec3ui: numTris = indexData->size(); break;
+    default:
+      throw std::runtime_error("unsupported trianglemesh.index data type");
+    }
+
+    switch (vertexData->type) {
+    case OSP_float:   numVerts = vertexData->size() / 4; break;
+    case OSP_vec3fa:  numVerts = vertexData->size(); break;
+    default:
+      throw std::runtime_error("unsupported trianglemesh.vertex data type");
+    }
+
+    eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
+                               numTris,numVerts);
+
+    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
+                 (void*)this->vertex,0,
+                 ospray::sizeOf(vertexData->type));
+    rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
+                 (void*)this->index,0,
+                 ospray::sizeOf(indexData->type));
+
+    box3f bounds = embree::empty;
+    
+    for (int i=0;i<vertexData->size();i++) 
+      bounds.extend(vertex[i]);
+
+    if (logLevel > 2) 
+      if (numPrints < 5) {
+        cout << "  created triangle mesh (" << numTris << " tris "
+             << ", " << numVerts << " vertices)" << endl;
+        cout << "  mesh bounds " << bounds << endl;
+      } 
+
+    string alpha_type = getParamString("alpha_type", "alpha");
+    string alpha_slot = getParamString("alpha_component", "a");
 
     switch(alpha_slot[0]) {
       case 'x':
@@ -105,13 +154,41 @@ namespace ospray {
       throw runtime_error("Unknown alpha representation provided to AlphaTriangleMesh");
     }
 
-    if(alphaType == ALPHA)
-      globalAlpha = getParam1f("alpha", 0.f);
-    else
-      globalAlpha = getParam1f("alpha", 1.f);
+    alphaMapData = getParamData("alpha_maps");
+    alphaData = getParamData("alphas");
 
-    map = (Texture2D*)getParamObject("alpha_map", NULL);
-    cout << "Alpha map was null in AlphaAwareGeometry, global alpha setting will be used." << endl;
+    mapPointers = alphaMapData ? (Texture2D**)alphaMapData->data : NULL;
+    globalAlphas = alphaData ? (float*)alphaData->data : NULL;
+
+    if(alphaType == OPACITY)
+      for(int i = 0; i < num_materials; i++)
+        globalAlphas[i] = 1.0f - globalAlphas[i];
+
+    if(alphaMapData) {
+      ispcMapPointers = new void*[num_materials];
+      for(int i = 0; i < num_materials; i++) {
+        if(mapPointers[i]) {
+          ispcMapPointers[i] = mapPointers[i]->getIE();
+        } else {
+          ispcMapPointers[i] = NULL;
+        }
+      }
+    }
+
+    ispc::AlphaAwareTriangleMesh_set(getIE(),model->getIE(),eMesh,
+                                      numTris,
+                                      (ispc::vec3i*)index,
+                                      (ispc::vec3fa*)vertex,
+                                      (ispc::vec3fa*)normal,
+                                      (ispc::vec4f*)color,
+                                      (ispc::vec2f*)texcoord,
+                                      geom_materialID,
+                                      ispcMaterialPtrs,
+                                      (uint32*)prim_materialID,
+                                      alphaComponent,
+                                      alphaType,
+                                      globalAlphas,
+                                      ispcMapPointers);
   }
 
   float AlphaAwareTriangleMesh::getAlpha(const vec4f &sample) const
@@ -139,5 +216,7 @@ namespace ospray {
 
     return a;
   }
+
+  extern "C" AlphaAwareTriangleMesh *createAlphaAwareTriangleMesh() { return new AlphaAwareTriangleMesh; }
 
 }

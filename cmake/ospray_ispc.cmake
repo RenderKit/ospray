@@ -38,7 +38,7 @@ MACRO (ispc_compile)
     #${ISPC_DIR}/examples/intrinsics/knc.h)
     SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()
-    SET(CMAKE_ISPC_FLAGS --target ${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING})
+    SET(CMAKE_ISPC_FLAGS -g --target ${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING})
     SET(ISPC_TARGET_EXT ".dev.o")
   ENDIF()
 

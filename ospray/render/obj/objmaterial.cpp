@@ -13,44 +13,17 @@
 namespace ospray {
   namespace obj {
 
-    //extern "C" void ispc_OBJMaterial_create(void *cppE);
-    //    extern "C" void ispc_OBJMaterial_set(
-
     //! \brief commit the material's parameters
     void OBJMaterial::commit()
     {
       if (ispcEquivalent == NULL)
         ispcEquivalent = ispc::OBJMaterial_create(this);
 
-#if 0
-      Ref<Data> textureArrayData = getParamData("textureArray",NULL);
-      int32 num_textures = textureArrayData ? textureArrayData->numItems : 0;
-
-      if(textureArrayData && num_textures > 0) {
-        Texture2D **textures = (ospray::Texture2D**)textureArrayData->data;
-        int map_d_idx    = getParam1i("map_d", -1);
-        int map_Kd_idx   = getParam1i("map_Kd", getParam1i("map_kd",-1));
-        int map_Ks_idx   = getParam1i("map_Ks", getParam1i("map_ks",-1));
-        int map_Ns_idx   = getParam1i("map_Ns", getParam1i("map_ns",-1));
-        int map_Bump_idx = getParam1i("map_Bump", 
-                                      getParam1i("map_bump",-1));
-
-        map_d =     map_d_idx    >= 0 ? textures[map_d_idx] : NULL;
-        
-        map_Kd =    map_Kd_idx   >= 0 ? textures[map_Kd_idx] : NULL;
-        map_Ks =    map_Ks_idx   >= 0 ? textures[map_Ks_idx] : NULL;
-        map_Ns =    map_Ns_idx   >= 0 ? textures[map_Ns_idx] : NULL;
-        map_Bump =  map_Bump_idx >= 0 ? textures[map_Bump_idx] : NULL;
-      } else {
-        map_d = map_Kd = map_Ks = map_Ns = map_Bump = NULL;
-      }
-#else
       map_d  = (Texture2D*)getParamObject("map_d", NULL);
       map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd", NULL));
       map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks", NULL));
       map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", NULL));
       map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", NULL));
-#endif
 
       d  = getParam1f("d", 1.f);
       Kd = getParam3f("kd", getParam3f("Kd", vec3f(.8f)));

@@ -6,6 +6,7 @@
 
 //Used to specify where to look in the alpha map for the actual alpha value
 enum AlphaComponent {
+  UNKNOWN,
   R,
   G,
   B,
@@ -27,11 +28,13 @@ enum AlphaType {
 struct AlphaAwareTriangleMesh
 {
   TriangleMesh base;
-  float globalAlpha;
-  Texture2D *map;
+  float *globalAlphas;
+  Texture2D **maps;
   AlphaComponent alphaComponent;
   AlphaType alphaType;
 };
+
+extern float AlphaAwareTriangleMesh_getAlpha(const uniform vec4f *uniform sample);
 
 extern void AlphaAwareTriangleMesh_Constructor(uniform AlphaAwareTriangleMesh *uniform mesh,
                                                void *uniform cppEquivalent,
@@ -48,8 +51,8 @@ extern void AlphaAwareTriangleMesh_Constructor(uniform AlphaAwareTriangleMesh *u
                                                uniform uint32 *uniform prim_materialID,
                                                uniform uint32 alphaComponent,
                                                uniform uint32 alphaType,
-                                               uniform float alpha,
-                                               uniform Texture2D *uniform map);
+                                               uniform float *uniform alphas,
+                                               uniform Texture2D *uniform *uniform maps);
 
 #endif//OSPRAY_ALPHA_AWARE_TRIANGLE_MESH_IH
 

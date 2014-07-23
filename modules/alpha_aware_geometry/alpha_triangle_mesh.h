@@ -45,9 +45,15 @@ namespace ospray {
     float getAlpha(const vec4f &sample) const;
 
     //data
-    float globalAlpha; //Global alpha value, overridden if map is non-null
-    Texture2D *map;
+    Ref<Data> alphaMapData;
+    Ref<Data> alphaData;
+    int num_materials;
+    float *globalAlphas; //Global alpha value, overridden if map is non-null
+    Texture2D **mapPointers;
+    void **ispcMapPointers;
     AlphaComponent alphaComponent;
     AlphaType      alphaType;
   };
+
+  extern "C" AlphaAwareTriangleMesh *createAlphaAwareTriangleMesh();
 }
