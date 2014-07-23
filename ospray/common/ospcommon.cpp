@@ -30,16 +30,16 @@ namespace ospray {
     long sum = 0;
     long i = 0;
 
-int nextPing = 1;
+    int nextPing = 1;
     while (mem < end) {
       sum += (i+13) * *mem;
       ++i;
       ++mem;
-
-	if (i==nextPing) { 
-	 std::cout << "checksum after " << (i*8) << " bytes: " << (int*)sum << std::endl;
-	  nextPing += nextPing;
-	}
+      
+      // if (i==nextPing) { 
+      //  std::cout << "checksum after " << (i*8) << " bytes: " << (int*)sum << std::endl;
+      //   nextPing += nextPing;
+     // }
     }
     return (void *)sum;
   }

@@ -30,6 +30,9 @@
 
 #define MAX_ENGINES 100
 
+#define MANUAL_DATA_UPLOADS 1
+#define UPLOAD_BUFFER_SIZE (2LL*1024*1024)
+
 namespace ospray {
   namespace coi {
 
@@ -61,6 +64,11 @@ namespace ospray {
       OSPCOI_NEW_LIGHT,
       OSPCOI_REMOVE_GEOMETRY,
       OSPCOI_FRAMEBUFFER_CLEAR,
+      OSPCOI_PRINT_CHECKSUMS,
+      OSPCOI_PIN_UPLOAD_BUFFER,
+      OSPCOI_CREATE_NEW_EMPTY_DATA,
+      OSPCOI_UPLOAD_DATA_DONE,
+      OSPCOI_UPLOAD_DATA_CHUNK,
       OSPCOI_NUM_FUNCTIONS
     } RemoteFctID;
 
@@ -86,10 +94,18 @@ namespace ospray {
       "ospray_coi_new_light",
       "ospray_coi_remove_geometry",
       "ospray_coi_framebuffer_clear",
+      "ospray_coi_print_checksums", // JUST FOR DEBUGGING!!!!
+      "ospray_coi_pin_upload_buffer",
+      "ospray_coi_create_new_empty_data",
+      "ospray_coi_upload_data_done",
+      "ospray_coi_upload_data_chunk",
       NULL
     };
     
     struct COIEngine {
+#ifdef MANUAL_DATA_UPLOADS
+      COIBUFFER uploadBuffer;
+#endif
       COIENGINE       coiEngine;   // COI engine handle
       COIPIPELINE     coiPipe;     // COI pipeline handle
       COIPROCESS      coiProcess; 
@@ -121,6 +137,9 @@ namespace ospray {
                         bool sync=true)
       { 
         double t0 = getSysTime();
+        // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+        // cout << "calling coi function " << coiFctName[ID] << endl;
+        // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 #if 1
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;
@@ -326,6 +345,7 @@ namespace ospray {
         coiError(result,"could not create command pipe");
       Assert(result == COI_SUCCESS);
       
+
       struct {
         int32 ID, count;
       } deviceInfo;
@@ -352,6 +372,36 @@ namespace ospray {
       if (result != COI_SUCCESS)
         coiError(result,std::string("could not get coi api function handle(s) '"));
       
+
+#ifdef MANUAL_DATA_UPLOADS
+      size_t size = UPLOAD_BUFFER_SIZE;
+      char *uploadBufferMem = new char[UPLOAD_BUFFER_SIZE];
+      result = COIBufferCreate(size,COI_BUFFER_NORMAL,0,
+                               uploadBufferMem,1,&coiProcess,&uploadBuffer);
+      if (result != COI_SUCCESS) {
+        cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
+        FATAL("error in allocating coi buffer");
+      }
+      {
+        COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
+        DataStream args;
+        COIEVENT event;
+        args.write((int)1);
+        cout << "CREATING UPLOAD BUFFER" << endl;
+        result = COIPipelineRunFunction(coiPipe,
+                                        coiFctHandle[OSPCOI_PIN_UPLOAD_BUFFER],
+                                        1,&uploadBuffer,&coiBufferFlags,//buffers
+                                        0,NULL,//dependencies
+                                        args.buf,args.ofs,//data
+                                        NULL,0,
+                                        &event);
+        COIEventWait(1,&event,-1,1,NULL,NULL);
+        if (result != COI_SUCCESS) {
+          cout << "error in pinning coi upload buffer : " << COIResultGetName(result) << endl;
+          FATAL("error in allocating coi buffer");
+        }
+      }
+#endif
     }
 
     // void COIEngine::callFunction(RemoteFctID ID, const DataStream &data, bool sync)
@@ -506,37 +556,141 @@ namespace ospray {
       args.write((int32)format);
       args.write((int32)flags);
 
-#if 1
+// #if 1
       double t0 = getSysTime();
       COIEVENT event[engine.size()];
       COIBUFFER coiBuffer[engine.size()];
 
-      cout << "checksum before uploading data" << endl;
-      PRINT(nitems*ospray::sizeOf(format));
-      PRINT((int*)computeCheckSum(init,nitems*ospray::sizeOf(format)));
+      size_t size = nitems*ospray::sizeOf(format);
+
+      // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
+      // cout << "HOST: NEW DATA" << endl;
+      // PRINT(nitems);
+      // PRINT(format);
+      // PRINT(nitems*ospray::sizeOf(format));
+      cout << "checksum before uploading data" << computeCheckSum(init,nitems*ospray::sizeOf(format)) << endl;
+      // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
 
 
+#if MANUAL_DATA_UPLOADS
+      callFunction(OSPCOI_CREATE_NEW_EMPTY_DATA,args);
+      // PING; PRINT(init);
+      for (size_t begin=0;begin<size;begin+=UPLOAD_BUFFER_SIZE) {
+        size_t blockSize = std::min((ulong)UPLOAD_BUFFER_SIZE,(ulong)(size-begin));
+        // PRINT(blockSize);
+        char *beginPtr = ((char*)init)+begin;
+        // cout << "host: first int64 of uploaded data: " << (int*)*(int*)beginPtr << endl;
+        for (int i=0;i<engine.size();i++) {
+          COIEVENT event;
+          result = COIBufferWrite(engine[i]->uploadBuffer,
+                                  0,beginPtr,blockSize,
+                                  COI_COPY_USE_DMA,
+                                  0,NULL,&event);
+          if (result != COI_SUCCESS)
+            cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
+          COIEventWait(1,&event,-1,1,NULL,NULL);
+        }
+        cout << "checksum of BLOCK before upload: " << computeCheckSum(beginPtr,blockSize) << endl;
+    //         COIBUFFER           in_DestBuffer,
+    //         uint64_t            in_Offset,
+    // const   void*               in_pSourceData,
+    //         uint64_t            in_Length,
+    //         COI_COPY_TYPE       in_Type,
+    //         uint32_t            in_NumDependencies,
+    // const   COIEVENT*           in_pDependencies,
+    //         COIEVENT*           out_pCompletion);
+        
+        DataStream args;
+        args.write(ID);
+        args.write((int64)begin);
+        args.write((int64)blockSize);
+
+
+        //        callFunction(OSPCOI_UPLOAD_DATA_CHUNK,args);
+        cout << "callling osp_coi_data_chunk" << endl;
+        for (int i=0;i<engine.size();i++) {
+          COIEVENT event;
+          bzero(&event,sizeof(event));
+          COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
+          result = COIPipelineRunFunction(engine[i]->coiPipe,
+                                          engine[i]->coiFctHandle[OSPCOI_UPLOAD_DATA_CHUNK],
+                                          1,&engine[i]->uploadBuffer,&coiBufferFlags,//buffers
+                                          0,NULL,//dependencies
+                                          args.buf,args.ofs,//data
+                                          NULL,0,
+                                          NULL); //&event);
+          if (result != COI_SUCCESS)
+            cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
+          // COIEventWait(1,&event,-1,1,NULL,NULL);
+          // PING;
+        }        
+        Assert(result == COI_SUCCESS);
+      }
+      cout << "checksum of entire data on HOST " << computeCheckSum(init,size) << endl;
+      callFunction(OSPCOI_UPLOAD_DATA_DONE,args);
+#else
       for (int i=0;i<engine.size();i++) {
         // PRINT(nitems);
-#if 0
-        result = COIBufferCreate(nitems*ospray::sizeOf(format)+128,
-                                 COI_BUFFER_NORMAL,COI_MAP_WRITE_ENTIRE_BUFFER,
-                                 NULL,1,&engine[i]->coiProcess,&coiBuffer[i]);
+// #if 0
+//         result = COIBufferCreate(nitems*ospray::sizeOf(format)+128,
+//                                  COI_BUFFER_NORMAL,COI_MAP_WRITE_ENTIRE_BUFFER,
+//                                  NULL,1,&engine[i]->coiProcess,&coiBuffer[i]);
 
-        size_t size = nitems*ospray::sizeOf(format);
-        size_t delta = 128*1024*1024;
-        for (size_t ofs=0;ofs<size;ofs+=delta) {
-          COIEVENT done;
-          bzero(&done,sizeof(done));
-          COIBufferWrite(coiBuffer[i],ofs,((char*)init)+ofs,std::min(size-ofs,delta),
-                         COI_COPY_USE_DMA,0,NULL,&done);
-          COIEventWait(1,&done,-1,1,NULL,NULL);
+//         size_t size = nitems*ospray::sizeOf(format);
+//         size_t delta = 128*1024*1024;
+//         for (size_t ofs=0;ofs<size;ofs+=delta) {
+//           COIEVENT done;
+//           bzero(&done,sizeof(done));
+//           COIBufferWrite(coiBuffer[i],ofs,((char*)init)+ofs,std::min(size-ofs,delta),
+//                          COI_COPY_USE_DMA,0,NULL,&done);
+//           COIEventWait(1,&done,-1,1,NULL,NULL);
+//         }
+// #else
+        {
+          DataStream args;
+          int i = 0;
+          args.write(i);
+          cout << "checksums BEFORE COIBufferCreate" << endl;
+          callFunction(OSPCOI_PRINT_CHECKSUMS,args);
         }
-#else
-        result = COIBufferCreate(nitems*ospray::sizeOf(format)+128,
-                                 COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
+        
+        size_t size = nitems*ospray::sizeOf(format);
+
+
+
+        result = COIBufferCreate(size,COI_BUFFER_NORMAL,
+                                 size>128*1024*1024?COI_OPTIMIZE_HUGE_PAGE_SIZE:0,
                                  init,1,&engine[i]->coiProcess,&coiBuffer[i]);
-#endif
+        if (result != COI_SUCCESS) {
+          cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
+          FATAL("error in allocating coi buffer");
+        }
+
+        {
+          DataStream args;
+          int i = 0;
+          args.write(i);
+          cout << "checksums AFTER COIBufferCreate (not passing the newly created buffer)" << endl;
+          callFunction(OSPCOI_PRINT_CHECKSUMS,args);
+        }
+        {
+          DataStream args;
+          int i = 0;
+          args.write(i);
+          cout << "checksums AFTER COIBufferCreate (WITH newly created buffer)" << endl;
+          bzero(&event[i],sizeof(event[i]));
+          COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
+          result = COIPipelineRunFunction(engine[i]->coiPipe,
+                                          engine[i]->coiFctHandle[OSPCOI_PRINT_CHECKSUMS],
+                                          1,&coiBuffer[i],&coiBufferFlags,//buffers
+                                          0,NULL,//dependencies
+                                          args.buf,args.ofs,//data
+                                          NULL,0,
+                                          &event[i]);
+          COIEventWait(1,&event[i],-1,1,NULL,NULL);
+        }
+
+// #endif
         Assert(result == COI_SUCCESS);
 
         // if (init) {
@@ -549,6 +703,7 @@ namespace ospray {
       }
 
       for (int i=0;i<engine.size();i++) {
+        cout << "callling osp_coi_new_data" << endl;
         bzero(&event[i],sizeof(event[i]));
         COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
         result = COIPipelineRunFunction(engine[i]->coiPipe,
@@ -564,43 +719,44 @@ namespace ospray {
       for (int i=0;i<engine.size();i++) {
         COIEventWait(1,&event[i],-1,1,NULL,NULL);
       }
+#endif
       double t1 = getSysTime();
       static double sum_t = 0;
       sum_t += (t1-t0);
       //      cout << "time spent in buffercreate " << (t1-t0) << " total " << sum_t << endl;
-#else
-      for (int i=0;i<engine.size();i++) {
-        COIBUFFER coiBuffer;
-        // PRINT(nitems);
-        result = COIBufferCreate(nitems*ospray::sizeOf(format),
-                                 COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
-                                 init,1,&engine[i]->coiProcess,&coiBuffer);
-        Assert(result == COI_SUCCESS);
+// #else
+//       for (int i=0;i<engine.size();i++) {
+//         COIBUFFER coiBuffer;
+//         // PRINT(nitems);
+//         result = COIBufferCreate(nitems*ospray::sizeOf(format),
+//                                  COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_WRITE,
+//                                  init,1,&engine[i]->coiProcess,&coiBuffer);
+//         Assert(result == COI_SUCCESS);
 
-        COIEVENT event;
-        if (init) {
-          bzero(&event,sizeof(event));
-          result = COIBufferWrite(coiBuffer,//engine[i]->coiProcess,
-                                  0,init,nitems*ospray::sizeOf(format),
-                                  COI_COPY_USE_DMA,0,NULL,&event);
-          Assert(result == COI_SUCCESS);
-          COIEventWait(1,&event,-1,1,NULL,NULL);
-        }
+//         COIEVENT event;
+//         if (init) {
+//           bzero(&event,sizeof(event));
+//           result = COIBufferWrite(coiBuffer,//engine[i]->coiProcess,
+//                                   0,init,nitems*ospray::sizeOf(format),
+//                                   COI_COPY_USE_DMA,0,NULL,&event);
+//           Assert(result == COI_SUCCESS);
+//           COIEventWait(1,&event,-1,1,NULL,NULL);
+//         }
 
-        bzero(&event,sizeof(event));
-        COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
-        result = COIPipelineRunFunction(engine[i]->coiPipe,
-                                        engine[i]->coiFctHandle[OSPCOI_NEW_DATA],
-                                        1,&coiBuffer,&coiBufferFlags,//buffers
-                                        0,NULL,//dependencies
-                                        args.buf,args.ofs,//data
-                                        NULL,0,
-                                        &event);
+//         bzero(&event,sizeof(event));
+//         COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
+//         result = COIPipelineRunFunction(engine[i]->coiPipe,
+//                                         engine[i]->coiFctHandle[OSPCOI_NEW_DATA],
+//                                         1,&coiBuffer,&coiBufferFlags,//buffers
+//                                         0,NULL,//dependencies
+//                                         args.buf,args.ofs,//data
+//                                         NULL,0,
+//                                         &event);
         
-        Assert(result == COI_SUCCESS);
-        COIEventWait(1,&event,-1,1,NULL,NULL);
-      }
-#endif
+//         Assert(result == COI_SUCCESS);
+//         COIEventWait(1,&event,-1,1,NULL,NULL);
+//       }
+// #endif
       return (OSPData)(int64)ID;
     }
 
@@ -713,7 +869,7 @@ namespace ospray {
       for (int i=0;i<engine.size();i++) {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
-        result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_MAP_READ_ONLY,
+        result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_ONLY,
                                  data,1,&engine[i]->coiProcess,&coiBuffer);
         Assert(result == COI_SUCCESS);
         COIEVENT event;
@@ -852,7 +1008,7 @@ namespace ospray {
       fb->size = size;
       for (int i=0;i<engine.size();i++) {
         result = COIBufferCreate(size.x*size.y*sizeof(int32),
-                                 COI_BUFFER_NORMAL,COI_MAP_READ_WRITE,
+                                 COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_WRITE,
                                  NULL,1,&engine[i]->coiProcess,&fb->coiBuffer[i]);
         Assert(result == COI_SUCCESS);
         

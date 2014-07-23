@@ -526,7 +526,7 @@ namespace ospray {
         ospSetData(ospMesh,"prim.materialID",primMatID);
       }
 
-      cout << "INDEX" << endl;
+      // cout << "INDEX" << endl;
       // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
