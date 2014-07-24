@@ -181,7 +181,6 @@ namespace ospray {
       for (xmlNode *node = root->children; node; node = node->next) {
         std::string nodeName = (char*)node->name;
         if (nodeName == "text") {
-          //PRINT(nodeName);
           // -------------------------------------------------------
         } else if (nodeName == "Texture2D") {
           // -------------------------------------------------------
