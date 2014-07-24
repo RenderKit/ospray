@@ -21,6 +21,7 @@ namespace ospray {
   bool doShadows = 1;
 
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
+  bool g_alpha = false;
   int accumID = -1;
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
@@ -391,6 +392,8 @@ namespace ospray {
         ospLoadModule(moduleName);
       } else if (arg == "--1k") {
         g_width = g_height = 1024;
+      } else if (arg == "--alpha") {
+        g_alpha = true;
       } else if (arg == "-win") {
         if (++i < ac)
           {
@@ -513,7 +516,7 @@ namespace ospray {
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
       // create ospray mesh
-      OSPGeometry ospMesh = ospNewTriangleMesh();
+      OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewTriangleMesh();
 
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,

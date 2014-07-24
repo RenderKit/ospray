@@ -219,4 +219,5 @@ namespace ospray {
 
   extern "C" AlphaAwareTriangleMesh *createAlphaAwareTriangleMesh() { return new AlphaAwareTriangleMesh; }
 
+  OSP_REGISTER_GEOMETRY(AlphaAwareTriangleMesh, alpha_aware_triangle_mesh);
 }
