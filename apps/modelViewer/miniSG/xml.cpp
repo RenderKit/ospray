@@ -1,0 +1,272 @@
+#include "xml.h"
+
+namespace ospray {
+  namespace xml {
+
+    std::string toString(const float f) 
+    { std::stringstream ss; ss << f; return ss.str(); }
+
+    std::string toString(const vec3f &v) 
+    { std::stringstream ss; ss << v.x << " " << v.y << " " << v.z; return ss.str(); }
+
+    Node::~Node()
+    {
+      for (int i=0;i<prop.size();i++) delete prop[i];
+      for (int i=0;i<child.size();i++) delete child[i];
+    }
+    
+    inline bool isWhite(char s) {
+      return
+        s == ' ' ||
+        s == '\t' ||
+        s == '\n' ||
+        s == '\r';
+    }
+
+    inline void expect(char *&s, const char w)
+    {
+      if (*s != w) {
+        std::stringstream err;
+        err << "error reading XML file: expecting '" << w << "', but found '" << *s << "'";
+        throw std::runtime_error(err.str());
+      }
+    }
+    inline void consume(char *&s, const char w)
+    {
+      expect(s,w);
+      ++s;
+    }
+    inline void consume(char *&s, const char *word)
+    {
+      const char *in = word;
+      while (*word) { 
+        try {
+          consume(s,*word); ++word;
+        } catch (...) {
+          std::stringstream err;
+          err << "error reading XML file: expecting '" << in << "', but could not find it";
+          throw std::runtime_error(err.str());
+        }
+      }
+    }
+
+    inline std::string makeString(const char *begin, const char *end) 
+    {
+      char mem[end-begin+1];
+      mem[end-begin] = 0;
+      memcpy(mem,begin,end-begin);
+      return mem;
+    }
+
+    void parseString(char *&s, std::string &value)
+    {
+      consume(s,'"');
+      char *begin = s;
+      while (*s != '"') {
+        if (*s == '\\') ++s;
+        ++s;
+      }
+      char *end = s;
+      value = makeString(begin,end);
+      consume(s,'"');
+    }
+
+    bool parseIdentifier(char *&s, std::string &identifier)
+    {
+      if (isalpha(*s) || *s == '_') {
+        char *begin = s;
+        ++s;
+        while (isalpha(*s) || isdigit(*s) || *s == '_') {
+          ++s;
+        }
+        char *end = s;
+        identifier = makeString(begin,end);
+        return true;
+      }
+      return false;
+    }
+
+    inline void skipWhites(char *&s)
+    {
+      while (isWhite(*s)) ++s;
+    }
+
+    bool parseProp(char *&s, Prop &prop)
+    {
+      if (!parseIdentifier(s,prop.name))
+        return false;
+      consume(s,'=');
+      expect(s,'"');
+      parseString(s,prop.value);
+      return true;
+    }
+
+    Node *parseNode(char *&s)
+    {
+      consume(s,'<');
+      Node *node = new Node;
+      try {
+        if (!parseIdentifier(s,node->name))
+          throw std::runtime_error("XML error: could not parse node name");
+      
+        skipWhites(s);
+      
+        Prop prop;
+        while (parseProp(s,prop)) {
+          node->prop.push_back(new Prop(prop));
+          skipWhites(s);
+        }
+
+        if (*s == '/') {
+          consume(s,"/>");
+          return node;
+        }
+
+        consume(s,">");
+
+        while (1) {
+          skipWhites(s);
+          if (*s == '<' && s[1] == '/') {
+            consume(s,"</");
+            std::string name = "";
+            parseIdentifier(s,name);
+            if (name != node->name)
+              throw std::runtime_error("invalid XML node - started with '<"+node->name+"...'>, but ended with '</"+name+">");
+            consume(s,">");
+            break;
+            // either end of current node
+          } else if (*s == '<') {
+            // child node
+            Node *child = parseNode(s);
+            node->child.push_back(child);
+          } else {
+            if (node->content != "")
+              throw std::runtime_error("invalid XML node - two different contents!?");
+            // content
+            char *begin = s;
+            while (*s != '<' && *s != 0) ++s;
+            char *end = s;
+            while (isalpha(end[-1])) --end;
+            node->content = makeString(begin,end);
+          }
+        }
+        return node;
+      } catch (std::runtime_error e) {
+        delete node;
+        throw e;
+      }
+    }
+
+    bool parseHeader(char *&s)
+    {
+      consume(s,"<?xml");
+      if (!isWhite(*s)) return false; ++s;
+
+      skipWhites(s);
+    
+      Prop headerProp;
+      while (parseProp(s,headerProp)) {
+        // ignore header prop
+        skipWhites(s);
+      }
+    
+      consume(s,"?>");
+    
+      return true;
+    }
+
+    bool parseXML(XMLDoc *xml, char *s)
+    {
+      if (!parseHeader(s))
+        throw std::runtime_error("could not parse XML header");
+    
+      skipWhites(s);
+      while (*s != 0) {
+        Node *node = parseNode(s);
+        if (node)xml->child.push_back(node);
+        skipWhites(s);
+      }
+
+      if (*s != 0) throw std::runtime_error("un-parsed junk at end of file"); ++s;
+      return xml;
+    }
+
+    void Writer::spaces()
+    {
+      for (int i=0;i<state.size();i++)
+        fprintf(xml,"  ");
+    }
+    
+    void Writer::writeProperty(const std::string &name, const std::string &value)
+    {
+      assert(xml);
+      assert(!state.empty());
+      State *s = state.top();
+      assert(s);
+      assert(!s->hasContent); // content may not be written before properties
+      fprintf(xml," %s=\"%s\"",name.c_str(),value.c_str());
+    }
+
+    void Writer::openNode(const std::string &type)
+    {
+      assert(xml);
+      spaces(); fprintf(xml,"<%s",type.c_str());
+      State *s = new State;
+      s->type = type;
+      state.push(s);
+    }
+    
+    void Writer::closeNode()
+    {
+      assert(xml);
+      assert(!state.empty());
+      State *s = state.top();
+      assert(s);
+      if (s->hasContent)
+        fprintf(xml,"</%s>",s->type.c_str());
+      else 
+        fprintf(xml,"/>\n");
+      delete s;
+      state.pop();
+    }
+
+    XMLDoc *readXML(const std::string &fn)
+    {
+      FILE *file = fopen(fn.c_str(),"r");
+      if (!file) throw std::runtime_error("ospray::XML error: could not open file '"+fn+"'");
+
+      fseek(file,0,SEEK_END);
+      long numBytes = ftell(file);
+      fseek(file,0,SEEK_SET);
+      char *mem = new char[numBytes+1];
+      mem[numBytes] = 0;
+      fread(mem,1,numBytes,file);
+      XMLDoc *xml = new XMLDoc;
+      bool valid = parseXML(xml,mem);
+      if (!valid) {
+        delete xml;
+        return NULL;
+      }
+      return xml;
+    }
+
+    Writer::Writer(FILE *xml, FILE *bin)
+      : xml(xml), bin(bin)
+    {}
+
+      /*! write document header, may only be called once */
+    void Writer::writeHeader(const std::string &version)
+    {
+      assert(xml);
+      fprintf(xml,"<?xml version=\"%s\"?>\n",version.c_str());
+    }
+
+    /*! write document footer. may only be called once, at end of write */
+    void Writer::writeFooter()
+    {
+      assert(xml);
+    }
+
+
+  }
+}
