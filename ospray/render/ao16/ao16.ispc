@@ -65,6 +65,7 @@ uniform bool AO16_directions_initialized = false;
 struct AO16Renderer {
   uniform Renderer inherited;
   uniform vec3f bgColor;
+  uniform int samplesPerFrame;
 };
 
 inline vec3f getShadingNormal(const Ray &ray)
@@ -169,6 +170,114 @@ inline vec3f getRandomDir(const int j, const uniform int i,
     AO16_directions[j][i].y * biNorm1 +
     AO16_directions[j][i].z * gNormal;
 #endif
+}
+
+inline vec3f getRandomDir(const int j, const int i, 
+                          const vec3f biNorm0,
+                          const vec3f biNorm1, 
+                          const vec3f gNormal,
+                          const float rot_x, const float rot_y)
+{
+#if 1
+        // const uniform float r0 = SimpleAO__randomU[j][i];
+        // const uniform float r1 = SimpleAO__randomV[j][i];
+        const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
+        const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
+        
+        const float w = sqrt(1.f-r1);
+        const float x = cos((2.f*M_PI)*r0)*w;
+        const float y = sin((2.f*M_PI)*r0)*w;
+        const float z = sqrt(r1)+EPS;
+        return
+          x*biNorm0+y*biNorm1+z*gNormal;
+#else
+  if (!AO16_directions_initialized) {    
+    for (uniform int j=0;j<16;j++)
+      for (uniform int i=0;i<16;i++) {
+        const uniform float r0 = SimpleAO__randomU[j][i];
+        const uniform float r1 = SimpleAO__randomV[j][i];
+        // const uniform float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
+        // const uniform float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
+        
+        const uniform float w = sqrt(1.f-r1);
+        const uniform float x = cos((2.f*M_PI)*r0)*w;
+        const uniform float y = sin((2.f*M_PI)*r0)*w;
+        const uniform float z = sqrt(r1)+EPS;
+        AO16_directions[j][i].x = x;
+        AO16_directions[j][i].y = y;
+        AO16_directions[j][i].z = z;      
+      }
+    AO16_directions_initialized = true;
+  }
+  return
+    AO16_directions[j][i].x * biNorm0 +
+    AO16_directions[j][i].y * biNorm1 +
+    AO16_directions[j][i].z * gNormal;
+#endif
+}
+
+
+inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
+                        int sampleOfs, int sampleCnt,
+                        const Ray &ray, 
+                        const int32 pixel_x, const int32 pixel_y,
+                        const float rot_x, const float rot_y)
+{
+  if (ray.geomID < 0)
+    return renderer->bgColor;
+
+  // print("shade at16\n");
+  DifferentialGeometry dg;
+  postIntersect(renderer->inherited.model,
+                dg,
+                ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+
+  const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
+  
+  const vec3f N = dg.Ns; //getShadingNormal(ray);
+
+  // print("shade at16 %\n",N.x,N.y,N.z);
+
+  uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
+  vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
+  foreach_unique(m in mat)
+    baseColor = m->Kd;
+  baseColor = baseColor * make_vec3f(dg.color);
+  // foreach_unique(tex in mat->map_Kd) {
+  //   if (tex) {
+  //     baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
+  //   }
+  // }
+  
+  int hits = 0;
+  vec3f biNormU,biNormV;
+  getBinormals(biNormU,biNormV,N);
+
+  const int sindex_x = pixel_x & 0x3;
+  const int sindex_y = pixel_y & 0x3;
+  const int sindex = (sindex_x) * 4 + (sindex_y);
+  for (uniform int i=0;i<sampleCnt;i++)
+    {
+      const vec3f ao_dir = getRandomDir(sindex,
+                                        (3*sindex_x+5*sindex_y+i+sampleCnt*sampleOfs)%16,
+                                        // i+sampleCnt*sampleOfs,
+                                        // i*sampleCnt+sampleOfs,
+                                        biNormU,biNormV,N,rot_x,rot_y);
+      
+      Ray ao_ray;
+      setRay(ao_ray,P,ao_dir);
+      ao_ray.t0 = EPS;
+      ao_ray.t = 1e20f; //inf; //1.f;
+      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(renderer->inherited.model,ao_ray))
+        hits++;
+      // print("sample %\n",ao_ray.geomID);
+    }
+  float diffuse = absf(dot(N,ray.dir));
+  float frac_visible = (sampleCnt-hits) * (1.0f/sampleCnt);
+	vec3f rgb = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
+  // print("rgb %\n",rgb.x,rgb.y,rgb.z);
+  return rgb;
 }
 
 
@@ -279,9 +388,17 @@ void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
   traceRay(renderer->inherited.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
-  float rot_x = 1.f-precomputedHalton3(sample.sampleID.z);
-  float rot_y = 1.f-precomputedHalton5(sample.sampleID.z);
+
+  uniform int samplesPerFrame = renderer->samplesPerFrame;
+  uniform int framesPer16 = 16/samplesPerFrame;
+  int accumID = sample.sampleID.z / framesPer16;
+  int sampleOfs = sample.sampleID.z % framesPer16;
+  float rot_x = 1.f-precomputedHalton3(accumID);
+  float rot_y = 1.f-precomputedHalton5(accumID);
+  // float rot_x = 1.f-precomputedHalton3(sample.sampleID.z);
+  // float rot_y = 1.f-precomputedHalton5(sample.sampleID.z);
   sample.rgb   = shade_ao16(renderer,
+                            sampleOfs,samplesPerFrame,
                             sample.ray,
                             sample.sampleID.x,
                             sample.sampleID.y, 
@@ -300,12 +417,14 @@ export void *uniform AO16Renderer_create(void *uniform cppE,
 }
 
 export void AO16Renderer_set(void *uniform _renderer,
+                             uniform int samplesPerFrame,
                              const uniform vec3f &bgColor,
                              void *uniform _model,
                              void *uniform _camera)
 {
   uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
   renderer->bgColor = bgColor;
+  renderer->samplesPerFrame = samplesPerFrame;
   renderer->inherited.model = (uniform Model*)_model;
   renderer->inherited.camera = (uniform Camera*)_camera;
 }
