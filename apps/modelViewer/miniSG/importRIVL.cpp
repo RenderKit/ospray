@@ -648,8 +648,6 @@ namespace ospray {
     {
       Group *g = dynamic_cast<Group *>(node.ptr);
       if (g) {
-        PING;
-        PRINT(g->child.size());
         for (int i=0;i<g->child.size();i++)
           traverseSG(model,g->child[i],xfm);
         return;
@@ -657,7 +655,6 @@ namespace ospray {
 
       Transform *xf = dynamic_cast<Transform *>(node.ptr);
       if (xf) {
-        PING;
         traverseSG(model,xf->child,xfm*xf->xfm);
         return;
       }
