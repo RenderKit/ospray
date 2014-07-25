@@ -86,6 +86,7 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   sample.ray.userData = &mhi;
   traceRay(renderer->inherited.model,sample.ray);
 
+#ifdef MHTK_SORTING
   /* sort the hitpoints (only for measuring performance) */
   for (uniform int i = 0; i < mhi.numHits - 1; ++i)
   {
@@ -109,6 +110,7 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
       mhi.hitArray[pos]   = tmp;
     }
   }
+#endif
 
 #if 1
   if (mhi.numHits > 0)
