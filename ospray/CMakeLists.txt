@@ -119,14 +119,12 @@ ENDIF()
 IF (OSPRAY_BUILD_COI_DEVICE)
   FIND_LIBRARY(LIBCOI_DEVICE libcoi_device.so
     PATHS
-    /opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
-    /opt/mpss/3.2.2/sysroots/k1om-mpss-linux/usr/lib64
-    /opt/mpss/3.2.3/sysroots/k1om-mpss-linux/usr/lib64
+    /opt/mpss/*/sysroots/k1om-mpss-linux/usr/lib64
     /opt/intel/mic/coi/device-linux-release/lib
     )
   FIND_LIBRARY(LIBCOI_HOST libcoi_host.so
     PATHS
-    /opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
+    /opt/mpss/*/sysroots/k1om-mpss-linux/usr/lib64
     /opt/intel/mic/coi/host-linux-release/lib
     )
   ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
