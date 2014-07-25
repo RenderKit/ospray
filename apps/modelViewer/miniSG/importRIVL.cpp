@@ -572,10 +572,6 @@ namespace ospray {
           // -------------------------------------------------------
           Ref<miniSG::Group> group = new miniSG::Group;
           nodeList.push_back(group.ptr);
-          PING;
-          PRINT(nodeName);
-          PRINT(node->name);
-          PRINT(node->content);
           // xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
           if (node->content == "")
             // empty group...
@@ -583,10 +579,8 @@ namespace ospray {
           // std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
           else {
             char *value = strdup(node->content.c_str());
-            PRINT(value);
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
               size_t childID = atoi(s);
-              PRINT(childID);
               miniSG::Node *child = nodeList[childID].ptr;
               assert(child);
               group->child.push_back(child);

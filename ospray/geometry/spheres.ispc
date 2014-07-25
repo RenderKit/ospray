@@ -21,6 +21,7 @@ struct Spheres {
   uniform Geometry geometry; //!< inherited geometry fields
 
   uniform uint8 *uniform data;
+  uniform Material *uniform *materialList;
 
   float           radius;
   int             materialID;
@@ -57,6 +58,9 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
     uniform uint8 *spherePtr = 
       THIS->data + THIS->bytesPerSphere*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
+    if (THIS->materialList) {
+      dg.material = THIS->materialList[dg.materialID];
+    }
   }
   dg.Ng = Ng;
   dg.Ns = Ns;
@@ -130,6 +134,7 @@ export void *uniform Spheres_create(void           *uniform cppEquivalent)
 export void SpheresGeometry_set(void           *uniform _geom,
                                 void           *uniform _model,
                                 void           *uniform data,
+                                void           *uniform materialList,
                                 int             uniform numSpheres,
                                 int             uniform bytesPerSphere,
                                 float           uniform radius,
@@ -145,6 +150,7 @@ export void SpheresGeometry_set(void           *uniform _geom,
   
   geom->geometry.model = model;
   geom->geometry.geomID = geomID;
+  geom->materialList = (Material **)materialList;
   geom->numSpheres = numSpheres;
   geom->radius = radius;
   geom->data = (uniform uint8 *uniform)data;

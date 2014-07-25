@@ -20,6 +20,7 @@ namespace ospray {
   Spheres::Spheres()
   {
     this->ispcEquivalent = ispc::Spheres_create(this);
+    _materialList = NULL;
   }
 
   void Spheres::finalize(Model *model) 
@@ -31,14 +32,29 @@ namespace ospray {
     offset_radius     = getParam1i("offset_radius",-1); //3*sizeof(float));
     offset_materialID = getParam1i("offset_materialID",-1);
     data              = getParamData("spheres",NULL);
+    materialList      = getParamData("materialList",NULL);
     
     if (data == NULL) 
       throw std::runtime_error("#ospray:geometry/spheres: no 'spheres' data specified");
     numSpheres = data->numBytes / bytesPerSphere;
     std::cout << "#osp: creating 'spheres' geometry, #spheres = " << numSpheres << std::endl;
     
+    if (_materialList) {
+      delete[] _materialList;
+      _materialList = NULL;
+    }
+
+    if (materialList) {
+      void **ispcMaterials = new void *[materialList->numItems];
+      for (int i=0;i<materialList->numItems;i++) {
+        Material *m = ((Material**)materialList->data)[i];
+        ispcMaterials[i] = m?m->getIE():NULL;
+      }
+      _materialList = (void*)ispcMaterials;
+    }
     ispc::SpheresGeometry_set(getIE(),model->getIE(),
-                              data->data,numSpheres,bytesPerSphere,
+                              data->data,_materialList,
+                              numSpheres,bytesPerSphere,
                               radius,materialID,
                               offset_center,offset_radius,offset_materialID);
   }

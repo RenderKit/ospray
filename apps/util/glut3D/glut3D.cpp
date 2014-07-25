@@ -21,7 +21,7 @@ namespace ospray {
 
   namespace glut3D {
 
-    //#define INVERT_RMB 
+#define INVERT_RMB 
 
     /*! currently active window */
     Glut3DWidget *Glut3DWidget::activeWindow = NULL;
