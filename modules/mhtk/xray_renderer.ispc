@@ -17,7 +17,7 @@
 #include "ospray/common/model.ih"
 #include "multihit_kernel.ih"
 
-#define MAX_HITS_PER_TRACE 256
+#define MAX_HITS_PER_TRACE 512
 
 // inline vec4f XRayRenderer_trace(Ray &ray, RTCScene scene)
 // {
@@ -60,12 +60,15 @@ void multiHitFilter(uniform Geometry *uniform geom,
   varying MultiHitInfo *uniform mhi = (varying MultiHitInfo *uniform)ray.userData;
 
   // Save hitpoint information
-  mhi->hitArray[mhi->numHits].primID = ray.primID;
-  mhi->hitArray[mhi->numHits].geomID = ray.geomID;
-  mhi->hitArray[mhi->numHits].t      = ray.t;
-  mhi->hitArray[mhi->numHits].Ng.x   = ray.Ng.x;
-  mhi->hitArray[mhi->numHits].Ng.y   = ray.Ng.y;
-  mhi->hitArray[mhi->numHits].Ng.z   = ray.Ng.z;
+#ifdef MHTK_SORTING
+  const int pos = mhi->numHits;
+  mhi->hitArray[pos].primID = ray.primID;
+  mhi->hitArray[pos].geomID = ray.geomID;
+  mhi->hitArray[pos].t      = ray.t;
+  mhi->hitArray[pos].Ng.x   = ray.Ng.x;
+  mhi->hitArray[pos].Ng.y   = ray.Ng.y;
+  mhi->hitArray[pos].Ng.z   = ray.Ng.z;
+#endif
 
   mhi->numHits++;
 
