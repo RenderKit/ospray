@@ -104,6 +104,9 @@ namespace ospray {
     struct TriangleMesh : public miniSG::Geometry {
       virtual string toString() const;
       TriangleMesh();
+      virtual ~TriangleMesh() {
+        PING; 
+      }
 
       // /*! \brief data handle to vertex data array. 
         
@@ -410,7 +413,7 @@ namespace ospray {
           // for (xmlAttr* attr = node->properties; attr; attr = attr->next)
             if (prop->name == "child") {
               // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-              size_t childID = atoi(node->content.c_str());//(char*)value);
+              size_t childID = atoi(prop->value.c_str());//(char*)value);
               miniSG::Node *child = nodeList[childID].ptr;
               assert(child);
               xfm->child = child;
@@ -569,7 +572,10 @@ namespace ospray {
           // -------------------------------------------------------
           Ref<miniSG::Group> group = new miniSG::Group;
           nodeList.push_back(group.ptr);
-
+          PING;
+          PRINT(nodeName);
+          PRINT(node->name);
+          PRINT(node->content);
           // xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
           if (node->content == "")
             // empty group...
@@ -577,8 +583,10 @@ namespace ospray {
           // std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
           else {
             char *value = strdup(node->content.c_str());
+            PRINT(value);
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
               size_t childID = atoi(s);
+              PRINT(childID);
               miniSG::Node *child = nodeList[childID].ptr;
               assert(child);
               group->child.push_back(child);
@@ -646,6 +654,8 @@ namespace ospray {
     {
       Group *g = dynamic_cast<Group *>(node.ptr);
       if (g) {
+        PING;
+        PRINT(g->child.size());
         for (int i=0;i<g->child.size();i++)
           traverseSG(model,g->child[i],xfm);
         return;
@@ -653,6 +663,7 @@ namespace ospray {
 
       Transform *xf = dynamic_cast<Transform *>(node.ptr);
       if (xf) {
+        PING;
         traverseSG(model,xf->child,xfm*xf->xfm);
         return;
       }
@@ -735,6 +746,9 @@ namespace ospray {
       nodeList.clear();
       Ref<miniSG::Node> sg = importRIVL(fileName);
       traverseSG(model,sg);
+      cout << "this should free the rivl scene graph!?" << endl;
+      sg = 0;
+      cout << "this should HAVE freed the rivl scene graph!?" << endl;
     }
     
   }

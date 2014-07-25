@@ -485,11 +485,18 @@ namespace ospray {
     ospCommit(ospRenderer);
     
     // code does not yet do instancing ... check that the model doesn't contain instances
-    bool doesInstancing = forceInstancing;
-    for (int i=0;i<msgModel->instance.size();i++)
-      if (msgModel->instance[i] != miniSG::Instance(i))
-        doesInstancing = true;
+    bool doesInstancing = 0;
 
+    if (forceInstancing) {
+      std::cout << "#osp:msgView: forced instancing - instances on." << std::endl;
+      doesInstancing = true;
+    } else if (msgModel->instance.size() > msgModel->mesh.size()) {
+      std::cout << "#osp:msgView: found more object instances than meshes - turning on instancing" << std::endl;
+      doesInstancing = true;
+    } else {
+      std::cout << "#osp:msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
+      doesInstancing = false;
+    }
     if (doesInstancing) {
       if (msgModel->instance.size() > maxObjectsToConsider) {
         cout << "cutting down on the number of meshes as requested on cmdline..." << endl;
@@ -514,6 +521,14 @@ namespace ospray {
       // create ospray mesh
       OSPGeometry ospMesh = ospNewTriangleMesh();
 
+      // check if we have to transform the vertices:
+      if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
+        // cout << "Transforming vertex array ..." << endl;
+        for (int vID=0;vID<msgMesh->position.size();vID++) {
+          msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
+                                            msgMesh->position[vID]);
+        }
+      }
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
