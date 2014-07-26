@@ -150,10 +150,6 @@ namespace ospray {
             char *end = s;
             while (isalpha(end[-1])) --end;
             node->content = makeString(begin,end);
-            if (node->content != "") {
-              PING;
-              PRINT(node->content);
-            }
           }
         }
         return node;
