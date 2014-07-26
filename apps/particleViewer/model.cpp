@@ -15,7 +15,7 @@ extern FILE *yyin;
 extern int yydebug;
 
 namespace ospray {
-  namespace lammps {
+  namespace particle {
     
     Model *parserModel = NULL;
 

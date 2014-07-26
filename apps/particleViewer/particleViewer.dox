@@ -1,4 +1,4 @@
-/*! \page ospray_apps_xyzView The OSPRay viewer for .xyz model files (e.g., from LAMMPS)
+/*! \page ospray_apps_particleViewer The OSPRay Particle Viewer (e.g., for LAMMPS .xyz files)
 
   \ingroup ospray_apps
 

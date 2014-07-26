@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace ospray {
-  namespace lammps {
+  namespace particle {
 
     struct Model {
       struct AtomType {

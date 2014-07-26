@@ -5,11 +5,11 @@
 
 %{
 
-#include "lammpsModel.h"
+#include "model.h"
 #include "loc.h"
 
   using namespace ospray;
-  using namespace ospray::lammps;
+  using namespace ospray::particle;
 
 // #define NOTIMPLEMENTED \
 //         Error(Loc::current, "Unimplemented parser functionality %s:%d", \
@@ -20,7 +20,7 @@ void yyerror(const char *s);
 
 extern char *yytext;
  namespace ospray {
-   namespace lammps {
+   namespace particle {
      extern Model *parserModel;
    }
  }
@@ -30,7 +30,7 @@ extern char *yytext;
   int                intVal;
   float              floatVal;
   char              *identifierVal;
-  std::vector<ospray::lammps::Model::Atom> *atomVector;
+  std::vector<ospray::particle::Model::Atom> *atomVector;
   ospray::vec3f                     *Vec3f;
 }
 
@@ -73,7 +73,7 @@ vec3_list
 : vec3_list Float Float Float
 { 
   $$ = $1; 
-  ospray::lammps::Model::Atom a; 
+  ospray::particle::Model::Atom a; 
   a.type = 0;
   a.position.x = $2;
   a.position.y = $3;
@@ -81,14 +81,14 @@ vec3_list
   $$->push_back(a);
 }
 | 
-{ $$ = new std::vector<ospray::lammps::Model::Atom> ; }
+{ $$ = new std::vector<ospray::particle::Model::Atom> ; }
 ;
 
 atom_list
 : atom_list Int Float Float Float
 { 
   $$ = $1; 
-  ospray::lammps::Model::Atom a; 
+  ospray::particle::Model::Atom a; 
   a.type = $2;
   a.position.x = $3;
   a.position.y = $4;
@@ -96,7 +96,7 @@ atom_list
   $$->push_back(a);
 }
 | 
-{ $$ = new std::vector<ospray::lammps::Model::Atom> ; }
+{ $$ = new std::vector<ospray::particle::Model::Atom> ; }
 ;
 
 Float

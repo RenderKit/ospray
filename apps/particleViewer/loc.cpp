@@ -12,7 +12,7 @@
 #include <sys/stat.h>
 
 namespace ospray {
-  namespace lammps {
+  namespace particle {
     Loc Loc::current;
 
     string Loc::toString() const { 

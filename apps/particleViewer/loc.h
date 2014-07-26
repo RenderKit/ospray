@@ -7,12 +7,12 @@
  ********************************************************************* */
 #pragma once
 
-#include "lammpsModel.h"
+#include "model.h"
 #include <string>
 #include <ostream>
 
 namespace ospray {
-  namespace lammps {
+  namespace particle {
   using std::string;
 
   struct Loc {

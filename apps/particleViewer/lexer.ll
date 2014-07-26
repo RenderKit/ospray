@@ -22,7 +22,7 @@ static void lCppComment();
 static void lHandleCppHash();
 
  using namespace ospray;
- using namespace ospray::lammps;
+ using namespace ospray::particle;
 
 %}
 
