@@ -1,20 +1,21 @@
-/*! \page ospray_apps_ospModelViewer The simple OSPRay model viewer for OBJ and rivl files
+/*! \page ospray_apps_xyzView The OSPRay viewer for .xyz model files (e.g., from LAMMPS)
 
   \ingroup ospray_apps
 
-  usage: ./msgView <args> models
+  usage: ./ospXYZ <args> models
   
-  supported model formats: OBJ (.obj/.mtl), rivl (.xml/.bin)
+  supported model formats: LAMMPs .xyz
   
   supported parameters:
+  
+  --radius r  : radius to be used per sphere
 
-  --sun-dir x y z : specify direction of automatic 'sun' dir-light
-
-  parameters inherited from glut3D:
+  supported parameters:
 
   -vp x y z : specify camera point of origin
   -vi x y z : specify camera point of interest
   -vu x y z : specify up-vector
+  --sun-dir x y z : specify direction of automatic 'sun' dir-light
   --spp n : number of samples per pixel (for renderers that respect the 'spp' parameter)
   --renderer <rendertype> : where rendertype is one of raycast,obj,geomID,primID, or any loaded renderer
 
