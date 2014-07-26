@@ -1,12 +1,16 @@
-SET(OSPRAY_MODULE_LAMMPSVIEW OFF CACHE BOOL "Build 'TACH' (lammpsView model Viewer)")
+# #####################################################################
+# INTEL CORPORATION PROPRIETARY INFORMATION                            
+# This software is supplied under the terms of a license agreement or  
+# nondisclosure agreement with Intel Corporation and may not be copied 
+# or disclosed except in accordance with the terms of that agreement.  
+# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+# #####################################################################
 
-IF (OSPRAY_MODULE_LAMMPSVIEW)
+SET(OSPRAY_APPS_PARTICLEVIEWER OFF CACHE BOOL "Build ospParticleViewer viewer")
 
-  #	IF (NOT OSPRAY_MPI)#
-  #		MESSAGE("The 'TACH' module needs MPI support to be built in")
-  #	ELSE()
+IF (OSPRAY_APPS_PARTICLEVIEWER)
+
   CONFIGURE_OSPRAY()
-  #		CONFIGURE_MPI()
 
   # -------------------------------------------------------
   find_program(LEX_EXE
@@ -56,24 +60,17 @@ IF (OSPRAY_MODULE_LAMMPSVIEW)
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
   INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
-  YACC_FILE(parser.yy)
-  LEX_FILE(lexer.ll)
-
-  #		OSPRAY_ADD_LIBRARY(ospray_module_lammpsView${OSPRAY_LIB_SUFFIX} SHARED
-  #			renderer.cpp
-  #			renderer.ispc
-  #			)
-  #		TARGET_LINK_LIBRARIES(ospray_module_lammpsView${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
-
   IF (NOT THIS_IS_MIC)
+    YACC_FILE(parser.yy)
+    LEX_FILE(lexer.ll)
+
     ADD_EXECUTABLE(ospLammpsView 
-      lammpsView.cpp
-      lammpsModel.cpp
+      viewer.cpp
+      model.cpp
       loc.cpp
       lexer_l.cpp
       parser_y.cpp
       )
     TARGET_LINK_LIBRARIES(ospLammpsView ospray ospray_glut3d)
   ENDIF()
-  #	ENDIF()
 ENDIF()

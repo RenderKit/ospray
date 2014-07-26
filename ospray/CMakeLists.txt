@@ -127,6 +127,8 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     /opt/mpss/*/sysroots/k1om-mpss-linux/usr/lib64
     /opt/intel/mic/coi/host-linux-release/lib
     )
+  MARK_AS_ADVANCED(LIBCOI_DEVICE)
+  MARK_AS_ADVANCED(LIBCOI_HOST)
   ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
