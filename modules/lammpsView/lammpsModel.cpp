@@ -34,26 +34,43 @@ namespace ospray {
       return atomTypeByName[name];
     }
 
-    void Model::load_DAT_XYZ(const std::string &fileName)
+    void Model::load_DAT_XYZ(const std::string &fileName, bool hasNormals)
     {
       FILE *file = fopen(fileName.c_str(),"r");
       if (!file) 
         throw std::runtime_error("could not open input file "+fileName);
       int numAtoms;
-      int rc = fscanf(file,"%i\nDAT\n",&numAtoms);
+      int rc = fscanf(file,"%i\n",&numAtoms);
       if (rc != 1)
         throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
+
+      char line[10000];
+      fgets(line,10000,file);
 
       std::cout << "#" << fileName << " (.dat.xyz format): expecting " << numAtoms << " atoms" << std::endl;
       for (int i=0;i<numAtoms;i++) {
         char atomName[110];
         Atom a;
-        rc = fscanf(file,"%100s %f %f %f\n",atomName,&a.position.x,&a.position.y,&a.position.z);
-        if (rc != 4) {
-          std::stringstream ss;
-          ss << "in " << fileName << " (line " << (i+2) << "): "
-             << "could not parse .dat.xyz data line" << std::endl;
-          throw std::runtime_error(ss.str());
+        if (hasNormals) {
+          vec3f n;
+          rc = fscanf(file,"%100s %f %f %f %f %f %f\n",atomName,
+                      &a.position.x,&a.position.y,&a.position.z,
+                      &n.x,&n.y,&n.z
+                      );
+          if (rc != 7) {
+            std::stringstream ss;
+            ss << "in " << fileName << " (line " << (i+2) << "): "
+               << "could not parse .dat.xyz data line" << std::endl;
+            throw std::runtime_error(ss.str());
+          }
+        } else {
+          rc = fscanf(file,"%100s %f %f %f\n",atomName,&a.position.x,&a.position.y,&a.position.z);
+          if (rc != 4) {
+            std::stringstream ss;
+            ss << "in " << fileName << " (line " << (i+2) << "): "
+               << "could not parse .dat.xyz data line" << std::endl;
+            throw std::runtime_error(ss.str());
+          }
         }
         a.type = getAtomType(atomName);
         atom.push_back(a);

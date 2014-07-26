@@ -95,7 +95,7 @@ namespace ospray {
     virtual void keypress(char key, const vec2f where)
     {
       switch (key) {
-      case 'F':
+      case 'R':
         alwaysRedraw = !alwaysRedraw; 
         forceRedraw();
         break;

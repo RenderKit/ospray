@@ -38,7 +38,7 @@ namespace ospray {
         <string:atomName> <float:x> <float:y> <float:c>\n // repeated numAtoms times
         <EOF>
       */
-      void load_DAT_XYZ(const std::string &fn);
+      void load_DAT_XYZ(const std::string &fn, bool hasNormals);
       box3f getBBox() const;
     };
 

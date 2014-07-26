@@ -19,15 +19,16 @@ namespace ospray {
     std::vector<OSPModel> modelTimeStep;
 
     OSPRenderer        ospRenderer = NULL;
-    typedef enum { LAMMPS_XYZ, DAT_XYZ } InputFormat;
+    typedef enum { LAMMPS_XYZ, DAT_XYZ, DAT_XYZ_NORMAL } InputFormat;
 
     /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
     //  vec3f defaultDirLight_direction(-.3, -1, .4);
     vec3f defaultDirLight_direction(.3, -1, -.2);
 
     //! the renderer we're about to use
-    std::string rendererType = "raycast_eyelight";
-    float radius = 30.f;
+    std::string rendererType = "ao1";
+    //    std::string rendererType = "raycast_eyelight";
+    float radius = 1.f;
     InputFormat inputFormat = LAMMPS_XYZ;
     void error(const std::string &lammps)
     {
@@ -76,6 +77,7 @@ namespace ospray {
       virtual void keypress(char key, const vec2f where)
       {
         switch(key) {
+        case 'Q': exit(0);
         case '>': {
           timeStep = (timeStep+1)%modelTimeStep.size();
           model = modelTimeStep[timeStep];
@@ -84,6 +86,7 @@ namespace ospray {
           PRINT(model);
           ospCommit(renderer);
           viewPort.modified = true;
+          forceRedraw();
         } break;
         case '<': {
           timeStep = (timeStep+modelTimeStep.size()-1)%modelTimeStep.size();
@@ -93,7 +96,10 @@ namespace ospray {
           ospSetParam(renderer,"model",model);
           ospCommit(renderer);
           viewPort.modified = true;
+          forceRedraw();
         } break;
+        default:
+          Glut3DWidget::keypress(key,where);
         }
       }
 
@@ -189,6 +195,8 @@ namespace ospray {
           PRINT(radius);
         } else if (arg == "--dat-xyz") {
           inputFormat = DAT_XYZ;
+        } else if (arg == "--dat-xyz-n") {
+          inputFormat = DAT_XYZ_NORMAL;
         } else if (arg == "--lammps") {
           inputFormat = LAMMPS_XYZ;
         } else if (arg == "--sun-dir") {
@@ -208,8 +216,10 @@ namespace ospray {
             lammps::Model *m = new lammps::Model;
             if (inputFormat == LAMMPS_XYZ) 
               m->load_LAMMPS_XYZ(fn.str());
-            else 
-              m->load_DAT_XYZ(fn.str());
+            else if (inputFormat == DAT_XYZ_NORMAL)
+              m->load_DAT_XYZ(fn.str(),true);
+            else
+              m->load_DAT_XYZ(fn.str(),false);
             lammpsModel.push_back(m);
           } else
             error("unknown file format "+fn.str());
