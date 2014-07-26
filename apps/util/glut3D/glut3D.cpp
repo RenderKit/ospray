@@ -694,7 +694,7 @@ namespace ospray {
         manipulator = inspectCenterManipulator;
         return;
       }
-      if (key == 'M' && moveModeManipulator) {
+      if ((key == 'M' || key == 'F') && moveModeManipulator) {
         manipulator = moveModeManipulator;
         return;
       }

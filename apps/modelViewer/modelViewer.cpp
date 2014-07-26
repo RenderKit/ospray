@@ -6,8 +6,6 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-
-
 // viewer widget
 #include "../util/glut3D/glut3D.h"
 // mini scene graph for loading the model
@@ -95,7 +93,7 @@ namespace ospray {
     virtual void keypress(char key, const vec2f where)
     {
       switch (key) {
-      case 'F':
+      case 'R':
         alwaysRedraw = !alwaysRedraw; 
         forceRedraw();
         break;

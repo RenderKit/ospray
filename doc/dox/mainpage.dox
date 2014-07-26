@@ -68,4 +68,10 @@
   one you are currently reading). Preferred configuration is to use
   the Intel C Compiler as well as Intel MPI.
 
+  \section apps Sample Applications
+
+  OSPRay comes with a set of sample viewer applications. 
+  \see ospray_apps_ospModelViewer
+  \see ospray_apps_ospParticleViewer
+  \see ospray_apps 
  */
