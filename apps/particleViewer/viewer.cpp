@@ -201,10 +201,6 @@ namespace ospray {
         } else if (arg == "--radius") {
           radius = atof(av[++i]);
           PRINT(radius);
-        } else if (arg == "--dat-xyz") {
-          inputFormat = DAT_XYZ;
-        } else if (arg == "--lammps") {
-          inputFormat = LAMMPS_XYZ;
         } else if (arg == "--sun-dir") {
           defaultDirLight_direction.x = atof(av[++i]);
           defaultDirLight_direction.y = atof(av[++i]);
@@ -218,12 +214,9 @@ namespace ospray {
           error("unkown commandline argument '"+arg+"'");
         } else {
           embree::FileName fn = arg;
-          if (fn.ext() == "xyz" || fn.ext() == "dat") {
+          if (fn.ext() == "xyz") {
             particle::Model *m = new particle::Model;
-            if (inputFormat == LAMMPS_XYZ) 
-              m->load_LAMMPS_XYZ(fn.str());
-            else
-              m->load_DAT_XYZ(fn.str());
+            m->loadXYZ(fn);
             lammpsModel.push_back(m);
           } else
             error("unknown file format "+fn.str());

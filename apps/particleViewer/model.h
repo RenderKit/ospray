@@ -35,17 +35,8 @@ namespace ospray {
       int getAtomType(const std::string &name);
 
       /*! \brief load lammps xyz files */
-      void load_LAMMPS_XYZ(const std::string &fn);
+      void loadXYZ(const std::string &fn);
       
-      /*! \brief load ".dat.xyz" files.
-        
-        dat_xyz files have a format of:
-        <int:numAtoms>\n
-        DAT\n
-        <string:atomName> <float:x> <float:y> <float:c>\n // repeated numAtoms times
-        <EOF>
-      */
-      void load_DAT_XYZ(const std::string &fn);
       box3f getBBox() const;
     };
 

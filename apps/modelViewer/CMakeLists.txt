@@ -15,7 +15,7 @@ ADD_SUBDIRECTORY(miniSG)
 # --------------------------------------------
 ADD_EXECUTABLE(ospModelViewer
   # CPP sources
-  msgView.cpp
+  modelViewer.cpp
   )
 TARGET_LINK_LIBRARIES(ospModelViewer
   ospray_minisg
