@@ -19,7 +19,7 @@ namespace ospray {
     std::vector<OSPModel> modelTimeStep;
 
     OSPRenderer        ospRenderer = NULL;
-    typedef enum { LAMMPS_XYZ, DAT_XYZ, DAT_XYZ_NORMAL } InputFormat;
+    typedef enum { LAMMPS_XYZ, DAT_XYZ } InputFormat;
 
     /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
     //  vec3f defaultDirLight_direction(-.3, -1, .4);
@@ -195,8 +195,6 @@ namespace ospray {
           PRINT(radius);
         } else if (arg == "--dat-xyz") {
           inputFormat = DAT_XYZ;
-        } else if (arg == "--dat-xyz-n") {
-          inputFormat = DAT_XYZ_NORMAL;
         } else if (arg == "--lammps") {
           inputFormat = LAMMPS_XYZ;
         } else if (arg == "--sun-dir") {
@@ -216,10 +214,8 @@ namespace ospray {
             lammps::Model *m = new lammps::Model;
             if (inputFormat == LAMMPS_XYZ) 
               m->load_LAMMPS_XYZ(fn.str());
-            else if (inputFormat == DAT_XYZ_NORMAL)
-              m->load_DAT_XYZ(fn.str(),true);
             else
-              m->load_DAT_XYZ(fn.str(),false);
+              m->load_DAT_XYZ(fn.str());
             lammpsModel.push_back(m);
           } else
             error("unknown file format "+fn.str());
