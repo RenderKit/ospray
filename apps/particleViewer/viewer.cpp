@@ -1,15 +1,23 @@
-/*! \file lammpsView.cpp A GLUT-based viewer for simple geometry
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
+
+/*! \file apps/particleViewer/viewer.cpp A GLUT-based viewer for simple geometry
   (supports STL and Wavefront OBJ files) */
 
 // viewer widget
 #include "glut3D/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
-#include "lammpsModel.h"
+#include "model.h"
 #include "sys/filename.h"
 
 namespace ospray {
-  namespace lammps {
+  namespace particle {
     using std::cout;
     using std::endl;
 
@@ -26,8 +34,9 @@ namespace ospray {
     vec3f defaultDirLight_direction(.3, -1, -.2);
 
     //! the renderer we're about to use
-    std::string rendererType = "raycast_eyelight";
-    float radius = 30.f;
+    std::string rendererType = "ao1";
+    //    std::string rendererType = "raycast_eyelight";
+    float radius = 1.f;
     InputFormat inputFormat = LAMMPS_XYZ;
     void error(const std::string &lammps)
     {
@@ -76,6 +85,7 @@ namespace ospray {
       virtual void keypress(char key, const vec2f where)
       {
         switch(key) {
+        case 'Q': exit(0);
         case '>': {
           timeStep = (timeStep+1)%modelTimeStep.size();
           model = modelTimeStep[timeStep];
@@ -84,6 +94,7 @@ namespace ospray {
           PRINT(model);
           ospCommit(renderer);
           viewPort.modified = true;
+          forceRedraw();
         } break;
         case '<': {
           timeStep = (timeStep+modelTimeStep.size()-1)%modelTimeStep.size();
@@ -93,7 +104,10 @@ namespace ospray {
           ospSetParam(renderer,"model",model);
           ospCommit(renderer);
           viewPort.modified = true;
+          forceRedraw();
         } break;
+        default:
+          Glut3DWidget::keypress(key,where);
         }
       }
 
@@ -158,7 +172,7 @@ namespace ospray {
       ospray::glut3D::FPSCounter fps;
     };
 
-    OSPData makeMaterials(OSPRenderer renderer,Model *model)
+    OSPData makeMaterials(OSPRenderer renderer,particle::Model *model)
     {
       int numMaterials = model->atomType.size();
       OSPMaterial matArray[numMaterials];
@@ -187,10 +201,6 @@ namespace ospray {
         } else if (arg == "--radius") {
           radius = atof(av[++i]);
           PRINT(radius);
-        } else if (arg == "--dat-xyz") {
-          inputFormat = DAT_XYZ;
-        } else if (arg == "--lammps") {
-          inputFormat = LAMMPS_XYZ;
         } else if (arg == "--sun-dir") {
           defaultDirLight_direction.x = atof(av[++i]);
           defaultDirLight_direction.y = atof(av[++i]);
@@ -204,12 +214,9 @@ namespace ospray {
           error("unkown commandline argument '"+arg+"'");
         } else {
           embree::FileName fn = arg;
-          if (fn.ext() == "xyz" || fn.ext() == "dat") {
-            lammps::Model *m = new lammps::Model;
-            if (inputFormat == LAMMPS_XYZ) 
-              m->load_LAMMPS_XYZ(fn.str());
-            else 
-              m->load_DAT_XYZ(fn.str());
+          if (fn.ext() == "xyz") {
+            particle::Model *m = new particle::Model;
+            m->loadXYZ(fn);
             lammpsModel.push_back(m);
           } else
             error("unknown file format "+fn.str());
@@ -290,5 +297,5 @@ int main(int ac, const char **av)
 {
   ospInit(&ac,av);
   ospray::glut3D::initGLUT(&ac,av);
-  ospray::lammps::lammpsViewMain(ac,av);
+  ospray::particle::lammpsViewMain(ac,av);
 }

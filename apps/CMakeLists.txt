@@ -24,6 +24,8 @@ IF(NOT THIS_IS_MIC)
 
   # stream line viewer for NASA Stream Line Demo
   ADD_SUBDIRECTORY(streamLineViewer)
+  # xyz atom model viewer (one sphere per atom)
+  ADD_SUBDIRECTORY(particleViewer)
 
   # volume viewer application
   OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build volume viewer application" OFF)

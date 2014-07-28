@@ -1,3 +1,10 @@
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
 #pragma once
 
 // ospray
@@ -7,7 +14,7 @@
 #include <vector>
 
 namespace ospray {
-  namespace lammps {
+  namespace particle {
 
     struct Model {
       struct AtomType {
@@ -28,17 +35,8 @@ namespace ospray {
       int getAtomType(const std::string &name);
 
       /*! \brief load lammps xyz files */
-      void load_LAMMPS_XYZ(const std::string &fn);
+      void loadXYZ(const std::string &fn);
       
-      /*! \brief load ".dat.xyz" files.
-        
-        dat_xyz files have a format of:
-        <int:numAtoms>\n
-        DAT\n
-        <string:atomName> <float:x> <float:y> <float:c>\n // repeated numAtoms times
-        <EOF>
-      */
-      void load_DAT_XYZ(const std::string &fn);
       box3f getBBox() const;
     };
 
