@@ -114,12 +114,6 @@ void multiHitFilter(uniform Geometry *uniform geom,
       break;
   }
 
-#    ifdef MHTK_SHOW_RAY_COHERENCE
-      /* count the number of incoherent lanes */
-      foreach_unique(val in programIndex)
-        mhi->numCoherent++;
-#    endif
-
   mhi->hitArray[i+1] = hit;
 #  else
   const int pos = mhi->numHits;
@@ -129,6 +123,11 @@ void multiHitFilter(uniform Geometry *uniform geom,
   mhi->hitArray[pos].Ng.x   = ray.Ng.x;
   mhi->hitArray[pos].Ng.y   = ray.Ng.y;
   mhi->hitArray[pos].Ng.z   = ray.Ng.z;
+#  endif
+#  ifdef MHTK_SHOW_RAY_COHERENCE
+      /* count the number of incoherent lanes */
+      foreach_unique(val in programIndex)
+        mhi->numCoherent++;
 #  endif
 #endif
 
