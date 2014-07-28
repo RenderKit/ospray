@@ -40,18 +40,6 @@ namespace ospray {
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
     
-    // cout << "committing" << endl;
-
     rtcCommit(embreeSceneHandle);
-    cout << "commited and built." << endl;
-    // cout << "Printing checksums of triangle geometries after build ... see if they still match!" << endl;
-    // for (int i=0;i<geometry.size();i++) {
-    //   TriangleMesh *tm = dynamic_cast<TriangleMesh*>(geometry[i].ptr);
-      // if (tm) {
-      //   PING;
-      //   PRINT(computeCheckSum(tm->vertex,tm->vertexData->numItems*sizeof(tm->vertex[0])));
-      //   PRINT(computeCheckSum(tm->index,tm->indexData->numItems*sizeof(tm->index[0])));
-      // }
-    // }
   }
 }
