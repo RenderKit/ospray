@@ -46,7 +46,7 @@ struct MultiHitInfo {
   MHTKHit hitArray[MAX_HITS_PER_TRACE];
   int32 numHits;
   int32 numSwaps;
-  int32 numIncoherent;
+  int32 numCoherent;
 };
 
 inline vec3f make_bin_color(const int i, const int max)
@@ -64,7 +64,14 @@ inline vec3f make_bin_color(const int i, const int max)
 }
 
 // Comment out for sorting during the intersection filter callback
-//#define MHTK_POST_SORTING
+#define MHTK_POST_SORTING
+
+// Comment out to visualize average # of incoherent sorts vs. # of sort swaps
+#define MHTK_SHOW_SWAPS
+
+// Comment out to visualize sort coherence vs. ray coherence (only works if
+// MHTK_SHOW_SWAPS is not defined
+//#define MHTK_SHOW_RAY_COHERENCE
 
 // /*! Intersection filter function for uniform rays. */
 // typedef void (*uniform RTCFilterFuncUniform)(void* uniform ptr,    /*!< pointer to user data */
@@ -96,10 +103,22 @@ void multiHitFilter(uniform Geometry *uniform geom,
     {
       mhi->hitArray[i+1] = mhi->hitArray[i];
       mhi->numSwaps++;
+
+#    ifndef MHTK_SHOW_RAY_COHERENCE
+      /* count the number of incoherent lanes */
+      foreach_unique(val in programIndex)
+        mhi->numCoherent++;
+#    endif
     }
     else
       break;
   }
+
+#    ifdef MHTK_SHOW_RAY_COHERENCE
+      /* count the number of incoherent lanes */
+      foreach_unique(val in programIndex)
+        mhi->numCoherent++;
+#    endif
 
   mhi->hitArray[i+1] = hit;
 #  else
@@ -124,9 +143,9 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   uniform XRayRenderer *uniform renderer = (uniform XRayRenderer *uniform)_renderer;
 
   MultiHitInfo mhi;
-  mhi.numHits       = 0;
-  mhi.numSwaps      = 0;
-  mhi.numIncoherent = 0;
+  mhi.numHits     = 0;
+  mhi.numSwaps    = 0;
+  mhi.numCoherent = 0;
 
 #ifdef OSPRAY_INTERSECTION_FILTER
   sample.ray.intersectionFilter = multiHitFilter;
@@ -158,6 +177,12 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
       mhi.hitArray[i]     = mhi.hitArray[pos];
       mhi.hitArray[pos]   = tmp;
       mhi.numSwaps++;
+
+#    ifndef MHTK_SHOW_RAY_COHERENCE
+      /* count the number of incoherent lanes */
+      foreach_unique(val in programIndex)
+        mhi.numCoherent++;
+#    endif
     }
   }
 #  endif
@@ -167,7 +192,13 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
 #if 0
     sample.rgb = make_random_color(mhi.numHits);
 #else
+#  ifdef MHTK_SHOW_SWAPS
     sample.rgb = make_bin_color(mhi.numSwaps, 128);
+#  else
+    sample.rgb = make_bin_color(programCount - (mhi.numCoherent /
+                                                (float)mhi.numSwaps),
+                                programCount);
+#  endif
 #endif
   else
     sample.rgb = make_vec3f(1);
