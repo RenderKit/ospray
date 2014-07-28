@@ -81,9 +81,9 @@ inline vec3f make_bin_color(const int i, const int max)
 void multiHitFilter(uniform Geometry *uniform geom,
                     varying Ray& ray  /*!< intersection to filter */)
 {
-  if (ray.geomID < 0) return;
-
   varying MultiHitInfo *uniform mhi = (varying MultiHitInfo *uniform)ray.userData;
+
+  if (ray.geomID < 0 || mhi->numHits >= MAX_HITS_PER_TRACE) return;
 
   // Save hitpoint information
 #ifdef MHTK_SORTING
