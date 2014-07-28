@@ -137,12 +137,13 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       = fb->depthBuffer 
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      const uint32  pixID = i*programCount+programIndex;
+    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+      //const uint32  pixID = i*programCount+programIndex;
+      const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
       const uint32  ofs   = y*fb->inherited.size.x+x;
-      const vec4f value = getRGBA(tile,i);
+      const vec4f value = getRGBA(tile,pixID);
       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
         if (accum) {
           vec4f acc = accum[ofs]+value;
@@ -172,12 +173,13 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       : NULL;
 
 
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      const uint32  pixID = i*programCount+programIndex;
+    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+      //const uint32  pixID = i*programCount+programIndex;
+      const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
       const uint32  ofs   = y*fb->inherited.size.x+x;
-      const vec4f value = getRGBA(tile,i);
+      const vec4f value = getRGBA(tile,pixID);
       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
         //        dst[ofs]        = cvt_uint32(value);
         if (accum) {
@@ -206,12 +208,13 @@ void LocalFrameBuffer_accumTile(uniform FrameBuffer *uniform _fb,
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   
   uniform vec4f *uniform dst = (uniform vec4f *uniform)fb->accumBuffer;
-  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32  pixID = i*programCount+programIndex;
+  for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    //const uint32  pixID = i*programCount+programIndex;
+    const uint32 pixID = i + programIndex;
     const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
     const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
     const uint32  ofs   = y*fb->inherited.size.x+x;
-    const vec4f value = getRGBA(tile,i);
+    const vec4f value = getRGBA(tile,pixID);
     if (x < fb->inherited.size.x & y < fb->inherited.size.y) 
       dst[ofs]        = value;
   }

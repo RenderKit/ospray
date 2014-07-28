@@ -10,6 +10,7 @@
 
 #include "ospray/common/ospcommon.ih"
 #include "ospray/math/vec.ih"
+#include "ospray/fb/tilesize.h"
 
 /*! \file ospray/render/util.ih \brief Utility-functions for shaders */
 
@@ -75,4 +76,14 @@ inline uint32 cvt_uint32(const vec3f &v)
     (cvt_uint32(v.y) << 8)  |
     (cvt_uint32(v.z) << 16);
 }
+
+struct z_order_t {
+  uniform uint32 xs[TILE_SIZE*TILE_SIZE];
+  uniform uint32 ys[TILE_SIZE*TILE_SIZE];
+};
+
+extern uniform z_order_t z_order;
+extern uniform bool z_order_initialized;
+
+void precomputeZOrder();
 
