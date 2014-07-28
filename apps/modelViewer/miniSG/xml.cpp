@@ -148,12 +148,8 @@ namespace ospray {
             char *begin = s;
             while (*s != '<' && *s != 0) ++s;
             char *end = s;
-            while (isalpha(end[-1])) --end;
+            while (isspace(end[-1])) --end;
             node->content = makeString(begin,end);
-            if (node->content != "") {
-              PING;
-              PRINT(node->content);
-            }
           }
         }
         return node;
