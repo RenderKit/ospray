@@ -50,6 +50,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
   float pixel_du = .5f, pixel_dv = .5f;
   float lens_du = 0.f, lens_dv = 0.f;
   uniform int32 spp = renderer->spp;
+  precomputeZOrder();
 
   if (spp > 1) {
     int startSampleID = max(fb->accumID,0)*spp;
@@ -59,16 +60,19 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
     screenSample.alpha = 0.f;
   
     CameraSample cameraSample;
+
+    const float spp_inv = 1.f / spp;
   
-    for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      const uint32 frag = i*programCount+programIndex;
-      screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
-      screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
+    for (uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+      const uint32 index = i + programIndex;
+      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
+      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) 
         continue;
 
       vec3f col = make_vec3f(0);
+      const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
       for (uniform uint32 s = 0; s<renderer->spp; s++) {
         pixel_du = precomputedHalton2(startSampleID+s);
         pixel_dv = precomputedHalton3(startSampleID+s);
@@ -81,8 +85,8 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
         renderer->renderSample(renderer,screenSample);
         col = col + screenSample.rgb;
       }
-      col = col * (1.f/spp);
-      setRGBAZ(tile,i,col,screenSample.alpha,screenSample.z);
+      col = col * (spp_inv);
+      setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
     }
   } else {
     if (fb->accumID >= 0) {
@@ -95,24 +99,33 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
     screenSample.sampleID.z = fb->accumID;
     screenSample.z = inf;
     screenSample.alpha = 0.f;
-  
-    CameraSample cameraSample;
-  
-    for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      const uint32 frag = i*programCount+programIndex;
-      screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
-      screenSample.sampleID.y        = tile.region.lower.y + (frag / TILE_SIZE);
-      if ((screenSample.sampleID.x >= fb->size.x) | 
-          (screenSample.sampleID.y >= fb->size.y)) 
-        continue;
 
+    CameraSample cameraSample;
+
+    for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+      const uint32 index = i + programIndex;
+      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
+      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+      //print("index          %\n", index);
+      //print("screenSample   %, %\n", screenSample.sampleID.x, screenSample.sampleID.y);
+      //print("offset         %, %\n", z_order.xs[index], z_order.ys[index]);
+      //print("tile region    %, %\n", tile.region.lower.x, tile.region.lower.y);
+      if ((screenSample.sampleID.x >= fb->size.x) | 
+          (screenSample.sampleID.y >= fb->size.y)) {
+        //print("Oversized! %,% >= %,%\n", screenSample.sampleID.x, screenSample.sampleID.y, fb->size.x, fb->size.y);
+        continue;
+      }
+
+      const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+      //print("linear offset  %+{%*%}=%\n", z_order.xs[index], z_order.ys[index], TILE_SIZE, pixel);
+      //print("\n");
+      assert(pixel < TILE_SIZE*TILE_SIZE);
       for (uniform uint32 s = 0; s<renderer->spp; s++) {
         cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
-      
+
         // print("initray % % %\n",camera,cameraSample.screen.x,cameraSample.screen.y);
         camera->initRay(camera,screenSample.ray,cameraSample);
-
         // if (any(screenSample.sampleID.y == 128 && screenSample.sampleID.x == 512)) {
         //   print("screen.x %\n",cameraSample.screen.x);
         //   print("screen.y %\n",cameraSample.screen.y);
@@ -150,7 +163,8 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
         // print("rgb %\n",screenSample.rgb.x);
         // }
 
-        setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
+        //vec3f p = make_vec3f(((float)index)/(TILE_SIZE*TILE_SIZE));
+        setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
         // print("DONE setrgba % %\n",&tile,i);
       }
     }

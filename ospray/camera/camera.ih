@@ -27,7 +27,7 @@ struct CameraSample {
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
 typedef void (*Camera_initRay)(uniform Camera  *uniform,
                                varying Ray &ray,
-                               const CameraSample &sample);
+                               const varying CameraSample &sample);
 
 
 struct Camera

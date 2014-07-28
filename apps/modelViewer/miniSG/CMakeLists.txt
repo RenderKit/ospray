@@ -11,9 +11,13 @@ IF (NOT THIS_IS_MIC)
   
   INCLUDE_DIRECTORIES(${OSPRAY_DIR})
 
+  ADD_LIBRARY(ospray_xml
+    xml.cpp
+    )
+  TARGET_LINK_LIBRARIES(ospray_xml)
+
   ADD_LIBRARY(ospray_minisg 
     miniSG.cpp
-    xml.cpp # for importRIVL
     importer.cpp
     importOBJ.cpp
     importSTL.cpp
@@ -21,7 +25,7 @@ IF (NOT THIS_IS_MIC)
     importTRI.cpp
     importRIVL.cpp
     )
-  TARGET_LINK_LIBRARIES(ospray_minisg)
+  TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml)
   # ------------------------------------------------------------
   SET_TARGET_PROPERTIES(ospray_minisg${OSPRAY_LIB_SUFFIX} 
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})
