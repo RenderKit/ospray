@@ -35,8 +35,8 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # whether to use ICC (vs GCC) for the non-MIC part
 SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
-# whether to use ICC (vs GCC) for the non-MIC part
-SET(OSPRAY_USE_INTEL_COMPILER ON CACHE BOOL "Use Intel Compiler?")
+# compiler selection for the non-MIC part
+SET(OSPRAY_COMPILER "ICC" CACHE STRING "Set to ICC, GCC, or CLANG")
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
 # whehter to build in MIC/xeon phi support
@@ -47,7 +47,6 @@ SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
-SET(OSPRAY_ICC ${OSPRAY_USE_INTEL_COMPILER})
 
 ##############################################################
 # modules

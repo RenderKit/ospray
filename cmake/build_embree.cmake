@@ -40,10 +40,14 @@ IF (RTCORE_BUFFER_STRIDE)
 ENDIF()
 
 # this has to be called *AFTER* setting RTCORE_EXPORT_ALL_SYMBOLS
-IF(OSPRAY_ICC)
+IF (OSPRAY_COMPILER STREQUAL "ICC")
   INCLUDE(${EMBREE_DIR}/common/cmake/icc.cmake)
-ELSE()
+ELSEIF (OSPRAY_COMPILER STREQUAL "GCC")
   INCLUDE(${EMBREE_DIR}/common/cmake/gcc.cmake)
+ELSEIF (OSPRAY_COMPILER STREQUAL "CLANG")
+  INCLUDE(${EMBREE_DIR}/common/cmake/clang.cmake)
+ELSE()
+  MESSAGE(FATAL_ERROR "Unknown compiler specified: " ${OSPRAY_COMPILER})
 ENDIF()
 
 
