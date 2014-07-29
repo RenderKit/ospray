@@ -7,7 +7,7 @@
 # #####################################################################
 
 IF (OSPRAY_MPI)
-  if (OSPRAY_ICC)
+  if (OSPRAY_COMPILER STREQUAL "ICC")
     find_program(MPI_COMPILER 
       NAMES mpiicpc
       DOC "MPI compiler.")
