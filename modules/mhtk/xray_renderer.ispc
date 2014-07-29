@@ -19,6 +19,25 @@
 
 #define MAX_HITS_PER_TRACE 512
 
+// '1' for sorting after intersection
+#define MHTK_POST_SORTING (1)
+
+// '1' to visualize # of sort swaps, '0' for average # of divergent sorts
+#define MHTK_SHOW_SWAPS (1)
+
+// '1' to visualize ray coherence, '0' to show swaps
+#define MHTK_SHOW_RAY_COHERENCE (0)
+
+#if MHTK_SHOW_RAY_COHERENCE
+#  undef MHTK_SHOW_SWAPS
+#  define MHTK_SHOW_SWAPS (0)
+#endif
+
+#ifndef MHTK_SORTING
+#  undef MHTK_SHOW_RAY_COHERENCE
+#  define MTHK_SHOW_RAY_COHERENCE (1)
+#endif
+
 // inline vec4f XRayRenderer_trace(Ray &ray, RTCScene scene)
 // {
 //   MHTKHit hitArray[MAX_HITS_PER_TRACE];
@@ -46,7 +65,7 @@ struct MultiHitInfo {
   MHTKHit hitArray[MAX_HITS_PER_TRACE];
   int32 numHits;
   int32 numSwaps;
-  int32 numIncoherent;
+  int32 numCoherent;
 };
 
 inline vec3f make_bin_color(const int i, const int max)
@@ -63,9 +82,6 @@ inline vec3f make_bin_color(const int i, const int max)
     return make_vec3f(1.f, 0.f, 0.f);
 }
 
-// Comment out for sorting during the intersection filter callback
-//#define MHTK_POST_SORTING
-
 // /*! Intersection filter function for uniform rays. */
 // typedef void (*uniform RTCFilterFuncUniform)(void* uniform ptr,    /*!< pointer to user data */
 //                                      uniform RTCRay1& ray  /*!< intersection to filter */);
@@ -74,13 +90,13 @@ inline vec3f make_bin_color(const int i, const int max)
 void multiHitFilter(uniform Geometry *uniform geom,
                     varying Ray& ray  /*!< intersection to filter */)
 {
-  if (ray.geomID < 0) return;
-
   varying MultiHitInfo *uniform mhi = (varying MultiHitInfo *uniform)ray.userData;
 
+  if (ray.geomID < 0 || mhi->numHits >= MAX_HITS_PER_TRACE) return;
+
   // Save hitpoint information
-#ifdef MHTK_SORTING
-#  ifndef MHTK_POST_SORTING
+#if MHTK_SORTING
+#  if !MHTK_POST_SORTING
   MHTKHit hit;
   hit.primID = ray.primID;
   hit.geomID = ray.geomID;
@@ -96,6 +112,14 @@ void multiHitFilter(uniform Geometry *uniform geom,
     {
       mhi->hitArray[i+1] = mhi->hitArray[i];
       mhi->numSwaps++;
+
+#    if !MHTK_SHOW_RAY_COHERENCE
+      /* count the number of incoherent lanes */
+      uniform unique = 0;
+      foreach_unique(val in programIndex)
+        unique++;
+      mhi->numCoherent += unique;
+#    endif
     }
     else
       break;
@@ -113,6 +137,14 @@ void multiHitFilter(uniform Geometry *uniform geom,
 #  endif
 #endif
 
+#if MHTK_SHOW_RAY_COHERENCE
+  /* count the number of incoherent lanes */
+  uniform unique = 0;
+  foreach_unique(val in programIndex)
+    unique++;
+  mhi->numCoherent += unique;
+#endif
+
   mhi->numHits++;
 
   ray.geomID = RTC_INVALID_GEOMETRY_ID; // -> discard this hit, we want them all ;-)
@@ -124,9 +156,9 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   uniform XRayRenderer *uniform renderer = (uniform XRayRenderer *uniform)_renderer;
 
   MultiHitInfo mhi;
-  mhi.numHits       = 0;
-  mhi.numSwaps      = 0;
-  mhi.numIncoherent = 0;
+  mhi.numHits     = 0;
+  mhi.numSwaps    = 0;
+  mhi.numCoherent = 0;
 
 #ifdef OSPRAY_INTERSECTION_FILTER
   sample.ray.intersectionFilter = multiHitFilter;
@@ -134,8 +166,8 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   sample.ray.userData = &mhi;
   traceRay(renderer->inherited.model,sample.ray);
 
-#ifdef MHTK_SORTING
-# ifdef MHTK_POST_SORTING
+#if MHTK_SORTING
+# if MHTK_POST_SORTING
   /* sort the hitpoints (only for measuring performance) */
   for (uniform int i = 0; i < mhi.numHits - 1; ++i)
   {
@@ -158,16 +190,32 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
       mhi.hitArray[i]     = mhi.hitArray[pos];
       mhi.hitArray[pos]   = tmp;
       mhi.numSwaps++;
+
+#    if !MHTK_SHOW_RAY_COHERENCE
+     /* count the number of incoherent lanes */
+      uniform unique = 0;
+      foreach_unique(val in programIndex)
+        unique++;
+      mhi.numCoherent += unique;
+#    endif
     }
   }
 #  endif
 #endif
 
   if (mhi.numHits > 0)
-#if 0
-    sample.rgb = make_random_color(mhi.numHits);
+#if MHTK_SHOW_RAY_COHERENCE
+    sample.rgb = make_bin_color(programCount - (mhi.numCoherent /
+                                                (float)mhi.numHits),
+                                programCount);
 #else
+#  if MHTK_SHOW_SWAPS
     sample.rgb = make_bin_color(mhi.numSwaps, 128);
+#  else
+    sample.rgb = make_bin_color(programCount - (mhi.numCoherent /
+                                                (float)mhi.numSwaps),
+                                programCount);
+#  endif
 #endif
   else
     sample.rgb = make_vec3f(1);
