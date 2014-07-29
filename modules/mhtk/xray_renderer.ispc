@@ -35,7 +35,7 @@
 
 #ifndef MHTK_SORTING
 #  undef MHTK_SHOW_RAY_COHERENCE
-#  define MTHK_SHOW_RAY_COHERENCE (1)
+#  define MHTK_SHOW_RAY_COHERENCE (1)
 #endif
 
 // inline vec4f XRayRenderer_trace(Ray &ray, RTCScene scene)
@@ -95,7 +95,7 @@ void multiHitFilter(uniform Geometry *uniform geom,
   if (ray.geomID < 0 || mhi->numHits >= MAX_HITS_PER_TRACE) return;
 
   // Save hitpoint information
-#if MHTK_SORTING
+#ifdef MHTK_SORTING
 #  if !MHTK_POST_SORTING
   MHTKHit hit;
   hit.primID = ray.primID;
@@ -166,7 +166,7 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   sample.ray.userData = &mhi;
   traceRay(renderer->inherited.model,sample.ray);
 
-#if MHTK_SORTING
+#ifdef MHTK_SORTING
 # if MHTK_POST_SORTING
   /* sort the hitpoints (only for measuring performance) */
   for (uniform int i = 0; i < mhi.numHits - 1; ++i)
