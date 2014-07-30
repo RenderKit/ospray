@@ -19,6 +19,7 @@
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
 #include "common/sys/taskscheduler.h"
+#include "embree2/rtcore.h"
 
 
 #ifdef OSPRAY_TARGET_MIC
@@ -113,6 +114,9 @@ namespace ospray {
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
+
+  /*! error handling callback to be used by embree */
+  void error_handler(const RTCError code, const char *str);
 }
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");

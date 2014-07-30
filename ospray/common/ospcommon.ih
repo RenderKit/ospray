@@ -9,10 +9,15 @@
 #ifndef OSPCOMMON_IH
 #define OSPCOMMON_IH 1
 
+#include "embree2/rtcore.isph"
+
 typedef unsigned int64 uint64;
 typedef unsigned int32 uint32;
 typedef unsigned int16 uint16;
 typedef unsigned int8  uint8;
+
+/*! ispc copy of embree error handling callback */
+void error_handler(const RTCError code, const int8* str);
 
 #include "ospray/math/vec.ih"
 

@@ -22,6 +22,8 @@ namespace ospray {
       /*! singleton that points to currently active device */
       static Device *current;
 
+      Device();
+
       virtual ~Device() {};
 
       /*! create a new frame buffer/swap chain of given type */

@@ -18,6 +18,7 @@ INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
 SET(OSPRAY_SOURCES
   common/ospcommon.cpp
+  common/ospcommon.ispc
   common/managed.cpp
   common/data.cpp
   common/model.cpp
