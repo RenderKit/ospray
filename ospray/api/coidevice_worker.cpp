@@ -35,43 +35,8 @@ using namespace std;
 namespace ospray {
   namespace coi {
 
-    std::vector<void *> alreadyCreated_ptr;
-    std::vector<size_t> alreadyCreated_size;
-    std::vector<void *> alreadyCreated_checkSum;
-
     // only used if manual buffer uploads are turned on ...
     void *uploadBuffer = NULL;
-
-    // void PRINT_BUFFERS_BEFORE()
-    // {
-    //   cout << "--------------- BEFORE ------------------" << endl;
-    //   cout <<
-    //   cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
-    //   for (int i=0;i<alreadyCreated_ptr.size();i++) {
-    //     cout << "----- buffer " << i << endl;
-    //     cout << "buffer SIZE(hex) " << i << " : " << (int*)alreadyCreated_size[i] << endl;
-    //     cout << "buffer DTA_BEGIN " << i << " : " << alreadyCreated_ptr[i] << endl;
-    //     cout << "buffer DTA_END   " << i << " : " << (int*)((char*)alreadyCreated_ptr[i]+alreadyCreated_size[i]) << endl;
-    //   }
-        
-    //   for (int i=0;i<alreadyCreated_ptr.size();i++) {
-    //     void *cs = computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]);
-    //     cout << "FOUND checksum " << i << " : " << cs << endl;
-    //     if (cs != alreadyCreated_checkSum[i])
-    //       FATAL("CHECKSUM MISMATCH!!!");
-        
-    //   }
-    // }
-    
-    void PRINT_BUFFERS_AFTER()
-    {
-      cout << "--------------- AFTER ------------------" << endl;
-      cout <<
-        cout << "Already created buffers: " << alreadyCreated_ptr.size() << endl;
-      for (int i=0;i<alreadyCreated_ptr.size();i++) {
-        cout << "FOUND checksum " << i << " : " << computeCheckSum(alreadyCreated_ptr[i],alreadyCreated_size[i]) << endl;
-      }
-    }
 
     COINATIVELIBEXPORT
     void ospray_coi_initialize(uint32_t         in_BufferCount,
@@ -93,10 +58,14 @@ namespace ospray {
       int32 *deviceInfo = (int32*)in_pMiscData;
       int deviceID = deviceInfo[0];
       int numDevices = deviceInfo[1];
+      ospray::debugMode = deviceInfo[2];
+      ospray::logLevel = deviceInfo[3];
 
-      cout << "!osp:coi: initializing device #" << deviceID
-           << " (" << (deviceID+1) << "/" << numDevices << ")" << endl;
-
+      if (ospray::debugMode || ospray::logLevel >= 1) {
+        std::cout << "!osp:coi: initializing device #" << deviceID
+                  << " (" << (deviceID+1) << "/" << numDevices << ")" << std::endl;
+        COIProcessProxyFlush();
+      }
       ospray::TiledLoadBalancer::instance = new ospray::InterleavedTiledLoadBalancer(deviceID,numDevices);
     }
 
@@ -109,30 +78,15 @@ namespace ospray {
                               void*            retVal,
                               uint16_t         retValSize)
     {
+      if (ospray::debugMode || ospray::logLevel >= 1) {
+        std::cout << "!osp:coi: new model" << std::endl;
+        COIProcessProxyFlush();
+      }
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
-      //      cout << "!osp:coi: new model " << handle.ID() << endl;
       Model *model = new Model;
       handle.assign(model);
-      COIProcessProxyFlush();
-    }
-
-    COINATIVELIBEXPORT
-    void ospray_coi_print_checksums(uint32_t         numBuffers,
-                                    void**           bufferPtr,
-                                    uint64_t*        bufferSize,
-                                    void*            argsPtr,
-                                    uint16_t         argsSize,
-                                    void*            retVal,
-                                    uint16_t         retValSize)
-    {
-      cout << "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" << endl;
-      PING; 
-      if (numBuffers) {
-        cout << "Buffer passed to print_checksums : " << bufferPtr[0] << endl;
-      }
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -146,10 +100,9 @@ namespace ospray {
     {
       DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
-      // cout << "!osp:coi: new trimesh " << handle.ID() << endl;
       TriangleMesh *mesh = new TriangleMesh;
       handle.assign(mesh);
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
 
@@ -164,22 +117,12 @@ namespace ospray {
     {
 
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       int    nitems = args.get<int32>(); 
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
 
-      cout << "=======================================================" << endl;
-      cout << "!osp:coi: new data " << handle.ID() << endl;
-      PRINT(numBuffers);
-      cout << "pointer of buffer " << bufferPtr[0] << endl;
-      cout << "size of buffer " << bufferSize[0] << endl;
       void *init = bufferPtr[0];
-
-      // PRINT_BUFFERS_BEFORE();
-      
-      // PRINT((int*)*(int64*)init);
 
       COIRESULT res = COIBufferAddRef(bufferPtr[0]);
       if (res != COI_SUCCESS) 
@@ -190,7 +133,6 @@ namespace ospray {
         throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
 
       if (format == OSP_OBJECT) {
-        cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
         Handle *in = (Handle *)bufferPtr[0];
         ManagedObject **out = (ManagedObject **)bufferPtr[0];
         for (int i=0;i<nitems;i++) {
@@ -209,12 +151,7 @@ namespace ospray {
         handle.assign(data);
       }
       
-      PRINT_BUFFERS_AFTER();
-      alreadyCreated_ptr.push_back(bufferPtr[0]);
-      alreadyCreated_size.push_back(bufferSize[0]);
-      alreadyCreated_checkSum.push_back(computeCheckSum(bufferPtr[0],bufferSize[0]));
-
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -232,25 +169,20 @@ namespace ospray {
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
 
+      if (ospray::debugMode) {
+        cout << "=======================================================" << endl;
+        cout << "!osp:coi: done uploading data " << handle.ID() << endl;
+      }
+      
       Data *data = (Data*)handle.lookup();
 
       size_t size = nitems * sizeOf((OSPDataType)format);
-      void *checkSum= computeCheckSum(data->data,size);
-      cout << "checksum of entire data on DEVICE " << checkSum << endl;
-
-      PRINT_BUFFERS_AFTER();
-      alreadyCreated_ptr.push_back(data->data);
-      alreadyCreated_size.push_back(size);
-      alreadyCreated_checkSum.push_back(checkSum);
-      PRINT_BUFFERS_AFTER();
-      
 
       if (format == OSP_STRING)
         throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
 
       if (format == OSP_OBJECT) {
-        cout << "FOUND DATA BUFFER THAT CONTAINS ACTUAL DATA OR OBJECTS - TRANSLATING HANDLES!" << endl;
-        COIProcessProxyFlush();
+        if (ospray::debugMode) COIProcessProxyFlush();
         Handle *in = (Handle *)data->data;
         ManagedObject **out = (ManagedObject **)data->data;
         for (int i=0;i<nitems;i++) {
@@ -260,11 +192,10 @@ namespace ospray {
           } else
             out[i] = 0;
         }
-        PING;
-      COIProcessProxyFlush();
+        if (ospray::debugMode) COIProcessProxyFlush();
       }
       
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -281,17 +212,10 @@ namespace ospray {
       int64  begin = args.get<int64>(); 
       int64  size = args.get<int64>(); 
 
-      // PRINT(uploadBuffer);
-      // cout << "dev: first int64 of uploaded data: " << (int*)*(int*)uploadBuffer << endl;
-      // COIProcessProxyFlush();
-
       Data *data = (Data*)handle.lookup();
-      // PRINT(begin);
-      // PRINT(size);
-      cout << "checksum of BLOCK on device: " << computeCheckSum(uploadBuffer,size) << endl;
       memcpy((char*)data->data + begin, uploadBuffer, size);
       
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -304,27 +228,26 @@ namespace ospray {
                                    uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       int    nitems = args.get<int32>(); 
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
 
-      cout << "=======================================================" << endl;
-      cout << "!osp:coi: new data " << handle.ID() << endl;
+      if (ospray::debugMode) {
+        cout << "=======================================================" << endl;
+        cout << "!osp:coi: new (as-yet-empty) data " << handle.ID() << endl;
+      }
       
       if (format == OSP_STRING)
         throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
 
       size_t size = nitems * sizeOf((OSPDataType)format);
-      PING;
-      PRINT(size);
       void *mem = new char[size];
       bzero(mem,size);
       Data *data = new Data(nitems,(OSPDataType)format,
                             mem,flags|OSP_DATA_SHARED_BUFFER);
       handle.assign(data);
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -337,15 +260,13 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
-      //      cout << "!osp:coi: new geometry " << handle.ID() << " " << type << endl;
 
       Geometry *geom = Geometry::createGeometry(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -375,7 +296,7 @@ namespace ospray {
                                              pixelArray);
       handle.assign(fb);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -388,7 +309,6 @@ namespace ospray {
                                       uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle _fb = args.get<Handle>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       const uint32 channel = args.get<uint32>();
@@ -405,15 +325,13 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
-      // cout << "!osp:coi: new camera " << handle.ID() << " " << type << endl;
 
       Camera *geom = Camera::createCamera(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -426,15 +344,15 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      // OSPModel *model = ospNewModel();
       Handle handle = args.get<Handle>();
       const char *type = args.getString();
-      cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
+      if (ospray::logLevel > 0)
+        cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
 
       Volume *geom = Volume::createVolume(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -455,7 +373,7 @@ namespace ospray {
       Volume *geom = Volume::createVolume(filename, type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -475,7 +393,7 @@ namespace ospray {
       TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
       handle.assign(transferFunction);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -494,7 +412,7 @@ namespace ospray {
       Renderer *geom = Renderer::createRenderer(type);
       handle.assign(geom);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -506,13 +424,9 @@ namespace ospray {
                                   void*            retVal,
                                   uint16_t         retValSize)
     {
-      PING;
-      cout << "=======================================================" << endl;
       void *buffer = bufferPtr[0];
-      // COIBufferAddRef(buffer);
       uploadBuffer = buffer;
-      PRINT(uploadBuffer);
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -543,7 +457,7 @@ namespace ospray {
         *(int*)retVal = false;
       }
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -555,6 +469,10 @@ namespace ospray {
                               void*            retVal,
                               uint16_t         retValSize)
     {
+      if (ospray::logLevel >= 2) {
+        std::cout << "!osp:coi: new light" << std::endl;
+        COIProcessProxyFlush();
+      }
       DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
       Handle _renderer = args.get<Handle>();
@@ -562,7 +480,7 @@ namespace ospray {
       Renderer *renderer = (Renderer *)_renderer.lookup();
 
       Light *light = NULL;
-      COIProcessProxyFlush(); 
+      if (ospray::debugMode) COIProcessProxyFlush(); 
 
       if (renderer)
         light = renderer->createLight(type);
@@ -571,7 +489,7 @@ namespace ospray {
       assert(light);
       handle.assign(light);
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -595,7 +513,7 @@ namespace ospray {
       Texture2D *tx = Texture2D::createTexture(width, height, (OSPDataType)type, bufferPtr[0], flags);
 
       handle.assign(tx);
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
                                 
     COINATIVELIBEXPORT
@@ -613,7 +531,7 @@ namespace ospray {
 
       Model *m = (Model*)model.lookup();
       m->geometry.push_back((Geometry*)geom.lookup());
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -631,7 +549,7 @@ namespace ospray {
 
       Geometry *g = (Geometry*)geom.lookup();
       g->setMaterial((Material*)mat.lookup());
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -643,6 +561,10 @@ namespace ospray {
                            void*            retVal,
                            uint16_t         retValSize)
     {
+      if (ospray::debugMode || ospray::logLevel >= 1) {
+        std::cout << "!osp:coi: commit" << std::endl;
+        COIProcessProxyFlush();
+      }
       DataStream args(argsPtr);
       Handle handle = args.get<Handle>();
 
@@ -657,7 +579,11 @@ namespace ospray {
         model->finalize();
       }
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
+      if (ospray::debugMode || ospray::logLevel >= 1) {
+        std::cout << "!osp:coi: DONE commit" << std::endl;
+        COIProcessProxyFlush();
+      }
     }
 
     /*! remove an existing geometry from a model */
@@ -691,7 +617,7 @@ namespace ospray {
         model->geometry.erase(it);
       }
 
-      COIProcessProxyFlush();
+      if (ospray::debugMode) COIProcessProxyFlush();
     }
 
     COINATIVELIBEXPORT
@@ -703,25 +629,13 @@ namespace ospray {
                                  void*            retVal,
                                  uint16_t         retValSize)
     {
-      // PING;
-      // COIProcessProxyFlush();
-
       DataStream args(argsPtr);
       Handle _fb       = args.get<Handle>();
       Handle renderer = args.get<Handle>();
       uint32 channelFlags = args.get<uint32>();
-      // cout << "!osp:coi: renderframe " << _fb.ID() << " " << renderer.ID() << endl;
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
       r->renderFrame(fb,channelFlags);
-      // if (fb->renderTask) {
-      //   fb->renderTask->done.sync();
-      //   fb->renderTask = NULL;
-      // }
-
-      // PING;
-      // COIProcessProxyFlush();
-
     }
 
     COINATIVELIBEXPORT
@@ -734,14 +648,6 @@ namespace ospray {
                                       uint16_t         retValSize)
     {
       // currently all rendering is synchronous, anyway ....
-
-      // DataStream args(argsPtr);
-      // Handle _fb       = args.get<Handle>();
-      // FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
-      // if (fb->renderTask) {
-      //   fb->renderTask->done.sync();
-      //   fb->renderTask = NULL;
-      // }
     }
 
     COINATIVELIBEXPORT
@@ -789,25 +695,28 @@ namespace ospray {
   }
 }
 
-int main(int ac, char **av)
+int main(int ac, const char **av)
 {
-  printf("!osp:coi: ospray_coi_worker starting up.\n");
+  ospray::init(&ac,&av);
+  if (ospray::logLevel >= 1)
+    printf("!osp:coi: ospray_coi_worker starting up.\n");
 
   // initialize embree. (we need to do this here rather than in
   // ospray::init() because in mpi-mode the latter is also called
   // in the host-stubs, where it shouldn't.
   std::stringstream embreeConfig;
-  rtcInit("verbose=2");
+  embreeConfig << "verbose=" << ospray::logLevel;
+  if (ospray::debugMode) 
+    embreeConfig << ",threads=1";
+  rtcInit(embreeConfig.str().c_str());
   //rtcInit("verbose=2,traverser=single,threads=1");
   //rtcInit("verbose=2,traverser=chunk");
-
-  //rtcInit(NULL);
 
   assert(rtcGetError() == RTC_NO_ERROR);
   ospray::TiledLoadBalancer::instance = NULL;
 
   COIPipelineStartExecutingRunFunctions();
-  COIProcessProxyFlush();
+  if (ospray::debugMode) COIProcessProxyFlush();
   COIProcessWaitForShutdown();
 }
   

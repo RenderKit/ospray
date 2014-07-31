@@ -12,32 +12,48 @@
 #else
 #include "GL/glut.h"
 #endif
-
-#ifdef OSP_ENABLE_REMOTE_GLUT3D
-#include "remoteGlut3D.h"
-#endif
+#include <sys/times.h>
 
 namespace ospray {
 
   namespace glut3D {
 
-#define INVERT_RMB 
+    bool dumpScreensDuringAnimation = false;
 
+    /*! write given frame buffer to file, in PPM P6 format. */
+    void saveFrameBufferToFile(const char *fileName,
+                               const uint32 *pixel,
+                               const uint32 sizeX, const uint32 sizeY)
+    {
+      FILE *file = fopen(fileName,"wb");
+      if (!file) {
+        std::cerr << "#osp:glut3D: Warning - could not create screen shot file '" 
+                  << fileName << "'" << std::endl;
+        return;
+      }
+      fprintf(file,"P6\n%i %i\n255\n",sizeX,sizeY);
+      unsigned char out[3*sizeX];
+      for (int y=0;y<sizeY;y++) {
+        const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
+        for (int x=0;x<sizeX;x++) {
+          out[3*x+0] = in[4*x+0];
+          out[3*x+1] = in[4*x+1];
+          out[3*x+2] = in[4*x+2];
+        }
+        fwrite(&out,3*sizeX,sizeof(char),file);
+      }
+      fprintf(file,"\n");
+      fclose(file);
+      std::cout << "#osp:glut3D: saved framebuffer to file " << fileName << std::endl;
+    }
+
+#define INVERT_RMB 
     /*! currently active window */
     Glut3DWidget *Glut3DWidget::activeWindow = NULL;
     vec2i Glut3DWidget::defaultInitSize(1024,768);
 
     bool animating = false;
 
-    void error(const std::string &msg)
-    {
-      std::cout << "ospray::glut3D fatal error : " << msg << std::endl;
-      std::cout << std::endl;
-      std::cout << "Proper usage: " << std::endl;
-      std::cout << " -win <width>x<height>" << std::endl;
-      std::cout << std::endl;
-      exit(1);
-    }
     // InspectCenter Glut3DWidget::INSPECT_CENTER;
     /*! viewport as specified on the command line */
     Glut3DWidget::ViewPort *viewPortFromCmdLine = NULL;
@@ -99,9 +115,6 @@ namespace ospray {
       : from(0,0,-1),
         at(0,0,0),
         up(upVectorFromCmdLine),
-        // : from(0,-1,0),
-        //   at(0,0,0),
-        //   up(0,0,1),
         aspect(1.f),
         openingAngle(60.f*M_PI/360.f),
         modified(true)
@@ -142,11 +155,6 @@ namespace ospray {
         lastButtonState = currButtonState;
       }
 
-      // bool left   = currButtonState & (1<<GLUT_LEFT_BUTTON);
-      // bool right  = currButtonState & (1<<GLUT_RIGHT_BUTTON);
-      // bool middle = currButtonState & (1<<GLUT_MIDDLE_BUTTON);
-
-      //mouseMotion(currMousePos,lastMousePos,left,right,middle);
       manipulator->motion(this);
       lastMousePos = currMousePos;
       if (viewPort.modified)
@@ -245,25 +253,25 @@ namespace ospray {
 
     void Glut3DWidget::forceRedraw()
     {
-#ifdef OSP_ENABLE_REMOTE_GLUT3D
-      if (RemoteGlut3D::instance)  
-        RemoteGlut3D::instance->postRedisplay();
-      else
-#endif
-        glutPostRedisplay();
+      glutPostRedisplay();
     }
 
     void Glut3DWidget::display()
     {
-#ifdef OSP_ENABLE_REMOTE_GLUT3D 
-     if (RemoteGlut3D::instance)  {
-        activeWindow = this;
-        RemoteGlut3D::instance->drawPixels(windowSize,ucharFB);
-        return;
-      }
-#endif
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
+        if (animating && dumpScreensDuringAnimation) {
+          static const char *dumpFileRoot;
+          if (!dumpFileRoot) 
+            dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
+          if (!dumpFileRoot)
+            dumpFileRoot = tmpnam(NULL);
+        
+          char fileName[100000];
+          sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(NULL));
+          saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
+        }
+
       } else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, floatFB);
       }
@@ -337,13 +345,6 @@ namespace ospray {
                               const vec2i &size,
                               bool fullScreen)
     {
-#ifdef OSP_ENABLE_REMOTE_GLUT3D
-      if (RemoteGlut3D::instance)  {
-        activeWindow = this;
-        RemoteGlut3D::instance->createWindow(title,size,fullScreen);
-        return;
-      }
-#endif
       glutInitWindowSize( size.x, size.y );
       windowID = glutCreateWindow(title);
       activeWindow = this;
@@ -361,11 +362,6 @@ namespace ospray {
 
     void runGLUT()
     {
-#ifdef OSP_ENABLE_REMOTE_GLUT3D
-      if (RemoteGlut3D::instance)  
-        RemoteGlut3D::instance->mainLoop();
-      else
-#endif
         glutMainLoop();
     }
 
@@ -390,25 +386,12 @@ namespace ospray {
             }
             continue;
           }
-          if (arg == "--osp:remote-glut") {
-#ifdef OSP_ENABLE_REMOTE_GLUT3D
-            removeArgs(*ac,(char **&)av,i,1); --i;
-            RemoteGlut3D::instance = new RemoteGlut3D;
-#else
-            throw std::runtime_error("Remote glut 3D support not compiled in");
-#endif
-            continue;
-          }
-          if (arg == "--1k") {
+          if (arg == "--1k" || arg == "-1k") {
             Glut3DWidget::defaultInitSize.x = Glut3DWidget::defaultInitSize.y = 1024;
             removeArgs(*ac,(char **&)av,i,1); --i;
             continue;
           }
           if (arg == "-vu") {
-            // if (!viewPortFromCmdLine) viewPortFromCmdLine = new Glut3DWidget::ViewPort;
-            // viewPortFromCmdLine->up.x = atof(av[i+1]);
-            // viewPortFromCmdLine->up.y = atof(av[i+2]);
-            // viewPortFromCmdLine->up.z = atof(av[i+3]);
             upVectorFromCmdLine.x = atof(av[i+1]);
             upVectorFromCmdLine.y = atof(av[i+2]);
             upVectorFromCmdLine.z = atof(av[i+3]);
@@ -618,7 +601,6 @@ namespace ospray {
         cam.modified = true;
       } return;
       }
-
       Manipulator::keypress(widget,key);
     }
 
@@ -685,6 +667,24 @@ namespace ospray {
     }
     void Glut3DWidget::keypress(char key, const vec2f where)
     {
+      if (key == '!') {
+        if (animating) {
+          dumpScreensDuringAnimation = !dumpScreensDuringAnimation;
+        } else {
+          static const char *dumpFileRoot;
+          if (!dumpFileRoot) 
+            dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
+          if (!dumpFileRoot)
+            dumpFileRoot = tmpnam(NULL);
+
+          char fileName[100000];
+          static int frameDumpSequenceID = 0;
+          sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
+          saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
+          return;
+        }
+      } 
+      
       if (key == 'C') {
         PRINT(viewPort);
         return;
@@ -725,9 +725,14 @@ namespace ospray {
 
     void Manipulator::keypress(Glut3DWidget *widget, const int32 key)
     {
-      if (key == 'Q') {
-        exit(0);
-      }
+      static int32 lastKey = -1;
+      switch(key) {
+      case 'Q': {
+        if (lastKey == 'Q')
+          _exit(0);
+      };
+      };
+      lastKey = key;
     };
     void Manipulator::specialkey(Glut3DWidget *widget, const int32 key)
     {
