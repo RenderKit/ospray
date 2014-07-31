@@ -70,9 +70,11 @@ namespace ospray {
     InterleavedTiledLoadBalancer(size_t deviceID, size_t numDevices)
       : deviceID(deviceID), numDevices(numDevices)
     {
-      std::cout << "=======================================================" << std::endl;
-      std::cout << "INTERLEAVED LOAD BALANCER" << std::endl;
-      std::cout << "=======================================================" << std::endl;
+      if (ospray::debugMode || ospray::logLevel) {
+        std::cout << "=======================================================" << std::endl;
+        std::cout << "INTERLEAVED LOAD BALANCER" << std::endl;
+        std::cout << "=======================================================" << std::endl;
+      }
     }
 
     /*! \brief a task for rendering a frame using the global tiled load balancer 

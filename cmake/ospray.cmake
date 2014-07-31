@@ -75,13 +75,13 @@ MACRO(CONFIGURE_OSPRAY)
   IF (THIS_IS_MIC)
     INCLUDE(${EMBREE_DIR}/common/cmake/icc_xeonphi.cmake)
     
-    SET(EMBREE_LIB embree_xeonphi)
+    SET(EMBREE_LIB sys_xeonphi simd_xeonphi embree_xeonphi)
 
     # whehter to build in MIC/xeon phi support
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
 
   ELSE()
-    SET(EMBREE_LIB embree)
+    SET(EMBREE_LIB sys simd embree)
   ENDIF()
 
   INCLUDE(ospray_ispc)

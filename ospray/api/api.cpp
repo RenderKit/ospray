@@ -56,11 +56,14 @@ namespace ospray {
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
 
+    /* call ospray::init to properly parse common args like
+       --osp:verbose, --osp:debug etc */
+    ospray::init(_ac,&_av);
+
     if (_ac && _av) {
       // we're only supporting local rendering for now - network device
       // etc to come.
       for (int i=1;i<*_ac;i++) {
-
         if (std::string(_av[i]) == "--osp:mpi") {
 #if OSPRAY_MPI
           removeArgs(*_ac,(char **&)_av,i,1);
@@ -69,6 +72,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
+          --i; continue;
         }
         if (std::string(_av[i]) == "--osp:coi") {
 #if OSPRAY_TARGET_MIC
@@ -80,6 +84,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay's COI support not compiled in");
 #endif
+          --i; continue;
         }
 
         if (std::string(_av[i]) == "--osp:mpi-launch") {
@@ -93,6 +98,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
+          --i; continue;
         }
         const char *listenArgName = "--osp:mpi-listen";
         if (!strncmp(_av[i],listenArgName,strlen(listenArgName))) {
@@ -107,6 +113,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
+          --i; continue;
         }
       }
     }

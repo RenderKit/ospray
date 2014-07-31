@@ -68,6 +68,12 @@ namespace ospray {
       if (parm == "--osp:debug") {
         debugMode = true;
         removeArgs(ac,av,i,1);
+      } else if (parm == "--osp:verbose") {
+        logLevel = 1;
+        removeArgs(ac,av,i,1);
+      } else if (parm == "--osp:vv") {
+        logLevel = 2;
+        removeArgs(ac,av,i,1);
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);
         removeArgs(ac,av,i,2);

@@ -726,7 +726,7 @@ namespace ospray {
     void Manipulator::keypress(Glut3DWidget *widget, const int32 key)
     {
       if (key == 'Q') {
-        exit(0);
+        _exit(0);
       }
     };
     void Manipulator::specialkey(Glut3DWidget *widget, const int32 key)

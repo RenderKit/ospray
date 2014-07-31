@@ -15,6 +15,8 @@
 #include "../include/ospray/ospray.h"
 // ispc side
 #include "trianglemesh_ispc.h"
+// C
+// #include <math.h>
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
@@ -39,11 +41,11 @@ namespace ospray {
   {
     static int numPrints = 0;
     numPrints++;
-    if (logLevel > 2) 
+    if (logLevel >= 2) 
       if (numPrints == 5)
         cout << "(all future printouts for triangle mesh creation will be emitted)" << endl;
     
-    if (logLevel > 2) 
+    if (logLevel >= 2) 
       if (numPrints < 5)
         std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
     Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
@@ -105,7 +107,6 @@ namespace ospray {
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-
 #ifndef NDEBUG
     {
       cout << "#osp/trimesh: Verifying index buffer ... " << endl;
@@ -117,9 +118,9 @@ namespace ospray {
       }
       cout << "#osp/trimesh: Verifying vertex buffer ... " << endl;
       for (int i=0;i<numVerts;i++) {
-        if (isnan(vertex[i].x) || 
-            isnan(vertex[i].y) || 
-            isnan(vertex[i].z))
+        if (std::isnan(vertex[i].x) || 
+            std::isnan(vertex[i].y) || 
+            std::isnan(vertex[i].z))
           throw std::runtime_error("NaN in vertex coordinate! (broken input model, refusing to handle that)");
       }
     }    
@@ -137,13 +138,12 @@ namespace ospray {
     for (int i=0;i<vertexData->size();i++) 
       bounds.extend(vertex[i]);
 
-    if (logLevel > 2) 
+    if (logLevel >= 2) 
       if (numPrints < 5) {
         cout << "  created triangle mesh (" << numTris << " tris "
              << ", " << numVerts << " vertices)" << endl;
         cout << "  mesh bounds " << bounds << endl;
       } 
-    // rtcEnable(model->embreeSceneHandle,eMesh);
 
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
