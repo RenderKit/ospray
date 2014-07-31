@@ -47,8 +47,6 @@ namespace ospray {
       if (!file) 
         throw std::runtime_error("could not open input file "+fileName);
       int numAtoms;
-      char line[10000];
-      // fgets(line,10000,file);
 
       // int rc = sscanf(line,"%i",&numAtoms);
       int rc = fscanf(file,"%i\n",&numAtoms);
@@ -56,8 +54,8 @@ namespace ospray {
       if (rc != 1)
         throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
       
-      // char line[10000];
-      // fgets(line,10000,file);
+      char line[10000]; 
+      fgets(line,10000,file); // description line
 
       std::cout << "#" << fileName << " (.dat.xyz format): expecting " << numAtoms << " atoms" << std::endl;
       for (int i=0;i<numAtoms;i++) {
