@@ -24,7 +24,8 @@ IF (OSPRAY_APPS_PARTICLEVIEWER)
     ADD_EXECUTABLE(ospParticleViewer
       viewer.cpp
       model.cpp
+      uintah.cpp
       )
-    TARGET_LINK_LIBRARIES(ospParticleViewer ospray ospray_glut3d)
+    TARGET_LINK_LIBRARIES(ospParticleViewer ospray ospray_glut3d ospray_xml)
   ENDIF()
 ENDIF()

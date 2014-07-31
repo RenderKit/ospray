@@ -47,24 +47,42 @@ namespace ospray {
       if (!file) 
         throw std::runtime_error("could not open input file "+fileName);
       int numAtoms;
+      char line[10000];
+      // fgets(line,10000,file);
+
+      // int rc = sscanf(line,"%i",&numAtoms);
       int rc = fscanf(file,"%i\n",&numAtoms);
+      PRINT(numAtoms);
       if (rc != 1)
         throw std::runtime_error("could not parse .dat.xyz header in input file "+fileName);
       
-      char line[10000];
-      fgets(line,10000,file);
+      // char line[10000];
+      // fgets(line,10000,file);
 
       std::cout << "#" << fileName << " (.dat.xyz format): expecting " << numAtoms << " atoms" << std::endl;
       for (int i=0;i<numAtoms;i++) {
         char atomName[110];
         Atom a;
         vec3f n;
-        rc = fscanf(file,"%100s %f %f %f %f %f %f\n",atomName,
+        if (!fgets(line,10000,file)) {
+          std::stringstream ss;
+          ss << "in " << fileName << " (line " << (i+2) << "): "
+             << "unexpected end of file!?" << std::endl;
+          throw std::runtime_error(ss.str());
+        }
+
+        rc = sscanf(line,"%100s %f %f %f %f %f %f\n",atomName,
                     &a.position.x,&a.position.y,&a.position.z,
                     &n.x,&n.y,&n.z
                     );
+        // rc = fscanf(file,"%100s %f %f %f %f %f %f\n",atomName,
+        //             &a.position.x,&a.position.y,&a.position.z,
+        //             &n.x,&n.y,&n.z
+        //             );
         if (rc != 7 && rc != 4) {
           std::stringstream ss;
+          PRINT(rc);
+          PRINT(line);
           ss << "in " << fileName << " (line " << (i+2) << "): "
              << "could not parse .dat.xyz data line" << std::endl;
           throw std::runtime_error(ss.str());

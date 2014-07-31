@@ -14,6 +14,7 @@
 // ospray, for rendering
 #include "ospray/ospray.h"
 #include "model.h"
+#include "uintah.h"
 #include "sys/filename.h"
 
 namespace ospray {
@@ -43,7 +44,7 @@ namespace ospray {
       cout << "ospray::lammpsView fatal error : " << lammps << endl;
       cout << endl;
       cout << "Proper usage: " << endl;
-      cout << "  ./lammpsView <inFileName.xyz>" << endl;
+      cout << "  ./lammpsView <inFileName[.xyz|.xml]>" << endl;
       cout << endl;
       exit(1);
     }
@@ -218,6 +219,9 @@ namespace ospray {
             particle::Model *m = new particle::Model;
             m->loadXYZ(fn);
             lammpsModel.push_back(m);
+          } else if (fn.ext() == "xml") {
+            particle::Model *m = parse__Uintah_timestep_xml(fn);
+            lammpsModel.push_back(m);
           } else
             error("unknown file format "+fn.str());
         }
@@ -248,7 +252,7 @@ namespace ospray {
         ospCommit(data);
 
         OSPGeometry geom = ospNewGeometry("spheres");
-        ospSet1f(geom,"radius",radius);
+        ospSet1f(geom,"radius",radius*lammpsModel[i]->radius);
         ospSet1i(geom,"bytes_per_sphere",sizeof(Model::Atom));
         ospSet1i(geom,"center_offset",0);
         ospSet1i(geom,"offset_materialID",3*sizeof(float));
