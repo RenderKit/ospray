@@ -81,7 +81,11 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
 
   ELSE()
-    SET(EMBREE_LIB sys simd embree)
+    IF (APPLE)
+      SET(EMBREE_LIB embree)
+    ELSE()
+      SET(EMBREE_LIB sys simd embree)
+    ENDIF()
   ENDIF()
 
   INCLUDE(ospray_ispc)
