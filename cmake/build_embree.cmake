@@ -6,7 +6,6 @@
 # Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
 # #####################################################################
 
-message("embree output dir ${OSPRAY_BINARY_DIR}")
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
 CONFIGURE_OSPRAY()

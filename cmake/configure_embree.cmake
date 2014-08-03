@@ -24,7 +24,7 @@ ELSE()
   ##################################################################
   # default branch: build ospray using local version of embree
   ##################################################################
-  SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/embree)
+  SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree)
 ENDIF()
 
 ##################################################################
@@ -48,4 +48,3 @@ SET(EMBREE_INCLUDE_DIRECTORIES
   ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon
   )
 INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
-
