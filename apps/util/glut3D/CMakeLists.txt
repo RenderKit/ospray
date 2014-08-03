@@ -6,6 +6,13 @@
 # Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
 # #####################################################################
 
+CONFIGURE_OSPRAY()
+
+MESSAGE("EMBREE ${EMBREE_INCLUDE_DIRECTORIES}")
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
+
 ADD_LIBRARY(ospray_glut3d SHARED glut3D.cpp)
 TARGET_LINK_LIBRARIES(ospray_glut3d ospray ${GLUT_LIBRARIES})
 # ------------------------------------------------------------

@@ -7,6 +7,7 @@
 # #####################################################################
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
 
 ADD_SUBDIRECTORY(miniSG)
 

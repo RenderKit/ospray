@@ -11,10 +11,11 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+# build and configure embree
+INCLUDE(../cmake/build_embree.cmake)
 
-INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
+INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
+INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
 
 SET(OSPRAY_SOURCES
   common/ospcommon.cpp
@@ -151,8 +152,13 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
-OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
+#message("ospray sources ${OSPRAY_SOURCES}")
+OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED 
+#  ${EMBREE_SOURCES}
+  ${OSPRAY_SOURCES}
+  )
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX} 
