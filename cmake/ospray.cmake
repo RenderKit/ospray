@@ -35,7 +35,7 @@ MACRO(CONFIGURE_OSPRAY)
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon
     )
-  message("embree include dirs in ospray.cmake ${EMBREE_INCLUDE_DIRECTORIES}")
+#  message("embree include dirs in ospray.cmake ${EMBREE_INCLUDE_DIRECTORIES}")
   INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
 
   IF (OSPRAY_TARGET STREQUAL "MIC")

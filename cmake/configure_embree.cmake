@@ -16,11 +16,10 @@ IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   MESSAGE("You have chosen to build OSPRay with a external version of embree that may or may not have been tested to work with this version of OSPRay. Use this option at your own risk.")
 
   # NOTE: 
-#  SET(EXTERNAL_EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree-ospray CACHE STRING
-#    "EXTERNAL Embree source directory")
+  SET(EXTERNAL_EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree-ospray CACHE STRING    "EXTERNAL Embree source directory")
 #  MARK_AS_ADVANCED(EMBREE_DIR)
-#  SET(OSPRAY_EMBREE_SOURCE_DIR ${EXTERNAL_EMBREE_DIR})
-  SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/external-embree)
+  SET(OSPRAY_EMBREE_SOURCE_DIR ${EXTERNAL_EMBREE_DIR})
+#  SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/external-embree)
 ELSE()
   ##################################################################
   # default branch: build ospray using local version of embree
