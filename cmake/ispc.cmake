@@ -15,7 +15,7 @@ MARK_AS_ADVANCED(OSPRAY_ISPC_DIRECTORY)
 
 IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/ispc")
   MESSAGE("********************************************")
-  MESSAGE("Could not find ISPC (tried ${PROJECT_SOURCE_DIR}/../ispc-v1.7.0-linux).")
+  MESSAGE("Could not find ISPC (tried ${OSPRAY_ISPC_DIRECTORY}.")
   MESSAGE("")
   MESSAGE("This version of ospray expects you to have a binary install of ISPC version 1.7.0, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
   MESSAGE("")
