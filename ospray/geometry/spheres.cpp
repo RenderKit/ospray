@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#undef NDEGBUG
+#undef NDEBUG
 
 // ospray
 #include "spheres.h"
