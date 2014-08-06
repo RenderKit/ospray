@@ -37,14 +37,4 @@ ADD_DEFINITIONS(-D__INTERSECTION_FILTER__)
 ADD_DEFINITIONS(-D__BUFFER_STRIDE__)
 ADD_DEFINITIONS(-DEMBREE_DISABLE_HAIR=1)
 
-# this section could be sooo much cleaner if embree only used
-# fully-qualified include names...
-SET(EMBREE_INCLUDE_DIRECTORIES
-  ${OSPRAY_EMBREE_SOURCE_DIR}/ 
-  ${OSPRAY_EMBREE_SOURCE_DIR}/include
-  ${OSPRAY_EMBREE_SOURCE_DIR}/
-  ${OSPRAY_EMBREE_SOURCE_DIR}/common
-  ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
-  ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon
-  )
-INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
+# Embree include directories are set in CONFIGURE_OSPRAY() since they depend on the build target.

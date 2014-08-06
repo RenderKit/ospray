@@ -7,8 +7,9 @@
 # #####################################################################
 
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
+
 CONFIGURE_OSPRAY()
+
 # =======================================================
 # source for everything embree keeps in its 'sys' library
 # =======================================================

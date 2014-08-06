@@ -14,9 +14,6 @@ CONFIGURE_OSPRAY()
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
 
-INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
-INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
-
 SET(OSPRAY_SOURCES
   common/ospcommon.cpp
   common/ospcommon.ispc
