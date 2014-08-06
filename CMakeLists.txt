@@ -48,14 +48,13 @@ SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
-##############################################################
-# modules
-##############################################################
 
-INCLUDE(cmake/build_embree.cmake)
-ADD_DEFINITIONS(${OSPRAY_EMBREE_CXX_FLAGS})
-
+##############################################################
+# cmake modules
+##############################################################
 INCLUDE(cmake/ospray.cmake)
+INCLUDE(cmake/ispc.cmake)
+INCLUDE(cmake/configure_embree.cmake)
 INCLUDE(cmake/mpi.cmake)
 INCLUDE(cmake/doxygen.cmake)
 
@@ -94,6 +93,6 @@ ENDIF()
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
-	SET (OSPRAY_TARGET "MIC")
-	ADD_SUBDIRECTORY(modules builddir/modules/mic)
+  SET (OSPRAY_TARGET "MIC")
+  ADD_SUBDIRECTORY(modules builddir/modules/mic)
 ENDIF()

@@ -9,7 +9,8 @@
 CONFIGURE_OSPRAY()
 
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-INCLUDE (${EMBREE_DIR}/common/cmake/ispc.cmake)
+#INCLUDE (${EMBREE_DIR}/common/cmake/ispc.cmake)
+
 INCLUDE_DIRECTORIES(${GLUT_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 

@@ -11,6 +11,7 @@
 #include "embree2/rtcore.h"
 
 namespace ospray {
+  void error_handler(const RTCError code, const char *str);
   namespace api {
     Device *Device::current = NULL;
 
