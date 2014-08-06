@@ -83,7 +83,7 @@ SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 IF (OSPRAY_MIC)
   SET (OSPRAY_TARGET "MIC")
-#  ADD_SUBDIRECTORY(apps builddir/apps/mic)
+  ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()
 
 
@@ -91,8 +91,8 @@ ENDIF()
 # modules at the end, they may need utilities
 ##############################################################
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
-#ADD_SUBDIRECTORY(modules builddir/modules/intel64)
+ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
-#  SET (OSPRAY_TARGET "MIC")
-#  ADD_SUBDIRECTORY(modules builddir/modules/mic)
+  SET (OSPRAY_TARGET "MIC")
+  ADD_SUBDIRECTORY(modules builddir/modules/mic)
 ENDIF()
