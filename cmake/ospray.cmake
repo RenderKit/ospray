@@ -45,6 +45,7 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_ISPC_TARGET "mic")
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
     #		SET(LIBRARY_OUTPUT_PATH "${OSPRAY_BINARY_DIR}/lib/mic")
     ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=16)
     ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC=1)
@@ -108,13 +109,8 @@ MACRO(CONFIGURE_OSPRAY)
   ENDIF()
 
   IF (THIS_IS_MIC)
-#    INCLUDE(${EMBREE_DIR}/common/cmake/icc_xeonphi.cmake)
-    
-#    SET(EMBREE_LIB sys_xeonphi simd_xeonphi embree_xeonphi)
-
     # whehter to build in MIC/xeon phi support
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
-
   ENDIF()
 
 #  INCLUDE(ospray_ispc)
