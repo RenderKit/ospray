@@ -183,7 +183,7 @@ ELSE()
       (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
       (${OSPRAY_XEON_TARGET} STREQUAL "SSE41") OR
       (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
-    OSPRAY_ADD_LIBRARY(ospray_embree_sse41 SHARED
+    OSPRAY_ADD_LIBRARY(ospray_embree_sse41 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_binner.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp   
@@ -201,7 +201,7 @@ ELSE()
       (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
       (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
       (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
-    OSPRAY_ADD_LIBRARY(ospray_embree_sse42 SHARED
+    OSPRAY_ADD_LIBRARY(ospray_embree_sse42 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_hybrid.cpp
       )
     SET_TARGET_PROPERTIES(ospray_embree_sse42 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE42}")
@@ -213,7 +213,7 @@ ELSE()
   # ------------------------------------------------------------------
   IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
       (${OSPRAY_XEON_TARGET} STREQUAL "AVX"))
-    OSPRAY_ADD_LIBRARY(ospray_embree_avx SHARED
+    OSPRAY_ADD_LIBRARY(ospray_embree_avx STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/builders/bezierrefgen.cpp 
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/builders/primrefgen.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/builders/heuristic_object_partition_unaligned.cpp
@@ -267,7 +267,7 @@ ELSE()
   # now, build and link in AVX2 support (for AVX2 only)
   # ------------------------------------------------------------------
   IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2"))
-    OSPRAY_ADD_LIBRARY(ospray_embree_avx2 SHARED
+    OSPRAY_ADD_LIBRARY(ospray_embree_avx2 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/instance_intersector1.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/instance_intersector4.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/instance_intersector8.cpp
