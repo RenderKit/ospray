@@ -62,7 +62,6 @@ namespace ospray {
   {
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
-    debugMode = false;
     for (int i=1;i<ac;) {
       std::string parm = av[i];
       if (parm == "--osp:debug") {
