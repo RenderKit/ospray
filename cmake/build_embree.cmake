@@ -66,12 +66,6 @@ SET(EMBREE_KERNELS_COMMON_SOURCES
   )
 
 IF (THIS_IS_MIC)
-  SET(EMBREE_SOURCES
-    ${EMBREE_COMMON_SYS_SOURCES}
-    ${EMBREE_COMMON_SIMD_SOURCES}
-    ${EMBREE_KERNELS_COMMON_SOURCES}
-    ${EMBREE_KERNELS_XEONPHI_SOURCES}
-    )
   # =======================================================
   # embree kernel components ONLY for xeon phi
   # =======================================================
@@ -107,6 +101,13 @@ IF (THIS_IS_MIC)
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi/bvh4hair/bvh4hair.cpp	
     )
 
+    OSPRAY_ADD_LIBRARY(ospray_embree${OSPRAY_LIB_SUFFIX} SHARED
+      ${EMBREE_COMMON_SYS_SOURCES}
+      ${EMBREE_COMMON_SIMD_SOURCES}
+      ${EMBREE_KERNELS_COMMON_SOURCES}
+      ${EMBREE_KERNELS_XEONPHI_SOURCES}
+      )
+    TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
 
 ELSE()
   # =======================================================
@@ -156,13 +157,6 @@ ELSE()
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector4.cpp
     )
 
-  # SET(EMBREE_SOURCES
-  #    ${EMBREE_COMMON_SYS_SOURCES}
-  #    ${EMBREE_COMMON_SIMD_SOURCES}
-  #    ${EMBREE_KERNELS_COMMON_SOURCES}
-  #    ${EMBREE_KERNELS_XEON_SOURCES}
-  #    )
-
   # ------------------------------------------------------------------
   # create the *BASE* embree library that's available on all ISAs  
   # ------------------------------------------------------------------
@@ -173,7 +167,6 @@ ELSE()
     ${EMBREE_KERNELS_XEON_SOURCES}
     )
   TARGET_LINK_LIBRARIES(ospray_embree pthread dl)
-
 
   # ------------------------------------------------------------------
   # now, build and link in SSE41 support (for anything more than SSE)
@@ -263,7 +256,6 @@ ELSE()
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx)
   ENDIF()
 
-
   # ------------------------------------------------------------------
   # now, build and link in AVX2 support (for AVX2 only)
   # ------------------------------------------------------------------
@@ -298,7 +290,3 @@ ELSE()
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx2)
   ENDIF()
 ENDIF()
-
-
-
-
