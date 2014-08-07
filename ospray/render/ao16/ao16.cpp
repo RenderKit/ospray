@@ -29,13 +29,15 @@ namespace ospray {
                            map_Kd!=NULL?map_Kd->getIE():NULL);
   }
   
-  AO16Renderer::AO16Renderer() 
+  template<int NUM_SAMPLES_PER_FRAME>
+  AO16Renderer<NUM_SAMPLES_PER_FRAME>::AO16Renderer() 
   : model(NULL), camera(NULL) 
   {
     ispcEquivalent = ispc::AO16Renderer_create(this,NULL,NULL);
   };
 
-  void AO16Renderer::commit()
+  template<int NUM_SAMPLES_PER_FRAME>
+  void AO16Renderer<NUM_SAMPLES_PER_FRAME>::commit()
   {
     Renderer::commit();
 
@@ -44,12 +46,23 @@ namespace ospray {
     camera = (Camera *)getParamObject("camera",NULL);
     bgColor = getParam3f("bgColor",vec3f(1.f));
     ispc::AO16Renderer_set(getIE(),
+                           NUM_SAMPLES_PER_FRAME,
                            (const ispc::vec3f&)bgColor,                           
                            model?model->getIE():NULL,
                            camera?camera->getIE():NULL);
   }
 
-  OSP_REGISTER_RENDERER(AO16Renderer,ao16);
-  OSP_REGISTER_RENDERER(AO16Renderer,ao);
+  typedef AO16Renderer<16> _AO16Renderer;
+  typedef AO16Renderer<8>  _AO8Renderer;
+  typedef AO16Renderer<4>  _AO4Renderer;
+  typedef AO16Renderer<2>  _AO2Renderer;
+  typedef AO16Renderer<1>  _AO1Renderer;
+
+  OSP_REGISTER_RENDERER(_AO16Renderer,ao16);
+  OSP_REGISTER_RENDERER(_AO8Renderer, ao8);
+  OSP_REGISTER_RENDERER(_AO4Renderer, ao4);
+  OSP_REGISTER_RENDERER(_AO2Renderer, ao2);
+  OSP_REGISTER_RENDERER(_AO1Renderer, ao1);
+  OSP_REGISTER_RENDERER(_AO16Renderer,ao);
 };
 

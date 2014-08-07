@@ -7,9 +7,16 @@
  ********************************************************************* */
 
 #include "device.h"
+#include "ospray/common/ospcommon.h"
+#include "embree2/rtcore.h"
 
 namespace ospray {
+  void error_handler(const RTCError code, const char *str);
   namespace api {
     Device *Device::current = NULL;
+
+    Device::Device() {
+      rtcSetErrorFunction(error_handler);
+    }
   }
 }

@@ -6,6 +6,8 @@
 # Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
 # #####################################################################
 
+CONFIGURE_OSPRAY()
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 ADD_SUBDIRECTORY(miniSG)
@@ -15,7 +17,7 @@ ADD_SUBDIRECTORY(miniSG)
 # --------------------------------------------
 ADD_EXECUTABLE(ospModelViewer
   # CPP sources
-  msgView.cpp
+  modelViewer.cpp
   )
 TARGET_LINK_LIBRARIES(ospModelViewer
   ospray_minisg

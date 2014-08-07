@@ -9,15 +9,12 @@
 IF (NOT THIS_IS_MIC)
   INCLUDE_DIRECTORIES(${OSPRAY_DIR}/ospray)
   
-  FIND_PACKAGE(LibXml2)
-  
-  IF (NOT LIBXML2_FOUND)
-    MESSAGE("could not find libxml!")
-  ENDIF()
-
   INCLUDE_DIRECTORIES(${OSPRAY_DIR})
-  INCLUDE_DIRECTORIES(${LIBXML2_INCLUDE_DIR})
-  ADD_DEFINITIONS(${LIBXML2_DEFINITIONS})
+
+  ADD_LIBRARY(ospray_xml
+    xml.cpp
+    )
+  TARGET_LINK_LIBRARIES(ospray_xml ospray)
 
   ADD_LIBRARY(ospray_minisg 
     miniSG.cpp
@@ -28,7 +25,7 @@ IF (NOT THIS_IS_MIC)
     importTRI.cpp
     importRIVL.cpp
     )
-  TARGET_LINK_LIBRARIES(ospray_minisg ${LIBXML2_LIBRARIES})
+  TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml)
   # ------------------------------------------------------------
   SET_TARGET_PROPERTIES(ospray_minisg${OSPRAY_LIB_SUFFIX} 
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})

@@ -38,7 +38,9 @@ SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
 # whether to enable alpha aware geometry
 SET(OSPRAY_ALPHA_AWARE_GEOMETRY OFF CACHE BOOL "Enable Alpha aware intersection filtering?")
 # whether to use ICC (vs GCC) for the non-MIC part
-SET(OSPRAY_USE_INTEL_COMPILER ON CACHE BOOL "Use Intel Compiler?")
+SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
+# compiler selection for the non-MIC part
+SET(OSPRAY_COMPILER "ICC" CACHE STRING "Set to ICC, GCC, or CLANG")
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
 # whehter to build in MIC/xeon phi support
@@ -49,16 +51,14 @@ SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
-SET(OSPRAY_ICC ${OSPRAY_USE_INTEL_COMPILER})
+
 
 ##############################################################
-# modules
+# cmake modules
 ##############################################################
-
-INCLUDE(cmake/build_embree.cmake)
-ADD_DEFINITIONS(${OSPRAY_EMBREE_CXX_FLAGS})
-
 INCLUDE(cmake/ospray.cmake)
+INCLUDE(cmake/ispc.cmake)
+INCLUDE(cmake/configure_embree.cmake)
 INCLUDE(cmake/mpi.cmake)
 INCLUDE(cmake/doxygen.cmake)
 
@@ -97,6 +97,6 @@ ENDIF()
 SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
-	SET (OSPRAY_TARGET "MIC")
-	ADD_SUBDIRECTORY(modules builddir/modules/mic)
+  SET (OSPRAY_TARGET "MIC")
+  ADD_SUBDIRECTORY(modules builddir/modules/mic)
 ENDIF()

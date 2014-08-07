@@ -70,7 +70,9 @@ namespace ospray {
     int64 offset_materialID;
 
     Ref<Data> data;
-    
+    Ref<Data> materialList;
+    void     *_materialList;
+
     Spheres();
   };
 }

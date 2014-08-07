@@ -8,12 +8,6 @@
 
 INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
 
-#INCLUDE(${EMBREE_DIR}/common/cmake/ispc.cmake)
-INCLUDE_DIRECTORIES(${EMBREE_DIR})
-INCLUDE_DIRECTORIES(${EMBREE_DIR}/common)
-INCLUDE_DIRECTORIES(${EMBREE_DIR}/kernels)
-INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR} ${PROJECT_SOURCE_DIR})
-
 CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
@@ -24,6 +18,8 @@ IF(NOT THIS_IS_MIC)
 
   # stream line viewer for NASA Stream Line Demo
   ADD_SUBDIRECTORY(streamLineViewer)
+  # xyz atom model viewer (one sphere per atom)
+  ADD_SUBDIRECTORY(particleViewer)
 
   # volume viewer application
   OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build volume viewer application" OFF)

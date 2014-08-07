@@ -19,10 +19,11 @@
 #include "miniSG.h"
 // stl
 #include <map>
-// libxml
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include <libxml/xmlreader.h>
+// // libxml
+// #include <libxml/tree.h>
+// #include <libxml/parser.h>
+// #include <libxml/xmlreader.h>
+#include "xml.h"
 // stdlib, for mmap
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -169,17 +170,18 @@ namespace ospray {
       return ss.str();
     } 
     
-    Ref<miniSG::Node> parseBGFscene(xmlNode *root)
+    Ref<miniSG::Node> parseBGFscene(xml::Node *root)
     {
-      std::string rootName = (char*)root->name;
+      std::string rootName = root->name;
       if (rootName != "BGFscene")
         throw std::runtime_error("XML file is not a RIVL model !?");
-      if (root->children == NULL)
+      if (root->child.empty())
         throw std::runtime_error("emply RIVL model !?");
 
       Ref<miniSG::Node> lastNode;
-      for (xmlNode *node = root->children; node; node = node->next) {
-        std::string nodeName = (char*)node->name;
+      for (int childID=0;childID<root->child.size();childID++) {//xmlNode *node = root->children; node; node = node->next) {
+        xml::Node *node = root->child[childID];
+        std::string nodeName = node->name;
         if (nodeName == "text") {
           // -------------------------------------------------------
         } else if (nodeName == "Texture2D") {
@@ -191,33 +193,49 @@ namespace ospray {
           int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
           std::string format;
 
-          for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
-            if (!strcmp( (const char*)attr->name, "ofs" )) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              ofs = atol((char*)value);
-              xmlFree(value);
-            } else if (!strcmp((const char*)attr->name, "width")) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              width = atol((char*)value);
-              xmlFree(value);
-            } else if (!strcmp((const char*)attr->name, "height")) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              height = atol((char*)value);
-              xmlFree(value);
-            } else if (!strcmp((const char*)attr->name, "channels")) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              channels = atol((char*)value);
-              xmlFree(value);
-            } else if (!strcmp((const char*)attr->name, "depth")) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              depth = atol((char*)value);
-              xmlFree(value);
-            } else if (!strcmp((const char*)attr->name, "format")) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              format = std::string((char*)value);
-              xmlFree(value);
+          for (int pID=0;pID<node->prop.size();pID++) {
+            xml::Prop *prop = node->prop[pID];
+            if (prop->name == "ofs") {
+              ofs = atol(prop->value.c_str());
+            } else if (prop->name == "width") {
+              width = atol(prop->value.c_str());
+            } else if (prop->name == "height") {
+              height = atol(prop->value.c_str());
+            } else if (prop->name == "channels") {
+              channels = atol(prop->value.c_str());
+            } else if (prop->name == "depth") {
+              depth = atol(prop->value.c_str());
+            } else if (prop->name == "format") {
+              format = prop->value.c_str();
             }
           }
+          // for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
+          //   if (!strcmp( (const char*)attr->name, "ofs" )) {
+          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+          //     ofs = atol((char*)value);
+          //     //xmlFree(value);
+          //   } else if (!strcmp((const char*)attr->name, "width")) {
+          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+          //     width = atol((char*)value);
+          //     //xmlFree(value);
+          //   } else if (!strcmp((const char*)attr->name, "height")) {
+          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+          //     height = atol((char*)value);
+          //     //xmlFree(value);
+          //   } else if (!strcmp((const char*)attr->name, "channels")) {
+          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+          //     channels = atol((char*)value);
+          //     //xmlFree(value);
+          //   } else if (!strcmp((const char*)attr->name, "depth")) {
+          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+          //     depth = atol((char*)value);
+          //     //xmlFree(value);
+          //   } else if (!strcmp((const char*)attr->name, "format")) {
+          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+          //     format = std::string((char*)value);
+          //     //xmlFree(value);
+          //   }
+          // }
 
           assert(ofs != size_t(-1) && "Offset not properly parsed for Texture2D nodes");
           assert(width != size_t(-1) && "Width not properly parsed for Texture2D nodes");
@@ -243,42 +261,48 @@ namespace ospray {
           std::string name;
           std::string type;
 
-          for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
-            if (!strcmp((const char*)attr->name, "name" )) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              name = (const char*)value;
+          for (int pID=0;pID<node->prop.size();pID++) {
+            xml::Prop *prop = node->prop[pID];
+          // for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
+            if (prop->name == "name") {
+              // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              name = prop->value;//(const char*)value;
               mat->setParam("name", name.c_str());
               mat->name = name;
-              xmlFree(value);
-            } else if (!strcmp((const char*)attr->name, "type")) {
-              xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-              type = (const char*)value;
+              //xmlFree(value);
+            } else if (prop->name == "type") {
+              // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+              type = prop->value; //(const char*)value;
               mat->setParam("type", type.c_str());
-              xmlFree(value);
+              //xmlFree(value);
             }
           }
 
-          for (xmlNode *child=node->children; child; child=child->next) {
-            std::string childNodeType = (char*)child->name;
+          for (int childID=0;childID<node->child.size();childID++) {//xmlNode *child=node->children; child; child=child->next) {
+            xml::Node *child = node->child[childID];
+            std::string childNodeType = child->name;
 
             if (!childNodeType.compare("param")) {
               std::string childName;
               std::string childType;
 
-              for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
-                if (!strcmp((const char*)attr->name, "name")) {
-                  xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  childName = (const char*)value;
-                  xmlFree(value);
-                } else if (!strcmp((const char*)attr->name, "type")) {
-                  xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  childType = (const char*)value;
-                  xmlFree(value);
+              for (int pID=0;pID<child->prop.size();pID++) {
+                xml::Prop *prop = child->prop[pID];
+              // for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
+                if (prop->name == "name") {
+                  // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  childName = prop->value; //(const char*)value;
+                  //xmlFree(value);
+                } else if (prop->name == "type") { 
+                  // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  childType = prop->value; //(const char*)value;
+                  //xmlFree(value);
                 }
               }
 
               //Get the data out of the node
-              xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
+              // xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
+              char *value = strdup(child->content.c_str());
 #define NEXT_TOK strtok(NULL, " \t\n\r")
               char *s = strtok((char*)value, " \t\n\r");
               //TODO: UGLY! Find a better way.
@@ -338,26 +362,26 @@ namespace ospray {
                 //error!
                 throw std::runtime_error("unknown parameter type '" + childType + "' when parsing RIVL materials.");
               }
+              free(value);
             } else if (!childNodeType.compare("textures")) {
               int num = -1;
-              for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
-                if (!strcmp((const char*)attr->name, "num")) {
-                  xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  assert(value);
-                  num = atol((const char*)value);
-                  xmlFree(value);
+              for (int pID=0;pID<child->prop.size();pID++) {
+                xml::Prop *prop = child->prop[pID];
+              // for (xmlAttr *attr = child->properties; attr; attr = attr->next) {
+                if (prop->name == "num") {
+                  num = atol(prop->value.c_str());
+                  //xmlFree(value);
                 }
               }
 
-              xmlChar *value = xmlNodeListGetString(node->doc, child->children, 1);
+              // xmlChar *value = xmlNodaeListGetString(node->doc, child->children, 1);
 
-              if (value == NULL) {
+              if (child->content == "") {
                 // empty texture node ....
               } else {
-                char *tokenBuffer = strdup((char*)value);
-                xmlFree(value); 
-
-                assert(value);
+                char *tokenBuffer = strdup(child->content.c_str());
+                //xmlFree(value); 
+                
                 char *s = strtok(tokenBuffer, " \t\n\r");
                 while (s) {
                   int texID = atoi(s);
@@ -367,8 +391,10 @@ namespace ospray {
                 }
                 free(tokenBuffer);
               }
-              if (mat->textures.size() != num)
-                FATAL("invalid number of textures in material (found either more or less than the 'num' field specifies");
+              if (mat->textures.size() != num) {
+                FATAL("invalid number of textures in material "
+                      "(found either more or less than the 'num' field specifies");
+              }
             }
           }
 #undef NEXT_TOK
@@ -379,19 +405,21 @@ namespace ospray {
           nodeList.push_back(xfm.ptr);
 
           // find child ID
-          for (xmlAttr* attr = node->properties; attr; attr = attr->next)
-            if (!strcmp((const char*)attr->name,"child")) {
-              xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-              size_t childID = atoi((char*)value);
+          for (int pID=0;pID<node->prop.size();pID++) {
+            xml::Prop *prop = node->prop[pID];
+          // for (xmlAttr* attr = node->properties; attr; attr = attr->next)
+            if (prop->name == "child") {
+              // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+              size_t childID = atoi(prop->value.c_str());//(char*)value);
               miniSG::Node *child = nodeList[childID].ptr;
               assert(child);
               xfm->child = child;
-              xmlFree(value); 
-            }       
-
+              //xmlFree(value); 
+            }   
+          }    
+            
           // parse xfm matrix
-          xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
-          int numRead = sscanf((char*)value,
+          int numRead = sscanf((char*)node->content.c_str(),
                                "%f %f %f\n%f %f %f\n%f %f %f\n%f %f %f",
                                &xfm->xfm.l.vx.x,
                                &xfm->xfm.l.vx.y,
@@ -405,35 +433,38 @@ namespace ospray {
                                &xfm->xfm.p.x,
                                &xfm->xfm.p.y,
                                &xfm->xfm.p.z);
-          xmlFree(value);
+          //xmlFree(value);
           if (numRead != 12)  {
-            PRINT(numRead);
             FATAL("invalid number of elements in RIVL transform node");
           }
-
+          
           // -------------------------------------------------------
         } else if (nodeName == "Mesh") {
           // -------------------------------------------------------
           Ref<miniSG::TriangleMesh> mesh = new miniSG::TriangleMesh;
           nodeList.push_back(mesh.ptr);
 
-          for (xmlNode *child=node->children;child;child=child->next) {
-            std::string childType = (char*)child->name;
+          for (int childID=0;childID<node->child.size();childID++) {//xmlNode *child=node->children;child;child=child->next) {
+            xml::Node *child = node->child[childID];
+            std::string childType = child->name;
             if (childType == "text") {
             } else if (childType == "vertex") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (!strcmp((const char*)attr->name,"ofs")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  ofs = atol((char*)value);
-                  xmlFree(value); 
+              for (int pID=0;pID<child->prop.size();pID++) {
+                xml::Prop *prop = child->prop[pID];
+              // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
+                if (prop->name == "ofs") {
+                  //xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  ofs = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
-                else if (!strcmp((const char*)attr->name,"num")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  num = atol((char*)value);
-                  xmlFree(value); 
+                else if (prop->name == "num") {
+                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  num = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
+              }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numVertices = num;
@@ -441,17 +472,20 @@ namespace ospray {
             } else if (childType == "normal") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (!strcmp((const char*)attr->name,"ofs")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  ofs = atol((char*)value);
-                  xmlFree(value); 
+              for (int pID=0;pID<child->prop.size();pID++) {
+                xml::Prop *prop = child->prop[pID];
+              // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
+                if (prop->name == "ofs"){ //!strcmp((const char*)attr->name,"ofs")) {
+                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  ofs = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
-                else if (!strcmp((const char*)attr->name,"num")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  num = atol((char*)value);
-                  xmlFree(value); 
+                else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
+                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  num = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
+              }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numNormals = num;
@@ -459,17 +493,22 @@ namespace ospray {
             } else if (childType == "texcoord") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (!strcmp((const char*)attr->name,"ofs")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  ofs = atol((char*)value);
-                  xmlFree(value); 
+              for (int pID=0;pID<child->prop.size();pID++) {
+                xml::Prop *prop = child->prop[pID];
+              // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
+                if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
+                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  // ofs = atol((char*)value);
+                  ofs = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
-                else if (!strcmp((const char*)attr->name,"num")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  num = atol((char*)value);
-                  xmlFree(value); 
+                else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
+                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  // num = atol((char*)value);
+                  num = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
+              }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numTexCoords = num;
@@ -477,23 +516,39 @@ namespace ospray {
             } else if (childType == "prim") {
               size_t ofs = -1, num = -1;
               // scan parameters ...
-              for (xmlAttr* attr = child->properties; attr; attr = attr->next)
-                if (!strcmp((const char*)attr->name,"ofs")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  ofs = atol((char*)value);
-                  xmlFree(value); 
+              for (int pID=0;pID<child->prop.size();pID++) {
+                xml::Prop *prop = child->prop[pID];
+              // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
+                if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
+                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  // ofs = atol((char*)value);
+                  ofs = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
-                else if (!strcmp((const char*)attr->name,"num")) {
-                  xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  num = atol((char*)value);
-                  xmlFree(value); 
+                else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
+                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                  // num = atol((char*)value);
+                  num = atol(prop->value.c_str()); //(char*)value);
+                  //xmlFree(value); 
                 }       
+                // if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
+                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                //   ofs = atol((char*)value);
+                //   //xmlFree(value); 
+                // }       
+                // else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
+                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
+                //   num = atol((char*)value);
+                //   //xmlFree(value); 
+                // }       
+              }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numTriangles = num;
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
-              xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);
+              char* value = strdup(child->content.c_str()); //xmlNodeListGetString(node->doc, child->children, 1);
+              // xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);
               for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
                 size_t matID = atoi(s);
                 Ref<RIVLMaterial> mat = nodeList[matID].cast<miniSG::RIVLMaterial>();
@@ -501,7 +556,8 @@ namespace ospray {
                 assert(mat.ptr);
                 mesh->material.push_back(mat);
               }
-              xmlFree(value);
+              free(value);
+              //xmlFree(value);
             } else {
               throw std::runtime_error("unknown child node type '"+childType+"' for mesh node");
             }
@@ -513,20 +569,21 @@ namespace ospray {
           // -------------------------------------------------------
           Ref<miniSG::Group> group = new miniSG::Group;
           nodeList.push_back(group.ptr);
-
-          xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
-          if (value == NULL)
+          // xmlChar* value = xmlNodeListGetString(node->doc, node->children, 1);
+          if (node->content == "")
             // empty group...
             ;
-            // std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
+          // std::cout << "warning: xmlNodeListGetString(...) returned NULL" << std::endl;
           else {
+            char *value = strdup(node->content.c_str());
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
               size_t childID = atoi(s);
               miniSG::Node *child = nodeList[childID].ptr;
               //assert(child);
               group->child.push_back(child);
             }
-            xmlFree(value);
+            free(value);
+            //xmlFree(value);
           }
           lastNode = group.ptr;
         } else {
@@ -553,6 +610,15 @@ namespace ospray {
       if (fd == -1)
         perror("could not open file");
       binBasePtr = (unsigned char *)mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+
+#if 1
+      Ref<xml::XMLDoc> doc = xml::readXML(fileName);
+      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 
+        throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
+      xml::Node *root_element = doc->child[0];
+      Ref<Node> node = parseBGFscene(root_element);
+      return node;
+#else
       /*
        * this initialize the library and check potential ABI mismatches
        * between the version it was compiled for and the actual shared
@@ -562,7 +628,6 @@ namespace ospray {
       
       xmlDocPtr doc; /* the resulting document tree */
       
-      PRINT(xmlFileName);
       doc = xmlReadFile(xmlFileName.c_str(), NULL, XML_PARSE_HUGE|XML_PARSE_RECOVER);
       if (doc == NULL) 
         throw std::runtime_error("could not open/parse xml file '"
@@ -572,7 +637,8 @@ namespace ospray {
       if (!root_element)
         throw std::runtime_error("importRIVL: could not find root element");
       Ref<Node> node = parseBGFscene(root_element);
-      xmlFreeDoc(doc);
+      //xmlFreeDoc(doc);
+#endif
       return node;
     }
 
@@ -669,6 +735,8 @@ namespace ospray {
       nodeList.clear();
       Ref<miniSG::Node> sg = importRIVL(fileName);
       traverseSG(model,sg);
+      nodeList.clear();
+      sg = 0;
     }
     
   }

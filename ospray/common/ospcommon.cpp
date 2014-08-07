@@ -62,11 +62,16 @@ namespace ospray {
   {
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
-    debugMode = false;
     for (int i=1;i<ac;) {
       std::string parm = av[i];
       if (parm == "--osp:debug") {
         debugMode = true;
+        removeArgs(ac,av,i,1);
+      } else if (parm == "--osp:verbose") {
+        logLevel = 1;
+        removeArgs(ac,av,i,1);
+      } else if (parm == "--osp:vv") {
+        logLevel = 2;
         removeArgs(ac,av,i,1);
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);
@@ -84,5 +89,23 @@ namespace ospray {
     ac -= howMany;
   }
 
+  void error_handler(const RTCError code, const char *str)
+  {
+    printf("Embree: ");
+    switch (code) {
+      case RTC_UNKNOWN_ERROR    : printf("RTC_UNKNOWN_ERROR"); break;
+      case RTC_INVALID_ARGUMENT : printf("RTC_INVALID_ARGUMENT"); break;
+      case RTC_INVALID_OPERATION: printf("RTC_INVALID_OPERATION"); break;
+      case RTC_OUT_OF_MEMORY    : printf("RTC_OUT_OF_MEMORY"); break;
+      case RTC_UNSUPPORTED_CPU  : printf("RTC_UNSUPPORTED_CPU"); break;
+      default                   : printf("invalid error code"); break;
+    }
+    if (str) { 
+      printf(" ("); 
+      while (*str) putchar(*str++); 
+      printf(")\n"); 
+    }
+    abort();
+  }
 }
 

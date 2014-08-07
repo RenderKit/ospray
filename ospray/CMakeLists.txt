@@ -11,13 +11,12 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-
-INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
+# build and configure embree
+INCLUDE(../cmake/build_embree.cmake)
 
 SET(OSPRAY_SOURCES
   common/ospcommon.cpp
+  common/ospcommon.ispc
   common/managed.cpp
   common/data.cpp
   common/model.cpp
@@ -119,16 +118,16 @@ ENDIF()
 IF (OSPRAY_BUILD_COI_DEVICE)
   FIND_LIBRARY(LIBCOI_DEVICE libcoi_device.so
     PATHS
-    /opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
-    /opt/mpss/3.2.2/sysroots/k1om-mpss-linux/usr/lib64
-    /opt/mpss/3.2.3/sysroots/k1om-mpss-linux/usr/lib64
+    /opt/mpss/*/sysroots/k1om-mpss-linux/usr/lib64
     /opt/intel/mic/coi/device-linux-release/lib
     )
   FIND_LIBRARY(LIBCOI_HOST libcoi_host.so
     PATHS
-    /opt/mpss/3.2.1/sysroots/k1om-mpss-linux/usr/lib64
+    /opt/mpss/*/sysroots/k1om-mpss-linux/usr/lib64
     /opt/intel/mic/coi/host-linux-release/lib
     )
+  MARK_AS_ADVANCED(LIBCOI_DEVICE)
+  MARK_AS_ADVANCED(LIBCOI_HOST)
   ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
@@ -150,8 +149,11 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
-OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${EMBREE_LIB})
+OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED 
+  ${OSPRAY_SOURCES}
+  )
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX} 

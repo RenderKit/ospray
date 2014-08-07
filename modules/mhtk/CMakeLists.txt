@@ -8,25 +8,29 @@
 
 SET(OSPRAY_MODULE_MHTK OFF CACHE BOOL "Build 'MHTK' module")
 
-IF (NOT OSPRAY_INTERSECTION_FILTER)
-  MESSAGE( SEND_ERROR "OSPRAY_INTERSECTION_FILTER must be enabled to use the MHTK module.")
-ENDIF()
-
 IF (OSPRAY_MODULE_MHTK)
   CONFIGURE_OSPRAY()
+
+    IF (NOT OSPRAY_INTERSECTION_FILTER)
+      MESSAGE( SEND_ERROR "OSPRAY_INTERSECTION_FILTER must be enabled to use the MHTK module.")
+    ENDIF()
+
+    SET(OSPRAY_MODULE_MHTK_SORTING ON CACHE BOOL "Sort MHTK intersections")
+
+    IF (OSPRAY_MODULE_MHTK_SORTING)
+      ADD_DEFINITIONS_ISPC(-DMHTK_SORTING)
+    ENDIF()
+
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-    INCLUDE_DIRECTORIES(${EMBREE_DIR}/kernels/xeon/)
-    INCLUDE_DIRECTORIES(${EMBREE_DIR}/tutorials/common)
+#    INCLUDE_DIRECTORIES(${EMBREE_DIR}/kernels/xeon/)
+#    INCLUDE_DIRECTORIES(${EMBREE_DIR}/tutorials/common)
 
     INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
     INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
     OSPRAY_ADD_LIBRARY(ospray_module_mhtk${OSPRAY_LIB_SUFFIX} SHARED
-#      multihit_kernel.cpp
-#      multihit_kernel.ispc
-
       xray_renderer.cpp
       xray_renderer.ispc
       )

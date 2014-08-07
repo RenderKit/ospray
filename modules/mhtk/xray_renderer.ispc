@@ -17,7 +17,26 @@
 #include "ospray/common/model.ih"
 #include "multihit_kernel.ih"
 
-#define MAX_HITS_PER_TRACE 2
+#define MAX_HITS_PER_TRACE 512
+
+// '1' for sorting after intersection
+#define MHTK_POST_SORTING (1)
+
+// '1' to visualize # of sort swaps, '0' for average # of divergent sorts
+#define MHTK_SHOW_SWAPS (1)
+
+// '1' to visualize ray coherence, '0' to show swaps
+#define MHTK_SHOW_RAY_COHERENCE (0)
+
+#if MHTK_SHOW_RAY_COHERENCE
+#  undef MHTK_SHOW_SWAPS
+#  define MHTK_SHOW_SWAPS (0)
+#endif
+
+#ifndef MHTK_SORTING
+#  undef MHTK_SHOW_RAY_COHERENCE
+#  define MHTK_SHOW_RAY_COHERENCE (1)
+#endif
 
 // inline vec4f XRayRenderer_trace(Ray &ray, RTCScene scene)
 // {
@@ -45,8 +64,23 @@ struct XRayRenderer {
 struct MultiHitInfo {
   MHTKHit hitArray[MAX_HITS_PER_TRACE];
   int32 numHits;
+  int32 numSwaps;
+  int32 numCoherent;
 };
 
+inline vec3f make_bin_color(const int i, const int max)
+{
+  if (i == 0)
+    return make_vec3f(0.f);
+  else if (i <= max/4)
+    return make_vec3f(0.f, 0.f, 1.f);
+  else if (i <= max/2)
+    return make_vec3f(0.f, 1.f, 0.f);
+  else if (i <= 3*max/4)
+    return make_vec3f(1.f, 1.f, 0.f);
+  else
+    return make_vec3f(1.f, 0.f, 0.f);
+}
 
 // /*! Intersection filter function for uniform rays. */
 // typedef void (*uniform RTCFilterFuncUniform)(void* uniform ptr,    /*!< pointer to user data */
@@ -56,13 +90,64 @@ struct MultiHitInfo {
 void multiHitFilter(uniform Geometry *uniform geom,
                     varying Ray& ray  /*!< intersection to filter */)
 {
-  if (ray.geomID < 0) return;
-
   varying MultiHitInfo *uniform mhi = (varying MultiHitInfo *uniform)ray.userData;
+
+  if (ray.geomID < 0 || mhi->numHits >= MAX_HITS_PER_TRACE) return;
+
+  // Save hitpoint information
+#ifdef MHTK_SORTING
+#  if !MHTK_POST_SORTING
+  MHTKHit hit;
+  hit.primID = ray.primID;
+  hit.geomID = ray.geomID;
+  hit.t      = ray.t;
+  hit.Ng.x   = ray.Ng.x;
+  hit.Ng.y   = ray.Ng.y;
+  hit.Ng.z   = ray.Ng.z;
+
+  int i = mhi->numHits-1;
+  for (; i >= 0; --i)
+  {
+    if (mhi->hitArray[i].t > hit.t)
+    {
+      mhi->hitArray[i+1] = mhi->hitArray[i];
+      mhi->numSwaps++;
+
+#    if !MHTK_SHOW_RAY_COHERENCE
+      /* count the number of incoherent lanes */
+      uniform unique = 0;
+      foreach_unique(val in programIndex)
+        unique++;
+      mhi->numCoherent += unique;
+#    endif
+    }
+    else
+      break;
+  }
+
+  mhi->hitArray[i+1] = hit;
+#  else
+  const int pos = mhi->numHits;
+  mhi->hitArray[pos].primID = ray.primID;
+  mhi->hitArray[pos].geomID = ray.geomID;
+  mhi->hitArray[pos].t      = ray.t;
+  mhi->hitArray[pos].Ng.x   = ray.Ng.x;
+  mhi->hitArray[pos].Ng.y   = ray.Ng.y;
+  mhi->hitArray[pos].Ng.z   = ray.Ng.z;
+#  endif
+#endif
+
+#if MHTK_SHOW_RAY_COHERENCE
+  /* count the number of incoherent lanes */
+  uniform unique = 0;
+  foreach_unique(val in programIndex)
+    unique++;
+  mhi->numCoherent += unique;
+#endif
 
   mhi->numHits++;
 
-  ray.geomID = -1; // -> discard this hit, we want them all ;-)
+  ray.geomID = RTC_INVALID_GEOMETRY_ID; // -> discard this hit, we want them all ;-)
 }
 
 void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
@@ -71,7 +156,9 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   uniform XRayRenderer *uniform renderer = (uniform XRayRenderer *uniform)_renderer;
 
   MultiHitInfo mhi;
-  mhi.numHits = 0;
+  mhi.numHits     = 0;
+  mhi.numSwaps    = 0;
+  mhi.numCoherent = 0;
 
 #ifdef OSPRAY_INTERSECTION_FILTER
   sample.ray.intersectionFilter = multiHitFilter;
@@ -79,9 +166,63 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
   sample.ray.userData = &mhi;
   traceRay(renderer->inherited.model,sample.ray);
 
+#ifdef MHTK_SORTING
+# if MHTK_POST_SORTING
+  /* sort the hitpoints (only for measuring performance) */
+  for (uniform int i = 0; i < mhi.numHits - 1; ++i)
+  {
+    float d = mhi.hitArray[i].t;
+    int pos = i;
+    bool doSwap = false;
+    for (int j = i+1; j < mhi.numHits; ++j)
+    {
+      if(mhi.hitArray[j].t < d)
+      {
+        doSwap = true;
+        pos = j;
+        d = mhi.hitArray[j].t;
+      }
+    }
 
-  sample.rgb = make_random_color(mhi.numHits);
+    if (doSwap)
+    {
+      varying MHTKHit tmp = mhi.hitArray[i];
+      mhi.hitArray[i]     = mhi.hitArray[pos];
+      mhi.hitArray[pos]   = tmp;
+      mhi.numSwaps++;
+
+#    if !MHTK_SHOW_RAY_COHERENCE
+     /* count the number of incoherent lanes */
+      uniform unique = 0;
+      foreach_unique(val in programIndex)
+        unique++;
+      mhi.numCoherent += unique;
+#    endif
+    }
+  }
+#  endif
+#endif
+
+  if (mhi.numHits > 0)
+#if MHTK_SHOW_RAY_COHERENCE
+    sample.rgb = make_bin_color(programCount - (mhi.numCoherent /
+                                                (float)mhi.numHits),
+                                programCount);
+#else
+#  if MHTK_SHOW_SWAPS
+    sample.rgb = make_bin_color(mhi.numSwaps, 128);
+#  else
+    sample.rgb = make_bin_color(programCount - (mhi.numCoherent /
+                                                (float)mhi.numSwaps),
+                                programCount);
+#  endif
+#endif
+  else
+    sample.rgb = make_vec3f(1);
+
   return;
+
+#if 0
   // MHTKHit hitArray[MAX_HITS_PER_TRACE];
   // const int32 numHits = multiHitKernel(renderer->embreeSceneHandle,
   //                                      sample.ray,hitArray,MAX_HITS_PER_TRACE);
@@ -101,6 +242,7 @@ void XRayRenderer_renderSample(uniform Renderer *uniform _renderer,
    //       );
   sample.rgb = make_vec3f(color);
   sample.alpha = 0.f;
+#endif
 }
 
 export void *uniform XRayRenderer_create(void *uniform cppE)
