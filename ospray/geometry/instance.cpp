@@ -28,6 +28,11 @@ namespace ospray {
     xfm.l.vz = getParam3f("xfm.l.vz",vec3f(0.f,0.f,1.f));
     xfm.p   = getParam3f("xfm.p",vec3f(0.f,0.f,0.f));
 
+    const vec3f center = model->getParam3f("explosion.center", vec3f(0.f));
+    const float dist = distance(xfm.p, center);
+
+    xfm.p   *= 1 + dist * model->getParam1f("explosion.factor", 0.f);
+
     instancedScene = (Model *)getParamObject("model",NULL);
     
     embreeGeomID = rtcNewInstance(model->embreeSceneHandle,

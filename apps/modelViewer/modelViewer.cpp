@@ -18,6 +18,9 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  bool  g_explosion_mode   = false;
+  float g_explosion_factor = 0.f;
+
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   int accumID = -1;
   int maxAccum = 64;
@@ -117,10 +120,32 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
+      case 'X':
+        {
+          g_explosion_factor += .05f;
+          vec3f center = embree::center(msgModel->getBBox());
+          ospSet3fv(ospModel, "explosion.center", &center.x);
+          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
+          printf("Model is exploded by %f\n", g_explosion_factor - 1.f);
+          ospCommit(ospModel);
+        }
+        break;
+      case 'x':
+        {
+          g_explosion_factor -= .05f;
+          g_explosion_factor = std::max( 0.f, g_explosion_factor);
+          vec3f center = embree::center(msgModel->getBBox());
+          ospSet3fv(ospModel, "explosion.center", &center.x);
+          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
+          printf("Model is exploded by %f\n", g_explosion_factor);
+          ospCommit(ospModel);
+        }
+        break;
       default:
         Glut3DWidget::keypress(key,where);
       }
     }
+
     virtual void display()
     {
       if (!fb || !renderer) return;

@@ -62,6 +62,7 @@ namespace ospray {
     prim_materialIDData = getParamData("prim.materialID");
     materialListData = getParamData("materialList");
     geom_materialID = getParam1i("geom.materialID",-1);
+    explosion_factor = model->getParam1f("explosion.factor", 0.f);
 
     Assert2(vertexData != NULL,
             "triangle mesh geometry does not have either 'position'"
