@@ -73,6 +73,8 @@ typedef enum {
   OSP_VOID_PTR,
   // object reference type
   OSP_OBJECT,
+  // a data array
+  OSP_DATA,
   // c-string (zero-terminated char pointer)
   OSP_STRING,
 
