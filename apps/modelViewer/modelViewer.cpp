@@ -13,6 +13,8 @@
 // ospray, for rendering
 #include "ospray/ospray.h"
 
+#include "sg/sg.h"
+
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -426,6 +428,10 @@ namespace ospray {
           miniSG::importTRI(*msgModel,fn);
         else if (fn.ext() == "xml")
           miniSG::importRIVL(*msgModel,fn);
+        else if (fn.ext() == "osp")
+          // right now this doesn't do anything other than parse the
+          // file - it will NOT be properly rendered!
+          sg::readXML(fn);
         else if (fn.ext() == "obj")
           miniSG::importOBJ(*msgModel,fn);
         else if (fn.ext() == "astl")

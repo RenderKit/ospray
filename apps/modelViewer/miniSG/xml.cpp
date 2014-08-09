@@ -162,6 +162,11 @@ namespace ospray {
     bool parseHeader(char *&s)
     {
       consume(s,"<?xml");
+      if (*s == '?' && s[1] == '>') {
+        consume(s,"?>");
+        return true;
+      }
+
       if (!isWhite(*s)) return false; ++s;
 
       skipWhites(s);

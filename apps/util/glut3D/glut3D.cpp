@@ -725,14 +725,11 @@ namespace ospray {
 
     void Manipulator::keypress(Glut3DWidget *widget, const int32 key)
     {
-      static int32 lastKey = -1;
       switch(key) {
       case 'Q': {
-        if (lastKey == 'Q')
-          _exit(0);
+        _exit(0);
       };
       };
-      lastKey = key;
     };
     void Manipulator::specialkey(Glut3DWidget *widget, const int32 key)
     {

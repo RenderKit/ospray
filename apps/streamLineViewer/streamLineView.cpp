@@ -155,11 +155,53 @@ namespace ospray {
 
   void writeToXML(StreamLines *sl, Triangles *tris) 
   {
-    FILE *file = fopen("/tmp/streamlines.xml","w");
-    fprintf(file,"<?xml?>\n");
-    fprintf(file,"<ospray version=\"0.5.0\">\n");
-    fprintf(file,"</ospray>\n");
-    fclose(file);
+    FILE *xml = fopen("/tmp/streamlines.xml","w");
+    FILE *bin = fopen("/tmp/streamlines.xml.bin","wb");
+    size_t ofs, num;
+    void *ptr;
+
+    fprintf(xml,"<?xml? version=\"0.5.0>\"\n");
+    fprintf(xml,"<ospray version=\"0.5.0\">\n");
+    fprintf(xml,"  <Model>\n");
+    fprintf(xml,"    <Geometry type=\"streamlines\">\n");
+    ofs = ftell(bin);
+    num = sl->vertex.size();
+    fwrite(&sl->vertex[0],sizeof(vec3fa),num,bin);
+    fprintf(xml,"      <data data name=\"vertex\"><Data type=\"vec3fa\" ofs=%li num=%li/></data>\n",ofs,num);
+    ofs = ftell(bin);
+    num = sl->index.size();
+    fwrite(&sl->index[0],sizeof(int32),num,bin);
+    fprintf(xml,"      <data name=\"index\"><Data type=\"int32\" ofs=%li num=%li/></data>\n",ofs,num);
+    fprintf(xml,"    </Geometry>\n");
+
+    fprintf(xml,"    <Geometry type=\"trianglemesh\">\n");
+    ofs = ftell(bin);
+    std::vector<vec3f> vertex, color;
+    for (int i=0;i<tris->vertex.size();i++) {
+      vertex.push_back(tris->vertex[i]);
+      color.push_back(tris->color[i]);
+    }
+    num = vertex.size();
+    fwrite(&vertex[0],sizeof(vec3f),num,bin);
+    fprintf(xml,"      <data name=\"vertex\"><Data type=\"vec3f\" ofs=%li num=%li/></data>\n",ofs,num);
+
+    num = color.size();
+    fwrite(&color[0],sizeof(vec3f),num,bin);
+    fprintf(xml,"      <data name=\"vertex.color\"><Data type=\"vec3f\" ofs=%li num=%li/></data>\n",ofs,num);
+
+    ofs = ftell(bin);
+    num = tris->index.size();
+    fwrite(&tris->index[0],sizeof(vec3ui),num,bin);
+    fprintf(xml,"      <data name=\"index\"><Data type=\"vec3ui\" ofs=%li num=%li/></data>\n",ofs,num);
+    fprintf(xml,"    </Geometry>\n");
+
+    fprintf(xml,"  </Model>\n");
+    fprintf(xml,"</ospray>\n");
+    fclose(xml);
+    fclose(bin);
+
+    cout << "written model to /tmp/streamlines.xml" << endl;
+    exit(0);
   }
 
   struct StreamLineViewer : public Glut3DWidget {
@@ -331,7 +373,9 @@ namespace ospray {
     // create viewer window
     // -------------------------------------------------------
 #if 1
-    writeToXML(streamLines,triangles);
+    char *shouldIWrite = getenv("OSPRAY_DUMP_MODEL");
+    if (shouldIWrite && atoi(shouldIWrite))
+      writeToXML(streamLines,triangles);
 #endif
     StreamLineViewer window(streamLines,triangles);
     window.create("ospDVR: OSPRay miniature stream line viewer");
