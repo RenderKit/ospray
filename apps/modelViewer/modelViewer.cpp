@@ -27,7 +27,7 @@ namespace ospray {
   int spp = 1; /*! number of samples per pixel */
   unsigned int maxObjectsToConsider = (uint32)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
-  bool forceInstancing = false;
+  bool forceInstancing = true;
   /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
   bool showDepthBuffer = 0;
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
@@ -122,23 +122,29 @@ namespace ospray {
         break;
       case 'X':
         {
-          g_explosion_factor += .05f;
+          g_explosion_factor += .005f;
           vec3f center = embree::center(msgModel->getBBox());
           ospSet3fv(ospModel, "explosion.center", &center.x);
           ospSetf(ospModel, "explosion.factor", g_explosion_factor);
-          printf("Model is exploded by %f\n", g_explosion_factor - 1.f);
+          printf("Model is exploded by %f\n", g_explosion_factor);
           ospCommit(ospModel);
+          accumID=0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
         }
         break;
       case 'x':
         {
-          g_explosion_factor -= .05f;
+          g_explosion_factor -= .005f;
           g_explosion_factor = std::max( 0.f, g_explosion_factor);
           vec3f center = embree::center(msgModel->getBBox());
           ospSet3fv(ospModel, "explosion.center", &center.x);
           ospSetf(ospModel, "explosion.factor", g_explosion_factor);
           printf("Model is exploded by %f\n", g_explosion_factor);
           ospCommit(ospModel);
+          accumID=0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
         }
         break;
       default:
