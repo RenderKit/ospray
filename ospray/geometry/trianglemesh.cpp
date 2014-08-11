@@ -134,7 +134,7 @@ namespace ospray {
                  (void*)this->index,0,
                  ospray::sizeOf(indexData->type));
 
-    box3f bounds = embree::empty;
+    bounds = embree::empty;
     
     for (int i=0;i<vertexData->size();i++) 
       bounds.extend(vertex[i]);

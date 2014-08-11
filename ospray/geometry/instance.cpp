@@ -28,15 +28,21 @@ namespace ospray {
     xfm.l.vz = getParam3f("xfm.l.vz",vec3f(0.f,0.f,1.f));
     xfm.p   = getParam3f("xfm.p",vec3f(0.f,0.f,0.f));
 
-    const vec3f center = model->getParam3f("explosion.center", vec3f(0.f));
-    const float dist = distance(xfm.p, center);
-
-    xfm.p   *= 1 + dist * model->getParam1f("explosion.factor", 0.f);
-
     instancedScene = (Model *)getParamObject("model",NULL);
-    
     embreeGeomID = rtcNewInstance(model->embreeSceneHandle,
                                   instancedScene->embreeSceneHandle);
+
+    assert(instancedScene);
+    
+    //This line causes xfrog to crash??
+    const vec3f mesh_center  = xfm.p;
+
+    const vec3f model_center = model->getParam3f("explosion.center", mesh_center);
+
+    //const float dist = distance(mesh_center, model_center);
+    const vec3f dir = mesh_center - model_center;
+    xfm.p += dir * model->getParam1f("explosion.factor", 0.f);
+
     rtcSetTransform(model->embreeSceneHandle,embreeGeomID,
                     RTC_MATRIX_COLUMN_MAJOR,
                     (const float *)&xfm);

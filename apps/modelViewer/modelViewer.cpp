@@ -122,9 +122,9 @@ namespace ospray {
         break;
       case 'X':
         {
-          g_explosion_factor += .005f;
+          g_explosion_factor += .1f;
           vec3f center = embree::center(msgModel->getBBox());
-          ospSet3fv(ospModel, "explosion.center", &center.x);
+          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
           ospSetf(ospModel, "explosion.factor", g_explosion_factor);
           printf("Model is exploded by %f\n", g_explosion_factor);
           ospCommit(ospModel);
@@ -135,10 +135,10 @@ namespace ospray {
         break;
       case 'x':
         {
-          g_explosion_factor -= .005f;
+          g_explosion_factor -= .1f;
           g_explosion_factor = std::max( 0.f, g_explosion_factor);
           vec3f center = embree::center(msgModel->getBBox());
-          ospSet3fv(ospModel, "explosion.center", &center.x);
+          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
           ospSetf(ospModel, "explosion.factor", g_explosion_factor);
           printf("Model is exploded by %f\n", g_explosion_factor);
           ospCommit(ospModel);
