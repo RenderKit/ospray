@@ -40,12 +40,12 @@ namespace ospray {
     std::cout << "#osp: creating 'spheres' geometry, #spheres = " << numSpheres << std::endl;
     
     if (_materialList) {
-      delete[] _materialList;
+      free(_materialList);
       _materialList = NULL;
     }
 
     if (materialList) {
-      void **ispcMaterials = new void *[materialList->numItems];
+      void **ispcMaterials = (void**) malloc(sizeof(void*) * materialList->numItems);
       for (int i=0;i<materialList->numItems;i++) {
         Material *m = ((Material**)materialList->data)[i];
         ispcMaterials[i] = m?m->getIE():NULL;
