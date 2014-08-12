@@ -614,7 +614,6 @@ namespace ospray {
       if (doesInstancing) {
         OSPModel model_i = ospNewModel();
         ospAddGeometry(model_i,ospMesh);
-        ospSet1i(model_i, "meshID", i);
         ospCommit(model_i);
         instanceModels.push_back(model_i);
       } else
@@ -626,7 +625,6 @@ namespace ospray {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
                                           msgModel->instance[i].xfm);
-        ospSet1i(inst, "geomID", msgModel->instance[i].meshID);
         ospAddGeometry(ospModel,inst);
       }
     }
