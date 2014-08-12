@@ -122,7 +122,7 @@ namespace ospray {
         break;
       case 'X':
         {
-          g_explosion_factor += .1f;
+          g_explosion_factor += .01f;
           vec3f center = embree::center(msgModel->getBBox());
           ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
           ospSetf(ospModel, "explosion.factor", g_explosion_factor);
@@ -135,7 +135,7 @@ namespace ospray {
         break;
       case 'x':
         {
-          g_explosion_factor -= .1f;
+          g_explosion_factor -= .01f;
           g_explosion_factor = std::max( 0.f, g_explosion_factor);
           vec3f center = embree::center(msgModel->getBBox());
           ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
@@ -614,6 +614,7 @@ namespace ospray {
       if (doesInstancing) {
         OSPModel model_i = ospNewModel();
         ospAddGeometry(model_i,ospMesh);
+        ospSet1i(model_i, "meshID", i);
         ospCommit(model_i);
         instanceModels.push_back(model_i);
       } else
@@ -625,6 +626,7 @@ namespace ospray {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
                                           msgModel->instance[i].xfm);
+        ospSet1i(inst, "geomID", msgModel->instance[i].meshID);
         ospAddGeometry(ospModel,inst);
       }
     }

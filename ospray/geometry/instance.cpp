@@ -34,12 +34,10 @@ namespace ospray {
 
     assert(instancedScene);
     
-    //This line causes xfrog to crash??
-    const vec3f mesh_center  = xfm.p;
-
+    const vec3f mesh_center  = xfm.p == vec3f(0.f, 0.f, 0.f)
+      ? embree::center(instancedScene->geometry[0]->bounds)
+      : xfm.p;
     const vec3f model_center = model->getParam3f("explosion.center", mesh_center);
-
-    //const float dist = distance(mesh_center, model_center);
     const vec3f dir = mesh_center - model_center;
     xfm.p += dir * model->getParam1f("explosion.factor", 0.f);
 
