@@ -18,6 +18,9 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  bool  g_explosion_mode   = false;
+  float g_explosion_factor = 0.f;
+
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
   int accumID = -1;
@@ -25,7 +28,7 @@ namespace ospray {
   int spp = 1; /*! number of samples per pixel */
   unsigned int maxObjectsToConsider = (uint32)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
-  bool forceInstancing = false;
+  bool forceInstancing = true;
   /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
   bool showDepthBuffer = 0;
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
@@ -118,10 +121,38 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
+      case 'X':
+        {
+          g_explosion_factor += .01f;
+          vec3f center = embree::center(msgModel->getBBox());
+          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
+          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
+          printf("Model is exploded by %f\n", g_explosion_factor);
+          ospCommit(ospModel);
+          accumID=0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+        }
+        break;
+      case 'x':
+        {
+          g_explosion_factor -= .01f;
+          g_explosion_factor = std::max( 0.f, g_explosion_factor);
+          vec3f center = embree::center(msgModel->getBBox());
+          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
+          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
+          printf("Model is exploded by %f\n", g_explosion_factor);
+          ospCommit(ospModel);
+          accumID=0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+        }
+        break;
       default:
         Glut3DWidget::keypress(key,where);
       }
     }
+
     virtual void display()
     {
       if (!fb || !renderer) return;
