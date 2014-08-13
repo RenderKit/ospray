@@ -35,8 +35,6 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # whether to enable intersection filters
 SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
-# whether to enable alpha aware geometry
-SET(OSPRAY_ALPHA_AWARE_GEOMETRY OFF CACHE BOOL "Enable Alpha aware intersection filtering?")
 # whether to use ICC (vs GCC) for the non-MIC part
 SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
 # compiler selection for the non-MIC part
