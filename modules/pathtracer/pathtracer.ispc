@@ -664,10 +664,9 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
   
   CameraSample cameraSample;
   
-  for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-    const uint32 frag = i*programCount+programIndex;
-    const uint32 ix = tile.region.lower.x + (frag % TILE_SIZE);
-    const uint32 iy = tile.region.lower.y + (frag / TILE_SIZE);
+  for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    const uint32 ix = tile.region.lower.x + z_order.xs[i];
+    const uint32 iy = tile.region.lower.y + z_order.ys[i];
     if (ix >= fb->size.x || iy >= fb->size.y) 
       continue;
 //     screenSample.sampleID.x        = tile.region.lower.x + (frag % TILE_SIZE);
@@ -699,7 +698,8 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
 //     PathTracer_Li(pt,
     // renderer->renderSample(renderer,screenSample);
     screenSample.rgb = PathTracer_renderPixel(pt,tile,rnd,ix,iy,pixel_du,pixel_dv);
-     setRGBAZ(tile,i,screenSample.rgb,screenSample.alpha,screenSample.z);
+    const uint32 pixel = z_order.xs[i] + (z_order.ys[i] * TILE_SIZE);
+     setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
   }
 }
 
@@ -746,6 +746,8 @@ export void* uniform PathTracer_create(void *uniform cppE,
   uniform PathTracer *uniform THIS = uniform new uniform PathTracer;
   PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,epsilon,
                           (uniform Image* uniform) backplate);
+
+  precomputeZOrder();
   
   THIS->scene = createScene();
   return THIS;

@@ -127,8 +127,8 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
 }
 
 #ifdef OSPRAY_INTERSECTION_FILTER
-void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
-                        varying Ray &ray  /*!< intersection to filter */)
+static void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
+                               varying Ray &ray  /*!< intersection to filter */)
 {
   uniform Geometry *uniform geom = (uniform Geometry *uniform)ptr;
   if (ray.intersectionFilter) {

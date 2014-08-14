@@ -55,9 +55,11 @@ namespace ospray {
       tx->ispcEquivalent = ispc::Texture2D_4f_create(tx,sx,sy,data);
       bpp = 4 * sizeof(float);
       // img = ispc::Image3fa__new(width, height, (ispc::vec3fa*)data, true);
-      // break;
+      break;
     default: throw std::runtime_error("Could not determine bytes per pixel in " __FILE__);
     }
+
+    assert(tx->ispcEquivalent && "ispcEquivalent may not be null in Texture2D");
     
     const int bytes = sx * sy * bpp;
     tx->width = sx;

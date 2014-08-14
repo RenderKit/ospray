@@ -196,7 +196,7 @@ namespace ospray {
       //                          bool right,
       //                          bool middle);
       virtual void reshape(const vec2i &newSize); 
-      virtual void idle()                        {}
+      virtual void idle()                        { usleep(1000); }
       /*! display this window. By default this will just clear this
         window's framebuffer; it's up to the user to override this fct
         to do something more useful */

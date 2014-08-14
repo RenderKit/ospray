@@ -579,7 +579,7 @@ namespace ospray {
             for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
               size_t childID = atoi(s);
               miniSG::Node *child = nodeList[childID].ptr;
-              assert(child);
+              //assert(child);
               group->child.push_back(child);
             }
             free(value);
@@ -587,7 +587,8 @@ namespace ospray {
           }
           lastNode = group.ptr;
         } else {
-          throw std::runtime_error("unknown node type '"+nodeName+"' in RIVL model");
+          nodeList.push_back(NULL);
+          //throw std::runtime_error("unknown node type '"+nodeName+"' in RIVL model");
         }
       }
       return lastNode;
@@ -725,7 +726,7 @@ namespace ospray {
         return;
       }
 
-      throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");
+      //throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");
     }
 
     /*! import a wavefront OBJ file, and add it to the specified model */

@@ -24,16 +24,13 @@ IF (OSPRAY_MODULE_MHTK)
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-    INCLUDE_DIRECTORIES(${EMBREE_DIR}/kernels/xeon/)
-    INCLUDE_DIRECTORIES(${EMBREE_DIR}/tutorials/common)
+#    INCLUDE_DIRECTORIES(${EMBREE_DIR}/kernels/xeon/)
+#    INCLUDE_DIRECTORIES(${EMBREE_DIR}/tutorials/common)
 
     INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
     INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
     OSPRAY_ADD_LIBRARY(ospray_module_mhtk${OSPRAY_LIB_SUFFIX} SHARED
-#      multihit_kernel.cpp
-#      multihit_kernel.ispc
-
       xray_renderer.cpp
       xray_renderer.ispc
       )

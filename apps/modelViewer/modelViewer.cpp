@@ -18,13 +18,17 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  bool  g_explosion_mode   = false;
+  float g_explosion_factor = 0.f;
+
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
+  bool g_alpha = false;
   int accumID = -1;
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
   unsigned int maxObjectsToConsider = (uint32)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
-  bool forceInstancing = false;
+  bool forceInstancing = true;
   /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
   bool showDepthBuffer = 0;
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
@@ -117,10 +121,38 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
+      case 'X':
+        {
+          g_explosion_factor += .01f;
+          vec3f center = embree::center(msgModel->getBBox());
+          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
+          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
+          printf("Model is exploded by %f\n", g_explosion_factor);
+          ospCommit(ospModel);
+          accumID=0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+        }
+        break;
+      case 'x':
+        {
+          g_explosion_factor -= .01f;
+          g_explosion_factor = std::max( 0.f, g_explosion_factor);
+          vec3f center = embree::center(msgModel->getBBox());
+          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
+          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
+          printf("Model is exploded by %f\n", g_explosion_factor);
+          ospCommit(ospModel);
+          accumID=0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+        }
+        break;
       default:
         Glut3DWidget::keypress(key,where);
       }
     }
+
     virtual void display()
     {
       if (!fb || !renderer) return;
@@ -329,6 +361,7 @@ namespace ospray {
         {
           miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
           OSPTexture2D ospTex = createTexture2D(tex);
+          ospCommit(ospTex);
           ospSetParam(ospMat, name, ospTex);
           break;
         }
@@ -388,6 +421,8 @@ namespace ospray {
         ospLoadModule(moduleName);
       } else if (arg == "--1k") {
         g_width = g_height = 1024;
+      } else if (arg == "--alpha") {
+        g_alpha = true;
       } else if (arg == "-win") {
         if (++i < ac)
           {
@@ -517,7 +552,7 @@ namespace ospray {
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
       // create ospray mesh
-      OSPGeometry ospMesh = ospNewTriangleMesh();
+      OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewTriangleMesh();
 
       // check if we have to transform the vertices:
       if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
@@ -564,6 +599,9 @@ namespace ospray {
         ospSetData(ospMesh,"vertex.texcoord",texcoord);
       }
 
+      ospSet1i(ospMesh, "alpha_type", 0);
+      ospSet1i(ospMesh, "alpha_component", 4);
+
       // add triangle material id array to mesh
       if (msgMesh->materialList.empty()) {
         // we have a single material for this mesh...
@@ -572,10 +610,46 @@ namespace ospray {
       } else {
         // we have an entire material list, assign that list
         std::vector<OSPMaterial > materialList;
-        for (int i=0;i<msgMesh->materialList.size();i++)
+        std::vector<OSPTexture2D > alphaMaps;
+        std::vector<float> alphas;
+        for (int i=0;i<msgMesh->materialList.size();i++) {
           materialList.push_back(createMaterial(ospRenderer, msgMesh->materialList[i].ptr));
+
+          for (miniSG::Material::ParamMap::const_iterator it =  msgMesh->materialList[i]->params.begin();
+              it != msgMesh->materialList[i]->params.end(); it++) {
+            const char *name = it->first.c_str();
+            const miniSG::Material::Param *p = it->second.ptr;
+            if(p->type == miniSG::Material::Param::TEXTURE) {
+              if(!strcmp(name, "map_kd")) {
+                miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
+                OSPTexture2D ospTex = createTexture2D(tex);
+                ospCommit(ospTex);
+                alphaMaps.push_back(ospTex);
+              }
+            } else if(p->type == miniSG::Material::Param::FLOAT) {
+              if(!strcmp(name, "d")) alphas.push_back(p->f[0]);
+            }
+          }
+
+          while(materialList.size() > alphaMaps.size()) {
+            alphaMaps.push_back(NULL);
+          }
+          while(materialList.size() > alphas.size()) {
+            alphas.push_back(0.f);
+          }
+        }
         OSPData ospMaterialList = ospNewData(materialList.size(), OSP_OBJECT, &materialList[0], 0);
         ospSetData(ospMesh,"materialList",ospMaterialList);
+
+        // only set these if alpha aware mode enabled
+        // this currently doesn't work on the MICs!
+        if(g_alpha) {
+          OSPData ospAlphaMapList = ospNewData(alphaMaps.size(), OSP_OBJECT, &alphaMaps[0], 0);
+          ospSetData(ospMesh, "alpha_maps", ospAlphaMapList);
+
+          OSPData ospAlphaList = ospNewData(alphas.size(), OSP_OBJECT, &alphas[0], 0);
+          ospSetData(ospMesh, "alphas", ospAlphaList);
+        }
       }
 
       ospCommit(ospMesh);

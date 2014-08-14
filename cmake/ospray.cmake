@@ -22,7 +22,19 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 MACRO(CONFIGURE_OSPRAY)
   SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
   SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+
   LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
+
+  # Embree common include directories; others may be added depending on build target.
+  # this section could be sooo much cleaner if embree only used
+  # fully-qualified include names...
+  SET(EMBREE_INCLUDE_DIRECTORIES
+    ${OSPRAY_EMBREE_SOURCE_DIR}/ 
+    ${OSPRAY_EMBREE_SOURCE_DIR}/include
+    ${OSPRAY_EMBREE_SOURCE_DIR}/common
+    ${OSPRAY_EMBREE_SOURCE_DIR}/
+    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
+    )
 
   IF (OSPRAY_TARGET STREQUAL "MIC")
     SET(OSPRAY_EXE_SUFFIX ".mic")
@@ -31,6 +43,11 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_ISPC_TARGET "mic")
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
+
+    # additional Embree include directory
+    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi)
+
     #		SET(LIBRARY_OUTPUT_PATH "${OSPRAY_BINARY_DIR}/lib/mic")
     ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=16)
     ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC=1)
@@ -50,22 +67,46 @@ MACRO(CONFIGURE_OSPRAY)
       MESSAGE(FATAL_ERROR "Unknown compiler specified: " ${OSPRAY_COMPILER})
     ENDIF()
 
+    # additional Embree include directory
+    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
+
     IF (${OSPRAY_XEON_TARGET} STREQUAL "AVX2")
       ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=8)
       ADD_DEFINITIONS(-DOSPRAY_TARGET_AVX2=1)
+
+      # embree targets - embree needs those to build the proper code paths
+      ADD_DEFINITIONS(-D__TARGET_SSE41__)
+      ADD_DEFINITIONS(-D__TARGET_SSE42__)
+      ADD_DEFINITIONS(-D__TARGET_AVX__)
+      ADD_DEFINITIONS(-D__TARGET_AVX2__)
+
+      # ispc target 
       SET(OSPRAY_ISPC_TARGET "avx2")
     ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "AVX")
       ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=8)
       ADD_DEFINITIONS(-DOSPRAY_TARGET_AVX=1)
+
+      # embree targets - embree needs those to build the proper code paths
+      ADD_DEFINITIONS(-D__TARGET_SSE41__)
+      ADD_DEFINITIONS(-D__TARGET_SSE42__)
+      ADD_DEFINITIONS(-D__TARGET_AVX__)
+
+      # ispc target 
       SET(OSPRAY_ISPC_TARGET "avx")
     ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "SSE")
       ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=4)
       ADD_DEFINITIONS(-DOSPRAY_TARGET_SSE=1)
+
+      # embree targets - embree needs those to build the proper code paths
+      ADD_DEFINITIONS(-D__TARGET_SSE41__)
+      ADD_DEFINITIONS(-D__TARGET_SSE42__)
+
+      # ispc target 
       SET(OSPRAY_ISPC_TARGET "sse4")
     ELSE()
       MESSAGE("unknown OSPRAY_XEON_TARGET '${OSPRAY_XEON_TARGET}'")
     ENDIF()
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
+#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
   ENDIF()
   
   IF (OSPRAY_MPI)
@@ -73,28 +114,26 @@ MACRO(CONFIGURE_OSPRAY)
   ENDIF()
 
   IF (THIS_IS_MIC)
-    INCLUDE(${EMBREE_DIR}/common/cmake/icc_xeonphi.cmake)
-    
-    SET(EMBREE_LIB sys_xeonphi simd_xeonphi embree_xeonphi)
-
     # whehter to build in MIC/xeon phi support
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
-
-  ELSE()
-    IF (APPLE)
-      SET(EMBREE_LIB embree)
-    ELSE()
-      SET(EMBREE_LIB sys simd embree)
-    ENDIF()
   ENDIF()
 
-  INCLUDE(ospray_ispc)
+#  INCLUDE(ospray_ispc)
+#  INCLUDE(ispc_build_rules)
 
+  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
+
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
+  
+  INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
+  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
 
   IF (OSPRAY_INTERSECTION_FILTER)
     ADD_DEFINITIONS(-DOSPRAY_INTERSECTION_FILTER=1)
     ADD_DEFINITIONS_ISPC(-DOSPRAY_INTERSECTION_FILTER=1)
   ENDIF()
+
 ENDMACRO()
 
 

@@ -20,6 +20,7 @@
 #include "../common/library.h"
 #include "../texture/texture2d.h"
 #include "../lights/light.h"
+
 // embree stuff
 // stl
 #include <algorithm>

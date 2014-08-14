@@ -153,6 +153,15 @@ namespace ospray {
     }
   };
 
+  void writeToXML(StreamLines *sl, Triangles *tris) 
+  {
+    FILE *file = fopen("/tmp/streamlines.xml","w");
+    fprintf(file,"<?xml?>\n");
+    fprintf(file,"<ospray version=\"0.5.0\">\n");
+    fprintf(file,"</ospray>\n");
+    fclose(file);
+  }
+
   struct StreamLineViewer : public Glut3DWidget {
     /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
     StreamLineViewer(StreamLines *sl, Triangles *tris) 
@@ -321,6 +330,9 @@ namespace ospray {
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
+#if 1
+    writeToXML(streamLines,triangles);
+#endif
     StreamLineViewer window(streamLines,triangles);
     window.create("ospDVR: OSPRay miniature stream line viewer");
     printf("Viewer created. Press 'Q' to quit.\n");

@@ -6,6 +6,8 @@
 # Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
 # #####################################################################
 
+CONFIGURE_OSPRAY()
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 ADD_SUBDIRECTORY(miniSG)

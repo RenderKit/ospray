@@ -64,7 +64,7 @@ IF (OSPRAY_MPI)
 
   IF (THIS_IS_MIC)
     # we _already_ included this in ospray, but at that time the "-mt_mpi" flag wasn't set"
-    INCLUDE(${EMBREE_DIR}/common/cmake/icc_xeonphi.cmake)
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
     #		SET(CMAKE_CXX_LINK_EXECUTABLE  	    "<CMAKE_CXX_COMPILER> ${CMAKE_CXX_FLAGS} -mmic -static-intel -rdynamic -fPIC -L${CMAKE_BINARY_DIR} <LINK_FLAGS> -o <TARGET> ${CMAKE_GNULD_IMAGE_VERSION} <OBJECTS> <LINK_LIBRARIES>")
     #		SET(CMAKE_CXX_CREATE_SHARED_LIBRARY "<CMAKE_CXX_COMPILER> ${CMAKE_CXX_FLAGS} -mmic -static-intel <LANGUAGE_COMPILE_FLAGS> <CMAKE_SHARED_MODULE_CXX_FLAGS> <LINK_FLAGS> <CMAKE_SHARED_MODULE_CREATE_CXX_FLAGS> -o <TARGET> ${CMAKE_GNULD_IMAGE_VERSION} <OBJECTS> <LINK_LIBRARIES> -zmuldefs")
   ENDIF()

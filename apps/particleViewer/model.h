@@ -31,6 +31,7 @@ namespace ospray {
       std::vector<AtomType *>   atomType;
       std::map<std::string,int> atomTypeByName;
       std::vector<Atom> atom;
+      float radius;
 
       int getAtomType(const std::string &name);
 
@@ -38,6 +39,8 @@ namespace ospray {
       void loadXYZ(const std::string &fn);
       
       box3f getBBox() const;
+
+      Model() : radius(1.f) {}
     };
 
   }
