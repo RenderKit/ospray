@@ -334,16 +334,16 @@ namespace ospray {
       const std::map<Vertex, uint32>::iterator& entry = vertexMap.find(i);
       if (entry != vertexMap.end()) return(entry->second);
 
-      if (isnan(v[i.v].x) || isnan(v[i.v].y) || isnan(v[i.v].z))
+      if (std::isnan(v[i.v].x) || std::isnan(v[i.v].y) || std::isnan(v[i.v].z))
         return -1;
 
-      if (i.vn >= 0 && (isnan(vn[i.vn].x) ||
-                        isnan(vn[i.vn].y) ||
-                        isnan(vn[i.vn].z)))
+      if (i.vn >= 0 && (std::isnan(vn[i.vn].x) ||
+                        std::isnan(vn[i.vn].y) ||
+                        std::isnan(vn[i.vn].z)))
         return -1;
 
-      if (i.vt >= 0 && (isnan(vt[i.vt].x) ||
-                        isnan(vt[i.vt].y)))
+      if (i.vt >= 0 && (std::isnan(vt[i.vt].x) ||
+                        std::isnan(vt[i.vt].y)))
         return -1;
 
       mesh->position.push_back(v[i.v]);

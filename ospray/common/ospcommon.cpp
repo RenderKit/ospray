@@ -62,11 +62,16 @@ namespace ospray {
   {
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
-    debugMode = false;
     for (int i=1;i<ac;) {
       std::string parm = av[i];
       if (parm == "--osp:debug") {
         debugMode = true;
+        removeArgs(ac,av,i,1);
+      } else if (parm == "--osp:verbose") {
+        logLevel = 1;
+        removeArgs(ac,av,i,1);
+      } else if (parm == "--osp:vv") {
+        logLevel = 2;
         removeArgs(ac,av,i,1);
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);

@@ -104,9 +104,6 @@ namespace ospray {
     struct TriangleMesh : public miniSG::Geometry {
       virtual string toString() const;
       TriangleMesh();
-      virtual ~TriangleMesh() {
-        PING; 
-      }
 
       // /*! \brief data handle to vertex data array. 
         
@@ -737,9 +734,8 @@ namespace ospray {
       nodeList.clear();
       Ref<miniSG::Node> sg = importRIVL(fileName);
       traverseSG(model,sg);
-      cout << "this should free the rivl scene graph!?" << endl;
+      nodeList.clear();
       sg = 0;
-      cout << "this should HAVE freed the rivl scene graph!?" << endl;
     }
     
   }

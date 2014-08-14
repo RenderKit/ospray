@@ -80,7 +80,7 @@ will automatically launch <xyz> on the hosts, and (ifavailable),
 
 <dt><code>OSPRAY_MPI</code></dt><dd>Specifies whether the users selected the MPI build option</dd>
 
-<dt><code>OSPRAY_ICC</code></dt><dd>Specifies whether the users selected the ICC (vs gcc) build option</dd>
+<dt><code>OSPRAY_COMPILER</code></dt><dd>Specifies which compiler the user selected (ICC, GCC, or CLANG)</dd>
 
 <dt><code>OSPRAY_MIC</code></dt><dd>Specifies whether the users
 selected the MIC build option, and wants to build the MIC/Xeon Phi
