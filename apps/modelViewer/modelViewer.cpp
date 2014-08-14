@@ -641,11 +641,15 @@ namespace ospray {
         OSPData ospMaterialList = ospNewData(materialList.size(), OSP_OBJECT, &materialList[0], 0);
         ospSetData(ospMesh,"materialList",ospMaterialList);
 
-        OSPData ospAlphaMapList = ospNewData(alphaMaps.size(), OSP_OBJECT, &alphaMaps[0], 0);
-        ospSetData(ospMesh, "alpha_maps", ospAlphaMapList);
+        // only set these if alpha aware mode enabled
+        // this currently doesn't work on the MICs!
+        if(g_alpha) {
+          OSPData ospAlphaMapList = ospNewData(alphaMaps.size(), OSP_OBJECT, &alphaMaps[0], 0);
+          ospSetData(ospMesh, "alpha_maps", ospAlphaMapList);
 
-        OSPData ospAlphaList = ospNewData(alphas.size(), OSP_OBJECT, &alphas[0], 0);
-        ospSetData(ospMesh, "alphas", ospAlphaList);
+          OSPData ospAlphaList = ospNewData(alphas.size(), OSP_OBJECT, &alphas[0], 0);
+          ospSetData(ospMesh, "alphas", ospAlphaList);
+        }
       }
 
       ospCommit(ospMesh);
