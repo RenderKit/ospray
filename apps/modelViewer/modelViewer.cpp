@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 // viewer widget
-#include "../util/glut3D/glut3D.h"
+#include "apps/common/widgets/glut3D.h"
 // mini scene graph for loading the model
 #include "miniSG/miniSG.h"
 // ospray, for rendering

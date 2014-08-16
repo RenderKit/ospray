@@ -10,7 +10,7 @@
   (supports STL and Wavefront OBJ files) */
 
 // viewer widget
-#include "glut3D/glut3D.h"
+#include "apps/common/widgets/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
 #include "model.h"

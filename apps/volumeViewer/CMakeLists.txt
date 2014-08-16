@@ -37,8 +37,8 @@ SET(MOC_HEADERS
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
-ADD_EXECUTABLE(ospQtVolumeViewer ${SRCS} ${MOC_OUTFILES})
-TARGET_LINK_LIBRARIES(ospQtVolumeViewer ${LIBS})
+ADD_EXECUTABLE(ospVolumeViewer ${SRCS} ${MOC_OUTFILES})
+TARGET_LINK_LIBRARIES(ospVolumeViewer ${LIBS})
 # ------------------------------------------------------------
-INSTALL(TARGETS ospQtVolumeViewer DESTINATION bin)
+INSTALL(TARGETS ospVolumeViewer DESTINATION bin)
 # ------------------------------------------------------------
