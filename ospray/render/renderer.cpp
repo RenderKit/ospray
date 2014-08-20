@@ -26,7 +26,12 @@ namespace ospray {
   void Renderer::commit()
   {
     spp = getParam1i("spp",1);
-    if(this->getIE()) ispc::Renderer_setSPP(this->getIE(),spp);
+    nearClip = getParam1f("near_clip",1e-6f);
+    PRINT(nearClip);
+    if(this->getIE()) {
+      ispc::Renderer_setSPP(this->getIE(),spp);
+      ispc::Renderer_setNearClip(this->getIE(), nearClip);
+    }
   }
 
   Renderer *Renderer::createRenderer(const char *type)

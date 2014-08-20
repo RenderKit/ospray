@@ -27,7 +27,8 @@ namespace ospray {
    */
   struct Renderer : public ManagedObject {
     uint32 spp;
-    Renderer() : spp(1) {};
+    float  nearClip;
+    Renderer() : spp(1), nearClip(1e-6f) {}
     virtual void commit();
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Renderer"; }

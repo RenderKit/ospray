@@ -18,6 +18,7 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  float g_near_clip = 1e-6f;
   bool  g_explosion_mode   = false;
   float g_explosion_factor = 0.f;
 
@@ -107,6 +108,7 @@ namespace ospray {
         ospSet1i(renderer,"shadowsEnabled",doShadows);
         ospCommit(renderer);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
         break;
       case 'D':
         showDepthBuffer = !showDepthBuffer;
@@ -150,6 +152,29 @@ namespace ospray {
         break;
       default:
         Glut3DWidget::keypress(key,where);
+      }
+    }
+
+    virtual void specialkey(int32 key, const vec2f where)
+    {
+      switch(key) {
+        case GLUT_KEY_PAGE_UP:
+          g_near_clip += 10.f * motionSpeed;
+          ospSet1f(renderer, "near_clip", g_near_clip);
+          ospCommit(renderer);
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+          break;
+        case GLUT_KEY_PAGE_DOWN:
+          g_near_clip -= 10.f * motionSpeed;
+          g_near_clip = std::max(g_near_clip, 1e-6f);
+          ospSet1f(renderer, "near_clip", g_near_clip);
+          ospCommit(renderer);
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+          break;
+        default:
+          Glut3DWidget::keypress(key,where);
       }
     }
 

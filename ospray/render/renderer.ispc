@@ -214,3 +214,9 @@ export void Renderer_setSPP(void *uniform _renderer, uniform uint32 spp)
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->spp = spp;
 }
+
+export void Renderer_setNearClip(void *uniform _renderer, uniform float nearClip)
+{
+  uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
+  renderer->nearClip = nearClip;
+}
