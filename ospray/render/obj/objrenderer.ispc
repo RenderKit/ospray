@@ -98,6 +98,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
   uniform int depth = 0;
 
   while (1) {
+    ray.t0 += renderer->inherited.nearClip;
     traceRay(renderer->inherited.model,ray);
 
     if (ray.geomID < 0) {

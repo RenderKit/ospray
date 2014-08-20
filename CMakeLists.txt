@@ -33,7 +33,7 @@ MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
 MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
-# whether to use ICC (vs GCC) for the non-MIC part
+# whether to enable intersection filters
 SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
 # compiler selection for the non-MIC part
 SET(OSPRAY_COMPILER "ICC" CACHE STRING "Set to ICC, GCC, or CLANG")

@@ -24,6 +24,7 @@
 inline vec4f getTexel4uc(const uniform Texture2D *uniform THIS,
                          const uint32 ix, const uint32 iy)
 {
+  assert(THIS);
   const uint32 c = ((uniform uint32 *uniform)THIS->data)[ix+THIS->size.x*iy];
   const float one_over_255 = (1.f/255.f);
   const uint32 r = c         & 255;
@@ -36,6 +37,7 @@ inline vec4f getTexel4uc(const uniform Texture2D *uniform THIS,
 inline vec4f getTexel3uc(const uniform Texture2D *uniform THIS,
                          const uint32 ix, const uint32 iy)
 {
+  assert(THIS);
   const uniform uint8 *uniform pixel = (const uniform uint8 *uniform)THIS->data;
   const float one_over_255 = (1.f/255.f);
   const uint32 pixelOfs = 3*(ix+THIS->size.x*iy);
@@ -49,6 +51,7 @@ static void Texture2D_4uc_bilinear(const uniform Texture2D *uniform _this,
                                    varying vec4f &ret,
                                    const varying vec2f &p)
 {
+  assert(_this);
   const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
 
   // repeat: get remainder within [0.1] parameter space
@@ -79,6 +82,7 @@ static void Texture2D_3uc_bilinear(const uniform Texture2D *uniform _this,
                                    varying vec4f &ret,
                                    const varying vec2f &p)
 {
+  assert(_this);
   const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
 
   // repeat: get remainder within [0.1] parameter space
@@ -109,6 +113,7 @@ static void Texture2D_4f_bilinear(const uniform Texture2D *uniform texture,
                               varying vec4f &ret,
                               const varying vec2f &p)
 {
+  assert(texture);
   ret = make_vec4f(1,1,0,0);
 }
 
@@ -116,6 +121,7 @@ static void Texture2D_3f_bilinear(const uniform Texture2D *uniform texture,
                               varying vec4f &ret,
                               const varying vec2f &p)
 {
+  assert(texture);
   ret = make_vec4f(1,0,1,0);
 }
 

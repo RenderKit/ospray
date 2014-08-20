@@ -354,6 +354,7 @@ extern "C" {
     format for vertices and normals in vec3fa, and vec4i for index
     (fourth component is the material ID). */
   OSPTriangleMesh ospNewTriangleMesh();
+
   /*! add an already created geometry to a model */
   void ospAddGeometry(OSPModel model, OSPGeometry mesh);
   /*! \} end of ospray_trianglemesh */

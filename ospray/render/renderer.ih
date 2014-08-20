@@ -66,6 +66,7 @@ struct Renderer {
   Camera      *camera;
   void        *cppEquivalent;
   uint32       spp; // number of samples per pixel
+  float        nearClip;
 };
 
 void Renderer_constructor(uniform Renderer *uniform renderer,

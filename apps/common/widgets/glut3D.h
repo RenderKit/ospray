@@ -79,6 +79,7 @@ namespace ospray {
       {};
       Glut3DWidget *widget;
     };
+
     struct InspectCenter : public Manipulator
     {
       virtual void dragLeft(Glut3DWidget *widget, 

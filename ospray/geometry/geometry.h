@@ -50,6 +50,9 @@ namespace ospray {
       ospLoadModule first. */
     static Geometry *createGeometry(const char *type); 
 
+    float explosion_factor;
+    box3f bounds;
+
   private:
     //! material associated to this geometry
     /*! this field is private to make sure it is only set through

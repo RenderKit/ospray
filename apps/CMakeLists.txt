@@ -11,13 +11,16 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
 CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
+
   # common utility classes for 3D viewer widget, importers, etc
-  ADD_SUBDIRECTORY(util)
+  ADD_SUBDIRECTORY(common/widgets)
+
   # mini-scene graph viewer for _geometry_ (intentionally simple)
   ADD_SUBDIRECTORY(modelViewer)
 
   # stream line viewer for NASA Stream Line Demo
   ADD_SUBDIRECTORY(streamLineViewer)
+
   # xyz atom model viewer (one sphere per atom)
   ADD_SUBDIRECTORY(particleViewer)
 
@@ -26,4 +29,5 @@ IF(NOT THIS_IS_MIC)
   IF(OSPRAY_APPS_VOLUMEVIEWER)
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
+
 ENDIF()
