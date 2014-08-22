@@ -50,7 +50,7 @@ static void AlphaAwareTriangleMesh_postIntersect(uniform Geometry *uniform geom,
     //calculate texture coordinate using barycentric coordinates
     const uniform vec3fa *uniform vertex = THIS->base.vertex;
     const uniform vec2f  *uniform texcoord = THIS->base.texcoord;
-    assert(vertex); assert(texcoord);
+    // assert(vertex); assert(texcoord);
     const vec3i index = THIS->base.index[ray.primID];
     dg.st
       = (1.f-ray.u-ray.v) * (texcoord[index.x])
