@@ -15,6 +15,8 @@ CONFIGURE_OSPRAY()
 INCLUDE(../cmake/build_embree.cmake)
 
 SET(OSPRAY_SOURCES
+  device/nwlayer.cpp
+
   common/ospcommon.cpp
   common/ospcommon.ispc
   common/managed.cpp

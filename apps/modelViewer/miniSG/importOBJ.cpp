@@ -149,7 +149,7 @@ namespace ospray {
       defaultMaterial = NULL;
       curMaterial = defaultMaterial;
 
-      char line[10000];
+      char line[1000000];
       memset(line, 0, sizeof(line));
 
       while (cin.peek() != -1)
