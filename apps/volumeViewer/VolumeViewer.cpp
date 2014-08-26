@@ -10,14 +10,25 @@
 #include "TransferFunctionEditor.h"
 #include <algorithm>
 
-VolumeViewer::VolumeViewer() : renderer_(NULL), volume_(NULL), transferFunction_(NULL), osprayWindow_(NULL)
+VolumeViewer::VolumeViewer(const osp::vec3i &dimensions, const float dt) : renderer_(NULL), transferFunction_(NULL), osprayWindow_(NULL)
 {
     // default window size
     resize(1024, 768);
 
+    QToolBar * toolbar = addToolBar("toolbar");
+  
+    QAction * nextAction = new QAction("Next", this);
+    connect(nextAction, SIGNAL(triggered()), this, SLOT(next()));
+
+    toolbar->addAction(nextAction);
+
     // create renderer for volume viewer
     ospLoadModule("dvr");
     renderer_ = ospNewRenderer("dvr_ispc");
+
+    // set the dt value; auto-set based on volume dimensions if dt == 0
+    if (dt != 0.f) ospSet1f(renderer_, "dt", dt);
+    else ospSet1f(renderer_, "dt", 1.f / float(std::max(std::max(dimensions.x, dimensions.y), dimensions.z)));
 
     if(!renderer_)
         throw std::runtime_error("could not create renderer type 'dvr_ispc'");
@@ -45,13 +56,12 @@ VolumeViewer::VolumeViewer() : renderer_(NULL), volume_(NULL), transferFunction_
     show();
 }
 
-void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout, const float dt)
+void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout)
 {
     std::string volumeType = layout + "_" + format;
-    volume_ = ospNewVolume(volumeType.c_str());
+    OSPVolume volume_ = ospNewVolume(volumeType.c_str());
 
-    if (!volume_) 
-        throw std::runtime_error("could not create volume type '" + volumeType + "'");
+    if (!volume_) throw std::runtime_error("could not create volume type '" + volumeType + "'");
 
     ospSetString(volume_, "filename", filename.c_str());
     ospSet3i(volume_, "dimensions", dimensions.x, dimensions.y, dimensions.z);
@@ -60,26 +70,21 @@ void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dim
     ospSetParam(volume_, "transferFunction", transferFunction_);
 
     // finally, commit the volume.
-    ospCommit(volume_);
+    ospCommit(volume_);  volumes_.push_back(volume_);
+
+}
+
+void VolumeViewer::setVolume(size_t index) {
 
     // and set the volume on the renderer
-    ospSetParam(renderer_, "volume", volume_);
-
-    // set the dt value; auto-set based on volume dimensions if dt == 0
-    if(dt != 0.f)
-    {
-        ospSet1f(renderer_, "dt", dt);
-    }
-    else
-    {
-        ospSet1f(renderer_, "dt", 1.f / float(std::max(std::max(dimensions.x, dimensions.y), dimensions.z)));
-    }
+    ospSetParam(renderer_, "volume", volumes_[index]);
 
     // at this point all required parameters of the renderer are set, so commit it
     ospCommit(renderer_);
 
     // enable rendering in the OSPRay window
     osprayWindow_->setRenderingEnabled(true);
+
 }
 
 void VolumeViewer::render()
@@ -89,6 +94,15 @@ void VolumeViewer::render()
         // force the OSPRay window to render
         osprayWindow_->updateGL();
     }
+}
+
+void VolumeViewer::next()
+{
+
+    static size_t index = 0;  index = (index + 1) % volumes_.size();
+    setVolume(index);
+    std::cout << "next" << std::endl;
+
 }
 
 void VolumeViewer::createTransferFunction()

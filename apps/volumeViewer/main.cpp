@@ -9,8 +9,9 @@
 #include "VolumeViewer.h"
 #include <iostream>
 #include <QtGui>
+#include <ctype.h>
 
-int main(int argc, char * argv[])
+int main(int argc, char *argv[])
 {
     // initialize OSPRay
     ospInit(&argc, (const char **)argv);
@@ -19,30 +20,28 @@ int main(int argc, char * argv[])
     QApplication * app = new QApplication(argc, argv);
 
     // parse commandline arguments
-    // we expect: <filename> <dim1> <dim2> <dim3> <type> <format>
-    if(argc < 7)
-    {
-        std::cerr << "usage: " << argv[0] << " <filename> <dim1> <dim2> <dim3> <format> <layout> [options]" << std::endl;
+    if(argc < 7) {
+
+        std::cerr << "usage: " << argv[0] << " <filename> [filename] [filename] ... <dim1> <dim2> <dim3> <format> <layout> [options]" << std::endl;
         std::cerr << "options:" << std::endl;
         std::cerr << "  -dt <dt>                             : use ray cast sample step size 'dt'" << std::endl;
         std::cerr << "  -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
         std::cerr << "  -benchmark <warm-up frames> <frames> : run benchmark and report overall frame rate" << std::endl;
         std::cerr << "  -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'" << std::endl;
+        return(1);
 
-        return 1;
     }
 
-    std::string filename = argv[1];
+    // parse the volume file names
+    std::vector<std::string> filenames;  for (size_t i=1 ; !isdigit(argv[i][0]) ; i++) filenames.push_back(std::string(argv[i]));
 
     osp::vec3i dimensions;
-    dimensions.x = atoi(argv[2]);
-    dimensions.y = atoi(argv[3]);
-    dimensions.z = atoi(argv[4]);
+    dimensions.x = atoi(argv[1 + filenames.size()]);
+    dimensions.y = atoi(argv[2 + filenames.size()]);
+    dimensions.z = atoi(argv[3 + filenames.size()]);
 
-    std::string format = argv[5];
-    std::string layout = argv[6];
-
-    std::cout << "got filename = " << filename << ", dimensions = (" << dimensions.x << ", " << dimensions.y << ", " << dimensions.z << "), format = " << format << ", layout = " << layout << std::endl;
+    std::string format = argv[4 + filenames.size()];
+    std::string layout = argv[5 + filenames.size()];
 
     // parse optional command line arguments
     float dt = 0.f;                 // viewer will auto-set dt for dt == 0
@@ -52,7 +51,7 @@ int main(int argc, char * argv[])
     int viewSizeWidth = 0;
     int viewSizeHeight = 0;
 
-    for(int i=7; i<argc; i++)
+    for(int i=6 + filenames.size() ; i<argc; i++)
     {
         std::string arg = argv[i];
 
@@ -122,10 +121,13 @@ int main(int argc, char * argv[])
     }
 
     // create volume viewer window
-    VolumeViewer * volumeViewer = new VolumeViewer();
+    VolumeViewer *volumeViewer = new VolumeViewer(dimensions, dt);
 
-    // load the volume from the commandline arguments
-    volumeViewer->loadVolume(filename, dimensions, format, layout, dt);
+    // load the volumes from the commandline arguments
+    for (size_t i=0 ; i < filenames.size() ; i++) volumeViewer->loadVolume(filenames[i], dimensions, format, layout);
+
+    // display the first volume
+    volumeViewer->setVolume(0);
 
     // set rotation rate
     volumeViewer->getQOSPRayWindow()->setRotationRate(rotationRate);
@@ -134,10 +136,7 @@ int main(int argc, char * argv[])
     volumeViewer->getQOSPRayWindow()->setBenchmarkParameters(benchmarkWarmUpFrames, benchmarkFrames);
 
     // set OSPRay view size if specified
-    if(viewSizeWidth != 0 && viewSizeHeight != 0)
-    {
-        volumeViewer->getQOSPRayWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
-    }
+    if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getQOSPRayWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
 
     // enter Qt event loop
     app->exec();
