@@ -18,8 +18,10 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  bool  g_fullScreen       = false;
   bool  g_explosion_mode   = false;
   float g_explosion_factor = 0.f;
+  glut3D::Glut3DWidget::ViewPort g_viewPort;
 
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
@@ -148,6 +150,18 @@ namespace ospray {
           forceRedraw();
         }
         break;
+      case 'f':
+        {
+          g_fullScreen = !g_fullScreen;
+          if(g_fullScreen) glutFullScreen();
+          else glutPositionWindow(0,10);
+        }
+        break;
+      case 'r':
+        {
+          viewPort = g_viewPort;
+        }
+        break;
       default:
         Glut3DWidget::keypress(key,where);
       }
@@ -188,6 +202,11 @@ namespace ospray {
       ++frameID;
       
       if (viewPort.modified) {
+        static bool once = true;
+        if(once) {
+          g_viewPort = viewPort;
+          once = false;
+        }
         Assert2(camera,"ospray camera is null");
         ospSetVec3f(camera,"pos",viewPort.from);
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
