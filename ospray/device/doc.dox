@@ -1,0 +1,7 @@
+
+
+
+Four possible worker implementations -- single-node, coi, mpi-group,
+and mpi-cluster -- defined as follows:
+
+  single-node: 
