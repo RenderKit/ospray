@@ -66,6 +66,7 @@ namespace ospray {
       OSPCOI_CREATE_NEW_EMPTY_DATA,
       OSPCOI_UPLOAD_DATA_DONE,
       OSPCOI_UPLOAD_DATA_CHUNK,
+      OSPCOI_UNPROJECT,
       OSPCOI_NUM_FUNCTIONS
     } RemoteFctID;
 
@@ -95,6 +96,7 @@ namespace ospray {
       "ospray_coi_create_new_empty_data",
       "ospray_coi_upload_data_done",
       "ospray_coi_upload_data_chunk",
+      "ospray_coi_unproject",
       NULL
     };
     
@@ -129,7 +131,8 @@ namespace ospray {
       COIDevice();
 
       void callFunction(RemoteFctID ID, const DataStream &data, 
-                        int *returnValue=NULL, 
+                        void *returnValue=NULL, 
+                        int returnValueSize=0,
                         bool sync=true)
       { 
         double t0 = getSysTime();
@@ -151,8 +154,8 @@ namespace ospray {
                                                     0,NULL,NULL,//buffers
                                                     0,NULL,//dependencies
                                                     data.buf,data.ofs,//data
-                                                    returnValue?returnValue:NULL,
-                                                    returnValue?sizeof(int):0,
+                                                    returnValue,
+                                                    returnValue?returnValueSize:0,
                                                     &event[i]);
           if (result != COI_SUCCESS) {
             coiError(result,"error in coipipelinerunfct");
@@ -281,6 +284,8 @@ namespace ospray {
       virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat);
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type);
+
+      virtual OSPPickData unproject(OSPRenderer _renderer, const vec2f &screenPos);
     };
 
 
@@ -685,7 +690,7 @@ namespace ospray {
       args.write(_renderer);
       args.write(type);
       int retValue = -1;
-      callFunction(OSPCOI_NEW_MATERIAL,args,&retValue);
+      callFunction(OSPCOI_NEW_MATERIAL,args,&retValue,sizeof(int));
       if (retValue)
         // could create material ...
         return (OSPMaterial)(int64)handle;
@@ -694,6 +699,19 @@ namespace ospray {
         handle.free();
         return (OSPMaterial)NULL;
       }
+    }
+
+    /*! have given renderer unproject a screenspace point to worldspace */
+    OSPPickData COIDevice::unproject(OSPRenderer _renderer, const vec2f &screenPos)
+    {
+      Assert2(_renderer, "NULL renderer in COIDevice::unproject");
+      DataStream args;
+      args.write(_renderer);
+      args.write(screenPos);
+
+      OSPPickData retValue = {false, 0, 0, 0};
+      callFunction(OSPCOI_UNPROJECT, args, &retValue, sizeof(retValue));
+      return retValue;
     }
 
     /*! create a new texture2D */

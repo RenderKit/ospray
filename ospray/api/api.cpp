@@ -483,4 +483,11 @@ namespace ospray {
     return geom;
   }
 
+  extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)
+  {
+    ASSERT_DEVICE();
+    Assert2(renderer, "NULL renderer passed to ospUnproject");
+    return ospray::api::Device::current->unproject(renderer, screenPos);
+  }
+
 }

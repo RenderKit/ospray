@@ -180,6 +180,27 @@ namespace ospray {
       }
     }
 
+    virtual void mouseButton(int32 whichButton, bool released, const vec2i &pos)
+    {
+      Glut3DWidget::mouseButton(whichButton, released, pos);
+      if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && glutGetModifiers() | GLUT_ACTIVE_SHIFT && manipulator == inspectCenterManipulator) {
+        vec2f normpos = vec2f(pos.x / (float)g_width, pos.y / (float)g_height);
+        OSPPickData data = ospUnproject(ospRenderer, normpos);
+        vec3f p(data.world_x, data.world_y, data.world_z);
+        if(data.hit) {
+          vec3f delta = p - viewPort.at;
+          vec3f right = cross(normalize(viewPort.up), normalize(viewPort.at - viewPort.from));
+          vec3f offset = dot(delta, right) * right + dot(delta, viewPort.up) * viewPort.up;
+          viewPort.at = p;
+          viewPort.from += offset;
+          viewPort.modified = true;
+          accumID = 0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          ((glut3D::InspectCenter*)inspectCenterManipulator)->pivot = p;
+        }
+      }
+    }
+
     virtual void display()
     {
       if (!fb || !renderer) return;

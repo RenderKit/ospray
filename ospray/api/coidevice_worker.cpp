@@ -461,6 +461,26 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
+    void ospray_coi_unproject(uint32_t         numBuffers,
+                              void**           bufferPtr,
+                              uint64_t*        bufferSize,
+                              void*            argsPtr,
+                              uint16_t         argsSize,
+                              void*            retVal,
+                              uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      Handle _renderer = args.get<Handle>();
+      vec2f screenPos = args.get<vec2f>();
+
+      Renderer *renderer = (Renderer *)_renderer.lookup();
+      OSPPickData retData = renderer->unproject(screenPos);
+      memcpy(retVal, &retData, retValSize);
+
+      if (ospray::debugMode) COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
     void ospray_coi_new_light(uint32_t         numBuffers,
                               void**           bufferPtr,
                               uint64_t*        bufferSize,

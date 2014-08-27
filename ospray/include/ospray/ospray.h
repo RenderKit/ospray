@@ -390,5 +390,14 @@ extern "C" {
   
   /*! \brief commit changes to an object */
   void ospCommit(OSPObject object);
+
+  /*! \brief represents the data returned after an ospUnproject (picking) operation */
+  extern "C" typedef struct {
+    bool hit;                           //Whether or not a hit actually occured
+    float world_x, world_y, world_z;    //The world-space position of the hit point
+  } OSPPickData;
+
+  /*! \brief unproject a [0-1] normalized screen-space pixel coordinate to a world-space position */
+  OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 }
 /*! \} */

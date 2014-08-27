@@ -457,6 +457,14 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
+    OSPPickData LocalDevice::unproject(OSPRenderer _renderer, const vec2f &screenPos)
+    {
+      Assert(_renderer != NULL && "invalid renderer handle");
+      Renderer *renderer = (Renderer*)_renderer;
+
+      return renderer->unproject(screenPos);
+    }
+
   }
 }
 

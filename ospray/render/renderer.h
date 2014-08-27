@@ -47,6 +47,8 @@ namespace ospray {
     /*! \brief create a light of given type */
     virtual Light *createLight(const char *type) { return NULL; }
 
+    virtual OSPPickData unproject(const vec2f &screenPos);
+
     FrameBuffer *currentFB;
 
     /*! \brief creates an abstract renderer class of given type 

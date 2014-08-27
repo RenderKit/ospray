@@ -140,12 +140,15 @@ namespace ospray {
       if (pos != currMousePos)
         motion(pos);
       lastButtonState = currButtonState;
+
       if (released)
         currButtonState = currButtonState & ~(1<<whichButton);
       else
         currButtonState = currButtonState |  (1<<whichButton);
-      manipulator->button(this);
+
+      manipulator->button(this, pos);
     }
+
     void Glut3DWidget::motion(const vec2i &pos)
     {
       currMousePos = pos;
@@ -439,6 +442,11 @@ namespace ospray {
     // ------------------------------------------------------------------
     // INSPECT_CENTER manipulator
     // ------------------------------------------------------------------
+    InspectCenter::InspectCenter(Glut3DWidget *widget)
+      : Manipulator(widget)
+      , pivot(center(widget->worldBounds))
+    {}
+
     void InspectCenter::keypress(Glut3DWidget *widget,
                                  int32 key)
     {
@@ -459,10 +467,16 @@ namespace ospray {
 
       Manipulator::keypress(widget,key);
     }
+
+    void InspectCenter::button(Glut3DWidget *widget, const vec2i &pos)
+    {
+    }
+
     void InspectCenter::rotate(float du, float dv)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      const vec3f pivot = center(widget->worldBounds);
+      //const vec3f pivot = widget->viewPort.at;//center(widget->worldBounds);
+      PRINT(pivot);
       AffineSpace3fa xfm
         = AffineSpace3fa::translate(pivot)
         * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
@@ -538,7 +552,7 @@ namespace ospray {
       vec2i delta_mouse = to - from;
       // PRINT(delta_mouse);
 
-      const vec3f pivot = center(widget->worldBounds);
+      //const vec3f pivot = center(widget->worldBounds);
       AffineSpace3fa xfm
         = AffineSpace3fa::translate(pivot)
         * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)

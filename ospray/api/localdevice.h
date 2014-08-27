@@ -128,6 +128,8 @@ namespace ospray {
 
       //! assign given material to given geometry
       virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat);
+
+      virtual OSPPickData unproject(OSPRenderer renderer, const vec2f &screenPos);
     };
   }
 }

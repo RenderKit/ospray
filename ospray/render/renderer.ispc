@@ -11,6 +11,13 @@
 #include "renderer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/camera/camera.ih"
+#include "ospray/common/model.ih"
+
+// The layout of this struct must match that of OSPPickData in ospray.h
+struct OSPPickData {
+  bool hit;
+  float world_x, world_y, world_z;
+};
 
 void Renderer_default_renderSample(uniform Renderer *uniform renderer,
                                    varying ScreenSample &sample)
@@ -219,4 +226,28 @@ export void Renderer_setNearClip(void *uniform _renderer, uniform float nearClip
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->nearClip = nearClip;
+}
+
+export uniform OSPPickData Renderer_unproject( void *uniform _renderer,
+                                        const uniform vec2f &screenPos)
+{
+  uniform Renderer    *uniform renderer = (uniform Renderer *uniform)_renderer;
+  uniform Camera      *uniform camera   = renderer->camera;
+  uniform Model       *uniform model    = renderer->model;
+
+  uniform OSPPickData ret;
+
+  CameraSample cameraSample;
+  cameraSample.screen.x = screenPos.x;
+  cameraSample.screen.y = 1.0 - screenPos.y;
+  Ray ray;
+  camera->initRay(camera, ray, cameraSample);
+  traceRay(model, ray);
+  vec3f p = ray.org + (ray.dir * ray.t);
+  ret.hit= extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
+  ret.world_x=extract(p.x,0);
+  ret.world_y=extract(p.y,0);
+  ret.world_z=extract(p.z,0);
+
+  return ret;
 }

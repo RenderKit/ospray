@@ -60,7 +60,7 @@ namespace ospray {
       virtual void motion(Glut3DWidget *widget);
       // this is the fct that gets called when any mouse button got
       // pressed or released in the associated window
-      virtual void button(Glut3DWidget *widget) {};
+      virtual void button(Glut3DWidget *widget, const vec2i &pos) {};
       /*! key press handler - override this fct to catch keyboard. */
       virtual void keypress(Glut3DWidget *widget, const int32 key);
       virtual void specialkey(Glut3DWidget *widget, const int32 key);
@@ -90,9 +90,13 @@ namespace ospray {
                               const vec2i &to, const vec2i &from);
       virtual void specialkey(Glut3DWidget *widget, const int32 key);
       virtual void keypress(Glut3DWidget *widget, int32 key);
-      InspectCenter(Glut3DWidget *widget) : Manipulator(widget) {}
+      virtual void button(Glut3DWidget *widget, const vec2i &pos);
+      InspectCenter(Glut3DWidget *widget);
       void rotate(float du, float dv);
+
+      vec3f pivot;
     };
+
     struct MoveMode : public Manipulator
     {
       virtual void dragLeft(Glut3DWidget *widget, 
@@ -102,6 +106,7 @@ namespace ospray {
       virtual void dragMiddle(Glut3DWidget *widget, 
                               const vec2i &to, const vec2i &from);
       virtual void keypress(Glut3DWidget *widget, int32 key);
+      virtual void button(Glut3DWidget *widget, const vec2i &pos) {}
       MoveMode(Glut3DWidget *widget) : Manipulator(widget) {}
     };
 

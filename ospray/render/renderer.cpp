@@ -78,4 +78,12 @@ namespace ospray {
     TiledLoadBalancer::instance->renderFrame(this,fb,channelFlags);
   }
 
+  OSPPickData Renderer::unproject(const vec2f &screenPos)
+  {
+    assert(getIE());
+    ispc::OSPPickData data_t = ispc::Renderer_unproject(getIE(),(const ispc::vec2f&)screenPos);
+    OSPPickData ret = { data_t.hit, data_t.world_x, data_t.world_y, data_t.world_z };
+    return ret;
+  }
+
 };

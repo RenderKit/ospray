@@ -29,10 +29,10 @@ typedef void (*Camera_initRay)(uniform Camera  *uniform,
                                varying Ray &ray,
                                const varying CameraSample &sample);
 
-
 struct Camera
 {
   Camera_initRay initRay;
+
   bool doesDOF; /*!< indicates whether this camera does depth-of-field
                     (DOF). If so, the 'CameraSample' passed to initRay
                     has to have properly initialized 'lens' value; if
