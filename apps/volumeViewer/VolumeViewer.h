@@ -29,7 +29,8 @@ public:
 public slots:
 
     void render();
-    void next();
+    void nextTimestep();
+    void playTimesteps(bool set);
 
 protected:
 
@@ -42,4 +43,7 @@ protected:
 
     // the view window
     QOSPRayWindow * osprayWindow_;
+
+    // play timesteps timer
+    QTimer playTimestepsTimer_;
 };
