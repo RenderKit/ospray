@@ -16,11 +16,19 @@ VolumeViewer::VolumeViewer(const osp::vec3i &dimensions, const float dt) : rende
     resize(1024, 768);
 
     QToolBar * toolbar = addToolBar("toolbar");
-  
-    QAction * nextAction = new QAction("Next", this);
-    connect(nextAction, SIGNAL(triggered()), this, SLOT(next()));
 
-    toolbar->addAction(nextAction);
+    // add timestep controls
+    QAction * nextTimestepAction = new QAction("Next timestep", this);
+    connect(nextTimestepAction, SIGNAL(triggered()), this, SLOT(nextTimestep()));
+    toolbar->addAction(nextTimestepAction);
+
+    QAction * playTimestepsAction = new QAction("Play timesteps", this);
+    playTimestepsAction->setCheckable(true);
+    connect(playTimestepsAction, SIGNAL(toggled(bool)), this, SLOT(playTimesteps(bool)));
+    toolbar->addAction(playTimestepsAction);
+
+    // connect play timesteps timer slot
+    connect(&playTimestepsTimer_, SIGNAL(timeout()), this, SLOT(nextTimestep()));
 
     // create renderer for volume viewer
     ospLoadModule("dvr");
@@ -59,19 +67,21 @@ VolumeViewer::VolumeViewer(const osp::vec3i &dimensions, const float dt) : rende
 void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout)
 {
     std::string volumeType = layout + "_" + format;
-    OSPVolume volume_ = ospNewVolume(volumeType.c_str());
+    OSPVolume volume = ospNewVolume(volumeType.c_str());
 
-    if (!volume_) throw std::runtime_error("could not create volume type '" + volumeType + "'");
+    if (!volume) throw std::runtime_error("could not create volume type '" + volumeType + "'");
 
-    ospSetString(volume_, "filename", filename.c_str());
-    ospSet3i(volume_, "dimensions", dimensions.x, dimensions.y, dimensions.z);
+    ospSetString(volume, "filename", filename.c_str());
+    ospSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
 
     // assign the transfer function
-    ospSetParam(volume_, "transferFunction", transferFunction_);
+    ospSetParam(volume, "transferFunction", transferFunction_);
 
     // finally, commit the volume.
-    ospCommit(volume_);  volumes_.push_back(volume_);
+    ospCommit(volume);
 
+    // add the volume to the vector of volumes
+    volumes_.push_back(volume);
 }
 
 void VolumeViewer::setVolume(size_t index) {
@@ -96,13 +106,24 @@ void VolumeViewer::render()
     }
 }
 
-void VolumeViewer::next()
+void VolumeViewer::nextTimestep()
 {
 
     static size_t index = 0;  index = (index + 1) % volumes_.size();
     setVolume(index);
-    std::cout << "next" << std::endl;
+}
 
+void VolumeViewer::playTimesteps(bool set)
+{
+    if(set == true)
+    {
+        // default 2 second delay
+        playTimestepsTimer_.start(2000);
+    }
+    else
+    {
+        playTimestepsTimer_.stop();
+    }
 }
 
 void VolumeViewer::createTransferFunction()
