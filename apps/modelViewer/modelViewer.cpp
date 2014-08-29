@@ -183,7 +183,7 @@ namespace ospray {
     virtual void mouseButton(int32 whichButton, bool released, const vec2i &pos)
     {
       Glut3DWidget::mouseButton(whichButton, released, pos);
-      if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && glutGetModifiers() | GLUT_ACTIVE_SHIFT && manipulator == inspectCenterManipulator) {
+      if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
         vec2f normpos = vec2f(pos.x / (float)g_width, pos.y / (float)g_height);
         OSPPickData data = ospUnproject(ospRenderer, normpos);
         vec3f p(data.world_x, data.world_y, data.world_z);
