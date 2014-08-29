@@ -16,7 +16,7 @@ Generating make files:
   Run make to build the software
 
 Using the model viewer:
-  The generated model viewer is called 'ospModelViewer"
+  The generated model viewer is called 'ospModelViewer'
 
   usage: ospModelViewer <arguments> <model path>
 
@@ -59,3 +59,35 @@ Using the model viewer:
     Right click & drag : zoom
     S : Toggle shadows
     D : Toggle between depth buffer and color buffer
+
+Using the streamline viewer:
+  The generated streamline viewer is called 'ospStreamlineViewer'
+
+  usage: ospStreamlineViewer <arguments> <model path>
+
+  The following arguments are valid for the streamline viewer:
+  --module : Load a given Ospray module
+  --renderer : Use a given renderer
+  --radius : Set the radius of the rendered streamlines
+
+
+  Keyboard and mouse commands:
+    Orbit :
+    W : Orbit camera up
+    A : Orbit camera left
+    S : Orbit camera down
+    D : Orbit camera right
+    F : Switch to free flight mode (move mode)
+    Left click & drag : orbit camera
+
+    Free Flight:
+    W : Move camera forward
+    A : Pan camera left
+    S : Move camera backwards
+    D : Pan camera right
+    I : Switch to Orbit mode
+
+    Common:
+    Q : Quit the program
+    Right click & drag : zoom
+    S : Toggle shadows
