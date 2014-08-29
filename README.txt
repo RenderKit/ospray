@@ -70,7 +70,6 @@ Using the streamline viewer:
   --renderer : Use a given renderer
   --radius : Set the radius of the rendered streamlines
 
-
   Keyboard and mouse commands:
     Orbit :
     W : Orbit camera up
