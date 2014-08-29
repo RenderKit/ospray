@@ -9,6 +9,12 @@
 Dependencies
   cmake 2.4+
   freeglut
+  ispc 1.7
+
+A note on ISPC:
+  ISPC needs to be placed in a sibling directory to ospray, for example:
+  ./development/ospray
+  ./development/ispc-v1.7.0-linux
 
 Generating make files:
   Create a new directory for the build files and cd into it
