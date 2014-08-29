@@ -40,7 +40,7 @@ Using the model viewer:
     A : Orbit camera left
     S : Orbit camera down
     D : Orbit camera right
-    M : Switch to free flight mode (move mode)
+    F : Switch to free flight mode (move mode)
     Left click & drag : orbit camera
     Shift + Left click : Set a new inspection point
 
