@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "./material.ih"
-#include "../textures/texture.ih"
+#include "ospray/texture/texture2d.ih"
 #include "../brdfs/transmission.ih"
 #include "../brdfs/lambertian.ih"
 #include "../brdfs/specular.ih"
@@ -15,15 +15,15 @@
 struct OBJ
 {
   uniform PathTraceMaterial base;
-  uniform Texture* map_d;  
+  uniform Texture2D* map_d;  
   float d; 
-  uniform Texture* map_Kd; 
+  uniform Texture2D* map_Kd; 
   vec3f Kd;
-  uniform Texture* map_Ks; 
+  uniform Texture2D* map_Ks; 
   vec3f Ks;
-  uniform Texture* map_Ns; 
+  uniform Texture2D* map_Ns; 
   float Ns;
-  uniform Texture* map_Bump;
+  uniform Texture2D* map_Bump;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -39,12 +39,10 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _THIS,
 
 
   /*! transmission */
-  float d = THIS->d;  
-  if (THIS->map_d) { const vec3f c = THIS->map_d->get(THIS->map_d,dg.st); d *= c.x; }
+  float d = THIS->map_d ? get1f(THIS->map_d, dg.st) : THIS->d;  
   if (d < 1.0f) COMPOSITED_BRDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
   /*! diffuse component */
-  vec3f Kd = mul(d, THIS->Kd);  
-  if (THIS->map_Kd) Kd = mul(Kd, THIS->map_Kd->get(THIS->map_Kd,dg.st));  
+  vec3f Kd = mul(d, THIS->map_Kd ? get3f(THIS->map_Kd, dg.st) : THIS->Kd);  
   if (ne(Kd,make_vec3f(0.0f))) COMPOSITED_BRDF_ADD(brdfs,Lambertian,Kd);
 
 #if 0
@@ -71,11 +69,11 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _THIS,
 // }
 
 void OBJ__Constructor(uniform OBJ* uniform THIS,
-                      uniform Texture* uniform map_d,  const uniform float d,
-                      uniform Texture* uniform map_Kd, const uniform vec3f Kd,
-                      uniform Texture* uniform map_Ks, const uniform vec3f Ks,
-                      uniform Texture* uniform map_Ns, const uniform float Ns,
-                      uniform Texture* uniform map_Bump)
+                      uniform Texture2D* uniform map_d,  const uniform float d,
+                      uniform Texture2D* uniform map_Kd, const uniform vec3f Kd,
+                      uniform Texture2D* uniform map_Ks, const uniform vec3f Ks,
+                      uniform Texture2D* uniform map_Ns, const uniform float Ns,
+                      uniform Texture2D* uniform map_Bump)
 {
   PathTraceMaterial__Constructor(&THIS->base,// OBJ__Destructor,
                                  OBJ__shade,NULL);
@@ -98,10 +96,10 @@ PathTracer_OBJ_create(void* uniform map_d,  const uniform float& d,
 {
   uniform OBJ* uniform THIS = uniform new uniform OBJ;
   OBJ__Constructor(THIS,
-                   (uniform Texture* uniform)map_d,d,
-                   (uniform Texture* uniform)map_Kd,Kd,
-                   (uniform Texture* uniform)map_Ks,Ks,
-                   (uniform Texture* uniform)map_Ns,Ns,
-                   (uniform Texture* uniform)map_Bump);
+                   (uniform Texture2D* uniform)map_d,   d,
+                   (uniform Texture2D* uniform)map_Kd,  Kd,
+                   (uniform Texture2D* uniform)map_Ks,  Ks,
+                   (uniform Texture2D* uniform)map_Ns,  Ns,
+                   (uniform Texture2D* uniform)map_Bump);
   return THIS;
 }

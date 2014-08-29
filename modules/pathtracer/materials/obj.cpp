@@ -7,6 +7,7 @@
  ********************************************************************* */
 
 #include "ospray/common/material.h"
+#include "ospray/texture/texture2d.h"
 #include "obj_ispc.h"
 
 namespace ospray {
@@ -19,21 +20,27 @@ namespace ospray {
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() == NULL) {
-          void* map_d = NULL;
+          Texture2D *map_d  = (Texture2D*)getParamObject("map_d", NULL);
+          Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd", NULL));
+          Texture2D *map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks", NULL));
+          Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", NULL));
+          Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", NULL));
+
           const float d = getParam1f("d",getParam1f("alpha",1.f));
-          void* map_Kd = NULL;
           const vec3f Kd = getParam3f("Kd",getParam3f("kd",getParam3f("color",vec3f(1.f))));
-          void* map_Ks = NULL;
           const vec3f Ks = vec3f(1.f);
-          void* map_Ns = NULL;
           const float Ns = 1.f;
-          void* map_Bump = NULL;
+
           ispcEquivalent = ispc::PathTracer_OBJ_create
-            (map_d,d,
-             map_Kd,(const ispc::vec3f&)Kd,
-             map_Ks,(const ispc::vec3f&)Ks,
-             map_Ns,Ns,
-             map_Bump);
+            (map_d ? map_d->getIE() : NULL,
+             d,
+             map_Kd ? map_Kd->getIE() : NULL,
+             (const ispc::vec3f&)Kd,
+             map_Ks ? map_Ks->getIE() : NULL,
+             (const ispc::vec3f&)Ks,
+             map_Ns ? map_Ns->getIE() : NULL,
+             Ns,
+             map_Bump ? map_Bump->getIE() : NULL);
         }
       }
     };
