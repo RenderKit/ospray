@@ -59,7 +59,3 @@ Using the model viewer:
     Right click & drag : zoom
     S : Toggle shadows
     D : Toggle between depth buffer and color buffer
-
-Using the volume viewer
-  //TODO
-  
