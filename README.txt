@@ -70,6 +70,11 @@ Using the streamline viewer:
   --renderer : Use a given renderer
   --radius : Set the radius of the rendered streamlines
 
+  Manipulator modes:
+    The model viewer has two modes that can be used to view a given model. An
+    orbiting camera, and a free flying camera. By default we start with the
+    orbiting camera.
+
   Keyboard and mouse commands:
     Orbit :
     W : Orbit camera up
