@@ -95,3 +95,40 @@ Using the streamline viewer:
     Q : Quit the program
     Right click & drag : zoom
     S : Toggle shadows
+
+Using the tachyon viewer:
+  Ospray must have been built with the tachyon module enabled
+
+  The generated viewer is called 'ospTachyon'
+
+  usage: ospTachyon <timestep paths>
+
+  Manipulator modes:
+    The model viewer has two modes that can be used to view a given model. An
+    orbiting camera, and a free flying camera. By default we start with the
+    orbiting camera.
+
+  Keyboard and mouse commands:
+    Orbit :
+    W : Orbit camera up
+    A : Orbit camera left
+    S : Orbit camera down
+    D : Orbit camera right
+    F : Switch to free flight mode (move mode)
+    Left click & drag : orbit camera
+
+    Free Flight:
+    W : Move camera forward
+    A : Pan camera left
+    S : Move camera backwards
+    D : Pan camera right
+    I : Switch to Orbit mode
+
+    Common:
+    Q : Quit the program
+    Right click & drag : zoom
+    S : Toggle shadows
+    L : Increase light scale
+    l : Decrease light scale
+    < : Go back one time step
+    > : Go forward one time step
