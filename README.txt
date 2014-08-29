@@ -7,18 +7,20 @@
  ********************************************************************* */
 
 Dependencies
-  cmake 2.4+
+  CMake 2.4+
   freeglut
-  ispc 1.7
+  ispc 1.7 (available from https://ispc.github.io/)
 
 A note on ISPC:
-  ISPC needs to be placed in a sibling directory to ospray, for example:
+  ISPC needs to be placed in a sibling directory to the ospray source, for example:
   ./development/ospray
   ./development/ispc-v1.7.0-linux
 
-Generating make files:
+Building:
   Create a new directory for the build files and cd into it
-  Run 'ccmake <path to ospray>' to generate the necessary files
+  Run 'ccmake <path to ospray source>' to generate the necessary files
+  Enable any optional applications or modules while in ccmake
+  In ccmake, run 'c' to configure and 'g' to generate the make files
   Run make to build the software
 
 Using the model viewer:
@@ -29,7 +31,7 @@ Using the model viewer:
   The following arguments may be useful:
     --osp:debug : Runs in debug mode, useful for tracking text printed to std out
     --osp:coi   : Runs on Intel MIC coprocessors, MIC and COI must be enabled via cmake
-    --module <module name> : Load a given Ospray module
+    --module <module name> : Load a given OSPRay module
     --renderer <renderer name> : Use a given renderer instead of the default
     --always-redraw : Force the model viewer to continually repaint the screen
     --spp : Set the number of samples per-pixel per-frame
@@ -72,7 +74,7 @@ Using the streamline viewer:
   usage: ospStreamlineViewer <arguments> <model path>
 
   The following arguments are valid for the streamline viewer:
-  --module : Load a given Ospray module
+  --module : Load a given OSPRay module
   --renderer : Use a given renderer
   --radius : Set the radius of the rendered streamlines
 
@@ -103,7 +105,7 @@ Using the streamline viewer:
     S : Toggle shadows
 
 Using the tachyon viewer:
-  Ospray must have been built with the tachyon module enabled
+  OSPRay must have been built with the tachyon module enabled
 
   The generated viewer is called 'ospTachyon'
 
