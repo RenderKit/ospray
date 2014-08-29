@@ -40,66 +40,45 @@ namespace ospray {
 
     struct COIDevice;
 
-    typedef enum { 
-      OSPCOI_NEW_MODEL=0,
-      OSPCOI_NEW_DATA,
-      OSPCOI_NEW_TRIANGLEMESH,
-      OSPCOI_COMMIT,
-      OSPCOI_SET_VALUE,
-      OSPCOI_NEW_MATERIAL,
-      OSPCOI_SET_MATERIAL,
-      OSPCOI_NEW_CAMERA,
-      OSPCOI_NEW_VOLUME,
-      OSPCOI_NEW_VOLUME_FROM_FILE,
-      OSPCOI_NEW_TRANSFER_FUNCTION,
-      OSPCOI_NEW_RENDERER,
-      OSPCOI_NEW_GEOMETRY,
-      OSPCOI_ADD_GEOMETRY,
-      OSPCOI_NEW_FRAMEBUFFER,
-      OSPCOI_RENDER_FRAME,
-      OSPCOI_RENDER_FRAME_SYNC,
-      OSPCOI_NEW_TEXTURE2D,
-      OSPCOI_NEW_LIGHT,
-      OSPCOI_REMOVE_GEOMETRY,
-      OSPCOI_FRAMEBUFFER_CLEAR,
-      OSPCOI_PIN_UPLOAD_BUFFER,
-      OSPCOI_CREATE_NEW_EMPTY_DATA,
-      OSPCOI_UPLOAD_DATA_DONE,
-      OSPCOI_UPLOAD_DATA_CHUNK,
-      OSPCOI_UNPROJECT,
-      OSPCOI_NUM_FUNCTIONS
-    } RemoteFctID;
+#define OSPCOI_FUNCTION_MAPPING                                             \
+      x(OSPCOI_NEW_MODEL=0,             "ospray_coi_new_model")             \
+      x(OSPCOI_NEW_DATA,                "ospray_coi_new_data")              \
+      x(OSPCOI_NEW_TRIANGLEMESH,        "ospray_coi_new_trianglemesh")      \
+      x(OSPCOI_COMMIT,                  "ospray_coi_commit")                \
+      x(OSPCOI_SET_VALUE,               "ospray_coi_set_value")             \
+      x(OSPCOI_NEW_MATERIAL,            "ospray_coi_new_material")          \
+      x(OSPCOI_SET_MATERIAL,            "ospray_coi_set_material")          \
+      x(OSPCOI_NEW_CAMERA,              "ospray_coi_new_camera")            \
+      x(OSPCOI_NEW_VOLUME,              "ospray_coi_new_volume")            \
+      x(OSPCOI_NEW_VOLUME_FROM_FILE,    "ospray_coi_new_volume_from_file")  \
+      x(OSPCOI_NEW_TRANSFER_FUNCTION,   "ospray_coi_new_transfer_function") \
+      x(OSPCOI_NEW_RENDERER,            "ospray_coi_new_renderer")          \
+      x(OSPCOI_NEW_GEOMETRY,            "ospray_coi_new_geometry")          \
+      x(OSPCOI_ADD_GEOMETRY,            "ospray_coi_add_geometry")          \
+      x(OSPCOI_NEW_FRAMEBUFFER,         "ospray_coi_new_framebuffer")       \
+      x(OSPCOI_RENDER_FRAME,            "ospray_coi_render_frame")          \
+      x(OSPCOI_RENDER_FRAME_SYNC,       "ospray_coi_render_frame_sync")     \
+      x(OSPCOI_NEW_TEXTURE2D,           "ospray_coi_new_texture2d")         \
+      x(OSPCOI_NEW_LIGHT,               "ospray_coi_new_light")             \
+      x(OSPCOI_REMOVE_GEOMETRY,         "ospray_coi_remove_geometry")       \
+      x(OSPCOI_FRAMEBUFFER_CLEAR,       "ospray_coi_framebuffer_clear")     \
+      x(OSPCOI_PIN_UPLOAD_BUFFER,       "ospray_coi_pin_upload_buffer")     \
+      x(OSPCOI_CREATE_NEW_EMPTY_DATA,   "ospray_coi_create_new_empty_data") \
+      x(OSPCOI_UPLOAD_DATA_DONE,        "ospray_coi_upload_data_done")      \
+      x(OSPCOI_UPLOAD_DATA_CHUNK,       "ospray_coi_upload_data_chunk")     \
+      x(OSPCOI_UNPROJECT,               "ospray_coi_unproject")             \
+      x(OSPCOI_NUM_FUNCTIONS,           NULL) //This must be last
 
-    const char *coiFctName[] = {
-      "ospray_coi_new_model",
-      "ospray_coi_new_data",
-      "ospray_coi_new_trianglemesh",
-      "ospray_coi_commit",
-      "ospray_coi_set_value",
-      "ospray_coi_new_material",
-      "ospray_coi_set_material",
-      "ospray_coi_new_camera",
-      "ospray_coi_new_volume",
-      "ospray_coi_new_volume_from_file",
-      "ospray_coi_new_transfer_function",
-      "ospray_coi_new_renderer",
-      "ospray_coi_new_geometry",
-      "ospray_coi_add_geometry",
-      "ospray_coi_new_framebuffer",
-      "ospray_coi_render_frame",
-      "ospray_coi_render_frame_sync",
-      "ospray_coi_new_texture2d",
-      "ospray_coi_new_light",
-      "ospray_coi_remove_geometry",
-      "ospray_coi_framebuffer_clear",
-      "ospray_coi_pin_upload_buffer",
-      "ospray_coi_create_new_empty_data",
-      "ospray_coi_upload_data_done",
-      "ospray_coi_upload_data_chunk",
-      "ospray_coi_unproject",
-      NULL
-    };
-    
+#define x(a,b) a,
+    typedef enum {
+      OSPCOI_FUNCTION_MAPPING
+    } RemoteFctID;
+#undef x
+
+#define x(a,b) b,
+    const  char *coiFctName[] = { OSPCOI_FUNCTION_MAPPING };
+#undef x
+
     struct COIEngine {
 #ifdef MANUAL_DATA_UPLOADS
       COIBUFFER uploadBuffer;
