@@ -476,7 +476,6 @@ namespace ospray {
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       //const vec3f pivot = widget->viewPort.at;//center(widget->worldBounds);
-      PRINT(pivot);
       AffineSpace3fa xfm
         = AffineSpace3fa::translate(pivot)
         * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
