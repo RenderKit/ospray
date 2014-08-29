@@ -14,11 +14,6 @@
 #include "ospray/common/model.ih"
 
 // The layout of this struct must match that of OSPPickData in ospray.h
-struct OSPPickData {
-  bool hit;
-  float world_x, world_y, world_z;
-};
-
 void Renderer_default_renderSample(uniform Renderer *uniform renderer,
                                    varying ScreenSample &sample)
 {

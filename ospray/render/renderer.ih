@@ -17,6 +17,12 @@ struct Renderer;
 struct Model;
 struct Camera;
 
+struct OSPPickData {
+  bool hit;
+  float world_x, world_y, world_z;
+};
+
+
 struct ScreenSample {
   // input values to 'renderSample'
   vec3i sampleID; /*!< x/y=pixelID,z=accumID/sampleID */

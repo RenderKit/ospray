@@ -37,6 +37,7 @@ namespace ospray {
     virtual void commit();
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type);
+    virtual OSPPickData unproject(const vec2f &screenPos);
 
     /*! the model we're rendering */
     Ref<Model>  model;

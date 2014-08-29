@@ -753,4 +753,26 @@ export void* uniform PathTracer_create(void *uniform cppE,
   return THIS;
 }
 
+export uniform OSPPickData PathTracer_unproject(void *uniform THIS_, const uniform vec2f &screenPos)
+{
+  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)THIS_;
+  uniform Camera *uniform camera = THIS->inherited.camera;
+  uniform Model *uniform model = THIS->scene->model;
+  uniform OSPPickData ret;
+
+  CameraSample cameraSample;
+  cameraSample.screen.x = screenPos.x;
+  cameraSample.screen.y = 1.0 - screenPos.y;
+  Ray ray;
+  camera->initRay(camera, ray, cameraSample);
+  traceRay(model, ray);
+  vec3f p = ray.org + (ray.dir * ray.t);
+  ret.hit= extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
+  ret.world_x=extract(p.x,0);
+  ret.world_y=extract(p.y,0);
+  ret.world_z=extract(p.z,0);
+
+  return ret;
+}
+
 

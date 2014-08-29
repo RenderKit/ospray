@@ -16,6 +16,7 @@
 
 namespace ospray {
   PathTracer::PathTracer()
+    : Renderer()
   {
     const int32 maxDepth = 20;
     const float minContribution = .01f;
@@ -57,6 +58,14 @@ namespace ospray {
     camera = (Camera*)getParamObject("camera",NULL);
     if (camera) 
       ispc::PathTracer_setCamera(getIE(),camera->getIE());
+  }
+
+  OSPPickData PathTracer::unproject(const vec2f &screenPos)
+  {
+    assert(getIE());
+    ispc::OSPPickData data_t = ispc::PathTracer_unproject(getIE(), (const ispc::vec2f&)screenPos);
+    OSPPickData ret = { data_t.hit, data_t.world_x, data_t.world_y, data_t.world_z };
+    return ret;
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
