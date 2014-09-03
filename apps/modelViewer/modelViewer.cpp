@@ -33,7 +33,7 @@ namespace ospray {
   int spp = 1; /*! number of samples per pixel */
   unsigned int maxObjectsToConsider = (uint32)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
-  bool forceInstancing = true;
+  bool forceInstancing = false;
   /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
   bool showDepthBuffer = 0;
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
@@ -470,6 +470,8 @@ namespace ospray {
         maxObjectsToConsider = atoi(av[++i]);
       } else if (arg == "--spp") {
         spp = atoi(av[++i]);
+      } else if (arg == "--force-instancing") {
+        forceInstancing = true;
       } else if (arg == "--pt") {
         // shortcut for '--module pathtracer --renderer pathtracer'
         const char *moduleName = "pathtracer";
