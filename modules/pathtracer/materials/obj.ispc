@@ -48,11 +48,11 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _THIS,
 #if 0
   /*! specular exponent */
   float Ns = THIS->Ns;  
-  if (THIS->map_Ns) { const vec3f c = THIS->map_Ns->get(THIS->map_Ns,dg.st); Ns *= c.x; }
+  if (THIS->map_Ns) { const float c = get1f(THIS->map_Ns, dg.st); Ns *= c; }
   
   /*! specular component */
   vec3f Ks = mul(d, THIS->Ks);  
-  if (THIS->map_Ks) Ks = mul(Ks, THIS->map_Ks->get(THIS->map_Ks,dg.st));  
+  if (THIS->map_Ks) Ks = mul(Ks, get3f(THIS->map_Ks,dg.st));  
   if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BRDF_ADD(brdfs,Specular,Ks,Ns);
 #endif
 }
