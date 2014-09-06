@@ -31,15 +31,11 @@ VolumeViewer::VolumeViewer(const osp::vec3i &dimensions, const float dt) : rende
     connect(&playTimestepsTimer_, SIGNAL(timeout()), this, SLOT(nextTimestep()));
 
     // create renderer for volume viewer
-    ospLoadModule("dvr");
-    renderer_ = ospNewRenderer("dvr_ispc");
+    renderer_ = ospNewRenderer("dvr_ispc");  if (renderer_ == NULL) throw std::runtime_error("could not create renderer type 'dvr_ispc'");
 
     // set the dt value; auto-set based on volume dimensions if dt == 0
     if (dt != 0.f) ospSet1f(renderer_, "dt", dt);
     else ospSet1f(renderer_, "dt", 1.f / float(std::max(std::max(dimensions.x, dimensions.y), dimensions.z)));
-
-    if(!renderer_)
-        throw std::runtime_error("could not create renderer type 'dvr_ispc'");
 
     // create transfer function
     createTransferFunction();

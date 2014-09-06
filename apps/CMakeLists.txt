@@ -12,20 +12,32 @@ CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
 
-  # common utility classes for 3D viewer widget, importers, etc
+  # common utility classes for reading and writing files
+# ADD_SUBDIRECTORY(common/fileio)
+
+  # common utility classes for 3D viewer widget
   ADD_SUBDIRECTORY(common/widgets)
 
   # mini-scene graph viewer for _geometry_ (intentionally simple)
-  ADD_SUBDIRECTORY(modelViewer)
+  OPTION(OSPRAY_APPS_MODELVIEWER "Build ospModelViewer application." ON)
+  IF (OSPRAY_APPS_MODELVIEWER)
+    ADD_SUBDIRECTORY(modelViewer)
+  ENDIF()
 
   # stream line viewer for NASA Stream Line Demo
-  ADD_SUBDIRECTORY(streamLineViewer)
+  OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." OFF)
+  IF(OSPRAY_APPS_STREAMLINEVIEWER)
+    ADD_SUBDIRECTORY(streamLineViewer)
+  ENDIF()
 
   # xyz atom model viewer (one sphere per atom)
-  ADD_SUBDIRECTORY(particleViewer)
+  OPTION(OSPRAY_APPS_PARTICLEVIEWER "Build ospParticleViewer application." OFF)
+  IF(OSPRAY_APPS_PARTICLEVIEWER)
+    ADD_SUBDIRECTORY(particleViewer)
+  ENDIF()
 
   # volume viewer application
-  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build volume viewer application" OFF)
+  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." OFF)
   IF(OSPRAY_APPS_VOLUMEVIEWER)
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
