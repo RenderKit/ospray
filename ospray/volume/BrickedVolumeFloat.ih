@@ -1,0 +1,58 @@
+//
+//                 INTEL CORPORATION PROPRIETARY INFORMATION
+//
+//    This software is supplied under the terms of a license agreement or
+//    nondisclosure agreement with Intel Corporation and may not be copied
+//    or disclosed except in accordance with the terms of that agreement.
+//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
+//
+
+#ifndef BRICKED_VOLUME_FLOAT_IH
+#define BRICKED_VOLUME_FLOAT_IH
+
+#include "ospray/volume/Volume.ih"
+
+    //! \brief ISPC variables and functions for the BrickedVolume class, a
+    //!  concrete implementation of the StructuredVolume class with 32-bit
+    //!  addressing in which the voxel data is laid out in memory in brick
+    //!  order.
+    //!
+    struct BrickedVolumeFloat {
+
+        //! Pointers to functions common to all Volume subtypes (must be the first field of the struct).
+        Volume inherited;
+
+        //! Volume size in bricks per dimension with padding to the nearest brick.
+        uniform vec3i brickCount;
+
+        //! Volume size in voxels per dimension.
+        uniform vec3i dimensions;
+
+        //! Voxel data.
+        float *uniform voxelData;
+
+    };
+
+    //! The gradient at the given sample location in the volume.
+    varying vec3f BrickedVolumeFloat_computeGradient(void *uniform volume, const varying vec3f &coordinates);
+
+    //! Tri-linear interpolation at the given sample location in the volume.
+    varying float BrickedVolumeFloat_computeSample(void *uniform volume, const varying vec3f &coordinates);
+
+    //! Declaration emitted during build in "ClassName_ispc.h".  Allocate storage for voxel data and assign type-specific function pointers.
+//  extern "C" { void *uniform BrickedVolumeFloat_createInstance(const uniform vec3i &dimensions, const void *uniform function); }
+
+    //! Compute the 1D address of a voxel in the volume from a 3D index.
+    varying int BrickedVolumeFloat_getVoxelAddress(BrickedVolumeFloat *uniform volume, const varying vec3i &index);
+
+    //! Voxel data accessor.
+    varying float BrickedVolumeFloat_getVoxel(BrickedVolumeFloat *uniform volume, const varying vec3i &index);
+
+    //! Declaration emitted during build in "ClassName_ispc.h".  Copy voxel data into the volume.
+//  extern "C" { void BrickedVolumeFloat_setRegion(void *uniform volume, const float *uniform source, const uniform vec3i &index, const uniform vec3i &count); }
+
+    //! Voxel data setter.
+    void BrickedVolumeFloat_setVoxel(BrickedVolumeFloat *uniform volume, const float *uniform source, const uniform vec3i &index, const varying vec3i &offset);
+
+#endif // BRICKED_VOLUME_FLOAT_IH
+

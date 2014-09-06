@@ -138,9 +138,6 @@ namespace ospray {
       /*! create a new camera object (out of list of registered cameras) */
       virtual OSPCamera newCamera(const char *type);
 
-      /*! create a new volume object (out of list of registered volume types) with data from a file */
-      virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
-
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type);
 

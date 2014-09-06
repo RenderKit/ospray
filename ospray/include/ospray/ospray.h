@@ -6,8 +6,6 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-
-
 /*! \defgroup ospray_api OSPRay Core API
 
   \ingroup ospray
@@ -69,40 +67,47 @@ typedef enum {
 } OSPFrameBufferFormat;
 
 typedef enum {
-  // void poitner type - only allowed for local rendering
+
+  //! Void pointer type.
   OSP_VOID_PTR,
-  // object reference type
+
+  //! Object reference type.
   OSP_OBJECT,
-  // a data array
-  OSP_DATA,
-  // c-string (zero-terminated char pointer)
+
+  //! Pointer to a C-style NULL-terminated character string.
   OSP_STRING,
 
-  // actual numeric data types
-  OSP_CHAR,   OSP_int8   = OSP_CHAR,
+  //! Character scalar type.
+  OSP_CHAR,    OSP_int8   = OSP_CHAR,
 
-  OSP_UCHAR,  OSP_uint8  = OSP_UCHAR,
-  OSP_UCHAR2, OSP_vec2uc = OSP_UCHAR2,
-  OSP_UCHAR3, OSP_vec3uc = OSP_UCHAR3,
-  OSP_UCHAR4, OSP_vec4uc = OSP_UCHAR4,
+  //! Unsigned character scalar and vector types.
+  OSP_UCHAR,   OSP_uint8  = OSP_UCHAR,
+  OSP_UCHAR2,  OSP_vec2uc = OSP_UCHAR2,
+  OSP_UCHAR3,  OSP_vec3uc = OSP_UCHAR3,
+  OSP_UCHAR4,  OSP_vec4uc = OSP_UCHAR4,
 
-  OSP_INT,    OSP_int32  = OSP_INT,
-  OSP_INT2,   OSP_vec2i  = OSP_INT2, 
-  OSP_INT3,   OSP_vec3i  = OSP_INT3,
-  OSP_INT4,   OSP_vec4i  = OSP_INT4,
+  //! Signed integer scalar and vector types.
+  OSP_INT,     OSP_int32  = OSP_INT,
+  OSP_INT2,    OSP_vec2i  = OSP_INT2,
+  OSP_INT3,    OSP_vec3i  = OSP_INT3,
+  OSP_INT4,    OSP_vec4i  = OSP_INT4,
 
-  OSP_UINT,   OSP_uint32 = OSP_UINT,
-  OSP_UINT2,  OSP_vec2ui = OSP_UINT2,
-  OSP_UINT3,  OSP_vec3ui = OSP_UINT3,
-  OSP_UINT4,  OSP_vec4ui = OSP_UINT4,
+  //! Unsigned integer scalar and vector types.
+  OSP_UINT,    OSP_uint32 = OSP_UINT,
+  OSP_UINT2,   OSP_vec2ui = OSP_UINT2,
+  OSP_UINT3,   OSP_vec3ui = OSP_UINT3,
+  OSP_UINT4,   OSP_vec4ui = OSP_UINT4,
 
-  OSP_FLOAT,  OSP_float  = OSP_FLOAT,
-  OSP_FLOAT2, OSP_vec2f  = OSP_FLOAT2,
-  OSP_FLOAT3, OSP_vec3f  = OSP_FLOAT3,
-  OSP_FLOAT4, OSP_vec4f  = OSP_FLOAT4,
-  OSP_FLOAT3A,OSP_vec3fa = OSP_FLOAT3A,
+  //! Single precision floating point scalar and vector types.
+  OSP_FLOAT,   OSP_float  = OSP_FLOAT,
+  OSP_FLOAT2,  OSP_vec2f  = OSP_FLOAT2,
+  OSP_FLOAT3,  OSP_vec3f  = OSP_FLOAT3,
+  OSP_FLOAT4,  OSP_vec4f  = OSP_FLOAT4,
+  OSP_FLOAT3A, OSP_vec3fa = OSP_FLOAT3A,
 
-  // not yet adapted to the new naming scheme:
+  //! Guard value.
+  OSP_UNKNOWN,
+
 } OSPDataType;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */

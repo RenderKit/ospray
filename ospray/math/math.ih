@@ -84,7 +84,6 @@ inline uniform float absf(const uniform float f) { return abs(f); }
 
 // inline float clamp(const float f) { return max(min(1.f,f),0.f); }
 
-
 inline uniform float rcp_safe(uniform float f) { return rcpf((abs(f) < 1e-8f) ? 1e-8f : f); }
 inline varying float rcp_safe(varying float f) { return rcpf((abs(f) < 1e-8f) ? 1e-8f : f); }
 
@@ -102,6 +101,22 @@ inline varying float deg2rad (const varying float x)  { return x * 1.74532925199
 
 inline uniform float rad2deg (const uniform float x)  { return x * 5.72957795130823208768e1f; }
 inline varying float rad2deg (const varying float x)  { return x * 5.72957795130823208768e1f; }
+
+inline uniform float nextafter(const uniform float a, const uniform float b) {
+
+    //! Match the behavior of the C99 math.h function.
+    if (a == b) return(b);
+
+    //! We will compute the smallest representable floating increment or decrement around 'a'.
+    uniform float delta = (b > a) ? 1.0f : -1.0f;
+
+    //! Iteratively compute the positive or negative increment.
+    while (a + 0.5f * delta != a) delta *= 0.5f;
+
+    //! Return the smallest number greater than 'a' or the largest number smaller than 'a'.
+    return(a + delta);
+
+}
 
 #define __define_lerp(TYPE)                                                     \
 inline TYPE lerp(float factor, TYPE a, TYPE b)                                  \

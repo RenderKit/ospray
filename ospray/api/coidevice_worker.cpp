@@ -349,28 +349,7 @@ namespace ospray {
       if (ospray::logLevel > 0)
         cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
 
-      Volume *geom = Volume::createVolume(type);
-      handle.assign(geom);
-
-      if (ospray::debugMode) COIProcessProxyFlush();
-    }
-
-    COINATIVELIBEXPORT
-    void ospray_coi_new_volume_from_file(uint32_t         numBuffers,
-                                 void**           bufferPtr,
-                                 uint64_t*        bufferSize,
-                                 void*            argsPtr,
-                                 uint16_t         argsSize,
-                                 void*            retVal,
-                                 uint16_t         retValSize)
-    {
-      DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
-      const char *filename = args.getString();
-      const char *type = args.getString();
-      cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
-
-      Volume *geom = Volume::createVolume(filename, type);
+      Volume *geom = Volume::createInstance(type);
       handle.assign(geom);
 
       if (ospray::debugMode) COIProcessProxyFlush();

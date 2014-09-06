@@ -10,7 +10,7 @@
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
 #include "ospray/common/material.h"
-#include "ospray/volume/volume.h"
+#include "ospray/volume/Volume.h"
 #include "ospray/transferfunction/TransferFunction.h"
 #include "localdevice.h"
 #include "ospray/common/ospcommon.h"
@@ -301,9 +301,8 @@ namespace ospray {
     LOG("ospNewTexture2D( " << width << ", " << height << ", " << type << ", " << data << ", " << flags << ")");
     return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
   }
-  /*! \brief create a new volume of given type 
-    
-    return 'NULL' if that type is not known */
+
+  /*! \brief create a new volume of given type, return 'NULL' if that type is not known */
   extern "C" OSPVolume ospNewVolume(const char *type)
   {
     ASSERT_DEVICE();
@@ -315,23 +314,6 @@ namespace ospray {
         cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
       else
         std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
-    return volume;
-  }
-
-  /*! \brief create a new volume of the given type from data in the given file
-    return 'NULL' if the type is not known or the file cannot be found */
-  extern "C" OSPVolume ospNewVolumeFromFile(const char *filename, const char *type)
-  {
-    ASSERT_DEVICE();
-    Assert(type != NULL && "invalid volume type identifier in ospNewVolumeFromFile");
-    Assert(filename != NULL && "no file name specified in ospNewVolumeFromFile");
-    LOG("ospNewVolumeFromFile(" << filename << ", " << type << ")");
-    OSPVolume volume = ospray::api::Device::current->newVolumeFromFile(filename, type);
-    if (ospray::logLevel > 0)
-      if (volume)
-        cout << "ospNewVolumeFromFile: " << ((ospray::Volume *) volume)->toString() << endl;
-      else
-        std::cerr << "#ospray: could not create volume of type '" << type << "' from file '" << filename << "'" << std::endl;
     return volume;
   }
 

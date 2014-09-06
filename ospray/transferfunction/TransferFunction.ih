@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 //
 //                 INTEL CORPORATION PROPRIETARY INFORMATION
 //
@@ -28,8 +20,8 @@
 
 struct TransferFunction;
 
-typedef varying vec3f (*TransferFunction_lookupColorFunction)(uniform TransferFunction * uniform transferFunction, const varying float &value);
-typedef varying float (*TransferFunction_lookupAlphaFunction)(uniform TransferFunction * uniform transferFunction, const varying float &value);
+typedef varying vec3f (*TransferFunction_lookupColorFunction)(const uniform TransferFunction * uniform transferFunction, const varying float &value);
+typedef varying float (*TransferFunction_lookupAlphaFunction)(const uniform TransferFunction * uniform transferFunction, const varying float &value);
 
 struct TransferFunction
 {
@@ -37,19 +29,16 @@ struct TransferFunction
     TransferFunction_lookupAlphaFunction lookupAlpha;
 };
 
-// used in ISPC function implementations...
-typedef uniform TransferFunction * TransferFunctionPtr;
-
 // used in exported ISPC function implementations...
 struct _TransferFunction {};
 typedef uniform _TransferFunction * uniform ExtTransferFunctionPtr;
 
 #define __defineMethods(type) \
     extern "C" { \
-        inline varying vec3f type##_lookupColor(uniform TransferFunctionPtr _transferFunction, const varying float &value); \
+        inline varying vec3f type##_lookupColor(const uniform TransferFunction *uniform _transferFunction, const varying float &value); \
     } \
     extern "C" { \
-        inline varying vec3f type##_lookupAlpha(uniform TransferFunctionPtr _transferFunction, const varying float &value); \
+        inline varying vec3f type##_lookupAlpha(const uniform TransferFunction *uniform _transferFunction, const varying float &value); \
     } \
 
 __defineMethods(TransferFunctionPiecewiseLinear);

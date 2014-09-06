@@ -13,7 +13,7 @@ CONFIGURE_OSPRAY()
 IF(NOT THIS_IS_MIC)
 
   # common utility classes for reading and writing files
-# ADD_SUBDIRECTORY(common/fileio)
+  ADD_SUBDIRECTORY(common/fileio)
 
   # common utility classes for 3D viewer widget
   ADD_SUBDIRECTORY(common/widgets)

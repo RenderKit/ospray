@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "ospray/camera/perspectivecamera.h"
-#include "ospray/volume/volume.h"
+#include "ospray/volume/Volume.h"
 #include "ospray/common/ray.h"
 #include "ospray/common/data.h"
 #include "ospray/render/dvr/dvr.h"
@@ -48,7 +48,7 @@ namespace ospray {
     Assert(camera && "null camera handle in 'dvr' renderer "
            "(did you forget to assign a 'camera' parameter to the renderer?)");
 
-    dt = getParam1f("dt",1.f/2048.f);
+    dt = getParam1f("dt", 0.0f);
 
     Data *xfData = (Data *)getParamObject("transferFunction",NULL);
     /*! \todo Add 'real' transfer function code to DVRRenderer(s) */

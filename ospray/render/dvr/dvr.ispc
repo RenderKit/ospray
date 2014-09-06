@@ -10,7 +10,7 @@
 #include "ospray/camera/perspectivecamera.ih"
 #include "ospray/common/ray.ih"
 #include "ospray/math/bbox.ih"
-#include "ospray/volume/volume.ih"
+#include "ospray/volume/Volume.ih"
 #include "ospray/render/util.ih"
 #include "ospray/render/renderer.ih"
 
@@ -60,7 +60,7 @@ inline vec4f traceRayDVR(const Ray &ray,
   // print("texit %\n",texit);
   if (tenter >= texit) return color;
 
-  float step_size = dt;//.5;
+  float step_size = dt;
 
   float t0, t1;
   float f0 = 0.0;
@@ -72,8 +72,8 @@ inline vec4f traceRayDVR(const Ray &ray,
     // print("t %\n",t1);
     t1 += step_size;
 
-    const vec3f p1 = volume->clampSize * (ray.org + t1 * ray.dir);
-    const float f1 = volume->lerpf(volume, p1);
+    const vec3f p1 = volume->upperBound * (ray.org + t1 * ray.dir);
+    const float f1 = volume->computeSample(volume, p1);
 
     vec4f color_sample = make_vec4f(1.f);
     float a = 1.f;
@@ -174,9 +174,15 @@ export void *uniform DVRRenderer_create(void *uniform cppE)
 export void DVRRenderer_set(void *uniform _renderer,
                             void *uniform _camera,
                             void *uniform _volume,
-                            uniform float dt)
+                            uniform float _dt)
 {
   uniform DVRRenderer *uniform renderer = (uniform DVRRenderer *uniform)_renderer;
+  uniform Volume *uniform volume = (uniform Volume *uniform) _volume;
+
+  uniform float max_bound = (volume->upperBound.x > volume->upperBound.y) ? volume->upperBound.x : volume->upperBound.y;
+  max_bound = (max_bound > volume->upperBound.z) ? max_bound : volume->upperBound.z;
+  uniform float dt = 1.0f / max_bound;
+
   renderer->inherited.model  = NULL;
   renderer->inherited.camera = (uniform Camera *uniform)_camera;
   renderer->volume = (uniform Volume *uniform)_volume;

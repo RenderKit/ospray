@@ -35,16 +35,13 @@ SET(OSPRAY_SOURCES
   camera/perspectivecamera.ispc
   camera/perspectivecamera.cpp
 
-  volume/volume.ispc
-  volume/volume.cpp
-  volume/naive32.ispc
-  volume/naive32.cpp
-  #	volume/naive64.ispc
-  #	volume/naive64.cpp
-  volume/bricked32.ispc
-  volume/bricked32.cpp
-  volume/bricked64.ispc
-  volume/bricked64.cpp
+  volume/BrickedVolume.cpp
+  volume/BrickedVolumeFloat.ispc
+  volume/BrickedVolumeUChar.ispc
+  volume/StructuredVolume.cpp
+  volume/StructuredVolumeFile.cpp
+  volume/SymbolRegistry.cpp
+  volume/Volume.cpp
 
   transferfunction/TransferFunction.cpp
   transferfunction/TransferFunctionPiecewiseLinear.ispc

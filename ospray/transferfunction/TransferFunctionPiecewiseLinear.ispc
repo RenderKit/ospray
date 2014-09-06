@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 //
 //                 INTEL CORPORATION PROPRIETARY INFORMATION
 //
@@ -32,9 +24,9 @@ struct TransferFunctionPiecewiseLinear
     uniform float alphaValueMax;
 };
 
-inline varying vec3f TransferFunctionPiecewiseLinear_lookupColor(uniform TransferFunctionPtr _transferFunction, const varying float &value)
+inline varying vec3f TransferFunctionPiecewiseLinear_lookupColor(const uniform TransferFunction *uniform _transferFunction, const varying float &value)
 {
-    uniform TransferFunctionPiecewiseLinear * uniform transferFunction = (uniform TransferFunctionPiecewiseLinear *uniform)_transferFunction;
+    const uniform TransferFunctionPiecewiseLinear * uniform transferFunction = (const uniform TransferFunctionPiecewiseLinear *uniform)_transferFunction;
 
     if(transferFunction->numColors == 0)
         return make_vec3f(1.);
@@ -56,9 +48,9 @@ inline varying vec3f TransferFunctionPiecewiseLinear_lookupColor(uniform Transfe
     }
 }
 
-inline varying float TransferFunctionPiecewiseLinear_lookupAlpha(uniform TransferFunctionPtr _transferFunction, const varying float &value)
+inline varying float TransferFunctionPiecewiseLinear_lookupAlpha(const uniform TransferFunction *uniform _transferFunction, const varying float &value)
 {
-    uniform TransferFunctionPiecewiseLinear * uniform transferFunction = (uniform TransferFunctionPiecewiseLinear *uniform)_transferFunction;
+    const uniform TransferFunctionPiecewiseLinear * uniform transferFunction = (const uniform TransferFunctionPiecewiseLinear *uniform)_transferFunction;
 
     if(transferFunction->numAlphas == 0)
         return 1.;
@@ -80,7 +72,7 @@ inline varying float TransferFunctionPiecewiseLinear_lookupAlpha(uniform Transfe
     }
 }
 
-uniform TransferFunctionPtr TransferFunctionPiecewiseLinear_create()
+uniform TransferFunction *uniform TransferFunctionPiecewiseLinear_create()
 {
     uniform TransferFunctionPiecewiseLinear * uniform transferFunction = uniform new uniform TransferFunctionPiecewiseLinear;
 
@@ -97,7 +89,7 @@ uniform TransferFunctionPtr TransferFunctionPiecewiseLinear_create()
     transferFunction->alphaValueMin = 0.;
     transferFunction->alphaValueMax = 1.;
 
-    return (uniform TransferFunctionPtr)transferFunction;
+    return (uniform TransferFunction *uniform) transferFunction;
 }
 
 export uniform ExtTransferFunctionPtr _TransferFunctionPiecewiseLinear_create()

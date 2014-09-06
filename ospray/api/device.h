@@ -87,9 +87,6 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type) = 0;
       
-      /*! create a new volume object (out of list of registered volume types) with data from a file */
-      virtual OSPVolume newVolumeFromFile(const char *filename, const char *type) = 0;
-
       /*! create a new transfer function object (out of list of registered transfer function types) */
       virtual OSPTransferFunction newTransferFunction(const char *type) = 0;
 
