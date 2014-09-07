@@ -2,11 +2,11 @@
 
 <!-- Contrived electron density data for a C-60 Buckminsterfullerene. -->
 
-<Volume>
-  <DataFile offset="0"> buckyball.raw </DataFile>
-  <Dimensions> 32 32 32 </Dimensions>
-  <VoxelType> uchar </VoxelType>
-  <VoxelSpacing> 0.01 0.01 0.01 </VoxelSpacing>
-  <VoxelRange> 0 255 </VoxelRange>
-</Volume>
+<volume>
+  <dataFile offset="0"> buckyball.raw </dataFile>
+  <dimensions> 32 32 32 </dimensions>
+  <voxelType> uchar </voxelType>
+  <voxelSpacing> 0.01 0.01 0.01 </voxelSpacing>
+  <voxelRange> 0 255 </voxelRange>
+</volume>
 

@@ -80,8 +80,8 @@ inline vec4f traceRayDVR(const Ray &ray,
 
     if(volume->transferFunction != NULL)
     {
-        vec3f colorLookup = volume->transferFunction->lookupColor(volume->transferFunction, f1);
-        a = volume->transferFunction->lookupAlpha(volume->transferFunction, f1);
+        vec3f colorLookup = volume->transferFunction->getColorForValue(volume->transferFunction, f1);
+        a = volume->transferFunction->getAlphaForValue(volume->transferFunction, f1);
 
         color_sample.x = colorLookup.x;
         color_sample.y = colorLookup.y;

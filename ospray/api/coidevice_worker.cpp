@@ -369,7 +369,7 @@ namespace ospray {
       const char *type = args.getString();
       cout << "!osp:coi: new transfer function " << handle.ID() << " " << type << endl;
 
-      TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
+      TransferFunction *transferFunction = TransferFunction::createInstance(type);
       handle.assign(transferFunction);
 
       if (ospray::debugMode) COIProcessProxyFlush();

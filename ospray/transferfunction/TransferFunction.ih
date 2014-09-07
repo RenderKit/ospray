@@ -10,39 +10,17 @@
 #ifndef TRANSFER_FUNCTION_IH
 #define TRANSFER_FUNCTION_IH
 
-/*! \file TransferFunction.ih 
-
-  \brief TransferFunction implementation for ISPC.
-
- */
-
 #include "ospray/common/ospcommon.ih"
 
-struct TransferFunction;
+    struct TransferFunction {
 
-typedef varying vec3f (*TransferFunction_lookupColorFunction)(const uniform TransferFunction * uniform transferFunction, const varying float &value);
-typedef varying float (*TransferFunction_lookupAlphaFunction)(const uniform TransferFunction * uniform transferFunction, const varying float &value);
+        //! Interpolated color for the given value.
+        varying vec3f (*getColorForValue)(const void *uniform transferFunction, varying float value);
 
-struct TransferFunction
-{
-    TransferFunction_lookupColorFunction lookupColor;
-    TransferFunction_lookupAlphaFunction lookupAlpha;
-};
+        //! Interpolated opacity for the given value.
+        varying float (*getAlphaForValue)(const void *uniform transferFunction, varying float value);
 
-// used in exported ISPC function implementations...
-struct _TransferFunction {};
-typedef uniform _TransferFunction * uniform ExtTransferFunctionPtr;
+    };
 
-#define __defineMethods(type) \
-    extern "C" { \
-        inline varying vec3f type##_lookupColor(const uniform TransferFunction *uniform _transferFunction, const varying float &value); \
-    } \
-    extern "C" { \
-        inline varying vec3f type##_lookupAlpha(const uniform TransferFunction *uniform _transferFunction, const varying float &value); \
-    } \
+#endif // TRANSFER_FUNCTION_IH
 
-__defineMethods(TransferFunctionPiecewiseLinear);
-
-#undef __defineMethods
-
-#endif

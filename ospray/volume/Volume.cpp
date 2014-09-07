@@ -25,7 +25,7 @@ namespace ospray {
         if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])());
 
         //! Otherwise construct the name of the creation function to look for.
-        std::string creationFunctionName = "ospray_create_volume_" + std::string(type);
+        std::string creationFunctionName = "ospray_create_volume_" + type;
 
         //! Look for the named function.
         symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);

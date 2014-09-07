@@ -39,20 +39,20 @@
     //! Tri-linear interpolation at the given sample location in the volume.
     varying float BrickedVolumeUChar_computeSample(void *uniform volume, const varying vec3f &coordinates);
 
-    //! Declaration emitted during build in "ClassName_ispc.h".  Allocate storage for voxel data and assign type-specific function pointers.
-//  extern "C" { void *uniform BrickedVolumeUChar_createInstance(const uniform vec3i &dimensions, const void *uniform function); }
-
     //! Compute the 1D address of a voxel in the volume from a 3D index.
     varying int BrickedVolumeUChar_getVoxelAddress(BrickedVolumeUChar *uniform volume, const varying vec3i &index);
 
     //! Voxel data accessor.
     varying uint8 BrickedVolumeUChar_getVoxel(BrickedVolumeUChar *uniform volume, const varying vec3i &index);
 
-    //! Declaration emitted during build in "ClassName_ispc.h".  Copy voxel data into the volume.
-//  extern "C" { void BrickedVolumeUChar_setRegion(void *uniform volume, const uint8 *uniform source, const uniform vec3i &index, const uniform vec3i &count); }
-
     //! Voxel data setter.
     void BrickedVolumeUChar_setVoxel(BrickedVolumeUChar *uniform volume, const uint8 *uniform source, const uniform vec3i &index, const varying vec3i &offset);
+
+    //! Declaration emitted during build in "ClassName_ispc.h".  Allocate storage for voxel data and assign type-specific function pointers.
+//  extern "C" { void *uniform BrickedVolumeUChar_createInstance(const uniform vec3i &dimensions, const void *uniform function); }
+
+    //! Declaration emitted during build in "ClassName_ispc.h".  Copy voxel data into the volume.
+//  extern "C" { void BrickedVolumeUChar_setRegion(void *uniform volume, const uint8 *uniform source, const uniform vec3i &index, const uniform vec3i &count); }
 
 #endif // BRICKED_VOLUME_UCHAR_IH
 

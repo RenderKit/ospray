@@ -334,7 +334,7 @@ namespace ospray {
     OSPTransferFunction LocalDevice::newTransferFunction(const char *type)
     {
       Assert(type != NULL && "invalid transfer function type identifier");
-      TransferFunction *transferFunction = TransferFunction::createTransferFunction(type);
+      TransferFunction *transferFunction = TransferFunction::createInstance(type);
       if (!transferFunction) {
         if (ospray::debugMode)
           throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");

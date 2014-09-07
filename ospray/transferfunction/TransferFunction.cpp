@@ -7,45 +7,36 @@
 //    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
 //
 
-#include "TransferFunction.h"
-#include "ospray/common/library.h"
 #include <map>
+#include "ospray/common/library.h"
+#include "ospray/transferfunction/TransferFunction.h"
 
-namespace ospray
-{
-    typedef TransferFunction *(*creatorFct)();
-    std::map<std::string, creatorFct> transferFunctionRegistry;
+namespace ospray {
 
-    TransferFunction * TransferFunction::createTransferFunction(const char * identifier)
-    {
-        char type[strlen(identifier)+2];
-        strcpy(type,identifier);
+    TransferFunction *TransferFunction::createInstance(std::string type) {
 
-        for(char *s = type; *s; ++s)
-            if(*s == '-')
-                *s = '_';
+        //! Function pointer type for creating a concrete instance of a subtype of this class.
+        typedef TransferFunction *(*creationFunctionPointer)();
 
-        std::map<std::string, TransferFunction *(*)()>::iterator it = transferFunctionRegistry.find(type);
+        //! Function pointers corresponding to each subtype.
+        std::map<std::string, creationFunctionPointer> symbolRegistry;
 
-        if(it != transferFunctionRegistry.end())
-            return it->second ? (it->second)() : NULL;
+        //! Return a concrete instance of the requested subtype if the creation function is already known.
+        if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])());
 
-        if(ospray::logLevel >= 2) 
-            std::cout << "#ospray: trying to look up transfer function type '" << type << "' for the first time" << std::endl;
+        //! Otherwise construct the name of the creation function to look for.
+        std::string creationFunctionName = "ospray_create_transfer_function_" + type;
 
-        std::string creatorName = "ospray_create_transfer_function__"+std::string(type);
-        creatorFct creator = (creatorFct)getSymbol(creatorName);
-        transferFunctionRegistry[type] = creator;
+        //! Look for the named function.
+        symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);
 
-        if(creator == NULL)
-        {
-            if(ospray::logLevel >= 1)
-                std::cout << "#ospray: could not find transfer function type '" << type << "'" << std::endl;
+        //! The named function may not be found if the requested subtype is not known.
+        if (symbolRegistry[type] == NULL && ospray::logLevel >= 1) std::cout << "OSPRay::TransferFunction error: unrecognized subtype '" << type << "'" << std::endl;
 
-            return NULL;
-        }
+        //! Return a concrete instance of the requested subtype.
+        return(symbolRegistry[type] ? (*symbolRegistry[type])() : NULL);
 
-        return (*creator)();
-  }
+    }
 
 } // namespace ospray
+

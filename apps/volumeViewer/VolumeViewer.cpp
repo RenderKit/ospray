@@ -71,10 +71,10 @@ void VolumeViewer::initVolumeFromFile(const std::string &filename) {
     if (!volume) throw std::runtime_error("could not create volume type '" + volumeType + "'");
 
     //! All volumes are assumed to be self-describing (e.g. via a header file).
-    ospSetString(volume, "Filename", filename.c_str());
+    ospSetString(volume, "filename", filename.c_str());
 
     //! Associate the transfer function with the volume.
-    ospSetParam(volume, "TransferFunction", transferFunction_);
+    ospSetParam(volume, "transferFunction", transferFunction_);
 
     //! Commit that bad boy.
     ospCommit(volume);
@@ -129,10 +129,10 @@ void VolumeViewer::playTimesteps(bool set)
 void VolumeViewer::createTransferFunction()
 {
     // create transfer function
-    transferFunction_ = ospNewTransferFunction("TransferFunctionPiecewiseLinear");
+    transferFunction_ = ospNewTransferFunction("piecewiseLinear");
 
     if(!transferFunction_)
-        throw std::runtime_error("could not create transfer function type 'TransferFunctionPiecewiseLinear'");
+        throw std::runtime_error("could not create transfer function type 'piecewiseLinear'");
 
     ospCommit(transferFunction_);
 }

@@ -23,7 +23,7 @@ namespace ospray {
         exitOnCondition(ispcEquivalent != NULL, "changes to volume objects are not allowed post-commit");
 
         //! The volume may be initialized from the contents of a file or from memory.
-        const char *filename = getParamString("Filename", NULL);  (filename) ? getVolumeFromFile(filename) : getVolumeFromMemory();
+        const char *filename = getParamString("filename", NULL);  (filename) ? getVolumeFromFile(filename) : getVolumeFromMemory();
 
     }
 
@@ -58,7 +58,7 @@ namespace ospray {
         setDimensions(volumeFile->getVolumeDimensions());
 
         //! Set the transfer function.
-        setTransferFunction((TransferFunction *) getParamObject("TransferFunction", NULL));
+        setTransferFunction((TransferFunction *) getParamObject("transferFunction", NULL));
 
         //! Set the voxel spacing.
         setVoxelSpacing(volumeFile->getVoxelSpacing());
@@ -77,22 +77,22 @@ namespace ospray {
     void StructuredVolume::getVolumeFromMemory() {
 
         //! Set the volume dimensions.
-        setDimensions(getParam3i("Dimensions", vec3i(0)));  exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");
+        setDimensions(getParam3i("dimensions", vec3i(0)));  exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");
 
         //! Set the transfer function.
-        setTransferFunction((TransferFunction *) getParamObject("TransferFunction", NULL));
+        setTransferFunction((TransferFunction *) getParamObject("transferFunction", NULL));
 
         //! Set the voxel spacing.
-        setVoxelSpacing(getParam3f("VoxelSpacing", vec3f(1.0f)));
+        setVoxelSpacing(getParam3f("voxelSpacing", vec3f(1.0f)));
 
         //! Set the voxel type string.
-        setVoxelType(getParamString("VoxelType", NULL));  exitOnCondition(voxelType.empty(), "no voxel type specified");
+        setVoxelType(getParamString("voxelType", NULL));  exitOnCondition(voxelType.empty(), "no voxel type specified");
 
         //! Create the equivalent ISPC volume container and allocate memory for voxel data.
         createEquivalentISPC();
 
         //! Get a pointer to the source voxel data.
-        const Data *voxelData = getParamData("VoxelData", NULL);  exitOnCondition(voxelData == NULL, "no voxel data was specified");
+        const Data *voxelData = getParamData("voxelData", NULL);  exitOnCondition(voxelData == NULL, "no voxel data was specified");
 
         //! The dimensions of the source voxel data and target volume must match.
         exitOnCondition(getVoxelCount() != voxelData->numItems, "unexpected dimensions of source voxel data");
