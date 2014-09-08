@@ -74,6 +74,9 @@ typedef enum {
   //! Object reference type.
   OSP_OBJECT,
 
+  //! Opaque array of data.
+  OSP_DATA,
+
   //! Pointer to a C-style NULL-terminated character string.
   OSP_STRING,
 
