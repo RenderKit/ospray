@@ -99,7 +99,7 @@ namespace ospray {
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new volume \"" << type << "\" ID " << (void*)(int64)handle << endl;
-          Volume *volume = Volume::createVolume(type);
+          Volume *volume = Volume::createInstance(type);
           if (!volume) 
             throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
           volume->refInc();

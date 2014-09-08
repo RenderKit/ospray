@@ -9,7 +9,7 @@
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 # setup dependencies
-SET(LIBS ${LIBS} ospray)
+SET(LIBS ${LIBS} ospray ospray_fileio)
 
 FIND_PACKAGE(Qt4 REQUIRED) 
 SET(QT_USE_QTOPENGL TRUE)
@@ -42,3 +42,4 @@ TARGET_LINK_LIBRARIES(ospVolumeViewer ${LIBS})
 # ------------------------------------------------------------
 INSTALL(TARGETS ospVolumeViewer DESTINATION bin)
 # ------------------------------------------------------------
+

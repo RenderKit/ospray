@@ -6,15 +6,19 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-
-
-// ospray stuff
 #include "ospray/fb/framebuffer.ih"
 #include "ospray/camera/perspectivecamera.ih"
 #include "ospray/common/ray.ih"
 #include "ospray/math/bbox.ih"
-#include "ospray/volume/volume.ih"
+#include "ospray/volume/Volume.ih"
+#include "ospray/render/util.ih"
+#include "ospray/render/renderer.ih"
 
+struct DVRRenderer {
+  Renderer inherited;
+  uniform Volume *uniform volume;
+  uniform float dt;
+};
 
 //! performs a ray-box intersection test, and returns intersection interval [t0,t1]
 inline void boxtest(const Ray &ray,
@@ -41,129 +45,147 @@ inline void boxtest(const Ray &ray,
 
 //! do direct volume rendering via ray casting 
 /*! \internal this is code adapted from some earlier code that was mostly written by aaron knoll */
-inline vec4f rayCastDVR(const Ray &ray, 
-                        uniform Volume *uniform volume)
+inline vec4f traceRayDVR(const Ray &ray, 
+                         uniform Volume *uniform volume,
+                         uniform float dt)
 {
-  const uniform box3f box = make_box3f(make_vec3f(0.f),volume->clampSize);
+  const uniform box3f box = make_box3f(make_vec3f(0.f),make_vec3f(1.f)); //volume->clampSize);
   const vec3f rdir = rcp(ray.dir);
   
   vec4f color = make_vec4f(0.f);
 
   float tenter, texit;
   boxtest(ray, rdir, box, tenter, texit);
+  // print("tenter %\n",tenter);
+  // print("texit %\n",texit);
   if (tenter >= texit) return color;
 
-  float step_size = .5;
+  float step_size = dt;
 
-#define QUADRATIC_SAMPLING 0
-#if QUADRATIC_SAMPLING
-  float ray_diff = 1.0;
-  float rda = ray.rda * ray_diff;
-  float rdb = sqrt(rda);
-  float inv_rda = 1.0 / rda;
-#endif
+  float t0, t1;
+  float f0 = 0.0;
 
-  if (tenter < texit)
-  {
-    vec3f p0; //, p1; 
-    float t0, t1;
-    float f0 = 0.0;
-    // float f1;
+  t1 = max(floor(tenter / step_size) * step_size, tenter);
 
-    t1 = tenter;
+  while(t1 < texit// && color.w < .97f
+        ) {
+    // print("t %\n",t1);
+    t1 += step_size;
 
-    //AARON NOTE: we will want some sort of space skipping here; or to call dvr() as an intersection routine on accel nodes.
+    const vec3f p1 = volume->upperBound * (ray.org + t1 * ray.dir);
+    const float f1 = volume->computeSample(volume, p1);
 
-#if QUADRATIC_SAMPLING
-    //find first sample in quadratic sampling pattern
-    float ceil_x = max(floor((sqrt(rdb * rdb + 2.0 * rda * tenter) - rdb) * inv_rda), 0.0);
-    t1 = max(0.5*rda*ceil_x*ceil_x + rdb*ceil_x - (1.0 / 65536.0), t1);
+    vec4f color_sample = make_vec4f(1.f);
+    float a = 1.f;
 
-    float dt = sqrt(rdb*rdb + 2.0 * rda * t1);
-    float M = 1.0;          //sample rate multiplier, e.g. per macrocell
-    float frda = M*(M + 1.0)*.5*rda;
-    step_size = M*dt + frda;
-#else
-    t1 = max(floor(tenter / step_size) * step_size, t1);
-#endif
-
-    // p1 = ray.org + t1 * ray.dir;
-
-    while(t1 < texit && color.w < .97f)
+    if(volume->transferFunction != NULL)
     {
-      // p0 = p1;
-      t1 += step_size;
-#if QUADRATIC_SAMPLING
-      step_size += frda;
-#endif
+        vec3f colorLookup = volume->transferFunction->getColorForValue(volume->transferFunction, f1);
+        a = volume->transferFunction->getAlphaForValue(volume->transferFunction, f1);
 
-      const vec3f p1 = ray.org + t1 * ray.dir;
-      const float f1 = volume->lerpf(volume, p1);
+        color_sample.x = colorLookup.x;
+        color_sample.y = colorLookup.y;
+        color_sample.z = colorLookup.z;
+    } else
+      a = f1;
 
-      vec4f color_sample = make_vec4f(f1); //f1 * make_vec4f(1); //, f1);
-      
-      const float alpha = 1.0 - exp(-color_sample.w * step_size);
-      const float alpha_1msa = alpha * (1.0-color.w);
+    const float alpha = 1.0 - exp(-a * step_size);
+    const float alpha_1msa = alpha * (1.0-color.w);
     
-      color_sample.w = 1.f;
-      color = color + color_sample * alpha_1msa;
-    }
-
-    // ray.color = color;
+    color_sample.w = 1.f;
+    color = color + color_sample * alpha_1msa;
+    if (min(min(color.x,color.y),color.z) >= 1.f)
+      break;
   }
-  // else
-  // {
-  //   ray.color = make_vec4f(0,0,0,1);
-  // } 
-  
   return color;
-  // return make_vec4f(abs(ray.dir));
-}
-
-//! render a line with DVR rendering; 
-/*! \internal this should eventually get moved to a tile-based
-  renderer (ideally with load balancer support for distributed
-  rendering), but right now lines is easier */
-task void DVRRenderer_renderLine(uniform FrameBuffer *uniform fb,
-                                 uniform Volume *uniform volume,
-                                 uniform Camera *uniform camera)
-{
-  const uniform int size_x = fb->size.x;
-  const uniform int size_y = fb->size.y;
-  const uniform int y = taskIndex;
-  foreach (x = 0 ... size_x) {
-    const float screen_u = (x+.5f)/size_x;
-    const float screen_v = (y+.5f)/size_y;
-    
-    Ray ray;
-    camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-                    (varying vec2f)make_vec2f(0.f,0.f));
-
-    const vec4f col = rayCastDVR(ray,volume);
-    fb->setPixel(fb,make_vec2i(x,y),col); //make_vec4f(fx,fy,fz,fw));
-  }
 }
 
 
-/*! \brief entry point for the ISPC-side render frame function for the
-  test frame renderer 
-  
-  \detailed \note As a publicly exported function the frame buffer
-  parameter for this function actually has to be typed 'void *'
-  because ISPC cannot export any (non-trivial) ISPC-side classes 
-  
-  \internal the reason we pass 'void*' typed parameters here is that the current
-  ISPC version cannot export the base classes for the pointers 
-*/
-export void ispc__DVRRenderer_renderFrame(void *uniform _camera,
-                                          void *uniform _volume,
-                                          void *uniform _fb
-                                          )
+void DVRRenderer_renderSample(uniform Renderer *uniform _renderer,
+                                  varying ScreenSample &sample)
 {
-  uniform FrameBuffer *uniform fb = (uniform FrameBuffer *uniform)_fb;
-  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-  uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
-  
-  launch[fb->size.y] DVRRenderer_renderLine(fb,volume,camera);
+  uniform DVRRenderer *uniform renderer = (uniform DVRRenderer *uniform)_renderer;
+
+  vec4f bgColor = make_vec4f(1.f);
+  // print("sample.ray.org.x %\n",sample.ray.org.x);
+  // scale the color value; this should be handled differently
+  vec4f rgba = 5.f * traceRayDVR(sample.ray,renderer->volume,renderer->dt);
+
+  rgba = rgba.w * rgba + (1.f-rgba.w)*bgColor;
+
+  sample.rgb.x = rgba.x;
+  sample.rgb.y = rgba.y;
+  sample.rgb.z = rgba.z;
+  sample.alpha = rgba.w;
+}
+
+// export void ispc__ISPCDVRRenderer_renderTile(void *uniform _tile,
+//                                              void *uniform _camera,
+//                                              void *uniform _volume,
+//                                              uniform float dt)
+// {
+//   uniform Volume *uniform volume = (uniform Volume *uniform)_volume;
+//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
+//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
+
+//   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
+//   const uniform uint32 size_x = tile->fbSize.x;
+//   const uniform uint32 size_y = tile->fbSize.y;
+//   const uniform uint32 x0 = tile->region.lower.x;
+//   const uniform uint32 y0 = tile->region.lower.y;
+//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+//     const uint32 frag = i*programCount+programIndex;
+//     const uint32  x     = x0 + (frag % TILE_SIZE);
+//     const uint32  y     = y0 + (frag / TILE_SIZE);
+//     // print("pixel % %\n",x,y);
+//     if (x < size_x & y < size_y) {
+//       // print("+pixel % %\n",x,y);
+      
+//       const float screen_u = (x+.5f)*tile->rcp_fbSize.x;
+//       const float screen_v = (y+.5f)*tile->rcp_fbSize.y;
+//       Ray ray;
+//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
+//                       (varying vec2f)make_vec2f(0.f,0.f));
+
+//       const vec4f col = 10 * traceRayDVR(ray,volume,dt);
+// #if 1
+//       tile->r[i] = col.x;
+//       tile->g[i] = col.y;
+//       tile->b[i] = col.z;
+//       tile->a[i] = col.w;
+//       tile->z[i] = ray.t;
+//       tile->rgba8[i] = cvt_uint32(col);
+// #endif
+//     }
+//   }
+
+// }
+
+
+export void *uniform DVRRenderer_create(void *uniform cppE)
+{
+  uniform DVRRenderer *uniform renderer = uniform new uniform DVRRenderer;
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
+  renderer->inherited.renderSample = DVRRenderer_renderSample;
+  return renderer;
+}
+
+
+export void DVRRenderer_set(void *uniform _renderer,
+                            void *uniform _camera,
+                            void *uniform _volume,
+                            uniform float _dt)
+{
+  uniform DVRRenderer *uniform renderer = (uniform DVRRenderer *uniform)_renderer;
+  uniform Volume *uniform volume = (uniform Volume *uniform) _volume;
+
+  uniform float max_bound = (volume->upperBound.x > volume->upperBound.y) ? volume->upperBound.x : volume->upperBound.y;
+  max_bound = (max_bound > volume->upperBound.z) ? max_bound : volume->upperBound.z;
+  uniform float dt = 1.0f / max_bound;
+
+  renderer->inherited.model  = NULL;
+  renderer->inherited.camera = (uniform Camera *uniform)_camera;
+  renderer->volume = (uniform Volume *uniform)_volume;
+  renderer->dt = dt;
 }
 

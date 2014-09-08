@@ -19,12 +19,6 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
     // load color maps
     loadColorMaps();
 
-    // set first available color map
-    if(colorMaps_.size() > 0)
-    {
-        setColorMapIndex(0);
-    }
-
     // setup UI elments
     QVBoxLayout * layout = new QVBoxLayout();
     setLayout(layout);
@@ -45,8 +39,6 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 
     formLayout->addRow("Color map", colorMapComboBox);
 
-    connect(colorMapComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
-
     // data value range, used as the domain for both color and opacity components of the transfer function
     QDoubleSpinBox * dataValueMinSpinBox = new QDoubleSpinBox();
     QDoubleSpinBox * dataValueMaxSpinBox = new QDoubleSpinBox();
@@ -57,17 +49,33 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
     formLayout->addRow("Data value min", dataValueMinSpinBox);
     formLayout->addRow("Data value max", dataValueMaxSpinBox);
 
-    connect(dataValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
-    connect(dataValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
-
     // opacity transfer function widget
     layout->addWidget(&transferFunctionAlphaWidget_);
 
+    //! The Qt 4.8 documentation says: "by default, for every connection you
+    //! make, a signal is emitted".  But this isn't happening here (Qt 4.8.5,
+    //! Mac OS 10.9.4) so we manually invoke these functions so the transfer
+    //! function is fully populated before the first render call.
+    //!
+    //! Unfortunately, each invocation causes all transfer function fields to
+    //! be rewritten on the ISPC side (due to repeated recommits of the OSPRay
+    //! transfer function object).
+    //!
+    setColorMapIndex(0);
+    transferFunctionAlphasChanged();
+    setDataValueMin(0.0);
+    setDataValueMax(1.0);
+
+    connect(colorMapComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
+    connect(dataValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
+    connect(dataValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
     connect(&transferFunctionAlphaWidget_, SIGNAL(transferFunctionChanged()), this, SLOT(transferFunctionAlphasChanged()));
+
 }
 
 void TransferFunctionEditor::transferFunctionAlphasChanged()
 {
+
     // default to 256 discretizations of the opacities over the domain
     std::vector<float> transferFunctionAlphas = transferFunctionAlphaWidget_.getInterpolatedValuesOverInterval(256);
 
@@ -77,10 +85,12 @@ void TransferFunctionEditor::transferFunctionAlphasChanged()
     // commit and emit signal
     ospCommit(transferFunction_);
     emit transferFunctionChanged();
+
 }
 
 void TransferFunctionEditor::setColorMapIndex(int index)
 {
+
     // set transfer function color properties for this color map
     std::vector<osp::vec3f> colors = colorMaps_[index].getColors();
 
@@ -93,10 +103,12 @@ void TransferFunctionEditor::setColorMapIndex(int index)
     // commit and emit signal
     ospCommit(transferFunction_);
     emit transferFunctionChanged();
+
 }
 
 void TransferFunctionEditor::setDataValueMin(double value)
 {
+
     // set as the minimum value in the domain for both color and opacity components of the transfer function
     ospSetf(transferFunction_, "colorValueMin", float(value));
     ospSetf(transferFunction_, "alphaValueMin", float(value));
@@ -104,10 +116,12 @@ void TransferFunctionEditor::setDataValueMin(double value)
     // commit and emit signal
     ospCommit(transferFunction_);
     emit transferFunctionChanged();
+
 }
 
 void TransferFunctionEditor::setDataValueMax(double value)
 {
+
     // set as the maximum value in the domain for both color and opacity components of the transfer function
     ospSetf(transferFunction_, "colorValueMax", float(value));
     ospSetf(transferFunction_, "alphaValueMax", float(value));
@@ -115,6 +129,7 @@ void TransferFunctionEditor::setDataValueMax(double value)
     // commit and emit signal
     ospCommit(transferFunction_);
     emit transferFunctionChanged();
+
 }
 
 void TransferFunctionEditor::loadColorMaps()

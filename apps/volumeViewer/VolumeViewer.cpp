@@ -1,87 +1,87 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+//
+//                 INTEL CORPORATION PROPRIETARY INFORMATION
+//
+//    This software is supplied under the terms of a license agreement or
+//    nondisclosure agreement with Intel Corporation and may not be copied
+//    or disclosed except in accordance with the terms of that agreement.
+//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
+//
 
+#include <algorithm>
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
-#include <algorithm>
 
-VolumeViewer::VolumeViewer(const osp::vec3i &dimensions, const float dt) : renderer_(NULL), transferFunction_(NULL), osprayWindow_(NULL)
-{
-    // default window size
+VolumeViewer::VolumeViewer(const float dt) : renderer_(NULL), transferFunction_(NULL), osprayWindow_(NULL) {
+
+    //! Default window size.
     resize(1024, 768);
 
-    QToolBar * toolbar = addToolBar("toolbar");
+    QToolBar *toolbar = addToolBar("toolbar");
 
-    // add timestep controls
-    QAction * nextTimestepAction = new QAction("Next timestep", this);
+    //! Add the "next timestep" widget and callback.
+    QAction *nextTimestepAction = new QAction("Next timestep", this);
     connect(nextTimestepAction, SIGNAL(triggered()), this, SLOT(nextTimestep()));
     toolbar->addAction(nextTimestepAction);
 
-    QAction * playTimestepsAction = new QAction("Play timesteps", this);
+    //! Add the "play timesteps" widget and callback.
+    QAction *playTimestepsAction = new QAction("Play timesteps", this);
     playTimestepsAction->setCheckable(true);
     connect(playTimestepsAction, SIGNAL(toggled(bool)), this, SLOT(playTimesteps(bool)));
     toolbar->addAction(playTimestepsAction);
 
-    // connect play timesteps timer slot
+    //! Connect the "play timesteps" timer.
     connect(&playTimestepsTimer_, SIGNAL(timeout()), this, SLOT(nextTimestep()));
 
-    // create renderer for volume viewer
-    ospLoadModule("dvr");
-    renderer_ = ospNewRenderer("dvr_ispc");
+    //! Create an OSPRay renderer for the volume viewer.
+    renderer_ = ospNewRenderer("dvr_ispc");  if (renderer_ == NULL) throw std::runtime_error("could not create renderer type 'dvr_ispc'");
 
-    // set the dt value; auto-set based on volume dimensions if dt == 0
-    if (dt != 0.f) ospSet1f(renderer_, "dt", dt);
-    else ospSet1f(renderer_, "dt", 1.f / float(std::max(std::max(dimensions.x, dimensions.y), dimensions.z)));
+    //! If no "dt" value is given, the renderer sets a default based on the volume bounds.
+    if (dt != 0.0f) ospSet1f(renderer_, "dt", dt);
 
-    if(!renderer_)
-        throw std::runtime_error("could not create renderer type 'dvr_ispc'");
-
-    // create transfer function
+    //! Create the transfer function.
     createTransferFunction();
 
-    // create the OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup...
+    //! Create the OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
     osprayWindow_ = new QOSPRayWindow(renderer_);
     setCentralWidget(osprayWindow_);
 
-    // set world bounds on OSPRay window. for volumes this is always (0,0,0) to (1,1,1).
-    osprayWindow_->setWorldBounds(osp::box3f(osp::vec3f(0.f), osp::vec3f(1.f)));
+    //! Set the window bounds based on the OSPRay world bounds (this is always [(0,0,0), (1,1,1)] for volumes).
+    osprayWindow_->setWorldBounds(osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
 
-    // create transfer function editor dock widget
-    // the transfer function editor will modify the transfer function directly
-    QDockWidget * transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
-    TransferFunctionEditor * transferFunctionEditor = new TransferFunctionEditor(transferFunction_);
+    //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
+    QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
+    TransferFunctionEditor *transferFunctionEditor = new TransferFunctionEditor(transferFunction_);
     transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
     addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
-    // connect signals and slots
+    //! Connect the Qt event signals and callbacks.
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
 
+    //! Show the window.
     show();
+
 }
 
-void VolumeViewer::loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout)
-{
-    std::string volumeType = layout + "_" + format;
-    OSPVolume volume = ospNewVolume(volumeType.c_str());
+void VolumeViewer::initVolumeFromFile(const std::string &filename) {
 
+    //! Currently only bricked volume types are supported.
+    std::string volumeType = "bricked";  OSPVolume volume = ospNewVolume(volumeType.c_str());
+
+    //! The requested volume type may not be known to OSPRay.
     if (!volume) throw std::runtime_error("could not create volume type '" + volumeType + "'");
 
+    //! All volumes are assumed to be self-describing (e.g. via a header file).
     ospSetString(volume, "filename", filename.c_str());
-    ospSet3i(volume, "dimensions", dimensions.x, dimensions.y, dimensions.z);
 
-    // assign the transfer function
+    //! Associate the transfer function with the volume.
     ospSetParam(volume, "transferFunction", transferFunction_);
 
-    // finally, commit the volume.
+    //! Commit that bad boy.
     ospCommit(volume);
 
-    // add the volume to the vector of volumes
+    //! Add the volume to the vector of volumes.
     volumes_.push_back(volume);
+
 }
 
 void VolumeViewer::setVolume(size_t index) {
@@ -129,10 +129,10 @@ void VolumeViewer::playTimesteps(bool set)
 void VolumeViewer::createTransferFunction()
 {
     // create transfer function
-    transferFunction_ = ospNewTransferFunction("TransferFunctionPiecewiseLinear");
+    transferFunction_ = ospNewTransferFunction("piecewiseLinear");
 
     if(!transferFunction_)
-        throw std::runtime_error("could not create transfer function type 'TransferFunctionPiecewiseLinear'");
+        throw std::runtime_error("could not create transfer function type 'piecewiseLinear'");
 
     ospCommit(transferFunction_);
 }

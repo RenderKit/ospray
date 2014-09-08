@@ -10,18 +10,16 @@ CONFIGURE_OSPRAY()
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/apps/util)
-INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
-INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
-INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 
-IF (NOT THIS_IS_MIC)
-  ADD_EXECUTABLE(ospParticleViewer
-    viewer.cpp
-    model.cpp
-    uintah.cpp
-    )
-  TARGET_LINK_LIBRARIES(ospParticleViewer ospray ospray_glut3d ospray_xml)
-ENDIF()
+ADD_LIBRARY(ospray_fileio SHARED
+  RawVolumeFile.cpp
+  SymbolRegistry.cpp
+  TinyXML2.cpp
+)
+
+TARGET_LINK_LIBRARIES(ospray_fileio ospray)
+# ------------------------------------------------------------
+SET_TARGET_PROPERTIES(ospray_fileio${OSPRAY_LIB_SUFFIX} 
+  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+INSTALL(TARGETS ospray_fileio${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 

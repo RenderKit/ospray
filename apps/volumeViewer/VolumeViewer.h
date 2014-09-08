@@ -1,10 +1,11 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+//
+//                 INTEL CORPORATION PROPRIETARY INFORMATION
+//
+//    This software is supplied under the terms of a license agreement or
+//    nondisclosure agreement with Intel Corporation and may not be copied
+//    or disclosed except in accordance with the terms of that agreement.
+//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
+//
 
 #pragma once
 
@@ -12,17 +13,17 @@
 #include <QtGui>
 #include <vector>
 
-class VolumeViewer : public QMainWindow
-{
+class VolumeViewer : public QMainWindow {
+
 Q_OBJECT
 
 public:
 
-    VolumeViewer(const osp::vec3i &dimensions, const float dt);
+    VolumeViewer(const float dt);
 
-    QOSPRayWindow *getQOSPRayWindow() { return osprayWindow_; }
+    QOSPRayWindow *getQOSPRayWindow() { return(osprayWindow_); }
 
-    void loadVolume(const std::string &filename, const osp::vec3i &dimensions, const std::string &format, const std::string &layout);
+    void initVolumeFromFile(const std::string &filename);
 
     void setVolume(size_t index);
 
@@ -36,14 +37,16 @@ protected:
 
     void createTransferFunction();
 
-    // OSPRay objects
+    //! OSPRay state.
     OSPRenderer renderer_;
     std::vector<OSPVolume> volumes_;
     OSPTransferFunction transferFunction_;
 
-    // the view window
-    QOSPRayWindow * osprayWindow_;
+    //! The view window.
+    QOSPRayWindow *osprayWindow_;
 
-    // play timesteps timer
+    //! Timer for use when stepping through multiple volumes.
     QTimer playTimestepsTimer_;
+
 };
+
