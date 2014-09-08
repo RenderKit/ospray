@@ -136,5 +136,43 @@ __define_lerp(uint32)
 
 #undef __define_lerp
 
+#define __define_max4(TYPE) \
+inline uniform TYPE max4(uniform TYPE a, uniform TYPE b, uniform TYPE c, uniform TYPE d)  \
+{                                                                                         \
+  return max(a, max(b, max(c, d)));                                                       \
+}                                                                                         \
+inline varying TYPE max4(varying TYPE a, varying TYPE b, varying TYPE c, varying TYPE d)  \
+{                                                                                         \
+  return max(a, max(b, max(c, d)));                                                       \
+}                                                                                         
+
+__define_max4(int8)
+__define_max4(int32)
+__define_max4(uint8)
+__define_max4(uint32)
+__define_max4(float)
+__define_max4(double)
+
+#undef __define_max4
+
+#define __define_min4(TYPE) \
+inline uniform TYPE min4(uniform TYPE a, uniform TYPE b, uniform TYPE c, uniform TYPE d)  \
+{                                                                                         \
+  return min(a, min(b, min(c, d)));                                                       \
+}                                                                                         \
+inline varying TYPE min4(varying TYPE a, varying TYPE b, varying TYPE c, varying TYPE d)  \
+{                                                                                         \
+  return min(a, min(b, min(c, d)));                                                       \
+}                                                                                         
+
+__define_min4(int8)
+__define_min4(int32)
+__define_min4(uint8)
+__define_min4(uint32)
+__define_min4(float)
+__define_min4(double)
+
+#undef __define_min4
+
 #endif
 
