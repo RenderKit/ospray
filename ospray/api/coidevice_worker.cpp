@@ -21,7 +21,7 @@
 #include "ospray/common/data.h"
 #include "ospray/geometry/trianglemesh.h"
 #include "ospray/camera/camera.h"
-#include "ospray/volume/volume.h"
+#include "ospray/volume/Volume.h"
 #include "ospray/render/renderer.h"
 #include "ospray/render/renderer.h"
 #include "ospray/render/loadbalancer.h"
