@@ -289,7 +289,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   if (ray.geomID < 0)
     return renderer->bgColor;
 
-  // print("shade at16\n");
+  print("shade at16\n");
   DifferentialGeometry dg;
   postIntersect(renderer->inherited.model,
                 dg,
@@ -300,7 +300,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   
   const vec3f N = dg.Ns; //getShadingNormal(ray);
 
-  // print("shade at16 %\n",N.x,N.y,N.z);
+  print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
   vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
