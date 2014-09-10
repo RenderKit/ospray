@@ -9,29 +9,29 @@
 
 #include <map>
 #include "ospray/common/library.h"
-#include "ospray/transferfunction/TransferFunction.h"
+#include "ospray/volume/Volume.h"
 
 namespace ospray {
 
-    TransferFunction *TransferFunction::createInstance(std::string type) {
+    Volume *Volume::createInstance(std::string type) {
 
         //! Function pointer type for creating a concrete instance of a subtype of this class.
-        typedef TransferFunction *(*creationFunctionPointer)();
+        typedef Volume *(*creationFunctionPointer)();
 
         //! Function pointers corresponding to each subtype.
-        std::map<std::string, creationFunctionPointer> symbolRegistry;
+        static std::map<std::string, creationFunctionPointer> symbolRegistry;
 
         //! Return a concrete instance of the requested subtype if the creation function is already known.
         if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])());
 
         //! Otherwise construct the name of the creation function to look for.
-        std::string creationFunctionName = "ospray_create_transfer_function_" + type;
+        std::string creationFunctionName = "ospray_create_volume_" + type;
 
         //! Look for the named function.
         symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);
 
         //! The named function may not be found if the requested subtype is not known.
-        if (symbolRegistry[type] == NULL && ospray::logLevel >= 1) std::cout << "OSPRay::TransferFunction error: unrecognized subtype '" << type << "'" << std::endl;
+        if (symbolRegistry[type] == NULL && ospray::logLevel >= 1) std::cout << "OSPRay::Volume error: unrecognized subtype '" << type << "'" << std::endl;
 
         //! Return a concrete instance of the requested subtype.
         return(symbolRegistry[type] ? (*symbolRegistry[type])() : NULL);

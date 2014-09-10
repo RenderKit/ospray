@@ -35,20 +35,18 @@ SET(OSPRAY_SOURCES
   camera/perspectivecamera.ispc
   camera/perspectivecamera.cpp
 
-  volume/volume.ispc
-  volume/volume.cpp
-  volume/naive32.ispc
-  volume/naive32.cpp
-  #	volume/naive64.ispc
-  #	volume/naive64.cpp
-  volume/bricked32.ispc
-  volume/bricked32.cpp
-  volume/bricked64.ispc
-  volume/bricked64.cpp
+  volume/BrickedVolume.cpp
+  volume/BrickedVolumeFloat.ispc
+  volume/BrickedVolumeUChar.ispc
+  volume/StructuredVolume.cpp
+  volume/StructuredVolumeFile.cpp
+  volume/SymbolRegistry.cpp
+  volume/Volume.cpp
 
+  transferfunction/LinearTransferFunction.ispc
+  transferfunction/LinearTransferFunction.cpp
   transferfunction/TransferFunction.cpp
-  transferfunction/TransferFunctionPiecewiseLinear.ispc
-  transferfunction/TransferFunctionPiecewiseLinear.cpp
+  transferfunction/SymbolRegistry.cpp
 
   geometry/geometry.ispc
   geometry/geometry.cpp
@@ -83,6 +81,8 @@ SET(OSPRAY_SOURCES
   render/raycast/raycast.ispc
   render/ao16/ao16.cpp
   render/ao16/ao16.ispc
+  render/dvr/dvr.cpp
+  render/dvr/dvr.ispc
   render/obj/objrenderer.ispc
   render/obj/objmaterial.ispc
   render/obj/objrenderer.cpp

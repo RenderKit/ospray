@@ -1,0 +1,38 @@
+//
+//                 INTEL CORPORATION PROPRIETARY INFORMATION
+//
+//    This software is supplied under the terms of a license agreement or
+//    nondisclosure agreement with Intel Corporation and may not be copied
+//    or disclosed except in accordance with the terms of that agreement.
+//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
+//
+
+#ifndef VOLUME_IH
+#define VOLUME_IH
+
+#include "ospray/common/ospcommon.ih"
+#include "ospray/transferfunction/TransferFunction.ih"
+
+    //! \brief Variables and methods common to all subtypes of the Volume
+    //!  class, an abstraction for the concrete object which performs the
+    //!  volume sampling (this struct must be the first field of a struct
+    //!  representing a "derived" class to allow casting to that class).
+    //!
+    struct Volume {
+
+        //! Color and opacity transfer function.
+        TransferFunction *uniform transferFunction;
+
+        //! The largest floating point value still inside the volume.
+        uniform vec3f upperBound;
+
+        //! The gradient at the given sample location in the volume.
+        varying vec3f (*computeGradient)(void *uniform volume, const varying vec3f &coordinates);
+
+        //! Tri-linear interpolation at the given sample location in the volume.
+        varying float (*computeSample)(void *uniform volume, const varying vec3f &coordinates);
+
+    };
+
+#endif // VOLUME_IH
+

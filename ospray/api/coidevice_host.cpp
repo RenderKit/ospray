@@ -230,9 +230,6 @@ namespace ospray {
       /*! create a new volume object (out of list of registered volumes) */
       virtual OSPVolume newVolume(const char *type);
 
-      /*! create a new volume object (out of list of registered volume types) with data from a file */
-      virtual OSPVolume newVolumeFromFile(const char *filename, const char *type);
-
       /*! create a new transfer function object (out of list of registered transfer function types) */
       virtual OSPTransferFunction newTransferFunction(const char *type);
 
@@ -785,19 +782,6 @@ namespace ospray {
       args.write(type);
       callFunction(OSPCOI_NEW_VOLUME,args);
       return (OSPVolume)(int64)handle;
-    }
-
-    /*! create a new volume object (out of list of registered volume types) with data from a file */
-    OSPVolume COIDevice::newVolumeFromFile(const char *filename, const char *type)
-    {
-      Assert(type);
-      Handle handle = Handle::alloc();
-      DataStream args;
-      args.write(handle);
-      args.write(filename);
-      args.write(type);
-      callFunction(OSPCOI_NEW_VOLUME_FROM_FILE, args);
-      return (OSPVolume)(int64) handle;
     }
 
     /*! create a new transfer function object (out of list of registered transfer function types) */

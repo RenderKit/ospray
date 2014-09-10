@@ -32,7 +32,6 @@ public slots:
 protected slots:
 
     void setColorMapIndex(int index);
-
     void setDataValueMin(double value);
     void setDataValueMax(double value);
 
