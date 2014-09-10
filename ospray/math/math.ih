@@ -129,15 +129,6 @@ inline uniform TYPE lerp(uniform float factor, uniform TYPE a, uniform TYPE b)  
 }
 
 
-inline float min4(float a, float b, float c, float d)
-{ return min(min(a,b),min(c,d)); };
-inline float max4(float a, float b, float c, float d)
-{ return max(max(a,b),max(c,d)); };
-inline uniform float min4(uniform float a, uniform float b, uniform float c, uniform float d)
-{ return min(min(a,b),min(c,d)); };
-inline uniform float max4(uniform float a, uniform float b, uniform float c, uniform float d)
-{ return max(max(a,b),max(c,d)); };
-
 __define_lerp(int8)
 __define_lerp(int32)
 __define_lerp(float)
@@ -146,43 +137,34 @@ __define_lerp(uint32)
 
 #undef __define_lerp
 
-#define __define_max4(TYPE) \
-inline uniform TYPE max4(uniform TYPE a, uniform TYPE b, uniform TYPE c, uniform TYPE d)  \
-{                                                                                         \
-  return max(a, max(b, max(c, d)));                                                       \
-}                                                                                         \
-inline varying TYPE max4(varying TYPE a, varying TYPE b, varying TYPE c, varying TYPE d)  \
-{                                                                                         \
-  return max(a, max(b, max(c, d)));                                                       \
-}                                                                                         
+// ------------------------------------------------------------------
+// min4/max4, for all types
+// ------------------------------------------------------------------
+#define __define_op4T(MM,TYPE)                                          \
+  inline uniform TYPE MM##4(uniform TYPE a, uniform TYPE b,             \
+                            uniform TYPE c, uniform TYPE d)             \
+  {                                                                     \
+    return MM(a, MM(b, MM(c, d)));                                      \
+  }                                                                     \
+  inline varying TYPE MM##4(varying TYPE a, varying TYPE b,             \
+                            varying TYPE c, varying TYPE d)             \
+  {                                                                     \
+    return MM(a, MM(b, MM(c, d)));                                      \
+  }                                                                                         
 
-__define_max4(int8)
-__define_max4(int32)
-__define_max4(uint8)
-__define_max4(uint32)
-__define_max4(float)
-__define_max4(double)
+#define __define_op4(MM) \
+  __define_op4T(MM,int8)    \
+  __define_op4T(MM,int32)   \
+  __define_op4T(MM,uint8)   \
+  __define_op4T(MM,uint32)  \
+  __define_op4T(MM,float)   \
+  __define_op4T(MM,double)
 
-#undef __define_max4
+__define_op4(min)
+__define_op4(max)
 
-#define __define_min4(TYPE) \
-inline uniform TYPE min4(uniform TYPE a, uniform TYPE b, uniform TYPE c, uniform TYPE d)  \
-{                                                                                         \
-  return min(a, min(b, min(c, d)));                                                       \
-}                                                                                         \
-inline varying TYPE min4(varying TYPE a, varying TYPE b, varying TYPE c, varying TYPE d)  \
-{                                                                                         \
-  return min(a, min(b, min(c, d)));                                                       \
-}                                                                                         
-
-__define_min4(int8)
-__define_min4(int32)
-__define_min4(uint8)
-__define_min4(uint32)
-__define_min4(float)
-__define_min4(double)
-
-#undef __define_min4
+#undef __define_op4T
+#undef __define_op4
 
 #endif
 
