@@ -20,6 +20,12 @@ namespace ospray {
     // ==================================================================
     template<> OSPDataType ParamT<Ref<Data> >::getOSPDataType() const
     { return OSP_DATA; }
+    template<> OSPDataType ParamT<Ref<Node> >::getOSPDataType() const
+    { return OSP_OBJECT; }
+    template<> OSPDataType ParamT<int32>::getOSPDataType() const
+    { return OSP_INT; }
+    template<> OSPDataType ParamT<float>::getOSPDataType() const
+    { return OSP_FLOAT; }
 
     // ==================================================================
     // sg node implementations
@@ -40,13 +46,30 @@ namespace ospray {
 
     bool parseParam(sg::Node *target, xml::Node *node)
     {
+      const std::string name = node->getProp("name");
+      if (name == "") return false;
       if (node->name == "data") {
         assert(node->child.size() == 1);
-        sg::Node *childNode = parseNode(node->child[0]);
-        assert(childNode != NULL);
-        sg::Data *dataNode = dynamic_cast<sg::Data *>(childNode);
+        sg::Node *value = parseNode(node->child[0]);
+        assert(value != NULL);
+        sg::Data *dataNode = dynamic_cast<sg::Data *>(value);
         assert(dataNode);
-        target->addParam(new ParamT<Ref<Data> >(node->getProp("name"),dataNode));
+        target->addParam(new ParamT<Ref<Data> >(name,dataNode));
+        return true;
+      }
+      if (node->name == "object") {
+        assert(node->child.size() == 1);
+        sg::Node *value = parseNode(node->child[0]);
+        assert(value != NULL);
+        target->addParam(new ParamT<Ref<sg::Node> >(name,value));
+        return true;
+      }
+      if (node->name == "int") {
+        target->addParam(new ParamT<int32>(name,atoi(node->content.c_str())));
+        return true;
+      }
+      if (node->name == "float") {
+        target->addParam(new ParamT<float>(name,atof(node->content.c_str())));
         return true;
       }
       return false;
@@ -145,6 +168,11 @@ namespace ospray {
     {
       if (node->name == "Data")
         return parseDataNode(node);
+      if (node->name == "Info")
+        return parseInfoNode(node);
+      if (node->name == "Renderer")
+        return parseRendererNode(node);
+      std::cout << "warning: unknown sg::Node type '" << node->name << "'" << std::endl;
       return NULL;
     }
 

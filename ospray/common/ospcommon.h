@@ -74,6 +74,7 @@ namespace ospray {
   typedef embree::BBox<vec2ui>   region2ui;
   
   typedef embree::BBox3f         box3f;
+  typedef embree::BBox3fa        box3fa;
   typedef embree::BBox<vec3uc>   box3uc;
   typedef embree::BBox<vec4f>    box4f;
   

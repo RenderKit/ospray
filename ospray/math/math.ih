@@ -113,6 +113,16 @@ inline uniform TYPE lerp(uniform float factor, uniform TYPE a, uniform TYPE b)  
   return (1-factor)* a + factor * b;                                            \
 }
 
+
+inline float min4(float a, float b, float c, float d)
+{ return min(min(a,b),min(c,d)); };
+inline float max4(float a, float b, float c, float d)
+{ return max(max(a,b),max(c,d)); };
+inline uniform float min4(uniform float a, uniform float b, uniform float c, uniform float d)
+{ return min(min(a,b),min(c,d)); };
+inline uniform float max4(uniform float a, uniform float b, uniform float c, uniform float d)
+{ return max(max(a,b),max(c,d)); };
+
 __define_lerp(int8)
 __define_lerp(int32)
 __define_lerp(float)
