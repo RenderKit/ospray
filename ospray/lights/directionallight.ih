@@ -19,6 +19,9 @@ struct DirectionalLight {
   uniform vec3f direction;  //!< direction of emitted light rays
 };
 
+//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
+varying vec3f DirectionalLight_computeRadiance(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
+
 //!< Construct a new ispc-side DirectionalLight object
 extern void DirectionalLight_Constructor( uniform DirectionalLight *uniform THIS,
                                           void *uniform cppEquivalent,

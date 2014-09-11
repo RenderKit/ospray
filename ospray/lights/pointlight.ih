@@ -21,6 +21,9 @@ struct PointLight {
   uniform float range;  //!< max range at which the light will have an effect
 };
 
+//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
+varying vec3f PointLight_computeRadiance(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
+
 //! Construct a new ispc-side PointLight object
 extern void PointLight_Constructor( uniform PointLight *uniform THIS,
                                     void *uniform cppEquivalent,
