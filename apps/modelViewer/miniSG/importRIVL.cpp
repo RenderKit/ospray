@@ -23,7 +23,7 @@
 // #include <libxml/tree.h>
 // #include <libxml/parser.h>
 // #include <libxml/xmlreader.h>
-#include "xml.h"
+#include "apps/common/xml/xml.h"
 // stdlib, for mmap
 #include <sys/types.h>
 #include <sys/stat.h>
