@@ -2,7 +2,7 @@
 #undef NDEBUG
 
 #include "ospray/common/ospcommon.h"
-#include "apps/modelViewer/miniSG/xml.h"
+#include "apps/common/xml/xml.h"
 #include "model.h"
 
 #include "common/sys/filename.h"
