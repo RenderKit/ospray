@@ -17,12 +17,30 @@ extern void DirectionalLight_Constructor( uniform DirectionalLight *uniform THIS
   Light_Constructor(&THIS->base, cppEquivalent);
   THIS->color = color;
   THIS->direction = direction;
+  THIS->base.computeRadiance = DirectionalLight_computeRadiance;
 }
 
 //!< Destroy an ispc-side DirectionLight object
 extern void DirectionalLight_Destructor(uniform DirectionalLight *uniform THIS)
 {
   Light_Destructor(&THIS->base);
+}
+
+//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
+varying vec3f DirectionalLight_computeRadiance(void *uniform pointer, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance) {
+
+    //! Cast to the actual Light subtype.
+    const DirectionalLight *uniform light = (DirectionalLight *uniform) pointer;
+
+    //! Normalized light vector.
+    direction = negate(light->direction);
+
+    //! Distance from the hit point to the sample point on the light.
+    distance = inf;
+
+    //! Radiance.
+    return(light->color);
+
 }
 
 //!< Create an ispc_side DirectionalLight object (called from c++)

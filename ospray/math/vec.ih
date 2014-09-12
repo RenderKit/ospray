@@ -236,11 +236,13 @@ inline uniform vec3f neg(const uniform vec3f v)
 { return make_vec3f(-v.x,-v.y,-v.z); }
 inline vec3f neg(const vec3f v)
 { return make_vec3f(-v.x,-v.y,-v.z); }
+inline uniform vec3f negate(const uniform vec3f &a)
+{ return(make_vec3f(-a.x, -a.y, -a.z)); }
+inline varying vec3f negate(const varying vec3f &a)
+{ return(make_vec3f(-a.x, -a.y, -a.z)); }
 
 
-
-
-#define __define_binary_operator(opname,op)                                  \
+#define __define_binary_operator(opname,op)                             \
   /* vec2f */                                                           \
   inline uniform vec2f opname (const uniform vec2f a,                   \
                                const uniform vec2f b) {                 \

@@ -19,12 +19,33 @@ void PointLight_Constructor( uniform PointLight *uniform THIS,
   THIS->position = position;
   THIS->color = color;
   THIS->range = range;
+  THIS->base.computeRadiance = PointLight_computeRadiance;
 }
 
 //! Destroy an ispc-side PointLight object and its base object
 void PointLight_Destructor(uniform PointLight *uniform THIS)
 {
   Light_Destructor(&THIS->base);
+}
+
+//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
+varying vec3f PointLight_computeRadiance(void *uniform pointer, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance) {
+
+    //! Cast to the actual Light subtype.
+    const PointLight *uniform light = (PointLight *uniform) pointer;
+
+    //! Extant light vector from the hit point.
+    const vec3f L = light->position - coordinates;
+
+    //! Distance from the hit point to the sample point on the light.
+    distance = length(L);
+
+    //! Normalized light vector.
+    direction = L / distance;
+
+    //! Radiance attenutated by distance.
+    return(light->color / (distance * distance));
+
 }
 
 //! Create an ispc-side PointLight object (called from c++ side)
