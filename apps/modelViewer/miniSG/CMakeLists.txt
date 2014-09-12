@@ -11,11 +11,6 @@ IF (NOT THIS_IS_MIC)
   
   INCLUDE_DIRECTORIES(${OSPRAY_DIR})
 
-  ADD_LIBRARY(ospray_xml
-    xml.cpp
-    )
-  TARGET_LINK_LIBRARIES(ospray_xml ospray)
-
   ADD_LIBRARY(ospray_minisg 
     miniSG.cpp
     importer.cpp
