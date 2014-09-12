@@ -10,7 +10,7 @@
 
 #undef NDEBUG
 #include "sg.h"
-#include "../miniSG/xml.h"
+#include "apps/common/xml/xml.h"
 
 namespace ospray {
   namespace sg {
