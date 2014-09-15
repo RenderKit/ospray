@@ -18,6 +18,9 @@ IF(NOT THIS_IS_MIC)
   # common utility classes for 3D viewer widget
   ADD_SUBDIRECTORY(common/widgets)
 
+  # common xml utility classes
+  ADD_SUBDIRECTORY(common/xml)
+
   # mini-scene graph viewer for _geometry_ (intentionally simple)
   OPTION(OSPRAY_APPS_MODELVIEWER "Build ospModelViewer application." ON)
   IF (OSPRAY_APPS_MODELVIEWER)
