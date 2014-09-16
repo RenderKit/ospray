@@ -129,6 +129,8 @@ inline uniform TYPE lerp(uniform float factor, uniform TYPE a, uniform TYPE b)  
 }
 
 
+//inline uniform bool isnan(uniform float f) { return (!(a<=0)) && (!(a>=0)); }
+
 __define_lerp(int8)
 __define_lerp(int32)
 __define_lerp(float)
