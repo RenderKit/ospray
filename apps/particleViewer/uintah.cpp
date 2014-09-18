@@ -34,6 +34,9 @@ namespace ospray {
       // std::cout << "#mpm: reading " << numParticles << " particles... " << std::flush;
       // printf("#mpm: reading%7ld particles...",numParticles); fflush(0);
       FILE *file = fopen(fn.c_str(),"rb");
+      if (!file) {
+        throw std::runtime_error("could not open data file "+fn);
+      }
       assert(file);
 
       fseek(file,begin,SEEK_SET);
@@ -49,7 +52,11 @@ namespace ospray {
       
       for (int i=0;i<numParticles;i++) {
         Particle p;
-        fread(&p,1,sizeof(p),file);
+        int rc = fread(&p,sizeof(p),1,file);
+        if (rc != 1) {
+          fclose(file);
+          throw std::runtime_error("read partial data "+fn);
+        }
 #if 1
         if (big_endian) {
           p.x = htonlf(p.x);
@@ -62,7 +69,8 @@ namespace ospray {
         a.type = model->getAtomType("<unnamed>");
         model->atom.push_back(a);
       }
-      // std::cout << "done (total " << model->atom.size() << ")" << std::endl;
+      
+      std::cout << "\r#osp:uintah: read " << numParticles << " particles (total " << float(model->atom.size()/1e6) << "M)";
 
       // Particle *particle = new Particle[numParticles];
       // fread(particle,numParticles,sizeof(Particle),file);
@@ -79,7 +87,7 @@ namespace ospray {
       size_t start = -1;
       size_t end = -1;
       size_t patch = -1;
-      size_t numParticles = -1;
+      size_t numParticles = 0;
       std::string variable;
       std::string filename;
       for (int i=0;i<var->child.size();i++) {
@@ -101,7 +109,7 @@ namespace ospray {
         }
       }
 
-      if (numParticles
+      if (numParticles > 0
           && variable == "p.x"
           /* && index == .... */ 
           ) {
@@ -128,7 +136,19 @@ namespace ospray {
     {
       std::string basePath = embree::FileName(fileName).path();
 
-      xml::XMLDoc *doc = xml::readXML(fileName);
+      xml::XMLDoc *doc = NULL;
+      try {
+        doc = xml::readXML(fileName);
+      } catch (std::runtime_error e) {
+        static bool warned = false;
+        if (!warned) {
+          std::cerr << "#osp:uintah: error in opening xml data file: " << e.what() << std::endl;
+           std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
+           std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
+           warned = true;
+        }
+        return;
+      }
       assert(doc);
       assert(doc->child.size() == 1);
       xml::Node *node = doc->child[0];
@@ -138,9 +158,10 @@ namespace ospray {
         assert(c->name == "Variable");
         parse__Variable(model,basePath,c);
       }
+      delete doc;
     }
     void parse__Uintah_TimeStep_Data(Model *model,
-                       const std::string &basePath, xml::Node *node)
+                                     const std::string &basePath, xml::Node *node)
     {
       assert(node->name == "Data");
       for (int i=0;i<node->child.size();i++) {
@@ -149,7 +170,17 @@ namespace ospray {
         for (int j=0;j<c->prop.size();j++) {
           xml::Prop *p = c->prop[j];
           if (p->name == "href") {
-            parse__Uintah_Datafile(model,basePath+"/"+p->value);
+            try {
+              parse__Uintah_Datafile(model,basePath+"/"+p->value);
+            } catch (std::runtime_error e) {
+              static bool warned = false;
+              if (!warned) {
+                std::cerr << "#osp:uintah: error in parsing timestep data: " << e.what() << std::endl;
+                std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
+                std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
+                warned = true;
+              }
+            }
           }
         }
       }

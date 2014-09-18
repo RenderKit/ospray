@@ -240,7 +240,9 @@ namespace ospray {
     XMLDoc *readXML(const std::string &fn)
     {
       FILE *file = fopen(fn.c_str(),"r");
-      if (!file) throw std::runtime_error("ospray::XML error: could not open file '"+fn+"'");
+      if (!file) {
+        throw std::runtime_error("ospray::XML error: could not open file '"+fn+"'");
+      }
 
       fseek(file,0,SEEK_END);
       long numBytes = ftell(file);
@@ -249,7 +251,14 @@ namespace ospray {
       mem[numBytes] = 0;
       fread(mem,1,numBytes,file);
       XMLDoc *xml = new XMLDoc;
-      bool valid = parseXML(xml,mem);
+      bool valid = false;
+      try {
+        valid = parseXML(xml,mem);
+      } catch (std::runtime_error e) {
+        fclose(file);
+      }
+      fclose(file);
+
       if (!valid) {
         delete xml;
         return NULL;
