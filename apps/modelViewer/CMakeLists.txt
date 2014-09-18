@@ -12,18 +12,22 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 ADD_SUBDIRECTORY(miniSG)
 
+ADD_LIBRARY(ospray_sg sg/sg)
+TARGET_LINK_LIBRARIES(ospray_sg   
+  ospray
+  ospray_xml)
+
 # --------------------------------------------
 # main executable
 # --------------------------------------------
 ADD_EXECUTABLE(ospModelViewer
   # CPP sources
   modelViewer.cpp
-  sg/sg
   )
 TARGET_LINK_LIBRARIES(ospModelViewer
   ospray_minisg
   ospray_glut3d
-  ospray
+  ospray_sg
   ${OPENGL_LIBRARY} 
   ${GLUT_LIBRARY}
   )

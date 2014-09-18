@@ -11,6 +11,9 @@
 #undef NDEBUG
 #include "sg.h"
 #include "apps/common/xml/xml.h"
+#include "../common/library.h"
+// embree stuff
+#include "common/sys/library.h"
 
 namespace ospray {
   namespace sg {
@@ -26,6 +29,39 @@ namespace ospray {
     { return OSP_INT; }
     template<> OSPDataType ParamT<float>::getOSPDataType() const
     { return OSP_FLOAT; }
+
+    // ==================================================================
+    // sg node registry code
+    // ==================================================================
+    typedef sg::Node *(*creatorFct)();
+    
+    std::map<std::string, creatorFct> sgNodeRegistry;
+
+    /*! create a node of given type if registered (and tell it to
+      parse itself from that xml node), or throw an exception if
+      unkown node type */
+    sg::Node *createNodeFrom(const xml::Node *node)
+    {
+      std::map<std::string, creatorFct>::iterator it = sgNodeRegistry.find(node->name);
+      creatorFct creator = NULL;
+      if (it == sgNodeRegistry.end()) {
+        std::string creatorName = "ospray_create_sg_node__"+std::string(node->name);
+        creator = (creatorFct)getSymbol(creatorName);
+        if (!creator)
+          throw std::runtime_error("unknown ospray scene graph node '"+node->name+"'");
+        sgNodeRegistry[node->name] = creator;
+      } else creator = it->second;
+      assert(creator);
+      sg::Node *newNode = creator();
+      assert(newNode);
+      try {
+        newNode->setFrom(node);
+        return newNode;
+      } catch (std::runtime_error e) {
+        delete newNode;
+        throw e;
+      }
+    }
 
     // ==================================================================
     // sg node implementations
@@ -158,9 +194,9 @@ namespace ospray {
           world->node.push_back(parseModelNode(node));
         } else if (node->name == "Renderer") {
           world->node.push_back(parseRendererNode(node));
-        } else
-          throw std::runtime_error("unknown node type '"+node->name
-                                   +"' in ospray::sg::World node");
+        } else {
+          world->node.push_back(ospray::sg::createNodeFrom(node));
+        }
       }
     }
 

@@ -16,6 +16,9 @@
 #include <map>
 
 namespace ospray {
+  namespace xml {
+    struct Node;
+  };
   namespace sg {
     /*! base node for every scene graph node */
     struct Node;
@@ -55,6 +58,7 @@ namespace ospray {
       virtual    std::string toString() const = 0;
       sg::Param *getParam(const std::string &name) const;
       void       addParam(sg::Param *p);
+      virtual void setFrom(const xml::Node *const node) {};
     protected:
       std::map<std::string,Param *> param;
     };
@@ -103,5 +107,20 @@ namespace ospray {
     };
     World *readXML(const std::string &fileName);
 
+  /*! \brief registers a internal ospray::<ClassName> renderer under
+      the externally accessible name "external_name" 
+      
+      \internal This currently works by defining a extern "C" function
+      with a given predefined name that creates a new instance of this
+      renderer. By having this symbol in the shared lib ospray can
+      lateron always get a handle to this fct and create an instance
+      of this renderer.
+  */
+#define OSP_REGISTER_SG_NODE(InternalClassName)                         \
+    extern "C" sg::Node *ospray_create_sg_node__##InternalClassName()   \
+    {                                                                   \
+      return new ospray::xml::InternalClassName;                        \
+    }                                                                   \
+  
   };
 }
