@@ -15,7 +15,9 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
   sg.cpp
 )
 
-TARGET_LINK_LIBRARIES(ospray_sg${OSPRAY_LIB_SUFFIX} ospray_sg${OSPRAY_LIB_SUFFIX})
+TARGET_LINK_LIBRARIES(ospray_sg${OSPRAY_LIB_SUFFIX} 
+  ospray_xml${OSPRAY_LIB_SUFFIX}
+  )
 # ------------------------------------------------------------
 SET_TARGET_PROPERTIES(ospray_sg${OSPRAY_LIB_SUFFIX} 
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
