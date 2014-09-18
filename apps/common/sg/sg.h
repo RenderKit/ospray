@@ -6,6 +6,8 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
+#pragma once
+
 /*! \file sg.h Simple Scene Graph for OSPRay model viewer (Interface) */
 
 // ospray API
