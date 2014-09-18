@@ -255,8 +255,10 @@ namespace ospray {
       try {
         valid = parseXML(xml,mem);
       } catch (std::runtime_error e) {
+        delete[] mem;
         fclose(file);
       }
+      delete[] mem;
       fclose(file);
 
       if (!valid) {
