@@ -12,11 +12,6 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 ADD_SUBDIRECTORY(miniSG)
 
-ADD_LIBRARY(ospray_sg sg/sg)
-TARGET_LINK_LIBRARIES(ospray_sg   
-  ospray
-  ospray_xml)
-
 # --------------------------------------------
 # main executable
 # --------------------------------------------

@@ -155,12 +155,6 @@ namespace ospray {
       
         char title[1000];
 
-        // if (alwaysRedraw) {
-        //   sprintf(title,"OSPRay LAMMPSView (%f fps)",
-        //           fps.getFPS());
-        //   setTitle(title);
-        //   forceRedraw();
-        // } else {
         sprintf(title,"OSPRay Particle Viewer");
         setTitle(title);
         // }
@@ -189,11 +183,11 @@ namespace ospray {
       return data;
     }
 
-    void lammpsViewMain(int &ac, const char **&av)
+    void ospParticleViewerMain(int &ac, const char **&av)
     {
       std::vector<Model *> particleModel;
     
-      cout << "lammpsView: starting to process cmdline arguments" << endl;
+      cout << "ospParticleViewer: starting to process cmdline arguments" << endl;
       for (int i=1;i<ac;i++) {
         const std::string arg = av[i];
         if (arg == "--renderer") {
@@ -232,7 +226,7 @@ namespace ospray {
       // -------------------------------------------------------
       // done parsings
       // -------------------------------------------------------]
-      cout << "lammpsView: done parsing. found model with" << endl;
+      cout << "ospParticleViewer: done parsing. found model with" << endl;
       cout << "  - num atoms: " << particleModel[0]->atom.size() << endl;
 
       // -------------------------------------------------------
@@ -282,7 +276,7 @@ namespace ospray {
       ospCommit(ospRenderer);
 
 
-      cout << "lammpsView: done creating ospray model." << endl;
+      cout << "ospParticleViewer: done creating ospray model." << endl;
 
       // -------------------------------------------------------
       // create viewer window
@@ -301,5 +295,5 @@ int main(int ac, const char **av)
 {
   ospInit(&ac,av);
   ospray::glut3D::initGLUT(&ac,av);
-  ospray::particle::lammpsViewMain(ac,av);
+  ospray::particle::ospParticleViewerMain(ac,av);
 }
