@@ -39,12 +39,12 @@ namespace ospray {
     //    std::string rendererType = "raycast_eyelight";
     float radius = 1.f;
     InputFormat inputFormat = LAMMPS_XYZ;
-    void error(const std::string &lammps)
+    void error(const std::string &err)
     {
-      cout << "ospray::lammpsView fatal error : " << lammps << endl;
+      cout << "#osp::ospParticleViewer fatal error : " << err << endl;
       cout << endl;
       cout << "Proper usage: " << endl;
-      cout << "  ./lammpsView <inFileName[.xyz|.xml]>" << endl;
+      cout << "  ./ospParticleViewer <inFileName[.xyz|.xml]>" << endl;
       cout << endl;
       exit(1);
     }
@@ -54,8 +54,8 @@ namespace ospray {
     /*! mini scene graph viewer widget. \internal Note that all handling
       of camera is almost exactly similar to the code in volView;
       might make sense to move that into a common class! */
-    struct LAMMPSViewer : public Glut3DWidget {
-      LAMMPSViewer(OSPModel model, OSPRenderer renderer)
+    struct ParticleViewer : public Glut3DWidget {
+      ParticleViewer(OSPModel model, OSPRenderer renderer)
         : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
           fb(NULL), renderer(renderer), model(model)
       {
@@ -161,7 +161,7 @@ namespace ospray {
         //   setTitle(title);
         //   forceRedraw();
         // } else {
-        sprintf(title,"OSPRay Lammps Viewer");
+        sprintf(title,"OSPRay Particle Viewer");
         setTitle(title);
         // }
       }
@@ -191,7 +191,7 @@ namespace ospray {
 
     void lammpsViewMain(int &ac, const char **&av)
     {
-      std::vector<Model *> lammpsModel;
+      std::vector<Model *> particleModel;
     
       cout << "lammpsView: starting to process cmdline arguments" << endl;
       for (int i=1;i<ac;i++) {
@@ -218,22 +218,22 @@ namespace ospray {
           if (fn.ext() == "xyz") {
             particle::Model *m = new particle::Model;
             m->loadXYZ(fn);
-            lammpsModel.push_back(m);
+            particleModel.push_back(m);
           } else if (fn.ext() == "xml") {
             particle::Model *m = parse__Uintah_timestep_xml(fn);
-            lammpsModel.push_back(m);
+            particleModel.push_back(m);
           } else
             error("unknown file format "+fn.str());
         }
       }
-      if (lammpsModel.empty())
+      if (particleModel.empty())
         error("no input file specified");
 
       // -------------------------------------------------------
       // done parsings
       // -------------------------------------------------------]
       cout << "lammpsView: done parsing. found model with" << endl;
-      cout << "  - num atoms: " << lammpsModel[0]->atom.size() << endl;
+      cout << "  - num atoms: " << particleModel[0]->atom.size() << endl;
 
       // -------------------------------------------------------
       // create ospray model
@@ -243,16 +243,16 @@ namespace ospray {
         error("could not create ospRenderer '"+rendererType+"'");
       Assert(ospRenderer != NULL && "could not create ospRenderer");
 
-      for (int i=0;i<lammpsModel.size();i++) {
+      for (int i=0;i<particleModel.size();i++) {
         OSPModel model = ospNewModel();
-        OSPData materialData = makeMaterials(ospRenderer,lammpsModel[i]);
+        OSPData materialData = makeMaterials(ospRenderer,particleModel[i]);
     
-        OSPData data = ospNewData(lammpsModel[i]->atom.size()*4,OSP_FLOAT,
-                                  &lammpsModel[i]->atom[0],OSP_DATA_SHARED_BUFFER);
+        OSPData data = ospNewData(particleModel[i]->atom.size()*4,OSP_FLOAT,
+                                  &particleModel[i]->atom[0],OSP_DATA_SHARED_BUFFER);
         ospCommit(data);
 
         OSPGeometry geom = ospNewGeometry("spheres");
-        ospSet1f(geom,"radius",radius*lammpsModel[i]->radius);
+        ospSet1f(geom,"radius",radius*particleModel[i]->radius);
         ospSet1i(geom,"bytes_per_sphere",sizeof(Model::Atom));
         ospSet1i(geom,"center_offset",0);
         ospSet1i(geom,"offset_materialID",3*sizeof(float));
@@ -287,10 +287,10 @@ namespace ospray {
       // -------------------------------------------------------
       // create viewer window
       // -------------------------------------------------------
-      LAMMPSViewer window(model,ospRenderer);
-      window.create("LAMMPSViewer: OSPRay Mini-Scene Graph test viewer");
-      printf("LAMMPS Viewer created. Press 'Q' to quit.\n");
-      window.setWorldBounds(box3f(lammpsModel[0]->getBBox()));
+      ParticleViewer window(model,ospRenderer);
+      window.create("ospray particle viewer");
+      printf("OSPRay Particle Viewer created. Press 'Q' to quit.\n");
+      window.setWorldBounds(box3f(particleModel[0]->getBBox()));
       ospray::glut3D::runGLUT();
     }
   }
