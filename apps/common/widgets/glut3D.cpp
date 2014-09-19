@@ -475,7 +475,7 @@ namespace ospray {
     void InspectCenter::rotate(float du, float dv)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      //const vec3f pivot = widget->viewPort.at;//center(widget->worldBounds);
+      const vec3f pivot = widget->viewPort.at;//center(widget->worldBounds);
       AffineSpace3fa xfm
         = AffineSpace3fa::translate(pivot)
         * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)
@@ -551,7 +551,7 @@ namespace ospray {
       vec2i delta_mouse = to - from;
       // PRINT(delta_mouse);
 
-      //const vec3f pivot = center(widget->worldBounds);
+      const vec3f pivot = cam.at; //center(widget->worldBounds);
       AffineSpace3fa xfm
         = AffineSpace3fa::translate(pivot)
         * AffineSpace3fa::rotate(cam.frame.l.vx,-dv)

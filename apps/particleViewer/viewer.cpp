@@ -284,7 +284,9 @@ namespace ospray {
       ParticleViewer window(model,ospRenderer);
       window.create("ospray particle viewer");
       printf("OSPRay Particle Viewer created. Press 'Q' to quit.\n");
-      window.setWorldBounds(box3f(particleModel[0]->getBBox()));
+      box3f wb(particleModel[0]->getBBox());
+      PRINT(wb);
+      window.setWorldBounds(wb);
       ospray::glut3D::runGLUT();
     }
   }
