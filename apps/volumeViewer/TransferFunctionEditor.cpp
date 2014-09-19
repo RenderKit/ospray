@@ -46,6 +46,8 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
     dataValueMaxSpinBox->setRange(-999999., 999999.);
     dataValueMinSpinBox->setValue(0.);
     dataValueMaxSpinBox->setValue(1.);
+    dataValueMinSpinBox->setDecimals(6);
+    dataValueMaxSpinBox->setDecimals(6);
     formLayout->addRow("Data value min", dataValueMinSpinBox);
     formLayout->addRow("Data value max", dataValueMaxSpinBox);
 
