@@ -50,16 +50,16 @@ namespace ospray {
         struct RenderTask : public embree::RefCount {
           Ref<Renderer>                renderer;
           Ref<FrameBuffer>             fb;
-          embree::TaskScheduler::Task  task;
           size_t                       numTiles_x;
           size_t                       numTiles_y;
           //          vec2i                        fbSize;
           uint32                       channelFlags;
+          embree::TaskScheduler::Task  task;
           
           TASK_RUN_FUNCTION(RenderTask,run);
           TASK_COMPLETE_FUNCTION(RenderTask,finish);
           
-          virtual ~RenderTask() { }
+          virtual ~RenderTask() {}
         };
         
         /*! number of tiles preallocated to this client; we can always

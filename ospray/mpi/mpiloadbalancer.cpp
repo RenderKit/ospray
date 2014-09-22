@@ -22,7 +22,6 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-        PING;
         int rc; MPI_Status status;
 
         // mpidevice already sent the 'cmd_render_frame' event; we
@@ -32,7 +31,6 @@ namespace ospray {
           = divRoundUp(fb->size.x,TILE_SIZE)
           * divRoundUp(fb->size.y,TILE_SIZE);
         
-        PRINT(fb);
         // printf("MASTER: num tiles %li\n",numTiles);
         assert(fb->colorBufferFormat == OSP_RGBA_I8);
         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
@@ -55,19 +53,16 @@ namespace ospray {
                 = rgba_i8[iy-region.lower.y][ix-region.lower.x];
             }
         }
-        printf("#m: master done fb %lx\n",fb);
-        PING;
+        //        printf("#m: master done fb %lx\n",fb);
       }
 
       void Slave::RenderTask::finish(size_t threadIndex, 
                                      size_t threadCount, 
                                      TaskScheduler::Event* event) 
       {
-        PING;
         renderer->endFrame(channelFlags);
         renderer = NULL;
         fb = NULL;
-        PING;
         // refDec();
       }
 
@@ -95,11 +90,11 @@ namespace ospray {
                                   size_t taskCount, 
                                   TaskScheduler::Event* event) 
       {
-        PING;
+        // PING;
         const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
 
-        PING;
+        // PING;
         Tile __aligned(64) tile;
         const size_t tile_y = tileID / numTiles_x;
         const size_t tile_x = tileID - tile_y*numTiles_x;
@@ -119,7 +114,9 @@ namespace ospray {
           }
         
         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
-        MPI_Send(&rgba_i8,TILE_SIZE*TILE_SIZE,MPI_INT,0,tileID,app.comm);
+        int count = (TILE_SIZE)*(TILE_SIZE);
+        if (count != 256) PING;
+        MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
       }
       
       void Slave::renderFrame(Renderer *tiledRenderer, 

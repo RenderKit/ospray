@@ -765,20 +765,7 @@ namespace ospray {
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
-      PING; PRINT(TiledLoadBalancer::instance);
-      // static long prev_t = 0;
-      // long before = __rdtsc();
-      // printf("#m: rendienrg into fb %lx      time %li\n",fb,before-prev_t);
       TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
-      PING;
-      // long after = __rdtsc();
-      // printf("#m: DONE rendienrg into fb %lx time %li\n",fb,after-before);
-      // prev_t = after;
-
-      // WARNING: I'm doing an *im*plicit swapbuffers here at the end
-      // of renderframe, but to be more opengl-conform we should
-      // actually have the user call an *ex*plicit ospSwapBuffers call...
-      // sc->advance();
     }
 
     //! release (i.e., reduce refcount of) given object

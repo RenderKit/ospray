@@ -62,9 +62,8 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-         PING;
-         PRINT(command);usleep(20);
-#if 1
+         // PRINT(command);usleep(20);
+#if 0
         if (worker.rank == 0)
           printf("#w: command %i\n",command);
 #endif
@@ -238,7 +237,6 @@ namespace ospray {
           fb->clear(channelFlags);
         } break;
         case api::MPIDevice::CMD_RENDER_FRAME: {
-          PING;
           const mpi::Handle  fbHandle = cmd.get_handle();
           // const mpi::Handle  swapChainHandle = cmd.get_handle();
           const mpi::Handle  rendererHandle  = cmd.get_handle();
@@ -248,10 +246,8 @@ namespace ospray {
           // Assert(sc);
           Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
-          PING;
           renderer->renderFrame(fb,channelFlags); //sc->getBackBuffer());
           // sc->advance();
-          PING;
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_MAP: {
           FATAL("should never get called on worker!?");
