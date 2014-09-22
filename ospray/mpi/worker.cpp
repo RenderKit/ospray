@@ -290,6 +290,8 @@ namespace ospray {
 
           size_t hasInitData = cmd.get_size_t();
           if (hasInitData) {
+            PRINT(nitems);
+            PRINT(sizeOf(format));
             cmd.get_data(nitems*sizeOf(format),data->data);
             if (format==OSP_OBJECT) {
               /* translating handles to managedobject pointers: if a
@@ -401,6 +403,7 @@ namespace ospray {
           cmd.free(name);
         } break;
         case api::MPIDevice::CMD_LOAD_MODULE: {
+          PING;
           const char *name = cmd.get_charPtr();
 
 #if THIS_IS_MIC
@@ -409,6 +412,8 @@ namespace ospray {
 #else
           std::string libName = "ospray_module_"+std::string(name)+"";
 #endif
+          PING;
+          PRINT(libName);
           loadLibrary(libName);
       
           std::string initSymName = "ospray_init_module_"+std::string(name);

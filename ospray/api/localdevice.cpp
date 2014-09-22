@@ -381,8 +381,7 @@ namespace ospray {
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
-        //        throw std::runtime_error("could not find module initializer "+initSymName);
-        return 1;
+        throw std::runtime_error("#osp:api: could not find module initializer "+initSymName);
       void (*initMethod)() = (void(*)())initSym;
       if (!initMethod) 
         return 2;

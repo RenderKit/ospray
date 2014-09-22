@@ -503,6 +503,7 @@ namespace ospray {
     /*! load module */
     int MPIDevice::loadModule(const char *name)
     {
+
 #if THIS_IS_MIC
       // embree automatically puts this into "lib<name>.so" format
       std::string libName = "ospray_module_"+std::string(name)+"_mic";
@@ -510,16 +511,23 @@ namespace ospray {
       std::string libName = "ospray_module_"+std::string(name)+"";
 #endif
       loadLibrary(libName);
+
+      PING;
+      PRINT(libName);
       
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
-        throw std::runtime_error("could not find module initializer "+initSymName);
+        throw std::runtime_error("#osp:mpi:mpidevice: could not find module initializer "+initSymName);
       void (*initMethod)() = (void(*)())initSym;
       initMethod();
 
+      PING;
+
       cmd.newCommand(CMD_LOAD_MODULE);
       cmd.send(name);
+
+      PING;
       
       // FIXME: actually we should return an error code here...
       return 0;
