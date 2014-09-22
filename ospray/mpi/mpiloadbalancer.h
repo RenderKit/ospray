@@ -32,6 +32,7 @@ namespace ospray {
         virtual void renderFrame(Renderer *tiledRenderer,
                                  FrameBuffer *fb,
                                  const uint32 channelFlags);
+        virtual std::string toString() const { return "ospray::mpi::staticLoadBalancer::Master"; };
       };
 
       /*! \brief the 'slave' in a tile-based master-slave *static*
@@ -70,6 +71,7 @@ namespace ospray {
         virtual void renderFrame(Renderer *tiledRenderer, 
                                  FrameBuffer *fb,
                                  const uint32 channelFlags);
+        virtual std::string toString() const { return "ospray::mpi::staticLoadBalancer::Slave"; };
       };
     }
 

@@ -17,7 +17,7 @@
 #include "ospray/geometry/trianglemesh.h"
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
-#include "ospray/volume/volume.h"
+#include "ospray/volume/Volume.h"
 #include "ospray/lights/light.h"
 #include "mpiloadbalancer.h"
 
@@ -62,9 +62,9 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-        // PING;
-        // PRINT(command);sleep(1);
-#if 0
+         PING;
+         PRINT(command);usleep(20);
+#if 1
         if (worker.rank == 0)
           printf("#w: command %i\n",command);
 #endif
@@ -157,7 +157,6 @@ namespace ospray {
 
         case api::MPIDevice::CMD_NEW_LIGHT: {
           PING;
-          // Assert(type != NULL && "invalid volume type identifier");
           const mpi::Handle rendererHandle = cmd.get_handle();
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
@@ -239,6 +238,7 @@ namespace ospray {
           fb->clear(channelFlags);
         } break;
         case api::MPIDevice::CMD_RENDER_FRAME: {
+          PING;
           const mpi::Handle  fbHandle = cmd.get_handle();
           // const mpi::Handle  swapChainHandle = cmd.get_handle();
           const mpi::Handle  rendererHandle  = cmd.get_handle();
@@ -248,8 +248,10 @@ namespace ospray {
           // Assert(sc);
           Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
+          PING;
           renderer->renderFrame(fb,channelFlags); //sc->getBackBuffer());
           // sc->advance();
+          PING;
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_MAP: {
           FATAL("should never get called on worker!?");

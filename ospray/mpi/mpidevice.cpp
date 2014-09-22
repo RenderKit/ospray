@@ -17,7 +17,7 @@
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
-#include "../volume/volume.h"
+#include "../volume/Volume.h"
 #include "mpiloadbalancer.h"
 
 namespace ospray {
@@ -30,9 +30,9 @@ namespace ospray {
     Group worker;
 
     //! this runs an ospray worker process. 
-    /*! it's up to the proper init
-      routine to decide which processes call this function and which
-      ones don't. This function will not return. */
+    /*! it's up to the proper init routine to decide which processes
+      call this function and which ones don't. This function will not
+      return. */
     void runWorker(int *_ac, const char **_av);
 
 
@@ -52,7 +52,10 @@ namespace ospray {
       printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
       MPI_Barrier(MPI_COMM_WORLD);
 
-      Assert(world.size > 1);
+      if (world.size <= 1) {
+        throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error - OSPRay told to run in MPI mode, but there seems to be no MPI peers!?\n#osp:mpi: (Did you forget an 'mpirun' in front of your application?)");
+      }
+
       if (world.rank == 0) {
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
@@ -762,10 +765,12 @@ namespace ospray {
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
+      PING; PRINT(TiledLoadBalancer::instance);
       // static long prev_t = 0;
       // long before = __rdtsc();
       // printf("#m: rendienrg into fb %lx      time %li\n",fb,before-prev_t);
       TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
+      PING;
       // long after = __rdtsc();
       // printf("#m: DONE rendienrg into fb %lx time %li\n",fb,after-before);
       // prev_t = after;

@@ -188,6 +188,8 @@ namespace ospray {
       std::vector<Model *> particleModel;
     
       cout << "ospParticleViewer: starting to process cmdline arguments" << endl;
+      std::vector<std::pair<particle::Model *, std::string> > deferredLoadingListXYZ;
+
       for (int i=1;i<ac;i++) {
         const std::string arg = av[i];
         if (arg == "--renderer") {
@@ -211,7 +213,9 @@ namespace ospray {
           embree::FileName fn = arg;
           if (fn.ext() == "xyz") {
             particle::Model *m = new particle::Model;
-            m->loadXYZ(fn);
+            //            m->loadXYZ(fn);
+            std::pair<particle::Model *, embree::FileName> loadJob(m,fn.str());
+            deferredLoadingListXYZ.push_back(loadJob);
             particleModel.push_back(m);
           } else if (fn.ext() == "xml") {
             particle::Model *m = parse__Uintah_timestep_xml(fn);
@@ -222,6 +226,15 @@ namespace ospray {
       }
       if (particleModel.empty())
         error("no input file specified");
+
+#pragma omp parallel 
+      {
+#pragma omp for
+        for (int i=0;i<deferredLoadingListXYZ.size();i++) {
+          deferredLoadingListXYZ[i].first->loadXYZ(deferredLoadingListXYZ[i].second);
+        }
+      }
+
 
       // -------------------------------------------------------
       // done parsings

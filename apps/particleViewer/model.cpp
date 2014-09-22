@@ -16,7 +16,7 @@ extern int yydebug;
 namespace ospray {
   namespace particle {
     
-    Model *parserModel = NULL;
+    // Model *parserModel = NULL;
 
     inline vec3f makeRandomColor(const int i)
     {

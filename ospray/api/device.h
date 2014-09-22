@@ -144,7 +144,8 @@ namespace ospray {
         throw "instances not implemented";
       }
 
-      virtual OSPPickData unproject(OSPRenderer renderer, const vec2f &screenPos) = 0;
+      virtual OSPPickData unproject(OSPRenderer renderer, const vec2f &screenPos) 
+      { throw std::runtime_error("unproject() (for picking) not impelemnted for this device"); };
     };
   }
 }

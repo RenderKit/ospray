@@ -167,7 +167,7 @@ namespace ospray {
     template<typename T>
     inline void set(const char *name, const T &t) { findParam(name,1)->set(t); }
 
-    /*! @{
+    /*! @{ */
     /*! \brief find the named parameter, and return its object value if
         available; else return 'default' value 
         

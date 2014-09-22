@@ -25,6 +25,7 @@ namespace ospray {
   struct TiledLoadBalancer 
   {
     static TiledLoadBalancer *instance;
+    virtual std::string toString() const = 0;
     virtual void renderFrame(Renderer *tiledRenderer,
                              FrameBuffer *fb,
                              const uint32 channelFlags) = 0;
@@ -54,6 +55,7 @@ namespace ospray {
     virtual void renderFrame(Renderer *tiledRenderer, 
                              FrameBuffer *fb,
                              const uint32 channelFlags);
+    virtual std::string toString() const { return "ospray::LocalTiledLoadBalancer"; };
   };
 
 #if 1
@@ -76,6 +78,8 @@ namespace ospray {
         std::cout << "=======================================================" << std::endl;
       }
     }
+
+    virtual std::string toString() const { return "ospray::InterleavedTiledLoadBalancer"; };
 
     /*! \brief a task for rendering a frame using the global tiled load balancer 
       

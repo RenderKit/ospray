@@ -169,6 +169,9 @@ INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 # MPI DEVICE - mpi worker
 ##############################################################
 IF (OSPRAY_MPI)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_LIBRARIES})
+  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick 
+
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/mpiworker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
   # ------------------------------------------------------------
