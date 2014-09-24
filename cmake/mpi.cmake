@@ -27,10 +27,10 @@ IF (OSPRAY_MPI)
 	DOC "MPI library.")
       SET(MPI_LIBRARIES ${MPI_LIBRARY})
     endif()
-    if (${MPI_COMPILER} STREQUAL "MPI_COMPILER-NOTFOUND")
-      message("could not find mpi compiler")
-    endif()
     SET(OSPRAY_MPI_MULTI_THREADING_FLAG "") #???
+  endif()
+  if (${MPI_COMPILER} STREQUAL "MPI_COMPILER-NOTFOUND")
+    message("could not find mpi compiler")
   endif()
   mark_as_advanced(MPI_COMPILER)
 
