@@ -10,6 +10,7 @@
 #include <iostream>
 #include <QtGui>
 #include <ctype.h>
+#include <sstream>
 #include "VolumeViewer.h"
 
 int main(int argc, char *argv[]) {
@@ -32,6 +33,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "    -dt <dt>                             : use ray cast sample step size 'dt'"            << std::endl;
         std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
         std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
+        std::cerr << "    -module <moduleName>                 : load the module 'moduleName'"                  << std::endl;
         std::cerr << " "                                                                                        << std::endl;
         return(1);
 
@@ -86,6 +88,19 @@ int main(int argc, char *argv[]) {
                 std::cout << "got viewSizeWidth = " << viewSizeWidth << ", viewSizeHeight = " << viewSizeHeight << std::endl;
 
             } else throw std::runtime_error("improperly formatted <width>x<height> argument");
+
+        } else if (arg == "-module") {
+
+            if (i + 1 >= argc) throw std::runtime_error("missing <moduleName> argument");
+            std::string moduleName = argv[++i];
+            std::cout << "loading module '" << moduleName << "'." << std::endl;
+            error_t error = ospLoadModule(moduleName.c_str());
+
+            if(error != 0) {
+                std::ostringstream ss;
+                ss << error;
+                throw std::runtime_error("could not load module " + moduleName + ", error " + ss.str());
+            }
 
         } else throw std::runtime_error("unknown parameter " + arg);
 
