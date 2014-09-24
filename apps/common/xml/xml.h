@@ -27,7 +27,7 @@ namespace ospray {
       std::vector<Prop *> prop;
       std::vector<Node *> child;
       
-      inline std::string getProp(const std::string &name) {
+      inline std::string getProp(const std::string &name) const {
         for (int i=0;i<prop.size();i++) 
           if (prop[i]->name == name) return prop[i]->value; 
         return "";
