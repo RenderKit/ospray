@@ -325,6 +325,8 @@ extern "C" {
   void ospSetString(OSPObject _object, const char *id, const char *s);
   /*! add a object-typed parameter to another object */
   void ospSetParam(OSPObject _object, const char *id, OSPObject object);
+  /*! add a object-typed parameter to another object */
+  void ospSetObject(OSPObject _object, const char *id, OSPObject object);
   /*! add a data array to another object */
   void ospSetData(OSPObject _object, const char *id, OSPData data);
   /*! add 1-float paramter to given object */

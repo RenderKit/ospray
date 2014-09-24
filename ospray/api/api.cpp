@@ -215,6 +215,13 @@ namespace ospray {
     LOG("ospSetData(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
+  /*! add a data array to another object */
+  extern "C" void ospSetObject(OSPObject target, const char *bufName, OSPObject value)
+  {
+    ASSERT_DEVICE();
+    LOG("ospSetData(...,\"" << bufName << "\",...)");
+    return ospray::api::Device::current->setObject(target,bufName,value);
+  }
 
   /*! \brief create a new renderer of given type 
 
