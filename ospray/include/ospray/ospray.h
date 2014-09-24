@@ -323,7 +323,9 @@ extern "C" {
   */
   /*! add a c-string (zero-terminated char *) parameter to another object */
   void ospSetString(OSPObject _object, const char *id, const char *s);
-  /*! add a object-typed parameter to another object */
+  /*! add a object-typed parameter to another object 
+    
+   \warning this call has been superseded by ospSetObject, and will eventually get removed */
   void ospSetParam(OSPObject _object, const char *id, OSPObject object);
   /*! add a object-typed parameter to another object */
   void ospSetObject(OSPObject _object, const char *id, OSPObject object);
