@@ -21,30 +21,3 @@ struct PerspectiveCamera {
   vec3f dir_dv;
 };
 
-// #ifndef OSPRAY_PERSPECTIVE_CAMERA_IH
-// #define OSPRAY_PERSPECTIVE_CAMERA_IH 1
-
-// /*! \file perspectivecamera.ih Defines the ISPC-side Perspective Camera class */
-
-// #include "camera.ih"
-
-// // ! contains all precomputed data for a perspectice camera to generate a ray with 
-// /*! \internal The main reason we have this data outside the main
-//     'PerspectiveCamera' class is that we can actually tell ispc to
-//     'export' this data-only class, whereas ISPC cannot export the main
-//     PerspectiveCamera class itself (because of some issues with
-//     exporting function pointers with varying paramters) */
-// struct PerspectiveCamera_Data
-// {
-//   vec3f org;
-//   vec3f dir_00;
-//   vec3f dir_du;
-//   vec3f dir_dv;
-// };
-
-// struct PerspectiveCamera {
-//   Camera inherited;
-//   PerspectiveCamera_Data data;
-// };
-
-// #endif
