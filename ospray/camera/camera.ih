@@ -6,8 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#ifndef OSPRAY_CAMERA_IH
-#define OSPRAY_CAMERA_IH 1
+#pragma once
 
 #include "../common/ray.ih"
 
@@ -16,10 +15,10 @@
 
 struct Camera;
 
-/*! input parameters to a 'initRay' method. Specifield the time,
-    pixel, and lens samples the camera is to generate a ray for */
+/*! \brief Specifies the input parameters (time, screen, and lens
+    samples) required for 'initRay' to generate a primary ray */
 struct CameraSample {
-  vec2f screen; /*! screen sample, from [(0,0)-frameSize] */
+  vec2f screen; /*!< screen sample, from [(0,0)-frameSize] */
   vec2f lens;   /*!< may be left un-initialized if 'camera.doesDOF' is false */
   float time;   /*!< time */
 };
@@ -29,15 +28,16 @@ typedef void (*Camera_initRay)(uniform Camera  *uniform,
                                varying Ray &ray,
                                const varying CameraSample &sample);
 
+/*! \brief Abstract base class for all camera types */
 struct Camera
 {
-  Camera_initRay initRay;
+  Camera_initRay initRay; /*!< the 'virtual' initRay() method */
 
-  bool doesDOF; /*!< indicates whether this camera does depth-of-field
-                    (DOF). If so, the 'CameraSample' passed to initRay
-                    has to have properly initialized 'lens' value; if
-                    not, this value can remain unused. */
+  bool doesDOF; /*!< indicates whether this camera wants to do
+                    depth-of-field (DOF). If so, the 'CameraSample'
+                    passed to initRay has to have properly initialized
+                    'lens' value; if not, this value can remain
+                    unused. */
   void *cppEquivalent; /*!< pointer back to c++-side of this class */
 };
 
-#endif
