@@ -8,7 +8,7 @@
 
 #pragma once
 
-/*! \file perspectivecamera.ih Defines the ISPC-side Perspective Camera class */
+/*! \file perspectivecamera.ih \brief Defines the ISPC-side Perspective Camera class */
 
 #include "camera.ih"
 
