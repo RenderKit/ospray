@@ -223,8 +223,12 @@ export void Renderer_setNearClip(void *uniform _renderer, uniform float nearClip
   renderer->nearClip = nearClip;
 }
 
-export uniform OSPPickData Renderer_unproject( void *uniform _renderer,
-                                        const uniform vec2f &screenPos)
+export void Renderer_unproject( void *uniform _renderer,
+				const uniform vec2f &screenPos,
+				uniform bool &hit,
+				uniform float &x,
+				uniform float &y,
+				uniform float &z)
 {
   uniform Renderer    *uniform renderer = (uniform Renderer *uniform)_renderer;
   uniform Camera      *uniform camera   = renderer->camera;
@@ -235,14 +239,15 @@ export uniform OSPPickData Renderer_unproject( void *uniform _renderer,
   CameraSample cameraSample;
   cameraSample.screen.x = screenPos.x;
   cameraSample.screen.y = 1.0 - screenPos.y;
+
   Ray ray;
   camera->initRay(camera, ray, cameraSample);
   traceRay(model, ray);
-  vec3f p = ray.org + (ray.dir * ray.t);
-  ret.hit= extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
-  ret.world_x=extract(p.x,0);
-  ret.world_y=extract(p.y,0);
-  ret.world_z=extract(p.z,0);
 
-  return ret;
+  vec3f p = ray.org + (ray.dir * ray.t);
+
+  hit= extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
+  x=extract(p.x,0);
+  y=extract(p.y,0);
+  z=extract(p.z,0);
 }

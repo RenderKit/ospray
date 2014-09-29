@@ -203,14 +203,15 @@ namespace ospray {
         vec3f p(data.world_x, data.world_y, data.world_z);
         if(data.hit) {
           vec3f delta = p - viewPort.at;
-          vec3f right = cross(normalize(viewPort.up), normalize(viewPort.at - viewPort.from));
-          vec3f offset = dot(delta, right) * right + dot(delta, viewPort.up) * viewPort.up;
+          vec3f right = cross(normalize(viewPort.at - viewPort.from), viewPort.up);
+          vec3f offset = dot(delta, right) * right - dot(delta, viewPort.up) * viewPort.up;
           viewPort.at = p;
-          viewPort.from += offset;
+          //viewPort.from += offset;
           viewPort.modified = true;
+	  computeFrame();
           accumID = 0;
           ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          ((glut3D::InspectCenter*)inspectCenterManipulator)->pivot = p;
+          //((glut3D::InspectCenter*)inspectCenterManipulator)->pivot = p;
         }
       }
     }
