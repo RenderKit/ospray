@@ -96,27 +96,27 @@ namespace ospray {
         OSPGeometry geom = ospNewTriangleMesh();
         numTriangles += va->triangle.size();
         if (va->triangle.size()) {
-          OSPData data = ospNewData(va->triangle.size(),OSP_vec3i,&va->triangle[0]);
+          OSPData data = ospNewData(va->triangle.size(),OSP_INT3,&va->triangle[0]);
           ospCommit(data);
           ospSetData(geom,"triangle",data);
         }
         if (va->coord.size()) {
-          OSPData data = ospNewData(va->coord.size(),OSP_vec3fa,&va->coord[0]);
+          OSPData data = ospNewData(va->coord.size(),OSP_FLOAT3A,&va->coord[0]);
           ospCommit(data);
           ospSetData(geom,"vertex",data);
         }
         if (va->normal.size()) {
-          OSPData data = ospNewData(va->normal.size(),OSP_vec3fa,&va->normal[0]);
+          OSPData data = ospNewData(va->normal.size(),OSP_FLOAT3A,&va->normal[0]);
           ospCommit(data);
           ospSetData(geom,"vertex.normal",data);
         }
         if (va->color.size()) {
-          OSPData data = ospNewData(va->color.size(),OSP_vec3fa,&va->color[0]);
+          OSPData data = ospNewData(va->color.size(),OSP_FLOAT3A,&va->color[0]);
           ospCommit(data);
           ospSetData(geom,"vertex.color",data);
         }
         if (va->perTriTextureID.size()) {
-          OSPData data = ospNewData(va->perTriTextureID.size(),OSP_uint32,
+          OSPData data = ospNewData(va->perTriTextureID.size(),OSP_UINT,
                                     &va->perTriTextureID[0]);
           ospCommit(data);
           ospSetData(geom,"prim.materialID",data);
@@ -131,7 +131,7 @@ namespace ospray {
       cout << "#osp:tachyon: specifying " << tm.numTextures() << " materials..." << endl;
       {
         OSPData data = ospNewData(tm.numTextures()*sizeof(Texture),
-                                  OSP_uint8,tm.getTexturesPtr());
+                                  OSP_UCHAR,tm.getTexturesPtr());
         ospCommit(data);
         ospSetData(ospModel,"textureArray",data);
       }
@@ -142,7 +142,7 @@ namespace ospray {
       {
         OSPData data
           = ospNewData(tm.numPointLights()*sizeof(PointLight),
-                       OSP_uint8,tm.getPointLightsPtr());
+                       OSP_UCHAR,tm.getPointLightsPtr());
         ospCommit(data);
         ospSetData(ospModel,"pointLights",data);
       }
@@ -153,7 +153,7 @@ namespace ospray {
       {
         OSPData data
           = ospNewData(tm.numDirLights()*sizeof(DirLight),
-                       OSP_uint8,tm.getDirLightsPtr());
+                       OSP_UCHAR,tm.getDirLightsPtr());
         ospCommit(data);
         ospSetData(ospModel,"dirLights",data);
       }

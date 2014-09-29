@@ -357,11 +357,11 @@ namespace ospray {
     OSPDataType type = OSP_VOID_PTR;
 
     if (msgTex->depth == 1) {
-      if( msgTex->channels == 3 ) type = OSP_vec3uc;
-      if( msgTex->channels == 4 ) type = OSP_vec4uc;
+      if( msgTex->channels == 3 ) type = OSP_UCHAR3;
+      if( msgTex->channels == 4 ) type = OSP_UCHAR4;
     } else if (msgTex->depth == 4) {
-      if( msgTex->channels == 3 ) type = OSP_vec3f;
-      if( msgTex->channels == 4 ) type = OSP_vec3fa;
+      if( msgTex->channels == 3 ) type = OSP_FLOAT3;
+      if( msgTex->channels == 4 ) type = OSP_FLOAT3A;
     }
 
     OSPTexture2D ospTex = ospNewTexture2D( msgTex->width,
@@ -454,9 +454,41 @@ namespace ospray {
     return ospMat;
   }
 
+
+  /*! class that traverses a sg::World scene graph, and extracts
+      ospray geometry, renderer settings, etc from that */
+  struct SGRenderer { 
+    SGRenderer() 
+      : ospModel(NULL),
+        ospRenderer(NULL)
+    {}
+
+    void traverse(Ref<sg::World> &world)
+    {
+      OSPModel model = ospNewModel();
+      traverseNode(model,world);
+      setModel(model);
+    }
+    void traverseNode(OSPModel model, Ref<sg::World> &world)
+    {
+    }
+    inline void setModel(OSPModel model) 
+    { if (ospModel) ospRelease(ospModel); ospModel = model; }
+    inline void setRenderer(OSPRenderer renderer) 
+    { if (ospRenderer) ospRelease(ospRenderer); ospRenderer = renderer; }
+  protected:
+    //! the ospray model that represents the entire world
+    OSPModel      ospModel;    
+    //! the last renderer encountered during traversal (if any)
+    OSPRenderer   ospRenderer; 
+    //! the list of all info nodes
+    std::vector<Ref<sg::Info> > info;
+  };
+
   void msgViewMain(int &ac, const char **&av)
   {
     msgModel = new miniSG::Model;
+    Ref<sg::World> world = NULL;
     
     cout << "msgView: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
@@ -530,15 +562,21 @@ namespace ospray {
           miniSG::importTRI(*msgModel,fn);
         else if (fn.ext() == "xml")
           miniSG::importRIVL(*msgModel,fn);
-        else if (fn.ext() == "osp")
+        else if (fn.ext() == "osp") {
           // right now this doesn't do anything other than parse the
           // file - it will NOT be properly rendered!
-          sg::readXML(fn);
-        else if (fn.ext() == "obj")
+          world = sg::readXML(fn);
+        } else if (fn.ext() == "obj")
           miniSG::importOBJ(*msgModel,fn);
         else if (fn.ext() == "astl")
           miniSG::importSTL(msgAnimation,fn);
       }
+    }
+
+    if (world) {
+      // this is the code that uses
+      SGRenderer renderer;
+      renderer.traverse(world);
     }
     // -------------------------------------------------------
     // done parsing
@@ -636,7 +674,7 @@ namespace ospray {
         }
       }
       // add position array to mesh
-      OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
+      OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"position",position);
       
@@ -649,14 +687,14 @@ namespace ospray {
 
       // cout << "INDEX" << endl;
       // add triangle index array to mesh
-      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
+      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_INT3,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
 
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
-        OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
+        OSPData normal = ospNewData(msgMesh->normal.size(),OSP_FLOAT3A,
                                     &msgMesh->normal[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->normal.size() > 0);
         ospSetData(ospMesh,"vertex.normal",normal);
@@ -666,7 +704,7 @@ namespace ospray {
 
       // add texcoord array to mesh
       if (!msgMesh->texcoord.empty()) {
-        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_vec2f,
+        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_FLOAT2,
                                       &msgMesh->texcoord[0], OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->texcoord.size() > 0);
         ospSetData(ospMesh,"vertex.texcoord",texcoord);

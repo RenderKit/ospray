@@ -212,6 +212,18 @@ namespace ospray {
   extern "C" void ospSetParam(OSPObject target, const char *bufName, OSPObject value)
   {
     ASSERT_DEVICE();
+    static bool warned = false;
+    if (!warned) {
+      std::cout << "'ospSetParam()' has been deprecated. Please use the new naming convention of 'ospSetObject()' instead" << std::endl;
+      warned = true;
+    }
+    LOG("ospSetData(...,\"" << bufName << "\",...)");
+    return ospray::api::Device::current->setObject(target,bufName,value);
+  }
+  /*! add a data array to another object */
+  extern "C" void ospSetObject(OSPObject target, const char *bufName, OSPObject value)
+  {
+    ASSERT_DEVICE();
     LOG("ospSetData(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(target,bufName,value);
   }

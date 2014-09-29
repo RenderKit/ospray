@@ -13,8 +13,6 @@
 
 namespace ospray {
 
-  size_t sizeOf(OSPDataType type);
-
   /*! \brief defines a data array (aka "buffer") type that contains
       'n' items of a given type */
   struct Data : public ManagedObject
