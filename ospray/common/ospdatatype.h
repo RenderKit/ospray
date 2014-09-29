@@ -55,5 +55,7 @@ typedef enum {
 
 } OSPDataType;
 
+namespace ospray {
 /*! \brief returns the size (in byte) for one instance of the given data type */
 size_t sizeOf(OSPDataType type);
+}
