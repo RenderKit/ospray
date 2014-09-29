@@ -192,7 +192,6 @@ namespace ospray {
         consume(s,"?>");
         return true;
       }
-
       if (!isWhite(*s)) return false; ++s;
 
       skipWhites(s);
@@ -204,15 +203,15 @@ namespace ospray {
       }
     
       consume(s,"?>");
-    
       return true;
     }
 
     bool parseXML(XMLDoc *xml, char *s)
     {
-      if (!parseHeader(s))
-        throw std::runtime_error("could not parse XML header");
-    
+      if (s[0] == '<' && s[1] == '?') {
+        if (!parseHeader(s))
+          throw std::runtime_error("could not parse XML header");
+      }
       skipWhites(s);
       while (*s != 0) {
         Node *node = parseNode(s);
