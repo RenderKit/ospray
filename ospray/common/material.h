@@ -33,7 +33,7 @@ namespace ospray {
   };
 
 
-  /*! \brief registers a internal ospray::<ClassName> material under
+  /*! \brief registers a internal ospray::'ClassName' material under
       the externally accessible name "external_name" 
       
       \internal This currently works by defining a extern "C" function
