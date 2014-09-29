@@ -104,10 +104,10 @@ namespace ospray {
 
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
                  (void*)this->vertex,0,
-                 ospray::sizeOf(vertexData->type));
+                 sizeOf(vertexData->type));
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_INDEX_BUFFER,
                  (void*)this->index,0,
-                 ospray::sizeOf(indexData->type));
+                 sizeOf(indexData->type));
 
     box3f bounds = embree::empty;
     
