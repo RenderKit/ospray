@@ -357,11 +357,11 @@ namespace ospray {
     OSPDataType type = OSP_VOID_PTR;
 
     if (msgTex->depth == 1) {
-      if( msgTex->channels == 3 ) type = OSP_vec3uc;
-      if( msgTex->channels == 4 ) type = OSP_vec4uc;
+      if( msgTex->channels == 3 ) type = OSP_UCHAR3;
+      if( msgTex->channels == 4 ) type = OSP_UCHAR4;
     } else if (msgTex->depth == 4) {
-      if( msgTex->channels == 3 ) type = OSP_vec3f;
-      if( msgTex->channels == 4 ) type = OSP_vec3fa;
+      if( msgTex->channels == 3 ) type = OSP_FLOAT3;
+      if( msgTex->channels == 4 ) type = OSP_FLOAT3A;
     }
 
     OSPTexture2D ospTex = ospNewTexture2D( msgTex->width,
@@ -636,7 +636,7 @@ namespace ospray {
         }
       }
       // add position array to mesh
-      OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
+      OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"position",position);
       
@@ -649,14 +649,14 @@ namespace ospray {
 
       // cout << "INDEX" << endl;
       // add triangle index array to mesh
-      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
+      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_INT3,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
 
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
-        OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
+        OSPData normal = ospNewData(msgMesh->normal.size(),OSP_FLOAT3A,
                                     &msgMesh->normal[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->normal.size() > 0);
         ospSetData(ospMesh,"vertex.normal",normal);
@@ -666,7 +666,7 @@ namespace ospray {
 
       // add texcoord array to mesh
       if (!msgMesh->texcoord.empty()) {
-        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_vec2f,
+        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_FLOAT2,
                                       &msgMesh->texcoord[0], OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->texcoord.size() > 0);
         ospSetData(ospMesh,"vertex.texcoord",texcoord);

@@ -244,8 +244,8 @@ namespace ospray {
       {
         OSPGeometry geom = ospNewGeometry("streamlines");
         Assert(geom);
-        OSPData vertex = ospNewData(sl->vertex.size(),OSP_vec3fa,&sl->vertex[0]);
-        OSPData index  = ospNewData(sl->index.size(),OSP_uint32,&sl->index[0]);
+        OSPData vertex = ospNewData(sl->vertex.size(),OSP_FLOAT3A,&sl->vertex[0]);
+        OSPData index  = ospNewData(sl->index.size(),OSP_UINT,&sl->index[0]);
         ospSetParam(geom,"vertex",vertex);
         ospSetParam(geom,"index",index);
         ospSet1f(geom,"radius",sl->radius);
@@ -258,9 +258,9 @@ namespace ospray {
       if (tris && !tris->index.empty()) {
         OSPGeometry geom = ospNewTriangleMesh();
         Assert(geom);
-        OSPData vertex = ospNewData(tris->vertex.size(),OSP_vec3fa,&tris->vertex[0]);
-        OSPData index  = ospNewData(tris->index.size(),OSP_vec3i,&tris->index[0]);
-        OSPData color  = ospNewData(tris->color.size(),OSP_vec3fa,&tris->color[0]);
+        OSPData vertex = ospNewData(tris->vertex.size(),OSP_FLOAT3A,&tris->vertex[0]);
+        OSPData index  = ospNewData(tris->index.size(),OSP_INT3,&tris->index[0]);
+        OSPData color  = ospNewData(tris->color.size(),OSP_FLOAT3A,&tris->color[0]);
         ospSetParam(geom,"vertex",vertex);
         ospSetParam(geom,"index",index);
         ospSetParam(geom,"vertex.color",color);

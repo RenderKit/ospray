@@ -18,12 +18,14 @@
 #pragma once
 
 // -------------------------------------------------------
-// include embree components 
+// include common components 
 // -------------------------------------------------------
-#include "common/math/vec2.h"
-#include "common/math/vec3.h"
-#include "common/math/bbox.h"
-#include "common/math/affinespace.h"
+#include "ospray/embree/common/math/vec2.h"
+#include "ospray/embree/common/math/vec3.h"
+#include "ospray/embree/common/math/vec4.h"
+#include "ospray/embree/common/math/bbox.h"
+#include "ospray/embree/common/math/affinespace.h"
+#include "ospray/common/ospdatatype.h"
 
 /*! namespace for classes in the public core API */
 namespace osp {
@@ -65,53 +67,6 @@ typedef enum {
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
-
-typedef enum {
-
-  //! Void pointer type.
-  OSP_VOID_PTR,
-
-  //! Object reference type.
-  OSP_OBJECT,
-
-  //! Opaque array of data.
-  OSP_DATA,
-
-  //! Pointer to a C-style NULL-terminated character string.
-  OSP_STRING,
-
-  //! Character scalar type.
-  OSP_CHAR,    OSP_int8   = OSP_CHAR,
-
-  //! Unsigned character scalar and vector types.
-  OSP_UCHAR,   OSP_uint8  = OSP_UCHAR,
-  OSP_UCHAR2,  OSP_vec2uc = OSP_UCHAR2,
-  OSP_UCHAR3,  OSP_vec3uc = OSP_UCHAR3,
-  OSP_UCHAR4,  OSP_vec4uc = OSP_UCHAR4,
-
-  //! Signed integer scalar and vector types.
-  OSP_INT,     OSP_int32  = OSP_INT,
-  OSP_INT2,    OSP_vec2i  = OSP_INT2,
-  OSP_INT3,    OSP_vec3i  = OSP_INT3,
-  OSP_INT4,    OSP_vec4i  = OSP_INT4,
-
-  //! Unsigned integer scalar and vector types.
-  OSP_UINT,    OSP_uint32 = OSP_UINT,
-  OSP_UINT2,   OSP_vec2ui = OSP_UINT2,
-  OSP_UINT3,   OSP_vec3ui = OSP_UINT3,
-  OSP_UINT4,   OSP_vec4ui = OSP_UINT4,
-
-  //! Single precision floating point scalar and vector types.
-  OSP_FLOAT,   OSP_float  = OSP_FLOAT,
-  OSP_FLOAT2,  OSP_vec2f  = OSP_FLOAT2,
-  OSP_FLOAT3,  OSP_vec3f  = OSP_FLOAT3,
-  OSP_FLOAT4,  OSP_vec4f  = OSP_FLOAT4,
-  OSP_FLOAT3A, OSP_vec3fa = OSP_FLOAT3A,
-
-  //! Guard value.
-  OSP_UNKNOWN,
-
-} OSPDataType;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {

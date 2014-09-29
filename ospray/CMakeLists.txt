@@ -211,10 +211,3 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   ENDIF()
 ENDIF()
 
-
-
-
-
-
-
-
