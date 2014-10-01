@@ -12,12 +12,6 @@
 
 <dl> 
 
-<dt>buckyball.raw</dt><dd> simple 'bucky ball' test data set for
-testing the volume renderer. It's 32^3 entries of char (or: 'uint8')
-type. Source: downloaded somewhere off the internet; to my knowledge
-this does not come with any copyrights,disclaimers, or anything of
-that sort.</dd>
-
 </dl>
 
                                                 \
