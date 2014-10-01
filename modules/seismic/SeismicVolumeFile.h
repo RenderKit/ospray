@@ -58,9 +58,14 @@ namespace ospray {
         //! Seismic data attributes
         BIN_TAG inputBinTag;
         int traceHeaderSize;
-        int origin[3];
-        float deltas[3];
-        int dimensions[3];
+        float deltas[3];            //!< Voxel spacing along each dimension.
+        int dimensions[3];          //<! Dimensions of the volume.
+
+        //! Use a subvolume of the full volume.
+        bool useSubvolume;
+        int subvolumeOffsets[3];    //!< Subvolume offset from full volume origin
+        int subvolumeSteps[3];      //!< Step size for generation of subvolume in each dimension; values > 1 allow for subsampling.
+        int subvolumeDimensions[3]; //!< Dimensions of subvolume, not considering any subsampling
 
         //! Error checking.
         void exitOnCondition(bool condition, const std::string &message) const { if (condition) throw std::runtime_error("OSPRay::SeismicVolumeFile error: " + message + "."); }
