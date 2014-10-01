@@ -17,6 +17,7 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
+  common/ospdatatype.cpp
   common/ospcommon.cpp
   common/ospcommon.ispc
   common/managed.cpp
@@ -210,11 +211,4 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # targets; it's already done above
   ENDIF()
 ENDIF()
-
-
-
-
-
-
-
 

@@ -92,6 +92,41 @@ void RayCastRenderer_renderSample_eyeLight(uniform Renderer *uniform _renderer,
   }
 }
 
+void RayCastRenderer_renderSample_Ng(uniform Renderer *uniform _renderer,
+                                           varying ScreenSample &sample)
+{
+  uniform RayCastRenderer *uniform renderer = (uniform RayCastRenderer *uniform)_renderer;
+
+  traceRay(renderer->inherited.model,sample.ray);
+  sample.z     = sample.ray.t;
+  sample.alpha = 1.f;
+
+  if (sample.ray.geomID < 0) 
+    sample.rgb = make_vec3f(1.f); 
+  else {
+    sample.rgb = absf(sample.ray.Ng);
+  }
+}
+
+void RayCastRenderer_renderSample_Ns(uniform Renderer *uniform _renderer,
+                                           varying ScreenSample &sample)
+{
+  uniform RayCastRenderer *uniform renderer = (uniform RayCastRenderer *uniform)_renderer;
+
+  traceRay(renderer->inherited.model,sample.ray);
+  sample.z     = sample.ray.t;
+  sample.alpha = 1.f;
+
+  if (sample.ray.geomID < 0) 
+    sample.rgb = make_vec3f(1.f); 
+  else {
+    // sample.rgb = absf(sample.ray.Ng);
+    DifferentialGeometry dg;
+    postIntersect(renderer->inherited.model, dg, sample.ray, DG_MATERIALID | DG_NG | DG_NS);
+    sample.rgb = absf(dg.Ns);
+  }
+}
+
 void RayCastRenderer_renderSample_eyeLight_primID(uniform Renderer *uniform _renderer,
                                                   varying ScreenSample &sample)
 {
@@ -148,6 +183,22 @@ export void *uniform RayCastRenderer_create_eyeLight(void *uniform cppE)
   uniform RayCastRenderer *uniform renderer = uniform new uniform RayCastRenderer;
   Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
   renderer->inherited.renderSample = RayCastRenderer_renderSample_eyeLight;
+  return renderer;
+}
+
+export void *uniform RayCastRenderer_create_Ng(void *uniform cppE)
+{
+  uniform RayCastRenderer *uniform renderer = uniform new uniform RayCastRenderer;
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
+  renderer->inherited.renderSample = RayCastRenderer_renderSample_Ng;
+  return renderer;
+}
+
+export void *uniform RayCastRenderer_create_Ns(void *uniform cppE)
+{
+  uniform RayCastRenderer *uniform renderer = uniform new uniform RayCastRenderer;
+  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
+  renderer->inherited.renderSample = RayCastRenderer_renderSample_Ns;
   return renderer;
 }
 

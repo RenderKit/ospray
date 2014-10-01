@@ -9,9 +9,12 @@
 #pragma once
 
 // ospray stuff
-#include "../geometry/geometry.h"
+#include "ospray/geometry/geometry.h"
+#include "ospray/volume/Volume.h"
+
 // stl stuff
 #include <vector>
+
 // embree stuff
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
@@ -36,6 +39,8 @@ namespace ospray {
 
     typedef std::vector<Ref<Geometry> > GeometryVector;
     GeometryVector geometry;
+
+    std::vector<Ref<Volume> > volumes;
 
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle; 

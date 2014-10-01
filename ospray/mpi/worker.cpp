@@ -290,8 +290,6 @@ namespace ospray {
 
           size_t hasInitData = cmd.get_size_t();
           if (hasInitData) {
-            PRINT(nitems);
-            PRINT(sizeOf(format));
             cmd.get_data(nitems*sizeOf(format),data->data);
             if (format==OSP_OBJECT) {
               /* translating handles to managedobject pointers: if a
