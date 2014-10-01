@@ -35,6 +35,11 @@ struct box3fa {
   int32 align1;
 };
 
+struct box4f { 
+  vec4f lower;
+  vec4f upper;
+};
+
 inline uniform box3f make_box3f(const uniform vec3f lo, const uniform vec3f hi)
 { uniform box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
 

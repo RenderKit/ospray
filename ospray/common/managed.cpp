@@ -71,15 +71,6 @@ namespace ospray {
     return paramList[paramList.size()-1];
   }
 
-  /*! @{ */
-  /*! \brief find the named parameter, and return its object value if
-    available; else return 'default' value 
-    
-    \detailed The returned managed object will *not* automatically
-    have its refcount increased; it is up to the callee to
-    properly do that (typically by assigning to a proper 'ref'
-    instance */
-  
 #define define_getparam(T,ABB,TARGETTYPE,FIELD)                       \
   T ManagedObject::getParam##ABB(const char *name, T valIfNotFound) { \
   Param *param = findParam(name);                                     \
@@ -90,17 +81,14 @@ namespace ospray {
   
   define_getparam(ManagedObject *,Object,OSP_OBJECT,ptr);
   define_getparam(int32, 1i,OSP_INT,i);
-  define_getparam(vec3i, 3i,OSP_vec3i,i);
-  define_getparam(vec3f, 3f,OSP_vec3f,f);
-  define_getparam(vec3fa,3f,OSP_vec3f,f);
+  define_getparam(vec3i, 3i,OSP_INT3,i);
+  define_getparam(vec3f, 3f,OSP_FLOAT3,f);
+  define_getparam(vec3fa,3f,OSP_FLOAT3,f);
   define_getparam(float, 1f,OSP_FLOAT, f);
   define_getparam(float, f, OSP_FLOAT, f);
   define_getparam(const char *, String, OSP_STRING, ptr);
 
 #undef define_getparam
-
-  /*! @} */
-
   
   void   ManagedObject::setParam(const char *name, ManagedObject *data)
   {

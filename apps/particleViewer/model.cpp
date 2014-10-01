@@ -16,7 +16,7 @@ extern int yydebug;
 namespace ospray {
   namespace particle {
     
-    Model *parserModel = NULL;
+    // Model *parserModel = NULL;
 
     inline vec3f makeRandomColor(const int i)
     {
@@ -95,6 +95,8 @@ namespace ospray {
       box3f bbox = embree::empty;
       for (int i=0;i<atom.size();i++)
         bbox.extend(atom[i].position);
+      PING;
+      PRINT(bbox);
       return bbox;
     }
 

@@ -17,7 +17,7 @@
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
-#include "../volume/volume.h"
+#include "../volume/Volume.h"
 #include "mpiloadbalancer.h"
 
 namespace ospray {
@@ -30,9 +30,9 @@ namespace ospray {
     Group worker;
 
     //! this runs an ospray worker process. 
-    /*! it's up to the proper init
-      routine to decide which processes call this function and which
-      ones don't. This function will not return. */
+    /*! it's up to the proper init routine to decide which processes
+      call this function and which ones don't. This function will not
+      return. */
     void runWorker(int *_ac, const char **_av);
 
 
@@ -52,7 +52,10 @@ namespace ospray {
       printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
       MPI_Barrier(MPI_COMM_WORLD);
 
-      Assert(world.size > 1);
+      if (world.size <= 1) {
+        throw std::runtime_error("No MPI workers found.\n#osp:mpi: Fatal Error - OSPRay told to run in MPI mode, but there seems to be no MPI peers!?\n#osp:mpi: (Did you forget an 'mpirun' in front of your application?)");
+      }
+
       if (world.rank == 0) {
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
@@ -500,6 +503,7 @@ namespace ospray {
     /*! load module */
     int MPIDevice::loadModule(const char *name)
     {
+
 #if THIS_IS_MIC
       // embree automatically puts this into "lib<name>.so" format
       std::string libName = "ospray_module_"+std::string(name)+"_mic";
@@ -507,16 +511,23 @@ namespace ospray {
       std::string libName = "ospray_module_"+std::string(name)+"";
 #endif
       loadLibrary(libName);
+
+      PING;
+      PRINT(libName);
       
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
-        throw std::runtime_error("could not find module initializer "+initSymName);
+        throw std::runtime_error("#osp:mpi:mpidevice: could not find module initializer "+initSymName);
       void (*initMethod)() = (void(*)())initSym;
       initMethod();
 
+      PING;
+
       cmd.newCommand(CMD_LOAD_MODULE);
       cmd.send(name);
+
+      PING;
       
       // FIXME: actually we should return an error code here...
       return 0;
@@ -762,18 +773,7 @@ namespace ospray {
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
-      // static long prev_t = 0;
-      // long before = __rdtsc();
-      // printf("#m: rendienrg into fb %lx      time %li\n",fb,before-prev_t);
       TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
-      // long after = __rdtsc();
-      // printf("#m: DONE rendienrg into fb %lx time %li\n",fb,after-before);
-      // prev_t = after;
-
-      // WARNING: I'm doing an *im*plicit swapbuffers here at the end
-      // of renderframe, but to be more opengl-conform we should
-      // actually have the user call an *ex*plicit ospSwapBuffers call...
-      // sc->advance();
     }
 
     //! release (i.e., reduce refcount of) given object

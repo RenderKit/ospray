@@ -81,8 +81,11 @@ namespace ospray {
   OSPPickData Renderer::unproject(const vec2f &screenPos)
   {
     assert(getIE());
-    ispc::OSPPickData data_t = ispc::Renderer_unproject(getIE(),(const ispc::vec2f&)screenPos);
-    OSPPickData ret = { data_t.hit, data_t.world_x, data_t.world_y, data_t.world_z };
+    bool hit; float x, y, z;
+
+    ispc::Renderer_unproject(getIE(),(const ispc::vec2f&)screenPos, hit, x, y, z);
+    OSPPickData ret = { hit, x, y, z };
+    
     return ret;
   }
 

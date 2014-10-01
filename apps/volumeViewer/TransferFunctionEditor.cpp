@@ -96,7 +96,7 @@ void TransferFunctionEditor::setColorMapIndex(int index)
     // set transfer function color properties for this color map
     std::vector<osp::vec3f> colors = colorMaps_[index].getColors();
 
-    OSPData transferFunctionColorsData = ospNewData(colors.size(), OSP_vec3f, colors.data());
+    OSPData transferFunctionColorsData = ospNewData(colors.size(), OSP_FLOAT3, colors.data());
     ospSetData(transferFunction_, "colors", transferFunctionColorsData);
 
     // set transfer function widget background image

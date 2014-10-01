@@ -11,7 +11,7 @@ built _in addition to_ the xeon target.
 
 \section cmake_basics Some basics.
 
-- OSPRay is built via cmake.</li>
+- OSPRay is built via cmake.
 
 - You should never build directly in the root source tree, but
   _always_ create a special build directory (e.g.,
@@ -19,7 +19,7 @@ built _in addition to_ the xeon target.
   e.g., use 'build-icc' for a build that has ICC enabled; 'build-mic'
   for one that has mic enabled, build-release vs build-debug,
   etc. Typically, I also use a 'bin' build dir that builds by default
-  config (in my case, icc enabled, mpi enabled, release mode)</li>
+  config (in my case, icc enabled, mpi enabled, release mode)
 
 - Since MICs require a (very!) different build than the Xeons OSPRay actually 
   supports a _dual_ target build in which it can build _both_ a xeon target _and_ a mic target (\ref cmake_dual_build)

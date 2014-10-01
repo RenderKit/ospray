@@ -24,7 +24,7 @@ namespace ospray {
     virtual void initRay(Ray &ray, const vec2f &sample) = 0;
   };
 
-  /*! \brief registers a internal ospray::<ClassName> camera under
+  /*! \brief registers a internal ospray::'ClassName' camera under
       the externally accessible name "external_name" 
       
       \internal This currently works by defining a extern "C" function

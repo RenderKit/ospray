@@ -26,32 +26,32 @@ namespace ospray {
     //TODO:ISPC side memory for images isn't currently managed, this will leak!
     void *img = NULL;
     switch (type) {
-    case OSP_vec4uc:
+    case OSP_UCHAR4:
       tx->ispcEquivalent = ispc::Texture2D_4uc_create(tx,sx,sy,data);
       bpp = 4;
       // tx->ispcEquivalent = ispc::Texture2D_3ca_bilinear_create(this,img);
       // img = ispc::Image3ca__new(width, height, (uint32_t*)data, true);
       break;
-      // case OSP_vec3uc:
+      // case OSP_UCHAR3:
       //   bpp = 3;
       //   img = ispc::Image3c__new(width, height, (ispc::vec3uc*)data, true);
       //   break;
-    case OSP_vec3uc:
+    case OSP_UCHAR3:
       tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,data);
       bpp = 3;
       // tx->ispcEquivalent = ispc::Texture2D_3ca_bilinear_create(this,img);
       // img = ispc::Image3ca__new(width, height, (uint32_t*)data, true);
       break;
-      // case OSP_vec3uc:
+      // case OSP_UCHAR3:
       //   bpp = 3;
       //   img = ispc::Image3c__new(width, height, (ispc::vec3uc*)data, true);
       //   break;
-    case OSP_vec3f:
+    case OSP_FLOAT3:
       tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,data);
       bpp = 3 * sizeof(float);
       // img = ispc::Image3f__new(width, height, (ispc::vec3f*)data, true);
       break;
-    case OSP_vec3fa:
+    case OSP_FLOAT3A:
       tx->ispcEquivalent = ispc::Texture2D_4f_create(tx,sx,sy,data);
       bpp = 4 * sizeof(float);
       // img = ispc::Image3fa__new(width, height, (ispc::vec3fa*)data, true);

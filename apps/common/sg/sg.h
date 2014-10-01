@@ -54,13 +54,17 @@ namespace ospray {
       T value;
     };
 
-    /*! base node of all scene graph nodes */
+    /*! \brief a entity that can traverse the scene graph */
+    struct Traverser;
+    
+    /*! \brief base node of all scene graph nodes */
     struct Node : public embree::RefCount 
     {
       virtual    std::string toString() const = 0;
       sg::Param *getParam(const std::string &name) const;
       void       addParam(sg::Param *p);
       virtual void setFrom(const xml::Node *const node) {};
+      virtual void traverse(Traverser *traverser) {};
     protected:
       std::map<std::string,Param *> param;
     };

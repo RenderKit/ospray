@@ -11,10 +11,26 @@ IF (OSPRAY_MPI)
     find_program(MPI_COMPILER 
       NAMES mpiicpc
       DOC "MPI compiler.")
+    SET(OSPRAY_MPI_MULTI_THREADING_FLAG "-mt_mpi")
   else()
-    find_program(MPI_COMPILER 
-      NAMES mpicxx
-      DOC "MPI compiler.")
+    find_package(MPI)
+    if (${MPI_COMPILER} STREQUAL "MPI_COMPILER-NOTFOUND")
+      #    message("MPI_COMPILER ${MPI_COMPILER}")
+      #    message("MPI_Intel_COMPILER ${MPI_Intel_COMPILER}")
+      find_program(MPI_COMPILER 
+	NAMES mpicxx
+	PATHS /usr/lib64/openmpi/bin
+	DOC "MPI compiler.")
+      find_library(MPI_LIBRARY
+	NAMES mpi
+	PATHS /usr/lib64/openmpi/lib
+	DOC "MPI library.")
+      SET(MPI_LIBRARIES ${MPI_LIBRARY})
+    endif()
+    SET(OSPRAY_MPI_MULTI_THREADING_FLAG "") #???
+  endif()
+  if (${MPI_COMPILER} STREQUAL "MPI_COMPILER-NOTFOUND")
+    message("could not find mpi compiler")
   endif()
   mark_as_advanced(MPI_COMPILER)
 
@@ -44,11 +60,11 @@ IF (OSPRAY_MPI)
   MACRO(CONFIGURE_MPI)
     INCLUDE_DIRECTORIES(${MPI_INCLUDE_PATH})
     SET(CMAKE_CXX_COMPILER ${MPI_COMPILER})
-    SET(APP_CMAKE_CXX_FLAGS "-mt_mpi")
+    SET(APP_CMAKE_CXX_FLAGS "${OSPRAY_MPI_MULTI_THREADING_FLAG}")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
     SET(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -mt_mpi")
-    SET(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -mt_mpi")
+    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OSPRAY_MPI_MULTI_THREADING_FLAG}")
+    SET(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} ${OSPRAY_MPI_MULTI_THREADING_FLAG}")
 
     IF (THIS_IS_MIC)
       SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -mmic" )

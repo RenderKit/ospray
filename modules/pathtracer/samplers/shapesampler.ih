@@ -8,8 +8,8 @@
 
 #pragma once
 
-/*! \file shapesampler.isph Implements sampling functions for different
- *  geometric shapes. */
+/*! \file shapesampler.ih \brief Implements sampling functions for
+    different geometric shapes. */
 
 #include "default.ih"
 #include "sample.ih"

@@ -11,20 +11,25 @@
 // ospray stuff
 #include "ospray/common/ray.ih"
 #include "ospray/geometry/geometry.ih"
+#include "ospray/volume/Volume.ih"
+
 // embree stuff
 #include "embree2/rtcore_scene.isph"
 
 struct Model {
-  /*! the scene handle we can use to tell embree to trace rays against 
-    this scene */
-  RTCScene embreeSceneHandle;
-  /*! pointer to the c++-equivalent class of this entity */
-  void    *cppEquivalent;
 
-  //! number of geometries in this model (usually set by C++ side)
-  uniform int32 numGeometries;
+  /*! the scene handle we can use to tell embree to trace rays against this scene */
+  RTCScene embreeSceneHandle;
+
+  /*! pointer to the c++-equivalent class of this entity */
+  void *cppEquivalent;
+
   //! array of (pointers to) geometries contained in this model
-  uniform Geometry *uniform *uniform geometry;
+  uniform Geometry *uniform *uniform geometry;  uniform int32 geometryCount;
+
+  //! volumes contained in the model
+  Volume **uniform volumes;  uniform int32 volumeCount;
+
 };
 
 /*! trace a ray (using embree where possible) */

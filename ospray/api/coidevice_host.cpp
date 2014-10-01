@@ -960,7 +960,7 @@ namespace ospray {
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
-      args.write(OSP_float);
+      args.write(OSP_FLOAT);
       args.write(f);
       callFunction(OSPCOI_SET_VALUE,args);
     }
@@ -972,7 +972,7 @@ namespace ospray {
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
-      args.write(OSP_int32);
+      args.write(OSP_INT);
       args.write(i);
       callFunction(OSPCOI_SET_VALUE,args);
     }
@@ -984,7 +984,7 @@ namespace ospray {
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
-      args.write(OSP_vec3f);
+      args.write(OSP_FLOAT3);
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
     }
@@ -996,7 +996,7 @@ namespace ospray {
       DataStream args;
       args.write((Handle&)target);
       args.write(bufName);
-      args.write(OSP_vec3i);
+      args.write(OSP_INT3);
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
     }

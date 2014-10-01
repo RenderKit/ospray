@@ -53,7 +53,7 @@ namespace ospray {
                 = rgba_i8[iy-region.lower.y][ix-region.lower.x];
             }
         }
-        // printf("#m: master done fb %lx\n",fb);
+        //        printf("#m: master done fb %lx\n",fb);
       }
 
       void Slave::RenderTask::finish(size_t threadIndex, 
@@ -90,9 +90,11 @@ namespace ospray {
                                   size_t taskCount, 
                                   TaskScheduler::Event* event) 
       {
+        // PING;
         const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
 
+        // PING;
         Tile __aligned(64) tile;
         const size_t tile_y = tileID / numTiles_x;
         const size_t tile_x = tileID - tile_y*numTiles_x;
@@ -112,7 +114,9 @@ namespace ospray {
           }
         
         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
-        MPI_Send(&rgba_i8,TILE_SIZE*TILE_SIZE,MPI_INT,0,tileID,app.comm);
+        int count = (TILE_SIZE)*(TILE_SIZE);
+        if (count != 256) PING;
+        MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
       }
       
       void Slave::renderFrame(Renderer *tiledRenderer, 

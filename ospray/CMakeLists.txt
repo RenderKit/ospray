@@ -17,6 +17,7 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
+  common/ospdatatype.cpp
   common/ospcommon.cpp
   common/ospcommon.ispc
   common/managed.cpp
@@ -169,6 +170,9 @@ INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 # MPI DEVICE - mpi worker
 ##############################################################
 IF (OSPRAY_MPI)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_LIBRARIES})
+  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick 
+
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/mpiworker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
   # ------------------------------------------------------------
@@ -207,11 +211,4 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # targets; it's already done above
   ENDIF()
 ENDIF()
-
-
-
-
-
-
-
 

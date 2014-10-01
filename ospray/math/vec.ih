@@ -221,6 +221,12 @@ __define_ispc_constructors(varying);
 #define __lift_binaryFct(FCT,T)                                         \
   inline uniform vec3##T FCT(const uniform vec3##T a, const uniform vec3##T b) \
   {  return make_vec3##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }     \
+  inline varying vec3##T FCT(const varying vec3##T a, const varying vec3##T b) \
+  {  return make_vec3##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }     \
+  inline uniform vec4##T FCT(const uniform vec4##T a, const uniform vec4##T b) \
+  {  return make_vec4##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z),FCT(a.w,b.w)); }     \
+  inline varying vec4##T FCT(const varying vec4##T a, const varying vec4##T b) \
+  {  return make_vec4##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z),FCT(a.w,b.w)); }     \
 
 
 __lift_binaryFct(min,f)
