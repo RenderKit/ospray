@@ -17,6 +17,10 @@
 #include <GL/glut.h>
 #endif
 
+#ifdef __linux__
+#include <unistd.h>
+#endif
+
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
   namespace glut3D {
