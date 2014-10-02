@@ -35,6 +35,7 @@ namespace ospray {
         CMD_NEW_TRIANGLEMESH,
         CMD_NEW_CAMERA,
         CMD_NEW_VOLUME,
+        CMD_NEW_TRANSFERFUNCTION,
         CMD_NEW_DATA,
         CMD_ADD_GEOMETRY,
         CMD_ADD_VOLUME,

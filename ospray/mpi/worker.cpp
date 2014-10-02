@@ -107,6 +107,20 @@ namespace ospray {
           handle.assign(volume);
           //          cout << "#w: new volume " << handle << endl;
         } break;
+        case api::MPIDevice::CMD_NEW_TRANSFERFUNCTION: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new transfer function \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          TransferFunction *transferFunction = TransferFunction::createInstance(type);
+          if (!transferFunction) {
+            throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");
+          }
+          transferFunction->refInc();
+          cmd.free(type);
+          handle.assign(transferFunction);
+        } break;
         case api::MPIDevice::CMD_NEW_MATERIAL: {
           // Assert(type != NULL && "invalid volume type identifier");
           const mpi::Handle rendererHandle = cmd.get_handle();

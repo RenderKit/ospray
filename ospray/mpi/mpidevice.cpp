@@ -702,8 +702,15 @@ namespace ospray {
         registered transfer function types) */
     OSPTransferFunction MPIDevice::newTransferFunction(const char *type)
     {
-      PING;
-      return NULL;
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+
+      cmd.newCommand(CMD_NEW_TRANSFERFUNCTION);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPTransferFunction)(int64)handle;
     }
 
 
