@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "    -dt <dt>                             : use ray cast sample step size 'dt'"            << std::endl;
         std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
         std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
+        std::cerr << "    -viewup <x> <y> <z>                  : set viewport up vector to ('x', 'y', 'z')"     << std::endl;
         std::cerr << "    -module <moduleName>                 : load the module 'moduleName'"                  << std::endl;
         std::cerr << " "                                                                                        << std::endl;
         return(1);
@@ -49,6 +50,7 @@ int main(int argc, char *argv[]) {
     int benchmarkFrames = 0;
     int viewSizeWidth = 0;
     int viewSizeHeight = 0;
+    osp::vec3f viewUp(0.f);
 
     //! Parse the optional command line arguments.
     for (int i=filenames.size() + 1 ; i < argc ; i++) {
@@ -89,6 +91,16 @@ int main(int argc, char *argv[]) {
 
             } else throw std::runtime_error("improperly formatted <width>x<height> argument");
 
+        } else if (arg == "-viewup") {
+
+            if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
+
+            viewUp.x = atof(argv[++i]);
+            viewUp.y = atof(argv[++i]);
+            viewUp.z = atof(argv[++i]);
+
+            std::cout << "got viewup = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
+
         } else if (arg == "-module") {
 
             if (i + 1 >= argc) throw std::runtime_error("missing <moduleName> argument");
@@ -123,6 +135,9 @@ int main(int argc, char *argv[]) {
 
     //! Set the window size if specified.
     if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getQOSPRayWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
+
+    //! Set the view up vector if specified.
+    if(viewUp != osp::vec3f(0.f)) volumeViewer->getQOSPRayWindow()->getViewport()->setUp(viewUp);
 
     //! Enter the Qt event loop.
     app->exec();

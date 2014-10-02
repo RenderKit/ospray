@@ -77,11 +77,6 @@ void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
     updateGL();
 }
 
-OSPFrameBuffer QOSPRayWindow::getFrameBuffer()
-{
-    return frameBuffer_;
-}
-
 void QOSPRayWindow::paintGL()
 {
     if(!renderingEnabled_ || !frameBuffer_ || !renderer_)

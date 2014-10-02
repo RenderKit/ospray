@@ -42,7 +42,15 @@ struct Viewport
     itself remains normalized. */
     osp::affine3f frame;
 
-    /*! set 'up' vector. if this vector is (0,0,0) the window will
+    /*! set up vector */
+    void setUp(const osp::vec3f &vec)
+    {
+        up = vec;
+        snapUp();
+        modified = true;
+    }
+
+    /*! set frame 'up' vector. if this vector is (0,0,0) the window will
     *not* apply the up-vector after camera manipulation */
     void snapUp()
     {
@@ -68,7 +76,9 @@ public:
     void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
     virtual void setWorldBounds(const osp::box3f &worldBounds);
 
-    OSPFrameBuffer getFrameBuffer();
+    Viewport * getViewport() { return &viewport_; }
+
+    OSPFrameBuffer getFrameBuffer() { return frameBuffer_; }
 
 protected:
 
