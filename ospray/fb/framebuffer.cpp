@@ -54,6 +54,8 @@ namespace ospray {
       case OSP_RGBA_I8:
         colorBuffer = new uint32[size.x*size.y];
         break;
+      default:
+	throw std::runtime_error("color buffer format not supported");
       }
     }
 
@@ -76,7 +78,18 @@ namespace ospray {
   LocalFrameBuffer::~LocalFrameBuffer() 
   {
     if (depthBuffer) delete[] depthBuffer;
-    if (colorBuffer) delete[] colorBuffer;
+
+    if (colorBuffer)
+      switch(colorBufferFormat) {
+      case OSP_RGBA_F32:
+        delete[] ((vec4f*)colorBuffer);
+        break;
+      case OSP_RGBA_I8:
+        delete[] ((uint32*)colorBuffer);
+        break;
+      default:
+	throw std::runtime_error("color buffer format not supported");
+      }
     if (accumBuffer) delete[] accumBuffer;
   }
 
