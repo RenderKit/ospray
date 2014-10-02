@@ -309,6 +309,7 @@ namespace ospray {
             }
           }
         } break;
+
         case api::MPIDevice::CMD_ADD_GEOMETRY: {
           const mpi::Handle modelHandle = cmd.get_handle();
           const mpi::Handle geomHandle = cmd.get_handle();
@@ -318,6 +319,17 @@ namespace ospray {
           Assert(geom);
           model->geometry.push_back(geom);
         } break;
+
+        case api::MPIDevice::CMD_ADD_VOLUME: {
+          const mpi::Handle modelHandle = cmd.get_handle();
+          const mpi::Handle volumeHandle = cmd.get_handle();
+          Model *model = (Model *) modelHandle.lookup();
+          Assert(model);
+          Volume *volume = (Volume *) volumeHandle.lookup();
+          Assert(volume);
+          model->volumes.push_back(volume);
+        } break;
+
         case api::MPIDevice::CMD_COMMIT: {
           const mpi::Handle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();

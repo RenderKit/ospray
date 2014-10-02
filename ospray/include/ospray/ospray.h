@@ -157,6 +157,9 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
 
+  //! add a volume to an existing model
+  void ospAddVolume(OSPModel model, OSPVolume volume);
+
   //! create a new transfer function of given type
   /*! return 'NULL' if that type is not known */
   OSPTransferFunction ospNewTransferFunction(const char * type);

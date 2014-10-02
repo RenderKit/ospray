@@ -55,6 +55,7 @@ namespace ospray {
       x(OSPCOI_NEW_RENDERER,            "ospray_coi_new_renderer")          \
       x(OSPCOI_NEW_GEOMETRY,            "ospray_coi_new_geometry")          \
       x(OSPCOI_ADD_GEOMETRY,            "ospray_coi_add_geometry")          \
+      x(OSPCOI_ADD_VOLUME,              "ospray_coi_add_volume")            \
       x(OSPCOI_NEW_FRAMEBUFFER,         "ospray_coi_new_framebuffer")       \
       x(OSPCOI_RENDER_FRAME,            "ospray_coi_render_frame")          \
       x(OSPCOI_RENDER_FRAME_SYNC,       "ospray_coi_render_frame_sync")     \
@@ -193,6 +194,9 @@ namespace ospray {
 
       /*! add a new geometry to a model */
       virtual void addGeometry(OSPModel _model, OSPGeometry _geometry);
+
+      /*! add a new volume to a model */
+      virtual void addVolume(OSPModel _model, OSPVolume _volume);
 
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
@@ -646,6 +650,15 @@ namespace ospray {
       callFunction(OSPCOI_ADD_GEOMETRY,args);
     }
 
+    /*! add a new volume to a model */
+    void COIDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    {
+      Handle handle = Handle::alloc();
+      DataStream args;
+      args.write((Handle &) _model);
+      args.write((Handle &) _volume);
+      callFunction(OSPCOI_ADD_VOLUME, args);
+    }
 
     //! assign given material to given geometry
     void COIDevice::setMaterial(OSPGeometry _geom, OSPMaterial _mat)

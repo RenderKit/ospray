@@ -164,6 +164,18 @@ namespace ospray {
       }
     }
 
+    /*! add a new volume to a model */
+    void LocalDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    {
+      Model *model = (Model *) _model;
+      Assert2(model, "null model in LocalDevice::addVolume()");
+
+      Volume *volume = (Volume *) _volume;
+      Assert2(volume, "null volume in LocalDevice::addVolume()");
+
+      model->volumes.push_back(volume);
+    }
+
     /*! create a new data buffer */
     OSPTriangleMesh LocalDevice::newTriangleMesh()
     {

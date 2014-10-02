@@ -36,6 +36,7 @@ namespace ospray {
         CMD_NEW_VOLUME,
         CMD_NEW_DATA,
         CMD_ADD_GEOMETRY,
+        CMD_ADD_VOLUME,
         CMD_COMMIT,
         CMD_LOAD_MODULE,
         CMD_RELEASE,

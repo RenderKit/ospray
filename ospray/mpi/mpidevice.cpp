@@ -441,6 +441,17 @@ namespace ospray {
       cmd.flush();
     }
 
+    /*! add a new volume to a model */
+    void MPIDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    {
+      Assert(_model);
+      Assert(_volume);
+      cmd.newCommand(CMD_ADD_VOLUME);
+      cmd.send((const mpi::Handle &) _model);
+      cmd.send((const mpi::Handle &) _volume);
+      cmd.flush();
+    }
+
     /*! create a new data buffer */
     OSPTriangleMesh MPIDevice::newTriangleMesh()
     {

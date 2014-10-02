@@ -534,6 +534,24 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
+    void ospray_coi_add_volume(uint32_t         numBuffers,
+                               void**           bufferPtr,
+                               uint64_t*        bufferSize,
+                               void*            argsPtr,
+                               uint16_t         argsSize,
+                               void*            retVal,
+                               uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      Handle model = args.get<Handle>();
+      Handle volume = args.get<Handle>();
+
+      Model *m = (Model *) model.lookup();
+      m->volumes.push_back((Volume *) volume.lookup());
+      if (ospray::debugMode) COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
     void ospray_coi_set_material(uint32_t         numBuffers,
                                  void**           bufferPtr,
                                  uint64_t*        bufferSize,

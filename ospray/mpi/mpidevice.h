@@ -37,6 +37,7 @@ namespace ospray {
         CMD_NEW_VOLUME,
         CMD_NEW_DATA,
         CMD_ADD_GEOMETRY,
+        CMD_ADD_VOLUME,
         CMD_COMMIT,
         CMD_LOAD_MODULE,
         CMD_RELEASE,
@@ -105,21 +106,30 @@ namespace ospray {
       /*! add a new geometry to a model */
       virtual void addGeometry(OSPModel _model, OSPGeometry _geometry);
 
+      /*! add a new volume to a model */
+      virtual void addVolume(OSPModel _model, OSPVolume _volume);
+
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);
+
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject target, const char *bufName, OSPObject value);
+
       /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f);
+
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);
+
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
+
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
+
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v);
 

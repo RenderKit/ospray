@@ -160,7 +160,7 @@ namespace ospray {
                                       OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
-    Assert(mapped != NULL && "invalid mapped pointer in ospAddGeometry");
+    Assert(mapped != NULL && "invalid mapped pointer in ospUnmapFrameBuffer");
     ospray::api::Device::current->frameBufferUnmap(mapped,fb);
   }
 
@@ -176,6 +176,14 @@ namespace ospray {
     Assert(model != NULL && "invalid model in ospAddGeometry");
     Assert(geometry != NULL && "invalid geometry in ospAddGeometry");
     return ospray::api::Device::current->addGeometry(model,geometry);
+  }
+
+  extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
+  {
+    ASSERT_DEVICE();
+    Assert(model != NULL && "invalid model in ospAddVolume");
+    Assert(geometry != NULL && "invalid volume in ospAddVolume");
+    return ospray::api::Device::current->addVolume(model, volume);
   }
 
   extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
@@ -234,7 +242,7 @@ namespace ospray {
   extern "C" OSPRenderer ospNewRenderer(const char *_type)
   {
     ASSERT_DEVICE();
-    Assert2(_type,"invalid render type identifier in ospAddGeometry");
+    Assert2(_type,"invalid render type identifier in ospNewRenderer");
     LOG("ospNewRenderer(" << _type << ")");
     int L = strlen(_type);
     char type[L+1];
@@ -259,7 +267,7 @@ namespace ospray {
   extern "C" OSPGeometry ospNewGeometry(const char *type)
   {
     ASSERT_DEVICE();
-    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    Assert(type != NULL && "invalid geometry type identifier in ospNewGeometry");
     LOG("ospNewGeometry(" << type << ")");
     OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
     // if (ospray::logLevel > 0)
@@ -295,7 +303,7 @@ namespace ospray {
   extern "C" OSPCamera ospNewCamera(const char *type)
   {
     ASSERT_DEVICE();
-    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    Assert(type != NULL && "invalid camera type identifier in ospNewCamera");
     LOG("ospNewCamera(" << type << ")");
     OSPCamera camera = ospray::api::Device::current->newCamera(type);
     return camera;
@@ -318,7 +326,7 @@ namespace ospray {
   extern "C" OSPVolume ospNewVolume(const char *type)
   {
     ASSERT_DEVICE();
-    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    Assert(type != NULL && "invalid volume type identifier in ospNewVolume");
     LOG("ospNewVolume(" << type << ")");
     OSPVolume volume = ospray::api::Device::current->newVolume(type);
     if (ospray::logLevel > 0)

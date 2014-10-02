@@ -51,8 +51,12 @@ namespace ospray {
 
       /*! add a new geometry to a model */
       virtual void addGeometry(OSPModel _model, OSPGeometry _geometry) = 0;
+
       /*! remove an existing geometry from a model */
       virtual void removeGeometry(OSPModel _model, OSPGeometry _geometry) = 0;
+
+      /*! add a new volume to a model */
+      virtual void addVolume(OSPModel _model, OSPVolume _volume) = 0;
 
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags) = 0;
