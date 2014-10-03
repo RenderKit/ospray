@@ -182,7 +182,7 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     Assert(model != NULL && "invalid model in ospAddVolume");
-    Assert(geometry != NULL && "invalid volume in ospAddVolume");
+    //Assert(geometry != NULL && "invalid volume in ospAddVolume");
     return ospray::api::Device::current->addVolume(model, volume);
   }
 
