@@ -19,7 +19,7 @@ export void *uniform LinearTransferFunction_createInstance() {
 
     //! Function to get the interpolated opacity for a given value.
     transferFunction->inherited.getAlphaForValue = LinearTransferFunction_getAlphaForValue;
-
+    
     //! Transfer function colors, count, and range.
     transferFunction->colors = NULL;  transferFunction->colorCount = 0;  transferFunction->colorRange = make_vec2f(0.0f, 1.0f);
 

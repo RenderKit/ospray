@@ -22,7 +22,6 @@
 
         //! Transfer function colors, count, and range.
         vec3f *uniform colors;  uniform int colorCount;  uniform vec2f colorRange;
-
     };
 
     //! Interpolated opacity for the given value.

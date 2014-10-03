@@ -47,6 +47,7 @@ SET(OSPRAY_SOURCES
   transferfunction/LinearTransferFunction.ispc
   transferfunction/LinearTransferFunction.cpp
   transferfunction/TransferFunction.cpp
+  transferfunction/TransferFunction.ispc
   transferfunction/SymbolRegistry.cpp
 
   geometry/geometry.ispc

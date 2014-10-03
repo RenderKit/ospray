@@ -10,6 +10,7 @@
 #include "ospray/common/data.h"
 #include "ospray/common/ospcommon.h"
 #include "ospray/transferfunction/LinearTransferFunction.h"
+#include "TransferFunction_ispc.h"
 
 namespace ospray {
 
@@ -32,6 +33,8 @@ namespace ospray {
 
         //! Set the opacity value range.
         if (alphas) ispc::LinearTransferFunction_setAlphaRange(getEquivalentISPC(), getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
+	
+	if (alphas) ispc::TransferFunction_PrecomputeMinMaxValues(getEquivalentISPC());
 
     }
 

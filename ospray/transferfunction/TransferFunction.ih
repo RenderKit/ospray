@@ -10,6 +10,8 @@
 #ifndef TRANSFER_FUNCTION_IH
 #define TRANSFER_FUNCTION_IH
 
+#define PRECOMPUTED_VALUES_DIM 16
+
 #include "ospray/common/ospcommon.ih"
 
     struct TransferFunction {
@@ -19,8 +21,20 @@
 
         //! Interpolated opacity for the given value.
         varying float (*getAlphaForValue)(const void *uniform transferFunction, varying float value);
-
+      
+        //!A 2D array that contains precomputed minimum and maximum values for a transfer function
+        vec2f precomputedMinMaxInRange[PRECOMPUTED_VALUES_DIM][PRECOMPUTED_VALUES_DIM];
     };
+
+//! Get min/max alpha for in the range i,j
+inline varying vec2f TransferFunction_getMinMaxAlphaInRange(const void *uniform transferFunction_, varying float rangeLow, varying float rangeHigh)
+{
+  uniform TransferFunction *uniform transferFunction = (uniform TransferFunction *uniform)transferFunction_;
+  const int maxDim = PRECOMPUTED_VALUES_DIM - 1;
+  const int i = floor(rangeLow*maxDim);
+  const int j = ceil(rangeHigh*maxDim);
+  return transferFunction->precomputedMinMaxInRange[floor(rangeLow*maxDim)][ceil(rangeHigh*maxDim)];
+}
 
 #endif // TRANSFER_FUNCTION_IH
 
