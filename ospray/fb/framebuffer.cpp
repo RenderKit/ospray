@@ -21,6 +21,7 @@ namespace ospray {
       hasAccumBuffer(hasAccumBuffer),
       accumID(-1)
   {
+    managedObjectType = OSP_FRAMEBUFFER;
     Assert(size.x > 0 && size.y > 0);
   };
 

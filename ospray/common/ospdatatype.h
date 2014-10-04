@@ -50,6 +50,9 @@ typedef enum {
   //! Single precision floating point scalar and vector types.
   OSP_FLOAT, OSP_FLOAT2, OSP_FLOAT3, OSP_FLOAT4, OSP_FLOAT3A,
 
+  //! Object collection reference type.
+  OSP_OBJECT_CATALOG,
+
   //! Guard value.
   OSP_UNKNOWN,
 

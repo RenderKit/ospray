@@ -76,6 +76,7 @@ namespace ospray {
       memcpy(tx->data, data, bytes);
     }
     
+    tx->managedObjectType = OSP_TEXTURE;
     return tx;
   }
   

@@ -30,6 +30,8 @@ namespace ospray {
         bzero(data,numBytes);
     }
 
+    managedObjectType = OSP_DATA;
+
     // std::cout << "checksum when creating data array" << std::endl;
     // PRINT(numBytes);
     // PRINT((int*)computeCheckSum(init,numBytes));

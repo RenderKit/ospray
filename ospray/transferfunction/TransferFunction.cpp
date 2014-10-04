@@ -33,8 +33,11 @@ namespace ospray {
         //! The named function may not be found if the requested subtype is not known.
         if (symbolRegistry[type] == NULL && ospray::logLevel >= 1) std::cout << "OSPRay::TransferFunction error: unrecognized subtype '" << type << "'" << std::endl;
 
-        //! Return a concrete instance of the requested subtype.
-        return(symbolRegistry[type] ? (*symbolRegistry[type])() : NULL);
+        //! Create a concrete instance of the requested subtype.
+        TransferFunction *transferFunction = (symbolRegistry[type]) ? (*symbolRegistry[type])() : NULL;
+
+        //! Denote the subclass type in the ManagedObject base class.
+        if (transferFunction) transferFunction->managedObjectType = OSP_TRANSFER_FUNCTION;  return(transferFunction);
 
     }
 

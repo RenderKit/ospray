@@ -48,7 +48,8 @@ namespace ospray {
         std::cout << "#ospray: could not find material type '" << type << "'" << std::endl;
       return NULL;
     }
-    return (*creator)();
+    Material *material = (*creator)();  material->managedObjectType = OSP_MATERIAL;
+    return(material);
   }
 
 }

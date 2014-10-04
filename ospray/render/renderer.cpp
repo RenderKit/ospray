@@ -51,7 +51,8 @@ namespace ospray {
         std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
       return NULL;
     }
-    return (*creator)();
+    Renderer *renderer = (*creator)();  renderer->managedObjectType = OSP_RENDERER;
+    return(renderer);
   }
 
   void Renderer::renderTile(Tile &tile)
