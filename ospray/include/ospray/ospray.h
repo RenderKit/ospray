@@ -68,6 +68,31 @@ typedef enum {
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
 
+typedef enum {
+
+  //! These flags indicate when data is to be loaded, and are used in
+  //! cases where the host and compute device(s) share no filesystems.
+  //! OSP_LOAD_DATA_IMMEDIATE denotes data should be loaded presently.
+  //! This flag is typically checked in a file loader running on the
+  //! host, in which case the data is loaded on the host and is later
+  //! copied to the device(s) through memory or an interconnect.  OSP_
+  //! LOAD_DATA_DEFERRED indicates that the load should be deferred to
+  //! the last possible moment, typically on the device.  This avoids
+  //! unnecessary copies in cases where the host and device are one in
+  //! the same or share a filesystem.
+  //!
+  //! Note that we distinguish between the data backing OSPRay objects
+  //! and configuration parameters on those objects.  The OSP_LOAD_DATA
+  //! flags apply to the former not the latter.  Parameters are loaded
+  //! immediately to allow introspection by the application, and so it
+  //! is assumed that file loaders can separately read parameters and
+  //! data.
+  //!
+  OSP_LOAD_DATA_DEFERRED,
+  OSP_LOAD_DATA_IMMEDIATE,
+
+} OSPLoadDataMode;
+
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {
 //   /*! experimental: currently used to specify that the app ranks -
@@ -281,32 +306,48 @@ extern "C" {
   */
   /*! add a c-string (zero-terminated char *) parameter to another object */
   void ospSetString(OSPObject _object, const char *id, const char *s);
+
   /*! add a object-typed parameter to another object 
     
    \warning this call has been superseded by ospSetObject, and will eventually get removed */
   void ospSetParam(OSPObject _object, const char *id, OSPObject object);
+
   /*! add a object-typed parameter to another object */
   void ospSetObject(OSPObject _object, const char *id, OSPObject object);
+
   /*! add a data array to another object */
   void ospSetData(OSPObject _object, const char *id, OSPData data);
+
   /*! add 1-float paramter to given object */
   void ospSetf(OSPObject _object, const char *id, float x);
+
   /*! add 1-float paramter to given object */
   void ospSet1f(OSPObject _object, const char *id, float x);
+
   /*! add 1-int paramter to given object */
   void ospSet1i(OSPObject _object, const char *id, int32 x);
+
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+
   /*! add 3-float paramter to given object */
   void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
+
   /*! add 3-int paramter to given object */
   void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
+
+  /*! add 2-float parameter to given object */
+  void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);
+
   /*! add 3-float paramter to given object */
   void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+
   /*! add 3-int paramter to given object */
   void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
+
   /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
   void ospSetVoidPtr(OSPObject _object, const char *id, void *v);
+
   /*! @} end of ospray_params */
 
   // -------------------------------------------------------

@@ -206,16 +206,25 @@ namespace ospray {
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);
+
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject target, const char *bufName, OSPObject value);
+
       /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f);
+
+      /*! assign (named) vec2f parameter to an object */
+      virtual void setVec2f(OSPObject object, const char *bufName, const vec2f &v);
+
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);
+
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
+
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
+
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) { NOTIMPLEMENTED; }
 
@@ -988,6 +997,18 @@ namespace ospray {
       args.write(OSP_INT);
       args.write(i);
       callFunction(OSPCOI_SET_VALUE,args);
+    }
+    /*! assign (named) data item as a parameter to an object */
+    void COIDevice::setVec2f(OSPObject target, const char *bufName, const vec2f &v)
+    {
+      Assert(bufName);
+
+      DataStream args;
+      args.write((Handle &) target);
+      args.write(bufName);
+      args.write(OSP_FLOAT2);
+      args.write(v);
+      callFunction(OSPCOI_SET_VALUE, args);
     }
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setVec3f(OSPObject target, const char *bufName, const vec3f &v)

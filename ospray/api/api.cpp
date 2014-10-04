@@ -417,6 +417,12 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
   }
+  /*! add a vec2f parameter to an object */
+  extern "C" void ospSetVec2f(OSPObject _object, const char *id, const vec2f &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec2f(_object, id, v);
+  }
   /*! add a data array to another object */
   extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)
   {

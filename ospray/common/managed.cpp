@@ -79,18 +79,19 @@ namespace ospray {
   return (T&)param->FIELD;                                            \
   }
   
-  define_getparam(ManagedObject *,Object,OSP_OBJECT,ptr);
-  define_getparam(int32, 1i,OSP_INT,i);
-  define_getparam(vec3i, 3i,OSP_INT3,i);
-  define_getparam(vec3f, 3f,OSP_FLOAT3,f);
-  define_getparam(vec3fa,3f,OSP_FLOAT3,f);
-  define_getparam(float, 1f,OSP_FLOAT, f);
-  define_getparam(float, f, OSP_FLOAT, f);
+  define_getparam(ManagedObject *, Object, OSP_OBJECT, ptr);
+  define_getparam(int32,  1i, OSP_INT,    i);
+  define_getparam(vec3i,  3i, OSP_INT3,   i);
+  define_getparam(vec3f,  3f, OSP_FLOAT3, f);
+  define_getparam(vec3fa, 3f, OSP_FLOAT3, f);
+  define_getparam(vec2f,  2f, OSP_FLOAT2, f);
+  define_getparam(float,  1f, OSP_FLOAT,  f);
+  define_getparam(float,  f,  OSP_FLOAT,  f);
   define_getparam(const char *, String, OSP_STRING, ptr);
 
 #undef define_getparam
   
-  void   ManagedObject::setParam(const char *name, ManagedObject *data)
+  void ManagedObject::setParam(const char *name, ManagedObject *data)
   {
     ManagedObject::Param *p = findParam(name,true);
     p->set(data);
