@@ -70,6 +70,7 @@ SET(OSPRAY_SOURCES
   lights/directionallight.ispc
   lights/spotlight.cpp
   lights/spotlight.ispc
+  lights/SymbolRegistry.cpp
 
   texture/texture2d.cpp
   texture/texture2d.ispc
