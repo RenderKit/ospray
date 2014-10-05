@@ -16,22 +16,22 @@ namespace ospray {
     void LinearTransferFunction::commit() {
 
         //! Create the equivalent ISPC transfer function.
-        if (getEquivalentISPC() == NULL) createEquivalentISPC();
+        if (ispcEquivalent == NULL) createEquivalentISPC();
 
         //! Retrieve the color and opacity values.
         Data *colors = getParamData("colors", NULL);  Data *alphas = getParamData("alphas", NULL);
 
         //! Set the color values.
-        if (colors) ispc::LinearTransferFunction_setColorValues(getEquivalentISPC(), colors->numItems, (ispc::vec3f *) colors->data);
+        if (colors) ispc::LinearTransferFunction_setColorValues(ispcEquivalent, colors->numItems, (ispc::vec3f *) colors->data);
 
         //! Set the color value range.
-        if (colors) ispc::LinearTransferFunction_setColorRange(getEquivalentISPC(), getParamf("colorValueMin", 0.0f), getParamf("colorValueMax", 1.0f));
+        if (colors) ispc::LinearTransferFunction_setColorRange(ispcEquivalent, getParamf("colorValueMin", 0.0f), getParamf("colorValueMax", 1.0f));
 
         //! Set the opacity values.
-        if (alphas) ispc::LinearTransferFunction_setAlphaValues(getEquivalentISPC(), alphas->numItems, (float *) alphas->data);
+        if (alphas) ispc::LinearTransferFunction_setAlphaValues(ispcEquivalent, alphas->numItems, (float *) alphas->data);
 
         //! Set the opacity value range.
-        if (alphas) ispc::LinearTransferFunction_setAlphaRange(getEquivalentISPC(), getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
+        if (alphas) ispc::LinearTransferFunction_setAlphaRange(ispcEquivalent, getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
 
     }
 

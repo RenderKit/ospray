@@ -129,10 +129,10 @@ void VolumeViewer::playTimesteps(bool set)
 void VolumeViewer::createTransferFunction()
 {
     // create transfer function
-    transferFunction_ = ospNewTransferFunction("piecewiseLinear");
+    transferFunction_ = ospNewTransferFunction("piecewise_linear");
 
     if(!transferFunction_)
-        throw std::runtime_error("could not create transfer function type 'piecewiseLinear'");
+        throw std::runtime_error("could not create transfer function type 'piecewise_linear'");
 
     ospCommit(transferFunction_);
 }

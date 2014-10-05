@@ -31,7 +31,7 @@ namespace ospray {
         symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);
 
         //! The named function may not be found if the requested subtype is not known.
-        if (symbolRegistry[type] == NULL && ospray::logLevel >= 1) std::cout << "OSPRay::TransferFunction error: unrecognized subtype '" << type << "'" << std::endl;
+        if (!symbolRegistry[type] && ospray::logLevel >= 1) std::cerr << "  ospray::TransferFunction  WARNING: unrecognized subtype '" + type + "'." << std::endl;
 
         //! Create a concrete instance of the requested subtype.
         TransferFunction *transferFunction = (symbolRegistry[type]) ? (*symbolRegistry[type])() : NULL;
