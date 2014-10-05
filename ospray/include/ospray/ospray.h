@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <vector>
+
 // -------------------------------------------------------
 // include common components 
 // -------------------------------------------------------
@@ -29,6 +31,7 @@
 
 /*! namespace for classes in the public core API */
 namespace osp {
+
   typedef embree::Vec2f  vec2f;
   typedef embree::Vec2i  vec2i;
   typedef embree::Vec3f  vec3f;
@@ -38,7 +41,7 @@ namespace osp {
   typedef embree::BBox3f box3f;
   typedef embree::AffineSpace3f affine3f;
 
-  struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
+  struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
   struct FrameBuffer      : public ManagedObject {};
   struct Renderer         : public ManagedObject {};
   struct Camera           : public ManagedObject {};
@@ -51,6 +54,8 @@ namespace osp {
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct TriangleMesh     : public Geometry {};
+  struct ObjectCatalog    : public ManagedObject { char *name;  ManagedObject *object;  OSPDataType type;  const void *value;  ObjectCatalog **entries; };
+
 }
 
 typedef enum {
@@ -124,6 +129,7 @@ typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::Light             *OSPLight;
+typedef osp::ObjectCatalog     *OSPObjectCatalog;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -178,6 +184,10 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPCamera ospNewCamera(const char *type);
 
+  //! import a collection of OSPRay objects from a file
+  /*! return 'NULL' if the file type is not known */
+  OSPObjectCatalog ospImportObjects(const char *filename);
+
   //! create a new volume of given type 
   /*! return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
@@ -199,7 +209,6 @@ extern "C" {
   //! create a new Texture2D with the given parameters
   /*! return 'NULL' if the texture could not be created with the given parameters */
   OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
-
 
   /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
@@ -411,4 +420,5 @@ extern "C" {
   /*! \brief unproject a [0-1] normalized screen-space pixel coordinate to a world-space position */
   OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 }
+
 /*! \} */

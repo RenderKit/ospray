@@ -12,6 +12,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 ADD_LIBRARY(ospray_fileio SHARED
+  OSPObjectFile.cpp
   RawVolumeFile.cpp
   SymbolRegistry.cpp
   TinyXML2.cpp

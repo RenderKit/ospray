@@ -32,6 +32,9 @@ SET(OSPRAY_SOURCES
   fb/framebuffer.cpp
   fb/localfb.ispc
 
+  fileio/ObjectCatalog.cpp
+  fileio/ObjectFile.cpp
+
   camera/camera.cpp
   camera/perspectivecamera.ispc
   camera/perspectivecamera.cpp
