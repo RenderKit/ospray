@@ -17,7 +17,7 @@
 #include "../transferfunction/TransferFunction.h"
 #include "../render/loadbalancer.h"
 #include "../common/material.h"
-#include "../common/library.h"
+#include "../common/Library.h"
 #include "../texture/texture2d.h"
 #include "../lights/light.h"
 

@@ -8,7 +8,7 @@
 //
 
 #include <map>
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 #include "ospray/transferfunction/TransferFunction.h"
 
 namespace ospray {

@@ -8,9 +8,7 @@
 
 // ospray stuff
 #include "renderer.h"
-#include "../common/library.h"
-// embree stuff
-#include "common/sys/library.h"
+#include "../common/Library.h"
 // stl stuff
 #include <map>
 // ispc exports

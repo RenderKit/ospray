@@ -11,7 +11,7 @@
 
 #include <map>
 #include "ospray/common/Data.h"
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 #include "ospray/fileio/VolumeFile.h"
 #include "ospray/volume/StructuredVolume.h"
 

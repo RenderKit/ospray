@@ -11,9 +11,7 @@
 #undef NDEBUG
 #include "sg.h"
 #include "apps/common/xml/xml.h"
-#include "../common/library.h"
-// embree stuff
-#include "common/sys/library.h"
+#include "../common/Library.h"
 
 namespace ospray {
   namespace sg {

@@ -8,7 +8,7 @@
 //
 
 #include <map>
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 #include "ospray/fileio/VolumeFile.h"
 
 namespace ospray {

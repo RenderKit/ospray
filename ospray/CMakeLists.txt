@@ -25,7 +25,7 @@ SET(OSPRAY_SOURCES
   common/model.cpp
   common/model.ispc
   common/material.cpp
-  common/library.cpp
+  common/Library.cpp
 
   fb/swapchain.cpp 
   fb/framebuffer.ispc

@@ -12,7 +12,7 @@
 //#include "../fb/swapchain.h"
 #include "ospray/common/model.h"
 #include "ospray/common/Data.h"
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 #include "ospray/common/model.h"
 #include "ospray/geometry/trianglemesh.h"
 #include "ospray/render/renderer.h"

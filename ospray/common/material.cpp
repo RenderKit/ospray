@@ -8,7 +8,7 @@
 
 // ospray
 #include "material.h"
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 // stl
 #include <map>
 

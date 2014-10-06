@@ -8,7 +8,7 @@
 
 //ospray
 #include "light.h"
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 
 //system
 #include <map>

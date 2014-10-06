@@ -9,7 +9,7 @@
 // ospray stuff
 #include "camera.h"
 // embree stuff
-#include "../common/library.h"
+#include "../common/Library.h"
 // stl stuff
 #include <map>
 

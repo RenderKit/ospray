@@ -8,7 +8,7 @@
 
 // ospray stuff
 #include "geometry.h"
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 // stl stuff
 #include <map>
 // ISPC-side
