@@ -8,7 +8,7 @@
 //
 
 #include "ospray/common/Data.h"
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/OspCommon.h"
 #include "ospray/transferfunction/LinearTransferFunction.h"
 #include "TransferFunction_ispc.h"
 

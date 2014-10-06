@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "model.h"
+#include "Model.h"
 
 namespace ospray {
   namespace particle {

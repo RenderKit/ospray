@@ -11,7 +11,7 @@
 #include "renderer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/camera/camera.ih"
-#include "ospray/common/model.ih"
+#include "ospray/common/Model.ih"
 
 // The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(uniform Renderer *uniform renderer,

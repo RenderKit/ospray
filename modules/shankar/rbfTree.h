@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/model.h"
+#include "ospray/common/Model.h"
 
 namespace ospray {
   namespace shankar {

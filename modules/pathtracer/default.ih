@@ -24,7 +24,7 @@
 // #include "common/math/linearspace.ih"
 // #include "common/math/affinespace.ih"
 #include "ospray/math/affine.ih"
-#include "ospray/common/ray.ih"
+#include "ospray/common/Ray.ih"
 
 /* vertex and triangle layout */
 struct RTCVertex   { uniform float x,y,z,a; };

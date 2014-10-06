@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "managed.h"
+#include "Managed.h"
 #include "Data.h"
 
 namespace ospray {

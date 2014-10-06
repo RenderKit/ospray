@@ -1,6 +1,6 @@
 //ospray
 #include "alpha_triangle_mesh.ih"
-#include "ospray/common/model.ih"
+#include "ospray/common/Model.ih"
 #include "ospray/texture/texture2d.ih"
 
 //embree

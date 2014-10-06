@@ -8,7 +8,7 @@
 
 // ospray
 #include "trianglemesh.ih"
-#include "ospray/common/model.ih"
+#include "ospray/common/Model.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_geometry.isph"

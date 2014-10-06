@@ -12,8 +12,8 @@
 #include "tile.h"
 
 // ospray
-#include "../common/ospcommon.h"
-#include "../common/managed.h"
+#include "../common/OspCommon.h"
+#include "../common/Managed.h"
 // embree
 #include "common/sys/taskscheduler.h"
 

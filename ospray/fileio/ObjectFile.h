@@ -11,7 +11,7 @@
 
 #include <stdlib.h>
 #include <string>
-#include "ospray/common/managed.h"
+#include "ospray/common/Managed.h"
 #include "ospray/fileio/ObjectCatalog.h"
 
 //! \brief Define a function to create an instance of the InternalClass

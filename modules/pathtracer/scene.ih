@@ -9,8 +9,8 @@
 #pragma once
 
 // ospray
-#include "common/ospcommon.ih"
-#include "common/model.ih"
+#include "common/OspCommon.ih"
+#include "common/Model.ih"
 
 // path tracer
 #include "materials/medium.ih"

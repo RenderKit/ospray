@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include "ospray/common/material.ih"
-#include "ospray/common/ray.ih"
-#include "ospray/common/dg.ih"
+#include "ospray/common/Material.ih"
+#include "ospray/common/Ray.ih"
+#include "ospray/common/DifferentialGeometry.ih"
 
 typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
                                           uniform Model *uniform model,

@@ -1,4 +1,4 @@
-#include "ospcommon.ih"
+#include "OspCommon.ih"
 
 //embree
 #include "embree2/rtcore.isph"

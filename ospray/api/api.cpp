@@ -9,13 +9,13 @@
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
-#include "ospray/common/material.h"
+#include "ospray/common/Material.h"
 #include "ospray/fileio/ObjectCatalog.h"
 #include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/transferfunction/TransferFunction.h"
 #include "localdevice.h"
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/OspCommon.h"
 
 #if 1
 # define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;

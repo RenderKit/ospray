@@ -8,7 +8,7 @@
 
 #include "ospray/camera/perspectivecamera.h"
 #include "ospray/volume/Volume.h"
-#include "ospray/common/ray.h"
+#include "ospray/common/Ray.h"
 #include "ospray/common/Data.h"
 #include "ospray/render/dvr/dvr.h"
 #include "dvr_ispc.h"

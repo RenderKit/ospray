@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/OspCommon.h"
 #include "ospray/api/handle.h"
 
 namespace ospray {

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "../common/ray.ih"
+#include "../common/Ray.ih"
 
 
 /*! \file camera.ih Defines the abstract base class of an ISPC-side camera */

@@ -14,7 +14,7 @@
 #endif
 
 // header
-#include "ospray/common/managed.h"
+#include "ospray/common/Managed.h"
 #include "ospray/common/Data.h"
 #include "miniSG.h"
 // stl

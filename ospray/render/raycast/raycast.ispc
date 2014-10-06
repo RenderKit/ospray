@@ -11,7 +11,7 @@
 // ospray stuff
 #include "../../fb/framebuffer.ih"
 #include "../../camera/perspectivecamera.ih"
-#include "ospray/common/model.ih"
+#include "ospray/common/Model.ih"
 #include "../util.ih"
 #include "ospray/render/renderer.ih"
 

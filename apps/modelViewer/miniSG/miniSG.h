@@ -10,8 +10,8 @@
 #pragma once
 
 // ospray stuff
-#include "ospray/common/ospcommon.h"
-#include "ospray/common/managed.h"
+#include "ospray/common/OspCommon.h"
+#include "ospray/common/Managed.h"
 // embree stuff
 #include "common/sys/filename.h"
 // stl stuff

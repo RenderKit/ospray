@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "model.ih"
+#include "Model.ih"
 
 typedef uniform Geometry *uniform uniGeomPtr;
 typedef uniform Material *uniform uniMaterialPtr;

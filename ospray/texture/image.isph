@@ -1,6 +1,6 @@
 // #pragma once
 
-// #include "../common/default.ih"
+// #include "../common/Default.ih"
 
 // struct Image;
 

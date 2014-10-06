@@ -8,9 +8,9 @@
 
 #pragma once
 
-#include "../common/managed.h"
-#include "../common/ospcommon.h"
-#include "ospray/common/material.h"
+#include "../common/Managed.h"
+#include "../common/OspCommon.h"
+#include "ospray/common/Material.h"
 
 namespace ospray {
   struct Model;

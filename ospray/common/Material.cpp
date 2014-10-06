@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 // ospray
-#include "material.h"
+#include "Material.h"
 #include "ospray/common/Library.h"
 // stl
 #include <map>

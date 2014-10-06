@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 //ospray stuff
-#include "managed.h"
+#include "Managed.h"
 
 //embree stuff
 #include "common/sys/library.h"

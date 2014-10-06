@@ -9,8 +9,8 @@
 
 
 // ospray
-#include "ospray/common/ospcommon.h"
-#include "ospray/common/ray.h"
+#include "ospray/common/OspCommon.h"
+#include "ospray/common/Ray.h"
 // embree
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_ray.h"

@@ -12,7 +12,7 @@
 #include <string.h>
 #include <vector>
 #include "ospray/include/ospray/ospray.h"
-#include "ospray/common/managed.h"
+#include "ospray/common/Managed.h"
 
 namespace ospray {
 

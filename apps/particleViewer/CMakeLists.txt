@@ -19,7 +19,7 @@ INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
 IF (NOT THIS_IS_MIC)
   ADD_EXECUTABLE(ospParticleViewer
     viewer.cpp
-    model.cpp
+    Model.cpp
     uintah.cpp
     )
   TARGET_LINK_LIBRARIES(ospParticleViewer ospray ospray_glut3d ospray_xml)

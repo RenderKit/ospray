@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "ospray/common/managed.h"
+#include "ospray/common/Managed.h"
 #include "ospray/transferfunction/TransferFunction.h"
 
 //! \brief Define a function to create an instance of the InternalClass

@@ -12,7 +12,7 @@
 
 #define PRECOMPUTED_VALUES_DIM 16
 
-#include "ospray/common/ospcommon.ih"
+#include "ospray/common/OspCommon.ih"
 
     struct TransferFunction {
 

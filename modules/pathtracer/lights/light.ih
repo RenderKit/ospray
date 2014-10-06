@@ -12,7 +12,7 @@
 #include "samplers/sample.ih"
 // #include "shapes/shape.ih"
 // #include "shapes/differentialgeometry.ih"
-#include "ospray/common/dg.ih"
+#include "ospray/common/DifferentialGeometry.ih"
 
 struct Shape;
 

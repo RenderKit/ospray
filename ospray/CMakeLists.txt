@@ -17,14 +17,14 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
-  common/ospdatatype.cpp
-  common/ospcommon.cpp
-  common/ospcommon.ispc
-  common/managed.cpp
+  common/OspDataType.cpp
+  common/OspCommon.cpp
+  common/OspCommon.ispc
+  common/Managed.cpp
   common/Data.cpp
-  common/model.cpp
-  common/model.ispc
-  common/material.cpp
+  common/Model.cpp
+  common/Model.ispc
+  common/Material.cpp
   common/Library.cpp
 
   fb/swapchain.cpp 

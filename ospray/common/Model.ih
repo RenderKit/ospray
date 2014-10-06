@@ -9,7 +9,7 @@
 #pragma once
 
 // ospray stuff
-#include "ospray/common/ray.ih"
+#include "ospray/common/Ray.ih"
 #include "ospray/geometry/geometry.ih"
 #include "ospray/volume/Volume.ih"
 

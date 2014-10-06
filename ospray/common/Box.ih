@@ -10,7 +10,7 @@
 #pragma once
 
 #include "math/vec.isph"
-#include "ray.ih"
+#include "Ray.ih"
 
 /*! Box structure. */
 struct Box

@@ -65,7 +65,7 @@ MACRO (ispc_compile)
   ENDIF()
 
   IF (THIS_IS_MIC)
-    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ispc_knc_backend.h  --addressing=${ISPC_ADDRESSING})
+    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/IspcKncBackend.h  --addressing=${ISPC_ADDRESSING})
     #${ISPC_DIR}/examples/intrinsics/knc.h)
     SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()

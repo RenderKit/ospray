@@ -6,8 +6,8 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "ospcommon.h"
-#include "ospdatatype.h"
+#include "OspCommon.h"
+#include "OspDataType.h"
 
 namespace ospray{
   size_t sizeOf(OSPDataType type) {

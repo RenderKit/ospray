@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "ospcommon.h"
+#include "OspCommon.h"
 // embree:
 #include "embree2/rtcore.h"
 //embree/include/embree.h"

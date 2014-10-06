@@ -13,7 +13,7 @@
 #include "ospray/camera/perspectivecamera.h"
 #include "ospray/volume/Volume.h"
 // ospray stuff
-#include "ospray/common/ray.h"
+#include "ospray/common/Ray.h"
 // ispc exports
 #include "xray_renderer_ispc.h"
 

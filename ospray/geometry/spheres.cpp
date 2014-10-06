@@ -11,7 +11,7 @@
 // ospray
 #include "spheres.h"
 #include "ospray/common/Data.h"
-#include "ospray/common/model.h"
+#include "ospray/common/Model.h"
 // ispc-generated files
 #include "spheres_ispc.h"
 

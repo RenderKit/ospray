@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "model.h"
+#include "Model.h"
 // embree stuff
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"

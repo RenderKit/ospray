@@ -8,7 +8,7 @@
 
 #pragma once 
 
-#include "managed.h"
+#include "Managed.h"
 
 namespace ospray {
   /*! \brief implements the basic abstraction for anything that is a 'material'.

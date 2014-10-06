@@ -10,7 +10,7 @@
 
 // ospray
 #include "instance.h"
-#include "ospray/common/model.h"
+#include "ospray/common/Model.h"
 // ispc-generated files
 #include "instance_ispc.h"
 

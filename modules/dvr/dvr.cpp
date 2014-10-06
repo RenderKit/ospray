@@ -10,7 +10,7 @@
 #include "../camera/perspectivecamera.h"
 #include "../volume/volume.h"
 // ospray stuff
-#include "../../ospray/common/ray.h"
+#include "../../ospray/common/Ray.h"
 #include "../../ospray/common/Data.h"
 // ispc exports
 #include "dvr_ispc.h"

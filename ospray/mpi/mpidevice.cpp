@@ -11,7 +11,7 @@
 #include "mpicommon.h"
 #include "mpidevice.h"
 //#include "../fb/swapchain.h"
-#include "../common/model.h"
+#include "../common/Model.h"
 #include "../common/Data.h"
 #include "../common/Library.h"
 #include "../geometry/trianglemesh.h"

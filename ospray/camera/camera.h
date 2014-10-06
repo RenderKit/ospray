@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "../common/managed.h"
-#include "../common/ray.h"
+#include "../common/Managed.h"
+#include "../common/Ray.h"
 
 namespace ospray {
   

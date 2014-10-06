@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/ospcommon.ih"
+#include "ospray/common/OspCommon.ih"
 #include "ospray/math/vec.ih"
 #include "ospray/fb/tilesize.h"
 

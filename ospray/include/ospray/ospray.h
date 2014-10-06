@@ -27,7 +27,7 @@
 #include "ospray/embree/common/math/vec4.h"
 #include "ospray/embree/common/math/bbox.h"
 #include "ospray/embree/common/math/affinespace.h"
-#include "ospray/common/ospdatatype.h"
+#include "ospray/common/OspDataType.h"
 
 /*! namespace for classes in the public core API */
 namespace osp {

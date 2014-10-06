@@ -8,7 +8,7 @@
 
 #include "localdevice.h"
 // #include "../fb/swapchain.h"
-#include "../common/model.h"
+#include "../common/Model.h"
 #include "../common/Data.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
@@ -16,7 +16,7 @@
 #include "../volume/Volume.h"
 #include "../transferfunction/TransferFunction.h"
 #include "../render/loadbalancer.h"
-#include "../common/material.h"
+#include "ospray/common/Material.h"
 #include "../common/Library.h"
 #include "../texture/texture2d.h"
 #include "../lights/light.h"

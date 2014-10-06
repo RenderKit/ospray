@@ -8,7 +8,7 @@
 
 #pragma once
 
-/*! \file ospcommon.h Defines common types and classes that _every_
+/*! \file OspCommon.h Defines common types and classes that _every_
     ospray file should know about */
 
 // embree

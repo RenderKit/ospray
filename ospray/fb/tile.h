@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/OspCommon.h"
 #include "tilesize.h"
 
 namespace ospray {

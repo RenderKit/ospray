@@ -9,8 +9,8 @@
 
 
 // ospray
-#include "ospray/common/ospcommon.ih"
-#include "ospray/common/ray.ih"
+#include "ospray/common/OspCommon.ih"
+#include "ospray/common/Ray.ih"
 // embree
 #include "embree2/rtcore.isph"
 

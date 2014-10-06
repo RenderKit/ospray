@@ -13,7 +13,7 @@
 // ospray API
 #include "ospray/ospray.h"
 // ospray 
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/OspCommon.h"
 // STL
 #include <map>
 
