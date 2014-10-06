@@ -145,7 +145,8 @@ namespace ospray {
     };
 
     /*! constructor */
-    ManagedObject() : ID(-1), ispcEquivalent(NULL) {};
+    ManagedObject() : ID(-1), ispcEquivalent(NULL), managedObjectType(OSP_UNKNOWN) {};
+
     /*! destructor */
     virtual ~ManagedObject() {};
 
@@ -155,11 +156,13 @@ namespace ospray {
     //! \brief common function to help printf-debugging 
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::ManagedObject"; }
+
     /*! return the ISPC equivalent of this class*/
     void *getIE() const { return ispcEquivalent; }
 
     /*! find a given parameter, or add it if not exists (and so specified) */
     Param *findParam(const char *name, bool addIfNotExist = false);
+
     /*! set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);
 
@@ -176,26 +179,34 @@ namespace ospray {
         properly do that (typically by assigning to a proper 'ref'
         instance */
     ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound);
+
     Data *getParamData(const char *name, Data *valIfNotFound=NULL)
     { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }
+
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
     vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);
+    vec2f  getParam2f(const char *name, const vec2f  valIfNotFound);
     int32  getParam1i(const char *name, const int32  valIfNotFound);
     float  getParam1f(const char *name, const float  valIfNotFound);
     float  getParamf (const char *name, const float  valIfNotFound);
-
 
     void  *getVoidPtr(const char *name, void *valIfNotFound);
     const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */
 
-    std::vector<Param *> paramList; /*!< list of parameters attached
-                                       to this object */
-    id_t ID; /*!< a global ID that can be used for referencing an
-               object remotely */
-    void *ispcEquivalent; /*!< ispc-side eqivalent of this C++-side
-                            class, if available (NULL if not) */
+    /*!< list of parameters attached to this object */
+    std::vector<Param *> paramList;
+
+    /*!< a global ID that can be used for referencing an object remotely */
+    id_t ID;
+
+    /*!< ispc-side eqivalent of this C++-side class, if available (NULL if not) */
+    void *ispcEquivalent;
+
+    /*!< subtype of this ManagedObject */
+    OSPDataType managedObjectType;
+
   };
 
 }

@@ -37,7 +37,8 @@ namespace ospray {
         std::cout << "#ospray: could not find light type '" << type << "'" << std::endl;
       return NULL;
     }
-    return (*creator)();
+    Light *light = (*creator)();  light->managedObjectType = OSP_LIGHT;
+    return(light);
   }
 
 }

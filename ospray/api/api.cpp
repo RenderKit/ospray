@@ -10,6 +10,8 @@
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
 #include "ospray/common/material.h"
+#include "ospray/fileio/ObjectCatalog.h"
+#include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/transferfunction/TransferFunction.h"
 #include "localdevice.h"
@@ -182,7 +184,7 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     Assert(model != NULL && "invalid model in ospAddVolume");
-    //Assert(geometry != NULL && "invalid volume in ospAddVolume");
+    Assert(volume != NULL && "invalid volume in ospAddVolume");
     return ospray::api::Device::current->addVolume(model, volume);
   }
 
@@ -322,6 +324,21 @@ namespace ospray {
     return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
   }
 
+  /*! \brief import a collection of OSPRay objects from a file, return 'NULL' if the file type is not known */
+  extern "C" OSPObjectCatalog ospImportObjects(const char *filename)
+  {
+    ASSERT_DEVICE();
+    Assert(filename != NULL && "no filename specified in ospImportObjects");
+    LOG("ospImportObjects(" << filename << ")");
+    OSPObjectCatalog catalog = ospray::ObjectFile::importObjects(filename);
+    if (ospray::logLevel > 0)
+      if (catalog)
+        cout << "ospImportObjects: " << filename << endl;
+      else
+        std::cerr << "#ospray: could not import objects from file '" << filename << "'" << std::endl;
+    return catalog;
+  }
+
   /*! \brief create a new volume of given type, return 'NULL' if that type is not known */
   extern "C" OSPVolume ospNewVolume(const char *type)
   {
@@ -383,13 +400,14 @@ namespace ospray {
 #endif
   }
 
-  /*! add a data array to another object */
   extern "C" void ospCommit(OSPObject object)
   {
     ASSERT_DEVICE();
     Assert(object && "invalid object handle to commit to");
     LOG("ospCommit(...)");
-    return ospray::api::Device::current->commit(object);
+    ObjectCatalog *catalog = dynamic_cast<ObjectCatalog *>(object);
+    if (catalog) catalog->commit();
+    else ospray::api::Device::current->commit(object);
   }
 
   extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
@@ -416,6 +434,12 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
+  }
+  /*! add a vec2f parameter to an object */
+  extern "C" void ospSetVec2f(OSPObject _object, const char *id, const vec2f &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec2f(_object, id, v);
   }
   /*! add a data array to another object */
   extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)

@@ -18,7 +18,7 @@
 #include "handle.h"
 //ospray
 #include "ospray/common/model.h"
-#include "ospray/common/data.h"
+#include "ospray/common/Data.h"
 #include "ospray/geometry/trianglemesh.h"
 #include "ospray/camera/camera.h"
 #include "ospray/volume/Volume.h"

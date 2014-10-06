@@ -10,7 +10,7 @@
 #include <iostream>
 #include <fstream>
 #include "rbfTree_ispc.h"
-#include "ospray/common/data.h"
+#include "ospray/common/Data.h"
 
 namespace ospray {
   namespace shankar {

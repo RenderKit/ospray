@@ -10,7 +10,7 @@
 
 // ospray
 #include "disks.h"
-#include "common/data.h"
+#include "common/Data.h"
 #include "common/model.h"
 // ispc-generated files
 #include "disks_ispc.h"

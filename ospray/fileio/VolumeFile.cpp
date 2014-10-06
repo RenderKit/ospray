@@ -9,14 +9,17 @@
 
 #include <map>
 #include "ospray/common/library.h"
-#include "ospray/volume/StructuredVolumeFile.h"
+#include "ospray/fileio/VolumeFile.h"
 
 namespace ospray {
 
-    StructuredVolumeFile *StructuredVolumeFile::open(const std::string &filename) {
+    OSPObjectCatalog VolumeFile::importVolume(const std::string &filename, Volume *volume) {
+
+        //! Attempt to get the absolute file path.
+        std::string fullfilename = getFullFilePath(filename);
 
         //! Function pointer type for creating a concrete instance of a subtype of this class.
-        typedef StructuredVolumeFile *(*creationFunctionPointer)(const std::string &filename);
+        typedef OSPObjectCatalog (*creationFunctionPointer)(const std::string &filename, Volume *volume);
 
         //! Function pointers corresponding to each subtype.
         static std::map<std::string, creationFunctionPointer> symbolRegistry;
@@ -25,19 +28,19 @@ namespace ospray {
         std::string type = filename.substr(filename.find_last_of(".") + 1);
 
         //! Return a concrete instance of the requested subtype if the creation function is already known.
-        if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])(filename));
+        if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])(fullfilename, volume));
 
         //! Otherwise construct the name of the creation function to look for.
-        std::string creationFunctionName = "ospray_create_structured_volume_file_" + std::string(type);
+        std::string creationFunctionName = "ospray_import_volume_file_" + std::string(type);
 
         //! Look for the named function.
         symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);
 
         //! The named function may not be found if the requested subtype is not known.
-        if (symbolRegistry[type] == NULL && ospray::logLevel >= 1) std::cout << "OSPRay::StructuredVolumeFile error: unrecognized subtype '" << type << "'" << std::endl;
+        if (!symbolRegistry[type] && ospray::logLevel >= 1) std::cerr << "  ospray::VolumeFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
 
-        //! Return a concrete instance of the requested subtype.
-        return(symbolRegistry[type] ? (*symbolRegistry[type])(filename) : NULL);
+        //! Return an ObjectCatalog to allow introspection.
+        return(symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename, volume) : NULL);
 
     }
 

@@ -48,6 +48,7 @@ namespace ospray {
         CMD_SET_STRING,
         CMD_SET_INT,
         CMD_SET_FLOAT,
+        CMD_SET_VEC2F,
         CMD_SET_VEC3F,
         CMD_SET_VEC3I,
         CMD_USER
@@ -121,6 +122,9 @@ namespace ospray {
 
       /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f);
+
+      /*! assign (named) vec2f parameter to an object */
+      virtual void setVec2f(OSPObject object, const char *bufName, const vec2f &v);
 
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);

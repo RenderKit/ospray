@@ -65,19 +65,23 @@ VolumeViewer::VolumeViewer(const float dt) : renderer_(NULL), transferFunction_(
 void VolumeViewer::initVolumeFromFile(const std::string &filename) {
 
     //! Currently only bricked volume types are supported.
-    std::string volumeType = "bricked";  OSPVolume volume = ospNewVolume(volumeType.c_str());
+//  std::string volumeType = "bricked";  OSPVolume volume = ospNewVolume(volumeType.c_str());
 
     //! The requested volume type may not be known to OSPRay.
-    if (!volume) throw std::runtime_error("could not create volume type '" + volumeType + "'");
+//  if (!volume) throw std::runtime_error("could not create volume type '" + volumeType + "'");
+
+    OSPObjectCatalog catalog = ospImportObjects(filename.c_str());
+
+    OSPVolume volume = (OSPVolume) catalog->entries[0]->object;
 
     //! All volumes are assumed to be self-describing (e.g. via a header file).
-    ospSetString(volume, "filename", filename.c_str());
+//  ospSetString(volume, "filename", filename.c_str());
 
     //! Associate the transfer function with the volume.
     ospSetParam(volume, "transferFunction", transferFunction_);
 
     //! Commit that bad boy.
-    ospCommit(volume);
+    ospCommit(catalog);
 
     //! Add the volume to the vector of volumes.
     volumes_.push_back(volume);
@@ -129,10 +133,10 @@ void VolumeViewer::playTimesteps(bool set)
 void VolumeViewer::createTransferFunction()
 {
     // create transfer function
-    transferFunction_ = ospNewTransferFunction("piecewiseLinear");
+    transferFunction_ = ospNewTransferFunction("piecewise_linear");
 
     if(!transferFunction_)
-        throw std::runtime_error("could not create transfer function type 'piecewiseLinear'");
+        throw std::runtime_error("could not create transfer function type 'piecewise_linear'");
 
     ospCommit(transferFunction_);
 }

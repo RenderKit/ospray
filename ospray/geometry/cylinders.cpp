@@ -10,7 +10,7 @@
 
 // ospray
 #include "cylinders.h"
-#include "ospray/common/data.h"
+#include "ospray/common/Data.h"
 #include "ospray/common/model.h"
 // ispc-generated files
 #include "cylinders_ispc.h"

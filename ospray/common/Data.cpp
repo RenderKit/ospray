@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "data.h"
+#include "Data.h"
 #include <sstream>
 
 namespace ospray {
@@ -29,6 +29,8 @@ namespace ospray {
       else if (type == OSP_OBJECT)
         bzero(data,numBytes);
     }
+
+    managedObjectType = OSP_DATA;
 
     // std::cout << "checksum when creating data array" << std::endl;
     // PRINT(numBytes);

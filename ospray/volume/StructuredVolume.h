@@ -35,6 +35,9 @@ namespace ospray {
     //! Allocate storage and populate the volume.
     virtual void commit();
 
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC() = 0;
+
     //! Get the volume dimensions.
     const vec3i &getDimensions() const { return(volumeDimensions); }
 
@@ -75,9 +78,6 @@ namespace ospray {
 
     //! Voxel type.
     std::string voxelType;
-
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC() = 0;
 
     //! Error checking.
     virtual void exitOnCondition(bool condition, const std::string &message) const { if (condition) throw std::runtime_error("OSPRay::StructuredVolume error: " + message + "."); }

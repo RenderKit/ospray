@@ -12,7 +12,7 @@
 #include "mpidevice.h"
 //#include "../fb/swapchain.h"
 #include "../common/model.h"
-#include "../common/data.h"
+#include "../common/Data.h"
 #include "../common/library.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
@@ -566,6 +566,18 @@ namespace ospray {
       cmd.send((const mpi::Handle &)_object);
       cmd.send(bufName);
       cmd.send(i);
+    }
+
+    /*! assign (named) vec2f parameter to an object */
+    void MPIDevice::setVec2f(OSPObject _object, const char *bufName, const vec2f &v)
+    {
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC2F);
+      cmd.send((const mpi::Handle &) _object);
+      cmd.send(bufName);
+      cmd.send(v);
     }
 
     /*! assign (named) vec3f parameter to an object */

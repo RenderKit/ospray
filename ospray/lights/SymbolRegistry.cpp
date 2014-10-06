@@ -7,16 +7,20 @@
 //    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
 //
 
-#include "apps/common/fileio/OSPObjectFile.h"
-#include "apps/common/fileio/RawVolumeFile.h"
+#include "ospray/lights/directionallight.h"
+#include "ospray/lights/pointlight.h"
+#include "ospray/lights/spotlight.h"
 
 namespace ospray {
 
-    //! Loader for XML object files.
-    OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
+    //! A directional light.
+    OSP_REGISTER_LIGHT(DirectionalLight, DirectionalLight);
 
-    //! Loader for RAW volume files.
-    OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
+    //! A point light with bounded range.
+    OSP_REGISTER_LIGHT(PointLight, PointLight);
+
+    //! A spot light with bounded angle and range.
+    OSP_REGISTER_LIGHT(SpotLight, SpotLight);
 
 } // namespace ospray
 

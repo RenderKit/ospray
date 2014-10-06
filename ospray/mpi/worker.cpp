@@ -11,7 +11,7 @@
 #include "command.h"
 //#include "../fb/swapchain.h"
 #include "ospray/common/model.h"
-#include "ospray/common/data.h"
+#include "ospray/common/Data.h"
 #include "ospray/common/library.h"
 #include "ospray/common/model.h"
 #include "ospray/geometry/trianglemesh.h"

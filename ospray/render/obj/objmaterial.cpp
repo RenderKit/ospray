@@ -8,7 +8,7 @@
 
 #include "objmaterial.h"
 #include "objmaterial_ispc.h"
-#include "../../common/data.h"
+#include "../../common/Data.h"
 
 namespace ospray {
   namespace obj {

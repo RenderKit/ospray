@@ -1,6 +1,6 @@
 // ospray
 #include "alpha_triangle_mesh.h"
-#include "ospray/common/data.h"
+#include "ospray/common/Data.h"
 #include "ospray/common/model.h"
 #include "ospray/texture/texture2d.h"
 

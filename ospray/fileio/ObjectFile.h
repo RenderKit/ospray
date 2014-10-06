@@ -9,7 +9,10 @@
 
 #pragma once
 
+#include <stdlib.h>
+#include <string>
 #include "ospray/common/managed.h"
+#include "ospray/fileio/ObjectCatalog.h"
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
@@ -19,47 +22,41 @@
 //!  macro is needed since the subclass type may not be known to OSPRay
 //!  at build time.  Rather, the subclass can be defined in an external
 //!  module and registered with OSPRay using this macro.
-//!
-#define OSP_REGISTER_TRANSFER_FUNCTION(InternalClass, ExternalName) \
-    extern "C" TransferFunction *ospray_create_transfer_function_##ExternalName() \
-        { return(new InternalClass()); }
+//! 
+#define OSP_REGISTER_OBJECT_FILE(InternalClass, ExternalName) \
+    extern "C" OSPObjectCatalog ospray_import_object_file_##ExternalName(const std::string &filename) \
+        { InternalClass file(filename);  return(file.importObjects()); }
 
 namespace ospray {
 
-    //! \brief A TransferFunction is an abstraction that maps a value to
-    //!  a color and opacity for rendering.
+    //! \brief An ObjectFile is an abstraction for the concrete objects
+    //!  used to load files containing one or more OSPRay objects.
     //!
-    //!  The actual mapping is unknown to this class, and is implemented
-    //!  in subclasses.  A type string specifies a particular concrete
-    //!  implementation to createInstance().  This type string must be
-    //!  registered in OSPRay proper, or in a loaded module using
-    //!  OSP_REGISTER_TRANSFER_FUNCTION.
+    //!  The file format is unknown to this class.  Subclasses implement
+    //!  loaders for specific formats, and the actual subclass used is
+    //!  determined from the file name extension.  Note that subclasses
+    //!  must be registered in OSPRay proper, or in a loaded module via
+    //!  OSP_REGISTER_OBJECT_FILE.
     //!
-    class TransferFunction : public ManagedObject {
+    class ObjectFile : public ManagedObject {
     public:
 
         //! Constructor.
-        TransferFunction() {};
+        ObjectFile() {};
 
         //! Destructor.
-        virtual ~TransferFunction() {};
+        virtual ~ObjectFile() {};
 
-        //! Allocate storage and populate the transfer function.
-        virtual void commit() = 0;
+        //! Create an ObjectFile object of the subtype given by the file extension and import the objects.
+        static OSPObjectCatalog importObjects(const std::string &filename);
 
-        //! Create a transfer function of the given type.
-        static TransferFunction *createInstance(std::string type);
-
-        //! Get the ISPC transfer function.
-        void *getEquivalentISPC() const { return(getIE()); }
+        //! Import the object data.
+        virtual OSPObjectCatalog importObjects() = 0;
 
         //! A string description of this class.
-        virtual std::string toString() const { return("ospray::TransferFunction"); }
+        virtual std::string toString() const { return("ospray::ObjectFile"); }
 
     protected:
-
-        //! Create the equivalent ISPC transfer function.
-        virtual void createEquivalentISPC() = 0;
 
         //! Print an error message.
         void emitMessage(const std::string &kind, const std::string &message) const
@@ -72,6 +69,10 @@ namespace ospray {
         //! Warning condition.
         void warnOnCondition(bool condition, const std::string &message) const
             { if (!condition) return;  emitMessage("WARNING", message); }
+
+        //! Get the absolute file path.
+        static std::string getFullFilePath(const std::string &filename)
+            { char *fullpath = realpath(filename.c_str(), NULL);  return(fullpath != NULL ? fullpath : filename); }
 
     };
 

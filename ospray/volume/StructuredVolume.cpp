@@ -10,10 +10,10 @@
 //
 
 #include <map>
-#include "ospray/common/data.h"
+#include "ospray/common/Data.h"
 #include "ospray/common/library.h"
+#include "ospray/fileio/VolumeFile.h"
 #include "ospray/volume/StructuredVolume.h"
-#include "ospray/volume/StructuredVolumeFile.h"
 
 namespace ospray {
 
@@ -51,26 +51,17 @@ namespace ospray {
 
     void StructuredVolume::getVolumeFromFile(const std::string &filename) {
 
-        //! Create a concrete instance of a subclass of StructuredVolumeFile based on the file name extension.
-        StructuredVolumeFile *volumeFile = StructuredVolumeFile::open(filename);  exitOnCondition(!volumeFile, "unrecognized volume file type '" + filename + "'");
-
         //! Set the volume dimensions.
-        setDimensions(volumeFile->getVolumeDimensions());
+        setDimensions(getParam3i("dimensions", vec3i(0)));
 
         //! Set the transfer function.
         setTransferFunction((TransferFunction *) getParamObject("transferFunction", NULL));
 
-        //! Set the voxel spacing.
-        setVoxelSpacing(volumeFile->getVoxelSpacing());
-
         //! Set the voxel type string.
-        setVoxelType(volumeFile->getVoxelType());
-
-        //! Create the equivalent ISPC volume container and allocate memory for voxel data.
-        createEquivalentISPC();
+        setVoxelType(getParamString("voxelType", "unspecified"));
 
         //! Copy voxel data into the volume.
-        volumeFile->getVoxelData(this);
+        VolumeFile::importVolume(filename, this);
 
     }
 

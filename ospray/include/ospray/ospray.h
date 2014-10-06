@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <vector>
+
 // -------------------------------------------------------
 // include common components 
 // -------------------------------------------------------
@@ -29,6 +31,7 @@
 
 /*! namespace for classes in the public core API */
 namespace osp {
+
   typedef embree::Vec2f  vec2f;
   typedef embree::Vec2i  vec2i;
   typedef embree::Vec3f  vec3f;
@@ -38,7 +41,7 @@ namespace osp {
   typedef embree::BBox3f box3f;
   typedef embree::AffineSpace3f affine3f;
 
-  struct ManagedObject { uint64 ID; virtual ~ManagedObject() {} };
+  struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
   struct FrameBuffer      : public ManagedObject {};
   struct Renderer         : public ManagedObject {};
   struct Camera           : public ManagedObject {};
@@ -51,6 +54,8 @@ namespace osp {
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct TriangleMesh     : public Geometry {};
+  struct ObjectCatalog    : public ManagedObject { char *name;  ManagedObject *object;  OSPDataType type;  const void *value;  ObjectCatalog **entries; };
+
 }
 
 typedef enum {
@@ -67,6 +72,31 @@ typedef enum {
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
+
+typedef enum {
+
+  //! These flags indicate when data is to be loaded, and are used in
+  //! cases where the host and compute device(s) share no filesystems.
+  //! OSP_LOAD_DATA_IMMEDIATE denotes data should be loaded presently.
+  //! This flag is typically checked in a file loader running on the
+  //! host, in which case the data is loaded on the host and is later
+  //! copied to the device(s) through memory or an interconnect.  OSP_
+  //! LOAD_DATA_DEFERRED indicates that the load should be deferred to
+  //! the last possible moment, typically on the device.  This avoids
+  //! unnecessary copies in cases where the host and device are one in
+  //! the same or share a filesystem.
+  //!
+  //! Note that we distinguish between the data backing OSPRay objects
+  //! and configuration parameters on those objects.  The OSP_LOAD_DATA
+  //! flags apply to the former not the latter.  Parameters are loaded
+  //! immediately to allow introspection by the application, and so it
+  //! is assumed that file loaders can separately read parameters and
+  //! data.
+  //!
+  OSP_LOAD_DATA_DEFERRED,
+  OSP_LOAD_DATA_IMMEDIATE,
+
+} OSPLoadDataMode;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {
@@ -99,6 +129,7 @@ typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::Light             *OSPLight;
+typedef osp::ObjectCatalog     *OSPObjectCatalog;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -153,6 +184,10 @@ extern "C" {
   /*! return 'NULL' if that type is not known */
   OSPCamera ospNewCamera(const char *type);
 
+  //! import a collection of OSPRay objects from a file
+  /*! return 'NULL' if the file type is not known */
+  OSPObjectCatalog ospImportObjects(const char *filename);
+
   //! create a new volume of given type 
   /*! return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
@@ -174,7 +209,6 @@ extern "C" {
   //! create a new Texture2D with the given parameters
   /*! return 'NULL' if the texture could not be created with the given parameters */
   OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
-
 
   /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
@@ -281,32 +315,48 @@ extern "C" {
   */
   /*! add a c-string (zero-terminated char *) parameter to another object */
   void ospSetString(OSPObject _object, const char *id, const char *s);
+
   /*! add a object-typed parameter to another object 
     
    \warning this call has been superseded by ospSetObject, and will eventually get removed */
   void ospSetParam(OSPObject _object, const char *id, OSPObject object);
+
   /*! add a object-typed parameter to another object */
   void ospSetObject(OSPObject _object, const char *id, OSPObject object);
+
   /*! add a data array to another object */
   void ospSetData(OSPObject _object, const char *id, OSPData data);
+
   /*! add 1-float paramter to given object */
   void ospSetf(OSPObject _object, const char *id, float x);
+
   /*! add 1-float paramter to given object */
   void ospSet1f(OSPObject _object, const char *id, float x);
+
   /*! add 1-int paramter to given object */
   void ospSet1i(OSPObject _object, const char *id, int32 x);
+
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+
   /*! add 3-float paramter to given object */
   void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
+
   /*! add 3-int paramter to given object */
   void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
+
+  /*! add 2-float parameter to given object */
+  void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);
+
   /*! add 3-float paramter to given object */
   void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+
   /*! add 3-int paramter to given object */
   void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
+
   /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
   void ospSetVoidPtr(OSPObject _object, const char *id, void *v);
+
   /*! @} end of ospray_params */
 
   // -------------------------------------------------------
@@ -370,4 +420,5 @@ extern "C" {
   /*! \brief unproject a [0-1] normalized screen-space pixel coordinate to a world-space position */
   OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 }
+
 /*! \} */

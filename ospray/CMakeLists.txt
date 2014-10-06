@@ -21,7 +21,7 @@ SET(OSPRAY_SOURCES
   common/ospcommon.cpp
   common/ospcommon.ispc
   common/managed.cpp
-  common/data.cpp
+  common/Data.cpp
   common/model.cpp
   common/model.ispc
   common/material.cpp
@@ -32,6 +32,10 @@ SET(OSPRAY_SOURCES
   fb/framebuffer.cpp
   fb/localfb.ispc
 
+  fileio/ObjectCatalog.cpp
+  fileio/ObjectFile.cpp
+  fileio/VolumeFile.cpp
+
   camera/camera.cpp
   camera/perspectivecamera.ispc
   camera/perspectivecamera.cpp
@@ -40,7 +44,6 @@ SET(OSPRAY_SOURCES
   volume/BrickedVolumeFloat.ispc
   volume/BrickedVolumeUChar.ispc
   volume/StructuredVolume.cpp
-  volume/StructuredVolumeFile.cpp
   volume/SymbolRegistry.cpp
   volume/Volume.cpp
 
@@ -71,6 +74,7 @@ SET(OSPRAY_SOURCES
   lights/directionallight.ispc
   lights/spotlight.cpp
   lights/spotlight.ispc
+  lights/SymbolRegistry.cpp
 
   texture/texture2d.cpp
   texture/texture2d.ispc

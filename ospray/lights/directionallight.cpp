@@ -25,6 +25,4 @@ namespace ospray {
     ispc::DirectionalLight_set(getIE(), (ispc::vec3f&)color, (ispc::vec3f&)direction);
   }
 
-  OSP_REGISTER_LIGHT(DirectionalLight, DirectionalLight);
-
 }

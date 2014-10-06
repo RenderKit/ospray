@@ -11,7 +11,7 @@
 #include "../volume/volume.h"
 // ospray stuff
 #include "../../ospray/common/ray.h"
-#include "../../ospray/common/data.h"
+#include "../../ospray/common/Data.h"
 // ispc exports
 #include "dvr_ispc.h"
 

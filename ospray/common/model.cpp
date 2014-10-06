@@ -22,6 +22,7 @@ namespace ospray {
 
   Model::Model()
   {
+    managedObjectType = OSP_MODEL;
     this->ispcEquivalent = ispc::Model_create(this);
   }
   void Model::finalize()

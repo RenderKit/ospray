@@ -9,7 +9,7 @@
 #include "localdevice.h"
 // #include "../fb/swapchain.h"
 #include "../common/model.h"
-#include "../common/data.h"
+#include "../common/Data.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
@@ -229,7 +229,15 @@ namespace ospray {
       ManagedObject::Param *param = object->findParam(bufName,1);
       param->set(f);
     }
+    /*! assign (named) vec2f parameter to an object */
+    void LocalDevice::setVec2f(OSPObject _object, const char *bufName, const vec2f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
 
+      object->findParam(bufName, 1)->set(v);
+    }
     /*! assign (named) vec3f parameter to an object */
     void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
     {
