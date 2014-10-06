@@ -48,6 +48,9 @@ namespace ospray {
         //! Allocate storage and populate the volume.
         virtual void commit() = 0;
 
+        //! Create the equivalent ISPC volume container.
+        virtual void createEquivalentISPC() = 0;
+
         //! Create a volume container of the given type.
         static Volume *createInstance(std::string type);
 
@@ -67,9 +70,6 @@ namespace ospray {
 
         //! Color and opacity transfer function.
         TransferFunction *transferFunction;
-
-        //! Create the equivalent ISPC volume container.
-        virtual void createEquivalentISPC() = 0;
 
     };
 

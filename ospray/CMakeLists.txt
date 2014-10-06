@@ -34,6 +34,7 @@ SET(OSPRAY_SOURCES
 
   fileio/ObjectCatalog.cpp
   fileio/ObjectFile.cpp
+  fileio/VolumeFile.cpp
 
   camera/camera.cpp
   camera/perspectivecamera.ispc
@@ -43,7 +44,6 @@ SET(OSPRAY_SOURCES
   volume/BrickedVolumeFloat.ispc
   volume/BrickedVolumeUChar.ispc
   volume/StructuredVolume.cpp
-  volume/StructuredVolumeFile.cpp
   volume/SymbolRegistry.cpp
   volume/Volume.cpp
 

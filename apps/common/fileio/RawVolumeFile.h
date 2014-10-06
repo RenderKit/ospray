@@ -9,63 +9,42 @@
 
 #pragma once
 
-#include <algorithm>
-#include <map>
 #include <string>
-#include "ospray/volume/StructuredVolumeFile.h"
+#include "ospray/common/Data.h"
+#include "ospray/fileio/VolumeFile.h"
+#include "ospray/volume/StructuredVolume.h"
 
 namespace ospray {
 
-    //! \brief A concrete implementation of the StructuredVolumeFile class
+    //! \brief A concrete implementation of the VolumeFile class for reading
     //!  for reading voxel data stored in a file on disk as a single mono-
-    //!  lithic brick.
+    //!  lithic brick, where the volume specification is defined elsewhere.
     //!
-    class RawVolumeFile : public StructuredVolumeFile {
+    class RawVolumeFile : public VolumeFile {
     public:
 
         //! Constructor.
-        RawVolumeFile(const std::string &filename) : filename(realpath(filename.c_str(), NULL)) { getKeyValueStrings(); }
+        RawVolumeFile(const std::string &filename) : filename(filename) {}
 
         //! Destructor.
         virtual ~RawVolumeFile() {};
 
-        //! Get the volume dimensions.
-        virtual vec3i getVolumeDimensions();
-
-        //! Copy data from the file into memory.
-        virtual void getVoxelData(void **buffer);
-
-        //! Copy data from the file into the volume.
-        virtual void getVoxelData(StructuredVolume *volume);
-
-        //! Get the voxel size in bytes.
-        size_t getVoxelSizeInBytes();
-
-        //! Get the voxel spacing.
-        virtual vec3f getVoxelSpacing();
-
-        //! Get the voxel type string.
-        virtual std::string getVoxelType();
+        //! Import the volume data.
+        virtual OSPObjectCatalog importVolume(Volume *volume);
 
         //! A string description of this class.
-        virtual std::string toString() const { return("ospray::RawVolumeFile<" + filename + ">"); }
+        virtual std::string toString() const { return("ospray::RawVolumeFile"); }
 
     private:
 
-        //! Path to the file containing the volume header.
+        //! Path to the file containing the volume data.
         std::string filename;
 
-        //! Key value pairs describing the volume.
-        std::map<std::string, std::string> header;
-
-        //! Error checking.
-        void exitOnCondition(bool condition, const std::string &message) const { if (condition) throw std::runtime_error("OSPRay::RawVolumeFile error: " + message + "."); }
-
-        //! Get key value pairs from a volume header file.
-        void getKeyValueStrings();
+        //! Copy a row of voxel data from the file into the volume.
+        void importVoxelRow(FILE *file, StructuredVolume *volume, Data *buffer, const size_t &index);
 
         //! Locate and open the volume data file.
-        FILE *openVoxelDataFile();
+        FILE *openVolumeFile();
 
     };
 

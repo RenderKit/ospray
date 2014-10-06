@@ -16,7 +16,7 @@ namespace ospray {
     OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
 
     //! Loader for RAW volume files.
-    OSP_REGISTER_STRUCTURED_VOLUME_FILE(RawVolumeFile, rawh);
+    OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
 
 } // namespace ospray
 

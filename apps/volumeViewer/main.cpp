@@ -11,6 +11,7 @@
 #include <QtGui>
 #include <ctype.h>
 #include "VolumeViewer.h"
+#include "ospray/include/ospray/ospray.h"
 
 int main(int argc, char *argv[]) {
 
