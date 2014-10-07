@@ -22,7 +22,8 @@
 //!  module and registered with OSPRay using this macro.
 //!
 #define OSP_REGISTER_VOLUME(InternalClass, ExternalName) \
-    extern "C" Volume *ospray_create_volume_##ExternalName() { return(new InternalClass()); }
+    extern "C" Volume *ospray_create_volume_##ExternalName() \
+        { return(new InternalClass()); }
 
 namespace ospray {
 
@@ -57,19 +58,25 @@ namespace ospray {
         //! Get the ISPC volume container.
         void *getEquivalentISPC() const { return(getIE()); }
 
-        //! Get the transfer function.
-        TransferFunction *getTransferFunction() { return((transferFunction != NULL && transferFunction->getIE() != NULL) ? transferFunction : NULL); }
-
-        //! Set the transfer function.
-        void setTransferFunction(TransferFunction *function) { transferFunction = function; }
-
         //! A string description of this class.
-        virtual std::string toString() const { return("ospray::Volume<abstract base class>"); }
+        virtual std::string toString() const { return("ospray::Volume"); }
 
     protected:
 
-        //! Color and opacity transfer function.
-        TransferFunction *transferFunction;
+        //! Volume transfer function.
+        void *transferFunction;
+
+        //! Print an error message.
+        inline void emitMessage(const std::string &kind, const std::string &message) const
+            { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+
+        //! Error checking.
+        inline void exitOnCondition(bool condition, const std::string &message) const
+            { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+
+        //! Warning condition.
+        inline void warnOnCondition(bool condition, const std::string &message) const
+            { if (!condition) return;  emitMessage("WARNING", message); }
 
     };
 

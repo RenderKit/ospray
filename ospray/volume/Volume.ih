@@ -1,37 +1,44 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+//
+//                 INTEL CORPORATION PROPRIETARY INFORMATION
+//
+//    This software is supplied under the terms of a license agreement or
+//    nondisclosure agreement with Intel Corporation and may not be copied
+//    or disclosed except in accordance with the terms of that agreement.
+//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
+//
 
-#pragma once
+#ifndef VOLUME_IH
+#define VOLUME_IH
 
-#include "ospray/common/OspCommon.ih"
+#include "ospray/common/ospcommon.ih"
 #include "ospray/transferfunction/TransferFunction.ih"
 
-/*! \brief Variables and methods common to all subtypes of the Volume
-  class, an abstraction for the concrete object which performs the
-  volume sampling (this struct must be the first field of a struct
-  representing a "derived" class to allow casting to that class).
-*/
-struct Volume {
+    //! \brief Variables and methods common to all subtypes of the Volume
+    //!  class, an abstraction for the concrete object which performs the
+    //!  volume sampling (this struct must be the first field of a struct
+    //!  representing a "derived" class to allow casting to that class).
+    //!
+    struct Volume {
 
-  //! \brief Color and opacity transfer function.
-  TransferFunction *uniform transferFunction;
+        //! Gamma correction coefficient and exponent.
+        uniform vec2f gammaCorrection;
 
-  //! \brief The largest floating point value still inside the volume.
-  /* note: unlike 'size' we can use this value to clamp floating point
-     coordinates, and be sure that they're always inside the volume */
-  uniform vec3f upperBound;
+        //! Step size for ray casting based renderers.
+        uniform float stepSize;
 
-  //! \brief The gradient at the given sample location in the volume.
-  varying vec3f (*computeGradient)(void *uniform volume, const varying vec3f &coordinates);
+        //! Color and opacity transfer function.
+        TransferFunction *uniform transferFunction;
 
-  //! \brief Tri-linear interpolation at the given sample location in the volume.
-  varying float (*computeSample)(void *uniform volume, const varying vec3f &coordinates);
+        //! The largest floating point value still inside the volume.
+        uniform vec3f upperBound;
 
-};
+        //! The gradient at the given sample location in the volume.
+        varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &coordinates);
 
+        //! Tri-linear interpolation at the given sample location in the volume.
+        varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &coordinates);
+
+    };
+
+#endif // VOLUME_IH
 
