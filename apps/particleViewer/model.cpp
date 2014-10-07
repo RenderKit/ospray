@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "Model.h"
+#include "model.h"
 
 extern int  yyparse();
 extern void yyerror(const char* msg);

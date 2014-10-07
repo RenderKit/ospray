@@ -10,7 +10,7 @@
 #ifndef VOLUME_IH
 #define VOLUME_IH
 
-#include "ospray/common/ospcommon.ih"
+#include "ospray/common/OspCommon.ih"
 #include "ospray/transferfunction/TransferFunction.ih"
 
     //! \brief Variables and methods common to all subtypes of the Volume
