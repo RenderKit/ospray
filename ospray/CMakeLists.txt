@@ -95,6 +95,9 @@ SET(OSPRAY_SOURCES
   render/obj/objpointlight.cpp
   render/obj/objspotlight.ispc
   render/obj/objspotlight.cpp
+  render/volume/RaycastVolumeRenderer.cpp
+  render/volume/RaycastVolumeRenderer.ispc
+  render/volume/SymbolRegistry.cpp
 
   api/api.cpp
   api/device.cpp
