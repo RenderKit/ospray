@@ -8,8 +8,8 @@
 //
 
 #include "ospray/camera/perspectivecamera.h"
-#include "ospray/common/data.h"
-#include "ospray/common/ray.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/Ray.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
 #include "ospray/volume/Volume.h"
 #include "RaycastVolumeRenderer_ispc.h"
