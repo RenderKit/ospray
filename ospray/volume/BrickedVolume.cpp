@@ -9,47 +9,51 @@
 
 #include <cassert>
 #include "ospray/volume/BrickedVolume.h"
-#include "BrickedVolumeFloat_ispc.h"
-#include "BrickedVolumeUChar_ispc.h"
+#include "BrickedVolume_ispc.h"
 
 namespace ospray {
 
-    bool inRange(const vec3i &value, const vec3i &lower, const vec3i &upper) {
-
-        //! The lower bound is inclusive.
-        if (value.x < lower.x || value.y < lower.y || value.z < lower.z) return(false);
-
-        //! The upper bound is exclusive.
-        if (value.x >= upper.x || value.y >= upper.y || value.z >= upper.z) return(false);
-
-        //! The vector is within the given range only if the individual components are in range.
-        return(true);
-
-    }
-
     void BrickedVolume::createEquivalentISPC() {
 
-        //! Allocate storage for single precision floating point voxel data.
-        if (voxelType == "float") ispcEquivalent = ispc::BrickedVolumeFloat_createInstance((ispc::vec3i &) getDimensions(), transferFunction->getIE());
+        //! Get the voxel type.
+        voxelType = getParamString("voxelType", "unspecified");  exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type");
 
-        //! Allocate storage for unsigned 8-bit integer voxel data.
-        if (voxelType == "uchar") ispcEquivalent = ispc::BrickedVolumeUChar_createInstance((ispc::vec3i &) getDimensions(), transferFunction->getIE());
+        //! Create an ISPC BrickedVolume object and assign type-specific function pointers.
+        ispcEquivalent = ispc::BrickedVolume_createInstance((int) getVoxelType());
 
-        //! The object may not have been created if out of memory or voxel type is unknown.
-        exitOnCondition(ispcEquivalent == NULL, "unable to allocate storage for volume, out of memory or unknown voxel type");
+        //! Get the volume dimensions.
+        volumeDimensions = getParam3i("dimensions", vec3i(0));  exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");
+
+        //! Get the transfer function.
+        transferFunction = getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no volume transfer function specified");
+
+        //! Get the gamma correction coefficient and exponent.
+        vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
+
+        //! Set the volume dimensions.
+        ispc::BrickedVolume_setVolumeDimensions(ispcEquivalent, (const ispc::vec3i &) volumeDimensions);
+
+        //! Set the transfer function.
+        ispc::BrickedVolume_setTransferFunction(ispcEquivalent, ((TransferFunction *) transferFunction)->getEquivalentISPC());
+
+        //! Set the sampling step size for ray casting based renderers.
+        ispc::BrickedVolume_setStepSize(ispcEquivalent, 1.0f / reduce_max(volumeDimensions) / getParam1f("samplingRate", 1.0f));
+
+        //! Set the gamma correction coefficient and exponent.
+        ispc::BrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
+
+        //! Allocate memory for the voxel data in the ISPC object.
+        ispc::BrickedVolume_allocateMemory(ispcEquivalent);
 
     }
 
     void BrickedVolume::setRegion(const void *source, const vec3i &index, const vec3i &count) {
 
         //! Range check.
-        // assert(inRange(index, vec3i(0), getDimensions()) && inRange(count, vec3i(1), getDimensions() + 1));
+        assert(inRange(index, vec3i(0), voxelDimensions) && inRange(count, vec3i(1), voxelDimensions + vec3i(1)));
 
-        //! Copy single precision floating point voxel data into the volume.
-        if (voxelType == "float") ispc::BrickedVolumeFloat_setRegion(getEquivalentISPC(), (const float *) source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);
-
-        //! Copy unsigned 8-bit integer voxel data into the volume.
-        if (voxelType == "uchar") ispc::BrickedVolumeUChar_setRegion(getEquivalentISPC(), (const uint8 *) source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);
+        //! Copy voxel data into the volume.
+        ispc::BrickedVolume_setRegion(ispcEquivalent, source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);
 
     }
 

@@ -6,9 +6,8 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
+/*! This header is shared with ISPC. */
 #pragma once
-
-#include <stdlib.h>
 
 /*! An enum type that represensts the different data types represented in ospray */
 typedef enum {
@@ -58,7 +57,3 @@ typedef enum {
 
 } OSPDataType;
 
-namespace ospray {
-/*! \brief returns the size (in byte) for one instance of the given data type */
-size_t sizeOf(OSPDataType type);
-}

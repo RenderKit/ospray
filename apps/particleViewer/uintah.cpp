@@ -3,7 +3,7 @@
 
 #include "ospray/common/OspCommon.h"
 #include "apps/common/xml/xml.h"
-#include "Model.h"
+#include "model.h"
 
 #include "common/sys/filename.h"
 

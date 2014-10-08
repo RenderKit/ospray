@@ -600,10 +600,17 @@ inline vec3f clamp(const vec3f &a, const uniform vec3f &b, const uniform vec3f &
 inline uniform vec3f nextafter(const uniform vec3i &a, const uniform vec3i &b)
 { return(make_vec3f(nextafter(a.x, b.x), nextafter(a.y, b.y), nextafter(a.z, b.z))); }
 
+inline varying float reduce_min(const varying vec4f &a)
+{ return(min(min(min(a.x, a.y), a.z), a.w)); }
 
-inline uniform bool isnan(uniform vec3f v) { return isnan(v.x+v.y+v.z); }
-inline bool isnan(vec3f v) { return isnan(v.x+v.y+v.z); }
+inline varying vec4f pow(const varying vec4f &a, const varying float b)
+{ return(make_vec4f(pow(a.x, b), pow(a.y, b), pow(a.z, b), pow(a.w, b))); }
 
+inline uniform bool isnan(uniform vec3f v)
+{ return isnan(v.x+v.y+v.z); }
+
+inline bool isnan(vec3f v)
+{ return isnan(v.x+v.y+v.z); }
 
 #endif
 

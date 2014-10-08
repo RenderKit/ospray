@@ -27,8 +27,7 @@ namespace ospray {
         volume->createEquivalentISPC();
 
         //! Allocate memory for a single row of voxel data.
-//      Data *buffer = new Data(volume->getDimensions().x, volume->getVoxelType(), NULL, 0);
-        Data *buffer = new Data(volume->getDimensions().x, volume->getEnumForVoxelType(), NULL, 0);
+        Data *buffer = new Data(volume->getDimensions().x, volume->getVoxelType(), NULL, 0);
 
         //! Copy voxel data into the volume a row at a time.
         for (size_t i=0 ; i < volume->getDimensions().y * volume->getDimensions().z ; i++) importVoxelRow(file, volume, buffer, i);

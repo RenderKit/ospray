@@ -21,6 +21,8 @@
 #include "common/sys/taskscheduler.h"
 //#include "embree2/rtcore.h"
 
+// ospray
+#include "ospray/common/OspDataType.h"
 
 #ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
@@ -119,6 +121,10 @@ namespace ospray {
 
   /*! error handling callback to be used by embree */
   //  void error_handler(const RTCError code, const char *str);
+
+  /*! size of OSPDataType */
+  size_t sizeOf(OSPDataType type);
+
 }
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");

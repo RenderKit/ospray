@@ -12,7 +12,7 @@
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
 // ispc side
-#include "model_ispc.h"
+#include "Model_ispc.h"
 
 #include "ospray/geometry/trianglemesh.h"
 

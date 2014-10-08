@@ -92,23 +92,20 @@ int main(int argc, char *argv[]) {
 
     }
 
-    //! Create the volume viewer window.
-    VolumeViewer *volumeViewer = new VolumeViewer(dt);
+    //! Create the OSPRay state and viewer window.
+    VolumeViewer *volumeViewer = new VolumeViewer(filenames);
 
-    //! Load the volumes from the specified files.
-    for (size_t i=0 ; i < filenames.size() ; i++) volumeViewer->initVolumeFromFile(filenames[i]);
-
-    //! Display the first volume.
-    volumeViewer->setVolume(0);
+    //! Display the first model.
+    volumeViewer->setModel(0);
 
     //! Set rotation rate to use in animation mode.
-    volumeViewer->getQOSPRayWindow()->setRotationRate(rotationRate);
+    volumeViewer->getWindow()->setRotationRate(rotationRate);
 
     //! Set benchmarking parameters.
-    volumeViewer->getQOSPRayWindow()->setBenchmarkParameters(benchmarkWarmUpFrames, benchmarkFrames);
+    volumeViewer->getWindow()->setBenchmarkParameters(benchmarkWarmUpFrames, benchmarkFrames);
 
     //! Set the window size if specified.
-    if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getQOSPRayWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
+    if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
 
     //! Enter the Qt event loop.
     app->exec();

@@ -13,7 +13,7 @@
 #include "apps/common/widgets/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
-#include "Model.h"
+#include "model.h"
 #include "uintah.h"
 #include "sys/filename.h"
 

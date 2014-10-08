@@ -17,7 +17,6 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
-  common/OspDataType.cpp
   common/OspCommon.cpp
   common/OspCommon.ispc
   common/Managed.cpp
@@ -41,8 +40,7 @@ SET(OSPRAY_SOURCES
   camera/perspectivecamera.cpp
 
   volume/BrickedVolume.cpp
-  volume/BrickedVolumeFloat.ispc
-  volume/BrickedVolumeUChar.ispc
+  volume/BrickedVolume.ispc
   volume/StructuredVolume.cpp
   volume/SymbolRegistry.cpp
   volume/Volume.cpp
@@ -97,6 +95,9 @@ SET(OSPRAY_SOURCES
   render/obj/objpointlight.cpp
   render/obj/objspotlight.ispc
   render/obj/objspotlight.cpp
+  render/volume/RaycastVolumeRenderer.cpp
+  render/volume/RaycastVolumeRenderer.ispc
+  render/volume/SymbolRegistry.cpp
 
   api/api.cpp
   api/device.cpp
