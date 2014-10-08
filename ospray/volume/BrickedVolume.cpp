@@ -25,7 +25,7 @@ namespace ospray {
         volumeDimensions = getParam3i("dimensions", vec3i(0));  exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");
 
         //! Get the transfer function.
-        transferFunction = getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no volume transfer function specified");
+        transferFunction = (TransferFunction*)getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no volume transfer function specified");
 
         //! Get the gamma correction coefficient and exponent.
         vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
