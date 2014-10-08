@@ -12,6 +12,8 @@
 
 #include "ospray/transferfunction/TransferFunction.ih"
 
+#define PRECOMPUTED_VALUES_DIM 16
+
     struct LinearTransferFunction {
 
         //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
@@ -22,6 +24,9 @@
 
         //! Transfer function colors, count, and range.
         vec3f *uniform colors;  uniform int colorCount;  uniform vec2f colorRange;
+
+        //! A 2D array that contains precomputed minimum and maximum values for a transfer function
+        vec2f precomputedMinMaxInRange[PRECOMPUTED_VALUES_DIM][PRECOMPUTED_VALUES_DIM];
     };
 
     //! Interpolated opacity for the given value.
@@ -29,6 +34,12 @@
 
     //! Interpolated color for the given value.
     varying vec3f LinearTransferFunction_getColorForValue(const void *uniform transferFunction, varying float value);
+
+    //! Precompute the min/max alpha ranges for this transfer function
+    void LinearTransferFunction_precomputeMinMaxAlphaRanges(void *uniform pointer);
+
+    //! Look up the precomputed min/max alpha values for a given range
+    varying vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, varying float lowRange, varying float highRange);
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Create an instance of this TransferFunction subtype.
 //  extern "C" { void *uniform LinearTransferFunction_createInstance(); }
