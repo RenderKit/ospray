@@ -8,7 +8,7 @@
 #pragma once
 
 // ospray
-#include "common/ospcommon.h"
+#include "common/OspCommon.h"
 // stl
 #include <map>
 #include <vector>

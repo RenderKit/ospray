@@ -11,7 +11,7 @@
 
 // ospray
 #include "ospray/render/renderer.h"
-#include "ospray/common/material.h"
+#include "ospray/common/Material.h"
 
 // obj renderer
 #include "objpointlight.h"

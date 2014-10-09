@@ -8,7 +8,7 @@
 
 //ospray
 #include "light.h"
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 
 //system
 #include <map>
@@ -37,7 +37,8 @@ namespace ospray {
         std::cout << "#ospray: could not find light type '" << type << "'" << std::endl;
       return NULL;
     }
-    return (*creator)();
+    Light *light = (*creator)();  light->managedObjectType = OSP_LIGHT;
+    return(light);
   }
 
 }

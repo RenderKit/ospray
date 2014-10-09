@@ -6,13 +6,6 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-
-
-
-/*
- mm -C ~/Projects/ospray/bin/ && ~/Projects/ospray/bin/streamLineView ~/models/NASA/B-field-sun/ext/*pnt ~/models/NASA/B-field-sun/original/temp\=6400k.sv   --renderer obj --1k -vp 0.897989 0.588022 -0.800192 -vi 0.0106688 -0.212129 -0.029311 -vu 0 1 0 
-*/
-
 #undef NDEBUG
 // viewer widget
 #include "apps/common/widgets/glut3D.h"

@@ -261,14 +261,17 @@ namespace ospray {
 
     void Glut3DWidget::display()
     {
+      char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
         if (animating && dumpScreensDuringAnimation) {
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
-          if (!dumpFileRoot)
-            dumpFileRoot = tmpnam(NULL);
+          if (!dumpFileRoot) {
+	    mkstemp(tmpFileName);
+            dumpFileRoot = tmpFileName;
+	  }
         
           char fileName[100000];
           sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(NULL));
@@ -684,12 +687,14 @@ namespace ospray {
         if (animating) {
           dumpScreensDuringAnimation = !dumpScreensDuringAnimation;
         } else {
+	  char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
-          if (!dumpFileRoot)
-            dumpFileRoot = tmpnam(NULL);
-
+          if (!dumpFileRoot) {
+	    mkstemp(tmpFileName);
+            dumpFileRoot = tmpFileName;
+	  }
           char fileName[100000];
           static int frameDumpSequenceID = 0;
           sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);

@@ -11,9 +11,9 @@
 #include "mpicommon.h"
 #include "mpidevice.h"
 //#include "../fb/swapchain.h"
-#include "../common/model.h"
-#include "../common/data.h"
-#include "../common/library.h"
+#include "../common/Model.h"
+#include "../common/Data.h"
+#include "../common/Library.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
@@ -441,6 +441,17 @@ namespace ospray {
       cmd.flush();
     }
 
+    /*! add a new volume to a model */
+    void MPIDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    {
+      Assert(_model);
+      Assert(_volume);
+      cmd.newCommand(CMD_ADD_VOLUME);
+      cmd.send((const mpi::Handle &) _model);
+      cmd.send((const mpi::Handle &) _volume);
+      cmd.flush();
+    }
+
     /*! create a new data buffer */
     OSPTriangleMesh MPIDevice::newTriangleMesh()
     {
@@ -555,6 +566,18 @@ namespace ospray {
       cmd.send((const mpi::Handle &)_object);
       cmd.send(bufName);
       cmd.send(i);
+    }
+
+    /*! assign (named) vec2f parameter to an object */
+    void MPIDevice::setVec2f(OSPObject _object, const char *bufName, const vec2f &v)
+    {
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC2F);
+      cmd.send((const mpi::Handle &) _object);
+      cmd.send(bufName);
+      cmd.send(v);
     }
 
     /*! assign (named) vec3f parameter to an object */
@@ -691,8 +714,15 @@ namespace ospray {
         registered transfer function types) */
     OSPTransferFunction MPIDevice::newTransferFunction(const char *type)
     {
-      PING;
-      return NULL;
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+
+      cmd.newCommand(CMD_NEW_TRANSFERFUNCTION);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPTransferFunction)(int64)handle;
     }
 
 

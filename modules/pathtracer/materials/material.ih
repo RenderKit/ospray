@@ -8,8 +8,8 @@
 
 #pragma once
 
-#include "ospray/common/material.ih"
-#include "ospray/common/dg.ih" //shapes/differentialgeometry.ih"
+#include "ospray/common/Material.ih"
+#include "ospray/common/DifferentialGeometry.ih" //shapes/differentialgeometry.ih"
 #include "default.ih"
 #include "materials/medium.ih"
 #include "samplers/sample.ih"

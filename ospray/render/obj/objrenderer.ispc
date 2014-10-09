@@ -12,7 +12,7 @@
 #include "ospray/fb/framebuffer.ih"
 #include "ospray/camera/perspectivecamera.ih"
 #include "ospray/render/util.ih"
-#include "ospray/common/model.ih"
+#include "ospray/common/Model.ih"
 #include "ospray/texture/texture2d.ih"
 #include "ospray/lights/light.ih"
 #include "ospray/lights/directionallight.ih"

@@ -8,7 +8,7 @@
 
 // ospray stuff
 #include "geometry.h"
-#include "ospray/common/library.h"
+#include "ospray/common/Library.h"
 // stl stuff
 #include <map>
 // ISPC-side
@@ -60,7 +60,8 @@ namespace ospray {
         std::cout << "#ospray: could not find geometry type '" << type << "'" << std::endl;
       return NULL;
     }
-    return (*creator)();
+    Geometry *geometry = (*creator)();  geometry->managedObjectType = OSP_GEOMETRY;
+    return(geometry);
   }
 };
 

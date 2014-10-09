@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/OspCommon.h"
 #include "ospray/include/ospray/ospray.h"
 /*! \file device.h Defines the abstract base class for OSPRay
     "devices" that implement the OSPRay API */
@@ -51,24 +51,37 @@ namespace ospray {
 
       /*! add a new geometry to a model */
       virtual void addGeometry(OSPModel _model, OSPGeometry _geometry) = 0;
+
       /*! remove an existing geometry from a model */
       virtual void removeGeometry(OSPModel _model, OSPGeometry _geometry) = 0;
+
+      /*! add a new volume to a model */
+      virtual void addVolume(OSPModel _model, OSPVolume _volume) = 0;
 
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags) = 0;
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s) = 0;
+
       /*! assign (named) data item as a parameter to an object */
       virtual void setObject(OSPObject object, const char *bufName, OSPObject obj) = 0;
+
       /*! assign (named) float parameter to an object */
       virtual void setFloat(OSPObject object, const char *bufName, const float f) = 0;
+
+      /*! assign (named) vec2f parameter to an object */
+      virtual void setVec2f(OSPObject object, const char *bufName, const vec2f &v) = 0;
+
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v) = 0;
+
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f) = 0;
+
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v) = 0;
+
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) = 0;
 

@@ -10,10 +10,10 @@
 #include "mpidevice.h"
 #include "command.h"
 //#include "../fb/swapchain.h"
-#include "ospray/common/model.h"
-#include "ospray/common/data.h"
-#include "ospray/common/library.h"
-#include "ospray/common/model.h"
+#include "ospray/common/Model.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/Library.h"
+#include "ospray/common/Model.h"
 #include "ospray/geometry/trianglemesh.h"
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
@@ -106,6 +106,20 @@ namespace ospray {
           Assert(volume);
           handle.assign(volume);
           //          cout << "#w: new volume " << handle << endl;
+        } break;
+        case api::MPIDevice::CMD_NEW_TRANSFERFUNCTION: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new transfer function \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          TransferFunction *transferFunction = TransferFunction::createInstance(type);
+          if (!transferFunction) {
+            throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");
+          }
+          transferFunction->refInc();
+          cmd.free(type);
+          handle.assign(transferFunction);
         } break;
         case api::MPIDevice::CMD_NEW_MATERIAL: {
           // Assert(type != NULL && "invalid volume type identifier");
@@ -309,6 +323,7 @@ namespace ospray {
             }
           }
         } break;
+
         case api::MPIDevice::CMD_ADD_GEOMETRY: {
           const mpi::Handle modelHandle = cmd.get_handle();
           const mpi::Handle geomHandle = cmd.get_handle();
@@ -318,6 +333,17 @@ namespace ospray {
           Assert(geom);
           model->geometry.push_back(geom);
         } break;
+
+        case api::MPIDevice::CMD_ADD_VOLUME: {
+          const mpi::Handle modelHandle = cmd.get_handle();
+          const mpi::Handle volumeHandle = cmd.get_handle();
+          Model *model = (Model *) modelHandle.lookup();
+          Assert(model);
+          Volume *volume = (Volume *) volumeHandle.lookup();
+          Assert(volume);
+          model->volumes.push_back(volume);
+        } break;
+
         case api::MPIDevice::CMD_COMMIT: {
           const mpi::Handle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();

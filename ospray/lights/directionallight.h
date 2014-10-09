@@ -9,7 +9,7 @@
 #pragma once
 
 #include "ospray/lights/light.h"
-#include "ospray/common/managed.h"
+#include "ospray/common/Managed.h"
 
 namespace ospray {
 

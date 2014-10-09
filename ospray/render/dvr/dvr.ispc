@@ -8,7 +8,7 @@
 
 #include "ospray/fb/framebuffer.ih"
 #include "ospray/camera/perspectivecamera.ih"
-#include "ospray/common/ray.ih"
+#include "ospray/common/Ray.ih"
 #include "ospray/math/bbox.ih"
 #include "ospray/volume/Volume.ih"
 #include "ospray/render/util.ih"

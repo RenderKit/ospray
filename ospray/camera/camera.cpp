@@ -9,7 +9,7 @@
 // ospray stuff
 #include "camera.h"
 // embree stuff
-#include "../common/library.h"
+#include "../common/Library.h"
 // stl stuff
 #include <map>
 
@@ -36,7 +36,8 @@ namespace ospray {
         std::cout << "#ospray: could not find camera type '" << type << "'" << std::endl;
       return NULL;
     }
-    return (*creator)();
+    Camera *camera = (*creator)();  camera->managedObjectType = OSP_CAMERA;
+    return(camera);
   }
 };
 

@@ -25,21 +25,18 @@ namespace ospray {
         LinearTransferFunction() {}
 
         //! Destructor.
-        virtual ~LinearTransferFunction() { if (getEquivalentISPC() != NULL) ispc::LinearTransferFunction_destroy(getEquivalentISPC()); }
+        virtual ~LinearTransferFunction() { if (ispcEquivalent != NULL) ispc::LinearTransferFunction_destroy(ispcEquivalent); }
 
         //! Allocate storage and populate the transfer function.
         virtual void commit();
 
         //! A string description of this class.
-        virtual std::string toString() const { return "ospray::LinearTransferFunction"; }
+        virtual std::string toString() const { return("ospray::LinearTransferFunction"); }
 
     protected:
 
         //! Create the equivalent ISPC transfer function.
         virtual void createEquivalentISPC();
-
-        //! Error checking.
-        void exitOnCondition(bool condition, const std::string &message) const { if (condition) throw std::runtime_error("OSPRay::LinearTransferFunction error: " + message + "."); }
 
     };
 

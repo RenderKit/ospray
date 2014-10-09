@@ -35,7 +35,7 @@ typedef embree::avx::BVH4Intersector8Hybrid<embree::Triangle4Intersector8Moeller
 /*! if defined, the multihit kernel will do some additional checks
   that we'll never add the same triangle twice, even if spatial
   splits are enabled. if 'RTC_SCENE_HIGH_QUALITY' is not specified
-  (see ospray/common/model.cpp) this is not required, and only
+  (see ospray/common/Model.cpp) this is not required, and only
   introduces overhead. */
 //#define TOLERATE_SPATIAL_SPLIT_BVHS 1
 

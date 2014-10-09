@@ -11,10 +11,10 @@
 // ospray stuff
 #include "ospray/fb/framebuffer.ih"
 #include "ospray/camera/camera.ih"
-#include "ospray/common/ray.ih"
+#include "ospray/common/Ray.ih"
 #include "ospray/render/util.ih"
 #include "ospray/math/math.ih"
-#include "ospray/common/model.ih"
+#include "ospray/common/Model.ih"
 #include "ospray/render/renderer.ih"
 #include "ospray/texture/texture.ih"
 

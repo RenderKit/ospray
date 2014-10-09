@@ -11,6 +11,7 @@
 
 #include "QOSPRayWindow.h"
 #include <QtGui>
+#include <string>
 #include <vector>
 
 class VolumeViewer : public QMainWindow {
@@ -19,34 +20,59 @@ Q_OBJECT
 
 public:
 
-    VolumeViewer(const float dt);
+    //! Constructor.
+    VolumeViewer(const std::vector<std::string> &filenames);
 
-    QOSPRayWindow *getQOSPRayWindow() { return(osprayWindow_); }
+    //! Destructor.
+   ~VolumeViewer() {};
 
-    void initVolumeFromFile(const std::string &filename);
+    //! Get the OSPRay output window.
+    QOSPRayWindow *getWindow() { return(osprayWindow); }
 
-    void setVolume(size_t index);
+    //! Select the model to be displayed.
+    void setModel(size_t index) { ospSetObject(renderer, "model", models[index]);  ospCommit(renderer);  osprayWindow->setRenderingEnabled(true); }
+
+    //! A string description of this class.
+    std::string toString() const { return("VolumeViewer"); }
 
 public slots:
 
-    void render();
-    void nextTimestep();
-    void playTimesteps(bool set);
+    //! Draw the model associated with the next time step.
+    void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index); }
+
+    //! Toggle animation over the time steps.
+    void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
+
+    //! Force the OSPRay window to be redrawn.
+    void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
 
 protected:
 
-    void createTransferFunction();
-
     //! OSPRay state.
-    OSPRenderer renderer_;
-    std::vector<OSPVolume> volumes_;
-    OSPTransferFunction transferFunction_;
+    std::vector<OSPObject> models;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
 
-    //! The view window.
-    QOSPRayWindow *osprayWindow_;
+    //! The OSPRay output window.
+    QOSPRayWindow *osprayWindow;
 
-    //! Timer for use when stepping through multiple volumes.
-    QTimer playTimestepsTimer_;
+    //! Timer for use when stepping through multiple models.
+    QTimer playTimeStepsTimer;
+
+    //! Print an error message.
+    void emitMessage(const std::string &kind, const std::string &message) const
+        { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+
+    //! Error checking.
+    void exitOnCondition(bool condition, const std::string &message) const
+        { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+
+    //! Load an OSPRay model from a file.
+    void importObjectsFromFile(const std::string &filename);
+
+    //! Create and configure the OSPRay state.
+    void initObjects(const std::vector<std::string> &filenames);
+
+    //! Create and configure the user interface widgets and callbacks.
+    void initUserInterfaceWidgets();
 
 };
 

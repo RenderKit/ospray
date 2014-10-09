@@ -12,7 +12,7 @@
 #define YY_MAIN 1
 #define YY_NEVER_INTERACTIVE 0
 
-#include "model.h"
+#include "Model.h"
 #include "loc.h"
 #include "parser_y.hpp" // (iw) use auto-generated one, not checked-in one
 #include <string>

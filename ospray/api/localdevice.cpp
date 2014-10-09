@@ -8,16 +8,16 @@
 
 #include "localdevice.h"
 // #include "../fb/swapchain.h"
-#include "../common/model.h"
-#include "../common/data.h"
+#include "../common/Model.h"
+#include "../common/Data.h"
 #include "../geometry/trianglemesh.h"
 #include "../render/renderer.h"
 #include "../camera/camera.h"
 #include "../volume/Volume.h"
 #include "../transferfunction/TransferFunction.h"
 #include "../render/loadbalancer.h"
-#include "../common/material.h"
-#include "../common/library.h"
+#include "ospray/common/Material.h"
+#include "../common/Library.h"
 #include "../texture/texture2d.h"
 #include "../lights/light.h"
 
@@ -164,6 +164,18 @@ namespace ospray {
       }
     }
 
+    /*! add a new volume to a model */
+    void LocalDevice::addVolume(OSPModel _model, OSPVolume _volume)
+    {
+      Model *model = (Model *) _model;
+      Assert2(model, "null model in LocalDevice::addVolume()");
+
+      Volume *volume = (Volume *) _volume;
+      Assert2(volume, "null volume in LocalDevice::addVolume()");
+
+      model->volumes.push_back(volume);
+    }
+
     /*! create a new data buffer */
     OSPTriangleMesh LocalDevice::newTriangleMesh()
     {
@@ -217,7 +229,15 @@ namespace ospray {
       ManagedObject::Param *param = object->findParam(bufName,1);
       param->set(f);
     }
+    /*! assign (named) vec2f parameter to an object */
+    void LocalDevice::setVec2f(OSPObject _object, const char *bufName, const vec2f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
 
+      object->findParam(bufName, 1)->set(v);
+    }
     /*! assign (named) vec3f parameter to an object */
     void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
     {

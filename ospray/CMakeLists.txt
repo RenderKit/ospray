@@ -17,36 +17,38 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
-  common/ospdatatype.cpp
-  common/ospcommon.cpp
-  common/ospcommon.ispc
-  common/managed.cpp
-  common/data.cpp
-  common/model.cpp
-  common/model.ispc
-  common/material.cpp
-  common/library.cpp
+  common/OspCommon.cpp
+  common/OspCommon.ispc
+  common/Managed.cpp
+  common/Data.cpp
+  common/Model.cpp
+  common/Model.ispc
+  common/Material.cpp
+  common/Library.cpp
 
   fb/swapchain.cpp 
   fb/framebuffer.ispc
   fb/framebuffer.cpp
   fb/localfb.ispc
 
+  fileio/ObjectCatalog.cpp
+  fileio/ObjectFile.cpp
+  fileio/VolumeFile.cpp
+
   camera/camera.cpp
   camera/perspectivecamera.ispc
   camera/perspectivecamera.cpp
 
   volume/BrickedVolume.cpp
-  volume/BrickedVolumeFloat.ispc
-  volume/BrickedVolumeUChar.ispc
+  volume/BrickedVolume.ispc
   volume/StructuredVolume.cpp
-  volume/StructuredVolumeFile.cpp
   volume/SymbolRegistry.cpp
   volume/Volume.cpp
 
   transferfunction/LinearTransferFunction.ispc
   transferfunction/LinearTransferFunction.cpp
   transferfunction/TransferFunction.cpp
+  transferfunction/TransferFunction.ispc
   transferfunction/SymbolRegistry.cpp
 
   geometry/geometry.ispc
@@ -70,6 +72,7 @@ SET(OSPRAY_SOURCES
   lights/directionallight.ispc
   lights/spotlight.cpp
   lights/spotlight.ispc
+  lights/SymbolRegistry.cpp
 
   texture/texture2d.cpp
   texture/texture2d.ispc
@@ -92,6 +95,9 @@ SET(OSPRAY_SOURCES
   render/obj/objpointlight.cpp
   render/obj/objspotlight.ispc
   render/obj/objspotlight.cpp
+  render/volume/RaycastVolumeRenderer.cpp
+  render/volume/RaycastVolumeRenderer.ispc
+  render/volume/SymbolRegistry.cpp
 
   api/api.cpp
   api/device.cpp

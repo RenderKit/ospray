@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/material.h"
+#include "ospray/common/Material.h"
 #include "ospray/texture/texture2d.h"
 
 namespace ospray {

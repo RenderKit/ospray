@@ -12,8 +12,8 @@
 #include "objpointlight.h"
 #include "objspotlight.h"
 // ospray
-#include "ospray/common/model.h"
-#include "ospray/common/data.h"
+#include "ospray/common/Model.h"
+#include "ospray/common/Data.h"
 #include "ospray/camera/camera.h"
 //embree
 #include "embree2/rtcore.h"

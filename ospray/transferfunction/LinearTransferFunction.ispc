@@ -19,6 +19,11 @@ export void *uniform LinearTransferFunction_createInstance() {
 
     //! Function to get the interpolated opacity for a given value.
     transferFunction->inherited.getAlphaForValue = LinearTransferFunction_getAlphaForValue;
+    
+    //! Virtual function to precompute the min/max alpha ranges of a transfer function
+    transferFunction->inherited.precomputeMinMaxAlphaRanges = LinearTransferFunction_precomputeMinMaxAlphaRanges;
+    //! Virtual function to look up the min/max alpha based on an input range
+    transferFunction->inherited.getMinMaxAlphaInRange = LinearTransferFunction_getMinMaxAlphaInRange;
 
     //! Transfer function colors, count, and range.
     transferFunction->colors = NULL;  transferFunction->colorCount = 0;  transferFunction->colorRange = make_vec2f(0.0f, 1.0f);
@@ -147,5 +152,51 @@ export void LinearTransferFunction_setAlphaValues(void *uniform pointer, const u
     //! Copy the opacity values into the transfer function.
     for (size_t i=0 ; i < count ; i++) transferFunction->alphas[i] = source[i];
 
+    transferFunction->inherited.precomputeMinMaxAlphaRanges(transferFunction);
 }
 
+void LinearTransferFunction_precomputeMinMaxAlphaRanges(void *uniform pointer) {
+  uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform)pointer;
+
+  //Compute the diagonal
+  for (int i = 0; i < PRECOMPUTED_VALUES_DIM; i++) {
+    //Figure out the range of values in the array we are going to compare
+    const int checkRangeLow = transferFunction->alphaCount * (((float)i) / PRECOMPUTED_VALUES_DIM);
+    const int checkRangeHigh = transferFunction->alphaCount * (((float)i+1) / PRECOMPUTED_VALUES_DIM);
+    
+    vec2f range = make_vec2f(transferFunction->alphas[checkRangeLow], transferFunction->alphas[checkRangeLow]);
+    for (int alphaIDX = checkRangeLow+1; alphaIDX < checkRangeHigh; alphaIDX++) {
+      range = make_vec2f(min(range.x, transferFunction->alphas[alphaIDX]),
+			 max(range.y, transferFunction->alphas[alphaIDX]));
+    }
+    
+    transferFunction->precomputedMinMaxInRange[i][i] = range;
+  }
+  
+  //Fill out each column from the diagonal up
+  for (int i = 0; i < PRECOMPUTED_VALUES_DIM; i++) {
+    for (int j = i+1; j < PRECOMPUTED_VALUES_DIM; j++) {
+      //Figure out the range of values in the array we are going to compare
+      const int checkRangeLow = transferFunction->alphaCount * (((float)i) / PRECOMPUTED_VALUES_DIM);
+      const int checkRangeHigh = transferFunction->alphaCount * (((float)j+1) / PRECOMPUTED_VALUES_DIM);
+
+      vec2f range = transferFunction->precomputedMinMaxInRange[i][i];
+      for (int alphaIDX = checkRangeLow+1; alphaIDX < checkRangeHigh; alphaIDX++) {
+	range = make_vec2f(min(range.x, transferFunction->alphas[alphaIDX]),
+			   max(range.y, transferFunction->alphas[alphaIDX]));
+      }
+    
+      transferFunction->precomputedMinMaxInRange[i][j] = range;
+    }
+  }
+
+}
+
+varying vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, varying float rangeLow, varying float rangeHigh) {
+  uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform)pointer;
+  const int maxDim = PRECOMPUTED_VALUES_DIM - 1;
+  const float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
+  const int i = floor(((rangeLow - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const int j = ceil(((rangeHigh - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  return transferFunction->precomputedMinMaxInRange[i][j];
+}

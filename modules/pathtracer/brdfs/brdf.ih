@@ -9,7 +9,7 @@
 #pragma once
 
 #include "optics.ih"
-#include "ospray/common/dg.ih"
+#include "ospray/common/DifferentialGeometry.ih"
 
 #define SPECULAR_REFLECTION   (1<<0)  /*!< diffuse light reflection            */
 #define DIFFUSE_REFLECTION    (1<<1)  /*!< glossy light reflection             */

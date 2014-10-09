@@ -7,32 +7,36 @@
 //    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
 //
 
-#include "ospray/common/data.h"
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/OspCommon.h"
 #include "ospray/transferfunction/LinearTransferFunction.h"
+#include "TransferFunction_ispc.h"
 
 namespace ospray {
 
     void LinearTransferFunction::commit() {
 
         //! Create the equivalent ISPC transfer function.
-        if (getEquivalentISPC() == NULL) createEquivalentISPC();
+        if (ispcEquivalent == NULL) createEquivalentISPC();
 
         //! Retrieve the color and opacity values.
         Data *colors = getParamData("colors", NULL);  Data *alphas = getParamData("alphas", NULL);
 
         //! Set the color values.
-        if (colors) ispc::LinearTransferFunction_setColorValues(getEquivalentISPC(), colors->numItems, (ispc::vec3f *) colors->data);
+        if (colors) ispc::LinearTransferFunction_setColorValues(ispcEquivalent, colors->numItems, (ispc::vec3f *) colors->data);
 
         //! Set the color value range.
-        if (colors) ispc::LinearTransferFunction_setColorRange(getEquivalentISPC(), getParamf("colorValueMin", 0.0f), getParamf("colorValueMax", 1.0f));
+        if (colors) ispc::LinearTransferFunction_setColorRange(ispcEquivalent, getParamf("colorValueMin", 0.0f), getParamf("colorValueMax", 1.0f));
 
         //! Set the opacity values.
-        if (alphas) ispc::LinearTransferFunction_setAlphaValues(getEquivalentISPC(), alphas->numItems, (float *) alphas->data);
+        if (alphas) ispc::LinearTransferFunction_setAlphaValues(ispcEquivalent, alphas->numItems, (float *) alphas->data);
 
         //! Set the opacity value range.
-        if (alphas) ispc::LinearTransferFunction_setAlphaRange(getEquivalentISPC(), getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
-
+        if (alphas) ispc::LinearTransferFunction_setAlphaRange(ispcEquivalent, getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
+	
+	//! Set the value range that the transfer function covers
+	vec2f range = getParam2f("range", vec2f(0.f,1.f));
+	ispc::TransferFunction_setValueRange(ispcEquivalent, range.x, range.y);
     }
 
     void LinearTransferFunction::createEquivalentISPC() {

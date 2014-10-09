@@ -8,9 +8,7 @@
 
 // ospray stuff
 #include "renderer.h"
-#include "../common/library.h"
-// embree stuff
-#include "common/sys/library.h"
+#include "../common/Library.h"
 // stl stuff
 #include <map>
 // ispc exports
@@ -51,7 +49,8 @@ namespace ospray {
         std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
       return NULL;
     }
-    return (*creator)();
+    Renderer *renderer = (*creator)();  renderer->managedObjectType = OSP_RENDERER;
+    return(renderer);
   }
 
   void Renderer::renderTile(Tile &tile)

@@ -10,7 +10,7 @@
 
 /*! \file renderer.h Defines the base renderer class */
 
-#include "ospray/common/model.h"
+#include "ospray/common/Model.h"
 #include "ospray/fb/framebuffer.h"
 
 namespace ospray {

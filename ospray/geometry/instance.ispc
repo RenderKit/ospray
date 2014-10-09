@@ -10,9 +10,9 @@
 #include "ospray/math/vec.ih"
 #include "ospray/math/affine.ih"
 #include "ospray/math/bbox.ih"
-#include "ospray/common/ray.ih"
+#include "ospray/common/Ray.ih"
 #include "ospray/geometry/geometry.ih"
-#include "ospray/common/model.ih"
+#include "ospray/common/Model.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"

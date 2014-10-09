@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "ospray/common/managed.h"
+#include "ospray/common/Managed.h"
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
@@ -21,7 +21,8 @@
 //!  module and registered with OSPRay using this macro.
 //!
 #define OSP_REGISTER_TRANSFER_FUNCTION(InternalClass, ExternalName) \
-    extern "C" TransferFunction *ospray_create_transfer_function_##ExternalName() { return(new InternalClass()); }
+    extern "C" TransferFunction *ospray_create_transfer_function_##ExternalName() \
+        { return(new InternalClass()); }
 
 namespace ospray {
 
@@ -53,12 +54,24 @@ namespace ospray {
         void *getEquivalentISPC() const { return(getIE()); }
 
         //! A string description of this class.
-        virtual std::string toString() const { return "ospray::TransferFunction<abstract base class>"; }
+        virtual std::string toString() const { return("ospray::TransferFunction"); }
 
     protected:
 
         //! Create the equivalent ISPC transfer function.
         virtual void createEquivalentISPC() = 0;
+
+        //! Print an error message.
+        void emitMessage(const std::string &kind, const std::string &message) const
+            { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+
+        //! Error checking.
+        void exitOnCondition(bool condition, const std::string &message) const
+            { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+
+        //! Warning condition.
+        void warnOnCondition(bool condition, const std::string &message) const
+            { if (!condition) return;  emitMessage("WARNING", message); }
 
     };
 

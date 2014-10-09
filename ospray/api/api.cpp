@@ -9,11 +9,13 @@
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
-#include "ospray/common/material.h"
+#include "ospray/common/Material.h"
+#include "ospray/fileio/ObjectCatalog.h"
+#include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/transferfunction/TransferFunction.h"
 #include "localdevice.h"
-#include "ospray/common/ospcommon.h"
+#include "ospray/common/OspCommon.h"
 
 #if 1
 # define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
@@ -160,7 +162,7 @@ namespace ospray {
                                       OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
-    Assert(mapped != NULL && "invalid mapped pointer in ospAddGeometry");
+    Assert(mapped != NULL && "invalid mapped pointer in ospUnmapFrameBuffer");
     ospray::api::Device::current->frameBufferUnmap(mapped,fb);
   }
 
@@ -176,6 +178,14 @@ namespace ospray {
     Assert(model != NULL && "invalid model in ospAddGeometry");
     Assert(geometry != NULL && "invalid geometry in ospAddGeometry");
     return ospray::api::Device::current->addGeometry(model,geometry);
+  }
+
+  extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
+  {
+    ASSERT_DEVICE();
+    Assert(model != NULL && "invalid model in ospAddVolume");
+    Assert(volume != NULL && "invalid volume in ospAddVolume");
+    return ospray::api::Device::current->addVolume(model, volume);
   }
 
   extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
@@ -234,7 +244,7 @@ namespace ospray {
   extern "C" OSPRenderer ospNewRenderer(const char *_type)
   {
     ASSERT_DEVICE();
-    Assert2(_type,"invalid render type identifier in ospAddGeometry");
+    Assert2(_type,"invalid render type identifier in ospNewRenderer");
     LOG("ospNewRenderer(" << _type << ")");
     int L = strlen(_type);
     char type[L+1];
@@ -259,7 +269,7 @@ namespace ospray {
   extern "C" OSPGeometry ospNewGeometry(const char *type)
   {
     ASSERT_DEVICE();
-    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    Assert(type != NULL && "invalid geometry type identifier in ospNewGeometry");
     LOG("ospNewGeometry(" << type << ")");
     OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
     // if (ospray::logLevel > 0)
@@ -295,7 +305,7 @@ namespace ospray {
   extern "C" OSPCamera ospNewCamera(const char *type)
   {
     ASSERT_DEVICE();
-    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    Assert(type != NULL && "invalid camera type identifier in ospNewCamera");
     LOG("ospNewCamera(" << type << ")");
     OSPCamera camera = ospray::api::Device::current->newCamera(type);
     return camera;
@@ -314,11 +324,26 @@ namespace ospray {
     return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
   }
 
+  /*! \brief import a collection of OSPRay objects from a file, return 'NULL' if the file type is not known */
+  extern "C" OSPObjectCatalog ospImportObjects(const char *filename)
+  {
+    ASSERT_DEVICE();
+    Assert(filename != NULL && "no filename specified in ospImportObjects");
+    LOG("ospImportObjects(" << filename << ")");
+    OSPObjectCatalog catalog = ospray::ObjectFile::importObjects(filename);
+    if (ospray::logLevel > 0)
+      if (catalog)
+        cout << "ospImportObjects: " << filename << endl;
+      else
+        std::cerr << "#ospray: could not import objects from file '" << filename << "'" << std::endl;
+    return catalog;
+  }
+
   /*! \brief create a new volume of given type, return 'NULL' if that type is not known */
   extern "C" OSPVolume ospNewVolume(const char *type)
   {
     ASSERT_DEVICE();
-    Assert(type != NULL && "invalid render type identifier in ospAddGeometry");
+    Assert(type != NULL && "invalid volume type identifier in ospNewVolume");
     LOG("ospNewVolume(" << type << ")");
     OSPVolume volume = ospray::api::Device::current->newVolume(type);
     if (ospray::logLevel > 0)
@@ -375,13 +400,14 @@ namespace ospray {
 #endif
   }
 
-  /*! add a data array to another object */
   extern "C" void ospCommit(OSPObject object)
   {
     ASSERT_DEVICE();
     Assert(object && "invalid object handle to commit to");
     LOG("ospCommit(...)");
-    return ospray::api::Device::current->commit(object);
+    ObjectCatalog *catalog = dynamic_cast<ObjectCatalog *>(object);
+    if (catalog) catalog->commit();
+    else ospray::api::Device::current->commit(object);
   }
 
   extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)
@@ -409,6 +435,12 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
   }
+  /*! add a vec2f parameter to an object */
+  extern "C" void ospSetVec2f(OSPObject _object, const char *id, const vec2f &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec2f(_object, id, v);
+  }
   /*! add a data array to another object */
   extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)
   {
@@ -420,6 +452,18 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec3i(_object,id,v);
+  }
+  /*! add a data array to another object */
+  extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
+  {
+    ASSERT_DEVICE();
+    ospSetVec2f(_object,id,vec2f(x,y));
+  }
+  /*! add a data array to another object */
+  extern "C" void ospSet2fv(OSPObject _object, const char *id, const float *xy)
+  {
+    ASSERT_DEVICE();
+    ospSetVec2f(_object,id,vec2f(xy[0],xy[1]));
   }
   /*! add a data array to another object */
   extern "C" void ospSet3f(OSPObject _object, const char *id, float x, float y, float z)

@@ -26,6 +26,9 @@ namespace ospray {
         //! Destructor.
         virtual ~BrickedVolume() {};
 
+        //! Create the equivalent ISPC volume container.
+        virtual void createEquivalentISPC();
+
         //! Copy voxels into the volume at the given index.
         virtual void setRegion(const void *source, const vec3i &index, const vec3i &count);
 
@@ -34,11 +37,9 @@ namespace ospray {
 
     protected:
 
-        //! Create the equivalent ISPC volume container.
-        virtual void createEquivalentISPC();
-
-        //! Error checking.
-        virtual void exitOnCondition(bool condition, const std::string &message) const { if (condition) throw std::runtime_error("OSPRay::BrickedVolume error: " + message + "."); }
+        //! Range test a vector value against [b, c).
+        inline bool inRange(const vec3i &a, const vec3i &b, const vec3i &c)
+            { return(a.x >= b.x && a.y >= b.y && a.z >= b.z && a.x < c.x && a.y < c.y && a.z < c.z); }
 
     };
 

@@ -25,7 +25,7 @@
 #pragma once
 
 #include "ospray/render/renderer.h"
-#include "ospray/common/model.h"
+#include "ospray/common/Model.h"
 #include "ospray/camera/camera.h"
 
 namespace ospray {

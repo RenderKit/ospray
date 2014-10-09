@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "trianglemesh.h"
-#include "../common/model.h"
+#include "../common/Model.h"
 // embree stuff
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"

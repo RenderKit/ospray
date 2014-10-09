@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "ospray/common/material.h"
+#include "ospray/common/Material.h"
 #include "dielectric_ispc.h"
 
 namespace ospray {
