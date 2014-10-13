@@ -14,289 +14,47 @@
 
 namespace ospray {
 
-    SeismicVolumeFile::SeismicVolumeFile(const std::string &filename) : filename(realpath(filename.c_str(), NULL)),
-                                                                        useSubvolume(false) {
+    OSPObjectCatalog SeismicVolumeFile::importVolume(Volume *pointer) {
 
-        //! Default subvolume parameters (can't initialize in initializer list)
-        subvolumeOffsets[0] = 0; subvolumeOffsets[1] = 0; subvolumeOffsets[2] = 0;
-        subvolumeSteps[0] = 1; subvolumeSteps[1] = 1; subvolumeSteps[2] = 1;
-        subvolumeDimensions[0] = 0; subvolumeDimensions[1] = 0; subvolumeDimensions[2] = 0;
+        //! This loader operates on StructuredVolume objects.
+        StructuredVolume *volume = dynamic_cast<StructuredVolume *>(pointer);  exitOnCondition(!volume, "unexpected volume type");
 
-        //! We use the file extension to determine if this is a header or volume file.
-        std::string extension = filename.substr(filename.find_last_of(".") + 1);
+        //! Set voxel type of the volume. Note that FreeDDS converts sample types of int, short, long, float, and double to float.
+        ospSetString((OSPObject)volume, "voxelType", "float");
 
-        if(extension == "smch" || extension == "seismich") {
+        //! Open seismic data file and populate attributes.
+        exitOnCondition(openSeismicDataFile(volume) != true, "unable to open file '" + filename + "'");
 
-            //! Read attributes from XML volume header file.
-            readHeader();
+        //! Create the equivalent ISPC volume container and allocate memory for voxel data.
+        volume->createEquivalentISPC();
 
-            //! Verify a data file has been specified.
-            std::string dataFilename = header["dataFilename"];  exitOnCondition(dataFilename.empty(), "no dataFilename found in volume header");
+        //! Import the voxel data from the file into the volume.
+        exitOnCondition(importVoxelData(volume) != true, "error importing voxel data.");
 
-            //! Open seismic data file.
-            exitOnCondition(openSeismicDataFile(dataFilename) != true, "could not open seismic data file");
-        }
-        else {
-
-            //! No header provided; the given filename is the volume filename.
-            //! Open seismic data file.
-            exitOnCondition(openSeismicDataFile(filename) != true, "could not open seismic data file");
-        }
+        //! Return an ObjectCatalog to allow introspection of the parameters.
+        return(new ObjectCatalog("volume", volume));
     }
 
-    vec3i SeismicVolumeFile::getVolumeDimensions() {
-
-        //! The returned dimensions consider any subvolume specified.
-        vec3i volumeDimensions(subvolumeDimensions[0] / subvolumeSteps[0] + (subvolumeDimensions[0] % subvolumeSteps[0] != 0),
-                               subvolumeDimensions[1] / subvolumeSteps[1] + (subvolumeDimensions[1] % subvolumeSteps[1] != 0),
-                               subvolumeDimensions[2] / subvolumeSteps[2] + (subvolumeDimensions[2] % subvolumeSteps[2] != 0));
-
-        //! Range check.
-        exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");  return(volumeDimensions);
-    }
-
-    void SeismicVolumeFile::getVoxelData(void **buffer) {
-
-        //! This method not yet implemented, waiting on final file loader API.
-        NOTIMPLEMENTED;
-    }
-
-    void SeismicVolumeFile::getVoxelData(StructuredVolume *volume) {
-
-        //! Volume statistics.
-        float dataMin = FLT_MAX;
-        float dataMax = -FLT_MAX;
-
-        //! Properties of the generated volume (this may be a subvolume of the full volume represented by the data).
-        vec3i volumeDimensions = getVolumeDimensions();
-
-        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile subvolume dimensions = " << volumeDimensions.x << " " << volumeDimensions.y << " " << volumeDimensions.z << std::endl;
-
-        //! Default trace fields used for coordinates in each dimension.
-        std::string traceCoordinate2Field("CdpNum");
-        std::string traceCoordinate3Field("FieldRecNum");
-
-        //! The volume header can override these defaults.
-        if(header.count("traceCoordinate2Field") == 1) traceCoordinate2Field = header["traceCoordinate2Field"];
-        if(header.count("traceCoordinate3Field") == 1) traceCoordinate3Field = header["traceCoordinate3Field"];
-
-        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile trace coordinate fields = " << traceCoordinate2Field << " " << traceCoordinate3Field << std::endl;
-
-        //! Get location of these fields in trace header.
-        FIELD_TAG traceCoordinate2Tag = cdds_member(inputBinTag, 0, traceCoordinate2Field.c_str());
-        FIELD_TAG traceCoordinate3Tag = cdds_member(inputBinTag, 0, traceCoordinate3Field.c_str());
-        if(traceHeaderSize > 0) exitOnCondition(traceCoordinate2Tag == -1 || traceCoordinate3Tag == -1, "could not get trace header coordinate information");
-
-        //! Allocate trace array; the trace length is given by the trace header size and the first dimension.
-        //! Note that FreeDDS converts all trace data to floats.
-        float * traceBuffer = (float *)malloc((traceHeaderSize + dimensions[0]) * sizeof(float));
-
-        //! Get origin in dimension 2 and 3 from first trace if we have a trace header; otherwise assume it is (0, 0).
-        int origin2 = 0;
-        int origin3 = 0;
-
-        if(traceHeaderSize > 0) {
-            exitOnCondition(cddx_read(inputBinTag, traceBuffer, 1) != 1, "could not read first trace");
-            cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &origin2, 1);
-            cdds_geti(inputBinTag, traceCoordinate3Tag, traceBuffer, &origin3, 1);
-
-            if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile trace coordinate origin: (" << origin2 << ", " << origin3 << ")" << std::endl;
-
-            //! Seek back to the beginning of the file.
-            cdds_lseek(inputBinTag, 0, 0, SEEK_SET);
-        }
-
-        //! Copy voxel data into the volume a trace at a time.
-        size_t traceCount = 0;
-
-        //! If no subvolume is specified and we have trace header information, read all the traces. Missing traces are allowed.
-        //! Otherwise, read only the specified subvolume, skipping over traces as needed. Missing traces NOT allowed.
-        if(!useSubvolume && traceHeaderSize > 0) {
-
-            while(cddx_read(inputBinTag, traceBuffer, 1) == 1) {
-
-                //! Get logical coordinates.
-                int coordinate2, coordinate3;
-                cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &coordinate2, 1);
-                cdds_geti(inputBinTag, traceCoordinate3Tag, traceBuffer, &coordinate3, 1);
-
-                //! Validate coordinates.
-                exitOnCondition(coordinate2-origin2 < 0 || coordinate2-origin2 >= dimensions[1] || coordinate3-origin3 < 0 || coordinate3-origin3 >= dimensions[2], "invalid trace coordinates found");
-
-                //! Copy trace into the volume.
-                volume->setRegion(&traceBuffer[traceHeaderSize], vec3i(0, coordinate2-origin2, coordinate3-origin3), vec3i(volumeDimensions.x, 1, 1));
-
-                //! Accumulate statistics.
-                for (int i1=0; i1<volumeDimensions.x; i1++) {
-
-                    dataMin = std::min(float(traceBuffer[traceHeaderSize + i1]), dataMin);
-                    dataMax = std::max(float(traceBuffer[traceHeaderSize + i1]), dataMax);
-                }
-
-                traceCount++;
-            }
-        }
-        else {
-
-            //! Allocate trace buffer for subvolume data.
-            float * traceBufferSubvolume = (float *)malloc(volumeDimensions.x * sizeof(float));
-
-            //! Iterate through the grid of traces of the subvolume, seeking as necessary.
-            for(int i3=subvolumeOffsets[2]; i3<subvolumeOffsets[2]+subvolumeDimensions[2]; i3+=subvolumeSteps[2]) {
-
-                //! Seek to offset if necessary.
-                if(i3 == subvolumeOffsets[2] && subvolumeOffsets[2] != 0) {
-                    cdds_lseek(inputBinTag, 0, subvolumeOffsets[2] * dimensions[1], SEEK_CUR);
-                }
-
-                for(int i2=subvolumeOffsets[1]; i2<subvolumeOffsets[1]+subvolumeDimensions[1]; i2+=subvolumeSteps[1]) {
-
-                    //! Seek to offset if necessary.
-                    if(i2 == subvolumeOffsets[1] && subvolumeOffsets[1] != 0) {
-                        cdds_lseek(inputBinTag, 0, subvolumeOffsets[1], SEEK_CUR);
-                    }
-
-                    //! Read trace.
-                    exitOnCondition(cddx_read(inputBinTag, traceBuffer, 1) != 1, "unable to read trace");
-
-                    //! Get logical coordinates.
-                    int coordinate2 = i2;
-                    int coordinate3 = i3;
-
-                    if(traceHeaderSize > 0) {
-                        cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &coordinate2, 1);
-                        cdds_geti(inputBinTag, traceCoordinate3Tag, traceBuffer, &coordinate3, 1);
-                    }
-                    else {
-                        coordinate2 = i2;
-                        coordinate3 = i3;
-                    }
-
-                    //! Some trace headers will have improper coordinate information; correct coordinate3 if necessary.
-                    if(coordinate2-origin2 >= dimensions[1])
-                    {
-                        coordinate3 = origin3 + (coordinate2-origin2) / dimensions[1];
-                        coordinate2 -= (coordinate3-origin3) * dimensions[1];
-                    }
-
-                    //! Validate we have the expected coordinates.
-                    if((coordinate2-origin2 != i2 || coordinate3-origin3 != i3) && ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile found incorrect coordinate(s): (" << coordinate2-origin2 << ", " << coordinate3-origin3 << ") != (" << i2 << ", " << i3 << ")" << std::endl;
-
-                    exitOnCondition(coordinate2-origin2 != i2, "found invalid coordinate (dimension 2)");
-                    exitOnCondition(coordinate3-origin3 != i3, "found invalid coordinate (dimension 3)");
-
-                    //! Resample trace for the subvolume.
-                    for(int i1=subvolumeOffsets[0]; i1<subvolumeOffsets[0]+subvolumeDimensions[0]; i1+=subvolumeSteps[0]) {
-                        traceBufferSubvolume[(i1 - subvolumeOffsets[0]) / subvolumeSteps[0]] = traceBuffer[traceHeaderSize + i1];
-                    }
-
-                    //! Copy subsampled trace into the volume.
-                    volume->setRegion(&traceBufferSubvolume[0], vec3i(0, (i2 - subvolumeOffsets[1]) / subvolumeSteps[1], (i3 - subvolumeOffsets[2]) / subvolumeSteps[2]), vec3i(volumeDimensions.x, 1, 1));
-
-                    //! Accumulate statistics.
-                    for (int i1=0; i1<volumeDimensions.x; i1++) {
-
-                        dataMin = std::min(float(traceBufferSubvolume[i1]), dataMin);
-                        dataMax = std::max(float(traceBufferSubvolume[i1]), dataMax);
-                    }
-
-                    traceCount++;
-
-                    //! Skip traces (second dimension)
-                    if(i2 >= subvolumeOffsets[1] + subvolumeDimensions[1] - subvolumeSteps[1]) {
-                        cdds_lseek(inputBinTag, 0, dimensions[1] - i2 - 1, SEEK_CUR);
-                    }
-                    else {
-                        cdds_lseek(inputBinTag, 0, subvolumeSteps[1] - 1, SEEK_CUR);
-                    }
-                }
-
-                //! Skip traces (third dimension)
-                if(i3 >= subvolumeOffsets[2] + subvolumeDimensions[2] - subvolumeSteps[2]) {
-                    cdds_lseek(inputBinTag, 0, (dimensions[2] - i3 - 1) * dimensions[1], SEEK_CUR);
-                }
-                else {
-                    cdds_lseek(inputBinTag, 0, (subvolumeSteps[2] - 1) * dimensions[1], SEEK_CUR);
-                }
-            }
-
-            //! Clean up.
-            free(traceBufferSubvolume);
-        }
-
-        //! Print statistics.
-        if(ospray::logLevel >= 1) {
-
-            std::cout << "OSPRay::SeismicVolumeFile read " << traceCount << " traces. " << volumeDimensions.y*volumeDimensions.z - int(traceCount) << " missing trace(s)." << std::endl;
-            std::cout << "OSPRay::SeismicVolumeFile volume data range = " << dataMin << " " << dataMax << std::endl;
-        }
-
-        //! Clean up.
-        free(traceBuffer);
-
-        //! Close the seismic data file.
-        cdds_close(inputBinTag);
-    }
-
-    vec3f SeismicVolumeFile::getVoxelSpacing() {
-
-        vec3f voxelSpacing(deltas[0], deltas[1], deltas[2]);
-
-        //! Range check.
-        exitOnCondition(voxelSpacing.x < 0.0f || voxelSpacing.y < 0.0f || voxelSpacing.z < 0.0f, "invalid voxel spacing");  return(voxelSpacing);
-    }
-
-    std::string SeismicVolumeFile::getVoxelType() {
-
-        //! Note: FreeDDS converts sample types int, short, long, float, and double to float.
-        return std::string("float");
-    }
-
-    void SeismicVolumeFile::readHeader() {
-
-        //! The XML document container.
-        tinyxml2::XMLDocument xml(true, tinyxml2::COLLAPSE_WHITESPACE);
-
-        //! Read the XML volume header file.
-        exitOnCondition(xml.LoadFile(filename.c_str()) != tinyxml2::XML_SUCCESS, "unable to read volume header file '" + filename + "'");
-
-        //! The XML node containing the volume specification.
-        tinyxml2::XMLNode *root = xml.FirstChildElement("volume");  exitOnCondition(root == NULL, "no volume XML tag found in header file '" + filename + "'");
-
-        //! Iterate over elements comprising the XML volume specification node.
-        for (tinyxml2::XMLElement *element = root->FirstChildElement() ; element != NULL ; element = element->NextSiblingElement()) {
-
-            //! Store the key value strings comprising this XML element.
-            header[element->Name()] = element->GetText();
-
-            //! Elements may contain zero or more attributes.
-            const tinyxml2::XMLAttribute *attribute = element->FirstAttribute();
-
-            //! Iterate over attributes in this XML element.
-            while (attribute != NULL) header[std::string(element->Name()) + " " + attribute->Name()] = attribute->Value(), attribute = attribute->Next();
-        }
-    }
-
-    bool SeismicVolumeFile::openSeismicDataFile(std::string dataFilename) {
+    bool SeismicVolumeFile::openSeismicDataFile(StructuredVolume *volume) {
 
         //! Open seismic data file, keeping trace header information.
         //! Sample types int, short, long, float, and double will be converted to float.
-        inputBinTag = cddx_in2("in", dataFilename.c_str(), "seismic");
-        exitOnCondition(inputBinTag < 0, "could not open data file " + dataFilename);
-
-        //! Get voxel spacing (deltas).
-        exitOnCondition(cdds_scanf("delta.axis(1)", "%f", &deltas[0]) != 1, "could not find delta of dimension 1");
-        exitOnCondition(cdds_scanf("delta.axis(2)", "%f", &deltas[1]) != 1, "could not find delta of dimension 2");
-        exitOnCondition(cdds_scanf("delta.axis(3)", "%f", &deltas[2]) != 1, "could not find delta of dimension 3");
-
-        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile volume deltas = " << deltas[0] << " " << deltas[1] << " " << deltas[2] << std::endl;
+        inputBinTag = cddx_in2("in", filename.c_str(), "seismic");
+        exitOnCondition(inputBinTag < 0, "could not open data file " + filename);
 
         //! Get seismic volume dimensions and volume size.
-        exitOnCondition(cdds_scanf("size.axis(1)", "%d", &dimensions[0]) != 1, "could not find size of dimension 1");
-        exitOnCondition(cdds_scanf("size.axis(2)", "%d", &dimensions[1]) != 1, "could not find size of dimension 2");
-        exitOnCondition(cdds_scanf("size.axis(3)", "%d", &dimensions[2]) != 1, "could not find size of dimension 3");
+        exitOnCondition(cdds_scanf("size.axis(1)", "%d", &dimensions.x) != 1, "could not find size of dimension 1");
+        exitOnCondition(cdds_scanf("size.axis(2)", "%d", &dimensions.y) != 1, "could not find size of dimension 2");
+        exitOnCondition(cdds_scanf("size.axis(3)", "%d", &dimensions.z) != 1, "could not find size of dimension 3");
 
-        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile volume dimensions = " << dimensions[0] << " " << dimensions[1] << " " << dimensions[2] << std::endl;
+        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile volume dimensions = " << dimensions.x << " " << dimensions.y << " " << dimensions.z << std::endl;
+
+        //! Get voxel spacing (deltas).
+        exitOnCondition(cdds_scanf("delta.axis(1)", "%f", &deltas.x) != 1, "could not find delta of dimension 1");
+        exitOnCondition(cdds_scanf("delta.axis(2)", "%f", &deltas.y) != 1, "could not find delta of dimension 2");
+        exitOnCondition(cdds_scanf("delta.axis(3)", "%f", &deltas.z) != 1, "could not find delta of dimension 3");
+
+        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile volume deltas = " << deltas.x << " " << deltas.y << " " << deltas.z << std::endl;
 
         //! Get trace header information.
         FIELD_TAG traceSamplesTag = cdds_member(inputBinTag, 0, "Samples");
@@ -306,54 +64,63 @@ namespace ospray {
         if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile trace header size = " << traceHeaderSize << std::endl;
 
         //! Check that volume dimensions are valid. If not, perform a scan of all trace headers to find actual dimensions.
-        if(dimensions[0] <= 1 || dimensions[1] <= 1 || dimensions[2] <= 1) {
+        if(reduce_min(dimensions) <= 1) {
 
             if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile improper volume dimensions found, scanning volume file for proper values." << std::endl;
 
-            exitOnCondition(scanSeismicDataFileForDimensions() != true, "failed scan of seismic data file");
+            exitOnCondition(scanSeismicDataFileForDimensions(volume) != true, "failed scan of seismic data file");
         }
-
-        //! Subvolume defaults to full dimensions (allowing for just subsampling, for example.)
-        subvolumeDimensions[0] = dimensions[0]; subvolumeDimensions[1] = dimensions[1]; subvolumeDimensions[2] = dimensions[2];
 
         //! Check if a subvolume of the volume has been specified.
-        //! Subvolume parameters: subvolumeOffsets, subvolumeSteps, subvolumeDimensions.
-        if(header.count("subvolumeOffset1") == 1) { useSubvolume = true; subvolumeOffsets[0] = atoi(header["subvolumeOffset1"].c_str()); }
-        if(header.count("subvolumeOffset2") == 1) { useSubvolume = true; subvolumeOffsets[1] = atoi(header["subvolumeOffset2"].c_str()); }
-        if(header.count("subvolumeOffset3") == 1) { useSubvolume = true; subvolumeOffsets[2] = atoi(header["subvolumeOffset3"].c_str()); }
+        //! Subvolume parameters: subvolumeOffsets, subvolumeDimensions, subvolumeSteps.
+        //! The subvolume defaults to full dimensions (allowing for just subsampling, for example.)
+        subvolumeOffsets = volume->getParam3i("subvolumeOffsets", vec3i(0));
+        exitOnCondition(reduce_min(subvolumeOffsets) < 0 || reduce_max(subvolumeOffsets - dimensions) >= 0, "invalid subvolume offsets");
 
-        if(header.count("subvolumeStep1") == 1) { useSubvolume = true; subvolumeSteps[0] = atoi(header["subvolumeStep1"].c_str()); }
-        if(header.count("subvolumeStep2") == 1) { useSubvolume = true; subvolumeSteps[1] = atoi(header["subvolumeStep2"].c_str()); }
-        if(header.count("subvolumeStep3") == 1) { useSubvolume = true; subvolumeSteps[2] = atoi(header["subvolumeStep3"].c_str()); }
+        subvolumeDimensions = volume->getParam3i("subvolumeDimensions", dimensions - subvolumeOffsets);
+        exitOnCondition(reduce_min(subvolumeDimensions) < 1 || reduce_max(subvolumeDimensions - (dimensions - subvolumeOffsets)) > 0, "invalid subvolume dimension(s) specified");
 
-        if(header.count("subvolumeDimension1") == 1) { useSubvolume = true; subvolumeDimensions[0] = atoi(header["subvolumeDimension1"].c_str()); }
-        if(header.count("subvolumeDimension2") == 1) { useSubvolume = true; subvolumeDimensions[1] = atoi(header["subvolumeDimension2"].c_str()); }
-        if(header.count("subvolumeDimension3") == 1) { useSubvolume = true; subvolumeDimensions[2] = atoi(header["subvolumeDimension3"].c_str()); }
+         subvolumeSteps = volume->getParam3i("subvolumeSteps", vec3i(1));
+            exitOnCondition(reduce_min(subvolumeSteps) < 1 || reduce_max(subvolumeSteps - (dimensions - subvolumeOffsets)) >= 0, "invalid subvolume steps");
 
-        //! Validate subvolume parameters and scale voxel spacing as necessary.
+        if(reduce_max(subvolumeOffsets) > 0 || subvolumeDimensions != dimensions || reduce_max(subvolumeSteps) > 1)
+            useSubvolume = true;
+        else
+            useSubvolume = false;
+
+        //! The dimensions of the volume to be imported.
+        volumeDimensions = vec3i(subvolumeDimensions.x / subvolumeSteps.x + (subvolumeDimensions.x % subvolumeSteps.x != 0),
+                                 subvolumeDimensions.y / subvolumeSteps.y + (subvolumeDimensions.y % subvolumeSteps.y != 0),
+                                 subvolumeDimensions.z / subvolumeSteps.z + (subvolumeDimensions.z % subvolumeSteps.z != 0));
+
+        //! Range check.
+        exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");
+
+        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile subvolume dimensions = " << volumeDimensions.x << " " << volumeDimensions.y << " " << volumeDimensions.z << std::endl;
+
+        //! Set dimensions of the volume.
+        ospSetVec3i((OSPObject)volume, "dimensions", volumeDimensions);
+
+        //! The voxel spacing of the volume to be imported.
+        volumeVoxelSpacing = deltas;
+
         if(useSubvolume) {
-
-            for(int i=0; i<3; i++) {
-                exitOnCondition(subvolumeOffsets[i] < 0 || subvolumeOffsets[i] >= dimensions[i], "invalid subvolume offset(s) specified");
-                exitOnCondition(subvolumeSteps[i] < 1 || subvolumeSteps[i] >= dimensions[i], "invalid subvolume step(s) specified");
-                exitOnCondition(subvolumeDimensions[i] < 1 || subvolumeDimensions[i] > dimensions[i] - subvolumeOffsets[i], "invalid subvolume dimension(s) specified");
-
-                deltas[i] *= float(subvolumeSteps[i]);
-            }
+            volumeVoxelSpacing.x *= float(subvolumeSteps.x);
+            volumeVoxelSpacing.y *= float(subvolumeSteps.y);
+            volumeVoxelSpacing.z *= float(subvolumeSteps.z);
         }
+
+        //! Set voxel spacing of the volume.
+        ospSetVec3f((OSPObject)volume, "voxelSpacing", volumeVoxelSpacing);
 
         return true;
     }
 
-    bool SeismicVolumeFile::scanSeismicDataFileForDimensions() {
+    bool SeismicVolumeFile::scanSeismicDataFileForDimensions(StructuredVolume *volume) {
 
-        //! Default trace fields used for coordinates in each dimension.
-        std::string traceCoordinate2Field("CdpNum");
-        std::string traceCoordinate3Field("FieldRecNum");
-
-        //! The volume header can override these defaults.
-        if(header.count("traceCoordinate2Field") == 1) traceCoordinate2Field = header["traceCoordinate2Field"];
-        if(header.count("traceCoordinate3Field") == 1) traceCoordinate3Field = header["traceCoordinate3Field"];
+        //! Trace fields used for coordinates in each dimension; defaults can be overridden.
+        std::string traceCoordinate2Field = volume->getParamString("traceCoordinate2Field", "CdpNum");
+        std::string traceCoordinate3Field = volume->getParamString("traceCoordinate3Field", "FieldRecNum");
 
         if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile trace coordinate fields = " << traceCoordinate2Field << " " << traceCoordinate3Field << std::endl;
 
@@ -364,7 +131,7 @@ namespace ospray {
 
         //! Allocate trace array; the trace length is given by the trace header size and the first dimension.
         //! Note that FreeDDS converts all trace data to floats.
-        float * traceBuffer = (float *)malloc((traceHeaderSize + dimensions[0]) * sizeof(float));
+        float * traceBuffer = (float *)malloc((traceHeaderSize + dimensions.x) * sizeof(float));
 
         //! Range in second and third dimensions
         int minDimension2, maxDimension2;
@@ -397,17 +164,191 @@ namespace ospray {
         }
 
         //! Update dimensions.
-        dimensions[1] = maxDimension2 - minDimension2 + 1;
-        dimensions[2] = maxDimension3 - minDimension3 + 1;
-        exitOnCondition(dimensions[1] <= 1 || dimensions[2] <= 1, "could not determine volume dimensions");
+        dimensions.y = maxDimension2 - minDimension2 + 1;
+        dimensions.z = maxDimension3 - minDimension3 + 1;
+        exitOnCondition(dimensions.y <= 1 || dimensions.z <= 1, "could not determine volume dimensions");
 
-        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile updated volume dimensions = " << dimensions[0] << " x " << dimensions[1] << " (" << minDimension2 << " --> " << maxDimension2 << ") x " << dimensions[2] << " (" << minDimension3 << " --> " << maxDimension3 << ")"  << std::endl;
+        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile updated volume dimensions = " << dimensions.x << " x " << dimensions.y << " (" << minDimension2 << " --> " << maxDimension2 << ") x " << dimensions.z << " (" << minDimension3 << " --> " << maxDimension3 << ")"  << std::endl;
 
         //! Clean up.
         free(traceBuffer);
 
         //! Seek back to the beginning of the file.
         cdds_lseek(inputBinTag, 0, 0, SEEK_SET);
+
+        return true;
+    }
+
+    bool SeismicVolumeFile::importVoxelData(StructuredVolume *volume) {
+
+        //! Volume statistics.
+        float dataMin = FLT_MAX;
+        float dataMax = -FLT_MAX;
+
+        //! Trace fields used for coordinates in each dimension; defaults can be overridden.
+        std::string traceCoordinate2Field = volume->getParamString("traceCoordinate2Field", "CdpNum");
+        std::string traceCoordinate3Field = volume->getParamString("traceCoordinate3Field", "FieldRecNum");
+
+        if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile trace coordinate fields = " << traceCoordinate2Field << " " << traceCoordinate3Field << std::endl;
+
+        //! Get location of these fields in trace header.
+        FIELD_TAG traceCoordinate2Tag = cdds_member(inputBinTag, 0, traceCoordinate2Field.c_str());
+        FIELD_TAG traceCoordinate3Tag = cdds_member(inputBinTag, 0, traceCoordinate3Field.c_str());
+        if(traceHeaderSize > 0) exitOnCondition(traceCoordinate2Tag == -1 || traceCoordinate3Tag == -1, "could not get trace header coordinate information");
+
+        //! Allocate trace array; the trace length is given by the trace header size and the first dimension.
+        //! Note that FreeDDS converts all trace data to floats.
+        float * traceBuffer = (float *)malloc((traceHeaderSize + dimensions.x) * sizeof(float));
+
+        //! Get origin in dimension 2 and 3 from first trace if we have a trace header; otherwise assume it is (0, 0).
+        int origin2 = 0;
+        int origin3 = 0;
+
+        if(traceHeaderSize > 0) {
+            exitOnCondition(cddx_read(inputBinTag, traceBuffer, 1) != 1, "could not read first trace");
+            cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &origin2, 1);
+            cdds_geti(inputBinTag, traceCoordinate3Tag, traceBuffer, &origin3, 1);
+
+            if(ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile trace coordinate origin: (" << origin2 << ", " << origin3 << ")" << std::endl;
+
+            //! Seek back to the beginning of the file.
+            cdds_lseek(inputBinTag, 0, 0, SEEK_SET);
+        }
+
+        //! Copy voxel data into the volume a trace at a time.
+        size_t traceCount = 0;
+
+        //! If no subvolume is specified and we have trace header information, read all the traces. Missing traces are allowed.
+        //! Otherwise, read only the specified subvolume, skipping over traces as needed. Missing traces NOT allowed.
+        if(!useSubvolume && traceHeaderSize > 0) {
+
+            while(cddx_read(inputBinTag, traceBuffer, 1) == 1) {
+
+                //! Get logical coordinates.
+                int coordinate2, coordinate3;
+                cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &coordinate2, 1);
+                cdds_geti(inputBinTag, traceCoordinate3Tag, traceBuffer, &coordinate3, 1);
+
+                //! Validate coordinates.
+                exitOnCondition(coordinate2-origin2 < 0 || coordinate2-origin2 >= dimensions.y || coordinate3-origin3 < 0 || coordinate3-origin3 >= dimensions.z, "invalid trace coordinates found");
+
+                //! Copy trace into the volume.
+                volume->setRegion(&traceBuffer[traceHeaderSize], vec3i(0, coordinate2-origin2, coordinate3-origin3), vec3i(volumeDimensions.x, 1, 1));
+
+                //! Accumulate statistics.
+                for (int i1=0; i1<volumeDimensions.x; i1++) {
+
+                    dataMin = std::min(float(traceBuffer[traceHeaderSize + i1]), dataMin);
+                    dataMax = std::max(float(traceBuffer[traceHeaderSize + i1]), dataMax);
+                }
+
+                traceCount++;
+            }
+        }
+        else {
+
+            //! Allocate trace buffer for subvolume data.
+            float * traceBufferSubvolume = (float *)malloc(volumeDimensions.x * sizeof(float));
+
+            //! Iterate through the grid of traces of the subvolume, seeking as necessary.
+            for(int i3=subvolumeOffsets.z; i3<subvolumeOffsets.z+subvolumeDimensions.z; i3+=subvolumeSteps.z) {
+
+                //! Seek to offset if necessary.
+                if(i3 == subvolumeOffsets.z && subvolumeOffsets.z != 0) {
+                    cdds_lseek(inputBinTag, 0, subvolumeOffsets.z * dimensions.y, SEEK_CUR);
+                }
+
+                for(int i2=subvolumeOffsets.y; i2<subvolumeOffsets.y+subvolumeDimensions.y; i2+=subvolumeSteps.y) {
+
+                    //! Seek to offset if necessary.
+                    if(i2 == subvolumeOffsets.y && subvolumeOffsets.y != 0) {
+                        cdds_lseek(inputBinTag, 0, subvolumeOffsets.y, SEEK_CUR);
+                    }
+
+                    //! Read trace.
+                    exitOnCondition(cddx_read(inputBinTag, traceBuffer, 1) != 1, "unable to read trace");
+
+                    //! Get logical coordinates.
+                    int coordinate2 = i2;
+                    int coordinate3 = i3;
+
+                    if(traceHeaderSize > 0) {
+                        cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &coordinate2, 1);
+                        cdds_geti(inputBinTag, traceCoordinate3Tag, traceBuffer, &coordinate3, 1);
+                    }
+                    else {
+                        coordinate2 = i2;
+                        coordinate3 = i3;
+                    }
+
+                    //! Some trace headers will have improper coordinate information; correct coordinate3 if necessary.
+                    if(coordinate2-origin2 >= dimensions.y)
+                    {
+                        coordinate3 = origin3 + (coordinate2-origin2) / dimensions.y;
+                        coordinate2 -= (coordinate3-origin3) * dimensions.y;
+                    }
+
+                    //! Validate we have the expected coordinates.
+                    if((coordinate2-origin2 != i2 || coordinate3-origin3 != i3) && ospray::logLevel >= 1) std::cout << "OSPRay::SeismicVolumeFile found incorrect coordinate(s): (" << coordinate2-origin2 << ", " << coordinate3-origin3 << ") != (" << i2 << ", " << i3 << ")" << std::endl;
+
+                    exitOnCondition(coordinate2-origin2 != i2, "found invalid coordinate (dimension 2)");
+                    exitOnCondition(coordinate3-origin3 != i3, "found invalid coordinate (dimension 3)");
+
+                    //! Resample trace for the subvolume.
+                    for(int i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x) {
+                        traceBufferSubvolume[(i1 - subvolumeOffsets.x) / subvolumeSteps.x] = traceBuffer[traceHeaderSize + i1];
+                    }
+
+                    //! Copy subsampled trace into the volume.
+                    volume->setRegion(&traceBufferSubvolume[0], vec3i(0, (i2 - subvolumeOffsets.y) / subvolumeSteps.y, (i3 - subvolumeOffsets.z) / subvolumeSteps.z), vec3i(volumeDimensions.x, 1, 1));
+
+                    //! Accumulate statistics.
+                    for (int i1=0; i1<volumeDimensions.x; i1++) {
+
+                        dataMin = std::min(float(traceBufferSubvolume[i1]), dataMin);
+                        dataMax = std::max(float(traceBufferSubvolume[i1]), dataMax);
+                    }
+
+                    traceCount++;
+
+                    //! Skip traces (second dimension)
+                    if(i2 >= subvolumeOffsets.y + subvolumeDimensions.y - subvolumeSteps.y) {
+                        cdds_lseek(inputBinTag, 0, dimensions.y - i2 - 1, SEEK_CUR);
+                    }
+                    else {
+                        cdds_lseek(inputBinTag, 0, subvolumeSteps.y - 1, SEEK_CUR);
+                    }
+                }
+
+                //! Skip traces (third dimension)
+                if(i3 >= subvolumeOffsets.z + subvolumeDimensions.z - subvolumeSteps.z) {
+                    cdds_lseek(inputBinTag, 0, (dimensions.z - i3 - 1) * dimensions.y, SEEK_CUR);
+                }
+                else {
+                    cdds_lseek(inputBinTag, 0, (subvolumeSteps.z - 1) * dimensions.y, SEEK_CUR);
+                }
+            }
+
+            //! Clean up.
+            free(traceBufferSubvolume);
+        }
+
+        //! Set voxel range of the volume.
+        vec2f voxelRange(dataMin, dataMax);
+        ospSetVec2f((OSPObject)volume, "voxelRange", voxelRange);
+
+        //! Print statistics.
+        if(ospray::logLevel >= 1) {
+
+            std::cout << "OSPRay::SeismicVolumeFile read " << traceCount << " traces. " << volumeDimensions.y*volumeDimensions.z - int(traceCount) << " missing trace(s)." << std::endl;
+            std::cout << "OSPRay::SeismicVolumeFile volume data range = " << dataMin << " " << dataMax << std::endl;
+        }
+
+        //! Clean up.
+        free(traceBuffer);
+
+        //! Close the seismic data file.
+        cdds_close(inputBinTag);
 
         return true;
     }

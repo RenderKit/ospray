@@ -210,6 +210,15 @@ namespace ospray {
         //! Sampling rate for ray casting based renderers.
         if (!strcmp(node->ToElement()->Name(), "samplingRate")) return(importAttributeFloat(node, volume));
 
+        //! Subvolume offset from origin within the full volume.
+        if (!strcmp(node->ToElement()->Name(), "subvolumeOffsets")) return(importAttributeInteger3(node, volume));
+
+        //! Subvolume dimensions within the full volume.
+        if (!strcmp(node->ToElement()->Name(), "subvolumeDimensions")) return(importAttributeInteger3(node, volume));
+
+        //! Subvolume steps in each dimension; can be used to subsample the volume.
+        if (!strcmp(node->ToElement()->Name(), "subvolumeSteps")) return(importAttributeInteger3(node, volume));
+
         //! Voxel value range.
         if (!strcmp(node->ToElement()->Name(), "voxelRange")) return(importAttributeFloat2(node, volume));
 

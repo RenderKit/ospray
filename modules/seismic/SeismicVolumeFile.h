@@ -9,75 +9,64 @@
 
 #pragma once
 
-#include <algorithm>
-#include <map>
-#include <string>
 #include <cdds.h>
-#include "ospray/volume/StructuredVolumeFile.h"
+#include <string>
+#include "ospray/common/Data.h"
+#include "ospray/fileio/VolumeFile.h"
+#include "ospray/volume/StructuredVolume.h"
 
 namespace ospray {
 
-    //! \brief A concrete implementation of the StructuredVolumeFile class
+    //! \brief A concrete implementation of the VolumeFile class
     //!  for reading voxel data stored in seismic file formats on disk.
     //!
-    class SeismicVolumeFile : public StructuredVolumeFile {
+    class SeismicVolumeFile : public VolumeFile {
     public:
 
         //! Constructor.
-        SeismicVolumeFile(const std::string &filename);
+        SeismicVolumeFile(const std::string &filename) : filename(filename) {}
 
         //! Destructor.
         virtual ~SeismicVolumeFile() {};
 
-        //! Get the volume dimensions.
-        virtual vec3i getVolumeDimensions();
-
-        //! Copy data from the file into memory.
-        virtual void getVoxelData(void **buffer);
-
-        //! Copy data from the file into the volume.
-        virtual void getVoxelData(StructuredVolume *volume);
-
-        //! Get the voxel spacing.
-        virtual vec3f getVoxelSpacing();
-
-        //! Get the voxel type string.
-        virtual std::string getVoxelType();
+        //! Import the volume data.
+        virtual OSPObjectCatalog importVolume(Volume *volume);
 
         //! A string description of this class.
-        virtual std::string toString() const { return("ospray::SeismicVolumeFile<" + filename + ">"); }
+        virtual std::string toString() const { return("ospray::SeismicVolumeFile"); }
 
     private:
 
-        //! Path to the file containing the volume header or the volume.
+        //! Path to the file containing the volume data.
         std::string filename;
-
-        //! Key value pairs from the header (if we have one) describing the volume.
-        std::map<std::string, std::string> header;
 
         //! Seismic data attributes
         BIN_TAG inputBinTag;
         int traceHeaderSize;
-        float deltas[3];            //!< Voxel spacing along each dimension.
-        int dimensions[3];          //<! Dimensions of the volume.
+        vec3i dimensions;           //<! Dimensions of the volume.
+        vec3f deltas;               //!< Voxel spacing along each dimension.
 
         //! Use a subvolume of the full volume.
         bool useSubvolume;
-        int subvolumeOffsets[3];    //!< Subvolume offset from full volume origin
-        int subvolumeSteps[3];      //!< Step size for generation of subvolume in each dimension; values > 1 allow for subsampling.
-        int subvolumeDimensions[3]; //!< Dimensions of subvolume, not considering any subsampling
+        vec3i subvolumeOffsets;     //!< Subvolume offset from full volume origin.
+        vec3i subvolumeDimensions;  //!< Dimensions of subvolume, not considering any subsampling.
+        vec3i subvolumeSteps;       //!< Step size for generation of subvolume in each dimension; values > 1 allow for subsampling.
 
-        //! Error checking.
-        void exitOnCondition(bool condition, const std::string &message) const { if (condition) throw std::runtime_error("OSPRay::SeismicVolumeFile error: " + message + "."); }
+        //! The dimensions of the volume to be imported, considering any subvolume parameters.
+        vec3i volumeDimensions;
 
-        //! Read key value pairs from a volume header file.
-        void readHeader();
+        //! The voxel spacing of the volume to be imported.
+        vec3f volumeVoxelSpacing;
 
-        //! Open the seismic data file.
-        bool openSeismicDataFile(std::string dataFilename);
+        //! Open the seismic data file and populate attributes.
+        bool openSeismicDataFile(StructuredVolume *volume);
 
         //! Scan the seismic data file to determine the volume dimensions.
-        bool scanSeismicDataFileForDimensions();
+        bool scanSeismicDataFileForDimensions(StructuredVolume *volume);
+
+        //! Import the voxel data from the file into the volume.
+        bool importVoxelData(StructuredVolume *volume);
+
     };
 
 } // namespace ospray
