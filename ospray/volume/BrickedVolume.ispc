@@ -159,12 +159,6 @@ export void BrickedVolume_allocateMemory(void *uniform pointer) {
     //! Memory may already have been allocated.
     if (volume->voxelData != NULL) return;
 
-    //! The largest floating point value still inside the volume.
-    volume->inherited.upperBound = nextafter(volume->volumeDimensions - 1, make_vec3i(0));
-
-    //! Volume size in bricks per dimension with padding to the nearest brick.
-    volume->brickCount = (volume->volumeDimensions + BRICK_VOXEL_WIDTH - 1) / BRICK_VOXEL_WIDTH;
-
     //! Volume size in voxels with padding.
     const uniform int voxelCount = volume->brickCount.x * volume->brickCount.y * volume->brickCount.z * BRICK_VOXEL_COUNT;
 
@@ -181,6 +175,9 @@ export void *uniform BrickedVolume_createInstance(const uniform int voxelType) {
     //! Store the voxel type.
     volume->voxelType = (OSPDataType) voxelType;
 
+    //! Store the voxel size.
+    volume->voxelSize = (volume->voxelType == OSP_FLOAT) ? sizeof(uniform float) : sizeof(uniform uint8);
+
     //! Function to compute the gradient at a sample location in the volume.
     volume->inherited.computeGradient = BrickedVolume_computeGradient;
 
@@ -195,6 +192,16 @@ export void *uniform BrickedVolume_createInstance(const uniform int voxelType) {
 
     //! Indicate that memory allocation is needed.
     volume->voxelData = NULL;  return(volume);
+
+}
+
+export void BrickedVolume_getVolumeSizeWithPadding(void *uniform pointer, uniform uint64 &value) {
+
+    //! Cast to the actual Volume type.
+    BrickedVolume *uniform volume = (BrickedVolume *uniform) pointer;
+
+    //! The volume size in bytes padded out to the next full brick.
+    value = (uint64) volume->brickCount.x * volume->brickCount.y * volume->brickCount.z * volume->voxelSize * BRICK_VOXEL_COUNT;
 
 }
 
@@ -245,6 +252,12 @@ export void BrickedVolume_setVolumeDimensions(void *uniform pointer, const unifo
 
     //! Set the step size for ray casting based renderers.
     volume->volumeDimensions = value;
+
+    //! The largest floating point value still inside the volume.
+    volume->inherited.upperBound = nextafter(volume->volumeDimensions - 1, make_vec3i(0));
+
+    //! Volume size in bricks per dimension with padding to the nearest brick.
+    volume->brickCount = (volume->volumeDimensions + BRICK_VOXEL_WIDTH - 1) / BRICK_VOXEL_WIDTH;
 
 }
 

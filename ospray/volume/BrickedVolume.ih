@@ -32,6 +32,9 @@
         //! Voxel data.
         void *uniform voxelData;
 
+        //! Voxel size in bytes.
+        uniform size_t voxelSize;
+
         //! Voxel type.
         uniform OSPDataType voxelType;
 
@@ -48,6 +51,9 @@
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Assign type-specific function pointers.
 //  extern "C" { void *uniform BrickedVolume_createInstance(const uniform int voxelType); }
+
+    //! Declaration emitted during build in "ClassName_ispc.h".  Volume size in bytes padded out to the next full brick.
+//  extern "C" { void BrickedVolume_getVolumeSizeWithPadding(void *uniform pointer, uniform uint64 &value); }
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Set the gamma correction coefficient and exponent.
 //  extern "C" { void BrickedVolume_setGammaCorrection(void *uniform volume, const uniform vec2f &value); }
