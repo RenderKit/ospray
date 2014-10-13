@@ -86,13 +86,10 @@ void VolumeViewer::initUserInterfaceWidgets() {
     QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
     TransferFunctionEditor *transferFunctionEditor = new TransferFunctionEditor(transferFunction);
     transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
+    connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
     addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
     //! Connect the "play timesteps" timer.
     connect(&playTimeStepsTimer, SIGNAL(timeout()), this, SLOT(nextTimeStep()));
 
-    //! Connect the Qt event signals and callbacks.
-    connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
-
 }
-
