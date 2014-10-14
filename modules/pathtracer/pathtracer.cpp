@@ -69,5 +69,10 @@ namespace ospray {
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
+
+  extern "C" void ospray_init_module_pathtracer() 
+  {
+    printf("Loaded plugin 'pathtracer' ...\n");
+  }
 };
 
