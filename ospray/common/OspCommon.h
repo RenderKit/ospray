@@ -24,6 +24,17 @@
 // ospray
 #include "ospray/common/OspDataType.h"
 
+/*! iw, 10/14/14 - got errors with ispc and c++ using different
+    definitions for (u)int64 (ispc uses stdint.h's "long int", we used
+    "long *long* int". Switched to using stdint types on c++ sides as
+    well, so we're compatible with what ispc does*/
+#define USE_STDINT_H 1
+
+#if USE_STDINT_H
+#  include <stdint.h> // for int64_t etc
+#endif
+
+
 #ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
 inline void operator delete(void* ptr) throw() { embree::alignedFree(ptr); }      
@@ -39,14 +50,29 @@ namespace ospray {
   using embree::zero;
 
   /*! basic types */
+#if USE_STDINT_H
+  typedef ::int64_t int64;
+  typedef ::uint64_t uint64;
+
+  typedef ::int32_t int32;
+  typedef ::uint32_t uint32;
+
+  typedef ::int16_t int16;
+  typedef ::uint16_t uint16;
+
+  typedef ::int8_t int8;
+  typedef ::uint8_t uint8;
+#else
   typedef          long long  int64;
-  typedef unsigned long long uint64;
+  typedef           ::int64_t int64;
+  typedef unsigned   int64_t uint64;
   typedef                int  int32;
   typedef unsigned       int uint32;
   typedef              short  int16;
   typedef unsigned     short uint16;
   typedef               char   int8;
   typedef unsigned      char  uint8;
+#endif
 
   /*! OSPRay's two-int vector class */
   typedef embree::Vec2i    vec2i;

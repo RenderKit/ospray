@@ -43,7 +43,8 @@ namespace ospray {
         ispc::BrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
 
         //! ISPC currently cannot operate on memory partitions > 2**31 - 1 bytes in any addressing mode, use BlockBrickedVolume for larger volumes.
-        uint64 bytes;  ispc::BrickedVolume_getVolumeSizeWithPadding(ispcEquivalent, bytes);  exitOnCondition(bytes > 2147483647, "volume size requires block_bricked_volume type");
+        uint64 bytes;  ispc::BrickedVolume_getVolumeSizeWithPadding(ispcEquivalent, bytes);  
+        exitOnCondition(bytes > 2147483647, "volume size requires block_bricked_volume type");
 
         //! Allocate memory for the voxel data in the ISPC object.
         ispc::BrickedVolume_allocateMemory(ispcEquivalent);
