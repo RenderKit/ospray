@@ -54,7 +54,7 @@ namespace ospray {
     void BrickedVolume::setRegion(const void *source, const vec3i &index, const vec3i &count) {
 
         //! Range check.
-        assert(inRange(index, vec3i(0), voxelDimensions) && inRange(count, vec3i(1), voxelDimensions + vec3i(1)));
+        // assert(inRange(index, vec3i(0), voxelDimensions) && inRange(count, vec3i(1), voxelDimensions + vec3i(1)));
 
         //! Copy voxel data into the volume.
         ispc::BrickedVolume_setRegion(ispcEquivalent, source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);

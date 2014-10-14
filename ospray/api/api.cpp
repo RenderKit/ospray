@@ -23,6 +23,14 @@
 # define LOG(a) /*ignore*/
 #endif
 
+/*! iw, 10/14/14 - object catalogs are breaking the MPI buidl, because
+    the handles aren't actually pointers, but _HANDLES_ in MPI mode
+    .... and doing a dynamic_cast on something that's not actually a
+    class triggers a core dump. Same will happen on COI device, actually ... */
+
+#define NO_CATALOGS 1
+
+
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
 namespace ospray {
@@ -405,9 +413,17 @@ namespace ospray {
     ASSERT_DEVICE();
     Assert(object && "invalid object handle to commit to");
     LOG("ospCommit(...)");
+#ifdef NO_CATALOGS
+    ObjectCatalog *catalog = NULL;
+#else
     ObjectCatalog *catalog = dynamic_cast<ObjectCatalog *>(object);
-    if (catalog) catalog->commit();
-    else ospray::api::Device::current->commit(object);
+#endif
+    if (catalog)  {
+      catalog->commit();
+    }
+    else {
+      ospray::api::Device::current->commit(object);
+    }
   }
 
   extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)

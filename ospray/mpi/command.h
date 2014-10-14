@@ -130,6 +130,13 @@ namespace ospray {
         Assert(rc == MPI_SUCCESS); 
         return v; 
       }
+      inline vec2f get_vec2f() 
+      { 
+        vec2f v; 
+        int rc = MPI_Bcast(&v,2,MPI_FLOAT,0,mpi::app.comm); 
+        Assert(rc == MPI_SUCCESS); 
+        return v; 
+      }
       inline vec3f get_vec3f() 
       { 
         vec3f v; 

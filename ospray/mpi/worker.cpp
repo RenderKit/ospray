@@ -62,7 +62,7 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-         // PRINT(command);usleep(20);
+        // PRINT(command);usleep(20);
 #if 0
         if (worker.rank == 0)
           printf("#w: command %i\n",command);
@@ -169,7 +169,6 @@ namespace ospray {
         } break;
 
         case api::MPIDevice::CMD_NEW_LIGHT: {
-          PING;
           const mpi::Handle rendererHandle = cmd.get_handle();
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
@@ -417,6 +416,15 @@ namespace ospray {
           obj->findParam(name,1)->set(val);
           cmd.free(name);
         } break;
+        case api::MPIDevice::CMD_SET_VEC2F: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const vec2f val = cmd.get_vec2f();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
         case api::MPIDevice::CMD_SET_VEC3I: {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
@@ -427,7 +435,6 @@ namespace ospray {
           cmd.free(name);
         } break;
         case api::MPIDevice::CMD_LOAD_MODULE: {
-          PING;
           const char *name = cmd.get_charPtr();
 
 #if THIS_IS_MIC
@@ -436,8 +443,6 @@ namespace ospray {
 #else
           std::string libName = "ospray_module_"+std::string(name)+"";
 #endif
-          PING;
-          PRINT(libName);
           loadLibrary(libName);
       
           std::string initSymName = "ospray_init_module_"+std::string(name);
