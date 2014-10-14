@@ -9,9 +9,9 @@
 
 #include "ospray/volume/BrickedVolume.ih"
 
-#define BRICK_WIDTH_EXPONENT  (4)
-#define BRICK_VOXEL_WIDTH     (1 << BRICK_WIDTH_EXPONENT)
-#define BRICK_VOXEL_COUNT     (BRICK_VOXEL_WIDTH * BRICK_VOXEL_WIDTH * BRICK_VOXEL_WIDTH)
+#define BRICK_VOXEL_WIDTH_BITCOUNT  (4)
+#define BRICK_VOXEL_WIDTH           (1 << BRICK_VOXEL_WIDTH_BITCOUNT)
+#define BRICK_VOXEL_COUNT           (BRICK_VOXEL_WIDTH * BRICK_VOXEL_WIDTH * BRICK_VOXEL_WIDTH)
 
 varying vec3f BrickedVolume_computeGradient(void *uniform pointer, const varying vec3f &coordinates) {
 
@@ -71,19 +71,19 @@ varying float BrickedVolume_computeSample(void *uniform pointer, const varying v
 
 }
 
-inline varying int BrickedVolume_getVoxelAddress(BrickedVolume *uniform volume, const varying vec3i &index) {
+inline varying uint32 BrickedVolume_getVoxelAddress(BrickedVolume *uniform volume, const varying vec3i &index) {
 
     //! Compute the 3D index of the volume brick containing the voxel.
-    const vec3i brickIndex = index >> BRICK_WIDTH_EXPONENT;
+    const vec3i brickIndex = index >> BRICK_VOXEL_WIDTH_BITCOUNT;
 
     //! Compute the 1D address of the volume brick containing the voxel.
-    const int brickAddress = brickIndex.x + volume->brickCount.x * (brickIndex.y + volume->brickCount.y * brickIndex.z);
+    const uint32 brickAddress = brickIndex.x + volume->brickCount.x * (brickIndex.y + volume->brickCount.y * (uint32) brickIndex.z);
 
     //! Compute the 3D offset of the voxel in the volume brick.
     const vec3i voxelOffset = bitwise_AND(index, BRICK_VOXEL_WIDTH - 1);
 
     //! Compute the 1D address of the voxel.
-    return((((((brickAddress << BRICK_WIDTH_EXPONENT) | voxelOffset.z) << BRICK_WIDTH_EXPONENT) | voxelOffset.y) << BRICK_WIDTH_EXPONENT) | voxelOffset.x);
+    return(brickAddress << 3 * BRICK_VOXEL_WIDTH_BITCOUNT | voxelOffset.z << 2 * BRICK_VOXEL_WIDTH_BITCOUNT | voxelOffset.y << BRICK_VOXEL_WIDTH_BITCOUNT | voxelOffset.x);
 
 }
 
@@ -96,7 +96,7 @@ inline varying float BrickedVolumeFloat_getVoxel(void *uniform pointer, const va
     float *uniform voxelData = (float *uniform) volume->voxelData;
 
     //! Compute the 1D address of the voxel in the volume.
-    const int voxelAddress = BrickedVolume_getVoxelAddress(volume, index);
+    const uint32 voxelAddress = BrickedVolume_getVoxelAddress(volume, index);
 
     //! The voxel value at the 1D address.
     return(voxelData[voxelAddress]);
@@ -112,7 +112,7 @@ inline varying float BrickedVolumeUChar_getVoxel(void *uniform pointer, const va
     uint8 *uniform voxelData = (uint8 *uniform) volume->voxelData;
 
     //! Compute the 1D address of the voxel in the volume.
-    const int voxelAddress = BrickedVolume_getVoxelAddress(volume, index);
+    const uint32 voxelAddress = BrickedVolume_getVoxelAddress(volume, index);
 
     //! The voxel value at the 1D address.
     return(voxelData[voxelAddress] / 255.0f);
@@ -128,7 +128,7 @@ inline void BrickedVolumeFloat_setVoxel(void *uniform pointer, const void *unifo
     float *uniform voxelData = (float *uniform) volume->voxelData;  const float *uniform sourceData = (const float *uniform) source;
 
     //! Compute the 1D address of the voxel in the volume.
-    const int voxelAddress = BrickedVolume_getVoxelAddress(volume, index + offset);
+    const uint32 voxelAddress = BrickedVolume_getVoxelAddress(volume, index + offset);
 
     //! Store the voxel value at the 1D address.
     voxelData[voxelAddress] = sourceData[(offset.z * volume->volumeDimensions.y + offset.y) * volume->volumeDimensions.x + offset.x];
@@ -144,7 +144,7 @@ inline void BrickedVolumeUChar_setVoxel(void *uniform pointer, const void *unifo
     uint8 *uniform voxelData = (uint8 *uniform) volume->voxelData;  const uint8 *uniform sourceData = (const uint8 *uniform) source;
 
     //! Compute the 1D address of the voxel in the volume.
-    const int voxelAddress = BrickedVolume_getVoxelAddress(volume, index + offset);
+    const uint32 voxelAddress = BrickedVolume_getVoxelAddress(volume, index + offset);
 
     //! Store the voxel value at the 1D address.
     voxelData[voxelAddress] = sourceData[(offset.z * volume->volumeDimensions.y + offset.y) * volume->volumeDimensions.x + offset.x];
@@ -160,7 +160,7 @@ export void BrickedVolume_allocateMemory(void *uniform pointer) {
     if (volume->voxelData != NULL) return;
 
     //! Volume size in voxels with padding.
-    const uniform int voxelCount = volume->brickCount.x * volume->brickCount.y * volume->brickCount.z * BRICK_VOXEL_COUNT;
+    const uniform uint32 voxelCount = volume->brickCount.x * volume->brickCount.y * volume->brickCount.z * BRICK_VOXEL_COUNT;
 
     //! Allocate storage for the voxel data.
     volume->voxelData = (volume->voxelType == OSP_FLOAT) ? (void *uniform)(uniform new uniform float[voxelCount]) : (void *uniform)(uniform new uniform uint8[voxelCount]);

@@ -25,7 +25,7 @@ namespace ospray {
         volumeDimensions = getParam3i("dimensions", vec3i(0));  exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");
 
         //! Get the transfer function.
-        transferFunction = (TransferFunction*)getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no volume transfer function specified");
+        transferFunction = (TransferFunction *) getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no transfer function specified");
 
         //! Get the gamma correction coefficient and exponent.
         vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
@@ -34,7 +34,7 @@ namespace ospray {
         ispc::BrickedVolume_setVolumeDimensions(ispcEquivalent, (const ispc::vec3i &) volumeDimensions);
 
         //! Set the transfer function.
-        ispc::BrickedVolume_setTransferFunction(ispcEquivalent, ((TransferFunction *) transferFunction)->getEquivalentISPC());
+        ispc::BrickedVolume_setTransferFunction(ispcEquivalent, transferFunction->getEquivalentISPC());
 
         //! Set the sampling step size for ray casting based renderers.
         ispc::BrickedVolume_setStepSize(ispcEquivalent, 1.0f / reduce_max(volumeDimensions) / getParam1f("samplingRate", 1.0f));
@@ -42,8 +42,8 @@ namespace ospray {
         //! Set the gamma correction coefficient and exponent.
         ispc::BrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
 
-        //! ISPC currently cannot operate on memory partitions > 2**31 - 1 bytes in any addressing mode, use PagedBrickedVolume for larger volumes.
-        uint64 bytes;  ispc::BrickedVolume_getVolumeSizeWithPadding(ispcEquivalent, bytes);  exitOnCondition(bytes > 2147483647, "volume size requires PagedBrickedVolume");
+        //! ISPC currently cannot operate on memory partitions > 2**31 - 1 bytes in any addressing mode, use BlockBrickedVolume for larger volumes.
+        uint64 bytes;  ispc::BrickedVolume_getVolumeSizeWithPadding(ispcEquivalent, bytes);  exitOnCondition(bytes > 2147483647, "volume size requires block_bricked_volume type");
 
         //! Allocate memory for the voxel data in the ISPC object.
         ispc::BrickedVolume_allocateMemory(ispcEquivalent);
