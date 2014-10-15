@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
+#include "SliceWidget.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL) {
 
@@ -30,6 +31,17 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer
 
     //! Show the window.
     show();
+
+}
+
+void VolumeViewer::addSlice() {
+
+    //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
+    QDockWidget * sliceDockWidget = new QDockWidget("Slice", this);
+    SliceWidget * sliceWidget = new SliceWidget(models, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
+    sliceDockWidget->setWidget(sliceWidget);
+    connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
+    addDockWidget(Qt::LeftDockWidgetArea, sliceDockWidget);
 
 }
 
@@ -81,6 +93,11 @@ void VolumeViewer::initUserInterfaceWidgets() {
     playTimeStepsAction->setCheckable(true);
     connect(playTimeStepsAction, SIGNAL(toggled(bool)), this, SLOT(playTimeSteps(bool)));
     toolbar->addAction(playTimeStepsAction);
+
+    //! Add the "add slice" widget and callback.
+    QAction *addSliceAction = new QAction("Add slice", this);
+    connect(addSliceAction, SIGNAL(triggered()), this, SLOT(addSlice()));
+    toolbar->addAction(addSliceAction);
 
     //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
     QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);

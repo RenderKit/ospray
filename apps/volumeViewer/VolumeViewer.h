@@ -48,13 +48,16 @@ public slots:
     //! Toggle animation over the time steps.
     void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
 
+    //! Add a slice to the volume.
+    void addSlice();
+
     //! Force the OSPRay window to be redrawn.
     void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
 
 protected:
 
     //! OSPRay state.
-    std::vector<OSPObject> models;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
+    std::vector<OSPModel> models;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
 
     //! The OSPRay output window.
     QOSPRayWindow *osprayWindow;
