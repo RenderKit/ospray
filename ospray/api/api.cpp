@@ -99,7 +99,7 @@ namespace ospray {
 
         if (std::string(_av[i]) == "--osp:mpi-launch") {
 #if OSPRAY_MPI
-          if (i+2 >= *_ac)
+          if (i+2 > *_ac)
             throw std::runtime_error("--osp:mpi-launch expects an argument");
           const char *launchCommand = strdup(_av[i+1]);
           removeArgs(*_ac,(char **&)_av,i,2);

@@ -28,6 +28,14 @@ namespace ospray {
 
     static const int HOST_NAME_MAX = 10000;
 
+
+    void embreeErrorFunc(const RTCError code, const char* str)
+    {
+      std::cerr << "#osp: embree internal error " << code << " : " << str << std::endl;
+      throw std::runtime_error("embree internal error '"+std::string(str)+"'");
+    }
+
+
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return. 
@@ -41,11 +49,25 @@ namespace ospray {
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
+      // std::stringstream embreeConfig;
+      // if (debugMode)
+      //   embreeConfig << " threads=1";
+      // rtcInit(embreeConfig.str().c_str());
+
+      //      assert(rtcGetError() == RTC_NO_ERROR);
+      rtcSetErrorFunction(embreeErrorFunc);
+
       std::stringstream embreeConfig;
       if (debugMode)
-        embreeConfig << " threads=1";
+        embreeConfig << " threads=1,verbose=2";
       rtcInit(embreeConfig.str().c_str());
-      assert(rtcGetError() == RTC_NO_ERROR);
+
+      if (rtcGetError() != RTC_NO_ERROR) {
+        // why did the error function not get called !?
+        std::cerr << "#osp:init: embree internal error number " << (int)rtcGetError() << std::endl;
+        assert(rtcGetError() == RTC_NO_ERROR);
+      }
+
 
       CommandStream cmd;
 
