@@ -14,6 +14,8 @@
 #include <string>
 #include <vector>
 
+class TransferFunctionEditor;
+
 class VolumeViewer : public QMainWindow {
 
 Q_OBJECT
@@ -28,6 +30,9 @@ public:
 
     //! Get the OSPRay output window.
     QOSPRayWindow *getWindow() { return(osprayWindow); }
+
+    //! Get the transfer function editor.
+    TransferFunctionEditor *getTransferFunctionEditor() { return(transferFunctionEditor); }
 
     //! Select the model to be displayed.
     void setModel(size_t index) { ospSetObject(renderer, "model", models[index]);  ospCommit(renderer);  osprayWindow->setRenderingEnabled(true); }
@@ -53,6 +58,9 @@ protected:
 
     //! The OSPRay output window.
     QOSPRayWindow *osprayWindow;
+
+    //! The transfer function editor.
+    TransferFunctionEditor *transferFunctionEditor;
 
     //! Timer for use when stepping through multiple models.
     QTimer playTimeStepsTimer;

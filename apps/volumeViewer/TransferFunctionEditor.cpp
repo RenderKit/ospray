@@ -101,41 +101,25 @@ void TransferFunctionEditor::transferFunctionAlphasChanged()
 
 }
 
-void TransferFunctionEditor::save()
+void TransferFunctionEditor::load(std::string filename)
 {
-    //! Get filename.
-    QString filename = QFileDialog::getSaveFileName(this, "Save transfer function", ".", "Transfer function files (*.tfn)");
+    //! Get filename if not specified.
+    if(filename.empty())
+        filename = QFileDialog::getOpenFileName(this, tr("Load transfer function"), ".", "Transfer function files (*.tfn)").toStdString();
 
-    if(filename.isNull())
-        return;
-
-    //! Make sure the filename has the proper extension.
-    if(filename.endsWith(".tfn") != true)
-        filename += ".tfn";
-
-    //! Serialize transfer function state to file.
-    QFile file(filename);
-    file.open(QIODevice::WriteOnly);
-
-    QDataStream out(&file);
-
-    out << colorMapComboBox_.currentIndex();
-    out << dataValueMinSpinBox_.value();
-    out << dataValueMaxSpinBox_.value();
-    out << transferFunctionAlphaWidget_.getPoints();
-}
-
-void TransferFunctionEditor::load()
-{
-    //! Get filename.
-    QString filename = QFileDialog::getOpenFileName(this, tr("Load transfer function"), ".", "Transfer function files (*.tfn)");
-
-    if(filename.isNull())
+    if(filename.empty())
         return;
 
     //! Get serialized transfer function state from file.
-    QFile file(filename);
-    file.open(QIODevice::ReadOnly);
+    QFile file(filename.c_str());
+    bool success = file.open(QIODevice::ReadOnly);
+
+    if(!success)
+    {
+        std::cerr << "unable to open " << filename << std::endl;
+        return;
+    }
+
     QDataStream in(&file);
 
     int colorMapIndex;
@@ -152,6 +136,36 @@ void TransferFunctionEditor::load()
     dataValueMinSpinBox_.setValue(dataValueMin);
     dataValueMaxSpinBox_.setValue(dataValueMax);
     transferFunctionAlphaWidget_.setPoints(points);
+}
+
+void TransferFunctionEditor::save()
+{
+    //! Get filename.
+    QString filename = QFileDialog::getSaveFileName(this, "Save transfer function", ".", "Transfer function files (*.tfn)");
+
+    if(filename.isNull())
+        return;
+
+    //! Make sure the filename has the proper extension.
+    if(filename.endsWith(".tfn") != true)
+        filename += ".tfn";
+
+    //! Serialize transfer function state to file.
+    QFile file(filename);
+    bool success = file.open(QIODevice::WriteOnly);
+
+    if(!success)
+    {
+        std::cerr << "unable to open " << filename.toStdString() << std::endl;
+        return;
+    }
+
+    QDataStream out(&file);
+
+    out << colorMapComboBox_.currentIndex();
+    out << dataValueMinSpinBox_.value();
+    out << dataValueMaxSpinBox_.value();
+    out << transferFunctionAlphaWidget_.getPoints();
 }
 
 void TransferFunctionEditor::setColorMapIndex(int index)

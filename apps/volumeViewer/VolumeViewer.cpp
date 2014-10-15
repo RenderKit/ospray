@@ -84,7 +84,7 @@ void VolumeViewer::initUserInterfaceWidgets() {
 
     //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
     QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
-    TransferFunctionEditor *transferFunctionEditor = new TransferFunctionEditor(transferFunction);
+    transferFunctionEditor = new TransferFunctionEditor(transferFunction);
     transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
     addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);

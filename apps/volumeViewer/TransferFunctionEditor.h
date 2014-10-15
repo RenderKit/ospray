@@ -29,10 +29,11 @@ public slots:
 
     void transferFunctionAlphasChanged();
 
+    void load(std::string filename = std::string());
+
 protected slots:
 
     void save();
-    void load();
     void setColorMapIndex(int index);
     void setDataValueMin(double value);
     void setDataValueMax(double value);

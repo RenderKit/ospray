@@ -12,6 +12,7 @@
 #include <ctype.h>
 #include <sstream>
 #include "VolumeViewer.h"
+#include "TransferFunctionEditor.h"
 #include "ospray/include/ospray/ospray.h"
 
 int main(int argc, char *argv[]) {
@@ -33,6 +34,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "    -benchmark <warm-up frames> <frames> : run benchmark and report overall frame rate"   << std::endl;
         std::cerr << "    -dt <dt>                             : use ray cast sample step size 'dt'"            << std::endl;
         std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
+        std::cerr << "    -transferfunction <filename>         : load transfer function from 'filename'"        << std::endl;
         std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
         std::cerr << "    -viewup <x> <y> <z>                  : set viewport up vector to ('x', 'y', 'z')"     << std::endl;
         std::cerr << "    -module <moduleName>                 : load the module 'moduleName'"                  << std::endl;
@@ -47,6 +49,7 @@ int main(int argc, char *argv[]) {
     //! Default values for the optional command line arguments.
     float dt = 0.0f;
     float rotationRate = 0.0f;
+    std::string transferFunctionFilename;
     int benchmarkWarmUpFrames = 0;
     int benchmarkFrames = 0;
     int viewSizeWidth = 0;
@@ -69,6 +72,12 @@ int main(int argc, char *argv[]) {
             if (i + 1 >= argc) throw std::runtime_error("missing <rate> argument");
             rotationRate = atof(argv[++i]);
             std::cout << "got rotationRate = " << rotationRate << std::endl;
+
+        } else if (arg == "-transferfunction") {
+
+                if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
+                transferFunctionFilename = std::string(argv[++i]);
+                std::cout << "got transferFunctionFilename = " << transferFunctionFilename << std::endl;
 
         } else if (arg == "-benchmark") {
 
@@ -127,6 +136,10 @@ int main(int argc, char *argv[]) {
 
     //! Set rotation rate to use in animation mode.
     volumeViewer->getWindow()->setRotationRate(rotationRate);
+
+    //! Load transfer function from file.
+    if(transferFunctionFilename.empty() != true)
+        volumeViewer->getTransferFunctionEditor()->load(transferFunctionFilename);
 
     //! Set benchmarking parameters.
     volumeViewer->getWindow()->setBenchmarkParameters(benchmarkWarmUpFrames, benchmarkFrames);
