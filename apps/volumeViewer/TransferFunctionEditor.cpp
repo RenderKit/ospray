@@ -23,6 +23,21 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
     QVBoxLayout * layout = new QVBoxLayout();
     setLayout(layout);
 
+    // save and load buttons
+    QWidget * saveLoadWidget = new QWidget();
+    QHBoxLayout * hboxLayout = new QHBoxLayout();
+    saveLoadWidget->setLayout(hboxLayout);
+
+    QPushButton * saveButton = new QPushButton("Save");
+    connect(saveButton, SIGNAL(clicked()), this, SLOT(save()));
+    hboxLayout->addWidget(saveButton);
+
+    QPushButton * loadButton = new QPushButton("Load");
+    connect(loadButton, SIGNAL(clicked()), this, SLOT(load()));
+    hboxLayout->addWidget(loadButton);
+
+    layout->addWidget(saveLoadWidget);
+
     // form layout
     QWidget * formWidget = new QWidget();
     QFormLayout * formLayout = new QFormLayout();
@@ -30,26 +45,22 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
     layout->addWidget(formWidget);
 
     // color map choice
-    QComboBox * colorMapComboBox = new QComboBox();
-
     for(unsigned int i=0; i<colorMaps_.size(); i++)
     {
-        colorMapComboBox->addItem(colorMaps_[i].getName().c_str());
+        colorMapComboBox_.addItem(colorMaps_[i].getName().c_str());
     }
 
-    formLayout->addRow("Color map", colorMapComboBox);
+    formLayout->addRow("Color map", &colorMapComboBox_);
 
     // data value range, used as the domain for both color and opacity components of the transfer function
-    QDoubleSpinBox * dataValueMinSpinBox = new QDoubleSpinBox();
-    QDoubleSpinBox * dataValueMaxSpinBox = new QDoubleSpinBox();
-    dataValueMinSpinBox->setRange(-999999., 999999.);
-    dataValueMaxSpinBox->setRange(-999999., 999999.);
-    dataValueMinSpinBox->setValue(0.);
-    dataValueMaxSpinBox->setValue(1.);
-    dataValueMinSpinBox->setDecimals(6);
-    dataValueMaxSpinBox->setDecimals(6);
-    formLayout->addRow("Data value min", dataValueMinSpinBox);
-    formLayout->addRow("Data value max", dataValueMaxSpinBox);
+    dataValueMinSpinBox_.setRange(-999999., 999999.);
+    dataValueMaxSpinBox_.setRange(-999999., 999999.);
+    dataValueMinSpinBox_.setValue(0.);
+    dataValueMaxSpinBox_.setValue(1.);
+    dataValueMinSpinBox_.setDecimals(6);
+    dataValueMaxSpinBox_.setDecimals(6);
+    formLayout->addRow("Data value min", &dataValueMinSpinBox_);
+    formLayout->addRow("Data value max", &dataValueMaxSpinBox_);
 
     // opacity transfer function widget
     layout->addWidget(&transferFunctionAlphaWidget_);
@@ -68,9 +79,9 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
     setDataValueMin(0.0);
     setDataValueMax(1.0);
 
-    connect(colorMapComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
-    connect(dataValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
-    connect(dataValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
+    connect(&colorMapComboBox_, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
+    connect(&dataValueMinSpinBox_, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
+    connect(&dataValueMaxSpinBox_, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
     connect(&transferFunctionAlphaWidget_, SIGNAL(transferFunctionChanged()), this, SLOT(transferFunctionAlphasChanged()));
 
 }
@@ -90,9 +101,61 @@ void TransferFunctionEditor::transferFunctionAlphasChanged()
 
 }
 
+void TransferFunctionEditor::save()
+{
+    //! Get filename.
+    QString filename = QFileDialog::getSaveFileName(this, "Save transfer function", ".", "Transfer function files (*.tfn)");
+
+    if(filename.isNull())
+        return;
+
+    //! Make sure the filename has the proper extension.
+    if(filename.endsWith(".tfn") != true)
+        filename += ".tfn";
+
+    //! Serialize transfer function state to file.
+    QFile file(filename);
+    file.open(QIODevice::WriteOnly);
+
+    QDataStream out(&file);
+
+    out << colorMapComboBox_.currentIndex();
+    out << dataValueMinSpinBox_.value();
+    out << dataValueMaxSpinBox_.value();
+    out << transferFunctionAlphaWidget_.getPoints();
+}
+
+void TransferFunctionEditor::load()
+{
+    //! Get filename.
+    QString filename = QFileDialog::getOpenFileName(this, tr("Load transfer function"), ".", "Transfer function files (*.tfn)");
+
+    if(filename.isNull())
+        return;
+
+    //! Get serialized transfer function state from file.
+    QFile file(filename);
+    file.open(QIODevice::ReadOnly);
+    QDataStream in(&file);
+
+    int colorMapIndex;
+    in >> colorMapIndex;
+
+    double dataValueMin, dataValueMax;
+    in >> dataValueMin >> dataValueMax;
+
+    QVector<QPointF> points;
+    in >> points;
+
+    //! Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
+    colorMapComboBox_.setCurrentIndex(colorMapIndex);
+    dataValueMinSpinBox_.setValue(dataValueMin);
+    dataValueMaxSpinBox_.setValue(dataValueMax);
+    transferFunctionAlphaWidget_.setPoints(points);
+}
+
 void TransferFunctionEditor::setColorMapIndex(int index)
 {
-
     // set transfer function color properties for this color map
     std::vector<osp::vec3f> colors = colorMaps_[index].getColors();
 

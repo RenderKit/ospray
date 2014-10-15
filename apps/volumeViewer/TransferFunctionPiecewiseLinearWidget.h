@@ -22,6 +22,12 @@ public:
     // get numValues of the transfer function regularly spaced over the entire interval [0, 1]
     std::vector<float> getInterpolatedValuesOverInterval(unsigned int numValues);
 
+    // get transfer function control points
+    QVector<QPointF> getPoints() { return points_; }
+
+    // set transfer function control points
+    void setPoints(const QVector<QPointF> &points) { points_ = points; repaint(); emit(transferFunctionChanged()); }
+
     void setBackgroundImage(QImage image);
 
 signals:
@@ -37,10 +43,10 @@ protected:
     virtual void mouseMoveEvent(QMouseEvent * event);
 
     // transform normalized coordinates to widget coordinates
-    QPointF pointToWidgetPoint(const osp::vec2f &point);
+    QPointF pointToWidgetPoint(const QPointF &point);
 
     // transform widget coordinates to normalized coordinates
-    osp::vec2f widgetPointToPoint(const QPointF &widgetPoint);
+    QPointF widgetPointToPoint(const QPointF &widgetPoint);
 
     // get the index of the selected point based on the clicked point in widget coordinates
     // returns -1 of no selected point
@@ -53,7 +59,7 @@ protected:
     QImage backgroundImage_;
 
     // the points that define the transfer function, in normalize coordinates ([0,1], [0,1])
-    std::vector<osp::vec2f> points_;
+    QVector<QPointF> points_;
 
     // currently selected point
     int selectedPointIndex_;

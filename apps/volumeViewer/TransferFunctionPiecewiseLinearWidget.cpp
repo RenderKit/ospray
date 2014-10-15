@@ -14,9 +14,9 @@ float TransferFunctionPiecewiseLinearWidget::linePixelWidth_ = 2.;
 
 bool TransferFunctionPiecewiseLinearWidget::updateDuringChange_ = true;
 
-bool comparePointsByX(const osp::vec2f &i, const osp::vec2f &j)
+bool comparePointsByX(const QPointF &i, const QPointF &j)
 {
-    return (i.x < j.x);
+    return (i.x() < j.x());
 }
 
 TransferFunctionPiecewiseLinearWidget::TransferFunctionPiecewiseLinearWidget() : selectedPointIndex_(-1)
@@ -28,8 +28,8 @@ TransferFunctionPiecewiseLinearWidget::TransferFunctionPiecewiseLinearWidget() :
     backgroundImage_.fill(QColor::fromRgbF(1,1,1,1).rgb());
 
     // default transfer function points
-    points_.push_back(osp::vec2f(0.,0.));
-    points_.push_back(osp::vec2f(1.,1.));
+    points_.push_back(QPointF(0.,0.));
+    points_.push_back(QPointF(1.,1.));
 }
 
 std::vector<float> TransferFunctionPiecewiseLinearWidget::getInterpolatedValuesOverInterval(unsigned int numValues)
@@ -117,7 +117,7 @@ void TransferFunctionPiecewiseLinearWidget::mousePressEvent(QMouseEvent * event)
         if(selectedPointIndex_ == -1)
         {
             // no point selected, create a new one
-            osp::vec2f newPoint = widgetPointToPoint(widgetClickPoint);
+            QPointF newPoint = widgetPointToPoint(widgetClickPoint);
 
             // insert into points vector and sort ascending by x
             points_.push_back(newPoint);
@@ -178,29 +178,29 @@ void TransferFunctionPiecewiseLinearWidget::mouseMoveEvent(QMouseEvent * event)
     if(selectedPointIndex_ != -1)
     {
         QPointF widgetMousePoint = event->posF();
-        osp::vec2f mousePoint = widgetPointToPoint(widgetMousePoint);
+        QPointF mousePoint = widgetPointToPoint(widgetMousePoint);
 
         // clamp x value
         if(selectedPointIndex_ == 0)
         {
             // the first point must have x == 0
-            mousePoint.x = 0.;
+            mousePoint.rx() = 0.;
         }
         else if(selectedPointIndex_ == points_.size() - 1)
         {
             // the last point must have x == 1
-            mousePoint.x = 1.;
+            mousePoint.rx() = 1.;
         }
         else
         {
             // intermediate points must have x between their neighbors
-            mousePoint.x = std::max(mousePoint.x, points_[selectedPointIndex_ - 1].x);
-            mousePoint.x = std::min(mousePoint.x, points_[selectedPointIndex_ + 1].x);
+            mousePoint.rx() = std::max(mousePoint.x(), points_[selectedPointIndex_ - 1].x());
+            mousePoint.rx() = std::min(mousePoint.x(), points_[selectedPointIndex_ + 1].x());
         }
 
         // clamp y value
-        mousePoint.y = std::min(mousePoint.y, 1.f);
-        mousePoint.y = std::max(mousePoint.y, 0.f);
+        mousePoint.ry() = std::min(mousePoint.y(), 1.);
+        mousePoint.ry() = std::max(mousePoint.y(), 0.);
 
         points_[selectedPointIndex_] = mousePoint;
 
@@ -214,14 +214,14 @@ void TransferFunctionPiecewiseLinearWidget::mouseMoveEvent(QMouseEvent * event)
     }
 }
 
-QPointF TransferFunctionPiecewiseLinearWidget::pointToWidgetPoint(const osp::vec2f &point)
+QPointF TransferFunctionPiecewiseLinearWidget::pointToWidgetPoint(const QPointF &point)
 {
-    return QPointF(point.x * float(width()), (1. - point.y) * float(height()));
+    return QPointF(point.x() * float(width()), (1. - point.y()) * float(height()));
 }
 
-osp::vec2f TransferFunctionPiecewiseLinearWidget::widgetPointToPoint(const QPointF &widgetPoint)
+QPointF TransferFunctionPiecewiseLinearWidget::widgetPointToPoint(const QPointF &widgetPoint)
 {
-    return osp::vec2f(float(widgetPoint.x()) / float(width()), 1. - float(widgetPoint.y()) / float(height()));
+    return QPointF(float(widgetPoint.x()) / float(width()), 1. - float(widgetPoint.y()) / float(height()));
 }
 
 int TransferFunctionPiecewiseLinearWidget::getSelectedPointIndex(const QPointF &widgetClickPoint)
@@ -244,27 +244,27 @@ float TransferFunctionPiecewiseLinearWidget::getInterpolatedValue(float x)
     // boundary cases
     if(x <= 0.)
     {
-        return points_[0].y;
+        return points_[0].y();
     }
     else if(x >= 1.)
     {
-        return points_[points_.size() - 1].y;
+        return points_[points_.size() - 1].y();
     }
 
     // we could make this more efficient...
     for(unsigned int i=0; i<points_.size() - 1; i++)
     {
-        if(x <= points_[i + 1].x)////
+        if(x <= points_[i + 1].x())
         {
-            float delta = x - points_[i].x;
-            float interval = points_[i+1].x - points_[i].x;
+            float delta = x - points_[i].x();
+            float interval = points_[i+1].x() - points_[i].x();
 
             if(delta == 0. || interval == 0.)
             {
-                return points_[i].y;
+                return points_[i].y();
             }
 
-            return points_[i].y + delta / interval * (points_[i+1].y - points_[i].y);
+            return points_[i].y() + delta / interval * (points_[i+1].y() - points_[i].y());
         }
     }
 
