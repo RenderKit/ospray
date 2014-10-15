@@ -19,6 +19,9 @@ public:
 
     TransferFunctionPiecewiseLinearWidget();
 
+    // minimum size of the widget
+    virtual QSize minimumSizeHint() const { return QSize(240, 180); }
+
     // get numValues of the transfer function regularly spaced over the entire interval [0, 1]
     std::vector<float> getInterpolatedValuesOverInterval(unsigned int numValues);
 
