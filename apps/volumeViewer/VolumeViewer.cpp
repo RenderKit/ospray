@@ -37,12 +37,9 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer
 void VolumeViewer::addSlice() {
 
     //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
-    QDockWidget * sliceDockWidget = new QDockWidget("Slice", this);
     SliceWidget * sliceWidget = new SliceWidget(models, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
-    sliceDockWidget->setWidget(sliceWidget);
     connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
-    addDockWidget(Qt::LeftDockWidgetArea, sliceDockWidget);
-
+    sliceWidgetsLayout.addWidget(sliceWidget);
 }
 
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
@@ -94,6 +91,9 @@ void VolumeViewer::initUserInterfaceWidgets() {
     connect(playTimeStepsAction, SIGNAL(toggled(bool)), this, SLOT(playTimeSteps(bool)));
     toolbar->addAction(playTimeStepsAction);
 
+    //! Connect the "play timesteps" timer.
+    connect(&playTimeStepsTimer, SIGNAL(timeout()), this, SLOT(nextTimeStep()));
+
     //! Add the "add slice" widget and callback.
     QAction *addSliceAction = new QAction("Add slice", this);
     connect(addSliceAction, SIGNAL(triggered()), this, SLOT(addSlice()));
@@ -106,7 +106,13 @@ void VolumeViewer::initUserInterfaceWidgets() {
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
     addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
-    //! Connect the "play timesteps" timer.
-    connect(&playTimeStepsTimer, SIGNAL(timeout()), this, SLOT(nextTimeStep()));
-
+    //! Create a scrollable dock widget for any added slices.
+    QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
+    QScrollArea *slicesScrollArea = new QScrollArea();
+    QWidget *slicesWidget = new QWidget();
+    slicesWidget->setLayout(&sliceWidgetsLayout);
+    slicesScrollArea->setWidget(slicesWidget);
+    slicesScrollArea->setWidgetResizable(true);
+    slicesDockWidget->setWidget(slicesScrollArea);
+    addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
 }

@@ -11,13 +11,14 @@
 #include <QtGui>
 #include <ospray/ospray.h>
 
-class SliceWidget : public QWidget
+class SliceWidget : public QFrame
 {
 Q_OBJECT
 
 public:
 
     SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds);
+    ~SliceWidget();
 
 signals:
 

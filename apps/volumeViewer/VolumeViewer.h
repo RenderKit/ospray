@@ -65,6 +65,9 @@ protected:
     //! The transfer function editor.
     TransferFunctionEditor *transferFunctionEditor;
 
+    //! Layout for slice widgets.
+    QVBoxLayout sliceWidgetsLayout;
+
     //! Timer for use when stepping through multiple models.
     QTimer playTimeStepsTimer;
 

@@ -95,23 +95,47 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) 
     //! Connect animation timer signal / slot.
     connect(&originSliderAnimationTimer, SIGNAL(timeout()), this, SLOT(animate()));
 
-    //! Auto-apply checkbox and Apply buttons.
-    QWidget * applyWidget = new QWidget();
+    //! Auto-apply checkbox, Delete, and Apply buttons.
+    QWidget * buttonsWidget = new QWidget();
     hboxLayout = new QHBoxLayout();
-    applyWidget->setLayout(hboxLayout);
+    buttonsWidget->setLayout(hboxLayout);
 
     autoApplyCheckBox.setText("Auto update");
     autoApplyCheckBox.setChecked(true);
     hboxLayout->addWidget(&autoApplyCheckBox);
 
+    QPushButton * deleteButton = new QPushButton("Delete");
+    connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteLater()));
+    hboxLayout->addWidget(deleteButton);
+
     QPushButton * applyButton = new QPushButton("Apply");
     connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
     hboxLayout->addWidget(applyButton);
 
-    layout->addWidget(applyWidget);
+    layout->addWidget(buttonsWidget);
+
+    //! Frame style for the widget.
+    setFrameStyle(QFrame::Panel | QFrame::Raised);
+
+    //! Minimum width for the widget.
+    setMinimumWidth(240);
 
     //! Auto-apply (if enabled)
     autoApply();
+}
+
+SliceWidget::~SliceWidget() {
+
+    if(triangleMesh) {
+
+        for(unsigned int i=0; i<models.size(); i++) {
+
+            ospRemoveGeometry(models[i], triangleMesh);
+            ospCommit(models[i]);
+        }
+    }
+
+    emit(sliceChanged());
 }
 
 void SliceWidget::apply() {
