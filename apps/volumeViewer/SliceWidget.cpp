@@ -27,7 +27,7 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) 
     formWidget->setLayout(formLayout);
     layout->addWidget(formWidget);
 
-    //! Origin parameters.
+    //! Origin parameters with default values.
     QWidget * originWidget = new QWidget();
     QHBoxLayout * hboxLayout = new QHBoxLayout();
     originWidget->setLayout(hboxLayout);
@@ -35,6 +35,10 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) 
     originXSpinBox.setRange(volumeBounds.lower.x, volumeBounds.upper.x);
     originYSpinBox.setRange(volumeBounds.lower.y, volumeBounds.upper.y);
     originZSpinBox.setRange(volumeBounds.lower.z, volumeBounds.upper.z);
+
+    originXSpinBox.setValue(0.5 * (volumeBounds.lower.x + volumeBounds.upper.x));
+    originYSpinBox.setValue(0.5 * (volumeBounds.lower.y + volumeBounds.upper.y));
+    originZSpinBox.setValue(0.5 * (volumeBounds.lower.z + volumeBounds.upper.z));
 
     connect(&originXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
     connect(&originYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
@@ -46,7 +50,7 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) 
 
     formLayout->addRow("Origin", originWidget);
 
-    //! Normal parameters.
+    //! Normal parameters with default values.
     QWidget * normalWidget = new QWidget();
     hboxLayout = new QHBoxLayout();
     normalWidget->setLayout(hboxLayout);
@@ -54,6 +58,10 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) 
     normalXSpinBox.setRange(-1., 1.);
     normalYSpinBox.setRange(-1., 1.);
     normalZSpinBox.setRange(-1., 1.);
+
+    normalXSpinBox.setValue(1.);
+    normalYSpinBox.setValue(0.);
+    normalZSpinBox.setValue(0.);
 
     connect(&normalXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
     connect(&normalYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
@@ -98,18 +106,12 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) 
     hboxLayout->addWidget(applyButton);
 
     layout->addWidget(applyWidget);
+
+    //! Auto-apply (if enabled)
+    autoApply();
 }
 
 void SliceWidget::apply() {
-
-    bool newGeometry = false;
-
-    //! Create the OSPRay geometry on the first apply().
-    if(!triangleMesh) {
-
-        triangleMesh = ospNewTriangleMesh();
-        newGeometry = true;
-    }
 
     //! Get the origin and normal values.
     osp::vec3f origin(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
@@ -119,6 +121,15 @@ void SliceWidget::apply() {
         return;
     else
         normal = normalize(normal);
+
+    //! Create the OSPRay geometry on the first apply().
+    bool newGeometry = false;
+
+    if(!triangleMesh) {
+
+        triangleMesh = ospNewTriangleMesh();
+        newGeometry = true;
+    }
 
     //! Compute basis vectors.
     osp::vec3f c(1.f,0.f,0.f);
