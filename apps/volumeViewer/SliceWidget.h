@@ -59,4 +59,5 @@ protected:
     QSlider originSlider;
     QPushButton originSliderAnimateButton;
     QTimer originSliderAnimationTimer;
+    int originSliderAnimationDirection;
 };

@@ -8,7 +8,10 @@
 
 #include "SliceWidget.h"
 
-SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) : models(models), volumeBounds(volumeBounds), triangleMesh(NULL) {
+SliceWidget::SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds) : models(models),
+                                                                                  volumeBounds(volumeBounds),
+                                                                                  triangleMesh(NULL),
+                                                                                  originSliderAnimationDirection(1) {
 
     //! Check parameters.
     if(models.size() == 0)
@@ -236,11 +239,12 @@ void SliceWidget::setAnimation(bool set) {
 
 void SliceWidget::animate() {
 
-    //! Increment slider position.
     int value = originSlider.value();
 
-    if(value < originSlider.maximum())
-        originSlider.setValue(value + 1);
-    else
-        originSlider.setValue(originSlider.minimum());
+    //! Check if we need to reverse direction.
+    if(value + originSliderAnimationDirection < originSlider.minimum() || value + originSliderAnimationDirection > originSlider.maximum())
+        originSliderAnimationDirection *= -1;
+
+    //! Increment slider position.
+    originSlider.setValue(value + originSliderAnimationDirection);
 }
