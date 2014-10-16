@@ -219,6 +219,10 @@ void SliceWidget::originSliderValueChanged(int value) {
     //! Get t value within this range.
     float t = tMin + sliderPosition * (tMax - tMin);
 
+    //! Clamp t within epsilon of the minimum and maximum, to prevent artifacts rendering near the bounds of the volume.
+    const float epsilon = 0.01;
+    t = std::max(std::min(t, tMax-epsilon), tMin+epsilon);
+
     //! Compute updated origin, clamped within the volume bounds.
     osp::vec3f updatedOrigin = clamp(origin + t*normal, volumeBounds.lower, volumeBounds.upper);
 
