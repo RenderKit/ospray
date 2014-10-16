@@ -51,6 +51,9 @@ public slots:
     //! Add a slice to the volume.
     void addSlice();
 
+    //! Add a slice to the volume from file.
+    void addSlice(std::string filename);
+
     //! Force the OSPRay window to be redrawn.
     void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
 

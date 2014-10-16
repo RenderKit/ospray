@@ -42,6 +42,17 @@ void VolumeViewer::addSlice() {
     sliceWidgetsLayout.addWidget(sliceWidget);
 }
 
+void VolumeViewer::addSlice(std::string filename) {
+
+    //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
+    SliceWidget * sliceWidget = new SliceWidget(models, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
+    connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
+    sliceWidgetsLayout.addWidget(sliceWidget);
+
+    //! Load state from file.
+    sliceWidget->load(filename);
+}
+
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 
     //! Create an OSPRay model.

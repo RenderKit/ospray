@@ -27,9 +27,11 @@ signals:
 public slots:
 
     void apply();
+    void load(std::string filename = std::string());
 
 protected slots:
 
+    void save();
     void autoApply();
     void originSliderValueChanged(int value);
     void setAnimation(bool set);

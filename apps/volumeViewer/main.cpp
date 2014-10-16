@@ -34,6 +34,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "    -benchmark <warm-up frames> <frames> : run benchmark and report overall frame rate"   << std::endl;
         std::cerr << "    -dt <dt>                             : use ray cast sample step size 'dt'"            << std::endl;
         std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
+        std::cerr << "    -slice <filename>                    : load volume slice from 'filename'"             << std::endl;
         std::cerr << "    -transferfunction <filename>         : load transfer function from 'filename'"        << std::endl;
         std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
         std::cerr << "    -viewup <x> <y> <z>                  : set viewport up vector to ('x', 'y', 'z')"     << std::endl;
@@ -49,6 +50,7 @@ int main(int argc, char *argv[]) {
     //! Default values for the optional command line arguments.
     float dt = 0.0f;
     float rotationRate = 0.0f;
+    std::vector<std::string> sliceFilenames;
     std::string transferFunctionFilename;
     int benchmarkWarmUpFrames = 0;
     int benchmarkFrames = 0;
@@ -72,6 +74,12 @@ int main(int argc, char *argv[]) {
             if (i + 1 >= argc) throw std::runtime_error("missing <rate> argument");
             rotationRate = atof(argv[++i]);
             std::cout << "got rotationRate = " << rotationRate << std::endl;
+
+        } else if (arg == "-slice") {
+
+                if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
+                sliceFilenames.push_back(std::string(argv[++i]));
+                std::cout << "got slice filename = " << sliceFilenames.back() << std::endl;
 
         } else if (arg == "-transferfunction") {
 
@@ -136,6 +144,12 @@ int main(int argc, char *argv[]) {
 
     //! Set rotation rate to use in animation mode.
     volumeViewer->getWindow()->setRotationRate(rotationRate);
+
+    //! Load slice(s) from file.
+    for(unsigned int i=0; i<sliceFilenames.size(); i++) {
+
+        volumeViewer->addSlice(sliceFilenames[i]);
+    }
 
     //! Load transfer function from file.
     if(transferFunctionFilename.empty() != true)

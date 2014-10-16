@@ -24,12 +24,14 @@ SET(SRCS ${SRCS}
   main.cpp
   ColorMap.cpp
   QOSPRayWindow.cpp
+  SliceWidget.cpp
   TransferFunctionEditor.cpp
   TransferFunctionPiecewiseLinearWidget.cpp
   VolumeViewer.cpp
   )
 
 SET(MOC_HEADERS
+  SliceWidget.h
   TransferFunctionEditor.h
   TransferFunctionPiecewiseLinearWidget.h
   VolumeViewer.h
