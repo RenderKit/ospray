@@ -65,6 +65,11 @@ void TransferFunctionPiecewiseLinearWidget::paintEvent(QPaintEvent * event)
 
     painter.setRenderHint(QPainter::Antialiasing, true);
 
+    // draw a border around the widget
+    QPen pen(Qt::gray, 4);
+    painter.setPen(pen);
+    painter.drawRect(0, 0, width(), height());
+
     // background image
     // clip to region below the transfer function lines
     QPainterPath clipPath;
