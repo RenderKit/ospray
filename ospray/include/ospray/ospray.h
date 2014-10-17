@@ -413,6 +413,9 @@ extern "C" {
 
   /*! \} */
   
+  /*! \brief commit changes to a collection of objects */
+  void ospCommitCatalog(OSPObjectCatalog catalog);
+
   /*! \brief commit changes to an object */
   void ospCommit(OSPObject object);
 
