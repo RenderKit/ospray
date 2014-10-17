@@ -12,7 +12,7 @@
 #include "TransferFunctionEditor.h"
 #include "SliceWidget.h"
 
-VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL) {
+VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL), autoRotationRate(0.025f) {
 
     //! Create and configure the OSPRay state.
     initObjects(filenames);
@@ -39,8 +39,11 @@ void VolumeViewer::autoRotate(bool set) {
     if(osprayWindow == NULL)
         return;
 
+    if(autoRotateAction != NULL)
+        autoRotateAction->setChecked(set);
+
     if(set) {
-        osprayWindow->setRotationRate(0.025);
+        osprayWindow->setRotationRate(autoRotationRate);
         osprayWindow->updateGL();
     }
     else {
@@ -106,7 +109,7 @@ void VolumeViewer::initUserInterfaceWidgets() {
 
     //! Add the "auto rotate" widget and callback.
     QToolBar *toolbar = addToolBar("toolbar");
-    QAction * autoRotateAction = new QAction("Auto rotate", this);
+    autoRotateAction = new QAction("Auto rotate", this);
     autoRotateAction->setCheckable(true);
     connect(autoRotateAction, SIGNAL(toggled(bool)), this, SLOT(autoRotate(bool)));
     toolbar->addAction(autoRotateAction);

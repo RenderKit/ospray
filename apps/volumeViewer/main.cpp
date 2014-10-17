@@ -143,7 +143,10 @@ int main(int argc, char *argv[]) {
     volumeViewer->setModel(0);
 
     //! Set rotation rate to use in animation mode.
-    volumeViewer->getWindow()->setRotationRate(rotationRate);
+    if(rotationRate != 0.f) {
+        volumeViewer->setAutoRotationRate(rotationRate);
+        volumeViewer->autoRotate(true);
+    }
 
     //! Load slice(s) from file.
     for(unsigned int i=0; i<sliceFilenames.size(); i++) {
