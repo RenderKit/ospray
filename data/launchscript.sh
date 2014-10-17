@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # ------------------------------------------------------------------
 # in case this script get called from within an MPI process we first
 # have to unset all these environment variables before we can call
@@ -49,12 +48,25 @@ export I_MPI_FABRICS="tcp:tcp"
 
 HOSTFILENAME=/tmp/.ospray.$USER
 rm $HOSTFILENAME
-echo mic0 >> $HOSTFILENAME
+
+for i in 00 01 02 03 04; do
+    echo tcg-vis-ivb-$i >> $HOSTFILENAME
+done
+echo "hosts to be used in rendering :"
+cat $HOSTFILENAME
+
+numnodes=`cat $HOSTFILENAME | wc -l`
+echo "number hosts to be used in rendering : $numnodes"
+
+
+#echo mic0 >> $HOSTFILENAME
 #mpirun -perhost 1 -np 1 -f $HOSTFILENAME ./ospray_mpi_worker --osp:connect $1 > /tmp/launch.out 
 #export I_MPI_FABRICS=tmi
-mpirun \
- -genv I_MPI_DEBUG 5 \
- -perhost 1 -np 2 -hostfile $HOSTFILENAME ./ospray_mpi_worker --osp:connect $1 > /tmp/ospray.launch.$user.out 
+command="mpirun -genv I_MPI_DEBUG 5 -perhost 1 -np $numnodes -hostfile $HOSTFILENAME ./ospray_mpi_worker --osp:connect $1"
+
+echo "run command is '$command'"
+$command  > /tmp/ospray.launch.$USER.out 
+
 #mpiexec.hydra -np 2 ./ospray_mpi_worker > /tmp/launch.out &
 
 

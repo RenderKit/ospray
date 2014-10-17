@@ -127,5 +127,10 @@ namespace ospray {
   // }
 
   OSP_REGISTER_RENDERER(TachyonRenderer,tachyon);
+
+  extern "C" void ospray_init_module_tachyon() 
+  {
+    printf("Loaded plugin 'pathtracer' ...\n");
+  }
 };
 

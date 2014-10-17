@@ -7,18 +7,19 @@
 //    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
 //
 
+#include "ospray/volume/BlockBrickedVolume.h"
 #include "ospray/volume/BrickedVolume.h"
 
 namespace ospray {
 
+    //! A volume type with 64-bit addressing and multi-level bricked storage order.
+    OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
+
     //! A volume type with 32-bit addressing and brick storage order.
-    OSP_REGISTER_VOLUME(BrickedVolume, bricked);
+    OSP_REGISTER_VOLUME(BrickedVolume, bricked_volume);
 
     //! A volume type with 32-bit addressing and XYZ storage order.
-//  OSP_REGISTER_VOLUME(MonolithicVolume, monolithic);
-
-    //! A volume type with 64-bit addressing and multi-level bricked storage order.
-//  OSP_REGISTER_VOLUME(PageBrickedVolume, page-bricked);
+//  OSP_REGISTER_VOLUME(MonolithicVolume, monolithic_volume);
 
 } // namespace ospray
 

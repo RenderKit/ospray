@@ -186,7 +186,7 @@ namespace ospray {
     OSPObjectCatalog OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
 
         //! Create the OSPRay object.
-        OSPVolume volume = ospNewVolume("bricked");
+        OSPVolume volume = ospNewVolume("block_bricked_volume");
 
         //! Iterate over object attributes.
         for (const tinyxml2::XMLNode *node = root->FirstChild() ; node ; node = node->NextSibling()) importVolumeAttribute(node, volume);

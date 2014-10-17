@@ -336,9 +336,14 @@ extern "C" {
   /*! add 1-int paramter to given object */
   void ospSet1i(OSPObject _object, const char *id, int32 x);
 
+  /*! add a 2-float parameter to a given object */
+  void ospSet2f(OSPObject _object, const char *id, float x, float y);
+
+  /*! add 3-float paramter to given object */
+  void ospSet2fv(OSPObject _object, const char *id, const float *xy);
+
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
-
   /*! add 3-float paramter to given object */
   void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
 

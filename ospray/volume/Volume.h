@@ -64,7 +64,7 @@ namespace ospray {
     protected:
 
         //! Volume transfer function.
-        void *transferFunction;
+        TransferFunction *transferFunction;
 
         //! Print an error message.
         inline void emitMessage(const std::string &kind, const std::string &message) const

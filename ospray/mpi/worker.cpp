@@ -28,6 +28,14 @@ namespace ospray {
 
     static const int HOST_NAME_MAX = 10000;
 
+
+    void embreeErrorFunc(const RTCError code, const char* str)
+    {
+      std::cerr << "#osp: embree internal error " << code << " : " << str << std::endl;
+      throw std::runtime_error("embree internal error '"+std::string(str)+"'");
+    }
+
+
     /*! it's up to the proper init
       routine to decide which processes call this function and which
       ones don't. This function will not return. 
@@ -41,11 +49,25 @@ namespace ospray {
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
+      // std::stringstream embreeConfig;
+      // if (debugMode)
+      //   embreeConfig << " threads=1";
+      // rtcInit(embreeConfig.str().c_str());
+
+      //      assert(rtcGetError() == RTC_NO_ERROR);
+      rtcSetErrorFunction(embreeErrorFunc);
+
       std::stringstream embreeConfig;
       if (debugMode)
-        embreeConfig << " threads=1";
+        embreeConfig << " threads=1,verbose=2";
       rtcInit(embreeConfig.str().c_str());
-      assert(rtcGetError() == RTC_NO_ERROR);
+
+      if (rtcGetError() != RTC_NO_ERROR) {
+        // why did the error function not get called !?
+        std::cerr << "#osp:init: embree internal error number " << (int)rtcGetError() << std::endl;
+        assert(rtcGetError() == RTC_NO_ERROR);
+      }
+
 
       CommandStream cmd;
 
@@ -62,7 +84,7 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-         // PRINT(command);usleep(20);
+        // PRINT(command);usleep(20);
 #if 0
         if (worker.rank == 0)
           printf("#w: command %i\n",command);
@@ -169,7 +191,6 @@ namespace ospray {
         } break;
 
         case api::MPIDevice::CMD_NEW_LIGHT: {
-          PING;
           const mpi::Handle rendererHandle = cmd.get_handle();
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
@@ -417,6 +438,15 @@ namespace ospray {
           obj->findParam(name,1)->set(val);
           cmd.free(name);
         } break;
+        case api::MPIDevice::CMD_SET_VEC2F: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const vec2f val = cmd.get_vec2f();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
         case api::MPIDevice::CMD_SET_VEC3I: {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
@@ -427,7 +457,6 @@ namespace ospray {
           cmd.free(name);
         } break;
         case api::MPIDevice::CMD_LOAD_MODULE: {
-          PING;
           const char *name = cmd.get_charPtr();
 
 #if THIS_IS_MIC
@@ -436,8 +465,6 @@ namespace ospray {
 #else
           std::string libName = "ospray_module_"+std::string(name)+"";
 #endif
-          PING;
-          PRINT(libName);
           loadLibrary(libName);
       
           std::string initSymName = "ospray_init_module_"+std::string(name);

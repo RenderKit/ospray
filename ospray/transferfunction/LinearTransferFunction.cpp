@@ -34,9 +34,9 @@ namespace ospray {
         //! Set the opacity value range.
         if (alphas) ispc::LinearTransferFunction_setAlphaRange(ispcEquivalent, getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
 	
-        //Compute the min/max values over all possible ranges into a LUT
-	if (alphas) ispc::TransferFunction_PrecomputeMinMaxValues(ispcEquivalent);
-
+	//! Set the value range that the transfer function covers
+	vec2f range = getParam2f("range", vec2f(0.f,1.f));
+	ispc::TransferFunction_setValueRange(ispcEquivalent, range.x, range.y);
     }
 
     void LinearTransferFunction::createEquivalentISPC() {
