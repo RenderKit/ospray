@@ -42,6 +42,9 @@ public:
 
 public slots:
 
+    //! Toggle auto-rotation of the view.
+    void autoRotate(bool set);
+
     //! Draw the model associated with the next time step.
     void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index); }
 

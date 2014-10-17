@@ -34,6 +34,20 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer
 
 }
 
+void VolumeViewer::autoRotate(bool set) {
+
+    if(osprayWindow == NULL)
+        return;
+
+    if(set) {
+        osprayWindow->setRotationRate(0.025);
+        osprayWindow->updateGL();
+    }
+    else {
+        osprayWindow->setRotationRate(0.);
+    }
+}
+
 void VolumeViewer::addSlice() {
 
     //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
@@ -90,8 +104,14 @@ void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
 
 void VolumeViewer::initUserInterfaceWidgets() {
 
-    //! Add the "next timestep" widget and callback.
+    //! Add the "auto rotate" widget and callback.
     QToolBar *toolbar = addToolBar("toolbar");
+    QAction * autoRotateAction = new QAction("Auto rotate", this);
+    autoRotateAction->setCheckable(true);
+    connect(autoRotateAction, SIGNAL(toggled(bool)), this, SLOT(autoRotate(bool)));
+    toolbar->addAction(autoRotateAction);
+
+    //! Add the "next timestep" widget and callback.
     QAction *nextTimeStepAction = new QAction("Next timestep", this);
     connect(nextTimeStepAction, SIGNAL(triggered()), this, SLOT(nextTimeStep()));
     toolbar->addAction(nextTimeStepAction);
