@@ -85,7 +85,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
     for (size_t i=0 ; catalog->entries[i] ; i++) if (catalog->entries[i]->type == OSP_VOLUME) ospAddVolume(model, (OSPVolume) catalog->entries[i]->object);
 
     //! Commit the OSPRay object state.
-    ospCommit(catalog);  ospCommit(model);  models.push_back(model);
+    ospCommitCatalog(catalog);  ospCommit(model);  models.push_back(model);
 
 }
 
@@ -96,6 +96,12 @@ void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
 
     //! Create an OSPRay transfer function.
     transferFunction = ospNewTransferFunction("piecewise_linear");
+
+    //! Create an OSPRay light source.
+    OSPLight light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
+
+    //! Set the light source on the renderer.
+    ospCommit(light);  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
 
     //! Detailed failure information will be reported by OSPRay.
     exitOnCondition(renderer == NULL || transferFunction == NULL, "could not create OSPRay object");  ospCommit(transferFunction);

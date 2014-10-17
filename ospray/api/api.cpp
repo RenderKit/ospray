@@ -91,7 +91,7 @@ namespace ospray {
 
         if (std::string(_av[i]) == "--osp:mpi-launch") {
 #if OSPRAY_MPI
-          if (i+2 >= *_ac)
+          if (i+2 > *_ac)
             throw std::runtime_error("--osp:mpi-launch expects an argument");
           const char *launchCommand = strdup(_av[i+1]);
           removeArgs(*_ac,(char **&)_av,i,2);
@@ -400,14 +400,21 @@ namespace ospray {
 #endif
   }
 
+  extern "C" void ospCommitCatalog(OSPObjectCatalog catalog)
+  {
+    ASSERT_DEVICE();
+    Assert(catalog && "invalid catalog handle to commit from");
+    LOG("ospCommitCatalog(...)");
+    ObjectCatalog *objects = dynamic_cast<ObjectCatalog *>(catalog);
+    objects->commit();
+  }
+
   extern "C" void ospCommit(OSPObject object)
   {
     ASSERT_DEVICE();
     Assert(object && "invalid object handle to commit to");
     LOG("ospCommit(...)");
-    ObjectCatalog *catalog = dynamic_cast<ObjectCatalog *>(object);
-    if (catalog) catalog->commit();
-    else ospray::api::Device::current->commit(object);
+    ospray::api::Device::current->commit(object);
   }
 
   extern "C" void ospSetString(OSPObject _object, const char *id, const char *s)

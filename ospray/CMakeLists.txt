@@ -39,6 +39,8 @@ SET(OSPRAY_SOURCES
   camera/perspectivecamera.ispc
   camera/perspectivecamera.cpp
 
+  volume/BlockBrickedVolume.cpp
+  volume/BlockBrickedVolume.ispc
   volume/BrickedVolume.cpp
   volume/BrickedVolume.ispc
   volume/StructuredVolume.cpp

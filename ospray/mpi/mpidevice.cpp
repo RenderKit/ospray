@@ -523,9 +523,6 @@ namespace ospray {
 #endif
       loadLibrary(libName);
 
-      PING;
-      PRINT(libName);
-      
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
@@ -533,12 +530,8 @@ namespace ospray {
       void (*initMethod)() = (void(*)())initSym;
       initMethod();
 
-      PING;
-
       cmd.newCommand(CMD_LOAD_MODULE);
       cmd.send(name);
-
-      PING;
       
       // FIXME: actually we should return an error code here...
       return 0;
