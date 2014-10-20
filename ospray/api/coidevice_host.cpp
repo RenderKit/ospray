@@ -50,7 +50,6 @@ namespace ospray {
       x(OSPCOI_SET_MATERIAL,            "ospray_coi_set_material")          \
       x(OSPCOI_NEW_CAMERA,              "ospray_coi_new_camera")            \
       x(OSPCOI_NEW_VOLUME,              "ospray_coi_new_volume")            \
-      x(OSPCOI_NEW_VOLUME_FROM_FILE,    "ospray_coi_new_volume_from_file")  \
       x(OSPCOI_NEW_TRANSFER_FUNCTION,   "ospray_coi_new_transfer_function") \
       x(OSPCOI_NEW_RENDERER,            "ospray_coi_new_renderer")          \
       x(OSPCOI_NEW_GEOMETRY,            "ospray_coi_new_geometry")          \
