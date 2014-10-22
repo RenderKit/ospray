@@ -77,13 +77,29 @@ inline uint32 cvt_uint32(const vec3f &v)
     (cvt_uint32(v.z) << 16);
 }
 
+/*! struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE pixels */
 struct z_order_t {
+  /*! 32-bit field specifying both x and y coordinate of the z-order,
+      with upper 16 bits for the y coordinate, and lower 16 for the x
+      coordinate. Compared to using two uint32-arrays, this saves on
+      gather-loop */
+  uniform uint32 xyIdx[TILE_SIZE*TILE_SIZE];
   uniform uint32 xs[TILE_SIZE*TILE_SIZE];
   uniform uint32 ys[TILE_SIZE*TILE_SIZE];
 };
 
+inline uint32 getZOrderX(const uint32 &xs16_ys16) { return xs16_ys16 & (0xffff); }
+inline uint32 getZOrderY(const uint32 &xs16_ys16) { return xs16_ys16 >> 16; }
+
 extern uniform z_order_t z_order;
 extern uniform bool z_order_initialized;
 
-void precomputeZOrder();
+/*! precompute a per-pixel z-order to be used within a tile */
+extern void precomputedZOrder_create();
+
+/*! precompute a per-pixel z-order to be used within a tile */
+inline void precomputeZOrder()
+{ if (!z_order_initialized) precomputedZOrder_create(); }
+
+
 
