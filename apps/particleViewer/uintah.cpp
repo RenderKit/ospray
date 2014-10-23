@@ -14,6 +14,7 @@ namespace ospray {
     /*! a dump-file we can use for debugging; we'll simply dump each
         parsed particle into this file during parsing */
     FILE *particleDumpFile = NULL;
+    size_t numDumpedParticles = 0;
 
     struct Particle {
       double x,y,z;
@@ -72,13 +73,14 @@ namespace ospray {
         a.position = vec3f(p.x,p.y,p.z);
         a.type = model->getAtomType("<unnamed>");
 
-        if (particleDumpFile)
+        if (particleDumpFile) {
+          numDumpedParticles++;
           fwrite(&a,sizeof(a),1,particleDumpFile);
-
-        model->atom.push_back(a);
+        } else 
+          model->atom.push_back(a);
       }
       
-      std::cout << "\r#osp:uintah: read " << numParticles << " particles (total " << float(model->atom.size()/1e6) << "M)";
+      std::cout << "\r#osp:uintah: read " << numParticles << " particles (total " << float((numDumpedParticles+model->atom.size())/1e6) << "M)";
 
       // Particle *particle = new Particle[numParticles];
       // fread(particle,numParticles,sizeof(Particle),file);
