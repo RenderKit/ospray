@@ -202,6 +202,27 @@ namespace ospray {
       virtual void keypress(char key, const vec2f where)
       {
         switch (key) {
+        case 'X':
+          if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
+            viewPort.up = - viewPort.up;
+          else 
+            viewPort.up = vec3f(1,0,0);
+          viewPort.modified = true;
+          break;
+        case 'Y':
+          if (viewPort.up == vec3f(0,1,0) || viewPort.up == vec3f(0,-1.f,0))
+            viewPort.up = - viewPort.up;
+          else 
+            viewPort.up = vec3f(0,1,0);
+          viewPort.modified = true;
+          break;
+        case 'Z':
+          if (viewPort.up == vec3f(0,0,1) || viewPort.up == vec3f(0,0,-1.f))
+            viewPort.up = - viewPort.up;
+          else 
+            viewPort.up = vec3f(0,0,1);
+          viewPort.modified = true;
+          break;
         case 'S':
           doShadows = !doShadows;
           cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;
