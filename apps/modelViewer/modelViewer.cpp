@@ -111,6 +111,7 @@ namespace ospray {
         cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;
         ospSet1i(renderer,"shadowsEnabled",doShadows);
         ospCommit(renderer);
+        accumID=0;
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
@@ -513,9 +514,13 @@ namespace ospray {
         ospLoadModule(moduleName);
         rendererType = moduleName;
       } else if (arg == "--sun-dir") {
-        defaultDirLight_direction.x = atof(av[++i]);
-        defaultDirLight_direction.y = atof(av[++i]);
-        defaultDirLight_direction.z = atof(av[++i]);
+        if (!strcmp(av[i+1],"none")) {
+          defaultDirLight_direction = vec3f(0.f);
+        } else {
+          defaultDirLight_direction.x = atof(av[++i]);
+          defaultDirLight_direction.y = atof(av[++i]);
+          defaultDirLight_direction.z = atof(av[++i]);
+        }
       } else if (arg == "--module" || arg == "--plugin") {
         assert(i+1 < ac);
         const char *moduleName = av[++i];
@@ -791,14 +796,16 @@ namespace ospray {
     //begin light test
     std::vector<OSPLight> dirLights;
     cout << "msgView: Adding a hard coded directional light as the sun." << endl;
-    OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
-    ospSetString(ospLight, "name", "sun" );
-    ospSet3f(ospLight, "color", 1, 1, 1);
-    ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
-    ospCommit(ospLight);
-    dirLights.push_back(ospLight);
-    OSPData dirLightArray = ospNewData(dirLights.size(), OSP_OBJECT, &dirLights[0], 0);
-    ospSetData(ospRenderer, "directionalLights", dirLightArray);
+    if (defaultDirLight_direction != vec3f(0.f)) {
+      OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
+      ospSetString(ospLight, "name", "sun" );
+      ospSet3f(ospLight, "color", 1, 1, 1);
+      ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
+      ospCommit(ospLight);
+      dirLights.push_back(ospLight);
+      OSPData dirLightArray = ospNewData(dirLights.size(), OSP_OBJECT, &dirLights[0], 0);
+      ospSetData(ospRenderer, "directionalLights", dirLightArray);
+    }
 #if 0
     //spot light
     std::vector<OSPLight> spotLights;
