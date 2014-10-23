@@ -129,6 +129,37 @@ namespace ospray {
         forceRedraw();
         break;
       case 'X':
+        if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
+          viewPort.up = - viewPort.up;
+        else 
+          viewPort.up = vec3f(1,0,0);
+        viewPort.modified = true;
+        accumID=0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      case 'Y':
+        if (viewPort.up == vec3f(0,1,0) || viewPort.up == vec3f(0,-1.f,0))
+          viewPort.up = - viewPort.up;
+        else 
+          viewPort.up = vec3f(0,1,0);
+        viewPort.modified = true;
+        accumID=0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      case 'Z':
+        if (viewPort.up == vec3f(0,0,1) || viewPort.up == vec3f(0,0,-1.f))
+          viewPort.up = - viewPort.up;
+        else 
+          viewPort.up = vec3f(0,0,1);
+        viewPort.modified = true;
+        accumID=0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+
+      case '(':
         {
           g_explosion_factor += .01f;
           vec3f center = embree::center(msgModel->getBBox());
@@ -141,7 +172,7 @@ namespace ospray {
           forceRedraw();
         }
         break;
-      case 'x':
+      case ')':
         {
           g_explosion_factor -= .01f;
           g_explosion_factor = std::max( 0.f, g_explosion_factor);
