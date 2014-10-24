@@ -55,12 +55,30 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
     if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
   }
   if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
-    uniform uint8 *spherePtr = 
-      THIS->data + THIS->bytesPerSphere*ray.primID;
-    dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
-    if (THIS->materialList) {
-      dg.material = THIS->materialList[dg.materialID];
-    }
+#if 1
+    const uniform int32 primsPerPage = (1024*1024*128);
+    if (any(ray.primID >= primsPerPage )) {
+      const int primPageID  = ray.primID / primsPerPage;
+      const int localPrimID = ray.primID % primsPerPage;
+      foreach_unique(primPage in primPageID) {
+        uniform uint8 *uniform pagePtr = THIS->data + (((int64)primPage) * primsPerPage * THIS->bytesPerSphere);
+        uniform uint8 *spherePtr = 
+          pagePtr + THIS->bytesPerSphere*localPrimID;
+        dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
+        if (THIS->materialList) {
+          dg.material = THIS->materialList[dg.materialID];
+        }
+      }
+    } else
+#endif
+      {
+        uniform uint8 *spherePtr = 
+          THIS->data + THIS->bytesPerSphere*ray.primID;
+        dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
+        if (THIS->materialList) {
+          dg.material = THIS->materialList[dg.materialID];
+        }
+      }
   }
   dg.Ng = Ng;
   dg.Ns = Ns;
@@ -70,7 +88,7 @@ void Spheres_bounds(uniform Spheres *uniform geometry,
                     uniform size_t primID,
                     uniform box3fa &bbox)
 {
-  uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*primID;
+  uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*((uniform int64)primID);
   uniform float radius = geometry->radius;
   if (geometry->offset_radius >= 0) {
     radius = *((uniform float *)(spherePtr+geometry->offset_radius));
@@ -85,7 +103,7 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
                        varying Ray &ray,
                        uniform size_t primID)
 {
-  uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*primID;
+  uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*((uniform int64)primID);
   uniform float radius = geometry->radius;
   if (geometry->offset_radius >= 0) {
     radius = *((uniform float *)(spherePtr+geometry->offset_radius));
