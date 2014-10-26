@@ -270,13 +270,15 @@ namespace ospray {
           ospFrameBuffer(NULL) 
       { createFB(); };
 
-      unsigned char *map() { return (uchar *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR); }
+      unsigned char *map() { return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR); }
       void unmap(unsigned char *mem) { ospUnmapFrameBuffer(mem,ospFrameBuffer); }
 
       void clearAccum() 
       {
         ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
       }
+      
+      vec2i getSize() const { return size; }
 
       virtual ~FrameBuffer() { destroyFB(); }
 
