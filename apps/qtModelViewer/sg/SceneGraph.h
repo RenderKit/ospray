@@ -271,7 +271,7 @@ namespace ospray {
       { createFB(); };
 
       unsigned char *map() { return (uchar *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR); }
-      void unmap(unsigned char *mem) { ospUnmapFrameBuffer(ospFrameBuffer,mem); }
+      void unmap(unsigned char *mem) { ospUnmapFrameBuffer(mem,ospFrameBuffer); }
 
       void clearAccum() 
       {
