@@ -9,51 +9,24 @@
 #include "ModelViewer.h"
 #include "widgets/affineSpaceManipulator/HelperGeometry.h"
 
-//#include "sg/Scene.h"
+#include "sg/SceneGraph.h"
+#include "sg/Renderer.h"
 
 namespace ospray {
   namespace viewer {
 
-        // =======================================================
-    //! render widget that renders through ospray
-    // =======================================================
-    struct OSPRayRenderWidget : public QAffineSpaceManipulator {
-      OSPRayRenderWidget();
+    using std::cout;
+    using std::endl;
 
-      // -------------------------------------------------------
-      // render widget callbacks
-      // -------------------------------------------------------
-
-      virtual void redraw();
-      virtual void resize(int width, int height);
-
-      // -------------------------------------------------------
-      // internal state
-      // -------------------------------------------------------
-
-      //! the ospray frame buffer we're using
-      OSPFrameBuffer ospFrameBuffer;
-
-      //! the renderer we're using
-      OSPRenderer    ospRenderer;
-      
-      //! the world model that we're using to render
-      OSPModel       ospModel; 
-
-      //! ospray camera we're using to render with
-      OSPCamera      ospCamera;
-
-      //! update the ospray camera (ospCamera) from the widget camera (this->camera)
-      void updateOSPRayCamera();
-
-      //! signals that the current ospray state is dirty (i.e., that we can not accumulate)
-      bool isDirty; 
-    };
-
-    OSPRayRenderWidget::OSPRayRenderWidget()
+    OSPRayRenderWidget::OSPRayRenderWidget(Ref<sg::Renderer> renderer)
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
-        ospRenderer(NULL), ospModel(NULL), ospCamera(NULL), ospFrameBuffer(NULL)
+        sgRenderer(renderer),
+        ospRenderer(NULL), 
+        ospModel(NULL), 
+        ospCamera(NULL), 
+        ospFrameBuffer(NULL)
     {
+#if 0
       CoordFrameGeometry arrows;
 
       ospModel = ospNewModel();
@@ -93,8 +66,17 @@ namespace ospray {
       ospSetObject(ospRenderer,"world",ospModel);
       ospSetObject(ospRenderer,"camera",ospCamera);
       ospCommit(ospRenderer);
+#endif
     }
     
+    void OSPRayRenderWidget::setWorld(Ref<sg::World> world)
+    {
+      assert(sgRenderer);
+      sgRenderer->setWorld(world);
+      cout << "#ospQTV: world set, found " 
+           << sgRenderer->allNodes.size() << " nodes" << endl;
+   }
+
     //! the QT callback that tells us that we have to redraw
     void OSPRayRenderWidget::redraw()
     { 
@@ -162,7 +144,7 @@ namespace ospray {
       editorWidgetStack->addPage("Transfer Function",transferFunctionEditor);
     }
 
-    ModelViewer::ModelViewer()
+    ModelViewer::ModelViewer(Ref<sg::Renderer> renderer)
       : editorWidgetStack(NULL),
         transferFunctionEditor(NULL),
         toolBar(NULL)
@@ -173,7 +155,7 @@ namespace ospray {
       resize(1024,768);
 
       // initialize renderer
-      renderer     = new OSPRayRenderer;
+      // renderer     = new OSPRayRenderer;
 
       // create GUI elements
       toolBar      = addToolBar("toolbar");
@@ -181,7 +163,7 @@ namespace ospray {
       //connect(nextTimestepAction, SIGNAL(triggered()), this, SLOT(nextTimestep()));
       toolBar->addAction(testAction);
 
-      renderWidget = new OSPRayRenderWidget();
+      renderWidget = new OSPRayRenderWidget(renderer);
       ///renderWidget = new CheckeredSphereRotationEditor();
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FLY);
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::INSPECT);
@@ -197,10 +179,15 @@ namespace ospray {
       createTransferFunctionEditor();
     }
 
-    void ModelViewer::render()
+    void ModelViewer::setWorld(Ref<sg::World> world) 
     {
-      PING;
+      renderWidget->setWorld(world); 
     }
+
+    // void ModelViewer::render()
+    // {
+    //   PING;
+    // }
 
     void ModelViewer::cameraChanged() 
     { PING; }

@@ -33,9 +33,19 @@ namespace ospray {
 
     World *importSpheres(const std::string &fileName)
     {
+      return NULL;
+    }
+
+    World *createTestSphere()
+    {
       sg::World *world = new sg::World;
-      sg::Geometry *spheres = new sg::GenericGeometry("spheres");
-      world->geometry.push_back(spheres);
+      sg::Spheres *spheres = new sg::Spheres;
+      spheres->sphere.push_back(sg::Spheres::Sphere(vec3f(0,0,0),1.f));
+      // sg::TransferFunction 
+      //   = new sg::TransferFunction(sg::TransferFunction::CoolToWarm));
+      // spheres->addParam(new NodeParam("transferFunction",transferFunction));
+      // world->geometry.push_back(spheres);
+      world->node.push_back(spheres);
       return world;
     }
       

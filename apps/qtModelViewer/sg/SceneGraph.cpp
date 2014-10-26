@@ -158,18 +158,18 @@ namespace ospray {
     //   return geometry;
     // }
     
-    sg::Renderer *parseRendererNode(xml::Node *node)
+    sg::Integrator *parseIntegratorNode(xml::Node *node)
     {
-      assert(node->name == "Renderer");
-      Renderer *renderer = new Renderer(node->getProp("type"));
+      assert(node->name == "Integrator");
+      Integrator *integrator = new Integrator(node->getProp("type"));
       for (int i=0;i<node->child.size();i++) {
         xml::Node *c = node->child[i];
-        if (parseParam(renderer,c))
+        if (parseParam(integrator,c))
           continue;
         throw std::runtime_error("unknown node type '"+c->name
-                                 +"' in ospray::sg::Renderer node");
+                                 +"' in ospray::sg::Integrator node");
       }
-      return renderer;
+      return integrator;
     }
     
     sg::World *parseWorldNode(xml::Node *node)
@@ -208,8 +208,8 @@ namespace ospray {
     //           world->node.push_back(parseInfoNode(node));
     //         } else if (node->name == "Model") {
     //           world->node.push_back(parseModelNode(node));
-    //         } else if (node->name == "Renderer") {
-    //           world->renderer.push_back(parseRendererNode(node));
+    //         } else if (node->name == "Integrator") {
+    //           world->integrator.push_back(parseIntegratorNode(node));
     //         } else {
     //           world->node.push_back(ospray::sg::createNodeFrom(node));
     //         }
@@ -223,8 +223,8 @@ namespace ospray {
         return parseDataNode(node);
       if (node->name == "Info")
         return parseInfoNode(node);
-      if (node->name == "Renderer")
-        return parseRendererNode(node);
+      if (node->name == "Integrator")
+        return parseIntegratorNode(node);
       std::cout << "warning: unknown sg::Node type '" << node->name << "'" << std::endl;
       return NULL;
     }
@@ -242,6 +242,33 @@ namespace ospray {
       return world;
     }
 
+
+    void Serialization::serialize(Ref<sg::World> world, Serialization::Mode mode)
+    {
+      clear(); 
+      Serialization::State state;
+      state.serialization = this;
+      world.ptr->serialize(state);
+    }
+
+    void Node::serialize(sg::Serialization::State &serialization)
+    {
+      throw std::runtime_error("serialization not implmemented for node '"+toString()+"'");
+    }
+
+
+
+    //! serialize into given serialization state 
+    void sg::World::serialize(sg::Serialization::State &state)
+    {
+      sg::Serialization::State savedState = state;
+      {
+        //state->serialization->object.push_back(Serialization::);
+        for (size_t i=0; i<node.size(); i++)
+          node[i]->serialize(state);
+      }
+      state = savedState;
+    }
 
   } // ::ospray::sg
 } // ::ospray
