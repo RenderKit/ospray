@@ -40,9 +40,6 @@ namespace ospray {
       accumID = 0;
       if (frameBuffer) 
         frameBuffer->clearAccum(); 
-// {
-//         ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
-//       }
     }
 
     //! create a default camera

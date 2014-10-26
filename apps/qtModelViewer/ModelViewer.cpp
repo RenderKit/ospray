@@ -80,15 +80,18 @@ namespace ospray {
     //! the QT callback that tells us that we have to redraw
     void OSPRayRenderWidget::redraw()
     { 
-      if (!ospFrameBuffer) return;
-      if (!ospRenderer) return;
+      if (!renderer) return;
+      if (!renderer->frameBuffer) return;
+      if (!renderer->camera) return;
+
+      renderer->renderFrame();
+
+      vec2i size = renderer->frameBuffer->getSize();
+      unsigned char *fbMem = renderer->frameBuffer->map();
+      glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);      
+      renderer->frameBuffer->unmap(fbMem);
       
-      updateOSPRayCamera();
-      ospRenderFrame(ospFrameBuffer, ospRenderer);
-      
-      uint32 *mappedFB = (unsigned int *)ospMapFrameBuffer(ospFrameBuffer);      
-      glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFB);      
-      ospUnmapFrameBuffer(mappedFB, ospFrameBuffer);
+      // updateOSPRayCamera();
     }
     
     //! the QT callback that tells us that the image got resize
