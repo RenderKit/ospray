@@ -91,19 +91,28 @@ namespace ospray {
         delete modelViewer;
         delete app;
       } else {
-        if (!renderer->frameBuffer)
+        cout << "#ospQTV: setting up in render-to-file mode" << endl;
+        if (!renderer->frameBuffer) {
+          cout << "#ospQTV: creating default framebuffer (" 
+               << frameResolution.x << "x" << frameResolution.y << ")" << endl;
           renderer->frameBuffer = new sg::FrameBuffer(frameResolution);
+        }
 
         // output file specified - render to file
-        cout << "#ospQTV: setting up in render-to-file mode" << endl;
+        cout << "#ospQTV: rendering frame" << endl;
         renderer->renderFrame();
+
         unsigned char *fbMem = renderer->frameBuffer->map();
+        cout << "#ospQTV: saving image" << endl;
         QImage image(fbMem,
                      renderer->frameBuffer->getSize().x,
                      renderer->frameBuffer->getSize().y,
                      QImage::Format_ARGB32);
         image.save(outFileName.c_str());
         renderer->frameBuffer->unmap(fbMem);
+        cout << "#ospQTV: rendered image saved to " << outFileName << endl;
+        cout << "#ospQTV: done... exiting." << endl;
+        exit(0);
       }
     }
   }

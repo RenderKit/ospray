@@ -292,11 +292,13 @@ namespace ospray {
 
     /*! a renderer node - the generic renderer node */
     struct Integrator : public sg::Node {
-      Integrator(const std::string &type) : type(type) {};
+      Integrator(const std::string &type) : type(type), ospRenderer(NULL) {};
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Renderer"; }
       /*! renderer type, i.e., 'ao', 'obj', 'pathtracer', ... */
       const std::string type; 
+
+      OSPRenderer ospRenderer;
     };
 
     /*! simple spheres, with all of the key info - position, radius,
