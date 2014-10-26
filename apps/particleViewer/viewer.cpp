@@ -167,6 +167,24 @@ namespace ospray {
       ospray::glut3D::FPSCounter fps;
     };
 
+    particle::Model *createTestCube(int numPerSide)
+    {
+      particle::Model *m = new particle::Model;
+      int type = m->getAtomType("testParticle");
+      for (int z=0;z<numPerSide;z++)
+        for (int y=0;y<numPerSide;y++)
+          for (int x=0;x<numPerSide;x++) {
+            particle::Model::Atom a;
+            a.position.x = x/float(numPerSide);
+            a.position.y = y/float(numPerSide);
+            a.position.z = z/float(numPerSide);
+            a.type = type;
+            m->atom.push_back(a);
+          }
+      m->radius = 1.f/numPerSide;
+      return m;
+    }
+
     OSPData makeMaterials(OSPRenderer renderer,particle::Model *model)
     {
       int numMaterials = model->atomType.size();
@@ -211,7 +229,11 @@ namespace ospray {
           error("unkown commandline argument '"+arg+"'");
         } else {
           embree::FileName fn = arg;
-          if (fn.ext() == "xyz") {
+          if (fn.str() == "___CUBE_TEST___") {
+            int numPerSide = atoi(av[++i]);
+            particle::Model *m = createTestCube(numPerSide);
+            particleModel.push_back(m);
+          } else if (fn.ext() == "xyz") {
             particle::Model *m = new particle::Model;
             //            m->loadXYZ(fn);
             std::pair<particle::Model *, embree::FileName> loadJob(m,fn.str());
