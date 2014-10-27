@@ -80,10 +80,15 @@ namespace ospray {
       struct Object : public embree::RefCount {
         /*! the node itself */
         Ref<sg::Node>      node;  
+
         /*! the instantiation info when we traversed this node. May be
-          NULL if object isn't instanced, and may contain more than
-          one node in case true instancing is being done. */
-        std::vector<Ref<Instantiation> > instantiation;
+          NULL if object isn't instanced (or only instanced once) */
+        Ref<Instantiation> instantiation;
+        // std::vector<Ref<Instantiation> > instantiation;
+
+        Object(sg::Node *node=NULL, Instantiation *inst=NULL)
+          : node(node), instantiation(inst) 
+        {};
       };
 
       /*! the node that maintains all the traversal state when
@@ -145,8 +150,17 @@ namespace ospray {
       inline void setParam(const std::string &name, const T &t) 
       { param[name] = new ParamT<T>(name,t); }
 
-      virtual void serialize(sg::Serialization::State &serialization);
+      /*! serialize the scene graph - add object to the serialization,
+          but don't do anything else to the node(s) */
+      virtual void serialize(sg::Serialization::State &state);
 
+      /*! 'render' the nodes - all geometries, materials, etc will
+          create their ospray counterparts, and store them in the
+          node  */
+      virtual void render(World *world=NULL, 
+                          Integrator *integrator=NULL,
+                          const affine3f &xfm = embree::one);
+      
       std::string name;
     protected:
       std::map<std::string,Ref<Param> > param;
@@ -241,11 +255,25 @@ namespace ospray {
 
     /*! a camera node - the generic camera node */
     struct Camera : public sg::Node {
-      Camera(const std::string &type) : type(type) {};
+      Camera(const std::string &type) : type(type), ospCamera(NULL) {};
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Camera"; }
       /*! camera type, i.e., 'ao', 'obj', 'pathtracer', ... */
       const std::string type; 
+
+      virtual void create() { 
+        if (ospCamera) destroy();
+        ospCamera = ospNewCamera(type.c_str());
+        commit();
+      };
+      virtual void commit() {}
+      virtual void destroy() {
+        if (!ospCamera) return;
+        ospRelease(ospCamera);
+        ospCamera = 0;
+      }
+
+      OSPCamera ospCamera;
     };
 
     struct PerspectiveCamera : public sg::Camera {     
@@ -253,7 +281,11 @@ namespace ospray {
         : Camera("perspective"),
           from(0,-1,0), at(0,0,0), up(0,0,1),
           fovy(60)
-      {}
+      {
+        create();
+      }
+
+      virtual void commit();
 
       vec3f from;
       vec3f at;
@@ -299,6 +331,7 @@ namespace ospray {
       const std::string type; 
 
       OSPRenderer ospRenderer;
+      virtual void commit();
     };
 
     /*! simple spheres, with all of the key info - position, radius,
@@ -315,19 +348,19 @@ namespace ospray {
           : position(position), 
             radius(radius), 
             typeID(typeID) 
-        {}
+        {};
+
         inline box3f getBounds() const
         { return box3f(position-vec3f(radius),position+vec3f(radius)); };
+
       };
+
+      OSPGeometry ospGeometry;
       /*! one material per typeID */
-      std::vector<Ref<sg::Material> > material;
+      // std::vector<Ref<sg::Material> > material;
       std::vector<Sphere>             sphere;
 
-      Spheres() : Geometry("spheres") {};
-
-      //! serialize into given serialization state 
-      virtual void serialize(sg::Serialization::State &serialization)
-      { PING; }
+      Spheres() : Geometry("spheres"), ospGeometry(NULL) {};
 
       virtual box3f getBounds() {
         box3f bounds = embree::empty;
@@ -335,11 +368,20 @@ namespace ospray {
           bounds.extend(sphere[i].getBounds());
         return bounds;
       }
+      /*! 'render' the nodes - all geometries, materials, etc will
+          create their ospray counterparts, and store them in the
+          node  */
+      virtual void render(World *world=NULL, 
+                          Integrator *integrator=NULL,
+                          const affine3f &xfm = embree::one);
+      
       
     };
     
     /*! a world node */
     struct World : public sg::Node {
+      World() : ospModel(NULL) {};
+
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::viewer::sg::World"; }
 
@@ -347,6 +389,11 @@ namespace ospray {
       virtual void serialize(sg::Serialization::State &serialization);
 
       std::vector<Ref<Node> > node;
+
+      OSPModel ospModel;
+      virtual void render(World *world=NULL, 
+                          Integrator *integrator=NULL,
+                          const affine3f &xfm = embree::one);
     };
       
     World *readXML(const std::string &fileName);

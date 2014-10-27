@@ -78,17 +78,17 @@ namespace ospray {
       // internal state
       // -------------------------------------------------------
 
-      //! the ospray frame buffer we're using
-      OSPFrameBuffer ospFrameBuffer;
+      // //! the ospray frame buffer we're using
+      // OSPFrameBuffer ospFrameBuffer;
 
-      //! the renderer we're using
-      OSPRenderer    ospRenderer;
+      // //! the renderer we're using
+      // OSPRenderer    ospRenderer;
       
-      //! the world model that we're using to render
-      OSPModel       ospModel; 
+      // //! the world model that we're using to render
+      // OSPModel       ospModel; 
 
-      //! ospray camera we're using to render with
-      OSPCamera      ospCamera;
+      // //! ospray camera we're using to render with
+      // OSPCamera      ospCamera;
 
       //! update the ospray camera (ospCamera) from the widget camera (this->camera)
       void updateOSPRayCamera();

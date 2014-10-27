@@ -20,10 +20,11 @@ namespace ospray {
           anything changes that might change the appearance of the
           converged image (e.g., camera position, scene, frame size,
           etc) */
-      void restartAccumulation();
+      void resetAccumulation();
 
       void setWorld(const Ref<sg::World> &world);
       void setCamera(const Ref<sg::Camera> &camera);
+      void setIntegrator(const Ref<sg::Integrator> &integrator);
 
       // -------------------------------------------------------
       // query functions
@@ -31,6 +32,8 @@ namespace ospray {
       
       //! find the last camera in the scene graph
       sg::Camera *getLastDefinedCamera() const;
+      //! find the last integrator in the scene graph
+      sg::Integrator *getLastDefinedIntegrator() const;
       
       //! create a default camera
       Ref<sg::Camera> createDefaultCamera();

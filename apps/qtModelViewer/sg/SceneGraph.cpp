@@ -251,13 +251,6 @@ namespace ospray {
       world.ptr->serialize(state);
     }
 
-    void Node::serialize(sg::Serialization::State &serialization)
-    {
-      throw std::runtime_error("serialization not implmemented for node '"+toString()+"'");
-    }
-
-
-
     //! serialize into given serialization state 
     void sg::World::serialize(sg::Serialization::State &state)
     {
@@ -270,5 +263,89 @@ namespace ospray {
       state = savedState;
     }
 
+    void Node::serialize(sg::Serialization::State &state)
+    { 
+      state.serialization->object.push_back(new Serialization::Object(this,state.instantiation.ptr));
+    }
+
+    void Integrator::commit()
+    {
+      if (!ospRenderer) {
+        ospRenderer = ospNewRenderer(type.c_str());
+        if (!ospRenderer) 
+          throw std::runtime_error("#ospQTV: could not create renderer");
+      }
+      assert(ospRenderer); 
+   }
+
+    void Node::render(World *world, 
+                       Integrator *integrator,
+                       const affine3f &_xfm)
+    {
+      NOTIMPLEMENTED;
+    }
+
+    void Spheres::render(World *world, 
+                       Integrator *integrator,
+                       const affine3f &_xfm)
+    {
+      assert(!ospGeometry);
+
+      ospGeometry = ospNewGeometry("spheres");
+      assert(ospGeometry);
+
+      OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,
+                                &sphere[0],OSP_DATA_SHARED_BUFFER);
+      ospSetData(ospGeometry,"spheres",data);
+
+      // ospSet1f(geom,"radius",radius*particleModel[i]->radius);
+      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
+      ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
+      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
+      ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
+      // ospSetData(geom,"materialList",materialData);
+
+      OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,
+                                       "default");
+      if (mat) {
+        vec3f kd = .7f;
+        ospSet3fv(mat,"kd",&kd.x);
+      }
+      ospSetMaterial(ospGeometry,mat);
+      ospCommit(ospGeometry);
+      
+      ospAddGeometry(world->ospModel,ospGeometry);
+      ospCommit(data);
+
+      
+    }
+
+    void World::render(World *world, 
+                       Integrator *integrator,
+                       const affine3f &_xfm)
+    {
+      PING;
+      if (ospModel)
+        throw std::runtime_error("World::ospModel alrady exists!?");
+      ospModel = ospNewModel();
+      affine3f xfm = embree::one;
+      for (size_t i=0;i<node.size();i++)
+        node[i]->render(this,integrator,xfm);
+      PING;
+      ospCommit(ospModel);
+      PING;
+    }
+
+    void PerspectiveCamera::commit() 
+    {
+      if (!ospCamera) ospCamera = ospNewCamera("perspective");
+      
+      ospSetVec3f(ospCamera,"pos",from);
+      ospSetVec3f(ospCamera,"dir",at - from);
+      ospSetVec3f(ospCamera,"up",up);
+      // ospSetf(ospCamera,"aspect",size.x/float(size.y));
+      ospCommit(ospCamera);      
+    }
+    
   } // ::ospray::sg
 } // ::ospray

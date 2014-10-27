@@ -22,6 +22,9 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    static const std::string DEFAULT_INTEGRATOR_NAME = "eyeLight_geomID";
+    
+
     /*! @{ state to be set via commandline params */
     
     /*! file we're saving the output to. If empty, we'll open a
@@ -35,6 +38,10 @@ namespace ospray {
 
     /*! camera as specified on the command line */
     Ref<sg::Camera> cameraFromCommandLine = NULL;
+
+    /*! renderer as specified on the command line */
+    std::string integratorFromCommandLine = "";
+
     /*! @} */
 
     void main(int argc, const char *argv[]) 
@@ -57,6 +64,8 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "--test-sphere") {
             world = sg::createTestSphere();
+          } else if (arg == "--renderer") {
+            integratorFromCommandLine = argv[++argID];
           } else {
             throw std::runtime_error("#ospQTV: unknown cmdline param '"+arg+"'");
           }
@@ -70,15 +79,48 @@ namespace ospray {
       // set the current world ...
       renderer->setWorld(world);
       
-      // activate the last camera defined in the scene graph (if set)
-      if (cameraFromCommandLine) {
-        renderer->setCamera(cameraFromCommandLine);
-      } else {
-        renderer->setCamera(renderer->getLastDefinedCamera());
+      // -------------------------------------------------------
+      // initialize renderer's integrator
+      // -------------------------------------------------------
+      {
+        // first, check if one is specified in the scene file.
+        Ref<sg::Integrator> integrator = renderer->getLastDefinedIntegrator();
+        if (!integrator) {
+          std::string integratorName = integratorFromCommandLine;
+          if (integratorName == "")
+            integratorName = DEFAULT_INTEGRATOR_NAME;
+          integrator = new sg::Integrator(integratorName);
+        }
+        renderer->setIntegrator(integrator);
       }
-      if (!renderer->camera)
-        renderer->setDefaultCamera();
 
+      // -------------------------------------------------------
+      // initialize renderer's camera
+      // -------------------------------------------------------
+      {
+        PING;
+        // activate the last camera defined in the scene graph (if set)
+        if (cameraFromCommandLine) {
+          PING;
+          renderer->setCamera(cameraFromCommandLine);
+        } else {
+          PING;
+          renderer->setCamera(renderer->getLastDefinedCamera());
+        }
+        if (!renderer->camera) {
+          PING;
+          renderer->setDefaultCamera();
+          PING;
+        }
+
+        PRINT(renderer->camera);
+        PRINT(renderer->camera->toString());
+      }
+
+
+      // -------------------------------------------------------
+      // determine output method: offline to file, or interactive viewer
+      // -------------------------------------------------------
       if (outFileName == "") {
         // create new modelviewer
         cout << "#ospQTV: setting up to open QT viewer window" << endl;

@@ -40,7 +40,7 @@ namespace ospray {
     {
       sg::World *world = new sg::World;
       sg::Spheres *spheres = new sg::Spheres;
-      spheres->sphere.push_back(sg::Spheres::Sphere(vec3f(0,0,0),1.f));
+      spheres->sphere.push_back(sg::Spheres::Sphere(vec3f(0,0,0),.1f));
       // sg::TransferFunction 
       //   = new sg::TransferFunction(sg::TransferFunction::CoolToWarm));
       // spheres->addParam(new NodeParam("transferFunction",transferFunction));

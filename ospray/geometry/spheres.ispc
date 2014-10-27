@@ -109,6 +109,7 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
     radius = *((uniform float *)(spherePtr+geometry->offset_radius));
   }
   uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
+  // print("sphere (%,%,%):%\n",center.x,center.y,center.z,radius);
   const vec3f A = center - ray.org;
 
   const float a = dot(ray.dir,ray.dir);

@@ -20,11 +20,12 @@ namespace ospray {
 
     OSPRayRenderWidget::OSPRayRenderWidget(Ref<sg::Renderer> renderer)
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
-        sgRenderer(renderer),
-        ospRenderer(NULL), 
-        ospModel(NULL), 
-        ospCamera(NULL), 
-        ospFrameBuffer(NULL)
+        sgRenderer(renderer)
+      // ,
+      //   ospRenderer(NULL), 
+      //   ospModel(NULL), 
+      //   ospCamera(NULL), 
+      //   ospFrameBuffer(NULL)
     {
 #if 0
       CoordFrameGeometry arrows;
@@ -80,16 +81,17 @@ namespace ospray {
     //! the QT callback that tells us that we have to redraw
     void OSPRayRenderWidget::redraw()
     { 
-      if (!renderer) return;
-      if (!renderer->frameBuffer) return;
-      if (!renderer->camera) return;
+      if (!sgRenderer) return;
+      if (!sgRenderer->frameBuffer) return;
+      if (!sgRenderer->camera) return;
 
-      renderer->renderFrame();
+      updateOSPRayCamera();
+      sgRenderer->renderFrame();
 
-      vec2i size = renderer->frameBuffer->getSize();
-      unsigned char *fbMem = renderer->frameBuffer->map();
+      vec2i size = sgRenderer->frameBuffer->getSize();
+      unsigned char *fbMem = sgRenderer->frameBuffer->map();
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);      
-      renderer->frameBuffer->unmap(fbMem);
+      sgRenderer->frameBuffer->unmap(fbMem);
       
       // updateOSPRayCamera();
     }
@@ -97,17 +99,20 @@ namespace ospray {
     //! the QT callback that tells us that the image got resize
     void OSPRayRenderWidget::resize(int width, int height)
     { 
-      if (ospFrameBuffer)
-        ospFreeFrameBuffer(ospFrameBuffer);
-      ospFrameBuffer = ospNewFrameBuffer(size,OSP_RGBA_I8);
-      assert(ospFrameBuffer);
+      sgRenderer->frameBuffer = new sg::FrameBuffer(vec2i(width,height));
+      sgRenderer->resetAccumulation();
+      // if (ospFrameBuffer)
+      //   ospFreeFrameBuffer(ospFrameBuffer);
+      // ospFrameBuffer = ospNewFrameBuffer(size,OSP_RGBA_I8);
+      // assert(ospFrameBuffer);
     }
 
     //! update the ospray camera (ospCamera) from the widget camera (this->camera)
     void OSPRayRenderWidget::updateOSPRayCamera()
     {
-      assert(frame);
-      assert(ospCamera);
+      if (!sgRenderer) return;
+      if (!sgRenderer->camera) return;
+      OSPCamera ospCamera = sgRenderer->camera->ospCamera;
 
       const vec3f from = frame->sourcePoint;
       const vec3f at   = frame->targetPoint;
