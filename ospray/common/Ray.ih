@@ -62,6 +62,7 @@ struct Ray {
   // -------------------------------------------------------
   // END OF EMBREE LAYOUT - this is where we can add our own data
   // -------------------------------------------------------
+  float t1;    //!< end of the valid ray interval
   void *uniform userData;
 #ifdef OSPRAY_INTERSECTION_FILTER
   uniform IntersectionFilterFunc intersectionFilter;
