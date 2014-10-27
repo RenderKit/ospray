@@ -19,8 +19,8 @@ namespace ospray {
 
     void StructuredVolume::commit() {
 
-        //! For now we do not support changes to a StructuredVolume object after it has been committed.
-        exitOnCondition(ispcEquivalent != NULL, "changes to volume objects are not allowed post-commit");
+        //! Some parameters can be changed after the volume has been allocated and filled.
+        if (ispcEquivalent != NULL) return(updateEditableParameters());
 
         //! Check for a file name.
         std::string filename = getParamString("filename", "");

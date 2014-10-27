@@ -38,8 +38,8 @@
         //! Tri-linear interpolation at the given sample location in the volume.
         varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &coordinates);
       
-        //! Tri-linear interpolation at each sample location in samplePositions array. samplePositions and results buffer must have size of at least numSamplePositions
-      void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform samplePositions, const varying int numSamplePositions, varying float *uniform results);
+        //! Tri-linear interpolation at each sample location in an array, 'coordinates' and 'results' arrays must be 'count' elements in size.
+        void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform coordinates, const varying int count, varying float *uniform results);
 
     };
 
