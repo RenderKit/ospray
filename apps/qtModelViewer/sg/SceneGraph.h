@@ -397,6 +397,7 @@ namespace ospray {
         value will be linearly interpolated (similar to a 1D texture
         for each) */
     struct TransferFunction : public sg::Node {
+
       TransferFunction() : ospTransferFunction(NULL) {}
 
       /*! \brief returns a std::string with the c++ name of this class */

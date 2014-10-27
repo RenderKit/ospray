@@ -205,8 +205,14 @@ namespace ospray {
     //! \brief Initialize this node's value from given corresponding XML node 
     void TransferFunction::setFromXML(const xml::Node *const node)
     {
-      std::string theme = node->getProp("theme");
-      PING;
+      colorArray.clear();
+      colorArray.push_back(osp::vec3f(0         , 0           , 0.562493   ));
+      colorArray.push_back(osp::vec3f(0         , 0           , 1          ));
+      colorArray.push_back(osp::vec3f(0         , 1           , 1          ));
+      colorArray.push_back(osp::vec3f(0.500008  , 1           , 0.500008   ));
+      colorArray.push_back(osp::vec3f(1         , 1           , 0          ));
+      colorArray.push_back(osp::vec3f(1         , 0           , 0          ));
+      colorArray.push_back(osp::vec3f(0.500008  , 0           , 0          ));
     }
 
     void World::render(World *world, 
