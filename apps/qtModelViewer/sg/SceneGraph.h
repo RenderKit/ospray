@@ -398,7 +398,10 @@ namespace ospray {
         for each) */
     struct TransferFunction : public sg::Node {
 
-      TransferFunction() : ospTransferFunction(NULL) {}
+      TransferFunction() : ospTransferFunction(NULL) { setDefaultValues(); }
+
+      //! \brief initialize color and alpha arrays to 'some' useful values
+      void setDefaultValues();
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::TransferFunction"; }
@@ -461,6 +464,10 @@ namespace ospray {
     World *createTestSphere();
     World *createTestCoordFrame();
     /*! @} */
+
+
+    /*! read a given scene graph node from its correspondoing xml node represenation */
+    sg::Node *parseNode(xml::Node *node);
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name" 

@@ -49,7 +49,13 @@ namespace ospray {
       assert(p->getName() != "");
       param[p->getName()] = p;
     }
+
+    // list of all named nodes
+    std::map<std::string,Ref<sg::Node> > namedNodes;
+    sg::Node *findNamedNode(const std::string &name) { if (namedNodes.find(name) != namedNodes.end()) return namedNodes[name].ptr; return NULL; }
+    void registerNamedNode(const std::string &name, Ref<sg::Node> node) { namedNodes[name] = node; }
     
+
 
     void Serialization::serialize(Ref<sg::World> world, Serialization::Mode mode)
     {
@@ -179,8 +185,11 @@ namespace ospray {
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
 
       assert(transferFunction);
-      assert(transferFunction->ospTransferFunction);
-      ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
+      if (transferFunction) {
+        transferFunction->render();
+        assert(transferFunction->ospTransferFunction);
+        ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
+      }
 
       OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,
                                        "default");
@@ -200,10 +209,28 @@ namespace ospray {
     void AlphaMappedSpheres::setFromXML(const xml::Node *const node)
     {
       PING;
+      for (size_t childID=0;childID<node->child.size();childID++) {
+        xml::Node *child = node->child[childID];
+        if (child->name == "transferFunction") {
+          if (child->getProp("ref") != "")
+            transferFunction = dynamic_cast<sg::TransferFunction*>(findNamedNode(child->getProp("ref")));
+          else if (child->child.size()) {
+            Ref<sg::Node> n = sg::parseNode(child->child[0]);
+            transferFunction = n.cast<sg::TransferFunction>();
+          }
+        }
+        else
+          std::cout << "#osp:sg:AlphaMappedSpheres: Warning - unknown child field type '" << child->name << "'" << std::endl;
+      }
+
+      if (!transferFunction) {
+        std::cout << "#osp:sg:AlphaMappedSpheres: Warning - no transfer function specified" << std::endl;
+        transferFunction = new TransferFunction();
+      }
     }
 
     //! \brief Initialize this node's value from given corresponding XML node 
-    void TransferFunction::setFromXML(const xml::Node *const node)
+    void TransferFunction::setDefaultValues()
     {
       colorArray.clear();
       colorArray.push_back(osp::vec3f(0         , 0           , 0.562493   ));
@@ -213,6 +240,15 @@ namespace ospray {
       colorArray.push_back(osp::vec3f(1         , 1           , 0          ));
       colorArray.push_back(osp::vec3f(1         , 0           , 0          ));
       colorArray.push_back(osp::vec3f(0.500008  , 0           , 0          ));
+
+      alphaArray.clear();
+      for (int i=0;i<colorArray.size();i++)
+        alphaArray.push_back(i/float(colorArray.size()-1));
+    }
+
+    //! \brief Initialize this node's value from given corresponding XML node 
+    void TransferFunction::setFromXML(const xml::Node *const node)
+    {
     }
 
     void World::render(World *world, 
