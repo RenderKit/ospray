@@ -52,16 +52,19 @@ namespace ospray {
         createEquivalentISPC();
 
         //! Get a pointer to the source voxel data.
-        const Data *voxelData = getParamData("voxelData", NULL);  exitOnCondition(voxelData == NULL, "no voxel data was specified");
+        const Data *voxelData = getParamData("voxelData", NULL);  exitOnCondition(voxelData == NULL, "no voxel data specified");  const uint8 *data = (const uint8 *) voxelData->data;
 
         //! The dimensions of the source voxel data and target volume must match.
-        exitOnCondition(volumeDimensions.x * volumeDimensions.y * volumeDimensions.z != voxelData->numItems, "unexpected dimensions of source voxel data");
+        exitOnCondition(volumeDimensions.x * volumeDimensions.y * volumeDimensions.z != voxelData->numItems, "unexpected source voxel data dimensions");
 
         //! The source and target voxel types must match.
         exitOnCondition(getVoxelType() != voxelData->type, "unexpected source voxel type");
 
-        //! Copy voxel data into the volume.
-        setRegion(voxelData->data, vec3i(0, 0, 0), volumeDimensions);
+        //! Size of a volume slice in bytes.
+        size_t sliceSizeInBytes = volumeDimensions.x * volumeDimensions.y * getVoxelSizeInBytes();
+
+        //! Copy voxel data into the volume in slices to avoid overflow in ISPC offset calculations.
+        for (size_t z=0 ; z < volumeDimensions.z ; z++) setRegion(&data[z * sliceSizeInBytes], vec3i(0, 0, z), vec3i(volumeDimensions.x, volumeDimensions.y, 1));
 
     }
 
