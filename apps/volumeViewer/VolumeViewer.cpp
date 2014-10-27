@@ -51,14 +51,6 @@ void VolumeViewer::autoRotate(bool set) {
     }
 }
 
-void VolumeViewer::addSlice() {
-
-    //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
-    SliceWidget * sliceWidget = new SliceWidget(models, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
-    connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
-    sliceWidgetsLayout.addWidget(sliceWidget);
-}
-
 void VolumeViewer::addSlice(std::string filename) {
 
     //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
@@ -66,8 +58,13 @@ void VolumeViewer::addSlice(std::string filename) {
     connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
     sliceWidgetsLayout.addWidget(sliceWidget);
 
-    //! Load state from file.
-    sliceWidget->load(filename);
+    //! Load state from file if specified.
+    if(!filename.empty())
+        sliceWidget->load(filename);
+}
+
+
+
 }
 
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {

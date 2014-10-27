@@ -54,11 +54,9 @@ public slots:
     //! Toggle animation over the time steps.
     void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
 
-    //! Add a slice to the volume.
-    void addSlice();
+    //! Add a slice to the volume, optionally from file.
+    void addSlice(std::string filename = std::string());
 
-    //! Add a slice to the volume from file.
-    void addSlice(std::string filename);
 
     //! Re-commit all OSPRay volumes.
     void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
