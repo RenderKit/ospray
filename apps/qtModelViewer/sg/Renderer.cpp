@@ -57,17 +57,11 @@ namespace ospray {
     Ref<sg::Camera> Renderer::createDefaultCamera()
     {
       Ref<sg::PerspectiveCamera> camera = new sg::PerspectiveCamera;
-      PING;
-      PRINT(camera);
-      PRINT(camera->toString());
       return camera.cast<sg::Camera>();
     }
 
     void Renderer::setCamera(const Ref<sg::Camera> &camera) 
     {
-      PING;
-      PRINT(camera);
-      if (camera) PRINT(camera->toString());
       this->camera = camera;
       if (this->camera) {
         this->camera->commit();

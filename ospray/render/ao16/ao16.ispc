@@ -184,7 +184,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   // print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
-  vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
+  vec3f baseColor = make_vec3f(.8f); // = mat->Kd; // * make_vec3f(dg.color);
   if (mat)
     foreach_unique(m in mat)
       baseColor = m->Kd;

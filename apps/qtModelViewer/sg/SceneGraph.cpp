@@ -324,16 +324,13 @@ namespace ospray {
                        Integrator *integrator,
                        const affine3f &_xfm)
     {
-      PING;
       if (ospModel)
         throw std::runtime_error("World::ospModel alrady exists!?");
       ospModel = ospNewModel();
       affine3f xfm = embree::one;
       for (size_t i=0;i<node.size();i++)
         node[i]->render(this,integrator,xfm);
-      PING;
       ospCommit(ospModel);
-      PING;
     }
 
     void PerspectiveCamera::commit() 

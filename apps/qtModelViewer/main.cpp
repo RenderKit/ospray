@@ -98,23 +98,15 @@ namespace ospray {
       // initialize renderer's camera
       // -------------------------------------------------------
       {
-        PING;
         // activate the last camera defined in the scene graph (if set)
         if (cameraFromCommandLine) {
-          PING;
           renderer->setCamera(cameraFromCommandLine);
         } else {
-          PING;
           renderer->setCamera(renderer->getLastDefinedCamera());
         }
         if (!renderer->camera) {
-          PING;
           renderer->setDefaultCamera();
-          PING;
         }
-
-        PRINT(renderer->camera);
-        PRINT(renderer->camera->toString());
       }
 
 
