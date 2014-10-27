@@ -213,7 +213,7 @@ namespace ospray {
     World *readXML(const std::string &fileName)
     {
       World *world = new World;
-      Ref<xml::XMLDoc> doc = NULL;
+      xml::XMLDoc *doc = NULL;
       try {
         doc = xml::readXML(fileName);
         if (!doc) 

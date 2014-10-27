@@ -24,7 +24,8 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    static const std::string DEFAULT_INTEGRATOR_NAME = "eyeLight_geomID";
+    static const std::string DEFAULT_INTEGRATOR_NAME = "ao4";
+    // static const std::string DEFAULT_INTEGRATOR_NAME = "eyeLight_geomID";
     
 
     /*! @{ state to be set via commandline params */
@@ -75,7 +76,7 @@ namespace ospray {
           }
         } else {
           embree::FileName fn = arg;
-          if (fn.ext() == ".osp") {
+          if (fn.ext() == "osp") {
             world = sg::loadOSP(fn.str());
           } else 
             throw std::runtime_error("unsupported file format in '"+fn.str()+"'");

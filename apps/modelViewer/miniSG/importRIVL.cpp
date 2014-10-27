@@ -612,7 +612,7 @@ namespace ospray {
       binBasePtr = (unsigned char *)mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
 
 #if 1
-      Ref<xml::XMLDoc> doc = xml::readXML(fileName);
+      xml::XMLDoc *doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       xml::Node *root_element = doc->child[0];

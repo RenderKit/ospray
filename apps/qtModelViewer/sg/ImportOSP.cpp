@@ -154,10 +154,13 @@ namespace ospray {
       return integrator;
     }
     
-    sg::World *parseWorldNode(xml::Node *node)
+    Ref<sg::World> parseWorldNode(xml::Node *node)
     {
-      assert(node->name == "World");
+      PING;
+      if (node->name != "World")
+        throw std::runtime_error("#osp:sg: expected a 'World' node, but found '"+node->name+"'");
       World *world = new World;
+      PING;
       for (int i=0;i<node->child.size();i++) {
         xml::Node *c = node->child[i];
         if (c->name == "Geometry") {
@@ -167,6 +170,7 @@ namespace ospray {
           throw std::runtime_error("unknown node type '"+c->name
                                    +"' in ospray::sg::World node");
       }
+      PING;
       return world;
     }
     
@@ -228,14 +232,25 @@ namespace ospray {
 
     Ref<sg::World> loadOSP(const std::string &fileName)
     {
-      Ref<xml::XMLDoc> doc = NULL;
+      xml::XMLDoc *doc = NULL;
+      // Ref<xml::XMLDoc> doc = NULL;
       doc = xml::readXML(fileName);
       if (!doc) 
         throw std::runtime_error("could not parse "+fileName);
-      if (doc->child.size() != 1 || doc->child[0]->name != "ospray") 
+      if (doc->child.size() != 1 || (doc->child[0]->name != "ospray" && doc->child[0]->name != "OSPRay") )
         throw std::runtime_error("not an ospray xml file");
 
-      Ref<sg::World> world = parseWorldNode(doc->child[0]);
+      PING;
+      xml::Node *root = doc->child[0];
+      PRINT(root);
+      PRINT(root->child.size());
+      if (root->child.size() != 1)
+        throw std::runtime_error("#osp:sg: error in XML file - right now supporting only a single World node in the 'OSPRay' section");
+
+      PING;
+
+      Ref<sg::World> world = parseWorldNode(root->child[0]);
+      cout << "#osp:sg: done parsing OSP file" << endl;
       return world;
     }
 
