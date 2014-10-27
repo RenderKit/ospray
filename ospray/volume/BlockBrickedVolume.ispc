@@ -286,6 +286,16 @@ export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *
 
 }
 
+export void BlockBrickedVolume_setValueRange(void *uniform pointer, const uniform vec2f &value) {
+
+    //! Cast to the actual Volume type.
+    BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Set the volume value range.
+    volume->inherited.valueRange = value;
+
+}
+
 export void BlockBrickedVolume_setVolumeDimensions(void *uniform pointer, const uniform vec3i &value) {
 
     //! Cast to the actual Volume subtype.
