@@ -131,7 +131,17 @@ namespace ospray {
       virtual    std::string toString() const = 0;
       sg::Param *getParam(const std::string &name) const;
       void       addParam(sg::Param *p);
-      virtual void setFrom(const xml::Node *const node) {};
+
+      //! \brief Initialize this node's value from given XML node 
+      /*!
+       * \detailed This allows a plug-and-play concept where a XML
+       * file can specify all kind of nodes wihout needing to know
+       * their actual types: The XML parser only needs to be able to
+       * create a proper C++ instance of the given node type (the
+       * OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
+       * tell the node to parse itself from the given XML content and
+       * XML children */
+      virtual void setFromXML(const xml::Node *const node) {};
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
@@ -382,24 +392,45 @@ namespace ospray {
       
     };
 
+    /*! \brief a *tabulated* transfer function realized through
+        uniformly spaced color and alpha values between which the
+        value will be linearly interpolated (similar to a 1D texture
+        for each) */
     struct TransferFunction : public sg::Node {
       TransferFunction() : ospTransferFunction(NULL) {}
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::TransferFunction"; }
+
+      //! \brief creates ospray-side object(s) for this node
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
 
+      //! \brief Initialize this node's value from given corresponding XML node 
+      virtual void setFromXML(const xml::Node *const node);
+
       OSPTransferFunction ospTransferFunction;
+      OSPData ospColorData;
+      OSPData ospAlphaData;
+
+      std::vector<vec3f> colorArray;
+      std::vector<float> alphaArray;
     };
     
-    struct AlphaMappedSpheres : public sg::Node {
+    struct AlphaMappedSpheres : public sg::Spheres {
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::AlphaMappedSpheres"; }
+
+      //! \brief creates ospray-side object(s) for this node
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
+
+      //! \brief Initialize this node's value from given corresponding XML node 
+      virtual void setFromXML(const xml::Node *const node);
+
+      Ref<sg::TransferFunction> transferFunction;
     };
     
     /*! a world node */

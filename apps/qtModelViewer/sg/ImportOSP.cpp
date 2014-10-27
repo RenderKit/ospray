@@ -61,7 +61,7 @@ namespace ospray {
       sg::Node *newNode = creator();
       assert(newNode);
       try {
-        newNode->setFrom(node);
+        newNode->setFromXML(node);
         return newNode;
       } catch (std::runtime_error e) {
         delete newNode;

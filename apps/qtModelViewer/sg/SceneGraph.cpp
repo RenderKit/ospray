@@ -8,6 +8,7 @@
 
 #undef NDEBUG
 #include "SceneGraph.h"
+#include "apps/common/xml/xml.h"
 
 namespace ospray {
   namespace sg {
@@ -148,15 +149,64 @@ namespace ospray {
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
       }
-      
+      ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,&colorArray[0]); ospCommit(ospColorData);
+      ospAlphaData = ospNewData(alphaArray.size(),OSP_FLOAT3,&alphaArray[0]); ospCommit(ospAlphaData);
+
+      ospSetData(ospTransferFunction,"colors",ospColorData);
+      ospSetData(ospTransferFunction,"alphas",ospAlphaData);
+      ospCommit(ospTransferFunction);
     }
 
     void AlphaMappedSpheres::render(World *world, 
                                   Integrator *integrator,
                                   const affine3f &xfm)
     {
+      assert(!ospGeometry);
+
+      // JUST FOR TESTING: create a sphere right here ....
+      sphere.push_back(Sphere(vec3f(0),1,1));
+
+      ospGeometry = ospNewGeometry("spheres");
+      assert(ospGeometry);
+
+
+      OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,&sphere[0]);
+      ospSetData(ospGeometry,"spheres",data);
+
+      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
+      ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
+      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
+      ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
+
+      assert(transferFunction);
+      assert(transferFunction->ospTransferFunction);
+      ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
+
+      OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,
+                                       "default");
+      if (mat) {
+        vec3f kd = .7f;
+        ospSet3fv(mat,"kd",&kd.x);
+      }
+      ospSetMaterial(ospGeometry,mat);
+      ospCommit(ospGeometry);
+
+      
+      ospAddGeometry(world->ospModel,ospGeometry);
+      ospCommit(data);
+    }
+
+    //! \brief Initialize this node's value from given corresponding XML node 
+    void AlphaMappedSpheres::setFromXML(const xml::Node *const node)
+    {
       PING;
-      NOTIMPLEMENTED;
+    }
+
+    //! \brief Initialize this node's value from given corresponding XML node 
+    void TransferFunction::setFromXML(const xml::Node *const node)
+    {
+      std::string theme = node->getProp("theme");
+      PING;
     }
 
     void World::render(World *world, 

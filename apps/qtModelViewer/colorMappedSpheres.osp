@@ -3,7 +3,7 @@
 	<World>
 		<TransferFunction ID="xf0" theme="CoolToWarm"/>
 		<AlphaMappedSpheres>
-			<object name="transferFunction" ref="xf0"/>
+			<transferFunction ref="xf0"/>
 		</AlphaMappedSpheres>
 	</World>
 	
