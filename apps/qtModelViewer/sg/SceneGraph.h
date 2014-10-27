@@ -403,7 +403,7 @@ namespace ospray {
     World *readXML(const std::string &fileName);
     World *importRIVL(const std::string &fileName);
     World *importSpheres(const std::string &fileName);
-
+    Ref<sg::World> loadOSP(const std::string &fileName);
 
     /*! @{ some simple testing geometry */
     World *createTestSphere();

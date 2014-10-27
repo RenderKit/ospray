@@ -36,7 +36,7 @@ SET(SRCS ${SRCS}
  sg/SceneGraph.cpp
  sg/ImportSpheres.cpp
  sg/Renderer.cpp
-
+sg/ImportOSP.cpp
   # the (th)ing to launch them all, and in darkness bind them...
   main.cpp
   )

@@ -14,6 +14,8 @@
 #include <ctype.h>
 // viewer
 #include "ModelViewer.h"
+// embree
+#include "ospray/embree/common/sys/filename.h"
 // scene graph
 #include "sg/SceneGraph.h"
 
@@ -64,13 +66,19 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "--test-sphere") {
             world = sg::createTestSphere();
+          } else if (arg == "--test-axes") {
+            // world = sg::createTestCoordinateAxes();
           } else if (arg == "--renderer") {
             integratorFromCommandLine = argv[++argID];
           } else {
             throw std::runtime_error("#ospQTV: unknown cmdline param '"+arg+"'");
           }
         } else {
-              
+          embree::FileName fn = arg;
+          if (fn.ext() == ".osp") {
+            world = sg::loadOSP(fn.str());
+          } else 
+            throw std::runtime_error("unsupported file format in '"+fn.str()+"'");
           // std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;
           //world = sg::importRIVL(arg);
         }
