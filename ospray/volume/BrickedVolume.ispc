@@ -31,7 +31,7 @@ varying vec3f BrickedVolume_computeGradient(void *uniform pointer, const varying
     gradient.z = volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, 1.0f)) - volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, -1.0f));
 
     //! This approximation may yield image artifacts.
-    return(gradient);
+    return(gradient * 0.5f);
 
 }
 
