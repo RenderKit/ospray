@@ -141,6 +141,24 @@ namespace ospray {
       
     }
 
+    void TransferFunction::render(World *world, 
+                                  Integrator *integrator,
+                                  const affine3f &xfm)
+    {
+      if (!ospTransferFunction) {
+        ospTransferFunction = ospNewTransferFunction("piecewise_linear");
+      }
+      
+    }
+
+    void AlphaMappedSpheres::render(World *world, 
+                                  Integrator *integrator,
+                                  const affine3f &xfm)
+    {
+      PING;
+      NOTIMPLEMENTED;
+    }
+
     void World::render(World *world, 
                        Integrator *integrator,
                        const affine3f &_xfm)
@@ -168,6 +186,8 @@ namespace ospray {
       ospSetf(ospCamera,"fovy",fovy); //size.x/float(size.y));
       ospCommit(ospCamera);      
     }
-    
+
+    OSP_REGISTER_SG_NODE(TransferFunction)
+    OSP_REGISTER_SG_NODE(AlphaMappedSpheres)
   } // ::ospray::sg
 } // ::ospray

@@ -1,7 +1,7 @@
 <OSPRay version="0.7.0">
 
 	<World>
-		<TabulatedTransferFunction ID="xf0" theme="CoolToWarm"/>
+		<TransferFunction ID="xf0" theme="CoolToWarm"/>
 		<AlphaMappedSpheres>
 			<object name="transferFunction" ref="xf0"/>
 		</AlphaMappedSpheres>

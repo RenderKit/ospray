@@ -381,6 +381,26 @@ namespace ospray {
       
       
     };
+
+    struct TransferFunction : public sg::Node {
+      TransferFunction() : ospTransferFunction(NULL) {}
+
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const { return "ospray::sg::TransferFunction"; }
+      virtual void render(World *world=NULL, 
+                          Integrator *integrator=NULL,
+                          const affine3f &xfm = embree::one);
+
+      OSPTransferFunction ospTransferFunction;
+    };
+    
+    struct AlphaMappedSpheres : public sg::Node {
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const { return "ospray::sg::AlphaMappedSpheres"; }
+      virtual void render(World *world=NULL, 
+                          Integrator *integrator=NULL,
+                          const affine3f &xfm = embree::one);
+    };
     
     /*! a world node */
     struct World : public sg::Node {
@@ -422,7 +442,7 @@ namespace ospray {
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
     extern "C" sg::Node *ospray_create_sg_node__##InternalClassName()   \
     {                                                                   \
-      return new ospray::xml::InternalClassName;                        \
+      return new ospray::sg::InternalClassName;                        \
     }                                                                 
 
   } // ::ospray::sg
