@@ -28,6 +28,7 @@ namespace ospray {
       //   ospFrameBuffer(NULL)
     {
 #if 0
+      // re-use that code for TriangleMesh-node code:
       CoordFrameGeometry arrows;
 
       ospModel = ospNewModel();
@@ -56,17 +57,6 @@ namespace ospray {
       }
       ospCommit(ospModel);
       
-      ospCamera = ospNewCamera("perspective");
-      updateOSPRayCamera();
-      
-      ospRenderer = ospNewRenderer(rendererType);
-      assert(ospRenderer);
-      if (!ospRenderer)
-        throw std::runtime_error("#ospQTV: could not create renderer");
-
-      ospSetObject(ospRenderer,"world",ospModel);
-      ospSetObject(ospRenderer,"camera",ospCamera);
-      ospCommit(ospRenderer);
 #endif
     }
     
@@ -112,16 +102,26 @@ namespace ospray {
     {
       if (!sgRenderer) return;
       if (!sgRenderer->camera) return;
-      OSPCamera ospCamera = sgRenderer->camera->ospCamera;
 
+#if 1
+      Ref<sg::PerspectiveCamera> camera = sgRenderer->camera.cast<sg::PerspectiveCamera>();
+      assert(camera);
       const vec3f from = frame->sourcePoint;
       const vec3f at   = frame->targetPoint;
+
+      camera->setFrom(from);
+      camera->setAt(at);
+      camera->setUp(frame->orientation.vz);
+      camera->commit();
+#else
+      OSPCamera ospCamera = sgRenderer->camera->ospCamera;
 
       ospSetVec3f(ospCamera,"pos",from);
       ospSetVec3f(ospCamera,"dir",at - from);
       ospSetVec3f(ospCamera,"up",frame->orientation.vz);
       ospSetf(ospCamera,"aspect",size.x/float(size.y));
       ospCommit(ospCamera);      
+#endif
     }
 
 

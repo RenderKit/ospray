@@ -20,6 +20,9 @@ namespace ospray {
     struct Node;
   } // ospray::xml
   namespace sg {
+
+     typedef unsigned int uint;
+
     /*! base node for every scene graph node */
     struct Node;
     /*! c++ wrapper for an ospray model */
@@ -39,23 +42,6 @@ namespace ospray {
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
-
-#if 0
-    /*! a traverser that implements a visitor design pattern. */
-    struct RendererBase : public embree::RefCount {
-      virtual void traverse(Node     *node);
-      virtual void traverse(World    *world);
-      virtual void traverse(Geometry *geometry);
-      virtual void traverse(Volume   *volume);
-
-      /*! list of all integrators in the root world */
-      std::vector<Ref<sg::Integrator> > integrators;
-      // /*! list of all frame buffers defined in the root world */
-      // std::vector<Ref<sg::Frame> > frameBuffers;
-      /*! the world we are traversing */
-      Ref<sg::World> world;
-    };
-#endif
 
     /*! class one can use to serialize all nodes in the scene graph */
     struct Serialization {
@@ -140,6 +126,8 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct Node : public embree::RefCount 
     {
+       Node() : lastModified(1), lastCommitted(0) {};
+
       virtual    std::string toString() const = 0;
       sg::Param *getParam(const std::string &name) const;
       void       addParam(sg::Param *p);
@@ -160,9 +148,11 @@ namespace ospray {
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
-      
+       virtual void commit() {};
       std::string name;
     protected:
+       size_t lastModified;
+       size_t lastCommitted;
       std::map<std::string,Ref<Param> > param;
     };
 
@@ -279,7 +269,7 @@ namespace ospray {
     struct PerspectiveCamera : public sg::Camera {     
       PerspectiveCamera() 
         : Camera("perspective"),
-          from(0,-1,0), at(0,0,0), up(0,0,1),
+          from(0,-1,0), at(0,0,0), up(0,0,1), aspect(1),
           fovy(60)
       {
         create();
@@ -287,10 +277,17 @@ namespace ospray {
 
       virtual void commit();
 
+      void setFrom(const vec3f &from) { if (from != this->from) { this->from = from; lastModified = __rdtsc(); } }
+      void setAt(const vec3f &at) { if (at != this->at) { this->at = at; lastModified = __rdtsc(); } }
+      void setUp(const vec3f &up) { if (up != this->up) { this->up = up; lastModified = __rdtsc(); } }
+      void setAspect(const float aspect) { if (aspect != this->aspect) { this->aspect = aspect; lastModified = __rdtsc(); } }
+      void setFovy(const float fovy) { if (fovy != this->fovy) { this->fovy = fovy; lastModified = __rdtsc(); } }
+    private:
       vec3f from;
       vec3f at;
       vec3f up;
       float fovy;
+      float aspect;
     };
 
     struct FrameBuffer : public sg::Node {
@@ -330,8 +327,15 @@ namespace ospray {
       /*! renderer type, i.e., 'ao', 'obj', 'pathtracer', ... */
       const std::string type; 
 
+      void setCamera(Ref<sg::Camera> camera) { if (camera != this->camera) { this->camera = camera; lastModified = __rdtsc(); } }
+      void setWorld(Ref<sg::World> world) { if (world != this->world) { this->world = world; lastModified = __rdtsc(); } }
+
       OSPRenderer ospRenderer;
       virtual void commit();
+
+    private:
+      Ref<sg::World> world;
+      Ref<sg::Camera> camera;
     };
 
     /*! simple spheres, with all of the key info - position, radius,
@@ -399,7 +403,12 @@ namespace ospray {
     World *readXML(const std::string &fileName);
     World *importRIVL(const std::string &fileName);
     World *importSpheres(const std::string &fileName);
+
+
+    /*! @{ some simple testing geometry */
     World *createTestSphere();
+    World *createTestCoordFrame();
+    /*! @} */
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name" 

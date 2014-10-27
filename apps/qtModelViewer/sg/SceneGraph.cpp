@@ -275,6 +275,27 @@ namespace ospray {
         if (!ospRenderer) 
           throw std::runtime_error("#ospQTV: could not create renderer");
       }
+      PING;
+      if (lastCommitted >= lastModified) return;
+      PING;
+
+      // set world, camera, ...
+      if (world ) { 
+        world->commit();
+        ospSetObject(ospRenderer,"world", world->ospModel);
+      }
+      PING;
+      if (camera) {
+        camera->commit();
+        ospSetObject(ospRenderer,"camera",camera->ospCamera);
+      }
+      PING;
+
+      lastCommitted = __rdtsc();
+      PING;
+      ospCommit(ospRenderer);
+
+      PING;
       assert(ospRenderer); 
    }
 
@@ -324,6 +345,7 @@ namespace ospray {
                        Integrator *integrator,
                        const affine3f &_xfm)
     {
+      PING;
       if (ospModel)
         throw std::runtime_error("World::ospModel alrady exists!?");
       ospModel = ospNewModel();
@@ -335,12 +357,16 @@ namespace ospray {
 
     void PerspectiveCamera::commit() 
     {
-      if (!ospCamera) ospCamera = ospNewCamera("perspective");
+      if (!ospCamera) create(); 
       
+      // const vec3f from = frame->sourcePoint;
+      // const vec3f at   = frame->targetPoint;
+
       ospSetVec3f(ospCamera,"pos",from);
       ospSetVec3f(ospCamera,"dir",at - from);
       ospSetVec3f(ospCamera,"up",up);
-      // ospSetf(ospCamera,"aspect",size.x/float(size.y));
+      ospSetf(ospCamera,"aspect",aspect); //size.x/float(size.y));
+      ospSetf(ospCamera,"fovy",fovy); //size.x/float(size.y));
       ospCommit(ospCamera);      
     }
     
