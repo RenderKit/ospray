@@ -14,6 +14,9 @@
 
     struct TransferFunction {
 
+        //! The value range covered by the transfer function.
+        vec2f valueRange;
+
         //! Interpolated color for the given value.
         varying vec3f (*getColorForValue)(const void *uniform transferFunction, varying float value);
 
@@ -26,9 +29,10 @@
         //! Virtual function to look up the min/max alpha based on an input range
         varying vec2f (*getMinMaxAlphaInRange)(void *uniform transferFunction, varying float lowRange, varying float highRange);
       
-        //! The value range covered by the transfer function
-        vec2f valueRange;
     };
+
+    //! Declaration emitted during build in "ClassName_ispc.h".  Set the value range.
+//  extern "C" { void TransferFunction_setValueRange(void *uniform transferFunction, const uniform vec2f &value);
 
 #endif // TRANSFER_FUNCTION_IH
 

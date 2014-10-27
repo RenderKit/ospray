@@ -25,8 +25,9 @@
         //! Transfer function colors, count, and range.
         vec3f *uniform colors;  uniform int colorCount;  uniform vec2f colorRange;
 
-        //! A 2D array that contains precomputed minimum and maximum values for a transfer function
+        //! A 2D array that contains precomputed minimum and maximum values for a transfer function.
         vec2f precomputedMinMaxInRange[PRECOMPUTED_VALUES_DIM][PRECOMPUTED_VALUES_DIM];
+
     };
 
     //! Interpolated opacity for the given value.

@@ -35,8 +35,8 @@ namespace ospray {
         if (alphas) ispc::LinearTransferFunction_setAlphaRange(ispcEquivalent, getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
 	
 	//! Set the value range that the transfer function covers
-	vec2f range = getParam2f("range", vec2f(0.f,1.f));
-	ispc::TransferFunction_setValueRange(ispcEquivalent, range.x, range.y);
+	vec2f valueRange = getParam2f("range", vec2f(0.0f, 1.0f));  ispc::TransferFunction_setValueRange(ispcEquivalent, (const ispc::vec2f &) valueRange);
+
     }
 
     void LinearTransferFunction::createEquivalentISPC() {
