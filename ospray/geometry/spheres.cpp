@@ -39,6 +39,10 @@ namespace ospray {
     numSpheres = data->numBytes / bytesPerSphere;
     std::cout << "#osp: creating 'spheres' geometry, #spheres = " << numSpheres << std::endl;
     
+    if (numSpheres >= (1ULL << 30)) {
+      throw std::runtime_error("#ospray::Spheres: too many spheres in this sphere geometry. Consider splitting this geometry in multiple geometries with fewer spheres (you can still put all those geometries into a single model, but you can't put that many spheres into a single geometry without causing address overflows)");
+    }
+
     if (_materialList) {
       free(_materialList);
       _materialList = NULL;

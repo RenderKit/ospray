@@ -60,13 +60,16 @@ public slots:
     //! Add a slice to the volume from file.
     void addSlice(std::string filename);
 
+    //! Re-commit all OSPRay volumes.
+    void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
+
     //! Force the OSPRay window to be redrawn.
     void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
 
 protected:
 
     //! OSPRay state.
-    std::vector<OSPModel> models;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
+    std::vector<OSPModel> models;  std::vector<OSPVolume> volumes;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
 
     //! The OSPRay output window.
     QOSPRayWindow *osprayWindow;

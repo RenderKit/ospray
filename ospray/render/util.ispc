@@ -70,11 +70,11 @@ inline void deinterleave(uniform uint32 z, uniform uint32 *uniform x, uniform ui
   *y = unpartition(z >> 1);
 }
 
-void precomputeZOrder() {
-  if (z_order_initialized) return;
-
-  for(uniform uint32 i = 0; i < TILE_SIZE*TILE_SIZE; i++)
+void precomputedZOrder_create() {
+  for(uniform uint32 i = 0; i < TILE_SIZE*TILE_SIZE; i++) {
     deinterleave(i, &z_order.xs[i], &z_order.ys[i]);
+    z_order.xyIdx[i] = z_order.xs[i] | (z_order.ys[i] << 16);
+  }
 
   z_order_initialized = true;
 }

@@ -84,6 +84,9 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
     //! Add the loaded volume(s) to the model.
     for (size_t i=0 ; catalog->entries[i] ; i++) if (catalog->entries[i]->type == OSP_VOLUME) ospAddVolume(model, (OSPVolume) catalog->entries[i]->object);
 
+    //! Keep vector of all loaded volume(s).
+    for (size_t i=0 ; catalog->entries[i] ; i++) if (catalog->entries[i]->type == OSP_VOLUME) volumes.push_back((OSPVolume) catalog->entries[i]->object);
+
     //! Commit the OSPRay object state.
     ospCommitCatalog(catalog);  ospCommit(model);  models.push_back(model);
 
@@ -143,6 +146,7 @@ void VolumeViewer::initUserInterfaceWidgets() {
     QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
     transferFunctionEditor = new TransferFunctionEditor(transferFunction);
     transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
+    connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(commitVolumes()));
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
     addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
