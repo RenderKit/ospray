@@ -19,32 +19,22 @@ namespace ospray {
 
     int Renderer::renderFrame()
     { 
-      PING;
-      PRINT(integrator);
-      PRINT(frameBuffer);
-      PRINT(camera);
-      PRINT(world);
-
       if (!integrator) return 1;
       if (!frameBuffer) return 2;
       if (!camera) return 3;
       if (!world) return 4;
-      PING;
 
       assert(frameBuffer->ospFrameBuffer);
       assert(integrator->ospRenderer);
 
-      PRINT(world->ospModel);
       if (!world->ospModel) {
         world->render();
         assert(world->ospModel);
       }
 
-      PING;
       integrator->setWorld(world);
       integrator->setCamera(camera);
       integrator->commit();
-      PING;
 
       ospRenderFrame(frameBuffer->ospFrameBuffer,
                      integrator->ospRenderer,
