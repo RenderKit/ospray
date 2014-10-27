@@ -19,6 +19,7 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 
     //! Setup UI elments.
     QVBoxLayout * layout = new QVBoxLayout();
+    layout->setSizeConstraint(QLayout::SetMinimumSize);
     setLayout(layout);
 
     //! Save and load buttons.

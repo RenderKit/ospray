@@ -147,6 +147,9 @@ void VolumeViewer::initUserInterfaceWidgets() {
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
     addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
+    //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
+    transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
+
     //! Create a scrollable dock widget for any added slices.
     QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
     QScrollArea *slicesScrollArea = new QScrollArea();
