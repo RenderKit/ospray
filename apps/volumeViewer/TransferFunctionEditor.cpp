@@ -8,22 +8,20 @@
 
 #include "TransferFunctionEditor.h"
 
-TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunction)
-{
-    // assign transfer function
+TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunction) : transferFunction(transferFunction) {
+
+    //! Make sure we have an existing transfer function.
     if(!transferFunction)
         throw std::runtime_error("must be constructed with an existing transfer function");
 
-    transferFunction_ = transferFunction;
-
-    // load color maps
+    //! Load color maps.
     loadColorMaps();
 
-    // setup UI elments
+    //! Setup UI elments.
     QVBoxLayout * layout = new QVBoxLayout();
     setLayout(layout);
 
-    // save and load buttons
+    //! Save and load buttons.
     QWidget * saveLoadWidget = new QWidget();
     QHBoxLayout * hboxLayout = new QHBoxLayout();
     saveLoadWidget->setLayout(hboxLayout);
@@ -38,32 +36,42 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 
     layout->addWidget(saveLoadWidget);
 
-    // form layout
+    //! Form layout.
     QWidget * formWidget = new QWidget();
     QFormLayout * formLayout = new QFormLayout();
     formWidget->setLayout(formLayout);
     layout->addWidget(formWidget);
 
-    // color map choice
-    for(unsigned int i=0; i<colorMaps_.size(); i++)
-    {
-        colorMapComboBox_.addItem(colorMaps_[i].getName().c_str());
-    }
+    //! Color map choice.
+    for(unsigned int i=0; i<colorMaps.size(); i++)
+        colorMapComboBox.addItem(colorMaps[i].getName().c_str());
 
-    formLayout->addRow("Color map", &colorMapComboBox_);
+    formLayout->addRow("Color map", &colorMapComboBox);
 
-    // data value range, used as the domain for both color and opacity components of the transfer function
-    dataValueMinSpinBox_.setRange(-999999., 999999.);
-    dataValueMaxSpinBox_.setRange(-999999., 999999.);
-    dataValueMinSpinBox_.setValue(0.);
-    dataValueMaxSpinBox_.setValue(1.);
-    dataValueMinSpinBox_.setDecimals(6);
-    dataValueMaxSpinBox_.setDecimals(6);
-    formLayout->addRow("Data value min", &dataValueMinSpinBox_);
-    formLayout->addRow("Data value max", &dataValueMaxSpinBox_);
+    //! Data value range, used as the domain for both color and opacity components of the transfer function.
+    dataValueMinSpinBox.setRange(-999999., 999999.);
+    dataValueMaxSpinBox.setRange(-999999., 999999.);
+    dataValueMinSpinBox.setValue(0.);
+    dataValueMaxSpinBox.setValue(1.);
+    dataValueMinSpinBox.setDecimals(6);
+    dataValueMaxSpinBox.setDecimals(6);
+    formLayout->addRow("Data value min", &dataValueMinSpinBox);
+    formLayout->addRow("Data value max", &dataValueMaxSpinBox);
 
-    // opacity transfer function widget
-    layout->addWidget(&transferFunctionAlphaWidget_);
+    //! Widget containing opacity transfer function widget and scaling slider.
+    QWidget * transferFunctionAlphaGroup = new QWidget();
+    hboxLayout = new QHBoxLayout();
+    transferFunctionAlphaGroup->setLayout(hboxLayout);
+
+    //! Opacity transfer function widget.
+    hboxLayout->addWidget(&transferFunctionAlphaWidget);
+
+    //! Opacity scaling slider, defaults to median value in range.
+    transferFunctionAlphaScalingSlider.setValue(int(0.5f * (transferFunctionAlphaScalingSlider.minimum() + transferFunctionAlphaScalingSlider.maximum())));
+    transferFunctionAlphaScalingSlider.setOrientation(Qt::Vertical);
+    hboxLayout->addWidget(&transferFunctionAlphaScalingSlider);
+
+    layout->addWidget(transferFunctionAlphaGroup);
 
     //! The Qt 4.8 documentation says: "by default, for every connection you
     //! make, a signal is emitted".  But this isn't happening here (Qt 4.8.5,
@@ -79,30 +87,43 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
     setDataValueMin(0.0);
     setDataValueMax(1.0);
 
-    connect(&colorMapComboBox_, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
-    connect(&dataValueMinSpinBox_, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
-    connect(&dataValueMaxSpinBox_, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
-    connect(&transferFunctionAlphaWidget_, SIGNAL(transferFunctionChanged()), this, SLOT(transferFunctionAlphasChanged()));
-
+    connect(&colorMapComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
+    connect(&dataValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
+    connect(&dataValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
+    connect(&transferFunctionAlphaWidget, SIGNAL(transferFunctionChanged()), this, SLOT(transferFunctionAlphasChanged()));
+    connect(&transferFunctionAlphaScalingSlider, SIGNAL(valueChanged(int)), this, SLOT(transferFunctionAlphasChanged()));
 }
 
-void TransferFunctionEditor::transferFunctionAlphasChanged()
-{
+void TransferFunctionEditor::transferFunctionAlphasChanged() {
 
-    // default to 256 discretizations of the opacities over the domain
-    std::vector<float> transferFunctionAlphas = transferFunctionAlphaWidget_.getInterpolatedValuesOverInterval(256);
+    //! Default to 256 discretizations of the opacities over the domain.
+    std::vector<float> transferFunctionAlphas = transferFunctionAlphaWidget.getInterpolatedValuesOverInterval(256);
+
+    //! Alpha scaling factor (normalized in [0, 1]).
+    const float alphaScalingNormalized = float(transferFunctionAlphaScalingSlider.value() - transferFunctionAlphaScalingSlider.minimum()) / float(transferFunctionAlphaScalingSlider.maximum() - transferFunctionAlphaScalingSlider.minimum());
+
+    // alpha scaling range, for now constant at 0 -> 200.
+    // this should really be bounded in [0.0, 1.0], but we allow a wider range to avoid additional parameters to the renderer / volume.
+    const float alphaScalingMin = 0.f;
+    const float alphaScalingMax = 200.f;
+
+    //! Alpha scaling within the above range.
+    const float alphaScaling = alphaScalingMin + alphaScalingNormalized * (alphaScalingMax - alphaScalingMin);
+
+    //! Scale alpha values.
+    for(unsigned int i=0; i<transferFunctionAlphas.size(); i++)
+        transferFunctionAlphas[i] *= alphaScaling;
 
     OSPData transferFunctionAlphasData = ospNewData(transferFunctionAlphas.size(), OSP_FLOAT, transferFunctionAlphas.data());
-    ospSetData(transferFunction_, "alphas", transferFunctionAlphasData);
+    ospSetData(transferFunction, "alphas", transferFunctionAlphasData);
 
-    // commit and emit signal
-    ospCommit(transferFunction_);
+    //! Commit and emit signal.
+    ospCommit(transferFunction);
     emit transferFunctionChanged();
-
 }
 
-void TransferFunctionEditor::load(std::string filename)
-{
+void TransferFunctionEditor::load(std::string filename) {
+
     //! Get filename if not specified.
     if(filename.empty())
         filename = QFileDialog::getOpenFileName(this, tr("Load transfer function"), ".", "Transfer function files (*.tfn)").toStdString();
@@ -131,15 +152,19 @@ void TransferFunctionEditor::load(std::string filename)
     QVector<QPointF> points;
     in >> points;
 
+    int alphaScalingIndex;
+    in >> alphaScalingIndex;
+
     //! Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
-    colorMapComboBox_.setCurrentIndex(colorMapIndex);
-    dataValueMinSpinBox_.setValue(dataValueMin);
-    dataValueMaxSpinBox_.setValue(dataValueMax);
-    transferFunctionAlphaWidget_.setPoints(points);
+    colorMapComboBox.setCurrentIndex(colorMapIndex);
+    dataValueMinSpinBox.setValue(dataValueMin);
+    dataValueMaxSpinBox.setValue(dataValueMax);
+    transferFunctionAlphaWidget.setPoints(points);
+    transferFunctionAlphaScalingSlider.setValue(alphaScalingIndex);
 }
 
-void TransferFunctionEditor::save()
-{
+void TransferFunctionEditor::save() {
+
     //! Get filename.
     QString filename = QFileDialog::getSaveFileName(this, "Save transfer function", ".", "Transfer function files (*.tfn)");
 
@@ -162,62 +187,58 @@ void TransferFunctionEditor::save()
 
     QDataStream out(&file);
 
-    out << colorMapComboBox_.currentIndex();
-    out << dataValueMinSpinBox_.value();
-    out << dataValueMaxSpinBox_.value();
-    out << transferFunctionAlphaWidget_.getPoints();
+    out << colorMapComboBox.currentIndex();
+    out << dataValueMinSpinBox.value();
+    out << dataValueMaxSpinBox.value();
+    out << transferFunctionAlphaWidget.getPoints();
+    out << transferFunctionAlphaScalingSlider.value();
 }
 
-void TransferFunctionEditor::setColorMapIndex(int index)
-{
-    // set transfer function color properties for this color map
-    std::vector<osp::vec3f> colors = colorMaps_[index].getColors();
+void TransferFunctionEditor::setColorMapIndex(int index) {
+
+    //! Set transfer function color properties for this color map.
+    std::vector<osp::vec3f> colors = colorMaps[index].getColors();
 
     OSPData transferFunctionColorsData = ospNewData(colors.size(), OSP_FLOAT3, colors.data());
-    ospSetData(transferFunction_, "colors", transferFunctionColorsData);
+    ospSetData(transferFunction, "colors", transferFunctionColorsData);
 
-    // set transfer function widget background image
-    transferFunctionAlphaWidget_.setBackgroundImage(colorMaps_[index].getImage());
+    //! Set transfer function widget background image.
+    transferFunctionAlphaWidget.setBackgroundImage(colorMaps[index].getImage());
 
-    // commit and emit signal
-    ospCommit(transferFunction_);
+    //! Commit and emit signal.
+    ospCommit(transferFunction);
     emit transferFunctionChanged();
-
 }
 
-void TransferFunctionEditor::setDataValueMin(double value)
-{
+void TransferFunctionEditor::setDataValueMin(double value) {
 
-    // set as the minimum value in the domain for both color and opacity components of the transfer function
-    ospSetf(transferFunction_, "colorValueMin", float(value));
-    ospSetf(transferFunction_, "alphaValueMin", float(value));
+    //! Set as the minimum value in the domain for both color and opacity components of the transfer function.
+    ospSetf(transferFunction, "colorValueMin", float(value));
+    ospSetf(transferFunction, "alphaValueMin", float(value));
 
-    // commit and emit signal
-    ospCommit(transferFunction_);
+    //! Commit and emit signal.
+    ospCommit(transferFunction);
     emit transferFunctionChanged();
-
 }
 
-void TransferFunctionEditor::setDataValueMax(double value)
-{
+void TransferFunctionEditor::setDataValueMax(double value) {
 
-    // set as the maximum value in the domain for both color and opacity components of the transfer function
-    ospSetf(transferFunction_, "colorValueMax", float(value));
-    ospSetf(transferFunction_, "alphaValueMax", float(value));
+    //! Set as the maximum value in the domain for both color and opacity components of the transfer function.
+    ospSetf(transferFunction, "colorValueMax", float(value));
+    ospSetf(transferFunction, "alphaValueMax", float(value));
 
-    // commit and emit signal
-    ospCommit(transferFunction_);
+    //! Commit and emit signal.
+    ospCommit(transferFunction);
     emit transferFunctionChanged();
-
 }
 
-void TransferFunctionEditor::loadColorMaps()
-{
-    // color maps based on ParaView default color maps
+void TransferFunctionEditor::loadColorMaps() {
+
+    //! Color maps based on ParaView default color maps.
 
     std::vector<osp::vec3f> colors;
 
-    // jet
+    //! Jet.
     colors.clear();
     colors.push_back(osp::vec3f(0         , 0           , 0.562493   ));
     colors.push_back(osp::vec3f(0         , 0           , 1          ));
@@ -226,9 +247,9 @@ void TransferFunctionEditor::loadColorMaps()
     colors.push_back(osp::vec3f(1         , 1           , 0          ));
     colors.push_back(osp::vec3f(1         , 0           , 0          ));
     colors.push_back(osp::vec3f(0.500008  , 0           , 0          ));
-    colorMaps_.push_back(ColorMap("Jet", colors));
+    colorMaps.push_back(ColorMap("Jet", colors));
 
-    // ice / fire
+    //! Ice / fire.
     colors.clear();
     colors.push_back(osp::vec3f(0         , 0           , 0           ));
     colors.push_back(osp::vec3f(0         , 0.120394    , 0.302678    ));
@@ -247,24 +268,24 @@ void TransferFunctionEditor::loadColorMaps()
     colors.push_back(osp::vec3f(0.508812  , 0           , 0           ));
     colors.push_back(osp::vec3f(0.299413  , 0.000366217 , 0.000549325 ));
     colors.push_back(osp::vec3f(0.0157473 , 0.00332647  , 0           ));
-    colorMaps_.push_back(ColorMap("Ice / Fire", colors));
+    colorMaps.push_back(ColorMap("Ice / Fire", colors));
 
-    // cool to warm
+    //! Cool to warm.
     colors.clear();
     colors.push_back(osp::vec3f(0.231373  , 0.298039    , 0.752941    ));
     colors.push_back(osp::vec3f(0.865003  , 0.865003    , 0.865003    ));
     colors.push_back(osp::vec3f(0.705882  , 0.0156863   , 0.14902     ));
-    colorMaps_.push_back(ColorMap("Cool to Warm", colors));
+    colorMaps.push_back(ColorMap("Cool to Warm", colors));
 
-    // blue to red rainbow
+    //! Blue to red rainbow.
     colors.clear();
     colors.push_back(osp::vec3f(0         , 0           , 1           ));
     colors.push_back(osp::vec3f(1         , 0           , 0           ));
-    colorMaps_.push_back(ColorMap("Blue to Red Rainbow", colors));
+    colorMaps.push_back(ColorMap("Blue to Red Rainbow", colors));
 
-    // grayscale
+    //! Grayscale.
     colors.clear();
     colors.push_back(osp::vec3f(0.));
     colors.push_back(osp::vec3f(1.));
-    colorMaps_.push_back(ColorMap("Grayscale", colors));
+    colorMaps.push_back(ColorMap("Grayscale", colors));
 }

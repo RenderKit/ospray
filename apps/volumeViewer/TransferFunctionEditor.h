@@ -13,8 +13,8 @@
 #include <QtGui>
 #include <ospray/ospray.h>
 
-class TransferFunctionEditor : public QWidget
-{
+class TransferFunctionEditor : public QWidget {
+
 Q_OBJECT
 
 public:
@@ -42,17 +42,24 @@ protected:
 
     void loadColorMaps();
 
-    // color maps
-    std::vector<ColorMap> colorMaps_;
+    //! Color maps.
+    std::vector<ColorMap> colorMaps;
 
-    // OSPRay transfer function object
-    OSPTransferFunction transferFunction_;
+    //! OSPRay transfer function object.
+    OSPTransferFunction transferFunction;
 
-    // transfer function widget for opacity
-    TransferFunctionPiecewiseLinearWidget transferFunctionAlphaWidget_;
+    //! Color map selection widget.
+    QComboBox colorMapComboBox;
 
-    //! UI elements.
-    QComboBox colorMapComboBox_;
-    QDoubleSpinBox dataValueMinSpinBox_;
-    QDoubleSpinBox dataValueMaxSpinBox_;
+    //! Transfer function minimum data value widget.
+    QDoubleSpinBox dataValueMinSpinBox;
+
+    //! Transfer function maximum data value widget.
+    QDoubleSpinBox dataValueMaxSpinBox;
+
+    //! Transfer function widget for opacity.
+    TransferFunctionPiecewiseLinearWidget transferFunctionAlphaWidget;
+
+    //! Slider for scaling transfer function opacities.
+    QSlider transferFunctionAlphaScalingSlider;
 };
