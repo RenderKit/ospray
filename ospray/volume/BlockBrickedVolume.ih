@@ -64,6 +64,9 @@
     //! Declaration emitted during build in "ClassName_ispc.h".  Set the color and opacity transfer function.
 //  extern "C" { void BlockBrickedVolume_setTransferFunction(void *uniform volume, void *uniform value); }
 
+    //! Declaration emitted during build in "ClassName_ispc.h".  Set the volume value range.
+//  extern "C" { void BlockBrickedVolume_setValueRange(void *uniform volume, const uniform vec2f &value); }
+
     //! Declaration emitted during build in "ClassName_ispc.h".  Set the volume size in voxels per dimension.
 //  extern "C" { void BlockBrickedVolume_setVolumeDimensions(void *uniform volume, const uniform vec3i &value); }
 

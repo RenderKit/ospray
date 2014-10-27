@@ -27,6 +27,9 @@ namespace ospray {
         //! Get the transfer function.
         transferFunction = (TransferFunction *) getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no transfer function specified");
 
+        //! Get the value range.
+        vec2f voxelRange = getParam2f("voxelRange", vec2f(0.0f));  exitOnCondition(voxelRange == vec2f(0.0f), "no voxel range specified");
+
         //! Get the gamma correction coefficient and exponent.
         vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
 
@@ -42,6 +45,9 @@ namespace ospray {
         //! Set the gamma correction coefficient and exponent.
         ispc::BlockBrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
 
+        //! Set the value range.
+        ispc::BlockBrickedVolume_setValueRange(ispcEquivalent, (const ispc::vec2f &) voxelRange);
+
         //! Allocate memory for the voxel data in the ISPC object.
         ispc::BlockBrickedVolume_allocateMemory(ispcEquivalent);
 
@@ -50,10 +56,29 @@ namespace ospray {
     void BlockBrickedVolume::setRegion(const void *source, const vec3i &index, const vec3i &count) {
 
         //! Range check.
-        // assert(inRange(index, vec3i(0), voxelDimensions) && inRange(count, vec3i(1), voxelDimensions + vec3i(1)));
+//      assert(inRange(index, vec3i(0), voxelDimensions) && inRange(count, vec3i(1), voxelDimensions + vec3i(1)));
 
         //! Copy voxel data into the volume.
         ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);
+
+    }
+
+    void BlockBrickedVolume::updateEditableParameters() {
+
+        //! Get the transfer function.
+        transferFunction = (TransferFunction *) getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no transfer function specified");
+
+        //! Get the gamma correction coefficient and exponent.
+        vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
+
+        //! Set the gamma correction coefficient and exponent.
+        ispc::BlockBrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
+
+        //! Set the sampling step size for ray casting based renderers.
+        ispc::BlockBrickedVolume_setStepSize(ispcEquivalent, 1.0f / reduce_max(volumeDimensions) / getParam1f("samplingRate", 1.0f));
+
+        //! Set the transfer function.
+        ispc::BlockBrickedVolume_setTransferFunction(ispcEquivalent, transferFunction->getEquivalentISPC());
 
     }
 

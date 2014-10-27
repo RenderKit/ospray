@@ -43,13 +43,16 @@ public slots:
     //! Toggle animation over the time steps.
     void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
 
+    //! Re-commit all OSPRay volumes.
+    void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
+
     //! Force the OSPRay window to be redrawn.
     void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
 
 protected:
 
     //! OSPRay state.
-    std::vector<OSPObject> models;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
+    std::vector<OSPObject> models;  std::vector<OSPVolume> volumes;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
 
     //! The OSPRay output window.
     QOSPRayWindow *osprayWindow;

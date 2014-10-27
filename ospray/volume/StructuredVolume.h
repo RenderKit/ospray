@@ -65,6 +65,9 @@ namespace ospray {
         //! Initialize the volume from memory.
         void getVolumeFromMemory();
 
+        //! Update select parameters after the volume has been allocated and filled.
+        virtual void updateEditableParameters() { return; }
+
     };
 
 } // namespace ospray

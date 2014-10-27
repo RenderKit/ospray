@@ -64,7 +64,7 @@ varying vec3f BlockBrickedVolume_computeGradient(void *uniform pointer, const va
     gradient.z = volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, 1.0f)) - volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, -1.0f));
 
     //! This approximation may yield image artifacts.
-    return(gradient);
+    return(gradient * 0.5f);
 
 }
 
@@ -283,6 +283,16 @@ export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *
 
     //! Set the color and opacity transfer function.
     volume->inherited.transferFunction = (TransferFunction *uniform) value;
+
+}
+
+export void BlockBrickedVolume_setValueRange(void *uniform pointer, const uniform vec2f &value) {
+
+    //! Cast to the actual Volume type.
+    BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Set the volume value range.
+    volume->inherited.valueRange = value;
 
 }
 
