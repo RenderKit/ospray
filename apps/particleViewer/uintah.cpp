@@ -226,7 +226,7 @@ namespace ospray {
     Model *parse__Uintah_timestep_xml(const std::string &s)
     {
       Model *model = new Model;
-      Ref<xml::XMLDoc> doc = xml::readXML(s);
+      xml::XMLDoc *doc = xml::readXML(s);
 
       char *dumpFileName = getenv("OSPRAY_PARTICLE_DUMP_FILE");
       if (dumpFileName)
@@ -245,6 +245,7 @@ namespace ospray {
       }
       std::cout << "#osp:mpm: bounds of particle centers: " << bounds << std::endl;
       model->radius = .002f;
+      delete doc;
       return model;
     }
   }
