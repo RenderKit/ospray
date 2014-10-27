@@ -11,6 +11,11 @@ namespace ospray {
   namespace particle {
     bool big_endian = false;
 
+    /*! a dump-file we can use for debugging; we'll simply dump each
+        parsed particle into this file during parsing */
+    FILE *particleDumpFile = NULL;
+    size_t numDumpedParticles = 0;
+
     struct Particle {
       double x,y,z;
     };
@@ -67,10 +72,15 @@ namespace ospray {
         Model::Atom a;
         a.position = vec3f(p.x,p.y,p.z);
         a.type = model->getAtomType("<unnamed>");
-        model->atom.push_back(a);
+
+        if (particleDumpFile) {
+          numDumpedParticles++;
+          fwrite(&a,sizeof(a),1,particleDumpFile);
+        } else 
+          model->atom.push_back(a);
       }
       
-      std::cout << "\r#osp:uintah: read " << numParticles << " particles (total " << float(model->atom.size()/1e6) << "M)";
+      std::cout << "\r#osp:uintah: read " << numParticles << " particles (total " << float((numDumpedParticles+model->atom.size())/1e6) << "M)";
 
       // Particle *particle = new Particle[numParticles];
       // fread(particle,numParticles,sizeof(Particle),file);
@@ -217,6 +227,10 @@ namespace ospray {
     {
       Model *model = new Model;
       Ref<xml::XMLDoc> doc = xml::readXML(s);
+
+      char *dumpFileName = getenv("OSPRAY_PARTICLE_DUMP_FILE");
+      if (dumpFileName)
+        particleDumpFile = fopen(dumpFileName,"wb");
       assert(doc);
       assert(doc->child.size() == 1);
       assert(doc->child[0]->name == "Uintah_timestep");

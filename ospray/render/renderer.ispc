@@ -74,7 +74,12 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
         continue;
 
       vec3f col = make_vec3f(0);
+#if 0
+      const uint32 zorderIdx = z_order.xyIdx[index];
+      const uint32 pixel = getZOrderX(zorderIdx) + (getZOrderY(zorderIdx) * TILE_SIZE);
+#else
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+#endif
       for (uniform uint32 s = 0; s<renderer->spp; s++) {
         pixel_du = precomputedHalton2(startSampleID+s);
         pixel_dv = precomputedHalton3(startSampleID+s);
@@ -106,8 +111,14 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
 
     for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
       const uint32 index = i + programIndex;
+#if 0
+      uint32 zorderIdx = z_order.xyIdx[index];
+      screenSample.sampleID.x        = tile.region.lower.x + getZOrderX(zorderIdx); //z_order.xs[index];
+      screenSample.sampleID.y        = tile.region.lower.y + getZOrderY(zorderIdx); //z_order.ys[index];
+#else
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+#endif
       //print("index          %\n", index);
       //print("screenSample   %, %\n", screenSample.sampleID.x, screenSample.sampleID.y);
       //print("offset         %, %\n", z_order.xs[index], z_order.ys[index]);

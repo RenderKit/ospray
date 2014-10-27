@@ -65,5 +65,13 @@ namespace ospray {
   OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_geomID,eyeLight_geomID);
   OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_geomID,geomID);
 
+  typedef RayCastRenderer<ispc::RayCastRenderer_create_eyeLight_vertexColor>
+  RayCastRenderer_eyeLight_vertexColor;
+  OSP_REGISTER_RENDERER(RayCastRenderer_eyeLight_vertexColor,eyeLight_vertexColor);
+
+  typedef RayCastRenderer<ispc::RayCastRenderer_create_testFrame>
+  RayCastRenderer_testFrame;
+  OSP_REGISTER_RENDERER(RayCastRenderer_testFrame,testFrame);
+
 };
 

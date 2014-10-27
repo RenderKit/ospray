@@ -113,6 +113,11 @@ namespace ospray {
   typedef embree::AffineSpace3f  AffineSpace3f;
   typedef embree::AffineSpace3fa AffineSpace3fa;
 
+  typedef embree::LinearSpace3f  linear3f;
+  typedef embree::LinearSpace3fa linear3fa;
+  typedef embree::LinearSpace3f  LinearSpace3f;
+  typedef embree::LinearSpace3fa LinearSpace3fa;
+
   using   embree::Ref;
   using   embree::RefCount;
 

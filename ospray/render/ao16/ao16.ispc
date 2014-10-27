@@ -134,42 +134,14 @@ inline vec3f getRandomDir(const int j, const uniform int i,
                    const vec3f gNormal,
                    const float rot_x, const float rot_y)
 {
-#if 1
-        // const uniform float r0 = SimpleAO__randomU[j][i];
-        // const uniform float r1 = SimpleAO__randomV[j][i];
-        const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
-        const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
+  const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
+  const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
         
-        const float w = sqrt(1.f-r1);
-        const float x = cos((2.f*M_PI)*r0)*w;
-        const float y = sin((2.f*M_PI)*r0)*w;
-        const float z = sqrt(r1)+EPS;
-        return
-          x*biNorm0+y*biNorm1+z*gNormal;
-#else
-  if (!AO16_directions_initialized) {    
-    for (uniform int j=0;j<16;j++)
-      for (uniform int i=0;i<16;i++) {
-        const uniform float r0 = SimpleAO__randomU[j][i];
-        const uniform float r1 = SimpleAO__randomV[j][i];
-        // const uniform float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
-        // const uniform float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
-        
-        const uniform float w = sqrt(1.f-r1);
-        const uniform float x = cos((2.f*M_PI)*r0)*w;
-        const uniform float y = sin((2.f*M_PI)*r0)*w;
-        const uniform float z = sqrt(r1)+EPS;
-        AO16_directions[j][i].x = x;
-        AO16_directions[j][i].y = y;
-        AO16_directions[j][i].z = z;      
-      }
-    AO16_directions_initialized = true;
-  }
-  return
-    AO16_directions[j][i].x * biNorm0 +
-    AO16_directions[j][i].y * biNorm1 +
-    AO16_directions[j][i].z * gNormal;
-#endif
+  const float w = sqrt(1.f-r1);
+  const float x = cos((2.f*M_PI)*r0)*w;
+  const float y = sin((2.f*M_PI)*r0)*w;
+  const float z = sqrt(r1)+EPS;
+  return x*biNorm0+y*biNorm1+z*gNormal;
 }
 
 inline vec3f getRandomDir(const int j, const int i, 
@@ -178,42 +150,14 @@ inline vec3f getRandomDir(const int j, const int i,
                           const vec3f gNormal,
                           const float rot_x, const float rot_y)
 {
-#if 1
-        // const uniform float r0 = SimpleAO__randomU[j][i];
-        // const uniform float r1 = SimpleAO__randomV[j][i];
-        const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
-        const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
+  const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
+  const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
         
-        const float w = sqrt(1.f-r1);
-        const float x = cos((2.f*M_PI)*r0)*w;
-        const float y = sin((2.f*M_PI)*r0)*w;
-        const float z = sqrt(r1)+EPS;
-        return
-          x*biNorm0+y*biNorm1+z*gNormal;
-#else
-  if (!AO16_directions_initialized) {    
-    for (uniform int j=0;j<16;j++)
-      for (uniform int i=0;i<16;i++) {
-        const uniform float r0 = SimpleAO__randomU[j][i];
-        const uniform float r1 = SimpleAO__randomV[j][i];
-        // const uniform float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
-        // const uniform float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
-        
-        const uniform float w = sqrt(1.f-r1);
-        const uniform float x = cos((2.f*M_PI)*r0)*w;
-        const uniform float y = sin((2.f*M_PI)*r0)*w;
-        const uniform float z = sqrt(r1)+EPS;
-        AO16_directions[j][i].x = x;
-        AO16_directions[j][i].y = y;
-        AO16_directions[j][i].z = z;      
-      }
-    AO16_directions_initialized = true;
-  }
-  return
-    AO16_directions[j][i].x * biNorm0 +
-    AO16_directions[j][i].y * biNorm1 +
-    AO16_directions[j][i].z * gNormal;
-#endif
+  const float w = sqrt(1.f-r1);
+  const float x = cos((2.f*M_PI)*r0)*w;
+  const float y = sin((2.f*M_PI)*r0)*w;
+  const float z = sqrt(r1)+EPS;
+  return x*biNorm0+y*biNorm1+z*gNormal;
 }
 
 
@@ -240,9 +184,10 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   // print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
-  vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
-  foreach_unique(m in mat)
-    baseColor = m->Kd;
+  vec3f baseColor = make_vec3f(.8f); // = mat->Kd; // * make_vec3f(dg.color);
+  if (mat)
+    foreach_unique(m in mat)
+      baseColor = m->Kd;
   baseColor = baseColor * make_vec3f(dg.color);
   // foreach_unique(tex in mat->map_Kd) {
   //   if (tex) {
@@ -337,54 +282,11 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   return rgb;
 }
 
-// inline vec3f shade_eyeLight(const Ray &ray, uniform RTCScene scene)
-// {
-//   if (ray.geomID < 0)
-//     return make_vec3f(0.f);
-
-//   const vec3f P = ray.org + ray.t * ray.dir;
-//   const vec3f N = getShadingNormal(ray);
-//   float c = -dot(normalize(ray.dir),N);
-//   return make_vec3f(c);
-// }
-
-// export void AO16Renderer_renderTile(void *uniform _tile,//uniform Tile   *uniform tile,
-//                                     void *uniform _fb,
-//                                     void *uniform _camera,//uniform Camera *uniform camera,
-//                                     void *uniform _model)
-// {
-//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-//   uniform FrameBuffer *uniform fb   = (uniform FrameBuffer *uniform)_fb;
-//   uniform Model  *uniform model  = (uniform Model *uniform)_model;
-//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-//   const uniform uint32 size_x = fb->size.x;
-//   const uniform uint32 size_y = fb->size.y;
-//   const uniform uint32 x0 = tile->region.lower.x;
-//   const uniform uint32 y0 = tile->region.lower.y;
-//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-//     const uint32 frag = i*programCount+programIndex;
-//     const uint32  x     = x0 + (frag % TILE_SIZE);
-//     const uint32  y     = y0 + (frag / TILE_SIZE);
-//     // print("pixel % %\n",x,y);
-//     if (x < tile->region.upper.x & y < tile->region.upper.y) {
-//       // print("+pixel % %\n",x,y);
-//       const float screen_u = (x+.5f)/size_x;
-//       const float screen_v = (y+.5f)/size_y;
-//       Ray ray;
-//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-//                       (varying vec2f)make_vec2f(0.f,0.f));
-//       // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
-//       traceRay(model,ray);
-//       setRGBA(tile,i,shade_ao16(ray,model,x,y));
-//     }
-//   }
-// }
-
-
 void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
                                varying ScreenSample &sample)
 {
   uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
+
   traceRay(renderer->inherited.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
@@ -395,8 +297,6 @@ void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
   int sampleOfs = sample.sampleID.z % framesPer16;
   float rot_x = 1.f-precomputedHalton3(accumID);
   float rot_y = 1.f-precomputedHalton5(accumID);
-  // float rot_x = 1.f-precomputedHalton3(sample.sampleID.z);
-  // float rot_y = 1.f-precomputedHalton5(sample.sampleID.z);
   sample.rgb   = shade_ao16(renderer,
                             sampleOfs,samplesPerFrame,
                             sample.ray,
