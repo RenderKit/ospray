@@ -21,10 +21,6 @@ IF(NOT THIS_IS_MIC)
   # common xml utility classes
   ADD_SUBDIRECTORY(common/xml)
 
-  # common "scene graph" utility classes (currently not a full scene graph,
-  # more a easier way to store scene input data; like "xml+some semantics")
-  ADD_SUBDIRECTORY(common/sg)
-
   # mini-scene graph viewer for _geometry_ (intentionally simple)
   OPTION(OSPRAY_APPS_MODELVIEWER "Build ospModelViewer application." ON)
   IF (OSPRAY_APPS_MODELVIEWER)

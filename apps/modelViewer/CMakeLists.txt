@@ -11,6 +11,10 @@ CONFIGURE_OSPRAY()
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/apps/common)
 
+# common "scene graph" utility classes (currently not a full scene graph,
+# more a easier way to store scene input data; like "xml+some semantics")
+ADD_SUBDIRECTORY(sg)
+
 ADD_SUBDIRECTORY(miniSG)
 
 # --------------------------------------------
