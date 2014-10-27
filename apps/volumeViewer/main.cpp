@@ -77,15 +77,15 @@ int main(int argc, char *argv[]) {
 
         } else if (arg == "-slice") {
 
-                if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
-                sliceFilenames.push_back(std::string(argv[++i]));
-                std::cout << "got slice filename = " << sliceFilenames.back() << std::endl;
+            if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
+            sliceFilenames.push_back(std::string(argv[++i]));
+            std::cout << "got slice filename = " << sliceFilenames.back() << std::endl;
 
         } else if (arg == "-transferfunction") {
 
-                if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
-                transferFunctionFilename = std::string(argv[++i]);
-                std::cout << "got transferFunctionFilename = " << transferFunctionFilename << std::endl;
+            if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
+            transferFunctionFilename = std::string(argv[++i]);
+            std::cout << "got transferFunctionFilename = " << transferFunctionFilename << std::endl;
 
         } else if (arg == "-benchmark") {
 
