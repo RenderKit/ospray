@@ -49,6 +49,27 @@ namespace ospray {
       return world;
     }
       
+    World *createTestSphereCube(size_t numPerSide)
+    {
+      sg::World *world = new sg::World;
+      sg::Spheres *spheres = new sg::Spheres;
+
+      float radius = 1.f/numPerSide;
+      for (int z=0;z<numPerSide;z++)
+        for (int y=0;y<numPerSide;y++)
+          for (int x=0;x<numPerSide;x++) {
+            vec3f a;
+            a.x = x/float(numPerSide);
+            a.y = y/float(numPerSide);
+            a.z = z/float(numPerSide);
+            Spheres::Sphere s(a,radius,0);
+            spheres->sphere.push_back(s);
+          }
+
+      world->node.push_back(spheres);
+      return world;
+    }
+      
   } // ::ospray::sg
 } // ::ospray
 

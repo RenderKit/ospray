@@ -67,6 +67,8 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "--test-sphere") {
             world = sg::createTestSphere();
+          } else if (arg == "--test-sphere-cube") {
+            world = sg::createTestSphereCube(atoi(argv[++argID]));
           } else if (arg == "--test-axes") {
             // world = sg::createTestCoordinateAxes();
           } else if (arg == "--renderer") {

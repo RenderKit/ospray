@@ -462,6 +462,9 @@ namespace ospray {
 
     /*! @{ some simple testing geometry */
     World *createTestSphere();
+
+    /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 spheres */
+    World *createTestSphereCube(size_t numSpheresPerCubeSize);
     World *createTestCoordFrame();
     /*! @} */
 
