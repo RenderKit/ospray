@@ -15,6 +15,8 @@
 #include <vector>
 // qt
 #include <QtGui>
+// scene graph
+#include "sg/SceneGraph.h"
 
 namespace ospray {
   namespace viewer {
@@ -26,7 +28,7 @@ namespace ospray {
     class QTransferFunctionAlphaEditor : public QWidget
     {
       Q_OBJECT;
-      
+
     public:
       
       QTransferFunctionAlphaEditor();
@@ -78,6 +80,7 @@ namespace ospray {
       static float pointPixelRadius;
       static float linePixelWidth;
       //! \}
+
     };
 
     
@@ -110,15 +113,15 @@ namespace ospray {
       };
 
     public:
-      QTransferFunctionEditor();
+      QTransferFunctionEditor(Ref<sg::TransferFunction> sgNode);
 
       //! add a new color map to the list of selectable color maps
       void addColorMap(const ColorMap *colorMap);
   
     signals:
       void transferFunctionChanged();
-    // public slots:
-    //   void transferFunctionAlphasChanged();
+    public slots:
+      void transferFunctionAlphasChanged();
     protected slots:
 
       void selectColorMap(int index);
@@ -137,6 +140,9 @@ namespace ospray {
 
       // transfer function widget for opacity
       QTransferFunctionAlphaEditor *transferFunctionAlphaEditor;
+
+      //! the node we are editing
+      Ref<sg::TransferFunction> sgNode;
     };
   }
 }

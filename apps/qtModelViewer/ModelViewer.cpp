@@ -135,8 +135,8 @@ namespace ospray {
     void ModelViewer::createEditorWidgetStack()
     {
       editorWidgetStack = new EditorWidgetStack;
-      editorWidgetStack->addPage("Test1",new QLabel("Test1"));
-      editorWidgetStack->addPage("Test2",new QLabel("Test2"));
+      // editorWidgetStack->addPage("Test1",new QLabel("Test1"));
+      // editorWidgetStack->addPage("Test2",new QLabel("Test2"));
       QDockWidget *dock = new QDockWidget(this);
       dock->setWindowTitle("Editors");
       dock->setWidget(editorWidgetStack);
@@ -147,15 +147,59 @@ namespace ospray {
 
     void ModelViewer::createTransferFunctionEditor()
     {
-      assert(transferFunctionEditor == NULL);
-      transferFunctionEditor = new QTransferFunctionEditor;
-      editorWidgetStack->addPage("Transfer Function",transferFunctionEditor);
+      QWidget *xfEditorsPage = NULL;
+      // make a list of all transfer function nodes in the scene graph
+      std::vector<Ref<sg::TransferFunction> > xferFuncs;
+      for (int i=0;i<sgRenderer->uniqueNodes.size();i++) {
+        sg::TransferFunction *xf = dynamic_cast<sg::TransferFunction *>
+          (sgRenderer->uniqueNodes.object[i]->node.ptr);
+        if (xf) xferFuncs.push_back(xf);
+      }
+      std::cout << "#osp:qtv: found " << xferFuncs.size() 
+                << " transfer function nodes" << std::endl;
+
+      if (xferFuncs.empty()) {
+        xfEditorsPage = new QLabel("(no xfer fcts found)");
+      } else {
+        // -------------------------------------------------------
+        // found some transfer functions - create a stacked widget
+        // with an editor for each
+        // -------------------------------------------------------
+        xfEditorsPage = new QWidget;
+        QVBoxLayout    *layout = new QVBoxLayout;
+        xfEditorsPage->setLayout(layout);
+
+
+        QStackedWidget *stackedWidget = new QStackedWidget;
+        QComboBox *pageComboBox = new QComboBox;
+        QObject::connect(pageComboBox, SIGNAL(activated(int)), 
+                         stackedWidget, SLOT(setCurrentIndex(int)));
+
+        layout->addWidget(pageComboBox);
+        layout->addWidget(stackedWidget);        
+
+        // now, create widgets for all of them
+        for (int i=0;i<xferFuncs.size();i++) {
+          // take name from node, or create one
+          std::string name = xferFuncs[i]->name;
+          if (name == "") {
+            std::stringstream ss;
+            ss << "(unnamed xfr fct #" << i << ")";
+            name = ss.str();
+          }
+          // add combo box and stacked widget entries
+          pageComboBox->addItem(tr(name.c_str()));
+          stackedWidget->addWidget(new QTransferFunctionEditor(xferFuncs[i]));
+        }
+      }
+      editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
     }
 
-    ModelViewer::ModelViewer(Ref<sg::Renderer> renderer)
+    ModelViewer::ModelViewer(Ref<sg::Renderer> sgRenderer)
       : editorWidgetStack(NULL),
         transferFunctionEditor(NULL),
-        toolBar(NULL)
+        toolBar(NULL),
+        sgRenderer(sgRenderer)
     {
       // resize to default window size
       //resize(320, 240);
@@ -171,13 +215,13 @@ namespace ospray {
       //connect(nextTimestepAction, SIGNAL(triggered()), this, SLOT(nextTimestep()));
       toolBar->addAction(testAction);
 
-      renderWidget = new OSPRayRenderWidget(renderer);
+      renderWidget = new OSPRayRenderWidget(sgRenderer);
       ///renderWidget = new CheckeredSphereRotationEditor();
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FLY);
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::INSPECT);
       // renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FREE_ROTATION);
       renderWidget->setMoveSpeed(1.f);
-      connect(renderWidget,SIGNAL(cameraChanged()),this,SLOT(cameraChanged()));
+      connect(renderWidget,SIGNAL(affineSpaceChanged(QAffineSpaceManipulator *)),this,SLOT(cameraChanged()));
 
       setCentralWidget(renderWidget);
 
@@ -192,12 +236,12 @@ namespace ospray {
       renderWidget->setWorld(world); 
     }
 
-    // void ModelViewer::render()
-    // {
-    //   PING;
-    // }
-
     void ModelViewer::cameraChanged() 
-    { PING; }
+    {
+      /* nothing to do here, yet - the ospray render widget
+         automatically updates the camera used for rendering. We can
+         still add some callbacks here eventually, but right now we
+         don't need this callback */
+    }
   }
 }

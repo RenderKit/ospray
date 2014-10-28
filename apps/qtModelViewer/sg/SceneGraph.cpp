@@ -208,7 +208,6 @@ namespace ospray {
     //! \brief Initialize this node's value from given corresponding XML node 
     void AlphaMappedSpheres::setFromXML(const xml::Node *const node)
     {
-      PING;
       for (size_t childID=0;childID<node->child.size();childID++) {
         xml::Node *child = node->child[childID];
         if (child->name == "transferFunction") {

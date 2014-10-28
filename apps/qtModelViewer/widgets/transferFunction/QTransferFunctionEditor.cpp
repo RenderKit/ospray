@@ -252,8 +252,8 @@ namespace ospray {
 
 
 
-    QTransferFunctionEditor::QTransferFunctionEditor() 
-      : activeColorMap(NULL)
+    QTransferFunctionEditor::QTransferFunctionEditor(Ref<sg::TransferFunction> sgNode) 
+      : activeColorMap(NULL), sgNode(sgNode)
     {
       // setup UI elments
       QVBoxLayout * layout = new QVBoxLayout();
@@ -355,11 +355,10 @@ namespace ospray {
     }
 
 
-    // void QTransferFunctionEditor::transferFunctionAlphasChanged()
-    // {
-    //   PING;
-    //   emit transferFunctionChanged();
-    // }
+    void QTransferFunctionEditor::transferFunctionAlphasChanged()
+    {
+      emit transferFunctionChanged();
+    }
 
     // void QTransferFunctionEditor::transferFunctionChanged()
     // {
