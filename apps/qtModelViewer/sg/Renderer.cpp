@@ -12,6 +12,8 @@
 
 namespace ospray {
   namespace sg {
+    using std::cout;
+    using std::endl;
 
     Renderer::Renderer()
       // : ospFrameBuffer(NULL)
@@ -57,7 +59,23 @@ namespace ospray {
     //! create a default camera
     Ref<sg::Camera> Renderer::createDefaultCamera()
     {
+      // create a default camera
       Ref<sg::PerspectiveCamera> camera = new sg::PerspectiveCamera;
+
+      // now, determine world bounds to automatically focus the camera
+      box3f worldBounds = world->getBounds();
+      if (worldBounds == box3f(empty)) {
+        cout << "#osp:qtv: world bounding box is empty, using default camera pose" << endl;
+      } else {
+        cout << "#osp:qtv: found world bounds " << worldBounds << endl;
+        cout << "#osp:qtv: focussing default camera on world bounds" << endl;
+
+        camera->setAt(center(worldBounds));
+        camera->setUp(vec3f(0,0,1));
+        camera->setFrom(center(worldBounds) + .8f*vec3f(-1,-3,+1.5)*worldBounds.size());
+        camera->commit();
+      }
+
       return camera.cast<sg::Camera>();
     }
 

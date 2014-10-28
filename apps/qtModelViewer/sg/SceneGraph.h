@@ -126,8 +126,8 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct Node : public embree::RefCount 
     {
-       Node() : lastModified(1), lastCommitted(0) {};
-
+      Node() : lastModified(1), lastCommitted(0) {};
+      
       virtual    std::string toString() const = 0;
       sg::Param *getParam(const std::string &name) const;
       void       addParam(sg::Param *p);
@@ -158,7 +158,16 @@ namespace ospray {
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
-       virtual void commit() {};
+      virtual void commit() {};
+
+      /*! \brief return bounding box in world coordinates.
+
+        This function can be used by the viewer(s) for calibrating
+        camera motion, setting default camera position, etc. Nodes
+        for which that does not apply can simpy return
+        box3f(embree::empty) */
+      virtual box3f getBounds() { return box3f(embree::empty); };
+      
       std::string name;
     protected:
        size_t lastModified;
@@ -287,6 +296,9 @@ namespace ospray {
 
       virtual void commit();
 
+      vec3f getFrom() const { return from; }
+      vec3f getAt() const { return at; }
+      vec3f getUp() const { return up; }
       void setFrom(const vec3f &from) { if (from != this->from) { this->from = from; lastModified = __rdtsc(); } }
       void setAt(const vec3f &at) { if (at != this->at) { this->at = at; lastModified = __rdtsc(); } }
       void setUp(const vec3f &up) { if (up != this->up) { this->up = up; lastModified = __rdtsc(); } }
@@ -453,6 +465,20 @@ namespace ospray {
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
+
+      /*! \brief return bounding box in world coordinates.
+
+        This function can be used by the viewer(s) for calibrating
+        camera motion, setting default camera position, etc. Nodes
+        for which that does not apply can simpy return
+        box3f(embree::empty) */
+      virtual box3f getBounds() { 
+        box3f bounds = embree::empty;
+        for (int i=0;i<node.size();i++)
+          bounds.extend(node[i]->getBounds());
+        return bounds;
+      }
+
     };
       
     World *readXML(const std::string &fileName);

@@ -27,6 +27,20 @@ namespace ospray {
       //   ospCamera(NULL), 
       //   ospFrameBuffer(NULL)
     {
+      box3f worldBounds = renderer->world->getBounds();
+      if (!worldBounds.empty()) {
+        QAffineSpaceManipulator::setMoveSpeed(length(worldBounds.size())*1e-3f);
+      }
+      Ref<sg::PerspectiveCamera> camera = renderer->camera.cast<sg::PerspectiveCamera>();
+      if (camera) {
+        frame->sourcePoint = camera->getFrom();
+        frame->targetPoint = camera->getAt();
+        frame->upVector    = camera->getUp();
+        frame->orientation.vz = normalize(camera->getUp());
+        frame->orientation.vy = normalize(camera->getAt() - camera->getFrom());
+        frame->orientation.vx = normalize(cross(frame->orientation.vy,frame->orientation.vz));
+      }
+
 #if 0
       // re-use that code for TriangleMesh-node code:
       CoordFrameGeometry arrows;
