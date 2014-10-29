@@ -175,7 +175,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   postIntersect(renderer->inherited.model,
                 dg,
                 ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD|DG_COLOR);
 
   const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
   
