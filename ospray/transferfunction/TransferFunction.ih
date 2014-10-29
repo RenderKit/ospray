@@ -1,38 +1,37 @@
-//
-//                 INTEL CORPORATION PROPRIETARY INFORMATION
-//
-//    This software is supplied under the terms of a license agreement or
-//    nondisclosure agreement with Intel Corporation and may not be copied
-//    or disclosed except in accordance with the terms of that agreement.
-//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
-//
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
 
-#ifndef TRANSFER_FUNCTION_IH
-#define TRANSFER_FUNCTION_IH
+#pragma once
+
 
 #include "ospray/common/OspCommon.ih"
 
-    struct TransferFunction {
+//! abstract base class for any kind of transfer function
+struct TransferFunction {
 
-        //! The value range covered by the transfer function.
-        vec2f valueRange;
+  //! The value range covered by the transfer function.
+  vec2f valueRange;
 
-        //! Interpolated color for the given value.
-        varying vec3f (*getColorForValue)(const void *uniform transferFunction, varying float value);
+  //! Interpolated color for the given value.
+  varying vec3f (*getColorForValue)(const void *uniform transferFunction, 
+                                    varying float value);
 
-        //! Interpolated opacity for the given value.
-        varying float (*getAlphaForValue)(const void *uniform transferFunction, varying float value);
+  //! Interpolated opacity for the given value.
+  varying float (*getAlphaForValue)(const void *uniform transferFunction, 
+                                    varying float value);
       
-        //! Virtual function to precompute the min/max alpha ranges of a transfer function
-        void (*precomputeMinMaxAlphaRanges)(void *uniform transferFunction);
+  //! Virtual function to precompute the min/max alpha ranges of a transfer function
+  void (*precomputeMinMaxAlphaRanges)(void *uniform transferFunction);
       
-        //! Virtual function to look up the min/max alpha based on an input range
-        varying vec2f (*getMinMaxAlphaInRange)(void *uniform transferFunction, varying float lowRange, varying float highRange);
-      
-    };
+  //! Virtual function to look up the min/max alpha based on an input range
+  varying vec2f (*getMinMaxAlphaInRange)(void *uniform transferFunction, 
+                                         varying float lowRange, 
+                                         varying float highRange);
+};
 
-    //! Declaration emitted during build in "ClassName_ispc.h".  Set the value range.
-//  extern "C" { void TransferFunction_setValueRange(void *uniform transferFunction, const uniform vec2f &value);
-
-#endif // TRANSFER_FUNCTION_IH
 
