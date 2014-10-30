@@ -46,7 +46,7 @@ varying vec3f LinearTransferFunction_getColorForValue(const void *uniform transf
 void LinearTransferFunction_precomputeMinMaxAlphaRanges(void *uniform pointer);
 
 //! Look up the precomputed min/max alpha values for a given range
-varying vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, 
-                                                           varying float lowRange, 
-                                                           varying float highRange);
+uniform vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, 
+                                                           uniform float lowRange, 
+                                                           uniform float highRange);
 

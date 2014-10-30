@@ -28,9 +28,9 @@ struct TransferFunction {
   void (*precomputeMinMaxAlphaRanges)(void *uniform transferFunction);
       
   //! Virtual function to look up the min/max alpha based on an input range
-  varying vec2f (*getMinMaxAlphaInRange)(void *uniform transferFunction, 
-                                         varying float lowRange, 
-                                         varying float highRange);
+  uniform vec2f (*getMinMaxAlphaInRange)(void *uniform transferFunction,
+                                         uniform float lowRange, 
+                                         uniform float highRange);      
 };
 
 

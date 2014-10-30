@@ -192,12 +192,12 @@ void LinearTransferFunction_precomputeMinMaxAlphaRanges(void *uniform pointer) {
 
 }
 
-varying vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, varying float rangeLow, varying float rangeHigh) 
+uniform vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, uniform float rangeLow, uniform float rangeHigh) 
 {
   uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform)pointer;
-  const int maxDim = PRECOMPUTED_VALUES_DIM - 1;
-  const float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
-  const int i = floor(((rangeLow - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  const int j = ceil(((rangeHigh - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform int maxDim = PRECOMPUTED_VALUES_DIM - 1;
+  const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
+  const uniform int i = floor(((rangeLow - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform int j = ceil(((rangeHigh - transferFunction->inherited.valueRange.x) / denom) * maxDim);
   return transferFunction->precomputedMinMaxInRange[i][j];
 }
