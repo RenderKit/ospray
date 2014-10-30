@@ -21,11 +21,13 @@ namespace ospray {
     };
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
-    struct Node : public embree::RefCount {
+    struct Node {
       std::string name;
       std::string content;
       std::vector<Prop *> prop;
       std::vector<Node *> child;
+      // std::vector<Ref<Prop> > prop;
+      // std::vector<Ref<Node> > child;
       
       inline std::string getProp(const std::string &name) const {
         for (int i=0;i<prop.size();i++) 

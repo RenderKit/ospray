@@ -20,6 +20,9 @@ namespace ospray {
     struct Node;
   } // ospray::xml
   namespace sg {
+
+     typedef unsigned int uint;
+
     /*! base node for every scene graph node */
     struct Node;
     /*! c++ wrapper for an ospray model */
@@ -39,23 +42,6 @@ namespace ospray {
 
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
-
-#if 0
-    /*! a traverser that implements a visitor design pattern. */
-    struct RendererBase : public embree::RefCount {
-      virtual void traverse(Node     *node);
-      virtual void traverse(World    *world);
-      virtual void traverse(Geometry *geometry);
-      virtual void traverse(Volume   *volume);
-
-      /*! list of all integrators in the root world */
-      std::vector<Ref<sg::Integrator> > integrators;
-      // /*! list of all frame buffers defined in the root world */
-      // std::vector<Ref<sg::Frame> > frameBuffers;
-      /*! the world we are traversing */
-      Ref<sg::World> world;
-    };
-#endif
 
     /*! class one can use to serialize all nodes in the scene graph */
     struct Serialization {
@@ -140,10 +126,22 @@ namespace ospray {
     /*! \brief base node of all scene graph nodes */
     struct Node : public embree::RefCount 
     {
+      Node() : lastModified(1), lastCommitted(0) {};
+      
       virtual    std::string toString() const = 0;
       sg::Param *getParam(const std::string &name) const;
       void       addParam(sg::Param *p);
-      virtual void setFrom(const xml::Node *const node) {};
+
+      //! \brief Initialize this node's value from given XML node 
+      /*!
+       * \detailed This allows a plug-and-play concept where a XML
+       * file can specify all kind of nodes wihout needing to know
+       * their actual types: The XML parser only needs to be able to
+       * create a proper C++ instance of the given node type (the
+       * OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
+       * tell the node to parse itself from the given XML content and
+       * XML children */
+      virtual void setFromXML(const xml::Node *const node) {};
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
@@ -160,9 +158,20 @@ namespace ospray {
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
+      virtual void commit() {};
+
+      /*! \brief return bounding box in world coordinates.
+
+        This function can be used by the viewer(s) for calibrating
+        camera motion, setting default camera position, etc. Nodes
+        for which that does not apply can simpy return
+        box3f(embree::empty) */
+      virtual box3f getBounds() { return box3f(embree::empty); };
       
       std::string name;
     protected:
+       size_t lastModified;
+       size_t lastCommitted;
       std::map<std::string,Ref<Param> > param;
     };
 
@@ -279,7 +288,7 @@ namespace ospray {
     struct PerspectiveCamera : public sg::Camera {     
       PerspectiveCamera() 
         : Camera("perspective"),
-          from(0,-1,0), at(0,0,0), up(0,0,1),
+          from(0,-1,0), at(0,0,0), up(0,0,1), aspect(1),
           fovy(60)
       {
         create();
@@ -287,10 +296,20 @@ namespace ospray {
 
       virtual void commit();
 
+      vec3f getFrom() const { return from; }
+      vec3f getAt() const { return at; }
+      vec3f getUp() const { return up; }
+      void setFrom(const vec3f &from) { if (from != this->from) { this->from = from; lastModified = __rdtsc(); } }
+      void setAt(const vec3f &at) { if (at != this->at) { this->at = at; lastModified = __rdtsc(); } }
+      void setUp(const vec3f &up) { if (up != this->up) { this->up = up; lastModified = __rdtsc(); } }
+      void setAspect(const float aspect) { if (aspect != this->aspect) { this->aspect = aspect; lastModified = __rdtsc(); } }
+      void setFovy(const float fovy) { if (fovy != this->fovy) { this->fovy = fovy; lastModified = __rdtsc(); } }
+    private:
       vec3f from;
       vec3f at;
       vec3f up;
       float fovy;
+      float aspect;
     };
 
     struct FrameBuffer : public sg::Node {
@@ -330,8 +349,15 @@ namespace ospray {
       /*! renderer type, i.e., 'ao', 'obj', 'pathtracer', ... */
       const std::string type; 
 
+      void setCamera(Ref<sg::Camera> camera) { if (camera != this->camera) { this->camera = camera; lastModified = __rdtsc(); } }
+      void setWorld(Ref<sg::World> world) { if (world != this->world) { this->world = world; lastModified = __rdtsc(); } }
+
       OSPRenderer ospRenderer;
       virtual void commit();
+
+    private:
+      Ref<sg::World> world;
+      Ref<sg::Camera> camera;
     };
 
     /*! simple spheres, with all of the key info - position, radius,
@@ -377,6 +403,119 @@ namespace ospray {
       
       
     };
+
+
+
+
+    /*! \brief a *tabulated* transfer function realized through
+        uniformly spaced color and alpha values between which the
+        value will be linearly interpolated (similar to a 1D texture
+        for each) */
+    struct TransferFunction : public sg::Node {
+
+      TransferFunction() : ospTransferFunction(NULL) { setDefaultValues(); }
+
+      //! \brief initialize color and alpha arrays to 'some' useful values
+      void setDefaultValues();
+
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const { return "ospray::sg::TransferFunction"; }
+
+      //! \brief creates ospray-side object(s) for this node
+      virtual void render(World *world=NULL, 
+                          Integrator *integrator=NULL,
+                          const affine3f &xfm = embree::one);
+
+      //! \brief Initialize this node's value from given corresponding XML node 
+      virtual void setFromXML(const xml::Node *const node);
+      virtual void commit();
+      
+      /*! set a new color map array */
+      void setColorMap(const std::vector<vec3f> &colorArray);
+      /*! set a new alpha map array */
+      void setAlphaMap(const std::vector<float> &alphaArray);
+
+      /*! return the ospray handle for this xfer fct, so we can assign
+          it to ospray obejcts that need a reference to the ospray
+          version of this xf */
+      OSPTransferFunction getOSPHandle() const { return ospTransferFunction; };
+    protected:
+      OSPTransferFunction ospTransferFunction;
+      OSPData ospColorData;
+      OSPData ospAlphaData;
+
+      std::vector<vec3f> colorArray;
+      std::vector<float> alphaArray;
+    };
+    
+    /*! simple spheres, with all of the key info - position, radius,
+        and a int32 type specifier baked into each sphere  */
+    struct AlphaSpheres : public sg::Geometry {
+      //! note: currently MUST be a multiple 8 b in size
+      struct Sphere { 
+        vec3f position;
+        float radius;
+        float attribute;
+        int typeID;
+        
+        Sphere(vec3f position, 
+               float radius,
+               float attribute,
+               int typeID=0) 
+          : position(position), 
+            radius(radius), 
+            attribute(attribute),
+            typeID(typeID)
+        {};
+
+        inline box3f getBounds() const
+        { return box3f(position-vec3f(radius),position+vec3f(radius)); };
+
+      };
+
+      OSPGeometry ospGeometry;
+      /*! one material per typeID */
+      // std::vector<Ref<sg::Material> > material;
+      std::vector<Sphere>             sphere;
+      Ref<TransferFunction>           transferFunction;
+
+
+      AlphaSpheres() 
+        : Geometry("alpha_spheres"), 
+          ospGeometry(NULL), 
+          transferFunction(new TransferFunction) 
+      {};
+      
+      virtual void setFromXML(const xml::Node *const node);
+
+      virtual box3f getBounds() {
+        box3f bounds = embree::empty;
+        for (size_t i=0;i<sphere.size();i++)
+          bounds.extend(sphere[i].getBounds());
+        return bounds;
+      }
+      /*! 'render' the nodes - all geometries, materials, etc will
+          create their ospray counterparts, and store them in the
+          node  */
+      virtual void render(World *world=NULL, 
+                          Integrator *integrator=NULL,
+                          const affine3f &xfm = embree::one);
+    };
+
+    // struct AlphaMappedSpheres : public sg::Spheres {
+    //   /*! \brief returns a std::string with the c++ name of this class */
+    //   virtual    std::string toString() const { return "ospray::sg::AlphaMappedSpheres"; }
+
+    //   //! \brief creates ospray-side object(s) for this node
+    //   virtual void render(World *world=NULL, 
+    //                       Integrator *integrator=NULL,
+    //                       const affine3f &xfm = embree::one);
+
+    //   //! \brief Initialize this node's value from given corresponding XML node 
+    //   virtual void setFromXML(const xml::Node *const node);
+
+    //   Ref<sg::TransferFunction> transferFunction;
+    // };
     
     /*! a world node */
     struct World : public sg::Node {
@@ -394,12 +533,40 @@ namespace ospray {
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
+
+      /*! \brief return bounding box in world coordinates.
+
+        This function can be used by the viewer(s) for calibrating
+        camera motion, setting default camera position, etc. Nodes
+        for which that does not apply can simpy return
+        box3f(embree::empty) */
+      virtual box3f getBounds() { 
+        box3f bounds = embree::empty;
+        for (int i=0;i<node.size();i++)
+          bounds.extend(node[i]->getBounds());
+        return bounds;
+      }
+
     };
       
     World *readXML(const std::string &fileName);
     World *importRIVL(const std::string &fileName);
     World *importSpheres(const std::string &fileName);
+    Ref<sg::World> loadOSP(const std::string &fileName);
+
+    /*! @{ some simple testing geometry */
     World *createTestSphere();
+
+    /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 spheres */
+    World *createTestSphereCube(size_t numSpheresPerCubeSize);
+    /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 *alpha*-spheres */
+    World *createTestAlphaSphereCube(size_t numSpheresPerCubeSize);
+    World *createTestCoordFrame();
+    /*! @} */
+
+
+    /*! read a given scene graph node from its correspondoing xml node represenation */
+    sg::Node *parseNode(xml::Node *node);
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name" 
@@ -413,7 +580,7 @@ namespace ospray {
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
     extern "C" sg::Node *ospray_create_sg_node__##InternalClassName()   \
     {                                                                   \
-      return new ospray::xml::InternalClassName;                        \
+      return new ospray::sg::InternalClassName;                        \
     }                                                                 
 
   } // ::ospray::sg

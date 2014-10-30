@@ -237,6 +237,8 @@ extern "C" {
   /*! \} */
 
 
+  /*! release refcount on given data buffer */
+  void ospFreeData(OSPData data);
   
 
   // -------------------------------------------------------

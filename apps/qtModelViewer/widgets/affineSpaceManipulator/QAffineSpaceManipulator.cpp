@@ -65,8 +65,6 @@ namespace ospray {
         motionSpeed(0.f)
     {}
 
-    //    void QAffineSpaceManipulator::frameChanged(QAffineSpaceManipulator *which) { PING; }
-
     //! the QT callback that tells us that we have to redraw
     void QAffineSpaceManipulator::paintGL()
     { redraw(); }
@@ -97,8 +95,6 @@ namespace ospray {
 
     void QAffineSpaceManipulator::mouseMoveEvent(QMouseEvent * event)
     {
-      // PRINT((int*)(int)event->buttons());
-      // PRINT((int*)(int)event->modifiers());
       QPoint newPos = event->pos();
       if ((event->buttons() & Qt::LeftButton) && (event->modifiers() & pickModifier)) {
         // mouse was draggd with left button pressed.

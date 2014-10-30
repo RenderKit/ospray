@@ -1,0 +1,10 @@
+<OSPRay version="0.7.0">
+
+	<World>
+		<TransferFunction ID="xf0" theme="CoolToWarm"/>
+		<AlphaMappedSpheres>
+			<transferFunction ref="xf0"/>
+		</AlphaMappedSpheres>
+	</World>
+	
+</OSPRay>

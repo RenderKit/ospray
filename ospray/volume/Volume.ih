@@ -32,6 +32,9 @@
         //! The largest floating point value still inside the volume.
         uniform vec3f upperBound;
 
+        //! The range of values contained in the volume.
+        uniform vec2f valueRange;
+
         //! The gradient at the given sample location in the volume.
         varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &coordinates);
 

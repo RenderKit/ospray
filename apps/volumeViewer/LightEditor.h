@@ -6,16 +6,33 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
+#pragma once
 
-#include "ospray/transferfunction/TransferFunction.ih"
+#include <QtGui>
+#include <ospray/ospray.h>
 
-export void TransferFunction_setValueRange(void *uniform pointer, const uniform vec2f &value) {
+class LightEditor : public QWidget {
 
-  //! Cast to the actual type.
-  TransferFunction *uniform transferFunction = (TransferFunction *uniform) pointer;
+Q_OBJECT
 
-  //! Set the transfer function value range.
-  transferFunction->valueRange = value;
+public:
 
-}
+    LightEditor(OSPLight light);
 
+signals:
+
+    void lightChanged();
+
+protected slots:
+
+    void alphaBetaSliderValueChanged();
+
+protected:
+
+    //! OSPRay light.
+    OSPLight light;
+
+    //! UI elements.
+    QSlider alphaSlider;
+    QSlider betaSlider;
+};

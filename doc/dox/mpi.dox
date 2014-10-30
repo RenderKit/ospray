@@ -51,4 +51,38 @@
   ospray_mpi_worker does not have this limitation).
 
 
+
+\page Running an MPI-parallel OSPRay on Stampede - Step by Step instructions
+
+Note for now all VNC Sessions on Stampede HAVE to run on the vis queue.
+<ul>
+<li>Create a VNC shell.
+<code>
+sbatch -A StampedeIntel -p vis -t 04:00:00  /share/doc/slurm/job.vnc -geometry 1600x1200
+</code>
+(Note: alternative queues would be 'normal-mic'
+
+<li>Get VNC server info:
+<code>
+touch vncserver.out ; tail -f vncserver.out
+</code>
+
+<li>Connect to this VNC server using your vnc client (e.g., tigervnc on Mac)
+
+<li>make sure to set the mpi fabric to dapl:
+<code>export I_MPI_FABRICS=dapl:tcp</code>
+<li>make sure you have intel and intel mpi loaded, and that you're using the right fabric.
+<code>
+module load intel
+module swap mvapich2 impi/4.1.0.030
+export I_MPI_FABRICS=dapl:tcp
+</code>
+
+<li>run your ospray-enabled app with "--osp:mpi-launch <launchscript>", where "launchscript" would be
+<dl>
+<dt>ospraydir/doc/launch-stampede-hosts.sh</dt><dd>launches the worker on all HOST nodes (ie, not on the MICs) allocated as part of the initial slurm allocation used to start the VNC serveradfadf</dd>
+<dt>ospraydir/doc/launch-stampede-symm.sh</dt><dd>launches the worker on ALL nodes (INCLUDING the MICs) allocated as part of the initial slurm allocation used to start the VNC server</dd>
+</dl>
+
+</ul>
  */

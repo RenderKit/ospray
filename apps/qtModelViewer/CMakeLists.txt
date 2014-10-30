@@ -8,6 +8,7 @@
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
 # setup dependencies
 SET(LIBS ${LIBS} ospray ospray_fileio)
@@ -36,7 +37,7 @@ SET(SRCS ${SRCS}
  sg/SceneGraph.cpp
  sg/ImportSpheres.cpp
  sg/Renderer.cpp
-
+sg/ImportOSP.cpp
   # the (th)ing to launch them all, and in darkness bind them...
   main.cpp
   )

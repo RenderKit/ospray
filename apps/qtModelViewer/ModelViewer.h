@@ -110,13 +110,13 @@ namespace ospray {
       Q_OBJECT
       
     public:
-      ModelViewer(Ref<sg::Renderer> renderer);
+      ModelViewer(Ref<sg::Renderer> sgRenderer);
     public slots:
       //! signals that the render widget changed one of the inputs
       //! (most likely, that the camera position got changed)
       void cameraChanged();
 
-      // void render();
+      void render();
 
       void setWorld(Ref<sg::World> newWorld);
 
@@ -142,6 +142,8 @@ namespace ospray {
       OSPRayRenderWidget       *renderWidget;
       // QAffineSpaceManipulator  *renderWidget;
       QTransferFunctionEditor  *transferFunctionEditor;
+
+      Ref<sg::Renderer> sgRenderer;
     };
   }
 }

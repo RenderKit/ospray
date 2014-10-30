@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
+#include "LightEditor.h"
 #include "SliceWidget.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL), autoRotationRate(0.025f) {
@@ -63,10 +64,6 @@ void VolumeViewer::addSlice(std::string filename) {
         sliceWidget->load(filename);
 }
 
-
-
-}
-
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 
     //! Create an OSPRay model.
@@ -98,7 +95,7 @@ void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
     transferFunction = ospNewTransferFunction("piecewise_linear");
 
     //! Create an OSPRay light source.
-    OSPLight light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
+    light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
 
     //! Set the light source on the renderer.
     ospCommit(light);  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
@@ -149,6 +146,13 @@ void VolumeViewer::initUserInterfaceWidgets() {
 
     //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
     transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
+
+    //! Create the light editor dock widget, this widget modifies the light directly.
+    QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
+    LightEditor *lightEditor = new LightEditor(light);
+    lightEditorDockWidget->setWidget(lightEditor);
+    connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
+    addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);
 
     //! Create a scrollable dock widget for any added slices.
     QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);

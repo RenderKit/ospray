@@ -15,6 +15,8 @@
 #include <vector>
 // qt
 #include <QtGui>
+// scene graph
+#include "sg/SceneGraph.h"
 
 namespace ospray {
   namespace viewer {
@@ -26,7 +28,7 @@ namespace ospray {
     class QTransferFunctionAlphaEditor : public QWidget
     {
       Q_OBJECT;
-      
+
     public:
       
       QTransferFunctionAlphaEditor();
@@ -41,6 +43,11 @@ namespace ospray {
     signals:
       
       void transferFunctionChanged();
+
+    public:
+      // get y value based on linear interpolation of the points_ values for x in [0, 1]
+      float getInterpolatedValue(float x);
+      
       
     protected:
       //! @{ callbacks to intercept qt events
@@ -61,9 +68,6 @@ namespace ospray {
       // returns -1 of no selected point
       int getSelectedPointIndex(const QPointF &widgetClickPoint);
       
-      // get y value based on linear interpolation of the points_ values for x in [0, 1]
-      float getInterpolatedValue(float x);
-      
       // this image shows the color map
       QImage *colorMapImage;
       
@@ -78,6 +82,7 @@ namespace ospray {
       static float pointPixelRadius;
       static float linePixelWidth;
       //! \}
+
     };
 
     
@@ -104,21 +109,25 @@ namespace ospray {
           can be used in the transfer fct editor */
         QImage *getRepresentativeImage() const;
 
+        //! query function that returns the current color map (to be
+        //! used in a scene graph node, for example
+        std::vector<osp::vec3f> getColors() const { return colors; };  
       protected:
         const std::string name;
         const std::vector<osp::vec3f> colors;
       };
 
     public:
+      // constructor
       QTransferFunctionEditor();
-
-      //! add a new color map to the list of selectable color maps
+      
+      // add a new color map to the list of selectable color maps
       void addColorMap(const ColorMap *colorMap);
   
     signals:
       void transferFunctionChanged();
-    // public slots:
-    //   void transferFunctionAlphasChanged();
+    public slots:
+      void transferFunctionAlphasChanged();
     protected slots:
 
       void selectColorMap(int index);
@@ -126,6 +135,7 @@ namespace ospray {
       // void setDataValueMax(double value);
 
     protected:
+
       const ColorMap *activeColorMap;
       void setDefaultColorMaps();
 
@@ -137,6 +147,27 @@ namespace ospray {
 
       // transfer function widget for opacity
       QTransferFunctionAlphaEditor *transferFunctionAlphaEditor;
+
+      virtual void updateColorMap() {};
+      virtual void updateAlphaMap() {};
     };
+
+    /*! a transfer fucntion editor that automatically updates an
+        ospray::sg::TransferFunction node */
+    struct QOSPTransferFunctionEditor : public QTransferFunctionEditor
+    {
+      QOSPTransferFunctionEditor(Ref<sg::TransferFunction> sgNode)
+        : sgNode(sgNode) 
+      {
+        // sgNode->render();
+      }
+
+      virtual void updateColorMap();
+      virtual void updateAlphaMap();
+      
+      //! the node we are editing
+      Ref<sg::TransferFunction> sgNode;
+    };
+
   }
 }

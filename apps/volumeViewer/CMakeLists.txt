@@ -23,6 +23,7 @@ SET(LIBS ${LIBS} ${OPENGL_LIBRARIES})
 SET(SRCS ${SRCS}
   main.cpp
   ColorMap.cpp
+  LightEditor.cpp
   QOSPRayWindow.cpp
   SliceWidget.cpp
   TransferFunctionEditor.cpp
@@ -31,6 +32,7 @@ SET(SRCS ${SRCS}
   )
 
 SET(MOC_HEADERS
+  LightEditor.h
   SliceWidget.h
   TransferFunctionEditor.h
   TransferFunctionPiecewiseLinearWidget.h

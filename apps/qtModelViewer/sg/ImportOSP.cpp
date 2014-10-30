@@ -6,27 +6,35 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-/*! \file sg.cpp Scene Graph for OSPRay model viewer (Implementation) */
-
 #undef NDEBUG
-#include "sg.h"
+
+// O_LARGEFILE is a GNU extension.
+#ifdef __APPLE__
+#define  O_LARGEFILE  0
+#endif
+
+// header
+#include "SceneGraph.h"
+// stl
+#include <map>
+// // libxml
 #include "apps/common/xml/xml.h"
-#include "../common/Library.h"
+// stdlib, for mmap
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
+#include <fcntl.h>
+// xml
+#include "apps/common/xml/xml.h"
+#include "ospray/common/Library.h"
+// embree stuff
+#include "common/sys/library.h"
 
 namespace ospray {
   namespace sg {
-
-    // ==================================================================
-    // parameter type specializations
-    // ==================================================================
-    template<> OSPDataType ParamT<Ref<Data> >::getOSPDataType() const
-    { return OSP_DATA; }
-    template<> OSPDataType ParamT<Ref<Node> >::getOSPDataType() const
-    { return OSP_OBJECT; }
-    template<> OSPDataType ParamT<int32>::getOSPDataType() const
-    { return OSP_INT; }
-    template<> OSPDataType ParamT<float>::getOSPDataType() const
-    { return OSP_FLOAT; }
+    using std::string;
+    using std::cout;
+    using std::endl;
 
     // ==================================================================
     // sg node registry code
@@ -53,24 +61,13 @@ namespace ospray {
       sg::Node *newNode = creator();
       assert(newNode);
       try {
-        newNode->setFrom(node);
+        newNode->setFromXML(node);
         return newNode;
       } catch (std::runtime_error e) {
         delete newNode;
         throw e;
       }
     }
-
-    // ==================================================================
-    // sg node implementations
-    // ==================================================================
-    void sg::Node::addParam(sg::Param *p)
-    {
-      assert(p);
-      assert(p->getName() != "");
-      param[p->getName()] = p;
-    }
-    
 
     // ==================================================================
     // XLM parser
@@ -128,47 +125,51 @@ namespace ospray {
       return info;
     }
     
-    sg::Geometry *parseGeometryNode(xml::Node *node)
+    // sg::Geometry *parseGeometryNode(xml::Node *node)
+    // {
+    //   assert(node->name == "Geometry");
+    //   Geometry *geometry = new Geometry(node->getProp("type"));
+    //   for (int i=0;i<node->child.size();i++) {
+    //     xml::Node *c = node->child[i];
+    //     if (parseParam(geometry,c))
+    //       continue;
+    //     throw std::runtime_error("unknown node type '"+c->name
+    //                              +"' in ospray::sg::Geometry node");
+    //   }
+    //   return geometry;
+    // }
+    
+    sg::Integrator *parseIntegratorNode(xml::Node *node)
     {
-      assert(node->name == "Geometry");
-      Geometry *geometry = new Geometry(node->getProp("type"));
+      assert(node->name == "Integrator");
+      Integrator *integrator = new Integrator(node->getProp("type"));
       for (int i=0;i<node->child.size();i++) {
         xml::Node *c = node->child[i];
-        if (parseParam(geometry,c))
+        if (parseParam(integrator,c))
           continue;
         throw std::runtime_error("unknown node type '"+c->name
-                                 +"' in ospray::sg::Geometry node");
+                                 +"' in ospray::sg::Integrator node");
       }
-      return geometry;
+      return integrator;
     }
     
-    sg::Renderer *parseRendererNode(xml::Node *node)
+    Ref<sg::World> parseWorldNode(xml::Node *node)
     {
-      assert(node->name == "Renderer");
-      Renderer *renderer = new Renderer(node->getProp("type"));
+      if (node->name != "World")
+        throw std::runtime_error("#osp:sg: expected a 'World' node, but found '"+node->name+"'");
+      World *world = new World;
       for (int i=0;i<node->child.size();i++) {
         xml::Node *c = node->child[i];
-        if (parseParam(renderer,c))
-          continue;
-        throw std::runtime_error("unknown node type '"+c->name
-                                 +"' in ospray::sg::Renderer node");
+        Ref<sg::Node> newNode = createNodeFrom(c);
+        world->node.push_back(newNode);
+        // if (c->name == "Geometry") {
+        //   //world->geometry.push_back(parseGeometryNode(c));
+        //   throw std::runtime_error("unspecified geometry node!?");
+        // } else 
+        //   throw std::runtime_error("unknown node type '"+c->name
+        //                            +"' in ospray::sg::World node");
       }
-      return renderer;
-    }
-    
-    sg::Model *parseModelNode(xml::Node *node)
-    {
-      assert(node->name == "Model");
-      Model *model = new Model;
-      for (int i=0;i<node->child.size();i++) {
-        xml::Node *c = node->child[i];
-        if (c->name == "Geometry")
-          model->geometry.push_back(parseGeometryNode(c));
-        else 
-          throw std::runtime_error("unknown node type '"+c->name
-                                   +"' in ospray::sg::Model node");
-      }
-      return model;
+      return world;
     }
     
     sg::Data *parseDataNode(xml::Node *node)
@@ -180,23 +181,6 @@ namespace ospray {
       size_t ofs = atol(node->getProp("ofs").c_str());
       return data;
     }
-    
-    /*! parse a 'ospray' node in the xml file */
-    void parseWorld(World *world, xml::Node *root)
-    {
-      for (int cID=0;cID<root->child.size();cID++) {
-        xml::Node *node = root->child[cID];
-        if (node->name == "Info") {
-          world->node.push_back(parseInfoNode(node));
-        } else if (node->name == "Model") {
-          world->node.push_back(parseModelNode(node));
-        } else if (node->name == "Renderer") {
-          world->node.push_back(parseRendererNode(node));
-        } else {
-          world->node.push_back(ospray::sg::createNodeFrom(node));
-        }
-      }
-    }
 
     sg::Node *parseNode(xml::Node *node)
     {
@@ -204,29 +188,34 @@ namespace ospray {
         return parseDataNode(node);
       if (node->name == "Info")
         return parseInfoNode(node);
-      if (node->name == "Renderer")
-        return parseRendererNode(node);
+      if (node->name == "Integrator")
+        return parseIntegratorNode(node);
       std::cout << "warning: unknown sg::Node type '" << node->name << "'" << std::endl;
       return NULL;
     }
 
-    World *readXML(const std::string &fileName)
+    Ref<sg::World> loadOSP(const std::string &fileName)
     {
-      World *world = new World;
-      Ref<xml::XMLDoc> doc = NULL;
-      try {
-        doc = xml::readXML(fileName);
-        if (!doc) 
-          throw std::runtime_error("could not parse "+fileName);
-        if (doc->child.size() != 1 || doc->child[0]->name != "ospray") 
-          throw std::runtime_error("not an ospray xml file");
-        parseWorld(world,doc->child[0]);
-        return world;
-      } catch (std::runtime_error e) {
-        delete world;
-        throw e;
-      }
+      xml::XMLDoc *doc = NULL;
+      // Ref<xml::XMLDoc> doc = NULL;
+      cout << "#osp:sg: starting to read OSPRay XML file '" << fileName << "'" << endl;
+      doc = xml::readXML(fileName);
+      cout << "#osp:sg: XML file read, starting to parse content..." << endl;
+
+      if (!doc) 
+        throw std::runtime_error("could not parse "+fileName);
+      if (doc->child.size() != 1 || (doc->child[0]->name != "ospray" && doc->child[0]->name != "OSPRay") )
+        throw std::runtime_error("not an ospray xml file");
+
+      xml::Node *root = doc->child[0];
+      if (root->child.size() != 1)
+        throw std::runtime_error("#osp:sg: error in XML file - right now supporting only a single World node in the 'OSPRay' section");
+
+      Ref<sg::World> world = parseWorldNode(root->child[0]);
+      cout << "#osp:sg: done parsing OSP file" << endl;
+      return world;
     }
 
-  };
-}
+  } // ::ospray::sg
+} // ::ospray
+

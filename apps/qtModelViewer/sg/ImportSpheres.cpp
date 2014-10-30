@@ -40,11 +40,55 @@ namespace ospray {
     {
       sg::World *world = new sg::World;
       sg::Spheres *spheres = new sg::Spheres;
-      spheres->sphere.push_back(sg::Spheres::Sphere(vec3f(0,0,0),.1f));
+      spheres->sphere.push_back(sg::Spheres::Sphere(vec3f(0,0,0),1.f));
       // sg::TransferFunction 
       //   = new sg::TransferFunction(sg::TransferFunction::CoolToWarm));
       // spheres->addParam(new NodeParam("transferFunction",transferFunction));
       // world->geometry.push_back(spheres);
+      world->node.push_back(spheres);
+      return world;
+    }
+      
+    World *createTestSphereCube(size_t numPerSide)
+    {
+      sg::World *world = new sg::World;
+      sg::Spheres *spheres = new sg::Spheres;
+
+      float radius = 1.f/numPerSide;
+      for (int z=0;z<numPerSide;z++)
+        for (int y=0;y<numPerSide;y++)
+          for (int x=0;x<numPerSide;x++) {
+            vec3f a;
+            a.x = x/float(numPerSide);
+            a.y = y/float(numPerSide);
+            a.z = z/float(numPerSide);
+            Spheres::Sphere s(a,radius,0);
+            spheres->sphere.push_back(s);
+          }
+
+      world->node.push_back(spheres);
+      return world;
+    }
+
+    World *createTestAlphaSphereCube(size_t numPerSide)
+    {
+      sg::World *world = new sg::World;
+      sg::AlphaSpheres *spheres = new sg::AlphaSpheres;
+
+      float radius = .7f/numPerSide;
+      for (int z=0;z<numPerSide;z++)
+        for (int y=0;y<numPerSide;y++)
+          for (int x=0;x<numPerSide;x++) {
+            vec3f a;
+            a.x = x/float(numPerSide);
+            a.y = y/float(numPerSide);
+            a.z = z/float(numPerSide);
+            float f = cos(15*a.x*a.y)+sin(12*a.y)+cos(22*a.x+13*a.z)*sin(5*a.z+3*a.x+11*a.y);
+            AlphaSpheres::Sphere s(a,radius,f);
+            spheres->sphere.push_back(s);
+          }
+
+      world->node.push_back(spheres->transferFunction.ptr);
       world->node.push_back(spheres);
       return world;
     }
