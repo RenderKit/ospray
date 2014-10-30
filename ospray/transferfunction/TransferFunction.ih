@@ -8,7 +8,6 @@
 
 #pragma once
 
-
 #include "ospray/common/OspCommon.ih"
 
 //! abstract base class for any kind of transfer function

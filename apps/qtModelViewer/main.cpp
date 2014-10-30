@@ -69,6 +69,8 @@ namespace ospray {
             world = sg::createTestSphere();
           } else if (arg == "--test-sphere-cube") {
             world = sg::createTestSphereCube(atoi(argv[++argID]));
+          } else if (arg == "--test-alpha-sphere-cube") {
+            world = sg::createTestAlphaSphereCube(atoi(argv[++argID]));
           } else if (arg == "--test-axes") {
             // world = sg::createTestCoordinateAxes();
           } else if (arg == "--renderer") {

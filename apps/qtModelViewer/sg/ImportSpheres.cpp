@@ -69,6 +69,29 @@ namespace ospray {
       world->node.push_back(spheres);
       return world;
     }
+
+    World *createTestAlphaSphereCube(size_t numPerSide)
+    {
+      sg::World *world = new sg::World;
+      sg::AlphaSpheres *spheres = new sg::AlphaSpheres;
+
+      float radius = .7f/numPerSide;
+      for (int z=0;z<numPerSide;z++)
+        for (int y=0;y<numPerSide;y++)
+          for (int x=0;x<numPerSide;x++) {
+            vec3f a;
+            a.x = x/float(numPerSide);
+            a.y = y/float(numPerSide);
+            a.z = z/float(numPerSide);
+            float f = cos(a.x)+2*sin(a.y)+cos(2*a.x+a.z)*sin(a.z);
+            AlphaSpheres::Sphere s(a,radius,f);
+            spheres->sphere.push_back(s);
+          }
+
+      world->node.push_back(spheres->transferFunction.ptr);
+      world->node.push_back(spheres);
+      return world;
+    }
       
   } // ::ospray::sg
 } // ::ospray

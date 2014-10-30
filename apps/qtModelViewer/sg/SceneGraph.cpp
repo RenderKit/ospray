@@ -148,6 +148,53 @@ namespace ospray {
       
     }
 
+
+    void AlphaSpheres::render(World *world, 
+                              Integrator *integrator,
+                              const affine3f &_xfm)
+    {
+      PING;
+      assert(!ospGeometry);
+      PING;
+      ospLoadModule("alpha_spheres");
+      PING;
+      ospGeometry = ospNewGeometry("alpha_spheres");
+      PING;
+      assert(ospGeometry);
+
+      PING;
+      PRINT(sphere.size());
+      OSPData data = ospNewData(sphere.size()*6,OSP_FLOAT,
+                                &sphere[0],OSP_DATA_SHARED_BUFFER);
+      PRINT(sphere.size());
+      PRINT(&sphere[0]);
+      ospSetData(ospGeometry,"spheres",data);
+
+      transferFunction->render(world,integrator,_xfm);
+
+      PING;
+      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(AlphaSpheres::Sphere));
+      ospSet1i(ospGeometry,"offset_center",     0*sizeof(float));
+      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
+      ospSet1i(ospGeometry,"offset_attribute",  4*sizeof(float));
+      PING;
+      ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
+
+      PING;
+      OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,"default");
+      if (mat) {
+        vec3f kd = .7f;
+        ospSet3fv(mat,"kd",&kd.x);
+      }
+      ospSetMaterial(ospGeometry,mat);
+      ospCommit(ospGeometry);
+      
+      ospAddGeometry(world->ospModel,ospGeometry);
+      ospCommit(data);
+      PING;
+    }
+
+
     void TransferFunction::render(World *world, 
                                   Integrator *integrator,
                                   const affine3f &xfm)
@@ -163,50 +210,50 @@ namespace ospray {
       ospCommit(ospTransferFunction);
     }
 
-    void AlphaMappedSpheres::render(World *world, 
-                                  Integrator *integrator,
-                                  const affine3f &xfm)
-    {
-      assert(!ospGeometry);
+    // void AlphaMappedSpheres::render(World *world, 
+    //                               Integrator *integrator,
+    //                               const affine3f &xfm)
+    // {
+    //   assert(!ospGeometry);
 
-      // JUST FOR TESTING: create a sphere right here ....
-      sphere.push_back(Sphere(vec3f(0),1,1));
+    //   // JUST FOR TESTING: create a sphere right here ....
+    //   sphere.push_back(Sphere(vec3f(0),1,1));
 
-      ospGeometry = ospNewGeometry("spheres");
-      assert(ospGeometry);
+    //   ospGeometry = ospNewGeometry("spheres");
+    //   assert(ospGeometry);
 
 
-      OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,&sphere[0]);
-      ospSetData(ospGeometry,"spheres",data);
+    //   OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,&sphere[0]);
+    //   ospSetData(ospGeometry,"spheres",data);
 
-      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
-      ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
-      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
-      ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
+    //   ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
+    //   ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
+    //   ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
+    //   ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
 
-      assert(transferFunction);
-      if (transferFunction) {
-        transferFunction->render();
-        assert(transferFunction->ospTransferFunction);
-        ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
-      }
+    //   assert(transferFunction);
+    //   if (transferFunction) {
+    //     transferFunction->render();
+    //     assert(transferFunction->ospTransferFunction);
+    //     ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
+    //   }
 
-      OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,
-                                       "default");
-      if (mat) {
-        vec3f kd = .7f;
-        ospSet3fv(mat,"kd",&kd.x);
-      }
-      ospSetMaterial(ospGeometry,mat);
-      ospCommit(ospGeometry);
+    //   OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,
+    //                                    "default");
+    //   if (mat) {
+    //     vec3f kd = .7f;
+    //     ospSet3fv(mat,"kd",&kd.x);
+    //   }
+    //   ospSetMaterial(ospGeometry,mat);
+    //   ospCommit(ospGeometry);
 
       
-      ospAddGeometry(world->ospModel,ospGeometry);
-      ospCommit(data);
-    }
+    //   ospAddGeometry(world->ospModel,ospGeometry);
+    //   ospCommit(data);
+    // }
 
     //! \brief Initialize this node's value from given corresponding XML node 
-    void AlphaMappedSpheres::setFromXML(const xml::Node *const node)
+    void AlphaSpheres::setFromXML(const xml::Node *const node)
     {
       for (size_t childID=0;childID<node->child.size();childID++) {
         xml::Node *child = node->child[childID];
@@ -219,11 +266,11 @@ namespace ospray {
           }
         }
         else
-          std::cout << "#osp:sg:AlphaMappedSpheres: Warning - unknown child field type '" << child->name << "'" << std::endl;
+          std::cout << "#osp:sg:AlphaSpheres: Warning - unknown child field type '" << child->name << "'" << std::endl;
       }
 
       if (!transferFunction) {
-        std::cout << "#osp:sg:AlphaMappedSpheres: Warning - no transfer function specified" << std::endl;
+        std::cout << "#osp:sg:AlphaSpheres: Warning - no transfer function specified" << std::endl;
         transferFunction = new TransferFunction();
       }
     }
@@ -279,6 +326,6 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(TransferFunction)
-    OSP_REGISTER_SG_NODE(AlphaMappedSpheres)
+    OSP_REGISTER_SG_NODE(AlphaSpheres)
   } // ::ospray::sg
 } // ::ospray

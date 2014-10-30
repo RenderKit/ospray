@@ -404,6 +404,9 @@ namespace ospray {
       
     };
 
+
+
+
     /*! \brief a *tabulated* transfer function realized through
         uniformly spaced color and alpha values between which the
         value will be linearly interpolated (similar to a 1D texture
@@ -434,20 +437,74 @@ namespace ospray {
       std::vector<float> alphaArray;
     };
     
-    struct AlphaMappedSpheres : public sg::Spheres {
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::AlphaMappedSpheres"; }
+    /*! simple spheres, with all of the key info - position, radius,
+        and a int32 type specifier baked into each sphere  */
+    struct AlphaSpheres : public sg::Geometry {
+      //! note: currently MUST be a multiple 8 b in size
+      struct Sphere { 
+        vec3f position;
+        float radius;
+        float attribute;
+        int typeID;
+        
+        Sphere(vec3f position, 
+               float radius,
+               float attribute,
+               int typeID=0) 
+          : position(position), 
+            radius(radius), 
+            attribute(attribute),
+            typeID(typeID)
+        {};
 
-      //! \brief creates ospray-side object(s) for this node
+        inline box3f getBounds() const
+        { return box3f(position-vec3f(radius),position+vec3f(radius)); };
+
+      };
+
+      OSPGeometry ospGeometry;
+      /*! one material per typeID */
+      // std::vector<Ref<sg::Material> > material;
+      std::vector<Sphere>             sphere;
+      Ref<TransferFunction>           transferFunction;
+
+
+      AlphaSpheres() 
+        : Geometry("alpha_spheres"), 
+          ospGeometry(NULL), 
+          transferFunction(new TransferFunction) 
+      {};
+      
+      virtual void setFromXML(const xml::Node *const node);
+
+      virtual box3f getBounds() {
+        box3f bounds = embree::empty;
+        for (size_t i=0;i<sphere.size();i++)
+          bounds.extend(sphere[i].getBounds());
+        return bounds;
+      }
+      /*! 'render' the nodes - all geometries, materials, etc will
+          create their ospray counterparts, and store them in the
+          node  */
       virtual void render(World *world=NULL, 
                           Integrator *integrator=NULL,
                           const affine3f &xfm = embree::one);
-
-      //! \brief Initialize this node's value from given corresponding XML node 
-      virtual void setFromXML(const xml::Node *const node);
-
-      Ref<sg::TransferFunction> transferFunction;
     };
+
+    // struct AlphaMappedSpheres : public sg::Spheres {
+    //   /*! \brief returns a std::string with the c++ name of this class */
+    //   virtual    std::string toString() const { return "ospray::sg::AlphaMappedSpheres"; }
+
+    //   //! \brief creates ospray-side object(s) for this node
+    //   virtual void render(World *world=NULL, 
+    //                       Integrator *integrator=NULL,
+    //                       const affine3f &xfm = embree::one);
+
+    //   //! \brief Initialize this node's value from given corresponding XML node 
+    //   virtual void setFromXML(const xml::Node *const node);
+
+    //   Ref<sg::TransferFunction> transferFunction;
+    // };
     
     /*! a world node */
     struct World : public sg::Node {
@@ -491,6 +548,8 @@ namespace ospray {
 
     /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 spheres */
     World *createTestSphereCube(size_t numSpheresPerCubeSize);
+    /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 *alpha*-spheres */
+    World *createTestAlphaSphereCube(size_t numSpheresPerCubeSize);
     World *createTestCoordFrame();
     /*! @} */
 
