@@ -10,6 +10,7 @@
 #include <algorithm>
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
+#include "LightEditor.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL) {
 
@@ -64,7 +65,7 @@ void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
     transferFunction = ospNewTransferFunction("piecewise_linear");
 
     //! Create an OSPRay light source.
-    OSPLight light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
+    light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
 
     //! Set the light source on the renderer.
     ospCommit(light);  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
@@ -97,6 +98,12 @@ void VolumeViewer::initUserInterfaceWidgets() {
     transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
     addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
+    //! Create the light editor dock widget, this widget modifies the light directly.
+    QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
+    LightEditor *lightEditor = new LightEditor(light);
+    lightEditorDockWidget->setWidget(lightEditor);
+    addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);
+
     //! Connect the "play timesteps" timer.
     connect(&playTimeStepsTimer, SIGNAL(timeout()), this, SLOT(nextTimeStep()));
 
@@ -104,5 +111,6 @@ void VolumeViewer::initUserInterfaceWidgets() {
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(commitVolumes()));
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
 
+    connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
 }
 

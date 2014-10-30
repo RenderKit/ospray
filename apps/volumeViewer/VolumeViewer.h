@@ -51,8 +51,20 @@ public slots:
 
 protected:
 
-    //! OSPRay state.
-    std::vector<OSPObject> models;  std::vector<OSPVolume> volumes;  OSPRenderer renderer;  OSPTransferFunction transferFunction;
+    //! OSPRay models.
+    std::vector<OSPObject> models;
+
+    //! OSPRay volumes.
+    std::vector<OSPVolume> volumes;
+
+    //! OSPRay renderer.
+    OSPRenderer renderer;
+
+    //! OSPRay transfer function.
+    OSPTransferFunction transferFunction;
+
+    //! OSPRay light.
+    OSPLight light;
 
     //! The OSPRay output window.
     QOSPRayWindow *osprayWindow;
