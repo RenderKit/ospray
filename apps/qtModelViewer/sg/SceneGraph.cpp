@@ -153,34 +153,23 @@ namespace ospray {
                               Integrator *integrator,
                               const affine3f &_xfm)
     {
-      PING;
       assert(!ospGeometry);
-      PING;
       ospLoadModule("alpha_spheres");
-      PING;
       ospGeometry = ospNewGeometry("alpha_spheres");
-      PING;
       assert(ospGeometry);
 
-      PING;
-      PRINT(sphere.size());
       OSPData data = ospNewData(sphere.size()*6,OSP_FLOAT,
                                 &sphere[0],OSP_DATA_SHARED_BUFFER);
-      PRINT(sphere.size());
-      PRINT(&sphere[0]);
       ospSetData(ospGeometry,"spheres",data);
 
       transferFunction->render(world,integrator,_xfm);
 
-      PING;
       ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(AlphaSpheres::Sphere));
       ospSet1i(ospGeometry,"offset_center",     0*sizeof(float));
       ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
       ospSet1i(ospGeometry,"offset_attribute",  4*sizeof(float));
-      PING;
-      ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
+      ospSetObject(ospGeometry,"transferFunction",transferFunction->getOSPHandle());
 
-      PING;
       OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,"default");
       if (mat) {
         vec3f kd = .7f;
@@ -191,9 +180,43 @@ namespace ospray {
       
       ospAddGeometry(world->ospModel,ospGeometry);
       ospCommit(data);
+    }
+
+
+    void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
+    {
+      if (ospColorData) { ospFreeData(ospColorData); ospColorData = NULL; }
+      this->colorArray = colorArray;
+      PING;
+    }
+    void TransferFunction::setAlphaMap(const std::vector<float> &alphaArray)
+    {
+      if (ospAlphaData) { ospFreeData(ospAlphaData); ospAlphaData = NULL; }
+      this->alphaArray = alphaArray;
       PING;
     }
 
+    void TransferFunction::commit() 
+    {
+      if (ospColorData == NULL) {
+        ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,&colorArray[0]); 
+        ospCommit(ospColorData);
+        ospSetData(ospTransferFunction,"colors",ospColorData);
+        lastModified = __rdtsc();
+      }
+      if (ospAlphaData == NULL) {
+        PING;
+        ospAlphaData = ospNewData(alphaArray.size(),OSP_FLOAT,&alphaArray[0]); 
+        ospCommit(ospAlphaData);
+        ospSetData(ospTransferFunction,"alphas",ospAlphaData);
+        lastModified = __rdtsc();
+        PING;
+      }
+      if (lastModified > lastCommitted) {
+        lastCommitted = __rdtsc();
+        ospCommit(ospTransferFunction);
+      }
+    }
 
     void TransferFunction::render(World *world, 
                                   Integrator *integrator,
@@ -202,12 +225,7 @@ namespace ospray {
       if (!ospTransferFunction) {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
       }
-      ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,&colorArray[0]); ospCommit(ospColorData);
-      ospAlphaData = ospNewData(alphaArray.size(),OSP_FLOAT3,&alphaArray[0]); ospCommit(ospAlphaData);
-
-      ospSetData(ospTransferFunction,"colors",ospColorData);
-      ospSetData(ospTransferFunction,"alphas",ospAlphaData);
-      ospCommit(ospTransferFunction);
+      commit();
     }
 
     // void AlphaMappedSpheres::render(World *world, 
@@ -308,6 +326,7 @@ namespace ospray {
       for (size_t i=0;i<node.size();i++)
         node[i]->render(this,integrator,xfm);
       ospCommit(ospModel);
+      PING;
     }
 
     void PerspectiveCamera::commit() 

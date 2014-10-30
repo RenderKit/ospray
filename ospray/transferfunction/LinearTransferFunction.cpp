@@ -19,8 +19,8 @@ namespace ospray {
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
     // Retrieve the color and opacity values.
-    Data *colors = getParamData("colors", NULL);  
-    Data *alphas = getParamData("alphas", NULL);
+    colors = getParamData("colors", NULL);  
+    alphas = getParamData("alphas", NULL);
 
     // Set the color values.
     if (colors) ispc::LinearTransferFunction_setColorValues(ispcEquivalent, colors->numItems, (ispc::vec3f *) colors->data);

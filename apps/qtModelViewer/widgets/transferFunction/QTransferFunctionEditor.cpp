@@ -128,6 +128,9 @@ namespace ospray {
             throw std::runtime_error("QTransferFunctionAlphaEditor::mousePressEvent(): "
                                      "selected point index out of range");
 
+          // emit signal
+          emit transferFunctionChanged();
+
           // trigger repaint
           repaint();
         }
@@ -151,6 +154,7 @@ namespace ospray {
             // trigger repaint
             repaint();
             
+            PING;
             // emit signal
             emit transferFunctionChanged();
           }
@@ -252,8 +256,8 @@ namespace ospray {
 
 
 
-    QTransferFunctionEditor::QTransferFunctionEditor(Ref<sg::TransferFunction> sgNode) 
-      : activeColorMap(NULL), sgNode(sgNode)
+    QTransferFunctionEditor::QTransferFunctionEditor() 
+      : activeColorMap(NULL)
     {
       // setup UI elments
       QVBoxLayout * layout = new QVBoxLayout();
@@ -357,7 +361,9 @@ namespace ospray {
 
     void QTransferFunctionEditor::transferFunctionAlphasChanged()
     {
+      PING;
       emit transferFunctionChanged();
+      updateAlphaMap();
     }
 
     // void QTransferFunctionEditor::transferFunctionChanged()
@@ -373,13 +379,13 @@ namespace ospray {
 
     void QTransferFunctionEditor::selectColorMap(int index) 
     { 
-      PING;
       activeColorMap = colorMaps[index]; 
 
       transferFunctionAlphaEditor->setColorMapImage(activeColorMap->getRepresentativeImage());
 
       //      void QTransferFunctionAlphaEditor::setColorMapImage(QImage *image)
 
+      updateColorMap();
       emit transferFunctionChanged();
     }
 
@@ -403,5 +409,29 @@ namespace ospray {
       return image;
     }
 
+
+
+    void QOSPTransferFunctionEditor::updateColorMap()
+    {
+      PING;
+      sgNode->setColorMap(activeColorMap->getColors());
+      sgNode->commit();
+    }
+    
+    void QOSPTransferFunctionEditor::updateAlphaMap()
+    {
+      PING;
+      const int numAlphas = 256;
+      std::vector<float> alphas;
+      for (int i=0;i<numAlphas;i++)
+        alphas.push_back(transferFunctionAlphaEditor->getInterpolatedValue(i/float(numAlphas/*-1*/)));
+
+      PING;
+      sgNode->setAlphaMap(alphas);
+      PING;
+      sgNode->commit();
+      PING;
+    }
+ 
   } // ::ospray::viewer
 } // ::ospray

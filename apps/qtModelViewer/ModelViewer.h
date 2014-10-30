@@ -116,7 +116,7 @@ namespace ospray {
       //! (most likely, that the camera position got changed)
       void cameraChanged();
 
-      // void render();
+      void render();
 
       void setWorld(Ref<sg::World> newWorld);
 

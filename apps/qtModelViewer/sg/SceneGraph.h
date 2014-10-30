@@ -428,7 +428,18 @@ namespace ospray {
 
       //! \brief Initialize this node's value from given corresponding XML node 
       virtual void setFromXML(const xml::Node *const node);
+      virtual void commit();
+      
+      /*! set a new color map array */
+      void setColorMap(const std::vector<vec3f> &colorArray);
+      /*! set a new alpha map array */
+      void setAlphaMap(const std::vector<float> &alphaArray);
 
+      /*! return the ospray handle for this xfer fct, so we can assign
+          it to ospray obejcts that need a reference to the ospray
+          version of this xf */
+      OSPTransferFunction getOSPHandle() const { return ospTransferFunction; };
+    protected:
       OSPTransferFunction ospTransferFunction;
       OSPData ospColorData;
       OSPData ospAlphaData;

@@ -83,7 +83,7 @@ namespace ospray {
             a.x = x/float(numPerSide);
             a.y = y/float(numPerSide);
             a.z = z/float(numPerSide);
-            float f = cos(a.x)+2*sin(a.y)+cos(2*a.x+a.z)*sin(a.z);
+            float f = cos(15*a.x*a.y)+sin(12*a.y)+cos(22*a.x+13*a.z)*sin(5*a.z+3*a.x+11*a.y);
             AlphaSpheres::Sphere s(a,radius,f);
             spheres->sphere.push_back(s);
           }

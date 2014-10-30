@@ -8,36 +8,41 @@
 
 #pragma once
 
-#include <vector>
+// ospray code
+#include "ospray/common/Data.h"
 #include "ospray/transferfunction/TransferFunction.h"
 #include "LinearTransferFunction_ispc.h"
+// STL
+#include <vector>
 
 namespace ospray {
 
-    //! \brief A concrete implementation of the TransferFunction class for
-    //!  piecewise linear transfer functions.
-    //!
-    class LinearTransferFunction : public TransferFunction {
-    public:
+  //! \brief A concrete implementation of the TransferFunction class for
+  //!  piecewise linear transfer functions.
+  //!
+  class LinearTransferFunction : public TransferFunction {
+  public:
 
-        //! Constructor.
-        LinearTransferFunction() {}
+    //! Constructor.
+    LinearTransferFunction() {}
 
-        //! Destructor.
-        virtual ~LinearTransferFunction() { if (ispcEquivalent != NULL) ispc::LinearTransferFunction_destroy(ispcEquivalent); }
+    //! Destructor.
+    virtual ~LinearTransferFunction() { if (ispcEquivalent != NULL) ispc::LinearTransferFunction_destroy(ispcEquivalent); }
 
-        //! Allocate storage and populate the transfer function.
-        virtual void commit();
+    //! Allocate storage and populate the transfer function.
+    virtual void commit();
 
-        //! A string description of this class.
-        virtual std::string toString() const { return("ospray::LinearTransferFunction"); }
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::LinearTransferFunction"); }
 
-    protected:
+  protected:
+    Ref<Data> colors; //!< data array that stores the color map
+    Ref<Data> alphas; //!< data array that stores the alpha map
 
-        //! Create the equivalent ISPC transfer function.
-        virtual void createEquivalentISPC();
+    //! Create the equivalent ISPC transfer function.
+    virtual void createEquivalentISPC();
 
-    };
+  };
 
 } // namespace ospray
 

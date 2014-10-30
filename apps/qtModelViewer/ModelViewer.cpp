@@ -21,11 +21,6 @@ namespace ospray {
     OSPRayRenderWidget::OSPRayRenderWidget(Ref<sg::Renderer> renderer)
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
         sgRenderer(renderer)
-      // ,
-      //   ospRenderer(NULL), 
-      //   ospModel(NULL), 
-      //   ospCamera(NULL), 
-      //   ospFrameBuffer(NULL)
     {
       box3f worldBounds = renderer->world->getBounds();
       if (!worldBounds.empty()) {
@@ -203,7 +198,17 @@ namespace ospray {
           }
           // add combo box and stacked widget entries
           pageComboBox->addItem(tr(name.c_str()));
-          stackedWidget->addWidget(new QTransferFunctionEditor(xferFuncs[i]));
+#if 1
+          QOSPTransferFunctionEditor *xfEd 
+            = new QOSPTransferFunctionEditor(xferFuncs[i]);
+          stackedWidget->addWidget(xfEd);
+          connect(xfEd, SIGNAL(transferFunctionChanged()), 
+                  this, SLOT(render()));
+#else
+          stackedWidget->addWidget(new QOSPTransferFunctionEditor(xferFuncs[i]));
+#endif
+
+    
         }
       }
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
@@ -235,7 +240,8 @@ namespace ospray {
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::INSPECT);
       // renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FREE_ROTATION);
       renderWidget->setMoveSpeed(1.f);
-      connect(renderWidget,SIGNAL(affineSpaceChanged(QAffineSpaceManipulator *)),this,SLOT(cameraChanged()));
+      connect(renderWidget,SIGNAL(affineSpaceChanged(QAffineSpaceManipulator *)),
+              this,SLOT(cameraChanged()));
 
       setCentralWidget(renderWidget);
 
@@ -248,6 +254,11 @@ namespace ospray {
     void ModelViewer::setWorld(Ref<sg::World> world) 
     {
       renderWidget->setWorld(world); 
+    }
+
+    void ModelViewer::render() { 
+      sgRenderer->resetAccumulation();
+      if (renderWidget) renderWidget->updateGL(); 
     }
 
     void ModelViewer::cameraChanged() 
