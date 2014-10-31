@@ -9,6 +9,7 @@
 // ospray
 #include "ao16.h"
 #include "ospray/camera/camera.h"
+#include "ospray/texture/texture2d.h"
 // embree
 #include "common/sys/sync/atomic.h"
 // ispc exports
@@ -23,7 +24,7 @@ namespace ospray {
   
   void AO16Material::commit() {
     Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
-    map_Kd = NULL; //(Texture*)getParam("map_Kd",NULL);
+    map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd", NULL));
     ispc::AO16Material_set(getIE(),
                            (const ispc::vec3f&)Kd,
                            map_Kd!=NULL?map_Kd->getIE():NULL);
