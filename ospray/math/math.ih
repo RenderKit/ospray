@@ -168,11 +168,16 @@ __define_op4(max)
 #undef __define_op4T
 #undef __define_op4
 
+#define SIMILAR_EPSILON .00001f
 inline float similar(float a, float b)
 {
-  #define SIMILAR_EPSILON .00001f
   return absf(a - b) <= SIMILAR_EPSILON;
-  #undef SIMILAR_EPSILON
 }
+
+inline uniform float similar(uniform float a, uniform float b)
+{
+  return absf(a - b) <= SIMILAR_EPSILON;
+}
+#undef SIMILAR_EPSILON
 
 #endif
