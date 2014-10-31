@@ -42,7 +42,7 @@
         varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &coordinates);
       
         //! Tri-linear interpolation at each sample location in an array, 'coordinates' and 'results' arrays must be 'count' elements in size.
-        void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform coordinates, const varying int count, varying float *uniform results);
+        void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform coordinates, const uniform int count, varying float *uniform results);
 
     };
 
