@@ -98,9 +98,11 @@ void AlphaSpheres_bounds(uniform AlphaSpheres *uniform geometry,
   bbox.upper = geometry->mmBVH.node[0].bounds_hi;
 }
 
+uniform float lastRadius = 0;
+
+static
 void AlphaSpheres_intersectPrim(void *uniform geomPtr,
-                                uniform int64 primID,
-                                uniform bool  isShadowRay,
+                                uniform int primID,
                                 varying Ray &ray)
 {
   // typecast "implicit THIS" pointer to the proper geometry type
@@ -108,12 +110,26 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
 
   // compute base pointer to actual sphere we are intersecting
   uniform uint8 *uniform spherePtr
-    = geometry->data + geometry->bytesPerSphere*((uniform int64)primID);
-
+    = geometry->data + geometry->bytesPerSphere * ((uniform int64)primID);
+  
   // read sphere members relative to sphere base pointr.
-  uniform float radius = *((uniform float *)(spherePtr+geometry->offset_radius));
-  uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
-  uniform float attrib = *((uniform float *)(spherePtr+geometry->offset_attribute));
+  uniform float radius = *((uniform float *uniform )(spherePtr+geometry->offset_radius));
+  uniform vec3f center = *((uniform vec3f*uniform )(spherePtr+geometry->offset_center));
+  uniform float attrib = *((uniform float *uniform )(spherePtr+geometry->offset_attribute));
+
+#if 0
+  if (radius != lastRadius) {
+    print("new radius %\n",radius);
+  print("offsets % % %\n",
+        geometry->offset_radius,
+        geometry->offset_center,
+        geometry->offset_attribute);
+    print("primID %\n",primID);
+    print("spherePTr %\n",spherePtr);
+    print("center % % %\n",center.x,center.y,center.z);
+    lastRadius = radius;
+  }
+#endif
   
   // normalize attribute to the [0,1] range (by normalizing relative
   // to the attribute range stored in the min max BVH's root node
@@ -166,7 +182,7 @@ void AlphaSpheres_intersect(uniform AlphaSpheres *uniform geometry,
                             uniform size_t primID)
 {
   MinMaxBVH2_traverse(&geometry->mmBVH,geometry,geometry->transferFunction,
-                      &AlphaSpheres_intersectPrim,false,ray);
+                      &AlphaSpheres_intersectPrim,geometry->numSpheres,ray);
 }
 
 

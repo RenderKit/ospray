@@ -91,7 +91,10 @@ namespace ospray {
         || (l==begin)
         || (l==end)
         ) {
-      node[nodeID].childRef = (end-begin) + begin*8; //(end-begin) + begin*sizeof(primID[0]);
+      int numChildren = end-begin;
+      node[nodeID].childRef = (numChildren) + begin*8; //(end-begin) + begin*sizeof(primID[0]);
+      assert(numChildren > 0);
+      assert(numChildren < 8);
       // PING;
       // for (int i=begin;i<end;i++)
       //   PRINT(i);

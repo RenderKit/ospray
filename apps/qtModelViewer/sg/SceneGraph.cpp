@@ -158,8 +158,12 @@ namespace ospray {
       ospGeometry = ospNewGeometry("alpha_spheres");
       assert(ospGeometry);
 
+      PING;
+      PRINT(&sphere[0]);
       OSPData data = ospNewData(sphere.size()*6,OSP_FLOAT,
                                 &sphere[0],OSP_DATA_SHARED_BUFFER);
+      ospCommit(data);
+
       ospSetData(ospGeometry,"spheres",data);
 
       transferFunction->render(world,integrator,_xfm);

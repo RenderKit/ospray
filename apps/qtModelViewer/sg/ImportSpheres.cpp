@@ -87,9 +87,15 @@ namespace ospray {
             AlphaSpheres::Sphere s(a,radius,f);
             spheres->sphere.push_back(s);
           }
+      
+      // for (int i=0;i<spheres->sphere.size();i++) {
+      //   AlphaSpheres::Sphere s = spheres->sphere[i];
+      //   cout << "sphere " << i << " : " << s.position << " rad " << s.radius << endl;
+      // }
 
       world->node.push_back(spheres->transferFunction.ptr);
       world->node.push_back(spheres);
+
       return world;
     }
       
@@ -102,6 +108,7 @@ namespace ospray {
         vec3f p,v;
       } particle;
 
+      //      maxParticles = std::min(maxParticles,(size_t)2200000); // 25 - 25
       float radius = 2.f;
       FILE *file = fopen(fileName,"rb");
       static float biggestF = 0.f;
@@ -114,11 +121,13 @@ namespace ospray {
           biggestF = f;
           PRINT(biggestF);
         }
+        // if (f > 200) f = 200;
         AlphaSpheres::Sphere s(particle.p,radius,f);
         spheres->sphere.push_back(s);
       }
 
       PING;
+      PRINT(spheres->sphere.size());
       world->node.push_back(spheres->transferFunction.ptr);
       world->node.push_back(spheres);
       PING;

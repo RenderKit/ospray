@@ -51,15 +51,14 @@ struct MinMaxBVH2 {
 
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
 typedef void (*MinMaxBVH_intersectPrim)(void *uniform geomPtr,
-                                        uniform int64 primID,
-                                        uniform bool  isShadowRay,
+                                        uniform int primID,
                                         varying Ray &ray);
 
 void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform bvh2,
                          void *uniform geomPtr,
                          TransferFunction *uniform,
                          uniform MinMaxBVH_intersectPrim intersectPrim,
-                         uniform bool isShadowRay,
+                         uniform int numPrims,
                          varying Ray &ray);
 
 

@@ -96,15 +96,15 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
                          void *uniform geomPtr,
                          TransferFunction *uniform xf,
                          uniform MinMaxBVH_intersectPrim intersectPrim,
-                         uniform bool isShadowRay,
+                         uniform int numPrims,
                          varying Ray &ray)
 // void traverse(uniform AMRIsoSurfaceGeometry *uniform isoGeom,
 //               uniform bool isShadowRay,
 //               varying Ray &ray)
 {
-#if 1
-  for (uniform int i=0;i<3*3*3;i++) {
-    intersectPrim(geomPtr,i,isShadowRay,ray);
+#if 0
+  for (uniform int i=0;i<numPrims;i++) {
+    intersectPrim(geomPtr,i,ray);
   }
   return;
 
@@ -115,8 +115,8 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
 
   uniform int64 nodeRef = mmBVH->node[0].childRef;
   uniform int64 stackPtr = 0;
-  uniform int64 nodeStack[32];
-  varying float distStack[32];
+  uniform int64 nodeStack[64];
+  varying float distStack[64];
   uniform unsigned int8 *uniform node0ptr
     = (uniform unsigned int8 *uniform)mmBVH->node;
   
@@ -168,11 +168,11 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
         // uniform uint64 primRef = primIDPtr[i];
         // isoGeom->intersectPrim(isoGeom,primRef,isShadowRay,ray);
         // print("intersection %\n",i);
-        intersectPrim(geomPtr,leafBegin+i,isShadowRay,ray);
+        intersectPrim(geomPtr,leafBegin+i,ray);
         // intersectCell(geometry,primRef,//isoGeom->hexa_cell[primID],
         //               isShadowRay,ray);
-        if (isShadowRay && ray.primID >= 0)
-          return;
+        // if (isShadowRay && ray.primID >= 0)
+        //   return;
       }
     }
     while (1) {

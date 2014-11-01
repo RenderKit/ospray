@@ -16,6 +16,8 @@
 #include "AlphaSpheres_ispc.h"
 
 namespace ospray {
+  using std::cout;
+  using std::endl;
 
   AlphaSpheres::AlphaSpheres()
   {
@@ -28,6 +30,10 @@ namespace ospray {
     PrimAbstraction pa(sphere,numSpheres);
     mmBVH.build(&pa);
   }
+
+  struct DbgSphere {
+    vec3f pos; float rad; int pad[2];
+  };
 
   void AlphaSpheres::finalize(Model *model) 
   {
@@ -53,10 +59,28 @@ namespace ospray {
     assert(transferFunction);
     
     sphere = (Sphere *)sphereData->data;
-    PRINT(sphere);
+    // PRINT(sphere);
 
+
+    // cout << "--------------------------------------------" << endl;
+    // cout << "spheres before build: " << numSpheres << endl;
+    // DbgSphere *dbg = (DbgSphere*)sphereData->data;
+    // for (int i=0;i<numSpheres;i++) {
+    //   cout << "sphere " << i << " " << dbg[i].pos << " " << dbg[i].rad << endl;
+    // }
     buildBVH();
-    PING;
+    // PING;
+    // cout << "--------------------------------------------" << endl;
+    // cout << "spheres AFTER build: " << numSpheres << endl;
+    // for (int i=0;i<numSpheres;i++) {
+    //   cout << "sphere " << i << " " << dbg[i].pos << " " << dbg[i].rad << endl;
+    // }
+    // PRINT(dbg);
+    // PRINT(dbg+numSpheres);
+    // PRINT(bytesPerSphere);
+    // PRINT(offset_center);
+    // PRINT(offset_radius);
+    // PRINT(offset_attribute);
 
     ispc::AlphaSpheres_set(getIE(),
                            model->getIE(),

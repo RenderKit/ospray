@@ -11,7 +11,7 @@
 export void *uniform LinearTransferFunction_createInstance() {
 
     // The transfer function.
-    LinearTransferFunction *uniform transferFunction = uniform new LinearTransferFunction;
+    LinearTransferFunction *uniform transferFunction = uniform new uniform LinearTransferFunction;
 
     // Function to get the interpolated color for a given value.
     transferFunction->inherited.getColorForValue = LinearTransferFunction_getColorForValue;
@@ -120,7 +120,7 @@ export void LinearTransferFunction_setColorValues(void *uniform pointer, const u
     if (transferFunction->colors != NULL) delete[] transferFunction->colors;
 
     // Allocate memory for the incoming color values.
-    transferFunction->colorCount = count;  transferFunction->colors = uniform new vec3f[count];
+    transferFunction->colorCount = count;  transferFunction->colors = uniform new uniform vec3f[count];
 
     // Copy the color values into the transfer function.
     for (size_t i=0 ; i < count ; i++) transferFunction->colors[i] = source[i];
@@ -146,7 +146,7 @@ export void LinearTransferFunction_setAlphaValues(void *uniform pointer, const u
     if (transferFunction->alphas != NULL) delete[] transferFunction->alphas;
 
     // Allocate memory for the incoming opacity values.
-    transferFunction->alphaCount = count;  transferFunction->alphas = uniform new float[count];
+    transferFunction->alphaCount = count;  transferFunction->alphas = uniform new uniform float[count];
 
     // Copy the opacity values into the transfer function.
     for (size_t i=0 ; i < count ; i++) transferFunction->alphas[i] = source[i];
