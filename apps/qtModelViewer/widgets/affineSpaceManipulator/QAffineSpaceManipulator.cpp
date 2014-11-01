@@ -67,7 +67,9 @@ namespace ospray {
 
     //! the QT callback that tells us that we have to redraw
     void QAffineSpaceManipulator::paintGL()
-    { redraw(); }
+    { 
+      redraw(); 
+    }
 
     //! the QT callback that tells us that the image got resize
     void QAffineSpaceManipulator::resizeGL(int width, int height)

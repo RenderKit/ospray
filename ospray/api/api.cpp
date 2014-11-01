@@ -131,13 +131,6 @@ namespace ospray {
   }
 
 
-  /*! release refcount on given data buffer */
-  extern "C" void ospFreeData(OSPData data)
-  {
-    std::cout << "freeing data not yet implemented" << std::endl;
-  }
-
-
   /*! destroy a given frame buffer. 
 
     due to internal reference counting the framebuffer may or may not be deleted immeidately

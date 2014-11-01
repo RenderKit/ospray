@@ -10,41 +10,10 @@
 
 #define DBG(a) /**/
 
-#if 0
-// for now, xf::getMinMax is *varying* (though it probably shouldn't be!?)
-inline bool rangeIsInteresting(TransferFunction *uniform xf,
-                               const uniform MinMaxBVH2 &mm,
-                               const uniform MinMaxBVH2Node &node)
-{
-  // get range of alpha values for given range of attribute values:
-
-  // get attribute range over the entire tree (for normalization)
-  const uniform float all_range_lo = mm.node[0].range_lo;
-  const uniform float all_range_hi = mm.node[0].range_hi;
-
-  // get attribute range for current subtree
-  float node_range_lo = node.range_lo;
-  float node_range_hi = node.range_hi;
-
-  // normalize both values
-  node_range_lo = (node_range_lo-all_range_lo) * rcp(all_range_hi-all_range_lo);
-  node_range_hi = (node_range_hi-all_range_lo) * rcp(all_range_hi-all_range_lo);
-
-  // evaluate alpha range for normalized attribute range
-  vec2f range = xf->getMinMaxAlphaInRange(xf,node_range_lo,node_range_hi);
-
-  // cull if max range (range.y) is below .5f
-  return range.y/*max range*/ >= .5f;
-}
-#else
-// this is what it _should_ be 
 inline uniform bool rangeIsInteresting(TransferFunction *uniform xf,
                                        const uniform MinMaxBVH2 &mm,
                                        const uniform MinMaxBVH2Node &node)
 {
-  // uniform vec2f range = xf->getMinMaxAlphaInRange(xf,rn.range_lo,rn.range_hi);
-  // return range.x <= .5f && range.y >= .5f;
-
   // get range of alpha values for given range of attribute values:
 
   // get attribute range over the entire tree (for normalization)
@@ -65,13 +34,11 @@ inline uniform bool rangeIsInteresting(TransferFunction *uniform xf,
   // cull if max range (range.y) is below .5f
   return range.y/*max range*/ >= .5f;
 }
-#endif
-
 
 inline bool intersects(const Ray &ray, 
                        const vec3f rorg,
                        const vec3f rdir, 
-                       const uniform MinMaxBVH2Node rn,
+                       const uniform MinMaxBVH2Node &rn,
                        float &dist)
 {
   const float t_lo_x = rn.bounds_lo.x * rdir.x + rorg.x;
@@ -98,18 +65,7 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
                          uniform MinMaxBVH_intersectPrim intersectPrim,
                          uniform int numPrims,
                          varying Ray &ray)
-// void traverse(uniform AMRIsoSurfaceGeometry *uniform isoGeom,
-//               uniform bool isShadowRay,
-//               varying Ray &ray)
 {
-#if 0
-  for (uniform int i=0;i<numPrims;i++) {
-    intersectPrim(geomPtr,i,ray);
-  }
-  return;
-
-#endif
-
   const vec3f rdir = rcp(ray.dir);
   const vec3f rorg = neg(ray.org * rdir);
 
@@ -123,8 +79,6 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
   while (1) {
     uniform int64 numPrimsInNode = nodeRef & 0x7;
     if (numPrimsInNode == 0) {
-      // inner node
-      // print("inner node %\n",(nodeRef & ~(7LL)));
       uniform MinMaxBVH2Node *uniform nodePair 
         = (uniform MinMaxBVH2Node *uniform)(node0ptr + (nodeRef & ~(7LL)));
       float dist0, dist1;
@@ -162,17 +116,9 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
       }
     } else {
       // primitives: do intersection
-      // print("LEAF node %\n",(nodeRef & ~(7LL)));
-      uniform uint64 leafBegin = nodeRef / 8; // & ~(7LL);
+      uniform uint64 leafBegin = nodeRef / 8;
       for (uniform int i=0;i<numPrimsInNode;i++) { 
-        // uniform uint64 primRef = primIDPtr[i];
-        // isoGeom->intersectPrim(isoGeom,primRef,isShadowRay,ray);
-        // print("intersection %\n",i);
         intersectPrim(geomPtr,leafBegin+i,ray);
-        // intersectCell(geometry,primRef,//isoGeom->hexa_cell[primID],
-        //               isShadowRay,ray);
-        // if (isShadowRay && ray.primID >= 0)
-        //   return;
       }
     }
     while (1) {
@@ -186,21 +132,5 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
     }
   }
 }
-
-
-
-
-// inline void printNode(uniform int64 nodeRef,uniform int childID, uniform MinMaxBVH2Node node) {
-//   print("node % %\n bounds (% % %):(% % %)\n range (%:%)\n",
-//         nodeRef,childID,
-//         node.bounds_lo.x,
-//         node.bounds_lo.y,
-//         node.bounds_lo.z,
-//         node.bounds_hi.x,
-//         node.bounds_hi.y,
-//         node.bounds_hi.z,
-//         node.range_lo,
-//         node.range_hi);
-// }
 
 
