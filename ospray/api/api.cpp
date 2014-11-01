@@ -32,7 +32,7 @@ namespace ospray {
   using std::cout;
 
 
-  volatile bool rendering = false;
+  // volatile bool rendering = false;
 
 #if OSPRAY_MPI
   namespace mpi {
@@ -226,7 +226,7 @@ namespace ospray {
   /*! add a data array to another object */
   extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
   { 
-    assert(!rendering);
+    // assert(!rendering);
     ASSERT_DEVICE();
     LOG("ospSetData(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
@@ -410,9 +410,9 @@ namespace ospray {
     nom = 0.8f*nom + t_frame;
     std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
 #else
-    rendering = true;
+    // rendering = true;
     ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
-    rendering = false;
+    // rendering = false;
 #endif
   }
 
@@ -427,7 +427,7 @@ namespace ospray {
 
   extern "C" void ospCommit(OSPObject object)
   {
-    assert(!rendering);
+    // assert(!rendering);
 
     ASSERT_DEVICE();
     Assert(object && "invalid object handle to commit to");
