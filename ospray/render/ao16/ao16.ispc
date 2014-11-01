@@ -170,7 +170,6 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   if (ray.geomID < 0)
     return renderer->bgColor;
 
-  print("shade ao16 %\n",ray.primID);
   DifferentialGeometry dg;
   postIntersect(renderer->inherited.model,
                 dg,
