@@ -485,7 +485,7 @@ namespace ospray {
           ospGeometry(NULL), 
           transferFunction(new TransferFunction) 
       {};
-      
+      virtual ~AlphaSpheres() { throw std::runtime_error("alpha-spheres destructed!?"); }
       virtual void setFromXML(const xml::Node *const node);
 
       virtual box3f getBounds() {
@@ -562,6 +562,9 @@ namespace ospray {
     /*! create a sphere geometry representing a cube of numSpheresPerCubeSize^3 *alpha*-spheres */
     World *createTestAlphaSphereCube(size_t numSpheresPerCubeSize);
     World *createTestCoordFrame();
+
+    World *importCosmicWeb(const char *fileName, size_t maxParticles);
+
     /*! @} */
 
 

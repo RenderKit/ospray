@@ -187,13 +187,13 @@ namespace ospray {
     {
       if (ospColorData) { ospFreeData(ospColorData); ospColorData = NULL; }
       this->colorArray = colorArray;
-      PING;
+      // PING;
     }
     void TransferFunction::setAlphaMap(const std::vector<float> &alphaArray)
     {
       if (ospAlphaData) { ospFreeData(ospAlphaData); ospAlphaData = NULL; }
       this->alphaArray = alphaArray;
-      PING;
+      // PING;
     }
 
     void TransferFunction::commit() 
@@ -205,12 +205,12 @@ namespace ospray {
         lastModified = __rdtsc();
       }
       if (ospAlphaData == NULL) {
-        PING;
+        // PING;
         ospAlphaData = ospNewData(alphaArray.size(),OSP_FLOAT,&alphaArray[0]); 
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"alphas",ospAlphaData);
         lastModified = __rdtsc();
-        PING;
+        // PING;
       }
       if (lastModified > lastCommitted) {
         lastCommitted = __rdtsc();

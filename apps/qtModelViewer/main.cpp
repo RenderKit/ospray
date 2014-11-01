@@ -67,6 +67,8 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "--test-sphere") {
             world = sg::createTestSphere();
+          } else if (arg == "--test-cosmo") {
+            world = sg::importCosmicWeb(argv[++argID],1024*1024*atoi(argv[++argID]));
           } else if (arg == "--test-sphere-cube") {
             world = sg::createTestSphereCube(atoi(argv[++argID]));
           } else if (arg == "--test-alpha-sphere-cube") {

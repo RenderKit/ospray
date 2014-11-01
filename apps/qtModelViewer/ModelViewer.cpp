@@ -22,9 +22,13 @@ namespace ospray {
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
         sgRenderer(renderer)
     {
+      PING;
       box3f worldBounds = renderer->world->getBounds();
+      PRINT(worldBounds);
       if (!worldBounds.empty()) {
-        QAffineSpaceManipulator::setMoveSpeed(length(worldBounds.size())*1e-3f);
+        float moveSpeed = .25*length(worldBounds.size());
+        PRINT(moveSpeed);
+        QAffineSpaceManipulator::setMoveSpeed(moveSpeed);
       }
       Ref<sg::PerspectiveCamera> camera = renderer->camera.cast<sg::PerspectiveCamera>();
       if (camera) {
@@ -239,7 +243,7 @@ namespace ospray {
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FLY);
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::INSPECT);
       // renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FREE_ROTATION);
-      renderWidget->setMoveSpeed(1.f);
+      //      renderWidget->setMoveSpeed(1.f);
       connect(renderWidget,SIGNAL(affineSpaceChanged(QAffineSpaceManipulator *)),
               this,SLOT(cameraChanged()));
 

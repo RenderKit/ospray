@@ -93,6 +93,38 @@ namespace ospray {
       return world;
     }
       
+    World *importCosmicWeb(const char *fileName, size_t maxParticles)
+    {
+      sg::World *world = new sg::World;
+      sg::AlphaSpheres *spheres = new sg::AlphaSpheres;
+      
+      struct Particle {
+        vec3f p,v;
+      } particle;
+
+      float radius = 2.f;
+      FILE *file = fopen(fileName,"rb");
+      static float biggestF = 0.f;
+      PING;
+      for (int i=0;i<maxParticles;i++) {
+        int rc = fread(&particle,sizeof(particle),1,file);
+        if (!rc) break;
+        float f = sqrtf(dot(particle.v,particle.v));
+        if (f > biggestF) {
+          biggestF = f;
+          PRINT(biggestF);
+        }
+        AlphaSpheres::Sphere s(particle.p,radius,f);
+        spheres->sphere.push_back(s);
+      }
+
+      PING;
+      world->node.push_back(spheres->transferFunction.ptr);
+      world->node.push_back(spheres);
+      PING;
+      return world;
+    }
+      
   } // ::ospray::sg
 } // ::ospray
 

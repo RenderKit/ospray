@@ -119,11 +119,14 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   // to the attribute range stored in the min max BVH's root node
   const uniform float attrib_lo = geometry->mmBVH.node[0].range_lo;
   const uniform float attrib_hi = geometry->mmBVH.node[0].range_hi;
-  attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo + 1e-10f);
+  attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo);
 
   // compute alpha value from attribute value
-  float alpha = geometry->transferFunction->getAlphaForValue(geometry->transferFunction,
-                                                             attrib);
+
+  // if (attrib > 1.f || attrib < 0.f)
+  //   print("attrib %\n",attrib);
+
+  float alpha = geometry->transferFunction->getAlphaForValue(geometry->transferFunction,attrib);
   if (alpha <= .5f)
     return;
 

@@ -10,7 +10,7 @@
 
 #define DBG(a) /**/
 
-#if 1
+#if 0
 // for now, xf::getMinMax is *varying* (though it probably shouldn't be!?)
 inline bool rangeIsInteresting(TransferFunction *uniform xf,
                                const uniform MinMaxBVH2 &mm,
@@ -39,10 +39,31 @@ inline bool rangeIsInteresting(TransferFunction *uniform xf,
 #else
 // this is what it _should_ be 
 inline uniform bool rangeIsInteresting(TransferFunction *uniform xf,
-                                       const uniform MinMaxBVH2Node &rn)
+                                       const uniform MinMaxBVH2 &mm,
+                                       const uniform MinMaxBVH2Node &node)
 {
-  uniform vec2f range = xf->getMinMaxAlphaInRange(xf,rn.range_lo,rn.range_hi);
-  return range.x <= .5f && range.y >= .5f;
+  // uniform vec2f range = xf->getMinMaxAlphaInRange(xf,rn.range_lo,rn.range_hi);
+  // return range.x <= .5f && range.y >= .5f;
+
+  // get range of alpha values for given range of attribute values:
+
+  // get attribute range over the entire tree (for normalization)
+  const uniform float all_range_lo = mm.node[0].range_lo;
+  const uniform float all_range_hi = mm.node[0].range_hi;
+
+  // get attribute range for current subtree
+  uniform float node_range_lo = node.range_lo;
+  uniform float node_range_hi = node.range_hi;
+
+  // normalize both values
+  node_range_lo = (node_range_lo-all_range_lo) * rcp(all_range_hi-all_range_lo);
+  node_range_hi = (node_range_hi-all_range_lo) * rcp(all_range_hi-all_range_lo);
+
+  // evaluate alpha range for normalized attribute range
+  uniform vec2f range = xf->getMinMaxAlphaInRange(xf,node_range_lo,node_range_hi);
+
+  // cull if max range (range.y) is below .5f
+  return range.y/*max range*/ >= .5f;
 }
 #endif
 
@@ -81,7 +102,7 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
 //               uniform bool isShadowRay,
 //               varying Ray &ray)
 {
-#if 0
+#if 1
   for (uniform int i=0;i<3*3*3;i++) {
     intersectPrim(geomPtr,i,isShadowRay,ray);
   }
