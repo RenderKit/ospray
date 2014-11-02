@@ -49,13 +49,7 @@ namespace ospray {
       assert(p);
       assert(p->getName() != "");
       param[p->getName()] = p;
-    }
-
-    // list of all named nodes
-    std::map<std::string,Ref<sg::Node> > namedNodes;
-    sg::Node *findNamedNode(const std::string &name) { if (namedNodes.find(name) != namedNodes.end()) return namedNodes[name].ptr; return NULL; }
-    void registerNamedNode(const std::string &name, Ref<sg::Node> node) { namedNodes[name] = node; }
-    
+    }    
 
 
     void Serialization::serialize(Ref<sg::World> world, Serialization::Mode mode)
@@ -134,7 +128,7 @@ namespace ospray {
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
       // ospSetData(geom,"materialList",materialData);
 
-      OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,
+      OSPMaterial mat = ospNewMaterial(integrator?integrator->getOSPHandle():NULL,
                                        "default");
       if (mat) {
         vec3f kd = .7f;
@@ -147,42 +141,6 @@ namespace ospray {
       ospCommit(data);
 
       
-    }
-
-
-    void AlphaSpheres::render(World *world, 
-                              Integrator *integrator,
-                              const affine3f &_xfm)
-    {
-      assert(!ospGeometry);
-      ospLoadModule("alpha_spheres");
-      ospGeometry = ospNewGeometry("alpha_spheres");
-      assert(ospGeometry);
-
-      OSPData data = ospNewData(sphere.size()*6,OSP_FLOAT,
-                                &sphere[0],OSP_DATA_SHARED_BUFFER);
-      ospCommit(data);
-
-      ospSetData(ospGeometry,"spheres",data);
-
-      transferFunction->render(world,integrator,_xfm);
-
-      ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(AlphaSpheres::Sphere));
-      ospSet1i(ospGeometry,"offset_center",     0*sizeof(float));
-      ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
-      ospSet1i(ospGeometry,"offset_attribute",  4*sizeof(float));
-      ospSetObject(ospGeometry,"transferFunction",transferFunction->getOSPHandle());
-
-      OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,"default");
-      if (mat) {
-        vec3f kd = .7f;
-        ospSet3fv(mat,"kd",&kd.x);
-      }
-      ospSetMaterial(ospGeometry,mat);
-      ospCommit(ospGeometry);
-      
-      ospAddGeometry(world->ospModel,ospGeometry);
-      ospCommit(data);
     }
 
 
@@ -229,29 +187,6 @@ namespace ospray {
         ospTransferFunction = ospNewTransferFunction("piecewise_linear");
       }
       commit();
-    }
-
-    //! \brief Initialize this node's value from given corresponding XML node 
-    void AlphaSpheres::setFromXML(const xml::Node *const node)
-    {
-      for (size_t childID=0;childID<node->child.size();childID++) {
-        xml::Node *child = node->child[childID];
-        if (child->name == "transferFunction") {
-          if (child->getProp("ref") != "")
-            transferFunction = dynamic_cast<sg::TransferFunction*>(findNamedNode(child->getProp("ref")));
-          else if (child->child.size()) {
-            Ref<sg::Node> n = sg::parseNode(child->child[0]);
-            transferFunction = n.cast<sg::TransferFunction>();
-          }
-        }
-        else
-          std::cout << "#osp:sg:AlphaSpheres: Warning - unknown child field type '" << child->name << "'" << std::endl;
-      }
-
-      if (!transferFunction) {
-        std::cout << "#osp:sg:AlphaSpheres: Warning - no transfer function specified" << std::endl;
-        transferFunction = new TransferFunction();
-      }
     }
 
     //! \brief Initialize this node's value from given corresponding XML node 
@@ -302,6 +237,5 @@ namespace ospray {
     }
 
     OSP_REGISTER_SG_NODE(TransferFunction)
-    OSP_REGISTER_SG_NODE(AlphaSpheres)
   } // ::ospray::sg
 } // ::ospray

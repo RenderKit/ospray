@@ -74,9 +74,14 @@ namespace ospray {
     World *createTestAlphaSphereCube(size_t numPerSide)
     {
       sg::World *world = new sg::World;
-      sg::AlphaSpheres *spheres = new sg::AlphaSpheres;
-
       float radius = .7f/numPerSide;
+
+      Ref<sg::AlphaSpheres> spheres = new sg::AlphaSpheres;
+      Ref<sg::TransferFunction> transferFunction = new sg::TransferFunction;
+
+      std::vector<vec3f> position;
+      sg::AlphaSpheres::Attribute *attribute = new sg::AlphaSpheres::Attribute("test");
+      
       for (int z=0;z<numPerSide;z++)
         for (int y=0;y<numPerSide;y++)
           for (int x=0;x<numPerSide;x++) {
@@ -84,24 +89,28 @@ namespace ospray {
             a.x = x/float(numPerSide);
             a.y = y/float(numPerSide);
             a.z = z/float(numPerSide);
+            position.push_back(a);
+
             float f = cos(15*a.x*a.y)+sin(12*a.y)+cos(22*a.x+13*a.z)*sin(5*a.z+3*a.x+11*a.y);
-            AlphaSpheres::Sphere s(a,radius,f);
-            spheres->sphere.push_back(s);
+            
+            (*attribute).push_back(f);
           }
       
-      // for (int i=0;i<spheres->sphere.size();i++) {
-      //   AlphaSpheres::Sphere s = spheres->sphere[i];
-      //   cout << "sphere " << i << " : " << s.position << " rad " << s.radius << endl;
-      // }
+      spheres->setRadius(radius);
+      spheres->setPositions(position);
+      spheres->addAttribute(attribute);
+      spheres->setTransferFunction(transferFunction);
 
-      world->node.push_back(spheres->transferFunction.ptr);
-      world->node.push_back(spheres);
+      world->node.push_back(transferFunction.cast<sg::Node>());
+      world->node.push_back(spheres.cast<sg::Node>());
 
       return world;
     }
       
     World *importCosmicWeb(const char *fileName, size_t maxParticles)
     {
+      throw std::runtime_error("World *importCosmicWeb(const char *fileName, size_t maxParticles)' not yet ported to new alphaspheres");
+#if 0
       sg::World *world = new sg::World;
       sg::AlphaSpheres *spheres = new sg::AlphaSpheres;
       
@@ -133,6 +142,7 @@ namespace ospray {
       world->node.push_back(spheres);
       PING;
       return world;
+#endif
     }
       
   } // ::ospray::sg

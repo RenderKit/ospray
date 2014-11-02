@@ -10,6 +10,8 @@
 
 #include "sg/common/TimeStamp.h"
 #include "sg/common/Serialization.h"
+// stl
+#include <map>
 
 namespace ospray {
   namespace xml {
@@ -106,7 +108,13 @@ namespace ospray {
         for which that does not apply can simpy return
         box3f(embree::empty) */
       virtual box3f getBounds() { return box3f(embree::empty); };
-      
+
+      //! return when this node was last modified
+      inline TimeStamp getLastModified()  const { return lastModified; };
+
+      //! return when this node was last committed
+      inline TimeStamp getLastCommitted() const { return lastCommitted; };
+
       std::string name;
     protected:
       TimeStamp lastModified;
@@ -116,6 +124,15 @@ namespace ospray {
 
     /*! read a given scene graph node from its correspondoing xml node represenation */
     sg::Node *parseNode(xml::Node *node);
+
+
+    // list of all named nodes - for now use this as a global
+    // variable, but eventually we'll need tofind a better way for
+    // storing this ... maybe in the world!?
+    extern std::map<std::string,Ref<sg::Node> > namedNodes;
+    sg::Node *findNamedNode(const std::string &name);
+    void registerNamedNode(const std::string &name, Ref<sg::Node> node);
+
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
       the externally accessible name "external_name" 

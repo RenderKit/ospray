@@ -44,6 +44,12 @@ namespace ospray {
       box3f getBBox() const;
 
       Model() : radius(1.f) {}
+
+      void addAttribute(const std::string &name, float value)
+      {
+        if (!attribute[name]) attribute[name] = new std::vector<float>;
+        attribute[name]->push_back(value);
+      }
     };
 
   }

@@ -32,12 +32,15 @@ SET(SRCS ${SRCS}
   ModelViewer.cpp
 
   # scene graph and importers
-#  sg/ImportRIVL
- # sg/Scene
- sg/SceneGraph.cpp
- sg/ImportSpheres.cpp
- sg/Renderer.cpp
-sg/ImportOSP.cpp
+  #  sg/ImportRIVL
+  # sg/Scene
+  sg/SceneGraph.cpp
+  sg/ImportSpheres.cpp
+  sg/Renderer.cpp
+  sg/ImportOSP.cpp
+  sg/geometry/Spheres.cpp
+  sg/common/Node.cpp
+
   # the (th)ing to launch them all, and in darkness bind them...
   main.cpp
   )
