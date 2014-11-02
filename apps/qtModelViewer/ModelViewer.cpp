@@ -231,6 +231,11 @@ namespace ospray {
       toolBar->addAction(testAction);
 
       renderWidget = new OSPRayRenderWidget(sgRenderer);
+      ///renderWidget = new CheckeredSphereRotationEditor();
+      //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FLY);
+      //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::INSPECT);
+      // renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FREE_ROTATION);
+      //      renderWidget->setMoveSpeed(1.f);
       connect(renderWidget,SIGNAL(affineSpaceChanged(QAffineSpaceManipulator *)),
               this,SLOT(cameraChanged()));
 

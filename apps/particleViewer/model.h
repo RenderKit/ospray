@@ -33,6 +33,9 @@ namespace ospray {
       std::vector<Atom> atom;
       float radius;
 
+      //! list of attribute values, if applicable.
+      std::map<std::string,std::vector<float> *> attribute;
+
       int getAtomType(const std::string &name);
 
       /*! \brief load lammps xyz files */

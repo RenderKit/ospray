@@ -123,7 +123,11 @@ namespace ospray {
           && variable == "p.x"
           /* && index == .... */ 
           ) {
+        PRINT(numParticles);
         readParticles(model,numParticles,basePath+"/"+filename,start,end);
+      }
+      else if (numParticles > 0) {
+        PRINT(numParticles); PRINT(variable);
       }
       // PRINT(patch);
       // PRINT(numParticles);

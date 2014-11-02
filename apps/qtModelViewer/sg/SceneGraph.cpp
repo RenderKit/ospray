@@ -9,6 +9,7 @@
 #undef NDEBUG
 #include "SceneGraph.h"
 #include "apps/common/xml/xml.h"
+#include "sg/geometry/Spheres.h"
 
 namespace ospray {
   namespace sg {
@@ -158,8 +159,6 @@ namespace ospray {
       ospGeometry = ospNewGeometry("alpha_spheres");
       assert(ospGeometry);
 
-      PING;
-      PRINT(&sphere[0]);
       OSPData data = ospNewData(sphere.size()*6,OSP_FLOAT,
                                 &sphere[0],OSP_DATA_SHARED_BUFFER);
       ospCommit(data);
@@ -187,34 +186,34 @@ namespace ospray {
     }
 
 
+    //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
-      if (ospColorData) { ospFreeData(ospColorData); ospColorData = NULL; }
+      if (ospColorData) { ospRelease(ospColorData); ospColorData = NULL; }
       this->colorArray = colorArray;
-      // PING;
-    }
-    void TransferFunction::setAlphaMap(const std::vector<float> &alphaArray)
-    {
-      if (ospAlphaData) { ospFreeData(ospAlphaData); ospAlphaData = NULL; }
-      this->alphaArray = alphaArray;
-      // PING;
     }
 
+    //! \brief Sets a new 'texture map' to be used for the alpha mapping
+    void TransferFunction::setAlphaMap(const std::vector<float> &alphaArray)
+    {
+      if (ospAlphaData) { ospRelease(ospAlphaData); ospAlphaData = NULL; }
+      this->alphaArray = alphaArray;
+    }
+
+    //! \brief commit the current field values to ospray
     void TransferFunction::commit() 
     {
       if (ospColorData == NULL) {
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,&colorArray[0]); 
         ospCommit(ospColorData);
         ospSetData(ospTransferFunction,"colors",ospColorData);
-        lastModified = __rdtsc();
+        lastModified = TimeStamp::now();
       }
       if (ospAlphaData == NULL) {
-        // PING;
         ospAlphaData = ospNewData(alphaArray.size(),OSP_FLOAT,&alphaArray[0]); 
         ospCommit(ospAlphaData);
         ospSetData(ospTransferFunction,"alphas",ospAlphaData);
-        lastModified = __rdtsc();
-        // PING;
+        lastModified = TimeStamp::now();
       }
       if (lastModified > lastCommitted) {
         lastCommitted = __rdtsc();
@@ -231,48 +230,6 @@ namespace ospray {
       }
       commit();
     }
-
-    // void AlphaMappedSpheres::render(World *world, 
-    //                               Integrator *integrator,
-    //                               const affine3f &xfm)
-    // {
-    //   assert(!ospGeometry);
-
-    //   // JUST FOR TESTING: create a sphere right here ....
-    //   sphere.push_back(Sphere(vec3f(0),1,1));
-
-    //   ospGeometry = ospNewGeometry("spheres");
-    //   assert(ospGeometry);
-
-
-    //   OSPData data = ospNewData(sphere.size()*5,OSP_FLOAT,&sphere[0]);
-    //   ospSetData(ospGeometry,"spheres",data);
-
-    //   ospSet1i(ospGeometry,"bytes_per_sphere",sizeof(Spheres::Sphere));
-    //   ospSet1i(ospGeometry,"center_offset",     0*sizeof(float));
-    //   ospSet1i(ospGeometry,"offset_radius",     3*sizeof(float));
-    //   ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
-
-    //   assert(transferFunction);
-    //   if (transferFunction) {
-    //     transferFunction->render();
-    //     assert(transferFunction->ospTransferFunction);
-    //     ospSetObject(ospGeometry,"transferFunction",transferFunction->ospTransferFunction);
-    //   }
-
-    //   OSPMaterial mat = ospNewMaterial(integrator?integrator->ospRenderer:NULL,
-    //                                    "default");
-    //   if (mat) {
-    //     vec3f kd = .7f;
-    //     ospSet3fv(mat,"kd",&kd.x);
-    //   }
-    //   ospSetMaterial(ospGeometry,mat);
-    //   ospCommit(ospGeometry);
-
-      
-    //   ospAddGeometry(world->ospModel,ospGeometry);
-    //   ospCommit(data);
-    // }
 
     //! \brief Initialize this node's value from given corresponding XML node 
     void AlphaSpheres::setFromXML(const xml::Node *const node)
@@ -330,21 +287,17 @@ namespace ospray {
       for (size_t i=0;i<node.size();i++)
         node[i]->render(this,integrator,xfm);
       ospCommit(ospModel);
-      PING;
     }
 
     void PerspectiveCamera::commit() 
     {
       if (!ospCamera) create(); 
       
-      // const vec3f from = frame->sourcePoint;
-      // const vec3f at   = frame->targetPoint;
-
       ospSetVec3f(ospCamera,"pos",from);
       ospSetVec3f(ospCamera,"dir",at - from);
       ospSetVec3f(ospCamera,"up",up);
-      ospSetf(ospCamera,"aspect",aspect); //size.x/float(size.y));
-      ospSetf(ospCamera,"fovy",fovy); //size.x/float(size.y));
+      ospSetf(ospCamera,"aspect",aspect);
+      ospSetf(ospCamera,"fovy",fovy);
       ospCommit(ospCamera);      
     }
 

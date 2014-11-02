@@ -15,6 +15,7 @@
 
 // header
 #include "SceneGraph.h"
+#include "sg/geometry/Spheres.h"
 // stl
 #include <map>
 // // libxml
