@@ -100,7 +100,7 @@ void AlphaSpheres_bounds(uniform AlphaSpheres *uniform geometry,
 }
 
 static
-void AlphaSpheres_intersectPrim(void *uniform geomPtr,
+varying bool AlphaSpheres_intersectPrim(void *uniform geomPtr,
                                 uniform int primID,
                                 varying Ray &ray)
 {
@@ -119,7 +119,7 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   const float c = dot(A,A)-radius*radius;
   
   const float radical = b*b-4.f*a*c;
-  if (radical < 0.f) return;
+  if (radical < 0.f) return false;
 
 
   // compute second half of intersection test
@@ -131,20 +131,10 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   float hit_t = 0.f;
   if (t_in > ray.t0 && t_in < ray.t) {
     hit_t = t_in;
-    // ray.primID = primID;
-    // ray.geomID = THIS->geometry.geomID;
-    // ray.t = t_in;
-    // ray.Ng = ray.org + ray.t*ray.dir - center;
-    // return;
   } else if (t_out > ray.t0 && t_out < ray.t) {
-    // ray.primID = primID;
-    // ray.geomID = THIS->geometry.geomID;
-    // ray.t = t_out;
-    // ray.Ng = ray.org + ray.t*ray.dir - center;
-    // return;
     hit_t = t_out;
   }
-  else /* miss : */ return;
+  else /* miss : */ return false;
 
   // -------------------------------------------------------
   // do attribute test
@@ -160,14 +150,14 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   const float alpha
     = THIS->transferFunction->getAlphaForValue(THIS->transferFunction,attrib);
   if (alpha <= .5f)
-    return;
+    return false;
 
   // found a hit - store it
   ray.primID = primID;
   ray.geomID = THIS->geometry.geomID;
   ray.t = t_in;
   ray.Ng = ray.org + ray.t*ray.dir - center;
-  return;
+  return true;
 }
 
 
@@ -175,7 +165,15 @@ void AlphaSpheres_intersect(uniform AlphaSpheres *uniform geometry,
                             varying Ray &ray,
                             uniform size_t primID)
 {
-  MinMaxBVH2_traverse(&geometry->mmBVH,false,geometry,geometry->transferFunction,
+  MinMaxBVH2_intersect(&geometry->mmBVH,geometry,geometry->transferFunction,
+                      &AlphaSpheres_intersectPrim,geometry->numSpheres,ray);
+}
+
+void AlphaSpheres_occluded(uniform AlphaSpheres *uniform geometry,
+                            varying Ray &ray,
+                            uniform size_t primID)
+{
+  MinMaxBVH2_occluded(&geometry->mmBVH,geometry,geometry->transferFunction,
                       &AlphaSpheres_intersectPrim,geometry->numSpheres,ray);
 }
 
@@ -227,5 +225,5 @@ export void AlphaSpheres_set(void           *uniform _geom,
   rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
                           (uniform RTCIntersectFuncVarying)&AlphaSpheres_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
-                         (uniform RTCOccludedFuncVarying)&AlphaSpheres_intersect);
+                         (uniform RTCOccludedFuncVarying)&AlphaSpheres_occluded);
 }
