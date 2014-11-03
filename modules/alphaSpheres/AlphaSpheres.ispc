@@ -173,7 +173,7 @@ void AlphaSpheres_intersect(uniform AlphaSpheres *uniform geometry,
                             varying Ray &ray,
                             uniform size_t primID)
 {
-  MinMaxBVH2_traverse(&geometry->mmBVH,geometry,geometry->transferFunction,
+  MinMaxBVH2_traverse(&geometry->mmBVH,false,geometry,geometry->transferFunction,
                       &AlphaSpheres_intersectPrim,geometry->numSpheres,ray);
 }
 

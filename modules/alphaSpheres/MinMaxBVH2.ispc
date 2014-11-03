@@ -60,6 +60,7 @@ inline bool intersects(const Ray &ray,
 }
 
 void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
+                         uniform bool isShadowRay,
                          void *uniform geomPtr,
                          TransferFunction *uniform xf,
                          uniform MinMaxBVH_intersectPrim intersectPrim,

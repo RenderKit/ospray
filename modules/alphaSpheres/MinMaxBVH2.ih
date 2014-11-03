@@ -56,6 +56,7 @@ typedef void (*MinMaxBVH_intersectPrim)(void *uniform geomPtr,
                                         varying Ray &ray);
 
 void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform bvh2,
+                         uniform bool isShadowRay,
                          void *uniform geomPtr,
                          TransferFunction *uniform,
                          uniform MinMaxBVH_intersectPrim intersectPrim,
