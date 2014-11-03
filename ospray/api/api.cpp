@@ -62,10 +62,24 @@ namespace ospray {
        --osp:verbose, --osp:debug etc */
     ospray::init(_ac,&_av);
 
+
+    const char *OSP_MPI_LAUNCH_FROM_ENV = getenv("OSPRAY_MPI_LAUNCH");
+
+    if (OSP_MPI_LAUNCH_FROM_ENV) {
+#if OSPRAY_MPI
+      std::cout << "#osp: launching ospray mpi ring - make sure that mpd is running" << std::endl;
+      ospray::api::Device::current
+	= mpi::createMPI_LaunchWorkerGroup(_ac,_av,OSP_MPI_LAUNCH_FROM_ENV);
+#else
+      throw std::runtime_error("OSPRay MPI support not compiled in");
+#endif
+    }
+
     if (_ac && _av) {
       // we're only supporting local rendering for now - network device
       // etc to come.
       for (int i=1;i<*_ac;i++) {
+
         if (std::string(_av[i]) == "--osp:mpi") {
 #if OSPRAY_MPI
           removeArgs(*_ac,(char **&)_av,i,1);

@@ -16,7 +16,7 @@
 #include "ospray/math/math.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/render/renderer.ih"
-#include "ospray/texture/texture.ih"
+#include "ospray/texture/texture2d.ih"
 
 #define EPS 1e-5f
 
@@ -94,7 +94,7 @@ void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
 struct AO16Material {
   Material inherited;
   vec3f Kd;
-  uniform Texture *uniform map_Kd;
+  uniform Texture2D *uniform map_Kd;
 };
 
 export void *uniform AO16Material_create(void *uniform cppE)
@@ -111,7 +111,7 @@ export void AO16Material_set(void *uniform _mat,
 {
   uniform AO16Material *uniform mat = (uniform AO16Material *uniform)_mat;
   mat->Kd = Kd;
-  mat->map_Kd = (uniform Texture *uniform)_map_Kd;
+  mat->map_Kd = (uniform Texture2D *uniform)_map_Kd;
 }
 
 inline float rotate(float x, float dx)
@@ -184,16 +184,22 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   // print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
-  vec3f baseColor = make_vec3f(.8f); // = mat->Kd; // * make_vec3f(dg.color);
+  vec3f baseColor = make_vec3f(.9f); // = mat->Kd; // * make_vec3f(dg.color);
   if (mat)
-    foreach_unique(m in mat)
+    foreach_unique(m in mat) {
       baseColor = m->Kd;
-  baseColor = baseColor * make_vec3f(dg.color);
+      if (m->map_Kd) {
+	vec4f kd_from_map = get4f(m->map_Kd,dg.st);
+	baseColor = baseColor * make_vec3f(kd_from_map);
+      }
+    }
   // foreach_unique(tex in mat->map_Kd) {
-  //   if (tex) {
+    //   if (tex) {
   //     baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
   //   }
   // }
+
+  baseColor = baseColor * make_vec3f(dg.color);
   
   int hits = 0;
   vec3f biNormU,biNormV;

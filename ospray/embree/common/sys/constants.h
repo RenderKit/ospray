@@ -31,11 +31,11 @@ namespace embree
 
   static struct TrueTy {
     __forceinline operator bool( ) const { return true; }
-  } True MAYBE_UNUSED;
+  } True1 MAYBE_UNUSED;
 
   static struct FalseTy {
     __forceinline operator bool( ) const { return false; }
-  } False MAYBE_UNUSED;
+  } False1 MAYBE_UNUSED;
 
   static struct ZeroTy
   {
