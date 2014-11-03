@@ -170,12 +170,11 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   if (ray.geomID < 0)
     return renderer->bgColor;
 
-  // print("shade at16\n");
   DifferentialGeometry dg;
   postIntersect(renderer->inherited.model,
                 dg,
                 ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD|DG_COLOR);
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
   const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
   
@@ -184,15 +183,32 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   // print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
-  vec3f baseColor = make_vec3f(.9f); // = mat->Kd; // * make_vec3f(dg.color);
-  if (mat)
+// <<<<<<< HEAD
+//   vec3f baseColor = make_vec3f(.9f); // = mat->Kd; // * make_vec3f(dg.color);
+//   if (mat)
+//     foreach_unique(m in mat) {
+//       baseColor = m->Kd;
+//       if (m->map_Kd) {
+// 	vec4f kd_from_map = get4f(m->map_Kd,dg.st);
+// 	baseColor = baseColor * make_vec3f(kd_from_map);
+//       }
+//     }
+// =======
+  vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
+  if (mat) {
     foreach_unique(m in mat) {
-      baseColor = m->Kd;
       if (m->map_Kd) {
-	vec4f kd_from_map = get4f(m->map_Kd,dg.st);
-	baseColor = baseColor * make_vec3f(kd_from_map);
+      // foreach_unique(tx in m->map_Kd) {
+      //   if (tx) {
+        vec4f Kd_from_map = get4f(m->map_Kd,dg.st);
+        baseColor = make_vec3f(Kd_from_map);
+      } else {
+        baseColor = m->Kd;
       }
     }
+  }
+  baseColor = baseColor * make_vec3f(dg.color);
+// >>>>>>> 43eb475e4b19b341643f066be9f53d9b35fea093
   // foreach_unique(tex in mat->map_Kd) {
     //   if (tex) {
   //     baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
@@ -240,7 +256,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   if (ray.geomID < 0)
     return renderer->bgColor;
 
-  print("shade at16\n");
+  // print("shade at16\n");
   DifferentialGeometry dg;
   postIntersect(renderer->inherited.model,
                 dg,
@@ -251,12 +267,20 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   
   const vec3f N = dg.Ns; //getShadingNormal(ray);
 
-  print("shade at16 %\n",N.x,N.y,N.z);
+  // print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
   vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
-  foreach_unique(m in mat)
-    baseColor = m->Kd;
+  foreach_unique(m in mat) {
+    foreach_unique(tx in mat->map_Kd) {
+      if (tx) {
+        vec4f Kd_from_map = get4f(tx,dg.st);
+        baseColor = make_vec3f(Kd_from_map);
+      } else {
+        baseColor = m->Kd;
+      }
+    }
+  }
   baseColor = baseColor * make_vec3f(dg.color);
   // foreach_unique(tex in mat->map_Kd) {
   //   if (tex) {

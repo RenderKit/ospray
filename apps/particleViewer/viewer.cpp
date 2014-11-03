@@ -27,6 +27,7 @@ namespace ospray {
     int timeStep = 0;
     std::vector<OSPModel> modelTimeStep;
 
+    std::string modelSaveFileName = "";
     OSPRenderer        ospRenderer = NULL;
     typedef enum { LAMMPS_XYZ, DAT_XYZ } InputFormat;
 
@@ -225,6 +226,8 @@ namespace ospray {
           const char *moduleName = av[++i];
           cout << "loading ospray module '" << moduleName << "'" << endl;
           ospLoadModule(moduleName);
+        } else if (arg == "--save-to") {
+          modelSaveFileName = av[++i];
         } else if (av[i][0] == '-') {
           error("unkown commandline argument '"+arg+"'");
         } else {
@@ -263,6 +266,10 @@ namespace ospray {
       // -------------------------------------------------------]
       cout << "ospParticleViewer: done parsing. found model with" << endl;
       cout << "  - num atoms: " << particleModel[0]->atom.size() << endl;
+      if (modelSaveFileName != "") {
+        particleModel[0]->saveToFile(modelSaveFileName);
+        exit(0);
+      }
 
       // -------------------------------------------------------
       // create ospray model

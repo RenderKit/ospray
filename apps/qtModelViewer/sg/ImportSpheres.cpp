@@ -15,6 +15,7 @@
 
 // header
 #include "SceneGraph.h"
+#include "sg/geometry/Spheres.h"
 // stl
 #include <map>
 // // libxml
@@ -73,9 +74,14 @@ namespace ospray {
     World *createTestAlphaSphereCube(size_t numPerSide)
     {
       sg::World *world = new sg::World;
-      sg::AlphaSpheres *spheres = new sg::AlphaSpheres;
-
       float radius = .7f/numPerSide;
+
+      Ref<sg::AlphaSpheres> spheres = new sg::AlphaSpheres;
+      Ref<sg::TransferFunction> transferFunction = new sg::TransferFunction;
+
+      std::vector<vec3f> position;
+      sg::AlphaSpheres::Attribute *attribute = new sg::AlphaSpheres::Attribute("test");
+      
       for (int z=0;z<numPerSide;z++)
         for (int y=0;y<numPerSide;y++)
           for (int x=0;x<numPerSide;x++) {
@@ -83,14 +89,60 @@ namespace ospray {
             a.x = x/float(numPerSide);
             a.y = y/float(numPerSide);
             a.z = z/float(numPerSide);
-            float f = cos(15*a.x*a.y)+sin(12*a.y)+cos(22*a.x+13*a.z)*sin(5*a.z+3*a.x+11*a.y);
-            AlphaSpheres::Sphere s(a,radius,f);
-            spheres->sphere.push_back(s);
-          }
+            position.push_back(a);
 
+            float f = cos(15*a.x*a.y)+sin(12*a.y)+cos(22*a.x+13*a.z)*sin(5*a.z+3*a.x+11*a.y);
+            
+            (*attribute).push_back(f);
+          }
+      
+      spheres->setRadius(radius);
+      spheres->setPositions(position);
+      spheres->addAttribute(attribute);
+      spheres->setTransferFunction(transferFunction);
+
+      world->node.push_back(transferFunction.cast<sg::Node>());
+      world->node.push_back(spheres.cast<sg::Node>());
+
+      return world;
+    }
+      
+    World *importCosmicWeb(const char *fileName, size_t maxParticles)
+    {
+      throw std::runtime_error("World *importCosmicWeb(const char *fileName, size_t maxParticles)' not yet ported to new alphaspheres");
+#if 0
+      sg::World *world = new sg::World;
+      sg::AlphaSpheres *spheres = new sg::AlphaSpheres;
+      
+      struct Particle {
+        vec3f p,v;
+      } particle;
+
+      //      maxParticles = std::min(maxParticles,(size_t)2200000); // 25 - 25
+      float radius = 2.f;
+      FILE *file = fopen(fileName,"rb");
+      static float biggestF = 0.f;
+      PING;
+      for (int i=0;i<maxParticles;i++) {
+        int rc = fread(&particle,sizeof(particle),1,file);
+        if (!rc) break;
+        float f = sqrtf(dot(particle.v,particle.v));
+        if (f > biggestF) {
+          biggestF = f;
+          PRINT(biggestF);
+        }
+        // if (f > 200) f = 200;
+        AlphaSpheres::Sphere s(particle.p,radius,f);
+        spheres->sphere.push_back(s);
+      }
+
+      PING;
+      PRINT(spheres->sphere.size());
       world->node.push_back(spheres->transferFunction.ptr);
       world->node.push_back(spheres);
+      PING;
       return world;
+#endif
     }
       
   } // ::ospray::sg

@@ -10,7 +10,7 @@
 
 #include "ospray/transferfunction/TransferFunction.ih"
 
-#define PRECOMPUTED_VALUES_DIM 16
+#define PRECOMPUTED_VALUES_DIM 32
 
 struct LinearTransferFunction {
 

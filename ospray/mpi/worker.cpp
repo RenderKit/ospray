@@ -19,6 +19,7 @@
 #include "ospray/camera/camera.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/lights/light.h"
+#include "ospray/texture/texture2d.h"
 #include "mpiloadbalancer.h"
 
 namespace ospray {
@@ -343,6 +344,24 @@ namespace ospray {
               }
             }
           }
+        } break;
+
+        case api::MPIDevice::CMD_NEW_TEXTURE2D: {
+          const mpi::Handle handle = cmd.get_handle();
+          Texture2D *texture2D = NULL;
+
+          int32 width = cmd.get_int32();
+          int32 height = cmd.get_int32();
+          int32 type = cmd.get_int32();
+          int32 flags = cmd.get_int32();
+          size_t size = cmd.get_size_t();
+          
+          void *data = malloc(size);
+          cmd.get_data(size,data);
+
+          texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,flags);
+          assert(texture2D);
+          handle.assign(texture2D);
         } break;
 
         case api::MPIDevice::CMD_ADD_GEOMETRY: {

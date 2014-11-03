@@ -11,7 +11,7 @@
 export void *uniform LinearTransferFunction_createInstance() {
 
     // The transfer function.
-    LinearTransferFunction *uniform transferFunction = uniform new LinearTransferFunction;
+    LinearTransferFunction *uniform transferFunction = uniform new uniform LinearTransferFunction;
 
     // Function to get the interpolated color for a given value.
     transferFunction->inherited.getColorForValue = LinearTransferFunction_getColorForValue;
@@ -21,6 +21,7 @@ export void *uniform LinearTransferFunction_createInstance() {
     
     // Virtual function to precompute the min/max alpha ranges of a transfer function
     transferFunction->inherited.precomputeMinMaxAlphaRanges = LinearTransferFunction_precomputeMinMaxAlphaRanges;
+
     // Virtual function to look up the min/max alpha based on an input range
     transferFunction->inherited.getMinMaxAlphaInRange = LinearTransferFunction_getMinMaxAlphaInRange;
 
@@ -120,7 +121,7 @@ export void LinearTransferFunction_setColorValues(void *uniform pointer, const u
     if (transferFunction->colors != NULL) delete[] transferFunction->colors;
 
     // Allocate memory for the incoming color values.
-    transferFunction->colorCount = count;  transferFunction->colors = uniform new vec3f[count];
+    transferFunction->colorCount = count;  transferFunction->colors = uniform new uniform vec3f[count];
 
     // Copy the color values into the transfer function.
     for (size_t i=0 ; i < count ; i++) transferFunction->colors[i] = source[i];
@@ -146,12 +147,14 @@ export void LinearTransferFunction_setAlphaValues(void *uniform pointer, const u
     if (transferFunction->alphas != NULL) delete[] transferFunction->alphas;
 
     // Allocate memory for the incoming opacity values.
-    transferFunction->alphaCount = count;  transferFunction->alphas = uniform new float[count];
+    transferFunction->alphaCount = count;  transferFunction->alphas = uniform new uniform float[count];
 
     // Copy the opacity values into the transfer function.
     for (size_t i=0 ; i < count ; i++) transferFunction->alphas[i] = source[i];
 
+    // Precompute the min / max alpha ranges.
     transferFunction->inherited.precomputeMinMaxAlphaRanges(transferFunction);
+
 }
 
 void LinearTransferFunction_precomputeMinMaxAlphaRanges(void *uniform pointer) {
@@ -197,7 +200,8 @@ uniform vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer
   uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform)pointer;
   const uniform int maxDim = PRECOMPUTED_VALUES_DIM - 1;
   const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
-  const uniform int i = floor(((rangeLow - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  const uniform int j = ceil(((rangeHigh - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform int i = floor(clamp((rangeLow - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform int j = ceil(clamp((rangeHigh - transferFunction->inherited.valueRange.x) / denom) * maxDim);
   return transferFunction->precomputedMinMaxInRange[i][j];
 }
+

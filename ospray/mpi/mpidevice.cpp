@@ -826,6 +826,31 @@ namespace ospray {
       cmd.flush();
     }
 
+    /*! create a new Texture2D object */
+    OSPTexture2D MPIDevice::newTexture2D(int width, int height, 
+                                         OSPDataType type, void *data, int flags)
+    {
+      mpi::Handle handle = mpi::Handle::alloc();
+      cmd.newCommand(CMD_NEW_TEXTURE2D);
+      cmd.send(handle);
+      cmd.send((int32)width);
+      cmd.send((int32)height);
+      cmd.send((int32)type);
+      cmd.send((int32)flags);
+      assert(data);
+      size_t size = ospray::sizeOf(type)*width*height;
+      cmd.send(size);
+
+      cmd.send(data,size);
+      // switch (type) {
+      //   cmd.
+      // default: 
+      //   PRINT(type); throw std::runtime_error("texture2d type not implemented");
+      // }
+      cmd.flush();
+      return (OSPTexture2D)(int64)handle;
+    }
+    
   }
 }
 

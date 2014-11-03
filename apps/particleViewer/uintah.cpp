@@ -33,6 +33,15 @@ namespace ospray {
         out[i] = in[7-i];
       return ret;
     }
+    float htonf(float f)
+    {
+      float ret;
+      char *in = (char*)&f;
+      char *out = (char*)&ret;
+      for (int i=0;i<4;i++)
+        out[i] = in[3-i];
+      return ret;
+    }
     void readParticles(Model *model,
                        size_t numParticles, const std::string &fn, size_t begin, size_t end)
     {
@@ -90,6 +99,133 @@ namespace ospray {
       fclose(file);
     }
 
+
+
+
+    void readDoubleAttributes(Model *model, const std::string &attrName, size_t numParticles, 
+                              const std::string &fn, size_t begin, size_t end)
+    {
+      // std::cout << "#mpm: reading " << numParticles << " particles... " << std::flush;
+      // printf("#mpm: reading%7ld particles...",numParticles); fflush(0);
+      FILE *file = fopen(fn.c_str(),"rb");
+      if (!file) {
+        throw std::runtime_error("could not open data file "+fn);
+      }
+      assert(file);
+
+      fseek(file,begin,SEEK_SET);
+      size_t len = end-begin;
+
+      if (len != numParticles*sizeof(double)) {
+        PING;
+        PRINT(len);
+        PRINT(numParticles);
+        PRINT(len/numParticles);
+      }
+      // PRINT(len);
+      
+      for (int i=0;i<numParticles;i++) {
+        double attrib;
+        int rc = fread(&attrib,sizeof(attrib),1,file);
+        if (rc != 1) {
+          fclose(file);
+          throw std::runtime_error("read partial data "+fn);
+        }
+#if 1
+        if (big_endian) {
+          attrib = htonlf(attrib);
+        }
+#endif
+
+        // if (particleDumpFile) {
+        //   numDumpedParticles++;
+        //   fwrite(&a,sizeof(a),1,particleDumpFile);
+        // } else 
+        model->addAttribute(attrName,attrib);
+      }
+      
+      std::stringstream attrs;
+      for (std::map<std::string,std::vector<float> *>::const_iterator it=model->attribute.begin();
+           it != model->attribute.end();it++) {
+        attrs << "," << it->first;
+      }
+        
+
+      std::cout << "\r#osp:uintah: " << numParticles << " pt.s (tot:" << float((numDumpedParticles+model->atom.size())/1e6) << "M" << attrs.str() << ")";
+
+      // Particle *particle = new Particle[numParticles];
+      // fread(particle,numParticles,sizeof(Particle),file);
+      // for (int i=0;i
+      // for (int i=0;i<100;i++)
+      //   printf("particle %5i: %lf %lf %lf\n",particle[i].x,particle[i].y,particle[i].z);
+      fclose(file);
+    }
+
+
+
+
+
+
+    void readFloatAttributes(Model *model, const std::string &attrName, size_t numParticles, 
+                              const std::string &fn, size_t begin, size_t end)
+    {
+      // std::cout << "#mpm: reading " << numParticles << " particles... " << std::flush;
+      // printf("#mpm: reading%7ld particles...",numParticles); fflush(0);
+      FILE *file = fopen(fn.c_str(),"rb");
+      if (!file) {
+        throw std::runtime_error("could not open data file "+fn);
+      }
+      assert(file);
+
+      fseek(file,begin,SEEK_SET);
+      size_t len = end-begin;
+
+      if (len != numParticles*sizeof(float)) {
+        PING;
+        PRINT(len);
+        PRINT(numParticles);
+        PRINT(len/numParticles);
+      }
+      // PRINT(len);
+      
+      for (int i=0;i<numParticles;i++) {
+        float attrib;
+        int rc = fread(&attrib,sizeof(attrib),1,file);
+        if (rc != 1) {
+          fclose(file);
+          throw std::runtime_error("read partial data "+fn);
+        }
+#if 1
+        if (big_endian) {
+          attrib = htonf(attrib);
+        }
+#endif
+
+        // if (particleDumpFile) {
+        //   numDumpedParticles++;
+        //   fwrite(&a,sizeof(a),1,particleDumpFile);
+        // } else 
+        model->addAttribute(attrName,attrib);
+      }
+      
+      std::stringstream attrs;
+      for (std::map<std::string,std::vector<float> *>::const_iterator it=model->attribute.begin();
+           it != model->attribute.end();it++) {
+        attrs << "," << it->first;
+      }
+        
+
+      std::cout << "\r#osp:uintah: " << numParticles << " pt.s (tot:" << float((numDumpedParticles+model->atom.size())/1e6) << "M" << attrs.str() << ")";
+
+      // Particle *particle = new Particle[numParticles];
+      // fread(particle,numParticles,sizeof(Particle),file);
+      // for (int i=0;i
+      // for (int i=0;i<100;i++)
+      //   printf("particle %5i: %lf %lf %lf\n",particle[i].x,particle[i].y,particle[i].z);
+      fclose(file);
+    }
+
+
     void parse__Variable(Model *model,
                        const std::string &basePath, xml::Node *var)
     {
@@ -100,6 +236,8 @@ namespace ospray {
       size_t numParticles = 0;
       std::string variable;
       std::string filename;
+      std::string varType = var->getProp("type");
+      // PRINT(varType);
       for (int i=0;i<var->child.size();i++) {
         xml::Node *n = var->child[i];
         if (n->name == "index") {
@@ -123,7 +261,20 @@ namespace ospray {
           && variable == "p.x"
           /* && index == .... */ 
           ) {
+        // PRINT(numParticles);
         readParticles(model,numParticles,basePath+"/"+filename,start,end);
+      }
+      else if (numParticles > 0
+               && varType == "ParticleVariable&lt;double&gt;"
+               ) { 
+        // PRINT(numParticles); PRINT(variable); PRINT(varType);
+        readDoubleAttributes(model,variable,numParticles,basePath+"/"+filename,start,end);
+      }
+      else if (numParticles > 0
+               && varType == "ParticleVariable&lt;float&gt;"
+               ) { 
+        // PRINT(numParticles); PRINT(variable); PRINT(varType);
+        readFloatAttributes(model,variable,numParticles,basePath+"/"+filename,start,end);
       }
       // PRINT(patch);
       // PRINT(numParticles);
@@ -150,6 +301,7 @@ namespace ospray {
       try {
         doc = xml::readXML(fileName);
       } catch (std::runtime_error e) {
+        model->cullPartialData();
         static bool warned = false;
         if (!warned) {
           std::cerr << "#osp:uintah: error in opening xml data file: " << e.what() << std::endl;
@@ -236,8 +388,15 @@ namespace ospray {
       assert(doc->child[0]->name == "Uintah_timestep");
       std::string basePath = embree::FileName(s).path();
       parse__Uintah_timestep(model, basePath, doc->child[0]);
+
+      std::stringstream attrs;
+      for (std::map<std::string,std::vector<float> *>::const_iterator it=model->attribute.begin();
+           it != model->attribute.end();it++) {
+        attrs << ":" << it->first;
+      }
+        
       std::cout << "#osp:mpm: read " << s << " : " 
-                << model->atom.size() << " particles" << std::endl;
+                << model->atom.size() << " particles (" << attrs.str() << ")" << std::endl;
 
       box3f bounds = embree::empty;
       for (int i=0;i<model->atom.size();i++) {

@@ -11,6 +11,7 @@
 #define VOLUME_IH
 
 #include "ospray/common/OspCommon.ih"
+#include "ospray/common/Ray.ih"
 #include "ospray/transferfunction/TransferFunction.ih"
 
     //! \brief Variables and methods common to all subtypes of the Volume
@@ -35,14 +36,17 @@
         //! The range of values contained in the volume.
         uniform vec2f valueRange;
 
-        //! The gradient at the given sample location in the volume.
+        //! The gradient at the given sample location in world coordinates.
         varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &coordinates);
 
-        //! Tri-linear interpolation at the given sample location in the volume.
+        //! Tri-linear interpolation at the given sample location in world coordinates.
         varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &coordinates);
       
         //! Tri-linear interpolation at each sample location in an array, 'coordinates' and 'results' arrays must be 'count' elements in size.
-        void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform coordinates, const varying int count, varying float *uniform results);
+        void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform coordinates, const uniform int count, varying float *uniform results);
+
+        //! Find the next hit point in the volume for ray casting based renderers.
+        void (*uniform intersect)(void *uniform volume, varying Ray &ray);
 
     };
 
