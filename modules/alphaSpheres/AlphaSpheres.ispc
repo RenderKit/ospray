@@ -99,8 +99,6 @@ void AlphaSpheres_bounds(uniform AlphaSpheres *uniform geometry,
   bbox.upper = geometry->mmBVH.node[0].bounds_hi;
 }
 
-uniform float lastRadius = 0;
-
 static
 void AlphaSpheres_intersectPrim(void *uniform geomPtr,
                                 uniform int primID,
@@ -109,35 +107,11 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   // typecast "implicit THIS" pointer to the proper geometry type
   AlphaSpheres *uniform THIS = (AlphaSpheres *uniform)geomPtr;
 
-  // read sphere members relative to sphere base pointr.
+  // read sphere members required for intersection test
   uniform float radius = THIS->radius;
   uniform vec3f center = THIS->position[primID];
-  uniform float attrib = THIS->attribute[primID];
 
-#if 1
-  if (radius != lastRadius) {
-    print("new radius %\n",radius);
-    print("primID %\n",primID);
-    print("center % % %\n",center.x,center.y,center.z);
-    lastRadius = radius;
-  }
-#endif
-  
-  // normalize attribute to the [0,1] range (by normalizing relative
-  // to the attribute range stored in the min max BVH's root node
-  const uniform float attrib_lo = THIS->mmBVH.node[0].range_lo;
-  const uniform float attrib_hi = THIS->mmBVH.node[0].range_hi;
-  attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo);
-
-  // compute alpha value from attribute value
-
-  // if (attrib > 1.f || attrib < 0.f)
-  //   print("attrib %\n",attrib);
-
-  float alpha = THIS->transferFunction->getAlphaForValue(THIS->transferFunction,attrib);
-  if (alpha <= .5f)
-    return;
-
+  // perform first half of intersection test ....
   const vec3f A = center - ray.org;
 
   const float a = dot(ray.dir,ray.dir);
@@ -147,24 +121,52 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   const float radical = b*b-4.f*a*c;
   if (radical < 0.f) return;
 
+
+  // compute second half of intersection test
   const float srad = sqrt(radical);
 
   const float t_in = (- b - srad) *rcpf(2.f*a);
   const float t_out= (- b + srad) *rcpf(2.f*a);
 
+  float hit_t = 0.f;
   if (t_in > ray.t0 && t_in < ray.t) {
-    ray.primID = primID;
-    ray.geomID = THIS->geometry.geomID;
-    ray.t = t_in;
-    ray.Ng = ray.org + ray.t*ray.dir - center;
-    return;
+    hit_t = t_in;
+    // ray.primID = primID;
+    // ray.geomID = THIS->geometry.geomID;
+    // ray.t = t_in;
+    // ray.Ng = ray.org + ray.t*ray.dir - center;
+    // return;
   } else if (t_out > ray.t0 && t_out < ray.t) {
-    ray.primID = primID;
-    ray.geomID = THIS->geometry.geomID;
-    ray.t = t_out;
-    ray.Ng = ray.org + ray.t*ray.dir - center;
-    return;
+    // ray.primID = primID;
+    // ray.geomID = THIS->geometry.geomID;
+    // ray.t = t_out;
+    // ray.Ng = ray.org + ray.t*ray.dir - center;
+    // return;
+    hit_t = t_out;
   }
+  else /* miss : */ return;
+
+  // -------------------------------------------------------
+  // do attribute test
+  uniform float attrib = THIS->attribute[primID];
+
+  // normalize attribute to the [0,1] range (by normalizing relative
+  // to the attribute range stored in the min max BVH's root node
+  const uniform float attrib_lo = THIS->mmBVH.node[0].range_lo;
+  const uniform float attrib_hi = THIS->mmBVH.node[0].range_hi;
+  attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo);
+
+  // compute alpha value from attribute value
+  const float alpha
+    = THIS->transferFunction->getAlphaForValue(THIS->transferFunction,attrib);
+  if (alpha <= .5f)
+    return;
+
+  // found a hit - store it
+  ray.primID = primID;
+  ray.geomID = THIS->geometry.geomID;
+  ray.t = t_in;
+  ray.Ng = ray.org + ray.t*ray.dir - center;
   return;
 }
 

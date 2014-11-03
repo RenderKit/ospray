@@ -77,8 +77,6 @@ namespace ospray {
       }
       
       // check if transfer function exists, and is updated
-      PING;
-      PRINT(transferFunction);
       if (transferFunction == NULL)
         throw std::runtime_error("osp:sg:AlphaSpheres: no 'transferFunction' defined");
       else {
@@ -88,8 +86,6 @@ namespace ospray {
       }
 
       // make sure active attribute is presetnt ...
-      PING;
-      PRINT(activeAttribute);
       if (activeAttribute == NULL)
         throw std::runtime_error("osp:sg:AlphaSpheres: no 'activeAttribute' defined");
       // ... and commited ...
