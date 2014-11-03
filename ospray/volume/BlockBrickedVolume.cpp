@@ -36,6 +36,9 @@ namespace ospray {
         //! Set the volume dimensions.
         ispc::BlockBrickedVolume_setVolumeDimensions(ispcEquivalent, (const ispc::vec3i &) volumeDimensions);
 
+        //! Set the value range (must occur before setting the transfer function).
+        ispc::BlockBrickedVolume_setValueRange(ispcEquivalent, (const ispc::vec2f &) voxelRange);
+
         //! Set the transfer function.
         ispc::BlockBrickedVolume_setTransferFunction(ispcEquivalent, transferFunction->getEquivalentISPC());
 
@@ -44,9 +47,6 @@ namespace ospray {
 
         //! Set the gamma correction coefficient and exponent.
         ispc::BlockBrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
-
-        //! Set the value range.
-        ispc::BlockBrickedVolume_setValueRange(ispcEquivalent, (const ispc::vec2f &) voxelRange);
 
         //! Allocate memory for the voxel data in the ISPC object.
         ispc::BlockBrickedVolume_allocateMemory(ispcEquivalent);

@@ -10,11 +10,9 @@
 
 #define DBG(a) /**/
 
-#if 1
-// for now, xf::getMinMax is *varying* (though it probably shouldn't be!?)
-inline bool rangeIsInteresting(TransferFunction *uniform xf,
-                               const uniform MinMaxBVH2 &mm,
-                               const uniform MinMaxBVH2Node &node)
+inline uniform bool rangeIsInteresting(TransferFunction *uniform xf,
+                                       const uniform MinMaxBVH2 &mm,
+                                       const uniform MinMaxBVH2Node &node)
 {
   // get range of alpha values for given range of attribute values:
 
@@ -22,35 +20,27 @@ inline bool rangeIsInteresting(TransferFunction *uniform xf,
   const uniform float all_range_lo = mm.node[0].range_lo;
   const uniform float all_range_hi = mm.node[0].range_hi;
 
+  if (all_range_hi == all_range_lo) return true;
+
   // get attribute range for current subtree
-  float node_range_lo = node.range_lo;
-  float node_range_hi = node.range_hi;
+  uniform float node_range_lo = node.range_lo;
+  uniform float node_range_hi = node.range_hi;
 
   // normalize both values
   node_range_lo = (node_range_lo-all_range_lo) * rcp(all_range_hi-all_range_lo);
   node_range_hi = (node_range_hi-all_range_lo) * rcp(all_range_hi-all_range_lo);
 
   // evaluate alpha range for normalized attribute range
-  vec2f range = xf->getMinMaxAlphaInRange(xf,node_range_lo,node_range_hi);
+  uniform vec2f range = xf->getMinMaxAlphaInRange(xf,node_range_lo,node_range_hi);
 
   // cull if max range (range.y) is below .5f
   return range.y/*max range*/ >= .5f;
 }
-#else
-// this is what it _should_ be 
-inline uniform bool rangeIsInteresting(TransferFunction *uniform xf,
-                                       const uniform MinMaxBVH2Node &rn)
-{
-  uniform vec2f range = xf->getMinMaxAlphaInRange(xf,rn.range_lo,rn.range_hi);
-  return range.x <= .5f && range.y >= .5f;
-}
-#endif
-
 
 inline bool intersects(const Ray &ray, 
                        const vec3f rorg,
                        const vec3f rdir, 
-                       const uniform MinMaxBVH2Node rn,
+                       const uniform MinMaxBVH2Node &rn,
                        float &dist)
 {
   const float t_lo_x = rn.bounds_lo.x * rdir.x + rorg.x;
@@ -71,48 +61,42 @@ inline bool intersects(const Ray &ray,
   return t_nr <= t_fr;
 }
 
-void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
+void MinMaxBVH2_intersect(uniform MinMaxBVH2 *uniform mmBVH,
                          void *uniform geomPtr,
                          TransferFunction *uniform xf,
                          uniform MinMaxBVH_intersectPrim intersectPrim,
-                         uniform bool isShadowRay,
+                         uniform int numPrims,
                          varying Ray &ray)
-// void traverse(uniform AMRIsoSurfaceGeometry *uniform isoGeom,
-//               uniform bool isShadowRay,
-//               varying Ray &ray)
 {
-#if 0
-  for (uniform int i=0;i<3*3*3;i++) {
-    intersectPrim(geomPtr,i,isShadowRay,ray);
-  }
-  return;
-
-#endif
-
   const vec3f rdir = rcp(ray.dir);
   const vec3f rorg = neg(ray.org * rdir);
 
   uniform int64 nodeRef = mmBVH->node[0].childRef;
   uniform int64 stackPtr = 0;
-  uniform int64 nodeStack[32];
-  varying float distStack[32];
+  uniform int64 nodeStack[64];
+  varying float distStack[64];
   uniform unsigned int8 *uniform node0ptr
     = (uniform unsigned int8 *uniform)mmBVH->node;
+  const uniform uint32 *uniform primID = mmBVH->primID;
   
   while (1) {
-    uniform int64 numPrimsInNode = nodeRef & 0x7;
+    uniform int64 numPrimsInNode = nodeRef & 0x3;
     if (numPrimsInNode == 0) {
-      // inner node
-      // print("inner node %\n",(nodeRef & ~(7LL)));
       uniform MinMaxBVH2Node *uniform nodePair 
-        = (uniform MinMaxBVH2Node *uniform)(node0ptr + (nodeRef & ~(7LL)));
+        = (uniform MinMaxBVH2Node *uniform)(node0ptr + (nodeRef & ~(3LL)));
       float dist0, dist1;
       DBG(printNode(nodeRef,0,nodePair[0]);
           printNode(nodeRef,1,nodePair[1]));
-      bool hit0 = rangeIsInteresting(xf,*mmBVH,nodePair[0])
-        && intersects(ray,rorg,rdir,nodePair[0],dist0);
-      bool hit1 = rangeIsInteresting(xf,*mmBVH,nodePair[1])
-        && intersects(ray,rorg,rdir,nodePair[1],dist1);
+      bool hit0 
+        =  intersects(ray,rorg,rdir,nodePair[0],dist0)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[0]);
+      bool hit1
+        =  intersects(ray,rorg,rdir,nodePair[1],dist1)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[1]);
+      // bool hit0 = rangeIsInteresting(xf,*mmBVH,nodePair[0])
+      //   && intersects(ray,rorg,rdir,nodePair[0],dist0);
+      // bool hit1 = rangeIsInteresting(xf,*mmBVH,nodePair[1])
+      //   && intersects(ray,rorg,rdir,nodePair[1],dist1);
       if (any(hit0)) {
         if (any(hit1)) {
           unmasked { distStack[stackPtr] = 1e20f; }
@@ -141,17 +125,9 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
       }
     } else {
       // primitives: do intersection
-      // print("LEAF node %\n",(nodeRef & ~(7LL)));
-      uniform uint64 leafBegin = nodeRef / 8; // & ~(7LL);
+      uniform uint64 leafBegin = nodeRef / 4;
       for (uniform int i=0;i<numPrimsInNode;i++) { 
-        // uniform uint64 primRef = primIDPtr[i];
-        // isoGeom->intersectPrim(isoGeom,primRef,isShadowRay,ray);
-        // print("intersection %\n",i);
-        intersectPrim(geomPtr,leafBegin+i,isShadowRay,ray);
-        // intersectCell(geometry,primRef,//isoGeom->hexa_cell[primID],
-        //               isShadowRay,ray);
-        if (isShadowRay && ray.primID >= 0)
-          return;
+        intersectPrim(geomPtr,primID[leafBegin+i],ray);
       }
     }
     while (1) {
@@ -168,18 +144,70 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
 
 
 
+void MinMaxBVH2_occluded(uniform MinMaxBVH2 *uniform mmBVH,
+                         void *uniform geomPtr,
+                         TransferFunction *uniform xf,
+                         uniform MinMaxBVH_intersectPrim intersectPrim,
+                         uniform int numPrims,
+                         varying Ray &ray)
+{
+  const vec3f rdir = rcp(ray.dir);
+  const vec3f rorg = neg(ray.org * rdir);
 
-// inline void printNode(uniform int64 nodeRef,uniform int childID, uniform MinMaxBVH2Node node) {
-//   print("node % %\n bounds (% % %):(% % %)\n range (%:%)\n",
-//         nodeRef,childID,
-//         node.bounds_lo.x,
-//         node.bounds_lo.y,
-//         node.bounds_lo.z,
-//         node.bounds_hi.x,
-//         node.bounds_hi.y,
-//         node.bounds_hi.z,
-//         node.range_lo,
-//         node.range_hi);
-// }
+  uniform int64 nodeRef = mmBVH->node[0].childRef;
+  uniform int64 stackPtr = 0;
+  uniform int64 nodeStack[64];
+  uniform unsigned int8 *uniform node0ptr
+    = (uniform unsigned int8 *uniform)mmBVH->node;
+  const uniform uint32 *uniform primID = mmBVH->primID;
+  
+  while (1) {
+    uniform int64 numPrimsInNode = nodeRef & 0x3;
+    if (numPrimsInNode == 0) {
+      uniform MinMaxBVH2Node *uniform nodePair 
+        = (uniform MinMaxBVH2Node *uniform)(node0ptr + (nodeRef & ~(3LL)));
+      float dist0, dist1;
+      DBG(printNode(nodeRef,0,nodePair[0]);
+          printNode(nodeRef,1,nodePair[1]));
+      bool hit0 
+        =  intersects(ray,rorg,rdir,nodePair[0],dist0)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[0]);
+      bool hit1
+        =  intersects(ray,rorg,rdir,nodePair[1],dist1)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[1]);
+      if (any(hit0)) {
+        if (any(hit1)) {
+          nodeStack[stackPtr++] = nodePair[1].childRef;
+          nodeRef = nodePair[0].childRef;
+          continue;
+        } else {
+          nodeRef = nodePair[0].childRef;
+          continue;
+        }
+      } else {
+        if (any(hit1)) {
+          nodeRef = nodePair[1].childRef;
+          continue;
+        } else {
+          // do nothing, just pop.
+        }
+      }
+    } else {
+      // primitives: do intersection
+      uniform uint64 leafBegin = nodeRef / 4;
+      for (uniform int i=0;i<numPrimsInNode;i++) { 
+        if (intersectPrim(geomPtr,primID[leafBegin+i],ray))
+          return;
+      }
+    }
+    while (1) {
+      // now, go on popping from stack.
+      if (stackPtr == 0) return;
+      --stackPtr;
+      nodeRef = nodeStack[stackPtr];
+      break;
+    }
+  }
+}
 
 

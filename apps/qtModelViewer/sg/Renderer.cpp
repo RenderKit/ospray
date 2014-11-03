@@ -6,8 +6,6 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#pragma once
-
 #include "Renderer.h"
 
 namespace ospray {
@@ -39,7 +37,7 @@ namespace ospray {
       integrator->commit();
 
       ospRenderFrame(frameBuffer->ospFrameBuffer,
-                     integrator->ospRenderer,
+                     integrator->getOSPHandle(),
                      OSP_FB_COLOR|OSP_FB_ACCUM);
       return 0;
     }

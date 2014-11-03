@@ -23,11 +23,16 @@
 # define LOG(a) /*ignore*/
 #endif
 
+
+
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
 namespace ospray {
   using std::endl;
   using std::cout;
+
+
+  // volatile bool rendering = false;
 
 #if OSPRAY_MPI
   namespace mpi {
@@ -126,13 +131,6 @@ namespace ospray {
   }
 
 
-  /*! release refcount on given data buffer */
-  extern "C" void ospFreeData(OSPData data)
-  {
-    std::cout << "freeing data not yet implemented" << std::endl;
-  }
-
-
   /*! destroy a given frame buffer. 
 
     due to internal reference counting the framebuffer may or may not be deleted immeidately
@@ -220,7 +218,8 @@ namespace ospray {
 
   /*! add a data array to another object */
   extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
-  {
+  { 
+    // assert(!rendering);
     ASSERT_DEVICE();
     LOG("ospSetData(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
@@ -404,7 +403,9 @@ namespace ospray {
     nom = 0.8f*nom + t_frame;
     std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
 #else
+    // rendering = true;
     ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
+    // rendering = false;
 #endif
   }
 
@@ -419,6 +420,8 @@ namespace ospray {
 
   extern "C" void ospCommit(OSPObject object)
   {
+    // assert(!rendering);
+
     ASSERT_DEVICE();
     Assert(object && "invalid object handle to commit to");
     LOG("ospCommit(...)");

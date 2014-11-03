@@ -23,33 +23,28 @@ namespace ospray {
 
   */
   struct AlphaSpheres : public Geometry {
-    //! note: currently MUST be a multiple 8 b in size
-    struct Sphere {
-      vec3f position;
-      float radius;
-      float attribute;
-      int typeID;
-    };
 
     struct PrimAbstraction : public MinMaxBVH::PrimAbstraction {
-      Sphere *sphere;
-      size_t numSpheres;
-      PrimAbstraction(Sphere *sphere, size_t numSpheres)
-        : sphere(sphere), numSpheres(numSpheres) 
-      {}
+      AlphaSpheres *as;
 
-      virtual size_t numPrims() { return numSpheres; }
-      virtual size_t sizeOfPrim() { return sizeof(*sphere); }
-      virtual void swapPrims(size_t aID, size_t bID) 
-      { std::swap(sphere[aID],sphere[bID]); }
-      virtual box4f boundsOfPrim(size_t i) { 
-        box4f b;
-        (vec3f&)b.lower = sphere[i].position - vec3f(sphere[i].radius);
-        (vec3f&)b.upper = sphere[i].position + vec3f(sphere[i].radius);
-        b.lower.w = b.upper.w = sphere[i].attribute;
+      PrimAbstraction(AlphaSpheres *as) : as(as) {};
+
+      virtual size_t numPrims() { return as->numSpheres; }
+      // virtual size_t sizeOfPrim() { return sizeof(vec3f); }
+      // virtual void swapPrims(size_t aID, size_t bID) 
+      // { std::swap(sphere[aID],sphere[bID]); }
+      virtual float attributeOf(size_t primID) 
+      { return as->attribute[primID]; }
+      
+      virtual box3f boundsOf(size_t primID) 
+      { 
+        box3f b;
+        b.lower = as->position[primID] - vec3f(as->radius);
+        b.upper = as->position[primID] + vec3f(as->radius);
         return b;
       }
     };
+
 
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::AlphaSpheres"; }
@@ -57,24 +52,19 @@ namespace ospray {
       model's acceleration structure */
     virtual void finalize(Model *model);
     
-    Ref<Data> sphereData;  //!< refcounted data array for vertex data
-    Sphere   *sphere;
+    Ref<Data> positionData;  //!< refcounted data array for vertex data
+    Ref<Data> attributeData;  //!< refcounted data array for vertex data
+    vec3f    *position;
+    float    *attribute;
 
-    // float radius;   //!< default radius, if no per-sphere radius was specified.
-    // int32 materialID;
+    float radius;
     
     size_t numSpheres;
-    size_t bytesPerSphere; //!< num bytes per sphere
-    int64 offset_center;
-    int64 offset_radius;
-    int64 offset_attribute;
 
     MinMaxBVH mmBVH;
+
     void buildBVH();
 
-    //    Ref<Data> data;
-    // Ref<Data> materialList;
-    // void     *_materialList;
     Ref<TransferFunction> transferFunction;
 
     AlphaSpheres();

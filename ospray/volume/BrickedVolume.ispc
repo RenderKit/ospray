@@ -44,7 +44,7 @@ varying float BrickedVolume_computeSample(void *uniform pointer, const varying v
     const vec3f clampedCoordinates = clamp(coordinates, make_vec3f(0.0f), volume->inherited.upperBound);
 
     //! Lower and upper corners of the box straddling the voxels to be interpolated.
-    const vec3i voxelIndex_0 = integer_cast(clampedCoordinates);  const vec3i voxelIndex_1 = voxelIndex_0 + make_vec3i(1);
+    const vec3i voxelIndex_0 = integer_cast(clampedCoordinates);  const vec3i voxelIndex_1 = voxelIndex_0 + 1;
 
     //! Fractional coordinates within the lower corner voxel used during interpolation.
     const vec3f fractionalCoordinates = clampedCoordinates - float_cast(voxelIndex_0);

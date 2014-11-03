@@ -6,8 +6,6 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#pragma once
-
 // viewer
 #include "HelperGeometry.h"
 

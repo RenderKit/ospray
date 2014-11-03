@@ -8,6 +8,8 @@
 
 #include "QTransferFunctionEditor.h"
 #include <algorithm>
+// scene graph components
+#include "sg/common/TransferFunction.h"
 
 namespace ospray {
   namespace viewer {
@@ -30,6 +32,7 @@ namespace ospray {
       colorMapImage->fill(QColor::fromRgbF(1,1,1,1).rgb());
       
       // default transfer function points
+      // points.push_back(osp::vec2f(0.,1.));
       points.push_back(osp::vec2f(0.,0.));
       points.push_back(osp::vec2f(1.,1.));
     }
@@ -42,12 +45,15 @@ namespace ospray {
     
     void QTransferFunctionAlphaEditor::setColorMapImage(QImage *image)
     {
+      // PING;
       assert(colorMapImage);
       delete colorMapImage;
       colorMapImage = image;
       
       // trigger repaint
+      // PING;
       repaint();
+      // PING;
     }
     
     void QTransferFunctionAlphaEditor::resizeEvent(QResizeEvent * event)
@@ -286,19 +292,20 @@ namespace ospray {
       // setColorMapIndex(0);
       // transferFunctionAlphasChanged();
 
+
+      selectColorMap(0);
       connect(colorMapComboBox, SIGNAL(currentIndexChanged(int)), 
               this, SLOT(selectColorMap(int)));
       connect(transferFunctionAlphaEditor, SIGNAL(transferFunctionChanged()), 
               this, SLOT(transferFunctionAlphasChanged()));
 
-      selectColorMap(0);
       //      emit selectColorMap(0);
     }
   
     void QTransferFunctionEditor::addColorMap(const ColorMap *colorMap) 
     {
       colorMaps.push_back(colorMap);
-      colorMapComboBox->addItem(colorMap->getName().c_str());
+      colorMapComboBox->addItem(tr(colorMap->getName().c_str()));
     }
     
     void QTransferFunctionEditor::setDefaultColorMaps() 
@@ -361,7 +368,6 @@ namespace ospray {
 
     void QTransferFunctionEditor::transferFunctionAlphasChanged()
     {
-      PING;
       emit transferFunctionChanged();
       updateAlphaMap();
     }
@@ -413,24 +419,24 @@ namespace ospray {
 
     void QOSPTransferFunctionEditor::updateColorMap()
     {
-      PING;
+      // PING;
       sgNode->setColorMap(activeColorMap->getColors());
       sgNode->commit();
     }
     
     void QOSPTransferFunctionEditor::updateAlphaMap()
     {
-      PING;
+      // PING;
       const int numAlphas = 256;
       std::vector<float> alphas;
       for (int i=0;i<numAlphas;i++)
-        alphas.push_back(transferFunctionAlphaEditor->getInterpolatedValue(i/float(numAlphas/*-1*/)));
+        alphas.push_back(transferFunctionAlphaEditor->getInterpolatedValue(i/float(numAlphas-1)));
 
-      PING;
+      // PING;
       sgNode->setAlphaMap(alphas);
-      PING;
+      // PING;
       sgNode->commit();
-      PING;
+    //   PING;
     }
  
   } // ::ospray::viewer

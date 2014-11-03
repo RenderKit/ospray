@@ -67,6 +67,8 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "--test-sphere") {
             world = sg::createTestSphere();
+          } else if (arg == "--test-cosmo") {
+            world = sg::importCosmicWeb(argv[++argID],1024*1024*atoi(argv[++argID]));
           } else if (arg == "--test-sphere-cube") {
             world = sg::createTestSphereCube(atoi(argv[++argID]));
           } else if (arg == "--test-alpha-sphere-cube") {
@@ -82,6 +84,8 @@ namespace ospray {
           embree::FileName fn = arg;
           if (fn.ext() == "osp") {
             world = sg::loadOSP(fn.str());
+          } else if (fn.ext() == "atom") {
+            world = sg::AlphaSpheres::importOspAtomFile(fn.str());
           } else 
             throw std::runtime_error("unsupported file format in '"+fn.str()+"'");
           // std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;

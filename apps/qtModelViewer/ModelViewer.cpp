@@ -24,7 +24,9 @@ namespace ospray {
     {
       box3f worldBounds = renderer->world->getBounds();
       if (!worldBounds.empty()) {
-        QAffineSpaceManipulator::setMoveSpeed(length(worldBounds.size())*1e-3f);
+        float moveSpeed = .25*length(worldBounds.size());
+        PRINT(moveSpeed);
+        QAffineSpaceManipulator::setMoveSpeed(moveSpeed);
       }
       Ref<sg::PerspectiveCamera> camera = renderer->camera.cast<sg::PerspectiveCamera>();
       if (camera) {
@@ -198,17 +200,13 @@ namespace ospray {
           }
           // add combo box and stacked widget entries
           pageComboBox->addItem(tr(name.c_str()));
-#if 1
+
+          // create a transfer function editor for this transfer function node
           QOSPTransferFunctionEditor *xfEd 
             = new QOSPTransferFunctionEditor(xferFuncs[i]);
           stackedWidget->addWidget(xfEd);
           connect(xfEd, SIGNAL(transferFunctionChanged()), 
                   this, SLOT(render()));
-#else
-          stackedWidget->addWidget(new QOSPTransferFunctionEditor(xferFuncs[i]));
-#endif
-
-    
         }
       }
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
@@ -221,12 +219,8 @@ namespace ospray {
         sgRenderer(sgRenderer)
     {
       // resize to default window size
-      //resize(320, 240);
       setWindowTitle(tr("OSPRay QT ModelViewer"));
       resize(1024,768);
-
-      // initialize renderer
-      // renderer     = new OSPRayRenderer;
 
       // create GUI elements
       toolBar      = addToolBar("toolbar");
@@ -239,7 +233,7 @@ namespace ospray {
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FLY);
       //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::INSPECT);
       // renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FREE_ROTATION);
-      renderWidget->setMoveSpeed(1.f);
+      //      renderWidget->setMoveSpeed(1.f);
       connect(renderWidget,SIGNAL(affineSpaceChanged(QAffineSpaceManipulator *)),
               this,SLOT(cameraChanged()));
 
