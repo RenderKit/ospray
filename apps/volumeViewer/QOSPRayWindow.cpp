@@ -12,7 +12,7 @@ QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : frameCount_(0), renderingEn
 {
     // assign renderer
     if(!renderer)
-        throw std::runtime_error("must be constructed with an existing renderer");
+        throw std::runtime_error("QOSPRayWindow: must be constructed with an existing renderer");
 
     renderer_ = renderer;
 
@@ -20,7 +20,7 @@ QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : frameCount_(0), renderingEn
     camera_ = ospNewCamera("perspective");
 
     if(!camera_)
-        throw std::runtime_error("could not create camera type 'perspective'");
+        throw std::runtime_error("QOSPRayWindow: could not create camera type 'perspective'");
 
     ospCommit(camera_);
 

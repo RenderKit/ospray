@@ -11,10 +11,13 @@
 #include "ospray/render/util.ih"
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
 
-inline void RaycastVolumeRenderer_computeSample(Volume *uniform volume, varying vec3f &coordinates, varying vec3f &increment, varying vec4f &color) {
+inline void RaycastVolumeRenderer_computeSample(Volume *uniform volume, varying Ray &ray, varying vec4f &color) {
 
-    //! Sample the volume and advance the ray.
-    const float sample = volume->computeSample(volume, coordinates);  coordinates = coordinates + increment;
+    //! Advance the ray.
+    volume->intersect(volume, ray);  if (ray.t > ray.t1) return;
+
+    //! Sample the volume at the hit point in world coordinates.
+    const float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
 
     //! Look up the color associated with the volume sample.
     const vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
@@ -30,7 +33,7 @@ inline void RaycastVolumeRenderer_computeSample(Volume *uniform volume, varying 
 
 }
 
-inline void RaycastVolumeRenderer_intersectBox(const varying Ray &ray, const uniform box3f &box, varying float &entry, varying float &exit) {
+inline void RaycastVolumeRenderer_intersectBox(const uniform box3f &box, varying Ray &ray) {
 
     //! Intersection interval minimum per axis.
     const vec3f minimum = rcp(ray.dir) * (box.lower - ray.org);
@@ -39,29 +42,26 @@ inline void RaycastVolumeRenderer_intersectBox(const varying Ray &ray, const uni
     const vec3f maximum = rcp(ray.dir) * (box.upper - ray.org);
 
     //! Distance along the ray to the entry point.
-    entry = max(max(ray.t0, min(minimum.x, maximum.x)), max(min(minimum.y, maximum.y), min(minimum.z, maximum.z)));
+    ray.t0 = max(max(ray.t0, min(minimum.x, maximum.x)), max(min(minimum.y, maximum.y), min(minimum.z, maximum.z)));
 
     //! Distance along the ray to the exit point.
-    exit = min(min(ray.t, max(minimum.x, maximum.x)), min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));
+    ray.t1 = min(min(ray.t, max(minimum.x, maximum.x)), min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));
 
 }
 
-inline void RaycastVolumeRenderer_intersectVolume(const varying Ray &ray, Volume *uniform volume, varying vec4f &color) {
+inline void RaycastVolumeRenderer_intersectVolume(Volume *uniform volume, varying Ray &ray, varying vec4f &color) {
 
     //! Box representing the global bounds of the volume.
     const uniform box3f bounds = make_box3f(make_vec3f(0.0f), make_vec3f(1.0f));
 
     //! Compute the intersection interval over the ray and volume bounds.
-    float entry, exit;  RaycastVolumeRenderer_intersectBox(ray, bounds, entry, exit);  if (entry >= exit) return;
+    RaycastVolumeRenderer_intersectBox(bounds, ray);  if (ray.t0 > ray.t1) return;
+
+    //! Adjust the ray so the initial hit point will lie just inside the volume.
+    ray.t = ray.t0 - volume->stepSize * 0.5f;
  
-    //! The coordinates along the ray at which to sample the volume.
-    vec3f coordinates = volume->upperBound * (ray.org + entry * ray.dir);
-
-    //! Increment required to move the coordinates along the ray one step.
-    vec3f increment = volume->upperBound * volume->stepSize * ray.dir;
-
     //! Trace the ray through the volume.
-    for (float t = entry ; t < exit && reduce_min(color) < 1.0f ; t += volume->stepSize) RaycastVolumeRenderer_computeSample(volume, coordinates, increment, color);
+    while (ray.t < ray.t1 && reduce_min(color) < 1.0f) RaycastVolumeRenderer_computeSample(volume, ray, color);
 
 }
 
@@ -74,7 +74,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer, varying Scree
     const vec4f background = make_vec4f(1.0f);
 
     //! For now we assume the model contains at least 1 volume.
-    vec4f color = make_vec4f(0.0f);  RaycastVolumeRenderer_intersectVolume(sample.ray, renderer->model->volumes[0], color);
+    vec4f color = make_vec4f(0.0f);  RaycastVolumeRenderer_intersectVolume(renderer->model->volumes[0], sample.ray, color);
 
     //! Gamma correction.
     color = renderer->model->volumes[0]->gammaCorrection.x * pow(color, renderer->model->volumes[0]->gammaCorrection.y);
@@ -96,7 +96,13 @@ export void *uniform RaycastVolumeRenderer_createInstance() {
     Renderer_constructor(&renderer->inherited, NULL, NULL, NULL);
 
     //! Function to compute the color and opacity for a screen space sample.
-    renderer->inherited.renderSample = RaycastVolumeRenderer_renderSample;  return(renderer);
+    renderer->inherited.renderSample = RaycastVolumeRenderer_renderSample;
+
+    //! Function to perform per-frame state initialization.
+    renderer->inherited.beginFrame = RaycastVolumeRenderer_renderFramePreamble;
+
+    //! Function to perform per-frame state completion.
+    renderer->inherited.endFrame = RaycastVolumeRenderer_renderFramePostamble;  return(renderer);
 
 }
 
