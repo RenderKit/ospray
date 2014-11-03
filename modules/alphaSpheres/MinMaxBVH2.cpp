@@ -91,7 +91,7 @@ namespace ospray {
 #ifdef LEAF_THRESHOLD
         (end-begin) <= LEAF_THRESHOLD || 
 #endif
-        (costIfSplit >= costNoSplit) && ((end-begin) <= 3)
+        ((costIfSplit >= costNoSplit) && ((end-begin) <= 3))
         || (l==begin)
         || (l==end)
         ) {
