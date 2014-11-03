@@ -20,6 +20,8 @@ inline uniform bool rangeIsInteresting(TransferFunction *uniform xf,
   const uniform float all_range_lo = mm.node[0].range_lo;
   const uniform float all_range_hi = mm.node[0].range_hi;
 
+  if (all_range_hi == all_range_lo) return true;
+
   // get attribute range for current subtree
   uniform float node_range_lo = node.range_lo;
   uniform float node_range_hi = node.range_hi;

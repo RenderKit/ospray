@@ -104,7 +104,7 @@ namespace ospray {
       void setPositions(const std::vector<vec3f> &positions);
 
       //! return a list of the names of all attributes we have in this geometry
-      std::vector<std::string> getListOfAttributes() const;
+      std::vector<std::string> getAttributeNames() const;
 
       //! add a new set of attributes to the geometry
       void addAttribute(Attribute *attribute);
@@ -151,7 +151,9 @@ namespace ospray {
 
       //! the transfer function we use for color-mapping the given attribute
       Ref<TransferFunction>           transferFunction;
-
+      
+    public:
+      static sg::World *importOspAtomFile(const std::string &fileName);
     };
     
   } // ::ospray::sg

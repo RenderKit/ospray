@@ -131,7 +131,7 @@ namespace ospray {
     }
 
       //! return a list of the names of all attributes we have in this geometry
-    std::vector<std::string> AlphaSpheres::getListOfAttributes() const
+    std::vector<std::string> AlphaSpheres::getAttributeNames() const
     {
       std::vector<std::string> names;
       for (std::map<std::string,Ref<Attribute> >::const_iterator it = attribute.begin(); 
@@ -175,9 +175,76 @@ namespace ospray {
     {
       assert(attribute != NULL);
       this->attribute[attribute->name] = attribute;
-      PRINT(this->attribute.size());
       if (this->attribute.size() == 1)
         setActiveAttribute(attribute);
+    }
+
+    sg::World *AlphaSpheres::importOspAtomFile(const std::string &fileName)
+    {
+      std::string binFileName = fileName+".bin";
+      FILE *txt = fopen(fileName.c_str(),"r");
+      FILE *bin = fopen(binFileName.c_str(),"rb");
+
+      Ref<sg::AlphaSpheres> spheres = new sg::AlphaSpheres;
+      Ref<sg::TransferFunction> transferFunction = new sg::TransferFunction;
+      spheres->setTransferFunction(transferFunction);
+      spheres->setRadius(1e-3f);
+      
+      size_t numAtoms = 0;
+      size_t offset;
+      
+      {
+        fscanf(txt,"atoms %li offset %li\n",&numAtoms,&offset);
+
+        //        numAtoms = std::min(numAtoms,(size_t)2000000);
+
+        fseek(bin,offset,SEEK_SET); 
+        std::vector<vec3f> position; 
+        position.resize(numAtoms);
+        fread(&position[0],sizeof(position[0]),numAtoms,bin);
+        spheres->setPositions(position);
+        // for (int i=0;i<100;i++)
+        //   PRINT(position[i]);
+        position.clear();
+      }
+       
+      char line[1000];
+      while (fgets(line,1000,txt) && !feof(txt)) {
+        char *name = strstr(line,"name");
+        if (!name) break;
+        name += 5;
+        char *eol = strstr(name,"\n"); 
+        if (eol) *eol = 0;
+        
+        sscanf(line,"attribute offset %li",&offset);
+        fseek(bin,offset,SEEK_SET);
+        
+        AlphaSpheres::Attribute *attr = new AlphaSpheres::Attribute(name);
+        attr->resize(numAtoms);
+        fread(&*attr->begin(),sizeof(float),numAtoms,bin);
+        spheres->addAttribute(attr);
+
+        // if (attr->name == "p.mass")
+        //   spheres->setActiveAttribute(attr);
+        if (attr->name == "p.temperature")
+          spheres->setActiveAttribute(attr);
+      }
+      
+      fclose(txt);
+      fclose(bin);
+      
+      sg::World *world = new sg::World;
+      world->node.push_back(transferFunction.ptr);
+      world->node.push_back(spheres.ptr);
+
+
+      std::vector<std::string> attrNames = spheres->getAttributeNames();
+      std::cout << "read the following attributes:" << std::flush;
+      for (int i=0;i<attrNames.size();i++)
+        std::cout << " " << attrNames[i];
+      std::cout << std::endl;
+
+      return world;
     }
 
     OSP_REGISTER_SG_NODE(AlphaSpheres)

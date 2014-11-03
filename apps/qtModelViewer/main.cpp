@@ -84,6 +84,8 @@ namespace ospray {
           embree::FileName fn = arg;
           if (fn.ext() == "osp") {
             world = sg::loadOSP(fn.str());
+          } else if (fn.ext() == "atom") {
+            world = sg::AlphaSpheres::importOspAtomFile(fn.str());
           } else 
             throw std::runtime_error("unsupported file format in '"+fn.str()+"'");
           // std::cout << "#osp:qtv: reading RIVL file " << arg << std::endl;

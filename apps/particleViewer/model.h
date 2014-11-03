@@ -50,6 +50,58 @@ namespace ospray {
         if (!attribute[name]) attribute[name] = new std::vector<float>;
         attribute[name]->push_back(value);
       }
+
+      void savePositions(const std::string &fileName)
+      {
+        FILE *file = fopen(fileName.c_str(),"wb");
+      }
+      void saveAttribute(const std::string &fileName, const std::vector<float> &attr)
+      {
+        FILE *file = fopen(fileName.c_str(),"wb");
+        for (int i=0;i<attr.size();i++)
+          fwrite(&attr[i],sizeof(float),1,file);
+        fclose(file);
+      }
+      void saveToFile(const std::string &fileName) {
+        const std::string binName = fileName+".bin";
+        
+        FILE *txt = fopen(fileName.c_str(),"w");
+        FILE *bin = fopen(binName.c_str(),"wb");
+        
+        fprintf(txt,"atoms %li offset %li\n",atom.size(),ftell(bin));
+        for (int i=0;i<atom.size();i++)
+          fwrite(&atom[i].position,sizeof(vec3f),1,bin);
+
+        for (std::map<std::string,std::vector<float> *>::const_iterator it=attribute.begin();
+             it != attribute.end();it++) {
+          fprintf(txt,"attribute offset %li name %s\n",
+                  ftell(bin),it->first.c_str());
+          fwrite(&*it->second->begin(),sizeof(float),it->second->size(),bin);
+        }
+
+        fclose(txt);
+        fclose(bin);
+      }
+
+      void cullPartialData() 
+      {
+        size_t largestCompleteSize = atom.size();
+        for (std::map<std::string,std::vector<float> *>::const_iterator it=attribute.begin();
+             it != attribute.end();it++)
+          largestCompleteSize = std::min(largestCompleteSize,it->second->size());
+        
+        if (atom.size() > largestCompleteSize) {
+          std::cout << "#osp:uintah: atoms w missing attribute(s): discarding" << std::endl;
+          atom.resize(largestCompleteSize);
+        }
+        for (std::map<std::string,std::vector<float> *>::const_iterator it=attribute.begin();
+             it != attribute.end();it++) {
+          if (it->second->size() > largestCompleteSize) {
+            std::cout << "#osp:uintah: attribute(s) w/o atom(s): discarding" << std::endl;
+            it->second->resize(largestCompleteSize);
+          }
+        }
+      }
     };
 
   }

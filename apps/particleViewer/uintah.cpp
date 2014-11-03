@@ -222,6 +222,7 @@ namespace ospray {
       try {
         doc = xml::readXML(fileName);
       } catch (std::runtime_error e) {
+        model->cullPartialData();
         static bool warned = false;
         if (!warned) {
           std::cerr << "#osp:uintah: error in opening xml data file: " << e.what() << std::endl;

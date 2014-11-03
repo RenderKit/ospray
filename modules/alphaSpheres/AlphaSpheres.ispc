@@ -144,7 +144,7 @@ varying bool AlphaSpheres_intersectPrim(void *uniform geomPtr,
   // to the attribute range stored in the min max BVH's root node
   const uniform float attrib_lo = THIS->mmBVH.node[0].range_lo;
   const uniform float attrib_hi = THIS->mmBVH.node[0].range_hi;
-  attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo);
+  attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo + 1e-10f);
 
   // compute alpha value from attribute value
   const float alpha
