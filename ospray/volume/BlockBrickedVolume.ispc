@@ -9,7 +9,7 @@
 
 #include "ospray/volume/BlockBrickedVolume.ih"
 
-struct Address {
+// namespace BlockBrickedVolume {
 
     //! The number of bits used to represent the width of a Block in voxels.
     #define BLOCK_VOXEL_WIDTH_BITCOUNT (8)
@@ -38,6 +38,16 @@ struct Address {
     //! The number of voxels contained in a block.
     #define BLOCK_VOXEL_COUNT (BLOCK_VOXEL_WIDTH * BLOCK_VOXEL_WIDTH * BLOCK_VOXEL_WIDTH)
 
+    //! Transform the given point into world coordinates.
+    vec3f BlockBrickedVolume_transformLocalToWorld(void *uniform pointer, const varying vec3f &coordinates);
+
+    //! Transform the given point into the local coordinate system of the volume.
+    vec3f BlockBrickedVolume_transformWorldToLocal(void *uniform pointer, const varying vec3f &coordinates);
+
+// }
+
+struct Address {
+
     //! The 1D address of the block in the volume containing the voxel.
     varying uint32 block;
 
@@ -46,10 +56,13 @@ struct Address {
 
 };
 
-varying vec3f BlockBrickedVolume_computeGradient(void *uniform pointer, const varying vec3f &coordinates) {
+varying vec3f BlockBrickedVolume_computeGradient(void *uniform pointer, const varying vec3f &location) {
 
     //! Cast to the actual Volume type.
     Volume *uniform volume = (Volume *uniform) pointer;
+
+    //! Transform the sample location into the local coordinate system.
+    const vec3f coordinates = BlockBrickedVolume_transformWorldToLocal(pointer, location);
 
     //! The gradient will be computed using central differences.
     varying vec3f gradient;
@@ -68,16 +81,19 @@ varying vec3f BlockBrickedVolume_computeGradient(void *uniform pointer, const va
 
 }
 
-varying float BlockBrickedVolume_computeSample(void *uniform pointer, const varying vec3f &coordinates) {
+varying float BlockBrickedVolume_computeSample(void *uniform pointer, const varying vec3f &location) {
 
     //! Cast to the actual Volume subtype.
     BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Transform the sample location into the local coordinate system.
+    const vec3f coordinates = BlockBrickedVolume_transformWorldToLocal(pointer, location);
 
     //! Coordinates outside the volume are clamped to the volume bounds.
     const vec3f clampedCoordinates = clamp(coordinates, make_vec3f(0.0f), volume->inherited.upperBound);
 
     //! Lower and upper corners of the box straddling the voxels to be interpolated.
-    const vec3i voxelIndex_0 = integer_cast(clampedCoordinates);  const vec3i voxelIndex_1 = voxelIndex_0 + make_vec3i(1);
+    const vec3i voxelIndex_0 = integer_cast(clampedCoordinates);  const vec3i voxelIndex_1 = voxelIndex_0 + 1;
 
     //! Fractional coordinates within the lower corner voxel used during interpolation.
     const vec3f fractionalCoordinates = clampedCoordinates - float_cast(voxelIndex_0);
@@ -158,6 +174,17 @@ inline varying float BlockBrickedVolumeUChar_getVoxel(void *uniform pointer, con
 
 }
 
+void BlockBrickedVolume_intersect(void *uniform pointer, varying Ray &ray) {
+
+    //! Cast to the actual Volume subtype.
+    BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Compute the next hit point using a spatial acceleration structure.
+    GridAccelerator_intersect(volume->accelerator, volume->inherited.stepSize, ray);
+//  ray.t += volume->inherited.stepSize;
+
+}
+
 inline void BlockBrickedVolumeFloat_setVoxel(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset) {
 
     //! Cast to the actual Volume subtype.
@@ -174,6 +201,9 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform pointer, const void *
 
     //! Store the voxel value at the 1D address.
     foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
+
+    //! Encode the voxel value in the spatial acceleration structure.
+    GridAccelerator_encodeValue(volume->accelerator, float_cast(index + offset), value);
 
 }
 
@@ -193,6 +223,29 @@ inline void BlockBrickedVolumeUChar_setVoxel(void *uniform pointer, const void *
 
     //! Store the voxel value at the 1D address.
     foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
+
+    //! Encode the voxel value in the spatial acceleration structure.
+    GridAccelerator_encodeValue(volume->accelerator, float_cast(index + offset), value);
+
+}
+
+inline vec3f BlockBrickedVolume_transformLocalToWorld(void *uniform pointer, const varying vec3f &coordinates) {
+
+    //! Cast to the actual Volume subtype.
+    BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Transform the point into the world coordinate system.
+    return(coordinates / volume->inherited.upperBound);
+
+}
+
+inline vec3f BlockBrickedVolume_transformWorldToLocal(void *uniform pointer, const varying vec3f &coordinates) {
+
+    //! Cast to the actual Volume subtype.
+    BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Transform the point into the local coordinate system.
+    return(coordinates * volume->inherited.upperBound);
 
 }
 
@@ -223,6 +276,9 @@ export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelTy
     //! The volume container.
     BlockBrickedVolume *uniform volume = uniform new uniform BlockBrickedVolume;
 
+    //! The spatial acceleration structure container.
+    volume->accelerator = (GridAccelerator *uniform) GridAccelerator_createInstance();
+
     //! Store the voxel type.
     volume->voxelType = (OSPDataType) voxelType;
 
@@ -234,6 +290,9 @@ export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelTy
 
     //! Function to sample the volume.
     volume->inherited.computeSample = BlockBrickedVolume_computeSample;
+
+    //! Function to find the next hit point for ray casting based renderers.
+    volume->inherited.intersect = BlockBrickedVolume_intersect;
 
     //! Function to get a voxel value.
     volume->getVoxel = (volume->voxelType == OSP_FLOAT) ? BlockBrickedVolumeFloat_getVoxel : BlockBrickedVolumeUChar_getVoxel;
@@ -284,6 +343,9 @@ export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *
     //! Set the color and opacity transfer function.
     volume->inherited.transferFunction = (TransferFunction *uniform) value;
 
+    //! Update the spatial acceleration structure.
+    GridAccelerator_encodeTransferFunction(volume->accelerator, volume->inherited.transferFunction);
+
 }
 
 export void BlockBrickedVolume_setValueRange(void *uniform pointer, const uniform vec2f &value) {
@@ -293,6 +355,9 @@ export void BlockBrickedVolume_setValueRange(void *uniform pointer, const unifor
 
     //! Set the volume value range.
     volume->inherited.valueRange = value;
+
+    //! Set the value range in the spatial acceleration structure.
+    GridAccelerator_setValueRange(volume->accelerator, volume->inherited.valueRange);
 
 }
 
@@ -309,6 +374,9 @@ export void BlockBrickedVolume_setVolumeDimensions(void *uniform pointer, const 
 
     //! Volume size in blocks per dimension with padding to the nearest block.
     volume->blockCount = (volume->volumeDimensions + BLOCK_VOXEL_WIDTH - 1) / BLOCK_VOXEL_WIDTH;
+
+    //! Allocate storage in the spatial acceleration structure.
+    GridAccelerator_setVolumeDimensions(volume->accelerator, volume->volumeDimensions);
 
 }
 

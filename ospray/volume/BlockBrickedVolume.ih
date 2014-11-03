@@ -11,6 +11,7 @@
 #define BLOCK_BRICKED_VOLUME_IH
 
 #include "ospray/common/OspDataType.h"
+#include "ospray/volume/GridAccelerator.ih"
 #include "ospray/volume/Volume.ih"
 
     //! \brief ISPC variables and functions for the BlockBrickedVolume class,
@@ -22,6 +23,9 @@
 
         //! Fields common to all Volume subtypes (must be the first entry of this struct).
         Volume inherited;
+
+        //! Spatial acceleration structure used for space skipping.
+        GridAccelerator *uniform accelerator;
 
         //! Volume size in blocks per dimension with padding to the nearest block.
         uniform vec3i blockCount;
@@ -47,7 +51,7 @@
     };
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Allocate memory for voxel data.
-//  extern "C" { void *uniform BlockBrickedVolume_allocateMemory(void *uniform volume); }
+//  extern "C" { void BlockBrickedVolume_allocateMemory(void *uniform volume); }
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Assign type-specific function pointers.
 //  extern "C" { void *uniform BlockBrickedVolume_createInstance(const uniform int voxelType); }
