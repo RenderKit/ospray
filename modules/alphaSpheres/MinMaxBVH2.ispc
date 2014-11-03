@@ -75,12 +75,13 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
   varying float distStack[64];
   uniform unsigned int8 *uniform node0ptr
     = (uniform unsigned int8 *uniform)mmBVH->node;
+  const uniform uint32 *uniform primID = mmBVH->primID;
   
   while (1) {
-    uniform int64 numPrimsInNode = nodeRef & 0x7;
+    uniform int64 numPrimsInNode = nodeRef & 0x3;
     if (numPrimsInNode == 0) {
       uniform MinMaxBVH2Node *uniform nodePair 
-        = (uniform MinMaxBVH2Node *uniform)(node0ptr + (nodeRef & ~(7LL)));
+        = (uniform MinMaxBVH2Node *uniform)(node0ptr + (nodeRef & ~(3LL)));
       float dist0, dist1;
       DBG(printNode(nodeRef,0,nodePair[0]);
           printNode(nodeRef,1,nodePair[1]));
@@ -116,9 +117,9 @@ void MinMaxBVH2_traverse(uniform MinMaxBVH2 *uniform mmBVH,
       }
     } else {
       // primitives: do intersection
-      uniform uint64 leafBegin = nodeRef / 8;
+      uniform uint64 leafBegin = nodeRef / 4;
       for (uniform int i=0;i<numPrimsInNode;i++) { 
-        intersectPrim(geomPtr,leafBegin+i,ray);
+        intersectPrim(geomPtr,primID[leafBegin+i],ray);
       }
     }
     while (1) {

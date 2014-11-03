@@ -22,9 +22,7 @@ namespace ospray {
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
         sgRenderer(renderer)
     {
-      PING;
       box3f worldBounds = renderer->world->getBounds();
-      PRINT(worldBounds);
       if (!worldBounds.empty()) {
         float moveSpeed = .25*length(worldBounds.size());
         PRINT(moveSpeed);

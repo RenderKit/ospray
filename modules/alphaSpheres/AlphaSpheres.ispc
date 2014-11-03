@@ -23,18 +23,17 @@
 struct AlphaSpheres {
   uniform Geometry geometry; //!< inherited geometry fields
 
-  uniform uint8    *uniform data;
+  vec3f *uniform position;
+  float *uniform attribute;
+
   //  uniform Material *uniform *materialList;
   uniform TransferFunction *uniform transferFunction;
 
   // the min-max BVH over the primitives
   MinMaxBVH2      mmBVH;
 
-  int             offset_center;
-  int             offset_radius;
-  int             offset_attribute;
+  float           radius;
   int32           numSpheres;
-  int32           bytesPerSphere;
 };
 
 typedef uniform float uniform_float;
@@ -63,14 +62,16 @@ static void AlphaSpheres_postIntersect(uniform Geometry *uniform geometry,
   if (flags & DG_COLOR) {
     // compute base pointer to actual sphere we are intersecting
     foreach_unique(primID in ray.primID) {
-      uniform uint8 *uniform spherePtr
-        = THIS->data + THIS->bytesPerSphere*((uniform int64)primID);
+      // uniform uint8 *uniform spherePtr
+      //   = THIS->data + THIS->bytesPerSphere*((uniform int64)primID);
 
-      // read sphere members relative to sphere base pointr.
-      uniform float radius = *((uniform float *)(spherePtr+THIS->offset_radius));
-      uniform vec3f center = *((uniform vec3f*)(spherePtr+THIS->offset_center));
-      uniform float attrib = *((uniform float *)(spherePtr+THIS->offset_attribute));
-  
+      // // read sphere members relative to sphere base pointr.
+      // uniform float radius = *((uniform float *)(spherePtr+THIS->offset_radius));
+      // uniform vec3f center = *((uniform vec3f*)(spherePtr+THIS->offset_center));
+      // uniform float attrib = *((uniform float *)(spherePtr+THIS->offset_attribute));
+
+      uniform float attrib = THIS->attribute[primID];
+
       // normalize attribute to the [0,1] range (by normalizing relative
       // to the attribute range stored in the min max BVH's root node
       const uniform float attrib_lo = THIS->mmBVH.node[0].range_lo;
@@ -106,26 +107,17 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
                                 varying Ray &ray)
 {
   // typecast "implicit THIS" pointer to the proper geometry type
-  AlphaSpheres *uniform geometry = (AlphaSpheres *uniform)geomPtr;
+  AlphaSpheres *uniform THIS = (AlphaSpheres *uniform)geomPtr;
 
-  // compute base pointer to actual sphere we are intersecting
-  uniform uint8 *uniform spherePtr
-    = geometry->data + geometry->bytesPerSphere * ((uniform int64)primID);
-  
   // read sphere members relative to sphere base pointr.
-  uniform float radius = *((uniform float *uniform )(spherePtr+geometry->offset_radius));
-  uniform vec3f center = *((uniform vec3f*uniform )(spherePtr+geometry->offset_center));
-  uniform float attrib = *((uniform float *uniform )(spherePtr+geometry->offset_attribute));
+  uniform float radius = THIS->radius;
+  uniform vec3f center = THIS->position[primID];
+  uniform float attrib = THIS->attribute[primID];
 
-#if 0
+#if 1
   if (radius != lastRadius) {
     print("new radius %\n",radius);
-  print("offsets % % %\n",
-        geometry->offset_radius,
-        geometry->offset_center,
-        geometry->offset_attribute);
     print("primID %\n",primID);
-    print("spherePTr %\n",spherePtr);
     print("center % % %\n",center.x,center.y,center.z);
     lastRadius = radius;
   }
@@ -133,8 +125,8 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   
   // normalize attribute to the [0,1] range (by normalizing relative
   // to the attribute range stored in the min max BVH's root node
-  const uniform float attrib_lo = geometry->mmBVH.node[0].range_lo;
-  const uniform float attrib_hi = geometry->mmBVH.node[0].range_hi;
+  const uniform float attrib_lo = THIS->mmBVH.node[0].range_lo;
+  const uniform float attrib_hi = THIS->mmBVH.node[0].range_hi;
   attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo);
 
   // compute alpha value from attribute value
@@ -142,7 +134,7 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
   // if (attrib > 1.f || attrib < 0.f)
   //   print("attrib %\n",attrib);
 
-  float alpha = geometry->transferFunction->getAlphaForValue(geometry->transferFunction,attrib);
+  float alpha = THIS->transferFunction->getAlphaForValue(THIS->transferFunction,attrib);
   if (alpha <= .5f)
     return;
 
@@ -162,13 +154,13 @@ void AlphaSpheres_intersectPrim(void *uniform geomPtr,
 
   if (t_in > ray.t0 && t_in < ray.t) {
     ray.primID = primID;
-    ray.geomID = geometry->geometry.geomID;
+    ray.geomID = THIS->geometry.geomID;
     ray.t = t_in;
     ray.Ng = ray.org + ray.t*ray.dir - center;
     return;
   } else if (t_out > ray.t0 && t_out < ray.t) {
     ray.primID = primID;
-    ray.geomID = geometry->geometry.geomID;
+    ray.geomID = THIS->geometry.geomID;
     ray.t = t_out;
     ray.Ng = ray.org + ray.t*ray.dir - center;
     return;
@@ -200,12 +192,11 @@ export void AlphaSpheres_set(void           *uniform _geom,
                              void           *uniform transferFunction,
                              int64           uniform rootRef,
                              const void     *uniform bvhNode,
-                             void           *uniform data,
-                             int             uniform numSpheres,
-                             int             uniform bytesPerSphere,
-                             int             uniform offset_center,
-                             int             uniform offset_radius,
-                             int             uniform offset_attribute)
+                             const uint32   *uniform primID,
+                             float           uniform radius,
+                             vec3f          *uniform positionData,
+                             float          *uniform attributeData,
+                             int             uniform numSpheres)
 {
   uniform AlphaSpheres *uniform geom = (uniform AlphaSpheres *uniform)_geom;
   uniform Model *uniform model = (uniform Model *uniform)_model;
@@ -216,18 +207,18 @@ export void AlphaSpheres_set(void           *uniform _geom,
   geom->geometry.geomID = geomID;
   // geom->materialList = (Material **)materialList;
   geom->numSpheres = numSpheres;
-  // geom->radius = radius;
-  geom->data = (uniform uint8 *uniform)data;
-  // geom->materialID = materialID;
-  geom->bytesPerSphere = bytesPerSphere;
+  geom->radius = radius;
+  geom->position  = positionData;
+  geom->attribute = attributeData;
+
+  print("radius %\n",radius);
 
   geom->mmBVH.rootRef = rootRef;
   geom->mmBVH.node    = (MinMaxBVH2Node*uniform)bvhNode;
+  geom->mmBVH.primID  = primID;
 
-  geom->offset_center     = offset_center;
-  geom->offset_radius     = offset_radius;
-  geom->offset_attribute  = offset_attribute;
   geom->transferFunction  = (TransferFunction *uniform)transferFunction;
+
   rtcSetUserData(model->embreeSceneHandle,geomID,geom);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
                        (uniform RTCBoundsFunc)&AlphaSpheres_bounds);

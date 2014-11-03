@@ -8,6 +8,8 @@
 
 #pragma once
 
+#undef NDEBUG
+
 #include "sg/geometry/Spheres.h"
 #include "sg/common/Integrator.h"
 // xml parser
@@ -71,10 +73,12 @@ namespace ospray {
         ospPositionData = ospNewData(position.size(),OSP_FLOAT3,&position[0],
                                      OSP_DATA_SHARED_BUFFER);
         ospCommit(ospPositionData);
-        ospSetData(ospGeometry,"position",ospPositionData);
+        ospSetData(ospGeometry,"positions",ospPositionData);
       }
       
       // check if transfer function exists, and is updated
+      PING;
+      PRINT(transferFunction);
       if (transferFunction == NULL)
         throw std::runtime_error("osp:sg:AlphaSpheres: no 'transferFunction' defined");
       else {
@@ -84,17 +88,23 @@ namespace ospray {
       }
 
       // make sure active attribute is presetnt ...
+      PING;
+      PRINT(activeAttribute);
       if (activeAttribute == NULL)
-        throw std::runtime_error("osp:sg:AlphaSpheres: no 'transferFunction' defined");
+        throw std::runtime_error("osp:sg:AlphaSpheres: no 'activeAttribute' defined");
       // ... and commited ...
       if (activeAttribute->ospData == NULL) {
         assert(activeAttribute->size() == position.size());
         activeAttribute->ospData = ospNewData(activeAttribute->size(),OSP_FLOAT,
-                                              &*activeAttribute->begin(),OSP_DATA_SHARED_BUFFER);
+                                              &*activeAttribute->begin(),
+                                              OSP_DATA_SHARED_BUFFER);        
+        ospCommit(activeAttribute->ospData);
       }
       // ... ; then assign this attribute to the geometry
-      ospSetData(ospGeometry,"attribute",activeAttribute->ospData);
-      
+      ospSetData(ospGeometry,"attributes",activeAttribute->ospData);
+
+      assert(radius > 0.f);
+      ospSet1f(ospGeometry,"radius",radius);
       
       ospCommit(ospGeometry);
       lastCommitted = TimeStamp::now();
@@ -158,17 +168,18 @@ namespace ospray {
     }
 
     //! add a new set of attributes to the geometry
-    void AlphaSpheres::setActiveAttribute(Attribute *attributeSet)
+    void AlphaSpheres::setActiveAttribute(Attribute *attribute)
     {
-      this->activeAttribute = activeAttribute; 
+      this->activeAttribute = attribute; 
       lastModified = TimeStamp::now(); 
     }
-
 
     //! add a new set of attributes to the geometry
     void AlphaSpheres::addAttribute(Attribute *attribute)
     {
+      assert(attribute != NULL);
       this->attribute[attribute->name] = attribute;
+      PRINT(this->attribute.size());
       if (this->attribute.size() == 1)
         setActiveAttribute(attribute);
     }

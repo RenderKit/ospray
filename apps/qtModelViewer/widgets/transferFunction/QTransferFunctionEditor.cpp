@@ -45,15 +45,15 @@ namespace ospray {
     
     void QTransferFunctionAlphaEditor::setColorMapImage(QImage *image)
     {
-      PING;
+      // PING;
       assert(colorMapImage);
       delete colorMapImage;
       colorMapImage = image;
       
       // trigger repaint
-      PING;
+      // PING;
       repaint();
-      PING;
+      // PING;
     }
     
     void QTransferFunctionAlphaEditor::resizeEvent(QResizeEvent * event)

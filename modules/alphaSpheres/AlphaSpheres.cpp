@@ -22,34 +22,26 @@ namespace ospray {
   AlphaSpheres::AlphaSpheres()
   {
     this->ispcEquivalent = ispc::AlphaSpheres_create(this);
-    // _materialList = NULL;
   }
   
   void AlphaSpheres::buildBVH() 
   {
-    PrimAbstraction pa(sphere,numSpheres);
-    mmBVH.build(&pa);
+    PrimAbstraction pa(this);
+    mmBVH.initialBuild(&pa);
   }
-
-  struct DbgSphere {
-    vec3f pos; float rad; int pad[2];
-  };
-
+  
   void AlphaSpheres::finalize(Model *model) 
   {
-    // radius            = getParam1f("radius",0.01f);
-    // materialID        = getParam1i("materialID",0);
-    bytesPerSphere    = getParam1i("bytes_per_sphere",6*sizeof(float));
-    offset_center     = getParam1i("offset_center",0);
-    offset_radius     = getParam1i("offset_radius",-1); //3*sizeof(float));
-    offset_attribute  = getParam1i("offset_attribute",-1);
-    sphereData          = getParamData("spheres",NULL);
-    // materialList      = getParamData("materialList",NULL);
+    radius            = getParam1f("radius",0.01f);
+    attributeData     = getParamData("attributes",NULL);
+    positionData      = getParamData("positions",NULL);
     transferFunction  = (TransferFunction *)getParamObject("transferFunction",NULL);
     
-    if (sphereData == NULL) 
-      throw std::runtime_error("#osp:AlphaSpheres: no 'spheres' data specified");
-    numSpheres = sphereData->numBytes / bytesPerSphere;
+    if (positionData == NULL) 
+      throw std::runtime_error("#osp:AlphaPositions: no 'positions' data specified");
+    if (attributeData == NULL) 
+      throw std::runtime_error("#osp:AlphaAttributes: no 'attributes' data specified");
+    numSpheres = positionData->numBytes / sizeof(vec3f);
 
     std::cout << "#osp: creating 'alpha_spheres' geometry, #spheres = " << numSpheres << std::endl;
     
@@ -58,42 +50,22 @@ namespace ospray {
     }
     assert(transferFunction);
     
-    sphere = (Sphere *)sphereData->data;
-    // PRINT(sphere);
+    position  = (vec3f *)positionData->data;
+    attribute = (float *)attributeData->data;
 
-
-    // cout << "--------------------------------------------" << endl;
-    // cout << "spheres before build: " << numSpheres << endl;
-    // DbgSphere *dbg = (DbgSphere*)sphereData->data;
-    // for (int i=0;i<numSpheres;i++) {
-    //   cout << "sphere " << i << " " << dbg[i].pos << " " << dbg[i].rad << endl;
-    // }
     buildBVH();
-    // PING;
-    // cout << "--------------------------------------------" << endl;
-    // cout << "spheres AFTER build: " << numSpheres << endl;
-    // for (int i=0;i<numSpheres;i++) {
-    //   cout << "sphere " << i << " " << dbg[i].pos << " " << dbg[i].rad << endl;
-    // }
-    // PRINT(dbg);
-    // PRINT(dbg+numSpheres);
-    // PRINT(bytesPerSphere);
-    // PRINT(offset_center);
-    // PRINT(offset_radius);
-    // PRINT(offset_attribute);
 
     ispc::AlphaSpheres_set(getIE(),
                            model->getIE(),
                            transferFunction->getIE(),
                            mmBVH.rootRef,
                            mmBVH.getNodePtr(),
-                           sphere,
-                           numSpheres,bytesPerSphere,
-                           offset_center,offset_radius,
-                           offset_attribute);
+                           &mmBVH.primID[0],
+                           radius,
+                           (ispc::vec3f*)position,attribute,
+                           numSpheres);
     PRINT(mmBVH.node.size());
     PRINT(mmBVH.node[0]);
-    PING;
   }
 
 

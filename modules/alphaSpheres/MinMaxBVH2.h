@@ -20,9 +20,10 @@ namespace ospray {
   struct MinMaxBVH {
     struct PrimAbstraction {
       virtual size_t numPrims() = 0;
-      virtual size_t sizeOfPrim() = 0;
-      virtual void swapPrims(size_t aID, size_t bID) = 0;
-      virtual box4f boundsOfPrim(size_t primID) = 0;
+      // virtual size_t sizeOfPrim() = 0;
+      // virtual void swapPrims(size_t aID, size_t bID) = 0;
+      virtual box3f boundsOf(size_t primID) = 0;
+      virtual float attributeOf(size_t primID) = 0;
     };
 
     /*! a node in a MinMaxBVH: a (4D-)bounding box, plus a child/leaf refence */
@@ -31,7 +32,8 @@ namespace ospray {
     };
     void buildRec(const size_t nodeID, 
                   PrimAbstraction *pa, const size_t begin, const size_t end);
-    void build(PrimAbstraction *pa);
+    void initialBuild(PrimAbstraction *pa);
+    void updateRanges(PrimAbstraction *pa);
 
     /*! to allow passing this pointer to ISCP: */
     const void *getNodePtr() const { assert(!node.empty()); return &node[0]; };
@@ -41,6 +43,7 @@ namespace ospray {
     //  protected:
     /*! node vector */
     std::vector<Node> node;
+    std::vector<uint> primID;
     /*! node reference to the root node */
     uint64 rootRef;
     const box4f &getBounds() const { return node[0]; }

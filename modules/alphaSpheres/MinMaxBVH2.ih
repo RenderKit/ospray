@@ -34,6 +34,7 @@ struct MinMaxBVH2Node {
   primitive */
 struct MinMaxBVH2 {
   int64           rootRef;
+  const uint32   *primID;
   MinMaxBVH2Node *node;
 };
 
