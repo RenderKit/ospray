@@ -554,11 +554,18 @@ __define_lerp4(uc)
 #undef __define_lerp3
 #undef __define_lerp4
 
-inline vec3i operator+(const uniform vec3i &a, const vec3i &b)
+inline uniform vec3i operator+(const uniform vec3i &a, const uniform vec3i &b)
 { return(make_vec3i(a.x + b.x, a.y + b.y, a.z + b.z)); }
 
-inline vec3i operator+(const vec3i &a, const uniform vec3i &b)
+inline vec3i operator+(const varying vec3i &a, const varying vec3i &b)
 { return(make_vec3i(a.x + b.x, a.y + b.y, a.z + b.z)); }
+
+// Workaround for compiler bug.
+inline vec3i operator+(const uniform vec3i &a, const varying vec3i &b)
+{ return(make_vec3i(a.x + b.x, a.y + b.y, a.z + b.z)); }
+
+inline vec3i operator+(const varying vec3i &a, const varying int32 b)
+{ return(make_vec3i(a.x + b, a.y + b, a.z + b)); }
 
 inline uniform vec3i operator+(const uniform vec3i &a, const uniform int b)
 { return(make_vec3i(a.x + b, a.y + b, a.z + b)); }
@@ -566,8 +573,20 @@ inline uniform vec3i operator+(const uniform vec3i &a, const uniform int b)
 inline uniform vec3i operator-(const uniform vec3i &a, const uniform int b)
 { return(make_vec3i(a.x - b, a.y - b, a.z - b)); }
 
+inline vec3i operator-(const varying vec3i &a, const uniform vec3i &b)
+{ return(make_vec3i(a.x - b.x, a.y - b.y, a.z - b.z)); }
+
+inline vec3i operator-(const varying vec3i &a, const varying vec3i &b)
+{ return(make_vec3i(a.x - b.x, a.y - b.y, a.z - b.z)); }
+
+inline vec3i operator-(const varying vec3i &a, const varying int32 b)
+{ return(make_vec3i(a.x - b, a.y - b, a.z - b)); }
+
 inline uniform vec3i operator/(const uniform vec3i &a, const uniform int b)
 { return(make_vec3i(a.x / b, a.y / b, a.z / b)); }
+
+inline vec3i max(const varying vec3i &a, const varying int32 b)
+{ return(make_vec3i(max(a.x, b), max(a.y, b), max(a.z, b))); }
 
 inline vec3f float_cast(const vec3i &a)
 { return(make_vec3f(a.x, a.y, a.z)); }
@@ -577,6 +596,9 @@ inline vec3i integer_cast(const vec3f &a)
 
 inline vec3i operator>>(const vec3i &a, const int b)
 { return(make_vec3i(a.x >> b, a.y >> b, a.z >> b)); }
+
+inline vec3i operator<<(const vec3i &a, const int b)
+{ return(make_vec3i(a.x << b, a.y << b, a.z << b)); }
 
 inline vec3i bitwise_AND(const vec3i &a, const int b)
 { return(make_vec3i(a.x & b, a.y & b, a.z &b)); }
@@ -600,8 +622,14 @@ inline vec3f clamp(const vec3f &a, const uniform vec3f &b, const uniform vec3f &
 inline uniform vec3f nextafter(const uniform vec3i &a, const uniform vec3i &b)
 { return(make_vec3f(nextafter(a.x, b.x), nextafter(a.y, b.y), nextafter(a.z, b.z))); }
 
+inline varying float reduce_min(const varying vec3f &a)
+{ return(min(min(a.x, a.y), a.z)); }
+
 inline varying float reduce_min(const varying vec4f &a)
 { return(min(min(min(a.x, a.y), a.z), a.w)); }
+
+inline varying vec3f pow(const varying vec3f &a, const varying float b)
+{ return(make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b))); }
 
 inline varying vec4f pow(const varying vec4f &a, const varying float b)
 { return(make_vec4f(pow(a.x, b), pow(a.y, b), pow(a.z, b), pow(a.w, b))); }
