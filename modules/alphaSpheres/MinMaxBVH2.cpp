@@ -21,14 +21,14 @@ namespace ospray {
   { 
     vec3f size = b.upper - b.lower;
     float f = size.x*size.y+size.x*size.z+size.y*size.z;
-    if (fabs(f) < 1e-8) return 1e-8; 
+    if (fabs(f) < 1e-15) return 1e-15; 
     return f;
   }
   __forceinline float my_safeArea(const box4f &b) 
   { 
     vec4f size = b.upper - b.lower;
     float f =  size.x*size.y+size.x*size.z+size.y*size.z;
-    if (fabs(f) < 1e-8) return 1e-8; 
+    if (fabs(f) < 1e-15) return 1e-15; 
     return f;
   }
 
