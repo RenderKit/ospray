@@ -27,6 +27,12 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer
     //! Set the window bounds based on the OSPRay world bounds (always [(0,0,0), (1,1,1)) for volumes).
     osprayWindow->setWorldBounds(osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
 
+    //! Create an OSPRay light source.
+    light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
+
+    //! Set the light source on the renderer.
+    ospCommit(light);  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
+
     //! Create an OSPRay transfer function.
     transferFunction = ospNewTransferFunction("piecewise_linear");  exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
 
@@ -96,12 +102,6 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 }
 
 void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
-
-    //! Create an OSPRay light source.
-    light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
-
-    //! Set the light source on the renderer.
-    ospCommit(light);  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
 
     //! Load OSPRay objects from files.
     for (size_t i=0 ; i < filenames.size() ; i++) importObjectsFromFile(filenames[i]);

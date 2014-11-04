@@ -18,6 +18,9 @@
     //! Brick width in grid cells.
     #define BRICK_WIDTH (1 << BRICK_WIDTH_BITCOUNT)
 
+    //! Brick size in cells.
+    #define BRICK_CELL_COUNT (BRICK_WIDTH * BRICK_WIDTH * BRICK_WIDTH)
+
     //! Bit count used to represent the grid cell width.
     #define CELL_WIDTH_BITCOUNT (4)
 
@@ -196,8 +199,8 @@ void GridAccelerator_setVolumeDimensions(GridAccelerator *uniform accelerator, c
     //! Grid size in bricks per dimension after padding out the grid dimensions to the nearest brick.
     accelerator->brickCount = (accelerator->gridDimensions + BRICK_WIDTH - 1) / BRICK_WIDTH;
 
-    //! Grid cell count.
-    const uniform size_t cellCount = accelerator->gridDimensions.x * accelerator->gridDimensions.y * accelerator->gridDimensions.z;
+    //! Grid cell count with padding.
+    const uniform size_t cellCount = accelerator->brickCount.x * accelerator->brickCount.y * accelerator->brickCount.z * BRICK_CELL_COUNT;
 
     //! Allocate storage for the encoded volumetric values per cell.
     accelerator->cellCodes = uniform new uniform uint32[cellCount];  memset(accelerator->cellCodes, 0, cellCount * sizeof(uniform uint32));

@@ -11,8 +11,7 @@
 LightEditor::LightEditor(OSPLight light) : light(light) {
 
     //! Make sure we have an existing transfer light.
-    if(!light)
-        throw std::runtime_error("must be constructed with an existing light");
+    if (!light) throw std::runtime_error("LightEditor: must be constructed with an existing light");
 
     //! Setup UI elments.
     QVBoxLayout * layout = new QVBoxLayout();
