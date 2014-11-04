@@ -6,8 +6,6 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#pragma once
-
 #undef NDEBUG
 
 #include "sg/geometry/Spheres.h"
@@ -188,7 +186,9 @@ namespace ospray {
       Ref<sg::AlphaSpheres> spheres = new sg::AlphaSpheres;
       Ref<sg::TransferFunction> transferFunction = new sg::TransferFunction;
       spheres->setTransferFunction(transferFunction);
-      spheres->setRadius(1e-3f);
+      spheres->setRadius(3e-3f);
+      
+      char *maxAtomsEnv = getenv("OSPRAY_MAX_ATOMS");
       
       size_t numAtoms = 0;
       size_t offset;
@@ -196,7 +196,8 @@ namespace ospray {
       {
         fscanf(txt,"atoms %li offset %li\n",&numAtoms,&offset);
 
-        //        numAtoms = std::min(numAtoms,(size_t)2000000);
+        if (maxAtomsEnv)
+          numAtoms = std::min(numAtoms,(size_t)atol(maxAtomsEnv));
 
         fseek(bin,offset,SEEK_SET); 
         std::vector<vec3f> position; 

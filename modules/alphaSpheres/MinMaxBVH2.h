@@ -43,7 +43,7 @@ namespace ospray {
     //  protected:
     /*! node vector */
     std::vector<Node> node;
-    std::vector<uint> primID;
+    std::vector<uint32> primID;
     /*! node reference to the root node */
     uint64 rootRef;
     const box4f &getBounds() const { return node[0]; }

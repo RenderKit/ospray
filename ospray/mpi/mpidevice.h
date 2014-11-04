@@ -37,6 +37,7 @@ namespace ospray {
         CMD_NEW_VOLUME,
         CMD_NEW_TRANSFERFUNCTION,
         CMD_NEW_DATA,
+        CMD_NEW_TEXTURE2D,
         CMD_ADD_GEOMETRY,
         CMD_ADD_VOLUME,
         CMD_COMMIT,
@@ -181,8 +182,7 @@ namespace ospray {
 
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(int width, int height, 
-                                        OSPDataType type, void *data, int flags)
-      { NOTIMPLEMENTED; }
+                                        OSPDataType type, void *data, int flags);
     };
 
   }

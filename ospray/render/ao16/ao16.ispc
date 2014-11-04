@@ -183,6 +183,17 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   // print("shade at16 %\n",N.x,N.y,N.z);
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
+// <<<<<<< HEAD
+//   vec3f baseColor = make_vec3f(.9f); // = mat->Kd; // * make_vec3f(dg.color);
+//   if (mat)
+//     foreach_unique(m in mat) {
+//       baseColor = m->Kd;
+//       if (m->map_Kd) {
+// 	vec4f kd_from_map = get4f(m->map_Kd,dg.st);
+// 	baseColor = baseColor * make_vec3f(kd_from_map);
+//       }
+//     }
+// =======
   vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
   if (mat) {
     foreach_unique(m in mat) {
@@ -197,11 +208,14 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
     }
   }
   baseColor = baseColor * make_vec3f(dg.color);
+// >>>>>>> 43eb475e4b19b341643f066be9f53d9b35fea093
   // foreach_unique(tex in mat->map_Kd) {
-  //   if (tex) {
+    //   if (tex) {
   //     baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
   //   }
   // }
+
+  baseColor = baseColor * make_vec3f(dg.color);
   
   int hits = 0;
   vec3f biNormU,biNormV;

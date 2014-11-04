@@ -87,10 +87,16 @@ void MinMaxBVH2_intersect(uniform MinMaxBVH2 *uniform mmBVH,
       float dist0, dist1;
       DBG(printNode(nodeRef,0,nodePair[0]);
           printNode(nodeRef,1,nodePair[1]));
-      bool hit0 = rangeIsInteresting(xf,*mmBVH,nodePair[0])
-        && intersects(ray,rorg,rdir,nodePair[0],dist0);
-      bool hit1 = rangeIsInteresting(xf,*mmBVH,nodePair[1])
-        && intersects(ray,rorg,rdir,nodePair[1],dist1);
+      bool hit0 
+        =  intersects(ray,rorg,rdir,nodePair[0],dist0)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[0]);
+      bool hit1
+        =  intersects(ray,rorg,rdir,nodePair[1],dist1)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[1]);
+      // bool hit0 = rangeIsInteresting(xf,*mmBVH,nodePair[0])
+      //   && intersects(ray,rorg,rdir,nodePair[0],dist0);
+      // bool hit1 = rangeIsInteresting(xf,*mmBVH,nodePair[1])
+      //   && intersects(ray,rorg,rdir,nodePair[1],dist1);
       if (any(hit0)) {
         if (any(hit1)) {
           unmasked { distStack[stackPtr] = 1e20f; }
@@ -163,10 +169,12 @@ void MinMaxBVH2_occluded(uniform MinMaxBVH2 *uniform mmBVH,
       float dist0, dist1;
       DBG(printNode(nodeRef,0,nodePair[0]);
           printNode(nodeRef,1,nodePair[1]));
-      bool hit0 = rangeIsInteresting(xf,*mmBVH,nodePair[0])
-        && intersects(ray,rorg,rdir,nodePair[0],dist0);
-      bool hit1 = rangeIsInteresting(xf,*mmBVH,nodePair[1])
-        && intersects(ray,rorg,rdir,nodePair[1],dist1);
+      bool hit0 
+        =  intersects(ray,rorg,rdir,nodePair[0],dist0)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[0]);
+      bool hit1
+        =  intersects(ray,rorg,rdir,nodePair[1],dist1)
+        && rangeIsInteresting(xf,*mmBVH,nodePair[1]);
       if (any(hit0)) {
         if (any(hit1)) {
           nodeStack[stackPtr++] = nodePair[1].childRef;
