@@ -11,7 +11,7 @@
 #include "ospray/render/util.ih"
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
 
-inline void RaycastVolumeRenderer_computeSample(Volume *uniform volume, varying Ray &ray, varying vec4f &color) {
+inline void RaycastVolumeRenderer_computeVolumeSample(Volume *uniform volume, varying Ray &ray, varying vec4f &color) {
 
     //! Advance the ray.
     volume->intersect(volume, ray);  if (ray.t > ray.t1) return;
@@ -25,11 +25,74 @@ inline void RaycastVolumeRenderer_computeSample(Volume *uniform volume, varying 
     //! Look up the opacity associated with the volume sample.
     const float sampleAlpha = volume->transferFunction->getAlphaForValue(volume->transferFunction, sample);
 
-    //! Attenuate the sampled opacity by step count so the apparent intensity remains constant.
-    const float transparency = (1.0f - color.w) * (1.0f - exp(-sampleAlpha * volume->stepSize));
+    //! Set the color contribution for this sample only (do not accumulate).
+    color = (1.0f - exp(-sampleAlpha * volume->stepSize)) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 
-    //! Attenuate the sampled color by the remaining transparency.
-    color = color + transparency * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
+}
+
+inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform renderer, varying Ray &ray, varying vec4f &color) {
+
+    //! We compute intersections on both the model and dynamicModel, and provide the contribution for the closest hit.
+
+    bool hitDynamicModel = false;
+
+    Ray dynamicRay = ray;
+    traceRay(renderer->dynamicModel, dynamicRay);
+
+    traceRay(renderer->model, ray);
+
+    if(dynamicRay.t < ray.t) {
+
+        hitDynamicModel = true;
+        ray = dynamicRay;
+    }
+
+    //! No hit found.
+    if(ray.geomID < 0) {
+        ray.t = infinity;
+        return;
+    }
+
+    //! Post intersect on the hit geometry.
+    DifferentialGeometry dg;
+
+    if(hitDynamicModel)
+        postIntersect(renderer->dynamicModel, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+    else
+        postIntersect(renderer->model, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+
+    //! Color of the geometry.
+    vec3f sampleColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
+
+    //! If no color found in the geometry, map through transfer function.
+    if(sampleColor.x == -1.f) {
+
+        //! Coordinates of the geometry hit.
+        const vec3f geometryCoordinates = ray.org + ray.t * ray.dir;
+
+        //! Sample the volume.
+        const float sample = renderer->model->volumes[0]->computeSample(renderer->model->volumes[0], geometryCoordinates);
+
+        //! Look up the color associated with the volume sample.
+        sampleColor = renderer->model->volumes[0]->transferFunction->getColorForValue(renderer->model->volumes[0]->transferFunction, sample);
+    }
+    else {
+
+        //! Lighting. For now only on geometry with color information.
+        vec3f lightDirection;
+        float lightDistance;
+        vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], dg.P, lightDirection, lightDistance);
+
+        const float cosNL = abs(dot(normalize(lightDirection), normalize(dg.Ns)));
+
+        sampleColor = sampleColor * cosNL * lightRadiance;
+    }
+
+    //! Assume constant alpha for now.
+    const float sampleAlpha = 1.0f;
+
+    //! Set the color contribution for this sample only (do not accumulate).
+    color = sampleAlpha * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 
 }
 
@@ -49,7 +112,10 @@ inline void RaycastVolumeRenderer_intersectBox(const uniform box3f &box, varying
 
 }
 
-inline void RaycastVolumeRenderer_intersectVolume(Volume *uniform volume, varying Ray &ray, varying vec4f &color) {
+//! This function intersects the volume and geometries.
+inline void RaycastVolumeRenderer_intersect(RaycastVolumeRenderer *uniform renderer, varying Ray &ray, varying vec4f &color) {
+
+    //! Assume just one volume.
 
     //! Box representing the global bounds of the volume.
     const uniform box3f bounds = make_box3f(make_vec3f(0.0f), make_vec3f(1.0f));
@@ -58,11 +124,50 @@ inline void RaycastVolumeRenderer_intersectVolume(Volume *uniform volume, varyin
     RaycastVolumeRenderer_intersectBox(bounds, ray);  if (ray.t0 > ray.t1) return;
 
     //! Adjust the ray so the initial hit point will lie just inside the volume.
-    ray.t = ray.t0 - volume->stepSize * 0.5f;
- 
-    //! Trace the ray through the volume.
-    while (ray.t < ray.t1 && reduce_min(color) < 1.0f) RaycastVolumeRenderer_computeSample(volume, ray, color);
+    ray.t = ray.t0 - renderer->model->volumes[0]->stepSize * 0.5f;
 
+    //! Copy of the ray for geometry intersection. The original ray is used for volume intersection.
+    Ray geometryRay = ray;
+    geometryRay.t = ray.t1; //! end of valid ray interval for traceRay()
+    geometryRay.primID = -1;
+    geometryRay.geomID = -1;
+    geometryRay.instID = -1;
+
+    //! Separate color contributions for the volume and geometries. Initialize to provided color in case of no volume contribution...
+    vec4f volumeColor = color;
+    vec4f geometryColor = color;
+
+    //! Initial trace through the volume and geometries.
+    RaycastVolumeRenderer_computeVolumeSample(renderer->model->volumes[0], ray, volumeColor);
+    RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
+
+    //! Trace the ray through the volume and geometries.
+    while (min(ray.t, geometryRay.t) < ray.t1 && reduce_min(color) < 1.0f) {
+
+        if(geometryRay.t < ray.t) {
+
+            //! Geometry contribution.
+            color = color + (1.0f - color.w) * geometryColor;
+
+            //! Reset geometry ray.
+            geometryRay.t0 = geometryRay.t + 1e-4f;
+            geometryRay.t = ray.t1; //! end of valid ray interval for traceRay()
+            geometryRay.primID = -1;
+            geometryRay.geomID = -1;
+            geometryRay.instID = -1;
+
+            //! Trace next geometry ray.
+            RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
+        }
+        else {
+
+            //! Volume contribution.
+            color = color + (1.0f - color.w) * volumeColor;
+
+            //! Trace next volume ray.
+            RaycastVolumeRenderer_computeVolumeSample(renderer->model->volumes[0], ray, volumeColor);
+        }
+    }
 }
 
 void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer, varying ScreenSample &sample) {
@@ -73,8 +178,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer, varying Scree
     //! Background color.
     const vec4f background = make_vec4f(1.0f);
 
-    //! For now we assume the model contains at least 1 volume.
-    vec4f color = make_vec4f(0.0f);  RaycastVolumeRenderer_intersectVolume(renderer->model->volumes[0], sample.ray, color);
+    //! Provide the renderer to the intersector as it contains all volumes, geometries, etc.
+    vec4f color = make_vec4f(0.0f);  RaycastVolumeRenderer_intersect(renderer, sample.ray, color);
 
     //! Gamma correction.
     color = renderer->model->volumes[0]->gammaCorrection.x * pow(color, renderer->model->volumes[0]->gammaCorrection.y);
