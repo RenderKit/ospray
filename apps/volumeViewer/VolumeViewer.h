@@ -71,6 +71,9 @@ protected:
     //! OSPRay models.
     std::vector<OSPModel> models;
 
+    //! Model for dynamic geometry (slices); maintained separately from other geometry.
+    OSPModel dynamicModel;
+
     //! OSPRay volumes.
     std::vector<OSPVolume> volumes;
 

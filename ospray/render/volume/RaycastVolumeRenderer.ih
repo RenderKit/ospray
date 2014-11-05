@@ -27,7 +27,7 @@
         Renderer inherited;
 
         //! Renderer state.
-        Camera *uniform camera;  Light **uniform lights;  Model *uniform model;
+        Camera *uniform camera;  Light **uniform lights;  Model *uniform model;  Model *uniform dynamicModel;
 
     };
 

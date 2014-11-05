@@ -136,3 +136,12 @@ export void RaycastVolumeRenderer_setModel(void *uniform pointer, void *uniform 
 
 }
 
+export void RaycastVolumeRenderer_setDynamicModel(void *uniform pointer, void *uniform model) {
+
+    //! Cast to the actual Renderer subtype.
+    RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
+
+    //! Set the model to be rendered.
+    renderer->dynamicModel = (Model *uniform) model;
+
+}

@@ -70,8 +70,12 @@ void VolumeViewer::autoRotate(bool set) {
 
 void VolumeViewer::addSlice(std::string filename) {
 
+    //! Use dynamic geometry model for slices.
+    std::vector<OSPModel> dynamicModels;
+    dynamicModels.push_back(dynamicModel);
+
     //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
-    SliceWidget * sliceWidget = new SliceWidget(models, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
+    SliceWidget * sliceWidget = new SliceWidget(dynamicModels, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
     connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
     sliceWidgetsLayout.addWidget(sliceWidget);
 
@@ -126,6 +130,13 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 }
 
 void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
+
+    //! Create model for dynamic geometry.
+    dynamicModel = ospNewModel();
+    ospCommit(dynamicModel);
+
+    //! Set the dynamic model on the renderer.
+    ospSetObject(renderer, "dynamic_model", dynamicModel);
 
     //! Load OSPRay objects from files.
     for (size_t i=0 ; i < filenames.size() ; i++) importObjectsFromFile(filenames[i]);

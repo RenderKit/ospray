@@ -27,11 +27,17 @@ namespace ospray {
         //! Get the model.
         model = (Model *) getParamObject("model", NULL);  exitOnCondition(model == NULL, "no model specified");
 
+        //! Get the dynamic model.
+        dynamicModel = (Model *) getParamObject("dynamic_model", NULL);  exitOnCondition(dynamicModel == NULL, "no dynamic model specified");
+
         //! Set the camera.
         ispc::RaycastVolumeRenderer_setCamera(ispcEquivalent, camera->getIE());
 
         //! Set the model.
         ispc::RaycastVolumeRenderer_setModel(ispcEquivalent, model->getIE());
+
+        //! Set the dynamic model.
+        ispc::RaycastVolumeRenderer_setDynamicModel(ispcEquivalent, dynamicModel->getIE());
 
         //! Set the lights if any.
         ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, getLightsFromData(getParamData("lights", NULL)));
