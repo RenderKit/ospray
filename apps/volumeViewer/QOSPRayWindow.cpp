@@ -72,7 +72,7 @@ void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
     viewport_.at = center(worldBounds_);
 
     // set viewport from point relative to center of world bounds
-    viewport_.from = viewport_.at - 2.f * viewport_.frame.l.vy;
+    viewport_.from = viewport_.at - 1.5f * viewport_.frame.l.vy;
 
     updateGL();
 }
