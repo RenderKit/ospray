@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
         std::cerr << " "                                                                                        << std::endl;
         std::cerr << "    -benchmark <warm-up frames> <frames> : run benchmark and report overall frame rate"   << std::endl;
         std::cerr << "    -dt <dt>                             : use ray cast sample step size 'dt'"            << std::endl;
+        std::cerr << "    -ply <filename>                      : load PLY geometry from 'filename'"             << std::endl;
         std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
         std::cerr << "    -slice <filename>                    : load volume slice from 'filename'"             << std::endl;
         std::cerr << "    -transferfunction <filename>         : load transfer function from 'filename'"        << std::endl;
@@ -49,6 +50,7 @@ int main(int argc, char *argv[]) {
 
     //! Default values for the optional command line arguments.
     float dt = 0.0f;
+    std::vector<std::string> plyFilenames;
     float rotationRate = 0.0f;
     std::vector<std::string> sliceFilenames;
     std::string transferFunctionFilename;
@@ -68,6 +70,13 @@ int main(int argc, char *argv[]) {
             if (i + 1 >= argc) throw std::runtime_error("missing <dt> argument");
             dt = atof(argv[++i]);
             std::cout << "got dt = " << dt << std::endl;
+
+        } else if (arg == "-ply") {
+
+            //! Note: we use "-ply" since "-geometry" gets parsed elsewhere...
+            if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
+            plyFilenames.push_back(std::string(argv[++i]));
+            std::cout << "got PLY filename = " << plyFilenames.back() << std::endl;
 
         } else if (arg == "-rotate") {
 
@@ -141,6 +150,12 @@ int main(int argc, char *argv[]) {
 
     //! Display the first model.
     volumeViewer->setModel(0);
+
+    //! Load PLY geometries from file.
+    for(unsigned int i=0; i<plyFilenames.size(); i++) {
+
+        volumeViewer->addGeometry(plyFilenames[i]);
+    }
 
     //! Set rotation rate to use in animation mode.
     if(rotationRate != 0.f) {

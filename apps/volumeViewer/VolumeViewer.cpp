@@ -12,6 +12,7 @@
 #include "TransferFunctionEditor.h"
 #include "LightEditor.h"
 #include "SliceWidget.h"
+#include "PLYGeometryFile.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL), autoRotationRate(0.025f) {
 
@@ -79,6 +80,29 @@ void VolumeViewer::addSlice(std::string filename) {
         sliceWidget->load(filename);
 }
 
+void VolumeViewer::addGeometry(std::string filename) {
+
+    //! For now we assume PLY geometry files. Later we can support other geometry formats.
+
+    //! Get filename if not specified.
+    if(filename.empty())
+        filename = QFileDialog::getOpenFileName(this, tr("Load geometry"), ".", "PLY files (*.ply)").toStdString();
+
+    if(filename.empty())
+        return;
+
+    //! Load the geometry.
+    PLYGeometryFile geometryFile(filename);
+
+    //! Add the OSPRay triangle mesh to all models.
+    OSPTriangleMesh triangleMesh = geometryFile.getOSPTriangleMesh();
+
+    for(unsigned int i=0; i<models.size(); i++) {
+        ospAddGeometry(models[i], triangleMesh);
+        ospCommit(models[i]);
+    }
+}
+
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 
     //! Create an OSPRay model.
@@ -135,6 +159,11 @@ void VolumeViewer::initUserInterfaceWidgets() {
     QAction *addSliceAction = new QAction("Add slice", this);
     connect(addSliceAction, SIGNAL(triggered()), this, SLOT(addSlice()));
     toolbar->addAction(addSliceAction);
+
+    //! Add the "add geometry" widget and callback.
+    QAction *addGeometryAction = new QAction("Add geometry", this);
+    connect(addGeometryAction, SIGNAL(triggered()), this, SLOT(addGeometry()));
+    toolbar->addAction(addGeometryAction);
 
     //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
     QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);

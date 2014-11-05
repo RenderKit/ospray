@@ -24,6 +24,7 @@ SET(SRCS ${SRCS}
   main.cpp
   ColorMap.cpp
   LightEditor.cpp
+  PLYGeometryFile.cpp
   QOSPRayWindow.cpp
   SliceWidget.cpp
   TransferFunctionEditor.cpp

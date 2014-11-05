@@ -57,6 +57,8 @@ public slots:
     //! Add a slice to the volume, optionally from file.
     void addSlice(std::string filename = std::string());
 
+    //! Add geometry from file.
+    void addGeometry(std::string filename = std::string());
 
     //! Re-commit all OSPRay volumes.
     void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
