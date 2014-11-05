@@ -55,7 +55,7 @@ namespace ospray {
         const Data *voxelData = getParamData("voxelData", NULL);  exitOnCondition(voxelData == NULL, "no voxel data specified");  const uint8 *data = (const uint8 *) voxelData->data;
 
         //! The dimensions of the source voxel data and target volume must match.
-        exitOnCondition(volumeDimensions.x * volumeDimensions.y * volumeDimensions.z != voxelData->numItems, "unexpected source voxel data dimensions");
+        exitOnCondition(size_t(volumeDimensions.x) * volumeDimensions.y * volumeDimensions.z != voxelData->numItems, "unexpected source voxel data dimensions");
 
         //! The source and target voxel types must match.
         exitOnCondition(getVoxelType() != voxelData->type, "unexpected source voxel type");
