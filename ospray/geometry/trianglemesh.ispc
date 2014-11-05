@@ -50,7 +50,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       // print("color % % %\n",dg.color.x,dg.color.y,dg.color.z);
     }
     else
-      dg.color = make_vec4f(1.f);
+      dg.color = make_vec4f(-1.f);
   }
 
   if (flags & DG_TEXCOORD && THIS->texcoord) {
