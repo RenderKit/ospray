@@ -59,10 +59,10 @@ void GridAccelerator_encodeTransferFunction(GridAccelerator *uniform accelerator
     accelerator->transferFunctionCode = 0;  for (uniform uint32 i=0 ; i < 32 ; i++) {
 
         //! The minimum value contained in the current value range bucket.
-        const uniform float rangeMinimum = (i / accelerator->rangeScale) * (transferFunction->valueRange.y - transferFunction->valueRange.x) + transferFunction->valueRange.x;
+        const uniform float rangeMinimum = (i / accelerator->rangeScale) * (accelerator->valueRange.y - accelerator->valueRange.x) + accelerator->valueRange.x;
 
         //! The maximum value contained in the current value range bucket.
-        const uniform float rangeMaximum = (nextafter(i + 1.0f, 0.0f) / accelerator->rangeScale) * (transferFunction->valueRange.y - transferFunction->valueRange.x) + transferFunction->valueRange.x;
+        const uniform float rangeMaximum = (nextafter(i + 1.0f, 0.0f) / accelerator->rangeScale) * (accelerator->valueRange.y - accelerator->valueRange.x) + accelerator->valueRange.x;
 
         //! Get the minimum and maximum alpha values for the given value range.
         const uniform vec2f alphaRange = transferFunction->getMinMaxAlphaInRange(transferFunction, rangeMinimum, rangeMaximum);
