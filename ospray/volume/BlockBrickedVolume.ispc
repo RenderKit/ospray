@@ -343,6 +343,9 @@ export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *
     //! Set the color and opacity transfer function.
     volume->inherited.transferFunction = (TransferFunction *uniform) value;
 
+    //! Set the value range in the spatial acceleration structure.
+    GridAccelerator_setValueRange(volume->accelerator, volume->inherited.transferFunction->valueRange);
+
     //! Update the spatial acceleration structure.
     GridAccelerator_encodeTransferFunction(volume->accelerator, volume->inherited.transferFunction);
 
@@ -355,9 +358,6 @@ export void BlockBrickedVolume_setValueRange(void *uniform pointer, const unifor
 
     //! Set the volume value range.
     volume->inherited.valueRange = value;
-
-    //! Set the value range in the spatial acceleration structure.
-    GridAccelerator_setValueRange(volume->accelerator, volume->inherited.valueRange);
 
 }
 
