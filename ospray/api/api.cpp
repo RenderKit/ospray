@@ -352,11 +352,12 @@ namespace ospray {
     Assert(filename != NULL && "no filename specified in ospImportObjects");
     LOG("ospImportObjects(" << filename << ")");
     OSPObjectCatalog catalog = ospray::ObjectFile::importObjects(filename);
-    if (ospray::logLevel > 0)
+    if (ospray::logLevel > 0) {
       if (catalog)
         cout << "ospImportObjects: " << filename << endl;
       else
         std::cerr << "#ospray: could not import objects from file '" << filename << "'" << std::endl;
+    }
     return catalog;
   }
 
@@ -367,11 +368,12 @@ namespace ospray {
     Assert(type != NULL && "invalid volume type identifier in ospNewVolume");
     LOG("ospNewVolume(" << type << ")");
     OSPVolume volume = ospray::api::Device::current->newVolume(type);
-    if (ospray::logLevel > 0)
+    if (ospray::logLevel > 0) {
       if (volume) 
         cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
       else
         std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
+    }
     return volume;
   }
 
@@ -383,11 +385,12 @@ namespace ospray {
     Assert(type != NULL && "invalid transfer function type identifier in ospNewTransferFunction");
     LOG("ospNewTransferFunction(" << type << ")");
     OSPTransferFunction transferFunction = ospray::api::Device::current->newTransferFunction(type);
-    if(ospray::logLevel > 0)
+    if(ospray::logLevel > 0) {
       if(transferFunction)
         cout << "ospNewTransferFunction: " << ((ospray::TransferFunction*)transferFunction)->toString() << endl;
       else
         std::cerr << "#ospray: could not create transfer function '" << type << "'" << std::endl;
+    }
     return transferFunction;
   }
 
