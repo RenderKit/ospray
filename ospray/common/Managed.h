@@ -229,7 +229,7 @@ namespace ospray {
     std::set<ManagedObject *> objectsListeningForChanges;
     
     /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
-    void notifyListeners();
+    void notifyListenersThatObjectGotChanged();
 
     //! register a new listener. this object will now get update notifications from us
     void registerListener(ManagedObject *newListener)

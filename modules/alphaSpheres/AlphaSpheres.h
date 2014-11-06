@@ -34,6 +34,7 @@ namespace ospray {
     };
 
     PKDGeometry();
+    virtual ~PKDGeometry();
 
     Ref<Data> particleData;
     Ref<TransferFunction> transferFunction;
@@ -50,7 +51,10 @@ namespace ospray {
     uint32 makeRangeBits(float attribute);
     virtual void finalize(Model *model);
     uint32 updateInnerNodeInfo(const box3f &bounds, size_t nodeID);
-    };
+
+    /*! gets called whenever any of this node's dependencies got changed */
+    virtual void dependencyGotChanged(ManagedObject *object);
+  };
 
   /*! \brief A geometry for a set of alpha-(and color-)mapped spheres
 

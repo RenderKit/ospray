@@ -29,12 +29,27 @@ namespace ospray {
     this->ispcEquivalent = ispc::PKDGeometry_create(this);
   }
   
+  PKDGeometry::~PKDGeometry() 
+  {
+    if (transferFunction)
+      transferFunction->unregisterListener(this);
+  }
+
   void AlphaSpheres::buildBVH() 
   {
     PrimAbstraction pa(this);
     mmBVH.initialBuild(&pa);
   }
   
+  /*! gets called whenever any of this node's dependencies got changed */
+  void PKDGeometry::dependencyGotChanged(ManagedObject *object)
+  {
+    if (object == transferFunction.ptr) {
+      // std::cout << "#osp:pkd: transfer function got changed - updating range bins" << std::endl;
+      ispc::PKDGeometry_updateTransferFunction(getIE(),transferFunction->getIE());
+    }
+  }
+ 
   void AlphaSpheres::finalize(Model *model) 
   {
     radius            = getParam1f("radius",0.01f);
@@ -69,6 +84,7 @@ namespace ospray {
                            radius,
                            (ispc::vec3f*)position,attribute,
                            numSpheres);
+
     PRINT(mmBVH.node.size());
     PRINT(mmBVH.node[0]);
   }
@@ -77,7 +93,11 @@ namespace ospray {
   {
     radius            = getParam1f("radius",0.01f);
     particleData      = getParamData("particles",NULL);
+    if (transferFunction)
+      transferFunction->unregisterListener(this);
     transferFunction  = (TransferFunction *)getParamObject("transferFunction",NULL);
+    if (transferFunction)
+      transferFunction->registerListener(this);
     
     if (particleData == NULL) 
       throw std::runtime_error("#osp:AlphaPositions: no 'particles' data specified");
@@ -122,13 +142,13 @@ namespace ospray {
                           (ispc::box3f &)centerBounds,
                           (ispc::box3f &)sphereBounds,
                           attr_lo,attr_hi);
-    PING;
+    ispc::PKDGeometry_updateTransferFunction(getIE(),transferFunction->getIE());
   }
   
   uint32 PKDGeometry::makeRangeBits(float attribute)
   {
     float rel_attribute = (attribute - attr_lo) / (attr_hi - attr_lo);
-    int binID = std::min(31,int(rel_attribute*30));
+    int binID = std::min(29,int(rel_attribute*30));
     return 1<<binID;
   }
 
@@ -136,13 +156,6 @@ namespace ospray {
   {
     if (nodeID >= numParticles) 
       return 0;
-
-    if (!embree::conjoint(bounds,particle[nodeID].position)) {
-      PING;
-      PRINT(bounds);
-      PRINT(nodeID);
-      PRINT(particle[nodeID].position);
-    }
 
     if (nodeID >= numInnerNodes) 
       return makeRangeBits(particle[nodeID].attribute);
@@ -155,6 +168,7 @@ namespace ospray {
       bits |= updateInnerNodeInfo(lBounds,2*nodeID+1);
       bits |= updateInnerNodeInfo(rBounds,2*nodeID+2);
       innerNodeInfo[nodeID].setBinBits(bits);
+
       return innerNodeInfo[nodeID].getBinBits();
     }
   }

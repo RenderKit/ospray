@@ -37,6 +37,9 @@ namespace ospray {
     // Set the value range that the transfer function covers
     vec2f valueRange = getParam2f("range", vec2f(0.0f, 1.0f));  
     ispc::TransferFunction_setValueRange(ispcEquivalent, (const ispc::vec2f &) valueRange);
+
+    // tell our 
+    notifyListenersThatObjectGotChanged();
   }
 
   void LinearTransferFunction::createEquivalentISPC() {

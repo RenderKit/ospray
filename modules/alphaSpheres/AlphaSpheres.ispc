@@ -12,7 +12,7 @@
 #include "ospray/common/Ray.ih"
 #include "ospray/geometry/geometry.ih"
 #include "ospray/common/Model.ih"
-#include "ospray/transferfunction/TransferFunction.ih"
+#include "ospray/transferfunction/LinearTransferFunction.ih"
 // this module
 #include "MinMaxBVH2.ih"
 // embree
@@ -485,6 +485,20 @@ export void *uniform PKDGeometry_create(void           *uniform cppEquivalent)
                        PKDGeometry_postIntersect,
                        NULL,0,NULL);
   return geom;
+}
+
+export void PKDGeometry_updateTransferFunction(void           *uniform _THIS,
+                                               void           *uniform _transferFunction)
+{
+  PKDGeometry *uniform THIS = (PKDGeometry *uniform)_THIS;
+  TransferFunction *uniform transferFunction = (TransferFunction *uniform)_transferFunction;
+  THIS->activeBinBits = 0;
+  for (uniform int i=0;i<30;i++) {
+    uniform vec2f alphaRange = LinearTransferFunction_getMinMaxAlphaInRange(transferFunction,i/30.f,(i+1)/30.f);
+    if (alphaRange.y >= .5f)
+      THIS->activeBinBits |= (1UL << i);
+  }
+  // print("#osp:pkd: new range bits: %\n",(void*uniform )THIS->activeBinBits);
 }
 
 export void AlphaSpheres_set(void           *uniform _geom,
