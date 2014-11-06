@@ -204,8 +204,6 @@ namespace ospray {
         position.resize(numAtoms);
         fread(&position[0],sizeof(position[0]),numAtoms,bin);
         spheres->setPositions(position);
-        // for (int i=0;i<100;i++)
-        //   PRINT(position[i]);
         position.clear();
       }
        

@@ -157,8 +157,6 @@ namespace ospray {
       char *maxAtomsEnv = getenv("OSPRAY_MAX_ATOMS");
       if (maxAtomsEnv) 
         numParticles = std::min(numParticles,(size_t)atol(maxAtomsEnv));
-      PING;
-      PRINT(numParticles);
 
       Ref<sg::PKDGeometry> pkd = new sg::PKDGeometry;
       Ref<sg::TransferFunction> transferFunction = new sg::TransferFunction;
@@ -168,7 +166,6 @@ namespace ospray {
       pkd->particle.resize(numParticles);
       for (int i=0;i<numParticles;i++) {
         fread(&pkd->particle[i],sizeof(Particle),1,file);
-        if (i < 10) PRINT(pkd->particle[i].position);
       }
       fclose(file);
       

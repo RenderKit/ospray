@@ -109,6 +109,7 @@ namespace ospray {
 
       void clearAccum() 
       {
+        PING;
         ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
       }
       
@@ -120,7 +121,7 @@ namespace ospray {
       virtual    std::string toString() const { return "ospray::sg::FrameBuffer"; }
       
     private:
-      void createFB() { ospFrameBuffer = ospNewFrameBuffer(size,OSP_RGBA_I8); }
+      void createFB() { ospFrameBuffer = ospNewFrameBuffer(size,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM); }
       void destroyFB() { ospFreeFrameBuffer(ospFrameBuffer); }
     };
 

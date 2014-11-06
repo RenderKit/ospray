@@ -86,14 +86,19 @@ namespace ospray {
       if (!sgRenderer->frameBuffer) return;
       if (!sgRenderer->camera) return;
 
-      updateOSPRayCamera();
+      //      updateOSPRayCamera();
       sgRenderer->renderFrame();
 
       vec2i size = sgRenderer->frameBuffer->getSize();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);      
       sgRenderer->frameBuffer->unmap(fbMem);
-      
+
+      // PING;
+      // repaint();
+      // updateGL();
+      // updateGL();
+      update();
       // updateOSPRayCamera();
     }
     
@@ -114,6 +119,8 @@ namespace ospray {
       if (!sgRenderer) return;
       if (!sgRenderer->camera) return;
 
+      PING;
+      sgRenderer->resetAccumulation();
 #if 1
       Ref<sg::PerspectiveCamera> camera = sgRenderer->camera.cast<sg::PerspectiveCamera>();
       assert(camera);
@@ -261,6 +268,8 @@ namespace ospray {
          automatically updates the camera used for rendering. We can
          still add some callbacks here eventually, but right now we
          don't need this callback */
+      PING;
+      renderWidget->updateOSPRayCamera();
     }
   }
 }
