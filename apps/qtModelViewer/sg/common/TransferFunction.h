@@ -19,7 +19,7 @@ namespace ospray {
         for each) */
     struct TransferFunction : public sg::Node {
 
-      TransferFunction() : ospTransferFunction(NULL) { setDefaultValues(); }
+      TransferFunction() : ospTransferFunction(NULL), ospColorData(NULL), ospAlphaData(NULL) { setDefaultValues(); }
 
       //! \brief initialize color and alpha arrays to 'some' useful values
       void setDefaultValues();

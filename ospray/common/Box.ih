@@ -6,40 +6,27 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-
 #pragma once
 
-#include "math/vec.isph"
+#include "ospray/math/vec.ih"
 #include "Ray.ih"
 
-/*! Box structure. */
-struct Box
-{
-  vec3f bmin, bmax;
-};
-
-inline Box make_Box(const vec3f bmin, const vec3f bmax)
-{
-  Box box;
-  box.bmin = bmin;
-  box.bmax = bmax;
-  return box;
-}
-
 inline void boxtest(Ray& ray,
-                    uniform Box& box,
+                    uniform box3f& box,
                     float& t0,
                     float& t1)
 {
-  vec3f mins = mul(sub(box.bmin, ray.org), ray.dir_rcp);
-  vec3f maxs = mul(sub(box.bmax, ray.org), ray.dir_rcp);
+  vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
+  vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
   
-  t0 = max(max(ray.tnear, min(mins.x,maxs.x)),
-                             max(min(mins.y,maxs.y),
-                             min(mins.z,maxs.z)));
-
-  t1 = min(min(ray.tfar, max(mins.x,maxs.x)),
-                             min(max(mins.y,maxs.y),
-                             max(mins.z,maxs.z)));
+  t0 = max(max(ray.t0, 
+               min(mins.x,maxs.x)),
+           max(min(mins.y,maxs.y),
+               min(mins.z,maxs.z)));
+  
+  t1 = min(min(ray.t, 
+               max(mins.x,maxs.x)),
+           min(max(mins.y,maxs.y),
+               max(mins.z,maxs.z)));
 }
 

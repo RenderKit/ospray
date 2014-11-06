@@ -27,7 +27,17 @@ IF (OSPRAY_MODULE_ALPHASPHERES)
     MinMaxBVH2.cpp
     MinMaxBVH2.ispc
     )
-
+	
   TARGET_LINK_LIBRARIES(ospray_module_alpha_spheres${OSPRAY_LIB_SUFFIX} 
     ospray${OSPRAY_LIB_SUFFIX})
+
+	ADD_EXECUTABLE(uintah2pkd${OSPRAY_EXE_SUFFIX}
+		uintah2pkd.cpp
+		PartiKD.cpp
+		)
+  TARGET_LINK_LIBRARIES(uintah2pkd${OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
+		ospray_xml${OSPRAY_LIB_SUFFIX}
+		)
+
 ENDIF()

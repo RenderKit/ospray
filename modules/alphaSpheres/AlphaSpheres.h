@@ -17,6 +17,41 @@
 /*! @{ \ingroup ospray_module_streamlines */
 namespace ospray {
 
+  struct PKDGeometry : public Geometry {
+    struct Particle {
+      vec3f position;
+      float attribute;
+    };
+
+    struct InnerNodeInfo {
+      uint32 getBinBits() const { return bits & ((1<<30)-1); }
+      uint32 getDim() const { return bits >> 30; }
+
+      void setBinBits(uint32 binBits) { bits = binBits | (getDim() << 30); }
+      void setDim(uint32 dim) { bits = getBinBits() | (dim << 30); }
+    private:
+      uint32 bits;
+    };
+
+    PKDGeometry();
+
+    Ref<Data> particleData;
+    Ref<TransferFunction> transferFunction;
+
+    Particle *particle;
+    size_t numParticles;
+    InnerNodeInfo *innerNodeInfo;
+    size_t numInnerNodes;
+    float radius;
+
+    box3f bounds;
+    float attr_lo, attr_hi;
+
+    uint32 makeRangeBits(float attribute);
+    virtual void finalize(Model *model);
+    uint32 updateInnerNodeInfo(const box3f &bounds, size_t nodeID);
+    };
+
   /*! \brief A geometry for a set of alpha-(and color-)mapped spheres
 
     Implements the \ref geometry_spheres geometry

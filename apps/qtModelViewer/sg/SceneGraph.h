@@ -12,6 +12,7 @@
 #include "sg/common/Node.h"
 #include "sg/geometry/Geometry.h"
 #include "sg/geometry/Spheres.h"
+#include "sg/geometry/PKD.h"
 #include "sg/common/Integrator.h"
 #include "sg/camera/Camera.h"
 

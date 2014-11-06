@@ -20,6 +20,30 @@
 #include "embree2/rtcore_scene.isph"
 #include "embree2/rtcore_geometry_user.isph"
 
+#include "ospray/common/Box.ih"
+
+struct PKDParticle {
+  uniform float position[3];
+  uniform float attribute;
+};
+
+struct PKDGeometry {
+  uniform Geometry geometry; //!< inherited geometry fields
+
+  PKDParticle *uniform particle;
+  size_t numParticles;
+  uint32 *uniform innerNodeInfo;
+  size_t numInnerNodes;
+  box3f centerBounds;
+  box3f sphereBounds;
+  float attr_lo, attr_hi;
+  uniform int32 activeBinBits;
+
+  uniform TransferFunction *uniform transferFunction;
+
+  float           radius;
+};
+
 struct AlphaSpheres {
   uniform Geometry geometry; //!< inherited geometry fields
 
@@ -91,12 +115,80 @@ static void AlphaSpheres_postIntersect(uniform Geometry *uniform geometry,
   dg.Ns = Ns;
 }
 
+static void PKDGeometry_postIntersect(uniform Geometry *uniform geometry,
+                                       uniform Model *uniform model,
+                                       varying DifferentialGeometry &dg,
+                                       const varying Ray &ray,
+                                       uniform int64 flags)
+{
+  uniform PKDGeometry *uniform THIS = (uniform PKDGeometry *uniform)geometry;
+  dg.geometry = geometry;
+  dg.material = geometry->material;
+  vec3f Ng = ray.Ng;
+  vec3f Ns = Ng;
+
+  if (flags & DG_NORMALIZE) {
+    Ng = normalize(Ng);
+    Ns = normalize(Ns);
+  }
+  if (flags & DG_FACEFORWARD) {
+    if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
+    if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
+  }
+
+  if (flags & DG_COLOR) {
+    // compute base pointer to actual sphere we are intersecting
+    foreach_unique(primID in ray.primID) {
+      // uniform uint8 *uniform spherePtr
+      //   = THIS->data + THIS->bytesPerSphere*((uniform int64)primID);
+
+      // // read sphere members relative to sphere base pointr.
+      // uniform float radius = *((uniform float *)(spherePtr+THIS->offset_radius));
+      // uniform vec3f center = *((uniform vec3f*)(spherePtr+THIS->offset_center));
+      // uniform float attrib = *((uniform float *)(spherePtr+THIS->offset_attribute));
+
+      uniform float attrib = THIS->particle[primID].attribute;
+
+      // normalize attribute to the [0,1] range (by normalizing relative
+      // to the attribute range stored in the min max BVH's root node
+      const uniform float attrib_lo = THIS->attr_lo;
+      const uniform float attrib_hi = THIS->attr_hi;
+      attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo + 1e-10f);
+
+      // compute alpha value from attribute value
+      float alpha = THIS->transferFunction->getAlphaForValue(THIS->transferFunction,
+                                                             attrib);
+      vec3f color = THIS->transferFunction->getColorForValue(THIS->transferFunction,
+                                                             attrib);
+      dg.color = make_vec4f(color.x,color.y,color.z,alpha);
+    }
+  }
+
+  dg.Ng = Ng;
+  dg.Ns = Ns;
+}
+
 void AlphaSpheres_bounds(uniform AlphaSpheres *uniform geometry,
                          uniform size_t primID,
                          uniform box3fa &bbox)
 {
   bbox.lower = geometry->mmBVH.node[0].bounds_lo;
   bbox.upper = geometry->mmBVH.node[0].bounds_hi;
+}
+
+void PKDGeometry_bounds(uniform PKDGeometry *uniform geometry,
+                         uniform size_t primID,
+                         uniform box3fa &bbox)
+{
+  bbox.lower = geometry->sphereBounds.lower;
+  bbox.upper = geometry->sphereBounds.upper;
+  print("pkd bounds %\n",primID);
+  print("bounds lo %\n",bbox.lower.x);
+  print("bounds lo %\n",bbox.lower.y);
+  print("bounds lo %\n",bbox.lower.z);
+  print("bounds lo %\n",bbox.upper.x);
+  print("bounds lo %\n",bbox.upper.y);
+  print("bounds lo %\n",bbox.upper.z);
 }
 
 static
@@ -161,6 +253,74 @@ varying bool AlphaSpheres_intersectPrim(void *uniform geomPtr,
 }
 
 
+
+
+
+static
+varying bool PKDGeometry_intersectPrim(void *uniform geomPtr,
+                                       uniform int primID,
+                                       varying Ray &ray)
+{
+  // typecast "implicit THIS" pointer to the proper geometry type
+  PKDGeometry *uniform THIS = (PKDGeometry *uniform)geomPtr;
+
+  // read sphere members required for intersection test
+  uniform float radius = THIS->radius;
+  // uniform vec3f center = (uniform vec3f &)THIS->particle[primID].position;
+  uniform vec3f center = make_vec3f(THIS->particle[primID].position[0],
+                                    THIS->particle[primID].position[1],
+                                    THIS->particle[primID].position[2]);
+                                    
+
+  // perform first half of intersection test ....
+  const vec3f A = center - ray.org;
+
+  const float a = dot(ray.dir,ray.dir);
+  const float b = -2.f*dot(ray.dir,A);
+  const float c = dot(A,A)-radius*radius;
+  
+  const float radical = b*b-4.f*a*c;
+  if (radical < 0.f) return false;
+
+
+  // compute second half of intersection test
+  const float srad = sqrt(radical);
+
+  const float t_in = (- b - srad) *rcpf(2.f*a);
+  const float t_out= (- b + srad) *rcpf(2.f*a);
+
+  float hit_t = 0.f;
+  if (t_in > ray.t0 && t_in < ray.t) {
+    hit_t = t_in;
+  } else if (t_out > ray.t0 && t_out < ray.t) {
+    hit_t = t_out;
+  }
+  else /* miss : */ return false;
+
+  // -------------------------------------------------------
+  // do attribute test
+  uniform float attrib = THIS->particle[primID].attribute;
+
+  // normalize attribute to the [0,1] range (by normalizing relative
+  // to the attribute range stored in the min max BVH's root node
+  const uniform float attrib_lo = THIS->attr_lo;
+  const uniform float attrib_hi = THIS->attr_hi;
+  attrib = (attrib - attrib_lo) * rcp(attrib_hi - attrib_lo + 1e-10f);
+
+  // compute alpha value from attribute value
+  const float alpha
+    = THIS->transferFunction->getAlphaForValue(THIS->transferFunction,attrib);
+  if (alpha <= .5f)
+    return false;
+
+  // found a hit - store it
+  ray.primID = primID;
+  ray.geomID = THIS->geometry.geomID;
+  ray.t = t_in;
+  ray.Ng = ray.org + ray.t*ray.dir - center;
+  return true;
+}
+
 void AlphaSpheres_intersect(uniform AlphaSpheres *uniform geometry,
                             varying Ray &ray,
                             uniform size_t primID)
@@ -183,6 +343,276 @@ export void *uniform AlphaSpheres_create(void           *uniform cppEquivalent)
   uniform AlphaSpheres *uniform geom = uniform new uniform AlphaSpheres;
   Geometry_Constructor(&geom->geometry,cppEquivalent,
                        AlphaSpheres_postIntersect,
+                       NULL,0,NULL);
+  return geom;
+}
+
+
+#if 0
+struct PKDStackEntry {
+  uniform box3f bounds;
+  uniform size_t nodeID;
+};
+
+void PKDGeometry_intersect(uniform PKDGeometry *uniform THIS,
+                            varying Ray &ray,
+                            uniform size_t primID)
+{
+  print("ISEC\n");
+  float t_in = ray.t0, t_out = ray.t;
+  boxtest(ray,THIS->bounds,t_in,t_out);
+  if (t_out < t_in) return;
+
+  uniform PKDStackEntry stack[64];
+  uniform int32 stackPtr = 0;
+
+  uniform size_t nodeID = 0;
+  uniform box3f bounds = THIS->centerBounds;
+  while (1) {
+    while (1) {
+      if (nodeID >= THIS->numInnerNodes) {
+        // this is a leaf ...
+        PKDGeometry_intersectPrim(THIS,nodeID,ray);
+        break; // pop
+      } else {
+        uniform int32  binBits = THIS->innerNodeInfo[nodeID] & ((1<<30)-1);
+        // if ((THIS->activeBinBits & binBits) == 0)
+        //   break;
+        
+        PKDGeometry_intersectPrim(THIS,nodeID,ray);
+        t_out = min(t_out,ray.t);
+        
+        uniform box3f lBounds = extend(bounds,THIS->radius);
+        uniform box3f rBounds = lBounds;
+        uniform size_t dim = THIS->innerNodeInfo[nodeID] >> 30;
+        print("node % dim %\n",nodeID,dim);
+        uniform plane_coord = THIS->particle[nodeID].position[dim];
+        float t_plane_0 = (plane_coord + THIS->radius - org[dim]) * rcp(dir[dim]);
+        float t_plane_1 = (plane_coord - THIS->radius - org[dim]) * rcp(dir[dim]);
+        
+        float t_in_0 = t_in;
+        float t_in_1 = t_in;
+        float t_out_0 = t_out;
+        float t_out_1 = t_out;
+        uniform bool goNode1First = false;
+        if (dir[dim] > 0.f) {
+          t_out_0 = min(t_out_0,t_plane_0);
+          t_in_1 = max(t_in_1,t_plane_1);
+        } else {
+          t_out_1 = min(t_out_1,t_plane_1);
+          t_in_0 = max(t_in_0,t_plane_0);
+          goNode1First = true;
+        }
+        uniform bool goNode0 = any(t_out_0 >= t_in_0);
+        uniform bool goNode1 = any(t_out_1 >= t_in_1);
+        if (goNode0) {
+          if (goNode1) {
+            if (goNode1First) {
+              unmasked { stack[stackPtr].t_in  = 1e20f; }
+              unmasked { stack[stackPtr].t_out = -1e20f; }
+              stack[stackPtr].t_in  = t_in_0;
+              stack[stackPtr].t_out = t_out_0;
+              stack[stackPtr].nodeID = 2*nodeID+1;
+              stackPtr++;
+              t_in = t_in_1;
+              t_out = t_out_1;
+              nodeID = 2*nodeID+2;
+            } else {
+              unmasked { stack[stackPtr].t_in  = 1e20f; }
+              unmasked { stack[stackPtr].t_out = -1e20f; }
+              stack[stackPtr].t_in  = t_in_1;
+              stack[stackPtr].t_out = t_out_1;
+              stack[stackPtr].nodeID = 2*nodeID+2;
+              stackPtr++;
+              t_in = t_in_0;
+              t_out = t_out_0;
+              nodeID = 2*nodeID+1;
+            }
+            continue;
+          } else {
+            t_in = t_in_0;
+            t_out = t_out_0;
+            nodeID = 2*nodeID+1;
+            continue;
+          }
+        } else {
+          if (goNode1) {
+            t_in = t_in_1;
+            t_out = t_out_1;
+            nodeID = 2*nodeID+2;
+            continue;
+          } else {
+            break; // pop
+          }
+        }
+      }
+    }
+    // TODO: pop
+    while (1) {
+      if (stackPtr == 0) return;
+      --stackPtr;
+      t_in = stack[stackPtr].t_in;
+      t_out = min(stack[stackPtr].t_out,ray.t);
+      if (all(t_in >= t_out)) continue;
+      nodeID = stack[stackPtr].nodeID;
+      break;
+    };
+  }
+}
+#else
+struct PKDStackEntry {
+  varying float t_in, t_out;
+  uniform size_t nodeID;
+};
+
+void PKDGeometry_intersect(uniform PKDGeometry *uniform THIS,
+                            varying Ray &ray,
+                            uniform size_t primID)
+{
+
+  float t_in = ray.t0, t_out = ray.t;
+  boxtest(ray,THIS->sphereBounds,t_in,t_out);
+
+  
+  if (t_out < t_in) return;
+  // print("t % %\n",t_in,t_out);
+
+  PKDStackEntry stack[64];
+  uniform int32 stackPtr = 0;
+
+  float org[3], dir[3];
+  org[0] = ray.org.x;
+  org[1] = ray.org.y;
+  org[2] = ray.org.z;
+  dir[0] = ray.dir.x;
+  dir[1] = ray.dir.y;
+  dir[2] = ray.dir.z;
+
+#if 0
+  for (uniform int i=0;i<THIS->numParticles;i++) {
+    PKDGeometry_intersectPrim(THIS,i,ray);
+  }
+  return;
+#endif
+
+  //  org[-20000] = 0;
+  // print("t % %\n",t_in,t_out);
+
+  // PKDGeometry_intersectPrim(THIS,0,ray);
+  // return;
+
+  // varying float *uniform org = &ray.org.x;
+  // varying float *uniform dir = &ray.dir.x;
+  uniform size_t nodeID = 0;
+  while (1) {
+    // print("t % %\n",t_in,t_out);
+    while (1) {
+      if (t_out < t_in) break;
+      if (nodeID >= THIS->numInnerNodes) {
+        // this is a leaf ...
+        PKDGeometry_intersectPrim(THIS,nodeID,ray);
+        break; // pop
+      } else {
+        uniform int32  binBits = THIS->innerNodeInfo[nodeID] & ((1<<30)-1);
+        // if ((THIS->activeBinBits & binBits) == 0)
+        //   break;
+        
+        PKDGeometry_intersectPrim(THIS,nodeID,ray);
+        t_out = min(t_out,ray.t);
+        
+        uniform size_t dim = THIS->innerNodeInfo[nodeID] >> 30;
+        uniform float plane_coord = THIS->particle[nodeID].position[dim];
+        // print("dim % coord %\n",dim,plane_coord);
+        float t_plane_0 = (plane_coord + THIS->radius - org[dim]) * rcp(dir[dim]);
+        float t_plane_1 = (plane_coord - THIS->radius - org[dim]) * rcp(dir[dim]);
+        
+        float t_in_0 = t_in;
+        float t_out_0 = t_out;
+
+        float t_in_1 = t_in;
+        float t_out_1 = t_out;
+        uniform bool goNode1First = false;
+        if (dir[dim] > 0.f) {
+          t_out_0 = min(t_out_0,t_plane_0);
+          t_in_1 = max(t_in_1,t_plane_1);
+        } else {
+          t_out_1 = min(t_out_1,t_plane_1);
+          t_in_0 = max(t_in_0,t_plane_0);
+          goNode1First = true;
+        }
+        uniform bool goNode0 = any(t_out_0 >= t_in_0);
+        uniform bool goNode1 = any(t_out_1 >= t_in_1);
+        if (goNode0) {
+          if (goNode1) {
+            if (goNode1First) {
+              unmasked { stack[stackPtr].t_in  = 1e20f; }
+              unmasked { stack[stackPtr].t_out = -1e20f; }
+              stack[stackPtr].t_in  = t_in_0;
+              stack[stackPtr].t_out = t_out_0;
+              stack[stackPtr].nodeID = 2*nodeID+1;
+              stackPtr++;
+              t_in = t_in_1;
+              t_out = t_out_1;
+              nodeID = 2*nodeID+2;
+            } else {
+              unmasked { stack[stackPtr].t_in  = 1e20f; }
+              unmasked { stack[stackPtr].t_out = -1e20f; }
+              stack[stackPtr].t_in  = t_in_1;
+              stack[stackPtr].t_out = t_out_1;
+              stack[stackPtr].nodeID = 2*nodeID+2;
+              stackPtr++;
+              t_in = t_in_0;
+              t_out = t_out_0;
+              nodeID = 2*nodeID+1;
+            }
+            continue;
+          } else {
+            t_in = t_in_0;
+            t_out = t_out_0;
+            nodeID = 2*nodeID+1;
+            continue;
+          }
+        } else {
+          if (goNode1) {
+            t_in = t_in_1;
+            t_out = t_out_1;
+            nodeID = 2*nodeID+2;
+            continue;
+          } else {
+            break; // pop
+          }
+        }
+      }
+    }
+    // TODO: pop
+    while (1) {
+      if (stackPtr == 0) return;
+      --stackPtr;
+      t_in = stack[stackPtr].t_in;
+      t_out = min(stack[stackPtr].t_out,ray.t);
+      if (all(t_in > t_out)) continue;
+      nodeID = stack[stackPtr].nodeID;
+      break;
+    };
+  }
+}
+#endif
+
+
+void PKDGeometry_occluded(uniform PKDGeometry *uniform geometry,
+                            varying Ray &ray,
+                            uniform size_t primID)
+{
+  // MinMaxBVH2_occluded(&geometry->mmBVH,geometry,geometry->transferFunction,
+  //                     &PKDGeometry_intersectPrim,geometry->numSpheres,ray);
+}
+
+
+export void *uniform PKDGeometry_create(void           *uniform cppEquivalent)
+{
+  uniform PKDGeometry *uniform geom = uniform new uniform PKDGeometry;
+  Geometry_Constructor(&geom->geometry,cppEquivalent,
+                       PKDGeometry_postIntersect,
                        NULL,0,NULL);
   return geom;
 }
@@ -226,4 +656,54 @@ export void AlphaSpheres_set(void           *uniform _geom,
                           (uniform RTCIntersectFuncVarying)&AlphaSpheres_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                          (uniform RTCOccludedFuncVarying)&AlphaSpheres_occluded);
+}
+
+
+
+
+
+export void PKDGeometry_set(void           *uniform _geom,
+                            void           *uniform _model,
+                            void           *uniform transferFunction,
+                            float           uniform radius,
+                            PKDParticle *uniform particle,
+                            uniform size_t numParticles,
+                            uint32 *uniform innerNodeInfo,
+                            uniform size_t numInnerNodes,
+                            uniform box3f &centerBounds,
+                            uniform box3f &sphereBounds,
+                            uniform float attr_lo, uniform float attr_hi)
+{
+  uniform PKDGeometry *uniform geom = (uniform PKDGeometry *uniform)_geom;
+  uniform Model *uniform model = (uniform Model *uniform)_model;
+
+  uniform uint32 geomID = rtcNewUserGeometry(model->embreeSceneHandle,1); //numSpheres);
+  
+  geom->geometry.model = model;
+  geom->geometry.geomID = geomID;
+  geom->radius = radius;
+  geom->particle  = particle;
+  geom->numParticles  = numParticles;
+  geom->innerNodeInfo  = innerNodeInfo;
+  geom->numInnerNodes = numInnerNodes;
+  geom->centerBounds        = centerBounds;
+  geom->sphereBounds        = sphereBounds;
+  geom->attr_lo = attr_lo;
+  geom->attr_hi = attr_hi;
+
+  geom->activeBinBits = 0xffffffff;
+
+  print("PKD: radius %\n",radius);
+  print("PKD: numParticles %\n",numParticles);
+
+
+  geom->transferFunction  = (TransferFunction *uniform)transferFunction;
+
+  rtcSetUserData(model->embreeSceneHandle,geomID,geom);
+  rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
+                       (uniform RTCBoundsFunc)&PKDGeometry_bounds);
+  rtcSetIntersectFunction(model->embreeSceneHandle,geomID,
+                          (uniform RTCIntersectFuncVarying)&PKDGeometry_intersect);
+  rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
+                         (uniform RTCOccludedFuncVarying)&PKDGeometry_occluded);
 }

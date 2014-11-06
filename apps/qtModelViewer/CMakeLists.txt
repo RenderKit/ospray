@@ -39,6 +39,7 @@ SET(SRCS ${SRCS}
   sg/Renderer.cpp
   sg/ImportOSP.cpp
   sg/geometry/Spheres.cpp
+  sg/geometry/PKD.cpp
   sg/common/Node.cpp
 
   # the (th)ing to launch them all, and in darkness bind them...

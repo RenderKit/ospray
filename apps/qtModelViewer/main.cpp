@@ -67,8 +67,12 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "--test-sphere") {
             world = sg::createTestSphere();
+          } else if (arg == "--test-pkd") {
+            world = sg::PKDGeometry::importPKDFile(argv[++argID]);
           } else if (arg == "--test-cosmo") {
-            world = sg::importCosmicWeb(argv[++argID],1024*1024*atoi(argv[++argID]));
+            const char * fileName = argv[++argID];
+            size_t maxParticles = 1024*1024*atoi(argv[++argID]);
+            world = sg::importCosmicWeb(fileName,maxParticles);
           } else if (arg == "--test-sphere-cube") {
             world = sg::createTestSphereCube(atoi(argv[++argID]));
           } else if (arg == "--test-alpha-sphere-cube") {
