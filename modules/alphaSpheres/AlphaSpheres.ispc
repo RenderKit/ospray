@@ -182,13 +182,6 @@ void PKDGeometry_bounds(uniform PKDGeometry *uniform geometry,
 {
   bbox.lower = geometry->sphereBounds.lower;
   bbox.upper = geometry->sphereBounds.upper;
-  print("pkd bounds %\n",primID);
-  print("bounds lo %\n",bbox.lower.x);
-  print("bounds lo %\n",bbox.lower.y);
-  print("bounds lo %\n",bbox.lower.z);
-  print("bounds lo %\n",bbox.upper.x);
-  print("bounds lo %\n",bbox.upper.y);
-  print("bounds lo %\n",bbox.upper.z);
 }
 
 static
@@ -576,10 +569,6 @@ export void PKDGeometry_set(void           *uniform _geom,
   geom->attr_hi = attr_hi;
 
   geom->activeBinBits = 0xffffffff;
-
-  print("PKD: radius %\n",radius);
-  print("PKD: numParticles %\n",numParticles);
-
 
   geom->transferFunction  = (TransferFunction *uniform)transferFunction;
 

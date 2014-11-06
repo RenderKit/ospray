@@ -25,7 +25,6 @@ namespace ospray {
       box3f worldBounds = renderer->world->getBounds();
       if (!worldBounds.empty()) {
         float moveSpeed = .25*length(worldBounds.size());
-        PRINT(moveSpeed);
         QAffineSpaceManipulator::setMoveSpeed(moveSpeed);
       }
       Ref<sg::PerspectiveCamera> camera = renderer->camera.cast<sg::PerspectiveCamera>();
@@ -86,7 +85,6 @@ namespace ospray {
       if (!sgRenderer->frameBuffer) return;
       if (!sgRenderer->camera) return;
 
-      //      updateOSPRayCamera();
       sgRenderer->renderFrame();
 
       vec2i size = sgRenderer->frameBuffer->getSize();
@@ -94,12 +92,9 @@ namespace ospray {
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);      
       sgRenderer->frameBuffer->unmap(fbMem);
 
-      // PING;
-      // repaint();
-      // updateGL();
-      // updateGL();
-      update();
-      // updateOSPRayCamera();
+      // accumulate, but only up to 32 frames
+      if (sgRenderer->accumID < 32)
+        update();
     }
     
     //! the QT callback that tells us that the image got resize
@@ -107,10 +102,6 @@ namespace ospray {
     { 
       sgRenderer->frameBuffer = new sg::FrameBuffer(vec2i(width,height));
       sgRenderer->resetAccumulation();
-      // if (ospFrameBuffer)
-      //   ospFreeFrameBuffer(ospFrameBuffer);
-      // ospFrameBuffer = ospNewFrameBuffer(size,OSP_RGBA_I8);
-      // assert(ospFrameBuffer);
     }
 
     //! update the ospray camera (ospCamera) from the widget camera (this->camera)
@@ -119,9 +110,7 @@ namespace ospray {
       if (!sgRenderer) return;
       if (!sgRenderer->camera) return;
 
-      PING;
       sgRenderer->resetAccumulation();
-#if 1
       Ref<sg::PerspectiveCamera> camera = sgRenderer->camera.cast<sg::PerspectiveCamera>();
       assert(camera);
       const vec3f from = frame->sourcePoint;
@@ -131,17 +120,7 @@ namespace ospray {
       camera->setAt(at);
       camera->setUp(frame->orientation.vz);
       camera->commit();
-#else
-      OSPCamera ospCamera = sgRenderer->camera->ospCamera;
-
-      ospSetVec3f(ospCamera,"pos",from);
-      ospSetVec3f(ospCamera,"dir",at - from);
-      ospSetVec3f(ospCamera,"up",frame->orientation.vz);
-      ospSetf(ospCamera,"aspect",size.x/float(size.y));
-      ospCommit(ospCamera);      
-#endif
     }
-
 
     //! create the lower-side time step slider (for models that have
     //! time steps; won't do anything for models that don't)
@@ -231,7 +210,7 @@ namespace ospray {
 
       // create GUI elements
       toolBar      = addToolBar("toolbar");
-      QAction *testAction = new QAction("test", this);
+      QAction *testAction = new QAction("File", this);
       //connect(nextTimestepAction, SIGNAL(triggered()), this, SLOT(nextTimestep()));
       toolBar->addAction(testAction);
 
@@ -262,13 +241,9 @@ namespace ospray {
       if (renderWidget) renderWidget->updateGL(); 
     }
 
+    // this is a incoming signal that the render widget changed the camera
     void ModelViewer::cameraChanged() 
     {
-      /* nothing to do here, yet - the ospray render widget
-         automatically updates the camera used for rendering. We can
-         still add some callbacks here eventually, but right now we
-         don't need this callback */
-      PING;
       renderWidget->updateOSPRayCamera();
     }
   }

@@ -109,7 +109,6 @@ namespace ospray {
 
       void clearAccum() 
       {
-        PING;
         ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
       }
       

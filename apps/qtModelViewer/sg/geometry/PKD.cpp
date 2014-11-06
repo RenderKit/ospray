@@ -28,9 +28,6 @@ namespace ospray {
         bounds.extend(particle[i].position);
       bounds.lower -= vec3f(radius);
       bounds.upper += vec3f(radius);
-      PING;
-      PRINT(particle.size());
-      PRINT(bounds);
       return bounds;
     }
 
@@ -38,7 +35,6 @@ namespace ospray {
                               Integrator *integrator,
                               const affine3f &_xfm)
     {
-      PING;
       assert(!ospGeometry);
       
       // check if the data has changed at all
@@ -46,13 +42,10 @@ namespace ospray {
         // ... and return if not
         return;
 
-      PING;
       // if no geometry exists, create it.
       if (!ospGeometry) {
         // make sure the module is loaded
         ospLoadModule("alpha_spheres");
-
-      PING;
 
         // and create the geometry
         ospGeometry = ospNewGeometry("pkd_geometry");
@@ -70,9 +63,6 @@ namespace ospray {
         // and finally, add this geometry to the model
         ospAddGeometry(world->ospModel,ospGeometry);
       }
-      
-      PING;
-
 
       // create the particle array
       if (!ospParticleData) {

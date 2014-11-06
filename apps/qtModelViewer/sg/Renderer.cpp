@@ -49,7 +49,6 @@ namespace ospray {
       etc) */
     void Renderer::resetAccumulation()
     {
-      PING;
       accumID = 0;
       if (frameBuffer) 
         frameBuffer->clearAccum(); 

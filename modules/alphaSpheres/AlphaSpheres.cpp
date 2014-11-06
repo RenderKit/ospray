@@ -122,9 +122,6 @@ namespace ospray {
       attr_lo = std::min(attr_lo,particle[i].attribute);
       attr_hi = std::max(attr_hi,particle[i].attribute);
     }
-    PRINT(bounds);
-    PRINT(attr_lo);
-    PRINT(attr_hi);
 
     box3f centerBounds = bounds;
     box3f sphereBounds = bounds;
@@ -132,7 +129,6 @@ namespace ospray {
     sphereBounds.upper += vec3f(radius);
     updateInnerNodeInfo(bounds,0);
 
-    PING;
     ispc::PKDGeometry_set(getIE(),
                           model->getIE(),
                           transferFunction->getIE(),
@@ -180,7 +176,7 @@ namespace ospray {
 
   extern "C" void ospray_init_module_alpha_spheres() 
   {
-    printf("Loaded plugin 'alpha_spheres' ...\n");
+    printf("#osp: loaded plugin 'alpha_spheres' ...\n");
   }
 
 }
