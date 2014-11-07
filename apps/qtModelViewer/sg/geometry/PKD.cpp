@@ -151,7 +151,8 @@ namespace ospray {
       Ref<sg::PKDGeometry> pkd = new sg::PKDGeometry;
       Ref<sg::TransferFunction> transferFunction = new sg::TransferFunction;
       pkd->setTransferFunction(transferFunction);
-      pkd->setRadius(2e-3f);
+      // pkd->setRadius(1.f);
+      pkd->setRadius(3e-3f);
       
       pkd->particle.resize(numParticles);
       for (int i=0;i<numParticles;i++) {

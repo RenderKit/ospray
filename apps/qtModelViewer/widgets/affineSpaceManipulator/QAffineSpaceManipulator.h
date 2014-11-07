@@ -133,10 +133,15 @@ namespace ospray {
       virtual void resize(int width, int height) {};
 
       //! this fct gets called when the user triggers a 'pick' event (by clicking with the pick modifier key pressed)
-      virtual void pick(QMouseEvent *event) 
+      virtual void pick(QMouseEvent *event)
       { std::cout << "pcking at " << event->pos().x() << "." << event->pos().y() << std::endl; }
 
     protected:
+
+      virtual void strafe(QMouseEvent * event);
+      virtual void rotate(QMouseEvent * event);      
+      virtual void move(QMouseEvent * event);
+
       //! size of window, in pixels
       vec2i         size; 
       //! viewport the user is modifying
