@@ -8,7 +8,7 @@
 
 #include "QOSPRayWindow.h"
 
-QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : frameCount_(0), renderingEnabled_(false), rotationRate_(0.f), benchmarkWarmUpFrames_(0), benchmarkFrames_(0), frameBuffer_(NULL), renderer_(NULL), camera_(NULL)
+QOSPRayWindow::QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate) : parent(parent), showFrameRate(showFrameRate), frameCount_(0), renderingEnabled_(false), rotationRate_(0.f), benchmarkWarmUpFrames_(0), benchmarkFrames_(0), frameBuffer_(NULL), renderer_(NULL), camera_(NULL)
 {
     // assign renderer
     if(!renderer)
@@ -105,7 +105,11 @@ void QOSPRayWindow::paintGL()
         viewport_.modified = false;
     }
 
+    renderFrameTimer.start();
     ospRenderFrame(frameBuffer_, renderer_);
+    double framesPerSecond = 1000.0 / renderFrameTimer.elapsed();
+    char title[1024];  sprintf(title, "OSPRay Volume Viewer (%.4f fps)", framesPerSecond);
+    if (showFrameRate == true) parent->setWindowTitle(title);
 
     uint32 * mappedFrameBuffer = (unsigned int *)ospMapFrameBuffer(frameBuffer_);
 

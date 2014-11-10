@@ -55,7 +55,7 @@ GridAccelerator *uniform GridAccelerator_createInstance() {
 
 void GridAccelerator_encodeTransferFunction(GridAccelerator *uniform accelerator, TransferFunction *uniform transferFunction) {
 
-    //! Encode the transfer function alpha values.
+    //! Encode the transfer function opacity values.
     accelerator->transferFunctionCode = 0;  for (uniform uint32 i=0 ; i < 32 ; i++) {
 
         //! The minimum value contained in the current value range bucket.
@@ -64,11 +64,11 @@ void GridAccelerator_encodeTransferFunction(GridAccelerator *uniform accelerator
         //! The maximum value contained in the current value range bucket.
         const uniform float rangeMaximum = (nextafter(i + 1.0f, 0.0f) / accelerator->rangeScale) * (accelerator->valueRange.y - accelerator->valueRange.x) + accelerator->valueRange.x;
 
-        //! Get the minimum and maximum alpha values for the given value range.
-        const uniform vec2f alphaRange = transferFunction->getMinMaxAlphaInRange(transferFunction, rangeMinimum, rangeMaximum);
+        //! Get the minimum and maximum opacity values for the given value range.
+        const uniform vec2f opacityRange = transferFunction->getMinMaxOpacityInRange(transferFunction, make_vec2f(rangeMinimum, rangeMaximum));
 
-        //! Encode the maximum alpha value.
-        if (alphaRange.y > 0.0f) accelerator->transferFunctionCode |= 1 << i;
+        //! Encode the maximum opacity value.
+        if (opacityRange.y > 0.0f) accelerator->transferFunctionCode |= 1 << i;
 
     }
 

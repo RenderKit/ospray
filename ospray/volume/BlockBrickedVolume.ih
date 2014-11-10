@@ -62,8 +62,8 @@
     //! Declaration emitted during build in "ClassName_ispc.h".  Copy voxel data into the volume.
 //  extern "C" { void BlockBrickedVolume_setRegion(void *uniform volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count); }
 
-    //! Declaration emitted during build in "ClassName_ispc.h".  Set the step size for ray casting based renderers.
-//  extern "C" { void BlockBrickedVolume_setStepSize(void *uniform volume, const uniform float value); }
+    //! Declaration emitted during build in "ClassName_ispc.h".  Set the recommended sampling rate for ray casting based renderers.
+//  extern "C" { void BlockBrickedVolume_setSamplingRate(void *uniform volume, const uniform float value); }
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Set the color and opacity transfer function.
 //  extern "C" { void BlockBrickedVolume_setTransferFunction(void *uniform volume, void *uniform value); }

@@ -231,7 +231,7 @@ export void BrickedVolume_setStepSize(void *uniform pointer, const uniform float
     BrickedVolume *uniform volume = (BrickedVolume *uniform) pointer;
 
     //! Set the step size for ray casting based renderers.
-    volume->inherited.stepSize = value;
+//  volume->inherited.stepSize = value;
 
 }
 

@@ -42,8 +42,8 @@ namespace ospray {
         //! Set the transfer function.
         ispc::BlockBrickedVolume_setTransferFunction(ispcEquivalent, transferFunction->getEquivalentISPC());
 
-        //! Set the sampling step size for ray casting based renderers.
-        ispc::BlockBrickedVolume_setStepSize(ispcEquivalent, 1.0f / reduce_max(volumeDimensions) / getParam1f("samplingRate", 1.0f));
+        //! Set the recommended sampling rate for ray casting based renderers.
+        ispc::BlockBrickedVolume_setSamplingRate(ispcEquivalent, getParam1f("samplingRate", 1.0f));
 
         //! Set the gamma correction coefficient and exponent.
         ispc::BlockBrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
@@ -74,8 +74,8 @@ namespace ospray {
         //! Set the gamma correction coefficient and exponent.
         ispc::BlockBrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
 
-        //! Set the sampling step size for ray casting based renderers.
-        ispc::BlockBrickedVolume_setStepSize(ispcEquivalent, 1.0f / reduce_max(volumeDimensions) / getParam1f("samplingRate", 1.0f));
+        //! Set the recommended sampling rate for ray casting based renderers.
+        ispc::BlockBrickedVolume_setSamplingRate(ispcEquivalent, getParam1f("samplingRate", 1.0f));
 
         //! Set the transfer function.
         ispc::BlockBrickedVolume_setTransferFunction(ispcEquivalent, transferFunction->getEquivalentISPC());

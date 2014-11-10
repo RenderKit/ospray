@@ -13,44 +13,37 @@
 
 namespace ospray {
 
-  void LinearTransferFunction::commit() 
-  {
-    // Create the equivalent ISPC transfer function.
-    if (ispcEquivalent == NULL) createEquivalentISPC();
+    void LinearTransferFunction::commit() {
 
-    // Retrieve the color and opacity values.
-    colors = getParamData("colors", NULL);  
-    alphas = getParamData("alphas", NULL);
+        // Create the equivalent ISPC transfer function.
+        if (ispcEquivalent == NULL) createEquivalentISPC();
 
-    // Set the color values.
-    if (colors) ispc::LinearTransferFunction_setColorValues(ispcEquivalent, colors->numItems, (ispc::vec3f *) colors->data);
+        // Retrieve the color and opacity values.
+        colorValues = getParamData("colors", NULL);  opacityValues = getParamData("opacities", NULL);
 
-    // Set the color value range.
-    if (colors) ispc::LinearTransferFunction_setColorRange(ispcEquivalent, getParamf("colorValueMin", 0.0f), getParamf("colorValueMax", 1.0f));
+        // Set the color values.
+        if (colorValues) ispc::LinearTransferFunction_setColorValues(ispcEquivalent, colorValues->numItems, (ispc::vec3f *) colorValues->data);
 
-    // Set the opacity values.
-    if (alphas) ispc::LinearTransferFunction_setAlphaValues(ispcEquivalent, alphas->numItems, (float *) alphas->data);
+        // Set the opacity values.
+        if (opacityValues) ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent, opacityValues->numItems, (float *) opacityValues->data);
 
-    // Set the opacity value range.
-    if (alphas) ispc::LinearTransferFunction_setAlphaRange(ispcEquivalent, getParamf("alphaValueMin", 0.0f), getParamf("alphaValueMax", 1.0f));
-	
-    // Set the value range that the transfer function covers
-    vec2f valueRange = getParam2f("range", vec2f(0.0f, 1.0f));  
-    ispc::TransferFunction_setValueRange(ispcEquivalent, (const ispc::vec2f &) valueRange);
-  }
+        // Set the value range that the transfer function covers.
+        vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));  ispc::TransferFunction_setValueRange(ispcEquivalent, (const ispc::vec2f &) valueRange);
 
-  void LinearTransferFunction::createEquivalentISPC() {
+    }
 
-    // The equivalent ISPC transfer function must not exist yet.
-    exitOnCondition(ispcEquivalent != NULL, "attempt to overwrite an existing ISPC transfer function");
+    void LinearTransferFunction::createEquivalentISPC() {
 
-    // Create the equivalent ISPC transfer function.
-    ispcEquivalent = ispc::LinearTransferFunction_createInstance();
+        // The equivalent ISPC transfer function must not exist yet.
+        exitOnCondition(ispcEquivalent != NULL, "attempt to overwrite an existing ISPC transfer function");
 
-    // The object may not have been created.
-    exitOnCondition(ispcEquivalent == NULL, "unable to create ISPC transfer function");
+        // Create the equivalent ISPC transfer function.
+        ispcEquivalent = ispc::LinearTransferFunction_createInstance();
 
-  }
+        // The object may not have been created.
+        exitOnCondition(ispcEquivalent == NULL, "unable to create ISPC transfer function");
+
+    }
 
 } // namespace ospray
 

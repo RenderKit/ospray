@@ -68,7 +68,7 @@ class QOSPRayWindow : public QGLWidget
 {
 public:
 
-    QOSPRayWindow(OSPRenderer renderer);
+    QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate);
     virtual ~QOSPRayWindow();
 
     void setRenderingEnabled(bool renderingEnabled);
@@ -81,6 +81,12 @@ public:
     OSPFrameBuffer getFrameBuffer() { return frameBuffer_; }
 
 protected:
+
+    /*! Parent Qt window. */
+    QMainWindow *parent;
+
+    /*! Display the frame rate in the main window title bar. */
+    bool showFrameRate;
 
     virtual void paintGL();
     virtual void resizeGL(int width, int height);
@@ -108,6 +114,9 @@ protected:
 
     /*! benchmarking: timer to measure elapsed time over benchmark frames */
     QTime benchmarkTimer_;
+
+    /*! Timer to measure elapsed time over a single frame. */
+    QTime renderFrameTimer;
 
     osp::vec2i windowSize_;
     Viewport viewport_;

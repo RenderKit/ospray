@@ -179,9 +179,12 @@ void BlockBrickedVolume_intersect(void *uniform pointer, varying Ray &ray) {
     //! Cast to the actual Volume subtype.
     BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
 
+    //! The recommended step size for ray casting based volume renderers.
+    const uniform float step = 1.0f / reduce_max(volume->volumeDimensions) / volume->inherited.samplingRate;
+
     //! Compute the next hit point using a spatial acceleration structure.
-    GridAccelerator_intersect(volume->accelerator, volume->inherited.stepSize, ray);
-//  ray.t += volume->inherited.stepSize;
+    GridAccelerator_intersect(volume->accelerator, step, ray);
+//  ray.t += step;
 
 }
 
@@ -325,13 +328,13 @@ export void BlockBrickedVolume_setRegion(void *uniform pointer, const void *unif
 
 }
 
-export void BlockBrickedVolume_setStepSize(void *uniform pointer, const uniform float value) {
+export void BlockBrickedVolume_setSamplingRate(void *uniform pointer, const uniform float value) {
 
     //! Cast to the actual Volume type.
     BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
 
-    //! Set the step size for ray casting based renderers.
-    volume->inherited.stepSize = value;
+    //! Set the recommended sampling rate for ray casting based renderers.
+    volume->inherited.samplingRate = value;
 
 }
 
@@ -344,7 +347,8 @@ export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *
     volume->inherited.transferFunction = (TransferFunction *uniform) value;
 
     //! Set the value range in the spatial acceleration structure.
-    GridAccelerator_setValueRange(volume->accelerator, volume->inherited.transferFunction->valueRange);
+//  GridAccelerator_setValueRange(volume->accelerator, volume->inherited.transferFunction->valueRange);
+    GridAccelerator_setValueRange(volume->accelerator, make_vec2f(-5.0f, 5.0f));
 
     //! Update the spatial acceleration structure.
     GridAccelerator_encodeTransferFunction(volume->accelerator, volume->inherited.transferFunction);

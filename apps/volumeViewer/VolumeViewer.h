@@ -23,7 +23,7 @@ Q_OBJECT
 public:
 
     //! Constructor.
-    VolumeViewer(const std::vector<std::string> &filenames);
+    VolumeViewer(const std::vector<std::string> &filenames, bool showFrameRate);
 
     //! Destructor.
    ~VolumeViewer() {};

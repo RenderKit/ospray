@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     int viewSizeWidth = 0;
     int viewSizeHeight = 0;
     osp::vec3f viewUp(0.f);
+    bool showFrameRate = false;
 
     //! Parse the optional command line arguments.
     for (int i=filenames.size() + 1 ; i < argc ; i++) {
@@ -89,6 +90,11 @@ int main(int argc, char *argv[]) {
             if (i + 1 >= argc) throw std::runtime_error("missing <filename> argument");
             sliceFilenames.push_back(std::string(argv[++i]));
             std::cout << "got slice filename = " << sliceFilenames.back() << std::endl;
+
+        } else if (arg == "-showframerate") {
+
+            showFrameRate = true;
+            std::cout << "set show frame rate" << std::endl;
 
         } else if (arg == "-transferfunction") {
 
@@ -146,7 +152,7 @@ int main(int argc, char *argv[]) {
     }
 
     //! Create the OSPRay state and viewer window.
-    VolumeViewer *volumeViewer = new VolumeViewer(filenames);
+    VolumeViewer *volumeViewer = new VolumeViewer(filenames, showFrameRate);
 
     //! Display the first model.
     volumeViewer->setModel(0);

@@ -10,43 +10,33 @@
 
 #include "ospray/transferfunction/TransferFunction.ih"
 
-#define PRECOMPUTED_VALUES_DIM 32
+#define PRECOMPUTED_OPACITY_SUBRANGE_COUNT 32
 
 struct LinearTransferFunction {
 
-  //! Pointers to functions common to all TransferFunction subtypes
-  //! (must be the first field of the struct).
-  TransferFunction inherited;
+    //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
+    TransferFunction inherited;
 
-  //! Transfer function alpha values, count, and range.
-  float *uniform alphas;  
-  uniform int alphaCount;  
-  uniform vec2f alphaRange;
+    //! Transfer function opacity values and count.
+    float *uniform opacityValues;  uniform int opacityValueCount;  
 
-  //! Transfer function colors, count, and range.
-  vec3f *uniform colors;  
-  uniform int colorCount;  
-  uniform vec2f colorRange;
+    //! Transfer function color values and count.
+    vec3f *uniform colorValues;  uniform int colorValueCount;  
 
-  //! A 2D array that contains precomputed minimum and maximum values
-  //! for a transfer function.
-  vec2f precomputedMinMaxInRange[PRECOMPUTED_VALUES_DIM][PRECOMPUTED_VALUES_DIM];
+    //! A 2D array that contains precomputed minimum and maximum opacity values for a transfer function.
+    vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
 
 };
 
-//! Interpolated opacity for the given value.
-varying float LinearTransferFunction_getAlphaForValue(const void *uniform transferFunction,
-                                                      varying float value);
+    //! Declaration emitted during build in "ClassName_ispc.h".  Create the transfer function container.
+//  extern "C" { void *uniform LinearTransferFunction_createInstance(); }
 
-//! Interpolated color for the given value.
-varying vec3f LinearTransferFunction_getColorForValue(const void *uniform transferFunction,
-                                                      varying float value);
+    //! Declaration emitted during build in "ClassName_ispc.h".  Free memory associated with the transfer function container.
+//  extern "C" { void LinearTransferFunction_destroy(void *uniform pointer); }
 
-//! Precompute the min/max alpha ranges for this transfer function
-void LinearTransferFunction_precomputeMinMaxAlphaRanges(void *uniform pointer);
+    //! Declaration emitted during build in "ClassName_ispc.h".  Set the transfer function color values.
+//  extern "C" { void LinearTransferFunction_setColorValues(void *uniform pointer, const uniform size_t &count, vec3f *uniform source); }
 
-//! Look up the precomputed min/max alpha values for a given range
-uniform vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, 
-                                                           uniform float lowRange, 
-                                                           uniform float highRange);
+    //! Declaration emitted during build in "ClassName_ispc.h".  Set the transfer function opacity values.
+//  extern "C" { void LinearTransferFunction_setOpacityValues(void *uniform pointer, const uniform size_t &count, float *uniform source); }
 

@@ -24,8 +24,8 @@
         //! Gamma correction coefficient and exponent.
         uniform vec2f gammaCorrection;
 
-        //! Step size for ray casting based renderers.
-        uniform float stepSize;
+        //! Recommended sampling rate for the renderer.
+        uniform float samplingRate;
 
         //! Color and opacity transfer function.
         TransferFunction *uniform transferFunction;

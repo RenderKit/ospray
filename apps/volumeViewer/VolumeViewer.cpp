@@ -14,7 +14,7 @@
 #include "SliceWidget.h"
 #include "PLYGeometryFile.h"
 
-VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL), autoRotationRate(0.025f) {
+VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames, bool showFrameRate) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL), autoRotationRate(0.025f) {
 
     //! Default window size.
     resize(1024, 768);
@@ -23,7 +23,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer
     renderer = ospNewRenderer("raycast_volume_renderer");  exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
     //! Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
-    osprayWindow = new QOSPRayWindow(renderer);  setCentralWidget(osprayWindow);
+    osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate);  setCentralWidget(osprayWindow);
 
     //! Set the window bounds based on the OSPRay world bounds (always [(0,0,0), (1,1,1)) for volumes).
     osprayWindow->setWorldBounds(osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
@@ -203,4 +203,5 @@ void VolumeViewer::initUserInterfaceWidgets() {
     slicesScrollArea->setWidgetResizable(true);
     slicesDockWidget->setWidget(slicesScrollArea);
     addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
+
 }
