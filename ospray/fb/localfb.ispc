@@ -21,22 +21,30 @@ struct LocalFB
   
 };
 
+// number of floats each task is clearing; must be a a mulitple of 16
+#define CLEAR_BLOCK_SIZE (32 * 1024)
+
 task void LocalFrameBuffer_clearAccum_task(uniform LocalFB *uniform fb)
 {
-  uniform float *uniform line
-    = (uniform float *uniform)&fb->accumBuffer[taskIndex*fb->inherited.size.x].x;
-  foreach (x=0 ... 4*fb->inherited.size.x)
-    line[x] = 0.f;
+  uniform float *uniform fbPointer 
+    = (uniform float *uniform)&fb->accumBuffer[0].x;
+  uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
+  uniform size_t num_floats = 4*fb->inherited.size.x*fb->inherited.size.y;
+  
+  foreach (x=0 ... min(CLEAR_BLOCK_SIZE,num_floats-taskIndex*CLEAR_BLOCK_SIZE))
+    block[x] = 0.f;
 }
 
 export void LocalFrameBuffer_clearAccum(void *uniform _fb)
 {
   uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
-
   fb->inherited.accumID = 0;
 
-  if (fb->accumBuffer)
-    launch[fb->inherited.size.y] LocalFrameBuffer_clearAccum_task(fb);
+  if (fb->accumBuffer) {
+    uniform size_t num_floats = 4*fb->inherited.size.x*fb->inherited.size.y;
+    uniform size_t num_blocks = (num_floats + CLEAR_BLOCK_SIZE - 1) / CLEAR_BLOCK_SIZE;
+    launch[num_blocks] LocalFrameBuffer_clearAccum_task(fb);
+  }
 }
 
 // =======================================================

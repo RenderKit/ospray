@@ -61,6 +61,15 @@ namespace ospray {
       void       *data;
     };
 
+    /*! data array */
+    template<typename T>
+    struct DataVector : public sg::Data {
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const { return "ospray::sg::DataArray<T>"; };
+      
+      std::vector<T> t;
+    };
+
     /*! a geometry node - the generic geometry node */
     struct GenericGeometry : public sg::Geometry {
       GenericGeometry(const std::string &type) : Geometry(type) {};
