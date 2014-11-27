@@ -107,15 +107,17 @@ namespace ospray {
       if (!sgRenderer->frameBuffer) return;
       if (!sgRenderer->camera) return;
 
-      static int frameID = 0;
-      if (frameID > 0) {
-        fps.doneRender();
-        printf("fps: %f\n",fps.getFPS());
+      if (showFPS) {
+        static int frameID = 0;
+        if (frameID > 0) {
+          fps.doneRender();
+          printf("fps: %f\n",fps.getFPS());
+        }
+        fps.startRender();
+        ++frameID;
       }
-      fps.startRender();
 
       sgRenderer->renderFrame();
-      ++frameID;
 
 
       vec2i size = sgRenderer->frameBuffer->getSize();

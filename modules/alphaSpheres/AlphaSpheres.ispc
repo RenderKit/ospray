@@ -681,7 +681,15 @@ void PKDGeometry_occluded_naive(uniform PKDGeometry *uniform THIS,
         t_out = min(t_out,ray.t);
         
         const varying size_t dim = THIS->innerNodeInfo[nodeID] >> 30;
-        const varying float plane_coord = THIS->particle[nodeID].position[dim];
+        // const varying float plane_coord = THIS->particle[nodeID].position[dim];
+        varying float plane_coord;// = THIS->particle[nodeID].position[dim];
+        foreach_unique(block in (nodeID >> 24)) {
+          // print("block %\n",block);
+          PKDParticle *uniform part_block = &THIS->particle[block];
+          int offs = nodeID - (block << 24);
+          // print("offs %\n",offs);
+          plane_coord = part_block[offs].position[dim];
+        }
 
         const float t_plane_0 = (plane_coord + THIS->radius - org[dim]) * rcp(dir[dim]);
         const float t_plane_1 = (plane_coord - THIS->radius - org[dim]) * rcp(dir[dim]);

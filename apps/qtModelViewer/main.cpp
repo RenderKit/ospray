@@ -45,6 +45,9 @@ namespace ospray {
     /*! renderer as specified on the command line */
     std::string integratorFromCommandLine = "";
 
+    /*! whether we will display the frames per second */
+    bool showFPS = false;
+
     /*! @} */
 
     void main(int argc, const char *argv[]) 
@@ -67,6 +70,8 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "--test-sphere") {
             world = sg::createTestSphere();
+          } else if (arg == "--show-fps" || arg == "--fps") {
+            showFPS = true;
           } else if (arg == "--test-pkd") {
             world = sg::PKDGeometry::importPKDFile(argv[++argID]);
           } else if (arg == "--test-cosmo") {
@@ -138,6 +143,7 @@ namespace ospray {
         // create new modelviewer
         cout << "#ospQTV: setting up to open QT viewer window" << endl;
         ModelViewer *modelViewer = new ModelViewer(renderer);
+        modelViewer->showFrameRate(showFPS);
         modelViewer->show();
         // let qt run...
         app->exec();
