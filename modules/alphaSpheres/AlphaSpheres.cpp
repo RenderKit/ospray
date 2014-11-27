@@ -111,8 +111,14 @@ namespace ospray {
     assert(transferFunction);
     
     particle  = (Particle *)particleData->data;
+
     numInnerNodes = numParticles / 2;
     innerNodeInfo = new InnerNodeInfo[numInnerNodes];
+
+    PRINT(particle);
+    PRINT(particle+numInnerNodes);
+    PRINT(particle+numParticles);
+
 
     bounds = embree::empty;
     attr_lo = std::numeric_limits<float>::infinity();

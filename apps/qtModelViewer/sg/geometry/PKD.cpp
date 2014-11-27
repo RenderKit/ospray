@@ -56,7 +56,10 @@ namespace ospray {
         OSPMaterial mat = ospNewMaterial(integrator?integrator->getOSPHandle():NULL,"default");
         if (mat) {
           vec3f kd = .7f;
+          vec3f ks = .3f;
           ospSet3fv(mat,"kd",&kd.x);
+          ospSet3fv(mat,"ks",&ks.x);
+          ospSet1f(mat,"Ns",.4f);
         }
         ospSetMaterial(ospGeometry,mat);
 

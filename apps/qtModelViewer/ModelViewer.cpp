@@ -18,6 +18,28 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    struct FPSCounter {
+      double smooth_nom;
+      double smooth_den;
+      double frameStartTime;
+
+      FPSCounter() 
+      {
+        smooth_nom = 0.;
+        smooth_den = 0.;
+        frameStartTime = 0.;
+      }
+      void startRender() { frameStartTime = ospray::getSysTime(); }
+      void doneRender() { 
+        double seconds = ospray::getSysTime() - frameStartTime; 
+        smooth_nom = smooth_nom * 0.8f + seconds;
+        smooth_den = smooth_den * 0.8f + 1.f;
+      }
+      double getFPS() const { return smooth_den / smooth_nom; }
+    };
+
+    FPSCounter fps;
+
     OSPRayRenderWidget::OSPRayRenderWidget(Ref<sg::Renderer> renderer)
       : QAffineSpaceManipulator(QAffineSpaceManipulator::INSPECT),
         sgRenderer(renderer)
@@ -85,7 +107,16 @@ namespace ospray {
       if (!sgRenderer->frameBuffer) return;
       if (!sgRenderer->camera) return;
 
+      static int frameID = 0;
+      if (frameID > 0) {
+        fps.doneRender();
+        printf("fps: %f\n",fps.getFPS());
+      }
+      fps.startRender();
+
       sgRenderer->renderFrame();
+      ++frameID;
+
 
       vec2i size = sgRenderer->frameBuffer->getSize();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
