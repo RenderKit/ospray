@@ -55,14 +55,28 @@ typedef bool (*MinMaxBVH_intersectPrim)(void *uniform geomPtr,
                                         uniform int primID,
                                         varying Ray &ray);
 
-void MinMaxBVH2_intersect(uniform MinMaxBVH2 *uniform bvh2,
+void MinMaxBVH2_intersect_packet(uniform MinMaxBVH2 *uniform bvh2,
                           void *uniform geomPtr,
                           TransferFunction *uniform,
                           uniform MinMaxBVH_intersectPrim intersectPrim,
                           uniform int numPrims,
                           varying Ray &ray);
 
-void MinMaxBVH2_occluded(uniform MinMaxBVH2 *uniform bvh2,
+void MinMaxBVH2_occluded_packet(uniform MinMaxBVH2 *uniform bvh2,
+                         void *uniform geomPtr,
+                         TransferFunction *uniform,
+                         uniform MinMaxBVH_intersectPrim occludedPrim,
+                         uniform int numPrims,
+                         varying Ray &ray);
+
+void MinMaxBVH2_intersect_naive(uniform MinMaxBVH2 *uniform bvh2,
+                          void *uniform geomPtr,
+                          TransferFunction *uniform,
+                          uniform MinMaxBVH_intersectPrim intersectPrim,
+                          uniform int numPrims,
+                          varying Ray &ray);
+
+void MinMaxBVH2_occluded_naive(uniform MinMaxBVH2 *uniform bvh2,
                          void *uniform geomPtr,
                          TransferFunction *uniform,
                          uniform MinMaxBVH_intersectPrim occludedPrim,

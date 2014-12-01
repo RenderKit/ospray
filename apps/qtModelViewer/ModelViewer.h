@@ -100,6 +100,9 @@ namespace ospray {
       sg::Serialization serialization;
       //! the world we're displaying
       Ref<sg::World> world;
+
+      //! whether to display the frame rate
+      bool showFPS;
     };
 
 
@@ -119,6 +122,9 @@ namespace ospray {
       void render();
 
       void setWorld(Ref<sg::World> newWorld);
+
+      /*! enable/disable display of frame rate */
+      void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
 
     protected:
       //! create the lower-side time step slider (for models that have
