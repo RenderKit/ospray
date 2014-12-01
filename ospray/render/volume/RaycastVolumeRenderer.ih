@@ -29,26 +29,13 @@
         //! Renderer state.
         Camera *uniform camera;  Light **uniform lights;  Model *uniform model;  Model *uniform dynamicModel;
 
-uint32 volumeSamples;
-uint32 screenSamples;
-
     };
 
     void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, const uniform int32 accumID)
-//      { if (renderer->fb) renderer->fb->accumID = accumID;  renderer->fb = NULL; }
-        {
-          if (renderer->fb) renderer->fb->accumID = accumID;  renderer->fb = NULL;
-          RaycastVolumeRenderer *uniform actual = (RaycastVolumeRenderer *uniform) renderer;
-          print("Average volume samples per pixel: %\n", (float) actual->volumeSamples / actual->screenSamples);
-        }
+        { if (renderer->fb) renderer->fb->accumID = accumID;  renderer->fb = NULL; }
 
     void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer, FrameBuffer *uniform framebuffer)
-//      { renderer->fb = framebuffer; }
-        {
-          renderer->fb = framebuffer;
-          RaycastVolumeRenderer *uniform actual = (RaycastVolumeRenderer *uniform) renderer;
-          actual->volumeSamples = 0;  actual->screenSamples = 0;
-        }
+        { renderer->fb = framebuffer; }
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Initialize a renderer object.
 //  extern "C" { void *uniform RaycastVolumeRenderer_createInstance(); }

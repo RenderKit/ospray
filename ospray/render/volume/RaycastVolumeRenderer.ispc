@@ -139,8 +139,6 @@ inline void RaycastVolumeRenderer_intersect(RaycastVolumeRenderer *uniform rende
     RaycastVolumeRenderer_computeVolumeSample(renderer->model->volumes[0], ray, volumeColor);
     RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
 
-renderer->screenSamples++;
-
     //! Trace the ray through the volume and geometries.
     while (min(ray.t, geometryRay.t) < ray.t1 && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
@@ -166,8 +164,6 @@ renderer->screenSamples++;
 
             //! Trace next volume ray.
             RaycastVolumeRenderer_computeVolumeSample(renderer->model->volumes[0], ray, volumeColor);
-
-renderer->volumeSamples++;
 
         }
 
