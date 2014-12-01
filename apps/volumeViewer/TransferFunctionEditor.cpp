@@ -107,13 +107,13 @@ void TransferFunctionEditor::transferFunctionAlphasChanged() {
     // alpha scaling range, for now constant at 0 -> 200.
     // this should really be bounded in [0.0, 1.0], but we allow a wider range to avoid additional parameters to the renderer / volume.
     const float alphaScalingMin = 0.f;
-    const float alphaScalingMax = 200.f;
+    const float alphaScalingMax = 1.f;
 
     //! Alpha scaling within the above range.
     const float alphaScaling = alphaScalingMin + alphaScalingNormalized * (alphaScalingMax - alphaScalingMin);
 
     //! Scale alpha values.
-//  for (unsigned int i=0; i < transferFunctionAlphas.size(); i++) transferFunctionAlphas[i] *= alphaScaling;
+    for (unsigned int i=0; i < transferFunctionAlphas.size(); i++) transferFunctionAlphas[i] *= alphaScaling;
 
     OSPData transferFunctionAlphasData = ospNewData(transferFunctionAlphas.size(), OSP_FLOAT, transferFunctionAlphas.data());
     ospSetData(transferFunction, "opacities", transferFunctionAlphasData);
