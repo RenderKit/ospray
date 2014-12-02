@@ -22,6 +22,9 @@ struct TransferFunction {
     //! Interpolated opacity for the given value.
     varying float (*getOpacityForValue)(const void *uniform transferFunction, varying float value);
       
+    //! Virtual function to look up the maximum opacity value based on an input range.
+    varying float (*getMaxOpacityInRange)(void *uniform transferFunction, const varying vec2f &range);
+
     //! Virtual function to look up the min/max opacity value based on an input range.
     uniform vec2f (*getMinMaxOpacityInRange)(void *uniform transferFunction, const uniform vec2f &range);
 

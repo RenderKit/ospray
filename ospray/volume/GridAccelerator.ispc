@@ -8,6 +8,7 @@
 //
 
 #include "ospray/math/bbox.ih"
+#include "ospray/volume/BlockBrickedVolume.ih"
 #include "ospray/volume/GridAccelerator.ih"
 
 // namespace GridAccelerator {
@@ -27,11 +28,19 @@
     //! Grid cell width in volumetric elements.
     #define CELL_WIDTH (1 << CELL_WIDTH_BITCOUNT)
 
-    //! Get the encoded bit vector for a given cell.
-    uint32 GridAccelerator_getCellCode(GridAccelerator *uniform accelerator, const varying vec3i &index);
+    //! Compute the 1D address of a cell in the grid.
+    uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator, const varying vec3i &index);
 
-    //! Bitwise OR an encoded bit vector with the vector stored for a given cell.
-    void GridAccelerator_setCellCode(GridAccelerator *uniform accelerator, const varying vec3i &index, const uint32 code);
+    //! Compute the value range of voxels contained in each cell of a brick in the grid.
+    void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, BlockBrickedVolume *uniform volume, const uniform vec3i &brickIndex);
+
+    //! Get the volumetric value range of a cell.
+    inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator, const varying vec3i &index, varying vec2f &value)
+        { const uint32 address = GridAccelerator_getCellAddress(accelerator, index);  value = accelerator->cellRange[address]; }
+
+    //! Set the volumetric value range of a cell.
+    inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator, uniform uint32 address, uniform vec2f &value)
+        { accelerator->cellRange[address] = value; }
 
     //! Transform the given point in volume coordinates into world coordinates.
     inline vec3f GridAccelerator_transformLocalToWorld(GridAccelerator *uniform accelerator, const varying vec3f &coordinates)
@@ -43,58 +52,92 @@
 
 // }
 
-GridAccelerator *uniform GridAccelerator_createInstance() {
+GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer) {
 
     //! The accelerator container.
     GridAccelerator *uniform accelerator = uniform new uniform GridAccelerator;
 
-    //! Find the largest floating point number less than the value range bucket count.
-    accelerator->rangeScale = nextafter(32.0f, 0.0f);  return(accelerator);
+    //! Cast to the actual volume type.
+    BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Grid size in cells per dimension after padding out the volume dimensions to the nearest cell.
+    accelerator->gridDimensions = (volume->volumeDimensions + CELL_WIDTH - 1) / CELL_WIDTH;
+
+    //! Grid size in bricks per dimension after padding out the grid dimensions to the nearest brick.
+    accelerator->brickCount = (accelerator->gridDimensions + BRICK_WIDTH - 1) / BRICK_WIDTH;
+
+    //! Grid cell count with padding.
+    const uniform size_t cellCount = accelerator->brickCount.x * accelerator->brickCount.y * accelerator->brickCount.z * BRICK_CELL_COUNT;
+
+    //! Allocate storage for the volumetric value range per cell.
+    accelerator->cellRange = uniform new uniform vec2f[cellCount];
+
+    //! Keep a pointer to the volume.
+    accelerator->volume = pointer;
+
+    //! The largest floating point value still inside the volume.
+    accelerator->volumeExtents = nextafter(volume->volumeDimensions - 1, make_vec3i(0));
+
+    //! Compute the volumetric value range per cell.
+//  launch[accelerator->brickCount.x, accelerator->brickCount.y, accelerator->brickCount.z] GridAccelerator_encodeVolumeBrick(accelerator, volume);
+    for (uniform int k=0 ; k < accelerator->brickCount.z ; k++)
+        for (uniform int j=0 ; j < accelerator->brickCount.y ; j++)
+            for (uniform int i=0 ; i < accelerator->brickCount.x ; i++)
+                GridAccelerator_encodeVolumeBrick(accelerator, volume, make_vec3i(i, j, k));
+
+    //! The completed acceleration structure.
+    return(accelerator);
 
 }
 
-void GridAccelerator_encodeTransferFunction(GridAccelerator *uniform accelerator, TransferFunction *uniform transferFunction) {
+inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator, BlockBrickedVolume *uniform volume, const uniform vec3i &cellIndex, uniform vec2f &cellRange) {
 
-    //! Encode the transfer function opacity values.
-    accelerator->transferFunctionCode = 0;  for (uniform uint32 i=0 ; i < 32 ; i++) {
+    //! Loop over voxels in the current cell.
+    foreach (k = 0 ... CELL_WIDTH, j = 0 ... CELL_WIDTH, i = 0 ... CELL_WIDTH) {
 
-        //! The minimum value contained in the current value range bucket.
-        const uniform float rangeMinimum = (i / accelerator->rangeScale) * (accelerator->valueRange.y - accelerator->valueRange.x) + accelerator->valueRange.x;
+        //! The 3D index of the voxel in the volume.
+        const vec3i voxelIndex = cellIndex * CELL_WIDTH + make_vec3i(i, j, k);
 
-        //! The maximum value contained in the current value range bucket.
-        const uniform float rangeMaximum = (nextafter(i + 1.0f, 0.0f) / accelerator->rangeScale) * (accelerator->valueRange.y - accelerator->valueRange.x) + accelerator->valueRange.x;
+        //! The voxel value.
+        const float value = volume->getVoxel(volume, min(volume->volumeDimensions - 1, voxelIndex));
 
-        //! Get the minimum and maximum opacity values for the given value range.
-        const uniform vec2f opacityRange = transferFunction->getMinMaxOpacityInRange(transferFunction, make_vec2f(rangeMinimum, rangeMaximum));
-
-        //! Encode the maximum opacity value.
-        if (opacityRange.y > 0.0f) accelerator->transferFunctionCode |= 1 << i;
+        //! Update the volumetric value range of the current cell.
+        cellRange.x = min(cellRange.x, reduce_min(value));  cellRange.y = max(cellRange.y, reduce_max(value));
 
     }
 
 }
 
-void GridAccelerator_encodeValue(GridAccelerator *uniform accelerator, const varying vec3f &coordinates, varying float value) {
+void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, BlockBrickedVolume *uniform volume, const uniform vec3i &brickIndex) {
 
-    //! Compute the 3D index of the voxel containing the value, and the cell containing the voxel.
-    const vec3i voxelIndex = integer_cast(coordinates);  const vec3i cellIndex = voxelIndex >> CELL_WIDTH_BITCOUNT;
+    //! The 1D address of the brick in the grid.
+    uniform uint32 brickAddress = brickIndex.x + accelerator->brickCount.x * (brickIndex.y + accelerator->brickCount.y * (uint32) brickIndex.z);
 
-    //! Values near cell bounds are added to adjacent cells to account for later interpolation.
-    const vec3i cellCount = cellIndex - (max(voxelIndex - 1, 0) >> CELL_WIDTH_BITCOUNT) + 1;
+    //! Loop over cells in the current brick.
+    for (uniform uint32 i=0 ; i < BRICK_CELL_COUNT ; i++) {
 
-    //! Project the value into the range [0.0, 1.0].
-    float normalizedValue = clamp((value - accelerator->valueRange.x) / (accelerator->valueRange.y - accelerator->valueRange.x));
+        //! The 1D address of the cell in the grid.
+        uniform uint32 cellAddress = brickAddress << 3 * BRICK_WIDTH_BITCOUNT | i;
 
-    //! Encode the value as a bit vector.
-    uint32 valueCode = 1 << (uint32)(normalizedValue * accelerator->rangeScale);
+        //! The index of the slice containing the current cell.
+        uniform uint32 z = i >> 2 * BRICK_WIDTH_BITCOUNT;  uniform uint32 offset = i & (BRICK_WIDTH * BRICK_WIDTH - 1);
 
-    //! Add the value to the current and any adjacent cells.
-//  for (size_t z=0 ; z < cellCount.z ; z++)
-//      for (size_t y=0 ; y < cellCount.y ; y++)
-//          for (size_t x=0 ; x < cellCount.x ; x++)
-//              GridAccelerator_setCellCode(accelerator, cellIndex + make_vec3i(x, y, z), valueCode);
+        //! The indices of the cell within the slice.
+        uniform uint32 y = offset >> BRICK_WIDTH_BITCOUNT;  uniform uint32 x = offset % BRICK_WIDTH;
 
-    GridAccelerator_setCellCode(accelerator, cellIndex, valueCode);
+        //! The 3D index of the cell in the grid.
+        uniform vec3i cellIndex = brickIndex * BRICK_WIDTH + make_vec3i(x, y, z);
+
+        //! The minimum and maximum volumetric values contained in the cell.
+        uniform vec2f cellRange = make_vec2f(99999.0f, -99999.0f);
+
+        //! Compute the value range over the voxels in the cell.
+        GridAccelerator_encodeBrickCell(accelerator, volume, cellIndex, cellRange);
+
+        //! Store the value range.
+        GridAccelerator_setCellRange(accelerator, cellAddress, cellRange);
+
+    }
 
 }
 
@@ -127,16 +170,6 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
 
 }
 
-uint32 GridAccelerator_getCellCode(GridAccelerator *uniform accelerator, const varying vec3i &index) {
-
-    //! Compute the 1D address of the cell in the grid.
-    const uint32 cellAddress = GridAccelerator_getCellAddress(accelerator, index);
-
-    //! The cell code at the 1D address.
-    return(accelerator->cellCodes[cellAddress]);
-
-}
-
 inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds, const varying Ray &ray) {
 
     //! Intersection interval minimum per axis.
@@ -155,58 +188,44 @@ inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds, const va
 
 void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform float step, varying Ray &ray) {
 
+    //! The associated volume.
+    Volume *uniform volume = (Volume *uniform) accelerator->volume;
+
     //! Tentatively advance the ray.
     ray.t += step;  if (ray.t >= ray.t1) return;
 
     //! Compute the hit point in the local coordinate system.
-    const vec3f coordinates = GridAccelerator_transformWorldToLocal(accelerator, ray.org + ray.t * ray.dir);
+    vec3f coordinates = GridAccelerator_transformWorldToLocal(accelerator, ray.org + ray.t * ray.dir);
 
     //! Compute the 3D index of the cell containing the hit point.
-    const vec3i cellIndex = integer_cast(coordinates) >> CELL_WIDTH_BITCOUNT;
+    vec3i cellIndex = integer_cast(coordinates) >> CELL_WIDTH_BITCOUNT;
+
+    //! If we visited this cell before then it must not be empty.
+    if (ray.geomID == cellIndex.x && ray.primID == cellIndex.y && ray.instID == cellIndex.z) return;
+
+    //! Track the hit cell.
+    ray.geomID = cellIndex.x;  ray.primID = cellIndex.y;  ray.instID = cellIndex.z;
+
+    //! Get the volumetric value range of the cell.
+    vec2f cellRange;  GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
+
+    //! Get the maximum opacity in the volumetric value range.
+    float maximumOpacity = volume->transferFunction->getMaxOpacityInRange(volume->transferFunction, cellRange);
 
     //! Return the hit point if the grid cell is not fully transparent.
-    uint32 cellOpacity = GridAccelerator_getCellCode(accelerator, cellIndex) & accelerator->transferFunctionCode;  if (cellOpacity) return;
+    if (maximumOpacity > 0.0f) return;
 
     //! Bounds of the grid cell in world coordinates.
-    const box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
+    box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
 
     //! Identify the distance along the ray to the entry and exit points on the cell.
-    const vec2f cellInterval = GridAccelerator_intersectCell(cellBounds, ray);
+    vec2f cellInterval = GridAccelerator_intersectCell(cellBounds, ray);
 
     //! Advance the ray so the next hit point will be outside the empty cell.
     ray.t += floor(abs(cellInterval.y - ray.t) / step) * step;
 
     //! Rinse and repeat.
     GridAccelerator_intersect(accelerator, step, ray);
-
-}
-
-void GridAccelerator_setCellCode(GridAccelerator *uniform accelerator, const varying vec3i &index, const uint32 code) {
-
-    //! Compute the 1D address of the cell in the grid.
-    const uint32 cellAddress = GridAccelerator_getCellAddress(accelerator, index);
-
-    //! Store the cell code at the 1D address, assumes this code is not multithreaded.
-    atomic_or_local(&accelerator->cellCodes[cellAddress], code);
-
-}
-
-void GridAccelerator_setVolumeDimensions(GridAccelerator *uniform accelerator, const uniform vec3i &volumeDimensions) {
-
-    //! Grid size in cells per dimension after padding out the volume dimensions to the nearest cell.
-    accelerator->gridDimensions = (volumeDimensions + CELL_WIDTH - 1) / CELL_WIDTH;
-
-    //! Grid size in bricks per dimension after padding out the grid dimensions to the nearest brick.
-    accelerator->brickCount = (accelerator->gridDimensions + BRICK_WIDTH - 1) / BRICK_WIDTH;
-
-    //! Grid cell count with padding.
-    const uniform size_t cellCount = accelerator->brickCount.x * accelerator->brickCount.y * accelerator->brickCount.z * BRICK_CELL_COUNT;
-
-    //! Allocate storage for the encoded volumetric values per cell.
-    accelerator->cellCodes = uniform new uniform uint32[cellCount];  memset(accelerator->cellCodes, 0, cellCount * sizeof(uniform uint32));
-
-    //! The largest floating point value still inside the volume.
-    accelerator->volumeExtents = nextafter(volumeDimensions - 1, make_vec3i(0));
 
 }
 

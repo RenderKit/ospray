@@ -56,6 +56,9 @@
     //! Declaration emitted during build in "ClassName_ispc.h".  Assign type-specific function pointers.
 //  extern "C" { void *uniform BlockBrickedVolume_createInstance(const uniform int voxelType); }
 
+    //! Declaration emitted during build in "ClassName_ispc.h".  Complete volume initialization.
+//  extern "C" { void BlockBrickedVolume_finish(void *uniform volume); }
+
     //! Declaration emitted during build in "ClassName_ispc.h".  Set the gamma correction coefficient and exponent.
 //  extern "C" { void BlockBrickedVolume_setGammaCorrection(void *uniform volume, const uniform vec2f &value); }
 

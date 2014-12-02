@@ -26,7 +26,6 @@ inline void RaycastVolumeRenderer_computeVolumeSample(Volume *uniform volume, va
     const float sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction, sample);
 
     //! Set the color contribution for this sample only (do not accumulate).
-//  color = (1.0f - exp(-sampleOpacity * volume->stepSize)) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
     color = clamp(sampleOpacity / volume->samplingRate) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 
 }

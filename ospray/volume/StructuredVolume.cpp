@@ -28,6 +28,9 @@ namespace ospray {
         //! The volume may be initialized from the contents of a file or from memory.
         if (!filename.empty()) VolumeFile::importVolume(filename, this);  else getVolumeFromMemory();
 
+        //! Complete volume initialization.
+        finish();
+
     }
 
     OSPDataType StructuredVolume::getVoxelType() const {

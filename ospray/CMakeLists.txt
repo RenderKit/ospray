@@ -41,8 +41,6 @@ SET(OSPRAY_SOURCES
 
   volume/BlockBrickedVolume.cpp
   volume/BlockBrickedVolume.ispc
-  volume/BrickedVolume.cpp
-  volume/BrickedVolume.ispc
   volume/GridAccelerator.ispc
   volume/StructuredVolume.cpp
   volume/SymbolRegistry.cpp
@@ -88,8 +86,8 @@ SET(OSPRAY_SOURCES
   render/raycast/raycast.ispc
   render/ao16/ao16.cpp
   render/ao16/ao16.ispc
-  render/dvr/dvr.cpp
-  render/dvr/dvr.ispc
+# render/dvr/dvr.cpp
+# render/dvr/dvr.ispc
   render/obj/objrenderer.ispc
   render/obj/objmaterial.ispc
   render/obj/objrenderer.cpp

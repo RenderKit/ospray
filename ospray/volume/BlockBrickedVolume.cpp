@@ -53,6 +53,16 @@ namespace ospray {
 
     }
 
+    void BlockBrickedVolume::finish() {
+
+        //! The ISPC volume container must exist at this point.
+        assert(ispcEquivalent != NULL);
+
+        //! Complete volume initialization.
+        ispc::BlockBrickedVolume_finish(ispcEquivalent);
+
+    }
+
     void BlockBrickedVolume::setRegion(const void *source, const vec3i &index, const vec3i &count) {
 
         //! Range check.

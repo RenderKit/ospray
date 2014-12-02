@@ -44,6 +44,17 @@ uniform vec2f LinearTransferFunction_getMinMaxOpacityInRange(void *uniform point
 
 }
 
+varying float LinearTransferFunction_getMaxOpacityInRange(void *uniform pointer, const varying vec2f &range) {
+
+    uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
+    const uniform int maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
+    const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
+    const varying int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+    const varying int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+    return(transferFunction->minMaxOpacityInRange[i][j].y);
+
+}
+
 inline varying float LinearTransferFunction_getOpacityForValue(const void *uniform pointer, varying float value) {
 
     // Cast to the actual TransferFunction subtype.
@@ -118,6 +129,9 @@ export void *uniform LinearTransferFunction_createInstance() {
 
     // Function to get the interpolated opacity for a given value.
     transferFunction->inherited.getOpacityForValue = LinearTransferFunction_getOpacityForValue;
+
+    // Virtual function to look up the maximum opacity based on an input range.
+    transferFunction->inherited.getMaxOpacityInRange = LinearTransferFunction_getMaxOpacityInRange;
 
     // Virtual function to look up the min/max opacity based on an input range.
     transferFunction->inherited.getMinMaxOpacityInRange = LinearTransferFunction_getMinMaxOpacityInRange;

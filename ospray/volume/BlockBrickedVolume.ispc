@@ -205,9 +205,6 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform pointer, const void *
     //! Store the voxel value at the 1D address.
     foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
 
-    //! Encode the voxel value in the spatial acceleration structure.
-    GridAccelerator_encodeValue(volume->accelerator, float_cast(index + offset), value);
-
 }
 
 inline void BlockBrickedVolumeUChar_setVoxel(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset) {
@@ -226,9 +223,6 @@ inline void BlockBrickedVolumeUChar_setVoxel(void *uniform pointer, const void *
 
     //! Store the voxel value at the 1D address.
     foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
-
-    //! Encode the voxel value in the spatial acceleration structure.
-    GridAccelerator_encodeValue(volume->accelerator, float_cast(index + offset), value);
 
 }
 
@@ -279,8 +273,8 @@ export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelTy
     //! The volume container.
     BlockBrickedVolume *uniform volume = uniform new uniform BlockBrickedVolume;
 
-    //! The spatial acceleration structure container.
-    volume->accelerator = (GridAccelerator *uniform) GridAccelerator_createInstance();
+    //! Denote that the acceleration structure does not exist yet.
+    volume->accelerator = NULL;
 
     //! Store the voxel type.
     volume->voxelType = (OSPDataType) voxelType;
@@ -305,6 +299,16 @@ export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelTy
 
     //! Indicate that memory allocation is needed.
     volume->voxelData = NULL;  return(volume);
+
+}
+
+export void BlockBrickedVolume_finish(void *uniform pointer) {
+
+    //! Cast to the actual Volume type.
+    BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+    //! Set the accelerator structure field.
+    volume->accelerator = GridAccelerator_createInstance(pointer);
 
 }
 
@@ -346,13 +350,6 @@ export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *
     //! Set the color and opacity transfer function.
     volume->inherited.transferFunction = (TransferFunction *uniform) value;
 
-    //! Set the value range in the spatial acceleration structure.
-//  GridAccelerator_setValueRange(volume->accelerator, volume->inherited.transferFunction->valueRange);
-    GridAccelerator_setValueRange(volume->accelerator, make_vec2f(-5.0f, 5.0f));
-
-    //! Update the spatial acceleration structure.
-    GridAccelerator_encodeTransferFunction(volume->accelerator, volume->inherited.transferFunction);
-
 }
 
 export void BlockBrickedVolume_setValueRange(void *uniform pointer, const uniform vec2f &value) {
@@ -378,9 +375,6 @@ export void BlockBrickedVolume_setVolumeDimensions(void *uniform pointer, const 
 
     //! Volume size in blocks per dimension with padding to the nearest block.
     volume->blockCount = (volume->volumeDimensions + BLOCK_VOXEL_WIDTH - 1) / BLOCK_VOXEL_WIDTH;
-
-    //! Allocate storage in the spatial acceleration structure.
-    GridAccelerator_setVolumeDimensions(volume->accelerator, volume->volumeDimensions);
 
 }
 
