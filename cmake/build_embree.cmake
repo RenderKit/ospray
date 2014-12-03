@@ -122,14 +122,12 @@ ELSE()
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/builders/heuristic_strand_partition.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/builders/heuristic_fallback.cpp
     
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/bezier1.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/bezier1i.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/triangle1.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/triangle4.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/triangle1v.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/triangle4v.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/triangle4i.cpp
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/ispc_wrapper_sse.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/instance_intersector1.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/instance_intersector4.cpp
     
@@ -139,22 +137,25 @@ ELSE()
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_fast.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_morton.cpp
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_binner.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp   
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_chunk.cpp
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_statistics.cpp
 
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb.cpp
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_builder.cpp
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_intersector1.cpp   
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_intersector4.cpp
+# remove for embree 2.3.3:
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/bezier1.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/ispc_wrapper_sse.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_binner.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_builder.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_intersector1.cpp   
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_intersector4.cpp
 
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair.cpp
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_statistics.cpp
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_builder.cpp 
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector1.cpp
-    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector4.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_statistics.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_builder.cpp 
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector1.cpp
+     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector4.cpp
     )
 
   # ------------------------------------------------------------------
@@ -178,10 +179,11 @@ ELSE()
       (${OSPRAY_XEON_TARGET} STREQUAL "SSE41") OR
       (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
     OSPRAY_ADD_LIBRARY(ospray_embree_sse41 STATIC
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_binner.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp   
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_chunk.cpp
+# remove for embree 2.3.3:
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_binner.cpp
       )
     SET_TARGET_PROPERTIES(ospray_embree_sse41 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE41}")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_sse41)
@@ -217,7 +219,6 @@ ELSE()
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/builders/heuristic_fallback.cpp
 
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/triangle8.cpp
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/ispc_wrapper_avx.cpp
 
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/instance_intersector1.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/instance_intersector4.cpp
@@ -234,6 +235,16 @@ ELSE()
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector8_chunk.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector8_hybrid.cpp
 
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8.cpp
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_builder.cpp
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_statistics.cpp
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector1.cpp  
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector4_hybrid.cpp   
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector8_chunk.cpp   
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector8_hybrid.cpp   
+
+# remove for embree 2.3.3:
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/geometry/ispc_wrapper_avx.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_builder.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_intersector1.cpp   
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4mb/bvh4mb_intersector4.cpp
@@ -243,14 +254,6 @@ ELSE()
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector1.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector4.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4hair/bvh4hair_intersector8.cpp
-
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8.cpp
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_builder.cpp
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_statistics.cpp
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector1.cpp  
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector4_hybrid.cpp   
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector8_chunk.cpp   
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh8/bvh8_intersector8_hybrid.cpp   
       )
     SET_TARGET_PROPERTIES(ospray_embree_avx PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_AVX}")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx)
