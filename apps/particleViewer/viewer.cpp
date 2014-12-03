@@ -242,6 +242,10 @@ namespace ospray {
             std::pair<particle::Model *, embree::FileName> loadJob(m,fn.str());
             deferredLoadingListXYZ.push_back(loadJob);
             particleModel.push_back(m);
+          } else if (fn.ext() == "xyz2") {
+            particle::Model *m = new particle::Model;
+            m->loadXYZ2(fn);
+            particleModel.push_back(m);
           } else if (fn.ext() == "xml") {
             particle::Model *m = parse__Uintah_timestep_xml(fn);
             particleModel.push_back(m);

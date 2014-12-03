@@ -40,7 +40,10 @@ namespace ospray {
 
       /*! \brief load lammps xyz files */
       void loadXYZ(const std::string &fn);
-      
+      /*! load xyz files in which there is *no* atom count, but just a
+        list of "type x y z" lines */
+      void loadXYZ2(const std::string &fileName);
+
       box3f getBBox() const;
 
       Model() : radius(1.f) {}
