@@ -13,6 +13,7 @@
 #include "ospray/include/ospray/ospray.h"
 // stl stuff
 #include <vector>
+#include <set>
 
 namespace ospray {
 
@@ -98,19 +99,24 @@ namespace ospray {
     struct Param {
       Param(const char *name);
       ~Param() { clear(); };
+
       /*! clear parameter to 'invalid type and value'; free/de-refcount data if reqd' */
       void clear();
+
       /*! set parameter to a 'pointer to object' type, and given pointer */
       void set(ManagedObject *ptr);
+
       //! set parameter to a 'c-string' type 
       /* \internal this function creates and keeps a *copy* of the passed string! */
       void set(const char *s);
+
       //! set parameter to a 'c-string' type 
       /* \internal this function does *not* copy whatever data this
          pointer points to (it doesn't have the info to do so), so
          this pointer belongs to the application, and it can not be
          used remotely */
       void set(void *v);
+
       /*! set parameter to given value and type 
         @{ */
       void set(const float  &v) { clear(); type = OSP_FLOAT; f[0] = v; }
@@ -207,6 +213,31 @@ namespace ospray {
     /*!< subtype of this ManagedObject */
     OSPDataType managedObjectType;
 
+    /*! gets called whenever any of this node's dependencies got changed */
+    virtual void dependencyGotChanged(ManagedObject *object) {};
+    
+    //! \brief a list of managed objects that want to get notified
+    //! whenever this object get changed (ie, committed).
+    /* When this object gets committed, it will call
+       'depedencyGotChanged' on each of the objects in this list. It
+       is up to the respective objects to properly register and
+       register themselves as dependencies.  \warning Objects here are
+       *NOT* refcounted to avoid cyclical referencing; this means that
+       every object that has registered itself somewhere absolutely
+       _has_ to properly unregister itself as a listenere before it
+       dies */
+    std::set<ManagedObject *> objectsListeningForChanges;
+    
+    /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
+    void notifyListenersThatObjectGotChanged();
+
+    //! register a new listener. this object will now get update notifications from us
+    void registerListener(ManagedObject *newListener)
+    { objectsListeningForChanges.insert(newListener); }
+
+    //! un-register a listener. this object will no longer get update notifications from us 
+    void unregisterListener(ManagedObject *noLongerListening)
+    { objectsListeningForChanges.erase(noLongerListening); }
   };
 
 }

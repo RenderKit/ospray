@@ -45,10 +45,4 @@ IF(NOT THIS_IS_MIC)
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
 
-  # volume viewer application
-  OPTION(OSPRAY_APPS_QTVIEWER "Build ospQTV qt-Viewer application." OFF)
-  IF(OSPRAY_APPS_QTVIEWER)
-    ADD_SUBDIRECTORY(qtModelViewer)
-  ENDIF()
-
 ENDIF()

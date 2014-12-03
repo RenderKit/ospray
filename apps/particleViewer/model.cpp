@@ -90,6 +90,28 @@ namespace ospray {
       }
     }
 
+    /*! load xyz files in which there is *no* atom count, but just a
+        list of "type x y z" lines */
+    void Model::loadXYZ2(const std::string &fileName)
+    {
+      FILE *file = fopen(fileName.c_str(),"r");
+      if (!file) 
+        throw std::runtime_error("could not open input file "+fileName);
+      int numAtoms;
+
+      int rc = 0;
+      char atomType[1000];
+      vec3f pos;
+      while ((rc = fscanf(file,"%s %f %f %f\n",atomType,&pos.x,&pos.y,&pos.z)) == 4) {
+        Atom a;
+        a.type = getAtomType(atomType);
+        a.position = pos;
+        atom.push_back(a);
+      }
+      if (rc != 4)
+        std::cout << "#" << fileName << " (.xyz format): file may be truncated" << std::endl;
+    }
+  
     box3f Model::getBBox() const 
     {
       box3f bbox = embree::empty;

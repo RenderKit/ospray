@@ -97,4 +97,13 @@ namespace ospray {
     p->set(data);
   }
 
+  /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
+  void ManagedObject::notifyListenersThatObjectGotChanged() 
+  {
+    for (std::set<ManagedObject *>::iterator it = objectsListeningForChanges.begin();
+         it != objectsListeningForChanges.end(); it++)  {
+      ManagedObject *object = *it;
+      object->dependencyGotChanged(this);
+    }
+  }
 }

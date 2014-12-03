@@ -6,10 +6,13 @@
 # Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
 # #####################################################################
 
+SET(ISPC_VERSION 1.8.0)
+#SET(ISPC_VERSION 1.7.0)
+
 IF (APPLE)
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v1.7.0-osx CACHE STRING "ISPC Directory")
+  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-osx CACHE STRING "ISPC Directory")
 ELSE()
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v1.7.0-linux CACHE STRING "ISPC Directory")
+  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-linux CACHE STRING "ISPC Directory")
 ENDIF()
 MARK_AS_ADVANCED(OSPRAY_ISPC_DIRECTORY)
 
@@ -17,7 +20,7 @@ IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/ispc")
   MESSAGE("********************************************")
   MESSAGE("Could not find ISPC (tried ${OSPRAY_ISPC_DIRECTORY}.")
   MESSAGE("")
-  MESSAGE("This version of ospray expects you to have a binary install of ISPC version 1.7.0, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
+  MESSAGE("This version of ospray expects you to have a binary install of ISPC version ${ISPC_VERSION}, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
   MESSAGE("")
   MESSAGE("If you insist on using your own custom install of ISPC, please make sure that the 'OSPRAY_ISPC_DIRECTORY' variable is properly set in cmake.")
   MESSAGE("********************************************")

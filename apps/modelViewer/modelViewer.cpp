@@ -28,6 +28,7 @@ namespace ospray {
 
   int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
+  bool g_createDefaultMaterial = true;
   int accumID = -1;
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
@@ -360,6 +361,7 @@ namespace ospray {
 
   OSPMaterial createDefaultMaterial(OSPRenderer renderer)
   {
+    if(!g_createDefaultMaterial) return NULL;
     static OSPMaterial ospMat = NULL;
     if (ospMat) return ospMat;
     
@@ -587,6 +589,8 @@ namespace ospray {
                 ss >> g_benchWarmup >> g_benchFrames;
               }
           }
+      } else if (arg == "--no-default-material") {
+        g_createDefaultMaterial = false;
       } else if (av[i][0] == '-') {
         error("unkown commandline argument '"+arg+"'");
       } else {
