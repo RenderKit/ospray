@@ -22,11 +22,19 @@
 // -------------------------------------------------------
 // include common components 
 // -------------------------------------------------------
+#if __EXTERNAL_EMBREE__
+#include "common/math/vec2.h"
+#include "common/math/vec3.h"
+#include "common/math/vec4.h"
+#include "common/math/bbox.h"
+#include "common/math/affinespace.h"
+#else
 #include "ospray/embree/common/math/vec2.h"
 #include "ospray/embree/common/math/vec3.h"
 #include "ospray/embree/common/math/vec4.h"
 #include "ospray/embree/common/math/bbox.h"
 #include "ospray/embree/common/math/affinespace.h"
+#endif
 #include "ospray/common/OspDataType.h"
 
 /*! namespace for classes in the public core API */
