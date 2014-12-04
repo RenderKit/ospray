@@ -595,22 +595,25 @@ namespace ospray {
         error("unkown commandline argument '"+arg+"'");
       } else {
         embree::FileName fn = arg;
-        if (fn.ext() == "stl")
+        if (fn.ext() == "stl") {
           miniSG::importSTL(*msgModel,fn);
-        else if (fn.ext() == "msg")
+        } else if (fn.ext() == "msg") {
           miniSG::importMSG(*msgModel,fn);
-        else if (fn.ext() == "tri")
+        } else if (fn.ext() == "tri") {
           miniSG::importTRI(*msgModel,fn);
-        else if (fn.ext() == "xml")
+        } else if (fn.ext() == "xml") {
           miniSG::importRIVL(*msgModel,fn);
-        else if (fn.ext() == "osp") {
+        } else if (fn.ext() == "osp") {
           // right now this doesn't do anything other than parse the
           // file - it will NOT be properly rendered!
           world = sg::readXML(fn);
-        } else if (fn.ext() == "obj")
+        } else if (fn.ext() == "obj") {
           miniSG::importOBJ(*msgModel,fn);
-        else if (fn.ext() == "astl")
+        } else if (fn.ext() == "x3d") {
+          miniSG::importX3D(*msgModel,fn); 
+        } else if (fn.ext() == "astl") {
           miniSG::importSTL(msgAnimation,fn);
+        }
       }
     }
 

@@ -31,34 +31,6 @@ namespace ospray {
       void *data;   //Pointer to binary texture data
     };
     
-#if 0
-    /*! mini 'all-rounder' material that should be able to capture
-      the most common material types such as OBJ wavefront */
-    struct Material : public RefCount {
-      std::string name; /*! symbolic name, if available (can be empty) */
-      std::string type; /*! material type (like "OBJ", or "Phong", if
-                            available (can be empty) */
-
-      float d;
-      float Ns;
-      float Ni;
-      vec3f Ka; /*!< ambient component */
-      vec3f Kd; /*!< diffuse component */
-      vec3f Ks; /*!< specular component */
-      vec3f Tf; 
-
-      std::string map_d;
-      std::string map_Ns;
-      std::string map_Ni;
-      std::string map_Ka;
-      std::string map_Kd;
-      std::string map_Ks;
-      std::string map_Refl;
-      std::string map_Bump;
-
-      Material();
-    };
-#else
     struct Material : public RefCount {
       struct Param : public RefCount {
         typedef enum {
@@ -184,13 +156,9 @@ namespace ospray {
       std::string name;
       std::string type;
     };
-#endif
 
     struct Triangle {
       uint32 v0, v1, v2;
-      //      uint32 materialID; // iw, 1/11/14: disabled materialID
-      //      per triangle, emrbee cannot do buffer sharing with this
-      //      format.
     };
 
     /*! default triangle mesh layout */
@@ -266,6 +234,9 @@ namespace ospray {
 
     /*! import a list of STL files */
     void importSTL(std::vector<Model *> &animation, const embree::FileName &fileName);
+
+    /*! import a list of X3D files */
+    void importX3D(Model &model, const embree::FileName &fileName);
 
     /*! import a MiniSG MSG file, and add it to the specified model */
     void importMSG(Model &model, const embree::FileName &fileName);

@@ -609,36 +609,14 @@ namespace ospray {
       int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDWR);
       if (fd == -1)
         perror("could not open file");
-      binBasePtr = (unsigned char *)mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+      binBasePtr = (unsigned char *)
+        mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
 
-#if 1
       xml::XMLDoc *doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       xml::Node *root_element = doc->child[0];
       Ref<Node> node = parseBGFscene(root_element);
-      return node;
-#else
-      /*
-       * this initialize the library and check potential ABI mismatches
-       * between the version it was compiled for and the actual shared
-       * library used.
-       */
-      LIBXML_TEST_VERSION;
-      
-      xmlDocPtr doc; /* the resulting document tree */
-      
-      doc = xmlReadFile(xmlFileName.c_str(), NULL, XML_PARSE_HUGE|XML_PARSE_RECOVER);
-      if (doc == NULL) 
-        throw std::runtime_error("could not open/parse xml file '"
-                                 +xmlFileName+"'");
-
-      xmlNode * root_element = xmlDocGetRootElement(doc);
-      if (!root_element)
-        throw std::runtime_error("importRIVL: could not find root element");
-      Ref<Node> node = parseBGFscene(root_element);
-      //xmlFreeDoc(doc);
-#endif
       return node;
     }
 

@@ -18,6 +18,7 @@ IF (NOT THIS_IS_MIC)
     importSTL.cpp
     importMSG.cpp
     importTRI.cpp
+    importX3D.cpp
     importRIVL.cpp
     )
   TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml)
