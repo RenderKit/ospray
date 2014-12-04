@@ -42,7 +42,15 @@ struct Viewport
     itself remains normalized. */
     osp::affine3f frame;
 
-    /*! set 'up' vector. if this vector is (0,0,0) the window will
+    /*! set up vector */
+    void setUp(const osp::vec3f &vec)
+    {
+        up = vec;
+        snapUp();
+        modified = true;
+    }
+
+    /*! set frame 'up' vector. if this vector is (0,0,0) the window will
     *not* apply the up-vector after camera manipulation */
     void snapUp()
     {
@@ -60,7 +68,7 @@ class QOSPRayWindow : public QGLWidget
 {
 public:
 
-    QOSPRayWindow(OSPRenderer renderer);
+    QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate);
     virtual ~QOSPRayWindow();
 
     void setRenderingEnabled(bool renderingEnabled);
@@ -68,9 +76,17 @@ public:
     void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
     virtual void setWorldBounds(const osp::box3f &worldBounds);
 
-    OSPFrameBuffer getFrameBuffer();
+    Viewport * getViewport() { return &viewport_; }
+
+    OSPFrameBuffer getFrameBuffer() { return frameBuffer_; }
 
 protected:
+
+    /*! Parent Qt window. */
+    QMainWindow *parent;
+
+    /*! Display the frame rate in the main window title bar. */
+    bool showFrameRate;
 
     virtual void paintGL();
     virtual void resizeGL(int width, int height);
@@ -98,6 +114,9 @@ protected:
 
     /*! benchmarking: timer to measure elapsed time over benchmark frames */
     QTime benchmarkTimer_;
+
+    /*! Timer to measure elapsed time over a single frame. */
+    QTime renderFrameTimer;
 
     osp::vec2i windowSize_;
     Viewport viewport_;

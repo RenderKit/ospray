@@ -11,8 +11,10 @@
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
 #include "LightEditor.h"
+#include "SliceWidget.h"
+#include "PLYGeometryFile.h"
 
-VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL) {
+VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames, bool showFrameRate) : renderer(NULL), transferFunction(NULL), osprayWindow(NULL), autoRotationRate(0.025f) {
 
     //! Default window size.
     resize(1024, 768);
@@ -21,7 +23,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer
     renderer = ospNewRenderer("raycast_volume_renderer");  exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
     //! Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
-    osprayWindow = new QOSPRayWindow(renderer);  setCentralWidget(osprayWindow);
+    osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate);  setCentralWidget(osprayWindow);
 
     //! Set the window bounds based on the OSPRay world bounds (always [(0,0,0), (1,1,1)) for volumes).
     osprayWindow->setWorldBounds(osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
@@ -49,6 +51,62 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames) : renderer
 
 }
 
+void VolumeViewer::autoRotate(bool set) {
+
+    if(osprayWindow == NULL)
+        return;
+
+    if(autoRotateAction != NULL)
+        autoRotateAction->setChecked(set);
+
+    if(set) {
+        osprayWindow->setRotationRate(autoRotationRate);
+        osprayWindow->updateGL();
+    }
+    else {
+        osprayWindow->setRotationRate(0.);
+    }
+}
+
+void VolumeViewer::addSlice(std::string filename) {
+
+    //! Use dynamic geometry model for slices.
+    std::vector<OSPModel> dynamicModels;
+    dynamicModels.push_back(dynamicModel);
+
+    //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
+    SliceWidget * sliceWidget = new SliceWidget(dynamicModels, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
+    connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
+    sliceWidgetsLayout.addWidget(sliceWidget);
+
+    //! Load state from file if specified.
+    if(!filename.empty())
+        sliceWidget->load(filename);
+}
+
+void VolumeViewer::addGeometry(std::string filename) {
+
+    //! For now we assume PLY geometry files. Later we can support other geometry formats.
+
+    //! Get filename if not specified.
+    if(filename.empty())
+        filename = QFileDialog::getOpenFileName(this, tr("Load geometry"), ".", "PLY files (*.ply)").toStdString();
+
+    if(filename.empty())
+        return;
+
+    //! Load the geometry.
+    PLYGeometryFile geometryFile(filename);
+
+    //! Add the OSPRay triangle mesh to all models.
+    OSPTriangleMesh triangleMesh = geometryFile.getOSPTriangleMesh();
+
+    for(unsigned int i=0; i<models.size(); i++) {
+        ospAddGeometry(models[i], triangleMesh);
+        ospCommit(models[i]);
+    }
+}
+
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 
     //! Create an OSPRay model.
@@ -73,6 +131,13 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 
 void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
 
+    //! Create model for dynamic geometry.
+    dynamicModel = ospNewModel();
+    ospCommit(dynamicModel);
+
+    //! Set the dynamic model on the renderer.
+    ospSetObject(renderer, "dynamic_model", dynamicModel);
+
     //! Load OSPRay objects from files.
     for (size_t i=0 ; i < filenames.size() ; i++) importObjectsFromFile(filenames[i]);
 
@@ -80,8 +145,14 @@ void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
 
 void VolumeViewer::initUserInterfaceWidgets() {
 
-    //! Add the "next timestep" widget and callback.
+    //! Add the "auto rotate" widget and callback.
     QToolBar *toolbar = addToolBar("toolbar");
+    autoRotateAction = new QAction("Auto rotate", this);
+    autoRotateAction->setCheckable(true);
+    connect(autoRotateAction, SIGNAL(toggled(bool)), this, SLOT(autoRotate(bool)));
+    toolbar->addAction(autoRotateAction);
+
+    //! Add the "next timestep" widget and callback.
     QAction *nextTimeStepAction = new QAction("Next timestep", this);
     connect(nextTimeStepAction, SIGNAL(triggered()), this, SLOT(nextTimeStep()));
     toolbar->addAction(nextTimeStepAction);
@@ -92,25 +163,46 @@ void VolumeViewer::initUserInterfaceWidgets() {
     connect(playTimeStepsAction, SIGNAL(toggled(bool)), this, SLOT(playTimeSteps(bool)));
     toolbar->addAction(playTimeStepsAction);
 
-    //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
-    QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
-    TransferFunctionEditor *transferFunctionEditor = new TransferFunctionEditor(transferFunction);
-    transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
-    addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
-
-    //! Create the light editor dock widget, this widget modifies the light directly.
-    QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
-    LightEditor *lightEditor = new LightEditor(light);
-    lightEditorDockWidget->setWidget(lightEditor);
-    addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);
-
     //! Connect the "play timesteps" timer.
     connect(&playTimeStepsTimer, SIGNAL(timeout()), this, SLOT(nextTimeStep()));
 
-    //! Connect the Qt event signals and callbacks.
+    //! Add the "add slice" widget and callback.
+    QAction *addSliceAction = new QAction("Add slice", this);
+    connect(addSliceAction, SIGNAL(triggered()), this, SLOT(addSlice()));
+    toolbar->addAction(addSliceAction);
+
+    //! Add the "add geometry" widget and callback.
+    QAction *addGeometryAction = new QAction("Add geometry", this);
+    connect(addGeometryAction, SIGNAL(triggered()), this, SLOT(addGeometry()));
+    toolbar->addAction(addGeometryAction);
+
+    //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
+    QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
+    transferFunctionEditor = new TransferFunctionEditor(transferFunction);
+    transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(commitVolumes()));
     connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
+    addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
+
+    //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
+    transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
+
+    //! Create the light editor dock widget, this widget modifies the light directly.
+    //! Disable for now pending UI improvements...
+    /* QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
+    LightEditor *lightEditor = new LightEditor(light);
+    lightEditorDockWidget->setWidget(lightEditor);
     connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
+    addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget); */
+
+    //! Create a scrollable dock widget for any added slices.
+    QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
+    QScrollArea *slicesScrollArea = new QScrollArea();
+    QWidget *slicesWidget = new QWidget();
+    slicesWidget->setLayout(&sliceWidgetsLayout);
+    slicesScrollArea->setWidget(slicesWidget);
+    slicesScrollArea->setWidgetResizable(true);
+    slicesDockWidget->setWidget(slicesScrollArea);
+    addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
 
 }
-

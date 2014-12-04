@@ -27,7 +27,7 @@
   shared library has to follow a certain naming scheme, see detailed
   comments for \ref ospLoadModule).
 
-  Modules can extend ospray in a variety of forms: Each module can
+  Modules can extend OSPRay in a variety of forms: Each module can
   implement one or multiple new geometry types, new camera types, new
   renderers, etc, etc. It is good practice to make sure that a module
   implements both scalar and ISPC variants, but not all modules may

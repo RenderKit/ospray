@@ -8,6 +8,117 @@
 
 #include "ospray/transferfunction/LinearTransferFunction.ih"
 
+inline varying vec3f LinearTransferFunction_getColorForValue(const void *uniform pointer, varying float value) {
+
+    // Cast to the actual TransferFunction subtype.
+    const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
+
+    // No color values may be available.
+    if (transferFunction->colorValueCount == 0) return(make_vec3f(1.0f));
+
+    // Clamp the value to the lower bound of the value range.
+    if (value <= transferFunction->inherited.valueRange.x) return(transferFunction->colorValues[0]);
+
+    // Clamp the value to the upper bound of the value range.
+    if (value >= transferFunction->inherited.valueRange.y) return(transferFunction->colorValues[transferFunction->colorValueCount - 1]);
+
+    // Map the value into the range [0.0, 1.0].
+    value = (value - transferFunction->inherited.valueRange.x) / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) * (transferFunction->colorValueCount - 1.0f);
+
+    // Compute the color index and fractional offset.
+    int index = floor(value);  float remainder = value - index;
+
+    // The interpolated color.
+    return((1.0f - remainder) * transferFunction->colorValues[index] + remainder * transferFunction->colorValues[min(index + 1, transferFunction->colorValueCount - 1)]);
+
+}
+
+uniform vec2f LinearTransferFunction_getMinMaxOpacityInRange(void *uniform pointer, const uniform vec2f &range) {
+
+    uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
+    const uniform int maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
+    const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
+    const uniform int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+    const uniform int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+    return(transferFunction->minMaxOpacityInRange[i][j]);
+
+}
+
+varying float LinearTransferFunction_getMaxOpacityInRange(void *uniform pointer, const varying vec2f &range) {
+
+    uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
+    const uniform int maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
+    const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
+    const varying int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+    const varying int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+    return(transferFunction->minMaxOpacityInRange[i][j].y);
+
+}
+
+inline varying float LinearTransferFunction_getOpacityForValue(const void *uniform pointer, varying float value) {
+
+    // Cast to the actual TransferFunction subtype.
+    const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
+
+    // No opacity values may be available.
+    if (transferFunction->opacityValueCount == 0) return(1.0f);
+
+    // Clamp the value to the lower bound of the value range.
+    if (value <= transferFunction->inherited.valueRange.x) return(transferFunction->opacityValues[0]);
+
+    // Clamp the value to the upper bound of the value range.
+    if (value >= transferFunction->inherited.valueRange.y) return(transferFunction->opacityValues[transferFunction->opacityValueCount - 1]);
+
+    // Map the value into the range [0.0, 1.0].
+    value = (value - transferFunction->inherited.valueRange.x) / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) * (transferFunction->opacityValueCount - 1.0f);
+
+    // Compute the opacity index and fractional offset.
+    int index = floor(value);  float remainder = value - index;
+
+    // The interpolated opacity.
+    return((1.0f - remainder) * transferFunction->opacityValues[index] + remainder * transferFunction->opacityValues[min(index + 1, transferFunction->opacityValueCount - 1)]);
+
+}
+
+void LinearTransferFunction_precomputeMinMaxOpacityRanges(void *uniform pointer) {
+
+    uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
+
+    // Compute the diagonal.
+    for (int i=0 ; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; i++) {
+
+        // Figure out the range of values in the array we are going to compare.
+        const int checkRangeLow = transferFunction->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+        const int checkRangeHigh = transferFunction->opacityValueCount * (((float) i + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+
+        vec2f range = make_vec2f(transferFunction->opacityValues[checkRangeLow], transferFunction->opacityValues[checkRangeLow]);
+        for (int opacityIDX = checkRangeLow + 1 ; opacityIDX < checkRangeHigh ; opacityIDX++)
+            range = make_vec2f(min(range.x, transferFunction->opacityValues[opacityIDX]), max(range.y, transferFunction->opacityValues[opacityIDX]));
+
+        transferFunction->minMaxOpacityInRange[i][i] = range;
+
+    }
+
+    // Fill out each column from the diagonal up.
+    for (int i=0 ; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; i++) {
+        for (int j = i + 1 ; j < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; j++) {
+
+            // Figure out the range of values in the array we are going to compare.
+            const int checkRangeLow = transferFunction->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+            const int checkRangeHigh = transferFunction->opacityValueCount * (((float) j + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+
+            vec2f range = transferFunction->minMaxOpacityInRange[i][i];
+            for (int opacityIDX = checkRangeLow + 1 ; opacityIDX < checkRangeHigh ; opacityIDX++)
+                range = make_vec2f(min(range.x, transferFunction->opacityValues[opacityIDX]), max(range.y, transferFunction->opacityValues[opacityIDX]));
+
+            transferFunction->minMaxOpacityInRange[i][j] = range;
+
+        }
+
+    }
+
+}
+
 export void *uniform LinearTransferFunction_createInstance() {
 
     // The transfer function.
@@ -17,19 +128,22 @@ export void *uniform LinearTransferFunction_createInstance() {
     transferFunction->inherited.getColorForValue = LinearTransferFunction_getColorForValue;
 
     // Function to get the interpolated opacity for a given value.
-    transferFunction->inherited.getAlphaForValue = LinearTransferFunction_getAlphaForValue;
-    
-    // Virtual function to precompute the min/max alpha ranges of a transfer function
-    transferFunction->inherited.precomputeMinMaxAlphaRanges = LinearTransferFunction_precomputeMinMaxAlphaRanges;
+    transferFunction->inherited.getOpacityForValue = LinearTransferFunction_getOpacityForValue;
 
-    // Virtual function to look up the min/max alpha based on an input range
-    transferFunction->inherited.getMinMaxAlphaInRange = LinearTransferFunction_getMinMaxAlphaInRange;
+    // Virtual function to look up the maximum opacity based on an input range.
+    transferFunction->inherited.getMaxOpacityInRange = LinearTransferFunction_getMaxOpacityInRange;
 
-    // Transfer function colors, count, and range.
-    transferFunction->colors = NULL;  transferFunction->colorCount = 0;  transferFunction->colorRange = make_vec2f(0.0f, 1.0f);
+    // Virtual function to look up the min/max opacity based on an input range.
+    transferFunction->inherited.getMinMaxOpacityInRange = LinearTransferFunction_getMinMaxOpacityInRange;
 
-    // Transfer function alpha values, count, and range.
-    transferFunction->alphas = NULL;  transferFunction->alphaCount = 0;  transferFunction->alphaRange = make_vec2f(0.0f, 1.0f);
+    // Transfer function colors and count.
+    transferFunction->colorValues = NULL;  transferFunction->colorValueCount = 0;
+
+    // Transfer function opacity values and count.
+    transferFunction->opacityValues = NULL;  transferFunction->opacityValueCount = 0;
+
+    // The default transfer function value range.
+    transferFunction->inherited.valueRange = make_vec2f(0.0f, 1.0f);
 
     // Freshly baked transfer function.
     return(transferFunction);
@@ -42,73 +156,13 @@ export void LinearTransferFunction_destroy(void *uniform pointer) {
     LinearTransferFunction *uniform transferFunction = (LinearTransferFunction *uniform) pointer;
 
     // Free memory for the color values.
-    if (transferFunction->colors != NULL) delete[] transferFunction->colors;
+    if (transferFunction->colorValues != NULL) delete[] transferFunction->colorValues;
 
     // Free memory for the opacity values.
-    if (transferFunction->alphas != NULL) delete[] transferFunction->alphas;
+    if (transferFunction->opacityValues != NULL) delete[] transferFunction->opacityValues;
 
-    // Free memory for the struct.
+    // Free memory for the container.
     delete transferFunction;
-
-}
-
-inline varying float LinearTransferFunction_getAlphaForValue(const void *uniform pointer, varying float value) {
-
-    // Cast to the actual TransferFunction subtype.
-    const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
-
-    // No opacity values may be available.
-    if (transferFunction->alphaCount == 0) return(1.0f);
-
-    // Clamp the value to the lower bound of the opacity value range.
-    if (value <= transferFunction->alphaRange.x) return(transferFunction->alphas[0]);
-
-    // Clamp the value to the upper bound of the opacity value range.
-    if (value >= transferFunction->alphaRange.y) return(transferFunction->alphas[transferFunction->alphaCount - 1]);
-
-    // Map the value into the range [0.0, 1.0].
-    value = (value - transferFunction->alphaRange.x) / (transferFunction->alphaRange.y - transferFunction->alphaRange.x) * (transferFunction->alphaCount - 1.0f);
-
-    // Compute the opacity index and fractional offset.
-    int index = floor(value);  float remainder = value - index;
-
-    // The interpolated opacity.
-    return((1.0f - remainder) * transferFunction->alphas[index] + remainder * transferFunction->alphas[min(index + 1, transferFunction->alphaCount - 1)]);
-    
-}
-
-inline varying vec3f LinearTransferFunction_getColorForValue(const void *uniform pointer, varying float value) {
-
-    // Cast to the actual TransferFunction subtype.
-    const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
-
-    // No color values may be available.
-    if (transferFunction->colorCount == 0) return(make_vec3f(1.0f));
-
-    // Clamp the value to the lower bound of the color value range.
-    if (value <= transferFunction->colorRange.x) return(transferFunction->colors[0]);
-
-    // Clamp the value to the upper bound of the color value range.
-    if (value >= transferFunction->colorRange.y) return(transferFunction->colors[transferFunction->colorCount - 1]);
-
-    // Map the value into the range [0.0, 1.0].
-    value = (value - transferFunction->colorRange.x) / (transferFunction->colorRange.y - transferFunction->colorRange.x) * (transferFunction->colorCount - 1.0f);
-
-    // Compute the color index and fractional offset.
-    int index = floor(value);  float remainder = value - index;
-
-    // The interpolated color.
-    return((1.0f - remainder) * transferFunction->colors[index] + remainder * transferFunction->colors[min(index + 1, transferFunction->colorCount - 1)]);
-
-}
-
-export void LinearTransferFunction_setColorRange(void *uniform pointer, const uniform float minimum, const uniform float maximum) {
-
-    // Cast to the actual TransferFunction subtype.
-    LinearTransferFunction *uniform transferFunction = (LinearTransferFunction *uniform) pointer;
-
-    // Set the color value range.
-    transferFunction->colorRange = make_vec2f(minimum, maximum);
 
 }
 
@@ -118,90 +172,32 @@ export void LinearTransferFunction_setColorValues(void *uniform pointer, const u
     LinearTransferFunction *uniform transferFunction = (LinearTransferFunction *uniform) pointer;
 
     // Free memory for any existing color values.
-    if (transferFunction->colors != NULL) delete[] transferFunction->colors;
+    if (transferFunction->colorValues != NULL) delete[] transferFunction->colorValues;
 
     // Allocate memory for the incoming color values.
-    transferFunction->colorCount = count;  transferFunction->colors = uniform new uniform vec3f[count];
+    transferFunction->colorValueCount = count;  transferFunction->colorValues = uniform new uniform vec3f[count];
 
     // Copy the color values into the transfer function.
-    for (size_t i=0 ; i < count ; i++) transferFunction->colors[i] = source[i];
+    for (size_t i=0 ; i < count ; i++) transferFunction->colorValues[i] = source[i];
 
 }
 
-export void LinearTransferFunction_setAlphaRange(void *uniform pointer, const uniform float minimum, const uniform float maximum) {
-
-    // Cast to the actual TransferFunction subtype.
-    LinearTransferFunction *uniform transferFunction = (LinearTransferFunction *uniform) pointer;
-
-    // Set the opacity value range.
-    transferFunction->alphaRange = make_vec2f(minimum, maximum);
-
-}
-
-export void LinearTransferFunction_setAlphaValues(void *uniform pointer, const uniform size_t &count, float *uniform source) {
+export void LinearTransferFunction_setOpacityValues(void *uniform pointer, const uniform size_t &count, float *uniform source) {
 
     // Cast to the actual TransferFunction subtype.
     LinearTransferFunction *uniform transferFunction = (LinearTransferFunction *uniform) pointer;
 
     // Free memory for any existing opacity values.
-    if (transferFunction->alphas != NULL) delete[] transferFunction->alphas;
+    if (transferFunction->opacityValues != NULL) delete[] transferFunction->opacityValues;
 
     // Allocate memory for the incoming opacity values.
-    transferFunction->alphaCount = count;  transferFunction->alphas = uniform new uniform float[count];
+    transferFunction->opacityValueCount = count;  transferFunction->opacityValues = uniform new uniform float[count];
 
     // Copy the opacity values into the transfer function.
-    for (size_t i=0 ; i < count ; i++) transferFunction->alphas[i] = source[i];
+    for (size_t i=0 ; i < count ; i++) transferFunction->opacityValues[i] = source[i];
 
-    // Precompute the min / max alpha ranges.
-    transferFunction->inherited.precomputeMinMaxAlphaRanges(transferFunction);
+    // Precompute the min / max opacity ranges.
+    LinearTransferFunction_precomputeMinMaxOpacityRanges(pointer);
 
-}
-
-void LinearTransferFunction_precomputeMinMaxAlphaRanges(void *uniform pointer) {
-
-  uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform)pointer;
-
-  //Compute the diagonal
-  for (int i = 0; i < PRECOMPUTED_VALUES_DIM; i++) {
-    //Figure out the range of values in the array we are going to compare
-    const int checkRangeLow = transferFunction->alphaCount * (((float)i) / PRECOMPUTED_VALUES_DIM);
-    const int checkRangeHigh = transferFunction->alphaCount * (((float)i+1) / PRECOMPUTED_VALUES_DIM);
-    
-    vec2f range = make_vec2f(transferFunction->alphas[checkRangeLow], transferFunction->alphas[checkRangeLow]);
-    for (int alphaIDX = checkRangeLow+1; alphaIDX < checkRangeHigh; alphaIDX++) {
-      range = make_vec2f(min(range.x, transferFunction->alphas[alphaIDX]),
-			 max(range.y, transferFunction->alphas[alphaIDX]));
-    }
-    
-    transferFunction->precomputedMinMaxInRange[i][i] = range;
-  }
-  
-  //Fill out each column from the diagonal up
-  for (int i = 0; i < PRECOMPUTED_VALUES_DIM; i++) {
-    for (int j = i+1; j < PRECOMPUTED_VALUES_DIM; j++) {
-      //Figure out the range of values in the array we are going to compare
-      const int checkRangeLow = transferFunction->alphaCount * (((float)i) / PRECOMPUTED_VALUES_DIM);
-      const int checkRangeHigh = transferFunction->alphaCount * (((float)j+1) / PRECOMPUTED_VALUES_DIM);
-
-      vec2f range = transferFunction->precomputedMinMaxInRange[i][i];
-      for (int alphaIDX = checkRangeLow+1; alphaIDX < checkRangeHigh; alphaIDX++) {
-	range = make_vec2f(min(range.x, transferFunction->alphas[alphaIDX]),
-			   max(range.y, transferFunction->alphas[alphaIDX]));
-      }
-    
-      transferFunction->precomputedMinMaxInRange[i][j] = range;
-    }
-  }
-
-}
-
-uniform vec2f LinearTransferFunction_getMinMaxAlphaInRange(void *uniform pointer, uniform float rangeLow, uniform float rangeHigh) 
-{
-  uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform)pointer;
-  const uniform int maxDim = PRECOMPUTED_VALUES_DIM - 1;
-  const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
-  const uniform int i = floor(clamp((rangeLow - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  const uniform int j = ceil(clamp((rangeHigh - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  return transferFunction->precomputedMinMaxInRange[i][j];
 }
 

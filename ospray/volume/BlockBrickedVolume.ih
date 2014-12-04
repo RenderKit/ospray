@@ -56,14 +56,17 @@
     //! Declaration emitted during build in "ClassName_ispc.h".  Assign type-specific function pointers.
 //  extern "C" { void *uniform BlockBrickedVolume_createInstance(const uniform int voxelType); }
 
+    //! Declaration emitted during build in "ClassName_ispc.h".  Complete volume initialization.
+//  extern "C" { void BlockBrickedVolume_finish(void *uniform volume); }
+
     //! Declaration emitted during build in "ClassName_ispc.h".  Set the gamma correction coefficient and exponent.
 //  extern "C" { void BlockBrickedVolume_setGammaCorrection(void *uniform volume, const uniform vec2f &value); }
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Copy voxel data into the volume.
 //  extern "C" { void BlockBrickedVolume_setRegion(void *uniform volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count); }
 
-    //! Declaration emitted during build in "ClassName_ispc.h".  Set the step size for ray casting based renderers.
-//  extern "C" { void BlockBrickedVolume_setStepSize(void *uniform volume, const uniform float value); }
+    //! Declaration emitted during build in "ClassName_ispc.h".  Set the recommended sampling rate for ray casting based renderers.
+//  extern "C" { void BlockBrickedVolume_setSamplingRate(void *uniform volume, const uniform float value); }
 
     //! Declaration emitted during build in "ClassName_ispc.h".  Set the color and opacity transfer function.
 //  extern "C" { void BlockBrickedVolume_setTransferFunction(void *uniform volume, void *uniform value); }
