@@ -62,6 +62,9 @@ namespace ospray {
         //! Voxel type.
         std::string voxelType;
 
+        //! Complete volume initialization.
+        virtual void finish() = 0;
+
         //! Initialize the volume from memory.
         void getVolumeFromMemory();
 

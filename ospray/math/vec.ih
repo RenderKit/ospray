@@ -554,6 +554,9 @@ __define_lerp4(uc)
 #undef __define_lerp3
 #undef __define_lerp4
 
+inline uniform vec3i operator*(const uniform vec3i &a, const uniform int b)
+{ return(make_vec3i(a.x * b, a.y * b, a.z * b)); }
+
 inline uniform vec3i operator+(const uniform vec3i &a, const uniform vec3i &b)
 { return(make_vec3i(a.x + b.x, a.y + b.y, a.z + b.z)); }
 
@@ -587,6 +590,9 @@ inline uniform vec3i operator/(const uniform vec3i &a, const uniform int b)
 
 inline vec3i max(const varying vec3i &a, const varying int32 b)
 { return(make_vec3i(max(a.x, b), max(a.y, b), max(a.z, b))); }
+
+inline vec3i min(const uniform vec3i &a, const varying vec3i &b)
+{ return(make_vec3i(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z))); }
 
 inline vec3f float_cast(const vec3i &a)
 { return(make_vec3f(a.x, a.y, a.z)); }
@@ -627,6 +633,9 @@ inline varying float reduce_min(const varying vec3f &a)
 
 inline varying float reduce_min(const varying vec4f &a)
 { return(min(min(min(a.x, a.y), a.z), a.w)); }
+
+inline uniform float reduce_max(const uniform vec3i &a)
+{ return(max(max(a.x, a.y), a.z)); }
 
 inline varying vec3f pow(const varying vec3f &a, const varying float b)
 { return(make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b))); }

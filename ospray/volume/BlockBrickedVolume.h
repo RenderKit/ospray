@@ -37,6 +37,9 @@ namespace ospray {
 
     protected:
 
+        //! Complete volume initialization.
+        virtual void finish();
+
         //! Update select parameters after the volume has been allocated and filled.
         virtual void updateEditableParameters();
 

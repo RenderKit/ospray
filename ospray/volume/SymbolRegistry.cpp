@@ -8,7 +8,6 @@
 //
 
 #include "ospray/volume/BlockBrickedVolume.h"
-#include "ospray/volume/BrickedVolume.h"
 
 namespace ospray {
 
@@ -16,7 +15,7 @@ namespace ospray {
     OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
 
     //! A volume type with 32-bit addressing and brick storage order.
-    OSP_REGISTER_VOLUME(BrickedVolume, bricked_volume);
+//  OSP_REGISTER_VOLUME(BrickedVolume, bricked_volume);
 
     //! A volume type with 32-bit addressing and XYZ storage order.
 //  OSP_REGISTER_VOLUME(MonolithicVolume, monolithic_volume);

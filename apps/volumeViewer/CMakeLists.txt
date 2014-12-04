@@ -24,7 +24,9 @@ SET(SRCS ${SRCS}
   main.cpp
   ColorMap.cpp
   LightEditor.cpp
+  PLYGeometryFile.cpp
   QOSPRayWindow.cpp
+  SliceWidget.cpp
   TransferFunctionEditor.cpp
   TransferFunctionPiecewiseLinearWidget.cpp
   VolumeViewer.cpp
@@ -32,6 +34,7 @@ SET(SRCS ${SRCS}
 
 SET(MOC_HEADERS
   LightEditor.h
+  SliceWidget.h
   TransferFunctionEditor.h
   TransferFunctionPiecewiseLinearWidget.h
   VolumeViewer.h
