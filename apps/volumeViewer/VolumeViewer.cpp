@@ -188,11 +188,12 @@ void VolumeViewer::initUserInterfaceWidgets() {
     transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
 
     //! Create the light editor dock widget, this widget modifies the light directly.
-    QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
+    //! Disable for now pending UI improvements...
+    /* QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
     LightEditor *lightEditor = new LightEditor(light);
     lightEditorDockWidget->setWidget(lightEditor);
     connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
-    addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);
+    addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget); */
 
     //! Create a scrollable dock widget for any added slices.
     QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
