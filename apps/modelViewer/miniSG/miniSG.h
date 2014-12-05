@@ -204,10 +204,6 @@ namespace ospray {
     bool operator!=(const Instance &a, const Instance &b);
 
     struct Model : public RefCount {
-      // /*! list of materials - if per-triangle material IDs are used,
-      //     then all material IDs of all meshes reference into this
-      //     list */
-      // std::vector<Ref<Material> > material;
       /*! list of meshes that the scene is composed of */
       std::vector<Ref<Mesh> >     mesh;
       /*! \brief list of instances (if available). */

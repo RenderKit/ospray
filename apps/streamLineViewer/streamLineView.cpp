@@ -13,6 +13,8 @@
 #include "ospray/ospray.h"
 // embree
 #include "common/sys/filename.h"
+// xml
+#include "apps/common/xml/xml.h"
 
 namespace ospray {
   using std::cout;
@@ -111,6 +113,8 @@ namespace ospray {
       // cout << " " << segments << " segments (" << totalSegments << " total)" << endl;
       fclose(file);
     }
+
+
     void parsePNTlist(const embree::FileName &fn)
     {
       FILE *file = fopen(fn.c_str(),"r");
@@ -146,56 +150,189 @@ namespace ospray {
     }
   };
 
-  void writeToXML(StreamLines *sl, Triangles *tris) 
+  void osxParseInts(std::vector<int> &vec, const std::string &content)
   {
-    FILE *xml = fopen("/tmp/streamlines.xml","w");
-    FILE *bin = fopen("/tmp/streamlines.xml.bin","wb");
-    size_t ofs, num;
-    void *ptr;
-
-    fprintf(xml,"<?xml? version=\"0.5.0>\"\n");
-    fprintf(xml,"<ospray version=\"0.5.0\">\n");
-    fprintf(xml,"  <Model>\n");
-    fprintf(xml,"    <Geometry type=\"streamlines\">\n");
-    ofs = ftell(bin);
-    num = sl->vertex.size();
-    fwrite(&sl->vertex[0],sizeof(vec3fa),num,bin);
-    fprintf(xml,"      <data data name=\"vertex\"><Data type=\"vec3fa\" ofs=%li num=%li/></data>\n",ofs,num);
-    ofs = ftell(bin);
-    num = sl->index.size();
-    fwrite(&sl->index[0],sizeof(int32),num,bin);
-    fprintf(xml,"      <data name=\"index\"><Data type=\"int32\" ofs=%li num=%li/></data>\n",ofs,num);
-    fprintf(xml,"    </Geometry>\n");
-
-    fprintf(xml,"    <Geometry type=\"trianglemesh\">\n");
-    ofs = ftell(bin);
-    std::vector<vec3f> vertex, color;
-    for (int i=0;i<tris->vertex.size();i++) {
-      vertex.push_back(tris->vertex[i]);
-      color.push_back(tris->color[i]);
+    char *s = strdup(content.c_str());
+    const char *delim = "\n\t\r ";
+    char *tok = strtok(s,delim);
+    while (tok) {
+      vec.push_back(atol(tok));
+      tok = strtok(NULL,delim);
     }
-    num = vertex.size();
-    fwrite(&vertex[0],sizeof(vec3f),num,bin);
-    fprintf(xml,"      <data name=\"vertex\"><Data type=\"vec3f\" ofs=%li num=%li/></data>\n",ofs,num);
-
-    num = color.size();
-    fwrite(&color[0],sizeof(vec3f),num,bin);
-    fprintf(xml,"      <data name=\"vertex.color\"><Data type=\"vec3f\" ofs=%li num=%li/></data>\n",ofs,num);
-
-    ofs = ftell(bin);
-    num = tris->index.size();
-    fwrite(&tris->index[0],sizeof(vec3ui),num,bin);
-    fprintf(xml,"      <data name=\"index\"><Data type=\"vec3ui\" ofs=%li num=%li/></data>\n",ofs,num);
-    fprintf(xml,"    </Geometry>\n");
-
-    fprintf(xml,"  </Model>\n");
-    fprintf(xml,"</ospray>\n");
-    fclose(xml);
-    fclose(bin);
-
-    cout << "written model to /tmp/streamlines.xml" << endl;
-    exit(0);
+    free(s);
   }
+  
+  void osxParseVec3is(std::vector<vec3i> &vec, const std::string &content)
+  {
+    char *s = strdup(content.c_str());
+    const char *delim = "\n\t\r ";
+    char *tok = strtok(s,delim);
+    while (tok) {
+      vec3i v;
+      assert(tok);
+      v.x = atol(tok);
+      tok = strtok(NULL,delim);
+
+      assert(tok);
+      v.y = atol(tok);
+      tok = strtok(NULL,delim);
+
+      assert(tok);
+      v.z = atol(tok);
+      tok = strtok(NULL,delim);
+
+      vec.push_back(v);
+    }
+    free(s);
+  }
+  
+  void osxParseVec3fas(std::vector<vec3fa> &vec, const std::string &content)
+  {
+    char *s = strdup(content.c_str());
+    const char *delim = "\n\t\r ";
+    char *tok = strtok(s,delim);
+    while (tok) {
+      vec3fa v;
+      assert(tok);
+      v.x = atof(tok);
+      tok = strtok(NULL,delim);
+
+      assert(tok);
+      v.y = atof(tok);
+      tok = strtok(NULL,delim);
+
+      assert(tok);
+      v.z = atof(tok);
+      tok = strtok(NULL,delim);
+
+      vec.push_back(v);
+    }
+    free(s);
+  }
+  
+  /*! parse ospray xml file */
+  void parseOSX(StreamLines *streamLines,
+                Triangles *triangles,
+                const std::string &fn)
+  {
+    xml::XMLDoc *doc = xml::readXML(fn);
+    assert(doc);
+    if (doc->child.size() != 1 || doc->child[0]->name != "OSPRay") 
+      throw std::runtime_error("could not parse osx file: Not in OSPRay format!?");
+    xml::Node *root_element = doc->child[0];
+    for (int childID=0;childID<root_element->child.size();childID++) {
+      xml::Node *node = root_element->child[childID];
+      if (node->name == "Info") {
+        // ignore
+        continue;
+      }
+
+      if (node->name == "Model") {
+        xml::Node *model_node = node;
+        for (int childID=0;childID<model_node->child.size();childID++) {
+          xml::Node *node = model_node->child[childID];
+
+          if (node->name == "StreamLines") {
+            
+            xml::Node *sl_node = node;
+            for (int childID=0;childID<sl_node->child.size();childID++) {
+              xml::Node *node = sl_node->child[childID];
+              if (node->name == "vertex") {
+                osxParseVec3fas(streamLines->vertex,node->content);
+                continue;
+              };
+              if (node->name == "index") {
+                osxParseInts(streamLines->index,node->content);
+                continue;
+              };
+            }
+            continue;
+          }
+          
+          if (node->name == "TriangleMesh") {
+            xml::Node *tris_node = node;
+            for (int childID=0;childID<tris_node->child.size();childID++) {
+              xml::Node *node = tris_node->child[childID];
+              if (node->name == "vertex") {
+                osxParseVec3fas(triangles->vertex,node->content);
+                continue;
+              };
+              if (node->name == "color") {
+                osxParseVec3fas(triangles->color,node->content);
+                continue;
+              };
+              if (node->name == "index") {
+                osxParseVec3is(triangles->index,node->content);
+                continue;
+              };
+            }
+            continue;
+          }
+        }
+      }
+    }
+  }
+
+    void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
+    {
+      FILE *file = fopen(fn,"w");
+      fprintf(file,"<?xml version=\"1.0\"?>\n\n");
+      fprintf(file,"<OSPRay>\n");
+      {
+        fprintf(file,"<Model>\n");
+        {
+          fprintf(file,"<StreamLines>\n");
+          {
+            fprintf(file,"<vertex>\n");
+            for (int i=0;i<streamLines->vertex.size();i++)
+              fprintf(file,"%f %f %f\n",
+                      streamLines->vertex[i].x,
+                      streamLines->vertex[i].y,
+                      streamLines->vertex[i].z);
+            fprintf(file,"</vertex>\n");
+
+            fprintf(file,"<index>\n");
+            for (int i=0;i<streamLines->index.size();i++)
+              fprintf(file,"%i ",streamLines->index[i]);
+            fprintf(file,"\n</index>\n");
+          }
+          fprintf(file,"</StreamLines>\n");
+
+
+          fprintf(file,"<TriangleMesh>\n");
+          {
+            fprintf(file,"<vertex>\n");
+            for (int i=0;i<triangles->vertex.size();i++)
+              fprintf(file,"%f %f %f\n",
+                      triangles->vertex[i].x,
+                      triangles->vertex[i].y,
+                      triangles->vertex[i].z);
+            fprintf(file,"</vertex>\n");
+
+            fprintf(file,"<color>\n");
+            for (int i=0;i<triangles->color.size();i++)
+              fprintf(file,"%f %f %f\n",
+                      triangles->color[i].x,
+                      triangles->color[i].y,
+                      triangles->color[i].z);
+            fprintf(file,"</color>\n");
+
+            fprintf(file,"<index>\n");
+            for (int i=0;i<triangles->index.size();i++)
+              fprintf(file,"%i %i %i\n",
+                      triangles->index[i].x,
+                      triangles->index[i].y,
+                      triangles->index[i].z);
+            fprintf(file,"</index>\n");
+
+          }
+          fprintf(file,"</TriangleMesh>\n");
+        }
+        fprintf(file,"</Model>\n");
+      }
+      fprintf(file,"</OSPRay>\n");
+      fclose(file);
+    }
 
   struct StreamLineViewer : public Glut3DWidget {
     /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
@@ -345,7 +482,9 @@ namespace ospray {
       std::string arg = av[i];
       if (arg[0] != '-') {
         const embree::FileName fn = arg;
-        if (fn.ext() == "pnt")
+        if (fn.ext() == "osx")
+          parseOSX(streamLines,triangles,fn);
+        else if (fn.ext() == "pnt")
           streamLines->parsePNT(fn);
         else if (fn.ext() == "pntlist")
           streamLines->parsePNTlist(fn);
@@ -359,17 +498,14 @@ namespace ospray {
         rendererType = av[++i];
       } else if (arg == "--radius") {
         streamLines->radius = atof(av[++i]);
+      } else if (arg == "--export") {
+        exportOSX(av[++i],streamLines,triangles);
       } else
         throw std::runtime_error("unknown parameter "+arg);
     }
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
-#if 1
-    char *shouldIWrite = getenv("OSPRAY_DUMP_MODEL");
-    if (shouldIWrite && atoi(shouldIWrite))
-      writeToXML(streamLines,triangles);
-#endif
     StreamLineViewer window(streamLines,triangles);
     window.create("ospDVR: OSPRay miniature stream line viewer");
     printf("Viewer created. Press 'Q' to quit.\n");

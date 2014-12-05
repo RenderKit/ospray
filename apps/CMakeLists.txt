@@ -28,7 +28,7 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
 
   # stream line viewer for NASA Stream Line Demo
-  OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." OFF)
+  OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." ON)
   IF(OSPRAY_APPS_STREAMLINEVIEWER)
     ADD_SUBDIRECTORY(streamLineViewer)
   ENDIF()
