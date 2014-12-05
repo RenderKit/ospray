@@ -13,8 +13,6 @@
 // ospray, for rendering
 #include "ospray/ospray.h"
 
-#include "sg/sg.h"
-
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -472,58 +470,13 @@ namespace ospray {
       };
     }
 
-    /*
-    std::vector<OSPTexture2D> textures;
-    for (size_t i = 0; i < mat->textures.size(); i++) {
-      OSPTexture2D tex = createTexture2D(mat->textures[i].ptr);
-      textures.push_back(tex);
-    }
-
-    if (!textures.empty()) {
-      OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], 0);
-      ospSetData(ospMat, "textureArray", textureArray);
-    }
-    */
-
     ospCommit(ospMat);
     return ospMat;
   }
 
-
-  /*! class that traverses a sg::World scene graph, and extracts
-      ospray geometry, renderer settings, etc from that */
-  struct SGRenderer { 
-    SGRenderer() 
-      : ospModel(NULL),
-        ospRenderer(NULL)
-    {}
-
-    void traverse(Ref<sg::World> &world)
-    {
-      OSPModel model = ospNewModel();
-      traverseNode(model,world);
-      setModel(model);
-    }
-    void traverseNode(OSPModel model, Ref<sg::World> &world)
-    {
-    }
-    inline void setModel(OSPModel model) 
-    { if (ospModel) ospRelease(ospModel); ospModel = model; }
-    inline void setRenderer(OSPRenderer renderer) 
-    { if (ospRenderer) ospRelease(ospRenderer); ospRenderer = renderer; }
-  protected:
-    //! the ospray model that represents the entire world
-    OSPModel      ospModel;    
-    //! the last renderer encountered during traversal (if any)
-    OSPRenderer   ospRenderer; 
-    //! the list of all info nodes
-    std::vector<Ref<sg::Info> > info;
-  };
-
   void msgViewMain(int &ac, const char **&av)
   {
     msgModel = new miniSG::Model;
-    Ref<sg::World> world = NULL;
     
     cout << "msgView: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
@@ -603,10 +556,6 @@ namespace ospray {
           miniSG::importTRI(*msgModel,fn);
         } else if (fn.ext() == "xml") {
           miniSG::importRIVL(*msgModel,fn);
-        } else if (fn.ext() == "osp") {
-          // right now this doesn't do anything other than parse the
-          // file - it will NOT be properly rendered!
-          world = sg::readXML(fn);
         } else if (fn.ext() == "obj") {
           miniSG::importOBJ(*msgModel,fn);
         } else if (fn.ext() == "x3d") {
@@ -617,11 +566,6 @@ namespace ospray {
       }
     }
 
-    if (world) {
-      // this is the code that uses
-      SGRenderer renderer;
-      renderer.traverse(world);
-    }
     // -------------------------------------------------------
     // done parsing
     // -------------------------------------------------------]
@@ -652,13 +596,6 @@ namespace ospray {
 
     if (numInstancedTris == 0 && msgAnimation.empty())
       error("no (valid) input files specified - model contains no triangles");
-
-    // if (msgModel->material.empty()) {
-    //   static int numWarnings = 0;
-    //   if (++numWarnings < 10)
-    //     cout << "msgView: adding default material (only reporting first 10 times)" << endl;
-    //   msgModel->material.push_back(new miniSG::Material);
-    // }
 
     // -------------------------------------------------------
     // create ospray model
