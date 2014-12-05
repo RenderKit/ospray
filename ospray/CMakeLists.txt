@@ -11,6 +11,13 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
+IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") 
+    AND ((${OSPRAY_COMPILER} STREQUAL "GCC") OR
+      (${OSPRAY_COMPILER} STREQUAL "gcc")))
+  MESSAGE(WARNING "Warning: You have selected 'avx2' target and 'gcc'-compiler, but many older gcc versions do not yet support avx2. If you run into build issues, please switch to either 'icc'-compiler, or upgrade your gcc version")
+ENDIF()
+
+
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
 
