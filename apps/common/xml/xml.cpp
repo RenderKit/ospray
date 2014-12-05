@@ -63,10 +63,13 @@ namespace ospray {
       if (!begin || !end)
         throw std::runtime_error("invalid substring in osp::xml::makeString");
       if (begin == end) return "";
-      char mem[end-begin+1];
+      char *mem = new char[end-begin+1];
       mem[end-begin] = 0;
+
       memcpy(mem,begin,end-begin);
-      return mem;
+      std::string s = mem;
+      delete mem;
+      return s;
     }
 
     void parseString(char *&s, std::string &value)

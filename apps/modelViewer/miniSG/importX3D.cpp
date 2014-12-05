@@ -6,6 +6,9 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
+// run the parser with assertions, even in release mode:
+#undef NDEBUG
+
 #include "miniSG.h"
 #include "importer.h"
 #include "apps/common/xml/xml.h"
@@ -26,8 +29,10 @@ namespace ospray {
                    const embree::FileName &fileName)
     {
       xml::XMLDoc *doc = xml::readXML(fileName);
-      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 
-        throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
+      assert(doc);
+      PRINT(doc->child[0]->name);
+      if (doc->child.size() != 1 || doc->child[0]->name != "X3D") 
+        throw std::runtime_error("could not parse X3D file: Not in X3D format!?");
       xml::Node *root_element = doc->child[0];
       parseX3D(model,root_element);
     }
