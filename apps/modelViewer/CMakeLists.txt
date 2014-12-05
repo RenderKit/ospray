@@ -23,7 +23,6 @@ ADD_EXECUTABLE(ospModelViewer
 TARGET_LINK_LIBRARIES(ospModelViewer
   ospray_minisg
   ospray_glut3d
-  ospray_sg
   ${OPENGL_LIBRARY} 
   ${GLUT_LIBRARY}
   )
