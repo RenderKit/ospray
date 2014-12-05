@@ -1,10 +1,18 @@
-# #####################################################################
-# INTEL CORPORATION PROPRIETARY INFORMATION                            
-# This software is supplied under the terms of a license agreement or  
-# nondisclosure agreement with Intel Corporation and may not be copied 
-# or disclosed except in accordance with the terms of that agreement.  
-# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
-# #####################################################################
+## ======================================================================== ##
+## Copyright 2009-2014 Intel Corporation                                    ##
+##                                                                          ##
+## Licensed under the Apache License, Version 2.0 (the "License");          ##
+## you may not use this file except in compliance with the License.         ##
+## You may obtain a copy of the License at                                  ##
+##                                                                          ##
+##     http://www.apache.org/licenses/LICENSE-2.0                           ##
+##                                                                          ##
+## Unless required by applicable law or agreed to in writing, software      ##
+## distributed under the License is distributed on an "AS IS" BASIS,        ##
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
+## See the License for the specific language governing permissions and      ##
+## limitations under the License.                                           ##
+## ======================================================================== ##
 
 FILE(WRITE "${CMAKE_BINARY_DIR}/CMakeDefines.h" "#define CMAKE_BUILD_DIR \"${CMAKE_BINARY_DIR}\"\n")
 
@@ -109,7 +117,7 @@ MACRO(CONFIGURE_OSPRAY)
     ELSE()
       MESSAGE("unknown OSPRAY_XEON_TARGET '${OSPRAY_XEON_TARGET}'")
     ENDIF()
-#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
+    #    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
   ENDIF()
   
   IF (OSPRAY_MPI)
@@ -121,8 +129,8 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
   ENDIF()
 
-#  INCLUDE(ospray_ispc)
-#  INCLUDE(ispc_build_rules)
+  #  INCLUDE(ospray_ispc)
+  #  INCLUDE(ispc_build_rules)
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
 

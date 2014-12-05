@@ -21,64 +21,64 @@
 //!  at build time.  Rather, the subclass can be defined in an external
 //!  module and registered with OSPRay using this macro.
 //!
-#define OSP_REGISTER_VOLUME(InternalClass, ExternalName) \
-    extern "C" Volume *ospray_create_volume_##ExternalName() \
-        { return(new InternalClass()); }
+#define OSP_REGISTER_VOLUME(InternalClass, ExternalName)        \
+  extern "C" Volume *ospray_create_volume_##ExternalName()      \
+  { return(new InternalClass()); }
 
 namespace ospray {
 
-    //! \brief A Volume is an abstraction for the concrete object which
-    //!  performs the volume sampling.
-    //!
-    //!  The actual memory layout, dimensionality, and source of samples
-    //!  are unknown to this class.  Subclasses may implement structured
-    //!  volumes, unstructured volumes, radial basis functions, etc.  A
-    //!  type string specifies a particular concrete implementation to
-    //!  createInstance().  This type string must be registered either in
-    //!  OSPRay proper, or in a loaded module using OSP_REGISTER_VOLUME.
-    //!
-    class Volume : public ManagedObject {
-    public:
+  //! \brief A Volume is an abstraction for the concrete object which
+  //!  performs the volume sampling.
+  //!
+  //!  The actual memory layout, dimensionality, and source of samples
+  //!  are unknown to this class.  Subclasses may implement structured
+  //!  volumes, unstructured volumes, radial basis functions, etc.  A
+  //!  type string specifies a particular concrete implementation to
+  //!  createInstance().  This type string must be registered either in
+  //!  OSPRay proper, or in a loaded module using OSP_REGISTER_VOLUME.
+  //!
+  class Volume : public ManagedObject {
+  public:
 
-        //! Constructor.
-        Volume() {};
+    //! Constructor.
+    Volume() {};
 
-        //! Destructor.
-        virtual ~Volume() {};
+    //! Destructor.
+    virtual ~Volume() {};
 
-        //! Allocate storage and populate the volume.
-        virtual void commit() = 0;
+    //! Allocate storage and populate the volume.
+    virtual void commit() = 0;
 
-        //! Create the equivalent ISPC volume container.
-        virtual void createEquivalentISPC() = 0;
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC() = 0;
 
-        //! Create a volume container of the given type.
-        static Volume *createInstance(std::string type);
+    //! Create a volume container of the given type.
+    static Volume *createInstance(std::string type);
 
-        //! Get the ISPC volume container.
-        void *getEquivalentISPC() const { return(getIE()); }
+    //! Get the ISPC volume container.
+    void *getEquivalentISPC() const { return(getIE()); }
 
-        //! A string description of this class.
-        virtual std::string toString() const { return("ospray::Volume"); }
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::Volume"); }
 
-    protected:
+  protected:
 
-        //! Volume transfer function.
-        TransferFunction *transferFunction;
+    //! Volume transfer function.
+    TransferFunction *transferFunction;
 
-        //! Print an error message.
-        inline void emitMessage(const std::string &kind, const std::string &message) const
-            { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+    //! Print an error message.
+    inline void emitMessage(const std::string &kind, const std::string &message) const
+    { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
 
-        //! Error checking.
-        inline void exitOnCondition(bool condition, const std::string &message) const
-            { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+    //! Error checking.
+    inline void exitOnCondition(bool condition, const std::string &message) const
+    { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
 
-        //! Warning condition.
-        inline void warnOnCondition(bool condition, const std::string &message) const
-            { if (!condition) return;  emitMessage("WARNING", message); }
+    //! Warning condition.
+    inline void warnOnCondition(bool condition, const std::string &message) const
+    { if (!condition) return;  emitMessage("WARNING", message); }
 
-    };
+  };
 
 } // namespace ospray
 
