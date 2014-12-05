@@ -171,35 +171,19 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
     return renderer->bgColor;
 
   DifferentialGeometry dg;
-  postIntersect(renderer->inherited.model,
-                dg,
-                ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-
+  postIntersect(renderer->inherited.model,dg,ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
+                |DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+  
   const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
   
-  const vec3f N = dg.Ns; //getShadingNormal(ray);
-
-  // print("shade at16 %\n",N.x,N.y,N.z);
+  const vec3f N = dg.Ns;
 
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
-// <<<<<<< HEAD
-//   vec3f baseColor = make_vec3f(.9f); // = mat->Kd; // * make_vec3f(dg.color);
-//   if (mat)
-//     foreach_unique(m in mat) {
-//       baseColor = m->Kd;
-//       if (m->map_Kd) {
-// 	vec4f kd_from_map = get4f(m->map_Kd,dg.st);
-// 	baseColor = baseColor * make_vec3f(kd_from_map);
-//       }
-//     }
-// =======
-  vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
+  vec3f baseColor = make_vec3f(1.f);
   if (mat) {
     foreach_unique(m in mat) {
       if (m->map_Kd) {
-      // foreach_unique(tx in m->map_Kd) {
-      //   if (tx) {
         vec4f Kd_from_map = get4f(m->map_Kd,dg.st);
         baseColor = make_vec3f(Kd_from_map);
       } else {
@@ -207,14 +191,6 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
       }
     }
   }
-  baseColor = baseColor * make_vec3f(dg.color);
-// >>>>>>> 43eb475e4b19b341643f066be9f53d9b35fea093
-  // foreach_unique(tex in mat->map_Kd) {
-    //   if (tex) {
-  //     baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
-  //   }
-  // }
-
   baseColor = baseColor * make_vec3f(dg.color);
   
   int hits = 0;
@@ -224,93 +200,25 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   const int sindex_x = pixel_x & 0x3;
   const int sindex_y = pixel_y & 0x3;
   const int sindex = (sindex_x) * 4 + (sindex_y);
-  for (uniform int i=0;i<sampleCnt;i++)
-    {
-      const vec3f ao_dir = getRandomDir(sindex,
-                                        (3*sindex_x+5*sindex_y+i+sampleCnt*sampleOfs)%16,
-                                        // i+sampleCnt*sampleOfs,
-                                        // i*sampleCnt+sampleOfs,
-                                        biNormU,biNormV,N,rot_x,rot_y);
-      
-      Ray ao_ray;
-      setRay(ao_ray,P,ao_dir);
-      ao_ray.t0 = EPS;
-      ao_ray.t = 1e20f; //inf; //1.f;
-      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(renderer->inherited.model,ao_ray))
-        hits++;
-      // print("sample %\n",ao_ray.geomID);
-    }
+  for (uniform int i=0;i<sampleCnt;i++) {
+    const vec3f ao_dir
+      = getRandomDir(sindex,
+                     (3*sindex_x+5*sindex_y+i+sampleCnt*sampleOfs)%16,
+                     biNormU,biNormV,N,rot_x,rot_y);
+    
+    Ray ao_ray;
+    setRay(ao_ray,P,ao_dir);
+    ao_ray.t0 = EPS;
+    ao_ray.t = 1e20f; 
+    if (dot(ao_ray.dir,N) < 0.05f || isOccluded(renderer->inherited.model,ao_ray))
+      hits++;
+  }
   float diffuse = absf(dot(N,ray.dir));
   float frac_visible = (sampleCnt-hits) * (1.0f/sampleCnt);
-	vec3f rgb = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
-  // print("rgb %\n",rgb.x,rgb.y,rgb.z);
+  vec3f rgb = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
   return rgb;
 }
 
-
-inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
-                        const Ray &ray, 
-                        const int32 pixel_x, const int32 pixel_y,
-                        const float rot_x, const float rot_y)
-{
-  if (ray.geomID < 0)
-    return renderer->bgColor;
-
-  // print("shade at16\n");
-  DifferentialGeometry dg;
-  postIntersect(renderer->inherited.model,
-                dg,
-                ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-
-  const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
-  
-  const vec3f N = dg.Ns; //getShadingNormal(ray);
-
-  // print("shade at16 %\n",N.x,N.y,N.z);
-
-  uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
-  vec3f baseColor = make_vec3f(1.f); // = mat->Kd; // * make_vec3f(dg.color);
-  foreach_unique(m in mat) {
-    foreach_unique(tx in mat->map_Kd) {
-      if (tx) {
-        vec4f Kd_from_map = get4f(tx,dg.st);
-        baseColor = make_vec3f(Kd_from_map);
-      } else {
-        baseColor = m->Kd;
-      }
-    }
-  }
-  baseColor = baseColor * make_vec3f(dg.color);
-  // foreach_unique(tex in mat->map_Kd) {
-  //   if (tex) {
-  //     baseColor = baseColor * make_vec3f(tex->get(tex,dg.st));
-  //   }
-  // }
-  
-  int hits = 0;
-  vec3f biNormU,biNormV;
-  getBinormals(biNormU,biNormV,N);
-
-  const int sindex = (pixel_x & 0x3) * 4 + (pixel_y & 0x3);
-  for (uniform int i=0;i<16;i++)
-    {
-      const vec3f ao_dir = getRandomDir(sindex,i,biNormU,biNormV,N,rot_x,rot_y);
-      
-      Ray ao_ray;
-      setRay(ao_ray,P,ao_dir);
-      ao_ray.t0 = EPS;
-      ao_ray.t = 1e20f; //inf; //1.f;
-      if (dot(ao_ray.dir,N) < 0.05f || isOccluded(renderer->inherited.model,ao_ray))
-        hits++;
-      // print("sample %\n",ao_ray.geomID);
-    }
-  float diffuse = absf(dot(N,ray.dir));
-  float frac_visible = (16.f-hits) * (1.0f/16.0f);
-	vec3f rgb = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
-  // print("rgb %\n",rgb.x,rgb.y,rgb.z);
-  return rgb;
-}
 
 void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
                                varying ScreenSample &sample)

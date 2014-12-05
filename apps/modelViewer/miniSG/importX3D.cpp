@@ -83,7 +83,6 @@ namespace ospray {
         }
         tok = strtok(NULL,delim);
       }
-      PRINT(mesh->triangle.size());
       free(s);
 
       // -------------------------------------------------------
