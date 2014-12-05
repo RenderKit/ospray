@@ -746,6 +746,16 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
+      // add color array to mesh
+      if (!msgMesh->color.empty()) {
+        OSPData color = ospNewData(msgMesh->color.size(),OSP_FLOAT3A,
+                                    &msgMesh->color[0],OSP_DATA_SHARED_BUFFER);
+        assert(msgMesh->color.size() > 0);
+        ospSetData(ospMesh,"vertex.color",color);
+      } else {
+        // cout << "no vertex colors!" << endl;
+      }
+
       // add texcoord array to mesh
       if (!msgMesh->texcoord.empty()) {
         OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_FLOAT2,
