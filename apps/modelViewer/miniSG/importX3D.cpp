@@ -108,12 +108,6 @@ namespace ospray {
 
         throw std::runtime_error("importX3D: unknown child type '"+node->name+"' to 'IndexedFaceSet' node");
       }
-      PING;
-      for (int i=0;i<10;i++)
-        PRINT(mesh->position[i]);
-      PING;
-      for (int i=0;i<10;i++)
-        PRINT((vec3i&)mesh->triangle[i]);
 
       model.mesh.push_back(mesh);
       model.instance.push_back(Instance(model.mesh.size()-1,xfm));

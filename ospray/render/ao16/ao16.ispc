@@ -171,6 +171,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
     return renderer->bgColor;
 
   DifferentialGeometry dg;
+  dg.color = make_vec4f(1.f);
   postIntersect(renderer->inherited.model,dg,ray,
                 DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
                 |DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
@@ -191,7 +192,8 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
       }
     }
   }
-  baseColor = baseColor * make_vec3f(dg.color);
+  if (dg.color.x > -1.f)
+    baseColor = baseColor * make_vec3f(dg.color);
   
   int hits = 0;
   vec3f biNormU,biNormV;
