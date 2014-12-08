@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "geometry.ih"
+#include "Geometry.ih"
 
 export void Geometry_setMaterial(void *uniform _geo, void *uniform _mat)
 {
@@ -34,5 +34,3 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
 extern void Geometry_Destructor(uniform Geometry *uniform mesh)
 {
 }
-
-

@@ -9,11 +9,11 @@
 #undef NDEBUG
 
 // ospray
-#include "cylinders.h"
+#include "Cylinders.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Model.h"
 // ispc-generated files
-#include "cylinders_ispc.h"
+#include "Cylinders_ispc.h"
 
 namespace ospray {
 

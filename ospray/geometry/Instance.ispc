@@ -11,7 +11,7 @@
 #include "ospray/math/affine.ih"
 #include "ospray/math/bbox.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/geometry.ih"
+#include "ospray/geometry/Geometry.ih"
 #include "ospray/common/Model.ih"
 // embree
 #include "embree2/rtcore.isph"

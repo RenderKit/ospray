@@ -10,7 +10,7 @@
 #include "ospray/math/vec.ih"
 #include "ospray/math/bbox.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/geometry.ih"
+#include "ospray/geometry/Geometry.ih"
 #include "ospray/common/Model.ih"
 // embree
 #include "embree2/rtcore.isph"
@@ -113,30 +113,6 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
     return;
   }
   return;
-
-
-  // const float a = dot(ray.dir,ray.dir);
-  // const float b = -2.f*dot(ray.dir,A);
-  // const float c = dot(A,A)-radius*radius;
-  
-  // const float radical = b*b-4.f*a*c;
-  // if (radical < 0.f) return;
-
-  // const float srad = sqrt(radical);
-
-  // const float t_in = (- b - srad) *rcpf(2.f*a);
-  // const float t_out= (- b + srad) *rcpf(2.f*a);
-
-  // if (t_in > ray.t0 && t_in < ray.t) {
-  //   ray.primID = primID;
-  //   ray.t = t_in;
-  //   return;
-  // } else if (t_out > ray.t0 && t_out < ray.t) {
-  //   ray.primID = primID;
-  //   ray.t = t_out;
-  //   return;
-  // }
-  // return;
 }
 
 
@@ -161,13 +137,8 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
     if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
   }
   if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
-    uniform uint8 *cylinderPtr = 
-      THIS->data + THIS->bytesPerCylinder*ray.primID;
-    // print("mat ofs % % %\n",THIS->offset_materialID,THIS->bytesPerCylinder,ray.primID);
+    uniform uint8 *cylinderPtr = THIS->data + THIS->bytesPerCylinder*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(cylinderPtr+THIS->offset_materialID));
-    // if (dg.materialID != 5) dg.materialID = 0;
-    // print("-> % %\n",cylinderPtr,dg.materialID);
-    // print("-> %\n",dg.materialID);
   }
   dg.Ng = Ng;
   dg.Ns = Ns;

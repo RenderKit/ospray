@@ -13,7 +13,7 @@
 #include "../common/Model.h"
 #include "../common/Data.h"
 #include "../common/Library.h"
-#include "../geometry/trianglemesh.h"
+#include "../geometry/TriangleMesh.h"
 #include "../render/Renderer.h"
 #include "../camera/camera.h"
 #include "../volume/Volume.h"

@@ -10,7 +10,7 @@
 #include "ospray/math/vec.ih"
 #include "ospray/math/bbox.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/geometry.ih"
+#include "ospray/geometry/Geometry.ih"
 #include "ospray/common/Model.ih"
 // embree
 #include "embree2/rtcore.isph"
@@ -55,7 +55,6 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
     if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
   }
   if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
-#if 1
     const uniform int32 primsPerPage = (1024*1024*128);
     if (any(ray.primID >= primsPerPage )) {
       const int primPageID  = ray.primID / primsPerPage;
@@ -70,7 +69,6 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
         }
       }
     } else
-#endif
       {
         uniform uint8 *spherePtr = 
           THIS->data + THIS->bytesPerSphere*ray.primID;
@@ -96,7 +94,6 @@ void Spheres_bounds(uniform Spheres *uniform geometry,
   uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
   bbox.lower = center-make_vec3f(radius);
   bbox.upper = center+make_vec3f(radius);
-  // print_box(bbox);
 }
 
 void Spheres_intersect(uniform Spheres *uniform geometry,
@@ -109,7 +106,6 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
     radius = *((uniform float *)(spherePtr+geometry->offset_radius));
   }
   uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
-  // print("sphere (%,%,%):%\n",center.x,center.y,center.z,radius);
   const vec3f A = center - ray.org;
 
   const float a = dot(ray.dir,ray.dir);

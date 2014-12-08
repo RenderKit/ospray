@@ -9,7 +9,7 @@
 #pragma once
 
 // ospray stuff
-#include "ospray/geometry/geometry.h"
+#include "ospray/geometry/Geometry.h"
 #include "ospray/volume/Volume.h"
 
 // stl stuff

@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 // ospray
-#include "trianglemesh.ih"
+#include "TriangleMesh.ih"
 #include "ospray/common/Model.ih"
 // embree
 #include "embree2/rtcore.isph"
@@ -28,16 +28,14 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
   dg.P = ray.org + ray.t * ray.dir;
 
   uniform vec3fa *uniform normal = THIS->normal;
-#if 1
+
   if ((flags & DG_NS) && normal) {
     const vec3i index = THIS->index[ray.primID];
     Ns
       = (1.f-ray.u-ray.v) * make_vec3f(normal[index.x])
       + ray.u * make_vec3f(normal[index.y])
       + ray.v * make_vec3f(normal[index.z]);
-    // print("normal interpolation!");
   }
-#endif
 
   if ((flags & DG_COLOR)) {
     uniform vec4f *uniform color = THIS->color;
@@ -47,7 +45,6 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
         = (1.f-ray.u-ray.v) * (color[index.x])
         + ray.u * (color[index.y])
         + ray.v * (color[index.z]);
-      // print("color % % %\n",dg.color.x,dg.color.y,dg.color.z);
     }
     else
       dg.color = make_vec4f(-1.f);
@@ -75,18 +72,17 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
       dg.materialID = THIS->geom_materialID;
     }
 
-    // print("bla\n");
     if( THIS->materialList) {
       //FIXME: crash here -- material pointers are bad
-  //     print("materialID INTO material list %\n",dg.materialID);
-//print("materialList = %\n",THIS->materialList);
-//print("materialList[0] = %\n",THIS->materialList[0]);
+      //print("materialID INTO material list %\n",dg.materialID);
+      //print("materialList = %\n",THIS->materialList);
+      //print("materialList[0] = %\n",THIS->materialList[0]);
       dg.material = THIS->materialList[dg.materialID < 0 ? 0 : dg.materialID];
- //      print("material fom material list %\n",dg.material);
+      //print("material fom material list %\n",dg.material);
     } else {
-   //    print("material FROM GEOM %\n",geom);
+      //print("material FROM GEOM %\n",geom);
       dg.material = geom->material;
-    //   print("material fom geometry %\n",dg.material);
+      //print("material fom geometry %\n",dg.material);
     }
   }
 

@@ -10,7 +10,7 @@
 
 // ospray stuff
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/geometry.ih"
+#include "ospray/geometry/Geometry.ih"
 #include "ospray/volume/Volume.ih"
 
 // embree stuff

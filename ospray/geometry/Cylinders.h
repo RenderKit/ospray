@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "geometry.h"
+#include "Geometry.h"
 
 /*! @{ \ingroup ospray_module_streamlines */
 namespace ospray {
@@ -42,8 +42,6 @@ namespace ospray {
     \ref ospray::CylinderSet class.
 
   */
-
-
 
   /*! \brief A geometry for a set of cylinders
 

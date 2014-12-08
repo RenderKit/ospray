@@ -9,10 +9,10 @@
 #undef NDEBUG
 
 // ospray
-#include "instance.h"
+#include "Instance.h"
 #include "ospray/common/Model.h"
 // ispc-generated files
-#include "instance_ispc.h"
+#include "Instance_ispc.h"
 
 namespace ospray {
 

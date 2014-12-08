@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "trianglemesh.h"
+#include "TriangleMesh.h"
 #include "../common/Model.h"
 // embree stuff
 #include "embree2/rtcore.h"
@@ -14,7 +14,7 @@
 #include "embree2/rtcore_geometry.h"
 #include "../include/ospray/ospray.h"
 // ispc side
-#include "trianglemesh_ispc.h"
+#include "TriangleMesh_ispc.h"
 // C
 // #include <math.h>
 
@@ -32,7 +32,6 @@ namespace ospray {
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
   {
-    //    cout << "creating new ispc-side trianglemesh!" << endl;
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
 
@@ -184,7 +183,7 @@ namespace ospray {
                           tailRingStart+i,
                           tailRingStart+((i+1)%numSegments)));
     }
-#if 1
+
     // body
     int bodyRingStart = vtx.size();
     for (int i=0;i<numSegments;i++) {
@@ -214,7 +213,6 @@ namespace ospray {
       idx.push_back(vec3i(a,b,tipTop));
       idx.push_back(vec3i(a,b,tipMid));
     }
-#endif
 
     ospray::TriangleMesh *mesh = new TriangleMesh;
     mesh->findParam("index",1)->set(new Data(idx.size(),OSP_INT3,&idx[0],0));

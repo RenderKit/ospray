@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "ospray/geometry/geometry.h"
+#include "ospray/geometry/Geometry.h"
 
 namespace ospray {
   namespace tachyon {

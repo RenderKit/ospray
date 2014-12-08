@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "geometry.h"
+#include "Geometry.h"
 
 /*! @{ \ingroup ospray_module_streamlines */
 namespace ospray {
@@ -65,8 +65,6 @@ namespace ospray {
     \image html sl2.jpg
 
   */
-
-
 
   /*! \brief A geometry for stream line curves
 

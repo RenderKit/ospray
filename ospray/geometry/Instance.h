@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "geometry.h"
+#include "Geometry.h"
 #include "../common/Data.h"
 
 namespace ospray {

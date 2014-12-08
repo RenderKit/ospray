@@ -10,7 +10,7 @@
 #define OSPRAY_TACHYON_GEOMETRY_IH 1
 
 // ospray
-#include "ospray/geometry/geometry.ih"
+#include "ospray/geometry/Geometry.ih"
 
 struct TachyonSpheres {
   uniform Geometry geometry;

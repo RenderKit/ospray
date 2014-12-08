@@ -58,18 +58,18 @@ SET(OSPRAY_SOURCES
   transferfunction/TransferFunction.ispc
   transferfunction/SymbolRegistry.cpp
 
-  geometry/geometry.ispc
-  geometry/geometry.cpp
-  geometry/trianglemesh.ispc
-  geometry/trianglemesh.cpp
-  geometry/streamlines.cpp
-  geometry/streamlines.ispc
-  geometry/instance.ispc
-  geometry/instance.cpp
-  geometry/spheres.cpp
-  geometry/spheres.ispc
-  geometry/cylinders.cpp
-  geometry/cylinders.ispc
+  geometry/Geometry.ispc
+  geometry/Geometry.cpp
+  geometry/TriangleMesh.ispc
+  geometry/TriangleMesh.cpp
+  geometry/StreamLines.cpp
+  geometry/StreamLines.ispc
+  geometry/Instance.ispc
+  geometry/Instance.cpp
+  geometry/Spheres.cpp
+  geometry/Spheres.ispc
+  geometry/Cylinders.cpp
+  geometry/Cylinders.ispc
 
   lights/Light.cpp
   lights/Light.ispc

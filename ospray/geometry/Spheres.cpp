@@ -9,11 +9,11 @@
 #undef NDEBUG
 
 // ospray
-#include "spheres.h"
+#include "Spheres.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Model.h"
 // ispc-generated files
-#include "spheres_ispc.h"
+#include "Spheres_ispc.h"
 
 namespace ospray {
 

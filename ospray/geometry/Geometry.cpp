@@ -7,12 +7,12 @@
  ********************************************************************* */
 
 // ospray stuff
-#include "geometry.h"
+#include "Geometry.h"
 #include "ospray/common/Library.h"
 // stl stuff
 #include <map>
 // ISPC-side
-#include "geometry_ispc.h"
+#include "Geometry_ispc.h"
 
 namespace ospray {
   typedef Geometry *(*creatorFct)();

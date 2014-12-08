@@ -14,7 +14,7 @@
 // ispc side
 #include "Model_ispc.h"
 
-#include "ospray/geometry/trianglemesh.h"
+#include "ospray/geometry/TriangleMesh.h"
 
 namespace ospray {
   using std::cout;

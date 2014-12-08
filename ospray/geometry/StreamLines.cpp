@@ -9,11 +9,11 @@
 #undef NDEBUG
 
 // ospray
-#include "streamlines.h"
+#include "StreamLines.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Model.h"
 // ispc-generated files
-#include "streamlines_ispc.h"
+#include "StreamLines_ispc.h"
 
 namespace ospray {
 
