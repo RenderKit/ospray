@@ -23,7 +23,7 @@
 #include "ospray/camera/camera.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/render/Renderer.h"
-#include "ospray/render/loadbalancer.h"
+#include "ospray/render/LoadBalancer.h"
 #include "ospray/texture/Texture2D.h"
 #include "ospray/lights/Light.h"
 // stl

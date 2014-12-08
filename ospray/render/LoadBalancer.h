@@ -8,7 +8,7 @@
 
 #pragma once
 
-/*! \file loadbalancer.h Implements the abstracion layer for a (tiled) load balancer */
+/*! \file LoadBalancer.h Implements the abstracion layer for a (tiled) load balancer */
 
 // ospray
 #include "ospray/common/OspCommon.h"
@@ -100,29 +100,6 @@ namespace ospray {
 
       TASK_RUN_FUNCTION(RenderTask,run);
       TASK_COMPLETE_FUNCTION(RenderTask,finish);
-
-      // // RenderTask(FrameBuffer *fb,
-      // //            Renderer::RenderJob *frameRenderJob,
-      // //            size_t numTiles_x,
-      // //            size_t numTiles_y,
-      // //            size_t numTiles_mine,
-      // //            size_t deviceID,
-      // //            size_t numDevices);
-      // size_t numTiles_x;
-      // size_t numTiles_y;
-      // size_t numTiles_mine;
-      // size_t deviceID;
-      // size_t numDevices;
-
-      // Ref<Renderer::RenderJob> frameRenderJob;
-      // Ref<FrameBuffer>             fb;
-      // TaskScheduler::Task          task;
-      // vec2i                        fbSize;
-      
-      // TASK_RUN_FUNCTION(RenderTask,run);
-      // TASK_COMPLETE_FUNCTION(RenderTask,finish);
-      
-      // virtual ~RenderTask() { }
     };
     
     virtual void renderFrame(Renderer *tiledRenderer, 

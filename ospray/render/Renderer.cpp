@@ -14,7 +14,7 @@
 // ispc exports
 #include "Renderer_ispc.h"
 // ospray
-#include "loadbalancer.h"
+#include "LoadBalancer.h"
 
 namespace ospray {
   typedef Renderer *(*creatorFct)();

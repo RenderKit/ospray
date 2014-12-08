@@ -84,7 +84,7 @@ SET(OSPRAY_SOURCES
   texture/Texture2D.cpp
   texture/Texture2D.ispc
   
-  render/loadbalancer.cpp
+  render/LoadBalancer.cpp
   render/Renderer.ispc
   render/Renderer.cpp
   render/util.ispc

@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "loadbalancer.h"
+#include "LoadBalancer.h"
 #include "Renderer.h"
 
 namespace ospray {
@@ -89,9 +89,7 @@ namespace ospray {
                                                      TaskScheduler::Event* event) 
   {
     int tileIndex = deviceID + numDevices * taskIndex;
-    // if (taskIndex == 33) {
-    //   printf("task % %\n",taskIndex,tileIndex);
-    // }
+
     Tile tile;
     const size_t tile_y = tileIndex / numTiles_x;
     const size_t tile_x = tileIndex - tile_y*numTiles_x;

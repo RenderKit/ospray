@@ -9,7 +9,7 @@
 #pragma once
 
 #include "mpicommon.h"
-#include "../render/loadbalancer.h"
+#include "../render/LoadBalancer.h"
 
 namespace ospray {
   namespace mpi {

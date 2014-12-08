@@ -14,7 +14,7 @@
 #include "../camera/camera.h"
 #include "../volume/Volume.h"
 #include "../transferfunction/TransferFunction.h"
-#include "../render/loadbalancer.h"
+#include "../render/LoadBalancer.h"
 #include "ospray/common/Material.h"
 #include "../common/Library.h"
 #include "../texture/Texture2D.h"
