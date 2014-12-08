@@ -7,13 +7,13 @@
  ********************************************************************* */
 
 // ospray
-#include "ao16.h"
+#include "AO16Renderer.h"
 #include "ospray/camera/camera.h"
 #include "ospray/texture/Texture2D.h"
 // embree
 #include "common/sys/sync/atomic.h"
 // ispc exports
-#include "ao16_ispc.h"
+#include "AO16Renderer_ispc.h"
 
 namespace ospray {
 

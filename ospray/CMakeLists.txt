@@ -90,8 +90,8 @@ SET(OSPRAY_SOURCES
   render/util.ispc
   render/raycast/raycast.cpp
   render/raycast/raycast.ispc
-  render/ao16/ao16.cpp
-  render/ao16/ao16.ispc
+  render/ao16/AO16Renderer.cpp
+  render/ao16/AO16Renderer.ispc
   render/obj/OBJRenderer.ispc
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp

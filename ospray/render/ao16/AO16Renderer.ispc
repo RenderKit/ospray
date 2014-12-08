@@ -6,8 +6,6 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-
-
 // ospray stuff
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/camera/camera.ih"
@@ -84,12 +82,6 @@ void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
   biNorm1 = normalize(cross(biNorm0,gNormal));
   biNorm0 = normalize(cross(biNorm1,gNormal));
 }
-
-// inline bool isOccluded(uniform RTCScene scene, Ray &ray)
-// {
-//   rtcIntersect(scene,*((varying RTCRay *uniform)&ray));
-//   return ray.geomID >= 0;
-// }
 
 struct AO16Material {
   Material inherited;

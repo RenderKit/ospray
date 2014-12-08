@@ -51,7 +51,7 @@ namespace ospray {
 
     To further improve frame rate there's a template parameter
     NUM_SAMPLES_PER_FRAME that allows for selecting subsets of these
-    samples (only 1,2,4,8, and 16 area allowed). I.e., whereas AO16
+    samples (only 1,2,4,8, and 16 are allowed). I.e., whereas AO16
     would usually trace the orginal 16 samples in the first frame, and
     a rotated version of that in the second, with
     NUM_SAMPLES_PER_FRAME set to 8 it would trace the original 8
