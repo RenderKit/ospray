@@ -23,14 +23,14 @@ IF (OSPRAY_MPI)
   else()
     find_package(MPI)
     if (${MPI_COMPILER} STREQUAL "MPI_COMPILER-NOTFOUND")
-      find_program(MPI_COMPILER 
-	NAMES mpicxx
-	PATHS /usr/lib64/openmpi/bin
-	DOC "MPI compiler.")
+      find_program(MPI_COMPILER
+        NAMES mpicxx
+        PATHS /usr/lib64/openmpi/bin
+        DOC "MPI compiler.")
       find_library(MPI_LIBRARY
-	NAMES mpi
-	PATHS /usr/lib64/openmpi/lib
-	DOC "MPI library.")
+        NAMES mpi
+        PATHS /usr/lib64/openmpi/lib
+        DOC "MPI library.")
       SET(MPI_LIBRARIES ${MPI_LIBRARY})
     endif()
     SET(OSPRAY_MPI_MULTI_THREADING_FLAG "") #???
