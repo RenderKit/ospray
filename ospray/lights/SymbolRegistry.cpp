@@ -7,9 +7,9 @@
 //    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
 //
 
-#include "ospray/lights/directionallight.h"
-#include "ospray/lights/pointlight.h"
-#include "ospray/lights/spotlight.h"
+#include "ospray/lights/DirectionalLight.h"
+#include "ospray/lights/PointLight.h"
+#include "ospray/lights/SpotLight.h"
 
 namespace ospray {
 

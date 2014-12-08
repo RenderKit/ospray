@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "light.h"
+#include "Light.h"
 
 namespace ospray {
 

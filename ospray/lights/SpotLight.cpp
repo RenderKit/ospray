@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "spotlight.h"
+#include "SpotLight.h"
 
 namespace ospray {
   //!< Constructor for SpotLight. Placed in protected section to make SpotLight act as an abstract base class.

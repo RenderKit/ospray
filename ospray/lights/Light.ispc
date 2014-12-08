@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "light.ih"
+#include "Light.ih"
 
 //! Construct a new ispc side light
 static void Light_Constructor(uniform Light *uniform light,

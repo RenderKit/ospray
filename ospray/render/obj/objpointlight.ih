@@ -9,7 +9,7 @@
 #ifndef OSPRAY_OBJ_POINT_LIGHT_IH
 #define OSPRAY_OBJ_POINT_LIGHT_IH
 
-#include "ospray/lights/pointlight.ih"
+#include "ospray/lights/PointLight.ih"
 
 //! ISPC implementation of an OBJPointLight
 struct OBJPointLight {

@@ -14,8 +14,8 @@
 #include "ospray/render/util.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/texture/texture2d.ih"
-#include "ospray/lights/light.ih"
-#include "ospray/lights/directionallight.ih"
+#include "ospray/lights/Light.ih"
+#include "ospray/lights/DirectionalLight.ih"
 #include "ospray/render/renderer.ih"
 // obj renderer
 #include "objmaterial.ih"

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/lights/spotlight.h"
+#include "ospray/lights/SpotLight.h"
 
 namespace ospray {
   namespace obj {

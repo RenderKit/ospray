@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "directionallight.ih"
+#include "DirectionalLight.ih"
 
 //!< Construct a new ispc-side DirectionalLight object
 extern void DirectionalLight_Constructor( uniform DirectionalLight *uniform THIS,

@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 //ospray
-#include "light.h"
+#include "Light.h"
 #include "ospray/common/Library.h"
 
 //system

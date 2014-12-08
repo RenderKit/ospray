@@ -17,7 +17,7 @@
 #include "ospray/render/renderer.h"
 #include "ospray/camera/camera.h"
 #include "ospray/volume/Volume.h"
-#include "ospray/lights/light.h"
+#include "ospray/lights/Light.h"
 #include "ospray/texture/texture2d.h"
 #include "mpiloadbalancer.h"
 

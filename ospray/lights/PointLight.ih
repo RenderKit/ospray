@@ -9,7 +9,7 @@
 #ifndef OSPRAY_POINT_LIGHT_IH
 #define OSPRAY_POINT_LIGHT_IH
 
-#include "light.ih"
+#include "Light.ih"
 #include "ospray/math/vec.ih"
 
 struct PointLight {

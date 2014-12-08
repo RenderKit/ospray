@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "spotlight.ih"
+#include "SpotLight.ih"
 
 //!< Construct a new ispc-side SpotLight object
 void SpotLight_Constructor(uniform SpotLight *uniform THIS,

@@ -13,7 +13,7 @@
 #include "ospray/camera/camera.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/lights/light.ih"
+#include "ospray/lights/Light.ih"
 #include "ospray/math/bbox.ih"
 #include "ospray/render/renderer.ih"
 
