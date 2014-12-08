@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "loadbalancer.h"
-#include "renderer.h"
+#include "Renderer.h"
 
 namespace ospray {
   using std::cout;

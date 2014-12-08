@@ -14,7 +14,7 @@
 #include "ospray/common/Library.h"
 #include "ospray/common/Model.h"
 #include "ospray/geometry/trianglemesh.h"
-#include "ospray/render/renderer.h"
+#include "ospray/render/Renderer.h"
 #include "ospray/camera/camera.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/lights/Light.h"

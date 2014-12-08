@@ -13,7 +13,7 @@
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/render/renderer.ih"
+#include "ospray/render/Renderer.ih"
 
 // path tracer stuff
 #include "samplers/precomputed_sampler.ih"

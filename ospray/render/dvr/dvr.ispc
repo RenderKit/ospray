@@ -12,7 +12,7 @@
 #include "ospray/math/bbox.ih"
 #include "ospray/volume/Volume.ih"
 #include "ospray/render/util.ih"
-#include "ospray/render/renderer.ih"
+#include "ospray/render/Renderer.ih"
 
 struct DVRRenderer {
   Renderer inherited;

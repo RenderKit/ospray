@@ -14,7 +14,7 @@
 #include "../common/Data.h"
 #include "../common/Library.h"
 #include "../geometry/trianglemesh.h"
-#include "../render/renderer.h"
+#include "../render/Renderer.h"
 #include "../camera/camera.h"
 #include "../volume/Volume.h"
 #include "mpiloadbalancer.h"

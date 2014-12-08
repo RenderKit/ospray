@@ -24,7 +24,7 @@
 */
 
 // ospray
-#include "ospray/render/renderer.h"
+#include "ospray/render/Renderer.h"
 #include "ospray/texture/Texture.h"
 
 namespace ospray {

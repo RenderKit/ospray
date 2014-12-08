@@ -13,7 +13,7 @@
 #include "ospray/camera/perspectivecamera.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/render/util.ih"
-#include "ospray/render/renderer.ih"
+#include "ospray/render/Renderer.ih"
 
 struct Phong {
   float plastic;

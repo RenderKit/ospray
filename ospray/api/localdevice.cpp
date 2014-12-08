@@ -10,7 +10,7 @@
 #include "../common/Model.h"
 #include "../common/Data.h"
 #include "../geometry/trianglemesh.h"
-#include "../render/renderer.h"
+#include "../render/Renderer.h"
 #include "../camera/camera.h"
 #include "../volume/Volume.h"
 #include "../transferfunction/TransferFunction.h"

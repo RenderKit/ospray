@@ -6,9 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "renderer.ih"
-
-#include "renderer.ih"
+#include "Renderer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/camera/camera.ih"
 #include "ospray/common/Model.ih"

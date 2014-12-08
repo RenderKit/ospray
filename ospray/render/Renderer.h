@@ -8,7 +8,7 @@
 
 #pragma once
 
-/*! \file renderer.h Defines the base renderer class */
+/*! \file Renderer.h Defines the base renderer class */
 
 #include "ospray/common/Model.h"
 #include "ospray/fb/FrameBuffer.h"

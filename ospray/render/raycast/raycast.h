@@ -39,7 +39,7 @@
  */
 
 // ospray
-#include "ospray/render/renderer.h"
+#include "ospray/render/Renderer.h"
 
 namespace ospray {
   using embree::TaskScheduler;

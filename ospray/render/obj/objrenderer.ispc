@@ -16,7 +16,7 @@
 #include "ospray/texture/Texture2D.ih"
 #include "ospray/lights/Light.ih"
 #include "ospray/lights/DirectionalLight.ih"
-#include "ospray/render/renderer.ih"
+#include "ospray/render/Renderer.ih"
 // obj renderer
 #include "objmaterial.ih"
 #include "objpointlight.ih"

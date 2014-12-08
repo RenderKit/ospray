@@ -7,12 +7,12 @@
  ********************************************************************* */
 
 // ospray stuff
-#include "renderer.h"
+#include "Renderer.h"
 #include "../common/Library.h"
 // stl stuff
 #include <map>
 // ispc exports
-#include "renderer_ispc.h"
+#include "Renderer_ispc.h"
 // ospray
 #include "loadbalancer.h"
 

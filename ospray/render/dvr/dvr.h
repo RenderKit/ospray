@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include "ospray/render/renderer.h"
+#include "ospray/render/Renderer.h"
 
 /*! @{ \ingroup ospray_module_dvr */
 namespace ospray {

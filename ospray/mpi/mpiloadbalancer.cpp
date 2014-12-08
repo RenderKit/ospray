@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "mpiloadbalancer.h"
-#include "ospray/render/renderer.h"
+#include "ospray/render/Renderer.h"
 #include "ospray/fb/FrameBuffer.h"
 
 namespace ospray {

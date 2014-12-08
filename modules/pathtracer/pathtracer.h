@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "ospray/render/renderer.h"
+#include "ospray/render/Renderer.h"
 #include "ospray/common/Model.h"
 #include "ospray/camera/camera.h"
 

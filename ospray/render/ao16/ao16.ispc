@@ -15,7 +15,7 @@
 #include "ospray/render/util.ih"
 #include "ospray/math/math.ih"
 #include "ospray/common/Model.ih"
-#include "ospray/render/renderer.ih"
+#include "ospray/render/Renderer.ih"
 #include "ospray/texture/Texture2D.ih"
 
 #define EPS 1e-5f
