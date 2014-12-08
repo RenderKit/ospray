@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "mpicommon.h"
+#include "MPICommon.h"
 
 namespace ospray {
   namespace mpi {
@@ -26,8 +26,6 @@ namespace ospray {
       world.comm = MPI_COMM_WORLD;
       MPI_Comm_rank(MPI_COMM_WORLD,&world.rank);
       MPI_Comm_size(MPI_COMM_WORLD,&world.size);
-
-
     }
   }
 

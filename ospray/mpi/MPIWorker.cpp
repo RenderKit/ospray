@@ -6,8 +6,8 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "../mpi/mpicommon.h"
-#include "../mpi/mpidevice.h"
+#include "../mpi/MPICommon.h"
+#include "../mpi/MPIDevice.h"
 
 namespace ospray {
   namespace mpi {

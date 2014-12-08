@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "mpicommon.h"
+#include "MPICommon.h"
 #include "ospray/api/Handle.h"
 
 namespace ospray {
@@ -103,19 +103,6 @@ namespace ospray {
         int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
         Assert(rc == MPI_SUCCESS); 
       }
-      // inline size_t get_data(void *pointer) 
-      // { 
-      //   int64 size; 
-      //   int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm); 
-      //   Assert(rc == MPI_SUCCESS); 
-      //   if (size == 0) pointer = NULL; 
-      //   else {
-      //     pointer = malloc(size);
-      //     int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
-      //     Assert(rc == MPI_SUCCESS); 
-      //   }
-      //   return size; 
-      // }
       inline Handle get_handle() 
       { 
         Handle v; 

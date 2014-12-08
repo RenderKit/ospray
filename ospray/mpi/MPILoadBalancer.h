@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "mpicommon.h"
+#include "MPICommon.h"
 #include "../render/LoadBalancer.h"
 
 namespace ospray {

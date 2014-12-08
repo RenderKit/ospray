@@ -119,9 +119,9 @@ IF (OSPRAY_MPI)
   CONFIGURE_MPI()
 
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}   
-    mpi/mpidevice.cpp
-    mpi/mpicommon.cpp
-    mpi/mpiloadbalancer.cpp
+    mpi/MPIDevice.cpp
+    mpi/MPICommon.cpp
+    mpi/MPILoadBalancer.cpp
     mpi/worker.cpp
     )
 ENDIF()
@@ -184,7 +184,7 @@ IF (OSPRAY_MPI)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_LIBRARIES})
   # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick 
 
-  ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/mpiworker.cpp)
+  ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
   # ------------------------------------------------------------
   INSTALL(TARGETS ospray_mpi_worker${OSPRAY_EXE_SUFFIX} DESTINATION bin)

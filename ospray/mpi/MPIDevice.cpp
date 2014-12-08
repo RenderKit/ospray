@@ -8,8 +8,8 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "mpicommon.h"
-#include "mpidevice.h"
+#include "MPICommon.h"
+#include "MPIDevice.h"
 #include "../common/Model.h"
 #include "../common/Data.h"
 #include "../common/Library.h"
@@ -17,7 +17,7 @@
 #include "../render/Renderer.h"
 #include "../camera/Camera.h"
 #include "../volume/Volume.h"
-#include "mpiloadbalancer.h"
+#include "MPILoadBalancer.h"
 
 namespace ospray {
   using std::cout;
@@ -113,10 +113,6 @@ namespace ospray {
       // nobody should ever come here ...
       return NULL;
     }
-
-
-
-
 
 
     /*! in this mode ("separate worker group" mode)
@@ -255,60 +251,6 @@ namespace ospray {
       }
       MPI_Barrier(app.comm);
       return new api::MPIDevice(ac,av);
-
-      //       if (mpi::world.rank == 0) {
-      // #if 1
-      //         if (fork()) {
-      //           system(launchCommand);
-      //           while(1) sleep(10);
-      //         }
-      //         //   sleep(10000);
-      //         // }
-      //         PING;
-      //         // sleep(20);
-      //         // PING;
-      //         sleep(3);
-      //         FILE *launchOutput = fopen("/tmp/launch.out","r");
-      // #else
-      //         PING;
-      //         FILE *launchOutput = popen(launchCommand,"r");
-      //         PRINT(launchOutput);
-      //         sleep(10);
-      // #endif
-
-      //         Assert(launchOutput);
-      //         char line[10000];
-      //         char *listenPort = NULL;
-      //         const char *LAUNCH_HEADER = "OSPRAY_SERVICE_PORT:";
-      //         PING;
-      //         while (fgets(line,10000,launchOutput) && !feof(launchOutput)) {
-      //           PING;
-      //           PRINT(line);
-      //           if (!strncmp(line,LAUNCH_HEADER,strlen(LAUNCH_HEADER))) {
-      //             listenPort = line + strlen(LAUNCH_HEADER);
-      //             char *eol = strstr(listenPort,"\n");
-      //             if (eol) *eol = 0;
-      //             break;
-      //           }
-      //         }
-      //         PING;
-      //         pclose(launchOutput);
-      //         PING;
-      //         PRINT(listenPort);
-      //         if (!listenPort)
-      //           throw std::runtime_error("failed to find service port in launch script output");
-      //         for (char *s = listenPort; *s; ++s)
-      //           if (*s == '%') *s = '$';
-
-      //         PING;
-      //         cout << "CONNECTING TO " << listenPort << endl;     
-      //         rc = MPI_Comm_connect(listenPort,MPI_INFO_NULL,0,app.comm,&worker.comm);
-      //         cout << "#######################################################" << endl;
-      //         cout << "connected!" << endl;
-      //         PING;
-      //       }
-      //       worker.makeIntracomm();
-      //       return new api::MPIDevice(ac,av);
     }
 
   }

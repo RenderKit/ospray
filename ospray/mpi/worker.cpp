@@ -6,9 +6,9 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "mpicommon.h"
-#include "mpidevice.h"
-#include "command.h"
+#include "MPICommon.h"
+#include "MPIDevice.h"
+#include "CommandStream.h"
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Library.h"
@@ -19,7 +19,7 @@
 #include "ospray/volume/Volume.h"
 #include "ospray/lights/Light.h"
 #include "ospray/texture/Texture2D.h"
-#include "mpiloadbalancer.h"
+#include "MPILoadBalancer.h"
 
 namespace ospray {
   namespace mpi {
@@ -84,11 +84,7 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-        // PRINT(command);usleep(20);
-#if 0
-        if (worker.rank == 0)
-          printf("#w: command %i\n",command);
-#endif
+
         switch (command) {
         case api::MPIDevice::CMD_NEW_RENDERER: {
           const mpi::Handle handle = cmd.get_handle();

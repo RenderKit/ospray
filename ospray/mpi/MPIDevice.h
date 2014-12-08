@@ -6,9 +6,9 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "mpicommon.h"
+#include "MPICommon.h"
 #include "../api/Device.h"
-#include "command.h"
+#include "CommandStream.h"
 #include "ospray/common/Managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
