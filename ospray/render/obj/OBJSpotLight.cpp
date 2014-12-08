@@ -6,8 +6,8 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "objspotlight.h"
-#include "objspotlight_ispc.h"
+#include "OBJSpotLight.h"
+#include "OBJSpotLight_ispc.h"
 
 namespace ospray {
   namespace obj {

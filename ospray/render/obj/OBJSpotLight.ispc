@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "objspotlight.ih"
+#include "OBJSpotLight.ih"
 
 //! Construct a new ispc-side OBJSpotLight
 extern void OBJSpotLight_Constructor( uniform OBJSpotLight *uniform THIS,

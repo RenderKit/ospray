@@ -6,8 +6,8 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "objmaterial.h"
-#include "objmaterial_ispc.h"
+#include "OBJMaterial.h"
+#include "OBJMaterial_ispc.h"
 #include "../../common/Data.h"
 
 namespace ospray {

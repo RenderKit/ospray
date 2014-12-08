@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "objpointlight.ih"
+#include "OBJPointLight.ih"
 
 //! Construct a new ispc-side OBJPointLight
 void OBJPointLight_Constructor(uniform OBJPointLight *uniform THIS,

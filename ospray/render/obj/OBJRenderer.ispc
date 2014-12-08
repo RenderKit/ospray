@@ -18,17 +18,15 @@
 #include "ospray/lights/DirectionalLight.ih"
 #include "ospray/render/Renderer.ih"
 // obj renderer
-#include "objmaterial.ih"
-#include "objpointlight.ih"
-#include "objspotlight.ih"
+#include "OBJMaterial.ih"
+#include "OBJPointLight.ih"
+#include "OBJSpotLight.ih"
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
 
 struct OBJRenderer {
   Renderer inherited;
-  // //uniform Texture *textureArray;
-  // uniform OBJMaterial *materialArray;
 
   const uniform OBJPointLight *uniform *uniform pointLights;
   uint32        numPointLights;
@@ -252,10 +250,7 @@ void OBJRenderer_renderSample(uniform Renderer *uniform _renderer,
                                varying ScreenSample &sample)
 {
   uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  // print("sample.ray.org.x %\n",sample.ray.org.x);
-  // sample.rgb = absf(sample.ray.dir);
   sample.rgb = OBJRenderer_shadeRay(sample,renderer);
-  // print("sample.x %\n",sample.rgb.x);
 }
 
 
@@ -303,52 +298,3 @@ export void OBJRenderer_destroy(void *uniform _renderer)
   uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
   delete renderer;
 }
-
-// export void ispc__OBJRenderer_renderTile(void *uniform _tile, //uniform Tile *uniform tile,
-//                                          void *uniform _camera, //uniform Camera *uniform camera,
-//                                          void *uniform _model,
-//                                          uniform int num_point_lights,
-//                                          void *uniform *uniform _point_lights,
-//                                          uniform int num_dir_lights,
-//                                          void *uniform *uniform _dir_lights)
-// {
-//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-
-//   uniform OBJRenderer renderer;
-//   renderer.model   = (uniform Model *uniform)_model;
-//   renderer.pointLights = (const uniform OBJPointLight *uniform *uniform)_point_lights;
-//   renderer.numPointLights = num_point_lights;
-//   renderer.dirLights = (const uniform DirectionalLight *uniform *uniform)_dir_lights;
-//   renderer.numDirLights = num_dir_lights;
-
-//   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
-//   const uniform uint32 size_x = tile->fbSize.x;
-//   const uniform uint32 size_y = tile->fbSize.y;
-//   const uniform uint32 x0 = tile->region.lower.x;
-//   const uniform uint32 y0 = tile->region.lower.y;
-//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-//     const uint32 frag = i*programCount+programIndex;
-//     const uint32  x     = x0 + (frag % TILE_SIZE);
-//     const uint32  y     = y0 + (frag / TILE_SIZE);
-//     // print("pixel % %\n",x,y);
-//     if (x < size_x & y < size_y) {
-//       // print("+pixel % %\n",x,y);
-//       const float screen_u = (x+.5f)/size_x;
-//       const float screen_v = (y+.5f)/size_y;
-//       Ray ray;
-//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-//                       (varying vec2f)make_vec2f(0.f,0.f));
-//       const vec3f col = OBJRenderer_shadeRay(ray,&renderer);
-// #if 1
-//       tile->r[i] = col.x;
-//       tile->g[i] = col.y;
-//       tile->b[i] = col.z;
-//       tile->a[i] = 1.f;
-//       tile->z[i] = ray.t;
-//       tile->rgba8[i] = cvt_uint32(col);
-// #endif
-//     }
-//   }
-// }
-

@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "objmaterial.ih"
+#include "OBJMaterial.ih"
 
 export void *uniform OBJMaterial_create(void *uniform cppE)
 {

@@ -92,14 +92,14 @@ SET(OSPRAY_SOURCES
   render/raycast/raycast.ispc
   render/ao16/ao16.cpp
   render/ao16/ao16.ispc
-  render/obj/objrenderer.ispc
-  render/obj/objmaterial.ispc
-  render/obj/objrenderer.cpp
-  render/obj/objmaterial.cpp
-  render/obj/objpointlight.ispc
-  render/obj/objpointlight.cpp
-  render/obj/objspotlight.ispc
-  render/obj/objspotlight.cpp
+  render/obj/OBJRenderer.ispc
+  render/obj/OBJMaterial.ispc
+  render/obj/OBJRenderer.cpp
+  render/obj/OBJMaterial.cpp
+  render/obj/OBJPointLight.ispc
+  render/obj/OBJPointLight.cpp
+  render/obj/OBJSpotLight.ispc
+  render/obj/OBJSpotLight.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/SymbolRegistry.cpp

@@ -7,10 +7,10 @@
  ********************************************************************* */
 
 // obj
-#include "objrenderer.h"
-#include "objmaterial.h"
-#include "objpointlight.h"
-#include "objspotlight.h"
+#include "OBJRenderer.h"
+#include "OBJMaterial.h"
+#include "OBJPointLight.h"
+#include "OBJSpotLight.h"
 // ospray
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
@@ -20,7 +20,7 @@
 //sys
 #include <vector>
 // ispc exports
-#include "objrenderer_ispc.h"
+#include "OBJRenderer_ispc.h"
 
 namespace ospray {
   namespace obj {
