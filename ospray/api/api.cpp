@@ -8,7 +8,7 @@
 
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/Renderer.h"
-#include "ospray/camera/camera.h"
+#include "ospray/camera/Camera.h"
 #include "ospray/common/Material.h"
 #include "ospray/fileio/ObjectCatalog.h"
 #include "ospray/fileio/ObjectFile.h"

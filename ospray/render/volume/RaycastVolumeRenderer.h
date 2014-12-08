@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "ospray/camera/camera.h"
+#include "ospray/camera/Camera.h"
 #include "ospray/common/Model.h"
 #include "ospray/lights/Light.h"
 #include "ospray/render/Renderer.h"

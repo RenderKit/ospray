@@ -7,7 +7,7 @@
 //    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
 //
 
-#include "ospray/camera/perspectivecamera.h"
+#include "ospray/camera/PerspectiveCamera.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Ray.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"

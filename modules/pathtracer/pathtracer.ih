@@ -8,7 +8,7 @@
 
 #include "ospray/math/vec.ih"
 #include "ospray/common/Model.ih"
-#include "ospray/camera/camera.ih"
+#include "ospray/camera/Camera.ih"
 
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/render/util.ih"

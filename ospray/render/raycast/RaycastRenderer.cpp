@@ -10,7 +10,7 @@
 
 // ospray
 #include "RaycastRenderer.h"
-#include "ospray/camera/perspectivecamera.h"
+#include "ospray/camera/PerspectiveCamera.h"
 // embree
 #include "common/sys/sync/atomic.h"
 // ispc exports

@@ -20,7 +20,7 @@
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
 #include "ospray/geometry/TriangleMesh.h"
-#include "ospray/camera/camera.h"
+#include "ospray/camera/Camera.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/render/LoadBalancer.h"

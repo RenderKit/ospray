@@ -8,7 +8,7 @@
 
 // ospray
 #include "AO16Renderer.h"
-#include "ospray/camera/camera.h"
+#include "ospray/camera/Camera.h"
 #include "ospray/texture/Texture2D.h"
 // embree
 #include "common/sys/sync/atomic.h"

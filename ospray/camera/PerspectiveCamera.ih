@@ -10,7 +10,7 @@
 
 /*! \file perspectivecamera.ih \brief Defines the ISPC-side Perspective Camera class */
 
-#include "camera.ih"
+#include "Camera.ih"
 
 /*! \brief A plain perspective ("PinHole") camera; no depth of field  */
 struct PerspectiveCamera {

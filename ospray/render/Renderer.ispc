@@ -8,7 +8,7 @@
 
 #include "Renderer.ih"
 #include "ospray/render/util.ih"
-#include "ospray/camera/camera.ih"
+#include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
 // The layout of this struct must match that of OSPPickData in ospray.h

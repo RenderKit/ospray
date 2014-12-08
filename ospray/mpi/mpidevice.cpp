@@ -15,7 +15,7 @@
 #include "../common/Library.h"
 #include "../geometry/TriangleMesh.h"
 #include "../render/Renderer.h"
-#include "../camera/camera.h"
+#include "../camera/Camera.h"
 #include "../volume/Volume.h"
 #include "mpiloadbalancer.h"
 

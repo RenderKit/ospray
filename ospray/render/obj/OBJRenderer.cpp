@@ -14,7 +14,7 @@
 // ospray
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
-#include "ospray/camera/camera.h"
+#include "ospray/camera/Camera.h"
 //embree
 #include "embree2/rtcore.h"
 //sys

@@ -10,7 +10,7 @@
 
 // ospray stuff
 #include "ospray/fb/FrameBuffer.ih"
-#include "ospray/camera/perspectivecamera.ih"
+#include "ospray/camera/PerspectiveCamera.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/texture/Texture2D.ih"

@@ -10,7 +10,7 @@
 #ifndef RAYCAST_VOLUME_RENDERER_IH
 #define RAYCAST_VOLUME_RENDERER_IH
 
-#include "ospray/camera/camera.ih"
+#include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/lights/Light.ih"

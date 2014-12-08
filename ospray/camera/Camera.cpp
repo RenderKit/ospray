@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 // ospray stuff
-#include "camera.h"
+#include "Camera.h"
 // embree stuff
 #include "../common/Library.h"
 // stl stuff

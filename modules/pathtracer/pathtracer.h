@@ -26,7 +26,7 @@
 
 #include "ospray/render/Renderer.h"
 #include "ospray/common/Model.h"
-#include "ospray/camera/camera.h"
+#include "ospray/camera/Camera.h"
 
 namespace ospray {
   struct PathTracer : public Renderer {
