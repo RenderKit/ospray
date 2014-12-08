@@ -47,26 +47,15 @@ namespace ospray {
   struct Camera;
   struct Model;
 
-  // enum { 
-  //   RC_EYELIGHT=0,
-  //   RC_PRIMID,
-  //   RC_GEOMID,
-  //   RC_INSTID,
-  //   RC_GNORMAL,
-  //   RC_TESTSHADOW,
-  // } RC_SHADEMODE;
-
   /*! \brief Implements the family of simple ray cast renderers */
-  // template<int SHADE_MODE=RC_EYELIGHT>
   template<void *(*SHADE_MODE)(void*)>
-  struct RayCastRenderer : public Renderer {
-    RayCastRenderer();
-    virtual std::string toString() const { return "ospray::RayCastRenderer"; }
+  struct RaycastRenderer : public Renderer {
+    RaycastRenderer();
+    virtual std::string toString() const { return "ospray::RaycastRenderer"; }
 
     Model  *model;
     Camera *camera;
     
-    // virtual void renderTile(Tile &tile, FrameBuffer *fb);
     virtual void commit();
   };
 };
