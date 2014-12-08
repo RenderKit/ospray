@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "mpicommon.h"
-#include "../api/device.h"
+#include "../api/Device.h"
 #include "command.h"
 #include "ospray/common/Managed.h"
 

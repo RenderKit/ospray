@@ -9,7 +9,7 @@
 #pragma once
 
 #include "mpicommon.h"
-#include "ospray/api/handle.h"
+#include "ospray/api/Handle.h"
 
 namespace ospray {
   namespace mpi {

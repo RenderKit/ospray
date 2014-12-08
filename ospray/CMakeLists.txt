@@ -104,10 +104,10 @@ SET(OSPRAY_SOURCES
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/SymbolRegistry.cpp
 
-  api/api.cpp
-  api/device.cpp
-  api/localdevice.cpp
-  api/handle.cpp
+  api/API.cpp
+  api/Device.cpp
+  api/LocalDevice.cpp
+  api/Handle.cpp
   )
 
 # -------------------------------------------------------
@@ -148,11 +148,11 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   IF (THIS_IS_MIC)
     ADD_DEFINITIONS(-DOSPRAY_COI_DEV=1)
     ADD_DEFINITIONS(-DOSPRAY_COI_HOST=0)
-    SET(OSPRAY_COI_COMPONENTS api/coidevice_dev.cpp)
+    SET(OSPRAY_COI_COMPONENTS api/COIDeviceDev.cpp)
   ELSE()
     ADD_DEFINITIONS(-DOSPRAY_COI_DEV=0)
     ADD_DEFINITIONS(-DOSPRAY_COI_HOST=1)
-    SET(OSPRAY_COI_COMPONENTS api/coidevice_host.cpp)
+    SET(OSPRAY_COI_COMPONENTS api/COIDeviceHost.cpp)
   ENDIF()
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES} ${OSPRAY_COI_COMPONENTS})
 ELSE()
@@ -203,7 +203,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
       ${LIBCOI_DEVICE}
       )
     # ... and add the coi worker executable
-    ADD_EXECUTABLE(ospray_coi_worker.mic api/coidevice_worker.cpp)
+    ADD_EXECUTABLE(ospray_coi_worker.mic api/COIDeviceWorker.cpp)
     TARGET_LINK_LIBRARIES(ospray_coi_worker.mic 
       ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}

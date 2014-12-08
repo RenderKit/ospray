@@ -14,7 +14,7 @@
 #include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/transferfunction/TransferFunction.h"
-#include "localdevice.h"
+#include "LocalDevice.h"
 #include "ospray/common/OspCommon.h"
 
 #if 1
@@ -30,9 +30,6 @@
 namespace ospray {
   using std::endl;
   using std::cout;
-
-
-  // volatile bool rendering = false;
 
 #if OSPRAY_MPI
   namespace mpi {
@@ -66,7 +63,6 @@ namespace ospray {
     /* call ospray::init to properly parse common args like
        --osp:verbose, --osp:debug etc */
     ospray::init(_ac,&_av);
-
 
     const char *OSP_MPI_LAUNCH_FROM_ENV = getenv("OSPRAY_MPI_LAUNCH");
 

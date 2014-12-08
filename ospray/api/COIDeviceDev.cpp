@@ -6,17 +6,9 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "device.h"
-#include "ospray/common/OspCommon.h"
-#include "embree2/rtcore.h"
+#include "Device.h"
 
 namespace ospray {
-  void error_handler(const RTCError code, const char *str);
-  namespace api {
-    Device *Device::current = NULL;
-
-    Device::Device() {
-      rtcSetErrorFunction(error_handler);
-    }
-  }
+  using std::cout; 
+  using std::endl;
 }

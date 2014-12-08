@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "coidevice_common.h"
+#include "COIDeviceCommon.h"
 #include <stdio.h>
 #include <sink/COIPipeline_sink.h>
 #include <sink/COIProcess_sink.h>
@@ -15,7 +15,7 @@
 #include <common/COISysInfo_common.h>
 #include <common/COIEvent_common.h>
 #include <iostream>
-#include "handle.h"
+#include "Handle.h"
 //ospray
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
@@ -735,4 +735,3 @@ int main(int ac, const char **av)
   if (ospray::debugMode) COIProcessProxyFlush();
   COIProcessWaitForShutdown();
 }
-  

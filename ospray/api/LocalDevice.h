@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "device.h"
+#include "Device.h"
 
 /*! \file localdevice.h Implements the "local" device for local rendering */
 
@@ -143,5 +143,3 @@ namespace ospray {
     };
   }
 }
-
-

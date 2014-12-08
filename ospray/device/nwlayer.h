@@ -13,7 +13,7 @@
 // ospray 
 #include "ospray/device/buffers.h"
 #include "ospray/device/command.h"
-#include "ospray/api/device.h"
+#include "ospray/api/Device.h"
 // embree
 #include "common/sys/network.h"
 

@@ -9,8 +9,8 @@
 #undef NDEBUG
 
 // OSPRay
-#include "device.h"
-#include "coidevice_common.h"
+#include "Device.h"
+#include "COIDeviceCommon.h"
 #include "ospray/common/Data.h"
 // COI
 #include "common/COIResult_common.h"
@@ -332,10 +332,7 @@ namespace ospray {
                                         0,NULL,1/*proxy!*/,
                                         NULL,0,NULL,
                                         &coiProcess);
-      // result = COIProcessCreateFromFile(coiEngine,
-      //                                   coiWorker,0,NULL,0,NULL,1/*proxy!*/,
-      //                                   NULL,0,NULL,
-      //                                   &coiProcess);
+
       if (result != COI_SUCCESS)
         coiError(result,"could not load worker binary");
       Assert(result == COI_SUCCESS);
@@ -946,8 +943,6 @@ namespace ospray {
     {
     }
 
-
-
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setObject(OSPObject target, const char *bufName, OSPObject value)
     {
@@ -1054,5 +1049,3 @@ namespace ospray {
     }
   }
 }
-
-

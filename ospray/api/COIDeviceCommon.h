@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "ospray/common/OspCommon.h"
-#include "ospray/api/handle.h"
+#include "ospray/api/Handle.h"
 
 namespace ospray {
   namespace coi {

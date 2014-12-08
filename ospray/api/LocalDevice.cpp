@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "localdevice.h"
+#include "LocalDevice.h"
 #include "../common/Model.h"
 #include "../common/Data.h"
 #include "../geometry/TriangleMesh.h"
