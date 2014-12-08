@@ -9,8 +9,8 @@
 #pragma once
 
 #include "ospray/common/OspCommon.ih"
-#include "ospray/fb/framebuffer.ih"
-#include "ospray/fb/tile.ih"
+#include "ospray/fb/FrameBuffer.ih"
+#include "ospray/fb/Tile.ih"
 #include "ospray/common/Ray.ih"
 
 struct Renderer;

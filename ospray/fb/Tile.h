@@ -9,7 +9,7 @@
 #pragma once
 
 #include "ospray/common/OspCommon.h"
-#include "tilesize.h"
+#include "tileSize.h"
 
 namespace ospray {
 

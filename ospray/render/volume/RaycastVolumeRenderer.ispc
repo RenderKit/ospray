@@ -7,7 +7,7 @@
 //    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
 //
 
-#include "ospray/fb/framebuffer.ih"
+#include "ospray/fb/FrameBuffer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
 

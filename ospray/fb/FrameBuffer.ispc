@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "ospray/fb/framebuffer.ih"
+#include "ospray/fb/FrameBuffer.ih"
 
 export void setTile(void *uniform _fb, void *uniform _tile)
 {

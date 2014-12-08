@@ -10,7 +10,7 @@
 
 #include "ospray/common/OspCommon.ih"
 #include "ospray/math/region.ih"
-#include "tilesize.h"
+#include "tileSize.h"
 
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
@@ -47,14 +47,6 @@ inline void setRGBAZ(uniform Tile &tile, const varying uint32 i,
                      const varying float alpha,
                      const varying float z)
 {
-  // print("rgb.r %\n",rgb.x);
-  // print("rgb.g %\n",rgb.y);
-  // print("rgb.b %\n",rgb.z);
-  // print("rgb.a %\n",alpha);
-  // print("rgb.z %\n",z);
-  // print("i %\n",i);
-  // print("&tile %\n",&tile);
-  // print("&r[i] %\n",&tile.r[i]);
   tile.r[i] = rgb.x;
   tile.g[i] = rgb.y;
   tile.b[i] = rgb.z;

@@ -10,7 +10,7 @@
 
 #include "ospray/common/OspCommon.ih"
 #include "ospray/math/vec.ih"
-#include "ospray/fb/tilesize.h"
+#include "ospray/fb/tileSize.h"
 
 /*! \file ospray/render/util.ih \brief Utility-functions for shaders */
 

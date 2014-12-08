@@ -23,7 +23,7 @@
 #include <map>
 
 
-#include "../fb/tilesize.h"
+#include "../fb/tileSize.h"
 
 
 #define MAX_ENGINES 100

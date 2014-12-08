@@ -12,7 +12,7 @@
 
 // ospray
 #include "ospray/common/OspCommon.h"
-#include "ospray/fb/framebuffer.h"
+#include "ospray/fb/FrameBuffer.h"
 #include "ospray/render/renderer.h"
 // embree
 #include "common/sys/taskscheduler.h"

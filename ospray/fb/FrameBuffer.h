@@ -9,7 +9,7 @@
 #pragma once
 
 // ospray
-#include "tile.h"
+#include "Tile.h"
 
 // ospray
 #include "../common/OspCommon.h"

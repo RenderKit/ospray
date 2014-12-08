@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "tile.ih"
+#include "Tile.ih"
 /*! \file framebuffer.ih Defines the abstract base class of an ISPC frame buffer */
 
 struct FrameBuffer;

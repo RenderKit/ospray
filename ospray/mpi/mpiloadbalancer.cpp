@@ -8,7 +8,7 @@
 
 #include "mpiloadbalancer.h"
 #include "ospray/render/renderer.h"
-#include "ospray/fb/framebuffer.h"
+#include "ospray/fb/FrameBuffer.h"
 
 namespace ospray {
   namespace mpi {

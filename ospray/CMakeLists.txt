@@ -33,9 +33,9 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Library.cpp
 
-  fb/framebuffer.ispc
-  fb/framebuffer.cpp
-  fb/localfb.ispc
+  fb/FrameBuffer.ispc
+  fb/FrameBuffer.cpp
+  fb/LocalFB.ispc
 
   fileio/ObjectCatalog.cpp
   fileio/ObjectFile.cpp
