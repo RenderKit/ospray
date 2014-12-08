@@ -92,8 +92,6 @@ SET(OSPRAY_SOURCES
   render/raycast/raycast.ispc
   render/ao16/ao16.cpp
   render/ao16/ao16.ispc
-# render/dvr/dvr.cpp
-# render/dvr/dvr.ispc
   render/obj/objrenderer.ispc
   render/obj/objmaterial.ispc
   render/obj/objrenderer.cpp
