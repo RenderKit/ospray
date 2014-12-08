@@ -17,7 +17,7 @@
 #include "../render/loadbalancer.h"
 #include "ospray/common/Material.h"
 #include "../common/Library.h"
-#include "../texture/texture2d.h"
+#include "../texture/Texture2D.h"
 #include "../lights/Light.h"
 
 // embree stuff

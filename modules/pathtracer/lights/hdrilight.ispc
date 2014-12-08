@@ -23,7 +23,6 @@
 // ======================================================================== //
 
 #include "light.isph"
-#include "textures/image.isph"
 #include "samplers/distribution2d.isph"
 
 struct HDRILight

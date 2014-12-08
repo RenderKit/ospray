@@ -9,7 +9,7 @@
 // ospray
 #include "ao16.h"
 #include "ospray/camera/camera.h"
-#include "ospray/texture/texture2d.h"
+#include "ospray/texture/Texture2D.h"
 // embree
 #include "common/sys/sync/atomic.h"
 // ispc exports

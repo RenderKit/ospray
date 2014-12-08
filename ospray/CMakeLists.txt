@@ -81,8 +81,8 @@ SET(OSPRAY_SOURCES
   lights/SpotLight.ispc
   lights/SymbolRegistry.cpp
 
-  texture/texture2d.cpp
-  texture/texture2d.ispc
+  texture/Texture2D.cpp
+  texture/Texture2D.ispc
   
   render/loadbalancer.cpp
   render/renderer.ispc

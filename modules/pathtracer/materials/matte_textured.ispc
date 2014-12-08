@@ -24,7 +24,7 @@
 
 #include "material.isph"
 #include "brdfs/lambertian.isph"
-#include "textures/texture.isph"
+#include "textures/Texture.isph"
 
 struct MatteTextured
 {

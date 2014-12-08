@@ -9,7 +9,7 @@
 #pragma once
 
 #include "ospray/common/Material.h"
-#include "ospray/texture/texture2d.h"
+#include "ospray/texture/Texture2D.h"
 
 namespace ospray {
   namespace obj {

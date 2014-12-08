@@ -6,20 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "texture2d.ih"
-
-//  void Texture2D__Constructor(uniform Texture2D *uniform THIS,
-//                              uniform Texture2D_get get) 
-// {
-//   LOG(print("Texture2D__Constructor\n"));
-//   THIS->get = get;
-// }
-
-//  void Texture2D__Destructor(uniform Texture2D *uniform THIS)
-// {
-//   //TODO
-// }
-
+#include "Texture2D.ih"
 
 inline vec4f getTexel4uc(const uniform Texture2D *uniform THIS,
                          const uint32 ix, const uint32 iy)

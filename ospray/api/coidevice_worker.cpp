@@ -25,7 +25,7 @@
 #include "ospray/render/renderer.h"
 #include "ospray/render/renderer.h"
 #include "ospray/render/loadbalancer.h"
-#include "ospray/texture/texture2d.h"
+#include "ospray/texture/Texture2D.h"
 #include "ospray/lights/Light.h"
 // stl
 #include <algorithm>

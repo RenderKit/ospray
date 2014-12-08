@@ -13,7 +13,7 @@
 #include "ospray/camera/perspectivecamera.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/Model.ih"
-#include "ospray/texture/texture2d.ih"
+#include "ospray/texture/Texture2D.ih"
 #include "ospray/lights/Light.ih"
 #include "ospray/lights/DirectionalLight.ih"
 #include "ospray/render/renderer.ih"

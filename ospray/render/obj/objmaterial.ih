@@ -11,7 +11,7 @@
 
 #include "ospray/math/vec.ih"
 #include "ospray/common/Material.ih"
-#include "ospray/texture/texture2d.ih"
+#include "ospray/texture/Texture2D.ih"
 
 //! ispc-equivalent of ospray::obj::OBJMaterial
 struct OBJMaterial 

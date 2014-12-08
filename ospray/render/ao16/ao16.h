@@ -25,7 +25,7 @@
 
 // ospray
 #include "ospray/render/renderer.h"
-#include "ospray/texture/texture.h"
+#include "ospray/texture/Texture.h"
 
 namespace ospray {
   using embree::TaskScheduler;

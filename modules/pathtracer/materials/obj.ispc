@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "./material.ih"
-#include "ospray/texture/texture2d.ih"
+#include "ospray/texture/Texture2D.ih"
 #include "../brdfs/transmission.ih"
 #include "../brdfs/lambertian.ih"
 #include "../brdfs/specular.ih"

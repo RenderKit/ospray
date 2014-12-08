@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "ospray/common/Material.h"
-#include "ospray/texture/texture2d.h"
+#include "ospray/texture/Texture2D.h"
 #include "obj_ispc.h"
 
 namespace ospray {

@@ -6,14 +6,8 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "texture2d.h"
-#include "texture2d_ispc.h"
-
-// #include "image3c_ispc.h"
-// #include "image3ca_ispc.h"
-// #include "image3f_ispc.h"
-// #include "image3fa_ispc.h"
-// #include "nearestneighbor_ispc.h"
+#include "Texture2D.h"
+#include "Texture2D_ispc.h"
 
 namespace ospray {
 
@@ -29,32 +23,18 @@ namespace ospray {
     case OSP_UCHAR4:
       tx->ispcEquivalent = ispc::Texture2D_4uc_create(tx,sx,sy,data);
       bpp = 4;
-      // tx->ispcEquivalent = ispc::Texture2D_3ca_bilinear_create(this,img);
-      // img = ispc::Image3ca__new(width, height, (uint32_t*)data, true);
       break;
-      // case OSP_UCHAR3:
-      //   bpp = 3;
-      //   img = ispc::Image3c__new(width, height, (ispc::vec3uc*)data, true);
-      //   break;
     case OSP_UCHAR3:
       tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,data);
       bpp = 3;
-      // tx->ispcEquivalent = ispc::Texture2D_3ca_bilinear_create(this,img);
-      // img = ispc::Image3ca__new(width, height, (uint32_t*)data, true);
       break;
-      // case OSP_UCHAR3:
-      //   bpp = 3;
-      //   img = ispc::Image3c__new(width, height, (ispc::vec3uc*)data, true);
-      //   break;
     case OSP_FLOAT3:
       tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,data);
       bpp = 3 * sizeof(float);
-      // img = ispc::Image3f__new(width, height, (ispc::vec3f*)data, true);
       break;
     case OSP_FLOAT3A:
       tx->ispcEquivalent = ispc::Texture2D_4f_create(tx,sx,sy,data);
       bpp = 4 * sizeof(float);
-      // img = ispc::Image3fa__new(width, height, (ispc::vec3fa*)data, true);
       break;
     default: throw std::runtime_error("Could not determine bytes per pixel in " __FILE__);
     }
