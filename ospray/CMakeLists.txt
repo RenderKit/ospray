@@ -33,7 +33,6 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Library.cpp
 
-  fb/swapchain.cpp 
   fb/framebuffer.ispc
   fb/framebuffer.cpp
   fb/localfb.ispc

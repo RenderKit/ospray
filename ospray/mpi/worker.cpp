@@ -9,7 +9,6 @@
 #include "mpicommon.h"
 #include "mpidevice.h"
 #include "command.h"
-//#include "../fb/swapchain.h"
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Library.h"
