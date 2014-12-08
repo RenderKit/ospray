@@ -12,7 +12,7 @@
 #include "Tile.h"
 
 // ospray
-#include "../common/OspCommon.h"
+#include "../common/OSPCommon.h"
 #include "../common/Managed.h"
 // embree
 #include "common/sys/taskscheduler.h"

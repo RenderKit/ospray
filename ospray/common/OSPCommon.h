@@ -8,7 +8,7 @@
 
 #pragma once
 
-/*! \file OspCommon.h Defines common types and classes that _every_
+/*! \file OSPCommon.h Defines common types and classes that _every_
     ospray file should know about */
 
 // embree
@@ -22,7 +22,7 @@
 //#include "embree2/rtcore.h"
 
 // ospray
-#include "ospray/common/OspDataType.h"
+#include "ospray/common/OSPDataType.h"
 
 /*! iw, 10/14/14 - got errors with ispc and c++ using different
     definitions for (u)int64 (ispc uses stdint.h's "long int", we used

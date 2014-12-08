@@ -15,7 +15,7 @@
 #include "ospray/volume/Volume.h"
 #include "ospray/transferfunction/TransferFunction.h"
 #include "LocalDevice.h"
-#include "ospray/common/OspCommon.h"
+#include "ospray/common/OSPCommon.h"
 
 #if 1
 # define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;

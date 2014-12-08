@@ -10,7 +10,7 @@
 
 /*! \todo move to api - it's also used in coi, and not mpi specific */
 
-#include "ospray/common/OspCommon.h"
+#include "ospray/common/OSPCommon.h"
 #include "ospray/common/Managed.h"
 
 namespace ospray {

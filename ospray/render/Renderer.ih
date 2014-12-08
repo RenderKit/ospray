@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/OspCommon.ih"
+#include "ospray/common/OSPCommon.ih"
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/fb/Tile.ih"
 #include "ospray/common/Ray.ih"

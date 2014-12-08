@@ -10,7 +10,7 @@
 #ifndef BLOCK_BRICKED_VOLUME_IH
 #define BLOCK_BRICKED_VOLUME_IH
 
-#include "ospray/common/OspDataType.h"
+#include "ospray/common/OSPDataType.h"
 #include "ospray/volume/GridAccelerator.ih"
 #include "ospray/volume/Volume.ih"
 

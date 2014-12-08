@@ -9,7 +9,7 @@
 #pragma once
 
 // ospray stuff
-#include "OspCommon.h"
+#include "OSPCommon.h"
 #include "ospray/include/ospray/ospray.h"
 // stl stuff
 #include <vector>

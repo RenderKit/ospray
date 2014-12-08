@@ -9,7 +9,7 @@
 #ifndef OSPRAY_MATERIAL_IH
 #define OSPRAY_MATERIAL_IH
 
-#include "ospray/common/OspCommon.ih"
+#include "ospray/common/OSPCommon.ih"
 
 /*! ISPC-side abstraction for a material. */
 struct Material {

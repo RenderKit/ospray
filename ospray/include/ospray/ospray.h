@@ -35,7 +35,7 @@
 #include "ospray/embree/common/math/bbox.h"
 #include "ospray/embree/common/math/affinespace.h"
 #endif
-#include "ospray/common/OspDataType.h"
+#include "ospray/common/OSPDataType.h"
 
 /*! namespace for classes in the public core API */
 namespace osp {

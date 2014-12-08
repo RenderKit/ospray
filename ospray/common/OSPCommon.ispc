@@ -1,4 +1,4 @@
-#include "OspCommon.ih"
+#include "OSPCommon.ih"
 
 //embree
 #include "embree2/rtcore.isph"
@@ -21,9 +21,6 @@ void error_handler(const RTCError code, const int8* str)
   }
   if (str) { 
     print("(%)", str);
-    //print(" ("); 
-    //while (*str) putchar(*str++); 
-    //print(")\n"); 
   }
   assert(0);
 }

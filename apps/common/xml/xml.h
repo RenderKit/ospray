@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/OspCommon.h"
+#include "ospray/common/OSPCommon.h"
 #include <stack>
 
 namespace ospray {

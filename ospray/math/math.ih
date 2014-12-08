@@ -11,7 +11,7 @@
 #ifndef MATH_ISPH
 #define MATH_ISPH
 
-#include "ospray/common/OspCommon.ih"
+#include "ospray/common/OSPCommon.ih"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Constants

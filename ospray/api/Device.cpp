@@ -7,7 +7,7 @@
  ********************************************************************* */
 
 #include "Device.h"
-#include "ospray/common/OspCommon.h"
+#include "ospray/common/OSPCommon.h"
 #include "embree2/rtcore.h"
 
 namespace ospray {

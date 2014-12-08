@@ -9,7 +9,7 @@
 #pragma once
 
 // ospray
-#include "common/OspCommon.ih"
+#include "common/OSPCommon.ih"
 #include "common/Model.ih"
 
 // path tracer

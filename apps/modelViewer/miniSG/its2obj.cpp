@@ -8,7 +8,7 @@
 
 #undef NDEBUG
 
-#include "common/OspCommon.h"
+#include "common/OSPCommon.h"
 
 using namespace ospray;
 using namespace std;

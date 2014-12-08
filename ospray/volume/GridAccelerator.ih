@@ -10,7 +10,7 @@
 #ifndef GRID_ACCELERATOR_IH
 #define GRID_ACCELERATOR_IH
 
-#include "ospray/common/OspCommon.ih"
+#include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/transferfunction/TransferFunction.ih"
 

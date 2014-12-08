@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include "ospray/common/OspCommon.ih"
+#include "ospray/common/OSPCommon.ih"
 
 //! Abstract base class for any kind of transfer function.
 struct TransferFunction {

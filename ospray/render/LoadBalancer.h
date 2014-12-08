@@ -11,7 +11,7 @@
 /*! \file LoadBalancer.h Implements the abstracion layer for a (tiled) load balancer */
 
 // ospray
-#include "ospray/common/OspCommon.h"
+#include "ospray/common/OSPCommon.h"
 #include "ospray/fb/FrameBuffer.h"
 #include "ospray/render/Renderer.h"
 // embree

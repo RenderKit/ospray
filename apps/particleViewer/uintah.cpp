@@ -1,7 +1,7 @@
 
 #undef NDEBUG
 
-#include "ospray/common/OspCommon.h"
+#include "ospray/common/OSPCommon.h"
 #include "apps/common/xml/xml.h"
 #include "model.h"
 
