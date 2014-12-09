@@ -1,12 +1,3 @@
-# #####################################################################
-# INTEL CORPORATION PROPRIETARY INFORMATION                            
-# This software is supplied under the terms of a license agreement or  
-# nondisclosure agreement with Intel Corporation and may not be copied 
-# or disclosed except in accordance with the terms of that agreement.  
-# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
-# #####################################################################
-
-
 # configure this dir for the proper "OSPRAY_LIB_SUFFIX" etc (depending
 # on which target we build for )
 CONFIGURE_OSPRAY()
@@ -16,7 +7,6 @@ IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2")
       (${OSPRAY_COMPILER} STREQUAL "gcc")))
   MESSAGE(WARNING "Warning: You have selected 'avx2' target and 'gcc'-compiler, but many older gcc versions do not yet support avx2. If you run into build issues, please switch to either 'icc'-compiler, or upgrade your gcc version")
 ENDIF()
-
 
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)

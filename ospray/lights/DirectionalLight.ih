@@ -1,13 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#ifndef OSPRAY_DIRECTIONAL_LIGHT_IH
-#define OSPRAY_DIRECTIONAL_LIGHT_IH
+#pragma once
 
 #include "Light.ih"
 #include "ospray/math/vec.ih"
@@ -31,4 +22,3 @@ extern void DirectionalLight_Constructor( uniform DirectionalLight *uniform THIS
 //!< Destroy an ispc-side DirectionLight object
 extern void DirectionalLight_Destructor(uniform DirectionalLight *uniform THIS);
 
-#endif
