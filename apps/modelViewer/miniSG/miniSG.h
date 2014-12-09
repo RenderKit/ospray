@@ -1,20 +1,11 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-
 #pragma once
 
-// ospray stuff
+// ospray 
 #include "ospray/common/OSPCommon.h"
 #include "ospray/common/Managed.h"
-// embree stuff
+// embree 
 #include "common/sys/filename.h"
-// stl stuff
+// stl 
 #include <vector>
 #include <map>
 
@@ -240,5 +231,5 @@ namespace ospray {
 
     void error(const std::string &err);
 
-  }
-}
+  } // ::ospray::minisg
+} // ::ospray

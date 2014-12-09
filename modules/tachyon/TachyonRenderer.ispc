@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // ospray
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/camera/PerspectiveCamera.ih"
@@ -216,7 +208,7 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
 }
 
 void TachyonRenderer_renderSample(uniform Renderer *uniform _renderer,
-                               varying ScreenSample &sample)
+                                  varying ScreenSample &sample)
 {
   uniform TachyonRenderer *uniform renderer = (uniform TachyonRenderer *uniform)_renderer;
   sample.rgb = shade(sample.ray,renderer);

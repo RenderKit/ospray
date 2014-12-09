@@ -1,15 +1,8 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "importer.h"
 
 namespace ospray {
   namespace miniSG {
+
     ImportHelper::ImportHelper(Model &model, const std::string &name)
       : model(&model) 
     {
@@ -50,5 +43,5 @@ namespace ospray {
       mesh->triangle.push_back(triangle);
     }
 
-  }
-}
+  } // ::ospray::minisg
+} // ::ospray

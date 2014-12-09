@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include <QtGui>
@@ -14,53 +6,53 @@
 
 struct Viewport
 {
-    Viewport() : from(0,-1,0),
-                 at(0,0,0),
-                 up(0,0,1),
-                 aspect(1.f),
-                 fovY(60.f),
-                 modified(true)
-    {
-        frame = osp::affine3f::translate(from) * osp::affine3f(embree::one);
-    }
+  Viewport() : from(0,-1,0),
+               at(0,0,0),
+               up(0,0,1),
+               aspect(1.f),
+               fovY(60.f),
+               modified(true)
+  {
+    frame = osp::affine3f::translate(from) * osp::affine3f(embree::one);
+  }
 
-    osp::vec3f from;
-    osp::vec3f at;
-    osp::vec3f up;
+  osp::vec3f from;
+  osp::vec3f at;
+  osp::vec3f up;
 
-    /*! aspect ratio (width / height) */
-    float aspect;
+  /*! aspect ratio (width / height) */
+  float aspect;
 
-    /*! vertical field of view (degrees) */
-    float fovY;
+  /*! vertical field of view (degrees) */
+  float fovY;
 
-    /*! this flag should be set every time the viewport is modified */
-    bool modified;
+  /*! this flag should be set every time the viewport is modified */
+  bool modified;
 
-    /*! camera frame in which the Y axis is the depth axis, and X
+  /*! camera frame in which the Y axis is the depth axis, and X
     and Z axes are parallel to the screen X and Y axis. The frame
     itself remains normalized. */
-    osp::affine3f frame;
+  osp::affine3f frame;
 
-    /*! set up vector */
-    void setUp(const osp::vec3f &vec)
-    {
-        up = vec;
-        snapUp();
-        modified = true;
-    }
+  /*! set up vector */
+  void setUp(const osp::vec3f &vec)
+  {
+    up = vec;
+    snapUp();
+    modified = true;
+  }
 
-    /*! set frame 'up' vector. if this vector is (0,0,0) the window will
-    *not* apply the up-vector after camera manipulation */
-    void snapUp()
-    {
-        if(fabsf(dot(up,frame.l.vz)) < 1e-3f)
-            return;
+  /*! set frame 'up' vector. if this vector is (0,0,0) the window will
+   *not* apply the up-vector after camera manipulation */
+  void snapUp()
+  {
+    if(fabsf(dot(up,frame.l.vz)) < 1e-3f)
+      return;
 
-        frame.l.vx = normalize(cross(frame.l.vy,up));
-        frame.l.vz = normalize(cross(frame.l.vx,frame.l.vy));
-        frame.l.vy = normalize(cross(frame.l.vz,frame.l.vx));
-    }
+    frame.l.vx = normalize(cross(frame.l.vy,up));
+    frame.l.vz = normalize(cross(frame.l.vx,frame.l.vy));
+    frame.l.vy = normalize(cross(frame.l.vz,frame.l.vx));
+  }
 };
 
 
@@ -68,62 +60,62 @@ class QOSPRayWindow : public QGLWidget
 {
 public:
 
-    QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate);
-    virtual ~QOSPRayWindow();
+  QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate);
+  virtual ~QOSPRayWindow();
 
-    void setRenderingEnabled(bool renderingEnabled);
-    void setRotationRate(float rotationRate);
-    void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
-    virtual void setWorldBounds(const osp::box3f &worldBounds);
+  void setRenderingEnabled(bool renderingEnabled);
+  void setRotationRate(float rotationRate);
+  void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
+  virtual void setWorldBounds(const osp::box3f &worldBounds);
 
-    Viewport * getViewport() { return &viewport_; }
+  Viewport * getViewport() { return &viewport_; }
 
-    OSPFrameBuffer getFrameBuffer() { return frameBuffer_; }
+  OSPFrameBuffer getFrameBuffer() { return frameBuffer_; }
 
 protected:
 
-    /*! Parent Qt window. */
-    QMainWindow *parent;
+  /*! Parent Qt window. */
+  QMainWindow *parent;
 
-    /*! Display the frame rate in the main window title bar. */
-    bool showFrameRate;
+  /*! Display the frame rate in the main window title bar. */
+  bool showFrameRate;
 
-    virtual void paintGL();
-    virtual void resizeGL(int width, int height);
-    virtual void mousePressEvent(QMouseEvent * event);
-    virtual void mouseReleaseEvent(QMouseEvent * event);
-    virtual void mouseMoveEvent(QMouseEvent * event);
+  virtual void paintGL();
+  virtual void resizeGL(int width, int height);
+  virtual void mousePressEvent(QMouseEvent * event);
+  virtual void mouseReleaseEvent(QMouseEvent * event);
+  virtual void mouseMoveEvent(QMouseEvent * event);
 
-    /*! rotate about center point */
-    virtual void rotateCenter(float du, float dv);
+  /*! rotate about center point */
+  virtual void rotateCenter(float du, float dv);
 
-    /*! frame counter */
-    long frameCount_;
+  /*! frame counter */
+  long frameCount_;
 
-    /*! only render when this flag is true. this allows the window to be created before all required components are ospCommit()'d. */
-    bool renderingEnabled_;
+  /*! only render when this flag is true. this allows the window to be created before all required components are ospCommit()'d. */
+  bool renderingEnabled_;
 
-    /*! rotation rate to automatically rotate view. */
-    float rotationRate_;
+  /*! rotation rate to automatically rotate view. */
+  float rotationRate_;
 
-    /*! benchmarking: number of warm-up frames */
-    int benchmarkWarmUpFrames_;
+  /*! benchmarking: number of warm-up frames */
+  int benchmarkWarmUpFrames_;
 
-    /*! benchmarking: number of frames over which to measure frame rate */
-    int benchmarkFrames_;
+  /*! benchmarking: number of frames over which to measure frame rate */
+  int benchmarkFrames_;
 
-    /*! benchmarking: timer to measure elapsed time over benchmark frames */
-    QTime benchmarkTimer_;
+  /*! benchmarking: timer to measure elapsed time over benchmark frames */
+  QTime benchmarkTimer_;
 
-    /*! Timer to measure elapsed time over a single frame. */
-    QTime renderFrameTimer;
+  /*! Timer to measure elapsed time over a single frame. */
+  QTime renderFrameTimer;
 
-    osp::vec2i windowSize_;
-    Viewport viewport_;
-    osp::box3f worldBounds_;
-    QPoint lastMousePosition_;
+  osp::vec2i windowSize_;
+  Viewport viewport_;
+  osp::box3f worldBounds_;
+  QPoint lastMousePosition_;
 
-    OSPFrameBuffer frameBuffer_;
-    OSPRenderer renderer_;
-    OSPCamera camera_;
+  OSPFrameBuffer frameBuffer_;
+  OSPRenderer renderer_;
+  OSPCamera camera_;
 };

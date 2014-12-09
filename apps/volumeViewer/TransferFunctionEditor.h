@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include "ColorMap.h"
@@ -15,51 +7,51 @@
 
 class TransferFunctionEditor : public QWidget {
 
-Q_OBJECT
+  Q_OBJECT
 
-public:
+  public:
 
-    TransferFunctionEditor(OSPTransferFunction transferFunction);
+  TransferFunctionEditor(OSPTransferFunction transferFunction);
 
 signals:
 
-    void transferFunctionChanged();
+  void transferFunctionChanged();
 
 public slots:
 
-    void transferFunctionAlphasChanged();
+  void transferFunctionAlphasChanged();
 
-    void load(std::string filename = std::string());
+  void load(std::string filename = std::string());
 
 protected slots:
 
-    void save();
-    void setColorMapIndex(int index);
-    void setDataValueMin(double value);
-    void setDataValueMax(double value);
+  void save();
+  void setColorMapIndex(int index);
+  void setDataValueMin(double value);
+  void setDataValueMax(double value);
 
 protected:
 
-    void loadColorMaps();
+  void loadColorMaps();
 
-    //! Color maps.
-    std::vector<ColorMap> colorMaps;
+  //! Color maps.
+  std::vector<ColorMap> colorMaps;
 
-    //! OSPRay transfer function object.
-    OSPTransferFunction transferFunction;
+  //! OSPRay transfer function object.
+  OSPTransferFunction transferFunction;
 
-    //! Color map selection widget.
-    QComboBox colorMapComboBox;
+  //! Color map selection widget.
+  QComboBox colorMapComboBox;
 
-    //! Transfer function minimum data value widget.
-    QDoubleSpinBox dataValueMinSpinBox;
+  //! Transfer function minimum data value widget.
+  QDoubleSpinBox dataValueMinSpinBox;
 
-    //! Transfer function maximum data value widget.
-    QDoubleSpinBox dataValueMaxSpinBox;
+  //! Transfer function maximum data value widget.
+  QDoubleSpinBox dataValueMaxSpinBox;
 
-    //! Transfer function widget for opacity.
-    TransferFunctionPiecewiseLinearWidget transferFunctionAlphaWidget;
+  //! Transfer function widget for opacity.
+  TransferFunctionPiecewiseLinearWidget transferFunctionAlphaWidget;
 
-    //! Slider for scaling transfer function opacities.
-    QSlider transferFunctionAlphaScalingSlider;
+  //! Slider for scaling transfer function opacities.
+  QSlider transferFunctionAlphaScalingSlider;
 };
