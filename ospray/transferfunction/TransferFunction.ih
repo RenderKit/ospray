@@ -1,35 +1,24 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include "ospray/common/OSPCommon.ih"
+#include "ospray/math/vec.ih"
 
 //! Abstract base class for any kind of transfer function.
 struct TransferFunction {
 
-    //! The value range covered by the transfer function.
-    vec2f valueRange;
+  //! The value range covered by the transfer function.
+  vec2f valueRange;
 
-    //! Interpolated color for the given value.
-    varying vec3f (*getColorForValue)(const void *uniform transferFunction, varying float value);
+  //! Interpolated color for the given value.
+  varying vec3f (*getColorForValue)(const void *uniform transferFunction, varying float value);
 
-    //! Interpolated opacity for the given value.
-    varying float (*getOpacityForValue)(const void *uniform transferFunction, varying float value);
+  //! Interpolated opacity for the given value.
+  varying float (*getOpacityForValue)(const void *uniform transferFunction, varying float value);
       
-    //! Virtual function to look up the maximum opacity value based on an input range.
-    varying float (*getMaxOpacityInRange)(void *uniform transferFunction, const varying vec2f &range);
+  //! Virtual function to look up the maximum opacity value based on an input range.
+  varying float (*getMaxOpacityInRange)(void *uniform transferFunction, const varying vec2f &range);
 
-    //! Virtual function to look up the min/max opacity value based on an input range.
-    uniform vec2f (*getMinMaxOpacityInRange)(void *uniform transferFunction, const uniform vec2f &range);
+  //! Virtual function to look up the min/max opacity value based on an input range.
+  uniform vec2f (*getMinMaxOpacityInRange)(void *uniform transferFunction, const uniform vec2f &range);
 
 };
-
-    //! Declaration emitted during build in "ClassName_ispc.h".  Set the transfer function value range.
-//  extern "C" { void TransferFunction_setValueRange(void *uniform pointer, const uniform vec2f &value); }
-

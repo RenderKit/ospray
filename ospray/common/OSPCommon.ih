@@ -1,23 +1,51 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+#pragma once
 
-#ifndef OSPCOMMON_IH
-#define OSPCOMMON_IH 1
+#include "embree2/rtcore.isph"
 
 typedef unsigned int64 uint64;
 typedef unsigned int32 uint32;
 typedef unsigned int16 uint16;
 typedef unsigned int8  uint8;
 
-#include "ospray/math/vec.ih"
-#include "embree2/rtcore.isph"
+#define LOG(x)
+
+// #ifndef NULL
+// #define NULL 0
+// #endif
+
+
+// /* vertex and triangle layout */
+// struct RTCVertex   { uniform float x,y,z,a; };
+// struct RTCTriangle { uniform int v0, v1, v2; };
+
+#if defined(__MIC__)
+inline void* uniform align_ptr(void* uniform ptr) {
+  return (void* uniform) ((((uniform int64)ptr) + 63) & (-64));
+}
+#elif defined(__AVX__)
+inline void* uniform align_ptr(void* uniform ptr) {
+  return (void* uniform) ((((uniform int64)ptr) + 31) & (-32));
+}
+#else
+inline void* uniform align_ptr(void* uniform ptr) {
+  return (void* uniform) ((((uniform int64)ptr) + 15) & (-16));
+}
+#endif
+
+
+#define inf     floatbits(0x7F800000)
+#define pos_inf floatbits(0x7F800000)
+#define neg_inf floatbits(0xFF800000)
+
+#define M_PI     3.14159265358979323846f
+#define pi       3.14159265358979323846f
+#define two_pi   6.283185307179586232f
+#define four_pi 12.566370614359172464f
+
+#define one_over_pi      0.31830988618379069122f
+#define one_over_two_pi  0.15915494309189534561f
+#define one_over_four_pi 0.079577471545947672804f
 
 /*! ispc copy of embree error handling callback */
 void error_handler(const RTCError code, const int8* str);
 
-#endif

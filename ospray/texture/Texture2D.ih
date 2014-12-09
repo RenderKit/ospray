@@ -8,8 +8,12 @@
 
 #pragma once
 
-#include "ospray/common/Default.ih"
+#include "ospray/common/default.ih"
 #include "math/vec.ih"
+#include "ospray/math/vec.ih"
+#include "ospray/math/affine.ih"
+#include "ospray/common/Ray.ih"
+
 
 struct Texture2D;
 
