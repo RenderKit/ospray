@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_MODULE_PATHTRACER ON CACHE BOOL "Build 'pathtracer' (Embree Path Tracer) module")
+SET(OSPRAY_MODULE_PATHTRACER OFF CACHE BOOL "Build 'pathtracer' (Embree Path Tracer) module")
 
 IF (OSPRAY_MODULE_PATHTRACER)
   

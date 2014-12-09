@@ -1,14 +1,6 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
-#include "brdf.ih"
+#include "BRDF.ih"
 
 struct DielectricReflection
 {
@@ -31,7 +23,7 @@ inline vec3f uniform_DielectricReflection__sample(const uniform BRDF* uniform _t
   return make_vec3f(fresnelDielectric(cosThetaO,this->eta));
 }
 
-inline void DielectricReflection__Constructor(uniform DielectricReflection* uniform this,
+inline void DielectricReflection__Constructor(uniform DielectricReflection* uniformR this,
                                               const uniform float etai,
                                               const uniform float etat)
 {
@@ -48,7 +40,8 @@ inline uniform DielectricReflection make_DielectricReflection(const uniform floa
 // varying DielectricReflection
 
 inline vec3f varying_DielectricReflection__eval(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
-  return make_vec3f(0.f);
+  return make_vec3f(0.f);1
+
 }
 
 inline vec3f varying_DielectricReflection__sample(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s)

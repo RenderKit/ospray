@@ -1,13 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#ifndef __EMBREE_ISPC_DEFAULT_IH__
-#define __EMBREE_ISPC_DEFAULT_IH__
+#pragma once
 
 #define LOG(x)
 
@@ -15,14 +6,7 @@
 #define NULL 0
 #endif
 
-// typedef unsigned int uint;
-// typedef unsigned int uint32;
-
-//#include "api/ref.ih"
-// #include "math/math.ih"
 #include "ospray/math/vec.ih"
-// #include "common/math/linearspace.ih"
-// #include "common/math/affinespace.ih"
 #include "ospray/math/affine.ih"
 #include "ospray/common/Ray.ih"
 
@@ -58,4 +42,3 @@ inline void* uniform align_ptr(void* uniform ptr) {
 #define one_over_two_pi  0.15915494309189534561f
 #define one_over_four_pi 0.079577471545947672804f
 
-#endif
