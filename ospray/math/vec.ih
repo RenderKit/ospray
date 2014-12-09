@@ -1,15 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-
-
-#ifndef OSPRAY_VEC_ISPH
-#define OSPRAY_VEC_ISPH
+#pragma once
 
 #include "math.ih"
 
@@ -351,69 +340,6 @@ inline bool ne(const vec3f a, const vec3f b)
 { return !eq(a,b); }
 
 
-// // ------------------------------------------------------------------
-// // vec3f * float
-// // ------------------------------------------------------------------
-// inline uniform vec3f operator*(const uniform vec3f &v, const uniform float f)
-// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
-// inline vec3f operator*(const vec3f &v, const float f)
-// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
-// // ------------------------------------------------------------------
-// // float * vec3f
-// // ------------------------------------------------------------------
-// inline uniform vec3f operator*(const uniform float f, const uniform vec3f v)
-// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
-// inline vec3f operator*(const float f, const vec3f v)
-// { return make_vec3f(v.x*f,v.y*f,v.z*f); }
-
-// // ------------------------------------------------------------------
-// // vec4f * float
-// // ------------------------------------------------------------------
-// inline uniform vec4f operator*(const uniform vec4f &v, const uniform float f)
-// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
-// inline vec4f operator*(const vec4f &v, const float f)
-// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
-// // ------------------------------------------------------------------
-// // float * vec4f
-// // ------------------------------------------------------------------
-// inline uniform vec4f operator*(const uniform float f, const uniform vec4f v)
-// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
-// inline vec4f operator*(const float f, const vec4f v)
-// { return make_vec4f(v.x*f,v.y*f,v.z*f,v.w*f); }
-
-// // ------------------------------------------------------------------
-// // operator '-'
-// // ------------------------------------------------------------------
-// inline vec3f operator-(const vec3f a, const vec3f b)               
-// { return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
-// inline uniform vec3f operator-(const uniform vec3f a,               
-//                                const uniform vec3f b)               
-// { return make_vec3f(a.x-b.x,a.y-b.y,a.z-b.z); }                
-
-// // ------------------------------------------------------------------
-// // operator '+'
-// // ------------------------------------------------------------------
-// inline vec3f operator+(const vec3f a, const vec3f b)               
-// { return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
-// inline uniform vec3f operator+(const uniform vec3f a,               
-//                                const uniform vec3f b)               
-// { return make_vec3f(a.x+b.x,a.y+b.y,a.z+b.z); }                
-
-// inline vec4f operator+(const vec4f a, const vec4f b)               
-// { return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
-// inline uniform vec4f operator+(const uniform vec4f a,               
-//                                const uniform vec4f b)               
-// { return make_vec4f(a.x+b.x,a.y+b.y,a.z+b.z,a.w+b.w); }                
-// // ------------------------------------------------------------------
-// // operator '*'
-// // ------------------------------------------------------------------
-// inline vec3f operator*(const vec3f a, const vec3f b)               
-// { return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
-// inline uniform vec3f operator*(const uniform vec3f a,               
-//                                const uniform vec3f b)               
-// { return make_vec3f(a.x*b.x,a.y*b.y,a.z*b.z); }                
-
-
 // ------------------------------------------------------------------
 // dot product
 // ------------------------------------------------------------------
@@ -649,5 +575,4 @@ inline uniform bool isnan(uniform vec3f v)
 inline bool isnan(vec3f v)
 { return isnan(v.x+v.y+v.z); }
 
-#endif
 

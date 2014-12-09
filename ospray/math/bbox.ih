@@ -1,15 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-
-
-#ifndef OSPRAY_BBOX_ISPH
-#define OSPRAY_BBOX_ISPH
+#pragma once
 
 #include "vec.ih"
 
@@ -50,20 +39,23 @@ inline box3f make_box3f(const vec3f lo, const vec3f hi)
 { box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
 
 inline void print_box(const uniform box3f &bbox)
-{ print("[(%f %f %f)-(%f %f %f)]",
+{ 
+  print("[(%f %f %f)-(%f %f %f)]",
         bbox.lower.x,
         bbox.lower.y,
         bbox.lower.z,
         bbox.upper.x,
         bbox.upper.y,
-        bbox.upper.z); }
-inline void print_box(const uniform box3fa &bbox)
-{ print("[(%f %f %f)-(%f %f %f)]",
-        bbox.lower.x,
-        bbox.lower.y,
-        bbox.lower.z,
-        bbox.upper.x,
-        bbox.upper.y,
-        bbox.upper.z); }
-#endif
+        bbox.upper.z); 
+}
 
+inline void print_box(const uniform box3fa &bbox)
+{ 
+  print("[(%f %f %f)-(%f %f %f)]",
+        bbox.lower.x,
+        bbox.lower.y,
+        bbox.lower.z,
+        bbox.upper.x,
+        bbox.upper.y,
+        bbox.upper.z); 
+}

@@ -1,12 +1,3 @@
-//
-//                 INTEL CORPORATION PROPRIETARY INFORMATION
-//
-//    This software is supplied under the terms of a license agreement or
-//    nondisclosure agreement with Intel Corporation and may not be copied
-//    or disclosed except in accordance with the terms of that agreement.
-//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
-//
-
 #pragma once
 
 #include <stdlib.h>
@@ -23,58 +14,58 @@
 //!  at build time.  Rather, the subclass can be defined in an external
 //!  module and registered with OSPRay using this macro.
 //! 
-#define OSP_REGISTER_OBJECT_FILE(InternalClass, ExternalName) \
-    extern "C" OSPObjectCatalog ospray_import_object_file_##ExternalName(const std::string &filename) \
-        { InternalClass file(filename);  return(file.importObjects()); }
+#define OSP_REGISTER_OBJECT_FILE(InternalClass, ExternalName)           \
+  extern "C" OSPObjectCatalog ospray_import_object_file_##ExternalName(const std::string &filename) \
+  { InternalClass file(filename);  return(file.importObjects()); }
 
 namespace ospray {
 
-    //! \brief An ObjectFile is an abstraction for the concrete objects
-    //!  used to load files containing one or more OSPRay objects.
-    //!
-    //!  The file format is unknown to this class.  Subclasses implement
-    //!  loaders for specific formats, and the actual subclass used is
-    //!  determined from the file name extension.  Note that subclasses
-    //!  must be registered in OSPRay proper, or in a loaded module via
-    //!  OSP_REGISTER_OBJECT_FILE.
-    //!
-    class ObjectFile : public ManagedObject {
-    public:
+  //! \brief An ObjectFile is an abstraction for the concrete objects
+  //!  used to load files containing one or more OSPRay objects.
+  //!
+  //!  The file format is unknown to this class.  Subclasses implement
+  //!  loaders for specific formats, and the actual subclass used is
+  //!  determined from the file name extension.  Note that subclasses
+  //!  must be registered in OSPRay proper, or in a loaded module via
+  //!  OSP_REGISTER_OBJECT_FILE.
+  //!
+  class ObjectFile : public ManagedObject {
+  public:
 
-        //! Constructor.
-        ObjectFile() {};
+    //! Constructor.
+    ObjectFile() {};
 
-        //! Destructor.
-        virtual ~ObjectFile() {};
+    //! Destructor.
+    virtual ~ObjectFile() {};
 
-        //! Create an ObjectFile object of the subtype given by the file extension and import the objects.
-        static OSPObjectCatalog importObjects(const std::string &filename);
+    //! Create an ObjectFile object of the subtype given by the file extension and import the objects.
+    static OSPObjectCatalog importObjects(const std::string &filename);
 
-        //! Import the object data.
-        virtual OSPObjectCatalog importObjects() = 0;
+    //! Import the object data.
+    virtual OSPObjectCatalog importObjects() = 0;
 
-        //! A string description of this class.
-        virtual std::string toString() const { return("ospray::ObjectFile"); }
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::ObjectFile"); }
 
-    protected:
+  protected:
 
-        //! Print an error message.
-        void emitMessage(const std::string &kind, const std::string &message) const
-            { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+    //! Print an error message.
+    void emitMessage(const std::string &kind, const std::string &message) const
+    { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
 
-        //! Error checking.
-        void exitOnCondition(bool condition, const std::string &message) const
-            { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+    //! Error checking.
+    void exitOnCondition(bool condition, const std::string &message) const
+    { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
 
-        //! Warning condition.
-        void warnOnCondition(bool condition, const std::string &message) const
-            { if (!condition) return;  emitMessage("WARNING", message); }
+    //! Warning condition.
+    void warnOnCondition(bool condition, const std::string &message) const
+    { if (!condition) return;  emitMessage("WARNING", message); }
 
-        //! Get the absolute file path.
-        static std::string getFullFilePath(const std::string &filename)
-            { char *fullpath = realpath(filename.c_str(), NULL);  return(fullpath != NULL ? fullpath : filename); }
+    //! Get the absolute file path.
+    static std::string getFullFilePath(const std::string &filename)
+    { char *fullpath = realpath(filename.c_str(), NULL);  return(fullpath != NULL ? fullpath : filename); }
 
-    };
+  };
 
-} // namespace ospray
+} // ::ospray
 

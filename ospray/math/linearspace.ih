@@ -1,13 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#ifndef OSPRAY_MATH_LINEARSPACE_IH
-#define OSPRAY_MATH_LINEARSPACE_IH
+#pragma once
 
 #include "vec.ih"
 
@@ -173,6 +164,3 @@ inline uniform LinearSpace3f rcp(const uniform LinearSpace3f l)
 { return adjoint(l)*rcpf(det(l)); }
 inline varying LinearSpace3f rcp(const varying LinearSpace3f l) 
 { return adjoint(l)*rcpf(det(l)); }
-
-
-#endif
