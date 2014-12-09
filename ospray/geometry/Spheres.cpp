@@ -34,7 +34,7 @@ namespace ospray {
     data              = getParamData("spheres",NULL);
     materialList      = getParamData("materialList",NULL);
     
-    if (data == NULL) 
+    if (data.ptr == NULL) 
       throw std::runtime_error("#ospray:geometry/spheres: no 'spheres' data specified");
     numSpheres = data->numBytes / bytesPerSphere;
     std::cout << "#osp: creating 'spheres' geometry, #spheres = " << numSpheres << std::endl;
