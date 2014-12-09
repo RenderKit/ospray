@@ -6,9 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-
-
-// ospray stuff
+// ospray
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/camera/PerspectiveCamera.ih"
 #include "ospray/common/Model.ih"
