@@ -68,22 +68,6 @@ extern char *yytext;
 %%
 
 world: TOKEN_BEGIN_SCENE scene TOKEN_END_SCENE { 
-  char *exportEmbree = getenv("OSPRAY_EXPORT_EMBREE");
-  if (exportEmbree) // && atoi(exportEmbree))
-    ospray::tachyon::parserModel->exportToEmbree(exportEmbree);
-
-#if 0
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "#osp:tachy (parser): Adding glow-light into middle of model..." << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  ospray::tachyon::PointLight pl;
-  pl.color = 1.f;
-  pl.center = 0.f;
-  pl.atten.constant = 0;
-  pl.atten.linear = 1;
-  pl.atten.quadratic = 0;
-  ospray::tachyon::parserModel->addPointLight(pl);
-#endif
  }
 ;
 
