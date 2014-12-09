@@ -1,13 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#ifndef OSPRAY_OBJ_POINT_LIGHT_IH
-#define OSPRAY_OBJ_POINT_LIGHT_IH
+#pragma once
 
 #include "ospray/lights/PointLight.ih"
 
@@ -33,4 +24,3 @@ extern void OBJPointLight_Constructor(uniform OBJPointLight *uniform THIS,
 //! Destroy an ispc-side OBJPointLight
 extern void OBJPointLight_Destructor(uniform OBJPointLight *uniform THIS);
 
-#endif

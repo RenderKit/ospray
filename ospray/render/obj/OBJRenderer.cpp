@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // obj
 #include "OBJRenderer.h"
 #include "OBJMaterial.h"
@@ -103,5 +95,6 @@ namespace ospray {
 
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);
     OSP_REGISTER_RENDERER(OBJRenderer,obj);
-  }
-}
+
+  } // ::ospray::obj
+} // ::ospray

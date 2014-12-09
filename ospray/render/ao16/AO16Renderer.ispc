@@ -1,4 +1,4 @@
-// ospray stuff
+// ospray 
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Ray.ih"

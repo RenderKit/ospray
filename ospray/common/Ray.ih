@@ -1,15 +1,6 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+#pragma once
 
-#ifndef OSPRAY_COMMON_RAY_IH
-#define OSPRAY_COMMON_RAY_IH
-
- // ospray stuff
+// ospray 
 #include "ospray/math/vec.ih"
 
 #ifdef OSPRAY_INTERSECTION_FILTER
@@ -121,4 +112,3 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
 #endif
 }
 
-#endif
