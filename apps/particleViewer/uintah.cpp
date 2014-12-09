@@ -1,9 +1,9 @@
 #undef NDEBUG
 
 #include "ospray/common/OSPCommon.h"
-#include "apps/common/xml/xml.h"
-#include "model.h"
-
+#include "apps/common/xml/XML.h"
+#include "Model.h"
+// embree
 #include "common/sys/filename.h"
 
 namespace ospray {

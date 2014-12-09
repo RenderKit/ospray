@@ -1,4 +1,4 @@
-#include "xml.h"
+#include "XML.h"
 
 namespace ospray {
   namespace xml {
@@ -314,6 +314,5 @@ namespace ospray {
       assert(xml);
     }
 
-
-  }
-}
+  } // ::ospray::xml
+} // ::ospray

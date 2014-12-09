@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #undef NDEBUG
 
 // O_LARGEFILE is a GNU extension.
@@ -20,10 +12,7 @@
 // stl
 #include <map>
 // // libxml
-// #include <libxml/tree.h>
-// #include <libxml/parser.h>
-// #include <libxml/xmlreader.h>
-#include "apps/common/xml/xml.h"
+#include "apps/common/xml/XML.h"
 // stdlib, for mmap
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -209,34 +198,6 @@ namespace ospray {
               format = prop->value.c_str();
             }
           }
-          // for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
-          //   if (!strcmp( (const char*)attr->name, "ofs" )) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     ofs = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "width")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     width = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "height")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     height = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "channels")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     channels = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "depth")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     depth = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "format")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     format = std::string((char*)value);
-          //     //xmlFree(value);
-          //   }
-          // }
-
           assert(ofs != size_t(-1) && "Offset not properly parsed for Texture2D nodes");
           assert(width != size_t(-1) && "Width not properly parsed for Texture2D nodes");
           assert(height != size_t(-1) && "Height not properly parsed for Texture2D nodes");
@@ -520,35 +481,18 @@ namespace ospray {
                 xml::Prop *prop = child->prop[pID];
               // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
                 if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // ofs = atol((char*)value);
                   ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
                 }       
                 else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // num = atol((char*)value);
                   num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
                 }       
-                // if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
-                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                //   ofs = atol((char*)value);
-                //   //xmlFree(value); 
-                // }       
-                // else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                //   num = atol((char*)value);
-                //   //xmlFree(value); 
-                // }       
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numTriangles = num;
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
-              char* value = strdup(child->content.c_str()); //xmlNodeListGetString(node->doc, child->children, 1);
-              // xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);
+              char* value = strdup(child->content.c_str());
               for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
                 size_t matID = atoi(s);
                 Ref<RIVLMaterial> mat = nodeList[matID].cast<miniSG::RIVLMaterial>();
@@ -704,7 +648,7 @@ namespace ospray {
         return;
       }
 
-      //throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");
+      throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");
     }
 
     /*! import a wavefront OBJ file, and add it to the specified model */
@@ -717,5 +661,5 @@ namespace ospray {
       sg = 0;
     }
     
-  }
-}
+  } // ::ospray::minisg
+} // ::ospray

@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #undef NDEBUG
 // viewer widget
 #include "apps/common/widgets/glut3D.h"
@@ -14,7 +6,7 @@
 // embree
 #include "common/sys/filename.h"
 // xml
-#include "apps/common/xml/xml.h"
+#include "apps/common/xml/XML.h"
 
 namespace ospray {
   using std::cout;
@@ -512,7 +504,8 @@ namespace ospray {
     window.setWorldBounds(streamLines->getBounds());
     ospray::glut3D::runGLUT();
   }
-}
+
+} // ::ospray
 
 int main(int ac, const char **av)
 {

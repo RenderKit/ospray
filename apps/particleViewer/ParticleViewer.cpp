@@ -1,12 +1,14 @@
-/*! \file apps/particleViewer/viewer.cpp A GLUT-based viewer for simple geometry
-  (supports STL and Wavefront OBJ files) */
+/*! \file apps/particleViewer/viewer.cpp 
+  \brief A GLUT-based viewer for simple particle data */
 
 // viewer widget
 #include "apps/common/widgets/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
-#include "model.h"
+// particle viewer
+#include "Model.h"
 #include "uintah.h"
+// embree
 #include "sys/filename.h"
 
 namespace ospray {

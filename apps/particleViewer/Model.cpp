@@ -1,12 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#include "model.h"
+#include "Model.h"
 
 extern int  yyparse();
 extern void yyerror(const char* msg);
@@ -16,8 +8,6 @@ extern int yydebug;
 namespace ospray {
   namespace particle {
     
-    // Model *parserModel = NULL;
-
     inline vec3f makeRandomColor(const int i)
     {
       const int mx = 13*17*43;
@@ -117,12 +107,10 @@ namespace ospray {
       box3f bbox = embree::empty;
       for (int i=0;i<atom.size();i++)
         bbox.extend(atom[i].position);
-      PING;
-      PRINT(bbox);
       return bbox;
     }
 
-  }
-}
+  } // ::ospray::particle
+} // ::ospray
 
 
