@@ -9,26 +9,16 @@
 #undef NDEBUG
 
 // ospray
-#include "tachyonRenderer.h"
+#include "TachyonRenderer.h"
 #include "ospray/camera/PerspectiveCamera.h"
 #include "common/Data.h"
 // tachyon
-#include "model.h"
+#include "Model.h"
 // ispc imports
-#include "tachyonRenderer_ispc.h"
+#include "TachyonRenderer_ispc.h"
 
 namespace ospray {
-  // extern "C" void ispc__TachyonRenderer_renderTile(void *tile, void *camera, void *model);
 
-  // void TachyonRenderer::RenderTask::renderTile(Tile &tile)
-  // {
-  //   ispc::TachyonRenderer_renderTile(&tile,
-  //                                    camera->getIE(),world->getIE(),
-  //                                    textureData->data,
-  //                                    pointLightArray,numPointLights,
-  //                                    dirLightArray,numDirLights,doShadows
-  //                                    );
-  // }
   TachyonRenderer::TachyonRenderer()
   {
     this->ispcEquivalent = ispc::TachyonRenderer_create(this);

@@ -71,19 +71,18 @@ IF (OSPRAY_MODULE_TACHYON)
   LEX_FILE(lexer.ll)
 
   OSPRAY_ADD_LIBRARY(ospray_module_tachyon${OSPRAY_LIB_SUFFIX} SHARED
-    tachyonRenderer.cpp
-    tachyonRenderer.ispc
+    TachyonRenderer.cpp
+    TachyonRenderer.ispc
     )
   TARGET_LINK_LIBRARIES(ospray_module_tachyon${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
 
   IF (NOT THIS_IS_MIC)
     ADD_EXECUTABLE(ospTachyon 
-      viewer 
-      model
+      Viewer 
+      Model
       lexer_l.cpp
       parser_y.cpp
-      parser.cpp 
-      loc.cpp
+      Loc.cpp
       )
     TARGET_LINK_LIBRARIES(ospTachyon ospray ospray_glut3d)
   ENDIF()

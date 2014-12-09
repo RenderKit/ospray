@@ -6,7 +6,7 @@
  * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
  ********************************************************************* */
 
-#include "loc.h"
+#include "Loc.h"
 #include <stdarg.h>
 #include <ctype.h>
 #include <sys/types.h>

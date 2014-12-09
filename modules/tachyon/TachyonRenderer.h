@@ -20,7 +20,6 @@
 #include "ospray/render/Renderer.h"
 
 namespace ospray {
-  // using embree::TaskScheduler;
 
   struct Camera;
   struct Model;
@@ -50,22 +49,5 @@ namespace ospray {
       void   *dirLightArray;
       uint32  numDirLights;
       bool    doShadows;
-    // struct RenderTask : public TileRenderer::RenderJob {
-    //   Model  *world;
-    //   Camera *camera;
-    //   Data   *textureData;
-    //   Data   *pointLightData;
-    //   void   *pointLightArray;
-    //   uint32  numPointLights;
-    //   Data   *dirLightData;
-    //   void   *dirLightArray;
-    //   uint32  numDirLights;
-    //   bool    doShadows;
-
-    //   virtual void renderTile(Tile &tile);
-    //   virtual ~RenderTask() {}
-    // };
-    // virtual TileRenderer::RenderJob *createRenderJob(FrameBuffer *fb);
-  // private:
   };
 };

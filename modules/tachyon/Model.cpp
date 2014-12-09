@@ -8,9 +8,9 @@
 
 #undef NDEBUG
 
-//ospray
-#include "model.h"
-//std
+// tachyon module
+#include "Model.h"
+// std
 #include <fstream>
 
 namespace ospray {

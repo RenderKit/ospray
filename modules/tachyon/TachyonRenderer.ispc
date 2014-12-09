@@ -43,7 +43,6 @@ struct DirLight
 struct TachyonRenderer {
   Renderer inherited;
 
-  // uniform Model *model;
   uniform Texture    *textureArray;
   uniform PointLight *pointLight;
   uint32  numPointLights;
@@ -56,8 +55,6 @@ struct TachyonRenderer {
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
-
-//inline float reduce_max(const vec3f v) { return max(max(v.x,v.y),v.z); }
 
 inline float lightAlpha(Ray &ray, uniform TachyonRenderer *uniform tachyon, const float weight)
 {
@@ -78,11 +75,6 @@ inline float lightAlpha(Ray &ray, uniform TachyonRenderer *uniform tachyon, cons
                   );
     const float material_opacity = tachyon->textureArray[dg.materialID].opacity;
     alpha = alpha * (1.f-material_opacity);
-
-    // if (material_opacity > .6f) {
-    //   int one = 1;
-    //   print("opacity %\n %\n %\n",one,material_opacity,alpha);
-    // }
 
     if (alpha * weight < ALPHA_THRESHOLD) return alpha;
 
@@ -127,7 +119,6 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
     
     if (local_opacity > .01f) {
       // enough weight here to shade at all ...
-        // print("INVALID MATERIAL ID!\n");
 
       Texture texture = tachyon->textureArray[dg.materialID];
       if (dg.color.x >= 0.f)
@@ -142,7 +133,6 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
       const vec3f P = ray.org+(ray.t*(ray.dir*(1.f-EPS))+EPS*dg.Ng);
       color = color + local_opacity * texture.ambient * texture.color;
 
-#if 1
       // -------------------------------------------------------
       // point lights
       // -------------------------------------------------------
@@ -170,11 +160,10 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
         Ray shadowRay;
         setRay(shadowRay,P,L,EPS,dist*(1.f-EPS)-EPS);
         const float light_alpha = lightAlpha(shadowRay,tachyon,max_contrib);
-        // const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
 
         localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
       }
-#endif
+
       // -------------------------------------------------------
       // dir lights
       // -------------------------------------------------------
@@ -199,7 +188,6 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
         Ray shadowRay;
         setRay(shadowRay,P,L,EPS,infinity);
         const float light_alpha = lightAlpha(shadowRay,tachyon,max_contrib);
-        // const float light_alpha = .2f+.8f*lightAlpha(shadowRay,tachyon,max_contrib);
 
         localShadeColor = localShadeColor + light_alpha * unshaded_light_contrib;
       }
@@ -264,54 +252,6 @@ export void TachyonRenderer_set(void *uniform _renderer,
   renderer->dirLight = (uniform DirLight *uniform)_dirLight;
   renderer->doShadows = doShadows;
   renderer->lightScale = lightScale;
-  print("lightscale %\n",lightScale);
 }
 
-// export void TachyonRenderer_renderTile(void *uniform _tile,
-//                                        void *uniform _camera,
-//                                        void *uniform _model,
-//                                        void *uniform _textureArray,
-//                                        void *uniform _pointLight,
-//                                        uniform uint32 numPointLights,
-//                                        void *uniform _dirLight,
-//                                        uniform uint32 numDirLights,
-//                                        uniform bool doShadows)
-// {
-//   uniform Tile   *uniform tile   = (uniform Tile *uniform)_tile;
-//   uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-
-//   uniform TachyonRenderer ytachyon;
-//   tachyon.textureArray = (uniform Texture *uniform)_textureArray;
-//   tachyon.model   = (uniform Model *uniform)_model;
-//   tachyon.numPointLights = numPointLights;
-//   tachyon.pointLight = (uniform PointLight *uniform)_pointLight;
-//   tachyon.numDirLights = numDirLights;
-//   tachyon.dirLight = (uniform DirLight *uniform)_dirLight;
-//   tachyon.doShadows = doShadows;
-
-//   tile->format = TILE_FORMAT_RGBA8 | TILE_FORMAT_FLOAT4;
-//   const uniform uint32 size_x = tile->fbSize.x;
-//   const uniform uint32 size_y = tile->fbSize.y;
-//   const uniform uint32 x0 = tile->region.lower.x;
-//   const uniform uint32 y0 = tile->region.lower.y;
-//   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-//     const uint32 frag = i*programCount+programIndex;
-//     const uint32  x     = x0 + (frag % TILE_SIZE);
-//     const uint32  y     = y0 + (frag / TILE_SIZE);
-//     if (x < size_x & y < size_y) {
-//       const float screen_u = (x+.5f)/size_x;
-//       const float screen_v = (y+.5f)/size_y;
-//       Ray ray;
-//       camera->initRay(camera,ray,make_vec2f(screen_u,screen_v),
-//                       (varying vec2f)make_vec2f(0.f,0.f));
-//       const vec4f col = make_vec4f(shade(ray,&tachyon));
-//       tile->r[i] = col.x;
-//       tile->g[i] = col.y;
-//       tile->b[i] = col.z;
-//       tile->a[i] = col.w;
-//       tile->z[i] = ray.t;
-//       tile->rgba8[i] = cvt_uint32(col);
-//     }
-//   }
-// }
 

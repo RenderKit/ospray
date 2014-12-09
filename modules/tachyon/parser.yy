@@ -1,18 +1,14 @@
 %error-verbose
-/* supress shift-reduces conflict message for dangling else */
-/* one for 'if', one for 'uif' */
- //%expect 2
 
 %{
 
-#include "parser.h"
-
+#include "Model.h"
+#include "Loc.h"
+  
+  extern int yydebug;
+  
   using namespace ospray;
-
-// #define NOTIMPLEMENTED \
-//         Error(Loc::current, "Unimplemented parser functionality %s:%d", \
-//         __FILE__, __LINE__);
-
+  
 extern int yylex();
 void yyerror(const char *s);
 
