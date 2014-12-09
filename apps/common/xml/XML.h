@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include "ospray/common/OSPCommon.h"
@@ -13,6 +5,7 @@
 
 namespace ospray {
   namespace xml {
+
     /*! 'prop'erties in xml nodes are the 'name="value"' inside the
       <node name1="value1" name2="value2"> ... </node> description */
     struct Prop {
@@ -86,5 +79,6 @@ namespace ospray {
       void spaces();
       std::stack<State*> state;
     };
-  }
-}
+
+  } // ::ospray::xml
+} // ::ospray
