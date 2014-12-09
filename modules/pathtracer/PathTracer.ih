@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "ospray/math/vec.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/camera/Camera.ih"
@@ -15,19 +7,16 @@
 #include "ospray/common/Ray.ih"
 #include "ospray/render/Renderer.ih"
 
-// path tracer stuff
-#include "samplers/precomputed_sampler.ih"
-#include "scene.ih"
+// path tracer
+#include "samplers/PrecomputedSampler.ih"
+#include "Scene.ih"
 
 #define MAX_LIGHTS 1000
 
-/*! DUMMY FOR NOW, JUST SO THE PATH TRACER CLASS CAN HAVE ONE OF THOSE! */
+// to be changed to the ospray image/texture classes, eventually
 struct Image;
 typedef vec3f (*get_nearest_varying_fct)(uniform Image *uniform image, 
                                          const float u, const float v);
-//   inline vec3f get_nearest_varying(uniform Image *uniform image, 
-//                                  const float u, const float v)
-// { return make_vec3f(0.f,1.f,0.f); }
 struct Image
 {
   vec2ui size;

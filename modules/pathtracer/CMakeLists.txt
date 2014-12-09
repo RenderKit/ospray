@@ -28,31 +28,31 @@ IF (OSPRAY_MODULE_PATHTRACER)
   INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
   
   OSPRAY_ADD_LIBRARY(ospray_module_pathtracer${OSPRAY_LIB_SUFFIX} SHARED
-    pathtracer.ispc
-    pathtracer.cpp
+    PathTracer.ispc
+    PathTracer.cpp
 
-    lights/light.ispc
-    lights/ambientlight.ispc
-    lights/pointlight.ispc
-    lights/spotlight.ispc
+    lights/Light.ispc
+    lights/AmbientLight.ispc
+    lights/PointLight.ispc
+    lights/SpotLight.ispc
     
-    materials/material.ispc
-    materials/obj.ispc
-    materials/obj.cpp
-    materials/velvet.ispc
-    materials/velvet.cpp
-    materials/metal.ispc
-    materials/metal.cpp
-    materials/thindielectric.ispc
-    materials/thindielectric.cpp
-    materials/dielectric.ispc
-    materials/dielectric.cpp
-    materials/metallicpaint.ispc
-    materials/metallicpaint.cpp
-    materials/plastic.ispc
-    materials/plastic.cpp
-    materials/matte.ispc
-    materials/matte.cpp
+    materials/Material.ispc
+    materials/OBJ.ispc
+    materials/OBJ.cpp
+    materials/Velvet.ispc
+    materials/Velvet.cpp
+    materials/Metal.ispc
+    materials/Metal.cpp
+    materials/ThinDielectric.ispc
+    materials/ThinDielectric.cpp
+    materials/Dielectric.ispc
+    materials/Dielectric.cpp
+    materials/MetallicPaint.ispc
+    materials/MetallicPaint.cpp
+    materials/Plastic.ispc
+    materials/Plastic.cpp
+    materials/Matte.ispc
+    materials/Matte.cpp
     )
   TARGET_LINK_LIBRARIES(
     ospray_module_pathtracer${OSPRAY_LIB_SUFFIX} 
