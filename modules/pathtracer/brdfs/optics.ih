@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../samplers/sample.ih"
-#include "../samplers/shapesampler.ih"
+#include "../samplers/Sample.ih"
+#include "../samplers/ShapeSampler.ih"
 
 /*! Reflects a viewing vector V at a normal N. */
 inline Sample3f reflect(const vec3f &V, const vec3f &N) {

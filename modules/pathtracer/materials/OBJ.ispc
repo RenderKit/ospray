@@ -1,16 +1,8 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#include "./material.ih"
+#include "./Material.ih"
 #include "ospray/texture/Texture2D.ih"
-#include "../brdfs/transmission.ih"
-#include "../brdfs/lambertian.ih"
-#include "../brdfs/specular.ih"
+#include "../brdfs/Transmission.ih"
+#include "../brdfs/Lambertian.ih"
+#include "../brdfs/Specular.ih"
 
 struct OBJ
 {

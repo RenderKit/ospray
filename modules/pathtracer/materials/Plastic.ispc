@@ -1,5 +1,5 @@
 #include "Material.ih"
-#include "brdfs/DielectriclayerLambertian.ih"
+#include "brdfs/DielectricLayerLambertian.ih"
 #include "brdfs/DielectricReflection.ih"
 #include "brdfs/MicrofacetPlastic.ih"
 

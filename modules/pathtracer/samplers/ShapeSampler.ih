@@ -1,18 +1,10 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
-/*! \file shapesampler.ih \brief Implements sampling functions for
-    different geometric shapes. */
+/*! \file shapesampler.ih
+  \brief Implements sampling functions for different geometric shapes. */
 
 #include "default.ih"
-#include "sample.ih"
+#include "Sample.ih"
 
 inline float cos2sin(const float f) { return sqrt(max(0.f,1.f-f*f)); }
 inline float sin2cos(const float f) { return sqrt(max(0.f,1.f-f*f)); }

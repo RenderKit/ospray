@@ -1,17 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#include "light.ih"
-
-// void Light__Destructor(uniform RefCount* uniform this) {
-//   LOG(print("Light__Destructor\n"));
-//   RefCount__Destructor(this);
-// }
+#include "Light.ih"
 
 void Light__Constructor(uniform Light* uniform this,
                         // uniform DestructorFunc destructor,

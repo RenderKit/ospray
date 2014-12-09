@@ -23,7 +23,7 @@ inline vec3f uniform_DielectricReflection__sample(const uniform BRDF* uniform _t
   return make_vec3f(fresnelDielectric(cosThetaO,this->eta));
 }
 
-inline void DielectricReflection__Constructor(uniform DielectricReflection* uniformR this,
+inline void DielectricReflection__Constructor(uniform DielectricReflection* uniform this,
                                               const uniform float etai,
                                               const uniform float etat)
 {
@@ -40,8 +40,7 @@ inline uniform DielectricReflection make_DielectricReflection(const uniform floa
 // varying DielectricReflection
 
 inline vec3f varying_DielectricReflection__eval(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
-  return make_vec3f(0.f);1
-
+  return make_vec3f(0.f);
 }
 
 inline vec3f varying_DielectricReflection__sample(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s)

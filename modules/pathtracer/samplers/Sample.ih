@@ -1,14 +1,4 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-#ifndef OSPRAY_PT_SAMPLE_IH
-#define OSPRAY_PT_SAMPLE_IH 1
-
+#pragma once
 #include "default.ih"
 
 struct Sample1f {
@@ -49,6 +39,4 @@ inline Sample3f make_Sample3f(const vec3f v, const float pdf)
   s.pdf = pdf;
   return s;
 }
-
-#endif
 

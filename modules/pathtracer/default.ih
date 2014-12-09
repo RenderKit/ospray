@@ -14,19 +14,19 @@
 struct RTCVertex   { uniform float x,y,z,a; };
 struct RTCTriangle { uniform int v0, v1, v2; };
 
-#if defined(__MIC__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 63) & (-64));
-}
-#elif defined(__AVX__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 31) & (-32));
-}
-#else
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 15) & (-16));
-}
-#endif
+// #if defined(__MIC__)
+// inline void* uniform align_ptr(void* uniform ptr) {
+//   return (void* uniform) ((((uniform int64)ptr) + 63) & (-64));
+// }
+// #elif defined(__AVX__)
+// inline void* uniform align_ptr(void* uniform ptr) {
+//   return (void* uniform) ((((uniform int64)ptr) + 31) & (-32));
+// }
+// #else
+// inline void* uniform align_ptr(void* uniform ptr) {
+//   return (void* uniform) ((((uniform int64)ptr) + 15) & (-16));
+// }
+// #endif
 
 
 #define inf     floatbits(0x7F800000)
