@@ -1,22 +1,14 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "OSPCommon.h"
-// embree:
+// embree
 #include "embree2/rtcore.h"
-//embree/include/embree.h"
 
-// C-lib
+// std
 #include <time.h>
 #include <sys/time.h>
 #include <sys/times.h>
 
 namespace ospray {
+
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;
@@ -140,5 +132,5 @@ namespace ospray {
 
   }
 
-}
+} // ::ospray
 

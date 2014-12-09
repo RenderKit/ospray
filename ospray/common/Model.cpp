@@ -1,22 +1,16 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
+// ospray
 #include "Model.h"
-// embree stuff
+#include "ospray/geometry/TriangleMesh.h"
+// embree
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
-// ispc side
+// ispc exports
 #include "Model_ispc.h"
 
-#include "ospray/geometry/TriangleMesh.h"
 
 namespace ospray {
+
   using std::cout;
   using std::endl;
 
@@ -52,4 +46,5 @@ namespace ospray {
     
     rtcCommit(embreeSceneHandle);
   }
-}
+
+} // ::ospray

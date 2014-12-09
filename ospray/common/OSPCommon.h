@@ -1,15 +1,7 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 /*! \file OSPCommon.h Defines common types and classes that _every_
-    ospray file should know about */
+  ospray file should know about */
 
 // embree
 #include "common/math/vec2.h"
@@ -19,20 +11,12 @@
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
 #include "common/sys/taskscheduler.h"
-//#include "embree2/rtcore.h"
 
 // ospray
 #include "ospray/common/OSPDataType.h"
 
-/*! iw, 10/14/14 - got errors with ispc and c++ using different
-    definitions for (u)int64 (ispc uses stdint.h's "long int", we used
-    "long *long* int". Switched to using stdint types on c++ sides as
-    well, so we're compatible with what ispc does*/
-#define USE_STDINT_H 1
-
-#if USE_STDINT_H
-#  include <stdint.h> // for int64_t etc
-#endif
+// std
+#include <stdint.h> // for int64_t etc
 
 
 #ifdef OSPRAY_TARGET_MIC
@@ -50,7 +34,6 @@ namespace ospray {
   using embree::zero;
 
   /*! basic types */
-#if USE_STDINT_H
   typedef ::int64_t int64;
   typedef ::uint64_t uint64;
 
@@ -62,17 +45,6 @@ namespace ospray {
 
   typedef ::int8_t int8;
   typedef ::uint8_t uint8;
-#else
-  typedef          long long  int64;
-  typedef           ::int64_t int64;
-  typedef unsigned   int64_t uint64;
-  typedef                int  int32;
-  typedef unsigned       int uint32;
-  typedef              short  int16;
-  typedef unsigned     short uint16;
-  typedef               char   int8;
-  typedef unsigned      char  uint8;
-#endif
 
   /*! OSPRay's two-int vector class */
   typedef embree::Vec2i    vec2i;
@@ -137,11 +109,11 @@ namespace ospray {
 # define AssertError(errMsg) /* nothing */
 #else
   extern void doAssertion(const char *file, int line, const char *expr, const char *expl);
-# define Assert(expr)                                                    \
+# define Assert(expr)                                                   \
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, NULL), 0)))
-# define Assert2(expr,expl)                                              \
+# define Assert2(expr,expl)                                             \
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, expl), 0)))
-# define AssertError(errMsg)                     \
+# define AssertError(errMsg)                            \
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 #endif
 
@@ -156,7 +128,7 @@ namespace ospray {
   /*! size of OSPDataType */
   size_t sizeOf(OSPDataType type);
 
-}
+} // ::ospray
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
 

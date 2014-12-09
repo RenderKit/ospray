@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/camera/Camera.h"
@@ -23,11 +15,10 @@
 # define LOG(a) /*ignore*/
 #endif
 
-
-
 /*! \file api.cpp implements the public ospray api functions by
   routing them to a respective \ref device */
 namespace ospray {
+
   using std::endl;
   using std::cout;
 
@@ -138,7 +129,7 @@ namespace ospray {
     // no device created on cmd line, yet, so default to localdevice
     if (ospray::api::Device::current == NULL)
       ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
-  }
+  } 
 
 
   /*! destroy a given frame buffer. 
@@ -559,4 +550,4 @@ namespace ospray {
     return ospray::api::Device::current->unproject(renderer, screenPos);
   }
 
-}
+} // ::ospray

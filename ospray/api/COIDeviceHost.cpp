@@ -1,30 +1,20 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #undef NDEBUG
 
-// OSPRay
+// ospray
 #include "Device.h"
 #include "COIDeviceCommon.h"
 #include "ospray/common/Data.h"
-// COI
+// coi
 #include "common/COIResult_common.h"
 #include "source/COIEngine_source.h"
 #include "source/COIEvent_source.h"
 #include "source/COIProcess_source.h"
 #include "source/COIBuffer_source.h"
 #include "source/COIPipeline_source.h"
-//std
+// std
 #include <map>
 
-
-#include "../fb/tileSize.h"
-
+#include "ospray/fb/tileSize.h"
 
 #define MAX_ENGINES 100
 
@@ -33,8 +23,6 @@
 
 namespace ospray {
   namespace coi {
-
-    // const char *coiWorker = "./ospray_coi_worker.mic";
 
     void coiError(COIRESULT result, const std::string &err);
 
@@ -115,10 +103,6 @@ namespace ospray {
                         bool sync=true)
       { 
         double t0 = getSysTime();
-        // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-        // cout << "calling coi function " << coiFctName[ID] << endl;
-        // cout << "$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$" << endl;
-#if 1
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;
         assert(engine.size() < MAX_ENGINES);
@@ -147,9 +131,6 @@ namespace ospray {
           }
           numEventsOutstanding = 0;
         }
-#else
-        for (int i=0;i<engine.size();i++) engine[i]->callFunction(ID,data,sync); 
-#endif
       }
 
       /*! create a new frame buffer */
@@ -1047,5 +1028,6 @@ namespace ospray {
       args.write(fbChannelFlags);
       callFunction(OSPCOI_FRAMEBUFFER_CLEAR,args);
     }
-  }
-}
+
+  } // ::ospray::coi
+} // ::ospray

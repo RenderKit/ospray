@@ -9,15 +9,6 @@ typedef unsigned int8  uint8;
 
 #define LOG(x)
 
-// #ifndef NULL
-// #define NULL 0
-// #endif
-
-
-// /* vertex and triangle layout */
-// struct RTCVertex   { uniform float x,y,z,a; };
-// struct RTCTriangle { uniform int v0, v1, v2; };
-
 #if defined(__MIC__)
 inline void* uniform align_ptr(void* uniform ptr) {
   return (void* uniform) ((((uniform int64)ptr) + 63) & (-64));

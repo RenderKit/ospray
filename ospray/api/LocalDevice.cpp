@@ -1,26 +1,17 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "LocalDevice.h"
-#include "../common/Model.h"
-#include "../common/Data.h"
-#include "../geometry/TriangleMesh.h"
-#include "../render/Renderer.h"
-#include "../camera/Camera.h"
-#include "../volume/Volume.h"
-#include "../transferfunction/TransferFunction.h"
-#include "../render/LoadBalancer.h"
+#include "ospray/common/Model.h"
+#include "ospray/common/Data.h"
+#include "ospray/geometry/TriangleMesh.h"
+#include "ospray/render/Renderer.h"
+#include "ospray/camera/Camera.h"
+#include "ospray/volume/Volume.h"
+#include "ospray/transferfunction/TransferFunction.h"
+#include "ospray/render/LoadBalancer.h"
 #include "ospray/common/Material.h"
-#include "../common/Library.h"
-#include "../texture/Texture2D.h"
-#include "../lights/Light.h"
+#include "ospray/common/Library.h"
+#include "ospray/texture/Texture2D.h"
+#include "ospray/lights/Light.h"
 
-// embree stuff
 // stl
 #include <algorithm>
 
@@ -480,6 +471,6 @@ namespace ospray {
       return renderer->unproject(screenPos);
     }
 
-  }
-}
+  } // ::ospray::api
+} // ::ospray
 

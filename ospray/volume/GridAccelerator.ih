@@ -1,46 +1,36 @@
-//
-//                 INTEL CORPORATION PROPRIETARY INFORMATION
-//
-//    This software is supplied under the terms of a license agreement or
-//    nondisclosure agreement with Intel Corporation and may not be copied
-//    or disclosed except in accordance with the terms of that agreement.
-//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
-//
-
-#ifndef GRID_ACCELERATOR_IH
-#define GRID_ACCELERATOR_IH
+#pragma once
 
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/transferfunction/TransferFunction.ih"
 
-    //! \brief A spatial acceleration structure over a BlockBrickedVolume, used
-    //!  for opacity and variance based space skipping.
-    //!
-    struct GridAccelerator {
+//! \brief A spatial acceleration structure over a BlockBrickedVolume, used
+//!  for opacity and variance based space skipping.
+//!
+struct GridAccelerator {
 
-        //! Grid size in bricks per dimension with padding to the nearest brick.
-        uniform vec3i brickCount;
+  //! Grid size in bricks per dimension with padding to the nearest brick.
+  uniform vec3i brickCount;
 
-        //! The range of volumetric values within a grid cell.
-        vec2f *uniform cellRange;
+  //! The range of volumetric values within a grid cell.
+  vec2f *uniform cellRange;
 
-        //! Grid size in cells per dimension.
-        uniform vec3i gridDimensions;
+  //! Grid size in cells per dimension.
+  uniform vec3i gridDimensions;
 
-        //! Pointer to the associated volume.
-        void *uniform volume;
+  //! Pointer to the associated volume.
+  void *uniform volume;
 
-        //! The largest floating point value still inside the volume.
-        uniform vec3f volumeExtents;
+  //! The largest floating point value still inside the volume.
+  uniform vec3f volumeExtents;
 
-    };
+};
 
-    //! Create an instance of the accelerator and encode the volume.
-    GridAccelerator *uniform GridAccelerator_createInstance(void *uniform volume);
+//! Create an instance of the accelerator and encode the volume.
+GridAccelerator *uniform GridAccelerator_createInstance(void *uniform volume);
 
-    //! Step a ray through the accelerator until a cell with visible volumetric elements is found.
-    void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform float step, varying Ray &ray);
-
-#endif // GRID_ACCELERATOR_IH
+//! Step a ray through the accelerator until a cell with visible volumetric elements is found.
+void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
+                               uniform float step, 
+                               varying Ray &ray);
 
