@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 /*! \defgroup ospray_api OSPRay Core API
 
   \ingroup ospray
@@ -64,7 +56,7 @@ namespace osp {
   struct TriangleMesh     : public Geometry {};
   struct ObjectCatalog    : public ManagedObject { char *name;  ManagedObject *object;  OSPDataType type;  const void *value;  ObjectCatalog **entries; };
 
-}
+} // ::osp
 
 typedef enum {
   OSP_FB_COLOR=(1<<0),
@@ -433,6 +425,7 @@ extern "C" {
 
   /*! \brief unproject a [0-1] normalized screen-space pixel coordinate to a world-space position */
   OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
-}
+
+} // extern "C"
 
 /*! \} */

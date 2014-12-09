@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include "ospray/transferfunction/TransferFunction.ih"
@@ -14,29 +6,17 @@
 
 struct LinearTransferFunction {
 
-    //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
-    TransferFunction inherited;
+  //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
+  TransferFunction inherited;
 
-    //! Transfer function opacity values and count.
-    float *uniform opacityValues;  uniform int opacityValueCount;  
+  //! Transfer function opacity values and count.
+  float *uniform opacityValues;  uniform int opacityValueCount;  
 
-    //! Transfer function color values and count.
-    vec3f *uniform colorValues;  uniform int colorValueCount;  
+  //! Transfer function color values and count.
+  vec3f *uniform colorValues;  uniform int colorValueCount;  
 
-    //! A 2D array that contains precomputed minimum and maximum opacity values for a transfer function.
-    vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
+  //! A 2D array that contains precomputed minimum and maximum opacity values for a transfer function.
+  vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
 
 };
-
-    //! Declaration emitted during build in "ClassName_ispc.h".  Create the transfer function container.
-//  extern "C" { void *uniform LinearTransferFunction_createInstance(); }
-
-    //! Declaration emitted during build in "ClassName_ispc.h".  Free memory associated with the transfer function container.
-//  extern "C" { void LinearTransferFunction_destroy(void *uniform pointer); }
-
-    //! Declaration emitted during build in "ClassName_ispc.h".  Set the transfer function color values.
-//  extern "C" { void LinearTransferFunction_setColorValues(void *uniform pointer, const uniform size_t &count, vec3f *uniform source); }
-
-    //! Declaration emitted during build in "ClassName_ispc.h".  Set the transfer function opacity values.
-//  extern "C" { void LinearTransferFunction_setOpacityValues(void *uniform pointer, const uniform size_t &count, float *uniform source); }
 
