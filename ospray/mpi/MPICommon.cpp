@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "MPICommon.h"
 
 namespace ospray {
@@ -27,6 +19,6 @@ namespace ospray {
       MPI_Comm_rank(MPI_COMM_WORLD,&world.rank);
       MPI_Comm_size(MPI_COMM_WORLD,&world.size);
     }
-  }
 
-}
+  } // ::ospray::mpi
+} // ::ospray

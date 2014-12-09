@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "MPICommon.h"
 #include "MPIDevice.h"
 #include "CommandStream.h"
@@ -27,7 +19,6 @@ namespace ospray {
     using std::endl;
 
     static const int HOST_NAME_MAX = 10000;
-
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
@@ -497,5 +488,6 @@ namespace ospray {
         }
       };
     }
-  }
-}
+
+  } // ::ospray::api
+} // ::ospray
