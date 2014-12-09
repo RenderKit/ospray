@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "Renderer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/camera/Camera.ih"
@@ -117,66 +109,20 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
 #endif
-      //print("index          %\n", index);
-      //print("screenSample   %, %\n", screenSample.sampleID.x, screenSample.sampleID.y);
-      //print("offset         %, %\n", z_order.xs[index], z_order.ys[index]);
-      //print("tile region    %, %\n", tile.region.lower.x, tile.region.lower.y);
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) {
-        //print("Oversized! %,% >= %,%\n", screenSample.sampleID.x, screenSample.sampleID.y, fb->size.x, fb->size.y);
         continue;
       }
 
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-      //print("linear offset  %+{%*%}=%\n", z_order.xs[index], z_order.ys[index], TILE_SIZE, pixel);
-      //print("\n");
       assert(pixel < TILE_SIZE*TILE_SIZE);
       for (uniform uint32 s = 0; s<renderer->spp; s++) {
         cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
-        // print("initray % % %\n",camera,cameraSample.screen.x,cameraSample.screen.y);
         camera->initRay(camera,screenSample.ray,cameraSample);
-        // if (any(screenSample.sampleID.y == 128 && screenSample.sampleID.x == 512)) {
-        //   print("screen.x %\n",cameraSample.screen.x);
-        //   print("screen.y %\n",cameraSample.screen.y);
-        //   print("ray.org.x %\n",screenSample.ray.org.x);
-        //   print("ray.org.y %\n",screenSample.ray.org.y);
-        //   print("ray.org.z %\n",screenSample.ray.org.z);
-        //   print("ray.dir.x %\n",screenSample.ray.dir.x);
-        //   print("ray.dir.y %\n",screenSample.ray.dir.y);
-        //   print("ray.dir.z %\n",screenSample.ray.dir.z);
-        //   print("ray.t0 %\n",screenSample.ray.t0);
-        //   print("ray.t %\n",screenSample.ray.t);
-        //   screenSample.ray.Ng.x = 1.f;
-        // } else {
-        //   screenSample.ray.Ng.x = 0.f;
-        // }
-
-        // print("rendersample %\n",renderer);
         renderer->renderSample(renderer,screenSample);
-        // print("setrgba % %\n",&tile,i);
-        // if (screenSample.rgb.x != 0) {
-        //   print("r %\n",screenSample.rgb.x);
-        //   print("g %\n",screenSample.rgb.y);
-        //   print("b %\n",screenSample.rgb.z);
-        // }
-        // if (any(screenSample.sampleID.y == 128 && screenSample.sampleID.x == 512)) {
-        //   print("ray.org.x %\n",screenSample.ray.org.x);
-        //   print("ray.org.y %\n",screenSample.ray.org.y);
-        //   print("ray.org.z %\n",screenSample.ray.org.z);
-        //   print("ray.dir.x %\n",screenSample.ray.dir.x);
-        //   print("ray.dir.y %\n",screenSample.ray.dir.y);
-        //   print("ray.dir.z %\n",screenSample.ray.dir.z);
-        //   print("ray.t %\n",screenSample.ray.t);
-        //   print("ray.primID %\n",screenSample.ray.primID);
-        //   print("ray.geomID %\n",screenSample.ray.geomID);
-        // print("rgb %\n",screenSample.rgb.x);
-        // }
-
-        //vec3f p = make_vec3f(((float)index)/(TILE_SIZE*TILE_SIZE));
         setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
-        // print("DONE setrgba % %\n",&tile,i);
       }
     }
   }

@@ -1,15 +1,8 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "LoadBalancer.h"
 #include "Renderer.h"
 
 namespace ospray {
+
   using std::cout;
   using std::endl;
 
@@ -143,24 +136,6 @@ namespace ospray {
         trying to do so, and thus am reverting to this
         fully-synchronous version for now */
 
-#if 0
-    PING;
-    PRINT(renderTask.ptr);
-    PRINT(renderTask->numTiles_mine);
-    for (int i=0;i<renderTask->numTiles_mine;i++) {
-      // cout << "tile " << i << " / " << renderTask->numTiles_mine << endl;
-      // FLUSH();
-      renderTask->run(0,1,i,renderTask->numTiles_mine,NULL);
-    }
-    renderTask->finish(0,1,NULL);
-    PING;
-  // void LocalTiledLoadBalancer::RenderTask::run(size_t threadIndex, 
-  //                                              size_t threadCount, 
-  //                                              size_t taskIndex, 
-  //                                              size_t taskCount, 
-  //                                              TaskScheduler::Event* event) 
-#else
-    // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
     TaskScheduler::EventSync sync;
     renderTask->task = embree::TaskScheduler::Task
       (&sync,
@@ -172,7 +147,6 @@ namespace ospray {
     // PRINT(renderTask->numTiles_mine);
     TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
     sync.sync();
-#endif
   }
 
-}
+} // ::ospray

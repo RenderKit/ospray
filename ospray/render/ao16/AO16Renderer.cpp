@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // ospray
 #include "AO16Renderer.h"
 #include "ospray/camera/Camera.h"
@@ -65,5 +57,6 @@ namespace ospray {
   OSP_REGISTER_RENDERER(_AO2Renderer, ao2);
   OSP_REGISTER_RENDERER(_AO1Renderer, ao1);
   OSP_REGISTER_RENDERER(_AO16Renderer,ao);
-};
+
+} // ::ospray
 

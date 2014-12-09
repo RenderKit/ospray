@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 /*! \defgroup ospray_render_raycast A Family of Simple Ray-Cast Renderers
@@ -42,6 +34,7 @@
 #include "ospray/render/Renderer.h"
 
 namespace ospray {
+
   using embree::TaskScheduler;
 
   struct Camera;
@@ -58,4 +51,5 @@ namespace ospray {
     
     virtual void commit();
   };
-};
+
+} // ::ospray

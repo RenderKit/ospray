@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 /*! \file LoadBalancer.h Implements the abstracion layer for a (tiled) load balancer */
@@ -18,6 +10,7 @@
 #include "common/sys/taskscheduler.h"
 
 namespace ospray {
+
   using embree::TaskScheduler;
 
   struct TileRenderer;
@@ -58,7 +51,6 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::LocalTiledLoadBalancer"; };
   };
 
-#if 1
   //! tiled load balancer for local rendering on the given machine
   /*! a tiled load balancer that orchestrates (multi-threaded)
     rendering on a local machine, without any cross-node
@@ -106,6 +98,5 @@ namespace ospray {
                              FrameBuffer *fb,
                              const uint32 channelFlags);
   };
-#endif
 
-}
+} // ::ospray
