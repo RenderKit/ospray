@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 /*! \file apps/particleViewer/viewer.cpp A GLUT-based viewer for simple geometry
   (supports STL and Wavefront OBJ files) */
 
@@ -19,6 +11,7 @@
 
 namespace ospray {
   namespace particle {
+
     using std::cout;
     using std::endl;
 
@@ -335,8 +328,9 @@ namespace ospray {
       window.setWorldBounds(wb);
       ospray::glut3D::runGLUT();
     }
-  }
-}
+
+  } // ::ospray::particle
+} // ::ospray
 
 
 int main(int ac, const char **av)

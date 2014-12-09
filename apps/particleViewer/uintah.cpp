@@ -1,4 +1,3 @@
-
 #undef NDEBUG
 
 #include "ospray/common/OSPCommon.h"
@@ -9,20 +8,17 @@
 
 namespace ospray {
   namespace particle {
+
     bool big_endian = false;
 
     /*! a dump-file we can use for debugging; we'll simply dump each
-        parsed particle into this file during parsing */
+      parsed particle into this file during parsing */
     FILE *particleDumpFile = NULL;
     size_t numDumpedParticles = 0;
 
     struct Particle {
       double x,y,z;
     };
-    // struct MPM {
-    //   std::vector<vec3f> pos;
-    // };
-    // MPM mpm;
 
     double htonlf(double f)
     {
@@ -91,11 +87,6 @@ namespace ospray {
       
       std::cout << "\r#osp:uintah: read " << numParticles << " particles (total " << float((numDumpedParticles+model->atom.size())/1e6) << "M)";
 
-      // Particle *particle = new Particle[numParticles];
-      // fread(particle,numParticles,sizeof(Particle),file);
-      // for (int i=0;i
-      // for (int i=0;i<100;i++)
-      //   printf("particle %5i: %lf %lf %lf\n",particle[i].x,particle[i].y,particle[i].z);
       fclose(file);
     }
 
@@ -131,16 +122,9 @@ namespace ospray {
           fclose(file);
           throw std::runtime_error("read partial data "+fn);
         }
-#if 1
         if (big_endian) {
           attrib = htonlf(attrib);
         }
-#endif
-
-        // if (particleDumpFile) {
-        //   numDumpedParticles++;
-        //   fwrite(&a,sizeof(a),1,particleDumpFile);
-        // } else 
         model->addAttribute(attrName,attrib);
       }
       
@@ -153,24 +137,13 @@ namespace ospray {
 
       std::cout << "\r#osp:uintah: " << numParticles << " pt.s (tot:" << float((numDumpedParticles+model->atom.size())/1e6) << "M" << attrs.str() << ")";
 
-      // Particle *particle = new Particle[numParticles];
-      // fread(particle,numParticles,sizeof(Particle),file);
-      // for (int i=0;i
-      // for (int i=0;i<100;i++)
-      //   printf("particle %5i: %lf %lf %lf\n",particle[i].x,particle[i].y,particle[i].z);
       fclose(file);
     }
 
 
-
-
-
-
     void readFloatAttributes(Model *model, const std::string &attrName, size_t numParticles, 
-                              const std::string &fn, size_t begin, size_t end)
+                             const std::string &fn, size_t begin, size_t end)
     {
-      // std::cout << "#mpm: reading " << numParticles << " particles... " << std::flush;
-      // printf("#mpm: reading%7ld particles...",numParticles); fflush(0);
       FILE *file = fopen(fn.c_str(),"rb");
       if (!file) {
         throw std::runtime_error("could not open data file "+fn);
@@ -201,10 +174,6 @@ namespace ospray {
         }
 #endif
 
-        // if (particleDumpFile) {
-        //   numDumpedParticles++;
-        //   fwrite(&a,sizeof(a),1,particleDumpFile);
-        // } else 
         model->addAttribute(attrName,attrib);
       }
       
@@ -217,17 +186,12 @@ namespace ospray {
 
       std::cout << "\r#osp:uintah: " << numParticles << " pt.s (tot:" << float((numDumpedParticles+model->atom.size())/1e6) << "M" << attrs.str() << ")";
 
-      // Particle *particle = new Particle[numParticles];
-      // fread(particle,numParticles,sizeof(Particle),file);
-      // for (int i=0;i
-      // for (int i=0;i<100;i++)
-      //   printf("particle %5i: %lf %lf %lf\n",particle[i].x,particle[i].y,particle[i].z);
       fclose(file);
     }
 
 
     void parse__Variable(Model *model,
-                       const std::string &basePath, xml::Node *var)
+                         const std::string &basePath, xml::Node *var)
     {
       size_t index = -1;
       size_t start = -1;
@@ -237,7 +201,6 @@ namespace ospray {
       std::string variable;
       std::string filename;
       std::string varType = var->getProp("type");
-      // PRINT(varType);
       for (int i=0;i<var->child.size();i++) {
         xml::Node *n = var->child[i];
         if (n->name == "index") {
@@ -261,39 +224,22 @@ namespace ospray {
           && variable == "p.x"
           /* && index == .... */ 
           ) {
-        // PRINT(numParticles);
         readParticles(model,numParticles,basePath+"/"+filename,start,end);
       }
       else if (numParticles > 0
                && varType == "ParticleVariable&lt;double&gt;"
                ) { 
-        // PRINT(numParticles); PRINT(variable); PRINT(varType);
         readDoubleAttributes(model,variable,numParticles,basePath+"/"+filename,start,end);
       }
       else if (numParticles > 0
                && varType == "ParticleVariable&lt;float&gt;"
                ) { 
-        // PRINT(numParticles); PRINT(variable); PRINT(varType);
         readFloatAttributes(model,variable,numParticles,basePath+"/"+filename,start,end);
       }
-      // PRINT(patch);
-      // PRINT(numParticles);
-      // PRINT(start);
-      // PRINT(filename);
     }
 
-    // pase a "Uintah_Output" node
-    // void parse__Uintah_Output(const std::string &basePath, xml::Node *node)
-    // {
-    //   assert(node->name == "Uintah_Output");
-    //   for (int i=0;i<node->child.size();i++) {
-    //     xml::Node *c = node->child[i];
-    //     assert(c->name == "Variable");
-    //     parse__Variable(basePath,c);
-    //   }
-    // }
     void parse__Uintah_Datafile(Model *model,
-                       const std::string &fileName)
+                                const std::string &fileName)
     {
       std::string basePath = embree::FileName(fileName).path();
 
@@ -305,9 +251,9 @@ namespace ospray {
         static bool warned = false;
         if (!warned) {
           std::cerr << "#osp:uintah: error in opening xml data file: " << e.what() << std::endl;
-           std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
-           std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
-           warned = true;
+          std::cerr << "#osp:uintah: continuing parsing, but parts of the data will be missing" << std::endl;
+          std::cerr << "#osp:uintah: (only printing first instance of this error; there may be more)" << std::endl;
+          warned = true;
         }
         return;
       }
@@ -407,6 +353,7 @@ namespace ospray {
       delete doc;
       return model;
     }
-  }
-}
+
+  } // ::ospray::particle
+} // ::ospray
 
