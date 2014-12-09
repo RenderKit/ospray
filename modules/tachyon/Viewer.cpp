@@ -13,12 +13,6 @@
 #include "ospray/ospray.h"
 // tachyon module
 #include "Model.h"
-#include "Loc.h"
-
-// flex/bison stuff
-extern int yydebug;
-extern FILE *yyin;
-extern int yyparse();
 
 namespace ospray {
   namespace tachyon {
@@ -56,23 +50,6 @@ namespace ospray {
       cout << " <none>" << endl;
       cout << endl;
       exit(1);
-    }
-
-    Model *parserModel = NULL;
-
-    void importFile(tachyon::Model &model, const std::string &fileName)
-    {
-      yydebug = 0;
-      parserModel = &model;
-      Loc::current.name = fileName.c_str();
-      Loc::current.line = 1;
-      std::cout << "#osp:tachyon: --- parsing " << fileName << " ---" << std::endl;
-      yyin=fopen(fileName.c_str(),"r"); //popen(cmd,"r");
-      if (!yyin)
-        Error(Loc::current,"#osp:tachyon: can't open file...");
-
-      yyparse();
-      fclose(yyin);
     }
 
     OSPModel specifyModel(tachyon::Model &tm)
