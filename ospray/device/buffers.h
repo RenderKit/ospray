@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 /*! \file ospray/device/nwlayer.h \brief Implement utility read/write
@@ -111,5 +103,6 @@ namespace ospray {
     template<> inline void WriteBuffer::write(const std::string &s) {
       write(s.c_str());
     }
-  }
-}
+
+  } // ::ospray::nwlayer
+} // ::ospray

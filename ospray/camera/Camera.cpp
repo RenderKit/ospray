@@ -1,19 +1,12 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-// ospray stuff
+// ospray 
 #include "Camera.h"
-// embree stuff
+// embree 
 #include "../common/Library.h"
-// stl stuff
+// stl 
 #include <map>
 
 namespace ospray {
+
   typedef Camera *(*creatorFct)();
 
   std::map<std::string, creatorFct> cameraRegistry;
@@ -39,5 +32,6 @@ namespace ospray {
     Camera *camera = (*creator)();  camera->managedObjectType = OSP_CAMERA;
     return(camera);
   }
-};
+
+} // ::ospray
 

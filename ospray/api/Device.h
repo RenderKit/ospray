@@ -1,15 +1,8 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include "ospray/common/OSPCommon.h"
 #include "ospray/include/ospray/ospray.h"
+
 /*! \file device.h Defines the abstract base class for OSPRay
     "devices" that implement the OSPRay API */
 
@@ -160,6 +153,6 @@ namespace ospray {
       virtual OSPPickData unproject(OSPRenderer renderer, const vec2f &screenPos) 
       { throw std::runtime_error("unproject() (for picking) not impelemnted for this device"); };
     };
-  }
-}
+  } // ::ospray::api
+} // ::ospray
 

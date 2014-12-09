@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include "ospray/common/default.ih"
@@ -13,7 +5,6 @@
 #include "ospray/math/vec.ih"
 #include "ospray/math/affine.ih"
 #include "ospray/common/Ray.ih"
-
 
 struct Texture2D;
 
@@ -32,14 +23,14 @@ struct Texture2D {
 
 
 /*! helper function that returns the sampled value for the first
-    channel of the given texture
+  channel of the given texture
 
-    Right now, this function always asks the texture for all four
-    channels, and then discards all but one; later implementations may
-    have specialized 'get1f' methods with the texture
+  Right now, this function always asks the texture for all four
+  channels, and then discards all but one; later implementations may
+  have specialized 'get1f' methods with the texture
 
-    \note tex may NOT be NULL!
- */
+  \note tex may NOT be NULL!
+*/
 inline float get1f(const uniform Texture2D *uniform tex,
                    const varying vec2f where)
 {
@@ -49,14 +40,14 @@ inline float get1f(const uniform Texture2D *uniform tex,
 }
 
 /*! helper function that returns the sampled value for the first three
-    channels of the given texture
+  channels of the given texture
 
-    Right now, this function always asks the texture for all four
-    channels, and then discards all but one; later implementations may
-    have specialized 'get3f' methods with the texture
+  Right now, this function always asks the texture for all four
+  channels, and then discards all but one; later implementations may
+  have specialized 'get3f' methods with the texture
 
-    \note tex may NOT be NULL!
- */
+  \note tex may NOT be NULL!
+*/
 inline vec3f get3f(const uniform Texture2D *uniform tex,
                    const varying vec2f where)
 {
@@ -66,16 +57,16 @@ inline vec3f get3f(const uniform Texture2D *uniform tex,
 }
 
 /*! helper function that returns the sampled value of the four
-    channels of the given texture.
+  channels of the given texture.
 
-    Note that it's up to the texture to define clearly what happens if
-    we ask for four channels even if the texture has less physical
-    channels.
+  Note that it's up to the texture to define clearly what happens if
+  we ask for four channels even if the texture has less physical
+  channels.
 
-    \note tex may NOT be NULL!
- */
+  \note tex may NOT be NULL!
+*/
 inline vec4f get4f(const uniform Texture2D *uniform tex,
-                          const varying vec2f where)
+                   const varying vec2f where)
 {
   vec4f ret;
   tex->get(tex,ret,where);

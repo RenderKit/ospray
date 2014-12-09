@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "DirectionalLight.ih"
 
 //!< Construct a new ispc-side DirectionalLight object
@@ -27,19 +19,22 @@ extern void DirectionalLight_Destructor(uniform DirectionalLight *uniform THIS)
 }
 
 //! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-varying vec3f DirectionalLight_computeRadiance(void *uniform pointer, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance) {
+varying vec3f DirectionalLight_computeRadiance(void *uniform pointer, 
+                                               const varying vec3f &coordinates, 
+                                               varying vec3f &direction, 
+                                               varying float &distance) 
+{
+  //! Cast to the actual Light subtype.
+  const DirectionalLight *uniform light = (DirectionalLight *uniform) pointer;
 
-    //! Cast to the actual Light subtype.
-    const DirectionalLight *uniform light = (DirectionalLight *uniform) pointer;
+  //! Normalized light vector.
+  direction = negate(light->direction);
 
-    //! Normalized light vector.
-    direction = negate(light->direction);
+  //! Distance from the hit point to the sample point on the light.
+  distance = inf;
 
-    //! Distance from the hit point to the sample point on the light.
-    distance = inf;
-
-    //! Radiance.
-    return(light->color);
+  //! Radiance.
+  return(light->color);
 
 }
 

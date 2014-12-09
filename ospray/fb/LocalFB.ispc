@@ -1,13 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-
-
 #include "ospray/fb/Tile.ih"
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/render/util.ih"
@@ -18,7 +8,6 @@ struct LocalFB
   void *colorBuffer;
   uniform float *depthBuffer;
   uniform vec4f *accumBuffer;
-  
 };
 
 // number of floats each task is clearing; must be a a mulitple of 16
@@ -168,7 +157,8 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   fb->colorBuffer = colorBuffer;
   fb->depthBuffer = (uniform float *uniform)depthBuffer;
   fb->accumBuffer = (uniform vec4f *uniform)accumBuffer;
-  fb->inherited.colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
+  fb->inherited.colorBufferFormat
+    = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
   return fb;
 }
 

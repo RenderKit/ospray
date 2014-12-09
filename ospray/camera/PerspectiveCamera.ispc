@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #include "PerspectiveCamera.ih"
 
 void PerspectiveCamera_initRay(uniform Camera *uniform camera,
@@ -27,7 +19,8 @@ void PerspectiveCamera_initRay(uniform Camera *uniform camera,
     parameters */
 export void *uniform PerspectiveCamera_create(void *uniform cppE)
 {
-  uniform PerspectiveCamera *uniform cam = uniform new uniform PerspectiveCamera;
+  uniform PerspectiveCamera *uniform cam 
+    = uniform new uniform PerspectiveCamera;
   cam->inherited.cppEquivalent = cppE;
   cam->inherited.initRay = PerspectiveCamera_initRay;
   cam->inherited.doesDOF = false;
@@ -40,7 +33,8 @@ export void PerspectiveCamera_set(void *uniform _camera,
                                   const uniform vec3f &dir_du,
                                   const uniform vec3f &dir_dv)
 {
-  uniform PerspectiveCamera *uniform camera = (uniform PerspectiveCamera *uniform)_camera;
+  uniform PerspectiveCamera *uniform camera
+    = (uniform PerspectiveCamera *uniform)_camera;
   camera->org    = org;
   camera->dir_00 = dir_00;
   camera->dir_du = dir_du;
