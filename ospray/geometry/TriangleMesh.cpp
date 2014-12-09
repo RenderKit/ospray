@@ -1,22 +1,13 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
+// ospray
 #include "TriangleMesh.h"
-#include "../common/Model.h"
-// embree stuff
+#include "ospray/common/Model.h"
+#include "../include/ospray/ospray.h"
+// embree 
 #include "embree2/rtcore.h"
 #include "embree2/rtcore_scene.h"
 #include "embree2/rtcore_geometry.h"
-#include "../include/ospray/ospray.h"
-// ispc side
+// ispc exports
 #include "TriangleMesh_ispc.h"
-// C
-// #include <math.h>
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
@@ -157,67 +148,4 @@ namespace ospray {
                            (uint32*)prim_materialID);
   }
 
-  //! helper fct that creates a tessllated unit arrow
-  /*! this function creates a tessllated 'unit' arrow, where 'unit'
-    means itreaches from Z=-1 to Z=+1. With of arrow head and
-    arrow body are given as parameters, as it the number of
-    segments for tessellating. The total number of triangles from
-    this arrow is 'numSegments*5'. */
-  ospray::TriangleMesh *makeArrow(int numSegments,
-                                  float headWidth,
-                                  float bodyWidth,
-                                  float headLength)
-  {
-    std::vector<vec3fa> vtx;
-    std::vector<vec3i>  idx;
-
-    // tail ring
-    int tailCenter = vtx.size();
-    vtx.push_back(vec3fa(0,0,-1.f));
-    int tailRingStart = vtx.size();
-    for (int i=0;i<numSegments;i++) {
-      const float u = cosf(i*(2.f*M_PI/numSegments));
-      const float v = sinf(i*(2.f*M_PI/numSegments));
-      vtx.push_back(vec3fa(u*bodyWidth,v*bodyWidth,-1.f));
-      idx.push_back(vec3i(tailCenter,
-                          tailRingStart+i,
-                          tailRingStart+((i+1)%numSegments)));
-    }
-
-    // body
-    int bodyRingStart = vtx.size();
-    for (int i=0;i<numSegments;i++) {
-      const float u = cosf(i*(2.f*M_PI/numSegments));
-      const float v = sinf(i*(2.f*M_PI/numSegments));
-      vtx.push_back(vec3fa(u*bodyWidth,v*bodyWidth,+1.f-headLength));
-      int a = tailRingStart+i;
-      int b = bodyRingStart+i;
-      int c = tailRingStart+(i+1)%numSegments;
-      int d = bodyRingStart+(i+1)%numSegments;
-      idx.push_back(vec3i(a,b,c));
-      idx.push_back(vec3i(b,c,d));
-    }
-
-    // tip 
-    int tipTop = vtx.size();
-    vtx.push_back(vec3fa(0,0,+1.f));
-    int tipMid = vtx.size();
-    vtx.push_back(vec3fa(0,0,+1.f-headLength));
-    int tipRingStart = vtx.size();
-    for (int i=0;i<numSegments;i++) {
-      const float u = cosf(i*(2.f*M_PI/numSegments));
-      const float v = sinf(i*(2.f*M_PI/numSegments));
-      vtx.push_back(vec3fa(u*headWidth,v*headWidth,+1.f-headLength));
-      int a = tipRingStart+i;
-      int b = tipRingStart+(i+1)%numSegments;
-      idx.push_back(vec3i(a,b,tipTop));
-      idx.push_back(vec3i(a,b,tipMid));
-    }
-
-    ospray::TriangleMesh *mesh = new TriangleMesh;
-    mesh->findParam("index",1)->set(new Data(idx.size(),OSP_INT3,&idx[0],0));
-    mesh->findParam("vertex",1)->set(new Data(vtx.size(),OSP_FLOAT3A,&vtx[0],0));
-    // mesh->commit();
-    return mesh;
-  }
-}
+} // ::ospray

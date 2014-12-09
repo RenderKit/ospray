@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // ospray
 #include "ospray/math/vec.ih"
 #include "ospray/math/bbox.ih"
@@ -157,11 +149,6 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
     if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
     if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
   }
-  // if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
-  //   uniform uint8 *spherePtr = 
-  //     THIS->data + THIS->bytesPerSphere*ray.primID;
-  //   dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
-  // }
   dg.Ng = Ng;
   dg.Ns = Ns;
 }

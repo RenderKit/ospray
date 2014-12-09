@@ -1,15 +1,7 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 #pragma once
 
 #include "Geometry.h"
-#include "../common/Data.h"
+#include "ospray/common/Data.h"
 
 namespace ospray {
 
@@ -74,14 +66,4 @@ namespace ospray {
     void** ispcMaterialPtrs; /*!< pointers to ISPC equivalent materials */
   };
 
-    //! helper fct that creates a tessllated unit arrow
-    /*! this function creates a tessllated 'unit' arrow, where 'unit'
-        means itreaches from Z=-1 to Z=+1. With of arrow head and
-        arrow body are given as parameters, as it the number of
-        segments for tessellating. The total number of triangles from
-        this arrow is 'numSegments*5'. */
-  ospray::TriangleMesh *makeArrow(int numSegments=64,
-                                  float headWidth=.5f,
-                                  float bodyWidth=.25f,
-                                  float headLength=1.f);
-};
+} // ::ospray

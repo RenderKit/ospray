@@ -1,11 +1,3 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // ospray
 #include "TriangleMesh.ih"
 #include "ospray/common/Model.ih"
@@ -73,16 +65,9 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform geom,
     }
 
     if( THIS->materialList) {
-      //FIXME: crash here -- material pointers are bad
-      //print("materialID INTO material list %\n",dg.materialID);
-      //print("materialList = %\n",THIS->materialList);
-      //print("materialList[0] = %\n",THIS->materialList[0]);
       dg.material = THIS->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-      //print("material fom material list %\n",dg.material);
     } else {
-      //print("material FROM GEOM %\n",geom);
       dg.material = geom->material;
-      //print("material fom geometry %\n",dg.material);
     }
   }
 

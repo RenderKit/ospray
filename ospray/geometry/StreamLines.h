@@ -1,19 +1,10 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
-
-
 #pragma once
 
 #include "Geometry.h"
 
-/*! @{ \ingroup ospray_module_streamlines */
 namespace ospray {
+
+  /*! @{ \ingroup ospray_module_streamlines */
 
   /*! \defgroup geometry_streamlines Stream Lines ("streamlines") 
 
@@ -32,7 +23,7 @@ namespace ospray {
     specified for this geometry.
 
     A stream line geometry is created via \ref ospNewGeometry with
-     type string "streamlines".
+    type string "streamlines".
 
     Each streamline is specified as a list of linear segments, where
     each segment is pretty much a cylinder with rounded ends. The
@@ -75,7 +66,7 @@ namespace ospray {
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::StreamLines"; }
     /*! \brief integrates this geometry's primitives into the respective
-        model's acceleration structure */
+      model's acceleration structure */
     virtual void finalize(Model *model);
 
     Ref<Data> vertexData;  //!< refcounted data array for vertex data
@@ -89,6 +80,7 @@ namespace ospray {
 
     StreamLines();
   };
-}
-/*! @} */
+  /*! @} */
+
+} // ::ospray
 
