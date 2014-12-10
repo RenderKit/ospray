@@ -1,3 +1,6 @@
+%{
+
+  /*
 // ======================================================================== //
 // Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
@@ -13,9 +16,7 @@
 // See the License for the specific language governing permissions and      //
 // limitations under the License.                                           //
 // ======================================================================== //
-
-
-%{
+*/ 
 
 #define YY_MAIN 1
 #define YY_NEVER_INTERACTIVE 0
