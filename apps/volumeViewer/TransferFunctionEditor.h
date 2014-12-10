@@ -17,7 +17,7 @@
 #pragma once
 
 #include "ColorMap.h"
-#include "TransferFunctionPiecewiseLinearWidget.h"
+#include "LinearTransferFunctionWidget.h"
 #include <QtGui>
 #include <ospray/ospray.h>
 
@@ -66,7 +66,7 @@ protected:
   QDoubleSpinBox dataValueMaxSpinBox;
 
   //! Transfer function widget for opacity.
-  TransferFunctionPiecewiseLinearWidget transferFunctionAlphaWidget;
+  LinearTransferFunctionWidget transferFunctionAlphaWidget;
 
   //! Slider for scaling transfer function opacities.
   QSlider transferFunctionAlphaScalingSlider;

@@ -19,13 +19,13 @@
 #include <QtGui>
 #include <ospray/ospray.h>
 
-class TransferFunctionPiecewiseLinearWidget : public QWidget
+class LinearTransferFunctionWidget : public QWidget
 {
   Q_OBJECT
 
   public:
 
-  TransferFunctionPiecewiseLinearWidget();
+  LinearTransferFunctionWidget();
 
   // minimum size of the widget
   virtual QSize minimumSizeHint() const { return QSize(240, 180); }
@@ -34,10 +34,10 @@ class TransferFunctionPiecewiseLinearWidget : public QWidget
   std::vector<float> getInterpolatedValuesOverInterval(unsigned int numValues);
 
   // get transfer function control points
-  QVector<QPointF> getPoints() { return points_; }
+  QVector<QPointF> getPoints() { return points; }
 
   // set transfer function control points
-  void setPoints(const QVector<QPointF> &points) { points_ = points; repaint(); emit(transferFunctionChanged()); }
+  void setPoints(const QVector<QPointF> &points) { this->points = points; repaint(); emit(transferFunctionChanged()); }
 
   void setBackgroundImage(QImage image);
 
@@ -63,23 +63,23 @@ protected:
   // returns -1 of no selected point
   int getSelectedPointIndex(const QPointF &widgetClickPoint);
 
-  // get y value based on linear interpolation of the points_ values for x in [0, 1]
+  // get y value based on linear interpolation of the points values for x in [0, 1]
   float getInterpolatedValue(float x);
 
   // this image shows the color map
-  QImage backgroundImage_;
+  QImage backgroundImage;
 
   // the points that define the transfer function, in normalize coordinates ([0,1], [0,1])
-  QVector<QPointF> points_;
+  QVector<QPointF> points;
 
   // currently selected point
-  int selectedPointIndex_;
+  int selectedPointIndex;
 
   // drawing properties
-  static float pointPixelRadius_;
-  static float linePixelWidth_;
+  static float pointPixelRadius;
+  static float linePixelWidth;
 
   // if true, will emit update signals during transfer function change
   // otherwise, will wait until change is complete (mouse release)
-  static bool updateDuringChange_;
+  static bool updateDuringChange;
 };

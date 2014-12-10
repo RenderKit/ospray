@@ -84,9 +84,9 @@ public:
   void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
   virtual void setWorldBounds(const osp::box3f &worldBounds);
 
-  Viewport * getViewport() { return &viewport_; }
+  Viewport * getViewport() { return &viewport; }
 
-  OSPFrameBuffer getFrameBuffer() { return frameBuffer_; }
+  OSPFrameBuffer getFrameBuffer() { return frameBuffer; }
 
 protected:
 
@@ -106,32 +106,32 @@ protected:
   virtual void rotateCenter(float du, float dv);
 
   /*! frame counter */
-  long frameCount_;
+  long frameCount;
 
   /*! only render when this flag is true. this allows the window to be created before all required components are ospCommit()'d. */
-  bool renderingEnabled_;
+  bool renderingEnabled;
 
   /*! rotation rate to automatically rotate view. */
-  float rotationRate_;
+  float rotationRate;
 
   /*! benchmarking: number of warm-up frames */
-  int benchmarkWarmUpFrames_;
+  int benchmarkWarmUpFrames;
 
   /*! benchmarking: number of frames over which to measure frame rate */
-  int benchmarkFrames_;
+  int benchmarkFrames;
 
   /*! benchmarking: timer to measure elapsed time over benchmark frames */
-  QTime benchmarkTimer_;
+  QTime benchmarkTimer;
 
   /*! Timer to measure elapsed time over a single frame. */
   QTime renderFrameTimer;
 
-  osp::vec2i windowSize_;
-  Viewport viewport_;
-  osp::box3f worldBounds_;
-  QPoint lastMousePosition_;
+  osp::vec2i windowSize;
+  Viewport viewport;
+  osp::box3f worldBounds;
+  QPoint lastMousePosition;
 
-  OSPFrameBuffer frameBuffer_;
-  OSPRenderer renderer_;
-  OSPCamera camera_;
+  OSPFrameBuffer frameBuffer;
+  OSPRenderer renderer;
+  OSPCamera camera;
 };

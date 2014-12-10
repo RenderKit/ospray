@@ -14,33 +14,33 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "TransferFunctionPiecewiseLinearWidget.h"
+#include "LinearTransferFunctionWidget.h"
 #include <algorithm>
 
-float TransferFunctionPiecewiseLinearWidget::pointPixelRadius_ = 8.;
-float TransferFunctionPiecewiseLinearWidget::linePixelWidth_ = 2.;
+float LinearTransferFunctionWidget::pointPixelRadius = 8.;
+float LinearTransferFunctionWidget::linePixelWidth = 2.;
 
-bool TransferFunctionPiecewiseLinearWidget::updateDuringChange_ = true;
+bool LinearTransferFunctionWidget::updateDuringChange = true;
 
 bool comparePointsByX(const QPointF &i, const QPointF &j)
 {
   return (i.x() < j.x());
 }
 
-TransferFunctionPiecewiseLinearWidget::TransferFunctionPiecewiseLinearWidget() : selectedPointIndex_(-1)
+LinearTransferFunctionWidget::LinearTransferFunctionWidget() : selectedPointIndex(-1)
 {
   // set background image to widget size
-  backgroundImage_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
+  backgroundImage = QImage(size(), QImage::Format_ARGB32_Premultiplied);
 
   // default background color
-  backgroundImage_.fill(QColor::fromRgbF(1,1,1,1).rgb());
+  backgroundImage.fill(QColor::fromRgbF(1,1,1,1).rgb());
 
   // default transfer function points
-  points_.push_back(QPointF(0.,0.));
-  points_.push_back(QPointF(1.,1.));
+  points.push_back(QPointF(0.,0.));
+  points.push_back(QPointF(1.,1.));
 }
 
-std::vector<float> TransferFunctionPiecewiseLinearWidget::getInterpolatedValuesOverInterval(unsigned int numValues)
+std::vector<float> LinearTransferFunctionWidget::getInterpolatedValuesOverInterval(unsigned int numValues)
 {
   std::vector<float> yValues;
 
@@ -52,20 +52,20 @@ std::vector<float> TransferFunctionPiecewiseLinearWidget::getInterpolatedValuesO
   return yValues;
 }
 
-void TransferFunctionPiecewiseLinearWidget::setBackgroundImage(QImage image)
+void LinearTransferFunctionWidget::setBackgroundImage(QImage image)
 {
-  backgroundImage_ = image;
+  backgroundImage = image;
 
   // trigger repaint
   repaint();
 }
 
-void TransferFunctionPiecewiseLinearWidget::resizeEvent(QResizeEvent * event)
+void LinearTransferFunctionWidget::resizeEvent(QResizeEvent * event)
 {
   QWidget::resizeEvent(event);
 }
 
-void TransferFunctionPiecewiseLinearWidget::paintEvent(QPaintEvent * event)
+void LinearTransferFunctionWidget::paintEvent(QPaintEvent * event)
 {
   QWidget::paintEvent(event);
 
@@ -83,9 +83,9 @@ void TransferFunctionPiecewiseLinearWidget::paintEvent(QPaintEvent * event)
   QPainterPath clipPath;
   QPolygonF clipPolygon;
 
-  for(unsigned int i=0; i<points_.size(); i++)
+  for(unsigned int i=0; i<points.size(); i++)
     {
-      clipPolygon << pointToWidgetPoint(points_[i]);
+      clipPolygon << pointToWidgetPoint(points[i]);
     }
 
   clipPolygon << QPointF(float(width()), float(height()));
@@ -95,28 +95,28 @@ void TransferFunctionPiecewiseLinearWidget::paintEvent(QPaintEvent * event)
   painter.setClipPath(clipPath);
 
   painter.setClipping(true);
-  painter.drawImage(rect(), backgroundImage_.scaledToWidth(width(), Qt::SmoothTransformation));
+  painter.drawImage(rect(), backgroundImage.scaledToWidth(width(), Qt::SmoothTransformation));
   painter.setClipping(false);
 
   // draw lines between points
-  painter.setPen(QPen(Qt::black, linePixelWidth_, Qt::SolidLine));
+  painter.setPen(QPen(Qt::black, linePixelWidth, Qt::SolidLine));
 
-  for(unsigned int i=0; i<points_.size() - 1; i++)
+  for(unsigned int i=0; i<points.size() - 1; i++)
     {
-      painter.drawLine(pointToWidgetPoint(points_[i]), pointToWidgetPoint(points_[i+1]));
+      painter.drawLine(pointToWidgetPoint(points[i]), pointToWidgetPoint(points[i+1]));
     }
 
   // draw points
-  painter.setPen(QPen(Qt::black, linePixelWidth_, Qt::SolidLine));
+  painter.setPen(QPen(Qt::black, linePixelWidth, Qt::SolidLine));
   painter.setBrush(QBrush(Qt::white));
 
-  for(unsigned int i=0; i<points_.size(); i++)
+  for(unsigned int i=0; i<points.size(); i++)
     {
-      painter.drawEllipse(pointToWidgetPoint(points_[i]), pointPixelRadius_, pointPixelRadius_);
+      painter.drawEllipse(pointToWidgetPoint(points[i]), pointPixelRadius, pointPixelRadius);
     }
 }
 
-void TransferFunctionPiecewiseLinearWidget::mousePressEvent(QMouseEvent * event)
+void LinearTransferFunctionWidget::mousePressEvent(QMouseEvent * event)
 {
   QWidget::mousePressEvent(event);
 
@@ -125,24 +125,24 @@ void TransferFunctionPiecewiseLinearWidget::mousePressEvent(QMouseEvent * event)
       // either select an existing point, or create a new one at this location
       QPointF widgetClickPoint = event->posF();
 
-      selectedPointIndex_ = getSelectedPointIndex(widgetClickPoint);
+      selectedPointIndex = getSelectedPointIndex(widgetClickPoint);
 
-      if(selectedPointIndex_ == -1)
+      if(selectedPointIndex == -1)
         {
           // no point selected, create a new one
           QPointF newPoint = widgetPointToPoint(widgetClickPoint);
 
           // insert into points vector and sort ascending by x
-          points_.push_back(newPoint);
+          points.push_back(newPoint);
 
-          std::stable_sort(points_.begin(), points_.end(), comparePointsByX);
+          std::stable_sort(points.begin(), points.end(), comparePointsByX);
 
           // set selected point index for the new point
-          selectedPointIndex_ = std::find(points_.begin(), points_.end(), newPoint) - points_.begin();
+          selectedPointIndex = std::find(points.begin(), points.end(), newPoint) - points.begin();
 
-          if(selectedPointIndex_ >= points_.size())
+          if(selectedPointIndex >= points.size())
             {
-              throw std::runtime_error("TransferFunctionPiecewiseLinearWidget::mousePressEvent(): selected point index out of range");
+              throw std::runtime_error("LinearTransferFunctionWidget::mousePressEvent(): selected point index out of range");
             }
 
           // trigger repaint
@@ -154,11 +154,11 @@ void TransferFunctionPiecewiseLinearWidget::mousePressEvent(QMouseEvent * event)
       // delete a point if selected (except for first and last points!)
       QPointF widgetClickPoint = event->posF();
 
-      selectedPointIndex_ = getSelectedPointIndex(widgetClickPoint);
+      selectedPointIndex = getSelectedPointIndex(widgetClickPoint);
 
-      if(selectedPointIndex_ != -1 && selectedPointIndex_ != 0 && selectedPointIndex_ != points_.size() - 1)
+      if(selectedPointIndex != -1 && selectedPointIndex != 0 && selectedPointIndex != points.size() - 1)
         {
-          points_.erase(points_.begin() + selectedPointIndex_);
+          points.erase(points.begin() + selectedPointIndex);
 
           // trigger repaint
           repaint();
@@ -167,39 +167,39 @@ void TransferFunctionPiecewiseLinearWidget::mousePressEvent(QMouseEvent * event)
           emit transferFunctionChanged();
         }
 
-      selectedPointIndex_ = -1;
+      selectedPointIndex = -1;
     }
 }
 
-void TransferFunctionPiecewiseLinearWidget::mouseReleaseEvent(QMouseEvent * event)
+void LinearTransferFunctionWidget::mouseReleaseEvent(QMouseEvent * event)
 {
   QWidget::mouseReleaseEvent(event);
 
   // emit signal if we were manipulating a point
-  if(selectedPointIndex_ != -1)
+  if(selectedPointIndex != -1)
     {
-      selectedPointIndex_ = -1;
+      selectedPointIndex = -1;
 
       emit transferFunctionChanged();
     }
 }
 
-void TransferFunctionPiecewiseLinearWidget::mouseMoveEvent(QMouseEvent * event)
+void LinearTransferFunctionWidget::mouseMoveEvent(QMouseEvent * event)
 {
   QWidget::mouseMoveEvent(event);
 
-  if(selectedPointIndex_ != -1)
+  if(selectedPointIndex != -1)
     {
       QPointF widgetMousePoint = event->posF();
       QPointF mousePoint = widgetPointToPoint(widgetMousePoint);
 
       // clamp x value
-      if(selectedPointIndex_ == 0)
+      if(selectedPointIndex == 0)
         {
           // the first point must have x == 0
           mousePoint.rx() = 0.;
         }
-      else if(selectedPointIndex_ == points_.size() - 1)
+      else if(selectedPointIndex == points.size() - 1)
         {
           // the last point must have x == 1
           mousePoint.rx() = 1.;
@@ -207,19 +207,19 @@ void TransferFunctionPiecewiseLinearWidget::mouseMoveEvent(QMouseEvent * event)
       else
         {
           // intermediate points must have x between their neighbors
-          mousePoint.rx() = std::max(mousePoint.x(), points_[selectedPointIndex_ - 1].x());
-          mousePoint.rx() = std::min(mousePoint.x(), points_[selectedPointIndex_ + 1].x());
+          mousePoint.rx() = std::max(mousePoint.x(), points[selectedPointIndex - 1].x());
+          mousePoint.rx() = std::min(mousePoint.x(), points[selectedPointIndex + 1].x());
         }
 
       // clamp y value
       mousePoint.ry() = std::min(mousePoint.y(), 1.);
       mousePoint.ry() = std::max(mousePoint.y(), 0.);
 
-      points_[selectedPointIndex_] = mousePoint;
+      points[selectedPointIndex] = mousePoint;
 
       repaint();
 
-      if(updateDuringChange_ == true)
+      if(updateDuringChange == true)
         {
           // emit signal
           emit transferFunctionChanged();
@@ -227,23 +227,23 @@ void TransferFunctionPiecewiseLinearWidget::mouseMoveEvent(QMouseEvent * event)
     }
 }
 
-QPointF TransferFunctionPiecewiseLinearWidget::pointToWidgetPoint(const QPointF &point)
+QPointF LinearTransferFunctionWidget::pointToWidgetPoint(const QPointF &point)
 {
   return QPointF(point.x() * float(width()), (1. - point.y()) * float(height()));
 }
 
-QPointF TransferFunctionPiecewiseLinearWidget::widgetPointToPoint(const QPointF &widgetPoint)
+QPointF LinearTransferFunctionWidget::widgetPointToPoint(const QPointF &widgetPoint)
 {
   return QPointF(float(widgetPoint.x()) / float(width()), 1. - float(widgetPoint.y()) / float(height()));
 }
 
-int TransferFunctionPiecewiseLinearWidget::getSelectedPointIndex(const QPointF &widgetClickPoint)
+int LinearTransferFunctionWidget::getSelectedPointIndex(const QPointF &widgetClickPoint)
 {
-  for(unsigned int i=0; i<points_.size(); i++)
+  for(unsigned int i=0; i<points.size(); i++)
     {
-      QPointF delta = pointToWidgetPoint(points_[i]) - widgetClickPoint;
+      QPointF delta = pointToWidgetPoint(points[i]) - widgetClickPoint;
 
-      if(sqrtf(delta.x()*delta.x() + delta.y()*delta.y()) <= pointPixelRadius_)
+      if(sqrtf(delta.x()*delta.x() + delta.y()*delta.y()) <= pointPixelRadius)
         {
           return int(i);
         }
@@ -252,35 +252,35 @@ int TransferFunctionPiecewiseLinearWidget::getSelectedPointIndex(const QPointF &
   return -1;
 }
 
-float TransferFunctionPiecewiseLinearWidget::getInterpolatedValue(float x)
+float LinearTransferFunctionWidget::getInterpolatedValue(float x)
 {
   // boundary cases
   if(x <= 0.)
     {
-      return points_[0].y();
+      return points[0].y();
     }
   else if(x >= 1.)
     {
-      return points_[points_.size() - 1].y();
+      return points[points.size() - 1].y();
     }
 
   // we could make this more efficient...
-  for(unsigned int i=0; i<points_.size() - 1; i++)
+  for(unsigned int i=0; i<points.size() - 1; i++)
     {
-      if(x <= points_[i + 1].x())
+      if(x <= points[i + 1].x())
         {
-          float delta = x - points_[i].x();
-          float interval = points_[i+1].x() - points_[i].x();
+          float delta = x - points[i].x();
+          float interval = points[i+1].x() - points[i].x();
 
           if(delta == 0. || interval == 0.)
             {
-              return points_[i].y();
+              return points[i].y();
             }
 
-          return points_[i].y() + delta / interval * (points_[i+1].y() - points_[i].y());
+          return points[i].y() + delta / interval * (points[i+1].y() - points[i].y());
         }
     }
 
   // we shouldn't get to this point...
-  throw std::runtime_error("TransferFunctionPiecewiseLinearWidget::getInterpolatedValue(): error!");
+  throw std::runtime_error("LinearTransferFunctionWidget::getInterpolatedValue(): error!");
 }

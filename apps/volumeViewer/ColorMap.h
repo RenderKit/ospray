@@ -34,6 +34,6 @@ public:
 
 protected:
 
-  std::string name_;
-  std::vector<osp::vec3f> colors_;
+  std::string name;
+  std::vector<osp::vec3f> colors;
 };
