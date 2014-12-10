@@ -47,16 +47,16 @@ namespace ospray {
     virtual void commit();
     virtual std::string toString() const { return "ospray::TachyonRenderer"; }
 
-      Model  *model;
-      Camera *camera;
-      Data   *textureData;
-      Data   *pointLightData;
-      void   *pointLightArray;
-      uint32  numPointLights;
-      Data   *dirLightData;
-      void   *dirLightArray;
-      uint32  numDirLights;
-      bool    doShadows;
+    Model  *model;
+    Camera *camera;
+    Data   *textureData;
+    Data   *pointLightData;
+    void   *pointLightArray;
+    uint32  numPointLights;
+    Data   *dirLightData;
+    void   *dirLightArray;
+    uint32  numDirLights;
+    bool    doShadows;
   };
 
 } // ::ospray

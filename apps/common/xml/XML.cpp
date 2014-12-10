@@ -317,7 +317,7 @@ namespace ospray {
       : xml(xml), bin(bin)
     {}
 
-      /*! write document header, may only be called once */
+    /*! write document header, may only be called once */
     void Writer::writeHeader(const std::string &version)
     {
       assert(xml);

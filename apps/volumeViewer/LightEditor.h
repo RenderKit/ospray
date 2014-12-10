@@ -25,22 +25,22 @@ Q_OBJECT
 
 public:
 
-    LightEditor(OSPLight light);
+  LightEditor(OSPLight light);
 
 signals:
 
-    void lightChanged();
+  void lightChanged();
 
 protected slots:
 
-    void alphaBetaSliderValueChanged();
+  void alphaBetaSliderValueChanged();
 
 protected:
 
-    //! OSPRay light.
-    OSPLight light;
+  //! OSPRay light.
+  OSPLight light;
 
-    //! UI elements.
-    QSlider alphaSlider;
-    QSlider betaSlider;
+  //! UI elements.
+  QSlider alphaSlider;
+  QSlider betaSlider;
 };

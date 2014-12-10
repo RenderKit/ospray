@@ -376,7 +376,7 @@ namespace ospray {
 
     void runGLUT()
     {
-        glutMainLoop();
+      glutMainLoop();
     }
 
     void initGLUT(int32 *ac, const char **av)
