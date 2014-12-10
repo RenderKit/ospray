@@ -87,9 +87,9 @@ namespace ospray {
       ospSet3f(camera,"dir",+1,-1,+1);
       ospCommit(camera);
 
-      ospSetParam(renderer,"world",model);
-      ospSetParam(renderer,"model",model);
-      ospSetParam(renderer,"camera",camera);
+      ospSetObject(renderer,"world",model);
+      ospSetObject(renderer,"model",model);
+      ospSetObject(renderer,"camera",camera);
       ospSet1i(renderer,"spp",spp);
       ospCommit(camera);
       ospCommit(renderer);
@@ -453,7 +453,7 @@ namespace ospray {
           OSPTexture2D ospTex = createTexture2D(tex);
           //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
           //ospSetData(ospMat, name, data);
-          ospSetParam(ospMat, name, ospTex);
+          ospSetObject(ospMat, name, ospTex);
         }
         break;
       case miniSG::Material::Param::FLOAT:
@@ -470,7 +470,7 @@ namespace ospray {
           miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
           OSPTexture2D ospTex = createTexture2D(tex);
           ospCommit(ospTex);
-          ospSetParam(ospMat, name, ospTex);
+          ospSetObject(ospMat, name, ospTex);
           break;
         }
       default: 

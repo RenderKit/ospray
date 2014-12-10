@@ -78,8 +78,8 @@ namespace ospray {
         ospSet3f(camera,"dir",+1,-1,+1);
         ospCommit(camera);
 
-        ospSetParam(renderer,"model",model);
-        ospSetParam(renderer,"camera",camera);
+        ospSetObject(renderer,"model",model);
+        ospSetObject(renderer,"camera",camera);
         ospCommit(camera);
         ospCommit(renderer);
       };
@@ -102,7 +102,7 @@ namespace ospray {
         case '>': {
           timeStep = (timeStep+1)%modelTimeStep.size();
           model = modelTimeStep[timeStep];
-          ospSetParam(renderer,"model",model);
+          ospSetObject(renderer,"model",model);
           PRINT(timeStep);
           PRINT(model);
           ospCommit(renderer);
@@ -114,7 +114,7 @@ namespace ospray {
           model = modelTimeStep[timeStep];
           PRINT(timeStep);
           PRINT(model);
-          ospSetParam(renderer,"model",model);
+          ospSetObject(renderer,"model",model);
           ospCommit(renderer);
           viewPort.modified = true;
           forceRedraw();

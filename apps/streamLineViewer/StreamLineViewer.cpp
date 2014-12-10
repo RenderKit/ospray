@@ -384,8 +384,8 @@ namespace ospray {
         Assert(geom);
         OSPData vertex = ospNewData(sl->vertex.size(),OSP_FLOAT3A,&sl->vertex[0]);
         OSPData index  = ospNewData(sl->index.size(),OSP_UINT,&sl->index[0]);
-        ospSetParam(geom,"vertex",vertex);
-        ospSetParam(geom,"index",index);
+        ospSetObject(geom,"vertex",vertex);
+        ospSetObject(geom,"index",index);
         ospSet1f(geom,"radius",sl->radius);
         if (mat)
           ospSetMaterial(geom,mat);
@@ -399,9 +399,9 @@ namespace ospray {
         OSPData vertex = ospNewData(tris->vertex.size(),OSP_FLOAT3A,&tris->vertex[0]);
         OSPData index  = ospNewData(tris->index.size(),OSP_INT3,&tris->index[0]);
         OSPData color  = ospNewData(tris->color.size(),OSP_FLOAT3A,&tris->color[0]);
-        ospSetParam(geom,"vertex",vertex);
-        ospSetParam(geom,"index",index);
-        ospSetParam(geom,"vertex.color",color);
+        ospSetObject(geom,"vertex",vertex);
+        ospSetObject(geom,"index",index);
+        ospSetObject(geom,"vertex.color",color);
         ospSetMaterial(geom,mat);
         ospCommit(geom);
         ospAddGeometry(model,geom);
@@ -410,8 +410,8 @@ namespace ospray {
       ospCommit(model);
 
       Assert2(renderer,"could not create renderer");
-      ospSetParam(renderer,"world",model);
-      ospSetParam(renderer,"camera",camera);
+      ospSetObject(renderer,"world",model);
+      ospSetObject(renderer,"camera",camera);
       ospCommit(renderer);
 
     };

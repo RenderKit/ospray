@@ -200,8 +200,8 @@ namespace ospray {
         renderer = ospNewRenderer(renderType);
 
         Assert2(renderer,"could not create renderer");
-        ospSetParam(renderer,"model",model);
-        ospSetParam(renderer,"camera",camera);
+        ospSetObject(renderer,"model",model);
+        ospSetObject(renderer,"camera",camera);
         ospSet1i(renderer,"do_shadows",doShadows);
         ospCommit(renderer);
 
@@ -269,7 +269,7 @@ namespace ospray {
         cout << "#osp:tachyon: switching to time step " << timeStepID
              << " (" << modelName << ")" << endl;
         model = timeStep[timeStepID]->om;
-        ospSetParam(renderer,"model",model);
+        ospSetObject(renderer,"model",model);
         ospCommit(renderer);
       }
 

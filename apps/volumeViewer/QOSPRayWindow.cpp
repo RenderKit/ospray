@@ -44,7 +44,7 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
 
   ospCommit(camera_);
 
-  ospSetParam(renderer_, "camera", camera_);
+  ospSetObject(renderer_, "camera", camera_);
 }
 
 QOSPRayWindow::~QOSPRayWindow()
