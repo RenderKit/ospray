@@ -72,6 +72,11 @@ namespace ospray {
       Ref<miniSG::Material> general;
     };
 
+    struct RIVLCamera : public miniSG::Node {
+      virtual string toString() const { return "ospray::miniSG::RIVLCamera"; } 
+      vec3f from, at, up;
+    };
+
     /*! Scene graph grouping node */
     struct Group : public miniSG::Node {
       virtual string toString() const;
@@ -376,6 +381,28 @@ namespace ospray {
           }
 #undef NEXT_TOK
           // -------------------------------------------------------
+        } else if (nodeName == "Camera") {
+          // -------------------------------------------------------
+          Ref<miniSG::RIVLCamera> camera = new miniSG::RIVLCamera;
+          nodeList.push_back(camera.ptr);
+
+          // parse values
+          for (int pID=0;pID<node->child.size();pID++) {
+            xml::Node *childNode = node->child[pID];
+            if (childNode->name == "from") {
+              sscanf(childNode->content.c_str(),"%f %f %f",
+                     &camera->from.x,&camera->from.y,&camera->from.z);
+            }   
+            if (childNode->name == "at") {
+              sscanf(childNode->content.c_str(),"%f %f %f",
+                     &camera->at.x,&camera->at.y,&camera->at.z);
+            }   
+            if (childNode->name == "up") {
+              sscanf(childNode->content.c_str(),"%f %f %f",
+                     &camera->up.x,&camera->up.y,&camera->up.z);
+            }   
+          }    
+          // -------------------------------------------------------
         } else if (nodeName == "Transform") {
           // -------------------------------------------------------
           Ref<miniSG::Transform> xfm = new miniSG::Transform;
@@ -592,6 +619,16 @@ namespace ospray {
       Transform *xf = dynamic_cast<Transform *>(node.ptr);
       if (xf) {
         traverseSG(model,xf->child,xfm*xf->xfm);
+        return;
+      }
+
+      RIVLCamera *cam = dynamic_cast<RIVLCamera *>(node.ptr);
+      if (cam) {
+        Ref<miniSG::Camera> c = new miniSG::Camera;
+        c->from = cam->from;
+        c->up = cam->up;
+        c->at = cam->at;
+        model.camera.push_back(c);
         return;
       }
 

@@ -28,6 +28,10 @@
 namespace ospray {
   namespace miniSG {
 
+    struct Camera : public RefCount {
+      vec3f from, at, up;
+    };
+
     struct Texture2D : public RefCount {
       Texture2D();
 
@@ -214,7 +218,9 @@ namespace ospray {
       /*! list of meshes that the scene is composed of */
       std::vector<Ref<Mesh> >     mesh;
       /*! \brief list of instances (if available). */
-      std::vector<Instance>      instance;
+      std::vector<Instance>       instance;
+      /*! \brief list of camera defined in the model (usually empty) */
+      std::vector<Ref<Camera> >   camera;
 
       //! return number of meshes in this model
       inline size_t numMeshes() const { return mesh.size(); }
