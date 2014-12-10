@@ -319,6 +319,24 @@ namespace ospray {
       glutSwapBuffers();
     }
 
+    void Glut3DWidget::setViewPort(const vec3f from, 
+                                   const vec3f at,
+                                   const vec3f up)
+    {
+      const vec3f dir = at - from;
+      viewPort.at    = at;
+      viewPort.from  = from;
+      viewPort.up    = up;
+      
+      this->worldBounds = worldBounds;
+      viewPort.frame.l.vy = normalize(dir);
+      viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
+      viewPort.frame.l.vz = normalize(cross(viewPort.frame.l.vx,viewPort.frame.l.vy));
+      viewPort.frame.p    = from;
+      viewPort.snapUp();
+      viewPort.modified = true;
+    }
+
     void Glut3DWidget::setWorldBounds(const box3f &worldBounds)
     {
       vec3f center = embree::center(worldBounds);

@@ -32,7 +32,7 @@ namespace ospray {
   float g_explosion_factor = 0.f;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
 
-  int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
+  int g_width = 1024, g_height = 1024, g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
   bool g_createDefaultMaterial = true;
   int accumID = -1;
@@ -829,6 +829,14 @@ namespace ospray {
     window.create("MSGViewer: OSPRay Mini-Scene Graph test viewer");
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(box3f(msgModel->getBBox()));
+    if (msgModel->camera.size() > 0) {
+      PRINT(msgModel->camera[0]->from);
+      PRINT(msgModel->camera[0]->at);
+      PRINT(msgModel->camera[0]->up);
+      window.setViewPort(msgModel->camera[0]->from,
+                         msgModel->camera[0]->at,
+                         msgModel->camera[0]->up);
+    }
     ospray::glut3D::runGLUT();
   }
 }

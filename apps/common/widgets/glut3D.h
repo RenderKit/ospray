@@ -200,6 +200,8 @@ namespace ospray {
       void setTitle(const char *title);
       /*! set window title */
       void setTitle(const std::string &title) { setTitle(title.c_str()); }
+      /*! set viewport to given values */
+      void setViewPort(const vec3f from, const vec3f at, const vec3f up);
 
       // ------------------------------------------------------------------
       // event handling - override this to change this widgets behavior
