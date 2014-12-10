@@ -37,8 +37,8 @@ namespace ospray {
     indexData  = getParamData("index",NULL);
 
     Assert(radius > 0.f);
-    Assert(vertexData != NULL);
-    Assert(indexData != NULL);
+    Assert(vertexData);
+    Assert(indexData);
 
     index       = (const uint32*)indexData->data;
     numSegments = indexData->numItems;
