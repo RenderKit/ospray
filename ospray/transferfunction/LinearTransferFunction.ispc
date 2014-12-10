@@ -101,14 +101,14 @@ void LinearTransferFunction_precomputeMinMaxOpacityRanges(void *uniform pointer)
   uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
 
   // Compute the diagonal.
-  for (int i=0 ; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; i++) {
+  for (uniform int i=0 ; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; i++) {
 
     // Figure out the range of values in the array we are going to compare.
-    const int checkRangeLow = transferFunction->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
-    const int checkRangeHigh = transferFunction->opacityValueCount * (((float) i + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+    const uniform int checkRangeLow = transferFunction->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+    const uniform int checkRangeHigh = transferFunction->opacityValueCount * (((float) i + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
 
-    vec2f range = make_vec2f(transferFunction->opacityValues[checkRangeLow], transferFunction->opacityValues[checkRangeLow]);
-    for (int opacityIDX = checkRangeLow + 1 ; opacityIDX < checkRangeHigh ; opacityIDX++)
+    uniform vec2f range = make_vec2f(transferFunction->opacityValues[checkRangeLow], transferFunction->opacityValues[checkRangeLow]);
+    for (uniform int opacityIDX = checkRangeLow + 1 ; opacityIDX < checkRangeHigh ; opacityIDX++)
       range = make_vec2f(min(range.x, transferFunction->opacityValues[opacityIDX]), max(range.y, transferFunction->opacityValues[opacityIDX]));
 
     transferFunction->minMaxOpacityInRange[i][i] = range;
@@ -116,15 +116,15 @@ void LinearTransferFunction_precomputeMinMaxOpacityRanges(void *uniform pointer)
   }
 
   // Fill out each column from the diagonal up.
-  for (int i=0 ; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; i++) {
-    for (int j = i + 1 ; j < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; j++) {
+  for (uniform int i=0 ; i < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; i++) {
+    for (uniform int j = i + 1 ; j < PRECOMPUTED_OPACITY_SUBRANGE_COUNT ; j++) {
 
       // Figure out the range of values in the array we are going to compare.
-      const int checkRangeLow = transferFunction->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
-      const int checkRangeHigh = transferFunction->opacityValueCount * (((float) j + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+      const uniform int checkRangeLow = transferFunction->opacityValueCount * (((float) i) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
+      const uniform int checkRangeHigh = transferFunction->opacityValueCount * (((float) j + 1) / PRECOMPUTED_OPACITY_SUBRANGE_COUNT);
 
-      vec2f range = transferFunction->minMaxOpacityInRange[i][i];
-      for (int opacityIDX = checkRangeLow + 1 ; opacityIDX < checkRangeHigh ; opacityIDX++)
+      uniform vec2f range = transferFunction->minMaxOpacityInRange[i][i];
+      for (uniform int opacityIDX = checkRangeLow + 1 ; opacityIDX < checkRangeHigh ; opacityIDX++)
         range = make_vec2f(min(range.x, transferFunction->opacityValues[opacityIDX]), max(range.y, transferFunction->opacityValues[opacityIDX]));
 
       transferFunction->minMaxOpacityInRange[i][j] = range;
@@ -196,7 +196,7 @@ export void LinearTransferFunction_setColorValues(void *uniform pointer,
   transferFunction->colorValueCount = count;  transferFunction->colorValues = uniform new uniform vec3f[count];
 
   // Copy the color values into the transfer function.
-  for (size_t i=0 ; i < count ; i++) transferFunction->colorValues[i] = source[i];
+  for (uniform size_t i=0 ; i < count ; i++) transferFunction->colorValues[i] = source[i];
 
 }
 
@@ -214,7 +214,7 @@ export void LinearTransferFunction_setOpacityValues(void *uniform pointer,
   transferFunction->opacityValueCount = count;  transferFunction->opacityValues = uniform new uniform float[count];
 
   // Copy the opacity values into the transfer function.
-  for (size_t i=0 ; i < count ; i++) transferFunction->opacityValues[i] = source[i];
+  for (uniform size_t i=0 ; i < count ; i++) transferFunction->opacityValues[i] = source[i];
 
   // Precompute the min / max opacity ranges.
   LinearTransferFunction_precomputeMinMaxOpacityRanges(pointer);
