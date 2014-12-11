@@ -37,7 +37,8 @@ namespace ospray {
     transferFunction = (TransferFunction *) getParamObject("transferFunction", NULL);  exitOnCondition(transferFunction == NULL, "no transfer function specified");
 
     //! Get the value range.
-    vec2f voxelRange = getParam2f("voxelRange", vec2f(0.0f));  exitOnCondition(voxelRange == vec2f(0.0f), "no voxel range specified");
+    //! Voxel range not used for now.
+    // vec2f voxelRange = getParam2f("voxelRange", vec2f(0.0f));  exitOnCondition(voxelRange == vec2f(0.0f), "no voxel range specified");
 
     //! Get the gamma correction coefficient and exponent.
     vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
@@ -46,7 +47,7 @@ namespace ospray {
     ispc::BlockBrickedVolume_setVolumeDimensions(ispcEquivalent, (const ispc::vec3i &) volumeDimensions);
 
     //! Set the value range (must occur before setting the transfer function).
-    ispc::BlockBrickedVolume_setValueRange(ispcEquivalent, (const ispc::vec2f &) voxelRange);
+    //ispc::BlockBrickedVolume_setValueRange(ispcEquivalent, (const ispc::vec2f &) voxelRange);
 
     //! Set the transfer function.
     ispc::BlockBrickedVolume_setTransferFunction(ispcEquivalent, transferFunction->getEquivalentISPC());
