@@ -36,3 +36,16 @@ struct LinearTransferFunction {
 
 };
 
+inline uniform float getMaxOpacityForRange(LinearTransferFunction *uniform tf, 
+                                           uniform float range_lo, uniform float range_hi)
+{
+  uniform float rel_lo
+    = (range_lo - tf->inherited.valueRange.x) 
+    * rcp(tf->inherited.valueRange.y-tf->inherited.valueRange.x+1e-6f);
+  uniform float rel_hi
+    = (range_hi - tf->inherited.valueRange.x) 
+    * rcp(tf->inherited.valueRange.y-tf->inherited.valueRange.x+1e-6f);
+  uniform int bin_lo = (int)(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_lo);
+  uniform int bin_hi = (int)(ceil(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_hi));
+  return tf->minMaxOpacityInRange[bin_lo][bin_hi].y;
+}
