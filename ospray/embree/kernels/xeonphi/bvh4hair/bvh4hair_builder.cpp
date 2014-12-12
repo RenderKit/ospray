@@ -96,7 +96,7 @@ namespace embree
   void BVH4HairBuilder::computePrimRefs(const size_t threadIndex, const size_t threadCount)
   {
     DBG(PING);
-    LockStepTaskScheduler::dispatchTask( task_computePrimRefsBezierCurves, this, threadIndex, threadCount );	
+    scene->lockstep_scheduler.dispatchTask( task_computePrimRefsBezierCurves, this, threadIndex, threadCount );	
   }
 
   void BVH4HairBuilder::computePrimRefsBezierCurves(const size_t threadID, const size_t numThreads) 
@@ -254,7 +254,7 @@ namespace embree
 
     fastbin_copy<Bezier1i,false>(prims,tmp_prims,startID,endID,centroidBoundsMin_2,scale,global_bin16[threadID]);    
 
-    LockStepTaskScheduler::syncThreadsWithReduction( threadID, numThreads, reduceBinsParallel, global_bin16 );
+    scene->lockstep_scheduler.syncThreadsWithReduction( threadID, numThreads, reduceBinsParallel, global_bin16 );
     
     if (threadID == 0)
       {
@@ -544,6 +544,10 @@ namespace embree
   void BVH4HairBuilder::build(const size_t threadIndex, const size_t threadCount) 
   {
     DBG(PING);
+    if (threadIndex != 0) {
+      FATAL("threadIndex != 0");
+    }
+
     const size_t totalNumPrimitives = getNumPrimitives();
 
 
@@ -564,21 +568,20 @@ namespace embree
 
 
     /* allocate BVH data */
-    allocateData(TaskScheduler::getNumThreads(),totalNumPrimitives);
+    allocateData(threadCount,totalNumPrimitives);
 
-    LockStepTaskScheduler::init(TaskScheduler::getNumThreads()); 
-
-    if (likely(numPrimitives > SINGLE_THREADED_BUILD_THRESHOLD && TaskScheduler::getNumThreads() > 1) )
+    if (likely(numPrimitives > SINGLE_THREADED_BUILD_THRESHOLD && threadCount > 1) )
       {
 	DBG(std::cout << "PARALLEL BUILD" << std::endl);
-	TaskScheduler::executeTask(threadIndex,threadCount,_build_parallel_hair,this,TaskScheduler::getNumThreads(),"build_parallel");
+	build_main(threadIndex,threadCount);
+
       }
     else
       {
 	/* number of primitives is small, just use single threaded mode */
 	assert( numPrimitives > 0 );
 	DBG(std::cout << "SERIAL BUILD" << std::endl);
-	build_parallel_hair(0,1,0,0,NULL);
+	build_main(0,1);
       }
 
     if (g_verbose >= 2) {
@@ -592,21 +595,11 @@ namespace embree
 
 
 
-  void BVH4HairBuilder::build_parallel_hair(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
+  void BVH4HairBuilder::build_main(size_t threadIndex, size_t threadCount) 
   {
     DBG(PING);
 
     TIMER(double msec = 0.0);
-
-    /* initialize thread-local work stacks */
-    if (threadIndex % 4 == 0)
-      local_workStack[threadIndex].reset();
-
-    /* all worker threads enter tasking system */
-    if (threadIndex != 0) {
-      LockStepTaskScheduler::dispatchTaskMainLoop(threadIndex,threadCount); 
-      return;
-    }
 
     /* start measurement */
     double t0 = 0.0f;
@@ -648,7 +641,7 @@ namespace embree
     /* work in multithreaded toplevel mode until sufficient subtasks got generated */    
     const size_t coreCount = (threadCount+3)/4;
     while (global_workStack.size() < coreCount &&
-	   global_workStack.size()+BVH4i::N <= SIZE_GLOBAL_WORK_STACK) 
+	   global_workStack.size()+BVH4Hair::N <= SIZE_GLOBAL_WORK_STACK) 
     {
       BuildRecord br;
       if (!global_workStack.pop_nolock_largest(br)) break;
@@ -660,13 +653,13 @@ namespace embree
 
     /* fill per core work queues */    
     TIMER(msec = getSeconds());    
-    LockStepTaskScheduler::dispatchTask(task_fillLocalWorkQueues, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask(task_fillLocalWorkQueues, this, threadIndex, threadCount );
     TIMER(msec = getSeconds()-msec);    
     TIMER(std::cout << "task_fillLocalWorkQueues " << 1000. * msec << " ms" << std::endl << std::flush);
 
     /* now process all created subtasks on multiple threads */    
     TIMER(msec = getSeconds());    
-    LockStepTaskScheduler::dispatchTask(task_buildSubTrees, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask(task_buildSubTrees, this, threadIndex, threadCount );
     DBG(DBG_PRINT(atomicID));
     TIMER(msec = getSeconds()-msec);    
     TIMER(std::cout << "task_buildSubTrees " << 1000. * msec << " ms" << std::endl << std::flush);
@@ -679,9 +672,6 @@ namespace embree
     bvh4hair->bounds           = global_bounds.geometry;
     bvh4hair->unaligned_nodes  = (BVH4Hair::UnalignedNode*)node;
     bvh4hair->accel            = prims;
-
-    /* release all threads again */
-    LockStepTaskScheduler::releaseThreads(threadCount);
 
     /* stop measurement */
     if (g_verbose >= 2) 
@@ -862,7 +852,7 @@ namespace embree
      global_sharedData.left.reset();
      global_sharedData.right.reset();
      
-     LockStepTaskScheduler::dispatchTask( task_parallelBinningGlobal, this, threadID, numThreads );
+     scene->lockstep_scheduler.dispatchTask( task_parallelBinningGlobal, this, threadID, numThreads );
 
      if (unlikely(global_sharedData.split.pos == -1)) 
        split_fallback(prims,current,leftChild,rightChild);
@@ -874,7 +864,7 @@ namespace embree
 	 global_sharedData.lCounter.reset(0);
 	 global_sharedData.rCounter.reset(0); 
 
-	 LockStepTaskScheduler::dispatchTask( task_parallelPartitioningGlobal, this, threadID, numThreads );
+	 scene->lockstep_scheduler.dispatchTask( task_parallelPartitioningGlobal, this, threadID, numThreads );
 
 	 const unsigned int mid = current.begin + global_sharedData.split.numLeft;
 
@@ -967,13 +957,12 @@ namespace embree
   {
 #if defined(DEBUG)
     if (current.depth > BVH4Hair::maxBuildDepthLeaf) 
-      throw std::runtime_error("ERROR: depth limit reached");
+      THROW_RUNTIME_ERROR("ERROR: depth limit reached");
 #endif
     
     /* create leaf */
     if (current.items() <= MAX_ITEMS_PER_LEAF) {
-      //node[current.parentID].createLeaf(current.begin,current.items(),current.parentBoxID);
-      createLeaf(current.parentPtr,current.begin,current.items());
+      createBVH4HairLeaf(current.parentPtr,current.begin,current.items());
       return;
     }
 
@@ -990,9 +979,7 @@ namespace embree
     size_t numChildren = 1;
     const size_t currentIndex = alloc.get(1);
 
-    //node[current.parentID].createNode(&node[currentIndex],current.parentBoxID);
-
-    createNode(current.parentPtr,currentIndex);
+    createBVH4HairNode(current.parentPtr,currentIndex);
     
     node[currentIndex].prefetchNode<PFHINT_L2EX>();
 
@@ -1000,7 +987,6 @@ namespace embree
     for (size_t i=0; i<numChildren; i++) 
     {
       node[currentIndex].setMatrix(children[i].bounds.geometry, i);
-      //children[i].parentID  = currentIndex;
       children[i].parentPtr = &node[currentIndex].child(i);
       children[i].depth     = current.depth+1;
       createLeaf(children[i],alloc,threadIndex,threadCount);
@@ -1071,9 +1057,9 @@ namespace embree
     BVH4Hair::UnalignedNode *current_node = (BVH4Hair::UnalignedNode *)&node[currentIndex];
 
 #if ENABLE_AABB_NODES == 1
-    createNode(current.parentPtr,currentIndex,BVH4Hair::alignednode_mask);
+    createBVH4HairNode(current.parentPtr,currentIndex,BVH4Hair::alignednode_mask);
 #else
-    createNode(current.parentPtr,currentIndex);
+    createBVH4HairNode(current.parentPtr,currentIndex);
 #endif
 
 
@@ -1192,15 +1178,13 @@ namespace embree
     const size_t currentIndex = alloc.get(1);
     /* recurseOBB */
 
-    //node[current.parentID].createNode(&node[currentIndex],current.parentBoxID);
-
     node[currentIndex].prefetchNode<PFHINT_L2EX>();
 
     /* init used/unused nodes */
     node[currentIndex].setInvalid();
 
     // === default OBB node ===
-    createNode(current.parentPtr,currentIndex);
+    createBVH4HairNode(current.parentPtr,currentIndex);
 
     for (unsigned int i=0; i<numChildren; i++) 
       node[currentIndex].setMatrix(children[i].xfm,children[i].bounds.geometry,i);

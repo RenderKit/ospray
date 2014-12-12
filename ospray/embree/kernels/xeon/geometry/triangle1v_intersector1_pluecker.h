@@ -27,6 +27,7 @@ namespace embree
    *  Pluecker coordinates for the intersection. Due to the shift, the
    *  Pluecker coordinate calculation simplifies. The edge equations
    *  are watertight along the edge for neighboring triangles. */
+  template<bool list>
   struct Triangle1vIntersector1Pluecker
   {
     typedef Triangle1v Primitive;
@@ -36,7 +37,7 @@ namespace embree
     };
 
     /*! Intersect a ray with the triangle and updates the hit. */
-    static __forceinline void intersect(const Precalculations& pre, Ray& ray, const Triangle1v& tri, const void* geom)
+    static __forceinline void intersect(const Precalculations& pre, Ray& ray, const Primitive& tri, const void* geom)
     {
       /* load triangle */
       STAT3(normal.trav_prims,1,1,1);
@@ -93,8 +94,8 @@ namespace embree
       const float u = U * rcpAbsDen;
       const float v = V * rcpAbsDen;
       const float t = T * rcpAbsDen;
-      const int geomID = tri.geomID();
-      const int primID = tri.primID();
+      const int geomID = tri.geomID<list>();
+      const int primID = tri.primID<list>();
 
       /* intersection filter test */
 #if defined(__INTERSECTION_FILTER__)
@@ -114,14 +115,8 @@ namespace embree
       ray.primID = primID;
     }
 
-    static __forceinline void intersect(const Precalculations& pre, Ray& ray, const Triangle1v* tri, size_t num, void* geom)
-    {
-      for (size_t i=0; i<num; i++)
-        intersect(pre,ray,tri[i],geom);
-    }
-
     /*! Test if the ray is occluded by one of the triangles. */
-    static __forceinline bool occluded(const Precalculations& pre, Ray& ray, const Triangle1v& tri, const void* geom)
+    static __forceinline bool occluded(const Precalculations& pre, Ray& ray, const Primitive& tri, const void* geom)
     {
       /* load triangle */
       STAT3(shadow.trav_prims,1,1,1);
@@ -175,7 +170,7 @@ namespace embree
 
       /* intersection filter test */
 #if defined(__INTERSECTION_FILTER__)
-      const int geomID = tri.geomID();
+      const int geomID = tri.geomID<list>();
       Geometry* geometry = ((Scene*)geom)->get(geomID);
       if (unlikely(geometry->hasOcclusionFilter1()))
       {
@@ -184,21 +179,12 @@ namespace embree
         const float u = U*rcpAbsDen;
         const float v = V*rcpAbsDen;
         const float t = T*rcpAbsDen;
-        const int primID = tri.primID();
+        const int primID = tri.primID<list>();
         return runOcclusionFilter1(geometry,ray,u,v,t,Ng,geomID,primID);
       }
 #endif
 
       return true;
-    }
-
-    static __forceinline bool occluded(const Precalculations& pre, Ray& ray, const Triangle1v* tri, size_t num, void* geom) 
-    {
-      for (size_t i=0; i<num; i++) 
-        if (occluded(pre,ray,tri[i],geom))
-          return true;
-
-      return false;
     }
   };
 }

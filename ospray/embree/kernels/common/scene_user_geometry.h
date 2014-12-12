@@ -32,7 +32,15 @@ namespace embree
     __forceinline size_t size() const {
       return numItems;
     }
-    
+
+    /*! check if the i'th primitive is valid */
+    __forceinline bool valid(size_t i, BBox3fa* bbox = NULL) const 
+    {
+      const BBox3fa b = bounds(i);
+      if (bbox) *bbox = b;
+      return inFloatRange(b);
+    }
+
     void enabling ();
     void disabling();
   };
@@ -52,17 +60,6 @@ namespace embree
     virtual void setOccludedFunction8 (RTCOccludedFunc8 occluded8, bool ispc);
     virtual void setOccludedFunction16 (RTCOccludedFunc16 occluded16, bool ispc);
     virtual void build(size_t threadIndex, size_t threadCount) {}
-    
-  public:
-    void* ispcPtr;
-    void* ispcIntersect1;
-    void* ispcIntersect4;
-    void* ispcIntersect8;
-    void* ispcIntersect16;
-    void* ispcOccluded1;
-    void* ispcOccluded4;
-    void* ispcOccluded8;
-    void* ispcOccluded16;
   };
   
   struct Instance : public UserGeometryBase

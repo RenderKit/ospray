@@ -17,10 +17,10 @@
 #pragma once
 
 #include "bvh4.h"
-#include "bvh4_builder_util.h" // FIXME: remove
 #include "builders/heuristic_object_partition.h"
 #include "builders/workstack.h"
 #include "common/scene_user_geometry.h"
+#include "common/scene_subdiv_mesh.h"
 
 namespace embree
 {
@@ -81,39 +81,39 @@ namespace embree
         ALIGNED_CLASS;
       public:
 
-        GlobalState (size_t numThreads) 
-	  : threadStack(new WorkStack<BuildRecord,SIZE_WORK_STACK>[numThreads]) {}
+        GlobalState () : numThreads(getNumberOfLogicalThreads()) {
+	  threadStack = new WorkStack<BuildRecord,SIZE_WORK_STACK>[numThreads]; 
+        }
         
         ~GlobalState () {
           delete[] threadStack;
         }
 
       public:
+	size_t numThreads;
 	WorkHeap<BuildRecord> heap;
         __aligned(64) WorkStack<BuildRecord,SIZE_WORK_STACK>* threadStack;
-	ObjectPartition::ParallelBinner parallelBinner;
+        ObjectPartition::ParallelBinner parallelBinner;
       };
-
-      static std::auto_ptr<GlobalState> g_state;
 
     public:
 
       /*! Constructor. */
-      BVH4BuilderFast (BVH4* bvh, size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
+      BVH4BuilderFast (LockStepTaskScheduler* scheduler, BVH4* bvh, size_t listMode, size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
       
       /*! Destructor */
       ~BVH4BuilderFast ();
    
       /* build function */
-      void build(size_t threadIndex, size_t threadCount);
+      virtual void build(size_t threadIndex, size_t threadCount);
 
       /* single threaded build */
       void build_sequential(size_t threadIndex, size_t threadCount);
 
     public:
-      TASK_RUN_FUNCTION(BVH4BuilderFast,computePrimRefs);
-      TASK_RUN_FUNCTION(BVH4BuilderFast,buildSubTrees);
-      TASK_RUN_FUNCTION(BVH4BuilderFast,build_parallel);
+      TASK_SET_FUNCTION(BVH4BuilderFast,computePrimRefs);
+      TASK_FUNCTION(BVH4BuilderFast,buildSubTrees);
+      TASK_SET_FUNCTION(BVH4BuilderFast,build_parallel);
 
     public:
 
@@ -124,7 +124,7 @@ namespace embree
       virtual void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo) = 0;
     
       /*! creates build primitive array (parallel version) */
-      virtual void create_primitive_array_parallel(size_t threadIndex, size_t threadCount, PrimInfo& pinfo) = 0;
+      virtual void create_primitive_array_parallel(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo) = 0;
     
       /*! build mode */
       enum { RECURSE_SEQUENTIAL = 1, RECURSE_PARALLEL = 2, BUILD_TOP_LEVEL = 3 };
@@ -153,7 +153,11 @@ namespace embree
       static void splitFallback(PrimRef * __restrict__ const primref, BuildRecord& current, BuildRecord& leftChild, BuildRecord& rightChild);
     
     public:
+      LockStepTaskScheduler* scheduler;
+      std::auto_ptr<GlobalState> state;
+
       BVH4* bvh;                               //!< Output BVH
+      size_t listMode;
       size_t logBlockSize;
       size_t logSAHBlockSize;
       size_t blocks(size_t N) { return (N+((1<<logBlockSize)-1)) >> logBlockSize; }
@@ -161,7 +165,7 @@ namespace embree
       size_t primBytes; 
       size_t minLeafSize;
       size_t maxLeafSize;
-
+      
     protected:
       TaskScheduler::Task task;
       
@@ -173,108 +177,88 @@ namespace embree
       size_t numPrimitives;
     };
 
-    class BVH4BezierBuilderFast : public BVH4BuilderFast
+    template<typename Primitive>
+    class BVH4BuilderFastT : public BVH4BuilderFast
     {
     public:
-      BVH4BezierBuilderFast (BVH4* bvh, Scene* scene,       size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
-      BVH4BezierBuilderFast (BVH4* bvh, BezierCurves* geom, size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
-      size_t number_of_primitives();
-      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
-      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, PrimInfo& pinfo) ;
+      BVH4BuilderFastT (BVH4* bvh, Scene* scene, size_t listMode, size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize, bool parallel);
+      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
     public:
       Scene* scene;         //!< input scene
+    };
+
+    template<typename Primitive>
+    class BVH4BezierBuilderFast : public BVH4BuilderFastT<Primitive>
+    {
+    public:
+      BVH4BezierBuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4BezierBuilderFast (BVH4* bvh, BezierCurves* geom, size_t listMode);
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+    public:
       BezierCurves* geom;   //!< input mesh
     };
-
-    class BVH4Bezier1BuilderFast : public BVH4BezierBuilderFast
+    
+    template<typename Primitive>
+    class BVH4TriangleBuilderFast : public BVH4BuilderFastT<Primitive>
     {
     public:
-      BVH4Bezier1BuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Bezier1BuilderFast (BVH4* bvh, BezierCurves* geom);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4Bezier1iBuilderFast : public BVH4BezierBuilderFast
-    {
-    public:
-      BVH4Bezier1iBuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Bezier1iBuilderFast (BVH4* bvh, BezierCurves* geom);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4TriangleBuilderFast : public BVH4BuilderFast
-    {
-    public:
-      BVH4TriangleBuilderFast (BVH4* bvh, Scene* scene,       size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
-      BVH4TriangleBuilderFast (BVH4* bvh, TriangleMesh* mesh, size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
+      BVH4TriangleBuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4TriangleBuilderFast (BVH4* bvh, TriangleMesh* mesh, size_t listMode);
       size_t number_of_primitives();
       void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
-      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, PrimInfo& pinfo) ;
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo) ;
     public:
-      Scene* scene;         //!< input scene
-      TriangleMesh* mesh;   //!< input mesh
+      TriangleMesh* geom;   //!< input mesh
     };
-
-    class BVH4Triangle1BuilderFast : public BVH4TriangleBuilderFast
+  
+    template<typename Primitive>
+    class BVH4UserGeometryBuilderFastT : public BVH4BuilderFastT<Primitive>
     {
     public:
-      BVH4Triangle1BuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Triangle1BuilderFast (BVH4* bvh, TriangleMesh* mesh);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4Triangle4BuilderFast : public BVH4TriangleBuilderFast
-    {
-    public:
-      BVH4Triangle4BuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Triangle4BuilderFast (BVH4* bvh, TriangleMesh* mesh);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4Triangle8BuilderFast : public BVH4TriangleBuilderFast
-    {
-    public:
-      BVH4Triangle8BuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Triangle8BuilderFast (BVH4* bvh, TriangleMesh* mesh);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4Triangle1vBuilderFast : public BVH4TriangleBuilderFast
-    {
-    public:
-      BVH4Triangle1vBuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Triangle1vBuilderFast (BVH4* bvh, TriangleMesh* mesh);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4Triangle4vBuilderFast : public BVH4TriangleBuilderFast
-    {
-    public:
-      BVH4Triangle4vBuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Triangle4vBuilderFast (BVH4* bvh, TriangleMesh* mesh);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4Triangle4iBuilderFast : public BVH4TriangleBuilderFast
-    {
-    public:
-      BVH4Triangle4iBuilderFast (BVH4* bvh, Scene* scene);
-      BVH4Triangle4iBuilderFast (BVH4* bvh, TriangleMesh* mesh);
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
-    };
-
-    class BVH4UserGeometryBuilderFast : public BVH4BuilderFast
-    {
-    public:
-      BVH4UserGeometryBuilderFast (BVH4* bvh, Scene* scene);
-      BVH4UserGeometryBuilderFast (BVH4* bvh, UserGeometryBase* geom);
+      BVH4UserGeometryBuilderFastT (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4UserGeometryBuilderFastT (BVH4* bvh, UserGeometryBase* geom, size_t listMode);
       size_t number_of_primitives();
       void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
-      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, PrimInfo& pinfo) ;
-      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo) ;
     public:
-      Scene* scene;                    //!< input scene
       UserGeometryBase* geom;   //!< input geometry
     };
+
+    class BVH4TopLevelBuilderFastT : public BVH4BuilderFast
+    {
+    public:
+      BVH4TopLevelBuilderFastT (LockStepTaskScheduler* scheduler, BVH4* bvh);
+      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
+      void build(size_t threadIndex, size_t threadCount, PrimRef* prims_i, size_t N)
+      {
+	this->prims_i = prims_i;
+	this->N = N;
+	BVH4BuilderFast::build(threadIndex,threadCount);
+      }
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+    public:
+      PrimRef* prims_i;
+      size_t N;
+    };
+
+    template<typename Primitive>
+    class BVH4SubdivBuilderFast : public BVH4BuilderFastT<Primitive>
+    {
+    public:
+      BVH4SubdivBuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4SubdivBuilderFast (BVH4* bvh, SubdivMesh* geom, size_t listMode);
+      virtual void build(size_t threadIndex, size_t threadCount);
+
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+    public:
+      SubdivMesh* geom;   //!< input mesh
+    };
+
   }
 }

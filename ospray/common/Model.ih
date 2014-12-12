@@ -1,0 +1,118 @@
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+// ospray stuff
+#include "ospray/common/Ray.ih"
+#include "ospray/geometry/Geometry.ih"
+#include "ospray/volume/Volume.ih"
+
+// embree stuff
+#include "embree2/rtcore_scene.isph"
+
+struct Model {
+
+  /*! the scene handle we can use to tell embree to trace rays against this scene */
+  RTCScene embreeSceneHandle;
+
+  /*! pointer to the c++-equivalent class of this entity */
+  void *cppEquivalent;
+
+  //! array of (pointers to) geometries contained in this model
+  uniform Geometry *uniform *uniform geometry;  uniform int32 geometryCount;
+
+  //! volumes contained in the model
+  Volume **uniform volumes;  uniform int32 volumeCount;
+
+};
+
+/*! trace a ray (using embree where possible) */
+inline void traceRay(uniform Model *uniform model,
+                     varying Ray &ray)
+{
+  rtcIntersect(model->embreeSceneHandle,(varying RTCRay&)ray);
+}
+
+/*! determine if ray is occluded (using embree where possible) */
+inline bool isOccluded(uniform Model *uniform model,
+                     varying Ray &ray)
+{
+  rtcOccluded(model->embreeSceneHandle,(varying RTCRay&)ray);
+  return ray.geomID >= 0;
+}
+
+/*! perform post-intersect computations. should only get called for
+    rays that actually hit that given model. */
+inline void postIntersect(uniform Model *uniform model,
+                          varying DifferentialGeometry &dg,
+                          const varying Ray &ray,
+                          uniform int64 flags)
+{
+  // iw: note - this code does not yet work with instances
+  dg.materialID = -1; // make sure this is properly initialized
+  //  dg.color.x    = -1;
+  if (flags & DG_COLOR)
+    dg.color = make_vec4f(1.f);
+
+#if 1
+  // a first hack for instancing: problem is that ospray assumes that
+  // 'ray.geomid' specifies the respective sub-geometry of a model
+  // that was hit, but for instances embree actually stores this value
+  // in ray.instID, so the model would have to know if it's a model
+  // over instances or a model over geometries, which is kind of ugly
+  // ... will eventually ahve to fix this properly by implementing
+  // instances directly in ospray, but for now let's try this hack
+  // here:
+  if (ray.instID < 0) {
+    // a regular geometry
+    foreach_unique(geomID in ray.geomID) {
+      uniform Geometry *uniform geom = model->geometry[geomID];
+      geom->postIntersect(geom,model,
+                          dg,ray,flags);
+    }
+  } else {
+    // instanced geometry: create copy of ray, iterate over
+    // ray.instIDs, and remove that instancing info from the ray (so
+    // the next level of model doesn't get confused by it)
+    Ray newRay = ray;
+    foreach_unique(instID in ray.instID) {
+      uniform Geometry *uniform instGeom = model->geometry[instID];
+      newRay.instID = -1;
+      instGeom->postIntersect(instGeom,model,
+                              dg,newRay,flags & ~(DG_NORMALIZE|DG_FACEFORWARD));
+    }
+  }
+#else
+  foreach_unique(geomID in ray.geomID) {
+    uniform Geometry *uniform geom = model->geometry[geomID];
+    geom->postIntersect(geom,model,
+                        dg,ray,flags);
+  }
+#endif
+
+  if (flags & DG_NORMALIZE) {
+    dg.Ng = normalize(dg.Ng);
+    dg.Ns = normalize(dg.Ns);
+  }
+  if (flags & DG_FACEFORWARD) {
+    if (flags & DG_NG)
+      if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);
+    if (flags & DG_NS)
+      if (dot(ray.dir,dg.Ns) >= 0.f) dg.Ns = neg(dg.Ns);
+  }
+}
+

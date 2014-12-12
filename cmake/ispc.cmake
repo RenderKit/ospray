@@ -1,15 +1,25 @@
-# #####################################################################
-# INTEL CORPORATION PROPRIETARY INFORMATION                            
-# This software is supplied under the terms of a license agreement or  
-# nondisclosure agreement with Intel Corporation and may not be copied 
-# or disclosed except in accordance with the terms of that agreement.  
-# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
-# #####################################################################
+## ======================================================================== ##
+## Copyright 2009-2014 Intel Corporation                                    ##
+##                                                                          ##
+## Licensed under the Apache License, Version 2.0 (the "License");          ##
+## you may not use this file except in compliance with the License.         ##
+## You may obtain a copy of the License at                                  ##
+##                                                                          ##
+##     http://www.apache.org/licenses/LICENSE-2.0                           ##
+##                                                                          ##
+## Unless required by applicable law or agreed to in writing, software      ##
+## distributed under the License is distributed on an "AS IS" BASIS,        ##
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
+## See the License for the specific language governing permissions and      ##
+## limitations under the License.                                           ##
+## ======================================================================== ##
+
+SET(ISPC_VERSION 1.8.0)
 
 IF (APPLE)
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v1.7.0-osx CACHE STRING "ISPC Directory")
+  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-osx CACHE STRING "ISPC Directory")
 ELSE()
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v1.7.0-linux CACHE STRING "ISPC Directory")
+  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-linux CACHE STRING "ISPC Directory")
 ENDIF()
 MARK_AS_ADVANCED(OSPRAY_ISPC_DIRECTORY)
 
@@ -17,7 +27,7 @@ IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/ispc")
   MESSAGE("********************************************")
   MESSAGE("Could not find ISPC (tried ${OSPRAY_ISPC_DIRECTORY}.")
   MESSAGE("")
-  MESSAGE("This version of ospray expects you to have a binary install of ISPC version 1.7.0, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
+  MESSAGE("This version of ospray expects you to have a binary install of ISPC version ${ISPC_VERSION}, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
   MESSAGE("")
   MESSAGE("If you insist on using your own custom install of ISPC, please make sure that the 'OSPRAY_ISPC_DIRECTORY' variable is properly set in cmake.")
   MESSAGE("********************************************")
@@ -65,11 +75,11 @@ MACRO (ispc_compile)
   ENDIF()
 
   IF (THIS_IS_MIC)
-    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ispc_knc_backend.h  --addressing=${ISPC_ADDRESSING})
+    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h  --addressing=${ISPC_ADDRESSING})
     #${ISPC_DIR}/examples/intrinsics/knc.h)
     SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()
-    SET(CMAKE_ISPC_FLAGS --target ${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING})
+    SET(CMAKE_ISPC_FLAGS --target=${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING} --cpu=${OSPRAY_ISPC_CPU})
     SET(ISPC_TARGET_EXT ".dev.o")
   ENDIF()
 
@@ -79,19 +89,13 @@ MACRO (ispc_compile)
 
     GET_FILENAME_COMPONENT(fname ${src} NAME_WE)
     GET_FILENAME_COMPONENT(dir ${src} PATH)
-#    MESSAGE("src ${src}")
-#    MESSAGE("dir ${dir}")
-#    MESSAGE("fname ${fname}")
 
     IF ("${dir}" MATCHES "^/")
       # ------------------------------------------------------------------
       # global path name to input, like when we include the embree sources
       # from a global external embree checkout
       # ------------------------------------------------------------------
-#      message("GLOBAL PATH")
       STRING(REGEX REPLACE "^/" "${CMAKE_CURRENT_BINARY_DIR}/rebased/" outdir "${dir}")
-#      STRING(REGEX REPLACE ${PROJECT_SOURCE_DIR} "__ROOT__" dir "${dir}")
-#      message("GLOBAL PATH FIXED ${outdir}")
       SET(indir "${dir}")
       SET(input "${indir}/${fname}.ispc")
     ELSE()
@@ -102,19 +106,6 @@ MACRO (ispc_compile)
       SET(indir "${CMAKE_CURRENT_SOURCE_DIR}/${dir}")
       SET(input "${indir}/${fname}.ispc")
     ENDIF()
-#    message("outdir ${outdir}")
-#    message("indir ${indir}")
-#    message("input ${input}")
-#    IF("${dir}" STREQUAL "")
-#      SET(outdir ${ISPC_TARGET_DIR})
-#    ELSE()
-#      message("ISPC_TARGET_DIR ${ISPC_TARGET_DIR}")
-#      message("dir ${dir}")
-#      STRING(REGEX REPLACE ${PROJECT_SOURCE_DIR} "__PROJECT__" outdir2 "${dir}")
-#      message("outdir2 ${outdir2}")
-#      SET(outdir ${ISPC_TARGET_DIR}/${outdir2})
-#      message("outdir ${outdir}")
-#    ENDIF()
     SET(outdirh ${ISPC_TARGET_DIR})
 
     SET(deps "")
@@ -131,15 +122,6 @@ MACRO (ispc_compile)
     ENDIF ()
 
     SET(ispc_compile_result "${outdir}/${fname}${ISPC_TARGET_EXT}")
-#    MESSAGE("ispc_compile_result ${ispc_compile_result}")
-    # if we have multiple targets add additional object files
-#    IF (__XEON__)
-#      IF (${targets} MATCHES ".*,.*")
-#	FOREACH(target ${target_list})
-#	  SET(results ${results} "${outdir}/${fname}${ISPC_TARGET_EXT}")
-#	ENDFOREACH()
- #     ENDIF()
-#    ENDIF()
     ADD_CUSTOM_COMMAND(
       OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h
       COMMAND mkdir -p ${outdir} \; ${ISPC_BINARY}
@@ -159,8 +141,6 @@ MACRO (ispc_compile)
       \;
       DEPENDS ${input}
       ${deps})
-#      DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${src}
-#${outdir}/${fname}${ISPC_TARGET_EXT}
     SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${ispc_compile_result})
 
   ENDFOREACH()
@@ -172,7 +152,6 @@ MACRO (add_ispc_executable name)
   SET(ISPC_SOURCES "")
   SET(OTHER_SOURCES "")
   FOREACH(src ${ARGN})
-#    message("src $src")
     GET_FILENAME_COMPONENT(ext ${src} EXT)
     IF (ext STREQUAL ".ispc")
       SET(ISPC_SOURCES ${ISPC_SOURCES} ${src})
@@ -188,9 +167,7 @@ MACRO (OSPRAY_ADD_LIBRARY name type)
   SET(ISPC_SOURCES "")
   SET(OTHER_SOURCES "")
   SET(ISPC_OBJECTS "")
-  #MESSAGE("ospray_add_library ${name} ${type} ${ARGN}")
   FOREACH(src ${ARGN})
-    #MESSAGE("ospray_add_library src=${src}")
     GET_FILENAME_COMPONENT(ext ${src} EXT)
     IF (ext STREQUAL ".ispc")
       SET(ISPC_SOURCES ${ISPC_SOURCES} ${src})
@@ -199,8 +176,5 @@ MACRO (OSPRAY_ADD_LIBRARY name type)
     ENDIF ()
   ENDFOREACH()
   ISPC_COMPILE(${ISPC_SOURCES})
-#  MESSAGE("ISPC_OBJECTS : ${ISPC_OBJECTS}")
-#  MESSAGE("OTHER_SOURCES : ${OTHER_SOURCES}")
   ADD_LIBRARY(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES})
 ENDMACRO()
-#ENDMACRO()

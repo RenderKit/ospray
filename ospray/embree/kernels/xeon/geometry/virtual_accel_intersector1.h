@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/accel.h"
+#include "virtual_accel.h"
 #include "common/ray.h"
 
 namespace embree
@@ -35,26 +35,11 @@ namespace embree
       prim.accel->intersect((RTCRay&)ray,prim.item);
     }
 
-    static __forceinline void intersect(const Precalculations& pre, Ray& ray, const Primitive* prim, size_t num, const void* geom) 
-    {
-      for (size_t i=0; i<num; i++) 
-        intersect(pre,ray,prim[i],geom);
-    }
-
     static __forceinline bool occluded(const Precalculations& pre, Ray& ray, const Primitive& prim, const void* geom) 
     {
       AVX_ZERO_UPPER();
       prim.accel->occluded((RTCRay&)ray,prim.item);
       return ray.geomID == 0;
-    }
-
-    static __forceinline bool occluded(const Precalculations& pre, Ray& ray, const Primitive* prim, size_t num, const void* geom) 
-    {
-      for (size_t i=0; i<num; i++) 
-        if (occluded(pre,ray,prim[i],geom))
-          return true;
-
-      return false;
     }
   };
 }

@@ -28,6 +28,7 @@
 namespace embree
 {
   /*! Interface to different task scheduler implementations. */
+  /* __hidden */
   class __hidden TaskScheduler : public RefCount
   {
   public:
@@ -143,6 +144,9 @@ namespace embree
     /*! returns the number of threads used */
     static size_t getNumThreads();
 
+    /*! enables specified number of threads */
+    static size_t enableThreads(size_t N);
+
     /*! add a task to the scheduler */
     static void addTask(ssize_t threadIndex, QUEUE queue, Task* task);
 
@@ -155,9 +159,6 @@ namespace embree
 
     /*! destroys the task scheduler */
     static void destroy();
-
-    /*! returns ISPC event of the thread */
-    static Event* getISPCEvent(ssize_t threadIndex);
 
     /*! waits for an event out of a task */
     static void waitForEvent(Event* event); // use only from main thread !!!
@@ -195,48 +196,22 @@ namespace embree
   protected:
     volatile bool terminateThreads;
     std::vector<thread_t> threads;
+    bool defaultNumThreads;
     size_t numThreads;
-    struct __aligned(64) ThreadEvent { 
-      Event* event; 
-      char align[64-sizeof(Event*)];
-    };
-    ThreadEvent* thread2event;
-
-    /* for lockstep taskscheduler*/
-  public:
-    static const unsigned int CONTROL_THREAD_ID = 0;
-
-    __aligned(64)static AlignedAtomicCounter32 taskCounter;
-    __aligned(64) static runFunction taskPtr;
-    __aligned(64) static void* volatile data;
-
-    static void init(const size_t numThreads);
-
-    static Barrier taskBarrier;
-
-    static bool dispatchTask(const size_t threadID, const size_t numThreads);
-
-    static void dispatchTaskMainLoop(const size_t threadID, const size_t numThreads);
-    static void releaseThreads(const size_t numThreads);
-  
-    static __forceinline bool dispatchTask(runFunction task,
-                                           void* data, 
-					   const size_t threadID,
-					   const size_t numThreads)
-    {
-      TaskScheduler::taskPtr = task;
-      TaskScheduler::data = data;
-      return TaskScheduler::dispatchTask(threadID, numThreads);
-    }
-
-    static void syncThreads(const size_t threadID, const size_t numThreads);
-
+    volatile size_t numEnabledThreads;
+    __forceinline bool isEnabled(size_t threadIndex) const { return threadIndex < numEnabledThreads; }
   };
 
 #define TASK_FUNCTION(Class,Name) \
   void Name (const size_t threadID, const size_t numThreads);           \
   static void task_##Name (void* data, const size_t threadID, const size_t numThreads) { \
     ((Class*)data)->Name(threadID,numThreads);                          \
+  }
+
+#define TASK_SET_FUNCTION(Class,Name) \
+  void Name (const size_t threadID, const size_t numThreads, const size_t taskID, const size_t numTasks); \
+  static void _##Name (void* data, const size_t threadID, const size_t numThreads, const size_t taskID, const size_t numTasks) { \
+    ((Class*)data)->Name(threadID,numThreads,taskID,numTasks);			\
   }
 
 #define LOCAL_TASK_FUNCTION(Class,Name) \
@@ -250,44 +225,85 @@ namespace embree
   {
   public:
 
-    static void init(const size_t numThreads);
+    struct Init
+    {
+      Init (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler)
+      : threadIndex(threadIndex), threadCount(threadCount), scheduler(scheduler) 
+      {
+	if (threadCount) 
+	{
+	  if (threadIndex == 0) scheduler->taskBarrier.init(threadCount);
+	  scheduler->barrier.wait(threadCount);
+	  scheduler->enter(threadIndex,threadCount);
+	}
+      }
+      
+      ~Init () {
+	if (threadIndex == 0 && threadCount != 0) {
+	  scheduler->leave(threadIndex,threadCount);
+	  scheduler->barrier.reset();
+	}
+      }
+
+      size_t threadIndex, threadCount;
+      LockStepTaskScheduler* scheduler;
+    };
 
     static const unsigned int CONTROL_THREAD_ID = 0;
 
-    __aligned(64)static AlignedAtomicCounter32 taskCounter;
-    __aligned(64) static void (* taskPtr)(void* data, const size_t threadID, const size_t numThreads);
-    __aligned(64) static void* volatile data;
+    __aligned(64) BarrierActive barrier;
+
+    typedef void (*runFunction)(void* data, const size_t threadID, const size_t numThreads);
+    typedef void (*runFunction2)(void* data, const size_t threadID, const size_t numThreads, const size_t taskID, const size_t numTasks);
+
+    __aligned(64) AlignedAtomicCounter32 taskCounter;
+    __aligned(64) runFunction taskPtr;
+    __aligned(64) runFunction2 taskPtr2;
+    size_t numTasks;
+    size_t numThreads;
+    __aligned(64) void* volatile data;
 
 #if defined(__MIC__)
-    static QuadTreeBarrier taskBarrier;
-    //static Barrier taskBarrier;
+    __aligned(64) QuadTreeBarrier taskBarrier;
+    //__aligned(64) LinearBarrierActive taskBarrier; //FIXME
+
 #else
-    static Barrier taskBarrier;
+    __aligned(64) Barrier taskBarrier;
 #endif
 
-    static bool dispatchTask(const size_t threadID, const size_t numThreads);
+    bool enter(size_t threadIndex, size_t threadCount);
+    void leave(size_t threadIndex, size_t threadCount);
 
-    static void dispatchTaskMainLoop(const size_t threadID, const size_t numThreads);
-    static void releaseThreads(const size_t numThreads);
+    bool dispatchTask(const size_t threadID, size_t numThreads);
+
+    void dispatchTaskMainLoop(const size_t threadID, const size_t numThreads);
+    void releaseThreads(const size_t numThreads);
   
-    static __forceinline bool dispatchTask(void (* task)(void* data, const size_t threadID, const size_t numThreads),
-                                           void* data, 
-					   const size_t threadID,
-					   const size_t numThreads)
+    __forceinline bool dispatchTask(runFunction task, void* data, const size_t threadID, const size_t numThreads)
     {
       LockStepTaskScheduler::taskPtr = task;
+      LockStepTaskScheduler::taskPtr2 = NULL;
       LockStepTaskScheduler::data = data;
       return LockStepTaskScheduler::dispatchTask(threadID, numThreads);
     }
 
-    static void syncThreads(const size_t threadID, const size_t numThreads);
+    __forceinline bool dispatchTask(const size_t threadID, const size_t numThreads, runFunction2 task, void* data, const size_t numTasks, const char* name = "")
+    {
+      LockStepTaskScheduler::taskPtr = NULL;
+      LockStepTaskScheduler::taskPtr2 = task;
+      LockStepTaskScheduler::data = data;
+      LockStepTaskScheduler::numTasks = numTasks;
+      return LockStepTaskScheduler::dispatchTask(threadID, numThreads);
+    }
 
-    static void syncThreadsWithReduction(const size_t threadID, 
-					 const size_t numThreads,
-					 void (* reductionFct)(const size_t currentThreadID,
-							       const size_t childThreadID,
-							       void *ptr),
-					 void *ptr);
+    void syncThreads(const size_t threadID, const size_t numThreads);
+
+    void syncThreadsWithReduction(const size_t threadID, 
+				  const size_t numThreads,
+				  void (* reductionFct)(const size_t currentThreadID,
+							const size_t childThreadID,
+							void *ptr),
+				  void *ptr);
 
 
 

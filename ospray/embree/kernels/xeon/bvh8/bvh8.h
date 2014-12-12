@@ -26,7 +26,7 @@ namespace embree
 {
   /*! Multi BVH with 4 children. Each node stores the bounding box of
    * it's 4 children as well as 4 child pointers. */
-  class BVH8 : public Bounded
+  class BVH8 : public AccelData
   {
     ALIGNED_CLASS;
   public:
@@ -175,6 +175,8 @@ namespace embree
       NodeRef children[N];    //!< Pointer to the 4 children (can be a node or leaf)
     };
 
+
+
     /*! swap the children of two nodes */
     __forceinline static void swap(Node* a, size_t i, Node* b, size_t j)
     {
@@ -218,12 +220,16 @@ namespace embree
     ~BVH8 ();
 
     /*! BVH8 instantiations */
+    static Accel* BVH8Triangle4(Scene* scene);
+    static Accel* BVH8Triangle4ObjectSplit(Scene* scene);
+    static Accel* BVH8Triangle4SpatialSplit(Scene* scene);
+
     static Accel* BVH8Triangle8(Scene* scene);
     static Accel* BVH8Triangle8ObjectSplit(Scene* scene);
     static Accel* BVH8Triangle8SpatialSplit(Scene* scene);
 
     /*! initializes the acceleration structure */
-    void init (size_t numPrimitives = 0, size_t numThreads = 1);
+    void init(size_t nodeSize, size_t numPrimitives, size_t numThreads);
 
     /*! Clears the barrier bits of a subtree. */
     void clearBarrier(NodeRef& node);
@@ -231,12 +237,12 @@ namespace embree
     LinearAllocatorPerThread alloc;
 
 #if defined (__AVX__)
-    __forceinline Node* allocNode(size_t thread) {
-      Node* node = (Node*) alloc.malloc(thread,sizeof(Node),1 << alignment); node->clear(); return node;
+    __forceinline Node* allocNode(LinearAllocatorPerThread::ThreadAllocator& thread) {
+      Node* node = (Node*) thread.malloc(sizeof(Node),1 << alignment); node->clear(); return node;
     }
 
-    __forceinline char* allocPrimitiveBlocks(size_t thread, size_t num) {
-      return (char*) alloc.malloc(thread,num*primTy.bytes,1 << alignment);
+    __forceinline char* allocPrimitiveBlocks(LinearAllocatorPerThread::ThreadAllocator& thread, size_t num) {
+      return (char*) thread.malloc(num*primTy.bytes,1 << alignment);
     }
 
     /*! Encodes a node */
@@ -269,4 +275,22 @@ namespace embree
   public:
     std::vector<BVH8*> objects;
   };
+
+#if defined (__AVX__)
+
+  __forceinline std::ostream &operator<<(std::ostream &o, const BVH8::Node &n)
+  {
+    o << "lower_x " << n.lower_x << std::endl;
+    o << "upper_x " << n.upper_x << std::endl;
+    o << "lower_y " << n.lower_y << std::endl;
+    o << "upper_y " << n.upper_y << std::endl;
+    o << "lower_z " << n.lower_z << std::endl;
+    o << "upper_z " << n.upper_z << std::endl;
+    o << "children ";
+    for (size_t i=0;i<BVH8::N;i++) o << n.children[i] << " ";
+    o << std::endl;
+    return o;
+  } 
+#endif
+
 }

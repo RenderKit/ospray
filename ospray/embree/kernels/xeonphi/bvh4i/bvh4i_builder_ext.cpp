@@ -207,7 +207,7 @@ PRINT(CORRECT_numPrims);
     dest0.reset(0);
     dest1.reset(0);
 
-    LockStepTaskScheduler::dispatchTask( task_countAndComputePrimRefsPreSplits, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask( task_countAndComputePrimRefsPreSplits, this, threadIndex, threadCount );
 
     /* === padding to 8-wide blocks === */
     const unsigned int preSplits        = dest1;
@@ -230,7 +230,7 @@ PRINT(CORRECT_numPrims);
 
     TIMER(msec = getSeconds());
 
-    LockStepTaskScheduler::dispatchTask( task_radixSortPreSplitIDs, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask( task_radixSortPreSplitIDs, this, threadIndex, threadCount );
 
     TIMER(msec = getSeconds()-msec);    
     TIMER(std::cout << "task_radixSortPreSplitIDs " << 1000. * msec << " ms" << std::endl << std::flush);
@@ -238,7 +238,7 @@ PRINT(CORRECT_numPrims);
 
     TIMER(msec = getSeconds());
 
-    LockStepTaskScheduler::dispatchTask( task_computePrimRefsFromPreSplitIDs, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask( task_computePrimRefsFromPreSplitIDs, this, threadIndex, threadCount );
 
     TIMER(msec = getSeconds()-msec);    
     TIMER(std::cout << "task_computePrimRefsFromPreSplitIDs " << 1000. * msec << " ms" << std::endl << std::flush);
@@ -292,44 +292,47 @@ PRINT(CORRECT_numPrims);
 	  if (unlikely(!mesh->isEnabled())) continue;
 	  if (unlikely(mesh->numTimeSteps != 1)) continue;
 
-	  const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
-	  const unsigned int stride = mesh->triangles.getBufferStride();
+	  if (offset < mesh->numTriangles)
+	    {
+	      const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
+	      const unsigned int stride = mesh->triangles.getBufferStride();
 
-	  for (unsigned int i=offset; i<mesh->numTriangles && currentID < endID; i++, currentID++,cptr_tri+=stride)	 
-	    { 			    
-	      const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
-	      //const TriangleMesh::Triangle& tri = mesh->triangle(i);
-	      prefetch<PFHINT_L2>(&tri + L2_PREFETCH_ITEMS);
-	      prefetch<PFHINT_L1>(&tri + L1_PREFETCH_ITEMS);
+	      for (unsigned int i=offset; i<mesh->numTriangles && currentID < endID; i++, currentID++,cptr_tri+=stride)	 
+		{ 			    
+		  const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
+		  //const TriangleMesh::Triangle& tri = mesh->triangle(i);
+		  prefetch<PFHINT_L2>(&tri + L2_PREFETCH_ITEMS);
+		  prefetch<PFHINT_L1>(&tri + L1_PREFETCH_ITEMS);
 
-	      const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
+		  const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
 
-	      mic_f bmin = min(min(v[0],v[1]),v[2]);
-	      mic_f bmax = max(max(v[0],v[1]),v[2]);
+		  mic_f bmin = min(min(v[0],v[1]),v[2]);
+		  mic_f bmax = max(max(v[0],v[1]),v[2]);
 
-	      const mic_f area_tri = tri_sah(v[0],v[1],v[2]);
-	      const mic_f area_box = box_sah(bmin,bmax);
-	      const mic_f factor = area_box * rcp(area_tri);
+		  const mic_f area_tri = tri_sah(v[0],v[1],v[2]);
+		  const mic_f area_box = box_sah(bmin,bmax);
+		  const mic_f factor = area_box * rcp(area_tri);
 
-	      DBG(
-		  DBG_PRINT(area_tri);
-		  DBG_PRINT(area_box);
-		  DBG_PRINT(factor);
-		  );
+		  DBG(
+		      DBG_PRINT(area_tri);
+		      DBG_PRINT(area_box);
+		      DBG_PRINT(factor);
+		      );
 
-	      const mic_m m_factor = factor > PRESPLIT_AREA_THRESHOLD;
-	      const mic_m m_sah_zero = area_box > PRESPLIT_MIN_AREA;
+		  const mic_m m_factor = factor > PRESPLIT_AREA_THRESHOLD;
+		  const mic_m m_sah_zero = area_box > PRESPLIT_MIN_AREA;
 
-	      if (any(m_factor & m_sah_zero)) 
-		numTrisPreSplit++;
-	      else
-		numTrisNoPreSplit++;   
+		  if (any(m_factor & m_sah_zero)) 
+		    numTrisPreSplit++;
+		  else
+		    numTrisNoPreSplit++;   
 
-	      bounds_scene_min = min(bounds_scene_min,bmin);
-	      bounds_scene_max = max(bounds_scene_max,bmax);
-	      const mic_f centroid2 = bmin+bmax;
-	      bounds_centroid_min = min(bounds_centroid_min,centroid2);
-	      bounds_centroid_max = max(bounds_centroid_max,centroid2);
+		  bounds_scene_min = min(bounds_scene_min,bmin);
+		  bounds_scene_max = max(bounds_scene_max,bmax);
+		  const mic_f centroid2 = bmin+bmax;
+		  bounds_centroid_min = min(bounds_centroid_min,centroid2);
+		  bounds_centroid_max = max(bounds_centroid_max,centroid2);
+		}
 	    }
 	  if (currentID == endID) break;
 	  offset = 0;
@@ -368,57 +371,60 @@ PRINT(CORRECT_numPrims);
 	  if (unlikely(!mesh->isEnabled())) continue;
 	  if (unlikely(mesh->numTimeSteps != 1)) continue;
 
-	  const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
-	  const unsigned int stride = mesh->triangles.getBufferStride();
+	  if (offset < mesh->numTriangles)
+	    {
+	      const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
+	      const unsigned int stride = mesh->triangles.getBufferStride();
 
-	  for (unsigned int i=offset; i<mesh->numTriangles && currentID < endID; i++, currentID++,cptr_tri+=stride)	 
-	    { 			    
-	      //const TriangleMesh::Triangle& tri = mesh->triangle(i);
-	      const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
+	      for (unsigned int i=offset; i<mesh->numTriangles && currentID < endID; i++, currentID++,cptr_tri+=stride)	 
+		{ 			    
+		  //const TriangleMesh::Triangle& tri = mesh->triangle(i);
+		  const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
 
-	      prefetch<PFHINT_L2>(&tri + L2_PREFETCH_ITEMS);
-	      prefetch<PFHINT_L1>(&tri + L1_PREFETCH_ITEMS);
+		  prefetch<PFHINT_L2>(&tri + L2_PREFETCH_ITEMS);
+		  prefetch<PFHINT_L1>(&tri + L1_PREFETCH_ITEMS);
 
-	      const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
+		  const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
 
-	      mic_f bmin = min(min(v[0],v[1]),v[2]);
-	      mic_f bmax = max(max(v[0],v[1]),v[2]);
+		  mic_f bmin = min(min(v[0],v[1]),v[2]);
+		  mic_f bmax = max(max(v[0],v[1]),v[2]);
 
-	      const mic_f area_tri = tri_sah(v[0],v[1],v[2]);
-	      const mic_f area_box = box_sah(bmin,bmax);
-	      const mic_f factor = area_box * rcp(area_tri);
+		  const mic_f area_tri = tri_sah(v[0],v[1],v[2]);
+		  const mic_f area_box = box_sah(bmin,bmax);
+		  const mic_f factor = area_box * rcp(area_tri);
 
-	      DBG(
-		  DBG_PRINT(area_tri);
-		  DBG_PRINT(area_box);
-		  DBG_PRINT(factor);
-		  );
+		  DBG(
+		      DBG_PRINT(area_tri);
+		      DBG_PRINT(area_box);
+		      DBG_PRINT(factor);
+		      );
 
-	      const mic_m m_factor = factor > PRESPLIT_AREA_THRESHOLD;
-	      const mic_m m_sah_zero = area_box > PRESPLIT_MIN_AREA;
+		  const mic_m m_factor = factor > PRESPLIT_AREA_THRESHOLD;
+		  const mic_m m_sah_zero = area_box > PRESPLIT_MIN_AREA;
 
-	      if (any(m_factor & m_sah_zero)) 
-		{
-		  prefetch<PFHINT_L2EX>(presplitIDs + 4*4);
+		  if (any(m_factor & m_sah_zero)) 
+		    {
+		      prefetch<PFHINT_L2EX>(presplitIDs + 4*4);
 
-		  store1f(&presplitIDs->code,area_box);
-		  store1f(&presplitIDs->sah,factor);
-		  presplitIDs->groupID = g;
-		  presplitIDs->primID  = i;
-		  presplitIDs++;
+		      store1f(&presplitIDs->code,area_box);
+		      store1f(&presplitIDs->sah,factor);
+		      presplitIDs->groupID = g;
+		      presplitIDs->primID  = i;
+		      presplitIDs++;
+		    }
+		  else
+		    {
+		      prefetch<PFHINT_L2EX>(no_presplit_prims + L2_PREFETCH_ITEMS);
+
+		      store4f(&no_presplit_prims->lower,bmin);
+		      store4f(&no_presplit_prims->upper,bmax);	
+		      no_presplit_prims->lower.a = g; 
+		      no_presplit_prims->upper.a = i;
+		      no_presplit_prims++;
+
+		    }
+
 		}
-	      else
-		{
-		  prefetch<PFHINT_L2EX>(no_presplit_prims + L2_PREFETCH_ITEMS);
-
-		  store4f(&no_presplit_prims->lower,bmin);
-		  store4f(&no_presplit_prims->upper,bmax);	
-		  no_presplit_prims->lower.a = g; 
-		  no_presplit_prims->upper.a = i;
-		  no_presplit_prims++;
-
-		}
-
 	    }
 	  if (currentID == endID) break;
 	  offset = 0;
@@ -471,7 +477,7 @@ PRINT(CORRECT_numPrims);
 	    }
 	}
 
-	LockStepTaskScheduler::syncThreads(threadID,numThreads);
+	scene->lockstep_scheduler.syncThreads(threadID,numThreads);
 
 
 	/* calculate total number of items for each bucket */
@@ -537,7 +543,7 @@ PRINT(CORRECT_numPrims);
 	  evictL2(&src[i]);
 	}
 
-	if (b<3) LockStepTaskScheduler::syncThreads(threadID,numThreads);
+	if (b<3) scene->lockstep_scheduler.syncThreads(threadID,numThreads);
 
       }
   }
@@ -666,12 +672,12 @@ PRINT(CORRECT_numPrims);
 
   void BVH4iBuilderVirtualGeometry::computePrimRefs(const size_t threadIndex, const size_t threadCount)
   {
-    LockStepTaskScheduler::dispatchTask( task_computePrimRefsVirtualGeometry, this, threadIndex, threadCount );	
+    scene->lockstep_scheduler.dispatchTask( task_computePrimRefsVirtualGeometry, this, threadIndex, threadCount );	
   }
 
   void BVH4iBuilderVirtualGeometry::createAccel(const size_t threadIndex, const size_t threadCount)
   {
-    LockStepTaskScheduler::dispatchTask( task_createVirtualGeometryAccel, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask( task_createVirtualGeometryAccel, this, threadIndex, threadCount );
   }
 
   void BVH4iBuilderVirtualGeometry::computePrimRefsVirtualGeometry(const size_t threadID, const size_t numThreads) 
@@ -822,7 +828,7 @@ PRINT(CORRECT_numPrims);
 
   void BVH4iBuilderMemoryConservative::createAccel(const size_t threadIndex, const size_t threadCount)
   {
-    LockStepTaskScheduler::dispatchTask( task_createMemoryConservativeAccel, this, threadIndex, threadCount );  
+    scene->lockstep_scheduler.dispatchTask( task_createMemoryConservativeAccel, this, threadIndex, threadCount );  
 
     // === do some padding add the end of 'accel' ===
 
@@ -877,5 +883,168 @@ PRINT(CORRECT_numPrims);
     return BVH4iStatistics<BVH4i::QuantizedNode>(bvh).str();
   }
 
+  /* =================================================================================== */
+  /* =================================================================================== */
+  /* =================================================================================== */
+
+  void BVH4iBuilderSubdivMesh::printBuilderName()
+  {
+    std::cout << "building BVH4i with Subdivision Surface SAH builder (MIC) ... " << std::endl;    
+  }
+
+  void BVH4iBuilderSubdivMesh::build(const size_t threadIndex, const size_t threadCount)
+  {
+    for (size_t i=0;i<scene->size();i++)
+      {
+	if (unlikely(scene->get(i) == NULL)) continue;
+	if (unlikely((scene->get(i)->type != SUBDIV_MESH) /*&& (scene->get(i)->type != INSTANCES)*/)) continue;
+	if (unlikely(!scene->get(i)->isEnabled())) continue;
+        SubdivMesh* geom = (SubdivMesh*) scene->get(i);
+	geom->initializeHalfEdgeStructures();
+      }
+
+    BVH4iBuilder::build(threadIndex,threadCount);
+  }
+
+  void BVH4iBuilderSubdivMesh::allocateData(const size_t threadCount, const size_t totalNumPrimitives)
+  {
+    PING;
+    size_t numPrimitivesOld = numPrimitives;
+    numPrimitives = totalNumPrimitives;
+    if (numPrimitivesOld != numPrimitives)
+      {
+	const size_t numPrims = numPrimitives+4;
+	const size_t minAllocNodes = (threadCount+1) * ALLOCATOR_NODE_BLOCK_SIZE; 
+	const size_t numNodes = (size_t)((numPrims+3)/4) + minAllocNodes;
+	allocateMemoryPools(numPrims,numNodes,sizeof(BVH4i::Node),sizeof(SubdivPatch1));
+      }
+  }
+
+
+  size_t BVH4iBuilderSubdivMesh::getNumPrimitives()
+  {
+    /* count total number of subdivision surface objects */
+    size_t numFaces = 0;       
+    for (size_t i=0;i<scene->size();i++)
+      {
+	if (unlikely(scene->get(i) == NULL)) continue;
+	if (unlikely((scene->get(i)->type != SUBDIV_MESH) /*&& (scene->get(i)->type != INSTANCES)*/)) continue;
+	if (unlikely(!scene->get(i)->isEnabled())) continue;
+        SubdivMesh* geom = (SubdivMesh*) scene->get(i);
+	numFaces += geom->size();
+      }
+    return numFaces;	
+  }
+
+  void BVH4iBuilderSubdivMesh::computePrimRefs(const size_t threadIndex, const size_t threadCount)
+  {
+    scene->lockstep_scheduler.dispatchTask( task_computePrimRefsSubdivMesh, this, threadIndex, threadCount );	
+  }
+
+  void BVH4iBuilderSubdivMesh::createAccel(const size_t threadIndex, const size_t threadCount)
+  {
+    scene->lockstep_scheduler.dispatchTask( task_createSubdivMeshAccel, this, threadIndex, threadCount );
+  }
+
+  void BVH4iBuilderSubdivMesh::computePrimRefsSubdivMesh(const size_t threadID, const size_t numThreads) 
+  {
+    const size_t numTotalGroups = scene->size();
+
+    /* count total number of virtual objects */
+    const size_t numFaces  = numPrimitives;
+    const size_t startID   = (threadID+0)*numFaces/numThreads;
+    const size_t endID     = (threadID+1)*numFaces/numThreads; 
+    
+    PrimRef *__restrict__ const prims     = this->prims;
+
+    // === find first group containing startID ===
+    unsigned int g=0, numSkipped = 0;
+    for (; g<numTotalGroups; g++) {       
+      if (unlikely(scene->get(g) == NULL)) continue;
+      if (unlikely((scene->get(g)->type != SUBDIV_MESH) /*&& (scene->get(g)->type != INSTANCES)*/)) continue;
+      if (unlikely(!scene->get(g)->isEnabled())) continue;
+      const SubdivMesh* const geom = (SubdivMesh*) scene->get(g);
+      const size_t numPrims = geom->size();
+      if (numSkipped + numPrims > startID) break;
+      numSkipped += numPrims;
+    }
+
+    /* start with first group containing startID */
+    mic_f bounds_scene_min((float)pos_inf);
+    mic_f bounds_scene_max((float)neg_inf);
+    mic_f bounds_centroid_min((float)pos_inf);
+    mic_f bounds_centroid_max((float)neg_inf);
+
+    unsigned int num = 0;
+    unsigned int currentID = startID;
+    unsigned int offset = startID - numSkipped;
+
+    for (; g<numTotalGroups; g++) 
+      {
+	if (unlikely(scene->get(g) == NULL)) continue;
+	if (unlikely((scene->get(g)->type != SUBDIV_MESH ) /*&& (scene->get(g)->type != INSTANCES)*/)) continue;
+	if (unlikely(!scene->get(g)->isEnabled())) continue;
+
+	SubdivMesh *subdiv_mesh = (SubdivMesh *)scene->get(g);
+
+        size_t N = subdiv_mesh->size();
+        for (unsigned int i=offset; i<N && currentID < endID; i++, currentID++)	 
+	  { 			    
+	    const BBox3fa bounds = subdiv_mesh->bounds(i);
+
+	    const mic_f bmin = broadcast4to16f(&bounds.lower); 
+	    const mic_f bmax = broadcast4to16f(&bounds.upper);
+          
+	    bounds_scene_min = min(bounds_scene_min,bmin);
+	    bounds_scene_max = max(bounds_scene_max,bmax);
+	    const mic_f centroid2 = bmin+bmax;
+	    bounds_centroid_min = min(bounds_centroid_min,centroid2);
+	    bounds_centroid_max = max(bounds_centroid_max,centroid2);
+
+	    store4f(&prims[currentID].lower,bmin);
+	    store4f(&prims[currentID].upper,bmax);	
+	    prims[currentID].lower.a = g;
+	    prims[currentID].upper.a = i;
+	  }
+        if (currentID == endID) break;
+        offset = 0;
+      }
+
+    /* update global bounds */
+    Centroid_Scene_AABB bounds;
+    
+    store4f(&bounds.centroid2.lower,bounds_centroid_min);
+    store4f(&bounds.centroid2.upper,bounds_centroid_max);
+    store4f(&bounds.geometry.lower,bounds_scene_min);
+    store4f(&bounds.geometry.upper,bounds_scene_max);
+
+    global_bounds.extend_atomic(bounds);    
+  }
+
+
+#define SUBDIVISION_LEVEL 0
+
+  void BVH4iBuilderSubdivMesh::createSubdivMeshAccel(const size_t threadID, const size_t numThreads)
+  {
+    const size_t startID = (threadID+0)*numPrimitives/numThreads;
+    const size_t endID   = (threadID+1)*numPrimitives/numThreads;
+
+    SubdivPatch1 *acc = (SubdivPatch1*)accel + startID;
+
+    const PrimRef* __restrict__  bptr = prims + startID;
+
+    for (size_t j=startID; j<endID; j++, bptr++, acc++)
+      {
+    	prefetch<PFHINT_NT>(bptr + L1_PREFETCH_ITEMS);
+    	prefetch<PFHINT_L2>(bptr + L2_PREFETCH_ITEMS);
+    	assert(bptr->geomID() < scene->size() );
+        SubdivMesh* subdiv_mesh = (SubdivMesh *) scene->get( bptr->geomID() );
+    	*acc = SubdivPatch1(&subdiv_mesh->getHalfEdgeForQuad( bptr->primID() ),
+			    subdiv_mesh->getVertexPositionPtr(),
+			    bptr->geomID(),
+			    bptr->primID(),
+			    SUBDIVISION_LEVEL);
+      }
+  }
 
 };

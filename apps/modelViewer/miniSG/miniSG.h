@@ -1,25 +1,36 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #pragma once
 
-// ospray stuff
-#include "ospray/common/ospcommon.h"
-#include "ospray/common/managed.h"
-// embree stuff
+// ospray 
+#include "ospray/common/OSPCommon.h"
+#include "ospray/common/Managed.h"
+// embree 
 #include "common/sys/filename.h"
-// stl stuff
+// stl 
 #include <vector>
 #include <map>
 
 namespace ospray {
   namespace miniSG {
+
+    struct Camera : public RefCount {
+      vec3f from, at, up;
+    };
 
     struct Texture2D : public RefCount {
       Texture2D();
@@ -31,34 +42,6 @@ namespace ospray {
       void *data;   //Pointer to binary texture data
     };
     
-#if 0
-    /*! mini 'all-rounder' material that should be able to capture
-      the most common material types such as OBJ wavefront */
-    struct Material : public RefCount {
-      std::string name; /*! symbolic name, if available (can be empty) */
-      std::string type; /*! material type (like "OBJ", or "Phong", if
-                            available (can be empty) */
-
-      float d;
-      float Ns;
-      float Ni;
-      vec3f Ka; /*!< ambient component */
-      vec3f Kd; /*!< diffuse component */
-      vec3f Ks; /*!< specular component */
-      vec3f Tf; 
-
-      std::string map_d;
-      std::string map_Ns;
-      std::string map_Ni;
-      std::string map_Ka;
-      std::string map_Kd;
-      std::string map_Ks;
-      std::string map_Refl;
-      std::string map_Bump;
-
-      Material();
-    };
-#else
     struct Material : public RefCount {
       struct Param : public RefCount {
         typedef enum {
@@ -184,13 +167,9 @@ namespace ospray {
       std::string name;
       std::string type;
     };
-#endif
 
     struct Triangle {
       uint32 v0, v1, v2;
-      //      uint32 materialID; // iw, 1/11/14: disabled materialID
-      //      per triangle, emrbee cannot do buffer sharing with this
-      //      format.
     };
 
     /*! default triangle mesh layout */
@@ -198,6 +177,7 @@ namespace ospray {
       std::string           name;     /*!< symbolic name of mesh, can be empty */
       std::vector<vec3fa>   position; /*!< vertex positions */
       std::vector<vec3fa>   normal;   /*!< vertex normals; empty if none present */
+      std::vector<vec3fa>   color ;   /*!< vertex colors; empty if none present */
       std::vector<vec2f>    texcoord; /*!< vertex texcoords; empty if none present */
       std::vector<Triangle> triangle; /*!< triangles' vertex IDs */
       std::vector<Ref<Material> > materialList; /*!< entire list of
@@ -235,14 +215,12 @@ namespace ospray {
     bool operator!=(const Instance &a, const Instance &b);
 
     struct Model : public RefCount {
-      // /*! list of materials - if per-triangle material IDs are used,
-      //     then all material IDs of all meshes reference into this
-      //     list */
-      // std::vector<Ref<Material> > material;
       /*! list of meshes that the scene is composed of */
       std::vector<Ref<Mesh> >     mesh;
       /*! \brief list of instances (if available). */
-      std::vector<Instance>      instance;
+      std::vector<Instance>       instance;
+      /*! \brief list of camera defined in the model (usually empty) */
+      std::vector<Ref<Camera> >   camera;
 
       //! return number of meshes in this model
       inline size_t numMeshes() const { return mesh.size(); }
@@ -267,10 +245,13 @@ namespace ospray {
     /*! import a list of STL files */
     void importSTL(std::vector<Model *> &animation, const embree::FileName &fileName);
 
+    /*! import a list of X3D files */
+    void importX3D(Model &model, const embree::FileName &fileName);
+
     /*! import a MiniSG MSG file, and add it to the specified model */
     void importMSG(Model &model, const embree::FileName &fileName);
 
     void error(const std::string &err);
 
-  }
-}
+  } // ::ospray::minisg
+} // ::ospray

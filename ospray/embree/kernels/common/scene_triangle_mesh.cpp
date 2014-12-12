@@ -33,14 +33,14 @@ namespace embree
   
   void TriangleMesh::enabling() 
   { 
-    if (numTimeSteps == 1) { atomic_add(&parent->numTriangleMeshes ,1); atomic_add(&parent->numTriangles ,numTriangles); }
-    else                   { atomic_add(&parent->numTriangleMeshes2,1); atomic_add(&parent->numTriangles2,numTriangles); }
+    if (numTimeSteps == 1) { atomic_add(&parent->numTriangles ,numTriangles); }
+    else                   { atomic_add(&parent->numTriangles2,numTriangles); }
   }
   
   void TriangleMesh::disabling() 
   { 
-    if (numTimeSteps == 1) { atomic_add(&parent->numTriangleMeshes ,-1); atomic_add(&parent->numTriangles ,-numTriangles); }
-    else                   { atomic_add(&parent->numTriangleMeshes2,-1); atomic_add(&parent->numTriangles2,-numTriangles); }
+    if (numTimeSteps == 1) { atomic_add(&parent->numTriangles ,-(ssize_t)numTriangles); }
+	else                   { atomic_add(&parent->numTriangles2,-(ssize_t)numTriangles); }
   }
 
   void TriangleMesh::setMask (unsigned mask) 
@@ -144,32 +144,38 @@ namespace embree
 
   bool TriangleMesh::verify () 
   {
-    float range = sqrtf(0.5f*FLT_MAX);
     for (size_t i=0; i<numTriangles; i++) {     
-      if (triangles[i].v[0] >= numVertices) { 
-#if DEBUG
-	DBG_PRINT(i); DBG_PRINT( triangles[i].v[0] ); 
-#endif
-	return false; }
-      if (triangles[i].v[1] >= numVertices) { 
-#if DEBUG
-	DBG_PRINT(i); DBG_PRINT( triangles[i].v[1] ); 
-#endif
-	return false; }
-      if (triangles[i].v[2] >= numVertices) { 
-#if DEBUG
-	DBG_PRINT(i); DBG_PRINT( triangles[i].v[2] ); 
-#endif
-	return false; }
+      if (triangles[i].v[0] >= numVertices) return false; 
+      if (triangles[i].v[1] >= numVertices) return false; 
+      if (triangles[i].v[2] >= numVertices) return false; 
     }
     for (size_t j=0; j<numTimeSteps; j++) {
       BufferT<Vec3fa>& verts = vertices[j];
       for (size_t i=0; i<numVertices; i++) {
-        if (!(verts[i].x > -range && verts[i].x < range)) return false;
-	if (!(verts[i].y > -range && verts[i].y < range)) return false;
-	if (!(verts[i].z > -range && verts[i].z < range)) return false;
+	if (!inFloatRange(verts[i])) 
+	  return false;
       }
     }
     return true;
+  }
+
+  void TriangleMesh::write(std::ofstream& file)
+  {
+    int type = TRIANGLE_MESH;
+    file.write((char*)&type,sizeof(int));
+    file.write((char*)&numTimeSteps,sizeof(int));
+    file.write((char*)&numVertices,sizeof(int));
+    file.write((char*)&numTriangles,sizeof(int));
+
+    for (size_t j=0; j<numTimeSteps; j++) {
+      while ((file.tellp() % 16) != 0) { char c = 0; file.write(&c,1); }
+      for (size_t i=0; i<numVertices; i++) file.write((char*)&vertex(i,j),sizeof(Vec3fa));  
+    }
+
+    while ((file.tellp() % 16) != 0) { char c = 0; file.write(&c,1); }
+    for (size_t i=0; i<numTriangles; i++) file.write((char*)&triangle(i),sizeof(Triangle));  
+
+    while ((file.tellp() % 16) != 0) { char c = 0; file.write(&c,1); }
+    for (size_t i=0; i<numTriangles; i++) file.write((char*)&triangle(i),sizeof(Triangle));  
   }
 }

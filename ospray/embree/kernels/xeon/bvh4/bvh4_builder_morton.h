@@ -17,8 +17,8 @@
 #pragma once
 
 #include "bvh4.h"
-#include "bvh4_builder_util.h" // FIXME: remove
-#include "../builders/heuristic_fallback.h"
+#include "builders/heuristic_fallback.h"
+#include "builders/workstack.h"
 
 namespace embree
 {
@@ -118,6 +118,7 @@ namespace embree
           numThreads = getNumberOfLogicalThreads();
           startGroup = new unsigned int[numThreads];
           startGroupOffset = new unsigned int[numThreads];
+	  dest = new size_t[numThreads];
           radixCount = (ThreadRadixCountTy*) alignedMalloc(numThreads*sizeof(ThreadRadixCountTy));
         }
 
@@ -126,32 +127,29 @@ namespace embree
           alignedFree(radixCount);
           delete[] startGroupOffset;
           delete[] startGroup;
+	  delete[] dest;
         }
 
         size_t numThreads;
         unsigned int* startGroup;
         unsigned int* startGroupOffset;
+	size_t* dest;
         ThreadRadixCountTy* radixCount;
         
-        //size_t numBuildRecords;
 	atomic_t taskCounter;
-        //__aligned(64) BuildRecord buildRecords[NUM_TOP_LEVEL_BINS];
 	std::vector<BuildRecord> buildRecords;
         __aligned(64) WorkStack<BuildRecord,NUM_TOP_LEVEL_BINS> workStack;
         LinearBarrierActive barrier;
       };
       
       /*! Constructor. */
-      BVH4BuilderMorton (BVH4* bvh, Scene* scene, TriangleMesh* mesh, size_t logBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
+      BVH4BuilderMorton (BVH4* bvh, Scene* scene, TriangleMesh* mesh, size_t listMode, size_t logBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
       
       /*! Destruction */
       ~BVH4BuilderMorton ();
       
       /* build function */
       void build(size_t threadIndex, size_t threadCount);
-      
-      /*! initialized the builder */
-      void init(size_t threadIndex, size_t threadCount);
       
       /*! precalculate some per thread data */
       void initThreadState(const size_t threadID, const size_t numThreads);
@@ -161,25 +159,25 @@ namespace embree
 
       CentGeomBBox3fa computeBounds();
 
-      void computeMortonCodes(const size_t startID, const size_t endID, 
+      void computeMortonCodes(const size_t startID, const size_t endID, size_t& destID,
                               const size_t startGroup, const size_t startOffset, 
                               MortonID32Bit* __restrict__ const dest);
 
       /*! main build task */
-      TASK_RUN_FUNCTION(BVH4BuilderMorton,build_parallel_morton);
+      TASK_SET_FUNCTION(BVH4BuilderMorton,build_parallel_morton);
       TaskScheduler::Task task;
       
       /*! task that calculates the bounding box of the scene */
-      TASK_RUN_FUNCTION(BVH4BuilderMorton,computeBounds);
+      TASK_FUNCTION(BVH4BuilderMorton,computeBounds);
       
       /*! task that calculates the morton codes for each primitive in the scene */
-      TASK_RUN_FUNCTION(BVH4BuilderMorton,computeMortonCodes);
+      TASK_FUNCTION(BVH4BuilderMorton,computeMortonCodes);
       
       /*! parallel sort of the morton codes */
-      TASK_RUN_FUNCTION(BVH4BuilderMorton,radixsort);
+      TASK_FUNCTION(BVH4BuilderMorton,radixsort);
       
       /*! task that builds a list of sub-trees */
-      TASK_RUN_FUNCTION(BVH4BuilderMorton,recurseSubMortonTrees);
+      TASK_FUNCTION(BVH4BuilderMorton,recurseSubMortonTrees);
       
     public:
       
@@ -218,6 +216,9 @@ namespace embree
       
     public:
       BVH4* bvh;               //!< Output BVH
+      LockStepTaskScheduler* scheduler;
+      std::auto_ptr<MortonBuilderState> state;
+
       Scene* scene;
       TriangleMesh* mesh;
       size_t logBlockSize;
@@ -226,12 +227,11 @@ namespace embree
       size_t primBytes; 
       size_t minLeafSize;
       size_t maxLeafSize;
+      size_t listMode;
 
       size_t topLevelItemThreshold;
       size_t encodeShift;
       size_t encodeMask;
-
-      static std::auto_ptr<MortonBuilderState> g_state;
             
     public:
       MortonID32Bit* __restrict__ morton;
@@ -243,16 +243,17 @@ namespace embree
       size_t numAllocatedPrimitives;
       size_t numAllocatedNodes;
       CentGeomBBox3fa global_bounds;
+      Barrier barrier;
       //createSmallLeaf createSmallLeaf;
       //leafBounds leafBounds;
-      LockStepTaskScheduler scheduler;
+      //LockStepTaskScheduler scheduler;
     };
 
     class BVH4Triangle1BuilderMorton : public BVH4BuilderMorton
     {
     public:
-      BVH4Triangle1BuilderMorton (BVH4* bvh, Scene* scene);
-      BVH4Triangle1BuilderMorton (BVH4* bvh, TriangleMesh* mesh);
+      BVH4Triangle1BuilderMorton (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4Triangle1BuilderMorton (BVH4* bvh, TriangleMesh* mesh, size_t listMode);
       BBox3fa leafBounds(NodeRef& ref) const;
       void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID, BBox3fa& box_o);
     };
@@ -260,8 +261,8 @@ namespace embree
     class BVH4Triangle4BuilderMorton : public BVH4BuilderMorton
     {
     public:
-      BVH4Triangle4BuilderMorton (BVH4* bvh, Scene* scene);
-      BVH4Triangle4BuilderMorton (BVH4* bvh, TriangleMesh* mesh);
+      BVH4Triangle4BuilderMorton (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4Triangle4BuilderMorton (BVH4* bvh, TriangleMesh* mesh, size_t listMode);
       BBox3fa leafBounds(NodeRef& ref) const;
       void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID, BBox3fa& box_o);
     };
@@ -269,8 +270,8 @@ namespace embree
     class BVH4Triangle8BuilderMorton : public BVH4BuilderMorton
     {
     public:
-      BVH4Triangle8BuilderMorton (BVH4* bvh, Scene* scene);
-      BVH4Triangle8BuilderMorton (BVH4* bvh, TriangleMesh* mesh);
+      BVH4Triangle8BuilderMorton (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4Triangle8BuilderMorton (BVH4* bvh, TriangleMesh* mesh, size_t listMode);
       BBox3fa leafBounds(NodeRef& ref) const;
       void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID, BBox3fa& box_o);
     };
@@ -278,8 +279,8 @@ namespace embree
     class BVH4Triangle1vBuilderMorton : public BVH4BuilderMorton
     {
     public:
-      BVH4Triangle1vBuilderMorton (BVH4* bvh, Scene* scene);
-      BVH4Triangle1vBuilderMorton (BVH4* bvh, TriangleMesh* mesh);
+      BVH4Triangle1vBuilderMorton (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4Triangle1vBuilderMorton (BVH4* bvh, TriangleMesh* mesh, size_t listMode);
       BBox3fa leafBounds(NodeRef& ref) const;
       void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID, BBox3fa& box_o);
     };
@@ -287,8 +288,8 @@ namespace embree
     class BVH4Triangle4vBuilderMorton : public BVH4BuilderMorton
     {
     public:
-      BVH4Triangle4vBuilderMorton (BVH4* bvh, Scene* scene);
-      BVH4Triangle4vBuilderMorton (BVH4* bvh, TriangleMesh* mesh);
+      BVH4Triangle4vBuilderMorton (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4Triangle4vBuilderMorton (BVH4* bvh, TriangleMesh* mesh, size_t listMode);
       BBox3fa leafBounds(NodeRef& ref) const;
       void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID, BBox3fa& box_o);
     };
@@ -296,8 +297,8 @@ namespace embree
     class BVH4Triangle4iBuilderMorton : public BVH4BuilderMorton
     {
     public:
-      BVH4Triangle4iBuilderMorton (BVH4* bvh, Scene* scene);
-      BVH4Triangle4iBuilderMorton (BVH4* bvh, TriangleMesh* mesh);
+      BVH4Triangle4iBuilderMorton (BVH4* bvh, Scene* scene, size_t listMode);
+      BVH4Triangle4iBuilderMorton (BVH4* bvh, TriangleMesh* mesh, size_t listMode);
       BBox3fa leafBounds(NodeRef& ref) const;
       void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID, BBox3fa& box_o);
     };

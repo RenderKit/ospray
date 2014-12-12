@@ -1,25 +1,33 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
-#include "mpicommon.h"
-#include "mpidevice.h"
-#include "command.h"
-//#include "../fb/swapchain.h"
-#include "ospray/common/model.h"
-#include "ospray/common/data.h"
-#include "ospray/common/library.h"
-#include "ospray/common/model.h"
-#include "ospray/geometry/trianglemesh.h"
-#include "ospray/render/renderer.h"
-#include "ospray/camera/camera.h"
-#include "ospray/volume/volume.h"
-#include "ospray/lights/light.h"
-#include "mpiloadbalancer.h"
+#include "MPICommon.h"
+#include "MPIDevice.h"
+#include "CommandStream.h"
+#include "ospray/common/Model.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/Library.h"
+#include "ospray/common/Model.h"
+#include "ospray/geometry/TriangleMesh.h"
+#include "ospray/render/Renderer.h"
+#include "ospray/camera/Camera.h"
+#include "ospray/volume/Volume.h"
+#include "ospray/lights/Light.h"
+#include "ospray/texture/Texture2D.h"
+#include "MPILoadBalancer.h"
 
 namespace ospray {
   namespace mpi {
@@ -27,6 +35,13 @@ namespace ospray {
     using std::endl;
 
     static const int HOST_NAME_MAX = 10000;
+
+    void embreeErrorFunc(const RTCError code, const char* str)
+    {
+      std::cerr << "#osp: embree internal error " << code << " : " << str << std::endl;
+      throw std::runtime_error("embree internal error '"+std::string(str)+"'");
+    }
+
 
     /*! it's up to the proper init
       routine to decide which processes call this function and which
@@ -41,11 +56,25 @@ namespace ospray {
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
+      // std::stringstream embreeConfig;
+      // if (debugMode)
+      //   embreeConfig << " threads=1";
+      // rtcInit(embreeConfig.str().c_str());
+
+      //      assert(rtcGetError() == RTC_NO_ERROR);
+      rtcSetErrorFunction(embreeErrorFunc);
+
       std::stringstream embreeConfig;
       if (debugMode)
-        embreeConfig << " threads=1";
+        embreeConfig << " threads=1,verbose=2";
       rtcInit(embreeConfig.str().c_str());
-      assert(rtcGetError() == RTC_NO_ERROR);
+
+      if (rtcGetError() != RTC_NO_ERROR) {
+        // why did the error function not get called !?
+        std::cerr << "#osp:init: embree internal error number " << (int)rtcGetError() << std::endl;
+        assert(rtcGetError() == RTC_NO_ERROR);
+      }
+
 
       CommandStream cmd;
 
@@ -62,12 +91,7 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-        // PING;
-        // PRINT(command);sleep(1);
-#if 0
-        if (worker.rank == 0)
-          printf("#w: command %i\n",command);
-#endif
+
         switch (command) {
         case api::MPIDevice::CMD_NEW_RENDERER: {
           const mpi::Handle handle = cmd.get_handle();
@@ -99,7 +123,7 @@ namespace ospray {
           if (worker.rank == 0)
             if (logLevel > 2)
               cout << "creating new volume \"" << type << "\" ID " << (void*)(int64)handle << endl;
-          Volume *volume = Volume::createVolume(type);
+          Volume *volume = Volume::createInstance(type);
           if (!volume) 
             throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
           volume->refInc();
@@ -107,6 +131,20 @@ namespace ospray {
           Assert(volume);
           handle.assign(volume);
           //          cout << "#w: new volume " << handle << endl;
+        } break;
+        case api::MPIDevice::CMD_NEW_TRANSFERFUNCTION: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new transfer function \"" << type << "\" ID " << (void*)(int64)handle << endl;
+          TransferFunction *transferFunction = TransferFunction::createInstance(type);
+          if (!transferFunction) {
+            throw std::runtime_error("unknown transfer function type '"+std::string(type)+"'");
+          }
+          transferFunction->refInc();
+          cmd.free(type);
+          handle.assign(transferFunction);
         } break;
         case api::MPIDevice::CMD_NEW_MATERIAL: {
           // Assert(type != NULL && "invalid volume type identifier");
@@ -156,8 +194,6 @@ namespace ospray {
         } break;
 
         case api::MPIDevice::CMD_NEW_LIGHT: {
-          PING;
-          // Assert(type != NULL && "invalid volume type identifier");
           const mpi::Handle rendererHandle = cmd.get_handle();
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
@@ -311,6 +347,25 @@ namespace ospray {
             }
           }
         } break;
+
+        case api::MPIDevice::CMD_NEW_TEXTURE2D: {
+          const mpi::Handle handle = cmd.get_handle();
+          Texture2D *texture2D = NULL;
+
+          int32 width = cmd.get_int32();
+          int32 height = cmd.get_int32();
+          int32 type = cmd.get_int32();
+          int32 flags = cmd.get_int32();
+          size_t size = cmd.get_size_t();
+          
+          void *data = malloc(size);
+          cmd.get_data(size,data);
+
+          texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,flags);
+          assert(texture2D);
+          handle.assign(texture2D);
+        } break;
+
         case api::MPIDevice::CMD_ADD_GEOMETRY: {
           const mpi::Handle modelHandle = cmd.get_handle();
           const mpi::Handle geomHandle = cmd.get_handle();
@@ -320,6 +375,17 @@ namespace ospray {
           Assert(geom);
           model->geometry.push_back(geom);
         } break;
+
+        case api::MPIDevice::CMD_ADD_VOLUME: {
+          const mpi::Handle modelHandle = cmd.get_handle();
+          const mpi::Handle volumeHandle = cmd.get_handle();
+          Model *model = (Model *) modelHandle.lookup();
+          Assert(model);
+          Volume *volume = (Volume *) volumeHandle.lookup();
+          Assert(volume);
+          model->volumes.push_back(volume);
+        } break;
+
         case api::MPIDevice::CMD_COMMIT: {
           const mpi::Handle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
@@ -393,6 +459,15 @@ namespace ospray {
           obj->findParam(name,1)->set(val);
           cmd.free(name);
         } break;
+        case api::MPIDevice::CMD_SET_VEC2F: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const vec2f val = cmd.get_vec2f();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
         case api::MPIDevice::CMD_SET_VEC3I: {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
@@ -429,5 +504,6 @@ namespace ospray {
         }
       };
     }
-  }
-}
+
+  } // ::ospray::api
+} // ::ospray

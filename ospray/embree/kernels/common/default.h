@@ -23,6 +23,7 @@
 #include "sys/sync/atomic.h"
 #include "sys/stl/vector.h"
 #include "sys/stl/string.h"
+#include "sys/stl/array2d.h"
 #include "sys/taskscheduler.h"
 
 #include "math/math.h"
@@ -41,24 +42,68 @@
 #include <set>
 #include <vector>
 #include <algorithm>
+#include <iomanip>
 
 #include "../version.h"
 
 #define ERROR(x) \
-  throw std::runtime_error(x)
+  THROW_RUNTIME_ERROR(x)
 
 namespace embree
 {
+
+  /* we consider floating point numbers in that range as valid input numbers */
+#define VALID_FLOAT_RANGE  1.844E18f
+
+  __forceinline bool inFloatRange(const float v) {
+    return (v > -VALID_FLOAT_RANGE) && (v < +VALID_FLOAT_RANGE);
+  };
+  __forceinline bool inFloatRange(const Vec3fa& v) {
+    return all(gt_mask(v,Vec3fa_t(-VALID_FLOAT_RANGE)) & lt_mask(v,Vec3fa_t(+VALID_FLOAT_RANGE)));
+  };
+  __forceinline bool inFloatRange(const BBox3fa& v) {
+    return all(gt_mask(v.lower,Vec3fa_t(-VALID_FLOAT_RANGE)) & lt_mask(v.upper,Vec3fa_t(+VALID_FLOAT_RANGE)));
+  };
+
+#define MODE_HIGH_QUALITY (1<<8)
+#define LIST_MODE_BITS 0xFF
+
+#if 0
+#define LeafMode 1
+#define LeafIterator1 ListIntersector1
+#define LeafIterator4 ListIntersector4
+#define LeafIterator4_1 ListIntersector4_1
+#define LeafIterator8 ListIntersector8
+#define LeafIterator8_1 ListIntersector8_1
+#else
+#define LeafMode 0
+#define LeafIterator1 ArrayIntersector1
+#define LeafIterator4 ArrayIntersector4
+#define LeafIterator4_1 ArrayIntersector4_1
+#define LeafIterator8 ArrayIntersector8
+#define LeafIterator8_1 ArrayIntersector8_1
+#endif
+
   /* global settings */
   extern size_t g_numThreads;
   extern size_t g_verbose;
+
   extern std::string g_tri_accel;
   extern std::string g_tri_builder;
   extern std::string g_tri_traverser;
+  extern double g_tri_builder_replication_factor;
+
   extern std::string g_tri_accel_mb;
   extern std::string g_tri_builder_mb;
+  extern std::string g_tri_traverser_mb;
+
   extern std::string g_hair_accel;
   extern std::string g_hair_builder;
+  extern std::string g_hair_traverser;
+  extern double g_hair_builder_replication_factor;
+
+  extern std::string g_subdiv_accel;
+
   extern int g_scene_flags;
   extern size_t g_benchmark;
   extern float g_memory_preallocation_factor;
@@ -156,6 +201,7 @@ namespace embree
   typedef Vec2<ssef> sse2f;
   typedef Vec3<ssef> sse3f;
   typedef Vec4<ssef> sse4f;
+  typedef LinearSpace3<sse3f> LinearSpaceSSE3f;
   typedef AffineSpaceT<LinearSpace3<sse3f > > AffineSpaceSSE3f;
   typedef BBox<sse3f > BBoxSSE3f;
 #endif
@@ -204,6 +250,12 @@ typedef void (*ErrorFunc) ();
 #define SELECT_SYMBOL_DEFAULT2(features,intersector,intersector2) \
   intersector = isa::intersector2;
 
+#if defined(__SSE__)
+#if !defined(__TARGET_SIMD4__)
+#define __TARGET_SIMD4__
+#endif
+#endif
+
 #if defined(__TARGET_SSE41__)
 #define SELECT_SYMBOL_SSE41(features,intersector) \
   if ((features & SSE41) == SSE41) intersector = sse41::intersector;
@@ -219,6 +271,9 @@ typedef void (*ErrorFunc) ();
 #endif
 
 #if defined(__TARGET_AVX__)
+#if !defined(__TARGET_SIMD8__)
+#define __TARGET_SIMD8__
+#endif
 #define SELECT_SYMBOL_AVX(features,intersector) \
   if ((features & AVX) == AVX) intersector = avx::intersector;
 #else
@@ -226,6 +281,9 @@ typedef void (*ErrorFunc) ();
 #endif
 
 #if defined(__TARGET_AVX2__)
+#if !defined(__TARGET_SIMD8__)
+#define __TARGET_SIMD8__
+#endif
 #define SELECT_SYMBOL_AVX2(features,intersector) \
   if ((features & AVX2) == AVX2) intersector = avx2::intersector;
 #else
@@ -233,6 +291,9 @@ typedef void (*ErrorFunc) ();
 #endif
 
 #if defined(__MIC__)
+#if !defined(__TARGET_SIMD4__)
+#define __TARGET_SIMD16__
+#endif
 #define SELECT_SYMBOL_KNC(features,intersector) \
   intersector = knc::intersector;
 #else

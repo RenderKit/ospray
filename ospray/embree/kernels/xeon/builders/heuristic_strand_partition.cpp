@@ -21,7 +21,7 @@ namespace embree
   namespace isa
   {
     template<>
-    const StrandSplit::Split StrandSplit::find<false>(size_t threadIndex, size_t threadCount, BezierRefList& prims)
+    const StrandSplit::Split StrandSplit::find<false>(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, BezierRefList& prims)
     {
       /* first curve determines first axis */
       BezierRefList::block_iterator_unsafe i = prims;
@@ -47,7 +47,7 @@ namespace embree
       
       for (BezierRefList::block_iterator_unsafe i = prims; i; i++) 
       {
-	Bezier1& prim = *i;
+	BezierPrim& prim = *i;
 	const Vec3fa axisi = normalize(prim.p3-prim.p0);
 	const float cos0 = abs(dot(axisi,axis0));
 	const float cos1 = abs(dot(axisi,axis1));
@@ -65,7 +65,7 @@ namespace embree
       return Split(sah,axis0,axis1);
     }
     
-    StrandSplit::TaskFindParallel::TaskFindParallel(size_t threadIndex, size_t threadCount, BezierRefList& prims)
+    StrandSplit::TaskFindParallel::TaskFindParallel(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, BezierRefList& prims)
     {
       /* first curve determines first axis */
       BezierRefList::block_iterator_unsafe i = prims;
@@ -73,7 +73,7 @@ namespace embree
       
       /* parallel calculation of 2nd axis  */
       size_t numTasks = min(maxTasks,threadCount);
-      TaskScheduler::executeTask(threadIndex,numTasks,_task_bound_parallel,this,numTasks,"build::task_find_parallel");
+      scheduler->dispatchTask(threadIndex,numTasks,_task_bound_parallel,this,numTasks,"build::task_find_parallel");
       
       /* select best 2nd axis */
       float bestCos = 1.0f;
@@ -82,7 +82,7 @@ namespace embree
       }
       
       /* parallel calculation of unaligned bounds */
-      TaskScheduler::executeTask(threadIndex,numTasks,_task_bound_parallel,this,numTasks,"build::task_find_parallel");
+      scheduler->dispatchTask(threadIndex,numTasks,_task_bound_parallel,this,numTasks,"build::task_find_parallel");
       
       /* reduce bounds calculates by tasks */
       size_t lnum = 0; BBox3fa lbounds = empty;
@@ -103,7 +103,7 @@ namespace embree
       split = Split(sah,axis0,axis1);
     }
     
-    void StrandSplit::TaskFindParallel::task_find_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
+    void StrandSplit::TaskFindParallel::task_find_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount) 
     {
       float bestCos = 1.0f;
       Vec3fa bestAxis1 = axis0;
@@ -112,7 +112,7 @@ namespace embree
       {
 	for (size_t i=0; i<block->size(); i++) 
 	{
-	  Bezier1& prim = block->at(i);
+	  BezierPrim& prim = block->at(i);
 	  Vec3fa axisi = prim.p3 - prim.p0;
 	  float leni = length(axisi);
 	  if (leni == 0.0f) continue;
@@ -125,7 +125,7 @@ namespace embree
       task_axis1[taskIndex] = bestAxis1;
     }
     
-    void StrandSplit::TaskFindParallel::task_bound_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
+    void StrandSplit::TaskFindParallel::task_bound_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount) 
     {
       const LinearSpace3fa space0 = frame(axis0).transposed();
       const LinearSpace3fa space1 = frame(axis1).transposed();
@@ -136,7 +136,7 @@ namespace embree
       {
 	for (size_t i=0; i<block->size(); i++) 
 	{
-	  Bezier1& prim = block->at(i);
+	  BezierPrim& prim = block->at(i);
 	  const Vec3fa axisi = normalize(prim.p3-prim.p0);
 	  const float cos0 = abs(dot(axisi,axis0));
 	  const float cos1 = abs(dot(axisi,axis1));
@@ -150,12 +150,12 @@ namespace embree
     }
     
     template<>
-    const StrandSplit::Split StrandSplit::find<true>(size_t threadIndex, size_t threadCount, BezierRefList& prims) {
-      return TaskFindParallel(threadIndex,threadCount,prims).split;
+    const StrandSplit::Split StrandSplit::find<true>(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, BezierRefList& prims) {
+      return TaskFindParallel(threadIndex,threadCount,scheduler,prims).split;
     }
     
     template<>
-    void StrandSplit::Split::split<false>(size_t threadIndex, size_t threadCount, PrimRefBlockAlloc<Bezier1>& alloc, 
+    void StrandSplit::Split::split<false>(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimRefBlockAlloc<BezierPrim>& alloc, 
 					  BezierRefList& prims, 
 					  BezierRefList& lprims_o, PrimInfo& linfo_o, 
 					  BezierRefList& rprims_o, PrimInfo& rinfo_o) const 
@@ -169,7 +169,7 @@ namespace embree
       {
 	for (size_t i=0; i<block->size(); i++) 
 	{
-	  const Bezier1& prim = block->at(i); 
+	  const BezierPrim& prim = block->at(i); 
 	  const Vec3fa axisi = normalize(prim.p3-prim.p0);
 	  const float cos0 = abs(dot(axisi,axis0));
 	  const float cos1 = abs(dot(axisi,axis1));
@@ -193,7 +193,7 @@ namespace embree
       }
     }
     
-    StrandSplit::TaskSplitParallel::TaskSplitParallel(size_t threadIndex, size_t threadCount, const Split* split, PrimRefBlockAlloc<Bezier1>& alloc, 
+    StrandSplit::TaskSplitParallel::TaskSplitParallel(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, const Split* split, PrimRefBlockAlloc<BezierPrim>& alloc, 
 						      BezierRefList& prims, 
 						      BezierRefList& lprims_o, PrimInfo& linfo_o, 
 						      BezierRefList& rprims_o, PrimInfo& rinfo_o)
@@ -201,7 +201,7 @@ namespace embree
     {
       /* parallel calculation of centroid bounds */
       size_t numTasks = min(maxTasks,threadCount);
-      TaskScheduler::executeTask(threadIndex,numTasks,_task_split_parallel,this,numTasks,"build::task_split_parallel");
+      scheduler->dispatchTask(threadIndex,numTasks,_task_split_parallel,this,numTasks,"build::task_split_parallel");
       
       /* reduction of bounding info */
       linfo_o = linfos[0];
@@ -212,18 +212,18 @@ namespace embree
       }
     }
     
-    void StrandSplit::TaskSplitParallel::task_split_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
+    void StrandSplit::TaskSplitParallel::task_split_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount) 
     {
-      split->split<false>(threadIndex,threadCount,alloc,prims,lprims_o,linfos[taskIndex],rprims_o,rinfos[taskIndex]);
+      split->split<false>(threadIndex,threadCount,NULL,alloc,prims,lprims_o,linfos[taskIndex],rprims_o,rinfos[taskIndex]);
     }
     
     template<>
-    void StrandSplit::Split::split<true>(size_t threadIndex, size_t threadCount, 
-					 PrimRefBlockAlloc<Bezier1>& alloc, BezierRefList& prims, 
+    void StrandSplit::Split::split<true>(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, 
+					 PrimRefBlockAlloc<BezierPrim>& alloc, BezierRefList& prims, 
 					 BezierRefList& lprims_o, PrimInfo& linfo_o, 
 					 BezierRefList& rprims_o, PrimInfo& rinfo_o) const
     {
-      TaskSplitParallel(threadIndex,threadCount,this,alloc,prims,lprims_o,linfo_o,rprims_o,rinfo_o);
+      TaskSplitParallel(threadIndex,threadCount,scheduler,this,alloc,prims,lprims_o,linfo_o,rprims_o,rinfo_o);
     }
   }
 }

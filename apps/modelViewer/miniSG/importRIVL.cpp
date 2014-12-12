@@ -1,10 +1,18 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #undef NDEBUG
 
@@ -14,16 +22,13 @@
 #endif
 
 // header
-#include "ospray/common/managed.h"
-#include "ospray/common/data.h"
+#include "ospray/common/Managed.h"
+#include "ospray/common/Data.h"
 #include "miniSG.h"
 // stl
 #include <map>
 // // libxml
-// #include <libxml/tree.h>
-// #include <libxml/parser.h>
-// #include <libxml/xmlreader.h>
-#include "xml.h"
+#include "apps/common/xml/XML.h"
 // stdlib, for mmap
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -65,6 +70,11 @@ namespace ospray {
     struct RIVLMaterial : public miniSG::Node {
       virtual string toString() const { return "ospray::miniSG::RIVLMaterial"; } 
       Ref<miniSG::Material> general;
+    };
+
+    struct RIVLCamera : public miniSG::Node {
+      virtual string toString() const { return "ospray::miniSG::RIVLCamera"; } 
+      vec3f from, at, up;
     };
 
     /*! Scene graph grouping node */
@@ -209,34 +219,6 @@ namespace ospray {
               format = prop->value.c_str();
             }
           }
-          // for (xmlAttr *attr = node->properties; attr; attr = attr->next) {
-          //   if (!strcmp( (const char*)attr->name, "ofs" )) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     ofs = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "width")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     width = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "height")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     height = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "channels")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     channels = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "depth")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     depth = atol((char*)value);
-          //     //xmlFree(value);
-          //   } else if (!strcmp((const char*)attr->name, "format")) {
-          //     xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
-          //     format = std::string((char*)value);
-          //     //xmlFree(value);
-          //   }
-          // }
-
           assert(ofs != size_t(-1) && "Offset not properly parsed for Texture2D nodes");
           assert(width != size_t(-1) && "Width not properly parsed for Texture2D nodes");
           assert(height != size_t(-1) && "Height not properly parsed for Texture2D nodes");
@@ -399,6 +381,28 @@ namespace ospray {
           }
 #undef NEXT_TOK
           // -------------------------------------------------------
+        } else if (nodeName == "Camera") {
+          // -------------------------------------------------------
+          Ref<miniSG::RIVLCamera> camera = new miniSG::RIVLCamera;
+          nodeList.push_back(camera.ptr);
+
+          // parse values
+          for (int pID=0;pID<node->child.size();pID++) {
+            xml::Node *childNode = node->child[pID];
+            if (childNode->name == "from") {
+              sscanf(childNode->content.c_str(),"%f %f %f",
+                     &camera->from.x,&camera->from.y,&camera->from.z);
+            }   
+            if (childNode->name == "at") {
+              sscanf(childNode->content.c_str(),"%f %f %f",
+                     &camera->at.x,&camera->at.y,&camera->at.z);
+            }   
+            if (childNode->name == "up") {
+              sscanf(childNode->content.c_str(),"%f %f %f",
+                     &camera->up.x,&camera->up.y,&camera->up.z);
+            }   
+          }    
+          // -------------------------------------------------------
         } else if (nodeName == "Transform") {
           // -------------------------------------------------------
           Ref<miniSG::Transform> xfm = new miniSG::Transform;
@@ -520,35 +524,18 @@ namespace ospray {
                 xml::Prop *prop = child->prop[pID];
               // for (xmlAttr* attr = child->properties; attr; attr = attr->next)
                 if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // ofs = atol((char*)value);
                   ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
                 }       
                 else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                  // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                  // num = atol((char*)value);
                   num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
                 }       
-                // if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
-                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                //   ofs = atol((char*)value);
-                //   //xmlFree(value); 
-                // }       
-                // else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
-                //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
-                //   num = atol((char*)value);
-                //   //xmlFree(value); 
-                // }       
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               mesh->numTriangles = num;
               mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
-              char* value = strdup(child->content.c_str()); //xmlNodeListGetString(node->doc, child->children, 1);
-              // xmlChar* value = xmlNodeListGetString(node->doc, child->children, 1);
+              char* value = strdup(child->content.c_str());
               for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
                 size_t matID = atoi(s);
                 Ref<RIVLMaterial> mat = nodeList[matID].cast<miniSG::RIVLMaterial>();
@@ -609,36 +596,14 @@ namespace ospray {
       int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDWR);
       if (fd == -1)
         perror("could not open file");
-      binBasePtr = (unsigned char *)mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+      binBasePtr = (unsigned char *)
+        mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
 
-#if 1
-      Ref<xml::XMLDoc> doc = xml::readXML(fileName);
+      xml::XMLDoc *doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       xml::Node *root_element = doc->child[0];
       Ref<Node> node = parseBGFscene(root_element);
-      return node;
-#else
-      /*
-       * this initialize the library and check potential ABI mismatches
-       * between the version it was compiled for and the actual shared
-       * library used.
-       */
-      LIBXML_TEST_VERSION;
-      
-      xmlDocPtr doc; /* the resulting document tree */
-      
-      doc = xmlReadFile(xmlFileName.c_str(), NULL, XML_PARSE_HUGE|XML_PARSE_RECOVER);
-      if (doc == NULL) 
-        throw std::runtime_error("could not open/parse xml file '"
-                                 +xmlFileName+"'");
-
-      xmlNode * root_element = xmlDocGetRootElement(doc);
-      if (!root_element)
-        throw std::runtime_error("importRIVL: could not find root element");
-      Ref<Node> node = parseBGFscene(root_element);
-      //xmlFreeDoc(doc);
-#endif
       return node;
     }
 
@@ -654,6 +619,16 @@ namespace ospray {
       Transform *xf = dynamic_cast<Transform *>(node.ptr);
       if (xf) {
         traverseSG(model,xf->child,xfm*xf->xfm);
+        return;
+      }
+
+      RIVLCamera *cam = dynamic_cast<RIVLCamera *>(node.ptr);
+      if (cam) {
+        Ref<miniSG::Camera> c = new miniSG::Camera;
+        c->from = cam->from;
+        c->up = cam->up;
+        c->at = cam->at;
+        model.camera.push_back(c);
         return;
       }
 
@@ -726,7 +701,7 @@ namespace ospray {
         return;
       }
 
-      //throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");
+      throw std::runtime_error("unhandled node type '"+node->toString()+"' in traverseSG");
     }
 
     /*! import a wavefront OBJ file, and add it to the specified model */
@@ -739,5 +714,5 @@ namespace ospray {
       sg = 0;
     }
     
-  }
-}
+  } // ::ospray::minisg
+} // ::ospray

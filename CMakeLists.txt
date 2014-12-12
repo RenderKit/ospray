@@ -1,16 +1,28 @@
-# #####################################################################
-# INTEL CORPORATION PROPRIETARY INFORMATION                            
-# This software is supplied under the terms of a license agreement or  
-# nondisclosure agreement with Intel Corporation and may not be copied 
-# or disclosed except in accordance with the terms of that agreement.  
-# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
-# #####################################################################
+## ======================================================================== ##
+## Copyright 2009-2014 Intel Corporation                                    ##
+##                                                                          ##
+## Licensed under the Apache License, Version 2.0 (the "License");          ##
+## you may not use this file except in compliance with the License.         ##
+## You may obtain a copy of the License at                                  ##
+##                                                                          ##
+##     http://www.apache.org/licenses/LICENSE-2.0                           ##
+##                                                                          ##
+## Unless required by applicable law or agreed to in writing, software      ##
+## distributed under the License is distributed on an "AS IS" BASIS,        ##
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
+## See the License for the specific language governing permissions and      ##
+## limitations under the License.                                           ##
+## ======================================================================== ##
 
 PROJECT(OSPRay)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.4)
 IF(COMMAND cmake_policy)
   CMAKE_POLICY(SET CMP0003 NEW)
+
+  IF(${CMAKE_MAJOR_VERSION} EQUAL 3)
+    CMAKE_POLICY(SET CMP0042 NEW)
+  ENDIF(${CMAKE_MAJOR_VERSION} EQUAL 3)
 ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
@@ -35,8 +47,10 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # whether to enable intersection filters
 SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
+MARK_AS_ADVANCED(OSPRAY_INTERSECTION_FILTER)
+
 # compiler selection for the non-MIC part
-SET(OSPRAY_COMPILER "ICC" CACHE STRING "Set to ICC, GCC, or CLANG")
+SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
 # whehter to build in MIC/xeon phi support

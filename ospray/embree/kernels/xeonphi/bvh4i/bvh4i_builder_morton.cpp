@@ -102,7 +102,11 @@ namespace embree
       DBG_PRINT(maxPrimsPerGroup);
       DBG_PRINT(encodeMask);
       DBG_PRINT(maxGroups);
-      FATAL("ENCODING ERROR");      
+      unsigned int primIDEncodingBits   = encodeShift;
+      unsigned int groupIDEncodingBits = __bsr((unsigned int)numGroups) + 1;
+      DBG_PRINT( primIDEncodingBits );
+      DBG_PRINT( groupIDEncodingBits );
+      FATAL("ENCODING ERROR: primIDEncodingBits + groupIDEncodingBits > 32");      
     }
   }
 
@@ -193,7 +197,11 @@ namespace embree
   }
 
   void BVH4iBuilderMorton::build(size_t threadIndex, size_t threadCount) 
-  {
+  {    
+    if (threadIndex != 0) {
+      FATAL("threadIndex != 0");
+    }
+
     if (unlikely(g_verbose >= 2))
       {
 	std::cout << "building BVH4i with 32-bit Morton builder (MIC)... " << std::flush;
@@ -201,11 +209,6 @@ namespace embree
     
     /* do some global inits first */
     initEncodingAllocateData();
-
-    // if (unlikely(g_verbose >= 2))
-    //   {
-    // 	DBG_PRINT(numPrimitives);
-    //   }
 
     if (likely(numPrimitives == 0))
       {
@@ -218,7 +221,7 @@ namespace embree
       }
 
     /* allocate memory arrays */
-    allocateData(TaskScheduler::getNumThreads());
+    allocateData(threadCount);
 
 #if defined(PROFILE)
     size_t numTotalPrimitives = numPrimitives;
@@ -231,7 +234,7 @@ namespace embree
     size_t iterations = PROFILE_ITERATIONS;
     for (size_t i=0; i<iterations; i++) 
     {
-      TaskScheduler::executeTask(threadIndex,threadCount,_build_parallel_morton,this,TaskScheduler::getNumThreads(),"build_parallel_morton");
+      build_main(threadIndex,threadCount);
 
       dt_min = min(dt_min,dt);
       dt_avg = dt_avg + dt;
@@ -249,13 +252,13 @@ namespace embree
     DBG(DBG_PRINT(numPrimitives));
 
 
-    if (likely(numPrimitives > SINGLE_THREADED_BUILD_THRESHOLD && TaskScheduler::getNumThreads() > 1))
+    if (likely(numPrimitives > SINGLE_THREADED_BUILD_THRESHOLD && threadCount > 1))
       {
 #if DEBUG
-	DBG_PRINT( TaskScheduler::getNumThreads() );
 	std::cout << "PARALLEL BUILD" << std::endl << std::flush;
 #endif
-	TaskScheduler::executeTask(threadIndex,threadCount,_build_parallel_morton,this,TaskScheduler::getNumThreads(),"build_parallel");
+	build_main(threadIndex,threadCount);
+
       }
     else
       {
@@ -263,7 +266,7 @@ namespace embree
 #if DEBUG
 	std::cout << "SERIAL BUILD" << std::endl << std::flush;
 #endif
-	build_parallel_morton(0,1,0,0,NULL);
+	build_main(0,1);
       }
 
     if (g_verbose >= 2) {
@@ -335,30 +338,31 @@ namespace embree
       if (unlikely(!mesh->isEnabled())) continue;
       if (unlikely(mesh->numTimeSteps != 1)) continue;
 
-
-      const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
-      const unsigned int stride = mesh->triangles.getBufferStride();
-      
-      for (size_t i=offset; i<mesh->numTriangles && currentID < endID; i++, currentID++,cptr_tri+=stride)	 
+      if (offset < mesh->numTriangles)
 	{
-	  const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
-	  prefetch<PFHINT_L1>(&tri + L1_PREFETCH_ITEMS);
-	  prefetch<PFHINT_L2>(&tri + L2_PREFETCH_ITEMS);
-
-	  assert( tri.v[0] < mesh->numVertices );
-	  assert( tri.v[1] < mesh->numVertices );
-	  assert( tri.v[2] < mesh->numVertices );
-
-	  const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
-
-	  const mic_f bmin  = min(min(v[0],v[1]),v[2]);
-	  const mic_f bmax  = max(max(v[0],v[1]),v[2]);
-
-	  const mic_f centroid2 = bmin+bmax;
-	  bounds_centroid_min = min(bounds_centroid_min,centroid2);
-	  bounds_centroid_max = max(bounds_centroid_max,centroid2);
-	}
+	  const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
+	  const unsigned int stride = mesh->triangles.getBufferStride();
       
+	  for (size_t i=offset; i<mesh->numTriangles && currentID < endID; i++, currentID++,cptr_tri+=stride)	 
+	    {
+	      const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
+	      prefetch<PFHINT_L1>(&tri + L1_PREFETCH_ITEMS);
+	      prefetch<PFHINT_L2>(&tri + L2_PREFETCH_ITEMS);
+
+	      assert( tri.v[0] < mesh->numVertices );
+	      assert( tri.v[1] < mesh->numVertices );
+	      assert( tri.v[2] < mesh->numVertices );
+
+	      const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
+
+	      const mic_f bmin  = min(min(v[0],v[1]),v[2]);
+	      const mic_f bmax  = max(max(v[0],v[1]),v[2]);
+
+	      const mic_f centroid2 = bmin+bmax;
+	      bounds_centroid_min = min(bounds_centroid_min,centroid2);
+	      bounds_centroid_max = max(bounds_centroid_max,centroid2);
+	    }
+	}      
       if (unlikely(currentID == endID)) break;
       offset = 0;
     }
@@ -409,40 +413,42 @@ namespace embree
        
       const unsigned int groupCode = (group << encodeShift);
 
-      const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
-      const unsigned int stride = mesh->triangles.getBufferStride();
+      if (offset < mesh->numTriangles)
+	{
+	  const char* __restrict__ cptr_tri = (char*)&mesh->triangle(offset);
+	  const unsigned int stride = mesh->triangles.getBufferStride();
       
-      for (size_t i=0; i<numTriangles; i++,cptr_tri+=stride)	  
-      {
-	//const TriangleMesh::Triangle& tri = mesh->triangle(offset+i);
-	const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
+	  for (size_t i=0; i<numTriangles; i++,cptr_tri+=stride)	  
+	    {
+	      //const TriangleMesh::Triangle& tri = mesh->triangle(offset+i);
+	      const TriangleMesh::Triangle& tri = *(TriangleMesh::Triangle*)cptr_tri;
 
-	prefetch<PFHINT_NT>(&tri + 16);
+	      prefetch<PFHINT_NT>(&tri + 16);
 
-	const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
-	const mic_f bmin  = min(min(v[0],v[1]),v[2]);
-	const mic_f bmax  = max(max(v[0],v[1]),v[2]);
+	      const mic3f v = mesh->getTriangleVertices<PFHINT_L2>(tri);
+	      const mic_f bmin  = min(min(v[0],v[1]),v[2]);
+	      const mic_f bmax  = max(max(v[0],v[1]),v[2]);
 
-	const mic_f cent  = bmin+bmax;
-	const mic_i binID = mic_i((cent-base)*scale);
+	      const mic_f cent  = bmin+bmax;
+	      const mic_i binID = mic_i((cent-base)*scale);
 
-	mID[2*slot+1] = groupCode | (offset+i);
-	compactustore16i_low(0x1,&binID3_x[2*slot+0],binID); // extract
-	compactustore16i_low(0x2,&binID3_y[2*slot+0],binID);
-	compactustore16i_low(0x4,&binID3_z[2*slot+0],binID);
-	slot++;
-	if (unlikely(slot == NUM_MORTON_IDS_PER_BLOCK))
-	  {
-	    const mic_i code  = bitInterleave(binID3_x,binID3_y,binID3_z);
-	    const mic_i final = select(0x5555,code,mID);      
-	    assert((size_t)dest % 64 == 0);
-	    store16i_ngo(dest,final);	    
-	    slot = 0;
-	    dest += 8;
-	  }
-        currentID++;
-      }
-
+	      mID[2*slot+1] = groupCode | (offset+i);
+	      compactustore16i_low(0x1,&binID3_x[2*slot+0],binID); // extract
+	      compactustore16i_low(0x2,&binID3_y[2*slot+0],binID);
+	      compactustore16i_low(0x4,&binID3_z[2*slot+0],binID);
+	      slot++;
+	      if (unlikely(slot == NUM_MORTON_IDS_PER_BLOCK))
+		{
+		  const mic_i code  = bitInterleave(binID3_x,binID3_y,binID3_z);
+		  const mic_i final = select(0x5555,code,mID);      
+		  assert((size_t)dest % 64 == 0);
+		  store16i_ngo(dest,final);	    
+		  slot = 0;
+		  dest += 8;
+		}
+	      currentID++;
+	    }
+	}
       offset = 0;
       if (currentID == endID) break;
     }
@@ -630,7 +636,7 @@ namespace embree
 	  }
       }
 
-      LockStepTaskScheduler::syncThreads(threadID,numThreads);
+      scene->lockstep_scheduler.syncThreads(threadID,numThreads);
 
 
       /* calculate total number of items for each bucket */
@@ -698,7 +704,7 @@ namespace embree
 	evictL2(&src[i]);
       }
 
-      if (b<3) LockStepTaskScheduler::syncThreads(threadID,numThreads);
+      if (b<3) scene->lockstep_scheduler.syncThreads(threadID,numThreads);
 
     }
   }
@@ -733,7 +739,7 @@ namespace embree
     
     while (true)
     {
-      const unsigned int taskID = LockStepTaskScheduler::taskCounter.inc();
+      const unsigned int taskID = scene->lockstep_scheduler.taskCounter.inc();
       if (taskID >= numBuildRecords) break;
       
       SmallBuildRecord &br = buildRecords[taskID];
@@ -812,7 +818,7 @@ namespace embree
 
     store3f(&node[current.parentNodeID].lower[current.parentLocalID],bounds_min);
     store3f(&node[current.parentNodeID].upper[current.parentLocalID],bounds_max);
-    createLeaf(node[current.parentNodeID].lower[current.parentLocalID].child,start,items);
+    createBVH4iLeaf(node[current.parentNodeID].lower[current.parentLocalID].child,start,items);
     __aligned(64) BBox3fa bounds;
     store4f(&bounds.lower,bounds_min);
     store4f(&bounds.upper,bounds_max);
@@ -825,7 +831,7 @@ namespace embree
   {
 #if defined(DEBUG)
     if (current.depth > BVH4i::maxBuildDepthLeaf) 
-      throw std::runtime_error("ERROR: depth limit reached");
+      THROW_RUNTIME_ERROR("ERROR: depth limit reached");
 #endif
     
     /* create leaf for few primitives */
@@ -867,7 +873,7 @@ namespace embree
     store3f(&node[current.parentNodeID].lower[current.parentLocalID],broadcast4to16f(&bounds.lower));
     store3f(&node[current.parentNodeID].upper[current.parentLocalID],broadcast4to16f(&bounds.upper));
 
-    createNode(node[current.parentNodeID].lower[current.parentLocalID].child,currentIndex,0); // numChildren);
+    createBVH4iNode<4>(node[current.parentNodeID].lower[current.parentLocalID].child,currentIndex);
 
     return bounds;
   }  
@@ -998,7 +1004,7 @@ namespace embree
 	children[i].parentLocalID = i;
       }
 
-    createNode(node[current.parentNodeID].lower[current.parentLocalID].child,currentIndex);
+    createBVH4iNode<4>(node[current.parentNodeID].lower[current.parentLocalID].child,currentIndex);
 
     return numChildren;
   }
@@ -1092,7 +1098,7 @@ namespace embree
 
     store3f(&node[current.parentNodeID].lower[current.parentLocalID],broadcast4to16f(&bounds.lower));
     store3f(&node[current.parentNodeID].upper[current.parentLocalID],broadcast4to16f(&bounds.upper));
-    createNode(node[current.parentNodeID].lower[current.parentLocalID].child,currentIndex,numChildren);
+    createBVH4iNode<4>(node[current.parentNodeID].lower[current.parentLocalID].child,currentIndex);
 
     if (enableTreeRotations)
       {
@@ -1107,9 +1113,6 @@ namespace embree
   {    
     if (unlikely(ref.isLeaf()))
       {
-#if DEBUG
-	FATAL("refit");
-#endif
 	return BBox3fa( empty );
       }
 
@@ -1140,9 +1143,6 @@ namespace embree
   {    
     if (unlikely(ref.isLeaf()))
       {
-#if DEBUG
-	FATAL("refit_toplevel");
-#endif
 	return BBox3fa( empty );
       }
 
@@ -1180,22 +1180,35 @@ namespace embree
   void BVH4iBuilderMorton::build_main (const size_t threadIndex, const size_t threadCount)
   { 
     DBG(PING);
+
+    /* start measurement */
+    double t0 = 0.0f;
+
+#if !defined(PROFILE)
+    if (g_verbose >= 2) 
+#endif
+      t0 = getSeconds();
+
     TIMER(std::cout << std::endl);
     TIMER(double msec = 0.0);
+
+    /* init thread state */
+    TIMER(msec = getSeconds());
+    scene->lockstep_scheduler.dispatchTask( task_initThreadState, this, threadIndex, threadCount );
+    TIMER(msec = getSeconds()-msec);    
+    TIMER(std::cout << "task_initThreadState " << 1000. * msec << " ms" << std::endl << std::flush);
 
     /* compute scene bounds */
     TIMER(msec = getSeconds());
     global_bounds.reset();
-    LockStepTaskScheduler::dispatchTask( task_computeBounds, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask( task_computeBounds, this, threadIndex, threadCount );
     TIMER(msec = getSeconds()-msec);    
     TIMER(std::cout << "task_computeBounds " << 1000. * msec << " ms" << std::endl << std::flush);
     TIMER(DBG_PRINT(global_bounds));
     
-
-
     /* compute morton codes */
     TIMER(msec = getSeconds());
-    LockStepTaskScheduler::dispatchTask( task_computeMortonCodes, this, threadIndex, threadCount );   
+    scene->lockstep_scheduler.dispatchTask( task_computeMortonCodes, this, threadIndex, threadCount );   
 
     /* padding */
     MortonID32Bit* __restrict__ const dest = (MortonID32Bit*)morton;
@@ -1212,11 +1225,22 @@ namespace embree
 
     /* sort morton codes */
     TIMER(msec = getSeconds());
-    LockStepTaskScheduler::dispatchTask( task_radixsort, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask( task_radixsort, this, threadIndex, threadCount );
 
 #if defined(DEBUG)
+    DBG_PRINT(numPrimitives);
+    DBG_PRINT(((numPrimitives+7)&(-8)));
     for (size_t i=1; i<((numPrimitives+7)&(-8)); i++)
-      assert(morton[i-1].code <= morton[i].code);
+      {
+	if (morton[i-1].code > morton[i].code)
+	  {
+	    DBG_PRINT( i );
+	    DBG_PRINT( morton[i-1].code );
+	    DBG_PRINT( morton[i].code );
+	  }
+
+	assert(morton[i-1].code <= morton[i].code);
+      }
 
     for (size_t i=numPrimitives; i<((numPrimitives+7)&(-8)); i++) {
       assert(dest[i].code  == 0xffffffff); 
@@ -1248,7 +1272,7 @@ namespace embree
     while(numBuildRecords < threadCount*3)
       {
 	numBuildRecordCounter.reset(numBuildRecords);
-	LockStepTaskScheduler::dispatchTask( task_createTopLevelTree, this, threadIndex, threadCount );
+	scene->lockstep_scheduler.dispatchTask( task_createTopLevelTree, this, threadIndex, threadCount );
 	iterations++;
 
 	if (unlikely(numBuildRecords == numBuildRecordCounter)) { break; }
@@ -1269,7 +1293,7 @@ namespace embree
     TIMER(msec = getSeconds());
     
     /* build sub-trees */
-    LockStepTaskScheduler::dispatchTask( task_recurseSubMortonTrees, this, threadIndex, threadCount );
+    scene->lockstep_scheduler.dispatchTask( task_recurseSubMortonTrees, this, threadIndex, threadCount );
 
     DBG(DBG_PRINT(atomicID));
 
@@ -1288,36 +1312,7 @@ namespace embree
 
     bvh->root   = node->child(0); 
     bvh->bounds = node->child(0).isLeaf() ? node->bounds(0) : rootBounds;
-  }
 
-  void BVH4iBuilderMorton::build_parallel_morton(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
-  {
-    TIMER(double msec = 0.0);
-
-
-    /* initialize thread state */
-    initThreadState(threadIndex,threadCount);
-    
-    /* let all thread except for control thread wait for work */
-    if (threadIndex != 0) {
-      LockStepTaskScheduler::dispatchTaskMainLoop(threadIndex,threadCount);
-      return;
-    }
-
-    /* start measurement */
-    double t0 = 0.0f;
-
-#if !defined(PROFILE)
-    if (g_verbose >= 2) 
-#endif
-      t0 = getSeconds();
-
-    /* performs build of tree */
-    build_main(threadIndex,threadCount);
-
-    /* end task */
-    LockStepTaskScheduler::releaseThreads(threadCount);
-    
     /* stop measurement */
 #if !defined(PROFILE)
     if (g_verbose >= 2) 
@@ -1325,6 +1320,7 @@ namespace embree
       dt = getSeconds()-t0;
 
   }
+
 }
 
 

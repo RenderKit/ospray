@@ -1,59 +1,44 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
-//
-//                 INTEL CORPORATION PROPRIETARY INFORMATION
-//
-//    This software is supplied under the terms of a license agreement or
-//    nondisclosure agreement with Intel Corporation and may not be copied
-//    or disclosed except in accordance with the terms of that agreement.
-//    Copyright (C) 2014 Intel Corporation. All Rights Reserved.
-//
+#pragma once
 
-#ifndef TRANSFER_FUNCTION_IH
-#define TRANSFER_FUNCTION_IH
+#include "ospray/common/OSPCommon.ih"
+#include "ospray/math/vec.ih"
 
-/*! \file TransferFunction.ih 
+//! Abstract base class for any kind of transfer function.
+struct TransferFunction {
 
-  \brief TransferFunction implementation for ISPC.
+  //! The value range covered by the transfer function.
+  vec2f valueRange;
 
- */
+  //! Interpolated color for the given value.
+  varying vec3f (*getColorForValue)(const void *uniform transferFunction, 
+                                    varying float value);
 
-#include "ospray/common/ospcommon.ih"
+  //! Interpolated opacity for the given value.
+  varying float (*getOpacityForValue)(const void *uniform transferFunction, 
+                                      varying float value);
+      
+  //! Virtual function to look up the maximum opacity value based on an input range.
+  varying float (*getMaxOpacityInRange)(void *uniform transferFunction, 
+                                        const varying vec2f &range);
 
-struct TransferFunction;
+  //! Virtual function to look up the min/max opacity value based on an input range.
+  uniform vec2f (*getMinMaxOpacityInRange)(void *uniform transferFunction, 
+                                           const uniform vec2f &range);
 
-typedef varying vec3f (*TransferFunction_lookupColorFunction)(uniform TransferFunction * uniform transferFunction, const varying float &value);
-typedef varying float (*TransferFunction_lookupAlphaFunction)(uniform TransferFunction * uniform transferFunction, const varying float &value);
-
-struct TransferFunction
-{
-    TransferFunction_lookupColorFunction lookupColor;
-    TransferFunction_lookupAlphaFunction lookupAlpha;
 };
-
-// used in ISPC function implementations...
-typedef uniform TransferFunction * TransferFunctionPtr;
-
-// used in exported ISPC function implementations...
-struct _TransferFunction {};
-typedef uniform _TransferFunction * uniform ExtTransferFunctionPtr;
-
-#define __defineMethods(type) \
-    extern "C" { \
-        inline varying vec3f type##_lookupColor(uniform TransferFunctionPtr _transferFunction, const varying float &value); \
-    } \
-    extern "C" { \
-        inline varying vec3f type##_lookupAlpha(uniform TransferFunctionPtr _transferFunction, const varying float &value); \
-    } \
-
-__defineMethods(TransferFunctionPiecewiseLinear);
-
-#undef __defineMethods
-
-#endif

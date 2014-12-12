@@ -1,18 +1,30 @@
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
 %error-verbose
-/* supress shift-reduces conflict message for dangling else */
-/* one for 'if', one for 'uif' */
- //%expect 2
 
 %{
 
-#include "parser.h"
-
+#include "Model.h"
+#include "Loc.h"
+  
+  extern int yydebug;
+  
   using namespace ospray;
-
-// #define NOTIMPLEMENTED \
-//         Error(Loc::current, "Unimplemented parser functionality %s:%d", \
-//         __FILE__, __LINE__);
-
+  
 extern int yylex();
 void yyerror(const char *s);
 
@@ -72,22 +84,6 @@ extern char *yytext;
 %%
 
 world: TOKEN_BEGIN_SCENE scene TOKEN_END_SCENE { 
-  char *exportEmbree = getenv("OSPRAY_EXPORT_EMBREE");
-  if (exportEmbree) // && atoi(exportEmbree))
-    ospray::tachyon::parserModel->exportToEmbree(exportEmbree);
-
-#if 0
-  std::cout << "-------------------------------------------------------" << std::endl;
-  std::cout << "#osp:tachy (parser): Adding glow-light into middle of model..." << std::endl;
-  std::cout << "-------------------------------------------------------" << std::endl;
-  ospray::tachyon::PointLight pl;
-  pl.color = 1.f;
-  pl.center = 0.f;
-  pl.atten.constant = 0;
-  pl.atten.linear = 1;
-  pl.atten.quadratic = 0;
-  ospray::tachyon::parserModel->addPointLight(pl);
-#endif
  }
 ;
 

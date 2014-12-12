@@ -21,6 +21,7 @@
 #include "scene_triangle_mesh.h"
 #include "scene_user_geometry.h"
 #include "scene_bezier_curves.h"
+#include "scene_subdiv_mesh.h"
 
 #include "common/acceln.h"
 #include "geometry.h"
@@ -54,13 +55,17 @@ namespace embree
     /*! Creates a new collection of quadratic bezier curves. */
     unsigned int newBezierCurves (RTCGeometryFlags flags, size_t maxCurves, size_t maxVertices, size_t numTimeSteps);
 
-    /*! Builds acceleration structure for the scene. */
-    void build ();
+    /*! Creates a new subdivision mesh. */
+    unsigned int newSubdivisionMesh (RTCGeometryFlags flags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numTimeSteps);
 
+    /*! Builds acceleration structure for the scene. */
     void build (size_t threadIndex, size_t threadCount);
 
+    /*! stores scene into binary file */
+    void write(std::ofstream& file);
+
     /*! build task */
-    TASK_COMPLETE_FUNCTION(Scene,task_build);
+    TASK_RUN_FUNCTION(Scene,task_build_parallel);
     TaskScheduler::Task task;
 
     /* return number of geometries */
@@ -105,6 +110,18 @@ namespace embree
       if (geometries[i]->type != TRIANGLE_MESH) return NULL;
       else return (TriangleMesh*) geometries[i]; 
     }
+    __forceinline SubdivMesh* getSubdivMesh(size_t i) { 
+      assert(i < geometries.size()); 
+      assert(geometries[i]);
+      assert(geometries[i]->type == SUBDIV_MESH);
+      return (SubdivMesh*) geometries[i]; 
+    }
+    __forceinline const SubdivMesh* getSubdivMesh(size_t i) const { 
+      assert(i < geometries.size()); 
+      assert(geometries[i]);
+      assert(geometries[i]->type == SUBDIV_MESH);
+      return (SubdivMesh*) geometries[i]; 
+    }
     __forceinline UserGeometryBase* getUserGeometrySafe(size_t i) { 
       assert(i < geometries.size()); 
       if (geometries[i] == NULL) return NULL;
@@ -117,7 +134,6 @@ namespace embree
       assert(geometries[i]->type == BEZIER_CURVES);
       return (BezierCurves*) geometries[i]; 
     }
-
 
     /* test if this is a static scene */
     __forceinline bool isStatic() const { return embree::isStatic(flags); }
@@ -148,15 +164,18 @@ namespace embree
     MutexSys mutex;
     AtomicMutex geometriesMutex;
 
+    /*! global lock step task scheduler */
+    __aligned(64) LockStepTaskScheduler lockstep_scheduler;
+
   public:
-    atomic_t numTriangleMeshes;        //!< number of enabled triangle meshes // FIXME: remove
-    atomic_t numTriangleMeshes2;       //!< number of enabled motion blur triangle meshes // FIXME: remove
     atomic_t numTriangles;             //!< number of enabled triangles
     atomic_t numTriangles2;            //!< number of enabled motion blur triangles
-    atomic_t numBezierCurves;                //!< number of enabled curves
-    atomic_t numBezierCurves2;               //!< number of enabled motion blur curves
+    atomic_t numBezierCurves;          //!< number of enabled curves
+    atomic_t numBezierCurves2;         //!< number of enabled motion blur curves
+    atomic_t numSubdivPatches;         //!< number of enabled subdivision patches
+    atomic_t numSubdivPatches2;        //!< number of enabled motion blur subdivision patches
+    atomic_t numUserGeometries1;       //!< number of enabled user geometries
 
-    atomic_t numUserGeometries1;        //!< number of enabled user geometries
     atomic_t numIntersectionFilters4;   //!< number of enabled intersection/occlusion filters for 4-wide ray packets
     atomic_t numIntersectionFilters8;   //!< number of enabled intersection/occlusion filters for 8-wide ray packets
     atomic_t numIntersectionFilters16;  //!< number of enabled intersection/occlusion filters for 16-wide ray packets

@@ -48,7 +48,9 @@ ADD_ISPC_LIBRARY(embree SHARED
   ../common/scene_user_geometry.cpp
   ../common/scene_triangle_mesh.cpp
   ../common/scene_bezier_curves.cpp
-  
+  ../common/scene_subdiv_mesh.cpp
+  ../common/raystream_log.cpp
+
   builders/bezierrefgen.cpp 
   builders/primrefgen.cpp
   builders/heuristic_object_partition_unaligned.cpp
@@ -57,46 +59,41 @@ ADD_ISPC_LIBRARY(embree SHARED
   builders/heuristic_strand_partition.cpp
   builders/heuristic_fallback.cpp
     
-  geometry/bezier1.cpp
+  geometry/bezier1v.cpp
   geometry/bezier1i.cpp
   geometry/triangle1.cpp
   geometry/triangle4.cpp
   geometry/triangle1v.cpp
   geometry/triangle4v.cpp
+  geometry/triangle4v_mb.cpp
   geometry/triangle4i.cpp
-  geometry/ispc_wrapper_sse.cpp
+  geometry/subdivpatch1.cpp
+  geometry/subdivpatchdispl1.cpp
+  geometry/virtual_accel.cpp
   geometry/instance_intersector1.cpp
   geometry/instance_intersector4.cpp
+  geometry/subdivpatch1_intersector1.cpp
   
   bvh4/bvh4.cpp
   bvh4/bvh4_rotate.cpp
   bvh4/bvh4_refit.cpp
   bvh4/bvh4_builder.cpp
+  bvh4/bvh4_builder_mb.cpp
+  bvh4/bvh4_builder_hair.cpp
+  bvh4/bvh4_builder_hair_mb.cpp
   bvh4/bvh4_builder_fast.cpp
   bvh4/bvh4_builder_morton.cpp
-  bvh4/bvh4_builder_binner.cpp
   bvh4/bvh4_builder_toplevel.cpp
   bvh4/bvh4_intersector1.cpp   
+  bvh4/bvh4_intersector4_single.cpp
   bvh4/bvh4_intersector4_chunk.cpp
   bvh4/bvh4_statistics.cpp
-
-  bvh4mb/bvh4mb.cpp
-  bvh4mb/bvh4mb_builder.cpp
-  bvh4mb/bvh4mb_intersector1.cpp   
-  bvh4mb/bvh4mb_intersector4.cpp
-
-  bvh4hair/bvh4hair.cpp
-  bvh4hair/bvh4hair_statistics.cpp
-  bvh4hair/bvh4hair_builder.cpp 
-  bvh4hair/bvh4hair_intersector1.cpp
-  bvh4hair/bvh4hair_intersector4.cpp
 )
 
 IF (TARGET_SSE41) 
   ADD_LIBRARY(embree_sse41 STATIC
-    bvh4/bvh4_builder_binner.cpp
-    bvh4/bvh4_builder_toplevel.cpp
     bvh4/bvh4_intersector1.cpp   
+    bvh4/bvh4_intersector4_single.cpp
     bvh4/bvh4_intersector4_chunk.cpp
   )
   SET_TARGET_PROPERTIES(embree_sse41 PROPERTIES COMPILE_FLAGS "${FLAGS_SSE41}")
@@ -123,32 +120,28 @@ IF (TARGET_AVX)
   builders/heuristic_fallback.cpp
 
    geometry/triangle8.cpp
-   geometry/ispc_wrapper_avx.cpp
 
    geometry/instance_intersector1.cpp
    geometry/instance_intersector4.cpp
    geometry/instance_intersector8.cpp
 
+   bvh4/bvh4_rotate.cpp
+   bvh4/bvh4_builder_toplevel.cpp
    bvh4/bvh4_builder_morton.cpp
    bvh4/bvh4_builder_fast.cpp
    bvh4/bvh4_builder.cpp
+   bvh4/bvh4_builder_mb.cpp
+   bvh4/bvh4_builder_hair.cpp
+   bvh4/bvh4_builder_hair_mb.cpp
    bvh4/bvh4_refit.cpp
 
    bvh4/bvh4_intersector1.cpp   
+   bvh4/bvh4_intersector4_single.cpp
    bvh4/bvh4_intersector4_chunk.cpp
    bvh4/bvh4_intersector4_hybrid.cpp
+   bvh4/bvh4_intersector8_single.cpp
    bvh4/bvh4_intersector8_chunk.cpp
    bvh4/bvh4_intersector8_hybrid.cpp
-
-   bvh4mb/bvh4mb_builder.cpp
-   bvh4mb/bvh4mb_intersector1.cpp   
-   bvh4mb/bvh4mb_intersector4.cpp
-   bvh4mb/bvh4mb_intersector8.cpp
-
-   bvh4hair/bvh4hair_builder.cpp
-   bvh4hair/bvh4hair_intersector1.cpp
-   bvh4hair/bvh4hair_intersector4.cpp
-   bvh4hair/bvh4hair_intersector8.cpp
 
    bvh8/bvh8.cpp
    bvh8/bvh8_builder.cpp
@@ -170,32 +163,49 @@ IF (TARGET_AVX2)
     geometry/instance_intersector4.cpp
     geometry/instance_intersector8.cpp
 		
-    geometry/ispc_wrapper_avx.cpp
-		
     bvh4/bvh4_intersector1.cpp
+    bvh4/bvh4_intersector4_single.cpp
     bvh4/bvh4_intersector4_chunk.cpp
     bvh4/bvh4_intersector4_hybrid.cpp
+    bvh4/bvh4_intersector8_single.cpp
     bvh4/bvh4_intersector8_chunk.cpp
     bvh4/bvh4_intersector8_hybrid.cpp
-
-    bvh4mb/bvh4mb_intersector1.cpp
-    bvh4mb/bvh4mb_intersector4.cpp
-    bvh4mb/bvh4mb_intersector8.cpp
-
-    bvh4hair/bvh4hair_intersector1.cpp
-    bvh4hair/bvh4hair_intersector4.cpp
-    bvh4hair/bvh4hair_intersector8.cpp
 
     bvh8/bvh8_intersector1.cpp   
     bvh8/bvh8_intersector4_hybrid.cpp 
     bvh8/bvh8_intersector8_chunk.cpp   
     bvh8/bvh8_intersector8_hybrid.cpp   
 )
-
   SET_TARGET_PROPERTIES(embree_avx2 PROPERTIES COMPILE_FLAGS "${FLAGS_AVX2}")
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} embree_avx2)
 ENDIF()
 
+
+IF (TARGET_AVX512) 
+  ADD_LIBRARY(embree_avx512 STATIC
+
+    geometry/instance_intersector1.cpp
+    geometry/instance_intersector4.cpp
+    geometry/instance_intersector8.cpp
+		
+    bvh4/bvh4_intersector1.cpp
+    bvh4/bvh4_intersector4_single.cpp
+    bvh4/bvh4_intersector4_chunk.cpp
+    bvh4/bvh4_intersector4_hybrid.cpp
+    bvh4/bvh4_intersector8_single.cpp
+    bvh4/bvh4_intersector8_chunk.cpp
+    bvh4/bvh4_intersector8_hybrid.cpp
+
+    bvh8/bvh8_intersector1.cpp   
+    bvh8/bvh8_intersector4_hybrid.cpp 
+    bvh8/bvh8_intersector8_chunk.cpp   
+    bvh8/bvh8_intersector8_hybrid.cpp   
+)
+  SET_TARGET_PROPERTIES(embree_avx512 PROPERTIES COMPILE_FLAGS "${FLAGS_AVX512}")
+  SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} embree_avx512)
+ENDIF()
+
+
 TARGET_LINK_LIBRARIES(embree ${EMBREE_LIBRARIES} sys simd)
-SET_TARGET_PROPERTIES(embree PROPERTIES VERSION 2.3.2 SOVERSION 2)
+SET_TARGET_PROPERTIES(embree PROPERTIES VERSION 2.3.3 SOVERSION 2)
 INSTALL(TARGETS embree DESTINATION lib)

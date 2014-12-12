@@ -17,24 +17,31 @@
 #include "scene.h"
 
 #if !defined(__MIC__)
-#include "bvh4/bvh4_builder_toplevel.h" // FIXME: remove
 #include "bvh4/bvh4.h"
 #include "bvh8/bvh8.h"
-#include "bvh4hair/bvh4hair.h"
-#include "bvh4mb/bvh4mb.h"
+#include "geometry/subdivpatchdispl1.h"
 #else
 #include "xeonphi/bvh4i/bvh4i.h"
 #include "xeonphi/bvh4mb/bvh4mb.h"
 #include "xeonphi/bvh4hair/bvh4hair.h"
 #endif
 
+
 namespace embree
 {
   Scene::Scene (RTCSceneFlags sflags, RTCAlgorithmFlags aflags)
     : flags(sflags), aflags(aflags), numMappedBuffers(0), is_build(false), needTriangles(false), needVertices(false),
-      numTriangleMeshes(0), numTriangleMeshes2(0), numTriangles(0), numTriangles2(0), numBezierCurves(0), numBezierCurves2(0), numUserGeometries1(0), 
+      numTriangles(0), numTriangles2(0), 
+      numBezierCurves(0), numBezierCurves2(0), 
+      numSubdivPatches(0), numSubdivPatches2(0), 
+      numUserGeometries1(0), 
       numIntersectionFilters4(0), numIntersectionFilters8(0), numIntersectionFilters16(0)
   {
+#if !defined(__MIC__)
+    lockstep_scheduler.taskBarrier.init(TaskScheduler::getNumThreads());
+#else
+    lockstep_scheduler.taskBarrier.init(MAX_MIC_THREADS);
+#endif
     if (g_scene_flags != -1)
       flags = (RTCSceneFlags) g_scene_flags;
 
@@ -44,6 +51,7 @@ namespace embree
     accels.add( BVH4mb::BVH4mbTriangle1ObjectSplitBinnedSAH(this) );
     accels.add( BVH4i::BVH4iVirtualGeometryBinnedSAH(this) );
     accels.add( BVH4Hair::BVH4HairBinnedSAH(this) );
+    accels.add( BVH4i::BVH4iSubdivMeshBinnedSAH(this) );
 
     if (g_verbose >= 1)
       {
@@ -92,17 +100,25 @@ namespace embree
 	      accels.add(BVH4i::BVH4iTriangle1ObjectSplitMorton64Bit(this));
 	    }
 
-	    else throw std::runtime_error("unknown builder "+g_tri_builder+" for BVH4i<Triangle1>");
+	    else THROW_RUNTIME_ERROR("unknown builder "+g_tri_builder+" for BVH4i<Triangle1>");
 	  }
       }
-    else throw std::runtime_error("unknown accel "+g_tri_accel);
+    else THROW_RUNTIME_ERROR("unknown accel "+g_tri_accel);
 
 
 #else
     createTriangleAccel();
-    accels.add(BVH4MB::BVH4MBTriangle1v(this));
+    //accels.add(BVH4::BVH4Triangle1vMB(this));
+    accels.add(BVH4::BVH4Triangle4vMB(this));
     accels.add(BVH4::BVH4UserGeometry(this));
     createHairAccel();
+    accels.add(BVH4::BVH4OBBBezier1iMB(this,false));
+
+    if      (g_subdiv_accel == "default"               ) accels.add(BVH4::BVH4SubdivPatch1(this));
+    else if (g_subdiv_accel == "bvh4.subdivpatch1"     ) accels.add(BVH4::BVH4SubdivPatch1(this));
+    else if (g_subdiv_accel == "bvh4.subdivpatchdispl1") accels.add(BVH4::BVH4SubdivPatchDispl1(this));
+    else THROW_RUNTIME_ERROR("unknown accel "+g_subdiv_accel);
+
 #endif
   }
 
@@ -117,10 +133,10 @@ namespace embree
         switch (mode) {
         case /*0b00*/ 0: 
 #if defined (__TARGET_AVX__)
-          if (has_feature(AVX2)) // on AVX machines BVH8 gives lower performance, only enable on AVX2!
+          if (has_feature(AVX)) // on AVX machines BVH8 gives lower performance, only enable on AVX2!
 	  {
-            if (isHighQuality()) accels.add(BVH8::BVH8Triangle8SpatialSplit(this)); 
-            else                 accels.add(BVH8::BVH8Triangle8ObjectSplit(this)); 
+            if (isHighQuality()) accels.add(BVH8::BVH8Triangle4SpatialSplit(this)); 
+            else                 accels.add(BVH8::BVH8Triangle4ObjectSplit(this)); 
           }
           else 
 #endif
@@ -152,16 +168,15 @@ namespace embree
     else if (g_tri_accel == "bvh4.bvh4.triangle4v")   accels.add(BVH4::BVH4BVH4Triangle4vObjectSplit(this));
     else if (g_tri_accel == "bvh4.triangle1")         accels.add(BVH4::BVH4Triangle1(this));
     else if (g_tri_accel == "bvh4.triangle4")         accels.add(BVH4::BVH4Triangle4(this));
-#if defined (__TARGET_AVX__)
-    else if (g_tri_accel == "bvh4.triangle8")         accels.add(BVH4::BVH4Triangle8(this));
-#endif
     else if (g_tri_accel == "bvh4.triangle1v")        accels.add(BVH4::BVH4Triangle1v(this));
     else if (g_tri_accel == "bvh4.triangle4v")        accels.add(BVH4::BVH4Triangle4v(this));
     else if (g_tri_accel == "bvh4.triangle4i")        accels.add(BVH4::BVH4Triangle4i(this));
 #if defined (__TARGET_AVX__)
+    else if (g_tri_accel == "bvh4.triangle8")         accels.add(BVH4::BVH4Triangle8(this));
+    else if (g_tri_accel == "bvh8.triangle4")         accels.add(BVH8::BVH8Triangle4(this));
     else if (g_tri_accel == "bvh8.triangle8")         accels.add(BVH8::BVH8Triangle8(this));
 #endif
-    else throw std::runtime_error("unknown triangle acceleration structure "+g_tri_accel);
+    else THROW_RUNTIME_ERROR("unknown triangle acceleration structure "+g_tri_accel);
   }
 
   void Scene::createHairAccel()
@@ -171,28 +186,28 @@ namespace embree
       if (isStatic()) {
         int mode =  2*(int)isCompact() + 1*(int)isRobust(); 
         switch (mode) {
-        case /*0b00*/ 0: accels.add(BVH4Hair::BVH4HairBezier1(this,isHighQuality())); break;
-        case /*0b01*/ 1: accels.add(BVH4Hair::BVH4HairBezier1(this,isHighQuality())); break;
-        case /*0b10*/ 2: accels.add(BVH4Hair::BVH4HairBezier1i(this,isHighQuality())); break;
-        case /*0b11*/ 3: accels.add(BVH4Hair::BVH4HairBezier1i(this,isHighQuality())); break;
+        case /*0b00*/ 0: accels.add(BVH4::BVH4OBBBezier1v(this,isHighQuality())); break;
+        case /*0b01*/ 1: accels.add(BVH4::BVH4OBBBezier1v(this,isHighQuality())); break;
+        case /*0b10*/ 2: accels.add(BVH4::BVH4OBBBezier1i(this,isHighQuality())); break;
+        case /*0b11*/ 3: accels.add(BVH4::BVH4OBBBezier1i(this,isHighQuality())); break;
         }
       } 
       else 
       {
         int mode =  2*(int)isCompact() + 1*(int)isRobust();
         switch (mode) {
-	case /*0b00*/ 0: accels.add(BVH4::BVH4Bezier1(this)); break;
-        case /*0b01*/ 1: accels.add(BVH4::BVH4Bezier1(this)); break;
+	case /*0b00*/ 0: accels.add(BVH4::BVH4Bezier1v(this)); break;
+        case /*0b01*/ 1: accels.add(BVH4::BVH4Bezier1v(this)); break;
         case /*0b10*/ 2: accels.add(BVH4::BVH4Bezier1i(this)); break;
         case /*0b11*/ 3: accels.add(BVH4::BVH4Bezier1i(this)); break;
         }
       }   
     }
-    else if (g_hair_accel == "bvh4.bezier1"     ) accels.add(BVH4::BVH4Bezier1(this));
+    else if (g_hair_accel == "bvh4.bezier1v"    ) accels.add(BVH4::BVH4Bezier1v(this));
     else if (g_hair_accel == "bvh4.bezier1i"    ) accels.add(BVH4::BVH4Bezier1i(this));
-    else if (g_hair_accel == "bvh4hair.bezier1" ) accels.add(BVH4Hair::BVH4HairBezier1(this,false));
-    else if (g_hair_accel == "bvh4hair.bezier1i") accels.add(BVH4Hair::BVH4HairBezier1i(this,false));
-    else throw std::runtime_error("unknown hair acceleration structure "+g_hair_accel);
+    else if (g_hair_accel == "bvh4obb.bezier1v" ) accels.add(BVH4::BVH4OBBBezier1v(this,false));
+    else if (g_hair_accel == "bvh4obb.bezier1i" ) accels.add(BVH4::BVH4OBBBezier1i(this,false));
+    else THROW_RUNTIME_ERROR("unknown hair acceleration structure "+g_hair_accel);
   }
 
 #endif
@@ -229,6 +244,23 @@ namespace embree
     Geometry* geom = new TriangleMesh(this,gflags,numTriangles,numVertices,numTimeSteps);
     return geom->id;
   }
+
+  unsigned Scene::newSubdivisionMesh (RTCGeometryFlags gflags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numTimeSteps) 
+  {
+    if (isStatic() && (gflags != RTC_GEOMETRY_STATIC)) {
+      process_error(RTC_INVALID_OPERATION,"static scenes can only contain static geometries");
+      return -1;
+    }
+
+    if (numTimeSteps == 0 || numTimeSteps > 2) {
+      process_error(RTC_INVALID_OPERATION,"only 1 or 2 time steps supported");
+      return -1;
+    }
+    
+    Geometry* geom = new SubdivMesh(this,gflags,numFaces,numEdges,numVertices,numTimeSteps);
+    return geom->id;
+  }
+
 
   unsigned Scene::newBezierCurves (RTCGeometryFlags gflags, size_t numCurves, size_t numVertices, size_t numTimeSteps) 
   {
@@ -269,16 +301,54 @@ namespace embree
     delete geometry;
   }
 
-  void Scene::build (size_t threadIndex, size_t threadCount) {
-    accels.build(threadIndex,threadCount);
-  }
-
-  void Scene::task_build(size_t threadIndex, size_t threadCount, TaskScheduler::Event* event) {
-    build(threadIndex,threadCount);
-  }
-
-  void Scene::build () 
+  void Scene::task_build_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
   {
+    LockStepTaskScheduler::Init init(threadIndex,threadCount,&lockstep_scheduler);
+    if (threadIndex == 0) accels.build(threadIndex,threadCount);
+  }
+
+  void Scene::build (size_t threadIndex, size_t threadCount) 
+  {
+#if 0 // FIXME: remove
+    SubdivMesh* subdivmesh = getSubdivMesh(0);
+    subdivmesh->initializeHalfEdgeStructures();
+    size_t N = subdivmesh->numFaces;
+    for (size_t i=0; i<N; i++)
+    {
+      SubdivPatchDispl1* patch = new SubdivPatchDispl1(&subdivmesh->halfEdges[4*i], subdivmesh->getVertexPositionPtr(0), 0, i, 8, true); // FIXME: wrong geomID
+      const size_t width  = patch->size();
+      const size_t height = patch->size();
+      TriangleMesh* mesh = new TriangleMesh (this, RTC_GEOMETRY_STATIC, (width-1)*(height-1)*2, width*height, 1);
+      Vec3fa* vertices = (Vec3fa*) mesh->map(RTC_VERTEX_BUFFER);
+      for (size_t y=0; y<height; y++) {
+        for (size_t x=0; x<width; x++) {
+          vertices[y*width+x] = patch->get(x,y);
+        }
+      }
+      mesh->unmap(RTC_VERTEX_BUFFER);
+      TriangleMesh::Triangle* triangles = (TriangleMesh::Triangle*) mesh->map(RTC_INDEX_BUFFER);
+      for (size_t y=0; y<height-1; y++) {
+        for (size_t x=0; x<width-1; x++) {
+          TriangleMesh::Triangle& tri0 = triangles[2*(y*(width-1)+x)+0];
+          tri0.v[0] = (y+0)*width + (x+0);
+          tri0.v[1] = (y+0)*width + (x+1);
+          tri0.v[2] = (y+1)*width + (x+1);
+          TriangleMesh::Triangle& tri1 = triangles[2*(y*(width-1)+x)+1];
+          tri1.v[0] = (y+0)*width + (x+0);
+          tri1.v[1] = (y+1)*width + (x+1);
+          tri1.v[2] = (y+1)*width + (x+0);
+        }
+      }
+      mesh->unmap(RTC_INDEX_BUFFER);
+    }
+    remove(subdivmesh);
+#endif
+
+    /* all user worker threads properly enter and leave the tasking system */
+    LockStepTaskScheduler::Init init(threadIndex,threadCount,&lockstep_scheduler);
+    if (threadIndex != 0) return;
+
+    /* allow only one build at a time */
     Lock<MutexSys> lock(mutex);
 
     if (isStatic() && isBuild()) {
@@ -292,7 +362,7 @@ namespace embree
     }
 
     /* verify geometry in debug mode  */
-#if defined(DEBUG)
+#if 0 && defined(DEBUG)
     for (size_t i=0; i<geometries.size(); i++) {
       if (geometries[i]) {
         if (!geometries[i]->verify()) {
@@ -306,18 +376,25 @@ namespace embree
     /* select fast code path if no intersection filter is present */
     accels.select(numIntersectionFilters4,numIntersectionFilters8,numIntersectionFilters16);
 
-    /* spawn build task */
-    TaskScheduler::EventSync event;
-    new (&task) TaskScheduler::Task(&event,NULL,NULL,1,_task_build,this,"scene_build");
-    TaskScheduler::addTask(-1,TaskScheduler::GLOBAL_FRONT,&task);
-    event.sync();
+    /* if user provided threads use them */
+    if (threadCount)
+      accels.build(threadIndex,threadCount);
+
+    /* otherwise use our own threads */
+    else
+    {
+      TaskScheduler::EventSync event;
+      new (&task) TaskScheduler::Task(&event,_task_build_parallel,this,TaskScheduler::getNumThreads(),NULL,NULL,"scene_build");
+      TaskScheduler::addTask(-1,TaskScheduler::GLOBAL_FRONT,&task);
+      event.sync();
+    }
 
     /* make static geometry immutable */
     if (isStatic()) 
     {
       accels.immutable();
       for (size_t i=0; i<geometries.size(); i++)
-        geometries[i]->immutable();
+        if (geometries[i]) geometries[i]->immutable();
     }
 
     /* delete geometry that is scheduled for delete */
@@ -356,6 +433,18 @@ namespace embree
       accels.print(2);
       std::cout << "selected scene intersector" << std::endl;
       intersectors.print(2);
+    }
+  }
+
+  void Scene::write(std::ofstream& file)
+  {
+    int magick = 0x35238765LL;
+    file.write((char*)&magick,sizeof(magick));
+    int numGroups = size();
+    file.write((char*)&numGroups,sizeof(numGroups));
+    for (size_t i=0; i<numGroups; i++) {
+      if (geometries[i]) geometries[i]->write(file);
+      else { int type = -1; file.write((char*)&type,sizeof(type)); }
     }
   }
 }

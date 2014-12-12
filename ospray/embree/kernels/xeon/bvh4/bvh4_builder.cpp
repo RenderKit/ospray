@@ -28,11 +28,6 @@
 #include "geometry/triangle4i.h"
 
 #define ROTATE_TREE 1
-//#if defined __AVX__
-//#define RESTRUCTURE_TREE 1
-//#else
-#define RESTRUCTURE_TREE 0
-//#endif
 
 #include "common/scene_triangle_mesh.h"
 
@@ -40,19 +35,21 @@ namespace embree
 {
   namespace isa
   {
-    template<> BVH4BuilderT<Triangle1 >::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,0,0,1.0f,false,sizeof(Triangle1),2,inf) {}
-    template<> BVH4BuilderT<Triangle4 >::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,2,2,1.0f,false,sizeof(Triangle4),4,inf) {}
+    static const size_t THRESHOLD_FOR_SINGLE_THREADED = 50000; // FIXME: measure if this is really optimal, maybe disable only parallel splits
+
+    template<> BVH4BuilderT<Triangle1>::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,0,0,1.0f,false,sizeof(Triangle1),2,inf) {}
+    template<> BVH4BuilderT<Triangle4>::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,2,2,1.0f,false,sizeof(Triangle4),4,inf) {}
 #if defined(__AVX__)
-    template<> BVH4BuilderT<Triangle8 >::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,3,2,1.0f,false,sizeof(Triangle8),8,inf) {}
+    template<> BVH4BuilderT<Triangle8>::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,3,2,1.0f,false,sizeof(Triangle8),8,inf) {}
 #endif
     template<> BVH4BuilderT<Triangle1v>::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,0,0,1.0f,false,sizeof(Triangle1v),2,inf) {}
     template<> BVH4BuilderT<Triangle4v>::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,2,2,1.0f,false,sizeof(Triangle4v),4,inf) {}
     template<> BVH4BuilderT<Triangle4i>::BVH4BuilderT (BVH4* bvh, Scene* scene, size_t mode) : BVH4Builder(bvh,scene,NULL,mode,2,2,1.0f,true ,sizeof(Triangle4i),4,inf) {}
 
-    template<> BVH4BuilderT<Triangle1 >::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,0,0,1.0f,false,sizeof(Triangle1),2,inf) {}
-    template<> BVH4BuilderT<Triangle4 >::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,2,2,1.0f,false,sizeof(Triangle4),4,inf) {}
+    template<> BVH4BuilderT<Triangle1>::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,0,0,1.0f,false,sizeof(Triangle1),2,inf) {}
+    template<> BVH4BuilderT<Triangle4>::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,2,2,1.0f,false,sizeof(Triangle4),4,inf) {}
 #if defined(__AVX__)
-    template<> BVH4BuilderT<Triangle8 >::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,3,2,1.0f,false,sizeof(Triangle8),8,inf) {}
+    template<> BVH4BuilderT<Triangle8>::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,3,2,1.0f,false,sizeof(Triangle8),8,inf) {}
 #endif
     template<> BVH4BuilderT<Triangle1v>::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,0,0,1.0f,false,sizeof(Triangle1v),2,inf) {}
     template<> BVH4BuilderT<Triangle4v>::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,2,2,1.0f,false,sizeof(Triangle4v),4,inf) {}
@@ -61,7 +58,7 @@ namespace embree
     BVH4Builder::BVH4Builder (BVH4* bvh, Scene* scene, TriangleMesh* mesh, size_t mode,
 				size_t logBlockSize, size_t logSAHBlockSize, float intCost, 
 				bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize)
-      : scene(scene), mesh(mesh), bvh(bvh), enableSpatialSplits(mode > 0), remainingReplications(0),
+      : scene(scene), mesh(mesh), bvh(bvh), scheduler(&scene->lockstep_scheduler), enableSpatialSplits(mode & MODE_HIGH_QUALITY), listMode(mode & LIST_MODE_BITS), remainingReplications(0),
 	logBlockSize(logBlockSize), logSAHBlockSize(logSAHBlockSize), intCost(intCost), 
 	needVertices(needVertices), primBytes(primBytes), minLeafSize(minLeafSize), maxLeafSize(maxLeafSize)
      {
@@ -74,253 +71,51 @@ namespace embree
       bvh->alloc.shrink();
     }
 
-///////////////////////////////////////////////////////////////////////////////////////
-
-#if defined(__AVX__)
-
-    struct RestructureNode
-    {
-      struct Partition3
-      {
-        __forceinline Partition3 () 
-          : set0(0), set1(0), set2(0), sah(inf) {}
-      public:
-        int set0,set1,set2;
-        float sah;
-      };
-
-      struct Item 
-      {
-        __forceinline Item () {}
-        __forceinline Item (BVH4::NodeRef ref, const BBox3fa& b) 
-          : ref(ref), bounds(b) { bounds.lower.a = ref.isLeaf() ? 0.0f : area(b); }
-
-        __forceinline friend bool operator<(const Item& a, const Item& b) { 
-          return a.bounds.lower.a < b.bounds.lower.a; 
-        }
-        
-      public:
-        BBox3fa bounds;
-        BVH4::NodeRef ref;
-      };
-
-      RestructureNode (BVH4::Node* node2) 
-      {
-        for (size_t i=0; i< (1<<12); i++) 
-          sa[i] = inf;
-
-        numItems = 0;
-        for (size_t c=0; c<4; c++) {
-          if (node2->child(c) == BVH4::emptyNode) continue;
-          items[numItems++] = Item(node2->child(c),node2->bounds(c));
-        }
-        if (numItems <= 1) return;
-        std::sort(&items[0],&items[numItems]);
-
-        BVH4::NodeRef ref0 = items[--numItems].ref;
-        if (ref0.isLeaf()) return;
-        BVH4::NodeRef ref1 = items[--numItems].ref;
-        if (ref1.isLeaf()) return;
-    
-        BVH4::Node* node0 = ref0.node();
-        for (size_t c=0; c<4; c++) {
-          if (node0->child(c) == BVH4::emptyNode) continue;
-          items[numItems++] = Item(node0->child(c),node0->bounds(c));
-        }
-
-        BVH4::Node* node1 = ref1.node();
-        for (size_t c=0; c<4; c++) {
-          if (node1->child(c) == BVH4::emptyNode) continue;
-          items[numItems++] = Item(node1->child(c),node1->bounds(c));
-        }
-
-        Partition3 best;
-        find012(0,0,0,0,best);
-        //PRINT(numItems);
-        //printf("set0 = "); for (size_t i=0; i<32; i++) if (best.set0 & (1<< i)) printf("1"); else printf("0"); printf("\n");
-        //printf("set1 = "); for (size_t i=0; i<32; i++) if (best.set1 & (1<< i)) printf("1"); else printf("0"); printf("\n");
-        //printf("set2 = "); for (size_t i=0; i<32; i++) if (best.set2 & (1<< i)) printf("1"); else printf("0"); printf("\n");
-        //assert(__popcnt(best.set0 | best.set1 | best.set2) == numItems);
-
-        int i0 = 0; node0->clear();
-        int set0 = best.set0;
-        int set1 = best.set1;
-        int set2 = best.set2;
-        while (set0) {
-          const size_t j = __bscf(set0);
-          node0->set(i0++,items[j].bounds,items[j].ref);
-        }
-
-        int i1 = 0; node1->clear();
-        while (set1) {
-          const size_t j = __bscf(set1);
-          node1->set(i1++,items[j].bounds,items[j].ref);
-        }
-
-        int i2 = 0; node2->clear();
-        while (set2) {
-          const size_t j = __bscf(set2);
-          node2->set(i2++,items[j].bounds,items[j].ref);
-        }
-        if (best.set0) {
-          if (__popcnt(best.set0) == 1) {
-            const size_t j = __bsf(best.set0);
-            node2->set(i2++,items[j].bounds,items[j].ref);
-          } else {
-            node2->set(i2++,setBounds(best.set0),ref0);
-          }
-        }
-        if (best.set1) {
-          if (__popcnt(best.set1) == 1) {
-            const size_t j = __bsf(best.set1);
-            node2->set(i2++,items[j].bounds,items[j].ref);
-          } else {
-            node2->set(i2++,setBounds(best.set1),ref1);
-          }
-        }
-      }
-
-      void find012(int i, int set0, int set1, int set2, Partition3& best) 
-      {
-        if (i == numItems) return selectBest(set0,set1,set2,best);
-        if (__popcnt(set0) == 4) return find12(i,set0,set1,set2,best);
-        if (__popcnt(set1) == 4) return find02(i,set0,set1,set2,best);
-        if (__popcnt(set2) == 2) return find01(i,set0,set1,set2,best);
-        find012(i+1,set0|(1<<i),set1,set2,best);
-        find012(i+1,set0,set1|(1<<i),set2,best);
-        find012(i+1,set0,set1,set2|(1<<i),best);
-      }
-
-      void find01(int i, int set0, int set1, int set2, Partition3& best) 
-      {
-        if (i == numItems) return selectBest(set0,set1,set2,best);
-        if (__popcnt(set0) == 4) return find1(i,set0,set1,set2,best);
-        if (__popcnt(set1) == 4) return find0(i,set0,set1,set2,best);
-        find01(i+1,set0|(1<<i),set1,set2,best);
-        find01(i+1,set0,set1|(1<<i),set2,best);
-      }
-
-      void find02(int i, int set0, int set1, int set2, Partition3& best) 
-      {
-        if (i == numItems) return selectBest(set0,set1,set2,best);
-        if (__popcnt(set0) == 4) return find2(i,set0,set1,set2,best);
-        if (__popcnt(set2) == 2) return find0(i,set0,set1,set2,best);
-        find02(i+1,set0|(1<<i),set1,set2,best);
-        find02(i+1,set0,set1,set2|(1<<i),best);
-      }
-
-      void find12(int i, int set0, int set1, int set2, Partition3& best) 
-      {
-        if (i == numItems) return selectBest(set0,set1,set2,best);
-        if (__popcnt(set1) == 4) return find2(i,set0,set1,set2,best);
-        if (__popcnt(set2) == 2) return find1(i,set0,set1,set2,best);
-        find12(i+1,set0,set1|(1<<i),set2,best);
-        find12(i+1,set0,set1,set2|(1<<i),best);
-      }
-      
-      void find0(int i, int set0, int set1, int set2, Partition3& best) 
-      {
-        if (i == numItems) return selectBest(set0,set1,set2,best);
-        find0(i+1,set0|(1<<i),set1,set2,best);
-      }
-
-      void find1(int i, int set0, int set1, int set2, Partition3& best) 
-      {
-        if (i == numItems) return selectBest(set0,set1,set2,best);
-        find1(i+1,set0,set1|(1<<i),set2,best);
-      }
-      
-      void find2(int i, int set0, int set1, int set2, Partition3& best) 
-      {
-        if (i == numItems) return selectBest(set0,set1,set2,best);
-        find2(i+1,set0,set1,set2|(1<<i),best);
-      }
-
-      void selectBest(int set0, int set1, int set2, Partition3& best)
-      {
-        if (sa[set0] == float(inf)) sa[set0] = setArea(set0);
-        if (sa[set1] == float(inf)) sa[set1] = setArea(set1);
-        const float sah = sa[set0] + sa[set1];
-        if (best.sah < sah) return;
-        best.sah  = sah;
-        best.set0 = set0;
-        best.set1 = set1;
-        best.set2 = set2;
-      }
-      
-      float setArea(size_t set) 
-      {
-        if (set == 0) 
-          return 0.0f;
-        
-        BBox3fa bounds = empty;
-        while (set) {
-          bounds.extend(items[__bscf(set)].bounds);
-        }
-        return area(bounds);
-      }
-
-      BBox3fa setBounds(size_t set) 
-      {
-        if (set == 0) 
-          return empty;
-        
-        BBox3fa bounds = empty;
-        while (set) {
-          bounds.extend(items[__bscf(set)].bounds);
-        }
-        return bounds;
-      }
-      
-    private:
-      float sa[1<<12];
-      Item items[12];
-      size_t numItems;
-    };
-
-    void BVH4Builder::restructureTree(NodeRef& ref, size_t depth)
-    {
-      if (ref.isLeaf()) return;
-      Node* node = ref.node();
-      RestructureNode temp(node);
-      for (size_t c=0; c<4; c++) {
-        if (node->child(c) == BVH4::emptyNode) continue;
-        restructureTree(node->child(c),depth+1);
-      }
-    }
-#endif
-
-///////////////////////////////////////////////////////////////////////////////////////
     template<typename Triangle>
-    typename BVH4Builder::NodeRef BVH4BuilderT<Triangle>::createLeaf(size_t threadIndex, PrimRefList& prims, const PrimInfo& pinfo)
+    typename BVH4Builder::NodeRef BVH4BuilderT<Triangle>::createLeaf(size_t threadIndex, Allocator& nodeAlloc, Allocator& leafAlloc, PrimRefList& prims, const PrimInfo& pinfo)
     {
       /* allocate leaf node */
       size_t N = blocks(pinfo.size());
-      Triangle* leaf = (Triangle*) bvh->allocPrimitiveBlocks(threadIndex,N);
+      Triangle* leaf = (Triangle*) bvh->allocPrimitiveBlocks(nodeAlloc,N); // FIMXE: should be leafAlloc?
       assert(N <= (size_t)BVH4::maxLeafBlocks);
       
+      /* make order of primitives deterministic */
+      PrimRefList::item* block = prims.take();
+      if (block) {
+	while (PrimRefList::item* block1 = prims.take()) {
+	  for (size_t i=0; i<block1->size(); i++) {
+	    bool ok = block->insert(block1->at(i));
+	    assert(ok);
+	  }
+	  alloc.free(threadIndex,block1);
+	}
+	std::sort(&block->at(0),&block->at(block->size()));
+	prims.insert(block);
+      }
+            
       /* insert all triangles */
       PrimRefList::block_iterator_unsafe iter(prims);
-      for (size_t i=0; i<N; i++) leaf[i].fill(iter,scene);
+      for (size_t i=0; i<N; i++) leaf[i].fill(iter,scene,listMode);
       assert(!iter);
       
       /* free all primitive blocks */
       while (PrimRefList::item* block = prims.take())
 	alloc.free(threadIndex,block);
-      
-      return bvh->encodeLeaf(leaf,N);
+
+      return bvh->encodeLeaf(leaf,listMode ? listMode : N);
     }
     
-    BVH4Builder::NodeRef BVH4Builder::createLargeLeaf(size_t threadIndex, PrimRefList& prims, const PrimInfo& pinfo, size_t depth)
+    BVH4Builder::NodeRef BVH4Builder::createLargeLeaf(size_t threadIndex, Allocator& nodeAlloc, Allocator& leafAlloc,
+                                                      PrimRefList& prims, const PrimInfo& pinfo, size_t depth)
     {
 #if defined(_DEBUG)
       if (depth >= BVH4::maxBuildDepthLeaf) 
-	throw std::runtime_error("ERROR: Loosing primitives during build.");
+	THROW_RUNTIME_ERROR("ERROR: Loosing primitives during build.");
 #endif
       
       /* create leaf for few primitives */
       if (pinfo.size() <= maxLeafSize)
-	return createLeaf(threadIndex,prims,pinfo);
+	return createLeaf(threadIndex,nodeAlloc,leafAlloc,prims,pinfo);
       
       /* first level */
       PrimRefList prims0, prims1;
@@ -334,12 +129,12 @@ namespace embree
       FallBackSplit::find(threadIndex,alloc,prims1,cprims[2],cinfo[2],cprims[3],cinfo[3]);
       
       /*! create an inner node */
-      Node* node = bvh->allocNode(threadIndex);
+      Node* node = bvh->allocNode(nodeAlloc);
       for (size_t i=0; i<4; i++) 
 	if (cinfo[i].size())
-	  node->set(i,cinfo[i].geomBounds,createLargeLeaf(threadIndex,cprims[i],cinfo[i],depth+1));
+	  node->set(i,cinfo[i].geomBounds,createLargeLeaf(threadIndex,nodeAlloc,leafAlloc,cprims[i],cinfo[i],depth+1));
 
-      BVH4::compact(node); // move empty nodes to the end
+      BVH4::compact(node); // moves empty nodes to the end
       return bvh->encodeNode(node);
     }  
 
@@ -347,7 +142,7 @@ namespace embree
     const Split BVH4Builder::find(size_t threadIndex, size_t threadCount, size_t depth, PrimRefList& prims, const PrimInfo& pinfo, bool spatial)
     {
       ObjectPartition::SplitInfo oinfo;
-      ObjectPartition::Split osplit = ObjectPartition::find<PARALLEL>(threadIndex,threadCount,prims,pinfo,logSAHBlockSize,oinfo);
+      ObjectPartition::Split osplit = ObjectPartition::find<PARALLEL>(threadIndex,threadCount,scheduler,prims,pinfo,logSAHBlockSize,oinfo);
       if (spatial) {
 	const BBox3fa overlap = intersect(oinfo.leftBounds,oinfo.rightBounds);
 	if (safeArea(overlap) < 0.2f*safeArea(pinfo.geomBounds)) spatial = false;
@@ -356,15 +151,18 @@ namespace embree
 	if (osplit.sah == float(inf)) return Split();
 	else return osplit;
       }
-      SpatialSplit   ::Split ssplit = SpatialSplit   ::find<PARALLEL>(threadIndex,threadCount,scene,prims,pinfo,logSAHBlockSize);
+      SpatialSplit::Split ssplit = SpatialSplit::find<PARALLEL>(threadIndex,threadCount,scheduler,scene,prims,pinfo,logSAHBlockSize);
       const float bestSAH = min(osplit.sah,ssplit.sah);
-      if      (bestSAH == osplit.sah) return osplit; 
+      
+      if      (bestSAH == float(inf)) return Split();
+      else if (bestSAH == osplit.sah) return osplit; 
       else if (bestSAH == ssplit.sah) return ssplit;
-      else                            return Split();
+      else THROW_RUNTIME_ERROR("internal error");      
     }
     
     template<bool PARALLEL>
-    __forceinline size_t BVH4Builder::createNode(size_t threadIndex, size_t threadCount, BVH4Builder* parent, BuildRecord& record, BuildRecord records_o[BVH4::N])
+    __forceinline size_t BVH4Builder::createNode(size_t threadIndex, size_t threadCount, Allocator& nodeAlloc, Allocator& leafAlloc,
+                                                 BVH4Builder* parent, BuildRecord& record, BuildRecord records_o[BVH4::N])
     {
       /*! compute leaf and split cost */
       const float leafSAH  = parent->intCost*record.pinfo.leafSAH(parent->logSAHBlockSize);
@@ -374,7 +172,7 @@ namespace embree
       
       /*! create a leaf node when threshold reached or SAH tells us to stop */
       if (record.pinfo.size() <= parent->minLeafSize || record.depth > BVH4::maxBuildDepth || (record.pinfo.size() <= parent->maxLeafSize && leafSAH <= splitSAH)) {
-	*record.dst = parent->createLargeLeaf(threadIndex,record.prims,record.pinfo,record.depth+1); return 0;
+	*record.dst = parent->createLargeLeaf(threadIndex,nodeAlloc,leafAlloc,record.prims,record.pinfo,record.depth+1); return 0;
       }
       
       /*! initialize child list */
@@ -399,7 +197,7 @@ namespace embree
 	/* perform best found split */
 	BuildRecord lrecord(record.depth+1);
 	BuildRecord rrecord(record.depth+1);
-	records_o[bestChild].split.split<PARALLEL>(threadIndex,threadCount,parent->alloc,parent->scene,records_o[bestChild].prims,lrecord.prims,lrecord.pinfo,rrecord.prims,rrecord.pinfo);
+	records_o[bestChild].split.split<PARALLEL>(threadIndex,threadCount,parent->scheduler,parent->alloc,parent->scene,records_o[bestChild].prims,lrecord.prims,lrecord.pinfo,rrecord.prims,rrecord.pinfo);
 
 	/* fallback if spatial split did fail for corner case */
 	if (lrecord.pinfo.size() == 0) {
@@ -432,7 +230,7 @@ namespace embree
       } while (numChildren < BVH4::N);
       
       /*! create an inner node */
-      Node* node = parent->bvh->allocNode(threadIndex);
+      Node* node = parent->bvh->allocNode(nodeAlloc);
       for (size_t i=0; i<numChildren; i++) {
 	node->set(i,records_o[i].pinfo.geomBounds);
 	records_o[i].dst = &node->child(i);
@@ -441,20 +239,20 @@ namespace embree
       return numChildren;
     }
 
-    void BVH4Builder::finish_build(size_t threadIndex, size_t threadCount, BuildRecord& record)
+    void BVH4Builder::finish_build(size_t threadIndex, size_t threadCount, Allocator& nodeAlloc, Allocator& leafAlloc, BuildRecord& record)
     {
-      BuildRecord children[BVH4::N];
-      size_t N = createNode<false>(threadIndex,threadCount,this,record,children);
+      BuildRecord children[BVH4::N]; 
+      size_t N = createNode<false>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,record,children);
       for (size_t i=0; i<N; i++)
-	finish_build(threadIndex,threadCount,children[i]);
+	finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,children[i]);
     }
 
-    void BVH4Builder::continue_build(size_t threadIndex, size_t threadCount, BuildRecord& record)
+    void BVH4Builder::continue_build(size_t threadIndex, size_t threadCount, Allocator& nodeAlloc, Allocator& leafAlloc, BuildRecord& record)
     {
       /* finish small tasks */
       if (record.pinfo.size() < 4*1024) 
       {
-	finish_build(threadIndex,threadCount,record);
+	finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
 #if ROTATE_TREE
 	for (int i=0; i<5; i++) 
 	  BVH4Rotate::rotate(bvh,*record.dst); 
@@ -466,7 +264,7 @@ namespace embree
       else
       {
 	BuildRecord children[BVH4::N];
-	size_t N = createNode<false>(threadIndex,threadCount,this,record,children);
+	size_t N = createNode<false>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,record,children);
       	taskMutex.lock();
 	for (size_t i=0; i<N; i++) {
 	  tasks.push_back(children[i]);
@@ -476,8 +274,11 @@ namespace embree
       }
     }
 
-    void BVH4Builder::build_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
+    void BVH4Builder::build_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount) 
     {
+      Allocator nodeAlloc(&bvh->alloc);
+      Allocator leafAlloc(&bvh->alloc);
+
       while (activeBuildRecords)
       {
 	taskMutex.lock();
@@ -488,12 +289,13 @@ namespace embree
 	BuildRecord record = tasks.back();
 	tasks.pop_back();
 	taskMutex.unlock();
-	continue_build(threadIndex,threadCount,record);
+	continue_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
 	atomic_add(&activeBuildRecords,-1);
       }
+      _mm_sfence(); // make written leaves globally visible
     }
 
-    BVH4::NodeRef BVH4Builder::layout_top_nodes(size_t threadIndex, NodeRef node)
+    BVH4::NodeRef BVH4Builder::layout_top_nodes(size_t threadIndex, Allocator& nodeAlloc, NodeRef node)
     {
       if (node.isBarrier()) {
 	node.clearBarrier();
@@ -502,9 +304,9 @@ namespace embree
       else if (!node.isLeaf()) 
       {
 	Node* src = node.node();
-	Node* dst = bvh->allocNode(threadIndex);
+	Node* dst = bvh->allocNode(nodeAlloc);
 	for (size_t i=0; i<BVH4::N; i++) {
-	  dst->set(i,src->bounds(i),layout_top_nodes(threadIndex,src->child(i)));
+	  dst->set(i,src->bounds(i),layout_top_nodes(threadIndex,nodeAlloc,src->child(i)));
 	}
 	return bvh->encodeNode(dst);
       }
@@ -514,18 +316,24 @@ namespace embree
     
     void BVH4Builder::build(size_t threadIndex, size_t threadCount) 
     {
+      //size_t threadCount = min(threadCountOld,getNumberOfCores()); 
+      //TaskScheduler::enableThreads(threadCount); // FIXME: enable
+
       /*! calculate number of primitives */
       size_t numPrimitives = 0;
       if (mesh) numPrimitives = mesh->numTriangles;
       else      numPrimitives = scene->numTriangles;
 
       /*! set maximal amount of primitive replications for spatial split mode */
-      if (enableSpatialSplits)
-	remainingReplications = numPrimitives;
+      size_t maxPrimitives = numPrimitives;
+      if (enableSpatialSplits) {
+        maxPrimitives = max(numPrimitives,(size_t)(g_tri_builder_replication_factor*numPrimitives));
+	remainingReplications = maxPrimitives-numPrimitives;
+      }
 
       /*! initialize internal buffers of BVH */
-      bvh->init(numPrimitives+remainingReplications);
-      
+      bvh->init(sizeof(BVH4::Node),maxPrimitives,threadCount);
+
       /*! skip build for empty scene */
       if (numPrimitives == 0) 
 	return;
@@ -544,57 +352,79 @@ namespace embree
       
       /* generate list of build primitives */
       PrimRefList prims; PrimInfo pinfo(empty);
-      if (mesh) PrimRefListGenFromGeometry<TriangleMesh>::generate(threadIndex,threadCount,&alloc,mesh ,prims,pinfo);
-      else      PrimRefListGen                          ::generate(threadIndex,threadCount,&alloc,scene,TRIANGLE_MESH,1,prims,pinfo);
+      if (mesh) PrimRefListGenFromGeometry<TriangleMesh>::generate(threadIndex,threadCount,scheduler,&alloc,mesh ,prims,pinfo);
+      else      PrimRefListGen                          ::generate(threadIndex,threadCount,scheduler,&alloc,scene,TRIANGLE_MESH,1,prims,pinfo);
       
-      /* perform initial split */
-      const Split split = find<true>(threadIndex,threadCount,1,prims,pinfo,enableSpatialSplits);
-      const BuildRecord record(1,prims,pinfo,split,&bvh->root);
-      tasks.push_back(record); 
-      activeBuildRecords=1;
+      Allocator nodeAlloc(&bvh->alloc);
+      Allocator leafAlloc(&bvh->alloc);
 
-      /* work in multithreaded toplevel mode until sufficient subtasks got generated */
-      while (tasks.size() > 0 && tasks.size() < threadCount)
+      /* single threaded path */
+      if (pinfo.size() <= THRESHOLD_FOR_SINGLE_THREADED)
       {
-	/* pop largest item for better load balancing */
-	BuildRecord task = tasks.front();
-	std::pop_heap(tasks.begin(),tasks.end());
-	tasks.pop_back();
-	activeBuildRecords--;
-	
-	/* process this item in parallel */
-	BuildRecord children[BVH4::N];
-	size_t N = createNode<true>(threadIndex,threadCount,this,task,children);
-	for (size_t i=0; i<N; i++) {
-	  tasks.push_back(children[i]);
-	  std::push_heap(tasks.begin(),tasks.end());
-	  activeBuildRecords++;
-	}
+	const Split split = find<false>(threadIndex,threadCount,1,prims,pinfo,enableSpatialSplits);
+	BuildRecord record(1,prims,pinfo,split,&bvh->root);
+	finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
+	_mm_sfence(); // make written leaves globally visible
       }
-      
-      /*! process each generated subtask in its own thread */
-      TaskScheduler::executeTask(threadIndex,threadCount,_build_parallel,this,threadCount,"BVH4Builder::build");
-                  
+
+      /* multithreaded path */
+      else
+      {
+	/* perform initial split */
+	const Split split = find<true>(threadIndex,threadCount,1,prims,pinfo,enableSpatialSplits);
+	BuildRecord record(1,prims,pinfo,split,&bvh->root);
+	tasks.push_back(record); 
+	activeBuildRecords=1;
+
+	/* work in multithreaded toplevel mode until sufficient subtasks got generated */
+	while (tasks.size() > 0 && tasks.size() < threadCount)
+	{
+	  /* pop largest item for better load balancing */
+	  BuildRecord task = tasks.front();
+	  std::pop_heap(tasks.begin(),tasks.end());
+	  tasks.pop_back();
+	  activeBuildRecords--;
+	  
+	  /* do not generate too small subtasks */
+	  if (task.pinfo.size() <= THRESHOLD_FOR_SINGLE_THREADED) {
+	    tasks.push_back(task);
+	    activeBuildRecords++;
+	    break;
+	  }
+	  
+	  /* process this item in parallel */
+	  BuildRecord children[BVH4::N];
+	  size_t N = createNode<true>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,task,children);
+	  for (size_t i=0; i<N; i++) {
+	    tasks.push_back(children[i]);
+	    std::push_heap(tasks.begin(),tasks.end());
+	    activeBuildRecords++;
+	  }
+	}
+	_mm_sfence(); // make written leaves globally visible
+	
+	/*! process each generated subtask in its own thread */
+	scheduler->dispatchTask(threadIndex,threadCount,_build_parallel,this,threadCount,"BVH4Builder::build");
+
+        tasks.clear();
+      }
+
       /* perform tree rotations of top part of the tree */
 #if ROTATE_TREE
       for (int i=0; i<5; i++) 
 	BVH4Rotate::rotate(bvh,bvh->root);
 #endif
-
+      
       /* layout top nodes */
-      bvh->root = layout_top_nodes(threadIndex,bvh->root);
+      bvh->root = layout_top_nodes(threadIndex,nodeAlloc,bvh->root);
       //bvh->clearBarrier(bvh->root);
       bvh->numPrimitives = pinfo.size();
       bvh->bounds = pinfo.geomBounds;
-
-#if RESTRUCTURE_TREE
-      for (int i=0; i<5; i++) 
-        restructureTree(bvh->root,0);
-#endif
       
       /* free all temporary memory blocks */
       Alloc::global.clear();
-
+      //TaskScheduler::enableThreads(threadCountOld); // FIXME: enable
+      
       if (g_verbose >= 2 || g_benchmark) 
 	t1 = getSeconds();
 

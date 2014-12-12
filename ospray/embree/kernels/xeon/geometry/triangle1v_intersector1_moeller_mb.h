@@ -31,12 +31,17 @@ namespace embree
    *  e2. The resulting algorithm is similar to the fastest one of the
    *  paper "Optimizing Ray-Triangle Intersection via Automated
    *  Search". */
+  template<bool list>
   struct Triangle1vIntersector1MoellerTrumboreMB
   {
     typedef Triangle1vMB Primitive;
 
+    struct Precalculations {
+      __forceinline Precalculations (const Ray& ray) {}
+    };
+
     /*! Intersect a ray with the triangle and updates the hit. */
-    static __forceinline void intersect(Ray& ray, const Triangle1vMB& tri, const void* geom)
+    static __forceinline void intersect(Precalculations& pre, Ray& ray, const Primitive& tri, const void* geom)
     {
       /* load triangle */
       STAT3(normal.trav_prims,1,1,1);
@@ -86,8 +91,8 @@ namespace embree
       const float u = U * rcpAbsDen;
       const float v = V * rcpAbsDen;
       const float t = T * rcpAbsDen;
-      const int geomID = tri.geomID();
-      const int primID = tri.primID();
+      const int geomID = tri.geomID<list>();
+      const int primID = tri.primID<list>();
 
       /* intersection filter test */
 #if defined(__INTERSECTION_FILTER__)
@@ -107,14 +112,8 @@ namespace embree
       ray.primID = primID;
     }
 
-    static __forceinline void intersect(Ray& ray, const Triangle1vMB* tri, size_t num, void* geom)
-    {
-      for (size_t i=0; i<num; i++)
-        intersect(ray,tri[i],geom);
-    }
-
     /*! Test if the ray is occluded by one of the triangles. */
-    static __forceinline bool occluded(Ray& ray, const Triangle1vMB& tri, const void* geom)
+    static __forceinline bool occluded(Precalculations& pre, Ray& ray, const Primitive& tri, const void* geom)
     {
       /* load triangle */
       STAT3(shadow.trav_prims,1,1,1);
@@ -161,7 +160,7 @@ namespace embree
 
       /* intersection filter test */
 #if defined(__INTERSECTION_FILTER__)
-      const int geomID = tri.geomID();
+      const int geomID = tri.geomID<list>();
       Geometry* geometry = ((Scene*)geom)->get(geomID);
       if (unlikely(geometry->hasOcclusionFilter1()))
       {
@@ -170,21 +169,12 @@ namespace embree
         const float u = U*rcpAbsDen;
         const float v = V*rcpAbsDen;
         const float t = T*rcpAbsDen;
-        const int primID = tri.primID();
+        const int primID = tri.primID<list>();
         return runOcclusionFilter1(geometry,ray,u,v,t,tri_Ng,geomID,primID);
       }
 #endif
 
       return true;
-    }
-
-    static __forceinline bool occluded(Ray& ray, const Triangle1vMB* tri, size_t num, void* geom) 
-    {
-      for (size_t i=0; i<num; i++) 
-        if (occluded(ray,tri[i],geom))
-          return true;
-
-      return false;
     }
   };
 }

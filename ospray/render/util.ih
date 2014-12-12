@@ -1,19 +1,26 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #pragma once
 
-#include "ospray/common/ospcommon.ih"
+#include "ospray/common/OSPCommon.ih"
 #include "ospray/math/vec.ih"
-#include "ospray/fb/tilesize.h"
+#include "ospray/fb/tileSize.h"
 
 /*! \file ospray/render/util.ih \brief Utility-functions for shaders */
-
 
 /*! number of precomputed halton values, must be a power of 2 */
 #define NUM_PRECOMPUTED_HALTON_VALUES 256
@@ -77,13 +84,29 @@ inline uint32 cvt_uint32(const vec3f &v)
     (cvt_uint32(v.z) << 16);
 }
 
+/*! struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE pixels */
 struct z_order_t {
+  /*! 32-bit field specifying both x and y coordinate of the z-order,
+      with upper 16 bits for the y coordinate, and lower 16 for the x
+      coordinate. Compared to using two uint32-arrays, this saves on
+      gather-loop */
+  uniform uint32 xyIdx[TILE_SIZE*TILE_SIZE];
   uniform uint32 xs[TILE_SIZE*TILE_SIZE];
   uniform uint32 ys[TILE_SIZE*TILE_SIZE];
 };
 
+inline uint32 getZOrderX(const uint32 &xs16_ys16) { return xs16_ys16 & (0xffff); }
+inline uint32 getZOrderY(const uint32 &xs16_ys16) { return xs16_ys16 >> 16; }
+
 extern uniform z_order_t z_order;
 extern uniform bool z_order_initialized;
 
-void precomputeZOrder();
+/*! precompute a per-pixel z-order to be used within a tile */
+extern void precomputedZOrder_create();
+
+/*! precompute a per-pixel z-order to be used within a tile */
+inline void precomputeZOrder()
+{ if (!z_order_initialized) precomputedZOrder_create(); }
+
+
 

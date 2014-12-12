@@ -29,6 +29,7 @@ namespace embree
    *  precalculate some factors and factor the calculations
    *  differently to allow precalculating the cross product e1 x
    *  e2. */
+  template<bool list>
   struct Triangle1Intersector4MoellerTrumbore
   {
     typedef Triangle1 Primitive;
@@ -37,162 +38,148 @@ namespace embree
       __forceinline Precalculations (const sseb& valid, const Ray4& ray) {}
     };
 
-    static __forceinline void intersect(const sseb& valid_i, Precalculations& pre, Ray4& ray, const Triangle1* __restrict__ tris, size_t num, const void* geom)
+    static __forceinline void intersect(const sseb& valid_i, Precalculations& pre, Ray4& ray, const Primitive& tri, const void* geom)
     {
-      for (size_t i=0; i<num; i++) 
-      {
-        STAT3(normal.trav_prims,1,popcnt(valid_i),4);
-
-        sseb valid = valid_i;
-        const sse3f org = ray.org;
-        const sse3f dir = ray.dir;
-        const ssef zero = ssef(0.0f);
-        const Triangle1& tri = tris[i];
-        
-        /* load vertices and calculate edges */
-        const ssef v0 = load4f(&tri.v0.x);
-        const ssef v1 = load4f(&tri.v1.x);
-        const ssef v2 = load4f(&tri.v2.x);
-        const ssef e1 = v0-v1;
-        const ssef e2 = v2-v0;
-        
-        /* calculate denominator */
-        const sse3f _v0 = sse3f(shuffle<0>(v0),shuffle<1>(v0),shuffle<2>(v0));
-        const sse3f C =  _v0 - org;
-        const sse3f Ng = sse3f(tri.Ng);
-        const ssef den = dot(dir,Ng);
-        const ssef sgnDen = signmsk(den);
-        const ssef absDen = abs(den);
-#if defined(__BACKFACE_CULLING__)
-        valid &= den > ssef(zero);
-#else
-        valid &= den != ssef(zero);
-#endif
-
-        /* perform edge tests */
-        const sse3f R = cross(dir,C);
-        const sse3f _e1(shuffle<0>(e1),shuffle<1>(e1),shuffle<2>(e1));
-        const ssef V = dot(R,_e1)^sgnDen;
-        const sse3f _e2(shuffle<0>(e2),shuffle<1>(e2),shuffle<2>(e2));
-        const ssef U = dot(R,_e2)^sgnDen;
-        valid &= V >= zero & U >= zero & U+V <= absDen;
-        if (unlikely(none(valid))) continue;
+      STAT3(normal.trav_prims,1,popcnt(valid_i),4);
       
-        /* perform depth test */
-        const ssef T = dot(C,Ng) ^ sgnDen;
-        valid &= (T >= absDen*ray.tnear) & (absDen*ray.tfar >= T);
-        if (unlikely(none(valid))) continue;
-        
-        /* ray masking test */
+      sseb valid = valid_i;
+      const sse3f org = ray.org;
+      const sse3f dir = ray.dir;
+      const ssef zero = ssef(0.0f);
+      
+      /* load vertices and calculate edges */
+      const ssef v0 = load4f(&tri.v0.x);
+      const ssef v1 = load4f(&tri.v1.x);
+      const ssef v2 = load4f(&tri.v2.x);
+      const ssef e1 = v0-v1;
+      const ssef e2 = v2-v0;
+      
+      /* calculate denominator */
+      const sse3f _v0 = sse3f(shuffle<0>(v0),shuffle<1>(v0),shuffle<2>(v0));
+      const sse3f C =  _v0 - org;
+      const sse3f Ng = sse3f(tri.Ng);
+      const ssef den = dot(dir,Ng);
+      const ssef sgnDen = signmsk(den);
+      const ssef absDen = abs(den);
+#if defined(__BACKFACE_CULLING__)
+      valid &= den > ssef(zero);
+#else
+      valid &= den != ssef(zero);
+#endif
+      
+      /* perform edge tests */
+      const sse3f R = cross(dir,C);
+      const sse3f _e1(shuffle<0>(e1),shuffle<1>(e1),shuffle<2>(e1));
+      const ssef V = dot(R,_e1)^sgnDen;
+      const sse3f _e2(shuffle<0>(e2),shuffle<1>(e2),shuffle<2>(e2));
+      const ssef U = dot(R,_e2)^sgnDen;
+      valid &= V >= zero & U >= zero & U+V <= absDen;
+      if (unlikely(none(valid))) return;
+      
+      /* perform depth test */
+      const ssef T = dot(C,Ng) ^ sgnDen;
+      valid &= (T >= absDen*ray.tnear) & (absDen*ray.tfar >= T);
+      if (unlikely(none(valid))) return;
+      
+      /* ray masking test */
 #if defined(__USE_RAY_MASK__)
-        valid &= (tri.mask() & ray.mask) != 0;
-        if (unlikely(none(valid))) continue;
+      valid &= (tri.mask() & ray.mask) != 0;
+      if (unlikely(none(valid))) return;
 #endif
-
-        /* calculate hit information */
-        const ssef rcpAbsDen = rcp(absDen);
-        const ssef u = U*rcpAbsDen;
-        const ssef v = V*rcpAbsDen;
-        const ssef t = T*rcpAbsDen;
-        const int geomID = tri.geomID();
-        const int primID = tri.primID();
-
-        /* intersection filter test */
+      
+      /* calculate hit information */
+      const ssef rcpAbsDen = rcp(absDen);
+      const ssef u = U*rcpAbsDen;
+      const ssef v = V*rcpAbsDen;
+      const ssef t = T*rcpAbsDen;
+      const int geomID = tri.geomID<list>();
+      const int primID = tri.primID<list>();
+      
+      /* intersection filter test */
 #if defined(__INTERSECTION_FILTER__)
-        Geometry* geometry = ((Scene*)geom)->get(geomID);
-        if (unlikely(geometry->hasIntersectionFilter4())) {
-          runIntersectionFilter4(valid,geometry,ray,u,v,t,Ng,geomID,primID);
-          continue;
-        }
-#endif
-
-        /* update hit information */
-        store4f(valid,&ray.u,u);
-        store4f(valid,&ray.v,v);
-        store4f(valid,&ray.tfar,t);
-        store4i(valid,&ray.geomID,geomID);
-        store4i(valid,&ray.primID,primID);
-        store4f(valid,&ray.Ng.x,Ng.x);
-        store4f(valid,&ray.Ng.y,Ng.y);
-        store4f(valid,&ray.Ng.z,Ng.z);
+      Geometry* geometry = ((Scene*)geom)->get(geomID);
+      if (unlikely(geometry->hasIntersectionFilter4())) {
+	runIntersectionFilter4(valid,geometry,ray,u,v,t,Ng,geomID,primID);
+	return;
       }
+#endif
+      
+      /* update hit information */
+      store4f(valid,&ray.u,u);
+      store4f(valid,&ray.v,v);
+      store4f(valid,&ray.tfar,t);
+      store4i(valid,&ray.geomID,geomID);
+      store4i(valid,&ray.primID,primID);
+      store4f(valid,&ray.Ng.x,Ng.x);
+      store4f(valid,&ray.Ng.y,Ng.y);
+      store4f(valid,&ray.Ng.z,Ng.z);
     }
 
-    static __forceinline sseb occluded(const sseb& valid_i, Precalculations& pre, Ray4& ray, const Triangle1* __restrict__ tris, size_t num, const void* geom)
+    static __forceinline sseb occluded(const sseb& valid_i, Precalculations& pre, Ray4& ray, const Primitive& tri, const void* geom)
     {
-      sseb valid0 = valid_i;
+      STAT3(shadow.trav_prims,1,popcnt(valid0),4);
 
-      for (size_t i=0; i<num; i++) 
-      {
-        STAT3(shadow.trav_prims,1,popcnt(valid0),4);
-
-        sseb valid = valid0;
-        const sse3f org = ray.org;
-        const sse3f dir = ray.dir;
-        const ssef zero = ssef(0.0f);
-        const Triangle1& tri = tris[i];
-        
-        /* load vertices and calculate edges */
-        const ssef v0 = load4f(&tri.v0.x);
-        const ssef v1 = load4f(&tri.v1.x);
-        const ssef v2 = load4f(&tri.v2.x);
-        const ssef e1 = v0-v1;
-        const ssef e2 = v2-v0;
-        
-        /* calculate denominator */
-        const sse3f _v0 = sse3f(shuffle<0>(v0),shuffle<1>(v0),shuffle<2>(v0));
-        const sse3f C =  _v0 - org;
-        const sse3f Ng = sse3f(tri.Ng);
-        const ssef den = dot(dir,Ng);
-        const ssef sgnDen = signmsk(den);
-        const ssef absDen = abs(den);
-#if defined(__BACKFACE_CULLING__)
-        valid &= den > ssef(zero);
-#else
-        valid &= den != ssef(zero);
-#endif
-        
-        /* perform edge tests */
-        const sse3f R = cross(dir,C);
-        const sse3f _e1(shuffle<0>(e1),shuffle<1>(e1),shuffle<2>(e1));
-        const ssef V = dot(R,_e1)^sgnDen;
-        const sse3f _e2(shuffle<0>(e2),shuffle<1>(e2),shuffle<2>(e2));
-        const ssef U = dot(R,_e2)^sgnDen;
-        valid &= V >= zero & U >= zero & U+V <= absDen;
-        if (unlikely(none(valid))) continue;
+      sseb valid = valid_i;
+      const sse3f org = ray.org;
+      const sse3f dir = ray.dir;
+      const ssef zero = ssef(0.0f);
+            
+      /* load vertices and calculate edges */
+      const ssef v0 = load4f(&tri.v0.x);
+      const ssef v1 = load4f(&tri.v1.x);
+      const ssef v2 = load4f(&tri.v2.x);
+      const ssef e1 = v0-v1;
+      const ssef e2 = v2-v0;
       
-        /* perform depth test */
-        const ssef T = dot(C,Ng) ^ sgnDen;
-        valid &= (T >= absDen*ray.tnear) & (absDen*ray.tfar >= T);
-        if (unlikely(none(valid))) continue;
-
-        /* ray masking test */
+      /* calculate denominator */
+      const sse3f _v0 = sse3f(shuffle<0>(v0),shuffle<1>(v0),shuffle<2>(v0));
+      const sse3f C =  _v0 - org;
+      const sse3f Ng = sse3f(tri.Ng);
+      const ssef den = dot(dir,Ng);
+      const ssef sgnDen = signmsk(den);
+      const ssef absDen = abs(den);
+#if defined(__BACKFACE_CULLING__)
+      valid &= den > ssef(zero);
+#else
+      valid &= den != ssef(zero);
+#endif
+      
+      /* perform edge tests */
+      const sse3f R = cross(dir,C);
+      const sse3f _e1(shuffle<0>(e1),shuffle<1>(e1),shuffle<2>(e1));
+      const ssef V = dot(R,_e1)^sgnDen;
+      const sse3f _e2(shuffle<0>(e2),shuffle<1>(e2),shuffle<2>(e2));
+      const ssef U = dot(R,_e2)^sgnDen;
+      valid &= V >= zero & U >= zero & U+V <= absDen;
+      if (unlikely(none(valid))) return valid;
+      
+      /* perform depth test */
+      const ssef T = dot(C,Ng) ^ sgnDen;
+      valid &= (T >= absDen*ray.tnear) & (absDen*ray.tfar >= T);
+      if (unlikely(none(valid))) return valid;
+      
+      /* ray masking test */
 #if defined(__USE_RAY_MASK__)
-        valid &= (tri.mask() & ray.mask) != 0;
-        if (unlikely(none(valid))) continue;
+      valid &= (tri.mask() & ray.mask) != 0;
+      if (unlikely(none(valid))) return valid;
 #endif
-
-        /* intersection filter test */
+      
+      /* intersection filter test */
 #if defined(__INTERSECTION_FILTER__)
-        const int geomID = tri.geomID();
-        Geometry* geometry = ((Scene*)geom)->get(geomID);
-        if (unlikely(geometry->hasOcclusionFilter4()))
-        {
-          /* calculate hit information */
-          const ssef rcpAbsDen = rcp(absDen);
-          const ssef u = U*rcpAbsDen;
-          const ssef v = V*rcpAbsDen;
-          const ssef t = T*rcpAbsDen;
-          const int primID = tri.primID();
-          valid = runOcclusionFilter4(valid,geometry,ray,u,v,t,Ng,geomID,primID);
-        }
-#endif
-        
-        /* update occlusion */
-        valid0 &= !valid;
-        if (none(valid0)) break;
+      const int geomID = tri.geomID<list>();
+      Geometry* geometry = ((Scene*)geom)->get(geomID);
+      if (unlikely(geometry->hasOcclusionFilter4()))
+      {
+	/* calculate hit information */
+	const ssef rcpAbsDen = rcp(absDen);
+	const ssef u = U*rcpAbsDen;
+	const ssef v = V*rcpAbsDen;
+	const ssef t = T*rcpAbsDen;
+	const int primID = tri.primID<list>();
+	valid = runOcclusionFilter4(valid,geometry,ray,u,v,t,Ng,geomID,primID);
       }
-      return !valid0;
+#endif
+      return valid;
     }
   };
 }

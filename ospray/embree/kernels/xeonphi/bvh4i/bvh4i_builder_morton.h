@@ -25,6 +25,7 @@
 namespace embree
 {
 
+
   class __aligned(16) SmallBuildRecord 
   {
   public:
@@ -128,13 +129,12 @@ namespace embree
     /*! allocate data arrays */
     void allocateData(size_t threadCount);
 
-    /*! precalculate some per thread data */
-    void initThreadState(const size_t threadID, const size_t numThreads);
-
     /*! main build task */
-    TASK_RUN_FUNCTION(BVH4iBuilderMorton,build_parallel_morton);
-    TaskScheduler::Task task;
-    
+    void build_main(const size_t threadID, const size_t numThreads);
+
+    /*! precalculate some per thread data */
+    TASK_FUNCTION(BVH4iBuilderMorton,initThreadState);
+
     /*! task that calculates the bounding box of the scene */
     TASK_FUNCTION(BVH4iBuilderMorton,computeBounds);
 
@@ -152,7 +152,6 @@ namespace embree
 
   public:
 
-    void build_main(const size_t threadID, const size_t numThreads);
 
     /*! creates a leaf node */
     BBox3fa createSmallLeaf(SmallBuildRecord& current);
@@ -233,19 +232,6 @@ namespace embree
       return currentIndex;
     }
 
-    __forceinline void createLeaf(BVH4i::NodeRef &ref,
-				  const unsigned int offset,
-				  const unsigned int entries) 
-    {
-      assert(entries <= 4);
-      ref = (offset << BVH4i::encodingBits) | BVH4i::leaf_mask | entries;
-    }
-
-    __forceinline void createNode(BVH4i::NodeRef &ref,
-				  const unsigned int index,			  
-				  const unsigned int children = 0) {
-      ref = ((index*4) << BVH4i::encodingBits);
-    }
 
   };
 
@@ -324,12 +310,11 @@ namespace embree
     /*! allocate data arrays */
     void allocateData(size_t threadCount);
 
-    /*! precalculate some per thread data */
-    void initThreadState(const size_t threadID, const size_t numThreads);
+    /*! main build function */
+    void build_main(const size_t threadID, const size_t numThreads);
 
-    /*! main build task */
-    TASK_RUN_FUNCTION(BVH4iBuilderMorton64Bit,build_parallel_morton64);
-    TaskScheduler::Task task;
+    /*! precalculate some per thread data */
+    TASK_FUNCTION(BVH4iBuilderMorton64Bit,initThreadState);
     
     /*! task that calculates the bounding box of the scene */
     TASK_FUNCTION(BVH4iBuilderMorton64Bit,computeBounds);
@@ -375,23 +360,9 @@ namespace embree
     /*! refit the sub-BVHs */
     BBox3fa refit(const BVH4i::NodeRef &ref);
 
-    __forceinline void createLeaf(BVH4i::NodeRef &ref,
-				  const unsigned int offset,
-				  const unsigned int entries) 
-    {
-      assert(entries <= 4);
-      ref = (offset << BVH4i::encodingBits) | BVH4i::leaf_mask | entries;
-    }
-
-    __forceinline void createNode(BVH4i::NodeRef &ref,
-				  const unsigned int index,			  
-				  const unsigned int children = 0) {
-      ref = ((index*4) << BVH4i::encodingBits);
-    }
 
   public:
 
-    void build_main(const size_t threadID, const size_t numThreads);
 
 
   public:

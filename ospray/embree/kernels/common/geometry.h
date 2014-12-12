@@ -24,7 +24,7 @@ namespace embree
   class Scene;
 
   /*! type of geometry */
-  enum GeometryTy { TRIANGLE_MESH = 1, USER_GEOMETRY = 2, BEZIER_CURVES = 4/*, INSTANCES = 8*/ };
+  enum GeometryTy { TRIANGLE_MESH = 1, USER_GEOMETRY = 2, BEZIER_CURVES = 4, SUBDIV_MESH = 8 /*, INSTANCES = 16*/ };
   
 #if defined(__SSE__)
   typedef void (*ISPCFilterFunc4)(void* ptr, RTCRay4& ray, __m128 valid);
@@ -210,6 +210,12 @@ namespace embree
     /*! Set occlusion function for ray packets of size 16. */
     virtual void setOccludedFunction16 (RTCOccludedFunc16 occluded16, bool ispc = false) { 
       process_error(RTC_INVALID_OPERATION,"operation not supported for this geometry"); 
+    }
+
+  public:
+
+    virtual void write(std::ofstream& file) {
+      int type = -1; file.write((char*)&type,sizeof(type));
     }
 
   public:

@@ -25,6 +25,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <fstream>
 #include <string>
 #include <string.h>
 
@@ -98,7 +99,6 @@
 
 #if defined(__WIN32__) 
 #if defined(CONFIG_AVX)
-  #define __TARGET_AVX__
   #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     #define __SSE3__
     #define __SSSE3__
@@ -110,8 +110,6 @@
   #endif
 #endif
 #if defined(CONFIG_AVX2)
-  #define __TARGET_AVX__
-  #define __TARGET_AVX2__
   #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     #define __SSE3__
     #define __SSSE3__
@@ -154,7 +152,7 @@
 #if defined(_WIN32) || defined(__EXPORT_ALL_SYMBOLS__)
 #  define __hidden
 #else
-#  define __hidden /* __attribute__ ((visibility ("hidden")))*/
+#  define __hidden __attribute__ ((visibility ("hidden")))
 #endif
 
 #ifdef __WIN32__
@@ -220,12 +218,8 @@
 #define DBG_PRINT(x) std::cout << STRING(x) << " = " << (x) << std::endl
 #define FATAL(x) { std::cout << "FATAL error in " << __FUNCTION__ << " : " << x << std::endl << std::flush; exit(0); }
 
-/* forces linking unused compilation units from static library */
-#define FORCE_LINK_THIS(unit) \
-  bool unit##_force_link_me = true;
-
-#define FORCE_LINK_THAT(unit) \
-  extern bool unit##_force_link_me; bool unit##_force_link = unit##_force_link_me;
+#define THROW_RUNTIME_ERROR(str) \
+  throw std::runtime_error(std::string(__FILE__) + " (" + std::stringOf(__LINE__) + "): " + std::string(str));
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Basic Types
@@ -282,6 +276,7 @@ typedef int32 ssize_t;
 ////////////////////////////////////////////////////////////////////////////////
 
 #include "sys/constants.h"
+#include "sys/stl/string.h"
 
 namespace embree
 {

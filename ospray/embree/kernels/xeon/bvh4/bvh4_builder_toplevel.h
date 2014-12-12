@@ -17,54 +17,45 @@
 #pragma once
 
 #include "bvh4.h"
-#include "bvh4_builder_util.h"
-#include "bvh4_builder_binner.h"
+#include "bvh4_builder_fast.h"
 #include "common/scene_triangle_mesh.h"
 
 namespace embree
 {
-  class BuildRecord;
-  struct BuildRef;
-
   namespace isa
   {
-    class BVH4BuilderTopLevel : public Builder
+    class BVH4BuilderTopLevel : public BVH4TopLevelBuilderFastT
     {
       ALIGNED_CLASS;
     public:
-      
-      /*! Type shortcuts */
-      typedef BVH4::Node    Node;
-      typedef BVH4::NodeRef NodeRef;
-      static const size_t SIZE_WORK_STACK = 64;
 
-      struct GlobalState
-      {
-        ALIGNED_CLASS;
-              
-      public:
-
-        GlobalState (size_t numThreads) {
-          thread_workStack = new WorkStack<BuildRecord,SIZE_WORK_STACK>[numThreads];
-          thread_bounds = new Centroid_Scene_AABB[numThreads];
-        }
-        
-        ~GlobalState () {
-          delete[] thread_workStack;
-          delete[] thread_bounds;
-        }
-
-      public:
-        __aligned(64) WorkStack<BuildRecord,SIZE_WORK_STACK> global_workStack;
-        __aligned(64) WorkStack<BuildRecord,SIZE_WORK_STACK>* thread_workStack;
-        LinearBarrierActive global_barrier;
-        ParallelBinner2<16> parallelBinner;  
-        Centroid_Scene_AABB* thread_bounds;
-      };
-
-      static std::auto_ptr<GlobalState> g_state;
-
+      struct BuildRef
+    {
     public:
+      __forceinline BuildRef () {}
+      
+      __forceinline BuildRef (const BBox3fa& bounds, BVH4::NodeRef node) 
+        : lower(bounds.lower), upper(bounds.upper), node(node)
+      {
+        if (node.isLeaf())
+          lower.w = 0.0f;
+        else
+          lower.w = area(this->bounds());
+      }
+      
+      __forceinline BBox3fa bounds () const {
+        return BBox3fa(lower,upper);
+      }
+      
+      friend bool operator< (const BuildRef& a, const BuildRef& b) {
+        return a.lower.w < b.lower.w;
+      }
+      
+    public:
+      Vec3fa lower;
+      Vec3fa upper;
+      BVH4::NodeRef node;
+    };
       
       /*! Constructor. */
       BVH4BuilderTopLevel (BVH4* bvh, Scene* scene, const createTriangleMeshAccelTy createTriangleMeshAccel);
@@ -75,28 +66,12 @@ namespace embree
       /*! builder entry point */
       void build(size_t threadIndex, size_t threadCount);
       
-      void build_toplevel(size_t threadIndex, size_t threadCount);
-      
       /*! parallel rebuild of geometry */
-      TASK_RUN_FUNCTION(BVH4BuilderTopLevel,task_create_parallel);
-      TASK_RUN_FUNCTION(BVH4BuilderTopLevel,task_build_parallel);
-      
-      
-      BBox3fa build (size_t threadIndex, size_t threadCount, size_t objectID);
+      TASK_SET_FUNCTION(BVH4BuilderTopLevel,task_build_parallel);
+
       void create_object(size_t objectID);
-      
+      void build (size_t threadIndex, size_t threadCount, size_t objectID);
       void open_sequential();
-      TASK_RUN_FUNCTION(BVH4BuilderTopLevel,task_open_parallel);
-      TASK_RUN_FUNCTION(BVH4BuilderTopLevel,task_build_subtrees);
-      
-      /*! Finishes BVH4 construction */
-      void createLeaf(BuildRecord& current, size_t threadIndex, size_t threadCount);
-      void recurse(size_t depth, BuildRecord& task, const size_t mode, const size_t threadID, const size_t numThreads);
-      void recurseSAH(size_t depth, BuildRecord& task, const size_t mode, const size_t threadID, const size_t numThreads);
-      
-      void split_sequential(BuildRecord& current, BuildRecord& left, BuildRecord& right);
-      void split_parallel(BuildRecord& current, BuildRecord& left, BuildRecord& right, const size_t threadID, const size_t numThreads);
-      void split(BuildRecord& current, BuildRecord& left, BuildRecord& right, const size_t mode, const size_t threadID, const size_t numThreads);
       
     public:
       BVH4* bvh;      //!< Output BVH4
@@ -107,18 +82,10 @@ namespace embree
     public:
       Scene* scene;
       createTriangleMeshAccelTy createTriangleMeshAccel;
-      size_t ofs;
       
-      /*! build mode */
-      enum { RECURSE = 1, BUILD_TOP_LEVEL = 3 };
-      
-      TaskScheduler::Task task;
       vector_t<BuildRef> refs;
-      vector_t<BuildRef> refs1;
-      volatile atomic_t global_dest;
-      volatile float global_max_volume;
+      vector_t<PrimRef> prims;
       AlignedAtomicCounter32 nextRef;
-      Barrier barrier;
     };
   }
 }

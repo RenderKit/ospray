@@ -1,10 +1,18 @@
-# #####################################################################
-# INTEL CORPORATION PROPRIETARY INFORMATION                            
-# This software is supplied under the terms of a license agreement or  
-# nondisclosure agreement with Intel Corporation and may not be copied 
-# or disclosed except in accordance with the terms of that agreement.  
-# Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
-# #####################################################################
+## ======================================================================== ##
+## Copyright 2009-2014 Intel Corporation                                    ##
+##                                                                          ##
+## Licensed under the Apache License, Version 2.0 (the "License");          ##
+## you may not use this file except in compliance with the License.         ##
+## You may obtain a copy of the License at                                  ##
+##                                                                          ##
+##     http://www.apache.org/licenses/LICENSE-2.0                           ##
+##                                                                          ##
+## Unless required by applicable law or agreed to in writing, software      ##
+## distributed under the License is distributed on an "AS IS" BASIS,        ##
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. ##
+## See the License for the specific language governing permissions and      ##
+## limitations under the License.                                           ##
+## ======================================================================== ##
 
 FILE(WRITE "${CMAKE_BINARY_DIR}/CMakeDefines.h" "#define CMAKE_BUILD_DIR \"${CMAKE_BINARY_DIR}\"\n")
 
@@ -57,14 +65,14 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_ISPC_SUFFIX ".o")
     SET(THIS_IS_MIC OFF)
     SET(__XEON__ ON)
-    IF (OSPRAY_COMPILER STREQUAL "ICC")
+    IF ((OSPRAY_COMPILER STREQUAL "ICC") OR (OSPRAY_COMPILER STREQUAL "icc"))
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc.cmake)
-    ELSEIF (OSPRAY_COMPILER STREQUAL "GCC")
+    ELSEIF ((OSPRAY_COMPILER STREQUAL "GCC") OR (OSPRAY_COMPILER STREQUAL "gcc"))
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/gcc.cmake)
-    ELSEIF (OSPRAY_COMPILER STREQUAL "CLANG")
+    ELSEIF ((OSPRAY_COMPILER STREQUAL "CLANG") OR (OSPRAY_COMPILER STREQUAL "clang"))
       INCLUDE(${PROJECT_SOURCE_DIR}/cmake/clang.cmake)
     ELSE()
-      MESSAGE(FATAL_ERROR "Unknown compiler specified: " ${OSPRAY_COMPILER})
+      MESSAGE(FATAL_ERROR "Unknown OSPRAY_COMPILER '${OSPRAY_COMPILER}'; recognized values are 'clang', 'icc', and 'gcc'")
     ENDIF()
 
     # additional Embree include directory
@@ -82,6 +90,7 @@ MACRO(CONFIGURE_OSPRAY)
 
       # ispc target 
       SET(OSPRAY_ISPC_TARGET "avx2")
+      SET(OSPRAY_ISPC_CPU "core-avx2")
     ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "AVX")
       ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=8)
       ADD_DEFINITIONS(-DOSPRAY_TARGET_AVX=1)
@@ -93,6 +102,7 @@ MACRO(CONFIGURE_OSPRAY)
 
       # ispc target 
       SET(OSPRAY_ISPC_TARGET "avx")
+      SET(OSPRAY_ISPC_CPU "corei7-avx")
     ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "SSE")
       ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=4)
       ADD_DEFINITIONS(-DOSPRAY_TARGET_SSE=1)
@@ -103,10 +113,11 @@ MACRO(CONFIGURE_OSPRAY)
 
       # ispc target 
       SET(OSPRAY_ISPC_TARGET "sse4")
+      SET(OSPRAY_ISPC_CPU "corei7")
     ELSE()
       MESSAGE("unknown OSPRAY_XEON_TARGET '${OSPRAY_XEON_TARGET}'")
     ENDIF()
-#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
+    #    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
   ENDIF()
   
   IF (OSPRAY_MPI)
@@ -118,8 +129,8 @@ MACRO(CONFIGURE_OSPRAY)
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
   ENDIF()
 
-#  INCLUDE(ospray_ispc)
-#  INCLUDE(ispc_build_rules)
+  #  INCLUDE(ospray_ispc)
+  #  INCLUDE(ispc_build_rules)
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
 

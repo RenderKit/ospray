@@ -112,8 +112,8 @@ namespace embree
       size_nodes(0),
       size_accel(0),
       num64BytesBlocksPerNode(4)
-      {
-      }
+	{
+	}
 
     virtual ~BVH4HairBuilder() 
       {	
@@ -134,23 +134,23 @@ namespace embree
 
     virtual std::string getStatistics();
 
-    void build_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event);
+    void build_main(size_t threadIndex, size_t threadCount);
 
   protected:
 
-    __forceinline void createLeaf(void *parentPtr,
-				  unsigned int offset, 
-				  unsigned int items)
-      {
-	assert(items <= BVH4Hair::N);
-	const unsigned int v = (offset << BVH4Hair::encodingBits) | BVH4Hair::leaf_mask | items;
-	unsigned int *ptr = (unsigned int*)parentPtr;
-	*ptr = v;
-      }
+    __forceinline void createBVH4HairLeaf(void *parentPtr,
+					  unsigned int offset, 
+					  unsigned int items)
+    {
+      assert(items <= BVH4Hair::N);
+      const unsigned int v = (offset << BVH4Hair::encodingBits) | BVH4Hair::leaf_mask | (items-1);
+      unsigned int *ptr = (unsigned int*)parentPtr;
+      *ptr = v;
+    }
 
-    __forceinline void createNode(void *parentPtr,
-				  unsigned int index,
-				  const size_t flags = 0)
+    __forceinline void createBVH4HairNode(void *parentPtr,
+					  unsigned int index,
+					  const size_t flags = 0)
     {
       unsigned int *ptr = (unsigned int*)parentPtr;
       *ptr = (index*sizeof(BVH4Hair::UnalignedNode)) | flags;      
@@ -195,7 +195,6 @@ namespace embree
     void computeUnalignedSpace( BuildRecordOBB& current );
     void computeUnalignedSpaceBounds( BuildRecordOBB& current );
 
-    TASK_RUN_FUNCTION(BVH4HairBuilder,build_parallel_hair);
     TASK_FUNCTION(BVH4HairBuilder,computePrimRefsBezierCurves);
     TASK_FUNCTION(BVH4HairBuilder,parallelBinningGlobal);
     TASK_FUNCTION(BVH4HairBuilder,parallelPartitioningGlobal);

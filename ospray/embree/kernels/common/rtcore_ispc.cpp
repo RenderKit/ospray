@@ -72,6 +72,10 @@ namespace embree
   extern "C" void ispcCommitScene (RTCScene scene) {
     return rtcCommit(scene);
   }
+
+  extern "C" void ispcCommitSceneThread (RTCScene scene, unsigned int threadID, unsigned int numThreads) {
+    return rtcCommitThread(scene,threadID,numThreads);
+  }
   
   extern "C" void ispcIntersect1 (RTCScene scene, RTCRay& ray) {
     rtcIntersect(scene,ray);
@@ -334,4 +338,9 @@ namespace embree
     ((Scene*)scene)->get(geomID)->setOcclusionFilterFunction16(filter,true);
     CATCH_END;
   }
+
+  extern "C" unsigned ispcNewSubdivisionMesh (RTCScene scene, RTCGeometryFlags flags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numTimeSteps) {
+    return rtcNewSubdivisionMesh((RTCScene)scene,flags,numFaces,numEdges,numVertices,numTimeSteps);
+  }
+
 }

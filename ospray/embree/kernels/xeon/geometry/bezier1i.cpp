@@ -32,56 +32,57 @@ namespace embree
     return 1;
   }
 
-  void SceneBezier1i::pack(char* dst, atomic_set<PrimRefBlock>::block_iterator_unsafe& prims, void* geom) const 
-  {
-    Scene* scene = (Scene*) geom;
-    const PrimRef& prim = *prims;
-    const unsigned geomID = prim.geomID();
-#if defined(PRE_SUBDIVISION_HACK)
-    const unsigned primID = prim.primID()/8;
-#else
-    const unsigned primID = prim.primID();
-#endif
-    const BezierCurves* curves = scene->getBezierCurves(geomID);
-    const Vec3fa& p0 = curves->vertex(curves->curve(primID));
-    new (dst) Bezier1i(&p0,geomID,primID);
-    prims++;
-  }
+  Bezier1iMBType Bezier1iMBType::type;
+
+  Bezier1iMBType::Bezier1iMBType () 
+    : PrimitiveType("bezier1imb",sizeof(Bezier1iMB),1,true,1) {} 
   
-  void SceneBezier1i::pack(char* dst, const PrimRef* prims, size_t num, void* geom) const 
-  {
-    Scene* scene = (Scene*) geom;
-    const PrimRef& prim = *prims;
-    const unsigned geomID = prim.geomID();
-#if defined(PRE_SUBDIVISION_HACK)
-    const unsigned primID = prim.primID()/8;
-#else
-    const unsigned primID = prim.primID();
-#endif
-    const BezierCurves* curves = scene->getBezierCurves(geomID);
-    const int vtx = curves->curve(primID);
-    const Vec3fa& p0 = curves->vertex(vtx);
-    new (dst) Bezier1i(&p0,geomID,primID);
-    prims++;
+  size_t Bezier1iMBType::blocks(size_t x) const {
+    return x;
   }
     
-  BBox3fa SceneBezier1i::update(char* prim, size_t num, void* geom) const 
+  size_t Bezier1iMBType::size(const char* This) const {
+    return 1;
+  }
+
+  BBox3fa SceneBezier1i::update(char* prim_i, size_t num, void* geom) const 
   {
     BBox3fa bounds = empty;
     Scene* scene = (Scene*) geom;
-    
-    for (size_t j=0; j<num; j++) 
+    Bezier1i* prim = (Bezier1i*) prim_i;
+
+    if (num == -1)
     {
-      Bezier1i& dst = ((Bezier1i*) prim)[j];
-      const unsigned geomID = dst.geomID;
-      const unsigned primID = dst.primID;
-      const BezierCurves* curves = scene->getBezierCurves(geomID);
-      const int vtx = curves->curve(primID);
-      bounds.extend(curves->vertex(vtx+0));
-      bounds.extend(curves->vertex(vtx+1));
-      bounds.extend(curves->vertex(vtx+2));
-      bounds.extend(curves->vertex(vtx+3));
-      //dst.mask = curves->mask;
+      while (true)
+      {
+	const unsigned geomID = prim->geomID<1>();
+	const unsigned primID = prim->primID<1>();
+	const BezierCurves* curves = scene->getBezierCurves(geomID);
+	const int vtx = curves->curve(primID);
+	bounds.extend(curves->vertex(vtx+0));
+	bounds.extend(curves->vertex(vtx+1));
+	bounds.extend(curves->vertex(vtx+2));
+	bounds.extend(curves->vertex(vtx+3));
+	//prim->mask = curves->mask;
+	const bool last = prim->last();
+	if (last) break;
+	prim++;
+      }
+    }
+    else
+    {
+      for (size_t i=0; i<num; i++, prim++)
+      {
+	const unsigned geomID = prim->geomID<0>();
+	const unsigned primID = prim->primID<0>();
+	const BezierCurves* curves = scene->getBezierCurves(geomID);
+	const int vtx = curves->curve(primID);
+	bounds.extend(curves->vertex(vtx+0));
+	bounds.extend(curves->vertex(vtx+1));
+	bounds.extend(curves->vertex(vtx+2));
+	bounds.extend(curves->vertex(vtx+3));
+	//prim->mask = curves->mask;
+      }
     }
     return bounds; 
   }

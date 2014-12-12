@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "common/accel.h"
+#include "virtual_accel.h"
 #include "common/ray4.h"
 
 namespace embree
@@ -29,33 +29,17 @@ namespace embree
       __forceinline Precalculations (const sseb& valid, const Ray4& ray) {}
     };
 
-    static __forceinline void intersect(const sseb& valid_i, Ray4& ray, const Primitive& prim, const void* geom) 
+    static __forceinline void intersect(const sseb& valid_i, const Precalculations& pre, Ray4& ray, const Primitive& prim, const void* geom) 
     {
       AVX_ZERO_UPPER();
       prim.accel->intersect4(&valid_i,(RTCRay4&)ray,prim.item);
     }
 
-    static __forceinline void intersect(const sseb& valid, Precalculations& pre, Ray4& ray, const Primitive* tri, size_t num, const void* geom)
-    {
-      for (size_t i=0; i<num; i++)
-        intersect(valid,ray,tri[i],geom);
-    }
-
-    static __forceinline sseb occluded(const sseb& valid_i, const Ray4& ray, const Primitive& prim, const void* geom) 
+    static __forceinline sseb occluded(const sseb& valid_i, const Precalculations& pre, const Ray4& ray, const Primitive& prim, const void* geom) 
     {
       AVX_ZERO_UPPER();
       prim.accel->occluded4(&valid_i,(RTCRay4&)ray,prim.item);
       return ray.geomID == 0;
-    }
-
-    static __forceinline sseb occluded(const sseb& valid, Precalculations& pre, const Ray4& ray, const Primitive* tri, size_t num, void* geom)
-    {
-      sseb terminated = !valid;
-      for (size_t i=0; i<num; i++) {
-        terminated |= occluded(!terminated,ray,tri[i],geom);
-        if (all(terminated)) return terminated;
-      }
-      return terminated;
     }
   };
 }

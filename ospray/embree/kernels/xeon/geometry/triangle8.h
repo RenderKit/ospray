@@ -33,8 +33,8 @@ namespace embree
     __forceinline Triangle8 () {}
 
     /*! Construction from vertices and IDs. */
-    __forceinline Triangle8 (const avx3f& v0, const avx3f& v1, const avx3f& v2, const avxi& geomID, const avxi& primID, const avxi& mask)
-      : v0(v0), e1(v0-v1), e2(v2-v0), Ng(cross(e1,e2)), geomID(geomID), primID(primID)
+    __forceinline Triangle8 (const avx3f& v0, const avx3f& v1, const avx3f& v2, const avxi& geomIDs, const avxi& primIDs, const avxi& mask, const bool last)
+      : v0(v0), e1(v0-v1), e2(v2-v0), Ng(cross(e1,e2)), geomIDs(geomIDs), primIDs(primIDs | (last << 31))
     {
 #if defined(__USE_RAY_MASK__)
       this->mask = mask;
@@ -44,14 +44,14 @@ namespace embree
     /*! Returns if the specified triangle is valid. */
     __forceinline bool valid(const size_t i) const { 
       assert(i<8); 
-      return geomID[i] != -1; 
+      return geomIDs[i] != -1; 
     }
 
     /*! Returns a mask that tells which triangles are valid. */
-    __forceinline avxb valid() const { return geomID != avxi(-1); }
+    __forceinline avxb valid() const { return geomIDs != avxi(-1); }
 
     /*! Returns a mask that tells which triangles are invalid. */
-    __forceinline avxb invalid() const { return geomID == avxi(-1); }
+    __forceinline avxb invalid() const { return geomIDs == avxi(-1); }
 
     /*! Returns the number of stored triangles. */
     __forceinline unsigned int size() const {
@@ -92,35 +92,90 @@ namespace embree
       store8f_nt(&dst->Ng.x,src.Ng.x);
       store8f_nt(&dst->Ng.y,src.Ng.y);
       store8f_nt(&dst->Ng.z,src.Ng.z);
-      store8i_nt(&dst->geomID,src.geomID);
-      store8i_nt(&dst->primID,src.primID);
+      store8i_nt(&dst->geomIDs,src.geomIDs);
+      store8i_nt(&dst->primIDs,src.primIDs);
 #if defined(__USE_RAY_MASK__)
       store8i_nt(&dst->mask,src.mask);
 #endif
     }
 
+    /*! returns required number of primitive blocks for N primitives */
+    static __forceinline size_t blocks(size_t N) { return (N+3)/4; }
+
+    /*! checks if this is the last triangle in the list */
+    __forceinline int last() const { 
+      return primIDs[0] & 0x80000000; 
+    }
+
+    /*! returns the geometry IDs */
+    template<bool list>
+    __forceinline avxi geomID() const { return geomIDs; }
+    template<bool list>
+    __forceinline int  geomID(const size_t i) const { assert(i<8); return geomIDs[i]; }
+
+    /*! returns the primitive IDs */
+    template<bool list>
+    __forceinline avxi primID() const { 
+      if (list) return primIDs & 0x7FFFFFFF; 
+      else      return primIDs;
+    }
+    template<bool list>
+    __forceinline int  primID(const size_t i) const { 
+      assert(i<8); 
+      if (list) return primIDs[i] & 0x7FFFFFFF; 
+      else      return primIDs[i];
+    }
+
     /*! fill triangle from triangle list */
-    __forceinline void fill(atomic_set<PrimRefBlock>::block_iterator_unsafe& prims, Scene* scene)
+    __forceinline void fill(atomic_set<PrimRefBlock>::block_iterator_unsafe& prims, Scene* scene, const bool list)
     {
-      avxi geomID = -1, primID = -1, mask = -1;
+      avxi vgeomID = -1, vprimID = -1, vmask = -1;
       avx3f v0 = zero, v1 = zero, v2 = zero;
       
       for (size_t i=0; i<8 && prims; i++, prims++)
       {
 	const PrimRef& prim = *prims;
-	const TriangleMesh* mesh = scene->getTriangleMesh(prim.geomID());
-	const TriangleMesh::Triangle& tri = mesh->triangle(prim.primID());
-	const Vec3fa& p0 = mesh->vertex(tri.v[0]);
-	const Vec3fa& p1 = mesh->vertex(tri.v[1]);
-	const Vec3fa& p2 = mesh->vertex(tri.v[2]);
-	geomID [i] = prim.geomID();
-	primID [i] = prim.primID();
-	mask   [i] = mesh->mask;
-	v0.x[i] = p0.x; v0.y[i] = p0.y; v0.z[i] = p0.z;
-	v1.x[i] = p1.x; v1.y[i] = p1.y; v1.z[i] = p1.z;
-	v2.x[i] = p2.x; v2.y[i] = p2.y; v2.z[i] = p2.z;
+	const size_t geomID = prim.geomID();
+        const size_t primID = prim.primID();
+        const TriangleMesh* __restrict__ const mesh = scene->getTriangleMesh(geomID);
+        const TriangleMesh::Triangle& tri = mesh->triangle(primID);
+        const Vec3fa& p0 = mesh->vertex(tri.v[0]);
+        const Vec3fa& p1 = mesh->vertex(tri.v[1]);
+        const Vec3fa& p2 = mesh->vertex(tri.v[2]);
+        vgeomID [i] = geomID;
+        vprimID [i] = primID;
+        vmask   [i] = mesh->mask;
+        v0.x[i] = p0.x; v0.y[i] = p0.y; v0.z[i] = p0.z;
+        v1.x[i] = p1.x; v1.y[i] = p1.y; v1.z[i] = p1.z;
+        v2.x[i] = p2.x; v2.y[i] = p2.y; v2.z[i] = p2.z;
       }
-      new (this) Triangle8(v0,v1,v2,geomID,primID,mask);
+      Triangle8::store_nt(this,Triangle8(v0,v1,v2,vgeomID,vprimID,vmask,!prims && list));
+    }
+
+    /*! fill triangle from triangle list */
+    __forceinline void fill(const PrimRef* prims, size_t& begin, size_t end, Scene* scene, const bool list)
+    {
+      avxi vgeomID = -1, vprimID = -1, vmask = -1;
+      avx3f v0 = zero, v1 = zero, v2 = zero;
+      
+      for (size_t i=0; i<8 && begin<end; i++, begin++)
+      {
+	const PrimRef& prim = prims[begin];
+        const size_t geomID = prim.geomID();
+        const size_t primID = prim.primID();
+        const TriangleMesh* __restrict__ const mesh = scene->getTriangleMesh(geomID);
+        const TriangleMesh::Triangle& tri = mesh->triangle(primID);
+        const Vec3fa& p0 = mesh->vertex(tri.v[0]);
+        const Vec3fa& p1 = mesh->vertex(tri.v[1]);
+        const Vec3fa& p2 = mesh->vertex(tri.v[2]);
+        vgeomID [i] = geomID;
+        vprimID [i] = primID;
+        vmask   [i] = mesh->mask;
+        v0.x[i] = p0.x; v0.y[i] = p0.y; v0.z[i] = p0.z;
+        v1.x[i] = p1.x; v1.y[i] = p1.y; v1.z[i] = p1.z;
+        v2.x[i] = p2.x; v2.y[i] = p2.y; v2.z[i] = p2.z;
+      }
+      Triangle8::store_nt(this,Triangle8(v0,v1,v2,vgeomID,vprimID,vmask,list && !prims));
     }
 
   public:
@@ -128,8 +183,8 @@ namespace embree
     avx3f e1;      //!< 1st edge of the triangles (v0-v1).
     avx3f e2;      //!< 2nd edge of the triangles (v2-v0).
     avx3f Ng;      //!< Geometry normal of the triangles.
-    avxi geomID;   //!< user geometry ID
-    avxi primID;   //!< primitive ID
+    avxi geomIDs;   //!< user geometry ID
+    avxi primIDs;   //!< primitive ID
 #if defined(__USE_RAY_MASK__)
     avxi mask;     //!< geometry mask
 #endif
@@ -139,37 +194,30 @@ namespace embree
 
 #if defined (__AVX__)
 
-    __forceinline std::ostream &operator<<(std::ostream &o, const Triangle8 &tri)
-    {
-      o << "v0    " << tri.v0 << std::endl;
-      o << "e1    " << tri.e1 << std::endl;
-      o << "e2    " << tri.e2 << std::endl;
-      o << "Ng    " << tri.Ng << std::endl;
-      o << "geomID" << tri.geomID << std::endl;
-      o << "primID" << tri.primID << std::endl;
-      return o;
-    }
+  __forceinline std::ostream &operator<<(std::ostream &o, const Triangle8& tri)
+  {
+    o << "v0    " << tri.v0 << std::endl;
+    o << "e1    " << tri.e1 << std::endl;
+    o << "e2    " << tri.e2 << std::endl;
+    o << "Ng    " << tri.Ng << std::endl;
+    o << "geomID" << tri.geomID<1>() << std::endl;
+    o << "primID" << tri.primID<1>() << std::endl;
+    return o;
+  }
 #endif
 
+  struct Triangle8Type : public PrimitiveType 
+  {
+    static Triangle8Type type;
 
-  struct Triangle8Type : public PrimitiveType {
     Triangle8Type ();
     size_t blocks(size_t x) const;
     size_t size(const char* This) const;
   };
 
-  struct SceneTriangle8 : public Triangle8Type
-  {
-    static SceneTriangle8 type;
-    void pack(char* This, atomic_set<PrimRefBlock>::block_iterator_unsafe& prims, void* geom) const;
-    void pack(char* dst, const PrimRef* prims, size_t num, void* geom) const;
-    BBox3fa update(char* prim, size_t num, void* geom) const;
-  };
-
   struct TriangleMeshTriangle8 : public Triangle8Type
   {
     static TriangleMeshTriangle8 type;
-    void pack(char* This, atomic_set<PrimRefBlock>::block_iterator_unsafe& prims, void* geom) const;
     BBox3fa update(char* prim, size_t num, void* geom) const;
   };
 }

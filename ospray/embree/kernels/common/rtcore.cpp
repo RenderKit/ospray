@@ -26,6 +26,7 @@
 #include "common/scene.h"
 #include "sys/taskscheduler.h"
 #include "sys/thread.h"
+#include "raystream_log.h"
 
 #define TRACE(x) //std::cout << #x << std::endl;
 
@@ -57,11 +58,11 @@ namespace embree
   /* register functions for accels */
   void BVH4Register();
   void BVH8Register();
-  void BVH4MBRegister();
-  void BVH4HairRegister();
 
 #if defined(__MIC__)
   void BVH4iRegister();
+  void BVH4MBRegister();
+  void BVH4HairRegister();
 #endif
 
   /*! intersector registration functions */
@@ -72,28 +73,41 @@ namespace embree
   DECLARE_SYMBOL(AccelSet::Intersector16,InstanceIntersector16);
   
   /* global settings */
-  std::string g_tri_accel = "default";        //!< acceleration structure to use for triangles
-  std::string g_tri_builder = "default";      //!< builder to use for triangles
-  std::string g_tri_traverser = "default";    //!< traverser to use for triangles
-  std::string g_tri_accel_mb = "default";     //!< acceleration structure to use for motion blur triangles
-  std::string g_tri_builder_mb = "default";   //!< builder to use for motion blur triangles
-  std::string g_tri_traverser_mb = "default";    //!< traverser to use for triangles
-  std::string g_hair_accel = "default";    //!< hair acceleration structure to use
-  std::string g_hair_builder = "default"; 
-  std::string g_hair_traverser = "default";    //!< traverser to use for hair
-  double      g_hair_builder_replication_factor = 2.0f; // FIXME: add this also for triangles
+  std::string g_tri_accel = "default";                 //!< acceleration structure to use for triangles
+  std::string g_tri_builder = "default";               //!< builder to use for triangles
+  std::string g_tri_traverser = "default";             //!< traverser to use for triangles
+  double      g_tri_builder_replication_factor = 2.0f; //!< maximally factor*N many primitives in accel
+
+  std::string g_tri_accel_mb = "default";              //!< acceleration structure to use for motion blur triangles
+  std::string g_tri_builder_mb = "default";            //!< builder to use for motion blur triangles
+  std::string g_tri_traverser_mb = "default";          //!< traverser to use for triangles
+
+  std::string g_hair_accel = "default";                //!< hair acceleration structure to use
+  std::string g_hair_builder = "default";              //!< builder to use for hair
+  std::string g_hair_traverser = "default";             //!< traverser to use for hair
+  double      g_hair_builder_replication_factor = 3.0f; //!< maximally factor*N many primitives in accel
   float       g_memory_preallocation_factor = 1.0f; 
 
-  int g_scene_flags = -1;       //!< scene flags to use
-  size_t g_verbose = 0;                   //!< verbosity of output
-  size_t g_numThreads = 0;                //!< number of threads to use in builders
+  std::string g_subdiv_accel = "default";               //!< acceleration structure to use for subdivision surfaces
+
+  int g_scene_flags = -1;                               //!< scene flags to use
+  size_t g_verbose = 0;                                 //!< verbosity of output
+  size_t g_numThreads = 0;                              //!< number of threads to use in builders
   size_t g_benchmark = 0;
+  size_t g_subdivision_level = 0;
+
+
+  RTCORE_API void setSubdivisionLevel(unsigned int v)
+  {
+    g_subdivision_level = v;
+  }
 
   void initSettings()
   {
     g_tri_accel = "default";
     g_tri_builder = "default";
     g_tri_traverser = "default";
+    g_hair_builder_replication_factor = 2.0f;
 
     g_tri_accel_mb = "default";
     g_tri_builder_mb = "default";
@@ -102,14 +116,16 @@ namespace embree
     g_hair_accel = "default";
     g_hair_builder = "default";
     g_hair_traverser = "default";
-    g_hair_builder_replication_factor = 2.0f;
-    
+    g_hair_builder_replication_factor = 3.0f;
     g_memory_preallocation_factor = 1.0f;
+
+    g_subdiv_accel = "default";
 
     g_scene_flags = -1;
     g_verbose = 0;
     g_numThreads = 0;
     g_benchmark = 0;
+    g_subdivision_level = 0;
   }
 
   void printSettings()
@@ -122,6 +138,7 @@ namespace embree
     std::cout << "  accel         = " << g_tri_accel << std::endl;
     std::cout << "  builder       = " << g_tri_builder << std::endl;
     std::cout << "  traverser     = " << g_tri_traverser << std::endl;
+    std::cout << "  replications  = " << g_tri_builder_replication_factor << std::endl;
 
     std::cout << "motion blur triangles:" << std::endl;
     std::cout << "  accel         = " << g_tri_accel_mb << std::endl;
@@ -133,6 +150,9 @@ namespace embree
     std::cout << "  builder       = " << g_hair_builder << std::endl;
     std::cout << "  traverser     = " << g_hair_traverser << std::endl;
     std::cout << "  replications  = " << g_hair_builder_replication_factor << std::endl;
+
+    std::cout << "subdivision surfaces:" << std::endl;
+    std::cout << "  accel         = " << g_subdiv_accel << std::endl;
 
 #if defined(__MIC__)
     std::cout << "memory allocation:" << std::endl;
@@ -252,23 +272,30 @@ namespace embree
 	  else if (isa == "sse3") cpu_features = SSE3;
 	  else if (isa == "ssse3") cpu_features = SSSE3;
 	  else if (isa == "sse41") cpu_features = SSE41;
+	  else if (isa == "sse4.1") cpu_features = SSE41;
 	  else if (isa == "sse42") cpu_features = SSE42;
+	  else if (isa == "sse4.2") cpu_features = SSE42;
 	  else if (isa == "avx") cpu_features = AVX;
 	  else if (isa == "avxi") cpu_features = AVXI;
 	  else if (isa == "avx2") cpu_features = AVX2;
 	}
+
         else if ((tok == "tri_accel" || tok == "accel") && parseSymbol (cfg,'=',pos))
             g_tri_accel = parseIdentifier (cfg,pos);
 	else if ((tok == "tri_builder" || tok == "builder") && parseSymbol (cfg,'=',pos))
 	    g_tri_builder = parseIdentifier (cfg,pos);
 	else if ((tok == "tri_traverser" || tok == "traverser") && parseSymbol (cfg,'=',pos))
             g_tri_traverser = parseIdentifier (cfg,pos);
+	else if (tok == "tri_builder_replication_factor" && parseSymbol (cfg,'=',pos))
+            g_tri_builder_replication_factor = parseInt (cfg,pos);
+
       	else if ((tok == "tri_accel_mb" || tok == "accel_mb") && parseSymbol (cfg,'=',pos))
             g_tri_accel = parseIdentifier (cfg,pos);
 	else if ((tok == "tri_builder_mb" || tok == "builder_mb") && parseSymbol (cfg,'=',pos))
 	    g_tri_builder = parseIdentifier (cfg,pos);
         else if ((tok == "tri_traverser_mb" || tok == "traverser_mb") && parseSymbol (cfg,'=',pos))
             g_tri_traverser = parseIdentifier (cfg,pos);
+
         else if (tok == "hair_accel" && parseSymbol (cfg,'=',pos))
             g_hair_accel = parseIdentifier (cfg,pos);
 	else if (tok == "hair_builder" && parseSymbol (cfg,'=',pos))
@@ -277,11 +304,15 @@ namespace embree
             g_hair_traverser = parseIdentifier (cfg,pos);
 	else if (tok == "hair_builder_replication_factor" && parseSymbol (cfg,'=',pos))
             g_hair_builder_replication_factor = parseInt (cfg,pos);
+
+        else if (tok == "subdiv_accel" && parseSymbol (cfg,'=',pos))
+            g_subdiv_accel = parseIdentifier (cfg,pos);
 	
         else if (tok == "verbose" && parseSymbol (cfg,'=',pos))
             g_verbose = parseInt (cfg,pos);
 	else if (tok == "benchmark" && parseSymbol (cfg,'=',pos))
             g_benchmark = parseInt (cfg,pos);
+
         else if (tok == "flags") {
           g_scene_flags = 0;
           if (parseSymbol (cfg,'=',pos)) {
@@ -353,9 +384,10 @@ namespace embree
     BVH4Register();
 #else
     BVH4iRegister();
-#endif 
     BVH4MBRegister();
-    BVH4HairRegister();    
+    BVH4HairRegister();
+
+#endif 
 #if defined(__TARGET_AVX__)
     if (has_feature(AVX)) {
       BVH8Register();
@@ -473,7 +505,30 @@ namespace embree
     CATCH_BEGIN;
     TRACE(rtcCommit);
     VERIFY_HANDLE(scene);
-    ((Scene*)scene)->build();
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.dumpGeometry(scene);
+#endif
+
+    ((Scene*)scene)->build(0,0);
+    CATCH_END;
+  }
+
+  RTCORE_API void rtcCommitThread(RTCScene scene, unsigned int threadID, unsigned int numThreads) 
+  {
+    CATCH_BEGIN;
+    TRACE(rtcCommitMT);
+    VERIFY_HANDLE(scene);
+    if (unlikely(numThreads == 0)) 
+      process_error(RTC_INVALID_OPERATION,"invalid number of threads specified");
+
+#if defined(__MIC__)
+    if (unlikely(numThreads % 4 != 0)) 
+      FATAL("MIC requires numThreads % 4 == 0 in rtcCommitThread");
+#endif
+    
+    ((Scene*)scene)->build(threadID,numThreads);
+
     CATCH_END;
   }
   
@@ -485,14 +540,23 @@ namespace embree
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
     if (((size_t)&ray) & 0x0F) process_error(RTC_INVALID_ARGUMENT,"ray not aligned to 16 bytes");   
 #endif
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay old_ray = ray;
+#endif
+
     ((Scene*)scene)->intersect(ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.logRay1Intersect(scene,old_ray,ray);
+#endif
   }
   
   RTCORE_API void rtcIntersect4 (const void* valid, RTCScene scene, RTCRay4& ray) 
   {
     TRACE(rtcIntersect4);
-#if defined(__MIC__)
-    process_error(RTC_INVALID_OPERATION,"rtcIntersect4 not supported on Xeon Phi");    
+#if !defined(__TARGET_SIMD4__)
+    process_error(RTC_INVALID_OPERATION,"rtcIntersect4 not supported");    
 #else
 #if defined(DEBUG)
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
@@ -501,15 +565,25 @@ namespace embree
 #endif
     STAT(size_t cnt=0; for (size_t i=0; i<4; i++) cnt += ((int*)valid)[i] == -1;);
     STAT3(normal.travs,1,cnt,4);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay4 old_ray = ray;
+#endif
+
     ((Scene*)scene)->intersect4(valid,ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.logRay4Intersect(valid,scene,old_ray,ray);
+#endif
+
 #endif
   }
   
   RTCORE_API void rtcIntersect8 (const void* valid, RTCScene scene, RTCRay8& ray) 
   {
     TRACE(rtcIntersect8);
-#if defined(__MIC__)
-    process_error(RTC_INVALID_OPERATION,"rtcIntersect8 not supported on Xeon Phi");                                    
+#if !defined(__TARGET_SIMD8__)
+    process_error(RTC_INVALID_OPERATION,"rtcIntersect8 not supported");                                    
 #else
 #if defined(DEBUG)
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
@@ -518,15 +592,25 @@ namespace embree
 #endif
     STAT(size_t cnt=0; for (size_t i=0; i<8; i++) cnt += ((int*)valid)[i] == -1;);
     STAT3(normal.travs,1,cnt,8);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay8 old_ray = ray;
+#endif
+
     ((Scene*)scene)->intersect8(valid,ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.logRay8Intersect(valid,scene,old_ray,ray);
+#endif
+
 #endif
   }
   
   RTCORE_API void rtcIntersect16 (const void* valid, RTCScene scene, RTCRay16& ray) 
   {
     TRACE(rtcIntersect16);
-#if !defined(__MIC__)
-    process_error(RTC_INVALID_OPERATION,"rtcIntersect16 only supported on Xeon Phi");
+#if !defined(__TARGET_SIMD16__)
+    process_error(RTC_INVALID_OPERATION,"rtcIntersect16 not supported");
 #else
 #if defined(DEBUG)
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
@@ -535,7 +619,17 @@ namespace embree
 #endif
     STAT(size_t cnt=0; for (size_t i=0; i<16; i++) cnt += ((int*)valid)[i] == -1;);
     STAT3(normal.travs,1,cnt,16);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay16 old_ray = ray;
+#endif
+
     ((Scene*)scene)->intersect16(valid,ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.logRay16Intersect(valid,scene,old_ray,ray);
+#endif
+
 #endif
   }
   
@@ -547,14 +641,24 @@ namespace embree
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
     if (((size_t)&ray) & 0x0F) process_error(RTC_INVALID_ARGUMENT,"ray not aligned to 16 bytes");   
 #endif
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay old_ray = ray;
+#endif
+
     ((Scene*)scene)->occluded(ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.logRay1Occluded(scene,old_ray,ray);
+#endif
+
   }
   
   RTCORE_API void rtcOccluded4 (const void* valid, RTCScene scene, RTCRay4& ray) 
   {
     TRACE(rtcOccluded4);
-#if defined(__MIC__)
-    process_error(RTC_INVALID_OPERATION,"rtcOccluded4 not supported on Xeon Phi");
+#if !defined(__TARGET_SIMD4__)
+    process_error(RTC_INVALID_OPERATION,"rtcOccluded4 not supported");
 #else
 #if defined(DEBUG)
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
@@ -563,15 +667,25 @@ namespace embree
 #endif
     STAT(size_t cnt=0; for (size_t i=0; i<4; i++) cnt += ((int*)valid)[i] == -1;);
     STAT3(shadow.travs,1,cnt,4);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay4 old_ray = ray;
+#endif
+
     ((Scene*)scene)->occluded4(valid,ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.logRay4Occluded(valid,scene,old_ray,ray);
+#endif
+
 #endif
   }
   
   RTCORE_API void rtcOccluded8 (const void* valid, RTCScene scene, RTCRay8& ray) 
   {
     TRACE(rtcOccluded8);
-#if defined(__MIC__)
-    process_error(RTC_INVALID_OPERATION,"rtcOccluded8 not supported on Xeon Phi");
+#if !defined(__TARGET_SIMD8__)
+    process_error(RTC_INVALID_OPERATION,"rtcOccluded8 not supported");
 #else
 #if defined(DEBUG)
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
@@ -580,15 +694,25 @@ namespace embree
 #endif
     STAT(size_t cnt=0; for (size_t i=0; i<8; i++) cnt += ((int*)valid)[i] == -1;);
     STAT3(shadow.travs,1,cnt,8);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay8 old_ray = ray;
+#endif
+
     ((Scene*)scene)->occluded8(valid,ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RayStreamLogger::rayStreamLogger.logRay8Occluded(valid,scene,old_ray,ray);
+#endif
+
 #endif
   }
   
   RTCORE_API void rtcOccluded16 (const void* valid, RTCScene scene, RTCRay16& ray) 
   {
     TRACE(rtcOccluded16);
-#if !defined(__MIC__)
-    process_error(RTC_INVALID_OPERATION,"rtcOccluded16 only supported on Xeon Phi");
+#if !defined(__TARGET_SIMD16__)
+    process_error(RTC_INVALID_OPERATION,"rtcOccluded16 not supported");
 #else
 #if defined(DEBUG)
     if (!((Scene*)scene)->is_build) process_error(RTC_INVALID_OPERATION,"scene got not committed");
@@ -597,7 +721,17 @@ namespace embree
 #endif
     STAT(size_t cnt=0; for (size_t i=0; i<16; i++) cnt += ((int*)valid)[i] == -1;);
     STAT3(shadow.travs,1,cnt,16);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+    RTCRay16 old_ray = ray;
+#endif
+
     ((Scene*)scene)->occluded16(valid,ray);
+
+#if defined(__ENABLE_RAYSTREAM_LOGGER__)
+  RayStreamLogger::rayStreamLogger.logRay16Occluded(valid,scene,old_ray,ray);
+#endif
+
 #endif
   }
   
@@ -952,4 +1086,16 @@ namespace embree
     ((Scene*)scene)->get_locked(geomID)->setOcclusionFilterFunction16(filter16);
     CATCH_END;
   }
+
+  /* new support for subdivision surfaces */
+  RTCORE_API unsigned rtcNewSubdivisionMesh (RTCScene scene, RTCGeometryFlags flags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numTimeSteps) 
+  {
+    CATCH_BEGIN;
+    TRACE(rtcNewSubdivisionMesh);
+    VERIFY_HANDLE(scene);
+    return ((Scene*)scene)->newSubdivisionMesh(flags,numFaces,numEdges,numVertices,numTimeSteps);
+    CATCH_END;
+    return -1;
+  }
+
 }

@@ -38,8 +38,8 @@ namespace embree
   
   void BezierCurves::disabling() 
   { 
-    if (numTimeSteps == 1) atomic_add(&parent->numBezierCurves ,-numCurves); 
-    else                   atomic_add(&parent->numBezierCurves2,-numCurves); 
+    if (numTimeSteps == 1) atomic_add(&parent->numBezierCurves ,-(ssize_t)numCurves); 
+	else                   atomic_add(&parent->numBezierCurves2,-(ssize_t)numCurves);
   }
   
   void BezierCurves::setMask (unsigned mask) 
@@ -143,19 +143,35 @@ namespace embree
 
   bool BezierCurves::verify () 
   {
-    float range = sqrtf(0.5f*FLT_MAX);
     for (size_t i=0; i<numCurves; i++) {
       if (curves[i]+3 >= numVertices) return false;
     }
     for (size_t j=0; j<numTimeSteps; j++) {
       BufferT<Vertex>& verts = vertices[j];
       for (size_t i=0; i<numVertices; i++) {
-        if (!(verts[i].x > -range && verts[i].x < range)) return false;
-	if (!(verts[i].y > -range && verts[i].y < range)) return false;
-	if (!(verts[i].z > -range && verts[i].z < range)) return false;
-	if (!(verts[i].r > -range && verts[i].r < range)) return false;
+        if (!inFloatRange(verts[i].x)) return false;
+	if (!inFloatRange(verts[i].y)) return false;
+	if (!inFloatRange(verts[i].z)) return false;
+	if (!inFloatRange(verts[i].r)) return false;
       }
     }
     return true;
+  }
+
+  void BezierCurves::write(std::ofstream& file)
+  {
+    int type = BEZIER_CURVES;
+    file.write((char*)&type,sizeof(int));
+    file.write((char*)&numTimeSteps,sizeof(int));
+    file.write((char*)&numVertices,sizeof(int));
+    file.write((char*)&numCurves,sizeof(int));
+
+    for (size_t j=0; j<numTimeSteps; j++) {
+      while ((file.tellp() % 16) != 0) { char c = 0; file.write(&c,1); }
+      for (size_t i=0; i<numVertices; i++) file.write((char*)&vertex(i,j),sizeof(Vec3fa));  
+    }
+
+    while ((file.tellp() % 16) != 0) { char c = 0; file.write(&c,1); }
+    for (size_t i=0; i<numCurves; i++) file.write((char*)&curve(i),sizeof(int));  
   }
 }

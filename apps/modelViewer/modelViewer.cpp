@@ -1,13 +1,21 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 // viewer widget
-#include "../util/glut3D/glut3D.h"
+#include "apps/common/widgets/glut3D.h"
 // mini scene graph for loading the model
 #include "miniSG/miniSG.h"
 // ospray, for rendering
@@ -18,17 +26,21 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  float g_near_clip = 1e-6f;
+  bool  g_fullScreen       = false;
   bool  g_explosion_mode   = false;
   float g_explosion_factor = 0.f;
+  glut3D::Glut3DWidget::ViewPort g_viewPort;
 
-  int g_width = 1024, g_height = 768, g_benchWarmup = 0, g_benchFrames = 0;
+  int g_width = 1024, g_height = 1024, g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
+  bool g_createDefaultMaterial = true;
   int accumID = -1;
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
   unsigned int maxObjectsToConsider = (uint32)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
-  bool forceInstancing = true;
+  bool forceInstancing = false;
   /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
   bool showDepthBuffer = 0;
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
@@ -75,9 +87,9 @@ namespace ospray {
       ospSet3f(camera,"dir",+1,-1,+1);
       ospCommit(camera);
 
-      ospSetParam(renderer,"world",model);
-      ospSetParam(renderer,"model",model);
-      ospSetParam(renderer,"camera",camera);
+      ospSetObject(renderer,"world",model);
+      ospSetObject(renderer,"model",model);
+      ospSetObject(renderer,"camera",camera);
       ospSet1i(renderer,"spp",spp);
       ospCommit(camera);
       ospCommit(renderer);
@@ -106,7 +118,9 @@ namespace ospray {
         cout << "Switching shadows " << (doShadows?"ON":"OFF") << endl;
         ospSet1i(renderer,"shadowsEnabled",doShadows);
         ospCommit(renderer);
+        accumID=0;
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
         break;
       case 'D':
         showDepthBuffer = !showDepthBuffer;
@@ -122,6 +136,37 @@ namespace ospray {
         forceRedraw();
         break;
       case 'X':
+        if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
+          viewPort.up = - viewPort.up;
+        else 
+          viewPort.up = vec3f(1,0,0);
+        viewPort.modified = true;
+        accumID=0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      case 'Y':
+        if (viewPort.up == vec3f(0,1,0) || viewPort.up == vec3f(0,-1.f,0))
+          viewPort.up = - viewPort.up;
+        else 
+          viewPort.up = vec3f(0,1,0);
+        viewPort.modified = true;
+        accumID=0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      case 'Z':
+        if (viewPort.up == vec3f(0,0,1) || viewPort.up == vec3f(0,0,-1.f))
+          viewPort.up = - viewPort.up;
+        else 
+          viewPort.up = vec3f(0,0,1);
+        viewPort.modified = true;
+        accumID=0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+
+      case '(':
         {
           g_explosion_factor += .01f;
           vec3f center = embree::center(msgModel->getBBox());
@@ -134,7 +179,7 @@ namespace ospray {
           forceRedraw();
         }
         break;
-      case 'x':
+      case ')':
         {
           g_explosion_factor -= .01f;
           g_explosion_factor = std::max( 0.f, g_explosion_factor);
@@ -148,8 +193,65 @@ namespace ospray {
           forceRedraw();
         }
         break;
+      case 'f':
+        {
+          g_fullScreen = !g_fullScreen;
+          if(g_fullScreen) glutFullScreen();
+          else glutPositionWindow(0,10);
+        }
+        break;
+      case 'r':
+        {
+          viewPort = g_viewPort;
+        }
+        break;
       default:
         Glut3DWidget::keypress(key,where);
+      }
+    }
+
+    virtual void specialkey(int32 key, const vec2f where)
+    {
+      switch(key) {
+        case GLUT_KEY_PAGE_UP:
+          g_near_clip += 10.f * motionSpeed;
+          ospSet1f(renderer, "near_clip", g_near_clip);
+          ospCommit(renderer);
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+          break;
+        case GLUT_KEY_PAGE_DOWN:
+          g_near_clip -= 10.f * motionSpeed;
+          g_near_clip = std::max(g_near_clip, 1e-6f);
+          ospSet1f(renderer, "near_clip", g_near_clip);
+          ospCommit(renderer);
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          forceRedraw();
+          break;
+        default:
+          Glut3DWidget::keypress(key,where);
+      }
+    }
+
+    virtual void mouseButton(int32 whichButton, bool released, const vec2i &pos)
+    {
+      Glut3DWidget::mouseButton(whichButton, released, pos);
+      if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
+        vec2f normpos = vec2f(pos.x / (float)g_width, pos.y / (float)g_height);
+        OSPPickData data = ospUnproject(ospRenderer, normpos);
+        vec3f p(data.world_x, data.world_y, data.world_z);
+        if(data.hit) {
+          vec3f delta = p - viewPort.at;
+          vec3f right = cross(normalize(viewPort.at - viewPort.from), viewPort.up);
+          vec3f offset = dot(delta, right) * right - dot(delta, viewPort.up) * viewPort.up;
+          viewPort.at = p;
+          //viewPort.from += offset;
+          viewPort.modified = true;
+	  computeFrame();
+          accumID = 0;
+          ospFrameBufferClear(fb,OSP_FB_ACCUM);
+          //((glut3D::InspectCenter*)inspectCenterManipulator)->pivot = p;
+        }
       }
     }
 
@@ -188,6 +290,11 @@ namespace ospray {
       ++frameID;
       
       if (viewPort.modified) {
+        static bool once = true;
+        if(once) {
+          g_viewPort = viewPort;
+          once = false;
+        }
         Assert2(camera,"ospray camera is null");
         ospSetVec3f(camera,"pos",viewPort.from);
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
@@ -260,6 +367,7 @@ namespace ospray {
 
   OSPMaterial createDefaultMaterial(OSPRenderer renderer)
   {
+    if(!g_createDefaultMaterial) return NULL;
     static OSPMaterial ospMat = NULL;
     if (ospMat) return ospMat;
     
@@ -290,11 +398,11 @@ namespace ospray {
     OSPDataType type = OSP_VOID_PTR;
 
     if (msgTex->depth == 1) {
-      if( msgTex->channels == 3 ) type = OSP_vec3uc;
-      if( msgTex->channels == 4 ) type = OSP_vec4uc;
+      if( msgTex->channels == 3 ) type = OSP_UCHAR3;
+      if( msgTex->channels == 4 ) type = OSP_UCHAR4;
     } else if (msgTex->depth == 4) {
-      if( msgTex->channels == 3 ) type = OSP_vec3f;
-      if( msgTex->channels == 4 ) type = OSP_vec3fa;
+      if( msgTex->channels == 3 ) type = OSP_FLOAT3;
+      if( msgTex->channels == 4 ) type = OSP_FLOAT3A;
     }
 
     OSPTexture2D ospTex = ospNewTexture2D( msgTex->width,
@@ -345,7 +453,7 @@ namespace ospray {
           OSPTexture2D ospTex = createTexture2D(tex);
           //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
           //ospSetData(ospMat, name, data);
-          ospSetParam(ospMat, name, ospTex);
+          ospSetObject(ospMat, name, ospTex);
         }
         break;
       case miniSG::Material::Param::FLOAT:
@@ -362,26 +470,13 @@ namespace ospray {
           miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
           OSPTexture2D ospTex = createTexture2D(tex);
           ospCommit(ospTex);
-          ospSetParam(ospMat, name, ospTex);
+          ospSetObject(ospMat, name, ospTex);
           break;
         }
       default: 
         throw std::runtime_error("unkonwn material parameter type");
       };
     }
-
-    /*
-    std::vector<OSPTexture2D> textures;
-    for (size_t i = 0; i < mat->textures.size(); i++) {
-      OSPTexture2D tex = createTexture2D(mat->textures[i].ptr);
-      textures.push_back(tex);
-    }
-
-    if (!textures.empty()) {
-      OSPData textureArray = ospNewData(textures.size(), OSP_OBJECT, &textures[0], 0);
-      ospSetData(ospMat, "textureArray", textureArray);
-    }
-    */
 
     ospCommit(ospMat);
     return ospMat;
@@ -403,6 +498,8 @@ namespace ospray {
         maxObjectsToConsider = atoi(av[++i]);
       } else if (arg == "--spp") {
         spp = atoi(av[++i]);
+      } else if (arg == "--force-instancing") {
+        forceInstancing = true;
       } else if (arg == "--pt") {
         // shortcut for '--module pathtracer --renderer pathtracer'
         const char *moduleName = "pathtracer";
@@ -411,9 +508,13 @@ namespace ospray {
         ospLoadModule(moduleName);
         rendererType = moduleName;
       } else if (arg == "--sun-dir") {
-        defaultDirLight_direction.x = atof(av[++i]);
-        defaultDirLight_direction.y = atof(av[++i]);
-        defaultDirLight_direction.z = atof(av[++i]);
+        if (!strcmp(av[i+1],"none")) {
+          defaultDirLight_direction = vec3f(0.f);
+        } else {
+          defaultDirLight_direction.x = atof(av[++i]);
+          defaultDirLight_direction.y = atof(av[++i]);
+          defaultDirLight_direction.z = atof(av[++i]);
+        }
       } else if (arg == "--module" || arg == "--plugin") {
         assert(i+1 < ac);
         const char *moduleName = av[++i];
@@ -449,24 +550,30 @@ namespace ospray {
                 ss >> g_benchWarmup >> g_benchFrames;
               }
           }
+      } else if (arg == "--no-default-material") {
+        g_createDefaultMaterial = false;
       } else if (av[i][0] == '-') {
         error("unkown commandline argument '"+arg+"'");
       } else {
         embree::FileName fn = arg;
-        if (fn.ext() == "stl")
+        if (fn.ext() == "stl") {
           miniSG::importSTL(*msgModel,fn);
-        else if (fn.ext() == "msg")
+        } else if (fn.ext() == "msg") {
           miniSG::importMSG(*msgModel,fn);
-        else if (fn.ext() == "tri")
+        } else if (fn.ext() == "tri") {
           miniSG::importTRI(*msgModel,fn);
-        else if (fn.ext() == "xml")
+        } else if (fn.ext() == "xml") {
           miniSG::importRIVL(*msgModel,fn);
-        else if (fn.ext() == "obj")
+        } else if (fn.ext() == "obj") {
           miniSG::importOBJ(*msgModel,fn);
-        else if (fn.ext() == "astl")
+        } else if (fn.ext() == "x3d") {
+          miniSG::importX3D(*msgModel,fn); 
+        } else if (fn.ext() == "astl") {
           miniSG::importSTL(msgAnimation,fn);
+        }
       }
     }
+
     // -------------------------------------------------------
     // done parsing
     // -------------------------------------------------------]
@@ -497,13 +604,6 @@ namespace ospray {
 
     if (numInstancedTris == 0 && msgAnimation.empty())
       error("no (valid) input files specified - model contains no triangles");
-
-    // if (msgModel->material.empty()) {
-    //   static int numWarnings = 0;
-    //   if (++numWarnings < 10)
-    //     cout << "msgView: adding default material (only reporting first 10 times)" << endl;
-    //   msgModel->material.push_back(new miniSG::Material);
-    // }
 
     // -------------------------------------------------------
     // create ospray model
@@ -563,7 +663,7 @@ namespace ospray {
         }
       }
       // add position array to mesh
-      OSPData position = ospNewData(msgMesh->position.size(),OSP_vec3fa,
+      OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"position",position);
       
@@ -576,14 +676,14 @@ namespace ospray {
 
       // cout << "INDEX" << endl;
       // add triangle index array to mesh
-      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_vec3i,
+      OSPData index = ospNewData(msgMesh->triangle.size(),OSP_INT3,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
 
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
-        OSPData normal = ospNewData(msgMesh->normal.size(),OSP_vec3fa,
+        OSPData normal = ospNewData(msgMesh->normal.size(),OSP_FLOAT3A,
                                     &msgMesh->normal[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->normal.size() > 0);
         ospSetData(ospMesh,"vertex.normal",normal);
@@ -591,9 +691,19 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
+      // add color array to mesh
+      if (!msgMesh->color.empty()) {
+        OSPData color = ospNewData(msgMesh->color.size(),OSP_FLOAT3A,
+                                    &msgMesh->color[0],OSP_DATA_SHARED_BUFFER);
+        assert(msgMesh->color.size() > 0);
+        ospSetData(ospMesh,"vertex.color",color);
+      } else {
+        // cout << "no vertex colors!" << endl;
+      }
+
       // add texcoord array to mesh
       if (!msgMesh->texcoord.empty()) {
-        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_vec2f,
+        OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_FLOAT2,
                                       &msgMesh->texcoord[0], OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->texcoord.size() > 0);
         ospSetData(ospMesh,"vertex.texcoord",texcoord);
@@ -679,14 +789,16 @@ namespace ospray {
     //begin light test
     std::vector<OSPLight> dirLights;
     cout << "msgView: Adding a hard coded directional light as the sun." << endl;
-    OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
-    ospSetString(ospLight, "name", "sun" );
-    ospSet3f(ospLight, "color", 1, 1, 1);
-    ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
-    ospCommit(ospLight);
-    dirLights.push_back(ospLight);
-    OSPData dirLightArray = ospNewData(dirLights.size(), OSP_OBJECT, &dirLights[0], 0);
-    ospSetData(ospRenderer, "directionalLights", dirLightArray);
+    if (defaultDirLight_direction != vec3f(0.f)) {
+      OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
+      ospSetString(ospLight, "name", "sun" );
+      ospSet3f(ospLight, "color", 1, 1, 1);
+      ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
+      ospCommit(ospLight);
+      dirLights.push_back(ospLight);
+      OSPData dirLightArray = ospNewData(dirLights.size(), OSP_OBJECT, &dirLights[0], 0);
+      ospSetData(ospRenderer, "directionalLights", dirLightArray);
+    }
 #if 0
     //spot light
     std::vector<OSPLight> spotLights;
@@ -717,6 +829,14 @@ namespace ospray {
     window.create("MSGViewer: OSPRay Mini-Scene Graph test viewer");
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(box3f(msgModel->getBBox()));
+    if (msgModel->camera.size() > 0) {
+      PRINT(msgModel->camera[0]->from);
+      PRINT(msgModel->camera[0]->at);
+      PRINT(msgModel->camera[0]->up);
+      window.setViewPort(msgModel->camera[0]->from,
+                         msgModel->camera[0]->at,
+                         msgModel->camera[0]->up);
+    }
     ospray::glut3D::runGLUT();
   }
 }

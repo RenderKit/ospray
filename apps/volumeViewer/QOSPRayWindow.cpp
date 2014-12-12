@@ -1,231 +1,250 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #include "QOSPRayWindow.h"
 
-QOSPRayWindow::QOSPRayWindow(OSPRenderer renderer) : frameCount_(0), renderingEnabled_(false), rotationRate_(0.f), benchmarkWarmUpFrames_(0), benchmarkFrames_(0), frameBuffer_(NULL), renderer_(NULL), camera_(NULL)
+QOSPRayWindow::QOSPRayWindow(QMainWindow *parent, 
+                             OSPRenderer renderer, 
+                             bool showFrameRate) 
+  : parent(parent), 
+    showFrameRate(showFrameRate), 
+    frameCount(0), 
+    renderingEnabled(false), 
+    rotationRate(0.f), 
+    benchmarkWarmUpFrames(0), 
+    benchmarkFrames(0), 
+    frameBuffer(NULL), 
+    renderer(NULL), 
+    camera(NULL)
 {
-    // assign renderer
-    if(!renderer)
-        throw std::runtime_error("must be constructed with an existing renderer");
+  // assign renderer
+  if(!renderer)
+    throw std::runtime_error("QOSPRayWindow: must be constructed with an existing renderer");
 
-    renderer_ = renderer;
+  this->renderer = renderer;
 
-    // setup camera
-    camera_ = ospNewCamera("perspective");
+  // setup camera
+  camera = ospNewCamera("perspective");
 
-    if(!camera_)
-        throw std::runtime_error("could not create camera type 'perspective'");
+  if(!camera)
+    throw std::runtime_error("QOSPRayWindow: could not create camera type 'perspective'");
 
-    ospCommit(camera_);
+  ospCommit(camera);
 
-    ospSetParam(renderer_, "camera", camera_);
+  ospSetObject(renderer, "camera", camera);
 }
 
 QOSPRayWindow::~QOSPRayWindow()
 {
-    // free the frame buffer and camera
-    // we don't own the renderer!
-    if(frameBuffer_)
+  // free the frame buffer and camera
+  // we don't own the renderer!
+  if(frameBuffer)
     {
-        ospFreeFrameBuffer(frameBuffer_);
+      ospFreeFrameBuffer(frameBuffer);
     }
 
-    if(camera_)
+  if(camera)
     {
-        ospRelease(camera_);
+      ospRelease(camera);
     }
 }
 
 void QOSPRayWindow::setRenderingEnabled(bool renderingEnabled)
 {
-    renderingEnabled_ = renderingEnabled;
+  this->renderingEnabled = renderingEnabled;
 
-    // trigger render if true
-    if(renderingEnabled_ == true)
+  // trigger render if true
+  if(renderingEnabled == true)
     {
-        updateGL();
+      updateGL();
     }
 }
 
 void QOSPRayWindow::setRotationRate(float rotationRate)
 {
-    rotationRate_ = rotationRate;
+  this->rotationRate = rotationRate;
 }
 
 void QOSPRayWindow::setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames)
 {
-    benchmarkWarmUpFrames_ = benchmarkWarmUpFrames;
-    benchmarkFrames_ = benchmarkFrames;
+  this->benchmarkWarmUpFrames = benchmarkWarmUpFrames;
+  this->benchmarkFrames = benchmarkFrames;
 }
 
 void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
 {
-    worldBounds_ = worldBounds;
+  this->worldBounds = worldBounds;
 
-    // set viewport look at point to center of world bounds
-    viewport_.at = center(worldBounds_);
+  // set viewport look at point to center of world bounds
+  viewport.at = center(worldBounds);
 
-    // set viewport from point relative to center of world bounds
-    viewport_.from = viewport_.at - 2.f * viewport_.frame.l.vy;
+  // set viewport from point relative to center of world bounds
+  viewport.from = viewport.at - 1.5f * viewport.frame.l.vy;
 
-    updateGL();
-}
-
-OSPFrameBuffer QOSPRayWindow::getFrameBuffer()
-{
-    return frameBuffer_;
+  updateGL();
 }
 
 void QOSPRayWindow::paintGL()
 {
-    if(!renderingEnabled_ || !frameBuffer_ || !renderer_)
+  if(!renderingEnabled || !frameBuffer || !renderer)
     {
-        return;
+      return;
     }
 
-    // if we're benchmarking and we've completed the required number of warm-up frames, start the timer
-    if(benchmarkFrames_ > 0 && frameCount_ == benchmarkWarmUpFrames_)
+  // if we're benchmarking and we've completed the required number of warm-up frames, start the timer
+  if(benchmarkFrames > 0 && frameCount == benchmarkWarmUpFrames)
     {
-        std::cout << "starting benchmark timer" << std::endl;
-        benchmarkTimer_.start();
+      std::cout << "starting benchmark timer" << std::endl;
+      benchmarkTimer.start();
     }
 
-    // update OSPRay camera if viewport has been modified
-    if(viewport_.modified)
+  // update OSPRay camera if viewport has been modified
+  if(viewport.modified)
     {
-        ospSetVec3f(camera_,"pos" ,viewport_.from);
-        ospSetVec3f(camera_,"dir" ,viewport_.at - viewport_.from);
-        ospSetVec3f(camera_,"up", viewport_.up);
-        ospSetf(camera_,"aspect", viewport_.aspect);
-        ospSetf(camera_,"fovy", viewport_.fovY);
+      ospSetVec3f(camera,"pos" ,viewport.from);
+      ospSetVec3f(camera,"dir" ,viewport.at - viewport.from);
+      ospSetVec3f(camera,"up", viewport.up);
+      ospSetf(camera,"aspect", viewport.aspect);
+      ospSetf(camera,"fovy", viewport.fovY);
 
-        ospCommit(camera_);
+      ospCommit(camera);
 
-        viewport_.modified = false;
+      viewport.modified = false;
     }
 
-    ospRenderFrame(frameBuffer_, renderer_);
+  renderFrameTimer.start();
+  ospRenderFrame(frameBuffer, renderer);
+  double framesPerSecond = 1000.0 / renderFrameTimer.elapsed();
+  char title[1024];  sprintf(title, "OSPRay Volume Viewer (%.4f fps)", framesPerSecond);
+  if (showFrameRate == true) parent->setWindowTitle(title);
 
-    uint32 * mappedFrameBuffer = (unsigned int *)ospMapFrameBuffer(frameBuffer_);
+  uint32 * mappedFrameBuffer = (unsigned int *)ospMapFrameBuffer(frameBuffer);
 
-    glDrawPixels(windowSize_.x, windowSize_.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFrameBuffer);
+  glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFrameBuffer);
 
-    ospUnmapFrameBuffer(mappedFrameBuffer, frameBuffer_);
+  ospUnmapFrameBuffer(mappedFrameBuffer, frameBuffer);
 
-    // automatic rotation
-    if(rotationRate_ != 0.f)
+  // automatic rotation
+  if(rotationRate != 0.f)
     {
-        rotateCenter(rotationRate_, 0.f);
+      rotateCenter(rotationRate, 0.f);
     }
 
-    // increment frame counter
-    frameCount_++;
+  // increment frame counter
+  frameCount++;
 
-    // quit if we're benchmarking and have exceeded the needed number of frames
-    if(benchmarkFrames_ > 0 && frameCount_ >= benchmarkWarmUpFrames_ + benchmarkFrames_)
+  // quit if we're benchmarking and have exceeded the needed number of frames
+  if(benchmarkFrames > 0 && frameCount >= benchmarkWarmUpFrames + benchmarkFrames)
     {
-        float elapsedSeconds = float(benchmarkTimer_.elapsed()) / 1000.f;
+      float elapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.f;
 
-        std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> " << float(benchmarkFrames_) / elapsedSeconds << " fps" << std::endl;
+      std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> " << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
 
-        QCoreApplication::quit();
+      QCoreApplication::quit();
     }
 
-    // force continuous rendering if we have automatic rotation or benchmarking enabled
-    if(rotationRate_ != 0.f || benchmarkFrames_ > 0)
+  // force continuous rendering if we have automatic rotation or benchmarking enabled
+  if(rotationRate != 0.f || benchmarkFrames > 0)
     {
-        update();
+      update();
     }
 }
 
 void QOSPRayWindow::resizeGL(int width, int height)
 {
-    windowSize_ = osp::vec2i(width, height);
+  windowSize = osp::vec2i(width, height);
 
-    // reallocate OSPRay framebuffer for new size
-    if(frameBuffer_)
+  // reallocate OSPRay framebuffer for new size
+  if(frameBuffer)
     {
-        ospFreeFrameBuffer(frameBuffer_);
+      ospFreeFrameBuffer(frameBuffer);
     }
 
-    frameBuffer_ = ospNewFrameBuffer(windowSize_, OSP_RGBA_I8);
+  frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8);
 
-    // update viewport aspect ratio
-    viewport_.aspect = float(width) / float(height);
-    viewport_.modified = true;
+  // update viewport aspect ratio
+  viewport.aspect = float(width) / float(height);
+  viewport.modified = true;
 
-    // update OpenGL viewport and force redraw
-    glViewport(0, 0, width, height);
-    updateGL();
+  // update OpenGL viewport and force redraw
+  glViewport(0, 0, width, height);
+  updateGL();
 }
 
 void QOSPRayWindow::mousePressEvent(QMouseEvent * event)
 {
-    lastMousePosition_ = event->pos();
+  lastMousePosition = event->pos();
 }
 
 void QOSPRayWindow::mouseReleaseEvent(QMouseEvent * event)
 {
-    lastMousePosition_ = event->pos();
+  lastMousePosition = event->pos();
 }
 
 void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 {
-    int dx = event->x() - lastMousePosition_.x();
-    int dy = event->y() - lastMousePosition_.y();
+  int dx = event->x() - lastMousePosition.x();
+  int dy = event->y() - lastMousePosition.y();
 
-    if(event->buttons() & Qt::LeftButton)
+  if(event->buttons() & Qt::LeftButton)
     {
-        // camera rotation about center point
-        const float rotationSpeed = 0.003f;
+      // camera rotation about center point
+      const float rotationSpeed = 0.003f;
 
-        float du = dx * rotationSpeed;
-        float dv = dy * rotationSpeed;
+      float du = dx * rotationSpeed;
+      float dv = dy * rotationSpeed;
 
-        rotateCenter(du, dv);
+      rotateCenter(du, dv);
     }
-    else if(event->buttons() & Qt::RightButton)
+  else if(event->buttons() & Qt::RightButton)
     {
-        // camera distance from center point
-        const float motionSpeed = 0.012f;
+      // camera distance from center point
+      const float motionSpeed = 0.012f;
 
-        float forward = dy * motionSpeed;
-        float oldDistance = length(viewport_.at - viewport_.from);
-        float newDistance = oldDistance - forward;
+      float forward = dy * motionSpeed;
+      float oldDistance = length(viewport.at - viewport.from);
+      float newDistance = oldDistance - forward;
 
-        if(newDistance < 1e-3f)
-            return;
+      if(newDistance < 1e-3f)
+        return;
 
-        viewport_.from = viewport_.at - newDistance * viewport_.frame.l.vy;
-        viewport_.frame.p = viewport_.from;
+      viewport.from = viewport.at - newDistance * viewport.frame.l.vy;
+      viewport.frame.p = viewport.from;
 
-        viewport_.modified = true;
+      viewport.modified = true;
     }
 
-    lastMousePosition_ = event->pos();
+  lastMousePosition = event->pos();
 
-    updateGL();
+  updateGL();
 }
 
 void QOSPRayWindow::rotateCenter(float du, float dv)
 {
-    const osp::vec3f pivot = center(worldBounds_);
+  const osp::vec3f pivot = center(worldBounds);
 
-    osp::affine3f xfm = osp::affine3f::translate(pivot)
-                      * osp::affine3f::rotate(viewport_.frame.l.vx, -dv)
-                      * osp::affine3f::rotate(viewport_.frame.l.vz, -du)
-                      * osp::affine3f::translate(-pivot);
+  osp::affine3f xfm = osp::affine3f::translate(pivot)
+    * osp::affine3f::rotate(viewport.frame.l.vx, -dv)
+    * osp::affine3f::rotate(viewport.frame.l.vz, -du)
+    * osp::affine3f::translate(-pivot);
 
-    viewport_.frame = xfm * viewport_.frame;
-    viewport_.from  = xfmPoint(xfm, viewport_.from);
-    viewport_.at    = xfmPoint(xfm, viewport_.at);
-    viewport_.snapUp();
+  viewport.frame = xfm * viewport.frame;
+  viewport.from  = xfmPoint(xfm, viewport.from);
+  viewport.at    = xfmPoint(xfm, viewport.at);
+  viewport.snapUp();
 
-    viewport_.modified = true;
+  viewport.modified = true;
 }

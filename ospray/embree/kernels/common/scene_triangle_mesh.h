@@ -30,7 +30,9 @@ namespace embree
     
   public:
     TriangleMesh (Scene* parent, RTCGeometryFlags flags, size_t numTriangles, size_t numVertices, size_t numTimeSteps); 
-    
+  
+    void write(std::ofstream& file);
+
     /* geometry interface */
   public:
     void enabling();
@@ -42,7 +44,7 @@ namespace embree
     void setUserData (void* ptr, bool ispc);
     void immutable ();
     bool verify ();
-    
+
   public:
 
     /*! returns number of triangles */
@@ -51,11 +53,26 @@ namespace embree
     }
     
     /*! returns i'th triangle*/
+    __forceinline Triangle& triangle(size_t i) {
+      assert(i < numTriangles);
+      return triangles[i];
+    }
+
+    /*! returns i'th triangle*/
     __forceinline const Triangle& triangle(size_t i) const {
+      if ( i >= numTriangles ) { DBG_PRINT(numTriangles); DBG_PRINT(i); }
       assert(i < numTriangles);
       return triangles[i];
     }
     
+    /*! returns i'th vertex of j'th timestep */
+    __forceinline Vec3fa& vertex(size_t i, size_t j = 0)  
+    {
+      assert(i < numVertices);
+      assert(j < numTimeSteps);
+      return vertices[j][i];
+    }
+
     /*! returns i'th vertex of j'th timestep */
     __forceinline const Vec3fa& vertex(size_t i, size_t j = 0) const 
     {
@@ -73,7 +90,32 @@ namespace embree
     __forceinline size_t getVertexBufferStride() const {
       return vertices[0].getBufferStride();
     }
-    
+
+    /*! check if the i'th primitive is valid */
+    __forceinline bool valid(size_t i, BBox3fa* bbox = NULL) const 
+    {
+      const Triangle& tri = triangle(i);
+      if (tri.v[0] >= numVertices) return false;
+      if (tri.v[1] >= numVertices) return false;
+      if (tri.v[2] >= numVertices) return false;
+
+      for (size_t j=0; j<numTimeSteps; j++) {
+	const Vec3fa& v0 = vertex(tri.v[0],j);
+	const Vec3fa& v1 = vertex(tri.v[1],j);
+	const Vec3fa& v2 = vertex(tri.v[2],j);
+	if (!inFloatRange(v0) || !inFloatRange(v1) || !inFloatRange(v2))
+	  return false;
+      }
+
+      if (bbox) {
+	const Vec3fa& v0 = vertex(tri.v[0]);
+	const Vec3fa& v1 = vertex(tri.v[1]);
+	const Vec3fa& v2 = vertex(tri.v[2]);
+	*bbox = BBox3fa(min(v0,v1,v2),max(v0,v1,v2));
+      }
+      return true;
+    }
+
     /*! calculates the bounds of the i'th triangle */
     __forceinline BBox3fa bounds(size_t i) const 
     {
@@ -83,7 +125,7 @@ namespace embree
       const Vec3fa& v2 = vertex(tri.v[2]);
       return BBox3fa(min(v0,v1,v2),max(v0,v1,v2));
     }
-    
+
 #if defined(__MIC__)
 
 
@@ -106,29 +148,6 @@ namespace embree
 
 #else
 	const mic_i stride = vertices[dim].getStride();
-
-	/* mic_i offset0 = stride * mic_i(tri.v[0]); */
-	/* mic_i offset1 = stride * mic_i(tri.v[1]); */
-	/* mic_i offset2 = stride * mic_i(tri.v[2]); */
-
-	/* const unsigned int off0 = offset0[0]; */
-	/* const unsigned int off1 = offset1[0]; */
-	/* const unsigned int off2 = offset2[0]; */
-
-	/* const char  *__restrict__ const base  = vertices[dim].getPtr(); */
-	/* const float *__restrict__ const vptr0 = (float*)(base + off0); */
-	/* const float *__restrict__ const vptr1 = (float*)(base + off1); */
-	/* const float *__restrict__ const vptr2 = (float*)(base + off2); */
-
-	/* if (HINT) */
-	/* { */
-	/*   prefetch<HINT>(vptr1); */
-	/*   prefetch<HINT>(vptr2); */
-	/* } */
-
-	/* const mic_f v0 = broadcast4to16f(vptr0);  */
-	/* const mic_f v1 = broadcast4to16f(vptr1);  */
-	/* const mic_f v2 = broadcast4to16f(vptr2);  */
 
 	const mic_i offset0_64 = mul_uint64(stride,mic_i(tri.v[0]));
 	const mic_i offset1_64 = mul_uint64(stride,mic_i(tri.v[1]));
@@ -167,7 +186,7 @@ namespace embree
     
   public:
     unsigned int mask;                //!< for masking out geometry
-    unsigned char numTimeSteps;       //!< number of time steps (1 or 2)
+    unsigned int numTimeSteps;        //!< number of time steps (1 or 2)
     
     BufferT<Triangle> triangles;      //!< array of triangles
     size_t numTriangles;              //!< number of triangles
@@ -175,4 +194,11 @@ namespace embree
     BufferT<Vec3fa> vertices[2];      //!< vertex array
     size_t numVertices;               //!< number of vertices
   };
+
+  __forceinline std::ostream &operator<<(std::ostream &o, const TriangleMesh::Triangle &t)
+  {
+    o << "tri " << t.v[0] << " " << t.v[1] << " " << t.v[2] << std::endl;
+    return o;
+  } 
+
 }

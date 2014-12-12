@@ -27,7 +27,6 @@ namespace embree
 
     static __forceinline void intersect(Ray& ray, const Primitive& prim, const void* geom) 
     {
-      AVX_ZERO_UPPER();
       prim.accel->intersect((RTCRay&)ray,prim.item);
     }
 
@@ -39,7 +38,6 @@ namespace embree
 
     static __forceinline bool occluded(Ray& ray, const Primitive& prim, const void* geom) 
     {
-      AVX_ZERO_UPPER();
       prim.accel->occluded((RTCRay&)ray,prim.item);
       return ray.geomID == 0;
     }

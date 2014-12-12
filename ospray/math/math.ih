@@ -1,17 +1,22 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
+#pragma once
 
-
-#ifndef MATH_ISPH
-#define MATH_ISPH
-
-#include "ospray/common/ospcommon.ih"
+#include "ospray/common/OSPCommon.ih"
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Constants
@@ -84,7 +89,6 @@ inline uniform float absf(const uniform float f) { return abs(f); }
 
 // inline float clamp(const float f) { return max(min(1.f,f),0.f); }
 
-
 inline uniform float rcp_safe(uniform float f) { return rcpf((abs(f) < 1e-8f) ? 1e-8f : f); }
 inline varying float rcp_safe(varying float f) { return rcpf((abs(f) < 1e-8f) ? 1e-8f : f); }
 
@@ -103,15 +107,32 @@ inline varying float deg2rad (const varying float x)  { return x * 1.74532925199
 inline uniform float rad2deg (const uniform float x)  { return x * 5.72957795130823208768e1f; }
 inline varying float rad2deg (const varying float x)  { return x * 5.72957795130823208768e1f; }
 
-#define __define_lerp(TYPE)                                                     \
-inline TYPE lerp(float factor, TYPE a, TYPE b)                                  \
-{                                                                               \
-  return (1-factor)* a + factor * b;                                            \
-}                                                                               \
-inline uniform TYPE lerp(uniform float factor, uniform TYPE a, uniform TYPE b)  \
-{                                                                               \
-  return (1-factor)* a + factor * b;                                            \
+inline uniform float nextafter(const uniform float a, const uniform float b) {
+
+  //! Match the behavior of the C99 math.h function.
+  if (a == b) return(b);
+
+  //! We will compute the smallest representable floating increment or decrement around 'a'.
+  uniform float delta = (b > a) ? 1.0f : -1.0f;
+
+  //! Iteratively compute the positive or negative increment.
+  while (a + 0.5f * delta != a) delta *= 0.5f;
+
+  //! Return the smallest number greater than 'a' or the largest number smaller than 'a'.
+  return(a + delta);
+
 }
+
+#define __define_lerp(TYPE)                                             \
+  inline TYPE lerp(float factor, TYPE a, TYPE b)                        \
+  {                                                                     \
+    return (1-factor)* a + factor * b;                                  \
+  }                                                                     \
+  inline uniform TYPE lerp(uniform float factor, uniform TYPE a, uniform TYPE b) \
+  {                                                                     \
+    return (1-factor)* a + factor * b;                                  \
+  }
+
 
 __define_lerp(int8)
 __define_lerp(int32)
@@ -121,5 +142,43 @@ __define_lerp(uint32)
 
 #undef __define_lerp
 
-#endif
+// ------------------------------------------------------------------
+// min4/max4, for all types
+// ------------------------------------------------------------------
+#define __define_op4T(MM,TYPE)                                  \
+  inline uniform TYPE MM##4(uniform TYPE a, uniform TYPE b,     \
+                            uniform TYPE c, uniform TYPE d)     \
+  {                                                             \
+    return MM(a, MM(b, MM(c, d)));                              \
+  }                                                             \
+  inline varying TYPE MM##4(varying TYPE a, varying TYPE b,     \
+                            varying TYPE c, varying TYPE d)     \
+  {                                                             \
+    return MM(a, MM(b, MM(c, d)));                              \
+  }                                                                                         
 
+#define __define_op4(MM)                        \
+  __define_op4T(MM,int8)                        \
+  __define_op4T(MM,int32)                       \
+  __define_op4T(MM,uint8)                       \
+  __define_op4T(MM,uint32)                      \
+  __define_op4T(MM,float)                       \
+  __define_op4T(MM,double)
+
+__define_op4(min)
+__define_op4(max)
+
+#undef __define_op4T
+#undef __define_op4
+
+#define SIMILAR_EPSILON .00001f
+inline float similar(float a, float b)
+{
+  return absf(a - b) <= SIMILAR_EPSILON;
+}
+
+inline uniform float similar(uniform float a, uniform float b)
+{
+  return absf(a - b) <= SIMILAR_EPSILON;
+}
+#undef SIMILAR_EPSILON

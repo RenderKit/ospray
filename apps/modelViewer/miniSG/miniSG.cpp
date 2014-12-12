@@ -1,10 +1,18 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
 
 #include "miniSG.h"
 
@@ -26,145 +34,159 @@ namespace ospray {
       // setParam( "Ka", vec3f(0.f) );
     }
 
-    float Material::getParam(const char *name, float defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::FLOAT && "Param type mismatch" );
-          return it->second->f[0];
-        }
+    float Material::getParam(const char *name, float defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::FLOAT && "Param type mismatch" );
+        return it->second->f[0];
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
     
-    vec2f Material::getParam(const char *name, vec2f defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::FLOAT_2 && "Param type mismatch" );
-          return vec2f(it->second->f[0], it->second->f[1]);
-        }
+    vec2f Material::getParam(const char *name, vec2f defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::FLOAT_2 && "Param type mismatch" );
+        return vec2f(it->second->f[0], it->second->f[1]);
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
 
-    vec3f Material::getParam(const char *name, vec3f defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::FLOAT_3 && "Param type mismatch" );
-          return vec3f( it->second->f[0], it->second->f[1], it->second->f[2] );
-        }
+    vec3f Material::getParam(const char *name, vec3f defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::FLOAT_3 && "Param type mismatch" );
+        return vec3f( it->second->f[0], it->second->f[1], it->second->f[2] );
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
 
-    vec4f Material::getParam(const char *name, vec4f defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::FLOAT_4 && "Param type mismatch" );
-          return vec4f( it->second->f[0], it->second->f[1], it->second->f[2], it->second->f[3] );
-        }
+    vec4f Material::getParam(const char *name, vec4f defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::FLOAT_4 && "Param type mismatch" );
+        return vec4f( it->second->f[0], it->second->f[1], it->second->f[2], it->second->f[3] );
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
 
-    int32 Material::getParam(const char *name, int32 defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::INT && "Param type mismatch" );
-          return it->second->i[0];
-        }
+    int32 Material::getParam(const char *name, int32 defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::INT && "Param type mismatch" );
+        return it->second->i[0];
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
 
-    vec2i Material::getParam(const char *name, vec2i defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::INT_2 && "Param type mismatch" );
-          return vec2i(it->second->i[0], it->second->i[1]);
-        }
+    vec2i Material::getParam(const char *name, vec2i defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::INT_2 && "Param type mismatch" );
+        return vec2i(it->second->i[0], it->second->i[1]);
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
 
-    vec3i Material::getParam(const char *name, vec3i defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::INT_3 && "Param type mismatch" );
-          return vec3i(it->second->i[0], it->second->i[1], it->second->i[2]);
-        }
+    vec3i Material::getParam(const char *name, vec3i defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::INT_3 && "Param type mismatch" );
+        return vec3i(it->second->i[0], it->second->i[1], it->second->i[2]);
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
 
-    vec4i Material::getParam(const char *name, vec4i defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::INT_4 && "Param type mismatch" );
-          return vec4i(it->second->i[0], it->second->i[1], it->second->i[2], it->second->i[3]);
-        }
+    vec4i Material::getParam(const char *name, vec4i defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::INT_4 && "Param type mismatch" );
+        return vec4i(it->second->i[0], it->second->i[1], it->second->i[2], it->second->i[3]);
+      }
 
-        return defaultVal;
-    }
-
-
-    uint32 Material::getParam(const char *name, uint32 defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::UINT && "Param type mismatch" );
-          return it->second->ui[0];
-        }
-
-        return defaultVal;
-    }
-
-    vec2ui Material::getParam(const char *name, vec2ui defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::UINT_2 && "Param type mismatch" );
-          return vec2ui(it->second->ui[0], it->second->ui[1]);
-        }
-
-        return defaultVal;
-    }
-
-    vec3ui Material::getParam(const char *name, vec3ui defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::UINT_3 && "Param type mismatch" );
-          return vec3ui(it->second->ui[0], it->second->ui[1], it->second->ui[2]);
-        }
-
-        return defaultVal;
-    }
-
-    vec4ui Material::getParam(const char *name, vec4ui defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::UINT_4 && "Param type mismatch" );
-          return vec4ui(it->second->ui[0], it->second->ui[1], it->second->ui[2], it->second->ui[3]);
-        }
-
-        return defaultVal;
+      return defaultVal;
     }
 
 
-    const char *Material::getParam(const char *name, const char *defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::STRING && "Param type mismatch" );
-          return it->second->s;
-        }
+    uint32 Material::getParam(const char *name, uint32 defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::UINT && "Param type mismatch" );
+        return it->second->ui[0];
+      }
 
-        return defaultVal;
+      return defaultVal;
     }
-    void *Material::getParam(const char *name, void *defaultVal) {
-        ParamMap::iterator it = params.find(name);
-        if (it != params.end()) {
-          assert( it->second->type == Param::TEXTURE /*|| other 'data' types*/&& "Param type mismatch" );
-          return it->second->ptr;
-        }
 
-        return defaultVal;
+    vec2ui Material::getParam(const char *name, vec2ui defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::UINT_2 && "Param type mismatch" );
+        return vec2ui(it->second->ui[0], it->second->ui[1]);
+      }
+
+      return defaultVal;
+    }
+
+    vec3ui Material::getParam(const char *name, vec3ui defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::UINT_3 && "Param type mismatch" );
+        return vec3ui(it->second->ui[0], it->second->ui[1], it->second->ui[2]);
+      }
+
+      return defaultVal;
+    }
+
+    vec4ui Material::getParam(const char *name, vec4ui defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::UINT_4 && "Param type mismatch" );
+        return vec4ui(it->second->ui[0], it->second->ui[1], it->second->ui[2], it->second->ui[3]);
+      }
+
+      return defaultVal;
+    }
+
+    const char *Material::getParam(const char *name, const char *defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::STRING && "Param type mismatch" );
+        return it->second->s;
+      }
+
+      return defaultVal;
+    }
+
+    void *Material::getParam(const char *name, void *defaultVal) 
+    {
+      ParamMap::iterator it = params.find(name);
+      if (it != params.end()) {
+        assert( it->second->type == Param::TEXTURE /*|| other 'data' types*/&& "Param type mismatch" );
+        return it->second->ptr;
+      }
+
+      return defaultVal;
     }
 
     void error(const std::string &err)
@@ -174,6 +196,7 @@ namespace ospray {
 
     bool operator==(const Instance &a, const Instance &b)
     { return a.meshID == b.meshID && a.xfm == b.xfm; }
+
     bool operator!=(const Instance &a, const Instance &b)
     { return !(a==b); }
 
@@ -225,5 +248,6 @@ namespace ospray {
         sum += mesh[i]->triangle.size();
       return sum;
     }
-  }
-}
+
+  } // ::ospray::minisg
+} // ::ospray

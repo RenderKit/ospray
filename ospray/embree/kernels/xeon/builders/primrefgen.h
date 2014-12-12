@@ -31,15 +31,15 @@ namespace embree
       typedef atomic_set<PrimRefBlockT<PrimRef> > PrimRefList;
 
     public:      
-      static void generate(size_t threadIndex, size_t threadCount, PrimRefBlockAlloc<PrimRef>* alloc, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRefList& prims, PrimInfo& pinfo);
+      static void generate(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimRefBlockAlloc<PrimRef>* alloc, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRefList& prims, PrimInfo& pinfo);
       
     private:
       
       /*! standard constructor that schedules the task */
-      PrimRefListGen (size_t threadIndex, size_t threadCount, PrimRefBlockAlloc<PrimRef>* alloc, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRefList& prims, PrimInfo& pinfo);
+      PrimRefListGen (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimRefBlockAlloc<PrimRef>* alloc, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRefList& prims, PrimInfo& pinfo);
             
       /*! parallel task to iterate over the primitives */
-      TASK_RUN_FUNCTION(PrimRefListGen,task_gen_parallel);
+      TASK_SET_FUNCTION(PrimRefListGen,task_gen_parallel);
       
     private:
       const Scene* scene;                  //!< input geometry
@@ -59,15 +59,15 @@ namespace embree
       typedef atomic_set<PrimRefBlockT<PrimRef> > PrimRefList;
 
     public:      
-      static void generate(size_t threadIndex, size_t threadCount, PrimRefBlockAlloc<PrimRef>* alloc, const Ty* geom, PrimRefList& prims, PrimInfo& pinfo);
+      static void generate(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimRefBlockAlloc<PrimRef>* alloc, const Ty* geom, PrimRefList& prims, PrimInfo& pinfo);
       
     private:
       
       /*! standard constructor that schedules the task */
-      PrimRefListGenFromGeometry (size_t threadIndex, size_t threadCount, PrimRefBlockAlloc<PrimRef>* alloc, const Ty* geom, PrimRefList& prims, PrimInfo& pinfo);
+      PrimRefListGenFromGeometry (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimRefBlockAlloc<PrimRef>* alloc, const Ty* geom, PrimRefList& prims, PrimInfo& pinfo);
             
       /*! parallel task to iterate over the primitives */
-      TASK_RUN_FUNCTION(PrimRefListGenFromGeometry,task_gen_parallel);
+      TASK_SET_FUNCTION(PrimRefListGenFromGeometry,task_gen_parallel);
       
       /* input data */
     private:
@@ -83,15 +83,15 @@ namespace embree
     {
     public:   
       static void generate_sequential(size_t threadIndex, size_t threadCount, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRef* prims, PrimInfo& pinfo);
-      static void generate_parallel  (size_t threadIndex, size_t threadCount, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRef* prims, PrimInfo& pinfo);
+      static void generate_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRef* prims, PrimInfo& pinfo);
       
     private:
       
       /*! standard constructor that schedules the task */
-      PrimRefArrayGen (size_t threadIndex, size_t threadCount, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRef* prims_o, PrimInfo& pinfo_o, bool parallel);
+      PrimRefArrayGen (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, const Scene* scene, GeometryTy ty, size_t numTimeSteps, PrimRef* prims_o, PrimInfo& pinfo_o, bool parallel);
             
       /*! parallel task to iterate over the primitives */
-      TASK_RUN_FUNCTION(PrimRefArrayGen,task_gen_parallel);
+      TASK_FUNCTION(PrimRefArrayGen,task_gen_parallel);
       
       /* input data */
     private:
@@ -101,6 +101,7 @@ namespace embree
       size_t numPrimitives;         //!< number of generated primitives
       PrimRef* prims_o;             //!< list of build primitives
       PrimInfo& pinfo_o;            //!< bounding information of primitives
+      size_t* dst;                  //!< write-start offset for each thread
     };
 
     /*! Generates an array of triangle build primitives from some geometry. */
@@ -109,21 +110,22 @@ namespace embree
     {
     public:   
       static void generate_sequential(size_t threadIndex, size_t threadCount, const Ty* geom, PrimRef* prims, PrimInfo& pinfo);
-      static void generate_parallel  (size_t threadIndex, size_t threadCount, const Ty* geom, PrimRef* prims, PrimInfo& pinfo);
+      static void generate_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, const Ty* geom, PrimRef* prims, PrimInfo& pinfo);
       
     private:
       
       /*! standard constructor */
-      PrimRefArrayGenFromGeometry (size_t threadIndex, size_t threadCount, const Ty* geom, PrimRef* prims_o, PrimInfo& pinfo_o);
+      PrimRefArrayGenFromGeometry (const Ty* geom, PrimRef* prims_o, PrimInfo& pinfo_o);
             
       /*! parallel task to iterate over the primitives */
-      TASK_RUN_FUNCTION(PrimRefArrayGenFromGeometry,task_gen_parallel);
+      TASK_FUNCTION(PrimRefArrayGenFromGeometry,task_gen_parallel);
       
       /* input data */
     private:
       const Ty* geom;               //!< input geometry
       PrimRef* prims_o;             //!< list of build primitives
       PrimInfo& pinfo_o;            //!< bounding information of primitives
+      size_t* dst;                  //!< write-start offset for each thread
     };
   }
 }

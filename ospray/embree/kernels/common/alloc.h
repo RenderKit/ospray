@@ -122,86 +122,6 @@ namespace embree
    *  allocation scheme. The per thread allocator allocates from its
    *  current memory block or requests a new block from the slower
    *  global allocator when its block is full. */
-  class AllocatorPerThread : public AllocatorBase
-  {
-    ALIGNED_CLASS;
-
-     /*! Allocation block size. Number of bytes to request from the
-      *  base allocator when the memory block of a thread is empty. */
-    //enum { allocBlockSize = 4096*16 };
-    enum { allocBlockSize = 4*4096 };
-
-  public:
-
-    /*! Allocator default construction. */
-    AllocatorPerThread () {
-      thread = new ThreadAllocator[getNumberOfLogicalThreads()];
-    }
-
-    /*! Allocator destructor. */
-    ~AllocatorPerThread() {
-      delete[] thread; thread = NULL;
-    }
-
-    /*! Aligned memory allocation */
-    __forceinline void* malloc(size_t tinfo, size_t bytes, size_t align = 16) {
-      return thread[tinfo].malloc(bytes,align,this);
-    }
-
-    /*! clears the allocator */
-    void clear () 
-    {
-      AllocatorBase::clear();
-      for (size_t i=0; i<getNumberOfLogicalThreads(); i++) 
-        thread[i].clear();
-    }
-
-  private:
-
-     /*! Per thread structure holding the current memory block. */
-    struct __aligned(4096) ThreadAllocator 
-    {
-      ALIGNED_CLASS_(4096);
-    public:
-
-      /*! Default constructor. */
-      __forceinline ThreadAllocator () : ptr(NULL), cur(0), end(0) {}
-
-      /* Allocate aligned memory from the threads memory block. */
-      __forceinline void* malloc(size_t bytes, size_t align, AllocatorBase* alloc) 
-      {
-        cur += (align - cur) & (align-1);
-        cur += bytes;
-        if (cur <= end) return &ptr[cur - bytes];
-        ptr = (char*) alloc->malloc(allocBlockSize);
-        cur = 0;
-        end = allocBlockSize;
-        if (bytes > allocBlockSize) 
-          throw std::runtime_error("allocated block is too large");
-        cur += bytes;
-        return &ptr[cur - bytes];
-      }
-
-      /*! clears the allocator */
-      void clear () {
-        ptr = NULL;
-        cur = end = 0;
-      }
-
-    public:
-      char*  ptr;      //!< pointer to memory block
-      size_t cur;      //!< Current location of the allocator.
-      size_t end;      //!< End of the memory block.
-    };
-
-  private:
-    ThreadAllocator* thread;   //!< one allocator for each thread
-  };
-
-  /*! This class implements an efficient multi-threaded memory
-   *  allocation scheme. The per thread allocator allocates from its
-   *  current memory block or requests a new block from the slower
-   *  global allocator when its block is full. */
   class LinearAllocatorPerThread : public RefCount
   {
     ALIGNED_CLASS;
@@ -229,11 +149,11 @@ namespace embree
       {
         cur += bytes + ((align - cur) & (align-1));
         if (likely(cur <= end)) return &ptr[cur - bytes];
-        ptr = (char*) alloc->malloc(allocBlockSize);
+        ptr = (char*) alloc->block.malloc(allocBlockSize);
         cur = 0;
         end = allocBlockSize;
         if (bytes > allocBlockSize) 
-          throw std::runtime_error("allocated block is too large");
+          THROW_RUNTIME_ERROR("allocated block is too large");
         cur += bytes;
         return &ptr[cur - bytes];
       }
@@ -252,207 +172,96 @@ namespace embree
     };
 
     /*! Allocator default construction. */
-    LinearAllocatorPerThread () 
-      : ptr(NULL), cur(0), end(0), bytesAllocated(0)
-    {
-      size_t numThreads = getNumberOfLogicalThreads();
-      thread = new ThreadAllocator[numThreads];
-      for (size_t i=0; i<numThreads; i++) thread[i].alloc = this;
-      ptr = NULL;
-    }
-
-    /*! Allocator destructor. */
-    ~LinearAllocatorPerThread() {
-      delete[] thread; thread = NULL;
-      if (ptr) os_free(ptr,end); ptr = NULL;
-      cur = end = 0;
-    }
+    LinearAllocatorPerThread () {}
 
     /*! Return pointer to start of memory region */
-    __forceinline       void* base()       { return ptr; }
-    __forceinline const void* base() const { return ptr; }
-
-    __forceinline       void* curPtr()       { return ptr+cur; }
-
-    /*! Aligned memory allocation */
-    __forceinline void* malloc(size_t tinfo, size_t bytes, size_t align = 16) {
-      return thread[tinfo].malloc(bytes,align);
-    }
+    __forceinline       void* base()       { return block.ptr; }
+    __forceinline const void* base() const { return block.ptr; }
+    __forceinline       void* curPtr()     { return block.ptr+block.cur; }
 
     /*! clears the allocator */
-    void clear () 
-    {
-      cur = 0;
-      const size_t numThreads = getNumberOfLogicalThreads();
-      for (size_t i=0; i<numThreads; i++) 
-	thread[i].clear();
-    }
-
-    /*! initializes the allocator */
-    void init (size_t bytes) 
-    {
-      clear();
-      const size_t numThreads = getNumberOfLogicalThreads();
-      bytes = max(bytes,size_t(allocBlockSize*numThreads));
-      if (bytes != size_t(end)) {
-        if (ptr) os_free(ptr,end);
-        ptr = (char*) os_reserve(bytes);
-        end = bytes;
-      }
+    void clear () {
+      block.clear();
     }
 
     /*! initializes the allocator */
     void init (size_t bytesAllocate, size_t bytesReserve) 
     {
       clear();
-      const size_t numThreads = getNumberOfLogicalThreads();
-	  bytesReserve = max(bytesAllocate,bytesReserve);
+      const size_t numThreads = getNumberOfLogicalThreads(); // FIXME: should get passed from outside
+      bytesReserve = max(bytesAllocate,bytesReserve);
       size_t bytesReserved = max(bytesReserve,size_t(allocBlockSize*numThreads));
-      if (bytesReserved != size_t(end) || bytesAllocate != bytesAllocated) 
-      {
-        bytesAllocated = bytesAllocate;
-        if (ptr) os_free(ptr,end);
-        ptr = (char*) os_reserve(bytesReserved);
-        os_commit(ptr,bytesAllocated);
-        //memset(ptr,0,bytesAllocated);
-        end = bytesReserved;
-      }
+      block.init(bytesAllocate,bytesReserved);
     }
 
-    /*! initialized the allocator */
-    void init_malloc (size_t bytes) 
-    {
-      clear();
-      if (bytes != size_t(end)) {
-        if (ptr) os_free(ptr,end);
-        ptr = (char*) os_malloc(bytes);
-        end = bytes;
-      }
-    }
-
-    /*! returns number of committed memory */
+    /*! returns number of committed bytes */
     size_t bytes () const {
-      return cur;
+      return block.cur;
     }
 
     void shrink () {
-      if (ptr == NULL) return;
-      os_shrink(ptr,cur,end);
-      end = cur;
-      bytesAllocated = cur;
+      block.shrink();
     }
 
   private:
 
-    /*! Allocates some number of bytes. */
-    void* malloc(size_t bytes) 
+    struct Block 
     {
-      ssize_t i = atomic_add(&cur,bytes);
-      if (unlikely(i > end)) throw std::runtime_error("build out of memory");
-      void* p = &ptr[i];
-      if (i+(ssize_t)bytes > bytesAllocated)
-        os_commit(p,bytes);
-      return p;
-    }
-
-  private:
-    ThreadAllocator* thread;   //!< one allocator for each thread
-    char*  ptr;                //!< pointer to memory
-    atomic_t cur;              //!< Current location of the allocator.
-    atomic_t end;              //!< End of the memory block.
-    atomic_t bytesAllocated;
-  };
-
-  class __aligned(64) GlobalAllocator
-  {
-  public:
-    
-    class __aligned(64) ThreadAllocator
-    {
-    public:        
-      static const size_t blockSize = 2*4096;
+      Block () 
+      : ptr(NULL), cur(0), end(0), bytesAllocated(0), next(NULL) {}
       
-      __forceinline ThreadAllocator(GlobalAllocator& global) 
-        : global(global), begin(NULL), end(NULL) {}
-      
-      __forceinline void* malloc(size_t bytes) 
+      Block (size_t bytes, Block* next = NULL) 
+      : ptr(NULL), cur(0), end(bytes), bytesAllocated(0), next(next) {}
+
+      ~Block () {
+	if (ptr) os_free(ptr,end); ptr = NULL;
+	cur = end = 0;
+	if (next) delete next; next = NULL;
+      }
+
+      __forceinline void init (size_t bytesAllocate, size_t bytesReserved)
       {
-        if (unlikely(begin+bytes > end)) {
-          begin = (char*) global.malloc(blockSize); 
-          end = begin+blockSize;
-        }
-        
-        char* next = begin;
-        begin+=bytes;
-        
-        if (unlikely(begin > end))
-          throw std::runtime_error("allocation too large");
-        
-        return next;
+	if (bytesReserved != size_t(end) || bytesAllocate != bytesAllocated) 
+	{
+	  bytesAllocated = bytesAllocate;
+	  if (ptr) os_free(ptr,end);
+	  ptr = (char*) os_reserve(bytesReserved);
+	  os_commit(ptr,bytesAllocated);
+	  end = bytesReserved;
+	}
       }
-      
+
+      __forceinline void clear() {
+	cur = 0;
+      }
+
+      /*! Allocates some number of bytes. */
+      void* malloc(size_t bytes) 
+      {
+	ssize_t i = atomic_add(&cur,bytes);
+	if (unlikely(i > end)) THROW_RUNTIME_ERROR("build out of memory");
+	void* p = &ptr[i];
+	if (i+(ssize_t)bytes > bytesAllocated)
+	  os_commit(p,bytes);
+	return p;
+      }
+
+      void shrink () {
+	if (ptr == NULL) return;
+	os_shrink(ptr,cur,end);
+	end = cur;
+	bytesAllocated = cur;
+      }
+
     public:
-      GlobalAllocator& global;
-      char* begin;
-      char* end;
-      size_t align;
+      char*  ptr;                //!< pointer to memory
+      atomic_t cur;              //!< Current location of the allocator.
+      atomic_t end;              //!< End of the memory block.
+      Block* next;
+      atomic_t bytesAllocated;
     };
-    
-  public:
-    GlobalAllocator () 
-      : data(NULL), bytesAllocated(0), bytesReserved(0), next(0) {}
-    
-    void init(size_t bytesAllocate, size_t bytesReserve) 
-    {
-      if (bytesAllocated == bytesAllocate && bytesReserved == bytesReserve)
-        return;
-      
-      if (bytesAllocate > bytesReserve)
-        bytesReserve = bytesAllocate;
 
-      if (data) os_free(data,bytesReserved);
-      
-      data = (char*) os_reserve(bytesReserve);
-      bytesReserved = bytesReserve;
-      
-      os_commit(data,bytesAllocate);
-      memset(data,0,bytesAllocate);
-      bytesAllocated = bytesAllocate;
-      
-      next = 0;
-    }
-    
-    void reset () {
-      next = 0;
-    }
-    
-    void shrink () {
-      if (data == NULL) return;
-      os_shrink(data,next,bytesReserved);
-      bytesAllocated = next;
-      bytesReserved = next;
-    }
-    
-    __forceinline void* malloc(size_t bytes) 
-    {
-      size_t n = atomic_add(&next,bytes);
-      if (unlikely(n+bytes > bytesAllocated)) {
-        if (n+bytes > bytesReserved) {
-          throw std::runtime_error("reserved memory region too small");
-        }
-        os_commit(data+n,bytes);
-      }
-      return &data[n];
-    }
-
-    __forceinline void* base() {
-      return data;
-    }
-
-  public:
-    atomic_t next;
-    char* data;
-    size_t bytesAllocated;
-    size_t bytesReserved;
+  private:
+    Block block;
   };
 }

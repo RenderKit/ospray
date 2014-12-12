@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "bvh8_intersector1.h"
+#include "geometry/triangle4_intersector1_moeller.h"
 #include "geometry/triangle8_intersector1_moeller.h"
 
 namespace embree
@@ -162,11 +163,14 @@ namespace embree
 	}
         
         /*! this is a leaf node */
+	assert(cur != BVH8::emptyNode);
         STAT3(normal.trav_leaves,1,1,1);
         size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
         PrimitiveIntersector::intersect(pre,ray,prim,num,bvh->geometry);
+
         ray_far = ray.tfar;
       }
+
       AVX_ZERO_UPPER();
     }
     
@@ -289,6 +293,7 @@ namespace embree
         }
         
         /*! this is a leaf node */
+	assert(cur != BVH8::emptyNode);
         STAT3(shadow.trav_leaves,1,1,1);
         size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
         if (PrimitiveIntersector::occluded(pre,ray,prim,num,bvh->geometry)) {
@@ -299,6 +304,7 @@ namespace embree
       AVX_ZERO_UPPER();
     }
 
-    DEFINE_INTERSECTOR1(BVH8Triangle8Intersector1Moeller,BVH8Intersector1<Triangle8Intersector1MoellerTrumbore>);
+    DEFINE_INTERSECTOR1(BVH8Triangle4Intersector1Moeller,BVH8Intersector1<LeafIterator1<Triangle4Intersector1MoellerTrumbore<LeafMode> > >);
+    DEFINE_INTERSECTOR1(BVH8Triangle8Intersector1Moeller,BVH8Intersector1<LeafIterator1<Triangle8Intersector1MoellerTrumbore<LeafMode> > >);
   }
 }

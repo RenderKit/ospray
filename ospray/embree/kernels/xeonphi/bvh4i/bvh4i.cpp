@@ -44,6 +44,9 @@ namespace embree
   DECLARE_SYMBOL(Accel::Intersector16,BVH4iTriangle1Intersector16HybridMoeller);
   DECLARE_SYMBOL(Accel::Intersector16,BVH4iTriangle1Intersector16HybridMoellerNoFilter);
 
+  DECLARE_SYMBOL(Accel::Intersector16,BVH4iTriangle1Intersector16TestMoeller);
+  DECLARE_SYMBOL(Accel::Intersector16,BVH4iTriangle1Intersector16TestMoellerNoFilter);
+
   DECLARE_SYMBOL(Accel::Intersector1 ,BVH4iVirtualGeometryIntersector1);
   DECLARE_SYMBOL(Accel::Intersector1 ,BVH4iVirtualGeometryIntersector1NoFilter);
 
@@ -63,6 +66,11 @@ namespace embree
   DECLARE_SYMBOL(Accel::Intersector16,BVH4iTriangle1mcIntersector16HybridMoeller);
   DECLARE_SYMBOL(Accel::Intersector16,BVH4iTriangle1mcIntersector16HybridMoellerNoFilter);
 
+  DECLARE_SYMBOL(Accel::Intersector1 ,BVH4iSubdivMeshIntersector1);
+  DECLARE_SYMBOL(Accel::Intersector1 ,BVH4iSubdivMeshIntersector1NoFilter);
+
+  DECLARE_SYMBOL(Accel::Intersector16,BVH4iSubdivMeshIntersector16);
+  DECLARE_SYMBOL(Accel::Intersector16,BVH4iSubdivMeshIntersector16NoFilter);
 
   void BVH4iRegister () 
   {
@@ -81,6 +89,9 @@ namespace embree
     SELECT_SYMBOL_KNC(features,BVH4iTriangle1Intersector16HybridMoeller);
     SELECT_SYMBOL_KNC(features,BVH4iTriangle1Intersector16HybridMoellerNoFilter);
 
+    SELECT_SYMBOL_KNC(features,BVH4iTriangle1Intersector16TestMoeller);
+    SELECT_SYMBOL_KNC(features,BVH4iTriangle1Intersector16TestMoellerNoFilter);
+
     SELECT_SYMBOL_KNC(features,BVH4iVirtualGeometryIntersector1);
     SELECT_SYMBOL_KNC(features,BVH4iVirtualGeometryIntersector1NoFilter);
 
@@ -98,6 +109,13 @@ namespace embree
 
     SELECT_SYMBOL_KNC(features,BVH4iTriangle1mcIntersector16HybridMoeller);
     SELECT_SYMBOL_KNC(features,BVH4iTriangle1mcIntersector16HybridMoellerNoFilter);
+
+    SELECT_SYMBOL_KNC(features,BVH4iSubdivMeshIntersector1);
+    SELECT_SYMBOL_KNC(features,BVH4iSubdivMeshIntersector1NoFilter);
+
+    SELECT_SYMBOL_KNC(features,BVH4iSubdivMeshIntersector16);
+    SELECT_SYMBOL_KNC(features,BVH4iSubdivMeshIntersector16NoFilter);
+
   }
 
 
@@ -127,7 +145,14 @@ namespace embree
 	intersectors.intersector16_nofilter = BVH4iTriangle1Intersector16SingleMoellerNoFilter;
 
       }
-    else throw std::runtime_error("unknown traverser "+g_tri_traverser+" for BVH4i<Triangle1>");      
+    else if (g_tri_traverser == "test" ) 
+      {
+	intersectors.intersector16          = BVH4iTriangle1Intersector16TestMoeller;
+	intersectors.intersector16_filter   = BVH4iTriangle1Intersector16TestMoeller;
+	intersectors.intersector16_nofilter = BVH4iTriangle1Intersector16TestMoellerNoFilter;
+
+      }
+    else THROW_RUNTIME_ERROR("unknown traverser "+g_tri_traverser+" for BVH4i<Triangle1>");      
     return intersectors;
   }
 
@@ -157,7 +182,7 @@ namespace embree
 	intersectors.intersector16_nofilter = BVH4iTriangle1mcIntersector16SingleMoellerNoFilter;
 
       }
-    else throw std::runtime_error("unknown traverser "+g_tri_traverser+" for BVH4i<Triangle1>");      
+    else THROW_RUNTIME_ERROR("unknown traverser "+g_tri_traverser+" for BVH4i<Triangle1>");      
     return intersectors;
   }
 
@@ -168,6 +193,15 @@ namespace embree
     intersectors.ptr = bvh;
     intersectors.intersector1  = BVH4iVirtualGeometryIntersector1;
     intersectors.intersector16 = BVH4iVirtualGeometryIntersector16;
+    return intersectors;
+  }
+
+  Accel::Intersectors BVH4iSubdivMeshIntersectors(BVH4i* bvh)
+  {
+    Accel::Intersectors intersectors;
+    intersectors.ptr = bvh;
+    intersectors.intersector1  = BVH4iSubdivMeshIntersector1;
+    intersectors.intersector16 = BVH4iSubdivMeshIntersector16;
     return intersectors;
   }
 
@@ -233,6 +267,15 @@ namespace embree
     Builder* builder = BVH4iBuilder::create(accel,scene,BVH4iBuilder::BVH4I_BUILDER_VIRTUAL_GEOMETRY);   
     Accel::Intersectors intersectors = BVH4iVirtualGeometryIntersectors(accel);
     return new AccelInstance(accel,builder,intersectors);    
+  }
+
+  Accel* BVH4i::BVH4iSubdivMeshBinnedSAH(Scene* scene)
+  {
+    BVH4i* accel = new BVH4i(SceneTriangle1::type,scene);    
+    Builder* builder = BVH4iBuilder::create(accel,scene,BVH4iBuilder::BVH4I_BUILDER_SUBDIV_MESH);   
+    Accel::Intersectors intersectors = BVH4iSubdivMeshIntersectors(accel);
+    scene->needVertices = true;
+    return new AccelInstance(accel,builder,intersectors);        
   }
 
   BVH4i::~BVH4i()

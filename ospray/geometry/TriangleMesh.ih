@@ -1,0 +1,51 @@
+// ======================================================================== //
+// Copyright 2009-2014 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "Geometry.ih"
+
+//! ispc-equivalent of the ospray::TriangleMesh geometry
+struct TriangleMesh {
+  uniform Geometry  geometry; //!< inherited geometry fields
+  uniform int32     numTriangles; //!< number of triangles
+  uniform vec3i    *index;  //!< mesh's triangle index array
+  uniform vec3fa   *vertex; //!< mesh's vertex array
+  uniform vec3fa   *normal; //!< mesh's vertex normal array
+  uniform vec4f    *color;  //!< mesh's vertex color array
+  uniform vec2f    *texcoord; //!< mesh's texture coordinate array
+  uniform uint32   *prim_materialID;     // per-primitive material ID
+  uniform Material *uniform *materialList;  // list of materials, if multiple materials are assigned to this mesh.
+  uniform int32     geom_materialID;     // per-object material ID
+};
+
+//! constructor for ispc-side TriangleMesh object
+extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
+                                     void *uniform cppEquivalent,
+                                     uniform Model *uniform model,
+                                     uniform int32  geomID,
+                                     uniform int32  numTriangles,
+                                     uniform vec3i  *uniform index,
+                                     uniform vec3fa *uniform vertex,
+                                     uniform vec3fa *uniform normal,
+                                     uniform vec4f  *uniform color,
+                                     uniform vec2f  *uniform texcoord,
+                                     uniform int32   geom_materialID,
+                                     uniform Material *uniform *uniform materialList,
+                                     uniform uint32 *uniform prim_materialID);
+//! destructor for ispc-side TriangleMesh object
+extern void TriangleMesh_Destructor(uniform TriangleMesh *uniform mesh);
+
