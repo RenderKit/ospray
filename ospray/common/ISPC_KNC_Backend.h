@@ -54,11 +54,20 @@
 #include <unistd.h>
 #include <algorithm>
 
+#ifndef __INTEL_COMPILER
+#error "Only Intel(R) C++ Compiler is supported"
+#endif
+
 #include <immintrin.h>
 #include <zmmintrin.h>
 
 #include <iostream> // for operator<<(m512[i])
 #include <iomanip>  // for operator<<(m512[i])
+
+#if __INTEL_COMPILER < 1500
+#warning "Your compiler version is outdated which can reduce performance in some cases. Please, update your compiler!"
+#endif
+
 
 #if 0
   #define STRING(x) #x
@@ -770,6 +779,16 @@ static FORCEINLINE __vec16_i32 __shuffle2_i32(__vec16_i32 v0, __vec16_i32 v1, __
     return ret;
 }
 
+static FORCEINLINE __vec16_i32 __shift_i32(__vec16_i32 v, int index) {
+  __vec16_i32 mod_index = _mm512_add_epi32(__ispc_stride1, __smear_i32<__vec16_i32>(index));
+  __vec16_i1 mask_ge = _mm512_cmpge_epi32_mask (mod_index, __smear_i32<__vec16_i32>(0));
+  __vec16_i1 mask_le = _mm512_cmple_epi32_mask (mod_index, __smear_i32<__vec16_i32>(0xF));
+  __vec16_i1 mask = mask_ge & mask_le;
+  __vec16_i32 ret = __smear_i32<__vec16_i32>(0);
+  ret = _mm512_mask_permutevar_epi32(ret, mask, mod_index, v);
+  return ret;
+}
+
 template <int ALIGN> static FORCEINLINE __vec16_i32 __load(const __vec16_i32 *p) {
 #ifdef ISPC_FORCE_ALIGNED_MEMORY
   return _mm512_load_epi32(p);
@@ -1033,6 +1052,98 @@ static FORCEINLINE __vec16_i1 __not_equal_i64_and_mask(const __vec16_i64 &a, con
   return __and(__not(__equal_i64(a,b)), mask);
 }
 
+
+static FORCEINLINE __vec16_i1 __unsigned_less_than_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_hi = _mm512_cmplt_epu32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 hi_eq = _mm512_cmpeq_epu32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 ret_lo = _mm512_mask_cmplt_epu32_mask(hi_eq, a.v_lo, b.v_lo);
+  return ret_hi | ret_lo;
+}
+
+static FORCEINLINE __vec16_i1 __unsigned_less_than_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m)
+{
+  return __unsigned_less_than_i64(a, b) & m;
+}
+
+static FORCEINLINE __vec16_i1 __unsigned_greater_than_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_hi = _mm512_cmpgt_epu32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 hi_eq = _mm512_cmpeq_epu32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 ret_lo = _mm512_mask_cmpgt_epu32_mask(hi_eq, a.v_lo, b.v_lo);
+  return ret_hi | ret_lo;
+}
+
+static FORCEINLINE __vec16_i1 __unsigned_greater_than_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m)
+{
+  return __unsigned_greater_than_i64(a, b) & m;
+}
+
+static FORCEINLINE __vec16_i1 __unsigned_less_equal_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_s_cmp = __unsigned_less_than_i64(a, b);
+  __vec16_i1 ret_equal = __equal_i64(a, b);
+  return ret_equal | ret_s_cmp;
+}
+
+static FORCEINLINE __vec16_i1 __unsigned_less_equal_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m) 
+{
+  return __unsigned_less_equal_i64(a, b) & m;
+}
+
+static FORCEINLINE __vec16_i1 __unsigned_greater_equal_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_s_cmp = __unsigned_greater_than_i64(a, b);
+  __vec16_i1 ret_equal = __equal_i64(a, b);
+  return ret_equal | ret_s_cmp;
+}
+
+static FORCEINLINE __vec16_i1 __unsigned_greater_equal_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m)
+{
+  return __unsigned_greater_equal_i64(a, b) & m;
+}
+
+static FORCEINLINE __vec16_i1 __signed_less_than_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_hi = _mm512_cmplt_epi32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 hi_eq = _mm512_cmpeq_epi32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 ret_lo = _mm512_mask_cmplt_epu32_mask(hi_eq, a.v_lo, b.v_lo);
+  return ret_hi | ret_lo; 
+}
+
+static FORCEINLINE __vec16_i1 __signed_less_than_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m)
+{
+  return __signed_less_than_i64(a, b) & m;
+}
+
+static FORCEINLINE __vec16_i1 __signed_greater_than_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_hi = _mm512_cmpgt_epi32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 hi_eq = _mm512_cmpeq_epi32_mask(a.v_hi, b.v_hi);
+  __vec16_i1 ret_lo = _mm512_mask_cmpgt_epu32_mask(hi_eq, a.v_lo, b.v_lo);
+  return ret_hi | ret_lo;
+}
+
+static FORCEINLINE __vec16_i1 __signed_greater_than_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m)
+{
+  return __signed_greater_than_i64(a, b) & m;
+}
+
+static FORCEINLINE __vec16_i1 __signed_less_equal_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_s_cmp = __signed_less_than_i64(a, b);
+  __vec16_i1 ret_equal = __equal_i64(a, b);
+  return ret_equal | ret_s_cmp;
+}
+
+static FORCEINLINE __vec16_i1 __signed_less_equal_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m)
+{
+  return __signed_less_equal_i64(a, b) & m;
+}
+
+static FORCEINLINE __vec16_i1 __signed_greater_equal_i64(__vec16_i64 a, __vec16_i64 b) {
+  __vec16_i1 ret_s_cmp = __signed_greater_than_i64(a, b);
+  __vec16_i1 ret_equal = __equal_i64(a, b);
+  return ret_equal | ret_s_cmp;
+}
+
+static FORCEINLINE __vec16_i1 __signed_greater_equal_i64_and_mask(__vec16_i64 a, __vec16_i64 b, __vec16_i1 m)
+{
+  return __signed_greater_equal_i64(a, b) & m;
+}
 
 
 template <class RetVecType> static RetVecType __smear_i64(const int64_t &l);
@@ -1331,6 +1442,17 @@ static FORCEINLINE __vec16_f __shuffle_float(__vec16_f v, __vec16_i32 index) {
   return _mm512_castsi512_ps(_mm512_mask_permutevar_epi32(_mm512_castps_si512(v), 0xffff, index, _mm512_castps_si512(v)));
 }
 
+static FORCEINLINE __vec16_f __shuffle2_float(__vec16_f v0, __vec16_f v1, __vec16_i32 index) {
+  __vec16_f ret;
+  for (int i = 0; i < 16; ++i){
+    if (__extract_element(index, i) < 16)
+      __insert_element(&ret, i, __extract_element(v0, __extract_element(index, i) & 0xF));
+    else
+      __insert_element(&ret, i, __extract_element(v1, __extract_element(index, i) & 0xF));
+  }
+  return ret;
+}
+
 template <int ALIGN> static FORCEINLINE __vec16_f __load(const __vec16_f *p) {
 #ifdef ISPC_FORCE_ALIGNED_MEMORY
   return _mm512_load_ps(p);
@@ -1359,6 +1481,108 @@ template <> FORCEINLINE void __store<64>(__vec16_f *p, __vec16_f v) {
   _mm512_store_ps(p, v);
 }
 #endif
+
+///////////////////////////////////////////////////////////////////////////
+// half<->float : this one passes the tests 
+// source : 
+// http://stackoverflow.com/questions/1659440/32-bit-to-16-bit-floating-point-conversion 
+///////////////////////////////////////////////////////////////////////////
+class Float16Compressor
+{
+  union Bits
+  {
+    float f;
+    int32_t si;
+    uint32_t ui;
+  };
+
+  static int const shift = 13;
+  static int const shiftSign = 16;
+
+  static int32_t const infN = 0x7F800000; // flt32 infinity
+  static int32_t const maxN = 0x477FE000; // max flt16 normal as a flt32
+  static int32_t const minN = 0x38800000; // min flt16 normal as a flt32
+  static int32_t const signN = 0x80000000; // flt32 sign bit
+
+  static int32_t const infC = infN >> shift;
+  static int32_t const nanN = (infC + 1) << shift; // minimum flt16 nan as a flt32
+  static int32_t const maxC = maxN >> shift;
+  static int32_t const minC = minN >> shift;
+  static int32_t const signC = signN >> shiftSign; // flt16 sign bit
+
+  static int32_t const mulN = 0x52000000; // (1 << 23) / minN
+  static int32_t const mulC = 0x33800000; // minN / (1 << (23 - shift))
+
+  static int32_t const subC = 0x003FF; // max flt32 subnormal down shifted
+  static int32_t const norC = 0x00400; // min flt32 normal down shifted
+
+  static int32_t const maxD = infC - maxC - 1;
+  static int32_t const minD = minC - subC - 1;
+
+  public:
+
+  static uint16_t compress(float value)
+  {
+    Bits v, s;
+    v.f = value;
+    uint32_t sign = v.si & signN;
+    v.si ^= sign;
+    sign >>= shiftSign; // logical shift
+    s.si = mulN;
+    s.si = s.f * v.f; // correct subnormals
+    v.si ^= (s.si ^ v.si) & -(minN > v.si);
+    v.si ^= (infN ^ v.si) & -((infN > v.si) & (v.si > maxN));
+    v.si ^= (nanN ^ v.si) & -((nanN > v.si) & (v.si > infN));
+    v.ui >>= shift; // logical shift
+    v.si ^= ((v.si - maxD) ^ v.si) & -(v.si > maxC);
+    v.si ^= ((v.si - minD) ^ v.si) & -(v.si > subC);
+    return v.ui | sign;
+  }
+
+  static float decompress(uint16_t value)
+  {
+    Bits v;
+    v.ui = value;
+    int32_t sign = v.si & signC;
+    v.si ^= sign;
+    sign <<= shiftSign;
+    v.si ^= ((v.si + minD) ^ v.si) & -(v.si > subC);
+    v.si ^= ((v.si + maxD) ^ v.si) & -(v.si > maxC);
+    Bits s;
+    s.si = mulC;
+    s.f *= v.si;
+    int32_t mask = -(norC > v.si);
+    v.si <<= shift;
+    v.si ^= (s.si ^ v.si) & mask;
+    v.si |= sign;
+    return v.f;
+  }
+};
+
+static FORCEINLINE float __half_to_float_uniform(int16_t h) 
+{
+  return Float16Compressor::decompress(h);
+}
+static FORCEINLINE __vec16_f __half_to_float_varying(__vec16_i16 v) 
+{
+  __vec16_f ret;
+  for (int i = 0; i < 16; ++i)
+    ret[i] = __half_to_float_uniform(v[i]);
+  return ret;
+}
+
+
+static FORCEINLINE int16_t __float_to_half_uniform(float f) 
+{
+  return Float16Compressor::compress(f);
+}
+static FORCEINLINE __vec16_i16 __float_to_half_varying(__vec16_f v) 
+{
+  __vec16_i16 ret;
+  for (int i = 0; i < 16; ++i)
+    ret[i] = __float_to_half_uniform(v[i]);
+  return ret;
+}
 
 ///////////////////////////////////////////////////////////////////////////
 // double
@@ -1390,6 +1614,10 @@ static FORCEINLINE __vec16_d __div(__vec16_d a, __vec16_d b) {
   ret.v1 = _mm512_div_pd(a.v1, b.v1);
   ret.v2 = _mm512_div_pd(a.v2, b.v2);
   return ret;
+}
+
+static FORCEINLINE __vec16_d __sqrt_varying_double(__vec16_d v) {
+  return __vec16_d(_mm512_sqrt_pd(v.v1),_mm512_sqrt_pd(v.v2));
 }
 
 static FORCEINLINE __vec16_i1 __equal_double(__vec16_d a, __vec16_d b) {
@@ -1566,6 +1794,17 @@ static FORCEINLINE __vec16_d __broadcast_double(__vec16_d v, int index) {
   return ret;
 }
 
+static FORCEINLINE __vec16_d __shuffle2_double(__vec16_d v0, __vec16_d v1, __vec16_i32 index) {
+  __vec16_d ret;
+  for (int i = 0; i < 16; ++i){
+    if (__extract_element(index, i) < 16)
+      __insert_element(&ret, i, __extract_element(v0, __extract_element(index, i) & 0xF));
+    else 
+      __insert_element(&ret, i, __extract_element(v1, __extract_element(index, i) & 0xF));
+  }
+  return ret;
+}
+
 template <int ALIGN> static FORCEINLINE __vec16_d __load(const __vec16_d *p) {
   __vec16_d ret;
   ret.v1 = _mm512_extloadunpacklo_pd(ret.v1, p, _MM_UPCONV_PD_NONE, _MM_HINT_NONE);
@@ -1686,6 +1925,15 @@ static FORCEINLINE __vec16_i32 __cast_zext(const __vec16_i32 &, const __vec16_i1
   return _mm512_extload_epi32(&val, _MM_UPCONV_EPI32_UINT16, _MM_BROADCAST32_NONE, _MM_HINT_NONE);
 }
 
+static FORCEINLINE __vec16_i64 __cast_zext(const __vec16_i64 &, const __vec16_i1 &val)
+{  
+  __vec16_i32 ret_hi = _mm512_setzero_epi32();
+  __vec16_i32 ret_lo = _mm512_setzero_epi32();
+  __vec16_i32 one = _mm512_set1_epi32(1);
+  ret_lo = _mm512_mask_mov_epi32(ret_lo, val, one);
+  return __vec16_i64 (ret_lo, ret_hi);
+}
+
 static FORCEINLINE __vec16_i64 __cast_zext(const __vec16_i64 &, const __vec16_i8 &val)
 {
   return __vec16_i64(__cast_zext(__vec16_i32(), val), _mm512_setzero_epi32());
@@ -1718,12 +1966,35 @@ static FORCEINLINE __vec16_f __cast_sitofp(__vec16_f, __vec16_i64 val) {
   __m512i tmp2;
   hilo2zmm(val, tmp1, tmp2);
   __vec16_f ret;
+
+/*
+  // Cycles don't work. It seems that it is icc bug.
   for (int i = 0; i < 8; i++) {
-    ((float*)&ret)[i] = (float)(((int64_t*)&tmp1)[i]);
+    ret[i] = (float)(((int64_t*)&tmp1)[i]);
   }
   for (int i = 0; i < 8; i++) {
     ((float*)&ret)[i + 8] = (float)(((int64_t*)&tmp2)[i]);
   }
+*/
+
+  ret[0] = (float)(((int64_t*)&tmp1)[0]);
+  ret[1] = (float)(((int64_t*)&tmp1)[1]);
+  ret[2] = (float)(((int64_t*)&tmp1)[2]);
+  ret[3] = (float)(((int64_t*)&tmp1)[3]);
+  ret[4] = (float)(((int64_t*)&tmp1)[4]);
+  ret[5] = (float)(((int64_t*)&tmp1)[5]);
+  ret[6] = (float)(((int64_t*)&tmp1)[6]);
+  ret[7] = (float)(((int64_t*)&tmp1)[7]);
+
+  ret[8] = (float)(((int64_t*)&tmp2)[0]);
+  ret[9] = (float)(((int64_t*)&tmp2)[1]);
+  ret[10] = (float)(((int64_t*)&tmp2)[2]);
+  ret[11] = (float)(((int64_t*)&tmp2)[3]);
+  ret[12] = (float)(((int64_t*)&tmp2)[4]);
+  ret[13] = (float)(((int64_t*)&tmp2)[5]);
+  ret[14] = (float)(((int64_t*)&tmp2)[6]);
+  ret[15] = (float)(((int64_t*)&tmp2)[7]);
+
   return ret;
 }
 
@@ -1792,7 +2063,7 @@ static FORCEINLINE __vec16_f __cast_uitofp(__vec16_f, __vec16_i64 val) {
   __m512i tmp2;
   hilo2zmm(val, tmp1, tmp2);
   __vec16_f ret;
-  // Cycles don't work. I don't know why.
+  // Cycles don't work. It seems that it is icc bug.
   /*
   for (int i = 0; i < 8; i++) {
     ((float*)&ret)[i] = ((float)(((uint64_t*)&tmp1)[i]));
@@ -1801,22 +2072,22 @@ static FORCEINLINE __vec16_f __cast_uitofp(__vec16_f, __vec16_i64 val) {
     ((float*)&ret)[i + 8] = ((float)(((uint64_t*)&tmp2)[i]));
   }
   */
-  ((float*)&ret)[0] = ((float)(((uint64_t*)&tmp1)[0]));
-  ((float*)&ret)[1] = ((float)(((uint64_t*)&tmp1)[1]));
-  ((float*)&ret)[2] = ((float)(((uint64_t*)&tmp1)[2]));
-  ((float*)&ret)[3] = ((float)(((uint64_t*)&tmp1)[3]));
-  ((float*)&ret)[4] = ((float)(((uint64_t*)&tmp1)[4]));
-  ((float*)&ret)[5] = ((float)(((uint64_t*)&tmp1)[5]));
-  ((float*)&ret)[6] = ((float)(((uint64_t*)&tmp1)[6]));
-  ((float*)&ret)[7] = ((float)(((uint64_t*)&tmp1)[7]));
-  ((float*)&ret)[8] = ((float)(((uint64_t*)&tmp2)[0]));
-  ((float*)&ret)[9] = ((float)(((uint64_t*)&tmp2)[1]));
-  ((float*)&ret)[10] = ((float)(((uint64_t*)&tmp2)[2]));
-  ((float*)&ret)[11] = ((float)(((uint64_t*)&tmp2)[3]));
-  ((float*)&ret)[12] = ((float)(((uint64_t*)&tmp2)[4]));
-  ((float*)&ret)[13] = ((float)(((uint64_t*)&tmp2)[5]));
-  ((float*)&ret)[14] = ((float)(((uint64_t*)&tmp2)[6]));
-  ((float*)&ret)[15] = ((float)(((uint64_t*)&tmp2)[7]));
+  ret[0] = ((float)(((uint64_t*)&tmp1)[0]));
+  ret[1] = ((float)(((uint64_t*)&tmp1)[1]));
+  ret[2] = ((float)(((uint64_t*)&tmp1)[2]));
+  ret[3] = ((float)(((uint64_t*)&tmp1)[3]));
+  ret[4] = ((float)(((uint64_t*)&tmp1)[4]));
+  ret[5] = ((float)(((uint64_t*)&tmp1)[5]));
+  ret[6] = ((float)(((uint64_t*)&tmp1)[6]));
+  ret[7] = ((float)(((uint64_t*)&tmp1)[7]));
+  ret[8] = ((float)(((uint64_t*)&tmp2)[0]));
+  ret[9] = ((float)(((uint64_t*)&tmp2)[1]));
+  ret[10] = ((float)(((uint64_t*)&tmp2)[2]));
+  ret[11] = ((float)(((uint64_t*)&tmp2)[3]));
+  ret[12] = ((float)(((uint64_t*)&tmp2)[4]));
+  ret[13] = ((float)(((uint64_t*)&tmp2)[5]));
+  ret[14] = ((float)(((uint64_t*)&tmp2)[6]));
+  ret[15] = ((float)(((uint64_t*)&tmp2)[7]));
   return ret;
 }
 
@@ -2402,7 +2673,37 @@ static FORCEINLINE __vec16_i32 __min_varying_int32 (__vec16_i32 v1, __vec16_i32 
 static FORCEINLINE __vec16_i32 __max_varying_uint32(__vec16_i32 v1, __vec16_i32 v2) { return _mm512_max_epu32(v1, v2); }
 static FORCEINLINE __vec16_i32 __min_varying_uint32(__vec16_i32 v1, __vec16_i32 v2) { return _mm512_min_epu32(v1, v2); }
 
+static FORCEINLINE __vec16_i64 __max_varying_int64 (__vec16_i64 v1, __vec16_i64 v2) {
+  __vec16_i64 ret;
+  ret.v_hi = _mm512_max_epi32(v1.v_hi, v2.v_hi);
+  __vec16_i1 mask = _mm512_cmpeq_epi32_mask(ret.v_hi, v2.v_hi);
+  ret.v_lo = _mm512_mask_max_epi32(v1.v_lo, mask, v1.v_lo, v2.v_lo);  
+  return ret;
+}
 
+static FORCEINLINE __vec16_i64 __min_varying_int64 (__vec16_i64 v1, __vec16_i64 v2) {
+  __vec16_i64 ret;
+  ret.v_hi = _mm512_min_epi32(v1.v_hi, v2.v_hi);
+  __vec16_i1 mask = _mm512_cmpeq_epi32_mask(ret.v_hi, v2.v_hi);
+  ret.v_lo = _mm512_mask_min_epi32(v1.v_lo, mask, v1.v_lo, v2.v_lo);
+  return ret;
+}
+
+static FORCEINLINE __vec16_i64 __max_varying_uint64 (__vec16_i64 v1, __vec16_i64 v2) {
+  __vec16_i64 ret;
+  ret.v_hi = _mm512_max_epu32(v1.v_hi, v2.v_hi);
+  __vec16_i1 mask = _mm512_cmpeq_epi32_mask(ret.v_hi, v2.v_hi);
+  ret.v_lo = _mm512_mask_max_epu32(v1.v_lo, mask, v1.v_lo, v2.v_lo);
+  return ret;
+}
+
+static FORCEINLINE __vec16_i64 __min_varying_uint64 (__vec16_i64 v1, __vec16_i64 v2) {
+  __vec16_i64 ret;
+  ret.v_hi = _mm512_min_epu32(v1.v_hi, v2.v_hi);
+  __vec16_i1 mask = _mm512_cmpeq_epi32_mask(ret.v_hi, v2.v_hi);
+  ret.v_lo = _mm512_mask_min_epu32(v1.v_lo, mask, v1.v_lo, v2.v_lo);
+  return ret;
+}
 
 // sqrt/rsqrt/rcp
 
@@ -2487,6 +2788,30 @@ static FORCEINLINE int64_t __count_trailing_zeros_i64(const __vec1_i64 mask) {
   return _mm_tzcnt_64(mask);
 }
 
+static FORCEINLINE int32_t __count_leading_zeros_i32(__vec1_i32 mask) { 
+  uint32_t n = 0;
+  if (mask == 0) 
+    return 32;
+  while (1) {
+    if (mask < 0) break;
+      n ++;
+      mask <<= 1;
+  }
+  return n;
+}
+
+static FORCEINLINE int64_t __count_leading_zeros_i64(__vec1_i64 mask) {
+  uint32_t n = 0;
+  if (mask == 0)
+    return 64;
+  while (1) {
+    if (mask < 0) break;
+      n ++;
+      mask <<= 1;
+  }
+  return n;
+}
+
 ///////////////////////////////////////////////////////////////////////////
 // reductions
 ///////////////////////////////////////////////////////////////////////////
@@ -2518,8 +2843,13 @@ static FORCEINLINE int64_t __reduce_add_int64(__vec16_i64 v) {
   __m512i tmp1;
   __m512i tmp2;
   hilo2zmm(v, tmp1, tmp2);
+#if __INTEL_COMPILER < 1500
+  int64_t res1 = _mm512_reduce_add_epi64((__m512)tmp1);
+  int64_t res2 = _mm512_reduce_add_epi64((__m512)tmp2);
+#else
   int64_t res1 = _mm512_reduce_add_epi64(tmp1);
   int64_t res2 = _mm512_reduce_add_epi64(tmp2);
+#endif
   return res1 + res2;
 }
 
@@ -2527,8 +2857,13 @@ static FORCEINLINE int64_t __reduce_min_int64(__vec16_i64 v) {
   __m512i tmp1;
   __m512i tmp2;
   hilo2zmm(v, tmp1, tmp2);
+#if __INTEL_COMPILER < 1500
+  int64_t res1 = _mm512_reduce_min_epi64((__m512)tmp1);
+  int64_t res2 = _mm512_reduce_min_epi64((__m512)tmp2);
+#else
   int64_t res1 = _mm512_reduce_min_epi64(tmp1);
   int64_t res2 = _mm512_reduce_min_epi64(tmp2);
+#endif
   return (res1 < res2) ? res1 : res2;
 }
 
@@ -2536,8 +2871,13 @@ static FORCEINLINE int64_t __reduce_max_int64(__vec16_i64 v) {
   __m512i tmp1;
   __m512i tmp2;
   hilo2zmm(v, tmp1, tmp2);
+#if __INTEL_COMPILER < 1500
+  int64_t res1 = _mm512_reduce_max_epi64((__m512)tmp1);
+  int64_t res2 = _mm512_reduce_max_epi64((__m512)tmp2);
+#else
   int64_t res1 = _mm512_reduce_max_epi64(tmp1);
   int64_t res2 = _mm512_reduce_max_epi64(tmp2);
+#endif
   return (res1 > res2) ? res1 : res2;
 }
 
@@ -2545,8 +2885,13 @@ static FORCEINLINE uint64_t __reduce_min_uint64(__vec16_i64 v) {
   __m512i tmp1;
   __m512i tmp2;
   hilo2zmm(v, tmp1, tmp2);
+#if __INTEL_COMPILER < 1500
+  uint64_t res1 = _mm512_reduce_min_epu64((__m512)tmp1);
+  uint64_t res2 = _mm512_reduce_min_epu64((__m512)tmp2);
+#else
   uint64_t res1 = _mm512_reduce_min_epu64(tmp1);
   uint64_t res2 = _mm512_reduce_min_epu64(tmp2);
+#endif
   return (res1 < res2) ? res1 : res2;
 }
 
@@ -2554,8 +2899,13 @@ static FORCEINLINE uint64_t __reduce_max_uint64(__vec16_i64 v) {
   __m512i tmp1;
   __m512i tmp2;
   hilo2zmm(v, tmp1, tmp2);
+#if __INTEL_COMPILER < 1500
+  uint64_t res1 = _mm512_reduce_max_epu64((__m512)tmp1);
+  uint64_t res2 = _mm512_reduce_max_epu64((__m512)tmp2);
+#else
   uint64_t res1 = _mm512_reduce_max_epu64(tmp1);
   uint64_t res2 = _mm512_reduce_max_epu64(tmp2);
+#endif
   return (res1 > res2) ? res1 : res2;
 }
 
@@ -2972,6 +3322,28 @@ static FORCEINLINE void __scatter_base_offsets64_i32(uint8_t *_base, uint32_t sc
   }
 }
 
+static FORCEINLINE void __scatter_base_offsets64_i64(uint8_t *_base, uint32_t scale, __vec16_i64 offsets,
+    __vec16_i64 value,
+    __vec16_i1 mask) { 
+
+  const __vec16_i32 signed_offsets = _mm512_add_epi32(offsets.v_lo, __smear_i32<__vec16_i32>((int32_t)INT_MIN));
+  __vec16_i1 still_to_do = mask;
+  while (still_to_do) {
+    int first_active_lane = _mm_tzcnt_32((int)still_to_do);
+    const uint &hi32 = ((uint*)&offsets.v_hi)[first_active_lane];
+    __vec16_i1 match = _mm512_mask_cmp_epi32_mask(mask,offsets.v_hi,
+        __smear_i32<__vec16_i32>((int32_t)hi32),
+        _MM_CMPINT_EQ);
+
+    void * base = (void*)((unsigned long)_base  + ((scale*(unsigned long)hi32) << 32) + scale*(unsigned long)(-(long)INT_MIN));  
+   
+    _mm512_mask_i32extscatter_epi32(base, match, signed_offsets, value.v_lo, _MM_DOWNCONV_EPI32_NONE, scale, _MM_HINT_NONE);
+    _mm512_mask_i32extscatter_epi32(base + sizeof(uint32_t), match, signed_offsets, value.v_hi, _MM_DOWNCONV_EPI32_NONE, scale, _MM_HINT_NONE);
+
+    still_to_do = _mm512_kxor(match,still_to_do);
+  }
+}
+
 static FORCEINLINE void // TODO
 __scatter_base_offsets64_i8(uint8_t *_base, uint32_t scale, __vec16_i64 offsets,
     __vec16_i8 value,
@@ -3053,6 +3425,10 @@ static FORCEINLINE void __scatter64_i32(__vec16_i64 ptrs, __vec16_i32 val, __vec
 */
 
 static FORCEINLINE void __scatter64_i64(__vec16_i64 ptrs, __vec16_i64 val, __vec16_i1 mask) {
+#if __INTEL_COMPILER < 1500
+  #warning "__scatter64_i64 is slow due to outdated compiler"
+  __scatter_base_offsets64_i64(0, 1, ptrs, val, mask);
+#else
   __vec16_i32 first8ptrs, second8ptrs;
   hilo2zmm(ptrs, first8ptrs.v, second8ptrs.v);
   __vec16_i32 first8vals, second8vals;
@@ -3060,6 +3436,7 @@ static FORCEINLINE void __scatter64_i64(__vec16_i64 ptrs, __vec16_i64 val, __vec
   _mm512_mask_i64extscatter_epi64 (0, mask, first8ptrs, first8vals, _MM_DOWNCONV_EPI64_NONE, 1, _MM_HINT_NONE);
   const __mmask8 mask8 = 0x00FF & (mask >> 8);
   _mm512_mask_i64extscatter_epi64 (0, mask8, second8ptrs, second8vals, _MM_DOWNCONV_EPI64_NONE, 1, _MM_HINT_NONE);
+#endif
 }
 
 
@@ -3090,21 +3467,21 @@ static FORCEINLINE int32_t __packed_store_active2(uint32_t *p, __vec16_i32 val, 
 // prefetch
 ///////////////////////////////////////////////////////////////////////////
 
-static FORCEINLINE void __prefetch_read_uniform_1(const char *p) {
-  _mm_prefetch(p, _MM_HINT_T0); // prefetch into L1$
+static FORCEINLINE void __prefetch_read_uniform_1(uint8_t *p) {
+  _mm_prefetch((const char*) p, _MM_HINT_T0); // prefetch into L1$
 }
 
-static FORCEINLINE void __prefetch_read_uniform_2(const char *p) {
-  _mm_prefetch(p, _MM_HINT_T1); // prefetch into L2$
+static FORCEINLINE void __prefetch_read_uniform_2(uint8_t *p) {
+  _mm_prefetch((const char*) p, _MM_HINT_T1); // prefetch into L2$
 }
 
-static FORCEINLINE void __prefetch_read_uniform_3(const char *p) {
+static FORCEINLINE void __prefetch_read_uniform_3(uint8_t *p) {
   // There is no L3$ on KNC, but we prefetch into L2$ instead.
-  _mm_prefetch(p, _MM_HINT_T1); // prefetch into L2$
+  _mm_prefetch((const char*) p, _MM_HINT_T1); // prefetch into L2$
 }
 
-static FORCEINLINE void __prefetch_read_uniform_nt(const char *p) {
-  _mm_prefetch(p, _MM_HINT_T2); // prefetch into L2$ with non-temporal hint
+static FORCEINLINE void __prefetch_read_uniform_nt(uint8_t *p) {
+  _mm_prefetch((const char*) p, _MM_HINT_T2); // prefetch into L2$ with non-temporal hint
   // _mm_prefetch(p, _MM_HINT_NTA); // prefetch into L1$ with non-temporal hint
 }
 
