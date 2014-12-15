@@ -26,7 +26,7 @@ IF(COMMAND cmake_policy)
 ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-SET(OSPRAY_VERSION 0.5.0)
+SET(OSPRAY_VERSION 0.7.0)
 SET(OSPRAY_SOVERSION 0)
 
 IF(NOT CMAKE_BUILD_TYPE)
@@ -53,7 +53,7 @@ MARK_AS_ADVANCED(OSPRAY_INTERSECTION_FILTER)
 SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
-# whehter to build in MIC/xeon phi support
+# whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
 MARK_AS_ADVANCED(OSPRAY_MPI)
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
