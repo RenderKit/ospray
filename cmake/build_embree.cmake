@@ -223,7 +223,8 @@ ELSE()
   ENDFOREACH()
   
   OSPRAY_ADD_LIBRARY(ospray_embree${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_EMBREE_SOURCES})
-  TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+  #NOT ON WIN: TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+  TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} ws2_32 setupapi)
   
   # ------------------------------------------------------------------
   # now, build and link in SSE41 support (for anything more than SSE)

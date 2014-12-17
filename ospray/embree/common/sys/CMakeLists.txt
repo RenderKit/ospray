@@ -40,7 +40,9 @@ ADD_LIBRARY(sys STATIC
   stl/string.cpp
 )
 
-TARGET_LINK_LIBRARIES(sys pthread dl)
+ IF (NOT WIN32)
+ # TARGET_LINK_LIBRARIES(sys pthread dl)
+ ENDIF()
 
 ELSE ()
  
@@ -63,6 +65,7 @@ ADD_LIBRARY(sys_xeonphi STATIC
   stl/string.cpp
 )
 
-TARGET_LINK_LIBRARIES(sys_xeonphi pthread dl)
-
+ IF (NOT WIN32)
+  TARGET_LINK_LIBRARIES(sys_xeonphi pthread dl)
+ ENDIF()
 ENDIF ()

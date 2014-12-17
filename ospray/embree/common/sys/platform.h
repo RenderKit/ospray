@@ -16,6 +16,13 @@
 
 #pragma once
 
+#pragma warning (disable: 3280)
+#pragma warning (disable: 177)
+#pragma warning (disable: 2415)
+#pragma warning (disable: 2407)
+#pragma warning (disable: 2557) // message #2557: comparison between signed and unsigned operands
+#pragma warning (disable: 82)   // message #82: storage class is not first
+
 #include <stddef.h>
 #include <assert.h>
 #include <cstdlib>
@@ -126,8 +133,12 @@
 //#define __USE_RAY_MASK__
 //#define __USE_STAT_COUNTERS__
 //#define __BACKFACE_CULLING__
+#ifndef __INTERSECTION_FILTER__
 #define __INTERSECTION_FILTER__
+#endif
+#ifndef __BUFFER_STRIDE__
 #define __BUFFER_STRIDE__
+#endif
 //#define __SPINLOCKS__
 //#define __LOG_TASKS__
 #endif

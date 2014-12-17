@@ -20,8 +20,10 @@
 
 // std
 #include <time.h>
+#ifndef __WIN32__
 #include <sys/time.h>
 #include <sys/times.h>
+#endif
 
 namespace ospray {
 
@@ -54,16 +56,20 @@ namespace ospray {
 
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
+      fprintf(stderr,"%s:%i: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
               file, line, expr, expl);
     else
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
+      fprintf(stderr,"%s:%i: Assertion failed: \"%s\".\n", file, line, expr);
     abort();
   }
 
   double getSysTime() {
+#ifdef __WIN32__
+	  throw std::runtime_error("getSystime not yet working under windows"); return 0.f;
+#else
     struct timeval tp; gettimeofday(&tp,NULL); 
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
+#endif
   }
 
   void init(int *_ac, const char ***_av)

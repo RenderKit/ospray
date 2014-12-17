@@ -24,6 +24,7 @@
 #include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "TriangleMesh_ispc.h"
+#include <cmath>
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
@@ -114,7 +115,7 @@ namespace ospray {
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(__WIN32__)
     {
       cout << "#osp/trimesh: Verifying index buffer ... " << endl;
       for (int i=0;i<numTris;i++) {

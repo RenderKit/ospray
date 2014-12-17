@@ -80,7 +80,14 @@ namespace ospray {
 
     //! Get the absolute file path.
     static std::string getFullFilePath(const std::string &filename)
-    { char *fullpath = realpath(filename.c_str(), NULL);  return(fullpath != NULL ? fullpath : filename); }
+    {
+#ifdef __WIN32__
+		//getfullpathname
+		throw std::runtime_error("no realpath() under windows");
+#else
+			char *fullpath = realpath(filename.c_str(), NULL);  return(fullpath != NULL ? fullpath : filename); 
+#endif
+	}
 
   };
 

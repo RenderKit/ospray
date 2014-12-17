@@ -376,7 +376,7 @@ namespace embree
           dist = lnearP;
           return lhit;
         }
-
+		else {
 #if defined(__SSE4_1__)
 	const ssef lnearP = maxi(maxi(mini(lclipMinX, lclipMaxX), mini(lclipMinY, lclipMaxY)), mini(lclipMinZ, lclipMaxZ));
 	const ssef lfarP  = mini(mini(maxi(lclipMinX, lclipMaxX), maxi(lclipMinY, lclipMaxY)), maxi(lclipMinZ, lclipMaxZ));
@@ -389,6 +389,7 @@ namespace embree
 #endif
 	dist = lnearP;
 	return lhit;
+		}
       }
       
       /*! intersection with ray packet of size 8 */
