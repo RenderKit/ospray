@@ -59,6 +59,11 @@ MARK_AS_ADVANCED(OSPRAY_MPI)
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
 SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
 
+# make ospray target and compiler uppercase - we need this in some other parts of the build system
+STRING(TOUPPER ${OSPRAY_XEON_TARGET} OSPRAY_XEON_TARGET)
+STRING(TOUPPER ${OSPRAY_COMPILER} OSPRAY_COMPILER)
+
+
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
