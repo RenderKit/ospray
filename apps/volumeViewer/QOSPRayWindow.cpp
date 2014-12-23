@@ -18,7 +18,8 @@
 
 QOSPRayWindow::QOSPRayWindow(QMainWindow *parent, 
                              OSPRenderer renderer, 
-                             bool showFrameRate) 
+                             bool showFrameRate,
+                             std::string writeFramesFilename)
   : parent(parent), 
     showFrameRate(showFrameRate), 
     frameCount(0), 
@@ -28,7 +29,8 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
     benchmarkFrames(0), 
     frameBuffer(NULL), 
     renderer(NULL), 
-    camera(NULL)
+    camera(NULL),
+    writeFramesFilename(writeFramesFilename)
 {
   // assign renderer
   if(!renderer)
@@ -131,9 +133,10 @@ void QOSPRayWindow::paintGL()
   char title[1024];  sprintf(title, "OSPRay Volume Viewer (%.4f fps)", framesPerSecond);
   if (showFrameRate == true) parent->setWindowTitle(title);
 
-  uint32 * mappedFrameBuffer = (unsigned int *)ospMapFrameBuffer(frameBuffer);
+  uint32 *mappedFrameBuffer = (unsigned int *) ospMapFrameBuffer(frameBuffer);
 
   glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFrameBuffer);
+  if (writeFramesFilename.length()) writeFrameBufferToFile(mappedFrameBuffer);
 
   ospUnmapFrameBuffer(mappedFrameBuffer, frameBuffer);
 
@@ -248,3 +251,28 @@ void QOSPRayWindow::rotateCenter(float du, float dv)
 
   viewport.modified = true;
 }
+
+void QOSPRayWindow::writeFrameBufferToFile(const uint32 *pixelData)
+{
+
+  static uint32 frameNumber = 0;
+  char filename[1024];
+  sprintf(filename, "%s_%05u.ppm", writeFramesFilename.c_str(), frameNumber++);
+  FILE *file = fopen(filename, "wb");  if (!file) { std::cerr << "unable to write to file '" << filename << "'" << std::endl;  return; }
+
+  fprintf(file, "P6\n%i %i\n255\n", windowSize.x, windowSize.y);
+  unsigned char out[3 * windowSize.x];
+  for (int y=0 ; y < windowSize.y ; y++) {
+    const unsigned char *in = (const unsigned char *) &pixelData[(windowSize.y - 1 - y) * windowSize.x];
+    for (int x=0 ; x < windowSize.x ; x++) {
+      out[3 * x + 0] = in[4 * x + 0];
+      out[3 * x + 1] = in[4 * x + 1];
+      out[3 * x + 2] = in[4 * x + 2];
+    }
+    fwrite(&out, 3 * windowSize.x, sizeof(char), file);
+  }
+  fprintf(file, "\n");
+  fclose(file);
+
+}
+
