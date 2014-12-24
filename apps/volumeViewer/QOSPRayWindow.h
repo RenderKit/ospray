@@ -76,7 +76,7 @@ class QOSPRayWindow : public QGLWidget
 {
 public:
 
-  QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate);
+  QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate, std::string writeFramesFilename);
   virtual ~QOSPRayWindow();
 
   void setRenderingEnabled(bool renderingEnabled);
@@ -134,4 +134,8 @@ protected:
   OSPFrameBuffer frameBuffer;
   OSPRenderer renderer;
   OSPCamera camera;
+
+  std::string writeFramesFilename;
+  void writeFrameBufferToFile(const uint32 *pixelData);
+
 };

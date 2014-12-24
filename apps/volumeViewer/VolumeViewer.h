@@ -30,7 +30,7 @@ class VolumeViewer : public QMainWindow {
   public:
 
   //! Constructor.
-  VolumeViewer(const std::vector<std::string> &filenames, bool showFrameRate);
+  VolumeViewer(const std::vector<std::string> &filenames, bool showFrameRate, std::string writeFramesFilename);
 
   //! Destructor.
   ~VolumeViewer() {};
