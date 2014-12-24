@@ -43,10 +43,15 @@ namespace ospray {
           if (prop[i]->name == name) return prop[i]->value; 
         return "";
       }
+
+      //*! find properly with given name, and return as long ('l') int. return undefined if prop does not exist
+      inline size_t getPropl(const std::string &name) const
+      { return atol(getProp(name).c_str()); }
+      
       Node() : name(""), content("") {}
       virtual ~Node();
     };
-    
+
     /*! a entire xml document */
     struct XMLDoc : public Node {
     };
