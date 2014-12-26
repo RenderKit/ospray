@@ -33,14 +33,19 @@ LinearTransferFunction_getColorForValue(const void *uniform pointer,
   if (value >= transferFunction->inherited.valueRange.y) return(transferFunction->colorValues[transferFunction->colorValueCount - 1]);
 
   // Map the value into the range [0.0, 1.0].
-  value = (value - transferFunction->inherited.valueRange.x) / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) * (transferFunction->colorValueCount - 1.0f);
+  value
+    = (value - transferFunction->inherited.valueRange.x) 
+    / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) 
+    * (transferFunction->colorValueCount - 1.0f);
 
   // Compute the color index and fractional offset.
-  int index = floor(value);  float remainder = value - index;
+  int   index     = floor(value);  
+  float remainder = value - index;
 
   // The interpolated color.
-  return((1.0f - remainder) * transferFunction->colorValues[index] + remainder * transferFunction->colorValues[min(index + 1, transferFunction->colorValueCount - 1)]);
-
+  return
+    ((1.0f - remainder) * transferFunction->colorValues[index] 
+     + remainder        * transferFunction->colorValues[min(index + 1, transferFunction->colorValueCount - 1)]);
 }
 
 uniform vec2f 
@@ -48,12 +53,11 @@ LinearTransferFunction_getMinMaxOpacityInRange(void *uniform pointer,
                                                const uniform vec2f &range) 
 {
   uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
-  const uniform int maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
-  const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
-  const uniform int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  const uniform int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  return(transferFunction->minMaxOpacityInRange[i][j]);
-
+  const uniform int   maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
+  const uniform float denom  = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
+  const uniform int   i      = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform int   j      = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  return(transferFunction->minMaxOpacityInRange[min(i,maxDim)][min(j,maxDim)]);
 }
 
 varying float 
@@ -65,7 +69,7 @@ LinearTransferFunction_getMaxOpacityInRange(void *uniform pointer,
   const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
   const varying int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
   const varying int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  return(transferFunction->minMaxOpacityInRange[i][j].y);
+  return(transferFunction->minMaxOpacityInRange[min(i,maxDim)][min(j,maxDim)].y);
 
 }
 
