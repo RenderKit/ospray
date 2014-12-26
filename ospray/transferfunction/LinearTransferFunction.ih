@@ -47,5 +47,7 @@ inline uniform float getMaxOpacityForRange(LinearTransferFunction *uniform tf,
     * rcp(tf->inherited.valueRange.y-tf->inherited.valueRange.x+1e-6f);
   uniform int bin_lo = (int)(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_lo);
   uniform int bin_hi = (int)(ceil(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_hi));
+  bin_lo = min(bin_lo,PRECOMPUTED_OPACITY_SUBRANGE_COUNT-1);
+  bin_hi = min(bin_hi,PRECOMPUTED_OPACITY_SUBRANGE_COUNT-1);
   return tf->minMaxOpacityInRange[bin_lo][bin_hi].y;
 }
