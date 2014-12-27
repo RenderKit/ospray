@@ -33,6 +33,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    bool showFPS = false;
     int maxAccum = 64;
     int accumID = 0;
     int timeStep = 0;
@@ -82,6 +83,8 @@ namespace ospray {
         ospSetObject(renderer,"camera",camera);
         ospCommit(camera);
         ospCommit(renderer);
+
+        setTitle("OSPRay Particle Viewer");
       };
 
       virtual void reshape(const ospray::vec2i &newSize)
@@ -93,6 +96,7 @@ namespace ospray {
         accumID = 0;
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
+
       }
 
       virtual void keypress(char key, const vec2f where)
@@ -165,10 +169,12 @@ namespace ospray {
       
         ospUnmapFrameBuffer(ucharFB,fb);
       
-        char title[1000];
-
-        sprintf(title,"OSPRay Particle Viewer");
-        setTitle(title);
+        if (showFPS) {
+          char title[1000];
+          
+          sprintf(title,"OSPRay Particle Viewer (%f fps)",fps.getFPS());
+          setTitle(title);
+        }
         // }
       }
     
@@ -237,6 +243,8 @@ namespace ospray {
           const char *moduleName = av[++i];
           cout << "loading ospray module '" << moduleName << "'" << endl;
           ospLoadModule(moduleName);
+        } else if (arg == "--show-fps") {
+          showFPS = true;
         } else if (arg == "--save-to") {
           modelSaveFileName = av[++i];
         } else if (av[i][0] == '-') {
