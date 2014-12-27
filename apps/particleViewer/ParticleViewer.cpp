@@ -175,7 +175,6 @@ namespace ospray {
           sprintf(title,"OSPRay Particle Viewer (%f fps)",fps.getFPS());
           setTitle(title);
         }
-        // }
       }
     
       OSPModel       model;
