@@ -83,8 +83,6 @@ namespace ospray {
         ospSetObject(renderer,"camera",camera);
         ospCommit(camera);
         ospCommit(renderer);
-
-        setTitle("OSPRay Particle Viewer");
       };
 
       virtual void reshape(const ospray::vec2i &newSize)
@@ -97,6 +95,7 @@ namespace ospray {
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
 
+        setTitle("OSPRay Particle Viewer");
       }
 
       virtual void keypress(char key, const vec2f where)
