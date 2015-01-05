@@ -21,7 +21,7 @@
 #include "ospray/fileio/ObjectCatalog.h"
 #include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
-#include "ospray/transferfunction/TransferFunction.h"
+#include "ospray/transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
 #include "ospray/common/OSPCommon.h"
 

@@ -17,7 +17,7 @@
 #pragma once
 
 #include "ospray/common/Managed.h"
-#include "ospray/transferfunction/TransferFunction.h"
+#include "ospray/transferFunction/TransferFunction.h"
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
