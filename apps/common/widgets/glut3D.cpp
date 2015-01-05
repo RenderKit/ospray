@@ -277,9 +277,9 @@ namespace ospray {
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
           if (!dumpFileRoot) {
-	    mkstemp(tmpFileName);
+            mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
-	  }
+          }
         
           char fileName[100000];
           sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(NULL));
@@ -713,14 +713,14 @@ namespace ospray {
         if (animating) {
           dumpScreensDuringAnimation = !dumpScreensDuringAnimation;
         } else {
-	  char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
+          char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
           if (!dumpFileRoot) {
-	    mkstemp(tmpFileName);
+            mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
-	  }
+          }
           char fileName[100000];
           static int frameDumpSequenceID = 0;
           sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);

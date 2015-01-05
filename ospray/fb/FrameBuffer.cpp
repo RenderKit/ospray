@@ -64,7 +64,7 @@ namespace ospray {
         colorBuffer = new uint32[size.x*size.y];
         break;
       default:
-	throw std::runtime_error("color buffer format not supported");
+        throw std::runtime_error("color buffer format not supported");
       }
     }
 
@@ -97,7 +97,7 @@ namespace ospray {
         delete[] ((uint32*)colorBuffer);
         break;
       default:
-	throw std::runtime_error("color buffer format not supported");
+        throw std::runtime_error("color buffer format not supported");
       }
     if (accumBuffer) delete[] accumBuffer;
   }

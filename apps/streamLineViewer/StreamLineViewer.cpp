@@ -281,66 +281,66 @@ namespace ospray {
     }
   }
 
-    void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
+  void exportOSX(const char *fn,StreamLines *streamLines, Triangles *triangles)
+  {
+    FILE *file = fopen(fn,"w");
+    fprintf(file,"<?xml version=\"1.0\"?>\n\n");
+    fprintf(file,"<OSPRay>\n");
     {
-      FILE *file = fopen(fn,"w");
-      fprintf(file,"<?xml version=\"1.0\"?>\n\n");
-      fprintf(file,"<OSPRay>\n");
+      fprintf(file,"<Model>\n");
       {
-        fprintf(file,"<Model>\n");
+        fprintf(file,"<StreamLines>\n");
         {
-          fprintf(file,"<StreamLines>\n");
-          {
-            fprintf(file,"<vertex>\n");
-            for (int i=0;i<streamLines->vertex.size();i++)
-              fprintf(file,"%f %f %f\n",
-                      streamLines->vertex[i].x,
-                      streamLines->vertex[i].y,
-                      streamLines->vertex[i].z);
-            fprintf(file,"</vertex>\n");
+          fprintf(file,"<vertex>\n");
+          for (int i=0;i<streamLines->vertex.size();i++)
+            fprintf(file,"%f %f %f\n",
+                    streamLines->vertex[i].x,
+                    streamLines->vertex[i].y,
+                    streamLines->vertex[i].z);
+          fprintf(file,"</vertex>\n");
 
-            fprintf(file,"<index>\n");
-            for (int i=0;i<streamLines->index.size();i++)
-              fprintf(file,"%i ",streamLines->index[i]);
-            fprintf(file,"\n</index>\n");
-          }
-          fprintf(file,"</StreamLines>\n");
-
-
-          fprintf(file,"<TriangleMesh>\n");
-          {
-            fprintf(file,"<vertex>\n");
-            for (int i=0;i<triangles->vertex.size();i++)
-              fprintf(file,"%f %f %f\n",
-                      triangles->vertex[i].x,
-                      triangles->vertex[i].y,
-                      triangles->vertex[i].z);
-            fprintf(file,"</vertex>\n");
-
-            fprintf(file,"<color>\n");
-            for (int i=0;i<triangles->color.size();i++)
-              fprintf(file,"%f %f %f\n",
-                      triangles->color[i].x,
-                      triangles->color[i].y,
-                      triangles->color[i].z);
-            fprintf(file,"</color>\n");
-
-            fprintf(file,"<index>\n");
-            for (int i=0;i<triangles->index.size();i++)
-              fprintf(file,"%i %i %i\n",
-                      triangles->index[i].x,
-                      triangles->index[i].y,
-                      triangles->index[i].z);
-            fprintf(file,"</index>\n");
-
-          }
-          fprintf(file,"</TriangleMesh>\n");
+          fprintf(file,"<index>\n");
+          for (int i=0;i<streamLines->index.size();i++)
+            fprintf(file,"%i ",streamLines->index[i]);
+          fprintf(file,"\n</index>\n");
         }
-        fprintf(file,"</Model>\n");
+        fprintf(file,"</StreamLines>\n");
+
+
+        fprintf(file,"<TriangleMesh>\n");
+        {
+          fprintf(file,"<vertex>\n");
+          for (int i=0;i<triangles->vertex.size();i++)
+            fprintf(file,"%f %f %f\n",
+                    triangles->vertex[i].x,
+                    triangles->vertex[i].y,
+                    triangles->vertex[i].z);
+          fprintf(file,"</vertex>\n");
+
+          fprintf(file,"<color>\n");
+          for (int i=0;i<triangles->color.size();i++)
+            fprintf(file,"%f %f %f\n",
+                    triangles->color[i].x,
+                    triangles->color[i].y,
+                    triangles->color[i].z);
+          fprintf(file,"</color>\n");
+
+          fprintf(file,"<index>\n");
+          for (int i=0;i<triangles->index.size();i++)
+            fprintf(file,"%i %i %i\n",
+                    triangles->index[i].x,
+                    triangles->index[i].y,
+                    triangles->index[i].z);
+          fprintf(file,"</index>\n");
+
+        }
+        fprintf(file,"</TriangleMesh>\n");
       }
-      fprintf(file,"</OSPRay>\n");
-      fclose(file);
+      fprintf(file,"</Model>\n");
     }
+    fprintf(file,"</OSPRay>\n");
+    fclose(file);
+  }
 
   struct StreamLineViewer : public Glut3DWidget {
     /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
@@ -501,7 +501,7 @@ namespace ospray {
         else
           throw std::runtime_error("unknown file format "+fn.str());
       } else if (arg == "--module") {
-	ospLoadModule(av[++i]);
+        ospLoadModule(av[++i]);
       } else if (arg == "--renderer") {
         rendererType = av[++i];
       } else if (arg == "--radius") {
