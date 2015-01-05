@@ -61,10 +61,11 @@ namespace ospray {
         embreeConfig << " threads=1,verbose=2";
       rtcInit(embreeConfig.str().c_str());
 
-      if (rtcGetError() != RTC_NO_ERROR) {
+      RTCError erc = rtcGetError();
+      if (erc != RTC_NO_ERROR) {
         // why did the error function not get called !?
-        std::cerr << "#osp:init: embree internal error number " << (int)rtcGetError() << std::endl;
-        assert(rtcGetError() == RTC_NO_ERROR);
+        std::cerr << "#osp:init: embree internal error number " << (int)erc << std::endl;
+        assert(erc == RTC_NO_ERROR);
       }
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }
