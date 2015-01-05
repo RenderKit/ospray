@@ -58,11 +58,11 @@ SET(OSPRAY_SOURCES
   volume/SymbolRegistry.cpp
   volume/Volume.cpp
 
-  transferfunction/LinearTransferFunction.ispc
-  transferfunction/LinearTransferFunction.cpp
-  transferfunction/TransferFunction.cpp
-  transferfunction/TransferFunction.ispc
-  transferfunction/SymbolRegistry.cpp
+  transferFunction/LinearTransferFunction.ispc
+  transferFunction/LinearTransferFunction.cpp
+  transferFunction/TransferFunction.cpp
+  transferFunction/TransferFunction.ispc
+  transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
