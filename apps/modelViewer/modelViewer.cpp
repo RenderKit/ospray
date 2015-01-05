@@ -213,23 +213,23 @@ namespace ospray {
     virtual void specialkey(int32 key, const vec2f where)
     {
       switch(key) {
-        case GLUT_KEY_PAGE_UP:
-          g_near_clip += 10.f * motionSpeed;
-          ospSet1f(renderer, "near_clip", g_near_clip);
-          ospCommit(renderer);
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-          break;
-        case GLUT_KEY_PAGE_DOWN:
-          g_near_clip -= 10.f * motionSpeed;
-          g_near_clip = std::max(g_near_clip, 1e-6f);
-          ospSet1f(renderer, "near_clip", g_near_clip);
-          ospCommit(renderer);
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-          break;
-        default:
-          Glut3DWidget::keypress(key,where);
+      case GLUT_KEY_PAGE_UP:
+        g_near_clip += 10.f * motionSpeed;
+        ospSet1f(renderer, "near_clip", g_near_clip);
+        ospCommit(renderer);
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      case GLUT_KEY_PAGE_DOWN:
+        g_near_clip -= 10.f * motionSpeed;
+        g_near_clip = std::max(g_near_clip, 1e-6f);
+        ospSet1f(renderer, "near_clip", g_near_clip);
+        ospCommit(renderer);
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      default:
+        Glut3DWidget::keypress(key,where);
       }
     }
 
@@ -247,7 +247,7 @@ namespace ospray {
           viewPort.at = p;
           //viewPort.from += offset;
           viewPort.modified = true;
-	  computeFrame();
+          computeFrame();
           accumID = 0;
           ospFrameBufferClear(fb,OSP_FB_ACCUM);
           //((glut3D::InspectCenter*)inspectCenterManipulator)->pivot = p;
@@ -311,15 +311,15 @@ namespace ospray {
       ++accumID;
 
       if (showDepthBuffer) {
-          depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
-          frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
-          Glut3DWidget::display();
-          ospUnmapFrameBuffer(depthFB,fb);
+        depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
+        frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
+        Glut3DWidget::display();
+        ospUnmapFrameBuffer(depthFB,fb);
       } else {
-          ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
-          frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-          Glut3DWidget::display();
-          ospUnmapFrameBuffer(ucharFB,fb);
+        ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+        frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
+        Glut3DWidget::display();
+        ospUnmapFrameBuffer(ucharFB,fb);
       }
       // frameBufferMode = g_frameBufferMode;
       // switch(frameBufferMode) {
@@ -694,7 +694,7 @@ namespace ospray {
       // add color array to mesh
       if (!msgMesh->color.empty()) {
         OSPData color = ospNewData(msgMesh->color.size(),OSP_FLOAT3A,
-                                    &msgMesh->color[0],OSP_DATA_SHARED_BUFFER);
+                                   &msgMesh->color[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->color.size() > 0);
         ospSetData(ospMesh,"vertex.color",color);
       } else {
@@ -726,7 +726,7 @@ namespace ospray {
           materialList.push_back(createMaterial(ospRenderer, msgMesh->materialList[i].ptr));
 
           for (miniSG::Material::ParamMap::const_iterator it =  msgMesh->materialList[i]->params.begin();
-              it != msgMesh->materialList[i]->params.end(); it++) {
+               it != msgMesh->materialList[i]->params.end(); it++) {
             const char *name = it->first.c_str();
             const miniSG::Material::Param *p = it->second.ptr;
             if(p->type == miniSG::Material::Param::TEXTURE) {
