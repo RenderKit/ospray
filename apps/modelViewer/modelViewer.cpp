@@ -28,8 +28,6 @@ namespace ospray {
 
   float g_near_clip = 1e-6f;
   bool  g_fullScreen       = false;
-  bool  g_explosion_mode   = false;
-  float g_explosion_factor = 0.f;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
 
   int g_width = 1024, g_height = 1024, g_benchWarmup = 0, g_benchFrames = 0;
@@ -164,34 +162,6 @@ namespace ospray {
         accumID=0;
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
-        break;
-
-      case '(':
-        {
-          g_explosion_factor += .01f;
-          vec3f center = embree::center(msgModel->getBBox());
-          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
-          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
-          printf("Model is exploded by %f\n", g_explosion_factor);
-          ospCommit(ospModel);
-          accumID=0;
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-        }
-        break;
-      case ')':
-        {
-          g_explosion_factor -= .01f;
-          g_explosion_factor = std::max( 0.f, g_explosion_factor);
-          vec3f center = embree::center(msgModel->getBBox());
-          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
-          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
-          printf("Model is exploded by %f\n", g_explosion_factor);
-          ospCommit(ospModel);
-          accumID=0;
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-        }
         break;
       case 'f':
         {
