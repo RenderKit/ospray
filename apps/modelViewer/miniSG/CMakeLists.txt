@@ -15,6 +15,20 @@
 ## ======================================================================== ##
 
 IF (NOT THIS_IS_MIC)
+  SET(USE_IMAGE_MAGICK ON CACHE BOOL "Use ImageMagick for ModelViewer's Texture loaders.")
+  IF (USE_IMAGE_MAGICK)
+#    FIND_PACKAGE(ImageMagick COMPONENTS Magick++ REQUIRED)
+    FIND_PACKAGE(ImageMagick COMPONENTS Magick++)
+    IF (IMAGEMAGICK_FOUND)
+      ADD_DEFINITIONS(-DUSE_IMAGEMAGICK)
+      INCLUDE_DIRECTORIES(${ImageMagick_Magick++_INCLUDE_DIR})
+      SET(MAGICK_LIBRARIES ${ImageMagick_Magick++_LIBRARY})
+    ELSE (IMAGEMAGICK_FOUND)
+      MESSAGE("ImageMagick not found. Texture loaders are disabled")
+    ENDIF (IMAGEMAGICK_FOUND)
+  ENDIF (USE_IMAGE_MAGICK)
+
+
   INCLUDE_DIRECTORIES(${OSPRAY_DIR}/ospray)
   
   INCLUDE_DIRECTORIES(${OSPRAY_DIR})
@@ -29,7 +43,8 @@ IF (NOT THIS_IS_MIC)
     importX3D.cpp
     importRIVL.cpp
     )
-  TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml)
+  TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml
+    ${MAGICK_LIBRARIES})
   # ------------------------------------------------------------
   SET_TARGET_PROPERTIES(ospray_minisg${OSPRAY_LIB_SUFFIX} 
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})

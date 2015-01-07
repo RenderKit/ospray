@@ -413,12 +413,10 @@ namespace ospray {
          it !=  mat->params.end(); ++it) {
       const char *name = it->first.c_str();
       const miniSG::Material::Param *p = it->second.ptr;
+
       switch(p->type) {
       case miniSG::Material::Param::INT:
-        if(strstr(name, "map_") == NULL) {
-          ospSet1i(ospMat,name,p->i[0]);
-        }
-        else {
+        {
           miniSG::Texture2D *tex = mat->textures[p->i[0]].ptr;
           OSPTexture2D ospTex = createTexture2D(tex);
           //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
@@ -700,7 +698,7 @@ namespace ospray {
             const char *name = it->first.c_str();
             const miniSG::Material::Param *p = it->second.ptr;
             if(p->type == miniSG::Material::Param::TEXTURE) {
-              if(!strcmp(name, "map_kd")) {
+              if(!strcmp(name, "map_kd") || !strcmp(name, "map_Kd")) {
                 miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
                 OSPTexture2D ospTex = createTexture2D(tex);
                 ospCommit(ospTex);

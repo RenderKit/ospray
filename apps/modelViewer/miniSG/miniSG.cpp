@@ -16,6 +16,11 @@
 
 #include "miniSG.h"
 
+#ifdef USE_IMAGEMAGICK
+# include <Magick++.h>
+using namespace Magick;
+#endif
+
 namespace ospray {
   namespace miniSG {
 
@@ -33,6 +38,50 @@ namespace ospray {
       // setParam( "Ks", vec3f(0.f) );
       // setParam( "Ka", vec3f(0.f) );
     }
+
+    Texture2D *loadTexture(const std::string &path, const std::string &fileNameBase)
+    {
+      const std::string fileName = path+"/"+fileNameBase;
+#ifdef USE_IMAGEMAGICK
+      static std::map<std::string,Texture2D*> textureCache;
+      if (textureCache.find(fileName) == textureCache.end()) {
+        Texture2D *tex = NULL;
+        Magick::Image image(fileName.c_str());
+        // Image* out = new Image4c(image.columns(),image.rows(),fileName);
+        tex = new Texture2D;
+        tex->width    = image.columns();
+        tex->height   = image.rows();
+        tex->channels = 4;
+        tex->depth    = 4;
+        float rcpMaxRGB = 1.0f/float(MaxRGB);
+        Magick::Pixels pixel_cache(image);
+        Magick::PixelPacket* pixels = pixel_cache.get(0,0,tex->width,tex->height);
+        if (!pixels) {
+          std::cerr << "#osp:minisg: failed to load texture '"+fileName+"'" << std::endl;
+          delete tex; 
+          tex = NULL;
+        } else {
+          tex->data = new vec4f[tex->width*tex->height];
+          for (size_t y=0; y<tex->height; y++) {
+            for (size_t x=0; x<tex->width; x++) {
+              vec4f c;
+              c.x = float(pixels[y*tex->width+x].red    )*rcpMaxRGB;
+              c.y = float(pixels[y*tex->width+x].green  )*rcpMaxRGB;
+              c.z = float(pixels[y*tex->width+x].blue   )*rcpMaxRGB;
+              c.w = float(pixels[y*tex->width+x].opacity)*rcpMaxRGB;
+              ((vec4f*)tex->data)[x+y*tex->width] = c;
+              //tex->set(x,y,c);
+            }
+          }
+        }
+        textureCache[fileName] = tex;
+      }
+      return textureCache[fileName];
+#else
+      return NULL;
+#endif
+    }
+
 
     float Material::getParam(const char *name, float defaultVal) 
     {

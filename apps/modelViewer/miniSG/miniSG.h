@@ -42,6 +42,8 @@ namespace ospray {
       void *data;   //Pointer to binary texture data
     };
     
+    Texture2D *loadTexture(const std::string &path, const std::string &fileName);
+
     struct Material : public RefCount {
       struct Param : public RefCount {
         typedef enum {
