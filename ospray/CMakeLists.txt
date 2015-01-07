@@ -172,7 +172,10 @@ ENDIF()
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED 
   ${OSPRAY_SOURCES}
   )
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} )
+IF (NOT WIN32)
+	#TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} pthread dl)
+ENDIF()
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")

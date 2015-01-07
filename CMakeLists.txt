@@ -75,7 +75,9 @@ INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
 INCLUDE(cmake/configure_embree.cmake)
 INCLUDE(cmake/mpi.cmake)
+IF(NOT WIN32)
 INCLUDE(cmake/doxygen.cmake)
+ENDIF()
 
 SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME}-${OSPRAY_XEON_TARGET})
 STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
@@ -95,6 +97,7 @@ IF (OSPRAY_MIC)
   ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
 ENDIF()
 
+IF (NOT WIN32)
 ##############################################################
 # ospray sample apps
 ##############################################################
@@ -115,3 +118,5 @@ IF (OSPRAY_MIC)
   SET (OSPRAY_TARGET "MIC")
   ADD_SUBDIRECTORY(modules builddir/modules/mic)
 ENDIF()
+ENDIF()
+

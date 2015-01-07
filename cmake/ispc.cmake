@@ -18,12 +18,17 @@ SET(ISPC_VERSION 1.8.0)
 
 IF (APPLE)
   SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-osx CACHE STRING "ISPC Directory")
+SET(ISPC_EXE_NAME "ispc")
+ELSEIF(WIN32)
+  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-windows CACHE STRING "ISPC Directory")
+SET(ISPC_EXE_NAME "ispc.exe")
 ELSE()
   SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-linux CACHE STRING "ISPC Directory")
+SET(ISPC_EXE_NAME "ispc")
 ENDIF()
 MARK_AS_ADVANCED(OSPRAY_ISPC_DIRECTORY)
 
-IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/ispc")
+IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/${ISPC_EXE_NAME}")
   MESSAGE("********************************************")
   MESSAGE("Could not find ISPC (tried ${OSPRAY_ISPC_DIRECTORY}.")
   MESSAGE("")
@@ -33,7 +38,7 @@ IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/ispc")
   MESSAGE("********************************************")
   MESSAGE(FATAL_ERROR "Could not find ISPC. Exiting")
 ELSE()
-  SET(ISPC_BINARY ${OSPRAY_ISPC_DIRECTORY}/ispc)
+  SET(ISPC_BINARY ${OSPRAY_ISPC_DIRECTORY}/${ISPC_EXE_NAME})
 ENDIF()
 
 # ##################################################################
@@ -70,8 +75,11 @@ MACRO (ispc_compile)
   ENDIF()
   
   IF(ISPC_INCLUDE_DIR)
-    STRING(REGEX REPLACE ";" ";-I;" ISPC_INCLUDE_DIR_PARMS "${ISPC_INCLUDE_DIR}")
-    SET(ISPC_INCLUDE_DIR_PARMS "-I" ${ISPC_INCLUDE_DIR_PARMS}) 
+    message("A : ISPC INCLUDE DIR ${ISPC_INCLUDE_DIR}")
+    STRING(REGEX REPLACE ";" " -I " ISPC_INCLUDE_DIR_PARMS ";${ISPC_INCLUDE_DIR}")
+    message("B : ISPC INCLUDE DIR_PARMS ${ISPC_INCLUDE_DIR_PARMS}")
+    #SET(ISPC_INCLUDE_DIR_PARMS " -I " ${ISPC_INCLUDE_DIR_PARMS}) 
+    #message("C : ISPC INCLUDE DIR_PARMS ${ISPC_INCLUDE_DIR_PARMS}")
   ENDIF()
 
   IF (THIS_IS_MIC)
@@ -98,6 +106,14 @@ MACRO (ispc_compile)
       STRING(REGEX REPLACE "^/" "${CMAKE_CURRENT_BINARY_DIR}/rebased/" outdir "${dir}")
       SET(indir "${dir}")
       SET(input "${indir}/${fname}.ispc")
+    ELSEIF ("${dir}" MATCHES "^C:")
+      # ------------------------------------------------------------------
+      # global path name to input, like when we include the embree sources
+      # from a global external embree checkout
+      # ------------------------------------------------------------------
+      STRING(REGEX REPLACE "^C:" "${CMAKE_CURRENT_BINARY_DIR}/rebased/" outdir "${dir}")
+      SET(indir "${dir}")
+      SET(input "${indir}/${fname}.ispc")
     ELSE()
       # ------------------------------------------------------------------
       # local path name to input, like local ospray sources
@@ -120,16 +136,35 @@ MACRO (ispc_compile)
 	ENDIF (EXISTS ${dep})
       ENDFOREACH(dep ${contents})
     ENDIF ()
-
+	IF (WIN32)
+	ELSE()
+	SET(ISPC_SYS_FLAGS "--pic")
+	ENDIF()
     SET(ispc_compile_result "${outdir}/${fname}${ISPC_TARGET_EXT}")
-    ADD_CUSTOM_COMMAND(
-      OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h
-      COMMAND mkdir -p ${outdir} \; ${ISPC_BINARY}
+	separate_arguments(ISPC_INCLUDE_DIR_PARMS)
+	MESSAGE("ispc command : COMMAND ${ISPC_BINARY}
       -I ${CMAKE_CURRENT_SOURCE_DIR} 
       ${ISPC_INCLUDE_DIR_PARMS}
       ${ISPC_DEFINES}
       --arch=${ISPC_ARCHITECTURE}
-      --pic
+      ${ISPC_SYS_FLAGS}
+      -O3
+      --woff
+      ${CMAKE_ISPC_FLAGS}
+      --opt=fast-math
+      -h ${outdirh}/${fname}_ispc.h
+      -MMM  ${outdir}/${fname}.dev.idep 
+      -o ${ispc_compile_result}
+      ${input}")
+    ADD_CUSTOM_COMMAND(
+      OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h
+	  FILE(MAKE_DIRECTORY ${outdir})
+      COMMAND ${ISPC_BINARY}
+      -I ${CMAKE_CURRENT_SOURCE_DIR} 
+      ${ISPC_INCLUDE_DIR_PARMS}
+      ${ISPC_DEFINES}
+      --arch=${ISPC_ARCHITECTURE}
+      ${ISPC_SYS_FLAGS}
       -O3
       --woff
       ${CMAKE_ISPC_FLAGS}
@@ -138,7 +173,7 @@ MACRO (ispc_compile)
       -MMM  ${outdir}/${fname}.dev.idep 
       -o ${ispc_compile_result}
       ${input}
-      \;
+      
       DEPENDS ${input}
       ${deps})
     SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${ispc_compile_result})

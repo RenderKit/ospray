@@ -17,7 +17,7 @@
 // ospray
 #include "Library.h"
 // std
-#include <dlfcn.h>
+//#include <dlfcn.h>
 
 namespace ospray {
 
@@ -51,9 +51,13 @@ namespace ospray {
       if (sym) return sym;
     }
 
+#ifdef __WIN32__
+	throw std::runtime_error("no dlsym under windows");
+#else
     // if none found in the loaded libs, try the default lib ...
     void *sym = dlsym(RTLD_DEFAULT,name.c_str());
     return sym;
+#endif
   }
 
 } // ::ospray

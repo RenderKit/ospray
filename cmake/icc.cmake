@@ -14,6 +14,15 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+IF(WIN32)
+SET(OSPRAY_ARCH_SSE3  "/arch:SSE3")
+SET(OSPRAY_ARCH_SSSE3 "/arch:SSSE3")
+SET(OSPRAY_ARCH_SSE41 "/arch:SSE4.1")
+SET(OSPRAY_ARCH_SSE42 "/arch:SSE4.2")
+SET(OSPRAY_ARCH_SSE   "/arch:SSE4.2")
+SET(OSPRAY_ARCH_AVX   "/arch:AVX")
+SET(OSPRAY_ARCH_AVX2  "/arch:AVX2")
+ELSE()
 SET(OSPRAY_ARCH_SSE3  "-xsse3")
 SET(OSPRAY_ARCH_SSSE3 "-xssse3")
 SET(OSPRAY_ARCH_SSE41 "-xsse4.1")
@@ -21,6 +30,7 @@ SET(OSPRAY_ARCH_SSE42 "-xsse4.2")
 SET(OSPRAY_ARCH_SSE   "-xsse4.2")
 SET(OSPRAY_ARCH_AVX   "-xAVX")
 SET(OSPRAY_ARCH_AVX2  "-xCORE-AVX2")
+ENDIF()
 
 SET(CMAKE_CXX_COMPILER "icpc")
 SET(CMAKE_C_COMPILER "icc")

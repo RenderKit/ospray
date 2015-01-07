@@ -19,6 +19,16 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
+#ifdef __WIN32__
+# define _USE_MATH_DEFINES 1
+# include <cmath>
+# include <math.h>
+# ifndef M_PI
+#  define M_PI       3.14159265358979323846
+# endif
+#endif
+
+
 // embree
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
