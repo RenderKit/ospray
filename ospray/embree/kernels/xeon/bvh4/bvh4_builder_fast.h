@@ -21,6 +21,11 @@
 #include "builders/workstack.h"
 #include "common/scene_user_geometry.h"
 #include "common/scene_subdiv_mesh.h"
+#include "geometry/grid.h"
+
+#include "algorithms/parallel_for_for.h"
+#include "algorithms/parallel_for_for_prefix_sum.h"
+
 
 namespace embree
 {
@@ -47,6 +52,12 @@ namespace embree
 	
         BuildRecord() {}
 
+#if defined(_MSC_VER)
+        BuildRecord& operator=(const BuildRecord &arg) { 
+          memcpy(this, &arg, sizeof(BuildRecord));    
+          return *this;
+        }
+#endif
 	__forceinline void init(unsigned int depth)
 	{
 	  this->depth = depth;
@@ -108,7 +119,7 @@ namespace embree
       virtual void build(size_t threadIndex, size_t threadCount);
 
       /* single threaded build */
-      void build_sequential(size_t threadIndex, size_t threadCount);
+      virtual void build_sequential(size_t threadIndex, size_t threadCount);
 
     public:
       TASK_SET_FUNCTION(BVH4BuilderFast,computePrimRefs);
@@ -118,13 +129,13 @@ namespace embree
     public:
 
       /*! compute number of primitives */
-      virtual size_t number_of_primitives() = 0;
+      virtual size_t number_of_primitives() { return 0; } // FIXME: create base class without these functions
     
       /*! creates build primitive array (sequential version) */
-      virtual void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo) = 0;
+      virtual void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo) {};
     
       /*! creates build primitive array (parallel version) */
-      virtual void create_primitive_array_parallel(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo) = 0;
+      virtual void create_primitive_array_parallel(size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo) {};
     
       /*! build mode */
       enum { RECURSE_SEQUENTIAL = 1, RECURSE_PARALLEL = 2, BUILD_TOP_LEVEL = 3 };
@@ -154,7 +165,7 @@ namespace embree
     
     public:
       LockStepTaskScheduler* scheduler;
-      std::auto_ptr<GlobalState> state;
+      std::unique_ptr<GlobalState> state;
 
       BVH4* bvh;                               //!< Output BVH
       size_t listMode;
@@ -258,6 +269,105 @@ namespace embree
       void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
     public:
       SubdivMesh* geom;   //!< input mesh
+    };
+
+    class BVH4SubdivQuadQuad4x4BuilderFast : public BVH4BuilderFastT<PrimRef>
+    {
+    public:
+      BVH4SubdivQuadQuad4x4BuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      virtual void build(size_t threadIndex, size_t threadCount);
+
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+
+      Scene::Iterator<SubdivMesh> iter;
+      ParallelForForPrefixSumState<PrimInfo> pstate;
+    };
+
+    class BVH4SubdivGridBuilderFast : public BVH4BuilderFastT<PrimRef>
+    {
+    public:
+      BVH4SubdivGridBuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      virtual void build(size_t threadIndex, size_t threadCount);
+
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+
+      Scene::Iterator<SubdivMesh> iter;
+      ParallelForForPrefixSumState<PrimInfo> pstate;
+    };
+
+    class BVH4SubdivGridEagerBuilderFast : public BVH4BuilderFastT<PrimRef>
+    {
+    public:
+      BVH4SubdivGridEagerBuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      virtual void build(size_t threadIndex, size_t threadCount);
+
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+
+      Scene::Iterator<SubdivMesh> iter;
+      ParallelForForPrefixSumState<PrimInfo> pstate;
+    };
+
+    class BVH4SubdivGridLazyBuilderFast : public BVH4BuilderFastT<Grid::LazyLeaf*>
+    {
+    public:
+      BVH4SubdivGridLazyBuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      virtual void build(size_t threadIndex, size_t threadCount);
+
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+
+      Scene::Iterator<SubdivMesh> iter;
+      ParallelForForPrefixSumState<PrimInfo> pstate;
+    };
+
+    class BVH4BuilderFastGeneric : public BVH4BuilderFast
+    {
+    public:
+      struct MakeLeaf {
+        virtual BVH4::NodeRef operator() (Allocator& alloc, const PrimRef* prims, size_t N) const = 0;
+      };
+
+    public:
+      BVH4BuilderFastGeneric (BVH4* bvh, PrimRef* prims, size_t N, const MakeLeaf& makeLeaf, size_t listMode, 
+                              size_t logBlockSize, size_t logSAHBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize);
+      ~BVH4BuilderFastGeneric();
+      virtual void build(size_t threadIndex, size_t threadCount);
+      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
+
+    public:
+      size_t N;
+      const MakeLeaf& makeLeaf;
+    };
+
+
+    class BVH4SubdivPatch1CachedBuilderFast : public BVH4BuilderFastT<PrimRef>
+    {
+    private:
+      bool fastUpdateMode;
+      size_t fastUpdateMode_numFaces;
+
+      BBox3fa refit(NodeRef& ref);
+
+    public:
+      BVH4SubdivPatch1CachedBuilderFast (BVH4* bvh, Scene* scene, size_t listMode);
+      virtual void build(size_t threadIndex, size_t threadCount);
+
+      size_t number_of_primitives();
+      void create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo);
+      void create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo);
+
+      void createSmallLeaf(BuildRecord& current, Allocator& leafAlloc, size_t threadID);
+      virtual void build_sequential(size_t threadIndex, size_t threadCount);
+
+      Scene::Iterator<SubdivMesh> iter;
+      ParallelForForPrefixSumState<PrimInfo> pstate;
     };
 
   }

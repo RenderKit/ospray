@@ -36,7 +36,7 @@ namespace embree
     static double dt = 0.0f;
 
     BVH4BuilderMorton::BVH4BuilderMorton (BVH4* bvh, Scene* scene, TriangleMesh* mesh, size_t listMode, size_t logBlockSize, bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize)
-      : bvh(bvh), state(NULL), scheduler(&scene->lockstep_scheduler), scene(scene), mesh(mesh), listMode(listMode), logBlockSize(logBlockSize), needVertices(needVertices), primBytes(primBytes), minLeafSize(minLeafSize), maxLeafSize(maxLeafSize),
+      : bvh(bvh), state(nullptr), scheduler(&scene->lockstep_scheduler), scene(scene), mesh(mesh), listMode(listMode), logBlockSize(logBlockSize), needVertices(needVertices), primBytes(primBytes), minLeafSize(minLeafSize), maxLeafSize(maxLeafSize),
 	topLevelItemThreshold(0), encodeShift(0), encodeMask(-1), morton(NULL), bytesMorton(0), numGroups(0), numPrimitives(0), numAllocatedPrimitives(0), numAllocatedNodes(0)
     {
       needAllThreads = true;
@@ -268,7 +268,7 @@ namespace embree
       /* compute mapping from world space into 3D grid */
       const ssef base  = (ssef)global_bounds.centBounds.lower;
       const ssef diag  = (ssef)global_bounds.centBounds.upper - (ssef)global_bounds.centBounds.lower;
-      const ssef scale = select(diag > ssef(1E-19), rcp(diag) * ssef(LATTICE_SIZE_PER_DIM * 0.99f),ssef(0.0f));
+      const ssef scale = select(diag > ssef(1E-19f), rcp(diag) * ssef(LATTICE_SIZE_PER_DIM * 0.99f),ssef(0.0f));
       
       size_t currentID = destID;
       size_t offset = startOffset;
@@ -352,7 +352,7 @@ namespace embree
       /* compute mapping from world space into 3D grid */
       const ssef base  = (ssef)global_bounds.centBounds.lower;
       const ssef diag  = (ssef)global_bounds.centBounds.upper - (ssef)global_bounds.centBounds.lower;
-      const ssef scale = select(diag > ssef(1E-19), rcp(diag) * ssef(LATTICE_SIZE_PER_DIM * 0.99f),ssef(0.0f));
+      const ssef scale = select(diag > ssef(1E-19f), rcp(diag) * ssef(LATTICE_SIZE_PER_DIM * 0.99f),ssef(0.0f));
       
       for (size_t i=current.begin; i<current.end; i++)
       {
@@ -681,9 +681,9 @@ namespace embree
         upper = max(upper,(ssef)p0,(ssef)p1,(ssef)p2);
 	vgeomID[i] = geomID;
 	vprimID[i] = primID;
-	v0[i] = (Vec3f*) &mesh->vertex(tri.v[0]); 
-	v1[i] = (int*)&mesh->vertex(tri.v[1])-(int*)v0[i]; 
-	v2[i] = (int*)&mesh->vertex(tri.v[2])-(int*)v0[i]; 
+	v0[i] = (Vec3f*) mesh->vertexPtr(tri.v[0]); 
+	v1[i] = (int*)   mesh->vertexPtr(tri.v[1])-(int*)v0[i]; 
+	v2[i] = (int*)   mesh->vertexPtr(tri.v[2])-(int*)v0[i]; 
       }
 
       for (size_t i=items; i<4; i++)

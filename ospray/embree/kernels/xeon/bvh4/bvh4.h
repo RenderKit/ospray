@@ -190,6 +190,11 @@ namespace embree
         return (char*)(ptr & ~(size_t)align_mask);
       }
 
+      /*! clear all bit flags */
+      __forceinline void clearFlags() {
+        ptr &= ~(size_t)align_mask;
+      }
+
     private:
       size_t ptr;
     };
@@ -690,7 +695,7 @@ namespace embree
 
         AffineSpace3fa space = b.space;
         space.p -= b.bounds.lower;
-        space = AffineSpace3fa::scale(1.0f/max(Vec3fa(1E-19),b.bounds.upper-b.bounds.lower))*space;
+        space = AffineSpace3fa::scale(1.0f/max(Vec3fa(1E-19f),b.bounds.upper-b.bounds.lower))*space;
         
         naabb.l.vx.x[i] = space.l.vx.x;
         naabb.l.vx.y[i] = space.l.vx.y;
@@ -794,7 +799,7 @@ namespace embree
 
 	AffineSpace3fa space = s0;
         space.p -= a.lower;
-	Vec3fa scale = 1.0f/max(Vec3fa(1E-19),a.upper-a.lower);
+	Vec3fa scale = 1.0f/max(Vec3fa(1E-19f),a.upper-a.lower);
         space = AffineSpace3fa::scale(scale)*space;
 	BBox3fa a1((a.lower-a.lower)*scale,(a.upper-a.lower)*scale);
 	BBox3fa c1((c.lower-a.lower)*scale,(c.upper-a.lower)*scale);
@@ -911,7 +916,7 @@ namespace embree
       {
 	AffineSpace3fa space = other;
         space.p -= bounds.lower;
-        space = AffineSpace3fa::scale(1.0f/max(Vec3fa(1E-19),bounds.upper-bounds.lower))*space;
+        space = AffineSpace3fa::scale(1.0f/max(Vec3fa(1E-19f),bounds.upper-bounds.lower))*space;
 	return space;
       }
 
@@ -1186,7 +1191,7 @@ namespace embree
   public:
 
     /*! BVH4 default constructor. */
-    BVH4 (const PrimitiveType& primTy, void* geometry, bool listMode);
+    BVH4 (const PrimitiveType& primTy, Scene* scene, bool listMode);
 
     /*! BVH4 destruction */
     ~BVH4 ();
@@ -1209,7 +1214,10 @@ namespace embree
     static Accel* BVH4Triangle4v(Scene* scene);
     static Accel* BVH4Triangle4i(Scene* scene);
     static Accel* BVH4SubdivPatch1(Scene* scene);
-    static Accel* BVH4SubdivPatchDispl1(Scene* scene);
+    static Accel* BVH4SubdivPatch1Cached(Scene* scene);
+    static Accel* BVH4SubdivGrid(Scene* scene);
+    static Accel* BVH4SubdivGridEager(Scene* scene);
+    static Accel* BVH4SubdivGridLazy(Scene* scene);
     static Accel* BVH4UserGeometry(Scene* scene);
     
     static Accel* BVH4BVH4Triangle1Morton(Scene* scene);
@@ -1242,9 +1250,14 @@ namespace embree
     void clearBarrier(NodeRef& node);
 
     /*! Propagate bounds for time t0 and time t1 up the tree. */
-    std::pair<BBox3fa,BBox3fa> refit(void* geom, NodeRef node);
+    std::pair<BBox3fa,BBox3fa> refit(Scene* scene, NodeRef node);
 
     LinearAllocatorPerThread alloc;
+
+    FastAllocator alloc2;
+
+    void *data_mem; /* additional memory, currently used for subdivpatch1cached memory */
+    size_t size_data_mem;
 
     __forceinline Node* allocNode(LinearAllocatorPerThread::ThreadAllocator& thread) {
       Node* node = (Node*) thread.malloc(sizeof(Node),1 << alignment); node->clear(); return node; // FIXME: why 16 bytes aligned and not 64 bytes?
@@ -1269,31 +1282,43 @@ namespace embree
     }
 
     /*! Encodes a node */
-    __forceinline NodeRef encodeNode(Node* node) {  // FIXME: template these functions
+    static __forceinline NodeRef encodeNode2(Node* node) {  // FIXME: make all static
       assert(!((size_t)node & align_mask)); 
       return NodeRef((size_t) node);
     }
 
     /*! Encodes a node */
-    __forceinline NodeRef encodeNode(NodeMB* node) { 
+    static __forceinline NodeRef encodeNode(void* node) {  // FIXME: template these functions
+      assert(!((size_t)node & align_mask)); 
+      return NodeRef((size_t) node);
+    }
+
+    /*! Encodes a node */
+    static __forceinline NodeRef encodeNode(NodeMB* node) { 
       assert(!((size_t)node & align_mask)); 
       return NodeRef((size_t) node | tyNodeMB);
     }
 
     /*! Encodes an unaligned node */
-    __forceinline NodeRef encodeNode(UnalignedNode* node) { 
+    static __forceinline NodeRef encodeNode(UnalignedNode* node) { 
       return NodeRef((size_t) node | tyUnalignedNode);
     }
 
     /*! Encodes an unaligned motion blur node */
-    __forceinline NodeRef encodeNode(UnalignedNodeMB* node) { 
+    static __forceinline NodeRef encodeNode(UnalignedNodeMB* node) { 
       return NodeRef((size_t) node |  tyUnalignedNodeMB);
     }
     
     /*! Encodes a leaf */
-    __forceinline NodeRef encodeLeaf(void* tri, size_t num) {
+    static __forceinline NodeRef encodeLeaf(void* tri, size_t num) {
       assert(!((size_t)tri & align_mask)); 
       return NodeRef((size_t)tri | (tyLeaf+min(num,(size_t)maxLeafBlocks)));
+    }
+
+    /*! Encodes a leaf */
+    static __forceinline NodeRef encodeTypedLeaf(void* ptr, size_t ty) {
+      assert(!((size_t)ptr & align_mask)); 
+      return NodeRef((size_t)ptr | (tyLeaf+ty));
     }
     
   public:
@@ -1305,7 +1330,7 @@ namespace embree
 
   public:
     const PrimitiveType& primTy;       //!< primitive type stored in the BVH
-    void* geometry;                    //!< pointer to additional data for primitive intersector
+    Scene* scene;                      //!< scene pointer
     bool listMode;                     //!< true if number of leaf items not encoded in NodeRef
     NodeRef root;                      //!< Root node
     size_t numPrimitives;

@@ -36,7 +36,7 @@ namespace embree
     __forceinline Triangle8 (const avx3f& v0, const avx3f& v1, const avx3f& v2, const avxi& geomIDs, const avxi& primIDs, const avxi& mask, const bool last)
       : v0(v0), e1(v0-v1), e2(v2-v0), Ng(cross(e1,e2)), geomIDs(geomIDs), primIDs(primIDs | (last << 31))
     {
-#if defined(__USE_RAY_MASK__)
+#if defined(RTCORE_RAY_MASK)
       this->mask = mask;
 #endif
     }
@@ -62,7 +62,7 @@ namespace embree
     __forceinline BBox3fa bounds() const 
     {
       avx3f p0 = v0;
-      avx3f p1 = v0+e1;
+      avx3f p1 = v0-e1;
       avx3f p2 = v0+e2;
       avx3f lower = min(p0,p1,p2);
       avx3f upper = max(p0,p1,p2);
@@ -94,7 +94,7 @@ namespace embree
       store8f_nt(&dst->Ng.z,src.Ng.z);
       store8i_nt(&dst->geomIDs,src.geomIDs);
       store8i_nt(&dst->primIDs,src.primIDs);
-#if defined(__USE_RAY_MASK__)
+#if defined(RTCORE_RAY_MASK)
       store8i_nt(&dst->mask,src.mask);
 #endif
     }
@@ -185,7 +185,7 @@ namespace embree
     avx3f Ng;      //!< Geometry normal of the triangles.
     avxi geomIDs;   //!< user geometry ID
     avxi primIDs;   //!< primitive ID
-#if defined(__USE_RAY_MASK__)
+#if defined(RTCORE_RAY_MASK)
     avxi mask;     //!< geometry mask
 #endif
 

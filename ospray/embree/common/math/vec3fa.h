@@ -62,6 +62,12 @@ namespace embree
     __forceinline operator const __m128&( void ) const { return m128; }
     __forceinline operator       __m128&( void )       { return m128; }
 
+#if defined (__SSE4_1__)
+    friend __forceinline const Vec3fa copy_a( const Vec3fa& a, const Vec3fa& b ) { return _mm_insert_ps(a, b, (3 << 4) | (3 << 6)); }
+#else
+    friend __forceinline const Vec3fa copy_a( const Vec3fa& a, const Vec3fa& b ) { Vec3fa c = a; c.a = b.a; return c; }
+#endif
+
     ////////////////////////////////////////////////////////////////////////////////
     /// Constants
     ////////////////////////////////////////////////////////////////////////////////
@@ -93,7 +99,7 @@ namespace embree
     return _mm_and_ps(a.m128, mask);
   }
   __forceinline const Vec3fa sign ( const Vec3fa& a ) {
-    return _mm_blendv_ps(Vec3fa(one), -Vec3fa(one), _mm_cmplt_ps (a,Vec3fa(zero))); 
+    return blendv_ps(Vec3fa(one), -Vec3fa(one), _mm_cmplt_ps (a,Vec3fa(zero))); 
   }
   __forceinline const Vec3fa rcp  ( const Vec3fa& a ) {
     const Vec3fa r = _mm_rcp_ps(a.m128);
@@ -105,7 +111,7 @@ namespace embree
     __m128 r = _mm_rsqrt_ps(a.m128);
     return _mm_add_ps(_mm_mul_ps(_mm_set1_ps(1.5f),r), _mm_mul_ps(_mm_mul_ps(_mm_mul_ps(a, _mm_set1_ps(-0.5f)), r), _mm_mul_ps(r, r)));
   }
-  __forceinline const Vec3fa zero_fix(const Vec3fa& a) { return _mm_blendv_ps(a, _mm_set1_ps(1E-10f), _mm_cmpeq_ps (a.m128, _mm_setzero_ps())); }
+  __forceinline const Vec3fa zero_fix(const Vec3fa& a) { return blendv_ps(a, _mm_set1_ps(1E-10f), _mm_cmpeq_ps (a.m128, _mm_setzero_ps())); }
   __forceinline const Vec3fa rcp_safe(const Vec3fa& a) { return rcp(zero_fix(a)); }
 
   __forceinline Vec3fa log ( const Vec3fa& a ) { 
@@ -229,6 +235,15 @@ namespace embree
 
   __forceinline float  length   ( const Vec3fa& a )                  { return sqrt(dot(a,a)); }
   __forceinline Vec3fa normalize( const Vec3fa& a )                  { return a*rsqrt(dot(a,a)); }
+
+  __forceinline Vec3fa normalize_safe( const Vec3fa& a ) { 
+    const float d = dot(a,a);
+    if (unlikely(d == 0.0f)) 
+      return a;
+    else
+      return a*rsqrt(d);
+  }
+
   __forceinline float  distance ( const Vec3fa& a, const Vec3fa& b ) { return length(a-b); }
   __forceinline float  halfArea ( const Vec3fa& d )                  { return d.x*(d.y+d.z)+d.y*d.z; }
   __forceinline Vec3fa reflect  (const Vec3fa& V, const Vec3fa& N)   { return 2.0f*dot(V,N)*N-V; } 
@@ -239,11 +254,11 @@ namespace embree
 
   __forceinline const Vec3fa select( bool s, const Vec3fa& t, const Vec3fa& f ) {
     __m128 mask = s ? _mm_castsi128_ps(_mm_cmpeq_epi32(_mm_setzero_si128(), _mm_setzero_si128())) : _mm_setzero_ps();
-    return _mm_blendv_ps(f, t, mask);
+    return blendv_ps(f, t, mask);
   }
 
   __forceinline const Vec3fa select( const Vec3ba& s, const Vec3fa& t, const Vec3fa& f ) {
-    return _mm_blendv_ps(f, t, s);
+    return blendv_ps(f, t, s);
   }
 
   __forceinline int maxDim ( const Vec3fa& a ) 
@@ -264,11 +279,9 @@ namespace embree
   __forceinline const Vec3fa floor( const Vec3fa& a ) { return _mm_round_ps(a, _MM_FROUND_TO_NEG_INF    ); }
   __forceinline const Vec3fa ceil ( const Vec3fa& a ) { return _mm_round_ps(a, _MM_FROUND_TO_POS_INF    ); }
 #else
-#if !defined(__WIN32__)
   __forceinline const Vec3fa trunc( const Vec3fa& a ) { return Vec3fa(truncf(a.x),truncf(a.y),truncf(a.z)); }
   __forceinline const Vec3fa floor( const Vec3fa& a ) { return Vec3fa(floorf(a.x),floorf(a.y),floorf(a.z)); }
   __forceinline const Vec3fa ceil ( const Vec3fa& a ) { return Vec3fa(ceilf (a.x),ceilf (a.y),ceilf (a.z)); }
-#endif
 #endif
 
   ////////////////////////////////////////////////////////////////////////////////

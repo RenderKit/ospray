@@ -43,11 +43,9 @@
 #include <vector>
 #include <algorithm>
 #include <iomanip>
+#include <array>
 
-#include "../version.h"
-
-#define ERROR(x) \
-  THROW_RUNTIME_ERROR(x)
+#include "version.h"
 
 namespace embree
 {
@@ -193,7 +191,7 @@ namespace embree
     return "UNKNOWN";
   }
 
-#if defined (__SSE__) || defined (__MIC__)
+#if defined (__SSE__) // || defined (__MIC__)
   typedef Vec2<sseb> sse2b;
   typedef Vec3<sseb> sse3b;
   typedef Vec2<ssei> sse2i;

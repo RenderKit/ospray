@@ -63,11 +63,19 @@ namespace embree
     __forceinline avxf( NaNTy    ) : m256(_mm256_set1_ps(nan)) {}
 
     ////////////////////////////////////////////////////////////////////////////////
-    /// Constants
+    /// Loads and Stores
     ////////////////////////////////////////////////////////////////////////////////
 
     static __forceinline avxf broadcast( const void* const a ) { 
       return _mm256_broadcast_ss((float*)a); 
+    }
+
+    static __forceinline avxf load( const unsigned char* const ptr ) { 
+#if defined(__AVX2__)
+      return _mm256_cvtepi32_ps(_mm256_cvtepu8_epi32(_mm_loadu_si128((__m128i*)ptr)));
+#else
+      return avxf(ssef::load(ptr),ssef::load(ptr+4));
+#endif
     }
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -313,7 +321,7 @@ namespace embree
   /// Transpose
   ////////////////////////////////////////////////////////////////////////////////
 
-  __forceinline void transpose4(const avxf& r0, const avxf& r1, const avxf& r2, const avxf& r3, avxf& c0, avxf& c1, avxf& c2, avxf& c3)
+  __forceinline void transpose(const avxf& r0, const avxf& r1, const avxf& r2, const avxf& r3, avxf& c0, avxf& c1, avxf& c2, avxf& c3)
   {
     avxf l02 = unpacklo(r0,r2);
     avxf h02 = unpackhi(r0,r2);
@@ -325,11 +333,22 @@ namespace embree
     c3 = unpackhi(h02,h13);
   }
 
+  __forceinline void transpose(const avxf& r0, const avxf& r1, const avxf& r2, const avxf& r3, avxf& c0, avxf& c1, avxf& c2)
+  {
+    avxf l02 = unpacklo(r0,r2);
+    avxf h02 = unpackhi(r0,r2);
+    avxf l13 = unpacklo(r1,r3);
+    avxf h13 = unpackhi(r1,r3);
+    c0 = unpacklo(l02,l13);
+    c1 = unpackhi(l02,l13);
+    c2 = unpacklo(h02,h13);
+  }
+
   __forceinline void transpose(const avxf& r0, const avxf& r1, const avxf& r2, const avxf& r3, const avxf& r4, const avxf& r5, const avxf& r6, const avxf& r7,
                                avxf& c0, avxf& c1, avxf& c2, avxf& c3, avxf& c4, avxf& c5, avxf& c6, avxf& c7)
   {
-    avxf h0,h1,h2,h3; transpose4(r0,r1,r2,r3,h0,h1,h2,h3);
-    avxf h4,h5,h6,h7; transpose4(r4,r5,r6,r7,h4,h5,h6,h7);
+    avxf h0,h1,h2,h3; transpose(r0,r1,r2,r3,h0,h1,h2,h3);
+    avxf h4,h5,h6,h7; transpose(r4,r5,r6,r7,h4,h5,h6,h7);
     c0 = shuffle<0,2>(h0,h4);
     c1 = shuffle<0,2>(h1,h5);
     c2 = shuffle<0,2>(h2,h6);
@@ -378,6 +397,10 @@ namespace embree
     return _mm256_store_ps((float*)ptr,f);
   }
 
+  __forceinline void storeu8f(void *ptr, const avxf& f ) { 
+    return _mm256_storeu_ps((float*)ptr,f);
+  }
+
   __forceinline void store8f( const avxb& mask, void *ptr, const avxf& f ) { 
     return _mm256_maskstore_ps((float*)ptr,(__m256i)mask,f);
   }
@@ -401,8 +424,12 @@ namespace embree
   /// Euclidian Space Operators
   ////////////////////////////////////////////////////////////////////////////////
 
+  //__forceinline avxf dot ( const avxf& a, const avxf& b ) {
+  //  return vreduce_add4(a*b);
+  //}
+
   __forceinline avxf dot ( const avxf& a, const avxf& b ) {
-    return vreduce_add4(a*b);
+    return _mm256_dp_ps(a,b,0x7F);
   }
 
   __forceinline avxf cross ( const avxf& a, const avxf& b ) 

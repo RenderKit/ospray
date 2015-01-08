@@ -270,6 +270,93 @@ namespace embree
     template<typename LeafIntersector>    
     void BVH4HairIntersector16<LeafIntersector>::occluded(mic_i* valid_i, BVH4Hair* bvh, Ray16& ray16)
     {
+      /* near and node stack */
+      __aligned(64) BVH4Hair::NodeRef stack_node[3*BVH4Hair::maxDepth+1];
+
+      /* setup */
+      const mic_f inv_ray_length = rsqrt(dot(ray16.dir,ray16.dir));
+      const mic3f ray16_normalized = ray16.dir * inv_ray_length;
+      LinearSpace_mic3f ray16_space = frame(ray16_normalized).transposed();
+
+      const mic_m m_valid = *(mic_i*)valid_i != mic_i(0);
+      const mic3f rdir16  = rcp_safe(ray16.dir);
+      mic_m terminated    = !m_valid;
+      const mic_f inf     = mic_f(pos_inf);
+      const mic_f zero    = mic_f::zero();
+
+      const void * __restrict__ accel = (void*)bvh->primitivesPtr();
+      const void * __restrict__ nodes = (void*)bvh->nodePtr();
+
+      stack_node[0] = BVH4Hair::invalidNode;
+
+      long rayIndex = -1;
+      while((rayIndex = bitscan64(rayIndex,toInt(m_valid))) != BITSCAN_NO_BIT_SET_64)	    
+        {
+	  Precalculations pre(ray16_space,inv_ray_length,rayIndex);
+
+	  stack_node[1] = bvh->root; 
+	  size_t sindex = 2;
+
+	  const mic_f org_xyz      = loadAOS4to16f(rayIndex,ray16.org.x,ray16.org.y,ray16.org.z);
+	  const mic_f dir_xyz      = loadAOS4to16f(rayIndex,ray16.dir.x,ray16.dir.y,ray16.dir.z);
+	  const mic_f min_dist_xyz = broadcast1to16f(&ray16.tnear[rayIndex]);
+	  const mic_f max_dist_xyz = broadcast1to16f(&ray16.tfar[rayIndex]);
+	  const mic_f rdir_xyz     = loadAOS4to16f(rayIndex,rdir16.x,rdir16.y,rdir16.z);
+	  const mic_f org_rdir_xyz = rdir_xyz * org_xyz;
+
+	  const unsigned int leaf_mask    = BVH4HAIR_LEAF_MASK;
+
+	  while (1)
+	    {
+	      BVH4Hair::NodeRef curNode = stack_node[sindex-1];
+	      sindex--;
+
+	      traverse_single_occluded(curNode,
+				       sindex,
+				       dir_xyz,
+				       org_xyz,
+				       rdir_xyz,
+				       org_rdir_xyz,
+				       min_dist_xyz,
+				       max_dist_xyz,
+				       stack_node,
+				       nodes,
+				       leaf_mask);
+
+
+	      /* return if stack is empty */
+	      if (unlikely(curNode == BVH4Hair::invalidNode)) break;
+
+	      STAT3(shadow.trav_leaves,1,1,1);
+
+	      /* intersect one ray against bezier curves */
+
+	      //////////////////////////////////////////////////////////////////////////////////////////////////
+	      BVH4Hair::NodeRef curNode4i = (unsigned int)curNode;
+
+	      const bool hit = LeafIntersector::occluded(curNode4i,
+							 rayIndex,
+							 dir_xyz,
+							 org_xyz,
+							 min_dist_xyz,
+							 max_dist_xyz,
+							 ray16,
+							 terminated,
+							 accel,
+							 (Scene*)bvh->geometry,
+							 pre);
+
+	      if (unlikely(hit)) break;
+	      //////////////////////////////////////////////////////////////////////////////////////////////////
+
+	    }
+
+
+	  if (unlikely(all(toMask(terminated)))) break;
+	}
+
+
+      store16i(m_valid & toMask(terminated),&ray16.geomID,0);
     }
     
 

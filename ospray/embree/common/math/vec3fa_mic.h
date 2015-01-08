@@ -17,6 +17,7 @@
 #pragma once
 
 #include "math.h"
+#include "simd/mic.h"
 
 namespace embree
 {
@@ -68,10 +69,11 @@ namespace embree
   struct __aligned(64) Vec3fa_t 
   {
     __m512 m512; 
-    
+        
     ////////////////////////////////////////////////////////////////////////////////
     /// Constructors, Assignment & Cast Operators
     ////////////////////////////////////////////////////////////////////////////////
+    __forceinline Vec3fa_t( ) { m512 = _mm512_undefined(); }
 
     __forceinline Vec3fa_t( const __m512 a ) : m512(a) {}
     __forceinline Vec3fa_t            ( const Vec3fa_t& other ) { m512 = other.m512; }
@@ -79,6 +81,9 @@ namespace embree
     
     __forceinline operator const __m512&( void ) const { return m512; }
     __forceinline operator       __m512&( void )       { return m512; }
+
+    __forceinline operator const mic_f( void ) const { return mic_f(m512); }
+    __forceinline operator       mic_f( void )       { return mic_f(m512); }
 
   public:
     __forceinline explicit Vec3fa_t ( float a ) 
@@ -161,6 +166,7 @@ namespace embree
   __forceinline Vec3fa_t nmadd ( const Vec3fa_t& a, const Vec3fa_t& b, const Vec3fa_t& c) { return _mm512_fnmadd_ps(a,b,c); }
   __forceinline Vec3fa_t nmsub ( const Vec3fa_t& a, const Vec3fa_t& b, const Vec3fa_t& c) { return _mm512_fnmsub_ps(a,b,c); }
 
+
   ////////////////////////////////////////////////////////////////////////////////
   /// Assignment Operators
   ////////////////////////////////////////////////////////////////////////////////
@@ -169,6 +175,10 @@ namespace embree
   __forceinline Vec3fa& operator -=( Vec3fa& a, const Vec3fa_t& b ) { return a = a - b; }
   __forceinline Vec3fa& operator *=( Vec3fa& a, const float    b ) { return a = a * b; }
   __forceinline Vec3fa& operator /=( Vec3fa& a, const float    b ) { return a = a / b; }
+
+  __forceinline Vec3fa_t& operator +=( Vec3fa_t& a, const Vec3fa_t& b ) { return a = a + b; }
+  __forceinline Vec3fa_t& operator *=( Vec3fa_t& a, const float    b  ) { return a = a * b; }
+  __forceinline Vec3fa_t& operator /=( Vec3fa_t& a, const float    b  ) { return a = a / b; }
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Reductions
@@ -255,4 +265,11 @@ namespace embree
   inline std::ostream& operator<<(std::ostream& cout, const Vec3fa& a) {
     return cout << "(" << a.x << ", " << a.y << ", " << a.z << ", " << a.w << ")";
   }
+
+  inline std::ostream& operator<<(std::ostream& cout, const Vec3fa_t& a) {
+    const float * const f = (float*)&a.m512;
+    return cout << "(" << f[0] << ", " << f[1] << ", " << f[2] << ", " << f[3] << ")";
+
+  }
+
 }

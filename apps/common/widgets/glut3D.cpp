@@ -21,6 +21,7 @@
 #include "GL/glut.h"
 #endif
 #include <sys/times.h>
+#include <unistd.h> // for usleep
 
 namespace ospray {
 
@@ -235,6 +236,9 @@ namespace ospray {
         forceRedraw();
       }
     }
+
+    void Glut3DWidget::idle()
+    { usleep(1000); }
 
     void Glut3DWidget::reshape(const vec2i &newSize)
     {

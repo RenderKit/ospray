@@ -20,8 +20,7 @@ INCLUDE(icc_xeonphi)
 
 ADD_DEFINITIONS(-D__TARGET_XEON_PHI__)
 
-ADD_ISPC_LIBRARY(embree_xeonphi SHARED
-
+ADD_ISPC_LIBRARY(embree_xeonphi ${EMBREE_LIB_TYPE}
   ../common/stat.cpp 
   ../common/globals.cpp 
   ../common/alloc.cpp 
@@ -38,11 +37,22 @@ ADD_ISPC_LIBRARY(embree_xeonphi SHARED
   ../common/scene_bezier_curves.cpp
   ../common/scene_subdiv_mesh.cpp
   ../common/raystream_log.cpp
-  
+  ../common/subdiv/subdivpatch1base.cpp
+  ../common/subdiv/tessellation_cache.cpp
+
+  ../algorithms/parallel_for.cpp
+  ../algorithms/parallel_reduce.cpp
+  ../algorithms/parallel_prefix_sum.cpp
+  ../algorithms/parallel_for_for.cpp
+  ../algorithms/parallel_for_for_prefix_sum.cpp
+  ../algorithms/sort.cpp
+  ../algorithms/pset.cpp
+  ../algorithms/pmap.cpp
+  ../algorithms/prefix.cpp
+
   geometry/triangle1.cpp
   geometry/instance_intersector1.cpp
   geometry/instance_intersector16.cpp
-  geometry/subdiv_intersector16.cpp
 
   builders/parallel_builder.cpp
 
@@ -55,6 +65,7 @@ ADD_ISPC_LIBRARY(embree_xeonphi SHARED
   bvh4i/bvh4i_intersector16_single.cpp
   bvh4i/bvh4i_intersector16_hybrid.cpp
   bvh4i/bvh4i_intersector16_test.cpp
+  bvh4i/bvh4i_intersector16_subdiv.cpp
   bvh4i/bvh4i_intersector1.cpp
   bvh4i/bvh4i_statistics.cpp
   bvh4i/bvh4i_rotate.cpp
@@ -73,5 +84,5 @@ ADD_ISPC_LIBRARY(embree_xeonphi SHARED
 )
 
 TARGET_LINK_LIBRARIES(embree_xeonphi sys_xeonphi simd_xeonphi)
-SET_TARGET_PROPERTIES(embree_xeonphi PROPERTIES VERSION 2.3.3 SOVERSION 2)
+SET_TARGET_PROPERTIES(embree_xeonphi PROPERTIES VERSION 2.4.0 SOVERSION 2)
 INSTALL(TARGETS embree_xeonphi DESTINATION lib)

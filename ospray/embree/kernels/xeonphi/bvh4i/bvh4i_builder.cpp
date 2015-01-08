@@ -31,13 +31,15 @@
 #define L1_PREFETCH_ITEMS 2
 #define L2_PREFETCH_ITEMS 16
 
-#define TIMER(x)  
+#define TIMER(x) 
 #define DBG(x) 
 
 //#define PROFILE
 #define PROFILE_ITERATIONS 100
 
 #define MEASURE_MEMORY_ALLOCATION_TIME 0
+
+//#define CHECK_BUILD_RECORD_IN_DEBUG_MODE
 
 //#define MERGE_TRIANGLE_PAIRS
 
@@ -101,7 +103,8 @@ namespace embree
       node(NULL), 
       accel(NULL), 
       size_prims(0),
-      num64BytesBlocksPerNode(bvh4iNodeSize / 64)
+      num64BytesBlocksPerNode(bvh4iNodeSize / 64),
+      leafItemThreshold(BVH4i::N)
   {
     DBG(PING);
   }
@@ -139,7 +142,8 @@ namespace embree
   void BVH4iBuilder::allocateMemoryPools(const size_t numPrims, 
 					 const size_t numNodes,
 					 const size_t sizeNodeInBytes,
-					 const size_t sizeAccelInBytes)
+					 const size_t sizeAccelInBytes,
+					 const float  bvh4iNodePreallocFactor)
   {
 #if MEASURE_MEMORY_ALLOCATION_TIME == 1
     double msec = 0.0;
@@ -166,22 +170,21 @@ namespace embree
       
     // === allocated memory for primrefs,nodes, and accel ===
     const size_t size_primrefs = numPrims * sizeof(PrimRef) + additional_size;
-    // const size_t size_node     = (numNodes * BVH4I_NODE_PREALLOC_FACTOR * sizeNodeInBytes + additional_size) * g_memory_preallocation_factor;
-    const size_t size_node     = (double)(numNodes * BVH4I_NODE_PREALLOC_FACTOR * sizeNodeInBytes + additional_size) * g_memory_preallocation_factor;
+    const size_t size_node     = (double)(numNodes * bvh4iNodePreallocFactor * sizeNodeInBytes + additional_size) * g_memory_preallocation_factor;
     const size_t size_accel    = numPrims * sizeAccelInBytes + additional_size;
 
     numAllocated64BytesBlocks = size_node / sizeof(mic_f);
-    
-#if DEBUG  
-    DBG_PRINT(numPrims);
-    DBG_PRINT(numNodes);
-    DBG_PRINT(sizeNodeInBytes);
-    DBG_PRINT(sizeAccelInBytes);
-    DBG_PRINT(numAllocated64BytesBlocks);
-    DBG_PRINT(size_primrefs);
-    DBG_PRINT(size_node);
-    DBG_PRINT(size_accel);
-#endif
+
+    DBG(
+	DBG_PRINT(numPrims);
+	DBG_PRINT(numNodes);
+	DBG_PRINT(sizeNodeInBytes);
+	DBG_PRINT(sizeAccelInBytes);
+	DBG_PRINT(numAllocated64BytesBlocks);
+	DBG_PRINT(size_primrefs);
+	DBG_PRINT(size_node);
+	DBG_PRINT(size_accel);
+	);
 
     prims = (PrimRef  *) os_malloc(size_primrefs); 
     node  = (mic_i    *) os_malloc(size_node);
@@ -244,13 +247,12 @@ namespace embree
     /* print builder name */
     if (unlikely(g_verbose >= 2)) {
       printBuilderName();
-      DBG_PRINT(totalNumPrimitives);
 
-#if DEBUG
-      DBG_PRINT(totalNumPrimitives);
-      DBG_PRINT(threadIndex);
-      DBG_PRINT(threadCount);
-#endif
+      DBG(
+	  DBG_PRINT(totalNumPrimitives);
+	  DBG_PRINT(threadIndex);
+	  DBG_PRINT(threadCount);
+	  );
     }
 
     if (likely(totalNumPrimitives == 0))
@@ -265,7 +267,6 @@ namespace embree
 
     /* allocate BVH data */
     allocateData(threadCount ,totalNumPrimitives);
-    
     if (likely(numPrimitives > SINGLE_THREADED_BUILD_THRESHOLD &&  threadCount > 1) )
       {
 	DBG(std::cout << "PARALLEL BUILD" << std::endl);
@@ -1037,7 +1038,7 @@ namespace embree
 #endif
 
     /* mark as leaf if leaf threshold reached */
-    if (current.items() <= BVH4i::N) {
+    if (current.items() <= leafItemThreshold) {
       current.createLeaf();
       return false;
     }
@@ -1148,8 +1149,8 @@ namespace embree
     checkBuildRecord(rightChild);
 #endif
 
-    if (leftChild.items()  <= BVH4i::N) leftChild.createLeaf();
-    if (rightChild.items() <= BVH4i::N) rightChild.createLeaf();	
+    if (leftChild.items()  <= leafItemThreshold) leftChild.createLeaf();
+    if (rightChild.items() <= leafItemThreshold) rightChild.createLeaf();	
     return true;
   }
 
@@ -1168,7 +1169,7 @@ namespace embree
 #endif
   
     /* mark as leaf if leaf threshold reached */
-    if (items <= BVH4i::N) {
+    if (items <= leafItemThreshold) {
       current.createLeaf();
       return false;
     }
@@ -1214,8 +1215,8 @@ namespace embree
     checkBuildRecord(rightChild);
 #endif
      
-    if (leftChild.items()  <= BVH4i::N) leftChild.createLeaf();
-    if (rightChild.items() <= BVH4i::N) rightChild.createLeaf();
+    if (leftChild.items()  <= leafItemThreshold) leftChild.createLeaf();
+    if (rightChild.items() <= leafItemThreshold) rightChild.createLeaf();
     return true;
   }
 
@@ -1238,7 +1239,7 @@ namespace embree
 #endif
   
     /* mark as leaf if leaf threshold reached */
-    if (items <= BVH4i::N) {
+    if (items <= leafItemThreshold) {
       current.createLeaf();
       return false;
     }
@@ -1288,8 +1289,8 @@ namespace embree
     checkBuildRecord(rightChild);
 #endif
      
-    if (leftChild.items()  <= BVH4i::N) leftChild.createLeaf();
-    if (rightChild.items() <= BVH4i::N) rightChild.createLeaf();
+    if (leftChild.items()  <= leafItemThreshold) leftChild.createLeaf();
+    if (rightChild.items() <= leafItemThreshold) rightChild.createLeaf();
     return true;
   }
 
@@ -1327,6 +1328,10 @@ namespace embree
     unsigned int blocks4 = (current.items()+3)/4;
     unsigned int center = current.begin + (blocks4/2)*4; // (current.begin + current.end)/2;
 
+    if (unlikely(current.items() <= 4))
+      {
+	center = current.begin + 1;
+      }
     assert(center != current.begin);
     assert(center != current.end);
     
@@ -1359,7 +1364,7 @@ namespace embree
 #endif
     
     /* create leaf */
-    if (current.items() <= BVH4i::N) {
+    if (current.items() <= leafItemThreshold) {
       createBVH4iLeaf(*(BVH4i::NodeRef*)current.parentPtr,current.begin,current.items());
 
 #if defined(DEBUG)
@@ -1380,6 +1385,9 @@ namespace embree
 
     /* allocate next four nodes */
     size_t numChildren = 4;
+    if (current.items() <= 4 )
+      numChildren = current.items();
+
     for (size_t i=0; i<numChildren; i++) 
       children[i].depth = current.depth+1;
 
@@ -1512,6 +1520,7 @@ namespace embree
   
   void BVH4iBuilder::checkBuildRecord(const BuildRecord &current)
   {
+#if defined(CHECK_BUILD_RECORD_IN_DEBUG_MODE)
     BBox3fa check_box;
     BBox3fa box;
     check_box = empty;
@@ -1539,6 +1548,7 @@ namespace embree
 	DBG_PRINT(box);
 	FATAL("check build record => subset(check_box,box) && subset(box,check_box)");
       }
+#endif
   }
 
   
@@ -1728,6 +1738,15 @@ namespace embree
       {
 	BuildRecord br;
 	if (!global_workStack.pop_nolock_largest(br)) break;
+
+#if 0
+	if (unlikely(br.items() < 4096)) 
+	  {
+	    global_workStack.push_nolock(br);
+	    break;
+	  }
+#endif
+	
 	DBG(DBG_PRINT(br));
 	recurseSAH(br,alloc,BUILD_TOP_LEVEL,threadIndex,threadCount);      
       }

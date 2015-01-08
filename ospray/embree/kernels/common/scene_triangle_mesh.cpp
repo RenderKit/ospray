@@ -40,7 +40,7 @@ namespace embree
   void TriangleMesh::disabling() 
   { 
     if (numTimeSteps == 1) { atomic_add(&parent->numTriangles ,-(ssize_t)numTriangles); }
-	else                   { atomic_add(&parent->numTriangles2,-(ssize_t)numTriangles); }
+    else                   { atomic_add(&parent->numTriangles2,-(ssize_t)numTriangles); }
   }
 
   void TriangleMesh::setMask (unsigned mask) 
@@ -67,12 +67,12 @@ namespace embree
 
     /* verify that all vertex accesses are 16 bytes aligned */
 #if defined(__MIC__)
-    if (type == RTC_VERTEX_BUFFER0 || type == RTC_VERTEX_BUFFER1) {
-      if (((size_t(ptr) + offset) & 0xF) || (stride & 0xF)) {
-        process_error(RTC_INVALID_OPERATION,"data must be 16 bytes aligned");
-        return;
-      }
-    }
+    // if (type == RTC_VERTEX_BUFFER0 || type == RTC_VERTEX_BUFFER1) {
+    //   if (((size_t(ptr) + offset) & 0xF) || (stride & 0xF)) {
+    //     process_error(RTC_INVALID_OPERATION,"data must be 16 bytes aligned");
+    //     return;
+    //   }
+    // }
 #endif
 
     switch (type) {
@@ -83,14 +83,14 @@ namespace embree
       vertices[0].set(ptr,offset,stride); 
       if (numVertices) {
         /* test if array is properly padded */
-        volatile int w = *((int*)&vertices[0][numVertices-1]+3); // FIXME: is failing hard avoidable?
+        volatile int w = *((int*)vertices[0].getPtr(numVertices-1)+3); // FIXME: is failing hard avoidable?
       }
       break;
     case RTC_VERTEX_BUFFER1: 
       vertices[1].set(ptr,offset,stride); 
       if (numVertices) {
         /* test if array is properly padded */
-        volatile int w = *((int*)&vertices[1][numVertices-1]+3); // FIXME: is failing hard avoidable?
+        volatile int w = *((int*)vertices[1].getPtr(numVertices-1)+3); // FIXME: is failing hard avoidable?
       }
       break;
     default: 
@@ -169,7 +169,7 @@ namespace embree
 
     for (size_t j=0; j<numTimeSteps; j++) {
       while ((file.tellp() % 16) != 0) { char c = 0; file.write(&c,1); }
-      for (size_t i=0; i<numVertices; i++) file.write((char*)&vertex(i,j),sizeof(Vec3fa));  
+      for (size_t i=0; i<numVertices; i++) file.write((char*)vertexPtr(i,j),sizeof(Vec3fa));  
     }
 
     while ((file.tellp() % 16) != 0) { char c = 0; file.write(&c,1); }

@@ -66,6 +66,21 @@ namespace embree
     static __forceinline ssef broadcast( const void* const a ) { return _mm_set1_ps(*(float*)a); }
 #endif
 
+#if defined(__SSE4_1__)
+    static __forceinline ssef load( const unsigned char* const ptr ) { 
+      return _mm_cvtepi32_ps(_mm_cvtepu8_epi32(_mm_loadu_si128((__m128i*)ptr)));
+    }
+#else
+    static __forceinline ssef load( const unsigned char* const ptr ) { 
+      //return _mm_cvtpu8_ps(*(__m64*)ptr); // don't enable, will use MMX instructions
+      return ssef(ptr[0],ptr[1],ptr[2],ptr[3]);
+    }
+#endif
+
+    static __forceinline ssef loadu( const void* const a ) { // FIXME: no void* pointer here, use float*
+      return _mm_loadu_ps((float*)a); 
+    }
+
     ////////////////////////////////////////////////////////////////////////////////
     /// Array Access
     ////////////////////////////////////////////////////////////////////////////////
@@ -83,7 +98,7 @@ namespace embree
   __forceinline const ssef operator +( const ssef& a ) { return a; }
   __forceinline const ssef operator -( const ssef& a ) { return _mm_xor_ps(a.m128, _mm_castsi128_ps(_mm_set1_epi32(0x80000000))); }
   __forceinline const ssef abs       ( const ssef& a ) { return _mm_and_ps(a.m128, _mm_castsi128_ps(_mm_set1_epi32(0x7fffffff))); }
-  __forceinline const ssef sign      ( const ssef& a ) { return _mm_blendv_ps(ssef(one), -ssef(one), _mm_cmplt_ps (a,ssef(zero))); }
+  __forceinline const ssef sign      ( const ssef& a ) { return blendv_ps(ssef(one), -ssef(one), _mm_cmplt_ps (a,ssef(zero))); }
   __forceinline const ssef signmsk   ( const ssef& a ) { return _mm_and_ps(a.m128,_mm_castsi128_ps(_mm_set1_epi32(0x80000000))); }
   
   __forceinline const ssef rcp  ( const ssef& a ) {
@@ -216,7 +231,7 @@ namespace embree
  }
 
 #if defined(__SSE4_1__) 
-#if defined(__clang__) || defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#if defined(__clang__) || defined(_MSC_VER) && (!defined(__INTEL_COMPILER) || defined(_DEBUG))
 __forceinline const ssef select(const int mask, const ssef& t, const ssef& f) {
  return select(sseb(mask), t, f);
 }
@@ -291,6 +306,7 @@ __forceinline const ssef select(const int mask, const ssef& t, const ssef& f) {
   template<size_t dst, size_t src> __forceinline const ssef insert( const ssef& a, const ssef& b ) { return insert<dst, src, 0>(a, b); }
   template<size_t dst>             __forceinline const ssef insert( const ssef& a, const float b ) { return insert<dst,      0>(a, _mm_set_ss(b)); }
 #else
+  template<size_t dst, size_t src> __forceinline const ssef insert( const ssef& a, const ssef& b ) { ssef c = a; c[dst] = b[src]; return c; }
   template<size_t dst>             __forceinline const ssef insert( const ssef& a, const float b ) { ssef c = a; c[dst] = b; return c; }
 #endif
 

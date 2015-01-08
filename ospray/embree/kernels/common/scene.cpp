@@ -19,13 +19,11 @@
 #if !defined(__MIC__)
 #include "bvh4/bvh4.h"
 #include "bvh8/bvh8.h"
-#include "geometry/subdivpatchdispl1.h"
 #else
 #include "xeonphi/bvh4i/bvh4i.h"
 #include "xeonphi/bvh4mb/bvh4mb.h"
 #include "xeonphi/bvh4hair/bvh4hair.h"
 #endif
-
 
 namespace embree
 {
@@ -35,7 +33,8 @@ namespace embree
       numBezierCurves(0), numBezierCurves2(0), 
       numSubdivPatches(0), numSubdivPatches2(0), 
       numUserGeometries1(0), 
-      numIntersectionFilters4(0), numIntersectionFilters8(0), numIntersectionFilters16(0)
+      numIntersectionFilters4(0), numIntersectionFilters8(0), numIntersectionFilters16(0),
+      commitCounter(0)
   {
 #if !defined(__MIC__)
     lockstep_scheduler.taskBarrier.init(TaskScheduler::getNumThreads());
@@ -113,11 +112,7 @@ namespace embree
     accels.add(BVH4::BVH4UserGeometry(this));
     createHairAccel();
     accels.add(BVH4::BVH4OBBBezier1iMB(this,false));
-
-    if      (g_subdiv_accel == "default"               ) accels.add(BVH4::BVH4SubdivPatch1(this));
-    else if (g_subdiv_accel == "bvh4.subdivpatch1"     ) accels.add(BVH4::BVH4SubdivPatch1(this));
-    else if (g_subdiv_accel == "bvh4.subdivpatchdispl1") accels.add(BVH4::BVH4SubdivPatchDispl1(this));
-    else THROW_RUNTIME_ERROR("unknown accel "+g_subdiv_accel);
+    createSubdivAccel();
 
 #endif
   }
@@ -133,7 +128,7 @@ namespace embree
         switch (mode) {
         case /*0b00*/ 0: 
 #if defined (__TARGET_AVX__)
-          if (has_feature(AVX)) // on AVX machines BVH8 gives lower performance, only enable on AVX2!
+          if (has_feature(AVX))
 	  {
             if (isHighQuality()) accels.add(BVH8::BVH8Triangle4SpatialSplit(this)); 
             else                 accels.add(BVH8::BVH8Triangle4ObjectSplit(this)); 
@@ -210,6 +205,26 @@ namespace embree
     else THROW_RUNTIME_ERROR("unknown hair acceleration structure "+g_hair_accel);
   }
 
+  void Scene::createSubdivAccel()
+  {
+    if (g_subdiv_accel == "default") 
+    {
+      if (isIncoherent(flags)) {
+        if (isCompact()) accels.add(BVH4::BVH4SubdivGridLazy(this));
+        else             accels.add(BVH4::BVH4SubdivGridEager(this));
+      }
+      else {
+        accels.add(BVH4::BVH4SubdivPatch1Cached(this));
+      }
+    }
+    else if (g_subdiv_accel == "bvh4.subdivpatch1"      ) accels.add(BVH4::BVH4SubdivPatch1(this));
+    else if (g_subdiv_accel == "bvh4.subdivpatch1cached") accels.add(BVH4::BVH4SubdivPatch1Cached(this));
+    else if (g_subdiv_accel == "bvh4.grid.adaptive"     ) accels.add(BVH4::BVH4SubdivGrid(this));
+    else if (g_subdiv_accel == "bvh4.grid.eager"        ) accels.add(BVH4::BVH4SubdivGridEager(this));
+    else if (g_subdiv_accel == "bvh4.grid.lazy"         ) accels.add(BVH4::BVH4SubdivGridLazy(this));
+    else THROW_RUNTIME_ERROR("unknown subdiv accel "+g_subdiv_accel);
+  }
+
 #endif
 
   Scene::~Scene () 
@@ -245,7 +260,7 @@ namespace embree
     return geom->id;
   }
 
-  unsigned Scene::newSubdivisionMesh (RTCGeometryFlags gflags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numTimeSteps) 
+  unsigned Scene::newSubdivisionMesh (RTCGeometryFlags gflags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numEdgeCreases, size_t numVertexCreases, size_t numHoles, size_t numTimeSteps) 
   {
     if (isStatic() && (gflags != RTC_GEOMETRY_STATIC)) {
       process_error(RTC_INVALID_OPERATION,"static scenes can only contain static geometries");
@@ -257,7 +272,7 @@ namespace embree
       return -1;
     }
     
-    Geometry* geom = new SubdivMesh(this,gflags,numFaces,numEdges,numVertices,numTimeSteps);
+    Geometry* geom = new SubdivMesh(this,gflags,numFaces,numEdges,numVertices,numEdgeCreases,numVertexCreases,numHoles,numTimeSteps);
     return geom->id;
   }
 
@@ -301,6 +316,7 @@ namespace embree
     delete geometry;
   }
 
+
   void Scene::task_build_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount, TaskScheduler::Event* event) 
   {
     LockStepTaskScheduler::Init init(threadIndex,threadCount,&lockstep_scheduler);
@@ -309,41 +325,6 @@ namespace embree
 
   void Scene::build (size_t threadIndex, size_t threadCount) 
   {
-#if 0 // FIXME: remove
-    SubdivMesh* subdivmesh = getSubdivMesh(0);
-    subdivmesh->initializeHalfEdgeStructures();
-    size_t N = subdivmesh->numFaces;
-    for (size_t i=0; i<N; i++)
-    {
-      SubdivPatchDispl1* patch = new SubdivPatchDispl1(&subdivmesh->halfEdges[4*i], subdivmesh->getVertexPositionPtr(0), 0, i, 8, true); // FIXME: wrong geomID
-      const size_t width  = patch->size();
-      const size_t height = patch->size();
-      TriangleMesh* mesh = new TriangleMesh (this, RTC_GEOMETRY_STATIC, (width-1)*(height-1)*2, width*height, 1);
-      Vec3fa* vertices = (Vec3fa*) mesh->map(RTC_VERTEX_BUFFER);
-      for (size_t y=0; y<height; y++) {
-        for (size_t x=0; x<width; x++) {
-          vertices[y*width+x] = patch->get(x,y);
-        }
-      }
-      mesh->unmap(RTC_VERTEX_BUFFER);
-      TriangleMesh::Triangle* triangles = (TriangleMesh::Triangle*) mesh->map(RTC_INDEX_BUFFER);
-      for (size_t y=0; y<height-1; y++) {
-        for (size_t x=0; x<width-1; x++) {
-          TriangleMesh::Triangle& tri0 = triangles[2*(y*(width-1)+x)+0];
-          tri0.v[0] = (y+0)*width + (x+0);
-          tri0.v[1] = (y+0)*width + (x+1);
-          tri0.v[2] = (y+1)*width + (x+1);
-          TriangleMesh::Triangle& tri1 = triangles[2*(y*(width-1)+x)+1];
-          tri1.v[0] = (y+0)*width + (x+0);
-          tri1.v[1] = (y+1)*width + (x+1);
-          tri1.v[2] = (y+1)*width + (x+0);
-        }
-      }
-      mesh->unmap(RTC_INDEX_BUFFER);
-    }
-    remove(subdivmesh);
-#endif
-
     /* all user worker threads properly enter and leave the tasking system */
     LockStepTaskScheduler::Init init(threadIndex,threadCount,&lockstep_scheduler);
     if (threadIndex != 0) return;
@@ -362,7 +343,7 @@ namespace embree
     }
 
     /* verify geometry in debug mode  */
-#if 0 && defined(DEBUG)
+#if 0 && defined(DEBUG) // FIXME: enable
     for (size_t i=0; i<geometries.size(); i++) {
       if (geometries[i]) {
         if (!geometries[i]->verify()) {
@@ -434,6 +415,9 @@ namespace embree
       std::cout << "selected scene intersector" << std::endl;
       intersectors.print(2);
     }
+    
+    /* update commit counter */
+    commitCounter++;
   }
 
   void Scene::write(std::ofstream& file)

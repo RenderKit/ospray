@@ -28,6 +28,8 @@
 #include "ospray/lights/Light.h"
 #include "ospray/texture/Texture2D.h"
 #include "MPILoadBalancer.h"
+// std
+#include <unistd.h> // for gethostname()
 
 namespace ospray {
   namespace mpi {

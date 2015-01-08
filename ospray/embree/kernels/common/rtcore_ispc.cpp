@@ -153,8 +153,12 @@ namespace embree
     rtcEnable(scene,geomID);
   }
   
-  extern "C" void ispcModified (RTCScene scene, unsigned geomID) {
+  extern "C" void ispcUpdate (RTCScene scene, unsigned geomID) {
     rtcUpdate(scene,geomID);
+  }
+
+  extern "C" void ispcUpdateBuffer (RTCScene scene, unsigned geomID, RTCBufferType type) {
+    rtcUpdateBuffer(scene,geomID,type);
   }
   
   extern "C" void ispcDisable (RTCScene scene, unsigned geomID) {
@@ -339,8 +343,18 @@ namespace embree
     CATCH_END;
   }
 
-  extern "C" unsigned ispcNewSubdivisionMesh (RTCScene scene, RTCGeometryFlags flags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numTimeSteps) {
-    return rtcNewSubdivisionMesh((RTCScene)scene,flags,numFaces,numEdges,numVertices,numTimeSteps);
+  extern "C" unsigned ispcNewSubdivisionMesh (RTCScene scene, RTCGeometryFlags flags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numEdgeCreases, size_t numVertexCreases, size_t numHoles, size_t numTimeSteps) {
+    return rtcNewSubdivisionMesh((RTCScene)scene,flags,numFaces,numEdges,numVertices,numEdgeCreases,numVertexCreases,numHoles,numTimeSteps);
+  }
+
+  extern "C" void ispcSetDisplacementFunction (RTCScene scene, unsigned int geomID, void* func, RTCBounds* bounds)
+  {
+    CATCH_BEGIN;
+    TRACE(rtcSetDisplacementFunction);
+    VERIFY_HANDLE(scene);
+    VERIFY_GEOMID(geomID);
+    ((Scene*)scene)->get(geomID)->setDisplacementFunction((RTCDisplacementFunc)func,bounds);
+    CATCH_END;
   }
 
 }

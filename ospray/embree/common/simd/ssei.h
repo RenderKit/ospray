@@ -62,6 +62,16 @@ namespace embree
     __forceinline ssei( StepTy )   : m128(_mm_set_epi32(3, 2, 1, 0)) {}
 
     ////////////////////////////////////////////////////////////////////////////////
+    /// Loads and Stores
+    ////////////////////////////////////////////////////////////////////////////////
+
+#if defined(__SSE4_1__)
+    static __forceinline ssei load( const unsigned char* const ptr ) { 
+      return _mm_cvtepu8_epi32(_mm_load_si128((__m128i*)ptr));
+    }
+#endif
+
+    ////////////////////////////////////////////////////////////////////////////////
     /// Array Access
     ////////////////////////////////////////////////////////////////////////////////
 
@@ -190,7 +200,7 @@ namespace embree
   }
 
 #if defined(__SSE4_1__) 
-#if defined(__clang__) || defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+#if defined(__clang__) || defined(_MSC_VER) && !defined(__INTEL_COMPILER) // FIXME: can this get removed?
   __forceinline const ssei select(const int mask, const ssei& t, const ssei& f) {
 	  return select(sseb(mask), t, f);
   }
@@ -267,6 +277,10 @@ namespace embree
 
   __forceinline ssei load4i( const void* const a ) { 
     return _mm_load_si128((__m128i*)a); 
+  }
+
+  __forceinline ssei loadu4i( const void* const a ) { 
+    return _mm_loadu_si128((__m128i*)a); 
   }
 
   __forceinline void store4i(void* ptr, const ssei& v) {

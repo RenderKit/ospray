@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#if 0
 #include "subdivpatchdispl1.h"
 #include "common/scene.h"
 
@@ -32,3 +33,4 @@ namespace embree
     return 1;
   }
 }
+#endif

@@ -29,7 +29,7 @@ namespace embree
 {
   /*! Interface to different task scheduler implementations. */
   /* __hidden */
-  class __hidden TaskScheduler : public RefCount
+  class TaskScheduler : public RefCount
   {
   public:
     struct Event;
@@ -232,7 +232,11 @@ namespace embree
       {
 	if (threadCount) 
 	{
-	  if (threadIndex == 0) scheduler->taskBarrier.init(threadCount);
+	  if (threadIndex == 0) {
+            scheduler->taskBarrier.init(threadCount);
+            scheduler->threadCount = threadCount;
+	    LockStepTaskScheduler::scheduler = scheduler;
+          }
 	  scheduler->barrier.wait(threadCount);
 	  scheduler->enter(threadIndex,threadCount);
 	}
@@ -242,12 +246,17 @@ namespace embree
 	if (threadIndex == 0 && threadCount != 0) {
 	  scheduler->leave(threadIndex,threadCount);
 	  scheduler->barrier.reset();
+	  LockStepTaskScheduler::scheduler = NULL;
 	}
       }
 
       size_t threadIndex, threadCount;
       LockStepTaskScheduler* scheduler;
     };
+
+    static __thread LockStepTaskScheduler* scheduler;
+    static LockStepTaskScheduler* instance();
+    static void setInstance(LockStepTaskScheduler*);
 
     static const unsigned int CONTROL_THREAD_ID = 0;
 
@@ -260,7 +269,10 @@ namespace embree
     __aligned(64) runFunction taskPtr;
     __aligned(64) runFunction2 taskPtr2;
     size_t numTasks;
-    size_t numThreads;
+    size_t numThreads; 
+
+    size_t getNumThreads() const { return threadCount; }
+    size_t threadCount;
     __aligned(64) void* volatile data;
 
 #if defined(__MIC__)
@@ -278,6 +290,10 @@ namespace embree
 
     void dispatchTaskMainLoop(const size_t threadID, const size_t numThreads);
     void releaseThreads(const size_t numThreads);
+
+    __forceinline bool dispatchTask(runFunction task, void* data) {
+      return dispatchTask(task, data, 0, threadCount);
+    }
   
     __forceinline bool dispatchTask(runFunction task, void* data, const size_t threadID, const size_t numThreads)
     {
@@ -296,6 +312,15 @@ namespace embree
       return LockStepTaskScheduler::dispatchTask(threadID, numThreads);
     }
 
+    __forceinline bool dispatchTaskSet(runFunction2 task, void* data, const size_t numTasks)
+    {
+      LockStepTaskScheduler::taskPtr = NULL;
+      LockStepTaskScheduler::taskPtr2 = task;
+      LockStepTaskScheduler::data = data;
+      LockStepTaskScheduler::numTasks = numTasks;
+      return LockStepTaskScheduler::dispatchTask(0, threadCount);
+    }
+
     void syncThreads(const size_t threadID, const size_t numThreads);
 
     void syncThreadsWithReduction(const size_t threadID, 
@@ -308,6 +333,8 @@ namespace embree
 
 
   };
+
+  extern __aligned(64) LockStepTaskScheduler g_regression_task_scheduler;
   
   class __aligned(64) LockStepTaskScheduler4ThreadsLocalCore
   {

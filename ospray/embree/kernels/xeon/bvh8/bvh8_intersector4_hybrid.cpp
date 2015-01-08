@@ -30,9 +30,9 @@ namespace embree
                                                                                  const ssef& ray_tnear, const ssef& ray_tfar)
     {
       /*! stack state */
-      StackItem stack[stackSizeSingle];  //!< stack of nodes 
-      StackItem* stackPtr = stack+1;        //!< current stack pointer
-      StackItem* stackEnd = stack+stackSizeSingle;
+      StackItemInt32<NodeRef> stack[stackSizeSingle];  //!< stack of nodes 
+      StackItemInt32<NodeRef>* stackPtr = stack+1;        //!< current stack pointer
+      StackItemInt32<NodeRef>* stackEnd = stack+stackSizeSingle;
       stack[0].ptr = root;
       stack[0].dist = neg_inf;
             
@@ -41,7 +41,7 @@ namespace embree
       const avx3f rdir(ray_rdir.x[k],ray_rdir.y[k],ray_rdir.z[k]);
       const avx3f org_rdir(org*rdir);
       avxf rayNear(ray_tnear[k]), rayFar(ray_tfar[k]);
-     
+
       /*! offsets to select the side that becomes the lower or upper bound */
       const size_t nearX = ray_rdir.x[k] >= 0.0f ? 0*sizeof(avxf) : 1*sizeof(avxf);
       const size_t nearY = ray_rdir.y[k] >= 0.0f ? 2*sizeof(avxf) : 3*sizeof(avxf);
@@ -108,7 +108,7 @@ namespace embree
             assert(cur != BVH8::emptyNode);
             continue;
           }
-          
+
           /*! two children are hit, push far child, and continue with closer child */
           NodeRef c0 = node->child(r); c0.prefetch(); const unsigned int d0 = ((unsigned int*)&tNear)[r];
           r = __bscf(mask);
@@ -164,7 +164,7 @@ namespace embree
 	assert(cur != BVH8::emptyNode);
         STAT3(normal.trav_leaves,1,1,1);
         size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
-	PrimitiveIntersector4::intersect(pre,ray,k,prim,num,bvh->geometry);
+	PrimitiveIntersector4::intersect(pre,ray,k,prim,num,bvh->scene);
         rayFar = ray.tfar[k];
       }
     }
@@ -221,9 +221,9 @@ namespace embree
           }
           ray_tfar = min(ray_tfar,ray.tfar);
           continue;
-        }
+	}
 #endif
-        
+
         while (1)
         {
           /* test if this is a leaf node */
@@ -314,7 +314,7 @@ namespace embree
         const sseb valid_leaf = ray_tfar > curDist;
         STAT3(normal.trav_leaves,1,popcnt(valid_leaf),4);
         size_t items; const Primitive* prim = (Primitive*) cur.leaf(items);
-        PrimitiveIntersector4::intersect(valid_leaf,pre,ray,prim,items,bvh->geometry);
+        PrimitiveIntersector4::intersect(valid_leaf,pre,ray,prim,items,bvh->scene);
         ray_tfar = select(valid_leaf,ray.tfar,ray_tfar);
       }
       AVX_ZERO_UPPER();
@@ -434,7 +434,7 @@ namespace embree
 	assert(cur != BVH8::emptyNode);
         STAT3(shadow.trav_leaves,1,1,1);
 	size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
-        if (PrimitiveIntersector4::occluded(pre,ray,k,prim,num,bvh->geometry)) {
+        if (PrimitiveIntersector4::occluded(pre,ray,k,prim,num,bvh->scene)) {
           ray.geomID[k] = 0;
           return true;
         }
@@ -589,7 +589,7 @@ namespace embree
         const sseb valid_leaf = ray_tfar > curDist;
         STAT3(shadow.trav_leaves,1,popcnt(valid_leaf),4);
         size_t items; const Primitive* prim = (Primitive*) cur.leaf(items);
-        terminated |= PrimitiveIntersector4::occluded(!terminated,pre,ray,prim,items,bvh->geometry);
+        terminated |= PrimitiveIntersector4::occluded(!terminated,pre,ray,prim,items,bvh->scene);
         if (all(terminated)) break;
         ray_tfar = select(terminated,ssef(neg_inf),ray_tfar);
       }

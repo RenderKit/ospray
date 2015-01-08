@@ -50,18 +50,22 @@ extern "C" uniform unsigned int ispcNewBezierCurves (RTCScene scene,
                                                               uniform size_tt numTimeSteps);
 
 extern "C" uniform unsigned int ispcNewSubdivisionMesh (RTCScene scene,
-                                                 uniform RTCGeometryFlags flags,
-                                                 uniform size_tt numFaces,
-                                                 uniform size_tt numEdges,
-                                                 uniform size_tt numVertices,
-                                                 uniform size_tt numTimeSteps);
+                                                        uniform RTCGeometryFlags flags,
+                                                        uniform size_tt numFaces,
+                                                        uniform size_tt numEdges,
+                                                        uniform size_tt numVertices,
+                                                        uniform size_tt numCreases,
+                                                        uniform size_tt numCorners,
+                                                        uniform size_tt numHoles,
+                                                        uniform size_tt numTimeSteps);
 
 extern "C" void ispcSetRayMask (RTCScene scene, uniform unsigned int geomID, uniform int mask);
 extern "C" void* uniform ispcMapBuffer(RTCScene scene, uniform unsigned int geomID, uniform RTCBufferType type);
 extern "C" void ispcUnmapBuffer(RTCScene scene, uniform unsigned int geomID, uniform RTCBufferType type);
 extern "C" void ispcSetBuffer(RTCScene scene, uniform unsigned int geomID, uniform RTCBufferType type, void* uniform ptr, uniform size_tt offset, uniform size_tt stride);
 extern "C" void ispcEnable (RTCScene scene, uniform unsigned int geomID);
-extern "C" void ispcModified (RTCScene scene, uniform unsigned int geomID);
+extern "C" void ispcUpdate (RTCScene scene, uniform unsigned int geomID);
+extern "C" void ispcUpdateBuffer (RTCScene scene, uniform unsigned int geomID, uniform RTCBufferType type);
 extern "C" void ispcDisable (RTCScene scene, uniform unsigned int geomID);
 extern "C" void ispcDeleteGeometry (RTCScene scene, uniform unsigned int geomID);
 
@@ -87,6 +91,8 @@ extern "C" void ispcSetOcclusionFilterFunction1 (RTCScene scene, uniform unsigne
 extern "C" void ispcSetOcclusionFilterFunction4 (RTCScene scene, uniform unsigned int geomID, void* uniform filter);
 extern "C" void ispcSetOcclusionFilterFunction8 (RTCScene scene, uniform unsigned int geomID, void* uniform filter);
 extern "C" void ispcSetOcclusionFilterFunction16 (RTCScene scene, uniform unsigned int geomID, void* uniform filter);
+
+extern "C" void ispcSetDisplacementFunction (RTCScene scene, uniform unsigned int geomID, void *uniform func, uniform RTCBounds* uniform bounds);
 
 void rtcInit(const uniform int8* uniform cfg) {
   ispcInit(cfg);
@@ -202,13 +208,16 @@ uniform unsigned int rtcNewHairGeometry (RTCScene scene,
 }
 
 uniform unsigned int rtcNewSubdivisionMesh (RTCScene scene,
-                                       uniform RTCGeometryFlags flags,
-                                       uniform size_t numFaces,
-                                       uniform size_t numEdges,
-                                       uniform size_t numVertices,
-                                       uniform size_t numTimeSteps)
+                                            uniform RTCGeometryFlags flags,
+                                            uniform size_t numFaces,
+                                            uniform size_t numEdges,
+                                            uniform size_t numVertices,
+                                            uniform size_t numEdgeCreases, 
+                                            uniform size_t numVertexCreases, 
+                                            uniform size_t numHoles,
+                                            uniform size_t numTimeSteps)
 {
-  return ispcNewSubdivisionMesh(scene,flags,numFaces,numEdges,numVertices,numTimeSteps);
+  return ispcNewSubdivisionMesh(scene,flags,numFaces,numEdges,numVertices,numEdgeCreases,numVertexCreases,numHoles,numTimeSteps);
 }
 
 
@@ -233,7 +242,11 @@ void rtcEnable (RTCScene scene, uniform unsigned int geomID) {
 }
 
 void rtcUpdate (RTCScene scene, uniform unsigned int geomID) {
-  ispcModified(scene,geomID);
+  ispcUpdate(scene,geomID);
+}
+
+void rtcUpdateBuffer (RTCScene scene, uniform unsigned int geomID, uniform RTCBufferType type) {
+  ispcUpdateBuffer(scene,geomID,type);
 }
 
 void rtcDisable (RTCScene scene, uniform unsigned int geomID) {
@@ -306,4 +319,9 @@ void rtcSetOcclusionFilterFunction (RTCScene scene, uniform unsigned int geomID,
     ispcSetOcclusionFilterFunction8(scene,geomID,filter);
   else if (sizeof(varying float) == 64)
     ispcSetOcclusionFilterFunction16(scene,geomID,filter);
+}
+
+void rtcSetDisplacementFunction (RTCScene scene, uniform unsigned int geomID, uniform RTCDisplacementFunc func, uniform RTCBounds* uniform bounds)
+{
+  ispcSetDisplacementFunction(scene,geomID,func,bounds);
 }

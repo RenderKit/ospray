@@ -456,6 +456,10 @@ namespace embree
     return _mm512_mul_ps(_mm512_extload_ps(ptr,_MM_UPCONV_PS_UINT8,_MM_BROADCAST_16X16,_MM_HINT_NONE),mic_f(1.0f/255.0f));  
   }
 
+  __forceinline mic_f load16f_uint16(const unsigned short *const ptr) {
+    return _mm512_mul_ps(_mm512_extload_ps(ptr,_MM_UPCONV_PS_UINT16,_MM_BROADCAST_16X16,_MM_HINT_NONE),mic_f(1.0f/65535.0f));  
+  }
+
   __forceinline mic_f uload16f_low_uint8(const mic_m& mask, const void* addr, const mic_f& v1) {
     return _mm512_mask_extloadunpacklo_ps(v1, mask, addr, _MM_UPCONV_PS_UINT8, _MM_HINT_NONE);
   }
@@ -553,6 +557,13 @@ namespace embree
   }
 
 
+  __forceinline mic_f uload16f(const mic_m& mask,const float *const addr) {
+    mic_f r = mic_f::undefined();
+    r =_mm512_mask_extloadunpacklo_ps(r, mask,addr, _MM_UPCONV_PS_NONE, _MM_HINT_NONE);
+    r = _mm512_mask_extloadunpackhi_ps(r, mask, addr+16, _MM_UPCONV_PS_NONE, _MM_HINT_NONE);  
+    return r;
+  }
+
   __forceinline mic_f uload16f(const float *const addr) {
     mic_f r = mic_f::undefined();
     r =_mm512_extloadunpacklo_ps(r, addr, _MM_UPCONV_PS_NONE, _MM_HINT_NONE);
@@ -565,6 +576,11 @@ namespace embree
   }
   
   __forceinline mic_f uload16f_low(const mic_m& mask, const void* addr, const mic_f& v1) {
+    return _mm512_mask_extloadunpacklo_ps(v1, mask, addr, _MM_UPCONV_PS_NONE, _MM_HINT_NONE);
+  }
+
+  __forceinline mic_f uload16f_low(const mic_m& mask, const void* addr) {
+    mic_f v1 = mic_f::undefined();
     return _mm512_mask_extloadunpacklo_ps(v1, mask, addr, _MM_UPCONV_PS_NONE, _MM_HINT_NONE);
   }
   
@@ -605,6 +621,10 @@ namespace embree
 
   __forceinline void store16f_int8(void* addr, const mic_f& v2) {
     _mm512_extstore_ps(addr,v2,_MM_DOWNCONV_PS_SINT8,0);
+  }
+
+  __forceinline void store16f_uint16(void* addr, const mic_f& v2) {
+    _mm512_extstore_ps(addr,v2,_MM_DOWNCONV_PS_UINT16,0);
   }
 
   __forceinline void store4f_int8(void* addr, const mic_f& v1) {

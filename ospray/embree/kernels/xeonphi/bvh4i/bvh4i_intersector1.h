@@ -36,7 +36,6 @@ namespace embree
       static void intersect(BVH4i* bvh, Ray& ray);
       static void occluded (BVH4i* bvh, Ray& ray);
     };
-
   }
 }
   

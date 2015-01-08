@@ -32,6 +32,34 @@ namespace embree
   class Scene : public Accel
   {
     ALIGNED_CLASS;
+
+  public:
+    template<typename Ty> // FIXME: give motion blur meshes different type to iterate over them here
+    class Iterator
+    {
+    public:
+      Iterator ()  {}
+
+      Iterator (Scene* scene) 
+        : scene(scene) {}
+
+      __forceinline Ty* operator[] (const size_t i) 
+      {
+        Geometry* geom = scene->geometries[i];
+        if (geom == NULL) return NULL;
+        if (!geom->isEnabled()) return NULL;
+        if (geom->type != Ty::geom_type) return NULL;
+        return (Ty*) geom;
+      }
+
+      __forceinline size_t size() const {
+        return scene->size();
+      }
+      
+    private:
+      Scene* scene;
+    };
+
   public:
     
     /*! Scene construction */
@@ -39,6 +67,7 @@ namespace embree
 
     void createTriangleAccel();
     void createHairAccel();
+    void createSubdivAccel();
 
     /*! Scene destruction */
     ~Scene ();
@@ -56,7 +85,7 @@ namespace embree
     unsigned int newBezierCurves (RTCGeometryFlags flags, size_t maxCurves, size_t maxVertices, size_t numTimeSteps);
 
     /*! Creates a new subdivision mesh. */
-    unsigned int newSubdivisionMesh (RTCGeometryFlags flags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numTimeSteps);
+    unsigned int newSubdivisionMesh (RTCGeometryFlags flags, size_t numFaces, size_t numEdges, size_t numVertices, size_t numEdgeCreases, size_t numVertexCreases, size_t numHoles, size_t numTimeSteps);
 
     /*! Builds acceleration structure for the scene. */
     void build (size_t threadIndex, size_t threadCount);
@@ -155,15 +184,16 @@ namespace embree
     
   public:
     AccelN accels;
+    unsigned int commitCounter;
     atomic_t numMappedBuffers;         //!< number of mapped buffers
     RTCSceneFlags flags;
     RTCAlgorithmFlags aflags;
-    bool needTriangles;
-    bool needVertices;
+    bool needTriangles; 
+    bool needVertices; // FIXME: this flag is also used for hair geometry, but there should be a second flag
     bool is_build;
     MutexSys mutex;
     AtomicMutex geometriesMutex;
-
+    
     /*! global lock step task scheduler */
     __aligned(64) LockStepTaskScheduler lockstep_scheduler;
 

@@ -84,6 +84,11 @@ namespace embree
 
     /*! Update geometry. */
     virtual void update ();
+
+    /*! Update geometry buffer. */
+    virtual void updateBuffer (RTCBufferType type) {
+      update(); // update everything for geometries not supporting this call
+    }
     
     /*! Disable geometry. */
     virtual void disable ();
@@ -124,6 +129,11 @@ namespace embree
 
     /*! Sets specified buffer. */
     virtual void setBuffer(RTCBufferType type, void* ptr, size_t offset, size_t stride) { 
+      process_error(RTC_INVALID_OPERATION,"operation not supported for this geometry"); 
+    }
+
+    /*! Set displacement function. */
+    virtual void setDisplacementFunction (RTCDisplacementFunc filter, RTCBounds* bounds) {
       process_error(RTC_INVALID_OPERATION,"operation not supported for this geometry"); 
     }
 

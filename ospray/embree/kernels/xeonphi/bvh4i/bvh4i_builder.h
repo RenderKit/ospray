@@ -19,10 +19,13 @@
 #include "builders/parallel_builder.h"
 #include "builders/builder_util.h"
 #include "builders/binning.h"
+#include "builders/priminfo.h"
 
 #include "bvh4i/bvh4i.h"
 #include "bvh4i_statistics.h"
 
+#include "algorithms/parallel_for_for.h"
+#include "algorithms/parallel_for_for_prefix_sum.h"
 
 namespace embree
 {
@@ -85,7 +88,8 @@ namespace embree
     void allocateMemoryPools(const size_t numPrims, 
 			     const size_t numNodes,
 			     const size_t sizeNodeInBytes  = sizeof(BVH4i::Node),
-			     const size_t sizeAccelInBytes = sizeof(Triangle1));
+			     const size_t sizeAccelInBytes = sizeof(Triangle1),
+			     const float  bvh4iNodePreallocFactor = BVH4I_NODE_PREALLOC_FACTOR);
 
     void checkBuildRecord(const BuildRecord &current);
     void checkLeafNode(const BVH4i::NodeRef &ref, const BBox3fa &bounds);
@@ -138,15 +142,16 @@ namespace embree
   protected:
     BVH4i* bvh;                   //!< Output BVH
 
-
     /* work record handling */
-  protected:
     PrimRef  *    prims;
     mic_i    *    node;  // node array in 64 byte blocks
     Triangle1*    accel;
 
-    size_t size_prims;
+    /* threshold for leaf generation */
+    size_t leafItemThreshold;
 
+    /* memory allocation */
+    size_t size_prims;
     const size_t num64BytesBlocksPerNode;
 
 
@@ -251,19 +256,28 @@ namespace embree
   /*! derived binned-SAH builder supporting subdivision surface meshes */  
   class BVH4iBuilderSubdivMesh : public BVH4iBuilder
   {
+  protected:
+    void *org_accel;
+    Scene::Iterator<SubdivMesh> iter;
+    ParallelForForPrefixSumState<PrimInfo> pstate;
+    bool fastUpdateMode;
+    size_t fastUpdateMode_numFaces;
+
   public:
-    BVH4iBuilderSubdivMesh (BVH4i* bvh, void* geometry) : BVH4iBuilder(bvh,geometry) {}
+    BVH4iBuilderSubdivMesh (BVH4i* bvh, void* geometry) : BVH4iBuilder(bvh,geometry),org_accel(NULL),fastUpdateMode(false),fastUpdateMode_numFaces(0)
+      {}
 
     virtual void build            (const size_t threadIndex, const size_t threadCount);
-    virtual void allocateData(const size_t threadCount, const size_t totalNumPrimitives);
+    virtual void allocateData     (const size_t threadCount, const size_t totalNumPrimitives);
     virtual size_t getNumPrimitives();
-    virtual void computePrimRefs(const size_t threadIndex, const size_t threadCount);
-    virtual void createAccel    (const size_t threadIndex, const size_t threadCount);
+    virtual void computePrimRefs  (const size_t threadIndex, const size_t threadCount);
+    virtual void createAccel      (const size_t threadIndex, const size_t threadCount);
     virtual void printBuilderName();
+    virtual void finalize         (const size_t threadIndex, const size_t threadCount);
 
   protected:
     TASK_FUNCTION(BVH4iBuilderSubdivMesh,computePrimRefsSubdivMesh);
-    TASK_FUNCTION(BVH4iBuilderSubdivMesh,createSubdivMeshAccel);
+    TASK_FUNCTION(BVH4iBuilderSubdivMesh,updateLeaves);
     
   };
 

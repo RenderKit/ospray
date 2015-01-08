@@ -21,7 +21,7 @@
 
 namespace embree
 {
-#if defined(__SPINLOCKS__)
+#if defined(RTCORE_SPINLOCKS)
 #define Barrier LinearBarrierActive
   //#define Barrier BarrierActive
 #else
@@ -75,7 +75,7 @@ namespace embree
 
     void wait (size_t numThreads) {
       atomic_add((atomic_t*)&cntr,1);
-      while (cntr != numThreads) __pause();
+      while (cntr != numThreads) __pause_cpu();
     }
 
   private:
@@ -111,7 +111,7 @@ namespace embree
       void init(size_t numThreads);
 
       __forceinline void pause(unsigned int &cycles) {
-	__pause_expfalloff(cycles,MAX_MIC_BARRIER_WAIT_CYCLES);
+	__pause_cpu_expfalloff(cycles,MAX_MIC_BARRIER_WAIT_CYCLES);
       }
 
       void wait (const size_t threadIndex, const size_t threadCount); // FIXME: remove second parameter

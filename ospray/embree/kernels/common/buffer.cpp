@@ -19,7 +19,7 @@
 namespace embree
 {
   Buffer::Buffer () 
-    : ptr(NULL), bytes(0), ptr_ofs(NULL), stride(0), num(0), shared(false), mapped(false) {}
+    : ptr(NULL), bytes(0), ptr_ofs(NULL), stride(0), num(0), shared(false), mapped(false), modified(true) {}
   
   Buffer::~Buffer () {
     free();
@@ -34,11 +34,12 @@ namespace embree
     stride = stride_in;
     shared = false;
     mapped = false;
+    modified = true;
   }
 
   void Buffer::set(void* ptr_in, size_t ofs_in, size_t stride_in)
   {
-#if !defined(__BUFFER_STRIDE__)
+#if !defined(RTCORE_BUFFER_STRIDE)
     if (stride_in != stride) {
       process_error(RTC_INVALID_OPERATION,"buffer stride feature disabled at compile time and specified stride does not match default stride");
       return;

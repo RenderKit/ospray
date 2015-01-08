@@ -159,6 +159,14 @@ namespace embree
     exit(1);
   }
 
+  LockStepTaskScheduler* LockStepTaskScheduler::instance() {
+    return scheduler;
+  }
+
+  void LockStepTaskScheduler::setInstance(LockStepTaskScheduler* inst) {
+    scheduler = inst;
+  }
+
   void TaskScheduler::destroyThreads ()
   {
     terminate();
@@ -166,6 +174,8 @@ namespace embree
     threads.clear();
     terminateThreads = false;
   }
+
+  __thread LockStepTaskScheduler* LockStepTaskScheduler::scheduler = NULL;
 
   void LockStepTaskScheduler::syncThreads(const size_t threadID, const size_t numThreads) {
     taskBarrier.wait(threadID,numThreads);
@@ -268,7 +278,7 @@ namespace embree
 	__memory_barrier();
 
 	while( (*(volatile unsigned int*)&threadState[m][0]) !=  0x01010101 )
-	  __pause(WAIT_CYCLES);
+	  __pause_cpu(WAIT_CYCLES);
 
 	mode = 1 - mode;
 
@@ -282,7 +292,7 @@ namespace embree
 	__memory_barrier();
 	
 	while (threadState[m][localThreadID] == 1)
-	  __pause(WAIT_CYCLES);
+	  __pause_cpu(WAIT_CYCLES);
       }
  
   }

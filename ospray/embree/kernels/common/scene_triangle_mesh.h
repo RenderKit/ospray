@@ -24,6 +24,8 @@ namespace embree
   /*! Triangle Mesh */
   struct TriangleMesh : public Geometry
   {
+    static const GeometryTy geom_type = TRIANGLE_MESH;
+
     struct Triangle {
       unsigned int v[3];
     };
@@ -53,20 +55,13 @@ namespace embree
     }
     
     /*! returns i'th triangle*/
-    __forceinline Triangle& triangle(size_t i) {
-      assert(i < numTriangles);
-      return triangles[i];
-    }
-
-    /*! returns i'th triangle*/
     __forceinline const Triangle& triangle(size_t i) const {
-      if ( i >= numTriangles ) { DBG_PRINT(numTriangles); DBG_PRINT(i); }
       assert(i < numTriangles);
       return triangles[i];
     }
-    
+
     /*! returns i'th vertex of j'th timestep */
-    __forceinline Vec3fa& vertex(size_t i, size_t j = 0)  
+    __forceinline const Vec3fa vertex(size_t i, size_t j = 0) const 
     {
       assert(i < numVertices);
       assert(j < numTimeSteps);
@@ -74,11 +69,11 @@ namespace embree
     }
 
     /*! returns i'th vertex of j'th timestep */
-    __forceinline const Vec3fa& vertex(size_t i, size_t j = 0) const 
+    __forceinline const char* vertexPtr(size_t i, size_t j = 0) const 
     {
       assert(i < numVertices);
       assert(j < numTimeSteps);
-      return vertices[j][i];
+      return vertices[j].getPtr(i);
     }
     
     /*! returns the stride in bytes of the triangle buffer */
@@ -100,17 +95,17 @@ namespace embree
       if (tri.v[2] >= numVertices) return false;
 
       for (size_t j=0; j<numTimeSteps; j++) {
-	const Vec3fa& v0 = vertex(tri.v[0],j);
-	const Vec3fa& v1 = vertex(tri.v[1],j);
-	const Vec3fa& v2 = vertex(tri.v[2],j);
+	const Vec3fa v0 = vertex(tri.v[0],j);
+	const Vec3fa v1 = vertex(tri.v[1],j);
+	const Vec3fa v2 = vertex(tri.v[2],j);
 	if (!inFloatRange(v0) || !inFloatRange(v1) || !inFloatRange(v2))
 	  return false;
       }
 
       if (bbox) {
-	const Vec3fa& v0 = vertex(tri.v[0]);
-	const Vec3fa& v1 = vertex(tri.v[1]);
-	const Vec3fa& v2 = vertex(tri.v[2]);
+	const Vec3fa v0 = vertex(tri.v[0]);
+	const Vec3fa v1 = vertex(tri.v[1]);
+	const Vec3fa v2 = vertex(tri.v[2]);
 	*bbox = BBox3fa(min(v0,v1,v2),max(v0,v1,v2));
       }
       return true;
@@ -120,9 +115,9 @@ namespace embree
     __forceinline BBox3fa bounds(size_t i) const 
     {
       const Triangle& tri = triangle(i);
-      const Vec3fa& v0 = vertex(tri.v[0]);
-      const Vec3fa& v1 = vertex(tri.v[1]);
-      const Vec3fa& v2 = vertex(tri.v[2]);
+      const Vec3fa v0 = vertex(tri.v[0]);
+      const Vec3fa v1 = vertex(tri.v[1]);
+      const Vec3fa v2 = vertex(tri.v[2]);
       return BBox3fa(min(v0,v1,v2),max(v0,v1,v2));
     }
 
@@ -136,18 +131,18 @@ namespace embree
 	assert( tri.v[1] < numVertices );
 	assert( tri.v[2] < numVertices );
 
-#if !defined(__BUFFER_STRIDE__)
+#if !defined(RTCORE_BUFFER_STRIDE)
 	
-	const float *__restrict__ const vptr0 = (float*)&vertex(tri.v[0],dim);
-	const float *__restrict__ const vptr1 = (float*)&vertex(tri.v[1],dim);
-	const float *__restrict__ const vptr2 = (float*)&vertex(tri.v[2],dim);
+	const float *__restrict__ const vptr0 = (float*) vertices[dim].getPtr(tri.v[0]);
+	const float *__restrict__ const vptr1 = (float*) vertices[dim].getPtr(tri.v[1]);
+	const float *__restrict__ const vptr2 = (float*) vertices[dim].getPtr(tri.v[2]);
 
 	const mic_f v0 = broadcast4to16f(vptr0); 
 	const mic_f v1 = broadcast4to16f(vptr1); 
 	const mic_f v2 = broadcast4to16f(vptr2); 
-
+	return mic3f(v0,v1,v2);
 #else
-	const mic_i stride = vertices[dim].getStride();
+	const mic_i stride = vertices[dim].getBufferStride();
 
 	const mic_i offset0_64 = mul_uint64(stride,mic_i(tri.v[0]));
 	const mic_i offset1_64 = mul_uint64(stride,mic_i(tri.v[1]));
@@ -168,18 +163,20 @@ namespace embree
 	  prefetch<HINT>(vptr2_64);
 	}
 
-	assert( vptr0_64 == (float*)&vertex(tri.v[0],dim) );
-	assert( vptr1_64 == (float*)&vertex(tri.v[1],dim) );
-	assert( vptr2_64 == (float*)&vertex(tri.v[2],dim) );
+	assert( vptr0_64 == (float*)vertexPtr(tri.v[0],dim) );
+	assert( vptr1_64 == (float*)vertexPtr(tri.v[1],dim) );
+	assert( vptr2_64 == (float*)vertexPtr(tri.v[2],dim) );
+	
+	const mic_m m_3f = 0x7;
+	const mic_f v0 = permute<0,0,0,0>(uload16f(m_3f,vptr0_64));
+	const mic_f v1 = permute<0,0,0,0>(uload16f(m_3f,vptr1_64));
+	const mic_f v2 = permute<0,0,0,0>(uload16f(m_3f,vptr2_64));
+	 //FIXME: there should be no need to zero the last component
 
-	const mic_f v0 = broadcast4to16f(vptr0_64);
-	const mic_f v1 = broadcast4to16f(vptr1_64);
-	const mic_f v2 = broadcast4to16f(vptr2_64);
-
+	return mic3f(select(0x7777,v0,mic_f::zero()),select(0x7777,v1,mic_f::zero()),select(0x7777,v2,mic_f::zero()));
 #endif	
 	
-	return mic3f(v0,v1,v2);
-	//return mic3f(select(0x7777,v0,mic_f::zero()),select(0x7777,v1,mic_f::zero()),select(0x7777,v2,mic_f::zero()));
+	
       }
     
 #endif
@@ -191,7 +188,7 @@ namespace embree
     BufferT<Triangle> triangles;      //!< array of triangles
     size_t numTriangles;              //!< number of triangles
     
-    BufferT<Vec3fa> vertices[2];      //!< vertex array
+    BufferT<Vec3fa> vertices[2];    //!< vertex array
     size_t numVertices;               //!< number of vertices
   };
 

@@ -24,6 +24,15 @@ namespace embree
 {
   namespace isa 
   {
+    /*! Converts single ray traversal into packet traversal. */
+    template<typename Intersector1>
+    class BVH4Intersector4FromIntersector1
+    {
+    public:
+      static void intersect(sseb* valid, BVH4* bvh, Ray4& ray);
+      static void occluded (sseb* valid, BVH4* bvh, Ray4& ray);
+    };
+
     /*! Single ray traversal for packets. */
     template<int types, bool robust, typename PrimitiveIntersector4>
       class BVH4Intersector4Single 
@@ -156,7 +165,7 @@ namespace embree
 	  assert(cur != BVH4::emptyNode);
 	  STAT3(normal.trav_leaves, 1, 1, 1);
 	  size_t num; Primitive* prim = (Primitive*)cur.leaf(num);
-	  PrimitiveIntersector4::intersect(pre, ray, k, prim, num, bvh->geometry);
+	  PrimitiveIntersector4::intersect(pre, ray, k, prim, num, bvh->scene);
 	  ray_far = ray.tfar[k];
 	}
       }
@@ -263,7 +272,7 @@ namespace embree
 	  assert(cur != BVH4::emptyNode);
 	  STAT3(shadow.trav_leaves,1,1,1);
 	  size_t num; Primitive* prim = (Primitive*) cur.leaf(num);
-	  if (PrimitiveIntersector4::occluded(pre,ray,k,prim,num,bvh->geometry)) {
+	  if (PrimitiveIntersector4::occluded(pre,ray,k,prim,num,bvh->scene)) {
 	    ray.geomID[k] = 0;
 	    return true;
 	  }
