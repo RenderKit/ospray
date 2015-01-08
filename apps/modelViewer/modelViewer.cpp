@@ -413,12 +413,10 @@ namespace ospray {
          it !=  mat->params.end(); ++it) {
       const char *name = it->first.c_str();
       const miniSG::Material::Param *p = it->second.ptr;
+
       switch(p->type) {
       case miniSG::Material::Param::INT:
-        if(strstr(name, "map_") == NULL) {
-          ospSet1i(ospMat,name,p->i[0]);
-        }
-        else {
+        {
           miniSG::Texture2D *tex = mat->textures[p->i[0]].ptr;
           OSPTexture2D ospTex = createTexture2D(tex);
           //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
@@ -438,9 +436,12 @@ namespace ospray {
       case miniSG::Material::Param::TEXTURE:
         {
           miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
-          OSPTexture2D ospTex = createTexture2D(tex);
-          ospCommit(ospTex);
-          ospSetObject(ospMat, name, ospTex);
+          if (tex) {
+            OSPTexture2D ospTex = createTexture2D(tex);
+            assert(ospTex);
+            ospCommit(ospTex);
+            ospSetObject(ospMat, name, ospTex);
+          }
           break;
         }
       default: 
@@ -591,13 +592,13 @@ namespace ospray {
     bool doesInstancing = 0;
 
     if (forceInstancing) {
-      std::cout << "#osp:msgView: forced instancing - instances on." << std::endl;
+      std::cout << "msgView: forced instancing - instances on." << std::endl;
       doesInstancing = true;
     } else if (msgModel->instance.size() > msgModel->mesh.size()) {
-      std::cout << "#osp:msgView: found more object instances than meshes - turning on instancing" << std::endl;
+      std::cout << "msgView: found more object instances than meshes - turning on instancing" << std::endl;
       doesInstancing = true;
     } else {
-      std::cout << "#osp:msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
+      std::cout << "msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
       doesInstancing = false;
     }
     if (doesInstancing) {
@@ -700,7 +701,7 @@ namespace ospray {
             const char *name = it->first.c_str();
             const miniSG::Material::Param *p = it->second.ptr;
             if(p->type == miniSG::Material::Param::TEXTURE) {
-              if(!strcmp(name, "map_kd")) {
+              if(!strcmp(name, "map_kd") || !strcmp(name, "map_Kd")) {
                 miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
                 OSPTexture2D ospTex = createTexture2D(tex);
                 ospCommit(ospTex);
@@ -800,9 +801,6 @@ namespace ospray {
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(box3f(msgModel->getBBox()));
     if (msgModel->camera.size() > 0) {
-      PRINT(msgModel->camera[0]->from);
-      PRINT(msgModel->camera[0]->at);
-      PRINT(msgModel->camera[0]->up);
       window.setViewPort(msgModel->camera[0]->from,
                          msgModel->camera[0]->at,
                          msgModel->camera[0]->up);
