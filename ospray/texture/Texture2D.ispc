@@ -37,6 +37,14 @@ inline vec4f getTexel4f(const uniform Texture2D *uniform THIS,
   return c;
 }
 
+inline vec4f getTexel3f(const uniform Texture2D *uniform THIS,
+                         const uint32 ix, const uint32 iy)
+{
+  assert(THIS);
+  vec3f v = ((uniform vec3f*uniform )THIS->data)[ix+THIS->size.x*iy];
+  return make_vec4f(v.x,v.y,v.z,0.f);
+}
+
 inline vec4f getTexel3uc(const uniform Texture2D *uniform THIS,
                          const uint32 ix, const uint32 iy)
 {
@@ -149,7 +157,31 @@ static void Texture2D_3f_bilinear(const uniform Texture2D *uniform texture,
                               const varying vec2f &p)
 {
   assert(texture);
-  ret = make_vec4f(1,0,1,0);
+
+  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)texture;
+
+  // repeat: get remainder within [0.1] parameter space
+  float fx = p.x-floor(p.x);
+  float fy = p.y-floor(p.y);
+
+  // scale by texture size
+  fx *= this->f_size_1.x;
+  fy *= this->f_size_1.y;
+
+  const int x0 = (int)(fx);
+  const int y0 = (int)(fy);
+  const int x1 = (int)(min(fx+1.f,this->f_size_1.x));
+  const int y1 = (int)(min(fy+1.f,this->f_size_1.y));
+  fx = fx - floor(fx);
+  fy = fy - floor(fy);
+  
+  const vec4f c00 = getTexel3f(this,x0,y0);
+  const vec4f c01 = getTexel3f(this,x1,y0);
+  const vec4f c10 = getTexel3f(this,x0,y1);
+  const vec4f c11 = getTexel3f(this,x1,y1);
+  ret = lerp(fy,
+             lerp(fx,c00,c01),
+             lerp(fx,c10,c11));
 }
 
 uniform Texture2D *uniform Texture2D_create(void *uniform cppE,

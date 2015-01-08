@@ -56,7 +56,7 @@ namespace ospray {
           int rc, peekchar;
 
           // open file
-          FILE *file = fopen(fileName.str().c_str(),"r");
+          FILE *file = fopen(fileName.str().c_str(),"rb");
           const int LINESZ=10000;
           char lineBuf[LINESZ+1]; 
 
@@ -106,9 +106,12 @@ namespace ospray {
           tex->height   = height;
           tex->channels = 3;
           tex->depth    = 1;
+          PRINT(fileName.str());
+          PRINT(width);
+          PRINT(height);
           tex->data     = new unsigned char[width*height*3];
-          PRINT((int)((unsigned char *)tex->data)[0]);
           fread(tex->data,width*height*3,1,file);
+          PRINT((int)((unsigned char *)tex->data)[0]);
           char *texels = (char *)tex->data;
         } catch(std::runtime_error e) {
           std::cerr << e.what() << std::endl;
