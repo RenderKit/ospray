@@ -132,11 +132,7 @@ namespace ospray {
           tex = NULL;
         } else {
           tex->data = new vec4f[tex->width*tex->height];
-          PING;
-          PRINT(tex);
-          PRINT(tex->width);
           for (size_t y=0; y<tex->height; y++) {
-            PRINT(y);
             for (size_t x=0; x<tex->width; x++) {
               vec4f c;
               c.x = float(pixels[y*tex->width+x].red    )*rcpMaxRGB;
@@ -147,15 +143,10 @@ namespace ospray {
               //tex->set(x,y,c);
             }
           }
-          PING;
         }
-        PING;
 #endif
       }
-      PING;
-      PRINT(tex);
       textureCache[fileName.str()] = tex;
-      PRINT(tex->width);
       return tex;
     }
 

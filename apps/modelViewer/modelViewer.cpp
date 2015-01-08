@@ -592,13 +592,13 @@ namespace ospray {
     bool doesInstancing = 0;
 
     if (forceInstancing) {
-      std::cout << "#osp:msgView: forced instancing - instances on." << std::endl;
+      std::cout << "msgView: forced instancing - instances on." << std::endl;
       doesInstancing = true;
     } else if (msgModel->instance.size() > msgModel->mesh.size()) {
-      std::cout << "#osp:msgView: found more object instances than meshes - turning on instancing" << std::endl;
+      std::cout << "msgView: found more object instances than meshes - turning on instancing" << std::endl;
       doesInstancing = true;
     } else {
-      std::cout << "#osp:msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
+      std::cout << "msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
       doesInstancing = false;
     }
     if (doesInstancing) {
@@ -801,9 +801,6 @@ namespace ospray {
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(box3f(msgModel->getBBox()));
     if (msgModel->camera.size() > 0) {
-      PRINT(msgModel->camera[0]->from);
-      PRINT(msgModel->camera[0]->at);
-      PRINT(msgModel->camera[0]->up);
       window.setViewPort(msgModel->camera[0]->from,
                          msgModel->camera[0]->at,
                          msgModel->camera[0]->up);
