@@ -29,8 +29,11 @@ namespace ospray {
   float g_near_clip = 1e-6f;
   bool  g_fullScreen       = false;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
+  
+  //! size of initial render window as specified via the command line.
+  vec2i initWindowSize(1024,1024);
 
-  int g_width = 1024, g_height = 1024, g_benchWarmup = 0, g_benchFrames = 0;
+  int g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
   bool g_createDefaultMaterial = true;
   int accumID = -1;
@@ -207,7 +210,7 @@ namespace ospray {
     {
       Glut3DWidget::mouseButton(whichButton, released, pos);
       if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
-        vec2f normpos = vec2f(pos.x / (float)g_width, pos.y / (float)g_height);
+        vec2f normpos = vec2f(pos.x / (float)windowSize.x, pos.y / (float)windowSize.y);
         OSPPickData data = ospUnproject(ospRenderer, normpos);
         vec3f p(data.world_x, data.world_y, data.world_z);
         if(data.hit) {
@@ -215,12 +218,11 @@ namespace ospray {
           vec3f right = cross(normalize(viewPort.at - viewPort.from), viewPort.up);
           vec3f offset = dot(delta, right) * right - dot(delta, viewPort.up) * viewPort.up;
           viewPort.at = p;
-          //viewPort.from += offset;
           viewPort.modified = true;
           computeFrame();
           accumID = 0;
           ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          //((glut3D::InspectCenter*)inspectCenterManipulator)->pivot = p;
+          forceRedraw();
         }
       }
     }
@@ -485,7 +487,7 @@ namespace ospray {
         cout << "loading ospray module '" << moduleName << "'" << endl;
         ospLoadModule(moduleName);
       } else if (arg == "--1k") {
-        g_width = g_height = 1024;
+        initWindowSize = vec2i(1024);
       } else if (arg == "--alpha") {
         g_alpha = true;
       } else if (arg == "-win") {
@@ -497,7 +499,7 @@ namespace ospray {
               {
                 arg2.replace(pos, 1, " ");
                 std::stringstream ss(arg2);
-                ss >> g_width >> g_height;
+                ss >> initWindowSize.x >> initWindowSize.y;
               }
           }
         else

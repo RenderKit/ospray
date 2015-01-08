@@ -129,4 +129,3 @@ protected:
   void initUserInterfaceWidgets();
 
 };
-
