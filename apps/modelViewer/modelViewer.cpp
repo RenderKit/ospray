@@ -436,9 +436,12 @@ namespace ospray {
       case miniSG::Material::Param::TEXTURE:
         {
           miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
-          OSPTexture2D ospTex = createTexture2D(tex);
-          ospCommit(ospTex);
-          ospSetObject(ospMat, name, ospTex);
+          if (tex) {
+            OSPTexture2D ospTex = createTexture2D(tex);
+            assert(ospTex);
+            ospCommit(ospTex);
+            ospSetObject(ospMat, name, ospTex);
+          }
           break;
         }
       default: 

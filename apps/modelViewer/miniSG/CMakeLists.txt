@@ -15,18 +15,22 @@
 ## ======================================================================== ##
 
 IF (NOT THIS_IS_MIC)
-  SET(USE_IMAGE_MAGICK ON CACHE BOOL "Use ImageMagick for ModelViewer's Texture loaders.")
-  IF (USE_IMAGE_MAGICK)
-    FIND_PACKAGE(ImageMagick COMPONENTS Magick++)
-    IF (IMAGEMAGICK_FOUND)
-      ADD_DEFINITIONS(-DUSE_IMAGEMAGICK)
-      INCLUDE_DIRECTORIES(${ImageMagick_Magick++_INCLUDE_DIR})
-      SET(MAGICK_LIBRARIES ${ImageMagick_Magick++_LIBRARY})
-    ELSE (IMAGEMAGICK_FOUND)
-      MESSAGE("ImageMagick not found. Texture loaders are disabled.")
-    ENDIF (IMAGEMAGICK_FOUND)
-  ENDIF (USE_IMAGE_MAGICK)
-
+  IF (APPLE)
+    #magick doesn't currently work on apple, apparently there's some
+    #issues with ImageMagick's default-installed libraries
+  ELSE()
+    SET(USE_IMAGE_MAGICK ON CACHE BOOL "Use ImageMagick for ModelViewer's Texture loaders.")
+    IF (USE_IMAGE_MAGICK)
+      FIND_PACKAGE(ImageMagick COMPONENTS Magick++)
+      IF (IMAGEMAGICK_FOUND)
+        ADD_DEFINITIONS(-DUSE_IMAGEMAGICK)
+        INCLUDE_DIRECTORIES(${ImageMagick_Magick++_INCLUDE_DIR})
+        SET(MAGICK_LIBRARIES ${ImageMagick_Magick++_LIBRARY})
+      ELSE (IMAGEMAGICK_FOUND)
+        MESSAGE("ImageMagick not found. Texture loaders are disabled.")
+      ENDIF (IMAGEMAGICK_FOUND)
+    ENDIF (USE_IMAGE_MAGICK)
+  ENDIF()
 
   INCLUDE_DIRECTORIES(${OSPRAY_DIR}/ospray)
   
