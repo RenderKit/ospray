@@ -396,7 +396,6 @@ namespace ospray {
         cout << "WARNING: model does not have materials! (assigning default)" << endl;
       return createDefaultMaterial(renderer);
     }
-
     static std::map<miniSG::Material *,OSPMaterial> alreadyCreatedMaterials;
     if (alreadyCreatedMaterials.find(mat) != alreadyCreatedMaterials.end())
       return alreadyCreatedMaterials[mat];
@@ -416,13 +415,7 @@ namespace ospray {
 
       switch(p->type) {
       case miniSG::Material::Param::INT:
-        {
-          miniSG::Texture2D *tex = mat->textures[p->i[0]].ptr;
-          OSPTexture2D ospTex = createTexture2D(tex);
-          //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
-          //ospSetData(ospMat, name, data);
-          ospSetObject(ospMat, name, ospTex);
-        }
+        ospSet1i(ospMat,name,p->i[0]);
         break;
       case miniSG::Material::Param::FLOAT:
         ospSet1f(ospMat,name,p->f[0]);
