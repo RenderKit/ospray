@@ -17,8 +17,8 @@
 #include "miniSG.h"
 
 #ifdef USE_IMAGEMAGICK
-#define MAGICKCORE_QUANTUM_DEPTH 32
-#define MAGICKCORE_HDRI_ENABLE 1
+#define MAGICKCORE_QUANTUM_DEPTH 16
+#define MAGICKCORE_HDRI_ENABLE 0
 # include <Magick++.h>
 using namespace Magick;
 #endif
@@ -56,7 +56,7 @@ namespace ospray {
           int rc, peekchar;
 
           // open file
-          FILE *file = fopen(fileName.str().c_str(),"rb");
+          FILE *file = fopen(fileName.str().c_str(),"r");
           const int LINESZ=10000;
           char lineBuf[LINESZ+1]; 
 
@@ -79,13 +79,13 @@ namespace ospray {
         
           // read width and height from first non-comment line
           int width=-1,height=-1;
-          rc = fscanf(file,"%i %i",&width,&height);
+          rc = fscanf(file,"%i %i\n",&width,&height);
           if (rc != 2) 
             throw std::runtime_error("#osp:miniSG: could not parse width and height in P6 PPM file '"+fileName.str()+"'. "
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
         
           // skip all comment lines
-           peekchar = getc(file);
+          peekchar = getc(file);
           while (peekchar == '#') {
             fgets(lineBuf,LINESZ,file);
             peekchar = getc(file);
@@ -93,7 +93,9 @@ namespace ospray {
         
           // read maxval
           int maxVal=-1;
-          rc = fscanf(file,"%i\n",&maxVal);
+          rc = fscanf(file,"%i",&maxVal);
+            peekchar = getc(file);
+
           if (rc != 1) 
             throw std::runtime_error("#osp:miniSG: could not parse maxval in P6 PPM file '"+fileName.str()+"'. "
                                      "Please report this bug at ospray.github.io, and include named file to reproduce the error.");
@@ -106,12 +108,8 @@ namespace ospray {
           tex->height   = height;
           tex->channels = 3;
           tex->depth    = 1;
-          PRINT(fileName.str());
-          PRINT(width);
-          PRINT(height);
           tex->data     = new unsigned char[width*height*3];
           fread(tex->data,width*height*3,1,file);
-          PRINT((int)((unsigned char *)tex->data)[0]);
           char *texels = (char *)tex->data;
         } catch(std::runtime_error e) {
           std::cerr << e.what() << std::endl;
@@ -134,7 +132,11 @@ namespace ospray {
           tex = NULL;
         } else {
           tex->data = new vec4f[tex->width*tex->height];
+          PING;
+          PRINT(tex);
+          PRINT(tex->width);
           for (size_t y=0; y<tex->height; y++) {
+            PRINT(y);
             for (size_t x=0; x<tex->width; x++) {
               vec4f c;
               c.x = float(pixels[y*tex->width+x].red    )*rcpMaxRGB;
@@ -145,10 +147,15 @@ namespace ospray {
               //tex->set(x,y,c);
             }
           }
+          PING;
         }
+        PING;
 #endif
       }
+      PING;
+      PRINT(tex);
       textureCache[fileName.str()] = tex;
+      PRINT(tex->width);
       return tex;
     }
 
