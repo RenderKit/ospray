@@ -18,7 +18,7 @@
 
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/transferfunction/TransferFunction.ih"
+#include "ospray/transferFunction/TransferFunction.ih"
 
 //! \brief A spatial acceleration structure over a BlockBrickedVolume, used
 //!  for opacity and variance based space skipping.

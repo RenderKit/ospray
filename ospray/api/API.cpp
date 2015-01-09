@@ -21,7 +21,7 @@
 #include "ospray/fileio/ObjectCatalog.h"
 #include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
-#include "ospray/transferfunction/TransferFunction.h"
+#include "ospray/transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
 #include "ospray/common/OSPCommon.h"
 
@@ -77,7 +77,7 @@ namespace ospray {
 #if OSPRAY_MPI
       std::cout << "#osp: launching ospray mpi ring - make sure that mpd is running" << std::endl;
       ospray::api::Device::current
-	= mpi::createMPI_LaunchWorkerGroup(_ac,_av,OSP_MPI_LAUNCH_FROM_ENV);
+        = mpi::createMPI_LaunchWorkerGroup(_ac,_av,OSP_MPI_LAUNCH_FROM_ENV);
 #else
       throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
@@ -336,10 +336,10 @@ namespace ospray {
   }
 
   extern "C" OSPTexture2D ospNewTexture2D(int width,
-      int height,
-      OSPDataType type,
-      void *data = NULL,
-      int flags = 0)
+                                          int height,
+                                          OSPDataType type,
+                                          void *data = NULL,
+                                          int flags = 0)
   {
     ASSERT_DEVICE();
     Assert2(width > 0, "Width must be greater than 0 in ospNewTexture2D");

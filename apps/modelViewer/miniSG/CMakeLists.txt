@@ -15,6 +15,28 @@
 ## ======================================================================== ##
 
 IF (NOT THIS_IS_MIC)
+  SET(USE_IMAGE_MAGICK OFF CACHE BOOL "Use ImageMagick for ModelViewer's Texture loaders.")
+  MARK_AS_ADVANCED(USE_IMAGE_MAGICK)
+  IF (USE_IMAGE_MAGICK)
+    IF (APPLE)
+      MESSAGE(ERROR "ImageMagick currently not supported under Apple")
+      # the magick libraries apparently have some issues on mac that
+      # requrie ospray to be built with very special compile flags; we
+      # can specify those, but then it no longer works with the
+      # mac-version of Qt, so we currently pick qt compatibliity over
+      # magick compatibility.
+    ELSE(APPLE)
+      FIND_PACKAGE(ImageMagick COMPONENTS Magick++)
+      IF (IMAGEMAGICK_FOUND)
+        ADD_DEFINITIONS(-DUSE_IMAGEMAGICK)
+        INCLUDE_DIRECTORIES(${ImageMagick_Magick++_INCLUDE_DIR})
+        SET(MAGICK_LIBRARIES ${ImageMagick_Magick++_LIBRARY})
+      ELSE (IMAGEMAGICK_FOUND)
+        MESSAGE(STATUS "ImageMagick not found. Texture loaders other than PPM are disabled.")
+      ENDIF (IMAGEMAGICK_FOUND)
+    ENDIF(APPLE)
+  ENDIF (USE_IMAGE_MAGICK)
+
   INCLUDE_DIRECTORIES(${OSPRAY_DIR}/ospray)
   
   INCLUDE_DIRECTORIES(${OSPRAY_DIR})
@@ -29,7 +51,8 @@ IF (NOT THIS_IS_MIC)
     importX3D.cpp
     importRIVL.cpp
     )
-  TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml)
+  TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml
+    ${MAGICK_LIBRARIES})
   # ------------------------------------------------------------
   SET_TARGET_PROPERTIES(ospray_minisg${OSPRAY_LIB_SUFFIX} 
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})

@@ -21,6 +21,7 @@
 #include "GL/glut.h"
 #endif
 #include <sys/times.h>
+#include <unistd.h> // for usleep
 
 namespace ospray {
 
@@ -153,6 +154,7 @@ namespace ospray {
         currButtonState = currButtonState & ~(1<<whichButton);
       else
         currButtonState = currButtonState |  (1<<whichButton);
+      currModifiers = glutGetModifiers();
 
       manipulator->button(this, pos);
     }
@@ -180,8 +182,7 @@ namespace ospray {
         lastMousePos(-1,-1),
         currMousePos(-1,-1),
         windowSize(-1,-1),
-        lastModifierState(0),
-        currModifierState(0),
+        currModifiers(0),
         lastButtonState(0),
         currButtonState(0),
         frameBufferMode(frameBufferMode),
@@ -236,6 +237,9 @@ namespace ospray {
       }
     }
 
+    void Glut3DWidget::idle()
+    { usleep(1000); }
+
     void Glut3DWidget::reshape(const vec2i &newSize)
     {
       windowSize = newSize;
@@ -277,9 +281,9 @@ namespace ospray {
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
           if (!dumpFileRoot) {
-	    mkstemp(tmpFileName);
+            mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
-	  }
+          }
         
           char fileName[100000];
           sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(NULL));
@@ -307,14 +311,12 @@ namespace ospray {
 
     void Glut3DWidget::drawPixels(const uint32 *framebuffer)
     {
-      PING;
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
       glutSwapBuffers();
     }
 
     void Glut3DWidget::drawPixels(const vec3fa *framebuffer)
     {
-      PING;
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, framebuffer);
       glutSwapBuffers();
     }
@@ -459,13 +461,23 @@ namespace ospray {
     // ------------------------------------------------------------------
     void Manipulator::motion(Glut3DWidget *widget)
     {
-      if (widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) {
-        dragLeft(widget,widget->currMousePos,widget->lastMousePos);
-      } else if (widget->currButtonState == (1<<GLUT_RIGHT_BUTTON)) {
+      if ((widget->currButtonState == (1<<GLUT_RIGHT_BUTTON))
+          ||
+          ((widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) 
+           && 
+           (widget->currModifiers & GLUT_ACTIVE_ALT))
+          ) {
         dragRight(widget,widget->currMousePos,widget->lastMousePos);
-      } else if (widget->currButtonState == (1<<GLUT_MIDDLE_BUTTON)) {
+      } else if ((widget->currButtonState == (1<<GLUT_MIDDLE_BUTTON)) 
+                 ||
+                 ((widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) 
+                  && 
+                  (widget->currModifiers & GLUT_ACTIVE_CTRL))
+                 ) {
         dragMiddle(widget,widget->currMousePos,widget->lastMousePos);
-      }
+      } else if (widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) {
+        dragLeft(widget,widget->currMousePos,widget->lastMousePos);
+      } 
     }
 
     // ------------------------------------------------------------------
@@ -564,9 +576,19 @@ namespace ospray {
     void InspectCenter::dragMiddle(Glut3DWidget *widget,
                                    const vec2i &to, const vec2i &from)
     {
-      // it's called inspect_***CENTER*** for a reason; this class
-      // will keep the rotation pivot at the center, and not do
-      // anything with center mouse button...
+      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      float du = (to.x - from.x);
+      float dv = (to.y - from.y);
+
+      vec2i delta_mouse = (to - from);
+
+      AffineSpace3fa xfm = AffineSpace3fa::translate( widget->motionSpeed * dv * cam.frame.l.vz )
+        * AffineSpace3fa::translate( -1.0 * widget->motionSpeed * du * cam.frame.l.vx );
+
+      cam.frame = xfm * cam.frame;
+      cam.from = xfmPoint(xfm, cam.from);
+      cam.at = xfmPoint(xfm, cam.at);
+      cam.modified = true;
     }
 
     void InspectCenter::dragLeft(Glut3DWidget *widget,
@@ -713,14 +735,14 @@ namespace ospray {
         if (animating) {
           dumpScreensDuringAnimation = !dumpScreensDuringAnimation;
         } else {
-	  char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
+          char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
           if (!dumpFileRoot) {
-	    mkstemp(tmpFileName);
+            mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
-	  }
+          }
           char fileName[100000];
           static int frameDumpSequenceID = 0;
           sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);

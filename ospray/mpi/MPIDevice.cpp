@@ -26,6 +26,8 @@
 #include "../camera/Camera.h"
 #include "../volume/Volume.h"
 #include "MPILoadBalancer.h"
+// std
+#include <unistd.h> // for fork()
 
 namespace ospray {
   using std::cout;

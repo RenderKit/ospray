@@ -28,11 +28,12 @@ namespace ospray {
 
   float g_near_clip = 1e-6f;
   bool  g_fullScreen       = false;
-  bool  g_explosion_mode   = false;
-  float g_explosion_factor = 0.f;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
+  
+  //! size of initial render window as specified via the command line.
+  vec2i initWindowSize(1024,1024);
 
-  int g_width = 1024, g_height = 1024, g_benchWarmup = 0, g_benchFrames = 0;
+  int g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
   bool g_createDefaultMaterial = true;
   int accumID = -1;
@@ -104,6 +105,8 @@ namespace ospray {
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
+      viewPort.modified = true;
+      forceRedraw();
     }
     
     virtual void keypress(char key, const vec2f where)
@@ -165,34 +168,6 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
-
-      case '(':
-        {
-          g_explosion_factor += .01f;
-          vec3f center = embree::center(msgModel->getBBox());
-          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
-          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
-          printf("Model is exploded by %f\n", g_explosion_factor);
-          ospCommit(ospModel);
-          accumID=0;
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-        }
-        break;
-      case ')':
-        {
-          g_explosion_factor -= .01f;
-          g_explosion_factor = std::max( 0.f, g_explosion_factor);
-          vec3f center = embree::center(msgModel->getBBox());
-          ospSet3f(ospModel, "explosion.center", center.x, center.y, center.z);
-          ospSetf(ospModel, "explosion.factor", g_explosion_factor);
-          printf("Model is exploded by %f\n", g_explosion_factor);
-          ospCommit(ospModel);
-          accumID=0;
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-        }
-        break;
       case 'f':
         {
           g_fullScreen = !g_fullScreen;
@@ -213,23 +188,23 @@ namespace ospray {
     virtual void specialkey(int32 key, const vec2f where)
     {
       switch(key) {
-        case GLUT_KEY_PAGE_UP:
-          g_near_clip += 10.f * motionSpeed;
-          ospSet1f(renderer, "near_clip", g_near_clip);
-          ospCommit(renderer);
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-          break;
-        case GLUT_KEY_PAGE_DOWN:
-          g_near_clip -= 10.f * motionSpeed;
-          g_near_clip = std::max(g_near_clip, 1e-6f);
-          ospSet1f(renderer, "near_clip", g_near_clip);
-          ospCommit(renderer);
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          forceRedraw();
-          break;
-        default:
-          Glut3DWidget::keypress(key,where);
+      case GLUT_KEY_PAGE_UP:
+        g_near_clip += 10.f * motionSpeed;
+        ospSet1f(renderer, "near_clip", g_near_clip);
+        ospCommit(renderer);
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      case GLUT_KEY_PAGE_DOWN:
+        g_near_clip -= 10.f * motionSpeed;
+        g_near_clip = std::max(g_near_clip, 1e-6f);
+        ospSet1f(renderer, "near_clip", g_near_clip);
+        ospCommit(renderer);
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      default:
+        Glut3DWidget::keypress(key,where);
       }
     }
 
@@ -237,7 +212,7 @@ namespace ospray {
     {
       Glut3DWidget::mouseButton(whichButton, released, pos);
       if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
-        vec2f normpos = vec2f(pos.x / (float)g_width, pos.y / (float)g_height);
+        vec2f normpos = vec2f(pos.x / (float)windowSize.x, pos.y / (float)windowSize.y);
         OSPPickData data = ospUnproject(ospRenderer, normpos);
         vec3f p(data.world_x, data.world_y, data.world_z);
         if(data.hit) {
@@ -245,12 +220,11 @@ namespace ospray {
           vec3f right = cross(normalize(viewPort.at - viewPort.from), viewPort.up);
           vec3f offset = dot(delta, right) * right - dot(delta, viewPort.up) * viewPort.up;
           viewPort.at = p;
-          //viewPort.from += offset;
           viewPort.modified = true;
-	  computeFrame();
+          computeFrame();
           accumID = 0;
           ospFrameBufferClear(fb,OSP_FB_ACCUM);
-          //((glut3D::InspectCenter*)inspectCenterManipulator)->pivot = p;
+          forceRedraw();
         }
       }
     }
@@ -311,15 +285,15 @@ namespace ospray {
       ++accumID;
 
       if (showDepthBuffer) {
-          depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
-          frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
-          Glut3DWidget::display();
-          ospUnmapFrameBuffer(depthFB,fb);
+        depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
+        frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
+        Glut3DWidget::display();
+        ospUnmapFrameBuffer(depthFB,fb);
       } else {
-          ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
-          frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-          Glut3DWidget::display();
-          ospUnmapFrameBuffer(ucharFB,fb);
+        ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+        frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
+        Glut3DWidget::display();
+        ospUnmapFrameBuffer(ucharFB,fb);
       }
       // frameBufferMode = g_frameBufferMode;
       // switch(frameBufferMode) {
@@ -443,18 +417,10 @@ namespace ospray {
          it !=  mat->params.end(); ++it) {
       const char *name = it->first.c_str();
       const miniSG::Material::Param *p = it->second.ptr;
+
       switch(p->type) {
       case miniSG::Material::Param::INT:
-        if(strstr(name, "map_") == NULL) {
-          ospSet1i(ospMat,name,p->i[0]);
-        }
-        else {
-          miniSG::Texture2D *tex = mat->textures[p->i[0]].ptr;
-          OSPTexture2D ospTex = createTexture2D(tex);
-          //OSPData data = ospNewData(1, OSP_OBJECT, ospTex, OSP_DATA_SHARED_BUFFER);
-          //ospSetData(ospMat, name, data);
-          ospSetObject(ospMat, name, ospTex);
-        }
+        ospSet1i(ospMat,name,p->i[0]);
         break;
       case miniSG::Material::Param::FLOAT:
         ospSet1f(ospMat,name,p->f[0]);
@@ -468,9 +434,12 @@ namespace ospray {
       case miniSG::Material::Param::TEXTURE:
         {
           miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
-          OSPTexture2D ospTex = createTexture2D(tex);
-          ospCommit(ospTex);
-          ospSetObject(ospMat, name, ospTex);
+          if (tex) {
+            OSPTexture2D ospTex = createTexture2D(tex);
+            assert(ospTex);
+            ospCommit(ospTex);
+            ospSetObject(ospMat, name, ospTex);
+          }
           break;
         }
       default: 
@@ -521,7 +490,7 @@ namespace ospray {
         cout << "loading ospray module '" << moduleName << "'" << endl;
         ospLoadModule(moduleName);
       } else if (arg == "--1k") {
-        g_width = g_height = 1024;
+        initWindowSize = vec2i(1024);
       } else if (arg == "--alpha") {
         g_alpha = true;
       } else if (arg == "-win") {
@@ -533,7 +502,7 @@ namespace ospray {
               {
                 arg2.replace(pos, 1, " ");
                 std::stringstream ss(arg2);
-                ss >> g_width >> g_height;
+                ss >> initWindowSize.x >> initWindowSize.y;
               }
           }
         else
@@ -621,13 +590,13 @@ namespace ospray {
     bool doesInstancing = 0;
 
     if (forceInstancing) {
-      std::cout << "#osp:msgView: forced instancing - instances on." << std::endl;
+      std::cout << "msgView: forced instancing - instances on." << std::endl;
       doesInstancing = true;
     } else if (msgModel->instance.size() > msgModel->mesh.size()) {
-      std::cout << "#osp:msgView: found more object instances than meshes - turning on instancing" << std::endl;
+      std::cout << "msgView: found more object instances than meshes - turning on instancing" << std::endl;
       doesInstancing = true;
     } else {
-      std::cout << "#osp:msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
+      std::cout << "msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
       doesInstancing = false;
     }
     if (doesInstancing) {
@@ -694,7 +663,7 @@ namespace ospray {
       // add color array to mesh
       if (!msgMesh->color.empty()) {
         OSPData color = ospNewData(msgMesh->color.size(),OSP_FLOAT3A,
-                                    &msgMesh->color[0],OSP_DATA_SHARED_BUFFER);
+                                   &msgMesh->color[0],OSP_DATA_SHARED_BUFFER);
         assert(msgMesh->color.size() > 0);
         ospSetData(ospMesh,"vertex.color",color);
       } else {
@@ -726,11 +695,11 @@ namespace ospray {
           materialList.push_back(createMaterial(ospRenderer, msgMesh->materialList[i].ptr));
 
           for (miniSG::Material::ParamMap::const_iterator it =  msgMesh->materialList[i]->params.begin();
-              it != msgMesh->materialList[i]->params.end(); it++) {
+               it != msgMesh->materialList[i]->params.end(); it++) {
             const char *name = it->first.c_str();
             const miniSG::Material::Param *p = it->second.ptr;
             if(p->type == miniSG::Material::Param::TEXTURE) {
-              if(!strcmp(name, "map_kd")) {
+              if(!strcmp(name, "map_kd") || !strcmp(name, "map_Kd")) {
                 miniSG::Texture2D *tex = (miniSG::Texture2D*)p->ptr;
                 OSPTexture2D ospTex = createTexture2D(tex);
                 ospCommit(ospTex);
@@ -830,9 +799,6 @@ namespace ospray {
     printf("MSG Viewer created. Press 'Q' to quit.\n");
     window.setWorldBounds(box3f(msgModel->getBBox()));
     if (msgModel->camera.size() > 0) {
-      PRINT(msgModel->camera[0]->from);
-      PRINT(msgModel->camera[0]->at);
-      PRINT(msgModel->camera[0]->up);
       window.setViewPort(msgModel->camera[0]->from,
                          msgModel->camera[0]->at,
                          msgModel->camera[0]->up);

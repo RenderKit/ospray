@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/transferfunction/LinearTransferFunction.h"
+#include "ospray/transferFunction/LinearTransferFunction.h"
 
 namespace ospray {
 

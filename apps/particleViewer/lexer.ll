@@ -33,6 +33,7 @@ static void lHandleCppHash();
  using namespace ospray;
  using namespace ospray::particle;
 
+#define register /**/
 %}
 
 %option nounput

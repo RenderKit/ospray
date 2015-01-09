@@ -18,9 +18,10 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") 
-    AND ((${OSPRAY_COMPILER} STREQUAL "GCC") OR
-      (${OSPRAY_COMPILER} STREQUAL "gcc")))
+IF  ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") AND
+		(${OSPRAY_COMPILER} STREQUAL "GCC") AND
+		(NOT APPLE)
+		)
   MESSAGE(WARNING "Warning: You have selected 'avx2' target and 'gcc'-compiler, but many older gcc versions do not yet support avx2. If you run into build issues, please switch to either 'icc'-compiler, or upgrade your gcc version")
 ENDIF()
 
@@ -58,11 +59,11 @@ SET(OSPRAY_SOURCES
   volume/SymbolRegistry.cpp
   volume/Volume.cpp
 
-  transferfunction/LinearTransferFunction.ispc
-  transferfunction/LinearTransferFunction.cpp
-  transferfunction/TransferFunction.cpp
-  transferfunction/TransferFunction.ispc
-  transferfunction/SymbolRegistry.cpp
+  transferFunction/LinearTransferFunction.ispc
+  transferFunction/LinearTransferFunction.cpp
+  transferFunction/TransferFunction.cpp
+  transferFunction/TransferFunction.ispc
+  transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp

@@ -36,7 +36,7 @@ namespace ospray {
       d  = getParam1f("d", 1.f);
       Kd = getParam3f("kd", getParam3f("Kd", vec3f(.8f)));
       Ks = getParam3f("ks", getParam3f("Ks", vec3f(0.f)));
-      Ns = getParam1f("ns", getParam1f("Ns", 0.f));
+      Ns = getParam1f("ns", getParam1f("Ns", 10.f));
 
       ispc::OBJMaterial_set(getIE(),
                             map_d ? map_d->getIE() : NULL,

@@ -216,7 +216,7 @@ namespace ospray {
       //                          bool right,
       //                          bool middle);
       virtual void reshape(const vec2i &newSize); 
-      virtual void idle()                        { usleep(1000); }
+      virtual void idle();
       /*! display this window. By default this will just clear this
         window's framebuffer; it's up to the user to override this fct
         to do something more useful */
@@ -260,8 +260,7 @@ namespace ospray {
       vec2i lastMousePos; /*! last mouse screen position of mouse before
                             current motion */
       vec2i currMousePos; /*! current screen position of mouse */
-      int32 lastModifierState, currModifierState;
-      int32 lastButtonState, currButtonState;
+      int64 lastButtonState, currButtonState, currModifiers;
       ViewPort viewPort;
       box3f  worldBounds; /*!< world bounds, to automatically set viewPort
                             lookat, mouse speed, etc */
