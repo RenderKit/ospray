@@ -105,6 +105,8 @@ namespace ospray {
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
+      viewPort.modified = true;
+      forceRedraw();
     }
     
     virtual void keypress(char key, const vec2f where)

@@ -260,8 +260,7 @@ namespace ospray {
       vec2i lastMousePos; /*! last mouse screen position of mouse before
                             current motion */
       vec2i currMousePos; /*! current screen position of mouse */
-      int32 lastModifierState, currModifierState;
-      int32 lastButtonState, currButtonState;
+      int64 lastButtonState, currButtonState, currModifiers;
       ViewPort viewPort;
       box3f  worldBounds; /*!< world bounds, to automatically set viewPort
                             lookat, mouse speed, etc */
