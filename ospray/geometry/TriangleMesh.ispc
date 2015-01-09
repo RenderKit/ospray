@@ -104,6 +104,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform vec4f  *uniform color,
                                      uniform vec2f  *uniform texcoord,
                                      uniform int32   geom_materialID,
+                                     uniform Material *uniform material,
                                      uniform Material *uniform *uniform materialList,
                                      uniform uint32 *uniform prim_materialID
                                      )
@@ -111,7 +112,7 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
   Geometry_Constructor(&mesh->geometry,cppEquivalent,
                        TriangleMesh_postIntersect,
                        model,geomID,
-                       mesh->geometry.material);
+                       material);
   mesh->numTriangles = numTriangles;
   mesh->index        = index;
   mesh->vertex       = vertex;
@@ -153,7 +154,7 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
   TriangleMesh_Constructor(mesh, cppEquivalent, 
-                           NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL);
+                           NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL);
   return mesh;
 }
 
@@ -167,6 +168,7 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform vec4f  *uniform color,
                                       uniform vec2f  *uniform texcoord,
                                       uniform int32   geom_materialID,
+                                      void *uniform material,
                                       void *uniform _materialList,
                                       uniform uint32 *uniform prim_materialID
                                       )
@@ -174,19 +176,20 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
   uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
   uniform Model *uniform model = (uniform Model *uniform)_model;
   uniform Material *uniform *uniform materialList = (uniform Material *uniform *uniform)_materialList;
- TriangleMesh_Constructor(mesh,
-                          mesh->geometry.cppEquivalent,
-                          model,
-                          geomID, 
-                          numTriangles,
-                          index,
-                          vertex,
-                          normal,
-                          color, 
-                          texcoord,
-                          geom_materialID,
-                          materialList,
-                          prim_materialID);
+  TriangleMesh_Constructor(mesh,
+                           mesh->geometry.cppEquivalent,
+                           model,
+                           geomID, 
+                           numTriangles,
+                           index,
+                           vertex,
+                           normal,
+                           color, 
+                           texcoord,
+                           geom_materialID,
+                           (Material*uniform)material,
+                           (Material*uniform*uniform)materialList,
+                           prim_materialID);
 #ifdef OSPRAY_INTERSECTION_FILTER
  rtcSetUserData(model->embreeSceneHandle,geomID,mesh);
  rtcSetIntersectionFilterFunction(model->embreeSceneHandle,geomID,
