@@ -593,11 +593,12 @@ namespace ospray {
       size_t fileSize = ftell(file);
       fclose(file);
       
-      int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDWR);
+      int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDONLY);
       if (fd == -1)
         perror("could not open file");
       binBasePtr = (unsigned char *)
-        mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+        mmap(NULL,fileSize,PROT_READ,MAP_SHARED,fd,0);
+        // mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
 
       xml::XMLDoc *doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 

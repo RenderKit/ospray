@@ -44,7 +44,8 @@ namespace ospray {
         return "";
       }
 
-      //*! find properly with given name, and return as long ('l') int. return undefined if prop does not exist
+      //*! find properly with given name, and return as long ('l')
+      //*! int. return undefined if prop does not exist
       inline size_t getPropl(const std::string &name) const
       { return atol(getProp(name).c_str()); }
       

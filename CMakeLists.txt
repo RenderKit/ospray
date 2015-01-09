@@ -50,7 +50,11 @@ SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
 MARK_AS_ADVANCED(OSPRAY_INTERSECTION_FILTER)
 
 # compiler selection for the non-MIC part
-SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
+IF (APPLE)
+	SET(OSPRAY_COMPILER "clang" CACHE STRING "Set to ICC, GCC, or CLANG")
+ELSE(APPLE)
+	SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
+ENDIF(APPLE)
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
 # whether to build in MIC/xeon phi support
