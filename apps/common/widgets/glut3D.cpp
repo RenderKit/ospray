@@ -465,9 +465,19 @@ namespace ospray {
     {
       if (widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) {
         dragLeft(widget,widget->currMousePos,widget->lastMousePos);
-      } else if (widget->currButtonState == (1<<GLUT_RIGHT_BUTTON)) {
+      } else if ((widget->currButtonState == (1<<GLUT_RIGHT_BUTTON))
+                 ||
+                 ((widget->currButtonState == (1<<GLUT_RIGHT_BUTTON)) 
+                  && 
+                  (glutGetModifiers() & GLUT_ACTIVE_ALT))
+                 ) {
         dragRight(widget,widget->currMousePos,widget->lastMousePos);
-      } else if (widget->currButtonState == (1<<GLUT_MIDDLE_BUTTON)) {
+      } else if ((widget->currButtonState == (1<<GLUT_MIDDLE_BUTTON)) 
+                 ||
+                 ((widget->currButtonState == (1<<GLUT_RIGHT_BUTTON)) 
+                  && 
+                  (glutGetModifiers() & GLUT_ACTIVE_CTRL))
+                 ) {
         dragMiddle(widget,widget->currMousePos,widget->lastMousePos);
       }
     }
