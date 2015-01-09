@@ -159,6 +159,7 @@ namespace ospray {
                            (ispc::vec4f*)color,
                            (ispc::vec2f*)texcoord,
                            geom_materialID,
+                           getMaterial()?getMaterial()->getIE():NULL,
                            ispcMaterialPtrs,
                            (uint32*)prim_materialID);
   }
