@@ -31,8 +31,8 @@ IF (NOT THIS_IS_MIC)
     ADD_LIBRARY(ospray_module_seismic${OSPRAY_LIB_SUFFIX} SHARED
       SeismicVolumeFile.cpp
       SymbolRegistry.cpp
-      ../../apps/common/fileio/TinyXML2.cpp
-      )
+      ../loaders/TinyXML2.cpp
+    )
 
     TARGET_LINK_LIBRARIES(ospray_module_seismic${OSPRAY_LIB_SUFFIX} ${FreeDDS_LIBRARIES})
 

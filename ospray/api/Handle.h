@@ -52,18 +52,28 @@ namespace ospray {
 
       /*! look up an object by handle, and return it. must be a defiend handle */
       ManagedObject *lookup() const;
+
+      /*! Return the handle associated with the given object. */
+      static Handle lookup(ManagedObject *object);
+
       /*! check whether the handle is defined *on this rank* */
       bool defined() const;
+
       /*! define the given handle to refer to given object */
       static void assign(const Handle &handle, const ManagedObject *object);
+
       /*! define the given handle to refer to given object */
       void assign(const ManagedObject *object) const;
+
       //! free the given object
       void freeObject() const;
+
       /*! returns the owner's rank */
       inline int32 owner() const { return i32.owner; }
+
       /*! returns the local ID to reference this object on the owner rank */
       inline int32 ID() const { return i32.ID; }
+
       /*! cast to int64 to allow fast operations with this type */
       inline operator int64() const { return i64; }
 

@@ -70,7 +70,6 @@ namespace osp {
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct TriangleMesh     : public Geometry {};
-  struct ObjectCatalog    : public ManagedObject { char *name;  ManagedObject *object;  OSPDataType type;  const void *value;  ObjectCatalog **entries; };
 
 } // ::osp
 
@@ -88,31 +87,6 @@ typedef enum {
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
-
-typedef enum {
-
-  //! These flags indicate when data is to be loaded, and are used in
-  //! cases where the host and compute device(s) share no filesystems.
-  //! OSP_LOAD_DATA_IMMEDIATE denotes data should be loaded presently.
-  //! This flag is typically checked in a file loader running on the
-  //! host, in which case the data is loaded on the host and is later
-  //! copied to the device(s) through memory or an interconnect.  OSP_
-  //! LOAD_DATA_DEFERRED indicates that the load should be deferred to
-  //! the last possible moment, typically on the device.  This avoids
-  //! unnecessary copies in cases where the host and device are one in
-  //! the same or share a filesystem.
-  //!
-  //! Note that we distinguish between the data backing OSPRay objects
-  //! and configuration parameters on those objects.  The OSP_LOAD_DATA
-  //! flags apply to the former not the latter.  Parameters are loaded
-  //! immediately to allow introspection by the application, and so it
-  //! is assumed that file loaders can separately read parameters and
-  //! data.
-  //!
-  OSP_LOAD_DATA_DEFERRED,
-  OSP_LOAD_DATA_IMMEDIATE,
-
-} OSPLoadDataMode;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {
@@ -145,7 +119,6 @@ typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::Light             *OSPLight;
-typedef osp::ObjectCatalog     *OSPObjectCatalog;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -199,10 +172,6 @@ extern "C" {
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */
   OSPCamera ospNewCamera(const char *type);
-
-  //! import a collection of OSPRay objects from a file
-  /*! return 'NULL' if the file type is not known */
-  OSPObjectCatalog ospImportObjects(const char *filename);
 
   //! create a new volume of given type 
   /*! return 'NULL' if that type is not known */
@@ -321,7 +290,7 @@ extern "C" {
 
 
   // -------------------------------------------------------
-  /*! \defgroup ospray_params Assigning parameters to objects 
+  /*! \defgroup ospray_params Object parameters.
 
     \ingroup ospray_api
 
@@ -358,6 +327,7 @@ extern "C" {
 
   /*! add 3-float paramter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+
   /*! add 3-float paramter to given object */
   void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
 
@@ -375,6 +345,50 @@ extern "C" {
 
   /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
   void ospSetVoidPtr(OSPObject _object, const char *id, void *v);
+
+  /*! \brief Object and parameter introspection.                            */
+  /*!                                                                       */
+  /*! These functions are used to retrieve the type or handle of an object, */
+  /*! or the name, type, or value of a parameter associated with an object. */
+  /*! These functions can be expensive in cases where the host and compute  */
+  /*! device are separated by a PCI bus or interconnect.                    */
+  /*!                                                                       */
+  /*! If the type of the requested parameter does not match that indicated  */
+  /*! by the function name, or the named parameter does not exist, then the */
+  /*! functions return '0'.                                                 */
+
+  /*! \brief Get the named data array associated with an object. */
+  int ospGetData(OSPObject object, const char *name, OSPData *value);
+
+  /*! \brief Get the named scalar floating point value associated with an object. */
+  int ospGetf(OSPObject object, const char *name, float *value);
+
+  /*! \brief Get the named scalar integer associated with an object. */
+  int ospGeti(OSPObject object, const char *name, int *value);
+
+  /*! \brief Get the material associated with a geometry object. */
+  int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value);
+
+  /*! \brief Get the named object associated with an object. */
+  int ospGetObject(OSPObject object, const char *name, OSPObject *value);
+
+  /*! \brief Retrieve a NULL-terminated list of the parameter names associated with an object. */
+  int ospGetParameters(OSPObject object, char ***value);
+
+  /*! \brief Get a pointer to a copy of the named character string associated with an object. */
+  int ospGetString(OSPObject object, const char *name, char **value);
+
+  /*! \brief Get the type of the named parameter or the given object (if 'name' is NULL). */
+  int ospGetType(OSPObject object, const char *name, OSPDataType *value);
+
+  /*! \brief Get the named 2-vector floating point value associated with an object. */
+  int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value);
+
+  /*! \brief Get the named 3-vector floating point value associated with an object. */
+  int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value);
+
+  /*! \brief Get the named 3-vector integer value associated with an object. */
+  int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value);
 
   /*! @} end of ospray_params */
 
@@ -427,9 +441,6 @@ extern "C" {
 
   /*! \} */
   
-  /*! \brief commit changes to a collection of objects */
-  void ospCommitCatalog(OSPObjectCatalog catalog);
-
   /*! \brief commit changes to an object */
   void ospCommit(OSPObject object);
 

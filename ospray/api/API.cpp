@@ -18,8 +18,6 @@
 #include "ospray/render/Renderer.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/common/Material.h"
-#include "ospray/fileio/ObjectCatalog.h"
-#include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/transferfunction/TransferFunction.h"
 #include "LocalDevice.h"
@@ -348,22 +346,6 @@ namespace ospray {
     return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
   }
 
-  /*! \brief import a collection of OSPRay objects from a file, return 'NULL' if the file type is not known */
-  extern "C" OSPObjectCatalog ospImportObjects(const char *filename)
-  {
-    ASSERT_DEVICE();
-    Assert(filename != NULL && "no filename specified in ospImportObjects");
-    LOG("ospImportObjects(" << filename << ")");
-    OSPObjectCatalog catalog = ospray::ObjectFile::importObjects(filename);
-    if (ospray::logLevel > 0) {
-      if (catalog)
-        cout << "ospImportObjects: " << filename << endl;
-      else
-        std::cerr << "#ospray: could not import objects from file '" << filename << "'" << std::endl;
-    }
-    return catalog;
-  }
-
   /*! \brief create a new volume of given type, return 'NULL' if that type is not known */
   extern "C" OSPVolume ospNewVolume(const char *type)
   {
@@ -427,15 +409,6 @@ namespace ospray {
     ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
     // rendering = false;
 #endif
-  }
-
-  extern "C" void ospCommitCatalog(OSPObjectCatalog catalog)
-  {
-    ASSERT_DEVICE();
-    Assert(catalog && "invalid catalog handle to commit from");
-    LOG("ospCommitCatalog(...)");
-    ObjectCatalog *objects = dynamic_cast<ObjectCatalog *>(catalog);
-    objects->commit();
   }
 
   extern "C" void ospCommit(OSPObject object)
@@ -540,6 +513,72 @@ namespace ospray {
     ASSERT_DEVICE();
     Assert2(geometry,"NULL geometry passed to ospSetMaterial");
     ospray::api::Device::current->setMaterial(geometry,material);
+  }
+
+  //! Get the named data array associated with an object.
+  extern "C" int ospGetData(OSPObject object, const char *name, OSPData *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getData(object, name, value));
+  }
+
+  //! Get the named scalar floating point value associated with an object.
+  extern "C" int ospGetf(OSPObject object, const char *name, float *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getf(object, name, value));
+  }
+
+  //! Get the named scalar integer associated with an object.
+  extern "C" int ospGeti(OSPObject object, const char *name, int *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->geti(object, name, value));
+  }
+
+  //! Get the material associated with a geometry object.
+  extern "C" int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getMaterial(geometry, value));
+  }
+
+  //! Get the named object associated with an object.
+  extern "C" int ospGetObject(OSPObject object, const char *name, OSPObject *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getObject(object, name, value));
+  }
+
+  //! Retrieve a NULL-terminated list of the parameter names associated with an object.
+  extern "C" int ospGetParameters(OSPObject object, char ***value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getParameters(object, value));
+  }
+
+  //! Get a pointer to a copy of the named character string associated with an object.
+  extern "C" int ospGetString(OSPObject object, const char *name, char **value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getString(object, name, value));
+  }
+
+  //! Get the type of the named parameter or the given object (if 'name' is NULL).
+  extern "C" int ospGetType(OSPObject object, const char *name, OSPDataType *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getType(object, name, value));
+  }
+
+  //! Get the named 2-vector floating point value associated with an object.
+  extern "C" int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getVec2f(object, name, value));
+  }
+
+  //! Get the named 3-vector floating point value associated with an object.
+  extern "C" int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getVec3f(object, name, value));
+  }
+
+  //! Get the named 3-vector integer value associated with an object.
+  extern "C" int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getVec3i(object, name, value));
   }
 
   /*! \brief create a new instance geometry that instantiates another

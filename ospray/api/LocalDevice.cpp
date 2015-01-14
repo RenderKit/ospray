@@ -288,6 +288,121 @@ namespace ospray {
       target->setParam(bufName,value);
     }
 
+    /*! Get the named data array associated with an object. */
+    int LocalDevice::getData(OSPObject handle, const char *name, OSPData *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_OBJECT && param->ptr->managedObjectType == OSP_DATA ? *value = (OSPData) param->ptr, true : false);
+
+    }
+
+    /*! Get the named scalar floating point value associated with an object. */
+    int LocalDevice::getf(OSPObject handle, const char *name, float *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT ? *value = param->f[0], true : false);
+
+    }
+
+    /*! Get the named scalar integer associated with an object. */
+    int LocalDevice::geti(OSPObject handle, const char *name, int *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_INT ? *value = param->i[0], true : false);
+
+    }
+
+    /*! Get the material associated with a geometry object. */
+    int LocalDevice::getMaterial(OSPGeometry handle, OSPMaterial *value) {
+
+      Geometry *geometry = (Geometry *) handle;
+      Assert(geometry != NULL && "invalid source geometry handle");
+      return(*value = (OSPMaterial) geometry->getMaterial(), true);
+
+    }
+
+    /*! Get the named object associated with an object. */
+    int LocalDevice::getObject(OSPObject handle, const char *name, OSPObject *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_OBJECT ? *value = (OSPObject) param->ptr, true : false);
+
+    }
+
+    /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
+    int LocalDevice::getParameters(OSPObject handle, char ***value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      char **names = (char **) malloc((object->paramList.size() + 1) * sizeof(char *));
+
+      for (size_t i=0 ; i < object->paramList.size() ; i++) names[i] = strdup(object->paramList[i]->name);
+      names[object->paramList.size()] = NULL;
+      return(*value = names, true);
+
+    }
+
+    /*! Get a pointer to a copy of the named character string associated with an object. */
+    int LocalDevice::getString(OSPObject handle, const char *name, char **value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_STRING ? *value = strdup(param->s), true : false);
+
+    }
+
+    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+    int LocalDevice::getType(OSPObject handle, const char *name, OSPDataType *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      if (name == NULL) return(*value = object->managedObjectType, true);
+
+      ManagedObject::Param *param = object->findParam(name);
+      if (param == NULL) return(false);
+      return(*value = (param->type == OSP_OBJECT) ? param->ptr->managedObjectType : param->type, true);
+
+    }
+
+    /*! Get the named 2-vector floating point value associated with an object. */
+    int LocalDevice::getVec2f(OSPObject handle, const char *name, vec2f *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT2 ? *value = ((vec2f *) param->f)[0], true : false);
+
+    }
+
+    /*! Get the named 3-vector floating point value associated with an object. */
+    int LocalDevice::getVec3f(OSPObject handle, const char *name, vec3f *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT3 ? *value = ((vec3f *) param->f)[0], true : false);
+
+    }
+
+    /*! Get the named 3-vector integer value associated with an object. */
+    int LocalDevice::getVec3i(OSPObject handle, const char *name, vec3i *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_INT3 ? *value = ((vec3i *) param->i)[0], true : false);
+
+    }
+
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer LocalDevice::newRenderer(const char *type)
     {

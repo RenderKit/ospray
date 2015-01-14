@@ -17,7 +17,7 @@
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 # setup dependencies
-SET(LIBS ${LIBS} ospray ospray_fileio)
+SET(LIBS ${LIBS} ospray ospray_module_loaders)
 
 FIND_PACKAGE(Qt4 REQUIRED) 
 SET(QT_USE_QTOPENGL TRUE)

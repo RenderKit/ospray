@@ -72,9 +72,6 @@ namespace ospray {
     //! Complete volume initialization.
     virtual void finish() = 0;
 
-    //! Initialize the volume from memory.
-    void getVolumeFromMemory();
-
     //! Update select parameters after the volume has been allocated and filled.
     virtual void updateEditableParameters() {}
 
