@@ -70,6 +70,7 @@ namespace ospray {
         objectByHandle.find(i64);
       return it != objectByHandle.end();
     }
+
     ManagedObject *Handle::lookup() const
     {
       if (i64 == 0) return NULL;
@@ -78,6 +79,14 @@ namespace ospray {
         objectByHandle.find(i64);
       Assert(it != objectByHandle.end());
       return it->second.ptr;
+    }
+
+    Handle Handle::lookup(ManagedObject *object) {
+
+      std::map<int64, Ref<ManagedObject> >::const_iterator it;
+      for (it = objectByHandle.begin() ; it != objectByHandle.end() ; it++) if (it->second.ptr == object) return(Handle(it->first));
+      return(nullHandle);
+
     }
     
     const Handle Handle::nullHandle(0);

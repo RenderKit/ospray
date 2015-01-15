@@ -14,21 +14,33 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+SET(OSPRAY_MODULE_LOADERS OFF CACHE BOOL "Build loaders for common file types.")
+
 CONFIGURE_OSPRAY()
 
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+IF (NOT THIS_IS_MIC)
+  IF (OSPRAY_MODULE_LOADERS)
 
-ADD_LIBRARY(ospray_fileio SHARED
-  OSPObjectFile.cpp
-  RawVolumeFile.cpp
-  SymbolRegistry.cpp
-  TinyXML2.cpp
-  )
+    INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+    INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-TARGET_LINK_LIBRARIES(ospray_fileio ospray)
-# ------------------------------------------------------------
-SET_TARGET_PROPERTIES(ospray_fileio${OSPRAY_LIB_SUFFIX} 
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-INSTALL(TARGETS ospray_fileio${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+    LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/loaders)
+
+    ADD_LIBRARY(ospray_module_loaders${OSPRAY_LIB_SUFFIX} SHARED
+      ObjectFile.cpp
+      OSPObjectFile.cpp
+      RawVolumeFile.cpp
+      SymbolRegistry.cpp
+      TinyXML2.cpp
+      VolumeFile.cpp
+    )
+
+    TARGET_LINK_LIBRARIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+
+    SET_TARGET_PROPERTIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX}
+      PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+    INSTALL(TARGETS ospray_module_loaders${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+
+  ENDIF (OSPRAY_MODULE_LOADERS)
+ENDIF (NOT THIS_IS_MIC)
 

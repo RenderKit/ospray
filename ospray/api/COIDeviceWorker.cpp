@@ -717,6 +717,161 @@ namespace ospray {
         throw "ospray_coi_set_value no timplemented for given data type";
       }
     }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_get_parameters(uint32_t         numBuffers,
+                                   void**           bufferPtr,
+                                   uint64_t*        bufferSize,
+                                   void*            argsPtr,
+                                   uint16_t         argsSize,
+                                   void*            retVal,
+                                   uint16_t         retValSize)
+    {
+
+      //! The size of ReturnValue is larger than that indicated by the following definition.
+      DataStream stream(argsPtr);
+      ManagedObject *object = stream.get<Handle>().lookup();
+      int *result = (int *) retVal;  result[0] = true;
+
+      for (size_t i=0, offset=0 ; i < object->paramList.size() ; i++) {
+
+          size_t size = strlen(object->paramList[i]->name) + 1;
+          memcpy((char *)(&result[1]) + offset, object->paramList[i]->name, size);
+          offset += size;
+
+      }
+
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_get_parameters_size(uint32_t         numBuffers,
+                                        void**           bufferPtr,
+                                        uint64_t*        bufferSize,
+                                        void*            argsPtr,
+                                        uint16_t         argsSize,
+                                        void*            retVal,
+                                        uint16_t         retValSize)
+    {
+
+      DataStream stream(argsPtr);
+      ManagedObject *object = stream.get<Handle>().lookup();
+      int *result = (int *) retVal;  result[0] = true;
+
+      int size = 0;
+      for (size_t i=0 ; i < object->paramList.size() ; i++) size += (strlen(object->paramList[i]->name) + 1) * sizeof(char);
+      memcpy(&result[1], &size, sizeof(int));
+
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_get_type(uint32_t         numBuffers,
+                             void**           bufferPtr,
+                             uint64_t*        bufferSize,
+                             void*            argsPtr,
+                             uint16_t         argsSize,
+                             void*            retVal,
+                             uint16_t         retValSize)
+    {
+
+      DataStream stream(argsPtr);
+      ManagedObject *object = stream.get<Handle>().lookup();
+      const char *name = stream.getString();
+      int *result = (int *) retVal;  result[0] = false;
+
+      switch (strlen(name)) {
+        case 0: {
+
+          OSPDataType type = object->managedObjectType;
+          result[0] = true;  memcpy(&result[1], &type, sizeof(OSPDataType));  break;
+
+        } default: {
+
+          ManagedObject::Param *param = object->findParam(name);
+          if (param == NULL) return;
+          OSPDataType type = (param->type == OSP_OBJECT) ? param->ptr->managedObjectType : param->type;
+          result[0] = true;  memcpy(&result[1], &type, sizeof(OSPDataType));  break;
+
+        }
+      }
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_get_value(uint32_t         numBuffers,
+                              void**           bufferPtr,
+                              uint64_t*        bufferSize,
+                              void*            argsPtr,
+                              uint16_t         argsSize,
+                              void*            retVal,
+                              uint16_t         retValSize)
+    {
+
+      DataStream stream(argsPtr);
+      ManagedObject *object = stream.get<Handle>().lookup();
+      const char *name = stream.getString();
+      OSPDataType type = stream.get<OSPDataType>();
+      ManagedObject::Param *param = object->findParam(name);
+      int *result = (int *) retVal;  result[0] = false;
+
+      switch (type) {
+        case OSP_DATA: {
+
+          if (param == NULL || param->type != OSP_OBJECT || param->ptr->managedObjectType != OSP_DATA) return;
+          Handle handle = Handle::lookup(param->ptr);
+          result[0] = true;  memcpy(&result[1], &handle, sizeof(Handle));  break;
+
+        } case OSP_FLOAT: {
+
+          if (param == NULL || param->type != OSP_FLOAT) return;
+          float value = param->f[0];
+          result[0] = true;  memcpy(&result[1], &value, sizeof(float));  break;
+
+        } case OSP_FLOAT2: {
+
+          if (param == NULL || param->type != OSP_FLOAT2) return;
+          vec2f value = ((vec2f *) param->f)[0];
+          result[0] = true;  memcpy(&result[1], &value, sizeof(vec2f));  break;
+
+        } case OSP_FLOAT3: {
+
+          if (param == NULL || param->type != OSP_FLOAT3) return;
+          vec3f value = ((vec3f *) param->f)[0];
+          result[0] = true;  memcpy(&result[1], &value, sizeof(vec3f));  break;
+
+        } case OSP_INT: {
+
+          if (param == NULL || param->type != OSP_INT) return;
+          int value = param->i[0];
+          result[0] = true;  memcpy(&result[1], &value, sizeof(int));  break;
+
+        } case OSP_INT3: {
+
+          if (param == NULL || param->type != OSP_INT3) return;
+          vec3i value = ((vec3i *) param->i)[0];
+          result[0] = true;  memcpy(&result[1], &value, sizeof(vec3i));  break;
+
+        } case OSP_MATERIAL: {
+
+          if (object->managedObjectType != OSP_GEOMETRY || ((Geometry *) object)->getMaterial() == NULL) return;
+          Handle handle = Handle::lookup(((Geometry *) object)->getMaterial());
+          result[0] = true;  memcpy(&result[1], &handle, sizeof(Handle));  break;
+
+        } case OSP_OBJECT: {
+
+          if (param == NULL || param->type != OSP_OBJECT) return;
+          Handle handle = Handle::lookup(param->ptr);
+          result[0] = true;  memcpy(&result[1], &handle, sizeof(Handle));  break;
+
+        } case OSP_STRING: {
+
+          if (param == NULL || param->type != OSP_STRING) return;
+          const char *value = param->s;
+          result[0] = true;  memcpy(&result[1], value, strnlen(value, retValSize - 1) + 1);  break;
+
+        } default:  return;
+
+      }
+    }
+
   } // ::ospray::coi
 } // ::ospray
 
