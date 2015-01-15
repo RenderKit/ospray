@@ -54,7 +54,10 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
   OSPData voxelDataObject = ospNewData(voxelCount, strcmp(voxelType, "float") ? OSP_UCHAR : OSP_FLOAT, voxelData, OSP_DATA_SHARED_BUFFER);
 
   //! Set the buffer as a parameter on the volume.
-  ospSetData(volume, "voxelData", voxelDataObject);  return(volume);
+  ospSetData(volume, "voxelData", voxelDataObject);
+
+  //! Return the volume.
+  return(volume);
 
 }
 

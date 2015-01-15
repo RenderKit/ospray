@@ -20,8 +20,8 @@
 #include "modules/loaders/VolumeFile.h"
 
 //! \brief A concrete implementation of the VolumeFile class for reading
-//!  for reading voxel data stored in a file on disk as a single mono-
-//!  lithic brick, where the volume specification is defined elsewhere.
+//!  voxel data stored in a file on disk as a single monolithic brick,
+//!  where the volume specification is defined elsewhere.
 //!
 class RawVolumeFile : public VolumeFile {
 public:
