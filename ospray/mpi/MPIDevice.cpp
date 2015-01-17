@@ -568,6 +568,102 @@ namespace ospray {
       cmd.flush();
     }
 
+    /*! Get the named data array associated with an object. */
+    int MPIDevice::getData(OSPObject object, const char *name, OSPData *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named scalar floating point value associated with an object. */
+    int MPIDevice::getf(OSPObject object, const char *name, float *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named scalar integer associated with an object. */
+    int MPIDevice::geti(OSPObject object, const char *name, int *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the material associated with a geometry object. */
+    int MPIDevice::getMaterial(OSPGeometry geometry, OSPMaterial *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named object associated with an object. */
+    int MPIDevice::getObject(OSPObject object, const char *name, OSPObject *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
+    int MPIDevice::getParameters(OSPObject object, char ***value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Retrieve the total length of the names (with terminators) of the parameters associated with an object. */
+    int MPIDevice::getParametersSize(OSPObject object, int *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get a pointer to a copy of the named character string associated with an object. */
+    int MPIDevice::getString(OSPObject object, const char *name, char **value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+    int MPIDevice::getType(OSPObject object, const char *name, OSPDataType *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named 2-vector floating point value associated with an object. */
+    int MPIDevice::getVec2f(OSPObject object, const char *name, vec2f *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named 3-vector floating point value associated with an object. */
+    int MPIDevice::getVec3f(OSPObject object, const char *name, vec3f *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named 3-vector integer value associated with an object. */
+    int MPIDevice::getVec3i(OSPObject object, const char *name, vec3i *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {
