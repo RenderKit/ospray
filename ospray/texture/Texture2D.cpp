@@ -60,7 +60,7 @@ namespace ospray {
     if (flags & OSP_DATA_SHARED_BUFFER) {
       tx->data = data;
     } else {
-      tx->data = new unsigned char[bytes];
+      tx->data = bytes ? new unsigned char[bytes] : NULL;
       memcpy(tx->data, data, bytes);
     }
     

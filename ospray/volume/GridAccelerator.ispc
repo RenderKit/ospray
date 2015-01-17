@@ -94,7 +94,10 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer)
   const uniform size_t cellCount = accelerator->brickCount.x * accelerator->brickCount.y * accelerator->brickCount.z * BRICK_CELL_COUNT;
 
   //! Allocate storage for the volumetric value range per cell.
-  accelerator->cellRange = uniform new uniform vec2f[cellCount];
+  if (cellCount)
+    accelerator->cellRange = uniform new uniform vec2f[cellCount];
+  else 
+    accelerator->cellRange = NULL;
 
   //! Keep a pointer to the volume.
   accelerator->volume = pointer;
