@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include <libgen.h>
 #include <string>
 #include <string.h>
 #include "modules/loaders/OSPObjectFile.h"
@@ -174,7 +175,7 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
   OSPVolume volume = ospNewVolume("block_bricked_volume");
 
   //! Temporary storage for the file name attribute if specified.
-  const char *filename = NULL;
+  const char *volumeFilename = NULL;
 
   //! Iterate over object attributes.
   for (const tinyxml2::XMLNode *node = root->FirstChild() ; node ; node = node->NextSibling()) {
@@ -183,7 +184,7 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
     if (!strcmp(node->ToElement()->Name(), "dimensions")) { importAttributeInteger3(node, volume);  continue; }
 
     //! File containing a volume specification and / or voxel data.
-    if (!strcmp(node->ToElement()->Name(), "filename")) { filename = node->ToElement()->GetText();  continue; }
+    if (!strcmp(node->ToElement()->Name(), "filename")) { volumeFilename = node->ToElement()->GetText();  continue; }
 
     //! Gamma correction coefficient and exponent.
     if (!strcmp(node->ToElement()->Name(), "gammaCorrection")) { importAttributeFloat2(node, volume);  continue; }
@@ -215,7 +216,21 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
   }
 
   //! Load the contents of the volume file if specified.
-  if (filename != NULL) VolumeFile::importVolume(filename, volume);
+  if (volumeFilename != NULL) {
+
+    //! Some implementations of 'dirname()' are destructive.
+    char *duplicateFilename = strdup(filename.c_str());
+
+    //! The volume file path is absolute.
+    if (volumeFilename[0] == '/') return(VolumeFile::importVolume(volumeFilename, volume));
+
+    //! The volume file path is relative to the object file path.
+    if (volumeFilename[0] != '/') return(VolumeFile::importVolume((std::string(dirname(duplicateFilename)) + "/" + volumeFilename).c_str(), volume));
+
+    //! Free the temporary character array.
+    if (duplicateFilename != NULL) free(duplicateFilename);
+
+  }
 
   //! The populated volume object.
   return(volume);
