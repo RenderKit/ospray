@@ -43,8 +43,5 @@ private:
   //! Path to the file containing the volume data.
   std::string filename;
 
-  //! Locate and open the volume data file.
-  FILE *openVolumeFile();
-
 };
 
