@@ -195,10 +195,6 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
   //! Allocate memory for the voxel data. Note that FreeDDS converts sample types of int, short, long, float, and double to float.
   float * voxelData = new float[voxelCount];
 
-  //! Volume statistics.
-  float dataMin = FLT_MAX;
-  float dataMax = -FLT_MAX;
-
   //! Trace fields used for coordinates in each dimension; defaults can be overridden.
   std::string traceCoordinate2Field = "CdpNum";
   std::string traceCoordinate3Field = "FieldRecNum";
@@ -259,13 +255,6 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
       size_t offset = (coordinate3-origin3) * volumeDimensions.y*volumeDimensions.x + (coordinate2-origin2) * volumeDimensions.x;
       memcpy(&voxelData[offset], &traceBuffer[traceHeaderSize], volumeDimensions.x * sizeof(float));
 
-      //! Accumulate statistics.
-      for (int i1=0; i1<volumeDimensions.x; i1++) {
-
-        dataMin = std::min(float(traceBuffer[traceHeaderSize + i1]), dataMin);
-        dataMax = std::max(float(traceBuffer[traceHeaderSize + i1]), dataMax);
-      }
-
       traceCount++;
     }
   }
@@ -324,13 +313,6 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
         size_t offset = ((i3 - subvolumeOffsets.z) / subvolumeSteps.z) * volumeDimensions.y*volumeDimensions.x + ((i2 - subvolumeOffsets.y) / subvolumeSteps.y) * volumeDimensions.x;
         memcpy(&voxelData[offset], &traceBufferSubvolume[0], volumeDimensions.x * sizeof(float));
 
-        //! Accumulate statistics.
-        for (int i1=0; i1<volumeDimensions.x; i1++) {
-
-          dataMin = std::min(float(traceBufferSubvolume[i1]), dataMin);
-          dataMax = std::max(float(traceBufferSubvolume[i1]), dataMax);
-        }
-
         traceCount++;
 
         //! Skip traces (second dimension)
@@ -357,15 +339,9 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
   //! Set the buffer as a parameter on the volume.
   ospSetData(volume, "voxelData", voxelDataObject);
 
-  //! Set voxel range of the volume.
-  osp::vec2f voxelRange(dataMin, dataMax);
-  ospSetVec2f(volume, "voxelRange", voxelRange);
-
   //! Print statistics.
-  if(verbose) {
+  if(verbose)
     std::cout << toString() << " read " << traceCount << " traces. " << volumeDimensions.y*volumeDimensions.z - int(traceCount) << " missing trace(s)." << std::endl;
-    std::cout << toString() << " volume data range = " << dataMin << " " << dataMax << std::endl;
-  }
 
   //! Clean up.
   free(traceBuffer);

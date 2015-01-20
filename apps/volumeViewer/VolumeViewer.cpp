@@ -60,6 +60,17 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
   //! Create and configure the OSPRay state.
   initObjects(filenames);
 
+  //! Update transfer function data value range with the voxel range of the first volume.
+  if(volumes.size() > 0 && transferFunctionEditor != NULL) {
+
+    osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[0], "voxelRange", &voxelRange);
+
+    if(voxelRange != osp::vec2f(0.f)) {
+      transferFunctionEditor->setDataValueMin(voxelRange.x);
+      transferFunctionEditor->setDataValueMax(voxelRange.y);
+    }
+  }
+
   //! Show the window.
   show();
 

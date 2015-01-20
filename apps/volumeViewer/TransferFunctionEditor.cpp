@@ -146,11 +146,10 @@ void TransferFunctionEditor::load(std::string filename) {
   QFile file(filename.c_str());
   bool success = file.open(QIODevice::ReadOnly);
 
-  if(!success)
-    {
-      std::cerr << "unable to open " << filename << std::endl;
-      return;
-    }
+  if(!success) {
+    std::cerr << "unable to open " << filename << std::endl;
+    return;
+  }
 
   QDataStream in(&file);
 
@@ -174,6 +173,32 @@ void TransferFunctionEditor::load(std::string filename) {
   transferFunctionAlphaScalingSlider.setValue(alphaScalingIndex);
 }
 
+void TransferFunctionEditor::setDataValueMin(double value) {
+
+  //! Make sure widget value is up to date (this method can be called from other classes).
+  dataValueMinSpinBox.setValue(value);
+
+  //! Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
+  ospSet2f(transferFunction, "valueRange", (float) value, (float) dataValueMaxSpinBox.value());
+
+  //! Commit and emit signal.
+  ospCommit(transferFunction);  emit transferFunctionChanged();
+
+}
+
+void TransferFunctionEditor::setDataValueMax(double value) {
+
+  //! Make sure widget value is up to date (this method can be called from other classes).
+  dataValueMaxSpinBox.setValue(value);
+
+  //! Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
+  ospSet2f(transferFunction, "valueRange", (float) dataValueMinSpinBox.value(), (float) value);
+
+  //! Commit and emit signal.
+  ospCommit(transferFunction);  emit transferFunctionChanged();
+
+}
+
 void TransferFunctionEditor::save() {
 
   //! Get filename.
@@ -190,11 +215,10 @@ void TransferFunctionEditor::save() {
   QFile file(filename);
   bool success = file.open(QIODevice::WriteOnly);
 
-  if(!success)
-    {
-      std::cerr << "unable to open " << filename.toStdString() << std::endl;
-      return;
-    }
+  if(!success) {
+    std::cerr << "unable to open " << filename.toStdString() << std::endl;
+    return;
+  }
 
   QDataStream out(&file);
 
@@ -215,26 +239,6 @@ void TransferFunctionEditor::setColorMapIndex(int index) {
 
   //! Set transfer function widget background image.
   transferFunctionAlphaWidget.setBackgroundImage(colorMaps[index].getImage());
-
-  //! Commit and emit signal.
-  ospCommit(transferFunction);  emit transferFunctionChanged();
-
-}
-
-void TransferFunctionEditor::setDataValueMax(double value) {
-
-  //! Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
-  ospSet2f(transferFunction, "valueRange", (float) dataValueMinSpinBox.value(), (float) value);
-
-  //! Commit and emit signal.
-  ospCommit(transferFunction);  emit transferFunctionChanged();
-
-}
-
-void TransferFunctionEditor::setDataValueMin(double value) {
-
-  //! Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
-  ospSet2f(transferFunction, "valueRange", (float) value, (float) dataValueMaxSpinBox.value());
 
   //! Commit and emit signal.
   ospCommit(transferFunction);  emit transferFunctionChanged();

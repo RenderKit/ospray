@@ -39,12 +39,13 @@ public slots:
 
   void load(std::string filename = std::string());
 
+  void setDataValueMin(double value);
+  void setDataValueMax(double value);
+
 protected slots:
 
   void save();
   void setColorMapIndex(int index);
-  void setDataValueMin(double value);
-  void setDataValueMax(double value);
 
 protected:
 

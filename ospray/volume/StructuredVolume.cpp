@@ -40,6 +40,37 @@ namespace ospray {
     //! The source and target voxel types must match.
     exitOnCondition(getVoxelType() != voxelData->type, "unexpected source voxel type");
 
+    //! Compute voxel range for the volume, if not provided already.
+    vec2f voxelRange = getParam2f("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
+
+    if(voxelRange == vec2f(FLT_MAX, -FLT_MAX)) {
+
+      if(voxelData->type == OSP_FLOAT) {
+
+        const float *data = (const float *)voxelData->data;
+
+        for(size_t i=0; i<voxelData->numItems; i++) {
+          voxelRange.x = std::min(voxelRange.x, data[i]);
+          voxelRange.y = std::max(voxelRange.y, data[i]);
+        }
+
+        set("voxelRange", voxelRange);
+      }
+      else if(voxelData->type == OSP_UCHAR) {
+
+        const uint8 *data = (const uint8 *)voxelData->data;
+
+        for(size_t i=0; i<voxelData->numItems; i++) {
+          voxelRange.x = std::min(voxelRange.x, (float)data[i]);
+          voxelRange.y = std::max(voxelRange.y, (float)data[i]);
+        }
+
+        set("voxelRange", voxelRange);
+      }
+      else
+        emitMessage("WARNING", "cannot compute voxel range for source voxel type");
+    }
+
     //! Size of a volume slice in bytes.
     size_t sliceSizeInBytes = volumeDimensions.x * volumeDimensions.y * getVoxelSizeInBytes();
 
