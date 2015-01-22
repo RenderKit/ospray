@@ -18,6 +18,9 @@ SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
 CONFIGURE_OSPRAY()
 
+# remove OSPRAY_ARCH_* flags from CMAKE_CXX_FLAGS; the Embree build will add these as appropriate for the various ISAs.
+string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
 # =======================================================
 # source for everything embree keeps in its 'sys' library
 # =======================================================
