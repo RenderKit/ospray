@@ -32,7 +32,7 @@ void Renderer_default_renderSample(uniform Renderer *uniform renderer,
 }
 
 void Renderer_default_beginFrame(uniform Renderer *uniform renderer,
-                         uniform FrameBuffer *uniform fb)
+                                 uniform FrameBuffer *uniform fb)
 {
   renderer->fb = fb;
   if (renderer->camera == NULL)
@@ -79,14 +79,9 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
           (screenSample.sampleID.y >= fb->size.y)) 
         continue;
 
-      vec3f col = make_vec3f(0);
-#if 0
-      const uint32 zorderIdx = z_order.xyIdx[index];
-      const uint32 pixel = getZOrderX(zorderIdx) + (getZOrderY(zorderIdx) * TILE_SIZE);
-#else
+      vec3f col = make_vec3f(0.f);
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-#endif
-      for (uniform uint32 s = 0; s<renderer->spp; s++) {
+      for (uniform uint32 s = 0; s<spp; s++) {
         pixel_du = precomputedHalton2(startSampleID+s);
         pixel_dv = precomputedHalton3(startSampleID+s);
         screenSample.sampleID.z = startSampleID+s;
@@ -117,14 +112,8 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
 
     for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
       const uint32 index = i + programIndex;
-#if 0
-      uint32 zorderIdx = z_order.xyIdx[index];
-      screenSample.sampleID.x        = tile.region.lower.x + getZOrderX(zorderIdx); //z_order.xs[index];
-      screenSample.sampleID.y        = tile.region.lower.y + getZOrderY(zorderIdx); //z_order.ys[index];
-#else
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
-#endif
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) {
         continue;
@@ -132,7 +121,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
 
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
       assert(pixel < TILE_SIZE*TILE_SIZE);
-      for (uniform uint32 s = 0; s<renderer->spp; s++) {
+      for (uniform uint32 s = 0; s<spp; s++) {
         cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
@@ -195,11 +184,11 @@ export void Renderer_setNearClip(void *uniform _renderer, uniform float nearClip
 }
 
 export void Renderer_unproject( void *uniform _renderer,
-				const uniform vec2f &screenPos,
-				uniform bool &hit,
-				uniform float &x,
-				uniform float &y,
-				uniform float &z)
+                                const uniform vec2f &screenPos,
+                                uniform bool &hit,
+                                uniform float &x,
+                                uniform float &y,
+                                uniform float &z)
 {
   uniform Renderer    *uniform renderer = (uniform Renderer *uniform)_renderer;
   uniform Camera      *uniform camera   = renderer->camera;

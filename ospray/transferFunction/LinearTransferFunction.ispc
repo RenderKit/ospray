@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/transferfunction/LinearTransferFunction.ih"
+#include "ospray/transferFunction/LinearTransferFunction.ih"
 
 inline varying vec3f 
 LinearTransferFunction_getColorForValue(const void *uniform pointer, 

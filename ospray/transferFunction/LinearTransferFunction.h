@@ -16,23 +16,45 @@
 
 #pragma once
 
-#include "ospray/transferfunction/TransferFunction.ih"
+// ospray
+#include "ospray/common/Data.h"
+#include "ospray/transferFunction/TransferFunction.h"
+#include "LinearTransferFunction_ispc.h"
+// std
+#include <vector>
 
-#define PRECOMPUTED_OPACITY_SUBRANGE_COUNT 32
+namespace ospray {
 
-struct LinearTransferFunction {
+  //! \brief A concrete implementation of the TransferFunction class for
+  //!  piecewise linear transfer functions.
+  //!
+  class LinearTransferFunction : public TransferFunction {
+  public:
 
-  //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
-  TransferFunction inherited;
+    //! Constructor.
+    LinearTransferFunction() {}
 
-  //! Transfer function opacity values and count.
-  float *uniform opacityValues;  uniform int opacityValueCount;  
+    //! Destructor.
+    virtual ~LinearTransferFunction() { if (ispcEquivalent != NULL) ispc::LinearTransferFunction_destroy(ispcEquivalent); }
 
-  //! Transfer function color values and count.
-  vec3f *uniform colorValues;  uniform int colorValueCount;  
+    //! Allocate storage and populate the transfer function.
+    virtual void commit();
 
-  //! A 2D array that contains precomputed minimum and maximum opacity values for a transfer function.
-  vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::LinearTransferFunction"); }
 
-};
+  protected:
+
+    //! Data array that stores the color map.
+    Ref<Data> colorValues;
+
+    //! Data array that stores the opacity map.
+    Ref<Data> opacityValues;
+
+    //! Create the equivalent ISPC transfer function.
+    virtual void createEquivalentISPC();
+
+  };
+
+} // ::ospray
 

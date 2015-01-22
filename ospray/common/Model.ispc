@@ -37,19 +37,24 @@ export void Model_init(void *uniform _model, uniform int32 numGeometries, unifor
     rtcDeleteScene(model->embreeSceneHandle);
 
   model->embreeSceneHandle = rtcNewScene(//RTC_SCENE_STATIC|RTC_SCENE_HIGH_QUALITY,
-					 RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
+                                         RTC_SCENE_STATIC,//|RTC_SCENE_COMPACT,
                                          //RTC_SCENE_DYNAMIC,
                                          //RTC_SCENE_DYNAMIC|RTC_SCENE_COMPACT,
                                          RTC_INTERSECT_UNIFORM|RTC_INTERSECT_VARYING);
 
   if (model->geometry) delete[] model->geometry;
-  model->geometry = uniform new uniform uniGeomPtr[numGeometries];
   model->geometryCount = numGeometries;
+  if (numGeometries > 0)
+    model->geometry = uniform new uniform uniGeomPtr[numGeometries];
+  else 
+    model->geometry = NULL;
 
   if (model->volumes) delete[] model->volumes;
-  if (numVolumes > 0) model->volumes = uniform new uniform uniVolumePtr[numVolumes];
   model->volumeCount = numVolumes;
-
+  if (numVolumes > 0) 
+    model->volumes = uniform new uniform uniVolumePtr[numVolumes];
+  else
+    model->volumes = NULL;
 }
 
 export uniform RTCScene Model_getEmbreeSceneHandle(void *uniform _model)

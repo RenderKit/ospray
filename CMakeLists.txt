@@ -26,7 +26,7 @@ IF(COMMAND cmake_policy)
 ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-SET(OSPRAY_VERSION 0.7.0)
+SET(OSPRAY_VERSION 0.7.1)
 SET(OSPRAY_SOVERSION 0)
 
 IF(NOT CMAKE_BUILD_TYPE)
@@ -50,7 +50,11 @@ SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
 MARK_AS_ADVANCED(OSPRAY_INTERSECTION_FILTER)
 
 # compiler selection for the non-MIC part
-SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
+IF (APPLE)
+	SET(OSPRAY_COMPILER "clang" CACHE STRING "Set to ICC, GCC, or CLANG")
+ELSE(APPLE)
+	SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
+ENDIF(APPLE)
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
 # whether to build in MIC/xeon phi support
@@ -58,6 +62,11 @@ SET(OSPRAY_BUILD_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering
 MARK_AS_ADVANCED(OSPRAY_MPI)
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
 SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
+
+# make ospray target and compiler uppercase - we need this in some other parts of the build system
+STRING(TOUPPER ${OSPRAY_XEON_TARGET} OSPRAY_XEON_TARGET)
+STRING(TOUPPER ${OSPRAY_COMPILER} OSPRAY_COMPILER)
+
 
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})

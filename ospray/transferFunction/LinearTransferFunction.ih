@@ -14,14 +14,25 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/transferfunction/TransferFunction.ih"
+#pragma once
 
-export void TransferFunction_setValueRange(void *uniform pointer, 
-                                           const uniform vec2f &value) 
-{
-  //! Cast to the actual type.
-  TransferFunction *uniform transferFunction = (TransferFunction *uniform) pointer;
+#include "ospray/transferFunction/TransferFunction.ih"
 
-  //! Set the transfer function value range.
-  transferFunction->valueRange = value;
-}
+#define PRECOMPUTED_OPACITY_SUBRANGE_COUNT 32
+
+struct LinearTransferFunction {
+
+  //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
+  TransferFunction inherited;
+
+  //! Transfer function opacity values and count.
+  float *uniform opacityValues;  uniform int opacityValueCount;  
+
+  //! Transfer function color values and count.
+  vec3f *uniform colorValues;  uniform int colorValueCount;  
+
+  //! A 2D array that contains precomputed minimum and maximum opacity values for a transfer function.
+  vec2f minMaxOpacityInRange[PRECOMPUTED_OPACITY_SUBRANGE_COUNT][PRECOMPUTED_OPACITY_SUBRANGE_COUNT];
+
+};
+

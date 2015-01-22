@@ -18,7 +18,7 @@
 
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/transferfunction/TransferFunction.ih"
+#include "ospray/transferFunction/TransferFunction.ih"
 
 //! \brief Variables and methods common to all subtypes of the Volume
 //!  class, an abstraction for the concrete object which performs the

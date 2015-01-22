@@ -25,32 +25,33 @@ namespace ospray {
     using std::endl;
 
     namespace staticLoadBalancer {
+
       Master::Master() {
       }
+
       void Master::renderFrame(Renderer *tiledRenderer,
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-        int rc; MPI_Status status;
+        int rc; 
+        MPI_Status status;
 
         // mpidevice already sent the 'cmd_render_frame' event; we
         // only have to wait for tiles...
-
         const size_t numTiles
           = divRoundUp(fb->size.x,TILE_SIZE)
           * divRoundUp(fb->size.y,TILE_SIZE);
         
-        // printf("MASTER: num tiles %li\n",numTiles);
         assert(fb->colorBufferFormat == OSP_RGBA_I8);
         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
         for (int i=0;i<numTiles;i++) {
           box2ui region;
-	  // printf("#m: receiving tile %i\n",i);
+          // printf("#m: receiving tile %i\n",i);
           rc = MPI_Recv(&region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
                         mpi::worker.comm,&status); 
           Assert(rc == MPI_SUCCESS); 
-           // printf("#m: received tile %i (%i,%i) from %i\n",i,
-           //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
+          // printf("#m: received tile %i (%i,%i) from %i\n",i,
+          //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
           rc = MPI_Recv(&rgba_i8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
                         status.MPI_SOURCE,status.MPI_TAG,mpi::worker.comm,&status);
           Assert(rc == MPI_SUCCESS);

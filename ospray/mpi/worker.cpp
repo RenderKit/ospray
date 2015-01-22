@@ -28,6 +28,8 @@
 #include "ospray/lights/Light.h"
 #include "ospray/texture/Texture2D.h"
 #include "MPILoadBalancer.h"
+// std
+#include <unistd.h> // for gethostname()
 
 namespace ospray {
   namespace mpi {
@@ -255,7 +257,7 @@ namespace ospray {
           handle.assign(geometry);
           if (worker.rank == 0)
             if (logLevel > 2)
-	      cout << "#w: new geometry " << handle << " " << geometry->toString() << endl;
+              cout << "#w: new geometry " << handle << " " << geometry->toString() << endl;
         } break;
 
         case api::MPIDevice::CMD_FRAMEBUFFER_CREATE: {
