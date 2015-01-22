@@ -169,6 +169,7 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
+LINK_DIRECTORIES(${OSPRAY_BINARY_DIR})
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED 
   ${OSPRAY_SOURCES}
   )

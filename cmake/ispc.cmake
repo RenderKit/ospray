@@ -75,9 +75,9 @@ MACRO (ispc_compile)
   ENDIF()
   
   IF(ISPC_INCLUDE_DIR)
-    message("A : ISPC INCLUDE DIR ${ISPC_INCLUDE_DIR}")
+   # message("A : ISPC INCLUDE DIR ${ISPC_INCLUDE_DIR}")
     STRING(REGEX REPLACE ";" " -I " ISPC_INCLUDE_DIR_PARMS ";${ISPC_INCLUDE_DIR}")
-    message("B : ISPC INCLUDE DIR_PARMS ${ISPC_INCLUDE_DIR_PARMS}")
+   # message("B : ISPC INCLUDE DIR_PARMS ${ISPC_INCLUDE_DIR_PARMS}")
     #SET(ISPC_INCLUDE_DIR_PARMS " -I " ${ISPC_INCLUDE_DIR_PARMS}) 
     #message("C : ISPC INCLUDE DIR_PARMS ${ISPC_INCLUDE_DIR_PARMS}")
   ENDIF()
@@ -142,20 +142,20 @@ MACRO (ispc_compile)
 	ENDIF()
     SET(ispc_compile_result "${outdir}/${fname}${ISPC_TARGET_EXT}")
 	separate_arguments(ISPC_INCLUDE_DIR_PARMS)
-	MESSAGE("ispc command : COMMAND ${ISPC_BINARY}
-      -I ${CMAKE_CURRENT_SOURCE_DIR} 
-      ${ISPC_INCLUDE_DIR_PARMS}
-      ${ISPC_DEFINES}
-      --arch=${ISPC_ARCHITECTURE}
-      ${ISPC_SYS_FLAGS}
-      -O3
-      --woff
-      ${CMAKE_ISPC_FLAGS}
-      --opt=fast-math
-      -h ${outdirh}/${fname}_ispc.h
-      -MMM  ${outdir}/${fname}.dev.idep 
-      -o ${ispc_compile_result}
-      ${input}")
+#	MESSAGE("ispc command : COMMAND ${ISPC_BINARY}
+#      -I ${CMAKE_CURRENT_SOURCE_DIR} 
+#      ${ISPC_INCLUDE_DIR_PARMS}
+#      ${ISPC_DEFINES}
+#      --arch=${ISPC_ARCHITECTURE}
+#      ${ISPC_SYS_FLAGS}
+#      -O3
+#      --woff
+#      ${CMAKE_ISPC_FLAGS}
+#      --opt=fast-math
+#      -h ${outdirh}/${fname}_ispc.h
+#      -MMM  ${outdir}/${fname}.dev.idep 
+#      -o ${ispc_compile_result}
+#      ${input}")
     ADD_CUSTOM_COMMAND(
       OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h
 	  FILE(MAKE_DIRECTORY ${outdir})

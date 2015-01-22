@@ -24,11 +24,11 @@ namespace embree
   typedef struct opaque_lib_t* lib_t;
 
   /*! loads a shared library */
-  lib_t openLibrary(const std::string& file);
+ lib_t openLibrary(const std::string& file);
 
   /*! returns address of a symbol from the library */
-  void* getSymbol(lib_t lib, const std::string& sym);
+void*  getSymbol(lib_t lib, const std::string& sym);
 
   /*! unloads a shared library */
-  void closeLibrary(lib_t lib);
+ void  closeLibrary(lib_t lib);
 }
