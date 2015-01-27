@@ -72,7 +72,7 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
   }
 
   //! Voxel count.
-  size_t voxelCount = importVolumeDimensions.x * importVolumeDimensions.y * importVolumeDimensions.z;
+  size_t voxelCount = size_t(importVolumeDimensions.x) * importVolumeDimensions.y * importVolumeDimensions.z;
 
   //! Allocate memory for the voxel data.
   void *voxelData = new unsigned char[voxelCount * voxelSize];
@@ -94,9 +94,9 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
     unsigned char *subvolumeRowData = new unsigned char[importVolumeDimensions.x * voxelSize];
 
     //! Read the subvolume data from the full volume.
-    for(size_t i3=subvolumeOffsets.z; i3<subvolumeOffsets.z+subvolumeDimensions.z; i3+=subvolumeSteps.z) {
+    for(long i3=subvolumeOffsets.z; i3<subvolumeOffsets.z+subvolumeDimensions.z; i3+=subvolumeSteps.z) {
 
-      for(size_t i2=subvolumeOffsets.y; i2<subvolumeOffsets.y+subvolumeDimensions.y; i2+=subvolumeSteps.y) {
+      for(long i2=subvolumeOffsets.y; i2<subvolumeOffsets.y+subvolumeDimensions.y; i2+=subvolumeSteps.y) {
 
         //! Seek to appropriate location in file.
         fseek(file, offset + i3*dimensions.y*dimensions.x*voxelSize + i2*dimensions.x*voxelSize, SEEK_SET);
@@ -108,7 +108,7 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
         exitOnCondition(voxelsRead != dimensions.x, "end of volume file reached before read completed");
 
         //! Resample row for the subvolume.
-        for(size_t i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x)
+        for(long i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x)
           memcpy(&subvolumeRowData[(i1 - subvolumeOffsets.x) / subvolumeSteps.x * voxelSize], &rowData[i1 * voxelSize], voxelSize);
 
         //! Copy subvolume row into the buffer.
