@@ -102,6 +102,20 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Configurations
+
+
+#ifdef __WIN32__
+#  ifdef OSPRAY_EMBREE_EXPORTS
+# define OSPRAY_EMBREE_INTERFACE __declspec(dllexport)
+#  else
+# define OSPRAY_EMBREE_INTERFACE __declspec(dllimport)
+#  endif
+#else
+# define OSPRAY_EMBREE_INTERFACE /* ignore */
+#endif
+
+
+
 ////////////////////////////////////////////////////////////////////////////////
 
 #if defined(__WIN32__) 
@@ -352,3 +366,8 @@ namespace embree
 #else 
 #error Unknown ISA
 #endif
+
+
+
+
+

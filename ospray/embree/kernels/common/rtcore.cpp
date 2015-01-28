@@ -14,10 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#ifndef RTCORE_API
 #ifdef _WIN32
 #  define RTCORE_API extern "C" __declspec(dllexport)
 #else
 #  define RTCORE_API extern "C" __attribute__ ((visibility ("default")))
+#endif
 #endif
 
 #include "common/default.h"

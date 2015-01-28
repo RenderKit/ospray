@@ -29,7 +29,7 @@ namespace embree
 {
   /*! Interface to different task scheduler implementations. */
   /* __hidden */
-  class __hidden TaskScheduler : public RefCount
+  class OSPRAY_EMBREE_INTERFACE TaskScheduler : public RefCount
   {
   public:
     struct Event;

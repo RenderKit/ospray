@@ -244,7 +244,7 @@ ELSE()
       # remove for embree 2.3.3:
       #      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_binner.cpp
       )
-    SET_TARGET_PROPERTIES(ospray_embree_sse41 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE41}")
+    SET_TARGET_PROPERTIES(ospray_embree_sse41 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE41} -DOSPRAY_EMBREE_EXPORTS=1")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_sse41)
   ENDIF()
 
@@ -259,7 +259,7 @@ ELSE()
     OSPRAY_ADD_LIBRARY(ospray_embree_sse42 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_hybrid.cpp
       )
-    SET_TARGET_PROPERTIES(ospray_embree_sse42 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE42}")
+    SET_TARGET_PROPERTIES(ospray_embree_sse42 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE42} -DOSPRAY_EMBREE_EXPORTS=1")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_sse42)
   ENDIF()
 
@@ -316,7 +316,7 @@ ELSE()
     ENDFOREACH()
     OSPRAY_ADD_LIBRARY(ospray_embree_avx STATIC
       ${OSPRAY_EMBREE_AVX_SOURCES})
-    SET_TARGET_PROPERTIES(ospray_embree_avx PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_AVX}")
+    SET_TARGET_PROPERTIES(ospray_embree_avx PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_AVX} -DOSPRAY_EMBREE_EXPORTS=1")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx)
   ENDIF()
 
@@ -349,7 +349,7 @@ ELSE()
     ENDFOREACH()
     OSPRAY_ADD_LIBRARY(ospray_embree_avx2 STATIC
       ${OSPRAY_EMBREE_AVX2_SOURCES})
-    SET_TARGET_PROPERTIES(ospray_embree_avx2 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_AVX2}")
+    SET_TARGET_PROPERTIES(ospray_embree_avx2 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_AVX2} -DOSPRAY_EMBREE_EXPORTS=1")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx2)
   ENDIF()
 ENDIF()
