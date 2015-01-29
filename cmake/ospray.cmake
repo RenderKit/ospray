@@ -23,11 +23,11 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 # Configure the output directories. To allow IMPI to do its magic we
-# will put *exexecutables* into the (same) build directory, but tag
+# will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
-MACRO(CONFIGURE_OSPRAY)
+MACRO(CONFIGURE_OSPRAY_NO_ARCH)
   SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
   SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
@@ -118,7 +118,6 @@ MACRO(CONFIGURE_OSPRAY)
     ELSE()
       MESSAGE("unknown OSPRAY_XEON_TARGET '${OSPRAY_XEON_TARGET}'")
     ENDIF()
-    #    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_FLAGS__${OSPRAY_XEON_TARGET}}")
   ENDIF()
   
   IF (OSPRAY_MPI)
@@ -126,7 +125,7 @@ MACRO(CONFIGURE_OSPRAY)
   ENDIF()
 
   IF (THIS_IS_MIC)
-    # whehter to build in MIC/xeon phi support
+    # whether to build in MIC/xeon phi support
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
   ENDIF()
 
@@ -149,3 +148,12 @@ MACRO(CONFIGURE_OSPRAY)
 ENDMACRO()
 
 
+MACRO(CONFIGURE_OSPRAY)
+
+  CONFIGURE_OSPRAY_NO_ARCH()
+  IF (OSPRAY_TARGET STREQUAL "MIC")
+  ELSE()
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}")
+  ENDIF()
+
+ENDMACRO()

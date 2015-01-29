@@ -190,7 +190,7 @@ bool SeismicVolumeFile::scanSeismicDataFileForDimensions(OSPVolume volume) {
 bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
 
   //! Voxel count.
-  size_t voxelCount = volumeDimensions.x * volumeDimensions.y * volumeDimensions.z;
+  size_t voxelCount = size_t(volumeDimensions.x) * volumeDimensions.y * volumeDimensions.z;
 
   //! Allocate memory for the voxel data. Note that FreeDDS converts sample types of int, short, long, float, and double to float.
   float * voxelData = new float[voxelCount];
@@ -252,7 +252,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
       exitOnCondition(coordinate2-origin2 < 0 || coordinate2-origin2 >= dimensions.y || coordinate3-origin3 < 0 || coordinate3-origin3 >= dimensions.z, "invalid trace coordinates found");
 
       //! Copy trace into the volume.
-      size_t offset = (coordinate3-origin3) * volumeDimensions.y*volumeDimensions.x + (coordinate2-origin2) * volumeDimensions.x;
+      size_t offset = (coordinate3-origin3) * size_t(volumeDimensions.y)*volumeDimensions.x + (coordinate2-origin2) * volumeDimensions.x;
       memcpy(&voxelData[offset], &traceBuffer[traceHeaderSize], volumeDimensions.x * sizeof(float));
 
       traceCount++;
@@ -264,13 +264,13 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
     float * traceBufferSubvolume = (float *)malloc(volumeDimensions.x * sizeof(float));
 
     //! Iterate through the grid of traces of the subvolume, seeking as necessary.
-    for(int i3=subvolumeOffsets.z; i3<subvolumeOffsets.z+subvolumeDimensions.z; i3+=subvolumeSteps.z) {
+    for(long i3=subvolumeOffsets.z; i3<subvolumeOffsets.z+subvolumeDimensions.z; i3+=subvolumeSteps.z) {
 
       //! Seek to offset if necessary.
       if(i3 == subvolumeOffsets.z && subvolumeOffsets.z != 0)
         cdds_lseek(inputBinTag, 0, subvolumeOffsets.z * dimensions.y, SEEK_CUR);
 
-      for(int i2=subvolumeOffsets.y; i2<subvolumeOffsets.y+subvolumeDimensions.y; i2+=subvolumeSteps.y) {
+      for(long i2=subvolumeOffsets.y; i2<subvolumeOffsets.y+subvolumeDimensions.y; i2+=subvolumeSteps.y) {
 
         //! Seek to offset if necessary.
         if(i2 == subvolumeOffsets.y && subvolumeOffsets.y != 0)
@@ -306,7 +306,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
         exitOnCondition(coordinate3-origin3 != i3, "found invalid coordinate (dimension 3)");
 
         //! Resample trace for the subvolume.
-        for(int i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x)
+        for(long i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x)
           traceBufferSubvolume[(i1 - subvolumeOffsets.x) / subvolumeSteps.x] = traceBuffer[traceHeaderSize + i1];
 
         //! Copy subsampled trace into the volume.
