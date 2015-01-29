@@ -72,15 +72,7 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
 
   }
 
-/*
-  //! Voxel count.
-  size_t voxelCount = size_t(importVolumeDimensions.x) * importVolumeDimensions.y * importVolumeDimensions.z;
-
-  //! Allocate memory for the voxel data.
-  void *voxelData = new unsigned char[voxelCount * voxelSize];
-
   if (!useSubvolume) {
-*/
 
     //! Voxel count.
     size_t voxelCount = volumeDimensions.x * volumeDimensions.y;
@@ -102,7 +94,9 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
 
     }
 
-/*
+    //! Clean up.
+    delete [] voxelData;
+
   } else {
 
     //! Allocate memory for a single row of voxel data.
@@ -129,18 +123,15 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
         for(long i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x)
           memcpy(&subvolumeRowData[(i1 - subvolumeOffsets.x) / subvolumeSteps.x * voxelSize], &rowData[i1 * voxelSize], voxelSize);
 
-        //! Copy subvolume row into the buffer.
-        size_t offset = (((i3 - subvolumeOffsets.z) / subvolumeSteps.z) * importVolumeDimensions.y * importVolumeDimensions.x + ((i2 - subvolumeOffsets.y) / subvolumeSteps.y) * importVolumeDimensions.x) * voxelSize;
-        memcpy(&((unsigned char *)voxelData)[offset], &subvolumeRowData[0], importVolumeDimensions.x * voxelSize);
-
+        //! Copy subvolume row into the volume.
+        ospSetRegion(volume, &subvolumeRowData[0], osp::vec3i(0, (i2 - subvolumeOffsets.y) / subvolumeSteps.y, (i3 - subvolumeOffsets.z) / subvolumeSteps.z), osp::vec3i(importVolumeDimensions.x, 1, 1));
       }
     }
 
     //! Clean up.
     delete [] rowData;
-
+    delete [] subvolumeRowData;
   }
-*/
 
   //! Return the volume.
   return(volume);
