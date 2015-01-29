@@ -26,62 +26,10 @@ namespace ospray {
   void StructuredVolume::commit() {
 
     //! Some parameters can be changed after the volume has been allocated and filled.
-    if (ispcEquivalent != NULL) return(updateEditableParameters());
-
-    //! Create the equivalent ISPC volume container and allocate memory for voxel data.
-    createEquivalentISPC();
-
-    //! Get a pointer to the source voxel buffer.
-    const Data *voxelData = getParamData("voxelData", NULL);  exitOnCondition(voxelData == NULL, "no voxel data specified");
-
-    //! The dimensions of the source voxel data and target volume must match.
-    exitOnCondition(size_t(volumeDimensions.x) * volumeDimensions.y * volumeDimensions.z != voxelData->numItems, "unexpected source voxel data dimensions");
-
-    //! The source and target voxel types must match.
-    exitOnCondition(getVoxelType() != voxelData->type, "unexpected source voxel type");
-
-    //! Compute voxel range for the volume, if not provided already.
-    vec2f voxelRange = getParam2f("voxelRange", vec2f(FLT_MAX, -FLT_MAX));
-
-    if(voxelRange == vec2f(FLT_MAX, -FLT_MAX)) {
-
-      if(voxelData->type == OSP_FLOAT) {
-
-        const float *data = (const float *)voxelData->data;
-
-        for(size_t i=0; i<voxelData->numItems; i++) {
-          voxelRange.x = std::min(voxelRange.x, data[i]);
-          voxelRange.y = std::max(voxelRange.y, data[i]);
-        }
-
-        set("voxelRange", voxelRange);
-      }
-      else if(voxelData->type == OSP_UCHAR) {
-
-        const uint8 *data = (const uint8 *)voxelData->data;
-
-        for(size_t i=0; i<voxelData->numItems; i++) {
-          voxelRange.x = std::min(voxelRange.x, (float)data[i]);
-          voxelRange.y = std::max(voxelRange.y, (float)data[i]);
-        }
-
-        set("voxelRange", voxelRange);
-      }
-      else
-        emitMessage("WARNING", "cannot compute voxel range for source voxel type");
-    }
-
-    //! Size of a volume slice in bytes.
-    size_t sliceSizeInBytes = volumeDimensions.x * volumeDimensions.y * getVoxelSizeInBytes();
-
-    //! Get a pointer to the raw voxel data.
-    const uint8 *data = (const uint8 *) voxelData->data;
-
-    //! Copy voxel data into the volume in slices to avoid overflow in ISPC offset calculations.
-    for (size_t z=0 ; z < volumeDimensions.z ; z++) setRegion(&data[z * sliceSizeInBytes], vec3i(0, 0, z), vec3i(volumeDimensions.x, volumeDimensions.y, 1));
+    updateEditableParameters();
 
     //! Complete volume initialization.
-    finish();
+    if (!finished) finish(), finished = true;
 
   }
 

@@ -249,6 +249,16 @@ namespace ospray {
       ManagedObject::Param *param = object->findParam(bufName,1);
       param->set(f);
     }
+
+    /*! Copy data into the given volume. */
+    int LocalDevice::setRegion(OSPVolume handle, void *source, const vec3i &index, const vec3i &count) {
+
+      Volume *volume = (Volume *) handle;
+      Assert(volume != NULL && "invalid volume object handle");
+      return(volume->setRegion(source, index, count));
+
+    }
+
     /*! assign (named) vec2f parameter to an object */
     void LocalDevice::setVec2f(OSPObject _object, const char *bufName, const vec2f &v)
     {
@@ -289,13 +299,23 @@ namespace ospray {
       target->setParam(bufName,value);
     }
 
-    /*! Get the named data array associated with an object. */
+    /*! Get the handle of the named data array associated with an object. */
     int LocalDevice::getData(OSPObject handle, const char *name, OSPData *value) {
 
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
       ManagedObject::Param *param = object->findParam(name);
       return(param && param->type == OSP_OBJECT && param->ptr->managedObjectType == OSP_DATA ? *value = (OSPData) param->ptr, true : false);
+
+    }
+
+    /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
+    int LocalDevice::getDataValues(OSPData handle, void **pointer, size_t *count, OSPDataType *type) {
+
+      Data *data = (Data *) handle;
+      Assert(object != NULL && "invalid data object handle");
+     *pointer = malloc(data->numBytes);  if (pointer == NULL) return(false);
+      return(memcpy(*pointer, data->data, data->numBytes), *count = data->numItems, *type = data->type, true);
 
     }
 

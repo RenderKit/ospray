@@ -450,6 +450,14 @@ namespace ospray {
       throw std::runtime_error("setting a void pointer as parameter to an object is not allowed in MPI mode");
     }
 
+    /*! Copy data into the given object. */
+    int MPIDevice::setRegion(OSPObject object, const void *source, const vec3i &index, const vec3i &count) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
     /*! assign (named) string parameter to an object */
     void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
     {
@@ -568,8 +576,16 @@ namespace ospray {
       cmd.flush();
     }
 
-    /*! Get the named data array associated with an object. */
+    /*! Get the handle of the named data array associated with an object. */
     int MPIDevice::getData(OSPObject object, const char *name, OSPData *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
+    int MPIDevice::getDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
 
       //! Not yet implemented.
       return(false);

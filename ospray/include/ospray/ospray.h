@@ -334,6 +334,17 @@ extern "C" {
   /*! add 3-int paramter to given object */
   void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
 
+  /*! \brief Copy data into the given volume.                               */
+  /*!                                                                       */
+  /*! Note that we distinguish between object data and object parameters.   */
+  /*! This function must be called only after all object parameters have    */
+  /*! set and before ospCommit(object) is called.  Memory for the volume    */
+  /*! is allocated on the first call to this function.  If allocation is    */
+  /*! unsuccessful or the region bounds are invalid, the return value is    */
+  /*! '0' (and non-zero otherwise).                                         */
+  /*!                                                                       */
+  int ospSetRegion(OSPVolume object, void *source, osp::vec3i index, osp::vec3i count);
+
   /*! add 2-float parameter to given object */
   void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);
 
@@ -357,8 +368,11 @@ extern "C" {
   /*! by the function name, or the named parameter does not exist, then the */
   /*! functions return '0'.                                                 */
 
-  /*! \brief Get the named data array associated with an object. */
+  /*! \brief Get the handle of the named data array associated with an object. */
   int ospGetData(OSPObject object, const char *name, OSPData *value);
+
+  /*! \brief Get a copy of the data in an array (the application is responsible for freeing this pointer). */
+  int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
 
   /*! \brief Get the named scalar floating point value associated with an object. */
   int ospGetf(OSPObject object, const char *name, float *value);

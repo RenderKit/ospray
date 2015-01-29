@@ -144,6 +144,9 @@ namespace ospray {
   /*! size of OSPDataType */
   size_t sizeOf(OSPDataType type);
 
+  /*! Convert a type string to an OSPDataType. */
+  OSPDataType typeForString(const char *string);
+
 } // ::ospray
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
