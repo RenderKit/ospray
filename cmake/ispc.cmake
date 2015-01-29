@@ -14,32 +14,50 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(ISPC_VERSION 1.8.0)
+SET(ISPC_VERSION_REQUIRED "1.7.1")
 
-IF (APPLE)
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-osx CACHE STRING "ISPC Directory")
-SET(ISPC_EXE_NAME "ispc")
-ELSEIF(WIN32)
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-windows CACHE STRING "ISPC Directory")
-SET(ISPC_EXE_NAME "ispc.exe")
-ELSE()
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-linux CACHE STRING "ISPC Directory")
-SET(ISPC_EXE_NAME "ispc")
+IF (NOT OSPRAY_ISPC_DIRECTORY)
+  # try sibling folder as hint for path of ISPC
+  SET(ISPC_VERSION_HINT "1.8.0")
+  IF (APPLE)
+    SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION_HINT}-osx)
+  ELSEIF(WIN32)
+    SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION_HINT}-windows)
+  ELSE()
+    SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION_HINT}-linux)
+  ENDIF()
 ENDIF()
-MARK_AS_ADVANCED(OSPRAY_ISPC_DIRECTORY)
 
-IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/${ISPC_EXE_NAME}")
-  MESSAGE("********************************************")
-  MESSAGE("Could not find ISPC (tried ${OSPRAY_ISPC_DIRECTORY}.")
-  MESSAGE("")
-  MESSAGE("This version of ospray expects you to have a binary install of ISPC version ${ISPC_VERSION}, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
-  MESSAGE("")
-  MESSAGE("If you insist on using your own custom install of ISPC, please make sure that the 'OSPRAY_ISPC_DIRECTORY' variable is properly set in cmake.")
-  MESSAGE("********************************************")
-  MESSAGE(FATAL_ERROR "Could not find ISPC. Exiting")
-ELSE()
-  SET(ISPC_BINARY ${OSPRAY_ISPC_DIRECTORY}/${ISPC_EXE_NAME})
+IF (NOT ISPC_BINARY)
+  FIND_PROGRAM(ISPC_BINARY ispc ${OSPRAY_ISPC_DIRECTORY})
+  IF (NOT ISPC_BINARY)
+    MESSAGE("********************************************")
+    MESSAGE("Could not find Intel SPMD Compiler (ISPC) (tried PATH and ${OSPRAY_ISPC_DIRECTORY}).")
+    MESSAGE("")
+    MESSAGE("This version of ospray expects you to have a binary install of ISPC version ${ISPC_VERSION_REQUIRED} or later, and expects it to be accessible via PATH or installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
+    MESSAGE("")
+    MESSAGE("If you insist on using your own custom install of ISPC, please make sure that the 'OSPRAY_ISPC_DIRECTORY' variable is properly set in cmake.")
+    MESSAGE("********************************************")
+    MESSAGE(FATAL_ERROR "Could not find ISPC. Exiting")
+  ELSE()
+    MESSAGE(STATUS "Found Intel SPMD Compiler (ISPC): ${ISPC_BINARY}")
+  ENDIF()
 ENDIF()
+
+IF(NOT ISPC_VERSION)
+  EXECUTE_PROCESS(COMMAND ${ISPC_BINARY} --version OUTPUT_VARIABLE ISPC_OUTPUT)
+  STRING(REGEX MATCH " [0-9]+[.][0-9]+[.][0-9]+ " ISPC_VERSION "${ISPC_OUTPUT}")
+
+  IF (ISPC_VERSION VERSION_LESS ISPC_VERSION_REQUIRED)
+    MESSAGE(FATAL_ERROR "Need at least version ${ISPC_VERSION_REQUIRED} of Intel SPMD Compiler (ISPC).")
+  ENDIF()
+
+  SET(ISPC_VERSION ${ISPC_VERSION} CACHE STRING "ISPC Version")
+  MARK_AS_ADVANCED(ISPC_VERSION)
+  MARK_AS_ADVANCED(ISPC_BINARY)
+ENDIF()
+
+
 
 # ##################################################################
 # add macro ADD_DEFINITIIONS_ISCP() that allows to pass #define's to
