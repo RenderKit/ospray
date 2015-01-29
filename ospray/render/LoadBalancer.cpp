@@ -17,6 +17,9 @@
 #include "LoadBalancer.h"
 #include "Renderer.h"
 
+// stl
+#include <algorithm>
+
 namespace ospray {
 
   using std::cout;
