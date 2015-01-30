@@ -148,5 +148,29 @@ namespace ospray {
 
   }
 
+  OSPDataType typeForString(const char *string) {
+
+    if (string == NULL)                return(OSP_UNKNOWN);
+    if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
+    if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
+    if (strcmp(string, "float2") == 0) return(OSP_FLOAT2);
+    if (strcmp(string, "float3") == 0) return(OSP_FLOAT2);
+    if (strcmp(string, "float4") == 0) return(OSP_FLOAT2);
+    if (strcmp(string, "int"   ) == 0) return(OSP_INT);
+    if (strcmp(string, "int2"  ) == 0) return(OSP_INT2);
+    if (strcmp(string, "int3"  ) == 0) return(OSP_INT3);
+    if (strcmp(string, "int4"  ) == 0) return(OSP_INT4);
+    if (strcmp(string, "uchar" ) == 0) return(OSP_UCHAR);
+    if (strcmp(string, "uchar2") == 0) return(OSP_UCHAR2);
+    if (strcmp(string, "uchar3") == 0) return(OSP_UCHAR3);
+    if (strcmp(string, "uchar4") == 0) return(OSP_UCHAR4);
+    if (strcmp(string, "uint"  ) == 0) return(OSP_UINT);
+    if (strcmp(string, "uint2" ) == 0) return(OSP_UINT2);
+    if (strcmp(string, "uint3" ) == 0) return(OSP_UINT3);
+    if (strcmp(string, "uint4" ) == 0) return(OSP_UINT4);
+    return(OSP_UNKNOWN);
+
+  }
+
 } // ::ospray
 

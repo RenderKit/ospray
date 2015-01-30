@@ -70,6 +70,9 @@ namespace ospray {
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags) = 0;
 
+      /*! Copy data into the given volume. */
+      virtual int setRegion(OSPVolume object, void *source, const vec3i &index, const vec3i &count) = 0;
+
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s) = 0;
 
@@ -94,8 +97,11 @@ namespace ospray {
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v) = 0;
 
-      /*! Get the named data array associated with an object. */
+      /*! Get the handle of the named data array associated with an object. */
       virtual int getData(OSPObject object, const char *name, OSPData *value) = 0;
+
+      /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
+      virtual int getDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) = 0;
 
       /*! Get the named scalar floating point value associated with an object. */
       virtual int getf(OSPObject object, const char *name, float *value) = 0;

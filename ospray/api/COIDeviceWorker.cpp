@@ -611,6 +611,25 @@ namespace ospray {
       }
     }
 
+    COINATIVELIBEXPORT
+    void ospray_coi_release(uint32_t         numBuffers,
+                            void**           bufferPtr,
+                            uint64_t*        bufferSize,
+                            void*            argsPtr,
+                            uint16_t         argsSize,
+                            void*            retVal,
+                            uint16_t         retValSize)
+    {
+
+      DataStream stream(argsPtr);
+      Handle handle = stream.get<Handle>();
+      ManagedObject *object = handle.lookup();
+      object->refDec();
+      handle.freeObject();
+      if (ospray::debugMode) COIProcessProxyFlush();
+
+    }
+
     /*! remove an existing geometry from a model */
     struct GeometryLocator {
       bool operator()(const embree::Ref<ospray::Geometry> &g) const {
@@ -676,6 +695,26 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
+    void ospray_coi_set_region(uint32_t         numBuffers,
+                               void**           bufferPtr,
+                               uint64_t*        bufferSize,
+                               void*            argsPtr,
+                               uint16_t         argsSize,
+                               void*            retVal,
+                               uint16_t         retValSize)
+    {
+
+      DataStream stream(argsPtr);
+      Volume *volume = (Volume *) stream.get<Handle>().lookup();
+      Data *data  = (Data *) stream.get<Handle>().lookup();
+      vec3i index = stream.get<vec3i>();
+      vec3i count = stream.get<vec3i>();
+      int *result = (int *) retVal;
+      result[0] = volume->setRegion(data->data, index, count);
+
+    }
+
+    COINATIVELIBEXPORT
     void ospray_coi_set_value(uint32_t         numBuffers,
                               void**           bufferPtr,
                               uint64_t*        bufferSize,
@@ -716,6 +755,42 @@ namespace ospray {
       default:
         throw "ospray_coi_set_value no timplemented for given data type";
       }
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_get_data_values(uint32_t         numBuffers,
+                                    void**           bufferPtr,
+                                    uint64_t*        bufferSize,
+                                    void*            argsPtr,
+                                    uint16_t         argsSize,
+                                    void*            retVal,
+                                    uint16_t         retValSize)
+    {
+
+      DataStream stream(argsPtr);
+      Data *data = (Data *) stream.get<Handle>().lookup();
+      int *result = (int *) retVal;  result[0] = false;
+      if (bufferSize[0] != data->numBytes) return;
+      memcpy(bufferPtr[0], data->data, data->numBytes);  result[0] = true;
+
+    }
+
+    COINATIVELIBEXPORT
+    void ospray_coi_get_data_properties(uint32_t         numBuffers,
+                                        void**           bufferPtr,
+                                        uint64_t*        bufferSize,
+                                        void*            argsPtr,
+                                        uint16_t         argsSize,
+                                        void*            retVal,
+                                        uint16_t         retValSize)
+    {
+
+      DataStream stream(argsPtr);
+      Data *data = (Data *) stream.get<Handle>().lookup();
+      int *result = (int *) retVal;  result[0] = true;
+      memcpy(&result[1], &data->numItems, sizeof(size_t));
+      memcpy((char *)(&result[1]) + sizeof(size_t), &data->type, sizeof(OSPDataType));
+
     }
 
     COINATIVELIBEXPORT

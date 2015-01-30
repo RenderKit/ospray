@@ -36,8 +36,8 @@ namespace ospray {
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC();
 
-    //! Copy voxels into the volume at the given index.
-    virtual void setRegion(const void *source, const vec3i &index, const vec3i &count);
+    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::BlockBrickedVolume<" + voxelType + ">"); }

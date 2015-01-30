@@ -446,6 +446,13 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
   }
+
+  /*! Copy data into the given volume. */
+  extern "C" int ospSetRegion(OSPVolume object, void *source, vec3i index, vec3i count) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->setRegion(object, source, index, count));
+  }
+
   /*! add a vec2f parameter to an object */
   extern "C" void ospSetVec2f(OSPObject _object, const char *id, const vec2f &v)
   {
@@ -515,10 +522,16 @@ namespace ospray {
     ospray::api::Device::current->setMaterial(geometry,material);
   }
 
-  //! Get the named data array associated with an object.
+  //! Get the handle of the named data array associated with an object.
   extern "C" int ospGetData(OSPObject object, const char *name, OSPData *value) {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getData(object, name, value));
+  }
+
+  //! Get a copy of the data in an array (the application is responsible for freeing this pointer).
+  extern "C" int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getDataValues(object, pointer, count, type));
   }
 
   //! Get the named scalar floating point value associated with an object.

@@ -27,7 +27,7 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
   int offset = 0;  ospGeti(volume, "filename offset", &offset);  fseek(file, offset, SEEK_SET);
 
   //! Volume dimensions.
-  osp::vec3i dimensions;  exitOnCondition(!ospGetVec3i(volume, "dimensions", &dimensions), "no volume dimensions specified");
+  osp::vec3i volumeDimensions;  exitOnCondition(!ospGetVec3i(volume, "dimensions", &volumeDimensions), "no volume dimensions specified");
 
   //! Voxel type string.
   char *voxelType;  exitOnCondition(!ospGetString(volume, "voxelType", &voxelType), "no voxel type specified");
@@ -42,20 +42,20 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
   //! Subvolume parameters: subvolumeOffsets, subvolumeDimensions, subvolumeSteps.
   //! The subvolume defaults to full dimensions (allowing for just subsampling, for example).
   osp::vec3i subvolumeOffsets = osp::vec3i(0);  ospGetVec3i(volume, "subvolumeOffsets", &subvolumeOffsets);
-  exitOnCondition(reduce_min(subvolumeOffsets) < 0 || reduce_max(subvolumeOffsets - dimensions) >= 0, "invalid subvolume offsets");
+  exitOnCondition(reduce_min(subvolumeOffsets) < 0 || reduce_max(subvolumeOffsets - volumeDimensions) >= 0, "invalid subvolume offsets");
 
-  osp::vec3i subvolumeDimensions = dimensions - subvolumeOffsets;  ospGetVec3i(volume, "subvolumeDimensions", &subvolumeDimensions);
-  exitOnCondition(reduce_min(subvolumeDimensions) < 1 || reduce_max(subvolumeDimensions - (dimensions - subvolumeOffsets)) > 0, "invalid subvolume dimension(s) specified");
+  osp::vec3i subvolumeDimensions = volumeDimensions - subvolumeOffsets;  ospGetVec3i(volume, "subvolumeDimensions", &subvolumeDimensions);
+  exitOnCondition(reduce_min(subvolumeDimensions) < 1 || reduce_max(subvolumeDimensions - (volumeDimensions - subvolumeOffsets)) > 0, "invalid subvolume dimension(s) specified");
 
   osp::vec3i subvolumeSteps = osp::vec3i(1);  ospGetVec3i(volume, "subvolumeSteps", &subvolumeSteps);
-  exitOnCondition(reduce_min(subvolumeSteps) < 1 || reduce_max(subvolumeSteps - (dimensions - subvolumeOffsets)) >= 0, "invalid subvolume steps");
+  exitOnCondition(reduce_min(subvolumeSteps) < 1 || reduce_max(subvolumeSteps - (volumeDimensions - subvolumeOffsets)) >= 0, "invalid subvolume steps");
 
   bool useSubvolume = false;
 
   //! The dimensions of the volume to be imported; this will be changed if a subvolume is specified.
-  osp::vec3i importVolumeDimensions = dimensions;
+  osp::vec3i importVolumeDimensions = volumeDimensions;
 
-  if(reduce_max(subvolumeOffsets) > 0 || subvolumeDimensions != dimensions || reduce_max(subvolumeSteps) > 1) {
+  if (reduce_max(subvolumeOffsets) > 0 || subvolumeDimensions != volumeDimensions || reduce_max(subvolumeSteps) > 1) {
 
     useSubvolume = true;
 
@@ -69,26 +69,38 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
 
     //! Update the provided dimensions of the volume for the subvolume specified.
     ospSetVec3i(volume, "dimensions", importVolumeDimensions);
+
   }
 
-  //! Voxel count.
-  size_t voxelCount = size_t(importVolumeDimensions.x) * importVolumeDimensions.y * importVolumeDimensions.z;
+  if (!useSubvolume) {
 
-  //! Allocate memory for the voxel data.
-  void *voxelData = new unsigned char[voxelCount * voxelSize];
+    //! Voxel count.
+    size_t voxelCount = volumeDimensions.x * volumeDimensions.y;
 
-  if(!useSubvolume) {
+    //! Allocate memory for a single slice through the volume.
+    void *voxelData = new unsigned char[voxelCount * voxelSize];
 
-    //! Copy voxel data into the buffer.
-    size_t voxelsRead = fread(voxelData, voxelSize, voxelCount, file);
+    //! We copy data into the volume by the slice in case memory is limited.
+    for (size_t z=0 ; z < volumeDimensions.z ; z++) {
 
-    //! The end of the file may have been reached unexpectedly.
-    exitOnCondition(voxelsRead != voxelCount, "end of volume file reached before read completed");
+      //! Copy voxel data into the buffer.
+      size_t voxelsRead = fread(voxelData, voxelSize, voxelCount, file);
+
+      //! The end of the file may have been reached unexpectedly.
+      exitOnCondition(voxelsRead != voxelCount, "end of volume file reached before read completed");
+
+      //! Copy the voxels into the volume.
+      ospSetRegion(volume, voxelData, osp::vec3i(0, 0, z), osp::vec3i(volumeDimensions.x, volumeDimensions.y, 1));
+
+    }
+
+    //! Clean up.
+    delete [] voxelData;
 
   } else {
 
     //! Allocate memory for a single row of voxel data.
-    unsigned char *rowData = new unsigned char[dimensions.x * voxelSize];
+    unsigned char *rowData = new unsigned char[volumeDimensions.x * voxelSize];
 
     //! Allocate memory for a single row of voxel data for the subvolume.
     unsigned char *subvolumeRowData = new unsigned char[importVolumeDimensions.x * voxelSize];
@@ -99,33 +111,27 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
       for(long i2=subvolumeOffsets.y; i2<subvolumeOffsets.y+subvolumeDimensions.y; i2+=subvolumeSteps.y) {
 
         //! Seek to appropriate location in file.
-        fseek(file, offset + i3*dimensions.y*dimensions.x*voxelSize + i2*dimensions.x*voxelSize, SEEK_SET);
+        fseek(file, offset + i3 * volumeDimensions.y * volumeDimensions.x * voxelSize + i2 * volumeDimensions.x * voxelSize, SEEK_SET);
 
         //! Read row from volume.
-        size_t voxelsRead = fread(rowData, voxelSize, dimensions.x, file);
+        size_t voxelsRead = fread(rowData, voxelSize, volumeDimensions.x, file);
 
         //! The end of the file may have been reached unexpectedly.
-        exitOnCondition(voxelsRead != dimensions.x, "end of volume file reached before read completed");
+        exitOnCondition(voxelsRead != volumeDimensions.x, "end of volume file reached before read completed");
 
         //! Resample row for the subvolume.
         for(long i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x)
           memcpy(&subvolumeRowData[(i1 - subvolumeOffsets.x) / subvolumeSteps.x * voxelSize], &rowData[i1 * voxelSize], voxelSize);
 
-        //! Copy subvolume row into the buffer.
-        size_t offset = (((i3 - subvolumeOffsets.z) / subvolumeSteps.z) * importVolumeDimensions.y*importVolumeDimensions.x + ((i2 - subvolumeOffsets.y) / subvolumeSteps.y) * importVolumeDimensions.x) * voxelSize;
-        memcpy(&((unsigned char *)voxelData)[offset], &subvolumeRowData[0], importVolumeDimensions.x * voxelSize);
+        //! Copy subvolume row into the volume.
+        ospSetRegion(volume, &subvolumeRowData[0], osp::vec3i(0, (i2 - subvolumeOffsets.y) / subvolumeSteps.y, (i3 - subvolumeOffsets.z) / subvolumeSteps.z), osp::vec3i(importVolumeDimensions.x, 1, 1));
       }
     }
 
     //! Clean up.
     delete [] rowData;
+    delete [] subvolumeRowData;
   }
-
-  //! Wrap the buffer in an OSPRay object using the OSP_DATA_SHARED_BUFFER flag to avoid copying the data.
-  OSPData voxelDataObject = ospNewData(voxelCount, strcmp(voxelType, "float") ? OSP_UCHAR : OSP_FLOAT, voxelData, OSP_DATA_SHARED_BUFFER);
-
-  //! Set the buffer as a parameter on the volume.
-  ospSetData(volume, "voxelData", voxelDataObject);
 
   //! Return the volume.
   return(volume);
