@@ -189,12 +189,6 @@ bool SeismicVolumeFile::scanSeismicDataFileForDimensions(OSPVolume volume) {
 
 bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
 
-  //! Voxel count.
-  size_t voxelCount = size_t(volumeDimensions.x) * volumeDimensions.y * volumeDimensions.z;
-
-  //! Allocate memory for the voxel data. Note that FreeDDS converts sample types of int, short, long, float, and double to float.
-  float * voxelData = new float[voxelCount];
-
   //! Trace fields used for coordinates in each dimension; defaults can be overridden.
   std::string traceCoordinate2Field = "CdpNum";
   std::string traceCoordinate3Field = "FieldRecNum";
@@ -252,8 +246,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
       exitOnCondition(coordinate2-origin2 < 0 || coordinate2-origin2 >= dimensions.y || coordinate3-origin3 < 0 || coordinate3-origin3 >= dimensions.z, "invalid trace coordinates found");
 
       //! Copy trace into the volume.
-      size_t offset = (coordinate3-origin3) * size_t(volumeDimensions.y)*volumeDimensions.x + (coordinate2-origin2) * volumeDimensions.x;
-      memcpy(&voxelData[offset], &traceBuffer[traceHeaderSize], volumeDimensions.x * sizeof(float));
+      ospSetRegion(volume, &traceBuffer[traceHeaderSize], osp::vec3i(0, coordinate2-origin2, coordinate3-origin3), osp::vec3i(volumeDimensions.x, 1, 1));
 
       traceCount++;
     }
@@ -310,8 +303,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
           traceBufferSubvolume[(i1 - subvolumeOffsets.x) / subvolumeSteps.x] = traceBuffer[traceHeaderSize + i1];
 
         //! Copy subsampled trace into the volume.
-        size_t offset = ((i3 - subvolumeOffsets.z) / subvolumeSteps.z) * volumeDimensions.y*volumeDimensions.x + ((i2 - subvolumeOffsets.y) / subvolumeSteps.y) * volumeDimensions.x;
-        memcpy(&voxelData[offset], &traceBufferSubvolume[0], volumeDimensions.x * sizeof(float));
+        ospSetRegion(volume, &traceBufferSubvolume[0], osp::vec3i(0, (i2 - subvolumeOffsets.y) / subvolumeSteps.y, (i3 - subvolumeOffsets.z) / subvolumeSteps.z), osp::vec3i(volumeDimensions.x, 1, 1));
 
         traceCount++;
 
@@ -332,12 +324,6 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
     //! Clean up.
     free(traceBufferSubvolume);
   }
-
-  //! Wrap the buffer in an OSPRay object using the OSP_DATA_SHARED_BUFFER flag to avoid copying the data.
-  OSPData voxelDataObject = ospNewData(voxelCount, OSP_FLOAT, voxelData, OSP_DATA_SHARED_BUFFER);
-
-  //! Set the buffer as a parameter on the volume.
-  ospSetData(volume, "voxelData", voxelDataObject);
 
   //! Print statistics.
   if(verbose)
