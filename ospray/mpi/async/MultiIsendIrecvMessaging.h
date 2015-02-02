@@ -42,12 +42,19 @@ namespace ospray {
 
           thread_t    sendThread;
           thread_t    recvThread;
-          Mutex       mutex;
-          Condition   cond;
+          Mutex       recvMutex;
+          Condition   recvCond;
+          Condition   recvTerminatedCond;
+          Mutex       sendMutex;
+          Condition   sendCond;
+          Condition   sendTerminatedCond;
           MPI_Request currentSendRequest;
           
           std::vector<QueuedMessage*> sendQueue;
-          bool      beginShutDown, sendIsShutDown, recvIsShutDown;
+
+          typedef enum { NOT_STARTED, RUNNING, FLAGGED_TO_TERMINATE, TERMINATED } ThreadState;
+          volatile ThreadState sendThreadState;
+          volatile ThreadState recvThreadState;
         };
 
         virtual void init();

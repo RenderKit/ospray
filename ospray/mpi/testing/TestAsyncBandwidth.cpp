@@ -22,20 +22,22 @@
 // min num ints we're sending
 #define MIN_SIZE 64
 // max num ints we're sending
-#define MAX_SIZE (4096000)
+#define MAX_SIZE (4096)
 // #define MAX_SIZE (4096*1024)
 // num seconds we're sending back and forth
-#define NUM_SECONDS 10
+#define NUM_SECONDS 3
+
+#define FIXED_SIZE 499
 
 namespace ospray {
   
   int numTerminated = 0;
   Condition cond;
   Mutex     mutex;
-  bool      shutDown = false;
-  size_t numBytesReceived = 0;
-  size_t numMessagesReceived = 0;
-  bool checkSum = false;
+  bool      doNotSendAnyMoreMessages = false;
+  size_t    numBytesReceived = 0;
+  size_t    numMessagesReceived = 0;
+  // bool      checkSum = false;
 
   int computeCheckSum1toN(int *arr, int N)
   {
@@ -45,7 +47,11 @@ namespace ospray {
     return sum;
   }
   void sendRandomMessage(mpi::Address addr) {
+#ifdef FIXED_SIZE
+    int N = FIXED_SIZE;
+#else
     int N = MIN_SIZE+int(drand48()*(MAX_SIZE-MIN_SIZE));
+    #endif
     int *msg = (int*)malloc(N*sizeof(N));//new int[N];
     for (int i=1;i<N;i++)
       msg[i] = rand();
@@ -56,44 +62,53 @@ namespace ospray {
   struct CheckSumAndBounceNewRandomMessage : public mpi::async::Consumer {
     virtual void process(const mpi::Address &source, void *message, int32 size) 
     {
+#ifdef FIXED_SIZE
+      if (size != FIXED_SIZE*sizeof(int)) {
+        printf("rank %i received %i\n",mpi::world.rank,size); fflush(0);
+      }
+#endif
+
+        // printf("rank %i received %i\n",mpi::world.rank,size); fflush(0);
+      
       if (size == 4) {
         mutex.lock();
         numTerminated++;
+        printf("rank %i terminated %i\n",mpi::world.rank,numTerminated); fflush(0);
         cond.broadcast();
         mutex.unlock();
         free(message);
         return;
       }
 
-      if (checkSum) {
-        // -------------------------------------------------------
-        // checksum
-        // -------------------------------------------------------
-        int *msg = (int *)message;
-        int N = size/sizeof(int);
-        int checkSum = computeCheckSum1toN(msg,N);
-        if (msg[0] != checkSum)
-          throw std::runtime_error("invalid checksum!");
-        free(message);
+      // if (checkSum) {
+      //   // -------------------------------------------------------
+      //   // checksum
+      //   // -------------------------------------------------------
+      //   int *msg = (int *)message;
+      //   int N = size/sizeof(int);
+      //   int checkSum = computeCheckSum1toN(msg,N);
+      //   if (msg[0] != checkSum)
+      //     throw std::runtime_error("invalid checksum!");
+      //   free(message);
 
+      //   mutex.lock();
+      //   numMessagesReceived ++;
+      //   numBytesReceived += size;
+      //   if (!doNotSendAnyMoreMessages) {
+      //     int tgt = rand() % source.group->size;
+      //     sendRandomMessage(mpi::Address(source.group,tgt));
+      //   }
+      //   mutex.unlock();
+      // } else {
         mutex.lock();
         numMessagesReceived ++;
         numBytesReceived += size;
-        if (!shutDown) {
-          int tgt = rand() % source.group->size;
-          sendRandomMessage(mpi::Address(source.group,tgt));
-        }
-        mutex.unlock();
-      } else {
-        mutex.lock();
-        numMessagesReceived ++;
-        numBytesReceived += size;
-        if (!shutDown) {
+        if (!doNotSendAnyMoreMessages) {
           int tgt = rand() % source.group->size;
           mpi::async::send(mpi::Address(source.group,tgt),message,size);
         }
         mutex.unlock();
-      }
+      // }
     }
   };
   
@@ -122,15 +137,16 @@ namespace ospray {
     }
 
     sleep(NUM_SECONDS);
-
-    shutDown = true;
+    //usleep(NUM_SECONDS*1000000LL);
+    
     mutex.lock();
+    doNotSendAnyMoreMessages = true;
     for (int i=0;i<world->size;i++) {
       int *msg = (int*)malloc(sizeof(int));
       *msg = -1;
       mpi::async::send(mpi::Address(world,i),msg,sizeof(int));
     }
-    
+    printf("#osp:mpi(%2i/%i): done notices sent\n",mpi::world.rank,mpi::world.size); fflush(0);
     while (numTerminated < mpi::world.size)
       cond.wait(mutex);
     mutex.unlock();
