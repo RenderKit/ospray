@@ -16,6 +16,7 @@
 
 #include "ospray/mpi/async/Messaging.h"
 #include "ospray/mpi/async/SimpleSendRecvMessaging.h"
+#include "ospray/mpi/async/MultiIsendIrecvMessaging.h"
 
 namespace ospray {
   namespace mpi {
@@ -86,7 +87,11 @@ namespace ospray {
       void initAsync()
       {
         if (AsyncMessagingImpl::global == NULL) {
+#if 0
+          AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
+#else
           AsyncMessagingImpl::global = new SimpleSendRecvImpl;
+#endif
           AsyncMessagingImpl::global->init();
         }
       }
