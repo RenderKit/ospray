@@ -132,9 +132,11 @@ IF (OSPRAY_MPI)
     mpi/async/MultiIsendIrecvMessaging.cpp
     )
 
-  ADD_EXECUTABLE(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
-    mpi/testing/TestAsyncCorrectness
+  ADD_EXECUTABLE(ospTestMPIAsyncBandwidth{OSPRAY_EXE_SUFFIX}
     mpi/testing/TestAsyncBandwidth
+    )
+  ADD_EXECUTABLE(ospTestMPIAsyncCorrectness{OSPRAY_EXE_SUFFIX}
+    mpi/testing/TestAsyncCorrectness
     )
   TARGET_LINK_LIBRARIES(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
     ospray${OSPRAY_LIB_SUFFIX}
