@@ -20,9 +20,9 @@
 
 #define NUM_START_MESSAGES 10
 // min num ints we're sending
-#define MIN_SIZE 10
+#define MIN_SIZE 10000
 // max num ints we're sending
-#define MAX_SIZE (4096)
+#define MAX_SIZE (4096000)
 // #define MAX_SIZE (4096*1024)
 // num seconds we're sending back and forth
 #define NUM_SECONDS 10
@@ -35,6 +35,7 @@ namespace ospray {
   bool      shutDown = false;
   size_t numBytesReceived = 0;
   size_t numMessagesReceived = 0;
+  bool checkSum = true;
 
   int computeCheckSum1toN(int *arr, int N)
   {
@@ -64,6 +65,7 @@ namespace ospray {
         return;
       }
 
+      if (checkSum) {
       // -------------------------------------------------------
       // checksum
       // -------------------------------------------------------
@@ -82,12 +84,25 @@ namespace ospray {
         sendRandomMessage(mpi::Address(source.group,tgt));
       }
       mutex.unlock();
+      } else {
+      mutex.lock();
+      numMessagesReceived ++;
+      numBytesReceived += size;
+      if (!shutDown) {
+        int tgt = rand() % source.group->size;
+        mpi::async::send(mpi::Address(source.group,tgt),message,size);
+      }
+      mutex.unlock();
+      }
     }
   };
-
+  
+  
   void mpiCommTest(int &ac, char **av)
   {
     mpi::init(&ac,(const char**)av);
+
+    if (ac == 2) checkSum = false;
 
     CheckSumAndBounceNewRandomMessage consumer;
 
