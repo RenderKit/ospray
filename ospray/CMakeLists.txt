@@ -138,7 +138,10 @@ IF (OSPRAY_MPI)
   ADD_EXECUTABLE(ospTestMPIAsyncCorrectness{OSPRAY_EXE_SUFFIX}
     mpi/testing/TestAsyncCorrectness
     )
-  TARGET_LINK_LIBRARIES(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
+  TARGET_LINK_LIBRARIES(ospTestMPIAsyncBandwidth{OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
+    )
+  TARGET_LINK_LIBRARIES(ospTestMPIAsyncCorrectness{OSPRAY_EXE_SUFFIX}
     ospray${OSPRAY_LIB_SUFFIX}
     )
 ENDIF()
