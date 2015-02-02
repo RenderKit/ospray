@@ -19,6 +19,10 @@
 #include <mpi.h>
 #include "ospray/common/OSPCommon.h"
 
+/*! helper macro that checks the return value of all MPI_xxx(...)
+    calls via MPI_CALL(xxx(...)).  */
+#define MPI_CALL(a) { int rc = MPI_##a; assert(rc == MPI_SUCCESS); }
+
 namespace ospray {
 
   /*! Helper class for MPI Programming */
@@ -45,6 +49,9 @@ namespace ospray {
       { MPI_Comm_rank(comm,&rank); MPI_Comm_size(comm,&size); containsMe = true; }
       void makeIntracomm()
       { containsMe = false; rank = MPI_ROOT; MPI_Comm_remote_size(comm,&size); }
+
+      /*! perform a MPI_barrier on this communicator */
+      void barrier() { MPI_CALL(Barrier(comm)); }
     };
 
     extern Group world; //! MPI_COMM_WORLD

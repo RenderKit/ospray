@@ -124,7 +124,7 @@ namespace ospray {
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
       /*! Copy data into the given volume. */
-      virtual int setRegion(OSPVolume object, const void *source, const vec3i &index, const vec3i &count);
+      virtual int setRegion(OSPVolume object, void *source, const vec3i &index, const vec3i &count);
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);
