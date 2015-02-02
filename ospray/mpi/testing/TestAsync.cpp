@@ -35,7 +35,7 @@ namespace ospray {
   bool      shutDown = false;
   size_t numBytesReceived = 0;
   size_t numMessagesReceived = 0;
-  bool checkSum = true;
+  bool checkSum = false;
 
   int computeCheckSum1toN(int *arr, int N)
   {
@@ -102,8 +102,8 @@ namespace ospray {
   {
     mpi::init(&ac,(const char**)av);
     if (ac == 2) {
-      printf("not doing checksumming...\n");
-      checkSum = false;
+      printf("now doing checksumming...\n");
+      checkSum = true;
     }
 
     CheckSumAndBounceNewRandomMessage consumer;
