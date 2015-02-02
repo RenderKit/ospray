@@ -56,7 +56,11 @@ ELSE(APPLE)
 	SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
 ENDIF(APPLE)
 # whether to build in MIC/xeon phi support
-SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
+IF (WIN32)
+  SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL "OSPRay with Xeon Phi not supported on Windows.")
+ELSE(WIN32)
+  OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with MIC Support?")
+ENDIF(WIN32)
 # whether to build in MIC/xeon phi support
 SET(OSPRAY_BUILD_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
 MARK_AS_ADVANCED(OSPRAY_MPI)
@@ -101,7 +105,6 @@ IF (OSPRAY_MIC)
   ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
 ENDIF()
 
-IF (NOT WIN32)
 ##############################################################
 # ospray sample apps
 ##############################################################
@@ -122,5 +125,3 @@ IF (OSPRAY_MIC)
   SET (OSPRAY_TARGET "MIC")
   ADD_SUBDIRECTORY(modules builddir/modules/mic)
 ENDIF()
-ENDIF()
-

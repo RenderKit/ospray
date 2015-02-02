@@ -47,14 +47,14 @@ namespace ospray {
       double smooth_den;
       double frameStartTime;
 
-      FPSCounter() 
+      FPSCounter()
       {
         smooth_nom = 0.;
         smooth_den = 0.;
         frameStartTime = 0.;
       }
       void startRender() { frameStartTime = ospray::getSysTime(); }
-      void doneRender() { 
+      void doneRender() {
         double seconds = ospray::getSysTime() - frameStartTime; 
         smooth_nom = smooth_nom * 0.8f + seconds;
         smooth_den = smooth_den * 0.8f + 1.f;

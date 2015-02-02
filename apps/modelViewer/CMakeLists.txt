@@ -31,8 +31,8 @@ ADD_EXECUTABLE(ospModelViewer
 TARGET_LINK_LIBRARIES(ospModelViewer
   ospray_minisg
   ospray_glut3d
-  ${OPENGL_LIBRARY} 
-  ${GLUT_LIBRARY}
+  ${OPENGL_LIBRARIES}
+  ${GLUT_LIBRARIES}
   )
 # ------------------------------------------------------------
 INSTALL(TARGETS ospModelViewer DESTINATION bin)

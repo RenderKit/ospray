@@ -21,6 +21,9 @@
 // ospray, for rendering
 #include "ospray/ospray.h"
 
+// stl
+#include <algorithm>"
+
 namespace ospray {
   using std::cout;
   using std::endl;

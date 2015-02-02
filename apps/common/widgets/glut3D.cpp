@@ -20,8 +20,18 @@
 #else
 #include "GL/glut.h"
 #endif
-#include <sys/times.h>
-#include <unistd.h> // for usleep
+
+#ifdef _WIN32
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h> // for Sleep
+#  define _USE_MATH_DEFINES
+#  include <math.h> // M_PI
+#else
+#  include <sys/times.h>
+#  include <unistd.h> // for usleep
+#endif
 
 namespace ospray {
 
@@ -238,7 +248,13 @@ namespace ospray {
     }
 
     void Glut3DWidget::idle()
-    { usleep(1000); }
+    {
+#ifdef _WIN32
+      Sleep(1);
+#else
+      usleep(1000);
+#endif
+    }
 
     void Glut3DWidget::reshape(const vec2i &newSize)
     {
@@ -276,6 +292,7 @@ namespace ospray {
       char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
+#ifndef _WIN32
         if (animating && dumpScreensDuringAnimation) {
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
@@ -289,7 +306,7 @@ namespace ospray {
           sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(NULL));
           saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
         }
-
+#endif
       } else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, floatFB);
       }
@@ -740,7 +757,7 @@ namespace ospray {
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
           if (!dumpFileRoot) {
-            mkstemp(tmpFileName);
+//            mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
           }
           char fileName[100000];
