@@ -20,7 +20,12 @@
 
 // std
 #include <time.h>
-#ifndef __WIN32__
+#ifdef __WIN32__
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h> // for GetSystemTime
+#else
 #include <sys/time.h>
 #include <sys/times.h>
 #endif
@@ -65,7 +70,8 @@ namespace ospray {
 
   double getSysTime() {
 #ifdef __WIN32__
-	  throw std::runtime_error("getSystime not yet working under windows"); return 0.f;
+    SYSTEMTIME tp; GetSystemTime(&tp);
+    return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
 #else
     struct timeval tp; gettimeofday(&tp,NULL); 
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 

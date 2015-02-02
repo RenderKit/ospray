@@ -19,6 +19,11 @@
 // std
 //#include <dlfcn.h>
 
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#endif
+
 namespace ospray {
 
   std::vector<Library*> loadedLibs;
@@ -51,13 +56,13 @@ namespace ospray {
       if (sym) return sym;
     }
 
-#ifdef __WIN32__
-	throw std::runtime_error("no dlsym under windows");
-#else
     // if none found in the loaded libs, try the default lib ...
+#ifdef _WIN32
+    void *sym = GetProcAddress(GetModuleHandle(0), name.c_str());
+#else
     void *sym = dlsym(RTLD_DEFAULT,name.c_str());
-    return sym;
 #endif
+    return sym;
   }
 
 } // ::ospray
