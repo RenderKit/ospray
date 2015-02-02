@@ -131,10 +131,10 @@ IF (OSPRAY_MPI)
     mpi/async/SimpleSendRecvMessaging.cpp
     )
 
-  ADD_EXECUTABLE(ospTestAyncMPI${OSPRAY_EXE_SUFFIX}
+  ADD_EXECUTABLE(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
     mpi/testing/TestAsync
     )
-  TARGET_LINK_LIBRARIES(ospTestAyncMPI${OSPRAY_EXE_SUFFIX}
+  TARGET_LINK_LIBRARIES(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
     ospray${OSPRAY_LIB_SUFFIX}
     )
 ENDIF()
