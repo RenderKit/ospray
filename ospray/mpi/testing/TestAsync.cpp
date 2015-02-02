@@ -18,9 +18,9 @@
 
 #define ASYNC_TAG 123
 
-#define NUM_START_MESSAGES 10
+#define NUM_START_MESSAGES 30
 // min num ints we're sending
-#define MIN_SIZE 10000
+#define MIN_SIZE 1000
 // max num ints we're sending
 #define MAX_SIZE (4096000)
 // #define MAX_SIZE (4096*1024)
@@ -101,13 +101,16 @@ namespace ospray {
   void mpiCommTest(int &ac, char **av)
   {
     mpi::init(&ac,(const char**)av);
-
-    if (ac == 2) checkSum = false;
+    if (ac == 2) {
+      printf("not doing checksumming...\n");
+      checkSum = false;
+    }
 
     CheckSumAndBounceNewRandomMessage consumer;
 
     mpi::async::Group *world = mpi::async::createGroup("world",MPI_COMM_WORLD,
                                                        &consumer,ASYNC_TAG);
+    srand(world->rank*13*17*23+2342556);
     
     mpi::world.barrier();
     char hostname[1000];
