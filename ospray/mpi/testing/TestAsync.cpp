@@ -45,7 +45,7 @@ namespace ospray {
   }
   void sendRandomMessage(mpi::Address addr) {
     int N = MIN_SIZE+int(drand48()*(MAX_SIZE-MIN_SIZE));
-    int *msg = new int[N];
+    int *msg = (int*)malloc(N*sizeof(N));//new int[N];
     for (int i=1;i<N;i++)
       msg[i] = rand();
     msg[0] = computeCheckSum1toN(msg,N);
@@ -111,8 +111,11 @@ namespace ospray {
 
     shutDown = true;
     mutex.lock();
-    for (int i=0;i<world->size;i++)
-      mpi::async::send(mpi::Address(world,i),new int(-1),sizeof(int));
+    for (int i=0;i<world->size;i++) {
+      int *msg = (int*)malloc(sizeof(int));
+      *msg = -1;
+      mpi::async::send(mpi::Address(world,i),msg,sizeof(int));
+    }
     
     while (numTerminated < mpi::world.size)
       cond.wait(mutex);
