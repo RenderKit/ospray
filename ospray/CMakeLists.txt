@@ -22,11 +22,12 @@ IF  ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") AND
 		(${OSPRAY_COMPILER} STREQUAL "GCC") AND
 		(NOT APPLE)
 		)
-  MESSAGE(WARNING "Warning: You have selected 'avx2' target and 'gcc'-compiler, but many older gcc versions do not yet support avx2. If you run into build issues, please switch to either 'icc'-compiler, or upgrade your gcc version")
+  MESSAGE(WARNING "Warning: You have selected 'AVX2' target and 'GCC'-compiler, but many older gcc versions do not yet support AVX2. If you run into build issues, please switch to either 'ICC'-compiler, or upgrade your gcc version")
 ENDIF()
 
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
+INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -106,6 +107,30 @@ SET(OSPRAY_SOURCES
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/SymbolRegistry.cpp
+
+  render/pathtracer/PathTracer.ispc
+  render/pathtracer/PathTracer.cpp
+  render/pathtracer/lights/Light.ispc
+  render/pathtracer/lights/AmbientLight.ispc
+  render/pathtracer/lights/PointLight.ispc
+  render/pathtracer/lights/SpotLight.ispc
+  render/pathtracer/materials/Material.ispc
+  render/pathtracer/materials/OBJ.ispc
+  render/pathtracer/materials/OBJ.cpp
+  render/pathtracer/materials/Velvet.ispc
+  render/pathtracer/materials/Velvet.cpp
+  render/pathtracer/materials/Metal.ispc
+  render/pathtracer/materials/Metal.cpp
+  render/pathtracer/materials/ThinDielectric.ispc
+  render/pathtracer/materials/ThinDielectric.cpp
+  render/pathtracer/materials/Dielectric.ispc
+  render/pathtracer/materials/Dielectric.cpp
+  render/pathtracer/materials/MetallicPaint.ispc
+  render/pathtracer/materials/MetallicPaint.cpp
+  render/pathtracer/materials/Plastic.ispc
+  render/pathtracer/materials/Plastic.cpp
+  render/pathtracer/materials/Matte.ispc
+  render/pathtracer/materials/Matte.cpp
 
   api/API.cpp
   api/Device.cpp

@@ -1,0 +1,37 @@
+#pragma once
+
+#include "BRDF.ih"
+#include "optics.ih"
+
+struct Conductor
+{
+  uniform BRDF base;
+  vec3f R;          //!< Reflectivity coefficient
+  vec3f eta;        //!< Real part of refraction index
+  vec3f k;          //!< Imaginary part of refraction index
+};
+
+vec3f Conductor__eval(const uniform BRDF* uniform _this, 
+                      const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
+  return make_vec3f(0.0f);
+}
+
+vec3f Conductor__sample(const uniform BRDF* uniform _this,
+                        const vec3f &wo, 
+                        const DifferentialGeometry &dg, 
+                        Sample3f &wi, 
+                        const vec2f &s)  
+{
+  const uniform Conductor* uniform this = (const uniform Conductor* uniform) _this;
+  wi = reflect(wo,dg.Ns);
+  return mul(this->R, fresnelConductor(dot(wo,dg.Ns),this->eta,this->k));
+}
+
+inline void Conductor__Constructor(uniform Conductor* uniform this,
+                                   const uniform vec3f R, const uniform vec3f eta, const uniform vec3f k)
+{
+  BRDF__Constructor(&this->base,SPECULAR_REFLECTION,Conductor__eval,Conductor__sample);
+  this->R = R;
+  this->eta = eta;
+  this->k = k;
+}

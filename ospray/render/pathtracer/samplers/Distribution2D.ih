@@ -1,0 +1,18 @@
+#pragma once
+
+#include "Sample.ih"
+
+struct Distribution2D 
+{
+  RefCount base;
+
+  vec2ui size;
+  uniform float* cdf_x;
+  uniform float* cdf_y;
+  uniform float* pdf_x;
+  uniform float* pdf_y;
+};
+
+uniform Distribution2D* uniform Distribution2D__new(const uniform float* uniform f, const uniform vec2ui size);
+
+Sample2f Distribution2D__sample(const uniform Distribution2D* uniform this, const vec2f &u);

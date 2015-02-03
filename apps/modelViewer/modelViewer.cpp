@@ -469,12 +469,9 @@ namespace ospray {
       } else if (arg == "--force-instancing") {
         forceInstancing = true;
       } else if (arg == "--pt") {
-        // shortcut for '--module pathtracer --renderer pathtracer'
-        const char *moduleName = "pathtracer";
-        cout << "loading ospray module '" << moduleName << "'" << endl;
+        // shortcut for '--renderer pathtracer'
         maxAccum = 1024;
-        ospLoadModule(moduleName);
-        rendererType = moduleName;
+        rendererType = "pathtracer";
       } else if (arg == "--sun-dir") {
         if (!strcmp(av[i+1],"none")) {
           defaultDirLight_direction = vec3f(0.f);

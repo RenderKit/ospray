@@ -1,0 +1,36 @@
+#pragma once
+
+#include "ospray/common/Material.ih"
+#include "ospray/common/DifferentialGeometry.ih"
+#include "ospray/common/Ray.ih"
+#include "materials/Medium.ih"
+#include "samplers/Sample.ih"
+#include "brdfs/BRDF.ih"
+#include "brdfs/CompositedBRDF.ih"
+
+struct PathTraceMaterial;
+
+/*! Shades a location and and returns a composited BRDF */
+typedef void (*PathTraceMaterial__shade)(const uniform PathTraceMaterial *uniform this,
+                                const Ray&                  ray,              /*!< The ray arriving at the point to shade. */
+                                const Medium&               currentMedium,    /*!< The medium this ray travels inside. */
+                                const DifferentialGeometry& dg,               /*!< The point to shade on a surface. */
+                                uniform CompositedBRDF&     brdfs);           /*!< Container for generated BRDF components. */
+
+typedef void (*PathTraceMaterial__selectNextMediumFunc)(const uniform PathTraceMaterial *uniform THIS,
+                                               varying Medium& currentMedium);
+
+struct PathTraceMaterial
+{
+  Material material;
+  //  RefCount base;
+  PathTraceMaterial__shade shade;
+  PathTraceMaterial__selectNextMediumFunc selectNextMedium;
+};
+
+// void Material__Destructor(uniform RefCount *uniform this);
+
+void PathTraceMaterial__Constructor(uniform PathTraceMaterial *uniform THIS,
+                           // uniform DestructorFunc destructor,
+                           uniform PathTraceMaterial__shade shade,
+                           uniform PathTraceMaterial__selectNextMediumFunc selectNextMedium);

@@ -1,0 +1,44 @@
+#pragma once
+
+#include "ospray/math/vec.ih"
+#include "ospray/math/affine.ih"
+
+struct Sample1f {
+  float v;
+  float pdf;
+};
+
+inline Sample1f make_Sample1f(const float v, const float pdf)
+{
+  Sample1f s;
+  s.v = v; 
+  s.pdf = pdf;
+  return s;
+}
+
+struct Sample2f {
+  vec2f v;
+  float pdf;
+};
+
+inline Sample2f make_Sample2f(const vec2f v, const float pdf)
+{
+  Sample2f s;
+  s.v = v; 
+  s.pdf = pdf;
+  return s;
+}
+
+struct Sample3f {
+  vec3f v;
+  float pdf;
+};
+
+inline Sample3f make_Sample3f(const vec3f v, const float pdf)
+{
+  Sample3f s;
+  s.v = v; 
+  s.pdf = pdf;
+  return s;
+}
+
