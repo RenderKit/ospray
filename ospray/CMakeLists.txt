@@ -130,6 +130,9 @@ IF (OSPRAY_MPI)
     mpi/async/Messaging.cpp
     mpi/async/SimpleSendRecvMessaging.cpp
     mpi/async/MultiIsendIrecvMessaging.cpp
+    mpi/async/CommLayer.cpp
+    
+    mpi/DistributedFrameBuffer.cpp
     )
 
   ADD_EXECUTABLE(ospTestMPIAsyncBandwidth${OSPRAY_EXE_SUFFIX}

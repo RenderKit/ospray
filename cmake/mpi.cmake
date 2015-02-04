@@ -27,7 +27,7 @@ IF (OSPRAY_MPI)
 
   # need to find a way to set this as needed for different MPI versions.
   # -mt_mpi needed for Intel MPI.
-  SET(OSPRAY_MPI_MULTI_THREADING_FLAG "")
+  SET(OSPRAY_MPI_MULTI_THREADING_FLAG "-mt_mpi ")
 
   MACRO(CONFIGURE_MPI)
     INCLUDE_DIRECTORIES(${MPI_CXX_INCLUDE_PATH})
