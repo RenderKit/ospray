@@ -28,6 +28,20 @@ namespace ospray {
   namespace mpi {
     namespace async {
       
+      void CommLayer::sendTo(Address dest, Message *msg, size_t size)
+      {
+        NOTIMPLEMENTED;
+      }
+
+      void CommLayer::registerObject(Object *object, ObjectID ID)
+      {
+        /* WARNING: though we do protect the registry here, the
+           registry lookup itself is NOT thread-safe right now */
+        mutex.lock();
+        assert(registry.find(ID) == registry.end());
+        registry[ID] = object;
+        mutex.unlock();
+      }
 
     } // ::ospray::mpi::async
   } // ::ospray::mpi
