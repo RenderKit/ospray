@@ -34,10 +34,6 @@ namespace ospray {
   using std::endl;
 
   namespace mpi {
-    Group world;
-    Group app;
-    Group worker;
-
     //! this runs an ospray worker process. 
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not

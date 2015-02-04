@@ -19,6 +19,10 @@
 namespace ospray {
   namespace mpi {
     
+    Group world;
+    Group app;
+    Group worker;
+
     void init(int *ac, const char **av)
     {
       int initialized = false;
