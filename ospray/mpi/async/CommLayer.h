@@ -45,6 +45,9 @@ namespace ospray {
       struct CommLayer : public async::Consumer { 
         typedef int32 ObjectID; 
 
+        //! the async::consumer virtual callback that a async::message arrived
+        virtual void process(const mpi::Address &source, void *message, int32 size);
+        
         struct Address {
           Address(int32 rank=-1,ObjectID objectID=-1) 
             : rank(rank), objectID(objectID)
@@ -89,31 +92,28 @@ namespace ospray {
               to actually do heavy work if needed - because this
               function may actually block the system's receiver thread
               until complete */
-          virtual void incoming(Message *msg) = 0;
-
+          virtual void incoming(mpi::async::CommLayer::Message *msg) = 0;
+          
           ObjectID myID;
           CommLayer *comm;
         };
-
+        
         void sendTo(Address dest, Message *msg, size_t size);
-
-        //! the async::consumer virtual callback that a async::message arrived
-        virtual void process(const Address &source, void *message, int32 size);
-
+        
         void registerObject(Object *object, ObjectID ID);
 
         //! convenience function that returns our rank in the comm group 
         int32 rank() const { return group->rank; }
-
+        
         //! mutex to protect the registry
         Mutex mutex;
-
+        
         /*! registry that allows to lookup objects by handle. objects
-            have to register themselves in order to be reachable */
+          have to register themselves in order to be reachable */
         std::map<ObjectID,Object *> registry;
-
+        
         /*! the mpi::async group we're using to communicate with
-            remote nodes */
+          remote nodes */
         async::Group *group; 
       };
 

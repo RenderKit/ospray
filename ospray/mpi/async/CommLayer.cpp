@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "CommLayer.h"
 
 /*! \file ospray/mpi/async/CommLayer.h Extends the asynchronous
@@ -28,6 +26,11 @@ namespace ospray {
   namespace mpi {
     namespace async {
       
+      void CommLayer::process(const mpi::Address &source, void *message, int32 size)
+      {
+        NOTIMPLEMENTED;
+      }
+
       void CommLayer::sendTo(Address dest, Message *msg, size_t size)
       {
         NOTIMPLEMENTED;
