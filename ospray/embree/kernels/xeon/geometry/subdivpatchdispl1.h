@@ -160,7 +160,7 @@ namespace embree
       unsigned levels;           //!< number of stored levels
       unsigned primID;
       unsigned geomID;
-      Node nodes[];
+      Node nodes[1];
       //Node n0;                  //!< root node
       //Node n00, n01, n10, n11;  //!< child nodes
     };
