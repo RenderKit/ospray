@@ -451,7 +451,9 @@ namespace ospray {
     }
 
     /*! Copy data into the given object. */
-    int MPIDevice::setRegion(OSPObject object, const void *source, const vec3i &index, const vec3i &count) {
+    int MPIDevice::setRegion(OSPVolume object, void *source, 
+                             const vec3i &index, 
+                             const vec3i &count) {
 
       //! Not yet implemented.
       return(false);
