@@ -123,6 +123,9 @@ namespace ospray {
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
+      /*! Copy data into the given volume. */
+      virtual int setRegion(OSPVolume object, const void *source, const vec3i &index, const vec3i &count);
+
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);
 
@@ -146,6 +149,45 @@ namespace ospray {
 
       /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
       virtual void setVoidPtr(OSPObject object, const char *bufName, void *v);
+
+      /*! Get the handle of the named data array associated with an object. */
+      virtual int getData(OSPObject object, const char *name, OSPData *value);
+
+      /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
+      virtual int getDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
+
+      /*! Get the named scalar floating point value associated with an object. */
+      virtual int getf(OSPObject object, const char *name, float *value);
+
+      /*! Get the named scalar integer associated with an object. */
+      virtual int geti(OSPObject object, const char *name, int *value);
+
+      /*! Get the material associated with a geometry object. */
+      virtual int getMaterial(OSPGeometry geometry, OSPMaterial *value);
+
+      /*! Get the named object associated with an object. */
+      virtual int getObject(OSPObject object, const char *name, OSPObject *value);
+
+      /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
+      virtual int getParameters(OSPObject object, char ***value);
+
+      /*! Retrieve the total length of the names (with terminators) of the parameters associated with an object. */
+      int getParametersSize(OSPObject object, int *value);
+
+      /*! Get a pointer to a copy of the named character string associated with an object. */
+      virtual int getString(OSPObject object, const char *name, char **value);
+
+      /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+      virtual int getType(OSPObject object, const char *name, OSPDataType *value);
+
+      /*! Get the named 2-vector floating point value associated with an object. */
+      virtual int getVec2f(OSPObject object, const char *name, vec2f *value);
+
+      /*! Get the named 3-vector floating point value associated with an object. */
+      virtual int getVec3f(OSPObject object, const char *name, vec3f *value);
+
+      /*! Get the named 3-vector integer value associated with an object. */
+      virtual int getVec3i(OSPObject object, const char *name, vec3i *value);
 
       /*! create a new triangle mesh geometry */
       virtual OSPTriangleMesh newTriangleMesh();

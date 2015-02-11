@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <string>
 #include "ospray/volume/Volume.h"
 
@@ -35,7 +36,7 @@ namespace ospray {
   public:
 
     //! Constructor.
-    StructuredVolume() {}
+    StructuredVolume() : finished(false), voxelRange(FLT_MAX, -FLT_MAX) {}
 
     //! Destructor.
     virtual ~StructuredVolume() {};
@@ -55,16 +56,22 @@ namespace ospray {
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
-    //! Copy voxels into the volume at the given index.
-    virtual void setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
+    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
 
   protected:
 
+    //! Indicate that the volume is fully initialized.
+    bool finished;
+
     //! Volume size in voxels per dimension.
     vec3i volumeDimensions;
+
+    //! Voxel value range.
+    vec2f voxelRange;
 
     //! Voxel type.
     std::string voxelType;
@@ -72,11 +79,16 @@ namespace ospray {
     //! Complete volume initialization.
     virtual void finish() = 0;
 
-    //! Initialize the volume from memory.
-    void getVolumeFromMemory();
-
     //! Update select parameters after the volume has been allocated and filled.
     virtual void updateEditableParameters() {}
+
+    //! Compute the voxel value range for floating point voxels.
+    inline void computeVoxelRange(const float *source, const size_t &count)
+      { for (size_t i=0 ; i < count ; i++) voxelRange.x = std::min(voxelRange.x, source[i]), voxelRange.y = std::max(voxelRange.y, source[i]); }
+
+    //! Compute the voxel value range for unsigned byte voxels.
+    inline void computeVoxelRange(const unsigned char *source, const size_t &count)
+      { for (size_t i=0 ; i < count ; i++) voxelRange.x = std::min(voxelRange.x, (float) source[i]), voxelRange.y = std::max(voxelRange.y, (float) source[i]); }
 
   };
 

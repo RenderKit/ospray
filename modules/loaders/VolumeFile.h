@@ -18,9 +18,7 @@
 
 #include <stdlib.h>
 #include <string>
-#include "ospray/common/Managed.h"
-#include "ospray/fileio/ObjectCatalog.h"
-#include "ospray/volume/Volume.h"
+#include "ospray/include/ospray/ospray.h"
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
@@ -32,57 +30,53 @@
 //!  module and registered with OSPRay using this macro.
 //! 
 #define OSP_REGISTER_VOLUME_FILE(InternalClass, ExternalName)           \
-  extern "C" OSPObjectCatalog ospray_import_volume_file_##ExternalName(const std::string &filename, Volume *volume) \
-  { InternalClass file(filename);  return(file.importVolume(volume)); }
+  extern "C" OSPVolume ospray_import_volume_file_##ExternalName(const std::string &filename, OSPVolume volume) \
+    { InternalClass file(filename);  return(file.importVolume(volume)); }
 
-namespace ospray {
+//! \brief The VolumeFile class is an abstraction for the concrete
+//!  object which is used to load volume data from a file.
+//!
+//!  The format of the volume data stored in a file on disk is unknown
+//!  to this class.  Subclasses implement loaders for specific formats,
+//!  and the actual subclass used is determined from the file extension.
+//!  This subclass must be registered in OSPRay proper, or in a loaded
+//!  module via OSP_REGISTER_VOLUME_FILE.
+//!
+class VolumeFile {
+public:
 
-  //! \brief The VolumeFile class is an abstraction for the concrete
-  //!  object which is used to load volume data from a file.
-  //!
-  //!  The format of the volume data stored in a file on disk is unknown
-  //!  to this class.  Subclasses implement loaders for specific formats,
-  //!  and the actual subclass used is determined from the file extension.
-  //!  This subclass must be registered in OSPRay proper, or in a loaded
-  //!  module via OSP_REGISTER_VOLUME_FILE.
-  //!
-  class VolumeFile : public ManagedObject {
-  public:
+  //! Constructor.
+  VolumeFile() {};
 
-    //! Constructor.
-    VolumeFile() {};
+  //! Destructor.
+  virtual ~VolumeFile() {};
 
-    //! Destructor.
-    virtual ~VolumeFile() {};
+  //! Create a VolumeFile object of the subtype given by the file extension and import the volume.
+  static OSPVolume importVolume(const std::string &filename, OSPVolume volume);
 
-    //! Create a VolumeFile object of the subtype given by the file extension and import the volume.
-    static OSPObjectCatalog importVolume(const std::string &filename, Volume *volume);
+  //! Import the volume specification and voxel data.
+  virtual OSPVolume importVolume(OSPVolume volume) = 0;
 
-    //! Import the volume specification and voxel data.
-    virtual OSPObjectCatalog importVolume(Volume *volume) = 0;
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::VolumeFile"); }
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::VolumeFile"); }
+protected:
 
-  protected:
-
-    //! Print an error message.
-    void emitMessage(const std::string &kind, const std::string &message) const
+  //! Print an error message.
+  void emitMessage(const std::string &kind, const std::string &message) const
     { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
 
-    //! Error checking.
-    void exitOnCondition(bool condition, const std::string &message) const
+  //! Error checking.
+  void exitOnCondition(bool condition, const std::string &message) const
     { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
 
-    //! Warning condition.
-    void warnOnCondition(bool condition, const std::string &message) const
+  //! Warning condition.
+  void warnOnCondition(bool condition, const std::string &message) const
     { if (!condition) return;  emitMessage("WARNING", message); }
 
-    //! Get the absolute file path.
-    static std::string getFullFilePath(const std::string &filename)
+  //! Get the absolute file path.
+  static std::string getFullFilePath(const std::string &filename)
     { char *fullpath = realpath(filename.c_str(), NULL);  return(fullpath != NULL ? fullpath : filename); }
 
-  };
-
-} // ::ospray
+};
 

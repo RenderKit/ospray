@@ -21,6 +21,10 @@ CONFIGURE_OSPRAY()
 IF (NOT THIS_IS_MIC)
   IF (OSPRAY_MODULE_SEISMIC)
 
+    IF (NOT OSPRAY_MODULE_LOADERS)
+      message(FATAL_ERROR "The 'loaders' module must be enabled to build the 'seismic' module.")
+    ENDIF (NOT OSPRAY_MODULE_LOADERS)
+
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
@@ -31,8 +35,7 @@ IF (NOT THIS_IS_MIC)
     ADD_LIBRARY(ospray_module_seismic${OSPRAY_LIB_SUFFIX} SHARED
       SeismicVolumeFile.cpp
       SymbolRegistry.cpp
-      ../../apps/common/fileio/TinyXML2.cpp
-      )
+    )
 
     TARGET_LINK_LIBRARIES(ospray_module_seismic${OSPRAY_LIB_SUFFIX} ${FreeDDS_LIBRARIES})
 

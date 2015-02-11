@@ -14,16 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "apps/common/fileio/OSPObjectFile.h"
-#include "apps/common/fileio/RawVolumeFile.h"
+#pragma once
 
-namespace ospray {
+#include <string>
+#include "modules/loaders/VolumeFile.h"
 
-  //! Loader for XML object files.
-  OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
+//! \brief A concrete implementation of the VolumeFile class for reading
+//!  voxel data stored in a file on disk as a single monolithic brick,
+//!  where the volume specification is defined elsewhere.
+//!
+class RawVolumeFile : public VolumeFile {
+public:
 
-  //! Loader for RAW volume files.
-  OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
+  //! Constructor.
+  RawVolumeFile(const std::string &filename) : filename(filename) {}
 
-} // ::ospray
+  //! Destructor.
+  virtual ~RawVolumeFile() {};
+
+  //! Import the volume data.
+  virtual OSPVolume importVolume(OSPVolume volume);
+
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::RawVolumeFile"); }
+
+private:
+
+  //! Path to the file containing the volume data.
+  std::string filename;
+
+};
 

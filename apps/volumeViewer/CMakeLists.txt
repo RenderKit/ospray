@@ -14,10 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+IF (NOT OSPRAY_MODULE_LOADERS)
+  message(FATAL_ERROR "The 'loaders' module must be enabled to build the 'ospVolumeViewer' application.")
+ENDIF (NOT OSPRAY_MODULE_LOADERS)
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 # setup dependencies
-SET(LIBS ${LIBS} ospray ospray_fileio)
+SET(LIBS ${LIBS} ospray ospray_module_loaders)
 
 FIND_PACKAGE(Qt4 REQUIRED) 
 SET(QT_USE_QTOPENGL TRUE)

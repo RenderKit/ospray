@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include <algorithm>
+#include "modules/loaders/ObjectFile.h"
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
 #include "LightEditor.h"
@@ -58,6 +59,17 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
 
   //! Create and configure the OSPRay state.
   initObjects(filenames);
+
+  //! Update transfer function data value range with the voxel range of the first volume.
+  if(volumes.size() > 0 && transferFunctionEditor != NULL) {
+
+    osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[0], "voxelRange", &voxelRange);
+
+    if(voxelRange != osp::vec2f(0.f)) {
+      transferFunctionEditor->setDataValueMin(voxelRange.x);
+      transferFunctionEditor->setDataValueMax(voxelRange.y);
+    }
+  }
 
   //! Show the window.
   show();
@@ -126,19 +138,26 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
   OSPModel model = ospNewModel();
 
   //! Load OSPRay objects from a file.
-  OSPObjectCatalog catalog = ospImportObjects(filename.c_str());
+  OSPObject *objects = ObjectFile::importObjects(filename.c_str());
 
-  //! For now we set the same transfer function on all volumes.
-  for (size_t i=0 ; catalog->entries[i] ; i++) if (catalog->entries[i]->type == OSP_VOLUME) ospSetObject(catalog->entries[i]->object, "transferFunction", transferFunction);
+  //! Iterate over the volumes contained in the object list.
+  for (size_t i=0 ; objects[i] ; i++) {
+    OSPDataType type;  ospGetType(objects[i], NULL, &type);  if (type == OSP_VOLUME) {
 
-  //! Add the loaded volume(s) to the model.
-  for (size_t i=0 ; catalog->entries[i] ; i++) if (catalog->entries[i]->type == OSP_VOLUME) ospAddVolume(model, (OSPVolume) catalog->entries[i]->object);
+      //! For now we set the same transfer function on all volumes.
+      ospSetObject(objects[i], "transferFunction", transferFunction);  ospCommit(objects[i]);
 
-  //! Keep vector of all loaded volume(s).
-  for (size_t i=0 ; catalog->entries[i] ; i++) if (catalog->entries[i]->type == OSP_VOLUME) volumes.push_back((OSPVolume) catalog->entries[i]->object);
+      //! Add the loaded volume(s) to the model.
+      ospAddVolume(model, (OSPVolume) objects[i]);
 
-  //! Commit the OSPRay object state.
-  ospCommitCatalog(catalog);  ospCommit(model);  models.push_back(model);
+      //! Keep a vector of all loaded volume(s).
+      volumes.push_back((OSPVolume) objects[i]);
+
+    }
+  }
+
+  //! Commit the model.
+  ospCommit(model);  models.push_back(model);
 
 }
 
