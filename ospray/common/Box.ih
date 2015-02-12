@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
+#include "ospray/math/bbox.ih"
 #include "Ray.ih"
 
 inline void boxtest(Ray& ray,
