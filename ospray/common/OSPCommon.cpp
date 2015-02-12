@@ -134,6 +134,14 @@ namespace ospray {
     case OSP_UINT2:     return sizeof(embree::Vec2<uint32>);
     case OSP_UINT3:     return sizeof(embree::Vec3<uint32>);
     case OSP_UINT4:     return sizeof(embree::Vec4<uint32>);
+    case OSP_LONG:       return sizeof(int64);
+    case OSP_LONG2:      return sizeof(embree::Vec2<int64>);
+    case OSP_LONG3:      return sizeof(embree::Vec3<int64>);
+    case OSP_LONG4:      return sizeof(embree::Vec4<int64>);
+    case OSP_ULONG:      return sizeof(uint64);
+    case OSP_ULONG2:     return sizeof(embree::Vec2<uint64>);
+    case OSP_ULONG3:     return sizeof(embree::Vec3<uint64>);
+    case OSP_ULONG4:     return sizeof(embree::Vec4<uint64>);
     case OSP_FLOAT:     return sizeof(float);
     case OSP_FLOAT2:    return sizeof(embree::Vec2<float>);
     case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
