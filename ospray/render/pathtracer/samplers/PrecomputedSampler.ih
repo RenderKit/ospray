@@ -48,7 +48,7 @@ inline const varying LightSample PrecomputedSample__getLightSample(const uniform
   return THIS->lightSamples[lightSampleId]; 
 }
 
-/*! The sampler factory precomputes samples for usage by multiple samlper threads. */
+/*! The sampler factory precomputes samples for usage by multiple sampler threads. */
 struct PrecomputedSampler 
 {
   uint32 numSamples1D;                  //!< Number of additional 1D samples per pixel sample.

@@ -246,7 +246,7 @@ uniform Scene *uniform createScene()
 
 #if 1
   // we don't have lights, yet, so use a hardcoded envlight for now!
-  print("#osp:pt: adding hard-coded envlight for now!\n");
+  print("#osp:PT: adding hard-coded envlight for now!\n");
   scene->envLights = uniform new uniform EnvLightPtr[1];
   scene->envLights[0] = AmbientLight__New(make_vec3f(.8f));
   scene->num_envLights = 1;
@@ -295,7 +295,7 @@ inline vec3f PathTracer_renderPixel(uniform PathTracer *uniform THIS,
     //    Ray ray;
     // THIS->camera->initRay(THIS->camera,ray,screenSample,lensSample);
     camera->initRay(camera,screenSample.ray,cameraSample);
-    screenSample.ray.time = lensSample.x; // FIXME: introduced correlation
+    screenSample.ray.time = PrecomputedSample__getTime(sample); 
 
     LightPath lightPath; init_LightPath(lightPath,screenSample.ray);
     
@@ -371,8 +371,6 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer,
   screenSample.z = inf;
   screenSample.alpha = 0.f;
   
-  CameraSample cameraSample;
-  
   for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
     const uint32 ix = tile.region.lower.x + z_order.xs[i];
     const uint32 iy = tile.region.lower.y + z_order.ys[i];
@@ -429,27 +427,3 @@ export void* uniform PathTracer_create(void *uniform cppE,
   THIS->scene = createScene();
   return THIS;
 }
-
-export uniform OSPPickData PathTracer_unproject(void *uniform THIS_, const uniform vec2f &screenPos)
-{
-  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)THIS_;
-  uniform Camera *uniform camera = THIS->inherited.camera;
-  uniform Model *uniform model = THIS->scene->model;
-  uniform OSPPickData ret;
-
-  CameraSample cameraSample;
-  cameraSample.screen.x = screenPos.x;
-  cameraSample.screen.y = 1.0 - screenPos.y;
-  Ray ray;
-  camera->initRay(camera, ray, cameraSample);
-  traceRay(model, ray);
-  vec3f p = ray.org + (ray.dir * ray.t);
-  ret.hit= extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
-  ret.world_x=extract(p.x,0);
-  ret.world_y=extract(p.y,0);
-  ret.world_z=extract(p.z,0);
-
-  return ret;
-}
-
-

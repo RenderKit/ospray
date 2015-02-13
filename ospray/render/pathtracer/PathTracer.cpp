@@ -28,7 +28,7 @@ namespace ospray {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
       if (numOccurrances[T] == 0) 
-        std::cout << "#osp:pt: do not know material type '" << type << "'" << 
+        std::cout << "#osp:PT: does not know material type '" << type << "'" << 
           " (replacing with OBJMaterial)" << std::endl;
       numOccurrances[T] ++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
@@ -50,14 +50,6 @@ namespace ospray {
     camera = (Camera*)getParamObject("camera",NULL);
     if (camera) 
       ispc::PathTracer_setCamera(getIE(),camera->getIE());
-  }
-
-  OSPPickData PathTracer::unproject(const vec2f &screenPos)
-  {
-    assert(getIE());
-    ispc::OSPPickData data_t = ispc::PathTracer_unproject(getIE(), (const ispc::vec2f&)screenPos);
-    OSPPickData ret = { data_t.hit, data_t.world_x, data_t.world_y, data_t.world_z };
-    return ret;
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
