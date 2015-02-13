@@ -41,8 +41,8 @@ namespace ospray {
     offset_materialID = getParam1i("offset_materialID",-1);
     data              = getParamData("cylinders",NULL);
     
-    Assert2(data.ptr != NULL, "no data specified");
-    Assert2(bytesPerCylinder > 0, "no data specified");
+    if (data.ptr == NULL || bytesPerCylinder == 0) 
+      throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders' data specified");
     numCylinders = data->numBytes / bytesPerCylinder;
     std::cout << "#osp: creating 'cylinders' geometry, #cylinders = " << numCylinders << std::endl;
     

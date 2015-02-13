@@ -62,9 +62,6 @@ namespace ospray {
         model's acceleration structure */
     virtual void finalize(Model *model);
 
-    Ref<Data> vertexData;  //!< refcounted data array for vertex data
-    Ref<Data> indexData; //!< refcounted data array for segment data
-
     float radius;   //!< default radius, if no per-cylinder radius was specified.
     int32 materialID;
     
