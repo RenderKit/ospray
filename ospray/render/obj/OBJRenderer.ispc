@@ -63,7 +63,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     float material_opacity = 1;
 
     if(objMaterial == NULL) {
-      material_opacity = dg.color.w;
+      material_opacity = 1.0 - dg.color.w;
     } else {
       foreach_unique( mat in objMaterial ) {
         if (mat->map_d != NULL) {
