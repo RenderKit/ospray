@@ -134,6 +134,26 @@ namespace ospray {
       fclose(file);
     }
 
+    void parseSWC(const embree::FileName &fn)
+    {
+      std::vector<vec3fa> filePoints;
+
+      FILE *file = fopen(fn.c_str(),"r");
+      Assert(file);
+      for (char line[10000]; fgets(line,10000,file) && !feof(file); ) {
+        if (line[0] == '#') continue;
+        
+        vec3fa v; float f0, f1; int ID, i, j;
+        sscanf(line,"%i %i %f %f %f %f %i\n",&ID,&i,&v.x,&v.y,&v.z,&f1,&j);
+        filePoints.push_back(v);
+
+        index.push_back(vertex.size());
+        vertex.push_back(v);
+        vertex.push_back(filePoints[j-1]);
+      }
+      fclose(file);
+    }
+
     void parse(const embree::FileName &fn)
     {
       if (fn.ext() == "pnt") 
@@ -494,6 +514,8 @@ namespace ospray {
           parseOSX(streamLines,triangles,fn);
         else if (fn.ext() == "pnt")
           streamLines->parsePNT(fn);
+        else if (fn.ext() == "swc")
+          streamLines->parseSWC(fn);
         else if (fn.ext() == "pntlist")
           streamLines->parsePNTlist(fn);
         else if (fn.ext() == "sv") 
