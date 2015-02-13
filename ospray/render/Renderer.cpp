@@ -42,8 +42,19 @@ namespace ospray {
     }
   }
 
-  Renderer *Renderer::createRenderer(const char *type)
+  Renderer *Renderer::createRenderer(const char *_type)
   {
+    char type[strlen(_type)+1];
+    strcpy(type,_type);
+    char *atSign = strstr(type,"@");
+    char *libName = NULL;
+    if (atSign) {
+      *atSign = 0;
+      libName = atSign+1;
+    }
+    if (libName)
+      loadLibrary("ospray_module_"+std::string(libName));
+    
     std::map<std::string, Renderer *(*)()>::iterator it = rendererRegistry.find(type);
     if (it != rendererRegistry.end())
       return it->second ? (it->second)() : NULL;
@@ -56,6 +67,7 @@ namespace ospray {
     creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
     rendererRegistry[type] = creator;
     if (creator == NULL) {
+      PING;
       if (ospray::logLevel >= 1) 
         std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
       return NULL;
