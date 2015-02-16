@@ -251,12 +251,12 @@ namespace ospray {
     }
 
     /*! Copy data into the given volume. */
-    int LocalDevice::setRegion(OSPVolume handle, void *source, const vec3i &index, const vec3i &count) {
-
+    int LocalDevice::setRegion(OSPVolume handle, const void *source, 
+                               const vec3i &index, const vec3i &count) 
+    {
       Volume *volume = (Volume *) handle;
       Assert(volume != NULL && "invalid volume object handle");
       return(volume->setRegion(source, index, count));
-
     }
 
     /*! assign (named) vec2f parameter to an object */
@@ -268,6 +268,7 @@ namespace ospray {
 
       object->findParam(bufName, 1)->set(v);
     }
+
     /*! assign (named) vec3f parameter to an object */
     void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
     {

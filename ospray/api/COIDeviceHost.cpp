@@ -210,7 +210,8 @@ namespace ospray {
       virtual int loadModule(const char *name);
 
       /*! Copy data into the given volume. */
-      virtual int setRegion(OSPVolume object, void *source, const vec3i &index, const vec3i &count);
+      virtual int setRegion(OSPVolume object, const void *source, 
+                            const vec3i &index, const vec3i &count);
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);
@@ -1056,8 +1057,9 @@ namespace ospray {
     }
 
     /*! Copy data into the given volume. */
-    int COIDevice::setRegion(OSPVolume object, void *source, const vec3i &index, const vec3i &count) {
-
+    int COIDevice::setRegion(OSPVolume object, const void *source, 
+                             const vec3i &index, const vec3i &count) 
+    {
       Assert(object != NULL && "invalid volume object handle");
       char *typeString = NULL;
       getString(object, "voxelType", &typeString);
@@ -1074,7 +1076,6 @@ namespace ospray {
       callFunction(OSPCOI_SET_REGION, stream, &result, sizeof(int));
 //    release(data);
       return(result);
-
     }
 
     /*! assign (named) data item as a parameter to an object */

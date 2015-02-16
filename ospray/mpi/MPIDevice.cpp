@@ -451,11 +451,11 @@ namespace ospray {
     }
 
     /*! Copy data into the given object. */
-    int MPIDevice::setRegion(OSPObject object, const void *source, const vec3i &index, const vec3i &count) {
-
+    int MPIDevice::setRegion(OSPVolume object, const void *source, 
+                             const vec3i &index, const vec3i &count) 
+    {
       //! Not yet implemented.
       return(false);
-
     }
 
     /*! assign (named) string parameter to an object */

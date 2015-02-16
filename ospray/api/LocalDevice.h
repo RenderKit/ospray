@@ -73,7 +73,8 @@ namespace ospray {
       virtual void setFloat(OSPObject object, const char *bufName, const float f);
 
       /*! Copy data into the given volume. */
-      virtual int setRegion(OSPVolume object, void *source, const vec3i &index, const vec3i &count);
+      virtual int setRegion(OSPVolume object, const void *source, 
+                            const vec3i &index, const vec3i &count);
 
       /*! assign (named) vec2f parameter to an object */
       virtual void setVec2f(OSPObject object, const char *bufName, const vec2f &v);
