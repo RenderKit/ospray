@@ -314,7 +314,7 @@ namespace ospray {
     int LocalDevice::getDataValues(OSPData handle, void **pointer, size_t *count, OSPDataType *type) {
 
       Data *data = (Data *) handle;
-      Assert(object != NULL && "invalid data object handle");
+      Assert(data != NULL && "invalid data object handle");
      *pointer = malloc(data->numBytes);  if (pointer == NULL) return(false);
       return(memcpy(*pointer, data->data, data->numBytes), *count = data->numItems, *type = data->type, true);
 

@@ -126,6 +126,16 @@ IF (OSPRAY_MPI)
     mpi/MPICommon.cpp
     mpi/MPILoadBalancer.cpp
     mpi/worker.cpp
+
+    mpi/async/Messaging.cpp
+    mpi/async/SimpleSendRecvMessaging.cpp
+    )
+
+  ADD_EXECUTABLE(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
+    mpi/testing/TestAsync
+    )
+  TARGET_LINK_LIBRARIES(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
     )
 ENDIF()
 

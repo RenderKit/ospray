@@ -48,7 +48,6 @@ void Renderer_default_endFrame(uniform Renderer *uniform renderer,
   renderer->fb = NULL;
 }
 
-
 void Renderer_default_renderTile(uniform Renderer *uniform renderer,
                                  uniform Tile &tile)
 {
@@ -56,8 +55,9 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
   uniform Camera      *uniform camera = renderer->camera;
 
   float pixel_du = .5f, pixel_dv = .5f;
-  float lens_du = 0.f, lens_dv = 0.f;
+  float lens_du = 0.f,  lens_dv = 0.f;
   uniform int32 spp = renderer->spp;
+
   precomputeZOrder();
 
   if (spp > 1) {
