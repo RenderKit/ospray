@@ -50,3 +50,5 @@ inline varying vec3f xfmVector(const uniform AffineSpace3f a, const varying vec3
 inline varying vec3f xfmVector(const varying AffineSpace3f a, const varying vec3f v) 
 { return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
 
+typedef AffineSpace3f affine3f;
+
