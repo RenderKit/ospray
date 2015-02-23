@@ -1065,7 +1065,7 @@ namespace ospray {
       getString(object, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
       Assert(type != OSP_UNKNOWN && "unknown volume element type");
-      OSPData data = newData(count.x * count.y * count.z, type, source, OSP_DATA_SHARED_BUFFER);
+      OSPData data = newData(count.x * count.y * count.z, type, (void *)source, OSP_DATA_SHARED_BUFFER);
 
       int result;
       DataStream stream;
