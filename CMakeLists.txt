@@ -30,7 +30,8 @@ SET(OSPRAY_VERSION 0.7.1)
 SET(OSPRAY_SOVERSION 0)
 
 IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type: Debug Release RelWithDebInfo MinSizeRel." FORCE)
+  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
+  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
 MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
@@ -46,22 +47,24 @@ MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # whether to enable intersection filters
-SET(OSPRAY_INTERSECTION_FILTER OFF CACHE BOOL "Enable Intersection Filters?")
+OPTION(OSPRAY_INTERSECTION_FILTER "Enable Intersection Filters?")
 MARK_AS_ADVANCED(OSPRAY_INTERSECTION_FILTER)
 
 # compiler selection for the non-MIC part
 IF (APPLE)
-	SET(OSPRAY_COMPILER "clang" CACHE STRING "Set to ICC, GCC, or CLANG")
+	SET(OSPRAY_DEFAULT_COMPILER "CLANG")
 ELSE(APPLE)
-	SET(OSPRAY_COMPILER "GCC" CACHE STRING "Set to ICC, GCC, or CLANG")
+	SET(OSPRAY_DEFAULT_COMPILER "GCC")
 ENDIF(APPLE)
+SET(OSPRAY_COMPILER ${OSPRAY_DEFAULT_COMPILER} CACHE STRING "Select which compiler to use.")
+SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS ICC GCC CLANG)
 # whether to build in MIC/xeon phi support
-SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE BOOL "Build OSPRay with MIC Support?")
-# whether to build in MIC/xeon phi support
-SET(OSPRAY_BUILD_MPI_DEVICE OFF CACHE BOOL "Add MPI Remote/Distributed rendering support?")
-MARK_AS_ADVANCED(OSPRAY_MPI)
+OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with MIC Support?")
+# whether to build in MPI support
+OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
-SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host (SSE,AVX,AVX2)")
+SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host.")
+SET_PROPERTY(CACHE OSPRAY_XEON_TARGET PROPERTY STRINGS SSE AVX AVX2)
 
 # make ospray target and compiler uppercase - we need this in some other parts of the build system
 STRING(TOUPPER ${OSPRAY_XEON_TARGET} OSPRAY_XEON_TARGET)
