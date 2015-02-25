@@ -411,6 +411,7 @@ namespace ospray {
       warnMaterial(type);
       return createDefaultMaterial(renderer);
     }
+    const bool isOBJMaterial = !strcmp(type, "OBJMaterial");
 
     for (miniSG::Material::ParamMap::const_iterator it =  mat->params.begin();
          it !=  mat->params.end(); ++it) {
@@ -422,7 +423,13 @@ namespace ospray {
         ospSet1i(ospMat,name,p->i[0]);
         break;
       case miniSG::Material::Param::FLOAT:
-        ospSet1f(ospMat,name,p->f[0]);
+        float f = p->f[0];
+        /* many mtl materials of obj models wrongly store the phong exponent
+         'Ns' in range [0..1], whereas OSPRay's material implementations
+         correctly interpret it to be in [0..inf), thus we map ranges here */
+        if (isOBJMaterial && (!strcmp(name, "Ns") || !strcmp(name, "ns")) && f <= 1.f)
+          f = 1.f/(1.f - f) - 1.f;
+        ospSet1f(ospMat,name,f);
         break;
       case miniSG::Material::Param::FLOAT_3:
         ospSet3fv(ospMat,name,p->f);
@@ -442,7 +449,7 @@ namespace ospray {
           break;
         }
       default: 
-        throw std::runtime_error("unkonwn material parameter type");
+        throw std::runtime_error("unknown material parameter type");
       };
     }
 

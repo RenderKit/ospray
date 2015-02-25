@@ -7,13 +7,13 @@
 struct OBJ
 {
   uniform PathTraceMaterial base;
-  uniform Texture2D* map_d;  
-  float d; 
-  uniform Texture2D* map_Kd; 
+  uniform Texture2D* map_d;
+  float d;
+  uniform Texture2D* map_Kd;
   vec3f Kd;
-  uniform Texture2D* map_Ks; 
+  uniform Texture2D* map_Ks;
   vec3f Ks;
-  uniform Texture2D* map_Ns; 
+  uniform Texture2D* map_Ns;
   float Ns;
   uniform Texture2D* map_Bump;
 };
@@ -22,31 +22,26 @@ struct OBJ
 // Implementation
 
 void OBJ__shade(const uniform PathTraceMaterial *uniform _THIS,
-                const Ray&                  ray,           
-                const Medium&               currentMedium, 
-                const DifferentialGeometry& dg,            
-                uniform CompositedBRDF&     brdfs)         
+                const Ray&                  ray,
+                const Medium&               currentMedium,
+                const DifferentialGeometry& dg,
+                uniform CompositedBRDF&     brdfs)
 {
   uniform const OBJ* uniform THIS = (uniform const OBJ* uniform)_THIS;
-
+  // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
 
   /*! transmission */
-  float d = THIS->map_d ? get1f(THIS->map_d, dg.st) : THIS->d;  
+  float d = THIS->d * get1f(THIS->map_d, dg.st, 1.f);
   if (d < 1.0f) COMPOSITED_BRDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
+
   /*! diffuse component */
-  vec3f Kd = mul(d, THIS->map_Kd ? get3f(THIS->map_Kd, dg.st) : THIS->Kd);  
+  vec3f Kd = d * THIS->Kd * get3f(THIS->map_Kd, dg.st, make_vec3f(1.f));
   if (ne(Kd,make_vec3f(0.0f))) COMPOSITED_BRDF_ADD(brdfs,Lambertian,Kd);
 
-#if 0
   /*! specular exponent */
-  float Ns = THIS->Ns;  
-  if (THIS->map_Ns) { const float c = get1f(THIS->map_Ns, dg.st); Ns *= c; }
-  
-  /*! specular component */
-  vec3f Ks = mul(d, THIS->Ks);  
-  if (THIS->map_Ks) Ks = mul(Ks, get3f(THIS->map_Ks,dg.st));  
+  float Ns = THIS->Ns * get1f(THIS->map_Ns, dg.st, 1.0f);
+  vec3f Ks = d * THIS->Ks * get3f(THIS->map_Ks, dg.st, make_vec3f(1.f));
   if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BRDF_ADD(brdfs,Specular,Ks,Ns);
-#endif
 }
 
 // void OBJ__Destructor(uniform RefCount* uniform _THIS)
@@ -79,7 +74,7 @@ void OBJ__Constructor(uniform OBJ* uniform THIS,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform 
+export void* uniform
 PathTracer_OBJ_create(void* uniform map_d,  const uniform float& d,
                       void* uniform map_Kd, const uniform vec3f& Kd,
                       void* uniform map_Ks, const uniform vec3f& Ks,

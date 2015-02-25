@@ -18,10 +18,10 @@ namespace ospray {
           Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", NULL));
           Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", NULL));
 
-          const float d = getParam1f("d",getParam1f("alpha",1.f));
-          const vec3f Kd = getParam3f("Kd",getParam3f("kd",getParam3f("color",vec3f(1.f))));
-          const vec3f Ks = vec3f(1.f);
-          const float Ns = 1.f;
+          const float d = getParam1f("d", getParam1f("alpha", 1.f));
+          const vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));
+          const vec3f Ks = getParam3f("Ks", getParam3f("ks", vec3f(0.f)));
+          const float Ns = getParam1f("Ns", getParam1f("ns", 10.f));
 
           ispcEquivalent = ispc::PathTracer_OBJ_create
             (map_d ? map_d->getIE() : NULL,
