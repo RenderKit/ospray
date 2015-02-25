@@ -422,7 +422,7 @@ namespace ospray {
       case miniSG::Material::Param::INT:
         ospSet1i(ospMat,name,p->i[0]);
         break;
-      case miniSG::Material::Param::FLOAT:
+      case miniSG::Material::Param::FLOAT: {
         float f = p->f[0];
         /* many mtl materials of obj models wrongly store the phong exponent
          'Ns' in range [0..1], whereas OSPRay's material implementations
@@ -430,7 +430,7 @@ namespace ospray {
         if (isOBJMaterial && (!strcmp(name, "Ns") || !strcmp(name, "ns")) && f <= 1.f)
           f = 1.f/(1.f - f) - 1.f;
         ospSet1f(ospMat,name,f);
-        break;
+        } break;
       case miniSG::Material::Param::FLOAT_3:
         ospSet3fv(ospMat,name,p->f);
         break;
