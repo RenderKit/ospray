@@ -115,3 +115,34 @@ inline varying int Random__getInt (varying Random* uniform this, varying int lim
 inline varying float Random__getFloat (varying Random* uniform this) { 
   return min(Random__getInt(this) / 2147483647.0f, 1.0f);
 } 
+
+
+///////////////////////////////////////////////////////////////////////////////
+// TEA - Random numbers based on Tiny Encryption Algorithm
+
+void tea8(unsigned int& v0, unsigned int& v1)
+{
+  unsigned int sum = 0;
+
+  for(uniform int i = 0; i < 8; i++) { // just 8 instead of 32 rounds
+    sum += 0x9e3779b9;
+    v0 += ((v1 << 4) + 0xa341316c) ^ (v1 + sum) ^ ((v1 >> 5) + 0xc8013ea4);
+    v1 += ((v0 << 4) + 0xad90777d) ^ (v0 + sum) ^ ((v0 >> 5) + 0x7e95761e);
+  }
+}
+
+struct RandomTEA
+{
+  unsigned int v0, v1;
+};
+
+inline void RandomTEA__Constructor(varying RandomTEA* uniform this, const unsigned int idx, const unsigned int seed) {
+  this->v0 = idx;
+  this->v1 = seed;
+}
+
+inline varying vec2f RandomTEA__getFloats(varying RandomTEA* uniform this) { 
+  tea8(this->v0, this->v1);
+  const float tofloat = 2.3283064365386962890625e-10f; // 1/2^32
+  return make_vec2f(this->v0 * tofloat, this->v1 * tofloat);
+}

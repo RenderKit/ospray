@@ -43,8 +43,8 @@ inline uniform int UniformPermutation__get(const uniform UniformPermutation* uni
 struct VaryingPermutation
 {
   uniform int elts;            //!< Size of the permutation.
-  varying int* uniform _perm;   //!< Array storing the permutation.
-  varying int* uniform perm;   //!< Array storing the permutation.
+  varying int* uniform perm;   //!< aligned Array storing the permutation.
+  varying int* uniform _perm;  //!< original pointer from memory allocator, to be aligned
 };
 
 /*! Creates a random permutation. Random number generator is provided as argument. */
