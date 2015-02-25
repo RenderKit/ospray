@@ -118,8 +118,9 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator
     //! The voxel value.
     const float value = volume->getVoxel(volume, min(volume->volumeDimensions - 1, voxelIndex));
 
-    //! Update the volumetric value range of the current cell.
-    cellRange.x = min(cellRange.x, reduce_min(value));  cellRange.y = max(cellRange.y, reduce_max(value));
+    //! Update the volumetric value range of the current cell, ignoring any NaN values.
+    if(!isnan(value))
+      cellRange.x = min(cellRange.x, reduce_min(value));  cellRange.y = max(cellRange.y, reduce_max(value));
 
   }
 }

@@ -20,6 +20,9 @@ inline varying vec3f
 LinearTransferFunction_getColorForValue(const void *uniform pointer, 
                                         varying float value) 
 {
+  // Return (0,0,0) for NaN values.
+  if (isnan(value)) return(make_vec3f(0.0f));
+
   // Cast to the actual TransferFunction subtype.
   const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
 
@@ -77,6 +80,9 @@ inline varying float
 LinearTransferFunction_getOpacityForValue(const void *uniform pointer, 
                                           varying float value) 
 {
+  // Return 0 for NaN values.
+  if (isnan(value)) return(0.0f);
+
   // Cast to the actual TransferFunction subtype.
   const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
 
