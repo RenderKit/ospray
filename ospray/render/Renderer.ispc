@@ -171,7 +171,7 @@ export void Renderer_endFrame(void *uniform _renderer, const uniform int32 newAc
   renderer->endFrame(renderer,newAccumID);
 }
 
-export void Renderer_setSPP(void *uniform _renderer, uniform uint32 spp)
+export void Renderer_setSPP(void *uniform _renderer, uniform int32 spp)
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->spp = spp;

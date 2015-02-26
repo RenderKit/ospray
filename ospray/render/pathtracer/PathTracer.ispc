@@ -291,9 +291,10 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, fb->size.x*iy+ix, fb->accumID);
+  const int spp = max(1, THIS->inherited.spp);
   
-  for (uniform int s=0; s<THIS->inherited.spp; s++) {
-    screenSample.sampleID.z = fb->accumID*THIS->inherited.spp + s;
+  for (uniform int s=0; s < spp; s++) {
+    screenSample.sampleID.z = fb->accumID*spp + s;
 
     CameraSample cameraSample;
     const vec2f pixelSample = RandomTEA__getFloats(rng);
@@ -314,7 +315,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
 
   screenSample.alpha = 1.f;
   screenSample.z = inf;
-  screenSample.rgb = L * rcpf(THIS->inherited.spp);
+  screenSample.rgb = L * rcpf(spp);
   return screenSample;
 }
 
@@ -333,16 +334,20 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &til
 {
   uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
   uniform FrameBuffer *uniform fb     = renderer->fb;
+
+  const uniform int blocks = renderer->spp > 0 || fb->accumID > 0 ? 1 : min(1 << -2 * renderer->spp, TILE_SIZE*TILE_SIZE);
   
-  for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-    const uint32 ix = tile.region.lower.x + z_order.xs[i];
-    const uint32 iy = tile.region.lower.y + z_order.ys[i];
+  for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE/blocks;i+=programCount) {
+    const uint32 ix = tile.region.lower.x + z_order.xs[i*blocks];
+    const uint32 iy = tile.region.lower.y + z_order.ys[i*blocks];
     if (ix >= fb->size.x || iy >= fb->size.y) 
       continue;
 
     ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy);
-    const uint32 pixel = z_order.xs[i] + (z_order.ys[i] * TILE_SIZE);
-    setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
+    for (uniform int p = 0; p < blocks; p++) {
+      const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
+      setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
+    }
   }
 }
 

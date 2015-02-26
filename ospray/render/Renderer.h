@@ -34,7 +34,7 @@ namespace ospray {
     projection/splatting based approaches
    */
   struct Renderer : public ManagedObject {
-    uint32 spp;
+    int32 spp;
     float  nearClip;
     Renderer() : spp(1), nearClip(1e-6f) {}
     virtual void commit();

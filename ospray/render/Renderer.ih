@@ -79,7 +79,7 @@ struct Renderer {
   Model       *model; 
   Camera      *camera;
   void        *cppEquivalent;
-  uint32       spp; // number of samples per pixel
+  int32        spp; // number of samples per pixel; negativ values mean subsampling, i.e. render only every 2^-spp pixel in x and y for the first frame
   float        nearClip;
 };
 
