@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -71,7 +71,7 @@ namespace embree
   /// Unary Operators
   ////////////////////////////////////////////////////////////////////////////////
   
-  __forceinline const sseb operator !( const sseb& a ) { return _mm_xor_ps(a, sseb(True)); }
+  __forceinline const sseb operator !( const sseb& a ) { return _mm_xor_ps(a, sseb(embree::True)); }
   
   ////////////////////////////////////////////////////////////////////////////////
   /// Binary Operators

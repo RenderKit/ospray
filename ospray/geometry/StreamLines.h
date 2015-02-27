@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,10 +28,10 @@ namespace ospray {
 
     \brief Geometry representing stream lines of a fixed radius
 
-    Implements a geometry consisinting of stream lines
-    consisting of connected (and rounded) cylinder segments. Each
+    Implements a geometry consisting of stream lines, i.e.
+    connected (and rounded) cylinder segments. Each
     stream line is specified by a set of vec3fa control points; all
-    vertices belonging to to the same logiical stream line are
+    vertices belonging to to the same logical stream line are
     connected via cylinders of a fixed radius, with additional spheres
     at each vertex to make for a smooth transition between the
     cylinders. A "streamline" geometry can contain multiple disjoint
@@ -67,7 +67,7 @@ namespace ospray {
     </dl>
 
     The functionality for this geometry is implemented via the
-    \ref ospray::TriangleMesh class.
+    \ref ospray::StreamLines class.
 
     \image html sl2.jpg
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -79,7 +79,7 @@ struct Renderer {
   Model       *model; 
   Camera      *camera;
   void        *cppEquivalent;
-  uint32       spp; // number of samples per pixel
+  int32        spp; // number of samples per pixel; negativ values mean subsampling, i.e. render only every 2^-spp pixel in x and y for the first frame
   float        nearClip;
 };
 

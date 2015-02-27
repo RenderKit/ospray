@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,7 +48,6 @@ void Renderer_default_endFrame(uniform Renderer *uniform renderer,
   renderer->fb = NULL;
 }
 
-
 void Renderer_default_renderTile(uniform Renderer *uniform renderer,
                                  uniform Tile &tile)
 {
@@ -56,8 +55,9 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
   uniform Camera      *uniform camera = renderer->camera;
 
   float pixel_du = .5f, pixel_dv = .5f;
-  float lens_du = 0.f, lens_dv = 0.f;
+  float lens_du = 0.f,  lens_dv = 0.f;
   uniform int32 spp = renderer->spp;
+
   precomputeZOrder();
 
   if (spp > 1) {
@@ -171,7 +171,7 @@ export void Renderer_endFrame(void *uniform _renderer, const uniform int32 newAc
   renderer->endFrame(renderer,newAccumID);
 }
 
-export void Renderer_setSPP(void *uniform _renderer, uniform uint32 spp)
+export void Renderer_setSPP(void *uniform _renderer, uniform int32 spp)
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->spp = spp;

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -124,7 +124,8 @@ namespace ospray {
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags);
 
       /*! Copy data into the given volume. */
-      virtual int setRegion(OSPVolume object, void *source, const vec3i &index, const vec3i &count);
+      virtual int setRegion(OSPVolume object, const void *source, 
+                            const vec3i &index, const vec3i &count);
 
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,57 +18,72 @@
 
 #include "ColorMap.h"
 #include "LinearTransferFunctionWidget.h"
-#include <QtGui>
 #include <ospray/ospray.h>
+#include <QtGui>
 
-class TransferFunctionEditor : public QWidget {
-
+class TransferFunctionEditor : public QWidget
+{
   Q_OBJECT
 
   public:
 
+  //! Construct the transfer function editor with the given OSPRay transfer function object. The editor will manipulate the OSPRay object directly.
   TransferFunctionEditor(OSPTransferFunction transferFunction);
 
 signals:
 
-  void transferFunctionChanged();
+  //! Signal emitted whenever the transfer function has been changed and committed.
+  void committed();
 
 public slots:
 
-  void transferFunctionAlphasChanged();
-
+  //! Load transfer function from file. If no filename given, a file selection dialog is created.
   void load(std::string filename = std::string());
 
-  void setDataValueMin(double value);
-  void setDataValueMax(double value);
+  //! Set the data value range for the transfer function editor.
+  void setDataValueRange(osp::vec2f dataValueRange);
+
+  //! Slot called to update transfer function opacity values based on widget values.
+  void updateOpacityValues();
 
 protected slots:
 
+  //! Save transfer function to file.
   void save();
+
+  //! Change active color map.
   void setColorMapIndex(int index);
+
+  //! Slot called to update data value range based on widget values.
+  void updateDataValueRange();
 
 protected:
 
+  //! Load default color maps.
   void loadColorMaps();
-
-  //! Color maps.
-  std::vector<ColorMap> colorMaps;
 
   //! OSPRay transfer function object.
   OSPTransferFunction transferFunction;
 
+  //! Available color maps.
+  std::vector<ColorMap> colorMaps;
+
   //! Color map selection widget.
   QComboBox colorMapComboBox;
 
-  //! Transfer function minimum data value widget.
+  //! Data value range minimum widget.
   QDoubleSpinBox dataValueMinSpinBox;
 
-  //! Transfer function maximum data value widget.
+  //! Data value range maximum widget.
   QDoubleSpinBox dataValueMaxSpinBox;
 
-  //! Transfer function widget for opacity.
-  LinearTransferFunctionWidget transferFunctionAlphaWidget;
+  //! Data value range scale (exponent, base 10) widget.
+  QSpinBox dataValueScaleSpinBox;
 
-  //! Slider for scaling transfer function opacities.
-  QSlider transferFunctionAlphaScalingSlider;
+  //! Linear transfer function widget for opacity values.
+  LinearTransferFunctionWidget opacityValuesWidget;
+
+  //! Opacity scaling slider.
+  QSlider opacityScalingSlider;
+
 };

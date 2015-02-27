@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,6 +20,9 @@ inline varying vec3f
 LinearTransferFunction_getColorForValue(const void *uniform pointer, 
                                         varying float value) 
 {
+  // Return (0,0,0) for NaN values.
+  if (isnan(value)) return(make_vec3f(0.0f));
+
   // Cast to the actual TransferFunction subtype.
   const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
 
@@ -77,6 +80,9 @@ inline varying float
 LinearTransferFunction_getOpacityForValue(const void *uniform pointer, 
                                           varying float value) 
 {
+  // Return 0 for NaN values.
+  if (isnan(value)) return(0.0f);
+
   // Cast to the actual TransferFunction subtype.
   const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
 

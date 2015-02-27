@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -84,7 +84,7 @@ namespace embree
   /// Unary Operators
   ////////////////////////////////////////////////////////////////////////////////
 
-  __forceinline const avxb operator !( const avxb& a ) { return _mm256_xor_ps(a, avxb(True)); }
+  __forceinline const avxb operator !( const avxb& a ) { return _mm256_xor_ps(a, avxb(embree::True)); }
 
   ////////////////////////////////////////////////////////////////////////////////
   /// Binary Operators
@@ -103,7 +103,7 @@ namespace embree
   ////////////////////////////////////////////////////////////////////////////////
 
   __forceinline const avxb operator !=( const avxb& a, const avxb& b ) { return _mm256_xor_ps(a, b); }
-  __forceinline const avxb operator ==( const avxb& a, const avxb& b ) { return _mm256_xor_ps(_mm256_xor_ps(a,b),avxb(True)); }
+  __forceinline const avxb operator ==( const avxb& a, const avxb& b ) { return _mm256_xor_ps(_mm256_xor_ps(a,b),avxb(embree::True)); }
 
   __forceinline const avxb select( const avxb& mask, const avxb& t, const avxb& f ) { 
     return _mm256_blendv_ps(f, t, mask); 

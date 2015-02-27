@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,7 +34,7 @@ namespace ospray {
     projection/splatting based approaches
    */
   struct Renderer : public ManagedObject {
-    uint32 spp;
+    int32 spp;
     float  nearClip;
     Renderer() : spp(1), nearClip(1e-6f) {}
     virtual void commit();

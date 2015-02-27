@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include <QtGui>
 #include <ospray/ospray.h>
+#include <QtGui>
 
 class LinearTransferFunctionWidget : public QWidget
 {
@@ -27,59 +27,60 @@ class LinearTransferFunctionWidget : public QWidget
 
   LinearTransferFunctionWidget();
 
-  // minimum size of the widget
+  //! Minimum size of the widget.
   virtual QSize minimumSizeHint() const { return QSize(240, 180); }
 
-  // get numValues of the transfer function regularly spaced over the entire interval [0, 1]
-  std::vector<float> getInterpolatedValuesOverInterval(unsigned int numValues);
+  //! Get numValues of the transfer function regularly spaced over the entire interval [0, 1].
+  std::vector<float> getInterpolatedValuesOverInterval(const unsigned int &numValues);
 
-  // get transfer function control points
+  //! Get transfer function control points.
   QVector<QPointF> getPoints() { return points; }
 
-  // set transfer function control points
-  void setPoints(const QVector<QPointF> &points) { this->points = points; repaint(); emit(transferFunctionChanged()); }
+  //! Set transfer function control points.
+  void setPoints(const QVector<QPointF> &points) { this->points = points; repaint(); emit(updated()); }
 
-  void setBackgroundImage(QImage image);
+  //! Set background image for the widget (for example to show a color map).
+  void setBackgroundImage(const QImage &image);
 
 signals:
 
-  void transferFunctionChanged();
+  //! Signal emitted when this widget is updated.
+  void updated();
 
 protected:
 
-  virtual void resizeEvent(QResizeEvent * event);
   virtual void paintEvent(QPaintEvent * event);
   virtual void mousePressEvent(QMouseEvent * event);
   virtual void mouseReleaseEvent(QMouseEvent * event);
   virtual void mouseMoveEvent(QMouseEvent * event);
 
-  // transform normalized coordinates to widget coordinates
+  //! Transform normalized coordinates to widget coordinates.
   QPointF pointToWidgetPoint(const QPointF &point);
 
-  // transform widget coordinates to normalized coordinates
+  //! Transform widget coordinates to normalized coordinates.
   QPointF widgetPointToPoint(const QPointF &widgetPoint);
 
-  // get the index of the selected point based on the clicked point in widget coordinates
-  // returns -1 of no selected point
+  //! Get the index of the selected point based on the clicked point in widget coordinates; returns -1 if no selected point.
   int getSelectedPointIndex(const QPointF &widgetClickPoint);
 
-  // get y value based on linear interpolation of the points values for x in [0, 1]
+  //! Get y value based on linear interpolation of the points values for x in [0, 1].
   float getInterpolatedValue(float x);
 
-  // this image shows the color map
+  //! Background image for the widget (for example to show a color map).
   QImage backgroundImage;
 
-  // the points that define the transfer function, in normalize coordinates ([0,1], [0,1])
+  //! The points that define the transfer function, in normalize coordinates ([0,1], [0,1]).
   QVector<QPointF> points;
 
-  // currently selected point
+  //! Currently selected point.
   int selectedPointIndex;
 
-  // drawing properties
+  //! Drawing properties: point pixel radius.
   static float pointPixelRadius;
+
+  //! Drawing properties: line pixel width.
   static float linePixelWidth;
 
-  // if true, will emit update signals during transfer function change
-  // otherwise, will wait until change is complete (mouse release)
+  //! If true, will emit update signals during transfer function change; otherwise, will wait until change is complete (mouse release).
   static bool updateDuringChange;
 };
