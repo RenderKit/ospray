@@ -19,6 +19,9 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
+/*! number of pixels that each job in a parallel rendertile task executes together */
+#define RENDERTILE_PIXELS_PER_JOB 32
+
 // The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(uniform Renderer *uniform renderer,
                                    varying ScreenSample &sample)
@@ -48,9 +51,101 @@ void Renderer_default_endFrame(uniform Renderer *uniform renderer,
   renderer->fb = NULL;
 }
 
+task void Renderer_default_renderTileJob(uniform Renderer *uniform renderer,
+                                         uniform Tile &tile)
+{
+  uniform FrameBuffer *uniform fb     = renderer->fb;
+  uniform Camera      *uniform camera = renderer->camera;
+
+  float pixel_du = .5f, pixel_dv = .5f;
+  float lens_du = 0.f,  lens_dv = 0.f;
+  uniform int32 spp = renderer->spp;
+
+  precomputeZOrder();
+
+  // if (spp > 1) {
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
+  const uniform int startSampleID = max(fb->accumID,0)*spp;
+    
+  ScreenSample screenSample;
+  screenSample.z = inf;
+  screenSample.alpha = 0.f;
+  
+  CameraSample cameraSample;
+
+  const float spp_inv = 1.f / spp;
+  
+  for (uint32 index=begin+programIndex;index<end;index+=programCount) {
+    // const uint32 index = i + programIndex;
+    screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
+    screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+    if ((screenSample.sampleID.x >= fb->size.x) | 
+        (screenSample.sampleID.y >= fb->size.y)) 
+      continue;
+
+    vec3f col = make_vec3f(0.f);
+    const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+    for (uniform uint32 s = 0; s<spp; s++) {
+      pixel_du = precomputedHalton2(startSampleID+s);
+      pixel_dv = precomputedHalton3(startSampleID+s);
+      screenSample.sampleID.z = startSampleID+s;
+        
+      cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+      cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      
+      camera->initRay(camera,screenSample.ray,cameraSample);
+      renderer->renderSample(renderer,screenSample);
+      col = col + screenSample.rgb;
+    }
+    col = col * (spp_inv);
+    setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
+  }
+  // } else {
+  //   if (fb->accumID >= 0) {
+  //     // compute 
+  //     pixel_du = precomputedHalton2(fb->accumID);
+  //     pixel_dv = precomputedHalton3(fb->accumID);
+  //   }
+    
+  //   ScreenSample screenSample;
+  //   screenSample.sampleID.z = fb->accumID;
+  //   screenSample.z = inf;
+  //   screenSample.alpha = 0.f;
+
+  //   CameraSample cameraSample;
+
+  //   for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+  //     const uint32 index = i + programIndex;
+  //     screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
+  //     screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+  //     if ((screenSample.sampleID.x >= fb->size.x) | 
+  //         (screenSample.sampleID.y >= fb->size.y)) {
+  //       continue;
+  //     }
+
+  //     const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+  //     assert(pixel < TILE_SIZE*TILE_SIZE);
+  //     for (uniform uint32 s = 0; s<spp; s++) {
+  //       cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+  //       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+
+  //       camera->initRay(camera,screenSample.ray,cameraSample);
+  //       renderer->renderSample(renderer,screenSample);
+  //       setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
+  //     }
+  // }
+  // }
+}
+
 void Renderer_default_renderTile(uniform Renderer *uniform renderer,
                                  uniform Tile &tile)
 {
+#if 1
+  precomputeZOrder();
+  uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+  launch[numJobs] Renderer_default_renderTileJob(renderer,tile);
+#else
   uniform FrameBuffer *uniform fb     = renderer->fb;
   uniform Camera      *uniform camera = renderer->camera;
 
@@ -131,6 +226,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       }
     }
   }
+#endif
 }
 
 void Renderer_constructor(uniform Renderer *uniform renderer,
