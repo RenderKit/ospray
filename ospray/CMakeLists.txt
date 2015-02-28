@@ -40,6 +40,7 @@ SET(OSPRAY_SOURCES
   common/Model.ispc
   common/Material.cpp
   common/Library.cpp
+  common/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp

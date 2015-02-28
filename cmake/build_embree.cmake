@@ -34,6 +34,7 @@ IF (THIS_IS_MIC)
     network.cpp
     tasklogger.cpp
     taskscheduler.cpp
+
     taskscheduler_sys.cpp
     taskscheduler_mic.cpp
     sync/mutex.cpp
@@ -50,6 +51,7 @@ ELSE()
     thread.cpp
     network.cpp
     tasklogger.cpp
+
     taskscheduler.cpp
     taskscheduler_sys.cpp
     sync/mutex.cpp
@@ -86,7 +88,8 @@ IF (THIS_IS_MIC)
     ../common/stat.cpp 
     ../common/globals.cpp 
     ../common/alloc.cpp 
-    ../common/tasksys.cpp 
+# iw: do not use _embree_ tasksys for ispc; use our own!
+#    ../common/tasksys.cpp 
     ../common/acceln.cpp
     ../common/rtcore.cpp 
     ../common/rtcore_ispc.cpp 
@@ -159,7 +162,8 @@ ELSE()
     ../common/stat.cpp 
     ../common/globals.cpp 
     ../common/alloc.cpp 
-    ../common/tasksys.cpp 
+# iw: do not use _embree_ tasksys for ispc; use our own!
+#    ../common/tasksys.cpp 
     ../common/acceln.cpp
     ../common/rtcore.cpp 
     ../common/rtcore_ispc.cpp 
