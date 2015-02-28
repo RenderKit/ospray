@@ -17,17 +17,9 @@
 #pragma once
 
 // ospray
-#include "Tile.h"
-
-// ospray
-#include "../common/OSPCommon.h"
-#include "../common/Managed.h"
-// embree
-#include "common/sys/taskscheduler.h"
+#include "ospray/fb/PixelOp.h"
 
 namespace ospray {
-
-  using embree::TaskScheduler;
 
   /*! abstract frame buffer class */
   struct FrameBuffer : public ManagedObject {

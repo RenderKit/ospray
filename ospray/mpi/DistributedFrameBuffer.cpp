@@ -31,10 +31,10 @@ namespace ospray {
   // }
 
   DistributedFrameBuffer::Tile::Tile(DistributedFrameBuffer *fb, 
-                                                const vec2i &begin, 
-                                                size_t tileID, 
-                                                size_t ownerID, 
-                                                TileData *data)
+                                     const vec2i &begin, 
+                                     size_t tileID, 
+                                     size_t ownerID, 
+                                     TileData *data)
     : tileID(tileID), ownerID(ownerID), fb(fb), begin(begin), data(data)
   {
   }
@@ -100,7 +100,7 @@ namespace ospray {
   void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)
   {
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
-    if (_msg->command == this->COMMAND_WRITE_TILE) {
+    if (_msg->command == WORKER_WRITE_TILE) {
       // start a new frame!
       WriteTileMessage *msg = (WriteTileMessage *)_msg;
       // PRINT(msg->coords);
@@ -170,7 +170,7 @@ namespace ospray {
       //   }
       // msg->sourceHandle = myHandle;
       // msg->targetHandle = myHandle;
-      msg->command      = COMMAND_WRITE_TILE;
+      msg->command      = WORKER_WRITE_TILE;
       // printf("client %i SENDS tile %li,%li\n",comm->rank(),x0,y0);
         
       comm->sendTo(mpi::async::CommLayer::Address(clientRank(myTile->ownerID),myID),

@@ -14,7 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "MPILoadBalancer.h"
+// ospray
+#include "ospray/mpi/MPILoadBalancer.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/fb/FrameBuffer.h"
 
@@ -66,9 +67,7 @@ namespace ospray {
         //        printf("#m: master done fb %lx\n",fb);
       }
 
-      void Slave::RenderTask::finish(size_t threadIndex, 
-                                     size_t threadCount, 
-                                     TaskScheduler::Event* event) 
+      void Slave::RenderTask::finish()
       {
         renderer->endFrame(channelFlags);
         renderer = NULL;
@@ -81,11 +80,7 @@ namespace ospray {
       }
 
 
-      void Slave::RenderTask::run(size_t threadIndex, 
-                                  size_t threadCount, 
-                                  size_t taskIndex, 
-                                  size_t taskCount, 
-                                  TaskScheduler::Event* event) 
+      void Slave::RenderTask::run(size_t taskIndex) 
       {
         // PING;
         const size_t tileID = taskIndex;
@@ -112,7 +107,6 @@ namespace ospray {
         
         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
         int count = (TILE_SIZE)*(TILE_SIZE);
-        if (count != 256) PING;
         MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
       }
       
@@ -137,18 +131,21 @@ namespace ospray {
           running into some issues with the embree taks system when
           trying to do so, and thus am reverting to this
           fully-synchronous version for now */
+        renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
+        renderTask->wait();
+
         
-        // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
-        TaskScheduler::EventSync sync;
-        renderTask->task = embree::TaskScheduler::Task
-          (&sync,
-           // (&renderTask->fb->frameIsReadyEvent,
-           renderTask->_run,renderTask.ptr,
-           renderTask->numTiles_x*renderTask->numTiles_y,
-           renderTask->_finish,renderTask.ptr,
-           "LocalTiledLoadBalancer::RenderTask");
-        TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-        sync.sync();
+        // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
+        // TaskScheduler::EventSync sync;
+        // renderTask->task = embree::TaskScheduler::Task
+        //   (&sync,
+        //    // (&renderTask->fb->frameIsReadyEvent,
+        //    renderTask->_run,renderTask.ptr,
+        //    renderTask->numTiles_x*renderTask->numTiles_y,
+        //    renderTask->_finish,renderTask.ptr,
+        //    "LocalTiledLoadBalancer::RenderTask");
+        // TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
+        // sync.sync();
       }
     }
 

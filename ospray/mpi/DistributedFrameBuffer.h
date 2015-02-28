@@ -30,7 +30,7 @@ namespace ospray {
   //                                                //mpi::async::Group *comm, 
   //                                                const vec2i &numPixels, 
   //                                                size_t handle);
-
+  
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
@@ -43,9 +43,14 @@ namespace ospray {
     virtual vec2i getNumPixels() const { return numPixels; }
     virtual size_t numMyTiles() const { return myTile.size(); };
 
+    /*! color buffer and depth buffer on master */
+    void  *colorBufferOnMaster;
+    float *depthBufferOnMaster;
+    
     enum { 
       //! command tag that identifies a CommLayer::message as a write tile command
-      COMMAND_WRITE_TILE = 13
+      WORKER_WRITE_TILE = 13,
+      MASTER_WRITE_TILE
     } COMMANDTAG;
 
     /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */

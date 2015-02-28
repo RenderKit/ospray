@@ -77,6 +77,17 @@ namespace ospray {
         assert(rtcGetError() == RTC_NO_ERROR);
       }
 
+      // -------------------------------------------------------
+      // initialize our task system
+      // -------------------------------------------------------
+      if (debugMode)
+        ospray::Task::initTaskSystem(0);
+      else {
+        cout << "#osp:mpi: STARINT ALL CLIENT THREADS" << endl;
+        ospray::Task::initTaskSystem(-1);
+      }
+
+
 
       CommandStream cmd;
 

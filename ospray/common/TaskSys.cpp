@@ -254,7 +254,13 @@ namespace ospray {
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {
       // embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,(t+1)%numThreads);
+#if 1
+      // embree will not assign affinity
+      embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,-1);
+#else
+      // embree will assign affinity in this case:
       embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)t,4*1024*1024,t);
+#endif
     }
 
 #if defined(__MIC__)
