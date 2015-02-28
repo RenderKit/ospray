@@ -245,6 +245,7 @@ export void PathTracer_setModel(void *uniform _THIS, void *uniform _model)
 {
   uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
   THIS->scene->model = (uniform Model*)_model;
+  THIS->inherited.model = (uniform Model*)_model;
 }
 
 uniform EnvironmentLight* uniform AmbientLight__New(const uniform vec3f& L);
