@@ -32,7 +32,8 @@ namespace ospray {
   //                                                size_t handle);
 
   struct DistributedFrameBuffer
-    : public mpi::async::CommLayer::Object
+    : public mpi::async::CommLayer::Object,
+      public virtual FrameBuffer
   {
     //! get number of pixels per tile, in x and y direction
     virtual vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
@@ -88,13 +89,20 @@ namespace ospray {
       size_t  tileID,ownerID;
       TileData *data;
 
-      Tile(DistributedFrameBuffer *fb, const vec2i &begin, size_t tileID, size_t ownerID, TileData *data);
+      Tile(DistributedFrameBuffer *fb, 
+           const vec2i &begin, 
+           size_t tileID, 
+           size_t ownerID, 
+           TileData *data);
     };
 
     //! constructor
     DistributedFrameBuffer(mpi::async::CommLayer *comm, 
                            const vec2i &numPixels, 
-                           size_t myHandle);
+                           size_t myHandle,
+                           ColorBufferFormat colorBufferFormat,
+                           bool hasDepthBuffer,
+                           bool hasAccumBuffer);
 
     // ==================================================================
     // interface (as a tiled frame buffer) for renderers running on

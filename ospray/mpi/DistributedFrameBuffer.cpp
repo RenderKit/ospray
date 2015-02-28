@@ -72,8 +72,12 @@ namespace ospray {
   DistributedFrameBuffer
   ::DistributedFrameBuffer(mpi::async::CommLayer *comm,
                            const vec2i &numPixels,
-                           size_t myID)
+                           size_t myID,
+                           ColorBufferFormat colorBufferFormat,
+                           bool hasDepthBuffer,
+                           bool hasAccumBuffer)
     : mpi::async::CommLayer::Object(comm,myID),
+      FrameBuffer(size,colorBufferFormat,hasDepthBuffer,hasAccumBuffer),
       numPixels(numPixels), maxValidPixelID(numPixels-vec2i(1)),
       numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),

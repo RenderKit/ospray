@@ -177,13 +177,6 @@ IF (OSPRAY_MPI)
     ospray${OSPRAY_LIB_SUFFIX}
     )
 
-  # ============================================
-  ADD_EXECUTABLE(ospTestMPIDBFTestScreen${OSPRAY_EXE_SUFFIX}
-    mpi/testing/TestDFBTestScreen
-    )
-  TARGET_LINK_LIBRARIES(ospTestMPIDBFTestScreen${OSPRAY_EXE_SUFFIX}
-    ospray${OSPRAY_LIB_SUFFIX}
-    )
 ENDIF()
 
 # -------------------------------------------------------
