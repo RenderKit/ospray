@@ -71,13 +71,13 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       = fb->depthBuffer 
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
-    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
       const uint32  ofs   = y*fb->inherited.size.x+x;
-      const vec4f value = getRGBA(tile,pixID);
       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
+        const vec4f value = getRGBA(tile,pixID);
         if (accum) {
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
@@ -104,27 +104,33 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       = fb->depthBuffer 
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
-
-
-    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      const uint32 pixID = i + programIndex;
-      const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
-      const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
-      const uint32  ofs   = y*fb->inherited.size.x+x;
-      const vec4f value = getRGBA(tile,pixID);
-      if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
+    VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
+    for (uniform int iy=0;iy<TILE_SIZE;iy++) {
+      uniform uint32 y = tile.region.lower.y + iy;
+      if (y >= fb->inherited.size.y) 
+        continue;
+      uniform iix = iy*TILE_SIZE / programCount;
+      for (uniform int ix=0;ix<TILE_SIZE;ix+=programCount,iix++) {
+        const uint32 x = tile.region.lower.x+ix+programIndex;
+        if (x >= fb->inherited.size.x)
+          continue;
+        
+        const uint32 fb_ofs   = y*fb->inherited.size.x + x;
+        const uint32 tile_ofs = (iy*TILE_SIZE+ix)+programIndex;
+        vec4f value = make_vec4f(varyTile->r[iix],
+                                 varyTile->g[iix],
+                                 varyTile->b[iix],
+                                 varyTile->a[iix]);
         if (accum) {
-          vec4f acc = accum[ofs]+value;
-          accum[ofs] = acc;
-
-          if (color) {
-            color[ofs] = cvt_uint32(acc * accScale);
-          }
+          value = value + accum[fb_ofs];
+          accum[fb_ofs] = value;
+          if (color) 
+            color[fb_ofs] = cvt_uint32(value * accScale);
         } else
           if (color)
-            color[ofs] = cvt_uint32(value);
+            color[fb_ofs] = cvt_uint32(value);
         if (depth)
-          fb->depthBuffer[ofs] = tile.z[i];
+          fb->depthBuffer[fb_ofs] = tile.z[tile_ofs];
       }
     }
   } else {

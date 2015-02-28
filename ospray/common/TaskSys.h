@@ -93,7 +93,14 @@ namespace ospray {
 
     Task *volatile __aligned(64) next, *volatile prev;
     const char *name;
-    static void initTaskSystem(const size_t maxNumRenderTasks);
+
+    /*! \brief initialize the task system with given number of worker
+        tasks.
+        
+        numThreads==-1 means 'use all that are available; numThreads=0
+        means 'no worker thread, assume that whoever calls wait() will
+        do the work */
+    static void initTaskSystem(const size_t numThreads);
   };
 
   __forceinline Task::Task(const char *name)

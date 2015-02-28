@@ -61,7 +61,7 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform renderer,
   float lens_du = 0.f,  lens_dv = 0.f;
   uniform int32 spp = renderer->spp;
 
-  precomputeZOrder();
+  // precomputeZOrder();
 
   // if (spp > 1) {
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;

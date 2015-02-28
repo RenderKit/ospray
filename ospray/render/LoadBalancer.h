@@ -22,12 +22,15 @@
 #include "ospray/common/OSPCommon.h"
 #include "ospray/fb/FrameBuffer.h"
 #include "ospray/render/Renderer.h"
-// embree
-#include "common/sys/taskscheduler.h"
+
+#include "ospray/common/TaskSys.h"
+
+// // embree
+// #include "common/sys/taskscheduler.h"
 
 namespace ospray {
 
-  using embree::TaskScheduler;
+  //  using embree::TaskScheduler;
 
   struct TileRenderer;
 
@@ -48,17 +51,20 @@ namespace ospray {
     application ranks each doing local rendering on their own)  */ 
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
-    struct RenderTask : public embree::RefCount {
+    struct RenderTask : public Task { //embree::RefCount {
       Ref<FrameBuffer>             fb;
       Ref<Renderer>                renderer;
       
       size_t                       numTiles_x;
       size_t                       numTiles_y;
       uint32                       channelFlags;
-      embree::TaskScheduler::Task  task;
+      // embree::TaskScheduler::Task  task;
 
-      TASK_RUN_FUNCTION(RenderTask,run);
-      TASK_COMPLETE_FUNCTION(RenderTask,finish);
+      virtual void run(size_t jobID);
+      virtual void finish();
+
+      // TASK_RUN_FUNCTION(RenderTask,run);
+      // TASK_COMPLETE_FUNCTION(RenderTask,finish);
     };
 
     virtual void renderFrame(Renderer *tiledRenderer, 
@@ -94,7 +100,7 @@ namespace ospray {
       if derived from FrameBuffer::RenderFrameEvent to allow us for
       attaching that as a sync primitive to the farme buffer
     */
-    struct RenderTask : public embree::RefCount {
+    struct RenderTask : public Task { //embree::RefCount {
       Ref<FrameBuffer>             fb;
       Ref<Renderer>                renderer;
       
@@ -104,10 +110,13 @@ namespace ospray {
       size_t                       deviceID;
       size_t                       numDevices;
       uint32                       channelFlags;
-      embree::TaskScheduler::Task  task;
 
-      TASK_RUN_FUNCTION(RenderTask,run);
-      TASK_COMPLETE_FUNCTION(RenderTask,finish);
+      virtual void run(size_t jobID);
+      virtual void finish();
+      // embree::TaskScheduler::Task  task;
+
+      // TASK_RUN_FUNCTION(RenderTask,run);
+      // TASK_COMPLETE_FUNCTION(RenderTask,finish);
     };
     
     virtual void renderFrame(Renderer *tiledRenderer, 

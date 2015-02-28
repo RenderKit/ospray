@@ -88,7 +88,6 @@ namespace ospray {
       const size_t nowCompleted = (numJobsCompleted += myCompleted); //++numJobsCompleted;
       if (nowCompleted == numJobsInTask) {
         // Yay - I just finished the job, so I get some extra work do do ... just like in real life....
-        
         finish();
         
         mutex.lock();
@@ -200,6 +199,8 @@ namespace ospray {
 
   inline void Task::activate()
   {
+    if (!TaskSys::global.initialized)
+      throw std::runtime_error("TASK SYSTEM NOT YET INITIALIZED");
     TaskSys::global.mutex.lock();
     bool wasEmpty = TaskSys::global.activeListFirst == NULL;
     if (wasEmpty) {
@@ -247,11 +248,13 @@ namespace ospray {
       numThreads = std::min(numThreads,(size_t)embree::getNumberOfLogicalThreads());
 #endif
     }
-    
+
+    PRINT(numThreads);
+
     /* generate all threads */
-    for (size_t t=0; t<numThreads; t++) {
+    for (size_t t=1; t<numThreads; t++) {
       // embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,(t+1)%numThreads);
-      embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,t);
+      embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)t,4*1024*1024,t);
     }
 
 #if defined(__MIC__)
@@ -270,6 +273,8 @@ namespace ospray {
     void        *data;
     TaskFuncType func;
 
+    ISPCTask() : Task("ISPC Task"), data(NULL), func(NULL) {}
+
     virtual void run(size_t jobID) 
     {
       func(data,-1,-1,jobID,numJobsInTask);
@@ -284,7 +289,9 @@ namespace ospray {
   __dllexport void* ISPCAlloc(void** taskPtr, int64 size, int32 alignment) 
   {
     if (*taskPtr == NULL) {
-      *taskPtr = new ISPCTask;//new TaskScheduler::EventSync;
+      ISPCTask *task = new ISPCTask;
+      task->refInc();
+      *taskPtr = task;
     }
     return (char*)_mm_malloc(size,alignment);
   }
@@ -303,7 +310,7 @@ namespace ospray {
   {
     ISPCTask *task = (ISPCTask *)_task;
     task->wait();
-    delete task;
+    task->refDec();
   }
 
 }

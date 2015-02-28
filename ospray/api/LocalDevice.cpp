@@ -27,6 +27,7 @@
 #include "ospray/common/Library.h"
 #include "ospray/texture/Texture2D.h"
 #include "ospray/lights/Light.h"
+#include "ospray/common/TaskSys.h"
 
 // stl
 #include <algorithm>
@@ -56,7 +57,10 @@ namespace ospray {
 
       rtcSetErrorFunction(embreeErrorFunc);
 
-      std::stringstream embreeConfig;
+      // -------------------------------------------------------
+      // initialize embree
+      // ------------------------------------------------------- 
+     std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
       rtcInit(embreeConfig.str().c_str());
@@ -67,6 +71,15 @@ namespace ospray {
         std::cerr << "#osp:init: embree internal error number " << (int)erc << std::endl;
         assert(erc == RTC_NO_ERROR);
       }
+
+      // -------------------------------------------------------
+      // initialize our task system
+      // -------------------------------------------------------
+      if (debugMode)
+        ospray::Task::initTaskSystem(0);
+      else
+        ospray::Task::initTaskSystem(-1);
+
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }
 

@@ -33,6 +33,17 @@ struct Tile {
   uniform vec2f    rcp_fbSize;
 };
 
+struct VaryingTile {
+  varying float  r[TILE_SIZE*TILE_SIZE/programCount]; /*! red */
+  varying float  g[TILE_SIZE*TILE_SIZE/programCount]; /*! green */
+  varying float  b[TILE_SIZE*TILE_SIZE/programCount]; /*!< blue */
+  varying float  a[TILE_SIZE*TILE_SIZE/programCount]; /*!< alpha */
+  varying float  z[TILE_SIZE*TILE_SIZE/programCount]; /*!< depth */
+  uniform region2i region;
+  uniform vec2i    fbSize;
+  uniform vec2f    rcp_fbSize;
+};
+
 inline vec4f setRGBA(uniform Tile &tile, varying uint32 i, const varying vec4f rgba)
 { 
   tile.r[i] = rgba.x;
@@ -74,4 +85,17 @@ inline void setRGBA(uniform Tile &tile, const varying uint32 i,
 inline varying vec4f getRGBA(uniform Tile &tile, const varying uint32 i)
 { return make_vec4f(tile.r[i],tile.g[i],tile.b[i],tile.a[i]); }
 
+// /*! get N RGBA elements from the tile - from (ix,iy) to (ix+N,iy),
+//     where N is the varying width */
+// inline void getRGBAPacket(varying vec4f &ret, 
+//                           uniform Tile &tile, 
+//                           uniform uint32 ix, 
+//                           uniform uint32 iy)
+// {
+//   const uint32 ofs = (iy*TILE_SIZE+ix)+programIndex;
+//   ret.x = tile.r[ofs];
+//   ret.y = tile.g[ofs];
+//   ret.z = tile.b[ofs];
+//   ret.w = tile.a[ofs];
+// }
 
