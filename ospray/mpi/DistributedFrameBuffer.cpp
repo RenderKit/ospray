@@ -22,16 +22,15 @@ namespace ospray {
 
   inline int clientRank(int clientID) { return clientID+1; }
 
-  //! create a new distributd frame buffer with given size and comm handle
-  TiledFrameBuffer *createDistributedFrameBuffer(mpi::async::CommLayer *comm, 
-                                                 const vec2i &numPixels, 
-                                                 size_t handle)
-  {
-    return new DistributedFrameBuffer<128>(comm,numPixels,handle);
-  }
+  // //! create a new distributd frame buffer with given size and comm handle
+  // TiledFrameBuffer *createDistributedFrameBuffer(mpi::async::CommLayer *comm, 
+  //                                                const vec2i &numPixels, 
+  //                                                size_t handle)
+  // {
+  //   return new DistributedFrameBuffer(comm,numPixels,handle);
+  // }
 
-  template<int TILE_SIZE>
-  DistributedFrameBuffer<TILE_SIZE>::Tile::Tile(DistributedFrameBuffer *fb, 
+  DistributedFrameBuffer::Tile::Tile(DistributedFrameBuffer *fb, 
                                                 const vec2i &begin, 
                                                 size_t tileID, 
                                                 size_t ownerID, 
@@ -41,8 +40,7 @@ namespace ospray {
   }
     
   //! depth-composite additional 'source' info into existing 'target' tile
-  template<int TILE_SIZE>
-  inline void DistributedFrameBuffer<TILE_SIZE>
+  inline void DistributedFrameBuffer
   ::depthComposite(DistributedFrameBuffer::TileData *target,
                    DistributedFrameBuffer::TileData *source)
   {
@@ -55,28 +53,27 @@ namespace ospray {
     }
   }
     
-  template<int TILE_SIZE>
-  inline void DistributedFrameBuffer<TILE_SIZE>::startNewFrame()
+  inline void DistributedFrameBuffer::startNewFrame()
   {
     mutex.lock();
     frameIsActive = true;
     // should actually move this to a thread:
     for (int i=0;i<delayedTile.size();i++) {
       WriteTileMessage *msg = delayedTile[i];
-      this->writeTile(msg->coords.x,msg->coords.y,TILE_SIZE,
-                      &msg->tile.color[0][0],&msg->tile.depth[0][0]);
-      delete msg;
+      this->incoming(msg);
+      // this->writeTile(msg->coords.x,msg->coords.y,TILE_SIZE,
+      //                 &msg->tile.color[0][0],&msg->tile.depth[0][0]);
+      // delete msg;
     }
     delayedTile.clear();
     mutex.unlock();
   }
 
-  template<int TILE_SIZE>
-  DistributedFrameBuffer<TILE_SIZE>
+  DistributedFrameBuffer
   ::DistributedFrameBuffer(mpi::async::CommLayer *comm,
                            const vec2i &numPixels,
                            size_t myID)
-    : TiledFrameBuffer(comm,myID),
+    : mpi::async::CommLayer::Object(comm,myID),
       numPixels(numPixels), maxValidPixelID(numPixels-vec2i(1)),
       numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
@@ -96,9 +93,7 @@ namespace ospray {
       }
   }
     
-  template<int TILE_SIZE>
-  void DistributedFrameBuffer<TILE_SIZE>
-  ::incoming(mpi::async::CommLayer::Message *_msg)
+  void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)
   {
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
     if (_msg->command == this->COMMAND_WRITE_TILE) {
@@ -125,8 +120,15 @@ namespace ospray {
 
       // printf("rank %i wrote tile %i,%i\n",comm->myRank,
       // msg->coords.x,msg->coords.y);
-      this->writeTile(msg->coords.x,msg->coords.y,TILE_SIZE,
-                      &msg->tile.color[0][0],&msg->tile.depth[0][0]);
+      
+      // "unpack" tile
+      ospray::Tile unpacked;
+      memcpy(unpacked.r,msg->r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
+      unpacked.region.lower = msg->coords;
+      unpacked.region.upper = min((msg->coords+vec2i(TILE_SIZE)),getNumPixels());
+      
+      // this->writeTile(msg->coords.x,msg->coords.y,TILE_SIZE,
+      //                 &msg->tile.color[0][0],&msg->tile.depth[0][0]);
       delete msg;
       return;
     }
@@ -135,72 +137,64 @@ namespace ospray {
   }
 
   //! write given tile data into the frame buffer, sending to remove owner if required
-  template<int TILE_SIZE>
-  void DistributedFrameBuffer<TILE_SIZE>::writeTile(size_t x0, size_t y0, size_t dxdy,
-                                                    uint32 *colorChannel, float *depthChannel)
+  void DistributedFrameBuffer::writeTile(ospray::Tile &tile)
   { 
     const size_t numPixels = TILE_SIZE*TILE_SIZE;
-      
-    typename DistributedFrameBuffer<TILE_SIZE>::TileData *td = new typename DistributedFrameBuffer<TILE_SIZE>::TileData;
-        
-    // first, read the tile
-        
-    typename DistributedFrameBuffer<TILE_SIZE>::Tile *tile = this->getTileFor(x0,y0);
-    if (tile->data == NULL) {
+    const int x0 = tile.region.lower.x;
+    const int y0 = tile.region.lower.y;
+    typename DistributedFrameBuffer::Tile *myTile
+      = this->getTileFor(x0,y0);
+    if (myTile->data == NULL) {
       // NOT my tile...
       WriteTileMessage *msg = new WriteTileMessage;
       msg->coords = vec2i(x0,y0);
+      // TODO: compress pixels before sending ...
+      memcpy(msg->r,tile.r,4*numPixels*sizeof(float));
+      // memcpy(msg->r,tile.r,numPixels*sizeof(float));
+      // memcpy(msg->g,tile.g,numPixels*sizeof(float));
+      // memcpy(msg->b,tile.b,numPixels*sizeof(float));
+      // memcpy(msg->a,tile.a,numPixels*sizeof(float));
         
-      size_t pixelID = 0;
-      TileData *td = &msg->tile;
-      for (size_t dy=0;dy<TILE_SIZE;dy++)
-        for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
-          const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
-          const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
-          td->color[0][pixelID] = colorChannel[dx+dy*dxdy];
-          td->depth[0][pixelID] = depthChannel[dx+dy*dxdy];
-        }
+      // size_t pixelID = 0;
+      // TileData *td = &msg->tile;
+      // for (size_t dy=0;dy<TILE_SIZE;dy++)
+      //   for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
+      //     const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
+      //     const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
+      //     td->color[0][pixelID] = colorChannel[dx+dy*dxdy];
+      //     td->depth[0][pixelID] = depthChannel[dx+dy*dxdy];
+      //   }
       // msg->sourceHandle = myHandle;
       // msg->targetHandle = myHandle;
       msg->command      = COMMAND_WRITE_TILE;
-      printf("client %i SENDS tile %li,%li\n",comm->rank(),x0,y0);
+      // printf("client %i SENDS tile %li,%li\n",comm->rank(),x0,y0);
         
-      comm->sendTo(mpi::async::CommLayer::Address(clientRank(tile->ownerID),myID),
+      comm->sendTo(mpi::async::CommLayer::Address(clientRank(myTile->ownerID),myID),
                    msg,sizeof(*msg));
     } else {
       // this is my tile...
 
-      printf("client %i WRITES tile %li,%li\n",comm->rank(),x0,y0);
+      // printf("client %i WRITES tile %li,%li\n",comm->rank(),x0,y0);
 
-      typename DistributedFrameBuffer<TILE_SIZE>::TileData td;
+      // typename DistributedFrameBuffer::TileData td;
       size_t pixelID = 0;
       for (size_t dy=0;dy<TILE_SIZE;dy++)
         for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
-          const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
-          const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
-          td.color[0][pixelID] = colorChannel[dx+dy*dxdy];
-          td.depth[0][pixelID] = depthChannel[dx+dy*dxdy];
+          memcpy(myTile->data->accum_r,tile.r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
+          // const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
+          // const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
+          // td.color[0][pixelID] = colorChannel[dx+dy*dxdy];
+          // td.depth[0][pixelID] = depthChannel[dx+dy*dxdy];
         }
       assert(frameIsActive);
-      DistributedFrameBuffer<TILE_SIZE>::depthComposite(tile->data,&td);
-      if (tileWrittenCBFunc)
-        tileWrittenCBFunc(this,tileWrittenCBData);
+      // DistributedFrameBuffer::depthComposite(tile->data,&td);
     }
-    delete td;
+    // delete td;
   }
 
-  void TiledFrameBuffer::setTileWrittenCB(TileWrittenCB func, void *data)
-  { 
-    tileWrittenCBFunc = func; 
-    tileWrittenCBData = data; 
-  }
+  // TiledFrameBuffer::DistributedFrameBuffer(mpi::async::CommLayer *comm,
+  //                                    size_t myID) 
+  //   : mpi::async::CommLayer::Object(comm,myID)
+  // {}
 
-  TiledFrameBuffer::TiledFrameBuffer(mpi::async::CommLayer *comm,
-                                     size_t myID) 
-    : mpi::async::CommLayer::Object(comm,myID),
-      tileWrittenCBData(NULL), 
-      tileWrittenCBFunc(NULL)
-  {}
-
-  //    template struct DistributedFrameBuffer<128>;
 }

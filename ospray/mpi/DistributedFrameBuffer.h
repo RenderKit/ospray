@@ -17,60 +17,22 @@
 #pragma once
 
 #include "ospray/mpi/async/CommLayer.h"
+#include "ospray/fb/tileSize.h"
+#include "ospray/fb/FrameBuffer.h"
 
 namespace ospray {
   using std::cout;
   using std::endl;
 
-  //! virtual abstraction for a tiled frame buffer with fixed tile size
-  struct TiledFrameBuffer : public mpi::async::CommLayer::Object
-  {
-    typedef void (*TileWrittenCB)(TiledFrameBuffer *which, void *data);
-      
-    /*! set a call back function (and a pointer data) to be called
-      whenever the farme is finished (on that client). Function
-      will get called when this client has written all its data
-      (including those that were remotely written by remote
-      nodes); that does not mean, though, that all of our peers
-      have already finished yet) */
-    void setTileWrittenCB(TileWrittenCB func, void *data);
-
-    TiledFrameBuffer(mpi::async::CommLayer *comm,size_t myID);
-
-    //! get number of pixels per tile, in x and y direction
-    virtual vec2i getTileSize() const = 0;
-    //! return number of tiles in x and y direction
-    virtual vec2i getNumTiles() const = 0;
-    //! get number of pixels in x and y diretion
-    virtual vec2i getNumPixels() const = 0;
-    virtual size_t numMyTiles() const = 0;
-
-    //! write given tile data into the frame buffer, sending to remove owner if required
-    virtual void writeTile(size_t x0, size_t y0, size_t dxdy, uint32 *colorChannel, float *depthChannel) = 0;
-
-    virtual void startNewFrame() = 0;
-    virtual void closeCurrentFrame() = 0;
-
-    vec2i numPixels,maxValidPixelID,tileSize;
-
-    /*! function that will get called when the client is done (\see
-      setTileWrittenCB */
-    TileWrittenCB tileWrittenCBFunc;
-    /*! additional 'data' parameter for the tileWrittenCBFunc (\see
-      setTileWrittenCB) */
-    void       *tileWrittenCBData;
-
-  };
 
   //! create a new distributd frame buffer with given size and comm handle
-  TiledFrameBuffer *createDistributedFrameBuffer(mpi::async::CommLayer *comm, 
-                                                 //mpi::async::Group *comm, 
-                                                 const vec2i &numPixels, 
-                                                 size_t handle);
+  // TiledFrameBuffer *createDistributedFrameBuffer(mpi::async::CommLayer *comm, 
+  //                                                //mpi::async::Group *comm, 
+  //                                                const vec2i &numPixels, 
+  //                                                size_t handle);
 
-  template<int TILE_SIZE>
   struct DistributedFrameBuffer
-    : public virtual TiledFrameBuffer
+    : public mpi::async::CommLayer::Object
   {
     //! get number of pixels per tile, in x and y direction
     virtual vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
@@ -87,19 +49,39 @@ namespace ospray {
 
     /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */
     struct TileData {
+      float  accum_r[TILE_SIZE][TILE_SIZE];
+      float  accum_g[TILE_SIZE][TILE_SIZE];
+      float  accum_b[TILE_SIZE][TILE_SIZE];
+      float  accum_a[TILE_SIZE][TILE_SIZE];
       uint32 color[TILE_SIZE][TILE_SIZE];
       float  depth[TILE_SIZE][TILE_SIZE];
     };
 
     //! message sent from one node's instance to another, to tell that instance to write that tile
     struct WriteTileMessage : public mpi::async::CommLayer::Message {
-      vec2i    coords;
-      TileData tile;
+      // TODO: add compression of pixels during transmission
+      vec2i coords;
+      float r[TILE_SIZE][TILE_SIZE];
+      float g[TILE_SIZE][TILE_SIZE];
+      float b[TILE_SIZE][TILE_SIZE];
+      float a[TILE_SIZE][TILE_SIZE];
     };
+
+    // /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */
+    // struct TileData : public ospray::Tile {
+    //   // uint32 color[TILE_SIZE][TILE_SIZE];
+    //   // float  depth[TILE_SIZE][TILE_SIZE];
+    // };
+
+    // //! message sent from one node's instance to another, to tell that instance to write that tile
+    // struct WriteTileMessage : public mpi::async::CommLayer::Message {
+    //   vec2i    coords;
+    //   TileData tile;
+    // };
 
     /*! one tile of the frame buffer. note that 'size' is the tile
       size used by the frame buffer, _NOT_ necessariy
-      'end-begin'. 'color' and 'depth' arrays are always alloc'ed in tileSize pixels */
+      'end-begin'. 'color' and 'depth' arrays are always alloc'ed in TILE_SIZE pixels */
     struct Tile {
       DistributedFrameBuffer *fb;
       vec2i   begin;
@@ -120,8 +102,9 @@ namespace ospray {
     // ==================================================================
 
     //! write given tile data into the frame buffer, sending to remove owner if required
-    virtual void writeTile(size_t x0, size_t y0, size_t dxdy, 
-                           uint32 *colorChannel, float *depthChannel);
+    virtual void writeTile(ospray::Tile &tile);
+    // virtual void writeTile(size_t x0, size_t y0, size_t dxdy, 
+    //                        uint32 *colorChannel, float *depthChannel);
 
     //! return tile descriptor for given pixel coordinates. this tile may or may not belong to current instance
     inline Tile *getTileFor(size_t x, size_t y) const
