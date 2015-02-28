@@ -19,7 +19,10 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
-/*! number of pixels that each job in a parallel rendertile task executes together */
+/*! number of pixels that each job in a parallel rendertile task
+    executes together. Must be a multipel of the maximum possible
+    programCount (16), and must be smaller than TILE_SIZE (in one
+    dimension) */
 #define RENDERTILE_PIXELS_PER_JOB 128
 
 // The layout of this struct must match that of OSPPickData in ospray.h
