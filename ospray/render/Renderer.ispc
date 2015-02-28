@@ -20,7 +20,7 @@
 #include "ospray/common/Model.ih"
 
 /*! number of pixels that each job in a parallel rendertile task executes together */
-#define RENDERTILE_PIXELS_PER_JOB 32
+#define RENDERTILE_PIXELS_PER_JOB 64
 
 // The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(uniform Renderer *uniform renderer,
