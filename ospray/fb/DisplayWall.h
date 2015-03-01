@@ -26,6 +26,8 @@
 
 namespace ospray {
 
+  /*! \brief a 'display wall' pixel op, that will send ready tiles to
+      a display wall software such as displayCluster */
   struct DisplayWallPO : public PixelOp {
     struct Instance : public PixelOp::Instance {
       FrameBuffer *fb;
@@ -33,10 +35,14 @@ namespace ospray {
       Instance(FrameBuffer *fb);
       virtual ~Instance() {}
 
-      virtual void postAccum(Tile &tile) { PING; };
+      virtual void postAccum(Tile &tile);
     };
 
-    virtual Instance *createInstance(FrameBuffer *fb) { return new Instance(fb); };
+    virtual PixelOp::Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) { PING; return new Instance(fb); };
+
+    //! \brief common function to help printf-debugging 
+    /*! Every derived class should overrride this! */
+    virtual std::string toString() const { return "ospray::DisplayWallPO"; }
   };
 
 }

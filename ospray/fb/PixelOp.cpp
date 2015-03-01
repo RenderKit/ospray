@@ -29,6 +29,8 @@ namespace ospray {
 
   PixelOp *PixelOp::createPixelOp(const char *_type)
   {
+    PING; PRINT(_type);
+
     char type[strlen(_type)+1];
     strcpy(type,_type);
     char *atSign = strstr(type,"@");
@@ -58,6 +60,9 @@ namespace ospray {
       return NULL;
     }
     PixelOp *pixelOp = (*creator)();  
+    PING;
+    PRINT(pixelOp);
+    PRINT(pixelOp->toString());
     pixelOp->managedObjectType = OSP_PIXEL_OP;
     return(pixelOp);
   }

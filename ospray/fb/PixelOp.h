@@ -65,7 +65,13 @@ namespace ospray {
           defines how these pixels are being processed before written
           into the color buffer */
       virtual void postAccum(Tile &tile) {};
+
+      //! \brief common function to help printf-debugging 
+      /*! Every derived class should overrride this! */
+      virtual std::string toString() const { return "ospray::PixelOp(base class)"; }
     };
+
+    //! \brief create an instance of this pixel op
     virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev)
     { return NULL; };
 

@@ -25,6 +25,10 @@ namespace ospray {
     PING;
   };
 
+  void DisplayWallPO::Instance::postAccum(Tile &tile)
+  { /* not doing anything useful, yet, just pinging ... */ PING; };
+
+
   OSP_REGISTER_PIXEL_OP(DisplayWallPO,display_wall);
 
 }
