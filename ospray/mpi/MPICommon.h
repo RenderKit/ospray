@@ -23,7 +23,7 @@
 // (DFB). if on, we use a DFB and accumulate where the tiles are
 // owned; if not, we use a localfb at the host, and send tiles back in
 // the load balancer
-#define USE_DFB 1
+// #define USE_DFB 1
 
 /*! helper macro that checks the return value of all MPI_xxx(...)
     calls via MPI_CALL(xxx(...)).  */
