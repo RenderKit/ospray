@@ -38,6 +38,9 @@ namespace ospray {
     virtual void unmap(const void *mappedMem) = 0;
     virtual void setTile(Tile &tile) = 0;
 
+    /*! \brief clear (the specified channels of) this frame buffer */
+    virtual void clear(const uint32 fbChannelFlags) = 0;
+
     /*! make sure the current frame is finished */
     void waitForRenderTaskToBeReady();
 
@@ -60,8 +63,6 @@ namespace ospray {
         reset the accumulationID (using ospClearAccum(fb)) if anything
         changes that requires clearing the accumulation buffer. */
     int32 accumID;
-
-    virtual void clear(const uint32 fbChannelFlags) = 0;
 
     Ref<PixelOp::Instance> pixelOp;
   };

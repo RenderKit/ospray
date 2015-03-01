@@ -222,9 +222,8 @@ namespace ospray {
   {
     while (1) {
       Task *task = getNextActiveTask();
-      assert(task->refCounter);
+      assert(task);
       task->workOnIt();
-      assert(task->refCounter);
       task->refDec();
     }
   }

@@ -18,7 +18,7 @@
 
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/fb/tileSize.h"
-#include "ospray/fb/FrameBuffer.h"
+#include "ospray/fb/LocalFB.h"
 
 namespace ospray {
   using std::cout;
@@ -47,7 +47,7 @@ namespace ospray {
     } COMMANDTAG;
 
     /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */
-    struct TileData {
+    struct DFBTileData {
       float  accum_r[TILE_SIZE][TILE_SIZE];
       float  accum_g[TILE_SIZE][TILE_SIZE];
       float  accum_b[TILE_SIZE][TILE_SIZE];
@@ -67,32 +67,37 @@ namespace ospray {
     };
 
     // /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */
-    // struct TileData : public ospray::Tile {
+    // struct DFBTileData : public ospray::DFBTile {
     //   // uint32 color[TILE_SIZE][TILE_SIZE];
     //   // float  depth[TILE_SIZE][TILE_SIZE];
     // };
 
     // //! message sent from one node's instance to another, to tell that instance to write that tile
-    // struct WriteTileMessage : public mpi::async::CommLayer::Message {
+    // struct WriteDFBTileMessage : public mpi::async::CommLayer::Message {
     //   vec2i    coords;
-    //   TileData tile;
+    //   DFBTileData tile;
     // };
 
     /*! one tile of the frame buffer. note that 'size' is the tile
       size used by the frame buffer, _NOT_ necessariy
       'end-begin'. 'color' and 'depth' arrays are always alloc'ed in TILE_SIZE pixels */
-    struct Tile {
+    struct DFBTile {
       DistributedFrameBuffer *fb;
       vec2i   begin;
       size_t  tileID,ownerID;
-      TileData *data;
+      DFBTileData *data;
 
-      Tile(DistributedFrameBuffer *fb, 
+      DFBTile(DistributedFrameBuffer *fb, 
            const vec2i &begin, 
            size_t tileID, 
            size_t ownerID, 
-           TileData *data);
+           DFBTileData *data);
     };
+
+    /*! local frame buffer on the master used for storing the final
+        tiles. will be null on all workers, and _may_ be null on the
+        master if the master does not have a color buffer */
+    Ref<LocalFrameBuffer> localFBonMaster;
 
     //! constructor
     DistributedFrameBuffer(mpi::async::CommLayer *comm, 
@@ -104,9 +109,17 @@ namespace ospray {
 
     virtual const void *mapDepthBuffer() { NOTIMPLEMENTED; }
     virtual const void *mapColorBuffer() { NOTIMPLEMENTED; }
-    virtual void unmap(const void *mappedMem)  { NOTIMPLEMENTED; }
-    virtual void setTile(ospray::Tile &tile) { NOTIMPLEMENTED; }
-    virtual void clear(const uint32 fbChannelFlags) { NOTIMPLEMENTED; }
+    virtual void unmap(const void *mappedMem) { NOTIMPLEMENTED; }
+    virtual void setTile(ospray::Tile &tile)  { NOTIMPLEMENTED; }
+
+    /*! \brief clear (the specified channels of) this frame buffer 
+
+      \details for the *distributed* frame buffer, we assume that
+      *all* nodes get this command, and that each instance therefore
+      can clear only its own tiles without having to tell any other
+      node about it
+     */
+    virtual void clear(const uint32 fbChannelFlags);
 
     //! write given tile data into the frame buffer, sending to remove owner if required
     virtual void writeTile(ospray::Tile &tile);
@@ -115,7 +128,7 @@ namespace ospray {
 
     //! return tile descriptor for given pixel coordinates. this tile
     //! may or may not belong to current instance
-    inline Tile *getTileFor(size_t x, size_t y) const
+    inline DFBTile *getTileFor(size_t x, size_t y) const
     { return tile[tileIDof(x,y)]; }
 
     // ==================================================================
@@ -143,13 +156,13 @@ namespace ospray {
       mutex.unlock();
     };
 
-    //! depth-composite additional 'source' info into existing 'target' tile
-    static inline void depthComposite(TileData *target, TileData *source);
+    // //! depth-composite additional 'source' info into existing 'target' tile
+    // static inline void depthComposite(DFBTileData *target, DFBTileData *source);
       
     vec2i numPixels,maxValidPixelID,numTiles;
 
-    std::vector<Tile *> tile;    //!< list of all tiles
-    std::vector<Tile *> myTile; //!< list of tiles belonging to this node. is a subset of 'tile' 
+    std::vector<DFBTile *> tile;    //!< list of all tiles
+    std::vector<DFBTile *> myTile; //!< list of tiles belonging to this node. is a subset of 'tile' 
 
     Mutex mutex;
     //! set to true when the frame becomes 'active', and write tile

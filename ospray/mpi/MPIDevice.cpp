@@ -305,7 +305,6 @@ namespace ospray {
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
 
 #if USE_DFB      
-      NOTIMPLEMENTED;
       mpi::Handle handle = mpi::Handle::alloc();
       
       FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,

@@ -30,28 +30,28 @@ namespace ospray {
   //   return new DistributedFrameBuffer(comm,numPixels,handle);
   // }
 
-  DistributedFrameBuffer::Tile::Tile(DistributedFrameBuffer *fb, 
+  DistributedFrameBuffer::DFBTile::DFBTile(DistributedFrameBuffer *fb, 
                                      const vec2i &begin, 
                                      size_t tileID, 
                                      size_t ownerID, 
-                                     TileData *data)
+                                     DFBTileData *data)
     : tileID(tileID), ownerID(ownerID), fb(fb), begin(begin), data(data)
   {
   }
     
-  //! depth-composite additional 'source' info into existing 'target' tile
-  inline void DistributedFrameBuffer
-  ::depthComposite(DistributedFrameBuffer::TileData *target,
-                   DistributedFrameBuffer::TileData *source)
-  {
-    const size_t numPixels = TILE_SIZE*TILE_SIZE;
-    for (size_t i=0;i<numPixels;i++) {
-      if (source->depth[0][i] < target->depth[0][i]) {
-        target->depth[0][i] = source->depth[0][i];
-        target->color[0][i] = source->color[0][i];
-      }
-    }
-  }
+  // //! depth-composite additional 'source' info into existing 'target' tile
+  // inline void DistributedFrameBuffer
+  // ::depthComposite(DistributedFrameBuffer::DFBTileData *target,
+  //                  DistributedFrameBuffer::DFBTileData *source)
+  // {
+  //   const size_t numPixels = TILE_SIZE*TILE_SIZE;
+  //   for (size_t i=0;i<numPixels;i++) {
+  //     if (source->depth[0][i] < target->depth[0][i]) {
+  //       target->depth[0][i] = source->depth[0][i];
+  //       target->color[0][i] = source->color[0][i];
+  //     }
+  //   }
+  // }
     
   inline void DistributedFrameBuffer::startNewFrame()
   {
@@ -83,14 +83,15 @@ namespace ospray {
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
       frameIsActive(false), frameIsDone(false)
   {
+    assert(comm);
     comm->registerObject(this,myID);
     size_t tileID=0;
     for (size_t y=0;y<numPixels.y;y+=TILE_SIZE)
       for (size_t x=0;x<numPixels.x;x+=TILE_SIZE,tileID++) {
         size_t ownerID = tileID%comm->group->size-1;
-        TileData *td = NULL;
-        if (clientRank(ownerID) == comm->group->rank) td = new TileData;
-        Tile *t = new Tile(this,vec2i(x,y),tileID,ownerID,td);
+        DFBTileData *td = NULL;
+        if (clientRank(ownerID) == comm->group->rank) td = new DFBTileData;
+        DFBTile *t = new DFBTile(this,vec2i(x,y),tileID,ownerID,td);
         tile.push_back(t);
         if (td) 
           myTile.push_back(t);
@@ -146,7 +147,7 @@ namespace ospray {
     const size_t numPixels = TILE_SIZE*TILE_SIZE;
     const int x0 = tile.region.lower.x;
     const int y0 = tile.region.lower.y;
-    typename DistributedFrameBuffer::Tile *myTile
+    typename DistributedFrameBuffer::DFBTile *myTile
       = this->getTileFor(x0,y0);
     if (myTile->data == NULL) {
       // NOT my tile...
@@ -195,6 +196,36 @@ namespace ospray {
     }
     // delete td;
   }
+
+
+    /*! \brief clear (the specified channels of) this frame buffer 
+
+      \details for the *distributed* frame buffer, we assume that
+      *all* nodes get this command, and that each instance therefore
+      can clear only its own tiles without having to tell any other
+      node about it
+     */
+  void DistributedFrameBuffer::clear(const uint32 fbChannelFlags)
+  {
+    printf("dfb todo: clear() in parallel ... \n");
+    if (fbChannelFlags & OSP_FB_ACCUM) {
+      for (int tileID=0;tileID<myTile.size();tileID++) {
+        DFBTileData *td = myTile[tileID]->data;
+        assert(td);
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+          (&td->accum_r[0][0])[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+          (&td->accum_g[0][0])[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+          (&td->accum_b[0][0])[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+          (&td->accum_a[0][0])[i] = 0.f;
+      }
+      accumID = 0;
+    }
+  }
+
+
 
   // TiledFrameBuffer::DistributedFrameBuffer(mpi::async::CommLayer *comm,
   //                                    size_t myID) 
