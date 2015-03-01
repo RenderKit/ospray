@@ -34,6 +34,9 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
+#if USE_DFB
+        // do nothing, other than waiting for the frame buffer to have received all the tiles
+#else
         int rc; 
         MPI_Status status;
 
@@ -65,6 +68,7 @@ namespace ospray {
             }
         }
         //        printf("#m: master done fb %lx\n",fb);
+#endif
       }
 
       void Slave::RenderTask::finish()
@@ -98,6 +102,9 @@ namespace ospray {
         tile.rcp_fbSize = rcp(vec2f(fb->size));
         renderer->renderTile(tile);
         fb->setTile(tile);
+#if USE_DFB
+        // do nothing - the frame buffer's 'setTile' will do the sending etc
+#else
         ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
         for (int iy=tile.region.lower.y;iy<tile.region.upper.y;iy++)
@@ -109,6 +116,7 @@ namespace ospray {
         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
         int count = (TILE_SIZE)*(TILE_SIZE);
         MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
+#endif
       }
       
       void Slave::renderFrame(Renderer *tiledRenderer, 

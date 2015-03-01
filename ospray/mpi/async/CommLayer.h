@@ -45,6 +45,8 @@ namespace ospray {
       struct CommLayer : public async::Consumer { 
         typedef int32 ObjectID; 
 
+        static CommLayer *WORLD;
+
         //! the async::consumer virtual callback that a async::message arrived
         virtual void process(const mpi::Address &source, void *message, int32 size);
         

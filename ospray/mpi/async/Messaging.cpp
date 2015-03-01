@@ -82,6 +82,7 @@ namespace ospray {
         MPI_CALL(Comm_size(comm,&size));
       }
 
+      Group *WORLD = NULL;
 
       // init async layer
       void initAsync()
@@ -94,6 +95,8 @@ namespace ospray {
 #endif
           AsyncMessagingImpl::global->init();
         }
+
+        extern Group *WORLD;
       }
 
       Group *createGroup(const std::string &name, MPI_Comm comm, 

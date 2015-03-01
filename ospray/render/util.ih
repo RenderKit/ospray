@@ -64,7 +64,11 @@ inline vec3f make_random_color(const int i)
 
 inline uint32 cvt_uint32(const float f)
 {
+#if 1
+  return (int32)(255.9f * f);
+#else
   return (uint32)(255.9f * max(min(f,1.f),0.f));
+#endif
 }
 
 inline uint32 cvt_uint32(const vec4f &v)

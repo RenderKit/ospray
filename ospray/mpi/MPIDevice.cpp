@@ -27,6 +27,8 @@
 #include "ospray/volume/Volume.h"
 #include "ospray/mpi/MPILoadBalancer.h"
 #include "ospray/fb/LocalFB.h"
+#include "ospray/mpi/async/CommLayer.h"
+#include "ospray/mpi/DistributedFrameBuffer.h"
 // std
 #include <unistd.h> // for fork()
 
@@ -301,7 +303,26 @@ namespace ospray {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+
+#if USE_DFB      
+      NOTIMPLEMENTED;
+      mpi::Handle handle = mpi::Handle::alloc();
       
+      FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                                   size,
+                                                   handle,
+                                                   colorBufferFormat,
+                                                   hasDepthBuffer,hasAccumBuffer);
+      fb->refInc();
+      mpi::Handle::assign(handle,fb);
+      cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
+      cmd.send(handle);
+      cmd.send(size);
+      cmd.send((int32)mode);
+      cmd.send((int32)channels);
+      cmd.flush();
+      return (OSPFrameBuffer)(int64)handle;
+#else
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
                                              hasDepthBuffer,hasAccumBuffer);
       fb->refInc();
@@ -316,6 +337,7 @@ namespace ospray {
       cmd.send((int32)channels);
       cmd.flush();
       return (OSPFrameBuffer)(int64)handle;
+#endif
     }
     
 

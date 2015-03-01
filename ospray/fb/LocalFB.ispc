@@ -81,9 +81,10 @@ export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb,
                                        varyTile->g[chunkID],
                                        varyTile->b[chunkID],
                                        varyTile->a[chunkID]);
+        const uint32 asRGBA = cvt_uint32(col);
       }
 
-      color[pixelID] = cvt_uint32(col);
+      color[pixelID] = asRGBA;
       if (depth)
         fb->depthBuffer[pixelID] = varyTile->z[chunkID];
     }
@@ -126,7 +127,22 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         acc.z += varyTile->b[chunkID];
         acc.w += varyTile->a[chunkID];
       }
+
+// #if 1
+//       uniform float<4> *uniform accPtr = (uniform float<4> *)&acc;
+//       float f0 = accPtr[programIndex].x;
+//       float f1 = accPtr[programIndex].y;
+//       float f2 = accPtr[programIndex].z;
+//       float f3 = accPtr[programIndex].w;
+      
+//       varying float *uniform dst = (varying float *uniform)&accum[extract(pixelID,0)];
+//       dst[0] = f0;
+//       dst[1] = f1;
+//       dst[2] = f2;
+//       dst[3] = f3;
+// #else
       accum[pixelID] = acc;
+// #endif
       unmasked {
         varyTile->r[chunkID] = accScale * acc.x;
         varyTile->g[chunkID] = accScale * acc.y;
@@ -138,6 +154,7 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
 }
 
 
+#if 0
 /*! deprecated - this was once used in ispc-side 'setTile' function
     pointers; but this is since handled on C++ side, which calls more
     specialized functions */
@@ -249,6 +266,7 @@ export void LocalFrameBuffer_setTile(void *uniform _fb, //uniform FrameBuffer *u
     print("format UNKNOWN\n");
   }
 }
+#endif
 
 // void LocalFrameBuffer_accumTile(uniform FrameBuffer *uniform _fb,
 //                                 uniform Tile &tile)

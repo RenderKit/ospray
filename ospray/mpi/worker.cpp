@@ -28,6 +28,8 @@
 #include "ospray/lights/Light.h"
 #include "ospray/texture/Texture2D.h"
 #include "ospray/fb/LocalFB.h"
+#include "ospray/mpi/async/CommLayer.h"
+#include "ospray/mpi/DistributedFrameBuffer.h"
 #include "ospray/mpi/MPILoadBalancer.h"
 // std
 #include <unistd.h> // for gethostname()
@@ -279,7 +281,14 @@ namespace ospray {
           const uint32 channelFlags       = cmd.get_int32();
           bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
           bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
+#if USE_DFB
+          FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                                       size,handle,mode,
+                                                       hasDepthBuffer,hasAccumBuffer);
+      
+#else
           FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);
+#endif
           handle.assign(fb);
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_CLEAR: {

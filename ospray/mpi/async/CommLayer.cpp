@@ -25,7 +25,9 @@
 namespace ospray {
   namespace mpi {
     namespace async {
-      
+
+      CommLayer *CommLayer::WORLD = NULL;
+
       void CommLayer::process(const mpi::Address &source, void *message, int32 size)
       {
         NOTIMPLEMENTED;

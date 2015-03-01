@@ -100,6 +100,8 @@ namespace ospray {
         int32      tag;
       };
 
+      extern Group *WORLD;
+
       //! abstraction - internally used - implement the messaging MPI
       struct AsyncMessagingImpl {
         virtual void init() = 0;

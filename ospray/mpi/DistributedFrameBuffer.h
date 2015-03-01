@@ -24,13 +24,6 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-
-  //! create a new distributd frame buffer with given size and comm handle
-  // TiledFrameBuffer *createDistributedFrameBuffer(mpi::async::CommLayer *comm, 
-  //                                                //mpi::async::Group *comm, 
-  //                                                const vec2i &numPixels, 
-  //                                                size_t handle);
-  
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
@@ -109,17 +102,19 @@ namespace ospray {
                            bool hasDepthBuffer,
                            bool hasAccumBuffer);
 
-    // ==================================================================
-    // interface (as a tiled frame buffer) for renderers running on
-    // the local node. 
-    // ==================================================================
+    virtual const void *mapDepthBuffer() { NOTIMPLEMENTED; }
+    virtual const void *mapColorBuffer() { NOTIMPLEMENTED; }
+    virtual void unmap(const void *mappedMem)  { NOTIMPLEMENTED; }
+    virtual void setTile(ospray::Tile &tile) { NOTIMPLEMENTED; }
+    virtual void clear(const uint32 fbChannelFlags) { NOTIMPLEMENTED; }
 
     //! write given tile data into the frame buffer, sending to remove owner if required
     virtual void writeTile(ospray::Tile &tile);
     // virtual void writeTile(size_t x0, size_t y0, size_t dxdy, 
     //                        uint32 *colorChannel, float *depthChannel);
 
-    //! return tile descriptor for given pixel coordinates. this tile may or may not belong to current instance
+    //! return tile descriptor for given pixel coordinates. this tile
+    //! may or may not belong to current instance
     inline Tile *getTileFor(size_t x, size_t y) const
     { return tile[tileIDof(x,y)]; }
 
