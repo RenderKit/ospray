@@ -90,7 +90,26 @@ namespace ospray {
 
   void LocalFrameBuffer::setTile(Tile &tile)
   {
+#if 1
+    if (pixelOp)
+      pixelOp->preAccum(tile);
+    if (accumBuffer)
+      ispc::LocalFrameBuffer_accumulateTile(getIE(),(ispc::Tile&)tile);
+    if (pixelOp)
+      pixelOp->postAccum(tile);
+    // // if (accumBuffer)
+    if (colorBuffer) {
+      switch(colorBufferFormat) {
+      case OSP_RGBA_I8:
+        ispc::LocalFrameBuffer_writeTile_RGBA_I8(getIE(),(ispc::Tile&)tile);
+        break;
+      default:
+        NOTIMPLEMENTED;
+      }
+    }
+#else
     ispc::LocalFrameBuffer_setTile(getIE(),(ispc::Tile&)tile);
+#endif
   }
 
   const void *LocalFrameBuffer::mapDepthBuffer()

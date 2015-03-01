@@ -49,15 +49,15 @@ namespace ospray {
       /*! gets called once at the end of the frame */
       virtual void endFrame() {};
       
-      // /*! called whenever a new tile comes in from a renderer, but
-      //     _before_ the tile gets written/accumulated into the frame
-      //     buffer. this way we can, for example, fill in missing
-      //     samples; however, the tile will _not_ yet contain the
-      //     previous frame's contributions from the accum buffer
-      //     etcpp. In distriubuted mode, it is undefined if this op gets
-      //     executed on the node that _produces_ the tile, or on the
-      //     node that _owns_ the tile (and its accum buffer data)  */
-      // virtual void preWrite(Tile &tile) {};
+      /*! called whenever a new tile comes in from a renderer, but
+          _before_ the tile gets written/accumulated into the frame
+          buffer. this way we can, for example, fill in missing
+          samples; however, the tile will _not_ yet contain the
+          previous frame's contributions from the accum buffer
+          etcpp. In distriubuted mode, it is undefined if this op gets
+          executed on the node that _produces_ the tile, or on the
+          node that _owns_ the tile (and its accum buffer data)  */
+      virtual void preAccum(Tile &tile) {};
 
       /*! called right after the tile got accumulated; i.e., the
           tile's RGBA values already contain the accu-buffer blended

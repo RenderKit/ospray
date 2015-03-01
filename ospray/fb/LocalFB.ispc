@@ -52,6 +52,95 @@ export void LocalFrameBuffer_clearAccum(void *uniform _fb)
   }
 }
 
+//! \brief write tile into the given frame buffer's color buffer
+/*! \detailed this buffer _must_ exist when this fct is called, and it
+    _must_ have RGBA_I8 format */
+export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb, 
+                                               uniform Tile &tile)
+{
+  uniform LocalFB *uniform fb    = (uniform LocalFB *uniform)_fb;
+  uniform uint32  *uniform color = (uniform uint32 *uniform)fb->colorBuffer;
+  uniform float   *uniform depth = (uniform float *uniform)fb->depthBuffer;
+  if (!color) 
+    // actually, this should never happen ...
+    return;
+
+  VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
+  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
+    uniform uint32 iiy=tile.region.lower.y+iy;
+    if (iiy >= tile.region.upper.y) continue;
+
+    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);
+    
+    for (uint32 iix = tile.region.lower.x+programIndex;
+         iix<tile.region.upper.x;iix+=programCount,chunkID++) {
+
+      uint32 pixelID = iiy*fb->inherited.size.x+iix;
+      unmasked {
+        varying vec4f col = make_vec4f(varyTile->r[chunkID],
+                                       varyTile->g[chunkID],
+                                       varyTile->b[chunkID],
+                                       varyTile->a[chunkID]);
+      }
+
+      color[pixelID] = cvt_uint32(col);
+      if (depth)
+        fb->depthBuffer[pixelID] = varyTile->z[chunkID];
+    }
+  }
+}
+
+//! \brief accumulate tile into BOTH accum buffer AND tile.
+/*! \detailed After this call, the frame buffer will contain 'prev
+    accum value + tile value', while the tile will contain '(prev
+    accum value + tile value/numAccums' */
+export void LocalFrameBuffer_accumulateTile(void *uniform _fb, 
+                                            uniform Tile &tile)
+{
+  uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
+  uniform vec4f *uniform accum = (uniform vec4f *uniform)fb->accumBuffer;
+  if (!accum) return;
+  
+  const float accScale = rcpf(fb->inherited.accumID+1);
+
+  VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
+  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
+    uniform uint32 iiy=tile.region.lower.y+iy;
+    if (iiy >= tile.region.upper.y) continue;
+
+    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);
+    
+    for (uint32 iix = tile.region.lower.x+programIndex;
+         iix<tile.region.upper.x;iix+=programCount,chunkID++) {
+
+      uint32 pixelID = iiy*fb->inherited.size.x+iix;
+      
+      /*! todo: rather than gathering, replace this code with
+          'load4f's and swizzles */
+      varying vec4f acc = make_vec4f(0.f);
+      if (fb->inherited.accumID > 0) 
+        acc = accum[pixelID];
+      unmasked {
+        acc.x += varyTile->r[chunkID];
+        acc.y += varyTile->g[chunkID];
+        acc.z += varyTile->b[chunkID];
+        acc.w += varyTile->a[chunkID];
+      }
+      accum[pixelID] = acc;
+      unmasked {
+        varyTile->r[chunkID] = accScale * acc.x;
+        varyTile->g[chunkID] = accScale * acc.y;
+        varyTile->b[chunkID] = accScale * acc.z;
+        varyTile->a[chunkID] = accScale * acc.w;
+      }
+    }
+  }
+}
+
+
+/*! deprecated - this was once used in ispc-side 'setTile' function
+    pointers; but this is since handled on C++ side, which calls more
+    specialized functions */
 export void LocalFrameBuffer_setTile(void *uniform _fb, //uniform FrameBuffer *uniform _fb,
                                      uniform Tile &tile)
 {
@@ -161,24 +250,24 @@ export void LocalFrameBuffer_setTile(void *uniform _fb, //uniform FrameBuffer *u
   }
 }
 
-void LocalFrameBuffer_accumTile(uniform FrameBuffer *uniform _fb,
-                                uniform Tile &tile)
-{
-  print("accum tile % %, %\n",tile.region.lower.x,tile.region.lower.y,tile.r[0]);
-  uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
+// void LocalFrameBuffer_accumTile(uniform FrameBuffer *uniform _fb,
+//                                 uniform Tile &tile)
+// {
+//   print("accum tile % %, %\n",tile.region.lower.x,tile.region.lower.y,tile.r[0]);
+//   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   
-  uniform vec4f *uniform dst = (uniform vec4f *uniform)fb->accumBuffer;
-  for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-    //const uint32  pixID = i*programCount+programIndex;
-    const uint32 pixID = i + programIndex;
-    const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
-    const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
-    const uint32  ofs   = y*fb->inherited.size.x+x;
-    const vec4f value = getRGBA(tile,pixID);
-    if (x < fb->inherited.size.x & y < fb->inherited.size.y) 
-      dst[ofs]        = value;
-  }
-}
+//   uniform vec4f *uniform dst = (uniform vec4f *uniform)fb->accumBuffer;
+//   for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+//     //const uint32  pixID = i*programCount+programIndex;
+//     const uint32 pixID = i + programIndex;
+//     const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
+//     const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
+//     const uint32  ofs   = y*fb->inherited.size.x+x;
+//     const vec4f value = getRGBA(tile,pixID);
+//     if (x < fb->inherited.size.x & y < fb->inherited.size.y) 
+//       dst[ofs]        = value;
+//   }
+// }
 
 export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              const uniform uint32 size_x,
