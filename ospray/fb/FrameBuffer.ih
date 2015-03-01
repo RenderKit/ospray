@@ -21,12 +21,12 @@
 
 struct FrameBuffer;
 
-/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-typedef void (*SetTileMethod)(uniform FrameBuffer  *uniform,
-                              uniform Tile &);
-/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-typedef void (*AccumTileMethod)(uniform FrameBuffer  *uniform,
-                                uniform Tile &);
+// /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
+// typedef void (*SetTileMethod)(uniform FrameBuffer  *uniform,
+//                               uniform Tile &);
+// /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
+// typedef void (*AccumTileMethod)(uniform FrameBuffer  *uniform,
+//                                 uniform Tile &);
 
 /*! app-mappable format of the color buffer. make sure that this
   matches the definition on the ISPC side */
@@ -42,8 +42,8 @@ typedef enum {
 
 struct FrameBuffer 
 {
-  SetTileMethod     setTile;
-  AccumTileMethod   accumTile;
+  //  SetTileMethod     setTile;
+  //  AccumTileMethod   accumTile;
 
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */

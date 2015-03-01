@@ -17,7 +17,7 @@
 // ospray
 #include "ospray/mpi/MPILoadBalancer.h"
 #include "ospray/render/Renderer.h"
-#include "ospray/fb/FrameBuffer.h"
+#include "ospray/fb/LocalFB.h"
 
 namespace ospray {
   namespace mpi {
@@ -97,6 +97,7 @@ namespace ospray {
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
         renderer->renderTile(tile);
+        fb->setTile(tile);
         ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
         for (int iy=tile.region.lower.y;iy<tile.region.upper.y;iy++)

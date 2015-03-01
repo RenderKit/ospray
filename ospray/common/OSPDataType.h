@@ -38,6 +38,7 @@ typedef enum {
   OSP_TEXTURE,
   OSP_TRANSFER_FUNCTION,
   OSP_VOLUME,
+  OSP_PIXEL_OP,
 
   //! Pointer to a C-style NULL-terminated character string.
   OSP_STRING,

@@ -69,6 +69,7 @@ namespace osp {
   struct TransferFunction : public ManagedObject {};
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
+  struct PixelOp          : public ManagedObject {};
   struct TriangleMesh     : public Geometry {};
 
 } // ::osp
@@ -119,6 +120,7 @@ typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::Light             *OSPLight;
+typedef osp::PixelOp           *OSPPixelOp;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -143,6 +145,13 @@ extern "C" {
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
   OSPRenderer ospNewRenderer(const char *type);
+
+  //! create a new pixel op of given type 
+  /*! return 'NULL' if that type is not known */
+  OSPPixelOp ospNewPixelOp(const char *type);
+  
+  //! set a frame buffer's pixel op */
+  void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op);
 
   //! create a new geometry of given type 
   /*! return 'NULL' if that type is not known */

@@ -71,6 +71,16 @@ namespace ospray {
     exit(1);
   }
 
+  struct DisplayWall {
+    std::string name;
+    vec2i size;
+    OSPFrameBuffer fb;
+    OSPPixelOp     po;
+
+    DisplayWall() : name(""), size(-1), fb(NULL), po(NULL) {};
+  };
+  DisplayWall *displayWall = NULL;
+
   using ospray::glut3D::Glut3DWidget;
   
   /*! mini scene graph viewer widget. \internal Note that all handling
@@ -103,6 +113,22 @@ namespace ospray {
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
+
+      /*! for now, let's just attach the pixel op to the _main_ frame
+          buffer - eventually we need to have a _second_ frame buffer
+          of the proper (much higher) size, but for now let's just use
+          the existing one... */
+      if (displayWall && displayWall->fb != fb) {
+        displayWall->fb = fb;
+        if (displayWall->po == NULL) {
+          displayWall->po = ospNewPixelOp("display_wall");
+          if (!displayWall->po)
+            throw std::runtime_error("could not load 'display_wall' component.");
+        }
+          
+        ospSetPixelOp(fb,displayWall->po);
+      }
+
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
       viewPort.modified = true;
@@ -510,6 +536,11 @@ namespace ospray {
           }
         else
           error("missing commandline param");
+      } else if (arg == "--display-wall") {
+        displayWall = new DisplayWall;
+        displayWall->size.x = atof(av[++i]);
+        displayWall->size.y = atof(av[++i]);
+        displayWall->name = av[++i];
       } else if (arg == "-bench") {
         if (++i < ac)
           {

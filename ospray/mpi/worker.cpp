@@ -14,9 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "MPICommon.h"
-#include "MPIDevice.h"
-#include "CommandStream.h"
+#include "ospray/mpi/MPICommon.h"
+#include "ospray/mpi/MPIDevice.h"
+#include "ospray/mpi/CommandStream.h"
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Library.h"
@@ -27,7 +27,8 @@
 #include "ospray/volume/Volume.h"
 #include "ospray/lights/Light.h"
 #include "ospray/texture/Texture2D.h"
-#include "MPILoadBalancer.h"
+#include "ospray/fb/LocalFB.h"
+#include "ospray/mpi/MPILoadBalancer.h"
 // std
 #include <unistd.h> // for gethostname()
 

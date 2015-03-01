@@ -108,6 +108,13 @@ namespace ospray {
       /*! create a new model */
       virtual OSPModel newModel();
 
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPPixelOp newPixelOp(const char *type) { NOTIMPLEMENTED; };
+
+      /*! set a frame buffer's pixel op object */
+      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) { NOTIMPLEMENTED; };
+      
+
       // /*! finalize a newly specified model */
       // virtual void finalizeModel(OSPModel _model);
 

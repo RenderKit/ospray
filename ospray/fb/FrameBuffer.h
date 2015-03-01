@@ -36,6 +36,7 @@ namespace ospray {
     virtual const void *mapColorBuffer() = 0;
 
     virtual void unmap(const void *mappedMem) = 0;
+    virtual void setTile(Tile &tile) = 0;
 
     /*! make sure the current frame is finished */
     void waitForRenderTaskToBeReady();
@@ -61,28 +62,9 @@ namespace ospray {
     int32 accumID;
 
     virtual void clear(const uint32 fbChannelFlags) = 0;
+
+    Ref<PixelOp::Instance> pixelOp;
   };
 
   
-  /*! local frame buffer - frame buffer that exists on local machine */
-  struct LocalFrameBuffer : public FrameBuffer {
-    void      *colorBuffer; /*!< format depends on
-                               FrameBuffer::colorBufferFormat, may be
-                               NULL */
-    float     *depthBuffer; /*!< one float per pixel, may be NULL */
-    vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
-
-    LocalFrameBuffer(const vec2i &size,
-                     ColorBufferFormat colorBufferFormat,
-                     bool hasDepthBuffer,
-                     bool hasAccumBuffer, 
-                     void *colorBufferToUse=NULL);
-    virtual ~LocalFrameBuffer();
-    
-    virtual const void *mapColorBuffer();
-    virtual const void *mapDepthBuffer();
-    virtual void unmap(const void *mappedMem);
-    virtual void clear(const uint32 fbChannelFlags);
-  };
-
 } // ::ospray

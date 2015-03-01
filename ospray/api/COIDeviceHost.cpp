@@ -213,6 +213,12 @@ namespace ospray {
       virtual int setRegion(OSPVolume object, const void *source, 
                             const vec3i &index, const vec3i &count);
 
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPPixelOp newPixelOp(const char *type) { NOTIMPLEMENTED; };
+
+      /*! set a frame buffer's pixel op object */
+      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) { NOTIMPLEMENTED; };
+      
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);
 

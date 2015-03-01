@@ -52,8 +52,8 @@ export void LocalFrameBuffer_clearAccum(void *uniform _fb)
   }
 }
 
-void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
-                              uniform Tile &tile)
+export void LocalFrameBuffer_setTile(void *uniform _fb, //uniform FrameBuffer *uniform _fb,
+                                     uniform Tile &tile)
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform bool hasDepth = (fb->depthBuffer != NULL);
@@ -133,6 +133,29 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           fb->depthBuffer[fb_ofs] = tile.z[tile_ofs];
       }
     }
+// #else
+//     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+//       const uint32 pixID = i + programIndex;
+//       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
+//       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
+//       const uint32  ofs   = y*fb->inherited.size.x+x;
+//       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
+//         const vec4f value = getRGBA(tile,pixID);
+//         if (accum) {
+//           vec4f acc = accum[ofs]+value;
+//           accum[ofs] = acc;
+
+//           if (color) {
+//             color[ofs] = cvt_uint32(acc * accScale);
+//           }
+//         } else
+//           if (color)
+//             color[ofs] = cvt_uint32(value);
+//         if (depth)
+//           fb->depthBuffer[ofs] = tile.z[i];
+//       }
+//     }
+// #endif
   } else {
     print("format UNKNOWN\n");
   }
@@ -166,8 +189,8 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              void *uniform accumBuffer)
 {
   uniform LocalFB *uniform fb = uniform new uniform LocalFB;
-  fb->inherited.setTile    = LocalFrameBuffer_setTile;
-  fb->inherited.accumTile  = LocalFrameBuffer_accumTile;
+  // fb->inherited.setTile    = LocalFrameBuffer_setTile;
+  // fb->inherited.accumTile  = LocalFrameBuffer_accumTile;
   fb->inherited.accumID    = -1;
   fb->inherited.size.x     = size_x;
   fb->inherited.size.y     = size_y;

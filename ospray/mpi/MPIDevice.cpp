@@ -16,16 +16,17 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "MPICommon.h"
-#include "MPIDevice.h"
-#include "../common/Model.h"
-#include "../common/Data.h"
-#include "../common/Library.h"
-#include "../geometry/TriangleMesh.h"
-#include "../render/Renderer.h"
-#include "../camera/Camera.h"
-#include "../volume/Volume.h"
-#include "MPILoadBalancer.h"
+#include "ospray/mpi/MPICommon.h"
+#include "ospray/mpi/MPIDevice.h"
+#include "ospray/common/Model.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/Library.h"
+#include "ospray/geometry/TriangleMesh.h"
+#include "ospray/render/Renderer.h"
+#include "ospray/camera/Camera.h"
+#include "ospray/volume/Volume.h"
+#include "ospray/mpi/MPILoadBalancer.h"
+#include "ospray/fb/LocalFB.h"
 // std
 #include <unistd.h> // for fork()
 

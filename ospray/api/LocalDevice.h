@@ -39,6 +39,12 @@ namespace ospray {
       virtual void frameBufferUnmap(const void *mapped,
                                     OSPFrameBuffer fb);
 
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPPixelOp newPixelOp(const char *type);
+
+      /*! set a frame buffer's pixel op object */
+      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op);
+      
       /*! create a new model */
       virtual OSPModel newModel();
 

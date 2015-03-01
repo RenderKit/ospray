@@ -254,7 +254,7 @@ export void Renderer_renderTile(void *uniform _renderer,
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->renderTile(renderer,tile);
-  renderer->fb->setTile(renderer->fb,tile);
+  // renderer->fb->setTile(renderer->fb,tile);
 }
 
 export void Renderer_beginFrame(void *uniform _renderer,

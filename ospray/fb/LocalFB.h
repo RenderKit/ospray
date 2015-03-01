@@ -14,27 +14,34 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "FrameBuffer.h"
-#include "LocalFB_ispc.h"
+#pragma once
+
+// ospray
+#include "ospray/fb/FrameBuffer.h"
 
 namespace ospray {
 
-  FrameBuffer::FrameBuffer(const vec2i &size,
-                           ColorBufferFormat colorBufferFormat,
-                           bool hasDepthBuffer,
-                           bool hasAccumBuffer)
-    : size(size),
-      colorBufferFormat(colorBufferFormat),
-      hasDepthBuffer(hasDepthBuffer),
-      hasAccumBuffer(hasAccumBuffer),
-      accumID(-1)
-  {
-    managedObjectType = OSP_FRAMEBUFFER;
-    Assert(size.x > 0 && size.y > 0);
-  };
+  /*! local frame buffer - frame buffer that exists on local machine */
+  struct LocalFrameBuffer : public FrameBuffer {
+    void      *colorBuffer; /*!< format depends on
+                               FrameBuffer::colorBufferFormat, may be
+                               NULL */
+    float     *depthBuffer; /*!< one float per pixel, may be NULL */
+    vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
 
-  void FrameBuffer::waitForRenderTaskToBeReady() 
-  {
-  }
+    LocalFrameBuffer(const vec2i &size,
+                     ColorBufferFormat colorBufferFormat,
+                     bool hasDepthBuffer,
+                     bool hasAccumBuffer, 
+                     void *colorBufferToUse=NULL);
+    virtual ~LocalFrameBuffer();
+    
+    virtual void setTile(Tile &tile);
+
+    virtual const void *mapColorBuffer();
+    virtual const void *mapDepthBuffer();
+    virtual void unmap(const void *mappedMem);
+    virtual void clear(const uint32 fbChannelFlags);
+  };
 
 } // ::ospray

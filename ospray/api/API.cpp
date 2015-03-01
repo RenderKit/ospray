@@ -253,11 +253,38 @@ namespace ospray {
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
   /*! add a data array to another object */
+  extern "C" void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op)
+  {
+    ASSERT_DEVICE();
+    LOG("ospSetPixelOp(...,...)");
+    return ospray::api::Device::current->setPixelOp(fb,op);
+  }
+
+  /*! add a data array to another object */
   extern "C" void ospSetObject(OSPObject target, const char *bufName, OSPObject value)
   {
     ASSERT_DEVICE();
-    LOG("ospSetData(...,\"" << bufName << "\",...)");
+    LOG("ospSetObject(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(target,bufName,value);
+  }
+
+  /*! \brief create a new pixelOp of given type 
+
+    return 'NULL' if that type is not known */
+  extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
+  {
+    ASSERT_DEVICE();
+    Assert2(_type,"invalid render type identifier in ospNewPixelOp");
+    LOG("ospNewPixelOp(" << _type << ")");
+    int L = strlen(_type);
+    char type[L+1];
+    for (int i=0;i<=L;i++) {
+      char c = _type[i];
+      if (c == '-' || c == ':') c = '_';
+      type[i] = c;
+    }
+    OSPPixelOp pixelOp = ospray::api::Device::current->newPixelOp(type);
+    return pixelOp;
   }
 
   /*! \brief create a new renderer of given type 
@@ -276,12 +303,6 @@ namespace ospray {
       type[i] = c;
     }
     OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
-    // cant typecast on MPI device!
-    // if (ospray::logLevel > 0)
-    //   if (renderer) 
-    //     cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
-    //   else
-    //     std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
     return renderer;
   }
   
