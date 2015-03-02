@@ -37,8 +37,8 @@ namespace ospray {
     virtual size_t numMyTiles() const { return myTile.size(); };
 
     /*! color buffer and depth buffer on master */
-    void  *colorBufferOnMaster;
-    float *depthBufferOnMaster;
+    // void  *colorBufferOnMaster;
+    // float *depthBufferOnMaster;
     
     enum { 
       //! command tag that identifies a CommLayer::message as a write tile command
@@ -107,9 +107,9 @@ namespace ospray {
                            bool hasDepthBuffer,
                            bool hasAccumBuffer);
 
-    virtual const void *mapDepthBuffer() { NOTIMPLEMENTED; }
-    virtual const void *mapColorBuffer() { NOTIMPLEMENTED; }
-    virtual void unmap(const void *mappedMem) { NOTIMPLEMENTED; }
+    virtual const void *mapDepthBuffer();
+    virtual const void *mapColorBuffer();
+    virtual void unmap(const void *mappedMem);
     virtual void setTile(ospray::Tile &tile)  { NOTIMPLEMENTED; }
 
     /*! \brief clear (the specified channels of) this frame buffer 

@@ -35,7 +35,9 @@ namespace ospray {
                                const uint32 channelFlags)
       {
 #if USE_DFB
+        PING;
         // do nothing, other than waiting for the frame buffer to have received all the tiles
+        MPI_Barrier(MPI_COMM_WORLD);
 #else
         int rc; 
         MPI_Status status;
@@ -86,7 +88,6 @@ namespace ospray {
 
       void Slave::RenderTask::run(size_t taskIndex) 
       {
-        // PING;
         const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
 
@@ -103,6 +104,7 @@ namespace ospray {
         renderer->renderTile(tile);
         fb->setTile(tile);
 #if USE_DFB
+        cout << "calling settile on client!" << endl;
         // do nothing - the frame buffer's 'setTile' will do the sending etc
 #else
         ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
@@ -124,6 +126,7 @@ namespace ospray {
                               const uint32 channelFlags
                               )
       {
+        PING;
         Ref<RenderTask> renderTask
           = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
         renderTask->fb = fb;
@@ -143,6 +146,7 @@ namespace ospray {
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
         renderTask->wait();
 
+        MPI_Barrier(MPI_COMM_WORLD);
         
         // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
         // TaskScheduler::EventSync sync;

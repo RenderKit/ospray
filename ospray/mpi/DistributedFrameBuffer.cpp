@@ -36,8 +36,7 @@ namespace ospray {
                                      size_t ownerID, 
                                      DFBTileData *data)
     : tileID(tileID), ownerID(ownerID), fb(fb), begin(begin), data(data)
-  {
-  }
+  {}
     
   // //! depth-composite additional 'source' info into existing 'target' tile
   // inline void DistributedFrameBuffer
@@ -81,7 +80,7 @@ namespace ospray {
       numPixels(numPixels), maxValidPixelID(numPixels-vec2i(1)),
       numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
-      frameIsActive(false), frameIsDone(false)
+      frameIsActive(false), frameIsDone(false), localFBonMaster(NULL)
   {
     assert(comm);
     comm->registerObject(this,myID);
@@ -96,6 +95,29 @@ namespace ospray {
         if (td) 
           myTile.push_back(t);
       }
+
+    if (comm->group->rank == 0) {
+      cout << "we're the master - creating a local fb to gather results" << endl;
+      localFBonMaster = new LocalFrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,0);
+    }
+  }
+
+  const void *DistributedFrameBuffer::mapDepthBuffer() 
+  {
+    assert(localFBonMaster);
+    return localFBonMaster->mapDepthBuffer();
+  }
+
+  const void *DistributedFrameBuffer::mapColorBuffer() 
+  {
+    assert(localFBonMaster);
+    return localFBonMaster->mapColorBuffer();
+  }
+
+  void DistributedFrameBuffer::unmap(const void *mappedMem) 
+  {
+    assert(localFBonMaster);
+    localFBonMaster->unmap(mappedMem);
   }
     
   void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)

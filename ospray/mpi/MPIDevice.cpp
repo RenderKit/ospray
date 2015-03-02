@@ -871,6 +871,7 @@ namespace ospray {
 
       //FrameBuffer *fb = sc->getFrontBuffer();
       // FrameBuffer *fb = sc->getBackBuffer();
+      PING;
       cmd.newCommand(CMD_RENDER_FRAME);
       cmd.send((const mpi::Handle&)_fb);
       cmd.send((const mpi::Handle&)_renderer);
