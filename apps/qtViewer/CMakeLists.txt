@@ -16,51 +16,46 @@
 
 CONFIGURE_OSPRAY()
 
-# mini-scene graph viewer for _geometry_ (intentionally simple)
-OPTION(OSPRAY_MODULE_QTMODELVIEWER "Build ospQTV Qt-ModelViewer." ON)
-IF (OSPRAY_MODULE_QTMODELVIEWER AND NOT THIS_IS_MIC)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
+INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
-  INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
+INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+SET(LIBS ${LIBS} ${GLUT_LIBRARIES})
 
-  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-  SET(LIBS ${LIBS} ${GLUT_LIBRARIES})
-  
-  FIND_PACKAGE(Qt4 REQUIRED) 
-  SET(QT_USE_QTOPENGL TRUE)
-  INCLUDE(${QT_USE_FILE})
-  SET(LIBS ${LIBS} ${QT_LIBRARIES})
-  
-  ADD_SUBDIRECTORY(sg)
-  
-  SET(SRCS ${SRCS}
-    # qt helper widgets
-    widgets/affineSpaceManipulator/HelperGeometry.cpp
-    widgets/affineSpaceManipulator/QAffineSpaceManipulator.cpp
-    widgets/transferFunction/QTransferFunctionEditor.cpp
+FIND_PACKAGE(Qt4 REQUIRED) 
+SET(QT_USE_QTOPENGL TRUE)
+INCLUDE(${QT_USE_FILE})
+SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
-    # modelviewer proper
-    ModelViewer.cpp
+ADD_SUBDIRECTORY(sg)
 
-    # the (th)ing to launch them all, and in darkness bind them...
-    main.cpp
-    )
+SET(SRCS ${SRCS}
+  # qt helper widgets
+  widgets/affineSpaceManipulator/HelperGeometry.cpp
+  widgets/affineSpaceManipulator/QAffineSpaceManipulator.cpp
+  widgets/transferFunction/QTransferFunctionEditor.cpp
 
-  SET(MOC_HEADERS
-    ModelViewer.h
-    widgets/transferFunction/QTransferFunctionEditor.h
-    widgets/affineSpaceManipulator/QAffineSpaceManipulator.h
-    )
+  # modelviewer proper
+  ModelViewer.cpp
 
-  QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
+  # the (th)ing to launch them all, and in darkness bind them...
+  main.cpp
+  )
 
-  ADD_EXECUTABLE(ospQTViewer ${SRCS} ${MOC_OUTFILES})
-  TARGET_LINK_LIBRARIES(ospQTViewer ${LIBS} 
-    ospray_sg${OSPRAY_LIB_SUFFIX}
-    )
-  # ------------------------------------------------------------
-  INSTALL(TARGETS ospQTViewer DESTINATION bin)
-  # ------------------------------------------------------------
+SET(MOC_HEADERS
+  ModelViewer.h
+  widgets/transferFunction/QTransferFunctionEditor.h
+  widgets/affineSpaceManipulator/QAffineSpaceManipulator.h
+  )
 
-ENDIF()
+QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
+
+ADD_EXECUTABLE(ospQTViewer ${SRCS} ${MOC_OUTFILES})
+TARGET_LINK_LIBRARIES(ospQTViewer ${LIBS} 
+  ospray_sg${OSPRAY_LIB_SUFFIX}
+  )
+# ------------------------------------------------------------
+INSTALL(TARGETS ospQTViewer DESTINATION bin)
+# ------------------------------------------------------------
+
