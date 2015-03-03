@@ -184,11 +184,10 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
   vec3f baseColor = make_vec3f(1.f);
   if (mat) {
     foreach_unique(m in mat) {
+      baseColor = m->Kd;
       if (m->map_Kd) {
         vec4f Kd_from_map = get4f(m->map_Kd,dg.st);
-        baseColor = make_vec3f(Kd_from_map);
-      } else {
-        baseColor = m->Kd;
+        baseColor = baseColor * make_vec3f(Kd_from_map);
       }
     }
   }
