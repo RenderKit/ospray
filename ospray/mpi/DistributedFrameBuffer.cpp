@@ -58,16 +58,22 @@ namespace ospray {
   {
     mutex.lock();
     frameIsActive = true;
-    // should actually move this to a thread:
-    for (int i=0;i<delayedTile.size();i++) {
-      WriteTileMessage *msg = delayedTile[i];
-      this->incoming(msg);
-      // this->writeTile(msg->coords.x,msg->coords.y,TILE_SIZE,
-      //                 &msg->tile.color[0][0],&msg->tile.depth[0][0]);
-      // delete msg;
-    }
-    delayedTile.clear();
+
+    // create a local copy of delayed tiles, so we can work on them outside the mutex
+    std::vector<mpi::async::CommLayer::Message *> delayedMessage = this->delayedMessage;
+    this->delayedMessage.clear();
+    numTilesWrittenThisFrame = 0;
+    numTilesToMasterThisFrame = 0;
+    frameIsDone   = false;
+
     mutex.unlock();
+    
+    PRINT(delayedMessage.size());
+    // should actually move this to a thread:
+    for (int i=0;i<delayedMessage.size();i++) {
+      mpi::async::CommLayer::Message *msg = delayedMessage[i];
+      this->incoming(msg);
+    }
   }
 
   DistributedFrameBuffer
@@ -133,11 +139,34 @@ namespace ospray {
     assert(localFBonMaster);
     localFBonMaster->unmap(mappedMem);
   }
+
+  void DistributedFrameBuffer::waitUntilFinished() {
+    PING;
+    mutex.lock();
+    while (!frameIsDone) 
+      doneCond.wait(mutex);
+    mutex.unlock();
+  }
     
   void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)
   {
+    if (!frameIsActive) {
+      mutex.lock();
+      if (!frameIsActive) {
+        // frame is really not yet active - put the tile into the
+        // delayed processing buffer, and return WITHOUT deleting
+        // it.
+        // printf("rank %i DELAYED TILE\n",comm->myRank);
+        delayedMessage.push_back(_msg);
+        mutex.unlock();
+        return;
+      }
+      mutex.unlock();
+    }
+
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
     if (_msg->command == MASTER_WRITE_TILE) {
+
       // cout << "TILE AT MASTER!" << endl;
       MasterTileMessage *msg = (MasterTileMessage *)_msg;
       // PRINT(msg->coords);
@@ -153,35 +182,20 @@ namespace ospray {
             = msg->color[iy][ix];//[ix+TILE_SIZE*iy];
         }
       }
+      mutex.lock();
+      numTilesWrittenThisFrame++;
+      PRINT(numTilesWrittenThisFrame);
+      if (numTilesWrittenThisFrame == numTiles.x*numTiles.y)
+        closeCurrentFrame(true);
+      mutex.unlock();
+      delete _msg;
       return;
     }
 
     if (_msg->command == WORKER_WRITE_TILE) {
-      // start a new frame!
       WriteTileMessage *msg = (WriteTileMessage *)_msg;
-      // PRINT(msg->coords);
 
-      // printf("client %i RECEIVES tile %i,%i\n",comm->rank(),msg->coords.x,msg->coords.y);
-        
-
-      if (!frameIsActive) {
-        mutex.lock();
-        if (!frameIsActive) {
-          // frame is really not yet active - put the tile into the
-          // delayed processing buffer, and return WITHOUT deleting
-          // it.
-          // printf("rank %i DELAYED TILE\n",comm->myRank);
-          delayedTile.push_back(msg);
-          mutex.unlock();
-          return;
-        }
-        mutex.unlock();
-      }
-
-      // printf("rank %i wrote tile %i,%i\n",comm->myRank,
-      // msg->coords.x,msg->coords.y);
-      
-      // "unpack" tile
+      // TODO: "unpack" tile
       ospray::Tile unpacked;
       memcpy(unpacked.r,msg->r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
       unpacked.region.lower = msg->coords;
@@ -201,6 +215,15 @@ namespace ospray {
   {
     writeTile(tile);
   }
+
+  void DistributedFrameBuffer::closeCurrentFrame(bool locked) {
+    PING;
+    if (!locked) mutex.lock();
+    frameIsActive = false;
+    frameIsDone   = true;
+    doneCond.broadcast();
+    if (!locked) mutex.unlock();
+  };
 
   //! write given tile data into the frame buffer, sending to remove owner if required
   void DistributedFrameBuffer::writeTile(ospray::Tile &tile)
@@ -239,19 +262,18 @@ namespace ospray {
         
       comm->sendTo(mpi::async::CommLayer::Address(clientRank(myTile->ownerID),myID),
                    msg,sizeof(*msg));
+      printf("CLIENT NUM SENT TO MASTER %i\n",numTilesToMasterThisFrame);
     } else {
       // this is my tile...
       assert(frameIsActive);
-
-      // printf("client %i WRITES tile %li,%li\n",comm->rank(),x0,y0);
 
       if (pixelOp)
         pixelOp->preAccum(tile);
 
       //! accumulate new tile data with existing accum data for this tile
       DFBTileData *td = myTile->data;
-      // if (hasAccumBuffer) {
       {
+        // perform tile accumulation. TODO: do this in ISPC
         size_t pixelID = 0;
         for (size_t iy=0;iy<TILE_SIZE;iy++)
           for (size_t ix=0;ix<TILE_SIZE;ix++, pixelID++) {
@@ -260,54 +282,26 @@ namespace ospray {
                               tile.g[pixelID],
                               tile.b[pixelID],
                               tile.a[pixelID]);
-            bool dbg =  ((ix+x0 == 512) && (iy+y0 == 512));
-            if (dbg) {
-              PRINT(col);
-            }
             if (hasAccumBuffer) {
               if (accumID > 0) {
-                vec4f acc = vec4f(td->accum_r[iy][ix],
-                                  td->accum_g[iy][ix],
-                                  td->accum_b[iy][ix],
-                                  td->accum_a[iy][ix]);;
-                col += acc;
-                if (dbg) {
-                  PRINT(td->accum_r[iy][ix]);
-                  PRINT(acc);
-                  PRINT(col);
-                  PRINT(rcpAccumID);
-                }
+                col += vec4f(td->accum_r[iy][ix],
+                             td->accum_g[iy][ix],
+                             td->accum_b[iy][ix],
+                             td->accum_a[iy][ix]);
               }
               td->accum_r[iy][ix] = col.x;
               td->accum_g[iy][ix] = col.y;
               td->accum_b[iy][ix] = col.z;
               td->accum_a[iy][ix] = col.w;
               col *= rcpAccumID;
-              if (dbg) {
-                PRINT(td->accum_r[iy][ix]);
-                PRINT(col);
-                PRINT(rcpAccumID);
-              }
             }
             td->color[iy][ix] = cvt_uint32(col);
           }
       }
-      
+
       if (pixelOp)
         pixelOp->postAccum(tile);
 
-      // { // actually commit the (new) tile data into tile memory
-      //   // size_t pixelID = 0;
-      //   // for (size_t dy=0;dy<TILE_SIZE;dy++)
-      //   //   for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
-      //   memcpy(myTile->data->accum_r,tile.r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
-      //       // const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
-      //       // const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
-      //       // td.color[0][pixelID] = colorChannel[dx+dy*dxdy];
-      //       // td.depth[0][pixelID] = depthChannel[dx+dy*dxdy];
-      //     // }
-      // }
-     
       MasterTileMessage *mtm = new MasterTileMessage;
       mtm->command = MASTER_WRITE_TILE;
       mtm->coords  = myTile->begin;
@@ -321,6 +315,15 @@ namespace ospray {
       vec2i size(TILE_SIZE,TILE_SIZE);
       writePPM(fn,size,(uint32*)&myTile->data->color);
 #endif
+
+      mutex.lock();
+      numTilesWrittenThisFrame++;
+      printf("CLIENT NUM WRITTEN %i\n",numTilesWrittenThisFrame);
+      if (numTilesWrittenThisFrame == numMyTiles())
+        closeCurrentFrame(true);
+      mutex.unlock();
+
+
       // DistributedFrameBuffer::depthComposite(tile->data,&td);
     }
     // delete td;

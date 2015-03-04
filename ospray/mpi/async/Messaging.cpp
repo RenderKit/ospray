@@ -88,7 +88,7 @@ namespace ospray {
       void initAsync()
       {
         if (AsyncMessagingImpl::global == NULL) {
-#if 1
+#if 0
           AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
 #else
           AsyncMessagingImpl::global = new SimpleSendRecvImpl;

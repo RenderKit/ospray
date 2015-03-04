@@ -24,6 +24,8 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  typedef embree::ConditionSys Condition;
+
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
@@ -155,12 +157,9 @@ namespace ospray {
     { return (x/TILE_SIZE)+(y/TILE_SIZE)*numTiles.x; }
       
     virtual void startNewFrame();
-    virtual void closeCurrentFrame() {
-      mutex.lock();
-      frameIsActive = false;
-      frameIsDone   = true;
-      mutex.unlock();
-    };
+    virtual void closeCurrentFrame(bool locked);
+
+    void waitUntilFinished();
 
     // //! depth-composite additional 'source' info into existing 'target' tile
     // static inline void depthComposite(DFBTileData *target, DFBTileData *source);
@@ -174,6 +173,9 @@ namespace ospray {
     vec2i maxValidPixelID;
     vec2i numTiles;
 
+    /*! number of tiles written this frame */
+    size_t numTilesWrittenThisFrame, numTilesToMasterThisFrame;
+
     std::vector<DFBTile *> tile;    //!< list of all tiles
     std::vector<DFBTile *> myTile; //!< list of tiles belonging to this node. is a subset of 'tile' 
 
@@ -181,10 +183,12 @@ namespace ospray {
     //! set to true when the frame becomes 'active', and write tile
     //! messages can be consumed.
     bool frameIsActive, frameIsDone;
+    //! condition that gets triggered when the frame is done
+    Condition doneCond;
 
     size_t numTilesWritten;
     //! when messages arrive before a frame is active
-    std::vector<WriteTileMessage *> delayedTile;
+    std::vector<mpi::async::CommLayer::Message *> delayedMessage;
   };
     
 }

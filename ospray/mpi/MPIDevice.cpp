@@ -871,13 +871,13 @@ namespace ospray {
 
       //FrameBuffer *fb = sc->getFrontBuffer();
       // FrameBuffer *fb = sc->getBackBuffer();
-      PING;
       cmd.newCommand(CMD_RENDER_FRAME);
       cmd.send((const mpi::Handle&)_fb);
       cmd.send((const mpi::Handle&)_renderer);
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
+      PING;
       TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
     }
 

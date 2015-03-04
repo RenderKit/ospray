@@ -18,6 +18,7 @@
 #include "ospray/mpi/MPILoadBalancer.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/fb/LocalFB.h"
+#include "ospray/mpi/DistributedFrameBuffer.h"
 
 namespace ospray {
   namespace mpi {
@@ -37,8 +38,16 @@ namespace ospray {
 #if USE_DFB
         // do nothing, other than waiting for the frame buffer to have received all the tiles
 
-        cout << "----------- barrier, to force master to wait for clients..." << endl;
-        MPI_Barrier(MPI_COMM_WORLD);
+        DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        static int frameID;
+        PRINT(++frameID);
+        PING; PRINT(getSysTime());
+        dfb->startNewFrame();
+        PING; PRINT(getSysTime());
+        dfb->waitUntilFinished();
+        PING; PRINT(getSysTime());
+        // cout << "----------- barrier, to force master to wait for clients..." << endl;
+        // MPI_Barrier(MPI_COMM_WORLD);
 #else
         int rc; 
         MPI_Status status;
@@ -128,6 +137,10 @@ namespace ospray {
                               const uint32 channelFlags
                               )
       {
+#if USE_DFB
+        DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
+        dfb->startNewFrame();
+#endif
         Ref<RenderTask> renderTask
           = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
         renderTask->fb = fb;
@@ -147,7 +160,12 @@ namespace ospray {
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
         renderTask->wait();
 
-        MPI_Barrier(MPI_COMM_WORLD);
+#if USE_DFB
+        dfb->waitUntilFinished();
+#endif
+        printf("*********** DONE ON CLIENT ***********\n");fflush(0);
+
+        //        MPI_Barrier(MPI_COMM_WORLD);
         
         // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
         // TaskScheduler::EventSync sync;
