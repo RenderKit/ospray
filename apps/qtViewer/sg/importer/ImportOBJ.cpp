@@ -369,6 +369,10 @@ namespace ospray {
 
       std::map<Vertex, uint32> vertexMap;
       TriangleMesh *mesh = new TriangleMesh;
+      mesh->vertex = new DataVector3f;
+      mesh->normal = new DataVector3f;
+      mesh->texcoord = new DataVector2f;
+      mesh->triangle =  new DataVector3i;
       mesh->material = curMaterial;
       world->node.push_back(mesh);
 
