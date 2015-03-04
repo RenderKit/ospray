@@ -63,7 +63,6 @@ namespace ospray {
 
       //! accumulation ID
       size_t accumID;
-
     };
   }
 }

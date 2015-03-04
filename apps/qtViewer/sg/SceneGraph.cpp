@@ -98,6 +98,8 @@ namespace ospray {
         ospSetObject(ospRenderer,"camera",camera->ospCamera);
       }
 
+      ospSet1i(ospRenderer,"spp",spp);
+
       lastCommitted = __rdtsc();
       ospCommit(ospRenderer);
       assert(ospRenderer); 
