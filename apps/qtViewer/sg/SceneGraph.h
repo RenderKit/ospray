@@ -16,7 +16,6 @@
 
 #pragma once
 
-
 #ifndef OSP_SG_INCLUDED
 #define OSP_SG_INCLUDED 1
 
@@ -31,6 +30,7 @@
 #include "sg/common/Integrator.h"
 #include "sg/camera/PerspectiveCamera.h"
 #include "sg/common/Data.h"
+#include "sg/common/FrameBuffer.h"
 
 // embree
 #include "common/sys/filename.h"
@@ -139,35 +139,6 @@ namespace ospray {
 
       /*! \brief light type, i.e., 'ao', 'obj', 'pathtracer', ... */
       const std::string type; 
-    };
-
-    struct FrameBuffer : public sg::Node {
-      vec2i size;
-      OSPFrameBuffer ospFrameBuffer;
-
-      FrameBuffer(const vec2i &size) 
-        : size(size), 
-          ospFrameBuffer(NULL) 
-      { createFB(); };
-
-      unsigned char *map() { return (unsigned char *)ospMapFrameBuffer(ospFrameBuffer, OSP_FB_COLOR); }
-      void unmap(unsigned char *mem) { ospUnmapFrameBuffer(mem,ospFrameBuffer); }
-
-      void clearAccum() 
-      {
-        ospFrameBufferClear(ospFrameBuffer,OSP_FB_ACCUM);
-      }
-      
-      vec2i getSize() const { return size; }
-
-      virtual ~FrameBuffer() { destroyFB(); }
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const { return "ospray::sg::FrameBuffer"; }
-      
-    private:
-      void createFB() { ospFrameBuffer = ospNewFrameBuffer(size,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM); }
-      void destroyFB() { ospFreeFrameBuffer(ospFrameBuffer); }
     };
 
     World *readXML(const std::string &fileName);

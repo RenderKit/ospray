@@ -36,7 +36,10 @@ namespace ospray {
       integrator->setWorld(world);
       integrator->setCamera(camera);
       integrator->commit();
+      camera->commit();
 
+      ospSet1f(camera->ospCamera,"aspect",frameBuffer->size.x/float(frameBuffer->size.y));
+      ospCommit(camera->ospCamera);
       ospRenderFrame(frameBuffer->ospFrameBuffer,
                      integrator->getOSPHandle(),
                      OSP_FB_COLOR|OSP_FB_ACCUM);

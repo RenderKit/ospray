@@ -143,6 +143,7 @@ namespace ospray {
         exit(1);
       }
       // set the current world ...
+      std::cout << "#osp:qtv: setting world ..." << std::endl;
       renderer->setWorld(world);
 
       // -------------------------------------------------------
@@ -215,6 +216,8 @@ namespace ospray {
                << frameResolution.x << "x" << frameResolution.y << ")" << endl;
           renderer->frameBuffer = new sg::FrameBuffer(frameResolution);
         }
+        renderer->frameBuffer->commit(); 
+        renderer->frameBuffer->clear();
 
         // output file specified - render to file
         cout << "#osp:qtv: rendering frame" << endl;
@@ -222,6 +225,8 @@ namespace ospray {
 
         unsigned char *fbMem = renderer->frameBuffer->map();
         cout << "#osp:qtv: saving image" << endl;
+        // PRINT((int*)fbMem);
+        // PRINT(*(int**)fbMem);
         QImage image(fbMem,
                      renderer->frameBuffer->getSize().x,
                      renderer->frameBuffer->getSize().y,

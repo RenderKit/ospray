@@ -12,6 +12,7 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
   geometry/PKD.cpp
   geometry/TriangleMesh.cpp
   common/Node.cpp
+  common/Integrator.cpp
   common/World.cpp
   common/Texture2D.cpp
   camera/PerspectiveCamera.cpp

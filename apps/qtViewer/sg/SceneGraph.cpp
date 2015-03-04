@@ -79,29 +79,5 @@ namespace ospray {
       state.serialization->object.push_back(new Serialization::Object(this,state.instantiation.ptr));
     }
 
-    void Integrator::commit()
-    {
-      if (!ospRenderer) {
-        ospRenderer = ospNewRenderer(type.c_str());
-        if (!ospRenderer) 
-          throw std::runtime_error("#osp:sg:SceneGraph: could not create renderer (of type '"+type+"')");
-      }
-      if (lastCommitted >= lastModified) return;
-
-      // set world, camera, ...
-      if (world ) { 
-        world->commit();
-        ospSetObject(ospRenderer,"world", world->ospModel);
-      }
-      if (camera) {
-        camera->commit();
-        ospSetObject(ospRenderer,"camera",camera->ospCamera);
-      }
-
-      lastCommitted = __rdtsc();
-      ospCommit(ospRenderer);
-      assert(ospRenderer); 
-   }
-
   } // ::ospray::sg
 } // ::ospray
