@@ -119,6 +119,8 @@ namespace ospray {
             if (cameraFromCommandLine) cameraFromCommandLine->setUp(vec3f(x,y,z));
           } else if (arg == "--fullscreen" || arg == "-fs"){
             fullscreen = true;
+          } else if (arg == "--spp") {
+            spp = atoi(argv[++argID]);
           } else {
             throw std::runtime_error("#osp:qtv: unknown cmdline param '"+arg+"'");
           }
@@ -183,6 +185,8 @@ namespace ospray {
           renderer->setCamera(renderer->createDefaultCamera(upFromCommandLine));
         }
       }
+
+      renderer->integrator->setSPP(spp);
 
       // -------------------------------------------------------
       // determine output method: offline to file, or interactive viewer

@@ -21,6 +21,7 @@
 
 namespace ospray {
   namespace sg {
+
     void Integrator::commit()
     {
       if (!ospRenderer) {
@@ -53,7 +54,6 @@ namespace ospray {
         ospSet1i(ospRenderer,"spp",spp);
       }
     }
-
 
   } // ::ospray::sg
 } // ::ospray

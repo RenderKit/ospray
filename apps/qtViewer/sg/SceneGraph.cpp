@@ -79,5 +79,34 @@ namespace ospray {
       state.serialization->object.push_back(new Serialization::Object(this,state.instantiation.ptr));
     }
 
+<<<<<<< HEAD
+=======
+    void Integrator::commit()
+    {
+      if (!ospRenderer) {
+        ospRenderer = ospNewRenderer(type.c_str());
+        if (!ospRenderer) 
+          throw std::runtime_error("#osp:sg:SceneGraph: could not create renderer (of type '"+type+"')");
+      }
+      if (lastCommitted >= lastModified) return;
+
+      // set world, camera, ...
+      if (world ) { 
+        world->commit();
+        ospSetObject(ospRenderer,"world", world->ospModel);
+      }
+      if (camera) {
+        camera->commit();
+        ospSetObject(ospRenderer,"camera",camera->ospCamera);
+      }
+
+      ospSet1i(ospRenderer,"spp",spp);
+
+      lastCommitted = __rdtsc();
+      ospCommit(ospRenderer);
+      assert(ospRenderer); 
+   }
+
+>>>>>>> 4814bd9beb6bcd8df0d16f2c4e0ff0a57f463a3d
   } // ::ospray::sg
 } // ::ospray
