@@ -877,7 +877,6 @@ namespace ospray {
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
-      PING;
       TiledLoadBalancer::instance->renderFrame(NULL,fb,fbChannelFlags);
     }
 

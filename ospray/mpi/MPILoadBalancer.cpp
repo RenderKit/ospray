@@ -36,18 +36,12 @@ namespace ospray {
                                const uint32 channelFlags)
       {
 #if USE_DFB
-        // do nothing, other than waiting for the frame buffer to have received all the tiles
-
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        static int frameID;
-        PRINT(++frameID);
-        PING; PRINT(getSysTime());
         dfb->startNewFrame();
-        PING; PRINT(getSysTime());
+        /* the client will do its magic here, and the distributed
+           frame buffer will be writing tiles here, without us doing
+           anything ourselves */
         dfb->waitUntilFinished();
-        PING; PRINT(getSysTime());
-        // cout << "----------- barrier, to force master to wait for clients..." << endl;
-        // MPI_Barrier(MPI_COMM_WORLD);
 #else
         int rc; 
         MPI_Status status;
@@ -163,21 +157,6 @@ namespace ospray {
 #if USE_DFB
         dfb->waitUntilFinished();
 #endif
-        printf("*********** DONE ON CLIENT ***********\n");fflush(0);
-
-        //        MPI_Barrier(MPI_COMM_WORLD);
-        
-        // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
-        // TaskScheduler::EventSync sync;
-        // renderTask->task = embree::TaskScheduler::Task
-        //   (&sync,
-        //    // (&renderTask->fb->frameIsReadyEvent,
-        //    renderTask->_run,renderTask.ptr,
-        //    renderTask->numTiles_x*renderTask->numTiles_y,
-        //    renderTask->_finish,renderTask.ptr,
-        //    "LocalTiledLoadBalancer::RenderTask");
-        // TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-        // sync.sync();
       }
     }
 

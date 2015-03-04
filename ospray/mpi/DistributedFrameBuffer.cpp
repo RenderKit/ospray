@@ -68,7 +68,6 @@ namespace ospray {
 
     mutex.unlock();
     
-    PRINT(delayedMessage.size());
     // should actually move this to a thread:
     for (int i=0;i<delayedMessage.size();i++) {
       mpi::async::CommLayer::Message *msg = delayedMessage[i];
@@ -94,21 +93,14 @@ namespace ospray {
     assert(comm);
     this->ispcEquivalent = ispc::DistributedFrameBuffer_create(this);
     ispc::DistributedFrameBuffer_set(getIE(),numPixels.x,numPixels.y,colorBufferFormat);
-    // PRINT(numPixels);
     comm->registerObject(this,myID);
     size_t tileID=0;
     for (size_t y=0;y<numPixels.y;y+=TILE_SIZE)
       for (size_t x=0;x<numPixels.x;x+=TILE_SIZE,tileID++) {
         size_t ownerID = tileID % (comm->group->size-1);
         DFBTileData *td = NULL;
-        // PRINT(x);
-        // PRINT(y);
-        // PRINT(ownerID);
-        // PRINT(clientRank(ownerID));
-        // PRINT(comm->group->rank);
         if (clientRank(ownerID) == comm->group->rank) td = new DFBTileData;
         DFBTile *t = new DFBTile(this,vec2i(x,y),tileID,ownerID,td);
-        // PRINT(t->data);
         tile.push_back(t);
         if (td) 
           myTile.push_back(t);
@@ -140,8 +132,8 @@ namespace ospray {
     localFBonMaster->unmap(mappedMem);
   }
 
-  void DistributedFrameBuffer::waitUntilFinished() {
-    PING;
+  void DistributedFrameBuffer::waitUntilFinished() 
+  {
     mutex.lock();
     while (!frameIsDone) 
       doneCond.wait(mutex);
@@ -167,9 +159,7 @@ namespace ospray {
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
     if (_msg->command == MASTER_WRITE_TILE) {
 
-      // cout << "TILE AT MASTER!" << endl;
       MasterTileMessage *msg = (MasterTileMessage *)_msg;
-      // PRINT(msg->coords);
       for (int iy=0;iy<TILE_SIZE;iy++) {
         int iiy = iy+msg->coords.y;
         if (iiy >= numPixels.y) continue;
@@ -184,7 +174,6 @@ namespace ospray {
       }
       mutex.lock();
       numTilesWrittenThisFrame++;
-      PRINT(numTilesWrittenThisFrame);
       if (numTilesWrittenThisFrame == numTiles.x*numTiles.y)
         closeCurrentFrame(true);
       mutex.unlock();
@@ -207,7 +196,6 @@ namespace ospray {
       return;
     }
 
-    PRINT(_msg->command);
     throw std::runtime_error("#osp:mpi:DistributedFrameBuffer: unknown command");
   }
 
@@ -217,7 +205,6 @@ namespace ospray {
   }
 
   void DistributedFrameBuffer::closeCurrentFrame(bool locked) {
-    PING;
     if (!locked) mutex.lock();
     frameIsActive = false;
     frameIsDone   = true;
@@ -262,7 +249,7 @@ namespace ospray {
         
       comm->sendTo(mpi::async::CommLayer::Address(clientRank(myTile->ownerID),myID),
                    msg,sizeof(*msg));
-      printf("CLIENT NUM SENT TO MASTER %i\n",numTilesToMasterThisFrame);
+      // printf("CLIENT NUM SENT TO MASTER %i\n",numTilesToMasterThisFrame);
     } else {
       // this is my tile...
       assert(frameIsActive);
@@ -318,7 +305,7 @@ namespace ospray {
 
       mutex.lock();
       numTilesWrittenThisFrame++;
-      printf("CLIENT NUM WRITTEN %i\n",numTilesWrittenThisFrame);
+      // printf("CLIENT NUM WRITTEN %i\n",numTilesWrittenThisFrame);
       if (numTilesWrittenThisFrame == numMyTiles())
         closeCurrentFrame(true);
       mutex.unlock();
