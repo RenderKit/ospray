@@ -106,11 +106,11 @@ namespace ospray {
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
         renderer->renderTile(tile);
-        PING;
-        PRINT(tile.region.lower);
+        // PING;
+        // PRINT(tile.region.lower);
         fb->setTile(tile);
 #if USE_DFB
-        cout << "calling settile on client!" << endl;
+        // cout << "calling settile on client!" << endl;
         // do nothing - the frame buffer's 'setTile' will do the sending etc
 #else
         ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;

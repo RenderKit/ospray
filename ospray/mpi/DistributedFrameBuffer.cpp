@@ -139,8 +139,22 @@ namespace ospray {
   void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)
   {
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
-    if (_msg->command == WORKER_WRITE_TILE) {
+    if (_msg->command == MASTER_WRITE_TILE) {
       cout << "TILE AT MASTER!" << endl;
+      MasterTileMessage *msg = (MasterTileMessage *)_msg;
+      PRINT(msg->coords);
+      for (int iy=0;iy<TILE_SIZE;iy++) {
+        int iiy = iy+msg->coords.y;
+        if (iiy >= numPixels.y) continue;
+        
+        for (int ix=0;ix<TILE_SIZE;ix++) {
+          int iix = ix+msg->coords.x;
+          if (iix >= numPixels.x) continue;
+          
+          ((uint*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
+            = msg->color[iy][ix];//[ix+TILE_SIZE*iy];
+        }
+      }
       return;
     }
 
@@ -181,7 +195,8 @@ namespace ospray {
       return;
     }
 
-    throw std::runtime_error("unkown command");
+    PRINT(_msg->command);
+    throw std::runtime_error("#osp:mpi:DistributedFrameBuffer: unknown command");
   }
 
   void DistributedFrameBuffer::setTile(ospray::Tile &tile)
@@ -198,7 +213,7 @@ namespace ospray {
     typename DistributedFrameBuffer::DFBTile *myTile
       = this->getTileFor(x0,y0);
 
-    printf("found tile %lx data %lx\n",myTile,myTile->data);
+    //    printf("found tile %lx data %lx\n",myTile,myTile->data);
     if (myTile->data == NULL) {
       // NOT my tile...
       WriteTileMessage *msg = new WriteTileMessage;
@@ -266,6 +281,9 @@ namespace ospray {
       }
      
       MasterTileMessage *mtm = new MasterTileMessage;
+      mtm->command = MASTER_WRITE_TILE;
+      mtm->coords  = myTile->begin;
+      memcpy(mtm->color,td->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
       comm->sendTo(this->master,mtm,sizeof(*mtm));
       
 #if 0

@@ -58,6 +58,7 @@ namespace ospray {
 
     //! message sent to the master when a tile is finished. Todo: compress the color data */
     struct MasterTileMessage : public mpi::async::CommLayer::Message {
+      vec2i coords;
       uint32 color[TILE_SIZE][TILE_SIZE];
     };
 

@@ -28,7 +28,6 @@ namespace ospray {
 
       CommLayer *CommLayer::WORLD = NULL;
 
-
       CommLayer::Object::Object(CommLayer *comm, ObjectID myID)
         : myID(myID), comm(comm)
       {
@@ -40,12 +39,27 @@ namespace ospray {
 
       void CommLayer::process(const mpi::Address &source, void *message, int32 size)
       {
-        NOTIMPLEMENTED;
+        Message *msg = (Message*)message;
+        PRINT(msg->dest.objectID);
+
+        mutex.lock();
+        Object *obj = registry[msg->dest.objectID];
+        mutex.unlock();
+        if (!obj)
+          throw std::runtime_error("#osp:mpi:CommLayer: no object with given ID");
+
+        msg->source.rank  = source.rank;
+        obj->incoming(msg);
       }
 
       void CommLayer::sendTo(Address dest, Message *msg, size_t size)
       {
-        NOTIMPLEMENTED;
+        // PING;
+        msg->source.rank = group->rank;
+        msg->dest = dest;
+        msg->size = size;
+        async::send(mpi::Address(group,dest.rank),msg,size);
+        // PING;
       }
 
       void CommLayer::registerObject(Object *object, ObjectID ID)
