@@ -40,7 +40,6 @@ namespace ospray {
       void CommLayer::process(const mpi::Address &source, void *message, int32 size)
       {
         Message *msg = (Message*)message;
-        PRINT(msg->dest.objectID);
 
         mutex.lock();
         Object *obj = registry[msg->dest.objectID];

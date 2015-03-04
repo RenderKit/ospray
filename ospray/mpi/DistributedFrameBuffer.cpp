@@ -38,8 +38,6 @@ namespace ospray {
                                            DFBTileData *data)
     : tileID(tileID), ownerID(ownerID), fb(fb), begin(begin), data(data)
   {
-    PRINT(data);
-    PRINT(this->data);
   }
     
   // //! depth-composite additional 'source' info into existing 'target' tile
@@ -90,21 +88,21 @@ namespace ospray {
     assert(comm);
     this->ispcEquivalent = ispc::DistributedFrameBuffer_create(this);
     ispc::DistributedFrameBuffer_set(getIE(),numPixels.x,numPixels.y,colorBufferFormat);
-    PRINT(numPixels);
+    // PRINT(numPixels);
     comm->registerObject(this,myID);
     size_t tileID=0;
     for (size_t y=0;y<numPixels.y;y+=TILE_SIZE)
       for (size_t x=0;x<numPixels.x;x+=TILE_SIZE,tileID++) {
         size_t ownerID = tileID % (comm->group->size-1);
         DFBTileData *td = NULL;
-        PRINT(x);
-        PRINT(y);
-        PRINT(ownerID);
-        PRINT(clientRank(ownerID));
-        PRINT(comm->group->rank);
+        // PRINT(x);
+        // PRINT(y);
+        // PRINT(ownerID);
+        // PRINT(clientRank(ownerID));
+        // PRINT(comm->group->rank);
         if (clientRank(ownerID) == comm->group->rank) td = new DFBTileData;
         DFBTile *t = new DFBTile(this,vec2i(x,y),tileID,ownerID,td);
-        PRINT(t->data);
+        // PRINT(t->data);
         tile.push_back(t);
         if (td) 
           myTile.push_back(t);
@@ -140,9 +138,9 @@ namespace ospray {
   {
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
     if (_msg->command == MASTER_WRITE_TILE) {
-      cout << "TILE AT MASTER!" << endl;
+      // cout << "TILE AT MASTER!" << endl;
       MasterTileMessage *msg = (MasterTileMessage *)_msg;
-      PRINT(msg->coords);
+      // PRINT(msg->coords);
       for (int iy=0;iy<TILE_SIZE;iy++) {
         int iiy = iy+msg->coords.y;
         if (iiy >= numPixels.y) continue;
@@ -163,7 +161,7 @@ namespace ospray {
       WriteTileMessage *msg = (WriteTileMessage *)_msg;
       // PRINT(msg->coords);
 
-      printf("client %i RECEIVES tile %i,%i\n",comm->rank(),msg->coords.x,msg->coords.y);
+      // printf("client %i RECEIVES tile %i,%i\n",comm->rank(),msg->coords.x,msg->coords.y);
         
 
       if (!frameIsActive) {
@@ -257,10 +255,40 @@ namespace ospray {
         size_t pixelID = 0;
         for (size_t iy=0;iy<TILE_SIZE;iy++)
           for (size_t ix=0;ix<TILE_SIZE;ix++, pixelID++) {
+            float rcpAccumID = 1.f/(accumID+1);
             vec4f col = vec4f(tile.r[pixelID],
                               tile.g[pixelID],
                               tile.b[pixelID],
                               tile.a[pixelID]);
+            bool dbg =  ((ix+x0 == 512) && (iy+y0 == 512));
+            if (dbg) {
+              PRINT(col);
+            }
+            if (hasAccumBuffer) {
+              if (accumID > 0) {
+                vec4f acc = vec4f(td->accum_r[iy][ix],
+                                  td->accum_g[iy][ix],
+                                  td->accum_b[iy][ix],
+                                  td->accum_a[iy][ix]);;
+                col += acc;
+                if (dbg) {
+                  PRINT(td->accum_r[iy][ix]);
+                  PRINT(acc);
+                  PRINT(col);
+                  PRINT(rcpAccumID);
+                }
+              }
+              td->accum_r[iy][ix] = col.x;
+              td->accum_g[iy][ix] = col.y;
+              td->accum_b[iy][ix] = col.z;
+              td->accum_a[iy][ix] = col.w;
+              col *= rcpAccumID;
+              if (dbg) {
+                PRINT(td->accum_r[iy][ix]);
+                PRINT(col);
+                PRINT(rcpAccumID);
+              }
+            }
             td->color[iy][ix] = cvt_uint32(col);
           }
       }
@@ -268,17 +296,17 @@ namespace ospray {
       if (pixelOp)
         pixelOp->postAccum(tile);
 
-      { // actually commit the (new) tile data into tile memory
-        // size_t pixelID = 0;
-        // for (size_t dy=0;dy<TILE_SIZE;dy++)
-        //   for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
-        memcpy(myTile->data->accum_r,tile.r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
-            // const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
-            // const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
-            // td.color[0][pixelID] = colorChannel[dx+dy*dxdy];
-            // td.depth[0][pixelID] = depthChannel[dx+dy*dxdy];
-          // }
-      }
+      // { // actually commit the (new) tile data into tile memory
+      //   // size_t pixelID = 0;
+      //   // for (size_t dy=0;dy<TILE_SIZE;dy++)
+      //   //   for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
+      //   memcpy(myTile->data->accum_r,tile.r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
+      //       // const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
+      //       // const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
+      //       // td.color[0][pixelID] = colorChannel[dx+dy*dxdy];
+      //       // td.depth[0][pixelID] = depthChannel[dx+dy*dxdy];
+      //     // }
+      // }
      
       MasterTileMessage *mtm = new MasterTileMessage;
       mtm->command = MASTER_WRITE_TILE;

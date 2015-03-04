@@ -35,12 +35,10 @@ namespace ospray {
                                const uint32 channelFlags)
       {
 #if USE_DFB
-        PING;
         // do nothing, other than waiting for the frame buffer to have received all the tiles
 
-        cout << "barrier, to force master to wait for clients..." << endl;
+        cout << "----------- barrier, to force master to wait for clients..." << endl;
         MPI_Barrier(MPI_COMM_WORLD);
-        PING;
 #else
         int rc; 
         MPI_Status status;
@@ -81,7 +79,6 @@ namespace ospray {
         renderer->endFrame(channelFlags);
         renderer = NULL;
         fb = NULL;
-        PING;
         // refDec();
       }
 
@@ -106,7 +103,6 @@ namespace ospray {
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
         renderer->renderTile(tile);
-        // PING;
         // PRINT(tile.region.lower);
         fb->setTile(tile);
 #if USE_DFB
@@ -132,17 +128,13 @@ namespace ospray {
                               const uint32 channelFlags
                               )
       {
-        PING;
         Ref<RenderTask> renderTask
           = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
         renderTask->fb = fb;
         renderTask->renderer = tiledRenderer;
-        PRINT(fb->size);
         renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
         renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
         renderTask->channelFlags = channelFlags;
-        PRINT(renderTask->numTiles_x);
-        PRINT(renderTask->numTiles_y);
         tiledRenderer->beginFrame(fb);
 
         /*! iw: using a local sync event for now; "in theory" we should be
@@ -155,9 +147,7 @@ namespace ospray {
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
         renderTask->wait();
 
-        PING;
         MPI_Barrier(MPI_COMM_WORLD);
-        PING;
         
         // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
         // TaskScheduler::EventSync sync;
