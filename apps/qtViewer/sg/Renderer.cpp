@@ -36,7 +36,10 @@ namespace ospray {
       integrator->setWorld(world);
       integrator->setCamera(camera);
       integrator->commit();
+      camera->commit();
 
+      ospSet1f(camera->ospCamera,"aspect",frameBuffer->size.x/float(frameBuffer->size.y));
+      ospCommit(camera->ospCamera);
       ospRenderFrame(frameBuffer->ospFrameBuffer,
                      integrator->getOSPHandle(),
                      OSP_FB_COLOR|OSP_FB_ACCUM);
@@ -60,7 +63,6 @@ namespace ospray {
     {
       // create a default camera
       Ref<sg::PerspectiveCamera> camera = new sg::PerspectiveCamera;
-      PRINT(up);
       if (world) {
       
         // now, determine world bounds to automatically focus the camera
@@ -75,7 +77,7 @@ namespace ospray {
           if (up == vec3f(0,0,0))
             up = vec3f(0,1,0);
           camera->setUp(up);
-          camera->setFrom(center(worldBounds) + .8f*vec3f(-1,+3,+1.5)*worldBounds.size());
+          camera->setFrom(center(worldBounds) + .3f*vec3f(-1,+3,+1.5)*worldBounds.size());
         }
       }
       camera->commit();

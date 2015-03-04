@@ -126,7 +126,7 @@ namespace ospray {
     template<typename T, int TID>
     struct DataVectorT : public DataBuffer {
       DataVectorT()
-        : DataBufferT(TID)
+        : DataBuffer((OSPDataType)TID)
       {}
       virtual void       *getBase()  const { return (void*)&v[0]; }
       virtual size_t      getSize()  const { return v.size(); }

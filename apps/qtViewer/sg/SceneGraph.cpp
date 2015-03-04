@@ -79,6 +79,8 @@ namespace ospray {
       state.serialization->object.push_back(new Serialization::Object(this,state.instantiation.ptr));
     }
 
+<<<<<<< HEAD
+=======
     void Integrator::commit()
     {
       if (!ospRenderer) {
@@ -98,10 +100,13 @@ namespace ospray {
         ospSetObject(ospRenderer,"camera",camera->ospCamera);
       }
 
+      ospSet1i(ospRenderer,"spp",spp);
+
       lastCommitted = __rdtsc();
       ospCommit(ospRenderer);
       assert(ospRenderer); 
    }
 
+>>>>>>> 4814bd9beb6bcd8df0d16f2c4e0ff0a57f463a3d
   } // ::ospray::sg
 } // ::ospray

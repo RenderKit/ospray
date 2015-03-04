@@ -113,6 +113,10 @@ namespace ospray {
     { 
       sgRenderer->frameBuffer = new sg::FrameBuffer(vec2i(width,height));
       sgRenderer->resetAccumulation();
+
+      Ref<sg::PerspectiveCamera> camera = sgRenderer->camera.cast<sg::PerspectiveCamera>();
+      camera->setAspect(width/float(height));
+      camera->commit();
     }
 
     //! update the ospray camera (ospCamera) from the widget camera (this->camera)
