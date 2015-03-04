@@ -63,7 +63,6 @@ namespace ospray {
     {
       // create a default camera
       Ref<sg::PerspectiveCamera> camera = new sg::PerspectiveCamera;
-      PRINT(up);
       if (world) {
       
         // now, determine world bounds to automatically focus the camera
@@ -78,7 +77,7 @@ namespace ospray {
           if (up == vec3f(0,0,0))
             up = vec3f(0,1,0);
           camera->setUp(up);
-          camera->setFrom(center(worldBounds) + .8f*vec3f(-1,+3,+1.5)*worldBounds.size());
+          camera->setFrom(center(worldBounds) + .3f*vec3f(-1,+3,+1.5)*worldBounds.size());
         }
       }
       camera->commit();

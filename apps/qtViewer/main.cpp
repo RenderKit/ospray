@@ -58,6 +58,9 @@ namespace ospray {
     /*! whether we will display the frames per second */
     bool showFPS = false;
 
+    /*! number of samples per pixel */
+    int spp = 1;
+
     /*! @} */
 
     void main(int argc, const char *argv[]) 
@@ -79,6 +82,9 @@ namespace ospray {
           } else if (arg == "--size") {
             frameResolution.x = atoi(argv[++argID]);
             frameResolution.y = atoi(argv[++argID]);
+          } else if (arg == "-spp" || arg == "--samples-per-pixel") {
+            spp = atoi(argv[++argID]);
+            PRINT(spp);
           } else if (arg == "--1k" || arg == "-1k") {
             frameResolution.x = 1024;
             frameResolution.y = 1024;
@@ -159,6 +165,8 @@ namespace ospray {
           integrator = new sg::Integrator(integratorName);
         }
         renderer->setIntegrator(integrator);
+        integrator->setSPP(spp);
+        integrator->commit();
       }
 
       // -------------------------------------------------------
@@ -227,10 +235,11 @@ namespace ospray {
         cout << "#osp:qtv: saving image" << endl;
         // PRINT((int*)fbMem);
         // PRINT(*(int**)fbMem);
-        QImage image(fbMem,
-                     renderer->frameBuffer->getSize().x,
-                     renderer->frameBuffer->getSize().y,
-                     QImage::Format_ARGB32);
+        QImage image = QImage(fbMem,
+                              renderer->frameBuffer->getSize().x,
+                              renderer->frameBuffer->getSize().y,
+                              QImage::Format_ARGB32).rgbSwapped().mirrored();
+        // QImage fb = QImage(fbMem,size.x,size.y,QImage::Format_RGB32).rgbSwapped().mirrored();
         image.save(outFileName.c_str());
         renderer->frameBuffer->unmap(fbMem);
         cout << "#osp:qtv: rendered image saved to " << outFileName << endl;

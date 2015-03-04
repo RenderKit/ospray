@@ -20,7 +20,7 @@ namespace ospray {
 
     /*! a renderer node - the generic renderer node */
     struct Integrator : public sg::Node {
-      Integrator(const std::string &type) : type(type), ospRenderer(NULL) {};
+      Integrator(const std::string &type) : type(type), ospRenderer(NULL), spp(1) {};
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Renderer"; }
       /*! renderer type, i.e., 'ao', 'obj', 'pathtracer', ... */
@@ -31,6 +31,8 @@ namespace ospray {
           called */
       virtual void commit();
       
+      void setSPP(size_t spp);
+
       OSPRenderer getOSPHandle() const { return ospRenderer; }
 
       SG_NODE_DECLARE_MEMBER(Ref<sg::Camera>,camera,Camera);
@@ -42,6 +44,9 @@ namespace ospray {
     public:
       OSPRenderer ospRenderer;
       
+      //! number of samples per pixel
+      size_t spp;
+
       // Ref<sg::World> world;
       // Ref<sg::Camera> camera;
     };

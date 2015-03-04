@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,46 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#undef NDEBUG
+#include "ospray/fb/Tile.ih"
+#include "ospray/fb/FrameBuffer.ih"
+#include "ospray/render/util.ih"
 
-// scene graph
-#include "Integrator.h"
+/*! a Local FrameBuffer that stores all pixel values (color, depth,
+    accum) in a plain 2D array of pixels (one array per component) */
+struct LocalFB 
+{
+  FrameBuffer super; /*!< superclass that we inherit from */
+  void          *colorBuffer;
+  uniform float *depthBuffer;
+  uniform vec4f *accumBuffer;
+};
 
-namespace ospray {
-  namespace sg {
-    void Integrator::commit()
-    {
-      if (!ospRenderer) {
-        ospRenderer = ospNewRenderer(type.c_str());
-        if (!ospRenderer) 
-          throw std::runtime_error("#osp:sg:SceneGraph: could not create renderer (of type '"+type+"')");
-      }
-      if (lastCommitted >= lastModified) return;
-
-      ospSet1i(ospRenderer,"spp",spp);
-
-      // set world, camera, ...
-      if (world ) { 
-        world->commit();
-        ospSetObject(ospRenderer,"world", world->ospModel);
-      }
-      if (camera) {
-        camera->commit();
-        ospSetObject(ospRenderer,"camera",camera->ospCamera);
-      }
-
-      lastCommitted = __rdtsc();
-      ospCommit(ospRenderer);
-      assert(ospRenderer); 
-   }
-
-    void Integrator::setSPP(size_t spp) { 
-      this->spp = spp;
-      if (ospRenderer) {
-        ospSet1i(ospRenderer,"spp",spp);
-      }
-    }
-
-
-  } // ::ospray::sg
-} // ::ospray
