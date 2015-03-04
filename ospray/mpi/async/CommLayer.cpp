@@ -28,6 +28,16 @@ namespace ospray {
 
       CommLayer *CommLayer::WORLD = NULL;
 
+
+      CommLayer::Object::Object(CommLayer *comm, ObjectID myID)
+        : myID(myID), comm(comm)
+      {
+        master = mpi::async::CommLayer::Address(comm->masterRank(),myID);
+        worker = new mpi::async::CommLayer::Address[comm->numWorkers()];
+        for (int i=0;i<comm->numWorkers();i++)
+          worker[i] = mpi::async::CommLayer::Address(comm->workerRank(i),myID);
+      }
+
       void CommLayer::process(const mpi::Address &source, void *message, int32 size)
       {
         NOTIMPLEMENTED;

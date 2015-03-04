@@ -159,7 +159,9 @@ namespace ospray {
     };
 
     /*! constructor */
-    ManagedObject() : ID(-1), ispcEquivalent(NULL), managedObjectType(OSP_UNKNOWN) {};
+    ManagedObject(void *ispcEquivalent=NULL) 
+      : ID(-1), ispcEquivalent(ispcEquivalent), managedObjectType(OSP_UNKNOWN) 
+    {};
 
     /*! destructor */
     virtual ~ManagedObject() {};

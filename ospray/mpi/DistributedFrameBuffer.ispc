@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,24 +14,30 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "ospray/fb/FrameBuffer.ih"
 
-/*! \file render/util.h Defines some utility functions shaared by different shading codes */
+struct DistributedFrameBuffer {
+  FrameBuffer super;
+};
 
-#include "ospray/common/OSPCommon.h"
+export void *uniform DistributedFrameBuffer_create(void *uniform cClassPtr)
+{
+  DistributedFrameBuffer *uniform self = uniform new uniform DistributedFrameBuffer;
+  FrameBuffer_Constructor(&self->super,cClassPtr);
 
-namespace ospray {
+  return self;
+}
 
-  //! generates a "random" color from an int.
-  inline vec3f makeRandomColor(const int i)
-  {
-    const int mx = 13*17*43;
-    const int my = 11*29;
-    const int mz = 7*23*63;
-    const uint32 g = (i * (3*5*127)+12312314);
-    return vec3f((g % mx)*(1.f/(mx-1)),
-                 (g % my)*(1.f/(my-1)),
-                 (g % mz)*(1.f/(mz-1)));
-  }
 
-} // ::ospray
+
+export void DistributedFrameBuffer_set(void *uniform _self,
+                                       const uniform uint32 size_x,
+                                       const uniform uint32 size_y,
+                                       uniform int32 colorBufferFormat)
+{
+  DistributedFrameBuffer *uniform self = (DistributedFrameBuffer*)_self;
+  FrameBuffer_set(&self->super,size_x,size_y,colorBufferFormat);
+}
+
+
+

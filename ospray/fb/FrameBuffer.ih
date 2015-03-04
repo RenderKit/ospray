@@ -54,3 +54,42 @@ struct FrameBuffer
   void *cClassPtr; /*!< pointer back to c++-side of this class */
 };
 
+
+
+/*! helper function to convert float-color into rgba-uint format */
+inline uint32 cvt_uint32(const float f)
+{
+#if 0
+  return (int32)(255.9f * f);
+#else
+  return (int32)(255.9f * max(min(f,1.f),0.f));
+#endif
+}
+
+/*! helper function to convert float-color into rgba-uint format */
+inline uint32 cvt_uint32(const vec4f &v)
+{
+  return 
+    (cvt_uint32(v.x) << 0)  |
+    (cvt_uint32(v.y) << 8)  |
+    (cvt_uint32(v.z) << 16) |
+    (cvt_uint32(v.w) << 24);
+}
+
+/*! helper function to convert float-color into rgba-uint format */
+inline uint32 cvt_uint32(const vec3f &v)
+{
+  return 
+    (cvt_uint32(v.x) << 0)  |
+    (cvt_uint32(v.y) << 8)  |
+    (cvt_uint32(v.z) << 16);
+}
+
+
+void FrameBuffer_Constructor(FrameBuffer *uniform self,
+                             void *uniform cClassPtr);
+
+void FrameBuffer_set(FrameBuffer *uniform self,
+                     const uniform uint32 size_x,
+                     const uniform uint32 size_y,
+                     int32 uniform colorBufferFormat);

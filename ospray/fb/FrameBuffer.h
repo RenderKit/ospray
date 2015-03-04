@@ -21,6 +21,33 @@
 
 namespace ospray {
 
+  /*! helper function to convert float-color into rgba-uint format */
+  inline uint32 cvt_uint32(const float f)
+  {
+    return (int32)(255.9f * std::max(std::min(f,1.f),0.f));
+  }
+
+  /*! helper function to convert float-color into rgba-uint format */
+  inline uint32 cvt_uint32(const vec4f &v)
+  {
+    return 
+      (cvt_uint32(v.x) << 0)  |
+      (cvt_uint32(v.y) << 8)  |
+      (cvt_uint32(v.z) << 16) |
+      (cvt_uint32(v.w) << 24);
+  }
+
+  /*! helper function to convert float-color into rgba-uint format */
+  inline uint32 cvt_uint32(const vec3f &v)
+  {
+    return 
+      (cvt_uint32(v.x) << 0)  |
+      (cvt_uint32(v.y) << 8)  |
+      (cvt_uint32(v.z) << 16);
+  }
+
+
+
   /*! abstract frame buffer class */
   struct FrameBuffer : public ManagedObject {
     /*! app-mappable format of the color buffer. make sure that this
@@ -67,5 +94,8 @@ namespace ospray {
     Ref<PixelOp::Instance> pixelOp;
   };
 
+  /*! helper function for debugging. write out given pixels in PPM
+      format. Pixels are supposed to come in as RGBA, 4x8 bit */
+  void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels);
   
 } // ::ospray

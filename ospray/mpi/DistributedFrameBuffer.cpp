@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "DistributedFrameBuffer.h"
+#include "DistributedFrameBuffer_ispc.h"
 
 namespace ospray {
   using std::cout;
@@ -31,12 +32,15 @@ namespace ospray {
   // }
 
   DistributedFrameBuffer::DFBTile::DFBTile(DistributedFrameBuffer *fb, 
-                                     const vec2i &begin, 
-                                     size_t tileID, 
-                                     size_t ownerID, 
-                                     DFBTileData *data)
+                                           const vec2i &begin, 
+                                           size_t tileID, 
+                                           size_t ownerID, 
+                                           DFBTileData *data)
     : tileID(tileID), ownerID(ownerID), fb(fb), begin(begin), data(data)
-  {}
+  {
+    PRINT(data);
+    PRINT(this->data);
+  }
     
   // //! depth-composite additional 'source' info into existing 'target' tile
   // inline void DistributedFrameBuffer
@@ -76,21 +80,31 @@ namespace ospray {
                            bool hasDepthBuffer,
                            bool hasAccumBuffer)
     : mpi::async::CommLayer::Object(comm,myID),
-      FrameBuffer(size,colorBufferFormat,hasDepthBuffer,hasAccumBuffer),
-      numPixels(numPixels), maxValidPixelID(numPixels-vec2i(1)),
+      FrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,hasAccumBuffer),
+      numPixels(numPixels),
+      maxValidPixelID(numPixels-vec2i(1)),
       numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
       frameIsActive(false), frameIsDone(false), localFBonMaster(NULL)
   {
     assert(comm);
+    this->ispcEquivalent = ispc::DistributedFrameBuffer_create(this);
+    ispc::DistributedFrameBuffer_set(getIE(),numPixels.x,numPixels.y,colorBufferFormat);
+    PRINT(numPixels);
     comm->registerObject(this,myID);
     size_t tileID=0;
     for (size_t y=0;y<numPixels.y;y+=TILE_SIZE)
       for (size_t x=0;x<numPixels.x;x+=TILE_SIZE,tileID++) {
-        size_t ownerID = tileID%comm->group->size-1;
+        size_t ownerID = tileID % (comm->group->size-1);
         DFBTileData *td = NULL;
+        PRINT(x);
+        PRINT(y);
+        PRINT(ownerID);
+        PRINT(clientRank(ownerID));
+        PRINT(comm->group->rank);
         if (clientRank(ownerID) == comm->group->rank) td = new DFBTileData;
         DFBTile *t = new DFBTile(this,vec2i(x,y),tileID,ownerID,td);
+        PRINT(t->data);
         tile.push_back(t);
         if (td) 
           myTile.push_back(t);
@@ -100,6 +114,8 @@ namespace ospray {
       cout << "we're the master - creating a local fb to gather results" << endl;
       localFBonMaster = new LocalFrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,0);
     }
+    ispc::DistributedFrameBuffer_set(getIE(),numPixels.x,numPixels.y,
+                                     colorBufferFormat);
   }
 
   const void *DistributedFrameBuffer::mapDepthBuffer() 
@@ -123,6 +139,11 @@ namespace ospray {
   void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)
   {
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
+    if (_msg->command == WORKER_WRITE_TILE) {
+      cout << "TILE AT MASTER!" << endl;
+      return;
+    }
+
     if (_msg->command == WORKER_WRITE_TILE) {
       // start a new frame!
       WriteTileMessage *msg = (WriteTileMessage *)_msg;
@@ -163,6 +184,11 @@ namespace ospray {
     throw std::runtime_error("unkown command");
   }
 
+  void DistributedFrameBuffer::setTile(ospray::Tile &tile)
+  {
+    writeTile(tile);
+  }
+
   //! write given tile data into the frame buffer, sending to remove owner if required
   void DistributedFrameBuffer::writeTile(ospray::Tile &tile)
   { 
@@ -171,6 +197,8 @@ namespace ospray {
     const int y0 = tile.region.lower.y;
     typename DistributedFrameBuffer::DFBTile *myTile
       = this->getTileFor(x0,y0);
+
+    printf("found tile %lx data %lx\n",myTile,myTile->data);
     if (myTile->data == NULL) {
       // NOT my tile...
       WriteTileMessage *msg = new WriteTileMessage;
@@ -200,20 +228,53 @@ namespace ospray {
                    msg,sizeof(*msg));
     } else {
       // this is my tile...
+      assert(frameIsActive);
 
       // printf("client %i WRITES tile %li,%li\n",comm->rank(),x0,y0);
 
-      // typename DistributedFrameBuffer::TileData td;
-      size_t pixelID = 0;
-      for (size_t dy=0;dy<TILE_SIZE;dy++)
-        for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
-          memcpy(myTile->data->accum_r,tile.r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
-          // const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
-          // const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
-          // td.color[0][pixelID] = colorChannel[dx+dy*dxdy];
-          // td.depth[0][pixelID] = depthChannel[dx+dy*dxdy];
-        }
-      assert(frameIsActive);
+      if (pixelOp)
+        pixelOp->preAccum(tile);
+
+      //! accumulate new tile data with existing accum data for this tile
+      DFBTileData *td = myTile->data;
+      // if (hasAccumBuffer) {
+      {
+        size_t pixelID = 0;
+        for (size_t iy=0;iy<TILE_SIZE;iy++)
+          for (size_t ix=0;ix<TILE_SIZE;ix++, pixelID++) {
+            vec4f col = vec4f(tile.r[pixelID],
+                              tile.g[pixelID],
+                              tile.b[pixelID],
+                              tile.a[pixelID]);
+            td->color[iy][ix] = cvt_uint32(col);
+          }
+      }
+      
+      if (pixelOp)
+        pixelOp->postAccum(tile);
+
+      { // actually commit the (new) tile data into tile memory
+        // size_t pixelID = 0;
+        // for (size_t dy=0;dy<TILE_SIZE;dy++)
+        //   for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
+        memcpy(myTile->data->accum_r,tile.r,4*TILE_SIZE*TILE_SIZE*sizeof(float));
+            // const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
+            // const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
+            // td.color[0][pixelID] = colorChannel[dx+dy*dxdy];
+            // td.depth[0][pixelID] = depthChannel[dx+dy*dxdy];
+          // }
+      }
+     
+      MasterTileMessage *mtm = new MasterTileMessage;
+      comm->sendTo(this->master,mtm,sizeof(*mtm));
+      
+#if 0
+      char fn[1000];
+      sprintf(fn,"/tmp/dfb_seq%05i_color_tile_%04i_%04i.ppm",accumID+1,
+              myTile->begin.x,myTile->begin.y);
+      vec2i size(TILE_SIZE,TILE_SIZE);
+      writePPM(fn,size,(uint32*)&myTile->data->color);
+#endif
       // DistributedFrameBuffer::depthComposite(tile->data,&td);
     }
     // delete td;
@@ -221,7 +282,7 @@ namespace ospray {
 
 
     /*! \brief clear (the specified channels of) this frame buffer 
-
+      
       \details for the *distributed* frame buffer, we assume that
       *all* nodes get this command, and that each instance therefore
       can clear only its own tiles without having to tell any other
@@ -245,6 +306,7 @@ namespace ospray {
       }
       accumID = 0;
     }
+    cout << "DFB CLEARED" << endl;
   }
 
 

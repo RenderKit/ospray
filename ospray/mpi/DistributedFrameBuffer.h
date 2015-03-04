@@ -33,7 +33,7 @@ namespace ospray {
     //! return number of tiles in x and y direction
     virtual vec2i getNumTiles()  const { return numTiles; };
     //! get number of pixels in x and y diretion
-    virtual vec2i getNumPixels() const { return numPixels; }
+    virtual vec2i getNumPixels() const { return size; }
     virtual size_t numMyTiles() const { return myTile.size(); };
 
     /*! color buffer and depth buffer on master */
@@ -54,6 +54,11 @@ namespace ospray {
       float  accum_a[TILE_SIZE][TILE_SIZE];
       uint32 color[TILE_SIZE][TILE_SIZE];
       float  depth[TILE_SIZE][TILE_SIZE];
+    };
+
+    //! message sent to the master when a tile is finished. Todo: compress the color data */
+    struct MasterTileMessage : public mpi::async::CommLayer::Message {
+      uint32 color[TILE_SIZE][TILE_SIZE];
     };
 
     //! message sent from one node's instance to another, to tell that instance to write that tile
@@ -110,7 +115,7 @@ namespace ospray {
     virtual const void *mapDepthBuffer();
     virtual const void *mapColorBuffer();
     virtual void unmap(const void *mappedMem);
-    virtual void setTile(ospray::Tile &tile)  { NOTIMPLEMENTED; }
+    virtual void setTile(ospray::Tile &tile);
 
     /*! \brief clear (the specified channels of) this frame buffer 
 
@@ -159,7 +164,14 @@ namespace ospray {
     // //! depth-composite additional 'source' info into existing 'target' tile
     // static inline void depthComposite(DFBTileData *target, DFBTileData *source);
       
-    vec2i numPixels,maxValidPixelID,numTiles;
+    /*! the number of pixels in the (whole) frame buffer (independent of which tiles we have).
+
+      Note this number should ALWAYS be equal to FrameBuffer::size;
+      but we use a more explicit name in this class to avoid confusion
+      when also iterating over numTiles, numDisplays, etc */
+    vec2i numPixels;
+    vec2i maxValidPixelID;
+    vec2i numTiles;
 
     std::vector<DFBTile *> tile;    //!< list of all tiles
     std::vector<DFBTile *> myTile; //!< list of tiles belonging to this node. is a subset of 'tile' 

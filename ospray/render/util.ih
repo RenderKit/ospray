@@ -62,32 +62,6 @@ inline vec3f make_random_color(const int i)
                     (g % mz)*(1.f/(mz-1)));
 }
 
-inline uint32 cvt_uint32(const float f)
-{
-#if 1
-  return (int32)(255.9f * f);
-#else
-  return (uint32)(255.9f * max(min(f,1.f),0.f));
-#endif
-}
-
-inline uint32 cvt_uint32(const vec4f &v)
-{
-  return 
-    (cvt_uint32(v.x) << 0)  |
-    (cvt_uint32(v.y) << 8)  |
-    (cvt_uint32(v.z) << 16) |
-    (cvt_uint32(v.w) << 24);
-}
-
-inline uint32 cvt_uint32(const vec3f &v)
-{
-  return 
-    (cvt_uint32(v.x) << 0)  |
-    (cvt_uint32(v.y) << 8)  |
-    (cvt_uint32(v.z) << 16);
-}
-
 /*! struct that stores a precomputed z-order for tiles of TILE_SIZE x TILE_SIZE pixels */
 struct z_order_t {
   /*! 32-bit field specifying both x and y coordinate of the z-order,

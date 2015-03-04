@@ -84,9 +84,7 @@ namespace ospray {
 
         /*! abstraction for an object that can send and receive messages */
         struct Object {
-          Object(CommLayer *comm, ObjectID myID)
-            : myID(myID), comm(comm)
-          {}
+          Object(CommLayer *comm, ObjectID myID);
 
           /*! function that will be called by the commlayer as soon as
               a message for this object comes in. this function should
@@ -98,6 +96,11 @@ namespace ospray {
           
           ObjectID myID;
           CommLayer *comm;
+
+          //! address of corresponding instance of 'this' on master
+          mpi::async::CommLayer::Address  master;
+          //! address of corresponding instance of 'this' on i'th worker
+          mpi::async::CommLayer::Address *worker;
         };
         
         void sendTo(Address dest, Message *msg, size_t size);
@@ -106,7 +109,11 @@ namespace ospray {
 
         //! convenience function that returns our rank in the comm group 
         int32 rank() const { return group->rank; }
-        
+
+        int32 numWorkers() const { return group->size; }
+        int32 masterRank() const { return 0; }
+        int32 workerRank(int clientID) const { return 1+clientID; }
+
         //! mutex to protect the registry
         Mutex mutex;
         

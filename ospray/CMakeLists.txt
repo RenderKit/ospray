@@ -162,6 +162,7 @@ IF (OSPRAY_MPI)
     mpi/async/CommLayer.cpp
     
     mpi/DistributedFrameBuffer.cpp
+    mpi/DistributedFrameBuffer.ispc
     )
 
   # ============================================

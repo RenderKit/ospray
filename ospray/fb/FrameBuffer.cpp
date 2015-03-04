@@ -37,4 +37,20 @@ namespace ospray {
   {
   }
 
+  /*! helper function for debugging. write out given pixels in PPM format */
+  void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels)
+  {
+    FILE *file = fopen(fileName.c_str(),"w");
+    if (!file) {
+      std::cout << "#osp:fb: could not open file " << fileName << std::endl;
+      return;
+    }
+    fprintf(file,"P6\n%i %i\n255\n",size.x,size.y);
+    for (int i=0;i<size.x*size.y;i++) {
+      char *ptr = (char*)&pixels[i];
+      fwrite(ptr,1,3,file);
+    }
+    fclose(file);
+  }
+  
 } // ::ospray
