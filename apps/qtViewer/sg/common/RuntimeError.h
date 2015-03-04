@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#pragma once
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+// ospray::sg
+#include "Node.h"
+// stl
+#include <stdexcept>
+
+namespace ospray {
+  namespace sg {
+
+    /*! \brief scene graph run time error abstraction. 
+
+      \detailed we derive from std::runtime_error to allow apps to
+      just catch those errors if they're not explicitly interested in
+      where it came from */
+    struct RuntimeError : public std::runtime_error {
+      RuntimeError(const std::string &err) : std::runtime_error("#osp:sg: "+err) {}
+    };
+
+  }
+}

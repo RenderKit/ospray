@@ -173,6 +173,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       const uint32 index = i + programIndex;
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) 
         continue;
@@ -222,7 +223,13 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
       camera->initRay(camera,screenSample.ray,cameraSample);
+#if 0
+      if (screenSample.sampleID.x+pixel_du > 250) {
+        screenSample.rgb = make_vec3f(0.f);
+      } else
+#endif
       renderer->renderSample(renderer,screenSample);
+
 
       for (uniform int p = 0; p < blocks; p++) {
         const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);

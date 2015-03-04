@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,38 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#pragma once
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+#include "sg/common/Node.h"
+#include "sg/common/Serialization.h"
+
+namespace ospray {
+  namespace sg {
+
+    /*! a camera node - the generic camera node */
+    struct Camera : public sg::Node {
+      Camera(const std::string &type) : type(type), ospCamera(NULL) {};
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const { return "ospray::sg::Camera"; }
+      /*! camera type, i.e., 'ao', 'obj', 'pathtracer', ... */
+      const std::string type; 
+
+      virtual void create() { 
+        if (ospCamera) destroy();
+        ospCamera = ospNewCamera(type.c_str());
+        commit();
+      };
+      virtual void commit() {}
+      virtual void destroy() {
+        if (!ospCamera) return;
+        ospRelease(ospCamera);
+        ospCamera = 0;
+      }
+
+      OSPCamera ospCamera;
+    };
+
+  } // ::ospray::sg
+} // ::ospray
+
+

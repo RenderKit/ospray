@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#include "sg/common/Node.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+namespace ospray {
+  namespace sg {
+
+    // list of all named nodes - for now use this as a global
+    // variable, but eventually we'll need tofind a better way for
+    // storing this
+    std::map<std::string,Ref<sg::Node> > namedNodes;
+
+    sg::Node *findNamedNode(const std::string &name)
+    { 
+      if (namedNodes.find(name) != namedNodes.end()) 
+        return namedNodes[name].ptr; 
+      return NULL; 
+    }
+
+    void registerNamedNode(const std::string &name, Ref<sg::Node> node)
+    {
+      namedNodes[name] = node; 
+    }
+
+  }
+}

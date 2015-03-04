@@ -101,12 +101,14 @@ namespace ospray {
     case OSP_UINT:  numTris = indexData->size() / 3; break;
     case OSP_INT3:  numTris = indexData->size(); break;
     case OSP_UINT3: numTris = indexData->size(); break;
+    case OSP_INT4:  numTris = indexData->size(); break;
     default:
       throw std::runtime_error("unsupported trianglemesh.index data type");
     }
 
     switch (vertexData->type) {
     case OSP_FLOAT:   numVerts = vertexData->size() / 4; break;
+    case OSP_FLOAT3:  numVerts = vertexData->size(); break;
     case OSP_FLOAT3A: numVerts = vertexData->size(); break;
     case OSP_FLOAT4:  numVerts = vertexData->size(); break;
     default:

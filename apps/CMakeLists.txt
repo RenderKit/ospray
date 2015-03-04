@@ -32,6 +32,12 @@ IF(NOT THIS_IS_MIC)
     ADD_SUBDIRECTORY(modelViewer)
   ENDIF()
 
+  # mini-scene graph viewer for _geometry_ (intentionally simple)
+  OPTION(OSPRAY_APPS_QTVIEWER "Build ospQTViewer (QT-based model viewer)" OFF)
+  IF (OSPRAY_APPS_QTVIEWER)
+    ADD_SUBDIRECTORY(qtViewer)
+  ENDIF()
+
   # stream line viewer for NASA Stream Line Demo
   OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." ON)
   IF(OSPRAY_APPS_STREAMLINEVIEWER)

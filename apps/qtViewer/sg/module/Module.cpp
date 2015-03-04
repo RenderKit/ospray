@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,40 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+// ospray::sg
+#include "Module.h"
+#include "../common/RuntimeError.h"
+// ospray
+#include "ospray/common/Library.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+/*! \file sg/module/Module.cpp Defines the interface for writing
+    ospray::sg modules */
+
+namespace ospray {
+  namespace sg {
+
+    /*! allows a user of the scene graph (e.g., a model viewer) to
+      load a scene graph module */
+    void loadModule(const std::string &moduleName)
+    {
+      static std::set<std::string> alreadyLoaded;
+      if (alreadyLoaded.find(moduleName) != alreadyLoaded.end()) return;
+
+      alreadyLoaded.insert(moduleName);
+
+      const std::string libName = "ospray_sg_"+moduleName;
+      const std::string symName = "ospray_sg_"+moduleName+"_init";
+      
+      ospray::loadLibrary(libName);
+      void *sym = ospray::getSymbol(symName);
+      if (!sym)
+        throw sg::RuntimeError("could not load module '"+moduleName+"'");
+
+      void (*initFct)() = (void (*)())sym;
+      initFct();
+    }
+
+  }
+}
+
+
