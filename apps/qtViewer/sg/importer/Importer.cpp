@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,37 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+// ospray::sg
+#include "Importer.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+/*! \file sg/module/Importer.cpp Defines the interface for writing
+    file importers for the ospray::sg */
+
+namespace ospray {
+  namespace sg {
+
+    std::map<const std::string, ImporterFunction> importerForExtension;
+
+    /*! declare an importer function for a given file extension */
+    void declareImporterForFileExtension(const std::string &fileExtension,
+                                         ImporterFunction importer)
+    {
+      importerForExtension[fileExtension] = importer;
+    }
+
+    /*! import a given file. throws a sg::RuntimeError if this could not be done */
+
+    void importFile(Ref<sg::World> &world, const FileName &fileName)
+    {
+      ImporterFunction importer = importerForExtension[fileName.ext()];
+      if (importer) {
+        ImportState state(world);
+        importer(fileName,state);
+      } else
+        throw sg::RuntimeError("unknown file format (fileName was '"+fileName.str()+"')");
+    }
+
+  }
+}
+
+

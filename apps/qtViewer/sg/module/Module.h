@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,32 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+// ospray::sg
+#include "../common/World.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+/*! \file sg/module/Module.h Defines the interface for writing
+    ospray::sg modules */
+
+namespace ospray {
+  namespace sg {
+    
+    /*! allows a user of the scene graph (e.g., a model viewer) to
+        load a scene graph module */
+    void loadModule(const std::string &moduleName);
+
+    /*! use this macro in a loadable module to register a new node
+        type (defined in this module) to the scene graph */
+#define OSPRAY_SG_REGISTER_NODE(className) \
+    void foo() { notImplemented(); }
+
+    /*! use this macro in a loadable module to properly define this
+        module to the scene graph. Make sure to follow this
+        declaration with a function body that does the actual
+        initialization of this module. */
+#define OSPRAY_SG_DECLARE_MODULE(moduleName) \
+    extern "C" void ospray_sg_##moduleName##_init()
+
+  }
+}
+
+

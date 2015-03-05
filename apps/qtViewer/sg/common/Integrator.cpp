@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,46 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#undef NDEBUG
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+// scene graph
+#include "Integrator.h"
+
+namespace ospray {
+  namespace sg {
+
+    void Integrator::commit()
+    {
+      if (!ospRenderer) {
+        ospRenderer = ospNewRenderer(type.c_str());
+        if (!ospRenderer) 
+          throw std::runtime_error("#osp:sg:SceneGraph: could not create renderer (of type '"+type+"')");
+      }
+      if (lastCommitted >= lastModified) return;
+
+      ospSet1i(ospRenderer,"spp",spp);
+
+      // set world, camera, ...
+      if (world ) { 
+        world->commit();
+        ospSetObject(ospRenderer,"world", world->ospModel);
+      }
+      if (camera) {
+        camera->commit();
+        ospSetObject(ospRenderer,"camera",camera->ospCamera);
+      }
+
+      lastCommitted = __rdtsc();
+      ospCommit(ospRenderer);
+      assert(ospRenderer); 
+   }
+
+    void Integrator::setSPP(size_t spp) { 
+      this->spp = spp;
+      if (ospRenderer) {
+        ospSet1i(ospRenderer,"spp",spp);
+      }
+    }
+
+  } // ::ospray::sg
+} // ::ospray

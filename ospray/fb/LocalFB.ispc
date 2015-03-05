@@ -72,7 +72,6 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
     for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      //const uint32  pixID = i*programCount+programIndex;
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
@@ -108,14 +107,12 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
 
 
     for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      //const uint32  pixID = i*programCount+programIndex;
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
       const uint32  ofs   = y*fb->inherited.size.x+x;
       const vec4f value = getRGBA(tile,pixID);
       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
-        //        dst[ofs]        = cvt_uint32(value);
         if (accum) {
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
@@ -131,7 +128,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       }
     }
   } else {
-    print("format UNKONWN\n");
+    print("format UNKNOWN\n");
   }
 }
 

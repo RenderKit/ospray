@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,35 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#pragma once
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+// sg
+#include "sg/common/Node.h"
+// embree
+#include "common/sys/filename.h"
+
+namespace ospray {
+  namespace sg {
+    using embree::FileName;
+
+    /*! \brief C++ wrapper for a 2D Texture */
+    struct Texture2D : public Node {
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const { return "ospray::viewer::sg::Texture2D"; };
+
+      //! \brief load texture from given file. 
+      /*! \detailed if file does not exist, or cannot be loaded for
+          some reason, return NULL. Multiple loads from the same file
+          will return the *same* texture object */
+      static Ref<Texture2D> load(const FileName &fileName);
+
+      //! texture size, in pixels
+      vec2i       size;
+      //! pixel data, in whatever format specified in 'texelType'
+      void       *texel;
+      //! format of each texel
+      OSPDataType texelType;
+    };
+
+  } // ::ospray::sg
+} // ::ospray

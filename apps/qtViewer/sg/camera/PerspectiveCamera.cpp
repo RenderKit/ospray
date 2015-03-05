@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,32 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#include "sg/camera/PerspectiveCamera.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+namespace ospray {
+  namespace sg {
+
+    PerspectiveCamera::PerspectiveCamera() 
+      : Camera("perspective"),
+        from(0,-1,0), at(0,0,0), up(0,0,1), aspect(1),
+        fovy(60)
+    {
+      create();
+    }
+
+    void PerspectiveCamera::commit() 
+    {
+      if (!ospCamera) create(); 
+      
+      ospSetVec3f(ospCamera,"pos",from);
+      ospSetVec3f(ospCamera,"dir",at - from);
+      ospSetVec3f(ospCamera,"up",up);
+      ospSetf(ospCamera,"aspect",aspect);
+      ospSetf(ospCamera,"fovy",fovy);
+      ospCommit(ospCamera);      
+    }
+    
+  } // ::ospray::sg
+} // ::ospray
+
+

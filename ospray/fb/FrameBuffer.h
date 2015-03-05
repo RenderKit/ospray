@@ -55,8 +55,7 @@ namespace ospray {
         an (application-mappable) depth buffer */
     bool hasDepthBuffer;
 
-    /*! indicates whether the app requested this frame buffer to have
-        an (application-mappable) depth buffer */
+    /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;
 
     /*! tracks how many times we have already accumulated into this

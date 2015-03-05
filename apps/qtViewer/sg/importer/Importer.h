@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,38 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+// ospray::sg
+#include "../common/World.h"
+// embree
+#include "common/sys/filename.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+/*! \file sg/module/Importer.h Defines the interface for writing
+    file importers for the ospray::sg */
+
+namespace ospray {
+  namespace sg {
+    using embree::FileName;
+
+    struct ImportState {
+      Ref<sg::World> world;
+      // std::vector<std::string> searchPaths;
+
+      ImportState(Ref<sg::World> world)
+        : world(world)
+      {}
+    };
+
+    /*! prototype for any scene graph importer function */
+    typedef void (*ImporterFunction)(const FileName &fileName,
+                                     sg::ImportState &importerState);
+    
+    /*! declare an importer function for a given file extension */
+    void declareImporterForFileExtension(const std::string &fileExtension,
+                                         ImporterFunction importer);
+    /*! import a given file. throws a sg::RuntimeError if this could not be done */
+    void importFile(Ref<sg::World> &world, const FileName &fileName);
+
+  }
+}
+
+

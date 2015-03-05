@@ -75,6 +75,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       const uint32 index = i + programIndex;
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) 
         continue;
@@ -110,23 +111,27 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
 
     CameraSample cameraSample;
 
-    for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      const uint32 index = i + programIndex;
-      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
-      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+    const uniform int blocks = fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+
+    for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE/blocks;i+=programCount) {
+      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[i*blocks];
+      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[i*blocks];
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) {
         continue;
       }
 
-      const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-      assert(pixel < TILE_SIZE*TILE_SIZE);
-      for (uniform uint32 s = 0; s<spp; s++) {
-        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+      cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
-        camera->initRay(camera,screenSample.ray,cameraSample);
-        renderer->renderSample(renderer,screenSample);
+      camera->initRay(camera,screenSample.ray,cameraSample);
+      renderer->renderSample(renderer,screenSample);
+
+      // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
+
+      for (uniform int p = 0; p < blocks; p++) {
+        const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
+        assert(pixel < TILE_SIZE*TILE_SIZE);
         setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
       }
     }

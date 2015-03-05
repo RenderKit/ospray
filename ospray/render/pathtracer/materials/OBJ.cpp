@@ -20,6 +20,7 @@
 
 namespace ospray {
   namespace pathtracer {
+
     struct OBJMaterial : public ospray::Material {
       //! \brief common function to help printf-debugging 
       /*! Every derived class should overrride this! */
@@ -54,5 +55,6 @@ namespace ospray {
     };
 
     OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_OBJMaterial);
+    OSP_REGISTER_MATERIAL(OBJMaterial,PathTracer_default)
   }
 }

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,44 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#include "sg/common/World.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+namespace ospray {
+  namespace sg {
+
+    box3f World::getBounds() 
+    {
+      box3f bounds = embree::empty;
+      for (int i=0;i<node.size();i++)
+        bounds.extend(node[i]->getBounds());
+      return bounds;
+    }
+
+    //! serialize into given serialization state 
+    void sg::World::serialize(sg::Serialization::State &state)
+    {
+      sg::Serialization::State savedState = state;
+      {
+        //state->serialization->object.push_back(Serialization::);
+        for (size_t i=0; i<node.size(); i++)
+          node[i]->serialize(state);
+      }
+      state = savedState;
+    }
+
+    void World::render(RenderContext &ctx)
+    {
+      ctx.world = this;
+
+      if (ospModel)
+        throw std::runtime_error("World::ospModel alrady exists!?");
+      ospModel = ospNewModel();
+      affine3f xfm = embree::one;
+      for (size_t i=0;i<node.size();i++) {
+        node[i]->render(ctx);
+      }
+      ospCommit(ospModel);
+    }
+
+  }
+}

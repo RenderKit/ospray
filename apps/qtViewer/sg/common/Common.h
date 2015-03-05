@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2014 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,11 +14,37 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "SeismicVolumeFile.h"
+#pragma once
 
-//! Loader for seismic volume files for supported self-describing formats.
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+// ospray API
+#include "ospray/ospray.h"
+// ospray 
+#include "ospray/common/OSPCommon.h"
+// STL
+
+namespace ospray {
+  namespace sg {
+
+    typedef unsigned int uint;
+    
+    /*! base node for every scene graph node */
+    struct Node;
+    /*! c++ wrapper for an ospray model */
+    struct World;
+    /*! c++ wrapper for an ospray light source */
+    struct Light;
+    /*! c++ wrapper for an ospray camera */
+    struct Geometry;
+    /*! c++ wrapper for an ospray geometry type */
+    struct Volume;
+    /*! c++ wrapper for an ospray volume type */
+    struct Camera;
+    /*! c++ wrapper for an ospray renderer (the thing that produces
+        pixel colors is actualy close to what PBRT calls in
+        'integrator' */
+    struct Integrator;
+    
+  } // ::ospray::sg
+} // ::ospray
+
+
