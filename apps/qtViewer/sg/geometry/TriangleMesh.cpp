@@ -79,6 +79,7 @@ namespace ospray {
     /*! 'render' the nodes */
     void PTMTriangleMesh::render(RenderContext &ctx)
     {
+      PRINT(this);
       if (ospGeometry) return;
 
       assert(ctx.world);
@@ -86,14 +87,14 @@ namespace ospray {
 
       ospGeometry = ospNewTriangleMesh();
       // set vertex arrays
-      if (vertex->notEmpty())
+      if (vertex && vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());
-      if (normal->notEmpty())
+      if (normal && normal->notEmpty())
         ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
-      if (texcoord->notEmpty())
+      if (texcoord && texcoord->notEmpty())
         ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
       // set triangle array
-      if (triangle->notEmpty())
+      if (triangle && triangle->notEmpty())
         ospSetData(ospGeometry,"triangle",triangle->getOSP());
       
       // assign a default material (for now.... eventually we might
