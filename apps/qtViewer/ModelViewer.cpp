@@ -215,14 +215,18 @@ namespace ospray {
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
     }
 
-	void ModelViewer::keyPressEvent(QKeyEvent *event){
-		if (event->key() == Qt::Key_Escape){
-			// TODO: Properly tell the app to quit?
-			exit(0);
-		} else {
-			QMainWindow::keyPressEvent(event);
-		}
-	}
+    void ModelViewer::keyPressEvent(QKeyEvent *event) {
+//      std::cout << event->key() << std::endl;
+      switch (event->key()) {
+        case Qt::Key_Escape:
+        case Qt::Key_Q:
+          // TODO: Properly tell the app to quit?
+          exit(0);
+        // TODO wasd movement
+        default:
+          QMainWindow::keyPressEvent(event);
+      }
+    }
 
     ModelViewer::ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen)
       : editorWidgetStack(NULL),
