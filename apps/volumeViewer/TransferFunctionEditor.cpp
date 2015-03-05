@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,7 +27,7 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
   //! Load color maps.
   loadColorMaps();
 
-  //! Setup UI elments.
+  //! Setup UI elements.
   QVBoxLayout * layout = new QVBoxLayout();
   layout->setSizeConstraint(QLayout::SetMinimumSize);
   setLayout(layout);
@@ -57,80 +57,48 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
   for(unsigned int i=0; i<colorMaps.size(); i++)
     colorMapComboBox.addItem(colorMaps[i].getName().c_str());
 
+  connect(&colorMapComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
+
   formLayout->addRow("Color map", &colorMapComboBox);
 
   //! Data value range, used as the domain for both color and opacity components of the transfer function.
   dataValueMinSpinBox.setRange(-999999., 999999.);
   dataValueMaxSpinBox.setRange(-999999., 999999.);
-  dataValueMinSpinBox.setValue(0.);
-  dataValueMaxSpinBox.setValue(1.);
+  dataValueScaleSpinBox.setRange(-100, 100);
   dataValueMinSpinBox.setDecimals(6);
   dataValueMaxSpinBox.setDecimals(6);
+
+  connect(&dataValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateDataValueRange()));
+  connect(&dataValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(updateDataValueRange()));
+  connect(&dataValueScaleSpinBox, SIGNAL(valueChanged(int)), this, SLOT(updateDataValueRange()));
+
   formLayout->addRow("Data value min", &dataValueMinSpinBox);
   formLayout->addRow("Data value max", &dataValueMaxSpinBox);
+  formLayout->addRow("Data value scale (10^X)", &dataValueScaleSpinBox);
 
-  //! Widget containing opacity transfer function widget and scaling slider.
-  QWidget * transferFunctionAlphaGroup = new QWidget();
+  //! Widget containing all opacity-related widgets.
+  QWidget * opacityGroup = new QWidget();
   hboxLayout = new QHBoxLayout();
-  transferFunctionAlphaGroup->setLayout(hboxLayout);
+  opacityGroup->setLayout(hboxLayout);
 
-  //! Opacity transfer function widget.
-  hboxLayout->addWidget(&transferFunctionAlphaWidget);
+  //! Opacity values widget.
+  connect(&opacityValuesWidget, SIGNAL(updated()), this, SLOT(updateOpacityValues()));
+  hboxLayout->addWidget(&opacityValuesWidget);
 
   //! Opacity scaling slider, defaults to median value in range.
-  transferFunctionAlphaScalingSlider.setValue(int(0.5f * (transferFunctionAlphaScalingSlider.minimum() + transferFunctionAlphaScalingSlider.maximum())));
-  transferFunctionAlphaScalingSlider.setOrientation(Qt::Vertical);
-  hboxLayout->addWidget(&transferFunctionAlphaScalingSlider);
+  opacityScalingSlider.setValue(int(0.5f * (opacityScalingSlider.minimum() + opacityScalingSlider.maximum())));
+  opacityScalingSlider.setOrientation(Qt::Vertical);
 
-  layout->addWidget(transferFunctionAlphaGroup);
+  connect(&opacityScalingSlider, SIGNAL(valueChanged(int)), this, SLOT(updateOpacityValues()));
 
-  //! The Qt 4.8 documentation says: "by default, for every connection you
-  //! make, a signal is emitted".  But this isn't happening here (Qt 4.8.5,
-  //! Mac OS 10.9.4) so we manually invoke these functions so the transfer
-  //! function is fully populated before the first render call.
-  //!
-  //! Unfortunately, each invocation causes all transfer function fields to
-  //! be rewritten on the ISPC side (due to repeated recommits of the OSPRay
-  //! transfer function object).
-  //!
+  hboxLayout->addWidget(&opacityScalingSlider);
+
+  layout->addWidget(opacityGroup);
+
+  //! Set defaults.
   setColorMapIndex(0);
-  transferFunctionAlphasChanged();
-  setDataValueMin(0.0);
-  setDataValueMax(1.0);
-
-  connect(&colorMapComboBox, SIGNAL(currentIndexChanged(int)), this, SLOT(setColorMapIndex(int)));
-  connect(&dataValueMinSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMin(double)));
-  connect(&dataValueMaxSpinBox, SIGNAL(valueChanged(double)), this, SLOT(setDataValueMax(double)));
-  connect(&transferFunctionAlphaWidget, SIGNAL(transferFunctionChanged()), this, SLOT(transferFunctionAlphasChanged()));
-  connect(&transferFunctionAlphaScalingSlider, SIGNAL(valueChanged(int)), this, SLOT(transferFunctionAlphasChanged()));
-
-}
-
-void TransferFunctionEditor::transferFunctionAlphasChanged() {
-
-  //! Default to 256 discretizations of the opacities over the domain.
-  std::vector<float> transferFunctionAlphas = transferFunctionAlphaWidget.getInterpolatedValuesOverInterval(256);
-
-  //! Alpha scaling factor (normalized in [0, 1]).
-  const float alphaScalingNormalized = float(transferFunctionAlphaScalingSlider.value() - transferFunctionAlphaScalingSlider.minimum()) / float(transferFunctionAlphaScalingSlider.maximum() - transferFunctionAlphaScalingSlider.minimum());
-
-  // alpha scaling range, for now constant at 0 -> 200.
-  // this should really be bounded in [0.0, 1.0], but we allow a wider range to avoid additional parameters to the renderer / volume.
-  const float alphaScalingMin = 0.f;
-  const float alphaScalingMax = 1.f;
-
-  //! Alpha scaling within the above range.
-  const float alphaScaling = alphaScalingMin + alphaScalingNormalized * (alphaScalingMax - alphaScalingMin);
-
-  //! Scale alpha values.
-  for (unsigned int i=0; i < transferFunctionAlphas.size(); i++) transferFunctionAlphas[i] *= alphaScaling;
-
-  OSPData transferFunctionAlphasData = ospNewData(transferFunctionAlphas.size(), OSP_FLOAT, transferFunctionAlphas.data());
-  ospSetData(transferFunction, "opacities", transferFunctionAlphasData);
-
-  //! Commit and emit signal.
-  ospCommit(transferFunction);
-  emit transferFunctionChanged();
+  setDataValueRange(osp::vec2f(0.0f, 1.0f));
+  updateOpacityValues();
 }
 
 void TransferFunctionEditor::load(std::string filename) {
@@ -162,41 +130,50 @@ void TransferFunctionEditor::load(std::string filename) {
   QVector<QPointF> points;
   in >> points;
 
-  int alphaScalingIndex;
-  in >> alphaScalingIndex;
+  int opacityScalingIndex;
+  in >> opacityScalingIndex;
 
   //! Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
   colorMapComboBox.setCurrentIndex(colorMapIndex);
-  dataValueMinSpinBox.setValue(dataValueMin);
-  dataValueMaxSpinBox.setValue(dataValueMax);
-  transferFunctionAlphaWidget.setPoints(points);
-  transferFunctionAlphaScalingSlider.setValue(alphaScalingIndex);
+  setDataValueRange(osp::vec2f(dataValueMin, dataValueMax));
+  opacityValuesWidget.setPoints(points);
+  opacityScalingSlider.setValue(opacityScalingIndex);
 }
 
-void TransferFunctionEditor::setDataValueMin(double value) {
+void TransferFunctionEditor::setDataValueRange(osp::vec2f dataValueRange) {
 
-  //! Make sure widget value is up to date (this method can be called from other classes).
-  dataValueMinSpinBox.setValue(value);
+  //! Determine appropriate scaling exponent (base 10) for the data value range in the widget.
+  int scaleExponent = round(log10f(0.5f * (dataValueRange.y - dataValueRange.x)));
 
-  //! Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
-  ospSet2f(transferFunction, "valueRange", (float) value, (float) dataValueMaxSpinBox.value());
+  //! Don't use a scaling exponent <= 5.
+  if(abs(scaleExponent) <= 5)
+    scaleExponent = 0;
 
-  //! Commit and emit signal.
-  ospCommit(transferFunction);  emit transferFunctionChanged();
-
+  //! Set widget values.
+  dataValueMinSpinBox.setValue(dataValueRange.x / powf(10.f, scaleExponent));
+  dataValueMaxSpinBox.setValue(dataValueRange.y / powf(10.f, scaleExponent));
+  dataValueScaleSpinBox.setValue(scaleExponent);
 }
 
-void TransferFunctionEditor::setDataValueMax(double value) {
+void TransferFunctionEditor::updateOpacityValues() {
 
-  //! Make sure widget value is up to date (this method can be called from other classes).
-  dataValueMaxSpinBox.setValue(value);
+  //! Default to 256 discretizations of the opacities over the domain.
+  std::vector<float> opacityValues = opacityValuesWidget.getInterpolatedValuesOverInterval(256);
 
-  //! Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
-  ospSet2f(transferFunction, "valueRange", (float) dataValueMinSpinBox.value(), (float) value);
+  //! Opacity scaling factor (normalized in [0, 1]).
+  const float opacityScalingNormalized = float(opacityScalingSlider.value() - opacityScalingSlider.minimum()) / float(opacityScalingSlider.maximum() - opacityScalingSlider.minimum());
+
+  //! Scale opacity values.
+  for (unsigned int i=0; i < opacityValues.size(); i++)
+    opacityValues[i] *= opacityScalingNormalized;
+
+  //! Update OSPRay transfer function.
+  OSPData opacityValuesData = ospNewData(opacityValues.size(), OSP_FLOAT, opacityValues.data());
+  ospSetData(transferFunction, "opacities", opacityValuesData);
 
   //! Commit and emit signal.
-  ospCommit(transferFunction);  emit transferFunctionChanged();
-
+  ospCommit(transferFunction);
+  emit committed();
 }
 
 void TransferFunctionEditor::save() {
@@ -225,8 +202,8 @@ void TransferFunctionEditor::save() {
   out << colorMapComboBox.currentIndex();
   out << dataValueMinSpinBox.value();
   out << dataValueMaxSpinBox.value();
-  out << transferFunctionAlphaWidget.getPoints();
-  out << transferFunctionAlphaScalingSlider.value();
+  out << opacityValuesWidget.getPoints();
+  out << opacityScalingSlider.value();
 }
 
 void TransferFunctionEditor::setColorMapIndex(int index) {
@@ -234,15 +211,28 @@ void TransferFunctionEditor::setColorMapIndex(int index) {
   //! Set transfer function color properties for this color map.
   std::vector<osp::vec3f> colors = colorMaps[index].getColors();
 
-  OSPData transferFunctionColorsData = ospNewData(colors.size(), OSP_FLOAT3, colors.data());
-  ospSetData(transferFunction, "colors", transferFunctionColorsData);
+  OSPData colorsData = ospNewData(colors.size(), OSP_FLOAT3, colors.data());
+  ospSetData(transferFunction, "colors", colorsData);
 
   //! Set transfer function widget background image.
-  transferFunctionAlphaWidget.setBackgroundImage(colorMaps[index].getImage());
+  opacityValuesWidget.setBackgroundImage(colorMaps[index].getImage());
 
   //! Commit and emit signal.
-  ospCommit(transferFunction);  emit transferFunctionChanged();
+  ospCommit(transferFunction);
+  emit committed();
+}
 
+void TransferFunctionEditor::updateDataValueRange() {
+
+  //! Data value scale.
+  float dataValueScale = powf(10.f, float(dataValueScaleSpinBox.value()));
+
+  //! Set the minimum and maximum values in the domain for both color and opacity components of the transfer function.
+  ospSet2f(transferFunction, "valueRange", dataValueScale * float(dataValueMinSpinBox.value()), dataValueScale * float(dataValueMaxSpinBox.value()));
+
+  //! Commit and emit signal.
+  ospCommit(transferFunction);
+  emit committed();
 }
 
 void TransferFunctionEditor::loadColorMaps() {

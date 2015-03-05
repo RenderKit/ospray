@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -411,6 +411,7 @@ namespace ospray {
       warnMaterial(type);
       return createDefaultMaterial(renderer);
     }
+    const bool isOBJMaterial = !strcmp(type, "OBJMaterial");
 
     for (miniSG::Material::ParamMap::const_iterator it =  mat->params.begin();
          it !=  mat->params.end(); ++it) {
@@ -421,9 +422,15 @@ namespace ospray {
       case miniSG::Material::Param::INT:
         ospSet1i(ospMat,name,p->i[0]);
         break;
-      case miniSG::Material::Param::FLOAT:
-        ospSet1f(ospMat,name,p->f[0]);
-        break;
+      case miniSG::Material::Param::FLOAT: {
+        float f = p->f[0];
+        /* many mtl materials of obj models wrongly store the phong exponent
+         'Ns' in range [0..1], whereas OSPRay's material implementations
+         correctly interpret it to be in [0..inf), thus we map ranges here */
+        if (isOBJMaterial && (!strcmp(name, "Ns") || !strcmp(name, "ns")) && f <= 1.f)
+          f = 1.f/(1.f - f) - 1.f;
+        ospSet1f(ospMat,name,f);
+        } break;
       case miniSG::Material::Param::FLOAT_3:
         ospSet3fv(ospMat,name,p->f);
         break;
@@ -442,7 +449,7 @@ namespace ospray {
           break;
         }
       default: 
-        throw std::runtime_error("unkonwn material parameter type");
+        throw std::runtime_error("unknown material parameter type");
       };
     }
 
@@ -469,12 +476,9 @@ namespace ospray {
       } else if (arg == "--force-instancing") {
         forceInstancing = true;
       } else if (arg == "--pt") {
-        // shortcut for '--module pathtracer --renderer pathtracer'
-        const char *moduleName = "pathtracer";
-        cout << "loading ospray module '" << moduleName << "'" << endl;
+        // shortcut for '--renderer pathtracer'
         maxAccum = 1024;
-        ospLoadModule(moduleName);
-        rendererType = moduleName;
+        rendererType = "pathtracer";
       } else if (arg == "--sun-dir") {
         if (!strcmp(av[i+1],"none")) {
           defaultDirLight_direction = vec3f(0.f);

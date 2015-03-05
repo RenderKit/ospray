@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -171,7 +171,7 @@ export void Renderer_endFrame(void *uniform _renderer, const uniform int32 newAc
   renderer->endFrame(renderer,newAccumID);
 }
 
-export void Renderer_setSPP(void *uniform _renderer, uniform uint32 spp)
+export void Renderer_setSPP(void *uniform _renderer, uniform int32 spp)
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->spp = spp;

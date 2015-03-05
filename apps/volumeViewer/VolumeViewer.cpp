@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -66,8 +66,9 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
     osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[0], "voxelRange", &voxelRange);
 
     if(voxelRange != osp::vec2f(0.f)) {
-      transferFunctionEditor->setDataValueMin(voxelRange.x);
-      transferFunctionEditor->setDataValueMax(voxelRange.y);
+
+      //! Set the values through the transfer function editor widget.
+      transferFunctionEditor->setDataValueRange(voxelRange);
     }
   }
 
@@ -212,8 +213,8 @@ void VolumeViewer::initUserInterfaceWidgets() {
   QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
   transferFunctionEditor = new TransferFunctionEditor(transferFunction);
   transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
-  connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(commitVolumes()));
-  connect(transferFunctionEditor, SIGNAL(transferFunctionChanged()), this, SLOT(render()));
+  connect(transferFunctionEditor, SIGNAL(committed()), this, SLOT(commitVolumes()));
+  connect(transferFunctionEditor, SIGNAL(committed()), this, SLOT(render()));
   addDockWidget(Qt::LeftDockWidgetArea, transferFunctionEditorDockWidget);
 
   //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.

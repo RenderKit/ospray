@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -132,7 +132,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
     float Ns = 0.f;
     vec3f Kd = make_vec3f(0.f,1.f,0.f);
     vec3f Ks = make_vec3f(0.f);
-    vec3f bump = make_vec3f(0.f);
+//    vec3f bump = make_vec3f(0.f); // not yet supported
 
     if (!objMaterial) {
       //color = color + path_opacity * make_vec3f(dg.color);
@@ -141,18 +141,17 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
       Kd = make_vec3f(dg.color);
     } else {
       foreach_unique (mat in objMaterial) {
-        // should those with-map/without-map material values get
-        // *multiplied* rather than used alternatively
-        d = mat->map_d ? get1f(mat->map_d,dg.st) : mat->d;
+        // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
+        d = mat->d * get1f(mat->map_d, dg.st, 1.f);
+        Kd = mat->Kd;
         if (mat->map_Kd) {
           vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
-          Kd = make_vec3f(Kd_from_map);
-          d *= 1.f-Kd_from_map.w;
-        } else
-          Kd = mat->Kd;
-        Ks = mat->map_Ks ? get3f(mat->map_Ks,dg.st,mat->Ks) : mat->Ks;
-        Ns = mat->map_Ns ? get1f(mat->map_Ns,dg.st) : mat->Ns;
-        bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
+          Kd = Kd * make_vec3f(Kd_from_map);
+          d *= 1.f - Kd_from_map.w;
+        }
+        Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
+        Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
+//        bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
       }
     }
 
