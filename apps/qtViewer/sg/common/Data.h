@@ -140,6 +140,9 @@ namespace ospray {
     struct DataVector3f : public DataVectorT<vec3f,OSP_FLOAT3> {
       virtual vec3f  get3f(index_t idx)  const { return this->v[idx]; }
     };
+    struct DataVector3fa : public DataVectorT<vec3fa,OSP_FLOAT3A> {
+      virtual vec3fa  get3fa(index_t idx)  const { return this->v[idx]; }
+    };
     struct DataVector3i : public DataVectorT<vec3i,OSP_INT3> {
       virtual vec3i  get3i(index_t idx)  const { return this->v[idx]; }
     };
