@@ -42,7 +42,7 @@ namespace ospray {
 
     public:
       OSPRenderer ospRenderer;
-      
+      size_t spp;
       // Ref<sg::World> world;
       // Ref<sg::Camera> camera;
     };
