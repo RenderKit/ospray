@@ -111,7 +111,7 @@ namespace ospray {
     switch (vertexData->type) {
     case OSP_FLOAT:   numVerts = vertexData->size() / 4; numCompsInVtx = 4; break;
     case OSP_FLOAT3:  numVerts = vertexData->size(); numCompsInVtx = 3; break;
-    case OSP_FLOAT3A: numVerts = vertexData->size(); numCompsInVtx = 3; break;
+    case OSP_FLOAT3A: numVerts = vertexData->size(); numCompsInVtx = 4; break;
     default:
       throw std::runtime_error("unsupported trianglemesh.vertex data type");
     }
@@ -169,6 +169,8 @@ namespace ospray {
         cout << "  mesh bounds " << bounds << endl;
       } 
 
+    PRINT(numCompsInVtx);
+    PRINT(numCompsInTri);
     if (numCompsInVtx==3 && numCompsInTri==4 ||
         numCompsInVtx==4 && numCompsInTri==3)
       ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
