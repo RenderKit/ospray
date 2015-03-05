@@ -29,6 +29,8 @@ namespace ospray {
 
       if (!world->ospModel) {
         RenderContext rootContext;
+        // geometries need the integrator to create materials
+        rootContext.integrator = integrator.ptr;
         world->render(rootContext);
         assert(world->ospModel);
       }

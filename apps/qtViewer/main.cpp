@@ -82,9 +82,8 @@ namespace ospray {
           } else if (arg == "--size") {
             frameResolution.x = atoi(argv[++argID]);
             frameResolution.y = atoi(argv[++argID]);
-          } else if (arg == "-spp" || arg == "--samples-per-pixel") {
+          } else if (arg == "-spp" || arg == "--spp" || arg == "--samples-per-pixel") {
             spp = atoi(argv[++argID]);
-            PRINT(spp);
           } else if (arg == "--1k" || arg == "-1k") {
             frameResolution.x = 1024;
             frameResolution.y = 1024;
@@ -119,8 +118,6 @@ namespace ospray {
             if (cameraFromCommandLine) cameraFromCommandLine->setUp(vec3f(x,y,z));
           } else if (arg == "--fullscreen" || arg == "-fs"){
             fullscreen = true;
-          } else if (arg == "--spp") {
-            spp = atoi(argv[++argID]);
           } else {
             throw std::runtime_error("#osp:qtv: unknown cmdline param '"+arg+"'");
           }
@@ -185,8 +182,6 @@ namespace ospray {
           renderer->setCamera(renderer->createDefaultCamera(upFromCommandLine));
         }
       }
-
-      renderer->integrator->setSPP(spp);
 
       // -------------------------------------------------------
       // determine output method: offline to file, or interactive viewer

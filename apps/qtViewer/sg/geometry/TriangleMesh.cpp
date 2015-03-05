@@ -16,6 +16,7 @@
 
 #include "sg/geometry/TriangleMesh.h"
 #include "sg/common/World.h"
+#include "sg/common/Integrator.h"
 
 namespace ospray {
   namespace sg {
@@ -47,13 +48,30 @@ namespace ospray {
       assert(ctx.world->ospModel);
 
       ospGeometry = ospNewTriangleMesh();
-      // set vertex array
+      // set vertex data
       if (vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());
-      // set triangle array
+      if (normal->notEmpty())
+        ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
+      if (texcoord->notEmpty())
+        ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
+      // set triangle data
       if (triangle->notEmpty())
         ospSetData(ospGeometry,"triangle",triangle->getOSP());
-      
+
+      // assign a default material (for now.... eventually we might
+      // want to do a 'real' material
+      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+      if (mat) {
+        vec3f kd = .7f;
+        vec3f ks = .3f;
+        ospSet3fv(mat,"kd",&kd.x);
+        ospSet3fv(mat,"ks",&ks.x);
+        ospSet1f(mat,"Ns",99.f);
+        ospCommit(mat);
+      }
+      ospSetMaterial(ospGeometry,mat);
+
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
@@ -61,19 +79,37 @@ namespace ospray {
     /*! 'render' the nodes */
     void PTMTriangleMesh::render(RenderContext &ctx)
     {
+      PRINT(this);
       if (ospGeometry) return;
 
       assert(ctx.world);
       assert(ctx.world->ospModel);
 
       ospGeometry = ospNewTriangleMesh();
-      // set vertex array
-      if (vertex->notEmpty())
+      // set vertex arrays
+      if (vertex && vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());
+      if (normal && normal->notEmpty())
+        ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
+      if (texcoord && texcoord->notEmpty())
+        ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
       // set triangle array
-      if (triangle->notEmpty())
+      if (triangle && triangle->notEmpty())
         ospSetData(ospGeometry,"triangle",triangle->getOSP());
       
+      // assign a default material (for now.... eventually we might
+      // want to do a 'real' material
+      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
+      if (mat) {
+        vec3f kd = .7f;
+        vec3f ks = .3f;
+        ospSet3fv(mat,"kd",&kd.x);
+        ospSet3fv(mat,"ks",&ks.x);
+        ospSet1f(mat,"Ns",99.f);
+        ospCommit(mat);
+      }
+      ospSetMaterial(ospGeometry,mat);
+
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
     }
