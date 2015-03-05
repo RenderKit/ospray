@@ -41,13 +41,13 @@ namespace ospray {
       MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
       MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
 
-#if USE_DFB
+// #if USE_DFB
       mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
       mpi::async::Group *worldGroup = mpi::async::createGroup("world",MPI_COMM_WORLD,
                                                               mpi::async::CommLayer::WORLD,
                                                               290374);
       mpi::async::CommLayer::WORLD->group = worldGroup;
-#endif
+// #endif
     }
 
   } // ::ospray::mpi

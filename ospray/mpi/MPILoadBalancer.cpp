@@ -35,46 +35,46 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-#if USE_DFB
+// #if USE_DFB
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
-#else
-        int rc; 
-        MPI_Status status;
+// #else
+//         int rc; 
+//         MPI_Status status;
 
-        // mpidevice already sent the 'cmd_render_frame' event; we
-        // only have to wait for tiles...
-        const size_t numTiles
-          = divRoundUp(fb->size.x,TILE_SIZE)
-          * divRoundUp(fb->size.y,TILE_SIZE);
+//         // mpidevice already sent the 'cmd_render_frame' event; we
+//         // only have to wait for tiles...
+//         const size_t numTiles
+//           = divRoundUp(fb->size.x,TILE_SIZE)
+//           * divRoundUp(fb->size.y,TILE_SIZE);
         
-        assert(fb->colorBufferFormat == OSP_RGBA_I8);
-        uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
-        for (int i=0;i<numTiles;i++) {
-          box2ui region;
-          // printf("#m: receiving tile %i\n",i);
-          rc = MPI_Recv(&region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
-                        mpi::worker.comm,&status); 
-          Assert(rc == MPI_SUCCESS); 
-          // printf("#m: received tile %i (%i,%i) from %i\n",i,
-          //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
-          rc = MPI_Recv(&rgba_i8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
-                        status.MPI_SOURCE,status.MPI_TAG,mpi::worker.comm,&status);
-          Assert(rc == MPI_SUCCESS);
+//         assert(fb->colorBufferFormat == OSP_RGBA_I8);
+//         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
+//         for (int i=0;i<numTiles;i++) {
+//           box2ui region;
+//           // printf("#m: receiving tile %i\n",i);
+//           rc = MPI_Recv(&region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
+//                         mpi::worker.comm,&status); 
+//           Assert(rc == MPI_SUCCESS); 
+//           // printf("#m: received tile %i (%i,%i) from %i\n",i,
+//           //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
+//           rc = MPI_Recv(&rgba_i8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
+//                         status.MPI_SOURCE,status.MPI_TAG,mpi::worker.comm,&status);
+//           Assert(rc == MPI_SUCCESS);
 
-          ospray::LocalFrameBuffer *lfb = (ospray::LocalFrameBuffer *)fb;
-          for (int iy=region.lower.y;iy<region.upper.y;iy++)
-            for (int ix=region.lower.x;ix<region.upper.x;ix++) {
-              ((uint32*)lfb->colorBuffer)[ix+iy*lfb->size.x] 
-                = rgba_i8[iy-region.lower.y][ix-region.lower.x];
-            }
-        }
-        //        printf("#m: master done fb %lx\n",fb);
-#endif
+//           ospray::LocalFrameBuffer *lfb = (ospray::LocalFrameBuffer *)fb;
+//           for (int iy=region.lower.y;iy<region.upper.y;iy++)
+//             for (int ix=region.lower.x;ix<region.upper.x;ix++) {
+//               ((uint32*)lfb->colorBuffer)[ix+iy*lfb->size.x] 
+//                 = rgba_i8[iy-region.lower.y][ix-region.lower.x];
+//             }
+//         }
+//         //        printf("#m: master done fb %lx\n",fb);
+// #endif
       }
 
       void Slave::RenderTask::finish()
@@ -108,22 +108,22 @@ namespace ospray {
         renderer->renderTile(tile);
         // PRINT(tile.region.lower);
         fb->setTile(tile);
-#if USE_DFB
-        // cout << "calling settile on client!" << endl;
-        // do nothing - the frame buffer's 'setTile' will do the sending etc
-#else
-        ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
-        uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
-        for (int iy=tile.region.lower.y;iy<tile.region.upper.y;iy++)
-          for (int ix=tile.region.lower.x;ix<tile.region.upper.x;ix++) {
-            rgba_i8[iy-tile.region.lower.y][ix-tile.region.lower.x] 
-              = ((uint32*)localFB->colorBuffer)[ix+iy*localFB->size.x];
-          }
+// #if USE_DFB
+//         // cout << "calling settile on client!" << endl;
+//         // do nothing - the frame buffer's 'setTile' will do the sending etc
+// #else
+//         ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
+//         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
+//         for (int iy=tile.region.lower.y;iy<tile.region.upper.y;iy++)
+//           for (int ix=tile.region.lower.x;ix<tile.region.upper.x;ix++) {
+//             rgba_i8[iy-tile.region.lower.y][ix-tile.region.lower.x] 
+//               = ((uint32*)localFB->colorBuffer)[ix+iy*localFB->size.x];
+//           }
         
-        MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
-        int count = (TILE_SIZE)*(TILE_SIZE);
-        MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
-#endif
+//         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
+//         int count = (TILE_SIZE)*(TILE_SIZE);
+//         MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
+// #endif
       }
       
       void Slave::renderFrame(Renderer *tiledRenderer, 
@@ -131,10 +131,10 @@ namespace ospray {
                               const uint32 channelFlags
                               )
       {
-#if USE_DFB
+// #if USE_DFB
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
-#endif
+// #endif
         Ref<RenderTask> renderTask
           = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
         renderTask->fb = fb;
@@ -154,9 +154,9 @@ namespace ospray {
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
         renderTask->wait();
 
-#if USE_DFB
+// #if USE_DFB
         dfb->waitUntilFinished();
-#endif
+// #endif
       }
     }
 

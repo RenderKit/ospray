@@ -304,7 +304,7 @@ namespace ospray {
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
 
-#if USE_DFB      
+// #if USE_DFB      
       mpi::Handle handle = mpi::Handle::alloc();
       
       FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
@@ -321,22 +321,22 @@ namespace ospray {
       cmd.send((int32)channels);
       cmd.flush();
       return (OSPFrameBuffer)(int64)handle;
-#else
-      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,hasAccumBuffer);
-      fb->refInc();
+// #else
+//       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
+//                                              hasDepthBuffer,hasAccumBuffer);
+//       fb->refInc();
       
-      mpi::Handle handle = mpi::Handle::alloc();
-      mpi::Handle::assign(handle,fb);
+//       mpi::Handle handle = mpi::Handle::alloc();
+//       mpi::Handle::assign(handle,fb);
       
-      cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
-      cmd.send(handle);
-      cmd.send(size);
-      cmd.send((int32)mode);
-      cmd.send((int32)channels);
-      cmd.flush();
-      return (OSPFrameBuffer)(int64)handle;
-#endif
+//       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
+//       cmd.send(handle);
+//       cmd.send(size);
+//       cmd.send((int32)mode);
+//       cmd.send((int32)channels);
+//       cmd.flush();
+//       return (OSPFrameBuffer)(int64)handle;
+// #endif
     }
     
 

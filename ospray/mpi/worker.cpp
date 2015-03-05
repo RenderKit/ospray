@@ -281,14 +281,14 @@ namespace ospray {
           const uint32 channelFlags       = cmd.get_int32();
           bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
           bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
-#if USE_DFB
+// #if USE_DFB
           FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                                        size,handle,mode,
                                                        hasDepthBuffer,hasAccumBuffer);
       
-#else
-          FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);
-#endif
+// #else
+//           FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);
+// #endif
           handle.assign(fb);
         } break;
         case api::MPIDevice::CMD_FRAMEBUFFER_CLEAR: {
