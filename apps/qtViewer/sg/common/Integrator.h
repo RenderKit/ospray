@@ -39,9 +39,7 @@ namespace ospray {
       SG_NODE_DECLARE_MEMBER(Ref<sg::World>,world,World);
       // void setCamera(Ref<sg::Camera> camera) { if (camera != this->camera) { this->camera = camera; lastModified = __rdtsc(); } }
       // void setWorld(Ref<sg::World> world) { if (world != this->world) { this->world = world; lastModified = __rdtsc(); } }
-      SG_NODE_DECLARE_MEMBER(int,spp,SPP);
 
-      
     public:
       OSPRenderer ospRenderer;
       
