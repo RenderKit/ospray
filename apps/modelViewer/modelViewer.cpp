@@ -525,6 +525,7 @@ namespace ospray {
       } else if (arg == "--size") {
         initWindowSize.x = atoi(av[++i]);
         initWindowSize.y = atoi(av[++i]);
+PRINT(initWindowSize);
       } else if (arg == "-win") {
         if (++i < ac)
           {
