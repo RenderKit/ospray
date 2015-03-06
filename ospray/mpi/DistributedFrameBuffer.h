@@ -43,9 +43,18 @@ namespace ospray {
     // float *depthBufferOnMaster;
     
     enum { 
-      //! command tag that identifies a CommLayer::message as a write tile command
+      /*! command tag that identifies a CommLayer::message as a write
+        tile command. this is a command using for sending a tile of
+        new samples to another instance of the framebuffer (the one
+        that actually owns that tile) for processing and 'writing' of
+        that tile on that owner node. */
       WORKER_WRITE_TILE = 13,
-      MASTER_WRITE_TILE
+      /*! command tag used for sending 'final' tiles from the tile
+          owner to the master frame buffer. Note that we *do* send a
+          message back ot the master even in cases where the master
+          does not actually care about the pixel data - we still have
+          to let the master know when we're done. */
+      MASTER_WRITE_TILE,
     } COMMANDTAG;
 
     /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */
@@ -59,9 +68,13 @@ namespace ospray {
     };
 
     //! message sent to the master when a tile is finished. Todo: compress the color data */
-    struct MasterTileMessage : public mpi::async::CommLayer::Message {
+    struct MasterTileMessage_RGBA_I8 : public mpi::async::CommLayer::Message {
       vec2i coords;
       uint32 color[TILE_SIZE][TILE_SIZE];
+    };
+    //! message sent to the master when a tile is finished. Todo: compress the color data */
+    struct MasterTileMessage_NONE : public mpi::async::CommLayer::Message {
+      vec2i coords;
     };
 
     //! message sent from one node's instance to another, to tell that instance to write that tile

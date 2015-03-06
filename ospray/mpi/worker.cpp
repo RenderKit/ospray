@@ -109,6 +109,17 @@ namespace ospray {
         const int command = cmd.get_int32();
 
         switch (command) {
+        case api::MPIDevice::CMD_NEW_PIXELOP: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *type = cmd.get_charPtr();
+          if (worker.rank == 0)
+            if (logLevel > 2)
+              cout << "creating new pixelOp \"" << type << "\" ID " << handle << endl;
+          PixelOp *pixelOp = PixelOp::createPixelOp(type);
+          cmd.free(type);
+          Assert(pixelOp);
+          handle.assign(pixelOp);
+        } break;
         case api::MPIDevice::CMD_NEW_RENDERER: {
           const mpi::Handle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
@@ -444,6 +455,15 @@ namespace ospray {
           Geometry *geo = (Geometry*)geoHandle.lookup();
           Material *mat = (Material*)matHandle.lookup();
           geo->setMaterial(mat);
+        } break;
+        case api::MPIDevice::CMD_SET_PIXELOP: {
+          const mpi::Handle fbHandle = cmd.get_handle();
+          const mpi::Handle poHandle = cmd.get_handle();
+          FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
+          PixelOp     *po = (PixelOp*)poHandle.lookup();
+          assert(fb);
+          assert(po);
+          fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
         } break;
         case api::MPIDevice::CMD_SET_STRING: {
           const mpi::Handle handle = cmd.get_handle();

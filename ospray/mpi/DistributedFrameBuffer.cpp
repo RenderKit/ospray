@@ -107,8 +107,12 @@ namespace ospray {
       }
 
     if (comm->group->rank == 0) {
-      cout << "we're the master - creating a local fb to gather results" << endl;
-      localFBonMaster = new LocalFrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,0);
+      if (colorBufferFormat == OSP_RGBA_NONE) {
+        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' format; creating distriubted frame buffer WITHOUT having a mappable copy on the master" << endl;
+      } else {
+        cout << "#osp:mpi:dfb: we're the master - creating a local fb to gather results" << endl;
+        localFBonMaster = new LocalFrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,0);
+      }
     }
     ispc::DistributedFrameBuffer_set(getIE(),numPixels.x,numPixels.y,
                                      colorBufferFormat);
@@ -158,20 +162,28 @@ namespace ospray {
 
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
     if (_msg->command == MASTER_WRITE_TILE) {
-
-      MasterTileMessage *msg = (MasterTileMessage *)_msg;
-      for (int iy=0;iy<TILE_SIZE;iy++) {
-        int iiy = iy+msg->coords.y;
-        if (iiy >= numPixels.y) continue;
+      switch(colorBufferFormat) {
+      case OSP_RGBA_NONE: {
+        /* nothing to do */
+      } break;
+      case OSP_RGBA_I8: {
+        MasterTileMessage_RGBA_I8 *msg = (MasterTileMessage_RGBA_I8 *)_msg;
+        for (int iy=0;iy<TILE_SIZE;iy++) {
+          int iiy = iy+msg->coords.y;
+          if (iiy >= numPixels.y) continue;
         
-        for (int ix=0;ix<TILE_SIZE;ix++) {
-          int iix = ix+msg->coords.x;
-          if (iix >= numPixels.x) continue;
-          
-          ((uint*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
-            = msg->color[iy][ix];//[ix+TILE_SIZE*iy];
-        }
+          for (int ix=0;ix<TILE_SIZE;ix++) {
+            int iix = ix+msg->coords.x;
+            if (iix >= numPixels.x) continue;
+            
+            ((uint*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
+              = msg->color[iy][ix];//[ix+TILE_SIZE*iy];
+          }
+        } break;
+        default:
+          throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented for distributed frame buffer");
       }
+      };
       mutex.lock();
       numTilesWrittenThisFrame++;
       if (numTilesWrittenThisFrame == numTiles.x*numTiles.y)
@@ -289,12 +301,24 @@ namespace ospray {
       if (pixelOp)
         pixelOp->postAccum(tile);
 
-      MasterTileMessage *mtm = new MasterTileMessage;
-      mtm->command = MASTER_WRITE_TILE;
-      mtm->coords  = myTile->begin;
-      memcpy(mtm->color,td->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
-      comm->sendTo(this->master,mtm,sizeof(*mtm));
-      
+      switch(colorBufferFormat) {
+      case OSP_RGBA_NONE: {
+        MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
+        mtm->command = MASTER_WRITE_TILE;
+        mtm->coords  = myTile->begin;
+        comm->sendTo(this->master,mtm,sizeof(*mtm));
+      } break;
+      case OSP_RGBA_I8: {
+        MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
+        mtm->command = MASTER_WRITE_TILE;
+        mtm->coords  = myTile->begin;
+        memcpy(mtm->color,td->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
+        comm->sendTo(this->master,mtm,sizeof(*mtm));
+      } break;
+      default:
+        throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented for distributed frame buffer");
+      };
+        
 #if 0
       char fn[1000];
       sprintf(fn,"/tmp/dfb_seq%05i_color_tile_%04i_%04i.ppm",accumID+1,
