@@ -497,7 +497,7 @@ namespace ospray {
         alwaysRedraw = true;
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
-      } else if (arg == "--spp") {
+      } else if (arg == "--spp" || arg == "-spp") {
         spp = atoi(av[++i]);
       } else if (arg == "--force-instancing") {
         forceInstancing = true;
@@ -522,6 +522,9 @@ namespace ospray {
         initWindowSize = vec2i(1024);
       } else if (arg == "--alpha") {
         g_alpha = true;
+      } else if (arg == "--size") {
+        initWindowSize.x = atoi(av[++i]);
+        initWindowSize.y = atoi(av[++i]);
       } else if (arg == "-win") {
         if (++i < ac)
           {

@@ -20,6 +20,13 @@
 #define PDF_CULLING 0.0f 
 //#define USE_DGCOLOR
 
+/*! number of pixels that each job in a parallel rendertile task
+    executes together. Must be a multipel of the maximum possible
+    programCount (16), and must be smaller than TILE_SIZE (in one
+    dimension) */
+#define RENDERTILE_PIXELS_PER_JOB 64
+
+
 //////////////////////////////////////////////////////////////////
 // LightPath
 
@@ -339,7 +346,37 @@ void PathTracer_beginFrame(uniform Renderer *uniform renderer,
   renderer->fb = fb;
 }
 
+#if 1
+void PathTracer_renderTileJob(uniform Renderer *uniform renderer, uniform Tile &tile)
+{
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
 
+  uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
+  uniform FrameBuffer *uniform fb     = renderer->fb;
+
+  const uniform int blocks = renderer->spp > 0 || fb->accumID > 0 ? 1 : min(1 << -2 * renderer->spp, TILE_SIZE*TILE_SIZE);
+  
+  for (uint32 i=begin+programIndex;i<end;i+=programCount) {
+    const uint32 ix = tile.region.lower.x + z_order.xs[i*blocks];
+    const uint32 iy = tile.region.lower.y + z_order.ys[i*blocks];
+    if (ix >= fb->size.x || iy >= fb->size.y) 
+      continue;
+
+    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy);
+    for (uniform int p = 0; p < blocks; p++) {
+      const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
+      setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
+    }
+  }
+}
+
+void PathTracer_renderTileChunk(uniform Renderer *uniform renderer, uniform Tile &tile)
+{
+  uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+  launch[numJobs] PathTracer_renderTileJob(renderer,tile);
+}
+#else
 void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &tile)
 {
   uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
@@ -360,6 +397,7 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &til
     }
   }
 }
+#endif
 
 void PathTracer__Constructor(void *uniform cppE,
                              uniform PathTracer* uniform THIS,
