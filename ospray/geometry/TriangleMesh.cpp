@@ -76,9 +76,9 @@ namespace ospray {
             "triangle mesh geometry does not have either 'index'"
             " or 'triangle' array");
 
-    this->index = (vec3i*)indexData->data;
-    this->vertex = (vec3fa*)vertexData->data;
-    this->normal = normalData ? (vec3fa*)normalData->data : NULL;
+    this->index = (int*)indexData->data;
+    this->vertex = (float*)vertexData->data;
+    this->normal = normalData ? (float*)normalData->data : NULL;
     this->color  = colorData ? (vec4f*)colorData->data : NULL;
     this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
     this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
@@ -99,10 +99,11 @@ namespace ospray {
 
     size_t numCompsInTri = 0;
     size_t numCompsInVtx = 0;
+    size_t numCompsInNor = 0;
     switch (indexData->type) {
-    case OSP_INT:   numTris = indexData->size() / 3; numCompsInTri = 3; break;
+    case OSP_INT:
     case OSP_UINT:  numTris = indexData->size() / 3; numCompsInTri = 3; break;
-    case OSP_INT3:  numTris = indexData->size(); numCompsInTri = 3; break;
+    case OSP_INT3:
     case OSP_UINT3: numTris = indexData->size(); numCompsInTri = 3; break;
     case OSP_INT4:  numTris = indexData->size(); numCompsInTri = 4; break;
     default:
@@ -115,40 +116,40 @@ namespace ospray {
     default:
       throw std::runtime_error("unsupported trianglemesh.vertex data type");
     }
+    if (normalData) switch (normalData->type) {
+    case OSP_FLOAT3:  numCompsInNor = 3; break;
+    case OSP_FLOAT:
+    case OSP_FLOAT3A: numCompsInNor = 4; break;
+    default:
+      throw std::runtime_error("unsupported trianglemesh.vertex.normal data type");
+    }
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-// #ifndef NDEBUG
-//     {
-//       cout << "#osp/trimesh: Verifying index buffer ... " << endl;
-//       if ((sizeOf(indexData->type) == 4*sizeof(int)
-//       for (int i=0;i<numTris;i++) {
-//              &&  (!inRange(index4i[i].x,0,numVerts) || 
-//                   !inRange(index4i[i].y,0,numVerts) || 
-//                   !inRange(index4i[i].z,0,numVerts)))
-//             ||
-//             (sizeOf(indexData->type) == 4*sizeof(int) 
-//              &&  (!inRange(index3i[i].x,0,numVerts) || 
-//                   !inRange(index3i[i].y,0,numVerts) || 
-//                   !inRange(index3i[i].z,0,numVerts)))
-//             )
-//           {
-//           PRINT(numTris);
-//           PRINT(i);
-//           PRINT(index[i]);
-//           PRINT(numVerts);
-//           throw std::runtime_error("vertex index not in range! (broken input model, refusing to handle that)");
-//         }
-//       }
-//       cout << "#osp/trimesh: Verifying vertex buffer ... " << endl;
-//       for (int i=0;i<numVerts;i++) {
-//         if (std::isnan(vertex[i].x) || 
-//             std::isnan(vertex[i].y) || 
-//             std::isnan(vertex[i].z))
-//           throw std::runtime_error("NaN in vertex coordinate! (broken input model, refusing to handle that)");
-//       }
-//     }    
-// #endif
+#ifndef NDEBUG
+    {
+      cout << "#osp/trimesh: Verifying index buffer ... " << endl;
+      for (int i=0;i<numTris*numCompsInTri;i+=numCompsInTri) {
+        if (!inRange(index[i+0],0,numVerts) || 
+            !inRange(index[i+1],0,numVerts) || 
+            !inRange(index[i+2],0,numVerts))
+        {
+          PRINT(numTris);
+          PRINT(i);
+          PRINT(index[i]);
+          PRINT(numVerts);
+          throw std::runtime_error("vertex index not in range! (broken input model, refusing to handle that)");
+        }
+      }
+      cout << "#osp/trimesh: Verifying vertex buffer ... " << endl;
+      for (int i=0;i<numVerts*numCompsInVtx;i+=numCompsInVtx) {
+        if (std::isnan(vertex[i+0]) || 
+            std::isnan(vertex[i+1]) || 
+            std::isnan(vertex[i+2]))
+          throw std::runtime_error("NaN in vertex coordinate! (broken input model, refusing to handle that)");
+      }
+    }    
+#endif
 
     rtcSetBuffer(embreeSceneHandle,eMesh,RTC_VERTEX_BUFFER,
                  (void*)this->vertex,0,
@@ -159,8 +160,8 @@ namespace ospray {
 
     bounds = embree::empty;
     
-    for (int i=0;i<vertexData->size();i++) 
-      bounds.extend(vertex[i]);
+    for (int i=0;i<numVerts*numCompsInVtx;i+=numCompsInVtx) 
+      bounds.extend(*(vec3f*)(vertex + i));
 
     if (logLevel >= 2) 
       if (numPrints < 5) {
@@ -169,25 +170,18 @@ namespace ospray {
         cout << "  mesh bounds " << bounds << endl;
       } 
 
-    PRINT(numCompsInVtx);
-    PRINT(numCompsInTri);
-    if (numCompsInVtx==3 && numCompsInTri==4 ||
-        numCompsInVtx==4 && numCompsInTri==3)
-      ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
+    ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
                            numCompsInTri,
-                           numCompsInVtx,
-                             (int*)index,
-                             (float*)vertex,
-                             (float*)normal,
+                           numCompsInNor,
+                           (int*)index,
+                           (float*)normal,
                            (ispc::vec4f*)color,
                            (ispc::vec2f*)texcoord,
                            geom_materialID,
                            getMaterial()?getMaterial()->getIE():NULL,
                            ispcMaterialPtrs,
                            (uint32*)prim_materialID);
-    else
-      throw std::runtime_error("#osp:trianglemesh: vertexsize/trianglesize variant not implemented");
   }
 
 } // ::ospray
