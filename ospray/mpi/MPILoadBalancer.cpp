@@ -42,6 +42,9 @@ namespace ospray {
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
+
+        MPI_Barrier(MPI_COMM_WORLD);
+
 // #else
 //         int rc; 
 //         MPI_Status status;
@@ -79,7 +82,6 @@ namespace ospray {
 
       void Slave::RenderTask::finish()
       {
-        renderer->endFrame(channelFlags);
         renderer = NULL;
         fb = NULL;
         // refDec();
@@ -93,7 +95,9 @@ namespace ospray {
       void Slave::RenderTask::run(size_t taskIndex) 
       {
         const size_t tileID = taskIndex;
+#if !MPI_IMAGE_COMPOSITING
         if ((tileID % worker.size) != worker.rank) return;
+#endif
 
         // PING;
         Tile __aligned(64) tile;
@@ -106,8 +110,11 @@ namespace ospray {
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
         renderer->renderTile(tile);
+
         // PRINT(tile.region.lower);
+
         fb->setTile(tile);
+
 // #if USE_DFB
 //         // cout << "calling settile on client!" << endl;
 //         // do nothing - the frame buffer's 'setTile' will do the sending etc
@@ -154,9 +161,13 @@ namespace ospray {
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
         renderTask->wait();
 
+        MPI_Barrier(MPI_COMM_WORLD);
+
 // #if USE_DFB
         dfb->waitUntilFinished();
-// #endif
+
+        tiledRenderer->endFrame(channelFlags);
+        // #endif
       }
     }
 

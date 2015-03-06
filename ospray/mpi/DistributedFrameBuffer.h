@@ -55,7 +55,18 @@ namespace ospray {
       float  accum_b[TILE_SIZE][TILE_SIZE];
       float  accum_a[TILE_SIZE][TILE_SIZE];
       uint32 color[TILE_SIZE][TILE_SIZE];
-      float  depth[TILE_SIZE][TILE_SIZE];
+      // float  depth[TILE_SIZE][TILE_SIZE];
+#if MPI_IMAGE_COMPOSITING
+      /*! mutex protecting this tile only */
+      float  comp_r[TILE_SIZE][TILE_SIZE];
+      float  comp_g[TILE_SIZE][TILE_SIZE];
+      float  comp_b[TILE_SIZE][TILE_SIZE];
+      float  comp_z[TILE_SIZE][TILE_SIZE];
+      Mutex mutex;
+      /*! number of different times this tile has been written this
+          frame. tile is done if all workers have written it */
+      size_t numTimesWrittenThisFrame;
+#endif
     };
 
     //! message sent to the master when a tile is finished. Todo: compress the color data */
@@ -72,6 +83,9 @@ namespace ospray {
       float g[TILE_SIZE][TILE_SIZE];
       float b[TILE_SIZE][TILE_SIZE];
       float a[TILE_SIZE][TILE_SIZE];
+#if MPI_IMAGE_COMPOSITING
+      float z[TILE_SIZE][TILE_SIZE];
+#endif
     };
 
     // /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */

@@ -110,7 +110,7 @@ namespace ospray {
         //! convenience function that returns our rank in the comm group 
         int32 rank() const { return group->rank; }
 
-        int32 numWorkers() const { return group->size; }
+        int32 numWorkers() const { return group->size - 1; }
         int32 masterRank() const { return 0; }
         int32 workerRank(int clientID) const { return 1+clientID; }
 
