@@ -18,6 +18,7 @@
 #include "Scene.ih"
 
 #define PDF_CULLING 0.0f 
+//#define USE_DGCOLOR
 
 //////////////////////////////////////////////////////////////////
 // LightPath
@@ -176,6 +177,10 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
 
         /*! Evaluate BRDF */
         vec3f brdf = CompositedBRDF__eval(&brdfs,wo,dg,ls.wi.v,directLightingBRDFTypes);
+#ifdef USE_DGCOLOR
+        if (dg.color.x > -1.f)
+          brdf = brdf * make_vec3f(dg.color);
+#endif
         if (reduce_max(brdf) <= 0.0f)
           continue;
         /*! Test for shadows. */
@@ -204,6 +209,10 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     vec2f s  = RandomTEA__getFloats(rng);
     vec2f ss = RandomTEA__getFloats(rng);
     vec3f c = CompositedBRDF__sample(&brdfs, wo, dg, wi, type, s, ss.x, giBRDFTypes);
+#ifdef USE_DGCOLOR
+    if (dg.color.x > -1.f && (type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
+      c = c * make_vec3f(dg.color);
+#endif
     
     /*! Continue only if we hit something valid. */
     if (reduce_max(c) <= 0.0f | wi.pdf <= PDF_CULLING) 

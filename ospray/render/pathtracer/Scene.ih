@@ -39,7 +39,7 @@ inline void postIntersect(const uniform Scene *uniform scene,
   if (hadHit(ray))
     postIntersect(scene->model,dg,ray,
                   DG_MATERIAL|DG_MATERIALID|
-                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD
+                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
                   );
 }
 
