@@ -54,6 +54,8 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
   vec3f Ng = ray.Ng;
   vec3f Ns = Ng;
 
+  dg.P = ray.org + ray.t * ray.dir;
+
   if (flags & DG_NORMALIZE) {
     Ng = normalize(Ng);
     Ns = normalize(Ns);

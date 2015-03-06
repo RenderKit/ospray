@@ -71,6 +71,9 @@ export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb,
                                        varyTile->g[chunkID],
                                        varyTile->b[chunkID],
                                        varyTile->a[chunkID]);
+
+        col = pow(max(col,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
+
         const uint32 asRGBA = cvt_uint32(col);
       }
 
