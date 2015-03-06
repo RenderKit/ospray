@@ -120,18 +120,24 @@ namespace ospray {
 
   const void *DistributedFrameBuffer::mapDepthBuffer() 
   {
+    if (!localFBonMaster)
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the depth buffer of a frame buffer buffer that doesn't have a host-side color buffer");
     assert(localFBonMaster);
     return localFBonMaster->mapDepthBuffer();
   }
 
   const void *DistributedFrameBuffer::mapColorBuffer() 
   {
+    if (!localFBonMaster)
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the color buffer of a frame buffer that doesn't have a host-side color buffer");
     assert(localFBonMaster);
     return localFBonMaster->mapColorBuffer();
   }
 
   void DistributedFrameBuffer::unmap(const void *mappedMem) 
   {
+    if (!localFBonMaster)
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospUnmap()' a frame buffer that doesn't have a host-side color buffer");
     assert(localFBonMaster);
     localFBonMaster->unmap(mappedMem);
   }
