@@ -57,7 +57,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform bool hasDepth = (fb->depthBuffer != NULL);
-  const float accScale = 1.f/(fb->inherited.accumID+1);
+  const uniform float accScale = 1.f/(fb->inherited.accumID+1);
   if (fb->inherited.colorBufferFormat == ColorBufferFormat_RGBA_FLOAT32) {
     uniform vec4f *uniform color
       = fb->colorBuffer 
@@ -117,8 +117,11 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
 
+          acc = acc * accScale;
+          acc = pow(max(acc,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
+
           if (color) {
-            color[ofs] = cvt_uint32(acc * accScale);
+            color[ofs] = cvt_uint32(acc);
           }
         } else
           if (color)
