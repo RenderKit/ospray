@@ -427,7 +427,7 @@ namespace ospray {
           }
           if (arg == "--size") {
             Glut3DWidget::defaultInitSize.x = atoi(av[i+1]);
-            Glut3DWidget::defaultInitSize.y = atoi(av[i+1]);
+            Glut3DWidget::defaultInitSize.y = atoi(av[i+2]);
             removeArgs(*ac,(char **&)av,i,3); --i;
             continue;
           }
