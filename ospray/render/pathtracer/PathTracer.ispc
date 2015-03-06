@@ -347,7 +347,7 @@ void PathTracer_beginFrame(uniform Renderer *uniform renderer,
 }
 
 #if 1
-void PathTracer_renderTileJob(uniform Renderer *uniform renderer, uniform Tile &tile)
+task void PathTracer_renderTileJob(uniform Renderer *uniform renderer, uniform Tile &tile)
 {
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
@@ -371,7 +371,7 @@ void PathTracer_renderTileJob(uniform Renderer *uniform renderer, uniform Tile &
   }
 }
 
-void PathTracer_renderTileChunk(uniform Renderer *uniform renderer, uniform Tile &tile)
+void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &tile)
 {
   uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
   launch[numJobs] PathTracer_renderTileJob(renderer,tile);
