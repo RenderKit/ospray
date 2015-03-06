@@ -61,13 +61,9 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::TriangleMesh"; }
     virtual void finalize(Model *model);
 
-    union {
-      const vec3i  *index3i;  //!< mesh's triangle index array
-      const vec4i  *index4i;
-      const void   *index;
-    };
-    const vec3fa *vertex; //!< mesh's vertex array
-    const vec3fa *normal; //!< mesh's vertex normal array
+    const int    *index;  //!< mesh's triangle index array
+    const float  *vertex; //!< mesh's vertex array
+    const float  *normal; //!< mesh's vertex normal array
     const vec4f  *color;  //!< mesh's vertex color array
     const vec2f  *texcoord; //!< mesh's vertex texcoord array
     const uint32 *prim_materialID; //!< per-primitive material ID

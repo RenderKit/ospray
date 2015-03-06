@@ -22,10 +22,9 @@
 struct TriangleMesh {
   uniform Geometry  geometry; //!< inherited geometry fields
   uniform int32     numTriangles; //!< number of triangles
-  uniform int32     vtxSize;
-  uniform int32     idxSize;
+  uniform int32     idxSize; //!< stride of triangle indices, in int32 elements
+  uniform int32     norSize; //!< stride of normals, in float32 elements
   uniform int      *index;  //!< mesh's triangle index array
-  uniform float    *vertex; //!< mesh's vertex array
   uniform float    *normal; //!< mesh's vertex normal array
   uniform vec4f    *color;  //!< mesh's vertex color array
   uniform vec2f    *texcoord; //!< mesh's texture coordinate array
@@ -41,9 +40,8 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform int32  geomID,
                                      uniform int32  numTriangles,
                                      uniform int32  idxSize,
-                                     uniform int32  vtxSize,
+                                     uniform int32  norSize,
                                      uniform int    *uniform index,
-                                     uniform float  *uniform vertex,
                                      uniform float  *uniform normal,
                                      uniform vec4f  *uniform color,
                                      uniform vec2f  *uniform texcoord,

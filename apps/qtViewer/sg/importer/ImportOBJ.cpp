@@ -357,7 +357,7 @@ namespace ospray {
         return -1;
 
       mesh->vertex.cast<DataVector3f>()->v.push_back(v[i.v]);
-      if (i.vn >= 0) mesh->normal.cast<DataVector3fa>()->v.push_back(vn[i.vn]);
+      if (i.vn >= 0) mesh->normal.cast<DataVector3f>()->v.push_back(vn[i.vn]);
       if (i.vt >= 0) mesh->texcoord.cast<DataVector2f>()->v.push_back(vt[i.vt]);
       return(vertexMap[i] = int(mesh->vertex->getSize()) - 1);
     }
@@ -370,7 +370,7 @@ namespace ospray {
       std::map<Vertex, uint32> vertexMap;
       TriangleMesh *mesh = new TriangleMesh;
       mesh->vertex = new DataVector3f;
-      mesh->normal = new DataVector3fa;
+      mesh->normal = new DataVector3f;
       mesh->texcoord = new DataVector2f;
       mesh->triangle =  new DataVector3i;
       mesh->material = curMaterial;
