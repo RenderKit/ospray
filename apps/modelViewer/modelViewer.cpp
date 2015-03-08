@@ -30,8 +30,6 @@ namespace ospray {
   bool  g_fullScreen       = false;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
   
-  //! size of initial render window as specified via the command line.
-  vec2i initWindowSize(1024,1024);
 
   int g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
@@ -497,7 +495,7 @@ namespace ospray {
         alwaysRedraw = true;
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
-      } else if (arg == "--spp") {
+      } else if (arg == "--spp" || arg == "-spp") {
         spp = atoi(av[++i]);
       } else if (arg == "--force-instancing") {
         forceInstancing = true;
@@ -518,24 +516,8 @@ namespace ospray {
         const char *moduleName = av[++i];
         cout << "loading ospray module '" << moduleName << "'" << endl;
         ospLoadModule(moduleName);
-      } else if (arg == "--1k") {
-        initWindowSize = vec2i(1024);
       } else if (arg == "--alpha") {
         g_alpha = true;
-      } else if (arg == "-win") {
-        if (++i < ac)
-          {
-            std::string arg2(av[i]);
-            size_t pos = arg2.find("x");
-            if (pos != std::string::npos)
-              {
-                arg2.replace(pos, 1, " ");
-                std::stringstream ss(arg2);
-                ss >> initWindowSize.x >> initWindowSize.y;
-              }
-          }
-        else
-          error("missing commandline param");
       } else if (arg == "--display-wall") {
         displayWall = new DisplayWall;
         displayWall->size.x = atof(av[++i]);

@@ -698,6 +698,32 @@ namespace ospray {
 
     }
 
+    /*! create a new pixelOp object (out of list of registered pixelOps) */
+    OSPPixelOp MPIDevice::newPixelOp(const char *type)
+    {
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+
+      cmd.newCommand(CMD_NEW_PIXELOP);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPPixelOp)(int64)handle;
+    }
+
+    /*! set a frame buffer's pixel op object */
+    void MPIDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
+    {
+      Assert(_fb != NULL);
+      Assert(_op != NULL);
+
+      cmd.newCommand(CMD_SET_PIXELOP);
+      cmd.send((const mpi::Handle&)_fb);
+      cmd.send((const mpi::Handle&)_op);
+      cmd.flush();
+    }
+      
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {

@@ -425,6 +425,12 @@ namespace ospray {
             removeArgs(*ac,(char **&)av,i,1); --i;
             continue;
           }
+          if (arg == "--size") {
+            Glut3DWidget::defaultInitSize.x = atoi(av[i+1]);
+            Glut3DWidget::defaultInitSize.y = atoi(av[i+2]);
+            removeArgs(*ac,(char **&)av,i,3); --i;
+            continue;
+          }
           if (arg == "-vu") {
             upVectorFromCmdLine.x = atof(av[i+1]);
             upVectorFromCmdLine.y = atof(av[i+2]);

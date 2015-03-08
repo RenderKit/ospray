@@ -52,7 +52,6 @@ namespace ospray {
         CMD_LOAD_MODULE,
         CMD_RELEASE,
         CMD_SET_MATERIAL,
-
         CMD_SET_OBJECT,
         CMD_SET_STRING,
         CMD_SET_INT,
@@ -60,6 +59,10 @@ namespace ospray {
         CMD_SET_VEC2F,
         CMD_SET_VEC3F,
         CMD_SET_VEC3I,
+
+        CMD_SET_PIXELOP,
+        CMD_NEW_PIXELOP,
+
         CMD_USER
       } CommandTag;
 
@@ -91,6 +94,13 @@ namespace ospray {
       virtual void frameBufferUnmap(const void *mapped,
                                     OSPFrameBuffer fb);
 
+
+      /*! set a frame buffer's pixel op object */
+      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op);
+      
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPPixelOp newPixelOp(const char *type);
+        
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
         
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
@@ -107,13 +117,6 @@ namespace ospray {
 
       /*! create a new model */
       virtual OSPModel newModel();
-
-      /*! create a new pixelOp object (out of list of registered pixelOps) */
-      virtual OSPPixelOp newPixelOp(const char *type) { NOTIMPLEMENTED; };
-
-      /*! set a frame buffer's pixel op object */
-      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) { NOTIMPLEMENTED; };
-      
 
       // /*! finalize a newly specified model */
       // virtual void finalizeModel(OSPModel _model);

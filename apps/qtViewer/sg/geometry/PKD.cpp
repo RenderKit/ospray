@@ -84,15 +84,16 @@ namespace ospray {
           throw std::runtime_error("#osp:sg:PKDGeometry: could not create ospray 'pkd_geometry'");
         assert(ospGeometry);
 
-        // assign a default material (for now.... eventaully we might
-        // want to do a 'real' mateiral
+        // assign a default material (for now.... eventually we might
+        // want to do a 'real' material
         OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
         if (mat) {
           vec3f kd = .7f;
           vec3f ks = .3f;
           ospSet3fv(mat,"kd",&kd.x);
           ospSet3fv(mat,"ks",&ks.x);
-          ospSet1f(mat,"Ns",.4f);
+          ospSet1f(mat,"Ns",99.f);
+          ospCommit(mat);
         }
         ospSetMaterial(ospGeometry,mat);
 

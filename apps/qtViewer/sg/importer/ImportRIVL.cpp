@@ -52,6 +52,7 @@ namespace ospray {
           // -------------------------------------------------------
 #if 1
           cout << "textures not yet implemented" << endl;
+          nodeList.push_back(NULL);
 #else
           Ref<sg::Texture> txt = new sg::RIVLTexture;
           txt.ptr->texData = new sg::Texture2D;
@@ -411,8 +412,8 @@ namespace ospray {
               for(char *s=strtok((char*)value," \t\n\r");s;s=strtok(NULL," \t\n\r")) {
                 size_t matID = atoi(s);
                 Ref<sg::Material> mat = nodeList[matID].cast<sg::Material>();
-                mat.ptr->refInc();
                 assert(mat.ptr);
+                mat.ptr->refInc();
                 mesh->materialList.push_back(mat);
               }
               free(value);

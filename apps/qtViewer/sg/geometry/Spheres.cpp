@@ -62,13 +62,11 @@ namespace ospray {
       ospSet1i(ospGeometry,"offset_materialID", 4*sizeof(float));
       // ospSetData(geom,"materialList",materialData);
 
-      OSPRenderer ospRenderer
-        = ctx.integrator?ctx.integrator->getOSPHandle():NULL;
-      OSPMaterial mat
-        = ospNewMaterial(ospRenderer,"default");
+      OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
       if (mat) {
         vec3f kd = .7f;
         ospSet3fv(mat,"kd",&kd.x);
+        ospCommit(mat);
       }
       ospSetMaterial(ospGeometry,mat);
       ospCommit(ospGeometry);

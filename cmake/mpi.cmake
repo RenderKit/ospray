@@ -15,9 +15,10 @@
 ## ======================================================================== ##
 
 IF (OSPRAY_MPI)
-  OPTION(OSPRAY_FORCE_IMPI "Force use of Intel MPI" OFF)
+#  OPTION(OSPRAY_FORCE_IMPI "Force use of Intel MPI" OFF)
 
-  IF (OSPRAY_FORCE_IMPI)
+  IF ((OSPRAY_COMPILER STREQUAL "ICC"))
+#  IF (OSPRAY_FORCE_IMPI)
     SET(MPI_CXX_COMPILER "mpiicpc")
     execute_process(
       COMMAND ${MPI_CXX_COMPILER} -mt_mpi -show
@@ -25,8 +26,8 @@ IF (OSPRAY_MPI)
       ERROR_VARIABLE   MPI_COMPILE_CMDLINE ERROR_STRIP_TRAILING_WHITESPACE
       RESULT_VARIABLE  MPI_COMPILER_RETURN)
     set(MPI_LINK_CMDLINE ${MPI_COMPILE_CMDLINE})
-    message("MPI_COMPILE_CMDLINE ${MPI_COMPILE_CMDLINE}")
-    message("MPI_LINK_CMDLINE ${MPI_LINK_CMDLINE}")
+ #   message("MPI_COMPILE_CMDLINE ${MPI_COMPILE_CMDLINE}")
+  #  message("MPI_LINK_CMDLINE ${MPI_LINK_CMDLINE}")
     
     # Extract compile flags from the compile command line.
     string(REGEX MATCHALL "(^| )-[Df]([^\" ]+|\"[^\"]+\")" MPI_ALL_COMPILE_FLAGS "${MPI_COMPILE_CMDLINE}")
@@ -71,7 +72,7 @@ IF (OSPRAY_MPI)
       string(REGEX REPLACE "//" "/" LPATH ${LPATH})
       list(APPEND MPI_LINK_PATH ${LPATH})
     endforeach()
-    message("MPI_ALL_LINK_PATHS ${MPI_ALL_LINK_PATHS}")
+#    message("MPI_ALL_LINK_PATHS ${MPI_ALL_LINK_PATHS}")
     
     # try using showme:libdirs if extracting didn't work.
     if (NOT MPI_LINK_PATH)
@@ -108,7 +109,7 @@ IF (OSPRAY_MPI)
         "${MPI_LINK_PATH};${CMAKE_C_IMPLICIT_LINK_DIRECTORIES}")
     endif ()
     
-    message("MPI_LIBNAMES ${MPI_LIBNAMES}")
+#    message("MPI_LIBNAMES ${MPI_LIBNAMES}")
     # Determine full path names for all of the libraries that one needs
     # to link against in an MPI program
     foreach(LIB ${MPI_LIBNAMES})
@@ -123,7 +124,7 @@ IF (OSPRAY_MPI)
         message(WARNING "Unable to find MPI library ${LIB}")
       endif()
     endforeach()
-    message("MPI_LIBRARIES_WORK ${MPI_LIBRARIES_WORK}")
+#    message("MPI_LIBRARIES_WORK ${MPI_LIBRARIES_WORK}")
 
     # Sanity check MPI_LIBRARIES to make sure there are enough libraries
     list(LENGTH MPI_LIBRARIES_WORK MPI_NUMLIBS)

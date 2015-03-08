@@ -27,6 +27,7 @@ namespace ospray {
     using std::endl;
 
     struct FPSCounter {
+      double fps;
       double smooth_nom;
       double smooth_den;
       double frameStartTime;
@@ -40,10 +41,12 @@ namespace ospray {
       void startRender() { frameStartTime = ospray::getSysTime(); }
       void doneRender() { 
         double seconds = ospray::getSysTime() - frameStartTime; 
-        smooth_nom = smooth_nom * 0.8f + seconds;
-        smooth_den = smooth_den * 0.8f + 1.f;
+        fps = 1./seconds;
+        smooth_nom = smooth_nom * 0.8 + seconds;
+        smooth_den = smooth_den * 0.8 + 1.;
       }
-      double getFPS() const { return smooth_den / smooth_nom; }
+      double getSmoothFPS() const { return smooth_den / smooth_nom; }
+      double getFPS() const { return fps; }
     };
 
     FPSCounter fps;
@@ -89,7 +92,7 @@ namespace ospray {
         static int frameID = 0;
         if (frameID > 0) {
           fps.doneRender();
-          printf("fps: %f\n",fps.getFPS());
+          printf("fps: %7.3f (smoothed: %7.3f)\n",fps.getFPS(),fps.getSmoothFPS());
         }
         fps.startRender();
         ++frameID;
@@ -215,14 +218,18 @@ namespace ospray {
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
     }
 
-	void ModelViewer::keyPressEvent(QKeyEvent *event){
-		if (event->key() == Qt::Key_Escape){
-			// TODO: Properly tell the app to quit?
-			exit(0);
-		} else {
-			QMainWindow::keyPressEvent(event);
-		}
-	}
+    void ModelViewer::keyPressEvent(QKeyEvent *event) {
+//      std::cout << event->key() << std::endl;
+      switch (event->key()) {
+        case Qt::Key_Escape:
+        case Qt::Key_Q:
+          // TODO: Properly tell the app to quit?
+          exit(0);
+        // TODO wasd movement
+        default:
+          QMainWindow::keyPressEvent(event);
+      }
+    }
 
     ModelViewer::ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen)
       : editorWidgetStack(NULL),
