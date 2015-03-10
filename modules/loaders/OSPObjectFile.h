@@ -19,7 +19,7 @@
 #include "modules/loaders/ObjectFile.h"
 #include "modules/loaders/TinyXML2.h"
 
-//! \brief A concrete implementation of the CommonObjectFile class
+//! \brief A concrete implementation of the ObjectFile class
 //!  for loading collections of OSPRay objects stored in XML format.
 //!
 //!  The loader creates and configures OSPRay object state according

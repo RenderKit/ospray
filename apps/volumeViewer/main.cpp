@@ -50,12 +50,15 @@ int main(int argc, char *argv[]) {
     std::cerr << "    -viewup <x> <y> <z>                  : set viewport up vector to ('x', 'y', 'z')"     << std::endl;
     std::cerr << "    -writeframes <filename>              : emit frames to 'filename_xxxxx.ppm'"           << std::endl;
     std::cerr << " "                                                                                        << std::endl;
-    return(1);
 
+    return(1);
   }
 
-  //! Parse the volume file names.
-  std::vector<std::string> filenames;  for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++) filenames.push_back(std::string(argv[i]));
+  //! Parse the OSPRay object file filenames.
+  std::vector<std::string> objectFileFilenames;
+
+  for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++)
+    objectFileFilenames.push_back(std::string(argv[i]));
 
   //! Default values for the optional command line arguments.
   float dt = 0.0f;
@@ -72,7 +75,7 @@ int main(int argc, char *argv[]) {
   std::string writeFramesFilename;
 
   //! Parse the optional command line arguments.
-  for (int i=filenames.size() + 1 ; i < argc ; i++) {
+  for (int i=objectFileFilenames.size() + 1 ; i < argc ; i++) {
 
     std::string arg = argv[i];
 
@@ -168,16 +171,14 @@ int main(int argc, char *argv[]) {
   }
 
   //! Create the OSPRay state and viewer window.
-  VolumeViewer *volumeViewer = new VolumeViewer(filenames, showFrameRate, writeFramesFilename);
+  VolumeViewer *volumeViewer = new VolumeViewer(objectFileFilenames, showFrameRate, writeFramesFilename);
 
   //! Display the first model.
   volumeViewer->setModel(0);
 
   //! Load PLY geometries from file.
-  for(unsigned int i=0; i<plyFilenames.size(); i++) {
-
+  for(unsigned int i=0; i<plyFilenames.size(); i++)
     volumeViewer->addGeometry(plyFilenames[i]);
-  }
 
   //! Set rotation rate to use in animation mode.
   if(rotationRate != 0.f) {
@@ -186,10 +187,8 @@ int main(int argc, char *argv[]) {
   }
 
   //! Load slice(s) from file.
-  for(unsigned int i=0; i<sliceFilenames.size(); i++) {
-
+  for(unsigned int i=0; i<sliceFilenames.size(); i++)
     volumeViewer->addSlice(sliceFilenames[i]);
-  }
 
   //! Load transfer function from file.
   if(transferFunctionFilename.empty() != true)
@@ -208,7 +207,7 @@ int main(int argc, char *argv[]) {
   app->exec();
 
   //! Cleanup
-  delete volumeViewer;  return(0);
+  delete volumeViewer;
 
+  return(0);
 }
-

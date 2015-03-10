@@ -54,14 +54,10 @@ QOSPRayWindow::~QOSPRayWindow()
   // free the frame buffer and camera
   // we don't own the renderer!
   if(frameBuffer)
-    {
-      ospFreeFrameBuffer(frameBuffer);
-    }
+    ospFreeFrameBuffer(frameBuffer);
 
   if(camera)
-    {
-      ospRelease(camera);
-    }
+    ospRelease(camera);
 }
 
 void QOSPRayWindow::setRenderingEnabled(bool renderingEnabled)
@@ -70,9 +66,7 @@ void QOSPRayWindow::setRenderingEnabled(bool renderingEnabled)
 
   // trigger render if true
   if(renderingEnabled == true)
-    {
-      updateGL();
-    }
+    updateGL();
 }
 
 void QOSPRayWindow::setRotationRate(float rotationRate)
@@ -102,30 +96,26 @@ void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
 void QOSPRayWindow::paintGL()
 {
   if(!renderingEnabled || !frameBuffer || !renderer)
-    {
-      return;
-    }
+    return;
 
   // if we're benchmarking and we've completed the required number of warm-up frames, start the timer
-  if(benchmarkFrames > 0 && frameCount == benchmarkWarmUpFrames)
-    {
-      std::cout << "starting benchmark timer" << std::endl;
-      benchmarkTimer.start();
-    }
+  if(benchmarkFrames > 0 && frameCount == benchmarkWarmUpFrames) {
+    std::cout << "starting benchmark timer" << std::endl;
+    benchmarkTimer.start();
+  }
 
   // update OSPRay camera if viewport has been modified
-  if(viewport.modified)
-    {
-      ospSetVec3f(camera,"pos" ,viewport.from);
-      ospSetVec3f(camera,"dir" ,viewport.at - viewport.from);
-      ospSetVec3f(camera,"up", viewport.up);
-      ospSetf(camera,"aspect", viewport.aspect);
-      ospSetf(camera,"fovy", viewport.fovY);
+  if(viewport.modified) {
+    ospSetVec3f(camera,"pos" ,viewport.from);
+    ospSetVec3f(camera,"dir" ,viewport.at - viewport.from);
+    ospSetVec3f(camera,"up", viewport.up);
+    ospSetf(camera,"aspect", viewport.aspect);
+    ospSetf(camera,"fovy", viewport.fovY);
 
-      ospCommit(camera);
+    ospCommit(camera);
 
-      viewport.modified = false;
-    }
+    viewport.modified = false;
+  }
 
   renderFrameTimer.start();
   ospRenderFrame(frameBuffer, renderer);
@@ -142,28 +132,24 @@ void QOSPRayWindow::paintGL()
 
   // automatic rotation
   if(rotationRate != 0.f)
-    {
-      rotateCenter(rotationRate, 0.f);
-    }
+    rotateCenter(rotationRate, 0.f);
 
   // increment frame counter
   frameCount++;
 
   // quit if we're benchmarking and have exceeded the needed number of frames
-  if(benchmarkFrames > 0 && frameCount >= benchmarkWarmUpFrames + benchmarkFrames)
-    {
-      float elapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.f;
+  if(benchmarkFrames > 0 && frameCount >= benchmarkWarmUpFrames + benchmarkFrames) {
 
-      std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> " << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
+    float elapsedSeconds = float(benchmarkTimer.elapsed()) / 1000.f;
 
-      QCoreApplication::quit();
-    }
+    std::cout << "benchmark: " << elapsedSeconds << " elapsed seconds ==> " << float(benchmarkFrames) / elapsedSeconds << " fps" << std::endl;
+
+    QCoreApplication::quit();
+  }
 
   // force continuous rendering if we have automatic rotation or benchmarking enabled
   if(rotationRate != 0.f || benchmarkFrames > 0)
-    {
-      update();
-    }
+    update();
 }
 
 void QOSPRayWindow::resizeGL(int width, int height)
@@ -172,9 +158,7 @@ void QOSPRayWindow::resizeGL(int width, int height)
 
   // reallocate OSPRay framebuffer for new size
   if(frameBuffer)
-    {
-      ospFreeFrameBuffer(frameBuffer);
-    }
+    ospFreeFrameBuffer(frameBuffer);
 
   frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8);
 
@@ -202,33 +186,33 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
   int dx = event->x() - lastMousePosition.x();
   int dy = event->y() - lastMousePosition.y();
 
-  if(event->buttons() & Qt::LeftButton)
-    {
-      // camera rotation about center point
-      const float rotationSpeed = 0.003f;
+  if(event->buttons() & Qt::LeftButton) {
 
-      float du = dx * rotationSpeed;
-      float dv = dy * rotationSpeed;
+    // camera rotation about center point
+    const float rotationSpeed = 0.003f;
 
-      rotateCenter(du, dv);
-    }
-  else if(event->buttons() & Qt::RightButton)
-    {
-      // camera distance from center point
-      const float motionSpeed = 0.012f;
+    float du = dx * rotationSpeed;
+    float dv = dy * rotationSpeed;
 
-      float forward = dy * motionSpeed;
-      float oldDistance = length(viewport.at - viewport.from);
-      float newDistance = oldDistance - forward;
+    rotateCenter(du, dv);
+  }
+  else if(event->buttons() & Qt::RightButton) {
 
-      if(newDistance < 1e-3f)
-        return;
+    // camera distance from center point
+    const float motionSpeed = 0.012f;
 
-      viewport.from = viewport.at - newDistance * viewport.frame.l.vy;
-      viewport.frame.p = viewport.from;
+    float forward = dy * motionSpeed;
+    float oldDistance = length(viewport.at - viewport.from);
+    float newDistance = oldDistance - forward;
 
-      viewport.modified = true;
-    }
+    if(newDistance < 1e-3f)
+      return;
+
+    viewport.from = viewport.at - newDistance * viewport.frame.l.vy;
+    viewport.frame.p = viewport.from;
+
+    viewport.modified = true;
+  }
 
   lastMousePosition = event->pos();
 
@@ -254,7 +238,6 @@ void QOSPRayWindow::rotateCenter(float du, float dv)
 
 void QOSPRayWindow::writeFrameBufferToFile(const uint32 *pixelData)
 {
-
   static uint32 frameNumber = 0;
   char filename[1024];
   sprintf(filename, "%s_%05u.ppm", writeFramesFilename.c_str(), frameNumber++);
@@ -273,6 +256,4 @@ void QOSPRayWindow::writeFrameBufferToFile(const uint32 *pixelData)
   }
   fprintf(file, "\n");
   fclose(file);
-
 }
-

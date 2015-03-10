@@ -22,10 +22,11 @@
 #include "SliceWidget.h"
 #include "PLYGeometryFile.h"
 
-VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames, 
+VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool showFrameRate,
                            std::string writeFramesFilename)
-  : renderer(NULL),
+  : objectFileFilenames(objectFileFilenames),
+    renderer(NULL),
     transferFunction(NULL), 
     osprayWindow(NULL), 
     autoRotationRate(0.025f) 
@@ -34,22 +35,28 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
   resize(1024, 768);
 
   //! Create an OSPRay renderer.
-  renderer = ospNewRenderer("raycast_volume_renderer");  exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
+  renderer = ospNewRenderer("raycast_volume_renderer");
+  exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
   //! Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
-  osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate, writeFramesFilename);  setCentralWidget(osprayWindow);
+  osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate, writeFramesFilename);
+  setCentralWidget(osprayWindow);
 
   //! Set the window bounds based on the OSPRay world bounds (always [(0,0,0), (1,1,1)) for volumes).
   osprayWindow->setWorldBounds(osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
 
   //! Create an OSPRay light source.
-  light = ospNewLight(NULL, "DirectionalLight");  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
+  light = ospNewLight(NULL, "DirectionalLight");
+  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);
+  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
+  ospCommit(light);
 
   //! Set the light source on the renderer.
-  ospCommit(light);  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
+  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
 
   //! Create an OSPRay transfer function.
-  transferFunction = ospNewTransferFunction("piecewise_linear");  exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
+  transferFunction = ospNewTransferFunction("piecewise_linear");
+  exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
 
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
@@ -58,7 +65,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
   ospCommit(transferFunction);
 
   //! Create and configure the OSPRay state.
-  initObjects(filenames);
+  initObjects();
 
   //! Update transfer function data value range with the voxel range of the first volume.
   if(volumes.size() > 0 && transferFunctionEditor != NULL) {
@@ -77,6 +84,19 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
 
 }
 
+void VolumeViewer::setModel(size_t index) {
+
+  //! Update current filename label.
+  currentFilenameLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back());
+
+  //! Set current model on the OSPRay renderer.
+  ospSetObject(renderer, "model", models[index]);
+  ospCommit(renderer);
+
+  //! Enable rendering on the OSPRay window.
+  osprayWindow->setRenderingEnabled(true);
+}
+
 void VolumeViewer::autoRotate(bool set) {
 
   if(osprayWindow == NULL)
@@ -89,9 +109,8 @@ void VolumeViewer::autoRotate(bool set) {
     osprayWindow->setRotationRate(autoRotationRate);
     osprayWindow->updateGL();
   }
-  else {
+  else
     osprayWindow->setRotationRate(0.);
-  }
 }
 
 void VolumeViewer::addSlice(std::string filename) {
@@ -143,26 +162,29 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 
   //! Iterate over the volumes contained in the object list.
   for (size_t i=0 ; objects[i] ; i++) {
-    OSPDataType type;  ospGetType(objects[i], NULL, &type);  if (type == OSP_VOLUME) {
+    OSPDataType type;
+    ospGetType(objects[i], NULL, &type);
+
+    if (type == OSP_VOLUME) {
 
       //! For now we set the same transfer function on all volumes.
-      ospSetObject(objects[i], "transferFunction", transferFunction);  ospCommit(objects[i]);
+      ospSetObject(objects[i], "transferFunction", transferFunction);
+      ospCommit(objects[i]);
 
       //! Add the loaded volume(s) to the model.
       ospAddVolume(model, (OSPVolume) objects[i]);
 
       //! Keep a vector of all loaded volume(s).
       volumes.push_back((OSPVolume) objects[i]);
-
     }
   }
 
   //! Commit the model.
-  ospCommit(model);  models.push_back(model);
-
+  ospCommit(model);
+  models.push_back(model);
 }
 
-void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
+void VolumeViewer::initObjects() {
 
   //! Create model for dynamic geometry.
   dynamicModel = ospNewModel();
@@ -172,7 +194,8 @@ void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
   ospSetObject(renderer, "dynamic_model", dynamicModel);
 
   //! Load OSPRay objects from files.
-  for (size_t i=0 ; i < filenames.size() ; i++) importObjectsFromFile(filenames[i]);
+  for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
+    importObjectsFromFile(objectFileFilenames[i]);
 
 }
 
@@ -238,4 +261,6 @@ void VolumeViewer::initUserInterfaceWidgets() {
   slicesDockWidget->setWidget(slicesScrollArea);
   addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
 
+  //! Add the current OSPRay object file label to the bottom status bar.
+  statusBar()->addWidget(&currentFilenameLabel);
 }
