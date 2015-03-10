@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "samplers/ShapeSampler.isph"
+#include "samplers/ShapeSampler.ih"
 
 struct DistantLight
 {
@@ -71,7 +71,7 @@ void DistantLight__Constructor(uniform DistantLight *uniform this,
                                const uniform vec3f L,
                                const uniform float halfAngle)
 {
-  EnvironmentLight__Constructor(&this->base,Light__Destructor,ENV_LIGHT,
+  EnvironmentLight__Constructor(&this->base,ENV_LIGHT,
                                 DistantLight__transform,NULL,DistantLight__eval,DistantLight__sample,
                                 DistantLight__Le);
   this->D = normalize(D);
