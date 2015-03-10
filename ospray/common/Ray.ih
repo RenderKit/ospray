@@ -85,7 +85,7 @@ struct Ray {
 
 /*! returns whether a ray has hit anything or not */
 inline bool noHit(const Ray &ray) 
-{ return ray.primID < 0; }
+{ return ray.geomID < 0; }
 
 /*! returns whether a ray has hit anything or not */
 inline bool hadHit(const Ray &ray) 

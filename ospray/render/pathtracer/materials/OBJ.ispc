@@ -56,11 +56,13 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _THIS,
     Kd = Kd * make_vec3f(Kd_from_map);
     d *= 1.f - Kd_from_map.w;
   }
-  Kd = Kd * d;
-  if (ne(Kd,make_vec3f(0.0f))) COMPOSITED_BRDF_ADD(brdfs,Lambertian,Kd);
+  Kd = Kd * d * make_vec3f(dg.color);
+  if (ne(Kd,make_vec3f(0.0f))) 
+    COMPOSITED_BRDF_ADD(brdfs,Lambertian,Kd);
 
   /*! transmission component */
-  if (d < 1.0f) COMPOSITED_BRDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
+  if (d < 1.0f) 
+    COMPOSITED_BRDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
 
   /*! specular component */
   float Ns = THIS->Ns * get1f(THIS->map_Ns, dg.st, 1.0f);
