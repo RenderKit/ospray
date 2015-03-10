@@ -394,7 +394,7 @@ namespace ospray {
 
       {
 #if 1
-        ispc::DFB_accumTile(tile,td);
+        ispc::DFB_accumTile((ispc::VaryingTile *)&tile,(ispc::DFBTileData*)td,hasAccumBuffer,accumID);
 #else
         // perform tile accumulation. TODO: do this in ISPC
         size_t pixelID = 0;
