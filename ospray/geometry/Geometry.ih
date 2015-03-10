@@ -20,6 +20,18 @@
 #include "ospray/common/Ray.ih"
 #include "ospray/common/DifferentialGeometry.ih"
 
+/*! Geometries are supposed to fill certain members of DifferentialGeometry:
+    calculate Ng, Ns, st, color, and materialID if the respective bit DG_NG,
+    DG_NS, DG_TEXCOORD, DG_COLOR, and DG_MATERIALID, in flags is set.
+    Important with instancing: P and ray are in world-coordinates, whereas Ng
+    and Ns are in object-coordinates and transformed to world-space by
+    Instance_postIntersect.
+    Model::postIntersect already set the hit point P, color, geometry, and
+    material before, and handles normalization/faceforwarding
+    (DG_NORMALIZE/DG_FACEFORWARD) after Geometry_postIntersectFct is called.
+    Thus the material pointer only needs to be set if different to
+    geometry->material, or the color when different to vec4f(1.0f).
+*/
 typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
                                           uniform Model *uniform model,
                                           varying DifferentialGeometry &dg,
@@ -32,10 +44,10 @@ struct Geometry {
   uniform Material *uniform material;//!< material attached to this geometry
   uniform Model    *uniform model;   //!< model that this geometry is part of
   uniform int32             geomID;  //!< ID that 'model' knows this geometry under
-  Geometry_postIntersectFct postIntersect; /*! postintersect function
-                                               that fills in a
-                                               differentialgeometry
-                                               struct */
+  Geometry_postIntersectFct postIntersect; /*! post-intersect function that
+                                             fills in a DifferentialGeometry
+                                             struct, see above prototype for
+                                             details */
 };
  
 //! constructor for ispc-side Geometry object

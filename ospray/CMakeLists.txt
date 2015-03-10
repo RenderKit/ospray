@@ -121,6 +121,7 @@ SET(OSPRAY_SOURCES
   render/pathtracer/PathTracer.cpp
   render/pathtracer/lights/Light.ispc
   render/pathtracer/lights/AmbientLight.ispc
+  render/pathtracer/lights/DistantLight.ispc
   render/pathtracer/lights/PointLight.ispc
   render/pathtracer/lights/SpotLight.ispc
   render/pathtracer/materials/Material.ispc
