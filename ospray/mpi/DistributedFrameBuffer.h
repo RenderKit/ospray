@@ -158,6 +158,11 @@ namespace ospray {
 
     //! write given tile data into the frame buffer, sending to remove owner if required
     virtual void writeTile(ospray::Tile &tile);
+
+    //! specialized write tile function for RGBA_I8 format
+    void writeTile(MasterTileMessage_RGBA_I8 *msg);
+
+
     // virtual void writeTile(size_t x0, size_t y0, size_t dxdy, 
     //                        uint32 *colorChannel, float *depthChannel);
 

@@ -86,7 +86,6 @@ namespace ospray {
       if (debugMode)
         ospray::Task::initTaskSystem(0);
       else {
-        cout << "#osp:mpi: STARINT ALL CLIENT THREADS" << endl;
         ospray::Task::initTaskSystem(-1);
       }
 

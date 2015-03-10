@@ -159,6 +159,23 @@ namespace ospray {
       doneCond.wait(mutex);
     mutex.unlock();
   }
+
+
+  void DistributedFrameBuffer::writeTile(MasterTileMessage_RGBA_I8 *msg)
+  {
+    for (int iy=0;iy<TILE_SIZE;iy++) {
+      int iiy = iy+msg->coords.y;
+      if (iiy >= numPixels.y) continue;
+      
+      for (int ix=0;ix<TILE_SIZE;ix++) {
+        int iix = ix+msg->coords.x;
+        if (iix >= numPixels.x) continue;
+        
+        ((uint*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
+          = msg->color[iy][ix];//[ix+TILE_SIZE*iy];
+      }
+    }
+  }
     
   void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)
   {
@@ -179,26 +196,15 @@ namespace ospray {
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
     if (_msg->command == MASTER_WRITE_TILE) {
       switch(colorBufferFormat) {
-      case OSP_RGBA_NONE: {
+      case OSP_RGBA_NONE: 
         /* nothing to do */
-      } break;
-      case OSP_RGBA_I8: {
-        MasterTileMessage_RGBA_I8 *msg = (MasterTileMessage_RGBA_I8 *)_msg;
-        for (int iy=0;iy<TILE_SIZE;iy++) {
-          int iiy = iy+msg->coords.y;
-          if (iiy >= numPixels.y) continue;
-        
-          for (int ix=0;ix<TILE_SIZE;ix++) {
-            int iix = ix+msg->coords.x;
-            if (iix >= numPixels.x) continue;
-            
-            ((uint*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
-              = msg->color[iy][ix];//[ix+TILE_SIZE*iy];
-          }
-        } break;
-        default:
-          throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented for distributed frame buffer");
-      }
+        break;
+      case OSP_RGBA_I8: 
+        writeTile((MasterTileMessage_RGBA_I8 *)_msg);
+        break;
+      default:
+        throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented "
+                                 "for distributed frame buffer");
       };
       mutex.lock();
       numTilesWrittenThisFrame++;
@@ -242,7 +248,6 @@ namespace ospray {
 
   void DistributedFrameBuffer::closeCurrentFrame(bool locked) {
     if (!locked) mutex.lock();
-    PING;
     frameIsActive = false;
     frameIsDone   = true;
     doneCond.broadcast();
@@ -369,8 +374,6 @@ namespace ospray {
       td->mutex.unlock();
 #endif
 
-      if (fabsf(tile.r[0]-1.f) > 1e-5f) PRINT(tile.r[0]);
-      // PING;
       {
         // perform tile accumulation. TODO: do this in ISPC
         size_t pixelID = 0;
