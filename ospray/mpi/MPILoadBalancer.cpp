@@ -20,7 +20,7 @@
 #include "ospray/fb/LocalFB.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
 
-#define BARRIER_AT_END_OF_FRAME 1
+// #define BARRIER_AT_END_OF_FRAME 1
 
 namespace ospray {
   namespace mpi {
