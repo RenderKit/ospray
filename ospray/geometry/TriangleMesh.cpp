@@ -14,6 +14,13 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#define OSP_COMPOSITING_TEST 1
+
+#if OSP_COMPOSITING_TEST
+# include "ospray/mpi/MPICommon.h"
+#endif
+
+
 // ospray
 #include "TriangleMesh.h"
 #include "ospray/common/Model.h"
@@ -84,13 +91,6 @@ namespace ospray {
     this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
 
-#if OSP_COMPOSITING_TEST
-    int myRank = mpi::worker.rank;
-    int ourSize = mpi::worker.size;
-    PRINT(myRank);
-    PRINT(ourSize);
-#endif
-
     if (materialList) {
       const int num_materials = materialListData->numItems;
       ispcMaterialPtrs = new void*[num_materials];
@@ -132,6 +132,24 @@ namespace ospray {
     default:
       throw std::runtime_error("unsupported trianglemesh.vertex.normal data type");
     }
+
+#if OSP_COMPOSITING_TEST
+    int myRank = mpi::worker.rank;
+    int ourSize = mpi::worker.size;
+
+    long begin = (numTris * myRank) / ourSize;
+    long end   = (numTris * (myRank+1)) / ourSize;
+    numTris = end-begin;
+    this->index += numCompsInTri*begin;
+
+    printf("#osp:trianglemesh: hack to test compositing: have %li tris on rank %i/%i\n",
+           numTris,myRank,ourSize);
+    // PRINT(myRank);
+    // PRINT(ourSize);
+    // PRINT(numTris);
+    // exit(0);
+#endif
+
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
@@ -179,6 +197,7 @@ namespace ospray {
         cout << "  mesh bounds " << bounds << endl;
       } 
 
+    PRINT(texcoord);
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
                            numCompsInTri,

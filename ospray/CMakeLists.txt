@@ -18,15 +18,15 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-SET(OSPRAY_COMPOSITING_TEST OFF CACHE BOOL "Compositing Test")
-IF (OSPRAY_COMPOSITING_TEST)
+SET(OSPRAY_EXP_COMPOSITING OFF CACHE BOOL "Experimental compositing")
+IF (OSPRAY_EXP_COMPOSITING)
   ADD_DEFINITIONS(-DMPI_IMAGE_COMPOSITING=1)
 ENDIF()
 
-IF  ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") AND
-		(${OSPRAY_COMPILER} STREQUAL "GCC") AND
-		(NOT APPLE)
-		)
+IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") AND
+    (${OSPRAY_COMPILER} STREQUAL "GCC") AND
+    (NOT APPLE)
+    )
   MESSAGE(WARNING "Warning: You have selected 'AVX2' target and 'GCC'-compiler, but many older gcc versions do not yet support AVX2. If you run into build issues, please switch to either 'ICC'-compiler, or upgrade your gcc version")
 ENDIF()
 

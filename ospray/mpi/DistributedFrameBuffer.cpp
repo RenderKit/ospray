@@ -61,12 +61,12 @@ namespace ospray {
     mutex.lock();
     frameIsActive = true;
 
-// #if MPI_IMAGE_COMPOSITING
-//     for (int i=0;i<myTile.size();i++) {
-//       myTile[i]->data->numTimesWrittenThisFrame = 0;
-//       if (different(myTile[i]->data->accum_r[0][0],accumID)) PRINT(myTile[i]->data->accum_r[0][0]);
-//     }
-// #endif
+#if MPI_IMAGE_COMPOSITING
+    for (int i=0;i<myTile.size();i++) {
+      myTile[i]->data->numTimesWrittenThisFrame = 0;
+      //       if (different(myTile[i]->data->accum_r[0][0],accumID)) PRINT(myTile[i]->data->accum_r[0][0]);
+    }
+#endif
 
 
     // create a local copy of delayed tiles, so we can work on them outside the mutex
@@ -74,15 +74,20 @@ namespace ospray {
     this->delayedMessage.clear();
     numTilesWrittenThisFrame = 0;
     numTilesToMasterThisFrame = 0;
+
+    printf("=== STARTING new frame (%i)\n",mpi::world.rank);
+
     frameIsDone   = false;
 
     mutex.unlock();
-    
+    PRINT(delayedMessage.size());
     // should actually move this to a thread:
     for (int i=0;i<delayedMessage.size();i++) {
       mpi::async::CommLayer::Message *msg = delayedMessage[i];
       this->incoming(msg);
     }
+    PING;
+
   }
 
   DistributedFrameBuffer
@@ -155,8 +160,11 @@ namespace ospray {
   void DistributedFrameBuffer::waitUntilFinished() 
   {
     mutex.lock();
-    while (!frameIsDone) 
+    while (!frameIsDone)  {
+      printf("-------------------------------------------- WAITING FOR FRAME (%i)\n",mpi::world.rank); fflush(0);
       doneCond.wait(mutex);
+      }
+    printf("--------------- DONE waiting FOR FRAME (%i)\n",mpi::world.rank); fflush(0);
     mutex.unlock();
   }
 
@@ -249,22 +257,23 @@ namespace ospray {
   void DistributedFrameBuffer::closeCurrentFrame(bool locked) {
     if (!locked) mutex.lock();
     frameIsActive = false;
+    printf("CLOSING frame (%i)\n",mpi::world.rank);
     frameIsDone   = true;
     doneCond.broadcast();
 
 
 #if MPI_IMAGE_COMPOSITING
-    for (int i=0;i<myTile.size();i++) {
-      if (myTile[i]->data->numTimesWrittenThisFrame != 2) {
-        PRINT(myTile[i]->data->numTimesWrittenThisFrame);
-        exit(0);
-      }
+    // for (int i=0;i<myTile.size();i++) {
+    //   // if (myTile[i]->data->numTimesWrittenThisFrame != 2) {
+    //   //   PRINT(myTile[i]->data->numTimesWrittenThisFrame);
+    //   //   exit(0);
+    //   // }
 
-      if (different(myTile[i]->data->accum_r[0][0],accumID+1)) {
-        cout << "WEIRD ACCUM TILE!? accum = " << accumID << endl;
-        PRINT(myTile[i]->data->accum_r[0][0]);
-      }
-    }
+    //   if (different(myTile[i]->data->accum_r[0][0],accumID+1)) {
+    //     cout << "WEIRD ACCUM TILE!? accum = " << accumID << endl;
+    //     PRINT(myTile[i]->data->accum_r[0][0]);
+    //   }
+    // }
 #endif
 
 
@@ -311,7 +320,9 @@ namespace ospray {
       // msg->targetHandle = myHandle;
       msg->command      = WORKER_WRITE_TILE;
       // printf("client %i SENDS tile %li,%li\n",comm->rank(),x0,y0);
-        
+
+      // PING; exit(0);
+
       comm->sendTo(this->worker[myTile->ownerID],
                    msg,sizeof(*msg));
       // printf("CLIENT NUM SENT TO MASTER %i\n",numTilesToMasterThisFrame);
@@ -353,6 +364,7 @@ namespace ospray {
       }
       td->numTimesWrittenThisFrame++;
       // PRINT(td->numTimesWrittenThisFrame);
+      // PRINT(comm->numWorkers());
       if (td->numTimesWrittenThisFrame == comm->numWorkers()) {
         // we're the last one to write. let's just write that data
         // back into the tile, and pretend that nothign happened :-)
