@@ -327,7 +327,7 @@ __define_binary_operator( operator-, - );
 __define_binary_operator( operator*, * );
 __define_binary_operator( operator/, / );
 
-// define old functional operators as used in the embree path tracer
+// define old functional operators as used in the embree path tracer, deprecated
 __define_binary_operator( add, + );
 __define_binary_operator( sub, - );
 __define_binary_operator( mul, * );

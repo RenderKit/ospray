@@ -102,25 +102,24 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
   const float t_in = (- b - srad) *rcpf(2.f*a);
   const float t_out= (- b + srad) *rcpf(2.f*a);
 
+  bool hit = false;
   if (t_in >= tAB0 && t_in <= tAB1) {
-    ray.primID = primID;
-    ray.geomID = geometry->geometry.geomID;
+    hit = true;
     ray.t = t_in;
-    const vec3f P = ray.org+ray.t*ray.dir - v0;
-    // const vec3f P = ray.t*ray.dir - A;
-    const vec3f V = cross(P,AB);
-    ray.Ng = cross(AB,V);
-    return;
   } else if (t_out >= tAB0 && t_out <= tAB1) {
+    hit = true;
+    ray.t = t_out;
+  }
+
+  if (hit) {
     ray.primID = primID;
     ray.geomID = geometry->geometry.geomID;
-    ray.t = t_out;
+    // cannot easily be moved to postIntersect
+    // we need hit in object space, in postIntersect it is in world-space
     const vec3f P = ray.t*ray.dir - A;
     const vec3f V = cross(P,AB);
     ray.Ng = cross(AB,V);
-    return;
   }
-  return;
 }
 
 
@@ -131,25 +130,12 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
                                        uniform int64 flags)
 {
   uniform Cylinders *uniform THIS = (uniform Cylinders *uniform)geometry;
-  dg.geometry = geometry;
-  dg.material = geometry->material;
-  vec3f Ng = ray.Ng;
-  vec3f Ns = Ng;
+  dg.Ng = dg.Ns = ray.Ng;
 
-  if (flags & DG_NORMALIZE) {
-    Ng = normalize(Ng);
-    Ns = normalize(Ns);
-  }
-  if (flags & DG_FACEFORWARD) {
-    if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
-    if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
-  }
   if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
     uniform uint8 *cylinderPtr = THIS->data + THIS->bytesPerCylinder*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(cylinderPtr+THIS->offset_materialID));
   }
-  dg.Ng = Ng;
-  dg.Ns = Ns;
 }
 
 export void *uniform Cylinders_create(void           *uniform cppEquivalent)

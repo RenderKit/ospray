@@ -178,8 +178,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         /*! Evaluate BRDF */
         vec3f brdf = CompositedBRDF__eval(&brdfs,wo,dg,ls.wi.v,directLightingBRDFTypes);
 #ifdef USE_DGCOLOR
-        if (dg.color.x > -1.f)
-          brdf = brdf * make_vec3f(dg.color);
+        brdf = brdf * make_vec3f(dg.color);
 #endif
         if (reduce_max(brdf) <= 0.0f)
           continue;
@@ -210,7 +209,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     vec2f ss = RandomTEA__getFloats(rng);
     vec3f c = CompositedBRDF__sample(&brdfs, wo, dg, wi, type, s, ss.x, giBRDFTypes);
 #ifdef USE_DGCOLOR
-    if (dg.color.x > -1.f && (type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
+    if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
       c = c * make_vec3f(dg.color);
 #endif
     

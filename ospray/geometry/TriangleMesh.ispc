@@ -29,11 +29,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
                                        uniform int64 flags)
 {
   uniform TriangleMesh *uniform self = (uniform TriangleMesh *uniform)_self;
-  dg.geometry = _self;
-  vec3f Ng = ray.Ng;
-  vec3f Ns = Ng;
-
-  dg.P = ray.org + ray.t * ray.dir;
+  dg.Ng = dg.Ns = ray.Ng;
   
   const varying int indexBase = self->idxSize * ray.primID;
   const varying vec3i index = make_vec3i(self->index[indexBase+0],
@@ -44,7 +40,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
     const uniform vec3f *const varying n0ptr = (const uniform vec3f *)&normal[index.x * self->norSize];
     const uniform vec3f *const varying n1ptr = (const uniform vec3f *)&normal[index.y * self->norSize];
     const uniform vec3f *const varying n2ptr = (const uniform vec3f *)&normal[index.z * self->norSize];
-    Ns
+    dg.Ns
       = (1.f-ray.u-ray.v) * *n0ptr
       + ray.u * *n1ptr
       + ray.v * *n2ptr;
@@ -58,8 +54,6 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
         + ray.u * (color[index.y])
         + ray.v * (color[index.z]);
     }
-    else
-      dg.color = make_vec4f(-1.f);
   }
 
   if (flags & DG_TEXCOORD && self->texcoord) {
@@ -82,15 +76,9 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
       dg.materialID = self->geom_materialID;
     }
 
-    if( self->materialList) {
+    if( self->materialList)
       dg.material = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
-    } else {
-      dg.material = _self->material;
-    }
   }
-
-  dg.Ns = Ns;
-  dg.Ng = Ng;
 }
 
 

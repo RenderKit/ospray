@@ -151,22 +151,7 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
                                        const varying Ray &ray,
                                        uniform int64 flags)
 {
-  uniform StreamLines *uniform THIS = (uniform StreamLines *uniform)geometry;
-  dg.geometry = geometry;
-  dg.material = geometry->material;
-  vec3f Ng = ray.Ng;
-  vec3f Ns = Ng;
-
-  if (flags & DG_NORMALIZE) {
-    Ng = normalize(Ng);
-    Ns = normalize(Ns);
-  }
-  if (flags & DG_FACEFORWARD) {
-    if (dot(ray.dir,Ng) >= 0.f) Ng = neg(Ng);
-    if (dot(ray.dir,Ns) >= 0.f) Ns = neg(Ns);
-  }
-  dg.Ng = Ng;
-  dg.Ns = Ns;
+  dg.Ng = dg.Ns = ray.Ng;
 }
 
 export void *uniform StreamLineGeometry_create(void           *uniform cppEquivalent)
