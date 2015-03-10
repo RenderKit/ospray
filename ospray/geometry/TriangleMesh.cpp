@@ -84,6 +84,13 @@ namespace ospray {
     this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
 
+#if OSP_COMPOSITING_TEST
+    int myRank = mpi::worker.rank;
+    int ourSize = mpi::worker.size;
+    PRINT(myRank);
+    PRINT(ourSize);
+#endif
+
     if (materialList) {
       const int num_materials = materialListData->numItems;
       ispcMaterialPtrs = new void*[num_materials];

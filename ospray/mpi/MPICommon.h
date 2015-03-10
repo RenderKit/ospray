@@ -30,9 +30,6 @@
     calls via MPI_CALL(xxx(...)).  */
 #define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
 
-/*! testing only - enable compositing-rendering mode */
-#define MPI_IMAGE_COMPOSITING 1
-
 namespace ospray {
 
   /*! Helper class for MPI Programming */
