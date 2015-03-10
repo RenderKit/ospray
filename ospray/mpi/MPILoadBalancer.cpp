@@ -20,6 +20,8 @@
 #include "ospray/fb/LocalFB.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
 
+#define BARRIER_AT_END_OF_FRAME 1
+
 namespace ospray {
   namespace mpi {
 
@@ -42,7 +44,9 @@ namespace ospray {
            anything ourselves */
         dfb->waitUntilFinished();
 
-        // MPI_Barrier(MPI_COMM_WORLD);
+#if BARRIER_AT_END_OF_FRAME
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
       }
 
       void Slave::RenderTask::finish()
@@ -105,8 +109,10 @@ namespace ospray {
 
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(channelFlags);
-
-        // MPI_Barrier(MPI_COMM_WORLD);
+        
+#if BARRIER_AT_END_OF_FRAME
+        MPI_Barrier(MPI_COMM_WORLD);
+#endif
       }
     }
 

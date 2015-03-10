@@ -37,7 +37,7 @@ namespace ospray {
   inline void DistributedFrameBuffer::startNewFrame()
   {
     mutex.lock();
-    frameIsActive = true;
+    assert(!frameIsActive);
 
 #if MPI_IMAGE_COMPOSITING
     for (int i=0;i<myTile.size();i++) 
@@ -51,6 +51,14 @@ namespace ospray {
     numTilesToMasterThisFrame = 0;
 
     frameIsDone   = false;
+
+    // set frame to active - this HAS TO BE the last thing we do
+    // before unlockign the mutex, because the 'incoming()' message
+    // will actually NOT lock the mutex when checking if
+    // 'frameIsActive' is true: as soon as the frame is tagged active,
+    // incoming WILL write into the frame buffer, composite tiles,
+    // etc!
+    frameIsActive = true;
 
     mutex.unlock();
     // should actually move this to a thread:

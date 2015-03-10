@@ -104,6 +104,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
   float path_opacity = 1.f;
   int max_depth = 10;
   uniform int depth = 0;
+  bool depthGotSet = 0;
 
   while (1) {
     ray.t0 += renderer->inherited.nearClip;
@@ -111,11 +112,9 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
 
     if (ray.geomID < 0) {
       color = color + path_opacity * renderer->bgColor;
-      sample.z = 1;
+      // sample.z = 1;
       return color;
     }
-
-    sample.z = log(ray.t) / 10;
 
     vec3f local_shade_color = make_vec3f(0.f);
 
@@ -153,6 +152,11 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
         Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
 //        bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
       }
+    }
+
+    if (d >= .5 && !depthGotSet) {
+      sample.z = ray.t;
+      depthGotSet = true;
     }
 
     const float local_opacity = path_opacity * d;
@@ -261,6 +265,7 @@ void OBJRenderer_renderSample(uniform Renderer *uniform _renderer,
                                varying ScreenSample &sample)
 {
   uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
+  sample.z = 1e20f;
   sample.rgb = OBJRenderer_shadeRay(sample,renderer);
 }
 

@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#if MPI_IMAGE_COMPOSITING
+#if 1 || MPI_IMAGE_COMPOSITING
 #  define OSP_COMPOSITING_TEST 1
 #endif
 
