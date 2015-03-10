@@ -30,7 +30,7 @@ class VolumeViewer : public QMainWindow {
   public:
 
   //! Constructor.
-  VolumeViewer(const std::vector<std::string> &filenames, bool showFrameRate, std::string writeFramesFilename);
+  VolumeViewer(const std::vector<std::string> &objectFileFilenames, bool showFrameRate, std::string writeFramesFilename);
 
   //! Destructor.
   ~VolumeViewer() {};
@@ -42,7 +42,7 @@ class VolumeViewer : public QMainWindow {
   TransferFunctionEditor *getTransferFunctionEditor() { return(transferFunctionEditor); }
 
   //! Select the model to be displayed.
-  void setModel(size_t index) { ospSetObject(renderer, "model", models[index]);  ospCommit(renderer);  osprayWindow->setRenderingEnabled(true); }
+  void setModel(size_t index);
 
   //! A string description of this class.
   std::string toString() const { return("VolumeViewer"); }
@@ -74,6 +74,9 @@ public slots:
   void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
 
 protected:
+
+  //! OSPRay object file filenames, one for each model / time step.
+  std::vector<std::string> objectFileFilenames;
 
   //! OSPRay models.
   std::vector<OSPModel> models;
@@ -111,6 +114,9 @@ protected:
   //! Timer for use when stepping through multiple models.
   QTimer playTimeStepsTimer;
 
+  //! Label for current OSPRay object file.
+  QLabel currentFilenameLabel;
+
   //! Print an error message.
   void emitMessage(const std::string &kind, const std::string &message) const
   { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
@@ -123,7 +129,7 @@ protected:
   void importObjectsFromFile(const std::string &filename);
 
   //! Create and configure the OSPRay state.
-  void initObjects(const std::vector<std::string> &filenames);
+  void initObjects();
 
   //! Create and configure the user interface widgets and callbacks.
   void initUserInterfaceWidgets();

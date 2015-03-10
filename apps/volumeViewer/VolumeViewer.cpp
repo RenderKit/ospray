@@ -22,10 +22,11 @@
 #include "SliceWidget.h"
 #include "PLYGeometryFile.h"
 
-VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames, 
+VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool showFrameRate,
                            std::string writeFramesFilename)
-  : renderer(NULL),
+  : objectFileFilenames(objectFileFilenames),
+    renderer(NULL),
     transferFunction(NULL), 
     osprayWindow(NULL), 
     autoRotationRate(0.025f) 
@@ -64,7 +65,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
   ospCommit(transferFunction);
 
   //! Create and configure the OSPRay state.
-  initObjects(filenames);
+  initObjects();
 
   //! Update transfer function data value range with the voxel range of the first volume.
   if(volumes.size() > 0 && transferFunctionEditor != NULL) {
@@ -81,6 +82,19 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &filenames,
   //! Show the window.
   show();
 
+}
+
+void VolumeViewer::setModel(size_t index) {
+
+  //! Update current filename label.
+  currentFilenameLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back());
+
+  //! Set current model on the OSPRay renderer.
+  ospSetObject(renderer, "model", models[index]);
+  ospCommit(renderer);
+
+  //! Enable rendering on the OSPRay window.
+  osprayWindow->setRenderingEnabled(true);
 }
 
 void VolumeViewer::autoRotate(bool set) {
@@ -170,7 +184,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
   models.push_back(model);
 }
 
-void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
+void VolumeViewer::initObjects() {
 
   //! Create model for dynamic geometry.
   dynamicModel = ospNewModel();
@@ -180,7 +194,8 @@ void VolumeViewer::initObjects(const std::vector<std::string> &filenames) {
   ospSetObject(renderer, "dynamic_model", dynamicModel);
 
   //! Load OSPRay objects from files.
-  for (size_t i=0 ; i < filenames.size() ; i++) importObjectsFromFile(filenames[i]);
+  for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
+    importObjectsFromFile(objectFileFilenames[i]);
 
 }
 
@@ -246,4 +261,6 @@ void VolumeViewer::initUserInterfaceWidgets() {
   slicesDockWidget->setWidget(slicesScrollArea);
   addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
 
+  //! Add the current OSPRay object file label to the bottom status bar.
+  statusBar()->addWidget(&currentFilenameLabel);
 }
