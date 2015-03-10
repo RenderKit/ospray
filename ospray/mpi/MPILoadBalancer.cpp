@@ -42,50 +42,13 @@ namespace ospray {
            anything ourselves */
         dfb->waitUntilFinished();
 
-
-        MPI_Barrier(MPI_COMM_WORLD);
-
-
-// #else
-//         int rc; 
-//         MPI_Status status;
-
-//         // mpidevice already sent the 'cmd_render_frame' event; we
-//         // only have to wait for tiles...
-//         const size_t numTiles
-//           = divRoundUp(fb->size.x,TILE_SIZE)
-//           * divRoundUp(fb->size.y,TILE_SIZE);
-        
-//         assert(fb->colorBufferFormat == OSP_RGBA_I8);
-//         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
-//         for (int i=0;i<numTiles;i++) {
-//           box2ui region;
-//           // printf("#m: receiving tile %i\n",i);
-//           rc = MPI_Recv(&region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
-//                         mpi::worker.comm,&status); 
-//           Assert(rc == MPI_SUCCESS); 
-//           // printf("#m: received tile %i (%i,%i) from %i\n",i,
-//           //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
-//           rc = MPI_Recv(&rgba_i8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
-//                         status.MPI_SOURCE,status.MPI_TAG,mpi::worker.comm,&status);
-//           Assert(rc == MPI_SUCCESS);
-
-//           ospray::LocalFrameBuffer *lfb = (ospray::LocalFrameBuffer *)fb;
-//           for (int iy=region.lower.y;iy<region.upper.y;iy++)
-//             for (int ix=region.lower.x;ix<region.upper.x;ix++) {
-//               ((uint32*)lfb->colorBuffer)[ix+iy*lfb->size.x] 
-//                 = rgba_i8[iy-region.lower.y][ix-region.lower.x];
-//             }
-//         }
-//         //        printf("#m: master done fb %lx\n",fb);
-// #endif
+        // MPI_Barrier(MPI_COMM_WORLD);
       }
 
       void Slave::RenderTask::finish()
       {
         renderer = NULL;
         fb = NULL;
-        // refDec();
       }
 
 
@@ -100,7 +63,6 @@ namespace ospray {
         if ((tileID % worker.size) != worker.rank) return;
 #endif
 
-        // PING;
         Tile __aligned(64) tile;
         const size_t tile_y = tileID / numTiles_x;
         const size_t tile_x = tileID - tile_y*numTiles_x;
@@ -112,26 +74,7 @@ namespace ospray {
         tile.rcp_fbSize = rcp(vec2f(fb->size));
         renderer->renderTile(tile);
 
-        // PRINT(tile.region.lower);
-
         fb->setTile(tile);
-
-// #if USE_DFB
-//         // cout << "calling settile on client!" << endl;
-//         // do nothing - the frame buffer's 'setTile' will do the sending etc
-// #else
-//         ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
-//         uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
-//         for (int iy=tile.region.lower.y;iy<tile.region.upper.y;iy++)
-//           for (int ix=tile.region.lower.x;ix<tile.region.upper.x;ix++) {
-//             rgba_i8[iy-tile.region.lower.y][ix-tile.region.lower.x] 
-//               = ((uint32*)localFB->colorBuffer)[ix+iy*localFB->size.x];
-//           }
-        
-//         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
-//         int count = (TILE_SIZE)*(TILE_SIZE);
-//         MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
-// #endif
       }
       
       void Slave::renderFrame(Renderer *tiledRenderer, 
@@ -141,8 +84,8 @@ namespace ospray {
       {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
-        Ref<RenderTask> renderTask
-          = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
+        Ref<RenderTask> renderTask = new RenderTask;
+
         renderTask->fb = fb;
         renderTask->renderer = tiledRenderer;
         renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
@@ -163,7 +106,7 @@ namespace ospray {
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(channelFlags);
 
-        MPI_Barrier(MPI_COMM_WORLD);
+        // MPI_Barrier(MPI_COMM_WORLD);
       }
     }
 

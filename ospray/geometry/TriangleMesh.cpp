@@ -14,7 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#define OSP_COMPOSITING_TEST 1
+#if MPI_IMAGE_COMPOSITING
+#  define OSP_COMPOSITING_TEST 1
+#endif
 
 #if OSP_COMPOSITING_TEST
 # include "ospray/mpi/MPICommon.h"
@@ -146,10 +148,6 @@ namespace ospray {
     printf("#osp:trianglemesh: hack to test compositing: have %li tris on rank %i/%i\n",
            numTris,myRank,ourSize);
     }
-    // PRINT(myRank);
-    // PRINT(ourSize);
-    // PRINT(numTris);
-    // exit(0);
 #endif
 
 
