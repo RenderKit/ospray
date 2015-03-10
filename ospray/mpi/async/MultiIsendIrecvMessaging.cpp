@@ -15,30 +15,30 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "MultiIsendIrecvMessaging.h"
+
+// #define WORKAROUND 1
 
 namespace ospray {
   namespace mpi {
     namespace async {
-      int dbg = false;
+      // int dbg = false;
 
-      double tt0 = 0;
-      double tt1 = 0;
-      double tt2 = 0;
-      double tt3 = 0;
-      double tt4 = 0;
-      double tt5 = 0;
-      double tt6 = 0;
-      double tt7 = 0;
-      double tt8 = 0;
-      double tt9 = 0;
-      double tt10 = 0;
-      double tt11 = 0;
-      double tt12 = 0;
-      double tt13 = 0;
-      double tt14 = 0;
+      // double tt0 = 0;
+      // double tt1 = 0;
+      // double tt2 = 0;
+      // double tt3 = 0;
+      // double tt4 = 0;
+      // double tt5 = 0;
+      // double tt6 = 0;
+      // double tt7 = 0;
+      // double tt8 = 0;
+      // double tt9 = 0;
+      // double tt10 = 0;
+      // double tt11 = 0;
+      // double tt12 = 0;
+      // double tt13 = 0;
+      // double tt14 = 0;
 
       MultiIsendIrecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
                                        Consumer *consumer, int32 tag)
@@ -57,37 +57,40 @@ namespace ospray {
         std::vector<QueuedMessage *> activeSendQueue;
 
         while (1) {
-          tt0 = getSysTime();
+          // tt0 = getSysTime();
           g->sendMutex.lock();
-          if (dbg) {
-            printf("%i: TESTING WAIT...\n",world.rank); fflush(0);
-          }
-          tt1 = getSysTime();
+          // if (dbg) {
+          //   printf("%i: TESTING WAIT...\n",world.rank); fflush(0);
+          // }
+          // tt1 = getSysTime();
+
           while (activeSendQueue.empty() && 
                  g->sendQueue.empty() && 
                  !(g->sendThreadState == FLAGGED_TO_TERMINATE)) 
             {
-              if (dbg) {
-                printf("%i: waiting again...\n",world.rank); fflush(0);
-              }
-              tt2 = getSysTime();
+              // if (dbg) {
+              //   printf("%i: waiting again...\n",world.rank); fflush(0);
+              // }
+              // tt2 = getSysTime();
               g->sendCond.wait(g->sendMutex);
-              tt3 = getSysTime();
+              // tt3 = getSysTime();
             }
-          if (dbg) {
-            printf("%i: new-sendq-size %li, active-sendq-size %li\n",
-                   world.rank,
-                   g->sendQueue.size(),
-                   activeSendQueue.size());
-          }
+          // if (dbg) {
+          //   printf("%i: new-sendq-size %li, active-sendq-size %li\n",
+          //          world.rank,
+          //          g->sendQueue.size(),
+          //          activeSendQueue.size());
+          // }
 
           if (g->sendThreadState == FLAGGED_TO_TERMINATE) {
             printf("EXITING %i/%i\n",world.rank,world.size);fflush(0);
             break;
           }
           
-          if (activeSendQueue.size() < 20) {
-            tt4 = getSysTime();
+          if (g->sendQueue.size() > 0
+              // activeSendQueue.size() < 20
+              ) {
+            // tt4 = getSysTime();
             // ------------------------------------------------------------------
             // pull newly added send messages from queue, then release that queue
             // ------------------------------------------------------------------
@@ -104,10 +107,10 @@ namespace ospray {
                 printf("rank %i found new 4-byte message to %i\n",world.rank,msg->addr.rank);
                 fflush(0);
               }
-              tt5 = getSysTime();
+              // tt5 = getSysTime();
               MPI_CALL(Isend(msg->ptr,msg->size,MPI_BYTE,msg->addr.rank,g->tag,
                              msg->addr.group->comm,&msg->request));
-              tt6 = getSysTime();
+              // tt6 = getSysTime();
               activeSendQueue.push_back(msg);
             }
           }
@@ -117,29 +120,37 @@ namespace ospray {
           // ------------------------------------------------------------------
           // remove all messages that are done sending form active send queue
           // ------------------------------------------------------------------
+
+// #if WORKAROUND
+//           if (activeSendQueue.size() > 0) {
+//             QueuedMessage *msg = activeSendQueue[0];
+//             MPI_CALL(Wait(&msg->request,&msg->status));
+//           }
+// #endif
+
           for (int i=0;i<activeSendQueue.size();) {
             QueuedMessage *msg = activeSendQueue[i];
             int done = 0;
-            tt7 = getSysTime();
+            // tt7 = getSysTime();
             MPI_CALL(Test(&msg->request,&done,&msg->status));
             if (done) {
-              tt8 = getSysTime();
+              // tt8 = getSysTime();
               MPI_CALL(Wait(&msg->request,&msg->status));
-              tt9 = getSysTime();
+              // tt9 = getSysTime();
               activeSendQueue.erase(activeSendQueue.begin()+i);
-          tt10 = getSysTime();
+              // tt10 = getSysTime();
               free(msg->ptr);
-          tt11 = getSysTime();
+              // tt11 = getSysTime();
               delete msg;
-          tt12 = getSysTime();
+              // tt12 = getSysTime();
             } else {
               ++i;
-              tt13 = getSysTime();
+              // tt13 = getSysTime();
             }
           }
-          tt14 = getSysTime();
+          // tt14 = getSysTime();
 
-          // if (activeSendQueue.empty()) usleep(10);
+          if (activeSendQueue.empty()) usleep(10);
         }
 
         if (!activeSendQueue.empty() || !g->sendQueue.empty()) {
@@ -148,10 +159,10 @@ namespace ospray {
           g->sendQueue.clear();
           for (int i=0;i<newSendQueue.size();i++) {
             QueuedMessage *msg = newSendQueue[i];
-            if (msg->size == 4) {
-              printf("rank %i found new 4-byte message to %i\n",world.rank,msg->addr.rank);
-              fflush(0);
-            }
+            // if (msg->size == 4) {
+            //   printf("rank %i found new 4-byte message to %i\n",world.rank,msg->addr.rank);
+            //   fflush(0);
+            // }
             MPI_CALL(Isend(msg->ptr,msg->size,MPI_BYTE,msg->addr.rank,g->tag,
                            msg->addr.group->comm,&msg->request));
             activeSendQueue.push_back(msg);
@@ -163,6 +174,7 @@ namespace ospray {
             // MPI_CALL(Cancel(&msg->request));
           }
         }
+
         // assert(activeSendQueue.empty());
         printf("#osp:mpi(%2i): shutting down send thread\n",g->rank);fflush(0);
         g->sendThreadState = TERMINATED;
@@ -188,12 +200,12 @@ namespace ospray {
           
           int count = -1;
           MPI_CALL(Get_count(&status,MPI_BYTE,&count));
-          static int lastCount = -1;
-          if (count != lastCount)  {
-            printf("rank %i received %i bytes\n",world.rank,count);
-            fflush(0);
-            lastCount = count;
-          }
+          // static int lastCount = -1;
+          // if (count != lastCount)  {
+          //   printf("rank %i received %i bytes\n",world.rank,count);
+          //   fflush(0);
+          //   lastCount = count;
+          // }
           void *msg = malloc(count);
           MPI_CALL(Recv(msg,count,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
                         g->comm,&status));
@@ -284,17 +296,17 @@ namespace ospray {
 
         Group *g = (Group *)dest.group;
         g->sendMutex.lock();
-        if (msgSize == 4) { 
-          double tt = getSysTime();
-          printf("%i: added new 4-byte msg to queue, tgt = %i\n",world.rank,msg->addr.rank);
-          printf("Time %f:\n 0=%f\n 1=%f\n 2=%f\n 3=%f\n 4=%f\n 5=%f\n 6=%f\n 7=%f\n 8=%f\n 9=%f\n10=%f\n",
-                 tt,tt0-tt,tt1-tt,tt2-tt,tt3-tt,tt4-tt,tt5-tt,tt6-tt,tt7-tt,tt8-tt,tt9-tt,tt10-tt);
-          printf("11=%f\n",tt11-tt);
-          printf("12=%f\n",tt12-tt);
-          printf("13=%f\n",tt13-tt);
-          printf("14=%f\n",tt14-tt);
-          dbg = true;
-        }
+        // if (msgSize == 4) { 
+        //   double tt = getSysTime();
+        //   printf("%i: added new 4-byte msg to queue, tgt = %i\n",world.rank,msg->addr.rank);
+        //   printf("Time %f:\n 0=%f\n 1=%f\n 2=%f\n 3=%f\n 4=%f\n 5=%f\n 6=%f\n 7=%f\n 8=%f\n 9=%f\n10=%f\n",
+        //          tt,tt0-tt,tt1-tt,tt2-tt,tt3-tt,tt4-tt,tt5-tt,tt6-tt,tt7-tt,tt8-tt,tt9-tt,tt10-tt);
+        //   printf("11=%f\n",tt11-tt);
+        //   printf("12=%f\n",tt12-tt);
+        //   printf("13=%f\n",tt13-tt);
+        //   printf("14=%f\n",tt14-tt);
+        //   // dbg = true;
+        // }
         // if (g->sendQueue.empty())
         //   g->sendCond.broadcast();
         g->sendQueue.push_back(msg);
