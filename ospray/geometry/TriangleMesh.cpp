@@ -197,7 +197,6 @@ namespace ospray {
         cout << "  mesh bounds " << bounds << endl;
       } 
 
-    PRINT(texcoord);
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
                            numCompsInTri,

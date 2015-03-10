@@ -17,6 +17,8 @@
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
 
+#include "ospray/common/TaskSys.h"
+
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -144,6 +146,7 @@ namespace ospray {
   }
 
 
+
   void DistributedFrameBuffer::writeTile(MasterTileMessage_RGBA_I8 *msg)
   {
     for (int iy=0;iy<TILE_SIZE;iy++) {
@@ -159,6 +162,65 @@ namespace ospray {
       }
     }
   }
+
+
+  struct DFBWriteTileTask : public ospray::Task {
+    DistributedFrameBuffer *dfb;
+    mpi::async::CommLayer::Message *_msg;
+
+    DFBWriteTileTask(DistributedFrameBuffer *dfb,
+                 mpi::async::CommLayer::Message *_msg) 
+      : dfb(dfb), _msg(_msg) 
+    {}
+    
+    virtual void run(size_t jobID) 
+    {
+      if (_msg->command == DistributedFrameBuffer::MASTER_WRITE_TILE) {
+        switch(dfb->colorBufferFormat) {
+        case OSP_RGBA_NONE: 
+          /* nothing to do */
+          break;
+        case OSP_RGBA_I8: 
+          dfb->writeTile((DistributedFrameBuffer::MasterTileMessage_RGBA_I8 *)_msg);
+          break;
+        default:
+          throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented "
+                                   "for distributed frame buffer");
+        };
+        dfb->mutex.lock();
+        dfb->numTilesWrittenThisFrame++;
+        if (dfb->numTilesWrittenThisFrame == dfb->numTiles.x*dfb->numTiles.y)
+          dfb->closeCurrentFrame(true);
+        dfb->mutex.unlock();
+        delete _msg;
+        return;
+      }
+
+      if (_msg->command == DistributedFrameBuffer::WORKER_WRITE_TILE) {
+        DistributedFrameBuffer::WriteTileMessage *msg = (DistributedFrameBuffer::WriteTileMessage *)_msg;
+
+        // TODO: "unpack" tile
+        ospray::Tile unpacked;
+        memcpy(unpacked.r,msg->r,TILE_SIZE*TILE_SIZE*sizeof(float));
+        memcpy(unpacked.g,msg->g,TILE_SIZE*TILE_SIZE*sizeof(float));
+        memcpy(unpacked.b,msg->b,TILE_SIZE*TILE_SIZE*sizeof(float));
+        memcpy(unpacked.a,msg->a,TILE_SIZE*TILE_SIZE*sizeof(float));
+#if MPI_IMAGE_COMPOSITING
+        memcpy(unpacked.z,msg->z,TILE_SIZE*TILE_SIZE*sizeof(float));
+#endif
+        unpacked.region.lower = msg->coords;
+        unpacked.region.upper = min((msg->coords+vec2i(TILE_SIZE)),dfb->getNumPixels());
+      
+        // cout << "worker RECEIVED tile " << unpacked.region.lower << endl;
+        dfb->writeTile(unpacked);
+        // msg->coords.x,msg->coords.y,TILE_SIZE,
+        //                       &msg->tile.color[0][0],&msg->tile.depth[0][0]);
+        delete msg;
+        return;
+      }
+    }
+  };
+
     
   void DistributedFrameBuffer::incoming(mpi::async::CommLayer::Message *_msg)
   {
@@ -174,6 +236,11 @@ namespace ospray {
       }
       mutex.unlock();
     }
+
+#if 1
+    Ref<DFBWriteTileTask> writeTask = new DFBWriteTileTask(this,_msg);
+    writeTask->schedule(1);
+#else
 
     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
     if (_msg->command == MASTER_WRITE_TILE) {
@@ -221,6 +288,7 @@ namespace ospray {
     }
 
     throw std::runtime_error("#osp:mpi:DistributedFrameBuffer: unknown command");
+#endif
   }
 
   void DistributedFrameBuffer::setTile(ospray::Tile &tile)
@@ -410,6 +478,24 @@ namespace ospray {
     }
   }
 
+  struct DFBClearTask : public ospray::Task {
+    DistributedFrameBuffer *dfb;
+    DFBClearTask(DistributedFrameBuffer *dfb) : dfb(dfb) {};
+    virtual void run(size_t jobID) 
+    {
+      size_t tileID = jobID;
+      DistributedFrameBuffer::DFBTileData *td = dfb->myTile[tileID]->data;
+      assert(td);
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+        (&td->accum_r[0][0])[i] = 0.f;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+        (&td->accum_g[0][0])[i] = 0.f;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+          (&td->accum_b[0][0])[i] = 0.f;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
+        (&td->accum_a[0][0])[i] = 0.f;
+    }
+  };
 
     /*! \brief clear (the specified channels of) this frame buffer 
       
@@ -420,6 +506,14 @@ namespace ospray {
      */
   void DistributedFrameBuffer::clear(const uint32 fbChannelFlags)
   {
+#if 1
+    if (fbChannelFlags & OSP_FB_ACCUM) {
+      Ref<DFBClearTask> clearTask = new DFBClearTask(this);
+      clearTask->schedule(myTile.size());
+      clearTask->wait();
+      accumID = 0;
+    }
+#else
     printf("dfb todo: clear() in parallel ... \n");
     if (fbChannelFlags & OSP_FB_ACCUM) {
       for (int tileID=0;tileID<myTile.size();tileID++) {
@@ -436,7 +530,7 @@ namespace ospray {
       }
       accumID = 0;
     }
-    cout << "DFB CLEARED" << endl;
+#endif
   }
 
 

@@ -58,6 +58,7 @@ namespace ospray {
       MPI_Status status;
       mpi::init(ac,av);
       printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+
       MPI_Barrier(MPI_COMM_WORLD);
 
       if (world.size <= 1) {
@@ -65,6 +66,12 @@ namespace ospray {
       }
 
       if (world.rank == 0) {
+        if (debugMode)
+          ospray::Task::initTaskSystem(0);
+        else {
+          ospray::Task::initTaskSystem(-1);
+        }
+
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
         app.makeIntercomm();
