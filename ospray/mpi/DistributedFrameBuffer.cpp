@@ -23,14 +23,6 @@ namespace ospray {
 
   inline int clientRank(int clientID) { return clientID+1; }
 
-  // //! create a new distributd frame buffer with given size and comm handle
-  // TiledFrameBuffer *createDistributedFrameBuffer(mpi::async::CommLayer *comm, 
-  //                                                const vec2i &numPixels, 
-  //                                                size_t handle)
-  // {
-  //   return new DistributedFrameBuffer(comm,numPixels,handle);
-  // }
-
   DistributedFrameBuffer::DFBTile::DFBTile(DistributedFrameBuffer *fb, 
                                            const vec2i &begin, 
                                            size_t tileID, 
@@ -40,20 +32,6 @@ namespace ospray {
   {
   }
     
-  // //! depth-composite additional 'source' info into existing 'target' tile
-  // inline void DistributedFrameBuffer
-  // ::depthComposite(DistributedFrameBuffer::DFBTileData *target,
-  //                  DistributedFrameBuffer::DFBTileData *source)
-  // {
-  //   const size_t numPixels = TILE_SIZE*TILE_SIZE;
-  //   for (size_t i=0;i<numPixels;i++) {
-  //     if (source->depth[0][i] < target->depth[0][i]) {
-  //       target->depth[0][i] = source->depth[0][i];
-  //       target->color[0][i] = source->color[0][i];
-  //     }
-  //   }
-  // }
-    
   inline bool different(float a, float b) { return fabsf(a-b) > 1e-4f; }
 
   inline void DistributedFrameBuffer::startNewFrame()
@@ -62,12 +40,9 @@ namespace ospray {
     frameIsActive = true;
 
 #if MPI_IMAGE_COMPOSITING
-    for (int i=0;i<myTile.size();i++) {
+    for (int i=0;i<myTile.size();i++) 
       myTile[i]->data->numTimesWrittenThisFrame = 0;
-      //       if (different(myTile[i]->data->accum_r[0][0],accumID)) PRINT(myTile[i]->data->accum_r[0][0]);
-    }
 #endif
-
 
     // create a local copy of delayed tiles, so we can work on them outside the mutex
     std::vector<mpi::async::CommLayer::Message *> delayedMessage = this->delayedMessage;
@@ -75,19 +50,14 @@ namespace ospray {
     numTilesWrittenThisFrame = 0;
     numTilesToMasterThisFrame = 0;
 
-    printf("=== STARTING new frame (%i)\n",mpi::world.rank);
-
     frameIsDone   = false;
 
     mutex.unlock();
-    PRINT(delayedMessage.size());
     // should actually move this to a thread:
     for (int i=0;i<delayedMessage.size();i++) {
       mpi::async::CommLayer::Message *msg = delayedMessage[i];
       this->incoming(msg);
     }
-    PING;
-
   }
 
   DistributedFrameBuffer
@@ -160,11 +130,8 @@ namespace ospray {
   void DistributedFrameBuffer::waitUntilFinished() 
   {
     mutex.lock();
-    while (!frameIsDone)  {
-      printf("-------------------------------------------- WAITING FOR FRAME (%i)\n",mpi::world.rank); fflush(0);
+    while (!frameIsDone) 
       doneCond.wait(mutex);
-      }
-    printf("--------------- DONE waiting FOR FRAME (%i)\n",mpi::world.rank); fflush(0);
     mutex.unlock();
   }
 
@@ -180,7 +147,7 @@ namespace ospray {
         if (iix >= numPixels.x) continue;
         
         ((uint*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
-          = msg->color[iy][ix];//[ix+TILE_SIZE*iy];
+          = msg->color[iy][ix];
       }
     }
   }
@@ -193,7 +160,6 @@ namespace ospray {
         // frame is really not yet active - put the tile into the
         // delayed processing buffer, and return WITHOUT deleting
         // it.
-        // printf("rank %i DELAYED TILE\n",comm->myRank);
         delayedMessage.push_back(_msg);
         mutex.unlock();
         return;
@@ -257,25 +223,8 @@ namespace ospray {
   void DistributedFrameBuffer::closeCurrentFrame(bool locked) {
     if (!locked) mutex.lock();
     frameIsActive = false;
-    printf("CLOSING frame (%i)\n",mpi::world.rank);
     frameIsDone   = true;
     doneCond.broadcast();
-
-
-#if MPI_IMAGE_COMPOSITING
-    // for (int i=0;i<myTile.size();i++) {
-    //   // if (myTile[i]->data->numTimesWrittenThisFrame != 2) {
-    //   //   PRINT(myTile[i]->data->numTimesWrittenThisFrame);
-    //   //   exit(0);
-    //   // }
-
-    //   if (different(myTile[i]->data->accum_r[0][0],accumID+1)) {
-    //     cout << "WEIRD ACCUM TILE!? accum = " << accumID << endl;
-    //     PRINT(myTile[i]->data->accum_r[0][0]);
-    //   }
-    // }
-#endif
-
 
     if (!locked) mutex.unlock();
   };
@@ -302,26 +251,7 @@ namespace ospray {
 #if MPI_IMAGE_COMPOSITING
       memcpy(msg->z,tile.z,TILE_SIZE*TILE_SIZE*sizeof(float));
 #endif
-      // memcpy(msg->r,tile.r,numPixels*sizeof(float));
-      // memcpy(msg->g,tile.g,numPixels*sizeof(float));
-      // memcpy(msg->b,tile.b,numPixels*sizeof(float));
-      // memcpy(msg->a,tile.a,numPixels*sizeof(float));
-        
-      // size_t pixelID = 0;
-      // TileData *td = &msg->tile;
-      // for (size_t dy=0;dy<TILE_SIZE;dy++)
-      //   for (size_t dx=0;dx<TILE_SIZE;dx++, pixelID++) {
-      //     const size_t x = std::min(x0+dx,(size_t)maxValidPixelID.x);
-      //     const size_t y = std::min(y0+dy,(size_t)maxValidPixelID.y);
-      //     td->color[0][pixelID] = colorChannel[dx+dy*dxdy];
-      //     td->depth[0][pixelID] = depthChannel[dx+dy*dxdy];
-      //   }
-      // msg->sourceHandle = myHandle;
-      // msg->targetHandle = myHandle;
       msg->command      = WORKER_WRITE_TILE;
-      // printf("client %i SENDS tile %li,%li\n",comm->rank(),x0,y0);
-
-      // PING; exit(0);
 
       comm->sendTo(this->worker[myTile->ownerID],
                    msg,sizeof(*msg));

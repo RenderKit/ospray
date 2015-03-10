@@ -35,21 +35,15 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-// #if USE_DFB
-        PING;
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        PING;
         dfb->startNewFrame();
-        PING;
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
 
 
-        PING;
         MPI_Barrier(MPI_COMM_WORLD);
-        PING;
 
 
 // #else
@@ -145,11 +139,8 @@ namespace ospray {
                               const uint32 channelFlags
                               )
       {
-        PING;
-// #if USE_DFB
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
-// #endif
         Ref<RenderTask> renderTask
           = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
         renderTask->fb = fb;
@@ -157,7 +148,6 @@ namespace ospray {
         renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
         renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
         renderTask->channelFlags = channelFlags;
-        PING;
         tiledRenderer->beginFrame(fb);
 
         /*! iw: using a local sync event for now; "in theory" we should be
@@ -167,22 +157,13 @@ namespace ospray {
           running into some issues with the embree taks system when
           trying to do so, and thus am reverting to this
           fully-synchronous version for now */
-        PING;
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
-        PING;
         renderTask->wait();
-        PING;
 
-
-// #if USE_DFB
         dfb->waitUntilFinished();
-
-        PING;
-        MPI_Barrier(MPI_COMM_WORLD);
-        PING;
         tiledRenderer->endFrame(channelFlags);
-        PING;
-        // #endif
+
+        MPI_Barrier(MPI_COMM_WORLD);
       }
     }
 
