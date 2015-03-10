@@ -134,16 +134,18 @@ namespace ospray {
     }
 
 #if OSP_COMPOSITING_TEST
-    int myRank = mpi::worker.rank;
     int ourSize = mpi::worker.size;
+    int myRank = mpi::worker.rank;
+    if (ourSize > 1) {
 
     long begin = (numTris * myRank) / ourSize;
     long end   = (numTris * (myRank+1)) / ourSize;
     numTris = end-begin;
     this->index += numCompsInTri*begin;
-
+    if (prim_materialID) prim_materialID += begin;
     printf("#osp:trianglemesh: hack to test compositing: have %li tris on rank %i/%i\n",
            numTris,myRank,ourSize);
+    }
     // PRINT(myRank);
     // PRINT(ourSize);
     // PRINT(numTris);
