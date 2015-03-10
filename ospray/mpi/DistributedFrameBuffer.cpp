@@ -325,6 +325,9 @@ namespace ospray {
 #endif
 
       {
+#if 1
+        ispc::DFB_accumTile(tile,td);
+#else
         // perform tile accumulation. TODO: do this in ISPC
         size_t pixelID = 0;
         for (size_t iy=0;iy<TILE_SIZE;iy++)
@@ -363,6 +366,7 @@ namespace ospray {
             // }
             td->color[iy][ix] = cvt_uint32(col);
           }
+#endif
       }
 
       if (pixelOp)
