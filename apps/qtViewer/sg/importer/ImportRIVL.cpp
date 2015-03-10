@@ -323,7 +323,7 @@ namespace ospray {
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
-              mesh->vertex = new DataArray3f((vec3f*)(binBasePtr+ofs),num,false);
+              mesh->vertex = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
               // mesh->numVertices = num;
               // mesh->vertex = ;
             } else if (childType == "normal") {
@@ -345,7 +345,7 @@ namespace ospray {
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
-              mesh->normal = new DataArray3f((vec3f*)(binBasePtr+ofs),num,false);
+              mesh->normal = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
               // mesh->numNormals = num;
               // mesh->normal = (vec3f*)(binBasePtr+ofs);
             } else if (childType == "texcoord") {
@@ -370,7 +370,7 @@ namespace ospray {
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
               // mesh->numTexCoords = num;
-              mesh->texcoord = new DataArray2f((vec2f*)(binBasePtr+ofs),num,false);
+              mesh->texcoord = new DataArray2f((vec2f*)((char*)binBasePtr+ofs),num,false);
               // mesh->texCoord = (vec2f*)(binBasePtr+ofs);
             } else if (childType == "prim") {
               size_t ofs = -1, num = -1;
@@ -403,7 +403,7 @@ namespace ospray {
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
-              mesh->triangle = new DataArray4i((vec4i*)(binBasePtr+ofs),num,false);
+              mesh->triangle = new DataArray4i((vec4i*)((char*)binBasePtr+ofs),num,false);
               // mesh->numTriangles = num;
               // mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
