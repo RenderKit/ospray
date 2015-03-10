@@ -207,7 +207,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   const vec4f background = make_vec4f(1.0f);
 
   //! Provide the renderer to the intersector as it contains all volumes, geometries, etc.
-  vec4f color = make_vec4f(0.0f);  RaycastVolumeRenderer_intersect(renderer, sample.ray, color);
+  vec4f color = make_vec4f(0.0f);
+  RaycastVolumeRenderer_intersect(renderer, sample.ray, color);
 
   //! Gamma correction.
   color = renderer->model->volumes[0]->gammaCorrection.x * pow(color, renderer->model->volumes[0]->gammaCorrection.y);
