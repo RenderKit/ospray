@@ -55,7 +55,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     if (ray.geomID < 0) return alpha;
 
     DifferentialGeometry dg;
-    postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD);
+    postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
 
     uniform Material *material = dg.material;
     uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;

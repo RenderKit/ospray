@@ -128,22 +128,6 @@ inline uniform float rotate(uniform float x, uniform float dx)
   return x;
 }
 
-inline vec3f getRandomDir(const int j, const uniform int i, 
-                   const vec3f biNorm0,
-                   const vec3f biNorm1, 
-                   const vec3f gNormal,
-                   const float rot_x, const float rot_y)
-{
-  const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
-  const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
-        
-  const float w = sqrt(1.f-r1);
-  const float x = cos((2.f*M_PI)*r0)*w;
-  const float y = sin((2.f*M_PI)*r0)*w;
-  const float z = sqrt(r1)+EPS;
-  return x*biNorm0+y*biNorm1+z*gNormal;
-}
-
 inline vec3f getRandomDir(const int j, const int i, 
                           const vec3f biNorm0,
                           const vec3f biNorm1, 
@@ -171,15 +155,10 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
     return renderer->bgColor;
 
   DifferentialGeometry dg;
-  dg.color = make_vec4f(1.f);
   postIntersect(renderer->inherited.model,dg,ray,
                 DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
                 |DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
   
-  const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
-  
-  const vec3f N = dg.Ns;
-
   uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
   vec3f baseColor = make_vec3f(1.f);
   if (mat) {
@@ -191,11 +170,12 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
       }
     }
   }
-  if (dg.color.x > -1.f)
-    baseColor = baseColor * make_vec3f(dg.color);
+  // should be done in material:
+  baseColor = baseColor * make_vec3f(dg.color);
   
   int hits = 0;
   vec3f biNormU,biNormV;
+  const vec3f N = dg.Ns;
   getBinormals(biNormU,biNormV,N);
 
   const int sindex_x = pixel_x & 0x3;
@@ -208,7 +188,7 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
                      biNormU,biNormV,N,rot_x,rot_y);
     
     Ray ao_ray;
-    setRay(ao_ray,P,ao_dir);
+    setRay(ao_ray,dg.P+1e-3f*N,ao_dir);
     ao_ray.t0 = EPS;
     ao_ray.t = 1e20f; 
     if (dot(ao_ray.dir,N) < 0.05f || isOccluded(renderer->inherited.model,ao_ray))
