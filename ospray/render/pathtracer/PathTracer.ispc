@@ -285,11 +285,11 @@ uniform Scene *uniform createScene()
 
 inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
                                     const uint32 ix, 
-                                    const uint32 iy)
+                                    const uint32 iy,
+                                    uint32 &numRays)
 {
   uniform FrameBuffer *uniform fb = THIS->inherited.fb;
 
-  uint32 numRays = 0;
   vec3f L = make_vec3f(0.f);
   uniform Camera *uniform camera = THIS->inherited.camera;
   ScreenSample screenSample;
@@ -336,6 +336,9 @@ void PathTracer_beginFrame(uniform Renderer *uniform renderer,
 {
 //  print("pathtracer new frame %\n",fb->accumID);
   renderer->fb = fb;
+  uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
+//  print("rays: %\n", pt->numRays);
+  pt->numRays = 0;
 }
 
 
@@ -343,6 +346,8 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &til
 {
   uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
   uniform FrameBuffer *uniform fb     = renderer->fb;
+
+  uint32 numRays = 0;
 
   const uniform int blocks = renderer->spp > 0 || fb->accumID > 0 ? 1 : min(1 << -2 * renderer->spp, TILE_SIZE*TILE_SIZE);
   
@@ -352,12 +357,13 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &til
     if (ix >= fb->size.x || iy >= fb->size.y) 
       continue;
 
-    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy);
+    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy, numRays);
     for (uniform int p = 0; p < blocks; p++) {
       const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
       setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
     }
   }
+  pt->numRays += reduce_add(numRays);
 }
 
 void PathTracer__Constructor(void *uniform cppE,
