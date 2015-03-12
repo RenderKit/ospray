@@ -84,7 +84,7 @@ namespace ospray {
 
       memcpy(mem,begin,end-begin);
       std::string s = mem;
-      delete mem;
+      delete [] mem;
       return s;
     }
 

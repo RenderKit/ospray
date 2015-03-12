@@ -1,10 +1,12 @@
 OSPRay
 ======
 
-This is release v0.7.1 of OSPRay. Bug fixes:
+This is release v0.7.2 of OSPRay. Changes:
 
-- ospModelViewer now properly loads textures for OBJ models
-- modified build options for supported compilers
-- various user interface bug fixes for ospModelViewer
+- Build fixes for older versions of GCC and Clang
+- Fixed time series support in ospVolumeViewer
+- Corrected memory management for shared data buffers
+- Updated to ISPC 1.8.1
+- Resolved issue in XML parser
 
 For more information, visit http://www.ospray.org.
