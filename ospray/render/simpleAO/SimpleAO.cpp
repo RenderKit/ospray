@@ -15,38 +15,25 @@
 // ======================================================================== //
 
 // ospray
-#include "AO16Renderer.h"
+#include "SimpleAO.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/texture/Texture2D.h"
 // embree
 #include "common/sys/sync/atomic.h"
 // ispc exports
-#include "SimpleAORenderer_ispc.h"
+#include "SimpleAO_ispc.h"
 
 namespace ospray {
 
   //! Constructor
   template<int NUM_SAMPLES_PER_FRAME>
-  SimpleAOMaterial<NUM_SAMPLES_PER_FRAME>::SimpleAOMaterial()
+  SimpleAO<NUM_SAMPLES_PER_FRAME>::Material::Material()
   {
     ispcEquivalent = ispc::SimpleAOMaterial_create(this);
   }
   
-  /*! \brief common function to help printf-debugging */
   template<int NUM_SAMPLES_PER_FRAME>
-  std::string SimpleAOMaterial<NUM_SAMPLES_PER_FRAME>::toString() const 
-  {
-    return "ospray::SimpleAORenderer"; 
-  }
-  
-  /*! \brief create a material of given type */
-  template<int NUM_SAMPLES_PER_FRAME>
-  Material *SimpleAOMaterial<NUM_SAMPLES_PER_FRAME>::createMaterial(const char *type) 
-  { 
-    return new SimpleAOMaterial; 
-  }
-
-  void SimpleAOMaterial::commit() 
+  void SimpleAO<NUM_SAMPLES_PER_FRAME>::Material::commit() 
   {
     Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
     map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd", NULL));
@@ -55,15 +42,31 @@ namespace ospray {
                            map_Kd.ptr!=NULL?map_Kd->getIE():NULL);
   }
   
+  //! \brief Constructor
   template<int NUM_SAMPLES_PER_FRAME>
-  SimpleAORenderer<NUM_SAMPLES_PER_FRAME>::SimpleAORenderer() 
+  SimpleAO<NUM_SAMPLES_PER_FRAME>::SimpleAO() 
     : model(NULL), camera(NULL) 
   {
-    ispcEquivalent = ispc::SimpleAORenderer_create(this,NULL,NULL);
+    ispcEquivalent = ispc::SimpleAO_create(this,NULL,NULL);
   };
 
+  /*! \brief create a material of given type */
   template<int NUM_SAMPLES_PER_FRAME>
-  void SimpleAORenderer<NUM_SAMPLES_PER_FRAME>::commit()
+  ospray::Material *SimpleAO<NUM_SAMPLES_PER_FRAME>::createMaterial(const char *type) 
+  { 
+    return new SimpleAO<NUM_SAMPLES_PER_FRAME>::Material; 
+  }
+
+  /*! \brief common function to help printf-debugging */
+  template<int NUM_SAMPLES_PER_FRAME>
+  std::string SimpleAO<NUM_SAMPLES_PER_FRAME>::toString() const 
+  {
+    return "ospray::render::SimpleAO"; 
+  }
+  
+  /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+  template<int NUM_SAMPLES_PER_FRAME>
+  void SimpleAO<NUM_SAMPLES_PER_FRAME>::commit()
   {
     Renderer::commit();
 
@@ -71,25 +74,33 @@ namespace ospray {
     model  = (Model  *)getParamObject("model",model); // new naming
     camera = (Camera *)getParamObject("camera",NULL);
     bgColor = getParam3f("bgColor",vec3f(1.f));
-    ispc::SimpleAORenderer_set(getIE(),
+    ispc::SimpleAO_set(getIE(),
                            NUM_SAMPLES_PER_FRAME,
                            (const ispc::vec3f&)bgColor,                           
                            model?model->getIE():NULL,
                            camera?camera->getIE():NULL);
   }
 
-  typedef SimpleAORenderer<16> AO16Renderer;
-  typedef SimpleAORenderer<8>  AO8Renderer;
-  typedef SimpleAORenderer<4>  AO4Renderer;
-  typedef SimpleAORenderer<2>  AO2Renderer;
-  typedef SimpleAORenderer<1>  AO1Renderer;
-
+  /*! \brief instantiation of SimpleAO that uses 16 AO rays per sample */
+  typedef SimpleAO<16> AO16Renderer;
   OSP_REGISTER_RENDERER(AO16Renderer,ao16);
-  OSP_REGISTER_RENDERER(AO8Renderer, ao8);
-  OSP_REGISTER_RENDERER(AO4Renderer, ao4);
-  OSP_REGISTER_RENDERER(AO2Renderer, ao2);
-  OSP_REGISTER_RENDERER(AO1Renderer, ao1);
   OSP_REGISTER_RENDERER(AO16Renderer,ao);
+
+  /*! \brief instantiation of SimpleAO that uses 8 AO rays per sample */
+  typedef SimpleAO<8>  AO8Renderer;
+  OSP_REGISTER_RENDERER(AO8Renderer, ao8);
+
+  /*! \brief instantiation of SimpleAO that uses 4 AO rays per sample */
+  typedef SimpleAO<4>  AO4Renderer;
+  OSP_REGISTER_RENDERER(AO4Renderer, ao4);
+
+  /*! \brief instantiation of SimpleAO that uses 2 AO rays per sample */
+  typedef SimpleAO<2>  AO2Renderer;
+  OSP_REGISTER_RENDERER(AO2Renderer, ao2);
+
+  /*! \brief instantiation of SimpleAO that uses 1 AO rays per sample */
+  typedef SimpleAO<1>  AO1Renderer;
+  OSP_REGISTER_RENDERER(AO1Renderer, ao1);
 
 } // ::ospray
 

@@ -42,14 +42,6 @@ namespace ospray {
   struct Camera;
   struct Model;
 
-  struct SimpleAOMaterial : public Material {
-    SimpleAOMaterial();
-    virtual void commit();
-
-    vec3f Kd; /*! diffuse material component, that's all we care for */
-    Ref<Texture> map_Kd;
-  };
-  
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
     
     \detailed This renderer uses a set of 16 precomputed AO directions
@@ -68,16 +60,40 @@ namespace ospray {
     rotation of the first 8 in the third, etc.
    */
   template<int NUM_SAMPLES_PER_FRAME>
-  struct SimpleAORenderer : public Renderer {
+  struct SimpleAO : public Renderer {
+    
+    //! \brief Material used by the SimpleAO renderer 
+    /*! \detailed Since the SimpleAO Renderer only cares about a
+        diffuse material component this material only stores diffuse
+        and diffuse texture */
+    struct Material : public ospray::Material {
 
-    //! Constructor
-    SimpleAORenderer();
+      //! \brief Constructor
+      Material();
+
+      /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+      virtual void commit();
+      
+      // -------------------------------------------------------
+      // member variables 
+      // -------------------------------------------------------
+
+      /*! diffuse material component, that's all we care for */
+      vec3f Kd;
+
+      /*! diffuse texture, if available */
+      Ref<Texture> map_Kd;
+    };
+  
+
+    //! \brief Constructor
+    SimpleAO();
 
     /*! \brief common function to help printf-debugging */
     virtual std::string toString() const;
 
     /*! \brief create a material of given type */
-    virtual Material *createMaterial(const char *type);
+    virtual ospray::Material *createMaterial(const char *type);
 
     /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
     virtual void commit();

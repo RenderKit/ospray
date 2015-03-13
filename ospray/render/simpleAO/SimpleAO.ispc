@@ -68,7 +68,7 @@ uniform float SimpleAO__randomV[16][16] = {
 uniform vec3f SimpleAO_directions[16][16];
 uniform bool SimpleAO_directions_initialized = false;
 
-struct SimpleAORenderer {
+struct SimpleAO {
   uniform Renderer super;
   uniform vec3f bgColor;
   uniform int samplesPerFrame;
@@ -145,7 +145,7 @@ inline vec3f getRandomDir(const int j, const int i,
 }
 
 
-inline vec3f shade_ao16(uniform SimpleAORenderer *uniform self,
+inline vec3f shade_ao16(uniform SimpleAO *uniform self,
                         int sampleOfs, int sampleCnt,
                         const Ray &ray, 
                         const int32 pixel_x, const int32 pixel_y,
@@ -201,10 +201,10 @@ inline vec3f shade_ao16(uniform SimpleAORenderer *uniform self,
 }
 
 
-void SimpleAORenderer_renderSample(uniform Renderer *uniform _self,
+void SimpleAO_renderSample(uniform Renderer *uniform _self,
                                varying ScreenSample &sample)
 {
-  uniform SimpleAORenderer *uniform self = (uniform SimpleAORenderer *uniform)_self;
+  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
 
   traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
@@ -225,32 +225,32 @@ void SimpleAORenderer_renderSample(uniform Renderer *uniform _self,
 }
 
 
-export void *uniform SimpleAORenderer_create(void *uniform cppE,
+export void *uniform SimpleAO_create(void *uniform cppE,
                                          void *uniform _model,
                                          void *uniform _camera)
 {
-  uniform SimpleAORenderer *uniform self = uniform new uniform SimpleAORenderer;
+  uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
   Renderer_constructor(&self->super,cppE,_model,_camera);
-  self->super.renderSample = SimpleAORenderer_renderSample;
+  self->super.renderSample = SimpleAO_renderSample;
   return self;
 }
 
-export void SimpleAORenderer_set(void *uniform _self,
+export void SimpleAO_set(void *uniform _self,
                              uniform int samplesPerFrame,
                              const uniform vec3f &bgColor,
                              void *uniform _model,
                              void *uniform _camera)
 {
-  uniform SimpleAORenderer *uniform self = (uniform SimpleAORenderer *uniform)_self;
+  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
   self->bgColor = bgColor;
   self->samplesPerFrame = samplesPerFrame;
   self->super.model = (uniform Model*)_model;
   self->super.camera = (uniform Camera*)_camera;
 }
 
-export void SimpleAORenderer_destroy(void *uniform _self)
+export void SimpleAO_destroy(void *uniform _self)
 {
-  uniform SimpleAORenderer *uniform self = (uniform SimpleAORenderer *uniform)_self;
+  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
   delete self;
 }
 
