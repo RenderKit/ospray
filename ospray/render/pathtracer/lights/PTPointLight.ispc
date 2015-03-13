@@ -15,35 +15,35 @@
 // ======================================================================== //
 
 // pathtracer
-#include "Light.ih"
-#include "samplers/ShapeSampler.ih"
+#include "PTLight.ih"
+#include "../samplers/ShapeSampler.ih"
 // ospray
 #include "math/affine.ih"
 
 struct PointLight
 {
-  uniform Light base;
+  uniform PTLight base;
   uniform vec3f P;
   uniform vec3f I;
 };
 
 PointLight* uniform PointLight__New(const uniform vec3f& P, const uniform vec3f& I);
 
-uniform Light* uniform PointLight__transform(const uniform Light *uniform _this, 
+uniform PTLight* uniform PointLight__transform(const uniform PTLight *uniform _this, 
                                              const uniform AffineSpace3f& xfm) 
 {
   const uniform PointLight *uniform this = (const uniform PointLight *uniform)_this;
-  return (uniform Light* uniform) PointLight__New(xfmPoint(xfm,this->P),this->I);
+  return (uniform PTLight* uniform) PointLight__New(xfmPoint(xfm,this->P),this->I);
 }
 
-varying vec3f PointLight__eval(const uniform Light *uniform _this, 
+varying vec3f PointLight__eval(const uniform PTLight *uniform _this, 
                                varying const DifferentialGeometry &dg, 
                                varying const vec3f &wi) 
 {
   return make_vec3f(0.0f);
 }
 
-varying vec3f PointLight__sample(const uniform Light *uniform _this,
+varying vec3f PointLight__sample(const uniform PTLight *uniform _this,
                                    varying const DifferentialGeometry &dg, 
                                    varying Sample3f &wi,
                                    varying float &tMax,
@@ -59,7 +59,7 @@ varying vec3f PointLight__sample(const uniform Light *uniform _this,
 
 void PointLight__Constructor(uniform PointLight* uniform this, const uniform vec3f& P, const uniform vec3f& I)
 {
-  Light__Constructor(&this->base,//Light__Destructor,
+  PTLight__Constructor(&this->base,//Light__Destructor,
                      NORMAL_LIGHT,
                      PointLight__transform,NULL,PointLight__eval,PointLight__sample);
   this->P = P; 

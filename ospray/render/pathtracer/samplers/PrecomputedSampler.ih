@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "../lights/Light.ih"
+#include "../lights/PTLight.ih"
 #include "patterns.ih"
 
 #define MAX_SAMPLES_1D 21
@@ -31,7 +31,7 @@ struct PrecomputedSample
   varying vec2f lens;                //!< 2D lens sample for depth of field.
   varying float samples1D[MAX_SAMPLES_1D];        //!< Additional 1D samples requested by the integrator.
   varying vec2f samples2D[MAX_SAMPLES_2D];        //!< Additional 2D samples requested by the integrator.
-  varying LightSample lightSamples[MAX_SAMPLES_LIGHT]; //!< Precomputed light samples.
+  varying PTLightSample lightSamples[MAX_SAMPLES_LIGHT]; //!< Precomputed light samples.
 };
 
 /*! Pixel sample position. */
@@ -60,7 +60,7 @@ inline const varying vec2f PrecomputedSample__getVec2f(const uniform Precomputed
 }
 
 /*! Get the specified precomputed light sample for the current sample. */
-inline const varying LightSample PrecomputedSample__getLightSample(const uniform PrecomputedSample* uniform THIS, uniform int lightSampleId) {
+inline const varying PTLightSample PrecomputedSample__getLightSample(const uniform PrecomputedSample* uniform THIS, uniform int lightSampleId) {
   return THIS->lightSamples[lightSampleId]; 
 }
 
@@ -70,7 +70,7 @@ struct PrecomputedSampler
   uint32 numSamples1D;                  //!< Number of additional 1D samples per pixel sample.
   uint32 numSamples2D;                  //!< Number of additional 2D samples per pixel sample.
   uint32 numLightSamples;               //!< Number of precomputed light samples per pixel sample.
-  uniform Light* lights[MAX_SAMPLES_LIGHT];        //!< References to all light sources.
+  uniform PTLight* lights[MAX_SAMPLES_LIGHT];        //!< References to all light sources.
   uniform int32 lightBaseSamples[MAX_SAMPLES_LIGHT]; //!< Base samples for light sample precomputation.
   
   uint32 samplesPerPixel;               //!< Number of samples per pixel.
@@ -120,7 +120,7 @@ inline uniform int PrecomputedSampler__request2D(uniform PrecomputedSampler* uni
 }
 
 /*! Request a precomputed light sample. */
-inline uniform int PrecomputedSampler__requestLightSample(uniform PrecomputedSampler* uniform THIS, uniform int baseSample, uniform Light* uniform light)
+inline uniform int PrecomputedSampler__requestLightSample(uniform PrecomputedSampler* uniform THIS, uniform int baseSample, uniform PTLight* uniform light)
 {
   THIS->lights[THIS->numLightSamples] = light;
   THIS->lightBaseSamples[THIS->numLightSamples] = baseSample;
@@ -194,7 +194,7 @@ void PrecomputedSampler__init(uniform PrecomputedSampler* uniform THIS)
     /*! Generate light samples. */
     for (uniform int d = 0; d < THIS->numLightSamples; d++) {
       for (uniform int s = 0; s < THIS->samplesPerPixel; s++) {
-        varying LightSample ls;
+        varying PTLightSample ls;
         varying DifferentialGeometry dg; 
         varying vec2f sample = THIS->samples[set*THIS->samplesPerPixel+s].samples2D[THIS->lightBaseSamples[d]];
         ls.L = THIS->lights[d]->sample(THIS->lights[d], dg, ls.wi, ls.tMax, sample);

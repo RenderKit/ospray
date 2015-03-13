@@ -16,19 +16,25 @@
 
 #pragma once
 
-#include "api/parms.h"
-#include "pointlight_ispc.h"
+#include "Light.ih"
+#include "ospray/math/vec.ih"
 
-namespace embree
-{
-  struct PointLight
-  {
-    static void* create(const Parms& parms)
-    {
-      const Vector3f P = parms.getVector3f("P",zero);
-      const Color I = parms.getColor("I",zero);
-      return ispc::PointLight__new((ispc::vec3f&)P,(ispc::vec3f&)I);
-    }
-  };
-}
+struct AmbientLight {
+  uniform Light base;       //!< inherited light fields
+
+  uniform vec3f color;      //!< light RGB color
+  uniform float intensity;   //!< amount of emitted light
+};
+
+//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
+varying vec3f AmbientLight_computeRadiance(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
+
+//!< Construct a new ispc-side AmbientLight object
+extern void AmbientLight_Constructor( uniform AmbientLight *uniform THIS,
+                                          void *uniform cppEquivalent,
+                                          const uniform vec3f &color,
+                                          const uniform float &intensity);
+
+//!< Destroy an ispc-side DirectionLight object
+extern void AmbientLight_Destructor(uniform AmbientLight *uniform THIS);
 

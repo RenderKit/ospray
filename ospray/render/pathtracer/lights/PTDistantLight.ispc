@@ -14,12 +14,12 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Light.ih"
-#include "samplers/ShapeSampler.ih"
+#include "PTLight.ih"
+#include "../samplers/ShapeSampler.ih"
 
 struct DistantLight
 {
-  EnvironmentLight base;
+  PTEnvironmentLight base;
   vec3f D;             //!< Light direction
   vec3f L;             //!< Radiance (W/(m^2*sr))
   float halfAngle;     //!< Half illumination angle
@@ -31,21 +31,21 @@ DistantLight* uniform DistantLight__New(const uniform vec3f& D,
                                         const uniform vec3f& L,
                                         const uniform float halfAngle);
 
-uniform Light* uniform DistantLight__transform(const uniform Light *uniform _this, 
+uniform PTLight* uniform DistantLight__transform(const uniform PTLight *uniform _this, 
                                                const uniform AffineSpace3f& xfm) 
 {
   const uniform DistantLight *uniform this = (const uniform DistantLight *uniform)_this;
-  return (uniform Light* uniform) DistantLight__New(xfmVector(xfm,this->D),this->L,this->halfAngle);
+  return (uniform PTLight* uniform) DistantLight__New(xfmVector(xfm,this->D),this->L,this->halfAngle);
 }
 
-varying vec3f DistantLight__Le(const uniform EnvironmentLight *uniform _this, varying const vec3f &wo) 
+varying vec3f DistantLight__Le(const uniform PTEnvironmentLight *uniform _this, varying const vec3f &wo) 
 {
   const uniform DistantLight *uniform this = (const uniform DistantLight *uniform)_this;
   if (dot(wo,this->D) >= this->cosHalfAngle) return this->L;
   return make_vec3f(0.0f);
 }
 
-varying vec3f DistantLight__eval(const uniform Light *uniform _this, 
+varying vec3f DistantLight__eval(const uniform PTLight *uniform _this, 
                                  varying const DifferentialGeometry &dg, 
                                  varying const vec3f &wi)
 {
@@ -54,7 +54,7 @@ varying vec3f DistantLight__eval(const uniform Light *uniform _this,
   return make_vec3f(0.0f);
 }
 
-varying vec3f DistantLight__sample(const uniform Light *uniform _this,
+varying vec3f DistantLight__sample(const uniform PTLight *uniform _this,
                                    varying const DifferentialGeometry &dg, 
                                    varying Sample3f &wi,
                                    varying float &tMax,
@@ -71,7 +71,7 @@ void DistantLight__Constructor(uniform DistantLight *uniform this,
                                const uniform vec3f L,
                                const uniform float halfAngle)
 {
-  EnvironmentLight__Constructor(&this->base,ENV_LIGHT,
+  PTEnvironmentLight__Constructor(&this->base,ENV_LIGHT,
                                 DistantLight__transform,NULL,DistantLight__eval,DistantLight__sample,
                                 DistantLight__Le);
   this->D = normalize(D);

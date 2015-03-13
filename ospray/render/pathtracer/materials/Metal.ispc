@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "brdfs/Conductor.ih"
-#include "brdfs/MicrofacetMetal.ih"
+#include "../brdfs/Conductor.ih"
+#include "../brdfs/MicrofacetMetal.ih"
 
 struct Metal
 {

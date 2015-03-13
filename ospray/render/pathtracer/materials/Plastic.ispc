@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "brdfs/DielectricLayerLambertian.ih"
-#include "brdfs/DielectricReflection.ih"
-#include "brdfs/MicrofacetPlastic.ih"
+#include "../brdfs/DielectricLayerLambertian.ih"
+#include "../brdfs/DielectricReflection.ih"
+#include "../brdfs/MicrofacetPlastic.ih"
 
 struct Plastic
 {

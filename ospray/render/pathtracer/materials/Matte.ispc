@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "brdfs/Lambertian.ih"
+#include "../brdfs/Lambertian.ih"
 
 struct Matte
 {

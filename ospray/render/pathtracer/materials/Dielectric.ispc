@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "brdfs/DielectricReflection.ih"
-#include "brdfs/DielectricTransmission.ih"
+#include "../brdfs/DielectricReflection.ih"
+#include "../brdfs/DielectricTransmission.ih"
 
 struct Dielectric
 {

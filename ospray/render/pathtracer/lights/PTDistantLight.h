@@ -17,20 +17,19 @@
 #pragma once
 
 #include "api/parms.h"
-#include "trianglelight_ispc.h"
+#include "PTDistantLight_ispc.h"
 
 namespace ospray {
   namespace pt {
     
-    struct TriangleLight
+    struct DistantLight
     {
       static void* create(const Parms& parms)
       {
-        const Vector3f v0 = parms.getVector3f("v0");
-        const Vector3f v1 = parms.getVector3f("v1");
-        const Vector3f v2 = parms.getVector3f("v2");
+        const Vector3f D = parms.getVector3f("D");
         const Color L = parms.getColor("L");
-        return ispc::TriangleLight__new((ispc::vec3f&)v0,(ispc::vec3f&)v1,(ispc::vec3f&)v2,(ispc::vec3f&)L);
+        const float halfAngle = parms.getFloat("halfAngle");
+        return ispc::DistantLight__new((ispc::vec3f&)D,(ispc::vec3f&)L,halfAngle);
       }
     };
 

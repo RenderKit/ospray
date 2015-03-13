@@ -16,30 +16,25 @@
 
 #pragma once
 
-// ospray
-#include "common/OSPCommon.ih"
-#include "common/Model.ih"
+#include "Light.h"
 
-// path tracer
-#include "materials/Medium.ih"
-#include "materials/Material.ih"
-#include "lights/PTLight.ih"
+namespace ospray {
 
-struct Scene {
-  uniform PTLight *uniform *uniform allLights;
-  uniform uint32 num_allLights;
-  uniform Model *uniform model;
-  uniform PTEnvironmentLight *uniform *uniform envLights;
-  uniform uint32 num_envLights;
-};
+  //! Base class for AmbientLight objects, inherits from Light
+  struct AmbientLight : public Light {
+    public:
 
-inline void postIntersect(const uniform Scene *uniform scene,
-                          Ray &ray,DifferentialGeometry &dg)
-{
-  if (hadHit(ray))
-    postIntersect(scene->model,dg,ray,
-                  DG_MATERIALID|
-                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
-                  );
+      //!Construct a new point light.
+      AmbientLight();
+
+      //! toString is used to aid in printf debugging
+      virtual std::string toString() const { return "ospray::AmbientLight"; }
+
+      //! Copy understood parameters into member parameters
+      virtual void commit();
+
+      vec3f color;                  //! RGB color of the light
+      float intensity;               //! Amount of light emitted
+  };
+
 }
-

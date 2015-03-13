@@ -1,13 +1,5 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,17 +17,23 @@
 #pragma once
 
 #include "api/parms.h"
-#include "ambientlight_ispc.h"
+#include "PTTriangleLight_ispc.h"
 
-namespace embree
-{
-  struct AmbientLight
-  {
-    static void* create(const Parms& parms)
+namespace ospray {
+  namespace pt {
+    
+    struct TriangleLight
     {
-      const Color L = parms.getColor("L");
-      return ispc::AmbientLight__new((ispc::vec3f&)L);
-    }
-  };
-}
+      static void* create(const Parms& parms)
+      {
+        const Vector3f v0 = parms.getVector3f("v0");
+        const Vector3f v1 = parms.getVector3f("v1");
+        const Vector3f v2 = parms.getVector3f("v2");
+        const Color L = parms.getColor("L");
+        return ispc::TriangleLight__new((ispc::vec3f&)v0,(ispc::vec3f&)v1,(ispc::vec3f&)v2,(ispc::vec3f&)L);
+      }
+    };
+
+  } // ::ospray::pt
+} // ::ospray
 

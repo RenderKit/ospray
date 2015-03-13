@@ -25,17 +25,16 @@
 #pragma once
 
 #include "api/parms.h"
-#include "directionallight_ispc.h"
+#include "PTAmbientLight_ispc.h"
 
 namespace embree
 {
-  struct DirectionalLight
+  struct AmbientLight
   {
     static void* create(const Parms& parms)
     {
-      const Vector3f D = parms.getVector3f("D");
-      const Color E = parms.getColor("E");
-      return ispc::DirectionalLight__new((ispc::vec3f&)D,(ispc::vec3f&)E);
+      const Color L = parms.getColor("L");
+      return ispc::AmbientLight__new((ispc::vec3f&)L);
     }
   };
 }

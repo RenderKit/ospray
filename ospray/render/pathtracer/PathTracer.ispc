@@ -107,7 +107,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       else {
         if (!lightPath.ignoreVisibleLights) {
           for (uniform int i=0; i<scene->num_envLights; i++) {
-            uniform const EnvironmentLight *uniform l = scene->envLights[i]; 
+            uniform const PTEnvironmentLight *uniform l = scene->envLights[i]; 
             L = add(L, mul(Lw,l->Le(l,wo)));
           }      
         }
@@ -154,15 +154,15 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       uniform int numAllLights = min(MAX_LIGHTS,scene->num_allLights);
       for (uniform int i=0; i<numAllLights; i++) 
       {
-        uniform Light* uniform light = scene->allLights[i];
+        uniform PTLight* uniform light = scene->allLights[i];
 
         /*! Either use precomputed samples for the light or sample light now. */
-        LightSample ls; 
+        PTLightSample ls; 
         ls.wi.v = make_vec3f(0.0f,0.0f,0.0f); ls.wi.pdf = 0.0f;
 #if 0
         // iw: turned off precomputed, not yet working
         if (light->type & TY_PRECOMPUTE_LIGHT_SAMPLES) {
-          ls = PrecomputedSample__getLightSample(sample_,THIS->precomputedLightSampleID[i]);
+          ls = PrecomputedSample__getPTLightSample(sample_,THIS->precomputedPTLightSampleID[i]);
         }
         else 
 #endif
@@ -256,9 +256,9 @@ export void PathTracer_setModel(void *uniform _THIS, void *uniform _model)
   THIS->inherited.model = (uniform Model*)_model;
 }
 
-uniform EnvironmentLight* uniform AmbientLight__New(const uniform vec3f& L);
-typedef uniform EnvironmentLight *uniform EnvLightPtr;
-typedef uniform Light *uniform LightPtr;
+uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L);
+typedef uniform PTEnvironmentLight *uniform EnvLightPtr;
+typedef uniform PTLight *uniform LightPtr;
 
 uniform Scene *uniform createScene()
 {
@@ -272,7 +272,7 @@ uniform Scene *uniform createScene()
   // we don't have lights, yet, so use a hardcoded envlight for now!
   print("#osp:PT: adding hard-coded envlight for now!\n");
   scene->envLights = uniform new uniform EnvLightPtr[1];
-  scene->envLights[0] = AmbientLight__New(make_vec3f(.8f));
+  scene->envLights[0] = PTAmbientLight__New(make_vec3f(.8f));
   scene->num_envLights = 1;
 
   scene->allLights = uniform new uniform LightPtr[1];
