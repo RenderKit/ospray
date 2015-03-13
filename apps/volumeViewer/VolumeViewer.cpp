@@ -153,6 +153,9 @@ void VolumeViewer::addGeometry(std::string filename) {
     ospAddGeometry(models[i], triangleMesh);
     ospCommit(models[i]);
   }
+
+  //! Force render.
+  render();
 }
 
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
