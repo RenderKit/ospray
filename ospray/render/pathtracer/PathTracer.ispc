@@ -78,14 +78,14 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
                              LightPath &lightPath, 
                              const uniform Scene *uniform scene,
                              varying RandomTEA* uniform rng,
-                             uint32 &numRays)
+                             uint32 &numRays,
+                             float &z_for_compositing)
 {
   uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE);
   uniform uint32/*BRDFType*/ giBRDFTypes = (uniform uint32)(ALL);
   
   vec3f L = make_vec3f(0.f);
   vec3f Lw = make_vec3f(1.f);
-
   while (true) 
   {
     /*! Terminate path if too long or contribution too low. */
@@ -97,6 +97,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     /*! Traverse ray. */
     DifferentialGeometry dg;
     traceRay(scene->model,lightPath.ray);
+
+    if (lightPath.depth == 0)
+      z_for_compositing = lightPath.ray.t;
     // rtcIntersect(scene->accel,lightPath.ray);
     postIntersect(scene,lightPath.ray,dg);
     numRays++;  
@@ -309,6 +312,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
   RandomTEA__Constructor(rng, fb->size.x*iy+ix, fb->accumID);
   const int spp = max(1, THIS->inherited.spp);
   
+  screenSample.z = inf;
   for (uniform int s=0; s < spp; s++) {
     screenSample.sampleID.z = fb->accumID*spp + s;
 
@@ -326,11 +330,10 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
     init_LightPath(lightPath, screenSample.ray);
     
     L = L + PathTraceIntegrator_Li(THIS, cameraSample.screen, lightPath,
-                                   THIS->scene, rng, numRays);
+                                   THIS->scene, rng, numRays, screenSample.z);
   }
 
   screenSample.alpha = 1.f;
-  screenSample.z = inf;
   screenSample.rgb = L * rcpf(spp);
   return screenSample;
 }
