@@ -88,6 +88,8 @@ public:
 
   OSPFrameBuffer getFrameBuffer() { return frameBuffer; }
 
+  void resetAccumulationBuffer() { ospFrameBufferClear(frameBuffer, OSP_FB_ACCUM); }
+
 protected:
 
   /*! Parent Qt window. */
@@ -113,6 +115,9 @@ protected:
 
   /*! rotation rate to automatically rotate view. */
   float rotationRate;
+
+  /*! timer used to trigger continuous re-renders (for progressive refinement, automatic rotation, etc.). */
+  QTimer renderTimer;
 
   /*! benchmarking: number of warm-up frames */
   int benchmarkWarmUpFrames;

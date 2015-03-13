@@ -136,9 +136,10 @@ inline void RaycastVolumeRenderer_intersectBox(const uniform box3f &box,
 }
 
 //! This function intersects the volume and geometries.
-inline void RaycastVolumeRenderer_intersect(RaycastVolumeRenderer *uniform renderer, 
-                                            varying Ray &ray, 
-                                            varying vec4f &color) 
+inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform renderer,
+                                            varying Ray &ray,
+                                            const varying float &rayOffset,
+                                            varying vec4f &color)
 {
   //! Assume just one volume.
 
@@ -146,7 +147,16 @@ inline void RaycastVolumeRenderer_intersect(RaycastVolumeRenderer *uniform rende
   const uniform box3f bounds = make_box3f(make_vec3f(0.0f), make_vec3f(1.0f));
 
   //! Compute the intersection interval over the ray and volume bounds.
-  RaycastVolumeRenderer_intersectBox(bounds, ray);  if (ray.t0 > ray.t1) return;  ray.t = ray.t0;
+  RaycastVolumeRenderer_intersectBox(bounds, ray);
+
+  if (ray.t0 > ray.t1)
+    return;
+
+  ray.t = ray.t0;
+
+  //! Offset ray by a fraction of the nominal ray step.
+  const uniform float step = 1.f / reduce_max(renderer->model->volumes[0]->upperBound) / renderer->model->volumes[0]->samplingRate;
+  ray.t += rayOffset * step;
 
   //! Copy of the ray for geometry intersection. The original ray is used for volume intersection.
   Ray geometryRay = ray;
@@ -199,9 +209,18 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   //! Background color.
   const vec4f background = make_vec4f(1.0f);
 
+  //! Ray offset for this sample, as a fraction of the nominal step size.
+  float rayOffset = precomputedHalton2(sample.sampleID.z);
+  int ix = sample.sampleID.x % 4;
+  int iy = sample.sampleID.y % 4;
+  int patternID = ix + 4 * iy;
+  rayOffset += precomputedHalton3(patternID);
+
+  if(rayOffset > 1.f) rayOffset -= 1.f;
+
   //! Provide the renderer to the intersector as it contains all volumes, geometries, etc.
   vec4f color = make_vec4f(0.0f);
-  RaycastVolumeRenderer_intersect(renderer, sample.ray, color);
+  RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color);
 
   //! Gamma correction.
   color = renderer->model->volumes[0]->gammaCorrection.x * pow(color, renderer->model->volumes[0]->gammaCorrection.y);

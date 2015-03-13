@@ -47,6 +47,9 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
   ospCommit(camera);
 
   ospSetObject(renderer, "camera", camera);
+
+  // connect signals and slots
+  connect(&renderTimer, SIGNAL(timeout()), this, SLOT(updateGL()));
 }
 
 QOSPRayWindow::~QOSPRayWindow()
@@ -66,7 +69,9 @@ void QOSPRayWindow::setRenderingEnabled(bool renderingEnabled)
 
   // trigger render if true
   if(renderingEnabled == true)
-    updateGL();
+    renderTimer.start();
+  else
+    renderTimer.stop();
 }
 
 void QOSPRayWindow::setRotationRate(float rotationRate)
@@ -118,7 +123,7 @@ void QOSPRayWindow::paintGL()
   }
 
   renderFrameTimer.start();
-  ospRenderFrame(frameBuffer, renderer);
+  ospRenderFrame(frameBuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
   double framesPerSecond = 1000.0 / renderFrameTimer.elapsed();
   char title[1024];  sprintf(title, "OSPRay Volume Viewer (%.4f fps)", framesPerSecond);
   if (showFrameRate == true) parent->setWindowTitle(title);
@@ -131,8 +136,10 @@ void QOSPRayWindow::paintGL()
   ospUnmapFrameBuffer(mappedFrameBuffer, frameBuffer);
 
   // automatic rotation
-  if(rotationRate != 0.f)
+  if(rotationRate != 0.f) {
+    resetAccumulationBuffer();
     rotateCenter(rotationRate, 0.f);
+  }
 
   // increment frame counter
   frameCount++;
@@ -146,10 +153,6 @@ void QOSPRayWindow::paintGL()
 
     QCoreApplication::quit();
   }
-
-  // force continuous rendering if we have automatic rotation or benchmarking enabled
-  if(rotationRate != 0.f || benchmarkFrames > 0)
-    update();
 }
 
 void QOSPRayWindow::resizeGL(int width, int height)
@@ -160,7 +163,7 @@ void QOSPRayWindow::resizeGL(int width, int height)
   if(frameBuffer)
     ospFreeFrameBuffer(frameBuffer);
 
-  frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8);
+  frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   // update viewport aspect ratio
   viewport.aspect = float(width) / float(height);
@@ -183,6 +186,8 @@ void QOSPRayWindow::mouseReleaseEvent(QMouseEvent * event)
 
 void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 {
+  resetAccumulationBuffer();
+
   int dx = event->x() - lastMousePosition.x();
   int dy = event->y() - lastMousePosition.y();
 

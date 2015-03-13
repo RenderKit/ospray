@@ -71,7 +71,12 @@ public slots:
   void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
 
   //! Force the OSPRay window to be redrawn.
-  void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
+  void render() {
+    if (osprayWindow != NULL) {
+      osprayWindow->resetAccumulationBuffer();
+      osprayWindow->updateGL();
+    }
+  }
 
 protected:
 
