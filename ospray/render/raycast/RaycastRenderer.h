@@ -62,13 +62,23 @@ namespace ospray {
     eyelight shading, etc */
   template<void *(*SHADE_MODE)(void*)>
   struct RaycastRenderer : public Renderer {
+
+    /*! \brief constructor */
     RaycastRenderer();
-    virtual std::string toString() const { return "ospray::RaycastRenderer"; }
+
+    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    virtual void commit();
+
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const;
+
+    // -------------------------------------------------------
+    // member variables 
+    // -------------------------------------------------------
 
     Model  *model;
     Camera *camera;
-    
-    virtual void commit();
   };
 
 } // ::ospray
