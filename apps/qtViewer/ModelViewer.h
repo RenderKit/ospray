@@ -152,8 +152,8 @@ namespace ospray {
       // qt gui components 
       // -------------------------------------------------------
       EditorWidgetStack        *editorWidgetStack;
+      QDockWidget              *editorWidgetDock;
       QToolBar                 *toolBar;
-      // QAffineSpaceManipulator  *renderWidget;
       QTransferFunctionEditor  *transferFunctionEditor;
 
       Ref<sg::Renderer> sgRenderer;

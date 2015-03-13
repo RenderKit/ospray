@@ -193,7 +193,7 @@ namespace ospray {
         // modelViewer->setFixedSize(frameResolution.x,frameResolution.y);
         modelViewer->showFrameRate(showFPS);
         if (fullscreen){
-          std::cout << "Opening fullscreen viewer, press 'ESC' to quit\n";
+          std::cout << "#osp:qtv: ppening fullscreen viewer, press 'ESC' to quit\n";
           modelViewer->showFullScreen();
         } else {
           modelViewer->show();
