@@ -100,14 +100,8 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform uint32 *uniform prim_materialID
                                      )
 {
-  // uniform Geometry_postIntersectFct *pi = NULL;
-  // if (numComponentsInVertex == 3 && numComponentsInTriangle == 4)
-  //   pi = TriangleMesh_postIntersect3f4i;
-  // else if (numComponentsInVertex == 4 && numComponentsInTriangle == 3)
-  //   pi = TriangleMesh_postIntersect4f3i;
-  
   Geometry_Constructor(&mesh->geometry,cppEquivalent,
-                       TriangleMesh_postIntersect,//pi,
+                       TriangleMesh_postIntersect,
                        model,geomID,
                        material);
   mesh->numTriangles = numTriangles;
