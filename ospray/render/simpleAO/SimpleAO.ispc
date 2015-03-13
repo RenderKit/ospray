@@ -65,11 +65,11 @@ uniform float SimpleAO__randomV[16][16] = {
 {0.329218, 0.662551, 0.995885, 0.00137174, 0.334705, 0.668038, 0.112483, 0.445816, 0.77915, 0.223594, 0.556927, 0.890261, 0.0384088, 0.371742, 0.705075, 0.14952}
 };
 
-uniform vec3f AO16_directions[16][16];
-uniform bool AO16_directions_initialized = false;
+uniform vec3f SimpleAO_directions[16][16];
+uniform bool SimpleAO_directions_initialized = false;
 
-struct AO16Renderer {
-  uniform Renderer inherited;
+struct SimpleAO {
+  uniform Renderer super;
   uniform vec3f bgColor;
   uniform int samplesPerFrame;
 };
@@ -91,25 +91,25 @@ void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
   biNorm0 = normalize(cross(biNorm1,gNormal));
 }
 
-struct AO16Material {
-  Material inherited;
+struct SimpleAOMaterial {
+  Material super;
   vec3f Kd;
   uniform Texture2D *uniform map_Kd;
 };
 
-export void *uniform AO16Material_create(void *uniform cppE)
+export void *uniform SimpleAOMaterial_create(void *uniform cppE)
 {
-  uniform AO16Material *uniform mat = uniform new uniform AO16Material;
-  mat->inherited.cppEquivalent = cppE;
+  uniform SimpleAOMaterial *uniform mat = uniform new uniform SimpleAOMaterial;
+  mat->super.cppEquivalent = cppE;
   return mat;
 }
 
-export void AO16Material_set(void *uniform _mat, 
+export void SimpleAOMaterial_set(void *uniform _mat, 
                              const uniform vec3f &Kd,
                              void *uniform _map_Kd
                              )
 {
-  uniform AO16Material *uniform mat = (uniform AO16Material *uniform)_mat;
+  uniform SimpleAOMaterial *uniform mat = (uniform SimpleAOMaterial *uniform)_mat;
   mat->Kd = Kd;
   mat->map_Kd = (uniform Texture2D *uniform)_map_Kd;
 }
@@ -126,22 +126,6 @@ inline uniform float rotate(uniform float x, uniform float dx)
   x += dx;
   if (x >= 1.f) x -= 1.f;
   return x;
-}
-
-inline vec3f getRandomDir(const int j, const uniform int i, 
-                   const vec3f biNorm0,
-                   const vec3f biNorm1, 
-                   const vec3f gNormal,
-                   const float rot_x, const float rot_y)
-{
-  const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
-  const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
-        
-  const float w = sqrt(1.f-r1);
-  const float x = cos((2.f*M_PI)*r0)*w;
-  const float y = sin((2.f*M_PI)*r0)*w;
-  const float z = sqrt(r1)+EPS;
-  return x*biNorm0+y*biNorm1+z*gNormal;
 }
 
 inline vec3f getRandomDir(const int j, const int i, 
@@ -161,26 +145,21 @@ inline vec3f getRandomDir(const int j, const int i,
 }
 
 
-inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
+inline vec3f shade_ao16(uniform SimpleAO *uniform self,
                         int sampleOfs, int sampleCnt,
                         const Ray &ray, 
                         const int32 pixel_x, const int32 pixel_y,
                         const float rot_x, const float rot_y)
 {
   if (ray.geomID < 0)
-    return renderer->bgColor;
+    return self->bgColor;
 
   DifferentialGeometry dg;
-  dg.color = make_vec4f(1.f);
-  postIntersect(renderer->inherited.model,dg,ray,
+  postIntersect(self->super.model,dg,ray,
                 DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD
                 |DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
   
-  const vec3f P = ray.org + (0.999f*ray.t) * ray.dir + 1e-3f*dg.Ns;
-  
-  const vec3f N = dg.Ns;
-
-  uniform AO16Material *mat = ((uniform AO16Material*)dg.material);
+  uniform SimpleAOMaterial *mat = ((uniform SimpleAOMaterial*)dg.material);
   vec3f baseColor = make_vec3f(1.f);
   if (mat) {
     foreach_unique(m in mat) {
@@ -191,11 +170,12 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
       }
     }
   }
-  if (dg.color.x > -1.f)
-    baseColor = baseColor * make_vec3f(dg.color);
+  // should be done in material:
+  baseColor = baseColor * make_vec3f(dg.color);
   
   int hits = 0;
   vec3f biNormU,biNormV;
+  const vec3f N = dg.Ns;
   getBinormals(biNormU,biNormV,N);
 
   const int sindex_x = pixel_x & 0x3;
@@ -208,10 +188,10 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
                      biNormU,biNormV,N,rot_x,rot_y);
     
     Ray ao_ray;
-    setRay(ao_ray,P,ao_dir);
+    setRay(ao_ray,dg.P+1e-3f*N,ao_dir);
     ao_ray.t0 = EPS;
     ao_ray.t = 1e20f; 
-    if (dot(ao_ray.dir,N) < 0.05f || isOccluded(renderer->inherited.model,ao_ray))
+    if (dot(ao_ray.dir,N) < 0.05f || isOccluded(self->super.model,ao_ray))
       hits++;
   }
   float diffuse = absf(dot(N,ray.dir));
@@ -221,22 +201,22 @@ inline vec3f shade_ao16(uniform AO16Renderer *uniform renderer,
 }
 
 
-void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
+void SimpleAO_renderSample(uniform Renderer *uniform _self,
                                varying ScreenSample &sample)
 {
-  uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
+  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
 
-  traceRay(renderer->inherited.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  uniform int samplesPerFrame = renderer->samplesPerFrame;
+  uniform int samplesPerFrame = self->samplesPerFrame;
   uniform int framesPer16 = 16/samplesPerFrame;
   int accumID = sample.sampleID.z / framesPer16;
   int sampleOfs = sample.sampleID.z % framesPer16;
   float rot_x = 1.f-precomputedHalton3(accumID);
   float rot_y = 1.f-precomputedHalton5(accumID);
-  sample.rgb   = shade_ao16(renderer,
+  sample.rgb   = shade_ao16(self,
                             sampleOfs,samplesPerFrame,
                             sample.ray,
                             sample.sampleID.x,
@@ -245,32 +225,32 @@ void AO16Renderer_renderSample(uniform Renderer *uniform _renderer,
 }
 
 
-export void *uniform AO16Renderer_create(void *uniform cppE,
+export void *uniform SimpleAO_create(void *uniform cppE,
                                          void *uniform _model,
                                          void *uniform _camera)
 {
-  uniform AO16Renderer *uniform renderer = uniform new uniform AO16Renderer;
-  Renderer_constructor(&renderer->inherited,cppE,_model,_camera);
-  renderer->inherited.renderSample = AO16Renderer_renderSample;
-  return renderer;
+  uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
+  Renderer_constructor(&self->super,cppE,_model,_camera);
+  self->super.renderSample = SimpleAO_renderSample;
+  return self;
 }
 
-export void AO16Renderer_set(void *uniform _renderer,
+export void SimpleAO_set(void *uniform _self,
                              uniform int samplesPerFrame,
                              const uniform vec3f &bgColor,
                              void *uniform _model,
                              void *uniform _camera)
 {
-  uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
-  renderer->bgColor = bgColor;
-  renderer->samplesPerFrame = samplesPerFrame;
-  renderer->inherited.model = (uniform Model*)_model;
-  renderer->inherited.camera = (uniform Camera*)_camera;
+  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
+  self->bgColor = bgColor;
+  self->samplesPerFrame = samplesPerFrame;
+  self->super.model = (uniform Model*)_model;
+  self->super.camera = (uniform Camera*)_camera;
 }
 
-export void AO16Renderer_destroy(void *uniform _renderer)
+export void SimpleAO_destroy(void *uniform _self)
 {
-  uniform AO16Renderer *uniform renderer = (uniform AO16Renderer *uniform)_renderer;
-  delete renderer;
+  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
+  delete self;
 }
 

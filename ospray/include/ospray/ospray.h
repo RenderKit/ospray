@@ -180,6 +180,10 @@ extern "C" {
 
   //! create a new camera of given type 
   /*! return 'NULL' if that type is not known */
+  /*! The default camera type supported in all ospray versions is
+      "perspective" (\ref perspective_camera).  For a list of
+      supported camera type in this version of ospray, see \ref
+      ospray_supported_cameras */
   OSPCamera ospNewCamera(const char *type);
 
   //! create a new volume of given type 
@@ -192,13 +196,6 @@ extern "C" {
   //! create a new transfer function of given type
   /*! return 'NULL' if that type is not known */
   OSPTransferFunction ospNewTransferFunction(const char * type);
-
-  //! create a new camera of given type.  
-  /*! The default camera type supported in all ospray versions is
-      "perspective" (\ref perspective_camera).  For a list of
-      supported camera type in this version of ospray, see \ref
-      ospray_supported_cameras */
-  OSPRenderer ospNewRenderer(const char *type);
   
   //! create a new Texture2D with the given parameters
   /*! return 'NULL' if the texture could not be created with the given parameters */

@@ -91,6 +91,8 @@ namespace embree
       return vertices[0].getBufferStride();
     }
 
+#if !defined(__MIC__)
+
     /*! check if the i'th primitive is valid */
     __forceinline bool valid(size_t i, BBox3fa* bbox = NULL) const 
     {
@@ -100,21 +102,23 @@ namespace embree
       if (tri.v[2] >= numVertices) return false;
 
       for (size_t j=0; j<numTimeSteps; j++) {
-	const Vec3fa& v0 = vertex(tri.v[0],j);
-	const Vec3fa& v1 = vertex(tri.v[1],j);
-	const Vec3fa& v2 = vertex(tri.v[2],j);
+	const Vec3fa v0 = vertices[j].load(tri.v[0]);
+	const Vec3fa v1 = vertices[j].load(tri.v[1]);
+	const Vec3fa v2 = vertices[j].load(tri.v[2]);
 	if (!inFloatRange(v0) || !inFloatRange(v1) || !inFloatRange(v2))
 	  return false;
       }
 
       if (bbox) {
-	const Vec3fa& v0 = vertex(tri.v[0]);
-	const Vec3fa& v1 = vertex(tri.v[1]);
-	const Vec3fa& v2 = vertex(tri.v[2]);
+        const Vec3fa v0 = vertices[0].load(tri.v[0]);
+	const Vec3fa v1 = vertices[0].load(tri.v[1]);
+	const Vec3fa v2 = vertices[0].load(tri.v[2]);
 	*bbox = BBox3fa(min(v0,v1,v2),max(v0,v1,v2));
       }
       return true;
     }
+
+#endif
 
     /*! calculates the bounds of the i'th triangle */
     __forceinline BBox3fa bounds(size_t i) const 

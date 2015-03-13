@@ -32,17 +32,25 @@
 
 struct LightPath 
 {
-  Ray    ray;                /*! Last ray in the path. */
-  Medium lastMedium;             /*! Medium the last ray travels inside. */
-  uniform uint32 depth;            /*! Recursion depth of path. */
-  vec3f  throughput;             /*! Determines the fraction of
-                                     radiance reaches the pixel along
-                                     the path. */
-  bool   ignoreVisibleLights;    /*! If the previous shade point used
-                                     shadow rays we have to ignore the
-                                     emission of geometrical lights to
-                                     not double count them. */
-  bool   unbent;                    /*! True of the ray path is a straight line. */
+  /*! \brief Last ray in the path. */
+  Ray    ray;                
+  
+  /*! \brief Medium the last ray travels inside. */
+  Medium lastMedium;             
+
+  /*! \brief Recursion depth of path. */
+  uniform uint32 depth;          
+
+  /*! \brief Determines the fraction of radiance reaches the pixel along the
+    path. */  
+  vec3f  throughput;             
+
+  /*! \brief If the previous shade point used shadow rays we have to ignore
+    the emission of geometrical lights to not double count them. */
+  bool   ignoreVisibleLights;    
+
+  /*! \brief True if the ray path is a straight line. */
+  bool   unbent;                    
 };
 
 inline void init_LightPath(LightPath& lp, const Ray &ray)
@@ -88,13 +96,13 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
   vec3f Lw = make_vec3f(1.f);
   while (true) 
   {
-    /*! Terminate path if too long or contribution too low. */
+    /* Terminate path if too long or contribution too low. */
     if (lightPath.depth >= THIS->maxDepth)
       return L;
     if (reduce_max(lightPath.throughput) <= THIS->minContribution)
       return L;
     
-    /*! Traverse ray. */
+    /* Traverse ray. */
     DifferentialGeometry dg;
     traceRay(scene->model,lightPath.ray);
 
@@ -106,7 +114,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     
     const vec3f wo = neg(lightPath.ray.dir);
 
-    /*! Environment shading when nothing hit. */
+    /* Environment shading when nothing hit. */
     if (noHit(lightPath.ray)) 
     {
       if ((bool)THIS->backplate & lightPath.unbent) {
@@ -126,7 +134,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       return L;
     }
 
-    /*! Shade surface. */
+    /* Shade surface. */
     uniform CompositedBRDF brdfs;
     CompositedBRDF__Constructor(&brdfs);
 #if 1
@@ -144,7 +152,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
 
 #if 0
     // iw: disabled because we dont' have per-geometry lights yet
-    /*! Add light emitted by hit area light source. */
+    /* Add light emitted by hit area light source. */
     if (!lightPath.ignoreVisibleLights) {
       foreach_unique(geomID in lightPath.ray.geomID) {
         const uniform AreaLight* uniform l = scene->model->geometry[geomID]->light;
@@ -155,10 +163,10 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     }
 #endif
 
-    /*! Check if any BRDF component uses direct lighting. */
+    /* Check if any BRDF component uses direct lighting. */
     bool useDirectLighting = brdfs.brdfTypes & directLightingBRDFTypes;
 
-    /*! Direct lighting. Shoot shadow rays to all light sources. */
+    /* Direct lighting. Shoot shadow rays to all light sources. */
     if (useDirectLighting) 
     {
       uniform int numAllLights = min(MAX_LIGHTS,scene->num_allLights);
@@ -166,7 +174,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       {
         uniform Light* uniform light = scene->allLights[i];
 
-        /*! Either use precomputed samples for the light or sample light now. */
+        /* Either use precomputed samples for the light or sample light now. */
         LightSample ls; 
         ls.wi.v = make_vec3f(0.0f,0.0f,0.0f); ls.wi.pdf = 0.0f;
 #if 0
@@ -180,19 +188,19 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
           ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
         }
 
-        /*! Ignore zero radiance or illumination from the back. */
+        /* Ignore zero radiance or illumination from the back. */
         //if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING | dot(dg.Ns,ls.wi.v) <= 1e-8f) 
         if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING) 
           continue;
 
-        /*! Evaluate BRDF */
+        /* Evaluate BRDF */
         vec3f brdf = CompositedBRDF__eval(&brdfs,wo,dg,ls.wi.v,directLightingBRDFTypes);
 #ifdef USE_DGCOLOR
         brdf = brdf * make_vec3f(dg.color);
 #endif
         if (reduce_max(brdf) <= 0.0f)
           continue;
-        /*! Test for shadows. */
+        /* Test for shadows. */
         numRays++;
         Ray shadow_ray; 
         setRay(shadow_ray,dg.P,ls.wi.v,
@@ -209,11 +217,11 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       }
     }
 
-    /*! Global illumination. Pick one BRDF component and sample it. */
+    /* Global illumination. Pick one BRDF component and sample it. */
     if (lightPath.depth >= THIS->maxDepth) 
       return L;
     
-    /*! sample brdf */
+    /* sample brdf */
     Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
     vec2f s  = RandomTEA__getFloats(rng);
     vec2f ss = RandomTEA__getFloats(rng);
@@ -223,17 +231,17 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       c = c * make_vec3f(dg.color);
 #endif
     
-    /*! Continue only if we hit something valid. */
+    /* Continue only if we hit something valid. */
     if (reduce_max(c) <= 0.0f | wi.pdf <= PDF_CULLING) 
       return L;
 
-    /*! Compute  simple volumetric effect. */
+    /* Compute  simple volumetric effect. */
     const vec3f transmission = lightPath.lastMedium.transmission;
     if (ne(transmission,make_vec3f(1.f)))
       // c = mul(c, pow(transmission,lightPath.ray.t));
       c = c * powf(transmission,lightPath.ray.t);
     
-    /*! Tracking medium if we hit a medium interface. */
+    /* Tracking medium if we hit a medium interface. */
     if (type & TRANSMISSION) {
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
@@ -241,7 +249,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
       }
     }
     
-    /*! Continue the path. */
+    /* Continue the path. */
     extend_fast(lightPath, 
                 dg.P,wi.v,//dg.error*
                 THIS->epsilon,inf,
@@ -295,11 +303,11 @@ uniform Scene *uniform createScene()
 
 inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
                                     const uint32 ix, 
-                                    const uint32 iy)
+                                    const uint32 iy,
+                                    uint32 &numRays)
 {
   uniform FrameBuffer *uniform fb = THIS->inherited.fb;
 
-  uint32 numRays = 0;
   vec3f L = make_vec3f(0.f);
   uniform Camera *uniform camera = THIS->inherited.camera;
   ScreenSample screenSample;
@@ -346,18 +354,26 @@ void PathTracer_beginFrame(uniform Renderer *uniform renderer,
 {
 //  print("pathtracer new frame %\n",fb->accumID);
   renderer->fb = fb;
+  uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
+//  print("rays: %\n", pt->numRays);
+  pt->numRays = 0;
 }
 
 #if 1
-task void PathTracer_renderTileJob(uniform Renderer *uniform renderer, uniform Tile &tile)
+task void PathTracer_renderTileJob(uniform Renderer *uniform renderer, 
+                                   uniform Tile &tile,
+                                   varying uint32 *uniform numRaysPerJob)
 {
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
 
   uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
   uniform FrameBuffer *uniform fb     = renderer->fb;
+  numRaysPerJob[taskIndex] = 0;
 
-  const uniform int blocks = renderer->spp > 0 || fb->accumID > 0 ? 1 : min(1 << -2 * renderer->spp, TILE_SIZE*TILE_SIZE);
+  const uniform int blocks
+    =  (renderer->spp > 0) 
+    || (fb->accumID > 0 ? 1 : min(1 << -2 * renderer->spp, TILE_SIZE*TILE_SIZE));
   
   for (uint32 i=begin+programIndex;i<end;i+=programCount) {
     const uint32 ix = tile.region.lower.x + z_order.xs[i*blocks];
@@ -365,7 +381,9 @@ task void PathTracer_renderTileJob(uniform Renderer *uniform renderer, uniform T
     if (ix >= fb->size.x || iy >= fb->size.y) 
       continue;
 
-    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy);
+    uint32 numRays = 0;
+    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy, numRays);
+    numRaysPerJob[taskIndex] = numRaysPerJob[taskIndex] + numRays;
     for (uniform int p = 0; p < blocks; p++) {
       const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
       setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
@@ -375,14 +393,25 @@ task void PathTracer_renderTileJob(uniform Renderer *uniform renderer, uniform T
 
 void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &tile)
 {
+  uniform PathTracer *uniform pt = (uniform PathTracer *uniform)renderer;
   uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
-  launch[numJobs] PathTracer_renderTileJob(renderer,tile);
+  varying uint32 numRaysPerJob[(TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB];
+  
+  launch[numJobs] PathTracer_renderTileJob(renderer,tile,&numRaysPerJob[0]);
+  sync;
+  
+  uint32 numRaysInTile = 0;
+  for (uniform int i=0;i<numJobs;i++)
+    numRaysInTile += numRaysPerJob[i];
+  pt->numRays += reduce_add(numRaysInTile);
 }
 #else
 void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &tile)
 {
   uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
   uniform FrameBuffer *uniform fb     = renderer->fb;
+
+  uint32 numRays = 0;
 
   const uniform int blocks = renderer->spp > 0 || fb->accumID > 0 ? 1 : min(1 << -2 * renderer->spp, TILE_SIZE*TILE_SIZE);
   
@@ -392,12 +421,13 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &til
     if (ix >= fb->size.x || iy >= fb->size.y) 
       continue;
 
-    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy);
+    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy, numRays);
     for (uniform int p = 0; p < blocks; p++) {
       const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
       setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
     }
   }
+  pt->numRays += reduce_add(numRays);
 }
 #endif
 

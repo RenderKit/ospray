@@ -226,6 +226,12 @@ void SliceWidget::apply() {
   OSPData indexData = ospNewData(indices.size(), OSP_INT3, &indices[0].x);
   ospSetData(triangleMesh, "index", indexData);
 
+  //! For now, vertex colors of (-1,-1,-1) indicate coloring should be mapped through the volume transfer function.
+  //! Transfer function / volume information will be soon be included as material parameters.
+  std::vector<osp::vec3fa> colors(positions.size(), osp::vec3f(-1.f));
+  OSPData colorData = ospNewData(colors.size(), OSP_FLOAT3A, &colors[0].x);
+  ospSetData(triangleMesh, "color", colorData);
+
   ospCommit(triangleMesh);
 
   if(newGeometry)

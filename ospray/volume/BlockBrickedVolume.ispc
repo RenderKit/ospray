@@ -173,7 +173,7 @@ inline varying float BlockBrickedVolumeUChar_getVoxel(void *uniform pointer, con
   Address address;  BlockBrickedVolume_getVoxelAddress(volume, index, address);
 
   //! The voxel value at the 1D address.
-  float value;  foreach_unique(block in address.block) value = voxelData[block][address.voxel];  return(value / 255.0f);
+  float value;  foreach_unique(block in address.block) value = voxelData[block][address.voxel];  return(value);
 
 }
 

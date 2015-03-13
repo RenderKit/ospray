@@ -184,6 +184,4 @@ export void CylindersGeometry_set(void           *uniform _geom,
                           (uniform RTCIntersectFuncVarying)&Cylinders_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                          (uniform RTCOccludedFuncVarying)&Cylinders_intersect);
-  rtcEnable(model->embreeSceneHandle,geomID);
-
 }

@@ -79,7 +79,7 @@ namespace ospray {
       sgRenderer->setWorld(world);
       cout << "#ospQTV: world set, found " 
            << sgRenderer->allNodes.size() << " nodes" << endl;
-   }
+    }
 
     //! the QT callback that tells us that we have to redraw
     void OSPRayRenderWidget::redraw()
@@ -156,10 +156,17 @@ namespace ospray {
       // editorWidgetStack->addPage("Test1",new QLabel("Test1"));
       // editorWidgetStack->addPage("Test2",new QLabel("Test2"));
       QDockWidget *dock = new QDockWidget(this);
-      dock->setWindowTitle("Editors");
-      dock->setWidget(editorWidgetStack);
-      dock->setFeatures(0);
-      addDockWidget(Qt::RightDockWidgetArea,dock);
+      // dock->setWindowTitle("Editors");
+      // dock->setWidget(editorWidgetStack);
+      // dock->setFeatures(0);
+      // addDockWidget(Qt::RightDockWidgetArea,dock);
+
+      editorWidgetDock = new QDockWidget(this);
+      editorWidgetDock->setWindowTitle("Editors");
+      editorWidgetDock->setWidget(editorWidgetStack);
+      editorWidgetDock->setFeatures(0);
+      addDockWidget(Qt::RightDockWidgetArea,editorWidgetDock);
+
     }
 
     void ModelViewer::createTransferFunctionEditor()
@@ -219,15 +226,26 @@ namespace ospray {
     }
 
     void ModelViewer::keyPressEvent(QKeyEvent *event) {
-//      std::cout << event->key() << std::endl;
+      //      std::cout << event->key() << std::endl;
       switch (event->key()) {
-        case Qt::Key_Escape:
-        case Qt::Key_Q:
-          // TODO: Properly tell the app to quit?
-          exit(0);
+      case Qt::Key_Escape:
+      case Qt::Key_Q:
+        // TODO: Properly tell the app to quit?
+        exit(0);
         // TODO wasd movement
-        default:
-          QMainWindow::keyPressEvent(event);
+      case Qt::Key_F:
+        setWindowState(windowState() ^ Qt::WindowFullScreen);
+        if (windowState() & Qt::WindowFullScreen){
+          toolBar->hide();
+          editorWidgetDock->hide();
+        } else {
+          toolBar->show();
+          editorWidgetDock->show();
+        }
+        break;
+
+      default:
+        QMainWindow::keyPressEvent(event);
       }
     }
 
@@ -241,18 +259,18 @@ namespace ospray {
       setWindowTitle(tr("OSPRay QT ModelViewer"));
       resize(1024,768);
 
-	  if (!fullscreen){
-		  // create GUI elements
-		  toolBar      = addToolBar("toolbar");
+      if (!fullscreen){
+        // create GUI elements
+        toolBar = addToolBar("toolbar");
 
-		  QAction *printCameraAction = new QAction("Print Camera", this);
-		  connect(printCameraAction, SIGNAL(triggered()), this, SLOT(printCameraAction()));
-		  toolBar->addAction(printCameraAction);
+        QAction *printCameraAction = new QAction("Print Camera", this);
+        connect(printCameraAction, SIGNAL(triggered()), this, SLOT(printCameraAction()));
+        toolBar->addAction(printCameraAction);
 
-		  QAction *screenShotAction = new QAction("Screenshot", this);
-		  connect(screenShotAction, SIGNAL(triggered()), this, SLOT(screenShotAction()));
-		  toolBar->addAction(screenShotAction);
-	  }
+        QAction *screenShotAction = new QAction("Screenshot", this);
+        connect(screenShotAction, SIGNAL(triggered()), this, SLOT(screenShotAction()));
+        toolBar->addAction(screenShotAction);
+      }
 
       renderWidget = new OSPRayRenderWidget(sgRenderer);
       ///renderWidget = new CheckeredSphereRotationEditor();
@@ -265,11 +283,17 @@ namespace ospray {
 
       setCentralWidget(renderWidget);
 
-	  if (!fullscreen){
-		  createTimeSlider();
-		  createEditorWidgetStack();
-		  createTransferFunctionEditor();
-	  }
+      setFocusPolicy(Qt::StrongFocus);
+      
+      createTimeSlider();
+      createEditorWidgetStack();
+      createTransferFunctionEditor();
+
+      if (fullscreen) {
+        setWindowState(windowState() & Qt::WindowFullScreen);
+        toolBar->hide();
+        editorWidgetDock->hide();
+      }
     }
 
     void ModelViewer::setWorld(Ref<sg::World> world) 

@@ -19,6 +19,46 @@
 
 namespace ospray {
 
+  /*! \brief constructor */
+  ManagedObject::ManagedObject()
+    : ID(-1), ispcEquivalent(NULL), managedObjectType(OSP_UNKNOWN) 
+  {}
+
+  /*! \brief destructor */
+  ManagedObject::~ManagedObject() 
+  {}
+
+  /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+  void ManagedObject::commit() 
+  {}
+
+  //! \brief common function to help printf-debugging 
+  /*! \detailed Every derived class should overrride this! */
+  std::string ManagedObject::toString() const 
+  {
+    return "ospray::ManagedObject"; 
+  }
+
+  //! \brief register a new listener for given object
+  /*! \detailed this object will now get update notifications from us */
+  void ManagedObject::registerListener(ManagedObject *newListener)
+  { 
+    objectsListeningForChanges.insert(newListener); 
+  }
+
+  //! \brief un-register a listener
+  /*! \detailed this object will no longer get update notifications from us  */
+  void ManagedObject::unregisterListener(ManagedObject *noLongerListening)
+  { 
+    objectsListeningForChanges.erase(noLongerListening); 
+  }
+
+  /*! \brief gets called whenever any of this node's dependencies got changed */
+  void ManagedObject::dependencyGotChanged(ManagedObject *object) 
+  {}
+    
+
+
   void ManagedObject::Param::set(ManagedObject *object)
   {
     Assert2(this,"trying to set null parameter");
