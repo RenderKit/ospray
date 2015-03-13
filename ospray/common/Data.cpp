@@ -54,7 +54,7 @@ namespace ospray {
       for (int i=0;i<numItems;i++)
         if (child[i]) child[i]->refDec();
     }
-    free(data); 
+    if (!(flags & OSP_DATA_SHARED_BUFFER)) free(data);
   }
 
 } // ::ospray
