@@ -34,13 +34,13 @@ signals:
 
 public slots:
 
-  void apply();
+  void autoApply();
   void load(std::string filename = std::string());
 
 protected slots:
 
+  void apply();
   void save();
-  void autoApply();
   void originSliderValueChanged(int value);
   void setAnimation(bool set);
   void animate();

@@ -127,6 +127,9 @@ void VolumeViewer::addSlice(std::string filename) {
   //! Load state from file if specified.
   if(!filename.empty())
     sliceWidget->load(filename);
+
+  //! Apply the slice (if auto apply enabled), triggering a commit and render.
+  sliceWidget->autoApply();
 }
 
 void VolumeViewer::addGeometry(std::string filename) {
