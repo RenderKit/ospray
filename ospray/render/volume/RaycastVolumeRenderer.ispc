@@ -57,7 +57,6 @@ RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform rende
                                             varying vec4f &color) 
 {
   //! We compute intersections on both the model and dynamicModel, and provide the contribution for the closest hit.
-
   bool hitDynamicModel = false;
 
   Ray dynamicRay = ray;
@@ -66,7 +65,6 @@ RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform rende
   traceRay(renderer->model, ray);
 
   if(dynamicRay.t < ray.t) {
-
     hitDynamicModel = true;
     ray = dynamicRay;
   }
@@ -88,8 +86,11 @@ RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform rende
   //! Color of the geometry.
   vec3f sampleColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
 
+  //! Default opacity of 1.
+  float sampleOpacity = 1.0f;
+
   //! If no color found in the geometry, map through transfer function.
-  if(sampleColor.x == -1.f) {
+  if(sampleColor.x < 0.f) {
 
     //! Coordinates of the geometry hit.
     const vec3f geometryCoordinates = ray.org + ray.t * ray.dir;
@@ -97,8 +98,8 @@ RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform rende
     //! Sample the volume.
     const float sample = renderer->model->volumes[0]->computeSample(renderer->model->volumes[0], geometryCoordinates);
 
-    //! Look up the color associated with the volume sample.
-    sampleColor = renderer->model->volumes[0]->transferFunction->getColorForValue(renderer->model->volumes[0]->transferFunction, sample);
+    //! Look up the color associated with the volume sample. NaN values will have a color of (0,0,0) and a 0 opacity.
+    sampleColor = isnan(sample) ? sampleOpacity = 0.f, make_vec3f(0.f) : renderer->model->volumes[0]->transferFunction->getColorForValue(renderer->model->volumes[0]->transferFunction, sample);
   }
   else {
 
@@ -111,9 +112,6 @@ RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform rende
 
     sampleColor = sampleColor * cosNL * lightRadiance;
   }
-
-  //! Assume constant opacity for now.
-  const float sampleOpacity = 1.0f;
 
   //! Set the color contribution for this sample only (do not accumulate).
   color = sampleOpacity * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
@@ -167,7 +165,6 @@ inline void RaycastVolumeRenderer_intersect(RaycastVolumeRenderer *uniform rende
 
   //! Trace the ray through the volume and geometries.
   while (min(ray.t, geometryRay.t) < ray.t1 && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
-
     if (geometryRay.t < ray.t) {
 
       //! Geometry contribution.
@@ -182,7 +179,6 @@ inline void RaycastVolumeRenderer_intersect(RaycastVolumeRenderer *uniform rende
 
       //! Trace next geometry ray.
       RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
-
     } else {
 
       //! Volume contribution.
@@ -190,11 +186,8 @@ inline void RaycastVolumeRenderer_intersect(RaycastVolumeRenderer *uniform rende
 
       //! Trace next volume ray.
       RaycastVolumeRenderer_computeVolumeSample(renderer->model->volumes[0], ray, volumeColor);
-
     }
-
   }
-
 }
 
 void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer, 
