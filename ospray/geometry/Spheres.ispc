@@ -180,5 +180,4 @@ export void SpheresGeometry_set(void           *uniform _geom,
                           (uniform RTCIntersectFuncVarying)&Spheres_intersect);
   rtcSetOccludedFunction(model->embreeSceneHandle,geomID,
                           (uniform RTCOccludedFuncVarying)&Spheres_intersect);
-  rtcEnable(model->embreeSceneHandle,geomID);
 }

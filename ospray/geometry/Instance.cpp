@@ -45,7 +45,6 @@ namespace ospray {
     rtcSetTransform(model->embreeSceneHandle,embreeGeomID,
                     RTC_MATRIX_COLUMN_MAJOR,
                     (const float *)&xfm);
-    rtcEnable(model->embreeSceneHandle,embreeGeomID);
     AffineSpace3f rcp_xfm = rcp(xfm);
     ispc::InstanceGeometry_set(getIE(),
                                (ispc::AffineSpace3f&)xfm,
