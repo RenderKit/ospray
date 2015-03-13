@@ -51,12 +51,15 @@
 
 namespace ospray {
 
-  using embree::TaskScheduler;
-
   struct Camera;
   struct Model;
 
-  /*! \brief Implements the family of simple ray cast renderers */
+  /*! \brief Implements the family of simple, primary-ray-only ray cast renderers 
+
+    \detailed This simple renderer shoots only a single primary ray
+    and does some simple shading, mostly for debugging purposes such
+    as visualizing primitive ID, geometry ID, shading normals,
+    eyelight shading, etc */
   template<void *(*SHADE_MODE)(void*)>
   struct RaycastRenderer : public Renderer {
     RaycastRenderer();

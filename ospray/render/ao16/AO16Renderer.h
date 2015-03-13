@@ -42,8 +42,8 @@ namespace ospray {
   struct Camera;
   struct Model;
 
-  struct AO16Material : public Material {
-    AO16Material();
+  struct SimpleAOMaterial : public Material {
+    SimpleAOMaterial();
     virtual void commit();
 
     vec3f Kd; /*! diffuse material component, that's all we care for */
@@ -52,8 +52,8 @@ namespace ospray {
   
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
     
-    This renderer uses a set of 16 precomputed AO directions to shoot
-    shadow rays; for accumulation these 16 directions are
+    \detailed This renderer uses a set of 16 precomputed AO directions
+    to shoot shadow rays; for accumulation these 16 directions are
     (semi-)randomly rotated to give different directions every frame
     (this is far from optimal regarding how well the samples are
     distributed, but seems OK for accumulation).
@@ -68,17 +68,29 @@ namespace ospray {
     rotation of the first 8 in the third, etc.
    */
   template<int NUM_SAMPLES_PER_FRAME>
-  struct AO16Renderer : public Renderer {
-    AO16Renderer();
+  struct SimpleAORenderer : public Renderer {
 
-    virtual std::string toString() const { return "ospray::AO16Renderer"; }
-    virtual Material *createMaterial(const char *type) { return new AO16Material; }
+    //! Constructor
+    SimpleAORenderer();
+
+    /*! \brief common function to help printf-debugging */
+    virtual std::string toString() const;
+
+    /*! \brief create a material of given type */
+    virtual Material *createMaterial(const char *type);
+
+    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    virtual void commit();
+
+    // -------------------------------------------------------
+    // member variables 
+    // -------------------------------------------------------
+
     Model  *model;
     Camera *camera;
-    // background color
+    //! the background color we are going to use if the primary ray didn't hit anything
     vec3f bgColor; 
 
-    virtual void commit();
   };
 
 } // ::ospray
