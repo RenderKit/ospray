@@ -56,7 +56,7 @@ public slots:
   void setAutoRotationRate(float rate) { autoRotationRate = rate; }
 
   //! Draw the model associated with the next time step.
-  void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index); }
+  void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index);  render(); }
 
   //! Toggle animation over the time steps.
   void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
