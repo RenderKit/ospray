@@ -101,17 +101,18 @@ RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform rende
     //! Look up the color associated with the volume sample. NaN values will have a color of (0,0,0) and a 0 opacity.
     sampleColor = isnan(sample) ? sampleOpacity = 0.f, make_vec3f(0.f) : renderer->model->volumes[0]->transferFunction->getColorForValue(renderer->model->volumes[0]->transferFunction, sample);
   }
-  else {
 
-    //! Lighting. For now only on geometry with color information.
-    vec3f lightDirection;
-    float lightDistance;
-    vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], dg.P, lightDirection, lightDistance);
+  //! Compute lighting.
+  vec3f lightDirection;
+  float lightDistance;
+  vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], dg.P, lightDirection, lightDistance);
 
-    const float cosNL = abs(dot(normalize(lightDirection), normalize(dg.Ns)));
+  //! Constant ambient lighting term.
+  const float ambient = 0.5f;
 
-    sampleColor = sampleColor * cosNL * lightRadiance;
-  }
+  const float cosNL = abs(dot(normalize(lightDirection), normalize(dg.Ns)));
+
+  sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
 
   //! Set the color contribution for this sample only (do not accumulate).
   color = sampleOpacity * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
