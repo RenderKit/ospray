@@ -17,7 +17,7 @@
 #pragma once
 
 #include "api/parms.h"
-#include "spotlight_ispc.h"
+#include "PTSpotLight_ispc.h"
 
 namespace ospray {
   namespace pt {

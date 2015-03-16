@@ -25,7 +25,7 @@
 #pragma once
 
 #include "api/parms.h"
-#include "hdrilight_ispc.h"
+#include "PTHDRILight_ispc.h"
 
 namespace embree
 {

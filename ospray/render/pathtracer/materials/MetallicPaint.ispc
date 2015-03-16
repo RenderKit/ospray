@@ -15,9 +15,9 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "brdfs/DielectricReflection.ih"
-#include "brdfs/DielectricLayerLambertian.ih"
-#include "brdfs/DielectricLayerMicrofacetMetal.ih"
+#include "../brdfs/DielectricReflection.ih"
+#include "../brdfs/DielectricLayerLambertian.ih"
+#include "../brdfs/DielectricLayerMicrofacetMetal.ih"
 
 struct MetallicPaint
 {

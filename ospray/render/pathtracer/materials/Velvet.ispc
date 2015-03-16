@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "brdfs/Minneart.ih"
-#include "brdfs/Velvety.ih"
+#include "../brdfs/Minneart.ih"
+#include "../brdfs/Velvety.ih"
 
 struct Velvet 
 {

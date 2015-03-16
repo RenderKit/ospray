@@ -15,16 +15,16 @@
 // ======================================================================== //
 
 // pathtracer
-#include "Light.ih"
-#include "samplers/ShapeSampler.ih"
+#include "PTLight.ih"
+#include "../samplers/ShapeSampler.ih"
 // ospray
 #include "math/affine.ih"
 
 struct SpotLight
 {
-  Light base;
+  PTLight base;
   vec3f P;             //!< Position of the spot light
-  vec3f D;             //!< Light direction of the spot light
+  vec3f D;             //!< PTLight direction of the spot light
   vec3f I;             //!< Radiant intensity (W/sr)
   float angleMin;      //!< Start of linear falloff region
   float angleMax;      //!< End of linear falloff region
@@ -38,21 +38,21 @@ SpotLight* uniform SpotLight__New(const uniform vec3f& P,
                                   const uniform float angleMin,
                                   const uniform float angleMax);
 
-uniform Light* uniform SpotLight__transform(const uniform Light *uniform _this, 
+uniform PTLight* uniform SpotLight__transform(const uniform PTLight *uniform _this, 
                                             const uniform AffineSpace3f& xfm) 
 {
   const uniform SpotLight *uniform this = (const uniform SpotLight *uniform)_this;
-  return (uniform Light* uniform) SpotLight__New(xfmPoint(xfm,this->P),xfmVector(xfm,this->D),this->I,this->angleMin,this->angleMax);
+  return (uniform PTLight* uniform) SpotLight__New(xfmPoint(xfm,this->P),xfmVector(xfm,this->D),this->I,this->angleMin,this->angleMax);
 }
 
-varying vec3f SpotLight__eval(const uniform Light *uniform _this, 
+varying vec3f SpotLight__eval(const uniform PTLight *uniform _this, 
                               varying const DifferentialGeometry &dg, 
                               varying const vec3f &wi) 
 {
   return make_vec3f(0.0f);
 }
 
-varying vec3f SpotLight__sample(const uniform Light *uniform _this,
+varying vec3f SpotLight__sample(const uniform PTLight *uniform _this,
                                 varying const DifferentialGeometry &dg, 
                                 varying Sample3f &wi,
                                 varying float &tMax,
@@ -80,7 +80,7 @@ void SpotLight__Constructor (uniform SpotLight *uniform this,
                              const uniform float angleMin,
                              const uniform float angleMax)
 {
-  Light__Constructor(&this->base,//Light__Destructor,
+  PTLight__Constructor(&this->base,//Light__Destructor,
                      NORMAL_LIGHT,
                      SpotLight__transform,NULL,SpotLight__eval,SpotLight__sample);
   this->P = P;

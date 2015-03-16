@@ -14,25 +14,23 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "api/parms.h"
-#include "distantlight_ispc.h"
+#include "AmbientLight.h"
+#include "AmbientLight_ispc.h"
 
 namespace ospray {
-  namespace pt {
+  //!Construct a new AmbientLight object
+  AmbientLight::AmbientLight()
+    : color(1.f, 1.f, 1.f)
+    , intensity(1.f)
+  {
+    ispcEquivalent = ispc::AmbientLight_create(this);
+  }
+
+  //!Commit parameters understood by the base AmbientLight class
+  void AmbientLight::commit() {
+    color     = getParam3f("color", vec3f(1.f, 1.f, 1.f));
+    intensity = getParam1f("intensity", 1.f);
     
-    struct DistantLight
-    {
-      static void* create(const Parms& parms)
-      {
-        const Vector3f D = parms.getVector3f("D");
-        const Color L = parms.getColor("L");
-        const float halfAngle = parms.getFloat("halfAngle");
-        return ispc::DistantLight__new((ispc::vec3f&)D,(ispc::vec3f&)L,halfAngle);
-      }
-    };
-
-  } // ::ospray::pt
-} // ::ospray
-
+    ispc::AmbientLight_set(getIE(), (ispc::vec3f&)color, intensity);
+  }
+}

@@ -22,41 +22,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "material.isph"
-#include "../brdfs/reflection.isph"
+#pragma once
 
-struct Mirror
+#include "api/parms.h"
+#include "PTDirectionalLight_ispc.h"
+
+namespace embree
 {
-  Material base;
-  Reflection reflection;
-};
-
-///////////////////////////////////////////////////////////////////////////////
-// Implementation
-
-void Mirror__shade(const uniform Material *uniform _this,
-                  const Ray&                  ray,            
-                  const Medium&               currentMedium,  
-                  const DifferentialGeometry& dg,             
-                  uniform CompositedBRDF&     brdfs)          
-{
-  uniform const Mirror *uniform this = (uniform const Mirror *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->reflection.base);
+  struct DirectionalLight
+  {
+    static void* create(const Parms& parms)
+    {
+      const Vector3f D = parms.getVector3f("D");
+      const Color E = parms.getColor("E");
+      return ispc::DirectionalLight__new((ispc::vec3f&)D,(ispc::vec3f&)E);
+    }
+  };
 }
 
-inline void Mirror__Constructor(uniform Mirror *uniform this,
-                               const uniform vec3f& reflectance)
-{
-  Material__Constructor(&this->base,Material__Destructor,Mirror__shade,NULL);
-  Reflection__Constructor(&this->reflection, reflectance);
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// External API
-
-export void* uniform Mirror__new(const uniform vec3f& reflectance)
-{
-  uniform Mirror *uniform m = uniform new uniform Mirror;
-  Mirror__Constructor(m,reflectance);
-  return m;
-}
