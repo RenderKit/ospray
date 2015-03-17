@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,7 +48,6 @@ void Renderer_default_endFrame(uniform Renderer *uniform renderer,
   renderer->fb = NULL;
 }
 
-
 void Renderer_default_renderTile(uniform Renderer *uniform renderer,
                                  uniform Tile &tile)
 {
@@ -56,8 +55,9 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
   uniform Camera      *uniform camera = renderer->camera;
 
   float pixel_du = .5f, pixel_dv = .5f;
-  float lens_du = 0.f, lens_dv = 0.f;
+  float lens_du = 0.f,  lens_dv = 0.f;
   uniform int32 spp = renderer->spp;
+
   precomputeZOrder();
 
   if (spp > 1) {
@@ -75,6 +75,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       const uint32 index = i + programIndex;
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) 
         continue;
@@ -110,23 +111,27 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
 
     CameraSample cameraSample;
 
-    for (uniform uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      const uint32 index = i + programIndex;
-      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
-      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+    const uniform int blocks = fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+
+    for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE/blocks;i+=programCount) {
+      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[i*blocks];
+      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[i*blocks];
       if ((screenSample.sampleID.x >= fb->size.x) | 
           (screenSample.sampleID.y >= fb->size.y)) {
         continue;
       }
 
-      const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-      assert(pixel < TILE_SIZE*TILE_SIZE);
-      for (uniform uint32 s = 0; s<spp; s++) {
-        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+      cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
-        camera->initRay(camera,screenSample.ray,cameraSample);
-        renderer->renderSample(renderer,screenSample);
+      camera->initRay(camera,screenSample.ray,cameraSample);
+      renderer->renderSample(renderer,screenSample);
+
+      // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
+
+      for (uniform int p = 0; p < blocks; p++) {
+        const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
+        assert(pixel < TILE_SIZE*TILE_SIZE);
         setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
       }
     }
@@ -171,7 +176,7 @@ export void Renderer_endFrame(void *uniform _renderer, const uniform int32 newAc
   renderer->endFrame(renderer,newAccumID);
 }
 
-export void Renderer_setSPP(void *uniform _renderer, uniform uint32 spp)
+export void Renderer_setSPP(void *uniform _renderer, uniform int32 spp)
 {
   uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
   renderer->spp = spp;

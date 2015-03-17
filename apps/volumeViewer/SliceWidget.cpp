@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -102,11 +102,13 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   formLayout->addRow("Normal", normalWidget);
 
   //! Add a slider and animate button for the origin location along the normal.
+  //! Defaults to mid-point (matching the origin widgets).
   QWidget * originSliderWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originSliderWidget->setLayout(hboxLayout);
 
   originSlider.setOrientation(Qt::Horizontal);
+  originSlider.setValue(0.5 * (originSlider.maximum() - originSlider.minimum()));
   connect(&originSlider, SIGNAL(valueChanged(int)), this, SLOT(originSliderValueChanged(int)));
   hboxLayout->addWidget(&originSlider);
 
@@ -161,6 +163,62 @@ SliceWidget::~SliceWidget() {
   }
 
   emit(sliceChanged());
+}
+
+void SliceWidget::autoApply() {
+
+  if(autoApplyCheckBox.isChecked())
+    apply();
+}
+
+void SliceWidget::load(std::string filename) {
+
+  //! Get filename if not specified.
+  if(filename.empty())
+    filename = QFileDialog::getOpenFileName(this, tr("Load slice"), ".", "Slice files (*.slc)").toStdString();
+
+  if(filename.empty())
+    return;
+
+  //! Get serialized slice state from file.
+  QFile file(filename.c_str());
+  bool success = file.open(QIODevice::ReadOnly);
+
+  if(!success)
+    {
+      std::cerr << "unable to open " << filename << std::endl;
+      return;
+    }
+
+  QDataStream in(&file);
+
+  bool autoApply;
+  in >> autoApply;
+
+  double originX, originY, originZ;
+  in >> originX >> originY >> originZ;
+
+  double normalX, normalY, normalZ;
+  in >> normalX >> normalY >> normalZ;
+
+  int sliderPosition;
+  in >> sliderPosition;
+
+  bool sliderAnimating;
+  in >> sliderAnimating;
+
+  in >> originSliderAnimationDirection;
+
+  //! Update slice state. Update values of the UI elements directly to signal appropriate slots.
+  autoApplyCheckBox.setChecked(autoApply);
+  originXSpinBox.setValue(originX);
+  originYSpinBox.setValue(originY);
+  originZSpinBox.setValue(originZ);
+  normalXSpinBox.setValue(normalX);
+  normalYSpinBox.setValue(normalY);
+  normalZSpinBox.setValue(normalZ);
+  originSlider.setValue(sliderPosition);
+  originSliderAnimateButton.setChecked(sliderAnimating);
 }
 
 void SliceWidget::apply() {
@@ -226,6 +284,12 @@ void SliceWidget::apply() {
   OSPData indexData = ospNewData(indices.size(), OSP_INT3, &indices[0].x);
   ospSetData(triangleMesh, "index", indexData);
 
+  //! For now, vertex colors of (-1,-1,-1) indicate coloring should be mapped through the volume transfer function.
+  //! Transfer function / volume information will be soon be included as material parameters.
+  std::vector<osp::vec3fa> colors(positions.size(), osp::vec3f(-1.f));
+  OSPData colorData = ospNewData(colors.size(), OSP_FLOAT3A, &colors[0].x);
+  ospSetData(triangleMesh, "color", colorData);
+
   ospCommit(triangleMesh);
 
   if(newGeometry)
@@ -236,56 +300,6 @@ void SliceWidget::apply() {
     ospCommit(models[i]);
 
   emit(sliceChanged());
-}
-
-void SliceWidget::load(std::string filename) {
-
-  //! Get filename if not specified.
-  if(filename.empty())
-    filename = QFileDialog::getOpenFileName(this, tr("Load slice"), ".", "Slice files (*.slc)").toStdString();
-
-  if(filename.empty())
-    return;
-
-  //! Get serialized slice state from file.
-  QFile file(filename.c_str());
-  bool success = file.open(QIODevice::ReadOnly);
-
-  if(!success)
-    {
-      std::cerr << "unable to open " << filename << std::endl;
-      return;
-    }
-
-  QDataStream in(&file);
-
-  bool autoApply;
-  in >> autoApply;
-
-  double originX, originY, originZ;
-  in >> originX >> originY >> originZ;
-
-  double normalX, normalY, normalZ;
-  in >> normalX >> normalY >> normalZ;
-
-  int sliderPosition;
-  in >> sliderPosition;
-
-  bool sliderAnimating;
-  in >> sliderAnimating;
-
-  in >> originSliderAnimationDirection;
-
-  //! Update slice state. Update values of the UI elements directly to signal appropriate slots.
-  autoApplyCheckBox.setChecked(autoApply);
-  originXSpinBox.setValue(originX);
-  originYSpinBox.setValue(originY);
-  originZSpinBox.setValue(originZ);
-  normalXSpinBox.setValue(normalX);
-  normalYSpinBox.setValue(normalY);
-  normalZSpinBox.setValue(normalZ);
-  originSlider.setValue(sliderPosition);
-  originSliderAnimateButton.setChecked(sliderAnimating);
 }
 
 void SliceWidget::save() {
@@ -318,12 +332,6 @@ void SliceWidget::save() {
   out << originSlider.value();
   out << originSliderAnimateButton.isChecked();
   out << originSliderAnimationDirection;
-}
-
-void SliceWidget::autoApply() {
-
-  if(autoApplyCheckBox.isChecked())
-    apply();
 }
 
 void SliceWidget::originSliderValueChanged(int value) {

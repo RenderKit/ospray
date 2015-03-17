@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,6 +20,9 @@ inline varying vec3f
 LinearTransferFunction_getColorForValue(const void *uniform pointer, 
                                         varying float value) 
 {
+  // Return (0,0,0) for NaN values.
+  if (isnan(value)) return(make_vec3f(0.0f));
+
   // Cast to the actual TransferFunction subtype.
   const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
 
@@ -33,14 +36,19 @@ LinearTransferFunction_getColorForValue(const void *uniform pointer,
   if (value >= transferFunction->inherited.valueRange.y) return(transferFunction->colorValues[transferFunction->colorValueCount - 1]);
 
   // Map the value into the range [0.0, 1.0].
-  value = (value - transferFunction->inherited.valueRange.x) / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) * (transferFunction->colorValueCount - 1.0f);
+  value
+    = (value - transferFunction->inherited.valueRange.x) 
+    / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) 
+    * (transferFunction->colorValueCount - 1.0f);
 
   // Compute the color index and fractional offset.
-  int index = floor(value);  float remainder = value - index;
+  int   index     = floor(value);  
+  float remainder = value - index;
 
   // The interpolated color.
-  return((1.0f - remainder) * transferFunction->colorValues[index] + remainder * transferFunction->colorValues[min(index + 1, transferFunction->colorValueCount - 1)]);
-
+  return
+    ((1.0f - remainder) * transferFunction->colorValues[index] 
+     + remainder        * transferFunction->colorValues[min(index + 1, transferFunction->colorValueCount - 1)]);
 }
 
 uniform vec2f 
@@ -48,12 +56,11 @@ LinearTransferFunction_getMinMaxOpacityInRange(void *uniform pointer,
                                                const uniform vec2f &range) 
 {
   uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
-  const uniform int maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
-  const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
-  const uniform int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  const uniform int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  return(transferFunction->minMaxOpacityInRange[i][j]);
-
+  const uniform int   maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
+  const uniform float denom  = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
+  const uniform int   i      = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform int   j      = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  return(transferFunction->minMaxOpacityInRange[min(i,maxDim)][min(j,maxDim)]);
 }
 
 varying float 
@@ -65,7 +72,7 @@ LinearTransferFunction_getMaxOpacityInRange(void *uniform pointer,
   const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
   const varying int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
   const varying int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  return(transferFunction->minMaxOpacityInRange[i][j].y);
+  return(transferFunction->minMaxOpacityInRange[min(i,maxDim)][min(j,maxDim)].y);
 
 }
 
@@ -73,6 +80,9 @@ inline varying float
 LinearTransferFunction_getOpacityForValue(const void *uniform pointer, 
                                           varying float value) 
 {
+  // Return 0 for NaN values.
+  if (isnan(value)) return(0.0f);
+
   // Cast to the actual TransferFunction subtype.
   const LinearTransferFunction *uniform transferFunction = (const LinearTransferFunction *uniform) pointer;
 

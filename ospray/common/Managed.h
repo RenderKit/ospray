@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -110,6 +110,28 @@ typedef unsigned long long id_t;
    */
   struct ManagedObject : public embree::RefCount
   {
+    /*! \brief constructor */
+    ManagedObject();
+
+    /*! \brief destructor */
+    virtual ~ManagedObject();
+
+    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    virtual void commit();
+    
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const;
+
+    /*! return the ISPC equivalent of this class */
+    void  *getIE() const { return ispcEquivalent; }
+
+    // ------------------------------------------------------------------
+    // everything related to finding/getting/setting parameters
+    // ------------------------------------------------------------------
+
+    /*! \brief container for _any_ sort of parameter an app can assign
+        to an ospray object */
     struct Param {
       Param(const char *name);
       ~Param() { clear(); };
@@ -164,26 +186,10 @@ typedef unsigned long long id_t;
       const char *name;
     };
 
-    /*! constructor */
-    ManagedObject() : ID(-1), ispcEquivalent(NULL), managedObjectType(OSP_UNKNOWN) {};
-
-    /*! destructor */
-    virtual ~ManagedObject() {};
-
-    //! commit the model's (or more exactly, the model's parameters') outstanding changes
-    virtual void commit() {}
-    
-    //! \brief common function to help printf-debugging 
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::ManagedObject"; }
-
-    /*! return the ISPC equivalent of this class*/
-    void *getIE() const { return ispcEquivalent; }
-
-    /*! find a given parameter, or add it if not exists (and so specified) */
+    /*! \brief find a given parameter, or add it if not exists (and so specified) */
     Param *findParam(const char *name, bool addIfNotExist = false);
 
-    /*! set given parameter to given data array */
+    /*! \brief set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);
 
     /*! set a parameter with given name to given value, create param if not existing */
@@ -215,24 +221,37 @@ typedef unsigned long long id_t;
     const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */
 
-    /*!< list of parameters attached to this object */
-    std::vector<Param *> paramList;
+    // ------------------------------------------------------------------
+    // functions to allow objects (called a 'listener') to track
+    // changes in one or more other objects (called a
+    // 'dependencies'). Listeners can register themselves as listneres
+    // with all their dependencies, and get 'notify'd whenever their
+    // depdencies got changed/committed.
+    // ------------------------------------------------------------------
 
-    /*!< a global ID that can be used for referencing an object remotely */
-    id_t ID;
-
-    /*!< ispc-side eqivalent of this C++-side class, if available (NULL if not) */
-    void *ispcEquivalent;
-
-    /*!< subtype of this ManagedObject */
-    OSPDataType managedObjectType;
-
-    /*! gets called whenever any of this node's dependencies got changed */
-    virtual void dependencyGotChanged(ManagedObject *object) {};
+    /*! \brief gets called whenever any of this node's dependencies got changed */
+    virtual void dependencyGotChanged(ManagedObject *object);
     
-    //! \brief a list of managed objects that want to get notified
-    //! whenever this object get changed (ie, committed).
-    /* When this object gets committed, it will call
+    //! \brief Will notify all listeners that we got changed
+    /*! \detailed will call 'dependencyGotChanged' on each of the
+        objects in 'objectsListeningForChanges' */
+    void notifyListenersThatObjectGotChanged();
+
+    //! \brief register a new listener for given object
+    /*! \detailed this object will now get update notifications from us */
+    void registerListener(ManagedObject *newListener);
+
+    //! \brief un-register a listener
+    /*! \detailed this object will no longer get update notifications from us  */
+    void unregisterListener(ManagedObject *noLongerListening);
+
+    // -------------------------------------------------------
+    // member variables 
+    // -------------------------------------------------------
+
+    //! \brief List of managed objects that want to get notified
+    //! whenever this object get changed (ie, committed). */
+    /*! \detailed When this object gets committed, it will call
        'depedencyGotChanged' on each of the objects in this list. It
        is up to the respective objects to properly register and
        register themselves as dependencies.  \warning Objects here are
@@ -242,16 +261,18 @@ typedef unsigned long long id_t;
        dies */
     std::set<ManagedObject *> objectsListeningForChanges;
     
-    /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
-    void notifyListenersThatObjectGotChanged();
+    /*! \brief list of parameters attached to this object */
+    std::vector<Param *> paramList;
 
-    //! register a new listener. this object will now get update notifications from us
-    void registerListener(ManagedObject *newListener)
-    { objectsListeningForChanges.insert(newListener); }
+    /*! \brief a global ID that can be used for referencing an object remotely */
+    id_t ID;
 
-    //! un-register a listener. this object will no longer get update notifications from us 
-    void unregisterListener(ManagedObject *noLongerListening)
-    { objectsListeningForChanges.erase(noLongerListening); }
+    /*! \brief ispc-side eqivalent of this C++-side class, if available (NULL if not) */
+    void *ispcEquivalent;
+
+    /*! \brief subtype of this ManagedObject */
+    OSPDataType managedObjectType;
+
   };
 
 } // ::ospray

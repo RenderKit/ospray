@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -64,6 +64,9 @@ namespace ospray {
 
     //! Get the ISPC volume container.
     void *getEquivalentISPC() const { return(getIE()); }
+
+    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::Volume"); }

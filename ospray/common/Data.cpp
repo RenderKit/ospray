@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -55,7 +55,7 @@ namespace ospray {
       for (int i=0;i<numItems;i++)
         if (child[i]) child[i]->refDec();
     }
-    free(data); 
+    if (!(flags & OSP_DATA_SHARED_BUFFER)) free(data);
   }
 
 } // ::ospray

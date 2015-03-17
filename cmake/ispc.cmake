@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2014 Intel Corporation                                    ##
+## Copyright 2009-2015 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -18,7 +18,7 @@ SET(ISPC_VERSION_REQUIRED "1.7.1")
 
 IF (NOT OSPRAY_ISPC_DIRECTORY)
   # try sibling folder as hint for path of ISPC
-  SET(ISPC_VERSION_HINT "1.8.0")
+  SET(ISPC_VERSION_HINT "1.8.1")
   IF (APPLE)
     SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION_HINT}-osx)
   ELSEIF(WIN32)

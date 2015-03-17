@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,12 +25,12 @@ class TransferFunctionEditor;
 
 class VolumeViewer : public QMainWindow {
 
-  Q_OBJECT
+Q_OBJECT
 
-  public:
+public:
 
   //! Constructor.
-  VolumeViewer(const std::vector<std::string> &filenames, bool showFrameRate);
+  VolumeViewer(const std::vector<std::string> &objectFileFilenames, bool showFrameRate, std::string writeFramesFilename);
 
   //! Destructor.
   ~VolumeViewer() {};
@@ -42,7 +42,7 @@ class VolumeViewer : public QMainWindow {
   TransferFunctionEditor *getTransferFunctionEditor() { return(transferFunctionEditor); }
 
   //! Select the model to be displayed.
-  void setModel(size_t index) { ospSetObject(renderer, "model", models[index]);  ospCommit(renderer);  osprayWindow->setRenderingEnabled(true); }
+  void setModel(size_t index);
 
   //! A string description of this class.
   std::string toString() const { return("VolumeViewer"); }
@@ -56,7 +56,7 @@ public slots:
   void setAutoRotationRate(float rate) { autoRotationRate = rate; }
 
   //! Draw the model associated with the next time step.
-  void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index); }
+  void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index);  render(); }
 
   //! Toggle animation over the time steps.
   void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
@@ -71,9 +71,18 @@ public slots:
   void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
 
   //! Force the OSPRay window to be redrawn.
-  void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
+  void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
+
+  //! Set sampling rate on all volumes.
+  void setSamplingRate(double value) {
+    for(size_t i=0; i<volumes.size(); i++) { ospSet1f(volumes[i], "samplingRate", value); ospCommit(volumes[i]); }
+    render();
+  }
 
 protected:
+
+  //! OSPRay object file filenames, one for each model / time step.
+  std::vector<std::string> objectFileFilenames;
 
   //! OSPRay models.
   std::vector<OSPModel> models;
@@ -103,13 +112,16 @@ protected:
   QVBoxLayout sliceWidgetsLayout;
 
   //! Auto-rotate button.
-  QAction * autoRotateAction;
+  QAction *autoRotateAction;
 
   //! Auto-rotation rate
   float autoRotationRate;
 
   //! Timer for use when stepping through multiple models.
   QTimer playTimeStepsTimer;
+
+  //! Label for current OSPRay object file.
+  QLabel currentFilenameLabel;
 
   //! Print an error message.
   void emitMessage(const std::string &kind, const std::string &message) const
@@ -123,10 +135,9 @@ protected:
   void importObjectsFromFile(const std::string &filename);
 
   //! Create and configure the OSPRay state.
-  void initObjects(const std::vector<std::string> &filenames);
+  void initObjects();
 
   //! Create and configure the user interface widgets and callbacks.
   void initUserInterfaceWidgets();
 
 };
-

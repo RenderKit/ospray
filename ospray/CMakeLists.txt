@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2014 Intel Corporation                                    ##
+## Copyright 2009-2015 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -22,11 +22,12 @@ IF  ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") AND
 		(${OSPRAY_COMPILER} STREQUAL "GCC") AND
 		(NOT APPLE)
 		)
-  MESSAGE(WARNING "Warning: You have selected 'avx2' target and 'gcc'-compiler, but many older gcc versions do not yet support avx2. If you run into build issues, please switch to either 'icc'-compiler, or upgrade your gcc version")
+  MESSAGE(WARNING "Warning: You have selected 'AVX2' target and 'GCC'-compiler, but many older gcc versions do not yet support AVX2. If you run into build issues, please switch to either 'ICC'-compiler, or upgrade your gcc version")
 ENDIF()
 
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
+#INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -43,10 +44,6 @@ SET(OSPRAY_SOURCES
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
   fb/LocalFB.ispc
-
-  fileio/ObjectCatalog.cpp
-  fileio/ObjectFile.cpp
-  fileio/VolumeFile.cpp
 
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc
@@ -78,12 +75,14 @@ SET(OSPRAY_SOURCES
   geometry/Cylinders.cpp
   geometry/Cylinders.ispc
 
+  lights/AmbientLight.ispc
+  lights/AmbientLight.cpp
+  lights/DirectionalLight.cpp
+  lights/DirectionalLight.ispc
   lights/Light.cpp
   lights/Light.ispc
   lights/PointLight.cpp
   lights/PointLight.ispc
-  lights/DirectionalLight.cpp
-  lights/DirectionalLight.ispc
   lights/SpotLight.cpp
   lights/SpotLight.ispc
   lights/SymbolRegistry.cpp
@@ -97,8 +96,8 @@ SET(OSPRAY_SOURCES
   render/util.ispc
   render/raycast/RaycastRenderer.cpp
   render/raycast/RaycastRenderer.ispc
-  render/ao16/AO16Renderer.cpp
-  render/ao16/AO16Renderer.ispc
+  render/simpleAO/SimpleAO.cpp
+  render/simpleAO/SimpleAO.ispc
   render/obj/OBJRenderer.ispc
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp
@@ -110,6 +109,31 @@ SET(OSPRAY_SOURCES
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/SymbolRegistry.cpp
+
+  render/pathtracer/PathTracer.ispc
+  render/pathtracer/PathTracer.cpp
+  render/pathtracer/lights/PTLight.ispc
+  render/pathtracer/lights/PTAmbientLight.ispc
+  render/pathtracer/lights/PTDistantLight.ispc
+  render/pathtracer/lights/PTPointLight.ispc
+  render/pathtracer/lights/PTSpotLight.ispc
+  render/pathtracer/materials/Material.ispc
+  render/pathtracer/materials/OBJ.ispc
+  render/pathtracer/materials/OBJ.cpp
+  render/pathtracer/materials/Velvet.ispc
+  render/pathtracer/materials/Velvet.cpp
+  render/pathtracer/materials/Metal.ispc
+  render/pathtracer/materials/Metal.cpp
+  render/pathtracer/materials/ThinDielectric.ispc
+  render/pathtracer/materials/ThinDielectric.cpp
+  render/pathtracer/materials/Dielectric.ispc
+  render/pathtracer/materials/Dielectric.cpp
+  render/pathtracer/materials/MetallicPaint.ispc
+  render/pathtracer/materials/MetallicPaint.cpp
+  render/pathtracer/materials/Plastic.ispc
+  render/pathtracer/materials/Plastic.cpp
+  render/pathtracer/materials/Matte.ispc
+  render/pathtracer/materials/Matte.cpp
 
   api/API.cpp
   api/Device.cpp
@@ -130,6 +154,16 @@ IF (OSPRAY_MPI)
     mpi/MPICommon.cpp
     mpi/MPILoadBalancer.cpp
     mpi/worker.cpp
+
+    mpi/async/Messaging.cpp
+    mpi/async/SimpleSendRecvMessaging.cpp
+    )
+
+  ADD_EXECUTABLE(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
+    mpi/testing/TestAsync
+    )
+  TARGET_LINK_LIBRARIES(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
     )
 ENDIF()
 

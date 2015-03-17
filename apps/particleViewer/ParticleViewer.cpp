@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,6 +33,7 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
+    bool showFPS = false;
     int maxAccum = 64;
     int accumID = 0;
     int timeStep = 0;
@@ -93,6 +94,8 @@ namespace ospray {
         accumID = 0;
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
+
+        setTitle("OSPRay Particle Viewer");
       }
 
       virtual void keypress(char key, const vec2f where)
@@ -165,11 +168,12 @@ namespace ospray {
       
         ospUnmapFrameBuffer(ucharFB,fb);
       
-        char title[1000];
-
-        sprintf(title,"OSPRay Particle Viewer");
-        setTitle(title);
-        // }
+        if (showFPS) {
+          char title[1000];
+          
+          sprintf(title,"OSPRay Particle Viewer (%f fps)",fps.getFPS());
+          setTitle(title);
+        }
       }
     
       OSPModel       model;
@@ -237,6 +241,8 @@ namespace ospray {
           const char *moduleName = av[++i];
           cout << "loading ospray module '" << moduleName << "'" << endl;
           ospLoadModule(moduleName);
+        } else if (arg == "--show-fps") {
+          showFPS = true;
         } else if (arg == "--save-to") {
           modelSaveFileName = av[++i];
         } else if (av[i][0] == '-') {

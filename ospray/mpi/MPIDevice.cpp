@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -450,6 +450,14 @@ namespace ospray {
       throw std::runtime_error("setting a void pointer as parameter to an object is not allowed in MPI mode");
     }
 
+    /*! Copy data into the given object. */
+    int MPIDevice::setRegion(OSPVolume object, const void *source, 
+                             const vec3i &index, const vec3i &count) 
+    {
+      //! Not yet implemented.
+      return(false);
+    }
+
     /*! assign (named) string parameter to an object */
     void MPIDevice::setString(OSPObject _object, const char *bufName, const char *s)
     {
@@ -566,6 +574,110 @@ namespace ospray {
       cmd.send(bufName);
       cmd.send(valHandle);
       cmd.flush();
+    }
+
+    /*! Get the handle of the named data array associated with an object. */
+    int MPIDevice::getData(OSPObject object, const char *name, OSPData *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
+    int MPIDevice::getDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named scalar floating point value associated with an object. */
+    int MPIDevice::getf(OSPObject object, const char *name, float *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named scalar integer associated with an object. */
+    int MPIDevice::geti(OSPObject object, const char *name, int *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the material associated with a geometry object. */
+    int MPIDevice::getMaterial(OSPGeometry geometry, OSPMaterial *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named object associated with an object. */
+    int MPIDevice::getObject(OSPObject object, const char *name, OSPObject *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
+    int MPIDevice::getParameters(OSPObject object, char ***value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Retrieve the total length of the names (with terminators) of the parameters associated with an object. */
+    int MPIDevice::getParametersSize(OSPObject object, int *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get a pointer to a copy of the named character string associated with an object. */
+    int MPIDevice::getString(OSPObject object, const char *name, char **value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+    int MPIDevice::getType(OSPObject object, const char *name, OSPDataType *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named 2-vector floating point value associated with an object. */
+    int MPIDevice::getVec2f(OSPObject object, const char *name, vec2f *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named 3-vector floating point value associated with an object. */
+    int MPIDevice::getVec3f(OSPObject object, const char *name, vec3f *value) {
+
+      //! Not yet implemented.
+      return(false);
+
+    }
+
+    /*! Get the named 3-vector integer value associated with an object. */
+    int MPIDevice::getVec3i(OSPObject object, const char *name, vec3i *value) {
+
+      //! Not yet implemented.
+      return(false);
+
     }
 
     /*! create a new renderer object (out of list of registered renderers) */

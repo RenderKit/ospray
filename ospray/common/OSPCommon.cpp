@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -146,6 +146,14 @@ namespace ospray {
     case OSP_UINT2:     return sizeof(embree::Vec2<uint32>);
     case OSP_UINT3:     return sizeof(embree::Vec3<uint32>);
     case OSP_UINT4:     return sizeof(embree::Vec4<uint32>);
+    case OSP_LONG:       return sizeof(int64);
+    case OSP_LONG2:      return sizeof(embree::Vec2<int64>);
+    case OSP_LONG3:      return sizeof(embree::Vec3<int64>);
+    case OSP_LONG4:      return sizeof(embree::Vec4<int64>);
+    case OSP_ULONG:      return sizeof(uint64);
+    case OSP_ULONG2:     return sizeof(embree::Vec2<uint64>);
+    case OSP_ULONG3:     return sizeof(embree::Vec3<uint64>);
+    case OSP_ULONG4:     return sizeof(embree::Vec4<uint64>);
     case OSP_FLOAT:     return sizeof(float);
     case OSP_FLOAT2:    return sizeof(embree::Vec2<float>);
     case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
@@ -157,6 +165,30 @@ namespace ospray {
     std::stringstream error;
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType " << (int)type;
     throw std::runtime_error(error.str());
+
+  }
+
+  OSPDataType typeForString(const char *string) {
+
+    if (string == NULL)                return(OSP_UNKNOWN);
+    if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
+    if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
+    if (strcmp(string, "float2") == 0) return(OSP_FLOAT2);
+    if (strcmp(string, "float3") == 0) return(OSP_FLOAT2);
+    if (strcmp(string, "float4") == 0) return(OSP_FLOAT2);
+    if (strcmp(string, "int"   ) == 0) return(OSP_INT);
+    if (strcmp(string, "int2"  ) == 0) return(OSP_INT2);
+    if (strcmp(string, "int3"  ) == 0) return(OSP_INT3);
+    if (strcmp(string, "int4"  ) == 0) return(OSP_INT4);
+    if (strcmp(string, "uchar" ) == 0) return(OSP_UCHAR);
+    if (strcmp(string, "uchar2") == 0) return(OSP_UCHAR2);
+    if (strcmp(string, "uchar3") == 0) return(OSP_UCHAR3);
+    if (strcmp(string, "uchar4") == 0) return(OSP_UCHAR4);
+    if (strcmp(string, "uint"  ) == 0) return(OSP_UINT);
+    if (strcmp(string, "uint2" ) == 0) return(OSP_UINT2);
+    if (strcmp(string, "uint3" ) == 0) return(OSP_UINT3);
+    if (strcmp(string, "uint4" ) == 0) return(OSP_UINT4);
+    return(OSP_UNKNOWN);
 
   }
 

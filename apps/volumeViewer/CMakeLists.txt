@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2014 Intel Corporation                                    ##
+## Copyright 2009-2015 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,10 +14,14 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+IF (NOT OSPRAY_MODULE_LOADERS)
+  message(FATAL_ERROR "The 'loaders' module must be enabled to build the 'ospVolumeViewer' application.")
+ENDIF (NOT OSPRAY_MODULE_LOADERS)
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 # setup dependencies
-SET(LIBS ${LIBS} ospray ospray_fileio)
+SET(LIBS ${LIBS} ospray ospray_module_loaders)
 
 FIND_PACKAGE(Qt4 REQUIRED) 
 SET(QT_USE_QTOPENGL TRUE)
@@ -34,6 +38,7 @@ SET(SRCS ${SRCS}
   LightEditor.cpp
   LinearTransferFunctionWidget.cpp
   PLYGeometryFile.cpp
+  PreferencesDialog.cpp
   QOSPRayWindow.cpp
   SliceWidget.cpp
   TransferFunctionEditor.cpp

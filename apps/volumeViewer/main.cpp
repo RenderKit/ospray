@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -40,20 +40,25 @@ int main(int argc, char *argv[]) {
     std::cerr << " "                                                                                        << std::endl;
     std::cerr << "    -benchmark <warm-up frames> <frames> : run benchmark and report overall frame rate"   << std::endl;
     std::cerr << "    -dt <dt>                             : use ray cast sample step size 'dt'"            << std::endl;
+    std::cerr << "    -module <moduleName>                 : load the module 'moduleName'"                  << std::endl;
     std::cerr << "    -ply <filename>                      : load PLY geometry from 'filename'"             << std::endl;
     std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
+    std::cerr << "    -showframerate                       : show the frame rate in the window title bar"   << std::endl;
     std::cerr << "    -slice <filename>                    : load volume slice from 'filename'"             << std::endl;
     std::cerr << "    -transferfunction <filename>         : load transfer function from 'filename'"        << std::endl;
     std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
     std::cerr << "    -viewup <x> <y> <z>                  : set viewport up vector to ('x', 'y', 'z')"     << std::endl;
-    std::cerr << "    -module <moduleName>                 : load the module 'moduleName'"                  << std::endl;
+    std::cerr << "    -writeframes <filename>              : emit frames to 'filename_xxxxx.ppm'"           << std::endl;
     std::cerr << " "                                                                                        << std::endl;
-    return(1);
 
+    return(1);
   }
 
-  //! Parse the volume file names.
-  std::vector<std::string> filenames;  for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++) filenames.push_back(std::string(argv[i]));
+  //! Parse the OSPRay object file filenames.
+  std::vector<std::string> objectFileFilenames;
+
+  for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++)
+    objectFileFilenames.push_back(std::string(argv[i]));
 
   //! Default values for the optional command line arguments.
   float dt = 0.0f;
@@ -67,9 +72,10 @@ int main(int argc, char *argv[]) {
   int viewSizeHeight = 0;
   osp::vec3f viewUp(0.f);
   bool showFrameRate = false;
+  std::string writeFramesFilename;
 
   //! Parse the optional command line arguments.
-  for (int i=filenames.size() + 1 ; i < argc ; i++) {
+  for (int i=objectFileFilenames.size() + 1 ; i < argc ; i++) {
 
     std::string arg = argv[i];
 
@@ -141,6 +147,12 @@ int main(int argc, char *argv[]) {
 
       std::cout << "got viewup = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
 
+    } else if (arg == "-writeframes") {
+
+      if (i + 1 >= argc || argv[i + 1][0] == '-') throw std::runtime_error("the '-writeframes' option requires a filename argument");
+      writeFramesFilename = argv[++i];
+      std::cout << "got writeFramesFilename = " << writeFramesFilename << std::endl;
+
     } else if (arg == "-module") {
 
       if (i + 1 >= argc) throw std::runtime_error("missing <moduleName> argument");
@@ -159,16 +171,14 @@ int main(int argc, char *argv[]) {
   }
 
   //! Create the OSPRay state and viewer window.
-  VolumeViewer *volumeViewer = new VolumeViewer(filenames, showFrameRate);
+  VolumeViewer *volumeViewer = new VolumeViewer(objectFileFilenames, showFrameRate, writeFramesFilename);
 
   //! Display the first model.
   volumeViewer->setModel(0);
 
   //! Load PLY geometries from file.
-  for(unsigned int i=0; i<plyFilenames.size(); i++) {
-
+  for(unsigned int i=0; i<plyFilenames.size(); i++)
     volumeViewer->addGeometry(plyFilenames[i]);
-  }
 
   //! Set rotation rate to use in animation mode.
   if(rotationRate != 0.f) {
@@ -177,10 +187,8 @@ int main(int argc, char *argv[]) {
   }
 
   //! Load slice(s) from file.
-  for(unsigned int i=0; i<sliceFilenames.size(); i++) {
-
+  for(unsigned int i=0; i<sliceFilenames.size(); i++)
     volumeViewer->addSlice(sliceFilenames[i]);
-  }
 
   //! Load transfer function from file.
   if(transferFunctionFilename.empty() != true)
@@ -199,7 +207,7 @@ int main(int argc, char *argv[]) {
   app->exec();
 
   //! Cleanup
-  delete volumeViewer;  return(0);
+  delete volumeViewer;
 
+  return(0);
 }
-

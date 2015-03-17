@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -54,11 +54,14 @@ typedef enum {
   //! Unsigned integer scalar and vector types.
   OSP_UINT, OSP_UINT2, OSP_UINT3, OSP_UINT4,
 
+  //! Signed 64-bit integer scalar and vector types.
+  OSP_LONG, OSP_LONG2, OSP_LONG3, OSP_LONG4,
+
+  //! Unsigned 64-bit integer scalar and vector types.
+  OSP_ULONG, OSP_ULONG2, OSP_ULONG3, OSP_ULONG4,
+
   //! Single precision floating point scalar and vector types.
   OSP_FLOAT, OSP_FLOAT2, OSP_FLOAT3, OSP_FLOAT4, OSP_FLOAT3A,
-
-  //! Object collection reference type.
-  OSP_OBJECT_CATALOG,
 
   //! Guard value.
   OSP_UNKNOWN,

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,6 +18,10 @@
 
 #include <mpi.h>
 #include "ospray/common/OSPCommon.h"
+
+/*! helper macro that checks the return value of all MPI_xxx(...)
+    calls via MPI_CALL(xxx(...)).  */
+#define MPI_CALL(a) { int rc = MPI_##a; assert(rc == MPI_SUCCESS); }
 
 namespace ospray {
 
@@ -45,6 +49,9 @@ namespace ospray {
       { MPI_Comm_rank(comm,&rank); MPI_Comm_size(comm,&size); containsMe = true; }
       void makeIntracomm()
       { containsMe = false; rank = MPI_ROOT; MPI_Comm_remote_size(comm,&size); }
+
+      /*! perform a MPI_barrier on this communicator */
+      void barrier() { MPI_CALL(Barrier(comm)); }
     };
 
     extern Group world; //! MPI_COMM_WORLD

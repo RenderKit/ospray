@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,14 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "apps/common/fileio/OSPObjectFile.h"
+#include "modules/loaders/OSPObjectFile.h"
 #include "SeismicVolumeFile.h"
 
-namespace ospray {
-
-  //! Loader for seismic volume files for supported self-describing formats.
-  OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
-  OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
-  OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
-
-} // namespace ospray
+//! Loader for seismic volume files for supported self-describing formats.
+OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
+OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
+OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
+OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);

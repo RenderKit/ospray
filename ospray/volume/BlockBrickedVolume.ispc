@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -173,7 +173,7 @@ inline varying float BlockBrickedVolumeUChar_getVoxel(void *uniform pointer, con
   Address address;  BlockBrickedVolume_getVoxelAddress(volume, index, address);
 
   //! The voxel value at the 1D address.
-  float value;  foreach_unique(block in address.block) value = voxelData[block][address.voxel];  return(value / 255.0f);
+  float value;  foreach_unique(block in address.block) value = voxelData[block][address.voxel];  return(value);
 
 }
 
@@ -187,7 +187,7 @@ void BlockBrickedVolume_intersect(void *uniform pointer, varying Ray &ray) {
 
   //! Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
-  //  ray.t += step;
+//ray.t += step;
 
 }
 
@@ -264,7 +264,7 @@ export void BlockBrickedVolume_allocateMemory(void *uniform pointer) {
   const uniform size_t blockCount = volume->blockCount.x * volume->blockCount.y * volume->blockCount.z;
 
   //! Allocate storage for pointers to the voxel blocks.
-  volume->voxelData = uniform new uniform Block[blockCount];
+  volume->voxelData = uniform new uniform Block[blockCount];  if (volume->voxelData == NULL) return;
 
   //! Allocate storage for the individual voxel blocks.
   for (uniform size_t i=0 ; i < blockCount ; i++) volume->voxelData[i] = (void *uniform)(uniform new uniform uint8[BLOCK_VOXEL_COUNT * volume->voxelSize]);

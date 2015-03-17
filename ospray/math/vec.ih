@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -327,7 +327,7 @@ __define_binary_operator( operator-, - );
 __define_binary_operator( operator*, * );
 __define_binary_operator( operator/, / );
 
-// define old functional operators as used in the embree path tracer
+// define old functional operators as used in the embree path tracer, deprecated
 __define_binary_operator( add, + );
 __define_binary_operator( sub, - );
 __define_binary_operator( mul, * );
@@ -577,6 +577,9 @@ inline varying float reduce_min(const varying vec4f &a)
 { return(min(min(min(a.x, a.y), a.z), a.w)); }
 
 inline uniform float reduce_max(const uniform vec3i &a)
+{ return(max(max(a.x, a.y), a.z)); }
+
+inline uniform float reduce_max(const uniform vec3f &a)
 { return(max(max(a.x, a.y), a.z)); }
 
 inline varying vec3f pow(const varying vec3f &a, const varying float b)

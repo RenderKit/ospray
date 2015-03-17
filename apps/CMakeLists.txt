@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2014 Intel Corporation                                    ##
+## Copyright 2009-2015 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -20,9 +20,6 @@ CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
 
-  # common utility classes for reading and writing files
-  ADD_SUBDIRECTORY(common/fileio)
-
   # common utility classes for 3D viewer widget
   ADD_SUBDIRECTORY(common/widgets)
 
@@ -33,6 +30,12 @@ IF(NOT THIS_IS_MIC)
   OPTION(OSPRAY_APPS_MODELVIEWER "Build ospModelViewer application." ON)
   IF (OSPRAY_APPS_MODELVIEWER)
     ADD_SUBDIRECTORY(modelViewer)
+  ENDIF()
+
+  # mini-scene graph viewer for _geometry_ (intentionally simple)
+  OPTION(OSPRAY_APPS_QTVIEWER "Build ospQTViewer (QT-based model viewer)" OFF)
+  IF (OSPRAY_APPS_QTVIEWER)
+    ADD_SUBDIRECTORY(qtViewer)
   ENDIF()
 
   # stream line viewer for NASA Stream Line Demo

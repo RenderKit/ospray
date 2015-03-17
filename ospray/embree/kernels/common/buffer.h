@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -135,6 +135,85 @@ namespace embree
       return mic_i(stride);
 #else
       return mic_i(sizeof(T));
+#endif
+    }    
+#endif
+
+    __forceinline char* getPtr() const {
+      return ptr;
+    }
+
+  };
+
+  /*! Implements a data stream inside a data buffer. */
+  template<>
+    class BufferT<Vec3fa> : public Buffer
+  {
+  public:
+
+    /*! access to the ith element of the buffer stream */
+    //__forceinline Vec3fa& operator[](size_t i) 
+    __forceinline Vec3fa& operator[](size_t i) 
+    {
+      assert(i<num);
+#if defined(__BUFFER_STRIDE__)
+      return *(Vec3fa*)(ptr_ofs + i*stride);
+#else
+      return *(Vec3fa*)(ptr_ofs + i*sizeof(Vec3fa));
+#endif
+    }
+
+    /*! access to the ith element of the buffer stream */
+#if !defined(__MIC__)
+
+    __forceinline const Vec3fa& operator[](size_t i) const 
+    {
+      assert(i<num);
+#if defined(__BUFFER_STRIDE__)
+      return *(Vec3fa*)(ptr_ofs + i*stride);
+#else
+      return *(const Vec3fa*)(ptr_ofs + i*sizeof(Vec3fa));
+#endif
+    }
+
+    __forceinline const Vec3fa load(size_t i) const 
+    {
+      assert(i<num);
+#if defined(__BUFFER_STRIDE__)
+      return Vec3fa(loadu4f(ptr_ofs + i*stride));
+#else
+      return *(const Vec3fa*)(ptr_ofs + i*sizeof(Vec3fa));
+#endif
+    }
+
+#else
+
+    __forceinline const Vec3fa& operator[](size_t i) const 
+    {
+      assert(i<num);
+#if defined(__BUFFER_STRIDE__)
+      return *(Vec3fa*)(ptr_ofs + i*stride);
+#else
+      return *(const Vec3fa*)(ptr_ofs + i*sizeof(Vec3fa));
+#endif
+    }
+
+#endif
+
+    __forceinline unsigned int getBufferStride() const {
+#if defined(__BUFFER_STRIDE__)
+      return stride;
+#else
+      return sizeof(Vec3fa);
+#endif
+    }
+
+#if defined(__MIC__)
+    __forceinline mic_i getStride() const {
+#if defined(__BUFFER_STRIDE__)
+      return mic_i(stride);
+#else
+      return mic_i(sizeof(Vec3fa));
 #endif
     }    
 #endif

@@ -27,7 +27,7 @@
 
   <dt>Portable</dt>
 
-  <dd> OSPray is supposed to be _portable_ across a wide range of
+  <dd>OSPray is supposed to be _portable_ across a wide range of
   compute architectures and instruction sets; from laptops to
   supercomputers; from CPUs to many-core accelerators; and across a
   wide range of ISAs. To achieve this OSPRay will is built around

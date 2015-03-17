@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -55,8 +55,7 @@ namespace ospray {
         an (application-mappable) depth buffer */
     bool hasDepthBuffer;
 
-    /*! indicates whether the app requested this frame buffer to have
-        an (application-mappable) depth buffer */
+    /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;
 
     /*! tracks how many times we have already accumulated into this

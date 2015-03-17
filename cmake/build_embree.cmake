@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2014 Intel Corporation                                    ##
+## Copyright 2009-2015 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -17,6 +17,9 @@
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
 CONFIGURE_OSPRAY()
+
+# remove OSPRAY_ARCH_* flags from CMAKE_CXX_FLAGS; the Embree build will add these as appropriate for the various ISAs.
+string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # =======================================================
 # source for everything embree keeps in its 'sys' library
@@ -145,6 +148,9 @@ IF (THIS_IS_MIC)
   
   OSPRAY_ADD_LIBRARY(ospray_embree${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_EMBREE_SOURCES})
   TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+
+  SET_TARGET_PROPERTIES(ospray_embree${OSPRAY_LIB_SUFFIX} PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+  INSTALL(TARGETS ospray_embree${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 ELSE()
   # =======================================================
   # embree kernel components ONLY for xeon
@@ -360,4 +366,7 @@ ELSE()
     SET_TARGET_PROPERTIES(ospray_embree_avx2 PROPERTIES COMPILE_DEFINITIONS "OSPRAY_EMBREE_EXPORTS")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx2)
   ENDIF()
+
+  SET_TARGET_PROPERTIES(ospray_embree PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+  INSTALL(TARGETS ospray_embree DESTINATION lib)
 ENDIF()

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -160,7 +160,7 @@ namespace embree
       unsigned levels;           //!< number of stored levels
       unsigned primID;
       unsigned geomID;
-      Node nodes[];
+      Node nodes[1];
       //Node n0;                  //!< root node
       //Node n00, n01, n10, n11;  //!< child nodes
     };

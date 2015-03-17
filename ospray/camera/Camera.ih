@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,7 +25,7 @@ struct Camera;
 /*! \brief Specifies the input parameters (time, screen, and lens
     samples) required for 'initRay' to generate a primary ray */
 struct CameraSample {
-  vec2f screen; /*!< screen sample, from [(0,0)-frameSize] */
+  vec2f screen; /*!< normalized screen sample, from [0..1] */
   vec2f lens;   /*!< may be left un-initialized if 'camera.doesDOF' is false */
   float time;   /*!< time */
 };

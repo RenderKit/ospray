@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -61,9 +61,9 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::TriangleMesh"; }
     virtual void finalize(Model *model);
 
-    const vec3i  *index;  //!< mesh's triangle index array
-    const vec3fa *vertex; //!< mesh's vertex array
-    const vec3fa *normal; //!< mesh's vertex normal array
+    const int    *index;  //!< mesh's triangle index array
+    const float  *vertex; //!< mesh's vertex array
+    const float  *normal; //!< mesh's vertex normal array
     const vec4f  *color;  //!< mesh's vertex color array
     const vec2f  *texcoord; //!< mesh's vertex texcoord array
     const uint32 *prim_materialID; //!< per-primitive material ID

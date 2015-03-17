@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -55,8 +55,13 @@ inline bool isOccluded(uniform Model *uniform model,
   return ray.geomID >= 0;
 }
 
-/*! perform post-intersect computations. should only get called for
-    rays that actually hit that given model. */
+/*! Perform post-intersect computations, i.e. fill the members of
+    DifferentialGeometry. Should only get called for rays that actually hit
+    that given model. Variables are calculated according to 'flags', a
+    bit-combination of DG_PostIntersectFlags.
+    The ray, dg.P, dg.Ng, and dg.Ns are in world-coordinates.
+    Color defaults to vec4f(1.f) if queried but not present in geometry.
+   */
 inline void postIntersect(uniform Model *uniform model,
                           varying DifferentialGeometry &dg,
                           const varying Ray &ray,
@@ -64,25 +69,27 @@ inline void postIntersect(uniform Model *uniform model,
 {
   // iw: note - this code does not yet work with instances
   dg.materialID = -1; // make sure this is properly initialized
-  //  dg.color.x    = -1;
+
   if (flags & DG_COLOR)
     dg.color = make_vec4f(1.f);
 
-#if 1
+  dg.P = ray.org + ray.t * ray.dir;
+
   // a first hack for instancing: problem is that ospray assumes that
   // 'ray.geomid' specifies the respective sub-geometry of a model
   // that was hit, but for instances embree actually stores this value
   // in ray.instID, so the model would have to know if it's a model
   // over instances or a model over geometries, which is kind of ugly
-  // ... will eventually ahve to fix this properly by implementing
+  // ... will eventually have to fix this properly by implementing
   // instances directly in ospray, but for now let's try this hack
   // here:
   if (ray.instID < 0) {
     // a regular geometry
     foreach_unique(geomID in ray.geomID) {
       uniform Geometry *uniform geom = model->geometry[geomID];
-      geom->postIntersect(geom,model,
-                          dg,ray,flags);
+      dg.geometry = geom;
+      dg.material = geom->material;
+      geom->postIntersect(geom,model,dg,ray,flags);
     }
   } else {
     // instanced geometry: create copy of ray, iterate over
@@ -91,28 +98,32 @@ inline void postIntersect(uniform Model *uniform model,
     Ray newRay = ray;
     foreach_unique(instID in ray.instID) {
       uniform Geometry *uniform instGeom = model->geometry[instID];
+      dg.geometry = instGeom;
+      dg.material = instGeom->material;
       newRay.instID = -1;
-      instGeom->postIntersect(instGeom,model,
-                              dg,newRay,flags & ~(DG_NORMALIZE|DG_FACEFORWARD));
+      instGeom->postIntersect(instGeom,model,dg,newRay,flags);
     }
   }
-#else
-  foreach_unique(geomID in ray.geomID) {
-    uniform Geometry *uniform geom = model->geometry[geomID];
-    geom->postIntersect(geom,model,
-                        dg,ray,flags);
-  }
-#endif
 
-  if (flags & DG_NORMALIZE) {
+// some useful combinations; enums unfortunately don't work :-(
+#define  DG_NG_FACEFORWARD (DG_NG | DG_FACEFORWARD)
+#define  DG_NS_FACEFORWARD (DG_NS | DG_FACEFORWARD)
+#define  DG_NG_NORMALIZE   (DG_NG | DG_NORMALIZE)
+#define  DG_NS_NORMALIZE   (DG_NS | DG_NORMALIZE)
+
+  if ((flags & DG_NG_NORMALIZE) == DG_NG_NORMALIZE)
     dg.Ng = normalize(dg.Ng);
+  if ((flags & DG_NS_NORMALIZE) == DG_NS_NORMALIZE)
     dg.Ns = normalize(dg.Ns);
-  }
-  if (flags & DG_FACEFORWARD) {
-    if (flags & DG_NG)
-      if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);
-    if (flags & DG_NS)
-      if (dot(ray.dir,dg.Ns) >= 0.f) dg.Ns = neg(dg.Ns);
-  }
+  
+  if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
+    if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);
+  if ((flags & DG_NS_FACEFORWARD) == DG_NS_FACEFORWARD)
+    if (dot(ray.dir,dg.Ns) >= 0.f) dg.Ns = neg(dg.Ns);
+
+#undef  DG_NG_FACEFORWARD
+#undef  DG_NS_FACEFORWARD
+#undef  DG_NG_NORMALIZE
+#undef  DG_NS_NORMALIZE
 }
 

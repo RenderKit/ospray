@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -55,24 +55,28 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     if (ray.geomID < 0) return alpha;
 
     DifferentialGeometry dg;
-    postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD);
+    postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
 
     uniform Material *material = dg.material;
     uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
     float material_opacity = 1;
 
-    foreach_unique( mat in objMaterial ) {
-      if (mat->map_d != NULL) {
-        vec4f d_map;
-        mat->map_d->get(mat->map_d, d_map, dg.st);
-        material_opacity = d_map.x;
-      } else if (mat->map_Kd != NULL) {
-        // todo: might want to do this only if map has a alpha channel
-        // (need to tag texture2d to even know that)
-        vec4f kd_map;
-        mat->map_Kd->get(mat->map_Kd,kd_map,dg.st);
-        material_opacity = 1.f-kd_map.w;
+    if(objMaterial == NULL) {
+      material_opacity = 1.0 - dg.color.w;
+    } else {
+      foreach_unique( mat in objMaterial ) {
+        if (mat->map_d != NULL) {
+          vec4f d_map;
+          mat->map_d->get(mat->map_d, d_map, dg.st);
+          material_opacity = d_map.x;
+        } else if (mat->map_Kd != NULL) {
+          // todo: might want to do this only if map has a alpha channel
+          // (need to tag texture2d to even know that)
+          vec4f kd_map;
+          mat->map_Kd->get(mat->map_Kd,kd_map,dg.st);
+          material_opacity = 1.f-kd_map.w;
+        }
       }
     }
 
@@ -124,30 +128,31 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
     uniform Material *material = dg.material;
     uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
 
-    if (!objMaterial) {
-      color = color + path_opacity * make_vec3f(dg.color);
-      return color;
-    }
-
     float d = 1.f;
     float Ns = 0.f;
     vec3f Kd = make_vec3f(0.f,1.f,0.f);
     vec3f Ks = make_vec3f(0.f);
-    vec3f bump = make_vec3f(0.f);
+//    vec3f bump = make_vec3f(0.f); // not yet supported
 
-    foreach_unique (mat in objMaterial) {
-      // should those with-map/without-map material values get
-      // *multiplied* rather than used alternatively
-      d = mat->map_d ? get1f(mat->map_d,dg.st) : mat->d;
-      if (mat->map_Kd) {
-        vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
-        Kd = make_vec3f(Kd_from_map);
-        d *= 1.f-Kd_from_map.w;
-      } else
+    if (!objMaterial) {
+      //color = color + path_opacity * make_vec3f(dg.color);
+      //return color;
+      d = dg.color.w;
+      Kd = make_vec3f(dg.color);
+    } else {
+      foreach_unique (mat in objMaterial) {
+        // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
+        d = mat->d * get1f(mat->map_d, dg.st, 1.f);
         Kd = mat->Kd;
-      Ks = mat->map_Ks ? get3f(mat->map_Ks,dg.st,mat->Ks) : mat->Ks;
-      Ns = mat->map_Ns ? get1f(mat->map_Ns,dg.st) : mat->Ns;
-      bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
+        if (mat->map_Kd) {
+          vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
+          Kd = Kd * make_vec3f(Kd_from_map);
+          d *= 1.f - Kd_from_map.w;
+        }
+        Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
+        Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
+//        bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
+      }
     }
 
     const float local_opacity = path_opacity * d;

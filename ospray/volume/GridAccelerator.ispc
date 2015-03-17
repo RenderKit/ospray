@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -35,49 +35,42 @@
 #define CELL_WIDTH (1 << CELL_WIDTH_BITCOUNT)
 
 //! Compute the 1D address of a cell in the grid.
-uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator, 
-                                      const varying vec3i &index);
+uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator, const varying vec3i &index);
 
 //! Compute the value range of voxels contained in each cell of a brick in the grid.
-void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, 
-                                       BlockBrickedVolume *uniform volume, 
-                                       const uniform vec3i &brickIndex);
+void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, BlockBrickedVolume *uniform volume, const uniform vec3i &brickIndex);
 
 //! Get the volumetric value range of a cell.
-inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator, 
-                                         const varying vec3i &index, 
-                                         varying vec2f &value)
-{ 
+inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator, const varying vec3i &index, varying vec2f &value) { 
+
   const uint32 address = GridAccelerator_getCellAddress(accelerator, index);  
   value = accelerator->cellRange[address]; 
+
 }
 
 //! Set the volumetric value range of a cell.
-inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator, 
-                                         uniform uint32 address, 
-                                         uniform vec2f &value)
-{ 
+inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator, uniform uint32 address, uniform vec2f &value) { 
+
   accelerator->cellRange[address] = value; 
+
 }
 
 //! Transform the given point in volume coordinates into world coordinates.
-inline vec3f 
-GridAccelerator_transformLocalToWorld(GridAccelerator *uniform accelerator, 
-                                      const varying vec3f &coordinates)
-{ 
+inline vec3f GridAccelerator_transformLocalToWorld(GridAccelerator *uniform accelerator, const varying vec3f &coordinates) { 
+
   return(coordinates / accelerator->volumeExtents); 
+
 }
 
 //! Transform the given point into the local coordinate system of the volume.
-inline vec3f 
-GridAccelerator_transformWorldToLocal(GridAccelerator *uniform accelerator, 
-                                      const varying vec3f &coordinates)
-{
+inline vec3f GridAccelerator_transformWorldToLocal(GridAccelerator *uniform accelerator, const varying vec3f &coordinates) {
+
   return(coordinates * accelerator->volumeExtents);
+
 }
 
-GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer) 
-{
+GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer) {
+
   //! The accelerator container.
   GridAccelerator *uniform accelerator = uniform new uniform GridAccelerator;
 
@@ -94,10 +87,7 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer)
   const uniform size_t cellCount = accelerator->brickCount.x * accelerator->brickCount.y * accelerator->brickCount.z * BRICK_CELL_COUNT;
 
   //! Allocate storage for the volumetric value range per cell.
-  if (cellCount)
-    accelerator->cellRange = uniform new uniform vec2f[cellCount];
-  else 
-    accelerator->cellRange = NULL;
+  accelerator->cellRange = (cellCount > 0) ?  uniform new uniform vec2f[cellCount] : NULL;
 
   //! Keep a pointer to the volume.
   accelerator->volume = pointer;
@@ -114,13 +104,11 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer)
 
   //! The completed acceleration structure.
   return(accelerator);
+
 }
 
-inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator, 
-                                            BlockBrickedVolume *uniform volume, 
-                                            const uniform vec3i &cellIndex, 
-                                            uniform vec2f &cellRange) 
-{
+inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator, BlockBrickedVolume *uniform volume, const uniform vec3i &cellIndex, uniform vec2f &cellRange) {
+
   //! Loop over voxels in the current cell.
   foreach (k = 0 ... CELL_WIDTH, j = 0 ... CELL_WIDTH, i = 0 ... CELL_WIDTH) {
 
@@ -130,16 +118,15 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator
     //! The voxel value.
     const float value = volume->getVoxel(volume, min(volume->volumeDimensions - 1, voxelIndex));
 
-    //! Update the volumetric value range of the current cell.
-    cellRange.x = min(cellRange.x, reduce_min(value));  
-    cellRange.y = max(cellRange.y, reduce_max(value));
+    //! Update the volumetric value range of the current cell, ignoring any NaN values.
+    if(!isnan(value))
+      cellRange.x = min(cellRange.x, reduce_min(value));  cellRange.y = max(cellRange.y, reduce_max(value));
+
   }
 }
 
-void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, 
-                                       BlockBrickedVolume *uniform volume, 
-                                       const uniform vec3i &brickIndex) 
-{
+void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, BlockBrickedVolume *uniform volume, const uniform vec3i &brickIndex) {
+
   //! The 1D address of the brick in the grid.
   uniform uint32 brickAddress = brickIndex.x + accelerator->brickCount.x * (brickIndex.y + accelerator->brickCount.y * (uint32) brickIndex.z);
 
@@ -170,9 +157,8 @@ void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator,
   }
 }
 
-inline uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator, 
-                                             const varying vec3i &index) 
-{
+inline uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator, const varying vec3i &index) {
+
   //! Compute the 3D index of the grid brick containing the cell.
   const vec3i brickIndex = index >> BRICK_WIDTH_BITCOUNT;
 
@@ -187,9 +173,8 @@ inline uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerato
 
 }
 
-inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator, 
-                                           const varying vec3i &index) 
-{
+inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator, const varying vec3i &index) {
+
   //! Coordinates of the lower corner of the cell in world coordinates.
   const vec3f lower = GridAccelerator_transformLocalToWorld(accelerator, float_cast(index << CELL_WIDTH_BITCOUNT));
 
@@ -198,11 +183,11 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
 
   //! The bounding box in world coordinates.
   return(make_box3f(lower, upper));
+
 }
 
-inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds, 
-                                           const varying Ray &ray) 
-{
+inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds, const varying Ray &ray) {
+
   //! Intersection interval minimum per axis.
   const vec3f minimum = rcp(ray.dir) * (bounds.lower - ray.org);
 
@@ -210,20 +195,17 @@ inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds,
   const vec3f maximum = rcp(ray.dir) * (bounds.upper - ray.org);
 
   //! Distance along the ray to the entry point.
-  vec2f interval;  
-  interval.x = max(max(ray.t0, min(minimum.x, maximum.x)), 
-                   max(min(minimum.y, maximum.y), min(minimum.z, maximum.z)));
+  vec2f interval;  interval.x = max(max(ray.t0, min(minimum.x, maximum.x)), max(min(minimum.y, maximum.y), min(minimum.z, maximum.z)));
 
   //! Distance along the ray to the exit point.
-  interval.y = min(min(ray.t1, max(minimum.x, maximum.x)), 
-                   min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));  
+  interval.y = min(min(ray.t1, max(minimum.x, maximum.x)), min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));  
+
   return(interval);
+
 }
 
-void GridAccelerator_intersect(GridAccelerator *uniform accelerator, 
-                               uniform float step, 
-                               varying Ray &ray) 
-{
+void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform float step, varying Ray &ray) {
+
   //! The associated volume.
   Volume *uniform volume = (Volume *uniform) accelerator->volume;
 
