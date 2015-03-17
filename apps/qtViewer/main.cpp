@@ -219,6 +219,10 @@ namespace ospray {
         delete app;
       } else {
         cout << "#osp:qtv: setting up in render-to-file mode" << endl;
+        if (frameResolution == vec2i(-1, -1)) {
+          cout << "#osp:qtv: Warning! no resolution specified, defaulting to 1280x720" << endl;
+          frameResolution = vec2i(1280, 720);
+        }
         if (!renderer->frameBuffer) {
           cout << "#osp:qtv: creating default framebuffer (" 
                << frameResolution.x << "x" << frameResolution.y << ")" << endl;
