@@ -44,9 +44,9 @@ namespace ospray {
            anything ourselves */
         dfb->waitUntilFinished();
 
-#if BARRIER_AT_END_OF_FRAME
-        MPI_Barrier(MPI_COMM_WORLD);
-#endif
+// #if BARRIER_AT_END_OF_FRAME
+//         MPI_Barrier(MPI_COMM_WORLD);
+// #endif
       }
 
       void Slave::RenderTask::finish()
@@ -110,9 +110,9 @@ namespace ospray {
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(channelFlags);
         
-#if BARRIER_AT_END_OF_FRAME
-        MPI_Barrier(MPI_COMM_WORLD);
-#endif
+// #if BARRIER_AT_END_OF_FRAME
+//         MPI_Barrier(MPI_COMM_WORLD);
+// #endif
       }
     }
 

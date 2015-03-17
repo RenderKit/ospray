@@ -125,6 +125,8 @@ namespace ospray {
     /*! specialized tile for plain sort-first rendering, where each
         tile is written only exactly once. */
     struct WriteOnlyOnceTile : public TileData {
+
+      /*! constructor */
       WriteOnlyOnceTile(DistributedFrameBuffer *dfb, 
                         const vec2i &begin, 
                         size_t tileID, 
@@ -136,7 +138,13 @@ namespace ospray {
       virtual void newFrame();
 
       /*! called exactly once for each ospray::Tile that needs to get
-          written into / composited into this dfb tile */
+        written into / composited into this dfb tile.
+        
+        for a write-once tile, we expect this to be called exactly
+        once per tile, so there's not a lot to do in here than
+        accumulating the tile data and telling the parent that we're
+        done.
+      */
       virtual void process(const ospray::Tile &tile);
     };
 
@@ -144,16 +152,30 @@ namespace ospray {
     /*! specialized tile for doing Z-compositing. this does not have
         additional data, but a different write op. */
     struct ZCompositeTile : public TileData {
+
+      /*! constructor */
+      ZCompositeTile(DistributedFrameBuffer *dfb, 
+                     const vec2i &begin, 
+                     size_t tileID, 
+                     size_t ownerID)
+        : TileData(dfb,begin,tileID,ownerID) 
+      {}
+
       /*! called exactly once at the beginning of each frame */
-      virtual void newFrame() = 0;
+      virtual void newFrame();
 
       /*! called exactly once for each ospray::Tile that needs to get
           written into / composited into this dfb tile */
-      virtual void process(const ospray::Tile &tile) = 0;
+      virtual void process(const ospray::Tile &tile);
 
       /*! number of input tiles that have been composited into this
           tile */
       size_t numPartsComposited;
+      /*! since we do not want to mess up the existing accumulatation
+          buffer in the parent tile we temporarily composite into this
+          buffer until all the composites have been done. */
+      ospray::Tile compositedTileData;
+      Mutex mutex;
     };
 
     /*! specialized tile implementation that first buffers all

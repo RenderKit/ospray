@@ -36,12 +36,12 @@ struct VaryingRGBA_I8 {
 //   varying uint32 color[TILE_SIZE*TILE_SIZE/programCount];
 // };
 
-export void DFB_accumTile(VaryingTile    *uniform tile,
-                          VaryingTile    *uniform accum,
-                          VaryingRGBA_I8 *uniform color,
-                          uniform bool hasAccumBuffer,
-                          uniform int32 accumID,
-                          uniform bool debug)
+export void DFB_accumulate(VaryingTile    *uniform tile,
+                           VaryingTile    *uniform accum,
+                           VaryingRGBA_I8 *uniform color,
+                           uniform bool hasAccumBuffer,
+                           uniform int32 accumID,
+                           uniform bool debug)
 {
   if (accumID < 1) {
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
@@ -84,6 +84,21 @@ export void DFB_accumTile(VaryingTile    *uniform tile,
     }
   }
 }
+
+
+export void DFB_zComposite(VaryingTile    *uniform delta,
+                           VaryingTile    *uniform current)
+{
+  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+    const bool closer = delta->z[i] < current->z[i];
+    current->r[i] = closer ? delta->r[i] : current->r[i];
+    current->g[i] = closer ? delta->g[i] : current->g[i];
+    current->b[i] = closer ? delta->b[i] : current->b[i];
+    current->a[i] = closer ? delta->a[i] : current->a[i];
+    current->z[i] = closer ? delta->z[i] : current->z[i];
+  }
+}
+
 
 export void *uniform DFB_create(void *uniform cClassPtr)
 {

@@ -19,6 +19,8 @@
 
 #include "ospray/common/TaskSys.h"
 
+#define DBG(a) /* ignore */
+
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -49,20 +51,56 @@ namespace ospray {
        only once */ 
   }
 
+  /*! called exactly once for each ospray::Tile that needs to get
+    written into / composited into this dfb tile.
+
+    for a write-once tile, we expect this to be called exactly once
+    per tile, so there's not a lot to do in here than accumulating the
+    tile data and telling the parent that we're done.
+  */
   void DFB::WriteOnlyOnceTile::process(const ospray::Tile &tile)
   {
     bool debug = 0;
-    ispc::DFB_accumTile((ispc::VaryingTile *)&tile,
-                        (ispc::VaryingTile*)&this->accum,
-                        (ispc::VaryingRGBA_I8*)&this->color,
-                        dfb->hasAccumBuffer,dfb->accumID,debug);
+    ispc::DFB_accumulate((ispc::VaryingTile *)&tile,
+                         (ispc::VaryingTile*)&this->accum,
+                         (ispc::VaryingRGBA_I8*)&this->color,
+                         dfb->hasAccumBuffer,dfb->accumID,debug);
     dfb->tileIsCompleted(this);
   }
+
+
+  void DFB::ZCompositeTile::newFrame() 
+  {
+    numPartsComposited = 0;
+  }
+
+  void DFB::ZCompositeTile::process(const ospray::Tile &tile) 
+  {
+    mutex.lock();
+    if (numPartsComposited == 0) 
+      memcpy(&accum,&tile,sizeof(tile));
+    else
+      ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
+                           (ispc::VaryingTile*)&this->compositedTileData);
+    
+    const bool done = (++numPartsComposited == dfb->comm->numWorkers());
+    mutex.unlock();
+    
+    if (done) {
+      ispc::DFB_accumulate((ispc::VaryingTile *)&this->compositedTileData,
+                           (ispc::VaryingTile*)&this->accum,
+                           (ispc::VaryingRGBA_I8*)&this->color,
+                           dfb->hasAccumBuffer,dfb->accumID,0);
+      dfb->tileIsCompleted(this);
+    }
+  }
+
 
 
   inline void DFB::startNewFrame()
   {
     mutex.lock();
+    DBG(printf("rank %i starting new frame\n",mpi::world.rank));
     assert(!frameIsActive);
 
     for (int i=0;i<myTiles.size();i++) 
@@ -351,10 +389,19 @@ namespace ospray {
 
   void DFB::tileIsCompleted(TileData *tile)
   {
-    // printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
-    //        tile->begin.x,tile->begin.y);
+    DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
+               tile->begin.x,tile->begin.y));
     if (IamTheMaster()) {
       /*! we will not do anything with the tile other than mark it's done */
+      mutex.lock();
+      numTilesCompletedThisFrame++;
+      DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %li %i\n",
+                 mpi::world.rank,
+                 tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+                 numTiles.x*numTiles.y));
+      if (numTilesCompletedThisFrame == numTiles.x*numTiles.y)
+        closeCurrentFrame(true);
+      mutex.unlock();
     } else {
       if (pixelOp)
         pixelOp->postAccum(tile->accum);
@@ -394,17 +441,20 @@ namespace ospray {
       // #endif
 
       // dfb->tileIsCompleted(tile);
+
+
+    mutex.lock();
+    numTilesCompletedThisFrame++;
+    DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",mpi::world.rank,
+           tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+               numTiles.x*numTiles.y));
+    if (numTilesCompletedThisFrame == myTiles.size())
+      closeCurrentFrame(true);
+    mutex.unlock();
     }
 
     // finally, do the book-keeping that this tile is completely done.
 
-    mutex.lock();
-    numTilesCompletedThisFrame++;
-    // printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",mpi::world.rank,
-    //        tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,numTiles.x*numTiles.y);
-    if (numTilesCompletedThisFrame == numTiles.x*numTiles.y)
-      closeCurrentFrame(true);
-    mutex.unlock();
   }
   
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
@@ -477,14 +527,17 @@ namespace ospray {
 
     //     throw std::runtime_error("#osp:mpi:DFB: unknown command");
     // #endif
-      }
+  }
 
   // void DFB::setTile(ospray::Tile &tile)
   // {
   //   writeTile(tile);
   // }
 
-  void DFB::closeCurrentFrame(bool locked) {
+  void DFB::closeCurrentFrame(bool locked) 
+  {
+    DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
+
     if (!locked) mutex.lock();
     frameIsActive = false;
     frameIsDone   = true;
