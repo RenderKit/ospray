@@ -153,20 +153,11 @@ namespace ospray {
     void ModelViewer::createEditorWidgetStack()
     {
       editorWidgetStack = new EditorWidgetStack;
-      // editorWidgetStack->addPage("Test1",new QLabel("Test1"));
-      // editorWidgetStack->addPage("Test2",new QLabel("Test2"));
-      QDockWidget *dock = new QDockWidget(this);
-      // dock->setWindowTitle("Editors");
-      // dock->setWidget(editorWidgetStack);
-      // dock->setFeatures(0);
-      // addDockWidget(Qt::RightDockWidgetArea,dock);
-
       editorWidgetDock = new QDockWidget(this);
       editorWidgetDock->setWindowTitle("Editors");
       editorWidgetDock->setWidget(editorWidgetStack);
       editorWidgetDock->setFeatures(0);
       addDockWidget(Qt::RightDockWidgetArea,editorWidgetDock);
-
     }
 
     void ModelViewer::createTransferFunctionEditor()
@@ -259,18 +250,16 @@ namespace ospray {
       setWindowTitle(tr("OSPRay QT ModelViewer"));
       resize(1024,768);
 
-      if (!fullscreen){
-        // create GUI elements
-        toolBar = addToolBar("toolbar");
+      // create GUI elements
+      toolBar = addToolBar("toolbar");
 
-        QAction *printCameraAction = new QAction("Print Camera", this);
-        connect(printCameraAction, SIGNAL(triggered()), this, SLOT(printCameraAction()));
-        toolBar->addAction(printCameraAction);
+      QAction *printCameraAction = new QAction("Print Camera", this);
+      connect(printCameraAction, SIGNAL(triggered()), this, SLOT(printCameraAction()));
+      toolBar->addAction(printCameraAction);
 
-        QAction *screenShotAction = new QAction("Screenshot", this);
-        connect(screenShotAction, SIGNAL(triggered()), this, SLOT(screenShotAction()));
-        toolBar->addAction(screenShotAction);
-      }
+      QAction *screenShotAction = new QAction("Screenshot", this);
+      connect(screenShotAction, SIGNAL(triggered()), this, SLOT(screenShotAction()));
+      toolBar->addAction(screenShotAction);
 
       renderWidget = new OSPRayRenderWidget(sgRenderer);
       ///renderWidget = new CheckeredSphereRotationEditor();
