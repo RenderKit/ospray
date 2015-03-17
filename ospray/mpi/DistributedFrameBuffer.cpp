@@ -78,7 +78,7 @@ namespace ospray {
   {
     mutex.lock();
     if (numPartsComposited == 0) 
-      memcpy(&accum,&tile,sizeof(tile));
+      memcpy(&compositedTileData,&tile,sizeof(tile));
     else
       ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
                            (ispc::VaryingTile*)&this->compositedTileData);
@@ -87,10 +87,22 @@ namespace ospray {
     mutex.unlock();
     
     if (done) {
-      ispc::DFB_accumulate((ispc::VaryingTile *)&this->compositedTileData,
+      ispc::DFB_accumulate((ispc::VaryingTile*)&this->compositedTileData,
                            (ispc::VaryingTile*)&this->accum,
                            (ispc::VaryingRGBA_I8*)&this->color,
                            dfb->hasAccumBuffer,dfb->accumID,0);
+      // if (accum.region.lower.x == 0 && accum.region.lower.y == 0) {
+      //   PRINT(compositedTileData.r[0]);
+      //   PRINT(compositedTileData.g[0]);
+      //   PRINT(compositedTileData.b[0]);
+      //   PRINT(compositedTileData.z[0]);
+      //   PRINT(accum.r[0]);
+      //   PRINT(accum.g[0]);
+      //   PRINT(accum.b[0]);
+      //   PRINT(accum.z[0]);
+      //   PRINT(dfb->accumID);
+      //   PRINT(color[0]);
+      // }
       dfb->tileIsCompleted(this);
     }
   }
