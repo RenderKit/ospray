@@ -32,15 +32,17 @@ namespace ospray {
   {
     //! get number of pixels per tile, in x and y direction
     virtual vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
+
     //! return number of tiles in x and y direction
     virtual vec2i getNumTiles()  const { return numTiles; };
+
     //! get number of pixels in x and y diretion
     virtual vec2i getNumPixels() const { return size; }
-    virtual size_t numMyTiles() const { return myTile.size(); };
+
+    //! number of tiles that "I" own
+    virtual size_t numMyTiles()  const { return myTiles.size(); };
 
     /*! color buffer and depth buffer on master */
-    // void  *colorBufferOnMaster;
-    // float *depthBufferOnMaster;
     
     enum { 
       /*! command tag that identifies a CommLayer::message as a write
@@ -54,79 +56,155 @@ namespace ospray {
           message back ot the master even in cases where the master
           does not actually care about the pixel data - we still have
           to let the master know when we're done. */
-      MASTER_WRITE_TILE,
+      MASTER_WRITE_TILE_I8,
+      /*! command tag used for sending 'final' tiles from the tile
+          owner to the master frame buffer. Note that we *do* send a
+          message back ot the master even in cases where the master
+          does not actually care about the pixel data - we still have
+          to let the master know when we're done. */
+      MASTER_WRITE_TILE_NONE,
     } COMMANDTAG;
 
-    /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */
-    struct DFBTileData {
-      float  accum_r[TILE_SIZE][TILE_SIZE];
-      float  accum_g[TILE_SIZE][TILE_SIZE];
-      float  accum_b[TILE_SIZE][TILE_SIZE];
-      float  accum_a[TILE_SIZE][TILE_SIZE];
-      uint32 color[TILE_SIZE][TILE_SIZE];
-      // float  depth[TILE_SIZE][TILE_SIZE];
-#if MPI_IMAGE_COMPOSITING
-      /*! mutex protecting this tile only */
-      float  comp_r[TILE_SIZE][TILE_SIZE];
-      float  comp_g[TILE_SIZE][TILE_SIZE];
-      float  comp_b[TILE_SIZE][TILE_SIZE];
-      float  comp_z[TILE_SIZE][TILE_SIZE];
-      Mutex mutex;
-      /*! number of different times this tile has been written this
-          frame. tile is done if all workers have written it */
-      size_t numTimesWrittenThisFrame;
-#endif
+    // -------------------------------------------------------
+    /*! keeps the book-keeping of one tile of the frame buffer. note
+      that 'size' is the tile size used by the frame buffer, _NOT_
+      necessariy 'end-begin'. 'color' and 'depth' arrays are always
+      alloc'ed in TILE_SIZE pixels */
+    struct TileDesc {
+      /*! constructor */
+      TileDesc(DistributedFrameBuffer *dfb, 
+                 const vec2i &begin, 
+                 size_t tileID, 
+                 size_t ownerID);
+
+      /*! returns whether this tile is one of this particular
+          node's tiles */
+      virtual bool mine() const { return false; }
+
+      DistributedFrameBuffer *dfb;
+      vec2i   begin;
+      size_t  tileID,ownerID;
     };
 
-    //! message sent to the master when a tile is finished. Todo: compress the color data */
+    // -------------------------------------------------------
+    /*! base class for a dfb tile. the only thing that all tiles have
+        in common is depth, and RGBA-float accumulated data. Note we
+        do not have a RGBA-I8 color field, because typically that'll
+        be done by the postop and send-to-master op, and not stored in
+        the DFB tile itself */
+    struct TileData : public TileDesc {
+      TileData(DistributedFrameBuffer *dfb, 
+                  const vec2i &begin, 
+                  size_t tileID, 
+                  size_t ownerID);
+
+      /*! called exactly once at the beginning of each frame */
+      virtual void newFrame() = 0;
+
+      /*! returns whether this tile is one of this particular
+          node's tiles */
+      virtual bool mine() const { return true; }
+
+      /*! called exactly once for each ospray::Tile that needs to get
+          written into / composited into this dfb tile */
+      virtual void process(const ospray::Tile &tile) = 0;
+
+      //! the actual accum buffer
+      ospray::Tile __aligned(64) accum;
+      //! the rbga32-convoerted colors
+      uint32 __aligned(64) color[TILE_SIZE*TILE_SIZE];
+
+      // float  accum_r[TILE_SIZE*TILE_SIZE];
+      // float  accum_g[TILE_SIZE*TILE_SIZE];
+      // float  accum_b[TILE_SIZE*TILE_SIZE];
+      // float  accum_a[TILE_SIZE*TILE_SIZE];
+      // float  z[TILE_SIZE*TILE_SIZE];
+    };
+
+    // -------------------------------------------------------
+    /*! specialized tile for plain sort-first rendering, where each
+        tile is written only exactly once. */
+    struct WriteOnlyOnceTile : public TileData {
+      WriteOnlyOnceTile(DistributedFrameBuffer *dfb, 
+                        const vec2i &begin, 
+                        size_t tileID, 
+                        size_t ownerID)
+        : TileData(dfb,begin,tileID,ownerID) 
+      {}
+
+      /*! called exactly once at the beginning of each frame */
+      virtual void newFrame();
+
+      /*! called exactly once for each ospray::Tile that needs to get
+          written into / composited into this dfb tile */
+      virtual void process(const ospray::Tile &tile);
+    };
+
+    // -------------------------------------------------------
+    /*! specialized tile for doing Z-compositing. this does not have
+        additional data, but a different write op. */
+    struct ZCompositeTile : public TileData {
+      /*! called exactly once at the beginning of each frame */
+      virtual void newFrame() = 0;
+
+      /*! called exactly once for each ospray::Tile that needs to get
+          written into / composited into this dfb tile */
+      virtual void process(const ospray::Tile &tile) = 0;
+
+      /*! number of input tiles that have been composited into this
+          tile */
+      size_t numPartsComposited;
+    };
+
+    /*! specialized tile implementation that first buffers all
+        ospray::Tile's until all input tiles are available, then sorts
+        them by closest z component per tile, and only tthen does
+        front-to-back compositing of those tiles */
+    struct AlphaBlendTile_Simple : public TileData {
+      /*! called exactly once at the beginning of each frame */
+      virtual void newFrame() = 0;
+
+      /*! called exactly once for each ospray::Tile that needs to get
+          written into / composited into this dfb tile */
+      virtual void process(const ospray::Tile &tile) = 0;
+
+      struct BufferedTile : public ospray::Tile {
+        float closest_z;
+      };
+      std::vector<BufferedTile *> bufferedTile;
+    };
+    
+    /*! this function gets called whenever one of our tiles is done
+        writing/compositing/blending/etc; i.e., as soon as we know
+        that all the ingredient tile datas for that tile have been
+        received from the client(s) that generated them. By the time
+        the tile gets called we do know that 'accum' field of the tile
+        has been set; it is this function's job to make sure we
+        properly call the post-op(s), properly send final color data
+        to the master (if required), and properly do the bookkeeping
+        that this tile is now done. */
+    virtual void tileIsCompleted(TileData *tile);
+    
+
+    /*! message sent to the master when a tile is finished. Todo:
+        compress the color data */
     struct MasterTileMessage_RGBA_I8 : public mpi::async::CommLayer::Message {
       vec2i coords;
       uint32 color[TILE_SIZE][TILE_SIZE];
     };
-    //! message sent to the master when a tile is finished. Todo: compress the color data */
+
+    /*! message sent to the master when a tile is finished. Todo:
+        compress the color data */
     struct MasterTileMessage_NONE : public mpi::async::CommLayer::Message {
       vec2i coords;
     };
 
-    //! message sent from one node's instance to another, to tell that instance to write that tile
+    /*! message sent from one node's instance to another, to tell that
+        instance to write that tile */
     struct WriteTileMessage : public mpi::async::CommLayer::Message {
       // TODO: add compression of pixels during transmission
       vec2i coords;
-      float r[TILE_SIZE][TILE_SIZE];
-      float g[TILE_SIZE][TILE_SIZE];
-      float b[TILE_SIZE][TILE_SIZE];
-      float a[TILE_SIZE][TILE_SIZE];
-#if MPI_IMAGE_COMPOSITING
-      float z[TILE_SIZE][TILE_SIZE];
-#endif
-    };
-
-    // /*! raw tile data of TILE_SIZE x TILE_SIZE pixels (hardcoded for depth and color, for now) */
-    // struct DFBTileData : public ospray::DFBTile {
-    //   // uint32 color[TILE_SIZE][TILE_SIZE];
-    //   // float  depth[TILE_SIZE][TILE_SIZE];
-    // };
-
-    // //! message sent from one node's instance to another, to tell that instance to write that tile
-    // struct WriteDFBTileMessage : public mpi::async::CommLayer::Message {
-    //   vec2i    coords;
-    //   DFBTileData tile;
-    // };
-
-    /*! one tile of the frame buffer. note that 'size' is the tile
-      size used by the frame buffer, _NOT_ necessariy
-      'end-begin'. 'color' and 'depth' arrays are always alloc'ed in TILE_SIZE pixels */
-    struct DFBTile {
-      DistributedFrameBuffer *fb;
-      vec2i   begin;
-      size_t  tileID,ownerID;
-      DFBTileData *data;
-
-      DFBTile(DistributedFrameBuffer *fb, 
-           const vec2i &begin, 
-           size_t tileID, 
-           size_t ownerID, 
-           DFBTileData *data);
+      ospray::Tile tile;
     };
 
     /*! local frame buffer on the master used for storing the final
@@ -134,6 +212,7 @@ namespace ospray {
         master if the master does not have a color buffer */
     Ref<LocalFrameBuffer> localFBonMaster;
 
+    inline bool IamTheMaster() const { return localFBonMaster; }
     //! constructor
     DistributedFrameBuffer(mpi::async::CommLayer *comm, 
                            const vec2i &numPixels, 
@@ -141,11 +220,13 @@ namespace ospray {
                            ColorBufferFormat colorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer);
-
+    
+    // ==================================================================
+    // framebuffer / device interface
+    // ==================================================================
     virtual const void *mapDepthBuffer();
     virtual const void *mapColorBuffer();
     virtual void unmap(const void *mappedMem);
-    virtual void setTile(ospray::Tile &tile);
 
     /*! \brief clear (the specified channels of) this frame buffer 
 
@@ -156,20 +237,20 @@ namespace ospray {
      */
     virtual void clear(const uint32 fbChannelFlags);
 
-    //! write given tile data into the frame buffer, sending to remove owner if required
-    virtual void writeTile(ospray::Tile &tile);
+    // ==================================================================
+    // framebuffer-renderer/loadbalancer interface
+    // ==================================================================
 
-    //! specialized write tile function for RGBA_I8 format
-    void writeTile(MasterTileMessage_RGBA_I8 *msg);
+    /*! framebuffer-renderer/loadbalancer interface: loadbalancer
+        calls this function whenever a local node has finished a tile,
+        and wants the (distributed) frame buffer to process it */
+    virtual void setTile(ospray::Tile &tile);
 
+    virtual void startNewFrame();
+    virtual void closeCurrentFrame(bool locked);
 
-    // virtual void writeTile(size_t x0, size_t y0, size_t dxdy, 
-    //                        uint32 *colorChannel, float *depthChannel);
+    void waitUntilFinished();
 
-    //! return tile descriptor for given pixel coordinates. this tile
-    //! may or may not belong to current instance
-    inline DFBTile *getTileFor(size_t x, size_t y) const
-    { return tile[tileIDof(x,y)]; }
 
     // ==================================================================
     // interface for the comm layer, to enable communication between
@@ -180,23 +261,32 @@ namespace ospray {
     //! recipient's job to properly delete the message.
     virtual void incoming(mpi::async::CommLayer::Message *msg);
 
+    //! process a (non-empty) write tile message at the master
+    void processMessage(MasterTileMessage_RGBA_I8 *msg);
+
+    //! process a (empty) write tile message at the master
+    void processMessage(MasterTileMessage_NONE *msg);
+
+    //! process a client-to-client write tile message */
+    void processMessage(WriteTileMessage *msg);
+
     // ==================================================================
     // internal helper functions
     // ==================================================================
 
-    //! return the tile ID for given pair of coordinates. this tile may or may not belong to current instance
-    inline size_t tileIDof(size_t x, size_t y) const
+    /*! return tile descriptor for given pixel coordinates. this tile
+      ! may or may not belong to current instance */
+    inline TileDesc *getTileDescFor(const vec2i &coords) const
+    { return allTiles[getTileIDof(coords.x,coords.y)]; }
+
+    /*! return the tile ID for given pair of coordinates. this tile
+        may or may not belong to current instance */
+    inline size_t getTileIDof(size_t x, size_t y) const
     { return (x/TILE_SIZE)+(y/TILE_SIZE)*numTiles.x; }
       
-    virtual void startNewFrame();
-    virtual void closeCurrentFrame(bool locked);
 
-    void waitUntilFinished();
-
-    // //! depth-composite additional 'source' info into existing 'target' tile
-    // static inline void depthComposite(DFBTileData *target, DFBTileData *source);
-      
-    /*! the number of pixels in the (whole) frame buffer (independent of which tiles we have).
+    /*! the number of pixels in the (whole) frame buffer (independent
+        of which tiles we have).
 
       Note this number should ALWAYS be equal to FrameBuffer::size;
       but we use a more explicit name in this class to avoid confusion
@@ -206,20 +296,43 @@ namespace ospray {
     vec2i numTiles;
 
     /*! number of tiles written this frame */
-    size_t numTilesWrittenThisFrame, numTilesToMasterThisFrame;
+    size_t numTilesCompletedThisFrame;
 
-    std::vector<DFBTile *> tile;    //!< list of all tiles
-    std::vector<DFBTile *> myTile; //!< list of tiles belonging to this node. is a subset of 'tile' 
+    /*! number of tiles we've (already) sent to the master this frame
+        (used to track when current node is done with this frame - we
+        are done exactly once we've completed sending the last tile to
+        the master) */
+    size_t numTilesToMasterThisFrame;
+
+    /*! vector of info for *all* tiles. Each logical tile in the
+      screen has an entry here */
+    std::vector<TileDesc *> allTiles;    
+
+    /*! list of *our* tiles ('our' as in 'that belong to the given
+        node'), with the actual data of those tiles */
+    std::vector<TileData *> myTiles; 
+
+    /*! mutex used to protect all threading-sensitive data in this
+        object */
 
     Mutex mutex;
     //! set to true when the frame becomes 'active', and write tile
     //! messages can be consumed.
-    bool frameIsActive, frameIsDone;
+    bool frameIsActive;
+
+    /*! set to true when the framebuffer is done for the given
+        frame */
+    bool frameIsDone;
+
     //! condition that gets triggered when the frame is done
     Condition doneCond;
 
-    size_t numTilesWritten;
-    //! when messages arrive before a frame is active
+    /*! a vector of async messages for the *current* frame that got
+        received before that frame actually started, and that we have
+        to delay processing until the frame actually starts. note this
+        condition can actually happen if another node is just fast
+        enough, and sends us the first rendered tile before our node's
+        loadbalancer even started working on that frame. */
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
   };
     
