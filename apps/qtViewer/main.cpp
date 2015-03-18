@@ -192,8 +192,9 @@ namespace ospray {
         ModelViewer *modelViewer = new ModelViewer(renderer, fullscreen);
         // modelViewer->setFixedSize(frameResolution.x,frameResolution.y);
         modelViewer->showFrameRate(showFPS);
+        std::cout << "#osp:qtv: Press 'f' to toggle fullscreen rendering mode" << endl;
         if (fullscreen){
-          std::cout << "#osp:qtv: ppening fullscreen viewer, press 'ESC' to quit\n";
+          std::cout << "#osp:qtv: opening fullscreen viewer, press 'ESC' to quit" << endl;
           modelViewer->showFullScreen();
         } else {
           modelViewer->show();
@@ -218,6 +219,10 @@ namespace ospray {
         delete app;
       } else {
         cout << "#osp:qtv: setting up in render-to-file mode" << endl;
+        if (frameResolution == vec2i(-1, -1)) {
+          cout << "#osp:qtv: Warning! no resolution specified, defaulting to 1280x720" << endl;
+          frameResolution = vec2i(1280, 720);
+        }
         if (!renderer->frameBuffer) {
           cout << "#osp:qtv: creating default framebuffer (" 
                << frameResolution.x << "x" << frameResolution.y << ")" << endl;
