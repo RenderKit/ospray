@@ -16,30 +16,24 @@
 
 #pragma once
 
-// ospray
-#include "common/OSPCommon.ih"
-#include "common/Model.ih"
+#include "api/parms.h"
+#include "PTSpotLight_ispc.h"
 
-// path tracer
-#include "materials/Medium.ih"
-#include "materials/Material.ih"
-#include "lights/PTLight.ih"
+namespace ospray {
+  namespace pt {
+    
+    struct SpotLight
+    {
+      static void* create(const Parms& parms)
+      {
+        const Vector3f P = parms.getVector3f("P");
+        const Vector3f D = parms.getVector3f("D");
+        const Color I = parms.getColor("I");
+        const float angleMin = parms.getFloat("angleMin");
+        const float angleMax = parms.getFloat("angleMax");
+        return ispc::SpotLight__new((ispc::vec3f&)P,(ispc::vec3f&)D,(ispc::vec3f&)I,angleMin,angleMax);
+      }
 
-struct Scene {
-  uniform PTLight *uniform *uniform allLights;
-  uniform uint32 num_allLights;
-  uniform Model *uniform model;
-  uniform PTEnvironmentLight *uniform *uniform envLights;
-  uniform uint32 num_envLights;
-};
-
-inline void postIntersect(const uniform Scene *uniform scene,
-                          Ray &ray,DifferentialGeometry &dg)
-{
-  if (hadHit(ray))
-    postIntersect(scene->model,dg,ray,
-                  DG_MATERIALID|
-                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
-                  );
-}
+    } // ::ospray::pt
+  } // ::ospray
 

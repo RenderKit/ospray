@@ -83,7 +83,8 @@ namespace ospray {
 
     //! the QT callback that tells us that the image got resize
     void QAffineSpaceManipulator::resizeGL(int width, int height)
-    { 
+    {
+      glViewport(0, 0, width, height);
       size = vec2i(width,height);
       resize(width,height);
     }

@@ -579,6 +579,9 @@ inline varying float reduce_min(const varying vec4f &a)
 inline uniform float reduce_max(const uniform vec3i &a)
 { return(max(max(a.x, a.y), a.z)); }
 
+inline uniform float reduce_max(const uniform vec3f &a)
+{ return(max(max(a.x, a.y), a.z)); }
+
 inline varying vec3f pow(const varying vec3f &a, const varying float b)
 { return(make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b))); }
 

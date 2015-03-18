@@ -1,13 +1,5 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,18 +17,22 @@
 #pragma once
 
 #include "api/parms.h"
-#include "directionallight_ispc.h"
+#include "PTDistantLight_ispc.h"
 
-namespace embree
-{
-  struct DirectionalLight
-  {
-    static void* create(const Parms& parms)
+namespace ospray {
+  namespace pt {
+    
+    struct DistantLight
     {
-      const Vector3f D = parms.getVector3f("D");
-      const Color E = parms.getColor("E");
-      return ispc::DirectionalLight__new((ispc::vec3f&)D,(ispc::vec3f&)E);
-    }
-  };
-}
+      static void* create(const Parms& parms)
+      {
+        const Vector3f D = parms.getVector3f("D");
+        const Color L = parms.getColor("L");
+        const float halfAngle = parms.getFloat("halfAngle");
+        return ispc::DistantLight__new((ispc::vec3f&)D,(ispc::vec3f&)L,halfAngle);
+      }
+    };
+
+  } // ::ospray::pt
+} // ::ospray
 

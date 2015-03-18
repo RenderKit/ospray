@@ -14,25 +14,24 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "PreferencesDialog.h"
+#include "VolumeViewer.h"
 
-#include "api/parms.h"
-#include "distantlight_ispc.h"
+PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volumeViewer)
+{
+  setWindowTitle("Preferences");
 
-namespace ospray {
-  namespace pt {
-    
-    struct DistantLight
-    {
-      static void* create(const Parms& parms)
-      {
-        const Vector3f D = parms.getVector3f("D");
-        const Color L = parms.getColor("L");
-        const float halfAngle = parms.getFloat("halfAngle");
-        return ispc::DistantLight__new((ispc::vec3f&)D,(ispc::vec3f&)L,halfAngle);
-      }
-    };
+  QFormLayout *formLayout = new QFormLayout();
+  setLayout(formLayout);
 
-  } // ::ospray::pt
-} // ::ospray
+  // sampling rate selection
+  QDoubleSpinBox *samplingRateSpinBox = new QDoubleSpinBox();
+  samplingRateSpinBox->setDecimals(3);
+  samplingRateSpinBox->setRange(0.01, 1.0);
+  samplingRateSpinBox->setSingleStep(0.01);
+  connect(samplingRateSpinBox, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setSamplingRate(double)));
+  formLayout->addRow("Sampling rate", samplingRateSpinBox);
 
+  // set default value. this will trigger signal / slot executions.
+  samplingRateSpinBox->setValue(0.125);
+}

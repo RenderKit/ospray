@@ -14,45 +14,45 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "Light.ih"
-#include "samplers/ShapeSampler.ih"
+#include "PTLight.ih"
+#include "../samplers/ShapeSampler.ih"
 
-struct AmbientLight
+struct PTAmbientLight
 {
-  EnvironmentLight base;
+  PTEnvironmentLight base;
   vec3f L;
 };
 
-uniform EnvironmentLight* uniform AmbientLight__New(const uniform vec3f& L);
+uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L);
 
-uniform Light* uniform AmbientLight__transform(const uniform Light *uniform _this, 
+uniform PTLight* uniform PTAmbientLight__transform(const uniform PTLight *uniform _this, 
                                                const uniform AffineSpace3f& xfm) 
 {
-  const uniform AmbientLight* uniform this = (const uniform AmbientLight* uniform)_this;
-  return (uniform Light* uniform) AmbientLight__New(this->L);
+  const uniform PTAmbientLight* uniform this = (const uniform PTAmbientLight* uniform)_this;
+  return (uniform PTLight* uniform) PTAmbientLight__New(this->L);
 }
 
-varying vec3f AmbientLight__Le(const uniform EnvironmentLight* uniform _this, varying const vec3f& wo) 
+varying vec3f PTAmbientLight__Le(const uniform PTEnvironmentLight* uniform _this, varying const vec3f& wo) 
 {
-  const uniform AmbientLight* uniform this = (const uniform AmbientLight* uniform)_this;
+  const uniform PTAmbientLight* uniform this = (const uniform PTAmbientLight* uniform)_this;
   return this->L;
 }
 
-varying vec3f AmbientLight__eval(const uniform Light* uniform _this, 
+varying vec3f PTAmbientLight__eval(const uniform PTLight* uniform _this, 
                                  varying const DifferentialGeometry& dg, 
                                  varying const vec3f& wi) 
 {
-  const uniform AmbientLight* uniform this = (const uniform AmbientLight* uniform)_this;
+  const uniform PTAmbientLight* uniform this = (const uniform PTAmbientLight* uniform)_this;
   return this->L;
 }
 
-varying vec3f AmbientLight__sample(const uniform Light* uniform _this,
+varying vec3f PTAmbientLight__sample(const uniform PTLight* uniform _this,
                                    varying const DifferentialGeometry& dg, 
                                    varying Sample3f& wi,
                                    varying float& tMax,
                                    varying const vec2f& s) 
 {
-  const uniform AmbientLight* uniform this = (const uniform AmbientLight* uniform)_this;
+  const uniform PTAmbientLight* uniform this = (const uniform PTAmbientLight* uniform)_this;
   wi = cosineSampleHemisphere(//.5f,.5f,
                               s.x, s.y, 
                               dg.Ns);
@@ -60,22 +60,22 @@ varying vec3f AmbientLight__sample(const uniform Light* uniform _this,
   return this->L;
 }
 
-void AmbientLight__Constructor(uniform AmbientLight* uniform this, const uniform vec3f L) 
+void PTAmbientLight__Constructor(uniform PTAmbientLight* uniform this, const uniform vec3f L) 
 {
-  EnvironmentLight__Constructor(&this->base,//Light__Destructor,
+  PTEnvironmentLight__Constructor(&this->base,//Light__Destructor,
                                 ENV_LIGHT,
-                                AmbientLight__transform,NULL,AmbientLight__eval,AmbientLight__sample,
-                                AmbientLight__Le);
+                                PTAmbientLight__transform,NULL,PTAmbientLight__eval,PTAmbientLight__sample,
+                                PTAmbientLight__Le);
   this->L = L;
 }
 
-uniform EnvironmentLight* uniform AmbientLight__New(const uniform vec3f& L)
+uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L)
 {
-  uniform AmbientLight* uniform light = uniform new uniform AmbientLight;
-  AmbientLight__Constructor(light,L);
-  return (EnvironmentLight*)light;
+  uniform PTAmbientLight* uniform light = uniform new uniform PTAmbientLight;
+  PTAmbientLight__Constructor(light,L);
+  return (PTEnvironmentLight*)light;
 }
 
-export void* uniform AmbientLight__new(const uniform vec3f& L) {
-  return AmbientLight__New(L);
+export void* uniform PTAmbientLight__new(const uniform vec3f& L) {
+  return PTAmbientLight__New(L);
 }

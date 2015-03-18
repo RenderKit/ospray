@@ -25,9 +25,9 @@ class TransferFunctionEditor;
 
 class VolumeViewer : public QMainWindow {
 
-  Q_OBJECT
+Q_OBJECT
 
-  public:
+public:
 
   //! Constructor.
   VolumeViewer(const std::vector<std::string> &objectFileFilenames, bool showFrameRate, std::string writeFramesFilename);
@@ -56,7 +56,7 @@ public slots:
   void setAutoRotationRate(float rate) { autoRotationRate = rate; }
 
   //! Draw the model associated with the next time step.
-  void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index); }
+  void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index);  render(); }
 
   //! Toggle animation over the time steps.
   void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
@@ -71,7 +71,13 @@ public slots:
   void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
 
   //! Force the OSPRay window to be redrawn.
-  void render() { if (osprayWindow != NULL) osprayWindow->updateGL(); }
+  void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
+
+  //! Set sampling rate on all volumes.
+  void setSamplingRate(double value) {
+    for(size_t i=0; i<volumes.size(); i++) { ospSet1f(volumes[i], "samplingRate", value); ospCommit(volumes[i]); }
+    render();
+  }
 
 protected:
 
@@ -106,7 +112,7 @@ protected:
   QVBoxLayout sliceWidgetsLayout;
 
   //! Auto-rotate button.
-  QAction * autoRotateAction;
+  QAction *autoRotateAction;
 
   //! Auto-rotation rate
   float autoRotationRate;

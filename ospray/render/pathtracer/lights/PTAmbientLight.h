@@ -1,5 +1,13 @@
+/********************************************************************* *\
+ * INTEL CORPORATION PROPRIETARY INFORMATION                            
+ * This software is supplied under the terms of a license agreement or  
+ * nondisclosure agreement with Intel Corporation and may not be copied 
+ * or disclosed except in accordance with the terms of that agreement.  
+ * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
+ ********************************************************************* */
+
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2013 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,23 +25,17 @@
 #pragma once
 
 #include "api/parms.h"
-#include "spotlight_ispc.h"
+#include "PTAmbientLight_ispc.h"
 
-namespace ospray {
-  namespace pt {
-    
-    struct SpotLight
+namespace embree
+{
+  struct AmbientLight
+  {
+    static void* create(const Parms& parms)
     {
-      static void* create(const Parms& parms)
-      {
-        const Vector3f P = parms.getVector3f("P");
-        const Vector3f D = parms.getVector3f("D");
-        const Color I = parms.getColor("I");
-        const float angleMin = parms.getFloat("angleMin");
-        const float angleMax = parms.getFloat("angleMax");
-        return ispc::SpotLight__new((ispc::vec3f&)P,(ispc::vec3f&)D,(ispc::vec3f&)I,angleMin,angleMax);
-      }
-
-    } // ::ospray::pt
-  } // ::ospray
+      const Color L = parms.getColor("L");
+      return ispc::AmbientLight__new((ispc::vec3f&)L);
+    }
+  };
+}
 

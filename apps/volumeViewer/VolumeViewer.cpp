@@ -21,6 +21,7 @@
 #include "LightEditor.h"
 #include "SliceWidget.h"
 #include "PLYGeometryFile.h"
+#include "PreferencesDialog.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool showFrameRate,
@@ -58,14 +59,11 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   transferFunction = ospNewTransferFunction("piecewise_linear");
   exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
 
-  //! Configure the user interface widgets and callbacks.
-  initUserInterfaceWidgets();
-
-  //! Commit the transfer function only after the initial colors and alphas have been set (workaround for Qt signalling issue).
-  ospCommit(transferFunction);
-
   //! Create and configure the OSPRay state.
   initObjects();
+
+  //! Configure the user interface widgets and callbacks.
+  initUserInterfaceWidgets();
 
   //! Update transfer function data value range with the voxel range of the first volume.
   if(volumes.size() > 0 && transferFunctionEditor != NULL) {
@@ -127,6 +125,9 @@ void VolumeViewer::addSlice(std::string filename) {
   //! Load state from file if specified.
   if(!filename.empty())
     sliceWidget->load(filename);
+
+  //! Apply the slice (if auto apply enabled), triggering a commit and render.
+  sliceWidget->autoApply();
 }
 
 void VolumeViewer::addGeometry(std::string filename) {
@@ -150,6 +151,9 @@ void VolumeViewer::addGeometry(std::string filename) {
     ospAddGeometry(models[i], triangleMesh);
     ospCommit(models[i]);
   }
+
+  //! Force render.
+  render();
 }
 
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
@@ -201,8 +205,16 @@ void VolumeViewer::initObjects() {
 
 void VolumeViewer::initUserInterfaceWidgets() {
 
-  //! Add the "auto rotate" widget and callback.
+  //! Create a toolbar at the top of the window.
   QToolBar *toolbar = addToolBar("toolbar");
+
+  //! Add preferences widget and callback.
+  PreferencesDialog *preferencesDialog = new PreferencesDialog(this);
+  QAction *showPreferencesAction = new QAction("Preferences", this);
+  connect(showPreferencesAction, SIGNAL(triggered()), preferencesDialog, SLOT(show()));
+  toolbar->addAction(showPreferencesAction);
+
+  //! Add the "auto rotate" widget and callback.
   autoRotateAction = new QAction("Auto rotate", this);
   autoRotateAction->setCheckable(true);
   connect(autoRotateAction, SIGNAL(toggled(bool)), this, SLOT(autoRotate(bool)));

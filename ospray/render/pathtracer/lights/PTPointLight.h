@@ -16,30 +16,19 @@
 
 #pragma once
 
-// ospray
-#include "common/OSPCommon.ih"
-#include "common/Model.ih"
+#include "api/parms.h"
+#include "PTPointLight_ispc.h"
 
-// path tracer
-#include "materials/Medium.ih"
-#include "materials/Material.ih"
-#include "lights/PTLight.ih"
-
-struct Scene {
-  uniform PTLight *uniform *uniform allLights;
-  uniform uint32 num_allLights;
-  uniform Model *uniform model;
-  uniform PTEnvironmentLight *uniform *uniform envLights;
-  uniform uint32 num_envLights;
-};
-
-inline void postIntersect(const uniform Scene *uniform scene,
-                          Ray &ray,DifferentialGeometry &dg)
+namespace embree
 {
-  if (hadHit(ray))
-    postIntersect(scene->model,dg,ray,
-                  DG_MATERIALID|
-                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
-                  );
+  struct PointLight
+  {
+    static void* create(const Parms& parms)
+    {
+      const Vector3f P = parms.getVector3f("P",zero);
+      const Color I = parms.getColor("I",zero);
+      return ispc::PointLight__new((ispc::vec3f&)P,(ispc::vec3f&)I);
+    }
+  };
 }
 

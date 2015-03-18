@@ -16,30 +16,24 @@
 
 #pragma once
 
-// ospray
-#include "common/OSPCommon.ih"
-#include "common/Model.ih"
+#include "api/parms.h"
+#include "PTTriangleLight_ispc.h"
 
-// path tracer
-#include "materials/Medium.ih"
-#include "materials/Material.ih"
-#include "lights/PTLight.ih"
+namespace ospray {
+  namespace pt {
+    
+    struct TriangleLight
+    {
+      static void* create(const Parms& parms)
+      {
+        const Vector3f v0 = parms.getVector3f("v0");
+        const Vector3f v1 = parms.getVector3f("v1");
+        const Vector3f v2 = parms.getVector3f("v2");
+        const Color L = parms.getColor("L");
+        return ispc::TriangleLight__new((ispc::vec3f&)v0,(ispc::vec3f&)v1,(ispc::vec3f&)v2,(ispc::vec3f&)L);
+      }
+    };
 
-struct Scene {
-  uniform PTLight *uniform *uniform allLights;
-  uniform uint32 num_allLights;
-  uniform Model *uniform model;
-  uniform PTEnvironmentLight *uniform *uniform envLights;
-  uniform uint32 num_envLights;
-};
-
-inline void postIntersect(const uniform Scene *uniform scene,
-                          Ray &ray,DifferentialGeometry &dg)
-{
-  if (hadHit(ray))
-    postIntersect(scene->model,dg,ray,
-                  DG_MATERIALID|
-                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
-                  );
-}
+  } // ::ospray::pt
+} // ::ospray
 

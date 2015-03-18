@@ -19,10 +19,10 @@
 #include "ospray/common/Material.ih"
 #include "ospray/common/DifferentialGeometry.ih"
 #include "ospray/common/Ray.ih"
-#include "materials/Medium.ih"
-#include "samplers/Sample.ih"
-#include "brdfs/BRDF.ih"
-#include "brdfs/CompositedBRDF.ih"
+#include "Medium.ih"
+#include "../samplers/Sample.ih"
+#include "../brdfs/BRDF.ih"
+#include "../brdfs/CompositedBRDF.ih"
 
 struct PathTraceMaterial;
 

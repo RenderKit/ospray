@@ -32,7 +32,7 @@ ENDIF()
 
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
-INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
+#INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -84,12 +84,14 @@ SET(OSPRAY_SOURCES
   geometry/Cylinders.cpp
   geometry/Cylinders.ispc
 
+  lights/AmbientLight.ispc
+  lights/AmbientLight.cpp
+  lights/DirectionalLight.cpp
+  lights/DirectionalLight.ispc
   lights/Light.cpp
   lights/Light.ispc
   lights/PointLight.cpp
   lights/PointLight.ispc
-  lights/DirectionalLight.cpp
-  lights/DirectionalLight.ispc
   lights/SpotLight.cpp
   lights/SpotLight.ispc
   lights/SymbolRegistry.cpp
@@ -119,11 +121,11 @@ SET(OSPRAY_SOURCES
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
-  render/pathtracer/lights/Light.ispc
-  render/pathtracer/lights/AmbientLight.ispc
-  render/pathtracer/lights/DistantLight.ispc
-  render/pathtracer/lights/PointLight.ispc
-  render/pathtracer/lights/SpotLight.ispc
+  render/pathtracer/lights/PTLight.ispc
+  render/pathtracer/lights/PTAmbientLight.ispc
+  render/pathtracer/lights/PTDistantLight.ispc
+  render/pathtracer/lights/PTPointLight.ispc
+  render/pathtracer/lights/PTSpotLight.ispc
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp

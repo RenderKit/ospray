@@ -1,13 +1,5 @@
-/********************************************************************* *\
- * INTEL CORPORATION PROPRIETARY INFORMATION                            
- * This software is supplied under the terms of a license agreement or  
- * nondisclosure agreement with Intel Corporation and may not be copied 
- * or disclosed except in accordance with the terms of that agreement.  
- * Copyright (C) 2014 Intel Corporation. All Rights Reserved.           
- ********************************************************************* */
-
 // ======================================================================== //
-// Copyright 2009-2013 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,20 +14,23 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "AmbientLight.h"
+#include "AmbientLight_ispc.h"
 
-#include "api/parms.h"
-#include "ambientlight_ispc.h"
-
-namespace embree
-{
-  struct AmbientLight
+namespace ospray {
+  //!Construct a new AmbientLight object
+  AmbientLight::AmbientLight()
+    : color(1.f, 1.f, 1.f)
+    , intensity(1.f)
   {
-    static void* create(const Parms& parms)
-    {
-      const Color L = parms.getColor("L");
-      return ispc::AmbientLight__new((ispc::vec3f&)L);
-    }
-  };
-}
+    ispcEquivalent = ispc::AmbientLight_create(this);
+  }
 
+  //!Commit parameters understood by the base AmbientLight class
+  void AmbientLight::commit() {
+    color     = getParam3f("color", vec3f(1.f, 1.f, 1.f));
+    intensity = getParam1f("intensity", 1.f);
+    
+    ispc::AmbientLight_set(getIE(), (ispc::vec3f&)color, intensity);
+  }
+}
