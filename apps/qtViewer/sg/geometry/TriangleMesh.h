@@ -58,7 +58,7 @@ namespace ospray {
       Ref<DataBuffer> texcoord;
 
       //! triangle indices
-      Ref<DataBuffer> triangle;
+      Ref<DataBuffer> index;
 #else
       //! vertex (position) array
       std::vector<vec3fa> vertex;
@@ -73,7 +73,7 @@ namespace ospray {
       std::vector<vec2f> texcoord;
 
       //! triangle indices
-      std::vector<Triangle> triangle;
+      std::vector<Triangle> index;
 #endif
     };
 
@@ -103,7 +103,8 @@ namespace ospray {
         list; if empty, all trianlges should use the
         Geometry::material no matter what Triangle::materialID is set
        */
-      std::vector<Ref<Material> > materialList;
+      std::vector<Ref<sg::Material> > materialList;
+      std::vector<uint32> materialIDs;
 
 #if 1
       // to allow memory-mapping triangle arrays (or in general,
@@ -122,7 +123,10 @@ namespace ospray {
       Ref<DataBuffer> texcoord;
 
       //! triangle indices
-      Ref<DataBuffer> triangle;
+      Ref<DataBuffer> index;
+      
+      //! material IDs
+      OSPData primMatIDs;
 #else
       //! vertex (position) array
       std::vector<vec3fa> vertex;

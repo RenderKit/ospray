@@ -147,7 +147,8 @@ namespace ospray {
     protected:
       TimeStamp lastModified;
       TimeStamp lastCommitted;
-      std::map<std::string,Ref<Param> > param;
+      typedef std::map<std::string, Ref<Param> > ParamMap;
+      ParamMap param;
     };
 
     /*! read a given scene graph node from its correspondoing xml node represenation */

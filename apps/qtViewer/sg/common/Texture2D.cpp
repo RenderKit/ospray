@@ -95,6 +95,20 @@ namespace ospray {
       textureCache[fileName.str()] = tex;
       return tex;
     }
+    
+    void Texture2D::render(RenderContext &ctx)
+    {
+      if (ospTexture) return;
+      
+      ospTexture = ospNewTexture2D(size.x,
+                                   size.y,
+                                   texelType,
+                                   texel,
+                                   0);
+      ospCommit(ospTexture);
+      
+      if(!ospTexture) std::cerr << "Warning: Could not create Texture2D\n";
+    }
 
   } // ::ospray::sg
 } // ::ospray

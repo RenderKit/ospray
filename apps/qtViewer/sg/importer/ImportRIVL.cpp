@@ -50,17 +50,11 @@ namespace ospray {
           // -------------------------------------------------------
         } else if (nodeName == "Texture2D") {
           // -------------------------------------------------------
-#if 1
-          cout << "textures not yet implemented" << endl;
-          nodeList.push_back(NULL);
-#else
-          Ref<sg::Texture> txt = new sg::RIVLTexture;
-          txt.ptr->texData = new sg::Texture2D;
+          Ref<sg::Texture2D> txt = new sg::Texture2D;
+          txt.ptr->ospTexture = NULL;
           nodeList.push_back(txt.ptr);
-          
-          int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
-          std::string format;
 
+          int height = -1, width = -1, ofs = -1, channels = -1, depth = -1;
           for (int pID=0;pID<node->prop.size();pID++) {
             xml::Prop *prop = node->prop[pID];
             if (prop->name == "ofs") {
@@ -73,28 +67,27 @@ namespace ospray {
               channels = atol(prop->value.c_str());
             } else if (prop->name == "depth") {
               depth = atol(prop->value.c_str());
-            } else if (prop->name == "format") {
-              format = prop->value.c_str();
             }
           }
-
           assert(ofs != size_t(-1) && "Offset not properly parsed for Texture2D nodes");
           assert(width != size_t(-1) && "Width not properly parsed for Texture2D nodes");
           assert(height != size_t(-1) && "Height not properly parsed for Texture2D nodes");
           assert(channels != size_t(-1) && "Channel count not properly parsed for Texture2D nodes");
           assert(depth != size_t(-1) && "Depth not properly parsed for Texture2D nodes");
-          assert( strcmp(format.c_str(), "") != 0 && "Format not properly parsed for Texture2D nodes");
 
-          txt.ptr->texData->channels = channels;
-          txt.ptr->texData->depth = depth;
-          txt.ptr->texData->width = width;
-          txt.ptr->texData->height = height;
-          txt.ptr->texData->data = (char*)(binBasePtr+ofs);
-#endif
+          if (channels == 4 && depth == 1) txt.ptr->texelType = OSP_UCHAR4;
+          else if (channels == 3 && depth == 1) txt.ptr->texelType = OSP_UCHAR3;
+          else if (channels == 4) txt.ptr->texelType = OSP_FLOAT3A;
+          else if (channels == 3) txt.ptr->texelType = OSP_FLOAT3;
+
+          txt.ptr->size = vec2i(width, height);
+          txt.ptr->texel = (char*)(binBasePtr)+ofs;
+          //PRINT(txt.ptr->texel);
           // -------------------------------------------------------
         } else if (nodeName == "Material") {
           // -------------------------------------------------------
           Ref<sg::Material> mat = new sg::Material;
+          mat->ospMaterial = NULL;
           nodeList.push_back(mat.ptr);
 
           // sg::Material *mat = RIVLmat.ptr->general.ptr;
@@ -115,6 +108,7 @@ namespace ospray {
             } else if (prop->name == "type") {
               // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
               type = prop->value; //(const char*)value;
+              mat->type = type;
               // mat->setParam("type", type.c_str());
               //xmlFree(value);
             }
@@ -174,15 +168,7 @@ namespace ospray {
                 float w = atof(s);
                 mat->setParam(childName, vec4f(x,y,z,w));
               } else if (!childType.compare("int")) {
-                //This *could* be a texture, handle it!
-                if(childName.find("map_") == std::string::npos) {
-                  mat->setParam(childName, (int32)atol(s)); 
-                } else {
-                  cout << "#osp:sg:warning: no textures yet..." << endl;
-                  // throw std::runtime_error("no textures, yet ...");
-                  // Texture2D* tex = mat->textures[(int32)atol(s)].ptr;
-                  // mat->setParam(childName.c_str(), (void*)tex, Material::Param::TEXTURE);
-                }
+                mat->setParam(childName, (int32)atol(s)); 
               } else if (!childType.compare("int2")) {
                 int32 x = atol(s);
                 s = NEXT_TOK;
@@ -227,30 +213,21 @@ namespace ospray {
                 // empty texture node ....
               } else {
                 char *tokenBuffer = strdup(child->content.c_str());
-                //xmlFree(value); 
-#if 1
-                  cout << "#osp:sg:warning: no textures yet..." << endl;
-                // throw std::runtime_error("no textures yet");
-#else
                 char *s = strtok(tokenBuffer, " \t\n\r");
                 while (s) {
                   int texID = atoi(s);
-                  RIVLTexture * tex = nodeList[texID].cast<RIVLTexture>().ptr;
-                  mat->textures.push_back(tex->texData);
+                  Ref<Texture2D> tex = nodeList[texID].cast<Texture2D>().ptr;
+                  tex->refInc();
+                  mat->textures.push_back(tex);
                   s = NEXT_TOK;
                 }
-#endif
                 free(tokenBuffer);
               }
-#if 1
-                  cout << "#osp:sg:warning: no textures yet..." << endl;
-              // throw std::runtime_error("no textures yet");
-#else
+
               if (mat->textures.size() != num) {
                 FATAL("invalid number of textures in material "
                       "(found either more or less than the 'num' field specifies");
               }
-#endif
             }
           }
 #undef NEXT_TOK
@@ -403,7 +380,7 @@ namespace ospray {
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
-              mesh->triangle = new DataArray4i((vec4i*)((char*)binBasePtr+ofs),num,false);
+              mesh->index = new DataArray4i((vec4i*)((char*)binBasePtr+ofs),num,false);
               // mesh->numTriangles = num;
               // mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {

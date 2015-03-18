@@ -35,6 +35,7 @@ namespace ospray {
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
       static Ref<Texture2D> load(const FileName &fileName);
+      virtual void render(RenderContext &ctx);
 
       //! texture size, in pixels
       vec2i       size;
@@ -42,6 +43,8 @@ namespace ospray {
       void       *texel;
       //! format of each texel
       OSPDataType texelType;
+      
+      OSPTexture2D ospTexture;
     };
 
   } // ::ospray::sg

@@ -55,9 +55,9 @@ namespace ospray {
         ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
       if (texcoord->notEmpty())
         ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
-      // set triangle data
-      if (triangle->notEmpty())
-        ospSetData(ospGeometry,"triangle",triangle->getOSP());
+      // set index data
+      if (index->notEmpty())
+        ospSetData(ospGeometry,"index",index->getOSP());
 
       // assign a default material (for now.... eventually we might
       // want to do a 'real' material
@@ -74,6 +74,7 @@ namespace ospray {
 
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      //std::cout << "#qtViewer 'rendered' mesh \n";
     }
 
     /*! 'render' the nodes */
@@ -93,9 +94,16 @@ namespace ospray {
         ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
       if (texcoord && texcoord->notEmpty())
         ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
-      // set triangle array
-      if (triangle && triangle->notEmpty())
-        ospSetData(ospGeometry,"triangle",triangle->getOSP());
+      // set index array
+      if (index && index->notEmpty())
+        ospSetData(ospGeometry,"index",index->getOSP());
+      
+      Triangle *triangles = (Triangle*)index->getBase();
+      for(size_t i = 0; i < index->getSize(); i++) {
+        materialIDs.push_back(triangles[i].materialID >> 16);
+      }
+      primMatIDs = ospNewData(materialIDs.size(), OSP_INT, &materialIDs[0], 0);
+      ospSetData(ospGeometry,"prim.materialID",primMatIDs);
       
       // assign a default material (for now.... eventually we might
       // want to do a 'real' material
@@ -108,10 +116,23 @@ namespace ospray {
         ospSet1f(mat,"Ns",99.f);
         ospCommit(mat);
       }
-      ospSetMaterial(ospGeometry,mat);
+      
+      std::vector<OSPMaterial> ospMaterials;
+      for (size_t i = 0; i < materialList.size(); i++) {
+        assert(materialList[i] != NULL);
+        //If the material hasn't already been 'rendered' ensure that it is.
+        materialList[i]->render(ctx);
+        //Push the 'rendered' material onto the list
+        ospMaterials.push_back(materialList[i]->ospMaterial);
+        //std::cout << "#qtViewer 'rendered' material " << materialList[i]->name << std::endl;
+      }
+      
+      OSPData materialData = ospNewData(materialList.size(), OSP_OBJECT, &ospMaterials[0], 0);
+      ospSetData(ospGeometry, "materialList", materialData);
 
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
+      //std::cout << "#qtViewer 'rendered' mesh\n";
     }
 
   } // ::ospray::sg
