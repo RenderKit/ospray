@@ -52,7 +52,6 @@ SET(OSPRAY_SOURCES
   fb/LocalFB.ispc
   fb/LocalFB.cpp
   fb/PixelOp.cpp
-  fb/DisplayWall.cpp
 
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc
@@ -192,6 +191,19 @@ IF (OSPRAY_MPI)
 ENDIF()
 
 # -------------------------------------------------------
+# DisplayCluster components
+# -------------------------------------------------------
+INCLUDE(${PROJECT_SOURCE_DIR}/cmake/displaycluster.cmake)
+
+IF (OSPRAY_DISPLAYCLUSTER)
+  CONFIGURE_DISPLAYCLUSTER()
+
+  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
+    fb/DisplayWall.cpp
+    )
+ENDIF()
+
+# -------------------------------------------------------
 # COI components
 # -------------------------------------------------------
 IF (OSPRAY_BUILD_COI_DEVICE)
@@ -232,6 +244,10 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   ${OSPRAY_SOURCES}
   )
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+
+IF (OSPRAY_DISPLAYCLUSTER)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${DISPLAYCLUSTER_LIBRARIES})
+ENDIF()
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")

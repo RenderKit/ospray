@@ -24,6 +24,9 @@
 // ospray
 #include "ospray/fb/PixelOp.h"
 
+// DisplayCluster
+class DcSocket;
+
 namespace ospray {
 
   /*! \brief a 'display wall' pixel op, that will send ready tiles to
@@ -31,6 +34,9 @@ namespace ospray {
   struct DisplayWallPO : public PixelOp {
     struct Instance : public PixelOp::Instance {
       FrameBuffer *fb;
+
+      //! DisplayCluster socket.
+      DcSocket *dcSocket;
 
       Instance(FrameBuffer *fb);
       virtual ~Instance() {}

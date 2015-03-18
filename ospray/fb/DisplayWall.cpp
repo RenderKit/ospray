@@ -16,17 +16,52 @@
 
 // ospray
 #include "DisplayWall.h"
+#include "FrameBuffer.h"
+
+// DisplayCluster
+#include "dcStream.h"
 
 namespace ospray {
 
   DisplayWallPO::Instance::Instance(FrameBuffer *fb) 
     : fb(fb) 
   {
-    PING;
-  };
+    // connect to DisplayCluster, for now assume localhost.
+    dcSocket = dcStreamConnect("localhost");
+
+    if(!dcSocket)
+      std::cerr << "could not connect to DisplayCluster at localhost" << std::endl;
+  }
 
   void DisplayWallPO::Instance::postAccum(Tile &tile)
-  { /* not doing anything useful, yet, just pinging ... */ PING; };
+  {
+    if(!dcSocket)
+      return;
+
+    uint32 colorBuffer[TILE_SIZE*TILE_SIZE];
+
+    size_t pixelID = 0;
+    for (size_t iy=0;iy<TILE_SIZE;iy++)
+      for (size_t ix=0;ix<TILE_SIZE;ix++, pixelID++) {
+        vec4f col = vec4f(tile.r[pixelID],
+                          tile.g[pixelID],
+                          tile.b[pixelID],
+                          tile.a[pixelID]);
+
+        colorBuffer[pixelID] = cvt_uint32(col);
+      }
+
+    int sourceIndex = tile.region.lower.y*tile.fbSize.x + tile.region.lower.x;
+    DcStreamParameters dcStreamParameters = dcStreamGenerateParameters("ospray", sourceIndex, tile.region.lower.x, tile.fbSize.y-tile.region.upper.y, TILE_SIZE, TILE_SIZE, tile.fbSize.x, tile.fbSize.y);
+
+    bool success = dcStreamSend(dcSocket, (unsigned char *)colorBuffer, tile.region.lower.x, tile.fbSize.y-tile.region.upper.y, tile.fbSize.x, 4*TILE_SIZE, tile.fbSize.y, RGBA, dcStreamParameters);
+
+    if(!success) {
+      std::cerr << "error sending tile to DisplayCluster, disconnecting." << std::endl;
+      dcStreamDisconnect(dcSocket);
+      dcSocket = NULL;
+    }
+  }
 
 
   OSP_REGISTER_PIXEL_OP(DisplayWallPO,display_wall);
