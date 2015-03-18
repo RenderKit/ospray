@@ -60,11 +60,14 @@ namespace ospray {
   */
   void DFB::WriteOnlyOnceTile::process(const ospray::Tile &tile)
   {
-    bool debug = 0;
+    this->final.region = tile.region;
+    this->final.fbSize = tile.fbSize;
+    this->final.rcp_fbSize = tile.rcp_fbSize;
     ispc::DFB_accumulate((ispc::VaryingTile *)&tile,
+                         (ispc::VaryingTile*)&this->final,
                          (ispc::VaryingTile*)&this->accum,
                          (ispc::VaryingRGBA_I8*)&this->color,
-                         dfb->hasAccumBuffer,dfb->accumID,debug);
+                         dfb->hasAccumBuffer,dfb->accumID);
     dfb->tileIsCompleted(this);
   }
 
@@ -88,9 +91,10 @@ namespace ospray {
     
     if (done) {
       ispc::DFB_accumulate((ispc::VaryingTile*)&this->compositedTileData,
+                           (ispc::VaryingTile*)&this->final,
                            (ispc::VaryingTile*)&this->accum,
                            (ispc::VaryingRGBA_I8*)&this->color,
-                           dfb->hasAccumBuffer,dfb->accumID,0);
+                           dfb->hasAccumBuffer,dfb->accumID);
       // if (accum.region.lower.x == 0 && accum.region.lower.y == 0) {
       //   PRINT(compositedTileData.r[0]);
       //   PRINT(compositedTileData.g[0]);
@@ -407,16 +411,16 @@ namespace ospray {
       /*! we will not do anything with the tile other than mark it's done */
       mutex.lock();
       numTilesCompletedThisFrame++;
-      DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %li %i\n",
-                 mpi::world.rank,
+      DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
                  tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
                  numTiles.x*numTiles.y));
       if (numTilesCompletedThisFrame == numTiles.x*numTiles.y)
         closeCurrentFrame(true);
       mutex.unlock();
     } else {
-      if (pixelOp)
-        pixelOp->postAccum(tile->accum);
+      if (pixelOp) {
+        pixelOp->postAccum(tile->final);
+      }
     
       // MasterTileMessage *mtm = new MasterTileMessage;
       // mtm->command = MASTER_WRITE_TILE;
@@ -429,7 +433,7 @@ namespace ospray {
         MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
         mtm->command = MASTER_WRITE_TILE_NONE;
         mtm->coords  = tile->begin;
-        // printf("rank sending to master %i,%i\n",mtm->coords.x,mtm->coords.y);
+        DBG(printf("rank sending to master %i,%i\n",mtm->coords.x,mtm->coords.y));
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
       case OSP_RGBA_I8: {
@@ -455,14 +459,14 @@ namespace ospray {
       // dfb->tileIsCompleted(tile);
 
 
-    mutex.lock();
-    numTilesCompletedThisFrame++;
-    DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",mpi::world.rank,
-           tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
-               numTiles.x*numTiles.y));
-    if (numTilesCompletedThisFrame == myTiles.size())
-      closeCurrentFrame(true);
-    mutex.unlock();
+      mutex.lock();
+      numTilesCompletedThisFrame++;
+      DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",mpi::world.rank,
+                 tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+                 numTiles.x*numTiles.y));
+      if (numTilesCompletedThisFrame == myTiles.size())
+        closeCurrentFrame(true);
+      mutex.unlock();
     }
 
     // finally, do the book-keeping that this tile is completely done.

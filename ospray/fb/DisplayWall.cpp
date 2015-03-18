@@ -18,23 +18,30 @@
 #include "DisplayWall.h"
 #include "FrameBuffer.h"
 
+#if OSPRAY_DISPLAY_CLUSTER
 // DisplayCluster
-#include "dcStream.h"
+# include "dcStream.h"
+#endif
 
 namespace ospray {
 
   DisplayWallPO::Instance::Instance(FrameBuffer *fb) 
     : fb(fb) 
   {
+#if OSPRAY_DISPLAY_CLUSTER
     // connect to DisplayCluster, for now assume localhost.
     dcSocket = dcStreamConnect("localhost");
 
     if(!dcSocket)
       std::cerr << "could not connect to DisplayCluster at localhost" << std::endl;
+#else
+    std::cout << "#osp:dw: display cluster support not compiled in" << std::endl;
+#endif
   }
 
   void DisplayWallPO::Instance::postAccum(Tile &tile)
   {
+#if OSPRAY_DISPLAY_CLUSTER
     if(!dcSocket)
       return;
 
@@ -61,6 +68,9 @@ namespace ospray {
       dcStreamDisconnect(dcSocket);
       dcSocket = NULL;
     }
+#else 
+    PRINT(tile.region);
+#endif
   }
 
 

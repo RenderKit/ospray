@@ -170,6 +170,8 @@ IF (OSPRAY_MPI)
     
     mpi/DistributedFrameBuffer.cpp
     mpi/DistributedFrameBuffer.ispc
+
+    fb/DisplayWall.cpp
     )
 
   # ============================================
@@ -197,10 +199,7 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/displaycluster.cmake)
 
 IF (OSPRAY_DISPLAYCLUSTER)
   CONFIGURE_DISPLAYCLUSTER()
-
-  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
-    fb/DisplayWall.cpp
-    )
+  ADD_DEFINITIONS(-DOSPRAY_DISPLAY_CLUSTER=1)
 ENDIF()
 
 # -------------------------------------------------------

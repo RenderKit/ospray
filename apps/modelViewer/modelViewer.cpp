@@ -117,14 +117,17 @@ namespace ospray {
           of the proper (much higher) size, but for now let's just use
           the existing one... */
       if (displayWall && displayWall->fb != fb) {
-        displayWall->fb = fb;
+        PRINT(displayWall->size);
+        displayWall->fb = ospNewFrameBuffer(displayWall->size,
+                                            OSP_RGBA_NONE,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+        ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
         if (displayWall->po == NULL) {
           displayWall->po = ospNewPixelOp("display_wall");
           if (!displayWall->po)
             throw std::runtime_error("could not load 'display_wall' component.");
         }
           
-        ospSetPixelOp(fb,displayWall->po);
+        ospSetPixelOp(displayWall->fb,displayWall->po);
       }
 
       ospSetf(camera,"aspect",viewPort.aspect);
@@ -302,23 +305,27 @@ namespace ospray {
         viewPort.modified = false;
         accumID=0;
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        if (displayWall)
+          ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
       }
       
       
-      ospRenderFrame(fb,renderer,OSP_FB_COLOR|(showDepthBuffer?OSP_FB_DEPTH:0)|OSP_FB_ACCUM);
+      ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
+      if (displayWall)
+        ospRenderFrame(displayWall->fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       ++accumID;
 
-      if (showDepthBuffer) {
-        depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
-        frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
-        Glut3DWidget::display();
-        ospUnmapFrameBuffer(depthFB,fb);
-      } else {
+      // if (showDepthBuffer) {
+      //   depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
+      //   frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
+      //   Glut3DWidget::display();
+      //   ospUnmapFrameBuffer(depthFB,fb);
+      // } else {
         ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
         frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
         Glut3DWidget::display();
         ospUnmapFrameBuffer(ucharFB,fb);
-      }
+      // }
       // frameBufferMode = g_frameBufferMode;
       // switch(frameBufferMode) {
       //   case Glut3DWidget::FRAMEBUFFER_DEPTH:

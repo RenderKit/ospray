@@ -109,8 +109,13 @@ namespace ospray {
           written into / composited into this dfb tile */
       virtual void process(const ospray::Tile &tile) = 0;
 
-      //! the actual accum buffer
       ospray::Tile __aligned(64) accum;
+      /* iw: TODO - have to change this. right now, to be able to give
+         the 'postaccum' pixel op a readily normalized tile we have to
+         create a local copy (the tile stores only the accum value,
+         and we cannot change this) */
+      ospray::Tile  __aligned(64) final;
+
       //! the rbga32-convoerted colors
       uint32 __aligned(64) color[TILE_SIZE*TILE_SIZE];
 
@@ -234,7 +239,7 @@ namespace ospray {
         master if the master does not have a color buffer */
     Ref<LocalFrameBuffer> localFBonMaster;
 
-    inline bool IamTheMaster() const { return localFBonMaster; }
+    inline bool IamTheMaster() const { return comm->IamTheMaster(); }
     //! constructor
     DistributedFrameBuffer(mpi::async::CommLayer *comm, 
                            const vec2i &numPixels, 

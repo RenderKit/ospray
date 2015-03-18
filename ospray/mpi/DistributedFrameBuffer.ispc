@@ -37,13 +37,13 @@ struct VaryingRGBA_I8 {
 // };
 
 export void DFB_accumulate(VaryingTile    *uniform tile,
+                           VaryingTile    *uniform final,
                            VaryingTile    *uniform accum,
                            VaryingRGBA_I8 *uniform color,
                            uniform bool hasAccumBuffer,
-                           uniform int32 accumID,
-                           uniform bool debug)
+                           uniform int32 accumID)
 {
-  if (accumID < 1) {
+  if (!hasAccumBuffer || accumID < 1) {
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
       vec4f col = make_vec4f(tile->r[i],
                              tile->g[i],
@@ -53,33 +53,36 @@ export void DFB_accumulate(VaryingTile    *uniform tile,
       accum->g[i] = col.y;
       accum->b[i] = col.z;
       accum->a[i] = col.w;
+      final->r[i] = col.x;
+      final->g[i] = col.y;
+      final->b[i] = col.z;
+      final->a[i] = col.w;
       color->color[i] = cvt_uint32(col);
     }
   } else {
     const float rcpAccumID = 1.f/(accumID+1);
     for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
-      vec4f col = make_vec4f(tile->r[i],
-                             tile->g[i],
-                             tile->b[i],
-                             tile->a[i]);
-      if (i == 0 && debug) {
-        print("col %f\n",col.x);
-        print("acc %f\n",accum->r[i]);
-      }
-
-      if (hasAccumBuffer) {
-        if (accumID > 0) {
-          col = col + make_vec4f(accum->r[i],
-                                 accum->g[i],
-                                 accum->b[i],
-                                 accum->a[i]);
-        }
-        accum->r[i] = col.x;
-        accum->g[i] = col.y;
-        accum->b[i] = col.z;
-        accum->a[i] = col.w;
-        col = col * rcpAccumID;
-      }
+      vec4f col
+        = make_vec4f(tile->r[i],
+                     tile->g[i],
+                     tile->b[i],
+                     tile->a[i])
+        + make_vec4f(accum->r[i],
+                     accum->g[i],
+                     accum->b[i],
+                     accum->a[i]);
+      
+      accum->r[i] = col.x;
+      accum->g[i] = col.y;
+      accum->b[i] = col.z;
+      accum->a[i] = col.w;
+      
+      col = col * rcpAccumID;
+      
+      final->r[i] = col.x;
+      final->g[i] = col.y;
+      final->b[i] = col.z;
+      final->a[i] = col.w;
       color->color[i] = cvt_uint32(col);
     }
   }
