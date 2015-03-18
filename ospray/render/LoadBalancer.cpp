@@ -41,6 +41,9 @@ namespace ospray {
     tile.region.lower.y = tile_y * TILE_SIZE;
     tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
+    tile.fbSize = fb->size;
+    tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+
     renderer->renderTile(tile);
     fb->setTile(tile);
   }
@@ -76,6 +79,8 @@ namespace ospray {
     tile.region.lower.y = tile_y * TILE_SIZE;
     tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
+    tile.fbSize = fb->size;
+    tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
     renderer->renderTile(tile);
   }
