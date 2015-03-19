@@ -156,6 +156,28 @@ void VolumeViewer::addGeometry(std::string filename) {
   render();
 }
 
+void VolumeViewer::screenshot(std::string filename) {
+
+  //! Get filename if not specified.
+  if(filename.empty())
+    filename = QFileDialog::getSaveFileName(this, tr("Save screenshot"), ".", "PNG files (*.png)").toStdString();
+
+  if(filename.empty())
+    return;
+
+  //! Make sure the filename has the proper extension.
+  if(QString(filename.c_str()).endsWith(".png") != true)
+    filename += ".png";
+
+  //! Grab the image.
+  QImage image = osprayWindow->grabFrameBuffer();
+
+  //! Save the screenshot.
+  bool success = image.save(filename.c_str());
+
+  std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
+}
+
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
 
   //! Create an OSPRay model.
@@ -243,6 +265,11 @@ void VolumeViewer::initUserInterfaceWidgets() {
   QAction *addGeometryAction = new QAction("Add geometry", this);
   connect(addGeometryAction, SIGNAL(triggered()), this, SLOT(addGeometry()));
   toolbar->addAction(addGeometryAction);
+
+  //! Add the "screenshot" widget and callback.
+  QAction *screenshotAction = new QAction("Screenshot", this);
+  connect(screenshotAction, SIGNAL(triggered()), this, SLOT(screenshot()));
+  toolbar->addAction(screenshotAction);
 
   //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
   QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
