@@ -67,6 +67,9 @@ public slots:
   //! Add geometry from file.
   void addGeometry(std::string filename = std::string());
 
+  //! Save screenshot.
+  void screenshot(std::string filename = std::string());
+
   //! Re-commit all OSPRay volumes.
   void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
 
