@@ -325,6 +325,16 @@ export void BlockBrickedVolume_setGammaCorrection(void *uniform pointer, const u
 
 }
 
+export void BlockBrickedVolume_setGradientShadingEnabled(void *uniform pointer, const uniform bool &value) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  //! Set the gamma correction coefficient and exponent.
+  volume->inherited.gradientShadingEnabled = value;
+
+}
+
 export void BlockBrickedVolume_setRegion(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count) {
 
   //! Cast to the actual Volume subtype.

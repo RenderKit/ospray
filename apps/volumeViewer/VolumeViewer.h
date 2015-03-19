@@ -73,6 +73,12 @@ public slots:
   //! Force the OSPRay window to be redrawn.
   void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
 
+  //! Set gradient shading flag on all volumes.
+  void setGradientShadingEnabled(bool value) {
+    for(size_t i=0; i<volumes.size(); i++) { ospSet1i(volumes[i], "gradientShadingEnabled", value); ospCommit(volumes[i]); }
+    render();
+  }
+
   //! Set sampling rate on all volumes.
   void setSamplingRate(double value) {
     for(size_t i=0; i<volumes.size(); i++) { ospSet1f(volumes[i], "samplingRate", value); ospCommit(volumes[i]); }
