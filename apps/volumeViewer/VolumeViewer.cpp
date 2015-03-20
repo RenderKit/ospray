@@ -18,6 +18,7 @@
 #include "modules/loaders/ObjectFile.h"
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
+#include "IsosurfaceEditor.h"
 #include "LightEditor.h"
 #include "SliceWidget.h"
 #include "PLYGeometryFile.h"
@@ -65,15 +66,16 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
 
-  //! Update transfer function data value range with the voxel range of the first volume.
+  //! Update transfer function and isosurface editor data value range with the voxel range of the first volume.
   if(volumes.size() > 0 && transferFunctionEditor != NULL) {
 
     osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[0], "voxelRange", &voxelRange);
 
     if(voxelRange != osp::vec2f(0.f)) {
 
-      //! Set the values through the transfer function editor widget.
+      //! Set the values through the editor widgets.
       transferFunctionEditor->setDataValueRange(voxelRange);
+      isosurfaceEditor->setDataValueRange(voxelRange);
     }
   }
 
@@ -281,6 +283,13 @@ void VolumeViewer::initUserInterfaceWidgets() {
 
   //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
   transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
+
+  //! Create isosurface editor dock widget.
+  QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurface Editor", this);
+  isosurfaceEditor = new IsosurfaceEditor();
+  isosurfaceEditorDockWidget->setWidget(isosurfaceEditor);
+  connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)), this, SLOT(setIsovalues(std::vector<float>)));
+  addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
 
   //! Create the light editor dock widget, this widget modifies the light directly.
   //! Disable for now pending UI improvements...

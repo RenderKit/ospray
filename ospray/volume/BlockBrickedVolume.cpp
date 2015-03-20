@@ -17,6 +17,7 @@
 //ospray
 #include "ospray/volume/BlockBrickedVolume.h"
 #include "BlockBrickedVolume_ispc.h"
+#include "ospray/common/Data.h"
 // std
 #include <cassert>
 
@@ -89,6 +90,16 @@ namespace ospray {
 
     //! Set the gradient shading flag for the renderer.
     ispc::BlockBrickedVolume_setGradientShadingEnabled(ispcEquivalent, getParam1i("gradientShadingEnabled", 0));
+
+    //! Set the isovalue(s).
+    Data *isovaluesData = (Data *)getParamData("isovalues", NULL);
+
+    if(isovaluesData && isovaluesData->size() > 0) {
+      ispc::BlockBrickedVolume_setNumIsovalues(ispcEquivalent, isovaluesData->size());
+      ispc::BlockBrickedVolume_setIsovalues(ispcEquivalent, (float *)isovaluesData->data);
+    }
+    else
+      ispc::BlockBrickedVolume_setNumIsovalues(ispcEquivalent, 0);
 
     //! Set the recommended sampling rate for ray casting based renderers.
     ispc::BlockBrickedVolume_setSamplingRate(ispcEquivalent, getParam1f("samplingRate", 1.0f));
