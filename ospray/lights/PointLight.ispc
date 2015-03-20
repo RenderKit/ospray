@@ -63,11 +63,6 @@ void PointLight_Constructor(uniform PointLight *uniform self,
   self->super.computeRadiance = PointLight_computeRadiance;
 }
 
-void PointLight_Destructor(uniform PointLight *uniform self)
-{
-  Light_Destructor(&self->super);
-}
-
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -81,10 +76,8 @@ export void *uniform PointLight_create(void *uniform cppEquivalent)
 }
 
 //! Destroy an ispc-side PointLight object
-export void PointLight_destroy(void *uniform _self)
+export void PointLight_destroy(void *uniform self)
 {
-  uniform PointLight *uniform self = (uniform PointLight *uniform)_self;
-  PointLight_Destructor(self);
   delete self;
 }
 

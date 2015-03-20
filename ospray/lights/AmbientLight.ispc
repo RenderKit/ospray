@@ -47,11 +47,6 @@ void AmbientLight_Constructor(uniform AmbientLight *uniform self,
   self->super.computeRadiance = AmbientLight_computeRadiance;
 }
 
-void AmbientLight_Destructor(uniform AmbientLight *uniform self)
-{
-  Light_Destructor(&self->super);
-}
-
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -65,10 +60,8 @@ export void *uniform AmbientLight_create(void *uniform cppEquivalent)
 }
 
 //! Destroy an ispc-side AmbientLight object
-export void AmbientLight_destroy(void *uniform _self)
+export void AmbientLight_destroy(void *uniform self)
 {
-  uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
-  AmbientLight_Destructor(self);
   delete self;
 }
 

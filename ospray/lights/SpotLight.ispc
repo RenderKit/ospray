@@ -73,11 +73,6 @@ void SpotLight_Constructor(uniform SpotLight *uniform self,
   self->super.computeRadiance = SpotLight_computeRadiance;
 }
 
-void SpotLight_Destructor(uniform SpotLight *uniform self)
-{
-  Light_Destructor(&self->super);
-}
-
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -97,10 +92,8 @@ export void *uniform SpotLight_create(void *uniform cppEquivalent)
 }
 
 //! Destroy an ispc-side SpotLight object
-export void SpotLight_destroy(void *uniform _self)
+export void SpotLight_destroy(void *uniform self)
 {
-  uniform SpotLight *uniform self = (uniform SpotLight *uniform)_self;
-  SpotLight_Destructor(self);
   delete self;
 }
 

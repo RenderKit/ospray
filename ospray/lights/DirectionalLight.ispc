@@ -52,11 +52,6 @@ void DirectionalLight_Constructor(uniform DirectionalLight *uniform self,
   self->super.computeRadiance = DirectionalLight_computeRadiance;
 }
 
-void DirectionalLight_Destructor(uniform DirectionalLight *uniform self)
-{
-  Light_Destructor(&self->super);
-}
-
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
@@ -70,10 +65,8 @@ export void *uniform DirectionalLight_create(void *uniform cppEquivalent)
 }
 
 //! Destroy an ispc-side DirectionalLIght object
-export void DirectionalLight_destroy(void *uniform _self)
+export void DirectionalLight_destroy(void *uniform self)
 {
-  uniform DirectionalLight *uniform self = (uniform DirectionalLight *uniform)_self;
-  DirectionalLight_Destructor(self);
   delete self;
 }
 

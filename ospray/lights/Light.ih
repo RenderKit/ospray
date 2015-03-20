@@ -21,13 +21,11 @@
 /*! ispc-side equivalent of a light */
 
 struct Light {
-
-  //! Pointer back to the C++ equivalent of this class.
-  void *uniform cppEquivalent;
-
   //! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
   varying vec3f (*computeRadiance)(const uniform Light *uniform self, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
 
+  //! Pointer back to the C++ equivalent of this class.
+  void *uniform cppEquivalent;
 };
 
 //! constructor for ispc-side light object
@@ -36,7 +34,3 @@ inline void Light_Constructor(uniform Light *uniform self,
 {
   self->cppEquivalent = cppEquivalent;
 }
-
-//! destructor for ispc-side light object - stub
-inline void Light_Destructor(uniform Light *uniform self) {}
-
