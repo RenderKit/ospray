@@ -26,7 +26,7 @@ namespace ospray {
     static Light *createLight(const char *type);
 
     //! Copy understood parameters into class members
-    virtual void commit(){}
+    virtual void commit() {}
 
     //! toString is used to aid in printf debugging
     virtual std::string toString() const { return "ospray::Light"; }

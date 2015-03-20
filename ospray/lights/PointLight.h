@@ -32,7 +32,7 @@ namespace ospray {
       //! Copy understood parameters into member parameters
       virtual void commit();
 
-// TODO    private:
+    private:
       vec3f position;               //!< world-space position of the light
       vec3f color;                  //!< RGB color of the light
       float intensity;              //!< Amount of light emitted

@@ -40,33 +40,13 @@ namespace ospray {
       world = (Model *)getParamObject("model",world);
       camera = (Camera *)getParamObject("camera",NULL);
 
-      pointLightData = (Data*)getParamData("pointLights",NULL);
+      lightData = (Data*)getParamData("lights",NULL);
 
-      if (pointLightData && pointLightArray.empty()) {
-        for (int i = 0; i < pointLightData->size(); i++) {
-          pointLightArray.push_back(((Light**)pointLightData->data)[i]->getIE());
-        }
-      }
+      if (lightData && lightArray.empty())
+        for (int i = 0; i < lightData->size(); i++)
+          lightArray.push_back(((Light**)lightData->data)[i]->getIE());
 
-      dirLightData = (Data*)getParamData("directionalLights", NULL);
-
-      if (dirLightData && dirLightArray.empty()) {
-        for (int i = 0; i < dirLightData->size(); i++) {
-          Light *light_i = ((Light**)dirLightData->data)[i];
-          dirLightArray.push_back(light_i->getIE());
-        }
-      }
-
-      spotLightData = (Data*)getParamData("spotLights", NULL);
-      if( spotLightData && spotLightArray.empty()) {
-        for (int i =0; i < spotLightData->size(); i++) {
-          spotLightArray.push_back(((Light**)spotLightData->data)[i]->getIE());
-        }
-      }
-      
-      void **pointLightPtr = pointLightArray.empty() ? NULL : &pointLightArray[0];
-      void **dirLightPtr = dirLightArray.empty() ? NULL : &dirLightArray[0];
-      void **spotLightPtr = spotLightArray.empty() ? NULL : &spotLightArray[0];
+      void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
       vec3f bgColor;
       bgColor = getParam3f("bgColor", vec3f(1.f));
@@ -77,9 +57,7 @@ namespace ospray {
                             camera?camera->getIE():NULL,
                             (ispc::vec3f&)bgColor,
                             shadowsEnabled,
-                            pointLightPtr, pointLightArray.size(),
-                            dirLightPtr,   dirLightArray.size(),
-                            spotLightPtr,  spotLightArray.size());
+                            lightPtr, lightArray.size());
     }
     
     OBJRenderer::OBJRenderer()

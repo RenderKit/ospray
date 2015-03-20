@@ -57,16 +57,11 @@ namespace ospray {
       OBJRenderer();
       virtual std::string toString() const { return "ospray::OBJRenderer"; }
 
-      // TODO: have a single array of 'lightData'
-      std::vector<void*> pointLightArray; // the 'IE's of the 'pointLightData'
-      std::vector<void*> dirLightArray;   // the 'IE's of the 'dirLightData'
-      std::vector<void*> spotLightArray;  // the 'IE's of the 'spotLightData'
+      std::vector<void*> lightArray; // the 'IE's of the XXXLights
 
       Model    *world;
       Camera   *camera;
-      Data     *pointLightData;
-      Data     *dirLightData;
-      Data     *spotLightData;
+      Data     *lightData;
       
       virtual void commit();
 

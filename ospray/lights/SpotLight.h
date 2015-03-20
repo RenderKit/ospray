@@ -33,7 +33,7 @@ namespace ospray {
       //! Copy understood parameters into class members
       virtual void commit();
 
-// TODO    private:
+    private:
       vec3f position;         //!< world-space position of the light
       vec3f direction;        //!< Direction that the SpotLight is pointing
       vec3f color;            //!< RGB color of the SpotLight
