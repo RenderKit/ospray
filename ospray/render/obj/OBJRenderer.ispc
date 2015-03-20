@@ -24,8 +24,6 @@
 #include "ospray/render/Renderer.ih"
 // obj renderer
 #include "OBJMaterial.ih"
-#include "OBJPointLight.ih"
-#include "OBJSpotLight.ih"
 
 #define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
@@ -33,11 +31,11 @@
 struct OBJRenderer {
   Renderer inherited;
 
-  const uniform OBJPointLight *uniform *uniform pointLights;
+  const uniform Light *uniform *uniform pointLights;
   uint32        numPointLights;
   const uniform Light *uniform *uniform dirLights;
   uint32        numDirLights;
-  const uniform OBJSpotLight *uniform *uniform spotLights;
+  const uniform Light *uniform *uniform spotLights;
   uint32        numSpotLights;
   vec3f         bgColor;
   bool          shadowsEnabled;
@@ -168,16 +166,14 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
 
       //calculate shading for point lights
       for (uniform int i = 0; i < renderer->numPointLights && renderer->pointLights; i++) {
-        const uniform OBJPointLight *uniform l = (const uniform OBJPointLight *uniform)renderer->pointLights[i];
+        const uniform Light *uniform l = renderer->pointLights[i];
         float dist;
-        const vec3f L = normalize(l->base.position - P, dist);
-        if (dist > l->base.range) continue;
-        const float attenuation = l->constantAttenuation
-                                + l->linearAttenuation * dist
-                                + l->quadraticAttenuation * dist * dist;
+        vec3f L;
+        const vec3f radiance = l->computeRadiance(l, P, L, dist);
+//        if (dist > l->base.range) continue;
         const float cosNL = abs(dot(L,dg.Ns));
         const float cosLR = max(0.f,dot(L,R));
-        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->base.color * rcpf(attenuation);
+        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * radiance;
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib > .01f) {
           Ray shadowRay;
@@ -190,7 +186,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
 
       //calculate shading for directional lights
       for (uniform int i = 0; i < renderer->numDirLights && renderer->dirLights; i++) {
-        const uniform Light *uniform l = (const uniform Light *uniform)renderer->dirLights[i];
+        const uniform Light *uniform l = renderer->dirLights[i];
         float dist;
         vec3f L;
         const vec3f radiance = l->computeRadiance(l, P, L, dist);
@@ -212,25 +208,17 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
 
       //calculate shading for spot lights
       for (uniform int i = 0; i < renderer->numSpotLights && renderer->spotLights; i++) {
-        const uniform OBJSpotLight *uniform l = (const uniform OBJSpotLight *uniform)renderer->spotLights[i];
+        const uniform Light *uniform l = renderer->spotLights[i];
         float dist;
-        const vec3f L = normalize(l->base.position - P, dist);
-        if (dist > l->base.range) continue;
-        const vec3f D = neg(l->base.direction);
-        const float cosLD = dot(L,D);
-        const float cosHalfAngleRads = l->base.cosLimit;
+        vec3f L;
+        vec3f radiance = l->computeRadiance(l, P, L, dist);
+  //      if (dist > l->base.range) continue;
 
-        if (cosLD > cosHalfAngleRads) {  //Inside the cone
+        if (reduce_max(radiance) > 0.f) {  //Inside the cone
           const float cosNL = abs(dot(L, dg.Ns));
           const float cosLR = max(0.f, dot(L,R));
 
-          const float attenuation = l->constantAttenuation
-                                    + l->linearAttenuation * dist
-                                    + l->quadraticAttenuation * dist * dist;
-
-          const float angleAttenuation = (cosLD - cosHalfAngleRads) / (1 - cosHalfAngleRads);
-
-          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->base.color * rcpf(attenuation) * angleAttenuation;
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * radiance;
           const float max_contrib = reduce_max(unshaded_light_contrib);
           if (max_contrib > .01f) {
             Ray shadowRay;
@@ -295,13 +283,13 @@ export void OBJRenderer_set(void *uniform _renderer,
   renderer->shadowsEnabled = shadowsEnabled;
 
   renderer->numPointLights = numPointLights;
-  renderer->pointLights = (const uniform OBJPointLight *uniform *uniform)pointLights;
+  renderer->pointLights = (const uniform Light *uniform *uniform)pointLights;
   
   renderer->numDirLights = numDirLights;
   renderer->dirLights = (const uniform Light *uniform *uniform)dirLights;
 
   renderer->numSpotLights = numSpotLights;
-  renderer->spotLights = (const uniform OBJSpotLight *uniform *uniform)spotLights;
+  renderer->spotLights = (const uniform Light *uniform *uniform)spotLights;
 }
 
 

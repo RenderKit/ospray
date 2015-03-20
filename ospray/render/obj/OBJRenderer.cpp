@@ -17,12 +17,11 @@
 // obj
 #include "OBJRenderer.h"
 #include "OBJMaterial.h"
-#include "OBJPointLight.h"
-#include "OBJSpotLight.h"
 // ospray
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
 #include "ospray/camera/Camera.h"
+#include "ospray/lights/Light.h"
 //embree
 #include "embree2/rtcore.h"
 //sys
@@ -95,22 +94,7 @@ namespace ospray {
       return mat;
     }
 
-    /*! \brief create a light of given type */
-    Light *OBJRenderer::createLight(const char *type)
-    {
-      Light *light = NULL;
-
-      if (strcmp("PointLight", type) == 0) {
-        light = new OBJPointLight;
-      } else if (strcmp("SpotLight", type) == 0) {
-        light = new OBJSpotLight;
-      }
-
-      return light;
-    }
-
     OSP_REGISTER_RENDERER(OBJRenderer,OBJ);
     OSP_REGISTER_RENDERER(OBJRenderer,obj);
-
   } // ::ospray::obj
 } // ::ospray

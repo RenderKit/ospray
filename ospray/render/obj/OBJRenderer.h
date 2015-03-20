@@ -39,9 +39,6 @@
 #include "ospray/render/Renderer.h"
 #include "ospray/common/Material.h"
 
-// obj renderer
-#include "OBJPointLight.h"
-
 // system
 #include <vector>
 
@@ -60,6 +57,7 @@ namespace ospray {
       OBJRenderer();
       virtual std::string toString() const { return "ospray::OBJRenderer"; }
 
+      // TODO: have a single array of 'lightData'
       std::vector<void*> pointLightArray; // the 'IE's of the 'pointLightData'
       std::vector<void*> dirLightArray;   // the 'IE's of the 'dirLightData'
       std::vector<void*> spotLightArray;  // the 'IE's of the 'spotLightData'
@@ -74,8 +72,6 @@ namespace ospray {
 
       /*! \brief create a material of given type */
       virtual Material *createMaterial(const char *type);
-      /*! \brief create a light of given type */
-      virtual Light    *createLight(const char *type);
     };
 
   } // ::ospray::api

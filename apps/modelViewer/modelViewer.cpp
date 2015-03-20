@@ -775,17 +775,19 @@ namespace ospray {
     //spot light
     std::vector<OSPLight> spotLights;
     cout << "msgView: Adding a hard coded spotlight for test." << endl;
-    OSPLight ospSpot = ospNewLight(ospRenderer, "OBJ_SpotLight");
+    OSPLight ospSpot = ospNewLight(ospRenderer, "SpotLight");
     ospSetString(ospSpot, "name", "spot_test");
     ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
     ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
     ospSet3f(ospSpot, "color", 1.f, 1.f, 1.f);
-    ospSet1f(ospSpot, "range", 1000.f);
     ospSet1f(ospSpot, "halfAngle", 15.f);
-    ospSet1f(ospSpot, "angularDropOff", 6.f);//Unused, delete?
+/* Unused, delete:
+    ospSet1f(ospSpot, "range", 1000.f);
+    ospSet1f(ospSpot, "angularDropOff", 6.f);
     ospSet1f(ospSpot, "attenuation.constant", .15f);
     ospSet1f(ospSpot, "attenuation.linear", .15f);
     ospSet1f(ospSpot, "attenuation.quadratic", .15f);
+*/
     ospCommit(ospSpot);
     spotLights.push_back(ospSpot);
     OSPData spotLightArray = ospNewData(spotLights.size(), OSP_OBJECT, &spotLights[0], 0);

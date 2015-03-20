@@ -100,10 +100,6 @@ SET(OSPRAY_SOURCES
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp
   render/obj/OBJMaterial.cpp
-  render/obj/OBJPointLight.ispc
-  render/obj/OBJPointLight.cpp
-  render/obj/OBJSpotLight.ispc
-  render/obj/OBJSpotLight.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/SymbolRegistry.cpp
