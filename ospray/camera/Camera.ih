@@ -39,12 +39,12 @@ typedef void (*Camera_initRay)(uniform Camera  *uniform,
 struct Camera
 {
   Camera_initRay initRay; /*!< the 'virtual' initRay() method */
+  void *cppEquivalent; /*!< pointer back to c++-side of this class */
 
   bool doesDOF; /*!< indicates whether this camera wants to do
                     depth-of-field (DOF). If so, the 'CameraSample'
                     passed to initRay has to have properly initialized
                     'lens' value; if not, this value can remain
                     unused. */
-  void *cppEquivalent; /*!< pointer back to c++-side of this class */
 };
 

@@ -98,7 +98,6 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
   uniform int depth = 0;
 
   while (1) {
-    ray.t0 += self->super.nearClip;
     traceRay(self->super.model,ray);
 
     if (ray.geomID < 0) {
@@ -214,7 +213,7 @@ void OBJRenderer_renderSample(uniform Renderer *uniform _self,
 export void *uniform OBJRenderer_create(void *uniform cppE)
 {
   uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
-  Renderer_constructor(&self->super,cppE,NULL,NULL);
+  Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = OBJRenderer_renderSample;
   return self;
 }
@@ -225,16 +224,12 @@ export void OBJRenderer_destroy(void *uniform self)
 }
 
 export void OBJRenderer_set(void *uniform _self,
-                            void *uniform _model,
-                            void *uniform _camera,
                             const uniform vec3f &bgColor,
                             const uniform bool &shadowsEnabled,
                             void **uniform lights,
                             uniform int32  numLights)
 {
   uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
-  self->super.model  = (uniform Model *uniform)_model;
-  self->super.camera = (uniform Camera *uniform)_camera;
 
   self->bgColor = bgColor;
   self->shadowsEnabled = shadowsEnabled;

@@ -34,11 +34,14 @@ namespace ospray {
 
   void Renderer::commit()
   {
-    spp = getParam1i("spp",1);
-    nearClip = getParam1f("near_clip",1e-6f);
-    if(this->getIE()) {
-      ispc::Renderer_setSPP(this->getIE(),spp);
-      ispc::Renderer_setNearClip(this->getIE(), nearClip);
+    spp = getParam1i("spp", 1);
+    if (getIE()) {
+      ManagedObject* model = getParamObject("model", getParamObject("world"));
+      ManagedObject* camera = getParamObject("camera");
+      ispc::Renderer_set(getIE(),
+                         model ?  model->getIE() : NULL,
+                         camera ?  camera->getIE() : NULL,
+                         spp);
     }
   }
 

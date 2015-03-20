@@ -29,7 +29,6 @@ namespace ospray {
   /*! \brief constructor */
   template<void *(*ISPC_CREATE)(void*)>
   RaycastRenderer<ISPC_CREATE>::RaycastRenderer()
-    : model(NULL), camera(NULL) 
   {
     ispcEquivalent = ISPC_CREATE(this);
   }
@@ -39,22 +38,6 @@ namespace ospray {
   template<void *(*ISPC_CREATE)(void*)>
   std::string RaycastRenderer<ISPC_CREATE>::toString() const
   { return "ospray::RaycastRenderer"; }
-
-  //! \brief common function to help printf-debugging 
-  /*! \detailed Every derived class should overrride this! */
-  template<void *(*ISPC_CREATE)(void*)>
-  void RaycastRenderer<ISPC_CREATE>::commit()
-  {
-    Renderer::commit();
-
-    model = (Model *)getParamObject("world",NULL);
-    model = (Model *)getParamObject("model",model);
-    camera = (Camera *)getParamObject("camera",NULL);
-
-    ispc::RaycastRenderer_set(getIE(),
-                              model?model->getIE():NULL,
-                              camera?camera->getIE():NULL);
-  }
 
   /*! \brief Instantion of Ray Cast Renderer that does a simple "eyelight" shading */
   /*! \detailed "eyelight" shading means to take the dot product

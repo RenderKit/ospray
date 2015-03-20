@@ -36,11 +36,7 @@ namespace ospray {
     {
       Renderer::commit();
 
-      world = (Model *)getParamObject("world",NULL);
-      world = (Model *)getParamObject("model",world);
-      camera = (Camera *)getParamObject("camera",NULL);
-
-      lightData = (Data*)getParamData("lights",NULL);
+      lightData = (Data*)getParamData("lights");
 
       if (lightData && lightArray.empty())
         for (int i = 0; i < lightData->size(); i++)
@@ -53,8 +49,6 @@ namespace ospray {
 
       bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
       ispc::OBJRenderer_set(getIE(),
-                            world?world->getIE():NULL,
-                            camera?camera->getIE():NULL,
                             (ispc::vec3f&)bgColor,
                             shadowsEnabled,
                             lightPtr, lightArray.size());

@@ -57,15 +57,7 @@ namespace ospray {
   void PathTracer::commit() 
   {
     Renderer::commit();
-    model = (Model*)getParamObject("world",NULL);
-    model = (Model*)getParamObject("model",model.ptr);
-
-    if (model)
-      ispc::PathTracer_setModel(getIE(),model->getIE());
-
-    camera = (Camera*)getParamObject("camera",NULL);
-    if (camera) 
-      ispc::PathTracer_setCamera(getIE(),camera->getIE());
+    ispc::PathTracer_setModel(getIE());
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

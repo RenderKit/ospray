@@ -190,16 +190,16 @@ namespace ospray {
       switch(key) {
       case GLUT_KEY_PAGE_UP:
         g_near_clip += 10.f * motionSpeed;
-        ospSet1f(renderer, "near_clip", g_near_clip);
-        ospCommit(renderer);
+        ospSet1f(camera, "near_clip", g_near_clip);
+        ospCommit(camera);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
       case GLUT_KEY_PAGE_DOWN:
         g_near_clip -= 10.f * motionSpeed;
         g_near_clip = std::max(g_near_clip, 1e-6f);
-        ospSet1f(renderer, "near_clip", g_near_clip);
-        ospCommit(renderer);
+        ospSet1f(camera, "near_clip", g_near_clip);
+        ospCommit(camera);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;

@@ -38,6 +38,8 @@ namespace ospray {
     far    = getParamf("far", std::numeric_limits<float>::infinity());
     fovy   = getParamf("fovy",60.f);
     aspect = getParamf("aspect",1.f);
+    nearClip = getParam1f("near_clip",getParam1f("nearClip",1e-6f));
+
 
     // ------------------------------------------------------------------
     // now, update the local precomptued values
@@ -59,7 +61,8 @@ namespace ospray {
                                 (const ispc::vec3f&)pos,
                                 (const ispc::vec3f&)dir_00,
                                 (const ispc::vec3f&)dir_du,
-                                (const ispc::vec3f&)dir_dv);
+                                (const ispc::vec3f&)dir_dv,
+                                nearClip);
   }
 
   void PerspectiveCamera::initRay(Ray &ray, const vec2f &sample)

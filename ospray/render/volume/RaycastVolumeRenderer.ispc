@@ -260,7 +260,7 @@ export void *uniform RaycastVolumeRenderer_createInstance() {
   RaycastVolumeRenderer *uniform renderer = uniform new uniform RaycastVolumeRenderer;
 
   //! Constructor of the parent class.
-  Renderer_constructor(&renderer->inherited, NULL, NULL, NULL);
+  Renderer_Constructor(&renderer->inherited, NULL);
 
   //! Function to compute the color and opacity for a screen space sample.
   renderer->inherited.renderSample = RaycastVolumeRenderer_renderSample;
