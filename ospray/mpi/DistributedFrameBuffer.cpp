@@ -95,18 +95,6 @@ namespace ospray {
                            (ispc::VaryingTile*)&this->accum,
                            (ispc::VaryingRGBA_I8*)&this->color,
                            dfb->hasAccumBuffer,dfb->accumID);
-      // if (accum.region.lower.x == 0 && accum.region.lower.y == 0) {
-      //   PRINT(compositedTileData.r[0]);
-      //   PRINT(compositedTileData.g[0]);
-      //   PRINT(compositedTileData.b[0]);
-      //   PRINT(compositedTileData.z[0]);
-      //   PRINT(accum.r[0]);
-      //   PRINT(accum.g[0]);
-      //   PRINT(accum.b[0]);
-      //   PRINT(accum.z[0]);
-      //   PRINT(dfb->accumID);
-      //   PRINT(color[0]);
-      // }
       dfb->tileIsCompleted(this);
     }
   }
@@ -121,10 +109,6 @@ namespace ospray {
 
     for (int i=0;i<myTiles.size();i++) 
       myTiles[i]->newFrame();
-    // #if MPI_IMAGE_COMPOSITING
-    //     for (int i=0;i<myTile.size();i++) 
-    //       myTile[i]->data->numTimesWrittenThisFrame = 0;
-    // #endif
 
     // create a local copy of delayed tiles, so we can work on them outside the mutex
     std::vector<mpi::async::CommLayer::Message *> 
@@ -190,7 +174,8 @@ namespace ospray {
 
     if (comm->group->rank == 0) {
       if (colorBufferFormat == OSP_RGBA_NONE) {
-        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' format; creating distriubted frame buffer WITHOUT having a mappable copy on the master" << endl;
+        cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' format; "
+          "creating distriubted frame buffer WITHOUT having a mappable copy on the master" << endl;
       } else {
         cout << "#osp:mpi:dfb: we're the master - creating a local fb to gather results" << endl;
         localFBonMaster = new LocalFrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,0);
@@ -203,7 +188,8 @@ namespace ospray {
   const void *DFB::mapDepthBuffer() 
   {
     if (!localFBonMaster)
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the depth buffer of a frame buffer buffer that doesn't have a host-side color buffer");
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the depth buffer of a frame"
+                               " buffer that doesn't have a host-side color buffer");
     assert(localFBonMaster);
     return localFBonMaster->mapDepthBuffer();
   }
@@ -211,7 +197,8 @@ namespace ospray {
   const void *DFB::mapColorBuffer() 
   {
     if (!localFBonMaster)
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the color buffer of a frame buffer that doesn't have a host-side color buffer");
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospMap()' the color buffer of a frame"
+                               " buffer that doesn't have a host-side color buffer");
     assert(localFBonMaster);
     return localFBonMaster->mapColorBuffer();
   }
@@ -219,20 +206,17 @@ namespace ospray {
   void DFB::unmap(const void *mappedMem) 
   {
     if (!localFBonMaster)
-      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospUnmap()' a frame buffer that doesn't have a host-side color buffer");
+      throw std::runtime_error("#osp:mpi:dfb: tried to 'ospUnmap()' a frame buffer that"
+                               " doesn't have a host-side color buffer");
     assert(localFBonMaster);
     localFBonMaster->unmap(mappedMem);
   }
 
   void DFB::waitUntilFinished() 
   {
-    // PING;
     mutex.lock();
-    // PRINT(frameIsDone);
-    // printf("rank %i is WAITING\n",mpi::world.rank);
     while (!frameIsDone) 
       doneCond.wait(mutex);
-    // printf("rank %i is done\n",mpi::world.rank);
     mutex.unlock();
   }
 
@@ -241,30 +225,14 @@ namespace ospray {
   void DFB::processMessage(DFB::WriteTileMessage *msg)
   {
     DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
+    // TODO: compress/decompress tile data
     TileData *td = (TileData*)tileDesc;
     td->process(msg->tile);
-    //         // TODO: "unpack" tile
-    //         ospray::Tile unpacked;
-    //         jmemcpy(unpacked.r,msg->r,TILE_SIZE*TILE_SIZE*sizeof(float));
-    //         memcpy(unpacked.g,msg->g,TILE_SIZE*TILE_SIZE*sizeof(float));
-    //         memcpy(unpacked.b,msg->b,TILE_SIZE*TILE_SIZE*sizeof(float));
-    //         memcpy(unpacked.a,msg->a,TILE_SIZE*TILE_SIZE*sizeof(float));
-    // #if MPI_IMAGE_COMPOSITING
-    //         memcpy(unpacked.z,msg->z,TILE_SIZE*TILE_SIZE*sizeof(float));
-    // #endif
-    //         unpacked.region.lower = msg->coords;
-    //         unpacked.region.upper = min((msg->coords+vec2i(TILE_SIZE)),dfb->getNumPixels());
-      
-    //         // cout << "worker RECEIVED tile " << unpacked.region.lower << endl;
-    //         dfb->writeTile(unpacked);
-    //         // msg->coords.x,msg->coords.y,TILE_SIZE,
-    //         //                       &msg->tile.color[0][0],&msg->tile.depth[0][0]);
   }
   
   void DFB::processMessage(MasterTileMessage_NONE *msg)
   {
-    /* nothing to do for 'none' tiles */
-    {}
+    { /* nothing to do for 'none' tiles */ }
 
     // and finally, tell the master that this tile is done
     DFB::TileDesc *tileDesc = this->getTileDescFor(msg->coords);
@@ -303,39 +271,6 @@ namespace ospray {
       : dfb(dfb), _msg(_msg) 
     {}
     
-    // void writeAtClient()
-    // {
-    //   dfb->processMessage((DFB::WriteTileMessage*)_msg);
-
-    // }
-    
-    // void writeAtMaster()
-    // {
-    //   switch(dfb->colorBufferFormat) {
-    //   case OSP_RGBA_NONE: 
-    //     /* nothing to do */
-    //     break;
-    //   case OSP_RGBA_I8: 
-    //     dfb->processMessage((DFB::MasterTileMessage_RGBA_I8 *)_msg);
-    //     break;
-    //   default:
-    //     throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented "
-    //                              "for distributed frame buffer");
-    //   };
-      
-    //   dfb->tileIsCompleted(tile);
-    //   // printf("rank %i (MASTER) is completed %li\n",mpi::world.rank,dfb->numTilesCompletedThisFrame);
-    //   // dfb->mutex.lock();
-    //   // dfb->numTilesCompletedThisFrame++;
-    //   // PING;
-    //   // PRINT(dfb->numTilesCompletedThisFrame);
-    //   // if (dfb->numTilesCompletedThisFrame == dfb->numTiles.x*dfb->numTiles.y)
-    //   //   dfb->closeCurrentFrame(true);
-    //   // dfb->mutex.unlock();
-    //   delete _msg;
-    //   return;
-    // }
-
     virtual void run(size_t jobID) 
     {
       switch (_msg->command) {
@@ -352,54 +287,6 @@ namespace ospray {
         assert(0);
       };
       delete _msg;
-      // if (_msg->command == DFB::MASTER_WRITE_TILE) {
-      //   writeAtMaster();
-      //   switch(dfb->colorBufferFormat) {
-      //   case OSP_RGBA_NONE: 
-      //     /* nothing to do */
-      //     break;
-      //   case OSP_RGBA_I8: 
-      //     dfb->processMessage((DFB::MasterTileMessage_RGBA_I8 *)_msg);
-      //     break;
-      //   default:
-      //     throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented "
-      //                              "for distributed frame buffer");
-      //   };
-      //   printf("rank %i (MASTER) is completed %li\n",mpi::world.rank,dfb->numTilesCompletedThisFrame);
-      //   dfb->mutex.lock();
-      //   dfb->numTilesCompletedThisFrame++;
-      //   PING;
-      //   PRINT(dfb->numTilesCompletedThisFrame);
-      //   if (dfb->numTilesCompletedThisFrame == dfb->numTiles.x*dfb->numTiles.y)
-      //     dfb->closeCurrentFrame(true);
-      //   dfb->mutex.unlock();
-      //   delete _msg;
-      //   return;
-      // }
-
-      // if (_msg->command == DFB::WORKER_WRITE_TILE) {
-      //   DFB::WriteTileMessage *msg
-      //     = (DFB::WriteTileMessage *)_msg;
-      //   dfb->processMessage(msg);
-
-      //         // TODO: "unpack" tile
-      //         ospray::Tile unpacked;
-      //         jmemcpy(unpacked.r,msg->r,TILE_SIZE*TILE_SIZE*sizeof(float));
-      //         memcpy(unpacked.g,msg->g,TILE_SIZE*TILE_SIZE*sizeof(float));
-      //         memcpy(unpacked.b,msg->b,TILE_SIZE*TILE_SIZE*sizeof(float));
-      //         memcpy(unpacked.a,msg->a,TILE_SIZE*TILE_SIZE*sizeof(float));
-      // #if MPI_IMAGE_COMPOSITING
-      //         memcpy(unpacked.z,msg->z,TILE_SIZE*TILE_SIZE*sizeof(float));
-      // #endif
-      //         unpacked.region.lower = msg->coords;
-      //         unpacked.region.upper = min((msg->coords+vec2i(TILE_SIZE)),dfb->getNumPixels());
-      
-      //         // cout << "worker RECEIVED tile " << unpacked.region.lower << endl;
-      //         dfb->writeTile(unpacked);
-      //         // msg->coords.x,msg->coords.y,TILE_SIZE,
-      //         //                       &msg->tile.color[0][0],&msg->tile.depth[0][0]);
-      // delete msg;
-      // return;
     }
   };
 
@@ -422,14 +309,11 @@ namespace ospray {
         pixelOp->postAccum(tile->final);
       }
     
-      // MasterTileMessage *mtm = new MasterTileMessage;
-      // mtm->command = MASTER_WRITE_TILE;
-      // mtm->coords  = myTile->begin;
-      // memcpy(mtm->color,td->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
-      // comm->sendTo(this->master,mtm,sizeof(*mtm));
-      
       switch(colorBufferFormat) {
       case OSP_RGBA_NONE: {
+        /* if the master doesn't have a framebufer (i.e., format
+           'none'), we're only telling it that we're done, but are not
+           sending any pixels */
         MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
         mtm->command = MASTER_WRITE_TILE_NONE;
         mtm->coords  = tile->begin;
@@ -437,28 +321,18 @@ namespace ospray {
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
       case OSP_RGBA_I8: {
+        /*! if the master has rgba_i8 format, we're sending him a tile
+            of the proper data */
         MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
         mtm->command = MASTER_WRITE_TILE_I8;
         mtm->coords  = tile->begin;
         memcpy(mtm->color,tile->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
-        // printf("rank sending to master %i,%i\n",mtm->coords.x,mtm->coords.y);
         comm->sendTo(this->master,mtm,sizeof(*mtm));
       } break;
       default:
         throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented for distributed frame buffer");
       };
         
-      // #if 0
-      //     char fn[1000];
-      //     sprintf(fn,"/tmp/dfb_seq%05i_color_tile_%04i_%04i.ppm",accumID+1,
-      //             myTile->begin.x,myTile->begin.y);
-      //     vec2i size(TILE_SIZE,TILE_SIZE);
-      //     writePPM(fn,size,(uint32*)&myTile->data->color);
-      // #endif
-
-      // dfb->tileIsCompleted(tile);
-
-
       mutex.lock();
       numTilesCompletedThisFrame++;
       DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",mpi::world.rank,
@@ -468,9 +342,6 @@ namespace ospray {
         closeCurrentFrame(true);
       mutex.unlock();
     }
-
-    // finally, do the book-keeping that this tile is completely done.
-
   }
   
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
@@ -479,76 +350,18 @@ namespace ospray {
     if (!frameIsActive) {
       mutex.lock();
       if (!frameIsActive) {
-        // frame is really not yet active - put the tile into the
-        // delayed processing buffer, and return WITHOUT deleting
-        // it.
+        // frame is not actually active, yet - put the tile into the
+        // delayed processing buffer, and return WITHOUT deleting it.
         delayedMessage.push_back(_msg);
-        // printf("DELAYING at %i: %i\n",mpi::world.rank,_msg->command);
         mutex.unlock();
         return;
       }
       mutex.unlock();
     }
 
-    // #if 1
     Ref<DFBProcessMessageTask> msgTask = new DFBProcessMessageTask(this,_msg);
     msgTask->schedule(1);
-    // #else
-
-    //     // printf("tiled frame buffer on rank %i received command %li\n",comm->myRank,_msg->command);
-    //     if (_msg->command == MASTER_WRITE_TILE) {
-    //       switch(colorBufferFormat) {
-    //       case OSP_RGBA_NONE: 
-    //         /* nothing to do */
-    //         break;
-    //       case OSP_RGBA_I8: 
-    //         writeTile((MasterTileMessage_RGBA_I8 *)_msg);
-    //         break;
-    //       default:
-    //         throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented "
-    //                                  "for distributed frame buffer");
-    //       };
-    //       dfb->tileIsCompleted(tileThatJustCompleted);
-    //       // mutex.lock();
-    //       // numTilesWrittenThisFrame++;
-    //       // if (numTilesWrittenThisFrame == numTiles.x*numTiles.y)
-    //       //   closeCurrentFrame(true);
-    //       // mutex.unlock();
-    //       delete _msg;
-    //       return;
-    //     }
-
-    //     if (_msg->command == WORKER_WRITE_TILE) {
-    //       WriteTileMessage *msg = (WriteTileMessage *)_msg;
-
-    //       // TODO: "unpack" tile
-    //       ospray::Tile unpacked;
-    //       memcpy(unpacked.r,msg->r,TILE_SIZE*TILE_SIZE*sizeof(float));
-    //       memcpy(unpacked.g,msg->g,TILE_SIZE*TILE_SIZE*sizeof(float));
-    //       memcpy(unpacked.b,msg->b,TILE_SIZE*TILE_SIZE*sizeof(float));
-    //       memcpy(unpacked.a,msg->a,TILE_SIZE*TILE_SIZE*sizeof(float));
-    // #if MPI_IMAGE_COMPOSITING
-    //       memcpy(unpacked.z,msg->z,TILE_SIZE*TILE_SIZE*sizeof(float));
-    // #endif
-    //       unpacked.region.lower = msg->coords;
-    //       unpacked.region.upper = min((msg->coords+vec2i(TILE_SIZE)),getNumPixels());
-      
-    //       // cout << "worker RECEIVED tile " << unpacked.region.lower << endl;
-    //       this->writeTile(unpacked);
-    // // msg->coords.x,msg->coords.y,TILE_SIZE,
-    // //                       &msg->tile.color[0][0],&msg->tile.depth[0][0]);
-    //       delete msg;
-    //       return;
-    //     }
-
-    //     throw std::runtime_error("#osp:mpi:DFB: unknown command");
-    // #endif
   }
-
-  // void DFB::setTile(ospray::Tile &tile)
-  // {
-  //   writeTile(tile);
-  // }
 
   void DFB::closeCurrentFrame(bool locked) 
   {
@@ -566,22 +379,14 @@ namespace ospray {
   void DFB::setTile(ospray::Tile &tile)
   { 
     const size_t numPixels = TILE_SIZE*TILE_SIZE;
-    // const int x0 = tile.region.lower.x;
-    // const int y0 = tile.region.lower.y;
     DFB::TileDesc *tileDesc = this->getTileDescFor(tile.region.lower);
 
-    //    printf("found tile %lx data %lx\n",myTile,myTile->data);
     if (!tileDesc->mine()) {
       // NOT my tile...
       WriteTileMessage *msg = new WriteTileMessage;
       msg->coords = tile.region.lower;
       // TODO: compress pixels before sending ...
       memcpy(&msg->tile,&tile,sizeof(ospray::Tile));
-      // memcpy(msg->r,tile.r,TILE_SIZE*TILE_SIZE*sizeof(float));
-      // memcpy(msg->g,tile.g,TILE_SIZE*TILE_SIZE*sizeof(float));
-      // memcpy(msg->b,tile.b,TILE_SIZE*TILE_SIZE*sizeof(float));
-      // memcpy(msg->a,tile.a,TILE_SIZE*TILE_SIZE*sizeof(float));
-      // memcpy(msg->z,tile.z,TILE_SIZE*TILE_SIZE*sizeof(float));
       msg->command      = WORKER_WRITE_TILE;
 
       comm->sendTo(this->worker[tileDesc->ownerID],
@@ -590,153 +395,9 @@ namespace ospray {
       // this is my tile...
       assert(frameIsActive);
 
-      // if (pixelOp)
-      //   pixelOp->preAccum(tile);
-
-      //! accumulate new tile data with existing accum data for this tile
-      // TileData *td = (TileData*)myTile->data;
       TileData *td = (TileData*)tileDesc;
       td->process(tile);
 
-
-      //       if (!td) 
-      //         throw std::runtime_error("not my tile!");
-
-      // #if MPI_IMAGE_COMPOSITING
-      //       td->mutex.lock();
-      //       {
-      //         size_t pixelID = 0;
-      //         if (td->numTimesWrittenThisFrame == 0) {
-      //           for (size_t iy=0;iy<TILE_SIZE;iy++)
-      //             for (size_t ix=0;ix<TILE_SIZE;ix++,pixelID++) {
-      //               td->comp_r[iy][ix] = tile.r[pixelID];
-      //               td->comp_g[iy][ix] = tile.g[pixelID];
-      //               td->comp_b[iy][ix] = tile.b[pixelID];
-      //               td->comp_z[iy][ix] = tile.z[pixelID];
-      //             }
-      //         } else {
-      //           for (size_t iy=0;iy<TILE_SIZE;iy++)
-      //             for (size_t ix=0;ix<TILE_SIZE;ix++,pixelID++) {
-      //               bool closer = tile.z[pixelID] < td->comp_z[iy][ix];
-      //               td->comp_r[iy][ix] = closer ? tile.r[pixelID] : td->comp_r[iy][ix];
-      //               td->comp_g[iy][ix] = closer ? tile.g[pixelID] : td->comp_g[iy][ix];
-      //               td->comp_b[iy][ix] = closer ? tile.b[pixelID] : td->comp_b[iy][ix];
-      //               td->comp_z[iy][ix] = closer ? tile.z[pixelID] : td->comp_z[iy][ix];
-      //             }
-      //         }
-      //       }
-      //       td->numTimesWrittenThisFrame++;
-      //       // PRINT(td->numTimesWrittenThisFrame);
-      //       // PRINT(comm->numWorkers());
-      //       if (td->numTimesWrittenThisFrame == comm->numWorkers()) {
-      //         // we're the last one to write. let's just write that data
-      //         // back into the tile, and pretend that nothign happened :-)
-      //         size_t pixelID = 0;
-      //         for (size_t iy=0;iy<TILE_SIZE;iy++)
-      //           for (size_t ix=0;ix<TILE_SIZE;ix++,pixelID++) {
-      //             tile.r[pixelID] = td->comp_r[iy][ix];
-      //             tile.g[pixelID] = td->comp_g[iy][ix];
-      //             tile.b[pixelID] = td->comp_b[iy][ix];
-      //             tile.a[pixelID] = 1.f;
-      //           }
-      //       } else {
-      //         // there's more that want to write before this tile is
-      //         // finished. return here, and wait for somebody else to
-      //         // complet this tile.
-      //         td->mutex.unlock();
-      //         return;
-      //       }
-      //       td->mutex.unlock();
-      // #endif
-
-      //       {
-      // #if 1
-      //         ispc::DFB_accumTile((ispc::VaryingTile *)&tile,(ispc::DFBTileData*)td,hasAccumBuffer,accumID);
-      // #else
-      //         // perform tile accumulation. TODO: do this in ISPC
-      //         size_t pixelID = 0;
-      //         for (size_t iy=0;iy<TILE_SIZE;iy++)
-      //           for (size_t ix=0;ix<TILE_SIZE;ix++, pixelID++) {
-      //             float rcpAccumID = 1.f/(accumID+1);
-      //             vec4f col = vec4f(tile.r[pixelID],
-      //                               tile.g[pixelID],
-      //                               tile.b[pixelID],
-      //                               tile.a[pixelID]);
-      //             vec4f old_col = col;
-      //             vec4f old_accum_col = vec4f(-1.f);
-      //             if (hasAccumBuffer) {
-      //               if (accumID > 0) {
-      //                 old_accum_col = vec4f(td->accum_r[iy][ix],
-      //                              td->accum_g[iy][ix],
-      //                              td->accum_b[iy][ix],
-      //                              td->accum_a[iy][ix]);
-      //                 col += vec4f(td->accum_r[iy][ix],
-      //                              td->accum_g[iy][ix],
-      //                              td->accum_b[iy][ix],
-      //                              td->accum_a[iy][ix]);
-      //               }
-      //               td->accum_r[iy][ix] = col.x;
-      //               td->accum_g[iy][ix] = col.y;
-      //               td->accum_b[iy][ix] = col.z;
-      //               td->accum_a[iy][ix] = col.w;
-      //               col *= rcpAccumID;
-      //             }
-      //             // if (fabsf(col.x-1.f) > 1e-5f) { 
-      //             //   PRINT(hasAccumBuffer);
-      //             //   PRINT(accumID);
-      //             //   PRINT(old_accum_col);
-      //             //   PRINT(old_col);
-      //             //   PRINT(rcpAccumID);
-      //             //   PRINT(col);
-      //             // }
-      //             td->color[iy][ix] = cvt_uint32(col);
-      //           }
-      // #endif
-      //       }
-
-      // if (pixelOp)
-      //   pixelOp->postAccum(tile);
-
-      // MasterTileMessage *mtm = new MasterTileMessage;
-      // mtm->command = MASTER_WRITE_TILE;
-      // mtm->coords  = myTile->begin;
-      // memcpy(mtm->color,td->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
-      // comm->sendTo(this->master,mtm,sizeof(*mtm));
-      
-      //       switch(colorBufferFormat) {
-      //       case OSP_RGBA_NONE: {
-      //         MasterTileMessage_NONE *mtm = new MasterTileMessage_NONE;
-      //         mtm->command = MASTER_WRITE_TILE;
-      //         mtm->coords  = myTile->begin;
-      //         comm->sendTo(this->master,mtm,sizeof(*mtm));
-      //       } break;
-      //       case OSP_RGBA_I8: {
-      //         MasterTileMessage_RGBA_I8 *mtm = new MasterTileMessage_RGBA_I8;
-      //         mtm->command = MASTER_WRITE_TILE;
-      //         mtm->coords  = myTile->begin;
-      //         memcpy(mtm->color,td->color,TILE_SIZE*TILE_SIZE*sizeof(uint32));
-      //         comm->sendTo(this->master,mtm,sizeof(*mtm));
-      //       } break;
-      //       default:
-      //         throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented for distributed frame buffer");
-      //       };
-        
-      // #if 0
-      //       char fn[1000];
-      //       sprintf(fn,"/tmp/dfb_seq%05i_color_tile_%04i_%04i.ppm",accumID+1,
-      //               myTile->begin.x,myTile->begin.y);
-      //       vec2i size(TILE_SIZE,TILE_SIZE);
-      //       writePPM(fn,size,(uint32*)&myTile->data->color);
-      // #endif
-
-      //       dfb->tileIsCompleted(tile);
-      //       // mutex.lock();
-      //       // numTilesWrittenThisFrame++;
-      //       // // printf("CLIENT NUM WRITTEN %i\n",numTilesWrittenThisFrame);
-      //       // if (numTilesWrittenThisFrame == numMyTiles())
-      //       //   closeCurrentFrame(true);
-
-      //       mutex.unlock();
     }
   }
 
@@ -752,12 +413,6 @@ namespace ospray {
       for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
       for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
       for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
-      // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
-      //   (&td->accum.g[0][0])[i] = 0.f;
-      // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
-      //     (&td->accum_b[0][0])[i] = 0.f;
-      // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) 
-      //   (&td->accum_a[0][0])[i] = 0.f;
     }
   };
 
