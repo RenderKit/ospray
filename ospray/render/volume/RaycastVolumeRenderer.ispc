@@ -30,9 +30,10 @@ void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer,
   renderer->fb = framebuffer; 
 }
 
-inline void RaycastVolumeRenderer_computeVolumeSample(Volume *uniform volume, 
-                                                      varying Ray &ray, 
-                                                      varying vec4f &color) 
+inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform renderer,
+                                                      Volume *uniform volume,
+                                                      varying Ray &ray,
+                                                      varying vec4f &color)
 {
   //! Advance the ray.
   volume->intersect(volume, ray);  if (ray.t > ray.t1) return;
@@ -41,7 +42,26 @@ inline void RaycastVolumeRenderer_computeVolumeSample(Volume *uniform volume,
   const float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
 
   //! Look up the color associated with the volume sample.
-  const vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
+  vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
+
+  //! Compute gradient shading, if enabled.
+  if(volume->gradientShadingEnabled) {
+
+    //! Compute lighting.
+    vec3f lightDirection;
+    float lightDistance;
+    vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], ray.org + ray.t * ray.dir, lightDirection, lightDistance);
+
+    //! Constant ambient lighting term.
+    const float ambient = 0.1f;
+
+    //! Use volume gradient as the normal.
+    const vec3f gradient = normalize(volume->computeGradient(volume, ray.org + ray.t * ray.dir));
+
+    const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(lightDirection), normalize(gradient)));
+
+    sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
+  }
 
   //! Look up the opacity associated with the volume sample.
   const float sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction, sample);
@@ -171,7 +191,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   vec4f geometryColor = color;
 
   //! Initial trace through the volume and geometries.
-  RaycastVolumeRenderer_computeVolumeSample(renderer->model->volumes[0], ray, volumeColor);
+  RaycastVolumeRenderer_computeVolumeSample(renderer, renderer->model->volumes[0], ray, volumeColor);
   RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
 
   //! Trace the ray through the volume and geometries.
@@ -196,7 +216,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
       color = color + (1.0f - color.w) * volumeColor;
 
       //! Trace next volume ray.
-      RaycastVolumeRenderer_computeVolumeSample(renderer->model->volumes[0], ray, volumeColor);
+      RaycastVolumeRenderer_computeVolumeSample(renderer, renderer->model->volumes[0], ray, volumeColor);
     }
   }
 }
