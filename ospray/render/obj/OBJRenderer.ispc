@@ -29,7 +29,7 @@
 #define ALPHA_THRESHOLD (.05f)
 
 struct OBJRenderer {
-  Renderer inherited;
+  Renderer super;
 
   const uniform Light *uniform *uniform lights;
   uint32        numLights;
@@ -87,7 +87,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
   }
 }
 
-inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OBJRenderer *uniform renderer) 
+inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varying ScreenSample &sample) 
 { 
   Ray &ray = sample.ray;
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
@@ -98,11 +98,11 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
   uniform int depth = 0;
 
   while (1) {
-    ray.t0 += renderer->inherited.nearClip;
-    traceRay(renderer->inherited.model,ray);
+    ray.t0 += self->super.nearClip;
+    traceRay(self->super.model,ray);
 
     if (ray.geomID < 0) {
-      color = color + path_opacity * renderer->bgColor;
+      color = color + path_opacity * self->bgColor;
       sample.z = 1;
       return color;
     }
@@ -112,7 +112,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
     vec3f local_shade_color = make_vec3f(0.f);
 
     DifferentialGeometry dg;
-    postIntersect(renderer->inherited.model,
+    postIntersect(self->super.model,
         dg,
         ray,
         DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
@@ -160,8 +160,8 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
       color = color + local_opacity * Kd * .25;
 
       //calculate shading for all lights
-      for (uniform int i = 0; renderer->lights && i < renderer->numLights; i++) {
-        const uniform Light *uniform l = renderer->lights[i];
+      for (uniform int i = 0; self->lights && i < self->numLights; i++) {
+        const uniform Light *uniform l = self->lights[i];
         float dist;
         vec3f L;
         const vec3f radiance = l->computeRadiance(l, P, L, dist);
@@ -171,12 +171,12 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
           const float cosLR = max(0.f,dot(L,R));
           const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * radiance;
 
-          if (renderer->shadowsEnabled) {
+          if (self->shadowsEnabled) {
             const float max_contrib = reduce_max(unshaded_light_contrib);
             if (max_contrib > .01f) {
               Ray shadowRay;
               setRay(shadowRay,P,L);
-              const float light_alpha = lightAlpha(shadowRay, renderer->inherited.model, max_contrib);
+              const float light_alpha = lightAlpha(shadowRay, self->super.model, max_contrib);
               local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
             }
           } else 
@@ -200,23 +200,31 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
   return color;
 }
 
-void OBJRenderer_renderSample(uniform Renderer *uniform _renderer,
+void OBJRenderer_renderSample(uniform Renderer *uniform _self,
                                varying ScreenSample &sample)
 {
-  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  sample.rgb = OBJRenderer_shadeRay(sample,renderer);
+  uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
+  sample.rgb = OBJRenderer_shadeRay(self, sample);
 }
 
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
 
 export void *uniform OBJRenderer_create(void *uniform cppE)
 {
-  uniform OBJRenderer *uniform renderer = uniform new uniform OBJRenderer;
-  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
-  renderer->inherited.renderSample = OBJRenderer_renderSample;
-  return renderer;
+  uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
+  Renderer_constructor(&self->super,cppE,NULL,NULL);
+  self->super.renderSample = OBJRenderer_renderSample;
+  return self;
 }
 
-export void OBJRenderer_set(void *uniform _renderer,
+export void OBJRenderer_destroy(void *uniform self)
+{
+  delete self;
+}
+
+export void OBJRenderer_set(void *uniform _self,
                             void *uniform _model,
                             void *uniform _camera,
                             const uniform vec3f &bgColor,
@@ -224,19 +232,12 @@ export void OBJRenderer_set(void *uniform _renderer,
                             void **uniform lights,
                             uniform int32  numLights)
 {
-  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  renderer->inherited.model  = (uniform Model *uniform)_model;
-  renderer->inherited.camera = (uniform Camera *uniform)_camera;
+  uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
+  self->super.model  = (uniform Model *uniform)_model;
+  self->super.camera = (uniform Camera *uniform)_camera;
 
-  renderer->bgColor = bgColor;
-  renderer->shadowsEnabled = shadowsEnabled;
-  renderer->lights = (const uniform Light *uniform *uniform)lights;
-  renderer->numLights = numLights;
-}
-
-
-export void OBJRenderer_destroy(void *uniform _renderer)
-{
-  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  delete renderer;
+  self->bgColor = bgColor;
+  self->shadowsEnabled = shadowsEnabled;
+  self->lights = (const uniform Light *uniform *uniform)lights;
+  self->numLights = numLights;
 }
