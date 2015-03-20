@@ -212,6 +212,20 @@ void BlockBrickedVolume_intersect(void *uniform pointer, varying Ray &ray) {
 
 }
 
+void BlockBrickedVolume_intersectIsosurface(void *uniform pointer, const uniform float isovalue, varying Ray &ray) {
+
+  //! Cast to the actual Volume subtype.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  //! The nominal step size for ray casting based volume renderers, not considering the sampling rate.
+  const uniform float step = 1.0f / reduce_max(volume->volumeDimensions);
+
+  //! Compute the next hit point using a spatial acceleration structure.
+  GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalue, ray);
+//ray.t += step;
+
+}
+
 inline void BlockBrickedVolumeFloat_setVoxel(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset) {
 
   //! Cast to the actual Volume subtype.
@@ -314,6 +328,7 @@ export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelTy
 
   //! Function to find the next hit point for ray casting based renderers.
   volume->inherited.intersect = BlockBrickedVolume_intersect;
+  volume->inherited.intersectIsosurface = BlockBrickedVolume_intersectIsosurface;
 
   //! Function to get a voxel value.
   volume->getVoxel = (volume->voxelType == OSP_FLOAT) ? BlockBrickedVolumeFloat_getVoxel : BlockBrickedVolumeUChar_getVoxel;
@@ -354,6 +369,22 @@ export void BlockBrickedVolume_setGradientShadingEnabled(void *uniform pointer, 
   //! Set the gamma correction coefficient and exponent.
   volume->inherited.gradientShadingEnabled = value;
 
+}
+
+export void BlockBrickedVolume_setNumIsovalues(void *uniform pointer, const uniform int value) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  volume->inherited.numIsovalues = value;
+}
+
+export void BlockBrickedVolume_setIsovalues(void *uniform pointer, uniform float *uniform values) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  volume->inherited.isovalues = values;
 }
 
 export void BlockBrickedVolume_setRegion(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count) {

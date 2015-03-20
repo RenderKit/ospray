@@ -22,6 +22,7 @@
 #include <vector>
 
 class TransferFunctionEditor;
+class IsosurfaceEditor;
 
 class VolumeViewer : public QMainWindow {
 
@@ -88,6 +89,14 @@ public slots:
     render();
   }
 
+  //! Set isosurface on all volumes; for now only one isovalue supported.
+  void setIsovalues(std::vector<float> isovalues) {
+    if(isovalues.size() > 0) std::cout << "setting isovalue: " << isovalues[0] << std::endl;
+    OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
+    for(size_t i=0; i<volumes.size(); i++) { ospSetData(volumes[i], "isovalues", isovaluesData); ospCommit(volumes[i]); }
+    render();
+  }
+
 protected:
 
   //! OSPRay object file filenames, one for each model / time step.
@@ -116,6 +125,9 @@ protected:
 
   //! The transfer function editor.
   TransferFunctionEditor *transferFunctionEditor;
+
+  //! The isosurface editor.
+  IsosurfaceEditor *isosurfaceEditor;
 
   //! Layout for slice widgets.
   QVBoxLayout sliceWidgetsLayout;

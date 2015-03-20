@@ -50,3 +50,8 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
                                uniform float step, 
                                varying Ray &ray);
 
+//! Step a ray through the accelerator until a cell containing the isovalue is found.
+void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
+                                         uniform float step,
+                                         uniform float isovalue,
+                                         varying Ray &ray);
