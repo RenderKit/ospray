@@ -282,7 +282,7 @@ namespace ospray {
         int iix = ix+msg->coords.x;
         if (iix >= numPixels.x) continue;
         
-        ((uint*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
+        ((uint32*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
           = msg->color[iy][ix];
       }
     }
