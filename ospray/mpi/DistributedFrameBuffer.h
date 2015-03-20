@@ -118,12 +118,6 @@ namespace ospray {
 
       //! the rbga32-convoerted colors
       uint32 __aligned(64) color[TILE_SIZE*TILE_SIZE];
-
-      // float  accum_r[TILE_SIZE*TILE_SIZE];
-      // float  accum_g[TILE_SIZE*TILE_SIZE];
-      // float  accum_b[TILE_SIZE*TILE_SIZE];
-      // float  accum_a[TILE_SIZE*TILE_SIZE];
-      // float  z[TILE_SIZE*TILE_SIZE];
     };
 
     // -------------------------------------------------------
@@ -176,6 +170,7 @@ namespace ospray {
       /*! number of input tiles that have been composited into this
           tile */
       size_t numPartsComposited;
+
       /*! since we do not want to mess up the existing accumulatation
           buffer in the parent tile we temporarily composite into this
           buffer until all the composites have been done. */
@@ -188,6 +183,7 @@ namespace ospray {
         them by closest z component per tile, and only tthen does
         front-to-back compositing of those tiles */
     struct AlphaBlendTile_Simple : public TileData {
+
       /*! called exactly once at the beginning of each frame */
       virtual void newFrame() = 0;
 
@@ -363,6 +359,6 @@ namespace ospray {
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
   };
     
-}
+} // ::ospray
 
 

@@ -34,8 +34,7 @@ namespace ospray {
                           size_t tileID, 
                           size_t ownerID)
     : tileID(tileID), ownerID(ownerID), dfb(dfb), begin(begin)
-  {
-  }
+  {}
 
   DFB::TileData::TileData(DFB *dfb, 
                           const vec2i &begin, 
@@ -433,4 +432,4 @@ namespace ospray {
     }
   }
 
-}
+} // ::ospray
