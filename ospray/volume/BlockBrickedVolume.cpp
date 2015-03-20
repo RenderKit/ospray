@@ -87,6 +87,9 @@ namespace ospray {
     //! Set the gamma correction coefficient and exponent.
     ispc::BlockBrickedVolume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
 
+    //! Set the gradient shading flag for the renderer.
+    ispc::BlockBrickedVolume_setGradientShadingEnabled(ispcEquivalent, getParam1i("gradientShadingEnabled", 0));
+
     //! Set the recommended sampling rate for ray casting based renderers.
     ispc::BlockBrickedVolume_setSamplingRate(ispcEquivalent, getParam1f("samplingRate", 1.0f));
 

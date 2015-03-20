@@ -61,26 +61,47 @@ struct Address {
 
 varying vec3f BlockBrickedVolume_computeGradient(void *uniform pointer, const varying vec3f &location) {
 
-  //! Cast to the actual Volume type.
-  Volume *uniform volume = (Volume *uniform) pointer;
+  //! Cast to the actual Volume subtype.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
 
-  //! Transform the sample location into the local coordinate system.
-  const vec3f coordinates = BlockBrickedVolume_transformWorldToLocal(pointer, location);
+  //! Gradient step in each dimension (world coordinates, still assuming unit cube projection).
+  const uniform vec3f gradientStep = 1.f / make_vec3f(volume->volumeDimensions);
 
   //! The gradient will be computed using central differences.
   varying vec3f gradient;
 
+#if 0
+  //! Central differences.
+
   //! Gradient magnitude in the X direction.
-  gradient.x = volume->computeSample(volume, coordinates + make_vec3f(1.0f, 0.0f, 0.0f)) - volume->computeSample(volume, coordinates + make_vec3f(-1.0f, 0.0f, 0.0f));
+  gradient.x = volume->inherited.computeSample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - volume->inherited.computeSample(volume, location + make_vec3f(-gradientStep.x, 0.0f, 0.0f));
 
   //! Gradient magnitude in the Y direction.
-  gradient.y = volume->computeSample(volume, coordinates + make_vec3f(0.0f, 1.0f, 0.0f)) - volume->computeSample(volume, coordinates + make_vec3f(0.0f, -1.0f, 0.0f));
+  gradient.y = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - volume->inherited.computeSample(volume, location + make_vec3f(0.0f, -gradientStep.y, 0.0f));
 
   //! Gradient magnitude in the Z direction.
-  gradient.z = volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, 1.0f)) - volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, -1.0f));
+  gradient.z = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, -gradientStep.z));
 
   //! This approximation may yield image artifacts.
-  return(gradient * 0.5f);
+  return(0.5f * gradient / gradientStep);
+#else
+  //! Forward differences.
+
+  //! Sample at gradient location.
+  float sample = volume->inherited.computeSample(volume, location);
+
+  //! Gradient magnitude in the X direction.
+  gradient.x = volume->inherited.computeSample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+
+  //! Gradient magnitude in the Y direction.
+  gradient.y = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+
+  //! Gradient magnitude in the Z direction.
+  gradient.z = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+
+  //! This approximation may yield image artifacts.
+  return(gradient / gradientStep);
+#endif
 
 }
 
@@ -322,6 +343,16 @@ export void BlockBrickedVolume_setGammaCorrection(void *uniform pointer, const u
 
   //! Set the gamma correction coefficient and exponent.
   volume->inherited.gammaCorrection = value;
+
+}
+
+export void BlockBrickedVolume_setGradientShadingEnabled(void *uniform pointer, const uniform bool &value) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  //! Set the gamma correction coefficient and exponent.
+  volume->inherited.gradientShadingEnabled = value;
 
 }
 
