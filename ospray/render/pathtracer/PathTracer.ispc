@@ -159,16 +159,8 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         /*! Either use precomputed samples for the light or sample light now. */
         PTLightSample ls; 
         ls.wi.v = make_vec3f(0.0f,0.0f,0.0f); ls.wi.pdf = 0.0f;
-#if 0
-        // iw: turned off precomputed, not yet working
-        if (light->type & TY_PRECOMPUTE_LIGHT_SAMPLES) {
-          ls = PrecomputedSample__getPTLightSample(sample_,THIS->precomputedPTLightSampleID[i]);
-        }
-        else 
-#endif
-          {
-          ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
-        }
+
+        ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
 
         /*! Ignore zero radiance or illumination from the back. */
         //if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING | dot(dg.Ns,ls.wi.v) <= 1e-8f) 
@@ -384,6 +376,9 @@ void PathTracer__Constructor(void *uniform cppE,
   THIS->backplate = backplate;
 }
 
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
 
 export void* uniform PathTracer_create(void *uniform cppE,
                                        const uniform int32& maxDepth, 
