@@ -21,7 +21,6 @@
 #include "ospray/common/Model.ih"
 #include "ospray/texture/Texture2D.ih"
 #include "ospray/lights/Light.ih"
-#include "ospray/lights/DirectionalLight.ih"
 #include "ospray/render/Renderer.ih"
 // obj renderer
 #include "OBJMaterial.ih"
@@ -36,7 +35,7 @@ struct OBJRenderer {
 
   const uniform OBJPointLight *uniform *uniform pointLights;
   uint32        numPointLights;
-  const uniform DirectionalLight *uniform *uniform dirLights;
+  const uniform Light *uniform *uniform dirLights;
   uint32        numDirLights;
   const uniform OBJSpotLight *uniform *uniform spotLights;
   uint32        numSpotLights;
@@ -191,13 +190,15 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
 
       //calculate shading for directional lights
       for (uniform int i = 0; i < renderer->numDirLights && renderer->dirLights; i++) {
-        const uniform DirectionalLight *uniform l = (const uniform DirectionalLight *uniform)renderer->dirLights[i];
-        const vec3f L = normalize(neg(l->direction));
+        const uniform Light *uniform l = (const uniform Light *uniform)renderer->dirLights[i];
+        float dist;
+        vec3f L;
+        const vec3f radiance = l->computeRadiance(l, P, L, dist);
 
         const float cosNL = abs(dot(L, dg.Ns));
         const float cosLR = max(0.f, dot(L,R));
 
-        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->color;
+        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * radiance;
 
         const float max_contrib = reduce_max(unshaded_light_contrib);
         if (max_contrib > .01f) {
@@ -217,7 +218,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
         if (dist > l->base.range) continue;
         const vec3f D = neg(l->base.direction);
         const float cosLD = dot(L,D);
-        const float cosHalfAngleRads = cos((l->base.halfAngle * M_PI) / 180.0f);
+        const float cosHalfAngleRads = l->base.cosLimit;
 
         if (cosLD > cosHalfAngleRads) {  //Inside the cone
           const float cosNL = abs(dot(L, dg.Ns));
@@ -297,7 +298,7 @@ export void OBJRenderer_set(void *uniform _renderer,
   renderer->pointLights = (const uniform OBJPointLight *uniform *uniform)pointLights;
   
   renderer->numDirLights = numDirLights;
-  renderer->dirLights = (const uniform DirectionalLight *uniform *uniform)dirLights;
+  renderer->dirLights = (const uniform Light *uniform *uniform)dirLights;
 
   renderer->numSpotLights = numSpotLights;
   renderer->spotLights = (const uniform OBJSpotLight *uniform *uniform)spotLights;

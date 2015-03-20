@@ -18,19 +18,26 @@
 #include "AmbientLight_ispc.h"
 
 namespace ospray {
-  //!Construct a new AmbientLight object
   AmbientLight::AmbientLight()
-    : color(1.f, 1.f, 1.f)
+    : color(1.f)
     , intensity(1.f)
   {
     ispcEquivalent = ispc::AmbientLight_create(this);
   }
 
-  //!Commit parameters understood by the base AmbientLight class
-  void AmbientLight::commit() {
-    color     = getParam3f("color", vec3f(1.f, 1.f, 1.f));
-    intensity = getParam1f("intensity", 1.f);
-    
-    ispc::AmbientLight_set(getIE(), (ispc::vec3f&)color, intensity);
+  AmbientLight::~AmbientLight() {
+    ispc::AmbientLight_destroy(getIE());
   }
+
+  //! Commit parameters understood by the AmbientLight
+  void AmbientLight::commit() {
+    color     = getParam3f("color", vec3f(1.f));
+    intensity = getParam1f("intensity", 1.f);
+
+    vec3f radiance = color * intensity;
+    
+    ispc::AmbientLight_set(getIE(), (ispc::vec3f&)radiance);
+  }
+
+  OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
 }

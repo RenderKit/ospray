@@ -16,7 +16,21 @@
 
 #pragma once
 
-#include "ospray/lights/PointLight.ih"
+#include "ospray/lights/Light.ih"
+#include "ospray/math/vec.ih"
+// old PointLight.ih, binary compatible
+struct PointLight {
+  uniform Light base;
+  uniform vec3f position;
+  uniform vec3f color;
+  uniform float range;
+};
+extern void PointLight_Constructor(uniform PointLight *uniform self,
+                            void *uniform cppEquivalent,
+                            const uniform vec3f &position,
+                            const uniform vec3f &color,
+                            const uniform float range);
+extern void PointLight_Destructor(uniform PointLight *uniform self);
 
 //! ISPC implementation of an OBJPointLight
 struct OBJPointLight {

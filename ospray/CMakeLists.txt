@@ -75,17 +75,15 @@ SET(OSPRAY_SOURCES
   geometry/Cylinders.cpp
   geometry/Cylinders.ispc
 
+  lights/Light.cpp
   lights/AmbientLight.ispc
   lights/AmbientLight.cpp
   lights/DirectionalLight.cpp
   lights/DirectionalLight.ispc
-  lights/Light.cpp
-  lights/Light.ispc
   lights/PointLight.cpp
   lights/PointLight.ispc
   lights/SpotLight.cpp
   lights/SpotLight.ispc
-  lights/SymbolRegistry.cpp
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc

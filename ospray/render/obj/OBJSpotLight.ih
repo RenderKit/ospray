@@ -16,7 +16,27 @@
 
 #pragma once
 
-#include "ospray/lights/SpotLight.ih"
+#include "ospray/lights/Light.ih"
+#include "ospray/math/vec.ih"
+// old SpotLight.ih, binary compatible
+struct SpotLight {
+  uniform Light base;
+
+  uniform vec3f position;
+  uniform vec3f direction;
+  uniform vec3f color;
+  uniform float rangeX;
+  uniform float cosLimit;
+  uniform float range;
+};
+extern void SpotLight_Constructor(uniform SpotLight *uniform self,
+                                  void *uniform cppEquivalent,
+                                  const uniform vec3f &position,
+                                  const uniform vec3f &direction,
+                                  const uniform vec3f &power,
+                                  const uniform float cosLimit,
+                                  const uniform float range);
+extern void SpotLight_Destructor(uniform SpotLight *uniform self);
 
 //! ISPC implementation of an OBJSpotLight
 struct OBJSpotLight {

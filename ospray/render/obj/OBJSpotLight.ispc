@@ -35,8 +35,8 @@ extern void OBJSpotLight_Constructor( uniform OBJSpotLight *uniform THIS,
                         position,
                         direction,
                         color,
-                        range,
-                        halfAngle);
+                        cos(halfAngle * (M_PI / 180.0f)),
+                        range);
 
   THIS->constantAttenuation = constantAttenuation;
   THIS->linearAttenuation = linearAttenuation;
@@ -89,7 +89,7 @@ export void OBJSpotLight_set( void *uniform _light,
   light->base.direction       = direction;
   light->base.color           = color;
   light->base.range           = range;
-  light->base.halfAngle       = halfAngle;
+  light->base.cosLimit        = cos(halfAngle * (M_PI / 180.0f));
 
   light->constantAttenuation  = constantAttenuation;
   light->linearAttenuation    = linearAttenuation;
