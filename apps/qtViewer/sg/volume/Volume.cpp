@@ -33,8 +33,17 @@ namespace ospray {
 
     //! \brief constructor
     ProceduralTestVolume::ProceduralTestVolume()
-      : dimensions(256)
-    {}
+      : dimensions(256), volume(NULL)
+    {
+      coeff[0] = 0.;
+      coeff[1] = 13;
+      coeff[2] = 17;
+      coeff[3] = 23;
+      coeff[4] = 5*7;
+      coeff[5] = 11;
+      coeff[6] = 19;
+      coeff[7] = 0.;
+    }
 
     /*! \brief returns a std::string with the c++ name of this class */
     std::string ProceduralTestVolume::toString() const
@@ -44,6 +53,22 @@ namespace ospray {
     box3f ProceduralTestVolume::getBounds() 
     { return box3f(vec3f(0.f),vec3f(1.f)); };
     
+    /*! \brief 'render' the object to ospray */
+    void ProceduralTestVolume::render(RenderContext &ctx) 
+    {
+      if (volume) return;
+
+      if (!transferFunction) 
+        setTransferFunction(new TransferFunction);
+      transferFunction->render(ctx);
+
+      volume = ospNewVolume("block_bricked_volume");
+      ospSetString(volume,"voxelType","float");
+      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospCommit(volume);
+      PRINT(volume);
+    };
+
     //! \brief Initialize this node's value from given XML node 
     void ProceduralTestVolume::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
     {

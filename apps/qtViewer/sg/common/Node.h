@@ -124,9 +124,10 @@ namespace ospray {
         but don't do anything else to the node(s) */
       virtual void serialize(sg::Serialization::State &state);
 
-      /*! 'render' the object for the first time */
+      /*! \brief 'render' the object for the first time */
       virtual void render(RenderContext &ctx) {};
-      /*! 'commit' updates */
+
+      /*! \brief 'commit' updates */
       virtual void commit() {};
 
       /*! \brief return bounding box in world coordinates.

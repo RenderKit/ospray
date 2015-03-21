@@ -31,11 +31,10 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds() = 0;
 
-      SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunctionfovy,TransferFunction);    
+      SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunction,TransferFunction);    
     };
     
     struct ProceduralTestVolume : public Volume {
-
       //! \brief constructor
       ProceduralTestVolume(); 
 
@@ -48,7 +47,18 @@ namespace ospray {
       //! \brief Initialize this node's value from given XML node 
       virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
 
+      /*! \brief 'render' the object to ospray */
+      virtual void render(RenderContext &ctx);
+
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
+
+      //! coefficients we use for generating the procedural 'noise'
+      /*! we generate a procedural volume using the function cos^2(p0
+          + p1*x + p2*y + p3 * z + p4*xy + p5 * yz + p6 * xz + p7 *
+          xyz), where x,y,z in [0,1] are the local coordinates inside
+          the volume, and p_i are the 8 values in the coeff[] array */
+      float coeff[1+3+3+1];
+      OSPVolume volume;
     };
     
   } // ::ospray::sg
