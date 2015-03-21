@@ -16,14 +16,14 @@
 
 #pragma once
 
-#include "sg/common/Material.h"
+#include "sg/common/TransferFunction.h"
 
 namespace ospray {
   namespace sg {
 
     /*! a geometry node - the generic geometry node */
     struct Volume : public sg::Node {
-      Volume(const std::string &type) : type(type), material(NULL) {};
+      Volume() {};
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Volume"; }
@@ -31,11 +31,7 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds() = 0;
 
-      /*! geometry type, i.e., 'spheres', 'cylinders', 'trianglemesh', ... */
-      const std::string type; 
-      
-      /*! material for this geometry */
-      Ref<Material> material;
+      SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunctionfovy,TransferFunction);    
     };
     
   } // ::ospray::sg
