@@ -1,4 +1,4 @@
 <ospray>
-	<Volume />
+	<ProceduralTestVolume />
 </ospray>
 

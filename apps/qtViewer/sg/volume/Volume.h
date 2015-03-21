@@ -35,11 +35,18 @@ namespace ospray {
     };
     
     struct ProceduralTestVolume : public Volume {
+
+      //! \brief constructor
+      ProceduralTestVolume(); 
+
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const;
 
       //! return bounding box of all primitives
       virtual box3f getBounds();
+
+      //! \brief Initialize this node's value from given XML node 
+      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
 
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
     };

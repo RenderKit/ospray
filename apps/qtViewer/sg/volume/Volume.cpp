@@ -19,10 +19,23 @@
 namespace ospray {
   namespace sg {
 
+    // =======================================================
+    // base volume class
+    // =======================================================
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string Volume::toString() const
     { return "ospray::sg::Volume"; }
     
+    // =======================================================
+    // procedural test volume class
+    // =======================================================
+
+    //! \brief constructor
+    ProceduralTestVolume::ProceduralTestVolume()
+      : dimensions(256)
+    {}
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string ProceduralTestVolume::toString() const
     { return "ospray::sg::ProceduralTestVolume"; }
@@ -31,6 +44,19 @@ namespace ospray {
     box3f ProceduralTestVolume::getBounds() 
     { return box3f(vec3f(0.f),vec3f(1.f)); };
     
+    //! \brief Initialize this node's value from given XML node 
+    void ProceduralTestVolume::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    {
+      for (int paramID=0;paramID < node->child.size();paramID++) {
+        const std::string param = node->child[paramID]->name;
+        if (param == "dimensions") {
+          PING;
+        } else
+          throw std::runtime_error("unknown parameter '"+param+"' in ProceduralTestVolume");
+      }
+      std::cout << "#osp:sg: created ProceduralTestVolume from XML file, dimensions = " << getDimensions() << std::endl;
+    }
+
     OSP_REGISTER_SG_NODE(ProceduralTestVolume);
 
   } // ::ospray::sg
