@@ -14,37 +14,25 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-#include "sg/common/TransferFunction.h"
+#include "Volume.h"
 
 namespace ospray {
   namespace sg {
 
-    /*! a geometry node - the generic geometry node */
-    struct Volume : public sg::Node {
-      Volume() {};
-
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const;
-
-      //! return bounding box of all primitives
-      virtual box3f getBounds() = 0;
-
-      SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunctionfovy,TransferFunction);    
-    };
+    /*! \brief returns a std::string with the c++ name of this class */
+    std::string Volume::toString() const
+    { return "ospray::sg::Volume"; }
     
-    struct ProceduralTestVolume : public Volume {
-      /*! \brief returns a std::string with the c++ name of this class */
-      virtual    std::string toString() const;
-
-      //! return bounding box of all primitives
-      virtual box3f getBounds();
-
-      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
-    };
+    /*! \brief returns a std::string with the c++ name of this class */
+    std::string ProceduralTestVolume::toString() const
+    { return "ospray::sg::ProceduralTestVolume"; }
     
+    //! return bounding box of all primitives
+    box3f ProceduralTestVolume::getBounds() 
+    { return box3f(vec3f(0.f),vec3f(1.f)); };
+    
+    OSP_REGISTER_SG_NODE(ProceduralTestVolume);
+
   } // ::ospray::sg
 } // ::ospray
-
 

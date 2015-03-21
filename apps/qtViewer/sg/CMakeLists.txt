@@ -18,6 +18,8 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
   camera/PerspectiveCamera.cpp
   common/Material.cpp
 
+  volume/Volume.cpp
+
   module/Module.cpp
 
   # scene graph importers
