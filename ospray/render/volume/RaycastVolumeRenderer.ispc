@@ -100,7 +100,7 @@ inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer 
     float t = ray.t;
     float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
 
-    if(isovalue >= min(sample0, sample) && isovalue <= max(sample0, sample)) {
+    if(!isnan(sample0+sample) && isovalue >= min(sample0, sample) && isovalue <= max(sample0, sample)) {
 
       //! Find the t value for the isosurface intersection.
       const float tHit = t0 + (isovalue - sample0) / (sample - sample0) * (t - t0);
