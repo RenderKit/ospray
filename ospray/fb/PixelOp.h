@@ -64,7 +64,8 @@ namespace ospray {
           values (assuming an accubuffer exists), and this function
           defines how these pixels are being processed before written
           into the color buffer */
-      virtual void postAccum(Tile &tile) {};
+      virtual void postAccum(Tile &tile) 
+      {};
 
       //! \brief common function to help printf-debugging 
       /*! Every derived class should overrride this! */
