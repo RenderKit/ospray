@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -35,6 +35,7 @@ namespace ospray {
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
       static Ref<Texture2D> load(const FileName &fileName);
+      virtual void render(RenderContext &ctx);
 
       //! texture size, in pixels
       vec2i       size;
@@ -42,6 +43,8 @@ namespace ospray {
       void       *texel;
       //! format of each texel
       OSPDataType texelType;
+      
+      OSPTexture2D ospTexture;
     };
 
   } // ::ospray::sg

@@ -35,6 +35,7 @@ SET(LIBS ${LIBS} ${OPENGL_LIBRARIES})
 SET(SRCS ${SRCS}
   main.cpp
   ColorMap.cpp
+  IsosurfaceEditor.cpp
   LightEditor.cpp
   LinearTransferFunctionWidget.cpp
   PLYGeometryFile.cpp
@@ -46,6 +47,7 @@ SET(SRCS ${SRCS}
   )
 
 SET(MOC_HEADERS
+  IsosurfaceEditor.h
   LightEditor.h
   LinearTransferFunctionWidget.h
   SliceWidget.h

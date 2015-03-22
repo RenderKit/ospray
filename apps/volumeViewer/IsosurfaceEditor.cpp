@@ -14,27 +14,39 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "IsosurfaceEditor.h"
 
-#include "Light.ih"
-#include "ospray/math/vec.ih"
+IsosurfaceEditor::IsosurfaceEditor()
+{
+  //! Setup UI elements.
+  QHBoxLayout * layout = new QHBoxLayout();
+  layout->setSizeConstraint(QLayout::SetMinimumSize);
+  setLayout(layout);
 
-struct AmbientLight {
-  uniform Light base;       //!< inherited light fields
+  layout->addWidget(&isovalueCheckBox);
 
-  uniform vec3f color;      //!< light RGB color
-  uniform float intensity;   //!< amount of emitted light
-};
+  //! Isovalue slider, defaults to median value in range.
+  isovalueSlider.setValue(int(0.5f * (isovalueSlider.minimum() + isovalueSlider.maximum())));
+  isovalueSlider.setOrientation(Qt::Horizontal);
 
-//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-varying vec3f AmbientLight_computeRadiance(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
+  layout->addWidget(&isovalueSlider);
 
-//!< Construct a new ispc-side AmbientLight object
-extern void AmbientLight_Constructor( uniform AmbientLight *uniform THIS,
-                                          void *uniform cppEquivalent,
-                                          const uniform vec3f &color,
-                                          const uniform float &intensity);
+  //! Connect signals and slots.
+  connect(&isovalueCheckBox, SIGNAL(toggled(bool)), this, SLOT(apply()));
+  connect(&isovalueSlider, SIGNAL(valueChanged(int)), this, SLOT(apply()));
 
-//!< Destroy an ispc-side DirectionLight object
-extern void AmbientLight_Destructor(uniform AmbientLight *uniform THIS);
+  //! Apply with default values.
+  apply();
+}
 
+void IsosurfaceEditor::apply()
+{
+  std::vector<float> isovalues;
+
+  if(isovalueCheckBox.isChecked()) {
+    float sliderPosition = float(isovalueSlider.value()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
+    isovalues.push_back(dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x));
+  }
+
+  emit(isovaluesChanged(isovalues));
+}

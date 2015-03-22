@@ -16,17 +16,17 @@
 
 #include "PerspectiveCamera.ih"
 
-void PerspectiveCamera_initRay(uniform Camera *uniform camera,
+void PerspectiveCamera_initRay(uniform Camera *uniform _self,
                                varying Ray &ray,
                                const varying CameraSample &sample)
 {
-  uniform PerspectiveCamera *uniform _this = 
-    (uniform PerspectiveCamera *uniform)camera;
-  const vec3f org = _this->org;
-  const vec3f dir = _this->dir_00
-    + sample.screen.x * _this->dir_du
-    + sample.screen.y * _this->dir_dv;
-  setRay(ray,org,normalize(dir));
+  uniform PerspectiveCamera *uniform self = 
+    (uniform PerspectiveCamera *uniform)_self;
+  const vec3f org = self->org;
+  const vec3f dir = self->dir_00
+    + sample.screen.x * self->dir_du
+    + sample.screen.y * self->dir_dv;
+  setRay(ray,org,normalize(dir),self->nearClip,inf);
 }
 
 /*! create a new ispc-side version of a perspectivecamera - with given
@@ -37,22 +37,24 @@ export void *uniform PerspectiveCamera_create(void *uniform cppE)
 {
   uniform PerspectiveCamera *uniform cam 
     = uniform new uniform PerspectiveCamera;
-  cam->inherited.cppEquivalent = cppE;
-  cam->inherited.initRay = PerspectiveCamera_initRay;
-  cam->inherited.doesDOF = false;
+  cam->super.cppEquivalent = cppE;
+  cam->super.initRay = PerspectiveCamera_initRay;
+  cam->super.doesDOF = false;
   return cam;
 }
 
-export void PerspectiveCamera_set(void *uniform _camera, 
+export void PerspectiveCamera_set(void *uniform _self, 
                                   const uniform vec3f &org,
                                   const uniform vec3f &dir_00,
                                   const uniform vec3f &dir_du,
-                                  const uniform vec3f &dir_dv)
+                                  const uniform vec3f &dir_dv,
+                                  const uniform float nearClip)
 {
-  uniform PerspectiveCamera *uniform camera
-    = (uniform PerspectiveCamera *uniform)_camera;
-  camera->org    = org;
-  camera->dir_00 = dir_00;
-  camera->dir_du = dir_du;
-  camera->dir_dv = dir_dv;
+  uniform PerspectiveCamera *uniform self
+    = (uniform PerspectiveCamera *uniform)_self;
+  self->org    = org;
+  self->dir_00 = dir_00;
+  self->dir_du = dir_du;
+  self->dir_dv = dir_dv;
+  self->nearClip = nearClip;
 }

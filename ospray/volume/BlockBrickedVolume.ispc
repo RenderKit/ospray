@@ -61,26 +61,47 @@ struct Address {
 
 varying vec3f BlockBrickedVolume_computeGradient(void *uniform pointer, const varying vec3f &location) {
 
-  //! Cast to the actual Volume type.
-  Volume *uniform volume = (Volume *uniform) pointer;
+  //! Cast to the actual Volume subtype.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
 
-  //! Transform the sample location into the local coordinate system.
-  const vec3f coordinates = BlockBrickedVolume_transformWorldToLocal(pointer, location);
+  //! Gradient step in each dimension (world coordinates, still assuming unit cube projection).
+  const uniform vec3f gradientStep = 1.f / make_vec3f(volume->volumeDimensions);
 
   //! The gradient will be computed using central differences.
   varying vec3f gradient;
 
+#if 0
+  //! Central differences.
+
   //! Gradient magnitude in the X direction.
-  gradient.x = volume->computeSample(volume, coordinates + make_vec3f(1.0f, 0.0f, 0.0f)) - volume->computeSample(volume, coordinates + make_vec3f(-1.0f, 0.0f, 0.0f));
+  gradient.x = volume->inherited.computeSample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - volume->inherited.computeSample(volume, location + make_vec3f(-gradientStep.x, 0.0f, 0.0f));
 
   //! Gradient magnitude in the Y direction.
-  gradient.y = volume->computeSample(volume, coordinates + make_vec3f(0.0f, 1.0f, 0.0f)) - volume->computeSample(volume, coordinates + make_vec3f(0.0f, -1.0f, 0.0f));
+  gradient.y = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - volume->inherited.computeSample(volume, location + make_vec3f(0.0f, -gradientStep.y, 0.0f));
 
   //! Gradient magnitude in the Z direction.
-  gradient.z = volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, 1.0f)) - volume->computeSample(volume, coordinates + make_vec3f(0.0f, 0.0f, -1.0f));
+  gradient.z = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, -gradientStep.z));
 
   //! This approximation may yield image artifacts.
-  return(gradient * 0.5f);
+  return(0.5f * gradient / gradientStep);
+#else
+  //! Forward differences.
+
+  //! Sample at gradient location.
+  float sample = volume->inherited.computeSample(volume, location);
+
+  //! Gradient magnitude in the X direction.
+  gradient.x = volume->inherited.computeSample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+
+  //! Gradient magnitude in the Y direction.
+  gradient.y = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+
+  //! Gradient magnitude in the Z direction.
+  gradient.z = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+
+  //! This approximation may yield image artifacts.
+  return(gradient / gradientStep);
+#endif
 
 }
 
@@ -191,6 +212,20 @@ void BlockBrickedVolume_intersect(void *uniform pointer, varying Ray &ray) {
 
 }
 
+void BlockBrickedVolume_intersectIsosurface(void *uniform pointer, const uniform float isovalue, varying Ray &ray) {
+
+  //! Cast to the actual Volume subtype.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  //! The nominal step size for ray casting based volume renderers, not considering the sampling rate.
+  const uniform float step = 1.0f / reduce_max(volume->volumeDimensions);
+
+  //! Compute the next hit point using a spatial acceleration structure.
+  GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalue, ray);
+//ray.t += step;
+
+}
+
 inline void BlockBrickedVolumeFloat_setVoxel(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset) {
 
   //! Cast to the actual Volume subtype.
@@ -293,6 +328,7 @@ export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelTy
 
   //! Function to find the next hit point for ray casting based renderers.
   volume->inherited.intersect = BlockBrickedVolume_intersect;
+  volume->inherited.intersectIsosurface = BlockBrickedVolume_intersectIsosurface;
 
   //! Function to get a voxel value.
   volume->getVoxel = (volume->voxelType == OSP_FLOAT) ? BlockBrickedVolumeFloat_getVoxel : BlockBrickedVolumeUChar_getVoxel;
@@ -323,6 +359,32 @@ export void BlockBrickedVolume_setGammaCorrection(void *uniform pointer, const u
   //! Set the gamma correction coefficient and exponent.
   volume->inherited.gammaCorrection = value;
 
+}
+
+export void BlockBrickedVolume_setGradientShadingEnabled(void *uniform pointer, const uniform bool &value) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  //! Set the gamma correction coefficient and exponent.
+  volume->inherited.gradientShadingEnabled = value;
+
+}
+
+export void BlockBrickedVolume_setNumIsovalues(void *uniform pointer, const uniform int value) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  volume->inherited.numIsovalues = value;
+}
+
+export void BlockBrickedVolume_setIsovalues(void *uniform pointer, uniform float *uniform values) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  volume->inherited.isovalues = values;
 }
 
 export void BlockBrickedVolume_setRegion(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count) {

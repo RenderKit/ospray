@@ -339,6 +339,8 @@ namespace ospray {
   extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
   {
     ASSERT_DEVICE();
+    Assert2(type != NULL, "invalid light type identifier in ospNewLight");
+    LOG("ospNewLight(" << renderer << ", " << type << ")");
     return ospray::api::Device::current->newLight(renderer, type);
   }
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -94,6 +94,20 @@ namespace ospray {
       } 
       textureCache[fileName.str()] = tex;
       return tex;
+    }
+    
+    void Texture2D::render(RenderContext &ctx)
+    {
+      if (ospTexture) return;
+      
+      ospTexture = ospNewTexture2D(size.x,
+                                   size.y,
+                                   texelType,
+                                   texel,
+                                   0);
+      ospCommit(ospTexture);
+      
+      if(!ospTexture) std::cerr << "Warning: Could not create Texture2D\n";
     }
 
   } // ::ospray::sg

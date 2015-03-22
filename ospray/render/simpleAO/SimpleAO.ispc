@@ -230,22 +230,18 @@ export void *uniform SimpleAO_create(void *uniform cppE,
                                          void *uniform _camera)
 {
   uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
-  Renderer_constructor(&self->super,cppE,_model,_camera);
+  Renderer_Constructor(&self->super,cppE,_model,_camera,1);
   self->super.renderSample = SimpleAO_renderSample;
   return self;
 }
 
 export void SimpleAO_set(void *uniform _self,
-                             uniform int samplesPerFrame,
-                             const uniform vec3f &bgColor,
-                             void *uniform _model,
-                             void *uniform _camera)
+                         const uniform vec3f &bgColor,
+                         uniform int samplesPerFrame)
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
   self->bgColor = bgColor;
   self->samplesPerFrame = samplesPerFrame;
-  self->super.model = (uniform Model*)_model;
-  self->super.camera = (uniform Camera*)_camera;
 }
 
 export void SimpleAO_destroy(void *uniform _self)

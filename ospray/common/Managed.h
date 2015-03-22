@@ -198,7 +198,7 @@ namespace ospray {
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
         instance */
-    ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound);
+    ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound=NULL);
 
     Data *getParamData(const char *name, Data *valIfNotFound=NULL)
     { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }

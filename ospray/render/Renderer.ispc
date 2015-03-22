@@ -26,7 +26,7 @@
 #define RENDERTILE_PIXELS_PER_JOB 128
 
 // The layout of this struct must match that of OSPPickData in ospray.h
-void Renderer_default_renderSample(uniform Renderer *uniform renderer,
+void Renderer_default_renderSample(uniform Renderer *uniform self,
                                    varying ScreenSample &sample)
 {
   sample.z = inf;
@@ -37,32 +37,32 @@ void Renderer_default_renderSample(uniform Renderer *uniform renderer,
                                  );
 }
 
-void Renderer_default_beginFrame(uniform Renderer *uniform renderer,
+void Renderer_default_beginFrame(uniform Renderer *uniform self,
                                  uniform FrameBuffer *uniform fb)
 {
-  renderer->fb = fb;
-  if (renderer->camera == NULL)
-    print("warning: ispc-side renderer % does not have a camera\n",renderer);
-  if (renderer->fb == NULL)
-    print("warning: ispc-side renderer % does not have a frame buffer\n",renderer);
+  self->fb = fb;
+  if (self->camera == NULL)
+    print("warning: ispc-side renderer % does not have a camera\n",self);
+  if (self->fb == NULL)
+    print("warning: ispc-side renderer % does not have a frame buffer\n",self);
 }
 
-void Renderer_default_endFrame(uniform Renderer *uniform renderer, 
+void Renderer_default_endFrame(uniform Renderer *uniform self, 
                                const uniform int32 accumID)
 {
-  if (renderer->fb) renderer->fb->accumID = accumID;
-  renderer->fb = NULL;
+  if (self->fb) self->fb->accumID = accumID;
+  self->fb = NULL;
 }
 
-task void Renderer_default_renderTileJob(uniform Renderer *uniform renderer,
+task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
                                          uniform Tile &tile)
 {
-  uniform FrameBuffer *uniform fb     = renderer->fb;
-  uniform Camera      *uniform camera = renderer->camera;
+  uniform FrameBuffer *uniform fb     = self->fb;
+  uniform Camera      *uniform camera = self->camera;
 
   float pixel_du = .5f, pixel_dv = .5f;
   float lens_du = 0.f,  lens_dv = 0.f;
-  uniform int32 spp = renderer->spp;
+  uniform int32 spp = self->spp;
 
   // precomputeZOrder();
 
@@ -98,7 +98,7 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform renderer,
       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
       
       camera->initRay(camera,screenSample.ray,cameraSample);
-      renderer->renderSample(renderer,screenSample);
+      self->renderSample(self,screenSample);
       col = col + screenSample.rgb;
     }
     col = col * (spp_inv);
@@ -141,20 +141,20 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform renderer,
   // }
 }
 
-void Renderer_default_renderTile(uniform Renderer *uniform renderer,
+void Renderer_default_renderTile(uniform Renderer *uniform self,
                                  uniform Tile &tile)
 {
 #if 1
   precomputeZOrder();
   uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
-  launch[numJobs] Renderer_default_renderTileJob(renderer,tile);
+  launch[numJobs] Renderer_default_renderTileJob(self,tile);
 #else
-  uniform FrameBuffer *uniform fb     = renderer->fb;
-  uniform Camera      *uniform camera = renderer->camera;
+  uniform FrameBuffer *uniform fb     = self->fb;
+  uniform Camera      *uniform camera = self->camera;
 
   float pixel_du = .5f, pixel_dv = .5f;
   float lens_du = 0.f,  lens_dv = 0.f;
-  uniform int32 spp = renderer->spp;
+  uniform int32 spp = self->spp;
 
   precomputeZOrder();
 
@@ -189,7 +189,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
       
         camera->initRay(camera,screenSample.ray,cameraSample);
-        renderer->renderSample(renderer,screenSample);
+        self->renderSample(self,screenSample);
         col = col + screenSample.rgb;
       }
       col = col * (spp_inv);
@@ -223,7 +223,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
       camera->initRay(camera,screenSample.ray,cameraSample);
-      renderer->renderSample(renderer,screenSample);
+      self->renderSample(self,screenSample);
 
       // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
 
@@ -237,66 +237,76 @@ void Renderer_default_renderTile(uniform Renderer *uniform renderer,
 #endif
 }
 
-void Renderer_constructor(uniform Renderer *uniform renderer,
+void Renderer_Constructor(uniform Renderer *uniform self,
+                          void *uniform cppE)
+{
+  self->cppEquivalent = cppE;
+  self->model  = NULL;
+  self->camera = NULL;
+  self->fb     = NULL;
+  self->spp    = 1;
+  self->renderSample = Renderer_default_renderSample;
+  self->renderTile   = Renderer_default_renderTile;
+  self->beginFrame   = Renderer_default_beginFrame;
+  self->endFrame     = Renderer_default_endFrame;
+  self->toneMap      = NULL;
+}
+
+void Renderer_Constructor(uniform Renderer *uniform self,
                           void *uniform cppE,
                           void *uniform _model,
-                          void *uniform _camera)
+                          void *uniform _camera,
+                          const uniform int32 spp)
 {
-  renderer->cppEquivalent = cppE;
-  renderer->model  = (uniform Model *uniform)_model;
-  renderer->camera = (uniform Camera *uniform)_camera;
-  renderer->renderSample = Renderer_default_renderSample;
-  renderer->renderTile   = Renderer_default_renderTile;
-  renderer->beginFrame   = Renderer_default_beginFrame;
-  renderer->endFrame     = Renderer_default_endFrame;
-  renderer->toneMap      = NULL;
+  Renderer_Constructor(self, cppE);
+  self->model  = (uniform Model *uniform)_model;
+  self->camera = (uniform Camera *uniform)_camera;
+  self->spp    = spp;
 }
 
-export void Renderer_renderTile(void *uniform _renderer,
+export void Renderer_renderTile(void *uniform _self,
                                 uniform Tile &tile)
 {
-  uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
-  renderer->renderTile(renderer,tile);
-  // renderer->fb->setTile(renderer->fb,tile);
+  uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
+  self->renderTile(self,tile);
 }
 
-export void Renderer_beginFrame(void *uniform _renderer,
+export void Renderer_beginFrame(void *uniform _self,
                                 void *uniform _fb)
 {
-  uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
+  uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   uniform FrameBuffer *uniform fb = (uniform FrameBuffer *uniform)_fb;
-  renderer->beginFrame(renderer,fb);
+  self->beginFrame(self,fb);
 }
 
 
-export void Renderer_endFrame(void *uniform _renderer, const uniform int32 newAccumID)
+export void Renderer_endFrame(void *uniform _self, const uniform int32 newAccumID)
 {
-  uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
-  renderer->endFrame(renderer,newAccumID);
+  uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
+  self->endFrame(self,newAccumID);
 }
 
-export void Renderer_setSPP(void *uniform _renderer, uniform int32 spp)
+export void Renderer_set(void *uniform _self,
+                         void *uniform _model,
+                         void *uniform _camera,
+                         const uniform int32 spp)
 {
-  uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
-  renderer->spp = spp;
+  uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
+  self->model  = (uniform Model *uniform)_model;
+  self->camera = (uniform Camera *uniform)_camera;
+  self->spp = spp;
 }
 
-export void Renderer_setNearClip(void *uniform _renderer, uniform float nearClip)
-{
-  uniform Renderer *uniform renderer = (uniform Renderer *uniform)_renderer;
-  renderer->nearClip = nearClip;
-}
-
-export void Renderer_unproject( void *uniform _renderer,
+export void Renderer_unproject( void *uniform _self,
                                 const uniform vec2f &screenPos,
                                 uniform bool &hit,
                                 uniform float &x,
                                 uniform float &y,
                                 uniform float &z)
 {
-  uniform Renderer    *uniform renderer = (uniform Renderer *uniform)_renderer;
-  uniform Camera      *uniform camera   = renderer->camera;
-  uniform Model       *uniform model    = renderer->model;
+  uniform Renderer    *uniform self = (uniform Renderer *uniform)_self;
+  uniform Camera      *uniform camera   = self->camera;
+  uniform Model       *uniform model    = self->model;
 
   uniform OSPPickData ret;
 

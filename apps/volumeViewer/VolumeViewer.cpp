@@ -18,6 +18,7 @@
 #include "modules/loaders/ObjectFile.h"
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
+#include "IsosurfaceEditor.h"
 #include "LightEditor.h"
 #include "SliceWidget.h"
 #include "PLYGeometryFile.h"
@@ -65,15 +66,16 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
 
-  //! Update transfer function data value range with the voxel range of the first volume.
+  //! Update transfer function and isosurface editor data value range with the voxel range of the first volume.
   if(volumes.size() > 0 && transferFunctionEditor != NULL) {
 
     osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[0], "voxelRange", &voxelRange);
 
     if(voxelRange != osp::vec2f(0.f)) {
 
-      //! Set the values through the transfer function editor widget.
+      //! Set the values through the editor widgets.
       transferFunctionEditor->setDataValueRange(voxelRange);
+      isosurfaceEditor->setDataValueRange(voxelRange);
     }
   }
 
@@ -154,6 +156,28 @@ void VolumeViewer::addGeometry(std::string filename) {
 
   //! Force render.
   render();
+}
+
+void VolumeViewer::screenshot(std::string filename) {
+
+  //! Get filename if not specified.
+  if(filename.empty())
+    filename = QFileDialog::getSaveFileName(this, tr("Save screenshot"), ".", "PNG files (*.png)").toStdString();
+
+  if(filename.empty())
+    return;
+
+  //! Make sure the filename has the proper extension.
+  if(QString(filename.c_str()).endsWith(".png") != true)
+    filename += ".png";
+
+  //! Grab the image.
+  QImage image = osprayWindow->grabFrameBuffer();
+
+  //! Save the screenshot.
+  bool success = image.save(filename.c_str());
+
+  std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
 }
 
 void VolumeViewer::importObjectsFromFile(const std::string &filename) {
@@ -244,6 +268,11 @@ void VolumeViewer::initUserInterfaceWidgets() {
   connect(addGeometryAction, SIGNAL(triggered()), this, SLOT(addGeometry()));
   toolbar->addAction(addGeometryAction);
 
+  //! Add the "screenshot" widget and callback.
+  QAction *screenshotAction = new QAction("Screenshot", this);
+  connect(screenshotAction, SIGNAL(triggered()), this, SLOT(screenshot()));
+  toolbar->addAction(screenshotAction);
+
   //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
   QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
   transferFunctionEditor = new TransferFunctionEditor(transferFunction);
@@ -254,6 +283,13 @@ void VolumeViewer::initUserInterfaceWidgets() {
 
   //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
   transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
+
+  //! Create isosurface editor dock widget.
+  QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurface Editor", this);
+  isosurfaceEditor = new IsosurfaceEditor();
+  isosurfaceEditorDockWidget->setWidget(isosurfaceEditor);
+  connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)), this, SLOT(setIsovalues(std::vector<float>)));
+  addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
 
   //! Create the light editor dock widget, this widget modifies the light directly.
   //! Disable for now pending UI improvements...

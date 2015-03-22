@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -372,7 +372,7 @@ namespace ospray {
       mesh->vertex = new DataVector3f;
       mesh->normal = new DataVector3f;
       mesh->texcoord = new DataVector2f;
-      mesh->triangle =  new DataVector3i;
+      mesh->index =  new DataVector3i;
       mesh->material = curMaterial;
       world->node.push_back(mesh);
 
@@ -392,7 +392,7 @@ namespace ospray {
               continue;
 
             vec3i tri(v0,v1,v2);
-            mesh->triangle.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
+            mesh->index.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
           }
         }
       curGroup.clear();

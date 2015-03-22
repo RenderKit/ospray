@@ -16,28 +16,34 @@
 
 #pragma once
 
-#include "ospray/lights/PointLight.h"
+#include <ospray/ospray.h>
+#include <QtGui>
 
-namespace ospray {
-  namespace obj {
+class IsosurfaceEditor : public QWidget
+{
+Q_OBJECT
 
-    //! OBJ renderer specific implementation of PointLights
-    struct OBJPointLight : public PointLight {
-      OBJPointLight();
-      //! \brief common function to help printf-debugging
-      virtual std::string toString() const { return "ospray::objrenderer::OBJPointLight"; }
+public:
 
-      //! \brief commit the light's parameters
-      virtual void commit();
+  IsosurfaceEditor();
 
-      //! destructor, to clean up
-      virtual ~OBJPointLight();
+signals:
 
-      //Attenuation will be calculated as 1/( constantAttenuation + linearAttenuation * distance + quadraticAttenuation * distance * distance )
-      float constantAttenuation;    //! Constant light attenuation
-      float linearAttenuation;      //! Linear light attenuation
-      float quadraticAttenuation;   //! Quadratic light attenuation
-    };
+  void isovaluesChanged(std::vector<float> values);
 
-  } // ::ospray::obj
-} // ::ospray
+public slots:
+
+  void setDataValueRange(osp::vec2f dataValueRange) { this->dataValueRange = dataValueRange; apply(); };
+
+protected slots:
+
+  void apply();
+
+protected:
+
+  osp::vec2f dataValueRange;
+
+  QCheckBox isovalueCheckBox;
+  QSlider isovalueSlider;
+
+};

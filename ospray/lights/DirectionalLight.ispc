@@ -14,67 +14,68 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "DirectionalLight.ih"
+#include "Light.ih"
+#include "ospray/math/vec.ih"
 
-//!< Construct a new ispc-side DirectionalLight object
-extern void DirectionalLight_Constructor( uniform DirectionalLight *uniform THIS,
-                                          void *uniform cppEquivalent,
-                                          const uniform vec3f &color,
-                                          const uniform vec3f &direction)
-{
-  Light_Constructor(&THIS->base, cppEquivalent);
-  THIS->color = color;
-  THIS->direction = direction;
-  THIS->base.computeRadiance = DirectionalLight_computeRadiance;
-}
+struct DirectionalLight {
+  uniform Light super;      //!< inherited light fields
 
-//!< Destroy an ispc-side DirectionLight object
-extern void DirectionalLight_Destructor(uniform DirectionalLight *uniform THIS)
-{
-  Light_Destructor(&THIS->base);
-}
+  uniform vec3f direction;  //!< direction of emitted light rays
+  uniform vec3f radiance;   //!< RGB color and intensity of light
+};
 
-//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-varying vec3f DirectionalLight_computeRadiance(void *uniform pointer, 
+
+// Implementation
+//////////////////////////////////////////////////////////////////////////////
+
+varying vec3f DirectionalLight_computeRadiance(const uniform Light *uniform _self,
                                                const varying vec3f &coordinates, 
                                                varying vec3f &direction, 
                                                varying float &distance) 
 {
-  //! Cast to the actual Light subtype.
-  const DirectionalLight *uniform light = (DirectionalLight *uniform) pointer;
+  const DirectionalLight *uniform self = (DirectionalLight *uniform)_self;
 
-  //! Normalized light vector.
-  direction = negate(light->direction);
-
-  //! Distance from the hit point to the sample point on the light.
+  direction = neg(self->direction);
   distance = inf;
 
-  //! Radiance.
-  return(light->color);
-
+  return self->radiance;
 }
 
-//!< Create an ispc_side DirectionalLight object (called from c++)
+void DirectionalLight_Constructor(uniform DirectionalLight *uniform self,
+                                  void *uniform cppEquivalent,
+                                  const uniform vec3f &direction,
+                                  const uniform vec3f &radiance)
+{
+  Light_Constructor(&self->super, cppEquivalent);
+  self->direction = direction;
+  self->radiance = radiance;
+  self->super.computeRadiance = DirectionalLight_computeRadiance;
+}
+
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
+
+//! Create an ispc-side DirectionalLight object
 export void *uniform DirectionalLight_create(void *uniform cppEquivalent)
 {
-  uniform DirectionalLight *uniform light = uniform new uniform DirectionalLight;
-  DirectionalLight_Constructor(light, cppEquivalent, make_vec3f(1.f, 1.f, 1.f), make_vec3f(0.f, -1.f, 0.f));
-  return light;
+  uniform DirectionalLight *uniform self = uniform new uniform DirectionalLight;
+  DirectionalLight_Constructor(self, cppEquivalent, make_vec3f(0.f, 0.f, 1.f), make_vec3f(1.f));
+  return self;
 }
 
-//!< Destroy an ispc-side DirectionalLIght object (called from c++)
-export void DirectionalLight_destroy(void *uniform _light) {
-  uniform DirectionalLight *uniform light = uniform new uniform DirectionalLight;
-  DirectionalLight_Destructor(light);
-  delete light;
-}
-
-//!< Set the parameters of an ispc-side DirectionalLight object (called from c++ side)
-export void DirectionalLight_set( void *uniform _light,
-                                  const uniform vec3f &color,
-                                  const uniform vec3f &direction)
+//! Destroy an ispc-side DirectionalLIght object
+export void DirectionalLight_destroy(void *uniform self)
 {
-  uniform DirectionalLight *uniform light = (uniform DirectionalLight *uniform)_light;
-  light->color = color;
-  light->direction = direction;
+  delete self;
+}
+
+//! Set the parameters of an ispc-side DirectionalLight object
+export void DirectionalLight_set(void *uniform _self,
+                                 const uniform vec3f &direction,
+                                 const uniform vec3f &radiance)
+{
+  uniform DirectionalLight *uniform self = (uniform DirectionalLight *uniform)_self;
+  self->direction = direction;
+  self->radiance = radiance;
 }

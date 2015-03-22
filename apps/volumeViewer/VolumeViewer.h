@@ -22,6 +22,7 @@
 #include <vector>
 
 class TransferFunctionEditor;
+class IsosurfaceEditor;
 
 class VolumeViewer : public QMainWindow {
 
@@ -67,15 +68,32 @@ public slots:
   //! Add geometry from file.
   void addGeometry(std::string filename = std::string());
 
+  //! Save screenshot.
+  void screenshot(std::string filename = std::string());
+
   //! Re-commit all OSPRay volumes.
   void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
 
   //! Force the OSPRay window to be redrawn.
   void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
 
+  //! Set gradient shading flag on all volumes.
+  void setGradientShadingEnabled(bool value) {
+    for(size_t i=0; i<volumes.size(); i++) { ospSet1i(volumes[i], "gradientShadingEnabled", value); ospCommit(volumes[i]); }
+    render();
+  }
+
   //! Set sampling rate on all volumes.
   void setSamplingRate(double value) {
     for(size_t i=0; i<volumes.size(); i++) { ospSet1f(volumes[i], "samplingRate", value); ospCommit(volumes[i]); }
+    render();
+  }
+
+  //! Set isosurface on all volumes; for now only one isovalue supported.
+  void setIsovalues(std::vector<float> isovalues) {
+    if(isovalues.size() > 0) std::cout << "setting isovalue: " << isovalues[0] << std::endl;
+    OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
+    for(size_t i=0; i<volumes.size(); i++) { ospSetData(volumes[i], "isovalues", isovaluesData); ospCommit(volumes[i]); }
     render();
   }
 
@@ -107,6 +125,9 @@ protected:
 
   //! The transfer function editor.
   TransferFunctionEditor *transferFunctionEditor;
+
+  //! The isosurface editor.
+  IsosurfaceEditor *isosurfaceEditor;
 
   //! Layout for slice widgets.
   QVBoxLayout sliceWidgetsLayout;

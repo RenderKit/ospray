@@ -178,30 +178,33 @@ extern "C" {
   //! assign given material to given geometry
   void ospSetMaterial(OSPGeometry geometry, OSPMaterial material);
 
-  //! create a new camera of given type 
-  /*! return 'NULL' if that type is not known */
-  /*! The default camera type supported in all ospray versions is
-      "perspective" (\ref perspective_camera).  For a list of
-      supported camera type in this version of ospray, see \ref
-      ospray_supported_cameras */
+  //! \brief create a new camera of given type 
+  /*! \detailed The default camera type supported in all ospray
+    versions is "perspective" (\ref perspective_camera).  For a list
+    of supported camera type in this version of ospray, see \ref
+    ospray_supported_cameras
+    
+    \returns 'NULL' if that type is not known, else a handle to the created camera
+  */
   OSPCamera ospNewCamera(const char *type);
 
-  //! create a new volume of given type 
-  /*! return 'NULL' if that type is not known */
+  //! \brief create a new volume of given type 
+  /*! \detailed return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
 
   //! add a volume to an existing model
   void ospAddVolume(OSPModel model, OSPVolume volume);
 
-  //! create a new transfer function of given type
-  /*! return 'NULL' if that type is not known */
+  //! \brief create a new transfer function of given type
+  /*! \detailed return 'NULL' if that type is not known */
   OSPTransferFunction ospNewTransferFunction(const char * type);
   
-  //! create a new Texture2D with the given parameters
-  /*! return 'NULL' if the texture could not be created with the given parameters */
+  //! \brief create a new Texture2D with the given parameters
+  /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
   OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
 
-  /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+  //! \brief lears the specified channel(s) of the frame buffer
+  /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
     if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
     if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf

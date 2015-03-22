@@ -217,16 +217,16 @@ namespace ospray {
       switch(key) {
       case GLUT_KEY_PAGE_UP:
         g_near_clip += 10.f * motionSpeed;
-        ospSet1f(renderer, "near_clip", g_near_clip);
-        ospCommit(renderer);
+        ospSet1f(camera, "near_clip", g_near_clip);
+        ospCommit(camera);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
       case GLUT_KEY_PAGE_DOWN:
         g_near_clip -= 10.f * motionSpeed;
         g_near_clip = std::max(g_near_clip, 1e-6f);
-        ospSet1f(renderer, "near_clip", g_near_clip);
-        ospCommit(renderer);
+        ospSet1f(camera, "near_clip", g_near_clip);
+        ospCommit(camera);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
@@ -779,38 +779,31 @@ namespace ospray {
 
     //TODO: Need to figure out where we're going to read lighting data from
     //begin light test
-    std::vector<OSPLight> dirLights;
-    cout << "msgView: Adding a hard coded directional light as the sun." << endl;
+    std::vector<OSPLight> lights;
     if (defaultDirLight_direction != vec3f(0.f)) {
+      cout << "msgView: Adding a hard coded directional light as the sun." << endl;
       OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
       ospSetString(ospLight, "name", "sun" );
       ospSet3f(ospLight, "color", 1, 1, 1);
       ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
       ospCommit(ospLight);
-      dirLights.push_back(ospLight);
-      OSPData dirLightArray = ospNewData(dirLights.size(), OSP_OBJECT, &dirLights[0], 0);
-      ospSetData(ospRenderer, "directionalLights", dirLightArray);
+      lights.push_back(ospLight);
     }
 #if 0
     //spot light
-    std::vector<OSPLight> spotLights;
     cout << "msgView: Adding a hard coded spotlight for test." << endl;
-    OSPLight ospSpot = ospNewLight(ospRenderer, "OBJ_SpotLight");
+    OSPLight ospSpot = ospNewLight(ospRenderer, "SpotLight");
     ospSetString(ospSpot, "name", "spot_test");
     ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
     ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
     ospSet3f(ospSpot, "color", 1.f, 1.f, 1.f);
-    ospSet1f(ospSpot, "range", 1000.f);
+    ospSet1f(ospSpot, "intensity", 7.f);
     ospSet1f(ospSpot, "halfAngle", 15.f);
-    ospSet1f(ospSpot, "angularDropOff", 6.f);//Unused, delete?
-    ospSet1f(ospSpot, "attenuation.constant", .15f);
-    ospSet1f(ospSpot, "attenuation.linear", .15f);
-    ospSet1f(ospSpot, "attenuation.quadratic", .15f);
     ospCommit(ospSpot);
-    spotLights.push_back(ospSpot);
-    OSPData spotLightArray = ospNewData(spotLights.size(), OSP_OBJECT, &spotLights[0], 0);
-    ospSetData(ospRenderer, "spotLights", spotLightArray);
+    lights.push_back(ospSpot);
 #endif
+    OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
+    ospSetData(ospRenderer, "lights", lightArray);
     //end light test
     ospCommit(ospRenderer);
 

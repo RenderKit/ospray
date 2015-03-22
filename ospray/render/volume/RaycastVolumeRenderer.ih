@@ -32,7 +32,7 @@ struct RaycastVolumeRenderer {
   //! Variables and functions common to all Renderer subtypes (must be the first field of the struct).
   Renderer inherited;
 
-  //! Renderer state.
+  //! Renderer state. TODO: camera&model already in inherited!
   Camera *uniform camera;  Light **uniform lights;  Model *uniform model;  Model *uniform dynamicModel;
 
 };

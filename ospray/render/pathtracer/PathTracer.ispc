@@ -177,16 +177,8 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         /* Either use precomputed samples for the light or sample light now. */
         PTLightSample ls;
         ls.wi.v = make_vec3f(0.0f,0.0f,0.0f); ls.wi.pdf = 0.0f;
-#if 0
-        // iw: turned off precomputed, not yet working
-        if (light->type & TY_PRECOMPUTE_LIGHT_SAMPLES) {
-          ls = PrecomputedSample__getPTLightSample(sample_,THIS->precomputedPTLightSampleID[i]);
-        }
-        else 
-#endif
-          {
-          ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
-        }
+
+        ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
 
         /* Ignore zero radiance or illumination from the back. */
         //if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING | dot(dg.Ns,ls.wi.v) <= 1e-8f) 
@@ -261,17 +253,10 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
 }
 
 
-export void PathTracer_setCamera(void *uniform _THIS, void *uniform _camera)
+export void PathTracer_setModel(void *uniform _THIS)
 {
   uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
-  THIS->inherited.camera = (uniform Camera*)_camera;
-}
-
-export void PathTracer_setModel(void *uniform _THIS, void *uniform _model)
-{
-  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
-  THIS->scene->model = (uniform Model*)_model;
-  THIS->inherited.model = (uniform Model*)_model;
+  THIS->scene->model = THIS->inherited.model;
 }
 
 uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L);
@@ -438,7 +423,7 @@ void PathTracer__Constructor(void *uniform cppE,
                              const uniform float& epsilon,
                              uniform Image* uniform backplate)
 {
-  Renderer_constructor(&THIS->inherited,cppE,NULL,NULL);
+  Renderer_Constructor(&THIS->inherited,cppE);
   THIS->inherited.renderTile   = PathTracer_renderTile;
   THIS->inherited.beginFrame   = PathTracer_beginFrame;
 
@@ -449,6 +434,9 @@ void PathTracer__Constructor(void *uniform cppE,
   THIS->backplate = backplate;
 }
 
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
 
 export void* uniform PathTracer_create(void *uniform cppE,
                                        const uniform int32& maxDepth, 

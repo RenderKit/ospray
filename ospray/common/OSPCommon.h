@@ -48,6 +48,7 @@ namespace ospray {
   using embree::one;
   using embree::empty;
   using embree::zero;
+  using embree::inf;
 
   /*! basic types */
   typedef ::int64_t int64;

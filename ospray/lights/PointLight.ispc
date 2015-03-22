@@ -14,72 +14,81 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "PointLight.ih"
+#include "Light.ih"
+#include "ospray/math/vec.ih"
 
-//! Construct an ispc-side PointLight object
-void PointLight_Constructor( uniform PointLight *uniform THIS,
-                             void *uniform cppEquivalent,
-                             const uniform vec3f &position,
-                             const uniform vec3f &color,
-                             const uniform float range)
+struct PointLight {
+  uniform Light super;    //!< inherited light fields
+
+  uniform vec3f position; //!< light position
+  uniform vec3f power;    //!< RGB color and intensity of light
+  uniform float range;    //!< maximum range at which the light will have an effect
+};
+
+
+// Implementation
+//////////////////////////////////////////////////////////////////////////////
+
+varying vec3f PointLight_computeRadiance(const uniform Light *uniform _self,
+                                         const varying vec3f &coordinates,
+                                         varying vec3f &direction,
+                                         varying float &distance)
 {
-  Light_Constructor(&THIS->base, cppEquivalent);
-  THIS->position = position;
-  THIS->color = color;
-  THIS->range = range;
-  THIS->base.computeRadiance = PointLight_computeRadiance;
-}
+    const PointLight *uniform self = (PointLight *uniform)_self;
 
-//! Destroy an ispc-side PointLight object and its base object
-void PointLight_Destructor(uniform PointLight *uniform THIS)
-{
-  Light_Destructor(&THIS->base);
-}
+    // extant light vector from the hit point
+    const vec3f L = self->position - coordinates;
 
-//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-varying vec3f PointLight_computeRadiance(void *uniform pointer, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance) {
-
-    //! Cast to the actual Light subtype.
-    const PointLight *uniform light = (PointLight *uniform) pointer;
-
-    //! Extant light vector from the hit point.
-    const vec3f L = light->position - coordinates;
-
-    //! Distance from the hit point to the sample point on the light.
     distance = length(L);
 
-    //! Normalized light vector.
+    // normalize light vector
     direction = L / distance;
 
-    //! Radiance attenutated by distance.
-    return(light->color / (distance * distance));
+    // TODO: account for range?
 
+    // convert from power to radiance by attenuting by distance^2
+    return self->power / (distance * distance);
 }
 
-//! Create an ispc-side PointLight object (called from c++ side)
+void PointLight_Constructor(uniform PointLight *uniform self,
+                            void *uniform cppEquivalent,
+                            const uniform vec3f &position,
+                            const uniform vec3f &power,
+                            const uniform float range)
+{
+  Light_Constructor(&self->super, cppEquivalent);
+  self->position = position;
+  self->power    = power;
+  self->range    = range;
+  self->super.computeRadiance = PointLight_computeRadiance;
+}
+
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
+
+//! Create an ispc-side PointLight object
 export void *uniform PointLight_create(void *uniform cppEquivalent)
 {
-  uniform PointLight *uniform light = uniform new uniform PointLight;
-  PointLight_Constructor(light, cppEquivalent, make_vec3f(0.f, 0.f, 0.f), make_vec3f(1.f, 1.f, 1.f), -1.f);
-  return light;
+  uniform PointLight *uniform self = uniform new uniform PointLight;
+  PointLight_Constructor(self, cppEquivalent, make_vec3f(0.f), make_vec3f(1.f), inf);
+  return self;
 }
 
-//! Destroy an ispc-side PointLight object (called from c++ side)
-export void PointLight_destroy(void *uniform _light)
+//! Destroy an ispc-side PointLight object
+export void PointLight_destroy(void *uniform self)
 {
-  uniform PointLight *uniform light = (uniform PointLight *uniform)_light;
-  PointLight_Destructor(light);
-  delete light;
+  delete self;
 }
 
-//! Set the parameters of an ispc-side PointLight object (called from c++ side)
-export void PointLight_set(void *uniform _light,
+//! Set the parameters of an ispc-side PointLight object
+export void PointLight_set(void *uniform _self,
                            const uniform vec3f &position,
-                           const uniform vec3f &color,
+                           const uniform vec3f &power,
                            const uniform float range)
 {
-  uniform PointLight *uniform light = (uniform PointLight *uniform)_light;
-  light->position = position;
-  light->color = color;
-  light->range = range;
+  uniform PointLight *uniform self = (uniform PointLight *uniform)_self;
+  self->position = position;
+  self->power = power;
+  self->range = range;
 }

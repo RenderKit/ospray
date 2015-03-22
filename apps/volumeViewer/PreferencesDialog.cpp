@@ -24,6 +24,11 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volum
   QFormLayout *formLayout = new QFormLayout();
   setLayout(formLayout);
 
+  // gradient shading flag
+  QCheckBox *gradientShadingEnabledCheckBox = new QCheckBox();
+  connect(gradientShadingEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setGradientShadingEnabled(bool)));
+  formLayout->addRow("Volume gradient shading", gradientShadingEnabledCheckBox);
+
   // sampling rate selection
   QDoubleSpinBox *samplingRateSpinBox = new QDoubleSpinBox();
   samplingRateSpinBox->setDecimals(3);
@@ -32,6 +37,7 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volum
   connect(samplingRateSpinBox, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setSamplingRate(double)));
   formLayout->addRow("Sampling rate", samplingRateSpinBox);
 
-  // set default value. this will trigger signal / slot executions.
+  // set default values. this will trigger signal / slot executions.
+  gradientShadingEnabledCheckBox->setChecked(false);
   samplingRateSpinBox->setValue(0.125);
 }

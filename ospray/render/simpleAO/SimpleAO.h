@@ -98,15 +98,8 @@ namespace ospray {
     /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
     virtual void commit();
 
-    // -------------------------------------------------------
-    // member variables 
-    // -------------------------------------------------------
-
-    Model  *model;
-    Camera *camera;
     //! the background color we are going to use if the primary ray didn't hit anything
     vec3f bgColor; 
-
   };
 
 } // ::ospray

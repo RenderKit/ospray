@@ -30,6 +30,15 @@ struct Volume {
   //! Gamma correction coefficient and exponent.
   uniform vec2f gammaCorrection;
 
+  //! Allow the renderer to perform gradient shading.
+  uniform bool gradientShadingEnabled;
+
+  //! Number of isovalues.
+  uniform int numIsovalues;
+
+  //! Isovalues.
+  uniform float *uniform isovalues;
+
   //! Recommended sampling rate for the renderer.
   uniform float samplingRate;
 
@@ -54,6 +63,8 @@ struct Volume {
   //! Find the next hit point in the volume for ray casting based renderers.
   void (*uniform intersect)(void *uniform volume, varying Ray &ray);
 
+  //! Find the next isosurface hit point in the volume for ray casting based renderers.
+  void (*uniform intersectIsosurface)(void *uniform volume, const uniform float isovalue, varying Ray &ray);
 };
 
 
