@@ -206,14 +206,8 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
 void OBJRenderer_renderSample(uniform Renderer *uniform _self,
                                varying ScreenSample &sample)
 {
-<<<<<<< HEAD
-  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  sample.z = 1e20f;
-  sample.rgb = OBJRenderer_shadeRay(sample,renderer);
-=======
   uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
   sample.rgb = OBJRenderer_shadeRay(self, sample);
->>>>>>> devel
 }
 
 
