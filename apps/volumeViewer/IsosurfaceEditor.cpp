@@ -31,22 +31,62 @@ IsosurfaceEditor::IsosurfaceEditor()
 
   layout->addWidget(&isovalueSlider);
 
+  //! Isovalue spin box.
+  isovalueSpinBox.setDecimals(6);
+  isovalueSpinBox.setValue(0.5f);
+  layout->addWidget(&isovalueSpinBox);
+
   //! Connect signals and slots.
   connect(&isovalueCheckBox, SIGNAL(toggled(bool)), this, SLOT(apply()));
   connect(&isovalueSlider, SIGNAL(valueChanged(int)), this, SLOT(apply()));
+  connect(&isovalueSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
 
   //! Apply with default values.
   apply();
 }
 
+void IsosurfaceEditor::setDataValueRange(osp::vec2f dataValueRange)
+{
+  this->dataValueRange = dataValueRange;
+
+  //! Update widget ranges.
+  isovalueSpinBox.setRange(dataValueRange.x, dataValueRange.y);
+
+  //! Get isovalue based on slider.
+  float sliderPosition = float(isovalueSlider.value()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
+  float isovalue = dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x);
+
+  //! Update spin box value.
+  isovalueSpinBox.setValue(isovalue);
+
+  apply();
+}
+
 void IsosurfaceEditor::apply()
 {
+  if(sender() == &isovalueSlider) {
+    float sliderPosition = float(isovalueSlider.value()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
+    float isovalue = dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x);
+
+    isovalueSpinBox.blockSignals(true);
+    isovalueSpinBox.setValue(isovalue);
+    isovalueSpinBox.blockSignals(false);
+  }
+  else if(sender() == &isovalueSpinBox) {
+    float isovalue = isovalueSpinBox.value();
+
+    float sliderPosition = float(isovalueSlider.minimum()) + (isovalue - dataValueRange.x) / (dataValueRange.y - dataValueRange.x) * (isovalueSlider.maximum() - isovalueSlider.minimum());
+
+    isovalueSlider.blockSignals(true);
+    isovalueSlider.setValue(int(sliderPosition));
+    isovalueSlider.blockSignals(false);
+  }
+
+  //! Eventually we'll provide multiple isovalues.
   std::vector<float> isovalues;
 
-  if(isovalueCheckBox.isChecked()) {
-    float sliderPosition = float(isovalueSlider.value()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
-    isovalues.push_back(dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x));
-  }
+  if(isovalueCheckBox.isChecked())
+    isovalues.push_back(isovalueSpinBox.value());
 
   emit(isovaluesChanged(isovalues));
 }
