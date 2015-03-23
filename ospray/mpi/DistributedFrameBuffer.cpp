@@ -43,6 +43,45 @@ namespace ospray {
     : TileDesc(dfb,begin,tileID,ownerID) 
   {}
   
+
+  /*! called exactly once at the beginning of each frame */
+  void DFB::AlphaBlendTile_simple::newFrame()
+  {
+    //    PING;
+    assert(bufferedTile.emtpy());
+  }
+  
+  void computeSortOrder(DFB::AlphaBlendTile_simple::BufferedTile *t)
+  {
+    float z = t->z[0];
+    for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
+      z = std::min(z,t->z[i]);
+    t->sortOrder = z;
+  }
+
+  inline bool compareBufferedTiles(const DFB::AlphaBlendTile_simple::BufferedTile *a,
+                                   const DFB::AlphaBlendTile_simple::BufferedTile *b)
+  { return a->sortOrder < b->sortOrder; }
+  
+  /*! called exactly once for each ospray::Tile that needs to get
+    written into / composited into this dfb tile */
+  void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
+  {
+    BufferedTile *addTile = new BufferedTile;
+    memcpy(addTile,&tile,sizeof(tile));
+    computeSortOrder(addTile);
+    bufferedTile.push_back(addTile);
+
+    if (bufferedTile.size() == dfb->comm->numWorkers()) {
+      printf("starting to composite tile %i,%i\n",tile.region.lower.x,tile.region.lower.y);
+      qsort(&bufferedTile[0],bufferedTile.size(),sizeof(bufferedTile[0]),
+            (int(*)(const void*,const void*))compareBufferedTiles);
+      for (int i=0;i<bufferedTile.size();i++)
+        PRINT(bufferedTile[i]->sortOrder);
+    }
+  }
+
+
   /*! called exactly once at the beginning of each frame */
   void DFB::WriteOnlyOnceTile::newFrame()
   { 
@@ -160,7 +199,11 @@ namespace ospray {
         size_t ownerID = tileID % (comm->group->size-1);
         if (clientRank(ownerID) == comm->group->rank) {
 #if MPI_IMAGE_COMPOSITING
+# if MPI_ALPHA_BLENDING
+          TileData *td = new AlphaBlendTile_simple(this,vec2i(x,y),tileID,ownerID);
+# else
           TileData *td = new ZCompositeTile(this,vec2i(x,y),tileID,ownerID);
+# endif
 #else
           TileData *td = new WriteOnlyOnceTile(this,vec2i(x,y),tileID,ownerID);
 #endif

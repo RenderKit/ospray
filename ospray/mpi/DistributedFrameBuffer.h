@@ -182,17 +182,29 @@ namespace ospray {
         ospray::Tile's until all input tiles are available, then sorts
         them by closest z component per tile, and only tthen does
         front-to-back compositing of those tiles */
-    struct AlphaBlendTile_Simple : public TileData {
+    struct AlphaBlendTile_simple : public TileData {
+
+      /*! constructor */
+      AlphaBlendTile_simple(DistributedFrameBuffer *dfb, 
+                     const vec2i &begin, 
+                     size_t tileID, 
+                     size_t ownerID)
+        : TileData(dfb,begin,tileID,ownerID) 
+      {}
 
       /*! called exactly once at the beginning of each frame */
-      virtual void newFrame() = 0;
+      virtual void newFrame();
 
       /*! called exactly once for each ospray::Tile that needs to get
           written into / composited into this dfb tile */
-      virtual void process(const ospray::Tile &tile) = 0;
+      virtual void process(const ospray::Tile &tile);
 
       struct BufferedTile : public ospray::Tile {
-        float closest_z;
+        /*! determines order of this tile relative to other tiles.
+
+          Tiles will get blended with the 'over' operator in
+          increasing 'BufferedTile::sortOrder' value */
+        float sortOrder;
       };
       std::vector<BufferedTile *> bufferedTile;
     };
