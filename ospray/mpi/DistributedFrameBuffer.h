@@ -199,7 +199,9 @@ namespace ospray {
           written into / composited into this dfb tile */
       virtual void process(const ospray::Tile &tile);
 
-      struct BufferedTile : public ospray::Tile {
+      struct BufferedTile {
+        ospray::Tile tile;
+
         /*! determines order of this tile relative to other tiles.
 
           Tiles will get blended with the 'over' operator in
@@ -207,6 +209,7 @@ namespace ospray {
         float sortOrder;
       };
       std::vector<BufferedTile *> bufferedTile;
+      Mutex mutex;
     };
     
     /*! this function gets called whenever one of our tiles is done

@@ -98,12 +98,12 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
   uniform int depth = 0;
   bool depthGotSet = 0;
 
+  sample.z = infinity;
   while (1) {
     traceRay(self->super.model,ray);
 
     if (ray.geomID < 0) {
       color = color + path_opacity * self->bgColor;
-      sample.z = 0;
       return color;
     }
 

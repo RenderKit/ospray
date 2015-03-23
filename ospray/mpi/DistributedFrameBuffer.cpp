@@ -53,32 +53,68 @@ namespace ospray {
   
   void computeSortOrder(DFB::AlphaBlendTile_simple::BufferedTile *t)
   {
-    float z = t->z[0];
-    for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
-      z = std::min(z,t->z[i]);
+    float z = std::numeric_limits<float>::infinity();
+    for (int iy=0;iy<t->tile.region.upper.y-t->tile.region.lower.y;iy++)
+      for (int ix=0;ix<t->tile.region.upper.x-t->tile.region.lower.x;ix++)
+        z = std::min(z,t->tile.z[ix+TILE_SIZE*iy]);
     t->sortOrder = z;
   }
 
-  inline bool compareBufferedTiles(const DFB::AlphaBlendTile_simple::BufferedTile *a,
-                                   const DFB::AlphaBlendTile_simple::BufferedTile *b)
-  { return a->sortOrder < b->sortOrder; }
+  inline int compareBufferedTiles(const void *_a,
+                                  const void *_b)
+  { 
+    const DFB::AlphaBlendTile_simple::BufferedTile *a = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_a;
+    const DFB::AlphaBlendTile_simple::BufferedTile *b = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_b;
+    if (a->sortOrder == b->sortOrder) return 0;
+    return a->sortOrder > b->sortOrder ? +1 : -1; 
+  }
+  
+  Mutex gMutex;
   
   /*! called exactly once for each ospray::Tile that needs to get
     written into / composited into this dfb tile */
   void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
   {
     BufferedTile *addTile = new BufferedTile;
-    memcpy(addTile,&tile,sizeof(tile));
+    memcpy(&addTile->tile,&tile,sizeof(tile));
     computeSortOrder(addTile);
+    
+    this->final.region = tile.region;
+    this->final.fbSize = tile.fbSize;
+    this->final.rcp_fbSize = tile.rcp_fbSize;
+    
+    mutex.lock();
     bufferedTile.push_back(addTile);
-
-    if (bufferedTile.size() == dfb->comm->numWorkers()) {
-      printf("starting to composite tile %i,%i\n",tile.region.lower.x,tile.region.lower.y);
+    int size = bufferedTile.size();
+    
+    if (size == dfb->comm->numWorkers()) {
+      // printf("starting to composite tile %i,%i\n",tile.region.lower.x,tile.region.lower.y);
       qsort(&bufferedTile[0],bufferedTile.size(),sizeof(bufferedTile[0]),
-            (int(*)(const void*,const void*))compareBufferedTiles);
+            compareBufferedTiles);
+      gMutex.lock();
       for (int i=0;i<bufferedTile.size();i++)
-        PRINT(bufferedTile[i]->sortOrder);
+        printf(" > %f",bufferedTile[i]->sortOrder);
+      printf("\n");
+      gMutex.unlock();
+      // for (int i=0;i<bufferedTile.size();i++)
+      //   PRINT(bufferedTile[i]->sortOrder);
+
+
+      this->final.region = tile.region;
+      this->final.fbSize = tile.fbSize;
+      this->final.rcp_fbSize = tile.rcp_fbSize;
+      ispc::DFB_accumulate((ispc::VaryingTile *)&bufferedTile[0]->tile,
+                           (ispc::VaryingTile*)&this->final,
+                           (ispc::VaryingTile*)&this->accum,
+                           (ispc::VaryingRGBA_I8*)&this->color,
+                           dfb->hasAccumBuffer,dfb->accumID);
+      dfb->tileIsCompleted(this);
+
+      for (int i=0;i<bufferedTile.size();i++)
+        delete bufferedTile[i];
+      bufferedTile.clear();
     }
+    mutex.unlock();
   }
 
 
