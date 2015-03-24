@@ -81,12 +81,17 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 
   //! Widget containing all opacity-related widgets.
   QWidget * opacityGroup = new QWidget();
-  hboxLayout = new QHBoxLayout();
-  opacityGroup->setLayout(hboxLayout);
+  QGridLayout * gridLayout = new QGridLayout();
+  opacityGroup->setLayout(gridLayout);
+
+  //! Vertical axis label.
+  QLabel * verticalAxisLabel = new QLabel("O\np\na\nc\ni\nt\ny");
+  verticalAxisLabel->setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
+  gridLayout->addWidget(verticalAxisLabel, 0, 0);
 
   //! Opacity values widget.
   connect(&opacityValuesWidget, SIGNAL(updated()), this, SLOT(updateOpacityValues()));
-  hboxLayout->addWidget(&opacityValuesWidget);
+  gridLayout->addWidget(&opacityValuesWidget, 0, 1);
 
   //! Opacity scaling slider, defaults to median value in range.
   opacityScalingSlider.setValue(int(0.5f * (opacityScalingSlider.minimum() + opacityScalingSlider.maximum())));
@@ -94,7 +99,12 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 
   connect(&opacityScalingSlider, SIGNAL(valueChanged(int)), this, SLOT(updateOpacityValues()));
 
-  hboxLayout->addWidget(&opacityScalingSlider);
+  gridLayout->addWidget(&opacityScalingSlider, 0, 2);
+
+  //! Horizontal axis label.
+  QLabel * horizontalAxisLabel = new QLabel("Data value");
+  horizontalAxisLabel->setAlignment(Qt::AlignHCenter);
+  gridLayout->addWidget(horizontalAxisLabel, 1, 1);
 
   layout->addWidget(opacityGroup);
 
