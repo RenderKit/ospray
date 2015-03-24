@@ -89,6 +89,16 @@ public slots:
     render();
   }
 
+  //! Set volume clipping box on all volumes.
+  void setVolumeClippingBox(osp::box3f value) {
+    for(size_t i=0; i<volumes.size(); i++) {
+      ospSet3fv(volumes[i], "volumeClippingBoxLower", &value.lower.x);
+      ospSet3fv(volumes[i], "volumeClippingBoxUpper", &value.upper.x);
+      ospCommit(volumes[i]);
+    }
+    render();
+  }
+
   //! Set isosurface on all volumes; for now only one isovalue supported.
   void setIsovalues(std::vector<float> isovalues) {
     if(isovalues.size() > 0) std::cout << "setting isovalue: " << isovalues[0] << std::endl;

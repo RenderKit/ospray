@@ -51,6 +51,9 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
   QWidget * formWidget = new QWidget();
   QFormLayout * formLayout = new QFormLayout();
   formWidget->setLayout(formLayout);
+  QMargins margins = formLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  formLayout->setContentsMargins(margins);
   layout->addWidget(formWidget);
 
   //! Color map choice.

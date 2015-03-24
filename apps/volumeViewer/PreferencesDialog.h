@@ -17,13 +17,25 @@
 #pragma once
 
 #include <QtGui>
+#include <vector>
 
 class VolumeViewer;
 
 class PreferencesDialog : public QDialog
 {
+Q_OBJECT
+
 public:
 
   PreferencesDialog(VolumeViewer *volumeViewer);
 
+protected slots:
+
+  void updateVolumeClippingBox();
+
+protected:
+
+  VolumeViewer *volumeViewer;
+
+  std::vector<QDoubleSpinBox *> volumeClippingBoxSpinBoxes;
 };

@@ -19,6 +19,7 @@
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/transferFunction/TransferFunction.ih"
+#include "ospray/math/bbox.ih"
 
 //! \brief Variables and methods common to all subtypes of the Volume
 //!  class, an abstraction for the concrete object which performs the
@@ -44,6 +45,9 @@ struct Volume {
 
   //! Color and opacity transfer function.
   TransferFunction *uniform transferFunction;
+
+  //! Clipping box for the volume (applies to volume rendering only).
+  uniform box3f volumeClippingBox;
 
   //! The largest floating point value still inside the volume.
   uniform vec3f upperBound;

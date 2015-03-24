@@ -17,7 +17,7 @@
 #include "PreferencesDialog.h"
 #include "VolumeViewer.h"
 
-PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volumeViewer)
+PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volumeViewer), volumeViewer(volumeViewer)
 {
   setWindowTitle("Preferences");
 
@@ -37,7 +37,51 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volum
   connect(samplingRateSpinBox, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setSamplingRate(double)));
   formLayout->addRow("Sampling rate", samplingRateSpinBox);
 
+  // volume clipping box
+  for(size_t i=0; i<6; i++) {
+    volumeClippingBoxSpinBoxes.push_back(new QDoubleSpinBox());
+
+    volumeClippingBoxSpinBoxes[i]->setDecimals(3);
+    volumeClippingBoxSpinBoxes[i]->setRange(0.0, 1.0);
+    volumeClippingBoxSpinBoxes[i]->setSingleStep(0.01);
+
+    if(i < 3)
+      volumeClippingBoxSpinBoxes[i]->setValue(0.);
+    else
+      volumeClippingBoxSpinBoxes[i]->setValue(1.);
+
+    connect(volumeClippingBoxSpinBoxes[i], SIGNAL(valueChanged(double)), this, SLOT(updateVolumeClippingBox()));
+  }
+
+  QWidget *volumeClippingBoxLowerWidget = new QWidget();
+  QHBoxLayout *hBoxLayout = new QHBoxLayout();
+  volumeClippingBoxLowerWidget->setLayout(hBoxLayout);
+
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[0]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[1]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[2]);
+
+  formLayout->addRow("Volume clipping box: lower", volumeClippingBoxLowerWidget);
+
+  QWidget *volumeClippingBoxUpperWidget = new QWidget();
+  hBoxLayout = new QHBoxLayout();
+  volumeClippingBoxUpperWidget->setLayout(hBoxLayout);
+
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[3]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[4]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[5]);
+
+  formLayout->addRow("Volume clipping box: upper", volumeClippingBoxUpperWidget);
+
   // set default values. this will trigger signal / slot executions.
   gradientShadingEnabledCheckBox->setChecked(false);
   samplingRateSpinBox->setValue(0.125);
+}
+
+void PreferencesDialog::updateVolumeClippingBox()
+{
+  osp::vec3f lower(volumeClippingBoxSpinBoxes[0]->value(), volumeClippingBoxSpinBoxes[1]->value(), volumeClippingBoxSpinBoxes[2]->value());
+  osp::vec3f upper(volumeClippingBoxSpinBoxes[3]->value(), volumeClippingBoxSpinBoxes[4]->value(), volumeClippingBoxSpinBoxes[5]->value());
+
+  volumeViewer->setVolumeClippingBox(osp::box3f(lower, upper));
 }

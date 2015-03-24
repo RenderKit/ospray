@@ -291,6 +291,9 @@ void VolumeViewer::initUserInterfaceWidgets() {
   connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)), this, SLOT(setIsovalues(std::vector<float>)));
   addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
 
+  //! Set the isosurface editor widget to its minimum allowed height, to leave room for other dock widgets.
+  isosurfaceEditor->setMaximumHeight(isosurfaceEditor->minimumSize().height());
+
   //! Create the light editor dock widget, this widget modifies the light directly.
   //! Disable for now pending UI improvements...
   /* QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);

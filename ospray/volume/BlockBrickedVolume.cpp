@@ -106,6 +106,12 @@ namespace ospray {
 
     //! Set the transfer function.
     ispc::BlockBrickedVolume_setTransferFunction(ispcEquivalent, transferFunction->getEquivalentISPC());
+
+    //! Set the volume clipping box.
+    box3f volumeClippingBox = box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)), getParam3f("volumeClippingBoxUpper", vec3f(1.f)));
+
+    ispc::BlockBrickedVolume_setVolumeClippingBox(ispcEquivalent, (const ispc::box3f &) volumeClippingBox);
+
   }
 
 } // ::ospray
