@@ -77,12 +77,10 @@ namespace ospray {
       floatstream << up.z;
       upVectorZValue = new QLineEdit(floatstream.str().c_str());
 
-      /* TODO
       layout->addWidget(upVectorLabel);
-      layout->addWidget(upVectorXValue);
-      layout->addWidget(upVectorYValue);
-      layout->addWidget(upVectorZValue);
-      */
+      layout->addWidget(upVectorXValue); upVectorXValue->setReadOnly(true);
+      layout->addWidget(upVectorYValue); upVectorYValue->setReadOnly(true);
+      layout->addWidget(upVectorZValue); upVectorZValue->setReadOnly(true);
       
       //Add a spacer taking up the remaining vertical area so that thigns aren't oddly separated.
       layout->addStretch();
