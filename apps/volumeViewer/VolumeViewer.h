@@ -42,7 +42,7 @@ public:
   //! Get the transfer function editor.
   TransferFunctionEditor *getTransferFunctionEditor() { return(transferFunctionEditor); }
 
-  //! Select the model to be displayed.
+  //! Select the model (time step) to be displayed.
   void setModel(size_t index);
 
   //! A string description of this class.
@@ -101,7 +101,6 @@ public slots:
 
   //! Set isosurface on all volumes; for now only one isovalue supported.
   void setIsovalues(std::vector<float> isovalues) {
-    if(isovalues.size() > 0) std::cout << "setting isovalue: " << isovalues[0] << std::endl;
     OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
     for(size_t i=0; i<volumes.size(); i++) { ospSetData(volumes[i], "isovalues", isovaluesData); ospCommit(volumes[i]); }
     render();
@@ -151,8 +150,8 @@ protected:
   //! Timer for use when stepping through multiple models.
   QTimer playTimeStepsTimer;
 
-  //! Label for current OSPRay object file.
-  QLabel currentFilenameLabel;
+  //! Label for current OSPRay object file information.
+  QLabel currentFilenameInfoLabel;
 
   //! Print an error message.
   void emitMessage(const std::string &kind, const std::string &message) const

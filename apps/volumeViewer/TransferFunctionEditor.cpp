@@ -17,7 +17,7 @@
 #include "TransferFunctionEditor.h"
 
 TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunction)
-  : transferFunction(transferFunction) 
+  : transferFunction(transferFunction), dataRangeSet(false)
 {
 
   //! Make sure we have an existing transfer function.
@@ -65,6 +65,8 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
   formLayout->addRow("Color map", &colorMapComboBox);
 
   //! Data value range, used as the domain for both color and opacity components of the transfer function.
+  dataValueMinSpinBox.setValue(0.);
+  dataValueMaxSpinBox.setValue(1.);
   dataValueMinSpinBox.setRange(-999999., 999999.);
   dataValueMaxSpinBox.setRange(-999999., 999999.);
   dataValueScaleSpinBox.setRange(-100, 100);
@@ -110,7 +112,6 @@ TransferFunctionEditor::TransferFunctionEditor(OSPTransferFunction transferFunct
 
   //! Set defaults.
   setColorMapIndex(0);
-  setDataValueRange(osp::vec2f(0.0f, 1.0f));
   updateOpacityValues();
 }
 
@@ -154,6 +155,12 @@ void TransferFunctionEditor::load(std::string filename) {
 }
 
 void TransferFunctionEditor::setDataValueRange(osp::vec2f dataValueRange) {
+
+  //! Only update widget values the first time.
+  if(dataRangeSet)
+    return;
+
+  dataRangeSet = true;
 
   //! Determine appropriate scaling exponent (base 10) for the data value range in the widget.
   int scaleExponent = round(log10f(0.5f * (dataValueRange.y - dataValueRange.x)));
