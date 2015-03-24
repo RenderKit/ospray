@@ -53,12 +53,18 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * formWidget = new QWidget();
   QFormLayout * formLayout = new QFormLayout();
   formWidget->setLayout(formLayout);
+  QMargins margins = formLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  formLayout->setContentsMargins(margins);
   layout->addWidget(formWidget);
 
   //! Origin parameters with default values.
   QWidget * originWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
   originXSpinBox.setRange(volumeBounds.lower.x, volumeBounds.upper.x);
   originYSpinBox.setRange(volumeBounds.lower.y, volumeBounds.upper.y);
@@ -82,6 +88,9 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * normalWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   normalWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
   normalXSpinBox.setRange(-1., 1.);
   normalYSpinBox.setRange(-1., 1.);
@@ -106,6 +115,9 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * originSliderWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originSliderWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
   originSlider.setOrientation(Qt::Horizontal);
   originSlider.setValue(0.5 * (originSlider.maximum() - originSlider.minimum()));
