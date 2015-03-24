@@ -60,7 +60,7 @@ public slots:
   void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index);  render(); }
 
   //! Toggle animation over the time steps.
-  void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
+  void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(500);  else playTimeStepsTimer.stop(); }
 
   //! Add a slice to the volume, optionally from file.
   void addSlice(std::string filename = std::string());
