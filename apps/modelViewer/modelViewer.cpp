@@ -125,6 +125,8 @@ namespace ospray {
           displayWall->po = ospNewPixelOp("display_wall");
           if (!displayWall->po)
             throw std::runtime_error("could not load 'display_wall' component.");
+          ospSetString(displayWall->po, "hostname", displayWall->name.c_str());
+          ospCommit(displayWall->po);
         }
           
         ospSetPixelOp(displayWall->fb,displayWall->po);

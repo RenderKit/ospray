@@ -25,17 +25,29 @@
 
 namespace ospray {
 
-  DisplayWallPO::Instance::Instance(FrameBuffer *fb) 
-    : fb(fb) 
+  DisplayWallPO::Instance::Instance(DisplayWallPO *po, FrameBuffer *fb)
+    : fb(fb), frameIndex(0), dcSocket(NULL)
   {
 #if OSPRAY_DISPLAY_CLUSTER
-    // connect to DisplayCluster, for now assume localhost.
-    dcSocket = dcStreamConnect("localhost");
+    const char *hostname = po->getParamString("hostname", "localhost");
+    std::cerr << "connecting to hostname " << hostname << std::endl;
+
+    // connect to DisplayCluster at given hostname.
+    dcSocket = dcStreamConnect(hostname);
 
     if(!dcSocket)
-      std::cerr << "could not connect to DisplayCluster at localhost" << std::endl;
+      std::cerr << "could not connect to DisplayCluster at " << hostname << std::endl;
 #else
     std::cout << "#osp:dw: display cluster support not compiled in" << std::endl;
+#endif
+  }
+
+  void DisplayWallPO::Instance::beginFrame()
+  {
+    frameIndex++;
+
+#if OSPRAY_DISPLAY_CLUSTER
+    dcStreamSetFrameIndex(frameIndex);
 #endif
   }
 
