@@ -39,6 +39,9 @@ namespace ospray {
       //! DisplayCluster socket.
       DcSocket *dcSocket;
 
+      //! DisplayCluster stream name.
+      std::string streamName;
+
       Instance(DisplayWallPO *po, FrameBuffer *fb);
       virtual ~Instance() {}
 
