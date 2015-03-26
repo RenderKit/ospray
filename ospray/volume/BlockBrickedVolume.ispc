@@ -417,6 +417,16 @@ export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *
 
 }
 
+export void BlockBrickedVolume_setVolumeClippingBox(void *uniform pointer, const uniform box3f &value) {
+
+  //! Cast to the actual Volume type.
+  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
+
+  //! Set the volume clipping box.
+  volume->inherited.volumeClippingBox = value;
+
+}
+
 export void BlockBrickedVolume_setValueRange(void *uniform pointer, const uniform vec2f &value) {
 
   //! Cast to the actual Volume type.

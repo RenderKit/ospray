@@ -66,19 +66,6 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
 
-  //! Update transfer function and isosurface editor data value range with the voxel range of the first volume.
-  if(volumes.size() > 0 && transferFunctionEditor != NULL) {
-
-    osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[0], "voxelRange", &voxelRange);
-
-    if(voxelRange != osp::vec2f(0.f)) {
-
-      //! Set the values through the editor widgets.
-      transferFunctionEditor->setDataValueRange(voxelRange);
-      isosurfaceEditor->setDataValueRange(voxelRange);
-    }
-  }
-
   //! Show the window.
   show();
 
@@ -86,12 +73,20 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
 
 void VolumeViewer::setModel(size_t index) {
 
-  //! Update current filename label.
-  currentFilenameLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back());
-
   //! Set current model on the OSPRay renderer.
   ospSetObject(renderer, "model", models[index]);
   ospCommit(renderer);
+
+  //! Update transfer function and isosurface editor data value range with the voxel range of the current volume.
+  osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[index], "voxelRange", &voxelRange);
+
+  if(voxelRange != osp::vec2f(0.f)) {
+    transferFunctionEditor->setDataValueRange(voxelRange);
+    isosurfaceEditor->setDataValueRange(voxelRange);
+  }
+
+  //! Update current filename information label.
+  currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
 
   //! Enable rendering on the OSPRay window.
   osprayWindow->setRenderingEnabled(true);
@@ -291,6 +286,9 @@ void VolumeViewer::initUserInterfaceWidgets() {
   connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)), this, SLOT(setIsovalues(std::vector<float>)));
   addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
 
+  //! Set the isosurface editor widget to its minimum allowed height, to leave room for other dock widgets.
+  isosurfaceEditor->setMaximumHeight(isosurfaceEditor->minimumSize().height());
+
   //! Create the light editor dock widget, this widget modifies the light directly.
   //! Disable for now pending UI improvements...
   /* QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
@@ -310,5 +308,5 @@ void VolumeViewer::initUserInterfaceWidgets() {
   addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
 
   //! Add the current OSPRay object file label to the bottom status bar.
-  statusBar()->addWidget(&currentFilenameLabel);
+  statusBar()->addWidget(&currentFilenameInfoLabel);
 }

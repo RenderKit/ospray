@@ -100,7 +100,7 @@ inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer 
     float t = ray.t;
     float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
 
-    if(isovalue >= min(sample0, sample) && isovalue <= max(sample0, sample)) {
+    if(!isnan(sample0+sample) && isovalue >= min(sample0, sample) && isovalue <= max(sample0, sample)) {
 
       //! Find the t value for the isosurface intersection.
       const float tHit = t0 + (isovalue - sample0) / (sample - sample0) * (t - t0);
@@ -246,6 +246,9 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   ray.t = ray.t0;
 
+  //! Maximum extent for the volume bounds.
+  const float tMax = ray.t1;
+
   //! Offset ray by a fraction of the nominal ray step.
   const uniform float step = 1.f / reduce_max(renderer->model->volumes[0]->upperBound) / renderer->model->volumes[0]->samplingRate;
   ray.t += rayOffset * step;
@@ -259,7 +262,16 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   //! Copy of the ray for geometry intersection.
   Ray geometryRay = isosurfaceRay;
-  geometryRay.t = ray.t1; //! end of valid ray interval for traceRay().
+  geometryRay.t = tMax; //! end of valid ray interval for traceRay().
+
+  //! Clipping box for volume rendering (does not apply to isosurfaces, geometry).
+  const uniform box3f volumeClippingBox = renderer->model->volumes[0]->volumeClippingBox;
+
+  //! Compute the intersection interval over the ray and clipping box bounds.
+  ray.t = tMax;
+  RaycastVolumeRenderer_intersectBox(volumeClippingBox, ray);
+
+  ray.t = ray.t0 + rayOffset * step;
 
   //! Separate color contributions for the volume, isosurfaces, and geometries. Initialize to provided color in case of no contribution...
   vec4f volumeColor = color;
@@ -274,7 +286,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(min(ray.t, isosurfaceRay.t), geometryRay.t)) < ray.t1 && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
+  while ((firstHit = min(min(ray.t, isosurfaceRay.t), geometryRay.t)) < tMax && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
     if (firstHit == ray.t) {
 
@@ -305,7 +317,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
       //! Reset geometry ray.
       geometryRay.t0 = geometryRay.t + 1e-4f;
-      geometryRay.t = ray.t1; //! end of valid ray interval for traceRay()
+      geometryRay.t = tMax; //! end of valid ray interval for traceRay()
       geometryRay.primID = -1;
       geometryRay.geomID = -1;
       geometryRay.instID = -1;

@@ -71,6 +71,9 @@ protected:
   //! Color map selection widget.
   QComboBox colorMapComboBox;
 
+  //! Indicates if the data value range has been set; we don't update the min / max widget values after the first time it's set.
+  bool dataRangeSet;
+
   //! Data value range minimum widget.
   QDoubleSpinBox dataValueMinSpinBox;
 

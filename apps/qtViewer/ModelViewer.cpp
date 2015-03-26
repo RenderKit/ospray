@@ -215,6 +215,24 @@ namespace ospray {
       }
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
     }
+    
+    void ModelViewer::createLightManipulator() {
+      QWidget *lmEditorsPage = new QWidget;
+      QVBoxLayout *layout = new QVBoxLayout;
+      lmEditorsPage->setLayout(layout);
+
+      QStackedWidget *stackedWidget = new QStackedWidget;
+      layout->addWidget(stackedWidget);
+      
+      Ref<sg::PerspectiveCamera> camera = renderWidget->sgRenderer->camera.cast<sg::PerspectiveCamera>();
+      QLightManipulator *lManipulator = new QLightManipulator(sgRenderer, camera->getUp());
+      //stackedWidget->addWidget(lManipulator);
+      layout->addWidget(lManipulator);
+      
+      editorWidgetStack->addPage("Light Editor", lManipulator);
+      
+      connect(lManipulator, SIGNAL(lightsChanged()), this, SLOT(render()));
+    }
 
     void ModelViewer::keyPressEvent(QKeyEvent *event) {
       //      std::cout << event->key() << std::endl;
@@ -243,6 +261,7 @@ namespace ospray {
     ModelViewer::ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen)
       : editorWidgetStack(NULL),
         transferFunctionEditor(NULL),
+        lightEditor(NULL),
         toolBar(NULL),
         sgRenderer(sgRenderer)
     {
@@ -276,6 +295,7 @@ namespace ospray {
       
       createTimeSlider();
       createEditorWidgetStack();
+      createLightManipulator();
       createTransferFunctionEditor();
 
       if (fullscreen) {
@@ -327,6 +347,10 @@ namespace ospray {
       const std::string fileName = "/tmp/ospQTV.screenshot.png";
       fb.save(fileName.c_str());
       std::cout << "screen shot saved in " << fileName << std::endl;
+    }
+    
+    void ModelViewer::lightChanged()
+    {
     }
   }
 }

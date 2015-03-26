@@ -33,7 +33,7 @@ signals:
 
 public slots:
 
-  void setDataValueRange(osp::vec2f dataValueRange) { this->dataValueRange = dataValueRange; apply(); };
+  void setDataValueRange(osp::vec2f dataValueRange);
 
 protected slots:
 
@@ -43,7 +43,11 @@ protected:
 
   osp::vec2f dataValueRange;
 
+  //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
+  bool dataRangeSet;
+
   QCheckBox isovalueCheckBox;
   QSlider isovalueSlider;
+  QDoubleSpinBox isovalueSpinBox;
 
 };
