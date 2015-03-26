@@ -36,6 +36,26 @@ struct VaryingRGBA_I8 {
 //   varying uint32 color[TILE_SIZE*TILE_SIZE/programCount];
 // };
 
+export void DFB_alphaBlendTiles(VaryingTile    *uniform front,
+                                VaryingTile    *uniform back)
+{
+  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+    // vec4f col = make_vec4f(tile->r[i],
+    //                        tile->g[i],
+    //                        tile->b[i],
+    //                        tile->a[i]);
+    // accum->r[i] = col.x;
+    // accum->g[i] = col.y;
+    // accum->b[i] = col.z;
+    // accum->a[i] = col.w;
+    // final->r[i] = col.x;
+    // final->g[i] = col.y;
+    // final->b[i] = col.z;
+    // final->a[i] = col.w;
+    // color->color[i] = cvt_uint32(col);
+  }
+}
+
 export void DFB_accumulate(VaryingTile    *uniform tile,
                            VaryingTile    *uniform final,
                            VaryingTile    *uniform accum,

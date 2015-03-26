@@ -175,6 +175,14 @@ IF (OSPRAY_MPI)
     )
 
   # ============================================
+  ADD_EXECUTABLE(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+    mpi/testing/createCompositeTestCubes
+    )
+  TARGET_LINK_LIBRARIES(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
+    )
+
+  # ============================================
   ADD_EXECUTABLE(ospTestMPIAsyncBandwidth${OSPRAY_EXE_SUFFIX}
     mpi/testing/TestAsyncBandwidth
     )

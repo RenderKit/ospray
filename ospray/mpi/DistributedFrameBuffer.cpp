@@ -91,13 +91,17 @@ namespace ospray {
       // printf("starting to composite tile %i,%i\n",tile.region.lower.x,tile.region.lower.y);
       qsort(&bufferedTile[0],bufferedTile.size(),sizeof(bufferedTile[0]),
             compareBufferedTiles);
-      gMutex.lock();
-      for (int i=0;i<bufferedTile.size();i++)
-        printf(" > %f",bufferedTile[i]->sortOrder);
-      printf("\n");
-      gMutex.unlock();
+      // gMutex.lock();
+      // for (int i=0;i<bufferedTile.size();i++)
+      //   printf(" > %f",bufferedTile[i]->sortOrder);
+      // printf("\n");
+      // gMutex.unlock();
       // for (int i=0;i<bufferedTile.size();i++)
       //   PRINT(bufferedTile[i]->sortOrder);
+
+      for (int i=1;i<bufferedTile.size();i++)
+        ispc::DFB_alphaBlendTiles((ispc::VaryingTile *)&bufferedTile[0]->tile,
+                                  (ispc::VaryingTile *)&bufferedTile[i]->tile);
 
 
       this->final.region = tile.region;
