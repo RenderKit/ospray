@@ -239,8 +239,7 @@ namespace ospray {
       switch (event->key()) {
       case Qt::Key_Escape:
       case Qt::Key_Q:
-        // TODO: Properly tell the app to quit?
-        exit(0);
+        QApplication::quit();
         // TODO wasd movement
       case Qt::Key_F:
         setWindowState(windowState() ^ Qt::WindowFullScreen);
