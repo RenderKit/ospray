@@ -70,12 +70,13 @@ namespace ospray {
   }
 
   struct DisplayWall {
-    std::string name;
+    std::string hostname;
+    std::string streamName;
     vec2i size;
     OSPFrameBuffer fb;
     OSPPixelOp     po;
 
-    DisplayWall() : name(""), size(-1), fb(NULL), po(NULL) {};
+    DisplayWall() : hostname(""), streamName(""), size(-1), fb(NULL), po(NULL) {};
   };
   DisplayWall *displayWall = NULL;
 
@@ -125,6 +126,9 @@ namespace ospray {
           displayWall->po = ospNewPixelOp("display_wall");
           if (!displayWall->po)
             throw std::runtime_error("could not load 'display_wall' component.");
+          ospSetString(displayWall->po, "hostname", displayWall->hostname.c_str());
+          ospSetString(displayWall->po, "streamName", displayWall->streamName.c_str());
+          ospCommit(displayWall->po);
         }
           
         ospSetPixelOp(displayWall->fb,displayWall->po);
@@ -527,9 +531,10 @@ namespace ospray {
         g_alpha = true;
       } else if (arg == "--display-wall") {
         displayWall = new DisplayWall;
+        displayWall->hostname = av[++i];
+        displayWall->streamName = av[++i];
         displayWall->size.x = atof(av[++i]);
         displayWall->size.y = atof(av[++i]);
-        displayWall->name = av[++i];
       } else if (arg == "-bench") {
         if (++i < ac)
           {
