@@ -47,6 +47,10 @@ static void Instance_postIntersect(uniform Geometry *uniform _THIS,
   foreach_unique(geomID in ray.geomID) {
     uniform Geometry *uniform instancedGeometry = 
       (uniform Geometry *uniform)instancedModel->geometry[geomID];
+
+    dg.geometry = instancedGeometry;
+    dg.material = instancedGeometry->material;
+
     instancedGeometry->postIntersect(instancedGeometry,instancedModel,
                                      dg,ray,flags);
   }

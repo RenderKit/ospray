@@ -76,8 +76,9 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
       dg.materialID = self->geom_materialID;
     }
 
-    if( self->materialList)
+    if( self->materialList) {
       dg.material = self->materialList[dg.materialID < 0 ? 0 : dg.materialID];
+    }
   }
 }
 
