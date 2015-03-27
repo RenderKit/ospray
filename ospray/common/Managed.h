@@ -107,7 +107,10 @@ namespace ospray {
     /*! \brief constructor */
     ManagedObject();
 
-    /*! \brief destructor */
+    /*! \brief destructor, frees the ispc-side allocated memory pointed to by
+     * ispcEquivalent, thus derived classes do not need to and must not delete
+     * their ispcEquivalent. This also means that derived classes most often do
+     * not need an own destructor. */
     virtual ~ManagedObject();
 
     /*! \brief commit the object's outstanding changes (such as changed parameters etc) */

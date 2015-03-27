@@ -56,3 +56,6 @@ inline void* uniform align_ptr(void* uniform ptr) {
 /*! ispc copy of embree error handling callback */
 void error_handler(const RTCError code, const int8* str);
 
+
+/*! a C++ callable delete of ispc-side allocated memory of uniform objects */
+export void delete_uniform(void *uniform uptr);
