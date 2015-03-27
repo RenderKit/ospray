@@ -18,7 +18,6 @@
 
 #include "ospray/common/default.ih"
 #include "ospray/math/vec.ih"
-#include "ospray/math/vec.ih"
 #include "ospray/math/affine.ih"
 #include "ospray/common/Ray.ih"
 
