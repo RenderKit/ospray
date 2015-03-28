@@ -592,14 +592,14 @@ namespace ospray {
     }
 
     //! release (i.e., reduce refcount of) given object
-    /*! note that all objects in ospray are refcounted, so one cannot
-      explicitly "delete" any object. instead, each object is created
+    /*! Note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. Instead, each object is created
       with a refcount of 1, and this refcount will be
       increased/decreased every time another object refers to this
-      object resp releases its hold on it; if the refcount is 0 the
+      object resp. releases its hold on it; if the refcount is 0 the
       object will automatically get deleted. For example, you can
       create a new material, assign it to a geometry, and immediately
-      after this assignation release its refcount; the material will
+      after this assignation release it; the material will
       stay 'alive' as long as the given geometry requires it. */
     void LocalDevice::release(OSPObject _obj)
     {

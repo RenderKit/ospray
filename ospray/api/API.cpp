@@ -148,7 +148,7 @@ namespace ospray {
 
   /*! destroy a given frame buffer. 
 
-    due to internal reference counting the framebuffer may or may not be deleted immeidately
+    due to internal reference counting the framebuffer may or may not be deleted immediately
   */
   extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
   {

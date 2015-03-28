@@ -688,15 +688,14 @@ namespace ospray {
       callFunction(OSPCOI_COMMIT,args);
     }
 
-    void COIDevice::release(OSPObject object) {
-
+    void COIDevice::release(OSPObject object)
+    {
       if (object == NULL) return;
       Handle handle = (Handle &) object;
       DataStream stream;
       stream.write(handle);
       callFunction(OSPCOI_RELEASE, stream);
       handle.free();
-
     }
 
     void COIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)

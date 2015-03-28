@@ -113,12 +113,12 @@ typedef osp::Model             *OSPModel;
 typedef osp::Data              *OSPData;
 typedef osp::Geometry          *OSPGeometry;
 typedef osp::Material          *OSPMaterial;
+typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
-typedef osp::Light             *OSPLight;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
