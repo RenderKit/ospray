@@ -25,10 +25,6 @@ namespace ospray {
     ispcEquivalent = ispc::AmbientLight_create(this);
   }
 
-  AmbientLight::~AmbientLight() {
-    ispc::AmbientLight_destroy(getIE());
-  }
-
   //! Commit parameters understood by the AmbientLight
   void AmbientLight::commit() {
     color     = getParam3f("color", vec3f(1.f));

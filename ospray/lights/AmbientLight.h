@@ -24,7 +24,6 @@ namespace ospray {
   class AmbientLight : public Light {
     public:
       AmbientLight();
-      ~AmbientLight();
 
       //! toString is used to aid in printf debugging
       virtual std::string toString() const { return "ospray::AmbientLight"; }

@@ -128,21 +128,6 @@ static void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
 }
 #endif
 
-
-//! destructor for ispc-side TriangleMesh object
-extern void TriangleMesh_Destructor(uniform TriangleMesh *uniform mesh)
-{ 
-  Geometry_Destructor(&mesh->geometry); 
-}
-
-//! free and properly destroy the given mesh geometry
-export void TriangleMesh_destroy(void *uniform _mesh)
-{
-  uniform TriangleMesh *uniform mesh = (uniform TriangleMesh *uniform)_mesh;
-  TriangleMesh_Destructor(mesh);
-  delete mesh;
-}
-
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;

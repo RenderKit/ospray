@@ -193,9 +193,3 @@ DEFINE_RAYCAST_RENDERER(eyeLight_primID);
 DEFINE_RAYCAST_RENDERER(eyeLight_geomID);
 DEFINE_RAYCAST_RENDERER(eyeLight_instID);
 DEFINE_RAYCAST_RENDERER(eyeLight_vertexColor);
-
-export void RaycastRenderer_destroy(void *uniform _self)
-{
-  uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
-  delete self;
-}

@@ -25,7 +25,6 @@ namespace ospray {
   class DirectionalLight : public Light {
     public:
       DirectionalLight();
-      ~DirectionalLight();
   
       //! toString is used to aid in printf debugging
       virtual std::string toString() const { return "ospray::DirectionalLight"; }

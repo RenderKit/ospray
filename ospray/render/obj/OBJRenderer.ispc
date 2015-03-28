@@ -218,11 +218,6 @@ export void *uniform OBJRenderer_create(void *uniform cppE)
   return self;
 }
 
-export void OBJRenderer_destroy(void *uniform self)
-{
-  delete self;
-}
-
 export void OBJRenderer_set(void *uniform _self,
                             const uniform vec3f &bgColor,
                             const uniform bool &shadowsEnabled,

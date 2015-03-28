@@ -187,9 +187,7 @@ export void LinearTransferFunction_destroy(void *uniform pointer)
   // Free memory for the opacity values.
   if (transferFunction->opacityValues != NULL) delete[] transferFunction->opacityValues;
 
-  // Free memory for the container.
-  delete transferFunction;
-
+  // Container is deallocated by ~ManagedObject
 }
 
 export void LinearTransferFunction_setColorValues(void *uniform pointer, 

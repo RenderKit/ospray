@@ -64,12 +64,6 @@ export void *uniform DirectionalLight_create(void *uniform cppEquivalent)
   return self;
 }
 
-//! Destroy an ispc-side DirectionalLIght object
-export void DirectionalLight_destroy(void *uniform self)
-{
-  delete self;
-}
-
 //! Set the parameters of an ispc-side DirectionalLight object
 export void DirectionalLight_set(void *uniform _self,
                                  const uniform vec3f &direction,
