@@ -134,7 +134,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
       foreach_unique (mat in objMaterial) {
         // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
         d = mat->d * get1f(mat->map_d, dg.st, 1.f);
-        Kd = mat->Kd;
+        Kd = mat->Kd * make_vec3f(dg.color);
         if (mat->map_Kd) {
           vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
           Kd = Kd * make_vec3f(Kd_from_map);
