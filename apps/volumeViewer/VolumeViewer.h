@@ -80,7 +80,7 @@ public slots:
   //! Set subsampling during interaction mode on renderer.
   void setSubsamplingInteractionEnabled(bool value) {
     ospSet1i(renderer, "spp", value ? -1 : 1);
-    ospCommit(renderer);
+    if(rendererInitialized) ospCommit(renderer);
   }
 
   //! Set gradient shading flag on all volumes.
@@ -128,6 +128,9 @@ protected:
 
   //! OSPRay renderer.
   OSPRenderer renderer;
+
+  //! OSPRay renderer initialization state: set to true after renderer is committed.
+  bool rendererInitialized;
 
   //! OSPRay transfer function.
   OSPTransferFunction transferFunction;

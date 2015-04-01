@@ -29,6 +29,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            std::string writeFramesFilename)
   : objectFileFilenames(objectFileFilenames),
     renderer(NULL),
+    rendererInitialized(false),
     transferFunction(NULL), 
     osprayWindow(NULL), 
     autoRotationRate(0.025f) 
@@ -76,6 +77,7 @@ void VolumeViewer::setModel(size_t index) {
   //! Set current model on the OSPRay renderer.
   ospSetObject(renderer, "model", models[index]);
   ospCommit(renderer);
+  rendererInitialized = true;
 
   //! Update transfer function and isosurface editor data value range with the voxel range of the current volume.
   osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[index], "voxelRange", &voxelRange);
