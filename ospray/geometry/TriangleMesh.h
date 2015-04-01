@@ -32,9 +32,15 @@ namespace ospray {
 
     Once created, a trianglemesh recognizes the following parameters
     <pre>
-    data<vec3fa> "position"  // vertex array
-    data<vec3i>  "index"     // index array (three int32 values per triangles)
-                             // each int32 value is index into 'position' array
+    Data<vec3f> or Data<vec3fa> "position"        // vertex array
+    Data<vec3i> or Data<vec3ia> "index"           // index array (three int32 values per triangles)
+                                                  // each int32 value is index into the vertex arrays
+    Data<vec3f> or Data<vec3fa> "normal"          // vertex normals
+    Data<vec4f>                 "color"           // vertex colors
+    Data<vec2f>                 "texcoord"        // texture coordinates
+    uint32                      "geom.materialID" // material ID for the whole mesh
+    Data<uint32>                "prim.materialID" // per triangle materials, indexing into "materialList"
+    Data<OSPMaterial>           "materialList"    // list of OSPMaterial pointers
     </pre>
 
     The functionality for this geometry is implemented via the
@@ -46,13 +52,22 @@ namespace ospray {
   /*! \brief A Triangle Mesh / Indexed Face Set Geometry
 
     A Triangle Mesh is a geometry registered under the name
-    "trianglemesh", and has two parameters to specify its contained
-    triangles; both specified via data arrays of the proper form: a
-    "position" array (Data<vec3f> type), and a "index" array
-    (Data<vec3i> or Data<vec3ia> type); indices specified in the
-    'index' array refer into the vertex array; each value is the index
-    of a _vertex_ (it, not a byte-offset, nor an index into a float
-    array, but an index into an array of vertices).
+    "trianglemesh", and has several parameters to specify its contained
+    triangles; they are specified via data arrays of the proper form:
+      -  a 'position' array (Data<vec3f> or Data<vec3fa> type)
+      -  a 'normal' array (Data<vec3f> or Data<vec3fa> type)
+      -  a 'color' array (Data<vec4f> type)
+      -  a 'texcoord' array (Data<vec2f> type)
+      -  an 'index' array (Data<vec3i> or Data<vec3ia> type)
+
+    Indices specified in the 'index' array refer into the vertex arrays;
+    each value is the index of a _vertex_ (it, not a byte-offset, nor an
+    index into a float array, but an index into an array of vertices).
+
+    Materials can be set either via 'geom.materialID' (uint32 type) for
+    the whole mesh, or per triangle via
+      - a 'prim.materialID' array (Data<uint32> type), indexing into
+      - a 'materialList' array (holding the OSPMaterial pointers)
    */
   struct TriangleMesh : public Geometry
   {
