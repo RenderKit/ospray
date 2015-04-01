@@ -50,6 +50,7 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
 
   // connect signals and slots
   connect(&renderTimer, SIGNAL(timeout()), this, SLOT(updateGL()));
+  connect(&renderRestartTimer, SIGNAL(timeout()), &renderTimer, SLOT(start()));
 }
 
 QOSPRayWindow::~QOSPRayWindow()
@@ -184,10 +185,18 @@ void QOSPRayWindow::mousePressEvent(QMouseEvent * event)
 void QOSPRayWindow::mouseReleaseEvent(QMouseEvent * event)
 {
   lastMousePosition = event->pos();
+
+  // restart continuous rendering immediately
+  renderTimer.start();
 }
 
 void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 {
+  // pause continuous rendering during interaction and cancel any render restart timers.
+  // this keeps interaction more responsive (especially with low frame rates).
+  renderTimer.stop();
+  renderRestartTimer.stop();
+
   resetAccumulationBuffer();
 
   int dx = event->x() - lastMousePosition.x();
@@ -224,6 +233,10 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
   lastMousePosition = event->pos();
 
   updateGL();
+
+  // after a 0.5s delay, restart continuous rendering.
+  renderRestartTimer.setSingleShot(true);
+  renderRestartTimer.start(500);
 }
 
 void QOSPRayWindow::rotateCenter(float du, float dv)
