@@ -25,17 +25,31 @@
 
 namespace ospray {
 
-  DisplayWallPO::Instance::Instance(FrameBuffer *fb) 
-    : fb(fb) 
+  DisplayWallPO::Instance::Instance(DisplayWallPO *po, FrameBuffer *fb)
+    : fb(fb), frameIndex(0), dcSocket(NULL), streamName("")
   {
 #if OSPRAY_DISPLAY_CLUSTER
-    // connect to DisplayCluster, for now assume localhost.
-    dcSocket = dcStreamConnect("localhost");
+    const char *hostname = po->getParamString("hostname", "localhost");
+    streamName = po->getParamString("streamName", "ospray");
+
+    std::cerr << "connecting to hostname " << hostname << " for stream name " << streamName << std::endl;
+
+    // connect to DisplayCluster at given hostname.
+    dcSocket = dcStreamConnect(hostname);
 
     if(!dcSocket)
-      std::cerr << "could not connect to DisplayCluster at localhost" << std::endl;
+      std::cerr << "could not connect to DisplayCluster at " << hostname << std::endl;
 #else
     std::cout << "#osp:dw: display cluster support not compiled in" << std::endl;
+#endif
+  }
+
+  void DisplayWallPO::Instance::beginFrame()
+  {
+    frameIndex++;
+
+#if OSPRAY_DISPLAY_CLUSTER
+    dcStreamSetFrameIndex(frameIndex);
 #endif
   }
 
@@ -59,7 +73,7 @@ namespace ospray {
       }
 
     int sourceIndex = tile.region.lower.y*tile.fbSize.x + tile.region.lower.x;
-    DcStreamParameters dcStreamParameters = dcStreamGenerateParameters("ospray", sourceIndex, tile.region.lower.x, tile.fbSize.y-tile.region.upper.y, TILE_SIZE, TILE_SIZE, tile.fbSize.x, tile.fbSize.y);
+    DcStreamParameters dcStreamParameters = dcStreamGenerateParameters(streamName.c_str(), sourceIndex, tile.region.lower.x, tile.fbSize.y-tile.region.upper.y, TILE_SIZE, TILE_SIZE, tile.fbSize.x, tile.fbSize.y);
 
     bool success = dcStreamSend(dcSocket, (unsigned char *)colorBuffer, tile.region.lower.x, tile.fbSize.y-tile.region.upper.y, tile.fbSize.x, 4*TILE_SIZE, tile.fbSize.y, RGBA, dcStreamParameters);
 

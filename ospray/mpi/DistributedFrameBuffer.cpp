@@ -181,6 +181,9 @@ namespace ospray {
     DBG(printf("rank %i starting new frame\n",mpi::world.rank));
     assert(!frameIsActive);
 
+    if (pixelOp)
+      pixelOp->beginFrame();
+
     for (int i=0;i<myTiles.size();i++) 
       myTiles[i]->newFrame();
 

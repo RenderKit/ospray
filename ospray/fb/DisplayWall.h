@@ -34,17 +34,23 @@ namespace ospray {
   struct DisplayWallPO : public PixelOp {
     struct Instance : public PixelOp::Instance {
       FrameBuffer *fb;
+      int frameIndex;
 
       //! DisplayCluster socket.
       DcSocket *dcSocket;
 
-      Instance(FrameBuffer *fb);
+      //! DisplayCluster stream name.
+      std::string streamName;
+
+      Instance(DisplayWallPO *po, FrameBuffer *fb);
       virtual ~Instance() {}
+
+      virtual void beginFrame();
 
       virtual void postAccum(Tile &tile);
     };
 
-    virtual PixelOp::Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) { PING; return new Instance(fb); };
+    virtual PixelOp::Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev) { PING; return new Instance(this, fb); };
 
     //! \brief common function to help printf-debugging 
     /*! Every derived class should overrride this! */
