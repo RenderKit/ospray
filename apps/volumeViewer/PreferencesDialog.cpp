@@ -24,6 +24,11 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volum
   QFormLayout *formLayout = new QFormLayout();
   setLayout(formLayout);
 
+  // subsampling during interaction flag
+  QCheckBox *subsamplingInteractionEnabledCheckBox = new QCheckBox();
+  connect(subsamplingInteractionEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setSubsamplingInteractionEnabled(bool)));
+  formLayout->addRow("Subsample during interaction", subsamplingInteractionEnabledCheckBox);
+
   // gradient shading flag
   QCheckBox *gradientShadingEnabledCheckBox = new QCheckBox();
   connect(gradientShadingEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setGradientShadingEnabled(bool)));
@@ -74,6 +79,7 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volum
   formLayout->addRow("Volume clipping box: upper", volumeClippingBoxUpperWidget);
 
   // set default values. this will trigger signal / slot executions.
+  subsamplingInteractionEnabledCheckBox->setChecked(false);
   gradientShadingEnabledCheckBox->setChecked(false);
   samplingRateSpinBox->setValue(0.125);
 }

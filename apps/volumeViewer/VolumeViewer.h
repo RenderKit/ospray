@@ -77,6 +77,12 @@ public slots:
   //! Force the OSPRay window to be redrawn.
   void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
 
+  //! Set subsampling during interaction mode on renderer.
+  void setSubsamplingInteractionEnabled(bool value) {
+    ospSet1i(renderer, "spp", value ? -1 : 1);
+    ospCommit(renderer);
+  }
+
   //! Set gradient shading flag on all volumes.
   void setGradientShadingEnabled(bool value) {
     for(size_t i=0; i<volumes.size(); i++) { ospSet1i(volumes[i], "gradientShadingEnabled", value); ospCommit(volumes[i]); }
