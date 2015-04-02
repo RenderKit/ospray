@@ -41,6 +41,8 @@ namespace ospray {
     cout << "  ./streamLineView <file1.pnt> <file2.pnt> ....<fileN.sv>" << std::endl;
     cout << "or" << endl;
     cout << "  ./streamLineView <listOfPntFiles.pntlist> ...." << std::endl;
+    cout << "or" << endl;
+    cout << "  ./streamLineView <file1.slraw> <file2.slraw> ....<fileN.slraw>" << std::endl;
     cout << endl;
     exit(1);
   }
@@ -142,6 +144,38 @@ namespace ospray {
       fclose(file);
     }
 
+    void parseSLRAW(const embree::FileName &fn)
+    {
+      FILE *file = fopen(fn.c_str(),"rb");
+
+      if (!file) {
+        cout << "WARNING: could not open file " << fn << endl;
+        return;
+      }
+
+      int numStreamlines;
+      int rc = fread(&numStreamlines, sizeof(int), 1, file);
+      Assert(rc == 1);
+
+      for(int s=0; s<numStreamlines; s++) {
+
+        int numStreamlinePoints;
+        rc = fread(&numStreamlinePoints, sizeof(int), 1, file);
+        Assert(rc == 1);
+
+        for(int p=0; p<numStreamlinePoints; p++) {
+
+          vec3fa pnt;
+          rc = fread(&pnt.x, 3*sizeof(float), 1, file);
+          Assert(rc == 1);
+
+          if(p != 0) index.push_back(vertex.size() - 1);
+          vertex.push_back(pnt);
+        }
+      }
+      fclose(file);
+    }
+
     void parseSWC(const embree::FileName &fn)
     {
       std::vector<vec3fa> filePoints;
@@ -177,6 +211,8 @@ namespace ospray {
           parsePNT(line);
         }
         fclose(file);
+      } else if (fn.ext() == "slraw") {
+        parseSLRAW(fn);
       } else 
         throw std::runtime_error("unknown input file format "+fn.str());
     }
@@ -629,6 +665,8 @@ namespace ospray {
 //          streamLines->parseSWC(fn);
         else if (fn.ext() == "pntlist")
           streamLines->parsePNTlist(fn);
+        else if (fn.ext() == "slraw")
+          streamLines->parseSLRAW(fn);
         else if (fn.ext() == "sv") 
           triangles->parseSV(fn);
         else
