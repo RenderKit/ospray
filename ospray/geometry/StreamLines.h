@@ -49,7 +49,7 @@ namespace ospray {
     first vertex of a link (the second one being "index+1").
 
     For example, two streamlines of vertices (A-B-C-D) and (E-F-G),
-    respectively, would internally correspond to 7 links (A-B, B-C,
+    respectively, would internally correspond to 5 links (A-B, B-C,
     C-D, E-F, and F-G), and could be specified via an array of
     vertices "A,B,C,D,E,F,G", plus an array of link offsets
     "0,1,2,4,5"
