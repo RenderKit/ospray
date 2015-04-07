@@ -45,6 +45,14 @@
 #endif
 #include "ospray/common/OSPDataType.h"
 
+#ifdef __GNUC__
+  #define OSP_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+  #define OSP_DEPRECATED __declspec(deprecated)
+#else
+  #define OSP_DEPRECATED
+#endif
+
 /*! namespace for classes in the public core API */
 namespace osp {
 
@@ -114,12 +122,12 @@ typedef osp::Model             *OSPModel;
 typedef osp::Data              *OSPData;
 typedef osp::Geometry          *OSPGeometry;
 typedef osp::Material          *OSPMaterial;
+typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
-typedef osp::Light             *OSPLight;
 typedef osp::PixelOp           *OSPPixelOp;
 
 /*! an error type. '0' means 'no error' */
@@ -311,7 +319,7 @@ extern "C" {
   /*! add a object-typed parameter to another object 
     
    \warning this call has been superseded by ospSetObject, and will eventually get removed */
-  void ospSetParam(OSPObject _object, const char *id, OSPObject object);
+  OSP_DEPRECATED void ospSetParam(OSPObject _object, const char *id, OSPObject object);
 
   /*! add a object-typed parameter to another object */
   void ospSetObject(OSPObject _object, const char *id, OSPObject object);

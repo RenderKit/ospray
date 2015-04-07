@@ -119,6 +119,9 @@ protected:
   /*! timer used to trigger continuous re-renders (for progressive refinement, automatic rotation, etc.). */
   QTimer renderTimer;
 
+  /*! timer used to restart continuous rendering after a delay during interaction. */
+  QTimer renderRestartTimer;
+
   /*! benchmarking: number of warm-up frames */
   int benchmarkWarmUpFrames;
 

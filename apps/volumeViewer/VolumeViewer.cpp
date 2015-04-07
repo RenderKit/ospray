@@ -29,6 +29,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            std::string writeFramesFilename)
   : objectFileFilenames(objectFileFilenames),
     renderer(NULL),
+    rendererInitialized(false),
     transferFunction(NULL), 
     osprayWindow(NULL), 
     autoRotationRate(0.025f) 
@@ -66,19 +67,6 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
 
-  //! Update transfer function and isosurface editor data value range with the voxel range of the first volume.
-  if(volumes.size() > 0 && transferFunctionEditor != NULL) {
-
-    osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[0], "voxelRange", &voxelRange);
-
-    if(voxelRange != osp::vec2f(0.f)) {
-
-      //! Set the values through the editor widgets.
-      transferFunctionEditor->setDataValueRange(voxelRange);
-      isosurfaceEditor->setDataValueRange(voxelRange);
-    }
-  }
-
   //! Show the window.
   show();
 
@@ -86,12 +74,21 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
 
 void VolumeViewer::setModel(size_t index) {
 
-  //! Update current filename label.
-  currentFilenameLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back());
-
   //! Set current model on the OSPRay renderer.
   ospSetObject(renderer, "model", models[index]);
   ospCommit(renderer);
+  rendererInitialized = true;
+
+  //! Update transfer function and isosurface editor data value range with the voxel range of the current volume.
+  osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[index], "voxelRange", &voxelRange);
+
+  if(voxelRange != osp::vec2f(0.f)) {
+    transferFunctionEditor->setDataValueRange(voxelRange);
+    isosurfaceEditor->setDataValueRange(voxelRange);
+  }
+
+  //! Update current filename information label.
+  currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
 
   //! Enable rendering on the OSPRay window.
   osprayWindow->setRenderingEnabled(true);
@@ -313,5 +310,5 @@ void VolumeViewer::initUserInterfaceWidgets() {
   addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
 
   //! Add the current OSPRay object file label to the bottom status bar.
-  statusBar()->addWidget(&currentFilenameLabel);
+  statusBar()->addWidget(&currentFilenameInfoLabel);
 }

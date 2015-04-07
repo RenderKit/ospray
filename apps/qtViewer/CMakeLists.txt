@@ -35,6 +35,7 @@ SET(SRCS ${SRCS}
   widgets/affineSpaceManipulator/HelperGeometry.cpp
   widgets/affineSpaceManipulator/QAffineSpaceManipulator.cpp
   widgets/transferFunction/QTransferFunctionEditor.cpp
+  widgets/lightManipulator/QLightManipulator.cpp
 
   # modelviewer proper
   ModelViewer.cpp
@@ -47,6 +48,7 @@ SET(MOC_HEADERS
   ModelViewer.h
   widgets/transferFunction/QTransferFunctionEditor.h
   widgets/affineSpaceManipulator/QAffineSpaceManipulator.h
+  widgets/lightManipulator/QLightManipulator.h
   )
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})

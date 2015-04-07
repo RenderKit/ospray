@@ -43,6 +43,9 @@ protected:
 
   osp::vec2f dataValueRange;
 
+  //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
+  bool dataRangeSet;
+
   QCheckBox isovalueCheckBox;
   QSlider isovalueSlider;
   QDoubleSpinBox isovalueSpinBox;

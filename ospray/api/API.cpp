@@ -148,13 +148,13 @@ namespace ospray {
 
   /*! destroy a given frame buffer. 
 
-    due to internal reference counting the framebuffer may or may not be deleted immeidately
+    due to internal reference counting the framebuffer may or may not be deleted immediately
   */
   extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
-    std::cout << "warning: ospFreeFrameBuffer not yet implemented - ignoring (this means there is a memory hole!)" << std::endl;
+    ospray::api::Device::current->release(fb);
   }
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 

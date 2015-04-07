@@ -243,10 +243,3 @@ export void SimpleAO_set(void *uniform _self,
   self->bgColor = bgColor;
   self->samplesPerFrame = samplesPerFrame;
 }
-
-export void SimpleAO_destroy(void *uniform _self)
-{
-  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
-  delete self;
-}
-

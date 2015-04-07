@@ -75,12 +75,6 @@ export void *uniform PointLight_create(void *uniform cppEquivalent)
   return self;
 }
 
-//! Destroy an ispc-side PointLight object
-export void PointLight_destroy(void *uniform self)
-{
-  delete self;
-}
-
 //! Set the parameters of an ispc-side PointLight object
 export void PointLight_set(void *uniform _self,
                            const uniform vec3f &position,

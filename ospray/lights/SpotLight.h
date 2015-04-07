@@ -25,7 +25,6 @@ namespace ospray {
   class SpotLight : public Light {
     public:
       SpotLight();
-      ~SpotLight();
 
       //! toString is used to aid in printf debugging
       virtual std::string toString() const { return "ospray::SpotLight"; }

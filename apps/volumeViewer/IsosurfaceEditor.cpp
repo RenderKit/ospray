@@ -16,7 +16,7 @@
 
 #include "IsosurfaceEditor.h"
 
-IsosurfaceEditor::IsosurfaceEditor()
+IsosurfaceEditor::IsosurfaceEditor() : dataRangeSet(false)
 {
   //! Setup UI elements.
   QHBoxLayout * layout = new QHBoxLayout();
@@ -40,24 +40,40 @@ IsosurfaceEditor::IsosurfaceEditor()
   connect(&isovalueCheckBox, SIGNAL(toggled(bool)), this, SLOT(apply()));
   connect(&isovalueSlider, SIGNAL(valueChanged(int)), this, SLOT(apply()));
   connect(&isovalueSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
-
-  //! Apply with default values.
-  apply();
 }
 
 void IsosurfaceEditor::setDataValueRange(osp::vec2f dataValueRange)
 {
   this->dataValueRange = dataValueRange;
 
-  //! Update widget ranges.
-  isovalueSpinBox.setRange(dataValueRange.x, dataValueRange.y);
+  if(!dataRangeSet) {
+    isovalueSpinBox.blockSignals(true);
+    isovalueSpinBox.setRange(dataValueRange.x, dataValueRange.y);
+    isovalueSpinBox.blockSignals(false);
 
-  //! Get isovalue based on slider.
-  float sliderPosition = float(isovalueSlider.value()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
-  float isovalue = dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x);
+    //! Get isovalue based on slider position.
+    float sliderPosition = float(isovalueSlider.value() - isovalueSlider.minimum()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
+    float isovalue = dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x);
 
-  //! Update spin box value.
-  isovalueSpinBox.setValue(isovalue);
+    //! Update spin box value.
+    isovalueSpinBox.setValue(isovalue);
+
+    dataRangeSet = true;
+  }
+  else {
+
+    //! Expand the spin box range if the range has already been set (for appropriate time series behavior).
+    isovalueSpinBox.setRange(std::min((double)dataValueRange.x, isovalueSpinBox.minimum()), std::max((double)dataValueRange.y, isovalueSpinBox.maximum()));
+
+    //! Update slider position for the new range.
+    float isovalue = isovalueSpinBox.value();
+
+    float sliderPosition = float(isovalueSlider.minimum()) + (isovalue - dataValueRange.x) / (dataValueRange.y - dataValueRange.x) * float(isovalueSlider.maximum() - isovalueSlider.minimum());
+
+    isovalueSlider.blockSignals(true);
+    isovalueSlider.setValue(int(sliderPosition));
+    isovalueSlider.blockSignals(false);
+  }
 
   apply();
 }
@@ -65,7 +81,7 @@ void IsosurfaceEditor::setDataValueRange(osp::vec2f dataValueRange)
 void IsosurfaceEditor::apply()
 {
   if(sender() == &isovalueSlider) {
-    float sliderPosition = float(isovalueSlider.value()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
+    float sliderPosition = float(isovalueSlider.value() - isovalueSlider.minimum()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
     float isovalue = dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x);
 
     isovalueSpinBox.blockSignals(true);
@@ -75,7 +91,7 @@ void IsosurfaceEditor::apply()
   else if(sender() == &isovalueSpinBox) {
     float isovalue = isovalueSpinBox.value();
 
-    float sliderPosition = float(isovalueSlider.minimum()) + (isovalue - dataValueRange.x) / (dataValueRange.y - dataValueRange.x) * (isovalueSlider.maximum() - isovalueSlider.minimum());
+    float sliderPosition = float(isovalueSlider.minimum()) + (isovalue - dataValueRange.x) / (dataValueRange.y - dataValueRange.x) * float(isovalueSlider.maximum() - isovalueSlider.minimum());
 
     isovalueSlider.blockSignals(true);
     isovalueSlider.setValue(int(sliderPosition));
