@@ -87,11 +87,13 @@ namespace ospray {
 
     Ref<Data> vertexData;  //!< refcounted data array for vertex data
     Ref<Data> indexData; //!< refcounted data array for segment data
+    Ref<Data> colorData;  //!< refcounted data array for vertex color data
 
     const vec3fa *vertex;
     size_t        numVertices;
     const uint32 *index;
     size_t        numSegments;
+    const vec4f  *color;
     float         radius;
 
     StreamLines();
