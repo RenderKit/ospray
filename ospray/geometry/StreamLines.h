@@ -64,6 +64,7 @@ namespace ospray {
     <dt><code>float        radius</code></dt><dd> Radius to be used for all stream lines</dd>
     <dt><li><code>Data<vec3fa> vertex</code></dt><dd> Array of all vertices for *all* curves in this geometry, one curve's vertices stored after another.</dd>
     <dt><li><code>Data<int32>  index </code></dt><dd> index[i] specifies the index of the first vertex of the i'th curve. The curve then uses all following vertices in the 'vertex' array until either the next curve starts, or the array's end is reached.</dd>
+    <dt><li><code>Data<vec3fa> color</code></dt><dd> Array of vertex colors corresponding to the vertices in this geometry.</dd>
     </dl>
 
     The functionality for this geometry is implemented via the
