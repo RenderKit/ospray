@@ -29,6 +29,7 @@ struct Cylinders {
   uniform Geometry geometry; //!< inherited geometry fields
 
   uniform uint8 *uniform data;
+  uniform Material *uniform *materialList;
 
   float           radius;
   int             materialID;
@@ -135,6 +136,9 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
   if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
     uniform uint8 *cylinderPtr = THIS->data + THIS->bytesPerCylinder*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(cylinderPtr+THIS->offset_materialID));
+    if (THIS->materialList) {
+      dg.material = THIS->materialList[dg.materialID];
+    }
   }
 }
 
@@ -150,6 +154,7 @@ export void *uniform Cylinders_create(void           *uniform cppEquivalent)
 export void CylindersGeometry_set(void           *uniform _geom,
                                   void           *uniform _model,
                                   void           *uniform data,
+                                  void           *uniform materialList,
                                   int             uniform numCylinders,
                                   int             uniform bytesPerCylinder,
                                   float           uniform radius,
@@ -166,6 +171,7 @@ export void CylindersGeometry_set(void           *uniform _geom,
   
   geom->geometry.model = model;
   geom->geometry.geomID = geomID;
+  geom->materialList = (Material **)materialList;
   geom->numCylinders = numCylinders;
   geom->radius = radius;
   geom->data = (uniform uint8 *uniform)data;
