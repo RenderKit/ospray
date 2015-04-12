@@ -25,6 +25,10 @@
 
 #pragma once
 
+#ifdef OSPRAY_MPI_DISTRIBUTED
+# include <mpi.h>
+#endif
+
 #include <vector>
 
 // -------------------------------------------------------
@@ -136,8 +140,13 @@ typedef int32 error_t;
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   void ospInit(int *ac, const char **av);
-  // //! initialize the ospray engine (for use with MPI-parallel app) 
-  // void ospInitMPI(int *ac, const char **av);
+
+#ifdef OSPRAY_MPI_DISTRIBUTED
+  //! initialize the ospray engine (for use with MPI-parallel app) 
+  /*! Note the application must call this function "INSTEAD OF"
+      MPI_Init(), NOT "in addition to" */
+  void ospMPIInit(int *ac, char ***av);
+#endif
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
