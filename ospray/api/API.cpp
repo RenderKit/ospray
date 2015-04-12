@@ -630,7 +630,7 @@ namespace ospray {
     ospSet3fv(geom,"xfm.l.vy",&xfm.l.vy.x);
     ospSet3fv(geom,"xfm.l.vz",&xfm.l.vz.x);
     ospSet3fv(geom,"xfm.p",&xfm.p.x);
-    ospSetParam(geom,"model",modelToInstantiate);
+    ospSetObject(geom,"model",modelToInstantiate);
     return geom;
   }
 
