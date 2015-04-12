@@ -14,8 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-/*! \file ospray/include/ospray/ospray.h Defines the external OSPRay
-    API */
+// \file ospray/ospray.h Defines the external OSPRay API */
 
 /*! \defgroup ospray_api OSPRay Core API
 
@@ -108,10 +107,26 @@ typedef enum {
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
 /*! \see ospMpiScope */
 typedef enum {
-  /*! all ospNew(), ospSet(), etc calls affect only the current rank */
-  OSP_MPI_THIS_RANK_ONLY,
-  /*! all ospNew(), ospSet() calls affect all ranks */
-  OSP_MPI_ALL_RANKS
+  //! \brief all ospNew(), ospSet(), etc calls affect only the current rank 
+  /*! \detailed in this mode, all ospXyz() calls made on a given rank
+    will ONLY affect state ont hat rank. This allows for configuring a
+    (globally known) object differnetly on each different rank (also
+    see OSP_MPI_SCOPE_GLOBAL) */
+  OSP_MPI_CURRENT_RANK,
+  OSP_MPI_SCOPE_LOCAL=OSP_MPI_CURRENT_RANK,
+  //! \brief all ospNew(), ospSet() calls affect all ranks 
+  /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
+      functions, but all objects defined through those functions---and
+      all parameters set through those---will apply equally to all
+      ranks. E.g., a OSPVolume vol = ospNewVolume(...) would create a
+      volume object handle that exists on (and therefore, is valid on)
+      all ranks. The (distributed) app may then switch to 'current
+      rank only' mode, and may assign different data or parameters on
+      each rank (typically, in order to have different parts of the
+      volume on different nodes), but the object itself is globally
+      known */
+  OSP_MPI_ALL_RANKS,
+  OSP_MPI_SCOPE_GLOBAL=OSP_MPI_ALL_RANKS
 } OSPMpiScope;
 #endif
 
@@ -156,13 +171,20 @@ extern "C" {
   void ospInit(int *ac, const char **av);
 
 #ifdef OSPRAY_MPI_DISTRIBUTED
-  //! initialize the ospray engine (for use with MPI-parallel app) 
-  /*! Note the application must call this function "INSTEAD OF"
+  typedef enum { 
+    OSP_MPI_Z_COMPOSITE
+  } OSPMpiMode;
+
+  //! \brief initialize the ospray engine (for use with MPI-parallel app) 
+  /*! \detailed Note the application must call this function "INSTEAD OF"
       MPI_Init(), NOT "in addition to" */
-  void ospMPIInit(int *ac, char ***av, int mpiMode=0);
+  void ospMpiInit(int *ac, char ***av, OSPMpiMode mpiMode=OSP_MPI_Z_COMPOSITE);
+
+  //! \brief shut down distributed mpi mode
+  void ospMpiShutdown();
 
   //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
-  void ospMPIScope(MPIScope scope);
+  void ospMpiScope(OSPMpiScope scope);
 #endif
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so

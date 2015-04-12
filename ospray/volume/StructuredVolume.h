@@ -16,9 +16,11 @@
 
 #pragma once
 
+// ospray
+#include "ospray/volume/Volume.h"
+// stl
 #include <algorithm>
 #include <string>
-#include "ospray/volume/Volume.h"
 
 namespace ospray {
 

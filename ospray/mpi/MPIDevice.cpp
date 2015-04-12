@@ -968,3 +968,23 @@ namespace ospray {
   } // ::ospray::mpi
 } // ::ospray
 
+  //! \brief initialize the ospray engine (for use with MPI-parallel app) 
+  /*! \detailed Note the application must call this function "INSTEAD OF"
+      MPI_Init(), NOT "in addition to" */
+extern "C" void ospMpiInit(int *ac, char ***av, OSPMpiMode mpiMode)
+{
+  PING;
+}
+
+//! \brief shut down distributed mpi mode
+extern "C" void ospMpiShutdown()
+{
+  PING;
+}
+
+//! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
+extern "C" void ospMpiScope(OSPMpiScope scope)
+{
+  PING;
+}
+

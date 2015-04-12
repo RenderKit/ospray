@@ -19,6 +19,11 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
+// mpi, if we need it
+#ifdef OSPRAY_MPI_DISTRIBUTED
+# include <mpi.h>
+#endif
+
 // embree
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
