@@ -14,6 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+/*! \file ospray/include/ospray/ospray.h Defines the external OSPRay
+    API */
+
 /*! \defgroup ospray_api OSPRay Core API
 
   \ingroup ospray
@@ -101,6 +104,17 @@ typedef enum {
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
 
+#ifdef OSPRAY_MPI_DISTRIBUTED
+//! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
+/*! \see ospMpiScope */
+typedef enum {
+  /*! all ospNew(), ospSet(), etc calls affect only the current rank */
+  OSP_MPI_THIS_RANK_ONLY,
+  /*! all ospNew(), ospSet() calls affect all ranks */
+  OSP_MPI_ALL_RANKS
+} OSPMpiScope;
+#endif
+
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {
 //   /*! experimental: currently used to specify that the app ranks -
@@ -145,7 +159,10 @@ extern "C" {
   //! initialize the ospray engine (for use with MPI-parallel app) 
   /*! Note the application must call this function "INSTEAD OF"
       MPI_Init(), NOT "in addition to" */
-  void ospMPIInit(int *ac, char ***av);
+  void ospMPIInit(int *ac, char ***av, int mpiMode=0);
+
+  //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
+  void ospMPIScope(MPIScope scope);
 #endif
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
