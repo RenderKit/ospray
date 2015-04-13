@@ -351,42 +351,6 @@ export void BlockBrickedVolume_finish(void *uniform pointer) {
 
 }
 
-export void BlockBrickedVolume_setGammaCorrection(void *uniform pointer, const uniform vec2f &value) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  //! Set the gamma correction coefficient and exponent.
-  volume->inherited.gammaCorrection = value;
-
-}
-
-export void BlockBrickedVolume_setGradientShadingEnabled(void *uniform pointer, const uniform bool &value) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  //! Set the gamma correction coefficient and exponent.
-  volume->inherited.gradientShadingEnabled = value;
-
-}
-
-export void BlockBrickedVolume_setNumIsovalues(void *uniform pointer, const uniform int value) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  volume->inherited.numIsovalues = value;
-}
-
-export void BlockBrickedVolume_setIsovalues(void *uniform pointer, uniform float *uniform values) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  volume->inherited.isovalues = values;
-}
-
 export void BlockBrickedVolume_setRegion(void *uniform pointer, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count) {
 
   //! Cast to the actual Volume subtype.
@@ -394,36 +358,6 @@ export void BlockBrickedVolume_setRegion(void *uniform pointer, const void *unif
 
   //! Copy voxel data from memory into the volume.
   foreach (z = 0 ... count.z, y = 0 ... count.y, x = 0 ... count.x) { const vec3i offset = make_vec3i(x, y, z);  volume->setVoxel(volume, source, index, offset); }
-
-}
-
-export void BlockBrickedVolume_setSamplingRate(void *uniform pointer, const uniform float value) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  //! Set the recommended sampling rate for ray casting based renderers.
-  volume->inherited.samplingRate = value;
-
-}
-
-export void BlockBrickedVolume_setTransferFunction(void *uniform pointer, void *uniform value) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  //! Set the color and opacity transfer function.
-  volume->inherited.transferFunction = (TransferFunction *uniform) value;
-
-}
-
-export void BlockBrickedVolume_setVolumeClippingBox(void *uniform pointer, const uniform box3f &value) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  //! Set the volume clipping box.
-  volume->inherited.volumeClippingBox = value;
 
 }
 

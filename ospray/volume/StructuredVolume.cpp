@@ -23,18 +23,20 @@
 
 namespace ospray {
 
-  void StructuredVolume::commit() {
-
+  void StructuredVolume::commit()
+  {
     //! Some parameters can be changed after the volume has been allocated and filled.
     updateEditableParameters();
 
-    //! Complete volume initialization.
-    if (!finished) finish(), finished = true;
-
+    //! Complete volume initialization (only on first commit).
+    if (!finished) {
+      finish();
+      finished = true;
+    }
   }
 
-  OSPDataType StructuredVolume::getVoxelType() const {
-
+  OSPDataType StructuredVolume::getVoxelType() const
+  {
     //! Separate out the base type and vector width.
     char kind[voxelType.size()];  unsigned int width = 1;  sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
 
@@ -46,7 +48,6 @@ namespace ospray {
 
     //! Unknown voxel type.
     return(OSP_UNKNOWN);
-
   }
 
 } // ::ospray

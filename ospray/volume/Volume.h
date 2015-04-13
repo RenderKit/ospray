@@ -52,21 +52,22 @@ namespace ospray {
     //! Destructor.
     virtual ~Volume() {};
 
-    //! Allocate storage and populate the volume.
-    virtual void commit() = 0;
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::Volume"); }
 
     //! Create a volume container of the given type.
     static Volume *createInstance(std::string type);
 
+    //! Allocate storage and populate the volume.
+    virtual void commit() = 0;
 
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::Volume"); }
-
   protected:
 
+    //! Update select editable parameters (allowed after the volume has been initially committed).
+    virtual void updateEditableParameters();
 
     //! Print an error message.
     inline void emitMessage(const std::string &kind, const std::string &message) const

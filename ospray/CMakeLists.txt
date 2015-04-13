@@ -55,6 +55,7 @@ SET(OSPRAY_SOURCES
   volume/StructuredVolume.cpp
   volume/SymbolRegistry.cpp
   volume/Volume.cpp
+  volume/Volume.ispc
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp

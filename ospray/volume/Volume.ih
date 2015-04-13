@@ -49,7 +49,7 @@ struct Volume {
   //! Clipping box for the volume (applies to volume rendering only).
   uniform box3f volumeClippingBox;
 
-  //! The largest floating point value still inside the volume.
+  //! The largest floating point value (in local coordinates) still inside the volume.
   uniform vec3f upperBound;
 
   //! The gradient at the given sample location in world coordinates.

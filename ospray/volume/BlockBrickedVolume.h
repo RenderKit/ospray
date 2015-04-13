@@ -33,22 +33,20 @@ namespace ospray {
     //! Destructor.
     virtual ~BlockBrickedVolume() {};
 
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC();
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::BlockBrickedVolume<" + voxelType + ">"); }
 
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::BlockBrickedVolume<" + voxelType + ">"); }
-
   protected:
+
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC();
 
     //! Complete volume initialization.
     virtual void finish();
 
-    //! Update select parameters after the volume has been allocated and filled.
-    virtual void updateEditableParameters();
   };
 
 } // ::ospray

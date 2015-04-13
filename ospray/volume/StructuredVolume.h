@@ -41,20 +41,14 @@ namespace ospray {
     //! Destructor.
     virtual ~StructuredVolume() {};
 
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
+
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit();
 
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC() = 0;
-
-    //! Get the OSPDataType enum corresponding to the voxel type string.
-    OSPDataType getVoxelType() const;
-
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
-
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
 
   protected:
 
@@ -73,8 +67,8 @@ namespace ospray {
     //! Complete volume initialization.
     virtual void finish() = 0;
 
-    //! Update select parameters after the volume has been allocated and filled.
-    virtual void updateEditableParameters() {}
+    //! Get the OSPDataType enum corresponding to the voxel type string.
+    OSPDataType getVoxelType() const;
 
     //! Compute the voxel value range for floating point voxels.
     inline void computeVoxelRange(const float *source, const size_t &count)
