@@ -17,7 +17,6 @@
 #pragma once
 
 #include "ospray/common/Managed.h"
-#include "ospray/transferFunction/TransferFunction.h"
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
@@ -56,14 +55,9 @@ namespace ospray {
     //! Allocate storage and populate the volume.
     virtual void commit() = 0;
 
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC() = 0;
-
     //! Create a volume container of the given type.
     static Volume *createInstance(std::string type);
 
-    //! Get the ISPC volume container.
-    void *getEquivalentISPC() const { return(getIE()); }
 
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
@@ -73,8 +67,6 @@ namespace ospray {
 
   protected:
 
-    //! Volume transfer function.
-    TransferFunction *transferFunction;
 
     //! Print an error message.
     inline void emitMessage(const std::string &kind, const std::string &message) const

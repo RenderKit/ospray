@@ -47,12 +47,6 @@ namespace ospray {
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC() = 0;
 
-    //! Volume size in voxels per dimension.
-    const vec3i &getDimensions() const { return(volumeDimensions); }
-
-    //! Voxel size in bytes.
-    size_t getVoxelSizeInBytes() const;
-
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
@@ -68,7 +62,7 @@ namespace ospray {
     bool finished;
 
     //! Volume size in voxels per dimension.
-    vec3i volumeDimensions;
+    vec3i dimensions;
 
     //! Voxel value range.
     vec2f voxelRange;

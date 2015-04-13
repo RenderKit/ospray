@@ -78,7 +78,7 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer) {
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
 
   //! Grid size in cells per dimension after padding out the volume dimensions to the nearest cell.
-  accelerator->gridDimensions = (volume->volumeDimensions + CELL_WIDTH - 1) / CELL_WIDTH;
+  accelerator->gridDimensions = (volume->dimensions + CELL_WIDTH - 1) / CELL_WIDTH;
 
   //! Grid size in bricks per dimension after padding out the grid dimensions to the nearest brick.
   accelerator->brickCount = (accelerator->gridDimensions + BRICK_WIDTH - 1) / BRICK_WIDTH;
@@ -93,7 +93,7 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform pointer) {
   accelerator->volume = pointer;
 
   //! The largest floating point value still inside the volume.
-  accelerator->volumeExtents = nextafter(volume->volumeDimensions - 1, make_vec3i(0));
+  accelerator->volumeExtents = nextafter(volume->dimensions - 1, make_vec3i(0));
 
   //! Compute the volumetric value range per cell.
   //  launch[accelerator->brickCount.x, accelerator->brickCount.y, accelerator->brickCount.z] GridAccelerator_encodeVolumeBrick(accelerator, volume);
@@ -116,7 +116,7 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator
     const vec3i voxelIndex = cellIndex * CELL_WIDTH + make_vec3i(i, j, k);
 
     //! The voxel value.
-    const float value = volume->getVoxel(volume, min(volume->volumeDimensions - 1, voxelIndex));
+    const float value = volume->getVoxel(volume, min(volume->dimensions - 1, voxelIndex));
 
     //! Update the volumetric value range of the current cell, ignoring any NaN values.
     if(!isnan(value))

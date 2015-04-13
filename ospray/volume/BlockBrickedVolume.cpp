@@ -33,11 +33,11 @@ namespace ospray {
     ispcEquivalent = ispc::BlockBrickedVolume_createInstance((int) getVoxelType());
 
     //! Get the volume dimensions.
-    volumeDimensions = getParam3i("dimensions", vec3i(0));  
-    exitOnCondition(reduce_min(volumeDimensions) <= 0, "invalid volume dimensions");
+    dimensions = getParam3i("dimensions", vec3i(0));
+    exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
 
     //! Set the volume dimensions.
-    ispc::BlockBrickedVolume_setVolumeDimensions(ispcEquivalent, (const ispc::vec3i &) volumeDimensions);
+    ispc::BlockBrickedVolume_setDimensions(ispcEquivalent, (const ispc::vec3i &) dimensions);
 
     //! Allocate memory for the voxel data in the ISPC object.
     ispc::BlockBrickedVolume_allocateMemory(ispcEquivalent);
@@ -50,9 +50,6 @@ namespace ospray {
 
     //! Make the voxel value range visible to the application.
     if (findParam("voxelRange") == NULL) set("voxelRange", voxelRange);  else voxelRange = getParam2f("voxelRange", voxelRange);
-
-    //! Set the voxel value range in the ISPC volume.
-    ispc::BlockBrickedVolume_setValueRange(ispcEquivalent, (const ispc::vec2f &) voxelRange);
 
     //! Complete volume initialization.
     ispc::BlockBrickedVolume_finish(ispcEquivalent);

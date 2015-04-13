@@ -238,7 +238,7 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform pointer, const void *
   Address address;  BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
 
   //! The source voxel value.
-  float value = sourceData[(offset.z * volume->volumeDimensions.y + offset.y) * volume->volumeDimensions.x + offset.x];
+  float value = sourceData[(offset.z * volume->dimensions.y + offset.y) * volume->dimensions.x + offset.x];
 
   //! Store the voxel value at the 1D address.
   foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
@@ -257,7 +257,7 @@ inline void BlockBrickedVolumeUChar_setVoxel(void *uniform pointer, const void *
   Address address;  BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
 
   //! The source voxel value.
-  uint8 value = sourceData[(offset.z * volume->volumeDimensions.y + offset.y) * volume->volumeDimensions.x + offset.x];
+  uint8 value = sourceData[(offset.z * volume->dimensions.y + offset.y) * volume->dimensions.x + offset.x];
 
   //! Store the voxel value at the 1D address.
   foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
@@ -427,29 +427,19 @@ export void BlockBrickedVolume_setVolumeClippingBox(void *uniform pointer, const
 
 }
 
-export void BlockBrickedVolume_setValueRange(void *uniform pointer, const uniform vec2f &value) {
-
-  //! Cast to the actual Volume type.
-  BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
-
-  //! Set the volume value range.
-  volume->inherited.valueRange = value;
-
-}
-
-export void BlockBrickedVolume_setVolumeDimensions(void *uniform pointer, const uniform vec3i &value) {
+export void BlockBrickedVolume_setDimensions(void *uniform pointer, const uniform vec3i &value) {
 
   //! Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) pointer;
 
-  //! Set the step size for ray casting based renderers.
-  volume->volumeDimensions = value;
+  //! Set the volume size in voxels per dimension.
+  volume->dimensions = value;
 
   //! The largest floating point value still inside the volume.
-  volume->inherited.upperBound = nextafter(volume->volumeDimensions - 1, make_vec3i(0));
+  volume->inherited.upperBound = nextafter(volume->dimensions - 1, make_vec3i(0));
 
   //! Volume size in blocks per dimension with padding to the nearest block.
-  volume->blockCount = (volume->volumeDimensions + BLOCK_VOXEL_WIDTH - 1) / BLOCK_VOXEL_WIDTH;
+  volume->blockCount = (volume->dimensions + BLOCK_VOXEL_WIDTH - 1) / BLOCK_VOXEL_WIDTH;
 
 }
 

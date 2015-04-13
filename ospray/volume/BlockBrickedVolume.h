@@ -49,11 +49,6 @@ namespace ospray {
 
     //! Update select parameters after the volume has been allocated and filled.
     virtual void updateEditableParameters();
-
-    //! Range test a vector value against [b, c).
-    inline bool inRange(const vec3i &a, const vec3i &b, const vec3i &c)
-    { return(a.x >= b.x && a.y >= b.y && a.z >= b.z && a.x < c.x && a.y < c.y && a.z < c.z); }
-
   };
 
 } // ::ospray

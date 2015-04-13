@@ -49,27 +49,5 @@ namespace ospray {
 
   }
 
-  size_t StructuredVolume::getVoxelSizeInBytes() const {
-
-    //! Separate out the base type and vector width.
-    char kind[voxelType.size()];  unsigned int width = 1;  sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
-
-    //! Unsigned character scalar and vector types.
-    if (!strcmp(kind, "uchar") && width >= 1 && width <= 4) return(sizeof(unsigned char) * width);
-
-    //! Floating point scalar and vector types.
-    if (!strcmp(kind, "float") && width >= 1 && width <= 4) return(sizeof(float) * width);
-
-    //! Unsigned integer scalar and vector types.
-    if (!strcmp(kind, "uint") && width >= 1 && width <= 4) return(sizeof(unsigned int) * width);
-
-    //! Signed integer scalar and vector types.
-    if (!strcmp(kind, "int") && width >= 1 && width <= 4) return(sizeof(int) * width);  
-
-    //! Unknown voxel type.
-    return(0);
-
-  }
-
 } // ::ospray
 
