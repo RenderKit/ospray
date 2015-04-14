@@ -475,7 +475,7 @@ extern "C" {
   } OSPPickResult;
 
   /*! \brief returns the world-space position of the geometry seen at [0-1] normalized screen-space pixel coordinates (if any) */
-  OSPPickResult ospPick(OSPRenderer renderer, const osp::vec2f &screenPos);
+  void ospPick(OSPPickResult *result, OSPRenderer renderer, const osp::vec2f &screenPos);
 
   extern "C" /*OSP_DEPRECATED*/ typedef struct {
     bool hit;

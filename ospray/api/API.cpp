@@ -613,11 +613,12 @@ namespace ospray {
     return geom;
   }
 
-  extern "C" OSPPickResult ospPick(OSPRenderer renderer, const vec2f &screenPos)
+  extern "C" void ospPick(OSPPickResult *result, OSPRenderer renderer, const vec2f &screenPos)
   {
     ASSERT_DEVICE();
     Assert2(renderer, "NULL renderer passed to ospPick");
-    return ospray::api::Device::current->pick(renderer, screenPos);
+    if (!result) return;
+    *result = ospray::api::Device::current->pick(renderer, screenPos);
   }
 
   extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)

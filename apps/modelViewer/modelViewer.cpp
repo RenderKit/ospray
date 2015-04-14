@@ -213,7 +213,8 @@ namespace ospray {
       Glut3DWidget::mouseButton(whichButton, released, pos);
       if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
         vec2f normpos = vec2f(pos.x / (float)windowSize.x, 1.0f - pos.y / (float)windowSize.y);
-        OSPPickResult pick = ospPick(ospRenderer, normpos);
+        OSPPickResult pick;
+        ospPick(&pick, ospRenderer, normpos);
         if(pick.hit) {
           vec3f delta = pick.position - viewPort.at;
           vec3f right = cross(normalize(viewPort.at - viewPort.from), viewPort.up);
