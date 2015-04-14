@@ -63,7 +63,7 @@ OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with MIC Support?")
 # whether to build in MPI support
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
-SET(OSPRAY_XEON_TARGET "AVX" CACHE STRING "Target ISA on host.")
+SET(OSPRAY_XEON_TARGET "AVX2" CACHE STRING "Maximum target ISA (e.g., 'avx2' means SSE,AVX,and AVX2).")
 SET_PROPERTY(CACHE OSPRAY_XEON_TARGET PROPERTY STRINGS SSE AVX AVX2)
 
 # make ospray target and compiler uppercase - we need this in some other parts of the build system
