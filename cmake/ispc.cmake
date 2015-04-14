@@ -129,7 +129,7 @@ MACRO (ispc_compile)
       SET(outputs ${outputs} ${outdir}/${fname}${ISPC_TARGET_EXT}.dev_${target}.o)
       SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_${target}.o)
     ENDFOREACH()
-    message("output ${outputs}")
+#    message("output ${outputs}")
     ADD_CUSTOM_COMMAND(
       #OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h ${outdir}/${fname}.dev_sse4.o ${outdir}/${fname}.dev_avx.o ${outdir}/${fname}.dev_avx2.o
       OUTPUT ${outputs}
