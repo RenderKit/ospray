@@ -78,7 +78,7 @@ namespace ospray {
       x(OSPCOI_CREATE_NEW_EMPTY_DATA,   "ospray_coi_create_new_empty_data") \
       x(OSPCOI_UPLOAD_DATA_DONE,        "ospray_coi_upload_data_done")      \
       x(OSPCOI_UPLOAD_DATA_CHUNK,       "ospray_coi_upload_data_chunk")     \
-      x(OSPCOI_UNPROJECT,               "ospray_coi_unproject")             \
+      x(OSPCOI_PICK,                    "ospray_coi_pick")                  \
       x(OSPCOI_NUM_FUNCTIONS,           NULL) //This must be last
 
 #define x(a,b) a,
@@ -325,7 +325,7 @@ namespace ospray {
       /*! have given renderer create a new material */
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type);
 
-      virtual OSPPickData unproject(OSPRenderer _renderer, const vec2f &screenPos);
+      virtual OSPPickResult pick(OSPRenderer _renderer, const vec2f &screenPos);
     };
 
 
@@ -757,16 +757,16 @@ namespace ospray {
       }
     }
 
-    /*! have given renderer unproject a screenspace point to worldspace */
-    OSPPickData COIDevice::unproject(OSPRenderer _renderer, const vec2f &screenPos)
+    /*! have given renderer "pick", i.e. returning the position of the geometry seen at screenspace point */
+    OSPPickResult COIDevice::pick(OSPRenderer _renderer, const vec2f &screenPos)
     {
-      Assert2(_renderer, "NULL renderer in COIDevice::unproject");
+      Assert2(_renderer, "NULL renderer in COIDevice::pick");
       DataStream args;
       args.write(_renderer);
       args.write(screenPos);
 
-      OSPPickData retValue = {false, 0, 0, 0};
-      callFunction(OSPCOI_UNPROJECT, args, &retValue, sizeof(retValue));
+      OSPPickResult retValue = {vec3f(0.), false};
+      callFunction(OSPCOI_PICK, args, &retValue, sizeof(retValue));
       return retValue;
     }
 

@@ -103,15 +103,15 @@ namespace ospray {
     TiledLoadBalancer::instance->renderFrame(this,fb,channelFlags);
   }
 
-  OSPPickData Renderer::unproject(const vec2f &screenPos)
+  OSPPickResult Renderer::pick(const vec2f &screenPos)
   {
     assert(getIE());
-    bool hit; float x, y, z;
+    vec3f pos; bool hit;
 
-    ispc::Renderer_unproject(getIE(),(const ispc::vec2f&)screenPos, hit, x, y, z);
-    OSPPickData ret = { hit, x, y, z };
-    
-    return ret;
+    ispc::Renderer_pick(getIE(), (const ispc::vec2f&)screenPos, (ispc::vec3f&)pos, hit);
+
+    OSPPickResult res = { pos, hit };
+    return res;
   }
 
 } // ::ospray

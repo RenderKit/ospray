@@ -27,7 +27,7 @@ struct Camera;
 struct CameraSample {
   vec2f screen; /*!< normalized screen sample, from [0..1] */
   vec2f lens;   /*!< may be left un-initialized if 'camera.doesDOF' is false */
-  float time;   /*!< time */
+  float time;   /*!< time, currently unused */
 };
 
 /*! \brief Fct pointer type for 'virtual' method that sets a pixel */

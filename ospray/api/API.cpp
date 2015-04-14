@@ -613,11 +613,26 @@ namespace ospray {
     return geom;
   }
 
-  extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)
+  extern "C" OSPPickResult ospPick(OSPRenderer renderer, const vec2f &screenPos)
   {
     ASSERT_DEVICE();
+    Assert2(renderer, "NULL renderer passed to ospPick");
+    return ospray::api::Device::current->pick(renderer, screenPos);
+  }
+
+  extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)
+  {
+    static bool warned = false;
+    if (!warned) {
+      std::cout << "'ospUnproject()' has been deprecated. Please use the new function 'ospPick()' instead" << std::endl;
+      warned = true;
+    }
+    ASSERT_DEVICE();
     Assert2(renderer, "NULL renderer passed to ospUnproject");
-    return ospray::api::Device::current->unproject(renderer, screenPos);
+    vec2f flippedScreenPos = vec2f(screenPos.x, 1.0f - screenPos.y);
+    OSPPickResult pick = ospray::api::Device::current->pick(renderer, flippedScreenPos);
+    OSPPickData res = { pick.hit,  pick.position.x,  pick.position.y,  pick.position.z };
+    return res;
   }
 
 } // ::ospray

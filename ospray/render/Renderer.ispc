@@ -19,7 +19,6 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
-// The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(uniform Renderer *uniform self,
                                    varying ScreenSample &sample)
 {
@@ -199,31 +198,27 @@ export void Renderer_set(void *uniform _self,
   self->spp = spp;
 }
 
-export void Renderer_unproject( void *uniform _self,
-                                const uniform vec2f &screenPos,
-                                uniform bool &hit,
-                                uniform float &x,
-                                uniform float &y,
-                                uniform float &z)
+export void Renderer_pick(void *uniform _self,
+                               const uniform vec2f &screenPos,
+                               uniform vec3f &pos,
+                               uniform bool &hit)
 {
-  uniform Renderer    *uniform self = (uniform Renderer *uniform)_self;
-  uniform Camera      *uniform camera   = self->camera;
-  uniform Model       *uniform model    = self->model;
-
-  uniform OSPPickData ret;
+  uniform Renderer *uniform self   = (uniform Renderer *uniform)_self;
+  uniform Camera   *uniform camera = self->camera;
+  uniform Model    *uniform model  = self->model;
 
   CameraSample cameraSample;
   cameraSample.screen.x = screenPos.x;
-  cameraSample.screen.y = 1.0 - screenPos.y;
+  cameraSample.screen.y = screenPos.y;
 
   Ray ray;
   camera->initRay(camera, ray, cameraSample);
   traceRay(model, ray);
 
-  vec3f p = ray.org + (ray.dir * ray.t);
+  vec3f p = ray.org + ray.dir * ray.t;
 
-  hit= extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
-  x=extract(p.x,0);
-  y=extract(p.y,0);
-  z=extract(p.z,0);
+  pos.x = extract(p.x,0);
+  pos.y = extract(p.y,0);
+  pos.z = extract(p.z,0);
+  hit = extract((int)(ray.geomID >= 0 || ray.instID >= 0), 0);
 }

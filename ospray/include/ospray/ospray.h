@@ -248,6 +248,8 @@ extern "C" {
     OSP_FB_RBGA_I8, OSP_FB_RGB_I8, and OSP_FB_NONE (note that
     OSP_FB_NONE is a perfectly reasonably choice for a framebuffer
     that will be used only internally, see notes below).
+    The origin of the screen coordinate system is the lower left
+    corner (as in OpenGL).
 
     \param channelFlags specifies which channels the frame buffer has,
     and is or'ed together from the values OSP_FB_COLOR,
@@ -466,14 +468,22 @@ extern "C" {
   /*! \brief commit changes to an object */
   void ospCommit(OSPObject object);
 
-  /*! \brief represents the data returned after an ospUnproject (picking) operation */
+  /*! \brief represents the result returned by an ospPick operation */
   extern "C" typedef struct {
-    bool hit;                           //Whether or not a hit actually occured
-    float world_x, world_y, world_z;    //The world-space position of the hit point
+    osp::vec3f position; //< the position of the hit point (in world-space)
+    bool hit;            //< whether or not a hit actually occured
+  } OSPPickResult;
+
+  /*! \brief returns the world-space position of the geometry seen at [0-1] normalized screen-space pixel coordinates (if any) */
+  OSPPickResult ospPick(OSPRenderer renderer, const osp::vec2f &screenPos);
+
+  extern "C" /*OSP_DEPRECATED*/ typedef struct {
+    bool hit;
+    float world_x, world_y, world_z;
   } OSPPickData;
 
-  /*! \brief unproject a [0-1] normalized screen-space pixel coordinate to a world-space position */
-  OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
+  /* \warning this call has been superseded by ospPick, and will eventually get removed */
+  OSP_DEPRECATED OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 
 } // extern "C"
 
