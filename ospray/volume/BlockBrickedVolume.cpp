@@ -37,7 +37,7 @@ namespace ospray {
     ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);
 
     //! DO ME: this return value should indicate the success or failure of memory allocation in ISPC and a range check.
-    return(true);
+    return true;
   }
 
   void BlockBrickedVolume::createEquivalentISPC() 
@@ -46,30 +46,12 @@ namespace ospray {
     voxelType = getParamString("voxelType", "unspecified");  
     exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type");
 
-    //! Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
-    ispcEquivalent = ispc::BlockBrickedVolume_createInstance((int) getVoxelType());
-
     //! Get the volume dimensions.
-    dimensions = getParam3i("dimensions", vec3i(0));
+    vec3i dimensions = getParam3i("dimensions", vec3i(0));
     exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
 
-    //! Set the volume dimensions.
-    ispc::BlockBrickedVolume_setDimensions(ispcEquivalent, (const ispc::vec3i &) dimensions);
-
-    //! Allocate memory for the voxel data in the ISPC object.
-    ispc::BlockBrickedVolume_allocateMemory(ispcEquivalent);
-  }
-
-  void BlockBrickedVolume::finish() 
-  {
-    //! The ISPC volume container must exist at this point.
-    assert(ispcEquivalent != NULL);
-
-    //! Make the voxel value range visible to the application.
-    if (findParam("voxelRange") == NULL) set("voxelRange", voxelRange);  else voxelRange = getParam2f("voxelRange", voxelRange);
-
-    //! Complete volume initialization.
-    ispc::BlockBrickedVolume_finish(ispcEquivalent);
+    //! Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
+    ispcEquivalent = ispc::BlockBrickedVolume_createInstance((int)getVoxelType(), (const ispc::vec3i &)dimensions);
   }
 
 } // ::ospray

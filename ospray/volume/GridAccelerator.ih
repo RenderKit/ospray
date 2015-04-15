@@ -18,7 +18,6 @@
 
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/transferFunction/TransferFunction.ih"
 
 //! \brief A spatial acceleration structure over a BlockBrickedVolume, used
 //!  for opacity and variance based space skipping.
@@ -36,9 +35,6 @@ struct GridAccelerator {
 
   //! Pointer to the associated volume.
   void *uniform volume;
-
-  //! The largest floating point value still inside the volume.
-  uniform vec3f volumeExtents;
 
 };
 

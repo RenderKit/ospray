@@ -55,17 +55,17 @@ namespace ospray {
     //! Indicate that the volume is fully initialized.
     bool finished;
 
-    //! Volume size in voxels per dimension.
-    vec3i dimensions;
-
-    //! Voxel value range.
+    //! Voxel value range (computed during setRegion()).
     vec2f voxelRange;
 
     //! Voxel type.
     std::string voxelType;
 
-    //! Complete volume initialization.
-    virtual void finish() = 0;
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC() = 0;
+
+    //! Complete volume initialization (only on first commit).
+    virtual void finish();
 
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;

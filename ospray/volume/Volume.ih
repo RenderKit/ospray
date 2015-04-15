@@ -52,14 +52,11 @@ struct Volume {
   //! The largest floating point value (in local coordinates) still inside the volume.
   uniform vec3f upperBound;
 
-  //! The gradient at the given sample location in world coordinates.
-  varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &coordinates);
+  //! The value at the given sample location in world coordinates.
+  varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &worldCoordinates);
 
-  //! Tri-linear interpolation at the given sample location in world coordinates.
-  varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &coordinates);
-      
-  //! Tri-linear interpolation at each sample location in an array, 'coordinates' and 'results' arrays must be 'count' elements in size.
-  void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform coordinates, const uniform int count, varying float *uniform results);
+  //! The gradient at the given sample location in world coordinates.
+  varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &worldCoordinates);
 
   //! Find the next hit point in the volume for ray casting based renderers.
   void (*uniform intersect)(void *uniform volume, varying Ray &ray);
@@ -68,4 +65,4 @@ struct Volume {
   void (*uniform intersectIsosurface)(void *uniform volume, const uniform float isovalue, varying Ray &ray);
 };
 
-
+void Volume_Constructor(Volume *uniform volume);

@@ -236,7 +236,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Assume just one volume.
 
   //! Box representing the global bounds of the volume.
-  const uniform box3f bounds = make_box3f(make_vec3f(0.0f), make_vec3f(1.0f));
+  const uniform box3f bounds = make_box3f(make_vec3f(0.0f), renderer->model->volumes[0]->upperBound);
 
   //! Compute the intersection interval over the ray and volume bounds.
   RaycastVolumeRenderer_intersectBox(bounds, ray);
@@ -250,12 +250,12 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   const float tMax = ray.t1;
 
   //! Offset ray by a fraction of the nominal ray step.
-  const uniform float step = 1.f / reduce_max(renderer->model->volumes[0]->upperBound) / renderer->model->volumes[0]->samplingRate;
+  const uniform float step = 1.f / renderer->model->volumes[0]->samplingRate;
   ray.t += rayOffset * step;
 
   //! Copy of the ray for volume isosurface intersection. The original ray is used for volume intersection.
   Ray isosurfaceRay = ray;
-  isosurfaceRay.t = ray.t0 + rayOffset * 1.f / reduce_max(renderer->model->volumes[0]->upperBound); // don't consider sampling rate, but still allow offset.
+  isosurfaceRay.t = ray.t0 + rayOffset * 1.f; // don't consider sampling rate, but still allow offset.
   isosurfaceRay.primID = -1;
   isosurfaceRay.geomID = -1;
   isosurfaceRay.instID = -1;
@@ -361,8 +361,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
 }
 
-export void *uniform RaycastVolumeRenderer_createInstance() {
-
+export void *uniform RaycastVolumeRenderer_createInstance()
+{
   //! The renderer object.
   RaycastVolumeRenderer *uniform renderer = uniform new uniform RaycastVolumeRenderer;
 
@@ -377,7 +377,6 @@ export void *uniform RaycastVolumeRenderer_createInstance() {
 
   //! Function to perform per-frame state completion.
   renderer->inherited.endFrame = RaycastVolumeRenderer_renderFramePostamble;  return(renderer);
-
 }
 
 export void RaycastVolumeRenderer_setCamera(void *uniform pointer, 

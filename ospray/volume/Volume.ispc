@@ -16,6 +16,14 @@
 
 #include "ospray/volume/Volume.ih"
 
+void Volume_Constructor(Volume *uniform volume)
+{
+  // default for upperBound; should be set to correct value by derived volume.
+  volume->upperBound = make_vec3f(1.f);
+
+  // other defaults are set during Volume::updateEditableParameters().
+}
+
 export void Volume_setGammaCorrection(void *uniform _self, const uniform vec2f &value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;

@@ -18,6 +18,7 @@
 #include "ospray/common/Data.h"
 #include "ospray/common/Library.h"
 #include "ospray/volume/StructuredVolume.h"
+#include "StructuredVolume_ispc.h"
 // stl
 #include <map>
 
@@ -35,6 +36,21 @@ namespace ospray {
     }
   }
 
+  void StructuredVolume::finish()
+  {
+    //! The ISPC volume container must exist at this point.
+    assert(ispcEquivalent != NULL);
+
+    //! Make the voxel value range visible to the application.
+    if (findParam("voxelRange") == NULL)
+      set("voxelRange", voxelRange);
+    else
+      voxelRange = getParam2f("voxelRange", voxelRange);
+
+    //! Complete volume initialization.
+    ispc::StructuredVolume_finish(ispcEquivalent);
+  }
+
   OSPDataType StructuredVolume::getVoxelType() const
   {
     //! Separate out the base type and vector width.
@@ -47,7 +63,7 @@ namespace ospray {
     if (!strcmp(kind, "uchar") && width == 1) return(OSP_UCHAR);
 
     //! Unknown voxel type.
-    return(OSP_UNKNOWN);
+    return OSP_UNKNOWN;
   }
 
 } // ::ospray
