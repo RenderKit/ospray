@@ -43,12 +43,12 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
-  common/OSPCommon.cpp
   common/OSPCommon.ispc
+  common/OSPCommon.cpp
   common/Managed.cpp
   common/Data.cpp
-  common/Model.cpp
   common/Model.ispc
+  common/Model.cpp
   common/Material.cpp
   common/Library.cpp
   common/TaskSys.cpp

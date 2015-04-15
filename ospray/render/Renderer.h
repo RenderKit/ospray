@@ -67,7 +67,7 @@ namespace ospray {
     /*! \brief create a light of given type */
     virtual Light *createLight(const char *type) { return NULL; }
 
-    virtual OSPPickData unproject(const vec2f &screenPos);
+    virtual OSPPickResult pick(const vec2f &screenPos);
 
     FrameBuffer *currentFB;
     

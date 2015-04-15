@@ -25,11 +25,6 @@ struct Renderer;
 struct Model;
 struct Camera;
 
-struct OSPPickData {
-  bool hit;
-  float world_x, world_y, world_z;
-};
-
 
 struct ScreenSample {
   // input values to 'renderSample'
