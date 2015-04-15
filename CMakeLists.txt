@@ -67,8 +67,8 @@ OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 #OPTION(OSPRAY_ISA_SSE  "Enable SSE ISA support" true)
 #OPTION(OSPRAY_ISA_AVX  "Enable AVX ISA support" true)
 #OPTION(OSPRAY_ISA_AVX2 "Enable AVX2 ISA support" true)
-SET(OSPRAY_TARGET_ISA "ALL" CACHE STRING "Target ISA (e.g., 'ALL' ISAs, with run-time selection).")
-SET_PROPERTY(CACHE OSPRAY_TARGET_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
+SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (e.g., 'ALL' ISAs, with run-time selection).")
+SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
 
 # make ospray target and compiler uppercase - we need this in some other parts of the build system
 #STRING(TOUPPER ${OSPRAY_XEON_TARGET} OSPRAY_XEON_TARGET)
