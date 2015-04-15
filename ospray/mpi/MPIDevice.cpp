@@ -269,6 +269,16 @@ namespace ospray {
       return new api::MPIDevice(ac,av);
     }
 
+    void initDistributedAPI(int *ac, char ***av, OSPMpiMode mpiMode)
+    {
+      int initialized = false;
+      MPI_CALL(Initialized(&initialized));
+      if (initialized) 
+        throw std::runtime_error("OSPRay MPI Error: MPI Already Initialized when calling ospMpiInit()");
+      
+      ospray::mpi::init(ac,(const char **)*av);
+    }
+    
   }
 
   namespace api {
@@ -964,7 +974,7 @@ namespace ospray {
       cmd.flush();
       return (OSPTexture2D)(int64)handle;
     }
-    
+
   } // ::ospray::mpi
 } // ::ospray
 
@@ -973,7 +983,7 @@ namespace ospray {
       MPI_Init(), NOT "in addition to" */
 extern "C" void ospMpiInit(int *ac, char ***av, OSPMpiMode mpiMode)
 {
-  PING;
+  ospray::mpi::initDistributedAPI(ac,av,mpiMode);
 }
 
 //! \brief shut down distributed mpi mode

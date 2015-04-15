@@ -26,8 +26,16 @@
 namespace ospray {
   void testDistributedApp(int &ac, char **&av)
   {
-    PING;
     ospMpiInit(&ac,&av,OSP_MPI_Z_COMPOSITE);
+
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+    MPI_Comm_size(MPI_COMM_WORLD,&size);
+    printf("#ospdapp: starting test app for osp distributed mode, rank %i/%i\n",rank,size);
+    MPI_Barrier(MPI_COMM_WORLD);
+    
+    MPI_Barrier(MPI_COMM_WORLD);
+    ospMpiShutdown();
   }
 }
 
