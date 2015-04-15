@@ -239,11 +239,12 @@ ELSE()
   # now, build and link in SSE41 support (for anything more than SSE)
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE41") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
+  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE41") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
     OSPRAY_ADD_LIBRARY(ospray_embree_sse41 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp   
@@ -259,10 +260,11 @@ ELSE()
   # now, build and link in SSE42 support (for anything more than SSE42)
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
+  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_SSE)
+#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
     OSPRAY_ADD_LIBRARY(ospray_embree_sse42 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_hybrid.cpp
       )
@@ -273,8 +275,9 @@ ELSE()
   # ------------------------------------------------------------------
   # now, build and link in AVX1 support (for AVX1 and AVX2)
   # ------------------------------------------------------------------
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "AVX"))
+  IF (OSPRAY_ISA_AVX OR OSPRAY_ISA_SSE)
+#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
+#      (${OSPRAY_XEON_TARGET} STREQUAL "AVX"))
     SET(EMBREE_KERNELS_AVX_SOURCES
       builders/bezierrefgen.cpp 
       builders/primrefgen.cpp
@@ -348,7 +351,8 @@ ELSE()
     bvh8/bvh8_intersector8_chunk.cpp   
     bvh8/bvh8_intersector8_hybrid.cpp   
     )
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2"))
+  IF (OSPRAY_ISA_AVX2)
+#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2"))
     SET(OSPRAY_EMBREE_AVX2_SOURCES "")
     FOREACH(src ${EMBREE_KERNELS_AVX2_SOURCES})
       SET(OSPRAY_EMBREE_AVX2_SOURCES ${OSPRAY_EMBREE_AVX2_SOURCES} 		

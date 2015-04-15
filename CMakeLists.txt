@@ -59,15 +59,19 @@ ENDIF(APPLE)
 SET(OSPRAY_COMPILER ${OSPRAY_DEFAULT_COMPILER} CACHE STRING "Select which compiler to use.")
 SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS ICC GCC CLANG)
 # whether to build in MIC/xeon phi support
-OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with MIC Support?")
+OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC/MIC Support?")
 # whether to build in MPI support
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
-SET(OSPRAY_XEON_TARGET "all" CACHE STRING "Maximum target ISA (e.g., 'auto' means SSE,AVX,and AVX2).")
-SET_PROPERTY(CACHE OSPRAY_XEON_TARGET PROPERTY STRINGS all SSE AVX AVX2 AVX2only)
+
+OPTION(OSPRAY_ISA_SSE  "Enable SSE ISA support" true)
+OPTION(OSPRAY_ISA_AVX  "Enable AVX ISA support" true)
+OPTION(OSPRAY_ISA_AVX2 "Enable AVX2 ISA support" true)
+#SET(OSPRAY_XEON_TARGET "all" CACHE STRING "Maximum target ISA (e.g., 'auto' means SSE,AVX,and AVX2).")
+#SET_PROPERTY(CACHE OSPRAY_XEON_TARGET PROPERTY STRINGS all SSE AVX AVX2 AVX2only)
 
 # make ospray target and compiler uppercase - we need this in some other parts of the build system
-STRING(TOUPPER ${OSPRAY_XEON_TARGET} OSPRAY_XEON_TARGET)
+#STRING(TOUPPER ${OSPRAY_XEON_TARGET} OSPRAY_XEON_TARGET)
 STRING(TOUPPER ${OSPRAY_COMPILER} OSPRAY_COMPILER)
 
 
@@ -84,7 +88,8 @@ INCLUDE(cmake/configure_embree.cmake)
 INCLUDE(cmake/mpi.cmake)
 INCLUDE(cmake/doxygen.cmake)
 
-SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME}-${OSPRAY_XEON_TARGET})
+SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME})
+#SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME}-${OSPRAY_XEON_TARGET})
 STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
 SET(CMAKE_INSTALL_PREFIX 
   /tmp/$ENV{USER}/OSPRAY-RELEASES/${OSPRAY_INSTALL_TARGET_LC})
@@ -95,20 +100,20 @@ SET(CMAKE_INSTALL_PREFIX
 ##############################################################
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
+SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
 IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "MIC")
+  SET (OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
 ENDIF()
 
 ##############################################################
 # ospray sample apps
 ##############################################################
-SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
+SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "MIC")
+  SET (OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()
 
@@ -116,9 +121,9 @@ ENDIF()
 ##############################################################
 # modules at the end, they may need utilities
 ##############################################################
-SET (OSPRAY_TARGET ${OSPRAY_XEON_TARGET})
+SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "MIC")
+  SET (OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(modules builddir/modules/mic)
 ENDIF()

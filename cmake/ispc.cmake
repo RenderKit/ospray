@@ -122,13 +122,21 @@ MACRO (ispc_compile)
       ENDFOREACH(dep ${contents})
     ENDIF ()
 
-    SET(ispc_compile_result "${outdir}/${fname}.dev.o")
-    SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
-    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
-    FOREACH(target ${OSPRAY_ISPC_TARGET_LIST})
-      SET(outputs ${outputs} ${outdir}/${fname}${ISPC_TARGET_EXT}.dev_${target}.o)
-      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_${target}.o)
-    ENDFOREACH()
+#    SET(ispc_compile_result "${outdir}/${fname}.dev.o")
+
+    LIST(LENGTH OSPRAY_ISPC_TARGET_LIST numIspcTargets)
+    IF (${numIspcTargets} EQUAL 1)
+      SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
+    ELSE()
+      SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
+      FOREACH(target ${OSPRAY_ISPC_TARGET_LIST})
+	SET(outputs ${outputs} ${outdir}/${fname}${ISPC_TARGET_EXT}.dev_${target}.o)
+	SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_${target}.o)
+      ENDFOREACH()
+    ENDIF()
+
 #    message("output ${outputs}")
     ADD_CUSTOM_COMMAND(
       #OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h ${outdir}/${fname}.dev_sse4.o ${outdir}/${fname}.dev_avx.o ${outdir}/${fname}.dev_avx2.o
