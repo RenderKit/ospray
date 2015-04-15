@@ -77,53 +77,30 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     # additional Embree include directory
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
     
+    
+    SET(OSPRAY_ISPC_CPU "<undefined>")
+    SET(OSPRAY_ISPC_TARGET_LIST "")
 
-    IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-	(${OSPRAY_XEON_TARGET} STREQUAL "avx2") OR
-	(${OSPRAY_XEON_TARGET} STREQUAL "all")  OR
-	(${OSPRAY_XEON_TARGET} STREQUAL "ALL")
-	)
-      # embree targets - embree needs those to build the proper code paths
-      ADD_DEFINITIONS(-D__TARGET_SSE41__)
-      ADD_DEFINITIONS(-D__TARGET_SSE42__)
-      ADD_DEFINITIONS(-D__TARGET_AVX__)
-      ADD_DEFINITIONS(-D__TARGET_AVX2__)
-
-      # ispc target 
-      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2)
-      SET(OSPRAY_ISPC_CPU "core-avx2")
-
-    ELSEIF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2only"))
-      # embree targets - embree needs those to build the proper code paths
-      ADD_DEFINITIONS(-D__TARGET_SSE41__)
-      ADD_DEFINITIONS(-D__TARGET_SSE42__)
-      ADD_DEFINITIONS(-D__TARGET_AVX__)
-      ADD_DEFINITIONS(-D__TARGET_AVX2__)
-
-      # ispc target 
-      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2)
-      SET(OSPRAY_ISPC_CPU "core-avx2")
-
-    ELSEIF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR (${OSPRAY_XEON_TARGET} STREQUAL "avx"))
-      # embree targets - embree needs those to build the proper code paths
-      ADD_DEFINITIONS(-D__TARGET_SSE41__)
-      ADD_DEFINITIONS(-D__TARGET_SSE42__)
-      ADD_DEFINITIONS(-D__TARGET_AVX__)
-
-      # ispc target 
-      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx)
-      SET(OSPRAY_ISPC_CPU "corei7-avx")
-
-    ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "SSE")
-      # embree targets - embree needs those to build the proper code paths
-      ADD_DEFINITIONS(-D__TARGET_SSE41__)
-      ADD_DEFINITIONS(-D__TARGET_SSE42__)
-
-      # ispc target 
-      SET(OSPRAY_ISPC_TARGET_LIST sse4)
+    IF (OSPRAY_ISA_SSE)
+      ADD_DEFINITIONS(-D__TARGET_SSE__)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
       SET(OSPRAY_ISPC_CPU "corei7")
-    ELSE()
-      MESSAGE("unknown OSPRAY_XEON_TARGET '${OSPRAY_XEON_TARGET}'")
+    ENDIF()
+
+    IF (OSPRAY_ISA_AVX)
+      ADD_DEFINITIONS(-D__TARGET_AVX__)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx)
+      SET(OSPRAY_ISPC_CPU "corei7-avx")
+    ENDIF()
+
+    IF (OSPRAY_ISA_AVX2)
+      ADD_DEFINITIONS(-D__TARGET_AVX2__)
+      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
+      SET(OSPRAY_ISPC_CPU "core-avx2")
+    ENDIF()
+
+    IF (NOT (OSPRAY_ISA_AVX2 OR OSPRAY_ISA_AVX2 OR OSPRAY_ISA_AVX2))
+      MESSAGE(ERROR "No ISAs selected. Select at least one of SSE, AVX, AVX2")
     ENDIF()
   ENDIF()
   
