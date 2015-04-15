@@ -40,6 +40,9 @@ struct Volume {
   //! Isovalues.
   uniform float *uniform isovalues;
 
+  //! Recommended sampling step size for ray casting based renderers, set by the underlying volume implementation.
+  uniform float samplingStep;
+
   //! Recommended sampling rate for the renderer.
   uniform float samplingRate;
 

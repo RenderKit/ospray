@@ -18,6 +18,9 @@
 
 void Volume_Constructor(Volume *uniform volume)
 {
+  // default sampling step; should be set to correct value by derived volume.
+  volume->samplingStep = 1.f;
+
   // default bounding box; should be set to correct value by derived volume.
   volume->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
 

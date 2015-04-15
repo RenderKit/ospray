@@ -189,6 +189,12 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
     //! Gamma correction coefficient and exponent.
     if (!strcmp(node->ToElement()->Name(), "gammaCorrection")) { importAttributeFloat2(node, volume);  continue; }
 
+    //! Grid origin in world coordinates.
+    if (!strcmp(node->ToElement()->Name(), "gridOrigin")) { importAttributeFloat3(node, volume);  continue; }
+
+    //! Grid spacing in each dimension in world coordinates.
+    if (!strcmp(node->ToElement()->Name(), "gridSpacing")) { importAttributeFloat3(node, volume);  continue; }
+
     //! Sampling rate for ray casting based renderers.
     if (!strcmp(node->ToElement()->Name(), "samplingRate")) { importAttributeFloat(node, volume);  continue; }
 
@@ -203,9 +209,6 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
 
     //! Voxel value range.
     if (!strcmp(node->ToElement()->Name(), "voxelRange")) { importAttributeFloat2(node, volume);  continue; }
-
-    //! Voxel spacing in world coordinates (currently unused).
-    if (!strcmp(node->ToElement()->Name(), "voxelSpacing")) { importAttributeFloat3(node, volume);  continue; }
 
     //! Voxel type string.
     if (!strcmp(node->ToElement()->Name(), "voxelType")) { importAttributeString(node, volume);  continue; }

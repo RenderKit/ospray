@@ -63,7 +63,7 @@ inline varying vec3f StructuredVolume_computeGradient(void *uniform _volume, con
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   //! Gradient step in each dimension (world coordinates).
-  const uniform vec3f gradientStep = make_vec3f(1.f);
+  const uniform vec3f gradientStep = volume->gridSpacing;
 
   //! The gradient will be computed using central differences.
   varying vec3f gradient;
@@ -108,7 +108,7 @@ inline void StructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   //! The recommended step size for ray casting based volume renderers.
-  const uniform float step = 1.0f / volume->inherited.samplingRate;
+  const uniform float step = reduce_min(volume->gridSpacing) / volume->inherited.samplingRate;
 
   //! Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
@@ -121,7 +121,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume, const un
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   //! The nominal step size for ray casting based volume renderers, not considering the sampling rate.
-  const uniform float step = 1.0f;
+  const uniform float step = reduce_min(volume->gridSpacing);
 
   //! Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalue, ray);
@@ -130,12 +130,12 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume, const un
 
 inline void StructuredVolume_transformLocalToWorld(StructuredVolume *uniform volume, const varying vec3f &localCoordinates, varying vec3f &worldCoordinates)
 {
-  worldCoordinates = localCoordinates;
+  worldCoordinates = volume->gridOrigin + localCoordinates * volume->gridSpacing;
 }
 
 inline void StructuredVolume_transformWorldToLocal(StructuredVolume *uniform volume, const varying vec3f &worldCoordinates, varying vec3f &localCoordinates)
 {
-  localCoordinates = worldCoordinates;
+  localCoordinates = rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
 }
 
 void StructuredVolume_Constructor(StructuredVolume *uniform volume, const uniform vec3i &dimensions)
@@ -149,11 +149,32 @@ void StructuredVolume_Constructor(StructuredVolume *uniform volume, const unifor
   volume->transformLocalToWorld = StructuredVolume_transformLocalToWorld;
   volume->transformWorldToLocal = StructuredVolume_transformWorldToLocal;
 
-  volume->inherited.boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(volume->dimensions - 1));
+  volume->inherited.boundingBox = make_box3f(volume->gridOrigin, volume->gridOrigin + make_vec3f(volume->dimensions - 1) * volume->gridSpacing);
   volume->inherited.computeSample = StructuredVolume_computeSample;
   volume->inherited.computeGradient = StructuredVolume_computeGradient;
   volume->inherited.intersect = StructuredVolume_intersect;
   volume->inherited.intersectIsosurface = StructuredVolume_intersectIsosurface;
+}
+
+export void StructuredVolume_setGridOrigin(void *uniform _self, const uniform vec3f &value)
+{
+  uniform StructuredVolume *uniform self = (uniform StructuredVolume *uniform)_self;
+  self->gridOrigin = value;
+
+  //! Update bounding box for new grid definition.
+  self->inherited.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
+}
+
+export void StructuredVolume_setGridSpacing(void *uniform _self, const uniform vec3f &value)
+{
+  uniform StructuredVolume *uniform self = (uniform StructuredVolume *uniform)_self;
+  self->gridSpacing = value;
+
+  //! Update nominal sampling step size for new grid definition.
+  self->inherited.samplingStep = reduce_min(self->gridSpacing);
+
+  //! Update bounding box for new grid definition.
+  self->inherited.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
 }
 
 export void StructuredVolume_finish(void *uniform _self)

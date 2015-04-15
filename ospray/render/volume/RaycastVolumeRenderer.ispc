@@ -68,7 +68,6 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
 
   //! Set the color contribution for this sample only (do not accumulate).
   color = clamp(sampleOpacity / volume->samplingRate) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
-
 }
 
 inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer *uniform renderer,
@@ -207,7 +206,6 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   //! Set the color contribution for this sample only (do not accumulate).
   color = sampleOpacity * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
-
 }
 
 inline void RaycastVolumeRenderer_intersectBox(const uniform box3f &box, 
@@ -224,7 +222,6 @@ inline void RaycastVolumeRenderer_intersectBox(const uniform box3f &box,
 
   //! Distance along the ray to the exit point.
   ray.t1 = min(min(ray.t, max(minimum.x, maximum.x)), min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));
-
 }
 
 //! This function intersects the volume and geometries.
@@ -250,7 +247,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   const float tMax = ray.t1;
 
   //! Offset ray by a fraction of the nominal ray step.
-  const uniform float step = 1.f / renderer->model->volumes[0]->samplingRate;
+  const uniform float step = renderer->model->volumes[0]->samplingStep / renderer->model->volumes[0]->samplingRate;
   ray.t += rayOffset * step;
 
   //! Copy of the ray for volume isosurface intersection. The original ray is used for volume intersection.
@@ -360,7 +357,6 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
   //! Store the result in the sample.
   sample.rgb.x = color.x;  sample.rgb.y = color.y;  sample.rgb.z = color.z;  sample.alpha = color.w;
-
 }
 
 export void *uniform RaycastVolumeRenderer_createInstance()
@@ -389,19 +385,16 @@ export void RaycastVolumeRenderer_setCamera(void *uniform pointer,
 
   //! Set the camera view to render.
   renderer->inherited.camera = (Camera *uniform) camera;
-
 }
 
 export void RaycastVolumeRenderer_setLights(void *uniform pointer, 
                                             void **uniform lights) 
 {
-
   //! Cast to the actual Renderer subtype.
   RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
 
   //! Set the light sources.
   renderer->lights = (Light **uniform) lights;
-
 }
 
 export void RaycastVolumeRenderer_setModel(void *uniform pointer, 
@@ -412,7 +405,6 @@ export void RaycastVolumeRenderer_setModel(void *uniform pointer,
 
   //! Set the model to be rendered.
   renderer->model = (Model *uniform) model;
-
 }
 
 export void RaycastVolumeRenderer_setDynamicModel(void *uniform pointer, 
@@ -423,5 +415,4 @@ export void RaycastVolumeRenderer_setDynamicModel(void *uniform pointer,
 
   //! Set the model to be rendered.
   renderer->dynamicModel = (Model *uniform) model;
-
 }

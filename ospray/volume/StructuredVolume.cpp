@@ -29,6 +29,14 @@ namespace ospray {
     //! Some parameters can be changed after the volume has been allocated and filled.
     updateEditableParameters();
 
+    //! Set the grid origin, default to (0,0,0).
+    vec3f gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) gridOrigin);
+
+    //! Set the grid spacing, default to (1,1,1).
+    vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) gridSpacing);
+
     //! Complete volume initialization (only on first commit).
     if (!finished) {
       finish();

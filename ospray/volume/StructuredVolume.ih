@@ -33,6 +33,12 @@ struct StructuredVolume {
   //! Volume size in voxels per dimension.
   uniform vec3i dimensions;
 
+  //! Grid origin.
+  uniform vec3f gridOrigin;
+
+  //! Grid spacing in each dimension.
+  uniform vec3f gridSpacing;
+
   //! Spatial acceleration structure used for space skipping.
   GridAccelerator *uniform accelerator;
 
