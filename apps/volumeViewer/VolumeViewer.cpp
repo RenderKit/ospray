@@ -67,9 +67,11 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
 
+  //! Set the window bounds based on the OSPRay world bounds.
+  osprayWindow->setWorldBounds(boundingBox);
+
   //! Show the window.
   show();
-
 }
 
 void VolumeViewer::setModel(size_t index) {
@@ -235,7 +237,7 @@ void VolumeViewer::initUserInterfaceWidgets() {
   QToolBar *toolbar = addToolBar("toolbar");
 
   //! Add preferences widget and callback.
-  PreferencesDialog *preferencesDialog = new PreferencesDialog(this);
+  PreferencesDialog *preferencesDialog = new PreferencesDialog(this, boundingBox);
   QAction *showPreferencesAction = new QAction("Preferences", this);
   connect(showPreferencesAction, SIGNAL(triggered()), preferencesDialog, SLOT(show()));
   toolbar->addAction(showPreferencesAction);

@@ -46,7 +46,7 @@ struct Volume {
   //! Color and opacity transfer function.
   TransferFunction *uniform transferFunction;
 
-  //! Clipping box for the volume (applies to volume rendering only).
+  //! Clipping box for the volume (applies to volume rendering only). An empty clipping box is ignored.
   uniform box3f volumeClippingBox;
 
   //! Bounding box for the volume in world coordinates.

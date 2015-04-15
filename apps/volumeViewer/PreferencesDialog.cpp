@@ -17,7 +17,7 @@
 #include "PreferencesDialog.h"
 #include "VolumeViewer.h"
 
-PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volumeViewer), volumeViewer(volumeViewer)
+PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boundingBox) : QDialog(volumeViewer), volumeViewer(volumeViewer)
 {
   setWindowTitle("Preferences");
 
@@ -47,13 +47,13 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volum
     volumeClippingBoxSpinBoxes.push_back(new QDoubleSpinBox());
 
     volumeClippingBoxSpinBoxes[i]->setDecimals(3);
-    volumeClippingBoxSpinBoxes[i]->setRange(0.0, 1.0);
-    volumeClippingBoxSpinBoxes[i]->setSingleStep(0.01);
+    volumeClippingBoxSpinBoxes[i]->setRange(boundingBox.lower[i % 3], boundingBox.upper[i % 3]);
+    volumeClippingBoxSpinBoxes[i]->setSingleStep(0.01 * (boundingBox.upper[i % 3] - boundingBox.lower[i % 3]));
 
     if(i < 3)
-      volumeClippingBoxSpinBoxes[i]->setValue(0.);
+      volumeClippingBoxSpinBoxes[i]->setValue(boundingBox.lower[i % 3]);
     else
-      volumeClippingBoxSpinBoxes[i]->setValue(1.);
+      volumeClippingBoxSpinBoxes[i]->setValue(boundingBox.upper[i % 3]);
 
     connect(volumeClippingBoxSpinBoxes[i], SIGNAL(valueChanged(double)), this, SLOT(updateVolumeClippingBox()));
   }

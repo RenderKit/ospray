@@ -268,10 +268,12 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   const uniform box3f volumeClippingBox = renderer->model->volumes[0]->volumeClippingBox;
 
   //! Compute the intersection interval over the ray and clipping box bounds.
-  ray.t = tMax;
-  RaycastVolumeRenderer_intersectBox(volumeClippingBox, ray);
+  if(ne(volumeClippingBox.lower, volumeClippingBox.upper)) {
+    ray.t = tMax;
+    RaycastVolumeRenderer_intersectBox(volumeClippingBox, ray);
 
-  ray.t = ray.t0 + rayOffset * step;
+    ray.t = ray.t0 + rayOffset * step;
+  }
 
   //! Separate color contributions for the volume, isosurfaces, and geometries. Initialize to provided color in case of no contribution...
   vec4f volumeColor = color;

@@ -94,8 +94,8 @@ namespace ospray {
     exitOnCondition(transferFunction == NULL, "no transfer function specified");
     ispc::Volume_setTransferFunction(ispcEquivalent, transferFunction->getIE());
 
-    //! Set the volume clipping box.
-    box3f volumeClippingBox = box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)), getParam3f("volumeClippingBoxUpper", vec3f(1.f)));
+    //! Set the volume clipping box (empty by default for no clipping).
+    box3f volumeClippingBox = box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)), getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
     ispc::Volume_setVolumeClippingBox(ispcEquivalent, (const ispc::box3f &) volumeClippingBox);
   }
 

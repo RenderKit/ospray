@@ -18,6 +18,7 @@
 
 #include <QtGui>
 #include <vector>
+#include <ospray/ospray.h>
 
 class VolumeViewer;
 
@@ -27,7 +28,7 @@ Q_OBJECT
 
 public:
 
-  PreferencesDialog(VolumeViewer *volumeViewer);
+  PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boundingBox);
 
 protected slots:
 
