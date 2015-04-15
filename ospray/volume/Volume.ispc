@@ -65,3 +65,9 @@ export void Volume_setVolumeClippingBox(void *uniform _self, const uniform box3f
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
   self->volumeClippingBox = value;
 }
+
+export uniform box3f Volume_getBoundingBox(void *uniform _self)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+  return self->boundingBox;
+}

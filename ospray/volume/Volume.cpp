@@ -56,6 +56,17 @@ namespace ospray {
     return(volume);
   }
 
+  void Volume::finish()
+  {
+    //! The ISPC volume container must exist at this point.
+    assert(ispcEquivalent != NULL);
+
+    //! Make the volume bounding box visible to the application.
+    ispc::box3f boundingBox = ispc::Volume_getBoundingBox(ispcEquivalent);
+    set("boundingBoxMin", vec3f(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z));
+    set("boundingBoxMax", vec3f(boundingBox.upper.x, boundingBox.upper.y, boundingBox.upper.z));
+  }
+
   void Volume::updateEditableParameters()
   {
     //! Set the gamma correction coefficient and exponent.

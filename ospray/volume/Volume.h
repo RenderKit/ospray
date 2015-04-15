@@ -69,6 +69,9 @@ namespace ospray {
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC() = 0;
 
+    //! Complete volume initialization (only on first commit).
+    virtual void finish();
+
     //! Update select editable parameters (allowed after the volume has been initially committed).
     virtual void updateEditableParameters();
 

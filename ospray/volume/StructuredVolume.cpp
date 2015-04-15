@@ -38,8 +38,7 @@ namespace ospray {
 
   void StructuredVolume::finish()
   {
-    //! The ISPC volume container must exist at this point.
-    assert(ispcEquivalent != NULL);
+    Volume::finish();
 
     //! Make the voxel value range visible to the application.
     if (findParam("voxelRange") == NULL)
