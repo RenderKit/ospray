@@ -122,7 +122,7 @@ MACRO (ispc_compile)
       ENDFOREACH(dep ${contents})
     ENDIF ()
 
-    SET(ispc_compile_result "${outdir}/${fname}.dev.o")
+#    SET(ispc_compile_result "${outdir}/${fname}.dev.o")
 
     LIST(LENGTH OSPRAY_ISPC_TARGET_LIST numIspcTargets)
     IF (${numIspcTargets} EQUAL 1)
