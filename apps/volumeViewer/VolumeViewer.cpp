@@ -67,9 +67,11 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
 
+  //! Set the window bounds based on the OSPRay world bounds.
+  osprayWindow->setWorldBounds(boundingBox);
+
   //! Show the window.
   show();
-
 }
 
 void VolumeViewer::setModel(size_t index) {
@@ -117,7 +119,7 @@ void VolumeViewer::addSlice(std::string filename) {
   dynamicModels.push_back(dynamicModel);
 
   //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
-  SliceWidget * sliceWidget = new SliceWidget(dynamicModels, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
+  SliceWidget * sliceWidget = new SliceWidget(dynamicModels, boundingBox);
   connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
   sliceWidgetsLayout.addWidget(sliceWidget);
 
@@ -222,6 +224,11 @@ void VolumeViewer::initObjects() {
   for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
     importObjectsFromFile(objectFileFilenames[i]);
 
+  //! Get the bounding box of the first volume.
+  if(volumes.size() > 0) {
+    ospGetVec3f(volumes[0], "boundingBoxMin", &boundingBox.lower);
+    ospGetVec3f(volumes[0], "boundingBoxMax", &boundingBox.upper);
+  }
 }
 
 void VolumeViewer::initUserInterfaceWidgets() {
@@ -230,7 +237,7 @@ void VolumeViewer::initUserInterfaceWidgets() {
   QToolBar *toolbar = addToolBar("toolbar");
 
   //! Add preferences widget and callback.
-  PreferencesDialog *preferencesDialog = new PreferencesDialog(this);
+  PreferencesDialog *preferencesDialog = new PreferencesDialog(this, boundingBox);
   QAction *showPreferencesAction = new QAction("Preferences", this);
   connect(showPreferencesAction, SIGNAL(triggered()), preferencesDialog, SLOT(show()));
   toolbar->addAction(showPreferencesAction);

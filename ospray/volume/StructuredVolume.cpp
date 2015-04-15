@@ -18,23 +18,48 @@
 #include "ospray/common/Data.h"
 #include "ospray/common/Library.h"
 #include "ospray/volume/StructuredVolume.h"
+#include "StructuredVolume_ispc.h"
 // stl
 #include <map>
 
 namespace ospray {
 
-  void StructuredVolume::commit() {
-
+  void StructuredVolume::commit()
+  {
     //! Some parameters can be changed after the volume has been allocated and filled.
     updateEditableParameters();
 
-    //! Complete volume initialization.
-    if (!finished) finish(), finished = true;
+    //! Set the grid origin, default to (0,0,0).
+    vec3f gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) gridOrigin);
 
+    //! Set the grid spacing, default to (1,1,1).
+    vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) gridSpacing);
+
+    //! Complete volume initialization (only on first commit).
+    if (!finished) {
+      finish();
+      finished = true;
+    }
   }
 
-  OSPDataType StructuredVolume::getVoxelType() const {
+  void StructuredVolume::finish()
+  {
+    Volume::finish();
 
+    //! Make the voxel value range visible to the application.
+    if (findParam("voxelRange") == NULL)
+      set("voxelRange", voxelRange);
+    else
+      voxelRange = getParam2f("voxelRange", voxelRange);
+
+    //! Complete volume initialization.
+    ispc::StructuredVolume_finish(ispcEquivalent);
+  }
+
+  OSPDataType StructuredVolume::getVoxelType() const
+  {
     //! Separate out the base type and vector width.
     char kind[voxelType.size()];  unsigned int width = 1;  sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
 
@@ -45,30 +70,7 @@ namespace ospray {
     if (!strcmp(kind, "uchar") && width == 1) return(OSP_UCHAR);
 
     //! Unknown voxel type.
-    return(OSP_UNKNOWN);
-
-  }
-
-  size_t StructuredVolume::getVoxelSizeInBytes() const {
-
-    //! Separate out the base type and vector width.
-    char kind[voxelType.size()];  unsigned int width = 1;  sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
-
-    //! Unsigned character scalar and vector types.
-    if (!strcmp(kind, "uchar") && width >= 1 && width <= 4) return(sizeof(unsigned char) * width);
-
-    //! Floating point scalar and vector types.
-    if (!strcmp(kind, "float") && width >= 1 && width <= 4) return(sizeof(float) * width);
-
-    //! Unsigned integer scalar and vector types.
-    if (!strcmp(kind, "uint") && width >= 1 && width <= 4) return(sizeof(unsigned int) * width);
-
-    //! Signed integer scalar and vector types.
-    if (!strcmp(kind, "int") && width >= 1 && width <= 4) return(sizeof(int) * width);  
-
-    //! Unknown voxel type.
-    return(0);
-
+    return OSP_UNKNOWN;
   }
 
 } // ::ospray

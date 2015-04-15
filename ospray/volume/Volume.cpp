@@ -17,6 +17,9 @@
 // ospray
 #include "ospray/common/Library.h"
 #include "ospray/volume/Volume.h"
+#include "Volume_ispc.h"
+#include "ospray/transferFunction/TransferFunction.h"
+#include "ospray/common/Data.h"
 // stl
 #include <map>
 
@@ -51,7 +54,49 @@ namespace ospray {
     if (volume) volume->managedObjectType = OSP_VOLUME;
 
     return(volume);
+  }
 
+  void Volume::finish()
+  {
+    //! The ISPC volume container must exist at this point.
+    assert(ispcEquivalent != NULL);
+
+    //! Make the volume bounding box visible to the application.
+    ispc::box3f boundingBox = ispc::Volume_getBoundingBox(ispcEquivalent);
+    set("boundingBoxMin", vec3f(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z));
+    set("boundingBoxMax", vec3f(boundingBox.upper.x, boundingBox.upper.y, boundingBox.upper.z));
+  }
+
+  void Volume::updateEditableParameters()
+  {
+    //! Set the gamma correction coefficient and exponent.
+    vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
+    ispc::Volume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
+
+    //! Set the gradient shading flag for the renderer.
+    ispc::Volume_setGradientShadingEnabled(ispcEquivalent, getParam1i("gradientShadingEnabled", 0));
+
+    //! Set the isovalue(s).
+    Data *isovaluesData = (Data *)getParamData("isovalues", NULL);
+
+    if(isovaluesData && isovaluesData->size() > 0) {
+      ispc::Volume_setNumIsovalues(ispcEquivalent, isovaluesData->size());
+      ispc::Volume_setIsovalues(ispcEquivalent, (float *)isovaluesData->data);
+    }
+    else
+      ispc::Volume_setNumIsovalues(ispcEquivalent, 0);
+
+    //! Set the recommended sampling rate for ray casting based renderers.
+    ispc::Volume_setSamplingRate(ispcEquivalent, getParam1f("samplingRate", 1.0f));
+
+    //! Set the transfer function.
+    TransferFunction *transferFunction = (TransferFunction *) getParamObject("transferFunction", NULL);
+    exitOnCondition(transferFunction == NULL, "no transfer function specified");
+    ispc::Volume_setTransferFunction(ispcEquivalent, transferFunction->getIE());
+
+    //! Set the volume clipping box (empty by default for no clipping).
+    box3f volumeClippingBox = box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)), getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
+    ispc::Volume_setVolumeClippingBox(ispcEquivalent, (const ispc::box3f &) volumeClippingBox);
   }
 
 } // ::ospray

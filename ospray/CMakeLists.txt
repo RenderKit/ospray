@@ -49,17 +49,19 @@ SET(OSPRAY_SOURCES
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
 
-  volume/BlockBrickedVolume.cpp
   volume/BlockBrickedVolume.ispc
+  volume/BlockBrickedVolume.cpp
   volume/GridAccelerator.ispc
+  volume/StructuredVolume.ispc
   volume/StructuredVolume.cpp
   volume/SymbolRegistry.cpp
+  volume/Volume.ispc
   volume/Volume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
-  transferFunction/TransferFunction.cpp
   transferFunction/TransferFunction.ispc
+  transferFunction/TransferFunction.cpp
   transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
