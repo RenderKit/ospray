@@ -27,7 +27,7 @@ inline varying float StructuredVolume_computeSample(void *uniform _volume, const
   volume->transformWorldToLocal(volume, worldCoordinates, localCoordinates);
 
   //! Coordinates outside the volume are clamped to the volume bounds.
-  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), volume->inherited.upperBound);
+  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), volume->localCoordinatesUpperBound);
 
   //! Lower and upper corners of the box straddling the voxels to be interpolated.
   const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  const vec3i voxelIndex_1 = voxelIndex_0 + 1;
@@ -144,17 +144,16 @@ void StructuredVolume_Constructor(StructuredVolume *uniform volume, const unifor
 
   volume->dimensions = dimensions;
   volume->accelerator = NULL;
+  volume->localCoordinatesUpperBound = nextafter(volume->dimensions - 1, make_vec3i(0));
   volume->getVoxel = NULL;
   volume->transformLocalToWorld = StructuredVolume_transformLocalToWorld;
   volume->transformWorldToLocal = StructuredVolume_transformWorldToLocal;
 
+  volume->inherited.boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(volume->dimensions - 1));
   volume->inherited.computeSample = StructuredVolume_computeSample;
   volume->inherited.computeGradient = StructuredVolume_computeGradient;
   volume->inherited.intersect = StructuredVolume_intersect;
   volume->inherited.intersectIsosurface = StructuredVolume_intersectIsosurface;
-
-  //! The largest floating point value still inside the volume.
- volume->inherited.upperBound = nextafter(volume->dimensions - 1, make_vec3i(0));
 }
 
 export void StructuredVolume_finish(void *uniform _self)

@@ -235,11 +235,11 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 {
   //! Assume just one volume.
 
-  //! Box representing the global bounds of the volume.
-  const uniform box3f bounds = make_box3f(make_vec3f(0.0f), renderer->model->volumes[0]->upperBound);
+  //! Bounding box of the volume.
+  const uniform box3f boundingBox = renderer->model->volumes[0]->boundingBox;
 
   //! Compute the intersection interval over the ray and volume bounds.
-  RaycastVolumeRenderer_intersectBox(bounds, ray);
+  RaycastVolumeRenderer_intersectBox(boundingBox, ray);
 
   if (ray.t0 > ray.t1)
     return;

@@ -36,6 +36,9 @@ struct StructuredVolume {
   //! Spatial acceleration structure used for space skipping.
   GridAccelerator *uniform accelerator;
 
+  //! The largest coordinate value (in local coordinates) still inside the volume.
+  uniform vec3f localCoordinatesUpperBound;
+
   //! Voxel data accessor.
   void (*uniform getVoxel)(void *uniform volume, const varying vec3i &index, varying float &value);
 
