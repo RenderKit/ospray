@@ -19,7 +19,7 @@ SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 CONFIGURE_OSPRAY()
 
 # remove OSPRAY_ARCH_* flags from CMAKE_CXX_FLAGS; the Embree build will add these as appropriate for the various ISAs.
-string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+#string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # =======================================================
 # source for everything embree keeps in its 'sys' library
@@ -236,6 +236,7 @@ ELSE()
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
   IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+    ADD_DEFINITIONS(-D__TARGET_SSE41__)
 #  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
 #      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
 #      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
@@ -257,6 +258,7 @@ ELSE()
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
   IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_SSE)
+    ADD_DEFINITIONS(-D__TARGET_SSE42__)
 #  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
 #      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
 #      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
@@ -274,6 +276,7 @@ ELSE()
   IF (OSPRAY_ISA_AVX OR OSPRAY_ISA_SSE)
 #  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
 #      (${OSPRAY_XEON_TARGET} STREQUAL "AVX"))
+    ADD_DEFINITIONS(-D__TARGET_AVX__)
     SET(EMBREE_KERNELS_AVX_SOURCES
       builders/bezierrefgen.cpp 
       builders/primrefgen.cpp
@@ -348,6 +351,7 @@ ELSE()
     bvh8/bvh8_intersector8_hybrid.cpp   
     )
   IF (OSPRAY_ISA_AVX2)
+    ADD_DEFINITIONS(-D__TARGET_AVX2__)
 #  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2"))
     SET(OSPRAY_EMBREE_AVX2_SOURCES "")
     FOREACH(src ${EMBREE_KERNELS_AVX2_SOURCES})
