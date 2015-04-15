@@ -102,7 +102,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_ISA_AVX  false)
       SET(OSPRAY_ISA_AVX2 true)
     ENDIF()
-    
+
   ENDIF()
   
   IF (OSPRAY_MPI)
