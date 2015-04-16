@@ -964,8 +964,8 @@ int main(int ac, const char **av)
   embreeConfig << "verbose=" << ospray::logLevel;
   if (ospray::debugMode) 
     embreeConfig << ",threads=1";
-  else if(numThreads > 0)
-    embreeConfig << " threads=" << numThreads;
+  else if(ospray::numThreads > 0)
+    embreeConfig << " threads=" << ospray::numThreads;
   rtcInit(embreeConfig.str().c_str());
   //rtcInit("verbose=2,traverser=single,threads=1");
   //rtcInit("verbose=2,traverser=chunk");
