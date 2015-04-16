@@ -41,7 +41,7 @@ public slots:
   void load(std::string filename = std::string());
 
   //! Set the data value range for the transfer function editor.
-  void setDataValueRange(osp::vec2f dataValueRange);
+  void setDataValueRange(osp::vec2f dataValueRange, bool force=false);
 
   //! Slot called to update transfer function opacity values based on widget values.
   void updateOpacityValues();
