@@ -86,6 +86,13 @@ MACRO (ispc_compile)
 #    SET(CMAKE_ISPC_FLAGS --target=${CMAKE_ISPC_TARGET} --addressing=32 --cpu=${OSPRAY_ISPC_CPU})
   ENDIF()
 
+	IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    SET(CMAKE_ISPC_OPT_FLAGS -O3)
+	ELSE()
+    SET(CMAKE_ISPC_OPT_FLAGS -O2 -g)
+	ENDIF()
+
+
   SET(ISPC_OBJECTS "")
   FOREACH(src ${ARGN})
     SET(ISPC_TARGET_DIR ${CMAKE_CURRENT_BINARY_DIR})
@@ -155,7 +162,7 @@ MACRO (ispc_compile)
       ${ISPC_DEFINES}
       --arch=${ISPC_ARCHITECTURE}
       --pic
-      -O3
+      ${CMAKE_ISPC_OPT_FLAGS}
       --woff
       ${CMAKE_ISPC_FLAGS}
       --opt=fast-math
