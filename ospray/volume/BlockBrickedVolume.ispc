@@ -112,7 +112,8 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
 
   //! Cast to the actual voxel type.
-  float **uniform voxelData = (float **uniform) volume->voxelData;  const float *uniform sourceData = (const float *uniform) source;
+  float **uniform voxelData = (float **uniform) volume->voxelData;
+  const float *uniform sourceData = (const float *uniform) source;
 
   //! Compute the 1D address of the block in the volume and the voxel in the block.
   Address address;  BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
@@ -157,16 +158,20 @@ inline void BlockBrickedVolume_allocateMemory(BlockBrickedVolume *uniform volume
   const uniform size_t blockCount = volume->blockCount.x * volume->blockCount.y * volume->blockCount.z;
 
   //! Allocate storage for pointers to the voxel blocks.
-  volume->voxelData = uniform new uniform Block[blockCount];  if (volume->voxelData == NULL) return;
+  volume->voxelData = uniform new uniform Block[blockCount];
+
+  if (volume->voxelData == NULL) return;
 
   //! Allocate storage for the individual voxel blocks.
-  for (uniform size_t i=0 ; i < blockCount ; i++) volume->voxelData[i] = (void *uniform)(uniform new uniform uint8[BLOCK_VOXEL_COUNT * volume->voxelSize]);
+  for (uniform size_t i=0 ; i < blockCount ; i++)
+    volume->voxelData[i] = (void *uniform)(uniform new uniform uint8[BLOCK_VOXEL_COUNT * volume->voxelSize]);
 }
 
 void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions)
 {
   StructuredVolume_Constructor(&volume->inherited, dimensions);
 
+  volume->voxelData = NULL;
   volume->voxelType = (OSPDataType) voxelType;
   volume->voxelSize = (volume->voxelType == OSP_FLOAT) ? sizeof(uniform float) : sizeof(uniform uint8);
   volume->inherited.getVoxel = (volume->voxelType == OSP_FLOAT) ? BlockBrickedVolumeFloat_getVoxel : BlockBrickedVolumeUChar_getVoxel;

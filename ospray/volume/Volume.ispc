@@ -74,9 +74,3 @@ export void Volume_getBoundingBox(uniform box3f *uniform ret, void *uniform _sel
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
   *ret = self->boundingBox;
 }
-
-// export uniform box3f Volume_getBoundingBox(void *uniform _self)
-// {
-//   uniform Volume *uniform self = (uniform Volume *uniform)_self;
-//   return self->boundingBox;
-// }
