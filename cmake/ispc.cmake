@@ -80,8 +80,14 @@ MACRO (ispc_compile)
     SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()
     SET(CMAKE_ISPC_FLAGS --target=${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING} --cpu=${OSPRAY_ISPC_CPU})
-    SET(ISPC_TARGET_EXT ".dev.o")
+		SET(ISPC_TARGET_EXT ".dev.o")
   ENDIF()
+
+	IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    SET(CMAKE_ISPC_OPT_FLAGS "-O3")
+	ELSE()
+    SET(CMAKE_ISPC_OPT_FLAGS "-O2 -g")
+	ENDIF()
 
   SET(ISPC_OBJECTS "")
   FOREACH(src ${ARGN})
@@ -130,9 +136,9 @@ MACRO (ispc_compile)
       ${ISPC_DEFINES}
       --arch=${ISPC_ARCHITECTURE}
       --pic
-      -O3
       --woff
       ${CMAKE_ISPC_FLAGS}
+      ${CMAKE_ISPC_OPT_FLAGS}
       --opt=fast-math
       -h ${outdirh}/${fname}_ispc.h
       -MMM  ${outdir}/${fname}.dev.idep 
