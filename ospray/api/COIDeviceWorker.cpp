@@ -31,6 +31,7 @@
 #include "ospray/geometry/TriangleMesh.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/volume/Volume.h"
+#include "ospray/transferFunction/TransferFunction.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/render/LoadBalancer.h"
 #include "ospray/texture/Texture2D.h"
