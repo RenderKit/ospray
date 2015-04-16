@@ -138,6 +138,8 @@ namespace ospray {
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
+  /*! number of Embree threads to use, 0 for the default number. (cmdline: --osp:numthreads \<n\>) */
+  extern uint32 numThreads;
 
   /*! error handling callback to be used by embree */
   //  void error_handler(const RTCError code, const char *str);

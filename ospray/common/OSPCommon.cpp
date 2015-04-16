@@ -29,6 +29,7 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;
   bool debugMode = false;
+  uint32 numThreads = 0; //!< 0 for default number of Embree threads.
 
   /*! for debugging. compute a checksum for given area range... */
   void *computeCheckSum(const void *ptr, size_t numBytes)
@@ -83,6 +84,9 @@ namespace ospray {
         removeArgs(ac,av,i,1);
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);
+        removeArgs(ac,av,i,2);
+      } else if (parm == "--osp:numthreads") {
+        numThreads = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
       } else {
         ++i;
