@@ -62,7 +62,8 @@ namespace ospray {
     assert(ispcEquivalent != NULL);
 
     //! Make the volume bounding box visible to the application.
-    ispc::box3f boundingBox = ispc::Volume_getBoundingBox(ispcEquivalent);
+    ispc::box3f boundingBox;
+    ispc::Volume_getBoundingBox(&boundingBox,ispcEquivalent);
     set("boundingBoxMin", vec3f(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z));
     set("boundingBoxMax", vec3f(boundingBox.upper.x, boundingBox.upper.y, boundingBox.upper.z));
   }
