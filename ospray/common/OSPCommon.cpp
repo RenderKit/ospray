@@ -17,7 +17,7 @@
 #include "OSPCommon.h"
 // embree
 #include "embree2/rtcore.h"
-
+#include "common/sys/sysinfo.h"
 // std
 #include <time.h>
 #include <sys/time.h>
@@ -69,6 +69,13 @@ namespace ospray {
 
   void init(int *_ac, const char ***_av)
   {
+#if !OSPRAY_TARGET_MIC
+    // if we're not on a MIC, check for SSE4.2 as minimum supported ISA.
+    int cpuFeatures = embree::getCPUFeatures();
+    if ((cpuFeatures & embree::CPU_FEATURE_SSE42) == 0)
+      throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.2.");
+#endif
+
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
     for (int i=1;i<ac;) {
