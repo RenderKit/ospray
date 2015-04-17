@@ -217,11 +217,14 @@ void TransferFunctionEditor::save() {
     return;
   }
 
+  //! Data value scale.
+  float dataValueScale = powf(10.f, float(dataValueScaleSpinBox.value()));
+
   QDataStream out(&file);
 
   out << colorMapComboBox.currentIndex();
-  out << dataValueMinSpinBox.value();
-  out << dataValueMaxSpinBox.value();
+  out << dataValueScale * dataValueMinSpinBox.value();
+  out << dataValueScale * dataValueMaxSpinBox.value();
   out << opacityValuesWidget.getPoints();
   out << opacityScalingSlider.value();
 }

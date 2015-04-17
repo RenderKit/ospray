@@ -235,6 +235,9 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Bounding box of the volume.
   const uniform box3f boundingBox = renderer->model->volumes[0]->boundingBox;
 
+  //! Ray epsilon.
+  const uniform float epsilon = 1e-4 * distance(boundingBox.lower, boundingBox.upper);
+
   //! Compute the intersection interval over the ray and volume bounds.
   RaycastVolumeRenderer_intersectBox(boundingBox, ray);
 
@@ -301,7 +304,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
       color = color + (1.0f - color.w) * isosurfaceColor;
 
       //! Reset isosurface ray.
-      isosurfaceRay.t = isosurfaceRay.t + 1e-4f;
+      isosurfaceRay.t = isosurfaceRay.t + epsilon;
       isosurfaceRay.primID = -1;
       isosurfaceRay.geomID = -1;
       isosurfaceRay.instID = -1;
@@ -315,7 +318,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
       color = color + (1.0f - color.w) * geometryColor;
 
       //! Reset geometry ray.
-      geometryRay.t0 = geometryRay.t + 1e-4f;
+      geometryRay.t0 = geometryRay.t + epsilon;
       geometryRay.t = tMax; //! end of valid ray interval for traceRay()
       geometryRay.primID = -1;
       geometryRay.geomID = -1;
