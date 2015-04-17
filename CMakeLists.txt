@@ -50,6 +50,10 @@ MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 OPTION(OSPRAY_INTERSECTION_FILTER "Enable Intersection Filters?")
 MARK_AS_ADVANCED(OSPRAY_INTERSECTION_FILTER)
 
+# add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
+OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable Intersection Filters?")
+MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
+
 # compiler selection for the non-MIC part
 IF (APPLE)
   SET(OSPRAY_COMPILER "CLANG" CACHE STRING "Select which compiler to use.")
@@ -71,7 +75,11 @@ OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 
 SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (e.g., 'ALL' ISAs, with run-time selection).")
 #SET(OSPRAY_BUILD_ISA "AVX" CACHE STRING "Target ISA (e.g., 'ALL' ISAs, with run-time selection).")
-SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
+IF (OSPRAY_BUILD_ENABLE_KNL)
+	SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2 AVX512)
+ELSE()
+	SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
+ENDIF()
 #SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS SSE AVX AVX2)
 
 # make ospray target and compiler uppercase - we need this in some other parts of the build system
