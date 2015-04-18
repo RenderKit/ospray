@@ -50,6 +50,8 @@ namespace ospray {
 
     std::vector<Ref<Volume> > volumes;
 
+    box3f bounds;
+
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle; 
   };

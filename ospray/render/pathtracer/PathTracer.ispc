@@ -235,12 +235,6 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
 }
 
 
-export void PathTracer_setModel(void *uniform _THIS)
-{
-  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
-  THIS->scene->model = THIS->inherited.model;
-}
-
 uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L);
 typedef uniform PTEnvironmentLight *uniform EnvLightPtr;
 typedef uniform PTLight *uniform LightPtr;
@@ -387,4 +381,16 @@ export void* uniform PathTracer_create(void *uniform cppE,
   
   THIS->scene = createScene();
   return THIS;
+}
+
+export void PathTracer_setModel(void *uniform _THIS)
+{
+  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
+  THIS->scene->model = THIS->inherited.model;
+}
+
+export void PathTracer_setEpsilon(void *uniform _THIS, const uniform float& epsilon)
+{
+  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
+  THIS->epsilon = epsilon;
 }

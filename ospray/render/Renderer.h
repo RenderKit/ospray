@@ -69,6 +69,7 @@ namespace ospray {
 
     virtual OSPPickResult pick(const vec2f &screenPos);
 
+    Model *model;
     FrameBuffer *currentFB;
     
     /*! \brief number of samples to be used per pixel in a tile */

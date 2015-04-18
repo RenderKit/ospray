@@ -58,6 +58,11 @@ namespace ospray {
   {
     Renderer::commit();
     ispc::PathTracer_setModel(getIE());
+    if (model) {
+      const float diameter = length(model->bounds.size());
+      const float epsilon = 1e-6f;
+      ispc::PathTracer_setEpsilon(getIE(), diameter * epsilon);
+    }
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

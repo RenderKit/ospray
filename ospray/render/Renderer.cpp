@@ -35,8 +35,8 @@ namespace ospray {
   void Renderer::commit()
   {
     spp = getParam1i("spp", 1);
+    model = (Model*)getParamObject("model", getParamObject("world"));
     if (getIE()) {
-      ManagedObject* model = getParamObject("model", getParamObject("world"));
       ManagedObject* camera = getParamObject("camera");
       ispc::Renderer_set(getIE(),
                          model ?  model->getIE() : NULL,
