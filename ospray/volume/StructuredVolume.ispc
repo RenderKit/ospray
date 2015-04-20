@@ -108,7 +108,7 @@ inline void StructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   //! The recommended step size for ray casting based volume renderers.
-  const uniform float step = reduce_min(volume->gridSpacing) / volume->inherited.samplingRate;
+  const uniform float step = volume->inherited.samplingStep / volume->inherited.samplingRate;
 
   //! Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
@@ -121,7 +121,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume, const un
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   //! The nominal step size for ray casting based volume renderers, not considering the sampling rate.
-  const uniform float step = reduce_min(volume->gridSpacing);
+  const uniform float step = volume->inherited.samplingStep;
 
   //! Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalue, ray);

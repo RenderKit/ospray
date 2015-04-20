@@ -255,7 +255,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   //! Copy of the ray for volume isosurface intersection. The original ray is used for volume intersection.
   Ray isosurfaceRay = ray;
-  isosurfaceRay.t = ray.t0 + rayOffset * 1.f; // don't consider sampling rate, but still allow offset.
+  isosurfaceRay.t = ray.t0 + rayOffset * renderer->model->volumes[0]->samplingStep; // don't consider sampling rate, but still allow offset.
   isosurfaceRay.primID = -1;
   isosurfaceRay.geomID = -1;
   isosurfaceRay.instID = -1;
