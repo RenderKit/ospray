@@ -14,15 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/BlockBrickedVolume.h"
-#include "ospray/volume/SharedStructuredVolume.h"
+#pragma once
 
-namespace ospray {
+#include "ospray/common/OSPDataType.h"
+#include "ospray/volume/StructuredVolume.ih"
 
-  //! A volume type with 64-bit addressing and multi-level bricked storage order.
-  OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
+//! \brief ISPC variables and functions for the SharedStructuredVolume class,
+//! a concrete implementation of the StructuredVolume class with 32-bit
+//! addressing in which the voxel data is laid out in memory in XYZ order and
+//! provided via a shared data buffer.
+//!
+struct SharedStructuredVolume {
 
-  //! A volume type with 32-bit addressing and XYZ storage order. The voxel data is provided by the application via a shared data buffer.
-  OSP_REGISTER_VOLUME(SharedStructuredVolume, shared_structured_volume);
+  //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
+  StructuredVolume inherited;
 
-} // ::ospray
+  //! Voxel data.
+  const void *uniform voxelData;
+
+  //! Voxel type.
+  uniform OSPDataType voxelType;
+
+};
+
+void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData);

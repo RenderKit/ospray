@@ -14,15 +14,42 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/BlockBrickedVolume.h"
-#include "ospray/volume/SharedStructuredVolume.h"
+#pragma once
+
+#include "ospray/volume/StructuredVolume.h"
 
 namespace ospray {
 
-  //! A volume type with 64-bit addressing and multi-level bricked storage order.
-  OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
+  //! \brief A concrete implementation of the StructuredVolume class
+  //!  with 32-bit addressing in which the voxel data is laid out in
+  //!  memory in XYZ order and provided via a shared data buffer.
+  //!
+  class SharedStructuredVolume : public StructuredVolume {
+  public:
 
-  //! A volume type with 32-bit addressing and XYZ storage order. The voxel data is provided by the application via a shared data buffer.
-  OSP_REGISTER_VOLUME(SharedStructuredVolume, shared_structured_volume);
+    //! Constructor.
+    SharedStructuredVolume() {};
+
+    //! Destructor.
+    virtual ~SharedStructuredVolume() {};
+
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::SharedStructuredVolume<" + voxelType + ">"); }
+
+    //! Allocate storage and populate the volume, called through the OSPRay API.
+    virtual void commit();
+
+    //! Copy voxels into the volume at the given index; not allowed on SharedStructuredVolume.
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) {
+      exitOnCondition(true, "setRegion() not allowed on this volume type; volume data must be provided via the voxelData parameter");
+      return 0;
+    }
+
+  protected:
+
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC();
+
+  };
 
 } // ::ospray

@@ -46,8 +46,6 @@ namespace ospray {
 
   void StructuredVolume::finish()
   {
-    Volume::finish();
-
     //! Make the voxel value range visible to the application.
     if (findParam("voxelRange") == NULL)
       set("voxelRange", voxelRange);
@@ -56,6 +54,9 @@ namespace ospray {
 
     //! Complete volume initialization.
     ispc::StructuredVolume_finish(ispcEquivalent);
+
+    //! Volume finish actions.
+    Volume::finish();
   }
 
   OSPDataType StructuredVolume::getVoxelType() const

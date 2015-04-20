@@ -55,7 +55,7 @@ namespace ospray {
     //! Indicate that the volume is fully initialized.
     bool finished;
 
-    //! Voxel value range (computed during setRegion()).
+    //! Voxel value range (will be computed if not provided as a parameter).
     vec2f voxelRange;
 
     //! Voxel type.
