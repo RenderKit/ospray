@@ -686,6 +686,10 @@ namespace ospray {
 
     void COIDevice::release(OSPObject object)
     {
+      // release() causes a crash, disabling pending debugging.
+      cout << "#osp:coi: warning, release() not implemented." << endl;
+      return;
+
       if (object == NULL) return;
       Handle handle = (Handle &) object;
       DataStream stream;
