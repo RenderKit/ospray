@@ -18,6 +18,37 @@ SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
 CONFIGURE_OSPRAY()
 
+# check whether gcc is new enough for AVX2
+IF (OSPRAY_ISA_AVX2 AND OSPRAY_COMPILER STREQUAL "GCC")
+  SET(GCC_VERSION_REQUIRED "4.7.0")
+
+  IF (NOT GCC_EXECUTABLE)
+    FIND_PROGRAM(GCC_EXECUTABLE gcc DOC "Path to the GCC executable.")
+    IF (NOT GCC_EXECUTABLE)
+      MESSAGE(FATAL_ERROR "GCC not found.")
+    ENDIF()
+  ENDIF()
+
+  IF(NOT GCC_VERSION)
+    EXECUTE_PROCESS(COMMAND ${GCC_EXECUTABLE} --version OUTPUT_VARIABLE GCC_OUTPUT)
+    STRING(REGEX MATCH " [0-9]+[.][0-9]+[.][0-9]+ " GCC_VERSION "${GCC_OUTPUT}")
+
+    IF (GCC_VERSION VERSION_LESS GCC_VERSION_REQUIRED)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(COMPILER_SUPPORTS_AVX2 false)
+    ELSE()
+      SET(COMPILER_SUPPORTS_AVX2 true)
+    ENDIF()
+
+    SET(GCC_VERSION ${GCC_VERSION} CACHE STRING "GCC Version")
+    MARK_AS_ADVANCED(GCC_VERSION)
+    MARK_AS_ADVANCED(GCC_EXECUTABLE)
+  ENDIF()
+ELSE() # assume clang and icc support AVX2
+  SET(COMPILER_SUPPORTS_AVX2 true)
+ENDIF()
+
+
 # remove OSPRAY_ARCH_* flags from CMAKE_CXX_FLAGS; the Embree build will add these as appropriate for the various ISAs.
 #string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
@@ -237,11 +268,6 @@ ELSE()
   # ------------------------------------------------------------------
   IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
     ADD_DEFINITIONS(-D__TARGET_SSE41__)
-#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE41") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
     OSPRAY_ADD_LIBRARY(ospray_embree_sse41 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp   
@@ -257,12 +283,8 @@ ELSE()
   # now, build and link in SSE42 support (for anything more than SSE42)
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
-  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_SSE)
+  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
     ADD_DEFINITIONS(-D__TARGET_SSE42__)
-#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
     OSPRAY_ADD_LIBRARY(ospray_embree_sse42 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_hybrid.cpp
       )
@@ -273,9 +295,7 @@ ELSE()
   # ------------------------------------------------------------------
   # now, build and link in AVX1 support (for AVX1 and AVX2)
   # ------------------------------------------------------------------
-  IF (OSPRAY_ISA_AVX OR OSPRAY_ISA_SSE)
-#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-#      (${OSPRAY_XEON_TARGET} STREQUAL "AVX"))
+  IF (OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
     ADD_DEFINITIONS(-D__TARGET_AVX__)
     SET(EMBREE_KERNELS_AVX_SOURCES
       builders/bezierrefgen.cpp 
@@ -350,9 +370,8 @@ ELSE()
     bvh8/bvh8_intersector8_chunk.cpp   
     bvh8/bvh8_intersector8_hybrid.cpp   
     )
-  IF (OSPRAY_ISA_AVX2)
+  IF (OSPRAY_ISA_AVX2 AND COMPILER_SUPPORTS_AVX2)
     ADD_DEFINITIONS(-D__TARGET_AVX2__)
-#  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2"))
     SET(OSPRAY_EMBREE_AVX2_SOURCES "")
     FOREACH(src ${EMBREE_KERNELS_AVX2_SOURCES})
       SET(OSPRAY_EMBREE_AVX2_SOURCES ${OSPRAY_EMBREE_AVX2_SOURCES} 		
