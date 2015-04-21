@@ -34,13 +34,19 @@ namespace ospray {
 
   void Renderer::commit()
   {
+    epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
     model = (Model*)getParamObject("model", getParamObject("world"));
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
+      if (model) {
+        const float diameter = length(model->bounds.size());
+        epsilon *= diameter;
+      }
       ispc::Renderer_set(getIE(),
                          model ?  model->getIE() : NULL,
                          camera ?  camera->getIE() : NULL,
+                         epsilon,
                          spp);
     }
   }

@@ -179,9 +179,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         Ray shadow_ray; 
         setRay(shadow_ray,dg.P,ls.wi.v,
                //dg.error*
-               THIS->epsilon,ls.tMax-
+               THIS->inherited.epsilon,ls.tMax-
                //dg.error*
-               THIS->epsilon);
+               THIS->inherited.epsilon);
         shadow_ray.time = lightPath.ray.time;
         
         if (isOccluded(scene->model,shadow_ray))
@@ -226,7 +226,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     /*! Continue the path. */
     extend_fast(lightPath, 
                 dg.P,wi.v,//dg.error*
-                THIS->epsilon,inf,
+                THIS->inherited.epsilon,inf,
            c,(type & directLightingBRDFTypes) != NONE);
 
     Lw = mul(mul(Lw,c),rcp(wi.pdf));
@@ -349,7 +349,6 @@ void PathTracer__Constructor(void *uniform cppE,
                              uniform PathTracer* uniform THIS,
                              const uniform int& maxDepth, 
                              const uniform float& minContribution,
-                             const uniform float& epsilon,
                              uniform Image* uniform backplate)
 {
   Renderer_Constructor(&THIS->inherited,cppE);
@@ -359,7 +358,6 @@ void PathTracer__Constructor(void *uniform cppE,
   THIS->maxDepth = maxDepth;
 
   THIS->minContribution = minContribution;
-  THIS->epsilon = epsilon;
   THIS->backplate = backplate;
 }
 
@@ -370,11 +368,10 @@ void PathTracer__Constructor(void *uniform cppE,
 export void* uniform PathTracer_create(void *uniform cppE,
                                        const uniform int32& maxDepth, 
                                        const uniform float& minContribution,
-                                       const uniform float& epsilon,
                                        void* uniform backplate)
 {
   uniform PathTracer *uniform THIS = uniform new uniform PathTracer;
-  PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,epsilon,
+  PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,
                           (uniform Image* uniform) backplate);
 
   precomputeZOrder();
@@ -387,10 +384,4 @@ export void PathTracer_setModel(void *uniform _THIS)
 {
   uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
   THIS->scene->model = THIS->inherited.model;
-}
-
-export void PathTracer_setEpsilon(void *uniform _THIS, const uniform float& epsilon)
-{
-  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
-  THIS->epsilon = epsilon;
 }

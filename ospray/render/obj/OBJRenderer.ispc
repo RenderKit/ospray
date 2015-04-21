@@ -25,7 +25,6 @@
 // obj renderer
 #include "OBJMaterial.ih"
 
-#define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
 
 struct OBJRenderer {
@@ -37,7 +36,7 @@ struct OBJRenderer {
   bool          shadowsEnabled;
 };
 
-inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight) {
+inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight, const uniform float epsilon) {
   float alpha = 1.f;
   int max_depth = 8;
   const float org_t_max = ray.t;
@@ -79,7 +78,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     max_depth--;
     if (max_depth <= 0) return alpha;
 
-    ray.t0 = ray.t + EPS;
+    ray.t0 = ray.t + epsilon;
     ray.t = org_t_max;
     ray.primID = -1;
     ray.geomID = -1;
@@ -153,7 +152,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
 
     if (local_opacity > 0.01f) { // worth shading?
       const vec3f R = ray.dir - (2.f * dot(ray.dir, dg.Ns))*dg.Ns;
-      const vec3f P = dg.P + EPS * dg.Ng;
+      const vec3f P = dg.P + self->super.epsilon * dg.Ng;
 
       //Some fake hard coded ambient light
       color = color + local_opacity * Kd * .05;
@@ -175,7 +174,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
             if (max_contrib > .01f) {
               Ray shadowRay;
               setRay(shadowRay,P,L);
-              const float light_alpha = lightAlpha(shadowRay, self->super.model, max_contrib);
+              const float light_alpha = lightAlpha(shadowRay, self->super.model, max_contrib, self->super.epsilon);
               local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
             }
           } else 
@@ -189,7 +188,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     path_opacity = path_opacity * (1.f - d);
     if (path_opacity < 0.01f) return color; //remaining contribution too low kill path
 
-    ray.t0 = ray.t + EPS;
+    ray.t0 = ray.t + self->super.epsilon;
     ray.t = infinity;
     ray.primID = -1;
     ray.geomID = -1;
