@@ -35,3 +35,4 @@ SET(OSPRAY_ARCH_AVX     "-mavx")
 SET(OSPRAY_ARCH_AVX2   "-mf16c -mavx2 -mfma -mlzcnt -mbmi -mbmi2")
 SET(OSPRAY_ARCH_AVX512 "-mavx512")
 
+SET(OSPRAY_COMPILER_SUPPORTS_AVX2 TRUE)

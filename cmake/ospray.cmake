@@ -111,6 +111,14 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 
   ENDIF()
   
+  IF (OSPRAY_ISA_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
+    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
+    ENDIF()
+    SET(OSPRAY_ISA_AVX2 false)
+  ENDIF()
+
   IF (OSPRAY_MPI)
     ADD_DEFINITIONS(-DOSPRAY_MPI=1)
   ENDIF()
