@@ -156,7 +156,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
       const vec3f P = dg.P + EPS * dg.Ng;
 
       //Some fake hard coded ambient light
-      color = color + local_opacity * Kd * .25;
+      color = color + local_opacity * Kd * .05;
 
       //calculate shading for all lights
       for (uniform int i = 0; self->lights && i < self->numLights; i++) {

@@ -146,7 +146,7 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Light"; }
 
-      /*! \brief light type, i.e., 'ao', 'obj', 'pathtracer', ... */
+      /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
       const std::string type; 
     };
 
