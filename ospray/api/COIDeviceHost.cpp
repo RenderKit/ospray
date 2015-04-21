@@ -559,10 +559,6 @@ namespace ospray {
       DataStream args;
       Handle ID = Handle::alloc();
 
-      if (nitems == 0) {
-        throw std::runtime_error("cowardly refusing to create empty buffer...");
-      }
-
       args.write(ID);
       args.write((int32)nitems);
       args.write((int32)format);
