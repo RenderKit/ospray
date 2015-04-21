@@ -245,18 +245,6 @@ namespace ospray {
       windowSize = newSize;
       viewPort.aspect = newSize.x/float(newSize.y);
 
-      switch (frameBufferMode) {
-      case FRAMEBUFFER_UCHAR:
-        if (ucharFB) delete[] ucharFB;
-        ucharFB = new uint32[newSize.x*newSize.y];
-        break;
-      case FRAMEBUFFER_FLOAT:
-        if (floatFB) delete[] floatFB;
-        floatFB = new vec3fa[newSize.x*newSize.y];
-        break;
-      default:
-        break;
-      }
       forceRedraw();
     }
 
@@ -273,10 +261,10 @@ namespace ospray {
 
     void Glut3DWidget::display()
     {
-      char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
         if (animating && dumpScreensDuringAnimation) {
+          char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
@@ -292,9 +280,6 @@ namespace ospray {
 
       } else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, floatFB);
-      }
-      else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_DEPTH && depthFB) {
-        glDrawPixels(windowSize.x, windowSize.y, GL_LUMINANCE, GL_FLOAT, depthFB);
       } else {
         glClearColor(0.f,0.f,0.f,1.f);
         glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
@@ -365,7 +350,7 @@ namespace ospray {
         viewPort.modified = true;
       }
       motionSpeed = length(diag) * .001f;
-      std::cout << "glut3d: setting world bounds " << worldBounds << ", motion speed " << motionSpeed << std::endl;
+      // std::cout << "glut3d: setting world bounds " << worldBounds << ", motion speed " << motionSpeed << std::endl;
     }
 
     void Glut3DWidget::setTitle(const char *title)
@@ -746,7 +731,8 @@ namespace ospray {
           char fileName[100000];
           static int frameDumpSequenceID = 0;
           sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
-          saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
+          if (ucharFB)
+            saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
           return;
         }
       } 

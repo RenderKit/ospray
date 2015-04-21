@@ -63,10 +63,10 @@ namespace ospray {
 
   void error(const std::string &msg)
   {
-    cout << "ospray::msgView fatal error : " << msg << endl;
+    cout << "#ospModelViewer fatal error : " << msg << endl;
     cout << endl;
     cout << "Proper usage: " << endl;
-    cout << "  ./msgView [-bench <warmpup>x<numFrames>] [-model] <inFileName>" << endl;
+    cout << "  ./ospModelViewer [-bench <warmpup>x<numFrames>] [-model] <inFileName>" << endl;
     cout << endl;
     exit(1);
   }
@@ -284,35 +284,18 @@ namespace ospray {
       ospRenderFrame(fb,renderer,OSP_FB_COLOR|(showDepthBuffer?OSP_FB_DEPTH:0)|OSP_FB_ACCUM);
       ++accumID;
 
-      if (showDepthBuffer) {
-        depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
-        frameBufferMode = Glut3DWidget::FRAMEBUFFER_DEPTH;
-        Glut3DWidget::display();
-        ospUnmapFrameBuffer(depthFB,fb);
-      } else {
-        ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
-        frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-        Glut3DWidget::display();
-        ospUnmapFrameBuffer(ucharFB,fb);
-      }
-      // frameBufferMode = g_frameBufferMode;
-      // switch(frameBufferMode) {
-      //   case Glut3DWidget::FRAMEBUFFER_DEPTH:
-      //     depthFB = (float *) ospMapFrameBuffer(fb, OSP_FB_DEPTH);
-      //     Glut3DWidget::display();
-      //     ospUnmapFrameBuffer(depthFB,fb);
-      //     break;
-      //   case Glut3DWidget::FRAMEBUFFER_UCHAR:
-      //     ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
-      //     Glut3DWidget::display();
-      //     ospUnmapFrameBuffer(ucharFB,fb);
-      //     break;
-      // }
+      // set the glut3d widget's frame buffer to the opsray frame buffer, then display
+      ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+      frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
+      Glut3DWidget::display();
+      ospUnmapFrameBuffer(ucharFB,fb);
+      // that pointer is no longer valid, so set it to null
+      ucharFB = NULL;
 
       char title[1000];
 
       if (alwaysRedraw) {
-        sprintf(title,"OSPRay MSGView (%f fps)",
+        sprintf(title,"OSPRay Model Viewer (%f fps)",
                 fps.getFPS());
         setTitle(title);
         forceRedraw();
@@ -457,11 +440,11 @@ namespace ospray {
     return ospMat;
   }
 
-  void msgViewMain(int &ac, const char **&av)
+  void ospModelViewerMain(int &ac, const char **&av)
   {
     msgModel = new miniSG::Model;
     
-    cout << "msgView: starting to process cmdline arguments" << endl;
+    cout << "#ospModelViewer: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
       if (arg == "--renderer") {
@@ -549,7 +532,7 @@ namespace ospray {
     // -------------------------------------------------------
     // done parsing
     // -------------------------------------------------------]
-    cout << "msgView: done parsing. found model with" << endl;
+    cout << "#ospModelViewer: done parsing. found model with" << endl;
     // cout << "  - num materials: " << msgModel->material.size() << endl;
     cout << "  - num meshes   : " << msgModel->mesh.size() << " ";
     int numUniqueTris = 0;
@@ -593,13 +576,13 @@ namespace ospray {
     bool doesInstancing = 0;
 
     if (forceInstancing) {
-      std::cout << "msgView: forced instancing - instances on." << std::endl;
+      std::cout << "#ospModelViewer: forced instancing - instances on." << std::endl;
       doesInstancing = true;
     } else if (msgModel->instance.size() > msgModel->mesh.size()) {
-      std::cout << "msgView: found more object instances than meshes - turning on instancing" << std::endl;
+      std::cout << "#ospModelViewer: found more object instances than meshes - turning on instancing" << std::endl;
       doesInstancing = true;
     } else {
-      std::cout << "msgView: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
+      std::cout << "#ospModelViewer: number of instances matches number of meshes, creating single model that contains all meshes" << std::endl;
       doesInstancing = false;
     }
     if (doesInstancing) {
@@ -616,7 +599,7 @@ namespace ospray {
     }
 
 
-    cout << "msgView: adding parsed geometries to ospray model" << endl;
+    cout << "#ospModelViewer: adding parsed geometries to ospray model" << endl;
     std::vector<OSPModel> instanceModels;
 
     for (int i=0;i<msgModel->mesh.size();i++) {
@@ -753,15 +736,15 @@ namespace ospray {
         ospAddGeometry(ospModel,inst);
       }
     }
-    cout << "msgView: committing model" << endl;
+    cout << "#ospModelViewer: committing model" << endl;
     ospCommit(ospModel);
-    cout << "msgView: done creating ospray model." << endl;
+    cout << "#ospModelViewer: done creating ospray model." << endl;
 
     //TODO: Need to figure out where we're going to read lighting data from
     //begin light test
     std::vector<OSPLight> lights;
     if (defaultDirLight_direction != vec3f(0.f)) {
-      cout << "msgView: Adding a hard coded directional light as the sun." << endl;
+      cout << "#ospModelViewer: Adding a hard coded directional light as the sun." << endl;
       OSPLight ospLight = ospNewLight(ospRenderer, "DirectionalLight");
       ospSetString(ospLight, "name", "sun" );
       ospSet3f(ospLight, "color", 1, 1, 1);
@@ -771,7 +754,7 @@ namespace ospray {
     }
 #if 0
     //spot light
-    cout << "msgView: Adding a hard coded spotlight for test." << endl;
+    cout << "#ospModelViewer: Adding a hard coded spotlight for test." << endl;
     OSPLight ospSpot = ospNewLight(ospRenderer, "SpotLight");
     ospSetString(ospSpot, "name", "spot_test");
     ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
@@ -791,9 +774,11 @@ namespace ospray {
     // create viewer window
     // -------------------------------------------------------
     MSGViewer window(ospModel,ospRenderer);
-    window.create("MSGViewer: OSPRay Mini-Scene Graph test viewer");
-    printf("MSG Viewer created. Press 'Q' to quit.\n");
-    window.setWorldBounds(box3f(msgModel->getBBox()));
+    window.create("ospModelViewer: OSPRay Mini-Scene Graph test viewer");
+    printf("#ospModelViewer: done creating window. Press 'Q' to quit.\n");
+    const box3f worldBounds(msgModel->getBBox());
+    window.setWorldBounds(worldBounds);
+    std::cout << "#ospModelViewer: set world bounds " << worldBounds << ", motion speed " << window.motionSpeed << std::endl;
     if (msgModel->camera.size() > 0) {
       window.setViewPort(msgModel->camera[0]->from,
                          msgModel->camera[0]->at,
@@ -808,5 +793,5 @@ int main(int ac, const char **av)
 {
   ospInit(&ac,av);
   ospray::glut3D::initGLUT(&ac,av);
-  ospray::msgViewMain(ac,av);
+  ospray::ospModelViewerMain(ac,av);
 }
