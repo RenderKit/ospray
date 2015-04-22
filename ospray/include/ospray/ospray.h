@@ -185,16 +185,17 @@ extern "C" {
     OSPD_Z_COMPOSITE
   } OSPDRenderMode;
 
-  //! \brief initialize the ospray engine (for use with MPI-parallel app) 
-  /*! \detailed Note the application must call this function "INSTEAD OF"
-      MPI_Init(), NOT "in addition to" */
+  //! the 'lid to the pot' of ospdMpiInit(). 
+  /*! does both an osp shutdown and an mpi shutdown for the mpi group
+      created with ospdMpiInit */
   void ospdMpiInit(int *ac, char ***av, OSPDRenderMode renderMode=OSPD_Z_COMPOSITE);
-
-  //! \brief shut down distributed mpi mode
-  void ospdShutdown();
 
   //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
   void ospdApiMode(OSPDApiMode mode);
+
+  /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
+      *and* the MPI layer created with ospdMpiInit */
+  void ospdMpiShutdown();
 #endif
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so

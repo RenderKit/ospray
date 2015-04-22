@@ -61,7 +61,7 @@ namespace ospray {
     MPI_Barrier(MPI_COMM_WORLD);
     printf("---------------------- SHUTTING DOWN ----------------------\n");fflush(0);
     MPI_Barrier(MPI_COMM_WORLD);
-    ospdShutdown();
+    ospdMpiShutdown();
   }
 }
 

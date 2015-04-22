@@ -1015,25 +1015,3 @@ namespace ospray {
   } // ::ospray::mpi
 } // ::ospray
 
-  //! \brief initialize the ospray engine (for use with MPI-parallel app) 
-  /*! \detailed Note the application must call this function "INSTEAD OF"
-      MPI_Init(), NOT "in addition to" */
-extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
-{
-  if (ospray::api::Device::current != NULL)
-    throw std::runtime_error("#osp:mpi: OSPRay already initialized!?");
-  ospray::mpi::initDistributedAPI(ac,av,mode);
-}
-
-//! \brief shut down distributed mpi mode
-extern "C" void ospdShutdown()
-{
-  // not implemented for now ...
-}
-
-//! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
-extern "C" void ospdApiMode(OSPDApiMode mode)
-{
-  PING;
-}
-
