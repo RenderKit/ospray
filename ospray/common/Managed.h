@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -31,8 +31,8 @@ namespace ospray {
   /*! \brief defines a basic object whose lifetime is managed by ospray 
 
     One of the core concepts of ospray is that all logical
-    objects in ospray --- renderers, geometries, models, camera, data
-    buffers, volumes, etc --- are all derived from the same absic
+    objects in ospray -- renderers, geometries, models, camera, data
+    buffers, volumes, etc -- are all derived from the same basic
     class that provides a certain kind of common, shared
     infrastructure:
 
@@ -41,69 +41,94 @@ namespace ospray {
     <dt>Reference counting</dt><dd> All ospray objects are reference
     counted, and will automatically live as long as any other object
     (and/or the application) still need it. In particular, even
-    calling ospFree on an object does *not* immediately destroy that
+    calling ospRelease on an object does *not* immediately destroy that
     object if other objects still use it.  </dd>
 
     <dt>C/ISPC correspondence</dt><dd>Most (though possibly not all!)
     objects in ospray will have components that operate in the C++
     side (typically if they require C++ features like templates or
-    inhertiance, of for distribution/MPI issues), and others that live
+    inhertiance, or for distribution/MPI issues), and others that live
     on the ISPC side of things (typically lower-level kernels that are
     performance-critical and require vectorization. Thanks to some
     limiations of ISPC this interplay is implemented by a one-on-one
-    correspondence where a C++ side ospray object also has a ISPC side
+    correspondence where a C++ side ospray object also has an ISPC side
     struct (with function pointers rather than virtual functions) that
     it maintains and updates as required (with "big" things like data
     arrays etc being shared by common pointer). To do this any ospray
-    object has a (optional) pointer to a possibly exisitng ISCP
-    counterpart (its "ISPC equivalent", or IE). For object that do not
+    object has an (optional) pointer to a possibly exisitng ISPC
+    counterpart (its "ISPC equivalent", or IE). For objects that do not
     have an IE, this value is NULL; typically, the IE will also have a
-    pointer back to its "C equivalet" (CE); and typically, it will be
+    pointer back to its "C equivalent" (CE); and typically, it will be
     the C side that is doing creation, destruction, etc. Since (due to
     some internal ISPC issues) many of the ISPC types we use cannot be
     exported to the C side this IE pointer will be 'void *', always
     understanding that there is typically a non-trivial ISPC struct on
     the other side, and always assuming that the C side class only
-    calls functions that know what type this pointer is. </dd>
+    calls functions that know what type this pointer is.</dd>
 
     <dt>parametrization</dt><dd>The third core concept common to _all_
     ospray objects is that they contain a list of named and typed
-    "parameters" of certain predefined type, including a type that
+    "parameters" of certain predefined types, including a type that
     allows to point to other ospray objects (data buffers are simply
-    one instance of such an ospray object). OSPRay itseld does not
+    one instance of such an ospray object). OSPRay itself does not
     know what kind of parameters any specific object may or may not
     need; it simply attaches them to the object, and that object has
-    to know by itself what to do with it</dd>
+    to know by itself what to do with it.</dd>
 
     <dt>committing and modifying objects</dt><dd>Parameters attached
     to an object are supposed to be only used by an object only after
     an explicit 'ospCommit' has been called on said object. At that
     stage, the object is expected to "parse" the parameters and do
-    with those values whatever it needs to be doing with them. Eg, a
+    with those values whatever it needs to be doing with them. E.g., a
     triangle mesh will assume data buffers with names "position" and
     "index" to be attached to them, and upon 'commit' will look for
     these buffers, and copy the (reference-counted) pointers to those
     buffers for use during rendering; the parameters themselves will
-    never be accessed other than during 'commit'.  </dd>
+    never be accessed other than during 'commit'.</dd>
 
     <dt>type abstraction</dt><dd>One particular goal of the
     parameterization is that virtually all functionality in ospray is
     abstracted. In particular the API differs between things that are
-    fundmentally different in functionality---such as a renderer is
-    different from a camera or a geometry---but does not specify at
+    fundamentally different in functionality -- such as a renderer is
+    different from a camera or a geometry -- but does not specify at
     all what exact variations of these different concepts are
     there. For example, for ospray a camera is simply a camera:
     whether its a perspective or a depth-of-field camera is specified
     only in the 'type' parameter (a string) to 'ospNewCamera'; and
     whatever parameters that camera may need to properly operate have
-    to be specified via parameters, without the api even knowing what
-    those parameters that might be.  </dd>
+    to be specified via parameters, without the API even knowing what
+    those parameters that might be.</dd>
     
     </dl>
 
    */
   struct ManagedObject : public embree::RefCount
   {
+    /*! \brief constructor */
+    ManagedObject();
+
+    /*! \brief destructor, frees the ISPC-side allocated memory pointed to by
+     * ispcEquivalent, thus derived classes do not need to and must not delete
+     * their ispcEquivalent. This also means that derived classes most often do
+     * not need an own destructor. */
+    virtual ~ManagedObject();
+
+    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    virtual void commit();
+    
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const;
+
+    /*! return the ISPC equivalent of this class */
+    void  *getIE() const { return ispcEquivalent; }
+
+    // ------------------------------------------------------------------
+    // everything related to finding/getting/setting parameters
+    // ------------------------------------------------------------------
+
+    /*! \brief container for _any_ sort of parameter an app can assign
+        to an ospray object */
     struct Param {
       Param(const char *name);
       ~Param() { clear(); };
@@ -158,26 +183,10 @@ namespace ospray {
       const char *name;
     };
 
-    /*! constructor */
-    ManagedObject() : ID(-1), ispcEquivalent(NULL), managedObjectType(OSP_UNKNOWN) {};
-
-    /*! destructor */
-    virtual ~ManagedObject() {};
-
-    //! commit the model's (or more exactly, the model's parameters') outstanding changes
-    virtual void commit() {}
-    
-    //! \brief common function to help printf-debugging 
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::ManagedObject"; }
-
-    /*! return the ISPC equivalent of this class*/
-    void *getIE() const { return ispcEquivalent; }
-
-    /*! find a given parameter, or add it if not exists (and so specified) */
+    /*! \brief find a given parameter, or add it if not exists (and so specified) */
     Param *findParam(const char *name, bool addIfNotExist = false);
 
-    /*! set given parameter to given data array */
+    /*! \brief set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);
 
     /*! set a parameter with given name to given value, create param if not existing */
@@ -192,7 +201,7 @@ namespace ospray {
         have its refcount increased; it is up to the callee to
         properly do that (typically by assigning to a proper 'ref'
         instance */
-    ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound);
+    ManagedObject *getParamObject(const char *name, ManagedObject *valIfNotFound=NULL);
 
     Data *getParamData(const char *name, Data *valIfNotFound=NULL)
     { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }
@@ -209,24 +218,37 @@ namespace ospray {
     const char  *getParamString(const char *name, const char *valIfNotFound);
     /*! @} */
 
-    /*!< list of parameters attached to this object */
-    std::vector<Param *> paramList;
+    // ------------------------------------------------------------------
+    // functions to allow objects (called a 'listener') to track
+    // changes in one or more other objects (called a
+    // 'dependencies'). Listeners can register themselves as listneres
+    // with all their dependencies, and get 'notify'd whenever their
+    // depdencies got changed/committed.
+    // ------------------------------------------------------------------
 
-    /*!< a global ID that can be used for referencing an object remotely */
-    id_t ID;
-
-    /*!< ispc-side eqivalent of this C++-side class, if available (NULL if not) */
-    void *ispcEquivalent;
-
-    /*!< subtype of this ManagedObject */
-    OSPDataType managedObjectType;
-
-    /*! gets called whenever any of this node's dependencies got changed */
-    virtual void dependencyGotChanged(ManagedObject *object) {};
+    /*! \brief gets called whenever any of this node's dependencies got changed */
+    virtual void dependencyGotChanged(ManagedObject *object);
     
-    //! \brief a list of managed objects that want to get notified
-    //! whenever this object get changed (ie, committed).
-    /* When this object gets committed, it will call
+    //! \brief Will notify all listeners that we got changed
+    /*! \detailed will call 'dependencyGotChanged' on each of the
+        objects in 'objectsListeningForChanges' */
+    void notifyListenersThatObjectGotChanged();
+
+    //! \brief register a new listener for given object
+    /*! \detailed this object will now get update notifications from us */
+    void registerListener(ManagedObject *newListener);
+
+    //! \brief un-register a listener
+    /*! \detailed this object will no longer get update notifications from us  */
+    void unregisterListener(ManagedObject *noLongerListening);
+
+    // -------------------------------------------------------
+    // member variables 
+    // -------------------------------------------------------
+
+    //! \brief List of managed objects that want to get notified
+    //! whenever this object get changed (ie, committed). */
+    /*! \detailed When this object gets committed, it will call
        'depedencyGotChanged' on each of the objects in this list. It
        is up to the respective objects to properly register and
        register themselves as dependencies.  \warning Objects here are
@@ -236,16 +258,18 @@ namespace ospray {
        dies */
     std::set<ManagedObject *> objectsListeningForChanges;
     
-    /*!< call 'dependencyGotChanged' on each of the objects in 'objectsListeningForChanges' */
-    void notifyListenersThatObjectGotChanged();
+    /*! \brief list of parameters attached to this object */
+    std::vector<Param *> paramList;
 
-    //! register a new listener. this object will now get update notifications from us
-    void registerListener(ManagedObject *newListener)
-    { objectsListeningForChanges.insert(newListener); }
+    /*! \brief a global ID that can be used for referencing an object remotely */
+    id_t ID;
 
-    //! un-register a listener. this object will no longer get update notifications from us 
-    void unregisterListener(ManagedObject *noLongerListening)
-    { objectsListeningForChanges.erase(noLongerListening); }
+    /*! \brief ISPC-side eqivalent of this C++-side class, if available (NULL if not) */
+    void *ispcEquivalent;
+
+    /*! \brief subtype of this ManagedObject */
+    OSPDataType managedObjectType;
+
   };
 
 } // ::ospray

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -59,6 +59,8 @@ namespace ospray {
       std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
+      else if(numThreads > 0)
+        embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
 
       RTCError erc = rtcGetError();
@@ -249,6 +251,16 @@ namespace ospray {
       ManagedObject::Param *param = object->findParam(bufName,1);
       param->set(f);
     }
+
+    /*! Copy data into the given volume. */
+    int LocalDevice::setRegion(OSPVolume handle, const void *source, 
+                               const vec3i &index, const vec3i &count) 
+    {
+      Volume *volume = (Volume *) handle;
+      Assert(volume != NULL && "invalid volume object handle");
+      return(volume->setRegion(source, index, count));
+    }
+
     /*! assign (named) vec2f parameter to an object */
     void LocalDevice::setVec2f(OSPObject _object, const char *bufName, const vec2f &v)
     {
@@ -258,6 +270,7 @@ namespace ospray {
 
       object->findParam(bufName, 1)->set(v);
     }
+
     /*! assign (named) vec3f parameter to an object */
     void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
     {
@@ -287,6 +300,131 @@ namespace ospray {
       Assert(bufName != NULL && "invalid identifier for object parameter");
 
       target->setParam(bufName,value);
+    }
+
+    /*! Get the handle of the named data array associated with an object. */
+    int LocalDevice::getData(OSPObject handle, const char *name, OSPData *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_OBJECT && param->ptr->managedObjectType == OSP_DATA ? *value = (OSPData) param->ptr, true : false);
+
+    }
+
+    /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
+    int LocalDevice::getDataValues(OSPData handle, void **pointer, size_t *count, OSPDataType *type) {
+
+      Data *data = (Data *) handle;
+      Assert(data != NULL && "invalid data object handle");
+     *pointer = malloc(data->numBytes);  if (pointer == NULL) return(false);
+      return(memcpy(*pointer, data->data, data->numBytes), *count = data->numItems, *type = data->type, true);
+
+    }
+
+    /*! Get the named scalar floating point value associated with an object. */
+    int LocalDevice::getf(OSPObject handle, const char *name, float *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT ? *value = param->f[0], true : false);
+
+    }
+
+    /*! Get the named scalar integer associated with an object. */
+    int LocalDevice::geti(OSPObject handle, const char *name, int *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_INT ? *value = param->i[0], true : false);
+
+    }
+
+    /*! Get the material associated with a geometry object. */
+    int LocalDevice::getMaterial(OSPGeometry handle, OSPMaterial *value) {
+
+      Geometry *geometry = (Geometry *) handle;
+      Assert(geometry != NULL && "invalid source geometry handle");
+      return(*value = (OSPMaterial) geometry->getMaterial(), true);
+
+    }
+
+    /*! Get the named object associated with an object. */
+    int LocalDevice::getObject(OSPObject handle, const char *name, OSPObject *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_OBJECT ? *value = (OSPObject) param->ptr, true : false);
+
+    }
+
+    /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
+    int LocalDevice::getParameters(OSPObject handle, char ***value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      char **names = (char **) malloc((object->paramList.size() + 1) * sizeof(char *));
+
+      for (size_t i=0 ; i < object->paramList.size() ; i++) names[i] = strdup(object->paramList[i]->name);
+      names[object->paramList.size()] = NULL;
+      return(*value = names, true);
+
+    }
+
+    /*! Get a pointer to a copy of the named character string associated with an object. */
+    int LocalDevice::getString(OSPObject handle, const char *name, char **value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_STRING ? *value = strdup(param->s), true : false);
+
+    }
+
+    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+    int LocalDevice::getType(OSPObject handle, const char *name, OSPDataType *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      if (name == NULL) return(*value = object->managedObjectType, true);
+
+      ManagedObject::Param *param = object->findParam(name);
+      if (param == NULL) return(false);
+      return(*value = (param->type == OSP_OBJECT) ? param->ptr->managedObjectType : param->type, true);
+
+    }
+
+    /*! Get the named 2-vector floating point value associated with an object. */
+    int LocalDevice::getVec2f(OSPObject handle, const char *name, vec2f *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT2 ? *value = ((vec2f *) param->f)[0], true : false);
+
+    }
+
+    /*! Get the named 3-vector floating point value associated with an object. */
+    int LocalDevice::getVec3f(OSPObject handle, const char *name, vec3f *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT3 ? *value = ((vec3f *) param->f)[0], true : false);
+
+    }
+
+    /*! Get the named 3-vector integer value associated with an object. */
+    int LocalDevice::getVec3i(OSPObject handle, const char *name, vec3i *value) {
+
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_INT3 ? *value = ((vec3i *) param->i)[0], true : false);
+
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
@@ -456,14 +594,14 @@ namespace ospray {
     }
 
     //! release (i.e., reduce refcount of) given object
-    /*! note that all objects in ospray are refcounted, so one cannot
-      explicitly "delete" any object. instead, each object is created
+    /*! Note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. Instead, each object is created
       with a refcount of 1, and this refcount will be
       increased/decreased every time another object refers to this
-      object resp releases its hold on it; if the refcount is 0 the
+      object resp. releases its hold on it; if the refcount is 0 the
       object will automatically get deleted. For example, you can
       create a new material, assign it to a geometry, and immediately
-      after this assignation release its refcount; the material will
+      after this assignation release it; the material will
       stay 'alive' as long as the given geometry requires it. */
     void LocalDevice::release(OSPObject _obj)
     {
@@ -480,12 +618,12 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
-    OSPPickData LocalDevice::unproject(OSPRenderer _renderer, const vec2f &screenPos)
+    OSPPickResult LocalDevice::pick(OSPRenderer _renderer, const vec2f &screenPos)
     {
       Assert(_renderer != NULL && "invalid renderer handle");
       Renderer *renderer = (Renderer*)_renderer;
 
-      return renderer->unproject(screenPos);
+      return renderer->pick(screenPos);
     }
 
   } // ::ospray::api

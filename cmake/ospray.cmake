@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2014 Intel Corporation                                    ##
+## Copyright 2009-2015 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -44,7 +44,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
     )
 
-  IF (OSPRAY_TARGET STREQUAL "MIC")
+  IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
     SET(OSPRAY_LIB_SUFFIX "_mic")
     SET(OSPRAY_ISPC_SUFFIX ".cpp")
@@ -57,7 +57,6 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi)
 
     #		SET(LIBRARY_OUTPUT_PATH "${OSPRAY_BINARY_DIR}/lib/mic")
-    ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=16)
     ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC=1)
   ELSE()
     SET(OSPRAY_EXE_SUFFIX "")
@@ -77,49 +76,51 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 
     # additional Embree include directory
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
-    
 
-    IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR (${OSPRAY_XEON_TARGET} STREQUAL "avx2"))
-      ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=8)
-      ADD_DEFINITIONS(-DOSPRAY_TARGET_AVX2=1)
-
-      # embree targets - embree needs those to build the proper code paths
-      ADD_DEFINITIONS(-D__TARGET_SSE41__)
-      ADD_DEFINITIONS(-D__TARGET_SSE42__)
-      ADD_DEFINITIONS(-D__TARGET_AVX__)
-      ADD_DEFINITIONS(-D__TARGET_AVX2__)
-
-      # ispc target 
-      SET(OSPRAY_ISPC_TARGET "avx2")
-      SET(OSPRAY_ISPC_CPU "core-avx2")
-    ELSEIF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR (${OSPRAY_XEON_TARGET} STREQUAL "avx"))
-      ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=8)
-      ADD_DEFINITIONS(-DOSPRAY_TARGET_AVX=1)
-
-      # embree targets - embree needs those to build the proper code paths
-      ADD_DEFINITIONS(-D__TARGET_SSE41__)
-      ADD_DEFINITIONS(-D__TARGET_SSE42__)
-      ADD_DEFINITIONS(-D__TARGET_AVX__)
-
-      # ispc target 
-      SET(OSPRAY_ISPC_TARGET "avx")
-      SET(OSPRAY_ISPC_CPU "corei7-avx")
-    ELSEIF (${OSPRAY_XEON_TARGET} STREQUAL "SSE")
-      ADD_DEFINITIONS(-DOSPRAY_SPMD_WIDTH=4)
-      ADD_DEFINITIONS(-DOSPRAY_TARGET_SSE=1)
-
-      # embree targets - embree needs those to build the proper code paths
-      ADD_DEFINITIONS(-D__TARGET_SSE41__)
-      ADD_DEFINITIONS(-D__TARGET_SSE42__)
-
-      # ispc target 
-      SET(OSPRAY_ISPC_TARGET "sse4")
-      SET(OSPRAY_ISPC_CPU "corei7")
-    ELSE()
-      MESSAGE("unknown OSPRAY_XEON_TARGET '${OSPRAY_XEON_TARGET}'")
+    IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2)
+#      SET(OSPRAY_ISPC_CPU "core-avx2")
+      SET(OSPRAY_ISA_SSE  true)
+      SET(OSPRAY_ISA_AVX  true)
+      SET(OSPRAY_ISA_AVX2 true)
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
+      SET(OSPRAY_ISPC_TARGET_LIST generic-16)
+ #     SET(OSPRAY_ISPC_CPU "core-avx2")
+      SET(OSPRAY_ISA_SSE  true)
+      SET(OSPRAY_ISA_AVX  false)
+      SET(OSPRAY_ISA_AVX2 false)
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
+      SET(OSPRAY_ISPC_TARGET_LIST avx2)
+ #     SET(OSPRAY_ISPC_CPU "core-avx2")
+      SET(OSPRAY_ISA_SSE  false)
+      SET(OSPRAY_ISA_AVX  false)
+      SET(OSPRAY_ISA_AVX2 true)
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
+      SET(OSPRAY_ISPC_TARGET_LIST avx)
+ #     SET(OSPRAY_ISPC_CPU "corei7-avx")
+      SET(OSPRAY_ISA_SSE  false)
+      SET(OSPRAY_ISA_AVX  true)
+      SET(OSPRAY_ISA_AVX2 false)
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE")
+      SET(OSPRAY_ISPC_TARGET_LIST sse4)
+ #     SET(OSPRAY_ISPC_CPU "corei7")
+      SET(OSPRAY_ISA_SSE  true)
+      SET(OSPRAY_ISA_AVX  false)
+      SET(OSPRAY_ISA_AVX2 false)
+    ELSE ()
+      MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, or ALL.")
     ENDIF()
+
   ENDIF()
   
+  IF (OSPRAY_ISA_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
+    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
+    ENDIF()
+    SET(OSPRAY_ISA_AVX2 false)
+  ENDIF()
+
   IF (OSPRAY_MPI)
     ADD_DEFINITIONS(-DOSPRAY_MPI=1)
   ENDIF()
@@ -151,9 +152,9 @@ ENDMACRO()
 MACRO(CONFIGURE_OSPRAY)
 
   CONFIGURE_OSPRAY_NO_ARCH()
-  IF (OSPRAY_TARGET STREQUAL "MIC")
-  ELSE()
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}")
-  ENDIF()
+#  IF (OSPRAY_TARGET STREQUAL "MIC")
+#  ELSE()
+#    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}")
+#  ENDIF()
 
 ENDMACRO()

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -30,10 +30,11 @@ namespace ospray {
   Light *Light::createLight(const char *type) {
     LightRegistry::const_iterator it = lightRegistry.find(type);
 
-    if (it != lightRegistry.end()) return it->second ? (it->second)() : NULL;
+    if (it != lightRegistry.end())
+      return it->second ? (it->second)() : NULL;
 
     if (ospray::logLevel >= 2)
-      std::cout << "#ospray: trying to look up light type '" << type << "'for the first time" << std::endl;
+      std::cout << "#ospray: trying to look up light type '" << type << "' for the first time" << std::endl;
 
     std::string creatorName = "ospray_create_light__"+std::string(type);
 
@@ -45,8 +46,9 @@ namespace ospray {
         std::cout << "#ospray: could not find light type '" << type << "'" << std::endl;
       return NULL;
     }
-    Light *light = (*creator)();  light->managedObjectType = OSP_LIGHT;
-    return(light);
+    Light *light = (*creator)();
+    light->managedObjectType = OSP_LIGHT;
+    return light;
   }
 
 }

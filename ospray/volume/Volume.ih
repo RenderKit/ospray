@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,6 +19,7 @@
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/transferFunction/TransferFunction.ih"
+#include "ospray/math/bbox.ih"
 
 //! \brief Variables and methods common to all subtypes of the Volume
 //!  class, an abstraction for the concrete object which performs the
@@ -30,30 +31,41 @@ struct Volume {
   //! Gamma correction coefficient and exponent.
   uniform vec2f gammaCorrection;
 
+  //! Allow the renderer to perform gradient shading.
+  uniform bool gradientShadingEnabled;
+
+  //! Number of isovalues.
+  uniform int numIsovalues;
+
+  //! Isovalues.
+  uniform float *uniform isovalues;
+
+  //! Recommended sampling step size for ray casting based renderers, set by the underlying volume implementation.
+  uniform float samplingStep;
+
   //! Recommended sampling rate for the renderer.
   uniform float samplingRate;
 
   //! Color and opacity transfer function.
   TransferFunction *uniform transferFunction;
 
-  //! The largest floating point value still inside the volume.
-  uniform vec3f upperBound;
+  //! Clipping box for the volume (applies to volume rendering only). An empty clipping box is ignored.
+  uniform box3f volumeClippingBox;
 
-  //! The range of values contained in the volume.
-  uniform vec2f valueRange;
+  //! Bounding box for the volume in world coordinates.
+  uniform box3f boundingBox;
+
+  //! The value at the given sample location in world coordinates.
+  varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &worldCoordinates);
 
   //! The gradient at the given sample location in world coordinates.
-  varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &coordinates);
-
-  //! Tri-linear interpolation at the given sample location in world coordinates.
-  varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &coordinates);
-      
-  //! Tri-linear interpolation at each sample location in an array, 'coordinates' and 'results' arrays must be 'count' elements in size.
-  void (*uniform computeSamples)(void *uniform volume, const varying vec3f *uniform coordinates, const uniform int count, varying float *uniform results);
+  varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &worldCoordinates);
 
   //! Find the next hit point in the volume for ray casting based renderers.
   void (*uniform intersect)(void *uniform volume, varying Ray &ray);
 
+  //! Find the next isosurface hit point in the volume for ray casting based renderers.
+  void (*uniform intersectIsosurface)(void *uniform volume, const uniform float isovalue, varying Ray &ray);
 };
 
-
+void Volume_Constructor(Volume *uniform volume);

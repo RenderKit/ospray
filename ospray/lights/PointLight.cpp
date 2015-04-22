@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,20 +15,29 @@
 // ======================================================================== //
 
 #include "PointLight.h"
+#include "PointLight_ispc.h"
 
 namespace ospray {
-  //!Construct a new PointLight object
   PointLight::PointLight()
-    : position(0.f, 0.f, 0.f)
-    , color(1.f, 1.f, 1.f)
-    , range(-1.f)
+    : position(0.f)
+    , color(1.f)
+    , intensity(1.f)
+    , range(inf)
   {
+    ispcEquivalent = ispc::PointLight_create(this);
   }
 
-  //!Commit parameters understood by the base PointLight class
+  //! Commit parameters understood by the PointLight
   void PointLight::commit() {
-    position = getParam3f("position", vec3f(0.f, 0.f, 0.f));
-    color    = getParam3f("color", vec3f(1.f, 1.f, 1.f));
-    range    = getParam1f("range", -1.f);
+    position  = getParam3f("position", vec3f(0.f));
+    color     = getParam3f("color", vec3f(1.f));
+    intensity = getParam1f("intensity", 1.f);
+    range     = getParam1f("range", inf);
+
+    vec3f power = color * intensity;
+
+    ispc::PointLight_set(getIE(), (ispc::vec3f&)position, (ispc::vec3f&)power, range);
   }
+
+  OSP_REGISTER_LIGHT(PointLight, PointLight);
 }

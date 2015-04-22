@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -47,8 +47,12 @@
 #endif
 
 #if defined(__BMI__) && defined(__GNUC__)
-#define _tzcnt_u32 __tzcnt_u32
-#define _tzcnt_u64 __tzcnt_u64
+# ifndef _tzcnt_u32
+#  define _tzcnt_u32 __tzcnt_u32
+# endif
+# ifndef _tzcnt_u64
+#  define _tzcnt_u64 __tzcnt_u64
+# endif
 #endif
 
 #if defined(__LZCNT__)

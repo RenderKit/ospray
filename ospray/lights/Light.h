@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,13 +22,13 @@ namespace ospray {
 
   //! Base class for Light objects
   struct Light : public ManagedObject {
-    //!Create a light of the given type
+    //! Create a light of the given type
     static Light *createLight(const char *type);
 
-    //!Copy understood parameters into class members
-    virtual void commit(){}
+    //! Copy understood parameters into class members
+    virtual void commit() {}
 
-    //!toString is used to aid in printf debugging
+    //! toString is used to aid in printf debugging
     virtual std::string toString() const { return "ospray::Light"; }
   };
 

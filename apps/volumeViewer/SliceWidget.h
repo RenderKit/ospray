@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,7 +25,7 @@ Q_OBJECT
 
 public:
 
-  SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds);
+  SliceWidget(std::vector<OSPModel> models, osp::box3f boundingBox);
   ~SliceWidget();
 
 signals:
@@ -34,13 +34,13 @@ signals:
 
 public slots:
 
-  void apply();
+  void autoApply();
   void load(std::string filename = std::string());
 
 protected slots:
 
+  void apply();
   void save();
-  void autoApply();
   void originSliderValueChanged(int value);
   void setAnimation(bool set);
   void animate();
@@ -51,7 +51,7 @@ protected:
   std::vector<OSPModel> models;
 
   //! Bounding box of the volume.
-  osp::box3f volumeBounds;
+  osp::box3f boundingBox;
 
   //! OSPRay triangle mesh for the slice.
   OSPTriangleMesh triangleMesh;

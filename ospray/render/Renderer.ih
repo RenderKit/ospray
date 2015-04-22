@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,11 +25,6 @@ struct Renderer;
 struct Model;
 struct Camera;
 
-struct OSPPickData {
-  bool hit;
-  float world_x, world_y, world_z;
-};
-
 
 struct ScreenSample {
   // input values to 'renderSample'
@@ -54,16 +49,16 @@ struct ScreenSample {
   super-sampling renderer make issue a chunk of N samples together for
   the same pixel coordinates in the same call.
  */
-typedef void (*Renderer_RenderSampleFct)(uniform Renderer *uniform renderer,
+typedef void (*Renderer_RenderSampleFct)(uniform Renderer *uniform self,
                                       varying ScreenSample &retValue);
-typedef void (*Renderer_ToneMapFct)(uniform Renderer *uniform renderer,
+typedef void (*Renderer_ToneMapFct)(uniform Renderer *uniform self,
                                  varying vec3f &color,
                                  const varying vec2i &pixelID);
-typedef void (*Renderer_RenderTileFct)(uniform Renderer *uniform renderer,
+typedef void (*Renderer_RenderTileFct)(uniform Renderer *uniform self,
                                     uniform Tile &tile);
-typedef void (*Renderer_BeginFrameFct)(uniform Renderer *uniform renderer,
+typedef void (*Renderer_BeginFrameFct)(uniform Renderer *uniform self,
                                        uniform FrameBuffer *uniform fb);
-typedef void (*Renderer_EndFrameFct)(uniform Renderer *uniform renderer, 
+typedef void (*Renderer_EndFrameFct)(uniform Renderer *uniform self, 
                                      const uniform int32 newAccumID);
 
 struct Renderer {
@@ -73,18 +68,21 @@ struct Renderer {
   Renderer_BeginFrameFct   beginFrame;
   Renderer_EndFrameFct     endFrame;
 
+  void        *cppEquivalent;
+
   FrameBuffer *fb; /*!< currently rendered frame buffer. may be NULL
                      or invalid before start of, or after end of, a
                      frame */
   Model       *model; 
   Camera      *camera;
-  void        *cppEquivalent;
-  uint32       spp; // number of samples per pixel
-  float        nearClip;
+  float        epsilon; // parameter to prevent self-intersection issues, will be scaled with diameter of the scene
+  int32        spp; // number of samples per pixel; negativ values mean subsampling, i.e. render only every 2^-spp pixel in x and y for the first frame
 };
 
-void Renderer_constructor(uniform Renderer *uniform renderer,
+void Renderer_Constructor(uniform Renderer *uniform self, void *uniform cppE);
+void Renderer_Constructor(uniform Renderer *uniform self,
                           void *uniform cppE,
                           void *uniform _model,
-                          void *uniform _camera);
+                          void *uniform _camera,
+                          const uniform int32 spp);
 

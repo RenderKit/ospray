@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,8 +18,6 @@
 #include "ospray/render/Renderer.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/common/Material.h"
-#include "ospray/fileio/ObjectCatalog.h"
-#include "ospray/fileio/ObjectFile.h"
 #include "ospray/volume/Volume.h"
 #include "ospray/transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
@@ -150,13 +148,13 @@ namespace ospray {
 
   /*! destroy a given frame buffer. 
 
-    due to internal reference counting the framebuffer may or may not be deleted immeidately
+    due to internal reference counting the framebuffer may or may not be deleted immediately
   */
   extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
-    std::cout << "warning: ospFreeFrameBuffer not yet implemented - ignoring (this means there is a memory hole!)" << std::endl;
+    ospray::api::Device::current->release(fb);
   }
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
@@ -320,6 +318,8 @@ namespace ospray {
   extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
   {
     ASSERT_DEVICE();
+    Assert2(type != NULL, "invalid light type identifier in ospNewLight");
+    LOG("ospNewLight(" << renderer << ", " << type << ")");
     return ospray::api::Device::current->newLight(renderer, type);
   }
 
@@ -346,22 +346,6 @@ namespace ospray {
     Assert2(height > 0, "Height must be greater than 0 in ospNewTexture2D");
     LOG("ospNewTexture2D( " << width << ", " << height << ", " << type << ", " << data << ", " << flags << ")");
     return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
-  }
-
-  /*! \brief import a collection of OSPRay objects from a file, return 'NULL' if the file type is not known */
-  extern "C" OSPObjectCatalog ospImportObjects(const char *filename)
-  {
-    ASSERT_DEVICE();
-    Assert(filename != NULL && "no filename specified in ospImportObjects");
-    LOG("ospImportObjects(" << filename << ")");
-    OSPObjectCatalog catalog = ospray::ObjectFile::importObjects(filename);
-    if (ospray::logLevel > 0) {
-      if (catalog)
-        cout << "ospImportObjects: " << filename << endl;
-      else
-        std::cerr << "#ospray: could not import objects from file '" << filename << "'" << std::endl;
-    }
-    return catalog;
   }
 
   /*! \brief create a new volume of given type, return 'NULL' if that type is not known */
@@ -429,15 +413,6 @@ namespace ospray {
 #endif
   }
 
-  extern "C" void ospCommitCatalog(OSPObjectCatalog catalog)
-  {
-    ASSERT_DEVICE();
-    Assert(catalog && "invalid catalog handle to commit from");
-    LOG("ospCommitCatalog(...)");
-    ObjectCatalog *objects = dynamic_cast<ObjectCatalog *>(catalog);
-    objects->commit();
-  }
-
   extern "C" void ospCommit(OSPObject object)
   {
     // assert(!rendering);
@@ -473,6 +448,13 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
   }
+
+  /*! Copy data into the given volume. */
+  extern "C" int ospSetRegion(OSPVolume object, void *source, vec3i index, vec3i count) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->setRegion(object, source, index, count));
+  }
+
   /*! add a vec2f parameter to an object */
   extern "C" void ospSetVec2f(OSPObject _object, const char *id, const vec2f &v)
   {
@@ -542,6 +524,78 @@ namespace ospray {
     ospray::api::Device::current->setMaterial(geometry,material);
   }
 
+  //! Get the handle of the named data array associated with an object.
+  extern "C" int ospGetData(OSPObject object, const char *name, OSPData *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getData(object, name, value));
+  }
+
+  //! Get a copy of the data in an array (the application is responsible for freeing this pointer).
+  extern "C" int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getDataValues(object, pointer, count, type));
+  }
+
+  //! Get the named scalar floating point value associated with an object.
+  extern "C" int ospGetf(OSPObject object, const char *name, float *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getf(object, name, value));
+  }
+
+  //! Get the named scalar integer associated with an object.
+  extern "C" int ospGeti(OSPObject object, const char *name, int *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->geti(object, name, value));
+  }
+
+  //! Get the material associated with a geometry object.
+  extern "C" int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getMaterial(geometry, value));
+  }
+
+  //! Get the named object associated with an object.
+  extern "C" int ospGetObject(OSPObject object, const char *name, OSPObject *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getObject(object, name, value));
+  }
+
+  //! Retrieve a NULL-terminated list of the parameter names associated with an object.
+  extern "C" int ospGetParameters(OSPObject object, char ***value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getParameters(object, value));
+  }
+
+  //! Get a pointer to a copy of the named character string associated with an object.
+  extern "C" int ospGetString(OSPObject object, const char *name, char **value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getString(object, name, value));
+  }
+
+  //! Get the type of the named parameter or the given object (if 'name' is NULL).
+  extern "C" int ospGetType(OSPObject object, const char *name, OSPDataType *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getType(object, name, value));
+  }
+
+  //! Get the named 2-vector floating point value associated with an object.
+  extern "C" int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getVec2f(object, name, value));
+  }
+
+  //! Get the named 3-vector floating point value associated with an object.
+  extern "C" int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getVec3f(object, name, value));
+  }
+
+  //! Get the named 3-vector integer value associated with an object.
+  extern "C" int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value) {
+    ASSERT_DEVICE();
+    return(ospray::api::Device::current->getVec3i(object, name, value));
+  }
+
   /*! \brief create a new instance geometry that instantiates another
     model.  the resulting geometry still has to be added to another
     model via ospAddGeometry */
@@ -555,15 +609,31 @@ namespace ospray {
     ospSet3fv(geom,"xfm.l.vy",&xfm.l.vy.x);
     ospSet3fv(geom,"xfm.l.vz",&xfm.l.vz.x);
     ospSet3fv(geom,"xfm.p",&xfm.p.x);
-    ospSetParam(geom,"model",modelToInstantiate);
+    ospSetObject(geom,"model",modelToInstantiate);
     return geom;
+  }
+
+  extern "C" void ospPick(OSPPickResult *result, OSPRenderer renderer, const vec2f &screenPos)
+  {
+    ASSERT_DEVICE();
+    Assert2(renderer, "NULL renderer passed to ospPick");
+    if (!result) return;
+    *result = ospray::api::Device::current->pick(renderer, screenPos);
   }
 
   extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)
   {
+    static bool warned = false;
+    if (!warned) {
+      std::cout << "'ospUnproject()' has been deprecated. Please use the new function 'ospPick()' instead" << std::endl;
+      warned = true;
+    }
     ASSERT_DEVICE();
     Assert2(renderer, "NULL renderer passed to ospUnproject");
-    return ospray::api::Device::current->unproject(renderer, screenPos);
+    vec2f flippedScreenPos = vec2f(screenPos.x, 1.0f - screenPos.y);
+    OSPPickResult pick = ospray::api::Device::current->pick(renderer, flippedScreenPos);
+    OSPPickData res = { pick.hit,  pick.position.x,  pick.position.y,  pick.position.z };
+    return res;
   }
 
 } // ::ospray

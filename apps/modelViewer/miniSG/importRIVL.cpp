@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -648,7 +648,18 @@ namespace ospray {
             t.v0 = tm->triangle[i].x;
             t.v1 = tm->triangle[i].y;
             t.v2 = tm->triangle[i].z;
+
+            // if (std::max(std::max(t.v0,t.v1),t.v2) >= mesh->position.size())
+            //   t.v0 = t.v1 = t.v2 = 0;
+            // assert(t.v0 >= 0 && t.v0 < mesh->position.size());
+            // assert(t.v1 >= 0 && t.v1 < mesh->position.size());
+            // assert(t.v2 >= 0 && t.v2 < mesh->position.size());
             mesh->triangle[i] = t;
+
+            assert(mesh->triangle[i].v0 >= 0 && mesh->triangle[i].v0 < mesh->position.size());
+            assert(mesh->triangle[i].v1 >= 0 && mesh->triangle[i].v1 < mesh->position.size());
+            assert(mesh->triangle[i].v2 >= 0 && mesh->triangle[i].v2 < mesh->position.size());
+
             mesh->triangleMaterialId[i] = tm->triangle[i].w >>16;
             if (mesh->triangleMaterialId[i]) anyNotZero = true;
           }

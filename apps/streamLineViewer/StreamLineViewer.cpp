@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -41,6 +41,8 @@ namespace ospray {
     cout << "  ./streamLineView <file1.pnt> <file2.pnt> ....<fileN.sv>" << std::endl;
     cout << "or" << endl;
     cout << "  ./streamLineView <listOfPntFiles.pntlist> ...." << std::endl;
+    cout << "or" << endl;
+    cout << "  ./streamLineView <file1.slraw> <file2.slraw> ....<fileN.slraw>" << std::endl;
     cout << endl;
     exit(1);
   }
@@ -89,6 +91,14 @@ namespace ospray {
       }
       fclose(file);
     }
+
+    box3f getBounds() const 
+    {
+      box3f bounds = embree::empty;
+      for (int i=0;i<vertex.size();i++)
+        bounds.extend(vertex[i]);
+      return bounds;
+    }
   };
 
   struct StreamLines {
@@ -134,6 +144,61 @@ namespace ospray {
       fclose(file);
     }
 
+    void parseSLRAW(const embree::FileName &fn)
+    {
+      FILE *file = fopen(fn.c_str(),"rb");
+
+      if (!file) {
+        cout << "WARNING: could not open file " << fn << endl;
+        return;
+      }
+
+      int numStreamlines;
+      int rc = fread(&numStreamlines, sizeof(int), 1, file);
+      Assert(rc == 1);
+
+      for(int s=0; s<numStreamlines; s++) {
+
+        int numStreamlinePoints;
+        rc = fread(&numStreamlinePoints, sizeof(int), 1, file);
+        Assert(rc == 1);
+
+        for(int p=0; p<numStreamlinePoints; p++) {
+
+          vec3fa pnt;
+          rc = fread(&pnt.x, 3*sizeof(float), 1, file);
+          Assert(rc == 1);
+
+          if(p != 0) index.push_back(vertex.size() - 1);
+          vertex.push_back(pnt);
+        }
+      }
+      fclose(file);
+    }
+
+    void parseSWC(const embree::FileName &fn)
+    {
+      std::vector<vec3fa> filePoints;
+
+      FILE *file = fopen(fn.c_str(),"r");
+      Assert(file);
+      radius = 99.f; 
+      for (char line[10000]; fgets(line,10000,file) && !feof(file); ) {
+        if (line[0] == '#') continue;
+       
+        vec3fa v; float f1; int ID, i, j;
+        sscanf(line,"%i %i %f %f %f %f %i\n",&ID,&i,&v.x,&v.y,&v.z,&f1,&j);
+        if (f1 < radius)
+          radius = f1;
+        filePoints.push_back(v);
+
+        index.push_back(vertex.size());
+        vertex.push_back(v);
+        vertex.push_back(filePoints[j-1]);
+      }
+      fclose(file);
+    }
+
     void parse(const embree::FileName &fn)
     {
       if (fn.ext() == "pnt") 
@@ -146,6 +211,8 @@ namespace ospray {
           parsePNT(line);
         }
         fclose(file);
+      } else if (fn.ext() == "slraw") {
+        parseSLRAW(fn);
       } else 
         throw std::runtime_error("unknown input file format "+fn.str());
     }
@@ -154,6 +221,59 @@ namespace ospray {
       box3f bounds = embree::empty;
       for (int i=0;i<vertex.size();i++)
         bounds.extend(vertex[i]);
+      return bounds;
+    }
+  };
+
+  struct StockleyWhealCannon {
+    struct Cylinder {
+      vec3f v0;
+      vec3f v1;
+      float r;
+    };
+    struct Sphere {
+      vec3f v;
+      float r;
+    };
+
+    std::vector<Sphere> spheres[3];
+    std::vector<Cylinder> cylinders[3];
+    box3f bounds;
+
+    void parse(const embree::FileName &fn)
+    {
+      std::vector<vec3fa> filePoints;
+
+      FILE *file = fopen(fn.c_str(),"r");
+      Assert(file);
+      bounds = embree::empty;
+      for (char line[10000]; fgets(line,10000,file) && !feof(file); ) {
+        if (line[0] == '#') continue;
+        
+        vec3f v; float radius; int id, parent, type;
+        sscanf(line,"%i %i %f %f %f %f %i\n", &id, &type, &v.x, &v.y, &v.z, &radius, &parent);
+        filePoints.push_back(v);
+        Assert(filePoints.size() == id); // assumes index-1==id
+        bounds.extend(v); // neglects radius
+
+        if (parent == -1) // root soma, just one sphere
+          spheres[0].push_back((Sphere){v, radius});
+        else { // cylinder with sphere at end
+          int idx;
+          switch (type) {
+            case 3: idx = 1; break; // basal dendrite
+            case 4: idx = 2; break; // apical dendrite
+            default: idx = 0; break; // soma / axon
+          }
+          spheres[idx].push_back((Sphere){v, radius});
+          cylinders[idx].push_back((Cylinder){filePoints[parent-1], v, radius});
+        }
+      }
+      fclose(file);
+    }
+
+    box3f getBounds() const 
+    {
       return bounds;
     }
   };
@@ -344,7 +464,7 @@ namespace ospray {
 
   struct StreamLineViewer : public Glut3DWidget {
     /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
-    StreamLineViewer(StreamLines *sl, Triangles *tris) 
+    StreamLineViewer(StreamLines *sl, Triangles *tris, StockleyWhealCannon *swc) 
       : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
         fb(NULL), renderer(NULL), 
         sl(sl), tris(tris)
@@ -379,7 +499,8 @@ namespace ospray {
       ospCommit(renderer);
 
       model = ospNewModel();
-      {
+
+      if (sl && !sl->index.empty()) {
         OSPGeometry geom = ospNewGeometry("streamlines");
         Assert(geom);
         OSPData vertex = ospNewData(sl->vertex.size(),OSP_FLOAT3A,&sl->vertex[0]);
@@ -405,6 +526,50 @@ namespace ospray {
         ospSetMaterial(geom,mat);
         ospCommit(geom);
         ospAddGeometry(model,geom);
+      }
+
+      if (swc && !swc->bounds.empty()) {
+        OSPMaterial material[3];
+        material[0] = mat;
+        material[1] = ospNewMaterial(renderer, "default");
+        if (material[1]) {
+          ospSet3f(material[1], "kd", .0, .7, .0); // OBJ renderer, green
+          ospCommit(material[1]);
+        }
+        material[2] = ospNewMaterial(renderer, "default");
+        if (material[2]) {
+          ospSet3f(material[2], "kd", .7, .0, .7); // OBJ renderer, magenta
+          ospCommit(material[2]);
+        }
+
+        OSPGeometry spheres[3], cylinders[3];
+        for (int i=0;i<3;i++) {
+          spheres[i] = ospNewGeometry("spheres");
+          Assert(spheres[i]);
+
+          OSPData data = ospNewData(swc->spheres[i].size(), OSP_FLOAT4, &swc->spheres[i][0]);
+          ospSetObject(spheres[i], "spheres", data);
+          ospSet1i(spheres[i], "offset_radius", 3*sizeof(float));
+ 
+          if (material[i])
+            ospSetMaterial(spheres[i], material[i]);
+
+          ospCommit(spheres[i]);
+          ospAddGeometry(model, spheres[i]);
+
+
+          cylinders[i] = ospNewGeometry("cylinders");
+          Assert(cylinders[i]);
+
+          data = ospNewData(swc->cylinders[i].size()*7, OSP_FLOAT, &swc->cylinders[i][0]);
+          ospSetObject(cylinders[i], "cylinders", data);
+ 
+          if (material[i])
+            ospSetMaterial(cylinders[i], material[i]);
+
+          ospCommit(cylinders[i]);
+          ospAddGeometry(model, cylinders[i]);
+        }
       }
 
       ospCommit(model);
@@ -486,6 +651,7 @@ namespace ospray {
   {
     StreamLines *streamLines = new StreamLines;
     Triangles   *triangles = new Triangles;
+    StockleyWhealCannon *swc = new StockleyWhealCannon;
     for (int i=1;i<ac;i++) {
       std::string arg = av[i];
       if (arg[0] != '-') {
@@ -494,8 +660,13 @@ namespace ospray {
           parseOSX(streamLines,triangles,fn);
         else if (fn.ext() == "pnt")
           streamLines->parsePNT(fn);
+        else if (fn.ext() == "swc")
+          swc->parse(fn);
+//          streamLines->parseSWC(fn);
         else if (fn.ext() == "pntlist")
           streamLines->parsePNTlist(fn);
+        else if (fn.ext() == "slraw")
+          streamLines->parseSLRAW(fn);
         else if (fn.ext() == "sv") 
           triangles->parseSV(fn);
         else
@@ -514,10 +685,13 @@ namespace ospray {
     // -------------------------------------------------------
     // create viewer window
     // -------------------------------------------------------
-    StreamLineViewer window(streamLines,triangles);
+    StreamLineViewer window(streamLines,triangles,swc);
     window.create("ospDVR: OSPRay miniature stream line viewer");
     printf("Viewer created. Press 'Q' to quit.\n");
-    window.setWorldBounds(streamLines->getBounds());
+    box3f bounds = streamLines->getBounds();
+    bounds.extend(triangles->getBounds());
+    bounds.extend(swc->getBounds());
+    window.setWorldBounds(bounds);
     ospray::glut3D::runGLUT();
   }
 

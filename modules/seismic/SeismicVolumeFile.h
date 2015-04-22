@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,62 +18,59 @@
 
 #include <cdds.h>
 #include <string>
-#include "ospray/common/Data.h"
-#include "ospray/fileio/VolumeFile.h"
-#include "ospray/volume/StructuredVolume.h"
+#include "modules/loaders/VolumeFile.h"
 
-namespace ospray {
+//! \brief A concrete implementation of the VolumeFile class
+//!  for reading voxel data stored in seismic file formats on disk.
+//!
+class SeismicVolumeFile : public VolumeFile {
+public:
 
-  //! \brief A concrete implementation of the VolumeFile class
-  //!  for reading voxel data stored in seismic file formats on disk.
-  //!
-  class SeismicVolumeFile : public VolumeFile {
-  public:
+  //! Constructor.
+  SeismicVolumeFile(const std::string &filename) : filename(filename), verbose(true) {}
 
-    //! Constructor.
-    SeismicVolumeFile(const std::string &filename) : filename(filename) {}
+  //! Destructor.
+  virtual ~SeismicVolumeFile() {};
 
-    //! Destructor.
-    virtual ~SeismicVolumeFile() {};
+  //! Import the volume data.
+  virtual OSPVolume importVolume(OSPVolume volume);
 
-    //! Import the volume data.
-    virtual OSPObjectCatalog importVolume(Volume *volume);
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_seismic::SeismicVolumeFile"); }
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::SeismicVolumeFile"); }
+private:
 
-  private:
+  //! Path to the file containing the volume data.
+  std::string filename;
 
-    //! Path to the file containing the volume data.
-    std::string filename;
+  //! Verbose logging.
+  bool verbose;
 
-    //! Seismic data attributes
-    BIN_TAG inputBinTag;
-    int traceHeaderSize;
-    vec3i dimensions;           //<! Dimensions of the volume.
-    vec3f deltas;               //!< Voxel spacing along each dimension.
+  //! Seismic data attributes
+  BIN_TAG inputBinTag;
+  int traceHeaderSize;
+  osp::vec3i dimensions;           //<! Dimensions of the volume.
+  osp::vec3f deltas;               //!< Voxel spacing along each dimension.
 
-    //! Use a subvolume of the full volume.
-    bool useSubvolume;
-    vec3i subvolumeOffsets;     //!< Subvolume offset from full volume origin.
-    vec3i subvolumeDimensions;  //!< Dimensions of subvolume, not considering any subsampling.
-    vec3i subvolumeSteps;       //!< Step size for generation of subvolume in each dimension; values > 1 allow for subsampling.
+  //! Use a subvolume of the full volume.
+  bool useSubvolume;
+  osp::vec3i subvolumeOffsets;     //!< Subvolume offset from full volume origin.
+  osp::vec3i subvolumeDimensions;  //!< Dimensions of subvolume, not considering any subsampling.
+  osp::vec3i subvolumeSteps;       //!< Step size for generation of subvolume in each dimension; values > 1 allow for subsampling.
 
-    //! The dimensions of the volume to be imported, considering any subvolume parameters.
-    vec3i volumeDimensions;
+  //! The dimensions of the volume to be imported, considering any subvolume parameters.
+  osp::vec3i volumeDimensions;
 
-    //! The voxel spacing of the volume to be imported.
-    vec3f volumeVoxelSpacing;
+  //! The voxel spacing of the volume to be imported.
+  osp::vec3f volumeVoxelSpacing;
 
-    //! Open the seismic data file and populate attributes.
-    bool openSeismicDataFile(StructuredVolume *volume);
+  //! Open the seismic data file and populate attributes.
+  bool openSeismicDataFile(OSPVolume volume);
 
-    //! Scan the seismic data file to determine the volume dimensions.
-    bool scanSeismicDataFileForDimensions(StructuredVolume *volume);
+  //! Scan the seismic data file to determine the volume dimensions.
+  bool scanSeismicDataFileForDimensions(OSPVolume volume);
 
-    //! Import the voxel data from the file into the volume.
-    bool importVoxelData(StructuredVolume *volume);
+  //! Import the voxel data from the file into the volume.
+  bool importVoxelData(OSPVolume volume);
 
-  };
-
-} // ::ospray
+};

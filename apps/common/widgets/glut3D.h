@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -279,13 +279,14 @@ namespace ospray {
       void computeFrame();
 
       static Glut3DWidget *activeWindow;
+      /*! pointer to the frame buffer data. it is the repsonsiblity of
+          the applicatoin derived from this class to properly allocate
+          and deallocate the frame buffer pointer */
       union {
         /*! uchar[4] RGBA-framebuffer, if applicable */
         uint32 *ucharFB;
         /*! float[4] RGBA-framebuffer, if applicable */
         vec3fa *floatFB;
-        /*! floating point depth framebuffer, if applicable */
-        float *depthFB;
       };
       friend void glut3dReshape(int32 x, int32 y);
       friend void glut3dDisplay(void);

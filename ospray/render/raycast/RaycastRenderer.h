@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -51,21 +51,24 @@
 
 namespace ospray {
 
-  using embree::TaskScheduler;
-
   struct Camera;
   struct Model;
 
-  /*! \brief Implements the family of simple ray cast renderers */
+  /*! \brief Implements the family of simple, primary-ray-only ray cast renderers 
+
+    \detailed This simple renderer shoots only a single primary ray
+    and does some simple shading, mostly for debugging purposes such
+    as visualizing primitive ID, geometry ID, shading normals,
+    eyelight shading, etc */
   template<void *(*SHADE_MODE)(void*)>
   struct RaycastRenderer : public Renderer {
-    RaycastRenderer();
-    virtual std::string toString() const { return "ospray::RaycastRenderer"; }
 
-    Model  *model;
-    Camera *camera;
-    
-    virtual void commit();
+    /*! \brief constructor */
+    RaycastRenderer();
+
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const;
   };
 
 } // ::ospray

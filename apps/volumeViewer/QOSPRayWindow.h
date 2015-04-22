@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -76,7 +76,7 @@ class QOSPRayWindow : public QGLWidget
 {
 public:
 
-  QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate);
+  QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate, std::string writeFramesFilename);
   virtual ~QOSPRayWindow();
 
   void setRenderingEnabled(bool renderingEnabled);
@@ -87,6 +87,8 @@ public:
   Viewport * getViewport() { return &viewport; }
 
   OSPFrameBuffer getFrameBuffer() { return frameBuffer; }
+
+  void resetAccumulationBuffer() { ospFrameBufferClear(frameBuffer, OSP_FB_ACCUM); }
 
 protected:
 
@@ -114,6 +116,12 @@ protected:
   /*! rotation rate to automatically rotate view. */
   float rotationRate;
 
+  /*! timer used to trigger continuous re-renders (for progressive refinement, automatic rotation, etc.). */
+  QTimer renderTimer;
+
+  /*! timer used to restart continuous rendering after a delay during interaction. */
+  QTimer renderRestartTimer;
+
   /*! benchmarking: number of warm-up frames */
   int benchmarkWarmUpFrames;
 
@@ -134,4 +142,8 @@ protected:
   OSPFrameBuffer frameBuffer;
   OSPRenderer renderer;
   OSPCamera camera;
+
+  std::string writeFramesFilename;
+  void writeFrameBufferToFile(const uint32 *pixelData);
+
 };

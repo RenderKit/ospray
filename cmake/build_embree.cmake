@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2014 Intel Corporation                                    ##
+## Copyright 2009-2015 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -19,7 +19,7 @@ SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 CONFIGURE_OSPRAY()
 
 # remove OSPRAY_ARCH_* flags from CMAKE_CXX_FLAGS; the Embree build will add these as appropriate for the various ISAs.
-string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+#string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 
 # =======================================================
 # source for everything embree keeps in its 'sys' library
@@ -235,11 +235,8 @@ ELSE()
   # now, build and link in SSE41 support (for anything more than SSE)
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE41") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
+  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+    ADD_DEFINITIONS(-D__TARGET_SSE41__)
     OSPRAY_ADD_LIBRARY(ospray_embree_sse41 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp   
@@ -255,10 +252,8 @@ ELSE()
   # now, build and link in SSE42 support (for anything more than SSE42)
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "AVX") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE42") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "SSE"))
+  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+    ADD_DEFINITIONS(-D__TARGET_SSE42__)
     OSPRAY_ADD_LIBRARY(ospray_embree_sse42 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_hybrid.cpp
       )
@@ -269,8 +264,8 @@ ELSE()
   # ------------------------------------------------------------------
   # now, build and link in AVX1 support (for AVX1 and AVX2)
   # ------------------------------------------------------------------
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") OR
-      (${OSPRAY_XEON_TARGET} STREQUAL "AVX"))
+  IF (OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+    ADD_DEFINITIONS(-D__TARGET_AVX__)
     SET(EMBREE_KERNELS_AVX_SOURCES
       builders/bezierrefgen.cpp 
       builders/primrefgen.cpp
@@ -326,25 +321,26 @@ ELSE()
   # ------------------------------------------------------------------
   # now, build and link in AVX2 support (for AVX2 only)
   # ------------------------------------------------------------------
-  SET(EMBREE_KERNELS_AVX2_SOURCES
-    geometry/instance_intersector1.cpp
-    geometry/instance_intersector4.cpp
-    geometry/instance_intersector8.cpp
-    
-    bvh4/bvh4_intersector1.cpp
-    bvh4/bvh4_intersector4_single.cpp
-    bvh4/bvh4_intersector4_chunk.cpp
-    bvh4/bvh4_intersector4_hybrid.cpp
-    bvh4/bvh4_intersector8_single.cpp
-    bvh4/bvh4_intersector8_chunk.cpp
-    bvh4/bvh4_intersector8_hybrid.cpp
+  IF (OSPRAY_ISA_AVX2)
+    SET(EMBREE_KERNELS_AVX2_SOURCES
+      geometry/instance_intersector1.cpp
+      geometry/instance_intersector4.cpp
+      geometry/instance_intersector8.cpp
+      
+      bvh4/bvh4_intersector1.cpp
+      bvh4/bvh4_intersector4_single.cpp
+      bvh4/bvh4_intersector4_chunk.cpp
+      bvh4/bvh4_intersector4_hybrid.cpp
+      bvh4/bvh4_intersector8_single.cpp
+      bvh4/bvh4_intersector8_chunk.cpp
+      bvh4/bvh4_intersector8_hybrid.cpp
 
-    bvh8/bvh8_intersector1.cpp   
-    bvh8/bvh8_intersector4_hybrid.cpp 
-    bvh8/bvh8_intersector8_chunk.cpp   
-    bvh8/bvh8_intersector8_hybrid.cpp   
-    )
-  IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2"))
+      bvh8/bvh8_intersector1.cpp   
+      bvh8/bvh8_intersector4_hybrid.cpp 
+      bvh8/bvh8_intersector8_chunk.cpp   
+      bvh8/bvh8_intersector8_hybrid.cpp   
+      )
+    ADD_DEFINITIONS(-D__TARGET_AVX2__)
     SET(OSPRAY_EMBREE_AVX2_SOURCES "")
     FOREACH(src ${EMBREE_KERNELS_AVX2_SOURCES})
       SET(OSPRAY_EMBREE_AVX2_SOURCES ${OSPRAY_EMBREE_AVX2_SOURCES} 		

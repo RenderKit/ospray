@@ -3,4 +3,5 @@
 bin
 *.user*
 build
-
+*.sw?
+tags

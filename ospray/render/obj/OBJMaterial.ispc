@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,12 +21,6 @@ export void *uniform OBJMaterial_create(void *uniform cppE)
   uniform OBJMaterial *uniform mat = uniform new uniform OBJMaterial;
   mat->base.cppEquivalent = cppE;
   return mat;
-}
-
-export void OBJMaterial_destroy(void *uniform _mat)
-{
-  uniform OBJMaterial *uniform mat = (uniform OBJMaterial *uniform)_mat;
-  delete(mat);
 }
 
 export void OBJMaterial_set(void *uniform _mat,

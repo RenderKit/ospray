@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,9 +37,4 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
   geometry->material = material;
   geometry->geomID   = geomID;
   geometry->postIntersect = postIntersect;
-}
-
-//! destructor for ispc-side Geometry object
-extern void Geometry_Destructor(uniform Geometry *uniform mesh)
-{
 }

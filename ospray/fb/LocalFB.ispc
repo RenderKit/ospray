@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -57,7 +57,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
 {
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   uniform bool hasDepth = (fb->depthBuffer != NULL);
-  const float accScale = 1.f/(fb->inherited.accumID+1);
+  const uniform float accScale = 1.f/(fb->inherited.accumID+1);
   if (fb->inherited.colorBufferFormat == ColorBufferFormat_RGBA_FLOAT32) {
     uniform vec4f *uniform color
       = fb->colorBuffer 
@@ -72,7 +72,6 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
     for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      //const uint32  pixID = i*programCount+programIndex;
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
@@ -108,20 +107,21 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
 
 
     for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      //const uint32  pixID = i*programCount+programIndex;
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
       const uint32  ofs   = y*fb->inherited.size.x+x;
       const vec4f value = getRGBA(tile,pixID);
       if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
-        //        dst[ofs]        = cvt_uint32(value);
         if (accum) {
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
 
+          acc = acc * accScale;
+          acc = pow(max(acc,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
+
           if (color) {
-            color[ofs] = cvt_uint32(acc * accScale);
+            color[ofs] = cvt_uint32(acc);
           }
         } else
           if (color)
@@ -131,7 +131,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       }
     }
   } else {
-    print("format UNKONWN\n");
+    print("format UNKNOWN\n");
   }
 }
 

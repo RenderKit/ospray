@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -50,12 +50,6 @@ namespace ospray {
                             map_Bump != NULL ? map_Bump->getIE() : NULL );
     }
 
-    OBJMaterial::~OBJMaterial()
-    {
-      if (getIE() != NULL)
-        ispc::OBJMaterial_destroy(getIE());
-    }
-    
     OSP_REGISTER_MATERIAL(OBJMaterial,OBJMaterial);
 
   } // ::ospray::obj

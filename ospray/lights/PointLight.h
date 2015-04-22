@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,11 +20,9 @@
 
 namespace ospray {
 
-  //! Base class for PointLight objects, inherits from Light
-  struct PointLight : public Light {
+  //! a PointLight is a singular light emitting from a point uniformly into all directions
+  class PointLight : public Light {
     public:
-
-      //!Construct a new point light.
       PointLight();
 
       //! toString is used to aid in printf debugging
@@ -33,10 +31,11 @@ namespace ospray {
       //! Copy understood parameters into member parameters
       virtual void commit();
 
-      vec3f position;               //! world-space position of the light
-      vec3f color;                  //! RGB color of the light
-      float range;                  //! range after which light has no effect
-
+    private:
+      vec3f position;               //!< world-space position of the light
+      vec3f color;                  //!< RGB color of the light
+      float intensity;              //!< Amount of light emitted
+      float range;                  //!< range after which light has no effect
   };
 
 }

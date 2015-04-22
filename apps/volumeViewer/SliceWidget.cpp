@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,9 +17,9 @@
 #include "SliceWidget.h"
 
 SliceWidget::SliceWidget(std::vector<OSPModel> models, 
-                         osp::box3f volumeBounds)
+                         osp::box3f boundingBox)
   : models(models),
-    volumeBounds(volumeBounds),
+    boundingBox(boundingBox),
     triangleMesh(NULL),
     originSliderAnimationDirection(1) 
 {  
@@ -27,7 +27,7 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   if(models.size() == 0)
     throw std::runtime_error("must be constructed with existing model(s)");
 
-  if(volume(volumeBounds) <= 0.f)
+  if(volume(boundingBox) <= 0.f)
     throw std::runtime_error("invalid volume bounds");
 
   //! Setup UI elements.
@@ -53,20 +53,26 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * formWidget = new QWidget();
   QFormLayout * formLayout = new QFormLayout();
   formWidget->setLayout(formLayout);
+  QMargins margins = formLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  formLayout->setContentsMargins(margins);
   layout->addWidget(formWidget);
 
   //! Origin parameters with default values.
   QWidget * originWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
-  originXSpinBox.setRange(volumeBounds.lower.x, volumeBounds.upper.x);
-  originYSpinBox.setRange(volumeBounds.lower.y, volumeBounds.upper.y);
-  originZSpinBox.setRange(volumeBounds.lower.z, volumeBounds.upper.z);
+  originXSpinBox.setRange(boundingBox.lower.x, boundingBox.upper.x);
+  originYSpinBox.setRange(boundingBox.lower.y, boundingBox.upper.y);
+  originZSpinBox.setRange(boundingBox.lower.z, boundingBox.upper.z);
 
-  originXSpinBox.setValue(0.5 * (volumeBounds.lower.x + volumeBounds.upper.x));
-  originYSpinBox.setValue(0.5 * (volumeBounds.lower.y + volumeBounds.upper.y));
-  originZSpinBox.setValue(0.5 * (volumeBounds.lower.z + volumeBounds.upper.z));
+  originXSpinBox.setValue(0.5 * (boundingBox.lower.x + boundingBox.upper.x));
+  originYSpinBox.setValue(0.5 * (boundingBox.lower.y + boundingBox.upper.y));
+  originZSpinBox.setValue(0.5 * (boundingBox.lower.z + boundingBox.upper.z));
 
   connect(&originXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
   connect(&originYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
@@ -82,6 +88,9 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * normalWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   normalWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
   normalXSpinBox.setRange(-1., 1.);
   normalYSpinBox.setRange(-1., 1.);
@@ -102,11 +111,16 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   formLayout->addRow("Normal", normalWidget);
 
   //! Add a slider and animate button for the origin location along the normal.
+  //! Defaults to mid-point (matching the origin widgets).
   QWidget * originSliderWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originSliderWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
   originSlider.setOrientation(Qt::Horizontal);
+  originSlider.setValue(0.5 * (originSlider.maximum() - originSlider.minimum()));
   connect(&originSlider, SIGNAL(valueChanged(int)), this, SLOT(originSliderValueChanged(int)));
   hboxLayout->addWidget(&originSlider);
 
@@ -163,79 +177,10 @@ SliceWidget::~SliceWidget() {
   emit(sliceChanged());
 }
 
-void SliceWidget::apply() {
+void SliceWidget::autoApply() {
 
-  //! Get the origin and normal values.
-  osp::vec3f origin(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
-  osp::vec3f normal = osp::vec3f(float(normalXSpinBox.value()), float(normalYSpinBox.value()), float(normalZSpinBox.value()));
-
-  if(normal == osp::vec3f(0.f))
-    return;
-  else
-    normal = normalize(normal);
-
-  //! Create the OSPRay geometry on the first apply().
-  bool newGeometry = false;
-
-  if(!triangleMesh) {
-
-    triangleMesh = ospNewTriangleMesh();
-    newGeometry = true;
-  }
-
-  //! Compute basis vectors.
-  osp::vec3f c(1.f,0.f,0.f);
-
-  if(dot(c, normal) > 0.9f)
-    c = osp::vec3f(0.f,1.f,0.f);
-
-  osp::vec3f b1 = cross(c, normal);
-  osp::vec3f b2 = cross(b1, normal);
-
-  //! For now just make a slice sufficiently large to span the volume.
-  const float size = sqrtf(2.f);
-
-  //! Create the triangles forming the slice.
-  osp::vec3f lowerLeft(origin - size*b1 - size*b2);
-  osp::vec3f span1(2.f*size*b1);
-  osp::vec3f span2(2.f*size*b2);
-
-  //! Subdivide the plane into a larger set of triangles to help with performance when combined with other geometries.
-  const size_t numSubdivisions = 32;
-
-  std::vector<osp::vec3fa> positions;
-
-  for(size_t i=0; i<numSubdivisions; i++)
-    for(size_t j=0; j<numSubdivisions; j++)
-      positions.push_back(lowerLeft + float(i)/float(numSubdivisions-1)*span1 + float(j)/float(numSubdivisions-1)*span2);
-
-  std::vector<osp::vec3i> indices;
-
-  for(size_t i=0; i<numSubdivisions-1; i++) {
-    for(size_t j=0; j<numSubdivisions-1; j++) {
-
-      indices.push_back(osp::vec3i(i*numSubdivisions+j, (i+1)*numSubdivisions+j, i*numSubdivisions+j+1));
-      indices.push_back(osp::vec3i((i+1)*numSubdivisions+j, (i+1)*numSubdivisions+j+1, i*numSubdivisions+j+1));
-    }
-  }
-
-  //! Update the OSPRay geometry.
-  OSPData positionData = ospNewData(positions.size(), OSP_FLOAT3A, &positions[0].x);
-  ospSetData(triangleMesh, "position", positionData);
-
-  OSPData indexData = ospNewData(indices.size(), OSP_INT3, &indices[0].x);
-  ospSetData(triangleMesh, "index", indexData);
-
-  ospCommit(triangleMesh);
-
-  if(newGeometry)
-    for(unsigned int i=0; i<models.size(); i++)
-      ospAddGeometry(models[i], triangleMesh);
-
-  for(unsigned int i=0; i<models.size(); i++)
-    ospCommit(models[i]);
-
-  emit(sliceChanged());
+  if(autoApplyCheckBox.isChecked())
+    apply();
 }
 
 void SliceWidget::load(std::string filename) {
@@ -288,6 +233,87 @@ void SliceWidget::load(std::string filename) {
   originSliderAnimateButton.setChecked(sliderAnimating);
 }
 
+void SliceWidget::apply() {
+
+  //! Get the origin and normal values.
+  osp::vec3f origin(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
+  osp::vec3f normal = osp::vec3f(float(normalXSpinBox.value()), float(normalYSpinBox.value()), float(normalZSpinBox.value()));
+
+  if(normal == osp::vec3f(0.f))
+    return;
+  else
+    normal = normalize(normal);
+
+  //! Create the OSPRay geometry on the first apply().
+  bool newGeometry = false;
+
+  if(!triangleMesh) {
+
+    triangleMesh = ospNewTriangleMesh();
+    newGeometry = true;
+  }
+
+  //! Compute basis vectors.
+  osp::vec3f c(1.f,0.f,0.f);
+
+  if(dot(c, normal) > 0.9f)
+    c = osp::vec3f(0.f,1.f,0.f);
+
+  osp::vec3f b1 = cross(c, normal);
+  osp::vec3f b2 = cross(b1, normal);
+
+  //! For now just make a slice sufficiently large to span the volume.
+  const float size = length(boundingBox.size());
+
+  //! Create the triangles forming the slice.
+  osp::vec3f lowerLeft(origin - size*b1 - size*b2);
+  osp::vec3f span1(2.f*size*b1);
+  osp::vec3f span2(2.f*size*b2);
+
+  //! Subdivide the plane into a larger set of triangles to help with performance when combined with other geometries.
+  const size_t numSubdivisions = 32;
+
+  std::vector<osp::vec3fa> positions;
+
+  for(size_t i=0; i<numSubdivisions; i++)
+    for(size_t j=0; j<numSubdivisions; j++)
+      positions.push_back(lowerLeft + float(i)/float(numSubdivisions-1)*span1 + float(j)/float(numSubdivisions-1)*span2);
+
+  std::vector<osp::vec3i> indices;
+
+  for(size_t i=0; i<numSubdivisions-1; i++) {
+    for(size_t j=0; j<numSubdivisions-1; j++) {
+
+      indices.push_back(osp::vec3i(i*numSubdivisions+j, (i+1)*numSubdivisions+j, i*numSubdivisions+j+1));
+      indices.push_back(osp::vec3i((i+1)*numSubdivisions+j, (i+1)*numSubdivisions+j+1, i*numSubdivisions+j+1));
+    }
+  }
+
+  //! Update the OSPRay geometry.
+  OSPData positionData = ospNewData(positions.size(), OSP_FLOAT3A, &positions[0].x);
+  ospSetData(triangleMesh, "position", positionData);
+
+  OSPData indexData = ospNewData(indices.size(), OSP_INT3, &indices[0].x);
+  ospSetData(triangleMesh, "index", indexData);
+
+  //! For now, vertex colors of (-1,-1,-1) indicate coloring should be mapped through the volume transfer function.
+  //! Transfer function / volume information will be soon be included as material parameters.
+  std::vector<osp::vec3fa> colors(positions.size(), osp::vec3f(-1.f));
+  OSPData colorData = ospNewData(colors.size(), OSP_FLOAT3A, &colors[0].x);
+  ospSetData(triangleMesh, "color", colorData);
+
+  ospCommit(triangleMesh);
+
+  if(newGeometry)
+    for(unsigned int i=0; i<models.size(); i++)
+      ospAddGeometry(models[i], triangleMesh);
+
+  for(unsigned int i=0; i<models.size(); i++)
+    ospCommit(models[i]);
+
+  emit(sliceChanged());
+}
+
 void SliceWidget::save() {
 
   //! Get filename.
@@ -320,12 +346,6 @@ void SliceWidget::save() {
   out << originSliderAnimationDirection;
 }
 
-void SliceWidget::autoApply() {
-
-  if(autoApplyCheckBox.isChecked())
-    apply();
-}
-
 void SliceWidget::originSliderValueChanged(int value) {
 
   //! Slider position in [0, 1].
@@ -336,13 +356,13 @@ void SliceWidget::originSliderValueChanged(int value) {
   osp::vec3f normal = normalize(osp::vec3f(normalXSpinBox.value(), normalYSpinBox.value(), normalZSpinBox.value()));
 
   //! Compute allowed range along normal for the volume bounds.
-  osp::vec3f upper(normal.x >= 0.f ? volumeBounds.upper.x : volumeBounds.lower.x,
-                   normal.y >= 0.f ? volumeBounds.upper.y : volumeBounds.lower.y,
-                   normal.z >= 0.f ? volumeBounds.upper.z : volumeBounds.lower.z);
+  osp::vec3f upper(normal.x >= 0.f ? boundingBox.upper.x : boundingBox.lower.x,
+                   normal.y >= 0.f ? boundingBox.upper.y : boundingBox.lower.y,
+                   normal.z >= 0.f ? boundingBox.upper.z : boundingBox.lower.z);
 
-  osp::vec3f lower(normal.x >= 0.f ? volumeBounds.lower.x : volumeBounds.upper.x,
-                   normal.y >= 0.f ? volumeBounds.lower.y : volumeBounds.upper.y,
-                   normal.z >= 0.f ? volumeBounds.lower.z : volumeBounds.upper.z);
+  osp::vec3f lower(normal.x >= 0.f ? boundingBox.lower.x : boundingBox.upper.x,
+                   normal.y >= 0.f ? boundingBox.lower.y : boundingBox.upper.y,
+                   normal.z >= 0.f ? boundingBox.lower.z : boundingBox.upper.z);
 
   float tMax = dot(abs(upper - origin), abs(normal));
   float tMin = -dot(abs(lower - origin), abs(normal));
@@ -355,7 +375,7 @@ void SliceWidget::originSliderValueChanged(int value) {
   t = std::max(std::min(t, tMax-epsilon), tMin+epsilon);
 
   //! Compute updated origin, clamped within the volume bounds.
-  osp::vec3f updatedOrigin = clamp(origin + t*normal, volumeBounds.lower, volumeBounds.upper);
+  osp::vec3f updatedOrigin = clamp(origin + t*normal, boundingBox.lower, boundingBox.upper);
 
   //! Finally, set the new origin value.
   originXSpinBox.setValue(updatedOrigin.x);

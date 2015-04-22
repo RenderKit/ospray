@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -233,7 +233,7 @@ void TachyonRenderer_renderSample(uniform Renderer *uniform _renderer,
 export void *uniform TachyonRenderer_create(void *uniform cppE)
 {
   uniform TachyonRenderer *uniform renderer = uniform new uniform TachyonRenderer;
-  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
+  Renderer_Constructor(&renderer->inherited,cppE);
   renderer->inherited.renderSample = TachyonRenderer_renderSample;
   return renderer;
 }

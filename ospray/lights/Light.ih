@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,19 +21,16 @@
 /*! ispc-side equivalent of a light */
 
 struct Light {
+  //! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
+  varying vec3f (*computeRadiance)(const uniform Light *uniform self, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
 
   //! Pointer back to the C++ equivalent of this class.
   void *uniform cppEquivalent;
-
-  //! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-  varying vec3f (*computeRadiance)(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
-
 };
 
 //! constructor for ispc-side light object
-extern void Light_Constructor(uniform Light *uniform light,
-                              void *uniform cppEquivalent);
-
-//! destructor for ispc-side light object
-extern void Light_Destructor(uniform Light *uniform light);
-
+inline void Light_Constructor(uniform Light *uniform self,
+                              void *uniform cppEquivalent)
+{
+  self->cppEquivalent = cppEquivalent;
+}

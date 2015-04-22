@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,6 @@
 #pragma once
 
 #include "ospray/common/Managed.h"
-#include "ospray/transferFunction/TransferFunction.h"
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
@@ -53,25 +52,28 @@ namespace ospray {
     //! Destructor.
     virtual ~Volume() {};
 
-    //! Allocate storage and populate the volume.
-    virtual void commit() = 0;
-
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC() = 0;
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::Volume"); }
 
     //! Create a volume container of the given type.
     static Volume *createInstance(std::string type);
 
-    //! Get the ISPC volume container.
-    void *getEquivalentISPC() const { return(getIE()); }
+    //! Allocate storage and populate the volume.
+    virtual void commit() = 0;
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::Volume"); }
+    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
 
   protected:
 
-    //! Volume transfer function.
-    TransferFunction *transferFunction;
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC() = 0;
+
+    //! Complete volume initialization (only on first commit).
+    virtual void finish();
+
+    //! Update select editable parameters (allowed after the volume has been initially committed).
+    virtual void updateEditableParameters();
 
     //! Print an error message.
     inline void emitMessage(const std::string &kind, const std::string &message) const

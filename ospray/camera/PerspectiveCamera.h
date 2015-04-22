@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -69,6 +69,7 @@ namespace ospray {
     float  far;
     float  fovy;
     float  aspect;
+    float  nearClip;
 
     // ------------------------------------------------------------------
     // the internal data we preprocessed from our input parameters

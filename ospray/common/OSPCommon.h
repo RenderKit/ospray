@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,6 +48,7 @@ namespace ospray {
   using embree::one;
   using embree::empty;
   using embree::zero;
+  using embree::inf;
 
   /*! basic types */
   typedef ::int64_t int64;
@@ -137,12 +138,17 @@ namespace ospray {
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
+  /*! number of Embree threads to use, 0 for the default number. (cmdline: --osp:numthreads \<n\>) */
+  extern uint32 numThreads;
 
   /*! error handling callback to be used by embree */
   //  void error_handler(const RTCError code, const char *str);
 
   /*! size of OSPDataType */
   size_t sizeOf(OSPDataType type);
+
+  /*! Convert a type string to an OSPDataType. */
+  OSPDataType typeForString(const char *string);
 
 } // ::ospray
 

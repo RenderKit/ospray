@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -23,8 +23,8 @@
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
 struct Tile {
-  uniform float  r[TILE_SIZE*TILE_SIZE]; /*! red */
-  uniform float  g[TILE_SIZE*TILE_SIZE]; /*! green */
+  uniform float  r[TILE_SIZE*TILE_SIZE]; /*!< red */
+  uniform float  g[TILE_SIZE*TILE_SIZE]; /*!< green */
   uniform float  b[TILE_SIZE*TILE_SIZE]; /*!< blue */
   uniform float  a[TILE_SIZE*TILE_SIZE]; /*!< alpha */
   uniform float  z[TILE_SIZE*TILE_SIZE]; /*!< depth */

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -39,9 +39,6 @@
 #include "ospray/render/Renderer.h"
 #include "ospray/common/Material.h"
 
-// obj renderer
-#include "OBJPointLight.h"
-
 // system
 #include <vector>
 
@@ -60,22 +57,16 @@ namespace ospray {
       OBJRenderer();
       virtual std::string toString() const { return "ospray::OBJRenderer"; }
 
-      std::vector<void*> pointLightArray; // the 'IE's of the 'pointLightData'
-      std::vector<void*> dirLightArray;   // the 'IE's of the 'dirLightData'
-      std::vector<void*> spotLightArray;  // the 'IE's of the 'spotLightData'
+      std::vector<void*> lightArray; // the 'IE's of the XXXLights
 
       Model    *world;
       Camera   *camera;
-      Data     *pointLightData;
-      Data     *dirLightData;
-      Data     *spotLightData;
+      Data     *lightData;
       
       virtual void commit();
 
       /*! \brief create a material of given type */
       virtual Material *createMaterial(const char *type);
-      /*! \brief create a light of given type */
-      virtual Light    *createLight(const char *type);
     };
 
   } // ::ospray::api
