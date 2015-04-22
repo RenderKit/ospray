@@ -42,7 +42,10 @@ namespace ospray {
                                                     const char *fileNameToStorePortIn);
     ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av, 
                                                      const char *launchCommand);
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av);
+    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
+                                                      bool ranksBecomeWorkers);
+    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    { return createMPI_runOnExistingRanks(ac,av,true); }
   }
 #endif
 #if OSPRAY_MIC_COI
@@ -249,7 +252,7 @@ namespace ospray {
       std::cout << "'ospSetParam()' has been deprecated. Please use the new naming convention of 'ospSetObject()' instead" << std::endl;
       warned = true;
     }
-    LOG("ospSetData(...,\"" << bufName << "\",...)");
+    LOG("ospSetParam(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
   /*! add a data array to another object */

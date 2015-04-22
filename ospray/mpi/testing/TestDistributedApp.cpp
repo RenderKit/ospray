@@ -23,10 +23,22 @@
 
 #include <ospray/ospray.h>
 
+#define Assert(cond,err) if (!(cond)) throw std::runtime_error(err);
+
 namespace ospray {
-  void testDistributedApp(int &ac, char **&av)
+
+  /*! global camera, handle is valid across all ranks */
+  OSPCamera      camera = NULL;
+  /*! global renderer, handle is valid across all ranks */
+  OSPRenderer    renderer = NULL;
+  /*! global frame buffer, handle is valid across all ranks */
+  OSPFrameBuffer fb     = NULL;
+  /*! global model, handle is valid across all ranks */
+  OSPModel       model  = NULL;
+
+  void testDistributedApp_main(int &ac, char **&av)
   {
-    ospMpiInit(&ac,&av,OSP_MPI_Z_COMPOSITE);
+    ospdMpiInit(&ac,&av,OSPD_Z_COMPOSITE);
 
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD,&rank);
@@ -34,13 +46,27 @@ namespace ospray {
     printf("#ospdapp: starting test app for osp distributed mode, rank %i/%i\n",rank,size);
     MPI_Barrier(MPI_COMM_WORLD);
     
+    ospdApiMode(OSPD_ALL);
+    model = ospNewModel();
+    Assert(model,"error creating model");
+
+    camera = ospNewCamera("perspective");
+    Assert(camera,"error creating camera");
+    
+    renderer = ospNewRenderer("obj");
+    Assert(renderer,"error creating renderer");
+    
+    ospdApiMode(OSPD_RANK);
+
     MPI_Barrier(MPI_COMM_WORLD);
-    ospMpiShutdown();
+    printf("---------------------- SHUTTING DOWN ----------------------\n");fflush(0);
+    MPI_Barrier(MPI_COMM_WORLD);
+    ospdShutdown();
   }
 }
 
 int main(int ac, char **av)
 {
-  ospray::testDistributedApp(ac,av);
+  ospray::testDistributedApp_main(ac,av);
   return 0;
 }

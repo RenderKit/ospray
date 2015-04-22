@@ -105,15 +105,17 @@ typedef enum {
 
 #ifdef OSPRAY_MPI_DISTRIBUTED
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
-/*! \see ospMpiScope */
+/*! \see ospdApiMode */
 typedef enum {
+
   //! \brief all ospNew(), ospSet(), etc calls affect only the current rank 
   /*! \detailed in this mode, all ospXyz() calls made on a given rank
     will ONLY affect state ont hat rank. This allows for configuring a
     (globally known) object differnetly on each different rank (also
     see OSP_MPI_SCOPE_GLOBAL) */
-  OSP_MPI_CURRENT_RANK,
-  OSP_MPI_SCOPE_LOCAL=OSP_MPI_CURRENT_RANK,
+  OSPD_MODE_INDEPENDENT,
+  OSPD_RANK=OSPD_MODE_INDEPENDENT /*!< alias for OSP_MODE_INDEPENDENT, reads better in code */,
+
   //! \brief all ospNew(), ospSet() calls affect all ranks 
   /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
       functions, but all objects defined through those functions---and
@@ -125,9 +127,17 @@ typedef enum {
       each rank (typically, in order to have different parts of the
       volume on different nodes), but the object itself is globally
       known */
-  OSP_MPI_ALL_RANKS,
-  OSP_MPI_SCOPE_GLOBAL=OSP_MPI_ALL_RANKS
-} OSPMpiScope;
+  OSPD_MODE_MASTERED,
+  OSPD_MASTER=OSPD_MODE_MASTERED /*!< alias for OSP_MODE_MASTERED, reads better in code */,
+
+  //! \brief all ospNew(), ospSet() are called collaboratively by all ranks 
+  /*! \detailed In this mode, ALL ranks must call (the same!) api
+      function, the result is collaborative across all nodes in the
+      sense that any object being created gets created across all
+      nodes, and ALL ranks get a valid handle returned */
+  OSPD_MODE_COLLABORATIVE,
+  OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
+} OSPDApiMode;
 #endif
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
@@ -172,19 +182,19 @@ extern "C" {
 
 #ifdef OSPRAY_MPI_DISTRIBUTED
   typedef enum { 
-    OSP_MPI_Z_COMPOSITE
-  } OSPMpiMode;
+    OSPD_Z_COMPOSITE
+  } OSPDRenderMode;
 
   //! \brief initialize the ospray engine (for use with MPI-parallel app) 
   /*! \detailed Note the application must call this function "INSTEAD OF"
       MPI_Init(), NOT "in addition to" */
-  void ospMpiInit(int *ac, char ***av, OSPMpiMode mpiMode=OSP_MPI_Z_COMPOSITE);
+  void ospdMpiInit(int *ac, char ***av, OSPDRenderMode renderMode=OSPD_Z_COMPOSITE);
 
   //! \brief shut down distributed mpi mode
-  void ospMpiShutdown();
+  void ospdShutdown();
 
-  //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
-  void ospMpiScope(OSPMpiScope scope);
+  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
+  void ospdApiMode(OSPDApiMode mode);
 #endif
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so

@@ -44,16 +44,38 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av);
 
 
-    /*! in this mode ("ospray on ranks" mode, or "ranks" mode)
-      - the user has launched mpirun explicitly, and all processes are *already* running
-      - the app is supposed to be running *only* on the root process
-      - ospray is supposed to be running on all ranks *other than* the root
-      - "ranks" means all processes with world.rank >= 1
-      
-      For this function, we assume: 
-      - all *all* MPI_COMM_WORLD processes are going into this function
+    /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
+        user has launched the app across all ranks using mpirun "<all
+        rank> <app>"; no new processes need to get launched.
+
+        Based on the 'startworkers' flag, this function can set up ospray in one of two modes:
+        
+        in "workers" mode (startworkes=true) all ranks > 0 become
+        workers, and will NOT return to the application; rank 0 is the
+        master that controls those workers but doesn't do any
+        rendeirng (we may at some point allow the master to join in
+        working as well, but currently this is not implemented). to
+        reach that mode we call this function with
+        'startworkers=true', which will make sure that, even though
+        all ranks _called_ mpiinit, only rank 0 will ever return to
+        the app, while all other ranks will automatically go to
+        running worker code, and never ever return from this function.
+
+        b) in "distribtued" mode the app itself is distributed, and
+        will use the ospray distributed api to control ospray in a
+        data-distributed mode. in this way, we'll call this function
+        with startWorkers=false, which will let all ranks return from
+        this function to do further work in the app.
+
+        For this function, we assume: 
+
+        - all *all* MPI_COMM_WORLD processes are going into this function
+
+        - this fct is called from ospInit (with startworkers=true) or
+          from ospdMpiInit (w/ startwoe3kers = false)
     */
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
+                                                      bool ranksBecomeWorkers)
     {
       MPI_Status status;
       mpi::init(ac,av);
@@ -123,8 +145,13 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, all workers will enter their worker loop (ie, they will *not* return
-        mpi::runWorker(ac,av);
-        /* no return here - 'runWorker' will never return */
+        if (ranksBecomeWorkers) {
+          mpi::runWorker(ac,av);
+          /* no return here - 'runWorker' will never return */
+        } else {
+          cout << "#osp:mpi: distributed mode detected, returning device on all ranks!" << endl << std::flush;
+          return new api::MPIDevice(ac,av);
+        }
       }
       // nobody should ever come here ...
       return NULL;
@@ -269,14 +296,24 @@ namespace ospray {
       return new api::MPIDevice(ac,av);
     }
 
-    void initDistributedAPI(int *ac, char ***av, OSPMpiMode mpiMode)
+    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
     {
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
       if (initialized) 
-        throw std::runtime_error("OSPRay MPI Error: MPI Already Initialized when calling ospMpiInit()");
+        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized when calling ospMpiInit()");
       
+      PING;
       ospray::mpi::init(ac,(const char **)*av);
+      if (mpi::world.size < 2) {
+        throw std::runtime_error("#osp:mpi: trying to run distributed API mode with a single rank? (did you forget the 'mpirun'?)");
+      }
+
+      PING;
+      ospray::api::Device::current
+        = ospray::mpi::createMPI_runOnExistingRanks(ac,(const char**)*av,false);
+      PRINT(ospray::api::Device::current);
+      PING;
     }
     
   }
@@ -300,7 +337,7 @@ namespace ospray {
       // mpi::init(_ac,_av);
 
       if (mpi::world.size !=1) {
-        if (mpi::world.rank != 0) {
+        if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
           PRINT(mpi::world.size);
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
@@ -981,19 +1018,21 @@ namespace ospray {
   //! \brief initialize the ospray engine (for use with MPI-parallel app) 
   /*! \detailed Note the application must call this function "INSTEAD OF"
       MPI_Init(), NOT "in addition to" */
-extern "C" void ospMpiInit(int *ac, char ***av, OSPMpiMode mpiMode)
+extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
 {
-  ospray::mpi::initDistributedAPI(ac,av,mpiMode);
+  if (ospray::api::Device::current != NULL)
+    throw std::runtime_error("#osp:mpi: OSPRay already initialized!?");
+  ospray::mpi::initDistributedAPI(ac,av,mode);
 }
 
 //! \brief shut down distributed mpi mode
-extern "C" void ospMpiShutdown()
+extern "C" void ospdShutdown()
 {
-  PING;
+  // not implemented for now ...
 }
 
 //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
-extern "C" void ospMpiScope(OSPMpiScope scope)
+extern "C" void ospdApiMode(OSPDApiMode mode)
 {
   PING;
 }
