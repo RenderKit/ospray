@@ -75,6 +75,7 @@ struct Renderer {
                      frame */
   Model       *model; 
   Camera      *camera;
+  float        epsilon; // parameter to prevent self-intersection issues, will be scaled with diameter of the scene
   int32        spp; // number of samples per pixel; negativ values mean subsampling, i.e. render only every 2^-spp pixel in x and y for the first frame
 };
 

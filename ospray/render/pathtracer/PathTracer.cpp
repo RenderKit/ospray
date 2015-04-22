@@ -28,11 +28,8 @@ namespace ospray {
   {
     const int32 maxDepth = 20;
     const float minContribution = .01f;
-    const float epsilon = 1e-5f;
     void *backplate = NULL;
-    ispcEquivalent = ispc::PathTracer_create(this,maxDepth,minContribution,epsilon,
-                                             backplate);
-
+    ispcEquivalent = ispc::PathTracer_create(this,maxDepth,minContribution,backplate);
   }
 
   /*! \brief create a material of given type */
@@ -58,11 +55,6 @@ namespace ospray {
   {
     Renderer::commit();
     ispc::PathTracer_setModel(getIE());
-    if (model) {
-      const float diameter = length(model->bounds.size());
-      const float epsilon = 1e-6f;
-      ispc::PathTracer_setEpsilon(getIE(), diameter * epsilon);
-    }
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

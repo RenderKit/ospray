@@ -72,6 +72,9 @@ namespace ospray {
     Model *model;
     FrameBuffer *currentFB;
     
+    /*! \brief parameter to prevent self-intersection issues, will be scaled with diameter of the scene */
+    float epsilon;
+
     /*! \brief number of samples to be used per pixel in a tile */
     int32        spp;
   };

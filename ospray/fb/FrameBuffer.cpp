@@ -50,8 +50,9 @@ namespace ospray {
   { 
     Assert(size.x > 0);
     Assert(size.y > 0);
-    if (colorBufferToUse)
+    if (colorBufferToUse) {
       colorBuffer = colorBufferToUse;
+    }
     else {
       switch(colorBufferFormat) {
       case OSP_RGBA_NONE:
@@ -102,23 +103,14 @@ namespace ospray {
     if (accumBuffer) delete[] accumBuffer;
   }
 
-  void FrameBuffer::waitForRenderTaskToBeReady() 
-  {
-    // if (frameIsReadyEvent) {
-    //   frameIsReadyEvent->sync();
-    // }
-  }
-
   const void *LocalFrameBuffer::mapDepthBuffer()
   {
-    waitForRenderTaskToBeReady();
     this->refInc();
     return (const void *)depthBuffer;
   }
   
   const void *LocalFrameBuffer::mapColorBuffer()
   {
-    waitForRenderTaskToBeReady();
     this->refInc();
     return (const void *)colorBuffer;
   }
