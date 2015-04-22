@@ -321,25 +321,25 @@ ELSE()
   # ------------------------------------------------------------------
   # now, build and link in AVX2 support (for AVX2 only)
   # ------------------------------------------------------------------
-  SET(EMBREE_KERNELS_AVX2_SOURCES
-    geometry/instance_intersector1.cpp
-    geometry/instance_intersector4.cpp
-    geometry/instance_intersector8.cpp
-    
-    bvh4/bvh4_intersector1.cpp
-    bvh4/bvh4_intersector4_single.cpp
-    bvh4/bvh4_intersector4_chunk.cpp
-    bvh4/bvh4_intersector4_hybrid.cpp
-    bvh4/bvh4_intersector8_single.cpp
-    bvh4/bvh4_intersector8_chunk.cpp
-    bvh4/bvh4_intersector8_hybrid.cpp
-
-    bvh8/bvh8_intersector1.cpp   
-    bvh8/bvh8_intersector4_hybrid.cpp 
-    bvh8/bvh8_intersector8_chunk.cpp   
-    bvh8/bvh8_intersector8_hybrid.cpp   
-    )
   IF (OSPRAY_ISA_AVX2)
+    SET(EMBREE_KERNELS_AVX2_SOURCES
+      geometry/instance_intersector1.cpp
+      geometry/instance_intersector4.cpp
+      geometry/instance_intersector8.cpp
+      
+      bvh4/bvh4_intersector1.cpp
+      bvh4/bvh4_intersector4_single.cpp
+      bvh4/bvh4_intersector4_chunk.cpp
+      bvh4/bvh4_intersector4_hybrid.cpp
+      bvh4/bvh4_intersector8_single.cpp
+      bvh4/bvh4_intersector8_chunk.cpp
+      bvh4/bvh4_intersector8_hybrid.cpp
+
+      bvh8/bvh8_intersector1.cpp   
+      bvh8/bvh8_intersector4_hybrid.cpp 
+      bvh8/bvh8_intersector8_chunk.cpp   
+      bvh8/bvh8_intersector8_hybrid.cpp   
+      )
     ADD_DEFINITIONS(-D__TARGET_AVX2__)
     SET(OSPRAY_EMBREE_AVX2_SOURCES "")
     FOREACH(src ${EMBREE_KERNELS_AVX2_SOURCES})
