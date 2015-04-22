@@ -36,6 +36,9 @@ namespace ospray {
     that together form a single model with a single accel structure */
   struct Geometry : public ManagedObject
   {
+    //! constructor
+    Geometry() : bounds(embree::empty) {};
+
     //! set given geometry's material. 
     /*! all material assignations should go through this function; the
         'material' field itself is private). This allows the
@@ -43,10 +46,13 @@ namespace ospray {
         the material field of the ISCP-equivalent whenever the
         c++-side's material gets changed */
     virtual void setMaterial(Material *mat);
+
     //! get material assigned to this geometry 
     virtual Material *getMaterial() const { return material.ptr; };
+
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Geometry"; }
+
     /*! \brief integrates this geometry's primitives into the respective
         model's acceleration structure */
     virtual void finalize(Model *model) {}
