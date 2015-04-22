@@ -37,7 +37,7 @@ namespace ospray {
   struct Geometry : public ManagedObject
   {
     //! constructor
-    Geometry() : bounds(embree::empty) {};
+    Geometry() : bounds(embree::empty) {}
 
     //! set given geometry's material. 
     /*! all material assignations should go through this function; the
