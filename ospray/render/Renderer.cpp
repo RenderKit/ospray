@@ -40,7 +40,7 @@ namespace ospray {
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
       if (model) {
-        const float diameter = length(model->bounds.size());
+        const float diameter = model->bounds.empty() ? 1.0f : length(model->bounds.size());
         epsilon *= diameter;
       }
       ispc::Renderer_set(getIE(),
