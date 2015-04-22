@@ -57,6 +57,7 @@ namespace ospray {
       }
 
       geometry[i]->finalize(this);
+
       bounds.extend(geometry[i]->bounds);
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }

@@ -37,10 +37,33 @@ namespace ospray {
     xfm.p   = getParam3f("xfm.p",vec3f(0.f,0.f,0.f));
 
     instancedScene = (Model *)getParamObject("model",NULL);
+    assert(instancedScene);
     embreeGeomID = rtcNewInstance(model->embreeSceneHandle,
                                   instancedScene->embreeSceneHandle);
 
-    assert(instancedScene);
+    const box3f b = instancedScene->bounds;
+    if (b.empty()) {
+      throw std::runtime_error("trying to instantiate a model that does"
+                               " not have a valid bounding box");
+    }
+    const vec3f v000(b.lower.x,b.lower.y,b.lower.z);
+    const vec3f v001(b.upper.x,b.lower.y,b.lower.z);
+    const vec3f v010(b.lower.x,b.upper.y,b.lower.z);
+    const vec3f v011(b.upper.x,b.upper.y,b.lower.z);
+    const vec3f v100(b.lower.x,b.lower.y,b.upper.z);
+    const vec3f v101(b.upper.x,b.lower.y,b.upper.z);
+    const vec3f v110(b.lower.x,b.upper.y,b.upper.z);
+    const vec3f v111(b.upper.x,b.upper.y,b.upper.z);
+
+    bounds = embree::empty;
+    bounds.extend(xfmPoint(xfm,v000));
+    bounds.extend(xfmPoint(xfm,v001));
+    bounds.extend(xfmPoint(xfm,v010));
+    bounds.extend(xfmPoint(xfm,v011));
+    bounds.extend(xfmPoint(xfm,v100));
+    bounds.extend(xfmPoint(xfm,v101));
+    bounds.extend(xfmPoint(xfm,v110));
+    bounds.extend(xfmPoint(xfm,v111));
 
     rtcSetTransform(model->embreeSceneHandle,embreeGeomID,
                     RTC_MATRIX_COLUMN_MAJOR,

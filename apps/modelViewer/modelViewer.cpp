@@ -410,7 +410,7 @@ namespace ospray {
         /* many mtl materials of obj models wrongly store the phong exponent
          'Ns' in range [0..1], whereas OSPRay's material implementations
          correctly interpret it to be in [0..inf), thus we map ranges here */
-        if (isOBJMaterial && (!strcmp(name, "Ns") || !strcmp(name, "ns")) && f <= 1.f)
+        if (isOBJMaterial && (!strcmp(name, "Ns") || !strcmp(name, "ns")) && f < 1.f)
           f = 1.f/(1.f - f) - 1.f;
         ospSet1f(ospMat,name,f);
         } break;

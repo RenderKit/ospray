@@ -107,6 +107,8 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_ISA_SSE  true)
       SET(OSPRAY_ISA_AVX  false)
       SET(OSPRAY_ISA_AVX2 false)
+    ELSE ()
+      MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, or ALL.")
     ENDIF()
 
   ENDIF()
