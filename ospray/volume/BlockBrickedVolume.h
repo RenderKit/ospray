@@ -36,6 +36,9 @@ namespace ospray {
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::BlockBrickedVolume<" + voxelType + ">"); }
 
+    //! Allocate storage and populate the volume, called through the OSPRay API.
+    virtual void commit();
+
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
 

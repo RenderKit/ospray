@@ -22,6 +22,15 @@
 
 namespace ospray {
 
+  void BlockBrickedVolume::commit()
+  {
+    //! The ISPC volume container should already exist.
+    exitOnCondition(ispcEquivalent == NULL, "the volume data must be set via ospSetRegion() prior to commit for this volume type");
+
+    //! StructuredVolume commit actions.
+    StructuredVolume::commit();
+  }
+
   int BlockBrickedVolume::setRegion(const void *source, const vec3i &index, const vec3i &count)
   {
     //! Create the equivalent ISPC volume container and allocate memory for voxel data.
