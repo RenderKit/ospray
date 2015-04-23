@@ -18,9 +18,6 @@ SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
 CONFIGURE_OSPRAY()
 
-# remove OSPRAY_ARCH_* flags from CMAKE_CXX_FLAGS; the Embree build will add these as appropriate for the various ISAs.
-#string(REPLACE "${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-
 # =======================================================
 # source for everything embree keeps in its 'sys' library
 # =======================================================
@@ -235,7 +232,7 @@ ELSE()
   # now, build and link in SSE41 support (for anything more than SSE)
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
-  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+  IF (OSPRAY_EMBREE_ENABLE_SSE OR OSPRAY_EMBREE_ENABLE_AVX OR OSPRAY_EMBREE_ENABLE_AVX2)
     ADD_DEFINITIONS(-D__TARGET_SSE41__)
     OSPRAY_ADD_LIBRARY(ospray_embree_sse41 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
@@ -252,7 +249,7 @@ ELSE()
   # now, build and link in SSE42 support (for anything more than SSE42)
   # note: "SSE" is a shortcut for SSE42
   # ------------------------------------------------------------------
-  IF (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+  IF (OSPRAY_EMBREE_ENABLE_SSE OR OSPRAY_EMBREE_ENABLE_AVX OR OSPRAY_EMBREE_ENABLE_AVX2)
     ADD_DEFINITIONS(-D__TARGET_SSE42__)
     OSPRAY_ADD_LIBRARY(ospray_embree_sse42 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_hybrid.cpp
@@ -264,7 +261,7 @@ ELSE()
   # ------------------------------------------------------------------
   # now, build and link in AVX1 support (for AVX1 and AVX2)
   # ------------------------------------------------------------------
-  IF (OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2)
+  IF (OSPRAY_EMBREE_ENABLE_AVX OR OSPRAY_EMBREE_ENABLE_AVX2)
     ADD_DEFINITIONS(-D__TARGET_AVX__)
     SET(EMBREE_KERNELS_AVX_SOURCES
       builders/bezierrefgen.cpp 
@@ -321,7 +318,7 @@ ELSE()
   # ------------------------------------------------------------------
   # now, build and link in AVX2 support (for AVX2 only)
   # ------------------------------------------------------------------
-  IF (OSPRAY_ISA_AVX2)
+  IF (OSPRAY_EMBREE_ENABLE_AVX2)
     SET(EMBREE_KERNELS_AVX2_SOURCES
       geometry/instance_intersector1.cpp
       geometry/instance_intersector4.cpp
