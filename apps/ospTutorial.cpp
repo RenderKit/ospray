@@ -118,7 +118,6 @@ int main(int ac, const char **av) {
 
   // access framebuffer and write its content as PPM file
   const uint32 * fb = (uint32*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
-  PRINT(fb);
   writePPM("firstFrame.ppm", width, height, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
@@ -128,7 +127,6 @@ int main(int ac, const char **av) {
     ospRenderFrame(framebuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   fb = (uint32*)ospMapFrameBuffer(framebuffer, OSP_FB_COLOR);
-  PRINT(fb);
   writePPM("accumulatedFrame.ppm", width, height, fb);
   ospUnmapFrameBuffer(fb, framebuffer);
 
