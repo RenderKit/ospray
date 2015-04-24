@@ -78,47 +78,82 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
 
     IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+      # ------------------------------------------------------------------
+      # in 'all' mode, we have a list of multiple targets for ispc,
+      # and enable all targets for embree (we may still disable some
+      # below if the compiler doesn't support them
+      # ------------------------------------------------------------------
       SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2)
-#      SET(OSPRAY_ISPC_CPU "core-avx2")
-      SET(OSPRAY_ISA_SSE  true)
-      SET(OSPRAY_ISA_AVX  true)
-      SET(OSPRAY_ISA_AVX2 true)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
+      # ------------------------------------------------------------------
+      # in 'avx512' mode, we currently build only avx512, in generic
+      # mode, but enable all embree targets to fall back to (currently
+      # does not work since embree would require a 16-wide trace
+      # function which it has in neither of the three targets)
+      # ------------------------------------------------------------------
       SET(OSPRAY_ISPC_TARGET_LIST generic-16)
- #     SET(OSPRAY_ISPC_CPU "core-avx2")
-      SET(OSPRAY_ISA_SSE  true)
-      SET(OSPRAY_ISA_AVX  false)
-      SET(OSPRAY_ISA_AVX2 false)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
+      # ------------------------------------------------------------------
+      # in 'avx2' mode, we enable ONLY avx2 for ispc, and all targets
+      # up to avx2 for embree. note that if the compiler doesn't
+      # support AVX we will have a combination where embree uses AVX
+      # (the most the compiler can do), while ispc still uses
+      # avx. this works because both targets are 8 wide. it does
+      # however require the compiler to understand AT LEAST AVX1.
+      # ------------------------------------------------------------------
       SET(OSPRAY_ISPC_TARGET_LIST avx2)
- #     SET(OSPRAY_ISPC_CPU "core-avx2")
-      SET(OSPRAY_ISA_SSE  false)
-      SET(OSPRAY_ISA_AVX  false)
-      SET(OSPRAY_ISA_AVX2 true)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
+      # ------------------------------------------------------------------
+      # in 'avx' mode, we enable ONLY avx for ispc, and both sse and
+      # avx for embree. note that this works ONLY works if the
+      # compiler knows at least AVX
+      # ------------------------------------------------------------------
       SET(OSPRAY_ISPC_TARGET_LIST avx)
- #     SET(OSPRAY_ISPC_CPU "corei7-avx")
-      SET(OSPRAY_ISA_SSE  false)
-      SET(OSPRAY_ISA_AVX  true)
-      SET(OSPRAY_ISA_AVX2 false)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE")
+      # ------------------------------------------------------------------
+      # in 'sse' mode, we enable ONLY sse4 for ispc, and only sse for
+      # embree
+      # ------------------------------------------------------------------
       SET(OSPRAY_ISPC_TARGET_LIST sse4)
- #     SET(OSPRAY_ISPC_CPU "corei7")
-      SET(OSPRAY_ISA_SSE  true)
-      SET(OSPRAY_ISA_AVX  false)
-      SET(OSPRAY_ISA_AVX2 false)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  false)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
     ELSE ()
       MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, or ALL.")
     ENDIF()
 
   ENDIF()
-  
-  IF (OSPRAY_ISA_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
+
+  IF (OSPRAY_EMBREE_ENABLE_AVX AND NOT OSPRAY_COMPILER_SUPPORTS_AVX)
+    IF (NOT OSPRAY_WARNED_MISSING_AVX)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX} of gcc for AVX. Disabling AVX.\nTo compile for AVX, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(OSPRAY_WARNED_MISSING_AVX ON CACHE INTERNAL "Warned about missing AVX support.")
+    ENDIF()
+    SET(OSPRAY_EMBREE_ENABLE_AVX false)
+  ENDIF()
+
+  IF (OSPRAY_EMBREE_ENABLE_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
     IF (NOT OSPRAY_WARNED_MISSING_AVX2)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX2} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
       SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
     ENDIF()
-    SET(OSPRAY_ISA_AVX2 false)
+    SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
   ENDIF()
 
   IF (OSPRAY_MPI)

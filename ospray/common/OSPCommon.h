@@ -150,6 +150,11 @@ namespace ospray {
   /*! Convert a type string to an OSPDataType. */
   OSPDataType typeForString(const char *string);
 
+  struct WarnOnce {
+    WarnOnce(const std::string &s);
+  private:
+    const std::string s;
+  };
 } // ::ospray
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
