@@ -29,12 +29,12 @@ namespace ospray {
         if (getIE() != NULL) return;
 
         const vec3f& transmission
-          = getParam3f("transmission",vec3f(1.f));
+          = getParam3f("transmission",getParam3f("color",vec3f(1.f)));
         const vec3f& transmissionOutside
           = getParam3f("transmissionOutside",vec3f(1.f));
 
         const float etaInside
-          = getParamf("etaInside",1.4f);
+          = getParamf("etaInside",getParamf("eta",1.4f));
         const float etaOutside
           = getParamf("etaOutside",1.f);
         
