@@ -51,6 +51,11 @@ namespace ospray {
         int rc = MPI_Bcast(&i,1,MPI_LONG,MPI_ROOT,mpi::worker.comm);
         Assert(rc == MPI_SUCCESS); 
       }
+      inline void send(const vec2f &v)
+      {
+        int rc = MPI_Bcast((void*)&v,2,MPI_FLOAT,MPI_ROOT,mpi::worker.comm);
+        Assert(rc == MPI_SUCCESS);
+      }
       inline void send(const vec2i &v)
       { 
         int rc = MPI_Bcast((void*)&v,2,MPI_INT,MPI_ROOT,mpi::worker.comm);
