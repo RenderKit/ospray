@@ -107,6 +107,9 @@ protected:
   /*! rotate about center point */
   virtual void rotateCenter(float du, float dv);
 
+  /*! strafe the camera from / at point */
+  virtual void strafe(float du, float dv);
+
   /*! frame counter */
   long frameCount;
 
