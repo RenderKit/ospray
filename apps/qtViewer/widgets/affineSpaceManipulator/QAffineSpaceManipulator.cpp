@@ -130,7 +130,7 @@ namespace ospray {
       QPoint newPos = event->pos();
       
       switch (interactionMode) {
-      case FLY:
+      case FLY: 
       case INSPECT: {
         // axes we're rotating in u and v direction, respectively.
         const vec3f uRotationAxis = frame->orientation.vz;
@@ -208,6 +208,22 @@ namespace ospray {
       lastMousePos = event->pos();
       emit affineSpaceChanged(this);
       updateGL();
+    }
+
+
+    //! switch to requested interaction mode
+    void QAffineSpaceManipulator::setInteractionMode(QAffineSpaceManipulator::InteractionMode interactionMode)
+    { this->interactionMode = interactionMode; }
+
+    /*! toggle-up: switch to given axis (x=0,y=1,z=2) as up-vectors for the rotation.
+      when _already_ in up-vector mode for this axis, switch to negative axis. */
+    void QAffineSpaceManipulator::toggleUp(int axis)
+    {
+      vec3f newUp = vec3f(axis==0,axis==1,axis==2);
+      if (frame->upVector == newUp)
+        newUp = - newUp;
+      frame->upVector = newUp;
+      frame->snapUp();
     }
 
 

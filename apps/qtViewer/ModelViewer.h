@@ -116,6 +116,9 @@ namespace ospray {
       
     public:
       ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen);
+
+      void toggleUpAxis(int axis);
+ 
       public slots:
         //! signals that the render widget changed one of the inputs
         //! (most likely, that the camera position got changed)
@@ -162,7 +165,7 @@ namespace ospray {
         Ref<sg::Renderer> sgRenderer;
 
     public:
-        OSPRayRenderWidget       *renderWidget;
+      OSPRayRenderWidget       *renderWidget;
     };
   }
 }

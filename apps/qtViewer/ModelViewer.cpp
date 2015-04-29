@@ -234,21 +234,51 @@ namespace ospray {
       connect(lManipulator, SIGNAL(lightsChanged()), this, SLOT(render()));
     }
 
+    void ModelViewer::toggleUpAxis(int axis)
+    {
+      std::cout << "#osp:QTV: new upvector is " << renderWidget->getFrame()->upVector << std::endl;
+    }
+
     void ModelViewer::keyPressEvent(QKeyEvent *event) {
-      //      std::cout << event->key() << std::endl;
       switch (event->key()) {
       case Qt::Key_Escape:
       case Qt::Key_Q:
         QApplication::quit();
         // TODO wasd movement
+      case Qt::Key_X:
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-X: switching to X-up/down upvector " << std::endl;
+          renderWidget->toggleUp(0);
+        } break;
+      case Qt::Key_Y:
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-Y: switching to Y-up/down upvector " << std::endl;
+          renderWidget->toggleUp(1);
+        } break;
+      case Qt::Key_Z:
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-Z: switching to Z-up/down upvector " << std::endl;
+          renderWidget->toggleUp(2);
+        } break;
       case Qt::Key_F:
-        setWindowState(windowState() ^ Qt::WindowFullScreen);
-        if (windowState() & Qt::WindowFullScreen){
-          toolBar->hide();
-          editorWidgetDock->hide();
-        } else {
-          toolBar->show();
-          editorWidgetDock->show();
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-f: switch to fly mode
+          std::cout << "Shift-F: Entering 'Fly' mode" << std::endl;
+          renderWidget->setInteractionMode(QAffineSpaceManipulator::FLY);
+        } else if (event->modifiers() & Qt::ControlModifier) {
+          // ctrl-f: switch to full-screen
+          std::cout << "Ctrl-F: Toggling full-screen mode" << std::endl;
+          setWindowState(windowState() ^ Qt::WindowFullScreen);
+          if (windowState() & Qt::WindowFullScreen){
+            toolBar->hide();
+            editorWidgetDock->hide();
+          } else {
+            toolBar->show();
+            editorWidgetDock->show();
+          }
         }
         break;
 
