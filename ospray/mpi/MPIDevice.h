@@ -51,8 +51,10 @@ namespace ospray {
         CMD_COMMIT,
         CMD_LOAD_MODULE,
         CMD_RELEASE,
+        CMD_GET_TYPE,
+        CMD_GET_VALUE,
         CMD_SET_MATERIAL,
-
+        CMD_SET_REGION,
         CMD_SET_OBJECT,
         CMD_SET_STRING,
         CMD_SET_INT,
