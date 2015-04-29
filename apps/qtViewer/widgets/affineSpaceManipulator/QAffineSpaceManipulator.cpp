@@ -189,8 +189,8 @@ namespace ospray {
         /* fly mode: move BOTH source and target positions
            forward/backward along move axis. Since we are moving
            *forward* with mouse, we move in POSITIVE y distance */
-        frame->sourcePoint += moveDistance * moveAxis;
-        frame->targetPoint += moveDistance * moveAxis;
+        frame->sourcePoint -= moveDistance * moveAxis;
+        frame->targetPoint -= moveDistance * moveAxis;
       } break;
       case FREE_ROTATION: 
       case INSPECT: {
