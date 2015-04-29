@@ -16,13 +16,15 @@
 
 #pragma once
 
-#include "linearspace.ih"
+#include "LinearSpace.ih"
 
+/*! A Affine vector space; i.e., a Linear Space with a translation */
 struct AffineSpace3f {
   LinearSpace3f l;
   vec3f         p;
 };
 
+/*! create a new affine space from given basis vectors v{x,y,z} and translation p */
 inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
                                                 const uniform vec3f vy,
                                                 const uniform vec3f vz,
@@ -36,19 +38,30 @@ inline uniform AffineSpace3f make_AffineSpace3f(const uniform vec3f vx,
   return xfm;
 }
 
+/*! apply given affine transformation to given _point_ v */
 inline uniform vec3f xfmPoint(const uniform AffineSpace3f a, const uniform vec3f v)
 { return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+
+/*! apply given affine transformation to given _point_ v */
 inline varying vec3f xfmPoint(const uniform AffineSpace3f a, const varying vec3f v) 
 { return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+
+/*! apply given affine transformation to given _point_ v */
 inline varying vec3f xfmPoint(const varying AffineSpace3f a, const varying vec3f v) 
 { return a.p + v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
 
+/*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
 inline uniform vec3f xfmVector(const uniform AffineSpace3f a, const uniform vec3f v)
 { return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+
+/*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
 inline varying vec3f xfmVector(const uniform AffineSpace3f a, const varying vec3f v) 
 { return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
+
+/*! apply affine transform to given _vector_ v, i.e., _without_ the translation */
 inline varying vec3f xfmVector(const varying AffineSpace3f a, const varying vec3f v) 
 { return v.x*a.l.vx + v.y*a.l.vy + v.z*a.l.vz; }
 
+/*! short-hand name for AffineSpace3f */
 typedef AffineSpace3f affine3f;
 
