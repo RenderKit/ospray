@@ -99,8 +99,8 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_ISPC_CPU "core-avx2")
     ENDIF()
 
-    IF (NOT (OSPRAY_ISA_AVX2 OR OSPRAY_ISA_AVX2 OR OSPRAY_ISA_AVX2))
-      MESSAGE(ERROR "No ISAs selected. Select at least one of SSE, AVX, AVX2")
+    IF (NOT (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2))
+      MESSAGE(FATAL_ERROR "No ISAs selected. Select at least one of SSE, AVX, AVX2")
     ENDIF()
   ENDIF()
   
