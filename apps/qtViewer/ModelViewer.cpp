@@ -241,29 +241,26 @@ namespace ospray {
 
     void ModelViewer::keyPressEvent(QKeyEvent *event) {
       switch (event->key()) {
-      case Qt::Key_Escape:
-      case Qt::Key_Q:
+      case Qt::Key_Escape: {
         QApplication::quit();
-        // TODO wasd movement
-      case Qt::Key_X:
+      } break;
+      case Qt::Key_C: {
+        // ------------------------------------------------------------------
+        // 'C': 
+        // - Shift-C print current camera 
+        // ------------------------------------------------------------------
         if (event->modifiers() & Qt::ShiftModifier) {
-          // shift-x: switch to X-up
-          std::cout << "Shift-X: switching to X-up/down upvector " << std::endl;
-          renderWidget->toggleUp(0);
-        } break;
-      case Qt::Key_Y:
-        if (event->modifiers() & Qt::ShiftModifier) {
-          // shift-x: switch to X-up
-          std::cout << "Shift-Y: switching to Y-up/down upvector " << std::endl;
-          renderWidget->toggleUp(1);
-        } break;
-      case Qt::Key_Z:
-        if (event->modifiers() & Qt::ShiftModifier) {
-          // shift-x: switch to X-up
-          std::cout << "Shift-Z: switching to Z-up/down upvector " << std::endl;
-          renderWidget->toggleUp(2);
-        } break;
-      case Qt::Key_F:
+          // shift-f: switch to fly mode
+          std::cout << "Shift-C: Printing camera" << std::endl;
+          printCameraAction();
+        }
+      } break;
+      case Qt::Key_F: {
+        // ------------------------------------------------------------------
+        // 'F': 
+        // - Shift-F enters fly mode
+        // - Ctrl-F toggles full-screen
+        // ------------------------------------------------------------------
         if (event->modifiers() & Qt::ShiftModifier) {
           // shift-f: switch to fly mode
           std::cout << "Shift-F: Entering 'Fly' mode" << std::endl;
@@ -280,7 +277,61 @@ namespace ospray {
             editorWidgetDock->show();
           }
         }
-        break;
+      } break;
+      case Qt::Key_I: {
+        // ------------------------------------------------------------------
+        // 'I': 
+        // - Ctrl-I switches to inspect mode
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-f: switch to fly mode
+          std::cout << "Shift-I: Entering 'Inspect' mode" << std::endl;
+          renderWidget->setInteractionMode(QAffineSpaceManipulator::INSPECT);
+        } 
+      } break;
+      case Qt::Key_Q: {
+        QApplication::quit();
+      } break;
+      case Qt::Key_R: {
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-f: switch to fly mode
+          std::cout << "Shift-R: Entering Free-'Rotation' mode (no up-vector)" << std::endl;
+          renderWidget->setInteractionMode(QAffineSpaceManipulator::FREE_ROTATION);
+        } 
+      } break;
+      case Qt::Key_X: {
+        // ------------------------------------------------------------------
+        // 'X': 
+        // - Ctrl-X switches to X-up/down for upvector
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-X: switching to X-up/down upvector " << std::endl;
+          renderWidget->toggleUp(0);
+        } 
+      } break;
+        // ------------------------------------------------------------------
+        // 'Y': 
+        // - Ctrl-Y switches to Y-up/down for upvector
+        // ------------------------------------------------------------------
+      case Qt::Key_Y: {
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-Y: switching to Y-up/down upvector " << std::endl;
+          renderWidget->toggleUp(1);
+        } 
+      } break;
+      case Qt::Key_Z: {
+        // ------------------------------------------------------------------
+        // 'Z': 
+        // - Ctrl-Z switches to Z-up/down for upvector
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-Z: switching to Z-up/down upvector " << std::endl;
+          renderWidget->toggleUp(2);
+        } 
+      } break;
 
       default:
         QMainWindow::keyPressEvent(event);
