@@ -878,9 +878,6 @@ namespace ospray {
     {
       if (type == NULL)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
-      
-      if (_renderer == NULL) 
-        throw std::runtime_error("#osp:mpi:newLight: NULL renderer handle");
 
       mpi::Handle handle = mpi::Handle::alloc();
       
