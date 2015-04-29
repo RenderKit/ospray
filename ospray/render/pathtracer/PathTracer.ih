@@ -44,7 +44,6 @@ struct PathTracer {
   uniform int32 numRays;
   uniform int32 maxDepth;
   uniform float minContribution;
-  uniform float epsilon;
   uniform Image* uniform backplate;
   uniform Scene *uniform scene; /*! iw: since ospray doesn't have the
                                     concept of a 'scene' in the sense

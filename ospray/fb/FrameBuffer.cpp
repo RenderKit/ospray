@@ -33,10 +33,6 @@ namespace ospray {
     Assert(size.x > 0 && size.y > 0);
   };
 
-  void FrameBuffer::waitForRenderTaskToBeReady() 
-  {
-  }
-
   /*! helper function for debugging. write out given pixels in PPM format */
   void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels)
   {
@@ -52,5 +48,5 @@ namespace ospray {
     }
     fclose(file);
   }
-  
+
 } // ::ospray

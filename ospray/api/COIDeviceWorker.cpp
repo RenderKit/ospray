@@ -31,6 +31,7 @@
 #include "ospray/geometry/TriangleMesh.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/volume/Volume.h"
+#include "ospray/transferFunction/TransferFunction.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/render/LoadBalancer.h"
 #include "ospray/texture/Texture2D.h"
@@ -963,6 +964,8 @@ int main(int ac, const char **av)
   embreeConfig << "verbose=" << ospray::logLevel;
   if (ospray::debugMode) 
     embreeConfig << ",threads=1";
+  else if(ospray::numThreads > 0)
+    embreeConfig << " threads=" << ospray::numThreads;
   rtcInit(embreeConfig.str().c_str());
   //rtcInit("verbose=2,traverser=single,threads=1");
   //rtcInit("verbose=2,traverser=chunk");

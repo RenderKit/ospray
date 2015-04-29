@@ -94,7 +94,7 @@ void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
   viewport.at = center(worldBounds);
 
   // set viewport from point relative to center of world bounds
-  viewport.from = viewport.at - 1.5f * viewport.frame.l.vy;
+  viewport.from = viewport.at - 1.5f * length(worldBounds.size()) * viewport.frame.l.vy;
 
   updateGL();
 }
@@ -217,7 +217,7 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
     // camera distance from center point
     const float motionSpeed = 0.012f;
 
-    float forward = dy * motionSpeed;
+    float forward = dy * motionSpeed * length(worldBounds.size());
     float oldDistance = length(viewport.at - viewport.from);
     float newDistance = oldDistance - forward;
 

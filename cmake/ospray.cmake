@@ -44,7 +44,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
     )
 
-  IF (OSPRAY_TARGET STREQUAL "MIC")
+  IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
     SET(OSPRAY_LIB_SUFFIX "_mic")
     SET(OSPRAY_ISPC_SUFFIX ".cpp")
@@ -76,34 +76,86 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 
     # additional Embree include directory
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
-    
-    
-    SET(OSPRAY_ISPC_CPU "<undefined>")
-    SET(OSPRAY_ISPC_TARGET_LIST "")
 
-    IF (OSPRAY_ISA_SSE)
-      ADD_DEFINITIONS(-D__TARGET_SSE__)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} sse4)
-      SET(OSPRAY_ISPC_CPU "corei7")
+    IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
+      # ------------------------------------------------------------------
+      # in 'all' mode, we have a list of multiple targets for ispc,
+      # and enable all targets for embree (we may still disable some
+      # below if the compiler doesn't support them
+      # ------------------------------------------------------------------
+      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
+      # ------------------------------------------------------------------
+      # in 'avx512' mode, we currently build only avx512, in generic
+      # mode, but enable all embree targets to fall back to (currently
+      # does not work since embree would require a 16-wide trace
+      # function which it has in neither of the three targets)
+      # ------------------------------------------------------------------
+      SET(OSPRAY_ISPC_TARGET_LIST generic-16)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
+      # ------------------------------------------------------------------
+      # in 'avx2' mode, we enable ONLY avx2 for ispc, and all targets
+      # up to avx2 for embree. note that if the compiler doesn't
+      # support AVX we will have a combination where embree uses AVX
+      # (the most the compiler can do), while ispc still uses
+      # avx. this works because both targets are 8 wide. it does
+      # however require the compiler to understand AT LEAST AVX1.
+      # ------------------------------------------------------------------
+      SET(OSPRAY_ISPC_TARGET_LIST avx2)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
+      # ------------------------------------------------------------------
+      # in 'avx' mode, we enable ONLY avx for ispc, and both sse and
+      # avx for embree. note that this works ONLY works if the
+      # compiler knows at least AVX
+      # ------------------------------------------------------------------
+      SET(OSPRAY_ISPC_TARGET_LIST avx)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+
+    ELSEIF (OSPRAY_BUILD_ISA STREQUAL "SSE")
+      # ------------------------------------------------------------------
+      # in 'sse' mode, we enable ONLY sse4 for ispc, and only sse for
+      # embree
+      # ------------------------------------------------------------------
+      SET(OSPRAY_ISPC_TARGET_LIST sse4)
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  false)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+    ELSE ()
+      MESSAGE(ERROR "Invalid OSPRAY_BUILD_ISA value. Please select one of SSE, AVX, AVX2, or ALL.")
     ENDIF()
 
-    IF (OSPRAY_ISA_AVX)
-      ADD_DEFINITIONS(-D__TARGET_AVX__)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx)
-      SET(OSPRAY_ISPC_CPU "corei7-avx")
-    ENDIF()
-
-    IF (OSPRAY_ISA_AVX2)
-      ADD_DEFINITIONS(-D__TARGET_AVX2__)
-      SET(OSPRAY_ISPC_TARGET_LIST ${OSPRAY_ISPC_TARGET_LIST} avx2)
-      SET(OSPRAY_ISPC_CPU "core-avx2")
-    ENDIF()
-
-    IF (NOT (OSPRAY_ISA_SSE OR OSPRAY_ISA_AVX OR OSPRAY_ISA_AVX2))
-      MESSAGE(FATAL_ERROR "No ISAs selected. Select at least one of SSE, AVX, AVX2")
-    ENDIF()
   ENDIF()
-  
+
+  IF (OSPRAY_EMBREE_ENABLE_AVX AND NOT OSPRAY_COMPILER_SUPPORTS_AVX)
+    IF (NOT OSPRAY_WARNED_MISSING_AVX)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX} of gcc for AVX. Disabling AVX.\nTo compile for AVX, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(OSPRAY_WARNED_MISSING_AVX ON CACHE INTERNAL "Warned about missing AVX support.")
+    ENDIF()
+    SET(OSPRAY_EMBREE_ENABLE_AVX false)
+  ENDIF()
+
+  IF (OSPRAY_EMBREE_ENABLE_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
+    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX2} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
+    ENDIF()
+    SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+  ENDIF()
+
   IF (OSPRAY_MPI)
     ADD_DEFINITIONS(-DOSPRAY_MPI=1)
   ENDIF()
@@ -113,9 +165,6 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
   ENDIF()
 
-  #  INCLUDE(ospray_ispc)
-  #  INCLUDE(ispc_build_rules)
-
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)
 
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
@@ -124,20 +173,11 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
 
-  IF (OSPRAY_INTERSECTION_FILTER)
-    ADD_DEFINITIONS(-DOSPRAY_INTERSECTION_FILTER=1)
-    ADD_DEFINITIONS_ISPC(-DOSPRAY_INTERSECTION_FILTER=1)
-  ENDIF()
-
 ENDMACRO()
 
 
 MACRO(CONFIGURE_OSPRAY)
 
   CONFIGURE_OSPRAY_NO_ARCH()
-  IF (OSPRAY_TARGET STREQUAL "MIC")
-  ELSE()
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OSPRAY_ARCH_${OSPRAY_XEON_TARGET}}")
-  ENDIF()
 
 ENDMACRO()

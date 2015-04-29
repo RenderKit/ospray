@@ -149,15 +149,15 @@ void TransferFunctionEditor::load(std::string filename) {
 
   //! Update transfer function state. Update values of the UI elements directly to signal appropriate slots.
   colorMapComboBox.setCurrentIndex(colorMapIndex);
-  setDataValueRange(osp::vec2f(dataValueMin, dataValueMax));
+  setDataValueRange(osp::vec2f(dataValueMin, dataValueMax), true);
   opacityValuesWidget.setPoints(points);
   opacityScalingSlider.setValue(opacityScalingIndex);
 }
 
-void TransferFunctionEditor::setDataValueRange(osp::vec2f dataValueRange) {
+void TransferFunctionEditor::setDataValueRange(osp::vec2f dataValueRange, bool force) {
 
   //! Only update widget values the first time.
-  if(dataRangeSet)
+  if(dataRangeSet && !force)
     return;
 
   dataRangeSet = true;
@@ -217,11 +217,14 @@ void TransferFunctionEditor::save() {
     return;
   }
 
+  //! Data value scale.
+  float dataValueScale = powf(10.f, float(dataValueScaleSpinBox.value()));
+
   QDataStream out(&file);
 
   out << colorMapComboBox.currentIndex();
-  out << dataValueMinSpinBox.value();
-  out << dataValueMaxSpinBox.value();
+  out << dataValueScale * dataValueMinSpinBox.value();
+  out << dataValueScale * dataValueMaxSpinBox.value();
   out << opacityValuesWidget.getPoints();
   out << opacityScalingSlider.value();
 }

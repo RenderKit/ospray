@@ -565,10 +565,6 @@ namespace ospray {
       DataStream args;
       Handle ID = Handle::alloc();
 
-      if (nitems == 0) {
-        throw std::runtime_error("cowardly refusing to create empty buffer...");
-      }
-
       args.write(ID);
       args.write((int32)nitems);
       args.write((int32)format);
@@ -696,6 +692,10 @@ namespace ospray {
 
     void COIDevice::release(OSPObject object)
     {
+      // release() causes a crash, disabling pending debugging.
+      cout << "#osp:coi: warning, release() not implemented." << endl;
+      return;
+
       if (object == NULL) return;
       Handle handle = (Handle &) object;
       DataStream stream;

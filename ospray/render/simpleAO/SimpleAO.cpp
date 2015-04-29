@@ -47,13 +47,13 @@ namespace ospray {
   SimpleAO<NUM_SAMPLES_PER_FRAME>::SimpleAO() 
   {
     ispcEquivalent = ispc::SimpleAO_create(this,NULL,NULL);
-  };
+  }
 
   /*! \brief create a material of given type */
   template<int NUM_SAMPLES_PER_FRAME>
   ospray::Material *SimpleAO<NUM_SAMPLES_PER_FRAME>::createMaterial(const char *type) 
   { 
-    return new SimpleAO<NUM_SAMPLES_PER_FRAME>::Material; 
+    return new typename SimpleAO<NUM_SAMPLES_PER_FRAME>::Material;
   }
 
   /*! \brief common function to help printf-debugging */

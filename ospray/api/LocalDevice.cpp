@@ -64,6 +64,8 @@ namespace ospray {
      std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
+      else if(numThreads > 0)
+        embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
 
       RTCError erc = rtcGetError();

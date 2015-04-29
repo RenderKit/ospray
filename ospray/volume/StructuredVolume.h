@@ -43,46 +43,34 @@ namespace ospray {
     //! Destructor.
     virtual ~StructuredVolume() {};
 
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
+
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit();
 
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC() = 0;
-
-    //! Volume size in voxels per dimension.
-    const vec3i &getDimensions() const { return(volumeDimensions); }
-
-    //! Voxel size in bytes.
-    size_t getVoxelSizeInBytes() const;
-
-    //! Get the OSPDataType enum corresponding to the voxel type string.
-    OSPDataType getVoxelType() const;
-
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
-
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
 
   protected:
 
     //! Indicate that the volume is fully initialized.
     bool finished;
 
-    //! Volume size in voxels per dimension.
-    vec3i volumeDimensions;
-
-    //! Voxel value range.
+    //! Voxel value range (will be computed if not provided as a parameter).
     vec2f voxelRange;
 
     //! Voxel type.
     std::string voxelType;
 
-    //! Complete volume initialization.
-    virtual void finish() = 0;
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC() = 0;
 
-    //! Update select parameters after the volume has been allocated and filled.
-    virtual void updateEditableParameters() {}
+    //! Complete volume initialization (only on first commit).
+    virtual void finish();
+
+    //! Get the OSPDataType enum corresponding to the voxel type string.
+    OSPDataType getVoxelType() const;
 
     //! Compute the voxel value range for floating point voxels.
     inline void computeVoxelRange(const float *source, const size_t &count)

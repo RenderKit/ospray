@@ -16,38 +16,25 @@
 
 #pragma once
 
-#include "ospray/volume/StructuredVolume.h"
+#include "ospray/common/OSPDataType.h"
+#include "ospray/volume/StructuredVolume.ih"
 
-namespace ospray {
+//! \brief ISPC variables and functions for the SharedStructuredVolume class,
+//! a concrete implementation of the StructuredVolume class with 32-bit
+//! addressing in which the voxel data is laid out in memory in XYZ order and
+//! provided via a shared data buffer.
+//!
+struct SharedStructuredVolume {
 
-  //! \brief A concrete implementation of the StructuredVolume class
-  //!  with 62-bit addressing in which the voxel data is laid out in
-  //!  memory in multiple pages each in brick order.
-  //!
-  class BlockBrickedVolume : public StructuredVolume {
-  public:
+  //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
+  StructuredVolume inherited;
 
-    //! Constructor.
-    BlockBrickedVolume() {};
+  //! Voxel data.
+  const void *uniform voxelData;
 
-    //! Destructor.
-    virtual ~BlockBrickedVolume() {};
+  //! Voxel type.
+  uniform OSPDataType voxelType;
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::BlockBrickedVolume<" + voxelType + ">"); }
+};
 
-    //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
-
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
-
-  protected:
-
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC();
-
-  };
-
-} // ::ospray
-
+void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData);

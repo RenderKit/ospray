@@ -31,6 +31,8 @@
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
 #include "ospray/mpi/MPILoadBalancer.h"
+#include "ospray/transferFunction/TransferFunction.h"
+
 // std
 #include <unistd.h> // for gethostname()
 
@@ -72,6 +74,8 @@ namespace ospray {
       std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
+      else if(numThreads > 0)
+        embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
 
       if (rtcGetError() != RTC_NO_ERROR) {
