@@ -30,6 +30,8 @@ namespace ospray {
   bool  g_fullScreen       = false;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
 
+  vec2i g_windowSize;
+
   int g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
   bool g_createDefaultMaterial = true;
@@ -70,6 +72,27 @@ namespace ospray {
 
   using ospray::glut3D::Glut3DWidget;
   
+  // helper function to write the rendered image as PPM file
+  void writePPM(const char *fileName,
+      const int sizeX, const int sizeY,
+      const uint32 *pixel)
+  {
+    FILE *file = fopen(fileName, "wb");
+    fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
+    unsigned char out[3*sizeX];
+    for (int y = 0; y < sizeY; y++) {
+      const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
+      for (int x = 0; x < sizeX; x++) {
+        out[3*x + 0] = in[4*x + 0];
+        out[3*x + 1] = in[4*x + 1];
+        out[3*x + 2] = in[4*x +2 ];
+      }
+      fwrite(&out, 3*sizeX, sizeof(char), file);
+    }
+    fprintf(file, "\n");
+    fclose(file);
+  }
+
   /*! mini scene graph viewer widget. \internal Note that all handling
     of camera is almost exactly similar to the code in volView;
     might make sense to move that into a common class! */
@@ -97,6 +120,7 @@ namespace ospray {
     virtual void reshape(const ospray::vec2i &newSize)
     {
       Glut3DWidget::reshape(newSize);
+      g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
@@ -255,6 +279,10 @@ namespace ospray {
           double time = ospray::getSysTime()-benchStart;
           double avgFps = fpsSum/double(frameID-g_benchWarmup);
           printf("Benchmark: time: %f avg fps: %f avg frame time: %f\n", time, avgFps, time/double(frameID-g_benchWarmup));
+
+          const uint32 * p = (uint32*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          writePPM("benchmark.ppm", g_windowSize.x, g_windowSize.y, p);
+
           exit(0);
         }
       
