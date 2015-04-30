@@ -190,16 +190,15 @@ namespace ospray {
         forceRedraw();
         break;
       case 'f':
-        {
-          g_fullScreen = !g_fullScreen;
-          if(g_fullScreen) glutFullScreen();
-          else glutPositionWindow(0,10);
-        }
+        g_fullScreen = !g_fullScreen;
+        if(g_fullScreen) glutFullScreen();
+        else glutPositionWindow(0,10);
         break;
       case 'r':
-        {
-          viewPort = g_viewPort;
-        }
+        viewPort = g_viewPort;
+        break;
+      case 'p':
+        printf("-vp %f %f %f -vu %f %f %f -vi %f %f %f\n", viewPort.from.x, viewPort.from.y, viewPort.from.z, viewPort.up.x, viewPort.up.y, viewPort.up.z, viewPort.at.x, viewPort.at.y, viewPort.at.z);
         break;
       default:
         Glut3DWidget::keypress(key,where);
@@ -517,7 +516,7 @@ namespace ospray {
       } else if (arg == "--no-default-material") {
         g_createDefaultMaterial = false;
       } else if (av[i][0] == '-') {
-        error("unkown commandline argument '"+arg+"'");
+        error("unknown commandline argument '"+arg+"'");
       } else {
         embree::FileName fn = arg;
         if (fn.ext() == "stl") {
