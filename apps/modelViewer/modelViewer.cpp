@@ -26,6 +26,8 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  const char *outFileName = NULL;
+
   float g_near_clip = 1e-6f;
   bool  g_fullScreen       = false;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
@@ -312,7 +314,13 @@ namespace ospray {
       ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();
-      ospUnmapFrameBuffer(ucharFB,fb);
+
+      if (outFileName && accumID == maxAccum) {
+        std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
+        writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+        exit(0);
+      }
+
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
 
@@ -476,6 +484,8 @@ namespace ospray {
         rendererType = av[++i];
       } else if (arg == "--always-redraw") {
         alwaysRedraw = true;
+      } else if (arg == "-o") {
+        outFileName = strdup(av[++i]);
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
       } else if (arg == "--spp") {
@@ -529,6 +539,8 @@ namespace ospray {
           miniSG::importRIVL(*msgModel,fn);
         } else if (fn.ext() == "obj") {
           miniSG::importOBJ(*msgModel,fn);
+        } else if (fn.ext() == "hbp") {
+          miniSG::importHBP(*msgModel,fn);
         } else if (fn.ext() == "x3d") {
           miniSG::importX3D(*msgModel,fn); 
         } else if (fn.ext() == "astl") {
