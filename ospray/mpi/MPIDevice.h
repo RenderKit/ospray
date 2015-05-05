@@ -47,6 +47,7 @@ namespace ospray {
         CMD_NEW_DATA,
         CMD_NEW_TEXTURE2D,
         CMD_ADD_GEOMETRY,
+        CMD_REMOVE_GEOMETRY,
         CMD_ADD_VOLUME,
         CMD_COMMIT,
         CMD_LOAD_MODULE,

@@ -30,6 +30,7 @@
 #include "MPILoadBalancer.h"
 #include "ospray/transferFunction/TransferFunction.h"
 // std
+#include <algorithm>
 #include <unistd.h> // for gethostname()
 
 namespace ospray {
@@ -38,6 +39,13 @@ namespace ospray {
     using std::endl;
 
     static const int HOST_NAME_MAX = 10000;
+
+    struct GeometryLocator {
+      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+        return ptr == &*g;
+      }
+      Geometry *ptr;
+    };
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
@@ -379,6 +387,22 @@ namespace ospray {
           Geometry *geom = (Geometry*)geomHandle.lookup();
           Assert(geom);
           model->geometry.push_back(geom);
+        } break;
+
+        case api::MPIDevice::CMD_REMOVE_GEOMETRY: {
+          const mpi::Handle modelHandle = cmd.get_handle();
+          const mpi::Handle geomHandle = cmd.get_handle();
+          Model *model = (Model*)modelHandle.lookup();
+          Assert(model);
+          Geometry *geom = (Geometry*)geomHandle.lookup();
+          Assert(geom);
+
+          GeometryLocator locator;
+          locator.ptr = geom;
+          Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+          if(it != model->geometry.end()) {
+            model->geometry.erase(it);
+          }
         } break;
 
         case api::MPIDevice::CMD_ADD_VOLUME: {
