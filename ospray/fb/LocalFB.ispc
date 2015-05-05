@@ -88,7 +88,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           if (color)
             color[ofs] = value;
         if (depth)
-          fb->depthBuffer[ofs] = tile.z[i];
+          fb->depthBuffer[ofs] = tile.z[pixID];
       }
     }
   } else if (fb->inherited.colorBufferFormat == ColorBufferFormat_RGBA_UINT8) {
@@ -127,7 +127,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           if (color)
             color[ofs] = cvt_uint32(value);
         if (depth)
-          fb->depthBuffer[ofs] = tile.z[i];
+          fb->depthBuffer[ofs] = tile.z[pixID];
       }
     }
   } else {
