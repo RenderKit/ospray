@@ -47,8 +47,10 @@
 #endif
 
 #if defined(__BMI__) && defined(__GNUC__)
+#ifndef _tzcnt_u32
 #define _tzcnt_u32 __tzcnt_u32
 #define _tzcnt_u64 __tzcnt_u64
+#endif
 #endif
 
 #if defined(__LZCNT__)
