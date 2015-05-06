@@ -14,31 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "miniSG.h"
+#include "importer.h"
+#include <fstream>
 
-#include "ospray/camera/Camera.ih"
-#include "ospray/common/Model.ih"
-#include "ospray/common/Ray.ih"
-#include "ospray/lights/Light.ih"
-#include "ospray/math/box.ih"
-#include "ospray/render/Renderer.ih"
+namespace ospray {
+  namespace miniSG {
+    using std::cout;
+    using std::endl;
 
-//! \brief ISPC variables and functions for the RaycastVolumeRenderer
-//!  class, a concrete subtype of the Renderer class for rendering
-//!  volumes with embedded surfaces via ray casting.
-//!
-struct RaycastVolumeRenderer {
+    /*! import a HBP file, and add it to the specified model */
+    void importHBP(Model &model, const embree::FileName &fileName)
+    {
+      std::string vtxName = fileName.str()+".vtx";
+      std::string triName = fileName.str()+".tri";
+      FILE *vtx = fopen(vtxName.c_str(),"rb");
+      FILE *tri = fopen(triName.c_str(),"rb");
 
-  //! Variables and functions common to all Renderer subtypes (must be the first field of the struct).
-  Renderer inherited;
+      Mesh *mesh = new Mesh;
+      vec3f v; 
+      Triangle t;
 
-  //! Renderer state. TODO: camera&model already in inherited!
-  Camera *uniform camera;  Light **uniform lights;  Model *uniform model;  Model *uniform dynamicModel;
+      while (fread(&v,sizeof(v),1,vtx))
+        mesh->position.push_back(vec3fa(v));
+      while (fread(&t,sizeof(t),1,tri))
+        mesh->triangle.push_back(t);
+      
+      model.mesh.push_back(mesh);
+      model.instance.push_back(Instance(model.mesh.size()-1));
+      mesh->material = NULL; 
+    }
 
-};
-
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, 
-                                                const uniform int32 accumID);
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer, 
-                                               FrameBuffer *uniform framebuffer);
-
+  } // ::ospray::minisg
+} // ::ospray

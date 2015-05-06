@@ -26,10 +26,13 @@ namespace ospray {
   using std::endl;
   bool doShadows = 1;
 
+  const char *outFileName = NULL;
+
   float g_near_clip = 1e-6f;
   bool  g_fullScreen       = false;
   glut3D::Glut3DWidget::ViewPort g_viewPort;
-  
+
+  vec2i g_windowSize;
 
   int g_benchWarmup = 0, g_benchFrames = 0;
   bool g_alpha = false;
@@ -82,6 +85,27 @@ namespace ospray {
 
   using ospray::glut3D::Glut3DWidget;
   
+  // helper function to write the rendered image as PPM file
+  void writePPM(const char *fileName,
+      const int sizeX, const int sizeY,
+      const uint32 *pixel)
+  {
+    FILE *file = fopen(fileName, "wb");
+    fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
+    unsigned char out[3*sizeX];
+    for (int y = 0; y < sizeY; y++) {
+      const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
+      for (int x = 0; x < sizeX; x++) {
+        out[3*x + 0] = in[4*x + 0];
+        out[3*x + 1] = in[4*x + 1];
+        out[3*x + 2] = in[4*x +2 ];
+      }
+      fwrite(&out, 3*sizeX, sizeof(char), file);
+    }
+    fprintf(file, "\n");
+    fclose(file);
+  }
+
   /*! mini scene graph viewer widget. \internal Note that all handling
     of camera is almost exactly similar to the code in volView;
     might make sense to move that into a common class! */
@@ -109,6 +133,7 @@ namespace ospray {
     virtual void reshape(const ospray::vec2i &newSize)
     {
       Glut3DWidget::reshape(newSize);
+      g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
@@ -200,16 +225,15 @@ namespace ospray {
         forceRedraw();
         break;
       case 'f':
-        {
-          g_fullScreen = !g_fullScreen;
-          if(g_fullScreen) glutFullScreen();
-          else glutPositionWindow(0,10);
-        }
+        g_fullScreen = !g_fullScreen;
+        if(g_fullScreen) glutFullScreen();
+        else glutPositionWindow(0,10);
         break;
       case 'r':
-        {
-          viewPort = g_viewPort;
-        }
+        viewPort = g_viewPort;
+        break;
+      case 'p':
+        printf("-vp %f %f %f -vu %f %f %f -vi %f %f %f\n", viewPort.from.x, viewPort.from.y, viewPort.from.z, viewPort.up.x, viewPort.up.y, viewPort.up.z, viewPort.at.x, viewPort.at.y, viewPort.at.z);
         break;
       default:
         Glut3DWidget::keypress(key,where);
@@ -289,6 +313,10 @@ namespace ospray {
           double time = ospray::getSysTime()-benchStart;
           double avgFps = fpsSum/double(frameID-g_benchWarmup);
           printf("Benchmark: time: %f avg fps: %f avg frame time: %f\n", time, avgFps, time/double(frameID-g_benchWarmup));
+
+          const uint32 * p = (uint32*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          writePPM("benchmark.ppm", g_windowSize.x, g_windowSize.y, p);
+
           exit(0);
         }
       
@@ -323,7 +351,13 @@ namespace ospray {
       ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();
-      ospUnmapFrameBuffer(ucharFB,fb);
+
+      if (outFileName && accumID == maxAccum) {
+        std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
+        writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+        exit(0);
+      }
+
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
 
@@ -487,6 +521,8 @@ namespace ospray {
         rendererType = av[++i];
       } else if (arg == "--always-redraw") {
         alwaysRedraw = true;
+      } else if (arg == "-o") {
+        outFileName = strdup(av[++i]);
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
       } else if (arg == "--spp" || arg == "-spp") {
@@ -533,7 +569,7 @@ namespace ospray {
       } else if (arg == "--no-default-material") {
         g_createDefaultMaterial = false;
       } else if (av[i][0] == '-') {
-        error("unkown commandline argument '"+arg+"'");
+        error("unknown commandline argument '"+arg+"'");
       } else {
         embree::FileName fn = arg;
         if (fn.ext() == "stl") {
@@ -546,6 +582,8 @@ namespace ospray {
           miniSG::importRIVL(*msgModel,fn);
         } else if (fn.ext() == "obj") {
           miniSG::importOBJ(*msgModel,fn);
+        } else if (fn.ext() == "hbp") {
+          miniSG::importHBP(*msgModel,fn);
         } else if (fn.ext() == "x3d") {
           miniSG::importX3D(*msgModel,fn); 
         } else if (fn.ext() == "astl") {

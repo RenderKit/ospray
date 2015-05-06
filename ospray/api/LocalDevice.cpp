@@ -191,7 +191,7 @@ namespace ospray {
       Assert2(model, "null model in LocalDevice::removeGeometry");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(model, "null geometry in LocalDevice::removeGeometry");
+      Assert2(geometry, "null geometry in LocalDevice::removeGeometry");
 
       GeometryLocator locator;
       locator.ptr = geometry;
