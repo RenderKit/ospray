@@ -38,7 +38,7 @@
 uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator, const varying vec3i &index);
 
 //! Compute the value range of voxels contained in each cell of a brick in the grid.
-void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, StructuredVolume *uniform volume, const uniform vec3i &brickIndex);
+task void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, StructuredVolume *uniform volume);
 
 //! Get the volumetric value range of a cell.
 inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator, const varying vec3i &index, varying vec2f &value)
@@ -77,11 +77,7 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform _volume)
   accelerator->volume = volume;
 
   //! Compute the volumetric value range per cell.
-  //  launch[accelerator->brickCount.x, accelerator->brickCount.y, accelerator->brickCount.z] GridAccelerator_encodeVolumeBrick(accelerator, volume);
-  for (uniform int k=0 ; k < accelerator->brickCount.z ; k++)
-    for (uniform int j=0 ; j < accelerator->brickCount.y ; j++)
-      for (uniform int i=0 ; i < accelerator->brickCount.x ; i++)
-        GridAccelerator_encodeVolumeBrick(accelerator, volume, make_vec3i(i, j, k));
+  launch[accelerator->brickCount.x * accelerator->brickCount.y * accelerator->brickCount.z] GridAccelerator_encodeVolumeBrick(accelerator, volume);
 
   //! The completed acceleration structure.
   return accelerator;
@@ -104,8 +100,13 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator
   }
 }
 
-void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, StructuredVolume *uniform volume, const uniform vec3i &brickIndex)
+task void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator, StructuredVolume *uniform volume)
 {
+  //! Brick index from task index.
+  const uniform vec3i brickIndex = make_vec3i(taskIndex % accelerator->brickCount.x,
+                                              (taskIndex / accelerator->brickCount.x) % accelerator->brickCount.y,
+                                              taskIndex / (accelerator->brickCount.x*accelerator->brickCount.y));
+
   //! The 1D address of the brick in the grid.
   uniform uint32 brickAddress = brickIndex.x + accelerator->brickCount.x * (brickIndex.y + accelerator->brickCount.y * (uint32) brickIndex.z);
 
