@@ -23,12 +23,6 @@ export void *uniform OBJMaterial_create(void *uniform cppE)
   return mat;
 }
 
-export void OBJMaterial_destroy(void *uniform _mat)
-{
-  uniform OBJMaterial *uniform mat = (uniform OBJMaterial *uniform)_mat;
-  delete(mat);
-}
-
 export void OBJMaterial_set(void *uniform _mat,
                             const void *uniform map_d, 
                             const uniform float &d,

@@ -50,6 +50,7 @@ SET(MOC_HEADERS
   IsosurfaceEditor.h
   LightEditor.h
   LinearTransferFunctionWidget.h
+  PreferencesDialog.h
   SliceWidget.h
   TransferFunctionEditor.h
   VolumeViewer.h

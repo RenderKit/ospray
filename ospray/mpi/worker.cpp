@@ -31,7 +31,10 @@
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
 #include "ospray/mpi/MPILoadBalancer.h"
+#include "ospray/transferFunction/TransferFunction.h"
+
 // std
+#include <algorithm>
 #include <unistd.h> // for gethostname()
 
 namespace ospray {
@@ -40,6 +43,13 @@ namespace ospray {
     using std::endl;
 
     static const int HOST_NAME_MAX = 10000;
+
+    struct GeometryLocator {
+      bool operator()(const embree::Ref<ospray::Geometry> &g) const {
+        return ptr == &*g;
+      }
+      Geometry *ptr;
+    };
 
     void embreeErrorFunc(const RTCError code, const char* str)
     {
@@ -72,6 +82,8 @@ namespace ospray {
       std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
+      else if(numThreads > 0)
+        embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
 
       if (rtcGetError() != RTC_NO_ERROR) {
@@ -409,6 +421,22 @@ namespace ospray {
           model->geometry.push_back(geom);
         } break;
 
+        case api::MPIDevice::CMD_REMOVE_GEOMETRY: {
+          const mpi::Handle modelHandle = cmd.get_handle();
+          const mpi::Handle geomHandle = cmd.get_handle();
+          Model *model = (Model*)modelHandle.lookup();
+          Assert(model);
+          Geometry *geom = (Geometry*)geomHandle.lookup();
+          Assert(geom);
+
+          GeometryLocator locator;
+          locator.ptr = geom;
+          Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
+          if(it != model->geometry.end()) {
+            model->geometry.erase(it);
+          }
+        } break;
+
         case api::MPIDevice::CMD_ADD_VOLUME: {
           const mpi::Handle modelHandle = cmd.get_handle();
           const mpi::Handle volumeHandle = cmd.get_handle();
@@ -448,6 +476,84 @@ namespace ospray {
           Assert(obj);
           handle.freeObject();
         } break;
+
+        case api::MPIDevice::CMD_GET_TYPE: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+
+          if (worker.rank == 0) {
+            ManagedObject *object = handle.lookup();
+            Assert(object);
+
+            struct ReturnValue { int success; OSPDataType value; } result;
+
+            if (strlen(name) == 0) {
+              result.success = 1;
+              result.value = object->managedObjectType;
+            } else {
+              ManagedObject::Param *param = object->findParam(name);
+              bool foundParameter = (param != NULL);
+
+              result.success = foundParameter ? result.value = param->type, 1 : 0;
+            }
+
+            cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
+            cmd.flush();
+          }
+        } break;
+
+        case api::MPIDevice::CMD_GET_VALUE: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          OSPDataType type = (OSPDataType) cmd.get_int32();
+
+          if (worker.rank == 0) {
+            ManagedObject *object = handle.lookup();
+            Assert(object);
+
+            ManagedObject::Param *param = object->findParam(name);
+            bool foundParameter = (param == NULL || param->type != type) ? false : true;
+
+            switch (type) {
+              case OSP_STRING: {
+                struct ReturnValue { int success; char value[2048]; } result;
+                result.success = foundParameter ? memcpy(&result.value[0], param->s, 2048), 1 : 0;
+                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
+              } break;
+              case OSP_FLOAT: {
+                struct ReturnValue { int success; float value; } result;
+                result.success = foundParameter ? result.value = ((float *) param->f)[0], 1 : 0;
+                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
+              } break;
+              case OSP_FLOAT2: {
+                struct ReturnValue { int success; vec2f value; } result;
+                result.success = foundParameter ? result.value = ((vec2f *) param->f)[0], 1 : 0;
+                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
+              } break;
+              case OSP_FLOAT3: {
+                struct ReturnValue { int success; vec3f value; } result;
+                result.success = foundParameter ? result.value = ((vec3f *) param->f)[0], 1 : 0;
+                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
+              } break;
+              case OSP_INT: {
+                struct ReturnValue { int success; int value; } result;
+                result.success = foundParameter ? result.value = ((int *) param->i)[0], 1 : 0;
+                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
+              } break;
+              case OSP_INT3: {
+                struct ReturnValue { int success; vec3i value; } result;
+                result.success = foundParameter ? result.value = ((vec3i *) param->i)[0], 1 : 0;
+                cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
+              } break;
+              default: {
+                throw std::runtime_error("CMD_GET_VALUE not implemented for type");
+              }
+            }
+            cmd.flush();
+          }
+
+        } break;
+
         case api::MPIDevice::CMD_SET_MATERIAL: {
           const mpi::Handle geoHandle = cmd.get_handle();
           const mpi::Handle matHandle = cmd.get_handle();
@@ -455,6 +561,7 @@ namespace ospray {
           Material *mat = (Material*)matHandle.lookup();
           geo->setMaterial(mat);
         } break;
+
         case api::MPIDevice::CMD_SET_PIXELOP: {
           const mpi::Handle fbHandle = cmd.get_handle();
           const mpi::Handle poHandle = cmd.get_handle();
@@ -464,6 +571,29 @@ namespace ospray {
           assert(po);
           fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
         } break;
+
+        case api::MPIDevice::CMD_SET_REGION: {
+          const mpi::Handle volumeHandle = cmd.get_handle();
+          const mpi::Handle dataHandle = cmd.get_handle();
+          const vec3i index = cmd.get_vec3i();
+          const vec3i count = cmd.get_vec3i();
+
+          Volume *volume = (Volume *)volumeHandle.lookup();
+          Assert(volume);
+
+          Data *data = (Data *)dataHandle.lookup();
+          Assert(data);
+
+          int success = volume->setRegion(data->data, index, count);
+
+          int myFail = (success == 0);
+          int sumFail = 0;
+          rc = MPI_Allreduce(&myFail,&sumFail,1,MPI_INT,MPI_SUM,worker.comm);
+
+          if (worker.rank == 0)
+            MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
+        } break;
+
         case api::MPIDevice::CMD_SET_STRING: {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();

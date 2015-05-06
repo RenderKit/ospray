@@ -59,12 +59,6 @@ export void *uniform AmbientLight_create(void *uniform cppEquivalent)
   return self;
 }
 
-//! Destroy an ispc-side AmbientLight object
-export void AmbientLight_destroy(void *uniform self)
-{
-  delete self;
-}
-
 //! Set the parameters of an ispc-side AmbientLight object
 export void AmbientLight_set(void *uniform _self,
                              const uniform vec3f &radiance)

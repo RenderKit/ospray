@@ -27,7 +27,7 @@ export void *uniform Model_create(void *uniform cppE)
   model->embreeSceneHandle = NULL;
   model->geometry          = NULL;
   model->volumes           = NULL;
-  return model;
+  return (void *uniform)model;
 }
 
 export void Model_init(void *uniform _model, uniform int32 numGeometries, uniform int32 numVolumes)
@@ -57,10 +57,10 @@ export void Model_init(void *uniform _model, uniform int32 numGeometries, unifor
     model->volumes = NULL;
 }
 
-export uniform RTCScene Model_getEmbreeSceneHandle(void *uniform _model)
+export void *uniform Model_getEmbreeSceneHandle(void *uniform _model)
 {
   uniform Model *uniform model = (uniform Model *uniform)_model;
-  return model->embreeSceneHandle;
+  return (void *uniform)model->embreeSceneHandle;
 }
 
 export void Model_setGeometry(void *uniform _model,

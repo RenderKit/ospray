@@ -38,7 +38,9 @@ namespace ospray {
 
       lightData = (Data*)getParamData("lights");
 
-      if (lightData && lightArray.empty())
+      lightArray.clear();
+
+      if (lightData)
         for (int i = 0; i < lightData->size(); i++)
           lightArray.push_back(((Light**)lightData->data)[i]->getIE());
 
@@ -48,6 +50,7 @@ namespace ospray {
       bgColor = getParam3f("bgColor", vec3f(1.f));
 
       bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
+
       ispc::OBJRenderer_set(getIE(),
                             (ispc::vec3f&)bgColor,
                             shadowsEnabled,

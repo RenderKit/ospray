@@ -79,11 +79,12 @@ namespace ospray {
     while (1) {
       const size_t thisJobID = numJobsStarted++;
       if (thisJobID >= numJobsInTask) 
-        break;
+       break;
       
       run(thisJobID);
       ++myCompleted;
     }
+
     if (myCompleted != 0) {
       const size_t nowCompleted = (numJobsCompleted += myCompleted); //++numJobsCompleted;
       if (nowCompleted == numJobsInTask) {
@@ -247,8 +248,6 @@ namespace ospray {
       numThreads = std::min(numThreads,(size_t)embree::getNumberOfLogicalThreads());
 #endif
     }
-
-    PRINT(numThreads);
 
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {

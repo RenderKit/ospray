@@ -17,7 +17,7 @@
 #include "OSPCommon.h"
 // embree
 #include "embree2/rtcore.h"
-
+#include "common/sys/sysinfo.h"
 // std
 #include <time.h>
 #include <sys/time.h>
@@ -29,7 +29,14 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;
   bool debugMode = false;
+  uint32 numThreads = 0; //!< 0 for default number of Embree threads.
 
+  WarnOnce::WarnOnce(const std::string &s) 
+    : s(s) 
+  {
+    std::cout << "Warning: " << s << " (only reporting first occurrence)" << std::endl;
+  }
+  
   /*! for debugging. compute a checksum for given area range... */
   void *computeCheckSum(const void *ptr, size_t numBytes)
   {
@@ -68,6 +75,13 @@ namespace ospray {
 
   void init(int *_ac, const char ***_av)
   {
+#if !OSPRAY_TARGET_MIC
+    // if we're not on a MIC, check for SSE4.2 as minimum supported ISA.
+    int cpuFeatures = embree::getCPUFeatures();
+    if ((cpuFeatures & embree::CPU_FEATURE_SSE42) == 0)
+      throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.2.");
+#endif
+
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
     for (int i=1;i<ac;) {
@@ -83,6 +97,9 @@ namespace ospray {
         removeArgs(ac,av,i,1);
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);
+        removeArgs(ac,av,i,2);
+      } else if (parm == "--osp:numthreads") {
+        numThreads = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
       } else {
         ++i;

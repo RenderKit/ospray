@@ -16,25 +16,40 @@
 
 #pragma once
 
-#include "ospray/math/bbox.ih"
-#include "Ray.ih"
+#include "ospray/volume/StructuredVolume.h"
 
-inline void boxtest(Ray& ray,
-                    uniform box3f& box,
-                    float& t0,
-                    float& t1)
-{
-  vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
-  vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
-  
-  t0 = max(max(ray.t0, 
-               min(mins.x,maxs.x)),
-           max(min(mins.y,maxs.y),
-               min(mins.z,maxs.z)));
-  
-  t1 = min(min(ray.t, 
-               max(mins.x,maxs.x)),
-           min(max(mins.y,maxs.y),
-               max(mins.z,maxs.z)));
-}
+namespace ospray {
 
+  //! \brief A concrete implementation of the StructuredVolume class
+  //!  with 32-bit addressing in which the voxel data is laid out in
+  //!  memory in XYZ order and provided via a shared data buffer.
+  //!
+  class SharedStructuredVolume : public StructuredVolume {
+  public:
+
+    //! Constructor.
+    SharedStructuredVolume() {};
+
+    //! Destructor.
+    virtual ~SharedStructuredVolume() {};
+
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::SharedStructuredVolume<" + voxelType + ">"); }
+
+    //! Allocate storage and populate the volume, called through the OSPRay API.
+    virtual void commit();
+
+    //! Copy voxels into the volume at the given index; not allowed on SharedStructuredVolume.
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) {
+      exitOnCondition(true, "setRegion() not allowed on this volume type; volume data must be provided via the voxelData parameter");
+      return 0;
+    }
+
+  protected:
+
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC();
+
+  };
+
+} // ::ospray

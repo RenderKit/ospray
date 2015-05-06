@@ -31,6 +31,7 @@
 #include "ospray/geometry/TriangleMesh.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/volume/Volume.h"
+#include "ospray/transferFunction/TransferFunction.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/render/LoadBalancer.h"
 #include "ospray/texture/Texture2D.h"
@@ -448,20 +449,20 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
-    void ospray_coi_unproject(uint32_t         numBuffers,
-                              void**           bufferPtr,
-                              uint64_t*        bufferSize,
-                              void*            argsPtr,
-                              uint16_t         argsSize,
-                              void*            retVal,
-                              uint16_t         retValSize)
+    void ospray_coi_pick(uint32_t         numBuffers,
+                         void**           bufferPtr,
+                         uint64_t*        bufferSize,
+                         void*            argsPtr,
+                         uint16_t         argsSize,
+                         void*            retVal,
+                         uint16_t         retValSize)
     {
       DataStream args(argsPtr);
       Handle _renderer = args.get<Handle>();
       vec2f screenPos = args.get<vec2f>();
 
       Renderer *renderer = (Renderer *)_renderer.lookup();
-      OSPPickData retData = renderer->unproject(screenPos);
+      OSPPickResult retData = renderer->pick(screenPos);
       memcpy(retVal, &retData, retValSize);
 
       if (ospray::debugMode) COIProcessProxyFlush();
@@ -963,6 +964,8 @@ int main(int ac, const char **av)
   embreeConfig << "verbose=" << ospray::logLevel;
   if (ospray::debugMode) 
     embreeConfig << ",threads=1";
+  else if(ospray::numThreads > 0)
+    embreeConfig << " threads=" << ospray::numThreads;
   rtcInit(embreeConfig.str().c_str());
   //rtcInit("verbose=2,traverser=single,threads=1");
   //rtcInit("verbose=2,traverser=chunk");

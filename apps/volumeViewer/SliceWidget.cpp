@@ -17,9 +17,9 @@
 #include "SliceWidget.h"
 
 SliceWidget::SliceWidget(std::vector<OSPModel> models, 
-                         osp::box3f volumeBounds)
+                         osp::box3f boundingBox)
   : models(models),
-    volumeBounds(volumeBounds),
+    boundingBox(boundingBox),
     triangleMesh(NULL),
     originSliderAnimationDirection(1) 
 {  
@@ -27,7 +27,7 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   if(models.size() == 0)
     throw std::runtime_error("must be constructed with existing model(s)");
 
-  if(volume(volumeBounds) <= 0.f)
+  if(volume(boundingBox) <= 0.f)
     throw std::runtime_error("invalid volume bounds");
 
   //! Setup UI elements.
@@ -53,20 +53,26 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * formWidget = new QWidget();
   QFormLayout * formLayout = new QFormLayout();
   formWidget->setLayout(formLayout);
+  QMargins margins = formLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  formLayout->setContentsMargins(margins);
   layout->addWidget(formWidget);
 
   //! Origin parameters with default values.
   QWidget * originWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
-  originXSpinBox.setRange(volumeBounds.lower.x, volumeBounds.upper.x);
-  originYSpinBox.setRange(volumeBounds.lower.y, volumeBounds.upper.y);
-  originZSpinBox.setRange(volumeBounds.lower.z, volumeBounds.upper.z);
+  originXSpinBox.setRange(boundingBox.lower.x, boundingBox.upper.x);
+  originYSpinBox.setRange(boundingBox.lower.y, boundingBox.upper.y);
+  originZSpinBox.setRange(boundingBox.lower.z, boundingBox.upper.z);
 
-  originXSpinBox.setValue(0.5 * (volumeBounds.lower.x + volumeBounds.upper.x));
-  originYSpinBox.setValue(0.5 * (volumeBounds.lower.y + volumeBounds.upper.y));
-  originZSpinBox.setValue(0.5 * (volumeBounds.lower.z + volumeBounds.upper.z));
+  originXSpinBox.setValue(0.5 * (boundingBox.lower.x + boundingBox.upper.x));
+  originYSpinBox.setValue(0.5 * (boundingBox.lower.y + boundingBox.upper.y));
+  originZSpinBox.setValue(0.5 * (boundingBox.lower.z + boundingBox.upper.z));
 
   connect(&originXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
   connect(&originYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
@@ -82,6 +88,9 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * normalWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   normalWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
   normalXSpinBox.setRange(-1., 1.);
   normalYSpinBox.setRange(-1., 1.);
@@ -106,6 +115,9 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   QWidget * originSliderWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originSliderWidget->setLayout(hboxLayout);
+  margins = hboxLayout->contentsMargins();
+  margins.setTop(0); margins.setBottom(0);
+  hboxLayout->setContentsMargins(margins);
 
   originSlider.setOrientation(Qt::Horizontal);
   originSlider.setValue(0.5 * (originSlider.maximum() - originSlider.minimum()));
@@ -251,7 +263,7 @@ void SliceWidget::apply() {
   osp::vec3f b2 = cross(b1, normal);
 
   //! For now just make a slice sufficiently large to span the volume.
-  const float size = sqrtf(2.f);
+  const float size = length(boundingBox.size());
 
   //! Create the triangles forming the slice.
   osp::vec3f lowerLeft(origin - size*b1 - size*b2);
@@ -344,13 +356,13 @@ void SliceWidget::originSliderValueChanged(int value) {
   osp::vec3f normal = normalize(osp::vec3f(normalXSpinBox.value(), normalYSpinBox.value(), normalZSpinBox.value()));
 
   //! Compute allowed range along normal for the volume bounds.
-  osp::vec3f upper(normal.x >= 0.f ? volumeBounds.upper.x : volumeBounds.lower.x,
-                   normal.y >= 0.f ? volumeBounds.upper.y : volumeBounds.lower.y,
-                   normal.z >= 0.f ? volumeBounds.upper.z : volumeBounds.lower.z);
+  osp::vec3f upper(normal.x >= 0.f ? boundingBox.upper.x : boundingBox.lower.x,
+                   normal.y >= 0.f ? boundingBox.upper.y : boundingBox.lower.y,
+                   normal.z >= 0.f ? boundingBox.upper.z : boundingBox.lower.z);
 
-  osp::vec3f lower(normal.x >= 0.f ? volumeBounds.lower.x : volumeBounds.upper.x,
-                   normal.y >= 0.f ? volumeBounds.lower.y : volumeBounds.upper.y,
-                   normal.z >= 0.f ? volumeBounds.lower.z : volumeBounds.upper.z);
+  osp::vec3f lower(normal.x >= 0.f ? boundingBox.lower.x : boundingBox.upper.x,
+                   normal.y >= 0.f ? boundingBox.lower.y : boundingBox.upper.y,
+                   normal.z >= 0.f ? boundingBox.lower.z : boundingBox.upper.z);
 
   float tMax = dot(abs(upper - origin), abs(normal));
   float tMin = -dot(abs(lower - origin), abs(normal));
@@ -363,7 +375,7 @@ void SliceWidget::originSliderValueChanged(int value) {
   t = std::max(std::min(t, tMax-epsilon), tMin+epsilon);
 
   //! Compute updated origin, clamped within the volume bounds.
-  osp::vec3f updatedOrigin = clamp(origin + t*normal, volumeBounds.lower, volumeBounds.upper);
+  osp::vec3f updatedOrigin = clamp(origin + t*normal, boundingBox.lower, boundingBox.upper);
 
   //! Finally, set the new origin value.
   originXSpinBox.setValue(updatedOrigin.x);

@@ -19,6 +19,7 @@
 // widgets
 #include "widgets/affineSpaceManipulator/QAffineSpaceManipulator.h"
 #include "widgets/transferFunction/QTransferFunctionEditor.h"
+#include "widgets/lightManipulator/QLightManipulator.h"
 // scene graph
 #include "sg/Renderer.h"
 
@@ -115,48 +116,53 @@ namespace ospray {
       
     public:
       ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen);
-    public slots:
-      //! signals that the render widget changed one of the inputs
-      //! (most likely, that the camera position got changed)
-      void cameraChanged();
 
-      //! print the camera on the command line (triggered by toolbar/menu).
-      void printCameraAction();
-      //! take a screen shot
-      void screenShotAction();
+      void toggleUpAxis(int axis);
+ 
+      public slots:
+        //! signals that the render widget changed one of the inputs
+        //! (most likely, that the camera position got changed)
+        void cameraChanged();
 
-      void render();
+        //! print the camera on the command line (triggered by toolbar/menu).
+        void printCameraAction();
+        //! take a screen shot
+        void screenShotAction();
 
-      void setWorld(Ref<sg::World> newWorld);
+        void render();
 
-      /*! enable/disable display of frame rate */
-      void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
+        void setWorld(Ref<sg::World> newWorld);
+
+        /*! enable/disable display of frame rate */
+        void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
+        
+        //! Catches that the light manipulator has changed our default light
+        void lightChanged();
+        
 
     protected:
-      //! create the lower-side time step slider (for models that have
-      //! time steps; won't do anything for models that don't)
-      void createTimeSlider();
-      //! create the widet on the side that'll host all the editing widgets
-      void createEditorWidgetStack();
-      //! create lights editor widget
-      void createLightsEditor();
-      //! create a transfer fucntion editor
-      void createTransferFunctionEditor();
-	  //! use escape to quit
-	  virtual void keyPressEvent(QKeyEvent *event);
+        //! create the lower-side time step slider (for models that have
+        //! time steps; won't do anything for models that don't)
+        void createTimeSlider();
+        //! create the widet on the side that'll host all the editing widgets
+        void createEditorWidgetStack();
+        //! create a transfer fucntion editor
+        void createTransferFunctionEditor();
+        //! create a light manipulator
+        void createLightManipulator();
+        //! use escape to quit
+        virtual void keyPressEvent(QKeyEvent *event);
 
-      // //! the ospray renderer we're using to render our frame
-      // OSPRayRenderer *renderer;
+        // -------------------------------------------------------
+        // qt gui components 
+        // -------------------------------------------------------
+        EditorWidgetStack        *editorWidgetStack;
+        QDockWidget              *editorWidgetDock;
+        QToolBar                 *toolBar;
+        QTransferFunctionEditor  *transferFunctionEditor;
+        QLightManipulator        *lightEditor;
 
-      // -------------------------------------------------------
-      // qt gui components 
-      // -------------------------------------------------------
-      EditorWidgetStack        *editorWidgetStack;
-      QDockWidget              *editorWidgetDock;
-      QToolBar                 *toolBar;
-      QTransferFunctionEditor  *transferFunctionEditor;
-
-      Ref<sg::Renderer> sgRenderer;
+        Ref<sg::Renderer> sgRenderer;
 
     public:
       OSPRayRenderWidget       *renderWidget;

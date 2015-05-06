@@ -26,11 +26,6 @@ namespace ospray {
     ispcEquivalent = ispc::DirectionalLight_create(this);
   }
 
-  DirectionalLight::~DirectionalLight() {
-    ispc::DirectionalLight_destroy(getIE());
-  }
-
-
   //! Commit parameters understood by the DirectionalLight
   void DirectionalLight::commit() {
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));

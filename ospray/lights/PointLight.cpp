@@ -27,10 +27,6 @@ namespace ospray {
     ispcEquivalent = ispc::PointLight_create(this);
   }
 
-  PointLight::~PointLight() {
-    ispc::PointLight_destroy(getIE());
-  }
-
   //! Commit parameters understood by the PointLight
   void PointLight::commit() {
     position  = getParam3f("position", vec3f(0.f));

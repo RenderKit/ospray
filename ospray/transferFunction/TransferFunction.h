@@ -57,9 +57,6 @@ namespace ospray {
     //! Create a transfer function of the given type.
     static TransferFunction *createInstance(std::string type);
 
-    //! Get the ISPC transfer function.
-    void *getEquivalentISPC() const { return(getIE()); }
-
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::TransferFunction"); }
 

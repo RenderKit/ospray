@@ -44,16 +44,38 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av);
 
 
-    /*! in this mode ("ospray on ranks" mode, or "ranks" mode)
-      - the user has launched mpirun explicitly, and all processes are *already* running
-      - the app is supposed to be running *only* on the root process
-      - ospray is supposed to be running on all ranks *other than* the root
-      - "ranks" means all processes with world.rank >= 1
-      
-      For this function, we assume: 
-      - all *all* MPI_COMM_WORLD processes are going into this function
+    /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
+        user has launched the app across all ranks using mpirun "<all
+        rank> <app>"; no new processes need to get launched.
+
+        Based on the 'startworkers' flag, this function can set up ospray in one of two modes:
+        
+        in "workers" mode (startworkes=true) all ranks > 0 become
+        workers, and will NOT return to the application; rank 0 is the
+        master that controls those workers but doesn't do any
+        rendeirng (we may at some point allow the master to join in
+        working as well, but currently this is not implemented). to
+        reach that mode we call this function with
+        'startworkers=true', which will make sure that, even though
+        all ranks _called_ mpiinit, only rank 0 will ever return to
+        the app, while all other ranks will automatically go to
+        running worker code, and never ever return from this function.
+
+        b) in "distribtued" mode the app itself is distributed, and
+        will use the ospray distributed api to control ospray in a
+        data-distributed mode. in this way, we'll call this function
+        with startWorkers=false, which will let all ranks return from
+        this function to do further work in the app.
+
+        For this function, we assume: 
+
+        - all *all* MPI_COMM_WORLD processes are going into this function
+
+        - this fct is called from ospInit (with startworkers=true) or
+          from ospdMpiInit (w/ startwoe3kers = false)
     */
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
+                                                      bool ranksBecomeWorkers)
     {
       MPI_Status status;
       mpi::init(ac,av);
@@ -123,8 +145,13 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, all workers will enter their worker loop (ie, they will *not* return
-        mpi::runWorker(ac,av);
-        /* no return here - 'runWorker' will never return */
+        if (ranksBecomeWorkers) {
+          mpi::runWorker(ac,av);
+          /* no return here - 'runWorker' will never return */
+        } else {
+          cout << "#osp:mpi: distributed mode detected, returning device on all ranks!" << endl << std::flush;
+          return new api::MPIDevice(ac,av);
+        }
       }
       // nobody should ever come here ...
       return NULL;
@@ -269,6 +296,26 @@ namespace ospray {
       return new api::MPIDevice(ac,av);
     }
 
+    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
+    {
+      int initialized = false;
+      MPI_CALL(Initialized(&initialized));
+      if (initialized) 
+        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized when calling ospMpiInit()");
+      
+      PING;
+      ospray::mpi::init(ac,(const char **)*av);
+      if (mpi::world.size < 2) {
+        throw std::runtime_error("#osp:mpi: trying to run distributed API mode with a single rank? (did you forget the 'mpirun'?)");
+      }
+
+      PING;
+      ospray::api::Device::current
+        = ospray::mpi::createMPI_runOnExistingRanks(ac,(const char**)*av,false);
+      PRINT(ospray::api::Device::current);
+      PING;
+    }
+    
   }
 
   namespace api {
@@ -290,7 +337,7 @@ namespace ospray {
       // mpi::init(_ac,_av);
 
       if (mpi::world.size !=1) {
-        if (mpi::world.rank != 0) {
+        if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
           PRINT(mpi::world.size);
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
@@ -476,11 +523,34 @@ namespace ospray {
     }
 
     /*! Copy data into the given object. */
-    int MPIDevice::setRegion(OSPVolume object, const void *source, 
-                             const vec3i &index, const vec3i &count) 
+    int MPIDevice::setRegion(OSPVolume _volume, const void *source,
+                             const vec3i &index, const vec3i &count)
     {
-      //! Not yet implemented.
-      return(false);
+      Assert(_volume);
+      Assert(source);
+
+      char *typeString = NULL;
+      getString(_volume, "voxelType", &typeString);
+      OSPDataType type = typeForString(typeString);
+      Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
+
+      OSPData data = newData(size_t(count.x) * count.y * count.z, type, (void *)source, OSP_DATA_SHARED_BUFFER);
+
+      cmd.newCommand(CMD_SET_REGION);
+      cmd.send((const mpi::Handle &)_volume);
+      cmd.send((const mpi::Handle &)data);
+      cmd.send(index);
+      cmd.send(count);
+
+      cmd.flush();
+
+      release(data);
+
+      int numFails = 0;
+      MPI_Status status;
+      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+
+      return (numFails == 0);
     }
 
     /*! assign (named) string parameter to an object */
@@ -618,19 +688,39 @@ namespace ospray {
     }
 
     /*! Get the named scalar floating point value associated with an object. */
-    int MPIDevice::getf(OSPObject object, const char *name, float *value) {
+    int MPIDevice::getf(OSPObject object, const char *name, float *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT);
+      cmd.flush();
 
+      struct ReturnValue { int success; float value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the named scalar integer associated with an object. */
-    int MPIDevice::geti(OSPObject object, const char *name, int *value) {
+    int MPIDevice::geti(OSPObject object, const char *name, int *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_INT);
+      cmd.flush();
 
+      struct ReturnValue { int success; int value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the material associated with a geometry object. */
@@ -665,44 +755,92 @@ namespace ospray {
 
     }
 
-    /*! Get a pointer to a copy of the named character string associated with an object. */
-    int MPIDevice::getString(OSPObject object, const char *name, char **value) {
+    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+    int MPIDevice::getType(OSPObject object, const char *name, OSPDataType *value)
+    {
+      Assert(object);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_TYPE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name ? name : "\0");
+      cmd.flush();
 
+      struct ReturnValue { int success; OSPDataType value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
-    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
-    int MPIDevice::getType(OSPObject object, const char *name, OSPDataType *value) {
+    /*! Get a pointer to a copy of the named character string associated with an object. */
+    int MPIDevice::getString(OSPObject object, const char *name, char **value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_STRING);
+      cmd.flush();
 
+      struct ReturnValue { int success; char value[2048]; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = strdup(result.value), true : false;
     }
 
     /*! Get the named 2-vector floating point value associated with an object. */
-    int MPIDevice::getVec2f(OSPObject object, const char *name, vec2f *value) {
+    int MPIDevice::getVec2f(OSPObject object, const char *name, vec2f *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT2);
+      cmd.flush();
 
+      struct ReturnValue { int success; vec2f value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the named 3-vector floating point value associated with an object. */
-    int MPIDevice::getVec3f(OSPObject object, const char *name, vec3f *value) {
+    int MPIDevice::getVec3f(OSPObject object, const char *name, vec3f *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT3);
+      cmd.flush();
 
+      struct ReturnValue { int success; vec3f value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the named 3-vector integer value associated with an object. */
-    int MPIDevice::getVec3i(OSPObject object, const char *name, vec3i *value) {
+    int MPIDevice::getVec3i(OSPObject object, const char *name, vec3i *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_INT3);
+      cmd.flush();
 
+      struct ReturnValue { int success; vec3i value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! create a new pixelOp object (out of list of registered pixelOps) */
@@ -838,9 +976,6 @@ namespace ospray {
     {
       if (type == NULL)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
-      
-      if (_renderer == NULL) 
-        throw std::runtime_error("#osp:mpi:newLight: NULL renderer handle");
 
       mpi::Handle handle = mpi::Handle::alloc();
       
@@ -887,7 +1022,10 @@ namespace ospray {
     /*! remove an existing geometry from a model */
     void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
-      PING;
+      cmd.newCommand(CMD_REMOVE_GEOMETRY);
+      cmd.send((const mpi::Handle&)_model);
+      cmd.send((const mpi::Handle&)_geometry);
+      cmd.flush();
     }
 
 
@@ -964,7 +1102,7 @@ namespace ospray {
       cmd.flush();
       return (OSPTexture2D)(int64)handle;
     }
-    
+
   } // ::ospray::mpi
 } // ::ospray
 

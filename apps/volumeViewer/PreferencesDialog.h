@@ -17,13 +17,26 @@
 #pragma once
 
 #include <QtGui>
+#include <vector>
+#include <ospray/ospray.h>
 
 class VolumeViewer;
 
 class PreferencesDialog : public QDialog
 {
+Q_OBJECT
+
 public:
 
-  PreferencesDialog(VolumeViewer *volumeViewer);
+  PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boundingBox);
 
+protected slots:
+
+  void updateVolumeClippingBox();
+
+protected:
+
+  VolumeViewer *volumeViewer;
+
+  std::vector<QDoubleSpinBox *> volumeClippingBoxSpinBoxes;
 };

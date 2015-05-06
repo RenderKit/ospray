@@ -54,10 +54,6 @@ MACRO (INCLUDE_DIRECTORIES_ISPC)
   SET (ISPC_INCLUDE_DIR ${ISPC_INCLUDE_DIR} ${ARGN})
 ENDMACRO ()
 
-SET(ISPC_ADDRESSING 32 CACHE INT
-  "32vs64 bit addressing in ispc")
-MARK_AS_ADVANCED(ISPC_ADDRESSING)
-
 MACRO(CONFIGURE_ISPC)
 ENDMACRO()
 
@@ -75,13 +71,27 @@ MACRO (ispc_compile)
   ENDIF()
 
   IF (THIS_IS_MIC)
-    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h  --addressing=${ISPC_ADDRESSING})
+    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h  --addressing=32)
     #${ISPC_DIR}/examples/intrinsics/knc.h)
-    SET(ISPC_TARGET_EXT ".dev.cpp")
+#    SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()
-    SET(CMAKE_ISPC_FLAGS --target=${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING} --cpu=${OSPRAY_ISPC_CPU})
-    SET(ISPC_TARGET_EXT ".dev.o")
+    SET(CMAKE_ISPC_TARGET "")
+    SET(COMMA "")
+#    SET(ISPC_TARGET_EXT ".dev.o")
+    FOREACH(target ${OSPRAY_ISPC_TARGET_LIST}) 
+      SET(CMAKE_ISPC_TARGET "${CMAKE_ISPC_TARGET}${COMMA}${target}")
+      SET(COMMA ",")
+    ENDFOREACH()
+    SET(CMAKE_ISPC_FLAGS --target=${CMAKE_ISPC_TARGET} --addressing=32)
+#    SET(CMAKE_ISPC_FLAGS --target=${CMAKE_ISPC_TARGET} --addressing=32 --cpu=${OSPRAY_ISPC_CPU})
   ENDIF()
+
+	IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    SET(CMAKE_ISPC_OPT_FLAGS -O3)
+	ELSE()
+    SET(CMAKE_ISPC_OPT_FLAGS -O2 -g)
+	ENDIF()
+
 
   SET(ISPC_OBJECTS "")
   FOREACH(src ${ARGN})
@@ -115,36 +125,68 @@ MACRO (ispc_compile)
       STRING(REGEX REPLACE ";" "\\\\;" contents "${contents}")
       STRING(REGEX REPLACE "\n" ";"    contents "${contents}")
       FOREACH(dep ${contents})
-	IF (EXISTS ${dep})
-	  SET(deps ${deps} ${dep})
-	ENDIF (EXISTS ${dep})
+	      IF (EXISTS ${dep})
+	        SET(deps ${deps} ${dep})
+	      ENDIF (EXISTS ${dep})
       ENDFOREACH(dep ${contents})
     ENDIF ()
 
-    SET(ispc_compile_result "${outdir}/${fname}${ISPC_TARGET_EXT}")
+#    SET(ispc_compile_result "${outdir}/${fname}.dev.o")
+
+    LIST(LENGTH OSPRAY_ISPC_TARGET_LIST numIspcTargets)
+    IF (THIS_IS_MIC)
+      SET(outputs ${outdir}/${fname}.dev.cpp ${outdirh}/${fname}_ispc.h)
+      SET(main_output ${outdir}/${fname}.dev.cpp)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.cpp)
+    ELSEIF (${OSPRAY_BUILD_ISA} STREQUAL "AVX512")
+      SET(outputs ${outdir}/${fname}.dev.cpp ${outdirh}/${fname}_ispc.h)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.cpp)
+      SET(main_output ${outdir}/${fname}.dev.cpp)
+			SET(CMAKE_ISPC_FLAGS --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNL_Backend.h  --addressing=32)
+			SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512")
+    ELSEIF (${numIspcTargets} EQUAL 1)
+      SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
+      SET(main_output ${outdir}/${fname}.dev.o)
+    ELSE()
+      SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
+      SET(main_output ${outdir}/${fname}.dev.o)
+      FOREACH(target ${OSPRAY_ISPC_TARGET_LIST})
+	SET(outputs ${outputs} ${outdir}/${fname}.dev_${target}.o)
+	SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_${target}.o)
+      ENDFOREACH()
+    ENDIF()
+
+#    message("output ${outputs}")
     ADD_CUSTOM_COMMAND(
-      OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h
+      #OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h ${outdir}/${fname}.dev_sse4.o ${outdir}/${fname}.dev_avx.o ${outdir}/${fname}.dev_avx2.o
+      OUTPUT ${outputs}
       COMMAND mkdir -p ${outdir} \; ${ISPC_BINARY}
       -I ${CMAKE_CURRENT_SOURCE_DIR} 
       ${ISPC_INCLUDE_DIR_PARMS}
       ${ISPC_DEFINES}
       --arch=${ISPC_ARCHITECTURE}
       --pic
-      -O3
+      ${CMAKE_ISPC_OPT_FLAGS}
       --woff
       ${CMAKE_ISPC_FLAGS}
       --opt=fast-math
       -h ${outdirh}/${fname}_ispc.h
       -MMM  ${outdir}/${fname}.dev.idep 
-      -o ${ispc_compile_result}
+      -o ${main_output}
       ${input}
       \;
       DEPENDS ${input}
       ${deps})
-    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${ispc_compile_result})
-
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${ispc_compile_result})
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outputs})${outdir}/${fname}.dev.o)
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_sse4.o)
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_avx.o)
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_avx2.o)
+    
   ENDFOREACH()
-
+  
 ENDMACRO()
 
 

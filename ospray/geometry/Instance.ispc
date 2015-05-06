@@ -16,11 +16,11 @@
 
 // ospray
 #include "ospray/math/vec.ih"
-#include "ospray/math/affine.ih"
-#include "ospray/math/bbox.ih"
+#include "ospray/math/box.ih"
+#include "ospray/math/AffineSpace.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/Geometry.ih"
 #include "ospray/common/Model.ih"
+#include "ospray/geometry/Geometry.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
@@ -47,6 +47,10 @@ static void Instance_postIntersect(uniform Geometry *uniform _THIS,
   foreach_unique(geomID in ray.geomID) {
     uniform Geometry *uniform instancedGeometry = 
       (uniform Geometry *uniform)instancedModel->geometry[geomID];
+
+    dg.geometry = instancedGeometry;
+    dg.material = instancedGeometry->material;
+
     instancedGeometry->postIntersect(instancedGeometry,instancedModel,
                                      dg,ray,flags);
   }

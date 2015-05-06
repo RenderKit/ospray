@@ -38,8 +38,3 @@ static void Geometry_Constructor(uniform Geometry *uniform geometry,
   geometry->geomID   = geomID;
   geometry->postIntersect = postIntersect;
 }
-
-//! destructor for ispc-side Geometry object
-extern void Geometry_Destructor(uniform Geometry *uniform mesh)
-{
-}

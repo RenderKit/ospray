@@ -16,6 +16,7 @@
 
 #include "Managed.h"
 #include "Data.h"
+#include "OSPCommon_ispc.h"
 
 namespace ospray {
 
@@ -26,7 +27,11 @@ namespace ospray {
 
   /*! \brief destructor */
   ManagedObject::~ManagedObject() 
-  {}
+  {
+    // it is OK to potentially delete NULL, nothing bad happens ==> no need to check
+    ispc::delete_uniform(ispcEquivalent);
+    ispcEquivalent = NULL;
+  }
 
   /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
   void ManagedObject::commit() 

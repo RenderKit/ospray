@@ -29,10 +29,6 @@ namespace ospray {
     ispcEquivalent = ispc::SpotLight_create(this);
   }
 
-  SpotLight::~SpotLight() {
-    ispc::SpotLight_destroy(getIE());
-  }
-
   //!< Copy understood parameters into class members
   void SpotLight::commit() {
     position  = getParam3f("position", vec3f(0.f));

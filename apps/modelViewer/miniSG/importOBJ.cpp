@@ -296,6 +296,19 @@ namespace ospray {
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
           if (!strncmp(token, "map_Bump" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
+
+          if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
+          if (!strncmp(token, "colorMap" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Kd", loadTexture(path, std::string(token)),Material::Param::TEXTURE);  continue; }
+
+          if (!strncmp(token, "color", 5)) { parseSep(token += 5);  cur->setParam("color", getVec3f(token)); continue; }
+          if (!strncmp(token, "type", 4)) { parseSep(token += 4);  cur->type = std::string(token); cur->setParam("type", token); continue; }
+
+          // add anything else as float param
+          const char * ident = token;
+          token += strcspn(token, " \t");
+          *(char*)token = 0;
+          parseSepOpt(token += 1);
+          cur->setParam(ident, getFloat(token));
         }
       // if (cur) g_device->rtCommit(cur);
       cin.close();
