@@ -226,34 +226,37 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform flo
   GridAccelerator_intersect(accelerator, step, ray);
 }
 
-void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator, uniform float step, uniform float isovalue, varying Ray &ray)
+void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator, uniform float step, uniform float *uniform isovalues, uniform int numIsovalues, varying Ray &ray)
 {
   //! The associated volume.
   StructuredVolume *uniform volume = (StructuredVolume *uniform) accelerator->volume;
 
   //! Tentatively advance the ray.
-  ray.t += step;  if (ray.t >= ray.t1) return;
+  ray.t += step;
+  if (ray.t >= ray.t1) return;
 
   //! Compute the hit point in the local coordinate system.
-  vec3f localCoordinates; volume->transformWorldToLocal(volume, ray.org + ray.t * ray.dir, localCoordinates);
+  vec3f localCoordinates;
+  volume->transformWorldToLocal(volume, ray.org + ray.t * ray.dir, localCoordinates);
 
   //! Compute the 3D index of the cell containing the hit point.
   vec3i cellIndex = integer_cast(localCoordinates) >> CELL_WIDTH_BITCOUNT;
 
   //! If we visited this cell before then it must not be empty.
-  if (ray.geomID == cellIndex.x && ray.primID == cellIndex.y && ray.instID == cellIndex.z) return;
+  if (ray.geomID == cellIndex.x && ray.primID == cellIndex.y && ray.instID == cellIndex.z)
+    return;
 
   //! Track the hit cell.
   ray.geomID = cellIndex.x;  ray.primID = cellIndex.y;  ray.instID = cellIndex.z;
 
   //! Get the volumetric value range of the cell.
-  vec2f cellRange;  GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
+  vec2f cellRange;
+  GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
 
-  //! See if isovalue is in volumetric range.
-  bool isovalueInRange = (isovalue >= cellRange.x && isovalue <= cellRange.y);
-
-  //! Return the hit point if the grid cell contains the isovalue.
-  if (isovalueInRange) return;
+  //! Return the hit point if the grid cell contains an isovalue.
+  for (uniform int i=0; i<numIsovalues; i++)
+    if (isovalues[i] >= cellRange.x && isovalues[i] <= cellRange.y)
+      return;
 
   //! Bounds of the grid cell in world coordinates.
   box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
@@ -265,5 +268,5 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator, u
   ray.t += floor(abs(cellInterval.y - ray.t) / step) * step;
 
   //! Rinse and repeat.
-  GridAccelerator_intersectIsosurface(accelerator, step, isovalue, ray);
+  GridAccelerator_intersectIsosurface(accelerator, step, isovalues, numIsovalues, ray);
 }
