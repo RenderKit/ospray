@@ -17,6 +17,10 @@
 #include "common/default.h"
 #include "scene.h"
 
+//#if defined(__AVX__)
+//# include "simd/avx.h"
+//#endif
+
 namespace embree
 {
 #define size_t int  // FIXME: workaround of ISPC bug

@@ -605,7 +605,8 @@ namespace embree
 
 #endif
   }
-  
+
+#ifndef __EMBREE_KNL_WORKAROUND__
   RTCORE_API void rtcIntersect16 (const void* valid, RTCScene scene, RTCRay16& ray) 
   {
     TRACE(rtcIntersect16);
@@ -632,6 +633,7 @@ namespace embree
 
 #endif
   }
+#endif
   
   RTCORE_API void rtcOccluded (RTCScene scene, RTCRay& ray) 
   {
