@@ -48,7 +48,7 @@ namespace ospray {
   void DFB::AlphaBlendTile_simple::newFrame()
   {
     //    PING;
-    assert(bufferedTile.emtpy());
+    assert(bufferedTile.empty());
   }
   
   void computeSortOrder(DFB::AlphaBlendTile_simple::BufferedTile *t)

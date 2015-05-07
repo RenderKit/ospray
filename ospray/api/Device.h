@@ -212,8 +212,16 @@ namespace ospray {
         throw "instances not implemented";
       }
 
+      /*! perform a pick operation */
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) 
-      { throw std::runtime_error("pick() not impelemnted for this device"); };
+      { 
+        throw std::runtime_error("pick() not impelemnted for this device"); 
+      };
+
+      /*! switch API mode for distriubted API extensions */
+      virtual void apiMode(OSPDApiMode mode)
+      { throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); }
+
     };
   } // ::ospray::api
 } // ::ospray

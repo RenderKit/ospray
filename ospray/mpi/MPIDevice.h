@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
+
 #include "MPICommon.h"
 #include "ospray/api/Device.h"
 #include "CommandStream.h"
@@ -22,9 +24,9 @@
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
 
 namespace ospray {
-  namespace api {
+  namespace mpi {
 
-    struct MPIDevice : public Device {
+    struct MPIDevice : public api::Device {
       typedef ospray::mpi::CommandStream CommandStream;
 
       CommandStream cmd;
@@ -66,6 +68,8 @@ namespace ospray {
 
         CMD_SET_PIXELOP,
         CMD_NEW_PIXELOP,
+
+        CMD_API_MODE,
 
         CMD_USER
       } CommandTag;
@@ -248,9 +252,21 @@ namespace ospray {
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(int width, int height, 
                                         OSPDataType type, void *data, int flags);
+
+      /*! switch API mode for distriubted API extensions */
+      virtual void apiMode(OSPDApiMode mode);
+
+      OSPDApiMode currentApiMode;
     };
 
-  } // ::ospray::api
+    // ==================================================================
+    // Helper functions
+    // ==================================================================
+
+    /*! return a string represenging the given API Mode */
+    const char *apiModeName(OSPDApiMode mode);
+
+  } // ::ospray::mpi
 } // ::ospray
 
 

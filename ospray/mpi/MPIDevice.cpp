@@ -119,7 +119,7 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, root proc(s) will return, initialize the MPI device, then return to the app
-        return new api::MPIDevice(ac,av);
+        return new mpi::MPIDevice(ac,av);
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
@@ -150,7 +150,7 @@ namespace ospray {
           /* no return here - 'runWorker' will never return */
         } else {
           cout << "#osp:mpi: distributed mode detected, returning device on all ranks!" << endl << std::flush;
-          return new api::MPIDevice(ac,av);
+          return new mpi::MPIDevice(ac,av);
         }
       }
       // nobody should ever come here ...
@@ -225,7 +225,7 @@ namespace ospray {
 
       if (app.rank >= 1)
         return NULL;
-      return new api::MPIDevice(ac,av);
+      return new mpi::MPIDevice(ac,av);
     }
 
     /*! in this mode ("separate worker group" mode)
@@ -293,7 +293,7 @@ namespace ospray {
         return NULL;
       }
       MPI_Barrier(app.comm);
-      return new api::MPIDevice(ac,av);
+      return new mpi::MPIDevice(ac,av);
     }
 
     void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
@@ -316,11 +316,9 @@ namespace ospray {
       PING;
     }
     
-  }
-
-  namespace api {
     MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
                          int *_ac, const char **_av)
+      : currentApiMode(OSPD_MODE_MASTERED)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv) 
@@ -1101,6 +1099,75 @@ namespace ospray {
       // }
       cmd.flush();
       return (OSPTexture2D)(int64)handle;
+    }
+
+    /*! return a string represenging the given API Mode */
+    const char *apiModeName(OSPDApiMode mode) 
+    {
+      switch (mode) {
+      case OSPD_MODE_INDEPENDENT:
+        return "OSPD_MODE_INDEPENDENT";
+      case OSPD_MODE_MASTERED:
+        return "OSPD_MODE_MASTERED";
+      case OSPD_MODE_COLLABORATIVE:
+        return "OSPD_MODE_COLLABORATIVE";
+      default:
+        PING;
+        PRINT(mode);
+        NOTIMPLEMENTED;
+      };
+      
+    }
+    /*! switch API mode for distriubted API extensions */
+    void MPIDevice::apiMode(OSPDApiMode newMode)
+    { 
+      printf("rank %i asked to go from %s mode to %s mode\n",mpi::world.rank,apiModeName(currentApiMode),apiModeName(newMode));
+      switch (currentApiMode) {
+        // ==================================================================
+        // ==================================================================
+      case OSPD_MODE_INDEPENDENT: {
+        NOTIMPLEMENTED;
+      } break;
+        // ==================================================================
+        // currently in default (mastered) mode where master tells workers what to do
+        // ==================================================================
+      case OSPD_MODE_MASTERED: {
+        // first: tell workers to switch to new mode: they're in
+        // mastered mode and thus waiting for *us* to tell them what
+        // to do, so let's do it.
+        switch (newMode) {
+        case OSPD_MODE_MASTERED: {
+          // nothing to do, actually, the workers are already in this
+          // mode, no use sending this request again
+          printf("rank %i remaining in mastered mode\n",mpi::world.rank);
+        } break;
+        case OSPD_MODE_INDEPENDENT:
+        case OSPD_MODE_COLLABORATIVE: {
+          printf("rank %i telling clients to switch to %s mode.\n",mpi::world.rank,apiModeName(newMode));
+          cmd.newCommand(CMD_API_MODE);
+          cmd.send((int32)newMode);
+          cmd.flush();
+          currentApiMode = newMode;
+          // and just to be sure, do a barrier here -- not acutally needed AFAICT.
+          MPI_Barrier(MPI_COMM_WORLD);
+        } break;
+        default:
+          NOTIMPLEMENTED;
+        };
+      } break;
+        // ==================================================================
+        // ==================================================================
+      case OSPD_MODE_COLLABORATIVE: {
+        NOTIMPLEMENTED;
+      } break;
+        
+        // ==================================================================
+        // this mode should not exit - implementation error
+        // ==================================================================
+      default:
+        NOTIMPLEMENTED;
+      };
+      throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); 
     }
 
   } // ::ospray::mpi

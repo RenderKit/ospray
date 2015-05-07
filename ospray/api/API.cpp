@@ -662,7 +662,6 @@ namespace ospray {
     return res;
   }
 
-#ifdef OSPRAY_MPI
   //! \brief initialize the ospray engine (for use with MPI-parallel app) 
   /*! \detailed Note the application must call this function "INSTEAD OF"
     MPI_Init(), NOT "in addition to" */
@@ -677,7 +676,7 @@ namespace ospray {
   extern "C" void ospdApiMode(OSPDApiMode mode)
   {
     ASSERT_DEVICE();
-    PING;
+    ospray::api::Device::current->apiMode(mode);
   }
 
   //! the 'lid to the pot' of ospdMpiInit(). 
@@ -686,6 +685,5 @@ namespace ospray {
   extern "C" void ospdMpiShutdown()
   {
   }
-#endif
 
 } // ::ospray
