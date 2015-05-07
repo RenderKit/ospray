@@ -15,94 +15,46 @@
 // ======================================================================== //
 
 #include "IsosurfaceEditor.h"
+#include "IsovalueWidget.h"
 
-IsosurfaceEditor::IsosurfaceEditor() : dataRangeSet(false)
+IsosurfaceEditor::IsosurfaceEditor()
 {
-  //! Setup UI elements.
-  QHBoxLayout * layout = new QHBoxLayout();
-  layout->setSizeConstraint(QLayout::SetMinimumSize);
-  setLayout(layout);
+  // Setup UI elements.
+  layout.setSizeConstraint(QLayout::SetMinimumSize);
+  layout.setAlignment(Qt::AlignTop);
+  setLayout(&layout);
 
-  layout->addWidget(&isovalueCheckBox);
-
-  //! Isovalue slider, defaults to median value in range.
-  isovalueSlider.setValue(int(0.5f * (isovalueSlider.minimum() + isovalueSlider.maximum())));
-  isovalueSlider.setOrientation(Qt::Horizontal);
-
-  layout->addWidget(&isovalueSlider);
-
-  //! Isovalue spin box.
-  isovalueSpinBox.setDecimals(6);
-  isovalueSpinBox.setValue(0.5f);
-  layout->addWidget(&isovalueSpinBox);
-
-  //! Connect signals and slots.
-  connect(&isovalueCheckBox, SIGNAL(toggled(bool)), this, SLOT(apply()));
-  connect(&isovalueSlider, SIGNAL(valueChanged(int)), this, SLOT(apply()));
-  connect(&isovalueSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
+  QPushButton *addIsovalueButton = new QPushButton("Add isosurface");
+  layout.addWidget(addIsovalueButton);
+  connect(addIsovalueButton, SIGNAL(clicked()), this, SLOT(addIsovalue()));
 }
 
 void IsosurfaceEditor::setDataValueRange(osp::vec2f dataValueRange)
 {
   this->dataValueRange = dataValueRange;
 
-  if(!dataRangeSet) {
-    isovalueSpinBox.blockSignals(true);
-    isovalueSpinBox.setRange(dataValueRange.x, dataValueRange.y);
-    isovalueSpinBox.blockSignals(false);
-
-    //! Get isovalue based on slider position.
-    float sliderPosition = float(isovalueSlider.value() - isovalueSlider.minimum()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
-    float isovalue = dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x);
-
-    //! Update spin box value.
-    isovalueSpinBox.setValue(isovalue);
-
-    dataRangeSet = true;
-  }
-  else {
-
-    //! Expand the spin box range if the range has already been set (for appropriate time series behavior).
-    isovalueSpinBox.setRange(std::min((double)dataValueRange.x, isovalueSpinBox.minimum()), std::max((double)dataValueRange.y, isovalueSpinBox.maximum()));
-
-    //! Update slider position for the new range.
-    float isovalue = isovalueSpinBox.value();
-
-    float sliderPosition = float(isovalueSlider.minimum()) + (isovalue - dataValueRange.x) / (dataValueRange.y - dataValueRange.x) * float(isovalueSlider.maximum() - isovalueSlider.minimum());
-
-    isovalueSlider.blockSignals(true);
-    isovalueSlider.setValue(int(sliderPosition));
-    isovalueSlider.blockSignals(false);
-  }
-
-  apply();
+  for (unsigned int i=0; i<isovalueWidgets.size(); i++)
+    isovalueWidgets[i]->setDataValueRange(dataValueRange);
 }
 
 void IsosurfaceEditor::apply()
 {
-  if(sender() == &isovalueSlider) {
-    float sliderPosition = float(isovalueSlider.value() - isovalueSlider.minimum()) / float(isovalueSlider.maximum() - isovalueSlider.minimum());
-    float isovalue = dataValueRange.x + sliderPosition * (dataValueRange.y - dataValueRange.x);
-
-    isovalueSpinBox.blockSignals(true);
-    isovalueSpinBox.setValue(isovalue);
-    isovalueSpinBox.blockSignals(false);
-  }
-  else if(sender() == &isovalueSpinBox) {
-    float isovalue = isovalueSpinBox.value();
-
-    float sliderPosition = float(isovalueSlider.minimum()) + (isovalue - dataValueRange.x) / (dataValueRange.y - dataValueRange.x) * float(isovalueSlider.maximum() - isovalueSlider.minimum());
-
-    isovalueSlider.blockSignals(true);
-    isovalueSlider.setValue(int(sliderPosition));
-    isovalueSlider.blockSignals(false);
-  }
-
-  //! Eventually we'll provide multiple isovalues.
   std::vector<float> isovalues;
 
-  if(isovalueCheckBox.isChecked())
-    isovalues.push_back(isovalueSpinBox.value());
+  for (unsigned int i=0; i<isovalueWidgets.size(); i++) {
+    if (isovalueWidgets[i]->getIsovalueEnabled())
+      isovalues.push_back(isovalueWidgets[i]->getIsovalue());
+  }
 
   emit(isovaluesChanged(isovalues));
+}
+
+void IsosurfaceEditor::addIsovalue()
+{
+  IsovalueWidget *isovalueWidget = new IsovalueWidget(this);
+
+  isovalueWidgets.push_back(isovalueWidget);
+  layout.addWidget(isovalueWidget);
+
+  isovalueWidget->setDataValueRange(dataValueRange);
 }

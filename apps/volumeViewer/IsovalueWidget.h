@@ -18,38 +18,39 @@
 
 #include <ospray/ospray.h>
 #include <QtGui>
-#include <vector>
 
-class IsovalueWidget;
+class IsosurfaceEditor;
 
-class IsosurfaceEditor : public QWidget
+class IsovalueWidget : public QWidget
 {
 Q_OBJECT
 
 public:
 
-  IsosurfaceEditor();
+  IsovalueWidget(IsosurfaceEditor *isosurfaceEditor);
 
-signals:
-
-  void isovaluesChanged(std::vector<float> values);
-
-public slots:
+  bool getIsovalueEnabled() { return isovalueCheckBox.isChecked(); }
+  float getIsovalue() { return isovalueSpinBox.value(); }
 
   void setDataValueRange(osp::vec2f dataValueRange);
 
-  void apply();
+signals:
+
+  void isovalueChanged();
 
 protected slots:
 
-  void addIsovalue();
+  void apply();
 
 protected:
 
   osp::vec2f dataValueRange;
 
-  QVBoxLayout layout;
+  //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
+  bool dataRangeSet;
 
-  std::vector<IsovalueWidget *> isovalueWidgets;
+  QCheckBox isovalueCheckBox;
+  QSlider isovalueSlider;
+  QDoubleSpinBox isovalueSpinBox;
 
 };

@@ -36,6 +36,7 @@ SET(SRCS ${SRCS}
   main.cpp
   ColorMap.cpp
   IsosurfaceEditor.cpp
+  IsovalueWidget.cpp
   LightEditor.cpp
   LinearTransferFunctionWidget.cpp
   PLYGeometryFile.cpp
@@ -48,6 +49,7 @@ SET(SRCS ${SRCS}
 
 SET(MOC_HEADERS
   IsosurfaceEditor.h
+  IsovalueWidget.h
   LightEditor.h
   LinearTransferFunctionWidget.h
   PreferencesDialog.h
