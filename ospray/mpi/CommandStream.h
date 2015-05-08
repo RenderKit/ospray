@@ -41,6 +41,11 @@ namespace ospray {
         int rc = MPI_Bcast((void*)data,size,MPI_BYTE,MPI_ROOT,mpi::worker.comm);
         Assert(rc == MPI_SUCCESS); 
       }
+      inline void send(const void *data, const size_t size, int32 rank, const MPI_Comm &comm)
+      {
+        int rc = MPI_Send((void*)data,size,MPI_BYTE,rank,0,comm);
+        Assert(rc == MPI_SUCCESS);
+      }
       inline void send(int32 i)
       { 
         int rc = MPI_Bcast(&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);
@@ -50,6 +55,11 @@ namespace ospray {
       { 
         int rc = MPI_Bcast(&i,1,MPI_LONG,MPI_ROOT,mpi::worker.comm);
         Assert(rc == MPI_SUCCESS); 
+      }
+      inline void send(const vec2f &v)
+      {
+        int rc = MPI_Bcast((void*)&v,2,MPI_FLOAT,MPI_ROOT,mpi::worker.comm);
+        Assert(rc == MPI_SUCCESS);
       }
       inline void send(const vec2i &v)
       { 
@@ -110,6 +120,12 @@ namespace ospray {
         // Assert(rc == MPI_SUCCESS); 
         int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
         Assert(rc == MPI_SUCCESS); 
+      }
+      inline void get_data(size_t size, void *pointer, const int32 &rank, const MPI_Comm &comm)
+      {
+        MPI_Status status;
+        int rc = MPI_Recv(pointer,size,MPI_BYTE,rank,0,comm,&status);
+        Assert(rc == MPI_SUCCESS);
       }
       inline Handle get_handle() 
       { 

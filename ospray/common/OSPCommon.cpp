@@ -31,6 +31,12 @@ namespace ospray {
   bool debugMode = false;
   uint32 numThreads = 0; //!< 0 for default number of Embree threads.
 
+  WarnOnce::WarnOnce(const std::string &s) 
+    : s(s) 
+  {
+    std::cout << "Warning: " << s << " (only reporting first occurrence)" << std::endl;
+  }
+  
   /*! for debugging. compute a checksum for given area range... */
   void *computeCheckSum(const void *ptr, size_t numBytes)
   {

@@ -451,11 +451,34 @@ namespace ospray {
     }
 
     /*! Copy data into the given object. */
-    int MPIDevice::setRegion(OSPVolume object, const void *source, 
-                             const vec3i &index, const vec3i &count) 
+    int MPIDevice::setRegion(OSPVolume _volume, const void *source,
+                             const vec3i &index, const vec3i &count)
     {
-      //! Not yet implemented.
-      return(false);
+      Assert(_volume);
+      Assert(source);
+
+      char *typeString = NULL;
+      getString(_volume, "voxelType", &typeString);
+      OSPDataType type = typeForString(typeString);
+      Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
+
+      OSPData data = newData(size_t(count.x) * count.y * count.z, type, (void *)source, OSP_DATA_SHARED_BUFFER);
+
+      cmd.newCommand(CMD_SET_REGION);
+      cmd.send((const mpi::Handle &)_volume);
+      cmd.send((const mpi::Handle &)data);
+      cmd.send(index);
+      cmd.send(count);
+
+      cmd.flush();
+
+      release(data);
+
+      int numFails = 0;
+      MPI_Status status;
+      int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
+
+      return (numFails == 0);
     }
 
     /*! assign (named) string parameter to an object */
@@ -593,19 +616,39 @@ namespace ospray {
     }
 
     /*! Get the named scalar floating point value associated with an object. */
-    int MPIDevice::getf(OSPObject object, const char *name, float *value) {
+    int MPIDevice::getf(OSPObject object, const char *name, float *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT);
+      cmd.flush();
 
+      struct ReturnValue { int success; float value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the named scalar integer associated with an object. */
-    int MPIDevice::geti(OSPObject object, const char *name, int *value) {
+    int MPIDevice::geti(OSPObject object, const char *name, int *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_INT);
+      cmd.flush();
 
+      struct ReturnValue { int success; int value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the material associated with a geometry object. */
@@ -640,44 +683,92 @@ namespace ospray {
 
     }
 
-    /*! Get a pointer to a copy of the named character string associated with an object. */
-    int MPIDevice::getString(OSPObject object, const char *name, char **value) {
+    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+    int MPIDevice::getType(OSPObject object, const char *name, OSPDataType *value)
+    {
+      Assert(object);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_TYPE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name ? name : "\0");
+      cmd.flush();
 
+      struct ReturnValue { int success; OSPDataType value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
-    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
-    int MPIDevice::getType(OSPObject object, const char *name, OSPDataType *value) {
+    /*! Get a pointer to a copy of the named character string associated with an object. */
+    int MPIDevice::getString(OSPObject object, const char *name, char **value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_STRING);
+      cmd.flush();
 
+      struct ReturnValue { int success; char value[2048]; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = strdup(result.value), true : false;
     }
 
     /*! Get the named 2-vector floating point value associated with an object. */
-    int MPIDevice::getVec2f(OSPObject object, const char *name, vec2f *value) {
+    int MPIDevice::getVec2f(OSPObject object, const char *name, vec2f *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT2);
+      cmd.flush();
 
+      struct ReturnValue { int success; vec2f value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the named 3-vector floating point value associated with an object. */
-    int MPIDevice::getVec3f(OSPObject object, const char *name, vec3f *value) {
+    int MPIDevice::getVec3f(OSPObject object, const char *name, vec3f *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT3);
+      cmd.flush();
 
+      struct ReturnValue { int success; vec3f value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! Get the named 3-vector integer value associated with an object. */
-    int MPIDevice::getVec3i(OSPObject object, const char *name, vec3i *value) {
+    int MPIDevice::getVec3i(OSPObject object, const char *name, vec3i *value)
+    {
+      Assert(object);
+      Assert(name);
 
-      //! Not yet implemented.
-      return(false);
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const mpi::Handle &) object);
+      cmd.send(name);
+      cmd.send(OSP_INT3);
+      cmd.flush();
 
+      struct ReturnValue { int success; vec3i value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
     }
 
     /*! create a new renderer object (out of list of registered renderers) */
@@ -787,9 +878,6 @@ namespace ospray {
     {
       if (type == NULL)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
-      
-      if (_renderer == NULL) 
-        throw std::runtime_error("#osp:mpi:newLight: NULL renderer handle");
 
       mpi::Handle handle = mpi::Handle::alloc();
       
@@ -836,7 +924,10 @@ namespace ospray {
     /*! remove an existing geometry from a model */
     void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
-      PING;
+      cmd.newCommand(CMD_REMOVE_GEOMETRY);
+      cmd.send((const mpi::Handle&)_model);
+      cmd.send((const mpi::Handle&)_geometry);
+      cmd.flush();
     }
 
 
