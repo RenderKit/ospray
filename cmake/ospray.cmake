@@ -112,7 +112,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_ISPC_TARGET_LIST avx2)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX")
       # ------------------------------------------------------------------
