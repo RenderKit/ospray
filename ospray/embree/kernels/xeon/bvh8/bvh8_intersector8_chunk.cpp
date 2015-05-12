@@ -18,12 +18,173 @@
 #include "geometry/triangle4_intersector8_moeller.h"
 #include "geometry/triangle8_intersector8_moeller.h"
 
+#if EMBREE_AVX512_WORKAROUND
+# include "embree2/rtcore_ray.h"
+#endif
+
 #define DBG(x) 
 
 #define START_SINDEX 5
 
 namespace embree
 {
+#if EMBREE_AVX512_WORKAROUND && __AVX2__
+  RTCORE_API void rtcIntersect16_doublePumpedIntersect8 (const void* valid, RTCScene scene, RTCRay16& ray) 
+  {
+    avxi valid0 = ((avxi *)valid)[0];
+    avxi valid1 = ((avxi *)valid)[1];
+    RTCRay8 ray0, ray1;
+
+#define SPLIT(member) \
+    (avxf&)ray0.member[0] = (avxf&)ray.member[0]; \
+    (avxf&)ray1.member[0] = (avxf&)ray.member[8]; 
+
+    //   /* ray data */
+    // public:
+    //   float orgx[8];  //!< x coordinate of ray origin
+    SPLIT(orgx);
+    //   float orgy[8];  //!< y coordinate of ray origin
+    SPLIT(orgy);
+    //   float orgz[8];  //!< z coordinate of ray origin
+    SPLIT(orgz);
+  
+    //   float dirx[8];  //!< x coordinate of ray direction
+    SPLIT(dirx);
+    //   float diry[8];  //!< y coordinate of ray direction
+    SPLIT(diry);
+    //   float dirz[8];  //!< z coordinate of ray direction
+    SPLIT(dirz);
+  
+    //   float tnear[8]; //!< Start of ray segment 
+    SPLIT(tnear);
+    //   float tfar[8];  //!< End of ray segment (set to hit distance)
+    SPLIT(tfar);
+
+    //   float time[8];  //!< Time of this ray for motion blur
+    SPLIT(time);
+    //   int   mask[8];  //!< Used to mask out objects during traversal
+    SPLIT(mask);
+  
+    //   /* hit data */
+    // public:
+    //   float Ngx[8];   //!< x coordinate of geometry normal
+    SPLIT(Ngx);
+    //   float Ngy[8];   //!< y coordinate of geometry normal
+    SPLIT(Ngy);
+    //   float Ngz[8];   //!< z coordinate of geometry normal
+    SPLIT(Ngz);
+  
+    //   float u[8];     //!< Barycentric u coordinate of hit
+    SPLIT(u);
+    //   float v[8];     //!< Barycentric v coordinate of hit
+    SPLIT(v);
+  
+    //   int   geomID[8];  //!< geometry ID
+    SPLIT(geomID);
+    //   int   primID[8];  //!< primitive ID
+    SPLIT(primID);
+    //   int   instID[8];  //!< instance ID
+    SPLIT(instID);
+
+    rtcIntersect8(&valid0,scene,ray0);
+    rtcIntersect8(&valid1,scene,ray1);
+
+#define MERGE(member) \
+    (avxf&)ray.member[0] = (avxf&)ray0.member[0];      \
+    (avxf&)ray.member[8] = (avxf&)ray1.member[0];                             
+
+    MERGE(tfar);
+    MERGE(u);
+    MERGE(v);
+    MERGE(Ngx);
+    MERGE(Ngy);
+    MERGE(Ngz);
+    MERGE(geomID);
+    MERGE(primID);
+    MERGE(instID);
+#undef SPLIT
+#undef MERGE
+  }
+
+  RTCORE_API void rtcOccluded16_doublePumpedOccluded8 (const void* valid, RTCScene scene, RTCRay16& ray) 
+  {
+    avxi valid0 = ((avxi *)valid)[0];
+    avxi valid1 = ((avxi *)valid)[1];
+    RTCRay8 ray0, ray1;
+
+#define SPLIT(member) \
+    (avxf&)ray0.member[0] = (avxf&)ray.member[0]; \
+    (avxf&)ray1.member[0] = (avxf&)ray.member[8]; 
+
+    //   /* ray data */
+    // public:
+    //   float orgx[8];  //!< x coordinate of ray origin
+    SPLIT(orgx);
+    //   float orgy[8];  //!< y coordinate of ray origin
+    SPLIT(orgy);
+    //   float orgz[8];  //!< z coordinate of ray origin
+    SPLIT(orgz);
+  
+    //   float dirx[8];  //!< x coordinate of ray direction
+    SPLIT(dirx);
+    //   float diry[8];  //!< y coordinate of ray direction
+    SPLIT(diry);
+    //   float dirz[8];  //!< z coordinate of ray direction
+    SPLIT(dirz);
+  
+    //   float tnear[8]; //!< Start of ray segment 
+    SPLIT(tnear);
+    //   float tfar[8];  //!< End of ray segment (set to hit distance)
+    SPLIT(tfar);
+
+    //   float time[8];  //!< Time of this ray for motion blur
+    SPLIT(time);
+    //   int   mask[8];  //!< Used to mask out objects during traversal
+    SPLIT(mask);
+  
+    //   /* hit data */
+    // public:
+    //   float Ngx[8];   //!< x coordinate of geometry normal
+    SPLIT(Ngx);
+    //   float Ngy[8];   //!< y coordinate of geometry normal
+    SPLIT(Ngy);
+    //   float Ngz[8];   //!< z coordinate of geometry normal
+    SPLIT(Ngz);
+  
+    //   float u[8];     //!< Barycentric u coordinate of hit
+    SPLIT(u);
+    //   float v[8];     //!< Barycentric v coordinate of hit
+    SPLIT(v);
+  
+    //   int   geomID[8];  //!< geometry ID
+    SPLIT(geomID);
+    //   int   primID[8];  //!< primitive ID
+    SPLIT(primID);
+    //   int   instID[8];  //!< instance ID
+    SPLIT(instID);
+
+    rtcOccluded8(&valid0,scene,ray0);
+    rtcOccluded8(&valid1,scene,ray1);
+
+#define MERGE(member) \
+    (avxf&)ray.member[0] = (avxf&)ray0.member[0];      \
+    (avxf&)ray.member[8] = (avxf&)ray1.member[0];                             
+
+    MERGE(tfar);
+    MERGE(u);
+    MERGE(v);
+    MERGE(Ngx);
+    MERGE(Ngy);
+    MERGE(Ngz);
+    MERGE(geomID);
+    MERGE(primID);
+    MERGE(instID);
+#undef SPLIT
+#undef MERGE
+  }
+
+#endif
+
   namespace isa
   {    
     

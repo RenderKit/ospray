@@ -19,6 +19,13 @@
 
 namespace embree
 {
+
+#if EMBREE_AVX512_WORKAROUND
+  RTCORE_API void rtcIntersect16_doublePumpedIntersect8 (const void* valid, RTCScene scene, RTCRay16& ray);
+  RTCORE_API void rtcOccluded16_doublePumpedOccluded8 (const void* valid, RTCScene scene, RTCRay16& ray);
+#endif
+
+
 #define size_t int  // FIXME: workaround of ISPC bug
 
 #define CATCH_BEGIN try {
@@ -90,7 +97,11 @@ namespace embree
   }
   
   extern "C" void ispcIntersect16 (const void* valid, RTCScene scene, RTCRay16& ray) {
+#if EMBREE_AVX512_WORKAROUND
+    rtcIntersect16_doublePumpedIntersect8(valid,scene,ray);
+#else
     rtcIntersect16(valid,scene,ray);
+#endif
   }
   
   extern "C" void ispcOccluded1 (RTCScene scene, RTCRay& ray) {
@@ -106,7 +117,11 @@ namespace embree
   }
   
   extern "C" void ispcOccluded16 (const void* valid, RTCScene scene, RTCRay16& ray) {
+#if EMBREE_AVX512_WORKAROUND
+    rtcOccluded16_doublePumpedOccluded8(valid,scene,ray);
+#else
     rtcOccluded16(valid,scene,ray);
+#endif
   }
   
   extern "C" void ispcDeleteScene (RTCScene scene) {

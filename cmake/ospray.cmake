@@ -99,6 +99,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+      ADD_DEFINITIONS(-DEMBREE_AVX512_WORKAROUND=1)
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
       # ------------------------------------------------------------------

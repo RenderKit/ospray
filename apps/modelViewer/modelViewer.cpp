@@ -161,6 +161,12 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
+      case '!': {
+        const uint32 * p = (uint32*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+        writePPM("ospmodelviewer.ppm", g_windowSize.x, g_windowSize.y, p);
+        // ospUnmapFrameBuffer(fb,p);
+        printf("#ospModelViewer: saved current frame to 'ospmodelviewer.ppm'\n");
+      } break;
       case 'X':
         if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
           viewPort.up = - viewPort.up;
