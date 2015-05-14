@@ -161,6 +161,12 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
+      case '!': {
+        const uint32 * p = (uint32*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+        writePPM("ospmodelviewer.ppm", g_windowSize.x, g_windowSize.y, p);
+        // ospUnmapFrameBuffer(fb,p);
+        printf("#ospModelViewer: saved current frame to 'ospmodelviewer.ppm'\n");
+      } break;
       case 'X':
         if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
           viewPort.up = - viewPort.up;
@@ -555,9 +561,9 @@ namespace ospray {
     cout << "#ospModelViewer: done parsing. found model with" << endl;
     // cout << "  - num materials: " << msgModel->material.size() << endl;
     cout << "  - num meshes   : " << msgModel->mesh.size() << " ";
-    int numUniqueTris = 0;
-    int numInstancedTris = 0;
-    for (int i=0;i<msgModel->mesh.size();i++) {
+    size_t numUniqueTris = 0;
+    size_t numInstancedTris = 0;
+    for (size_t  i=0;i<msgModel->mesh.size();i++) {
       if (i < 10)
         cout << "[" << msgModel->mesh[i]->size() << "]";
       else
@@ -566,7 +572,7 @@ namespace ospray {
     }
     cout << endl;
     cout << "  - num instances: " << msgModel->instance.size() << " ";
-    for (int i=0;i<msgModel->instance.size();i++) {
+    for (size_t  i=0;i<msgModel->instance.size();i++) {
       if (i < 10)
         cout << "[" << msgModel->mesh[msgModel->instance[i].meshID]->size() << "]";
       else
@@ -622,7 +628,7 @@ namespace ospray {
     cout << "#ospModelViewer: adding parsed geometries to ospray model" << endl;
     std::vector<OSPModel> instanceModels;
 
-    for (int i=0;i<msgModel->mesh.size();i++) {
+    for (size_t i=0;i<msgModel->mesh.size();i++) {
       //      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
@@ -632,7 +638,7 @@ namespace ospray {
       // check if we have to transform the vertices:
       if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
         // cout << "Transforming vertex array ..." << endl;
-        for (int vID=0;vID<msgMesh->position.size();vID++) {
+        for (size_t vID=0;vID<msgMesh->position.size();vID++) {
           msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                             msgMesh->position[vID]);
         }

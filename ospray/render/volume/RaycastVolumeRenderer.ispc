@@ -77,15 +77,14 @@ inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer 
 {
   //! Terminate if there are no isovalues.
   if (volume->numIsovalues == 0) {
-    ray.t = ray.t1 + 1.f;
+    ray.t = infinity;
     return;
   }
 
-  //! Assume one isovalue for now.
-  const uniform float isovalue = volume->isovalues[0];
-
   //! Advance the ray.
-  volume->intersectIsosurface(volume, isovalue, ray);  if (ray.t > ray.t1) return;
+  volume->intersectIsosurface(volume, volume->isovalues, volume->numIsovalues, ray);
+
+  if (ray.t > ray.t1) return;
 
   //! Sample the volume at the hit point in world coordinates.
   float t0 = ray.t;
@@ -94,15 +93,31 @@ inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer 
   while(1) {
 
     //! Advance the ray.
-    volume->intersectIsosurface(volume, isovalue, ray);  if (ray.t > ray.t1) return;
+    volume->intersectIsosurface(volume, volume->isovalues, volume->numIsovalues, ray);
+
+    if (ray.t > ray.t1) return;
 
     float t = ray.t;
     float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
 
-    if(!isnan(sample0+sample) && isovalue >= min(sample0, sample) && isovalue <= max(sample0, sample)) {
+    //! Find the t value and record the isovalue for the first isosurface intersection.
+    float tHit = infinity;
+    float isovalueHit;
 
-      //! Find the t value for the isosurface intersection.
-      const float tHit = t0 + (isovalue - sample0) / (sample - sample0) * (t - t0);
+    if (!isnan(sample0+sample)) {
+      for (uniform int i=0; i<volume->numIsovalues; i++) {
+        if ((volume->isovalues[i] - sample0) * (volume->isovalues[i] - sample) <= 0.f) {
+          const float tIso = t0 + (volume->isovalues[i] - sample0) / (sample - sample0) * (t - t0);
+
+          if (tIso < tHit) {
+            tHit = tIso;
+            isovalueHit = volume->isovalues[i];
+          }
+        }
+      }
+    }
+
+    if(tHit <= ray.t1) {
 
       //! Isosurface hit point.
       const vec3f coordinates = ray.org + tHit * ray.dir;
@@ -121,7 +136,7 @@ inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer 
       const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(lightDirection), normalize(gradient)));
 
       //! Look up the color associated with the isovalue.
-      vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, isovalue);
+      vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, isovalueHit);
 
       sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
 

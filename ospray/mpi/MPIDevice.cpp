@@ -924,7 +924,10 @@ namespace ospray {
     /*! remove an existing geometry from a model */
     void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
-      PING;
+      cmd.newCommand(CMD_REMOVE_GEOMETRY);
+      cmd.send((const mpi::Handle&)_model);
+      cmd.send((const mpi::Handle&)_geometry);
+      cmd.flush();
     }
 
 

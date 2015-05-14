@@ -2617,7 +2617,7 @@ static FORCEINLINE __vec16_f __sqrt_varying_float(__vec16_f v) {
 
 static FORCEINLINE __vec16_f __rcp_varying_float(__vec16_f v) {
 #ifdef ISPC_FAST_MATH
-  return _mm512_rcp23_ps(v); // Approximation with 23 bits of accuracy.
+  return _mm512_rcp28_ps(v); // Approximation with 23 bits of accuracy.
 #else
   return _mm512_recip_ps(v);
 #endif

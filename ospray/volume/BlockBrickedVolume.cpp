@@ -37,12 +37,12 @@ namespace ospray {
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
     //! Compute the voxel value range for float voxels if none was previously specified.
-    if (voxelType == "float" && findParam("voxelRange") == NULL) computeVoxelRange((float *) source, count.x * count.y * count.z);
+    if (voxelType == "float" && findParam("voxelRange") == NULL) computeVoxelRange((float *) source, size_t(count.x) * count.y * count.z);
 
     //! Compute the voxel value range for unsigned byte voxels if none was previously specified.
-    if (voxelType == "uchar" && findParam("voxelRange") == NULL) computeVoxelRange((unsigned char *) source, count.x * count.y * count.z);
+    if (voxelType == "uchar" && findParam("voxelRange") == NULL) computeVoxelRange((unsigned char *) source, size_t(count.x) * count.y * count.z);
 
-    //! Copy voxel data into the volume (the number of voxels must be less than 2**31 - 1 to avoid overflow in voxel indexing in ISPC).
+    //! Copy voxel data into the volume.
     ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);
 
     //! DO ME: this return value should indicate the success or failure of memory allocation in ISPC and a range check.
