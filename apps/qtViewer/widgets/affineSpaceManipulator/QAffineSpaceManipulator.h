@@ -105,6 +105,13 @@ namespace ospray {
       //! constructor
       QAffineSpaceManipulator(QAffineSpaceManipulator::InteractionMode interactionMode = FLY);
       
+      //! switch to requested interaction mode
+      void setInteractionMode(QAffineSpaceManipulator::InteractionMode interactionMode);
+
+      /*! toggle-up: switch to given axis (x=0,y=1,z=2) as up-vectors for the rotation.
+        when _already_ in up-vector mode for this axis, switch to negative axis. */
+      void toggleUp(int axis);
+
       //! set the movement speed
       void setMoveSpeed(const float moveSpeed) { this->motionSpeed = moveSpeed; }
       

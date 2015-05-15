@@ -20,7 +20,7 @@
 #include "ospray/common/Model.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/lights/Light.ih"
-#include "ospray/math/bbox.ih"
+#include "ospray/math/box.ih"
 #include "ospray/render/Renderer.ih"
 
 //! \brief ISPC variables and functions for the RaycastVolumeRenderer

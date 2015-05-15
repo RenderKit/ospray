@@ -16,8 +16,7 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
-#include "ospray/math/affine.ih"
+#include "ospray/math/AffineSpace.ih"
 
 struct Sample1f {
   float v;

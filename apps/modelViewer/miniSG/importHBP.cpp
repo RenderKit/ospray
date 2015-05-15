@@ -14,27 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "miniSG.h"
+#include "importer.h"
+#include <fstream>
 
-#include "ospray/math/bbox.ih"
-#include "Ray.ih"
+namespace ospray {
+  namespace miniSG {
+    using std::cout;
+    using std::endl;
 
-inline void boxtest(Ray& ray,
-                    uniform box3f& box,
-                    float& t0,
-                    float& t1)
-{
-  vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
-  vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
-  
-  t0 = max(max(ray.t0, 
-               min(mins.x,maxs.x)),
-           max(min(mins.y,maxs.y),
-               min(mins.z,maxs.z)));
-  
-  t1 = min(min(ray.t, 
-               max(mins.x,maxs.x)),
-           min(max(mins.y,maxs.y),
-               max(mins.z,maxs.z)));
-}
+    /*! import a HBP file, and add it to the specified model */
+    void importHBP(Model &model, const embree::FileName &fileName)
+    {
+      std::string vtxName = fileName.str()+".vtx";
+      std::string triName = fileName.str()+".tri";
+      FILE *vtx = fopen(vtxName.c_str(),"rb");
+      FILE *tri = fopen(triName.c_str(),"rb");
 
+      Mesh *mesh = new Mesh;
+      vec3f v; 
+      Triangle t;
+
+      while (fread(&v,sizeof(v),1,vtx))
+        mesh->position.push_back(vec3fa(v));
+      while (fread(&t,sizeof(t),1,tri))
+        mesh->triangle.push_back(t);
+      
+      model.mesh.push_back(mesh);
+      model.instance.push_back(Instance(model.mesh.size()-1));
+      mesh->material = NULL; 
+    }
+
+  } // ::ospray::minisg
+} // ::ospray
