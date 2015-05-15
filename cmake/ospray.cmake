@@ -84,11 +84,21 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_ISA_AVX  true)
       SET(OSPRAY_ISA_AVX2 true)
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
-      SET(OSPRAY_ISPC_TARGET_LIST generic-16)
- #     SET(OSPRAY_ISPC_CPU "core-avx2")
-      SET(OSPRAY_ISA_SSE  true)
-      SET(OSPRAY_ISA_AVX  false)
-      SET(OSPRAY_ISA_AVX2 false)
+      # ------------------------------------------------------------------
+      # in 'avx512' mode, we currently build only avx512, in generic
+      # mode, but enable all embree targets to fall back to (currently
+      # does not work since embree would require a 16-wide trace
+      # function which it has in neither of the three targets)
+      # ------------------------------------------------------------------
+			IF (OSPRAY_ISPC_KNL_NATIVE)
+				SET(OSPRAY_ISPC_TARGET_LIST knl-avx512)
+			ELSE()
+				SET(OSPRAY_ISPC_TARGET_LIST generic-16)
+			ENDIF()
+      SET(OSPRAY_EMBREE_ENABLE_SSE  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX  true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
       SET(OSPRAY_ISPC_TARGET_LIST avx2)
  #     SET(OSPRAY_ISPC_CPU "core-avx2")
