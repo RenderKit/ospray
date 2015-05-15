@@ -42,7 +42,7 @@ struct BlockBrickedVolume {
   uniform size_t voxelSize;
 
   //! Voxel data setter.
-  void (*uniform setVoxel)(void *uniform volume, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset);
+  void (*uniform setVoxel)(void *uniform volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset);
 
 };
 

@@ -48,7 +48,7 @@ namespace ospray {
     vec3f dx = normalize(cross(dz,up));
     vec3f dy = normalize(cross(dx,dz));
 
-    float imgPlane_size_y = 2.f*sinf(fovy/2.f*M_PI/180.);
+    float imgPlane_size_y = 2.f*tanf(fovy/2.f*M_PI/180.);
     float imgPlane_size_x = imgPlane_size_y * aspect;
     dir_00
       = dz

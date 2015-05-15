@@ -212,6 +212,16 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 
     rotateCenter(du, dv);
   }
+  else if(event->buttons() & Qt::MidButton) {
+
+    // camera strafe of from / at point
+    const float strafeSpeed = 0.001f * length(worldBounds.size());
+
+    float du = dx * strafeSpeed;
+    float dv = dy * strafeSpeed;
+
+    strafe(du, dv);
+  }
   else if(event->buttons() & Qt::RightButton) {
 
     // camera distance from center point
@@ -241,7 +251,7 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 
 void QOSPRayWindow::rotateCenter(float du, float dv)
 {
-  const osp::vec3f pivot = center(worldBounds);
+  const osp::vec3f pivot = viewport.at;
 
   osp::affine3f xfm = osp::affine3f::translate(pivot)
     * osp::affine3f::rotate(viewport.frame.l.vx, -dv)
@@ -252,6 +262,19 @@ void QOSPRayWindow::rotateCenter(float du, float dv)
   viewport.from  = xfmPoint(xfm, viewport.from);
   viewport.at    = xfmPoint(xfm, viewport.at);
   viewport.snapUp();
+
+  viewport.modified = true;
+}
+
+void QOSPRayWindow::strafe(float du, float dv)
+{
+  osp::affine3f xfm = osp::affine3f::translate(dv * viewport.frame.l.vz)
+    * osp::affine3f::translate(-du * viewport.frame.l.vx);
+
+  viewport.frame = xfm * viewport.frame;
+  viewport.from = xfmPoint(xfm, viewport.from);
+  viewport.at = xfmPoint(xfm, viewport.at);
+  viewport.modified = true;
 
   viewport.modified = true;
 }

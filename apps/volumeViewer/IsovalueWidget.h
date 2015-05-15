@@ -16,38 +16,41 @@
 
 #pragma once
 
-#include "ospray/volume/StructuredVolume.h"
+#include <ospray/ospray.h>
+#include <QtGui>
 
-namespace ospray {
+class IsosurfaceEditor;
 
-  //! \brief A concrete implementation of the StructuredVolume class
-  //!  with 62-bit addressing in which the voxel data is laid out in
-  //!  memory in multiple pages each in brick order.
-  //!
-  class BlockBrickedVolume : public StructuredVolume {
-  public:
+class IsovalueWidget : public QWidget
+{
+Q_OBJECT
 
-    //! Constructor.
-    BlockBrickedVolume() {};
+public:
 
-    //! Destructor.
-    virtual ~BlockBrickedVolume() {};
+  IsovalueWidget(IsosurfaceEditor *isosurfaceEditor);
 
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::BlockBrickedVolume<" + voxelType + ">"); }
+  bool getIsovalueEnabled() { return isovalueCheckBox.isChecked(); }
+  float getIsovalue() { return isovalueSpinBox.value(); }
 
-    //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
+  void setDataValueRange(osp::vec2f dataValueRange);
 
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
+signals:
 
-  protected:
+  void isovalueChanged();
 
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC();
+protected slots:
 
-  };
+  void apply();
 
-} // ::ospray
+protected:
 
+  osp::vec2f dataValueRange;
+
+  //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
+  bool dataRangeSet;
+
+  QCheckBox isovalueCheckBox;
+  QSlider isovalueSlider;
+  QDoubleSpinBox isovalueSpinBox;
+
+};

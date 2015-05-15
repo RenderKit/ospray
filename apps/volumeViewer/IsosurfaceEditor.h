@@ -18,6 +18,9 @@
 
 #include <ospray/ospray.h>
 #include <QtGui>
+#include <vector>
+
+class IsovalueWidget;
 
 class IsosurfaceEditor : public QWidget
 {
@@ -35,19 +38,18 @@ public slots:
 
   void setDataValueRange(osp::vec2f dataValueRange);
 
+  void apply();
+
 protected slots:
 
-  void apply();
+  void addIsovalue();
 
 protected:
 
   osp::vec2f dataValueRange;
 
-  //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
-  bool dataRangeSet;
+  QVBoxLayout layout;
 
-  QCheckBox isovalueCheckBox;
-  QSlider isovalueSlider;
-  QDoubleSpinBox isovalueSpinBox;
+  std::vector<IsovalueWidget *> isovalueWidgets;
 
 };

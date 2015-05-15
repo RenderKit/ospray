@@ -22,18 +22,27 @@
 
 namespace ospray {
 
+  void BlockBrickedVolume::commit()
+  {
+    //! The ISPC volume container should already exist.
+    exitOnCondition(ispcEquivalent == NULL, "the volume data must be set via ospSetRegion() prior to commit for this volume type");
+
+    //! StructuredVolume commit actions.
+    StructuredVolume::commit();
+  }
+
   int BlockBrickedVolume::setRegion(const void *source, const vec3i &index, const vec3i &count)
   {
     //! Create the equivalent ISPC volume container and allocate memory for voxel data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
     //! Compute the voxel value range for float voxels if none was previously specified.
-    if (voxelType == "float" && findParam("voxelRange") == NULL) computeVoxelRange((float *) source, count.x * count.y * count.z);
+    if (voxelType == "float" && findParam("voxelRange") == NULL) computeVoxelRange((float *) source, size_t(count.x) * count.y * count.z);
 
     //! Compute the voxel value range for unsigned byte voxels if none was previously specified.
-    if (voxelType == "uchar" && findParam("voxelRange") == NULL) computeVoxelRange((unsigned char *) source, count.x * count.y * count.z);
+    if (voxelType == "uchar" && findParam("voxelRange") == NULL) computeVoxelRange((unsigned char *) source, size_t(count.x) * count.y * count.z);
 
-    //! Copy voxel data into the volume (the number of voxels must be less than 2**31 - 1 to avoid overflow in voxel indexing in ISPC).
+    //! Copy voxel data into the volume.
     ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, (const ispc::vec3i &) index, (const ispc::vec3i &) count);
 
     //! DO ME: this return value should indicate the success or failure of memory allocation in ISPC and a range check.
@@ -44,11 +53,11 @@ namespace ospray {
   {
     //! Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");  
-    exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type");
+    exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type (must be set before calling ospSetRegion())");
 
     //! Get the volume dimensions.
     vec3i dimensions = getParam3i("dimensions", vec3i(0));
-    exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
+    exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions (must be set before calling ospSetRegion())");
 
     //! Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
     ispcEquivalent = ispc::BlockBrickedVolume_createInstance((int)getVoxelType(), (const ispc::vec3i &)dimensions);

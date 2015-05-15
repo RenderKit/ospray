@@ -106,7 +106,7 @@ inline void BlockBrickedVolumeUChar_getVoxel(void *uniform _volume, const varyin
     value = voxelData[block][address.voxel];
 }
 
-inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset)
+inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset)
 {
   //! Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
@@ -115,32 +115,47 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *
   float **uniform voxelData = (float **uniform) volume->voxelData;
   const float *uniform sourceData = (const float *uniform) source;
 
-  //! Compute the 1D address of the block in the volume and the voxel in the block.
-  Address address;  BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
+  foreach_unique(offsetZ in offset.z) {
 
-  //! The source voxel value.
-  float value = sourceData[(offset.z * volume->inherited.dimensions.y + offset.y) * volume->inherited.dimensions.x + offset.x];
+    const float *uniform sourceDataShifted = sourceData + (int64)offsetZ * count.y * count.x;
 
-  //! Store the voxel value at the 1D address.
-  foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
+    //! Compute the 1D address of the block in the volume and the voxel in the block.
+    Address address;
+    BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
+
+    //! The source voxel value.
+    float value = sourceDataShifted[offset.y * count.x + offset.x];
+
+    //! Store the voxel value at the 1D address.
+    foreach_unique(block in address.block)
+      voxelData[block][address.voxel] = value;
+  }
 }
 
-inline void BlockBrickedVolumeUChar_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset)
+inline void BlockBrickedVolumeUChar_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset)
 {
   //! Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
 
   //! Cast to the actual voxel type.
-  uint8 **uniform voxelData = (uint8 **uniform) volume->voxelData;  const uint8 *uniform sourceData = (const uint8 *uniform) source;
+  uint8 **uniform voxelData = (uint8 **uniform) volume->voxelData;
+  const uint8 *uniform sourceData = (const uint8 *uniform) source;
 
-  //! Compute the 1D address of the block in the volume and the voxel in the block.
-  Address address;  BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
+  foreach_unique(offsetZ in offset.z) {
 
-  //! The source voxel value.
-  uint8 value = sourceData[(offset.z * volume->inherited.dimensions.y + offset.y) * volume->inherited.dimensions.x + offset.x];
+    const uint8 *uniform sourceDataShifted = sourceData + (int64)offsetZ * count.y * count.x;
 
-  //! Store the voxel value at the 1D address.
-  foreach_unique(block in address.block) voxelData[block][address.voxel] = value;
+    //! Compute the 1D address of the block in the volume and the voxel in the block.
+    Address address;
+    BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
+
+    //! The source voxel value.
+    uint8 value = sourceDataShifted[offset.y * count.x + offset.x];
+
+    //! Store the voxel value at the 1D address.
+    foreach_unique(block in address.block)
+      voxelData[block][address.voxel] = value;
+  }
 }
 
 inline void BlockBrickedVolume_allocateMemory(BlockBrickedVolume *uniform volume)
@@ -199,6 +214,6 @@ export void BlockBrickedVolume_setRegion(void *uniform _self, const void *unifor
   //! Copy voxel data from memory into the volume.
   foreach (z = 0 ... count.z, y = 0 ... count.y, x = 0 ... count.x) {
     const vec3i offset = make_vec3i(x, y, z);
-    self->setVoxel(self, source, index, offset);
+    self->setVoxel(self, source, index, count, offset);
   }
 }

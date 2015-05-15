@@ -268,11 +268,6 @@ void VolumeViewer::initUserInterfaceWidgets()
   //! Connect the "play timesteps" timer.
   connect(&playTimeStepsTimer, SIGNAL(timeout()), this, SLOT(nextTimeStep()));
 
-  //! Add the "add slice" widget and callback.
-  QAction *addSliceAction = new QAction("Add slice", this);
-  connect(addSliceAction, SIGNAL(triggered()), this, SLOT(addSlice()));
-  toolbar->addAction(addSliceAction);
-
   //! Add the "add geometry" widget and callback.
   QAction *addGeometryAction = new QAction("Add geometry", this);
   connect(addGeometryAction, SIGNAL(triggered()), this, SLOT(addGeometry()));
@@ -284,7 +279,7 @@ void VolumeViewer::initUserInterfaceWidgets()
   toolbar->addAction(screenshotAction);
 
   //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
-  QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
+  QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function", this);
   transferFunctionEditor = new TransferFunctionEditor(transferFunction);
   transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
   connect(transferFunctionEditor, SIGNAL(committed()), this, SLOT(commitVolumes()));
@@ -294,15 +289,28 @@ void VolumeViewer::initUserInterfaceWidgets()
   //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
   transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
 
+  //! Create a scrollable dock widget for any added slices.
+  QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
+  QScrollArea *slicesScrollArea = new QScrollArea();
+  QWidget *slicesWidget = new QWidget();
+  sliceWidgetsLayout.setAlignment(Qt::AlignTop);
+  slicesWidget->setLayout(&sliceWidgetsLayout);
+  slicesScrollArea->setWidget(slicesWidget);
+  slicesScrollArea->setWidgetResizable(true);
+  slicesDockWidget->setWidget(slicesScrollArea);
+  addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
+
+  //! Add the "add slice" button and callback.
+  QPushButton *addSliceButton = new QPushButton("Add slice");
+  connect(addSliceButton, SIGNAL(clicked()), this, SLOT(addSlice()));
+  sliceWidgetsLayout.addWidget(addSliceButton);
+
   //! Create isosurface editor dock widget.
-  QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurface Editor", this);
+  QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurfaces", this);
   isosurfaceEditor = new IsosurfaceEditor();
   isosurfaceEditorDockWidget->setWidget(isosurfaceEditor);
   connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)), this, SLOT(setIsovalues(std::vector<float>)));
   addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
-
-  //! Set the isosurface editor widget to its minimum allowed height, to leave room for other dock widgets.
-  isosurfaceEditor->setMaximumHeight(isosurfaceEditor->minimumSize().height());
 
   //! Create the light editor dock widget, this widget modifies the light directly.
   //! Disable for now pending UI improvements...
@@ -312,15 +320,15 @@ void VolumeViewer::initUserInterfaceWidgets()
      connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
      addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget); */
 
-  //! Create a scrollable dock widget for any added slices.
-  QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
-  QScrollArea *slicesScrollArea = new QScrollArea();
-  QWidget *slicesWidget = new QWidget();
-  slicesWidget->setLayout(&sliceWidgetsLayout);
-  slicesScrollArea->setWidget(slicesWidget);
-  slicesScrollArea->setWidgetResizable(true);
-  slicesDockWidget->setWidget(slicesScrollArea);
-  addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
+  //! Tabify dock widgets.
+  tabifyDockWidget(transferFunctionEditorDockWidget, slicesDockWidget);
+  tabifyDockWidget(transferFunctionEditorDockWidget, isosurfaceEditorDockWidget);
+
+  //! Tabs on top.
+  setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::North);
+
+  //! Default to showing transfer function tab widget.
+  transferFunctionEditorDockWidget->raise();
 
   //! Add the current OSPRay object file label to the bottom status bar.
   statusBar()->addWidget(&currentFilenameInfoLabel);

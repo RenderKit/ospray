@@ -1,7 +1,28 @@
 OSPRay
 ======
 
-This is release v0.8.0 of OSPRay. Changes since the 0.7.x branch:
+This is release v0.8.1 of OSPRay. Changes since v0.8.0:
+
+- The volume renderer and volume viewer can now be run MPI parallel
+  (data replicated) using the "--osp:mpi" command line option.
+- Improved performance of volume grid accelerator generation, reducing
+  load times for large volumes.
+- The volume renderer and volume viewer now properly handle multiple
+  isosurfaces.
+- Added small example tutorial demonstrating how to use OSPRay.
+- Several fixes to support older versions of GCC.
+- Bug fixes to ospSetRegion() implementation for arbitrarily shaped
+  regions and setting large volumes in a single call.
+- Bug fix for geometries with invalid bounds; fixes streamline and
+  sphere rendering in some scenes.
+- Fixed bug in depth buffer generation.
+
+For more information, visit http://www.ospray.org.
+
+Release History
+---------------
+
+#### Changes in v0.8.0:
 
 - Incorporated early version of a new Qt-based viewer to eventually
   unify (and replace) the existing simpler GLUT-based viewers.
@@ -27,12 +48,7 @@ This is release v0.8.0 of OSPRay. Changes since the 0.7.x branch:
 - Various bug fixes, cleanups and documentation updates throughout the
   codebase.
 
-For more information, visit http://www.ospray.org.
-
-Release History
----------------
-
-Changes in v0.7.2
+#### Changes in v0.7.2:
 
 - Build fixes for older versions of GCC and Clang
 - Fixed time series support in ospVolumeViewer
