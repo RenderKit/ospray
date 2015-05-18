@@ -71,7 +71,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       = fb->depthBuffer 
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
-    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
@@ -106,7 +106,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       : NULL;
 
 
-    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
@@ -142,8 +142,7 @@ void LocalFrameBuffer_accumTile(uniform FrameBuffer *uniform _fb,
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   
   uniform vec4f *uniform dst = (uniform vec4f *uniform)fb->accumBuffer;
-  for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-    //const uint32  pixID = i*programCount+programIndex;
+  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
     const uint32 pixID = i + programIndex;
     const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
     const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
