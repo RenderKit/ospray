@@ -27,6 +27,8 @@ namespace ospray {
   bool doShadows = 1;
 
   const char *outFileName = NULL;
+  size_t numAccumsFrameInFileOutput = 1;
+  size_t numSPPinFileOutput = 1;
 
   float g_near_clip = 1e-6f;
   bool  g_fullScreen       = false;
@@ -312,6 +314,21 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
       }
       
+      if (outFileName) {
+        ospSet1i(renderer,"spp",numSPPinFileOutput);
+        ospCommit(renderer);
+        std::cout << "#ospModelViewer: Renderering offline image with " << numSPPinFileOutput << " samples per pixel per frame, and accumulation of " << numAccumsFrameInFileOutput << " such frames" << endl;
+        for (int i=0;i<numAccumsFrameInFileOutput;i++) {
+          ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
+          ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          std::cout << "#ospModelViewer: Saved rendered image (w/ " << i << " accums) in " << outFileName << std::endl;
+          writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+          ospUnmapFrameBuffer(ucharFB,fb);
+        }
+        // std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
+        // writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+        exit(0);
+      }
       
       ospRenderFrame(fb,renderer,OSP_FB_COLOR|(showDepthBuffer?OSP_FB_DEPTH:0)|OSP_FB_ACCUM);
       ++accumID;
@@ -321,11 +338,11 @@ namespace ospray {
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();
 
-      if (outFileName && accumID == maxAccum) {
-        std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
-        writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
-        exit(0);
-      }
+      // if (outFileName && accumID == maxAccum) {
+      //   std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
+      //   writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+      //   exit(0);
+      // }
 
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
@@ -492,6 +509,10 @@ namespace ospray {
         alwaysRedraw = true;
       } else if (arg == "-o") {
         outFileName = strdup(av[++i]);
+      } else if (arg == "-o:nacc") {
+        numAccumsFrameInFileOutput = atoi(av[++i]);
+      } else if (arg == "-o:spp") {
+        numSPPinFileOutput = atoi(av[++i]);
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
       } else if (arg == "--spp") {
