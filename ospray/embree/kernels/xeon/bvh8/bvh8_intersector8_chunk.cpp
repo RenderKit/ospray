@@ -27,105 +27,105 @@
 #define START_SINDEX 5
 
 
-#ifdef __EMBREE_KNL_WORKAROUND__
-#include "embree2/rtcore_ray.h"
+// #ifdef __EMBREE_KNL_WORKAROUND__
+// #include "embree2/rtcore_ray.h"
 
-RTCORE_API void rtcIntersect16 (const void* valid, RTCScene scene, RTCRay16& ray) 
-{
-  printf("we're getting a intersect16 here, but only have avx2 .... let's chop it up into 2x8\n");
+// RTCORE_API void rtcIntersect16 (const void* valid, RTCScene scene, RTCRay16& ray) 
+// {
+//   printf("we're getting a intersect16 here, but only have avx2 .... let's chop it up into 2x8\n");
   
-  const embree::avxf *valid8 = (const embree::avxf *)valid;
-  RTCRay8 ray8[2];
+//   const embree::avxf *valid8 = (const embree::avxf *)valid;
+//   RTCRay8 ray8[2];
   
-#define SPLIT(field)                                                  \
-  *(embree::avxf *)ray8[0].field = ((embree::avxf *)ray.field)[0];    \
-  *(embree::avxf *)ray8[1].field = ((embree::avxf *)ray.field)[1]; 
+// #define SPLIT(field)                                                  \
+//   *(embree::avxf *)ray8[0].field = ((embree::avxf *)ray.field)[0];    \
+//   *(embree::avxf *)ray8[1].field = ((embree::avxf *)ray.field)[1]; 
   
-  //   /* ray data */
-  // public:
-  //   float orgx[8];  //!< x coordinate of ray origin
-  //   float orgy[8];  //!< y coordinate of ray origin
-  //   float orgz[8];  //!< z coordinate of ray origin
-  SPLIT(orgx);
-  SPLIT(orgy);
-  SPLIT(orgz);
+//   //   /* ray data */
+//   // public:
+//   //   float orgx[8];  //!< x coordinate of ray origin
+//   //   float orgy[8];  //!< y coordinate of ray origin
+//   //   float orgz[8];  //!< z coordinate of ray origin
+//   SPLIT(orgx);
+//   SPLIT(orgy);
+//   SPLIT(orgz);
   
-  //   float dirx[8];  //!< x coordinate of ray direction
-  //   float diry[8];  //!< y coordinate of ray direction
-  //   float dirz[8];  //!< z coordinate of ray direction 
-  SPLIT(dirx);
-  SPLIT(diry);
-  SPLIT(dirz);
+//   //   float dirx[8];  //!< x coordinate of ray direction
+//   //   float diry[8];  //!< y coordinate of ray direction
+//   //   float dirz[8];  //!< z coordinate of ray direction 
+//   SPLIT(dirx);
+//   SPLIT(diry);
+//   SPLIT(dirz);
   
-  //   float tnear[8]; //!< Start of ray segment 
-  //   float tfar[8];  //!< End of ray segment (set to hit distance)
-  SPLIT(tnear);
-  SPLIT(tfar);
+//   //   float tnear[8]; //!< Start of ray segment 
+//   //   float tfar[8];  //!< End of ray segment (set to hit distance)
+//   SPLIT(tnear);
+//   SPLIT(tfar);
   
-  //   float time[8];  //!< Time of this ray for motion blur
-  //   int   mask[8];  //!< Used to mask out objects during traversal
-  SPLIT(time);
-  SPLIT(mask);
+//   //   float time[8];  //!< Time of this ray for motion blur
+//   //   int   mask[8];  //!< Used to mask out objects during traversal
+//   SPLIT(time);
+//   SPLIT(mask);
   
-  //   /* hit data */
-  // public:
-  //   float Ngx[8];   //!< x coordinate of geometry normal
-  //   float Ngy[8];   //!< y coordinate of geometry normal
-  //   float Ngz[8];   //!< z coordinate of geometry normal
-  SPLIT(Ngx);
-  SPLIT(Ngy);
-  SPLIT(Ngz);
+//   //   /* hit data */
+//   // public:
+//   //   float Ngx[8];   //!< x coordinate of geometry normal
+//   //   float Ngy[8];   //!< y coordinate of geometry normal
+//   //   float Ngz[8];   //!< z coordinate of geometry normal
+//   SPLIT(Ngx);
+//   SPLIT(Ngy);
+//   SPLIT(Ngz);
   
-  //   float u[8];     //!< Barycentric u coordinate of hit
-  //   float v[8];     //!< Barycentric v coordinate of hit
-  SPLIT(u);
-  SPLIT(v);
+//   //   float u[8];     //!< Barycentric u coordinate of hit
+//   //   float v[8];     //!< Barycentric v coordinate of hit
+//   SPLIT(u);
+//   SPLIT(v);
   
-  //   int   geomID[8];  //!< geometry ID
-  //   int   primID[8];  //!< primitive ID
-  //   int   instID[8];  //!< instance ID
-  SPLIT(geomID);
-  SPLIT(primID);
-  SPLIT(instID);
+//   //   int   geomID[8];  //!< geometry ID
+//   //   int   primID[8];  //!< primitive ID
+//   //   int   instID[8];  //!< instance ID
+//   SPLIT(geomID);
+//   SPLIT(primID);
+//   SPLIT(instID);
   
-#undef SPLIT
+// #undef SPLIT
   
-  rtcIntersect8((const void *)&valid8[0],scene,ray8[0]);
-  rtcIntersect8((const void *)&valid8[1],scene,ray8[1]);
+//   rtcIntersect8((const void *)&valid8[0],scene,ray8[0]);
+//   rtcIntersect8((const void *)&valid8[1],scene,ray8[1]);
   
-#define REMERGE(field)                                                \
-    ((embree::avxf *)ray.field)[0] = *(embree::avxf *)ray8[0].field;  \
-    ((embree::avxf *)ray.field)[1] = *(embree::avxf *)ray8[1].field;  \
+// #define REMERGE(field)                                                \
+//     ((embree::avxf *)ray.field)[0] = *(embree::avxf *)ray8[0].field;  \
+//     ((embree::avxf *)ray.field)[1] = *(embree::avxf *)ray8[1].field;  \
     
-  //   float tnear[8]; //!< Start of ray segment 
-  //   float tfar[8];  //!< End of ray segment (set to hit distance)
-  REMERGE(tnear);
-  REMERGE(tfar);
-  //   /* hit data */
-  // public:
-  //   float Ngx[8];   //!< x coordinate of geometry normal
-  //   float Ngy[8];   //!< y coordinate of geometry normal
-  //   float Ngz[8];   //!< z coordinate of geometry normal
-  REMERGE(Ngx);
-  REMERGE(Ngy);
-  REMERGE(Ngz);
+//   //   float tnear[8]; //!< Start of ray segment 
+//   //   float tfar[8];  //!< End of ray segment (set to hit distance)
+//   REMERGE(tnear);
+//   REMERGE(tfar);
+//   //   /* hit data */
+//   // public:
+//   //   float Ngx[8];   //!< x coordinate of geometry normal
+//   //   float Ngy[8];   //!< y coordinate of geometry normal
+//   //   float Ngz[8];   //!< z coordinate of geometry normal
+//   REMERGE(Ngx);
+//   REMERGE(Ngy);
+//   REMERGE(Ngz);
   
-  //   float u[8];     //!< Barycentric u coordinate of hit
-  //   float v[8];     //!< Barycentric v coordinate of hit
-  REMERGE(u);
-  REMERGE(v);
+//   //   float u[8];     //!< Barycentric u coordinate of hit
+//   //   float v[8];     //!< Barycentric v coordinate of hit
+//   REMERGE(u);
+//   REMERGE(v);
   
-  //   int   geomID[8];  //!< geometry ID
-  //   int   primID[8];  //!< primitive ID
-  //   int   instID[8];  //!< instance ID
-  REMERGE(geomID);
-  REMERGE(primID);
-  REMERGE(instID);
-#undef REMERGE
-  // ((Scene*)scene)->intersect16(valid,ray);
+//   //   int   geomID[8];  //!< geometry ID
+//   //   int   primID[8];  //!< primitive ID
+//   //   int   instID[8];  //!< instance ID
+//   REMERGE(geomID);
+//   REMERGE(primID);
+//   REMERGE(instID);
+// #undef REMERGE
+//   // ((Scene*)scene)->intersect16(valid,ray);
   
-  }
-#endif
+//   }
+// #endif
 
 namespace embree
 {
