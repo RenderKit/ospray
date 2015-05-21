@@ -265,7 +265,7 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator, u
   vec2f cellInterval = GridAccelerator_intersectCell(cellBounds, ray);
 
   //! Advance the ray so the next hit point will be outside the empty cell.
-  ray.t += floor(abs(cellInterval.y - ray.t) / step) * step;
+  ray.t += floor(abs(cellInterval.y - ray.t) / step) * step - step;
 
   //! Rinse and repeat.
   GridAccelerator_intersectIsosurface(accelerator, step, isovalues, numIsovalues, ray);
