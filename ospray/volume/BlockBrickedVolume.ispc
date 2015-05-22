@@ -106,7 +106,7 @@ inline void BlockBrickedVolumeUChar_getVoxel(void *uniform _volume, const varyin
     value = voxelData[block][address.voxel];
 }
 
-inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset)
+inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset)
 {
   //! Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
@@ -117,14 +117,14 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *
 
   foreach_unique(offsetZ in offset.z) {
 
-    const float *uniform sourceDataShifted = sourceData + (int64)offsetZ * volume->inherited.dimensions.y * volume->inherited.dimensions.x;
+    const float *uniform sourceDataShifted = sourceData + (int64)offsetZ * count.y * count.x;
 
     //! Compute the 1D address of the block in the volume and the voxel in the block.
     Address address;
     BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
 
     //! The source voxel value.
-    float value = sourceDataShifted[offset.y * volume->inherited.dimensions.x + offset.x];
+    float value = sourceDataShifted[offset.y * count.x + offset.x];
 
     //! Store the voxel value at the 1D address.
     foreach_unique(block in address.block)
@@ -132,7 +132,7 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *
   }
 }
 
-inline void BlockBrickedVolumeUChar_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const varying vec3i &offset)
+inline void BlockBrickedVolumeUChar_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset)
 {
   //! Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
@@ -143,14 +143,14 @@ inline void BlockBrickedVolumeUChar_setVoxel(void *uniform _volume, const void *
 
   foreach_unique(offsetZ in offset.z) {
 
-    const uint8 *uniform sourceDataShifted = sourceData + (int64)offsetZ * volume->inherited.dimensions.y * volume->inherited.dimensions.x;
+    const uint8 *uniform sourceDataShifted = sourceData + (int64)offsetZ * count.y * count.x;
 
     //! Compute the 1D address of the block in the volume and the voxel in the block.
     Address address;
     BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
 
     //! The source voxel value.
-    uint8 value = sourceDataShifted[offset.y * volume->inherited.dimensions.x + offset.x];
+    uint8 value = sourceDataShifted[offset.y * count.x + offset.x];
 
     //! Store the voxel value at the 1D address.
     foreach_unique(block in address.block)
@@ -214,6 +214,6 @@ export void BlockBrickedVolume_setRegion(void *uniform _self, const void *unifor
   //! Copy voxel data from memory into the volume.
   foreach (z = 0 ... count.z, y = 0 ... count.y, x = 0 ... count.x) {
     const vec3i offset = make_vec3i(x, y, z);
-    self->setVoxel(self, source, index, offset);
+    self->setVoxel(self, source, index, count, offset);
   }
 }

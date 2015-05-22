@@ -27,6 +27,8 @@ namespace ospray {
   bool doShadows = 1;
 
   const char *outFileName = NULL;
+  size_t numAccumsFrameInFileOutput = 1;
+  size_t numSPPinFileOutput = 1;
 
   float g_near_clip = 1e-6f;
   bool  g_fullScreen       = false;
@@ -194,6 +196,12 @@ namespace ospray {
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
+      case '!': {
+        const uint32 * p = (uint32*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+        writePPM("ospmodelviewer.ppm", g_windowSize.x, g_windowSize.y, p);
+        // ospUnmapFrameBuffer(fb,p);
+        printf("#ospModelViewer: saved current frame to 'ospmodelviewer.ppm'\n");
+      } break;
       case 'X':
         if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
           viewPort.up = - viewPort.up;
@@ -341,6 +349,21 @@ namespace ospray {
           ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
       }
       
+      if (outFileName) {
+        ospSet1i(renderer,"spp",numSPPinFileOutput);
+        ospCommit(renderer);
+        std::cout << "#ospModelViewer: Renderering offline image with " << numSPPinFileOutput << " samples per pixel per frame, and accumulation of " << numAccumsFrameInFileOutput << " such frames" << endl;
+        for (int i=0;i<numAccumsFrameInFileOutput;i++) {
+          ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
+          ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          std::cout << "#ospModelViewer: Saved rendered image (w/ " << i << " accums) in " << outFileName << std::endl;
+          writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+          ospUnmapFrameBuffer(ucharFB,fb);
+        }
+        // std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
+        // writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+        exit(0);
+      }
       
       ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       if (displayWall)
@@ -352,11 +375,11 @@ namespace ospray {
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
       Glut3DWidget::display();
 
-      if (outFileName && accumID == maxAccum) {
-        std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
-        writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
-        exit(0);
-      }
+      // if (outFileName && accumID == maxAccum) {
+      //   std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
+      //   writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
+      //   exit(0);
+      // }
 
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
@@ -523,6 +546,10 @@ namespace ospray {
         alwaysRedraw = true;
       } else if (arg == "-o") {
         outFileName = strdup(av[++i]);
+      } else if (arg == "-o:nacc") {
+        numAccumsFrameInFileOutput = atoi(av[++i]);
+      } else if (arg == "-o:spp") {
+        numSPPinFileOutput = atoi(av[++i]);
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
       } else if (arg == "--spp" || arg == "-spp") {
@@ -598,9 +625,9 @@ namespace ospray {
     cout << "#ospModelViewer: done parsing. found model with" << endl;
     // cout << "  - num materials: " << msgModel->material.size() << endl;
     cout << "  - num meshes   : " << msgModel->mesh.size() << " ";
-    int numUniqueTris = 0;
-    int numInstancedTris = 0;
-    for (int i=0;i<msgModel->mesh.size();i++) {
+    size_t numUniqueTris = 0;
+    size_t numInstancedTris = 0;
+    for (size_t  i=0;i<msgModel->mesh.size();i++) {
       if (i < 10)
         cout << "[" << msgModel->mesh[i]->size() << "]";
       else
@@ -609,7 +636,7 @@ namespace ospray {
     }
     cout << endl;
     cout << "  - num instances: " << msgModel->instance.size() << " ";
-    for (int i=0;i<msgModel->instance.size();i++) {
+    for (size_t  i=0;i<msgModel->instance.size();i++) {
       if (i < 10)
         cout << "[" << msgModel->mesh[msgModel->instance[i].meshID]->size() << "]";
       else
@@ -665,7 +692,7 @@ namespace ospray {
     cout << "#ospModelViewer: adding parsed geometries to ospray model" << endl;
     std::vector<OSPModel> instanceModels;
 
-    for (int i=0;i<msgModel->mesh.size();i++) {
+    for (size_t i=0;i<msgModel->mesh.size();i++) {
       //      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
 
@@ -675,7 +702,7 @@ namespace ospray {
       // check if we have to transform the vertices:
       if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
         // cout << "Transforming vertex array ..." << endl;
-        for (int vID=0;vID<msgMesh->position.size();vID++) {
+        for (size_t vID=0;vID<msgMesh->position.size();vID++) {
           msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                             msgMesh->position[vID]);
         }

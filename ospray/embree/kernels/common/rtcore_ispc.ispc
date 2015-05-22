@@ -116,7 +116,11 @@ RTCScene rtcNewScene (uniform RTCSceneFlags flags, uniform RTCAlgorithmFlags afl
     else if (sizeof(varying float) == 32)
       aflags = (uniform RTCAlgorithmFlags) ((aflags & ~RTC_INTERSECT_VARYING) | (1 << 2));
     else if (sizeof(varying float) == 64)
+#if EMBREE_AVX512_WORKAROUND
+      aflags = (uniform RTCAlgorithmFlags) ((aflags & ~RTC_INTERSECT_VARYING) | (1 << 2));
+#else
       aflags = (uniform RTCAlgorithmFlags) ((aflags & ~RTC_INTERSECT_VARYING) | (1 << 3));
+#endif
   }
   return ispcNewScene(flags,aflags);
 }
