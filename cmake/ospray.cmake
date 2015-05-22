@@ -28,6 +28,10 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY_NO_ARCH)
+  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
+    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
+  ENDIF()
+
   SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
   SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 

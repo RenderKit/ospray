@@ -233,7 +233,7 @@ namespace ospray {
               }
 
               if (mat->textures.size() != num) {
-                FATAL("invalid number of textures in material "
+                throw std::runtime_error("invalid number of textures in material "
                       "(found either more or less than the 'num' field specifies");
               }
             }
@@ -276,7 +276,7 @@ namespace ospray {
                                &xfm->xfm.p.z);
           //xmlFree(value);
           if (numRead != 12)  {
-            FATAL("invalid number of elements in RIVL transform node");
+            throw std::runtime_error("invalid number of elements in RIVL transform node");
           }
           
           // -------------------------------------------------------

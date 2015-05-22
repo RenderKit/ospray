@@ -16,8 +16,11 @@
 
 #pragma once
 
+// ospray
 #include "ospray/common/OSPCommon.h"
+// std
 #include <stack>
+#include <vector>
 
 namespace ospray {
   namespace xml {

@@ -18,6 +18,7 @@
 #include "QAffineSpaceManipulator.h"
 #include "HelperGeometry.h"
 #include <sys/times.h>
+#include <cmath>
 
 #if __APPLE__
 # include "glut.h"

@@ -37,8 +37,6 @@
 
 namespace ospray {
 
-  using embree::TaskScheduler;
-
   struct Camera;
   struct Model;
 

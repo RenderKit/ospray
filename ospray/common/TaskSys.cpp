@@ -18,7 +18,8 @@
 // stl - ugh.
 #include <deque>
 // embree
-#include <common/sys/sysinfo.h>
+#include "common/sys/sysinfo.h"
+#include "common/sys/thread.h"
 
 namespace ospray {
   using std::cout;

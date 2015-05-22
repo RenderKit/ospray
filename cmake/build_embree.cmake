@@ -39,6 +39,20 @@ IF (THIS_IS_MIC)
     sync/barrier.cpp
     stl/string.cpp
     )
+ELSEIF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
+  SET(EMBREE_COMMON_SYS_SOURCES
+    alloc.cpp		
+    library.cpp
+		string.cpp
+    barrier.cpp
+    mutex.cpp
+		sysinfo.cpp
+    condition.cpp
+    network.cpp
+    thread.cpp
+    filename.cpp
+    regression.cpp
+    )
 ELSE()
   SET(EMBREE_COMMON_SYS_SOURCES
     platform.cpp
@@ -155,6 +169,66 @@ ELSE()
   # =======================================================
   # embree kernel components ONLY for xeon
   # =======================================================
+ELSEIF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
+  SET(EMBREE_KERNELS_XEON_SOURCES
+../common//acceln.cpp
+../common//accelset.cpp
+../common//buffer.cpp
+../common//geometry.cpp
+../common//globals.cpp
+../common//raystream_log.cpp
+../common//rtcore.cpp
+../common//rtcore_ispc.cpp
+../common//scene.cpp
+../common//scene_bezier_curves.cpp
+../common//scene_instance.cpp
+../common//scene_subdiv_mesh.cpp
+../common//scene_triangle_mesh.cpp
+../common//scene_user_geometry.cpp
+../common//stat.cpp
+../common//state.cpp
+../common//subdiv/subdivpatch1base.cpp
+../common//subdiv/tessellation_cache.cpp
+./builders/primrefgen.avx.cpp
+./builders/primrefgen.cpp
+./bvh4/bvh4.cpp
+./bvh4/bvh4_builder_hair.avx.cpp
+./bvh4/bvh4_builder_hair.cpp
+./bvh4/bvh4_builder_morton.avx.cpp
+./bvh4/bvh4_builder_morton.cpp
+./bvh4/bvh4_builder_sah.avx.cpp
+./bvh4/bvh4_builder_sah.cpp
+./bvh4/bvh4_builder_subdiv.avx.cpp
+./bvh4/bvh4_builder_subdiv.cpp
+./bvh4/bvh4_builder_twolevel.avx.cpp
+./bvh4/bvh4_builder_twolevel.cpp
+./bvh4/bvh4_intersector1.cpp
+./bvh4/bvh4_intersector4_chunk.cpp
+./bvh4/bvh4_intersector4_hybrid.cpp
+./bvh4/bvh4_intersector4_single.cpp
+./bvh4/bvh4_intersector8_chunk.cpp
+./bvh4/bvh4_intersector8_hybrid.cpp
+./bvh4/bvh4_intersector8_single.cpp
+./bvh4/bvh4_refit.avx.cpp
+./bvh4/bvh4_refit.cpp
+./bvh4/bvh4_rotate.cpp
+./bvh4/bvh4_statistics.cpp
+./bvh8/bvh8.cpp
+./bvh8/bvh8_builder_sah.avx.cpp
+./bvh8/bvh8_builder_sah.cpp
+./bvh8/bvh8_intersector1.cpp
+./bvh8/bvh8_intersector4_hybrid.cpp
+./bvh8/bvh8_intersector8_chunk.cpp
+./bvh8/bvh8_intersector8_hybrid.cpp
+./bvh8/bvh8_statistics.cpp
+./geometry/instance_intersector1.cpp
+./geometry/instance_intersector4.cpp
+./geometry/instance_intersector8.cpp
+./geometry/primitive.cpp
+./geometry/subdivpatch1_intersector1.cpp
+./geometry/subdivpatch1cached_intersector1.cpp
+)
+ELSE()
   SET(EMBREE_KERNELS_XEON_SOURCES
     ../common/stat.cpp 
     ../common/globals.cpp 

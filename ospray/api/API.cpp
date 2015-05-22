@@ -662,6 +662,15 @@ namespace ospray {
     return res;
   }
 
+  //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
+  extern "C" void ospdApiMode(OSPDApiMode mode)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->apiMode(mode);
+  }
+
+
+#if OSPRAY_MPI
   //! \brief initialize the ospray engine (for use with MPI-parallel app) 
   /*! \detailed Note the application must call this function "INSTEAD OF"
     MPI_Init(), NOT "in addition to" */
@@ -672,18 +681,12 @@ namespace ospray {
     ospray::mpi::initDistributedAPI(ac,av,mode);
   }
 
-  //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
-  extern "C" void ospdApiMode(OSPDApiMode mode)
-  {
-    ASSERT_DEVICE();
-    ospray::api::Device::current->apiMode(mode);
-  }
-
   //! the 'lid to the pot' of ospdMpiInit(). 
   /*! does both an osp shutdown and an mpi shutdown for the mpi group
       created with ospdMpiInit */
   extern "C" void ospdMpiShutdown()
   {
   }
+#endif
 
 } // ::ospray

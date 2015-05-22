@@ -17,6 +17,8 @@
 #include "miniSG.h"
 #include "importer.h"
 #include <fstream>
+#include <cmath>
+#include <string>
 
 /*! the boeing 777 model does not actually have a 'mtl' file; instead,
   as materials it has a single RBG diffuse color that's encoded in

@@ -88,8 +88,8 @@ namespace ospray {
         // want to do a 'real' material
         OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
         if (mat) {
-          vec3f kd = .7f;
-          vec3f ks = .3f;
+          vec3f kd(.7f);
+          vec3f ks(.3f);
           ospSet3fv(mat,"kd",&kd.x);
           ospSet3fv(mat,"ks",&ks.x);
           ospSet1f(mat,"Ns",99.f);

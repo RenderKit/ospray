@@ -104,7 +104,6 @@ typedef enum {
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
 
-#ifdef OSPRAY_MPI_DISTRIBUTED
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
 /*! \see ospdApiMode */
 typedef enum {
@@ -139,7 +138,6 @@ typedef enum {
   OSPD_MODE_COLLABORATIVE,
   OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
 } OSPDApiMode;
-#endif
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {
@@ -181,18 +179,18 @@ extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   void ospInit(int *ac, const char **av);
 
-#ifdef OSPRAY_MPI_DISTRIBUTED
   typedef enum { 
     OSPD_Z_COMPOSITE
   } OSPDRenderMode;
 
+  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
+  void ospdApiMode(OSPDApiMode mode);
+
+#ifdef OSPRAY_MPI_DISTRIBUTED
   //! the 'lid to the pot' of ospdMpiInit(). 
   /*! does both an osp shutdown and an mpi shutdown for the mpi group
       created with ospdMpiInit */
   void ospdMpiInit(int *ac, char ***av, OSPDRenderMode renderMode=OSPD_Z_COMPOSITE);
-
-  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
-  void ospdApiMode(OSPDApiMode mode);
 
   /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
       *and* the MPI layer created with ospdMpiInit */
