@@ -18,7 +18,7 @@ SET(CMAKE_CXX_COMPILER "clang++")
 SET(CMAKE_C_COMPILER "clang")
 
 IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
-  SET(CMAKE_CXX_FLAGS "-fPIC -fno-strict-aliasing -Wno-narrowing -std=c++11")
+  SET(CMAKE_CXX_FLAGS "-fPIC -fno-strict-aliasing -Wno-narrowing -std=c++11 -stdlib=libc++")
 ELSE()
   SET(CMAKE_CXX_FLAGS "-fPIC -fno-strict-aliasing -Wno-narrowing")
 ENDIF()
