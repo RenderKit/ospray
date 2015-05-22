@@ -53,6 +53,7 @@ ELSE()
       sync/barrier.cpp
       stl/string.cpp
       )
+ELSE()
     SET(EMBREE_COMMON_SYS_SOURCES
       platform.cpp
       sysinfo.cpp
