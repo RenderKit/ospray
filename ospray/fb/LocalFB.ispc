@@ -48,7 +48,6 @@ export void LocalFrameBuffer_clearAccum(void *uniform _fb)
 export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb, 
                                                uniform Tile &tile)
 {
-<<<<<<< HEAD
 // <<<<<<< HEAD
   uniform LocalFB *uniform fb    = (uniform LocalFB *uniform)_fb;
   uniform uint32  *uniform color = (uniform uint32 *uniform)fb->colorBuffer;
@@ -152,81 +151,6 @@ export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb,
 //         if (depth)
 //           fb->depthBuffer[ofs] = tile.z[pixID];
 // >>>>>>> devel
-=======
-  uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
-  uniform bool hasDepth = (fb->depthBuffer != NULL);
-  const uniform float accScale = 1.f/(fb->inherited.accumID+1);
-  if (fb->inherited.colorBufferFormat == ColorBufferFormat_RGBA_FLOAT32) {
-    uniform vec4f *uniform color
-      = fb->colorBuffer 
-      ? (uniform vec4f *uniform)fb->colorBuffer
-      : NULL;
-    uniform vec4f *uniform accum
-      = fb->accumBuffer
-      ? (uniform vec4f *uniform)fb->accumBuffer
-      : NULL;
-    uniform float *uniform depth
-      = fb->depthBuffer 
-      ? (uniform float *uniform)fb->depthBuffer
-      : NULL;
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      const uint32 pixID = i + programIndex;
-      const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
-      const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
-      const uint32  ofs   = y*fb->inherited.size.x+x;
-      const vec4f value = getRGBA(tile,pixID);
-      if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
-        if (accum) {
-          vec4f acc = accum[ofs]+value;
-          accum[ofs] = acc;
-          if (color) {
-            color[ofs] = acc * accScale;
-          }
-        } else
-          if (color)
-            color[ofs] = value;
-        if (depth)
-          fb->depthBuffer[ofs] = tile.z[pixID];
-      }
-    }
-  } else if (fb->inherited.colorBufferFormat == ColorBufferFormat_RGBA_UINT8) {
-    uniform uint32 *uniform color
-      = fb->colorBuffer 
-      ? (uniform uint32 *uniform)fb->colorBuffer
-      : NULL;
-    uniform vec4f *uniform accum
-      = fb->accumBuffer
-      ? (uniform vec4f *uniform)fb->accumBuffer
-      : NULL;
-    uniform float *uniform depth
-      = fb->depthBuffer 
-      ? (uniform float *uniform)fb->depthBuffer
-      : NULL;
-
-
-    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-      const uint32 pixID = i + programIndex;
-      const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
-      const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
-      const uint32  ofs   = y*fb->inherited.size.x+x;
-      const vec4f value = getRGBA(tile,pixID);
-      if (x < fb->inherited.size.x & y < fb->inherited.size.y) {
-        if (accum) {
-          vec4f acc = accum[ofs]+value;
-          accum[ofs] = acc;
-
-          acc = acc * accScale;
-          acc = pow(max(acc,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
-
-          if (color) {
-            color[ofs] = cvt_uint32(acc);
-          }
-        } else
-          if (color)
-            color[ofs] = cvt_uint32(value);
-        if (depth)
-          fb->depthBuffer[ofs] = tile.z[pixID];
->>>>>>> devel
       }
 
       color[pixelID] = asRGBA;
@@ -235,6 +159,7 @@ export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb,
     }
   }
 }
+
 
 //! \brief accumulate tile into BOTH accum buffer AND tile.
 /*! \detailed After this call, the frame buffer will contain 'prev
@@ -247,7 +172,6 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   uniform vec4f *uniform accum = (uniform vec4f *uniform)fb->accumBuffer;
   if (!accum) return;
   
-<<<<<<< HEAD
   const float accScale = rcpf(fb->super.accumID+1);
 
   VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
@@ -283,17 +207,6 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
         varyTile->a[chunkID] = accScale * acc.w;
       }
     }
-=======
-  uniform vec4f *uniform dst = (uniform vec4f *uniform)fb->accumBuffer;
-  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-    const uint32 pixID = i + programIndex;
-    const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
-    const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
-    const uint32  ofs   = y*fb->inherited.size.x+x;
-    const vec4f value = getRGBA(tile,pixID);
-    if (x < fb->inherited.size.x & y < fb->inherited.size.y) 
-      dst[ofs]        = value;
->>>>>>> devel
   }
 }
 

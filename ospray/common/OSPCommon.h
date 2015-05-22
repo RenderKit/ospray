@@ -32,8 +32,13 @@
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
 //#include "common/sys/taskscheduler.h"
-#include "common/sys/atomic.h"
-#include "common/sys/condition.h"
+#ifdef __NEW_EMBREE__
+# include "common/sys/atomic.h"
+# include "common/sys/condition.h"
+#else
+# include "common/sys/sync/atomic.h"
+# include "common/sys/sync/condition.h"
+#endif
 
 // ospray
 #include "ospray/common/OSPDataType.h"
