@@ -1,10 +1,10 @@
-#include "TriangleStream.h"
+#include "PrimStream.h"
 
 namespace ospray {
 
-  void TriangleStream::flush()
+  void PrimStream::flush()
   {
-    if (numTriangles == 0) return;
+    if (numPrims == 0) return;
 
     size_t myID = (size_t)pthread_self();
     // printf("ID %li DOING flush\n",myID);
@@ -19,16 +19,14 @@ namespace ospray {
     buffer.clear();
   }
   
-  void TriangleStream::push(const Triangle &tri)
+  void PrimStream::push(const Prim &prim)
   {
-    bounds.extend(tri.a);
-    bounds.extend(tri.b);
-    bounds.extend(tri.c);
-    numTriangles++;
-    if (buffer.push(tri)) return;
+    bounds.extend(prim.bounds);
+    numPrims++;
+    if (buffer.push(prim)) return;
 
     flush();
-    buffer.push(tri);
+    buffer.push(prim);
   }
   
 }

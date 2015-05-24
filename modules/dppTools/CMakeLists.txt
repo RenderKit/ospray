@@ -17,12 +17,11 @@
 CONFIGURE_OSPRAY()
 
 # mini-scene graph viewer for _geometry_ (intentionally simple)
-OPTION(OSPRAY_MODULE_DPTOOLS "Build Data-Parallel Tools Module." OFF)
-IF (OSPRAY_MODULE_DPTOOLD AND NOT THIS_IS_MIC)
-
-  ADD_EXECUTABLE(dpPartition 
+OPTION(OSPRAY_MODULE_DPPTOOLS "Build Data-Parallel Tools Module." OFF)
+IF (OSPRAY_MODULE_DPPTOOLS AND NOT THIS_IS_MIC)
+  ADD_EXECUTABLE(dpPartition
     Block.cpp 
-    TriangleStream.cpp 
+    PrimStream.cpp 
     dpPartition.cpp 
     minilzo/minilzo.c
     )
