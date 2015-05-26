@@ -21,8 +21,8 @@
 namespace ospray {
 
   //! \brief A concrete implementation of the StructuredVolume class
-  //!  with 32-bit addressing in which the voxel data is laid out in
-  //!  memory in XYZ order and provided via a shared data buffer.
+  //!  in which the voxel data is laid out in memory in XYZ order and
+  //!  provided via a shared data buffer.
   //!
   class SharedStructuredVolume : public StructuredVolume {
   public:

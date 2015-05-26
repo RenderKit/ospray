@@ -22,10 +22,10 @@ inline void SharedStructuredVolumeFloat_getVoxel(void *uniform _volume, const va
   SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
 
   //! Cast to the actual voxel type.
-  const float *uniform voxelData = (const float *uniform) volume->voxelData;
+  const float **uniform voxelData = (const float **uniform) volume->voxelData;
 
   //! The voxel value at the given index.
-  value = voxelData[index.x + volume->inherited.dimensions.x * (index.y + volume->inherited.dimensions.y * index.z)];
+  value = voxelData[index.z][index.x + volume->inherited.dimensions.x * index.y];
 }
 
 inline void SharedStructuredVolumeUChar_getVoxel(void *uniform _volume, const varying vec3i &index, varying float &value)
@@ -34,19 +34,27 @@ inline void SharedStructuredVolumeUChar_getVoxel(void *uniform _volume, const va
   SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
 
   //! Cast to the actual voxel type.
-  const uint8 *uniform voxelData = (const uint8 *uniform) volume->voxelData;
+  const uint8 **uniform voxelData = (const uint8 **uniform) volume->voxelData;
 
   //! The voxel value at the given index.
-  value = voxelData[index.x + volume->inherited.dimensions.x * (index.y + volume->inherited.dimensions.y * index.z)];
+  value = voxelData[index.z][index.x + volume->inherited.dimensions.x * index.y];
 }
 
 void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData)
 {
   StructuredVolume_Constructor(&volume->inherited, dimensions);
 
-  volume->voxelData = voxelData;
   volume->voxelType = (OSPDataType) voxelType;
   volume->inherited.getVoxel = (volume->voxelType == OSP_FLOAT) ? SharedStructuredVolumeFloat_getVoxel : SharedStructuredVolumeUChar_getVoxel;
+
+  //! Set pointers to planes of the voxel data; this allows volumes with > 2**31 - 1 elements to be addressed in ISPC.
+  typedef void *uniform Plane;
+
+  volume->voxelData = uniform new uniform Plane[dimensions.z];
+
+  for (uniform int z=0; z < dimensions.z; z++)
+    volume->voxelData[z] = (volume->voxelType == OSP_FLOAT) ? (void *)((float *uniform)voxelData + (int64)z*dimensions.x*dimensions.y) :
+                                                              (void *)((uint8 *uniform)voxelData + (int64)z*dimensions.x*dimensions.y);
 }
 
 export void *uniform SharedStructuredVolume_createInstance(const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData)

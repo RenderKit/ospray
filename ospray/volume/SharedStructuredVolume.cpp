@@ -42,10 +42,6 @@ namespace ospray {
     vec3i dimensions = getParam3i("dimensions", vec3i(0));
     exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
 
-    //! This volume type only supports 2GB volumes for now.
-    size_t voxelSize = getVoxelType() == OSP_FLOAT ? 4 : 1;
-    exitOnCondition(dimensions.x*dimensions.y*dimensions.z*voxelSize > (1L << 31), "this volume type currently only supports up to 2GB volumes");
-
     //! Get the voxel data.
     Data *voxelData = (Data *)getParamObject("voxelData", NULL);
     exitOnCondition(voxelData == NULL, "no voxel data provided");
