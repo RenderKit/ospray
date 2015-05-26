@@ -7,7 +7,12 @@ namespace ospray {
   const size_t KILO = 1024;
   const size_t MEGA = 1024*KILO;
   const size_t GIGA = 1024*MEGA;
-  const size_t LEAF_THRESHOLD = 100*MEGA;
+  const size_t LEAF_THRESHOLD = 10*MEGA;
+
+  embree::MutexSys leafListMutex;
+  std::vector<size_t> leafList;
+
+  std::priority_queue<std::pair<index_t,Ref<BlockStream> > > workQueue;
 
   struct BlockStream : public embree::RefCount {
     BlockStream()
@@ -54,8 +59,10 @@ namespace ospray {
       while(fread(&prim,sizeof(prim),1,file) && !feof(file)) {
         ts.push(prim);
       }
+      ts.flush();
       bs->push(ts);
       fclose(file);
+      cout << "done importing prefs from " << fileName << ", found " << bs->numPrims << " prims" << endl;
     }
 
     const std::string fileName;
@@ -257,11 +264,12 @@ namespace ospray {
         rStream->push(rPrims);
       }
     }
-    
-    void makeLeaf(Ref<BlockStream> input, const box3f &domain)
+
+    void makeLeaf(Ref<BlockStream> input, const box3f &domain, size_t leafID)
     {
-      //      static embree::AtomicCounter nextID;
-      size_t thisID = splitID; //nextID++;
+      static embree::AtomicCounter nextID;
+      size_t thisID = nextID++;
+
       char fileName[10000];
       sprintf(fileName,"%s_%015li.dp_leaf",BlockRef::fileNameBase.c_str(),thisID);
       FILE *file = fopen(fileName,"wb");
@@ -279,7 +287,10 @@ namespace ospray {
         }
       }
       fclose(file);
+      leafListMutex.lock();
+      leafList.push_back(thisID);
       printf("Written leaf block %li, num prims = %li\n",thisID,input->numPrims);
+      leafListMutex.unlock();
     }
 
     virtual void finish() 
@@ -300,7 +311,7 @@ namespace ospray {
     Ref<Task> finishStream(Ref<BlockStream> stream, const box3f &domain, int side)
     {
       if (stream->numPrims < LEAF_THRESHOLD) {
-        makeLeaf(stream,domain);
+        makeLeaf(stream,domain,2*splitID+side);
         return NULL;
       } else {
         Ref<Task> ret = new BinarySplitTask(stream,domain,2*splitID+side);
@@ -317,28 +328,27 @@ namespace ospray {
   };
 
 
-  void dpPartition(int ac, char **av)
+  void importInputs(const std::string &inputFileName)
   {
-    Task::initTaskSystem(-1);
-
-    int num_big = 8;
-    int num_small = 8;
-
     Ref<ImportTask> importTask = new ImportTask;
-    
-    importTask->input.push_back(new PRefInput(av[1]));
-    BlockRef::fileNameBase = av[2];
-
-    // int geomID=0;
-    // for (int iz=0;iz<num_big;iz++)
-    //   for (int iy=0;iy<num_big;iy++)
-    //     for (int ix=0;ix<num_big;ix++) {
-    //       importTask->input.push_back(new DummyInput(geomID++,vec3i(ix,iy,iz),vec3i(num_small)));
-    //     }
-
+    importTask->input.push_back(new PRefInput(inputFileName));
     cout << "scheduling import task with " << importTask->input.size() << " inputs" << endl;
     importTask->scheduleAndWait(importTask->input.size());
     cout << "imported " << ospray::prettyNumber(importTask->output->numPrims) << " prims, in " << importTask->output->blockRefs.size() << " blocks" << endl;
+    workQueue.insert(std::pair<index_t,Ref<BlockStream> >(importTask->output->numPrims,importTask->output));
+  }
+  
+  void dpPartition(int ac, char **av)
+  {
+    BlockRef::fileNameBase = av[2];
+    Task::initTaskSystem(-1);
+    
+    size_t numToGenerate = atoi(av[3]);
+    while (workQueue.size() < numToGenerate) {
+      Ref<SplitTask> 
+    }
+
+
 
 
     Ref<BinarySplitTask> partTask = new BinarySplitTask(importTask->output,importTask->output->bounds,1);
@@ -346,6 +356,12 @@ namespace ospray {
     // Ref<FixedSizePartitionTask> partTask = new FixedSizePartitionTask(&importTask->output,vec3i(13,11,7));
     partTask->scheduleAndWait(partTask->input->blockRefs.size());
 
+    std::string leafListFileName = BlockRef::fileNameBase+".dp_leaf_index";
+    FILE *leafListFile = fopen(leafListFileName.c_str(),"wb");
+    assert(leafListFile);
+    cout << "writing leaf list of " << leafList.size() << " items to " << leafListFileName << endl;
+    fwrite(&leafList[0],sizeof(leafList[0]),leafList.size(),leafListFile);
+    fclose(leafListFile);
     // size_t numBricks = 0;
     // for (int i=0;i<partTask->blockStream.size();i++)
     //   numBricks += partTask->blockStream[i]->blockRefs.size();
