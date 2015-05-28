@@ -35,6 +35,7 @@
 #ifdef __NEW_EMBREE__
 # include "common/sys/atomic.h"
 # include "common/sys/condition.h"
+# include <unistd.h>
 #else
 # include "common/sys/sync/atomic.h"
 # include "common/sys/sync/condition.h"

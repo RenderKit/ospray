@@ -17,33 +17,16 @@
 
 #include "MultiIsendIrecvMessaging.h"
 
-// #define WORKAROUND 1
+// for usleep
+#include <unistd.h>
 
 namespace ospray {
   namespace mpi {
     namespace async {
-      // int dbg = false;
-
-      // double tt0 = 0;
-      // double tt1 = 0;
-      // double tt2 = 0;
-      // double tt3 = 0;
-      // double tt4 = 0;
-      // double tt5 = 0;
-      // double tt6 = 0;
-      // double tt7 = 0;
-      // double tt8 = 0;
-      // double tt9 = 0;
-      // double tt10 = 0;
-      // double tt11 = 0;
-      // double tt12 = 0;
-      // double tt13 = 0;
-      // double tt14 = 0;
 
       MultiIsendIrecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
                                        Consumer *consumer, int32 tag)
-        : async::Group(// name,
-                       comm,consumer,tag),
+        : async::Group(comm,consumer,tag),
           sendThreadState(NOT_STARTED), recvThreadState(NOT_STARTED)
       {
         recvThread = embree::createThread(recvThreadFunc,this);

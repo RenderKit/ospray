@@ -181,22 +181,6 @@ IF (OSPRAY_MPI)
     )
 
   # ============================================
-  ADD_EXECUTABLE(ospTestMPIAsyncBandwidth${OSPRAY_EXE_SUFFIX}
-    mpi/testing/TestAsyncBandwidth
-    )
-  TARGET_LINK_LIBRARIES(ospTestMPIAsyncBandwidth${OSPRAY_EXE_SUFFIX}
-    ospray${OSPRAY_LIB_SUFFIX}
-    )
-
-  # ============================================
-  ADD_EXECUTABLE(ospTestMPIAsyncCorrectness${OSPRAY_EXE_SUFFIX}
-    mpi/testing/TestAsyncCorrectness
-    )
-  TARGET_LINK_LIBRARIES(ospTestMPIAsyncCorrectness${OSPRAY_EXE_SUFFIX}
-    ospray${OSPRAY_LIB_SUFFIX}
-    )
-
-  # ============================================
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
   ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
