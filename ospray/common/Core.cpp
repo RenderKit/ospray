@@ -26,14 +26,22 @@
 */
 
 #include "ospray/common/Core.h"
-
+#ifdef OSPRAY_MPI
+# include "ospray/mpi/MPIDevice.h"
+#endif
 namespace ospray {
   
   namespace core {
 
     /*! returns true if and only if the system runs in MPI-parallel mode */
     bool isMpiParallel()
-    { NOTIMPLEMENTED; }
+    { 
+#ifdef OSPRAY_MPI
+      return mpi::worker.size > 0;
+#else
+      return false;
+#endif
+    }
 
     /*! \brief get number of worker processes that actually do perform rendering work. 
 
@@ -43,7 +51,13 @@ namespace ospray {
       of their own. In localdevice mode, this will return '1'.
      */
      size_t getWorkerCount()
-     { NOTIMPLEMENTED; }
+     { 
+#ifdef OSPRAY_MPI
+       return mpi::worker.size;
+#else
+       return 1;
+#endif
+     }
 
     /*! \brief return rank of the worker
 
@@ -55,7 +69,13 @@ namespace ospray {
 
      */
      index_t getWorkerRank()
-     { NOTIMPLEMENTED; }
+     { 
+#ifdef OSPRAY_MPI
+       return mpi::worker.rank;
+#else
+       return 0;
+#endif
+     }
 
   } // ::ospray::core
   
