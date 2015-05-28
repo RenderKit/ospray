@@ -178,7 +178,15 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
     OSPDataType type;
     ospGetType(objects[i], NULL, &type);
 
-    if (type == OSP_VOLUME) {
+    if (type == OSP_GEOMETRY) {
+
+      //! Commit the geometry.
+      ospCommit(objects[i]);
+
+      //! Add the loaded geometry to the model.
+      ospAddGeometry(model, (OSPGeometry) objects[i]);
+
+    } else if (type == OSP_VOLUME) {
 
       //! For now we set the same transfer function on all volumes.
       ospSetObject(objects[i], "transferFunction", transferFunction);
