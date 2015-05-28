@@ -101,17 +101,18 @@ bool SeismicVolumeFile::openSeismicDataFile(OSPVolume volume) {
   //! Set dimensions of the volume.
   ospSetVec3i(volume, "dimensions", volumeDimensions);
 
-  //! The voxel spacing of the volume to be imported.
-  volumeVoxelSpacing = deltas;
+  //! The grid spacing of the volume to be imported.
+  gridSpacing = deltas;
 
   if(useSubvolume) {
-    volumeVoxelSpacing.x *= float(subvolumeSteps.x);
-    volumeVoxelSpacing.y *= float(subvolumeSteps.y);
-    volumeVoxelSpacing.z *= float(subvolumeSteps.z);
+    gridSpacing.x *= float(subvolumeSteps.x);
+    gridSpacing.y *= float(subvolumeSteps.y);
+    gridSpacing.z *= float(subvolumeSteps.z);
   }
 
-  //! Set voxel spacing of the volume.
-  ospSetVec3f(volume, "voxelSpacing", volumeVoxelSpacing);
+  //! Set voxel spacing of the volume if not already provided.
+  if(!ospGetVec3f(volume, "gridSpacing", &gridSpacing))
+    ospSetVec3f(volume, "gridSpacing", gridSpacing);
 
   return true;
 }
