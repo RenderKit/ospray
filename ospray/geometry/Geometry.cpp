@@ -45,11 +45,11 @@ namespace ospray {
   }
 
 
-  /*! \brief creates an abstract material class of given type 
+  /*! \brief creates an abstract geometry class of given type 
     
-    The respective material type must be a registered material type
+    The respective geometry type must be a registered geometry type
     in either ospray proper or any already loaded module. For
-    material types specified in special modules, make sure to call
+    geometry types specified in special modules, make sure to call
     ospLoadModule first. */
   Geometry *Geometry::createGeometry(const char *type)
   {
