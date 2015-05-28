@@ -34,7 +34,7 @@ namespace ospray {
   namespace core {
 
     /*! returns true if and only if the system runs in MPI-parallel mode */
-    static bool isMpiParallel();
+    bool isMpiParallel();
 
     /*! \brief get number of worker processes that actually do perform rendering work. 
 
@@ -43,7 +43,7 @@ namespace ospray {
       the master) that only coordinate rendering but don't hold data
       of their own. In localdevice mode, this will return '1'.
      */
-    static size_t getWorkerCount();
+    size_t getWorkerCount();
 
     /*! \brief return rank of the worker
 
@@ -54,7 +54,7 @@ namespace ospray {
       value < 0.  In local mode, this will return 0.
 
      */
-    static index_t getWorkerRank();
+    index_t getWorkerRank();
 
   } // ::ospray::core
   

@@ -21,6 +21,7 @@
 // #include "ospray/common/OSPCommon.h"
 // embree
 #include "common/sys/platform.h"
+#include "common/sys/thread.h"
 #include "common/sys/sync/mutex.h"
 #include "common/sys/sync/condition.h"
 

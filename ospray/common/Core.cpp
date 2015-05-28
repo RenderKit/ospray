@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 /*! \file ospray/common/Core.h Defines an abstration that allows
     components to query common properties about the ospray core 
 
