@@ -76,6 +76,8 @@ namespace ospray {
   typedef ::int8_t int8;
   typedef ::uint8_t uint8;
 
+  typedef ::int64_t index_t;
+
   /*! OSPRay's two-int vector class */
   typedef embree::Vec2i    vec2i;
   /*! OSPRay's three-unsigned char vector class */

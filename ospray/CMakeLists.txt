@@ -38,6 +38,7 @@ SET(OSPRAY_SOURCES
 
   common/OSPCommon.ispc
   common/OSPCommon.cpp
+  common/Core.cpp
   common/Managed.cpp
   common/Data.cpp
   common/Model.ispc
