@@ -341,9 +341,3 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
 
   return true;
 }
-
-//! Module initialization function
-extern "C" void ospray_init_module_seismic() {
-
-  std::cout << "loaded module 'seismic'." << std::endl;
-}
