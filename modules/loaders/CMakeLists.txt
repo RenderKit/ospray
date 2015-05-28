@@ -32,6 +32,7 @@ IF (NOT THIS_IS_MIC)
       RawVolumeFile.cpp
       SymbolRegistry.cpp
       TinyXML2.cpp
+      TriangleMeshFile.cpp
       VolumeFile.cpp
     )
 

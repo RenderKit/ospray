@@ -65,14 +65,14 @@ private:
   //! Import a string.
   void importAttributeString(const tinyxml2::XMLNode *node, OSPObject parent);
 
-  //! Import a light object.
-  OSPLight importLight(const tinyxml2::XMLNode *root);
-
   //! Import an object.
   OSPObject importObject(const tinyxml2::XMLNode *node);
 
-  //! To be implemented.
-  inline OSPGeometry importTriangleMesh(const tinyxml2::XMLNode *root) { return(NULL); }
+  //! Import a light object.
+  OSPLight importLight(const tinyxml2::XMLNode *root);
+
+  //! Import a triangle mesh object.
+  OSPTriangleMesh importTriangleMesh(const tinyxml2::XMLNode *root);
 
   //! Import a volume object.
   OSPVolume importVolume(const tinyxml2::XMLNode *root);
