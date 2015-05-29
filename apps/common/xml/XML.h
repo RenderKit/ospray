@@ -31,6 +31,7 @@ namespace ospray {
       std::string name;
       std::string value;
     };
+
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
     struct Node {
@@ -38,6 +39,7 @@ namespace ospray {
       std::string content;
       std::vector<Prop *> prop;
       std::vector<Node *> child;
+      Node               *doc;
       // std::vector<Ref<Prop> > prop;
       // std::vector<Ref<Node> > child;
       
@@ -52,12 +54,16 @@ namespace ospray {
       inline size_t getPropl(const std::string &name) const
       { return atol(getProp(name).c_str()); }
       
-      Node() : name(""), content("") {}
+      Node() : name(""), content(""), doc(NULL) {}
       virtual ~Node();
     };
 
     /*! a entire xml document */
     struct XMLDoc : public Node {
+      //! \brief original file name when the document was loaded. Can be empty string.
+      /*! \detailed can be used to find related docs relative to
+          existing one */
+      std::string fileName;
     };
     
     /*! parse an XML file with given file name, and return a pointer

@@ -145,10 +145,11 @@ namespace ospray {
       return true;
     }
 
-    Node *parseNode(char *&s)
+    Node *parseNode(XMLDoc *doc, char *&s)
     {
       consume(s,'<');
       Node *node = new Node;
+      node->doc = doc;
       try {
         if (!parseIdentifier(s,node->name))
           throw std::runtime_error("XML error: could not parse node name");
@@ -181,7 +182,7 @@ namespace ospray {
             // either end of current node
           } else if (*s == '<') {
             // child node
-            Node *child = parseNode(s);
+            Node *child = parseNode(doc,s);
             node->child.push_back(child);
           } else if (*s == 0) {
             std::cout << "#osp:xml: warning: xml file ended with still-open nodes (this typically indicates a partial xml file)" << std::endl;
@@ -233,8 +234,10 @@ namespace ospray {
       }
       skipWhites(s);
       while (*s != 0) {
-        Node *node = parseNode(s);
-        if (node)xml->child.push_back(node);
+        Node *node = parseNode(xml,s);
+        if (node) {
+          xml->child.push_back(node);
+        }
         skipWhites(s);
       }
 
@@ -295,6 +298,7 @@ namespace ospray {
       mem[numBytes] = 0;
       fread(mem,1,numBytes,file);
       XMLDoc *xml = new XMLDoc;
+      xml->fileName = fn;
       bool valid = false;
       try {
         valid = parseXML(xml,mem);
