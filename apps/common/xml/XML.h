@@ -25,6 +25,9 @@
 namespace ospray {
   namespace xml {
 
+    struct Node;
+    struct XMLDoc;
+
     /*! 'prop'erties in xml nodes are the 'name="value"' inside the
       <node name1="value1" name2="value2"> ... </node> description */
     struct Prop {
@@ -35,11 +38,11 @@ namespace ospray {
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
     struct Node {
-      std::string name;
-      std::string content;
+      std::string         name;
+      std::string         content;
       std::vector<Prop *> prop;
       std::vector<Node *> child;
-      Node               *doc;
+      XMLDoc             *doc;
       // std::vector<Ref<Prop> > prop;
       // std::vector<Ref<Node> > child;
       
