@@ -69,6 +69,7 @@ namespace ospray {
     float  far;
     float  fovy;
     float  aspect;
+    float  nearClip;
 
     // ------------------------------------------------------------------
     // the internal data we preprocessed from our input parameters

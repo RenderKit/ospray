@@ -16,25 +16,41 @@
 
 #pragma once
 
-#include "Light.ih"
-#include "ospray/math/vec.ih"
+#include <ospray/ospray.h>
+#include <QtGui>
 
-struct AmbientLight {
-  uniform Light base;       //!< inherited light fields
+class IsosurfaceEditor;
 
-  uniform vec3f color;      //!< light RGB color
-  uniform float intensity;   //!< amount of emitted light
+class IsovalueWidget : public QWidget
+{
+Q_OBJECT
+
+public:
+
+  IsovalueWidget(IsosurfaceEditor *isosurfaceEditor);
+
+  bool getIsovalueEnabled() { return isovalueCheckBox.isChecked(); }
+  float getIsovalue() { return isovalueSpinBox.value(); }
+
+  void setDataValueRange(osp::vec2f dataValueRange);
+
+signals:
+
+  void isovalueChanged();
+
+protected slots:
+
+  void apply();
+
+protected:
+
+  osp::vec2f dataValueRange;
+
+  //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
+  bool dataRangeSet;
+
+  QCheckBox isovalueCheckBox;
+  QSlider isovalueSlider;
+  QDoubleSpinBox isovalueSpinBox;
+
 };
-
-//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-varying vec3f AmbientLight_computeRadiance(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
-
-//!< Construct a new ispc-side AmbientLight object
-extern void AmbientLight_Constructor( uniform AmbientLight *uniform THIS,
-                                          void *uniform cppEquivalent,
-                                          const uniform vec3f &color,
-                                          const uniform float &intensity);
-
-//!< Destroy an ispc-side DirectionLight object
-extern void AmbientLight_Destructor(uniform AmbientLight *uniform THIS);
-

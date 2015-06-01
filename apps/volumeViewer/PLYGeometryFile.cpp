@@ -77,8 +77,8 @@ bool PLYGeometryFile::parse() {
     in.getline(line, 1024);
     std::string lineString(line);
 
-    //! Ignore comments.
-    if(startsWith(lineString, "comment"))
+    //! Ignore comment and obj_info lines.
+    if(startsWith(lineString, "comment") || startsWith(lineString, "obj_info"))
       continue;
 
     //! Vertex header information.
@@ -169,8 +169,11 @@ bool PLYGeometryFile::parse() {
 
     vertices.push_back(osp::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
 
+    //! Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
     if(haveVertexColors)
       vertexColors.push_back(1.f/255.f * osp::vec3fa(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex]));
+    else
+      vertexColors.push_back(osp::vec3fa(1.f));
   }
 
   //! Read the face data.

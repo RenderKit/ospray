@@ -45,9 +45,6 @@ namespace ospray {
 
     virtual void unmap(const void *mappedMem) = 0;
 
-    /*! make sure the current frame is finished */
-    void waitForRenderTaskToBeReady();
-
     /*! indicates whether the app requested this frame buffer to have
         an accumulation buffer */
     bool hasAccumBuffer;

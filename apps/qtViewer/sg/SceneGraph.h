@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,6 +27,7 @@
 #include "sg/geometry/Geometry.h"
 #include "sg/geometry/Spheres.h"
 #include "sg/geometry/PKD.h"
+#include "sg/volume/Volume.h"
 #include "sg/common/Integrator.h"
 #include "sg/camera/PerspectiveCamera.h"
 #include "sg/common/Data.h"
@@ -145,7 +146,7 @@ namespace ospray {
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::sg::Light"; }
 
-      /*! \brief light type, i.e., 'ao', 'obj', 'pathtracer', ... */
+      /*! \brief light type, i.e., 'DirectionalLight', 'PointLight', ... */
       const std::string type; 
     };
 

@@ -59,6 +59,8 @@ namespace ospray {
       std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
+      else if(numThreads > 0)
+        embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
 
       RTCError erc = rtcGetError();
@@ -174,7 +176,7 @@ namespace ospray {
       Assert2(model, "null model in LocalDevice::removeGeometry");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(model, "null geometry in LocalDevice::removeGeometry");
+      Assert2(geometry, "null geometry in LocalDevice::removeGeometry");
 
       GeometryLocator locator;
       locator.ptr = geometry;
@@ -592,14 +594,14 @@ namespace ospray {
     }
 
     //! release (i.e., reduce refcount of) given object
-    /*! note that all objects in ospray are refcounted, so one cannot
-      explicitly "delete" any object. instead, each object is created
+    /*! Note that all objects in ospray are refcounted, so one cannot
+      explicitly "delete" any object. Instead, each object is created
       with a refcount of 1, and this refcount will be
       increased/decreased every time another object refers to this
-      object resp releases its hold on it; if the refcount is 0 the
+      object resp. releases its hold on it; if the refcount is 0 the
       object will automatically get deleted. For example, you can
       create a new material, assign it to a geometry, and immediately
-      after this assignation release its refcount; the material will
+      after this assignation release it; the material will
       stay 'alive' as long as the given geometry requires it. */
     void LocalDevice::release(OSPObject _obj)
     {
@@ -616,12 +618,12 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
-    OSPPickData LocalDevice::unproject(OSPRenderer _renderer, const vec2f &screenPos)
+    OSPPickResult LocalDevice::pick(OSPRenderer _renderer, const vec2f &screenPos)
     {
       Assert(_renderer != NULL && "invalid renderer handle");
       Renderer *renderer = (Renderer*)_renderer;
 
-      return renderer->unproject(screenPos);
+      return renderer->pick(screenPos);
     }
 
   } // ::ospray::api

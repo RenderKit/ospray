@@ -17,12 +17,22 @@
 #include "PreferencesDialog.h"
 #include "VolumeViewer.h"
 
-PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volumeViewer)
+PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boundingBox) : QDialog(volumeViewer), volumeViewer(volumeViewer)
 {
   setWindowTitle("Preferences");
 
   QFormLayout *formLayout = new QFormLayout();
   setLayout(formLayout);
+
+  // subsampling during interaction flag
+  QCheckBox *subsamplingInteractionEnabledCheckBox = new QCheckBox();
+  connect(subsamplingInteractionEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setSubsamplingInteractionEnabled(bool)));
+  formLayout->addRow("Subsample during interaction", subsamplingInteractionEnabledCheckBox);
+
+  // gradient shading flag
+  QCheckBox *gradientShadingEnabledCheckBox = new QCheckBox();
+  connect(gradientShadingEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setGradientShadingEnabled(bool)));
+  formLayout->addRow("Volume gradient shading", gradientShadingEnabledCheckBox);
 
   // sampling rate selection
   QDoubleSpinBox *samplingRateSpinBox = new QDoubleSpinBox();
@@ -32,6 +42,52 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer) : QDialog(volum
   connect(samplingRateSpinBox, SIGNAL(valueChanged(double)), volumeViewer, SLOT(setSamplingRate(double)));
   formLayout->addRow("Sampling rate", samplingRateSpinBox);
 
-  // set default value. this will trigger signal / slot executions.
+  // volume clipping box
+  for(size_t i=0; i<6; i++) {
+    volumeClippingBoxSpinBoxes.push_back(new QDoubleSpinBox());
+
+    volumeClippingBoxSpinBoxes[i]->setDecimals(3);
+    volumeClippingBoxSpinBoxes[i]->setRange(boundingBox.lower[i % 3], boundingBox.upper[i % 3]);
+    volumeClippingBoxSpinBoxes[i]->setSingleStep(0.01 * (boundingBox.upper[i % 3] - boundingBox.lower[i % 3]));
+
+    if(i < 3)
+      volumeClippingBoxSpinBoxes[i]->setValue(boundingBox.lower[i % 3]);
+    else
+      volumeClippingBoxSpinBoxes[i]->setValue(boundingBox.upper[i % 3]);
+
+    connect(volumeClippingBoxSpinBoxes[i], SIGNAL(valueChanged(double)), this, SLOT(updateVolumeClippingBox()));
+  }
+
+  QWidget *volumeClippingBoxLowerWidget = new QWidget();
+  QHBoxLayout *hBoxLayout = new QHBoxLayout();
+  volumeClippingBoxLowerWidget->setLayout(hBoxLayout);
+
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[0]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[1]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[2]);
+
+  formLayout->addRow("Volume clipping box: lower", volumeClippingBoxLowerWidget);
+
+  QWidget *volumeClippingBoxUpperWidget = new QWidget();
+  hBoxLayout = new QHBoxLayout();
+  volumeClippingBoxUpperWidget->setLayout(hBoxLayout);
+
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[3]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[4]);
+  hBoxLayout->addWidget(volumeClippingBoxSpinBoxes[5]);
+
+  formLayout->addRow("Volume clipping box: upper", volumeClippingBoxUpperWidget);
+
+  // set default values. this will trigger signal / slot executions.
+  subsamplingInteractionEnabledCheckBox->setChecked(false);
+  gradientShadingEnabledCheckBox->setChecked(false);
   samplingRateSpinBox->setValue(0.125);
+}
+
+void PreferencesDialog::updateVolumeClippingBox()
+{
+  osp::vec3f lower(volumeClippingBoxSpinBoxes[0]->value(), volumeClippingBoxSpinBoxes[1]->value(), volumeClippingBoxSpinBoxes[2]->value());
+  osp::vec3f upper(volumeClippingBoxSpinBoxes[3]->value(), volumeClippingBoxSpinBoxes[4]->value(), volumeClippingBoxSpinBoxes[5]->value());
+
+  volumeViewer->setVolumeClippingBox(osp::box3f(lower, upper));
 }

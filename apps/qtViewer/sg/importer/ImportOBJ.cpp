@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -298,6 +298,19 @@ namespace ospray {
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)));  continue; }
           if (!strncmp(token, "map_Bump" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token)));  continue; }
+
+          if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token)));  continue; }
+          if (!strncmp(token, "colorMap" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Kd", loadTexture(path, std::string(token)));  continue; }
+
+          if (!strncmp(token, "color", 5)) { parseSep(token += 5);  cur->setParam("color", getVec3f(token)); continue; }
+          if (!strncmp(token, "type", 4)) { parseSep(token += 4);  cur->type = std::string(token); continue; }
+
+          // add anything else as float param
+          const char * ident = token;
+          token += strcspn(token, " \t");
+          *(char*)token = 0;
+          parseSepOpt(token += 1);
+          cur->setParam(ident, getFloat(token));
         }
       // if (cur) g_device->rtCommit(cur);
       cin.close();
@@ -372,7 +385,7 @@ namespace ospray {
       mesh->vertex = new DataVector3f;
       mesh->normal = new DataVector3f;
       mesh->texcoord = new DataVector2f;
-      mesh->triangle =  new DataVector3i;
+      mesh->index =  new DataVector3i;
       mesh->material = curMaterial;
       world->node.push_back(mesh);
 
@@ -392,7 +405,7 @@ namespace ospray {
               continue;
 
             vec3i tri(v0,v1,v2);
-            mesh->triangle.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
+            mesh->index.cast<DataVector3i>()->push_back(tri); //Vec3i(v0, v1, v2));
           }
         }
       curGroup.clear();

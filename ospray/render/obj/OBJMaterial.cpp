@@ -50,12 +50,6 @@ namespace ospray {
                             map_Bump != NULL ? map_Bump->getIE() : NULL );
     }
 
-    OBJMaterial::~OBJMaterial()
-    {
-      if (getIE() != NULL)
-        ispc::OBJMaterial_destroy(getIE());
-    }
-    
     OSP_REGISTER_MATERIAL(OBJMaterial,OBJMaterial);
 
   } // ::ospray::obj

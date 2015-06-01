@@ -159,16 +159,8 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         /*! Either use precomputed samples for the light or sample light now. */
         PTLightSample ls; 
         ls.wi.v = make_vec3f(0.0f,0.0f,0.0f); ls.wi.pdf = 0.0f;
-#if 0
-        // iw: turned off precomputed, not yet working
-        if (light->type & TY_PRECOMPUTE_LIGHT_SAMPLES) {
-          ls = PrecomputedSample__getPTLightSample(sample_,THIS->precomputedPTLightSampleID[i]);
-        }
-        else 
-#endif
-          {
-          ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
-        }
+
+        ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
 
         /*! Ignore zero radiance or illumination from the back. */
         //if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING | dot(dg.Ns,ls.wi.v) <= 1e-8f) 
@@ -187,9 +179,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         Ray shadow_ray; 
         setRay(shadow_ray,dg.P,ls.wi.v,
                //dg.error*
-               THIS->epsilon,ls.tMax-
+               THIS->inherited.epsilon,ls.tMax-
                //dg.error*
-               THIS->epsilon);
+               THIS->inherited.epsilon);
         shadow_ray.time = lightPath.ray.time;
         
         if (isOccluded(scene->model,shadow_ray))
@@ -234,7 +226,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     /*! Continue the path. */
     extend_fast(lightPath, 
                 dg.P,wi.v,//dg.error*
-                THIS->epsilon,inf,
+                THIS->inherited.epsilon,inf,
            c,(type & directLightingBRDFTypes) != NONE);
 
     Lw = mul(mul(Lw,c),rcp(wi.pdf));
@@ -242,19 +234,6 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
   return L;
 }
 
-
-export void PathTracer_setCamera(void *uniform _THIS, void *uniform _camera)
-{
-  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
-  THIS->inherited.camera = (uniform Camera*)_camera;
-}
-
-export void PathTracer_setModel(void *uniform _THIS, void *uniform _model)
-{
-  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
-  THIS->scene->model = (uniform Model*)_model;
-  THIS->inherited.model = (uniform Model*)_model;
-}
 
 uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L);
 typedef uniform PTEnvironmentLight *uniform EnvLightPtr;
@@ -370,33 +349,39 @@ void PathTracer__Constructor(void *uniform cppE,
                              uniform PathTracer* uniform THIS,
                              const uniform int& maxDepth, 
                              const uniform float& minContribution,
-                             const uniform float& epsilon,
                              uniform Image* uniform backplate)
 {
-  Renderer_constructor(&THIS->inherited,cppE,NULL,NULL);
+  Renderer_Constructor(&THIS->inherited,cppE);
   THIS->inherited.renderTile   = PathTracer_renderTile;
   THIS->inherited.beginFrame   = PathTracer_beginFrame;
 
   THIS->maxDepth = maxDepth;
 
   THIS->minContribution = minContribution;
-  THIS->epsilon = epsilon;
   THIS->backplate = backplate;
 }
 
 
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
+
 export void* uniform PathTracer_create(void *uniform cppE,
                                        const uniform int32& maxDepth, 
                                        const uniform float& minContribution,
-                                       const uniform float& epsilon,
                                        void* uniform backplate)
 {
   uniform PathTracer *uniform THIS = uniform new uniform PathTracer;
-  PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,epsilon,
+  PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,
                           (uniform Image* uniform) backplate);
 
   precomputeZOrder();
   
   THIS->scene = createScene();
   return THIS;
+}
+
+export void PathTracer_setModel(void *uniform _THIS)
+{
+  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
+  THIS->scene->model = THIS->inherited.model;
 }

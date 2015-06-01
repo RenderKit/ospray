@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -105,6 +105,13 @@ namespace ospray {
         : DataArrayT<vec3fa,OSP_FLOAT3A>(base,size,mine)
       {}
       virtual vec3fa  get3fa(index_t idx)  const { return this->base[idx]; }
+    };
+
+    struct DataArray1i : public DataArrayT<int32,OSP_INT> {
+      DataArray1i(int32 *base, size_t size, bool mine=true)
+        : DataArrayT<int32,OSP_INT>(base,size,mine)
+        {}
+      virtual int32 get1i(index_t idx) const { return this->base[idx]; }
     };
 
     struct DataArray3i : public DataArrayT<vec3i,OSP_INT3> {

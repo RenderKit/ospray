@@ -16,25 +16,25 @@
 
 #pragma once
 
-#include "Light.ih"
-#include "ospray/math/vec.ih"
+#include "ospray/common/OSPDataType.h"
+#include "ospray/volume/StructuredVolume.ih"
 
-struct DirectionalLight {
-  uniform Light base;       //!< inherited light fields
+//! \brief ISPC variables and functions for the SharedStructuredVolume class,
+//! a concrete implementation of the StructuredVolume class in which the voxel
+//! data is laid out in memory in XYZ order and provided via a shared data
+//! buffer.
+//!
+struct SharedStructuredVolume {
 
-  uniform vec3f color;      //!< light RGB color
-  uniform vec3f direction;  //!< direction of emitted light rays
+  //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
+  StructuredVolume inherited;
+
+  //! Voxel data.
+  void **uniform voxelData;
+
+  //! Voxel type.
+  uniform OSPDataType voxelType;
+
 };
 
-//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-varying vec3f DirectionalLight_computeRadiance(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
-
-//!< Construct a new ispc-side DirectionalLight object
-extern void DirectionalLight_Constructor( uniform DirectionalLight *uniform THIS,
-                                          void *uniform cppEquivalent,
-                                          const uniform vec3f &color,
-                                          const uniform vec3f &direction);
-
-//!< Destroy an ispc-side DirectionLight object
-extern void DirectionalLight_Destructor(uniform DirectionalLight *uniform THIS);
-
+void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData);

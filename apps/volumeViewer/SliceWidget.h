@@ -25,7 +25,7 @@ Q_OBJECT
 
 public:
 
-  SliceWidget(std::vector<OSPModel> models, osp::box3f volumeBounds);
+  SliceWidget(std::vector<OSPModel> models, osp::box3f boundingBox);
   ~SliceWidget();
 
 signals:
@@ -51,7 +51,7 @@ protected:
   std::vector<OSPModel> models;
 
   //! Bounding box of the volume.
-  osp::box3f volumeBounds;
+  osp::box3f boundingBox;
 
   //! OSPRay triangle mesh for the slice.
   OSPTriangleMesh triangleMesh;

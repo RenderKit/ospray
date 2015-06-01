@@ -14,20 +14,42 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/lights/DirectionalLight.h"
-#include "ospray/lights/PointLight.h"
-#include "ospray/lights/SpotLight.h"
+#pragma once
 
-namespace ospray {
+#include <ospray/ospray.h>
+#include <QtGui>
+#include <vector>
 
-  //! A directional light.
-  OSP_REGISTER_LIGHT(DirectionalLight, DirectionalLight);
+class IsovalueWidget;
 
-  //! A point light with bounded range.
-  OSP_REGISTER_LIGHT(PointLight, PointLight);
+class IsosurfaceEditor : public QWidget
+{
+Q_OBJECT
 
-  //! A spot light with bounded angle and range.
-  OSP_REGISTER_LIGHT(SpotLight, SpotLight);
+public:
 
-} // namespace ospray
+  IsosurfaceEditor();
 
+signals:
+
+  void isovaluesChanged(std::vector<float> values);
+
+public slots:
+
+  void setDataValueRange(osp::vec2f dataValueRange);
+
+  void apply();
+
+protected slots:
+
+  void addIsovalue();
+
+protected:
+
+  osp::vec2f dataValueRange;
+
+  QVBoxLayout layout;
+
+  std::vector<IsovalueWidget *> isovalueWidgets;
+
+};

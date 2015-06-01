@@ -18,13 +18,6 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-IF  ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") AND
-		(${OSPRAY_COMPILER} STREQUAL "GCC") AND
-		(NOT APPLE)
-		)
-  MESSAGE(WARNING "Warning: You have selected 'AVX2' target and 'GCC'-compiler, but many older gcc versions do not yet support AVX2. If you run into build issues, please switch to either 'ICC'-compiler, or upgrade your gcc version")
-ENDIF()
-
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
 #INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
@@ -32,12 +25,12 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
-  common/OSPCommon.cpp
   common/OSPCommon.ispc
+  common/OSPCommon.cpp
   common/Managed.cpp
   common/Data.cpp
-  common/Model.cpp
   common/Model.ispc
+  common/Model.cpp
   common/Material.cpp
   common/Library.cpp
 
@@ -49,17 +42,21 @@ SET(OSPRAY_SOURCES
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
 
-  volume/BlockBrickedVolume.cpp
   volume/BlockBrickedVolume.ispc
+  volume/BlockBrickedVolume.cpp
   volume/GridAccelerator.ispc
+  volume/SharedStructuredVolume.ispc
+  volume/SharedStructuredVolume.cpp
+  volume/StructuredVolume.ispc
   volume/StructuredVolume.cpp
   volume/SymbolRegistry.cpp
+  volume/Volume.ispc
   volume/Volume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
-  transferFunction/TransferFunction.cpp
   transferFunction/TransferFunction.ispc
+  transferFunction/TransferFunction.cpp
   transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
@@ -75,17 +72,15 @@ SET(OSPRAY_SOURCES
   geometry/Cylinders.cpp
   geometry/Cylinders.ispc
 
+  lights/Light.cpp
   lights/AmbientLight.ispc
   lights/AmbientLight.cpp
   lights/DirectionalLight.cpp
   lights/DirectionalLight.ispc
-  lights/Light.cpp
-  lights/Light.ispc
   lights/PointLight.cpp
   lights/PointLight.ispc
   lights/SpotLight.cpp
   lights/SpotLight.ispc
-  lights/SymbolRegistry.cpp
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc
@@ -102,10 +97,6 @@ SET(OSPRAY_SOURCES
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp
   render/obj/OBJMaterial.cpp
-  render/obj/OBJPointLight.ispc
-  render/obj/OBJPointLight.cpp
-  render/obj/OBJSpotLight.ispc
-  render/obj/OBJSpotLight.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/SymbolRegistry.cpp

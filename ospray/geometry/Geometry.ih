@@ -57,6 +57,3 @@ extern void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  uniform Model *uniform model,
                                  uniform int32  geomID,
                                  uniform Material *uniform material);
-//! destructor for ispc-side Geometry object
-extern void Geometry_Destructor(uniform Geometry *uniform mesh);
-

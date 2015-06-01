@@ -107,6 +107,9 @@ protected:
   /*! rotate about center point */
   virtual void rotateCenter(float du, float dv);
 
+  /*! strafe the camera from / at point */
+  virtual void strafe(float du, float dv);
+
   /*! frame counter */
   long frameCount;
 
@@ -118,6 +121,9 @@ protected:
 
   /*! timer used to trigger continuous re-renders (for progressive refinement, automatic rotation, etc.). */
   QTimer renderTimer;
+
+  /*! timer used to restart continuous rendering after a delay during interaction. */
+  QTimer renderRestartTimer;
 
   /*! benchmarking: number of warm-up frames */
   int benchmarkWarmUpFrames;

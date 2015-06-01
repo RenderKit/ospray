@@ -32,19 +32,8 @@ struct RaycastRenderer
   uniform Renderer super;
   /*! the specific "shading" mode (primID, geomID, Ng, etc) we should
       use for shading the ray */
-  int shadeMode;
+//  int shadeMode; unused
 };
-
-export void RaycastRenderer_set(void *uniform _self,
-                                void *uniform _model,
-                                void *uniform _camera)
-{
-  uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
-  uniform Model *uniform model = (uniform Model *uniform)_model;
-  uniform Camera *uniform camera = (uniform Camera *uniform)_camera;
-  self->super.model = model;
-  self->super.camera = camera;
-}
 
 //! a simple test-frame renderer that doesn't even trace a ray, just
 //! returns a well-defined test frame (mostly useful for debugging
@@ -190,7 +179,7 @@ void RaycastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _sel
   {                                                                     \
     uniform RaycastRenderer *uniform self                               \
       = uniform new uniform RaycastRenderer;                            \
-    Renderer_constructor(&self->super,cppE,NULL,NULL);                  \
+    Renderer_Constructor(&self->super,cppE);                            \
     self->super.renderSample                                            \
       = RaycastRenderer_renderSample_##name;                            \
     return self;                                                        \
@@ -204,9 +193,3 @@ DEFINE_RAYCAST_RENDERER(eyeLight_primID);
 DEFINE_RAYCAST_RENDERER(eyeLight_geomID);
 DEFINE_RAYCAST_RENDERER(eyeLight_instID);
 DEFINE_RAYCAST_RENDERER(eyeLight_vertexColor);
-
-export void RaycastRenderer_destroy(void *uniform _self)
-{
-  uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
-  delete self;
-}

@@ -148,13 +148,13 @@ namespace ospray {
 
   /*! destroy a given frame buffer. 
 
-    due to internal reference counting the framebuffer may or may not be deleted immeidately
+    due to internal reference counting the framebuffer may or may not be deleted immediately
   */
   extern "C" void ospFreeFrameBuffer(OSPFrameBuffer fb)
   {
     ASSERT_DEVICE();
     Assert(fb != NULL);
-    std::cout << "warning: ospFreeFrameBuffer not yet implemented - ignoring (this means there is a memory hole!)" << std::endl;
+    ospray::api::Device::current->release(fb);
   }
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
@@ -318,6 +318,8 @@ namespace ospray {
   extern "C" OSPLight ospNewLight(OSPRenderer renderer, const char *type)
   {
     ASSERT_DEVICE();
+    Assert2(type != NULL, "invalid light type identifier in ospNewLight");
+    LOG("ospNewLight(" << renderer << ", " << type << ")");
     return ospray::api::Device::current->newLight(renderer, type);
   }
 
@@ -607,15 +609,31 @@ namespace ospray {
     ospSet3fv(geom,"xfm.l.vy",&xfm.l.vy.x);
     ospSet3fv(geom,"xfm.l.vz",&xfm.l.vz.x);
     ospSet3fv(geom,"xfm.p",&xfm.p.x);
-    ospSetParam(geom,"model",modelToInstantiate);
+    ospSetObject(geom,"model",modelToInstantiate);
     return geom;
+  }
+
+  extern "C" void ospPick(OSPPickResult *result, OSPRenderer renderer, const vec2f &screenPos)
+  {
+    ASSERT_DEVICE();
+    Assert2(renderer, "NULL renderer passed to ospPick");
+    if (!result) return;
+    *result = ospray::api::Device::current->pick(renderer, screenPos);
   }
 
   extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)
   {
+    static bool warned = false;
+    if (!warned) {
+      std::cout << "'ospUnproject()' has been deprecated. Please use the new function 'ospPick()' instead" << std::endl;
+      warned = true;
+    }
     ASSERT_DEVICE();
     Assert2(renderer, "NULL renderer passed to ospUnproject");
-    return ospray::api::Device::current->unproject(renderer, screenPos);
+    vec2f flippedScreenPos = vec2f(screenPos.x, 1.0f - screenPos.y);
+    OSPPickResult pick = ospray::api::Device::current->pick(renderer, flippedScreenPos);
+    OSPPickData res = { pick.hit,  pick.position.x,  pick.position.y,  pick.position.z };
+    return res;
   }
 
 } // ::ospray

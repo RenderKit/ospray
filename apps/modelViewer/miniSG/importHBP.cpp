@@ -14,41 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "OBJPointLight.h"
-#include "OBJPointLight_ispc.h"
+#include "miniSG.h"
+#include "importer.h"
+#include <fstream>
 
 namespace ospray {
-  namespace obj {
+  namespace miniSG {
+    using std::cout;
+    using std::endl;
 
-    //! Create a new OBJPointLight object and ispc equivalent
-    OBJPointLight::OBJPointLight() {
-      ispcEquivalent = ispc::OBJPointLight_create(this);
+    /*! import a HBP file, and add it to the specified model */
+    void importHBP(Model &model, const embree::FileName &fileName)
+    {
+      std::string vtxName = fileName.str()+".vtx";
+      std::string triName = fileName.str()+".tri";
+      FILE *vtx = fopen(vtxName.c_str(),"rb");
+      FILE *tri = fopen(triName.c_str(),"rb");
+
+      Mesh *mesh = new Mesh;
+      vec3f v; 
+      Triangle t;
+
+      while (fread(&v,sizeof(v),1,vtx))
+        mesh->position.push_back(vec3fa(v));
+      while (fread(&t,sizeof(t),1,tri))
+        mesh->triangle.push_back(t);
+      
+      model.mesh.push_back(mesh);
+      model.instance.push_back(Instance(model.mesh.size()-1));
+      mesh->material = NULL; 
     }
 
-    //! Commit parameters to class members. Pass data on to ispc side object.
-    void OBJPointLight::commit() {
-
-      //commit inherited params
-      PointLight::commit();
-
-      constantAttenuation = getParam1f("attenuation.constant", 0.f);
-      linearAttenuation = getParam1f("attenuation.linear", 0.f);
-      quadraticAttenuation = getParam1f("attenuation.quadratic", 0.f);
-
-      ispc::OBJPointLight_set(getIE(),
-                              (ispc::vec3f&)position,
-                              (ispc::vec3f&)color,
-                              range,
-                              constantAttenuation,
-                              linearAttenuation,
-                              quadraticAttenuation);
-    }
-
-    //! Destroy an OBJPointLight object
-    OBJPointLight::~OBJPointLight(){}
-
-    //Register the light type
-    OSP_REGISTER_LIGHT(OBJPointLight, OBJ_PointLight);
-
-  } // ::ospray::obj
+  } // ::ospray::minisg
 } // ::ospray

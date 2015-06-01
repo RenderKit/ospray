@@ -34,7 +34,7 @@ namespace ospray {
     compositing or even projection/splatting based approaches
    */
   struct Renderer : public ManagedObject {
-    Renderer() : spp(1), nearClip(1e-6f) {}
+    Renderer() : spp(1) {}
 
     /*! \brief creates an abstract renderer class of given type 
 
@@ -67,16 +67,16 @@ namespace ospray {
     /*! \brief create a light of given type */
     virtual Light *createLight(const char *type) { return NULL; }
 
-    virtual OSPPickData unproject(const vec2f &screenPos);
+    virtual OSPPickResult pick(const vec2f &screenPos);
 
+    Model *model;
     FrameBuffer *currentFB;
     
+    /*! \brief parameter to prevent self-intersection issues, will be scaled with diameter of the scene */
+    float epsilon;
+
     /*! \brief number of samples to be used per pixel in a tile */
     int32        spp;
-
-    /*! \brief near clipping plane. \todo do we actually need this? */
-    float        nearClip;
-
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under

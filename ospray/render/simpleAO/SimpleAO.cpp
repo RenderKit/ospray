@@ -45,16 +45,15 @@ namespace ospray {
   //! \brief Constructor
   template<int NUM_SAMPLES_PER_FRAME>
   SimpleAO<NUM_SAMPLES_PER_FRAME>::SimpleAO() 
-    : model(NULL), camera(NULL) 
   {
     ispcEquivalent = ispc::SimpleAO_create(this,NULL,NULL);
-  };
+  }
 
   /*! \brief create a material of given type */
   template<int NUM_SAMPLES_PER_FRAME>
   ospray::Material *SimpleAO<NUM_SAMPLES_PER_FRAME>::createMaterial(const char *type) 
   { 
-    return new SimpleAO<NUM_SAMPLES_PER_FRAME>::Material; 
+    return new typename SimpleAO<NUM_SAMPLES_PER_FRAME>::Material;
   }
 
   /*! \brief common function to help printf-debugging */
@@ -70,15 +69,10 @@ namespace ospray {
   {
     Renderer::commit();
 
-    model  = (Model  *)getParamObject("world",NULL); // old naming
-    model  = (Model  *)getParamObject("model",model); // new naming
-    camera = (Camera *)getParamObject("camera",NULL);
     bgColor = getParam3f("bgColor",vec3f(1.f));
     ispc::SimpleAO_set(getIE(),
-                           NUM_SAMPLES_PER_FRAME,
-                           (const ispc::vec3f&)bgColor,                           
-                           model?model->getIE():NULL,
-                           camera?camera->getIE():NULL);
+                       (const ispc::vec3f&)bgColor,                           
+                       NUM_SAMPLES_PER_FRAME);
   }
 
   /*! \brief instantiation of SimpleAO that uses 16 AO rays per sample */

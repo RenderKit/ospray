@@ -16,10 +16,10 @@
 
 // ospray
 #include "ospray/math/vec.ih"
-#include "ospray/math/bbox.ih"
+#include "ospray/math/box.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/Geometry.ih"
 #include "ospray/common/Model.ih"
+#include "ospray/geometry/Geometry.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
@@ -32,6 +32,7 @@ struct StreamLines {
   int32           numVertices;
   uniform uint32 *index;
   int32           numSegments;
+  uniform vec4f  *color;
 };
 
 void StreamLines_bounds(uniform StreamLines *uniform geometry,
@@ -137,10 +138,12 @@ void StreamLines_intersect(uniform StreamLines *uniform geometry,
 
   if (hit) {
     ray.geomID = geometry->geometry.geomID;
+    ray.primID = primID; // original primID needed for vertex coloring
     const vec3f P = ray.t * ray.dir;
     float s = dot(P-A,B-A) * rcpf(dot(B-A,B-A));
     s = min(max(s,0.f),1.f);
     const vec3f PonAxis = A + s * (B-A);
+    ray.u = s;
     ray.Ng = normalize(P-PonAxis);
   }
 }
@@ -152,6 +155,15 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
                                        uniform int64 flags)
 {
   dg.Ng = dg.Ns = ray.Ng;
+
+  if ((flags & DG_COLOR)) {
+    uniform StreamLines *uniform THIS = (uniform StreamLines *uniform)geometry;
+    uniform vec4f *uniform color = THIS->color;
+    if (color) {
+      const varying uint32 index  = THIS->index[ray.primID];
+      dg.color = (1.f-ray.u) * color[index] + ray.u * color[index+1];
+    }
+  }
 }
 
 export void *uniform StreamLineGeometry_create(void           *uniform cppEquivalent)
@@ -170,7 +182,8 @@ StreamLineGeometry_set(void           *uniform _geom,
                        uniform vec3fa *uniform vertex,
                        int32           uniform numVertices,
                        uniform uint32 *uniform index,
-                       int32           uniform numSegments)
+                       int32           uniform numSegments,
+                       uniform vec4f  *uniform color)
 {
   uniform StreamLines *uniform geom = (uniform StreamLines *uniform)_geom;
   uniform Model *uniform model = (uniform Model *uniform)_model;
@@ -182,6 +195,7 @@ StreamLineGeometry_set(void           *uniform _geom,
   geom->index = index;
   geom->numSegments = numSegments;
   geom->numVertices = numVertices;
+  geom->color = color;
   geom->radius = radius;
   rtcSetUserData(model->embreeSceneHandle,geomID,geom);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,

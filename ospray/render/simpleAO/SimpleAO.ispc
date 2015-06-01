@@ -24,8 +24,6 @@
 #include "ospray/render/Renderer.ih"
 #include "ospray/texture/Texture2D.ih"
 
-#define EPS 1e-5f
-
 uniform float SimpleAO__randomU[16][16] = {
   {0, 0.5, 0.25, 0.75, 0.125, 0.625, 0.375, 0.875, 0.0625, 0.5625, 0.3125, 0.8125, 0.1875, 0.6875, 0.4375, 0.9375},
   {0.03125, 0.53125, 0.28125, 0.78125, 0.15625, 0.65625, 0.40625, 0.90625, 0.09375, 0.59375, 0.34375, 0.84375, 0.21875, 0.71875, 0.46875, 0.96875},
@@ -132,7 +130,8 @@ inline vec3f getRandomDir(const int j, const int i,
                           const vec3f biNorm0,
                           const vec3f biNorm1, 
                           const vec3f gNormal,
-                          const float rot_x, const float rot_y)
+                          const float rot_x, const float rot_y,
+                          const uniform float epsilon)
 {
   const float r0 = rotate(SimpleAO__randomU[j][i],rot_x);
   const float r1 = rotate(SimpleAO__randomV[j][i],rot_y);
@@ -140,7 +139,7 @@ inline vec3f getRandomDir(const int j, const int i,
   const float w = sqrt(1.f-r1);
   const float x = cos((2.f*M_PI)*r0)*w;
   const float y = sin((2.f*M_PI)*r0)*w;
-  const float z = sqrt(r1)+EPS;
+  const float z = sqrt(r1)+epsilon;
   return x*biNorm0+y*biNorm1+z*gNormal;
 }
 
@@ -185,11 +184,11 @@ inline vec3f shade_ao16(uniform SimpleAO *uniform self,
     const vec3f ao_dir
       = getRandomDir(sindex,
                      (3*sindex_x+5*sindex_y+i+sampleCnt*sampleOfs)%16,
-                     biNormU,biNormV,N,rot_x,rot_y);
+                     biNormU,biNormV,N,rot_x,rot_y,self->super.epsilon);
     
     Ray ao_ray;
     setRay(ao_ray,dg.P+1e-3f*N,ao_dir);
-    ao_ray.t0 = EPS;
+    ao_ray.t0 = self->super.epsilon;
     ao_ray.t = 1e20f; 
     if (dot(ao_ray.dir,N) < 0.05f || isOccluded(self->super.model,ao_ray))
       hits++;
@@ -230,27 +229,16 @@ export void *uniform SimpleAO_create(void *uniform cppE,
                                          void *uniform _camera)
 {
   uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
-  Renderer_constructor(&self->super,cppE,_model,_camera);
+  Renderer_Constructor(&self->super,cppE,_model,_camera,1);
   self->super.renderSample = SimpleAO_renderSample;
   return self;
 }
 
 export void SimpleAO_set(void *uniform _self,
-                             uniform int samplesPerFrame,
-                             const uniform vec3f &bgColor,
-                             void *uniform _model,
-                             void *uniform _camera)
+                         const uniform vec3f &bgColor,
+                         uniform int samplesPerFrame)
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
   self->bgColor = bgColor;
   self->samplesPerFrame = samplesPerFrame;
-  self->super.model = (uniform Model*)_model;
-  self->super.camera = (uniform Camera*)_camera;
 }
-
-export void SimpleAO_destroy(void *uniform _self)
-{
-  uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
-  delete self;
-}
-

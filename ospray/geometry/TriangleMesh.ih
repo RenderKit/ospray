@@ -49,6 +49,3 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                                      uniform Material *uniform material,
                                      uniform Material *uniform *uniform materialList,
                                      uniform uint32 *uniform prim_materialID);
-//! destructor for ispc-side TriangleMesh object
-extern void TriangleMesh_Destructor(uniform TriangleMesh *uniform mesh);
-

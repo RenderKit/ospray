@@ -66,19 +66,9 @@ namespace ospray {
     /*! \brief constructor */
     RaycastRenderer();
 
-    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
-    virtual void commit();
-
     //! \brief common function to help printf-debugging 
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const;
-
-    // -------------------------------------------------------
-    // member variables 
-    // -------------------------------------------------------
-
-    Model  *model;
-    Camera *camera;
   };
 
 } // ::ospray

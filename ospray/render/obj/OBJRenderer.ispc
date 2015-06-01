@@ -21,30 +21,22 @@
 #include "ospray/common/Model.ih"
 #include "ospray/texture/Texture2D.ih"
 #include "ospray/lights/Light.ih"
-#include "ospray/lights/DirectionalLight.ih"
 #include "ospray/render/Renderer.ih"
 // obj renderer
 #include "OBJMaterial.ih"
-#include "OBJPointLight.ih"
-#include "OBJSpotLight.ih"
 
-#define EPS (1e-4f)
 #define ALPHA_THRESHOLD (.05f)
 
 struct OBJRenderer {
-  Renderer inherited;
+  Renderer super;
 
-  const uniform OBJPointLight *uniform *uniform pointLights;
-  uint32        numPointLights;
-  const uniform DirectionalLight *uniform *uniform dirLights;
-  uint32        numDirLights;
-  const uniform OBJSpotLight *uniform *uniform spotLights;
-  uint32        numSpotLights;
+  const uniform Light *uniform *uniform lights;
+  uint32        numLights;
   vec3f         bgColor;
   bool          shadowsEnabled;
 };
 
-inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight) {
+inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight, const uniform float epsilon) {
   float alpha = 1.f;
   int max_depth = 8;
   const float org_t_max = ray.t;
@@ -57,10 +49,9 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     DifferentialGeometry dg;
     postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
 
-    uniform Material *material = dg.material;
-    uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)material;
+    uniform OBJMaterial *objMaterial = (uniform OBJMaterial *)dg.material;
 
-    float material_opacity = 1;
+    float material_opacity = 1.f;
 
     if(objMaterial == NULL) {
       material_opacity = 1.0 - dg.color.w;
@@ -87,7 +78,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     max_depth--;
     if (max_depth <= 0) return alpha;
 
-    ray.t0 = ray.t + EPS;
+    ray.t0 = ray.t + epsilon;
     ray.t = org_t_max;
     ray.primID = -1;
     ray.geomID = -1;
@@ -95,7 +86,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
   }
 }
 
-inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OBJRenderer *uniform renderer) 
+inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varying ScreenSample &sample) 
 { 
   Ray &ray = sample.ray;
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
@@ -106,11 +97,10 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
   uniform int depth = 0;
 
   while (1) {
-    ray.t0 += renderer->inherited.nearClip;
-    traceRay(renderer->inherited.model,ray);
+    traceRay(self->super.model,ray);
 
     if (ray.geomID < 0) {
-      color = color + path_opacity * renderer->bgColor;
+      color = color + path_opacity * self->bgColor;
       sample.z = 1;
       return color;
     }
@@ -120,7 +110,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
     vec3f local_shade_color = make_vec3f(0.f);
 
     DifferentialGeometry dg;
-    postIntersect(renderer->inherited.model,
+    postIntersect(self->super.model,
         dg,
         ray,
         DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
@@ -143,7 +133,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
       foreach_unique (mat in objMaterial) {
         // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
         d = mat->d * get1f(mat->map_d, dg.st, 1.f);
-        Kd = mat->Kd;
+        Kd = mat->Kd * make_vec3f(dg.color);
         if (mat->map_Kd) {
           vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
           Kd = Kd * make_vec3f(Kd_from_map);
@@ -157,87 +147,38 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
 
     const float local_opacity = path_opacity * d;
 
-    max_depth-=1;
+    max_depth -= 1;
     if (max_depth <= 0) return color;
 
-    if (local_opacity > 0.01f) { //worth shading
+    if (local_opacity > 0.01f) { // worth shading?
       const vec3f R = ray.dir - (2.f * dot(ray.dir, dg.Ns))*dg.Ns;
-      const vec3f P = ray.org + (ray.t * ray.dir * (1.f - EPS)) + EPS * dg.Ng;
+      const vec3f P = dg.P + self->super.epsilon * dg.Ng;
 
       //Some fake hard coded ambient light
-      color = color + local_opacity * Kd * .25;
+      color = color + local_opacity * Kd * .05;
 
-      //calculate shading for point lights
-      for (uniform int i = 0; i < renderer->numPointLights && renderer->pointLights; i++) {
-        const uniform OBJPointLight *uniform l = (const uniform OBJPointLight *uniform)renderer->pointLights[i];
+      //calculate shading for all lights
+      for (uniform int i = 0; self->lights && i < self->numLights; i++) {
+        const uniform Light *uniform l = self->lights[i];
         float dist;
-        const vec3f L = normalize(l->base.position - P, dist);
-        if (dist > l->base.range) continue;
-        const float attenuation = l->constantAttenuation
-                                + l->linearAttenuation * dist
-                                + l->quadraticAttenuation * dist * dist;
-        const float cosNL = abs(dot(L,dg.Ns));
-        const float cosLR = max(0.f,dot(L,R));
-        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->base.color * rcpf(attenuation);
-        const float max_contrib = reduce_max(unshaded_light_contrib);
-        if (max_contrib > .01f) {
-          Ray shadowRay;
-          setRay(shadowRay,P,L);
-          const float light_alpha = renderer->shadowsEnabled ? lightAlpha(shadowRay, renderer->inherited.model, max_contrib) : 1.;
+        vec3f L;
+        const vec3f radiance = l->computeRadiance(l, P, L, dist);
 
-          local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
-        }
-      }
+        if (reduce_max(radiance) > 0.f) { // any potential contribution?
+          const float cosNL = abs(dot(L,dg.Ns));
+          const float cosLR = max(0.f,dot(L,R));
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * radiance;
 
-      //calculate shading for directional lights
-      for (uniform int i = 0; i < renderer->numDirLights && renderer->dirLights; i++) {
-        const uniform DirectionalLight *uniform l = (const uniform DirectionalLight *uniform)renderer->dirLights[i];
-        const vec3f L = normalize(neg(l->direction));
-
-        const float cosNL = abs(dot(L, dg.Ns));
-        const float cosLR = max(0.f, dot(L,R));
-
-        const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->color;
-
-        const float max_contrib = reduce_max(unshaded_light_contrib);
-        if (max_contrib > .01f) {
-          Ray shadowRay;
-          setRay(shadowRay, P, L);
-          const float light_alpha = renderer->shadowsEnabled ? lightAlpha(shadowRay, renderer->inherited.model, max_contrib) : 1.;
-
-          local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
-        }
-      }
-
-      //calculate shading for spot lights
-      for (uniform int i = 0; i < renderer->numSpotLights && renderer->spotLights; i++) {
-        const uniform OBJSpotLight *uniform l = (const uniform OBJSpotLight *uniform)renderer->spotLights[i];
-        float dist;
-        const vec3f L = normalize(l->base.position - P, dist);
-        if (dist > l->base.range) continue;
-        const vec3f D = neg(l->base.direction);
-        const float cosLD = dot(L,D);
-        const float cosHalfAngleRads = cos((l->base.halfAngle * M_PI) / 180.0f);
-
-        if (cosLD > cosHalfAngleRads) {  //Inside the cone
-          const float cosNL = abs(dot(L, dg.Ns));
-          const float cosLR = max(0.f, dot(L,R));
-
-          const float attenuation = l->constantAttenuation
-                                    + l->linearAttenuation * dist
-                                    + l->quadraticAttenuation * dist * dist;
-
-          const float angleAttenuation = (cosLD - cosHalfAngleRads) / (1 - cosHalfAngleRads);
-
-          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * l->base.color * rcpf(attenuation) * angleAttenuation;
-          const float max_contrib = reduce_max(unshaded_light_contrib);
-          if (max_contrib > .01f) {
-            Ray shadowRay;
-            setRay(shadowRay, P, L);
-            const float light_alpha = renderer->shadowsEnabled ? lightAlpha(shadowRay, renderer->inherited.model, max_contrib) : 1.;
-
-            local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
-          }
+          if (self->shadowsEnabled) {
+            const float max_contrib = reduce_max(unshaded_light_contrib);
+            if (max_contrib > .01f) {
+              Ray shadowRay;
+              setRay(shadowRay,P,L);
+              const float light_alpha = lightAlpha(shadowRay, self->super.model, max_contrib, self->super.epsilon);
+              local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
+            }
+          } else 
+            local_shade_color = local_shade_color + unshaded_light_contrib;
         }
       }
 
@@ -247,7 +188,7 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
     path_opacity = path_opacity * (1.f - d);
     if (path_opacity < 0.01f) return color; //remaining contribution too low kill path
 
-    ray.t0 = ray.t + EPS;
+    ray.t0 = ray.t + self->super.epsilon;
     ray.t = infinity;
     ray.primID = -1;
     ray.geomID = -1;
@@ -257,55 +198,35 @@ inline vec3f OBJRenderer_shadeRay(varying ScreenSample &sample, const uniform OB
   return color;
 }
 
-void OBJRenderer_renderSample(uniform Renderer *uniform _renderer,
+void OBJRenderer_renderSample(uniform Renderer *uniform _self,
                                varying ScreenSample &sample)
 {
-  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  sample.rgb = OBJRenderer_shadeRay(sample,renderer);
+  uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
+  sample.rgb = OBJRenderer_shadeRay(self, sample);
 }
 
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
 
 export void *uniform OBJRenderer_create(void *uniform cppE)
 {
-  uniform OBJRenderer *uniform renderer = uniform new uniform OBJRenderer;
-  Renderer_constructor(&renderer->inherited,cppE,NULL,NULL);
-  renderer->inherited.renderSample = OBJRenderer_renderSample;
-  return renderer;
+  uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
+  Renderer_Constructor(&self->super,cppE);
+  self->super.renderSample = OBJRenderer_renderSample;
+  return self;
 }
 
-export void OBJRenderer_set(void *uniform _renderer,
-                            void *uniform _model,
-                            void *uniform _camera,
+export void OBJRenderer_set(void *uniform _self,
                             const uniform vec3f &bgColor,
                             const uniform bool &shadowsEnabled,
-                            void **uniform pointLights,
-                            uniform int32  numPointLights,
-                            void **uniform dirLights,
-                            uniform int32  numDirLights,
-                            void **uniform spotLights,
-                            uniform int32  numSpotLights)
+                            void **uniform lights,
+                            uniform int32  numLights)
 {
-  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  renderer->inherited.model  = (uniform Model *uniform)_model;
-  renderer->inherited.camera = (uniform Camera *uniform)_camera;
+  uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
 
-  renderer->bgColor = bgColor;
-
-  renderer->shadowsEnabled = shadowsEnabled;
-
-  renderer->numPointLights = numPointLights;
-  renderer->pointLights = (const uniform OBJPointLight *uniform *uniform)pointLights;
-  
-  renderer->numDirLights = numDirLights;
-  renderer->dirLights = (const uniform DirectionalLight *uniform *uniform)dirLights;
-
-  renderer->numSpotLights = numSpotLights;
-  renderer->spotLights = (const uniform OBJSpotLight *uniform *uniform)spotLights;
-}
-
-
-export void OBJRenderer_destroy(void *uniform _renderer)
-{
-  uniform OBJRenderer *uniform renderer = (uniform OBJRenderer *uniform)_renderer;
-  delete renderer;
+  self->bgColor = bgColor;
+  self->shadowsEnabled = shadowsEnabled;
+  self->lights = (const uniform Light *uniform *uniform)lights;
+  self->numLights = numLights;
 }

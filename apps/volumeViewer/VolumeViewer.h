@@ -22,6 +22,7 @@
 #include <vector>
 
 class TransferFunctionEditor;
+class IsosurfaceEditor;
 
 class VolumeViewer : public QMainWindow {
 
@@ -41,7 +42,7 @@ public:
   //! Get the transfer function editor.
   TransferFunctionEditor *getTransferFunctionEditor() { return(transferFunctionEditor); }
 
-  //! Select the model to be displayed.
+  //! Select the model (time step) to be displayed.
   void setModel(size_t index);
 
   //! A string description of this class.
@@ -59,7 +60,7 @@ public slots:
   void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index);  render(); }
 
   //! Toggle animation over the time steps.
-  void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(2000);  else playTimeStepsTimer.stop(); }
+  void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(500);  else playTimeStepsTimer.stop(); }
 
   //! Add a slice to the volume, optionally from file.
   void addSlice(std::string filename = std::string());
@@ -67,15 +68,47 @@ public slots:
   //! Add geometry from file.
   void addGeometry(std::string filename = std::string());
 
+  //! Save screenshot.
+  void screenshot(std::string filename = std::string());
+
   //! Re-commit all OSPRay volumes.
   void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
 
   //! Force the OSPRay window to be redrawn.
   void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
 
+  //! Set subsampling during interaction mode on renderer.
+  void setSubsamplingInteractionEnabled(bool value) {
+    ospSet1i(renderer, "spp", value ? -1 : 1);
+    if(rendererInitialized) ospCommit(renderer);
+  }
+
+  //! Set gradient shading flag on all volumes.
+  void setGradientShadingEnabled(bool value) {
+    for(size_t i=0; i<volumes.size(); i++) { ospSet1i(volumes[i], "gradientShadingEnabled", value); ospCommit(volumes[i]); }
+    render();
+  }
+
   //! Set sampling rate on all volumes.
   void setSamplingRate(double value) {
     for(size_t i=0; i<volumes.size(); i++) { ospSet1f(volumes[i], "samplingRate", value); ospCommit(volumes[i]); }
+    render();
+  }
+
+  //! Set volume clipping box on all volumes.
+  void setVolumeClippingBox(osp::box3f value) {
+    for(size_t i=0; i<volumes.size(); i++) {
+      ospSet3fv(volumes[i], "volumeClippingBoxLower", &value.lower.x);
+      ospSet3fv(volumes[i], "volumeClippingBoxUpper", &value.upper.x);
+      ospCommit(volumes[i]);
+    }
+    render();
+  }
+
+  //! Set isosurface on all volumes; for now only one isovalue supported.
+  void setIsovalues(std::vector<float> isovalues) {
+    OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
+    for(size_t i=0; i<volumes.size(); i++) { ospSetData(volumes[i], "isovalues", isovaluesData); ospCommit(volumes[i]); }
     render();
   }
 
@@ -93,8 +126,14 @@ protected:
   //! OSPRay volumes.
   std::vector<OSPVolume> volumes;
 
+  //! Bounding box of the (first) volume.
+  osp::box3f boundingBox;
+
   //! OSPRay renderer.
   OSPRenderer renderer;
+
+  //! OSPRay renderer initialization state: set to true after renderer is committed.
+  bool rendererInitialized;
 
   //! OSPRay transfer function.
   OSPTransferFunction transferFunction;
@@ -108,6 +147,9 @@ protected:
   //! The transfer function editor.
   TransferFunctionEditor *transferFunctionEditor;
 
+  //! The isosurface editor.
+  IsosurfaceEditor *isosurfaceEditor;
+
   //! Layout for slice widgets.
   QVBoxLayout sliceWidgetsLayout;
 
@@ -120,8 +162,8 @@ protected:
   //! Timer for use when stepping through multiple models.
   QTimer playTimeStepsTimer;
 
-  //! Label for current OSPRay object file.
-  QLabel currentFilenameLabel;
+  //! Label for current OSPRay object file information.
+  QLabel currentFilenameInfoLabel;
 
   //! Print an error message.
   void emitMessage(const std::string &kind, const std::string &message) const

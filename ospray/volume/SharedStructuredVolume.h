@@ -16,28 +16,40 @@
 
 #pragma once
 
-#include "ospray/lights/PointLight.h"
+#include "ospray/volume/StructuredVolume.h"
 
 namespace ospray {
-  namespace obj {
 
-    //! OBJ renderer specific implementation of PointLights
-    struct OBJPointLight : public PointLight {
-      OBJPointLight();
-      //! \brief common function to help printf-debugging
-      virtual std::string toString() const { return "ospray::objrenderer::OBJPointLight"; }
+  //! \brief A concrete implementation of the StructuredVolume class
+  //!  in which the voxel data is laid out in memory in XYZ order and
+  //!  provided via a shared data buffer.
+  //!
+  class SharedStructuredVolume : public StructuredVolume {
+  public:
 
-      //! \brief commit the light's parameters
-      virtual void commit();
+    //! Constructor.
+    SharedStructuredVolume() {};
 
-      //! destructor, to clean up
-      virtual ~OBJPointLight();
+    //! Destructor.
+    virtual ~SharedStructuredVolume() {};
 
-      //Attenuation will be calculated as 1/( constantAttenuation + linearAttenuation * distance + quadraticAttenuation * distance * distance )
-      float constantAttenuation;    //! Constant light attenuation
-      float linearAttenuation;      //! Linear light attenuation
-      float quadraticAttenuation;   //! Quadratic light attenuation
-    };
+    //! A string description of this class.
+    virtual std::string toString() const { return("ospray::SharedStructuredVolume<" + voxelType + ">"); }
 
-  } // ::ospray::obj
+    //! Allocate storage and populate the volume, called through the OSPRay API.
+    virtual void commit();
+
+    //! Copy voxels into the volume at the given index; not allowed on SharedStructuredVolume.
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) {
+      exitOnCondition(true, "setRegion() not allowed on this volume type; volume data must be provided via the voxelData parameter");
+      return 0;
+    }
+
+  protected:
+
+    //! Create the equivalent ISPC volume container.
+    virtual void createEquivalentISPC();
+
+  };
+
 } // ::ospray

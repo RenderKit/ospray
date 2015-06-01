@@ -94,6 +94,10 @@ namespace embree
   __forceinline float safeArea( const BBox<Vec3fa>& b ) { if (b.empty()) return 0.0f; else return area(b); }
   __forceinline float halfArea( const BBox<Vec3fa>& b ) { const Vec3fa d = b.size(); return d.x*(d.y+d.z)+d.y*d.z; }
 
+  __forceinline float     area( const BBox<Vec3f>& b ) { const Vec3f d = b.size(); return 2.0f*(d.x*(d.y+d.z)+d.y*d.z); }
+  __forceinline float safeArea( const BBox<Vec3f>& b ) { if (b.empty()) return 0.0f; else return area(b); }
+  __forceinline float halfrea( const BBox<Vec3f>& b ) { const Vec3f d = b.size(); return d.x*(d.y+d.z)+d.y*d.z; }
+
   /*! merges bounding boxes and points */
   template<typename T> __forceinline const BBox<T> merge( const BBox<T>& a, const       T& b ) { return BBox<T>(min(a.lower, b    ), max(a.upper, b    )); }
   template<typename T> __forceinline const BBox<T> merge( const       T& a, const BBox<T>& b ) { return BBox<T>(min(a    , b.lower), max(a    , b.upper)); }

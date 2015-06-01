@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,6 +17,7 @@
 #pragma once
 
 #include "sg/common/Node.h"
+#include "sg/common/Texture2D.h"
 
 namespace ospray {
   namespace sg {
@@ -25,11 +26,18 @@ namespace ospray {
     struct Material : public Node {
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const { return "ospray::viewer::sg::Material"; };
+      
+      //! 'render' the nodes
+      virtual void render(RenderContext &ctx);
 
       //! a logical name, of no other useful meaning whatsoever
       std::string name; 
       //! indicates the type of material/shader the renderer should use for these parameters
       std::string type;
+      //! vector of textures used by the material
+      std::vector< Ref< Texture2D > > textures;
+      
+      OSPMaterial ospMaterial;
     };
 
   } // ::ospray::sg

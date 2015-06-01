@@ -58,6 +58,7 @@ namespace ospray {
   using embree::one;
   using embree::empty;
   using embree::zero;
+  using embree::inf;
 
   /*! basic types */
   typedef ::int64_t int64;
@@ -147,6 +148,8 @@ namespace ospray {
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
+  /*! number of Embree threads to use, 0 for the default number. (cmdline: --osp:numthreads \<n\>) */
+  extern uint32 numThreads;
 
   /*! error handling callback to be used by embree */
   //  void error_handler(const RTCError code, const char *str);
@@ -157,6 +160,11 @@ namespace ospray {
   /*! Convert a type string to an OSPDataType. */
   OSPDataType typeForString(const char *string);
 
+  struct WarnOnce {
+    WarnOnce(const std::string &s);
+  private:
+    const std::string s;
+  };
 } // ::ospray
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");

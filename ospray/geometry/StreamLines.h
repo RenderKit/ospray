@@ -49,7 +49,7 @@ namespace ospray {
     first vertex of a link (the second one being "index+1").
 
     For example, two streamlines of vertices (A-B-C-D) and (E-F-G),
-    respectively, would internally correspond to 7 links (A-B, B-C,
+    respectively, would internally correspond to 5 links (A-B, B-C,
     C-D, E-F, and F-G), and could be specified via an array of
     vertices "A,B,C,D,E,F,G", plus an array of link offsets
     "0,1,2,4,5"
@@ -64,6 +64,7 @@ namespace ospray {
     <dt><code>float        radius</code></dt><dd> Radius to be used for all stream lines</dd>
     <dt><li><code>Data<vec3fa> vertex</code></dt><dd> Array of all vertices for *all* curves in this geometry, one curve's vertices stored after another.</dd>
     <dt><li><code>Data<int32>  index </code></dt><dd> index[i] specifies the index of the first vertex of the i'th curve. The curve then uses all following vertices in the 'vertex' array until either the next curve starts, or the array's end is reached.</dd>
+    <dt><li><code>Data<vec3fa> color</code></dt><dd> Array of vertex colors corresponding to the vertices in this geometry.</dd>
     </dl>
 
     The functionality for this geometry is implemented via the
@@ -87,11 +88,13 @@ namespace ospray {
 
     Ref<Data> vertexData;  //!< refcounted data array for vertex data
     Ref<Data> indexData; //!< refcounted data array for segment data
+    Ref<Data> colorData;  //!< refcounted data array for vertex color data
 
     const vec3fa *vertex;
     size_t        numVertices;
     const uint32 *index;
     size_t        numSegments;
+    const vec4f  *color;
     float         radius;
 
     StreamLines();

@@ -16,6 +16,9 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
   common/World.cpp
   common/Texture2D.cpp
   camera/PerspectiveCamera.cpp
+  common/Material.cpp
+
+  volume/Volume.cpp
 
   module/Module.cpp
 

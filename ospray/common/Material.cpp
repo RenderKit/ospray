@@ -49,15 +49,16 @@ namespace ospray {
                 << type << "' for the first time..." << std::endl;
 
     std::string creatorName = "ospray_create_material__"+std::string(type);
-    creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
+    creatorFct creator = (creatorFct)getSymbol(creatorName);
     materialRegistry[type] = creator;
     if (creator == NULL) {
       if (ospray::logLevel >= 1) 
         std::cout << "#ospray: could not find material type '" << type << "'" << std::endl;
       return NULL;
     }
-    Material *material = (*creator)();  material->managedObjectType = OSP_MATERIAL;
-    return(material);
+    Material *material = (*creator)();
+    material->managedObjectType = OSP_MATERIAL;
+    return material;
   }
 
 } // ::ospray

@@ -20,11 +20,9 @@
 
 namespace ospray {
 
-  //! Base class for AmbientLight objects, inherits from Light
-  struct AmbientLight : public Light {
+  //! an AmbientLight is a constant light that is present everywhere
+  class AmbientLight : public Light {
     public:
-
-      //!Construct a new point light.
       AmbientLight();
 
       //! toString is used to aid in printf debugging
@@ -33,8 +31,9 @@ namespace ospray {
       //! Copy understood parameters into member parameters
       virtual void commit();
 
-      vec3f color;                  //! RGB color of the light
-      float intensity;               //! Amount of light emitted
+    private:
+      vec3f color;                  //!< RGB color of the light
+      float intensity;              //!< Amount of light emitted
   };
 
 }

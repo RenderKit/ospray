@@ -40,6 +40,7 @@ namespace ospray {
   TriangleMesh::TriangleMesh() 
     : eMesh(RTC_INVALID_ID)
   {
+    this->ispcMaterialPtrs = NULL;
     this->ispcEquivalent = ispc::TriangleMesh_create(this);
   }
 
@@ -84,16 +85,15 @@ namespace ospray {
     this->texcoord = texcoordData ? (vec2f*)texcoordData->data : NULL;
     this->prim_materialID  = prim_materialIDData ? (uint32*)prim_materialIDData->data : NULL;
     this->materialList  = materialListData ? (ospray::Material**)materialListData->data : NULL;
-
-    if (materialList) {
+    
+    if (materialList && !ispcMaterialPtrs) {
       const int num_materials = materialListData->numItems;
       ispcMaterialPtrs = new void*[num_materials];
       for (int i = 0; i < num_materials; i++) {
+        assert(this->materialList[i] != NULL && "Materials in list should never be NULL");
         this->ispcMaterialPtrs[i] = this->materialList[i]->getIE();
       }
-    } else {
-      this->ispcMaterialPtrs = NULL;
-    }
+    } 
 
     size_t numTris  = -1;
     size_t numVerts = -1;
@@ -106,6 +106,7 @@ namespace ospray {
     case OSP_UINT:  numTris = indexData->size() / 3; numCompsInTri = 3; break;
     case OSP_INT3:
     case OSP_UINT3: numTris = indexData->size(); numCompsInTri = 3; break;
+    case OSP_UINT4:
     case OSP_INT4:  numTris = indexData->size(); numCompsInTri = 4; break;
     default:
       throw std::runtime_error("unsupported trianglemesh.index data type");

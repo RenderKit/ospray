@@ -201,7 +201,10 @@ int main(int argc, char *argv[]) {
   if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
 
   //! Set the view up vector if specified.
-  if(viewUp != osp::vec3f(0.f)) volumeViewer->getWindow()->getViewport()->setUp(viewUp);
+  if(viewUp != osp::vec3f(0.f)) {
+    volumeViewer->getWindow()->getViewport()->setUp(viewUp);
+    volumeViewer->getWindow()->resetAccumulationBuffer();
+  }
 
   //! Enter the Qt event loop.
   app->exec();

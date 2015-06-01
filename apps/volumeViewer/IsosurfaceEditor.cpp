@@ -14,30 +14,47 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "IsosurfaceEditor.h"
+#include "IsovalueWidget.h"
 
-#include "Light.ih"
-#include "ospray/math/vec.ih"
+IsosurfaceEditor::IsosurfaceEditor()
+{
+  // Setup UI elements.
+  layout.setSizeConstraint(QLayout::SetMinimumSize);
+  layout.setAlignment(Qt::AlignTop);
+  setLayout(&layout);
 
-struct PointLight {
-  uniform Light base;     //!< inherited light fields
+  QPushButton *addIsovalueButton = new QPushButton("Add isosurface");
+  layout.addWidget(addIsovalueButton);
+  connect(addIsovalueButton, SIGNAL(clicked()), this, SLOT(addIsovalue()));
+}
 
-  uniform vec3f position; //!< light position
-  uniform vec3f color;    //!< light color
+void IsosurfaceEditor::setDataValueRange(osp::vec2f dataValueRange)
+{
+  this->dataValueRange = dataValueRange;
 
-  uniform float range;  //!< max range at which the light will have an effect
-};
+  for (unsigned int i=0; i<isovalueWidgets.size(); i++)
+    isovalueWidgets[i]->setDataValueRange(dataValueRange);
+}
 
-//! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-varying vec3f PointLight_computeRadiance(void *uniform light, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
+void IsosurfaceEditor::apply()
+{
+  std::vector<float> isovalues;
 
-//! Construct a new ispc-side PointLight object
-extern void PointLight_Constructor( uniform PointLight *uniform THIS,
-                                    void *uniform cppEquivalent,
-                                    const uniform vec3f &position,
-                                    const uniform vec3f &color,
-                                    const uniform float range);
+  for (unsigned int i=0; i<isovalueWidgets.size(); i++) {
+    if (isovalueWidgets[i]->getIsovalueEnabled())
+      isovalues.push_back(isovalueWidgets[i]->getIsovalue());
+  }
 
-//! Destroy an ispc-side PointLight object
-extern void PointLight_Destructor(uniform PointLight *uniform THIS);
+  emit(isovaluesChanged(isovalues));
+}
 
+void IsosurfaceEditor::addIsovalue()
+{
+  IsovalueWidget *isovalueWidget = new IsovalueWidget(this);
+
+  isovalueWidgets.push_back(isovalueWidget);
+  layout.addWidget(isovalueWidget);
+
+  isovalueWidget->setDataValueRange(dataValueRange);
+}

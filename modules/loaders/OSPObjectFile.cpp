@@ -18,10 +18,32 @@
 #include <string>
 #include <string.h>
 #include "modules/loaders/OSPObjectFile.h"
+#include "modules/loaders/TriangleMeshFile.h"
 #include "modules/loaders/VolumeFile.h"
 
-void OSPObjectFile::importAttributeFloat(const tinyxml2::XMLNode *node, OSPObject parent) {
+OSPObject *OSPObjectFile::importObjects()
+{
+  //! The XML document container.
+  tinyxml2::XMLDocument xml(true, tinyxml2::COLLAPSE_WHITESPACE);
 
+  //! Read the XML object file.
+  exitOnCondition(xml.LoadFile(filename.c_str()) != tinyxml2::XML_SUCCESS, "unable to read object file '" + filename + "'");
+
+  //! A list of OSPRay objects and their attributes contained in the file.
+  std::vector<OSPObject> objects;
+
+  //! Iterate over the object entries, skip the XML declaration and comments.
+  for (const tinyxml2::XMLNode *node = xml.FirstChild() ; node ; node = node->NextSibling()) if (node->ToElement()) objects.push_back(importObject(node));
+
+  //! Copy the objects into a list.
+  OSPObject *pointer = new OSPObject[objects.size() + 1];  memcpy(pointer, &objects[0], objects.size() * sizeof(OSPObject));
+
+  //! Mark the end of the list.
+  pointer[objects.size()] = NULL;  return(pointer);
+}
+
+void OSPObjectFile::importAttributeFloat(const tinyxml2::XMLNode *node, OSPObject parent)
+{
   //! The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  float value = 0.0f;  char guard[8];
 
@@ -30,11 +52,10 @@ void OSPObjectFile::importAttributeFloat(const tinyxml2::XMLNode *node, OSPObjec
 
   //! Set the attribute on the parent object.
   ospSet1f(parent, node->ToElement()->Name(), value);
-
 }
 
-void OSPObjectFile::importAttributeFloat2(const tinyxml2::XMLNode *node, OSPObject parent) {
-
+void OSPObjectFile::importAttributeFloat2(const tinyxml2::XMLNode *node, OSPObject parent)
+{
   //! The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  osp::vec2f value(0.0f);  char guard[8];
 
@@ -43,11 +64,10 @@ void OSPObjectFile::importAttributeFloat2(const tinyxml2::XMLNode *node, OSPObje
 
   //! Set the attribute on the parent object.
   ospSetVec2f(parent, node->ToElement()->Name(), value);
-
 }
 
-void OSPObjectFile::importAttributeFloat3(const tinyxml2::XMLNode *node, OSPObject parent) {
-
+void OSPObjectFile::importAttributeFloat3(const tinyxml2::XMLNode *node, OSPObject parent)
+{
   //! The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  osp::vec3f value(0.0f);  char guard[8];
 
@@ -56,11 +76,10 @@ void OSPObjectFile::importAttributeFloat3(const tinyxml2::XMLNode *node, OSPObje
 
   //! Set the attribute on the parent object.
   ospSetVec3f(parent, node->ToElement()->Name(), value);
-
 }
 
-void OSPObjectFile::importAttributeInteger(const tinyxml2::XMLNode *node, OSPObject parent) {
-
+void OSPObjectFile::importAttributeInteger(const tinyxml2::XMLNode *node, OSPObject parent)
+{
   //! The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  int value = 0;  char guard[8];
 
@@ -69,11 +88,10 @@ void OSPObjectFile::importAttributeInteger(const tinyxml2::XMLNode *node, OSPObj
 
   //! Set the attribute on the parent object.
   ospSet1i(parent, node->ToElement()->Name(), value);
-
 }
 
-void OSPObjectFile::importAttributeInteger3(const tinyxml2::XMLNode *node, OSPObject parent) {
-
+void OSPObjectFile::importAttributeInteger3(const tinyxml2::XMLNode *node, OSPObject parent)
+{
   //! The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  osp::vec3i value(0);  char guard[8];
 
@@ -82,11 +100,10 @@ void OSPObjectFile::importAttributeInteger3(const tinyxml2::XMLNode *node, OSPOb
 
   //! Set the attribute on the parent object.
   ospSetVec3i(parent, node->ToElement()->Name(), value);
-
 }
 
-void OSPObjectFile::importAttributeString(const tinyxml2::XMLNode *node, OSPObject parent) {
-
+void OSPObjectFile::importAttributeString(const tinyxml2::XMLNode *node, OSPObject parent)
+{
   //! Get the attribute value.
   const char *value = node->ToElement()->GetText();
 
@@ -95,11 +112,25 @@ void OSPObjectFile::importAttributeString(const tinyxml2::XMLNode *node, OSPObje
 
   //! Set the attribute on the parent object.
   ospSetString(parent, node->ToElement()->Name(), value);
-
 }
 
-OSPLight OSPObjectFile::importLight(const tinyxml2::XMLNode *root) {
+OSPObject OSPObjectFile::importObject(const tinyxml2::XMLNode *node)
+{
+  //! OSPRay light object.
+  if (!strcmp(node->ToElement()->Name(), "light")) return((OSPObject) importLight(node));
 
+  //! OSPRay triangle mesh object.
+  if (!strcmp(node->ToElement()->Name(), "triangleMesh")) return((OSPObject) importTriangleMesh(node));
+
+  //! OSPRay volume object.
+  if (!strcmp(node->ToElement()->Name(), "volume")) return((OSPObject) importVolume(node));
+
+  //! No other object types are currently supported.
+  exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");  return(NULL);
+}
+
+OSPLight OSPObjectFile::importLight(const tinyxml2::XMLNode *root)
+{
   //! Create the OSPRay object.
   OSPLight light = ospNewLight(NULL, root->ToElement()->Attribute("type"));
 
@@ -128,49 +159,48 @@ OSPLight OSPObjectFile::importLight(const tinyxml2::XMLNode *root) {
 
   //! The populated light object.
   return(light);
-
 }
 
-OSPObject OSPObjectFile::importObject(const tinyxml2::XMLNode *node) {
+OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
+{
+  //! Create the OSPRay object.
+  OSPTriangleMesh triangleMesh = ospNewTriangleMesh();
 
-  //! OSPRay light object.
-  if (!strcmp(node->ToElement()->Name(), "light")) return((OSPObject) importLight(node));
+  //! Temporary storage for the file name attribute if specified.
+  const char *triangleMeshFilename = NULL;
 
-  //! OSPRay triangle mesh object.
-  if (!strcmp(node->ToElement()->Name(), "triangleMesh")) return((OSPObject) importTriangleMesh(node));
+  //! Iterate over object attributes.
+  for (const tinyxml2::XMLNode *node = root->FirstChild() ; node ; node = node->NextSibling()) {
 
-  //! OSPRay volume object.
-  if (!strcmp(node->ToElement()->Name(), "volume")) return((OSPObject) importVolume(node));
+    //! File containing a triangle mesh specification and / or data.
+    if (!strcmp(node->ToElement()->Name(), "filename")) { triangleMeshFilename = node->ToElement()->GetText();  continue; }
 
-  //! No other object types are currently supported.
-  exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");  return(NULL);
+    //! Error check.
+    exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
+  }
 
+  //! Load the contents of the triangle mesh file if specified.
+  if (triangleMeshFilename != NULL) {
+
+    //! Some implementations of 'dirname()' are destructive.
+    char *duplicateFilename = strdup(filename.c_str());
+
+    //! The triangle mesh file path is absolute.
+    if (triangleMeshFilename[0] == '/') return(TriangleMeshFile::importTriangleMesh(triangleMeshFilename, triangleMesh));
+
+    //! The triangle mesh file path is relative to the object file path.
+    if (triangleMeshFilename[0] != '/') return(TriangleMeshFile::importTriangleMesh((std::string(dirname(duplicateFilename)) + "/" + triangleMeshFilename).c_str(), triangleMesh));
+
+    //! Free the temporary character array.
+    if (duplicateFilename != NULL) free(duplicateFilename);
+  }
+
+  //! The populated triangle mesh object.
+  return(triangleMesh);
 }
 
-OSPObject *OSPObjectFile::importObjects() {
-
-  //! The XML document container.
-  tinyxml2::XMLDocument xml(true, tinyxml2::COLLAPSE_WHITESPACE);
-
-  //! Read the XML object file.
-  exitOnCondition(xml.LoadFile(filename.c_str()) != tinyxml2::XML_SUCCESS, "unable to read object file '" + filename + "'");
-
-  //! A list of OSPRay objects and their attributes contained in the file.
-  std::vector<OSPObject> objects;
-
-  //! Iterate over the object entries, skip the XML declaration and comments.
-  for (const tinyxml2::XMLNode *node = xml.FirstChild() ; node ; node = node->NextSibling()) if (node->ToElement()) objects.push_back(importObject(node));
-
-  //! Copy the objects into a list.
-  OSPObject *pointer = new OSPObject[objects.size() + 1];  memcpy(pointer, &objects[0], objects.size() * sizeof(OSPObject));
-
-  //! Mark the end of the list.
-  pointer[objects.size()] = NULL;  return(pointer);
-
-}
-
-OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
-
+OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
+{
   //! Create the OSPRay object.
   OSPVolume volume = ospNewVolume("block_bricked_volume");
 
@@ -189,6 +219,12 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
     //! Gamma correction coefficient and exponent.
     if (!strcmp(node->ToElement()->Name(), "gammaCorrection")) { importAttributeFloat2(node, volume);  continue; }
 
+    //! Grid origin in world coordinates.
+    if (!strcmp(node->ToElement()->Name(), "gridOrigin")) { importAttributeFloat3(node, volume);  continue; }
+
+    //! Grid spacing in each dimension in world coordinates.
+    if (!strcmp(node->ToElement()->Name(), "gridSpacing")) { importAttributeFloat3(node, volume);  continue; }
+
     //! Sampling rate for ray casting based renderers.
     if (!strcmp(node->ToElement()->Name(), "samplingRate")) { importAttributeFloat(node, volume);  continue; }
 
@@ -204,15 +240,11 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
     //! Voxel value range.
     if (!strcmp(node->ToElement()->Name(), "voxelRange")) { importAttributeFloat2(node, volume);  continue; }
 
-    //! Voxel spacing in world coordinates (currently unused).
-    if (!strcmp(node->ToElement()->Name(), "voxelSpacing")) { importAttributeFloat3(node, volume);  continue; }
-
     //! Voxel type string.
     if (!strcmp(node->ToElement()->Name(), "voxelType")) { importAttributeString(node, volume);  continue; }
 
     //! Error check.
     exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
-
   }
 
   //! Load the contents of the volume file if specified.
@@ -229,11 +261,8 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root) {
 
     //! Free the temporary character array.
     if (duplicateFilename != NULL) free(duplicateFilename);
-
   }
 
   //! The populated volume object.
   return(volume);
-
 }
-

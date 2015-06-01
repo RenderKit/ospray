@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -83,7 +83,8 @@ namespace ospray {
 
     //! the QT callback that tells us that the image got resize
     void QAffineSpaceManipulator::resizeGL(int width, int height)
-    { 
+    {
+      glViewport(0, 0, width, height);
       size = vec2i(width,height);
       resize(width,height);
     }
@@ -129,7 +130,7 @@ namespace ospray {
       QPoint newPos = event->pos();
       
       switch (interactionMode) {
-      case FLY:
+      case FLY: 
       case INSPECT: {
         // axes we're rotating in u and v direction, respectively.
         const vec3f uRotationAxis = frame->orientation.vz;
@@ -188,8 +189,8 @@ namespace ospray {
         /* fly mode: move BOTH source and target positions
            forward/backward along move axis. Since we are moving
            *forward* with mouse, we move in POSITIVE y distance */
-        frame->sourcePoint += moveDistance * moveAxis;
-        frame->targetPoint += moveDistance * moveAxis;
+        frame->sourcePoint -= moveDistance * moveAxis;
+        frame->targetPoint -= moveDistance * moveAxis;
       } break;
       case FREE_ROTATION: 
       case INSPECT: {
@@ -207,6 +208,22 @@ namespace ospray {
       lastMousePos = event->pos();
       emit affineSpaceChanged(this);
       updateGL();
+    }
+
+
+    //! switch to requested interaction mode
+    void QAffineSpaceManipulator::setInteractionMode(QAffineSpaceManipulator::InteractionMode interactionMode)
+    { this->interactionMode = interactionMode; }
+
+    /*! toggle-up: switch to given axis (x=0,y=1,z=2) as up-vectors for the rotation.
+      when _already_ in up-vector mode for this axis, switch to negative axis. */
+    void QAffineSpaceManipulator::toggleUp(int axis)
+    {
+      vec3f newUp = vec3f(axis==0,axis==1,axis==2);
+      if (frame->upVector == newUp)
+        newUp = - newUp;
+      frame->upVector = newUp;
+      frame->snapUp();
     }
 
 

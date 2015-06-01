@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -153,20 +153,11 @@ namespace ospray {
     void ModelViewer::createEditorWidgetStack()
     {
       editorWidgetStack = new EditorWidgetStack;
-      // editorWidgetStack->addPage("Test1",new QLabel("Test1"));
-      // editorWidgetStack->addPage("Test2",new QLabel("Test2"));
-      QDockWidget *dock = new QDockWidget(this);
-      // dock->setWindowTitle("Editors");
-      // dock->setWidget(editorWidgetStack);
-      // dock->setFeatures(0);
-      // addDockWidget(Qt::RightDockWidgetArea,dock);
-
       editorWidgetDock = new QDockWidget(this);
       editorWidgetDock->setWindowTitle("Editors");
       editorWidgetDock->setWidget(editorWidgetStack);
       editorWidgetDock->setFeatures(0);
       addDockWidget(Qt::RightDockWidgetArea,editorWidgetDock);
-
     }
 
     void ModelViewer::createTransferFunctionEditor()
@@ -224,25 +215,123 @@ namespace ospray {
       }
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
     }
+    
+    void ModelViewer::createLightManipulator() {
+      QWidget *lmEditorsPage = new QWidget;
+      QVBoxLayout *layout = new QVBoxLayout;
+      lmEditorsPage->setLayout(layout);
+
+      QStackedWidget *stackedWidget = new QStackedWidget;
+      layout->addWidget(stackedWidget);
+      
+      Ref<sg::PerspectiveCamera> camera = renderWidget->sgRenderer->camera.cast<sg::PerspectiveCamera>();
+      QLightManipulator *lManipulator = new QLightManipulator(sgRenderer, camera->getUp());
+      //stackedWidget->addWidget(lManipulator);
+      layout->addWidget(lManipulator);
+      
+      editorWidgetStack->addPage("Light Editor", lManipulator);
+      
+      connect(lManipulator, SIGNAL(lightsChanged()), this, SLOT(render()));
+    }
+
+    void ModelViewer::toggleUpAxis(int axis)
+    {
+      std::cout << "#osp:QTV: new upvector is " << renderWidget->getFrame()->upVector << std::endl;
+    }
 
     void ModelViewer::keyPressEvent(QKeyEvent *event) {
-      //      std::cout << event->key() << std::endl;
       switch (event->key()) {
-      case Qt::Key_Escape:
-      case Qt::Key_Q:
-        // TODO: Properly tell the app to quit?
-        exit(0);
-        // TODO wasd movement
-      case Qt::Key_F:
-        setWindowState(windowState() ^ Qt::WindowFullScreen);
-        if (windowState() & Qt::WindowFullScreen){
-          toolBar->hide();
-          editorWidgetDock->hide();
-        } else {
-          toolBar->show();
-          editorWidgetDock->show();
+      case Qt::Key_Escape: {
+        QApplication::quit();
+      } break;
+      case Qt::Key_C: {
+        // ------------------------------------------------------------------
+        // 'C': 
+        // - Shift-C print current camera 
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-f: switch to fly mode
+          std::cout << "Shift-C: Printing camera" << std::endl;
+          printCameraAction();
         }
-        break;
+      } break;
+      case Qt::Key_F: {
+        // ------------------------------------------------------------------
+        // 'F': 
+        // - Shift-F enters fly mode
+        // - Ctrl-F toggles full-screen
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-f: switch to fly mode
+          std::cout << "Shift-F: Entering 'Fly' mode" << std::endl;
+          renderWidget->setInteractionMode(QAffineSpaceManipulator::FLY);
+        } else if (event->modifiers() & Qt::ControlModifier) {
+          // ctrl-f: switch to full-screen
+          std::cout << "Ctrl-F: Toggling full-screen mode" << std::endl;
+          setWindowState(windowState() ^ Qt::WindowFullScreen);
+          if (windowState() & Qt::WindowFullScreen){
+            toolBar->hide();
+            editorWidgetDock->hide();
+          } else {
+            toolBar->show();
+            editorWidgetDock->show();
+          }
+        }
+      } break;
+      case Qt::Key_I: {
+        // ------------------------------------------------------------------
+        // 'I': 
+        // - Ctrl-I switches to inspect mode
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-f: switch to fly mode
+          std::cout << "Shift-I: Entering 'Inspect' mode" << std::endl;
+          renderWidget->setInteractionMode(QAffineSpaceManipulator::INSPECT);
+        } 
+      } break;
+      case Qt::Key_Q: {
+        QApplication::quit();
+      } break;
+      case Qt::Key_R: {
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-f: switch to fly mode
+          std::cout << "Shift-R: Entering Free-'Rotation' mode (no up-vector)" << std::endl;
+          renderWidget->setInteractionMode(QAffineSpaceManipulator::FREE_ROTATION);
+        } 
+      } break;
+      case Qt::Key_X: {
+        // ------------------------------------------------------------------
+        // 'X': 
+        // - Ctrl-X switches to X-up/down for upvector
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-X: switching to X-up/down upvector " << std::endl;
+          renderWidget->toggleUp(0);
+        } 
+      } break;
+        // ------------------------------------------------------------------
+        // 'Y': 
+        // - Ctrl-Y switches to Y-up/down for upvector
+        // ------------------------------------------------------------------
+      case Qt::Key_Y: {
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-Y: switching to Y-up/down upvector " << std::endl;
+          renderWidget->toggleUp(1);
+        } 
+      } break;
+      case Qt::Key_Z: {
+        // ------------------------------------------------------------------
+        // 'Z': 
+        // - Ctrl-Z switches to Z-up/down for upvector
+        // ------------------------------------------------------------------
+        if (event->modifiers() & Qt::ShiftModifier) {
+          // shift-x: switch to X-up
+          std::cout << "Shift-Z: switching to Z-up/down upvector " << std::endl;
+          renderWidget->toggleUp(2);
+        } 
+      } break;
 
       default:
         QMainWindow::keyPressEvent(event);
@@ -252,6 +341,7 @@ namespace ospray {
     ModelViewer::ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen)
       : editorWidgetStack(NULL),
         transferFunctionEditor(NULL),
+        lightEditor(NULL),
         toolBar(NULL),
         sgRenderer(sgRenderer)
     {
@@ -259,18 +349,16 @@ namespace ospray {
       setWindowTitle(tr("OSPRay QT ModelViewer"));
       resize(1024,768);
 
-      if (!fullscreen){
-        // create GUI elements
-        toolBar = addToolBar("toolbar");
+      // create GUI elements
+      toolBar = addToolBar("toolbar");
 
-        QAction *printCameraAction = new QAction("Print Camera", this);
-        connect(printCameraAction, SIGNAL(triggered()), this, SLOT(printCameraAction()));
-        toolBar->addAction(printCameraAction);
+      QAction *printCameraAction = new QAction("Print Camera", this);
+      connect(printCameraAction, SIGNAL(triggered()), this, SLOT(printCameraAction()));
+      toolBar->addAction(printCameraAction);
 
-        QAction *screenShotAction = new QAction("Screenshot", this);
-        connect(screenShotAction, SIGNAL(triggered()), this, SLOT(screenShotAction()));
-        toolBar->addAction(screenShotAction);
-      }
+      QAction *screenShotAction = new QAction("Screenshot", this);
+      connect(screenShotAction, SIGNAL(triggered()), this, SLOT(screenShotAction()));
+      toolBar->addAction(screenShotAction);
 
       renderWidget = new OSPRayRenderWidget(sgRenderer);
       ///renderWidget = new CheckeredSphereRotationEditor();
@@ -287,6 +375,7 @@ namespace ospray {
       
       createTimeSlider();
       createEditorWidgetStack();
+      createLightManipulator();
       createTransferFunctionEditor();
 
       if (fullscreen) {
@@ -338,6 +427,10 @@ namespace ospray {
       const std::string fileName = "/tmp/ospQTV.screenshot.png";
       fb.save(fileName.c_str());
       std::cout << "screen shot saved in " << fileName << std::endl;
+    }
+    
+    void ModelViewer::lightChanged()
+    {
     }
   }
 }

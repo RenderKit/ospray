@@ -45,6 +45,14 @@
 #endif
 #include "ospray/common/OSPDataType.h"
 
+#ifdef __GNUC__
+  #define OSP_DEPRECATED __attribute__((deprecated))
+#elif defined(_MSC_VER)
+  #define OSP_DEPRECATED __declspec(deprecated)
+#else
+  #define OSP_DEPRECATED
+#endif
+
 /*! namespace for classes in the public core API */
 namespace osp {
 
@@ -53,6 +61,7 @@ namespace osp {
   typedef embree::Vec3f  vec3f;
   typedef embree::Vec3i  vec3i;
   typedef embree::Vec3fa vec3fa;
+  typedef embree::Vec4f  vec4f;
   typedef embree::BBox<embree::Vec2i> box2i;
   typedef embree::BBox3f box3f;
   typedef embree::AffineSpace3f affine3f;
@@ -113,12 +122,12 @@ typedef osp::Model             *OSPModel;
 typedef osp::Data              *OSPData;
 typedef osp::Geometry          *OSPGeometry;
 typedef osp::Material          *OSPMaterial;
+typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
-typedef osp::Light             *OSPLight;
 
 /*! an error type. '0' means 'no error' */
 typedef int32 error_t;
@@ -169,30 +178,33 @@ extern "C" {
   //! assign given material to given geometry
   void ospSetMaterial(OSPGeometry geometry, OSPMaterial material);
 
-  //! create a new camera of given type 
-  /*! return 'NULL' if that type is not known */
-  /*! The default camera type supported in all ospray versions is
-      "perspective" (\ref perspective_camera).  For a list of
-      supported camera type in this version of ospray, see \ref
-      ospray_supported_cameras */
+  //! \brief create a new camera of given type 
+  /*! \detailed The default camera type supported in all ospray
+    versions is "perspective" (\ref perspective_camera).  For a list
+    of supported camera type in this version of ospray, see \ref
+    ospray_supported_cameras
+    
+    \returns 'NULL' if that type is not known, else a handle to the created camera
+  */
   OSPCamera ospNewCamera(const char *type);
 
-  //! create a new volume of given type 
-  /*! return 'NULL' if that type is not known */
+  //! \brief create a new volume of given type 
+  /*! \detailed return 'NULL' if that type is not known */
   OSPVolume ospNewVolume(const char *type);
 
   //! add a volume to an existing model
   void ospAddVolume(OSPModel model, OSPVolume volume);
 
-  //! create a new transfer function of given type
-  /*! return 'NULL' if that type is not known */
+  //! \brief create a new transfer function of given type
+  /*! \detailed return 'NULL' if that type is not known */
   OSPTransferFunction ospNewTransferFunction(const char * type);
   
-  //! create a new Texture2D with the given parameters
-  /*! return 'NULL' if the texture could not be created with the given parameters */
+  //! \brief create a new Texture2D with the given parameters
+  /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
   OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
 
-  /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
+  //! \brief lears the specified channel(s) of the frame buffer
+  /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
     if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
     if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
@@ -237,6 +249,8 @@ extern "C" {
     OSP_FB_RBGA_I8, OSP_FB_RGB_I8, and OSP_FB_NONE (note that
     OSP_FB_NONE is a perfectly reasonably choice for a framebuffer
     that will be used only internally, see notes below).
+    The origin of the screen coordinate system is the lower left
+    corner (as in OpenGL).
 
     \param channelFlags specifies which channels the frame buffer has,
     and is or'ed together from the values OSP_FB_COLOR,
@@ -299,7 +313,7 @@ extern "C" {
   /*! add a object-typed parameter to another object 
     
    \warning this call has been superseded by ospSetObject, and will eventually get removed */
-  void ospSetParam(OSPObject _object, const char *id, OSPObject object);
+  OSP_DEPRECATED void ospSetParam(OSPObject _object, const char *id, OSPObject object);
 
   /*! add a object-typed parameter to another object */
   void ospSetObject(OSPObject _object, const char *id, OSPObject object);
@@ -455,14 +469,22 @@ extern "C" {
   /*! \brief commit changes to an object */
   void ospCommit(OSPObject object);
 
-  /*! \brief represents the data returned after an ospUnproject (picking) operation */
+  /*! \brief represents the result returned by an ospPick operation */
   extern "C" typedef struct {
-    bool hit;                           //Whether or not a hit actually occured
-    float world_x, world_y, world_z;    //The world-space position of the hit point
+    osp::vec3f position; //< the position of the hit point (in world-space)
+    bool hit;            //< whether or not a hit actually occured
+  } OSPPickResult;
+
+  /*! \brief returns the world-space position of the geometry seen at [0-1] normalized screen-space pixel coordinates (if any) */
+  void ospPick(OSPPickResult *result, OSPRenderer renderer, const osp::vec2f &screenPos);
+
+  extern "C" /*OSP_DEPRECATED*/ typedef struct {
+    bool hit;
+    float world_x, world_y, world_z;
   } OSPPickData;
 
-  /*! \brief unproject a [0-1] normalized screen-space pixel coordinate to a world-space position */
-  OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
+  /* \warning this call has been superseded by ospPick, and will eventually get removed */
+  OSP_DEPRECATED OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 
 } // extern "C"
 

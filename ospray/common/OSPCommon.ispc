@@ -40,3 +40,8 @@ void error_handler(const RTCError code, const int8* str)
   }
   assert(0);
 }
+
+export void delete_uniform(void *uniform uptr)
+{
+  delete uptr;
+}

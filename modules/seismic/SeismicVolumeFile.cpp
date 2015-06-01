@@ -101,17 +101,18 @@ bool SeismicVolumeFile::openSeismicDataFile(OSPVolume volume) {
   //! Set dimensions of the volume.
   ospSetVec3i(volume, "dimensions", volumeDimensions);
 
-  //! The voxel spacing of the volume to be imported.
-  volumeVoxelSpacing = deltas;
+  //! The grid spacing of the volume to be imported.
+  gridSpacing = deltas;
 
   if(useSubvolume) {
-    volumeVoxelSpacing.x *= float(subvolumeSteps.x);
-    volumeVoxelSpacing.y *= float(subvolumeSteps.y);
-    volumeVoxelSpacing.z *= float(subvolumeSteps.z);
+    gridSpacing.x *= float(subvolumeSteps.x);
+    gridSpacing.y *= float(subvolumeSteps.y);
+    gridSpacing.z *= float(subvolumeSteps.z);
   }
 
-  //! Set voxel spacing of the volume.
-  ospSetVec3f(volume, "voxelSpacing", volumeVoxelSpacing);
+  //! Set voxel spacing of the volume if not already provided.
+  if(!ospGetVec3f(volume, "gridSpacing", &gridSpacing))
+    ospSetVec3f(volume, "gridSpacing", gridSpacing);
 
   return true;
 }
@@ -202,10 +203,17 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
 
   if(verbose) std::cout << toString() << " trace coordinate fields = " << traceCoordinate2Field << " " << traceCoordinate3Field << std::endl;
 
-  //! Get location of these fields in trace header.
+  //! Get location of these fields in trace header. If we can't find them, ignore trace header information.
+  bool ignoreTraceHeaders = false;
+
   FIELD_TAG traceCoordinate2Tag = cdds_member(inputBinTag, 0, traceCoordinate2Field.c_str());
   FIELD_TAG traceCoordinate3Tag = cdds_member(inputBinTag, 0, traceCoordinate3Field.c_str());
-  if(traceHeaderSize > 0) exitOnCondition(traceCoordinate2Tag == -1 || traceCoordinate3Tag == -1, "could not get trace header coordinate information");
+
+  if(traceHeaderSize > 0 && (traceCoordinate2Tag == -1 || traceCoordinate3Tag == -1)) {
+    ignoreTraceHeaders = true;
+    if(verbose)
+      std::cout << toString() << " could not get trace header coordinate information, ignoring trace header information." << std::endl;
+  }
 
   //! Allocate trace array; the trace length is given by the trace header size and the first dimension.
   //! Note that FreeDDS converts all trace data to floats.
@@ -216,7 +224,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
   int origin2 = 0;
   int origin3 = 0;
 
-  if(traceHeaderSize > 0) {
+  if(!ignoreTraceHeaders && traceHeaderSize > 0) {
 
     exitOnCondition(cddx_read(inputBinTag, traceBuffer, 1) != 1, "could not read first trace");
     cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &origin2, 1);
@@ -233,7 +241,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
 
   //! If no subvolume is specified and we have trace header information, read all the traces. Missing traces are allowed.
   //! Otherwise, read only the specified subvolume, skipping over traces as needed. Missing traces NOT allowed.
-  if(!useSubvolume && traceHeaderSize > 0) {
+  if(!useSubvolume && !ignoreTraceHeaders && traceHeaderSize > 0) {
 
     while(cddx_read(inputBinTag, traceBuffer, 1) == 1) {
 
@@ -276,13 +284,9 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
         int coordinate2 = i2;
         int coordinate3 = i3;
 
-        if(traceHeaderSize > 0) {
+        if(!ignoreTraceHeaders && traceHeaderSize > 0) {
           cdds_geti(inputBinTag, traceCoordinate2Tag, traceBuffer, &coordinate2, 1);
           cdds_geti(inputBinTag, traceCoordinate3Tag, traceBuffer, &coordinate3, 1);
-        }
-        else {
-          coordinate2 = i2;
-          coordinate3 = i3;
         }
 
         //! Some trace headers will have improper coordinate information; correct coordinate3 if necessary.
@@ -336,10 +340,4 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
   cdds_close(inputBinTag);
 
   return true;
-}
-
-//! Module initialization function
-extern "C" void ospray_init_module_seismic() {
-
-  std::cout << "loaded module 'seismic'." << std::endl;
 }

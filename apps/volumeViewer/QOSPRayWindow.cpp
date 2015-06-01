@@ -50,6 +50,7 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
 
   // connect signals and slots
   connect(&renderTimer, SIGNAL(timeout()), this, SLOT(updateGL()));
+  connect(&renderRestartTimer, SIGNAL(timeout()), &renderTimer, SLOT(start()));
 }
 
 QOSPRayWindow::~QOSPRayWindow()
@@ -93,7 +94,7 @@ void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
   viewport.at = center(worldBounds);
 
   // set viewport from point relative to center of world bounds
-  viewport.from = viewport.at - 1.5f * viewport.frame.l.vy;
+  viewport.from = viewport.at - 1.5f * length(worldBounds.size()) * viewport.frame.l.vy;
 
   updateGL();
 }
@@ -165,6 +166,8 @@ void QOSPRayWindow::resizeGL(int width, int height)
 
   frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8, OSP_FB_COLOR | OSP_FB_ACCUM);
 
+  resetAccumulationBuffer();
+
   // update viewport aspect ratio
   viewport.aspect = float(width) / float(height);
   viewport.modified = true;
@@ -182,10 +185,18 @@ void QOSPRayWindow::mousePressEvent(QMouseEvent * event)
 void QOSPRayWindow::mouseReleaseEvent(QMouseEvent * event)
 {
   lastMousePosition = event->pos();
+
+  // restart continuous rendering immediately
+  renderTimer.start();
 }
 
 void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 {
+  // pause continuous rendering during interaction and cancel any render restart timers.
+  // this keeps interaction more responsive (especially with low frame rates).
+  renderTimer.stop();
+  renderRestartTimer.stop();
+
   resetAccumulationBuffer();
 
   int dx = event->x() - lastMousePosition.x();
@@ -201,12 +212,22 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 
     rotateCenter(du, dv);
   }
+  else if(event->buttons() & Qt::MidButton) {
+
+    // camera strafe of from / at point
+    const float strafeSpeed = 0.001f * length(worldBounds.size());
+
+    float du = dx * strafeSpeed;
+    float dv = dy * strafeSpeed;
+
+    strafe(du, dv);
+  }
   else if(event->buttons() & Qt::RightButton) {
 
     // camera distance from center point
     const float motionSpeed = 0.012f;
 
-    float forward = dy * motionSpeed;
+    float forward = dy * motionSpeed * length(worldBounds.size());
     float oldDistance = length(viewport.at - viewport.from);
     float newDistance = oldDistance - forward;
 
@@ -222,11 +243,15 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
   lastMousePosition = event->pos();
 
   updateGL();
+
+  // after a 0.5s delay, restart continuous rendering.
+  renderRestartTimer.setSingleShot(true);
+  renderRestartTimer.start(500);
 }
 
 void QOSPRayWindow::rotateCenter(float du, float dv)
 {
-  const osp::vec3f pivot = center(worldBounds);
+  const osp::vec3f pivot = viewport.at;
 
   osp::affine3f xfm = osp::affine3f::translate(pivot)
     * osp::affine3f::rotate(viewport.frame.l.vx, -dv)
@@ -237,6 +262,19 @@ void QOSPRayWindow::rotateCenter(float du, float dv)
   viewport.from  = xfmPoint(xfm, viewport.from);
   viewport.at    = xfmPoint(xfm, viewport.at);
   viewport.snapUp();
+
+  viewport.modified = true;
+}
+
+void QOSPRayWindow::strafe(float du, float dv)
+{
+  osp::affine3f xfm = osp::affine3f::translate(dv * viewport.frame.l.vz)
+    * osp::affine3f::translate(-du * viewport.frame.l.vx);
+
+  viewport.frame = xfm * viewport.frame;
+  viewport.from = xfmPoint(xfm, viewport.from);
+  viewport.at = xfmPoint(xfm, viewport.at);
+  viewport.modified = true;
 
   viewport.modified = true;
 }

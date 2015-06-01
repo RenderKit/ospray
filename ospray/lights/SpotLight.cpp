@@ -15,24 +15,38 @@
 // ======================================================================== //
 
 #include "SpotLight.h"
+#include "SpotLight_ispc.h"
 
 namespace ospray {
-  //!< Constructor for SpotLight. Placed in protected section to make
-  //!SpotLight act as an abstract base class.
   SpotLight::SpotLight()
-    : position(0.f, 0.f, 0.f)
-    , direction(1.f, 1.f, 1.f)
-    , color(1.f, 1.f, 1.f)
-    , range(-1.f)
-    , halfAngle(-1.f)
-  {}
+    : position(0.f)
+    , direction(0.f, 0.f, 1.f)
+    , color(1.f)
+    , intensity(1.f)
+    , halfAngle(90.f)
+    , range(inf)
+  {
+    ispcEquivalent = ispc::SpotLight_create(this);
+  }
 
   //!< Copy understood parameters into class members
   void SpotLight::commit() {
-    position  = getParam3f("position", vec3f(0.f, 0.f, 0.f));
-    direction = getParam3f("direction", vec3f(1.f, 1.f, 1.f));
-    color = getParam3f("color", vec3f(1.f, 1.f, 1.f));
-    range = getParam1f("range", -1.f);
-    halfAngle = getParam1f("halfAngle", -1.f);
+    position  = getParam3f("position", vec3f(0.f));
+    direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
+    color     = getParam3f("color", vec3f(1.f));
+    intensity = getParam1f("intensity", 1.f);
+    halfAngle = getParam1f("halfAngle", 90.f);
+    range     = getParam1f("range", inf);
+
+    vec3f power = color * intensity;
+    
+    ispc::SpotLight_set(getIE(),
+                        (ispc::vec3f&)position,
+                        (ispc::vec3f&)direction,
+                        (ispc::vec3f&)power,
+                        cos(halfAngle * (M_PI / 180.0f)),
+                        range);
   }
+
+  OSP_REGISTER_LIGHT(SpotLight, SpotLight);
 }
