@@ -28,9 +28,6 @@
 //!
 struct Volume {
 
-  //! Gamma correction coefficient and exponent.
-  uniform vec2f gammaCorrection;
-
   //! Allow the renderer to perform gradient shading.
   uniform bool gradientShadingEnabled;
 

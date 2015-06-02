@@ -367,9 +367,6 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   vec4f color = make_vec4f(0.0f);
   RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color);
 
-  //! Gamma correction.
-  color = renderer->model->volumes[0]->gammaCorrection.x * pow(color, renderer->model->volumes[0]->gammaCorrection.y);
-
   //! Attenuate the foreground and background colors by the opacity.
   color = color.w * color + (1.0f - color.w) * background;
 

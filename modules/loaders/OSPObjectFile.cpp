@@ -216,9 +216,6 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
     //! File containing a volume specification and / or voxel data.
     if (!strcmp(node->ToElement()->Name(), "filename")) { volumeFilename = node->ToElement()->GetText();  continue; }
 
-    //! Gamma correction coefficient and exponent.
-    if (!strcmp(node->ToElement()->Name(), "gammaCorrection")) { importAttributeFloat2(node, volume);  continue; }
-
     //! Grid origin in world coordinates.
     if (!strcmp(node->ToElement()->Name(), "gridOrigin")) { importAttributeFloat3(node, volume);  continue; }
 
