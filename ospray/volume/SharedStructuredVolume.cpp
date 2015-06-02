@@ -17,11 +17,18 @@
 //ospray
 #include "ospray/volume/SharedStructuredVolume.h"
 #include "SharedStructuredVolume_ispc.h"
+#include "StructuredVolume_ispc.h"
 #include "ospray/common/Data.h"
 // std
 #include <cassert>
 
 namespace ospray {
+
+  SharedStructuredVolume::~SharedStructuredVolume()
+  {
+    //! No longer listen for changes to voxelData.
+    if(voxelData) voxelData->unregisterListener(this);
+  }
 
   void SharedStructuredVolume::commit()
   {
@@ -32,10 +39,10 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  void SharedStructuredVolume::createEquivalentISPC() 
+  void SharedStructuredVolume::createEquivalentISPC()
   {
     //! Get the voxel type.
-    voxelType = getParamString("voxelType", "unspecified");  
+    voxelType = getParamString("voxelType", "unspecified");
     exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type");
 
     //! Get the volume dimensions.
@@ -43,7 +50,7 @@ namespace ospray {
     exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
 
     //! Get the voxel data.
-    Data *voxelData = (Data *)getParamObject("voxelData", NULL);
+    voxelData = (Data *)getParamObject("voxelData", NULL);
     exitOnCondition(voxelData == NULL, "no voxel data provided");
     warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER), "the voxel data buffer was not created with the OSP_DATA_SHARED_BUFFER flag; use another volume type (e.g. BlockBrickedVolume) for better performance");
 
@@ -58,6 +65,16 @@ namespace ospray {
 
     //! Create an ISPC SharedStructuredVolume object and assign type-specific function pointers.
     ispcEquivalent = ispc::SharedStructuredVolume_createInstance((int)getVoxelType(), (const ispc::vec3i &)dimensions, voxelData->data);
+
+    //! Listen for changes to voxelData.
+    voxelData->registerListener(this);
+  }
+
+  void SharedStructuredVolume::dependencyGotChanged(ManagedObject *object)
+  {
+    //! Rebuild volume accelerator when voxelData is committed.
+    if(object == voxelData && ispcEquivalent)
+      ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
   }
 
 } // ::ospray
