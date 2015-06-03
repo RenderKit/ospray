@@ -27,12 +27,6 @@ void Volume_Constructor(Volume *uniform volume)
   // other defaults are set during Volume::updateEditableParameters().
 }
 
-export void Volume_setGammaCorrection(void *uniform _self, const uniform vec2f &value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->gammaCorrection = value;
-}
-
 export void Volume_setGradientShadingEnabled(void *uniform _self, const uniform bool &value)
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;

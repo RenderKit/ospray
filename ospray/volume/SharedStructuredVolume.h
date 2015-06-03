@@ -28,10 +28,10 @@ namespace ospray {
   public:
 
     //! Constructor.
-    SharedStructuredVolume() {};
+    SharedStructuredVolume() : voxelData(NULL) {};
 
     //! Destructor.
-    virtual ~SharedStructuredVolume() {};
+    virtual ~SharedStructuredVolume();
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::SharedStructuredVolume<" + voxelType + ">"); }
@@ -49,6 +49,12 @@ namespace ospray {
 
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC();
+
+    //! Called when a dependency of this object changes.
+    virtual void dependencyGotChanged(ManagedObject *object);
+
+    //! The voxelData object upon commit().
+    Data *voxelData;
 
   };
 

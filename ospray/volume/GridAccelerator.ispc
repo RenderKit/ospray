@@ -83,6 +83,16 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform _volume)
   return accelerator;
 }
 
+void GridAccelerator_destroy(GridAccelerator *uniform accelerator)
+{
+  //! Free memory allocated by the accelerator.
+  if (accelerator->cellRange)
+    delete[] accelerator->cellRange;
+
+  //! Free the accelerator container.
+  delete accelerator;
+}
+
 inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator, StructuredVolume *uniform volume, const uniform vec3i &cellIndex, uniform vec2f &cellRange)
 {
   //! Loop over voxels in the current cell.
