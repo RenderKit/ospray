@@ -14,11 +14,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(ISPC_VERSION_REQUIRED "1.7.1")
+SET(ISPC_VERSION_REQUIRED "1.8.2")
 
 IF (NOT OSPRAY_ISPC_DIRECTORY)
   # try sibling folder as hint for path of ISPC
-  SET(ISPC_VERSION_HINT "1.8.1")
+  SET(ISPC_VERSION_HINT "1.8.2")
   IF (APPLE)
     SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION_HINT}-osx)
   ELSEIF(WIN32)
@@ -46,7 +46,8 @@ ENDIF()
 
 IF(NOT ISPC_VERSION)
   EXECUTE_PROCESS(COMMAND ${ISPC_BINARY} --version OUTPUT_VARIABLE ISPC_OUTPUT)
-  STRING(REGEX MATCH " [0-9]+[.][0-9]+[.][0-9]+ " ISPC_VERSION "${ISPC_OUTPUT}")
+  STRING(REGEX MATCH " ([0-9]+[.][0-9]+[.][0-9]+)(dev|knl)? " DUMMY "${ISPC_OUTPUT}")
+  SET(ISPC_VERSION ${CMAKE_MATCH_1})
 
   IF (ISPC_VERSION VERSION_LESS ISPC_VERSION_REQUIRED)
     MESSAGE(FATAL_ERROR "Need at least version ${ISPC_VERSION_REQUIRED} of Intel SPMD Compiler (ISPC).")
@@ -162,7 +163,7 @@ MACRO (ispc_compile)
       ENDFOREACH(dep ${contents})
     ENDIF ()
     IF (WIN32)
-      SET(ISPC_SYS_FLAGS "")
+      SET(ISPC_SYS_FLAGS "--dllexport")
     ELSE()
       SET(ISPC_SYS_FLAGS "--pic")
     ENDIF()
