@@ -60,4 +60,6 @@ IF(NOT THIS_IS_MIC)
 
   CONFIGURE_OSPRAY()
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+
+  add_subdirectory(knl-test)
 ENDIF()
