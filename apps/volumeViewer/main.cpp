@@ -200,6 +200,9 @@ int main(int argc, char *argv[]) {
   //! Set the window size if specified.
   if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
 
+
+    volumeViewer->getWindow()->getViewport()->at = osp::vec3f(.5f);
+    volumeViewer->getWindow()->getViewport()->from = osp::vec3f(-1.f);
   //! Set the view up vector if specified.
   if(viewUp != osp::vec3f(0.f)) {
     volumeViewer->getWindow()->getViewport()->setUp(viewUp);

@@ -505,7 +505,7 @@ namespace ospray {
       if (arg == "--renderer") {
         assert(i+1 < ac);
         rendererType = av[++i];
-      } else if (arg == "--always-redraw") {
+      } else if (arg == "--always-redraw" || arg == "-fps") {
         alwaysRedraw = true;
       } else if (arg == "-o") {
         outFileName = strdup(av[++i]);
@@ -515,7 +515,7 @@ namespace ospray {
         numSPPinFileOutput = atoi(av[++i]);
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
-      } else if (arg == "--spp") {
+      } else if (arg == "--spp" || arg == "-spp") {
         spp = atoi(av[++i]);
       } else if (arg == "--force-instancing") {
         forceInstancing = true;
