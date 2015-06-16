@@ -82,7 +82,9 @@ namespace embree
            || 
            !isEnabled(threadIndex)
            ) {
-      if (wait) { printf("waiting %li t %lf\n",threadIndex,getSysTime()); condition.wait(mutex); }
+      if (wait) {
+// printf("waiting %li t %lf\n",threadIndex,getSysTime()); 
+condition.wait(mutex); }
       else { mutex.unlock(); return; }
     }
 
@@ -99,7 +101,7 @@ namespace embree
     size_t elt = --task->started;
     if (elt == 0) end--;
 
-    printf("thread %i has %i...%i; i=%li, elt=%li\n",threadIndex,begin,end,i,elt);
+    //printf("thread %i has %i...%i; i=%li, elt=%li\n",threadIndex,begin,end,i,elt);
 
     mutex.unlock();
     
@@ -127,7 +129,7 @@ namespace embree
     while (!terminateThreads) {
 
       work(threadIndex,threadCount,true);
-      printf("done work %li %lf\n",threadIndex,getSysTime());
+      //printf("done work %li %lf\n",threadIndex,getSysTime());
     }
   }
 
