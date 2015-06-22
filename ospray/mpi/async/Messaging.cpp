@@ -21,52 +21,6 @@
 namespace ospray {
   namespace mpi {
 
-    // Group *WORLD = NULL;
-
-    // Group::Group(const std::string &name, MPI_Comm comm)
-    //   : comm(comm), rank(-1), size(-1), name(name)
-    // {
-    //   int rc=MPI_SUCCESS;
-    //   MPI_CALL(Comm_rank(comm,&rank));
-    //   MPI_CALL(Comm_size(comm,&size));
-    // }
-
-    // void Group::barrier() 
-    // {
-    //   int rc=MPI_SUCCESS;
-    //   MPI_CALL(Barrier(comm));
-    // }
-
-    // int requested = MPI_THREAD_MULTIPLE;
-    // int provided = -1;
-
-#if 0
-    void initMPI(int &ac, char **&av)
-    {
-      // PING;fflush(0);
-      if (WORLD != NULL)
-        throw std::runtime_error("#osp:mpi: MPI already initialized.");
-
-      // PING;fflush(0);
-      MPI_Init_thread(&ac,&av,requested,&provided);
-      // PING;fflush(0);
-      if (provided != requested)
-        throw std::runtime_error("#osp:mpi: the MPI implementation you are trying to run this application on does not support threading.");
-      // world = new Group(MPI_COMM_WORLD);
-      WORLD = new Group("MPI_COMM_WORLD");
-      // PRINT(WORLD->toString());
-
-      MPI_CALL(Barrier(MPI_COMM_WORLD));
-      // printf("#osp:mpi: MPI Initialized, we are world rank %i/%i\n",WORLD->rank,WORLD->size);
-      // fflush(0);
-      MPI_CALL(Barrier(MPI_COMM_WORLD));
-      printf("#osp:mpi: MPI Initialized, we are world rank %i/%i\n",
-             WORLD->rank,WORLD->size);
-      MPI_CALL(Barrier(WORLD->comm));
-      PING;
-    }
-#endif
-
     namespace async {
       
       AsyncMessagingImpl *AsyncMessagingImpl::global = NULL;
@@ -76,8 +30,9 @@ namespace ospray {
                    Consumer *consumer, int32 tag)
         :  tag(tag), consumer(consumer)
       {
-        this->comm = comm;
         int rc=MPI_SUCCESS;
+        MPI_CALL(Comm_dup(comm,&this->comm));
+        // this->comm = comm;
         MPI_CALL(Comm_rank(comm,&rank));
         MPI_CALL(Comm_size(comm,&size));
       }

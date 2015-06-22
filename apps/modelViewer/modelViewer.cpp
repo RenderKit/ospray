@@ -693,26 +693,33 @@ namespace ospray {
     std::vector<OSPModel> instanceModels;
 
     for (size_t i=0;i<msgModel->mesh.size();i++) {
-      //      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
+      printf("Mesh %li/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
+      PRINT(msgMesh.ptr);
 
       // create ospray mesh
       OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewTriangleMesh();
+      PRINT(ospMesh);
 
       // check if we have to transform the vertices:
       if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
         // cout << "Transforming vertex array ..." << endl;
+        PRINT(msgMesh->position.size());
         for (size_t vID=0;vID<msgMesh->position.size();vID++) {
           msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                             msgMesh->position[vID]);
         }
       }
 
+      PING; fflush(0);
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
+      PING; fflush(0);
       ospSetData(ospMesh,"position",position);
+      PING; fflush(0);
       
+      PING; fflush(0);
       // add triangle index array to mesh
       if (!msgMesh->triangleMaterialId.empty()) {
         OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
@@ -720,12 +727,14 @@ namespace ospray {
         ospSetData(ospMesh,"prim.materialID",primMatID);
       }
 
+      PING; fflush(0);
       // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_INT3,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
 
+      PING; fflush(0);
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
         OSPData normal = ospNewData(msgMesh->normal.size(),OSP_FLOAT3A,
@@ -736,6 +745,7 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
+      PING; fflush(0);
       // add color array to mesh
       if (!msgMesh->color.empty()) {
         OSPData color = ospNewData(msgMesh->color.size(),OSP_FLOAT3A,
@@ -746,6 +756,7 @@ namespace ospray {
         // cout << "no vertex colors!" << endl;
       }
 
+      PING; fflush(0);
       // add texcoord array to mesh
       if (!msgMesh->texcoord.empty()) {
         OSPData texcoord = ospNewData(msgMesh->texcoord.size(), OSP_FLOAT2,
@@ -754,19 +765,24 @@ namespace ospray {
         ospSetData(ospMesh,"vertex.texcoord",texcoord);
       }
 
+      PING; fflush(0);
       ospSet1i(ospMesh, "alpha_type", 0);
       ospSet1i(ospMesh, "alpha_component", 4);
 
+      PING; fflush(0);
       // add triangle material id array to mesh
       if (msgMesh->materialList.empty()) {
+        PING;
         // we have a single material for this mesh...
         OSPMaterial singleMaterial = createMaterial(ospRenderer, msgMesh->material.ptr);
         ospSetMaterial(ospMesh,singleMaterial);
       } else {
+        PING;
         // we have an entire material list, assign that list
         std::vector<OSPMaterial > materialList;
         std::vector<OSPTexture2D > alphaMaps;
         std::vector<float> alphas;
+        PRINT(msgMesh->materialList.size());
         for (int i=0;i<msgMesh->materialList.size();i++) {
           materialList.push_back(createMaterial(ospRenderer, msgMesh->materialList[i].ptr));
 
@@ -807,6 +823,7 @@ namespace ospray {
         }
       }
 
+      PING;
       ospCommit(ospMesh);
 
       if (doesInstancing) {
@@ -818,7 +835,7 @@ namespace ospray {
         ospAddGeometry(ospModel,ospMesh);
 
     }
-
+    PING;
     if (doesInstancing) {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
@@ -842,6 +859,7 @@ namespace ospray {
       ospCommit(ospLight);
       lights.push_back(ospLight);
     }
+    PING;
 #if 0
     //spot light
     cout << "#ospModelViewer: Adding a hard coded spotlight for test." << endl;
@@ -855,10 +873,12 @@ namespace ospray {
     ospCommit(ospSpot);
     lights.push_back(ospSpot);
 #endif
+    PING;
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);
     //end light test
     ospCommit(ospRenderer);
+    PING;
 
     // -------------------------------------------------------
     // create viewer window

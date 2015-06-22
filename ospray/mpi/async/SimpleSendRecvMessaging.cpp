@@ -21,8 +21,7 @@ namespace ospray {
     namespace async {
       SimpleSendRecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
                                        Consumer *consumer, int32 tag)
-        : async::Group(// name,
-                       comm,consumer,tag),
+        : async::Group(comm,consumer,tag),
           beginShutDown(0), sendIsShutDown(0), recvIsShutDown(0)
       {
         recvThread = embree::createThread(recvThreadFunc,this);
@@ -63,6 +62,7 @@ namespace ospray {
 
         while (1) {
           MPI_Status status;
+          PING;fflush(0);
           MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
           // printf("#osp:mpi(%2i): incoming from %i\n",g->rank,status.MPI_SOURCE);fflush(0);
           if (g->beginShutDown) {
@@ -73,6 +73,7 @@ namespace ospray {
           
           int count = -1;
           MPI_CALL(Get_count(&status,MPI_BYTE,&count));
+          PRINT(count);
           void *msg = malloc(count);
           MPI_CALL(Recv(msg,count,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
                         g->comm,&status));
