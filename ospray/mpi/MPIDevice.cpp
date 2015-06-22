@@ -304,17 +304,13 @@ namespace ospray {
       if (initialized) 
         throw std::runtime_error("OSPRay MPI Error: MPI already Initialized when calling ospMpiInit()");
       
-      PING;
       ospray::mpi::init(ac,(const char **)*av);
       if (mpi::world.size < 2) {
         throw std::runtime_error("#osp:mpi: trying to run distributed API mode with a single rank? (did you forget the 'mpirun'?)");
       }
 
-      PING;
       ospray::api::Device::current
         = ospray::mpi::createMPI_runOnExistingRanks(ac,(const char**)*av,false);
-      PRINT(ospray::api::Device::current);
-      PING;
     }
     
     MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
@@ -491,24 +487,16 @@ namespace ospray {
     /*! create a new data buffer */
     OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
-      PING;fflush(0);
       mpi::Handle handle = mpi::Handle::alloc();
-      PING; PRINT(CMD_NEW_DATA); fflush(0);
       cmd.newCommand(CMD_NEW_DATA);
       cmd.send(handle);
       cmd.send((size_t)nitems);
       cmd.send((int32)format);
       cmd.send(flags);
-      PING;fflush(0);
       size_t size = init?ospray::sizeOf(format)*nitems:0;
-      PING;fflush(0);
       cmd.send(size);
-      PING;fflush(0);
       if (init) {
-        PING;fflush(0);
-        PRINT(size);
         cmd.send(init,size);
-        PING;fflush(0);
         if (format == OSP_OBJECT) {
           // no need to do anything special here: while we have to
           // encode objects as handles for network transfer, the host
@@ -518,11 +506,8 @@ namespace ospray {
           // note: we _might_, in fact, have to increaes the data
           // array entries' refcount here !?
         }
-      PING;fflush(0);
       }
-      PING;fflush(0);
       cmd.flush();
-      PING;fflush(0);
       return (OSPData)(int64)handle;
     }
         

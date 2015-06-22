@@ -39,6 +39,8 @@
 #include <algorithm>
 #include <unistd.h> // for gethostname()
 
+#define DBG(a) /**/
+
 namespace ospray {
   namespace mpi {
     using std::cout; 
@@ -121,7 +123,7 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-        PING; PRINT(command); fflush(0);
+        // PING; PRINT(command); fflush(0);
 
         switch (command) {
         case ospray::CMD_NEW_PIXELOP: {
@@ -366,24 +368,24 @@ namespace ospray {
           handle.assign(triangleMesh);
         } break;
         case ospray::CMD_NEW_DATA: {
-          PING; fflush(0);
+          DBG(PING; fflush(0));
           const mpi::Handle handle = cmd.get_handle();
           Data *data = NULL;
           size_t nitems      = cmd.get_size_t();
           OSPDataType format = (OSPDataType)cmd.get_int32();
-          PRINT(format); fflush(0);
+          DBG(PRINT(format); fflush(0));
           int flags          = cmd.get_int32();
-          PRINT(flags); fflush(0);
+          DBG(PRINT(flags); fflush(0));
           data = new Data(nitems,format,NULL,flags & ~OSP_DATA_SHARED_BUFFER);
           Assert(data);
           handle.assign(data);
 
           size_t hasInitData = cmd.get_size_t();
           if (hasInitData) {
-            PING; fflush(0);
-            PRINT(nitems*sizeOf(format)); fflush(0);
+            DBG(PING; fflush(0);
+                PRINT(nitems*sizeOf(format)); fflush(0));
             cmd.get_data(nitems*sizeOf(format),data->data);
-            PING; fflush(0);
+            DBG(PING; fflush(0));
             if (format==OSP_OBJECT) {
               /* translating handles to managedobject pointers: if a
                  data array has 'object' or 'data' entry types, then
@@ -401,38 +403,38 @@ namespace ospray {
               }
             }
           }
-          PING; fflush(0);
-          sleep(1);
-          PING; fflush(0);
+          DBG(PING; fflush(0);
+              sleep(1);
+              PING; fflush(0));
         } break;
 
         case ospray::CMD_NEW_TEXTURE2D: {
-          PING; fflush(0);
+          DBG(PING; fflush(0));
           const mpi::Handle handle = cmd.get_handle();
           Texture2D *texture2D = NULL;
 
           int32 width = cmd.get_int32();
-          PRINT(width); fflush(0);
+          // PRINT(width); fflush(0);
           int32 height = cmd.get_int32();
-          PRINT(height); fflush(0);
+          // PRINT(height); fflush(0);
           int32 type = cmd.get_int32();
-          PRINT(type); fflush(0);
+          // PRINT(type); fflush(0);
           int32 flags = cmd.get_int32();
-          PRINT(flags); fflush(0);
+          // PRINT(flags); fflush(0);
           size_t size = cmd.get_size_t();
-          PRINT(size); fflush(0);
+          // PRINT(size); fflush(0);
           
           void *data = malloc(size);
-          PRINT(size); fflush(0);
+          // PRINT(size); fflush(0);
           cmd.get_data(size,data);
 
           texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,flags | OSP_DATA_SHARED_BUFFER);
-          PRINT(texture2D); fflush(0);
+          DBG(PRINT(texture2D); fflush(0));
           assert(texture2D);
           handle.assign(texture2D);
-          PING; fflush(0);
-          sleep(1);
-          PING; fflush(0);
+          DBG(PING; fflush(0);
+              sleep(1);
+              PING; fflush(0));
         } break;
 
         case ospray::CMD_ADD_GEOMETRY: {
@@ -658,10 +660,8 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_VEC3F: {
           // ==================================================================
-          PING; fflush(0);
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
-          PRINT(name); fflush(0);
           const vec3f val = cmd.get_vec3f();
           ManagedObject *obj = handle.lookup();
           Assert(obj);

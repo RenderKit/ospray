@@ -44,7 +44,6 @@ namespace ospray {
       inline void send(const void *data, const size_t size)
       {
         Assert(data);
-        PING; PRINT(size); fflush(0);
         int rc = MPI_Bcast((void*)data,size,MPI_BYTE,MPI_ROOT,mpi::worker.comm);
         checkMpiError(rc); 
       }
@@ -125,10 +124,8 @@ namespace ospray {
         // int64 size; 
         // int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm); 
         // checkMpiError(rc); 
-        PING; PRINT(size); fflush(0); 
         int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
         // std::cout << "after broadcast!" << std::endl << std::flush; fflush(0);
-        PING; PRINT(rc); fflush(0);
         checkMpiError(rc); 
       }
       inline void get_data(size_t size, void *pointer, const int32 &rank, const MPI_Comm &comm)
