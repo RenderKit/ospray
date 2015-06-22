@@ -542,7 +542,7 @@ namespace ospray {
       if (arg == "--renderer") {
         assert(i+1 < ac);
         rendererType = av[++i];
-      } else if (arg == "--always-redraw") {
+      } else if (arg == "--always-redraw" || arg == "-fps") {
         alwaysRedraw = true;
       } else if (arg == "-o") {
         outFileName = strdup(av[++i]);
@@ -711,15 +711,11 @@ namespace ospray {
         }
       }
 
-      // PING; fflush(0);
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
-      // PING; fflush(0);
       ospSetData(ospMesh,"position",position);
-      // PING; fflush(0);
       
-      // PING; fflush(0);
       // add triangle index array to mesh
       if (!msgMesh->triangleMaterialId.empty()) {
         OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
@@ -727,14 +723,12 @@ namespace ospray {
         ospSetData(ospMesh,"prim.materialID",primMatID);
       }
 
-      // PING; fflush(0);
       // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_INT3,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
 
-      // PING; fflush(0);
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
         OSPData normal = ospNewData(msgMesh->normal.size(),OSP_FLOAT3A,
@@ -745,7 +739,6 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
-      // PING; fflush(0);
       // add color array to mesh
       if (!msgMesh->color.empty()) {
         OSPData color = ospNewData(msgMesh->color.size(),OSP_FLOAT3A,
@@ -817,7 +810,6 @@ namespace ospray {
         }
       }
 
-      PING;
       ospCommit(ospMesh);
 
       if (doesInstancing) {
@@ -829,7 +821,6 @@ namespace ospray {
         ospAddGeometry(ospModel,ospMesh);
 
     }
-    PING;
     if (doesInstancing) {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
@@ -853,7 +844,6 @@ namespace ospray {
       ospCommit(ospLight);
       lights.push_back(ospLight);
     }
-    PING;
 #if 0
     //spot light
     cout << "#ospModelViewer: Adding a hard coded spotlight for test." << endl;
@@ -867,12 +857,10 @@ namespace ospray {
     ospCommit(ospSpot);
     lights.push_back(ospSpot);
 #endif
-    PING;
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);
     //end light test
     ospCommit(ospRenderer);
-    PING;
 
     // -------------------------------------------------------
     // create viewer window
