@@ -200,40 +200,44 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform flo
   StructuredVolume *uniform volume = (StructuredVolume *uniform) accelerator->volume;
 
   //! Tentatively advance the ray.
-  ray.t += step;  if (ray.t >= ray.t1) return;
+  ray.t += step;
 
-  //! Compute the hit point in the local coordinate system.
-  vec3f localCoordinates; volume->transformWorldToLocal(volume, ray.org + ray.t * ray.dir, localCoordinates);
+  const vec3f ray_rdir = rcp(ray.dir);
+  // sign of direction determines near/far index
+  const vec3i nextCellIndex = make_vec3i(1 - (intbits(ray.dir.x) >> 31), 1 - (intbits(ray.dir.y) >> 31), 1 - (intbits(ray.dir.z) >> 31));
 
-  //! Compute the 3D index of the cell containing the hit point.
-  vec3i cellIndex = integer_cast(localCoordinates) >> CELL_WIDTH_BITCOUNT;
+  while (ray.t < ray.t1) {
+    //! Compute the hit point in the local coordinate system.
+    vec3f localCoordinates; volume->transformWorldToLocal(volume, ray.org + ray.t * ray.dir, localCoordinates);
 
-  //! If we visited this cell before then it must not be empty.
-  if (ray.geomID == cellIndex.x && ray.primID == cellIndex.y && ray.instID == cellIndex.z) return;
+    //! Compute the 3D index of the cell containing the hit point.
+    vec3i cellIndex = integer_cast(localCoordinates) >> CELL_WIDTH_BITCOUNT;
 
-  //! Track the hit cell.
-  ray.geomID = cellIndex.x;  ray.primID = cellIndex.y;  ray.instID = cellIndex.z;
+    //! If we visited this cell before then it must not be empty.
+    if (ray.geomID == cellIndex.x && ray.primID == cellIndex.y && ray.instID == cellIndex.z) return;
 
-  //! Get the volumetric value range of the cell.
-  vec2f cellRange;  GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
+    //! Track the hit cell.
+    ray.geomID = cellIndex.x;  ray.primID = cellIndex.y;  ray.instID = cellIndex.z;
 
-  //! Get the maximum opacity in the volumetric value range.
-  float maximumOpacity = volume->inherited.transferFunction->getMaxOpacityInRange(volume->inherited.transferFunction, cellRange);
+    //! Get the volumetric value range of the cell.
+    vec2f cellRange;  GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
 
-  //! Return the hit point if the grid cell is not fully transparent.
-  if (maximumOpacity > 0.0f) return;
+    //! Get the maximum opacity in the volumetric value range.
+    float maximumOpacity = volume->inherited.transferFunction->getMaxOpacityInRange(volume->inherited.transferFunction, cellRange);
 
-  //! Bounds of the grid cell in world coordinates.
-  box3f cellBounds = GridAccelerator_getCellBounds(accelerator, cellIndex);
+    //! Return the hit point if the grid cell is not fully transparent.
+    if (maximumOpacity > 0.0f) return;
 
-  //! Identify the distance along the ray to the entry and exit points on the cell.
-  vec2f cellInterval = GridAccelerator_intersectCell(cellBounds, ray);
+    //! Exit bound of the grid cell in world coordinates.
+    vec3f farBound; volume->transformLocalToWorld(volume, float_cast(cellIndex + nextCellIndex << CELL_WIDTH_BITCOUNT), farBound);
 
-  //! Advance the ray so the next hit point will be outside the empty cell.
-  ray.t += floor(abs(cellInterval.y - ray.t) / step) * step;
+    //! Identify the distance along the ray to the exit points on the cell.
+    const vec3f maximum = ray_rdir * (farBound - ray.org);
+    const float exitDist = min(min(ray.t1, maximum.x), min(maximum.y, maximum.z));
 
-  //! Rinse and repeat.
-  GridAccelerator_intersect(accelerator, step, ray);
+    //! Advance the ray so the next hit point will be outside the empty cell.
+    ray.t += ceil(abs(exitDist - ray.t) / step) * step;
+  }
 }
 
 void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator, uniform float step, uniform float *uniform isovalues, uniform int numIsovalues, varying Ray &ray)
