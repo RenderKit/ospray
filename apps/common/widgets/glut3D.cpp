@@ -238,7 +238,9 @@ namespace ospray {
     }
 
     void Glut3DWidget::idle()
-    { usleep(1000); }
+    { 
+      // usleep(1000); 
+    }
 
     void Glut3DWidget::reshape(const vec2i &newSize)
     {
@@ -262,7 +264,10 @@ namespace ospray {
     void Glut3DWidget::display()
     {
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
+        //double before = getSysTime();
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
+        //double after = getSysTime();
+        //printf("time for gldrawpixels of %ix%i window: %fs\n",windowSize.x,windowSize.y,float(after-before));
         if (animating && dumpScreensDuringAnimation) {
           char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
           static const char *dumpFileRoot;
@@ -296,12 +301,14 @@ namespace ospray {
 
     void Glut3DWidget::drawPixels(const uint32 *framebuffer)
     {
+      throw std::runtime_error("should not be used right now");
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
       glutSwapBuffers();
     }
 
     void Glut3DWidget::drawPixels(const vec3fa *framebuffer)
     {
+      throw std::runtime_error("should not be used right now");
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, framebuffer);
       glutSwapBuffers();
     }
@@ -387,6 +394,11 @@ namespace ospray {
     void initGLUT(int32 *ac, const char **av)
     {
       glutInit(ac, (char **) av);
+
+
+      // glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);
+      glutInitDisplayMode (GLUT_RGBA | GLUT_DOUBLE);
+
       for(int i = 1; i < *ac;i++)
         {
           std::string arg(av[i]);

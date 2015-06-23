@@ -425,12 +425,12 @@ namespace ospray {
     ASSERT_DEVICE();
 #if 0
     double t0 = ospray::getSysTime();
-    ospray::api::Device::current->renderFrame(fb,renderer);
+    ospray::api::Device::current->renderFrame(fb,renderer,fbChannelFlags);
     double t_frame = ospray::getSysTime() - t0;
     static double nom = 0.f;
     static double den = 0.f;
-    den = 0.8f*den + 1.f;
-    nom = 0.8f*nom + t_frame;
+    den = 0.95f*den + 1.f;
+    nom = 0.95f*nom + t_frame;
     std::cout << "done rendering, time per frame = " << (t_frame*1000.f) << "ms, avg'ed fps = " << (den/nom) << std::endl;
 #else
     // rendering = true;

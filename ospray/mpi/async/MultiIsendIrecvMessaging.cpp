@@ -133,7 +133,7 @@ namespace ospray {
           }
           // tt14 = getSysTime();
 
-          if (activeSendQueue.empty()) usleep(10);
+          // if (activeSendQueue.empty()) usleep(10);
         }
 
         if (!activeSendQueue.empty() || !g->sendQueue.empty()) {

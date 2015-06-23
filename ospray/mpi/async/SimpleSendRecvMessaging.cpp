@@ -79,7 +79,7 @@ namespace ospray {
                         g->comm,&status));
           g->consumer->process(Address(g,status.MPI_SOURCE),msg,count);
         }
-        g->mutex.unlock();
+        // g->mutex.unlock();
 
         // printf("#osp:mpi(%2i): shutting down recv thread\n",g->rank);fflush(0);
         g->mutex.lock();

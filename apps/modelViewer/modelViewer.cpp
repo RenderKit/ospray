@@ -308,6 +308,7 @@ namespace ospray {
       if (frameID > 0) fps.doneRender();
       fps.startRender();
       //}
+#if 0
       static double benchStart=0;
       static double fpsSum=0;
       if (g_benchFrames > 0 && frameID == g_benchWarmup)
@@ -327,7 +328,7 @@ namespace ospray {
 
           exit(0);
         }
-      
+#endif 
       ++frameID;
       
       if (viewPort.modified) {
@@ -373,13 +374,8 @@ namespace ospray {
       // set the glut3d widget's frame buffer to the opsray frame buffer, then display
       ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-      Glut3DWidget::display();
 
-      // if (outFileName && accumID == maxAccum) {
-      //   std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
-      //   writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
-      //   exit(0);
-      // }
+      Glut3DWidget::display();
 
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
