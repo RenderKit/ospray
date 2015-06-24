@@ -29,6 +29,7 @@ namespace ospray {
       std::vector<double> t_whenReceived;
       double T0;
       double t_recv, t_send;
+      size_t b_recv, b_sent;
 
       extern "C" void async_beginFrame() 
       {
@@ -39,6 +40,8 @@ namespace ospray {
           T0 = getSysTime();
           t_send = 0;
           t_recv = 0;
+          b_recv = 0;
+          b_sent = 0;
           t_whenSent.clear();
           t_whenReceived.clear();
         }
@@ -46,7 +49,9 @@ namespace ospray {
 
       extern "C" void async_endFrame()
       {
-        printf("rank %i t_send %f recv %f\n",mpi::world.rank,t_send,t_recv);
+        printf("rank %i t_send %fMb in %fs recv %fMb in %fs\n",
+               mpi::world.rank,
+               b_sent*1e-6f,t_send,b_recv*1e-6f,t_recv);
       }
 
 #endif
@@ -71,8 +76,10 @@ namespace ospray {
           MPI_CALL(Send(action->data,action->size,MPI_BYTE,
                         action->addr.rank,g->tag,action->addr.group->comm));
           double t1 = getSysTime();
-          if (logIt)
+          if (logIt) {
             t_send += (t1-t0);
+            b_sent += action->size;
+          }
           free(action->data);
           delete action;
         }
@@ -96,8 +103,10 @@ namespace ospray {
           MPI_CALL(Recv(action->data,action->size,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
                         g->comm,MPI_STATUS_IGNORE));
           double t1 = getSysTime();
-          if (logIt)
+          if (logIt) {
             t_recv += (t1-t0);
+            b_recv += action->size;
+          }
           g->procQueue.put(action);
         }
       }

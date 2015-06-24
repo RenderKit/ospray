@@ -41,7 +41,7 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-    async_beginFrame();
+        async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         double before = getSysTime();
         dfb->startNewFrame();
