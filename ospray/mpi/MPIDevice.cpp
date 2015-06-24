@@ -248,7 +248,8 @@ namespace ospray {
 
       Assert(launchCommand);
 
-      app.comm = world.comm; 
+      // app.comm = world.comm; 
+      MPI_Comm_dup(world.comm,&app.comm);
       app.makeIntercomm();
       
       char appPortName[MPI_MAX_PORT_NAME];
@@ -303,17 +304,13 @@ namespace ospray {
       if (initialized) 
         throw std::runtime_error("OSPRay MPI Error: MPI already Initialized when calling ospMpiInit()");
       
-      PING;
       ospray::mpi::init(ac,(const char **)*av);
       if (mpi::world.size < 2) {
         throw std::runtime_error("#osp:mpi: trying to run distributed API mode with a single rank? (did you forget the 'mpirun'?)");
       }
 
-      PING;
       ospray::api::Device::current
         = ospray::mpi::createMPI_runOnExistingRanks(ac,(const char**)*av,false);
-      PRINT(ospray::api::Device::current);
-      PING;
     }
     
     MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,

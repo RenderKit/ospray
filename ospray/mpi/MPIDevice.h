@@ -18,6 +18,7 @@
 
 #include "MPICommon.h"
 #include "ospray/api/Device.h"
+#include "ospray/device/command.h"
 #include "CommandStream.h"
 #include "ospray/common/Managed.h"
 
@@ -31,49 +32,50 @@ namespace ospray {
 
       CommandStream cmd;
 
-      enum {
-        CMD_NEW_RENDERER=0,
-        CMD_FRAMEBUFFER_CREATE,
-        CMD_RENDER_FRAME,
-        CMD_FRAMEBUFFER_CLEAR,
-        CMD_FRAMEBUFFER_MAP,
-        CMD_FRAMEBUFFER_UNMAP,
-        CMD_NEW_MODEL,
-        CMD_NEW_GEOMETRY,
-        CMD_NEW_MATERIAL,
-        CMD_NEW_LIGHT,
-        CMD_NEW_TRIANGLEMESH,
-        CMD_NEW_CAMERA,
-        CMD_NEW_VOLUME,
-        CMD_NEW_TRANSFERFUNCTION,
-        CMD_NEW_DATA,
-        CMD_NEW_TEXTURE2D,
-        CMD_ADD_GEOMETRY,
-        CMD_REMOVE_GEOMETRY,
-        CMD_ADD_VOLUME,
-        CMD_COMMIT,
-        CMD_LOAD_MODULE,
-        CMD_RELEASE,
-        CMD_GET_TYPE,
-        CMD_GET_VALUE,
-        CMD_SET_MATERIAL,
-        CMD_SET_REGION,
-        CMD_SET_OBJECT,
-        CMD_SET_STRING,
-        CMD_SET_INT,
-        CMD_SET_FLOAT,
-        CMD_SET_VEC2F,
-        CMD_SET_VEC3F,
-        CMD_SET_VEC3I,
+      typedef ospray::CommandTag CommandTag;
+      // enum {
+      //   CMD_NEW_RENDERER=0,
+      //   CMD_FRAMEBUFFER_CREATE,
+      //   CMD_RENDER_FRAME,
+      //   CMD_FRAMEBUFFER_CLEAR,
+      //   CMD_FRAMEBUFFER_MAP,
+      //   CMD_FRAMEBUFFER_UNMAP,
+      //   CMD_NEW_MODEL,
+      //   CMD_NEW_GEOMETRY,
+      //   CMD_NEW_MATERIAL,
+      //   CMD_NEW_LIGHT,
+      //   CMD_NEW_TRIANGLEMESH,
+      //   CMD_NEW_CAMERA,
+      //   CMD_NEW_VOLUME,
+      //   CMD_NEW_TRANSFERFUNCTION,
+      //   CMD_NEW_DATA,
+      //   CMD_NEW_TEXTURE2D,
+      //   CMD_ADD_GEOMETRY,
+      //   CMD_REMOVE_GEOMETRY,
+      //   CMD_ADD_VOLUME,
+      //   CMD_COMMIT,
+      //   CMD_LOAD_MODULE,
+      //   CMD_RELEASE,
+      //   CMD_GET_TYPE,
+      //   CMD_GET_VALUE,
+      //   CMD_SET_MATERIAL,
+      //   CMD_SET_REGION,
+      //   CMD_SET_OBJECT,
+      //   CMD_SET_STRING,
+      //   CMD_SET_INT,
+      //   CMD_SET_FLOAT,
+      //   CMD_SET_VEC2F,
+      //   CMD_SET_VEC3F,
+      //   CMD_SET_VEC3I,
 
-        CMD_SET_PIXELOP,
-        CMD_NEW_PIXELOP,
+      //   CMD_SET_PIXELOP,
+      //   CMD_NEW_PIXELOP,
 
-        CMD_API_MODE,
+      //   CMD_API_MODE,
 
-        CMD_USER
-      } CommandTag;
-
+      //   CMD_USER
+      // } CommandTag;
+      
       /*! constructor */
       MPIDevice(// AppMode appMode, OSPMode ospMode,
                 int *_ac=NULL, const char **_av=NULL);

@@ -48,6 +48,7 @@ namespace ospray {
 
         while (1) {
           MPI_Status status;
+          // PING;fflush(0);
           MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
           Action *action = new Action;
           action->addr = Address(g,status.MPI_SOURCE);

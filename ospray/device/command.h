@@ -22,7 +22,7 @@
 #include "ospray/device/buffers.h"
 
 namespace ospray {
-  namespace nwlayer {
+  // namespace nwlayer {
 
     /*! the command ID is a numerical value that corresponds to a
         given command type, and that lets the receiver figure out what
@@ -35,6 +35,8 @@ namespace ospray {
         CMD_FRAMEBUFFER_CLEAR,
         CMD_FRAMEBUFFER_MAP,
         CMD_FRAMEBUFFER_UNMAP,
+
+        CMD_NEW_DATA = 100,
         CMD_NEW_MODEL,
         CMD_NEW_GEOMETRY,
         CMD_NEW_MATERIAL,
@@ -42,23 +44,66 @@ namespace ospray {
         CMD_NEW_TRIANGLEMESH,
         CMD_NEW_CAMERA,
         CMD_NEW_VOLUME,
-        CMD_NEW_DATA,
-        CMD_ADD_GEOMETRY,
+        CMD_NEW_TRANSFERFUNCTION,
+        CMD_NEW_TEXTURE2D,
+
+        CMD_ADD_GEOMETRY=200,
+        CMD_REMOVE_GEOMETRY,
         CMD_ADD_VOLUME,
         CMD_COMMIT,
         CMD_LOAD_MODULE,
         CMD_RELEASE,
-        CMD_SET_MATERIAL,
 
+        CMD_GET_TYPE=300,
+        CMD_GET_VALUE,
+        CMD_SET_MATERIAL,
+        CMD_SET_REGION,
         CMD_SET_OBJECT,
         CMD_SET_STRING,
         CMD_SET_INT,
         CMD_SET_FLOAT,
+        CMD_SET_VEC2F,
         CMD_SET_VEC3F,
         CMD_SET_VEC3I,
+
+        CMD_SET_PIXELOP,
+        CMD_NEW_PIXELOP,
+
+        CMD_API_MODE,
+
         CMD_USER
+        // CMD_NEW_RENDERER=0,
+        // CMD_FRAMEBUFFER_CREATE,
+        // CMD_RENDER_FRAME,
+        // CMD_FRAMEBUFFER_CLEAR,
+        // CMD_FRAMEBUFFER_MAP,
+        // CMD_FRAMEBUFFER_UNMAP,
+        // CMD_NEW_MODEL,
+        // CMD_NEW_GEOMETRY,
+        // CMD_NEW_MATERIAL,
+        // CMD_NEW_LIGHT,
+        // CMD_NEW_TRIANGLEMESH,
+        // CMD_NEW_CAMERA,
+        // CMD_NEW_VOLUME,
+
+        // CMD_NEW_DATA = 30,
+        // CMD_ADD_GEOMETRY,
+        // CMD_ADD_VOLUME,
+        // CMD_COMMIT,
+        // CMD_LOAD_MODULE,
+        // CMD_RELEASE, 
+        // CMD_SET_MATERIAL,
+
+        // CMD_SET_OBJECT,
+        // CMD_SET_STRING,
+        // CMD_SET_INT,
+        // CMD_SET_FLOAT,
+        // CMD_SET_VEC3F,
+        // CMD_SET_VEC3I,
+        // CMD_USER
     } CommandTag;
 
+  namespace nwlayer {
     struct InitCmd {
     };
     struct NewFrameBufferCmd {
