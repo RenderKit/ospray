@@ -1029,6 +1029,7 @@ namespace ospray {
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
+      double T0 = getSysTime();
       const mpi::Handle handle = (const mpi::Handle&)_fb;
       // const mpi::Handle handle = (const mpi::Handle&)_sc;
       // SwapChain *sc = (SwapChain *)handle.lookup();

@@ -308,6 +308,7 @@ namespace ospray {
       if (frameID > 0) fps.doneRender();
       fps.startRender();
       //}
+#if 0
       static double benchStart=0;
       static double fpsSum=0;
       if (g_benchFrames > 0 && frameID == g_benchWarmup)
@@ -327,7 +328,7 @@ namespace ospray {
 
           exit(0);
         }
-      
+#endif 
       ++frameID;
       
       if (viewPort.modified) {
@@ -373,13 +374,8 @@ namespace ospray {
       // set the glut3d widget's frame buffer to the opsray frame buffer, then display
       ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-      Glut3DWidget::display();
 
-      // if (outFileName && accumID == maxAccum) {
-      //   std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
-      //   writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
-      //   exit(0);
-      // }
+      Glut3DWidget::display();
 
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
@@ -711,15 +707,11 @@ namespace ospray {
         }
       }
 
-      // PING; fflush(0);
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
-      // PING; fflush(0);
       ospSetData(ospMesh,"position",position);
-      // PING; fflush(0);
       
-      // PING; fflush(0);
       // add triangle index array to mesh
       if (!msgMesh->triangleMaterialId.empty()) {
         OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
@@ -727,14 +719,12 @@ namespace ospray {
         ospSetData(ospMesh,"prim.materialID",primMatID);
       }
 
-      // PING; fflush(0);
       // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_INT3,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
       assert(msgMesh->triangle.size() > 0);
       ospSetData(ospMesh,"index",index);
 
-      // PING; fflush(0);
       // add normal array to mesh
       if (!msgMesh->normal.empty()) {
         OSPData normal = ospNewData(msgMesh->normal.size(),OSP_FLOAT3A,
@@ -745,7 +735,6 @@ namespace ospray {
         // cout << "no vertex normals!" << endl;
       }
 
-      // PING; fflush(0);
       // add color array to mesh
       if (!msgMesh->color.empty()) {
         OSPData color = ospNewData(msgMesh->color.size(),OSP_FLOAT3A,
@@ -817,7 +806,6 @@ namespace ospray {
         }
       }
 
-      PING;
       ospCommit(ospMesh);
 
       if (doesInstancing) {
@@ -829,7 +817,6 @@ namespace ospray {
         ospAddGeometry(ospModel,ospMesh);
 
     }
-    PING;
     if (doesInstancing) {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
@@ -853,7 +840,6 @@ namespace ospray {
       ospCommit(ospLight);
       lights.push_back(ospLight);
     }
-    PING;
 #if 0
     //spot light
     cout << "#ospModelViewer: Adding a hard coded spotlight for test." << endl;
@@ -867,12 +853,10 @@ namespace ospray {
     ospCommit(ospSpot);
     lights.push_back(ospSpot);
 #endif
-    PING;
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);
     //end light test
     ospCommit(ospRenderer);
-    PING;
 
     // -------------------------------------------------------
     // create viewer window

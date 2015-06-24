@@ -38,11 +38,15 @@ namespace ospray {
                                const uint32 channelFlags)
       {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        double before = getSysTime();
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
+        double after = getSysTime();
+        float T = after - before;
+        printf("master: render time %f, theofps %f\n",T,1.f/T);
 
 // #if BARRIER_AT_END_OF_FRAME
 //         MPI_Barrier(MPI_COMM_WORLD);

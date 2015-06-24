@@ -335,7 +335,12 @@ namespace ospray {
           // Assert(sc);
           Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
+      double before = getSysTime();
           renderer->renderFrame(fb,channelFlags); //sc->getBackBuffer());
+      double after = getSysTime();
+      float T = after - before;
+      printf("#rank %i: pure time to render %f, theo fps %f\n",mpi::worker.rank,T,1.f/T);
+
           // sc->advance();
         } break;
         case ospray::CMD_FRAMEBUFFER_MAP: {

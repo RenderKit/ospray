@@ -43,7 +43,7 @@ namespace ospray {
       void initAsync()
       {
         if (AsyncMessagingImpl::global == NULL) {
-#if 1
+#if 0
           AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
           AsyncMessagingImpl::global->init();
           PRINT(mpi::async::WORLD);
