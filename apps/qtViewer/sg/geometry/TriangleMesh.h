@@ -39,9 +39,26 @@ namespace ospray {
       /*! 'render' the nodes */
       virtual void render(RenderContext &ctx);
 
+      //! \brief Initialize this node's value from given XML node 
+      /*!
+        \detailed This allows a plug-and-play concept where a XML
+        file can specify all kind of nodes wihout needing to know
+        their actual types: The XML parser only needs to be able to
+        create a proper C++ instance of the given node type (the
+        OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
+        tell the node to parse itself from the given XML content and
+        XML children 
+        
+        \param node The XML node specifying this node's fields
+
+        \param binBasePtr A pointer to an accompanying binary file (if
+        existant) that contains additional binary data that the xml
+        node fields may point into
+      */
+      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+
       OSPGeometry         ospGeometry;
       
-#if 1
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
@@ -59,22 +76,6 @@ namespace ospray {
 
       //! triangle indices
       Ref<DataBuffer> index;
-#else
-      //! vertex (position) array
-      std::vector<vec3fa> vertex;
-
-      //! vertex normal array. empty means 'not present'
-      std::vector<vec3fa> normal;
-
-      //! vertex color array. empty means 'not present'
-      std::vector<vec3fa> color;
-
-      //! vertex texture coordinate array. empty means 'not present'
-      std::vector<vec2f> texcoord;
-
-      //! triangle indices
-      std::vector<Triangle> index;
-#endif
     };
 
 

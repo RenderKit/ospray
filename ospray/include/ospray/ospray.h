@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// \file ospray/ospray.h Defines the external OSPRay API */
+
 /*! \defgroup ospray_api OSPRay Core API
 
   \ingroup ospray
@@ -24,6 +26,10 @@
  */
 
 #pragma once
+
+#ifdef OSPRAY_MPI_DISTRIBUTED
+# include <mpi.h>
+#endif
 
 #include <vector>
 
@@ -61,6 +67,7 @@ namespace osp {
   typedef embree::Vec3f  vec3f;
   typedef embree::Vec3i  vec3i;
   typedef embree::Vec3fa vec3fa;
+  typedef embree::Vec4f  vec4f;
   typedef embree::BBox<embree::Vec2i> box2i;
   typedef embree::BBox3f box3f;
   typedef embree::AffineSpace3f affine3f;
@@ -96,6 +103,41 @@ typedef enum {
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
+
+//! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
+/*! \see ospdApiMode */
+typedef enum {
+
+  //! \brief all ospNew(), ospSet(), etc calls affect only the current rank 
+  /*! \detailed in this mode, all ospXyz() calls made on a given rank
+    will ONLY affect state ont hat rank. This allows for configuring a
+    (globally known) object differnetly on each different rank (also
+    see OSP_MPI_SCOPE_GLOBAL) */
+  OSPD_MODE_INDEPENDENT,
+  OSPD_RANK=OSPD_MODE_INDEPENDENT /*!< alias for OSP_MODE_INDEPENDENT, reads better in code */,
+
+  //! \brief all ospNew(), ospSet() calls affect all ranks 
+  /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
+      functions, but all objects defined through those functions---and
+      all parameters set through those---will apply equally to all
+      ranks. E.g., a OSPVolume vol = ospNewVolume(...) would create a
+      volume object handle that exists on (and therefore, is valid on)
+      all ranks. The (distributed) app may then switch to 'current
+      rank only' mode, and may assign different data or parameters on
+      each rank (typically, in order to have different parts of the
+      volume on different nodes), but the object itself is globally
+      known */
+  OSPD_MODE_MASTERED,
+  OSPD_MASTER=OSPD_MODE_MASTERED /*!< alias for OSP_MODE_MASTERED, reads better in code */,
+
+  //! \brief all ospNew(), ospSet() are called collaboratively by all ranks 
+  /*! \detailed In this mode, ALL ranks must call (the same!) api
+      function, the result is collaborative across all nodes in the
+      sense that any object being created gets created across all
+      nodes, and ALL ranks get a valid handle returned */
+  OSPD_MODE_COLLABORATIVE,
+  OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
+} OSPDApiMode;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {
@@ -136,8 +178,24 @@ typedef int32 error_t;
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   void ospInit(int *ac, const char **av);
-  // //! initialize the ospray engine (for use with MPI-parallel app) 
-  // void ospInitMPI(int *ac, const char **av);
+
+  typedef enum { 
+    OSPD_Z_COMPOSITE
+  } OSPDRenderMode;
+
+  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
+  void ospdApiMode(OSPDApiMode mode);
+
+#ifdef OSPRAY_MPI_DISTRIBUTED
+  //! the 'lid to the pot' of ospdMpiInit(). 
+  /*! does both an osp shutdown and an mpi shutdown for the mpi group
+      created with ospdMpiInit */
+  void ospdMpiInit(int *ac, char ***av, OSPDRenderMode renderMode=OSPD_Z_COMPOSITE);
+
+  /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
+      *and* the MPI layer created with ospdMpiInit */
+  void ospdMpiShutdown();
+#endif
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
@@ -257,6 +315,8 @@ extern "C" {
     OSP_FB_RBGA_I8, OSP_FB_RGB_I8, and OSP_FB_NONE (note that
     OSP_FB_NONE is a perfectly reasonably choice for a framebuffer
     that will be used only internally, see notes below).
+    The origin of the screen coordinate system is the lower left
+    corner (as in OpenGL).
 
     \param channelFlags specifies which channels the frame buffer has,
     and is or'ed together from the values OSP_FB_COLOR,
@@ -475,14 +535,22 @@ extern "C" {
   /*! \brief commit changes to an object */
   void ospCommit(OSPObject object);
 
-  /*! \brief represents the data returned after an ospUnproject (picking) operation */
+  /*! \brief represents the result returned by an ospPick operation */
   extern "C" typedef struct {
-    bool hit;                           //Whether or not a hit actually occured
-    float world_x, world_y, world_z;    //The world-space position of the hit point
+    osp::vec3f position; //< the position of the hit point (in world-space)
+    bool hit;            //< whether or not a hit actually occured
+  } OSPPickResult;
+
+  /*! \brief returns the world-space position of the geometry seen at [0-1] normalized screen-space pixel coordinates (if any) */
+  void ospPick(OSPPickResult *result, OSPRenderer renderer, const osp::vec2f &screenPos);
+
+  extern "C" /*OSP_DEPRECATED*/ typedef struct {
+    bool hit;
+    float world_x, world_y, world_z;
   } OSPPickData;
 
-  /*! \brief unproject a [0-1] normalized screen-space pixel coordinate to a world-space position */
-  OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
+  /* \warning this call has been superseded by ospPick, and will eventually get removed */
+  OSP_DEPRECATED OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 
 } // extern "C"
 

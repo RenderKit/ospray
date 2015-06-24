@@ -29,13 +29,6 @@ IF (OSPRAY_EXP_COMPOSITING)
 
 ENDIF()
 
-IF ((${OSPRAY_XEON_TARGET} STREQUAL "AVX2") AND
-    (${OSPRAY_COMPILER} STREQUAL "GCC") AND
-    (NOT APPLE)
-    )
-  MESSAGE(WARNING "Warning: You have selected 'AVX2' target and 'GCC'-compiler, but many older gcc versions do not yet support AVX2. If you run into build issues, please switch to either 'ICC'-compiler, or upgrade your gcc version")
-ENDIF()
-
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
 #INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
@@ -43,15 +36,17 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
-  common/OSPCommon.cpp
   common/OSPCommon.ispc
+  common/OSPCommon.cpp
+  common/Core.cpp
   common/Managed.cpp
   common/Data.cpp
-  common/Model.cpp
   common/Model.ispc
+  common/Model.cpp
   common/Material.cpp
   common/Library.cpp
   common/TaskSys.cpp
+  common/Thread.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -63,17 +58,21 @@ SET(OSPRAY_SOURCES
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
 
-  volume/BlockBrickedVolume.cpp
   volume/BlockBrickedVolume.ispc
+  volume/BlockBrickedVolume.cpp
   volume/GridAccelerator.ispc
+  volume/SharedStructuredVolume.ispc
+  volume/SharedStructuredVolume.cpp
+  volume/StructuredVolume.ispc
   volume/StructuredVolume.cpp
   volume/SymbolRegistry.cpp
+  volume/Volume.ispc
   volume/Volume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
-  transferFunction/TransferFunction.cpp
   transferFunction/TransferFunction.ispc
+  transferFunction/TransferFunction.cpp
   transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
@@ -175,18 +174,20 @@ IF (OSPRAY_MPI)
     )
 
   # ============================================
-  ADD_EXECUTABLE(ospTestMPIAsyncBandwidth${OSPRAY_EXE_SUFFIX}
-    mpi/testing/TestAsyncBandwidth
+  ADD_EXECUTABLE(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+    mpi/testing/createCompositeTestCubes
     )
-  TARGET_LINK_LIBRARIES(ospTestMPIAsyncBandwidth${OSPRAY_EXE_SUFFIX}
+  TARGET_LINK_LIBRARIES(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
     ospray${OSPRAY_LIB_SUFFIX}
     )
 
   # ============================================
-  ADD_EXECUTABLE(ospTestMPIAsyncCorrectness${OSPRAY_EXE_SUFFIX}
-    mpi/testing/TestAsyncCorrectness
+  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+  ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
+    mpi/testing/TestDistributedApp
     )
-  TARGET_LINK_LIBRARIES(ospTestMPIAsyncCorrectness${OSPRAY_EXE_SUFFIX}
+  TARGET_LINK_LIBRARIES(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
     ospray${OSPRAY_LIB_SUFFIX}
     )
 
@@ -242,7 +243,15 @@ ENDIF()
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED 
   ${OSPRAY_SOURCES}
   )
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
+  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR})
+  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR}/bin)
+  MESSAGE("LINKING EXTENRALLY TO EMBREE IN ${OSPRAY_EMBREE_SOURCE_DIR}")
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+#  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} sys ${OSPRAY_EMBREE_SOURCE_DIR}/bin/libembree.dylib  pthread dl)
+ELSE()
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+ENDIF()
 
 IF (OSPRAY_DISPLAYCLUSTER)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${DISPLAYCLUSTER_LIBRARIES})

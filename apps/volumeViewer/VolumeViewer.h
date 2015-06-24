@@ -126,6 +126,9 @@ protected:
   //! OSPRay volumes.
   std::vector<OSPVolume> volumes;
 
+  //! Bounding box of the (first) volume.
+  osp::box3f boundingBox;
+
   //! OSPRay renderer.
   OSPRenderer renderer;
 

@@ -42,7 +42,12 @@ namespace ospray {
                                                     const char *fileNameToStorePortIn);
     ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av, 
                                                      const char *launchCommand);
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av);
+    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
+                                                      bool ranksBecomeWorkers);
+    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    { return createMPI_runOnExistingRanks(ac,av,true); }
+
+    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode);
   }
 #endif
 #if OSPRAY_MIC_COI
@@ -249,7 +254,7 @@ namespace ospray {
       std::cout << "'ospSetParam()' has been deprecated. Please use the new naming convention of 'ospSetObject()' instead" << std::endl;
       warned = true;
     }
-    LOG("ospSetData(...,\"" << bufName << "\",...)");
+    LOG("ospSetParam(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
   /*! add a data array to another object */
@@ -630,15 +635,58 @@ namespace ospray {
     ospSet3fv(geom,"xfm.l.vy",&xfm.l.vy.x);
     ospSet3fv(geom,"xfm.l.vz",&xfm.l.vz.x);
     ospSet3fv(geom,"xfm.p",&xfm.p.x);
-    ospSetParam(geom,"model",modelToInstantiate);
+    ospSetObject(geom,"model",modelToInstantiate);
     return geom;
+  }
+
+  extern "C" void ospPick(OSPPickResult *result, OSPRenderer renderer, const vec2f &screenPos)
+  {
+    ASSERT_DEVICE();
+    Assert2(renderer, "NULL renderer passed to ospPick");
+    if (!result) return;
+    *result = ospray::api::Device::current->pick(renderer, screenPos);
   }
 
   extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)
   {
+    static bool warned = false;
+    if (!warned) {
+      std::cout << "'ospUnproject()' has been deprecated. Please use the new function 'ospPick()' instead" << std::endl;
+      warned = true;
+    }
     ASSERT_DEVICE();
     Assert2(renderer, "NULL renderer passed to ospUnproject");
-    return ospray::api::Device::current->unproject(renderer, screenPos);
+    vec2f flippedScreenPos = vec2f(screenPos.x, 1.0f - screenPos.y);
+    OSPPickResult pick = ospray::api::Device::current->pick(renderer, flippedScreenPos);
+    OSPPickData res = { pick.hit,  pick.position.x,  pick.position.y,  pick.position.z };
+    return res;
   }
+
+  //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
+  extern "C" void ospdApiMode(OSPDApiMode mode)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->apiMode(mode);
+  }
+
+
+#if OSPRAY_MPI
+  //! \brief initialize the ospray engine (for use with MPI-parallel app) 
+  /*! \detailed Note the application must call this function "INSTEAD OF"
+    MPI_Init(), NOT "in addition to" */
+  extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
+  {
+    if (ospray::api::Device::current != NULL)
+      throw std::runtime_error("#osp:mpi: OSPRay already initialized!?");
+    ospray::mpi::initDistributedAPI(ac,av,mode);
+  }
+
+  //! the 'lid to the pot' of ospdMpiInit(). 
+  /*! does both an osp shutdown and an mpi shutdown for the mpi group
+      created with ospdMpiInit */
+  extern "C" void ospdMpiShutdown()
+  {
+  }
+#endif
 
 } // ::ospray

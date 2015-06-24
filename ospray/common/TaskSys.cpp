@@ -18,7 +18,8 @@
 // stl - ugh.
 #include <deque>
 // embree
-#include <common/sys/sysinfo.h>
+#include "common/sys/sysinfo.h"
+#include "common/sys/thread.h"
 
 namespace ospray {
   using std::cout;
@@ -79,11 +80,12 @@ namespace ospray {
     while (1) {
       const size_t thisJobID = numJobsStarted++;
       if (thisJobID >= numJobsInTask) 
-        break;
+       break;
       
       run(thisJobID);
       ++myCompleted;
     }
+
     if (myCompleted != 0) {
       const size_t nowCompleted = (numJobsCompleted += myCompleted); //++numJobsCompleted;
       if (nowCompleted == numJobsInTask) {
@@ -129,9 +131,9 @@ namespace ospray {
   }
 
 
-  void Task::scheduleAndWait(size_t numJobs)
+  void Task::scheduleAndWait(size_t numJobs, ScheduleOrder order)
   {
-    schedule(numJobs);
+    schedule(numJobs,order);
     wait();
   }
   //   refInc();
@@ -188,9 +190,10 @@ namespace ospray {
     TaskSys::global.init(maxNumRenderTasks);
   }
 
-  void Task::schedule(size_t numJobs)
+  void Task::schedule(size_t numJobs, ScheduleOrder order)
   {
     refInc();
+    this->order = order;
     numJobsInTask = numJobs;
     status = Task::SCHEDULED;
     if (numMissingDependencies == 0)
@@ -205,13 +208,17 @@ namespace ospray {
     bool wasEmpty = TaskSys::global.activeListFirst == NULL;
     if (wasEmpty) {
       TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
-      this->prev = this->next = NULL;
+      this->next = NULL;
       TaskSys::global.tasksAvailable.broadcast();
     } else {
-      this->next = NULL;
-      this->prev = TaskSys::global.activeListLast;
-      this->prev->next = this;
-      TaskSys::global.activeListLast = this;      
+      if (order == Task::BACK_OF_QUEUE) {
+        this->next = NULL;
+        TaskSys::global.activeListLast->next = this;
+        TaskSys::global.activeListLast = this;      
+      } else {
+        this->next = TaskSys::global.activeListFirst;
+        TaskSys::global.activeListFirst = this;
+      }
     }
     status = Task::ACTIVE;
     TaskSys::global.mutex.unlock();
@@ -247,8 +254,6 @@ namespace ospray {
       numThreads = std::min(numThreads,(size_t)embree::getNumberOfLogicalThreads());
 #endif
     }
-
-    PRINT(numThreads);
 
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {

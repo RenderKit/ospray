@@ -18,7 +18,7 @@
 
 #include "ospray/common/default.ih"
 #include "ospray/math/vec.ih"
-#include "ospray/math/affine.ih"
+#include "ospray/math/AffineSpace.ih"
 #include "ospray/common/Ray.ih"
 
 struct Texture2D;

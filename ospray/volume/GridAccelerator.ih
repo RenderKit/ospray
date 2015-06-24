@@ -18,7 +18,6 @@
 
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/transferFunction/TransferFunction.ih"
 
 //! \brief A spatial acceleration structure over a BlockBrickedVolume, used
 //!  for opacity and variance based space skipping.
@@ -37,13 +36,13 @@ struct GridAccelerator {
   //! Pointer to the associated volume.
   void *uniform volume;
 
-  //! The largest floating point value still inside the volume.
-  uniform vec3f volumeExtents;
-
 };
 
 //! Create an instance of the accelerator and encode the volume.
 GridAccelerator *uniform GridAccelerator_createInstance(void *uniform volume);
+
+//! Destroy an instance of the accelerator and free all associated memory.
+void GridAccelerator_destroy(GridAccelerator *uniform accelerator);
 
 //! Step a ray through the accelerator until a cell with visible volumetric elements is found.
 void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
@@ -53,5 +52,6 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
 //! Step a ray through the accelerator until a cell containing the isovalue is found.
 void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
                                          uniform float step,
-                                         uniform float isovalue,
+                                         uniform float *uniform isovalues,
+                                         uniform int numIsovalues,
                                          varying Ray &ray);

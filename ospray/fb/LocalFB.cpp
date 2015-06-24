@@ -114,14 +114,14 @@ namespace ospray {
 
   const void *LocalFrameBuffer::mapDepthBuffer()
   {
-    waitForRenderTaskToBeReady();
+    // waitForRenderTaskToBeReady();
     this->refInc();
     return (const void *)depthBuffer;
   }
   
   const void *LocalFrameBuffer::mapColorBuffer()
   {
-    waitForRenderTaskToBeReady();
+    // waitForRenderTaskToBeReady();
     this->refInc();
     return (const void *)colorBuffer;
   }

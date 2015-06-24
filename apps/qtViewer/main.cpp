@@ -23,7 +23,7 @@
 // viewer
 #include "ModelViewer.h"
 // embree
-#include "ospray/embree/common/sys/filename.h"
+#include "common/sys/filename.h"
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"

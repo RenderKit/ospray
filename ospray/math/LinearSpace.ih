@@ -18,6 +18,7 @@
 
 #include "vec.ih"
 
+/*! Linear vector space, or a linear transformation */
 struct LinearSpace3f 
 {
   vec3f vx;
@@ -180,3 +181,6 @@ inline uniform LinearSpace3f rcp(const uniform LinearSpace3f l)
 { return adjoint(l)*rcpf(det(l)); }
 inline varying LinearSpace3f rcp(const varying LinearSpace3f l) 
 { return adjoint(l)*rcpf(det(l)); }
+
+/*! short-hand name for LinearSpace3f */
+typedef LinearSpace3f linear3f;

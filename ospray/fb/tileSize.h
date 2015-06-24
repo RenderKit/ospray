@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#define TILE_SIZE 256
-// #define TILE_SIZE 32
-// #define TILE_SIZE 256
+#define TILE_SIZE 128
 
 

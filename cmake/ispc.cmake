@@ -14,26 +14,34 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(ISPC_VERSION 1.8.1)
-
 IF (APPLE)
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-osx CACHE STRING "ISPC Directory")
+  SET(ISPC_DIR_SUFFIX "osx")
 ELSE()
-  SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-linux CACHE STRING "ISPC Directory")
+  SET(ISPC_DIR_SUFFIX "linux")
 ENDIF()
-MARK_AS_ADVANCED(OSPRAY_ISPC_DIRECTORY)
 
-IF (NOT EXISTS "${OSPRAY_ISPC_DIRECTORY}/ispc")
+IF (EXISTS "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2knl-linux/ispc")
+  SET(OSPRAY_ISPC_AUTODETECT_DIR "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2knl-linux")
+ELSEIF (EXISTS "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2-${ISPC_DIR_SUFFIX}/ispc")
+  SET(OSPRAY_ISPC_AUTODETECT_DIR "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2-${ISPC_DIR_SUFFIX}")
+ELSEIF (EXISTS "${PROJECT_SOURCE_DIR}/../ispc-v1.8.1-${ISPC_DIR_SUFFIX}/ispc")
+  SET(OSPRAY_ISPC_AUTODETECT_DIR "${PROJECT_SOURCE_DIR}/../ispc-v1.8.1-${ISPC_DIR_SUFFIX}")
+ELSE()
+  SET(OSPRAY_ISPC_AUTODETECT_DIR "<not found>")
+ENDIF()
+
+SET(OSPRAY_ISPC_DIRECTORY "${OSPRAY_ISPC_AUTODETECT_DIR}" CACHE STRING "ISPC Directory")
+
+SET(ISPC_BINARY ${OSPRAY_ISPC_DIRECTORY}/ispc)
+IF (NOT EXISTS "${ISPC_BINARY}")
   MESSAGE("********************************************")
-  MESSAGE("Could not find ISPC (tried ${OSPRAY_ISPC_DIRECTORY}.")
+  MESSAGE("Could not find ISPC")
   MESSAGE("")
   MESSAGE("This version of ospray expects you to have a binary install of ISPC version ${ISPC_VERSION}, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
   MESSAGE("")
   MESSAGE("If you insist on using your own custom install of ISPC, please make sure that the 'OSPRAY_ISPC_DIRECTORY' variable is properly set in cmake.")
   MESSAGE("********************************************")
   MESSAGE(FATAL_ERROR "Could not find ISPC. Exiting")
-ELSE()
-  SET(ISPC_BINARY ${OSPRAY_ISPC_DIRECTORY}/ispc)
 ENDIF()
 
 # ##################################################################
@@ -54,10 +62,6 @@ MACRO (INCLUDE_DIRECTORIES_ISPC)
   SET (ISPC_INCLUDE_DIR ${ISPC_INCLUDE_DIR} ${ARGN})
 ENDMACRO ()
 
-SET(ISPC_ADDRESSING 32 CACHE INT
-  "32vs64 bit addressing in ispc")
-MARK_AS_ADVANCED(ISPC_ADDRESSING)
-
 MACRO(CONFIGURE_ISPC)
 ENDMACRO()
 
@@ -75,10 +79,25 @@ MACRO (ispc_compile)
   ENDIF()
 
   IF (THIS_IS_MIC)
-    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h  --addressing=${ISPC_ADDRESSING})
+    SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h  --addressing=32)
     #${ISPC_DIR}/examples/intrinsics/knc.h)
-    SET(ISPC_TARGET_EXT ".dev.cpp")
+#    SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()
+    SET(CMAKE_ISPC_TARGET "")
+    SET(COMMA "")
+#    SET(ISPC_TARGET_EXT ".dev.o")
+    FOREACH(target ${OSPRAY_ISPC_TARGET_LIST}) 
+      SET(CMAKE_ISPC_TARGET "${CMAKE_ISPC_TARGET}${COMMA}${target}")
+      SET(COMMA ",")
+    ENDFOREACH()
+    SET(CMAKE_ISPC_FLAGS --target=${CMAKE_ISPC_TARGET} --addressing=32)
+#    SET(CMAKE_ISPC_FLAGS --target=${CMAKE_ISPC_TARGET} --addressing=32 --cpu=${OSPRAY_ISPC_CPU})
+  ENDIF()
+
+  IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
+    SET(CMAKE_ISPC_OPT_FLAGS -O3)
+  ELSE()
+<<<<<<< HEAD
     SET(CMAKE_ISPC_FLAGS --target=${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING} --cpu=${OSPRAY_ISPC_CPU})
 		SET(ISPC_TARGET_EXT ".dev.o")
   ENDIF()
@@ -88,6 +107,11 @@ MACRO (ispc_compile)
 	ELSE()
     SET(CMAKE_ISPC_OPT_FLAGS -O2 -g)
 	ENDIF()
+=======
+    SET(CMAKE_ISPC_OPT_FLAGS -O2 -g)
+  ENDIF()
+
+>>>>>>> bb458b3a6c509c86ea093033023e9d5441e45c55
 
   SET(ISPC_OBJECTS "")
   FOREACH(src ${ARGN})
@@ -121,36 +145,86 @@ MACRO (ispc_compile)
       STRING(REGEX REPLACE ";" "\\\\;" contents "${contents}")
       STRING(REGEX REPLACE "\n" ";"    contents "${contents}")
       FOREACH(dep ${contents})
-	IF (EXISTS ${dep})
-	  SET(deps ${deps} ${dep})
-	ENDIF (EXISTS ${dep})
+	      IF (EXISTS ${dep})
+	        SET(deps ${deps} ${dep})
+	      ENDIF (EXISTS ${dep})
       ENDFOREACH(dep ${contents})
     ENDIF ()
 
-    SET(ispc_compile_result "${outdir}/${fname}${ISPC_TARGET_EXT}")
+#    SET(ispc_compile_result "${outdir}/${fname}.dev.o")
+
+    LIST(LENGTH OSPRAY_ISPC_TARGET_LIST numIspcTargets)
+    IF (THIS_IS_MIC)
+      SET(outputs ${outdir}/${fname}.dev.cpp ${outdirh}/${fname}_ispc.h)
+      SET(main_output ${outdir}/${fname}.dev.cpp)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.cpp)
+#    ELSEIF ((${OSPRAY_BUILD_ISA} STREQUAL "AVX512") AND (NOT (OSPRAY_ISPC_KNL_NATIVE)))
+#      SET(outputs ${outdir}/${fname}.dev.cpp ${outdirh}/${fname}_ispc.h)
+#      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.cpp)
+#      SET(main_output ${outdir}/${fname}.dev.cpp)
+#      SET(CMAKE_ISPC_FLAGS --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNL_Backend.h  --addressing=32 -DEMBREE_AVX512_WORKAROUND=1)
+#      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512")
+# avx512knl-i32x16
+    ELSEIF (${OSPRAY_BUILD_ISA} STREQUAL "AVX512")
+      IF (OSPRAY_ISPC_KNL_NATIVE)
+	SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
+	SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
+	SET(main_output ${outdir}/${fname}.dev.o)
+	SET(CMAKE_ISPC_FLAGS --target=avx512knl-i32x16 --addressing=32)
+      ELSE()
+	SET(outputs ${outdir}/${fname}.dev.cpp ${outdirh}/${fname}_ispc.h)
+	SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.cpp)
+	SET(main_output ${outdir}/${fname}.dev.cpp)
+	SET(CMAKE_ISPC_FLAGS --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNL_Backend.h  --addressing=32 -DEMBREE_AVX512_WORKAROUND=1)
+	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512")
+      ENDIF()
+    ELSEIF (${numIspcTargets} EQUAL 1)
+      SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
+      SET(main_output ${outdir}/${fname}.dev.o)
+    ELSE()
+      SET(outputs ${outdir}/${fname}.dev.o ${outdirh}/${fname}_ispc.h)
+      SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev.o)
+      SET(main_output ${outdir}/${fname}.dev.o)
+      FOREACH(target ${OSPRAY_ISPC_TARGET_LIST})
+	SET(outputs ${outputs} ${outdir}/${fname}.dev_${target}.o)
+	SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_${target}.o)
+      ENDFOREACH()
+    ENDIF()
+
+#    message("output ${outputs}")
     ADD_CUSTOM_COMMAND(
-      OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h
+      #OUTPUT ${ispc_compile_result} ${outdirh}/${fname}_ispc.h ${outdir}/${fname}.dev_sse4.o ${outdir}/${fname}.dev_avx.o ${outdir}/${fname}.dev_avx2.o
+      OUTPUT ${outputs}
       COMMAND mkdir -p ${outdir} \; ${ISPC_BINARY}
       -I ${CMAKE_CURRENT_SOURCE_DIR} 
       ${ISPC_INCLUDE_DIR_PARMS}
       ${ISPC_DEFINES}
       --arch=${ISPC_ARCHITECTURE}
       --pic
+<<<<<<< HEAD
+=======
+      ${CMAKE_ISPC_OPT_FLAGS}
+>>>>>>> bb458b3a6c509c86ea093033023e9d5441e45c55
       --woff
       ${CMAKE_ISPC_FLAGS}
       ${CMAKE_ISPC_OPT_FLAGS}
       --opt=fast-math
       -h ${outdirh}/${fname}_ispc.h
       -MMM  ${outdir}/${fname}.dev.idep 
-      -o ${ispc_compile_result}
+      -o ${main_output}
       ${input}
       \;
       DEPENDS ${input}
       ${deps})
-    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${ispc_compile_result})
-
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${ispc_compile_result})
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outputs})${outdir}/${fname}.dev.o)
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_sse4.o)
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_avx.o)
+    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_avx2.o)
+    
   ENDFOREACH()
-
+  
 ENDMACRO()
 
 
@@ -183,4 +257,20 @@ MACRO (OSPRAY_ADD_LIBRARY name type)
   ENDFOREACH()
   ISPC_COMPILE(${ISPC_SOURCES})
   ADD_LIBRARY(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES})
+ENDMACRO()
+
+MACRO (OSPRAY_ADD_EXECUTABLE name type)
+  SET(ISPC_SOURCES "")
+  SET(OTHER_SOURCES "")
+  SET(ISPC_OBJECTS "")
+  FOREACH(src ${ARGN})
+    GET_FILENAME_COMPONENT(ext ${src} EXT)
+    IF (ext STREQUAL ".ispc")
+      SET(ISPC_SOURCES ${ISPC_SOURCES} ${src})
+    ELSE ()
+      SET(OTHER_SOURCES ${OTHER_SOURCES} ${src})
+    ENDIF ()
+  ENDFOREACH()
+  ISPC_COMPILE(${ISPC_SOURCES})
+  ADD_EXECUTABLE(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES})
 ENDMACRO()

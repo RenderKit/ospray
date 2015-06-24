@@ -64,7 +64,7 @@ namespace ospray {
 
       OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
       if (mat) {
-        vec3f kd = .7f;
+        vec3f kd = vec3f(.7f);
         ospSet3fv(mat,"kd",&kd.x);
         ospCommit(mat);
       }

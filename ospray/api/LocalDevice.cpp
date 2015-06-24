@@ -64,6 +64,8 @@ namespace ospray {
      std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
+      else if(numThreads > 0)
+        embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
 
       RTCError erc = rtcGetError();
@@ -189,7 +191,7 @@ namespace ospray {
       Assert2(model, "null model in LocalDevice::removeGeometry");
 
       Geometry *geometry = (Geometry *)_geometry;
-      Assert2(model, "null geometry in LocalDevice::removeGeometry");
+      Assert2(geometry, "null geometry in LocalDevice::removeGeometry");
 
       GeometryLocator locator;
       locator.ptr = geometry;
@@ -649,12 +651,12 @@ namespace ospray {
       geometry->setMaterial(material);
     }
 
-    OSPPickData LocalDevice::unproject(OSPRenderer _renderer, const vec2f &screenPos)
+    OSPPickResult LocalDevice::pick(OSPRenderer _renderer, const vec2f &screenPos)
     {
       Assert(_renderer != NULL && "invalid renderer handle");
       Renderer *renderer = (Renderer*)_renderer;
 
-      return renderer->unproject(screenPos);
+      return renderer->pick(screenPos);
     }
 
   } // ::ospray::api

@@ -28,38 +28,20 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool showFrameRate,
                            std::string writeFramesFilename)
   : objectFileFilenames(objectFileFilenames),
+    dynamicModel(NULL),
+    boundingBox(osp::vec3f(0.f), osp::vec3f(1.f)),
     renderer(NULL),
     rendererInitialized(false),
-    transferFunction(NULL), 
-    osprayWindow(NULL), 
-    autoRotationRate(0.025f) 
+    transferFunction(NULL),
+    light(NULL),
+    osprayWindow(NULL),
+    transferFunctionEditor(NULL),
+    isosurfaceEditor(NULL),
+    autoRotateAction(NULL),
+    autoRotationRate(0.025f)
 {
   //! Default window size.
   resize(1024, 768);
-
-  //! Create an OSPRay renderer.
-  renderer = ospNewRenderer("raycast_volume_renderer");
-  exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
-
-  //! Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
-  osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate, writeFramesFilename);
-  setCentralWidget(osprayWindow);
-
-  //! Set the window bounds based on the OSPRay world bounds (always [(0,0,0), (1,1,1)) for volumes).
-  osprayWindow->setWorldBounds(osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
-
-  //! Create an OSPRay light source.
-  light = ospNewLight(NULL, "DirectionalLight");
-  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);
-  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
-  ospCommit(light);
-
-  //! Set the light source on the renderer.
-  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
-
-  //! Create an OSPRay transfer function.
-  transferFunction = ospNewTransferFunction("piecewise_linear");
-  exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
 
   //! Create and configure the OSPRay state.
   initObjects();
@@ -67,13 +49,19 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   //! Configure the user interface widgets and callbacks.
   initUserInterfaceWidgets();
 
+  //! Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
+  osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate, writeFramesFilename);
+  setCentralWidget(osprayWindow);
+
+  //! Set the window bounds based on the OSPRay world bounds.
+  osprayWindow->setWorldBounds(boundingBox);
+
   //! Show the window.
   show();
-
 }
 
-void VolumeViewer::setModel(size_t index) {
-
+void VolumeViewer::setModel(size_t index)
+{
   //! Set current model on the OSPRay renderer.
   ospSetObject(renderer, "model", models[index]);
   ospCommit(renderer);
@@ -94,8 +82,8 @@ void VolumeViewer::setModel(size_t index) {
   osprayWindow->setRenderingEnabled(true);
 }
 
-void VolumeViewer::autoRotate(bool set) {
-
+void VolumeViewer::autoRotate(bool set)
+{
   if(osprayWindow == NULL)
     return;
 
@@ -110,14 +98,14 @@ void VolumeViewer::autoRotate(bool set) {
     osprayWindow->setRotationRate(0.);
 }
 
-void VolumeViewer::addSlice(std::string filename) {
-
+void VolumeViewer::addSlice(std::string filename)
+{
   //! Use dynamic geometry model for slices.
   std::vector<OSPModel> dynamicModels;
   dynamicModels.push_back(dynamicModel);
 
   //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
-  SliceWidget * sliceWidget = new SliceWidget(dynamicModels, osp::box3f(osp::vec3f(0.0f), osp::vec3f(1.0f)));
+  SliceWidget * sliceWidget = new SliceWidget(dynamicModels, boundingBox);
   connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
   sliceWidgetsLayout.addWidget(sliceWidget);
 
@@ -129,8 +117,8 @@ void VolumeViewer::addSlice(std::string filename) {
   sliceWidget->autoApply();
 }
 
-void VolumeViewer::addGeometry(std::string filename) {
-
+void VolumeViewer::addGeometry(std::string filename)
+{
   //! For now we assume PLY geometry files. Later we can support other geometry formats.
 
   //! Get filename if not specified.
@@ -155,8 +143,8 @@ void VolumeViewer::addGeometry(std::string filename) {
   render();
 }
 
-void VolumeViewer::screenshot(std::string filename) {
-
+void VolumeViewer::screenshot(std::string filename)
+{
   //! Get filename if not specified.
   if(filename.empty())
     filename = QFileDialog::getSaveFileName(this, tr("Save screenshot"), ".", "PNG files (*.png)").toStdString();
@@ -177,8 +165,8 @@ void VolumeViewer::screenshot(std::string filename) {
   std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
 }
 
-void VolumeViewer::importObjectsFromFile(const std::string &filename) {
-
+void VolumeViewer::importObjectsFromFile(const std::string &filename)
+{
   //! Create an OSPRay model.
   OSPModel model = ospNewModel();
 
@@ -190,7 +178,15 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
     OSPDataType type;
     ospGetType(objects[i], NULL, &type);
 
-    if (type == OSP_VOLUME) {
+    if (type == OSP_GEOMETRY) {
+
+      //! Commit the geometry.
+      ospCommit(objects[i]);
+
+      //! Add the loaded geometry to the model.
+      ospAddGeometry(model, (OSPGeometry) objects[i]);
+
+    } else if (type == OSP_VOLUME) {
 
       //! For now we set the same transfer function on all volumes.
       ospSetObject(objects[i], "transferFunction", transferFunction);
@@ -209,10 +205,30 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename) {
   models.push_back(model);
 }
 
-void VolumeViewer::initObjects() {
+void VolumeViewer::initObjects()
+{
+  //! Create an OSPRay renderer.
+  renderer = ospNewRenderer("raycast_volume_renderer");
+  exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
+
+  //! Create an OSPRay light source.
+  light = ospNewLight(NULL, "DirectionalLight");
+  exitOnCondition(light == NULL, "could not create OSPRay light object");
+  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);
+  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
+  ospCommit(light);
+
+  //! Set the light source on the renderer.
+  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
+
+  //! Create an OSPRay transfer function.
+  transferFunction = ospNewTransferFunction("piecewise_linear");
+  exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
+  ospCommit(transferFunction);
 
   //! Create model for dynamic geometry.
   dynamicModel = ospNewModel();
+  exitOnCondition(dynamicModel == NULL, "could not create OSPRay dynamic model object");
   ospCommit(dynamicModel);
 
   //! Set the dynamic model on the renderer.
@@ -222,15 +238,20 @@ void VolumeViewer::initObjects() {
   for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
     importObjectsFromFile(objectFileFilenames[i]);
 
+  //! Get the bounding box of the first volume.
+  if(volumes.size() > 0) {
+    ospGetVec3f(volumes[0], "boundingBoxMin", &boundingBox.lower);
+    ospGetVec3f(volumes[0], "boundingBoxMax", &boundingBox.upper);
+  }
 }
 
-void VolumeViewer::initUserInterfaceWidgets() {
-
+void VolumeViewer::initUserInterfaceWidgets()
+{
   //! Create a toolbar at the top of the window.
   QToolBar *toolbar = addToolBar("toolbar");
 
   //! Add preferences widget and callback.
-  PreferencesDialog *preferencesDialog = new PreferencesDialog(this);
+  PreferencesDialog *preferencesDialog = new PreferencesDialog(this, boundingBox);
   QAction *showPreferencesAction = new QAction("Preferences", this);
   connect(showPreferencesAction, SIGNAL(triggered()), preferencesDialog, SLOT(show()));
   toolbar->addAction(showPreferencesAction);
@@ -255,11 +276,6 @@ void VolumeViewer::initUserInterfaceWidgets() {
   //! Connect the "play timesteps" timer.
   connect(&playTimeStepsTimer, SIGNAL(timeout()), this, SLOT(nextTimeStep()));
 
-  //! Add the "add slice" widget and callback.
-  QAction *addSliceAction = new QAction("Add slice", this);
-  connect(addSliceAction, SIGNAL(triggered()), this, SLOT(addSlice()));
-  toolbar->addAction(addSliceAction);
-
   //! Add the "add geometry" widget and callback.
   QAction *addGeometryAction = new QAction("Add geometry", this);
   connect(addGeometryAction, SIGNAL(triggered()), this, SLOT(addGeometry()));
@@ -271,7 +287,7 @@ void VolumeViewer::initUserInterfaceWidgets() {
   toolbar->addAction(screenshotAction);
 
   //! Create the transfer function editor dock widget, this widget modifies the transfer function directly.
-  QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function Editor", this);
+  QDockWidget *transferFunctionEditorDockWidget = new QDockWidget("Transfer Function", this);
   transferFunctionEditor = new TransferFunctionEditor(transferFunction);
   transferFunctionEditorDockWidget->setWidget(transferFunctionEditor);
   connect(transferFunctionEditor, SIGNAL(committed()), this, SLOT(commitVolumes()));
@@ -281,15 +297,28 @@ void VolumeViewer::initUserInterfaceWidgets() {
   //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
   transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
 
+  //! Create a scrollable dock widget for any added slices.
+  QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
+  QScrollArea *slicesScrollArea = new QScrollArea();
+  QWidget *slicesWidget = new QWidget();
+  sliceWidgetsLayout.setAlignment(Qt::AlignTop);
+  slicesWidget->setLayout(&sliceWidgetsLayout);
+  slicesScrollArea->setWidget(slicesWidget);
+  slicesScrollArea->setWidgetResizable(true);
+  slicesDockWidget->setWidget(slicesScrollArea);
+  addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
+
+  //! Add the "add slice" button and callback.
+  QPushButton *addSliceButton = new QPushButton("Add slice");
+  connect(addSliceButton, SIGNAL(clicked()), this, SLOT(addSlice()));
+  sliceWidgetsLayout.addWidget(addSliceButton);
+
   //! Create isosurface editor dock widget.
-  QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurface Editor", this);
+  QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurfaces", this);
   isosurfaceEditor = new IsosurfaceEditor();
   isosurfaceEditorDockWidget->setWidget(isosurfaceEditor);
   connect(isosurfaceEditor, SIGNAL(isovaluesChanged(std::vector<float>)), this, SLOT(setIsovalues(std::vector<float>)));
   addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
-
-  //! Set the isosurface editor widget to its minimum allowed height, to leave room for other dock widgets.
-  isosurfaceEditor->setMaximumHeight(isosurfaceEditor->minimumSize().height());
 
   //! Create the light editor dock widget, this widget modifies the light directly.
   //! Disable for now pending UI improvements...
@@ -299,15 +328,15 @@ void VolumeViewer::initUserInterfaceWidgets() {
      connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
      addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget); */
 
-  //! Create a scrollable dock widget for any added slices.
-  QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
-  QScrollArea *slicesScrollArea = new QScrollArea();
-  QWidget *slicesWidget = new QWidget();
-  slicesWidget->setLayout(&sliceWidgetsLayout);
-  slicesScrollArea->setWidget(slicesWidget);
-  slicesScrollArea->setWidgetResizable(true);
-  slicesDockWidget->setWidget(slicesScrollArea);
-  addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
+  //! Tabify dock widgets.
+  tabifyDockWidget(transferFunctionEditorDockWidget, slicesDockWidget);
+  tabifyDockWidget(transferFunctionEditorDockWidget, isosurfaceEditorDockWidget);
+
+  //! Tabs on top.
+  setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::North);
+
+  //! Default to showing transfer function tab widget.
+  transferFunctionEditorDockWidget->raise();
 
   //! Add the current OSPRay object file label to the bottom status bar.
   statusBar()->addWidget(&currentFilenameInfoLabel);

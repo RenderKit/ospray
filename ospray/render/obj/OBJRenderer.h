@@ -47,7 +47,6 @@ namespace ospray {
   struct Model;
 
   namespace obj {
-    using embree::TaskScheduler;
 
     /*! \brief Renderer for the OBJ Wavefront Material/Lighting format 
 

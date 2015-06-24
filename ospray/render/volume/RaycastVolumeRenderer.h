@@ -38,9 +38,6 @@ namespace ospray {
     //! Initialize the renderer state, and create the equivalent ISPC volume renderer object.
     virtual void commit();
 
-    //! Get the equivalent ISPC volume renderer object.
-    void *getEquivalentISPC() const { return(getIE()); }
-
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::RaycastVolumeRenderer"); }
 

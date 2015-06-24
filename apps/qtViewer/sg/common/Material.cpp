@@ -38,8 +38,8 @@ namespace ospray {
           return;
         }
         defaultMaterial = ospNewMaterial(ctx.integrator->getOSPHandle(), "OBJMaterial");
-        const vec3f kd = .7f;
-        const vec3f ks = .3f;
+        vec3f kd(.7f);
+        vec3f ks(.3f);
         ospSet3fv(defaultMaterial, "Kd", &kd.x);
         ospSet3fv(defaultMaterial, "Ks", &ks.x);
         ospSet1f(defaultMaterial, "Ns", 99.f);

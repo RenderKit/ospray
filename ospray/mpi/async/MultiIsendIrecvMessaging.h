@@ -16,8 +16,11 @@
 
 #pragma once
 
+// ospray
 #include "Messaging.h"
+// stl
 #include <deque>
+#include <vector>
 
 namespace ospray {
   namespace mpi {

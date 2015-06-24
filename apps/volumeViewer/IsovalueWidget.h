@@ -16,25 +16,41 @@
 
 #pragma once
 
-#include "ospray/math/bbox.ih"
-#include "Ray.ih"
+#include <ospray/ospray.h>
+#include <QtGui>
 
-inline void boxtest(Ray& ray,
-                    uniform box3f& box,
-                    float& t0,
-                    float& t1)
+class IsosurfaceEditor;
+
+class IsovalueWidget : public QWidget
 {
-  vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
-  vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
-  
-  t0 = max(max(ray.t0, 
-               min(mins.x,maxs.x)),
-           max(min(mins.y,maxs.y),
-               min(mins.z,maxs.z)));
-  
-  t1 = min(min(ray.t, 
-               max(mins.x,maxs.x)),
-           min(max(mins.y,maxs.y),
-               max(mins.z,maxs.z)));
-}
+Q_OBJECT
 
+public:
+
+  IsovalueWidget(IsosurfaceEditor *isosurfaceEditor);
+
+  bool getIsovalueEnabled() { return isovalueCheckBox.isChecked(); }
+  float getIsovalue() { return isovalueSpinBox.value(); }
+
+  void setDataValueRange(osp::vec2f dataValueRange);
+
+signals:
+
+  void isovalueChanged();
+
+protected slots:
+
+  void apply();
+
+protected:
+
+  osp::vec2f dataValueRange;
+
+  //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
+  bool dataRangeSet;
+
+  QCheckBox isovalueCheckBox;
+  QSlider isovalueSlider;
+  QDoubleSpinBox isovalueSpinBox;
+
+};

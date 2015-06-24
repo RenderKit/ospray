@@ -23,8 +23,8 @@
 /*! a screen tile. the memory layout of this class has to _exactly_
   match the (C++-)one in tile.h */
 struct Tile {
-  uniform float  r[TILE_SIZE*TILE_SIZE]; /*! red */
-  uniform float  g[TILE_SIZE*TILE_SIZE]; /*! green */
+  uniform float  r[TILE_SIZE*TILE_SIZE]; /*!< red */
+  uniform float  g[TILE_SIZE*TILE_SIZE]; /*!< green */
   uniform float  b[TILE_SIZE*TILE_SIZE]; /*!< blue */
   uniform float  a[TILE_SIZE*TILE_SIZE]; /*!< alpha */
   uniform float  z[TILE_SIZE*TILE_SIZE]; /*!< depth */
