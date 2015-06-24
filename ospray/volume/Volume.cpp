@@ -70,10 +70,6 @@ namespace ospray {
 
   void Volume::updateEditableParameters()
   {
-    //! Set the gamma correction coefficient and exponent.
-    vec2f gammaCorrection = getParam2f("gammaCorrection", vec2f(1.0f));
-    ispc::Volume_setGammaCorrection(ispcEquivalent, (const ispc::vec2f &) gammaCorrection);
-
     //! Set the gradient shading flag for the renderer.
     ispc::Volume_setGradientShadingEnabled(ispcEquivalent, getParam1i("gradientShadingEnabled", 0));
 

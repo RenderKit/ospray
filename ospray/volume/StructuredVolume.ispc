@@ -177,10 +177,13 @@ export void StructuredVolume_setGridSpacing(void *uniform _self, const uniform v
   self->inherited.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
 }
 
-export void StructuredVolume_finish(void *uniform _self)
+export void StructuredVolume_buildAccelerator(void *uniform _self)
 {
   //! Cast to the actual Volume type.
   StructuredVolume *uniform self = (StructuredVolume *uniform)_self;
+
+  //! Delete the current accelerator if it exists.
+  if(self->accelerator) GridAccelerator_destroy(self->accelerator);
 
   //! Set the accelerator structure field.
   self->accelerator = GridAccelerator_createInstance(&self->inherited);

@@ -52,8 +52,8 @@ namespace ospray {
     else
       voxelRange = getParam2f("voxelRange", voxelRange);
 
-    //! Complete volume initialization.
-    ispc::StructuredVolume_finish(ispcEquivalent);
+    //! Build volume accelerator.
+    ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
 
     //! Volume finish actions.
     Volume::finish();

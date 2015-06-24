@@ -379,7 +379,7 @@ namespace ospray {
       createTransferFunctionEditor();
 
       if (fullscreen) {
-        setWindowState(windowState() & Qt::WindowFullScreen);
+        setWindowState(windowState() | Qt::WindowFullScreen);
         toolBar->hide();
         editorWidgetDock->hide();
       }

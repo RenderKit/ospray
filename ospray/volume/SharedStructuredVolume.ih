@@ -20,9 +20,9 @@
 #include "ospray/volume/StructuredVolume.ih"
 
 //! \brief ISPC variables and functions for the SharedStructuredVolume class,
-//! a concrete implementation of the StructuredVolume class with 32-bit
-//! addressing in which the voxel data is laid out in memory in XYZ order and
-//! provided via a shared data buffer.
+//! a concrete implementation of the StructuredVolume class in which the voxel
+//! data is laid out in memory in XYZ order and provided via a shared data
+//! buffer.
 //!
 struct SharedStructuredVolume {
 
@@ -30,7 +30,7 @@ struct SharedStructuredVolume {
   StructuredVolume inherited;
 
   //! Voxel data.
-  const void *uniform voxelData;
+  void **uniform voxelData;
 
   //! Voxel type.
   uniform OSPDataType voxelType;

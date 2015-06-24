@@ -21,17 +21,17 @@
 namespace ospray {
 
   //! \brief A concrete implementation of the StructuredVolume class
-  //!  with 32-bit addressing in which the voxel data is laid out in
-  //!  memory in XYZ order and provided via a shared data buffer.
+  //!  in which the voxel data is laid out in memory in XYZ order and
+  //!  provided via a shared data buffer.
   //!
   class SharedStructuredVolume : public StructuredVolume {
   public:
 
     //! Constructor.
-    SharedStructuredVolume() {};
+    SharedStructuredVolume() : voxelData(NULL) {};
 
     //! Destructor.
-    virtual ~SharedStructuredVolume() {};
+    virtual ~SharedStructuredVolume();
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::SharedStructuredVolume<" + voxelType + ">"); }
@@ -49,6 +49,12 @@ namespace ospray {
 
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC();
+
+    //! Called when a dependency of this object changes.
+    virtual void dependencyGotChanged(ManagedObject *object);
+
+    //! The voxelData object upon commit().
+    Data *voxelData;
 
   };
 
