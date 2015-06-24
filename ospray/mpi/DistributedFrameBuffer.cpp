@@ -445,7 +445,7 @@ namespace ospray {
     }
 
     Ref<DFBProcessMessageTask> msgTask = new DFBProcessMessageTask(this,_msg);
-    msgTask->schedule(1);
+    msgTask->schedule(1,Task::FRONT_OF_QUEUE);
   }
 
   void DFB::closeCurrentFrame(bool locked) 
