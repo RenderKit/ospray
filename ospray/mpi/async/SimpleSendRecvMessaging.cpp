@@ -25,11 +25,15 @@ namespace ospray {
 #if PROFILE_MPI
       int frameID = 0;
       bool logIt = 0;
-      std::vector<double> t_whenSent;
-      std::vector<double> t_whenReceived;
       double T0;
       double t_recv, t_send;
       size_t b_recv, b_sent;
+
+      struct MsgLog {
+        int to, size;
+        double begin, end;
+      };
+      std::vector<MsgLog> sendLog, recvLog;
 
       extern "C" void async_beginFrame() 
       {
@@ -42,8 +46,8 @@ namespace ospray {
           t_recv = 0;
           b_recv = 0;
           b_sent = 0;
-          t_whenSent.clear();
-          t_whenReceived.clear();
+          sendLog.clear();
+          recvLog.clear();
         }
       }
 
@@ -52,6 +56,16 @@ namespace ospray {
         printf("rank %i t_send %fMb in %fs recv %fMb in %fs\n",
                mpi::world.rank,
                b_sent*1e-6f,t_send,b_recv*1e-6f,t_recv);
+        for (int i=0;i<sendLog.size();i++) {
+          MsgLog log = sendLog[i];
+          printf(" sent to to %i (%fMB) from %f to %f (%fs)\n",log.to,log.size*1e-6f,
+                 log.begin-T0,log.end-T0,log.end-log.begin);
+        }
+        for (int i=0;i<recvLog.size();i++) {
+          MsgLog log = recvLog[i];
+          printf(" recvd from %i (%fMB) from %f to %f (%fs)\n",log.to,log.size*1e-6f,
+                 log.begin-T0,log.end-T0,log.end-log.begin);
+        }
       }
 
 #endif
@@ -79,6 +93,13 @@ namespace ospray {
           if (logIt) {
             t_send += (t1-t0);
             b_sent += action->size;
+
+            MsgLog log;
+            log.to = action->addr.rank;
+            log.size = action->size;
+            log.begin = t0;
+            log.end = t1;
+            sendLog.push_back(log);
           }
           free(action->data);
           delete action;
@@ -106,6 +127,13 @@ namespace ospray {
           if (logIt) {
             t_recv += (t1-t0);
             b_recv += action->size;
+
+            MsgLog log;
+            log.to = action->addr.rank;
+            log.size = action->size;
+            log.begin = t0;
+            log.end = t1;
+            recvLog.push_back(log);
           }
           g->procQueue.put(action);
         }
