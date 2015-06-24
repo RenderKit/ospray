@@ -80,38 +80,22 @@ MACRO (ispc_compile)
 
   IF (THIS_IS_MIC)
     SET(CMAKE_ISPC_FLAGS --opt=force-aligned-memory --target generic-16 --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h  --addressing=32)
-    #${ISPC_DIR}/examples/intrinsics/knc.h)
-#    SET(ISPC_TARGET_EXT ".dev.cpp")
   ELSE()
     SET(CMAKE_ISPC_TARGET "")
     SET(COMMA "")
-#    SET(ISPC_TARGET_EXT ".dev.o")
     FOREACH(target ${OSPRAY_ISPC_TARGET_LIST}) 
       SET(CMAKE_ISPC_TARGET "${CMAKE_ISPC_TARGET}${COMMA}${target}")
       SET(COMMA ",")
     ENDFOREACH()
     SET(CMAKE_ISPC_FLAGS --target=${CMAKE_ISPC_TARGET} --addressing=32)
-#    SET(CMAKE_ISPC_FLAGS --target=${CMAKE_ISPC_TARGET} --addressing=32 --cpu=${OSPRAY_ISPC_CPU})
   ENDIF()
 
   IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
     SET(CMAKE_ISPC_OPT_FLAGS -O3)
   ELSE()
-<<<<<<< HEAD
-    SET(CMAKE_ISPC_FLAGS --target=${OSPRAY_ISPC_TARGET} --addressing=${ISPC_ADDRESSING} --cpu=${OSPRAY_ISPC_CPU})
 		SET(ISPC_TARGET_EXT ".dev.o")
-  ENDIF()
-
-	IF (${CMAKE_BUILD_TYPE} STREQUAL "Release")
-    SET(CMAKE_ISPC_OPT_FLAGS -O3)
-	ELSE()
-    SET(CMAKE_ISPC_OPT_FLAGS -O2 -g)
-	ENDIF()
-=======
     SET(CMAKE_ISPC_OPT_FLAGS -O2 -g)
   ENDIF()
-
->>>>>>> bb458b3a6c509c86ea093033023e9d5441e45c55
 
   SET(ISPC_OBJECTS "")
   FOREACH(src ${ARGN})
@@ -202,10 +186,7 @@ MACRO (ispc_compile)
       ${ISPC_DEFINES}
       --arch=${ISPC_ARCHITECTURE}
       --pic
-<<<<<<< HEAD
-=======
       ${CMAKE_ISPC_OPT_FLAGS}
->>>>>>> bb458b3a6c509c86ea093033023e9d5441e45c55
       --woff
       ${CMAKE_ISPC_FLAGS}
       ${CMAKE_ISPC_OPT_FLAGS}
@@ -217,11 +198,6 @@ MACRO (ispc_compile)
       \;
       DEPENDS ${input}
       ${deps})
-    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${ispc_compile_result})
-    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outputs})${outdir}/${fname}.dev.o)
-    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_sse4.o)
-    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_avx.o)
-    #    SET(ISPC_OBJECTS ${ISPC_OBJECTS} ${outdir}/${fname}.dev_avx2.o)
     
   ENDFOREACH()
   
