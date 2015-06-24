@@ -46,8 +46,7 @@ namespace ospray {
 
       extern "C" void async_endFrame()
       {
-        PRINT(t_send);
-        PRINT(t_recv);
+        printf("rank %i t_send %f recv %f\n",mpi::world.rank,t_send,t_recv);
       }
 
 #endif

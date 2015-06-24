@@ -125,7 +125,7 @@ namespace ospray {
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(channelFlags);
         double t1wait = getSysTime();
-        printf("rank %i t_wait at end %f\n",float(t1wait-t0wait));
+        printf("rank %i t_wait at end %f\n",mpi::world.rank,float(t1wait-t0wait));
 
     async_endFrame();
         
