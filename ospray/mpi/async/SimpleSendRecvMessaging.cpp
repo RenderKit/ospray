@@ -14,11 +14,44 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#define PROFILE_MPI 1
+
 #include "SimpleSendRecvMessaging.h"
 
 namespace ospray {
   namespace mpi {
     namespace async {
+
+#if PROFILE_MPI
+      int frameID = 0;
+      bool logIt = 0;
+      std::vector<double> t_whenSent;
+      std::vector<double> t_whenReceived;
+      double T0;
+      double t_recv, t_send;
+
+      extern "C" void async_beginFrame() 
+      {
+        ++ frameID;
+        if (frameID > 20) logIt = true;
+
+        if (logIt) {
+          T0 = getSysTime();
+          t_send = 0;
+          t_recv = 0;
+          t_whenSent.clear();
+          t_whenReceived.clear();
+        }
+      }
+
+      extern "C" void async_endFrame()
+      {
+        PRINT(t_send);
+        PRINT(t_recv);
+      }
+
+#endif
+
       SimpleSendRecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
                                        Consumer *consumer, int32 tag)
         : async::Group(comm,consumer,tag),
@@ -35,8 +68,12 @@ namespace ospray {
 
         while (1) {
           Action *action = g->sendQueue.get();
+          double t0 = getSysTime();
           MPI_CALL(Send(action->data,action->size,MPI_BYTE,
                         action->addr.rank,g->tag,action->addr.group->comm));
+          double t1 = getSysTime();
+          if (logIt)
+            t_send += (t1-t0);
           free(action->data);
           delete action;
         }
@@ -56,8 +93,12 @@ namespace ospray {
           MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
 
           action->data = malloc(action->size);
+          double t0 = getSysTime();
           MPI_CALL(Recv(action->data,action->size,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
                         g->comm,MPI_STATUS_IGNORE));
+          double t1 = getSysTime();
+          if (logIt)
+            t_recv += (t1-t0);
           g->procQueue.put(action);
         }
       }

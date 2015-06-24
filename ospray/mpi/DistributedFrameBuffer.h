@@ -17,7 +17,7 @@
 #pragma once
 
 #include "ospray/mpi/async/CommLayer.h"
-#include "ospray/fb/tileSize.h"
+#include "ospray/fb/Tile.h"
 #include "ospray/fb/LocalFB.h"
 
 namespace ospray {

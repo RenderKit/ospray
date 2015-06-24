@@ -25,6 +25,10 @@
 namespace ospray {
   namespace mpi {
 
+    // for profiling
+    extern "C" void async_beginFrame();
+    extern "C" void async_endFrame();
+
     using std::cout; 
     using std::endl;
 
@@ -37,6 +41,7 @@ namespace ospray {
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
+    async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         double before = getSysTime();
         dfb->startNewFrame();
@@ -48,6 +53,7 @@ namespace ospray {
         float T = after - before;
         printf("master: render time %f, theofps %f\n",T,1.f/T);
 
+    async_endFrame();
 // #if BARRIER_AT_END_OF_FRAME
 //         MPI_Barrier(MPI_COMM_WORLD);
 // #endif
@@ -91,6 +97,9 @@ namespace ospray {
                               const uint32 channelFlags
                               )
       {
+
+    async_beginFrame();
+
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
         Ref<RenderTask> renderTask = new RenderTask;
@@ -112,8 +121,13 @@ namespace ospray {
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
         renderTask->wait();
 
+        double t0wait = getSysTime();
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(channelFlags);
+        double t1wait = getSysTime();
+        printf("rank %i t_wait at end %f\n",float(t1wait-t0wait));
+
+    async_endFrame();
         
 // #if BARRIER_AT_END_OF_FRAME
 //         MPI_Barrier(MPI_COMM_WORLD);
