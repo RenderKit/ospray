@@ -47,12 +47,25 @@ namespace ospray {
     // //! active way before other tasks in the task queue
     // void addContinuation(Task *continuation);
 
+    typedef enum {
+      /*! schedule job to the END of the job queue, meaning it'll get
+          pulled only after all the ones already in the queue */
+      BACK_OF_QUEUE,
+      /*! schedule job to the FRONT of the queue, meaning it'll likely
+          get processed even before other jobs that are already in the
+          queue */
+      FRONT_OF_QUEUE
+    } ScheduleOrder;
+
+    /*! the order in the queue that this job will get scheduled when activated */
+    ScheduleOrder order;
+
     //! schedule the given task with the given number of
     //! sub-jobs. . if the task has dependencies, it may not be
     //! immeately active.
-    void schedule(size_t numJobs);
+    void schedule(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
-    void scheduleAndWait(size_t numJobs);
+    void scheduleAndWait(size_t numJobs, ScheduleOrder order=BACK_OF_QUEUE);
 
     //! wait for the task to complete, optionally (by default) helping
     //! to actually work on completing this task.
@@ -91,7 +104,7 @@ namespace ospray {
     // //! continuations: those become scheduled when we complete
     // std::vector<Task *> continuations;
 
-    Task *volatile __aligned(64) next, *volatile prev;
+    Task *volatile __aligned(64) next;
     const char *name;
 
     /*! \brief initialize the task system with given number of worker

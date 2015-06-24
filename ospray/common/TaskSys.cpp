@@ -131,9 +131,9 @@ namespace ospray {
   }
 
 
-  void Task::scheduleAndWait(size_t numJobs)
+  void Task::scheduleAndWait(size_t numJobs, ScheduleOrder order)
   {
-    schedule(numJobs);
+    schedule(numJobs,order);
     wait();
   }
   //   refInc();
@@ -190,9 +190,10 @@ namespace ospray {
     TaskSys::global.init(maxNumRenderTasks);
   }
 
-  void Task::schedule(size_t numJobs)
+  void Task::schedule(size_t numJobs, ScheduleOrder order)
   {
     refInc();
+    this->order = order;
     numJobsInTask = numJobs;
     status = Task::SCHEDULED;
     if (numMissingDependencies == 0)
@@ -207,13 +208,17 @@ namespace ospray {
     bool wasEmpty = TaskSys::global.activeListFirst == NULL;
     if (wasEmpty) {
       TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
-      this->prev = this->next = NULL;
+      this->next = NULL;
       TaskSys::global.tasksAvailable.broadcast();
     } else {
-      this->next = NULL;
-      this->prev = TaskSys::global.activeListLast;
-      this->prev->next = this;
-      TaskSys::global.activeListLast = this;      
+      if (order == Task::BACK_OF_QUEUE) {
+        this->next = NULL;
+        TaskSys::global.activeListLast->next = this;
+        TaskSys::global.activeListLast = this;      
+      } else {
+        this->next = TaskSys::global.activeListFirst;
+        TaskSys::global.activeListFirst = this;
+      }
     }
     status = Task::ACTIVE;
     TaskSys::global.mutex.unlock();
