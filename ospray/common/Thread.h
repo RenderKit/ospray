@@ -14,9 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "OSPCommon.h"
+#pragma once
 
 /*! \file ospray/common/Thread.h \brief Abstraction for a Thread object */
+
+#include "OSPCommon.h"
 
 namespace ospray {
   

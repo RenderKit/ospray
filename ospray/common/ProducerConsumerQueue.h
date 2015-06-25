@@ -14,13 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "OSPCommon.h"
-// stl
-#include <queue>
+#pragma once
 
 /*! \file ospray/common/ProducerConsumerQueue.h \brief Abstraction for
     a mutex-protected producer-consumer queue that different threads
     can write into / pull from */
+
+#include "OSPCommon.h"
+// stl
+#include <queue>
 
 namespace ospray {
 

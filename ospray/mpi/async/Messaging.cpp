@@ -43,25 +43,12 @@ namespace ospray {
       void initAsync()
       {
         if (AsyncMessagingImpl::global == NULL) {
-#if 0
+#if 1
           AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
-          AsyncMessagingImpl::global->init();
-          PRINT(mpi::async::WORLD);
-          if (mpi::world.rank == 0) {
-            std::cout
-              << "============================================" << std::endl;
-            std::cout
-              << "#osp:mpi: using async send/recv MPI code." << std::endl
-              << "#osp:mpi: this assumes Intel MPI 5 V 2015.2," << std::endl
-              << "#osp:mpi: and older MPI versions WILL " << std::endl
-              << "#osp:mpi: produce hang-ups in MPI!" << std::endl;
-            std::cout
-              << "============================================" << std::endl;
-          }
 #else
           AsyncMessagingImpl::global = new SimpleSendRecvImpl;
-          AsyncMessagingImpl::global->init();
 #endif
+          AsyncMessagingImpl::global->init();
         }
 
         // extern Group *WORLD;

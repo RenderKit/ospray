@@ -1,6 +1,5 @@
-
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,9 +16,6 @@
 
 #include "MultiIsendIrecvMessaging.h"
 
-// for usleep
-#include <unistd.h>
-
 namespace ospray {
   namespace mpi {
     namespace async {
@@ -27,217 +23,64 @@ namespace ospray {
       MultiIsendIrecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
                                        Consumer *consumer, int32 tag)
         : async::Group(comm,consumer,tag),
-          sendThreadState(NOT_STARTED), recvThreadState(NOT_STARTED)
+          sendThread(this), recvThread(this), procThread(this)
       {
-        recvThread = embree::createThread(recvThreadFunc,this);
-        sendThread = embree::createThread(sendThreadFunc,this);
+        recvThread.start();
+        sendThread.start();
+        procThread.start();
       }
 
-      void MultiIsendIrecvImpl::Group::sendThreadFunc(void *arg)
+      void MultiIsendIrecvImpl::SendThread::run()
       {
-        Group *g = (Group *)arg;
-        g->sendThreadState = RUNNING;
-        std::vector<QueuedMessage *> activeSendQueue;
-
+        Group *g = this->group;
         while (1) {
-          // tt0 = getSysTime();
-          g->sendMutex.lock();
-          // if (dbg) {
-          //   printf("%i: TESTING WAIT...\n",world.rank); fflush(0);
-          // }
-          // tt1 = getSysTime();
-
-          while (activeSendQueue.empty() && 
-                 g->sendQueue.empty() && 
-                 !(g->sendThreadState == FLAGGED_TO_TERMINATE)) 
-            {
-              // if (dbg) {
-              //   printf("%i: waiting again...\n",world.rank); fflush(0);
-              // }
-              // tt2 = getSysTime();
-              g->sendCond.wait(g->sendMutex);
-              // tt3 = getSysTime();
-            }
-          // if (dbg) {
-          //   printf("%i: new-sendq-size %li, active-sendq-size %li\n",
-          //          world.rank,
-          //          g->sendQueue.size(),
-          //          activeSendQueue.size());
-          // }
-
-          if (g->sendThreadState == FLAGGED_TO_TERMINATE) {
-            printf("EXITING %i/%i\n",world.rank,world.size);fflush(0);
-            break;
-          }
-          
-          if (g->sendQueue.size() > 0
-              // activeSendQueue.size() < 20
-              ) {
-            // tt4 = getSysTime();
-            // ------------------------------------------------------------------
-            // pull newly added send messages from queue, then release that queue
-            // ------------------------------------------------------------------
-            std::vector<QueuedMessage *> newSendQueue = g->sendQueue;
-            g->sendQueue.clear();
-            g->sendMutex.unlock();
-          
-            // ------------------------------------------------------------------
-            // start new messages, and add to active send queue
-            // ------------------------------------------------------------------
-            for (int i=0;i<newSendQueue.size();i++) {
-              QueuedMessage *msg = newSendQueue[i];
-              if (msg->size == 4) {
-                printf("rank %i found new 4-byte message to %i\n",world.rank,msg->addr.rank);
-                fflush(0);
-              }
-              // tt5 = getSysTime();
-              MPI_CALL(Isend(msg->ptr,msg->size,MPI_BYTE,msg->addr.rank,g->tag,
-                             msg->addr.group->comm,&msg->request));
-              // tt6 = getSysTime();
-              activeSendQueue.push_back(msg);
-            }
-          }
-          else 
-            g->sendMutex.unlock();
-
-          // ------------------------------------------------------------------
-          // remove all messages that are done sending form active send queue
-          // ------------------------------------------------------------------
-
-// #if WORKAROUND
-//           if (activeSendQueue.size() > 0) {
-//             QueuedMessage *msg = activeSendQueue[0];
-//             MPI_CALL(Wait(&msg->request,&msg->status));
-//           }
-// #endif
-
-          for (int i=0;i<activeSendQueue.size();) {
-            QueuedMessage *msg = activeSendQueue[i];
-            int done = 0;
-            // tt7 = getSysTime();
-            MPI_CALL(Test(&msg->request,&done,&msg->status));
-            if (done) {
-              // tt8 = getSysTime();
-              MPI_CALL(Wait(&msg->request,&msg->status));
-              // tt9 = getSysTime();
-              activeSendQueue.erase(activeSendQueue.begin()+i);
-              // tt10 = getSysTime();
-              free(msg->ptr);
-              // tt11 = getSysTime();
-              delete msg;
-              // tt12 = getSysTime();
-            } else {
-              ++i;
-              // tt13 = getSysTime();
-            }
-          }
-          // tt14 = getSysTime();
-
-          // if (activeSendQueue.empty()) usleep(10);
+          Action *action = g->sendQueue.get();
+          // note we're not using any window here; we just pull them
+          // in order. this is OK because they key is to have mulitple
+          // sends going in parallel - which we do because each
+          // (i)send is already started by the time it enters the
+          // queue
+          MPI_Wait(&action->request,MPI_STATUS_IGNORE);
+          free(action->data);
+          delete action;
         }
-
-        if (!activeSendQueue.empty() || !g->sendQueue.empty()) {
-          printf("#osp:mpi(%2i): flushing send queue\n",mpi::world.rank);
-          std::vector<QueuedMessage *> newSendQueue = g->sendQueue;
-          g->sendQueue.clear();
-          for (int i=0;i<newSendQueue.size();i++) {
-            QueuedMessage *msg = newSendQueue[i];
-            // if (msg->size == 4) {
-            //   printf("rank %i found new 4-byte message to %i\n",world.rank,msg->addr.rank);
-            //   fflush(0);
-            // }
-            MPI_CALL(Isend(msg->ptr,msg->size,MPI_BYTE,msg->addr.rank,g->tag,
-                           msg->addr.group->comm,&msg->request));
-            activeSendQueue.push_back(msg);
-          }
-
-          for (int i=0;i<activeSendQueue.size();i++) {
-            QueuedMessage *msg = activeSendQueue[i];
-            MPI_CALL(Wait(&msg->request,&msg->status));
-            // MPI_CALL(Cancel(&msg->request));
-          }
-        }
-
-        // assert(activeSendQueue.empty());
-        printf("#osp:mpi(%2i): shutting down send thread\n",g->rank);fflush(0);
-        g->sendThreadState = TERMINATED;
-        g->sendTerminatedCond.broadcast();
-        g->sendMutex.unlock();
       }
 
-      void MultiIsendIrecvImpl::Group::recvThreadFunc(void *arg)
+      void MultiIsendIrecvImpl::RecvThread::run()
       {
-        Group *g = (Group *)arg;
-        g->recvThreadState = RUNNING;
-
+        // note this thread not only _probes_ for new receives, it
+        // also immediately starts the receive operation using Irecv()
+        Group *g = (Group *)this->group;
+        
         while (1) {
           MPI_Status status;
           MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
-          // printf("#osp:mpi(%2i): incoming from %i\n",g->rank,status.MPI_SOURCE);fflush(0);
-          if (g->recvThreadState == FLAGGED_TO_TERMINATE) {
-            printf("#osp:mpi(%2i): recv flagged to terminate\n",g->rank);fflush(0);
-            int done;
-            MPI_CALL(Recv(&done,1,MPI_INT,status.MPI_SOURCE,status.MPI_TAG,g->comm,&status));
-            break;
-          }
-          
-          int count = -1;
-          MPI_CALL(Get_count(&status,MPI_BYTE,&count));
-          // static int lastCount = -1;
-          // if (count != lastCount)  {
-          //   printf("rank %i received %i bytes\n",world.rank,count);
-          //   fflush(0);
-          //   lastCount = count;
-          // }
-          void *msg = malloc(count);
-          MPI_CALL(Recv(msg,count,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
-                        g->comm,&status));
-          g->consumer->process(Address(g,status.MPI_SOURCE),msg,count);
-        }
-        // g->recvMutex.unlock();
+          Action *action = new Action;
+          action->addr = Address(g,status.MPI_SOURCE);
 
-        // printf("#osp:mpi(%2i): shutting down recv thread\n",g->rank);fflush(0);
-        // g->recvMutex.lock();
-        g->recvThreadState = TERMINATED;
-        g->recvTerminatedCond.broadcast();
-        g->recvMutex.unlock();
+          MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
+
+          action->data = malloc(action->size);
+          MPI_CALL(Irecv(action->data,action->size,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
+                        g->comm,&action->request));
+          g->recvQueue.put(action);
+        }
+      }
+
+      void MultiIsendIrecvImpl::ProcThread::run()
+      {
+        Group *g = (Group *)this->group;
+        while (1) {
+          Action *action = g->recvQueue.get();
+          MPI_CALL(Wait(&action->request,MPI_STATUS_IGNORE));
+          g->consumer->process(action->addr,action->data,action->size);
+          delete action;
+        }
       }
 
       void MultiIsendIrecvImpl::Group::shutdown()
       {
-        printf("%i/%i triggering shutdown cond!\n",world.rank,world.size);fflush(0);
-
-        // ------------------------------------------------------------------
-        // shut down sending
-        // ------------------------------------------------------------------
-        printf("%i/%i triggering shutdown for send!\n",world.rank,world.size);fflush(0);
-        sendMutex.lock();
-        sendThreadState = FLAGGED_TO_TERMINATE;
-        sendCond.broadcast();
-        // and wait for shut down to happen
-        while (sendThreadState != TERMINATED)
-          sendTerminatedCond.wait(sendMutex);
-        sendMutex.unlock();
-
-        printf("%i/%i triggering shutdown for recv!\n",world.rank,world.size);fflush(0);
-        // ------------------------------------------------------------------
-        // shut down recving
-        // ------------------------------------------------------------------
-        recvMutex.lock();
-        recvThreadState = FLAGGED_TO_TERMINATE;
-        recvCond.broadcast();
-        // send one dummy message to ourselves, to make sure
-        // 'something' gets received before that flag is checked
-        MPI_Status status;
-        MPI_Request request;
-        char done = 1;
-        assert(sendQueue.empty());
-        MPI_CALL(Isend(&done,1,MPI_BYTE,rank,tag,comm,&request));
-        // MPI_CALL(Cancel(&request));
-        // and wait for shut down to happen
-        while (recvThreadState != TERMINATED)
-          recvTerminatedCond.wait(recvMutex);
-        recvMutex.unlock();
+        std::cout << "shutdown() not implemented for this messaging ..." << std::endl;
       }
 
       void MultiIsendIrecvImpl::init()
@@ -272,29 +115,14 @@ namespace ospray {
 
       void MultiIsendIrecvImpl::send(const Address &dest, void *msgPtr, int32 msgSize)
       {
-        QueuedMessage *msg = new QueuedMessage;
-        msg->addr = dest;
-        msg->ptr  = msgPtr;
-        msg->size = msgSize;
+        Action *action = new Action;
+        action->addr   = dest;
+        action->data   = msgPtr;
+        action->size   = msgSize;
 
         Group *g = (Group *)dest.group;
-        g->sendMutex.lock();
-        // if (msgSize == 4) { 
-        //   double tt = getSysTime();
-        //   printf("%i: added new 4-byte msg to queue, tgt = %i\n",world.rank,msg->addr.rank);
-        //   printf("Time %f:\n 0=%f\n 1=%f\n 2=%f\n 3=%f\n 4=%f\n 5=%f\n 6=%f\n 7=%f\n 8=%f\n 9=%f\n10=%f\n",
-        //          tt,tt0-tt,tt1-tt,tt2-tt,tt3-tt,tt4-tt,tt5-tt,tt6-tt,tt7-tt,tt8-tt,tt9-tt,tt10-tt);
-        //   printf("11=%f\n",tt11-tt);
-        //   printf("12=%f\n",tt12-tt);
-        //   printf("13=%f\n",tt13-tt);
-        //   printf("14=%f\n",tt14-tt);
-        //   // dbg = true;
-        // }
-        // if (g->sendQueue.empty())
-        //   g->sendCond.broadcast();
-        g->sendQueue.push_back(msg);
-        g->sendCond.broadcast();
-        g->sendMutex.unlock();
+        MPI_CALL(Isend(action->data,action->size,MPI_BYTE,dest.rank,g->tag,g->comm,&action->request));
+        g->sendQueue.put(action);
       }
 
     } // ::ospray::mpi::async
