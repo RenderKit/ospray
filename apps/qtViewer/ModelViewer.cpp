@@ -23,6 +23,8 @@
 namespace ospray {
   namespace viewer {
 
+    float autoRotateSpeed = 0.f;
+
     using std::cout;
     using std::endl;
 
@@ -106,9 +108,16 @@ namespace ospray {
       glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);      
       sgRenderer->frameBuffer->unmap(fbMem);
 
-      // accumulate, but only up to 32 frames
-      if (sgRenderer->accumID < 32)
+      if (autoRotateSpeed != 0.f) {
+        rotateAroundTarget(autoRotateSpeed,0.f);
+        // sgRenderer->resetAccumulation();
+        updateOSPRayCamera();
         update();
+      } 
+      // accumulate, but only up to 32 frames
+      if (sgRenderer->accumID < 32) {
+        update();
+      }
     }
     
     //! the QT callback that tells us that the image got resize
@@ -243,6 +252,37 @@ namespace ospray {
       switch (event->key()) {
       case Qt::Key_Escape: {
         QApplication::quit();
+      } break;
+      case '{': {
+        if (autoRotateSpeed == 0.f) {
+          autoRotateSpeed = -1.f;
+        } else if (autoRotateSpeed < 0) {
+          autoRotateSpeed *= 1.5f;
+        } else {
+          autoRotateSpeed /= 1.5f;
+          if (autoRotateSpeed < 1.f)
+            autoRotateSpeed = 0.f;
+        }
+        printf("new auto-rotate speed %f\n",autoRotateSpeed);
+        update();
+      } break;
+      case '}': {
+        if (autoRotateSpeed == 0.f) {
+          autoRotateSpeed = +1.f;
+        } else if (autoRotateSpeed < 0) {
+          autoRotateSpeed /= 1.5f;
+          if (autoRotateSpeed > -1.f)
+            autoRotateSpeed = 0.f;
+        } else {
+          autoRotateSpeed *= 1.5f;
+        }
+        printf("new auto-rotate speed %f\n",autoRotateSpeed);
+        update();
+      } break;
+      case '|': {
+        printf("'|' key - stopping auto-rotation\n");
+        autoRotateSpeed = 0.f;
+        update();
       } break;
       case Qt::Key_C: {
         // ------------------------------------------------------------------
