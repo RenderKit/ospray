@@ -21,6 +21,9 @@
 // xml parser
 #include "apps/common/xml/XML.h"
 
+#include <sys/types.h>
+#include <sys/mman.h>
+
 namespace ospray {
   namespace sg {
 
@@ -95,24 +98,41 @@ namespace ospray {
           ospSet1f(mat,"Ns",99.f);
           ospCommit(mat);
         }
+
+
         ospSetMaterial(ospGeometry,mat);
 
         // and finally, add this geometry to the model
         ospAddGeometry(ctx.world->ospModel,ospGeometry);
       }
-
+      
+      // if true, we're forcing a immediate paging-in of all data
+      // (otherwise the data is only mmap'ed and paged in on demand)
+      bool forcePageIn = true;
+        
       // create the particle array
       if (!ospPositionData) {
         if (numParticles == 0)
           throw std::runtime_error("osp:sg:PKDGeometry: no 'position' data defined in PKD geometry");
-        if (format == OSP_FLOAT3)
+
+        size_t numPositionBytes;
+        if (format == OSP_FLOAT3) {
           ospPositionData = ospNewData(numParticles,OSP_FLOAT3,particle3f,
                                        OSP_DATA_SHARED_BUFFER);
-        else
+          numPositionBytes = sizeof(vec3f)*numParticles;
+        } else {
           ospPositionData = ospNewData(numParticles,OSP_ULONG,particle3f,
                                        OSP_DATA_SHARED_BUFFER);
+          numPositionBytes = sizeof(long long)*numParticles;
+        }
         ospCommit(ospPositionData);
         ospSetData(ospGeometry,"position",ospPositionData);
+        
+        cout << "#osp:pkd: numbytes for raw p-k-d tree: " << numPositionBytes << endl;
+        if (forcePageIn) {
+          cout << "#osp:pkd: FORCED page-in of entire position array" << endl;
+          madvise(particle3f,numPositionBytes,MADV_WILLNEED);
+        }
       }
       
       // check if transfer function exists, and is updated
@@ -130,6 +150,12 @@ namespace ospray {
           attribute[0]->ospData = ospNewData(numParticles,OSP_FLOAT,attribute[0]->value,
                                              OSP_DATA_SHARED_BUFFER);
           ospSetData(ospGeometry,"attribute",attribute[0]->ospData);
+          size_t numAttributeBytes = sizeof(float)*numParticles;
+          cout << "#osp:pkd: numbytes for particle attribute: " << numAttributeBytes << endl;
+          if (forcePageIn) {
+            cout << "#osp:pkd: FORCED page-in of entire attribute array" << endl;
+            madvise(attribute[0]->value,numParticles*sizeof(float),MADV_WILLNEED);
+          }
         }
       }
 
