@@ -139,8 +139,7 @@ bool SeismicVolumeFile::scanSeismicDataFileForDimensions(OSPVolume volume) {
 
   //! Allocate trace array; the trace length is given by the trace header size and the first dimension.
   //! Note that FreeDDS converts all trace data to floats.
-  float * traceBuffer = (float *)malloc((traceHeaderSize + dimensions.x) * sizeof(float));
-  exitOnCondition(traceBuffer == NULL, "failed to allocate trace buffer");
+  float * traceBuffer = new float[traceHeaderSize + dimensions.x];
 
   //! Range in second and third dimensions
   int minDimension2, maxDimension2;
@@ -180,7 +179,7 @@ bool SeismicVolumeFile::scanSeismicDataFileForDimensions(OSPVolume volume) {
   if(verbose) std::cout << toString() << " updated volume dimensions = " << dimensions.x << " x " << dimensions.y << " (" << minDimension2 << " --> " << maxDimension2 << ") x " << dimensions.z << " (" << minDimension3 << " --> " << maxDimension3 << ")"  << std::endl;
 
   //! Clean up.
-  free(traceBuffer);
+  delete [] traceBuffer;
 
   //! Seek back to the beginning of the file.
   cdds_lseek(inputBinTag, 0, 0, SEEK_SET);
@@ -215,10 +214,21 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
       std::cout << toString() << " could not get trace header coordinate information, ignoring trace header information." << std::endl;
   }
 
+  //! Find total number of traces. If we find the expected number, ignore trace headers. This speeds loading of the volume significantly.
+  long numTraces = cdds_lseek(inputBinTag, 0, 0, SEEK_END);
+
+  if(numTraces == size_t(dimensions.y) * dimensions.z) {
+    ignoreTraceHeaders = true;
+    if(verbose)
+      std::cout << toString() << " file has expected number of traces, assuming traces are in expected order and ignoring trace header information." << std::endl;
+  }
+
+  //! Seek back to the beginning of the file.
+  cdds_lseek(inputBinTag, 0, 0, SEEK_SET);
+
   //! Allocate trace array; the trace length is given by the trace header size and the first dimension.
   //! Note that FreeDDS converts all trace data to floats.
-  float * traceBuffer = (float *)malloc((traceHeaderSize + dimensions.x) * sizeof(float));
-  exitOnCondition(traceBuffer == NULL, "failed to allocate trace buffer");
+  float * traceBuffer = new float[traceHeaderSize + dimensions.x];
 
   //! Get origin in dimension 2 and 3 from first trace if we have a trace header; otherwise assume it is (0, 0).
   int origin2 = 0;
@@ -262,7 +272,10 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
   else {
 
     //! Allocate trace buffer for subvolume data.
-    float * traceBufferSubvolume = (float *)malloc(volumeDimensions.x * sizeof(float));
+    float * traceBufferSubvolume = new float[volumeDimensions.x];
+
+    //! We will call ospSetRegion() with planes of traces.
+    float * planeBuffer = new float[volumeDimensions.y * volumeDimensions.x];
 
     //! Iterate through the grid of traces of the subvolume, seeking as necessary.
     for(long i3=subvolumeOffsets.z; i3<subvolumeOffsets.z+subvolumeDimensions.z; i3+=subvolumeSteps.z) {
@@ -306,8 +319,8 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
         for(long i1=subvolumeOffsets.x; i1<subvolumeOffsets.x+subvolumeDimensions.x; i1+=subvolumeSteps.x)
           traceBufferSubvolume[(i1 - subvolumeOffsets.x) / subvolumeSteps.x] = traceBuffer[traceHeaderSize + i1];
 
-        //! Copy subsampled trace into the volume.
-        ospSetRegion(volume, &traceBufferSubvolume[0], osp::vec3i(0, (i2 - subvolumeOffsets.y) / subvolumeSteps.y, (i3 - subvolumeOffsets.z) / subvolumeSteps.z), osp::vec3i(volumeDimensions.x, 1, 1));
+        //! Copy subsampled trace into the plane buffer.
+        memcpy((void *)&planeBuffer[(i2 - subvolumeOffsets.y) / subvolumeSteps.y * volumeDimensions.x], (const void *)traceBufferSubvolume, volumeDimensions.x * sizeof(float));
 
         traceCount++;
 
@@ -318,6 +331,9 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
           cdds_lseek(inputBinTag, 0, subvolumeSteps.y - 1, SEEK_CUR);
       }
 
+      //! Copy plane of traces into the volume.
+      ospSetRegion(volume, planeBuffer, osp::vec3i(0, 0, (i3 - subvolumeOffsets.z) / subvolumeSteps.z), osp::vec3i(volumeDimensions.x, volumeDimensions.y, 1));
+
       //! Skip traces (third dimension)
       if(i3 >= subvolumeOffsets.z + subvolumeDimensions.z - subvolumeSteps.z)
         cdds_lseek(inputBinTag, 0, (dimensions.z - i3 - 1) * dimensions.y, SEEK_CUR);
@@ -326,7 +342,8 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
     }
 
     //! Clean up.
-    free(traceBufferSubvolume);
+    delete [] traceBufferSubvolume;
+    delete [] planeBuffer;
   }
 
   //! Print statistics.
@@ -334,7 +351,7 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
     std::cout << toString() << " read " << traceCount << " traces. " << volumeDimensions.y*volumeDimensions.z - int(traceCount) << " missing trace(s)." << std::endl;
 
   //! Clean up.
-  free(traceBuffer);
+  delete [] traceBuffer;
 
   //! Close the seismic data file.
   cdds_close(inputBinTag);
