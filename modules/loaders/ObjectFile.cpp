@@ -42,7 +42,7 @@ OSPObject *ObjectFile::importObjects(const std::string &filename) {
   symbolRegistry[type] = (creationFunctionPointer) ospray::getSymbol(creationFunctionName);
 
   //! The named function may not be found if the requested subtype is not known.
-  if (!symbolRegistry[type] && ospray::logLevel >= 1) std::cerr << "  ospray_module_loaders::ObjectFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
+  if (!symbolRegistry[type]) std::cerr << "  ospray_module_loaders::ObjectFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
 
   //! Return a list of objects loaded from the file.
   return(symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename) : NULL);
