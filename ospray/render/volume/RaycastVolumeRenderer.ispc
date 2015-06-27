@@ -213,7 +213,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], dg.P, lightDirection, lightDistance);
 
   //! Constant ambient lighting term.
-  const float ambient = 0.5f;
+  const float ambient = 0.1f;
 
   const float cosNL = abs(dot(normalize(lightDirection), normalize(dg.Ns)));
 

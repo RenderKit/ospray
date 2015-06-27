@@ -23,6 +23,11 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 # setup dependencies
 SET(LIBS ${LIBS} ospray ospray_module_loaders)
 
+# link optional loaders-based modules if built
+IF (OSPRAY_MODULE_SEISMIC)
+  SET(LIBS ${LIBS} ospray_module_seismic)
+ENDIF (OSPRAY_MODULE_SEISMIC)
+
 FIND_PACKAGE(Qt4 REQUIRED) 
 SET(QT_USE_QTOPENGL TRUE)
 INCLUDE(${QT_USE_FILE})
