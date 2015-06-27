@@ -241,7 +241,7 @@ namespace ospray {
           const char *moduleName = av[++i];
           cout << "loading ospray module '" << moduleName << "'" << endl;
           ospLoadModule(moduleName);
-        } else if (arg == "--show-fps") {
+        } else if (arg == "--show-fps" || arg == "-fps") {
           showFPS = true;
         } else if (arg == "--save-to") {
           modelSaveFileName = av[++i];
