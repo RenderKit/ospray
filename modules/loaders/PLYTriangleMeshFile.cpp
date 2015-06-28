@@ -40,6 +40,9 @@ OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangle
   OSPData vertexColorData = ospNewData(vertexColors.size(), OSP_FLOAT3A, &vertexColors[0].x);
   ospSetData(triangleMesh, "vertex.color", vertexColorData);
 
+  OSPData vertexNormalData = ospNewData(vertexNormals.size(), OSP_FLOAT3A, &vertexNormals[0].x);
+  ospSetData(triangleMesh, "vertex.normal", vertexNormalData);
+
   OSPData indexData = ospNewData(triangles.size(), OSP_INT3, &triangles[0].x);
   ospSetData(triangleMesh, "index", indexData);
 
@@ -166,6 +169,9 @@ bool PLYTriangleMeshFile::parse()
     //! Add to vertices vector with scaling applied.
     vertices.push_back(scale * osp::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
 
+    //! Vertex normals will be computed later.
+    vertexNormals.push_back(osp::vec3fa(0.f));
+
     //! Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
     if(haveVertexColors)
       vertexColors.push_back(1.f/255.f * osp::vec3fa(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex]));
@@ -185,7 +191,17 @@ bool PLYTriangleMeshFile::parse()
     exitOnCondition(!in.good(), "error reading face data.");
 
     triangles.push_back(triangle);
+
+    //! Add vertex normal contributions.
+    osp::vec3fa triangleNormal = cross(vertices[triangle.y] - vertices[triangle.x], vertices[triangle.z] - vertices[triangle.x]);
+    vertexNormals[triangle.x] += triangleNormal;
+    vertexNormals[triangle.y] += triangleNormal;
+    vertexNormals[triangle.z] += triangleNormal;
   }
+
+  //! Normalize vertex normals.
+  for(int i=0; i<vertexNormals.size(); i++)
+    vertexNormals[i] = normalize(vertexNormals[i]);
 
   if(verbose)
     std::cout << toString() << " done." << std::endl;

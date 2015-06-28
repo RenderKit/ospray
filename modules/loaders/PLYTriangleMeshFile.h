@@ -54,6 +54,9 @@ private:
   //! Vertex colors.
   std::vector<osp::vec3fa> vertexColors;
 
+  //! Vertex normals.
+  std::vector<osp::vec3fa> vertexNormals;
+
   //! Triangle definitions.
   std::vector<osp::vec3i>  triangles;
 
