@@ -16,12 +16,12 @@
 
 #include <algorithm>
 #include "modules/loaders/ObjectFile.h"
+#include "modules/loaders/TriangleMeshFile.h"
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
 #include "LightEditor.h"
 #include "SliceWidget.h"
-#include "PLYGeometryFile.h"
 #include "PreferencesDialog.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
@@ -123,24 +123,27 @@ void VolumeViewer::addGeometry(std::string filename)
 
   //! Get filename if not specified.
   if(filename.empty())
-    filename = QFileDialog::getOpenFileName(this, tr("Load geometry"), ".", "PLY files (*.ply)").toStdString();
+    filename = QFileDialog::getOpenFileName(this, tr("Load geometry"), ".", "Geometry files (*.ply *.dds)").toStdString();
 
   if(filename.empty())
     return;
 
-  //! Load the geometry.
-  PLYGeometryFile geometryFile(filename);
+  //! Attempt to load the geometry through the TriangleMeshFile loader.
+  OSPTriangleMesh triangleMesh = ospNewTriangleMesh();
 
-  //! Add the OSPRay triangle mesh to all models.
-  OSPTriangleMesh triangleMesh = geometryFile.getOSPTriangleMesh();
+  //! If successful, commit the triangle mesh and add it to all models.
+  if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {
 
-  for(unsigned int i=0; i<models.size(); i++) {
-    ospAddGeometry(models[i], triangleMesh);
-    ospCommit(models[i]);
+    ospCommit(triangleMesh);
+
+    for(unsigned int i=0; i<models.size(); i++) {
+      ospAddGeometry(models[i], triangleMesh);
+      ospCommit(models[i]);
+    }
+
+    //! Force render.
+    render();
   }
-
-  //! Force render.
-  render();
 }
 
 void VolumeViewer::screenshot(std::string filename)

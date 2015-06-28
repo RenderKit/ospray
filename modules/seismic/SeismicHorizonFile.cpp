@@ -21,6 +21,9 @@
 
 OSPTriangleMesh SeismicHorizonFile::importTriangleMesh(OSPTriangleMesh triangleMesh)
 {
+  //! Get scaling parameter if provided.
+  ospGetVec3f(triangleMesh, "scale", &scale);
+
   //! Open seismic data file and populate attributes.
   exitOnCondition(openSeismicDataFile(triangleMesh) != true, "unable to open file '" + filename + "'");
 
@@ -105,6 +108,9 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
 
         long index = h*dimensions.y*dimensions.x + i2*dimensions.x + i1;
         osp::vec3fa vertex(volumeBuffer[index] * deltas.z, i1 * deltas.x, i2 * deltas.y);
+
+        //! Apply scaling.
+        vertex *= scale;
 
         vertices.push_back(vertex);
         vertexColors.push_back(osp::vec3fa(-1.f)); // color by volume / transfer function for now

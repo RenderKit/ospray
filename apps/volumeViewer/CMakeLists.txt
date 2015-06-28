@@ -44,7 +44,6 @@ SET(SRCS ${SRCS}
   IsovalueWidget.cpp
   LightEditor.cpp
   LinearTransferFunctionWidget.cpp
-  PLYGeometryFile.cpp
   PreferencesDialog.cpp
   QOSPRayWindow.cpp
   SliceWidget.cpp
