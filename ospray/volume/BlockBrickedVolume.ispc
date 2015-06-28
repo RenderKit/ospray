@@ -206,14 +206,23 @@ export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelTy
   return volume;
 }
 
+task void BlockBrickedVolume_setRegionTask(BlockBrickedVolume *uniform self, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count)
+{
+  //! Offset from task index.
+  const uniform int offsetY = taskIndex % count.y;
+  const uniform int offsetZ = taskIndex / count.y;
+
+  foreach (x = 0 ... count.x) {
+      const vec3i offset = make_vec3i(x, offsetY, offsetZ);
+      self->setVoxel(self, source, index, count, offset);
+    }
+}
+
 export void BlockBrickedVolume_setRegion(void *uniform _self, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count)
 {
   //! Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
 
-  //! Copy voxel data from memory into the volume.
-  foreach (z = 0 ... count.z, y = 0 ... count.y, x = 0 ... count.x) {
-    const vec3i offset = make_vec3i(x, y, z);
-    self->setVoxel(self, source, index, count, offset);
-  }
+  //! Launch tasks to copy voxel data from memory into the volume.
+  launch[count.y * count.z] BlockBrickedVolume_setRegionTask(self, source, index, count);
 }
