@@ -42,7 +42,7 @@ OSPVolume VolumeFile::importVolume(const std::string &filename, OSPVolume volume
   symbolRegistry[type] = (creationFunctionPointer) ospray::getSymbol(creationFunctionName);
 
   //! The named function may not be found if the requested subtype is not known.
-  if (!symbolRegistry[type] && ospray::logLevel >= 1) std::cerr << "  ospray_module_loaders::VolumeFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
+  if (!symbolRegistry[type]) std::cerr << "  ospray_module_loaders::VolumeFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
 
   //! Return a handle for the loaded volume object.
   return(symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename, volume) : NULL);
