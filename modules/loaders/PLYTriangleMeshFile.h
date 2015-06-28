@@ -17,22 +17,36 @@
 #pragma once
 
 #include <string>
-#include <vector>
-#include <ospray/ospray.h>
+#include "modules/loaders/TriangleMeshFile.h"
 
-class PLYGeometryFile {
-
+//! \brief A concrete implementation of the TriangleMeshFile class
+//!  for reading triangle data stored in the PLY file format on disk.
+//!
+class PLYTriangleMeshFile : public TriangleMeshFile {
 public:
 
-  PLYGeometryFile(const std::string &filename);
+  //! Constructor.
+  PLYTriangleMeshFile(const std::string &filename) : filename(filename), scale(osp::vec3f(1.f)), verbose(true) {}
 
-  //! Get an OSPTriangleMesh representing the geometry.
-  OSPTriangleMesh getOSPTriangleMesh();
+  //! Destructor.
+  virtual ~PLYTriangleMeshFile() {};
 
-protected:
+  //! Import the triangle data.
+  virtual OSPTriangleMesh importTriangleMesh(OSPTriangleMesh triangleMesh);
 
-  //! PLY geometry filename.
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::PLYTriangleMeshFile"); }
+
+private:
+
+  //! Path to the file containing the triangle data.
   std::string filename;
+
+  //! Scaling for vertex coordinates.
+  osp::vec3f scale;
+
+  //! Verbose logging.
+  bool verbose;
 
   //! Vertices.
   std::vector<osp::vec3fa> vertices;

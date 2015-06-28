@@ -29,6 +29,7 @@ IF (NOT THIS_IS_MIC)
     ADD_LIBRARY(ospray_module_loaders${OSPRAY_LIB_SUFFIX} SHARED
       ObjectFile.cpp
       OSPObjectFile.cpp
+      PLYTriangleMeshFile.cpp
       RawVolumeFile.cpp
       SymbolRegistry.cpp
       TinyXML2.cpp

@@ -14,30 +14,26 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "PLYGeometryFile.h"
+#include "PLYTriangleMeshFile.h"
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <cstdio>
-
-//! Error checking.
-void exitOnCondition(bool condition, const std::string &message) { if (condition) throw std::runtime_error("PLYGeometryFile error: " + message + "."); }
 
 //! String comparison helper.
 bool startsWith(const std::string &haystack, const std::string &needle) {
   return needle.length() <= haystack.length() && equal(needle.begin(), needle.end(), haystack.begin());
 }
 
-PLYGeometryFile::PLYGeometryFile(const std::string &filename) : filename(filename) {
+OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangleMesh)
+{
+  //! Get scaling parameter if provided.
+  ospGetVec3f(triangleMesh, "scale", &scale);
 
-  //! Parse the file.
-  exitOnCondition(parse() != true, "error parsing geometry file");
-}
+  //! Parse the PLY triangle data file and populate attributes.
+  exitOnCondition(parse() != true, "error parsing the file '" + filename + "'");
 
-OSPTriangleMesh PLYGeometryFile::getOSPTriangleMesh() {
-
-  OSPTriangleMesh triangleMesh = ospNewTriangleMesh();
-
+  //! Set the vertex, vertex colors and triangle index data on the triangle mesh.
   OSPData vertexData = ospNewData(vertices.size(), OSP_FLOAT3A, &vertices[0].x);
   ospSetData(triangleMesh, "vertex", vertexData);
 
@@ -47,13 +43,12 @@ OSPTriangleMesh PLYGeometryFile::getOSPTriangleMesh() {
   OSPData indexData = ospNewData(triangles.size(), OSP_INT3, &triangles[0].x);
   ospSetData(triangleMesh, "index", indexData);
 
-  ospCommit(triangleMesh);
-
+  //! Return the triangle mesh.
   return triangleMesh;
 }
 
-bool PLYGeometryFile::parse() {
-
+bool PLYTriangleMeshFile::parse()
+{
   std::ifstream in(filename.c_str());
   exitOnCondition(!in.is_open(), "unable to open geometry file.");
 
@@ -132,7 +127,8 @@ bool PLYGeometryFile::parse() {
       exitOnCondition(true, "unexpected line in header: " + lineString);
   }
 
-  std::cout << "numVertices = " << numVertices << ", numVertexProperties = " << numVertexProperties << ", numFaces = " << numFaces << std::endl;
+  if(verbose)
+    std::cout << toString() << " numVertices = " << numVertices << ", numVertexProperties = " << numVertexProperties << ", numFaces = " << numFaces << std::endl;
 
   //! Make sure we have the required vertex properties.
   exitOnCondition(!vertexPropertyToIndex.count("x") || !vertexPropertyToIndex.count("y") || !vertexPropertyToIndex.count("z"), "vertex coordinate properties missing.");
@@ -167,7 +163,8 @@ bool PLYGeometryFile::parse() {
       vertexProperties.push_back(value);
     }
 
-    vertices.push_back(osp::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
+    //! Add to vertices vector with scaling applied.
+    vertices.push_back(scale * osp::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
 
     //! Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
     if(haveVertexColors)
@@ -190,7 +187,8 @@ bool PLYGeometryFile::parse() {
     triangles.push_back(triangle);
   }
 
-  std::cout << "done." << std::endl;
+  if(verbose)
+    std::cout << toString() << " done." << std::endl;
 
   return true;
 }
