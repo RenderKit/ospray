@@ -155,6 +155,24 @@ namespace ospray {
   private:
     const std::string s;
   };
+
+  /*! added pretty-print function for large numbers, printing 10000000 as "10M" instead */
+  inline std::string prettyNumber(const size_t s) {
+    double val = s;
+    char result[100];
+    if (val >= 1e12f) {
+      sprintf(result,"%.1fT",val/1e12f);
+    } else if (val >= 1e9f) {
+      sprintf(result,"%.1fG",val/1e9f);
+    } else if (val >= 1e6f) {
+      sprintf(result,"%.1fM",val/1e6f);
+    } else if (val >= 1e3f) {
+      sprintf(result,"%.1fK",val/1e3f);
+    } else {
+      sprintf(result,"%lu",s);
+    }
+    return result;
+  }
 } // ::ospray
 
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
