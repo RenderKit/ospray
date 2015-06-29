@@ -99,17 +99,14 @@ namespace ospray {
       // for (int i=0;i<bufferedTile.size();i++)
       //   PRINT(bufferedTile[i]->sortOrder);
 
-      gMutex.lock();
-      for (int i=0;i<bufferedTile.size();i++)
-        cout << bufferedTile[i]->sortOrder << " " << std::flush;
-      cout << endl;
 
+      vec4f backGround(1,1,1,1);
+      ispc::DFB_alphaBlendBackground((ispc::VaryingTile *)&bufferedTile[0]->tile,
+                                     (ispc::vec4f&)backGround);
 
       for (int i=1;i<bufferedTile.size();i++)
         ispc::DFB_alphaBlendTiles((ispc::VaryingTile *)&bufferedTile[0]->tile,
                                   (ispc::VaryingTile *)&bufferedTile[i]->tile);
-
-      gMutex.unlock();
 
       this->final.region = tile.region;
       this->final.fbSize = tile.fbSize;

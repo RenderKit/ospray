@@ -255,6 +255,8 @@ namespace ospray {
 #endif
     }
 
+    PRINT(numThreads);
+
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {
       // embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,(t+1)%numThreads);

@@ -36,10 +36,26 @@ struct VaryingRGBA_I8 {
 //   varying uint32 color[TILE_SIZE*TILE_SIZE/programCount];
 // };
 
+export void DFB_alphaBlendBackground(VaryingTile    *uniform firstTile,
+                                     const uniform vec4f &bgColor)
+{
+  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
+    vec4f col_over = make_vec4f(firstTile->r[i],
+                                firstTile->g[i],
+                                firstTile->b[i],
+                                firstTile->a[i]);
+    vec4f col_new = col_over + bgColor * (1.f-col_over.w);
+    firstTile->r[i] = col_new.x;
+    firstTile->g[i] = col_new.y;
+    firstTile->b[i] = col_new.z;
+    firstTile->a[i] = col_new.w;
+  }
+}
+
 export void DFB_alphaBlendTiles(VaryingTile    *uniform prev,
                                 VaryingTile    *uniform over)
 {
-  print("alpha0 prev % over %\n",prev->a[0],over->a[0]);
+  // print("alpha0 prev % over %\n",prev->a[0],over->a[0]);
   for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
     vec4f col_prev = make_vec4f(prev->r[i],
                                 prev->g[i],

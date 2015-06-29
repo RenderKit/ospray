@@ -372,7 +372,11 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
   //! Attenuate the foreground and background colors by the opacity.
 
-  // color = color.w * color + (1.0f - color.w) * background;
+#if EXP_ALPHA_BLENDING
+  // do NOT blend in background.... would otherwise blend that in in each tile!
+#else
+  color = color.w * color + (1.0f - color.w) * background;
+#endif
 
   //! Store the result in the sample.
   sample.rgb.x = color.x;  
