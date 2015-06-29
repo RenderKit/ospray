@@ -34,6 +34,9 @@ IF(NOT CMAKE_BUILD_TYPE)
   SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
 ENDIF(NOT CMAKE_BUILD_TYPE)
 
+# create a configure file that both ospray and ispc can read the cmake config from
+CONFIGURE_FILE(ospray/common/CMakeConfig_template.h OSPRayCMakeConfig.h)
+
 MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 
 SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})

@@ -29,8 +29,6 @@ namespace ospray {
     namespace async {
       struct MultiIsendIrecvImpl : public AsyncMessagingImpl {
         
-        enum { WINDOW_SIZE = 16 };
-
         struct Group;
         struct Message;
 

@@ -65,6 +65,9 @@ ENDMACRO ()
 MACRO(CONFIGURE_ISPC)
 ENDMACRO()
 
+# add current binary dir for _C-code_, since the c-code has to be able
+# to find the auto-generated .h files that the 'export' statement
+# generates
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_BINARY_DIR})
 MACRO (ispc_compile)
   IF (CMAKE_OSX_ARCHITECTURES STREQUAL "i386")

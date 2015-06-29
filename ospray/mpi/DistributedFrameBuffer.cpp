@@ -241,8 +241,8 @@ namespace ospray {
       for (size_t x=0;x<numPixels.x;x+=TILE_SIZE,tileID++) {
         size_t ownerID = tileID % (comm->group->size-1);
         if (clientRank(ownerID) == comm->group->rank) {
-#if MPI_IMAGE_COMPOSITING
-# if MPI_ALPHA_BLENDING
+#if EXP_IMAGE_COMPOSITING
+# if EXP_ALPHA_BLENDING
           TileData *td = new AlphaBlendTile_simple(this,vec2i(x,y),tileID,ownerID);
 # else
           TileData *td = new ZCompositeTile(this,vec2i(x,y),tileID,ownerID);
@@ -300,7 +300,9 @@ namespace ospray {
   void DFB::waitUntilFinished() 
   {
     mutex.lock();
-    while (!frameIsDone) 
+    while (
+           // (myTiles.size() > 0) && 
+           !frameIsDone) 
       doneCond.wait(mutex);
     mutex.unlock();
   }
@@ -510,7 +512,7 @@ namespace ospray {
   */
   void DFB::clear(const uint32 fbChannelFlags)
   {
-    if (fbChannelFlags & OSP_FB_ACCUM) {
+    if (fbChannelFlags & OSP_FB_ACCUM && myTiles.size() != 0) {
       Ref<DFBClearTask> clearTask = new DFBClearTask(this);
       clearTask->schedule(myTiles.size());
       clearTask->wait();

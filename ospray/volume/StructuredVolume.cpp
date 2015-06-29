@@ -16,6 +16,7 @@
 
 //ospray
 #include "ospray/common/Data.h"
+#include "ospray/common/Core.h"
 #include "ospray/common/Library.h"
 #include "ospray/volume/StructuredVolume.h"
 #include "StructuredVolume_ispc.h"
@@ -51,6 +52,15 @@ namespace ospray {
       set("voxelRange", voxelRange);
     else
       voxelRange = getParam2f("voxelRange", voxelRange);
+
+#if EXP_DISTRIBUTED_VOLUME
+    if (core::isMpiParallel()) {
+      printf("creating structured volume in parallel MPI mode\n");
+
+      vec3i compsDim(core::getWorkerCount(),1,1);
+      PRINT(compsDim);
+    }
+#endif
 
     //! Build volume accelerator.
     ispc::StructuredVolume_buildAccelerator(ispcEquivalent);

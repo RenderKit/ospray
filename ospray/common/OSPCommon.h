@@ -24,6 +24,8 @@
 # include <mpi.h>
 #endif
 
+#include "OSPRayCMakeConfig.h"
+
 // embree
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"

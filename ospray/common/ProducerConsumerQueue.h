@@ -40,8 +40,19 @@ namespace ospray {
     /*! put a new element into this queue */
     void put(T t);
 
+    /*! put multiple new elements into this queue */
+    void putSome(T *t, size_t numTs);
+
     /*! get element that got written into the queue */
     T get();
+
+    /*! get elements in the queue into the given vector, and clear the queue.
+      if the queue is currently empty, wait until at least one element is there */
+    void getAll(std::vector<T> &all);
+
+    /*! get elements in the queue into the given vector, and clear the queue.
+      if the queue is currently empty, wait until at least one element is there */
+    size_t getSome(T *some, size_t maxSize);
 
   private:
     /*! the actual queue that holds the data */
@@ -59,14 +70,13 @@ namespace ospray {
   // =======================================================
 
 
-    /*! get element that got written into the queue */
+  /*! get element that got written into the queue */
   template<typename T>
   T ProducerConsumerQueue<T>::get()
   {
     mutex.lock();
     while (content.empty())
       notEmptyCond.wait(mutex);
-    bool wasEmpty = content.empty();
     T t = content.front();
     content.pop_front();
     mutex.unlock();
@@ -85,5 +95,54 @@ namespace ospray {
     mutex.unlock();
   }
 
-}
+  /*! put multiple new elements into this queue */
+  template<typename T>
+  void ProducerConsumerQueue<T>::putSome(T *t, size_t numTs)
+  {
+    mutex.lock();
+    bool wasEmpty = content.empty();
+    for (int i=0;i<numTs;i++)
+      content.push_back(t[i]);
+    if (wasEmpty)
+      notEmptyCond.broadcast();
+    mutex.unlock();
+  }
+
+
+  /*! get element that got written into the queue */
+  template<typename T>
+  void ProducerConsumerQueue<T>::getAll(std::vector<T> &all)
+  {
+    mutex.lock();
+    while (content.empty())
+      notEmptyCond.wait(mutex);
+
+    size_t size = content.size();
+    all.resize(size);
+    int i = 0;
+    for (typename std::deque<T>::iterator it=content.begin(); it != content.end(); it++)
+      all[i++] = *it;
+    content.clear();
+    mutex.unlock();
+  }
+  
+  /*! get element that got written into the queue */
+  template<typename T>
+  size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize)
+  {
+    mutex.lock();
+    while (content.empty())
+      notEmptyCond.wait(mutex);
+
+    size_t num = 0;
+    while (num < maxSize && !content.empty()) {
+      some[num++] = content.front();
+      content.pop_front();
+    }
+    mutex.unlock();
+    return num;
+  }
+  
+} // ::ospray
+
 

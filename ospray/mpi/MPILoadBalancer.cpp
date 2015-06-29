@@ -43,20 +43,20 @@ namespace ospray {
       {
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        double before = getSysTime();
+        // double before = getSysTime();
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
-        double after = getSysTime();
-        float T = after - before;
-        printf("master: render time %f, theofps %f\n",T,1.f/T);
+        // double after = getSysTime();
+        // float T = after - before;
+        // printf("master: render time %f, theofps %f\n",T,1.f/T);
 
-    async_endFrame();
-// #if BARRIER_AT_END_OF_FRAME
-//         MPI_Barrier(MPI_COMM_WORLD);
-// #endif
+        async_endFrame();
+        // #if BARRIER_AT_END_OF_FRAME
+        //         MPI_Barrier(MPI_COMM_WORLD);
+        // #endif
       }
 
       void Slave::RenderTask::finish()
@@ -72,12 +72,19 @@ namespace ospray {
 
       void Slave::RenderTask::run(size_t taskIndex) 
       {
+#if EXP_IMAGE_COMPOSITING
+        const size_t tileID = (taskIndex + 3*worker.rank) % (numTiles_x*numTiles_y);
+#else
         const size_t tileID = taskIndex;
-#if !MPI_IMAGE_COMPOSITING
         if ((tileID % worker.size) != worker.rank) return;
 #endif
 
+#if TILE_SIZE>128
+        Tile *tilePtr = new Tile;
+        Tile &tile = *tilePtr;
+#else
         Tile __aligned(64) tile;
+#endif
         const size_t tile_y = tileID / numTiles_x;
         const size_t tile_x = tileID - tile_y*numTiles_x;
         tile.region.lower.x = tile_x * TILE_SIZE;
@@ -90,6 +97,9 @@ namespace ospray {
         renderer->renderTile(tile);
 
         fb->setTile(tile);
+#if TILE_SIZE>128
+        delete tilePtr;
+#endif
       }
       
       void Slave::renderFrame(Renderer *tiledRenderer, 
@@ -98,7 +108,7 @@ namespace ospray {
                               )
       {
 
-    async_beginFrame();
+        async_beginFrame();
 
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
@@ -121,17 +131,17 @@ namespace ospray {
         renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
         renderTask->wait();
 
-        double t0wait = getSysTime();
+        // double t0wait = getSysTime();
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(channelFlags);
-        double t1wait = getSysTime();
-        printf("rank %i t_wait at end %f\n",mpi::world.rank,float(t1wait-t0wait));
+        // double t1wait = getSysTime();
+        // printf("rank %i t_wait at end %f\n",mpi::world.rank,float(t1wait-t0wait));
 
-    async_endFrame();
+        async_endFrame();
         
-// #if BARRIER_AT_END_OF_FRAME
-//         MPI_Barrier(MPI_COMM_WORLD);
-// #endif
+        // #if BARRIER_AT_END_OF_FRAME
+        //         MPI_Barrier(MPI_COMM_WORLD);
+        // #endif
       }
     }
 

@@ -121,7 +121,8 @@ namespace ospray {
         action->size   = msgSize;
 
         Group *g = (Group *)dest.group;
-        MPI_CALL(Isend(action->data,action->size,MPI_BYTE,dest.rank,g->tag,g->comm,&action->request));
+        MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
+                       dest.rank,g->tag,g->comm,&action->request));
         g->sendQueue.put(action);
       }
 

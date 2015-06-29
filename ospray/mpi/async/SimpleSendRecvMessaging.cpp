@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#define PROFILE_MPI 1
+//#define PROFILE_MPI 1
 
 #include "SimpleSendRecvMessaging.h"
 
@@ -67,7 +67,9 @@ namespace ospray {
                  log.begin-T0,log.end-T0,log.end-log.begin);
         }
       }
-
+#else
+      extern "C" void async_beginFrame() {}
+      extern "C" void async_endFrame() {}
 #endif
 
       SimpleSendRecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
@@ -90,6 +92,7 @@ namespace ospray {
           MPI_CALL(Send(action->data,action->size,MPI_BYTE,
                         action->addr.rank,g->tag,action->addr.group->comm));
           double t1 = getSysTime();
+#if PROFILE_MPI
           if (logIt) {
             t_send += (t1-t0);
             b_sent += action->size;
@@ -101,6 +104,7 @@ namespace ospray {
             log.end = t1;
             sendLog.push_back(log);
           }
+#endif
           free(action->data);
           delete action;
         }
@@ -124,6 +128,7 @@ namespace ospray {
           MPI_CALL(Recv(action->data,action->size,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
                         g->comm,MPI_STATUS_IGNORE));
           double t1 = getSysTime();
+#if PROFILE_MPI
           if (logIt) {
             t_recv += (t1-t0);
             b_recv += action->size;
@@ -135,6 +140,7 @@ namespace ospray {
             log.end = t1;
             recvLog.push_back(log);
           }
+#endif
           g->procQueue.put(action);
         }
       }

@@ -20,12 +20,14 @@ CONFIGURE_OSPRAY()
 
 SET(OSPRAY_EXP_COMPOSITING OFF CACHE BOOL "Experimental compositing")
 IF (OSPRAY_EXP_COMPOSITING)
-  ADD_DEFINITIONS(-DMPI_IMAGE_COMPOSITING=1)
+#  ADD_DEFINITIONS(-DMPI_IMAGE_COMPOSITING=1)
 
   SET(OSPRAY_EXP_ALPHA_BLENDING OFF CACHE BOOL "Experimental alpha-blending for compositing")
-  IF (OSPRAY_EXP_ALPHA_BLENDING)
-    ADD_DEFINITIONS(-DMPI_ALPHA_BLENDING=1)
-  ENDIF()
+#  IF (OSPRAY_EXP_ALPHA_BLENDING)
+#    ADD_DEFINITIONS(-DMPI_ALPHA_BLENDING=1)
+#  ENDIF()
+
+  SET(OSPRAY_EXP_DISTRIBUTED_VOLUME OFF CACHE BOOL "Experimental support for distributed volumes")
 
 ENDIF()
 
@@ -33,8 +35,8 @@ ENDIF()
 INCLUDE(../cmake/build_embree.cmake)
 #INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
 
-ADD_DEFINITIONS(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
-ADD_DEFINITIONS_ISPC(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
+#ADD_DEFINITIONS(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
+#ADD_DEFINITIONS_ISPC(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -168,6 +170,7 @@ IF (OSPRAY_MPI)
     mpi/async/Messaging.cpp
     mpi/async/SimpleSendRecvMessaging.cpp
     mpi/async/MultiIsendIrecvMessaging.cpp
+    mpi/async/BatchedIsendIrecvMessaging.cpp
     mpi/async/CommLayer.cpp
     
     mpi/DistributedFrameBuffer.cpp
