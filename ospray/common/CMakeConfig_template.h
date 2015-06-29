@@ -16,37 +16,14 @@
 
 #pragma once
 
-#include "ospray/volume/StructuredVolume.h"
+// define ON and OFF to the flags that "ON"/"OFF" string values that
+// cmake puts in below will make sense
+#define ON 1
+#define OFF 0
 
-namespace ospray {
+#define TILE_SIZE @OSPRAY_TILE_SIZE@
 
-  //! \brief A concrete implementation of the StructuredVolume class
-  //!  with 62-bit addressing in which the voxel data is laid out in
-  //!  memory in multiple pages each in brick order.
-  //!
-  class BlockBrickedVolume : public StructuredVolume {
-  public:
-
-    //! Constructor.
-    BlockBrickedVolume() {};
-
-    //! Destructor.
-    virtual ~BlockBrickedVolume() {};
-
-    //! A string description of this class.
-    virtual std::string toString() const { return("ospray::BlockBrickedVolume<" + voxelType + ">"); }
-
-    //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
-
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
-
-  protected:
-
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC();
-  };
-
-} // ::ospray
+#define EXP_DISTRIBUTED_VOLUME @OSPRAY_EXP_DISTRIBUTED_VOLUME@
+#define EXP_ALPHA_BLENDING @OSPRAY_EXP_ALPHA_BLENDING@
+#define EXP_IMAGE_COMPOSITING @OSPRAY_EXP_COMPOSITING@
 

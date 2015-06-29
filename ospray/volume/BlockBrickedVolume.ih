@@ -41,6 +41,12 @@ struct BlockBrickedVolume {
   //! Voxel size in bytes.
   uniform size_t voxelSize;
 
+  /*! coordinate by which we will offset all coordinates used in
+    'setRegion'. all voxels with coordinates lower than this value
+    will get disacarded, and voxel with coordaintes higher than this
+    value will get shifted by this value to the right */
+  uniform vec3i setRegionLowerOffset;
+
   //! Voxel data setter.
   void (*uniform setVoxel)(void *uniform volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset);
 

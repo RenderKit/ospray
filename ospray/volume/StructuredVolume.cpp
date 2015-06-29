@@ -32,7 +32,6 @@ namespace ospray {
 
     //! Set the grid origin, default to (0,0,0).
     this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
-    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
 
     //! Get the volume dimensions.
     this->dimensions = getParam3i("dimensions", vec3i(0));
@@ -41,7 +40,16 @@ namespace ospray {
 
     //! Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+
+
+#if EXP_DISTRIBUTED_VOLUME
+    this->gridOrigin += vec3f(myDomain.lower)*this->gridSpacing;
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
     ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
+#else
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
+    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
+#endif
 
     //! Complete volume initialization (only on first commit).
     if (!finished) {
@@ -57,15 +65,6 @@ namespace ospray {
       set("voxelRange", voxelRange);
     else
       voxelRange = getParam2f("voxelRange", voxelRange);
-
-#if EXP_DISTRIBUTED_VOLUME
-    if (core::isMpiParallel()) {
-      printf("creating structured volume in parallel MPI mode\n");
-
-      vec3i compsDim(core::getWorkerCount(),1,1);
-      PRINT(compsDim);
-    }
-#endif
 
     //! Build volume accelerator.
     ispc::StructuredVolume_buildAccelerator(ispcEquivalent);

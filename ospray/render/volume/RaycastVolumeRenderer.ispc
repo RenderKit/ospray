@@ -256,8 +256,10 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Compute the intersection interval over the ray and volume bounds.
   RaycastVolumeRenderer_intersectBox(boundingBox, ray);
 
-  if (ray.t0 > ray.t1)
+  if (ray.t0 > ray.t1) {
+    ray.t0 = 1e20f;
     return;
+  }
 
   ray.t = ray.t0;
 
@@ -352,7 +354,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
 
   //! Background color.
-  const vec4f background = make_vec4f(1.0f);
+  const vec4f background = make_vec4f(1.0f,1.f,1.f,0.f);
 
   //! Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);
@@ -366,12 +368,19 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   //! Provide the renderer to the intersector as it contains all volumes, geometries, etc.
   vec4f color = make_vec4f(0.0f);
   RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color);
+  sample.z = sample.ray.t0;
 
   //! Attenuate the foreground and background colors by the opacity.
-  color = color.w * color + (1.0f - color.w) * background;
+
+  // color = color.w * color + (1.0f - color.w) * background;
 
   //! Store the result in the sample.
-  sample.rgb.x = color.x;  sample.rgb.y = color.y;  sample.rgb.z = color.z;  sample.alpha = color.w;
+  sample.rgb.x = color.x;  
+  sample.rgb.y = color.y;  
+  sample.rgb.z = color.z;  
+  sample.alpha = color.w;
+  // if (sample.alpha < 1.f) 
+  //   print("alpha %\n",sample.alpha);
 }
 
 export void *uniform RaycastVolumeRenderer_createInstance()

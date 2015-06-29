@@ -106,7 +106,11 @@ inline void BlockBrickedVolumeUChar_getVoxel(void *uniform _volume, const varyin
     value = voxelData[block][address.voxel];
 }
 
-inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset)
+inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, 
+                                             const void *uniform source, 
+                                             const uniform vec3i &index, 
+                                             const uniform vec3i &count, 
+                                             const varying vec3i &offset)
 {
   //! Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
@@ -119,9 +123,24 @@ inline void BlockBrickedVolumeFloat_setVoxel(void *uniform _volume, const void *
 
     const float *uniform sourceDataShifted = sourceData + (int64)offsetZ * count.y * count.x;
 
+#if EXP_DISTRIBUTED_VOLUME
+    vec3i shiftedIndex = index + offset - volume->setRegionLowerOffset;
+    if (shiftedIndex.x < 0 ||
+        shiftedIndex.y < 0 ||
+        shiftedIndex.z < 0 ||
+        shiftedIndex.x >= volume->inherited.dimensions.x ||
+        shiftedIndex.y >= volume->inherited.dimensions.y ||
+        shiftedIndex.z >= volume->inherited.dimensions.z
+        ) continue;
+
+    //! Compute the 1D address of the block in the volume and the voxel in the block.
+    Address address;
+    BlockBrickedVolume_getVoxelAddress(volume, shiftedIndex, address);
+#else
     //! Compute the 1D address of the block in the volume and the voxel in the block.
     Address address;
     BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
+#endif
 
     //! The source voxel value.
     float value = sourceDataShifted[offset.y * count.x + offset.x];
@@ -182,40 +201,54 @@ inline void BlockBrickedVolume_allocateMemory(BlockBrickedVolume *uniform volume
     volume->voxelData[i] = (void *uniform)(uniform new uniform uint8[BLOCK_VOXEL_COUNT * volume->voxelSize]);
 }
 
-void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions)
+void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume, 
+                                    const uniform int voxelType, 
+                                    const uniform vec3i &dimensions,
+                                    const uniform vec3i &setRegionLowerOffset)
 {
   StructuredVolume_Constructor(&volume->inherited, dimensions);
 
   volume->voxelData = NULL;
   volume->voxelType = (OSPDataType) voxelType;
-  volume->voxelSize = (volume->voxelType == OSP_FLOAT) ? sizeof(uniform float) : sizeof(uniform uint8);
-  volume->inherited.getVoxel = (volume->voxelType == OSP_FLOAT) ? BlockBrickedVolumeFloat_getVoxel : BlockBrickedVolumeUChar_getVoxel;
-  volume->setVoxel = (volume->voxelType == OSP_FLOAT) ? BlockBrickedVolumeFloat_setVoxel : BlockBrickedVolumeUChar_setVoxel;
+  volume->voxelSize = (volume->voxelType == OSP_FLOAT)
+    ? sizeof(uniform float)
+    : sizeof(uniform uint8);
+  volume->inherited.getVoxel = (volume->voxelType == OSP_FLOAT)
+    ? BlockBrickedVolumeFloat_getVoxel
+    : BlockBrickedVolumeUChar_getVoxel;
+  volume->setVoxel = (volume->voxelType == OSP_FLOAT) 
+    ? BlockBrickedVolumeFloat_setVoxel
+    : BlockBrickedVolumeUChar_setVoxel;
+  volume->setRegionLowerOffset = setRegionLowerOffset;
 
   //! Allocate memory.
   BlockBrickedVolume_allocateMemory(volume);
 }
 
-export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelType, const uniform vec3i &dimensions)
+export void *uniform BlockBrickedVolume_createInstance(const uniform int voxelType, 
+                                                       const uniform vec3i &dimensions,
+                                                       const uniform vec3i &setRegionLowerOffset)
 {
   //! The volume container.
   BlockBrickedVolume *uniform volume = uniform new uniform BlockBrickedVolume;
-
-  BlockBrickedVolume_Constructor(volume, voxelType, dimensions);
+  BlockBrickedVolume_Constructor(volume, voxelType, dimensions, setRegionLowerOffset);
 
   return volume;
 }
 
-task void BlockBrickedVolume_setRegionTask(BlockBrickedVolume *uniform self, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count)
+task void BlockBrickedVolume_setRegionTask(BlockBrickedVolume *uniform self, 
+                                           const void *uniform source, 
+                                           const uniform vec3i &index, 
+                                           const uniform vec3i &count)
 {
   //! Offset from task index.
   const uniform int offsetY = taskIndex % count.y;
   const uniform int offsetZ = taskIndex / count.y;
 
   foreach (x = 0 ... count.x) {
-      const vec3i offset = make_vec3i(x, offsetY, offsetZ);
-      self->setVoxel(self, source, index, count, offset);
-    }
+    const vec3i offset = make_vec3i(x, offsetY, offsetZ);
+    self->setVoxel(self, source, index, count, offset);
+  }
 }
 
 export void BlockBrickedVolume_setRegion(void *uniform _self, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count)

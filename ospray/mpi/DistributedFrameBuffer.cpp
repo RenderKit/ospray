@@ -66,7 +66,7 @@ namespace ospray {
     const DFB::AlphaBlendTile_simple::BufferedTile *a = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_a;
     const DFB::AlphaBlendTile_simple::BufferedTile *b = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_b;
     if (a->sortOrder == b->sortOrder) return 0;
-    return a->sortOrder > b->sortOrder ? +1 : -1; 
+    return a->sortOrder > b->sortOrder ? -1 : +1; 
   }
   
   Mutex gMutex;
@@ -99,18 +99,25 @@ namespace ospray {
       // for (int i=0;i<bufferedTile.size();i++)
       //   PRINT(bufferedTile[i]->sortOrder);
 
+      gMutex.lock();
+      for (int i=0;i<bufferedTile.size();i++)
+        cout << bufferedTile[i]->sortOrder << " " << std::flush;
+      cout << endl;
+
+
       for (int i=1;i<bufferedTile.size();i++)
         ispc::DFB_alphaBlendTiles((ispc::VaryingTile *)&bufferedTile[0]->tile,
                                   (ispc::VaryingTile *)&bufferedTile[i]->tile);
 
+      gMutex.unlock();
 
       this->final.region = tile.region;
       this->final.fbSize = tile.fbSize;
       this->final.rcp_fbSize = tile.rcp_fbSize;
       ispc::DFB_accumulate((ispc::VaryingTile *)&bufferedTile[0]->tile,
-                           (ispc::VaryingTile*)&this->final,
-                           (ispc::VaryingTile*)&this->accum,
-                           (ispc::VaryingRGBA_I8*)&this->color,
+                           (ispc::VaryingTile *)&this->final,
+                           (ispc::VaryingTile *)&this->accum,
+                           (ispc::VaryingRGBA_I8 *)&this->color,
                            dfb->hasAccumBuffer,dfb->accumID);
       dfb->tileIsCompleted(this);
 
