@@ -175,6 +175,9 @@ OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
     //! File containing a triangle mesh specification and / or data.
     if (!strcmp(node->ToElement()->Name(), "filename")) { triangleMeshFilename = node->ToElement()->GetText();  continue; }
 
+    //! Scaling for vertex coordinates.
+    if (!strcmp(node->ToElement()->Name(), "scale")) { importAttributeFloat3(node, triangleMesh);  continue; }
+
     //! Error check.
     exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
   }

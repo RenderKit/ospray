@@ -27,7 +27,7 @@ class SeismicHorizonFile : public TriangleMeshFile {
 public:
 
   //! Constructor.
-  SeismicHorizonFile(const std::string &filename) : filename(filename), verbose(true) {}
+  SeismicHorizonFile(const std::string &filename) : filename(filename), scale(osp::vec3f(1.f)), verbose(true) {}
 
   //! Destructor.
   virtual ~SeismicHorizonFile() {};
@@ -42,6 +42,9 @@ private:
 
   //! Path to the file containing the horizon data.
   std::string filename;
+
+  //! Scaling for vertex coordinates.
+  osp::vec3f scale;
 
   //! Verbose logging.
   bool verbose;

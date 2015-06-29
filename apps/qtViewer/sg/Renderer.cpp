@@ -53,6 +53,7 @@ namespace ospray {
       ospRenderFrame(frameBuffer->ospFrameBuffer,
                      integrator->getOSPHandle(),
                      OSP_FB_COLOR|OSP_FB_ACCUM);
+      accumID++;
       return 0;
     }
 

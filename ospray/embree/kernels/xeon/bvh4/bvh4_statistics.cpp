@@ -53,6 +53,7 @@ namespace embree
     size_t bytesAlignedNodesMB = numAlignedNodesMB*sizeof(BVH4::NodeMB);
     size_t bytesUnalignedNodesMB = numUnalignedNodesMB*sizeof(BVH4::UnalignedNodeMB);
     size_t bytesPrims  = numPrims*bvh->primTy.bytes;
+
     size_t numVertices = bvh->numVertices;
     size_t bytesVertices = numVertices*sizeof(Vec3fa); 
     size_t bytesTotal = bytesAlignedNodes+bytesUnalignedNodes+bytesAlignedNodesMB+bytesUnalignedNodesMB+bytesPrims+bytesVertices;

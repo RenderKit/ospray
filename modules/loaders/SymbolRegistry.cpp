@@ -16,6 +16,7 @@
 
 #include "modules/loaders/OSPObjectFile.h"
 #include "modules/loaders/RawVolumeFile.h"
+#include "modules/loaders/PLYTriangleMeshFile.h"
 
 //! Loader for XML object files.
 OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
@@ -23,3 +24,5 @@ OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
 //! Loader for RAW volume files.
 OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
 
+//! Loader for PLY triangle mesh files.
+OSP_REGISTER_TRIANGLEMESH_FILE(PLYTriangleMeshFile, ply);
