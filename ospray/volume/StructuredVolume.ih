@@ -21,10 +21,9 @@
 
 struct GridAccelerator;
 
-//! \brief Variables and methods common to all subtypes of the
-//!  StructuredVolume class (this struct must be the first field of a
-//!  struct representing a "derived" class).
-//!
+/*! \brief Variables and methods common to all subtypes of the
+  StructuredVolume class (this struct must be the first field of a
+  struct representing a "derived" class). */
 struct StructuredVolume {
 
   //! Fields common to all Volume subtypes (must be the first entry of this struct).
