@@ -56,11 +56,12 @@ namespace ospray {
     exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type (must be set before calling ospSetRegion())");
 
     //! Get the volume dimensions.
-    vec3i dimensions = getParam3i("dimensions", vec3i(0));
-    exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions (must be set before calling ospSetRegion())");
+    this->dimensions = getParam3i("dimensions", vec3i(0));
+    exitOnCondition(reduce_min(this->dimensions) <= 0, 
+                    "invalid volume dimensions (must be set before calling ospSetRegion())");
 
     //! Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
-    ispcEquivalent = ispc::BlockBrickedVolume_createInstance((int)getVoxelType(), (const ispc::vec3i &)dimensions);
+    ispcEquivalent = ispc::BlockBrickedVolume_createInstance((int)getVoxelType(), (const ispc::vec3i &)this->dimensions);
   }
 
 } // ::ospray
