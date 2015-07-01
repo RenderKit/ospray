@@ -48,31 +48,31 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
                                   const varying Ray &ray,
                                   uniform int64 flags)
 {
-  uniform Spheres *uniform THIS = (uniform Spheres *uniform)geometry;
+  uniform Spheres *uniform self = (uniform Spheres *uniform)geometry;
 
   dg.Ng = dg.Ns = ray.Ng;
 
-  if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
+  if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
     const uniform int32 primsPerPage = (1024*1024*128);
     if (any(ray.primID >= primsPerPage )) {
       const int primPageID  = ray.primID / primsPerPage;
       const int localPrimID = ray.primID % primsPerPage;
       foreach_unique(primPage in primPageID) {
-        uniform uint8 *uniform pagePtr = THIS->data + (((int64)primPage) * primsPerPage * THIS->bytesPerSphere);
+        uniform uint8 *uniform pagePtr = self->data + (((int64)primPage) * primsPerPage * self->bytesPerSphere);
         uniform uint8 *spherePtr = 
-          pagePtr + THIS->bytesPerSphere*localPrimID;
-        dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
-        if (THIS->materialList) {
-          dg.material = THIS->materialList[dg.materialID];
+          pagePtr + self->bytesPerSphere*localPrimID;
+        dg.materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
+        if (self->materialList) {
+          dg.material = self->materialList[dg.materialID];
         }
       }
     } else
       {
         uniform uint8 *spherePtr = 
-          THIS->data + THIS->bytesPerSphere*ray.primID;
-        dg.materialID = *((uniform uint32 *varying)(spherePtr+THIS->offset_materialID));
-        if (THIS->materialList) {
-          dg.material = THIS->materialList[dg.materialID];
+          self->data + self->bytesPerSphere*ray.primID;
+        dg.materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
+        if (self->materialList) {
+          dg.material = self->materialList[dg.materialID];
         }
       }
   }

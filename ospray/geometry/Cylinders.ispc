@@ -130,14 +130,14 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
                                        const varying Ray &ray,
                                        uniform int64 flags)
 {
-  uniform Cylinders *uniform THIS = (uniform Cylinders *uniform)geometry;
+  uniform Cylinders *uniform self = (uniform Cylinders *uniform)geometry;
   dg.Ng = dg.Ns = ray.Ng;
 
-  if ((flags & DG_MATERIALID) && (THIS->offset_materialID >= 0)) {
-    uniform uint8 *cylinderPtr = THIS->data + THIS->bytesPerCylinder*ray.primID;
-    dg.materialID = *((uniform uint32 *varying)(cylinderPtr+THIS->offset_materialID));
-    if (THIS->materialList) {
-      dg.material = THIS->materialList[dg.materialID];
+  if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
+    uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
+    dg.materialID = *((uniform uint32 *varying)(cylinderPtr+self->offset_materialID));
+    if (self->materialList) {
+      dg.material = self->materialList[dg.materialID];
     }
   }
 }

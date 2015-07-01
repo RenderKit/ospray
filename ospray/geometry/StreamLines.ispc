@@ -157,10 +157,10 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_COLOR)) {
-    uniform StreamLines *uniform THIS = (uniform StreamLines *uniform)geometry;
-    uniform vec4f *uniform color = THIS->color;
+    uniform StreamLines *uniform self = (uniform StreamLines *uniform)geometry;
+    uniform vec4f *uniform color = self->color;
     if (color) {
-      const varying uint32 index  = THIS->index[ray.primID];
+      const varying uint32 index  = self->index[ray.primID];
       dg.color = (1.f-ray.u) * color[index] + ray.u * color[index+1];
     }
   }
