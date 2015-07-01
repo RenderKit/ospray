@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ospray/fb/FrameBuffer.ih"
+#include "ospray/common/Ray.ih"
 #include "ospray/render/util.ih"
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
 
@@ -223,22 +224,6 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   color = sampleOpacity * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 }
 
-inline void RaycastVolumeRenderer_intersectBox(const uniform box3f &box, 
-                                               varying Ray &ray) 
-{
-  //! Intersection interval minimum per axis.
-  const vec3f minimum = rcp(ray.dir) * (box.lower - ray.org);
-
-  //! Intersection interval maximum per axis.
-  const vec3f maximum = rcp(ray.dir) * (box.upper - ray.org);
-
-  //! Distance along the ray to the entry point.
-  ray.t0 = max(max(ray.t0, min(minimum.x, maximum.x)), max(min(minimum.y, maximum.y), min(minimum.z, maximum.z)));
-
-  //! Distance along the ray to the exit point.
-  ray.t1 = min(min(ray.t, max(minimum.x, maximum.x)), min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));
-}
-
 //! This function intersects the volume and geometries.
 inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform renderer,
                                             varying Ray &ray,
@@ -254,7 +239,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   const uniform float epsilon = 1e-4 * distance(boundingBox.lower, boundingBox.upper);
 
   //! Compute the intersection interval over the ray and volume bounds.
-  RaycastVolumeRenderer_intersectBox(boundingBox, ray);
+  intersectBox(ray, boundingBox, ray.t0, ray.t1);
 
   if (ray.t0 > ray.t1)
     return;
@@ -285,7 +270,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Compute the intersection interval over the ray and clipping box bounds.
   if(ne(volumeClippingBox.lower, volumeClippingBox.upper)) {
     ray.t = tMax;
-    RaycastVolumeRenderer_intersectBox(volumeClippingBox, ray);
+    intersectBox(ray, volumeClippingBox, ray.t0, ray.t1);
 
     ray.t = ray.t0 + rayOffset * step;
   }
@@ -303,7 +288,9 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(min(ray.t, isosurfaceRay.t), geometryRay.t)) < tMax && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
+  while ((firstHit = min(min(ray.t, isosurfaceRay.t), geometryRay.t)) < tMax 
+         && 
+         min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
     if (firstHit == ray.t) {
 

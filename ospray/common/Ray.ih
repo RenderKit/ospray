@@ -134,10 +134,10 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
 }
 
 /*! helper function that performs a ray-box test */
-inline void boxtest(Ray& ray,
-                    uniform box3f& box,
-                    float& t0,
-                    float& t1)
+inline void intersectBox(Ray& ray,
+                         const uniform box3f& box,
+                         float& t0,
+                         float& t1)
 {
   const vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
   const vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
@@ -154,10 +154,10 @@ inline void boxtest(Ray& ray,
 }
 
 /*! helper function that performs a ray-box test */
-inline void boxtest(Ray& ray,
-                    uniform box3fa& _box,
-                    float& t0,
-                    float& t1)
+inline void intersectBox(Ray& ray,
+                         const uniform box3fa& _box,
+                         float& t0,
+                         float& t1)
 {
   const uniform box3f box = make_box3f(_box);
   const vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
