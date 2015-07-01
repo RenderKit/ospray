@@ -446,6 +446,8 @@ namespace ospray {
       const mpi::Handle handle = (const mpi::Handle&)_object;
       cmd.send((const mpi::Handle&)_object);
       cmd.flush();
+
+      MPI_Barrier(MPI_COMM_WORLD);
     }
     
     /*! add a new geometry to a model */

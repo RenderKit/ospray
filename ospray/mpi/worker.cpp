@@ -491,6 +491,8 @@ namespace ospray {
           Model *model = dynamic_cast<Model *>(obj);
           if (model)
             model->finalize();
+
+          MPI_Barrier(MPI_COMM_WORLD);
         } break;
         case ospray::CMD_SET_OBJECT: {
           const mpi::Handle handle = cmd.get_handle();
