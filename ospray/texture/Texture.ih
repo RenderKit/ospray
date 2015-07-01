@@ -20,20 +20,22 @@
 
 struct Texture;
 
-// Accessing y, z, or a from the returned value is undefined if the
-// texture does not have 4 channels
+//!\brief virtual function type for sampling a Texture (of any type)
+/*! \note Accessing y, z, or a from the returned value is undefined if the
+  texture has less than 4 channels */
 typedef varying vec4f (*Texture__get)(const uniform Texture *uniform this, 
                                       const varying vec2f& p);
 
+//! \brief Abstract base class for any type of (2D) texture
 struct Texture 
 {
-  // RefCount base;
+  //! virtual function for sampling this texture
   Texture__get get;
 };
 
-inline void Texture__Constructor(uniform Texture* uniform THIS,
-                                 // uniform DestructorFunc destructor,
+//! constructor for 2D texture base class
+inline void Texture__Constructor(uniform Texture* uniform self,
                                  uniform Texture__get get)
 {
-  THIS->get = get;
+  self->get = get;
 }

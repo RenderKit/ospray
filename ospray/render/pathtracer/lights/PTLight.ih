@@ -47,18 +47,18 @@ typedef PTLight* uniform (*PTLightTransformFunc)(const uniform PTLight *uniform 
 
 typedef Shape* uniform (*ShapeFunc)(const uniform PTLight *uniform this);
 
-typedef varying vec3f (*EnvironmentLeFunc)(const uniform PTEnvironmentLight *uniform _THIS,
+typedef varying vec3f (*EnvironmentLeFunc)(const uniform PTEnvironmentLight *uniform _self,
                                            varying const vec3f &wo);
 
-typedef varying vec3f (*AreaLeFunc)(const uniform AreaPTLight *uniform _THIS,
+typedef varying vec3f (*AreaLeFunc)(const uniform AreaPTLight *uniform _self,
                                     varying const DifferentialGeometry &dg, 
                                     varying const vec3f &wo);
 
-typedef varying vec3f (*EvalFunc)(const uniform PTLight *uniform _THIS,
+typedef varying vec3f (*EvalFunc)(const uniform PTLight *uniform _self,
                                   varying const DifferentialGeometry &dg, 
                                   varying const vec3f &wi);
 
-typedef varying vec3f (*SampleFunc)(const uniform PTLight *uniform _THIS,
+typedef varying vec3f (*SampleFunc)(const uniform PTLight *uniform _self,
                                     varying const DifferentialGeometry &dg, 
                                     varying Sample3f &wi,
                                     varying float &tMax,
@@ -67,16 +67,12 @@ typedef varying vec3f (*SampleFunc)(const uniform PTLight *uniform _THIS,
 /*! Abstract base class of all embree light sources */
 struct PTLight
 {
-  // RefCount base;
-
   PTLightType type;
   PTLightTransformFunc transform;
   ShapeFunc shape;
   EvalFunc eval;
   SampleFunc sample;
 };
-
-// void PTLight__Destructor(uniform RefCount* uniform this);
 
 void PTLight__Constructor(uniform PTLight* uniform this,
                         // uniform DestructorFunc destructor,

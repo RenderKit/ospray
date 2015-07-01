@@ -16,11 +16,11 @@
 
 #include "Texture2D.ih"
 
-inline vec4f getTexel4uc(const uniform Texture2D *uniform THIS,
+inline vec4f getTexel4uc(const uniform Texture2D *uniform self,
                          const uint32 ix, const uint32 iy)
 {
-  assert(THIS);
-  const uint32 c = ((uniform uint32 *uniform)THIS->data)[ix+THIS->size.x*iy];
+  assert(self);
+  const uint32 c = ((uniform uint32 *uniform)self->data)[ix+self->size.x*iy];
   const float one_over_255 = (1.f/255.f);
   const uint32 r = c         & 255;
   const uint32 g = (c >>  8) & 255;
@@ -29,29 +29,29 @@ inline vec4f getTexel4uc(const uniform Texture2D *uniform THIS,
   return make_vec4f(r*one_over_255, g*one_over_255, b*one_over_255, a*one_over_255);
 }
 
-inline vec4f getTexel4f(const uniform Texture2D *uniform THIS,
+inline vec4f getTexel4f(const uniform Texture2D *uniform self,
                         const uint32 ix, const uint32 iy)
 {
-  assert(THIS);
-  const vec4f c = ((uniform vec4f *uniform)THIS->data)[ix+THIS->size.x*iy];
+  assert(self);
+  const vec4f c = ((uniform vec4f *uniform)self->data)[ix+self->size.x*iy];
   return c;
 }
 
-inline vec4f getTexel3f(const uniform Texture2D *uniform THIS,
+inline vec4f getTexel3f(const uniform Texture2D *uniform self,
                          const uint32 ix, const uint32 iy)
 {
-  assert(THIS);
-  vec3f v = ((uniform vec3f*uniform )THIS->data)[ix+THIS->size.x*iy];
+  assert(self);
+  vec3f v = ((uniform vec3f*uniform )self->data)[ix+self->size.x*iy];
   return make_vec4f(v.x,v.y,v.z,0.f);
 }
 
-inline vec4f getTexel3uc(const uniform Texture2D *uniform THIS,
+inline vec4f getTexel3uc(const uniform Texture2D *uniform self,
                          const uint32 ix, const uint32 iy)
 {
-  assert(THIS);
-  const uniform uint8 *uniform pixel = (const uniform uint8 *uniform)THIS->data;
+  assert(self);
+  const uniform uint8 *uniform pixel = (const uniform uint8 *uniform)self->data;
   const float one_over_255 = (1.f/255.f);
-  const uint32 pixelOfs = 3*(ix+THIS->size.x*iy);
+  const uint32 pixelOfs = 3*(ix+self->size.x*iy);
   const uint32 r = pixel[pixelOfs+0];
   const uint32 g = pixel[pixelOfs+1];
   const uint32 b = pixel[pixelOfs+2];

@@ -32,7 +32,7 @@
     Thus the material pointer only needs to be set if different to
     geometry->material, or the color when different to vec4f(1.0f).
 */
-typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
+typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform self,
                                           uniform Model *uniform model,
                                           varying DifferentialGeometry &dg,
                                           const varying Ray &ray,
