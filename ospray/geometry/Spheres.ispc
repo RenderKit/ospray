@@ -88,8 +88,7 @@ void Spheres_bounds(uniform Spheres *uniform geometry,
     radius = *((uniform float *)(spherePtr+geometry->offset_radius));
   }
   uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
-  bbox.lower = center-make_vec3f(radius);
-  bbox.upper = center+make_vec3f(radius);
+  bbox = make_box3fa(center-make_vec3f(radius),center+make_vec3f(radius));
 }
 
 void Spheres_intersect(uniform Spheres *uniform geometry,

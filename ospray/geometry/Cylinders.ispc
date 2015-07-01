@@ -54,8 +54,8 @@ void Cylinders_bounds(uniform Cylinders *uniform geometry,
   }
   uniform vec3f v0 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v0));
   uniform vec3f v1 = *((uniform vec3f*)(cylinderPtr+geometry->offset_v1));
-  bbox.lower = min(v0,v1)-make_vec3f(radius);
-  bbox.upper = max(v0,v1)+make_vec3f(radius);
+  bbox = make_box3fa(min(v0,v1)-make_vec3f(radius),
+                     max(v0,v1)+make_vec3f(radius));
 }
 
 void Cylinders_intersect(uniform Cylinders *uniform geometry,

@@ -42,8 +42,8 @@ void StreamLines_bounds(uniform StreamLines *uniform geometry,
   uniform uint32 index  = geometry->index[primID];
   const uniform vec3f A = make_vec3f(geometry->vertex[index]);
   const uniform vec3f B = make_vec3f(geometry->vertex[index+1]);
-  bbox.lower = min(A,B)-make_vec3f(geometry->radius);
-  bbox.upper = max(A,B)+make_vec3f(geometry->radius);
+  bbox.lower = make_vec3fa(min(A,B)-make_vec3f(geometry->radius));
+  bbox.upper = make_vec3fa(max(A,B)+make_vec3f(geometry->radius));
 }
 
 inline bool intersectShiftedSphere(varying Ray &ray,

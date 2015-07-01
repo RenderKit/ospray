@@ -155,10 +155,11 @@ inline void boxtest(Ray& ray,
 
 /*! helper function that performs a ray-box test */
 inline void boxtest(Ray& ray,
-                    uniform box3fa& box,
+                    uniform box3fa& _box,
                     float& t0,
                     float& t1)
 {
+  const uniform box3f box = make_box3f(_box);
   const vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
   const vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
   
