@@ -257,7 +257,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   RaycastVolumeRenderer_intersectBox(boundingBox, ray);
 
   if (ray.t0 > ray.t1) {
-    ray.t0 = 1e20f;
+    ray.t0 = infinity;
     return;
   }
 
