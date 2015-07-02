@@ -26,6 +26,7 @@
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool showFrameRate,
+                           bool fullScreen,
                            std::string writeFramesFilename)
   : objectFileFilenames(objectFileFilenames),
     dynamicModel(NULL),
@@ -55,6 +56,9 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
 
   //! Set the window bounds based on the OSPRay world bounds.
   osprayWindow->setWorldBounds(boundingBox);
+
+  if (fullScreen)
+    setWindowState(windowState() | Qt::WindowFullScreen);
 
   //! Show the window.
   show();

@@ -31,7 +31,7 @@ Q_OBJECT
 public:
 
   //! Constructor.
-  VolumeViewer(const std::vector<std::string> &objectFileFilenames, bool showFrameRate, std::string writeFramesFilename);
+  VolumeViewer(const std::vector<std::string> &objectFileFilenames, bool showFrameRate, bool fullScreen, std::string writeFramesFilename);
 
   //! Destructor.
   ~VolumeViewer() {};
