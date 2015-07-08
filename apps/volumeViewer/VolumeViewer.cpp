@@ -21,7 +21,7 @@
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
 #include "LightEditor.h"
-#include "SliceWidget.h"
+#include "SliceEditor.h"
 #include "PreferencesDialog.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
@@ -29,7 +29,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool fullScreen,
                            std::string writeFramesFilename)
   : objectFileFilenames(objectFileFilenames),
-    dynamicModel(NULL),
+    modelIndex(0),
     boundingBox(osp::vec3f(0.f), osp::vec3f(1.f)),
     renderer(NULL),
     rendererInitialized(false),
@@ -66,13 +66,15 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
 
 void VolumeViewer::setModel(size_t index)
 {
+  modelIndex = index;
+
   //! Set current model on the OSPRay renderer.
   ospSetObject(renderer, "model", models[index]);
   ospCommit(renderer);
   rendererInitialized = true;
 
-  //! Update transfer function and isosurface editor data value range with the voxel range of the current volume.
-  osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[index], "voxelRange", &voxelRange);
+  //! Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
+  osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[index][0], "voxelRange", &voxelRange);
 
   if(voxelRange != osp::vec2f(0.f)) {
     transferFunctionEditor->setDataValueRange(voxelRange);
@@ -104,21 +106,7 @@ void VolumeViewer::autoRotate(bool set)
 
 void VolumeViewer::addSlice(std::string filename)
 {
-  //! Use dynamic geometry model for slices.
-  std::vector<OSPModel> dynamicModels;
-  dynamicModels.push_back(dynamicModel);
-
-  //! Create a slice widget and add it to the dock. This widget modifies the slice directly.
-  SliceWidget * sliceWidget = new SliceWidget(dynamicModels, boundingBox);
-  connect(sliceWidget, SIGNAL(sliceChanged()), this, SLOT(render()));
-  sliceWidgetsLayout.addWidget(sliceWidget);
-
-  //! Load state from file if specified.
-  if(!filename.empty())
-    sliceWidget->load(filename);
-
-  //! Apply the slice (if auto apply enabled), triggering a commit and render.
-  sliceWidget->autoApply();
+  sliceEditor->addSlice(filename);
 }
 
 void VolumeViewer::addGeometry(std::string filename)
@@ -172,10 +160,105 @@ void VolumeViewer::screenshot(std::string filename)
   std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
 }
 
+void VolumeViewer::setGradientShadingEnabled(bool value)
+{
+  for(size_t i=0; i<volumes.size(); i++)
+    for(size_t j=0; j<volumes[i].size(); j++) {
+      ospSet1i(volumes[i][j], "gradientShadingEnabled", value);
+      ospCommit(volumes[i][j]);
+    }
+
+  render();
+}
+
+void VolumeViewer::setSamplingRate(double value)
+{
+  for(size_t i=0; i<volumes.size(); i++)
+    for(size_t j=0; j<volumes[i].size(); j++) {
+      ospSet1f(volumes[i][j], "samplingRate", value);
+      ospCommit(volumes[i][j]);
+    }
+
+  render();
+}
+
+void VolumeViewer::setVolumeClippingBox(osp::box3f value)
+{
+  for(size_t i=0; i<volumes.size(); i++)
+    for(size_t j=0; j<volumes[i].size(); j++) {
+      ospSet3fv(volumes[i][j], "volumeClippingBoxLower", &value.lower.x);
+      ospSet3fv(volumes[i][j], "volumeClippingBoxUpper", &value.upper.x);
+      ospCommit(volumes[i][j]);
+    }
+
+  render();
+}
+
+void VolumeViewer::setSlices(std::vector<SliceParameters> sliceParameters)
+{
+  //! Provide the slices to OSPRay as the coefficients (a,b,c,d) of the plane equation ax + by + cz + d = 0.
+  std::vector<osp::vec4f> planes;
+
+  for(size_t i=0; i<sliceParameters.size(); i++)
+    planes.push_back(osp::vec4f(sliceParameters[i].normal.x,
+                                sliceParameters[i].normal.y,
+                                sliceParameters[i].normal.z,
+                                -dot(sliceParameters[i].origin, sliceParameters[i].normal)));
+
+  OSPData planesData = ospNewData(planes.size(), OSP_FLOAT4, &planes[0].x);
+
+  //! Remove existing slice geometries from models.
+  for(size_t i=0; i<slices.size(); i++)
+    for(size_t j=0; j<slices[i].size(); j++) {
+      ospRemoveGeometry(models[i], slices[i][j]);
+    }
+
+  slices.clear();
+
+  //! Add new slices for each volume of each model. Later we can do this only for the active model on time step change...
+  for(size_t i=0; i<volumes.size(); i++) {
+    slices.push_back(std::vector<OSPGeometry>());
+
+    for(size_t j=0; j<volumes[i].size(); j++)
+      for(size_t k=0; k<sliceParameters.size(); k++) {
+
+        OSPGeometry slicesGeometry = ospNewGeometry("slices");
+        ospSetData(slicesGeometry, "planes", planesData);
+        ospSetObject(slicesGeometry, "volume", volumes[i][j]);
+        ospCommit(slicesGeometry);
+
+        ospAddGeometry(models[i], slicesGeometry);
+
+        slices[i].push_back(slicesGeometry);
+      }
+
+    ospCommit(models[i]);
+  }
+
+  render();
+}
+
+void VolumeViewer::setIsovalues(std::vector<float> isovalues)
+{
+  OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
+
+  for(size_t i=0; i<volumes.size(); i++)
+    for(size_t j=0; j<volumes[i].size(); j++) {
+      ospSetData(volumes[i][j], "isovalues", isovaluesData);
+      ospCommit(volumes[i][j]);
+    }
+
+  render();
+}
+
 void VolumeViewer::importObjectsFromFile(const std::string &filename)
 {
   //! Create an OSPRay model.
   OSPModel model = ospNewModel();
+  models.push_back(model);
+
+  //! Create vector of volumes for this model.
+  volumes.push_back(std::vector<OSPVolume>());
 
   //! Load OSPRay objects from a file.
   OSPObject *objects = ObjectFile::importObjects(filename.c_str());
@@ -202,14 +285,13 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
       //! Add the loaded volume(s) to the model.
       ospAddVolume(model, (OSPVolume) objects[i]);
 
-      //! Keep a vector of all loaded volume(s).
-      volumes.push_back((OSPVolume) objects[i]);
+      //! Add to volumes vector for the current model.
+      volumes.back().push_back((OSPVolume) objects[i]);
     }
   }
 
   //! Commit the model.
   ospCommit(model);
-  models.push_back(model);
 }
 
 void VolumeViewer::initObjects()
@@ -233,22 +315,14 @@ void VolumeViewer::initObjects()
   exitOnCondition(transferFunction == NULL, "could not create OSPRay transfer function object");
   ospCommit(transferFunction);
 
-  //! Create model for dynamic geometry.
-  dynamicModel = ospNewModel();
-  exitOnCondition(dynamicModel == NULL, "could not create OSPRay dynamic model object");
-  ospCommit(dynamicModel);
-
-  //! Set the dynamic model on the renderer.
-  ospSetObject(renderer, "dynamic_model", dynamicModel);
-
   //! Load OSPRay objects from files.
   for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
     importObjectsFromFile(objectFileFilenames[i]);
 
   //! Get the bounding box of the first volume.
-  if(volumes.size() > 0) {
-    ospGetVec3f(volumes[0], "boundingBoxMin", &boundingBox.lower);
-    ospGetVec3f(volumes[0], "boundingBoxMax", &boundingBox.upper);
+  if(volumes.size() > 0 && volumes[0].size() > 0) {
+    ospGetVec3f(volumes[0][0], "boundingBoxMin", &boundingBox.lower);
+    ospGetVec3f(volumes[0][0], "boundingBoxMax", &boundingBox.upper);
   }
 }
 
@@ -304,21 +378,12 @@ void VolumeViewer::initUserInterfaceWidgets()
   //! Set the transfer function editor widget to its minimum allowed height, to leave room for other dock widgets.
   transferFunctionEditor->setMaximumHeight(transferFunctionEditor->minimumSize().height());
 
-  //! Create a scrollable dock widget for any added slices.
-  QDockWidget *slicesDockWidget = new QDockWidget("Slices", this);
-  QScrollArea *slicesScrollArea = new QScrollArea();
-  QWidget *slicesWidget = new QWidget();
-  sliceWidgetsLayout.setAlignment(Qt::AlignTop);
-  slicesWidget->setLayout(&sliceWidgetsLayout);
-  slicesScrollArea->setWidget(slicesWidget);
-  slicesScrollArea->setWidgetResizable(true);
-  slicesDockWidget->setWidget(slicesScrollArea);
-  addDockWidget(Qt::LeftDockWidgetArea, slicesDockWidget);
-
-  //! Add the "add slice" button and callback.
-  QPushButton *addSliceButton = new QPushButton("Add slice");
-  connect(addSliceButton, SIGNAL(clicked()), this, SLOT(addSlice()));
-  sliceWidgetsLayout.addWidget(addSliceButton);
+  //! Create slice editor dock widget.
+  QDockWidget *sliceEditorDockWidget = new QDockWidget("Slices", this);
+  sliceEditor = new SliceEditor(boundingBox);
+  sliceEditorDockWidget->setWidget(sliceEditor);
+  connect(sliceEditor, SIGNAL(slicesChanged(std::vector<SliceParameters>)), this, SLOT(setSlices(std::vector<SliceParameters>)));
+  addDockWidget(Qt::LeftDockWidgetArea, sliceEditorDockWidget);
 
   //! Create isosurface editor dock widget.
   QDockWidget *isosurfaceEditorDockWidget = new QDockWidget("Isosurfaces", this);
@@ -336,7 +401,7 @@ void VolumeViewer::initUserInterfaceWidgets()
      addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget); */
 
   //! Tabify dock widgets.
-  tabifyDockWidget(transferFunctionEditorDockWidget, slicesDockWidget);
+  tabifyDockWidget(transferFunctionEditorDockWidget, sliceEditorDockWidget);
   tabifyDockWidget(transferFunctionEditorDockWidget, isosurfaceEditorDockWidget);
 
   //! Tabs on top.

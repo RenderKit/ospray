@@ -73,6 +73,8 @@ SET(OSPRAY_SOURCES
   geometry/Spheres.ispc
   geometry/Cylinders.cpp
   geometry/Cylinders.ispc
+  geometry/Slices.ispc
+  geometry/Slices.cpp
 
   lights/Light.cpp
   lights/AmbientLight.ispc

@@ -37,7 +37,10 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
                                                       varying vec4f &color)
 {
   //! Advance the ray.
-  volume->intersect(volume, ray);  if (ray.t > ray.t1) return;
+  volume->intersect(volume, ray);
+
+  if (ray.t > ray.t1)
+    return;
 
   //! Sample the volume at the hit point in world coordinates.
   const float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
@@ -85,7 +88,8 @@ inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer 
   //! Advance the ray.
   volume->intersectIsosurface(volume, volume->isovalues, volume->numIsovalues, ray);
 
-  if (ray.t > ray.t1) return;
+  if (ray.t > ray.t1)
+    return;
 
   //! Sample the volume at the hit point in world coordinates.
   float t0 = ray.t;
@@ -96,7 +100,8 @@ inline void RaycastVolumeRenderer_computeIsosurfaceSample(RaycastVolumeRenderer 
     //! Advance the ray.
     volume->intersectIsosurface(volume, volume->isovalues, volume->numIsovalues, ray);
 
-    if (ray.t > ray.t1) return;
+    if (ray.t > ray.t1)
+      return;
 
     float t = ray.t;
     float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
@@ -163,18 +168,8 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
                                                         varying Ray &ray,
                                                         varying vec4f &color)
 {
-  //! We compute intersections on both the model and dynamicModel, and provide the contribution for the closest hit.
-  bool hitDynamicModel = false;
-
-  Ray dynamicRay = ray;
-  traceRay(renderer->dynamicModel, dynamicRay);
-
+  //! We compute intersections on the model and provide the contribution for the closest hit.
   traceRay(renderer->model, ray);
-
-  if(dynamicRay.t < ray.t) {
-    hitDynamicModel = true;
-    ray = dynamicRay;
-  }
 
   //! No hit found.
   if(ray.geomID < 0) {
@@ -184,11 +179,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   //! Post intersect on the hit geometry.
   DifferentialGeometry dg;
-
-  if(hitDynamicModel)
-    postIntersect(renderer->dynamicModel, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-  else
-    postIntersect(renderer->model, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
+  postIntersect(renderer->model, dg, ray, DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
   //! Color of the geometry.
   vec3f sampleColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
@@ -291,8 +282,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   float firstHit;
 
   while ((firstHit = min(min(ray.t, isosurfaceRay.t), geometryRay.t)) < tMax 
-         && 
-         min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
+         && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
     if (firstHit == ray.t) {
 
@@ -378,7 +368,9 @@ export void *uniform RaycastVolumeRenderer_createInstance()
   renderer->inherited.beginFrame = RaycastVolumeRenderer_renderFramePreamble;
 
   //! Function to perform per-frame state completion.
-  renderer->inherited.endFrame = RaycastVolumeRenderer_renderFramePostamble;  return(renderer);
+  renderer->inherited.endFrame = RaycastVolumeRenderer_renderFramePostamble;
+
+  return renderer;
 }
 
 export void RaycastVolumeRenderer_setCamera(void *uniform pointer, 
@@ -409,14 +401,4 @@ export void RaycastVolumeRenderer_setModel(void *uniform pointer,
 
   //! Set the model to be rendered.
   renderer->model = (Model *uniform) model;
-}
-
-export void RaycastVolumeRenderer_setDynamicModel(void *uniform pointer, 
-                                                  void *uniform model) 
-{
-  //! Cast to the actual Renderer subtype.
-  RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
-
-  //! Set the model to be rendered.
-  renderer->dynamicModel = (Model *uniform) model;
 }

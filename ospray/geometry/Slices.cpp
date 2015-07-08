@@ -14,65 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#undef NDEBUG
 
-#include <QtGui>
-#include <ospray/ospray.h>
+// ospray
+#include "Slices.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/Model.h"
+// ispc-generated files
+#include "Slices_ispc.h"
 
-struct SliceParameters
-{
-  osp::vec3f origin;
-  osp::vec3f normal;
-};
+namespace ospray {
 
-class SliceEditor;
+  Slices::Slices()
+  {
+    this->ispcEquivalent = ispc::Slices_create(this);
+  }
 
+  void Slices::finalize(Model *model) 
+  {
+    planesData = getParamData("planes", NULL);
+    volume     = (Volume *)getParamObject("volume", NULL);
 
-class SliceWidget : public QFrame
-{
-Q_OBJECT
+    Assert(planesData);
+    Assert(volume);
 
-public:
+    numPlanes = planesData->numItems;
+    planes    = (const vec4f*)planesData->data;
 
-  SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox);
-  ~SliceWidget();
+    ispc::Slices_set(getIE(), model->getIE(), numPlanes, (ispc::vec4f*)planes, volume->getIE());
+  }
 
-  SliceParameters getSliceParameters();
+  OSP_REGISTER_GEOMETRY(Slices, slices);
 
-signals:
-
-  void sliceChanged();
-  void sliceDeleted(SliceWidget *);
-
-public slots:
-
-  void load(std::string filename = std::string());
-
-protected slots:
-
-  void apply();
-  void save();
-  void originSliderValueChanged(int value);
-  void setAnimation(bool set);
-  void animate();
-
-protected:
-
-  //! Bounding box of the volume.
-  osp::box3f boundingBox;
-
-  //! UI elements.
-  QDoubleSpinBox originXSpinBox;
-  QDoubleSpinBox originYSpinBox;
-  QDoubleSpinBox originZSpinBox;
-
-  QDoubleSpinBox normalXSpinBox;
-  QDoubleSpinBox normalYSpinBox;
-  QDoubleSpinBox normalZSpinBox;
-
-  QSlider originSlider;
-  QPushButton originSliderAnimateButton;
-  QTimer originSliderAnimationTimer;
-  int originSliderAnimationDirection;
-
-};
+} // ::ospray

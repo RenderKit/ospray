@@ -17,6 +17,7 @@
 #pragma once
 
 #include "QOSPRayWindow.h"
+#include "SliceWidget.h"
 #include <QtGui>
 #include <string>
 #include <vector>
@@ -57,13 +58,13 @@ public slots:
   void setAutoRotationRate(float rate) { autoRotationRate = rate; }
 
   //! Draw the model associated with the next time step.
-  void nextTimeStep() { static size_t index = 0;  index = (index + 1) % models.size();  setModel(index);  render(); }
+  void nextTimeStep() { modelIndex = (modelIndex + 1) % models.size();  setModel(modelIndex);  render(); }
 
   //! Toggle animation over the time steps.
   void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(500);  else playTimeStepsTimer.stop(); }
 
-  //! Add a slice to the volume, optionally from file.
-  void addSlice(std::string filename = std::string());
+  //! Add a slice to the volume from file.
+  void addSlice(std::string filename);
 
   //! Add geometry from file.
   void addGeometry(std::string filename = std::string());
@@ -72,7 +73,7 @@ public slots:
   void screenshot(std::string filename = std::string());
 
   //! Re-commit all OSPRay volumes.
-  void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) ospCommit(volumes[i]); }
+  void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) for(size_t j=0; j<volumes[i].size(); j++) ospCommit(volumes[i][j]); }
 
   //! Force the OSPRay window to be redrawn.
   void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
@@ -84,33 +85,19 @@ public slots:
   }
 
   //! Set gradient shading flag on all volumes.
-  void setGradientShadingEnabled(bool value) {
-    for(size_t i=0; i<volumes.size(); i++) { ospSet1i(volumes[i], "gradientShadingEnabled", value); ospCommit(volumes[i]); }
-    render();
-  }
+  void setGradientShadingEnabled(bool value);
 
   //! Set sampling rate on all volumes.
-  void setSamplingRate(double value) {
-    for(size_t i=0; i<volumes.size(); i++) { ospSet1f(volumes[i], "samplingRate", value); ospCommit(volumes[i]); }
-    render();
-  }
+  void setSamplingRate(double value);
 
   //! Set volume clipping box on all volumes.
-  void setVolumeClippingBox(osp::box3f value) {
-    for(size_t i=0; i<volumes.size(); i++) {
-      ospSet3fv(volumes[i], "volumeClippingBoxLower", &value.lower.x);
-      ospSet3fv(volumes[i], "volumeClippingBoxUpper", &value.upper.x);
-      ospCommit(volumes[i]);
-    }
-    render();
-  }
+  void setVolumeClippingBox(osp::box3f value);
 
-  //! Set isosurface on all volumes; for now only one isovalue supported.
-  void setIsovalues(std::vector<float> isovalues) {
-    OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
-    for(size_t i=0; i<volumes.size(); i++) { ospSetData(volumes[i], "isovalues", isovaluesData); ospCommit(volumes[i]); }
-    render();
-  }
+  //! Set slices on all volumes.
+  void setSlices(std::vector<SliceParameters> sliceParameters);
+
+  //! Set isosurfaces on all volumes.
+  void setIsovalues(std::vector<float> isovalues);
 
 protected:
 
@@ -120,11 +107,14 @@ protected:
   //! OSPRay models.
   std::vector<OSPModel> models;
 
-  //! Model for dynamic geometry (slices); maintained separately from other geometry.
-  OSPModel dynamicModel;
+  //! Active OSPRay model index (time step).
+  size_t modelIndex;
 
-  //! OSPRay volumes.
-  std::vector<OSPVolume> volumes;
+  //! OSPRay volume(s) for each model.
+  std::vector<std::vector<OSPVolume> > volumes;
+
+  //! OSPRay slice geometries for each model.
+  std::vector<std::vector<OSPGeometry> > slices;
 
   //! Bounding box of the (first) volume.
   osp::box3f boundingBox;
@@ -147,11 +137,11 @@ protected:
   //! The transfer function editor.
   TransferFunctionEditor *transferFunctionEditor;
 
+  //! The slice editor.
+  SliceEditor *sliceEditor;
+
   //! The isosurface editor.
   IsosurfaceEditor *isosurfaceEditor;
-
-  //! Layout for slice widgets.
-  QVBoxLayout sliceWidgetsLayout;
 
   //! Auto-rotate button.
   QAction *autoRotateAction;

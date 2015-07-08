@@ -44,7 +44,8 @@ namespace ospray {
   protected:
 
     //! Required renderer state.
-    Camera *camera;  Model *model;  Model *dynamicModel;
+    Camera *camera;
+    Model *model;
 
     //! Print an error message.
     void emitMessage(const std::string &kind, const std::string &message) const

@@ -16,45 +16,30 @@
 
 #pragma once
 
-#include <QtGui>
 #include <ospray/ospray.h>
 
-struct SliceParameters
-{
-  osp::vec3f origin;
-  osp::vec3f normal;
-};
+#include "SliceWidget.h"
+#include <QtGui>
+#include <vector>
+#include <string>
 
-class SliceEditor;
-
-
-class SliceWidget : public QFrame
+class SliceEditor : public QWidget
 {
 Q_OBJECT
 
 public:
 
-  SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox);
-  ~SliceWidget();
-
-  SliceParameters getSliceParameters();
+  SliceEditor(osp::box3f boundingBox);
 
 signals:
 
-  void sliceChanged();
-  void sliceDeleted(SliceWidget *);
+  void slicesChanged(std::vector<SliceParameters> sliceParameters);
 
 public slots:
 
-  void load(std::string filename = std::string());
-
-protected slots:
-
+  void addSlice(std::string filename = std::string());
   void apply();
-  void save();
-  void originSliderValueChanged(int value);
-  void setAnimation(bool set);
-  void animate();
+  void deleteSlice(SliceWidget *sliceWidget);
 
 protected:
 
@@ -62,17 +47,7 @@ protected:
   osp::box3f boundingBox;
 
   //! UI elements.
-  QDoubleSpinBox originXSpinBox;
-  QDoubleSpinBox originYSpinBox;
-  QDoubleSpinBox originZSpinBox;
-
-  QDoubleSpinBox normalXSpinBox;
-  QDoubleSpinBox normalYSpinBox;
-  QDoubleSpinBox normalZSpinBox;
-
-  QSlider originSlider;
-  QPushButton originSliderAnimateButton;
-  QTimer originSliderAnimationTimer;
-  int originSliderAnimationDirection;
+  QVBoxLayout layout;
+  std::vector<SliceWidget *> sliceWidgets;
 
 };
