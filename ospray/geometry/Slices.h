@@ -55,7 +55,7 @@ namespace ospray {
       model's acceleration structure */
     virtual void finalize(Model *model);
 
-    Ref<Data> planesData; //!< refcounted data array for vertex data
+    Ref<Data> planesData; //!< refcounted data array for planes data
     Ref<Volume> volume;
 
     size_t       numPlanes;

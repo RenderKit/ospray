@@ -28,9 +28,9 @@
 
 struct Slices {
   uniform Geometry geometry; //!< inherited geometry fields
-  uniform int32    numPlanes;
-  uniform vec4f   *planes;
-  uniform Volume  *volume;
+  uniform int32 numPlanes;
+  uniform vec4f *uniform planes;
+  uniform Volume *uniform volume;
 };
 
 void Slices_bounds(uniform Slices *uniform slices,
