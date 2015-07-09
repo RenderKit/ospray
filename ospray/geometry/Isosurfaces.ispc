@@ -49,7 +49,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
 
   // Operate on a copy of the ray.
   Ray rayCopy = ray;
-  rayCopy.t = ray.t0;
+  rayCopy.t = ray.t0 + ray.time; // use ray.time as a ray offset
   rayCopy.t1 = ray.t;
 
   // Sample the volume at the current point in world coordinates.

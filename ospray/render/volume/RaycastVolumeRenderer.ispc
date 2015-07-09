@@ -157,6 +157,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Copy of the ray for geometry intersection. The original ray is used for volume intersection.
   Ray geometryRay = ray;
   geometryRay.t = tMax; //!< end of valid ray interval for traceRay().
+  geometryRay.time = -rayOffset * volume->samplingStep; //!< used by isosurface geometries as a ray offset
   geometryRay.primID = -1;
   geometryRay.geomID = -1;
   geometryRay.instID = -1;
