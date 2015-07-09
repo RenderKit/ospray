@@ -245,11 +245,36 @@ void VolumeViewer::setIsovalues(std::vector<float> isovalues)
 {
   OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
 
-  for(size_t i=0; i<volumes.size(); i++)
-    for(size_t j=0; j<volumes[i].size(); j++) {
-      ospSetData(volumes[i][j], "isovalues", isovaluesData);
-      ospCommit(volumes[i][j]);
+  //! Remove existing isosurface geometries from models.
+  for(size_t i=0; i<isosurfaces.size(); i++)
+    for(size_t j=0; j<isosurfaces[i].size(); j++) {
+      ospRemoveGeometry(models[i], isosurfaces[i][j]);
     }
+
+  isosurfaces.clear();
+
+  //! Return if we have no isosurfaces...
+  if(isovalues.size() == 0)
+    return;
+
+  //! Add new isosurfaces for each volume of each model. Later we can do this only for the active model on time step change...
+  for(size_t i=0; i<volumes.size(); i++) {
+    isosurfaces.push_back(std::vector<OSPGeometry>());
+
+    for(size_t j=0; j<volumes[i].size(); j++) {
+
+      OSPGeometry isosurfacesGeometry = ospNewGeometry("isosurfaces");
+      ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
+      ospSetObject(isosurfacesGeometry, "volume", volumes[i][j]);
+      ospCommit(isosurfacesGeometry);
+
+      ospAddGeometry(models[i], isosurfacesGeometry);
+
+      isosurfaces[i].push_back(isosurfacesGeometry);
+    }
+
+    ospCommit(models[i]);
+  }
 
   render();
 }

@@ -31,12 +31,6 @@ struct Volume {
   //! Allow the renderer to perform gradient shading.
   uniform bool gradientShadingEnabled;
 
-  //! Number of isovalues.
-  uniform int numIsovalues;
-
-  //! Isovalues.
-  uniform float *uniform isovalues;
-
   //! Recommended sampling step size for ray casting based renderers, set by the underlying volume implementation.
   uniform float samplingStep;
 

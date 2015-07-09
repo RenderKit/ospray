@@ -116,6 +116,9 @@ protected:
   //! OSPRay slice geometries for each model.
   std::vector<std::vector<OSPGeometry> > slices;
 
+  //! OSPRay isosurface geometries for each model.
+  std::vector<std::vector<OSPGeometry> > isosurfaces;
+
   //! Bounding box of the (first) volume.
   osp::box3f boundingBox;
 
