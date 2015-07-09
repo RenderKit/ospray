@@ -46,7 +46,9 @@ void Slices_intersect(uniform Slices *uniform slices,
 {
   const float tIntersect = -(dot(ray.org, make_vec3f(slices->planes[primID])) + slices->planes[primID].w) * rcpf(dot(ray.dir, make_vec3f(slices->planes[primID])));
 
-  if (!isnan(tIntersect) && tIntersect >= ray.t0 && tIntersect <= ray.t) {
+  // slice intersections ignored where NaNs exist in the volume
+  if (!isnan(tIntersect) && tIntersect >= ray.t0 && tIntersect <= ray.t &&
+      !isnan(slices->volume->computeSample(slices->volume, ray.org + tIntersect*ray.dir))) {
     ray.geomID = slices->geometry.geomID;
     ray.primID = primID;
     ray.t = tIntersect;
@@ -64,7 +66,7 @@ static void Slices_postIntersect(uniform Geometry *uniform geometry,
 
   if ((flags & DG_COLOR)) {
     uniform Slices *uniform self = (uniform Slices *uniform)geometry;
-    const float sample = self->volume->computeSample(self->volume, ray.org + ray.t*ray.dir);
+    const float sample = self->volume->computeSample(self->volume, dg.P);
     const vec3f sampleColor = self->volume->transferFunction->getColorForValue(self->volume->transferFunction, sample);
     const float sampleOpacity = 1.f; // later allow "opacity" parameter on slices.
 
