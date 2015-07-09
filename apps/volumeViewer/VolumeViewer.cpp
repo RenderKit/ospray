@@ -215,22 +215,25 @@ void VolumeViewer::setSlices(std::vector<SliceParameters> sliceParameters)
 
   slices.clear();
 
+  //! Return if we have no slices...
+  if(planes.size() == 0)
+    return;
+
   //! Add new slices for each volume of each model. Later we can do this only for the active model on time step change...
   for(size_t i=0; i<volumes.size(); i++) {
     slices.push_back(std::vector<OSPGeometry>());
 
-    for(size_t j=0; j<volumes[i].size(); j++)
-      for(size_t k=0; k<sliceParameters.size(); k++) {
+    for(size_t j=0; j<volumes[i].size(); j++) {
 
-        OSPGeometry slicesGeometry = ospNewGeometry("slices");
-        ospSetData(slicesGeometry, "planes", planesData);
-        ospSetObject(slicesGeometry, "volume", volumes[i][j]);
-        ospCommit(slicesGeometry);
+      OSPGeometry slicesGeometry = ospNewGeometry("slices");
+      ospSetData(slicesGeometry, "planes", planesData);
+      ospSetObject(slicesGeometry, "volume", volumes[i][j]);
+      ospCommit(slicesGeometry);
 
-        ospAddGeometry(models[i], slicesGeometry);
+      ospAddGeometry(models[i], slicesGeometry);
 
-        slices[i].push_back(slicesGeometry);
-      }
+      slices[i].push_back(slicesGeometry);
+    }
 
     ospCommit(models[i]);
   }
