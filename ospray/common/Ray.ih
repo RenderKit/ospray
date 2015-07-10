@@ -134,7 +134,7 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
 }
 
 /*! helper function that performs a ray-box test */
-inline void intersectBox(Ray& ray,
+inline void intersectBox(const Ray& ray,
                          const uniform box3f& box,
                          float& t0,
                          float& t1)
@@ -154,7 +154,7 @@ inline void intersectBox(Ray& ray,
 }
 
 /*! helper function that performs a ray-box test */
-inline void intersectBox(Ray& ray,
+inline void intersectBox(const Ray& ray,
                          const uniform box3fa& _box,
                          float& t0,
                          float& t1)
