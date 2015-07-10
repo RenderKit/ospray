@@ -46,8 +46,11 @@ void Slices_intersect(uniform Slices *uniform slices,
 {
   const float tIntersect = -(dot(ray.org, make_vec3f(slices->planes[primID])) + slices->planes[primID].w) * rcpf(dot(ray.dir, make_vec3f(slices->planes[primID])));
 
+  float tBox0, tBox1;
+  intersectBox(ray, slices->volume->boundingBox, tBox0, tBox1);
+
   // slice intersections ignored where NaNs exist in the volume
-  if (!isnan(tIntersect) && tIntersect >= ray.t0 && tIntersect <= ray.t &&
+  if (!isnan(tIntersect) && tIntersect >= max(ray.t0, tBox0) && tIntersect <= min(ray.t, tBox1) &&
       !isnan(slices->volume->computeSample(slices->volume, ray.org + tIntersect*ray.dir))) {
     ray.geomID = slices->geometry.geomID;
     ray.primID = primID;

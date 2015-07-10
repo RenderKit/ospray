@@ -47,10 +47,13 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
   // Volume of interest.
   uniform Volume *uniform volume = self->volume;
 
+  float tBox0, tBox1;
+  intersectBox(ray, self->volume->boundingBox, tBox0, tBox1);
+
   // Operate on a copy of the ray.
   Ray rayCopy = ray;
-  rayCopy.t = ray.t0 + ray.time; // use ray.time as a ray offset
-  rayCopy.t1 = ray.t;
+  rayCopy.t = max(ray.t0, tBox0) + ray.time; // use ray.time as a ray offset
+  rayCopy.t1 = min(ray.t, tBox1);
 
   // Sample the volume at the current point in world coordinates.
   float t0 = rayCopy.t;

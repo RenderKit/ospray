@@ -139,39 +139,30 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Ray epsilon.
   const uniform float epsilon = 1e-4 * distance(boundingBox.lower, boundingBox.upper);
 
-  //! Compute the intersection interval over the ray and volume bounds.
-  intersectBox(ray, boundingBox, ray.t0, ray.t1);
-
-  if (ray.t0 > ray.t1)
-    return;
-
-  ray.t = ray.t0;
-
-  //! Maximum extent for the volume bounds.
-  const float tMax = ray.t1;
-
-  //! Offset ray by a fraction of the nominal ray step.
-  const uniform float step = volume->samplingStep / volume->samplingRate;
-  ray.t += rayOffset * step;
-
   //! Copy of the ray for geometry intersection. The original ray is used for volume intersection.
   Ray geometryRay = ray;
-  geometryRay.t = tMax; //!< end of valid ray interval for traceRay().
   geometryRay.time = -rayOffset * volume->samplingStep; //!< used by isosurface geometries as a ray offset
   geometryRay.primID = -1;
   geometryRay.geomID = -1;
   geometryRay.instID = -1;
 
-  //! Clipping box for volume rendering (does not apply to geometry).
-  const uniform box3f volumeClippingBox = volume->volumeClippingBox;
+  //! Compute the intersection interval over the ray and volume bounds.
+  intersectBox(ray, boundingBox, ray.t0, ray.t);
 
-  //! Compute the intersection interval over the ray and clipping box bounds.
-  if(ne(volumeClippingBox.lower, volumeClippingBox.upper)) {
-    ray.t = tMax;
-    intersectBox(ray, volumeClippingBox, ray.t0, ray.t1);
+  //! And the volume clipping box bounds.
+  if(ne(volume->volumeClippingBox.lower, volume->volumeClippingBox.upper))
+    intersectBox(ray, volume->volumeClippingBox, ray.t0, ray.t);
 
-    ray.t = ray.t0 + rayOffset * step;
-  }
+  ray.t1 = ray.t;
+
+  if (ray.t0 > ray.t1)
+    ray.t = infinity;
+  else
+    ray.t = ray.t0;
+
+  //! Offset ray by a fraction of the nominal ray step.
+  const uniform float step = volume->samplingStep / volume->samplingRate;
+  ray.t += rayOffset * step;
 
   //! Separate color contributions for the volume and geometries. Initialize to provided color in case of no contribution...
   vec4f volumeColor = color;
@@ -184,10 +175,16 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   //! Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(ray.t, geometryRay.t)) < tMax
+  while ((firstHit = min(ray.t, geometryRay.t)) < infinity
          && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
     if (firstHit == ray.t) {
+
+      //! Check to see if we've exited the volume.
+      if (ray.t > ray.t1) {
+        ray.t = infinity;
+        continue;
+      }
 
       //! Volume contribution.
       color = color + (1.0f - color.w) * volumeColor;
@@ -202,7 +199,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
       //! Reset geometry ray.
       geometryRay.t0 = geometryRay.t + epsilon;
-      geometryRay.t = tMax; //! end of valid ray interval for traceRay()
+      geometryRay.t = infinity; //! end of valid ray interval for traceRay()
       geometryRay.primID = -1;
       geometryRay.geomID = -1;
       geometryRay.instID = -1;
