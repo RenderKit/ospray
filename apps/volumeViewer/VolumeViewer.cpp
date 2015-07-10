@@ -69,12 +69,12 @@ void VolumeViewer::setModel(size_t index)
   modelIndex = index;
 
   //! Set current model on the OSPRay renderer.
-  ospSetObject(renderer, "model", models[index]);
+  ospSetObject(renderer, "model", modelStates[index].model);
   ospCommit(renderer);
   rendererInitialized = true;
 
   //! Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
-  osp::vec2f voxelRange(0.f);  ospGetVec2f(volumes[index][0], "voxelRange", &voxelRange);
+  osp::vec2f voxelRange(0.f);  ospGetVec2f(modelStates[index].volumes[0], "voxelRange", &voxelRange);
 
   if(voxelRange != osp::vec2f(0.f)) {
     transferFunctionEditor->setDataValueRange(voxelRange);
@@ -128,9 +128,9 @@ void VolumeViewer::addGeometry(std::string filename)
 
     ospCommit(triangleMesh);
 
-    for(unsigned int i=0; i<models.size(); i++) {
-      ospAddGeometry(models[i], triangleMesh);
-      ospCommit(models[i]);
+    for(size_t i=0; i<modelStates.size(); i++) {
+      ospAddGeometry(modelStates[i].model, triangleMesh);
+      ospCommit(modelStates[i].model);
     }
 
     //! Force render.
@@ -162,10 +162,10 @@ void VolumeViewer::screenshot(std::string filename)
 
 void VolumeViewer::setGradientShadingEnabled(bool value)
 {
-  for(size_t i=0; i<volumes.size(); i++)
-    for(size_t j=0; j<volumes[i].size(); j++) {
-      ospSet1i(volumes[i][j], "gradientShadingEnabled", value);
-      ospCommit(volumes[i][j]);
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1i(modelStates[i].volumes[j], "gradientShadingEnabled", value);
+      ospCommit(modelStates[i].volumes[j]);
     }
 
   render();
@@ -173,10 +173,10 @@ void VolumeViewer::setGradientShadingEnabled(bool value)
 
 void VolumeViewer::setSamplingRate(double value)
 {
-  for(size_t i=0; i<volumes.size(); i++)
-    for(size_t j=0; j<volumes[i].size(); j++) {
-      ospSet1f(volumes[i][j], "samplingRate", value);
-      ospCommit(volumes[i][j]);
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet1f(modelStates[i].volumes[j], "samplingRate", value);
+      ospCommit(modelStates[i].volumes[j]);
     }
 
   render();
@@ -184,11 +184,11 @@ void VolumeViewer::setSamplingRate(double value)
 
 void VolumeViewer::setVolumeClippingBox(osp::box3f value)
 {
-  for(size_t i=0; i<volumes.size(); i++)
-    for(size_t j=0; j<volumes[i].size(); j++) {
-      ospSet3fv(volumes[i][j], "volumeClippingBoxLower", &value.lower.x);
-      ospSet3fv(volumes[i][j], "volumeClippingBoxUpper", &value.upper.x);
-      ospCommit(volumes[i][j]);
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
+      ospSet3fv(modelStates[i].volumes[j], "volumeClippingBoxLower", &value.lower.x);
+      ospSet3fv(modelStates[i].volumes[j], "volumeClippingBoxUpper", &value.upper.x);
+      ospCommit(modelStates[i].volumes[j]);
     }
 
   render();
@@ -208,34 +208,31 @@ void VolumeViewer::setSlices(std::vector<SliceParameters> sliceParameters)
   OSPData planesData = ospNewData(planes.size(), OSP_FLOAT4, &planes[0].x);
 
   //! Remove existing slice geometries from models.
-  for(size_t i=0; i<slices.size(); i++)
-    for(size_t j=0; j<slices[i].size(); j++) {
-      ospRemoveGeometry(models[i], slices[i][j]);
-    }
+  for(size_t i=0; i<modelStates.size(); i++) {
+    for(size_t j=0; j<modelStates[i].slices.size(); j++)
+      ospRemoveGeometry(modelStates[i].model, modelStates[i].slices[j]);
 
-  slices.clear();
-
-  //! Return if we have no slices...
-  if(planes.size() == 0)
-    return;
+    modelStates[i].slices.clear();
+  }
 
   //! Add new slices for each volume of each model. Later we can do this only for the active model on time step change...
-  for(size_t i=0; i<volumes.size(); i++) {
-    slices.push_back(std::vector<OSPGeometry>());
+  for(size_t i=0; i<modelStates.size(); i++) {
 
-    for(size_t j=0; j<volumes[i].size(); j++) {
+    if(planes.size() > 0) {
+      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
 
-      OSPGeometry slicesGeometry = ospNewGeometry("slices");
-      ospSetData(slicesGeometry, "planes", planesData);
-      ospSetObject(slicesGeometry, "volume", volumes[i][j]);
-      ospCommit(slicesGeometry);
+        OSPGeometry slicesGeometry = ospNewGeometry("slices");
+        ospSetData(slicesGeometry, "planes", planesData);
+        ospSetObject(slicesGeometry, "volume", modelStates[i].volumes[j]);
+        ospCommit(slicesGeometry);
 
-      ospAddGeometry(models[i], slicesGeometry);
+        ospAddGeometry(modelStates[i].model, slicesGeometry);
 
-      slices[i].push_back(slicesGeometry);
+        modelStates[i].slices.push_back(slicesGeometry);
+      }
     }
 
-    ospCommit(models[i]);
+    ospCommit(modelStates[i].model);
   }
 
   render();
@@ -246,34 +243,31 @@ void VolumeViewer::setIsovalues(std::vector<float> isovalues)
   OSPData isovaluesData = ospNewData(isovalues.size(), OSP_FLOAT, &isovalues[0]);
 
   //! Remove existing isosurface geometries from models.
-  for(size_t i=0; i<isosurfaces.size(); i++)
-    for(size_t j=0; j<isosurfaces[i].size(); j++) {
-      ospRemoveGeometry(models[i], isosurfaces[i][j]);
-    }
+  for(size_t i=0; i<modelStates.size(); i++) {
+    for(size_t j=0; j<modelStates[i].isosurfaces.size(); j++)
+      ospRemoveGeometry(modelStates[i].model, modelStates[i].isosurfaces[j]);
 
-  isosurfaces.clear();
-
-  //! Return if we have no isosurfaces...
-  if(isovalues.size() == 0)
-    return;
+    modelStates[i].isosurfaces.clear();
+  }
 
   //! Add new isosurfaces for each volume of each model. Later we can do this only for the active model on time step change...
-  for(size_t i=0; i<volumes.size(); i++) {
-    isosurfaces.push_back(std::vector<OSPGeometry>());
+  for(size_t i=0; i<modelStates.size(); i++) {
 
-    for(size_t j=0; j<volumes[i].size(); j++) {
+    if(isovalues.size() > 0) {
+      for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
 
-      OSPGeometry isosurfacesGeometry = ospNewGeometry("isosurfaces");
-      ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
-      ospSetObject(isosurfacesGeometry, "volume", volumes[i][j]);
-      ospCommit(isosurfacesGeometry);
+        OSPGeometry isosurfacesGeometry = ospNewGeometry("isosurfaces");
+        ospSetData(isosurfacesGeometry, "isovalues", isovaluesData);
+        ospSetObject(isosurfacesGeometry, "volume", modelStates[i].volumes[j]);
+        ospCommit(isosurfacesGeometry);
 
-      ospAddGeometry(models[i], isosurfacesGeometry);
+        ospAddGeometry(modelStates[i].model, isosurfacesGeometry);
 
-      isosurfaces[i].push_back(isosurfacesGeometry);
+        modelStates[i].isosurfaces.push_back(isosurfacesGeometry);
+      }
     }
 
-    ospCommit(models[i]);
+    ospCommit(modelStates[i].model);
   }
 
   render();
@@ -281,12 +275,8 @@ void VolumeViewer::setIsovalues(std::vector<float> isovalues)
 
 void VolumeViewer::importObjectsFromFile(const std::string &filename)
 {
-  //! Create an OSPRay model.
-  OSPModel model = ospNewModel();
-  models.push_back(model);
-
-  //! Create vector of volumes for this model.
-  volumes.push_back(std::vector<OSPVolume>());
+  //! Create an OSPRay model and its associated model state.
+  modelStates.push_back(ModelState(ospNewModel()));
 
   //! Load OSPRay objects from a file.
   OSPObject *objects = ObjectFile::importObjects(filename.c_str());
@@ -302,7 +292,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
       ospCommit(objects[i]);
 
       //! Add the loaded geometry to the model.
-      ospAddGeometry(model, (OSPGeometry) objects[i]);
+      ospAddGeometry(modelStates.back().model, (OSPGeometry) objects[i]);
 
     } else if (type == OSP_VOLUME) {
 
@@ -311,15 +301,15 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
       ospCommit(objects[i]);
 
       //! Add the loaded volume(s) to the model.
-      ospAddVolume(model, (OSPVolume) objects[i]);
+      ospAddVolume(modelStates.back().model, (OSPVolume) objects[i]);
 
       //! Add to volumes vector for the current model.
-      volumes.back().push_back((OSPVolume) objects[i]);
+      modelStates.back().volumes.push_back((OSPVolume) objects[i]);
     }
   }
 
   //! Commit the model.
-  ospCommit(model);
+  ospCommit(modelStates.back().model);
 }
 
 void VolumeViewer::initObjects()
@@ -348,9 +338,9 @@ void VolumeViewer::initObjects()
     importObjectsFromFile(objectFileFilenames[i]);
 
   //! Get the bounding box of the first volume.
-  if(volumes.size() > 0 && volumes[0].size() > 0) {
-    ospGetVec3f(volumes[0][0], "boundingBoxMin", &boundingBox.lower);
-    ospGetVec3f(volumes[0][0], "boundingBoxMax", &boundingBox.upper);
+  if(modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
+    ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", &boundingBox.lower);
+    ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMax", &boundingBox.upper);
   }
 }
 

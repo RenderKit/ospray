@@ -25,6 +25,18 @@
 class TransferFunctionEditor;
 class IsosurfaceEditor;
 
+//! OSPRay model and its volumes / geometries
+struct ModelState {
+
+  ModelState(OSPModel model) : model(model) { }
+
+  OSPModel model; //!< the OSPRay model
+
+  std::vector<OSPVolume> volumes; //!< OSPRay volumes for the model
+  std::vector<OSPGeometry> slices; //! OSPRay slice geometries for the model
+  std::vector<OSPGeometry> isosurfaces; //! OSPRay isosurface geometries for the model
+};
+
 class VolumeViewer : public QMainWindow {
 
 Q_OBJECT
@@ -58,7 +70,7 @@ public slots:
   void setAutoRotationRate(float rate) { autoRotationRate = rate; }
 
   //! Draw the model associated with the next time step.
-  void nextTimeStep() { modelIndex = (modelIndex + 1) % models.size();  setModel(modelIndex);  render(); }
+  void nextTimeStep() { modelIndex = (modelIndex + 1) % modelStates.size();  setModel(modelIndex);  render(); }
 
   //! Toggle animation over the time steps.
   void playTimeSteps(bool animate) { if (animate == true) playTimeStepsTimer.start(500);  else playTimeStepsTimer.stop(); }
@@ -73,7 +85,7 @@ public slots:
   void screenshot(std::string filename = std::string());
 
   //! Re-commit all OSPRay volumes.
-  void commitVolumes() { for(size_t i=0; i<volumes.size(); i++) for(size_t j=0; j<volumes[i].size(); j++) ospCommit(volumes[i][j]); }
+  void commitVolumes() { for(size_t i=0; i<modelStates.size(); i++) for(size_t j=0; j<modelStates[i].volumes.size(); j++) ospCommit(modelStates[i].volumes[j]); }
 
   //! Force the OSPRay window to be redrawn.
   void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
@@ -104,20 +116,11 @@ protected:
   //! OSPRay object file filenames, one for each model / time step.
   std::vector<std::string> objectFileFilenames;
 
-  //! OSPRay models.
-  std::vector<OSPModel> models;
+  //! OSPRay models and their volumes / geometries.
+  std::vector<ModelState> modelStates;
 
   //! Active OSPRay model index (time step).
   size_t modelIndex;
-
-  //! OSPRay volume(s) for each model.
-  std::vector<std::vector<OSPVolume> > volumes;
-
-  //! OSPRay slice geometries for each model.
-  std::vector<std::vector<OSPGeometry> > slices;
-
-  //! OSPRay isosurface geometries for each model.
-  std::vector<std::vector<OSPGeometry> > isosurfaces;
 
   //! Bounding box of the (first) volume.
   osp::box3f boundingBox;
