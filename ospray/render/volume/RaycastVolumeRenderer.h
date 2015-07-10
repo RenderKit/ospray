@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include "ospray/camera/Camera.h"
-#include "ospray/common/Model.h"
-#include "ospray/lights/Light.h"
 #include "ospray/render/Renderer.h"
 
 namespace ospray {
@@ -42,10 +39,6 @@ namespace ospray {
     virtual std::string toString() const { return("ospray::RaycastVolumeRenderer"); }
 
   protected:
-
-    //! Required renderer state.
-    Camera *camera;
-    Model *model;
 
     //! Print an error message.
     void emitMessage(const std::string &kind, const std::string &message) const

@@ -15,6 +15,9 @@
 // ======================================================================== //
 
 // ospray
+#include "ospray/camera/Camera.h"
+#include "ospray/common/Model.h"
+#include "ospray/lights/Light.h"
 #include "ospray/camera/PerspectiveCamera.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Ray.h"
@@ -30,11 +33,19 @@ namespace ospray {
     //! Create the equivalent ISPC RaycastVolumeRenderer object.
     if (ispcEquivalent == NULL) ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
 
+    //! Get the background color.
+    vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
+
     //! Get the camera.
-    camera = (Camera *) getParamObject("camera", NULL);  exitOnCondition(camera == NULL, "no camera specified");
+    Camera *camera = (Camera *) getParamObject("camera", NULL);
+    exitOnCondition(camera == NULL, "no camera specified");
 
     //! Get the model.
-    model = (Model *) getParamObject("model", NULL);  exitOnCondition(model == NULL, "no model specified");
+    Model *model = (Model *) getParamObject("model", NULL);
+    exitOnCondition(model == NULL, "no model specified");
+
+    //! Set the background color.
+    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
 
     //! Set the camera.
     ispc::RaycastVolumeRenderer_setCamera(ispcEquivalent, camera->getIE());

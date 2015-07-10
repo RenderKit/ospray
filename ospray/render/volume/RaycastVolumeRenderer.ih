@@ -33,6 +33,7 @@ struct RaycastVolumeRenderer {
   Renderer inherited;
 
   //! Renderer state. TODO: camera&model already in inherited!
+  uniform vec3f bgColor;
   Camera *uniform camera;
   Light **uniform lights;
   Model *uniform model;

@@ -220,7 +220,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
 
   //! Background color.
-  const vec4f background = make_vec4f(1.0f);
+  const vec4f background = make_vec4f(renderer->bgColor.x, renderer->bgColor.y, renderer->bgColor.z, 1.f);
 
   //! Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);
@@ -262,32 +262,42 @@ export void *uniform RaycastVolumeRenderer_createInstance()
   return renderer;
 }
 
-export void RaycastVolumeRenderer_setCamera(void *uniform pointer, 
-                                            void *uniform camera) 
+export void RaycastVolumeRenderer_setBackgroundColor(void *uniform _self,
+                                                     const uniform vec3f &bgColor)
 {
   //! Cast to the actual Renderer subtype.
-  RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
+  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
 
   //! Set the camera view to render.
-  renderer->inherited.camera = (Camera *uniform) camera;
+  self->bgColor = bgColor;
 }
 
-export void RaycastVolumeRenderer_setLights(void *uniform pointer, 
-                                            void **uniform lights) 
+export void RaycastVolumeRenderer_setCamera(void *uniform _self,
+                                            void *uniform camera)
 {
   //! Cast to the actual Renderer subtype.
-  RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
+  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
+
+  //! Set the camera view to render.
+  self->inherited.camera = (Camera *uniform) camera;
+}
+
+export void RaycastVolumeRenderer_setLights(void *uniform _self,
+                                            void **uniform lights)
+{
+  //! Cast to the actual Renderer subtype.
+  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
 
   //! Set the light sources.
-  renderer->lights = (Light **uniform) lights;
+  self->lights = (Light **uniform) lights;
 }
 
-export void RaycastVolumeRenderer_setModel(void *uniform pointer, 
-                                           void *uniform model) 
+export void RaycastVolumeRenderer_setModel(void *uniform _self,
+                                           void *uniform model)
 {
   //! Cast to the actual Renderer subtype.
-  RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
+  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
 
   //! Set the model to be rendered.
-  renderer->model = (Model *uniform) model;
+  self->model = (Model *uniform) model;
 }
