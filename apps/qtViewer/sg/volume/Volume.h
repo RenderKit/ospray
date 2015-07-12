@@ -16,10 +16,15 @@
 
 #pragma once
 
+// sg
 #include "sg/common/TransferFunction.h"
+// embree
+#include "common/sys/filename.h"
 
 namespace ospray {
   namespace sg {
+
+    using embree::FileName;
 
     /*! a geometry node - the generic geometry node */
     struct Volume : public sg::Node {
@@ -36,6 +41,9 @@ namespace ospray {
 
     /*! a plain old structured volume */
     struct StructuredVolume : public Volume {
+      //! constructor
+      StructuredVolume();
+
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const;
 
@@ -49,6 +57,15 @@ namespace ospray {
       virtual void render(RenderContext &ctx);
 
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
+      SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);    
+      SG_NODE_DECLARE_MEMBER(std::string,scalarType,ScalarType);    
+      
+      //! \brief file name of the xml doc when the node was loaded/parsed from xml 
+      /*! \detailed we need this to properly resolve relative file names */
+      FileName fileNameOfCorrespondingXmlDoc;
+
+      //! ospray volume object handle
+      OSPVolume volume;
     };
     
     struct ProceduralTestVolume : public Volume {

@@ -31,6 +31,11 @@ namespace ospray {
     // structured volume class
     // =======================================================
 
+    //! constructor
+    StructuredVolume::StructuredVolume()
+      : dimensions(-1), fileName(""), scalarType("<undefined>"), volume(NULL)
+    {}
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string StructuredVolume::toString() const
     { return "ospray::sg::StructuredVolume"; }
@@ -46,11 +51,18 @@ namespace ospray {
         const std::string param = node->child[paramID]->name;
         const std::string content = node->child[paramID]->content;
         if (param == "dimensions") {
-          PING;
-          PRINT(content);
           setDimensions(parseVec3i(content));
-        } else
-          throw std::runtime_error("unknown parameter '"+param+"' in ProceduralTestVolume");
+          continue;
+        } 
+        if (param == "fileName") {
+          setFileName(content);
+          assert(node);
+          assert(node->doc);
+          fileNameOfCorrespondingXmlDoc = node->doc->fileName;
+          continue;
+        } 
+
+        throw std::runtime_error("unknown parameter '"+param+"' in StructuredVolume");
       }
       std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " << getDimensions() << std::endl;
     }
@@ -58,7 +70,17 @@ namespace ospray {
     /*! \brief 'render' the object to ospray */
     void StructuredVolume::render(RenderContext &ctx)
     {
-      NOTIMPLEMENTED;
+      if (volume) return;
+
+      if (!transferFunction) 
+        setTransferFunction(new TransferFunction);
+      transferFunction->render(ctx);
+
+      // volume = ospNewVolume("block_bricked_volume");
+      // ospSetString(volume,"voxelType","float");
+      // ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      // ospCommit(volume);
+      // PRINT(volume);
     }
 
     OSP_REGISTER_SG_NODE(StructuredVolume);
