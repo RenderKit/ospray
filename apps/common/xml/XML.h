@@ -45,6 +45,11 @@ namespace ospray {
       //! destructor
       virtual ~Node();
 
+      inline bool hasProp(const std::string &name) const {
+        for (int i=0;i<prop.size();i++) 
+          if (prop[i]->name == name) return true;
+        return false;
+      }
       inline std::string getProp(const std::string &name) const {
         for (int i=0;i<prop.size();i++) 
           if (prop[i]->name == name) return prop[i]->value; 

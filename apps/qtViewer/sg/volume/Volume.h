@@ -64,6 +64,8 @@ namespace ospray {
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
 
+      const unsigned char *mappedPointer;
+
       //! ospray volume object handle
       OSPVolume volume;
     };
