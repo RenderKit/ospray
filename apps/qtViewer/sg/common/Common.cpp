@@ -14,44 +14,20 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
-// ospray API
-#include "ospray/ospray.h"
-// ospray 
-#include "ospray/common/OSPCommon.h"
-// STL
+// scene graph common stuff
+#include "Common.h"
 
 namespace ospray {
   namespace sg {
-
-    typedef unsigned int uint;
     
-    /*! base node for every scene graph node */
-    struct Node;
-    /*! c++ wrapper for an ospray model */
-    struct World;
-    /*! c++ wrapper for an ospray light source */
-    struct Light;
-    /*! c++ wrapper for an ospray camera */
-    struct Geometry;
-    /*! c++ wrapper for an ospray geometry type */
-    struct Volume;
-    /*! c++ wrapper for an ospray volume type */
-    struct Camera;
-    /*! c++ wrapper for an ospray renderer (the thing that produces
-        pixel colors is actualy close to what PBRT calls in
-        'integrator' */
-    struct Integrator;
-
-
-    /*! @{ helper functions for parsing xml nodes */
     //! parse vec3i from std::string (typically an xml-node's content string) 
-    vec3i parseVec3i(const std::string &text);
-
-    /*! @} */
-
+    vec3i parseVec3i(const std::string &text) 
+    { 
+      vec3i ret; 
+      int rc = sscanf(text.c_str(),"%i %i %i",&ret.x,&ret.y,&ret.z); 
+      assert(rc == 3); 
+      return ret; 
+    }
+    
   } // ::ospray::sg
 } // ::ospray
-
-

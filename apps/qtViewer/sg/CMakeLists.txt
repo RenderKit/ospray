@@ -11,6 +11,8 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
   geometry/Spheres.cpp
   geometry/PKD.cpp
   geometry/TriangleMesh.cpp
+
+  common/Common.cpp
   common/Node.cpp
   common/Integrator.cpp
   common/World.cpp

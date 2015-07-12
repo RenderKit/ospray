@@ -28,6 +28,42 @@ namespace ospray {
     { return "ospray::sg::Volume"; }
     
     // =======================================================
+    // structured volume class
+    // =======================================================
+
+    /*! \brief returns a std::string with the c++ name of this class */
+    std::string StructuredVolume::toString() const
+    { return "ospray::sg::StructuredVolume"; }
+    
+    //! return bounding box of all primitives
+    box3f StructuredVolume::getBounds()
+    { return box3f(vec3f(0.f),vec3f(getDimensions())); }
+
+      //! \brief Initialize this node's value from given XML node 
+    void StructuredVolume::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    {
+      for (int paramID=0;paramID < node->child.size();paramID++) {
+        const std::string param = node->child[paramID]->name;
+        const std::string content = node->child[paramID]->content;
+        if (param == "dimensions") {
+          PING;
+          PRINT(content);
+          setDimensions(parseVec3i(content));
+        } else
+          throw std::runtime_error("unknown parameter '"+param+"' in ProceduralTestVolume");
+      }
+      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " << getDimensions() << std::endl;
+    }
+    
+    /*! \brief 'render' the object to ospray */
+    void StructuredVolume::render(RenderContext &ctx)
+    {
+      NOTIMPLEMENTED;
+    }
+
+    OSP_REGISTER_SG_NODE(StructuredVolume);
+
+    // =======================================================
     // procedural test volume class
     // =======================================================
 

@@ -33,6 +33,23 @@ namespace ospray {
 
       SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunction,TransferFunction);    
     };
+
+    /*! a plain old structured volume */
+    struct StructuredVolume : public Volume {
+      /*! \brief returns a std::string with the c++ name of this class */
+      virtual    std::string toString() const;
+
+      //! return bounding box of all primitives
+      virtual box3f getBounds();
+
+      //! \brief Initialize this node's value from given XML node 
+      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr);
+
+      /*! \brief 'render' the object to ospray */
+      virtual void render(RenderContext &ctx);
+
+      SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
+    };
     
     struct ProceduralTestVolume : public Volume {
       //! \brief constructor
