@@ -78,7 +78,9 @@ namespace ospray {
       if (node->hasProp("ofs"))
         mappedPointer = binBasePtr + node->getPropl("ofs");
       dimensions = parseVec3i(node->getProp("dimensions"));
-      fileName = node->getProp(fileName);
+      fileName = node->getProp("fileName");
+      if (fileName != "") fileNameOfCorrespondingXmlDoc = node->doc->fileName;
+      PRINT(fileName);
 
       if (scalarType != "float") 
         throw std::runtime_error("unkonwn StructuredVolume.scalarType (currently only supporting 'float')");
@@ -95,6 +97,7 @@ namespace ospray {
       if (volume) return;
 
       PRINT(dimensions);
+      PRINT(fileName);
 
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
@@ -104,9 +107,15 @@ namespace ospray {
       ospSetVec3i(volume,"dimensions",dimensions);
       size_t nPerSlice = dimensions.x*dimensions.y;
       if (fileName != "") {
-        FILE *file = fopen(fileName.c_str(),"rb");
+        PRINT(fileNameOfCorrespondingXmlDoc);
+        FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
+        PRINT(realFileName);
+        FILE *file = fopen(realFileName.c_str(),"rb");
         if (!file) 
-          throw std::runtime_error("StructuredVolume::render(): could not open file '"+fileName+"'");
+          throw std::runtime_error("StructuredVolume::render(): could not open file '"
+                                   +realFileName.str()+"' (expanded from xml file '"
+                                   +fileNameOfCorrespondingXmlDoc.str()
+                                   +"' and file name '"+fileName+"')");
         float *slice = new float[nPerSlice];
         for (int z=0;z<dimensions.z;z++) {
           size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
