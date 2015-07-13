@@ -83,6 +83,9 @@ namespace ospray {
       if (scalarType != "float") 
         throw std::runtime_error("unkonwn StructuredVolume.scalarType (currently only supporting 'float')");
           
+      if (!transferFunction) 
+        setTransferFunction(new TransferFunction);
+
       std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " << getDimensions() << std::endl;
     }
     
@@ -123,8 +126,6 @@ namespace ospray {
         delete[] slice;
       }
       
-      if (!transferFunction) 
-        setTransferFunction(new TransferFunction);
       transferFunction->render(ctx);
 
       // volume = ospNewVolume("block_bricked_volume");

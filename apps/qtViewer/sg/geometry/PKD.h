@@ -55,7 +55,7 @@ namespace ospray {
       virtual void render(RenderContext &ctx);
 
 
-    //! serialize into given serialization state 
+      //! serialize into given serialization state 
       virtual void serialize(sg::Serialization::State &state)
       {
         Geometry::serialize(state);

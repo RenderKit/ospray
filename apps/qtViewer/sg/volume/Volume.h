@@ -36,6 +36,16 @@ namespace ospray {
       //! return bounding box of all primitives
       virtual box3f getBounds() = 0;
 
+      //! serialize into given serialization state 
+      virtual void serialize(sg::Serialization::State &state)
+      {
+        PING;
+        Node::serialize(state);
+        PRINT(transferFunction);
+        if (transferFunction) 
+          transferFunction->serialize(state);
+      }
+
       SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunction,TransferFunction);    
     };
 
@@ -59,7 +69,7 @@ namespace ospray {
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
       SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);    
       SG_NODE_DECLARE_MEMBER(std::string,scalarType,ScalarType);    
-      
+
       //! \brief file name of the xml doc when the node was loaded/parsed from xml 
       /*! \detailed we need this to properly resolve relative file names */
       FileName fileNameOfCorrespondingXmlDoc;
