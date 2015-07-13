@@ -39,9 +39,7 @@ namespace ospray {
       //! serialize into given serialization state 
       virtual void serialize(sg::Serialization::State &state)
       {
-        PING;
         Node::serialize(state);
-        PRINT(transferFunction);
         if (transferFunction) 
           transferFunction->serialize(state);
       }
