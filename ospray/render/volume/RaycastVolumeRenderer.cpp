@@ -28,7 +28,7 @@ namespace ospray {
     //! Create the equivalent ISPC RaycastVolumeRenderer object.
     if (ispcEquivalent == NULL) ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
 
-#if 1
+#if 0
     const vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
     ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
 
