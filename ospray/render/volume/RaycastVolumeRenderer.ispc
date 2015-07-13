@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "ospray/fb/FrameBuffer.ih"
+#include "ospray/common/Model.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/render/util.ih"
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
@@ -80,7 +81,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
                                                         varying vec4f &color)
 {
   //! We compute intersections on the model and provide the contribution for the closest hit.
-  traceRay(renderer->model, ray);
+  traceRay(renderer->inherited.model, ray);
 
   //! No hit found.
   if(ray.geomID < 0) {
@@ -90,7 +91,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   //! Post intersect on the hit geometry.
   DifferentialGeometry dg;
-  postIntersect(renderer->model, dg, ray, DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR);
+  postIntersect(renderer->inherited.model, dg, ray, DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR);
 
   //! Color of the geometry.
   vec3f sampleColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
@@ -131,7 +132,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
                                             varying vec4f &color)
 {
   //! Assume just one volume.
-  Volume *uniform volume = renderer->model->volumes[0];
+  Volume *uniform volume = renderer->inherited.model->volumes[0];
 
   //! Bounding box of the volume.
   const uniform box3f boundingBox = volume->boundingBox;
@@ -277,14 +278,4 @@ export void RaycastVolumeRenderer_setLights(void *uniform _self,
 
   //! Set the light sources.
   self->lights = (Light **uniform) lights;
-}
-
-export void RaycastVolumeRenderer_setModel(void *uniform _self,
-                                           void *uniform model)
-{
-  //! Cast to the actual Renderer subtype.
-  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
-
-  //! Set the model to be rendered.
-  self->model = (Model *uniform) model;
 }

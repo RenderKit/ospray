@@ -15,12 +15,9 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/common/Model.h"
 #include "ospray/lights/Light.h"
 #include "ospray/common/Data.h"
-#include "ospray/common/Ray.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
-#include "ospray/volume/Volume.h"
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
 
@@ -34,15 +31,8 @@ namespace ospray {
     //! Get the background color.
     vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
 
-    //! Get the model.
-    Model *model = (Model *) getParamObject("model", NULL);
-    exitOnCondition(model == NULL, "no model specified");
-
     //! Set the background color.
     ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
-
-    //! Set the model.
-    ispc::RaycastVolumeRenderer_setModel(ispcEquivalent, model->getIE());
 
     //! Set the lights if any.
     ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, getLightsFromData(getParamData("lights", NULL)));
