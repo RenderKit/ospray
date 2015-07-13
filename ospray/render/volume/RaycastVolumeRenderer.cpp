@@ -23,38 +23,22 @@
 
 namespace ospray {
 
-  void RaycastVolumeRenderer::commit() {
-
-    //! Create the equivalent ISPC RaycastVolumeRenderer object.
+  void RaycastVolumeRenderer::commit() 
+  {
+    // Create the equivalent ISPC RaycastVolumeRenderer object.
     if (ispcEquivalent == NULL) ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
 
-#if 0
-    const vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
-    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
-
-    Camera *camera = (Camera *) getParamObject("camera", NULL);
-    if (camera) ispc::RaycastVolumeRenderer_setCamera(ispcEquivalent, camera->getIE());
-
-    Model *model = (Model *) getParamObject("model", NULL);
-    if (model) ispc::RaycastVolumeRenderer_setModel(ispcEquivalent, model->getIE());
-
-    //! Set the lights if any.
-    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, getLightsFromData(getParamData("lights", NULL)));
-
-    Renderer::commit();
-#else
-    //! Get the background color.
+    // Get the background color.
     vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
 
-    //! Set the background color.
+    // Set the background color.
     ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
 
-    //! Set the lights if any.
+    // Set the lights if any.
     ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, getLightsFromData(getParamData("lights", NULL)));
 
-    //! Initialize state in the parent class, must be called after the ISPC object is created.
+    // Initialize state in the parent class, must be called after the ISPC object is created.
     Renderer::commit();
-#endif
   }
 
   void **RaycastVolumeRenderer::getLightsFromData(const Data *buffer) {
