@@ -265,18 +265,8 @@ export void RaycastVolumeRenderer_setBackgroundColor(void *uniform _self,
   //! Cast to the actual Renderer subtype.
   uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
 
-  //! Set the camera view to render.
+  //! Set the background color.
   self->bgColor = bgColor;
-}
-
-export void RaycastVolumeRenderer_setCamera(void *uniform _self,
-                                            void *uniform camera)
-{
-  //! Cast to the actual Renderer subtype.
-  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
-
-  //! Set the camera view to render.
-  self->inherited.camera = (Camera *uniform) camera;
 }
 
 export void RaycastVolumeRenderer_setLights(void *uniform _self,

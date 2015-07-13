@@ -16,7 +16,6 @@
 
 #pragma once
 
-#include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/lights/Light.ih"
@@ -32,9 +31,8 @@ struct RaycastVolumeRenderer {
   //! Variables and functions common to all Renderer subtypes (must be the first field of the struct).
   Renderer inherited;
 
-  //! Renderer state. TODO: camera&model already in inherited!
+  //! Renderer state. TODO: model already in inherited!
   uniform vec3f bgColor;
-  Camera *uniform camera;
   Light **uniform lights;
   Model *uniform model;
 
