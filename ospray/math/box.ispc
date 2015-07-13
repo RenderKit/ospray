@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "box.ih"
 
 void print_box(const uniform box3f &bbox)
