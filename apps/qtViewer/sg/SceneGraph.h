@@ -26,7 +26,6 @@
 #include "sg/common/Node.h"
 #include "sg/geometry/Geometry.h"
 #include "sg/geometry/Spheres.h"
-#include "sg/geometry/PKD.h"
 #include "sg/volume/Volume.h"
 #include "sg/common/Integrator.h"
 #include "sg/camera/PerspectiveCamera.h"
