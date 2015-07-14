@@ -89,6 +89,28 @@ static void Texture2D_4uc_bilinear(const uniform Texture2D *uniform _this,
              lerp(fx,c10,c11));
 }
 
+static void Texture2D_4uc_nearest(const uniform Texture2D *uniform _this,
+                                  varying vec4f &ret,
+                                  const varying vec2f &p)
+{
+  assert(_this);
+  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
+
+  // repeat: get remainder within [0.1] parameter space
+  float fx = p.x-floor(p.x);
+  float fy = p.y-floor(p.y);
+
+  // scale by texture size
+  fx *= this->f_size_1.x;
+  fy *= this->f_size_1.y;
+
+  // nearest
+  const int x = (int)(min(round(fx),this->f_size_1.x));
+  const int y = (int)(min(round(fy),this->f_size_1.y));
+
+  ret = getTexel4uc(this,x,y);
+}
+
 static void Texture2D_3uc_bilinear(const uniform Texture2D *uniform _this,
                                    varying vec4f &ret,
                                    const varying vec2f &p)
@@ -118,6 +140,28 @@ static void Texture2D_3uc_bilinear(const uniform Texture2D *uniform _this,
   ret = lerp(fy,
              lerp(fx,c00,c01),
              lerp(fx,c10,c11));
+}
+
+static void Texture2D_3uc_nearest(const uniform Texture2D *uniform _this,
+                                  varying vec4f &ret,
+                                  const varying vec2f &p)
+{
+  assert(_this);
+  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
+
+  // repeat: get remainder within [0.1] parameter space
+  float fx = p.x-floor(p.x);
+  float fy = p.y-floor(p.y);
+
+  // scale by texture size
+  fx *= this->f_size_1.x;
+  fy *= this->f_size_1.y;
+
+  // nearest
+  const int x = (int)(min(round(fx),this->f_size_1.x));
+  const int y = (int)(min(round(fy),this->f_size_1.y));
+
+  ret = getTexel3uc(this,x,y);
 }
 
 static void Texture2D_4f_bilinear(const uniform Texture2D *uniform texture,
@@ -152,6 +196,28 @@ static void Texture2D_4f_bilinear(const uniform Texture2D *uniform texture,
              lerp(fx,c10,c11));
 }
 
+static void Texture2D_4f_nearest(const uniform Texture2D *uniform _this,
+                                  varying vec4f &ret,
+                                  const varying vec2f &p)
+{
+  assert(_this);
+  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
+
+  // repeat: get remainder within [0.1] parameter space
+  float fx = p.x-floor(p.x);
+  float fy = p.y-floor(p.y);
+
+  // scale by texture size
+  fx *= this->f_size_1.x;
+  fy *= this->f_size_1.y;
+
+  // nearest
+  const int x = (int)(min(round(fx),this->f_size_1.x));
+  const int y = (int)(min(round(fy),this->f_size_1.y));
+
+  ret = getTexel4f(this,x,y);
+}
+
 static void Texture2D_3f_bilinear(const uniform Texture2D *uniform texture,
                               varying vec4f &ret,
                               const varying vec2f &p)
@@ -184,6 +250,28 @@ static void Texture2D_3f_bilinear(const uniform Texture2D *uniform texture,
              lerp(fx,c10,c11));
 }
 
+static void Texture2D_3f_nearest(const uniform Texture2D *uniform _this,
+                                  varying vec4f &ret,
+                                  const varying vec2f &p)
+{
+  assert(_this);
+  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
+
+  // repeat: get remainder within [0.1] parameter space
+  float fx = p.x-floor(p.x);
+  float fy = p.y-floor(p.y);
+
+  // scale by texture size
+  fx *= this->f_size_1.x;
+  fy *= this->f_size_1.y;
+
+  // nearest
+  const int x = (int)(min(round(fx),this->f_size_1.x));
+  const int y = (int)(min(round(fy),this->f_size_1.y));
+
+  ret = getTexel3f(this,x,y);
+}
+
 uniform Texture2D *uniform Texture2D_create(void *uniform cppE,
                                             uniform uint32 sizeX,
                                             uniform uint32 sizeY,
@@ -202,24 +290,35 @@ uniform Texture2D *uniform Texture2D_create(void *uniform cppE,
 export void *uniform Texture2D_4uc_create(void *uniform cppE, 
                                           uniform uint32 sizeX,
                                           uniform uint32 sizeY,
-                                          void *uniform data)
-{ return Texture2D_create(cppE,sizeX,sizeY,data,&Texture2D_4uc_bilinear); };
+                                          void *uniform data,
+                                          uniform int flags)
+{
+  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_4uc_nearest : &Texture2D_4uc_bilinear);
+}
 
 export void *uniform Texture2D_4f_create(void *uniform cppE,
                                          uniform uint32 sizeX,
                                          uniform uint32 sizeY,
-                                         void *uniform data)
-{ return Texture2D_create(cppE,sizeX,sizeY,data,&Texture2D_4f_bilinear); };
+                                         void *uniform data,
+                                         uniform int flags)
+{
+  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_4f_nearest : &Texture2D_4f_bilinear);
+}
 
 export void *uniform Texture2D_3f_create(void *uniform cppE,
                                          uniform uint32 sizeX,
                                          uniform uint32 sizeY,
-                                         void *uniform data)
-{ return Texture2D_create(cppE,sizeX,sizeY,data,&Texture2D_3f_bilinear); };
+                                         void *uniform data,
+                                         uniform int flags)
+{
+  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_3f_nearest : &Texture2D_3f_bilinear);
+}
 
 export void *uniform Texture2D_3uc_create(void *uniform cppE, 
                                           uniform uint32 sizeX,
                                           uniform uint32 sizeY,
-                                          void *uniform data)
-{ return Texture2D_create(cppE,sizeX,sizeY,data,&Texture2D_3uc_bilinear); };
-
+                                          void *uniform data,
+                                          uniform int flags)
+{
+  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_3uc_nearest : &Texture2D_3uc_bilinear);
+}

@@ -110,6 +110,12 @@ typedef enum {
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
 
+/*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
+typedef enum {
+  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
+  OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
+} OSPTextureCreationFlags;
+
 typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
   OSP_GENERAL_ERROR /*! unspecified error */

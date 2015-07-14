@@ -20,6 +20,13 @@
 
 struct Texture;
 
+//! \brief Texture creation flags provided by the application
+/*! \note Make sure these match the application-side definitions in ospray.h. */
+typedef enum {
+  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
+  OSP_TEXTURE_FILTER_NEAREST = (1<<1)
+} Texture_CreationFlags;
+
 //!\brief virtual function type for sampling a Texture (of any type)
 /*! \note Accessing y, z, or a from the returned value is undefined if the
   texture has less than 4 channels */
