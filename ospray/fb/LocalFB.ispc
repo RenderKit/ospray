@@ -118,7 +118,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           accum[ofs] = acc;
 
           acc = acc * accScale;
-          acc = pow(max(acc,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
+          //acc = pow(max(acc,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
 
           if (color) {
             color[ofs] = cvt_uint32(acc);
