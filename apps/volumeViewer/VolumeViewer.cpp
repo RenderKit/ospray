@@ -337,10 +337,18 @@ void VolumeViewer::initObjects()
   for (size_t i=0 ; i < objectFileFilenames.size() ; i++)
     importObjectsFromFile(objectFileFilenames[i]);
 
-  //! Get the bounding box of the first volume.
+  //! Get the bounding box of all volumes of the first model.
   if(modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
     ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", &boundingBox.lower);
     ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMax", &boundingBox.upper);
+
+    for (size_t i=1; i<modelStates[0].volumes.size(); i++) {
+      osp::box3f volumeBoundingBox;
+      ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMin", &volumeBoundingBox.lower);
+      ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMax", &volumeBoundingBox.upper);
+
+      boundingBox.extend(volumeBoundingBox);
+    }
   }
 }
 
