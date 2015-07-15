@@ -66,7 +66,7 @@ namespace ospray {
 
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
       SG_NODE_DECLARE_MEMBER(std::string,fileName,FileName);    
-      SG_NODE_DECLARE_MEMBER(std::string,scalarType,ScalarType);    
+      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);    
 
       //! \brief file name of the xml doc when the node was loaded/parsed from xml 
       /*! \detailed we need this to properly resolve relative file names */
@@ -77,10 +77,11 @@ namespace ospray {
       //! ospray volume object handle
       OSPVolume volume;
     };
-    
-    struct ProceduralTestVolume : public Volume {
-      //! \brief constructor
-      ProceduralTestVolume(); 
+
+    /*! a structured volume whose input comes from a set of stacked RAW files */
+    struct StackedRawSlices : public Volume {
+
+      StackedRawSlices();
 
       /*! \brief returns a std::string with the c++ name of this class */
       virtual    std::string toString() const;
@@ -94,15 +95,20 @@ namespace ospray {
       /*! \brief 'render' the object to ospray */
       virtual void render(RenderContext &ctx);
 
+      /*! resolution (X x Y) of each slice */
+      SG_NODE_DECLARE_MEMBER(vec2i,sliceResolution,SliceResolution);    
+      /*! base path name for the slices, in "printf format" (e.g., "/mydir/slice%04i.raw") */
+      SG_NODE_DECLARE_MEMBER(std::string,baseName,BaseName);    
+      SG_NODE_DECLARE_MEMBER(int32,firstSliceID,FirstSliceID);    
+      SG_NODE_DECLARE_MEMBER(int32,numSlices,numSlices);    
+      SG_NODE_DECLARE_MEMBER(std::string,voxelType,ScalarType);    
+
+      //! actual dimensions after the data is loaded in - to be computed from sliceResolutiona nd numSlices
       SG_NODE_DECLARE_MEMBER(vec3i,dimensions,Dimensions);    
 
-      //! coefficients we use for generating the procedural 'noise'
-      /*! we generate a procedural volume using the function cos^2(p0
-          + p1*x + p2*y + p3 * z + p4*xy + p5 * yz + p6 * xz + p7 *
-          xyz), where x,y,z in [0,1] are the local coordinates inside
-          the volume, and p_i are the 8 values in the coeff[] array */
-      float coeff[1+3+3+1];
+      //! ospray volume object handle
       OSPVolume volume;
+
     };
     
   } // ::ospray::sg

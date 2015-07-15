@@ -29,5 +29,14 @@ namespace ospray {
       return ret; 
     }
     
+    //! parse vec2i from std::string (typically an xml-node's content string) 
+    vec2i parseVec2i(const std::string &text) 
+    { 
+      vec2i ret; 
+      int rc = sscanf(text.c_str(),"%i %i",&ret.x,&ret.y); 
+      assert(rc == 2); 
+      return ret; 
+    }
+    
   } // ::ospray::sg
 } // ::ospray
