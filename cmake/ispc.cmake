@@ -14,34 +14,28 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+SET(ISPC_VERSION 1.8.2)
+
 IF (APPLE)
   SET(ISPC_DIR_SUFFIX "osx")
 ELSE()
   SET(ISPC_DIR_SUFFIX "linux")
 ENDIF()
 
-IF (EXISTS "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2knl-linux/ispc")
-  SET(OSPRAY_ISPC_AUTODETECT_DIR "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2knl-linux")
-ELSEIF (EXISTS "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2-${ISPC_DIR_SUFFIX}/ispc")
-  SET(OSPRAY_ISPC_AUTODETECT_DIR "${PROJECT_SOURCE_DIR}/../ispc-v1.8.2-${ISPC_DIR_SUFFIX}")
-ELSEIF (EXISTS "${PROJECT_SOURCE_DIR}/../ispc-v1.8.1-${ISPC_DIR_SUFFIX}/ispc")
-  SET(OSPRAY_ISPC_AUTODETECT_DIR "${PROJECT_SOURCE_DIR}/../ispc-v1.8.1-${ISPC_DIR_SUFFIX}")
-ELSE()
-  SET(OSPRAY_ISPC_AUTODETECT_DIR "<not found>")
-ENDIF()
-
-SET(OSPRAY_ISPC_DIRECTORY "${OSPRAY_ISPC_AUTODETECT_DIR}" CACHE STRING "ISPC Directory")
+SET(OSPRAY_ISPC_DIRECTORY ${PROJECT_SOURCE_DIR}/../ispc-v${ISPC_VERSION}-${ISPC_DIR_SUFFIX} CACHE STRING "ISPC Directory")
+MARK_AS_ADVANCED(OSPRAY_ISPC_DIRECTORY)
 
 SET(ISPC_BINARY ${OSPRAY_ISPC_DIRECTORY}/ispc)
+
 IF (NOT EXISTS "${ISPC_BINARY}")
   MESSAGE("********************************************")
-  MESSAGE("Could not find ISPC")
+  MESSAGE("Could not find ISPC (tried ${ISPC_BINARY})")
   MESSAGE("")
-  MESSAGE("This version of ospray expects you to have a binary install of ISPC version ${ISPC_VERSION}, and expects this to be installed in the sibling directory to where the ospray source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
+  MESSAGE("This version of OSPRay expects you to have a binary install of ISPC version ${ISPC_VERSION}, and expects this to be installed in the sibling directory to where the OSPRay source are located. Please go to https://ispc.github.io/downloads.html, select the binary release for your particular platform, and unpack it to ${PROJECT_SOURCE_DIR}/../")
   MESSAGE("")
-  MESSAGE("If you insist on using your own custom install of ISPC, please make sure that the 'OSPRAY_ISPC_DIRECTORY' variable is properly set in cmake.")
+  MESSAGE("If you insist on using your own custom install of ISPC, please make sure that the 'OSPRAY_ISPC_DIRECTORY' variable is properly set in CMake.")
   MESSAGE("********************************************")
-  MESSAGE(FATAL_ERROR "Could not find ISPC. Exiting")
+  MESSAGE(FATAL_ERROR "Could not find ISPC. Exiting.")
 ENDIF()
 
 # ##################################################################
