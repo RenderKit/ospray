@@ -112,7 +112,7 @@ inline void StructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
 
   //! Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
-//ray.t += step;
+//ray.t0 += step;
 }
 
 inline void StructuredVolume_intersectIsosurface(void *uniform _volume, uniform float *uniform isovalues, uniform int numIsovalues, varying Ray &ray)
@@ -125,7 +125,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume, uniform 
 
   //! Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalues, numIsovalues, ray);
-//ray.t += step;
+//ray.t0 += step;
 }
 
 inline void StructuredVolume_transformLocalToWorld(StructuredVolume *uniform volume, const varying vec3f &localCoordinates, varying vec3f &worldCoordinates)

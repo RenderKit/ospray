@@ -37,14 +37,9 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
                                                       varying Ray &ray,
                                                       varying vec4f &color)
 {
-  //! Advance the ray.
-  volume->intersect(volume, ray);
-
-  if (ray.t > ray.t1)
-    return;
-
   //! Sample the volume at the hit point in world coordinates.
-  const float sample = volume->computeSample(volume, ray.org + ray.t * ray.dir);
+  const vec3f coordinates = ray.org + ray.t0 * ray.dir;
+  const float sample = volume->computeSample(volume, coordinates);
 
   //! Look up the color associated with the volume sample.
   vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
@@ -55,13 +50,13 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
     //! Compute lighting.
     vec3f lightDirection;
     float lightDistance;
-    vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], ray.org + ray.t * ray.dir, lightDirection, lightDistance);
+    vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], coordinates, lightDirection, lightDistance);
 
     //! Constant ambient lighting term.
     const float ambient = 0.1f;
 
     //! Use volume gradient as the normal.
-    const vec3f gradient = normalize(volume->computeGradient(volume, ray.org + ray.t * ray.dir));
+    const vec3f gradient = normalize(volume->computeGradient(volume, coordinates));
 
     const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(lightDirection), normalize(gradient)));
 
@@ -73,10 +68,12 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
 
   //! Set the color contribution for this sample only (do not accumulate).
   color = clamp(sampleOpacity / volume->samplingRate) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
+
+  //! Advance the ray for the next sample.
+  volume->intersect(volume, ray);
 }
 
 inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *uniform renderer,
-                                                        Volume *uniform volume,
                                                         varying Ray &ray,
                                                         varying vec4f &color)
 {
@@ -99,16 +96,6 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   //! Opacity of the geometry.
   float sampleOpacity = dg.color.w;
 
-  //! If no color found in the geometry, map through transfer function.
-  if(sampleColor.x < 0.f) {
-
-    //! Sample the volume.
-    const float sample = volume->computeSample(volume, dg.P);
-
-    //! Look up the color associated with the volume sample. NaN values will have a color of (0,0,0) and a 0 opacity.
-    sampleColor = isnan(sample) ? sampleOpacity = 0.f, make_vec3f(0.f) : volume->transferFunction->getColorForValue(volume->transferFunction, sample);
-  }
-
   //! Compute lighting.
   vec3f lightDirection;
   float lightDistance;
@@ -122,7 +109,55 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
 
   //! Set the color contribution for this sample only (do not accumulate).
-  color = make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, sampleOpacity);
+  color = sampleOpacity * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.f);
+}
+
+//! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
+//! considering the provided ray offset and any clipping. If no volume is found, the
+//! returned volume is NULL and ray.t0 will be set to infinity.
+inline Volume * RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform renderer,
+                                                       varying Ray &ray,
+                                                       const varying float &rayOffset)
+{
+  //! The first intersected volume.
+  Volume * volume = NULL;
+
+  //! The ray with bounds for the first intersected volume.
+  Ray volumeRay = ray;
+  volumeRay.t0 = infinity;
+
+  //! Test each volume and find the first intersection.
+  for (uniform int32 i=0; i<renderer->inherited.model->volumeCount; i++) {
+
+    //! Intersect volume bounding box.
+    float t0, t1;
+    intersectBox(ray, renderer->inherited.model->volumes[i]->boundingBox, t0, t1);
+
+    //! Clip against volume clipping box (if specified).
+    if(ne(renderer->inherited.model->volumes[i]->volumeClippingBox.lower, renderer->inherited.model->volumes[i]->volumeClippingBox.upper)) {
+      float tClip0, tClip1;
+      intersectBox(ray, renderer->inherited.model->volumes[i]->volumeClippingBox, tClip0, tClip1);
+
+      t0 = max(t0, tClip0);
+      t1 = min(t1, tClip1);
+    }
+
+    //! Update intersected volume.
+    if (t0 < t1 && t0 < volumeRay.t0) {
+      volumeRay.t0 = t0;
+      volumeRay.t = t1;
+      volume = renderer->inherited.model->volumes[i];
+    }
+  }
+
+  //! Update the provided ray.
+  ray = volumeRay;
+
+  //! If we intersected a volume, offset ray by a fraction of the nominal ray step.
+  if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
+
+  //! Return the first intersected volume.
+  return volume;
 }
 
 //! This function intersects the volume and geometries.
@@ -131,67 +166,65 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
                                             const varying float &rayOffset,
                                             varying vec4f &color)
 {
-  //! Assume just one volume.
-  Volume *uniform volume = renderer->inherited.model->volumes[0];
+  //! Original tMax for ray interval
+  const float tMax = ray.t;
 
-  //! Bounding box of the volume.
-  const uniform box3f boundingBox = volume->boundingBox;
+  //! Ray epsilon based on bounding box of all volumes.
+  uniform box3f boundingBox = renderer->inherited.model->volumeCount ? renderer->inherited.model->volumes[0]->boundingBox :
+                                                                       make_box3f(make_vec3f(0.f), make_vec3f(0.f));
 
-  //! Ray epsilon.
-  const uniform float epsilon = 1e-4 * distance(boundingBox.lower, boundingBox.upper);
+  for (uniform int32 i=1; i<renderer->inherited.model->volumeCount; i++) {
+    boundingBox.lower = min(boundingBox.lower, renderer->inherited.model->volumes[i]->boundingBox.lower);
+    boundingBox.upper = max(boundingBox.upper, renderer->inherited.model->volumes[i]->boundingBox.upper);
+  }
+
+  const uniform float epsilon = renderer->inherited.model->volumeCount ? 1e-4f * distance(boundingBox.lower, boundingBox.upper) :
+                                                                         1e-4f;
 
   //! Copy of the ray for geometry intersection. The original ray is used for volume intersection.
   Ray geometryRay = ray;
-  geometryRay.time = -rayOffset * volume->samplingStep; //!< used by isosurface geometries as a ray offset
   geometryRay.primID = -1;
   geometryRay.geomID = -1;
   geometryRay.instID = -1;
 
-  //! Compute the intersection interval over the ray and volume bounds.
-  intersectBox(ray, boundingBox, ray.t0, ray.t);
+  //! Get first intersected volume for each ray and set the ray bounds.
+  Volume *volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray, rayOffset);
 
-  //! And the volume clipping box bounds.
-  if(ne(volume->volumeClippingBox.lower, volume->volumeClippingBox.upper))
-    intersectBox(ray, volume->volumeClippingBox, ray.t0, ray.t);
-
-  ray.t1 = ray.t;
-
-  if (ray.t0 > ray.t1)
-    ray.t = infinity;
-  else
-    ray.t = ray.t0;
-
-  //! Offset ray by a fraction of the nominal ray step.
-  const uniform float step = volume->samplingStep / volume->samplingRate;
-  ray.t += rayOffset * step;
+  //! Provide ray offset for use with isosurface geometries (this value ignored elsewhere).
+  if (volume)
+    geometryRay.time = -rayOffset * volume->samplingStep;
 
   //! Separate color contributions for the volume and geometries. Initialize to provided color in case of no contribution...
   vec4f volumeColor = color;
   vec4f geometryColor = color;
 
-  //! Initial trace through the volume and geometries.
-  RaycastVolumeRenderer_computeVolumeSample(renderer, volume, ray, volumeColor);
-  RaycastVolumeRenderer_computeGeometrySample(renderer, volume, geometryRay, geometryColor);
+  //! Initial trace through geometries.
+  RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
 
   //! Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(ray.t, geometryRay.t)) < infinity
+  while ((firstHit = min(ray.t0, geometryRay.t)) < infinity
          && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
-    if (firstHit == ray.t) {
+    if (firstHit == ray.t0) {
 
-      //! Check to see if we've exited the volume.
-      if (ray.t > ray.t1) {
-        ray.t = infinity;
-        continue;
+      //! Check to see if we've exited the current volume.
+      if (ray.t0 >= ray.t) {
+
+        ray.t0 = ray.t + epsilon;
+        ray.t = tMax;
+        volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray, rayOffset);
       }
+      else {
 
-      //! Volume contribution.
-      color = color + (1.0f - color.w) * volumeColor;
+        //! Compute the volume sample at the current position and advance the ray.
+        foreach_unique (v in volume)
+          RaycastVolumeRenderer_computeVolumeSample(renderer, v, ray, volumeColor);
 
-      //! Trace next volume ray.
-      RaycastVolumeRenderer_computeVolumeSample(renderer, volume, ray, volumeColor);
+        //! Volume contribution.
+        color = color + (1.0f - color.w) * volumeColor;
+      }
     }
     else if (firstHit == geometryRay.t) {
 
@@ -200,13 +233,16 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
       //! Reset geometry ray.
       geometryRay.t0 = geometryRay.t + epsilon;
-      geometryRay.t = infinity; //! end of valid ray interval for traceRay()
+      geometryRay.t = tMax; //! end of valid ray interval for traceRay()
       geometryRay.primID = -1;
       geometryRay.geomID = -1;
       geometryRay.instID = -1;
 
+      //! Update ray offset for use with isosurface geometries based on current volume (this value ignored elsewhere).
+      geometryRay.time = volume ? -rayOffset * volume->samplingStep : 0.f;
+
       //! Trace next geometry ray.
-      RaycastVolumeRenderer_computeGeometrySample(renderer, volume, geometryRay, geometryColor);
+      RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
     }
   }
 }

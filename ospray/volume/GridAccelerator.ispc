@@ -189,7 +189,7 @@ inline vec2f GridAccelerator_intersectCell(const varying box3f &bounds, const va
   vec2f interval;  interval.x = max(max(ray.t0, min(minimum.x, maximum.x)), max(min(minimum.y, maximum.y), min(minimum.z, maximum.z)));
 
   //! Distance along the ray to the exit point.
-  interval.y = min(min(ray.t1, max(minimum.x, maximum.x)), min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));  
+  interval.y = min(min(ray.t, max(minimum.x, maximum.x)), min(max(minimum.y, maximum.y), max(minimum.z, maximum.z)));
 
   return interval;
 }
@@ -200,15 +200,16 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform flo
   StructuredVolume *uniform volume = (StructuredVolume *uniform) accelerator->volume;
 
   //! Tentatively advance the ray.
-  ray.t += step;
+  ray.t0 += step;
 
   const vec3f ray_rdir = rcp(ray.dir);
   // sign of direction determines near/far index
   const vec3i nextCellIndex = make_vec3i(1 - (intbits(ray.dir.x) >> 31), 1 - (intbits(ray.dir.y) >> 31), 1 - (intbits(ray.dir.z) >> 31));
 
-  while (ray.t < ray.t1) {
+  while (ray.t0 < ray.t) {
+
     //! Compute the hit point in the local coordinate system.
-    vec3f localCoordinates; volume->transformWorldToLocal(volume, ray.org + ray.t * ray.dir, localCoordinates);
+    vec3f localCoordinates; volume->transformWorldToLocal(volume, ray.org + ray.t0 * ray.dir, localCoordinates);
 
     //! Compute the 3D index of the cell containing the hit point.
     vec3i cellIndex = integer_cast(localCoordinates) >> CELL_WIDTH_BITCOUNT;
@@ -233,10 +234,10 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform flo
 
     //! Identify the distance along the ray to the exit points on the cell.
     const vec3f maximum = ray_rdir * (farBound - ray.org);
-    const float exitDist = min(min(ray.t1, maximum.x), min(maximum.y, maximum.z));
+    const float exitDist = min(min(ray.t, maximum.x), min(maximum.y, maximum.z));
 
     //! Advance the ray so the next hit point will be outside the empty cell.
-    ray.t += ceil(abs(exitDist - ray.t) / step) * step;
+    ray.t0 += ceil(abs(exitDist - ray.t0) / step) * step;
   }
 }
 
@@ -246,12 +247,12 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator, u
   StructuredVolume *uniform volume = (StructuredVolume *uniform) accelerator->volume;
 
   //! Tentatively advance the ray.
-  ray.t += step;
-  if (ray.t >= ray.t1) return;
+  ray.t0 += step;
+  if (ray.t0 >= ray.t) return;
 
   //! Compute the hit point in the local coordinate system.
   vec3f localCoordinates;
-  volume->transformWorldToLocal(volume, ray.org + ray.t * ray.dir, localCoordinates);
+  volume->transformWorldToLocal(volume, ray.org + ray.t0 * ray.dir, localCoordinates);
 
   //! Compute the 3D index of the cell containing the hit point.
   vec3i cellIndex = integer_cast(localCoordinates) >> CELL_WIDTH_BITCOUNT;
@@ -279,7 +280,7 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator, u
   vec2f cellInterval = GridAccelerator_intersectCell(cellBounds, ray);
 
   //! Advance the ray so the next hit point will be outside the empty cell.
-  ray.t += floor(abs(cellInterval.y - ray.t) / step) * step - step;
+  ray.t0 += floor(abs(cellInterval.y - ray.t0) / step) * step - step;
 
   //! Rinse and repeat.
   GridAccelerator_intersectIsosurface(accelerator, step, isovalues, numIsovalues, ray);

@@ -52,23 +52,23 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
 
   // Operate on a copy of the ray.
   Ray rayCopy = ray;
-  rayCopy.t = max(ray.t0, tBox0) + ray.time; // use ray.time as a ray offset
-  rayCopy.t1 = min(ray.t, tBox1);
+  rayCopy.t0 = max(ray.t0, tBox0) + ray.time; // use ray.time as a ray offset
+  rayCopy.t = min(ray.t, tBox1);
 
   // Sample the volume at the current point in world coordinates.
-  float t0 = rayCopy.t;
-  float sample0 = volume->computeSample(volume, rayCopy.org + rayCopy.t * rayCopy.dir);
+  float t0 = rayCopy.t0;
+  float sample0 = volume->computeSample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
 
   while(1) {
 
     // Advance the ray.
     volume->intersectIsosurface(volume, self->isovalues, self->numIsovalues, rayCopy);
 
-    if (rayCopy.t > rayCopy.t1)
+    if (rayCopy.t0 > rayCopy.t)
       return;
 
-    const float t = rayCopy.t;
-    const float sample = volume->computeSample(volume, rayCopy.org + rayCopy.t * rayCopy.dir);
+    const float t = rayCopy.t0;
+    const float sample = volume->computeSample(volume, rayCopy.org + rayCopy.t0 * rayCopy.dir);
 
     // Find t value and isovalue index for the first isosurface intersection.
     float tHit = infinity;
@@ -87,7 +87,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
       }
 
       // If we found a hit, update ray information and return.
-      if (tHit <= rayCopy.t1) {
+      if (tHit <= rayCopy.t) {
         ray.geomID = self->geometry.geomID;
         ray.primID = isovalueID;
         ray.t = tHit;
