@@ -126,6 +126,17 @@ void VolumeViewer::addGeometry(std::string filename)
   //! If successful, commit the triangle mesh and add it to all models.
   if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {
 
+    //! For now: if this is a DDS geometry, assume it is a horizon and its color should be mapped through the first volume's transfer function.
+    if(QString(filename.c_str()).endsWith(".dds") && modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
+
+      OSPMaterial material = ospNewMaterial(renderer, "default");
+      ospSetVec3f(material, "Kd", osp::vec3f(1.f));
+      ospSetObject(material, "volume", modelStates[0].volumes[0]);
+      ospCommit(material);
+
+      ospSetMaterial(triangleMesh, material);
+    }
+
     ospCommit(triangleMesh);
 
     for(size_t i=0; i<modelStates.size(); i++) {
