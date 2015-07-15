@@ -24,6 +24,18 @@ namespace ospray {
   //!  volumes optionally containing embedded surfaces.
   //!
   class RaycastVolumeRenderer : public Renderer {
+
+    //! Material used by RaycastVolumeRenderer.
+    struct Material : public ospray::Material {
+
+      Material();
+
+      virtual void commit();
+
+      vec3f Kd;           //!< Diffuse material component.
+      Ref<Volume> volume; //!< If provided, color will be mapped through this volume's transfer function.
+    };
+
   public:
 
     //! Constructor.
@@ -31,6 +43,9 @@ namespace ospray {
 
     //! Destructor.
     ~RaycastVolumeRenderer() {};
+
+    //! Create a material of the given type.
+    Material * createMaterial(const char *type) { return new Material; }
 
     //! Initialize the renderer state, and create the equivalent ISPC volume renderer object.
     virtual void commit();

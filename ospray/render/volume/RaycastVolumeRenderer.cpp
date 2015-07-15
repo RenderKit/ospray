@@ -20,8 +20,22 @@
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
+#include "RaycastVolumeRendererMaterial_ispc.h"
 
 namespace ospray {
+
+  RaycastVolumeRenderer::Material::Material()
+  {
+    ispcEquivalent = ispc::RaycastVolumeRendererMaterial_create(this);
+  }
+
+  void RaycastVolumeRenderer::Material::commit()
+  {
+    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(1.0f))));
+    volume = (Volume *)getParamObject("volume", NULL);
+
+    ispc::RaycastVolumeRendererMaterial_set(getIE(), (const ispc::vec3f&)Kd, volume ? volume->getIE() : NULL);
+  }
 
   void RaycastVolumeRenderer::commit() 
   {

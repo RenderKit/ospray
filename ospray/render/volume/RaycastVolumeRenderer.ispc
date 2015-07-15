@@ -19,6 +19,7 @@
 #include "ospray/common/Ray.ih"
 #include "ospray/render/util.ih"
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
+#include "ospray/render/volume/RaycastVolumeRendererMaterial.ih"
 
 void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, 
                                                 const uniform int32 accumID)
@@ -88,10 +89,24 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   //! Post intersect on the hit geometry.
   DifferentialGeometry dg;
-  postIntersect(renderer->inherited.model, dg, ray, DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR);
+  postIntersect(renderer->inherited.model, dg, ray, DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID);
 
   //! Color of the geometry.
   vec3f sampleColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
+
+  //! Apply material if it exists.
+  uniform RaycastVolumeRendererMaterial *mat = (uniform RaycastVolumeRendererMaterial*)dg.material;
+
+  if (mat) {
+    foreach_unique(m in mat) {
+      sampleColor = sampleColor * m->Kd;
+
+      if (m->volume) {
+        const float sample = m->volume->computeSample(m->volume, dg.P);
+        sampleColor = sampleColor * m->volume->transferFunction->getColorForValue(m->volume->transferFunction, sample);
+      }
+    }
+  }
 
   //! Opacity of the geometry.
   float sampleOpacity = dg.color.w;

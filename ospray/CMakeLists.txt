@@ -105,6 +105,7 @@ SET(OSPRAY_SOURCES
   render/obj/OBJMaterial.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
+  render/volume/RaycastVolumeRendererMaterial.ispc
   render/volume/SymbolRegistry.cpp
 
   render/pathtracer/PathTracer.ispc
