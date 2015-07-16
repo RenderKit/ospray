@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "math/vec.ih"
+#include "ospray/math/vec.ih"
 
 struct Texture;
 
