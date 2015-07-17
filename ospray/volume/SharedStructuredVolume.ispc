@@ -16,53 +16,168 @@
 
 #include "ospray/volume/SharedStructuredVolume.ih"
 
-inline void SharedStructuredVolumeFloat_getVoxel(void *uniform _volume, const varying vec3i &index, varying float &value)
+// -----------------------------------------------------------------------------
+// versions for pure 32-bit addressing. volume *MUST* be smaller than 2G
+// -----------------------------------------------------------------------------
+
+/*! get a voxel from given volume type, assuming we can use 32-bit addressing */
+inline void SharedStructuredVolumeFloat_getVoxel_32(void *uniform _volume, 
+                                                    const varying vec3i &index, 
+                                                    varying float &value)
 {
-  //! Cast to the actual Volume subtype.
+  // Cast to the actual Volume subtype.
   SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
 
-  //! Cast to the actual voxel type.
-  const float **uniform voxelData = (const float **uniform) volume->voxelData;
+  // Cast to the actual voxel type.
+  const float *uniform voxelData = (const float *uniform) volume->voxelData;
 
-  //! The voxel value at the given index.
-  value = voxelData[index.z][index.x + volume->inherited.dimensions.x * index.y];
+  // The voxel value at the given index.
+  value = voxelData[index.x + volume->super.dimensions.x * (index.y + volume->super.dimensions.y)];
 }
 
-inline void SharedStructuredVolumeUChar_getVoxel(void *uniform _volume, const varying vec3i &index, varying float &value)
+/*! get a voxel from given volume type, assuming we can use 32-bit addressing */
+inline void SharedStructuredVolumeUChar_getVoxel_32(void *uniform _volume, 
+                                                    const varying vec3i &index, 
+                                                    varying float &value)
 {
-  //! Cast to the actual Volume subtype.
+  // Cast to the actual Volume subtype.
   SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
 
-  //! Cast to the actual voxel type.
-  const uint8 **uniform voxelData = (const uint8 **uniform) volume->voxelData;
+  // Cast to the actual voxel type.
+  const uint8 *uniform voxelData = (const uint8 *uniform) volume->voxelData;
 
-  //! The voxel value at the given index.
-  value = voxelData[index.z][index.x + volume->inherited.dimensions.x * index.y];
+  // The voxel value at the given index.
+  value = voxelData[index.x + volume->super.dimensions.x * (index.y + volume->super.dimensions.y)];
 }
 
-void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData)
+
+// -----------------------------------------------------------------------------
+// versions for 64/32-bit addressing. volume itself can be larger than
+// 2G, but each slice must be within the 2G limit.
+// -----------------------------------------------------------------------------
+
+
+/*! get a voxel from given volume type, assuming we need proper 64-bit addressing */
+inline void SharedStructuredVolumeFloat_getVoxel_64_32(void *uniform _volume, 
+                                                       const varying vec3i &index, 
+                                                       varying float &value)
 {
-  StructuredVolume_Constructor(&volume->inherited, dimensions);
+  // Cast to the actual Volume subtype.
+  SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
+
+  // iterate over slices, then do 32-bit gather in slice
+  foreach_unique (z in index.z) {
+    const float *uniform sliceData = (const float *)((const uint8 *)volume->voxelData + volume->bytesPerSlice);
+    value = sliceData[index.x + volume->super.dimensions.x * index.y];
+  }
+}
+
+/*! get a voxel from given volume type, assuming we need proper 64-bit addressing */
+inline void SharedStructuredVolumeUChar_getVoxel_64_32(void *uniform _volume, 
+                                                       const varying vec3i &index, 
+                                                       varying float &value)
+{
+  // Cast to the actual Volume subtype.
+  SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
+
+  // iterate over slices, then do 32-bit gather in slice
+  foreach_unique (z in index.z) {
+    const uint8 *uniform sliceData = ((const uint8 *)volume->voxelData + volume->bytesPerSlice);
+    value = sliceData[index.x + volume->super.dimensions.x * index.y];
+  }
+}
+
+
+// -----------------------------------------------------------------------------
+// versions for full 64-bit addressing, no matter what the dimensions or slice size
+// -----------------------------------------------------------------------------
+
+/*! get a voxel from given volume type, assuming we need proper 64-bit addressing */
+inline void SharedStructuredVolumeFloat_getVoxel_64(void *uniform _volume, 
+                                                       const varying vec3i &index, 
+                                                       varying float &value)
+{
+  // Cast to the actual Volume subtype.
+  SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
+
+  const uint64 index64 = (uint64)index.x + volume->super.dimensions.x * ((int64)index.y + volume->super.dimensions.y * ((uint64)index.z));
+  const uint32 hi28 = index64 >> 28;
+  const uint32 lo28 = index64 & ((1<<28)-1);
+
+  foreach_unique (hi in hi28) {
+    const float *uniform base = (const float *)((const uint8 *)volume->voxelData + (1ULL<<28)*hi);
+    value = base[lo28];
+  }
+}
+
+/*! get a voxel from given volume type, assuming we need proper 64-bit addressing */
+inline void SharedStructuredVolumeUChar_getVoxel_64(void *uniform _volume, 
+                                                       const varying vec3i &index, 
+                                                       varying float &value)
+{
+  // Cast to the actual Volume subtype.
+  SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
+
+  const uint64 index64 = 
+    (uint64)index.x + volume->super.dimensions.x * ((int64)index.y + volume->super.dimensions.y * ((uint64)index.z));
+  const uint32 hi28 = index64 >> 28;
+  const uint32 lo28 = index64 & ((1<<28)-1);
+
+  foreach_unique (hi in hi28) {
+    const uint8 *uniform base = ((const uint8 *)volume->voxelData + (1ULL<<28)*hi);
+    value = base[lo28];
+  }
+}
+
+
+void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, 
+                                        void *uniform cppEquivalent,
+                                        const uniform int voxelType, 
+                                        const uniform vec3i &dimensions, 
+                                        const void *uniform voxelData)
+{
+  StructuredVolume_Constructor(&volume->super, cppEquivalent, dimensions);
+
+  const uniform uint64 bytesPerVoxel = (volume->voxelType == OSP_FLOAT) ? sizeof(float) : sizeof(uint8);
+  const uniform uint64 bytesPerSlice = bytesPerVoxel * (uint64)dimensions.x * (uint64)dimensions.y;
+  const uniform uint64 bytesPerVolume = bytesPerSlice * dimensions.z;
 
   volume->voxelType = (OSPDataType) voxelType;
-  volume->inherited.getVoxel = (volume->voxelType == OSP_FLOAT) ? SharedStructuredVolumeFloat_getVoxel : SharedStructuredVolumeUChar_getVoxel;
+  volume->voxelData = voxelData;
+  volume->bytesPerSlice;
 
-  //! Set pointers to planes of the voxel data; this allows volumes with > 2**31 - 1 elements to be addressed in ISPC.
-  typedef void *uniform Plane;
-
-  volume->voxelData = uniform new uniform Plane[dimensions.z];
-
-  for (uniform int z=0; z < dimensions.z; z++)
-    volume->voxelData[z] = (volume->voxelType == OSP_FLOAT) ? (void *)((float *uniform)voxelData + (int64)z*dimensions.x*dimensions.y) :
-                                                              (void *)((uint8 *uniform)voxelData + (int64)z*dimensions.x*dimensions.y);
+  if (bytesPerVolume <= (1ULL<<30)) {
+    // in this case, we know ALL addressing can be 32-bit.
+    volume->super.getVoxel
+      = (volume->voxelType == OSP_FLOAT) 
+      ? SharedStructuredVolumeFloat_getVoxel_32
+      : SharedStructuredVolumeUChar_getVoxel_32;
+  } else if (bytesPerSlice < (1ULL << 30)) {
+    // in this case, we know we can do 32-bit addressing within a
+    // slice, but need 64-bit arithmetic to get slice begins
+    volume->super.getVoxel
+      = (volume->voxelType == OSP_FLOAT) 
+      ? SharedStructuredVolumeFloat_getVoxel_64_32
+      : SharedStructuredVolumeUChar_getVoxel_64_32;
+  } else {
+    // in this case, even a single slice is too big to do 32-bit
+    // addressing, and we have to do 64-bit throughout
+    volume->super.getVoxel
+      = (volume->voxelType == OSP_FLOAT) 
+      ? SharedStructuredVolumeFloat_getVoxel_64
+      : SharedStructuredVolumeUChar_getVoxel_64;
+  }
 }
 
-export void *uniform SharedStructuredVolume_createInstance(const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData)
+export void *uniform SharedStructuredVolume_createInstance(void *uniform cppEquivalent, 
+                                                           const uniform int voxelType, 
+                                                           const uniform vec3i &dimensions, 
+                                                           const void *uniform voxelData)
 {
-  //! The volume container.
+  // The volume container.
   SharedStructuredVolume *uniform volume = uniform new uniform SharedStructuredVolume;
 
-  SharedStructuredVolume_Constructor(volume, voxelType, dimensions, voxelData);
+  SharedStructuredVolume_Constructor(volume, cppEquivalent, voxelType, dimensions, voxelData);
 
   return volume;
 }

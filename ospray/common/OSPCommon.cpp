@@ -25,6 +25,12 @@
 
 namespace ospray {
 
+  /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
+  extern "C" void *malloc64(size_t size)
+  {
+    return malloc(size);
+  }
+
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;

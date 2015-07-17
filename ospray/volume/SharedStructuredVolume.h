@@ -40,10 +40,7 @@ namespace ospray {
     virtual void commit();
 
     //! Copy voxels into the volume at the given index; not allowed on SharedStructuredVolume.
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) {
-      exitOnCondition(true, "setRegion() not allowed on this volume type; volume data must be provided via the voxelData parameter");
-      return 0;
-    }
+    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
 
   protected:
 
