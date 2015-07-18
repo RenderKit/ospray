@@ -64,7 +64,7 @@ namespace ospray {
                     "use another volume type (e.g. BlockBrickedVolume) for better performance");
 
     // The voxel count.
-    size_t voxelCount = (size_t)dimensions.x * dimensions.y * dimensions.z;
+    size_t voxelCount = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
   
     // Compute the voxel value range for float voxels if none was previously specified.
     if (voxelType == "float" && findParam("voxelRange") == NULL) 

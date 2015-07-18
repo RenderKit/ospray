@@ -30,9 +30,10 @@ inline void SharedStructuredVolumeFloat_getVoxel_32(void *uniform _volume,
 
   // Cast to the actual voxel type.
   const float *uniform voxelData = (const float *uniform) volume->voxelData;
+  const uint32 addr = index.x + volume->super.dimensions.x * (index.y + volume->super.dimensions.y * index.z);
 
   // The voxel value at the given index.
-  value = voxelData[index.x + volume->super.dimensions.x * (index.y + volume->super.dimensions.y)];
+  value = voxelData[addr];
 }
 
 /*! get a voxel from given volume type, assuming we can use 32-bit addressing */
@@ -47,7 +48,7 @@ inline void SharedStructuredVolumeUChar_getVoxel_32(void *uniform _volume,
   const uint8 *uniform voxelData = (const uint8 *uniform) volume->voxelData;
 
   // The voxel value at the given index.
-  value = voxelData[index.x + volume->super.dimensions.x * (index.y + volume->super.dimensions.y)];
+  value = voxelData[index.x + volume->super.dimensions.x * (index.y + volume->super.dimensions.y * index.z)];
 }
 
 
@@ -67,7 +68,8 @@ inline void SharedStructuredVolumeFloat_getVoxel_64_32(void *uniform _volume,
 
   // iterate over slices, then do 32-bit gather in slice
   foreach_unique (z in index.z) {
-    const float *uniform sliceData = (const float *)((const uint8 *)volume->voxelData + volume->bytesPerSlice);
+    const float *uniform sliceData
+      = (const float *)((const uint8 *)volume->voxelData + z * volume->bytesPerSlice);
     value = sliceData[index.x + volume->super.dimensions.x * index.y];
   }
 }
@@ -82,7 +84,8 @@ inline void SharedStructuredVolumeUChar_getVoxel_64_32(void *uniform _volume,
 
   // iterate over slices, then do 32-bit gather in slice
   foreach_unique (z in index.z) {
-    const uint8 *uniform sliceData = ((const uint8 *)volume->voxelData + volume->bytesPerSlice);
+    const uint8 *uniform sliceData
+      = ((const uint8 *)volume->voxelData + z * volume->bytesPerSlice);
     value = sliceData[index.x + volume->super.dimensions.x * index.y];
   }
 }
@@ -105,9 +108,10 @@ inline void SharedStructuredVolumeFloat_getVoxel_64(void *uniform _volume,
   const uint32 lo28 = index64 & ((1<<28)-1);
 
   foreach_unique (hi in hi28) {
-    const float *uniform base = (const float *)((const uint8 *)volume->voxelData + (1ULL<<28)*hi);
+    const uniform uint64 hi64 = hi;
+    const float *uniform base = ((const float *)volume->voxelData) + (hi64<<28);
     value = base[lo28];
-  }
+}
 }
 
 /*! get a voxel from given volume type, assuming we need proper 64-bit addressing */
@@ -124,7 +128,8 @@ inline void SharedStructuredVolumeUChar_getVoxel_64(void *uniform _volume,
   const uint32 lo28 = index64 & ((1<<28)-1);
 
   foreach_unique (hi in hi28) {
-    const uint8 *uniform base = ((const uint8 *)volume->voxelData + (1ULL<<28)*hi);
+    const uniform uint64 hi64 = hi;
+    const uint8 *uniform base = ((const uint8 *)volume->voxelData) + (hi64<<28);
     value = base[lo28];
   }
 }
@@ -147,12 +152,14 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
   volume->bytesPerSlice;
 
   if (bytesPerVolume <= (1ULL<<30)) {
+    print("#osp:shared_structured_volume: using 32-bit mode\n");
     // in this case, we know ALL addressing can be 32-bit.
     volume->super.getVoxel
       = (volume->voxelType == OSP_FLOAT) 
       ? SharedStructuredVolumeFloat_getVoxel_32
       : SharedStructuredVolumeUChar_getVoxel_32;
   } else if (bytesPerSlice < (1ULL << 30)) {
+    print("#osp:shared_structured_volume: using 64/32-bit mode\n");
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice begins
     volume->super.getVoxel
@@ -160,6 +167,7 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
       ? SharedStructuredVolumeFloat_getVoxel_64_32
       : SharedStructuredVolumeUChar_getVoxel_64_32;
   } else {
+    print("#osp:shared_structured_volume: using 64-bit mode\n");
     // in this case, even a single slice is too big to do 32-bit
     // addressing, and we have to do 64-bit throughout
     volume->super.getVoxel

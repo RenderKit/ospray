@@ -225,7 +225,8 @@ namespace ospray {
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
     }
     
-    void ModelViewer::createLightManipulator() {
+    void ModelViewer::createLightManipulator()
+    {
       QWidget *lmEditorsPage = new QWidget;
       QVBoxLayout *layout = new QVBoxLayout;
       lmEditorsPage->setLayout(layout);
@@ -430,7 +431,8 @@ namespace ospray {
       renderWidget->setWorld(world); 
     }
 
-    void ModelViewer::render() { 
+    void ModelViewer::render()
+    {
       sgRenderer->resetAccumulation();
       if (renderWidget) renderWidget->updateGL(); 
     }

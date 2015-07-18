@@ -64,9 +64,14 @@ namespace ospray {
       etc) */
     void Renderer::resetAccumulation()
     {
-      accumID = 0;
-      if (frameBuffer) 
+      if (accumID == 0) {
+        // cout << "accumID already 0..." << endl;
+      } else {
+        accumID = 0;
+        // cout << "resetting accum" << endl;
+        if (frameBuffer)
         frameBuffer->clearAccum(); 
+      }
     }
 
     //! create a default camera

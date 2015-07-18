@@ -67,7 +67,9 @@ namespace ospray {
   OSPDataType StructuredVolume::getVoxelType() const
   {
     //! Separate out the base type and vector width.
-    char kind[voxelType.size()];  unsigned int width = 1;  sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
+    char kind[voxelType.size()];  
+    unsigned int width = 1;
+    sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
 
     //! Single precision scalar floating point.
     if (!strcmp(kind, "float") && width == 1) return(OSP_FLOAT);
