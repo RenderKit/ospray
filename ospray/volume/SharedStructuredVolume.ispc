@@ -66,11 +66,15 @@ inline void SharedStructuredVolumeFloat_getVoxel_64_32(void *uniform _volume,
   // Cast to the actual Volume subtype.
   SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
 
+  const uniform uint8 *uniform basePtr = (const uniform uint8 *uniform)volume->voxelData;
+
   // iterate over slices, then do 32-bit gather in slice
+  const uint32 ofs = index.x + volume->super.dimensions.x * index.y;
   foreach_unique (z in index.z) {
-    const float *uniform sliceData
-      = (const float *)((const uint8 *)volume->voxelData + z * volume->bytesPerSlice);
-    value = sliceData[index.x + volume->super.dimensions.x * index.y];
+    const uniform uint64 byteOffset = z * volume->bytesPerSlice;
+    const uniform float *uniform sliceData
+      = (const uniform float *uniform )(basePtr + byteOffset);
+    value = sliceData[ofs];
   }
 }
 
@@ -82,11 +86,16 @@ inline void SharedStructuredVolumeUChar_getVoxel_64_32(void *uniform _volume,
   // Cast to the actual Volume subtype.
   SharedStructuredVolume *uniform volume = (SharedStructuredVolume *uniform) _volume;
 
+
+  const uniform uint8 *uniform basePtr = (const uniform uint8 *uniform)volume->voxelData;
+
   // iterate over slices, then do 32-bit gather in slice
+  const uint32 ofs = index.x + volume->super.dimensions.x * index.y;
   foreach_unique (z in index.z) {
-    const uint8 *uniform sliceData
-      = ((const uint8 *)volume->voxelData + z * volume->bytesPerSlice);
-    value = sliceData[index.x + volume->super.dimensions.x * index.y];
+    const uniform uint64 byteOffset = z * volume->bytesPerSlice;
+    const uniform uint8 *uniform sliceData
+      = (const uniform uint8 *uniform )(basePtr + byteOffset);
+    value = sliceData[ofs];
   }
 }
 
@@ -143,23 +152,23 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
 {
   StructuredVolume_Constructor(&volume->super, cppEquivalent, dimensions);
 
-  const uniform uint64 bytesPerVoxel = (volume->voxelType == OSP_FLOAT) ? sizeof(float) : sizeof(uint8);
+  const uniform uint64 bytesPerVoxel = (voxelType == OSP_FLOAT) ? sizeof(uniform float) : sizeof(uniform uint8);
   const uniform uint64 bytesPerSlice = bytesPerVoxel * (uint64)dimensions.x * (uint64)dimensions.y;
   const uniform uint64 bytesPerVolume = bytesPerSlice * dimensions.z;
 
-  volume->voxelType = (OSPDataType) voxelType;
-  volume->voxelData = voxelData;
-  volume->bytesPerSlice;
+  volume->voxelType     = (OSPDataType) voxelType;
+  volume->voxelData     = voxelData;
+  volume->bytesPerSlice = bytesPerSlice;
 
   if (bytesPerVolume <= (1ULL<<30)) {
-    print("#osp:shared_structured_volume: using 32-bit mode\n");
+    //print("#osp:shared_structured_volume: using 32-bit mode\n");
     // in this case, we know ALL addressing can be 32-bit.
     volume->super.getVoxel
       = (volume->voxelType == OSP_FLOAT) 
       ? SharedStructuredVolumeFloat_getVoxel_32
       : SharedStructuredVolumeUChar_getVoxel_32;
-  } else if (bytesPerSlice < (1ULL << 30)) {
-    print("#osp:shared_structured_volume: using 64/32-bit mode\n");
+  } else if (bytesPerSlice <= (1ULL << 30)) {
+    //print("#osp:shared_structured_volume: using 64/32-bit mode\n");
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice begins
     volume->super.getVoxel
@@ -167,7 +176,7 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
       ? SharedStructuredVolumeFloat_getVoxel_64_32
       : SharedStructuredVolumeUChar_getVoxel_64_32;
   } else {
-    print("#osp:shared_structured_volume: using 64-bit mode\n");
+    //print("#osp:shared_structured_volume: using 64-bit mode\n");
     // in this case, even a single slice is too big to do 32-bit
     // addressing, and we have to do 64-bit throughout
     volume->super.getVoxel

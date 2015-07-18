@@ -37,7 +37,7 @@ struct SharedStructuredVolume {
   //! \brief number of bytes for one x/y slice of the data. 
   /*! \detailed THis is used to compute offsets for slices with
       different z values */
-  uint64 bytesPerSlice;
+  uniform uint64 bytesPerSlice;
 
   //! Voxel type.
   uniform OSPDataType voxelType;

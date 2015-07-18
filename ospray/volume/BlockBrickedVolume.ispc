@@ -102,8 +102,6 @@ inline void BlockBrickedVolumeFloat_getVoxel(void *uniform _volume,
     float *uniform blockPtr = blockMem + (BLOCK_VOXEL_COUNT * blockID);
     value = blockPtr[address.voxel];
   }
-  if (any(value > .5f)) print("-> %\n",value);
-
 }
 
 inline void BlockBrickedVolumeUChar_getVoxel(void *uniform _volume, 

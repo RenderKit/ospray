@@ -176,7 +176,6 @@ namespace ospray {
         if (nRead != nVoxels)
           THROW_SG_ERROR(__PRETTY_FUNCTION__,"read incomplete data (truncated file or wrong format?!)");
         OSPData data = ospNewData(nVoxels,OSP_FLOAT,voxels,OSP_DATA_SHARED_BUFFER);
-        PRINT(data);
         ospSetData(volume,"voxelData",data);
       }
       fclose(file);

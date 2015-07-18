@@ -75,9 +75,10 @@ namespace ospray {
       computeVoxelRange((unsigned char *)voxelData->data, voxelCount);
 
     // Create an ISPC SharedStructuredVolume object and assign type-specific function pointers.
+    int voxelType = (int)getVoxelType();
     ispcEquivalent
       = ispc::SharedStructuredVolume_createInstance(this,
-                                                    (int)getVoxelType(), 
+                                                    voxelType, 
                                                     (const ispc::vec3i &)dimensions, 
                                                     voxelData->data);
     
