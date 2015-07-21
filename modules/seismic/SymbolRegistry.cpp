@@ -18,10 +18,10 @@
 #include "SeismicHorizonFile.h"
 #include "SeismicVolumeFile.h"
 
-//! Loaders for seismic horizon files for supported self-describing formats.
+// Loaders for seismic horizon files for supported self-describing formats.
 OSP_REGISTER_TRIANGLEMESH_FILE(SeismicHorizonFile, dds);
 
-//! Loader for seismic volume files for supported self-describing formats.
+// Loader for seismic volume files for supported self-describing formats.
 OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
 OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
 OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);

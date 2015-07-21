@@ -50,10 +50,10 @@ public:
   ~VolumeViewer() {};
 
   //! Get the OSPRay output window.
-  QOSPRayWindow *getWindow() { return(osprayWindow); }
+  QOSPRayWindow *getWindow() { return osprayWindow; }
 
   //! Get the transfer function editor.
-  TransferFunctionEditor *getTransferFunctionEditor() { return(transferFunctionEditor); }
+  TransferFunctionEditor *getTransferFunctionEditor() { return transferFunctionEditor; }
 
   //! Select the model (time step) to be displayed.
   void setModel(size_t index);

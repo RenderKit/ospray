@@ -55,20 +55,19 @@ namespace ospray {
     Renderer::commit();
   }
 
-  void **RaycastVolumeRenderer::getLightsFromData(const Data *buffer) {
-
-    //! Lights are optional.
+  void **RaycastVolumeRenderer::getLightsFromData(const Data *buffer)
+  {
+    // Lights are optional.
     size_t lightCount = (buffer != NULL) ? buffer->numItems : 0;
 
-    //! The light array is a NULL terminated list of pointers.
+    // The light array is a NULL terminated list of pointers.
     void **lights = new void *[lightCount + 1];
 
-    //! Copy pointers to the ISPC Light objects.
+    // Copy pointers to the ISPC Light objects.
     for (size_t i=0 ; i < lightCount ; i++) lights[i] = ((Light **) buffer->data)[i]->getIE();
 
-    //! Mark the end of the array.
+    // Mark the end of the array.
     lights[lightCount] = NULL;  return(lights);
-
   }
 
 } // ::ospray

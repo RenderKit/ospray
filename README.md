@@ -1,7 +1,14 @@
 OSPRay
 ======
 
-This is release v0.8.1 of OSPRay. Changes since v0.8.0:
+This is release v0.8.2 of OSPRay.
+
+For more information, visit http://www.ospray.org.
+
+Release History
+---------------
+
+#### Changes in v0.8.1:
 
 - The volume renderer and volume viewer can now be run MPI parallel
   (data replicated) using the "--osp:mpi" command line option.
@@ -16,11 +23,6 @@ This is release v0.8.1 of OSPRay. Changes since v0.8.0:
 - Bug fix for geometries with invalid bounds; fixes streamline and
   sphere rendering in some scenes.
 - Fixed bug in depth buffer generation.
-
-For more information, visit http://www.ospray.org.
-
-Release History
----------------
 
 #### Changes in v0.8.0:
 

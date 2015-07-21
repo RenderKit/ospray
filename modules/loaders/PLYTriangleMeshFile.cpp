@@ -27,13 +27,13 @@ bool startsWith(const std::string &haystack, const std::string &needle) {
 
 OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangleMesh)
 {
-  //! Get scaling parameter if provided.
+  // Get scaling parameter if provided.
   ospGetVec3f(triangleMesh, "scale", &scale);
 
-  //! Parse the PLY triangle data file and populate attributes.
+  // Parse the PLY triangle data file and populate attributes.
   exitOnCondition(parse() != true, "error parsing the file '" + filename + "'");
 
-  //! Set the vertex, vertex colors and triangle index data on the triangle mesh.
+  // Set the vertex, vertex colors and triangle index data on the triangle mesh.
   OSPData vertexData = ospNewData(vertices.size(), OSP_FLOAT3A, &vertices[0].x);
   ospSetData(triangleMesh, "vertex", vertexData);
 
@@ -46,7 +46,7 @@ OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangle
   OSPData indexData = ospNewData(triangles.size(), OSP_INT3, &triangles[0].x);
   ospSetData(triangleMesh, "index", indexData);
 
-  //! Return the triangle mesh.
+  // Return the triangle mesh.
   return triangleMesh;
 }
 
@@ -55,7 +55,7 @@ bool PLYTriangleMeshFile::parse()
   std::ifstream in(filename.c_str());
   exitOnCondition(!in.is_open(), "unable to open geometry file.");
 
-  //! Verify header.
+  // Verify header.
   char line[1024];
   in.getline(line, 1024);
   exitOnCondition(std::string(line) != "ply", "ply header not found.");
@@ -63,7 +63,7 @@ bool PLYTriangleMeshFile::parse()
   in.getline(line, 1024);
   exitOnCondition(std::string(line) != "format ascii 1.0", "only ascii PLY files are supported.");
 
-  //! Parse the rest of the header line by line.
+  // Parse the rest of the header line by line.
   int numVertices = 0;
   int numVertexProperties = 0;
   std::map<std::string, int> vertexPropertyToIndex;
@@ -71,61 +71,61 @@ bool PLYTriangleMeshFile::parse()
 
   while(in.good()) {
 
-    //! Read a new line.
+    // Read a new line.
     in.getline(line, 1024);
     std::string lineString(line);
 
-    //! Ignore comment and obj_info lines.
+    // Ignore comment and obj_info lines.
     if(startsWith(lineString, "comment") || startsWith(lineString, "obj_info"))
       continue;
 
-    //! Vertex header information.
+    // Vertex header information.
     else if(startsWith(lineString, "element vertex")) {
 
-      //! Number of vertices.
+      // Number of vertices.
       exitOnCondition(sscanf(line, "element vertex %i", &numVertices) != 1, "could not read number of vertices.");
 
-      //! Read vertex property definitions.
+      // Read vertex property definitions.
       while(in.good()) {
         std::streampos currentPos = in.tellg();
 
         in.getline(line, 1024);
         lineString = std::string(line);
 
-        //! Seek backward and break after last property is found.
+        // Seek backward and break after last property is found.
         if(!startsWith(lineString, "property")) {
           in.seekg(currentPos);
           break;
         }
 
-        //! Read property name.
+        // Read property name.
         char propertyType[64];
         char propertyName[64];
         exitOnCondition(sscanf(line, "property %s %s", propertyType, propertyName) != 2, "could not read vertex property definition.");
 
-        //! Save property information.
+        // Save property information.
         vertexPropertyToIndex[std::string(propertyName)] = numVertexProperties;
         numVertexProperties++;
       }
     }
 
-    //! Face header information.
+    // Face header information.
     else if(startsWith(lineString, "element face")) {
 
-      //! Number of faces.
+      // Number of faces.
       exitOnCondition(sscanf(line, "element face %i", &numFaces) != 1, "could not read number of faces.");
 
-      //! Next line should be "property list uchar int vertex_indices"
+      // Next line should be "property list uchar int vertex_indices"
       in.getline(line, 1024);
       lineString = std::string(line);
       exitOnCondition(!startsWith(lineString, "property list uchar int vertex_indices"), "unexpected face header information.");
     }
 
-    //! Break on end of header.
+    // Break on end of header.
     else if(startsWith(lineString, "end_header"))
       break;
 
-    //! Unexpected line.
+    // Unexpected line.
     else
       exitOnCondition(true, "unexpected line in header: " + lineString);
   }
@@ -133,14 +133,14 @@ bool PLYTriangleMeshFile::parse()
   if(verbose)
     std::cout << toString() << " numVertices = " << numVertices << ", numVertexProperties = " << numVertexProperties << ", numFaces = " << numFaces << std::endl;
 
-  //! Make sure we have the required vertex properties.
+  // Make sure we have the required vertex properties.
   exitOnCondition(!vertexPropertyToIndex.count("x") || !vertexPropertyToIndex.count("y") || !vertexPropertyToIndex.count("z"), "vertex coordinate properties missing.");
 
   int xIndex = vertexPropertyToIndex["x"];
   int yIndex = vertexPropertyToIndex["y"];
   int zIndex = vertexPropertyToIndex["z"];
     
-  //! See if we have vertex colors.
+  // See if we have vertex colors.
   bool haveVertexColors = false;
   int rIndex, gIndex, bIndex, aIndex;
 
@@ -153,7 +153,7 @@ bool PLYTriangleMeshFile::parse()
     aIndex = vertexPropertyToIndex["alpha"];
   }
 
-  //! Read the vertex data.
+  // Read the vertex data.
   for(int i=0; i<numVertices; i++) {
 
     std::vector<float> vertexProperties;
@@ -166,20 +166,20 @@ bool PLYTriangleMeshFile::parse()
       vertexProperties.push_back(value);
     }
 
-    //! Add to vertices vector with scaling applied.
+    // Add to vertices vector with scaling applied.
     vertices.push_back(scale * osp::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
 
-    //! Vertex normals will be computed later.
+    // Vertex normals will be computed later.
     vertexNormals.push_back(osp::vec3fa(0.f));
 
-    //! Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
+    // Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
     if(haveVertexColors)
       vertexColors.push_back(1.f/255.f * osp::vec3fa(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex]));
     else
       vertexColors.push_back(osp::vec3fa(1.f));
   }
 
-  //! Read the face data.
+  // Read the face data.
   for(int i=0; i<numFaces; i++) {
 
     int count;
@@ -192,14 +192,14 @@ bool PLYTriangleMeshFile::parse()
 
     triangles.push_back(triangle);
 
-    //! Add vertex normal contributions.
+    // Add vertex normal contributions.
     osp::vec3fa triangleNormal = cross(vertices[triangle.y] - vertices[triangle.x], vertices[triangle.z] - vertices[triangle.x]);
     vertexNormals[triangle.x] += triangleNormal;
     vertexNormals[triangle.y] += triangleNormal;
     vertexNormals[triangle.z] += triangleNormal;
   }
 
-  //! Normalize vertex normals.
+  // Normalize vertex normals.
   for(int i=0; i<vertexNormals.size(); i++)
     vertexNormals[i] = normalize(vertexNormals[i]);
 
