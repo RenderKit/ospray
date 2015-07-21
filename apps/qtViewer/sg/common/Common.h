@@ -25,6 +25,9 @@
 namespace ospray {
   namespace sg {
 
+#define THROW_SG_ERROR(where,err) \
+    throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err));
+
     typedef unsigned int uint;
     
     /*! base node for every scene graph node */
