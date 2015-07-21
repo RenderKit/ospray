@@ -21,15 +21,15 @@ SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
   : boundingBox(boundingBox),
     originSliderAnimationDirection(1) 
 {  
-  //! Check parameters.
+  // Check parameters.
   if(volume(boundingBox) <= 0.f)
     throw std::runtime_error("invalid volume bounds");
 
-  //! Setup UI elements.
+  // Setup UI elements.
   QVBoxLayout * layout = new QVBoxLayout();
   setLayout(layout);
 
-  //! Save and load buttons.
+  // Save and load buttons.
   QWidget * saveLoadWidget = new QWidget();
   QHBoxLayout * hboxLayout = new QHBoxLayout();
   saveLoadWidget->setLayout(hboxLayout);
@@ -44,7 +44,7 @@ SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
 
   layout->addWidget(saveLoadWidget);
 
-  //! Form layout for the rest of the UI elements.
+  // Form layout for the rest of the UI elements.
   QWidget * formWidget = new QWidget();
   QFormLayout * formLayout = new QFormLayout();
   formWidget->setLayout(formLayout);
@@ -53,7 +53,7 @@ SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
   formLayout->setContentsMargins(margins);
   layout->addWidget(formWidget);
 
-  //! Origin parameters with default values.
+  // Origin parameters with default values.
   QWidget * originWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originWidget->setLayout(hboxLayout);
@@ -79,7 +79,7 @@ SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
 
   formLayout->addRow("Origin", originWidget);
 
-  //! Normal parameters with default values.
+  // Normal parameters with default values.
   QWidget * normalWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   normalWidget->setLayout(hboxLayout);
@@ -105,8 +105,8 @@ SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
 
   formLayout->addRow("Normal", normalWidget);
 
-  //! Add a slider and animate button for the origin location along the normal.
-  //! Defaults to mid-point (matching the origin widgets).
+  // Add a slider and animate button for the origin location along the normal.
+  // Defaults to mid-point (matching the origin widgets).
   QWidget * originSliderWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   originSliderWidget->setLayout(hboxLayout);
@@ -126,10 +126,10 @@ SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
 
   formLayout->addRow("", originSliderWidget);
 
-  //! Connect animation timer signal / slot.
+  // Connect animation timer signal / slot.
   connect(&originSliderAnimationTimer, SIGNAL(timeout()), this, SLOT(animate()));
 
-  //! Delete button.
+  // Delete button.
   QWidget * buttonsWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   buttonsWidget->setLayout(hboxLayout);
@@ -140,17 +140,17 @@ SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
 
   layout->addWidget(buttonsWidget);
 
-  //! Frame style for the widget.
+  // Frame style for the widget.
   setFrameStyle(QFrame::Panel | QFrame::Raised);
 
-  //! Minimum width for the widget.
+  // Minimum width for the widget.
   setMinimumWidth(240);
 
-  //! Connect signals to trigger updates in the slice editor.
+  // Connect signals to trigger updates in the slice editor.
   connect(this, SIGNAL(sliceChanged()), sliceEditor, SLOT(apply()));
   connect(this, SIGNAL(sliceDeleted(SliceWidget *)), sliceEditor, SLOT(deleteSlice(SliceWidget *)));
 
-  //! Apply slice once event loop continues (allows SliceWidget to be added to SliceEditor list first).
+  // Apply slice once event loop continues (allows SliceWidget to be added to SliceEditor list first).
   QTimer::singleShot(0, this, SLOT(apply()));
 }
 
@@ -163,7 +163,7 @@ SliceParameters SliceWidget::getSliceParameters()
 {
   SliceParameters sliceParameters;
 
-  //! Get the origin and normal values.
+  // Get the origin and normal values.
   sliceParameters.origin = osp::vec3f(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
   sliceParameters.normal = osp::vec3f(float(normalXSpinBox.value()), float(normalYSpinBox.value()), float(normalZSpinBox.value()));
 
@@ -172,14 +172,14 @@ SliceParameters SliceWidget::getSliceParameters()
 
 void SliceWidget::load(std::string filename)
 {
-  //! Get filename if not specified.
+  // Get filename if not specified.
   if(filename.empty())
     filename = QFileDialog::getOpenFileName(this, tr("Load slice"), ".", "Slice files (*.slc)").toStdString();
 
   if(filename.empty())
     return;
 
-  //! Get serialized slice state from file.
+  // Get serialized slice state from file.
   QFile file(filename.c_str());
   bool success = file.open(QIODevice::ReadOnly);
 
@@ -205,7 +205,7 @@ void SliceWidget::load(std::string filename)
 
   in >> originSliderAnimationDirection;
 
-  //! Update slice state. Update values of the UI elements directly to signal appropriate slots.
+  // Update slice state. Update values of the UI elements directly to signal appropriate slots.
   originXSpinBox.setValue(originX);
   originYSpinBox.setValue(originY);
   originZSpinBox.setValue(originZ);
@@ -223,17 +223,17 @@ void SliceWidget::apply()
 
 void SliceWidget::save() {
 
-  //! Get filename.
+  // Get filename.
   QString filename = QFileDialog::getSaveFileName(this, "Save slice", ".", "Slice files (*.slc)");
 
   if(filename.isNull())
     return;
 
-  //! Make sure the filename has the proper extension.
+  // Make sure the filename has the proper extension.
   if(filename.endsWith(".slc") != true)
     filename += ".slc";
 
-  //! Serialize slice state to file.
+  // Serialize slice state to file.
   QFile file(filename);
   bool success = file.open(QIODevice::WriteOnly);
 
@@ -254,14 +254,14 @@ void SliceWidget::save() {
 
 void SliceWidget::originSliderValueChanged(int value) {
 
-  //! Slider position in [0, 1].
+  // Slider position in [0, 1].
   float sliderPosition = float(value) / float(originSlider.maximum() - originSlider.minimum());
 
-  //! Get origin and (normalized) normal vectors.
+  // Get origin and (normalized) normal vectors.
   osp::vec3f origin(originXSpinBox.value(), originYSpinBox.value(), originZSpinBox.value());
   osp::vec3f normal = normalize(osp::vec3f(normalXSpinBox.value(), normalYSpinBox.value(), normalZSpinBox.value()));
 
-  //! Compute allowed range along normal for the volume bounds.
+  // Compute allowed range along normal for the volume bounds.
   osp::vec3f upper(normal.x >= 0.f ? boundingBox.upper.x : boundingBox.lower.x,
                    normal.y >= 0.f ? boundingBox.upper.y : boundingBox.lower.y,
                    normal.z >= 0.f ? boundingBox.upper.z : boundingBox.lower.z);
@@ -273,17 +273,17 @@ void SliceWidget::originSliderValueChanged(int value) {
   float tMax = dot(abs(upper - origin), abs(normal));
   float tMin = -dot(abs(lower - origin), abs(normal));
 
-  //! Get t value within this range.
+  // Get t value within this range.
   float t = tMin + sliderPosition * (tMax - tMin);
 
-  //! Clamp t within epsilon of the minimum and maximum, to prevent artifacts rendering near the bounds of the volume.
+  // Clamp t within epsilon of the minimum and maximum, to prevent artifacts rendering near the bounds of the volume.
   const float epsilon = 0.01;
   t = std::max(std::min(t, tMax-epsilon), tMin+epsilon);
 
-  //! Compute updated origin, clamped within the volume bounds.
+  // Compute updated origin, clamped within the volume bounds.
   osp::vec3f updatedOrigin = clamp(origin + t*normal, boundingBox.lower, boundingBox.upper);
 
-  //! Finally, set the new origin value.
+  // Finally, set the new origin value.
   originXSpinBox.setValue(updatedOrigin.x);
   originYSpinBox.setValue(updatedOrigin.y);
   originZSpinBox.setValue(updatedOrigin.z);
@@ -291,7 +291,7 @@ void SliceWidget::originSliderValueChanged(int value) {
 
 void SliceWidget::setAnimation(bool set) {
 
-  //! Start or stop the animation timer.
+  // Start or stop the animation timer.
   if(set)
     originSliderAnimationTimer.start(100);
   else
@@ -302,10 +302,10 @@ void SliceWidget::animate() {
 
   int value = originSlider.value();
 
-  //! Check if we need to reverse direction.
+  // Check if we need to reverse direction.
   if(value + originSliderAnimationDirection < originSlider.minimum() || value + originSliderAnimationDirection > originSlider.maximum())
     originSliderAnimationDirection *= -1;
 
-  //! Increment slider position.
+  // Increment slider position.
   originSlider.setValue(value + originSliderAnimationDirection);
 }

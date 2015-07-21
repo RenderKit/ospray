@@ -18,34 +18,32 @@
 #include "ospray/common/Library.h"
 #include "modules/loaders/ObjectFile.h"
 
-OSPObject *ObjectFile::importObjects(const std::string &filename) {
-
-  //! Attempt to get the absolute file path.
+OSPObject *ObjectFile::importObjects(const std::string &filename)
+{
+  // Attempt to get the absolute file path.
   std::string fullfilename = getFullFilePath(filename);
 
-  //! Function pointer type for creating a concrete instance of a subtype of this class.
+  // Function pointer type for creating a concrete instance of a subtype of this class.
   typedef OSPObject *(*creationFunctionPointer)(const std::string &filename);
 
-  //! Function pointers corresponding to each subtype.
+  // Function pointers corresponding to each subtype.
   static std::map<std::string, creationFunctionPointer> symbolRegistry;
 
-  //! The subtype string is the file extension.
+  // The subtype string is the file extension.
   std::string type = filename.substr(filename.find_last_of(".") + 1);
 
-  //! Return a concrete instance of the requested subtype if the creation function is already known.
+  // Return a concrete instance of the requested subtype if the creation function is already known.
   if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])(fullfilename));
 
-  //! Otherwise construct the name of the creation function to look for.
+  // Otherwise construct the name of the creation function to look for.
   std::string creationFunctionName = "ospray_import_object_file_" + std::string(type);
 
-  //! Look for the named function.
+  // Look for the named function.
   symbolRegistry[type] = (creationFunctionPointer) ospray::getSymbol(creationFunctionName);
 
-  //! The named function may not be found if the requested subtype is not known.
+  // The named function may not be found if the requested subtype is not known.
   if (!symbolRegistry[type]) std::cerr << "  ospray_module_loaders::ObjectFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
 
-  //! Return a list of objects loaded from the file.
-  return(symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename) : NULL);
-
+  // Return a list of objects loaded from the file.
+  return symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename) : NULL;
 }
-

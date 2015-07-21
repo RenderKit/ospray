@@ -23,246 +23,245 @@
 
 OSPObject *OSPObjectFile::importObjects()
 {
-  //! The XML document container.
+  // The XML document container.
   tinyxml2::XMLDocument xml(true, tinyxml2::COLLAPSE_WHITESPACE);
 
-  //! Read the XML object file.
+  // Read the XML object file.
   exitOnCondition(xml.LoadFile(filename.c_str()) != tinyxml2::XML_SUCCESS, "unable to read object file '" + filename + "'");
 
-  //! A list of OSPRay objects and their attributes contained in the file.
+  // A list of OSPRay objects and their attributes contained in the file.
   std::vector<OSPObject> objects;
 
-  //! Iterate over the object entries, skip the XML declaration and comments.
+  // Iterate over the object entries, skip the XML declaration and comments.
   for (const tinyxml2::XMLNode *node = xml.FirstChild() ; node ; node = node->NextSibling()) if (node->ToElement()) objects.push_back(importObject(node));
 
-  //! Copy the objects into a list.
+  // Copy the objects into a list.
   OSPObject *pointer = new OSPObject[objects.size() + 1];  memcpy(pointer, &objects[0], objects.size() * sizeof(OSPObject));
 
-  //! Mark the end of the list.
+  // Mark the end of the list.
   pointer[objects.size()] = NULL;  return(pointer);
 }
 
 void OSPObjectFile::importAttributeFloat(const tinyxml2::XMLNode *node, OSPObject parent)
 {
-  //! The attribute value is encoded in a string.
+  // The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  float value = 0.0f;  char guard[8];
 
-  //! Get the attribute value.
+  // Get the attribute value.
   exitOnCondition(sscanf(text, "%f %7s", &value, guard) != 1, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
 
-  //! Set the attribute on the parent object.
+  // Set the attribute on the parent object.
   ospSet1f(parent, node->ToElement()->Name(), value);
 }
 
 void OSPObjectFile::importAttributeFloat2(const tinyxml2::XMLNode *node, OSPObject parent)
 {
-  //! The attribute value is encoded in a string.
+  // The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  osp::vec2f value(0.0f);  char guard[8];
 
-  //! Get the attribute value.
+  // Get the attribute value.
   exitOnCondition(sscanf(text, "%f %f %7s", &value.x, &value.y, guard) != 2, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
 
-  //! Set the attribute on the parent object.
+  // Set the attribute on the parent object.
   ospSetVec2f(parent, node->ToElement()->Name(), value);
 }
 
 void OSPObjectFile::importAttributeFloat3(const tinyxml2::XMLNode *node, OSPObject parent)
 {
-  //! The attribute value is encoded in a string.
+  // The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  osp::vec3f value(0.0f);  char guard[8];
 
-  //! Get the attribute value.
+  // Get the attribute value.
   exitOnCondition(sscanf(text, "%f %f %f %7s", &value.x, &value.y, &value.z, guard) != 3, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
 
-  //! Set the attribute on the parent object.
+  // Set the attribute on the parent object.
   ospSetVec3f(parent, node->ToElement()->Name(), value);
 }
 
 void OSPObjectFile::importAttributeInteger(const tinyxml2::XMLNode *node, OSPObject parent)
 {
-  //! The attribute value is encoded in a string.
+  // The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  int value = 0;  char guard[8];
 
-  //! Get the attribute value.
+  // Get the attribute value.
   exitOnCondition(sscanf(text, "%d %7s", &value, guard) != 1, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
 
-  //! Set the attribute on the parent object.
+  // Set the attribute on the parent object.
   ospSet1i(parent, node->ToElement()->Name(), value);
 }
 
 void OSPObjectFile::importAttributeInteger3(const tinyxml2::XMLNode *node, OSPObject parent)
 {
-  //! The attribute value is encoded in a string.
+  // The attribute value is encoded in a string.
   const char *text = node->ToElement()->GetText();  osp::vec3i value(0);  char guard[8];
 
-  //! Get the attribute value.
+  // Get the attribute value.
   exitOnCondition(sscanf(text, "%d %d %d %7s", &value.x, &value.y, &value.z, guard) != 3, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
 
-  //! Set the attribute on the parent object.
+  // Set the attribute on the parent object.
   ospSetVec3i(parent, node->ToElement()->Name(), value);
 }
 
 void OSPObjectFile::importAttributeString(const tinyxml2::XMLNode *node, OSPObject parent)
 {
-  //! Get the attribute value.
+  // Get the attribute value.
   const char *value = node->ToElement()->GetText();
 
-  //! Error check.
+  // Error check.
   exitOnCondition(strlen(value) == 0, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
 
-  //! Set the attribute on the parent object.
+  // Set the attribute on the parent object.
   ospSetString(parent, node->ToElement()->Name(), value);
 }
 
 OSPObject OSPObjectFile::importObject(const tinyxml2::XMLNode *node)
 {
-  //! OSPRay light object.
+  // OSPRay light object.
   if (!strcmp(node->ToElement()->Name(), "light")) return((OSPObject) importLight(node));
 
-  //! OSPRay triangle mesh object.
+  // OSPRay triangle mesh object.
   if (!strcmp(node->ToElement()->Name(), "triangleMesh")) return((OSPObject) importTriangleMesh(node));
 
-  //! OSPRay volume object.
+  // OSPRay volume object.
   if (!strcmp(node->ToElement()->Name(), "volume")) return((OSPObject) importVolume(node));
 
-  //! No other object types are currently supported.
+  // No other object types are currently supported.
   exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");  return(NULL);
 }
 
 OSPLight OSPObjectFile::importLight(const tinyxml2::XMLNode *root)
 {
-  //! Create the OSPRay object.
+  // Create the OSPRay object.
   OSPLight light = ospNewLight(NULL, root->ToElement()->Attribute("type"));
 
-  //! Iterate over object attributes.
+  // Iterate over object attributes.
   for (const tinyxml2::XMLNode *node = root->FirstChild() ; node ; node = node->NextSibling()) {
 
-    //! Light color.
+    // Light color.
     if (!strcmp(node->ToElement()->Name(), "color")) { importAttributeFloat3(node, light);  continue; }
 
-    //! Light direction.
+    // Light direction.
     if (!strcmp(node->ToElement()->Name(), "direction")) { importAttributeFloat3(node, light);  continue; }
 
-    //! Light half angle for spot lights.
+    // Light half angle for spot lights.
     if (!strcmp(node->ToElement()->Name(), "halfAngle")) { importAttributeFloat(node, light);  continue; }
 
-    //! Light position.
+    // Light position.
     if (!strcmp(node->ToElement()->Name(), "position")) { importAttributeFloat3(node, light);  continue; }
 
-    //! Light illumination distance cutoff.
+    // Light illumination distance cutoff.
     if (!strcmp(node->ToElement()->Name(), "range")) { importAttributeFloat(node, light);  continue; }
 
-    //! Error check.
+    // Error check.
     exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
-
   }
 
-  //! The populated light object.
-  return(light);
+  // The populated light object.
+  return light;
 }
 
 OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
 {
-  //! Create the OSPRay object.
+  // Create the OSPRay object.
   OSPTriangleMesh triangleMesh = ospNewTriangleMesh();
 
-  //! Temporary storage for the file name attribute if specified.
+  // Temporary storage for the file name attribute if specified.
   const char *triangleMeshFilename = NULL;
 
-  //! Iterate over object attributes.
+  // Iterate over object attributes.
   for (const tinyxml2::XMLNode *node = root->FirstChild() ; node ; node = node->NextSibling()) {
 
-    //! File containing a triangle mesh specification and / or data.
+    // File containing a triangle mesh specification and / or data.
     if (!strcmp(node->ToElement()->Name(), "filename")) { triangleMeshFilename = node->ToElement()->GetText();  continue; }
 
-    //! Scaling for vertex coordinates.
+    // Scaling for vertex coordinates.
     if (!strcmp(node->ToElement()->Name(), "scale")) { importAttributeFloat3(node, triangleMesh);  continue; }
 
-    //! Error check.
+    // Error check.
     exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
   }
 
-  //! Load the contents of the triangle mesh file if specified.
+  // Load the contents of the triangle mesh file if specified.
   if (triangleMeshFilename != NULL) {
 
-    //! Some implementations of 'dirname()' are destructive.
+    // Some implementations of 'dirname()' are destructive.
     char *duplicateFilename = strdup(filename.c_str());
 
-    //! The triangle mesh file path is absolute.
+    // The triangle mesh file path is absolute.
     if (triangleMeshFilename[0] == '/') return(TriangleMeshFile::importTriangleMesh(triangleMeshFilename, triangleMesh));
 
-    //! The triangle mesh file path is relative to the object file path.
+    // The triangle mesh file path is relative to the object file path.
     if (triangleMeshFilename[0] != '/') return(TriangleMeshFile::importTriangleMesh((std::string(dirname(duplicateFilename)) + "/" + triangleMeshFilename).c_str(), triangleMesh));
 
-    //! Free the temporary character array.
+    // Free the temporary character array.
     if (duplicateFilename != NULL) free(duplicateFilename);
   }
 
-  //! The populated triangle mesh object.
-  return(triangleMesh);
+  // The populated triangle mesh object.
+  return triangleMesh;
 }
 
 OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
 {
-  //! Create the OSPRay object.
+  // Create the OSPRay object.
   OSPVolume volume = ospNewVolume("block_bricked_volume");
 
-  //! Temporary storage for the file name attribute if specified.
+  // Temporary storage for the file name attribute if specified.
   const char *volumeFilename = NULL;
 
-  //! Iterate over object attributes.
+  // Iterate over object attributes.
   for (const tinyxml2::XMLNode *node = root->FirstChild() ; node ; node = node->NextSibling()) {
 
-    //! Volume size in voxels per dimension.
+    // Volume size in voxels per dimension.
     if (!strcmp(node->ToElement()->Name(), "dimensions")) { importAttributeInteger3(node, volume);  continue; }
 
-    //! File containing a volume specification and / or voxel data.
+    // File containing a volume specification and / or voxel data.
     if (!strcmp(node->ToElement()->Name(), "filename")) { volumeFilename = node->ToElement()->GetText();  continue; }
 
-    //! Grid origin in world coordinates.
+    // Grid origin in world coordinates.
     if (!strcmp(node->ToElement()->Name(), "gridOrigin")) { importAttributeFloat3(node, volume);  continue; }
 
-    //! Grid spacing in each dimension in world coordinates.
+    // Grid spacing in each dimension in world coordinates.
     if (!strcmp(node->ToElement()->Name(), "gridSpacing")) { importAttributeFloat3(node, volume);  continue; }
 
-    //! Sampling rate for ray casting based renderers.
+    // Sampling rate for ray casting based renderers.
     if (!strcmp(node->ToElement()->Name(), "samplingRate")) { importAttributeFloat(node, volume);  continue; }
 
-    //! Subvolume offset from origin within the full volume.
+    // Subvolume offset from origin within the full volume.
     if (!strcmp(node->ToElement()->Name(), "subvolumeOffsets")) { importAttributeInteger3(node, volume);  continue; }
 
-    //! Subvolume dimensions within the full volume.
+    // Subvolume dimensions within the full volume.
     if (!strcmp(node->ToElement()->Name(), "subvolumeDimensions")) { importAttributeInteger3(node, volume);  continue; }
 
-    //! Subvolume steps in each dimension; can be used to subsample the volume.
+    // Subvolume steps in each dimension; can be used to subsample the volume.
     if (!strcmp(node->ToElement()->Name(), "subvolumeSteps")) { importAttributeInteger3(node, volume);  continue; }
 
-    //! Voxel value range.
+    // Voxel value range.
     if (!strcmp(node->ToElement()->Name(), "voxelRange")) { importAttributeFloat2(node, volume);  continue; }
 
-    //! Voxel type string.
+    // Voxel type string.
     if (!strcmp(node->ToElement()->Name(), "voxelType")) { importAttributeString(node, volume);  continue; }
 
-    //! Error check.
+    // Error check.
     exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
   }
 
-  //! Load the contents of the volume file if specified.
+  // Load the contents of the volume file if specified.
   if (volumeFilename != NULL) {
 
-    //! Some implementations of 'dirname()' are destructive.
+    // Some implementations of 'dirname()' are destructive.
     char *duplicateFilename = strdup(filename.c_str());
 
-    //! The volume file path is absolute.
+    // The volume file path is absolute.
     if (volumeFilename[0] == '/') return(VolumeFile::importVolume(volumeFilename, volume));
 
-    //! The volume file path is relative to the object file path.
+    // The volume file path is relative to the object file path.
     if (volumeFilename[0] != '/') return(VolumeFile::importVolume((std::string(dirname(duplicateFilename)) + "/" + volumeFilename).c_str(), volume));
 
-    //! Free the temporary character array.
+    // Free the temporary character array.
     if (duplicateFilename != NULL) free(duplicateFilename);
   }
 
-  //! The populated volume object.
-  return(volume);
+  // The populated volume object.
+  return volume;
 }
