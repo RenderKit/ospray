@@ -50,7 +50,6 @@ struct Address {
 
   //! The 1D offset of the voxel in the enclosing block.
   varying uint32 voxel;
-  
 };
 
 inline void BlockBrickedVolume_getVoxelAddress(BlockBrickedVolume *uniform volume, 
@@ -125,70 +124,6 @@ inline void BlockBrickedVolumeUChar_getVoxel(void *uniform _volume,
   }
 }
 
-// inline void 
-// BlockBrickedVolumeFloat_setVoxelFromRegion(void *uniform _volume, 
-//                                            const void *uniform source, 
-//                                            /*! the local coordinates in the region we're blitting */
-//                                            const uniform vec3i &coordInRegion, 
-//                                            /*! the size of the region we're copying */
-//                                            const uniform vec3i &regionSize, 
-//                                            /*! the coordinates where region[0,0,0] will be copied into */
-//                                            const varying vec3i &targetCoord000)
-// {
-//   // Cast to the actual Volume subtype.
-//   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
-
-//   // Cast to the actual voxel type.
-//   float *uniform voxelData = (float *uniform) volume->voxelData;
-//   const float *uniform sourceData = (const float *uniform) source;
-
-//   foreach_unique(offsetZ in offset.z) {
-
-//     const float *uniform sourceDataShifted = sourceData + (int64)offsetZ * count.y * count.x;
-
-//     // Compute the 1D address of the block in the volume and the voxel in the block.
-//     Address address;
-//     BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
-
-//     // The source voxel value.
-//     float value = sourceDataShifted[offset.y * count.x + offset.x];
-
-//     // Store the voxel value at the 1D address.
-//     foreach_unique(block in address.block)
-//       voxelData[block][address.voxel] = value;
-//   }
-// }
-
-// inline void BlockBrickedVolumeUChar_setVoxel(void *uniform _volume, 
-//                                              const void *uniform source, 
-//                                              const uniform vec3i &index, 
-//                                              const uniform vec3i &count, 
-//                                              const varying vec3i &offset)
-// {
-//   // Cast to the actual Volume subtype.
-//   BlockBrickedVolume *uniform volume = (BlockBrickedVolume *uniform) _volume;
-
-//   // Cast to the actual voxel type.
-//   uint8 *uniform voxelData = (uint8 *uniform) volume->voxelData;
-//   const uint8 *uniform sourceData = (const uint8 *uniform) source;
-
-//   foreach_unique(offsetZ in offset.z) {
-
-//     const uint8 *uniform sourceDataShifted = sourceData + (int64)offsetZ * count.y * count.x;
-
-//     // Compute the 1D address of the block in the volume and the voxel in the block.
-//     Address address;
-//     BlockBrickedVolume_getVoxelAddress(volume, index + offset, address);
-
-//     // The source voxel value.
-//     uint8 value = sourceDataShifted[offset.y * count.x + offset.x];
-
-//     // Store the voxel value at the 1D address.
-//     foreach_unique(block in address.block)
-//       voxelData[block][address.voxel] = value;
-//   }
-// }
-
 inline void BlockBrickedVolume_allocateMemory(BlockBrickedVolume *uniform volume)
 {
   // Memory may already have been allocated.
@@ -256,7 +191,7 @@ task void BBVFloat_setRegionTask(BlockBrickedVolume *uniform self,
   }
 }
                                  
-/*! copy given block of pixels into the volume, where source[0] will
+/*! copy given block of voxels into the volume, where source[0] will
   be written to volume[targetCoord000] */
 void BlockBrickedVolumeUChar_setRegion(void *uniform _volume, 
                                        const void *uniform _source, 
@@ -271,8 +206,8 @@ void BlockBrickedVolumeUChar_setRegion(void *uniform _volume,
                                          regionSize);
 }
 
-  /*! copy given block of pixels into the volume, where source[0] will
-    be written to volume[targetCoord000] */
+/*! copy given block of voxels into the volume, where source[0] will
+  be written to volume[targetCoord000] */
 void BlockBrickedVolumeFloat_setRegion(void *uniform _volume, 
                                        const void *uniform _source, 
                                        const uniform vec3i &targetCoord000,
@@ -326,21 +261,6 @@ export void *uniform BlockBrickedVolume_createInstance(void *uniform cppEquivale
 
   return volume;
 }
-
-// task void BlockBrickedVolume_setRegionTask(BlockBrickedVolume *uniform self, 
-//                                            const void *uniform source, 
-//                                            const uniform vec3i &index, 
-//                                            const uniform vec3i &count)
-// {
-//   // Offset from task index.
-//   const uniform int offsetY = taskIndex % count.y;
-//   const uniform int offsetZ = taskIndex / count.y;
-
-//   foreach (x = 0 ... count.x) {
-//       const vec3i offset = make_vec3i(x, offsetY, offsetZ);
-//       self->setVoxel(self, source, index, count, offset);
-//     }
-// }
 
 export void 
 BlockBrickedVolume_setRegion(void *uniform _self,

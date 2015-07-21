@@ -42,7 +42,7 @@ struct BlockBrickedVolume {
   //! Voxel size in bytes.
   uniform size_t voxelSize;
 
-  /*! copy given block of pixels into the volume, where source[0] will
+  /*! copy given block of voxels into the volume, where source[0] will
     be written to volume[targetCoord000] */
   void (*uniform setRegion)(void *uniform _volume, 
                             const void *uniform _source,
