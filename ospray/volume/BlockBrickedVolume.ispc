@@ -98,7 +98,7 @@ inline void BlockBrickedVolumeFloat_getVoxel(void *uniform _volume,
 
   // The voxel value at the 1D address.
   foreach_unique(blockID in address.block) {
-    float *uniform blockPtr = blockMem + (BLOCK_VOXEL_COUNT * blockID);
+    float *uniform blockPtr = blockMem + (BLOCK_VOXEL_COUNT * (uint64)blockID);
     value = blockPtr[address.voxel];
   }
 }
@@ -119,7 +119,7 @@ inline void BlockBrickedVolumeUChar_getVoxel(void *uniform _volume,
 
   // The voxel value at the 1D address.
   foreach_unique(blockID in address.block) {
-    uint8 *uniform blockPtr = blockMem + (BLOCK_VOXEL_COUNT * blockID);
+    uint8 *uniform blockPtr = blockMem + (BLOCK_VOXEL_COUNT * (uint64)blockID);
     value = blockPtr[address.voxel];
   }
 }
