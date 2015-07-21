@@ -108,22 +108,21 @@ IF (OSPRAY_MIC)
 ENDIF()
 
 ##############################################################
-# ospray sample apps
-##############################################################
-SET (OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(apps builddir/apps/intel64)
-IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(apps builddir/apps/mic)
-ENDIF()
-
-
-##############################################################
-# modules at the end, they may need utilities
+# ospray modules
 ##############################################################
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
   SET (OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(modules builddir/modules/mic)
+ENDIF()
+
+##############################################################
+# ospray sample apps at the end, they made need modules
+##############################################################
+SET (OSPRAY_TARGET "intel64")
+ADD_SUBDIRECTORY(apps builddir/apps/intel64)
+IF (OSPRAY_MIC)
+  SET (OSPRAY_TARGET "mic")
+  ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()
