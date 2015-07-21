@@ -96,7 +96,6 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
 
   //! Generate triangle mesh for each horizon.
   std::vector<osp::vec3fa> vertices;
-  std::vector<osp::vec3fa> vertexColors;
   std::vector<osp::vec3fa> vertexNormals;
   std::vector<osp::vec3i>  triangles;
 
@@ -113,7 +112,6 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
         vertex *= scale;
 
         vertices.push_back(vertex);
-        vertexColors.push_back(osp::vec3fa(-1.f)); // color by volume / transfer function for now
         vertexNormals.push_back(osp::vec3fa(0.f));
       }
     }
@@ -156,9 +154,6 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
   //! Set data on triangle mesh.
   OSPData vertexData = ospNewData(vertices.size(), OSP_FLOAT3A, &vertices[0].x);
   ospSetData(triangleMesh, "vertex", vertexData);
-
-  OSPData vertexColorData = ospNewData(vertexColors.size(), OSP_FLOAT3A, &vertexColors[0].x);
-  ospSetData(triangleMesh, "vertex.color", vertexColorData);
 
   OSPData vertexNormalData = ospNewData(vertexNormals.size(), OSP_FLOAT3A, &vertexNormals[0].x);
   ospSetData(triangleMesh, "vertex.normal", vertexNormalData);

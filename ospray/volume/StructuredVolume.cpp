@@ -30,12 +30,17 @@ namespace ospray {
     updateEditableParameters();
 
     //! Set the grid origin, default to (0,0,0).
-    vec3f gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
-    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) gridOrigin);
+    this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
+
+    //! Get the volume dimensions.
+    this->dimensions = getParam3i("dimensions", vec3i(0));
+    exitOnCondition(reduce_min(this->dimensions) <= 0, 
+                    "invalid volume dimensions");
 
     //! Set the grid spacing, default to (1,1,1).
-    vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
-    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) gridSpacing);
+    this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
 
     //! Complete volume initialization (only on first commit).
     if (!finished) {
@@ -62,7 +67,9 @@ namespace ospray {
   OSPDataType StructuredVolume::getVoxelType() const
   {
     //! Separate out the base type and vector width.
-    char kind[voxelType.size()];  unsigned int width = 1;  sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
+    char kind[voxelType.size()];  
+    unsigned int width = 1;
+    sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
 
     //! Single precision scalar floating point.
     if (!strcmp(kind, "float") && width == 1) return(OSP_FLOAT);
@@ -74,5 +81,23 @@ namespace ospray {
     return OSP_UNKNOWN;
   }
 
+  //! Compute the voxel value range for floating point voxels.
+  void StructuredVolume::computeVoxelRange(const float *source, const size_t &count)
+  { 
+    for (size_t i=0 ; i < count ; i++) {
+      voxelRange.x = std::min(voxelRange.x, source[i]);
+      voxelRange.y = std::max(voxelRange.y, source[i]); 
+    }
+  }
+  
+  //! Compute the voxel value range for unsigned byte voxels.
+  void StructuredVolume::computeVoxelRange(const unsigned char *source, const size_t &count)
+  { 
+    for (size_t i=0 ; i < count ; i++) {
+      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
+      voxelRange.y = std::max(voxelRange.y, (float) source[i]); 
+    }
+  }
+  
 } // ::ospray
 

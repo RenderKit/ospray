@@ -73,16 +73,6 @@ namespace ospray {
     //! Set the gradient shading flag for the renderer.
     ispc::Volume_setGradientShadingEnabled(ispcEquivalent, getParam1i("gradientShadingEnabled", 0));
 
-    //! Set the isovalue(s).
-    Data *isovaluesData = (Data *)getParamData("isovalues", NULL);
-
-    if(isovaluesData && isovaluesData->size() > 0) {
-      ispc::Volume_setNumIsovalues(ispcEquivalent, isovaluesData->size());
-      ispc::Volume_setIsovalues(ispcEquivalent, (float *)isovaluesData->data);
-    }
-    else
-      ispc::Volume_setNumIsovalues(ispcEquivalent, 0);
-
     //! Set the recommended sampling rate for ray casting based renderers.
     ispc::Volume_setSamplingRate(ispcEquivalent, getParam1f("samplingRate", 1.0f));
 

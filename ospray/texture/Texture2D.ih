@@ -16,9 +16,10 @@
 
 #pragma once
 
+#include "Texture.ih"
 #include "ospray/common/default.ih"
 #include "ospray/math/vec.ih"
-#include "ospray/math/affine.ih"
+#include "ospray/math/AffineSpace.ih"
 #include "ospray/common/Ray.ih"
 
 struct Texture2D;
@@ -88,9 +89,6 @@ inline vec4f get4f(const uniform Texture2D *uniform tex,
   return ret;
 }
 
-
-
-
 /*! helper function: get4f() with a default value if the texture is NULL */
 inline float get1f(const uniform Texture2D *uniform tex,
                    const varying vec2f where,
@@ -117,4 +115,3 @@ inline vec4f get4f(const uniform Texture2D *uniform tex,
   if (tex == NULL) return defaultValue;
   else return get4f(tex,where);
 }
-

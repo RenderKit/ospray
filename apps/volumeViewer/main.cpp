@@ -44,6 +44,7 @@ int main(int argc, char *argv[]) {
     std::cerr << "    -ply <filename>                      : load PLY geometry from 'filename'"             << std::endl;
     std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
     std::cerr << "    -showframerate                       : show the frame rate in the window title bar"   << std::endl;
+    std::cerr << "    -fullscreen                          : enter fullscreen mode"                         << std::endl;
     std::cerr << "    -slice <filename>                    : load volume slice from 'filename'"             << std::endl;
     std::cerr << "    -transferfunction <filename>         : load transfer function from 'filename'"        << std::endl;
     std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
@@ -71,7 +72,9 @@ int main(int argc, char *argv[]) {
   int viewSizeWidth = 0;
   int viewSizeHeight = 0;
   osp::vec3f viewUp(0.f);
+  osp::vec3f viewAt(0.f), viewFrom(0.f);
   bool showFrameRate = false;
+  bool fullScreen = false;
   std::string writeFramesFilename;
 
   //! Parse the optional command line arguments.
@@ -104,10 +107,15 @@ int main(int argc, char *argv[]) {
       sliceFilenames.push_back(std::string(argv[++i]));
       std::cout << "got slice filename = " << sliceFilenames.back() << std::endl;
 
-    } else if (arg == "-showframerate") {
+    } else if (arg == "-showframerate" || arg == "-fps") {
 
       showFrameRate = true;
       std::cout << "set show frame rate" << std::endl;
+
+    } else if (arg == "-fullscreen") {
+
+      fullScreen = true;
+      std::cout << "go full screen" << std::endl;
 
     } else if (arg == "-transferfunction") {
 
@@ -137,7 +145,7 @@ int main(int argc, char *argv[]) {
 
       } else throw std::runtime_error("improperly formatted <width>x<height> argument");
 
-    } else if (arg == "-viewup") {
+    } else if (arg == "-viewup" || arg == "-vu") {
 
       if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
 
@@ -146,6 +154,26 @@ int main(int argc, char *argv[]) {
       viewUp.z = atof(argv[++i]);
 
       std::cout << "got viewup = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
+
+    } else if (arg == "-vp") {
+
+      if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
+
+      viewFrom.x = atof(argv[++i]);
+      viewFrom.y = atof(argv[++i]);
+      viewFrom.z = atof(argv[++i]);
+
+      std::cout << "got view-from (-vp) = " << viewFrom.x << " " << viewFrom.y << " " << viewFrom.z << std::endl;
+
+    } else if (arg == "-vi") {
+
+      if (i + 3 >= argc) throw std::runtime_error("missing <x> <y> <z> arguments");
+
+      viewAt.x = atof(argv[++i]);
+      viewAt.y = atof(argv[++i]);
+      viewAt.z = atof(argv[++i]);
+
+      std::cout << "got view-at (-vi) = " << viewAt.x << " " << viewAt.y << " " << viewAt.z << std::endl;
 
     } else if (arg == "-writeframes") {
 
@@ -171,7 +199,7 @@ int main(int argc, char *argv[]) {
   }
 
   //! Create the OSPRay state and viewer window.
-  VolumeViewer *volumeViewer = new VolumeViewer(objectFileFilenames, showFrameRate, writeFramesFilename);
+  VolumeViewer *volumeViewer = new VolumeViewer(objectFileFilenames, showFrameRate, fullScreen, writeFramesFilename);
 
   //! Display the first model.
   volumeViewer->setModel(0);
@@ -197,8 +225,14 @@ int main(int argc, char *argv[]) {
   //! Set benchmarking parameters.
   volumeViewer->getWindow()->setBenchmarkParameters(benchmarkWarmUpFrames, benchmarkFrames);
 
+  if (viewAt != viewFrom) {
+    volumeViewer->getWindow()->getViewport()->at = viewAt;
+    volumeViewer->getWindow()->getViewport()->from = viewFrom;
+  }
+
   //! Set the window size if specified.
   if (viewSizeWidth != 0 && viewSizeHeight != 0) volumeViewer->getWindow()->setFixedSize(viewSizeWidth, viewSizeHeight);
+
 
   //! Set the view up vector if specified.
   if(viewUp != osp::vec3f(0.f)) {

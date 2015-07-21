@@ -16,7 +16,10 @@
 
 #include "ospray/volume/Volume.ih"
 
-void Volume_Constructor(Volume *uniform volume)
+void Volume_Constructor(Volume *uniform volume,
+                        /*! pointer to the c++-equivalent class of this entity */
+                        void *uniform cppEquivalent
+                        )
 {
   // default sampling step; should be set to correct value by derived volume.
   volume->samplingStep = 1.f;
@@ -24,6 +27,7 @@ void Volume_Constructor(Volume *uniform volume)
   // default bounding box; should be set to correct value by derived volume.
   volume->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
 
+  volume->cppEquivalent = cppEquivalent;
   // other defaults are set during Volume::updateEditableParameters().
 }
 
@@ -31,18 +35,6 @@ export void Volume_setGradientShadingEnabled(void *uniform _self, const uniform 
 {
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
   self->gradientShadingEnabled = value;
-}
-
-export void Volume_setNumIsovalues(void *uniform _self, const uniform int value)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->numIsovalues = value;
-}
-
-export void Volume_setIsovalues(void *uniform _self, uniform float *uniform values)
-{
-  uniform Volume *uniform self = (uniform Volume *uniform)_self;
-  self->isovalues = values;
 }
 
 export void Volume_setSamplingRate(void *uniform _self, const uniform float value)

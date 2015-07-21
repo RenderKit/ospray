@@ -34,14 +34,14 @@ export void OBJMaterial_set(void *uniform _mat,
                             const uniform float &Ns,
                             const void *uniform map_Bump)
 {
-  uniform OBJMaterial *uniform THIS = (uniform OBJMaterial *uniform)_mat;
-  THIS->map_d = (uniform Texture2D *uniform)map_d;
-  THIS->d = d;
-  THIS->map_Kd = (uniform Texture2D *uniform)map_Kd;
-  THIS->Kd = Kd;
-  THIS->map_Ks = (uniform Texture2D *uniform)map_Ks;
-  THIS->Ks = Ks;
-  THIS->map_Ns = (uniform Texture2D *uniform)map_Ns;
-  THIS->Ns = Ns;
-  THIS->map_Bump = (uniform Texture2D *uniform)map_Bump;
+  uniform OBJMaterial *uniform self = (uniform OBJMaterial *uniform)_mat;
+  self->map_d = (uniform Texture2D *uniform)map_d;
+  self->d = d;
+  self->map_Kd = (uniform Texture2D *uniform)map_Kd;
+  self->Kd = Kd;
+  self->map_Ks = (uniform Texture2D *uniform)map_Ks;
+  self->Ks = Ks;
+  self->map_Ns = (uniform Texture2D *uniform)map_Ns;
+  self->Ns = Ns;
+  self->map_Bump = (uniform Texture2D *uniform)map_Bump;
 }

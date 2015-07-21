@@ -19,22 +19,33 @@
 #include "ospray/common/OSPDataType.h"
 #include "ospray/volume/StructuredVolume.ih"
 
-//! \brief ISPC variables and functions for the SharedStructuredVolume class,
-//! a concrete implementation of the StructuredVolume class in which the voxel
-//! data is laid out in memory in XYZ order and provided via a shared data
-//! buffer.
-//!
+//! \brief ISPC variables and functions for the SharedStructuredVolume class
+/*! \detailed The SharedStructuredVolume is a concrete implementation
+  of the StructuredVolume class in which the voxel data is laid out in
+  memory in XYZ order and provided via a shared data buffer.
+*/
 struct SharedStructuredVolume {
 
   //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
-  StructuredVolume inherited;
+  StructuredVolume super;
 
-  //! Voxel data.
-  void **uniform voxelData;
+  //! \brief pointer to voxel data. 
+  /* In this volume class, this memory region will typically be shared
+     with the applicattion, so we mess with either data layout */
+  const void *uniform voxelData;
+  
+  //! \brief number of bytes for one x/y slice of the data. 
+  /*! \detailed THis is used to compute offsets for slices with
+      different z values */
+  uniform uint64 bytesPerSlice;
 
   //! Voxel type.
   uniform OSPDataType voxelType;
 
 };
 
-void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions, const void *uniform voxelData);
+void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, 
+                                        void *uniform cppEquivalent,
+                                        const uniform int voxelType, 
+                                        const uniform vec3i &dimensions, 
+                                        const void *uniform voxelData);

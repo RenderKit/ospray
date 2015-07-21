@@ -18,7 +18,7 @@
 #include "PTLight.ih"
 #include "../samplers/ShapeSampler.ih"
 // ospray
-#include "math/affine.ih"
+#include "ospray/math/AffineSpace.ih"
 
 struct SpotLight
 {

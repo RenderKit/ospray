@@ -18,6 +18,7 @@
 
 // ospray 
 #include "ospray/math/vec.ih"
+#include "ospray/math/box.ih"
 
 #ifdef OSPRAY_INTERSECTION_FILTER
 struct Geometry;
@@ -73,7 +74,6 @@ struct Ray {
   // this value to store the upper 32 bits of the primitive ID
   int primID_hi64;
 
-  float t1;    //!< end of the valid ray interval
   void *uniform userData;
 #ifdef OSPRAY_INTERSECTION_FILTER
   uniform IntersectionFilterFunc intersectionFilter;
@@ -100,7 +100,7 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir)
   if (ray.dir.y == 0.f) ray.dir.y = 1e-6f;
   if (ray.dir.z == 0.f) ray.dir.z = 1e-6f;
   ray.t0  = 1e-6f;
-  ray.t   = 1e10f;//infinity;
+  ray.t   = infinity;
   ray.time = 0.f;
   ray.mask = -1;
   ray.geomID = -1;
@@ -132,3 +132,43 @@ inline void setRay(Ray &ray, const vec3f &ray_org, const vec3f &ray_dir,
 #endif
 }
 
+/*! helper function that performs a ray-box test */
+inline void intersectBox(const Ray& ray,
+                         const uniform box3f& box,
+                         float& t0,
+                         float& t1)
+{
+  const vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
+  const vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
+  
+  t0 = max(max(ray.t0, 
+               min(mins.x,maxs.x)),
+           max(min(mins.y,maxs.y),
+               min(mins.z,maxs.z)));
+  
+  t1 = min(min(ray.t, 
+               max(mins.x,maxs.x)),
+           min(max(mins.y,maxs.y),
+               max(mins.z,maxs.z)));
+}
+
+/*! helper function that performs a ray-box test */
+inline void intersectBox(const Ray& ray,
+                         const uniform box3fa& _box,
+                         float& t0,
+                         float& t1)
+{
+  const uniform box3f box = make_box3f(_box);
+  const vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
+  const vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
+  
+  t0 = max(max(ray.t0, 
+               min(mins.x,maxs.x)),
+           max(min(mins.y,maxs.y),
+               min(mins.z,maxs.z)));
+  
+  t1 = min(min(ray.t, 
+               max(mins.x,maxs.x)),
+           min(max(mins.y,maxs.y),
+               max(mins.z,maxs.z)));
+}

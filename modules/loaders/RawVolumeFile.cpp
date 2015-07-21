@@ -78,7 +78,7 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume) {
     size_t voxelCount = volumeDimensions.x * volumeDimensions.y;
 
     //! Allocate memory for a single slice through the volume.
-    void *voxelData = new unsigned char[voxelCount * voxelSize];
+    unsigned char *voxelData = new unsigned char[voxelCount * voxelSize];
 
     //! We copy data into the volume by the slice in case memory is limited.
     for (size_t z=0 ; z < volumeDimensions.z ; z++) {

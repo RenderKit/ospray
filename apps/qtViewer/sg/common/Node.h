@@ -174,7 +174,7 @@ namespace ospray {
       of this renderer.
     */
 #define OSP_REGISTER_SG_NODE(InternalClassName)                         \
-    extern "C" sg::Node *ospray_create_sg_node__##InternalClassName()   \
+    extern "C" ospray::sg::Node *ospray_create_sg_node__##InternalClassName() \
     {                                                                   \
       return new ospray::sg::InternalClassName;                        \
     }                                                                 

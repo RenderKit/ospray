@@ -15,18 +15,13 @@
 // ======================================================================== //
 
 #include "SliceWidget.h"
+#include "SliceEditor.h"
 
-SliceWidget::SliceWidget(std::vector<OSPModel> models, 
-                         osp::box3f boundingBox)
-  : models(models),
-    boundingBox(boundingBox),
-    triangleMesh(NULL),
+SliceWidget::SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox)
+  : boundingBox(boundingBox),
     originSliderAnimationDirection(1) 
 {  
   //! Check parameters.
-  if(models.size() == 0)
-    throw std::runtime_error("must be constructed with existing model(s)");
-
   if(volume(boundingBox) <= 0.f)
     throw std::runtime_error("invalid volume bounds");
 
@@ -74,9 +69,9 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   originYSpinBox.setValue(0.5 * (boundingBox.lower.y + boundingBox.upper.y));
   originZSpinBox.setValue(0.5 * (boundingBox.lower.z + boundingBox.upper.z));
 
-  connect(&originXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
-  connect(&originYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
-  connect(&originZSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
+  connect(&originXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
+  connect(&originYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
+  connect(&originZSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
 
   hboxLayout->addWidget(&originXSpinBox);
   hboxLayout->addWidget(&originYSpinBox);
@@ -100,9 +95,9 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   normalYSpinBox.setValue(0.);
   normalZSpinBox.setValue(0.);
 
-  connect(&normalXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
-  connect(&normalYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
-  connect(&normalZSpinBox, SIGNAL(valueChanged(double)), this, SLOT(autoApply()));
+  connect(&normalXSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
+  connect(&normalYSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
+  connect(&normalZSpinBox, SIGNAL(valueChanged(double)), this, SLOT(apply()));
 
   hboxLayout->addWidget(&normalXSpinBox);
   hboxLayout->addWidget(&normalYSpinBox);
@@ -134,22 +129,14 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   //! Connect animation timer signal / slot.
   connect(&originSliderAnimationTimer, SIGNAL(timeout()), this, SLOT(animate()));
 
-  //! Auto-apply checkbox, Delete, and Apply buttons.
+  //! Delete button.
   QWidget * buttonsWidget = new QWidget();
   hboxLayout = new QHBoxLayout();
   buttonsWidget->setLayout(hboxLayout);
 
-  autoApplyCheckBox.setText("Auto update");
-  autoApplyCheckBox.setChecked(true);
-  hboxLayout->addWidget(&autoApplyCheckBox);
-
   QPushButton * deleteButton = new QPushButton("Delete");
   connect(deleteButton, SIGNAL(clicked()), this, SLOT(deleteLater()));
   hboxLayout->addWidget(deleteButton);
-
-  QPushButton * applyButton = new QPushButton("Apply");
-  connect(applyButton, SIGNAL(clicked()), this, SLOT(apply()));
-  hboxLayout->addWidget(applyButton);
 
   layout->addWidget(buttonsWidget);
 
@@ -159,32 +146,32 @@ SliceWidget::SliceWidget(std::vector<OSPModel> models,
   //! Minimum width for the widget.
   setMinimumWidth(240);
 
-  //! Auto-apply (if enabled)
-  autoApply();
+  //! Connect signals to trigger updates in the slice editor.
+  connect(this, SIGNAL(sliceChanged()), sliceEditor, SLOT(apply()));
+  connect(this, SIGNAL(sliceDeleted(SliceWidget *)), sliceEditor, SLOT(deleteSlice(SliceWidget *)));
+
+  //! Apply slice once event loop continues (allows SliceWidget to be added to SliceEditor list first).
+  QTimer::singleShot(0, this, SLOT(apply()));
 }
 
-SliceWidget::~SliceWidget() {
-
-  if(triangleMesh) {
-
-    for(unsigned int i=0; i<models.size(); i++) {
-
-      ospRemoveGeometry(models[i], triangleMesh);
-      ospCommit(models[i]);
-    }
-  }
-
-  emit(sliceChanged());
+SliceWidget::~SliceWidget()
+{
+  emit(sliceDeleted(this));
 }
 
-void SliceWidget::autoApply() {
+SliceParameters SliceWidget::getSliceParameters()
+{
+  SliceParameters sliceParameters;
 
-  if(autoApplyCheckBox.isChecked())
-    apply();
+  //! Get the origin and normal values.
+  sliceParameters.origin = osp::vec3f(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
+  sliceParameters.normal = osp::vec3f(float(normalXSpinBox.value()), float(normalYSpinBox.value()), float(normalZSpinBox.value()));
+
+  return sliceParameters;
 }
 
-void SliceWidget::load(std::string filename) {
-
+void SliceWidget::load(std::string filename)
+{
   //! Get filename if not specified.
   if(filename.empty())
     filename = QFileDialog::getOpenFileName(this, tr("Load slice"), ".", "Slice files (*.slc)").toStdString();
@@ -204,9 +191,6 @@ void SliceWidget::load(std::string filename) {
 
   QDataStream in(&file);
 
-  bool autoApply;
-  in >> autoApply;
-
   double originX, originY, originZ;
   in >> originX >> originY >> originZ;
 
@@ -222,7 +206,6 @@ void SliceWidget::load(std::string filename) {
   in >> originSliderAnimationDirection;
 
   //! Update slice state. Update values of the UI elements directly to signal appropriate slots.
-  autoApplyCheckBox.setChecked(autoApply);
   originXSpinBox.setValue(originX);
   originYSpinBox.setValue(originY);
   originZSpinBox.setValue(originZ);
@@ -233,84 +216,8 @@ void SliceWidget::load(std::string filename) {
   originSliderAnimateButton.setChecked(sliderAnimating);
 }
 
-void SliceWidget::apply() {
-
-  //! Get the origin and normal values.
-  osp::vec3f origin(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
-  osp::vec3f normal = osp::vec3f(float(normalXSpinBox.value()), float(normalYSpinBox.value()), float(normalZSpinBox.value()));
-
-  if(normal == osp::vec3f(0.f))
-    return;
-  else
-    normal = normalize(normal);
-
-  //! Create the OSPRay geometry on the first apply().
-  bool newGeometry = false;
-
-  if(!triangleMesh) {
-
-    triangleMesh = ospNewTriangleMesh();
-    newGeometry = true;
-  }
-
-  //! Compute basis vectors.
-  osp::vec3f c(1.f,0.f,0.f);
-
-  if(dot(c, normal) > 0.9f)
-    c = osp::vec3f(0.f,1.f,0.f);
-
-  osp::vec3f b1 = cross(c, normal);
-  osp::vec3f b2 = cross(b1, normal);
-
-  //! For now just make a slice sufficiently large to span the volume.
-  const float size = length(boundingBox.size());
-
-  //! Create the triangles forming the slice.
-  osp::vec3f lowerLeft(origin - size*b1 - size*b2);
-  osp::vec3f span1(2.f*size*b1);
-  osp::vec3f span2(2.f*size*b2);
-
-  //! Subdivide the plane into a larger set of triangles to help with performance when combined with other geometries.
-  const size_t numSubdivisions = 32;
-
-  std::vector<osp::vec3fa> positions;
-
-  for(size_t i=0; i<numSubdivisions; i++)
-    for(size_t j=0; j<numSubdivisions; j++)
-      positions.push_back(lowerLeft + float(i)/float(numSubdivisions-1)*span1 + float(j)/float(numSubdivisions-1)*span2);
-
-  std::vector<osp::vec3i> indices;
-
-  for(size_t i=0; i<numSubdivisions-1; i++) {
-    for(size_t j=0; j<numSubdivisions-1; j++) {
-
-      indices.push_back(osp::vec3i(i*numSubdivisions+j, (i+1)*numSubdivisions+j, i*numSubdivisions+j+1));
-      indices.push_back(osp::vec3i((i+1)*numSubdivisions+j, (i+1)*numSubdivisions+j+1, i*numSubdivisions+j+1));
-    }
-  }
-
-  //! Update the OSPRay geometry.
-  OSPData positionData = ospNewData(positions.size(), OSP_FLOAT3A, &positions[0].x);
-  ospSetData(triangleMesh, "position", positionData);
-
-  OSPData indexData = ospNewData(indices.size(), OSP_INT3, &indices[0].x);
-  ospSetData(triangleMesh, "index", indexData);
-
-  //! For now, vertex colors of (-1,-1,-1) indicate coloring should be mapped through the volume transfer function.
-  //! Transfer function / volume information will be soon be included as material parameters.
-  std::vector<osp::vec3fa> colors(positions.size(), osp::vec3f(-1.f));
-  OSPData colorData = ospNewData(colors.size(), OSP_FLOAT3A, &colors[0].x);
-  ospSetData(triangleMesh, "color", colorData);
-
-  ospCommit(triangleMesh);
-
-  if(newGeometry)
-    for(unsigned int i=0; i<models.size(); i++)
-      ospAddGeometry(models[i], triangleMesh);
-
-  for(unsigned int i=0; i<models.size(); i++)
-    ospCommit(models[i]);
-
+void SliceWidget::apply()
+{
   emit(sliceChanged());
 }
 
@@ -338,7 +245,6 @@ void SliceWidget::save() {
 
   QDataStream out(&file);
 
-  out << autoApplyCheckBox.isChecked();
   out << originXSpinBox.value() << originXSpinBox.value() << originXSpinBox.value();
   out << normalXSpinBox.value() << normalYSpinBox.value() << normalZSpinBox.value();
   out << originSlider.value();

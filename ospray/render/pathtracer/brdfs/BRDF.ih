@@ -35,16 +35,16 @@
 /*! perfect specular reflections and transmissions */
 #define SPECULAR     (SPECULAR_REFLECTION  | SPECULAR_TRANSMISSION) 
 
-/*!< all possible reflections   */
+/*! all possible reflections   */
 #define REFLECTION   (DIFFUSE_REFLECTION   | GLOSSY_REFLECTION   | SPECULAR_REFLECTION) 
 
-/*!< all possible transmissions */
+/*! all possible transmissions */
 #define TRANSMISSION (DIFFUSE_TRANSMISSION | GLOSSY_TRANSMISSION|SPECULAR_TRANSMISSION)
 
-/*!< no component set   */
+/*! no component set   */
 #define NONE         0
 
-/*!< all components set */
+/*! all components set */
 #define ALL          (REFLECTION | TRANSMISSION)
 
 struct BRDF;

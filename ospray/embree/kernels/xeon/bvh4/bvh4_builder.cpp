@@ -56,15 +56,15 @@ namespace embree
     template<> BVH4BuilderT<Triangle4i>::BVH4BuilderT (BVH4* bvh, TriangleMesh* mesh, size_t mode) : BVH4Builder(bvh,mesh->parent,mesh,mode,2,2,1.0f,true ,sizeof(Triangle4i),4,inf) {}
 
     BVH4Builder::BVH4Builder (BVH4* bvh, Scene* scene, TriangleMesh* mesh, size_t mode,
-				size_t logBlockSize, size_t logSAHBlockSize, float intCost, 
-				bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize)
+                              size_t logBlockSize, size_t logSAHBlockSize, float intCost, 
+                              bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize)
       : scene(scene), mesh(mesh), bvh(bvh), scheduler(&scene->lockstep_scheduler), enableSpatialSplits(mode & MODE_HIGH_QUALITY), listMode(mode & LIST_MODE_BITS), remainingReplications(0),
-	logBlockSize(logBlockSize), logSAHBlockSize(logSAHBlockSize), intCost(intCost), 
-	needVertices(needVertices), primBytes(primBytes), minLeafSize(minLeafSize), maxLeafSize(maxLeafSize)
-     {
-       size_t maxLeafPrims = BVH4::maxLeafBlocks*(size_t(1)<<logBlockSize);
-       if (maxLeafPrims < this->maxLeafSize) this->maxLeafSize = maxLeafPrims;
-       needAllThreads = true;
+        logBlockSize(logBlockSize), logSAHBlockSize(logSAHBlockSize), intCost(intCost), 
+      needVertices(needVertices), primBytes(primBytes), minLeafSize(minLeafSize), maxLeafSize(maxLeafSize)
+    {
+      size_t maxLeafPrims = BVH4::maxLeafBlocks*(size_t(1)<<logBlockSize);
+      if (maxLeafPrims < this->maxLeafSize) this->maxLeafSize = maxLeafPrims;
+      needAllThreads = true;
     }
     
     BVH4Builder::~BVH4Builder() {
@@ -82,15 +82,15 @@ namespace embree
       /* make order of primitives deterministic */
       PrimRefList::item* block = prims.take();
       if (block) {
-	while (PrimRefList::item* block1 = prims.take()) {
-	  for (size_t i=0; i<block1->size(); i++) {
-	    bool ok = block->insert(block1->at(i));
-	    assert(ok);
-	  }
-	  alloc.free(threadIndex,block1);
-	}
-	std::sort(&block->at(0),&block->at(block->size()));
-	prims.insert(block);
+        while (PrimRefList::item* block1 = prims.take()) {
+          for (size_t i=0; i<block1->size(); i++) {
+            bool ok = block->insert(block1->at(i));
+            assert(ok);
+          }
+          alloc.free(threadIndex,block1);
+        }
+        std::sort(&block->at(0),&block->at(block->size()));
+        prims.insert(block);
       }
             
       /* insert all triangles */
@@ -100,7 +100,7 @@ namespace embree
       
       /* free all primitive blocks */
       while (PrimRefList::item* block = prims.take())
-	alloc.free(threadIndex,block);
+        alloc.free(threadIndex,block);
 
       return bvh->encodeLeaf(leaf,listMode ? listMode : N);
     }
@@ -110,12 +110,12 @@ namespace embree
     {
 #if defined(_DEBUG)
       if (depth >= BVH4::maxBuildDepthLeaf) 
-	THROW_RUNTIME_ERROR("ERROR: Loosing primitives during build.");
+        THROW_RUNTIME_ERROR("ERROR: Loosing primitives during build.");
 #endif
       
       /* create leaf for few primitives */
       if (pinfo.size() <= maxLeafSize)
-	return createLeaf(threadIndex,nodeAlloc,leafAlloc,prims,pinfo);
+        return createLeaf(threadIndex,nodeAlloc,leafAlloc,prims,pinfo);
       
       /* first level */
       PrimRefList prims0, prims1;
@@ -131,8 +131,8 @@ namespace embree
       /*! create an inner node */
       Node* node = bvh->allocNode(nodeAlloc);
       for (size_t i=0; i<4; i++) 
-	if (cinfo[i].size())
-	  node->set(i,cinfo[i].geomBounds,createLargeLeaf(threadIndex,nodeAlloc,leafAlloc,cprims[i],cinfo[i],depth+1));
+        if (cinfo[i].size())
+          node->set(i,cinfo[i].geomBounds,createLargeLeaf(threadIndex,nodeAlloc,leafAlloc,cprims[i],cinfo[i],depth+1));
 
       BVH4::compact(node); // moves empty nodes to the end
       return bvh->encodeNode(node);
@@ -144,12 +144,12 @@ namespace embree
       ObjectPartition::SplitInfo oinfo;
       ObjectPartition::Split osplit = ObjectPartition::find<PARALLEL>(threadIndex,threadCount,scheduler,prims,pinfo,logSAHBlockSize,oinfo);
       if (spatial) {
-	const BBox3fa overlap = intersect(oinfo.leftBounds,oinfo.rightBounds);
-	if (safeArea(overlap) < 0.2f*safeArea(pinfo.geomBounds)) spatial = false;
+        const BBox3fa overlap = intersect(oinfo.leftBounds,oinfo.rightBounds);
+        if (safeArea(overlap) < 0.2f*safeArea(pinfo.geomBounds)) spatial = false;
       }
       if (!spatial) {
-	if (osplit.sah == float(inf)) return Split();
-	else return osplit;
+        if (osplit.sah == float(inf)) return Split();
+        else return osplit;
       }
       SpatialSplit::Split ssplit = SpatialSplit::find<PARALLEL>(threadIndex,threadCount,scheduler,scene,prims,pinfo,logSAHBlockSize);
       const float bestSAH = min(osplit.sah,ssplit.sah);
@@ -172,7 +172,7 @@ namespace embree
       
       /*! create a leaf node when threshold reached or SAH tells us to stop */
       if (record.pinfo.size() <= parent->minLeafSize || record.depth > BVH4::maxBuildDepth || (record.pinfo.size() <= parent->maxLeafSize && leafSAH <= splitSAH)) {
-	*record.dst = parent->createLargeLeaf(threadIndex,nodeAlloc,leafAlloc,record.prims,record.pinfo,record.depth+1); return 0;
+        *record.dst = parent->createLargeLeaf(threadIndex,nodeAlloc,leafAlloc,record.prims,record.pinfo,record.depth+1); return 0;
       }
       
       /*! initialize child list */
@@ -182,58 +182,58 @@ namespace embree
       /*! split until node is full or SAH tells us to stop */
       do {
 	
-	/*! find best child to split */
-	float bestSAH = 0; 
-	ssize_t bestChild = -1;
-	for (size_t i=0; i<numChildren; i++) 
-	{
-	  float dSAH = records_o[i].split.splitSAH()-records_o[i].pinfo.leafSAH(parent->logSAHBlockSize);
-	  if (records_o[i].pinfo.size() <= parent->minLeafSize) continue; 
-	  if (records_o[i].pinfo.size() > parent->maxLeafSize) dSAH = min(0.0f,dSAH); //< force split for large jobs
-	  if (dSAH <= bestSAH) { bestChild = i; bestSAH = dSAH; }
-	}
-	if (bestChild == -1) break;
+        /*! find best child to split */
+        float bestSAH = 0; 
+        ssize_t bestChild = -1;
+        for (size_t i=0; i<numChildren; i++) 
+          {
+            float dSAH = records_o[i].split.splitSAH()-records_o[i].pinfo.leafSAH(parent->logSAHBlockSize);
+            if (records_o[i].pinfo.size() <= parent->minLeafSize) continue; 
+            if (records_o[i].pinfo.size() > parent->maxLeafSize) dSAH = min(0.0f,dSAH); //< force split for large jobs
+            if (dSAH <= bestSAH) { bestChild = i; bestSAH = dSAH; }
+          }
+        if (bestChild == -1) break;
 	
-	/* perform best found split */
-	BuildRecord lrecord(record.depth+1);
-	BuildRecord rrecord(record.depth+1);
-	records_o[bestChild].split.split<PARALLEL>(threadIndex,threadCount,parent->scheduler,parent->alloc,parent->scene,records_o[bestChild].prims,lrecord.prims,lrecord.pinfo,rrecord.prims,rrecord.pinfo);
+        /* perform best found split */
+        BuildRecord lrecord(record.depth+1);
+        BuildRecord rrecord(record.depth+1);
+        records_o[bestChild].split.split<PARALLEL>(threadIndex,threadCount,parent->scheduler,parent->alloc,parent->scene,records_o[bestChild].prims,lrecord.prims,lrecord.pinfo,rrecord.prims,rrecord.pinfo);
 
-	/* fallback if spatial split did fail for corner case */
-	if (lrecord.pinfo.size() == 0) {
-	  rrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,rrecord.prims,rrecord.pinfo,false);
-	  records_o[bestChild] = rrecord;
-	  continue;
-	}
+        /* fallback if spatial split did fail for corner case */
+        if (lrecord.pinfo.size() == 0) {
+          rrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,rrecord.prims,rrecord.pinfo,false);
+          records_o[bestChild] = rrecord;
+          continue;
+        }
 
-	/* fallback if spatial split did fail for corner case */
-	if (rrecord.pinfo.size() == 0) {
-	  lrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,lrecord.prims,lrecord.pinfo,false);
-	  records_o[bestChild] = lrecord;
-	  continue;
-	}
+        /* fallback if spatial split did fail for corner case */
+        if (rrecord.pinfo.size() == 0) {
+          lrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,lrecord.prims,lrecord.pinfo,false);
+          records_o[bestChild] = lrecord;
+          continue;
+        }
 	
-	/* count number of replications caused by spatial splits */
-	ssize_t remaining = 0;
-	const ssize_t replications = lrecord.pinfo.size()+rrecord.pinfo.size()-records_o[bestChild].pinfo.size(); 
-	assert(replications >= 0);
-	if (replications >= 0) 
-	  remaining = atomic_add(&parent->remainingReplications,-replications);
+        /* count number of replications caused by spatial splits */
+        ssize_t remaining = 0;
+        const ssize_t replications = lrecord.pinfo.size()+rrecord.pinfo.size()-records_o[bestChild].pinfo.size(); 
+        assert(replications >= 0);
+        if (replications >= 0) 
+          remaining = atomic_add(&parent->remainingReplications,-replications);
 
-	/* find new splits */
-	lrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,lrecord.prims,lrecord.pinfo,parent->enableSpatialSplits && remaining > 0);
-	rrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,rrecord.prims,rrecord.pinfo,parent->enableSpatialSplits && remaining > 0);
-	records_o[bestChild  ] = lrecord;
-	records_o[numChildren] = rrecord;
-	numChildren++;
+        /* find new splits */
+        lrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,lrecord.prims,lrecord.pinfo,parent->enableSpatialSplits && remaining > 0);
+        rrecord.split = parent->find<PARALLEL>(threadIndex,threadCount,record.depth,rrecord.prims,rrecord.pinfo,parent->enableSpatialSplits && remaining > 0);
+        records_o[bestChild  ] = lrecord;
+        records_o[numChildren] = rrecord;
+        numChildren++;
 	
       } while (numChildren < BVH4::N);
       
       /*! create an inner node */
       Node* node = parent->bvh->allocNode(nodeAlloc);
       for (size_t i=0; i<numChildren; i++) {
-	node->set(i,records_o[i].pinfo.geomBounds);
-	records_o[i].dst = &node->child(i);
+        node->set(i,records_o[i].pinfo.geomBounds);
+        records_o[i].dst = &node->child(i);
       }
       *record.dst = parent->bvh->encodeNode(node);
       return numChildren;
@@ -244,34 +244,34 @@ namespace embree
       BuildRecord children[BVH4::N]; 
       size_t N = createNode<false>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,record,children);
       for (size_t i=0; i<N; i++)
-	finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,children[i]);
+        finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,children[i]);
     }
 
     void BVH4Builder::continue_build(size_t threadIndex, size_t threadCount, Allocator& nodeAlloc, Allocator& leafAlloc, BuildRecord& record)
     {
       /* finish small tasks */
       if (record.pinfo.size() < 4*1024) 
-      {
-	finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
+        {
+          finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
 #if ROTATE_TREE
-	for (int i=0; i<5; i++) 
-	  BVH4Rotate::rotate(bvh,*record.dst); 
+          for (int i=0; i<5; i++) 
+            BVH4Rotate::rotate(bvh,*record.dst); 
 #endif
-	record.dst->setBarrier();
-      }
+          record.dst->setBarrier();
+        }
 
       /* and split large tasks */
       else
-      {
-	BuildRecord children[BVH4::N];
-	size_t N = createNode<false>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,record,children);
-      	taskMutex.lock();
-	for (size_t i=0; i<N; i++) {
-	  tasks.push_back(children[i]);
-	  atomic_add(&activeBuildRecords,1);
-	}
-	taskMutex.unlock();
-      }
+        {
+          BuildRecord children[BVH4::N];
+          size_t N = createNode<false>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,record,children);
+          taskMutex.lock();
+          for (size_t i=0; i<N; i++) {
+            tasks.push_back(children[i]);
+            atomic_add(&activeBuildRecords,1);
+          }
+          taskMutex.unlock();
+        }
     }
 
     void BVH4Builder::build_parallel(size_t threadIndex, size_t threadCount, size_t taskIndex, size_t taskCount) 
@@ -280,38 +280,38 @@ namespace embree
       Allocator leafAlloc(&bvh->alloc);
 
       while (activeBuildRecords)
-      {
-	taskMutex.lock();
-	if (tasks.size() == 0) {
-	  taskMutex.unlock();
-	  continue;
-	}
-	BuildRecord record = tasks.back();
-	tasks.pop_back();
-	taskMutex.unlock();
-	continue_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
-	atomic_add(&activeBuildRecords,-1);
-      }
+        {
+          taskMutex.lock();
+          if (tasks.size() == 0) {
+            taskMutex.unlock();
+            continue;
+          }
+          BuildRecord record = tasks.back();
+          tasks.pop_back();
+          taskMutex.unlock();
+          continue_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
+          atomic_add(&activeBuildRecords,-1);
+        }
       _mm_sfence(); // make written leaves globally visible
     }
 
     BVH4::NodeRef BVH4Builder::layout_top_nodes(size_t threadIndex, Allocator& nodeAlloc, NodeRef node)
     {
       if (node.isBarrier()) {
-	node.clearBarrier();
-	return node;
+        node.clearBarrier();
+        return node;
       }
       else if (!node.isLeaf()) 
-      {
-	Node* src = node.node();
-	Node* dst = bvh->allocNode(nodeAlloc);
-	for (size_t i=0; i<BVH4::N; i++) {
-	  dst->set(i,src->bounds(i),layout_top_nodes(threadIndex,nodeAlloc,src->child(i)));
-	}
-	return bvh->encodeNode(dst);
-      }
+        {
+          Node* src = node.node();
+          Node* dst = bvh->allocNode(nodeAlloc);
+          for (size_t i=0; i<BVH4::N; i++) {
+            dst->set(i,src->bounds(i),layout_top_nodes(threadIndex,nodeAlloc,src->child(i)));
+          }
+          return bvh->encodeNode(dst);
+        }
       else
-	return node;
+        return node;
     }
     
     void BVH4Builder::build(size_t threadIndex, size_t threadCount) 
@@ -328,7 +328,7 @@ namespace embree
       size_t maxPrimitives = numPrimitives;
       if (enableSpatialSplits) {
         maxPrimitives = max(numPrimitives,(size_t)(g_tri_builder_replication_factor*numPrimitives));
-	remainingReplications = maxPrimitives-numPrimitives;
+        remainingReplications = maxPrimitives-numPrimitives;
       }
 
       /*! initialize internal buffers of BVH */
@@ -336,19 +336,19 @@ namespace embree
 
       /*! skip build for empty scene */
       if (numPrimitives == 0) 
-	return;
+        return;
       
       /*! verbose mode */
       if (g_verbose >= 2) {
-	std::cout << "building BVH4<" << bvh->primTy.name << "> with " << TOSTRING(isa) "::BVH4Builder(";
-	if (enableSpatialSplits) std::cout << "spatialsplits";
-	std::cout << ") ... " << std::flush;
+        std::cout << "building BVH4<" << bvh->primTy.name << "> with " << TOSTRING(isa) "::BVH4Builder(";
+        if (enableSpatialSplits) std::cout << "spatialsplits";
+        std::cout << ") ... " << std::flush;
       }
 
       /*! benchmark mode */
       double t0 = 0.0, t1 = 0.0f;
       if (g_verbose >= 2 || g_benchmark)
-	t0 = getSeconds();
+        t0 = getSeconds();
       
       /* generate list of build primitives */
       PrimRefList prims; PrimInfo pinfo(empty);
@@ -360,59 +360,59 @@ namespace embree
 
       /* single threaded path */
       if (pinfo.size() <= THRESHOLD_FOR_SINGLE_THREADED)
-      {
-	const Split split = find<false>(threadIndex,threadCount,1,prims,pinfo,enableSpatialSplits);
-	BuildRecord record(1,prims,pinfo,split,&bvh->root);
-	finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
-	_mm_sfence(); // make written leaves globally visible
-      }
+        {
+          const Split split = find<false>(threadIndex,threadCount,1,prims,pinfo,enableSpatialSplits);
+          BuildRecord record(1,prims,pinfo,split,&bvh->root);
+          finish_build(threadIndex,threadCount,nodeAlloc,leafAlloc,record);
+          _mm_sfence(); // make written leaves globally visible
+        }
 
       /* multithreaded path */
       else
-      {
-	/* perform initial split */
-	const Split split = find<true>(threadIndex,threadCount,1,prims,pinfo,enableSpatialSplits);
-	BuildRecord record(1,prims,pinfo,split,&bvh->root);
-	tasks.push_back(record); 
-	activeBuildRecords=1;
+        {
+          /* perform initial split */
+          const Split split = find<true>(threadIndex,threadCount,1,prims,pinfo,enableSpatialSplits);
+          BuildRecord record(1,prims,pinfo,split,&bvh->root);
+          tasks.push_back(record); 
+          activeBuildRecords=1;
 
-	/* work in multithreaded toplevel mode until sufficient subtasks got generated */
-	while (tasks.size() > 0 && tasks.size() < threadCount)
-	{
-	  /* pop largest item for better load balancing */
-	  BuildRecord task = tasks.front();
-	  std::pop_heap(tasks.begin(),tasks.end());
-	  tasks.pop_back();
-	  activeBuildRecords--;
+          /* work in multithreaded toplevel mode until sufficient subtasks got generated */
+          while (tasks.size() > 0 && tasks.size() < threadCount)
+            {
+              /* pop largest item for better load balancing */
+              BuildRecord task = tasks.front();
+              std::pop_heap(tasks.begin(),tasks.end());
+              tasks.pop_back();
+              activeBuildRecords--;
 	  
-	  /* do not generate too small subtasks */
-	  if (task.pinfo.size() <= THRESHOLD_FOR_SINGLE_THREADED) {
-	    tasks.push_back(task);
-	    activeBuildRecords++;
-	    break;
-	  }
+              /* do not generate too small subtasks */
+              if (task.pinfo.size() <= THRESHOLD_FOR_SINGLE_THREADED) {
+                tasks.push_back(task);
+                activeBuildRecords++;
+                break;
+              }
 	  
-	  /* process this item in parallel */
-	  BuildRecord children[BVH4::N];
-	  size_t N = createNode<true>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,task,children);
-	  for (size_t i=0; i<N; i++) {
-	    tasks.push_back(children[i]);
-	    std::push_heap(tasks.begin(),tasks.end());
-	    activeBuildRecords++;
-	  }
-	}
-	_mm_sfence(); // make written leaves globally visible
+              /* process this item in parallel */
+              BuildRecord children[BVH4::N];
+              size_t N = createNode<true>(threadIndex,threadCount,nodeAlloc,leafAlloc,this,task,children);
+              for (size_t i=0; i<N; i++) {
+                tasks.push_back(children[i]);
+                std::push_heap(tasks.begin(),tasks.end());
+                activeBuildRecords++;
+              }
+            }
+          _mm_sfence(); // make written leaves globally visible
 	
-	/*! process each generated subtask in its own thread */
-	scheduler->dispatchTask(threadIndex,threadCount,_build_parallel,this,threadCount,"BVH4Builder::build");
+          /*! process each generated subtask in its own thread */
+          scheduler->dispatchTask(threadIndex,threadCount,_build_parallel,this,threadCount,"BVH4Builder::build");
 
-        tasks.clear();
-      }
+          tasks.clear();
+        }
 
       /* perform tree rotations of top part of the tree */
 #if ROTATE_TREE
       for (int i=0; i<5; i++) 
-	BVH4Rotate::rotate(bvh,bvh->root);
+        BVH4Rotate::rotate(bvh,bvh->root);
 #endif
       
       /* layout top nodes */
@@ -426,19 +426,19 @@ namespace embree
       //TaskScheduler::enableThreads(threadCountOld); // FIXME: enable
       
       if (g_verbose >= 2 || g_benchmark) 
-	t1 = getSeconds();
+        t1 = getSeconds();
 
       /*! verbose mode */
       if (g_verbose >= 2) {
       	std::cout << "[DONE]" << std::endl;
-	std::cout << "  dt = " << 1000.0f*(t1-t0) << "ms, perf = " << 1E-6*double(numPrimitives)/(t1-t0) << " Mprim/s" << std::endl;
+        std::cout << "  dt = " << 1000.0f*(t1-t0) << "ms, perf = " << 1E-6*double(numPrimitives)/(t1-t0) << " Mprim/s" << std::endl;
         std::cout << BVH4Statistics(bvh).str();
       }
 
       /* benchmark mode */
       if (g_benchmark) {
-	BVH4Statistics stat(bvh);
-	std::cout << "BENCHMARK_BUILD " << t1-t0 << " " << double(numPrimitives)/(t1-t0) << " " << stat.sah() << " " << stat.bytesUsed() << std::endl;
+        BVH4Statistics stat(bvh);
+        std::cout << "BENCHMARK_BUILD " << t1-t0 << " " << double(numPrimitives)/(t1-t0) << " " << stat.sah() << " " << stat.bytesUsed() << std::endl;
       }
     }
     

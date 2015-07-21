@@ -110,6 +110,12 @@ typedef enum {
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
 
+/*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
+typedef enum {
+  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
+  OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
+} OSPTextureCreationFlags;
+
 typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
   OSP_GENERAL_ERROR /*! unspecified error */
@@ -345,16 +351,26 @@ extern "C" {
   /*! add 3-int paramter to given object */
   void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
 
-  /*! \brief Copy data into the given volume.                               */
-  /*!                                                                       */
-  /*! Note that we distinguish between object data and object parameters.   */
-  /*! This function must be called only after all object parameters have    */
-  /*! set and before ospCommit(object) is called.  Memory for the volume    */
-  /*! is allocated on the first call to this function.  If allocation is    */
-  /*! unsuccessful or the region bounds are invalid, the return value is    */
-  /*! '0' (and non-zero otherwise).                                         */
-  /*!                                                                       */
-  int ospSetRegion(OSPVolume object, void *source, osp::vec3i index, osp::vec3i count);
+  // \brief Set a given region of the volume to a given set of voxels
+  /*! \detailed Given a block of voxels (of dimensions 'blockDim',
+      located at the memory region pointed to by 'source', copy the
+      given voxels into volume, at the region of addresses
+      [regionCoords...regionCoord+regionSize].
+  */
+  int ospSetRegion(/*! the object we're writing this blcok of pixels into */
+                   OSPVolume object, 
+                   /* points to the first voxel to be copies. The
+                      voxels at 'soruce' MUST have dimensions
+                      'regionSize', must be organized in 3D-array
+                      order, and must have the same voxel type as the
+                      volume.*/
+                   void *source, 
+                   /*! coordinates of the lower, left, front corner of
+                     the target region.*/
+                   osp::vec3i regionCoords, 
+                   /*! size of the region that we're writing to; MUST
+                     be the same as the dimensions of source[][][] */
+                   osp::vec3i regionSize);
 
   /*! add 2-float parameter to given object */
   void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);

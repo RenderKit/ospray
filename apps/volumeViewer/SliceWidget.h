@@ -19,22 +19,33 @@
 #include <QtGui>
 #include <ospray/ospray.h>
 
+struct SliceParameters
+{
+  osp::vec3f origin;
+  osp::vec3f normal;
+};
+
+class SliceEditor;
+
+
 class SliceWidget : public QFrame
 {
 Q_OBJECT
 
 public:
 
-  SliceWidget(std::vector<OSPModel> models, osp::box3f boundingBox);
+  SliceWidget(SliceEditor *sliceEditor, osp::box3f boundingBox);
   ~SliceWidget();
+
+  SliceParameters getSliceParameters();
 
 signals:
 
   void sliceChanged();
+  void sliceDeleted(SliceWidget *);
 
 public slots:
 
-  void autoApply();
   void load(std::string filename = std::string());
 
 protected slots:
@@ -47,18 +58,10 @@ protected slots:
 
 protected:
 
-  //! OSPRay models.
-  std::vector<OSPModel> models;
-
   //! Bounding box of the volume.
   osp::box3f boundingBox;
 
-  //! OSPRay triangle mesh for the slice.
-  OSPTriangleMesh triangleMesh;
-
   //! UI elements.
-  QCheckBox autoApplyCheckBox;
-
   QDoubleSpinBox originXSpinBox;
   QDoubleSpinBox originYSpinBox;
   QDoubleSpinBox originZSpinBox;
@@ -71,4 +74,5 @@ protected:
   QPushButton originSliderAnimateButton;
   QTimer originSliderAnimationTimer;
   int originSliderAnimationDirection;
+
 };

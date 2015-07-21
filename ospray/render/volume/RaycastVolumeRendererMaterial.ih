@@ -16,25 +16,12 @@
 
 #pragma once
 
-#include "ospray/math/bbox.ih"
-#include "Ray.ih"
+#include "ospray/common/Material.ih"
+#include "ospray/math/vec.ih"
+#include "ospray/volume/Volume.ih"
 
-inline void boxtest(Ray& ray,
-                    uniform box3f& box,
-                    float& t0,
-                    float& t1)
-{
-  vec3f mins = mul(sub(box.lower, ray.org), rcp(ray.dir));
-  vec3f maxs = mul(sub(box.upper, ray.org), rcp(ray.dir));
-  
-  t0 = max(max(ray.t0, 
-               min(mins.x,maxs.x)),
-           max(min(mins.y,maxs.y),
-               min(mins.z,maxs.z)));
-  
-  t1 = min(min(ray.t, 
-               max(mins.x,maxs.x)),
-           min(max(mins.y,maxs.y),
-               max(mins.z,maxs.z)));
-}
-
+struct RaycastVolumeRendererMaterial {
+  Material inherited;
+  vec3f Kd;
+  uniform Volume *uniform volume;
+};
