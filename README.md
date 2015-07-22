@@ -106,7 +106,7 @@ CMake is easy:
 
 -   You should now have `libospray.so` as well as a set of sample
     viewers. You can test your version of OSPRay using any of the
-    examples on the [OSPRay Demos and Examples](demos.html) page.
+    examples on the [OSPRay Demos and Examples] page.
 
 Examples
 ========
@@ -154,10 +154,11 @@ Demos
 -----
 
 Several ready-to-run demos, models and data sets for OSPRay can be found
-at the [OSPRay website](https://ospray.github.io/demos.html).
+at the [OSPRay Demos and Examples] page.
 
 [news/updates]: https://ospray.github.io/news.html
 [getting OSPRay]: https://ospray.github.io/getting_ospray.html
+[OSPRay Demos and Examples]: https://ospray.github.io/demos.html
 [imgTutorial1]:  https://ospray.github.io/images/tutorial_firstframe.png
 [imgTutorial2]:  https://ospray.github.io/images/tutorial_accumulatedframe.png
 [imgQTViewer]:  https://ospray.github.io/images/QTViewer.jpg
