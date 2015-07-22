@@ -56,7 +56,7 @@ branch should always point to the latest tested bugfix release.
 Prerequisites
 -------------
 
-OSPRay currently supports both Linux and Mac\ OS\ X (a Windows version
+OSPRay currently supports both Linux and Mac OS X (a Windows version
 will soon follow). In addition, before you can build OSPRay you need the
 following prerequisites:
 
@@ -76,7 +76,8 @@ following prerequisites:
     (icc)](https://software.intel.com/en-us/c-compilers), but also
     support GCC and clang-cc), and standard Linux development tools.
     To build the demo viewers, you should also have some version of
-    OpenGL and the GL Utility Toolkit (GLUT or freeglut).
+    OpenGL and the GL Utility Toolkit (GLUT or freeglut), as well as
+    Qt 4.6 or higher.
 -   OSPRay also heavily uses [Embree](http://embree.github.io); however,
     OSPRay directly includes its own copy of Embree, so a special
     installation of Embree is *not* required.
