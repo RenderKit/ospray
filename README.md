@@ -1,5 +1,9 @@
-% OSPRay: An Open, Scalable, Parallel, Ray Tracing Based Rendering Engine for High-Fidelity Visualization 0.8.2
-% Intel Corporation
+OSPRay
+======
+
+This is release v0.8.2 of OSPRay. For changes and new
+features see the [changelog](CHANGELOG.md). Also visit
+http://www.ospray.org for more information.
 
 OSPRay Overview
 ===============
@@ -102,7 +106,7 @@ CMake is easy:
 
 -   You should now have `libospray.so` as well as a set of sample
     viewers. You can test your version of OSPRay using any of the
-    examples on the [OSPRay Demos and Examples](demos.html) page.
+    examples on the [OSPRay Demos and Examples] page.
 
 Examples
 ========
@@ -123,9 +127,9 @@ progressive refinement, resulting in antialiased edges and converged
 shadows, shown after ten frames in the second image
 `accumulatedFrames.png`.
 
-![First frame.](images/tutorial_firstframe.png)
+![First frame.][imgTutorial1]
 
-![After accumulating ten frames.](images/tutorial_accumulatedframe.png)
+![After accumulating ten frames.][imgTutorial2]
 
 
 QT Viewer
@@ -134,7 +138,28 @@ QT Viewer
 OSPRay also includes a demo viewer application `ospQTViewer`, showcasing all features
 of OSPRay.
 
-![Screenshot of `ospQTViewer`.](images/QTViewer.jpg)
+![Screenshot of `ospQTViewer`.][imgQTViewer]
+
+
+Volume Viewer
+-------------
+
+Additionally, OSPRay includes a demo viewer application
+`ospVolumeViewer`, which is specifically tailored for volume rendering.
+
+![Screenshot of `ospVolumeViewer`.][imgVolumeViewer]
+
+
+Demos
+-----
+
+Several ready-to-run demos, models and data sets for OSPRay can be found
+at the [OSPRay Demos and Examples] page.
 
 [news/updates]: https://ospray.github.io/news.html
 [getting OSPRay]: https://ospray.github.io/getting_ospray.html
+[OSPRay Demos and Examples]: https://ospray.github.io/demos.html
+[imgTutorial1]:  https://ospray.github.io/images/tutorial_firstframe.png
+[imgTutorial2]:  https://ospray.github.io/images/tutorial_accumulatedframe.png
+[imgQTViewer]:  https://ospray.github.io/images/QTViewer.jpg
+[imgVolumeViewer]:  https://ospray.github.io/images/VolumeViewer.png
