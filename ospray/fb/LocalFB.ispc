@@ -82,11 +82,11 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
           if (color) {
-            color[ofs] = acc * accScale;
+            color[ofs] = pow(max(acc * accScale,make_vec4f(0.f)), rcpf(fb->inherited.gamma));
           }
         } else
           if (color)
-            color[ofs] = value;
+            color[ofs] = pow(max(value,make_vec4f(0.f)), rcpf(fb->inherited.gamma));
         if (depth)
           fb->depthBuffer[ofs] = tile.z[pixID];
       }
@@ -116,16 +116,12 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
         if (accum) {
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
-
-          acc = acc * accScale;
-          //acc = pow(max(acc,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
-
           if (color) {
-            color[ofs] = cvt_uint32(acc);
+            color[ofs] = cvt_uint32(pow(max(acc * accScale,make_vec4f(0.f)), rcpf(fb->inherited.gamma)));
           }
         } else
           if (color)
-            color[ofs] = cvt_uint32(value);
+            color[ofs] = cvt_uint32(pow(max(value,make_vec4f(0.f)), rcpf(fb->inherited.gamma)));
         if (depth)
           fb->depthBuffer[ofs] = tile.z[pixID];
       }
@@ -169,6 +165,7 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   fb->inherited.size.y     = size_y;
   fb->inherited.rcpSize.x  = 1.f/size_x;
   fb->inherited.rcpSize.y  = 1.f/size_y;
+  fb->inherited.gamma = 1.0f;
   fb->colorBuffer = colorBuffer;
   fb->depthBuffer = (uniform float *uniform)depthBuffer;
   fb->accumBuffer = (uniform vec4f *uniform)accumBuffer;
@@ -176,4 +173,3 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
     = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
   return fb;
 }
-

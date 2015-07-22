@@ -166,6 +166,10 @@ void QOSPRayWindow::resizeGL(int width, int height)
 
   frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8, OSP_FB_COLOR | OSP_FB_ACCUM);
 
+  // set gamma correction
+  ospSet1f(frameBuffer, "gamma", 2.2f);
+  ospCommit(frameBuffer);
+
   resetAccumulationBuffer();
 
   // update viewport aspect ratio
