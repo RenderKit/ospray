@@ -39,7 +39,7 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
 
   # stream line viewer for NASA Stream Line Demo
-  OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." ON)
+  OPTION(OSPRAY_APPS_STREAMLINEVIEWER "Build ospStreamLineViewer application." OFF)
   MARK_AS_ADVANCED(OSPRAY_APPS_STREAMLINEVIEWER)
   IF(OSPRAY_APPS_STREAMLINEVIEWER)
     ADD_SUBDIRECTORY(streamLineViewer)
@@ -47,13 +47,12 @@ IF(NOT THIS_IS_MIC)
 
   # xyz atom model viewer (one sphere per atom)
   OPTION(OSPRAY_APPS_PARTICLEVIEWER "Build ospParticleViewer application." OFF)
-#  MARK_AS_ADVANCED(OSPRAY_APPS_PARTICLEVIEWER)
   IF(OSPRAY_APPS_PARTICLEVIEWER)
     ADD_SUBDIRECTORY(particleViewer)
   ENDIF()
 
   # volume viewer application
-  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." OFF)
+  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
   IF(OSPRAY_APPS_VOLUMEVIEWER)
     ADD_SUBDIRECTORY(volumeViewer)
   ENDIF()
