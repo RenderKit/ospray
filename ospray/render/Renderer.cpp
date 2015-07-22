@@ -76,7 +76,6 @@ namespace ospray {
     creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
     rendererRegistry[type] = creator;
     if (creator == NULL) {
-      PING;
       if (ospray::logLevel >= 1) 
         std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
       return NULL;

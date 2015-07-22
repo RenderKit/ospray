@@ -16,10 +16,10 @@
 
 // ospray
 #include "ospray/math/vec.ih"
-#include "ospray/math/bbox.ih"
+#include "ospray/math/box.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/Geometry.ih"
 #include "ospray/common/Model.ih"
+#include "ospray/geometry/Geometry.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
@@ -42,8 +42,8 @@ void StreamLines_bounds(uniform StreamLines *uniform geometry,
   uniform uint32 index  = geometry->index[primID];
   const uniform vec3f A = make_vec3f(geometry->vertex[index]);
   const uniform vec3f B = make_vec3f(geometry->vertex[index+1]);
-  bbox.lower = min(A,B)-make_vec3f(geometry->radius);
-  bbox.upper = max(A,B)+make_vec3f(geometry->radius);
+  bbox.lower = make_vec3fa(min(A,B)-make_vec3f(geometry->radius));
+  bbox.upper = make_vec3fa(max(A,B)+make_vec3f(geometry->radius));
 }
 
 inline bool intersectShiftedSphere(varying Ray &ray,
@@ -157,10 +157,10 @@ static void StreamLines_postIntersect(uniform Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_COLOR)) {
-    uniform StreamLines *uniform THIS = (uniform StreamLines *uniform)geometry;
-    uniform vec4f *uniform color = THIS->color;
+    uniform StreamLines *uniform self = (uniform StreamLines *uniform)geometry;
+    uniform vec4f *uniform color = self->color;
     if (color) {
-      const varying uint32 index  = THIS->index[ray.primID];
+      const varying uint32 index  = self->index[ray.primID];
       dg.color = (1.f-ray.u) * color[index] + ray.u * color[index+1];
     }
   }

@@ -16,11 +16,11 @@
 
 // ospray
 #include "ospray/math/vec.ih"
-#include "ospray/math/affine.ih"
-#include "ospray/math/bbox.ih"
+#include "ospray/math/box.ih"
+#include "ospray/math/AffineSpace.ih"
 #include "ospray/common/Ray.ih"
-#include "ospray/geometry/Geometry.ih"
 #include "ospray/common/Model.ih"
+#include "ospray/geometry/Geometry.ih"
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_scene.isph"
@@ -35,15 +35,15 @@ struct Instance {
 
 
 
-static void Instance_postIntersect(uniform Geometry *uniform _THIS,
+static void Instance_postIntersect(uniform Geometry *uniform _self,
                                    uniform Model *uniform parentModel,
                                    varying DifferentialGeometry &dg,
                                    const varying Ray &ray,
                                    uniform int64 flags)
 {
-  uniform Instance *uniform THIS = (uniform Instance *uniform)_THIS;
+  uniform Instance *uniform self = (uniform Instance *uniform)_self;
   uniform Model *uniform instancedModel = 
-    (uniform Model *uniform)THIS->model;
+    (uniform Model *uniform)self->model;
   foreach_unique(geomID in ray.geomID) {
     uniform Geometry *uniform instancedGeometry = 
       (uniform Geometry *uniform)instancedModel->geometry[geomID];
@@ -55,8 +55,8 @@ static void Instance_postIntersect(uniform Geometry *uniform _THIS,
                                      dg,ray,flags);
   }
   // XXX this is wrong when the transformation contains non-uniform scaling!
-  dg.Ns = xfmVector(THIS->xfm,dg.Ns);
-  dg.Ng = xfmVector(THIS->xfm,dg.Ng);
+  dg.Ns = xfmVector(self->xfm,dg.Ns);
+  dg.Ng = xfmVector(self->xfm,dg.Ng);
 }
 
 export void *uniform InstanceGeometry_create(void *uniform cppE)
@@ -68,13 +68,13 @@ export void *uniform InstanceGeometry_create(void *uniform cppE)
   return inst;
 }
 
-export void InstanceGeometry_set(void *uniform _THIS, 
+export void InstanceGeometry_set(void *uniform _self, 
                                  const uniform AffineSpace3f &xfm,
                                  const uniform AffineSpace3f &rcp_xfm,
                                  void *uniform _model)
 {
-  uniform Instance *uniform THIS = (uniform Instance *uniform)_THIS;
-  THIS->model   = (uniform Model *uniform)_model;
-  THIS->xfm     = xfm;
-  THIS->rcp_xfm = xfm;
+  uniform Instance *uniform self = (uniform Instance *uniform)_self;
+  self->model   = (uniform Model *uniform)_model;
+  self->xfm     = xfm;
+  self->rcp_xfm = xfm;
 }

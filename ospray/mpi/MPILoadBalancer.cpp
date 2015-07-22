@@ -112,7 +112,6 @@ namespace ospray {
         
         MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
         int count = (TILE_SIZE)*(TILE_SIZE);
-        if (count != 256) PING;
         MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
       }
       

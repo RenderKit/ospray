@@ -71,7 +71,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       = fb->depthBuffer 
       ? (uniform float *uniform)fb->depthBuffer
       : NULL;
-    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
@@ -82,11 +82,11 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
           if (color) {
-            color[ofs] = acc * accScale;
+            color[ofs] = pow(max(acc * accScale,make_vec4f(0.f)), rcpf(fb->inherited.gamma));
           }
         } else
           if (color)
-            color[ofs] = value;
+            color[ofs] = pow(max(value,make_vec4f(0.f)), rcpf(fb->inherited.gamma));
         if (depth)
           fb->depthBuffer[ofs] = tile.z[pixID];
       }
@@ -106,7 +106,7 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
       : NULL;
 
 
-    for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
       const uint32 pixID = i + programIndex;
       const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
       const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
@@ -116,16 +116,12 @@ void LocalFrameBuffer_setTile(uniform FrameBuffer *uniform _fb,
         if (accum) {
           vec4f acc = accum[ofs]+value;
           accum[ofs] = acc;
-
-          acc = acc * accScale;
-          acc = pow(max(acc,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
-
           if (color) {
-            color[ofs] = cvt_uint32(acc);
+            color[ofs] = cvt_uint32(pow(max(acc * accScale,make_vec4f(0.f)), rcpf(fb->inherited.gamma)));
           }
         } else
           if (color)
-            color[ofs] = cvt_uint32(value);
+            color[ofs] = cvt_uint32(pow(max(value,make_vec4f(0.f)), rcpf(fb->inherited.gamma)));
         if (depth)
           fb->depthBuffer[ofs] = tile.z[pixID];
       }
@@ -142,8 +138,7 @@ void LocalFrameBuffer_accumTile(uniform FrameBuffer *uniform _fb,
   uniform LocalFB *uniform fb  = (uniform LocalFB *uniform)_fb;
   
   uniform vec4f *uniform dst = (uniform vec4f *uniform)fb->accumBuffer;
-  for (int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-    //const uint32  pixID = i*programCount+programIndex;
+  for (uniform int i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
     const uint32 pixID = i + programIndex;
     const uint32  x     = tile.region.lower.x + (pixID % TILE_SIZE);
     const uint32  y     = tile.region.lower.y + (pixID / TILE_SIZE);
@@ -170,6 +165,7 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   fb->inherited.size.y     = size_y;
   fb->inherited.rcpSize.x  = 1.f/size_x;
   fb->inherited.rcpSize.y  = 1.f/size_y;
+  fb->inherited.gamma = 1.0f;
   fb->colorBuffer = colorBuffer;
   fb->depthBuffer = (uniform float *uniform)depthBuffer;
   fb->accumBuffer = (uniform vec4f *uniform)accumBuffer;
@@ -177,4 +173,3 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
     = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
   return fb;
 }
-

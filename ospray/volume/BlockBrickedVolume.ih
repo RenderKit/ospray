@@ -19,11 +19,12 @@
 #include "ospray/common/OSPDataType.h"
 #include "ospray/volume/StructuredVolume.ih"
 
-//! \brief ISPC variables and functions for the BlockBrickedVolume class,
-//!  a concrete implementation of the StructuredVolume class with 64-bit
-//!  addressing in which the voxel data is laid out in memory in multiple
-//!  pages each in brick order.
-//!
+//! \brief ISPC variables and functions for the BlockBrickedVolume class
+/*! \detailed ISPC variables and functions for the BlockBrickedVolume class,
+  a concrete implementation of the StructuredVolume class with 64-bit
+  addressing in which the voxel data is laid out in memory in multiple
+  pages each in brick order.
+*/
 struct BlockBrickedVolume {
 
   //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
@@ -32,8 +33,8 @@ struct BlockBrickedVolume {
   //! Volume size in blocks per dimension with padding to the nearest block.
   uniform vec3i blockCount;
 
-  //! Voxel data.
-  void **uniform voxelData;
+  //! pointer to the large array of blocks.
+  void *uniform blockMem;
 
   //! Voxel type.
   uniform OSPDataType voxelType;
@@ -41,9 +42,16 @@ struct BlockBrickedVolume {
   //! Voxel size in bytes.
   uniform size_t voxelSize;
 
-  //! Voxel data setter.
-  void (*uniform setVoxel)(void *uniform volume, const void *uniform source, const uniform vec3i &index, const uniform vec3i &count, const varying vec3i &offset);
-
+  /*! copy given block of voxels into the volume, where source[0] will
+    be written to volume[targetCoord000] */
+  void (*uniform setRegion)(void *uniform _volume, 
+                            const void *uniform _source,
+                            const uniform vec3i &regionSize, 
+                            const uniform vec3i &targetCoord000);
 };
 
-void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume, const uniform int voxelType, const uniform vec3i &dimensions);
+void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume, 
+                                    /*! pointer to the c++-equivalent class of this entity */
+                                    void *uniform cppEquivalent,
+                                    const uniform int voxelType, 
+                                    const uniform vec3i &dimensions);

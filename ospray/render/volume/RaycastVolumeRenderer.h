@@ -16,9 +16,6 @@
 
 #pragma once
 
-#include "ospray/camera/Camera.h"
-#include "ospray/common/Model.h"
-#include "ospray/lights/Light.h"
 #include "ospray/render/Renderer.h"
 
 namespace ospray {
@@ -27,6 +24,18 @@ namespace ospray {
   //!  volumes optionally containing embedded surfaces.
   //!
   class RaycastVolumeRenderer : public Renderer {
+
+    //! Material used by RaycastVolumeRenderer.
+    struct Material : public ospray::Material {
+
+      Material();
+
+      virtual void commit();
+
+      vec3f Kd;           //!< Diffuse material component.
+      Ref<Volume> volume; //!< If provided, color will be mapped through this volume's transfer function.
+    };
+
   public:
 
     //! Constructor.
@@ -35,6 +44,9 @@ namespace ospray {
     //! Destructor.
     ~RaycastVolumeRenderer() {};
 
+    //! Create a material of the given type.
+    Material * createMaterial(const char *type) { return new Material; }
+
     //! Initialize the renderer state, and create the equivalent ISPC volume renderer object.
     virtual void commit();
 
@@ -42,9 +54,6 @@ namespace ospray {
     virtual std::string toString() const { return("ospray::RaycastVolumeRenderer"); }
 
   protected:
-
-    //! Required renderer state.
-    Camera *camera;  Model *model;  Model *dynamicModel;
 
     //! Print an error message.
     void emitMessage(const std::string &kind, const std::string &message) const

@@ -61,8 +61,8 @@ private:
   //! The dimensions of the volume to be imported, considering any subvolume parameters.
   osp::vec3i volumeDimensions;
 
-  //! The voxel spacing of the volume to be imported.
-  osp::vec3f volumeVoxelSpacing;
+  //! The grid spacing of the volume to be imported.
+  osp::vec3f gridSpacing;
 
   //! Open the seismic data file and populate attributes.
   bool openSeismicDataFile(OSPVolume volume);

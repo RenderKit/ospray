@@ -56,10 +56,10 @@ int main(int ac, const char **av) {
   osp::vec3f cam_view(0.1f, 0.f, 1.f);
 
   // triangle mesh data
-  float vertex[] = { -1.0f, -1.0f, 3.0f,
-                     -1.0f,  1.0f, 3.0f,
-                      1.0f, -1.0f, 3.0f,
-                      0.1f,  0.1f, 0.3f };
+  float vertex[] = { -1.0f, -1.0f, 3.0f, 0.f,
+                     -1.0f,  1.0f, 3.0f, 0.f,
+                      1.0f, -1.0f, 3.0f, 0.f,
+                      0.1f,  0.1f, 0.3f, 0.f };
   float color[] =  { 0.9f, 0.5f, 0.5f, 1.0f,
                      0.8f, 0.8f, 0.8f, 1.0f,
                      0.8f, 0.8f, 0.8f, 1.0f,
@@ -82,7 +82,7 @@ int main(int ac, const char **av) {
 
   // create and setup model and mesh
   OSPGeometry mesh = ospNewTriangleMesh();
-  OSPData data = ospNewData(4, OSP_FLOAT3, vertex); // OSP_FLOAT4 format is also supported for vertex positions
+  OSPData data = ospNewData(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions (currently not on MIC)
   ospCommit(data);
   ospSetData(mesh, "vertex", data);
 

@@ -26,7 +26,7 @@ IF(COMMAND cmake_policy)
 ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-SET(OSPRAY_VERSION 0.8.1)
+SET(OSPRAY_VERSION 0.8.2)
 SET(OSPRAY_SOVERSION 0)
 
 IF(NOT CMAKE_BUILD_TYPE)
@@ -46,12 +46,8 @@ MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
 MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
-# whether to enable intersection filters
-OPTION(OSPRAY_INTERSECTION_FILTER "Enable Intersection Filters?")
-MARK_AS_ADVANCED(OSPRAY_INTERSECTION_FILTER)
-
 # add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
-OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable Intersection Filters?")
+OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
 MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
 
 # compiler selection for the non-MIC part
@@ -72,6 +68,7 @@ OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (SSE,AVX,AVX2,or ALL)")
 IF (OSPRAY_BUILD_ENABLE_KNL)
   SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2 AVX512)
+	OPTION(OSPRAY_ISPC_KNL_NATIVE "Enable ISPC's native KNL build")
 ELSE()
   SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
 ENDIF()
@@ -111,22 +108,21 @@ IF (OSPRAY_MIC)
 ENDIF()
 
 ##############################################################
-# ospray sample apps
-##############################################################
-SET (OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(apps builddir/apps/intel64)
-IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(apps builddir/apps/mic)
-ENDIF()
-
-
-##############################################################
-# modules at the end, they may need utilities
+# ospray modules
 ##############################################################
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
   SET (OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(modules builddir/modules/mic)
+ENDIF()
+
+##############################################################
+# ospray sample apps at the end, they may need modules
+##############################################################
+SET (OSPRAY_TARGET "intel64")
+ADD_SUBDIRECTORY(apps builddir/apps/intel64)
+IF (OSPRAY_MIC)
+  SET (OSPRAY_TARGET "mic")
+  ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()

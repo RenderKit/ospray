@@ -585,6 +585,8 @@ namespace ospray {
       Glut3DWidget::reshape(newSize);
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
+      ospSet1f(fb, "gamma", 2.2f);
+      ospCommit(fb);
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
     }

@@ -47,22 +47,20 @@ namespace ospray {
   //! \brief register a new listener for given object
   /*! \detailed this object will now get update notifications from us */
   void ManagedObject::registerListener(ManagedObject *newListener)
-  { 
+  {
     objectsListeningForChanges.insert(newListener); 
   }
 
   //! \brief un-register a listener
   /*! \detailed this object will no longer get update notifications from us  */
   void ManagedObject::unregisterListener(ManagedObject *noLongerListening)
-  { 
+  {
     objectsListeningForChanges.erase(noLongerListening); 
   }
 
   /*! \brief gets called whenever any of this node's dependencies got changed */
   void ManagedObject::dependencyGotChanged(ManagedObject *object) 
   {}
-    
-
 
   void ManagedObject::Param::set(ManagedObject *object)
   {

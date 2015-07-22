@@ -90,6 +90,8 @@ namespace ospray {
         Glut3DWidget::reshape(newSize);
         if (fb) ospFreeFrameBuffer(fb);
         fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
+        ospSet1f(fb, "gamma", 2.2f);
+        ospCommit(fb);
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         accumID = 0;
         ospSetf(camera,"aspect",viewPort.aspect);
@@ -241,7 +243,7 @@ namespace ospray {
           const char *moduleName = av[++i];
           cout << "loading ospray module '" << moduleName << "'" << endl;
           ospLoadModule(moduleName);
-        } else if (arg == "--show-fps") {
+        } else if (arg == "--show-fps" || arg == "-fps") {
           showFPS = true;
         } else if (arg == "--save-to") {
           modelSaveFileName = av[++i];

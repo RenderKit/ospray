@@ -49,14 +49,14 @@ namespace ospray {
 
       ospGeometry = ospNewTriangleMesh();
       // set vertex data
-      if (vertex->notEmpty())
+      if (vertex && vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());
-      if (normal->notEmpty())
+      if (normal && normal->notEmpty())
         ospSetData(ospGeometry,"vertex.normal",normal->getOSP());
-      if (texcoord->notEmpty())
+      if (texcoord && texcoord->notEmpty())
         ospSetData(ospGeometry,"vertex.texcoord",texcoord->getOSP());
       // set index data
-      if (index->notEmpty())
+      if (index && index->notEmpty())
         ospSetData(ospGeometry,"index",index->getOSP());
 
       // assign a default material (for now.... eventually we might
@@ -74,7 +74,6 @@ namespace ospray {
 
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      //std::cout << "#qtViewer 'rendered' mesh \n";
     }
 
     /*! 'render' the nodes */

@@ -26,7 +26,6 @@
 #include "sg/common/Node.h"
 #include "sg/geometry/Geometry.h"
 #include "sg/geometry/Spheres.h"
-#include "sg/geometry/PKD.h"
 #include "sg/volume/Volume.h"
 #include "sg/common/Integrator.h"
 #include "sg/camera/PerspectiveCamera.h"
@@ -156,6 +155,9 @@ namespace ospray {
 
     /*! import an OBJ wavefront model, and add its contents to the given world */
     void importOBJ(const Ref<World> &world, const FileName &fileName);
+
+    /*! import an PLY model, and add its contents to the given world */
+    void importPLY(Ref<World> &world, const FileName &fileName);
 
     /*! import an X3D-format model, and add its contents to the given world */
     void importX3D(const Ref<World> &world, const FileName &fileName);

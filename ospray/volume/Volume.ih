@@ -19,7 +19,7 @@
 #include "ospray/common/OSPCommon.ih"
 #include "ospray/common/Ray.ih"
 #include "ospray/transferFunction/TransferFunction.ih"
-#include "ospray/math/bbox.ih"
+#include "ospray/math/box.ih"
 
 //! \brief Variables and methods common to all subtypes of the Volume
 //!  class, an abstraction for the concrete object which performs the
@@ -28,17 +28,11 @@
 //!
 struct Volume {
 
-  //! Gamma correction coefficient and exponent.
-  uniform vec2f gammaCorrection;
+  /*! pointer to the c++-equivalent class of this entity */
+  void *cppEquivalent;
 
   //! Allow the renderer to perform gradient shading.
   uniform bool gradientShadingEnabled;
-
-  //! Number of isovalues.
-  uniform int numIsovalues;
-
-  //! Isovalues.
-  uniform float *uniform isovalues;
 
   //! Recommended sampling step size for ray casting based renderers, set by the underlying volume implementation.
   uniform float samplingStep;
@@ -56,16 +50,30 @@ struct Volume {
   uniform box3f boundingBox;
 
   //! The value at the given sample location in world coordinates.
-  varying float (*uniform computeSample)(void *uniform volume, const varying vec3f &worldCoordinates);
+  varying float (*uniform computeSample)(void *uniform volume, 
+                                         const varying vec3f &worldCoordinates);
+  
+  //! The values at the given sample locations in world coordinates.
+  void (*uniform computeSamples)(void *uniform volume, 
+                                 const varying vec3f *uniform positions, 
+                                 const uniform int numPositions, 
+                                 varying float *uniform results);
 
   //! The gradient at the given sample location in world coordinates.
-  varying vec3f (*uniform computeGradient)(void *uniform volume, const varying vec3f &worldCoordinates);
+  varying vec3f (*uniform computeGradient)(void *uniform volume, 
+                                           const varying vec3f &worldCoordinates);
 
   //! Find the next hit point in the volume for ray casting based renderers.
   void (*uniform intersect)(void *uniform volume, varying Ray &ray);
 
   //! Find the next isosurface hit point in the volume for ray casting based renderers.
-  void (*uniform intersectIsosurface)(void *uniform volume, uniform float *uniform isovalues, uniform int numIsovalues, varying Ray &ray);
+  void (*uniform intersectIsosurface)(void *uniform volume, 
+                                      uniform float *uniform isovalues, 
+                                      uniform int numIsovalues, 
+                                      varying Ray &ray);
 };
 
-void Volume_Constructor(Volume *uniform volume);
+void Volume_Constructor(Volume *uniform volume,
+                        /*! pointer to the c++-equivalent class of this entity */
+                        void *uniform cppEquivalent
+                        );

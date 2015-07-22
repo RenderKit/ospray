@@ -16,62 +16,38 @@
 
 #pragma once
 
-#include "vec.ih"
+#include <ospray/ospray.h>
 
-struct box2f {
-  vec2f lower;
-  vec2f upper;
+#include "SliceWidget.h"
+#include <QtGui>
+#include <vector>
+#include <string>
+
+class SliceEditor : public QWidget
+{
+Q_OBJECT
+
+public:
+
+  SliceEditor(osp::box3f boundingBox);
+
+signals:
+
+  void slicesChanged(std::vector<SliceParameters> sliceParameters);
+
+public slots:
+
+  void addSlice(std::string filename = std::string());
+  void apply();
+  void deleteSlice(SliceWidget *sliceWidget);
+
+protected:
+
+  //! Bounding box of the volume.
+  osp::box3f boundingBox;
+
+  //! UI elements.
+  QVBoxLayout layout;
+  std::vector<SliceWidget *> sliceWidgets;
+
 };
-
-struct box2i {
-  vec2i lower;
-  vec2i upper;
-};
-
-struct box3f { 
-  vec3f lower;
-  vec3f upper;
-};
-
-struct box3fa { 
-  vec3f lower;
-  int32 align0;
-  vec3f upper;
-  int32 align1;
-};
-
-struct box4f { 
-  vec4f lower;
-  vec4f upper;
-};
-
-inline uniform box3f make_box3f(const uniform vec3f lo, const uniform vec3f hi)
-{ uniform box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
-
-inline uniform box3fa make_box3fa(const uniform box3f &b)
-{ uniform box3fa bb; bb.lower = make_vec3f(b.lower); bb.upper = make_vec3f(b.upper); return bb; }
-
-inline box3f make_box3f(const vec3f lo, const vec3f hi)
-{ box3f bb; bb.lower = lo; bb.upper = hi; return bb; }
-
-inline void print_box(const uniform box3f &bbox)
-{ 
-  print("[(%f %f %f)-(%f %f %f)]",
-        bbox.lower.x,
-        bbox.lower.y,
-        bbox.lower.z,
-        bbox.upper.x,
-        bbox.upper.y,
-        bbox.upper.z); 
-}
-
-inline void print_box(const uniform box3fa &bbox)
-{ 
-  print("[(%f %f %f)-(%f %f %f)]",
-        bbox.lower.x,
-        bbox.lower.y,
-        bbox.lower.z,
-        bbox.upper.x,
-        bbox.upper.y,
-        bbox.upper.z); 
-}

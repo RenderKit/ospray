@@ -35,33 +35,33 @@ struct PrecomputedSample
 };
 
 /*! Pixel sample position. */
-inline const varying vec2f PrecomputedSample__getPixel(const uniform PrecomputedSample* uniform THIS) { 
-  return THIS->pixel; 
+inline const varying vec2f PrecomputedSample__getPixel(const uniform PrecomputedSample* uniform self) { 
+  return self->pixel; 
 }
 
 /*! Get the current lens sample. */
-inline const varying vec2f PrecomputedSample__getLens(const uniform PrecomputedSample* uniform THIS) { 
-  return THIS->lens; 
+inline const varying vec2f PrecomputedSample__getLens(const uniform PrecomputedSample* uniform self) { 
+  return self->lens; 
 }
 
 /*! Get the current time sample. */
-inline const varying float PrecomputedSample__getTime(const uniform PrecomputedSample* uniform THIS) { 
-  return THIS->time; 
+inline const varying float PrecomputedSample__getTime(const uniform PrecomputedSample* uniform self) { 
+  return self->time; 
 }
 
 /*! Get the specified additional 1D sample for the current sample. */
-inline const varying float PrecomputedSample__getFloat (const uniform PrecomputedSample* uniform THIS, uniform int dim) { 
-  return THIS->samples1D[dim]; 
+inline const varying float PrecomputedSample__getFloat (const uniform PrecomputedSample* uniform self, uniform int dim) { 
+  return self->samples1D[dim]; 
 }
 
 /*! Get the specified additional 2D sample for the current sample. */
-inline const varying vec2f PrecomputedSample__getVec2f(const uniform PrecomputedSample* uniform THIS, uniform int dim) { 
-  return THIS->samples2D[dim]; 
+inline const varying vec2f PrecomputedSample__getVec2f(const uniform PrecomputedSample* uniform self, uniform int dim) { 
+  return self->samples2D[dim]; 
 }
 
 /*! Get the specified precomputed light sample for the current sample. */
-inline const varying PTLightSample PrecomputedSample__getLightSample(const uniform PrecomputedSample* uniform THIS, uniform int lightSampleId) {
-  return THIS->lightSamples[lightSampleId]; 
+inline const varying PTLightSample PrecomputedSample__getLightSample(const uniform PrecomputedSample* uniform self, uniform int lightSampleId) {
+  return self->lightSamples[lightSampleId]; 
 }
 
 /*! The sampler factory precomputes samples for usage by multiple sampler threads. */
@@ -80,78 +80,78 @@ struct PrecomputedSampler
   uniform PrecomputedSample* uniform _samples; //!< All precomputed samples.
 };
 
-inline void PrecomputedSampler__Destructor(uniform PrecomputedSampler* uniform THIS) {
+inline void PrecomputedSampler__Destructor(uniform PrecomputedSampler* uniform self) {
   LOG(print("PrecomputedSampler__Destructor\n"));
-  delete[] THIS->_samples;
+  delete[] self->_samples;
 }
 
 /*! Construction from parameters. */
-inline void PrecomputedSampler__Constructor(uniform PrecomputedSampler* uniform THIS,
+inline void PrecomputedSampler__Constructor(uniform PrecomputedSampler* uniform self,
                                             const uniform int samplesPerPixel,
                                             const uniform int sampleSets)
 {
   LOG(print("PrecomputedSampler__Constructor\n"));
-  THIS->numSamples1D = 0;
-  THIS->numSamples2D = 0;
-  THIS->numLightSamples = 0;
-  THIS->samplesPerPixel = samplesPerPixel;
-  THIS->sampleSets = sampleSets;
-  THIS->totalSamplesMask = samplesPerPixel*sampleSets-1;
-  THIS->_samples = NULL;
-  THIS->samples = NULL;
+  self->numSamples1D = 0;
+  self->numSamples2D = 0;
+  self->numLightSamples = 0;
+  self->samplesPerPixel = samplesPerPixel;
+  self->sampleSets = sampleSets;
+  self->totalSamplesMask = samplesPerPixel*sampleSets-1;
+  self->_samples = NULL;
+  self->samples = NULL;
 }
     
 /*! Request additional 1D samples per pixel sample. */
-inline uniform int PrecomputedSampler__request1D(uniform PrecomputedSampler* uniform THIS, uniform int num) 
+inline uniform int PrecomputedSampler__request1D(uniform PrecomputedSampler* uniform self, uniform int num) 
 {
-  uniform int dim = THIS->numSamples1D;
-  THIS->numSamples1D += num;
-  if (THIS->numSamples1D > MAX_SAMPLES_1D) print("ERROR: Too many 1D samples requested.\n");
+  uniform int dim = self->numSamples1D;
+  self->numSamples1D += num;
+  if (self->numSamples1D > MAX_SAMPLES_1D) print("ERROR: Too many 1D samples requested.\n");
   return dim;
 }
 
 /*! Request additional 2D samples per pixel sample. */
-inline uniform int PrecomputedSampler__request2D(uniform PrecomputedSampler* uniform THIS, uniform int num) 
+inline uniform int PrecomputedSampler__request2D(uniform PrecomputedSampler* uniform self, uniform int num) 
 {
-  uniform int dim = THIS->numSamples2D;
-  THIS->numSamples2D += num;
-  if (THIS->numSamples2D > MAX_SAMPLES_2D) print("ERROR: Too many 2D samples requested.\n");
+  uniform int dim = self->numSamples2D;
+  self->numSamples2D += num;
+  if (self->numSamples2D > MAX_SAMPLES_2D) print("ERROR: Too many 2D samples requested.\n");
   return dim;
 }
 
 /*! Request a precomputed light sample. */
-inline uniform int PrecomputedSampler__requestLightSample(uniform PrecomputedSampler* uniform THIS, uniform int baseSample, uniform PTLight* uniform light)
+inline uniform int PrecomputedSampler__requestLightSample(uniform PrecomputedSampler* uniform self, uniform int baseSample, uniform PTLight* uniform light)
 {
-  THIS->lights[THIS->numLightSamples] = light;
-  THIS->lightBaseSamples[THIS->numLightSamples] = baseSample;
-  THIS->numLightSamples++;
-  if (THIS->numLightSamples > MAX_SAMPLES_LIGHT) print("ERROR: Too many light samples requested.\n");
-  return THIS->numLightSamples-1;
+  self->lights[self->numLightSamples] = light;
+  self->lightBaseSamples[self->numLightSamples] = baseSample;
+  self->numLightSamples++;
+  if (self->numLightSamples > MAX_SAMPLES_LIGHT) print("ERROR: Too many light samples requested.\n");
+  return self->numLightSamples-1;
 }
 
 inline uniform PrecomputedSample* uniform 
-PrecomputedSampler__get(const uniform PrecomputedSampler* uniform THIS, 
+PrecomputedSampler__get(const uniform PrecomputedSampler* uniform self, 
                         uniform uint32 i, uniform uint32 s) 
 {
-  return &THIS->samples[(i*THIS->samplesPerPixel+s)&THIS->totalSamplesMask];
+  return &self->samples[(i*self->samplesPerPixel+s)&self->totalSamplesMask];
 }
 
 /*! Initialize the factory for a given iteration and precompute all samples. */
-void PrecomputedSampler__init(uniform PrecomputedSampler* uniform THIS)
+void PrecomputedSampler__init(uniform PrecomputedSampler* uniform self)
 {
   print("Generating % MB of precalculated samples  ",
-        (THIS->sampleSets*THIS->samplesPerPixel*sizeof(uniform PrecomputedSample))/(1024*1024));
+        (self->sampleSets*self->samplesPerPixel*sizeof(uniform PrecomputedSample))/(1024*1024));
   
   //varying Random rng; rng.Constructor(1243);
   varying Random rng; Random__Constructor(&rng, 1243 + 5464*programIndex);
-  THIS->_samples = uniform new uniform PrecomputedSample[THIS->sampleSets*THIS->samplesPerPixel+1];
-  THIS->samples = (uniform PrecomputedSample* uniform) align_ptr(THIS->_samples);
+  self->_samples = uniform new uniform PrecomputedSample[self->sampleSets*self->samplesPerPixel+1];
+  self->samples = (uniform PrecomputedSample* uniform) align_ptr(self->_samples);
 
-  varying vec2f* uniform _pixel = uniform new varying vec2f[THIS->samplesPerPixel+1];
-  varying float* uniform _time = uniform new varying float[THIS->samplesPerPixel+1];
-  varying vec2f* uniform _lens = uniform new varying vec2f[THIS->samplesPerPixel+1];
-  varying float* uniform _samples1D = uniform new varying float[THIS->samplesPerPixel+1];
-  varying vec2f* uniform _samples2D = uniform new varying vec2f[THIS->samplesPerPixel+1];
+  varying vec2f* uniform _pixel = uniform new varying vec2f[self->samplesPerPixel+1];
+  varying float* uniform _time = uniform new varying float[self->samplesPerPixel+1];
+  varying vec2f* uniform _lens = uniform new varying vec2f[self->samplesPerPixel+1];
+  varying float* uniform _samples1D = uniform new varying float[self->samplesPerPixel+1];
+  varying vec2f* uniform _samples2D = uniform new varying vec2f[self->samplesPerPixel+1];
 
   varying vec2f* uniform pixel = (varying vec2f* uniform) align_ptr(_pixel); 
   varying float* uniform time = (varying float* uniform) align_ptr(_time);
@@ -159,46 +159,46 @@ void PrecomputedSampler__init(uniform PrecomputedSampler* uniform THIS)
   varying float* uniform samples1D = (varying float* uniform) align_ptr(_samples1D);
   varying vec2f* uniform samples2D = (varying vec2f* uniform) align_ptr(_samples2D);
 
-  for (uniform int set = 0; set < THIS->sampleSets; set++)
+  for (uniform int set = 0; set < self->sampleSets; set++)
   {
     print(".");
     
     /*! Generate pixel and lens samples. */
-    multiJittered(pixel, THIS->samplesPerPixel, rng);
-    jittered(time, THIS->samplesPerPixel, rng);
-    multiJittered(lens, THIS->samplesPerPixel, rng);
+    multiJittered(pixel, self->samplesPerPixel, rng);
+    jittered(time, self->samplesPerPixel, rng);
+    multiJittered(lens, self->samplesPerPixel, rng);
     
-    for (uniform int s = 0; s < THIS->samplesPerPixel; s++) 
+    for (uniform int s = 0; s < self->samplesPerPixel; s++) 
     {
-      THIS->samples[set*THIS->samplesPerPixel+s].pixel = pixel[s];
-      THIS->samples[set*THIS->samplesPerPixel+s].time  = time[s];
-      THIS->samples[set*THIS->samplesPerPixel+s].lens  = lens[s];
+      self->samples[set*self->samplesPerPixel+s].pixel = pixel[s];
+      self->samples[set*self->samplesPerPixel+s].time  = time[s];
+      self->samples[set*self->samplesPerPixel+s].lens  = lens[s];
     }
 
     /*! Generate requested 1D samples. */
-    for (uniform int d = 0; d < THIS->numSamples1D; d++) {
-      jittered(samples1D, THIS->samplesPerPixel, rng);
-      for (uniform int s = 0; s < THIS->samplesPerPixel; s++) {
-        THIS->samples[set*THIS->samplesPerPixel+s].samples1D[d] = samples1D[s];
+    for (uniform int d = 0; d < self->numSamples1D; d++) {
+      jittered(samples1D, self->samplesPerPixel, rng);
+      for (uniform int s = 0; s < self->samplesPerPixel; s++) {
+        self->samples[set*self->samplesPerPixel+s].samples1D[d] = samples1D[s];
       }
     }
 
     /*! Generate 2D samples. */
-    for (uniform int d = 0; d < THIS->numSamples2D; d++) {
-      multiJittered(samples2D, THIS->samplesPerPixel, rng);
-      for (uniform int s = 0; s < THIS->samplesPerPixel; s++) {
-        THIS->samples[set*THIS->samplesPerPixel+s].samples2D[d] = samples2D[s];
+    for (uniform int d = 0; d < self->numSamples2D; d++) {
+      multiJittered(samples2D, self->samplesPerPixel, rng);
+      for (uniform int s = 0; s < self->samplesPerPixel; s++) {
+        self->samples[set*self->samplesPerPixel+s].samples2D[d] = samples2D[s];
       }
     }
 
     /*! Generate light samples. */
-    for (uniform int d = 0; d < THIS->numLightSamples; d++) {
-      for (uniform int s = 0; s < THIS->samplesPerPixel; s++) {
+    for (uniform int d = 0; d < self->numLightSamples; d++) {
+      for (uniform int s = 0; s < self->samplesPerPixel; s++) {
         varying PTLightSample ls;
         varying DifferentialGeometry dg; 
-        varying vec2f sample = THIS->samples[set*THIS->samplesPerPixel+s].samples2D[THIS->lightBaseSamples[d]];
-        ls.L = THIS->lights[d]->sample(THIS->lights[d], dg, ls.wi, ls.tMax, sample);
-        THIS->samples[set*THIS->samplesPerPixel+s].lightSamples[d] = ls;
+        varying vec2f sample = self->samples[set*self->samplesPerPixel+s].samples2D[self->lightBaseSamples[d]];
+        ls.L = self->lights[d]->sample(self->lights[d], dg, ls.wi, ls.tMax, sample);
+        self->samples[set*self->samplesPerPixel+s].lightSamples[d] = ls;
       }
     }
   }
@@ -211,17 +211,17 @@ void PrecomputedSampler__init(uniform PrecomputedSampler* uniform THIS)
 }
 
 /*! Reset the sampler factory. Delete all precomputed samples. */
-inline void PrecomputedSampler__reset(uniform PrecomputedSampler* uniform THIS)
+inline void PrecomputedSampler__reset(uniform PrecomputedSampler* uniform self)
 {
-  delete[] THIS->_samples;
-  THIS->_samples = NULL;
-  THIS->samples = NULL;
-  THIS->numSamples1D = 0;
-  THIS->numSamples2D = 0;
-  THIS->numLightSamples = 0;
+  delete[] self->_samples;
+  self->_samples = NULL;
+  self->samples = NULL;
+  self->numSamples1D = 0;
+  self->numSamples2D = 0;
+  self->numLightSamples = 0;
 }
 
-inline bool PrecomputedSampler__empty (uniform PrecomputedSampler* uniform THIS) 
+inline bool PrecomputedSampler__empty (uniform PrecomputedSampler* uniform self) 
 {
-  return THIS->samples == NULL;
+  return self->samples == NULL;
 }

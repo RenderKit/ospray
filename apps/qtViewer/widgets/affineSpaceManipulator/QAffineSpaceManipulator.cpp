@@ -125,12 +125,36 @@ namespace ospray {
       updateGL();
     }
 
+    /*! rotate around target point, by given angles */
+    void QAffineSpaceManipulator::rotateAroundTarget(float angle_x, float angle_y)
+    {
+      // axes we're rotating in u and v direction, respectively.
+      const vec3f uRotationAxis = frame->orientation.vz;
+      const vec3f vRotationAxis = frame->orientation.vx;
+      const float rotSpeed = 2.f;
+      const float du = - angle_x / 300.f;
+      const float dv = - angle_y / 300.f;
+      linear3f rot
+        = linear3f::rotate(vRotationAxis,dv)
+        * linear3f::rotate(uRotationAxis,du);
+      frame->orientation = rot * frame->orientation;
+      frame->snapUp();
+      const vec3f vecToTarget = frame->targetPoint - frame->sourcePoint;
+      if (interactionMode == FLY) {
+        // in FLY mode, the SOURCE point stays, and the target point rotates
+        frame->targetPoint = frame->sourcePoint + xfmVector(rot,vecToTarget);
+      } else {
+        assert(interactionMode == INSPECT);
+        frame->sourcePoint = frame->targetPoint - xfmVector(rot,vecToTarget);
+      }
+    }
+    
     void QAffineSpaceManipulator::rotate(QMouseEvent * event)
     {
       QPoint newPos = event->pos();
       
       switch (interactionMode) {
-      case FLY:
+      case FLY: 
       case INSPECT: {
         // axes we're rotating in u and v direction, respectively.
         const vec3f uRotationAxis = frame->orientation.vz;
@@ -189,8 +213,8 @@ namespace ospray {
         /* fly mode: move BOTH source and target positions
            forward/backward along move axis. Since we are moving
            *forward* with mouse, we move in POSITIVE y distance */
-        frame->sourcePoint += moveDistance * moveAxis;
-        frame->targetPoint += moveDistance * moveAxis;
+        frame->sourcePoint -= moveDistance * moveAxis;
+        frame->targetPoint -= moveDistance * moveAxis;
       } break;
       case FREE_ROTATION: 
       case INSPECT: {
@@ -208,6 +232,22 @@ namespace ospray {
       lastMousePos = event->pos();
       emit affineSpaceChanged(this);
       updateGL();
+    }
+
+
+    //! switch to requested interaction mode
+    void QAffineSpaceManipulator::setInteractionMode(QAffineSpaceManipulator::InteractionMode interactionMode)
+    { this->interactionMode = interactionMode; }
+
+    /*! toggle-up: switch to given axis (x=0,y=1,z=2) as up-vectors for the rotation.
+      when _already_ in up-vector mode for this axis, switch to negative axis. */
+    void QAffineSpaceManipulator::toggleUp(int axis)
+    {
+      vec3f newUp = vec3f(axis==0,axis==1,axis==2);
+      if (frame->upVector == newUp)
+        newUp = - newUp;
+      frame->upVector = newUp;
+      frame->snapUp();
     }
 
 

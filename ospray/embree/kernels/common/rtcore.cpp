@@ -28,7 +28,7 @@
 #include "sys/thread.h"
 #include "raystream_log.h"
 
-#define TRACE(x) //std::cout << #x << std::endl;
+#define TRACE(x) // std::cout << #x << std::endl;
 
 namespace embree
 {
@@ -602,10 +602,10 @@ namespace embree
 #if defined(__ENABLE_RAYSTREAM_LOGGER__)
     RayStreamLogger::rayStreamLogger.logRay8Intersect(valid,scene,old_ray,ray);
 #endif
-
 #endif
   }
-  
+
+#ifndef __EMBREE_KNL_WORKAROUND__
   RTCORE_API void rtcIntersect16 (const void* valid, RTCScene scene, RTCRay16& ray) 
   {
     TRACE(rtcIntersect16);
@@ -632,6 +632,7 @@ namespace embree
 
 #endif
   }
+#endif
   
   RTCORE_API void rtcOccluded (RTCScene scene, RTCRay& ray) 
   {

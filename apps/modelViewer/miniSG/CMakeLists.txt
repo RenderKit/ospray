@@ -45,6 +45,7 @@ IF (NOT THIS_IS_MIC)
     miniSG.cpp
     importer.cpp
     importOBJ.cpp
+    importHBP.cpp
     importSTL.cpp
     importMSG.cpp
     importTRI.cpp

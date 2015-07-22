@@ -15,10 +15,20 @@
 // ======================================================================== //
 
 #include "modules/loaders/OSPObjectFile.h"
+#include "SeismicHorizonFile.h"
 #include "SeismicVolumeFile.h"
 
-//! Loader for seismic volume files for supported self-describing formats.
+// Loaders for seismic horizon files for supported self-describing formats.
+OSP_REGISTER_TRIANGLEMESH_FILE(SeismicHorizonFile, dds);
+
+// Loader for seismic volume files for supported self-describing formats.
 OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, dds);
 OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, H);
 OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, sgy);
 OSP_REGISTER_VOLUME_FILE(SeismicVolumeFile, segy);
+
+//! Module initialization function
+extern "C" void ospray_init_module_seismic()
+{
+  std::cout << "loaded module 'seismic'." << std::endl;
+}

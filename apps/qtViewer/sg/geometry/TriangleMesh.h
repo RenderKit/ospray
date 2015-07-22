@@ -41,7 +41,6 @@ namespace ospray {
 
       OSPGeometry         ospGeometry;
       
-#if 1
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
@@ -59,22 +58,6 @@ namespace ospray {
 
       //! triangle indices
       Ref<DataBuffer> index;
-#else
-      //! vertex (position) array
-      std::vector<vec3fa> vertex;
-
-      //! vertex normal array. empty means 'not present'
-      std::vector<vec3fa> normal;
-
-      //! vertex color array. empty means 'not present'
-      std::vector<vec3fa> color;
-
-      //! vertex texture coordinate array. empty means 'not present'
-      std::vector<vec2f> texcoord;
-
-      //! triangle indices
-      std::vector<Triangle> index;
-#endif
     };
 
 
@@ -106,7 +89,6 @@ namespace ospray {
       std::vector<Ref<sg::Material> > materialList;
       std::vector<uint32> materialIDs;
 
-#if 1
       // to allow memory-mapping triangle arrays (or in general,
       // sharing data with an application) we use data arrays, not std::vector's
 
@@ -127,17 +109,6 @@ namespace ospray {
       
       //! material IDs
       OSPData primMatIDs;
-#else
-      //! vertex (position) array
-      std::vector<vec3fa> vertex;
-
-      //! vertex normal array
-      std::vector<vec3fa> normal;
-
-      //! vertex texture coordinate array
-      std::vector<vec2f> texcoord;
-      //! triangle indices
-#endif 
    };
 
   } // ::ospray::sg

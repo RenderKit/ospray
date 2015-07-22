@@ -33,10 +33,12 @@ struct Model {
   void *cppEquivalent;
 
   //! array of (pointers to) geometries contained in this model
-  uniform Geometry *uniform *uniform geometry;  uniform int32 geometryCount;
+  uniform Geometry *uniform *uniform geometry;
+  uniform int32 geometryCount;
 
   //! volumes contained in the model
-  Volume **uniform volumes;  uniform int32 volumeCount;
+  Volume **uniform volumes;
+  uniform int32 volumeCount;
 
 };
 
