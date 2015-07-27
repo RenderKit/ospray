@@ -50,7 +50,7 @@ namespace ospray {
     //! the renderer we're about to use
     std::string rendererType = "ao1";
     //    std::string rendererType = "raycast_eyelight";
-    float radius = 1.f;
+    // float defaultRadius = 1.f;
     InputFormat inputFormat = LAMMPS_XYZ;
     void error(const std::string &err)
     {
@@ -195,9 +195,9 @@ namespace ospray {
             a.position.y = y/float(numPerSide);
             a.position.z = z/float(numPerSide);
             a.type = type;
+            a.radius = 1.f/numPerSide;
             m->atom.push_back(a);
           }
-      m->radius = 1.f/numPerSide;
       return m;
     }
 
@@ -217,12 +217,28 @@ namespace ospray {
       return data;
     }
 
+    struct DeferredLoadJob {
+      DeferredLoadJob(particle::Model *model,
+                      const embree::FileName &xyzFileName,
+                      const embree::FileName &defFileName)
+        : model(model), xyzFileName(xyzFileName), defFileName(defFileName)
+      {}
+                      
+      //! the mode we still have to load
+      particle::Model *model;
+      //! file name of xyz file to be loaded into this model
+      embree::FileName xyzFileName;
+      //! name of atom type defintion file active when this xyz file was added
+      embree::FileName defFileName;
+    };
+
     void ospParticleViewerMain(int &ac, const char **&av)
     {
       std::vector<Model *> particleModel;
     
       cout << "ospParticleViewer: starting to process cmdline arguments" << endl;
-      std::vector<std::pair<particle::Model *, std::string> > deferredLoadingListXYZ;
+      std::vector<DeferredLoadJob *> deferredLoadingListXYZ;
+      embree::FileName defFileName = "";
 
       for (int i=1;i<ac;i++) {
         const std::string arg = av[i];
@@ -230,8 +246,7 @@ namespace ospray {
           assert(i+1 < ac);
           rendererType = av[++i];
         } else if (arg == "--radius") {
-          radius = atof(av[++i]);
-          PRINT(radius);
+          Model::defaultRadius = atof(av[++i]);
         } else if (arg == "--sun-dir") {
           defaultDirLight_direction.x = atof(av[++i]);
           defaultDirLight_direction.y = atof(av[++i]);
@@ -245,6 +260,8 @@ namespace ospray {
           showFPS = true;
         } else if (arg == "--save-to") {
           modelSaveFileName = av[++i];
+        } else if (arg == "--atom-defs") {
+          defFileName = av[++i];
         } else if (av[i][0] == '-') {
           error("unkown commandline argument '"+arg+"'");
         } else {
@@ -256,8 +273,8 @@ namespace ospray {
           } else if (fn.ext() == "xyz") {
             particle::Model *m = new particle::Model;
             //            m->loadXYZ(fn);
-            std::pair<particle::Model *, embree::FileName> loadJob(m,fn.str());
-            deferredLoadingListXYZ.push_back(loadJob);
+            // std::pair<particle::Model *, embree::FileName> loadJob(m,fn.str());
+            deferredLoadingListXYZ.push_back(new DeferredLoadJob(m,fn,defFileName));
             particleModel.push_back(m);
           } else if (fn.ext() == "xyz2") {
             particle::Model *m = new particle::Model;
@@ -277,7 +294,13 @@ namespace ospray {
       {
 #pragma omp for
         for (int i=0;i<deferredLoadingListXYZ.size();i++) {
-          deferredLoadingListXYZ[i].first->loadXYZ(deferredLoadingListXYZ[i].second);
+          embree::FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
+          embree::FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
+          particle::Model *model = deferredLoadingListXYZ[i]->model;
+          
+          if (defFileName.str() != "")
+            model->readAtomTypeDefinitions(defFileName);
+          model->loadXYZ(xyzFileName);
         }
       }
 
@@ -304,15 +327,15 @@ namespace ospray {
         OSPModel model = ospNewModel();
         OSPData materialData = makeMaterials(ospRenderer,particleModel[i]);
     
-        OSPData data = ospNewData(particleModel[i]->atom.size()*4,OSP_FLOAT,
+        OSPData data = ospNewData(particleModel[i]->atom.size()*5,OSP_FLOAT,
                                   &particleModel[i]->atom[0],OSP_DATA_SHARED_BUFFER);
         ospCommit(data);
 
         OSPGeometry geom = ospNewGeometry("spheres");
-        ospSet1f(geom,"radius",radius*particleModel[i]->radius);
         ospSet1i(geom,"bytes_per_sphere",sizeof(Model::Atom));
-        ospSet1i(geom,"center_offset",0);
-        ospSet1i(geom,"offset_materialID",3*sizeof(float));
+        ospSet1i(geom,"offset_center",0);
+        ospSet1i(geom,"offset_radius",3*sizeof(float));
+        ospSet1i(geom,"offset_materialID",4*sizeof(float));
         ospSetData(geom,"spheres",data);
         ospSetData(geom,"materialList",materialData);
         ospCommit(geom);
