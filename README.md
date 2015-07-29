@@ -1,59 +1,166 @@
 OSPRay
 ======
 
-This is release v0.8.2 of OSPRay.
+This is release v0.8.2 of OSPRay. For changes and new
+features see the [changelog](CHANGELOG.md). Also visit
+http://www.ospray.org for more information.
 
-For more information, visit http://www.ospray.org.
+OSPRay Overview
+===============
 
-Release History
----------------
+OSPRay is an **o**pen source, **s**calable, and **p**ortable **ray**
+tracing engine for high-performance, high-fidelity visualization on
+Intel® Architecture CPUs. OSPRay is released under the permissive
+[Apache 2.0 license](http://www.apache.org/licenses/LICENSE-2.0).
 
-#### Changes in v0.8.1:
+The purpose of OSPRay is to provide an open, powerful, and easy-to-use
+rendering library that allows one to easily build applications that use
+ray tracing based rendering for interactive applications (including both
+surface- and volume-based visualizations). OSPRay is completely
+CPU-based, and runs on anything from laptops, to workstations, to
+compute nodes in HPC systems.
 
-- The volume renderer and volume viewer can now be run MPI parallel
-  (data replicated) using the "--osp:mpi" command line option.
-- Improved performance of volume grid accelerator generation, reducing
-  load times for large volumes.
-- The volume renderer and volume viewer now properly handle multiple
-  isosurfaces.
-- Added small example tutorial demonstrating how to use OSPRay.
-- Several fixes to support older versions of GCC.
-- Bug fixes to ospSetRegion() implementation for arbitrarily shaped
-  regions and setting large volumes in a single call.
-- Bug fix for geometries with invalid bounds; fixes streamline and
-  sphere rendering in some scenes.
-- Fixed bug in depth buffer generation.
+OSPRay internally builds on top of [Embree](https://embree.github.io/)
+and [ISPC (Intel® SPMD Program Compiler)](https://ispc.github.io/),
+and fully utilizes modern instruction sets like Intel® SSE, AVX, AVX2,
+or Intel® Xeon Phi™ to achieve high rendering performance.
 
-#### Changes in v0.8.0:
 
-- Incorporated early version of a new Qt-based viewer to eventually
-  unify (and replace) the existing simpler GLUT-based viewers.
-- Added new path tracing renderer (ospray/render/pathtracer),
-  roughly based on the Embree sample path tracer.
-- Added new features to the volume renderer:
-    - Gradient shading (lighting)
-    - Implicit isosurfacing
-    - Progressive refinement
-    - Support for regular grids, specified with the "gridOrigin" and
-      "gridSpacing" parameters.
-    - New "shared_structured_volume" volume type that allows voxel
-      data to be provided by applications through a shared data buffer.
-    - New API call to set subregions of volume data (ospSetRegion()).
-- Added a subsampling-mode, enabled with a negative "spp" parameter;
-  the first frame after scene changes is rendered with reduced
-  resolution, increasing interactivity.
-- Added multi-target ISA support; OSPRay will now select the appropriate
-  ISA at run time.
-- Added support for the Stanford SEP file format to the seismic module.
-- Added "--osp:numthreads <n>" command line option to restrict  the
-  number of threads OSPRay creates.
-- Various bug fixes, cleanups and documentation updates throughout the
-  codebase.
+OSPRay Support and Contact
+--------------------------
 
-#### Changes in v0.7.2:
+OSPRay is still in "pre 1.0" alpha stage, and though we do our best to
+guarantee stable release versions a certain number of bugs,
+as-yet-missing features, inconsistencies, or any other issues are
+unavoidable at this stage. Should you find any such issues please report
+them immediately via [OSPRay's GitHub Issue
+Tracker](https://github.com/ospray/OSPRay/issues) (or, if you should
+happen to have a fix for it,you can also send us a pull request); for
+missing features please contact us via email at
+<ospray@googlegroups.com>.
 
-- Build fixes for older versions of GCC and Clang
-- Fixed time series support in ospVolumeViewer
-- Corrected memory management for shared data buffers
-- Updated to ISPC 1.8.1
-- Resolved issue in XML parser
+For recent news, updates, and announcements, please see our complete
+[news/updates] page.
+
+Join our [mailing
+list](https://groups.google.com/forum/#!forum/ospray-announce/join) to
+receive release announcements and major news regarding OSPRay.
+
+Building OSPRay from Source
+===========================
+
+The latest OSPRay sources are always available at the [OSPRay GitHub
+repository](http://github.com/ospray/ospray). The default "master"
+branch should always point to the latest tested bugfix release.
+
+Prerequisites
+-------------
+
+OSPRay currently supports both Linux and Mac OS X (a Windows version
+will soon follow). In addition, before you can build OSPRay you need the
+following prerequisites:
+
+-   You can clone the latest OSPRay sources via:
+
+        git clone https://github.com/ospray/ospray.git
+
+-   To build OSPRay you require a copy of the [Intel® SPMD Program
+    Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
+    latest binary release of ISPC (currently 1.8.2) from the [ISPC
+    downloads page](https://ispc.github.io/downloads.html), and place it
+    right "next to" the checked-out OSPRay sources in your directory
+    tree (e.g., if OSPRay is in `~/Projects/ospray`, ISPC should be in
+    `~/Projects/ispc-v1.8.2-linux`).
+-   Additional packages you need are [CMake](http://www.cmake.org), any
+    form of C++ compiler (we recommend using the [Intel® C++ compiler
+    (icc)](https://software.intel.com/en-us/c-compilers), but also
+    support GCC and clang-cc), and standard Linux development tools.
+    To build the demo viewers, you should also have some version of
+    OpenGL and the GL Utility Toolkit (GLUT or freeglut), as well as
+    Qt 4.6 or higher.
+-   OSPRay also heavily uses [Embree](http://embree.github.io); however,
+    OSPRay directly includes its own copy of Embree, so a special
+    installation of Embree is *not* required.
+
+Compiling OSPRay
+----------------
+
+Assume the above requisites are all fulfilled, building OSPRay through
+CMake is easy:
+
+-   Create a build directory, and go into it
+
+        user@mymachine[~/Projects]: mkdir ospray/release
+        user@mymachine[~/Projects]: cd ospray/release
+
+    (We do recommend having separate build directories for different
+    configurations such as release, debug, etc).
+-   Open the CMake configuration dialog
+
+        user@mymachine[~/Projects/ospray/release]: ccmake ..
+
+-   Make sure to properly set build mode, desired compiler, enable the
+    components you need, etc; then type 'c'onfigure and 'g'enerate. When
+    back on the command prompt, build it using
+
+        user@mymachine[~/Projects/ospray/release]: make
+
+-   You should now have `libospray.so` as well as a set of sample
+    viewers. You can test your version of OSPRay using any of the
+    examples on the [OSPRay Demos and Examples] page.
+
+Examples
+========
+
+Tutorial
+--------
+
+A minimal working example demonstrating how to use OSPRay can be found
+at `apps/ospTutorial.cpp`. Build it in the build_directory with
+
+    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common  ./libospray.so -o ospTutorial
+
+Running `ospTutorial` will create two images of two triangles, rendered
+with the Ambient Occlusion renderer. The first image `firstFrame.ppm` shows the
+result after one call to `ospRenderFrame` -- jagged edges and noise in the
+shadow can be seen. Calling `ospRenderFrame` multiple times enables
+progressive refinement, resulting in antialiased edges and converged
+shadows, shown after ten frames in the second image
+`accumulatedFrames.png`.
+
+![First frame.][imgTutorial1]
+
+![After accumulating ten frames.][imgTutorial2]
+
+
+QT Viewer
+---------
+
+OSPRay also includes a demo viewer application `ospQTViewer`, showcasing all features
+of OSPRay.
+
+![Screenshot of `ospQTViewer`.][imgQTViewer]
+
+
+Volume Viewer
+-------------
+
+Additionally, OSPRay includes a demo viewer application
+`ospVolumeViewer`, which is specifically tailored for volume rendering.
+
+![Screenshot of `ospVolumeViewer`.][imgVolumeViewer]
+
+
+Demos
+-----
+
+Several ready-to-run demos, models and data sets for OSPRay can be found
+at the [OSPRay Demos and Examples] page.
+
+[news/updates]: https://ospray.github.io/news.html
+[getting OSPRay]: https://ospray.github.io/getting_ospray.html
+[OSPRay Demos and Examples]: https://ospray.github.io/demos.html
+[imgTutorial1]:  https://ospray.github.io/images/tutorial_firstframe.png
+[imgTutorial2]:  https://ospray.github.io/images/tutorial_accumulatedframe.png
+[imgQTViewer]:  https://ospray.github.io/images/QTViewer.jpg
+[imgVolumeViewer]:  https://ospray.github.io/images/VolumeViewer.png
