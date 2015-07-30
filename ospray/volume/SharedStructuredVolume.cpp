@@ -65,23 +65,27 @@ namespace ospray {
 
     // The voxel count.
     size_t voxelCount = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
-  
-    // Compute the voxel value range for float voxels if none was previously specified.
-    if (voxelType == "float" && findParam("voxelRange") == NULL) 
-      computeVoxelRange((float *)voxelData->data, voxelCount);
 
     // Compute the voxel value range for unsigned byte voxels if none was previously specified.
-    if (voxelType == "uchar" && findParam("voxelRange") == NULL) 
+    if (voxelType == "uchar" && findParam("voxelRange") == NULL)
       computeVoxelRange((unsigned char *)voxelData->data, voxelCount);
+
+    // Compute the voxel value range for float voxels if none was previously specified.
+    if (voxelType == "float" && findParam("voxelRange") == NULL)
+      computeVoxelRange((float *)voxelData->data, voxelCount);
+
+    // Compute the voxel value range for float voxels if none was previously specified.
+    if (voxelType == "double" && findParam("voxelRange") == NULL)
+      computeVoxelRange((double *)voxelData->data, voxelCount);
 
     // Create an ISPC SharedStructuredVolume object and assign type-specific function pointers.
     int voxelType = (int)getVoxelType();
     ispcEquivalent
       = ispc::SharedStructuredVolume_createInstance(this,
-                                                    voxelType, 
-                                                    (const ispc::vec3i &)dimensions, 
+                                                    voxelType,
+                                                    (const ispc::vec3i &)dimensions,
                                                     voxelData->data);
-    
+
     // Listen for changes to voxelData.
     voxelData->registerListener(this);
   }

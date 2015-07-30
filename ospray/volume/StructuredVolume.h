@@ -61,11 +61,14 @@ namespace ospray {
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
+    //! Compute the voxel value range for unsigned byte voxels.
+    void computeVoxelRange(const unsigned char *source, const size_t &count);
+
     //! Compute the voxel value range for floating point voxels.
     void computeVoxelRange(const float *source, const size_t &count);
 
-    //! Compute the voxel value range for unsigned byte voxels.
-    void computeVoxelRange(const unsigned char *source, const size_t &count);
+    //! Compute the voxel value range for double precision floating point voxels.
+    void computeVoxelRange(const double *source, const size_t &count);
 
     //! Volume size in voxels per dimension.
     vec3i dimensions;

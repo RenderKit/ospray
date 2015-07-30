@@ -71,33 +71,45 @@ namespace ospray {
     unsigned int width = 1;
     sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
 
+    // Unsigned 8-bit scalar integer.
+    if (!strcmp(kind, "uchar") && width == 1) return(OSP_UCHAR);
+
     // Single precision scalar floating point.
     if (!strcmp(kind, "float") && width == 1) return(OSP_FLOAT);
 
-    // Unsigned 8-bit scalar integer.
-    if (!strcmp(kind, "uchar") && width == 1) return(OSP_UCHAR);
+    // Double precision scalar floating point.
+    if (!strcmp(kind, "double") && width == 1) return(OSP_DOUBLE);
 
     // Unknown voxel type.
     return OSP_UNKNOWN;
   }
 
-  // Compute the voxel value range for floating point voxels.
-  void StructuredVolume::computeVoxelRange(const float *source, const size_t &count)
-  { 
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, source[i]);
-      voxelRange.y = std::max(voxelRange.y, source[i]); 
-    }
-  }
-  
   // Compute the voxel value range for unsigned byte voxels.
   void StructuredVolume::computeVoxelRange(const unsigned char *source, const size_t &count)
-  { 
+  {
     for (size_t i=0 ; i < count ; i++) {
       voxelRange.x = std::min(voxelRange.x, (float) source[i]);
-      voxelRange.y = std::max(voxelRange.y, (float) source[i]); 
+      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
     }
   }
-  
+
+  // Compute the voxel value range for floating point voxels.
+  void StructuredVolume::computeVoxelRange(const float *source, const size_t &count)
+  {
+    for (size_t i=0 ; i < count ; i++) {
+      voxelRange.x = std::min(voxelRange.x, source[i]);
+      voxelRange.y = std::max(voxelRange.y, source[i]);
+    }
+  }
+
+  // Compute the voxel value range for double precision floating point voxels.
+  void StructuredVolume::computeVoxelRange(const double *source, const size_t &count)
+  {
+    for (size_t i=0 ; i < count ; i++) {
+      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
+      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
+    }
+  }
+
 } // ::ospray
 
