@@ -44,8 +44,8 @@ struct SharedStructuredVolume {
 
 };
 
-void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume, 
+void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
                                         void *uniform cppEquivalent,
-                                        const uniform int voxelType, 
-                                        const uniform vec3i &dimensions, 
+                                        const uniform int voxelType,
+                                        const uniform vec3i &dimensions,
                                         const void *uniform voxelData);

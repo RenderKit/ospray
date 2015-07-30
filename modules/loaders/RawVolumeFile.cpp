@@ -32,11 +32,17 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
   // Voxel type string.
   char *voxelType;  exitOnCondition(!ospGetString(volume, "voxelType", &voxelType), "no voxel type specified");
 
-  // Supported voxel types.
-  exitOnCondition(strcmp(voxelType, "float") && strcmp(voxelType, "uchar"), "unsupported voxel type");
-
   // Voxel size in bytes.
-  size_t voxelSize = strcmp(voxelType, "float") ? sizeof(unsigned char) : sizeof(float);
+  size_t voxelSize;
+
+  if (strcmp(voxelType, "uchar") == 0)
+    voxelSize = sizeof(unsigned char);
+  else if (strcmp(voxelType, "float") == 0)
+    voxelSize = sizeof(float);
+  else if (strcmp(voxelType, "double") == 0)
+    voxelSize = sizeof(double);
+  else
+    exitOnCondition(true, "unsupported voxel type");
 
   // Check if a subvolume of the volume has been specified.
   // Subvolume parameters: subvolumeOffsets, subvolumeDimensions, subvolumeSteps.
