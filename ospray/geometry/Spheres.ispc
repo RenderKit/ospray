@@ -53,28 +53,25 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
   dg.Ng = dg.Ns = ray.Ng;
 
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
-    const uniform int32 primsPerPage = (1024*1024*128);
+    const uniform int32 primsPerPage = (1024*1024*64);
     if (any(ray.primID >= primsPerPage )) {
       const int primPageID  = ray.primID / primsPerPage;
       const int localPrimID = ray.primID % primsPerPage;
       foreach_unique(primPage in primPageID) {
-        uniform uint8 *uniform pagePtr = self->data + (((int64)primPage) * primsPerPage * self->bytesPerSphere);
-        uniform uint8 *spherePtr = 
-          pagePtr + self->bytesPerSphere*localPrimID;
+        uniform uint8 *uniform pagePtr   = self->data + (((int64)primPage) * primsPerPage * self->bytesPerSphere);
+        uniform uint8 *varying spherePtr = pagePtr + self->bytesPerSphere*localPrimID;
         dg.materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
         if (self->materialList) {
           dg.material = self->materialList[dg.materialID];
         }
       }
-    } else
-      {
-        uniform uint8 *spherePtr = 
-          self->data + self->bytesPerSphere*ray.primID;
-        dg.materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
-        if (self->materialList) {
-          dg.material = self->materialList[dg.materialID];
-        }
+    } else {
+      uniform uint8 *varying spherePtr = self->data + self->bytesPerSphere*ray.primID;
+      dg.materialID = *((uniform uint32 *varying)(spherePtr+self->offset_materialID));
+      if (self->materialList) {
+        dg.material = self->materialList[dg.materialID];
       }
+    }
   }
 }
 
@@ -86,9 +83,9 @@ void Spheres_bounds(uniform Spheres *uniform geometry,
   uniform float radius = geometry->radius;
   
   if (geometry->offset_radius >= 0) {
-    radius = *((uniform float *)(spherePtr+geometry->offset_radius));
+    radius = *((uniform float *uniform)(spherePtr+geometry->offset_radius));
   }
-  uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
+  uniform vec3f center = *((uniform vec3f*uniform)(spherePtr+geometry->offset_center));
   bbox = make_box3fa(center-make_vec3f(radius),center+make_vec3f(radius));
 }
 
@@ -99,9 +96,9 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
   uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*((uniform int64)primID);
   uniform float radius = geometry->radius;
   if (geometry->offset_radius >= 0) {
-    radius = *((uniform float *)(spherePtr+geometry->offset_radius));
+    radius = *((uniform float *uniform)(spherePtr+geometry->offset_radius));
   }
-  uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
+  uniform vec3f center = *((uniform vec3f*uniform)(spherePtr+geometry->offset_center));
   const vec3f A = center - ray.org;
 
   const float a = dot(ray.dir,ray.dir);
