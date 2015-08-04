@@ -91,14 +91,17 @@ namespace ospray {
 
     int Model::getAtomType(const std::string &name)
     {
-      if (atomTypeByName.find(name) == atomTypeByName.end()) {
+      std::map<std::string,int>::iterator it = atomTypeByName.find(name);
+      if (it == atomTypeByName.end()) {
         std::cout << "Found atom type '"+name+"'" << std::endl;
         AtomType *a = new AtomType(name);
         a->color = makeRandomColor(atomType.size());
-        atomTypeByName[name] = atomType.size();
+        int newID = atomType.size();
+        atomTypeByName[name] = newID;
         atomType.push_back(a);
+        return newID;
       }
-      return atomTypeByName[name];
+      return it->second;
     }
 
     void Model::loadXYZ(const std::string &fileName)
@@ -126,7 +129,12 @@ namespace ospray {
           std::stringstream ss;
           ss << "in " << fileName << " (line " << (i+2) << "): "
              << "unexpected end of file!?" << std::endl;
+#if 1
+          std::cout << "warning: " << ss.str() << std::endl;
+          break;
+#else
           throw std::runtime_error(ss.str());
+#endif
         }
 
         rc = sscanf(line,"%100s %f %f %f %f %f %f\n",atomName,
@@ -143,7 +151,12 @@ namespace ospray {
           PRINT(line);
           ss << "in " << fileName << " (line " << (i+2) << "): "
              << "could not parse .dat.xyz data line" << std::endl;
+#if 1
+          std::cout << "warning: " << ss.str() << std::endl;
+          break;
+#else
           throw std::runtime_error(ss.str());
+#endif
         }
         a.type = getAtomType(atomName);
         a.radius = atomType[a.type]->radius;
