@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "Volume.h"
+#include "sg/common/World.h"
+#include "sg/common/Integrator.h"
 
 namespace ospray {
   namespace sg {
@@ -28,61 +30,245 @@ namespace ospray {
     { return "ospray::sg::Volume"; }
     
     // =======================================================
-    // procedural test volume class
+    // structured volume class
     // =======================================================
 
-    //! \brief constructor
-    ProceduralTestVolume::ProceduralTestVolume()
-      : dimensions(256), volume(NULL)
-    {
-      coeff[0] = 0.;
-      coeff[1] = 13;
-      coeff[2] = 17;
-      coeff[3] = 23;
-      coeff[4] = 5*7;
-      coeff[5] = 11;
-      coeff[6] = 19;
-      coeff[7] = 0.;
-    }
+    //! constructor
+    StructuredVolume::StructuredVolume()
+      : dimensions(-1), voxelType("<undefined>"), volume(NULL), mappedPointer(NULL)
+    {}
 
     /*! \brief returns a std::string with the c++ name of this class */
-    std::string ProceduralTestVolume::toString() const
-    { return "ospray::sg::ProceduralTestVolume"; }
+    std::string StructuredVolume::toString() const
+    { return "ospray::sg::StructuredVolume"; }
     
     //! return bounding box of all primitives
-    box3f ProceduralTestVolume::getBounds() 
-    { return box3f(vec3f(0.f),vec3f(1.f)); };
+    box3f StructuredVolume::getBounds()
+    { return box3f(vec3f(0.f),vec3f(getDimensions())); }
+
+      //! \brief Initialize this node's value from given XML node 
+    void StructuredVolume::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    {
+      voxelType = node->getProp("voxelType");
+      if (node->hasProp("ofs"))
+        mappedPointer = binBasePtr + node->getPropl("ofs");
+      dimensions = parseVec3i(node->getProp("dimensions"));
+
+      if (voxelType != "float") 
+        throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
+          
+      if (!transferFunction) 
+        setTransferFunction(new TransferFunction);
+
+      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " 
+                << getDimensions() << std::endl;
+    }
     
     /*! \brief 'render' the object to ospray */
-    void ProceduralTestVolume::render(RenderContext &ctx) 
+    void StructuredVolume::render(RenderContext &ctx)
     {
       if (volume) return;
 
-      if (!transferFunction) 
-        setTransferFunction(new TransferFunction);
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
+        throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
+      
+      volume = ospNewVolume("block_bricked_volume");
+      if (!volume)
+        THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
+
+      ospSetString(volume,"voxelType",voxelType.c_str());
+      ospSetVec3i(volume,"dimensions",dimensions);
+      size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
+      assert(mappedPointer != NULL);
+
+      for (int z=0;z<dimensions.z;z++) {
+        float *slice = (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
+        ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
+      }
+
       transferFunction->render(ctx);
 
-      volume = ospNewVolume("block_bricked_volume");
-      ospSetString(volume,"voxelType","float");
       ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
       ospCommit(volume);
-      PRINT(volume);
-    };
-
-    //! \brief Initialize this node's value from given XML node 
-    void ProceduralTestVolume::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
-    {
-      for (int paramID=0;paramID < node->child.size();paramID++) {
-        const std::string param = node->child[paramID]->name;
-        if (param == "dimensions") {
-          PING;
-        } else
-          throw std::runtime_error("unknown parameter '"+param+"' in ProceduralTestVolume");
-      }
-      std::cout << "#osp:sg: created ProceduralTestVolume from XML file, dimensions = " << getDimensions() << std::endl;
+      ospAddVolume(ctx.world->ospModel,volume);
     }
 
-    OSP_REGISTER_SG_NODE(ProceduralTestVolume);
+    OSP_REGISTER_SG_NODE(StructuredVolume);
+
+
+    // =======================================================
+    // structured volume that is stored in a separate file (ie, a file
+    // other than the ospbin file)
+    // =======================================================
+
+    //! constructor
+    StructuredVolumeFromFile::StructuredVolumeFromFile()
+      : dimensions(-1), fileName(""), voxelType("<undefined>"), volume(NULL)
+    {}
+
+    /*! \brief returns a std::string with the c++ name of this class */
+    std::string StructuredVolumeFromFile::toString() const
+    { return "ospray::sg::StructuredVolumeFromFile"; }
+    
+    //! return bounding box of all primitives
+    box3f StructuredVolumeFromFile::getBounds()
+    { return box3f(vec3f(0.f),vec3f(getDimensions())); }
+
+      //! \brief Initialize this node's value from given XML node 
+    void StructuredVolumeFromFile::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    {
+      voxelType = node->getProp("voxelType");
+      dimensions = parseVec3i(node->getProp("dimensions"));
+      fileName = node->getProp("fileName");
+      if (fileName == "") throw std::runtime_error("sg::StructuredVolumeFromFile: no 'fileName' specified");
+
+      fileNameOfCorrespondingXmlDoc = node->doc->fileName;
+      
+      if (voxelType != "float") 
+        throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
+      
+      if (!transferFunction) 
+        setTransferFunction(new TransferFunction);
+      
+      std::cout << "#osp:sg: created StructuredVolume from XML file, dimensions = " 
+                << getDimensions() << std::endl;
+    }
+    
+    /*! \brief 'render' the object to ospray */
+    void StructuredVolumeFromFile::render(RenderContext &ctx)
+    {
+      if (volume) return;
+      
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
+        throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
+
+      bool useBlockBricked = 0;
+
+      volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
+      if (!volume)
+        THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
+      
+      ospSetString(volume,"voxelType",voxelType.c_str());
+      ospSetVec3i(volume,"dimensions",dimensions);
+      
+      FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
+      FILE *file = fopen(realFileName.c_str(),"rb");
+      if (!file) 
+        throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
+                                 +realFileName.str()+"' (expanded from xml file '"
+                                 +fileNameOfCorrespondingXmlDoc.str()
+                                 +"' and file name '"+fileName+"')");
+
+      if (useBlockBricked) {
+        size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
+        float *slice = new float[nPerSlice];
+        for (int z=0;z<dimensions.z;z++) {
+          size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
+          if (nRead != nPerSlice)
+            throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+          ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
+        }
+        delete[] slice;
+      } else {
+        size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
+        float *voxels = new float[nVoxels];
+        size_t nRead = fread(voxels,sizeof(float),nVoxels,file);
+        if (nRead != nVoxels)
+          THROW_SG_ERROR(__PRETTY_FUNCTION__,"read incomplete data (truncated file or wrong format?!)");
+        OSPData data = ospNewData(nVoxels,OSP_FLOAT,voxels,OSP_DATA_SHARED_BUFFER);
+        ospSetData(volume,"voxelData",data);
+      }
+      fclose(file);
+
+      transferFunction->render(ctx);
+
+      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospCommit(volume);
+      ospAddVolume(ctx.world->ospModel,volume);
+    }
+
+    OSP_REGISTER_SG_NODE(StructuredVolumeFromFile);
+
+
+
+
+
+    // =======================================================
+    // stacked slices volume class
+    // =======================================================
+
+    //! constructor
+    StackedRawSlices::StackedRawSlices()
+      : dimensions(-1), baseName(""), voxelType("uint8"), volume(NULL)
+    {}
+
+    /*! \brief returns a std::string with the c++ name of this class */
+    std::string StackedRawSlices::toString() const
+    { return "ospray::sg::StackedRawSlices"; }
+    
+    //! return bounding box of all primitives
+    box3f StackedRawSlices::getBounds()
+    { return box3f(vec3f(0.f),vec3f(getDimensions())); }
+
+      //! \brief Initialize this node's value from given XML node 
+    void StackedRawSlices::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    {
+      voxelType = node->getProp("voxelType");
+      sliceResolution = parseVec2i(node->getProp("sliceResolution"));
+      baseName = node->getProp("baseName");
+      firstSliceID = node->getPropl("firstSliceID");
+      numSlices = node->getPropl("numSlices");
+      if (voxelType != "uint8") 
+        throw std::runtime_error("unkonwn StackedRawSlices.voxelType (currently only supporting 'uint8')");
+          
+      if (!transferFunction) 
+        setTransferFunction(new TransferFunction);
+    }
+    
+    /*! \brief 'render' the object to ospray */
+    void StackedRawSlices::render(RenderContext &ctx)
+    {
+      if (volume) return;
+
+      dimensions.x = sliceResolution.x;
+      dimensions.y = sliceResolution.y;
+      dimensions.z = numSlices;
+
+      if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
+        throw std::runtime_error("StackedRawSlices::render(): invalid volume dimensions");
+      
+      volume = ospNewVolume("block_bricked_volume");
+      if (!volume)
+        THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
+
+      ospSetString(volume,"voxelType",voxelType.c_str());
+      ospSetVec3i(volume,"dimensions",dimensions);
+      size_t nPerSlice = dimensions.x*dimensions.y;
+      uint8 *slice = new uint8[nPerSlice];
+      for (int sliceID=0;sliceID<numSlices;sliceID++) {
+        char sliceName[strlen(baseName.c_str())+20];
+        sprintf(sliceName,baseName.c_str(),firstSliceID+sliceID);
+        PRINT(sliceName);
+        FILE *file = fopen(sliceName,"rb");
+        if (!file) 
+          throw std::runtime_error("StackedRawSlices::render(): could not open file '"
+                                   +std::string(sliceName)+"'");
+        size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
+        if (nRead != nPerSlice)
+          throw std::runtime_error("StackedRawSlices::render(): read incomplete slice data ... partial file or wrong format!?");
+        ospSetRegion(volume,slice,vec3i(0,0,sliceID),vec3i(dimensions.x,dimensions.y,1));
+        fclose(file);
+      }
+      delete[] slice;
+      
+      transferFunction->render(ctx);
+      
+      ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
+      ospCommit(volume);
+      ospAddVolume(ctx.world->ospModel,volume);
+    }
+
+    OSP_REGISTER_SG_NODE(StackedRawSlices);
 
   } // ::ospray::sg
 } // ::ospray

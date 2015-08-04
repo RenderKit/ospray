@@ -46,14 +46,23 @@ namespace embree
     static const size_t THRESHOLD_FOR_SUBTREE_RECURSION = 128;
     static const size_t THRESHOLD_FOR_SINGLE_THREADED = 50000; // FIXME: measure if this is really optimal, maybe disable only parallel splits
 
-    BVH4BuilderFast::BVH4BuilderFast (LockStepTaskScheduler* scheduler, BVH4* bvh, size_t listMode, size_t logBlockSize, size_t logSAHBlockSize, 
-				      bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize)
-      : scheduler(scheduler), state(NULL), bvh(bvh), numPrimitives(0), prims(NULL), bytesPrims(0), listMode(listMode), logBlockSize(logBlockSize), logSAHBlockSize(logSAHBlockSize), 
-	needVertices(needVertices), primBytes(primBytes), minLeafSize(minLeafSize), maxLeafSize(maxLeafSize) { needAllThreads = true; }
+    BVH4BuilderFast::BVH4BuilderFast (LockStepTaskScheduler* scheduler, BVH4* bvh, 
+                                      size_t listMode, size_t logBlockSize, size_t logSAHBlockSize, 
+                                      bool needVertices, size_t primBytes, 
+                                      const size_t minLeafSize, const size_t maxLeafSize)
+      : scheduler(scheduler), state(NULL), bvh(bvh), 
+        numPrimitives(0), prims(NULL), bytesPrims(0), listMode(listMode), 
+        logBlockSize(logBlockSize), logSAHBlockSize(logSAHBlockSize), 
+      needVertices(needVertices), primBytes(primBytes), 
+      minLeafSize(minLeafSize), maxLeafSize(maxLeafSize) 
+    { needAllThreads = true; }
 
     template<typename Primitive>
-    BVH4BuilderFastT<Primitive>::BVH4BuilderFastT (BVH4* bvh, Scene* scene, size_t listMode, size_t logBlockSize, size_t logSAHBlockSize, 
-						   bool needVertices, size_t primBytes, const size_t minLeafSize, const size_t maxLeafSize,bool parallel)
+    BVH4BuilderFastT<Primitive>::BVH4BuilderFastT(BVH4* bvh, Scene* scene, size_t listMode, 
+                                                  size_t logBlockSize, size_t logSAHBlockSize, 
+                                                  bool needVertices, size_t primBytes, 
+                                                  const size_t minLeafSize, const size_t maxLeafSize,
+                                                  bool parallel)
       : scene(scene), BVH4BuilderFast(&scene->lockstep_scheduler,bvh,listMode,logBlockSize,logSAHBlockSize,needVertices,primBytes,minLeafSize,maxLeafSize) { needAllThreads = parallel; }
     
     template<> BVH4BezierBuilderFast  <Bezier1v>   ::BVH4BezierBuilderFast   (BVH4* bvh, Scene* scene, size_t listMode) 
@@ -74,8 +83,41 @@ namespace embree
       : geom(NULL), BVH4BuilderFastT<Triangle4v>(bvh,scene,listMode,2,2,false,sizeof(Triangle4v),4,inf,true) {}
     template<> BVH4TriangleBuilderFast<Triangle4i>::BVH4TriangleBuilderFast (BVH4* bvh, Scene* scene, size_t listMode) 
       : geom(NULL), BVH4BuilderFastT<Triangle4i>(bvh,scene,listMode,2,2,true,sizeof(Triangle4i),4,inf,true) {}
-    template<> BVH4UserGeometryBuilderFastT<AccelSetItem>::BVH4UserGeometryBuilderFastT (BVH4* bvh, Scene* scene, size_t listMode) 
-      : geom(NULL), BVH4BuilderFastT<AccelSetItem>(bvh,scene,listMode,0,0,false,sizeof(AccelSetItem),1,1,true) {}
+
+    size_t g_minLeafSize = 0;
+    inline size_t getMinLeafSize() {
+      if (g_minLeafSize == 0) {
+        char *env = getenv("EMBREE_MIN_LEAF_SIZE");
+        if (env) {
+          g_minLeafSize = atoi(env);
+          if (g_minLeafSize == 0) THROW_RUNTIME_ERROR("could not parse 'EMBREE_MIN_LEAF_SIZE' env var");
+        } else
+          g_minLeafSize = 1;
+      }
+      return g_minLeafSize;
+    }
+
+    size_t g_maxLeafSize = 0;
+    inline size_t getMaxLeafSize() {
+      if (g_maxLeafSize == 0) {
+        char *env = getenv("EMBREE_MAX_LEAF_SIZE");
+        if (env) {
+          g_maxLeafSize = atoi(env);
+          if (g_maxLeafSize == 0) THROW_RUNTIME_ERROR("could not parse 'EMBREE_MAX_LEAF_SIZE' env var");
+        } else
+          g_maxLeafSize = 1;
+      }
+      return g_maxLeafSize;
+    }
+
+    // XXX
+    template<> BVH4UserGeometryBuilderFastT<AccelSetItem>::BVH4UserGeometryBuilderFastT
+    (BVH4* bvh, Scene* scene, size_t listMode) 
+      : geom(NULL), BVH4BuilderFastT<AccelSetItem>(bvh,scene,listMode,0,0,false,sizeof(AccelSetItem),
+                                                   getMinLeafSize(),getMaxLeafSize(),
+                                                   // 1,1,
+                                                   true) 
+    {}
 
     template<> BVH4BezierBuilderFast  <Bezier1v>   ::BVH4BezierBuilderFast   (BVH4* bvh, BezierCurves* geom, size_t listMode) 
       : geom(geom), BVH4BuilderFastT<Bezier1v>   (bvh,geom->parent,listMode,0,0,false,sizeof(Bezier1v)   ,1,1,geom->size() > THRESHOLD_FOR_SINGLE_THREADED) {}
@@ -128,41 +170,41 @@ namespace embree
 
       /* skip build for empty scene */
       if (numPrimitives == 0) 
-	return;
-      
+        return;
+
       /* verbose mode */
       if (g_verbose >= 1)
         std::cout << "building BVH4<" << bvh->primTy.name << "> with " << TOSTRING(isa) "::BVH4BuilderFast ... " << std::flush;
       
       /* allocate build primitive array */
       if (numPrimitivesOld != numPrimitives)
-      {
-	if (prims) os_free(prims,bytesPrims);
-	bytesPrims = numPrimitives * sizeof(PrimRef);
-        prims = (PrimRef* ) os_malloc(bytesPrims);  memset(prims,0,bytesPrims);
-      }
+        {
+          if (prims) os_free(prims,bytesPrims);
+          bytesPrims = numPrimitives * sizeof(PrimRef);
+          prims = (PrimRef* ) os_malloc(bytesPrims);  memset(prims,0,bytesPrims);
+        }
       
       if (!parallel) {
-	build_sequential(threadIndex,threadCount);
+        build_sequential(threadIndex,threadCount);
       } 
       else {
         state.reset(new GlobalState());
-	//size_t numActiveThreads = threadCount;
-	size_t numActiveThreads = min(threadCount,getNumberOfCores());
-	build_parallel(threadIndex,numActiveThreads,0,1);
+        //size_t numActiveThreads = threadCount;
+        size_t numActiveThreads = min(threadCount,getNumberOfCores());
+        build_parallel(threadIndex,numActiveThreads,0,1);
         state.reset(NULL);
       }
       
       /* verbose mode */
       if (g_verbose >= 2) {
-	std::cout << "[DONE] " << 1000.0f*dt << "ms (" << numPrimitives/dt*1E-6 << " Mtris/s)" << std::endl;
-	std::cout << BVH4Statistics(bvh).str();
+        std::cout << "[DONE] " << 1000.0f*dt << "ms (" << numPrimitives/dt*1E-6 << " Mtris/s)" << std::endl;
+        std::cout << BVH4Statistics(bvh).str();
       }
 
       /* benchmark mode */
       if (g_benchmark) {
-	BVH4Statistics stat(bvh);
-	std::cout << "BENCHMARK_BUILD " << dt << " " << double(numPrimitives)/dt << " " << stat.sah() << " " << stat.bytesUsed() << std::endl;
+        BVH4Statistics stat(bvh);
+        std::cout << "BENCHMARK_BUILD " << dt << " " << double(numPrimitives)/dt << " " << stat.sah() << " " << stat.bytesUsed() << std::endl;
       }
     }
 
@@ -246,19 +288,19 @@ namespace embree
     // =======================================================================================================
     // =======================================================================================================
 
-   template<typename Primitive>
-   void BVH4SubdivBuilderFast<Primitive>::build(size_t threadIndex, size_t threadCount)
+    template<typename Primitive>
+    void BVH4SubdivBuilderFast<Primitive>::build(size_t threadIndex, size_t threadCount)
     {
       size_t numPatches = 0;
       for (size_t i=0; i<this->scene->size(); i++) 
-      {
-	const Geometry* geom = this->scene->get(i);
-        if (geom == NULL || !geom->isEnabled()) continue;
-	if (geom->type != SUBDIV_MESH) continue;
-        SubdivMesh* subdiv_mesh = (SubdivMesh*)geom;
-        subdiv_mesh->initializeHalfEdgeStructures();
-	numPatches += subdiv_mesh->size();
-      }
+        {
+          const Geometry* geom = this->scene->get(i);
+          if (geom == NULL || !geom->isEnabled()) continue;
+          if (geom->type != SUBDIV_MESH) continue;
+          SubdivMesh* subdiv_mesh = (SubdivMesh*)geom;
+          subdiv_mesh->initializeHalfEdgeStructures();
+          numPatches += subdiv_mesh->size();
+        }
       this->scene->numSubdivPatches = numPatches; // FIXME: is it ok to initialize this here?
 
       BVH4BuilderFast::build(threadIndex,threadCount);
@@ -297,16 +339,16 @@ namespace embree
     void BVH4TopLevelBuilderFastT::create_primitive_array_sequential(size_t threadIndex, size_t threadCount, PrimInfo& pinfo)
     {
       for (size_t i=0; i<N; i++) {
-	pinfo.add(prims_i[i].bounds(),prims_i[i].center2());
-	prims[i] = prims_i[i];
+        pinfo.add(prims_i[i].bounds(),prims_i[i].center2());
+        prims[i] = prims_i[i];
       }
     }
 
     void BVH4TopLevelBuilderFastT::create_primitive_array_parallel  (size_t threadIndex, size_t threadCount, LockStepTaskScheduler* scheduler, PrimInfo& pinfo) 
     {
       for (size_t i=0; i<N; i++) {
-	pinfo.add(prims_i[i].bounds(),prims_i[i].center2());
-	prims[i] = prims_i[i];
+        pinfo.add(prims_i[i].bounds(),prims_i[i].center2());
+        prims[i] = prims_i[i];
       }
     }
  
@@ -332,7 +374,7 @@ namespace embree
       *current.parent = bvh->encodeLeaf((char*)accel,listMode ? listMode : items);
       
       for (size_t i=0; i<items; i++) 
-	accel[i].fill(prims,start,current.end,scene,listMode);
+        accel[i].fill(prims,start,current.end,scene,listMode);
     }
 
     void BVH4BuilderFast::createLeaf(BuildRecord& current, Allocator& nodeAlloc, Allocator& leafAlloc, size_t threadIndex, size_t threadCount)
@@ -361,12 +403,12 @@ namespace embree
       
       /* recurse into each child */
       for (size_t i=0; i<4; i++) 
-      {
-        node->set(i,children[i].geomBounds);
-        children[i].parent = &node->child(i);
-        children[i].depth = current.depth+1;
-        createLeaf(children[i],nodeAlloc,leafAlloc,threadIndex,threadCount);
-      }
+        {
+          node->set(i,children[i].geomBounds);
+          children[i].parent = &node->child(i);
+          children[i].depth = current.depth+1;
+          createLeaf(children[i],nodeAlloc,leafAlloc,threadIndex,threadCount);
+        }
       BVH4::compact(node); // move empty nodes to the end
     }
 
@@ -462,17 +504,17 @@ namespace embree
         int bestChild = -1;
         float bestArea = neg_inf;
         for (unsigned int i=0; i<numChildren; i++)
-        {
-          /* ignore leaves as they cannot get split */
-          if (children[i].size() <= minLeafSize)
-            continue;
+          {
+            /* ignore leaves as they cannot get split */
+            if (children[i].size() <= minLeafSize)
+              continue;
           
-          /* remember child with largest area */
-          if (children[i].sceneArea() > bestArea) { 
-            bestArea = children[i].sceneArea();
-            bestChild = i;
+            /* remember child with largest area */
+            if (children[i].sceneArea() > bestArea) { 
+              bestArea = children[i].sceneArea();
+              bestChild = i;
+            }
           }
-        }
         if (bestChild == -1) break;
         
         /*! split best child into left and right child */
@@ -480,8 +522,8 @@ namespace embree
         split(children[bestChild],left,right,mode,threadID,numThreads);
         
         /* add new children left and right */
-	left.init(current.depth+1); 
-	right.init(current.depth+1);
+        left.init(current.depth+1); 
+        right.init(current.depth+1);
         children[bestChild] = children[numChildren-1];
         children[numChildren-1] = left;
         children[numChildren+0] = right;
@@ -502,11 +544,11 @@ namespace embree
       
       /* recurse into each child */
       for (unsigned int i=0; i<numChildren; i++) 
-      {  
-        node->set(i,children[i].geomBounds);
-        children[i].parent = &node->child(i);
-        recurse_continue(children[i],nodeAlloc,leafAlloc,mode,threadID,numThreads);
-      }
+        {  
+          node->set(i,children[i].geomBounds);
+          children[i].parent = &node->child(i);
+          recurse_continue(children[i],nodeAlloc,leafAlloc,mode,threadID,numThreads);
+        }
     }
     
     // =======================================================================================================
@@ -519,28 +561,28 @@ namespace embree
       __aligned(64) Allocator leafAlloc(&bvh->alloc);
       
       while (true) 
-      {
-	BuildRecord br;
-	if (!state->heap.pop(br))
         {
-          /* global work queue empty => try to steal from neighboring queues */	  
-          bool success = false;
-          for (size_t i=0; i<numThreads; i++)
-          {
-            if (state->threadStack[(threadID+i)%numThreads].pop(br)) {
-              success = true;
-              break;
+          BuildRecord br;
+          if (!state->heap.pop(br))
+            {
+              /* global work queue empty => try to steal from neighboring queues */	  
+              bool success = false;
+              for (size_t i=0; i<numThreads; i++)
+                {
+                  if (state->threadStack[(threadID+i)%numThreads].pop(br)) {
+                    success = true;
+                    break;
+                  }
+                }
+              /* found nothing to steal ? */
+              if (!success) break; // FIXME: may loose threads
             }
-          }
-          /* found nothing to steal ? */
-          if (!success) break; // FIXME: may loose threads
-        }
         
-        /* process local work queue */
-	recurse(br,nodeAlloc,leafAlloc,RECURSE_PARALLEL,threadID,numThreads);
-	while (state->threadStack[threadID].pop(br))
+          /* process local work queue */
           recurse(br,nodeAlloc,leafAlloc,RECURSE_PARALLEL,threadID,numThreads);
-      }
+          while (state->threadStack[threadID].pop(br))
+            recurse(br,nodeAlloc,leafAlloc,RECURSE_PARALLEL,threadID,numThreads);
+        }
       _mm_sfence(); // make written leaves globally visible
     }
 
@@ -606,21 +648,21 @@ namespace embree
 
       /* work in multithreaded toplevel mode until sufficient subtasks got generated */
       while (state->heap.size() < 2*threadCount)
-      {
-        BuildRecord br;
+        {
+          BuildRecord br;
 
-        /* pop largest item for better load balancing */
-	if (!state->heap.pop(br)) 
-          break;
+          /* pop largest item for better load balancing */
+          if (!state->heap.pop(br)) 
+            break;
         
-        /* guarantees to create no leaves in this stage */
-        if (br.size() <= max(minLeafSize,THRESHOLD_FOR_SINGLE_THREADED)) {
-	  state->heap.push(br);
-          break;
-	}
+          /* guarantees to create no leaves in this stage */
+          if (br.size() <= max(minLeafSize,THRESHOLD_FOR_SINGLE_THREADED)) {
+            state->heap.push(br);
+            break;
+          }
 
-        recurse(br,nodeAlloc,leafAlloc,BUILD_TOP_LEVEL,threadIndex,threadCount);
-      }
+          recurse(br,nodeAlloc,leafAlloc,BUILD_TOP_LEVEL,threadIndex,threadCount);
+        }
       _mm_sfence(); // make written leaves globally visible
 
       std::sort(state->heap.begin(),state->heap.end(),BuildRecord::Greater());

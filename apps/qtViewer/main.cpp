@@ -127,6 +127,9 @@ namespace ospray {
             world = sg::loadOSP(fn.str());
             // } else if (fn.ext() == "atom") {
             //   world = sg::AlphaSpheres::importOspAtomFile(fn.str());
+          } else if (fn.ext() == "ply" || 
+                     fn.ext() == "gz" && fn.dropExt().ext() == "ply") {
+            sg::importPLY(world,fn);
           } else if (fn.ext() == "obj") {
             sg::importOBJ(world,fn);
             // } else if (fn.ext() == "x3d") {

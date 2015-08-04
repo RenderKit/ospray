@@ -52,15 +52,6 @@ namespace ospray {
 
   protected:
 
-    //! Indicate that the volume is fully initialized.
-    bool finished;
-
-    //! Voxel value range (will be computed if not provided as a parameter).
-    vec2f voxelRange;
-
-    //! Voxel type.
-    std::string voxelType;
-
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC() = 0;
 
@@ -70,14 +61,32 @@ namespace ospray {
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
-    //! Compute the voxel value range for floating point voxels.
-    inline void computeVoxelRange(const float *source, const size_t &count)
-      { for (size_t i=0 ; i < count ; i++) voxelRange.x = std::min(voxelRange.x, source[i]), voxelRange.y = std::max(voxelRange.y, source[i]); }
-
     //! Compute the voxel value range for unsigned byte voxels.
-    inline void computeVoxelRange(const unsigned char *source, const size_t &count)
-      { for (size_t i=0 ; i < count ; i++) voxelRange.x = std::min(voxelRange.x, (float) source[i]), voxelRange.y = std::max(voxelRange.y, (float) source[i]); }
+    void computeVoxelRange(const unsigned char *source, const size_t &count);
 
+    //! Compute the voxel value range for floating point voxels.
+    void computeVoxelRange(const float *source, const size_t &count);
+
+    //! Compute the voxel value range for double precision floating point voxels.
+    void computeVoxelRange(const double *source, const size_t &count);
+
+    //! Volume size in voxels per dimension.
+    vec3i dimensions;
+    
+    //! Grid origin.
+    vec3f gridOrigin;
+    
+    //! Grid spacing in each dimension.
+    vec3f gridSpacing;
+
+    //! Indicate that the volume is fully initialized.
+    bool finished;
+
+    //! Voxel value range (will be computed if not provided as a parameter).
+    vec2f voxelRange;
+
+    //! Voxel type.
+    std::string voxelType;
   };
 
 } // ::ospray

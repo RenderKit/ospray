@@ -124,6 +124,9 @@ namespace ospray {
       //! return size of widget in pixels
       inline vec2i getSize() const { return size; }
 
+      /*! rotate around target point, by given angles */
+      void rotateAroundTarget(float angle_x, float angle_y);
+
       // -------------------------------------------------------
       // QT callbacks
       // -------------------------------------------------------

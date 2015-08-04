@@ -66,7 +66,7 @@ inline void extend_fast(LightPath& lp,
 //////////////////////////////////////////////////////////////////
 // PathTracer
 
-vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
+vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              const vec2f &pixel, // normalized, i.e. in [0..1]
                              LightPath &lightPath, 
                              const uniform Scene *uniform scene,
@@ -82,9 +82,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
   while (true) 
   {
     /*! Terminate path if too long or contribution too low. */
-    if (lightPath.depth >= THIS->maxDepth)
+    if (lightPath.depth >= self->maxDepth)
       return L;
-    if (reduce_max(lightPath.throughput) <= THIS->minContribution)
+    if (reduce_max(lightPath.throughput) <= self->minContribution)
       return L;
     
     /*! Traverse ray. */
@@ -99,10 +99,10 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     /*! Environment shading when nothing hit. */
     if (noHit(lightPath.ray)) 
     {
-      if ((bool)THIS->backplate & lightPath.unbent) {
-        const int x = clamp((int)(pixel.x * THIS->backplate->size.x), 0, (int)THIS->backplate->size.x-1);
-        const int y = clamp((int)(pixel.y * THIS->backplate->size.y), 0, (int)THIS->backplate->size.y-1);
-        L = THIS->backplate->get_nearest_varying(THIS->backplate,x,y);
+      if ((bool)self->backplate & lightPath.unbent) {
+        const int x = clamp((int)(pixel.x * self->backplate->size.x), 0, (int)self->backplate->size.x-1);
+        const int y = clamp((int)(pixel.y * self->backplate->size.y), 0, (int)self->backplate->size.y-1);
+        L = self->backplate->get_nearest_varying(self->backplate,x,y);
       }
       else {
         if (!lightPath.ignoreVisibleLights) {
@@ -179,9 +179,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
         Ray shadow_ray; 
         setRay(shadow_ray,dg.P,ls.wi.v,
                //dg.error*
-               THIS->inherited.epsilon,ls.tMax-
+               self->inherited.epsilon,ls.tMax-
                //dg.error*
-               THIS->inherited.epsilon);
+               self->inherited.epsilon);
         shadow_ray.time = lightPath.ray.time;
         
         if (isOccluded(scene->model,shadow_ray))
@@ -192,7 +192,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     }
 
     /*! Global illumination. Pick one BRDF component and sample it. */
-    if (lightPath.depth >= THIS->maxDepth) 
+    if (lightPath.depth >= self->maxDepth) 
       return L;
     
     /*! sample brdf */
@@ -226,7 +226,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform THIS,
     /*! Continue the path. */
     extend_fast(lightPath, 
                 dg.P,wi.v,//dg.error*
-                THIS->inherited.epsilon,inf,
+                self->inherited.epsilon,inf,
            c,(type & directLightingBRDFTypes) != NONE);
 
     Lw = mul(mul(Lw,c),rcp(wi.pdf));
@@ -262,15 +262,15 @@ uniform Scene *uniform createScene()
   return scene;
 }
 
-inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
+inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
                                     const uint32 ix, 
                                     const uint32 iy,
                                     uint32 &numRays)
 {
-  uniform FrameBuffer *uniform fb = THIS->inherited.fb;
+  uniform FrameBuffer *uniform fb = self->inherited.fb;
 
   vec3f L = make_vec3f(0.f);
-  uniform Camera *uniform camera = THIS->inherited.camera;
+  uniform Camera *uniform camera = self->inherited.camera;
   ScreenSample screenSample;
 
   screenSample.sampleID.x = ix;
@@ -279,7 +279,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, fb->size.x*iy+ix, fb->accumID);
-  const int spp = max(1, THIS->inherited.spp);
+  const int spp = max(1, self->inherited.spp);
   
   for (uniform int s=0; s < spp; s++) {
     screenSample.sampleID.z = fb->accumID*spp + s;
@@ -297,8 +297,8 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform THIS,
     LightPath lightPath;
     init_LightPath(lightPath, screenSample.ray);
     
-    L = L + PathTraceIntegrator_Li(THIS, cameraSample.screen, lightPath,
-                                   THIS->scene, rng, numRays);
+    L = L + PathTraceIntegrator_Li(self, cameraSample.screen, lightPath,
+                                   self->scene, rng, numRays);
   }
 
   screenSample.alpha = 1.f;
@@ -346,19 +346,19 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &til
 }
 
 void PathTracer__Constructor(void *uniform cppE,
-                             uniform PathTracer* uniform THIS,
+                             uniform PathTracer* uniform self,
                              const uniform int& maxDepth, 
                              const uniform float& minContribution,
                              uniform Image* uniform backplate)
 {
-  Renderer_Constructor(&THIS->inherited,cppE);
-  THIS->inherited.renderTile   = PathTracer_renderTile;
-  THIS->inherited.beginFrame   = PathTracer_beginFrame;
+  Renderer_Constructor(&self->inherited,cppE);
+  self->inherited.renderTile   = PathTracer_renderTile;
+  self->inherited.beginFrame   = PathTracer_beginFrame;
 
-  THIS->maxDepth = maxDepth;
+  self->maxDepth = maxDepth;
 
-  THIS->minContribution = minContribution;
-  THIS->backplate = backplate;
+  self->minContribution = minContribution;
+  self->backplate = backplate;
 }
 
 
@@ -370,18 +370,18 @@ export void* uniform PathTracer_create(void *uniform cppE,
                                        const uniform float& minContribution,
                                        void* uniform backplate)
 {
-  uniform PathTracer *uniform THIS = uniform new uniform PathTracer;
-  PathTracer__Constructor(cppE,THIS,maxDepth,minContribution,
+  uniform PathTracer *uniform self = uniform new uniform PathTracer;
+  PathTracer__Constructor(cppE,self,maxDepth,minContribution,
                           (uniform Image* uniform) backplate);
 
   precomputeZOrder();
   
-  THIS->scene = createScene();
-  return THIS;
+  self->scene = createScene();
+  return self;
 }
 
-export void PathTracer_setModel(void *uniform _THIS)
+export void PathTracer_setModel(void *uniform _self)
 {
-  uniform PathTracer *uniform THIS = (uniform PathTracer *uniform)_THIS;
-  THIS->scene->model = THIS->inherited.model;
+  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
+  self->scene->model = self->inherited.model;
 }

@@ -59,3 +59,6 @@ void error_handler(const RTCError code, const int8* str);
 
 /*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
 export void delete_uniform(void *uniform uptr);
+
+/*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
+extern "C" void *uniform malloc64(uniform uint64 size);

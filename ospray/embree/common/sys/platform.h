@@ -216,8 +216,8 @@
 #define   likely(expr) (expr)
 #define unlikely(expr) (expr)
 #else
-#define   likely(expr) __builtin_expect((expr),true )
-#define unlikely(expr) __builtin_expect((expr),false)
+#define   likely(expr) __builtin_expect((bool)(expr),true )
+#define unlikely(expr) __builtin_expect((bool)(expr),false)
 #endif
 
 /* compiler memory barriers */

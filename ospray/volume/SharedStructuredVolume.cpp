@@ -17,47 +17,84 @@
 //ospray
 #include "ospray/volume/SharedStructuredVolume.h"
 #include "SharedStructuredVolume_ispc.h"
+#include "StructuredVolume_ispc.h"
 #include "ospray/common/Data.h"
 // std
 #include <cassert>
 
 namespace ospray {
 
+  SharedStructuredVolume::~SharedStructuredVolume()
+  {
+    // No longer listen for changes to voxelData.
+    if(voxelData) voxelData->unregisterListener(this);
+  }
+
   void SharedStructuredVolume::commit()
   {
-    //! Create the equivalent ISPC volume container.
+    // Create the equivalent ISPC volume container.
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
-    //! StructuredVolume commit actions.
+    // StructuredVolume commit actions.
     StructuredVolume::commit();
   }
 
-  void SharedStructuredVolume::createEquivalentISPC() 
+  int SharedStructuredVolume::setRegion(const void *source, const vec3i &index, const vec3i &count) 
   {
-    //! Get the voxel type.
-    voxelType = getParamString("voxelType", "unspecified");  
+    exitOnCondition(true, "setRegion() not allowed on this volume type; "
+                    "volume data must be provided via the voxelData parameter");
+    return 0;
+  }
+
+  void SharedStructuredVolume::createEquivalentISPC()
+  {
+    // Get the voxel type.
+    voxelType = getParamString("voxelType", "unspecified");
     exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type");
 
-    //! Get the volume dimensions.
+    // Get the volume dimensions.
     vec3i dimensions = getParam3i("dimensions", vec3i(0));
     exitOnCondition(reduce_min(dimensions) <= 0, "invalid volume dimensions");
 
-    //! Get the voxel data.
-    Data *voxelData = (Data *)getParamObject("voxelData", NULL);
+    // Get the voxel data.
+    voxelData = (Data *)getParamObject("voxelData", NULL);
     exitOnCondition(voxelData == NULL, "no voxel data provided");
-    warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER), "the voxel data buffer was not created with the OSP_DATA_SHARED_BUFFER flag; use another volume type (e.g. BlockBrickedVolume) for better performance");
+    warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER), 
+                    "the voxel data buffer was not created with the OSP_DATA_SHARED_BUFFER flag; "
+                    "use another volume type (e.g. BlockBrickedVolume) for better performance");
 
-    //! The voxel count.
-    size_t voxelCount = (size_t)dimensions.x * dimensions.y * dimensions.z;
-  
-    //! Compute the voxel value range for float voxels if none was previously specified.
-    if (voxelType == "float" && findParam("voxelRange") == NULL) computeVoxelRange((float *)voxelData->data, voxelCount);
+    // The voxel count.
+    size_t voxelCount = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
 
-    //! Compute the voxel value range for unsigned byte voxels if none was previously specified.
-    if (voxelType == "uchar" && findParam("voxelRange") == NULL) computeVoxelRange((unsigned char *)voxelData->data, voxelCount);
+    // Compute the voxel value range for unsigned byte voxels if none was previously specified.
+    if (voxelType == "uchar" && findParam("voxelRange") == NULL)
+      computeVoxelRange((unsigned char *)voxelData->data, voxelCount);
 
-    //! Create an ISPC SharedStructuredVolume object and assign type-specific function pointers.
-    ispcEquivalent = ispc::SharedStructuredVolume_createInstance((int)getVoxelType(), (const ispc::vec3i &)dimensions, voxelData->data);
+    // Compute the voxel value range for float voxels if none was previously specified.
+    if (voxelType == "float" && findParam("voxelRange") == NULL)
+      computeVoxelRange((float *)voxelData->data, voxelCount);
+
+    // Compute the voxel value range for float voxels if none was previously specified.
+    if (voxelType == "double" && findParam("voxelRange") == NULL)
+      computeVoxelRange((double *)voxelData->data, voxelCount);
+
+    // Create an ISPC SharedStructuredVolume object and assign type-specific function pointers.
+    int voxelType = (int)getVoxelType();
+    ispcEquivalent
+      = ispc::SharedStructuredVolume_createInstance(this,
+                                                    voxelType,
+                                                    (const ispc::vec3i &)dimensions,
+                                                    voxelData->data);
+
+    // Listen for changes to voxelData.
+    voxelData->registerListener(this);
+  }
+
+  void SharedStructuredVolume::dependencyGotChanged(ManagedObject *object)
+  {
+    // Rebuild volume accelerator when voxelData is committed.
+    if(object == voxelData && ispcEquivalent)
+      ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
   }
 
 } // ::ospray

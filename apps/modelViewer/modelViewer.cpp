@@ -130,6 +130,8 @@ namespace ospray {
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+      ospSet1f(fb, "gamma", 2.2f);
+      ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
@@ -508,7 +510,7 @@ namespace ospray {
       if (arg == "--renderer") {
         assert(i+1 < ac);
         rendererType = av[++i];
-      } else if (arg == "--always-redraw") {
+      } else if (arg == "--always-redraw" || arg == "-fps") {
         alwaysRedraw = true;
       } else if (arg == "-o") {
         outFileName = strdup(av[++i]);
@@ -518,7 +520,7 @@ namespace ospray {
         numSPPinFileOutput = atoi(av[++i]);
       } else if (arg == "--max-objects") {
         maxObjectsToConsider = atoi(av[++i]);
-      } else if (arg == "--spp") {
+      } else if (arg == "--spp" || arg == "-spp") {
         spp = atoi(av[++i]);
       } else if (arg == "--force-instancing") {
         forceInstancing = true;

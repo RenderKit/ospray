@@ -125,6 +125,30 @@ namespace ospray {
       updateGL();
     }
 
+    /*! rotate around target point, by given angles */
+    void QAffineSpaceManipulator::rotateAroundTarget(float angle_x, float angle_y)
+    {
+      // axes we're rotating in u and v direction, respectively.
+      const vec3f uRotationAxis = frame->orientation.vz;
+      const vec3f vRotationAxis = frame->orientation.vx;
+      const float rotSpeed = 2.f;
+      const float du = - angle_x / 300.f;
+      const float dv = - angle_y / 300.f;
+      linear3f rot
+        = linear3f::rotate(vRotationAxis,dv)
+        * linear3f::rotate(uRotationAxis,du);
+      frame->orientation = rot * frame->orientation;
+      frame->snapUp();
+      const vec3f vecToTarget = frame->targetPoint - frame->sourcePoint;
+      if (interactionMode == FLY) {
+        // in FLY mode, the SOURCE point stays, and the target point rotates
+        frame->targetPoint = frame->sourcePoint + xfmVector(rot,vecToTarget);
+      } else {
+        assert(interactionMode == INSPECT);
+        frame->sourcePoint = frame->targetPoint - xfmVector(rot,vecToTarget);
+      }
+    }
+    
     void QAffineSpaceManipulator::rotate(QMouseEvent * event)
     {
       QPoint newPos = event->pos();

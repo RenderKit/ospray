@@ -56,8 +56,7 @@ namespace ospray {
     if (logLevel >= 2) 
       if (numPrints < 5)
         std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
-    Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
-    
+
     Assert(model && "invalid model pointer");
 
     RTCScene embreeSceneHandle = model->embreeSceneHandle;

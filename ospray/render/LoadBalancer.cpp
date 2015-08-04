@@ -34,7 +34,6 @@ namespace ospray {
     renderer->endFrame(channelFlags);
     renderer = NULL;
     fb = NULL;
-    // refDec();
   }
 
   void LocalTiledLoadBalancer::RenderTask::run(size_t threadIndex, 
@@ -51,7 +50,6 @@ namespace ospray {
     tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     renderer->renderTile(tile);
-
   }
 
   /*! render a frame via the tiled load balancer */
@@ -89,7 +87,6 @@ namespace ospray {
        "LocalTiledLoadBalancer::RenderTask");
     TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
     sync.sync();
-    // renderTask->fb->frameIsReadyEvent.sync();
   }
 
 

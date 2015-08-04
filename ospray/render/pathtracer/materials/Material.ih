@@ -28,25 +28,25 @@ struct PathTraceMaterial;
 
 /*! Shades a location and and returns a composited BRDF */
 typedef void (*PathTraceMaterial__shade)(const uniform PathTraceMaterial *uniform this,
-                                const Ray&                  ray,              /*!< The ray arriving at the point to shade. */
-                                const Medium&               currentMedium,    /*!< The medium this ray travels inside. */
-                                const DifferentialGeometry& dg,               /*!< The point to shade on a surface. */
-                                uniform CompositedBRDF&     brdfs);           /*!< Container for generated BRDF components. */
+                                         /*! The ray arriving at the point to shade. */
+                                         const Ray&                  ray,             
+                                         /*! The medium this ray travels inside. */
+                                         const Medium&               currentMedium,   
+                                         /*! The point to shade on a surface. */
+                                         const DifferentialGeometry& dg,    
+                                         /*! Container for generated BRDF components. */           
+                                         uniform CompositedBRDF&     brdfs);
 
-typedef void (*PathTraceMaterial__selectNextMediumFunc)(const uniform PathTraceMaterial *uniform THIS,
-                                               varying Medium& currentMedium);
+typedef void (*PathTraceMaterial__selectNextMediumFunc)(const uniform PathTraceMaterial *uniform self,
+                                                        varying Medium& currentMedium);
 
 struct PathTraceMaterial
 {
   Material material;
-  //  RefCount base;
   PathTraceMaterial__shade shade;
   PathTraceMaterial__selectNextMediumFunc selectNextMedium;
 };
 
-// void Material__Destructor(uniform RefCount *uniform this);
-
-void PathTraceMaterial__Constructor(uniform PathTraceMaterial *uniform THIS,
-                           // uniform DestructorFunc destructor,
-                           uniform PathTraceMaterial__shade shade,
-                           uniform PathTraceMaterial__selectNextMediumFunc selectNextMedium);
+void PathTraceMaterial__Constructor(uniform PathTraceMaterial *uniform self,
+                                    uniform PathTraceMaterial__shade shade,
+                                    uniform PathTraceMaterial__selectNextMediumFunc selectNextMedium);

@@ -15,61 +15,59 @@
 // ======================================================================== //
 
 // ospray
-#include "ospray/camera/PerspectiveCamera.h"
+#include "ospray/lights/Light.h"
 #include "ospray/common/Data.h"
-#include "ospray/common/Ray.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
-#include "ospray/volume/Volume.h"
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
+#include "RaycastVolumeRendererMaterial_ispc.h"
 
 namespace ospray {
 
-  void RaycastVolumeRenderer::commit() {
-
-    //! Create the equivalent ISPC RaycastVolumeRenderer object.
-    if (ispcEquivalent == NULL) ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
-
-    //! Get the camera.
-    camera = (Camera *) getParamObject("camera", NULL);  exitOnCondition(camera == NULL, "no camera specified");
-
-    //! Get the model.
-    model = (Model *) getParamObject("model", NULL);  exitOnCondition(model == NULL, "no model specified");
-
-    //! Get the dynamic model.
-    dynamicModel = (Model *) getParamObject("dynamic_model", NULL);  exitOnCondition(dynamicModel == NULL, "no dynamic model specified");
-
-    //! Set the camera.
-    ispc::RaycastVolumeRenderer_setCamera(ispcEquivalent, camera->getIE());
-
-    //! Set the model.
-    ispc::RaycastVolumeRenderer_setModel(ispcEquivalent, model->getIE());
-
-    //! Set the dynamic model.
-    ispc::RaycastVolumeRenderer_setDynamicModel(ispcEquivalent, dynamicModel->getIE());
-
-    //! Set the lights if any.
-    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, getLightsFromData(getParamData("lights", NULL)));
-
-    //! Initialize state in the parent class, must be called after the ISPC object is created.
-    Renderer::commit();
-
+  RaycastVolumeRenderer::Material::Material()
+  {
+    ispcEquivalent = ispc::RaycastVolumeRendererMaterial_create(this);
   }
 
-  void **RaycastVolumeRenderer::getLightsFromData(const Data *buffer) {
+  void RaycastVolumeRenderer::Material::commit()
+  {
+    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(1.0f))));
+    volume = (Volume *)getParamObject("volume", NULL);
 
-    //! Lights are optional.
+    ispc::RaycastVolumeRendererMaterial_set(getIE(), (const ispc::vec3f&)Kd, volume ? volume->getIE() : NULL);
+  }
+
+  void RaycastVolumeRenderer::commit() 
+  {
+    // Create the equivalent ISPC RaycastVolumeRenderer object.
+    if (ispcEquivalent == NULL) ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
+
+    // Get the background color.
+    vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
+
+    // Set the background color.
+    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
+
+    // Set the lights if any.
+    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, getLightsFromData(getParamData("lights", NULL)));
+
+    // Initialize state in the parent class, must be called after the ISPC object is created.
+    Renderer::commit();
+  }
+
+  void **RaycastVolumeRenderer::getLightsFromData(const Data *buffer)
+  {
+    // Lights are optional.
     size_t lightCount = (buffer != NULL) ? buffer->numItems : 0;
 
-    //! The light array is a NULL terminated list of pointers.
+    // The light array is a NULL terminated list of pointers.
     void **lights = new void *[lightCount + 1];
 
-    //! Copy pointers to the ISPC Light objects.
+    // Copy pointers to the ISPC Light objects.
     for (size_t i=0 ; i < lightCount ; i++) lights[i] = ((Light **) buffer->data)[i]->getIE();
 
-    //! Mark the end of the array.
+    // Mark the end of the array.
     lights[lightCount] = NULL;  return(lights);
-
   }
 
 } // ::ospray

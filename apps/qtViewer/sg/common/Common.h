@@ -25,6 +25,9 @@
 namespace ospray {
   namespace sg {
 
+#define THROW_SG_ERROR(where,err) \
+    throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err));
+
     typedef unsigned int uint;
     
     /*! base node for every scene graph node */
@@ -43,7 +46,17 @@ namespace ospray {
         pixel colors is actualy close to what PBRT calls in
         'integrator' */
     struct Integrator;
-    
+
+    /*! @{ helper functions for parsing xml nodes */
+
+    //! parse vec3i from std::string (typically an xml-node's content string) 
+    vec2i parseVec2i(const std::string &text);
+
+    //! parse vec3i from std::string (typically an xml-node's content string) 
+    vec3i parseVec3i(const std::string &text);
+
+    /*! @} */
+
   } // ::ospray::sg
 } // ::ospray
 

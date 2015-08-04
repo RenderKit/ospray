@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_MODULE_LOADERS OFF CACHE BOOL "Build loaders for common file types.")
+OPTION(OSPRAY_MODULE_LOADERS "Build loaders for common file types." ON)
 
 CONFIGURE_OSPRAY()
 
@@ -29,6 +29,7 @@ IF (NOT THIS_IS_MIC)
     ADD_LIBRARY(ospray_module_loaders${OSPRAY_LIB_SUFFIX} SHARED
       ObjectFile.cpp
       OSPObjectFile.cpp
+      PLYTriangleMeshFile.cpp
       RawVolumeFile.cpp
       SymbolRegistry.cpp
       TinyXML2.cpp

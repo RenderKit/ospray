@@ -25,7 +25,6 @@ void PTLight__Constructor(uniform PTLight* uniform this,
                         uniform SampleFunc sample)
 {
   LOG(print("PTLight__Constructor\n"));
-  // RefCount__Constructor(&this->base,destructor);
   this->type = type;
   this->transform = transform;
   this->shape = shape;

@@ -23,7 +23,9 @@ extern int yydebug;
 
 namespace ospray {
   namespace particle {
-    
+
+    float Model::defaultRadius = 1.f;
+
     inline vec3f makeRandomColor(const int i)
     {
       const int mx = 13*17*43;
@@ -34,6 +36,58 @@ namespace ospray {
                    (g % my)*(1.f/(my-1)),
                    (g % mz)*(1.f/(mz-1)));
     }
+
+    /*! read given file with atom type definitions */
+    void Model::readAtomTypeDefinitions(const embree::FileName &fn)
+    {
+      FILE *file = fopen(fn.str().c_str(),"r");
+      if (!file) {
+        std::cout << "#osp:particle: could not open '" << fn.str() << "'" << std::endl;
+        return;
+      }
+
+      char line[10000];
+      const char *sep = "\n\t ";
+
+      AtomType *currentType = NULL;
+      while (fgets(line,10000,file) && !feof(file)) {
+        if (line[0] == '#')
+          continue;
+
+        char *tok = strtok(line,sep);
+        if (tok == NULL)
+          continue;
+
+        if (!strcmp(tok,"atomtype")) {
+          const char *name = strtok(NULL,sep);
+          assert(name);
+          currentType = atomType[getAtomType(name)];
+          assert(currentType);
+          continue;
+        }
+
+        if (!strcmp(tok,"color")) {
+          assert(currentType);
+          float r = atof(strtok(NULL,sep));
+          float g = atof(strtok(NULL,sep));
+          float b = atof(strtok(NULL,sep));
+          currentType->color = vec3f(r,g,b);
+          continue;
+        }
+        
+        if (!strcmp(tok,"radius")) {
+          assert(currentType);
+          float r = atof(strtok(NULL,sep));
+          currentType->radius = r;
+          continue;
+        }
+        
+        throw std::runtime_error("#osp:particleViewer:readAtomTypeDefs: cannot parse token '"+std::string(tok)+"'");
+      }
+
+      fclose(file);
+    }
+      
 
     int Model::getAtomType(const std::string &name)
     {
@@ -92,6 +146,11 @@ namespace ospray {
           throw std::runtime_error(ss.str());
         }
         a.type = getAtomType(atomName);
+        a.radius = atomType[a.type]->radius;
+        if (a.radius == 0.f)
+          a.radius = defaultRadius;
+        if (a.radius == 0.f)
+          throw std::runtime_error("particle has invalid radius. Either specify proper radius in the def file, or use '--radius' cmdline parameter to set a valid radius");
         atom.push_back(a);
       }
     }

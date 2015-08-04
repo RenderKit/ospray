@@ -25,6 +25,8 @@ INCLUDE(../cmake/build_embree.cmake)
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
+  math/box.ispc
+
   common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Managed.cpp
@@ -71,6 +73,10 @@ SET(OSPRAY_SOURCES
   geometry/Spheres.ispc
   geometry/Cylinders.cpp
   geometry/Cylinders.ispc
+  geometry/Slices.ispc
+  geometry/Slices.cpp
+  geometry/Isosurfaces.ispc
+  geometry/Isosurfaces.cpp
 
   lights/Light.cpp
   lights/AmbientLight.ispc
@@ -99,6 +105,7 @@ SET(OSPRAY_SOURCES
   render/obj/OBJMaterial.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
+  render/volume/RaycastVolumeRendererMaterial.ispc
   render/volume/SymbolRegistry.cpp
 
   render/pathtracer/PathTracer.ispc

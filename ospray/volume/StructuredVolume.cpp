@@ -26,18 +26,23 @@ namespace ospray {
 
   void StructuredVolume::commit()
   {
-    //! Some parameters can be changed after the volume has been allocated and filled.
+    // Some parameters can be changed after the volume has been allocated and filled.
     updateEditableParameters();
 
-    //! Set the grid origin, default to (0,0,0).
-    vec3f gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
-    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) gridOrigin);
+    // Set the grid origin, default to (0,0,0).
+    this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
 
-    //! Set the grid spacing, default to (1,1,1).
-    vec3f gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
-    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) gridSpacing);
+    // Get the volume dimensions.
+    this->dimensions = getParam3i("dimensions", vec3i(0));
+    exitOnCondition(reduce_min(this->dimensions) <= 0, 
+                    "invalid volume dimensions");
 
-    //! Complete volume initialization (only on first commit).
+    // Set the grid spacing, default to (1,1,1).
+    this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
+
+    // Complete volume initialization (only on first commit).
     if (!finished) {
       finish();
       finished = true;
@@ -46,32 +51,64 @@ namespace ospray {
 
   void StructuredVolume::finish()
   {
-    //! Make the voxel value range visible to the application.
+    // Make the voxel value range visible to the application.
     if (findParam("voxelRange") == NULL)
       set("voxelRange", voxelRange);
     else
       voxelRange = getParam2f("voxelRange", voxelRange);
 
-    //! Complete volume initialization.
-    ispc::StructuredVolume_finish(ispcEquivalent);
+    // Build volume accelerator.
+    ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
 
-    //! Volume finish actions.
+    // Volume finish actions.
     Volume::finish();
   }
 
   OSPDataType StructuredVolume::getVoxelType() const
   {
-    //! Separate out the base type and vector width.
-    char kind[voxelType.size()];  unsigned int width = 1;  sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
+    // Separate out the base type and vector width.
+    char kind[voxelType.size()];  
+    unsigned int width = 1;
+    sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
 
-    //! Single precision scalar floating point.
-    if (!strcmp(kind, "float") && width == 1) return(OSP_FLOAT);
-
-    //! Unsigned 8-bit scalar integer.
+    // Unsigned 8-bit scalar integer.
     if (!strcmp(kind, "uchar") && width == 1) return(OSP_UCHAR);
 
-    //! Unknown voxel type.
+    // Single precision scalar floating point.
+    if (!strcmp(kind, "float") && width == 1) return(OSP_FLOAT);
+
+    // Double precision scalar floating point.
+    if (!strcmp(kind, "double") && width == 1) return(OSP_DOUBLE);
+
+    // Unknown voxel type.
     return OSP_UNKNOWN;
+  }
+
+  // Compute the voxel value range for unsigned byte voxels.
+  void StructuredVolume::computeVoxelRange(const unsigned char *source, const size_t &count)
+  {
+    for (size_t i=0 ; i < count ; i++) {
+      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
+      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
+    }
+  }
+
+  // Compute the voxel value range for floating point voxels.
+  void StructuredVolume::computeVoxelRange(const float *source, const size_t &count)
+  {
+    for (size_t i=0 ; i < count ; i++) {
+      voxelRange.x = std::min(voxelRange.x, source[i]);
+      voxelRange.y = std::max(voxelRange.y, source[i]);
+    }
+  }
+
+  // Compute the voxel value range for double precision floating point voxels.
+  void StructuredVolume::computeVoxelRange(const double *source, const size_t &count)
+  {
+    for (size_t i=0 ; i < count ; i++) {
+      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
+      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
+    }
   }
 
 } // ::ospray

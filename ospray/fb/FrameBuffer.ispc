@@ -30,3 +30,9 @@ export void accumTile(void *uniform _fb, void *uniform _tile)
   fb->accumTile(fb,*tile);
 }
 
+export void FrameBuffer_set(void *uniform _self,
+                            const uniform float gamma)
+{
+  uniform FrameBuffer *uniform self = (uniform FrameBuffer *uniform)_self;
+  self->gamma = gamma;
+}
