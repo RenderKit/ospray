@@ -85,10 +85,8 @@ void Spheres_bounds(uniform Spheres *uniform geometry,
   uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*((uniform int64)primID);
   uniform float radius = geometry->radius;
   
-  print("bounds %\n",geometry->offset_radius);
   if (geometry->offset_radius >= 0) {
     radius = *((uniform float *)(spherePtr+geometry->offset_radius));
-    print("radius % -> %\n",geometry->offset_radius,radius);
   }
   uniform vec3f center = *((uniform vec3f*)(spherePtr+geometry->offset_center));
   bbox = make_box3fa(center-make_vec3f(radius),center+make_vec3f(radius));
