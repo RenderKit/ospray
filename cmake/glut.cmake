@@ -27,22 +27,26 @@ ELSEIF (WIN32)
   ENDIF()
   FIND_PATH(GLUT_INCLUDE_DIR
     NAMES GL/glut.h
-    PATHS ${DEPRECIATED_WIN32_INCLUDE} ${FREEGLUT_ROOT_PATH}/include
+    PATHS ${FREEGLUT_ROOT_PATH}/include
+    ${PROJECT_SOURCE_DIR}/../freeglut/include
+    ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-3.0.0-2.mp/include ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-3.0.0-2.mp/freeglut/include
+    ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-2.8.1-1.mp/include ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-2.8.1-1.mp/freeglut/include
+    ${DEPRECIATED_WIN32_INCLUDE}
   )
   # detect and select x64
   IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
     SET(ARCH x64)
   ENDIF()
   FIND_LIBRARY(GLUT_glut_LIBRARY
-    NAMES glut glut32 freeglut
-    PATHS ${DEPRECIATED_WIN32_RELEASE} ${FREEGLUT_ROOT_PATH}/${ARCH} ${PROJECT_SOURCE_DIR}/../freeglut-MSVC-2.8.1-1.mp
+    NAMES freeglut glut glut32
+    PATHS ${GLUT_INCLUDE_DIR}/../lib/${ARCH} ${FREEGLUT_ROOT_PATH}/lib/${ARCH} ${DEPRECIATED_WIN32_RELEASE}
   )
   SET(GLUT_LIBRARIES ${GLUT_glut_LIBRARY})
   MARK_AS_ADVANCED(
     GLUT_INCLUDE_DIR
     GLUT_glut_LIBRARY
   )
-  IF (NOT GLUT_glut_LIBRARY)
+  IF (NOT GLUT_INCLUDE_DIR OR NOT GLUT_glut_LIBRARY)
     MESSAGE(FATAL_ERROR "Could not find GLUT library. You could fetch freeglut from http://www.transmissionzero.co.uk/software/freeglut-devel/ and set the FREEGLUT_ROOT_PATH variable in cmake.")
   ENDIF()
 ELSE()
@@ -58,7 +62,7 @@ ELSE()
       )
     FIND_LIBRARY(GLUT_LIBRARIES NAMES libglut.so PATHS $ENV{TACC_FREEGLUT_LIB})
     IF (NOT GLUIBRARIESD)
-      MESSAGE(FATAL_ERROR "Could not find GLUT library, even after trying additional search dirs")	
+      MESSAGE(FATAL_ERROR "Could not find GLUT library, even after trying additional search dirs")
     ELSE()
       SET(GLUT_FOUND ON)
     ENDIF()
