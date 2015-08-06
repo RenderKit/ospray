@@ -16,13 +16,6 @@
 
 #pragma once
 
-#pragma warning (disable: 3280)
-#pragma warning (disable: 177)
-#pragma warning (disable: 2415)
-#pragma warning (disable: 2407)
-#pragma warning (disable: 2557) // message #2557: comparison between signed and unsigned operands
-#pragma warning (disable: 82)   // message #82: storage class is not first
-
 #include <stddef.h>
 #include <assert.h>
 #include <cstdlib>
@@ -293,8 +286,17 @@ typedef int32 ssize_t;
 #pragma warning(disable:4996) // 'std::copy': Function call with parameters that may be unsafe 
 #pragma warning(disable:391 ) // '<=' : signed / unsigned mismatch
 #pragma warning(disable:4018) // '<' : signed / unsigned mismatch
-
 #endif
+
+#if 0
+#pragma warning (disable: 3280)
+#pragma warning (disable: 177)
+#pragma warning (disable: 2415)
+#pragma warning (disable: 2407)
+#pragma warning (disable: 2557) // message #2557: comparison between signed and unsigned operands
+#pragma warning (disable: 82)   // message #82: storage class is not first
+#endif
+
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Default Includes and Functions

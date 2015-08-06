@@ -22,7 +22,7 @@
 #include "ospray/ospray.h"
 
 // stl
-#include <algorithm>"
+#include <algorithm>
 
 namespace ospray {
   using std::cout;

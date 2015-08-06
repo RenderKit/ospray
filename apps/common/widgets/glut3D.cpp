@@ -741,10 +741,12 @@ namespace ospray {
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
+#ifndef _WIN32
           if (!dumpFileRoot) {
-//            mkstemp(tmpFileName);
+            mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
           }
+#endif
           char fileName[100000];
           static int frameDumpSequenceID = 0;
           sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);

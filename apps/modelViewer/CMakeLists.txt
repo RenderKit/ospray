@@ -34,8 +34,5 @@ TARGET_LINK_LIBRARIES(ospModelViewer
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
   )
-IF (WIN32)
-  SET_TARGET_PROPERTIES(ospModelViewer PROPERTIES LINK_FLAGS "/DEF:${PROJECT_SOURCE_DIR}/ospray/ospray.def")
-ENDIF()
 # ------------------------------------------------------------
 INSTALL(TARGETS ospModelViewer DESTINATION bin)

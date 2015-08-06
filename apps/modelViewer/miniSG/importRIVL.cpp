@@ -606,6 +606,7 @@ namespace ospray {
         fprintf(stderr, "could not create file mapping (error %lu)\n", GetLastError());
 #else
       int fd = ::open(binFileName.c_str(), O_LARGEFILE | O_RDONLY);
+      if (fd == -1)
         perror("could not open file");
 #endif
 

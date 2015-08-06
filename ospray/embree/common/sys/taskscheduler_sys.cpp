@@ -18,15 +18,27 @@
 #include "tasklogger.h"
 // std
 #include <time.h>
-#include <sys/time.h>
-#include <sys/times.h>
+#ifdef __WIN32__
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h> // for GetSystemTime
+#else
+# include <sys/time.h>
+# include <sys/times.h>
+#endif
  
 
 namespace embree
 {
   double getSysTime() {
+#ifdef __WIN32__
+    SYSTEMTIME tp; GetSystemTime(&tp);
+    return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
+#else
     struct timeval tp; gettimeofday(&tp,NULL); 
-    return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
+    return double(tp.tv_sec) + double(tp.tv_usec)/1E6;
+#endif
   }
 
   TaskSchedulerSys::TaskSchedulerSys()
