@@ -38,9 +38,9 @@ namespace ospray {
     // ------------------------------------------------------------------
     // first, "parse" the expected parameters
     // ------------------------------------------------------------------
-    pos    = getParam3f("pos",vec3fa(0.f));
-    dir    = getParam3f("dir",vec3fa(0.f,0.0f,1.f));
-    up     = getParam3f("up", vec3fa(0.f,1.0f,0.f));
+    pos    = getParam3f("pos",vec3f(0.f));
+    dir    = getParam3f("dir",vec3f(0.f,0.0f,1.f));
+    up     = getParam3f("up", vec3f(0.f,1.0f,0.f));
     near   = getParamf("near",0.f);
     far    = getParamf("far", std::numeric_limits<float>::infinity());
     fovy   = getParamf("fovy",60.f);

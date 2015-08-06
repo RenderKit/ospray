@@ -268,14 +268,13 @@ namespace ospray {
     ASSERT_DEVICE();
     Assert2(_type,"invalid render type identifier in ospNewRenderer");
     LOG("ospNewRenderer(" << _type << ")");
-    int L = strlen(_type);
-    char type[L+1];
-    for (int i=0;i<=L;i++) {
-      char c = _type[i];
-      if (c == '-' || c == ':') c = '_';
-      type[i] = c;
+   
+    std::string type(_type);
+    for (size_t i = 0; i < type.size(); i++) {
+      if (type[i] == '-' || type[i] == ':') 
+        type[i] = '_';
     }
-    OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
+    OSPRenderer renderer = ospray::api::Device::current->newRenderer(type.c_str());
     // cant typecast on MPI device!
     // if (ospray::logLevel > 0)
     //   if (renderer) 
