@@ -45,6 +45,16 @@
 #endif
 #include "ospray/common/OSPDataType.h"
 
+#ifdef _WIN32
+#  ifdef ospray_EXPORTS
+#    define OSPRAY_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPRAY_INTERFACE
+#endif
+
 #ifdef __GNUC__
   #define OSP_DEPRECATED __attribute__((deprecated))
 #elif defined(_MSC_VER)
@@ -140,34 +150,34 @@ typedef int32 error_t;
 
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
-  void ospInit(int *ac, const char **av);
+  OSPRAY_INTERFACE void ospInit(int *ac, const char **av);
   // //! initialize the ospray engine (for use with MPI-parallel app) 
   // void ospInitMPI(int *ac, const char **av);
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
-  error_t ospLoadModule(const char *pluginName);
+  OSPRAY_INTERFACE error_t ospLoadModule(const char *pluginName);
 
   //! use renderer to render a frame. 
   /*! What input to tuse for rendering the frame is encoded in the
       renderer's parameters, typically in "world". */
-  void ospRenderFrame(OSPFrameBuffer fb, 
-                      OSPRenderer renderer, 
-                      const uint32 fbChannelFlags=OSP_FB_COLOR);
+  OSPRAY_INTERFACE void ospRenderFrame(OSPFrameBuffer fb, 
+                                       OSPRenderer renderer, 
+                                       const uint32 fbChannelFlags=OSP_FB_COLOR);
 
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
-  OSPRenderer ospNewRenderer(const char *type);
+  OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
 
   //! create a new geometry of given type 
   /*! return 'NULL' if that type is not known */
-  OSPGeometry ospNewGeometry(const char *type);
+  OSPRAY_INTERFACE OSPGeometry ospNewGeometry(const char *type);
 
   //! let given renderer create a new material of given type
-  OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type);
+  OSPRAY_INTERFACE OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type);
 
   //! let given renderer create a new light of given type
-  OSPLight ospNewLight(OSPRenderer renderer, const char *type);
+  OSPRAY_INTERFACE OSPLight ospNewLight(OSPRenderer renderer, const char *type);
   
   //! release (i.e., reduce refcount of) given object
   /*! note that all objects in ospray are refcounted, so one cannot
@@ -179,10 +189,10 @@ extern "C" {
       create a new material, assign it to a geometry, and immediately
       after this assignation release its refcount; the material will
       stay 'alive' as long as the given geometry requires it. */
-  void ospRelease(OSPObject obj);
+  OSPRAY_INTERFACE void ospRelease(OSPObject obj);
   
   //! assign given material to given geometry
-  void ospSetMaterial(OSPGeometry geometry, OSPMaterial material);
+  OSPRAY_INTERFACE void ospSetMaterial(OSPGeometry geometry, OSPMaterial material);
 
   //! \brief create a new camera of given type 
   /*! \detailed The default camera type supported in all ospray
@@ -192,22 +202,22 @@ extern "C" {
     
     \returns 'NULL' if that type is not known, else a handle to the created camera
   */
-  OSPCamera ospNewCamera(const char *type);
+  OSPRAY_INTERFACE OSPCamera ospNewCamera(const char *type);
 
   //! \brief create a new volume of given type 
   /*! \detailed return 'NULL' if that type is not known */
-  OSPVolume ospNewVolume(const char *type);
+  OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
   //! add a volume to an existing model
-  void ospAddVolume(OSPModel model, OSPVolume volume);
+  OSPRAY_INTERFACE void ospAddVolume(OSPModel model, OSPVolume volume);
 
   //! \brief create a new transfer function of given type
   /*! \detailed return 'NULL' if that type is not known */
-  OSPTransferFunction ospNewTransferFunction(const char * type);
+  OSPRAY_INTERFACE OSPTransferFunction ospNewTransferFunction(const char * type);
   
   //! \brief create a new Texture2D with the given parameters
   /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
-  OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
+  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
 
   //! \brief lears the specified channel(s) of the frame buffer
   /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
@@ -216,7 +226,7 @@ extern "C" {
     if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
     if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID
   */
-  void ospFrameBufferClear(OSPFrameBuffer fb, const uint32 whichChannel);
+  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer fb, const uint32 whichChannel);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_data Data Buffer Handling 
@@ -232,7 +242,7 @@ extern "C" {
       In this case the calling program guarantees that the 'init' pointer will remain
       valid for the duration that this data array is being used.
    */
-  OSPData ospNewData(size_t numItems, OSPDataType format, const void *init=NULL, int flags=0);
+  OSPRAY_INTERFACE OSPData ospNewData(size_t numItems, OSPDataType format, const void *init=NULL, int flags=0);
 
   /*! \} */
 
@@ -286,22 +296,22 @@ extern "C" {
     format of OSP_FB_NONE the pixels from the path tracing stage will
     never ever be transferred to the application.
    */
-  OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                   const OSPFrameBufferFormat externalFormat=OSP_RGBA_I8,
-                                   const int channelFlags=OSP_FB_COLOR);
+  OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
+                                    const OSPFrameBufferFormat externalFormat=OSP_RGBA_I8,
+                                    const int channelFlags=OSP_FB_COLOR);
 
   /*! \brief free a framebuffer 
 
     due to refcounting the frame buffer may not immeidately be deleted
     at this time */
-  void ospFreeFrameBuffer(OSPFrameBuffer fb);
+  OSPRAY_INTERFACE void ospFreeFrameBuffer(OSPFrameBuffer fb);
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
-  const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
-                                OSPFrameBufferChannel=OSP_FB_COLOR);
+  OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
+                                                 OSPFrameBufferChannel=OSP_FB_COLOR);
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
-  void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer fb);
+  OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer fb);
 
   /*! \} */
 
@@ -314,7 +324,7 @@ extern "C" {
     @{ 
   */
   /*! add a c-string (zero-terminated char *) parameter to another object */
-  void ospSetString(OSPObject _object, const char *id, const char *s);
+  OSPRAY_INTERFACE void ospSetString(OSPObject _object, const char *id, const char *s);
 
   /*! add a object-typed parameter to another object 
     
@@ -322,34 +332,34 @@ extern "C" {
   OSP_DEPRECATED void ospSetParam(OSPObject _object, const char *id, OSPObject object);
 
   /*! add a object-typed parameter to another object */
-  void ospSetObject(OSPObject _object, const char *id, OSPObject object);
+  OSPRAY_INTERFACE void ospSetObject(OSPObject _object, const char *id, OSPObject object);
 
   /*! add a data array to another object */
-  void ospSetData(OSPObject _object, const char *id, OSPData data);
+  OSPRAY_INTERFACE void ospSetData(OSPObject _object, const char *id, OSPData data);
 
   /*! add 1-float paramter to given object */
-  void ospSetf(OSPObject _object, const char *id, float x);
+  OSPRAY_INTERFACE void ospSetf(OSPObject _object, const char *id, float x);
 
   /*! add 1-float paramter to given object */
-  void ospSet1f(OSPObject _object, const char *id, float x);
+  OSPRAY_INTERFACE void ospSet1f(OSPObject _object, const char *id, float x);
 
   /*! add 1-int paramter to given object */
-  void ospSet1i(OSPObject _object, const char *id, int32 x);
+  OSPRAY_INTERFACE void ospSet1i(OSPObject _object, const char *id, int32 x);
 
   /*! add a 2-float parameter to a given object */
-  void ospSet2f(OSPObject _object, const char *id, float x, float y);
+  OSPRAY_INTERFACE void ospSet2f(OSPObject _object, const char *id, float x, float y);
 
   /*! add 3-float paramter to given object */
-  void ospSet2fv(OSPObject _object, const char *id, const float *xy);
+  OSPRAY_INTERFACE void ospSet2fv(OSPObject _object, const char *id, const float *xy);
 
   /*! add 3-float paramter to given object */
-  void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
+  OSPRAY_INTERFACE void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
 
   /*! add 3-float paramter to given object */
-  void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
+  OSPRAY_INTERFACE void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
 
   /*! add 3-int paramter to given object */
-  void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
+  OSPRAY_INTERFACE void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
 
   // \brief Set a given region of the volume to a given set of voxels
   /*! \detailed Given a block of voxels (of dimensions 'blockDim',
@@ -357,32 +367,32 @@ extern "C" {
       given voxels into volume, at the region of addresses
       [regionCoords...regionCoord+regionSize].
   */
-  int ospSetRegion(/*! the object we're writing this blcok of pixels into */
-                   OSPVolume object, 
-                   /* points to the first voxel to be copies. The
-                      voxels at 'soruce' MUST have dimensions
-                      'regionSize', must be organized in 3D-array
-                      order, and must have the same voxel type as the
-                      volume.*/
-                   void *source, 
-                   /*! coordinates of the lower, left, front corner of
-                     the target region.*/
-                   osp::vec3i regionCoords, 
-                   /*! size of the region that we're writing to; MUST
-                     be the same as the dimensions of source[][][] */
-                   osp::vec3i regionSize);
+  OSPRAY_INTERFACE int ospSetRegion(/*! the object we're writing this block of pixels into */
+                                    OSPVolume object, 
+                                    /* points to the first voxel to be copies. The
+                                       voxels at 'soruce' MUST have dimensions
+                                       'regionSize', must be organized in 3D-array
+                                       order, and must have the same voxel type as the
+                                       volume.*/
+                                    void *source, 
+                                    /*! coordinates of the lower, left, front corner of
+                                      the target region.*/
+                                    osp::vec3i regionCoords, 
+                                    /*! size of the region that we're writing to; MUST
+                                      be the same as the dimensions of source[][][] */
+                                    osp::vec3i regionSize);
 
   /*! add 2-float parameter to given object */
-  void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);
+  OSPRAY_INTERFACE void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);
 
   /*! add 3-float paramter to given object */
-  void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+  OSPRAY_INTERFACE void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
 
   /*! add 3-int paramter to given object */
-  void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
+  OSPRAY_INTERFACE void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
 
   /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
-  void ospSetVoidPtr(OSPObject _object, const char *id, void *v);
+  OSPRAY_INTERFACE void ospSetVoidPtr(OSPObject _object, const char *id, void *v);
 
   /*! \brief Object and parameter introspection.                            */
   /*!                                                                       */
@@ -396,40 +406,40 @@ extern "C" {
   /*! functions return '0'.                                                 */
 
   /*! \brief Get the handle of the named data array associated with an object. */
-  int ospGetData(OSPObject object, const char *name, OSPData *value);
+  OSPRAY_INTERFACE int ospGetData(OSPObject object, const char *name, OSPData *value);
 
   /*! \brief Get a copy of the data in an array (the application is responsible for freeing this pointer). */
-  int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
+  OSPRAY_INTERFACE int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
 
   /*! \brief Get the named scalar floating point value associated with an object. */
-  int ospGetf(OSPObject object, const char *name, float *value);
+  OSPRAY_INTERFACE int ospGetf(OSPObject object, const char *name, float *value);
 
   /*! \brief Get the named scalar integer associated with an object. */
-  int ospGeti(OSPObject object, const char *name, int *value);
+  OSPRAY_INTERFACE int ospGeti(OSPObject object, const char *name, int *value);
 
   /*! \brief Get the material associated with a geometry object. */
-  int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value);
+  OSPRAY_INTERFACE int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value);
 
   /*! \brief Get the named object associated with an object. */
-  int ospGetObject(OSPObject object, const char *name, OSPObject *value);
+  OSPRAY_INTERFACE int ospGetObject(OSPObject object, const char *name, OSPObject *value);
 
   /*! \brief Retrieve a NULL-terminated list of the parameter names associated with an object. */
-  int ospGetParameters(OSPObject object, char ***value);
+  OSPRAY_INTERFACE int ospGetParameters(OSPObject object, char ***value);
 
   /*! \brief Get a pointer to a copy of the named character string associated with an object. */
-  int ospGetString(OSPObject object, const char *name, char **value);
+  OSPRAY_INTERFACE int ospGetString(OSPObject object, const char *name, char **value);
 
   /*! \brief Get the type of the named parameter or the given object (if 'name' is NULL). */
-  int ospGetType(OSPObject object, const char *name, OSPDataType *value);
+  OSPRAY_INTERFACE int ospGetType(OSPObject object, const char *name, OSPDataType *value);
 
   /*! \brief Get the named 2-vector floating point value associated with an object. */
-  int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value);
+  OSPRAY_INTERFACE int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value);
 
   /*! \brief Get the named 3-vector floating point value associated with an object. */
-  int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value);
+  OSPRAY_INTERFACE int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value);
 
   /*! \brief Get the named 3-vector integer value associated with an object. */
-  int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value);
+  OSPRAY_INTERFACE int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value);
 
   /*! @} end of ospray_params */
 
@@ -447,21 +457,21 @@ extern "C" {
     "position", "index", "normal", "texcoord", "color", etc. Data
     format for vertices and normals in vec3fa, and vec4i for index
     (fourth component is the material ID). */
-  OSPTriangleMesh ospNewTriangleMesh();
+  OSPRAY_INTERFACE OSPTriangleMesh ospNewTriangleMesh();
 
   /*! add an already created geometry to a model */
-  void ospAddGeometry(OSPModel model, OSPGeometry mesh);
+  OSPRAY_INTERFACE void ospAddGeometry(OSPModel model, OSPGeometry mesh);
   /*! \} end of ospray_trianglemesh */
 
   /*! \brief remove an existing geometry from a model */
-  void ospRemoveGeometry(OSPModel model, OSPGeometry mesh);
+  OSPRAY_INTERFACE void ospRemoveGeometry(OSPModel model, OSPGeometry mesh);
 
 
   /*! \brief create a new instance geometry that instantiates another
     model.  the resulting geometry still has to be added to another
     model via ospAddGeometry */
-  OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
-                             const osp::affine3f &xfm);
+  OSPRAY_INTERFACE OSPGeometry ospNewInstance(OSPModel modelToInstantiate,
+                                              const osp::affine3f &xfm);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_model OSPRay Model Handling 
@@ -478,12 +488,12 @@ extern "C" {
   */
 
   /*! \brief create a new ospray model.  */
-  OSPModel ospNewModel();
+  OSPRAY_INTERFACE OSPModel ospNewModel();
 
   /*! \} */
   
   /*! \brief commit changes to an object */
-  void ospCommit(OSPObject object);
+  OSPRAY_INTERFACE void ospCommit(OSPObject object);
 
   /*! \brief represents the result returned by an ospPick operation */
   extern "C" typedef struct {
@@ -492,7 +502,7 @@ extern "C" {
   } OSPPickResult;
 
   /*! \brief returns the world-space position of the geometry seen at [0-1] normalized screen-space pixel coordinates (if any) */
-  void ospPick(OSPPickResult *result, OSPRenderer renderer, const osp::vec2f &screenPos);
+  OSPRAY_INTERFACE void ospPick(OSPPickResult *result, OSPRenderer renderer, const osp::vec2f &screenPos);
 
   extern "C" /*OSP_DEPRECATED*/ typedef struct {
     bool hit;
