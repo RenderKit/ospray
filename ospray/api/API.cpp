@@ -22,7 +22,6 @@
 #include "ospray/volume/Volume.h"
 #include "ospray/transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
-#include "ospray/common/OSPCommon.h"
 #include "ospray/common/Core.h"
 
 #ifdef _WIN32
@@ -62,6 +61,8 @@ namespace ospray {
     ospray::api::Device *createCoiDevice(int *ac, const char **av);
   }
 #endif
+
+} // ::ospray
 
   std::string getPidString() {
     char s[100];
@@ -790,6 +791,4 @@ namespace ospray {
 
     ospray::api::Device::current->sampleVolume(results, volume, (const vec3f *)worldCoordinates, count);
   }
-
-} // ::ospray
 
