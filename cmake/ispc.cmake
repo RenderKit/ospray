@@ -113,7 +113,9 @@ MACRO (ISPC_COMPILE)
   ENDIF()
 
   IF (WIN32)
+   IF(ISPC_DLLEXPORT) # workaround for bug #1085 in ISPC 1.8.2: ospray_embree should export, but export in ospray cause link errors
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --dllexport)
+   ENDIF()
   ELSE()
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
   ENDIF()

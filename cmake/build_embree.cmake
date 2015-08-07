@@ -228,7 +228,9 @@ ELSE()
     SET (OSPRAY_EMBREE_SOURCES ${OSPRAY_EMBREE_SOURCES} ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/${src})
   ENDFOREACH()
   
+SET(ISPC_DLLEXPORT "yes") # workaround for bug #1085 in ISPC 1.8.2: ospray_embree should export, but export in ospray cause link errors
   OSPRAY_ADD_LIBRARY(ospray_embree${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_EMBREE_SOURCES})
+UNSET(ISPC_DLLEXPORT)
 
   TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
