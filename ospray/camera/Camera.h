@@ -42,7 +42,7 @@ namespace ospray {
       of this camera.
   */
 #define OSP_REGISTER_CAMERA(InternalClassName,external_name)        \
-  extern "C" Camera *ospray_create_camera__##external_name()        \
+  extern "C" OSPRAY_INTERFACE Camera *ospray_create_camera__##external_name()        \
   {                                                                 \
     return new InternalClassName;                                   \
   }                                                                 \
