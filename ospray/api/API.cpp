@@ -383,7 +383,7 @@ namespace ospray {
   }
 
   extern "C" void ospFrameBufferClear(OSPFrameBuffer fb, 
-                                      const uint32 fbChannelFlags)
+                                      const ::uint32 fbChannelFlags)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->frameBufferClear(fb,fbChannelFlags);
@@ -394,7 +394,7 @@ namespace ospray {
     model _may_ be empty (though most framebuffers will expect one!) */
   extern "C" void ospRenderFrame(OSPFrameBuffer fb, 
                                  OSPRenderer renderer, 
-                                 const uint32 fbChannelFlags
+                                 const ::uint32 fbChannelFlags
                                  )
   {
     ASSERT_DEVICE();
@@ -439,7 +439,7 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
   }
-  extern "C" void ospSet1i(OSPObject _object, const char *id, int32 x)
+  extern "C" void ospSet1i(OSPObject _object, const char *id, ::int32 x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
