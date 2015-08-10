@@ -23,9 +23,6 @@
 # define _USE_MATH_DEFINES 1
 # include <cmath>
 # include <math.h>
-# ifndef M_PI
-#  define M_PI       3.14159265358979323846
-# endif
 # ifdef _M_X64
 typedef long long ssize_t;
 # else

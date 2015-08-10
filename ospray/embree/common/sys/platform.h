@@ -93,12 +93,8 @@
 #define DEBUG
 #endif
 
-////////////////////////////////////////////////////////////////////////////////
-/// Configurations
-
-
 #ifdef __WIN32__
-#  ifdef OSPRAY_EMBREE_EXPORTS
+#  ifdef ospray_embree_EXPORTS
 # define OSPRAY_EMBREE_INTERFACE __declspec(dllexport)
 #  else
 # define OSPRAY_EMBREE_INTERFACE __declspec(dllimport)
@@ -107,8 +103,8 @@
 # define OSPRAY_EMBREE_INTERFACE /* ignore */
 #endif
 
-
-
+////////////////////////////////////////////////////////////////////////////////
+/// Configurations
 ////////////////////////////////////////////////////////////////////////////////
 
 #if defined(__WIN32__) 
@@ -312,7 +308,6 @@ typedef int32 ssize_t;
 #pragma warning (disable: 82)   // message #82: storage class is not first
 #endif
 
-
 ////////////////////////////////////////////////////////////////////////////////
 /// Default Includes and Functions
 ////////////////////////////////////////////////////////////////////////////////
@@ -383,8 +378,3 @@ namespace embree
 #else 
 #error Unknown ISA
 #endif
-
-
-
-
-

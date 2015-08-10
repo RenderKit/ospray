@@ -20,7 +20,7 @@
 #include <stddef.h>
 
 #ifdef _WIN32
-#  ifdef OSPRAY_EMBREE_EXPORTS
+#  ifdef ospray_embree_EXPORTS
 #    define OSPRAY_EMBREE_INTERFACE __declspec(dllexport)
 #  else
 #    define OSPRAY_EMBREE_INTERFACE __declspec(dllimport)

@@ -127,7 +127,7 @@ namespace ospray {
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);
-#if !defined(NDEBUG) && !defined(__WIN32__)
+#ifndef NDEBUG
     {
       cout << "#osp/trimesh: Verifying index buffer ... " << endl;
       for (int i=0;i<numTris*numCompsInTri;i+=numCompsInTri) {

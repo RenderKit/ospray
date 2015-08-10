@@ -92,13 +92,13 @@ namespace ospray {
 
       // helper functions called from the default 'motion' fct
       OSPRAY_GLUT3D_INTERFACE virtual void dragLeft(Glut3DWidget *widget, 
-                            const vec2i &to, const vec2i &from) 
+                                                    const vec2i &to, const vec2i &from) 
       {};
       OSPRAY_GLUT3D_INTERFACE virtual void dragRight(Glut3DWidget *widget, 
-                             const vec2i &to, const vec2i &from) 
+                                                     const vec2i &to, const vec2i &from) 
       {};
       OSPRAY_GLUT3D_INTERFACE virtual void dragMiddle(Glut3DWidget *widget, 
-                              const vec2i &to, const vec2i &from)
+                                                      const vec2i &to, const vec2i &from)
       {};
       Glut3DWidget *widget;
     };

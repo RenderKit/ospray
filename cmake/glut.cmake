@@ -61,7 +61,7 @@ ELSE()
       $ENV{TACC_FREEGLUT_LIB}
       )
     FIND_LIBRARY(GLUT_LIBRARIES NAMES libglut.so PATHS $ENV{TACC_FREEGLUT_LIB})
-    IF (NOT GLUIBRARIESD)
+    IF (NOT GLUT_LIBRARIES)
       MESSAGE(FATAL_ERROR "Could not find GLUT library, even after trying additional search dirs")
     ELSE()
       SET(GLUT_FOUND ON)
