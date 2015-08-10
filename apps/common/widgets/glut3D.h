@@ -29,14 +29,25 @@
 #include <unistd.h>
 #endif
 
+#ifdef _WIN32
+#  ifdef ospray_glut3d_EXPORTS
+#    define OSPRAY_GLUT3D_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_GLUT3D_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPRAY_GLUT3D_INTERFACE
+#endif
+
+
 namespace ospray {
   //! dedicated namespace for 3D glut viewer widget
   namespace glut3D {
 
     /*! initialize everything GLUT-related */
-    void initGLUT(int32 *ac, const char **av);
+    OSPRAY_GLUT3D_INTERFACE void initGLUT(int32 *ac, const char **av);
     /*! switch over to GLUT for control flow. This functoin will not return */
-    void runGLUT();
+    OSPRAY_GLUT3D_INTERFACE void runGLUT();
 
 
     using embree::AffineSpace3fa;
@@ -47,19 +58,19 @@ namespace ospray {
       double smooth_den;
       double frameStartTime;
 
-      FPSCounter() 
+      FPSCounter()
       {
         smooth_nom = 0.;
         smooth_den = 0.;
         frameStartTime = 0.;
       }
-      void startRender() { frameStartTime = ospray::getSysTime(); }
-      void doneRender() { 
+      OSPRAY_GLUT3D_INTERFACE void startRender() { frameStartTime = ospray::getSysTime(); }
+      OSPRAY_GLUT3D_INTERFACE void doneRender() {
         double seconds = ospray::getSysTime() - frameStartTime; 
         smooth_nom = smooth_nom * 0.8f + seconds;
         smooth_den = smooth_den * 0.8f + 1.f;
       }
-      double getFPS() const { return smooth_den / smooth_nom; }
+      OSPRAY_GLUT3D_INTERFACE double getFPS() const { return smooth_den / smooth_nom; }
     };
 
 
@@ -69,25 +80,25 @@ namespace ospray {
     struct Manipulator {
       // this is the fct that gets called when the mouse moved in the
       // associated window
-      virtual void motion(Glut3DWidget *widget);
+      OSPRAY_GLUT3D_INTERFACE virtual void motion(Glut3DWidget *widget);
       // this is the fct that gets called when any mouse button got
       // pressed or released in the associated window
-      virtual void button(Glut3DWidget *widget, const vec2i &pos) {};
+      OSPRAY_GLUT3D_INTERFACE virtual void button(Glut3DWidget *widget, const vec2i &pos) {};
       /*! key press handler - override this fct to catch keyboard. */
-      virtual void keypress(Glut3DWidget *widget, const int32 key);
-      virtual void specialkey(Glut3DWidget *widget, const int32 key);
-      Manipulator(Glut3DWidget *widget) : widget(widget) {};
+      OSPRAY_GLUT3D_INTERFACE virtual void keypress(Glut3DWidget *widget, const int32 key);
+      OSPRAY_GLUT3D_INTERFACE virtual void specialkey(Glut3DWidget *widget, const int32 key);
+      OSPRAY_GLUT3D_INTERFACE Manipulator(Glut3DWidget *widget) : widget(widget) {};
     protected:
 
       // helper functions called from the default 'motion' fct
-      virtual void dragLeft(Glut3DWidget *widget, 
-                            const vec2i &to, const vec2i &from) 
+      OSPRAY_GLUT3D_INTERFACE virtual void dragLeft(Glut3DWidget *widget, 
+                                                    const vec2i &to, const vec2i &from) 
       {};
-      virtual void dragRight(Glut3DWidget *widget, 
-                             const vec2i &to, const vec2i &from) 
+      OSPRAY_GLUT3D_INTERFACE virtual void dragRight(Glut3DWidget *widget, 
+                                                     const vec2i &to, const vec2i &from) 
       {};
-      virtual void dragMiddle(Glut3DWidget *widget, 
-                              const vec2i &to, const vec2i &from)
+      OSPRAY_GLUT3D_INTERFACE virtual void dragMiddle(Glut3DWidget *widget, 
+                                                      const vec2i &to, const vec2i &from)
       {};
       Glut3DWidget *widget;
     };
@@ -147,7 +158,7 @@ namespace ospray {
     struct Glut3DWidget
     {
       /*! size we'll create a window at */
-      static vec2i defaultInitSize;
+      OSPRAY_GLUT3D_INTERFACE static vec2i defaultInitSize;
 
       typedef enum { 
         FRAMEBUFFER_UCHAR,FRAMEBUFFER_FLOAT,FRAMEBUFFER_DEPTH,FRAMEBUFFER_NONE
@@ -177,9 +188,9 @@ namespace ospray {
       
         /*! set 'up' vector. if this vector is '0,0,0' the viewer will
          *not* apply the up-vector after camera manipulation */
-        void snapUp();
+        OSPRAY_GLUT3D_INTERFACE void snapUp();
 
-        ViewPort();
+        OSPRAY_GLUT3D_INTERFACE ViewPort();
       };
       // static InspectCenter INSPECT_CENTER;
       Manipulator *inspectCenterManipulator;
@@ -187,71 +198,71 @@ namespace ospray {
 
       /*! current manipulator */
       Manipulator *manipulator;
-      Glut3DWidget(FrameBufferMode frameBufferMode,
-                   ManipulatorMode initialManipulator=INSPECT_CENTER_MODE,
-                   int allowedManipulators=INSPECT_CENTER_MODE|MOVE_MODE);
+      OSPRAY_GLUT3D_INTERFACE Glut3DWidget(FrameBufferMode frameBufferMode,
+                                           ManipulatorMode initialManipulator=INSPECT_CENTER_MODE,
+                                           int allowedManipulators=INSPECT_CENTER_MODE|MOVE_MODE);
 
       /*! set a default camera position that views given bounds from the
         top left front */
-      virtual void setWorldBounds(const box3f &worldBounds);
+      OSPRAY_GLUT3D_INTERFACE virtual void setWorldBounds(const box3f &worldBounds);
       /*! tell GLUT that this window is 'dirty' and needs redrawing */
-      virtual void forceRedraw();
+      OSPRAY_GLUT3D_INTERFACE virtual void forceRedraw();
       /*! set window title */
-      void setTitle(const char *title);
+      OSPRAY_GLUT3D_INTERFACE void setTitle(const char *title);
       /*! set window title */
-      void setTitle(const std::string &title) { setTitle(title.c_str()); }
+      OSPRAY_GLUT3D_INTERFACE void setTitle(const std::string &title) { setTitle(title.c_str()); }
       /*! set viewport to given values */
-      void setViewPort(const vec3f from, const vec3f at, const vec3f up);
+      OSPRAY_GLUT3D_INTERFACE void setViewPort(const vec3f from, const vec3f at, const vec3f up);
 
       // ------------------------------------------------------------------
       // event handling - override this to change this widgets behavior
       // to input events
       // ------------------------------------------------------------------
-      virtual void mouseButton(int32 which, bool released, const vec2i &pos);
-      virtual void motion(const vec2i &pos);
+      OSPRAY_GLUT3D_INTERFACE virtual void mouseButton(int32 which, bool released, const vec2i &pos);
+      OSPRAY_GLUT3D_INTERFACE virtual void motion(const vec2i &pos);
       // /*! mouse moved to this location, with given left/right/middle buttons pressed */
       // virtual void mouseMotion(const vec2i &from, 
       //                          const vec2i &to,
       //                          bool left, 
       //                          bool right,
       //                          bool middle);
-      virtual void reshape(const vec2i &newSize); 
-      virtual void idle();
+      OSPRAY_GLUT3D_INTERFACE virtual void reshape(const vec2i &newSize); 
+      OSPRAY_GLUT3D_INTERFACE virtual void idle();
       /*! display this window. By default this will just clear this
         window's framebuffer; it's up to the user to override this fct
         to do something more useful */
-      virtual void display();
+      OSPRAY_GLUT3D_INTERFACE virtual void display();
 
       // ------------------------------------------------------------------
       // helper functions
       // ------------------------------------------------------------------
       /*! activate _this_ window, in the sense that all future glut
         events get routed to this window instance */
-      virtual void activate();
+      OSPRAY_GLUT3D_INTERFACE virtual void activate();
       /*! create this window. Note that this just *creates* the window,
         but glut will not do anything else with this window before
         'run' got called */
-      void create(const char *title,                               
-                  const vec2i &size=defaultInitSize,
-                  bool fullScreen = false);
+      OSPRAY_GLUT3D_INTERFACE void create(const char *title,                               
+                                          const vec2i &size=defaultInitSize,
+                                          bool fullScreen = false);
 
       /*! clear the frame buffer color and depth bits */
-      void clearPixels();
+      OSPRAY_GLUT3D_INTERFACE void clearPixels();
 
       /*! draw uint32 pixels into the GLUT window (assumes window and buffer dimensions are equal) */
-      void drawPixels(const uint32 *framebuffer);
+      OSPRAY_GLUT3D_INTERFACE void drawPixels(const uint32 *framebuffer);
 
       /*! draw float4 pixels into the GLUT window (assumes window and buffer dimensions are equal) */
-      void drawPixels(const vec3fa *framebuffer);
+      OSPRAY_GLUT3D_INTERFACE void drawPixels(const vec3fa *framebuffer);
 
       // ------------------------------------------------------------------
       // camera helper code
       // ------------------------------------------------------------------
-      void snapUp();
+      OSPRAY_GLUT3D_INTERFACE void snapUp();
       /*! set 'up' vector. if this vector is '0,0,0' the viewer will
        *not* apply the up-vector after camera manipulation */
-      virtual void setZUp(const vec3f &up);
-      void noZUp() { setZUp(vec3f(0.f)); }
+      OSPRAY_GLUT3D_INTERFACE virtual void setZUp(const vec3f &up);
+      OSPRAY_GLUT3D_INTERFACE void noZUp() { setZUp(vec3f(0.f)); }
 
       // ------------------------------------------------------------------
       // internal state variables
@@ -276,9 +287,9 @@ namespace ospray {
 
       /*! recompute current viewPort's frame from cameras 'from',
           'at', 'up' values. */
-      void computeFrame();
+      OSPRAY_GLUT3D_INTERFACE void computeFrame();
 
-      static Glut3DWidget *activeWindow;
+      OSPRAY_GLUT3D_INTERFACE static Glut3DWidget *activeWindow;
       /*! pointer to the frame buffer data. it is the repsonsiblity of
           the applicatoin derived from this class to properly allocate
           and deallocate the frame buffer pointer */
@@ -296,8 +307,8 @@ namespace ospray {
       friend void glut3dMouseFunc(int32 whichButton, int32 released, 
                                   int32 x, int32 y);
 
-      virtual void keypress(char key, const vec2f where);
-      virtual void specialkey(int32 key, const vec2f where);
+      OSPRAY_GLUT3D_INTERFACE virtual void keypress(char key, const vec2f where);
+      OSPRAY_GLUT3D_INTERFACE virtual void specialkey(int32 key, const vec2f where);
     };
 
     std::ostream &operator<<(std::ostream &o, const Glut3DWidget::ViewPort &cam);

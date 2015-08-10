@@ -30,7 +30,7 @@
 namespace embree
 {
   /* opens a shared library */
-  lib_t openLibrary(const std::string& file)
+ lib_t openLibrary(const std::string& file)
   {
     std::string fullName = file+".dll";
     FileName executable = getExecutableFileName();
@@ -39,12 +39,12 @@ namespace embree
   }
 
   /* returns address of a symbol from the library */
-  void* getSymbol(lib_t lib, const std::string& sym) {
+ void*  getSymbol(lib_t lib, const std::string& sym) {
     return GetProcAddress(HMODULE(lib),sym.c_str());
   }
 
   /* closes the shared library */
-  void closeLibrary(lib_t lib) {
+ void closeLibrary(lib_t lib) {
     FreeLibrary(HMODULE(lib));
   }
 }

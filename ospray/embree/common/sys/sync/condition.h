@@ -20,7 +20,7 @@
 
 namespace embree
 {
-  class ConditionSys
+  class OSPRAY_EMBREE_INTERFACE ConditionSys
   {
   public:
     ConditionSys();

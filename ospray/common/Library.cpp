@@ -17,7 +17,13 @@
 // ospray
 #include "Library.h"
 // std
-#include <dlfcn.h>
+
+#ifdef _WIN32
+#  define WIN32_LEAN_AND_MEAN
+#  include <windows.h>
+#else
+#  include <dlfcn.h>
+#endif
 
 namespace ospray {
 
@@ -52,7 +58,16 @@ namespace ospray {
     }
 
     // if none found in the loaded libs, try the default lib ...
+#ifdef _WIN32
+    void *sym = GetProcAddress(GetModuleHandle(0), name.c_str()); // look in exe (i.e. when linked statically)
+    if (!sym) {
+      MEMORY_BASIC_INFORMATION mbi;
+      VirtualQuery(getSymbol, &mbi, sizeof(mbi)); // get handle to current dll via a known function
+      sym = GetProcAddress((HINSTANCE)(mbi.AllocationBase), name.c_str()); // look in ospray.dll (i.e. when linked dynamically)
+    }
+#else
     void *sym = dlsym(RTLD_DEFAULT,name.c_str());
+#endif
     return sym;
   }
 

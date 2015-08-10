@@ -24,6 +24,7 @@
 #include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "TriangleMesh_ispc.h"
+#include <cmath>
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 

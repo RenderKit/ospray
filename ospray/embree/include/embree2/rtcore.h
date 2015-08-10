@@ -19,6 +19,14 @@
 
 #include <stddef.h>
 
+#ifdef _WIN32
+#  ifdef ospray_embree_EXPORTS
+#    define OSPRAY_EMBREE_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_EMBREE_INTERFACE __declspec(dllimport)
+#  endif
+#endif
+
 #ifndef RTCORE_API
 #ifdef _WIN32
 #  define RTCORE_API extern "C" __declspec(dllimport) 
