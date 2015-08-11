@@ -244,6 +244,7 @@ namespace ospray {
     {
       windowSize = newSize;
       viewPort.aspect = newSize.x/float(newSize.y);
+      glViewport(0, 0, windowSize.x, windowSize.y);
 
       forceRedraw();
     }
