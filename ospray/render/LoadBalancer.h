@@ -92,7 +92,7 @@ namespace ospray {
     /*! \brief a task for rendering a frame using the global tiled load balancer 
       
       if derived from FrameBuffer::RenderFrameEvent to allow us for
-      attaching that as a sync primitive to the farme buffer
+      attaching that as a sync primitive to the frame buffer
     */
     struct RenderTask : public embree::RefCount {
       Ref<FrameBuffer>             fb;

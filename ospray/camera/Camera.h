@@ -28,8 +28,17 @@ namespace ospray {
     //! \brief common function to help printf-debugging 
     /*! Every derived class should overrride this! */
     virtual std::string toString() const { return "ospray::Camera (base class)"; }
+    virtual void commit();
     static Camera *createCamera(const char *identifier);
-    virtual void initRay(Ray &ray, const vec2f &sample) = 0;
+
+  public:
+    // ------------------------------------------------------------------
+    // parameters that each camera has, 'parsed' from params
+    // ------------------------------------------------------------------
+    vec3f  pos;      // position of the camera in world-space
+    vec3f  dir;      // main direction of the camera in world-space
+    vec3f  up;       // up direction of the camera in world-space
+    float  nearClip; // near clipping distance
   };
 
   /*! \brief registers a internal ospray::'ClassName' camera under

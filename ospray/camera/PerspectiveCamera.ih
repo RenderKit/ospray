@@ -30,7 +30,5 @@ struct PerspectiveCamera {
   vec3f dir_00; /*!< \brief direction of ray with screenSample=(0,0) */
   vec3f dir_du; /*!< \brief delta of ray direction between two pixels in X */
   vec3f dir_dv; /*!< \brief delta of ray direction between two pixels in Y */
-
-  float nearClip; /*!< \brief near clipping plane. */
 };
 
