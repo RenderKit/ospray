@@ -45,6 +45,8 @@ SET(OSPRAY_SOURCES
   camera/PerspectiveCamera.cpp
   camera/OrthographicCamera.ispc
   camera/OrthographicCamera.cpp
+  camera/PanoramicCamera.ispc
+  camera/PanoramicCamera.cpp
 
   volume/BlockBrickedVolume.ispc
   volume/BlockBrickedVolume.cpp

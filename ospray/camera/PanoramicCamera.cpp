@@ -1,0 +1,53 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#include "PanoramicCamera.h"
+#include <limits>
+// ispc-side stuff
+#include "PanoramicCamera_ispc.h"
+
+#ifdef __WIN32__
+#  define _USE_MATH_DEFINES
+#  include <math.h> // M_PI
+#endif
+
+namespace ospray {
+
+  PanoramicCamera::PanoramicCamera()
+  {
+    ispcEquivalent = ispc::PanoramicCamera_create(this);
+  }
+  void PanoramicCamera::commit()
+  {
+    Camera::commit();
+
+    // ------------------------------------------------------------------
+    // update the local precomputed values: the camera coordinate frame
+    // ------------------------------------------------------------------
+    linear3f frame;
+    frame.vy = normalize(dir);
+    frame.vx = normalize(cross(frame.vy, up));
+    frame.vz = cross(frame.vx, frame.vy);
+
+    ispc::PanoramicCamera_set(getIE(),
+                              (const ispc::vec3f&)pos,
+                              (const ispc::LinearSpace3f&)frame,
+                              nearClip);
+  }
+
+  OSP_REGISTER_CAMERA(PanoramicCamera,panoramic);
+
+} // ::ospray
