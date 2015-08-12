@@ -51,9 +51,6 @@
 
 namespace ospray {
 
-  struct Camera;
-  struct Model;
-
   /*! \brief Implements the family of simple, primary-ray-only ray cast renderers 
 
     \detailed This simple renderer shoots only a single primary ray

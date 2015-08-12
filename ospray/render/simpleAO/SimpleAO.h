@@ -39,9 +39,6 @@ namespace ospray {
 
   using embree::TaskScheduler;
 
-  struct Camera;
-  struct Model;
-
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
     
     \detailed This renderer uses a set of 16 precomputed AO directions

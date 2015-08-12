@@ -43,8 +43,6 @@
 #include <vector>
 
 namespace ospray {
-  struct Camera;
-  struct Model;
 
   namespace obj {
     using embree::TaskScheduler;
@@ -59,8 +57,6 @@ namespace ospray {
 
       std::vector<void*> lightArray; // the 'IE's of the XXXLights
 
-      Model    *world;
-      Camera   *camera;
       Data     *lightData;
       
       virtual void commit();
