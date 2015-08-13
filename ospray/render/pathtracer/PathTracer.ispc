@@ -15,7 +15,11 @@
 // ======================================================================== //
 
 #include "PathTracer.ih"
-#include "Scene.ih"
+#include "ospray/camera/Camera.ih"
+
+#include "materials/Medium.ih"
+#include "materials/Material.ih"
+#include "samplers/PrecomputedSampler.ih"
 
 #define PDF_CULLING 0.0f 
 //#define USE_DGCOLOR
@@ -69,7 +73,6 @@ inline void extend_fast(LightPath& lp,
 vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              const vec2f &pixel, // normalized, i.e. in [0..1]
                              LightPath &lightPath, 
-                             const uniform Scene *uniform scene,
                              varying RandomTEA* uniform rng,
                              uint32 &numRays)
 {
@@ -88,10 +91,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       return L;
     
     /*! Traverse ray. */
-    DifferentialGeometry dg;
-    traceRay(scene->model,lightPath.ray);
-    // rtcIntersect(scene->accel,lightPath.ray);
-    postIntersect(scene,lightPath.ray,dg);
+    traceRay(self->super.model, lightPath.ray);
     numRays++;  
     
     const vec3f wo = neg(lightPath.ray.dir);
@@ -99,6 +99,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Environment shading when nothing hit. */
     if (noHit(lightPath.ray)) 
     {
+#if 0
       if ((bool)self->backplate & lightPath.unbent) {
         const int x = clamp((int)(pixel.x * self->backplate->size.x), 0, (int)self->backplate->size.x-1);
         const int y = clamp((int)(pixel.y * self->backplate->size.y), 0, (int)self->backplate->size.y-1);
@@ -112,9 +113,16 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           }      
         }
       }
+#endif
 
       return L;
     }
+
+    DifferentialGeometry dg;
+    postIntersect(self->super.model, dg, lightPath.ray,
+        DG_MATERIALID|
+        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
+        );
 
     /*! Shade surface. */
     uniform CompositedBRDF brdfs;
@@ -126,7 +134,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 #else
     foreach_unique(geomID in lightPath.ray.geomID) {
       uniform PathTraceMaterial* uniform m
-        = (uniform PathTraceMaterial*)(scene->model->geometry[geomID]->material);
+        = (uniform PathTraceMaterial*)(self->super.model->geometry[geomID]->material);
       print("shading %\n",m);
       if (m != NULL) m->shade(m,lightPath.ray, lightPath.lastMedium, dg, brdfs);
     }
@@ -137,7 +145,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Add light emitted by hit area light source. */
     if (!lightPath.ignoreVisibleLights) {
       foreach_unique(geomID in lightPath.ray.geomID) {
-        const uniform AreaLight* uniform l = scene->model->geometry[geomID]->light;
+        const uniform AreaLight* uniform l = self->super.model->geometry[geomID]->light;
         if (l != NULL)
           // L = add(L, mul(Lw, l->Le(l,dg,wo)));
           L = L + Lw * l->Le(l,dg,wo);
@@ -151,16 +159,16 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Direct lighting. Shoot shadow rays to all light sources. */
     if (useDirectLighting) 
     {
-      uniform int numAllLights = min(MAX_LIGHTS,scene->num_allLights);
-      for (uniform int i=0; i<numAllLights; i++) 
+      uniform int numLights = self->lights ? min(MAX_LIGHTS, self->numLights) : 0;
+      for (uniform int i = 0; i < numLights; i++) 
       {
-        uniform PTLight* uniform light = scene->allLights[i];
+        const uniform Light *uniform light = self->lights[i];
 
         /*! Either use precomputed samples for the light or sample light now. */
         PTLightSample ls; 
         ls.wi.v = make_vec3f(0.0f,0.0f,0.0f); ls.wi.pdf = 0.0f;
 
-        ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
+//XXX        ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
 
         /*! Ignore zero radiance or illumination from the back. */
         //if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING | dot(dg.Ns,ls.wi.v) <= 1e-8f) 
@@ -179,12 +187,12 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         Ray shadow_ray; 
         setRay(shadow_ray,dg.P,ls.wi.v,
                //dg.error*
-               self->inherited.epsilon,ls.tMax-
+               self->super.epsilon,ls.tMax-
                //dg.error*
-               self->inherited.epsilon);
+               self->super.epsilon);
         shadow_ray.time = lightPath.ray.time;
         
-        if (isOccluded(scene->model,shadow_ray))
+        if (isOccluded(self->super.model,shadow_ray))
           continue;
 
         L = add(L,mul(mul(Lw,ls.L),mul(brdf,rcp(ls.wi.pdf))));
@@ -226,7 +234,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Continue the path. */
     extend_fast(lightPath, 
                 dg.P,wi.v,//dg.error*
-                self->inherited.epsilon,inf,
+                self->super.epsilon,inf,
            c,(type & directLightingBRDFTypes) != NONE);
 
     Lw = mul(mul(Lw,c),rcp(wi.pdf));
@@ -239,38 +247,15 @@ uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L);
 typedef uniform PTEnvironmentLight *uniform EnvLightPtr;
 typedef uniform PTLight *uniform LightPtr;
 
-uniform Scene *uniform createScene()
-{
-  uniform Scene *uniform scene = uniform new uniform Scene;
-  scene->allLights = NULL;
-  scene->num_allLights = 0;
-  scene->envLights = NULL;
-  scene->num_envLights = 0;
-
-#if 1
-  // we don't have lights, yet, so use a hardcoded envlight for now!
-  print("#osp:PT: adding hard-coded envlight for now!\n");
-  scene->envLights = uniform new uniform EnvLightPtr[1];
-  scene->envLights[0] = PTAmbientLight__New(make_vec3f(.8f));
-  scene->num_envLights = 1;
-
-  scene->allLights = uniform new uniform LightPtr[1];
-  scene->allLights[0] = (uniform LightPtr)scene->envLights[0];
-  scene->num_allLights = 1;
-#endif
-
-  return scene;
-}
-
 inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
                                     const uint32 ix, 
                                     const uint32 iy,
                                     uint32 &numRays)
 {
-  uniform FrameBuffer *uniform fb = self->inherited.fb;
+  uniform FrameBuffer *uniform fb = self->super.fb;
 
   vec3f L = make_vec3f(0.f);
-  uniform Camera *uniform camera = self->inherited.camera;
+  uniform Camera *uniform camera = self->super.camera;
   ScreenSample screenSample;
 
   screenSample.sampleID.x = ix;
@@ -279,7 +264,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, fb->size.x*iy+ix, fb->accumID);
-  const int spp = max(1, self->inherited.spp);
+  const int spp = max(1, self->super.spp);
   
   for (uniform int s=0; s < spp; s++) {
     screenSample.sampleID.z = fb->accumID*spp + s;
@@ -297,8 +282,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
     LightPath lightPath;
     init_LightPath(lightPath, screenSample.ray);
     
-    L = L + PathTraceIntegrator_Li(self, cameraSample.screen, lightPath,
-                                   self->scene, rng, numRays);
+    L = L + PathTraceIntegrator_Li(self, cameraSample.screen, lightPath, rng, numRays);
   }
 
   screenSample.alpha = 1.f;
@@ -345,43 +329,48 @@ void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &til
   pt->numRays += reduce_add(numRays);
 }
 
-void PathTracer__Constructor(void *uniform cppE,
-                             uniform PathTracer* uniform self,
-                             const uniform int& maxDepth, 
-                             const uniform float& minContribution,
-                             uniform Image* uniform backplate)
-{
-  Renderer_Constructor(&self->inherited,cppE);
-  self->inherited.renderTile   = PathTracer_renderTile;
-  self->inherited.beginFrame   = PathTracer_beginFrame;
-
-  self->maxDepth = maxDepth;
-
-  self->minContribution = minContribution;
-  self->backplate = backplate;
-}
-
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void* uniform PathTracer_create(void *uniform cppE,
-                                       const uniform int32& maxDepth, 
-                                       const uniform float& minContribution,
-                                       void* uniform backplate)
+export void PathTracer_set(void *uniform _self,
+                           const uniform int32 maxDepth,
+                           const uniform float minContribution,
+                           void *uniform backplate,
+                           void **uniform lights,
+                           const uniform uint32 numLights)
+{
+  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
+
+  self->maxDepth = maxDepth;
+  self->minContribution = minContribution;
+  self->backplate = (uniform Image *uniform)backplate;
+  self->lights = (const uniform Light *uniform *uniform)lights;
+  self->numLights = numLights;
+}
+
+export void* uniform PathTracer_create(void *uniform cppE)
 {
   uniform PathTracer *uniform self = uniform new uniform PathTracer;
-  PathTracer__Constructor(cppE,self,maxDepth,minContribution,
-                          (uniform Image* uniform) backplate);
+  Renderer_Constructor(&self->super,cppE);
+  self->super.renderTile   = PathTracer_renderTile;
+  self->super.beginFrame   = PathTracer_beginFrame;
+
+  PathTracer_set(self, 20, 0.01f, NULL, NULL, 0);
+
+#if 0
+  // we don't have lights, yet, so use a hardcoded envlight for now!
+  print("#osp:PT: adding hard-coded envlight for now!\n");
+  scene->envLights = uniform new uniform EnvLightPtr[1];
+  scene->envLights[0] = PTAmbientLight__New(make_vec3f(.8f));
+  scene->num_envLights = 1;
+
+  scene->allLights = uniform new uniform LightPtr[1];
+  scene->allLights[0] = (uniform LightPtr)scene->envLights[0];
+  scene->num_allLights = 1;
+#endif
 
   precomputeZOrder();
   
-  self->scene = createScene();
   return self;
-}
-
-export void PathTracer_setModel(void *uniform _self)
-{
-  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
-  self->scene->model = self->inherited.model;
 }
