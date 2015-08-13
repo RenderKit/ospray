@@ -18,12 +18,8 @@
 #include "OBJRenderer.h"
 #include "OBJMaterial.h"
 // ospray
-#include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
-#include "ospray/camera/Camera.h"
 #include "ospray/lights/Light.h"
-//embree
-#include "embree2/rtcore.h"
 //sys
 #include <vector>
 // ispc exports
@@ -49,7 +45,7 @@ namespace ospray {
       vec3f bgColor;
       bgColor = getParam3f("bgColor", vec3f(1.f));
 
-      bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
+      const bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
 
       ispc::OBJRenderer_set(getIE(),
                             (ispc::vec3f&)bgColor,

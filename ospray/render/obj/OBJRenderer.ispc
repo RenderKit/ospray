@@ -16,7 +16,6 @@
 
 // ospray 
 #include "ospray/fb/FrameBuffer.ih"
-#include "ospray/camera/PerspectiveCamera.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/texture/Texture2D.ih"
@@ -32,6 +31,7 @@ struct OBJRenderer {
 
   const uniform Light *uniform *uniform lights;
   uint32        numLights;
+
   vec3f         bgColor;
   bool          shadowsEnabled;
 };
@@ -209,19 +209,11 @@ void OBJRenderer_renderSample(uniform Renderer *uniform _self,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void *uniform OBJRenderer_create(void *uniform cppE)
-{
-  uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
-  Renderer_Constructor(&self->super,cppE);
-  self->super.renderSample = OBJRenderer_renderSample;
-  return self;
-}
-
 export void OBJRenderer_set(void *uniform _self,
                             const uniform vec3f &bgColor,
-                            const uniform bool &shadowsEnabled,
+                            const uniform bool shadowsEnabled,
                             void **uniform lights,
-                            uniform int32  numLights)
+                            const uniform uint32 numLights)
 {
   uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
 
@@ -229,4 +221,14 @@ export void OBJRenderer_set(void *uniform _self,
   self->shadowsEnabled = shadowsEnabled;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
+}
+
+export void *uniform OBJRenderer_create(void *uniform cppE)
+{
+  uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
+  Renderer_Constructor(&self->super,cppE);
+  self->super.renderSample = OBJRenderer_renderSample;
+  OBJRenderer_set(self, make_vec3f(1.f), true, NULL, 0);
+
+  return self;
 }
