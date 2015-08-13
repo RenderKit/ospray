@@ -17,8 +17,10 @@
 
 /* This is a small example tutorial how to use OSPRay in an application.
  *
- * Build it in the build_directory with
+ * On Linux build it in the build_directory with
  *   g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common  ./libospray.so -o ospTutorial
+ * On Windows build it in the build_directory\$Configuration with
+ *   cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\ospray\embree\common ospray.lib
  */
 
 #include "ospray/ospray.h"
@@ -30,7 +32,7 @@ void writePPM(const char *fileName,
 {
   FILE *file = fopen(fileName, "wb");
   fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-  unsigned char out[3*sizeX];
+  unsigned char *out = (unsigned char *)alloca(3*sizeX);
   for (int y = 0; y < sizeY; y++) {
     const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
     for (int x = 0; x < sizeX; x++) {
@@ -38,7 +40,7 @@ void writePPM(const char *fileName,
       out[3*x + 1] = in[4*x + 1];
       out[3*x + 2] = in[4*x +2 ];
     }
-    fwrite(&out, 3*sizeX, sizeof(char), file);
+    fwrite(out, 3*sizeX, sizeof(char), file);
   }
   fprintf(file, "\n");
   fclose(file);
