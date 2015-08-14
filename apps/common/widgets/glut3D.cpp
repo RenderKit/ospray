@@ -51,7 +51,7 @@ namespace ospray {
         return;
       }
       fprintf(file,"P6\n%i %i\n255\n",sizeX,sizeY);
-      unsigned char *out = new unsigned char[3 * sizeX];
+      unsigned char *out = (unsigned char *)alloca(3*sizeX);
       for (int y=0;y<sizeY;y++) {
         const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
         for (int x=0;x<sizeX;x++) {
@@ -59,9 +59,8 @@ namespace ospray {
           out[3*x+1] = in[4*x+1];
           out[3*x+2] = in[4*x+2];
         }
-        fwrite(&out,3*sizeX,sizeof(char),file);
+        fwrite(out, 3*sizeX, sizeof(char), file);
       }
-      delete[] out;
       fprintf(file,"\n");
       fclose(file);
       std::cout << "#osp:glut3D: saved framebuffer to file " << fileName << std::endl;
