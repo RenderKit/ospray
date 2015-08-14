@@ -113,9 +113,12 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           }      
         }
       }
-#endif
 
       return L;
+#else
+      // we don't have env lights yet, so use a hardcoded envlight for now!
+      return L + Lw * 0.8f;
+#endif
     }
 
     DifferentialGeometry dg;
@@ -165,37 +168,34 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         const uniform Light *uniform light = self->lights[i];
 
         /*! Either use precomputed samples for the light or sample light now. */
-        PTLightSample ls; 
-        ls.wi.v = make_vec3f(0.0f,0.0f,0.0f); ls.wi.pdf = 0.0f;
-
-//XXX        ls.L = light->sample(light, dg, ls.wi, ls.tMax, RandomTEA__getFloats(rng));
+        LightSample ls = light->sample(light, dg, RandomTEA__getFloats(rng));
 
         /*! Ignore zero radiance or illumination from the back. */
-        //if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING | dot(dg.Ns,ls.wi.v) <= 1e-8f) 
-        if (reduce_max(ls.L) <= 0.0f | ls.wi.pdf <= PDF_CULLING) 
+        if (reduce_max(ls.radiance) <= 0.0f | ls.pdf <= PDF_CULLING)  //| dot(dg.Ns, ls.direction) <= 1e-8f) 
           continue;
 
         /*! Evaluate BRDF */
-        vec3f brdf = CompositedBRDF__eval(&brdfs,wo,dg,ls.wi.v,directLightingBRDFTypes);
+        vec3f brdf = CompositedBRDF__eval(&brdfs, wo, dg, ls.direction, directLightingBRDFTypes);
 #ifdef USE_DGCOLOR
         brdf = brdf * make_vec3f(dg.color);
 #endif
         if (reduce_max(brdf) <= 0.0f)
           continue;
+
         /*! Test for shadows. */
         numRays++;
         Ray shadow_ray; 
-        setRay(shadow_ray,dg.P,ls.wi.v,
+        setRay(shadow_ray, dg.P, ls.direction,
                //dg.error*
-               self->super.epsilon,ls.tMax-
+               self->super.epsilon, ls.distance-
                //dg.error*
                self->super.epsilon);
         shadow_ray.time = lightPath.ray.time;
         
-        if (isOccluded(self->super.model,shadow_ray))
+        if (isOccluded(self->super.model, shadow_ray))
           continue;
 
-        L = add(L,mul(mul(Lw,ls.L),mul(brdf,rcp(ls.wi.pdf))));
+        L = L + Lw * ls.radiance * brdf * rcp(ls.pdf);
       }
     }
 
@@ -357,18 +357,6 @@ export void* uniform PathTracer_create(void *uniform cppE)
   self->super.beginFrame   = PathTracer_beginFrame;
 
   PathTracer_set(self, 20, 0.01f, NULL, NULL, 0);
-
-#if 0
-  // we don't have lights, yet, so use a hardcoded envlight for now!
-  print("#osp:PT: adding hard-coded envlight for now!\n");
-  scene->envLights = uniform new uniform EnvLightPtr[1];
-  scene->envLights[0] = PTAmbientLight__New(make_vec3f(.8f));
-  scene->num_envLights = 1;
-
-  scene->allLights = uniform new uniform LightPtr[1];
-  scene->allLights[0] = (uniform LightPtr)scene->envLights[0];
-  scene->num_allLights = 1;
-#endif
 
   precomputeZOrder();
   

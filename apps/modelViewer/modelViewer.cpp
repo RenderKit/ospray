@@ -811,11 +811,20 @@ namespace ospray {
     ospSetString(ospSpot, "name", "spot_test");
     ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
     ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
-    ospSet3f(ospSpot, "color", 1.f, 1.f, 1.f);
+    ospSet3f(ospSpot, "color", 1.f, 1.f, .1f);
     ospSet1f(ospSpot, "intensity", 7.f);
     ospSet1f(ospSpot, "halfAngle", 15.f);
     ospCommit(ospSpot);
     lights.push_back(ospSpot);
+    //point light
+    cout << "#ospModelViewer: Adding a hard coded pointlight for test." << endl;
+    OSPLight ospPoint = ospNewLight(ospRenderer, "PointLight");
+    ospSetString(ospPoint, "name", "point_test");
+    ospSet3f(ospPoint, "position", -5.f, 20.f, 10.f);
+    ospSet3f(ospPoint, "color", .1f, 1.f, 1.f);
+    ospSet1f(ospPoint, "intensity", 200.f);
+    ospCommit(ospPoint);
+    lights.push_back(ospPoint);
 #endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);

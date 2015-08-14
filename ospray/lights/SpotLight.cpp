@@ -29,7 +29,6 @@ namespace ospray {
     , color(1.f)
     , intensity(1.f)
     , halfAngle(90.f)
-    , range(inf)
   {
     ispcEquivalent = ispc::SpotLight_create(this);
   }
@@ -41,7 +40,6 @@ namespace ospray {
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
     halfAngle = getParam1f("halfAngle", 90.f);
-    range     = getParam1f("range", inf);
 
     vec3f power = color * intensity;
     
@@ -49,8 +47,7 @@ namespace ospray {
                         (ispc::vec3f&)position,
                         (ispc::vec3f&)direction,
                         (ispc::vec3f&)power,
-                        cos(halfAngle * (M_PI / 180.0f)),
-                        range);
+                        cos(halfAngle * (M_PI / 180.0f)));
   }
 
   OSP_REGISTER_LIGHT(SpotLight, SpotLight);

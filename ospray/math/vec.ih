@@ -68,6 +68,13 @@ __define_ispc_vector4(float,f);
     ret.y = y;                                                  \
     return ret;                                                 \
   }                                                             \
+  inline UV vec2##ABB make_vec2##ABB(const UV ITYPE x)          \
+  {                                                             \
+    UV vec2##ABB ret;                                           \
+    ret.x = x;                                                  \
+    ret.y = x;                                                  \
+    return ret;                                                 \
+  }                                                             \
   
 /*! defines all constructors "make_vec3[T]" and "make_vec3[T]a" for
   3-vector type */

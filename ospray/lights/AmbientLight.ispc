@@ -27,14 +27,18 @@ struct AmbientLight {
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying vec3f AmbientLight_computeRadiance(const uniform Light *uniform _self, 
-                                           const varying vec3f &coordinates, 
-                                           varying vec3f &direction, 
-                                           varying float &distance) 
+varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
+                                        const varying DifferentialGeometry &dg,
+                                        const varying vec2f &)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
+  LightSample sample;
+
   // since it's an ambient light, postion and distance and direction don't matter
-  return self->radiance;
+  sample.radiance = self->radiance;
+  sample.pdf = 0.f; //hmm?
+
+  return sample;
 }
 
 
@@ -44,7 +48,7 @@ void AmbientLight_Constructor(uniform AmbientLight *uniform self,
 {
   Light_Constructor(&self->super, cppEquivalent);
   self->radiance = radiance;
-  self->super.computeRadiance = AmbientLight_computeRadiance;
+  self->super.sample = AmbientLight_sample;
 }
 
 

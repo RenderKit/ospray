@@ -39,7 +39,6 @@ namespace ospray {
       float intensity;        //!< Amount of light emitted
       float halfAngle;        //!< Half angle of spot light, in degree. If angle from intersection to light is greater than this, the light does not influence shading for that intersection
 // TODO     float angularDropOff;   //!< This gives the drop off of light intensity as angle between intersection point and light position increases
-      float range;            //!< Max influence range of the SpotLight
   };
 
 }

@@ -18,49 +18,49 @@
 #include "ospray/math/vec.ih"
 
 struct PointLight {
-  uniform Light super;    //!< inherited light fields
+  Light super;    //!< inherited light fields
 
-  uniform vec3f position; //!< light position
-  uniform vec3f power;    //!< RGB color and intensity of light
-  uniform float range;    //!< maximum range at which the light will have an effect
+  vec3f position; //!< light position
+  vec3f power;    //!< RGB color and intensity of light
 };
 
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying vec3f PointLight_computeRadiance(const uniform Light *uniform _self,
-                                         const varying vec3f &coordinates,
-                                         varying vec3f &direction,
-                                         varying float &distance)
+varying LightSample PointLight_sample(const uniform Light *uniform _self,
+                                      const varying DifferentialGeometry &dg,
+                                      const varying vec2f &)
 {
-    const PointLight *uniform self = (PointLight *uniform)_self;
+  const PointLight *uniform self = (PointLight *uniform)_self;
+  LightSample sample;
 
-    // extant light vector from the hit point
-    const vec3f L = self->position - coordinates;
+  // extant light vector from the hit point
+  const vec3f dir = self->position - dg.P;
+  const float dist = length(dir);
 
-    distance = length(L);
+  // normalized light vector
+  sample.direction = dir / dist;
+  sample.distance = dist;
 
-    // normalize light vector
-    direction = L / distance;
+  // we always take this sample
+  sample.pdf = 1.f;
 
-    // TODO: account for range?
+  // convert from power to radiance by attenuting by distance^2
+  sample.radiance = self->power / (dist * dist);
 
-    // convert from power to radiance by attenuting by distance^2
-    return self->power / (distance * distance);
+  return sample;
 }
 
 void PointLight_Constructor(uniform PointLight *uniform self,
                             void *uniform cppEquivalent,
                             const uniform vec3f &position,
-                            const uniform vec3f &power,
-                            const uniform float range)
+                            const uniform vec3f &power)
 {
   Light_Constructor(&self->super, cppEquivalent);
   self->position = position;
   self->power    = power;
-  self->range    = range;
-  self->super.computeRadiance = PointLight_computeRadiance;
+  self->super.sample = PointLight_sample;
 }
 
 
@@ -71,18 +71,16 @@ void PointLight_Constructor(uniform PointLight *uniform self,
 export void *uniform PointLight_create(void *uniform cppEquivalent)
 {
   uniform PointLight *uniform self = uniform new uniform PointLight;
-  PointLight_Constructor(self, cppEquivalent, make_vec3f(0.f), make_vec3f(1.f), inf);
+  PointLight_Constructor(self, cppEquivalent, make_vec3f(0.f), make_vec3f(1.f));
   return self;
 }
 
 //! Set the parameters of an ispc-side PointLight object
 export void PointLight_set(void *uniform _self,
                            const uniform vec3f &position,
-                           const uniform vec3f &power,
-                           const uniform float range)
+                           const uniform vec3f &power)
 {
   uniform PointLight *uniform self = (uniform PointLight *uniform)_self;
   self->position = position;
   self->power = power;
-  self->range = range;
 }
