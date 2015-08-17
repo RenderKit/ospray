@@ -41,7 +41,8 @@ inline vec3f uniform_Lambertian__sample(const uniform BRDF* uniform _this,
                                         const vec2f &s)  
 {
   const uniform Lambertian* uniform this = (const uniform Lambertian* uniform) _this;
-  wi = cosineSampleHemisphere(s.x,s.y,dg.Ns);
+  wi.v = cosineSampleHemisphere(dg.Ns, s);
+  wi.pdf = cosineSampleHemispherePDF(wi.v);
   return uniform_Lambertian__eval(&this->base, wo, dg, wi.v);
 }
 
@@ -73,7 +74,8 @@ inline vec3f varying_Lambertian__sample(const uniform BRDF* uniform _this,
                                         const vec2f &s)  
 {
   const varying Lambertian* uniform this = (const varying Lambertian* uniform) _this;
-  wi = cosineSampleHemisphere(s.x,s.y,dg.Ns);
+  wi.v = cosineSampleHemisphere(dg.Ns, s);
+  wi .pdf = cosineSampleHemispherePDF(wi.v);
   return varying_Lambertian__eval(&this->base, wo, dg, wi.v);
 }
 
