@@ -23,6 +23,7 @@
 // good reference is "Total Compendium" by Philip Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
 
 #include "ospray/math/vec.ih"
+#include "ospray/math/LinearSpace.ih"
 
 
 inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - f * f)); }

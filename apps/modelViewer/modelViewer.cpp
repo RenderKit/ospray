@@ -825,6 +825,13 @@ namespace ospray {
     ospSet1f(ospPoint, "intensity", 200.f);
     ospCommit(ospPoint);
     lights.push_back(ospPoint);
+    //ambient light
+    cout << "#ospModelViewer: Adding a hard coded ambientlight for test." << endl;
+    OSPLight ospAmbient = ospNewLight(ospRenderer, "AmbientLight");
+    ospSetString(ospAmbient, "name", "ambient_test");
+    ospSet1f(ospAmbient, "intensity", 0.8f);
+    ospCommit(ospAmbient);
+    lights.push_back(ospAmbient);
 #endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);

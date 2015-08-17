@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/vec.ih"
+#include "ospray/math/sampling.ih"
 
 struct AmbientLight {
   uniform Light super;      //!< inherited light fields
@@ -29,16 +29,24 @@ struct AmbientLight {
 
 varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
                                         const varying DifferentialGeometry &dg,
-                                        const varying vec2f &)
+                                        const varying vec2f &s)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
   LightSample sample;
 
-  // since it's an ambient light, postion and distance and direction don't matter
+  sample.direction = cosineSampleHemisphere(dg.Ns, s);
+  sample.distance = inf;
   sample.radiance = self->radiance;
-  sample.pdf = 0.f; //hmm?
+  sample.pdf = 1.f; //hmm?
 
   return sample;
+}
+
+varying vec3f AmbientLight_evalEnv(const uniform Light *uniform _self,
+                                   const varying vec3f &)
+{
+  uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
+  return self->radiance;
 }
 
 
@@ -49,6 +57,7 @@ void AmbientLight_Constructor(uniform AmbientLight *uniform self,
   Light_Constructor(&self->super, cppEquivalent);
   self->radiance = radiance;
   self->super.sample = AmbientLight_sample;
+  self->super.evalEnv = AmbientLight_evalEnv;
 }
 
 

@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/vec.ih"
 
 struct PointLight {
   Light super;    //!< inherited light fields

@@ -82,6 +82,7 @@ SET(OSPRAY_SOURCES
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
 
+  lights/Light.ispc
   lights/Light.cpp
   lights/AmbientLight.ispc
   lights/AmbientLight.cpp

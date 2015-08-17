@@ -97,28 +97,18 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     const vec3f wo = neg(lightPath.ray.dir);
 
     /*! Environment shading when nothing hit. */
-    if (noHit(lightPath.ray)) 
-    {
-#if 0
+    if (noHit(lightPath.ray)) {
       if ((bool)self->backplate & lightPath.unbent) {
         const int x = clamp((int)(pixel.x * self->backplate->size.x), 0, (int)self->backplate->size.x-1);
         const int y = clamp((int)(pixel.y * self->backplate->size.y), 0, (int)self->backplate->size.y-1);
         L = self->backplate->get_nearest_varying(self->backplate,x,y);
-      }
-      else {
-        if (!lightPath.ignoreVisibleLights) {
-          for (uniform int i=0; i<scene->num_envLights; i++) {
-            uniform const PTEnvironmentLight *uniform l = scene->envLights[i]; 
-            L = add(L, mul(Lw,l->Le(l,wo)));
-          }      
-        }
-      }
+      } else if (!lightPath.ignoreVisibleLights)
+          for (uniform int i = 0; i < self->numLights; i++) { // TODO: self->num_envLights
+            const uniform Light *uniform l = self->lights[i];
+            L = L + Lw * l->evalEnv(l, wo);
+          }
 
       return L;
-#else
-      // we don't have env lights yet, so use a hardcoded envlight for now!
-      return L + Lw * 0.8f;
-#endif
     }
 
     DifferentialGeometry dg;

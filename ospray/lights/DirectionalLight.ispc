@@ -15,7 +15,6 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/vec.ih"
 
 struct DirectionalLight {
   uniform Light super;      //!< inherited light fields
