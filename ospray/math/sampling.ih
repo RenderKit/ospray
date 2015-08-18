@@ -23,12 +23,11 @@
 // good reference is "Total Compendium" by Philip Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
 
 #include "ospray/math/vec.ih"
-#include "ospray/math/LinearSpace.ih"
 
 
 inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - f * f)); }
 
-/// cosine-weighted sampling of hemisphere oriented along the +z-axis (or N)
+/// cosine-weighted sampling of hemisphere oriented along the +z-axis
 ////////////////////////////////////////////////////////////////////////////////
 
 inline vec3f cosineSampleHemisphere(const vec2f s)
@@ -39,11 +38,6 @@ inline vec3f cosineSampleHemisphere(const vec2f s)
   return make_vec3f(cos(phi) * sinTheta,
                     sin(phi) * sinTheta,
                     cosTheta);
-}
-
-inline vec3f cosineSampleHemisphere(const vec3f &N, const vec2f &s)
-{
-  return frame(N) * cosineSampleHemisphere(s);
 }
 
 inline float cosineSampleHemispherePDF(const vec3f &dir)
@@ -65,18 +59,13 @@ inline vec3f powerCosineSampleHemisphere(const float n, const vec2f &s)
                     cosTheta);
 }
 
-inline vec3f powerCosineSampleHemisphere(const float n, const vec3f &N, const vec2f &s)
-{
-  return frame(N) * powerCosineSampleHemisphere(n, s);
-}
-
 inline float powerCosineSampleHemispherePDF(const vec3f dir, const float n) // TODO: order of arguments
 {
   return (n + 1.0f) * (0.5f / M_PI) * pow(dir.z, n);
 }
 
 
-/// uniform sampling of cone of directions oriented along the +z-axis (or N)
+/// uniform sampling of cone of directions oriented along the +z-axis
 ////////////////////////////////////////////////////////////////////////////////
 
 inline vec3f uniformSampleCone(const float angle, const vec2f &s)
@@ -87,11 +76,6 @@ inline vec3f uniformSampleCone(const float angle, const vec2f &s)
   return make_vec3f(cosf(phi) * sinTheta,
                     sinf(phi) * sinTheta,
                     cosTheta);
-}
-
-inline vec3f uniformSampleCone(const float angle, const vec3f &N, const vec2f &s)
-{
-  return frame(N) * uniformSampleCone(angle, s);
 }
 
 inline float uniformSampleConePDF(const float angle)

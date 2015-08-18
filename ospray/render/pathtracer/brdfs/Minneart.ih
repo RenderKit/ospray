@@ -50,8 +50,9 @@ vec3f uniform_Minneart__sample(const uniform BRDF* uniform _this,
                                const vec2f &s)  
 {
   const uniform Minneart* uniform this = (const uniform Minneart* uniform) _this;
-  wi.v = cosineSampleHemisphere(dg.Ns, s);
-  wi.pdf = cosineSampleHemispherePDF(wi.v);
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
   return uniform_Minneart__eval(_this, wo, dg, wi.v);
 }
 
@@ -86,8 +87,9 @@ vec3f varying_Minneart__sample(const uniform BRDF* uniform _this,
                                const vec2f &s)  
 {
   const varying Minneart* uniform this = (const varying Minneart* uniform) _this;
-  wi.v = cosineSampleHemisphere(dg.Ns, s);
-  wi.pdf = cosineSampleHemispherePDF(wi.v);
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
   return varying_Minneart__eval(_this, wo, dg, wi.v);
 }
 

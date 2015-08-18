@@ -16,6 +16,7 @@
 
 #include "Light.ih"
 #include "ospray/math/sampling.ih"
+#include "ospray/math/LinearSpace.ih"
 
 struct AmbientLight {
   uniform Light super;      //!< inherited light fields
@@ -34,10 +35,11 @@ varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
   LightSample sample;
 
-  sample.direction = cosineSampleHemisphere(dg.Ns, s);
+  const vec3f localDir = cosineSampleHemisphere(s);
+  sample.direction = frame(dg.Ns) * localDir;
+  sample.pdf = cosineSampleHemispherePDF(localDir);
   sample.distance = inf;
   sample.radiance = self->radiance;
-  sample.pdf = 1.f; //hmm?
 
   return sample;
 }
