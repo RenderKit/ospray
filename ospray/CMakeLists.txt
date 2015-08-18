@@ -92,6 +92,8 @@ SET(OSPRAY_SOURCES
   lights/PointLight.ispc
   lights/SpotLight.cpp
   lights/SpotLight.ispc
+  lights/QuadLight.cpp
+  lights/QuadLight.ispc
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc

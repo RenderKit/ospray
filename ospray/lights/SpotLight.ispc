@@ -52,7 +52,7 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
   const float cosAngle = -dot(self->direction, sample.direction);
   const float angularAttenuation = clamp((cosAngle - self->cosAngleMax) * rcp(self->cosAngleMin - self->cosAngleMax));
 
-  // convert from power to radiance by attenuting by distance^2; attentuate by angle and clip to the angular limit
+  // convert from power to radiance by attenuting by distance^2; attentuate by angle
   sample.radiance = self->power * rcp(dist * dist) * angularAttenuation;
 
   return sample;

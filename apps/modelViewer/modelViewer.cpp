@@ -811,7 +811,7 @@ namespace ospray {
     ospSetString(ospSpot, "name", "spot_test");
     ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
     ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
-    ospSet3f(ospSpot, "color", 1.f, 1.f, .1f);
+    ospSet3f(ospSpot, "color", 1.f, 1.f, .5f);
     ospSet1f(ospSpot, "intensity", 17.f);
     ospSet1f(ospSpot, "openingAngle", 50.f);
     ospSet1f(ospSpot, "penumbraAngle", 2.f);
@@ -822,7 +822,7 @@ namespace ospray {
     OSPLight ospPoint = ospNewLight(ospRenderer, "PointLight");
     ospSetString(ospPoint, "name", "point_test");
     ospSet3f(ospPoint, "position", -5.f, 20.f, 10.f);
-    ospSet3f(ospPoint, "color", .1f, 1.f, 1.f);
+    ospSet3f(ospPoint, "color", .5f, 1.f, 1.f);
     ospSet1f(ospPoint, "intensity", 200.f);
     ospCommit(ospPoint);
     lights.push_back(ospPoint);
@@ -833,6 +833,17 @@ namespace ospray {
     ospSet1f(ospAmbient, "intensity", 0.2f);
     ospCommit(ospAmbient);
     lights.push_back(ospAmbient);
+    //quad light
+    cout << "#ospModelViewer: Adding a hard coded quadlight for test." << endl;
+    OSPLight ospQuad = ospNewLight(ospRenderer, "QuadLight");
+    ospSetString(ospQuad, "name", "quad_test");
+    ospSet3f(ospQuad, "position", 1.f, 3.5f, 0.f);
+    ospSet3f(ospQuad, "edge1", 0.f, 0.f, 0.3f);
+    ospSet3f(ospQuad, "edge2", 2.f, 0.f, 0.f);
+    ospSet3f(ospQuad, "color", .5f, 1.f, .5f);
+    ospSet1f(ospQuad, "intensity", 45.f);
+    ospCommit(ospQuad);
+    lights.push_back(ospQuad);
 #endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);
