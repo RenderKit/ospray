@@ -19,9 +19,9 @@
 #include "ospray/math/LinearSpace.ih"
 
 struct AmbientLight {
-  uniform Light super;      //!< inherited light fields
+  Light super;      //!< inherited light fields
 
-  uniform vec3f radiance;   //!< RGB color and intensity of light
+  vec3f radiance;   //!< RGB color and intensity of light
 };
 
 

@@ -46,7 +46,7 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
   sample.pdf = 1.f;
 
   // convert from power to radiance by attenuting by distance^2
-  sample.radiance = self->power / (dist * dist);
+  sample.radiance = self->power * rcp(dist * dist);
 
   return sample;
 }

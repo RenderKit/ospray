@@ -812,8 +812,9 @@ namespace ospray {
     ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
     ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
     ospSet3f(ospSpot, "color", 1.f, 1.f, .1f);
-    ospSet1f(ospSpot, "intensity", 7.f);
-    ospSet1f(ospSpot, "halfAngle", 15.f);
+    ospSet1f(ospSpot, "intensity", 17.f);
+    ospSet1f(ospSpot, "openingAngle", 50.f);
+    ospSet1f(ospSpot, "penumbraAngle", 2.f);
     ospCommit(ospSpot);
     lights.push_back(ospSpot);
     //point light
@@ -829,7 +830,7 @@ namespace ospray {
     cout << "#ospModelViewer: Adding a hard coded ambientlight for test." << endl;
     OSPLight ospAmbient = ospNewLight(ospRenderer, "AmbientLight");
     ospSetString(ospAmbient, "name", "ambient_test");
-    ospSet1f(ospAmbient, "intensity", 0.8f);
+    ospSet1f(ospAmbient, "intensity", 0.2f);
     ospCommit(ospAmbient);
     lights.push_back(ospAmbient);
 #endif

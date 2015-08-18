@@ -22,13 +22,16 @@
 #  include <math.h> // M_PI
 #endif
 
+
 namespace ospray {
+
   SpotLight::SpotLight()
     : position(0.f)
     , direction(0.f, 0.f, 1.f)
     , color(1.f)
     , intensity(1.f)
-    , halfAngle(90.f)
+    , openingAngle(180.f)
+    , penumbraAngle(5.f)
   {
     ispcEquivalent = ispc::SpotLight_create(this);
   }
@@ -39,15 +42,23 @@ namespace ospray {
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
-    halfAngle = getParam1f("halfAngle", 90.f);
+    openingAngle = getParam1f("openingAngle", 2.0f * getParam1f("halfAngle"/*deprecated*/, 90.f));
+    penumbraAngle = getParam1f("penumbraAngle", 5.f);
 
-    vec3f power = color * intensity;
+    // check ranges and pre-compute parameters
+    const vec3f power = color * intensity;
+    direction = normalize(direction);
+    openingAngle = clamp(openingAngle, 0.f, 180.f);
+    penumbraAngle = clamp(penumbraAngle, 0.001f, 0.5f*openingAngle);
+    const float cosAngleMax = cos(deg2rad(0.5f*openingAngle));
+    const float cosAngleMin = cos(deg2rad(0.5f*openingAngle - penumbraAngle));
     
     ispc::SpotLight_set(getIE(),
                         (ispc::vec3f&)position,
                         (ispc::vec3f&)direction,
                         (ispc::vec3f&)power,
-                        cos(halfAngle * (M_PI / 180.0f)));
+                        cosAngleMax,
+                        cosAngleMin);
   }
 
   OSP_REGISTER_LIGHT(SpotLight, SpotLight);

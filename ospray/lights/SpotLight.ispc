@@ -17,12 +17,13 @@
 #include "Light.ih"
 
 struct SpotLight {
-  uniform Light super;            //!< inherited light fields
+  Light super;            //!< inherited light fields
 
-  uniform vec3f position;         //!< Position of the SpotLight
-  uniform vec3f direction;        //!< Direction that the SpotLight is emitting
-  uniform vec3f power;            //!< RGB color and intensity of the SpotLight
-  uniform float cosLimit;         //!< Angular limit of the spot in an easier to use form: cosine of the half angle in radians.
+  vec3f position;         //!< Position of the SpotLight
+  vec3f direction;        //!< Direction that the SpotLight is emitting; normalized
+  vec3f power;            //!< RGB color and intensity of the SpotLight
+  float cosAngleMax;      //!< Angular limit of the spot in an easier to use form: cosine of the half angle in radians
+  float cosAngleMin;      //!< Border of the penumbra area of the spot in an easier to use form; larger than cosAngleMax
 };
 
 
@@ -49,58 +50,48 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
 
   // cosine of the negated light direction and light vector.
   const float cosAngle = -dot(self->direction, sample.direction);
-
-  // TODO Angular attenuation factor.
-  const float angularAttenuation = (cosAngle - self->cosLimit) / (1.f - self->cosLimit);
+  const float angularAttenuation = clamp((cosAngle - self->cosAngleMax) * rcp(self->cosAngleMin - self->cosAngleMax));
 
   // convert from power to radiance by attenuting by distance^2; attentuate by angle and clip to the angular limit
-  sample.radiance = cosAngle > self->cosLimit ? self->power / (dist * dist) * angularAttenuation : make_vec3f(0.f);
+  sample.radiance = self->power * rcp(dist * dist) * angularAttenuation;
 
   return sample;
-}
-
-void SpotLight_Constructor(uniform SpotLight *uniform self,
-                                  void *uniform cppEquivalent,
-                                  const uniform vec3f &position,
-                                  const uniform vec3f &direction,
-                                  const uniform vec3f &power,
-                                  const uniform float cosLimit)
-{
-  Light_Constructor(&self->super, cppEquivalent);
-  self->position     = position;
-  self->direction    = direction;
-  self->power        = power;
-  self->cosLimit     = cosLimit;
-  self->super.sample = SpotLight_sample;
 }
 
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Create an ispc-side SpotLight object
-export void *uniform SpotLight_create(void *uniform cppEquivalent)
-{
-  uniform SpotLight *uniform self = uniform new uniform SpotLight;
-  SpotLight_Constructor(self,
-                        cppEquivalent,
-                        make_vec3f(0.f),
-                        make_vec3f(0.f, 0.f, 1.f),
-                        make_vec3f(1.f),
-                        0.f);
-  return self;
-}
-
 //! Set the parameters of an ispc-side SpotLight object
 export void SpotLight_set(void *uniform _self,
                           const uniform vec3f &position,
                           const uniform vec3f &direction,
                           const uniform vec3f &power,
-                          const uniform float cosLimit)
+                          const uniform float cosAngleMax,
+                          const uniform float cosAngleMin)
 {
   uniform SpotLight *uniform self = (uniform SpotLight *uniform)_self;
   self->position     = position;
   self->direction    = direction;
   self->power        = power;
-  self->cosLimit     = cosLimit;
+  self->cosAngleMax  = cosAngleMax;
+  self->cosAngleMin  = cosAngleMin;
+}
+
+//! Create an ispc-side SpotLight object
+export void *uniform SpotLight_create(void *uniform cppEquivalent)
+{
+  uniform SpotLight *uniform self = uniform new uniform SpotLight;
+
+  Light_Constructor(&self->super, cppEquivalent);
+  self->super.sample = SpotLight_sample;
+
+  SpotLight_set(self,
+                make_vec3f(0.f),
+                make_vec3f(0.f, 0.f, 1.f),
+                make_vec3f(1.f),
+                0.f,
+                0.01f);
+
+  return self;
 }

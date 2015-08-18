@@ -17,10 +17,10 @@
 #include "Light.ih"
 
 struct DirectionalLight {
-  uniform Light super;      //!< inherited light fields
+  Light super;      //!< inherited light fields
 
-  uniform vec3f direction;  //!< direction of emitted light rays
-  uniform vec3f radiance;   //!< RGB color and intensity of light
+  vec3f direction;  //!< direction of emitted light rays
+  vec3f radiance;   //!< RGB color and intensity of light
 };
 
 
