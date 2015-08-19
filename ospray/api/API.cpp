@@ -428,21 +428,25 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setString(_object,id,s);
   }
+
   extern "C" void ospSetf(OSPObject _object, const char *id, float x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
   }
+
   extern "C" void ospSet1f(OSPObject _object, const char *id, float x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
   }
+
   extern "C" void ospSet1i(OSPObject _object, const char *id, int32 x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
   }
+
   extern "C" void ospSeti(OSPObject _object, const char *id, int x)
   {
     ASSERT_DEVICE();
@@ -462,6 +466,13 @@ namespace ospray {
     ospray::api::Device::current->setVec2f(_object, id, v);
   }
   /*! add a data array to another object */
+  /*! add a vec2f parameter to an object */
+  extern "C" void ospSetVec2i(OSPObject _object, const char *id, const vec2i &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec2i(_object, id, v);
+  }
+  /*! add a data array to another object */
   extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)
   {
     ASSERT_DEVICE();
@@ -473,42 +484,70 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec3i(_object,id,v);
   }
+
   /*! add a data array to another object */
   extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
   {
     ASSERT_DEVICE();
     ospSetVec2f(_object,id,vec2f(x,y));
   }
+
   /*! add a data array to another object */
   extern "C" void ospSet2fv(OSPObject _object, const char *id, const float *xy)
   {
     ASSERT_DEVICE();
     ospSetVec2f(_object,id,vec2f(xy[0],xy[1]));
   }
+
+  /*! add a data array to another object */
+  extern "C" void ospSet2i(OSPObject _object, const char *id, int x, int y)
+  {
+    ASSERT_DEVICE();
+    ospSetVec2i(_object,id,vec2i(x,y));
+  }
+
+  /*! add a data array to another object */
+  extern "C" void ospSet2iv(OSPObject _object, const char *id, const int *xy)
+  {
+    ASSERT_DEVICE();
+    ospSetVec2f(_object,id,vec2i(xy[0],xy[1]));
+  }
+
   /*! add a data array to another object */
   extern "C" void ospSet3f(OSPObject _object, const char *id, float x, float y, float z)
   {
     ASSERT_DEVICE();
     ospSetVec3f(_object,id,vec3f(x,y,z));
   }
+
   /*! add a data array to another object */
   extern "C" void ospSet3fv(OSPObject _object, const char *id, const float *xyz)
   {
     ASSERT_DEVICE();
     ospSetVec3f(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
   }
+
   /*! add a data array to another object */
   extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
   {
     ASSERT_DEVICE();
     ospSetVec3i(_object,id,vec3f(x,y,z));
   }
+
+  /*! add a data array to another object */
+  extern "C" void ospSet3iv(OSPObject _object, const char *id, const int *xyz)
+  {
+    ASSERT_DEVICE();
+    ospSetVec3i(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
+  }
+
   /*! add a data array to another object */
   extern "C" void ospSetVoidPtr(OSPObject _object, const char *id, void *v)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVoidPtr(_object,id,v);
   }
+
   extern "C" void ospRelease(OSPObject _object)
   {
     ASSERT_DEVICE();

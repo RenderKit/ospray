@@ -567,6 +567,18 @@ namespace ospray {
       cmd.send(v);
     }
 
+    /*! assign (named) vec2f parameter to an object */
+    void MPIDevice::setVec2i(OSPObject _object, const char *bufName, const vec2i &v)
+    {
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC2I);
+      cmd.send((const mpi::Handle &) _object);
+      cmd.send(bufName);
+      cmd.send(v);
+    }
+
     /*! assign (named) vec3i parameter to an object */
     void MPIDevice::setVec3i(OSPObject _object, const char *bufName, const vec3i &v)
     {
