@@ -290,7 +290,7 @@ namespace ospray {
             mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
           }
-        
+
           char fileName[100000];
           sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(NULL));
           saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
@@ -332,7 +332,7 @@ namespace ospray {
       viewPort.at    = at;
       viewPort.from  = from;
       viewPort.up    = up;
-      
+
       this->worldBounds = worldBounds;
       viewPort.frame.l.vy = normalize(dir);
       viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
@@ -756,7 +756,7 @@ namespace ospray {
           return;
         }
       } 
-      
+
       if (key == 'C') {
         PRINT(viewPort);
         return;
@@ -798,10 +798,11 @@ namespace ospray {
     void Manipulator::keypress(Glut3DWidget *widget, const int32 key)
     {
       switch(key) {
-      case 'Q': {
+      case 27 /*ESC*/:
+      case 'q':
+      case 'Q':
         _exit(0);
-      };
-      };
+      }
     };
     void Manipulator::specialkey(Glut3DWidget *widget, const int32 key)
     {
