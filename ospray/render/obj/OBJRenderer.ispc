@@ -66,7 +66,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
           // (need to tag texture2d to even know that)
           vec4f kd_map;
           mat->map_Kd->get(mat->map_Kd,kd_map,dg.st);
-          material_opacity = 1.f-kd_map.w;
+          material_opacity = kd_map.w;
         }
       }
     }
@@ -137,7 +137,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
         if (mat->map_Kd) {
           vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
           Kd = Kd * make_vec3f(Kd_from_map);
-          d *= 1.f - Kd_from_map.w;
+          d *= Kd_from_map.w;
         }
         Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
         Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
