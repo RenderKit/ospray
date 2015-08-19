@@ -70,8 +70,8 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
 
     if (alpha * weight < ALPHA_THRESHOLD) return alpha;
 
-    max_depth--;
-    if (max_depth <= 0) return alpha;
+    if (--max_depth <= 0)
+      return 0.f;
 
     ray.t0 = ray.t + epsilon;
     ray.t = org_t_max;

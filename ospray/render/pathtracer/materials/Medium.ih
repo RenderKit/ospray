@@ -19,7 +19,7 @@
 struct Medium
 {
   vec3f transmission; //!< Transmissivity of medium.
-  float eta;             //!< Refraction index of medium.
+  float eta;          //!< Refraction index of medium.
 };
 
 inline Medium make_Medium(const vec3f transmission, const float eta)

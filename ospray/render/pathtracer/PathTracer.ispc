@@ -29,9 +29,9 @@
 
 struct LightPath 
 {
-  Ray    ray;                /*! Last ray in the path. */
+  Ray    ray;                    /*! Last ray in the path. */
   Medium lastMedium;             /*! Medium the last ray travels inside. */
-  uniform uint32 depth;            /*! Recursion depth of path. */
+  uniform uint32 depth;          /*! Recursion depth of path. */
   vec3f  throughput;             /*! Determines the fraction of
                                      radiance reaches the pixel along
                                      the path. */
@@ -39,7 +39,7 @@ struct LightPath
                                      shadow rays we have to ignore the
                                      emission of geometrical lights to
                                      not double count them. */
-  bool   unbent;                    /*! True of the ray path is a straight line. */
+  bool   unbent;                 /*! True of the ray path is a straight line. */
 };
 
 inline void init_LightPath(LightPath& lp, const Ray &ray)
@@ -69,6 +69,61 @@ inline void extend_fast(LightPath& lp,
 
 //////////////////////////////////////////////////////////////////
 // PathTracer
+
+vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContrib, Ray &shadowRay, Medium medium, varying RandomTEA* uniform rng)
+{
+  int max_depth = self->maxDepth;
+  const float org_t_max = shadowRay.t;
+  const uniform uint32/*BRDFType*/ specularBTDFs = (uniform uint32)(SPECULAR_TRANSMISSION);
+
+  while (1) {
+    traceRay(self->super.model, shadowRay);
+
+    if (noHit(shadowRay))
+      return lightContrib;
+
+    DifferentialGeometry dg;
+    postIntersect(self->super.model, dg, shadowRay,
+        DG_MATERIALID|
+        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
+        );
+
+    uniform CompositedBRDF brdfs;
+    CompositedBRDF__Constructor(&brdfs);
+
+    uniform PathTraceMaterial *m = (uniform PathTraceMaterial*)dg.material;
+    foreach_unique(mm in m)
+      if (mm != NULL)
+        mm->shade(mm, shadowRay, medium, dg, brdfs);
+
+    Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
+    const vec2f s = make_vec2f(0.5f);
+    const vec2f ss = RandomTEA__getFloats(rng);
+    const vec3f transparency = CompositedBRDF__sample(&brdfs, shadowRay.dir, dg, wi, type, s, ss.x, specularBTDFs);
+    lightContrib = lightContrib * transparency;
+
+    /*! Compute simple volumetric effect. */
+    if (ne(medium.transmission, make_vec3f(1.f)))
+      lightContrib = lightContrib * powf(medium.transmission, shadowRay.t - shadowRay.t0);
+    
+    if (reduce_max(lightContrib) <= self->minContribution)
+      return lightContrib;
+
+    if (--max_depth <= 0)
+      return make_vec3f(0.f);
+
+    /*! Tracking medium if we hit a medium interface. */
+    foreach_unique(mm in m)
+      if (mm != NULL)
+        mm->selectNextMedium(mm, medium);
+    
+    shadowRay.t0 = shadowRay.t + self->super.epsilon;
+    shadowRay.t = org_t_max;
+    shadowRay.primID = -1;
+    shadowRay.geomID = -1;
+    shadowRay.instID = -1;
+  }
+}
 
 vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              const vec2f &pixel, // normalized, i.e. in [0..1]
@@ -123,7 +178,8 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 #if 1
     uniform PathTraceMaterial*m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
-    if (mm != NULL) mm->shade(mm,lightPath.ray, lightPath.lastMedium, dg, brdfs);
+      if (mm != NULL)
+        mm->shade(mm, lightPath.ray, lightPath.lastMedium, dg, brdfs);
 #else
     foreach_unique(geomID in lightPath.ray.geomID) {
       uniform PathTraceMaterial* uniform m
@@ -182,10 +238,8 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                self->super.epsilon);
         shadow_ray.time = lightPath.ray.time;
         
-        if (isOccluded(self->super.model, shadow_ray))
-          continue;
-
-        L = L + Lw * ls.radiance * brdf * rcp(ls.pdf);
+        vec3f unshaded_light_contrib = Lw * ls.radiance * brdf * rcp(ls.pdf);
+        L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, lightPath.lastMedium, rng);
       }
     }
 
@@ -207,10 +261,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     if (reduce_max(c) <= 0.0f | wi.pdf <= PDF_CULLING) 
       return L;
 
-    /*! Compute  simple volumetric effect. */
+    /*! Compute simple volumetric effect. */
     const vec3f transmission = lightPath.lastMedium.transmission;
     if (ne(transmission,make_vec3f(1.f)))
-      // c = mul(c, pow(transmission,lightPath.ray.t));
       c = c * powf(transmission,lightPath.ray.t);
     
     /*! Tracking medium if we hit a medium interface. */
