@@ -36,7 +36,8 @@ struct OBJRenderer {
   bool          shadowsEnabled;
 };
 
-inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight, const uniform float epsilon) {
+inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight, const uniform float epsilon)
+{
   float alpha = 1.f;
   int max_depth = 8;
   const float org_t_max = ray.t;
@@ -160,7 +161,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
         if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
           const float cosNL = abs(dot(light.direction, dg.Ns));
           const float cosLR = max(0.f, dot(light.direction, R));
-          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance;
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance * rcp(light.pdf);
 
           if (self->shadowsEnabled) {
             const float max_contrib = reduce_max(unshaded_light_contrib);
