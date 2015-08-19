@@ -234,7 +234,24 @@ namespace ospray {
           txt.ptr->texData->depth = depth;
           txt.ptr->texData->width = width;
           txt.ptr->texData->height = height;
-          txt.ptr->texData->data = (char*)(binBasePtr+ofs);
+          if (channels == 4) { // RIVL bin stores alpha channel inverted, fix here
+            size_t sz = width * height;
+            if (depth == 1) { // char
+              vec4uc *texel = new vec4uc[sz];
+              memcpy(texel, binBasePtr+ofs, sz*sizeof(vec4uc));
+              for (size_t p = 0; p < sz; p++)
+                texel[p].w = 255 - texel[p].w; 
+              txt.ptr->texData->data = texel;
+            } else { // float
+              vec4f *texel = new vec4f[sz];
+              memcpy(texel, binBasePtr+ofs, sz*sizeof(vec4f));
+              for (size_t p = 0; p < sz; p++)
+                texel[p].w = 1.0f - texel[p].w; 
+              txt.ptr->texData->data = texel;
+            }
+          } else
+            txt.ptr->texData->data = (char*)(binBasePtr+ofs);
+
           // -------------------------------------------------------
         } else if (nodeName == "Material") {
           // -------------------------------------------------------

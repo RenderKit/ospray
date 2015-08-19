@@ -54,24 +54,18 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     float material_opacity = 1.f;
 
     if(objMaterial == NULL) {
-      material_opacity = 1.0 - dg.color.w;
+      material_opacity = dg.color.w;
     } else {
       foreach_unique( mat in objMaterial ) {
-        if (mat->map_d != NULL) {
-          vec4f d_map;
-          mat->map_d->get(mat->map_d, d_map, dg.st);
-          material_opacity = d_map.x;
-        } else if (mat->map_Kd != NULL) {
-          // todo: might want to do this only if map has a alpha channel
-          // (need to tag texture2d to even know that)
-          vec4f kd_map;
-          mat->map_Kd->get(mat->map_Kd,kd_map,dg.st);
-          material_opacity = kd_map.w;
+        material_opacity = mat->d * get1f(mat->map_d, dg.st, 1.f);
+        if (mat->map_Kd) {
+          vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
+          material_opacity *= Kd_from_map.w;
         }
       }
     }
 
-    alpha = alpha * (1.f - material_opacity );
+    alpha = alpha * (1.f - material_opacity);
 
     if (alpha * weight < ALPHA_THRESHOLD) return alpha;
 

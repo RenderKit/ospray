@@ -93,6 +93,8 @@ namespace ospray {
   typedef embree::Vec2i    vec2i;
   /*! OSPRay's three-unsigned char vector class */
   typedef embree::Vec3<uint8> vec3uc;
+  /*! OSPRay's 4x unsigned char vector class */
+  typedef embree::Vec4<uint8> vec4uc;
   /*! OSPRay's 2x uint32 vector class */
   typedef embree::Vec2<uint32> vec2ui;
   /*! OSPRay's 3x uint32 vector class */
