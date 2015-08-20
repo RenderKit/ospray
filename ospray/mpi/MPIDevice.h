@@ -62,6 +62,7 @@ namespace ospray {
         CMD_SET_FLOAT,
         CMD_SET_VEC2F,
         CMD_SET_VEC3F,
+        CMD_SET_VEC2I,
         CMD_SET_VEC3I,
         CMD_USER
       } CommandTag;
@@ -147,6 +148,9 @@ namespace ospray {
 
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
+
+      /*! assign (named) vec2i parameter to an object */
+      virtual void setVec2i(OSPObject object, const char *bufName, const vec2i &v);
 
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
