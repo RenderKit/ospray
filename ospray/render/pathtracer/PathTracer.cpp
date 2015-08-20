@@ -65,7 +65,7 @@ namespace ospray {
     void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
     const int32 maxDepth = getParam1i("maxDepth", 20);
-    const float minContribution = getParam1i("minContribution", 0.01f);
+    const float minContribution = getParam1f("minContribution", 0.01f);
     void *backplate = NULL;// TODO 
 
     ispc::PathTracer_set(getIE(), maxDepth, minContribution, backplate,
