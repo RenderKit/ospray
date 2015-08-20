@@ -84,7 +84,12 @@ namespace ospray {
       return NULL;
     }
     delete[] type;
-    Renderer *renderer = (*creator)();  renderer->managedObjectType = OSP_RENDERER;
+    Renderer *renderer = (*creator)();  
+    renderer->managedObjectType = OSP_RENDERER;
+    if (renderer == NULL && ospray::logLevel >= 1) {
+      std::cout << "#osp:warning[ospNewRenderer(...)]: could not create renderer of that type." << endl;
+      std::cout << "#osp:warning[ospNewRenderer(...)]: Note: Requested renderer type was '" << type << "'" << endl;
+    }
     return(renderer);
   }
 
