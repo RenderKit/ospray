@@ -510,7 +510,7 @@ namespace ospray {
   extern "C" void ospSet2iv(OSPObject _object, const char *id, const int *xy)
   {
     ASSERT_DEVICE();
-    ospSetVec2f(_object,id,vec2i(xy[0],xy[1]));
+    ospSetVec2i(_object,id,vec2i(xy[0],xy[1]));
   }
 
   /*! add a data array to another object */
