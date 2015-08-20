@@ -327,37 +327,37 @@ extern "C" {
   /*! add a data array to another object */
   void ospSetData(OSPObject _object, const char *id, OSPData data);
 
-  /*! add 1-float paramter to given object */
+  /*! add 1-float parameter to given object */
   void ospSetf(OSPObject _object, const char *id, float x);
 
-  /*! add 1-float paramter to given object */
+  /*! add 1-float parameter to given object */
   void ospSet1f(OSPObject _object, const char *id, float x);
 
-  /*! add 1-int paramter to given object */
+  /*! add 1-int parameter to given object */
   void ospSet1i(OSPObject _object, const char *id, int32 x);
 
   /*! add a 2-float parameter to a given object */
   void ospSet2f(OSPObject _object, const char *id, float x, float y);
 
-  /*! add 3-float paramter to given object */
+  /*! add 2-float parameter to given object */
   void ospSet2fv(OSPObject _object, const char *id, const float *xy);
 
   /*! add a 2-int parameter to a given object */
   void ospSet2i(OSPObject _object, const char *id, int x, int y);
 
-  /*! add 3-int paramter to given object */
+  /*! add 2-int parameter to given object */
   void ospSet2iv(OSPObject _object, const char *id, const int *xy);
 
-  /*! add 3-float paramter to given object */
+  /*! add 3-float parameter to given object */
   void ospSet3f(OSPObject _object, const char *id, float x, float y, float z);
 
-  /*! add 3-float paramter to given object */
+  /*! add 3-float parameter to given object */
   void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
 
-  /*! add 3-int paramter to given object */
+  /*! add 3-int parameter to given object */
   void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
 
-  /*! add 3-int paramter to given object */
+  /*! add 3-int parameter to given object */
   void ospSet3iv(OSPObject _object, const char *id, const int *xyz);
 
 
@@ -385,13 +385,13 @@ extern "C" {
   /*! add 2-float parameter to given object */
   void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);
 
-  /*! add 2-float parameter to given object */
+  /*! add 2-int parameter to given object */
   void ospSetVec2i(OSPObject _object, const char *id, const osp::vec2i &v);
 
-  /*! add 3-float paramter to given object */
+  /*! add 3-float parameter to given object */
   void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
 
-  /*! add 3-int paramter to given object */
+  /*! add 3-int parameter to given object */
   void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
 
   /*! add untyped void pointer to object - this will *ONLY* work in local rendering!  */
