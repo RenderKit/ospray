@@ -567,7 +567,7 @@ namespace ospray {
       cmd.send(v);
     }
 
-    /*! assign (named) vec2f parameter to an object */
+    /*! assign (named) vec2i parameter to an object */
     void MPIDevice::setVec2i(OSPObject _object, const char *bufName, const vec2i &v)
     {
       Assert(_object);
