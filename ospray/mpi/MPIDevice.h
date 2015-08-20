@@ -62,6 +62,7 @@ namespace ospray {
         CMD_SET_FLOAT,
         CMD_SET_VEC2F,
         CMD_SET_VEC3F,
+        CMD_SET_VEC2I,
         CMD_SET_VEC3I,
         CMD_USER
       } CommandTag;
