@@ -462,7 +462,7 @@ namespace ospray {
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
 
-      FILE *file = fopen(binFileName.c_str(),"r");
+      FILE *file = fopen(binFileName.c_str(),"rb");
       if (!file)
         perror("could not open binary file");
       fseek(file,0,SEEK_END);
