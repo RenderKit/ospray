@@ -32,7 +32,11 @@
 // stdlib, for mmap
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/mman.h>
+#ifdef _WIN32
+#  include <windows.h>
+#else
+#  include <sys/mman.h>
+#endif
 #include <fcntl.h>
 
 namespace ospray {
@@ -230,7 +234,24 @@ namespace ospray {
           txt.ptr->texData->depth = depth;
           txt.ptr->texData->width = width;
           txt.ptr->texData->height = height;
-          txt.ptr->texData->data = (char*)(binBasePtr+ofs);
+          if (channels == 4) { // RIVL bin stores alpha channel inverted, fix here
+            size_t sz = width * height;
+            if (depth == 1) { // char
+              vec4uc *texel = new vec4uc[sz];
+              memcpy(texel, binBasePtr+ofs, sz*sizeof(vec4uc));
+              for (size_t p = 0; p < sz; p++)
+                texel[p].w = 255 - texel[p].w; 
+              txt.ptr->texData->data = texel;
+            } else { // float
+              vec4f *texel = new vec4f[sz];
+              memcpy(texel, binBasePtr+ofs, sz*sizeof(vec4f));
+              for (size_t p = 0; p < sz; p++)
+                texel[p].w = 1.0f - texel[p].w; 
+              txt.ptr->texData->data = texel;
+            }
+          } else
+            txt.ptr->texData->data = (char*)(binBasePtr+ofs);
+
           // -------------------------------------------------------
         } else if (nodeName == "Material") {
           // -------------------------------------------------------
@@ -586,19 +607,33 @@ namespace ospray {
       string xmlFileName = fileName;
       string binFileName = fileName+".bin";
 
-      FILE *file = fopen(binFileName.c_str(),"r");
+      FILE *file = fopen(binFileName.c_str(),"rb");
       if (!file)
         perror("could not open binary file");
       fseek(file,0,SEEK_END);
       size_t fileSize = ftell(file);
       fclose(file);
       
-      int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDONLY);
+#ifdef _WIN32
+      HANDLE fileHandle = CreateFile(binFileName.c_str(), GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+      if (fileHandle == NULL)
+        fprintf(stderr, "could not open file '%s' (error %lu)\n", binFileName.c_str(), GetLastError());
+      HANDLE fileMappingHandle = CreateFileMapping(fileHandle, NULL, PAGE_READONLY, 0, 0, NULL);
+      if (fileMappingHandle == NULL)
+        fprintf(stderr, "could not create file mapping (error %lu)\n", GetLastError());
+#else
+      int fd = ::open(binFileName.c_str(), O_LARGEFILE | O_RDONLY);
       if (fd == -1)
         perror("could not open file");
+#endif
+
       binBasePtr = (unsigned char *)
+#ifdef _WIN32
+        MapViewOfFile(fileMappingHandle, FILE_MAP_READ, 0, 0, fileSize);
+#else
         mmap(NULL,fileSize,PROT_READ,MAP_SHARED,fd,0);
         // mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
+#endif
 
       xml::XMLDoc *doc = xml::readXML(fileName);
       if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 

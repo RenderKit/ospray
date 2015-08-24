@@ -54,7 +54,7 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
   if (self->map_Kd) {
     vec4f Kd_from_map = get4f(self->map_Kd,dg.st);
     Kd = Kd * make_vec3f(Kd_from_map);
-    d *= 1.f - Kd_from_map.w;
+    d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
   if (ne(Kd,make_vec3f(0.0f))) 

@@ -20,7 +20,7 @@
 
 namespace embree
 {
-  struct AtomicCounter {
+  struct OSPRAY_EMBREE_INTERFACE AtomicCounter {
   public:
     __forceinline AtomicCounter( void ) : data(0) {}
     __forceinline AtomicCounter( const atomic_t data ) : data(data) {}
@@ -45,7 +45,7 @@ namespace embree
     volatile atomic_t data;
   };
 
-  class __aligned(64) AlignedAtomicCounter32
+  class __aligned(64) OSPRAY_EMBREE_INTERFACE AlignedAtomicCounter32
   {
   public:
     __forceinline AlignedAtomicCounter32 () : data(0) {}

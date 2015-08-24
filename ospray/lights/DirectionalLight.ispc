@@ -15,30 +15,31 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/vec.ih"
 
 struct DirectionalLight {
-  uniform Light super;      //!< inherited light fields
+  Light super;      //!< inherited light fields
 
-  uniform vec3f direction;  //!< direction of emitted light rays
-  uniform vec3f radiance;   //!< RGB color and intensity of light
+  vec3f direction;  //!< direction of emitted light rays
+  vec3f radiance;   //!< RGB color and intensity of light
 };
 
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying vec3f DirectionalLight_computeRadiance(const uniform Light *uniform _self,
-                                               const varying vec3f &coordinates, 
-                                               varying vec3f &direction, 
-                                               varying float &distance) 
+varying LightSample DirectionalLight_sample(const uniform Light *uniform _self,
+                                            const varying DifferentialGeometry &dg,
+                                            const varying vec2f &)
 {
   const DirectionalLight *uniform self = (DirectionalLight *uniform)_self;
+  LightSample sample;
 
-  direction = neg(self->direction);
-  distance = inf;
+  sample.direction = neg(self->direction);
+  sample.distance = inf;
+  sample.radiance = self->radiance;
+  sample.pdf = 1.f;
 
-  return self->radiance;
+  return sample;
 }
 
 void DirectionalLight_Constructor(uniform DirectionalLight *uniform self,
@@ -49,7 +50,7 @@ void DirectionalLight_Constructor(uniform DirectionalLight *uniform self,
   Light_Constructor(&self->super, cppEquivalent);
   self->direction = direction;
   self->radiance = radiance;
-  self->super.computeRadiance = DirectionalLight_computeRadiance;
+  self->super.sample = DirectionalLight_sample;
 }
 
 

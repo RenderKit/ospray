@@ -56,7 +56,7 @@ namespace ospray {
           int rc, peekchar;
 
           // open file
-          FILE *file = fopen(fileName.str().c_str(),"r");
+          FILE *file = fopen(fileName.str().c_str(),"rb");
           const int LINESZ=10000;
           char lineBuf[LINESZ+1]; 
 

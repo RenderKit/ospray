@@ -52,7 +52,9 @@ vec3f uniform_Velvety__sample(const uniform BRDF* uniform _this,
                               const vec2f &s)  
 {
   const uniform Velvety* uniform this = (const uniform Velvety* uniform) _this;
-  wi = cosineSampleHemisphere(s.x,s.y,dg.Ns);
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
   return uniform_Velvety__eval(_this, wo, dg, wi.v);
 }
 
@@ -89,7 +91,9 @@ vec3f varying_Velvety__sample(const uniform BRDF* uniform _this,
                               const vec2f &s)  
 {
   const varying Velvety* uniform this = (const varying Velvety* uniform) _this;
-  wi = cosineSampleHemisphere(s.x,s.y,dg.Ns);
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
   return varying_Velvety__eval(_this, wo, dg, wi.v);
 }
 

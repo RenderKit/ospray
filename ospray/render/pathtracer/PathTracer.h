@@ -17,18 +17,17 @@
 #pragma once
 
 #include "ospray/render/Renderer.h"
-#include "ospray/common/Model.h"
-#include "ospray/camera/Camera.h"
+#include "ospray/common/Material.h"
 
 namespace ospray {
   struct PathTracer : public Renderer {
-    virtual std::string toString() const
-    { return "ospray::PathTracer"; }
-
     PathTracer();
+    virtual std::string toString() const { return "ospray::PathTracer"; }
     virtual void commit();
-    /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type);
+
+    std::vector<void*> lightArray; // the 'IE's of the XXXLights
+    Data *lightData;
   };
 }
 

@@ -43,6 +43,10 @@ SET(OSPRAY_SOURCES
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc
   camera/PerspectiveCamera.cpp
+  camera/OrthographicCamera.ispc
+  camera/OrthographicCamera.cpp
+  camera/PanoramicCamera.ispc
+  camera/PanoramicCamera.cpp
 
   volume/BlockBrickedVolume.ispc
   volume/BlockBrickedVolume.cpp
@@ -78,6 +82,7 @@ SET(OSPRAY_SOURCES
   geometry/Isosurfaces.ispc
   geometry/Isosurfaces.cpp
 
+  lights/Light.ispc
   lights/Light.cpp
   lights/AmbientLight.ispc
   lights/AmbientLight.cpp
@@ -87,6 +92,8 @@ SET(OSPRAY_SOURCES
   lights/PointLight.ispc
   lights/SpotLight.cpp
   lights/SpotLight.ispc
+  lights/QuadLight.cpp
+  lights/QuadLight.ispc
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc
@@ -110,11 +117,6 @@ SET(OSPRAY_SOURCES
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
-  render/pathtracer/lights/PTLight.ispc
-  render/pathtracer/lights/PTAmbientLight.ispc
-  render/pathtracer/lights/PTDistantLight.ispc
-  render/pathtracer/lights/PTPointLight.ispc
-  render/pathtracer/lights/PTSpotLight.ispc
   render/pathtracer/materials/Material.ispc
   render/pathtracer/materials/OBJ.ispc
   render/pathtracer/materials/OBJ.cpp
@@ -202,10 +204,14 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
+#LINK_DIRECTORIES(${OSPRAY_BINARY_DIR})
+SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+FIND_PACKAGE(Threads REQUIRED)
+
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED 
   ${OSPRAY_SOURCES}
   )
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")

@@ -23,6 +23,16 @@
 // stl
 #include <stack>
 
+#ifdef _WIN32
+#  ifdef ospray_xml_EXPORTS
+#    define OSPRAY_XML_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_XML_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPRAY_XML_INTERFACE
+#endif
+
 namespace ospray {
   namespace xml {
 
@@ -95,7 +105,7 @@ namespace ospray {
       to it.  In case of any error, this function will free all
       already-allocated data, and throw a std::runtime_error
       exception */
-    XMLDoc *readXML(const std::string &fn);
+    OSPRAY_XML_INTERFACE XMLDoc *readXML(const std::string &fn);
 
       
     /*! @{ */

@@ -16,6 +16,9 @@
 
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
+SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+FIND_PACKAGE(Threads REQUIRED)
+
 CONFIGURE_OSPRAY()
 
 # =======================================================
@@ -144,7 +147,7 @@ IF (THIS_IS_MIC)
   ENDFOREACH()
   
   OSPRAY_ADD_LIBRARY(ospray_embree${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_EMBREE_SOURCES})
-  TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+  TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
   SET_TARGET_PROPERTIES(ospray_embree${OSPRAY_LIB_SUFFIX} PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
   INSTALL(TARGETS ospray_embree${OSPRAY_LIB_SUFFIX} DESTINATION lib)
@@ -225,8 +228,15 @@ ELSE()
     SET (OSPRAY_EMBREE_SOURCES ${OSPRAY_EMBREE_SOURCES} ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/${src})
   ENDFOREACH()
   
+SET(ISPC_DLLEXPORT "yes") # workaround for bug #1085 in ISPC 1.8.2: ospray_embree should export, but export in ospray cause link errors
   OSPRAY_ADD_LIBRARY(ospray_embree${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_EMBREE_SOURCES})
-  TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} pthread dl)
+UNSET(ISPC_DLLEXPORT)
+
+  TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+
+  IF (WIN32)
+    TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} ws2_32 setupapi) # TODO: should not be necessary
+  ENDIF()
   
   # ------------------------------------------------------------------
   # now, build and link in SSE41 support (for anything more than SSE)

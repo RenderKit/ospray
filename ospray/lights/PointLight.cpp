@@ -22,7 +22,6 @@ namespace ospray {
     : position(0.f)
     , color(1.f)
     , intensity(1.f)
-    , range(inf)
   {
     ispcEquivalent = ispc::PointLight_create(this);
   }
@@ -32,11 +31,10 @@ namespace ospray {
     position  = getParam3f("position", vec3f(0.f));
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
-    range     = getParam1f("range", inf);
 
     vec3f power = color * intensity;
 
-    ispc::PointLight_set(getIE(), (ispc::vec3f&)position, (ispc::vec3f&)power, range);
+    ispc::PointLight_set(getIE(), (ispc::vec3f&)position, (ispc::vec3f&)power);
   }
 
   OSP_REGISTER_LIGHT(PointLight, PointLight);

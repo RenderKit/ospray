@@ -25,6 +25,12 @@
 
 namespace ospray {
 
+#ifdef __WIN32__
+typedef unsigned long long id_t;
+#endif
+
+
+
   /*! forward-def so param can use a pointer to data */
   struct Data;
 

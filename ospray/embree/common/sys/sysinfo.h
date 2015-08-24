@@ -66,7 +66,7 @@ namespace embree
 
   /*! get CPU features */
   extern int cpu_features;
-  int getCPUFeatures();
+  OSPRAY_EMBREE_INTERFACE int getCPUFeatures();
 
   /*! convert CPU features into a string */
   std::string stringOfCPUFeatures(int features);

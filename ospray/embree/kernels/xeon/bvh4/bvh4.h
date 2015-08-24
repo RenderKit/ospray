@@ -330,8 +330,7 @@ namespace embree
           const size_t mask = movemask(vmask);
           dist = tNear;
           return mask;
-        }
-
+        } else {
 #if defined(__SSE4_1__)
 	const ssef tNear = maxi(maxi(tNearX,tNearY),maxi(tNearZ,tnear));
 	const ssef tFar  = mini(mini(tFarX ,tFarY ),mini(tFarZ ,tfar ));
@@ -345,6 +344,7 @@ namespace embree
 #endif
 	dist = tNear;
 	return mask;
+        }
       }
 
       /*! intersection with ray packet of size 4 */
@@ -375,8 +375,7 @@ namespace embree
           const sseb lhit   = round_down*max(lnearP,tnear) <= round_up*min(lfarP,tfar);      
           dist = lnearP;
           return lhit;
-        }
-
+        } else {
 #if defined(__SSE4_1__)
 	const ssef lnearP = maxi(maxi(mini(lclipMinX, lclipMaxX), mini(lclipMinY, lclipMaxY)), mini(lclipMinZ, lclipMaxZ));
 	const ssef lfarP  = mini(mini(maxi(lclipMinX, lclipMaxX), maxi(lclipMinY, lclipMaxY)), maxi(lclipMinZ, lclipMaxZ));
@@ -389,6 +388,7 @@ namespace embree
 #endif
 	dist = lnearP;
 	return lhit;
+        }
       }
       
       /*! intersection with ray packet of size 8 */
@@ -420,8 +420,7 @@ namespace embree
           const avxb lhit   = round_down*max(lnearP,tnear) <= round_up*min(lfarP,tfar);      
           dist = lnearP;
           return lhit;
-        }
-
+        } else {
 #if defined(__AVX2__)
 	const avxf lnearP = maxi(maxi(mini(lclipMinX, lclipMaxX), mini(lclipMinY, lclipMaxY)), mini(lclipMinZ, lclipMaxZ));
 	const avxf lfarP  = mini(mini(maxi(lclipMinX, lclipMaxX), maxi(lclipMinY, lclipMaxY)), maxi(lclipMinZ, lclipMaxZ));
@@ -433,6 +432,7 @@ namespace embree
 #endif
 	dist = lnearP;
 	return lhit;
+        }
       }
 #endif
       

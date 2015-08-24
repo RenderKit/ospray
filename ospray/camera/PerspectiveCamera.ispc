@@ -22,11 +22,13 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
 {
   uniform PerspectiveCamera *uniform self = 
     (uniform PerspectiveCamera *uniform)_self;
+
   const vec3f org = self->org;
   const vec3f dir = self->dir_00
     + sample.screen.x * self->dir_du
     + sample.screen.y * self->dir_dv;
-  setRay(ray,org,normalize(dir),self->nearClip,inf);
+
+  setRay(ray,org,normalize(dir),self->super.nearClip,inf);
 }
 
 /*! create a new ispc-side version of a perspectivecamera - with given
@@ -56,5 +58,5 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->dir_00 = dir_00;
   self->dir_du = dir_du;
   self->dir_dv = dir_dv;
-  self->nearClip = nearClip;
+  self->super.nearClip = nearClip;
 }

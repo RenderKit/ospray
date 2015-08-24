@@ -43,8 +43,6 @@
 #include <vector>
 
 namespace ospray {
-  struct Camera;
-  struct Model;
 
   namespace obj {
     using embree::TaskScheduler;
@@ -56,17 +54,11 @@ namespace ospray {
     struct OBJRenderer : public Renderer {
       OBJRenderer();
       virtual std::string toString() const { return "ospray::OBJRenderer"; }
+      virtual void commit();
+      virtual Material *createMaterial(const char *type);
 
       std::vector<void*> lightArray; // the 'IE's of the XXXLights
-
-      Model    *world;
-      Camera   *camera;
-      Data     *lightData;
-      
-      virtual void commit();
-
-      /*! \brief create a material of given type */
-      virtual Material *createMaterial(const char *type);
+      Data *lightData;
     };
 
   } // ::ospray::api

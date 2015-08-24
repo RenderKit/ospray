@@ -16,7 +16,6 @@
 
 // ospray 
 #include "ospray/fb/FrameBuffer.ih"
-#include "ospray/camera/PerspectiveCamera.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/texture/Texture2D.ih"
@@ -32,11 +31,13 @@ struct OBJRenderer {
 
   const uniform Light *uniform *uniform lights;
   uint32        numLights;
+
   vec3f         bgColor;
   bool          shadowsEnabled;
 };
 
-inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight, const uniform float epsilon) {
+inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weight, const uniform float epsilon)
+{
   float alpha = 1.f;
   int max_depth = 8;
   const float org_t_max = ray.t;
@@ -54,29 +55,23 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
     float material_opacity = 1.f;
 
     if(objMaterial == NULL) {
-      material_opacity = 1.0 - dg.color.w;
+      material_opacity = dg.color.w;
     } else {
       foreach_unique( mat in objMaterial ) {
-        if (mat->map_d != NULL) {
-          vec4f d_map;
-          mat->map_d->get(mat->map_d, d_map, dg.st);
-          material_opacity = d_map.x;
-        } else if (mat->map_Kd != NULL) {
-          // todo: might want to do this only if map has a alpha channel
-          // (need to tag texture2d to even know that)
-          vec4f kd_map;
-          mat->map_Kd->get(mat->map_Kd,kd_map,dg.st);
-          material_opacity = 1.f-kd_map.w;
+        material_opacity = mat->d * get1f(mat->map_d, dg.st, 1.f);
+        if (mat->map_Kd) {
+          vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
+          material_opacity *= Kd_from_map.w;
         }
       }
     }
 
-    alpha = alpha * (1.f - material_opacity );
+    alpha = alpha * (1.f - material_opacity);
 
     if (alpha * weight < ALPHA_THRESHOLD) return alpha;
 
-    max_depth--;
-    if (max_depth <= 0) return alpha;
+    if (--max_depth <= 0)
+      return 0.f;
 
     ray.t0 = ray.t + epsilon;
     ray.t = org_t_max;
@@ -137,7 +132,7 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
         if (mat->map_Kd) {
           vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
           Kd = Kd * make_vec3f(Kd_from_map);
-          d *= 1.f - Kd_from_map.w;
+          d *= Kd_from_map.w;
         }
         Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
         Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
@@ -160,20 +155,19 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
       //calculate shading for all lights
       for (uniform int i = 0; self->lights && i < self->numLights; i++) {
         const uniform Light *uniform l = self->lights[i];
-        float dist;
-        vec3f L;
-        const vec3f radiance = l->computeRadiance(l, P, L, dist);
+        const vec2f s = make_vec2f(0.5f);
+        const LightSample light = l->sample(l, dg, s);
 
-        if (reduce_max(radiance) > 0.f) { // any potential contribution?
-          const float cosNL = abs(dot(L,dg.Ns));
-          const float cosLR = max(0.f,dot(L,R));
-          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * radiance;
+        if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
+          const float cosNL = abs(dot(light.direction, dg.Ns));
+          const float cosLR = max(0.f, dot(light.direction, R));
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance * rcp(light.pdf);
 
           if (self->shadowsEnabled) {
             const float max_contrib = reduce_max(unshaded_light_contrib);
             if (max_contrib > .01f) {
               Ray shadowRay;
-              setRay(shadowRay,P,L);
+              setRay(shadowRay, P, light.direction);
               const float light_alpha = lightAlpha(shadowRay, self->super.model, max_contrib, self->super.epsilon);
               local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
             }
@@ -209,19 +203,11 @@ void OBJRenderer_renderSample(uniform Renderer *uniform _self,
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void *uniform OBJRenderer_create(void *uniform cppE)
-{
-  uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
-  Renderer_Constructor(&self->super,cppE);
-  self->super.renderSample = OBJRenderer_renderSample;
-  return self;
-}
-
 export void OBJRenderer_set(void *uniform _self,
                             const uniform vec3f &bgColor,
-                            const uniform bool &shadowsEnabled,
+                            const uniform bool shadowsEnabled,
                             void **uniform lights,
-                            uniform int32  numLights)
+                            const uniform uint32 numLights)
 {
   uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
 
@@ -229,4 +215,14 @@ export void OBJRenderer_set(void *uniform _self,
   self->shadowsEnabled = shadowsEnabled;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
+}
+
+export void *uniform OBJRenderer_create(void *uniform cppE)
+{
+  uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
+  Renderer_Constructor(&self->super,cppE);
+  self->super.renderSample = OBJRenderer_renderSample;
+  OBJRenderer_set(self, make_vec3f(1.f), true, NULL, 0);
+
+  return self;
 }

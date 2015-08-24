@@ -42,7 +42,7 @@ inline vec4f getTexel3f(const uniform Texture2D *uniform self,
 {
   assert(self);
   vec3f v = ((uniform vec3f*uniform )self->data)[ix+self->size.x*iy];
-  return make_vec4f(v.x,v.y,v.z,0.f);
+  return make_vec4f(v.x,v.y,v.z,1.f);
 }
 
 inline vec4f getTexel3uc(const uniform Texture2D *uniform self,
@@ -55,7 +55,7 @@ inline vec4f getTexel3uc(const uniform Texture2D *uniform self,
   const uint32 r = pixel[pixelOfs+0];
   const uint32 g = pixel[pixelOfs+1];
   const uint32 b = pixel[pixelOfs+2];
-  return make_vec4f(r*one_over_255, g*one_over_255, b*one_over_255, 0.f);
+  return make_vec4f(r*one_over_255, g*one_over_255, b*one_over_255, 1.f);
 }
 
 static void Texture2D_4uc_bilinear(const uniform Texture2D *uniform _this,

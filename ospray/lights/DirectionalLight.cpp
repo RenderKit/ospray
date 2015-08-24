@@ -32,7 +32,8 @@ namespace ospray {
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
 
-    vec3f radiance = color * intensity;
+    const vec3f radiance = color * intensity;
+    direction = normalize(direction);
 
     ispc::DirectionalLight_set(getIE(), (ispc::vec3f&)direction, (ispc::vec3f&)radiance);
   }

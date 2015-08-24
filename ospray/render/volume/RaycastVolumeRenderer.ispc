@@ -49,9 +49,10 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
   if(volume->gradientShadingEnabled) {
 
     // Compute lighting.
-    vec3f lightDirection;
-    float lightDistance;
-    vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], coordinates, lightDirection, lightDistance);
+    const vec2f s = make_vec2f(0.5f);
+    DifferentialGeometry dg;
+    dg.P = coordinates;
+    LightSample light = renderer->lights[0]->sample(renderer->lights[0], dg, s);
 
     // Constant ambient lighting term.
     const float ambient = 0.1f;
@@ -59,9 +60,9 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
     // Use volume gradient as the normal.
     const vec3f gradient = normalize(volume->computeGradient(volume, coordinates));
 
-    const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(lightDirection), normalize(gradient)));
+    const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(light.direction), normalize(gradient)));
 
-    sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
+    sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * light.radiance;
   }
 
   // Look up the opacity associated with the volume sample.
@@ -112,16 +113,15 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   float sampleOpacity = dg.color.w;
 
   // Compute lighting.
-  vec3f lightDirection;
-  float lightDistance;
-  vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], dg.P, lightDirection, lightDistance);
+  const vec2f s = make_vec2f(0.5f);
+  LightSample light = renderer->lights[0]->sample(renderer->lights[0], dg, s);
 
   // Constant ambient lighting term.
   const float ambient = 0.1f;
 
-  const float cosNL = abs(dot(normalize(lightDirection), dg.Ns));
+  const float cosNL = abs(dot(normalize(light.direction), dg.Ns));
 
-  sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
+  sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * light.radiance;
 
   // Set the color contribution for this sample only (do not accumulate).
   color = sampleOpacity * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.f);

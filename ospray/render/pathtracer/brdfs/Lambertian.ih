@@ -31,7 +31,7 @@ inline vec3f uniform_Lambertian__eval(const uniform BRDF* uniform _this,
                                       const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
 {
   const uniform Lambertian* uniform this = (const uniform Lambertian* uniform) _this;
-  return mul(this->R, (1.0f/(float)(M_PI)) * clamp(dot(wi,dg.Ns)));
+  return this->R/M_PI * clamp(dot(wi, dg.Ns));
 }
 
 inline vec3f uniform_Lambertian__sample(const uniform BRDF* uniform _this,
@@ -41,7 +41,9 @@ inline vec3f uniform_Lambertian__sample(const uniform BRDF* uniform _this,
                                         const vec2f &s)  
 {
   const uniform Lambertian* uniform this = (const uniform Lambertian* uniform) _this;
-  wi = cosineSampleHemisphere(s.x,s.y,dg.Ns);
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
   return uniform_Lambertian__eval(&this->base, wo, dg, wi.v);
 }
 
@@ -63,7 +65,7 @@ inline vec3f varying_Lambertian__eval(const uniform BRDF* uniform _this,
                                       const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
 {
   const varying Lambertian* uniform this = (const varying Lambertian* uniform) _this;
-  return mul(this->R, (1.0f/(float)(M_PI)) * clamp(dot(wi,dg.Ns)));
+  return this->R/M_PI * clamp(dot(wi, dg.Ns));
 }
 
 inline vec3f varying_Lambertian__sample(const uniform BRDF* uniform _this,
@@ -73,7 +75,9 @@ inline vec3f varying_Lambertian__sample(const uniform BRDF* uniform _this,
                                         const vec2f &s)  
 {
   const varying Lambertian* uniform this = (const varying Lambertian* uniform) _this;
-  wi = cosineSampleHemisphere(s.x,s.y,dg.Ns);
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
   return varying_Lambertian__eval(&this->base, wo, dg, wi.v);
 }
 
