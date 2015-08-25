@@ -355,7 +355,7 @@ void PathTracer_beginFrame(uniform Renderer *uniform renderer,
 }
 
 
-task void PathTracer_renderTile_job(uniform Renderer *uniform renderer, 
+task void PathTracer_renderTileJob(uniform Renderer *uniform renderer, 
                                    uniform Tile &tile,
                                    varying uint32 *uniform numRaysPerJob)
 {

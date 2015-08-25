@@ -37,7 +37,7 @@ namespace ospray {
   void FrameBuffer::commit()
   {
     const float gamma = getParam1f("gamma", 1.0f);
-    ispc::FrameBuffer_set(ispcEquivalent, gamma);
+    ispc::FrameBuffer_set_gamma(ispcEquivalent, gamma);
   }
 
   /*! helper function for debugging. write out given pixels in PPM format */

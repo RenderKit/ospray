@@ -21,9 +21,39 @@
 #define ON 1
 #define OFF 0
 
+// make sure that a string "__UNDEFINED_VARIABLE__" evaluated to true
+// when used in a #if expression. that allows us later on to test if
+// any cmake variable "XYZ" is actually defined by doing a "#if
+// __UNDEFINED_VARIABLE__@XYZ@", which, if XYZ is _not_ known, whill
+// evaluate to __UNDEFINED_VARIABLE__{emptystring} = 1
+#define __UNDEFINED_VARIABLE__ 1
+
+
 #define TILE_SIZE @OSPRAY_TILE_SIZE@
 
-#define EXP_DISTRIBUTED_VOLUME @OSPRAY_EXP_DISTRIBUTED_VOLUME@
-#define EXP_ALPHA_BLENDING @OSPRAY_EXP_ALPHA_BLENDING@
 #define EXP_IMAGE_COMPOSITING @OSPRAY_EXP_COMPOSITING@
+
+// -------------------------------------------------------
+// define EXP_DISTRIBUTED_VOLUME as set in the cmake file
+// if not set in cmakefile, set it to '0'
+// -------------------------------------------------------
+#ifdef __UNDEFINED_VARIABLE__@OSPRAY_EXP_DISTRIBUTED_VOLUME@
+#  define EXP_DISTRIBUTED_VOLUME 0
+#else
+#  define EXP_DISTRIBUTED_VOLUME @OSPRAY_EXP_DISTRIBUTED_VOLUME@
+#endif
+
+// -------------------------------------------------------
+// define EXP_ALPHA_BLENDING as set in the cmake file
+// if not set in cmakefile, set it to '0'
+// -------------------------------------------------------
+#ifdef __UNDEFINED_VARIABLE__@OSPRAY_EXP_ALPHA_BLENDING@
+#  define EXP_ALPHA_BLENDING 0
+#else
+#  define EXP_ALPHA_BLENDING @OSPRAY_EXP_ALPHA_BLENDING@
+#endif
+
+
+#undef ON
+#undef OFF
 

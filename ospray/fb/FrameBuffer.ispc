@@ -42,8 +42,8 @@ void FrameBuffer_set(FrameBuffer *uniform self,
   self->colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
 }
 
-export void FrameBuffer_set(void *uniform _self,
-                            const uniform float gamma)
+export void FrameBuffer_set_gamma(void *uniform _self,
+                                  const uniform float gamma)
 {
   uniform FrameBuffer *uniform self = (uniform FrameBuffer *uniform)_self;
   self->gamma = gamma;

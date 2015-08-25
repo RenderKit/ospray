@@ -245,11 +245,19 @@ __define_ispc_constructors(varying);
   /* uniform vec2 FCT(uniform vec2, uniform vec2) */                    \
   inline uniform vec2##T FCT(const uniform vec2##T a,                   \
                              const uniform vec2##T b)                   \
-  {  return make_vec2##T(FCT(a.x,b.x),FCT(a.y,b.y)); }     \
+  {  return make_vec2##T(FCT(a.x,b.x),FCT(a.y,b.y)); }                  \
   /* vec2 FCT(vec2, vec2) */                                            \
   inline varying vec2##T FCT(const varying vec2##T a,                   \
                              const varying vec2##T b)                   \
-  {  return make_vec2##T(FCT(a.x,b.x),FCT(a.y,b.y)); }     \
+  {  return make_vec2##T(FCT(a.x,b.x),FCT(a.y,b.y)); }                  \
+  /* vec2 FCT(vec2, uniform vec2) */                                    \
+  inline varying vec2##T FCT(const varying vec2##T a,                   \
+                             const uniform vec2##T b)                   \
+  {  return make_vec2##T(FCT(a.x,b.x),FCT(a.y,b.y)); }                  \
+  /* vec2 FCT(uniform vec2, vec2) */                                    \
+  inline varying vec2##T FCT(const uniform vec2##T a,                   \
+                             const varying vec2##T b)                   \
+  {  return make_vec2##T(FCT(a.x,b.x),FCT(a.y,b.y)); }                  \
                                                                         \
   /* ********************************************************* */       \
   /*                    ---- vec3 ----                         */       \
@@ -262,9 +270,17 @@ __define_ispc_constructors(varying);
   inline varying vec3##T FCT(const varying vec3##T a,                   \
                              const varying vec3##T b)                   \
   {  return make_vec3##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }     \
+  /* vec3 FCT(uniformvec3, vec3) */                                     \
+  inline varying vec3##T FCT(const uniform vec3##T a,                   \
+                             const varying vec3##T b)                   \
+  {  return make_vec3##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }     \
+  /* vec3 FCT(vec3, uniformvec3) */                                     \
+  inline varying vec3##T FCT(const varying vec3##T a,                   \
+                             const uniform vec3##T b)                   \
+  {  return make_vec3##T(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }     \
                                                                         \
   /* ********************************************************* */       \
-  /*                    ---- vec3a ----                         */      \
+  /*                    ---- vec3a (from 3a and 3a) ----  */            \
   /* ********************************************************* */       \
   /* uniform vec3a FCT(uniform vec3a, uniform vec3a) */                 \
   inline uniform vec3##T##a FCT(const uniform vec3##T##a a,             \
@@ -276,7 +292,7 @@ __define_ispc_constructors(varying);
   {  return make_vec3##T##a(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }  \
                                                                         \
   /* ********************************************************* */       \
-  /*                    ---- vec3a ----                         */      \
+  /*                    ---- vec3a (from 3 and 3a) ----  */             \
   /* ********************************************************* */       \
   /* uniform vec3a FCT(uniform vec3a, uniform vec3a) */                 \
   inline uniform vec3##T##a FCT(const uniform vec3##T a,                \
@@ -288,7 +304,7 @@ __define_ispc_constructors(varying);
   {  return make_vec3##T##a(FCT(a.x,b.x),FCT(a.y,b.y),FCT(a.z,b.z)); }  \
                                                                         \
   /* ********************************************************* */       \
-  /*                    ---- vec3a ----                         */      \
+  /*                    ---- vec3a (from 3a and 3) ----  */             \
   /* ********************************************************* */       \
   /* uniform vec3a FCT(uniform vec3a, uniform vec3a) */                 \
   inline uniform vec3##T##a FCT(const uniform vec3##T##a a,             \
@@ -315,8 +331,12 @@ __define_ispc_constructors(varying);
 
 __lift_binaryFct(min,f)
 __lift_binaryFct(max,f)
+__lift_binaryFct(min,i)
+__lift_binaryFct(max,i)
+__lift_binaryFct(min,ui)
+__lift_binaryFct(max,ui)
 
-#undef __lift_binaryFct3
+#undef __lift_binaryFct
 
 // =======================================================
 
@@ -612,8 +632,8 @@ inline uniform vec3i operator/(const uniform vec3i &a, const uniform int b)
 inline vec3i max(const varying vec3i &a, const varying int32 b)
 { return(make_vec3i(max(a.x, b), max(a.y, b), max(a.z, b))); }
 
-inline vec3i min(const uniform vec3i &a, const varying vec3i &b)
-{ return(make_vec3i(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z))); }
+// inline vec3i min(const uniform vec3i &a, const varying vec3i &b)
+// { return(make_vec3i(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z))); }
 
 inline vec3f float_cast(const vec3i &a)
 { return(make_vec3f(a.x, a.y, a.z)); }

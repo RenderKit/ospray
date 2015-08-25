@@ -22,7 +22,7 @@
     accum) in a plain 2D array of pixels (one array per component) */
 struct LocalFB 
 {
-  FrameBuffer super; /*!< superclass that we inherit from */
+  FrameBuffer    super; /*!< superclass that we inherit from */
   void          *colorBuffer;
   uniform float *depthBuffer;
   uniform vec4f *accumBuffer;

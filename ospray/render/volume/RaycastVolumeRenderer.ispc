@@ -194,7 +194,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
     ? renderer->inherited.model->volumes[0]->boundingBox 
     : make_box3f(make_vec3f(0.f), make_vec3f(0.f));
 
-  Model *model = renderer->inherited.model;
+  Model *uniform model = renderer->inherited.model;
   for (uniform int32 i=1; i<renderer->inherited.model->volumeCount; i++) {
     boundingBox.lower = min(boundingBox.lower, model->volumes[i]->boundingBox.lower);
     boundingBox.upper = max(boundingBox.upper, model->volumes[i]->boundingBox.upper);

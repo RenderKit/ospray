@@ -20,15 +20,9 @@ CONFIGURE_OSPRAY()
 
 SET(OSPRAY_EXP_COMPOSITING OFF CACHE BOOL "Experimental compositing")
 IF (OSPRAY_EXP_COMPOSITING)
-#  ADD_DEFINITIONS(-DMPI_IMAGE_COMPOSITING=1)
 
   SET(OSPRAY_EXP_ALPHA_BLENDING OFF CACHE BOOL "Experimental alpha-blending for compositing")
-#  IF (OSPRAY_EXP_ALPHA_BLENDING)
-#    ADD_DEFINITIONS(-DMPI_ALPHA_BLENDING=1)
-#  ENDIF()
-
   SET(OSPRAY_EXP_DISTRIBUTED_VOLUME OFF CACHE BOOL "Experimental support for distributed volumes")
-
 ENDIF()
 
 # build and configure embree
