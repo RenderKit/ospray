@@ -20,10 +20,23 @@
 #include "common/sys/sysinfo.h"
 // std
 #include <time.h>
+#ifdef __WIN32__
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h> // for GetSystemTime
+#else
 #include <sys/time.h>
 #include <sys/times.h>
+#endif
 
 namespace ospray {
+
+  /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
+  extern "C" void *malloc64(size_t size)
+  {
+    return malloc(size);
+  }
 
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
@@ -61,16 +74,21 @@ namespace ospray {
 
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
+      fprintf(stderr,"%s:%i: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
               file, line, expr, expl);
     else
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
+      fprintf(stderr,"%s:%i: Assertion failed: \"%s\".\n", file, line, expr);
     abort();
   }
 
   double getSysTime() {
+#ifdef __WIN32__
+    SYSTEMTIME tp; GetSystemTime(&tp);
+    return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
+#else
     struct timeval tp; gettimeofday(&tp,NULL); 
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
+#endif
   }
 
   void init(int *_ac, const char ***_av)
@@ -151,19 +169,20 @@ namespace ospray {
     case OSP_UINT2:     return sizeof(embree::Vec2<uint32>);
     case OSP_UINT3:     return sizeof(embree::Vec3<uint32>);
     case OSP_UINT4:     return sizeof(embree::Vec4<uint32>);
-    case OSP_LONG:       return sizeof(int64);
-    case OSP_LONG2:      return sizeof(embree::Vec2<int64>);
-    case OSP_LONG3:      return sizeof(embree::Vec3<int64>);
-    case OSP_LONG4:      return sizeof(embree::Vec4<int64>);
-    case OSP_ULONG:      return sizeof(uint64);
-    case OSP_ULONG2:     return sizeof(embree::Vec2<uint64>);
-    case OSP_ULONG3:     return sizeof(embree::Vec3<uint64>);
-    case OSP_ULONG4:     return sizeof(embree::Vec4<uint64>);
+    case OSP_LONG:      return sizeof(int64);
+    case OSP_LONG2:     return sizeof(embree::Vec2<int64>);
+    case OSP_LONG3:     return sizeof(embree::Vec3<int64>);
+    case OSP_LONG4:     return sizeof(embree::Vec4<int64>);
+    case OSP_ULONG:     return sizeof(uint64);
+    case OSP_ULONG2:    return sizeof(embree::Vec2<uint64>);
+    case OSP_ULONG3:    return sizeof(embree::Vec3<uint64>);
+    case OSP_ULONG4:    return sizeof(embree::Vec4<uint64>);
     case OSP_FLOAT:     return sizeof(float);
     case OSP_FLOAT2:    return sizeof(embree::Vec2<float>);
     case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
     case OSP_FLOAT4:    return sizeof(embree::Vec4<float>);
     case OSP_FLOAT3A:   return sizeof(embree::Vec3fa);
+    case OSP_DOUBLE:    return sizeof(double);
     default: break;
     };
 

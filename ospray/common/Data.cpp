@@ -37,7 +37,7 @@ namespace ospray {
       if (init)
         memcpy(data,init,numBytes);
       else if (type == OSP_OBJECT)
-        bzero(data,numBytes);
+        memset(data,0,numBytes);
     }
 
     managedObjectType = OSP_DATA;

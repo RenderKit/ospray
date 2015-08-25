@@ -37,6 +37,7 @@ namespace ospray {
       if (world ) { 
         world->commit();
         ospSetObject(ospRenderer,"world", world->ospModel);
+        ospSetObject(ospRenderer,"model", world->ospModel);
       }
       if (camera) {
         camera->commit();

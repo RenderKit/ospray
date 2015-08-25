@@ -93,11 +93,36 @@
 #define DEBUG
 #endif
 
+#ifdef __WIN32__
+#  ifdef ospray_embree_EXPORTS
+# define OSPRAY_EMBREE_INTERFACE __declspec(dllexport)
+#  else
+# define OSPRAY_EMBREE_INTERFACE __declspec(dllimport)
+#  endif
+#else
+# define OSPRAY_EMBREE_INTERFACE /* ignore */
+#endif
+
 ////////////////////////////////////////////////////////////////////////////////
 /// Configurations
 ////////////////////////////////////////////////////////////////////////////////
 
 #if defined(__WIN32__) 
+#if defined(CONFIG_SSE41)
+  #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+    #define __SSE3__
+    #define __SSSE3__
+    #define __SSE4_1__
+  #endif
+#endif
+#if defined(CONFIG_SSE42)
+  #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
+    #define __SSE3__
+    #define __SSSE3__
+    #define __SSE4_1__
+    #define __SSE4_2__
+  #endif
+#endif
 #if defined(CONFIG_AVX)
   #if defined(_MSC_VER) && !defined(__INTEL_COMPILER)
     #define __SSE3__
@@ -121,13 +146,17 @@
     #if !defined(__AVX2__)
       #define __AVX2__
     #endif
-#endif
+  #endif
 #endif
 //#define __USE_RAY_MASK__
 //#define __USE_STAT_COUNTERS__
 //#define __BACKFACE_CULLING__
+#ifndef __INTERSECTION_FILTER__
 #define __INTERSECTION_FILTER__
+#endif
+#ifndef __BUFFER_STRIDE__
 #define __BUFFER_STRIDE__
+#endif
 //#define __SPINLOCKS__
 //#define __LOG_TASKS__
 #endif
@@ -191,8 +220,8 @@
 #define   likely(expr) (expr)
 #define unlikely(expr) (expr)
 #else
-#define   likely(expr) __builtin_expect((expr),true )
-#define unlikely(expr) __builtin_expect((expr),false)
+#define   likely(expr) __builtin_expect((bool)(expr),true )
+#define unlikely(expr) __builtin_expect((bool)(expr),false)
 #endif
 
 /* compiler memory barriers */
@@ -268,7 +297,15 @@ typedef int32 ssize_t;
 #pragma warning(disable:4996) // 'std::copy': Function call with parameters that may be unsafe 
 #pragma warning(disable:391 ) // '<=' : signed / unsigned mismatch
 #pragma warning(disable:4018) // '<' : signed / unsigned mismatch
+#endif
 
+#if 0
+#pragma warning (disable: 3280)
+#pragma warning (disable: 177)
+#pragma warning (disable: 2415)
+#pragma warning (disable: 2407)
+#pragma warning (disable: 2557) // message #2557: comparison between signed and unsigned operands
+#pragma warning (disable: 82)   // message #82: storage class is not first
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////

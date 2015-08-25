@@ -111,7 +111,6 @@ namespace ospray {
 
       ospCommit(ospGeometry);
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
-      //std::cout << "#qtViewer 'rendered' mesh \n";
     }
 
     /*! 'render' the nodes */

@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "FrameBuffer.h"
+#include "FrameBuffer_ispc.h"
 #include "LocalFB_ispc.h"
 
 namespace ospray {
@@ -31,7 +32,13 @@ namespace ospray {
   {
     managedObjectType = OSP_FRAMEBUFFER;
     Assert(size.x > 0 && size.y > 0);
-  };
+  }
+
+  void FrameBuffer::commit()
+  {
+    const float gamma = getParam1f("gamma", 1.0f);
+    ispc::FrameBuffer_set(ispcEquivalent, gamma);
+  }
 
   /*! helper function for debugging. write out given pixels in PPM format */
   void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels)

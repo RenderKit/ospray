@@ -27,41 +27,41 @@ namespace ospray {
 
   Volume *Volume::createInstance(std::string type) 
   {
-    //! Function pointer type for creating a concrete instance of a subtype of this class.
+    // Function pointer type for creating a concrete instance of a subtype of this class.
     typedef Volume *(*creationFunctionPointer)();
 
-    //! Function pointers corresponding to each subtype.
+    // Function pointers corresponding to each subtype.
     static std::map<std::string, creationFunctionPointer> symbolRegistry;
 
-    //! Find the creation function for the subtype if not already known.
+    // Find the creation function for the subtype if not already known.
     if (symbolRegistry.count(type) == 0) {
 
-      //! Construct the name of the creation function to look for.
+      // Construct the name of the creation function to look for.
       std::string creationFunctionName = "ospray_create_volume_" + type;
 
-      //! Look for the named function.
+      // Look for the named function.
       symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);
 
-      //! The named function may not be found if the requested subtype is not known.
+      // The named function may not be found if the requested subtype is not known.
       if (!symbolRegistry[type] && ospray::logLevel >= 1) 
         std::cerr << "  ospray::Volume  WARNING: unrecognized subtype '" + type + "'." << std::endl;
     }
 
-    //! Create a concrete instance of the requested subtype.
+    // Create a concrete instance of the requested subtype.
     Volume *volume = (symbolRegistry[type]) ? (*symbolRegistry[type])() : NULL;
 
-    //! Denote the subclass type in the ManagedObject base class.
+    // Denote the subclass type in the ManagedObject base class.
     if (volume) volume->managedObjectType = OSP_VOLUME;
 
-    return(volume);
+    return volume;
   }
 
   void Volume::finish()
   {
-    //! The ISPC volume container must exist at this point.
+    // The ISPC volume container must exist at this point.
     assert(ispcEquivalent != NULL);
 
-    //! Make the volume bounding box visible to the application.
+    // Make the volume bounding box visible to the application.
     ispc::box3f boundingBox;
     ispc::Volume_getBoundingBox(&boundingBox,ispcEquivalent);
     set("boundingBoxMin", vec3f(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z));
@@ -70,28 +70,18 @@ namespace ospray {
 
   void Volume::updateEditableParameters()
   {
-    //! Set the gradient shading flag for the renderer.
+    // Set the gradient shading flag for the renderer.
     ispc::Volume_setGradientShadingEnabled(ispcEquivalent, getParam1i("gradientShadingEnabled", 0));
 
-    //! Set the isovalue(s).
-    Data *isovaluesData = (Data *)getParamData("isovalues", NULL);
-
-    if(isovaluesData && isovaluesData->size() > 0) {
-      ispc::Volume_setNumIsovalues(ispcEquivalent, isovaluesData->size());
-      ispc::Volume_setIsovalues(ispcEquivalent, (float *)isovaluesData->data);
-    }
-    else
-      ispc::Volume_setNumIsovalues(ispcEquivalent, 0);
-
-    //! Set the recommended sampling rate for ray casting based renderers.
+    // Set the recommended sampling rate for ray casting based renderers.
     ispc::Volume_setSamplingRate(ispcEquivalent, getParam1f("samplingRate", 1.0f));
 
-    //! Set the transfer function.
+    // Set the transfer function.
     TransferFunction *transferFunction = (TransferFunction *) getParamObject("transferFunction", NULL);
     exitOnCondition(transferFunction == NULL, "no transfer function specified");
     ispc::Volume_setTransferFunction(ispcEquivalent, transferFunction->getIE());
 
-    //! Set the volume clipping box (empty by default for no clipping).
+    // Set the volume clipping box (empty by default for no clipping).
     box3f volumeClippingBox = box3f(getParam3f("volumeClippingBoxLower", vec3f(0.f)), getParam3f("volumeClippingBoxUpper", vec3f(0.f)));
     ispc::Volume_setVolumeClippingBox(ispcEquivalent, (const ispc::box3f &) volumeClippingBox);
   }

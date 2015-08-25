@@ -33,6 +33,7 @@
 #include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "TriangleMesh_ispc.h"
+#include <cmath>
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
@@ -64,8 +65,7 @@ namespace ospray {
     if (logLevel >= 2) 
       if (numPrints < 5)
         std::cout << "ospray: finalizing triangle mesh ..." << std::endl;
-    Assert((eMesh == RTC_INVALID_ID) && "triangle mesh already built!?");
-    
+
     Assert(model && "invalid model pointer");
 
     RTCScene embreeSceneHandle = model->embreeSceneHandle;

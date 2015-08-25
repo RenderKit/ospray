@@ -21,8 +21,8 @@
 
 namespace ospray {
 
-  void LinearTransferFunction::commit() {
-
+  void LinearTransferFunction::commit()
+  {
     // Create the equivalent ISPC transfer function.
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
@@ -40,11 +40,10 @@ namespace ospray {
 
     // Notify listeners that the transfer function has changed.
     notifyListenersThatObjectGotChanged();
-
   }
 
-  void LinearTransferFunction::createEquivalentISPC() {
-
+  void LinearTransferFunction::createEquivalentISPC()
+  {
     // The equivalent ISPC transfer function must not exist yet.
     exitOnCondition(ispcEquivalent != NULL, "attempt to overwrite an existing ISPC transfer function");
 
@@ -53,7 +52,6 @@ namespace ospray {
 
     // The object may not have been created.
     exitOnCondition(ispcEquivalent == NULL, "unable to create ISPC transfer function");
-
   }
 
 } // ::ospray

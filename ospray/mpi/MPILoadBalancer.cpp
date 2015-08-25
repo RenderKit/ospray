@@ -138,10 +138,6 @@ namespace ospray {
         // printf("rank %i t_wait at end %f\n",mpi::world.rank,float(t1wait-t0wait));
 
         async_endFrame();
-        
-        // #if BARRIER_AT_END_OF_FRAME
-        //         MPI_Barrier(MPI_COMM_WORLD);
-        // #endif
       }
     }
 

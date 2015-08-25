@@ -15,25 +15,39 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/vec.ih"
+#include "ospray/math/sampling.ih"
+#include "ospray/math/LinearSpace.ih"
 
 struct AmbientLight {
-  uniform Light super;      //!< inherited light fields
+  Light super;      //!< inherited light fields
 
-  uniform vec3f radiance;   //!< RGB color and intensity of light
+  vec3f radiance;   //!< RGB color and intensity of light
 };
 
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying vec3f AmbientLight_computeRadiance(const uniform Light *uniform _self, 
-                                           const varying vec3f &coordinates, 
-                                           varying vec3f &direction, 
-                                           varying float &distance) 
+varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
+                                        const varying DifferentialGeometry &dg,
+                                        const varying vec2f &s)
 {
   uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
-  // since it's an ambient light, postion and distance and direction don't matter
+  LightSample sample;
+
+  const vec3f localDir = cosineSampleHemisphere(s);
+  sample.direction = frame(dg.Ns) * localDir;
+  sample.pdf = cosineSampleHemispherePDF(localDir);
+  sample.distance = inf;
+  sample.radiance = self->radiance;
+
+  return sample;
+}
+
+varying vec3f AmbientLight_evalEnv(const uniform Light *uniform _self,
+                                   const varying vec3f &)
+{
+  uniform AmbientLight *uniform self = (uniform AmbientLight *uniform)_self;
   return self->radiance;
 }
 
@@ -44,7 +58,8 @@ void AmbientLight_Constructor(uniform AmbientLight *uniform self,
 {
   Light_Constructor(&self->super, cppEquivalent);
   self->radiance = radiance;
-  self->super.computeRadiance = AmbientLight_computeRadiance;
+  self->super.sample = AmbientLight_sample;
+  self->super.evalEnv = AmbientLight_evalEnv;
 }
 
 

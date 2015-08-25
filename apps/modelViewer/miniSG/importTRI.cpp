@@ -16,7 +16,6 @@
 
 #include "miniSG.h"
 #include "importer.h"
-#include <sys/times.h>
 
 namespace ospray {
   namespace miniSG {

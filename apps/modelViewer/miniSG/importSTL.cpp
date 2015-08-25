@@ -31,7 +31,7 @@ namespace ospray {
     /*! import a list of STL files */
     void importSTL(std::vector<Model *> &animation, const embree::FileName &fileName)
     {
-      FILE *file = fopen(fileName.c_str(),"r");
+      FILE *file = fopen(fileName.c_str(),"rb");
       if (!file) error("could not open input file");
       char line[10000];
       while (fgets(line,10000,file) && !feof(file)) {

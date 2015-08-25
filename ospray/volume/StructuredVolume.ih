@@ -21,7 +21,8 @@
 
 struct GridAccelerator;
 
-/*! \brief Variables and methods common to all subtypes of the
+//! \brief Base class for all structured volume types
+/*! \detailed Variables and methods common to all subtypes of the
   StructuredVolume class (this struct must be the first field of a
   struct representing a "derived" class). */
 struct StructuredVolume {
@@ -48,11 +49,18 @@ struct StructuredVolume {
   void (*uniform getVoxel)(void *uniform volume, const varying vec3i &index, varying float &value);
 
   //! Transform from local coordinates to world coordinates using the volume's grid definition.
-  void (*uniform transformLocalToWorld)(StructuredVolume *uniform volume, const varying vec3f &localCoordinates, varying vec3f &worldCoordinates);
+  void (*uniform transformLocalToWorld)(StructuredVolume *uniform volume, 
+                                        const varying vec3f &localCoordinates, 
+                                        varying vec3f &worldCoordinates);
 
   //! Transform from world coordinates to local coordinates using the volume's grid definition.
-  void (*uniform transformWorldToLocal)(StructuredVolume *uniform volume, const varying vec3f &worldCoordinates, varying vec3f &localCoordinates);
+  void (*uniform transformWorldToLocal)(StructuredVolume *uniform volume, 
+                                        const varying vec3f &worldCoordinates, 
+                                        varying vec3f &localCoordinates);
 
 };
 
-void StructuredVolume_Constructor(StructuredVolume *uniform volume, const uniform vec3i &dimensions);
+void StructuredVolume_Constructor(StructuredVolume *uniform volume, 
+                                  /*! pointer to the c++-equivalent class of this entity */
+                                  void *uniform cppEquivalent,
+                                  const uniform vec3i &dimensions);

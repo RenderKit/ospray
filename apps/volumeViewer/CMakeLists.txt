@@ -46,6 +46,7 @@ SET(SRCS ${SRCS}
   LinearTransferFunctionWidget.cpp
   PreferencesDialog.cpp
   QOSPRayWindow.cpp
+  SliceEditor.cpp
   SliceWidget.cpp
   TransferFunctionEditor.cpp
   VolumeViewer.cpp
@@ -57,6 +58,7 @@ SET(MOC_HEADERS
   LightEditor.h
   LinearTransferFunctionWidget.h
   PreferencesDialog.h
+  SliceEditor.h
   SliceWidget.h
   TransferFunctionEditor.h
   VolumeViewer.h

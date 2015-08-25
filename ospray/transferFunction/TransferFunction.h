@@ -28,7 +28,7 @@
 //!  module and registered with OSPRay using this macro.
 //!
 #define OSP_REGISTER_TRANSFER_FUNCTION(InternalClass, ExternalName)     \
-  extern "C" TransferFunction *ospray_create_transfer_function_##ExternalName() \
+  extern "C" OSPRAY_INTERFACE TransferFunction *ospray_create_transfer_function_##ExternalName() \
   { return(new InternalClass()); }
 
 namespace ospray {

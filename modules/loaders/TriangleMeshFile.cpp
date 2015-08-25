@@ -20,30 +20,30 @@
 
 OSPTriangleMesh TriangleMeshFile::importTriangleMesh(const std::string &filename, OSPTriangleMesh triangleMesh)
 {
-  //! Attempt to get the absolute file path.
+  // Attempt to get the absolute file path.
   std::string fullfilename = getFullFilePath(filename);
 
-  //! Function pointer type for creating a concrete instance of a subtype of this class.
+  // Function pointer type for creating a concrete instance of a subtype of this class.
   typedef OSPTriangleMesh (*creationFunctionPointer)(const std::string &filename, OSPTriangleMesh triangleMesh);
 
-  //! Function pointers corresponding to each subtype.
+  // Function pointers corresponding to each subtype.
   static std::map<std::string, creationFunctionPointer> symbolRegistry;
 
-  //! The subtype string is the file extension.
+  // The subtype string is the file extension.
   std::string type = filename.substr(filename.find_last_of(".") + 1);
 
-  //! Return a concrete instance of the requested subtype if the creation function is already known.
+  // Return a concrete instance of the requested subtype if the creation function is already known.
   if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])(fullfilename, triangleMesh));
 
-  //! Otherwise construct the name of the creation function to look for.
+  // Otherwise construct the name of the creation function to look for.
   std::string creationFunctionName = "ospray_import_trianglemesh_file_" + std::string(type);
 
-  //! Look for the named function.
+  // Look for the named function.
   symbolRegistry[type] = (creationFunctionPointer) ospray::getSymbol(creationFunctionName);
 
-  //! The named function may not be found if the requested subtype is not known.
+  // The named function may not be found if the requested subtype is not known.
   if (!symbolRegistry[type]) std::cerr << "  ospray_module_loaders::TriangleMeshFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
 
-  //! Return a handle for the loaded triangle mesh object.
+  // Return a handle for the loaded triangle mesh object.
   return(symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename, triangleMesh) : NULL);
 }

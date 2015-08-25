@@ -24,6 +24,17 @@
 # include <mpi.h>
 #endif
 
+#ifdef __WIN32__
+# define _USE_MATH_DEFINES 1
+# include <cmath>
+# include <math.h>
+# ifdef _M_X64
+typedef long long ssize_t;
+# else
+typedef int ssize_t;
+# endif
+#endif
+
 #include "OSPRayCMakeConfig.h"
 
 // embree
@@ -50,6 +61,16 @@
 #include <stdint.h> // for int64_t etc
 #include <sstream>
 
+#ifdef _WIN32
+#  ifdef ospray_EXPORTS
+#    define OSPRAY_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPRAY_INTERFACE
+#endif
+
 
 #ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
@@ -65,6 +86,8 @@ namespace ospray {
   using embree::empty;
   using embree::zero;
   using embree::inf;
+  using embree::deg2rad;
+  using embree::clamp;
 
   /*! basic types */
   typedef ::int64_t int64;
@@ -85,6 +108,8 @@ namespace ospray {
   typedef embree::Vec2i    vec2i;
   /*! OSPRay's three-unsigned char vector class */
   typedef embree::Vec3<uint8> vec3uc;
+  /*! OSPRay's 4x unsigned char vector class */
+  typedef embree::Vec4<uint8> vec4uc;
   /*! OSPRay's 2x uint32 vector class */
   typedef embree::Vec2<uint32> vec2ui;
   /*! OSPRay's 3x uint32 vector class */
@@ -132,21 +157,21 @@ namespace ospray {
   using   embree::RefCount;
 
   /*! return system time in seconds */
-  double getSysTime();
+  OSPRAY_INTERFACE double getSysTime();
 
   void init(int *ac, const char ***av);
 
   /*! remove specified num arguments from an ac/av arglist */
-  void removeArgs(int &ac, char **&av, int where, int howMany);
+  OSPRAY_INTERFACE void removeArgs(int &ac, char **&av, int where, int howMany);
   /*! for debugging. compute a checksum for given area range... */
-  void *computeCheckSum(const void *ptr, size_t numBytes);
+  OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
 
 #ifdef NDEBUG
 # define Assert(expr) /* nothing */
 # define Assert2(expr,expl) /* nothing */
 # define AssertError(errMsg) /* nothing */
 #else
-  extern void doAssertion(const char *file, int line, const char *expr, const char *expl);
+  OSPRAY_INTERFACE void doAssertion(const char *file, int line, const char *expr, const char *expl);
 # define Assert(expr)                                                   \
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, NULL), 0)))
 # define Assert2(expr,expl)                                             \

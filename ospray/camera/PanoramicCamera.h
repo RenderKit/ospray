@@ -16,30 +16,39 @@
 
 #pragma once
 
-// ospray
-#include "common/OSPCommon.ih"
-#include "common/Model.ih"
+#include "ospray/camera/Camera.h"
 
-// path tracer
-#include "materials/Medium.ih"
-#include "materials/Material.ih"
-#include "lights/PTLight.ih"
+namespace ospray {
 
-struct Scene {
-  uniform PTLight *uniform *uniform allLights;
-  uniform uint32 num_allLights;
-  uniform Model *uniform model;
-  uniform PTEnvironmentLight *uniform *uniform envLights;
-  uniform uint32 num_envLights;
-};
+  /*! \defgroup panoramic_camera The Panoramic Camera ("panoramic")
 
-inline void postIntersect(const uniform Scene *uniform scene,
-                          Ray &ray,DifferentialGeometry &dg)
-{
-  if (hadHit(ray))
-    postIntersect(scene->model,dg,ray,
-                  DG_MATERIALID|
-                  DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
-                  );
-}
+    \brief Implements a panoramic camera with latitude/longitude mapping,
+    without support for Depth of Field or Motion Blur
 
+    \ingroup ospray_supported_cameras
+    
+    A simple panoramic camera. This camera type is loaded by passing
+    the type string "panoramic" to \ref ospNewCamera
+
+    The panoramic camera supports the following parameters
+    <pre>
+    vec3f(a) pos;    // camera position
+    vec3f(a) dir;    // camera direction
+    vec3f(a) up;     // up vector
+    </pre>
+
+    The functionality for a panoramic camera is implemented via the
+    \ref ospray::PanoramicCamera class.
+  */
+
+  //! Implements a simple panoramic camera (see \subpage panoramic_camera)
+  struct PanoramicCamera : public Camera {
+    /*! \brief constructor \internal also creates the ispc-side data structure */
+    PanoramicCamera();
+    //! \brief common function to help printf-debugging 
+    /*! Every derived class should overrride this! */
+    virtual std::string toString() const { return "ospray::PanoramicCamera"; }
+    virtual void commit();
+  };
+
+} // ::ospray

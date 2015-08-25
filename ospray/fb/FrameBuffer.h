@@ -59,6 +59,9 @@ namespace ospray {
                 ColorBufferFormat colorBufferFormat,
                 bool hasDepthBuffer,
                 bool hasAccumBuffer);
+
+    virtual void commit();
+
     virtual const void *mapDepthBuffer() = 0;
     virtual const void *mapColorBuffer() = 0;
 

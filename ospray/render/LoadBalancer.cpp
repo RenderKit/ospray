@@ -17,6 +17,9 @@
 #include "LoadBalancer.h"
 #include "Renderer.h"
 
+// stl
+#include <algorithm>
+
 namespace ospray {
 
   using std::cout;
@@ -29,7 +32,6 @@ namespace ospray {
     renderer->endFrame(channelFlags);
     renderer = NULL;
     fb = NULL;
-    // refDec();
   }
 
   void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex) 
@@ -45,6 +47,7 @@ namespace ospray {
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
     renderer->renderTile(tile);
+    printf("settile... twice?\n");
     fb->setTile(tile);
   }
 
@@ -66,6 +69,26 @@ namespace ospray {
     
     renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
     renderTask->wait();
+
+    // /*! iw: using a local sync event for now; "in theory" we should be
+    //     able to attach something like a sync event to the frame
+    //     buffer, just trigger the task here, and let somebody else sync
+    //     on the framebuffer once it is needed; alas, I'm currently
+    //     running into some issues with the embree taks system when
+    //     trying to do so, and thus am reverting to this
+    //     fully-synchronous version for now */
+
+    // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
+    // TaskScheduler::EventSync sync;
+    // renderTask->task = embree::TaskScheduler::Task
+    //   (&sync,
+    //   // (&renderTask->fb->frameIsReadyEvent,
+    //    renderTask->_run,renderTask.ptr,
+    //    renderTask->numTiles_x*renderTask->numTiles_y,
+    //    renderTask->_finish,renderTask.ptr,
+    //    "LocalTiledLoadBalancer::RenderTask");
+    // TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
+    // sync.sync();
   }
 
   void InterleavedTiledLoadBalancer::RenderTask::run(size_t taskIndex)

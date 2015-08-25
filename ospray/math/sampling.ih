@@ -1,0 +1,115 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+/*! \brief utility library containing sampling functions */
+
+// convention is to return the sample (vec2f or vec3f) generated from given vec2f 's'ample as last parameter
+// sampling functions often come in pairs: sample and pdf (needed later for MIS)
+// good reference is "Total Compendium" by Philip Dutre http://people.cs.kuleuven.be/~philip.dutre/GI/
+
+#include "ospray/math/vec.ih"
+
+
+inline float cos2sin(const float f) { return sqrt(max(0.f, 1.f - f * f)); }
+
+/// cosine-weighted sampling of hemisphere oriented along the +z-axis
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f cosineSampleHemisphere(const vec2f s)
+{
+  const float phi = (2.0f * M_PI) * s.x;
+  const float cosTheta = sqrt(s.y);
+  const float sinTheta = sqrt(1.0f - s.y);
+  return make_vec3f(cos(phi) * sinTheta,
+                    sin(phi) * sinTheta,
+                    cosTheta);
+}
+
+inline float cosineSampleHemispherePDF(const vec3f &dir)
+{
+  return dir.z / M_PI;
+}
+
+
+/// power cosine-weighted sampling of hemisphere oriented along the +z-axis
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f powerCosineSampleHemisphere(const float n, const vec2f &s)
+{
+  const float phi = (2.0f * M_PI) * s.x;
+  const float cosTheta = pow(s.y, 1.0f / (n + 1.0f));
+  const float sinTheta = cos2sin(cosTheta);
+  return make_vec3f(cos(phi) * sinTheta,
+                    sin(phi) * sinTheta,
+                    cosTheta);
+}
+
+inline float powerCosineSampleHemispherePDF(const vec3f dir, const float n) // TODO: order of arguments
+{
+  return (n + 1.0f) * (0.5f / M_PI) * pow(dir.z, n);
+}
+
+
+/// uniform sampling of cone of directions oriented along the +z-axis
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f uniformSampleCone(const float angle, const vec2f &s)
+{
+  const float phi = (2.0f * M_PI) * s.x;
+  const float cosTheta = 1.0f - s.y * (1.0f - cos(angle));
+  const float sinTheta = cos2sin(cosTheta);
+  return make_vec3f(cosf(phi) * sinTheta,
+                    sinf(phi) * sinTheta,
+                    cosTheta);
+}
+
+inline float uniformSampleConePDF(const float angle)
+{
+    return rcp((4.0f*M_PI)*sqrf(sinf(0.5f*angle)));
+}
+
+
+/// uniform sampling of disk
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec2f uniformSampleDisk(const float radius, const vec2f &s)
+{
+  const float r = sqrtf(s.x);
+  const float theta = (2.0f * M_PI) * s.y;
+  return radius * r * make_vec2f(cosf(theta), sinf(theta));
+}
+
+inline float uniformSampleDiskPDF(const float radius)
+{
+  return rcp(M_PI * radius * radius);
+}
+
+
+/// uniform sampling of triangle abc
+////////////////////////////////////////////////////////////////////////////////
+
+inline vec3f uniformSampleTriangle(const vec3f &a, const vec3f &b, const vec3f &c, const vec2f &s)
+{
+  const float su = sqrtf(s.x);
+  return c + (1.0f - su) * (a-c) + (s.y*su) * (b-c);
+}
+
+inline float uniformSampleTrianglePDF(const vec3f &a, const vec3f &b, const vec3f &c)
+{
+  return 2.0f * rcp(abs(length(cross(a-c, b-c))));
+}

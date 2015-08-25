@@ -32,7 +32,7 @@
     Thus the material pointer only needs to be set if different to
     geometry->material, or the color when different to vec4f(1.0f).
 */
-typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
+typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform self,
                                           uniform Model *uniform model,
                                           varying DifferentialGeometry &dg,
                                           const varying Ray &ray,
@@ -40,14 +40,21 @@ typedef void (*Geometry_postIntersectFct)(uniform Geometry *uniform THIS,
 
 /*! ispc-side equivalent of a geometry */
 struct Geometry {
-  void *uniform cppEquivalent; //! pointer back to the C++-equivalent of this class
-  uniform Material *uniform material;//!< material attached to this geometry
-  uniform Model    *uniform model;   //!< model that this geometry is part of
-  uniform int32             geomID;  //!< ID that 'model' knows this geometry under
-  Geometry_postIntersectFct postIntersect; /*! post-intersect function that
-                                             fills in a DifferentialGeometry
-                                             struct, see above prototype for
-                                             details */
+  /*! 'virtual' post-intersect function that fills in a
+    DifferentialGeometry struct, see above prototype for details */
+  Geometry_postIntersectFct postIntersect;
+
+  //! pointer back to the C++-equivalent of this class
+  void *uniform cppEquivalent; 
+
+  //! material attached to this geometry
+  uniform Material *uniform material;
+
+  //! model that this geometry is part of
+  uniform Model    *uniform model; 
+
+  //! ID that 'model' knows this geometry under  
+  uniform int32             geomID;
 };
  
 //! constructor for ispc-side Geometry object

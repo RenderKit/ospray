@@ -46,6 +46,7 @@ namespace ospray {
 
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC();
+
   };
 
 } // ::ospray

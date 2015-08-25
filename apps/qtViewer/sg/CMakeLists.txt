@@ -9,8 +9,9 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
   Renderer.cpp
   common/TransferFunction.cpp
   geometry/Spheres.cpp
-  geometry/PKD.cpp
   geometry/TriangleMesh.cpp
+
+  common/Common.cpp
   common/Node.cpp
   common/Integrator.cpp
   common/World.cpp
@@ -22,11 +23,14 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
 
   module/Module.cpp
 
+  3rdParty/ply.cpp
+
   # scene graph importers
   importer/Importer.cpp
   importer/ImportSpheres.cpp
   importer/ImportOSP.cpp
   importer/ImportOBJ.cpp
+  importer/ImportPLY.cpp
   importer/ImportRIVL.cpp
   #    ImportX3D.cpp
 )

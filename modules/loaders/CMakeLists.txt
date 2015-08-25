@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_MODULE_LOADERS OFF CACHE BOOL "Build loaders for common file types.")
+OPTION(OSPRAY_MODULE_LOADERS "Build loaders for common file types." ON)
 
 CONFIGURE_OSPRAY()
 

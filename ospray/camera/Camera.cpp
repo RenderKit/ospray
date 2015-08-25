@@ -49,5 +49,14 @@ namespace ospray {
     return(camera);
   }
 
+  void Camera::commit()
+  {
+    // "parse" the general expected parameters
+    pos      = getParam3f("pos", vec3f(0.f));
+    dir      = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
+    up       = getParam3f("up", vec3f(0.f, 1.f, 0.f));
+    nearClip = getParam1f("near_clip", getParam1f("nearClip", 1e-6f));
+  }
+
 } // ::ospray
 

@@ -53,7 +53,7 @@ namespace ospray {
 
   Renderer *Renderer::createRenderer(const char *_type)
   {
-    char type[strlen(_type)+1];
+    char* type = new char[strlen(_type)+1];
     strcpy(type,_type);
     char *atSign = strstr(type,"@");
     char *libName = NULL;
@@ -65,8 +65,10 @@ namespace ospray {
       loadLibrary("ospray_module_"+std::string(libName));
     
     std::map<std::string, Renderer *(*)()>::iterator it = rendererRegistry.find(type);
-    if (it != rendererRegistry.end())
+    if (it != rendererRegistry.end()) {
+      delete[] type;
       return it->second ? (it->second)() : NULL;
+    }
     
     if (ospray::logLevel >= 2) 
       std::cout << "#ospray: trying to look up renderer type '" 
@@ -76,12 +78,18 @@ namespace ospray {
     creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
     rendererRegistry[type] = creator;
     if (creator == NULL) {
-      PING;
       if (ospray::logLevel >= 1) 
         std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
+      delete[] type;
       return NULL;
     }
-    Renderer *renderer = (*creator)();  renderer->managedObjectType = OSP_RENDERER;
+    delete[] type;
+    Renderer *renderer = (*creator)();  
+    renderer->managedObjectType = OSP_RENDERER;
+    if (renderer == NULL && ospray::logLevel >= 1) {
+      std::cout << "#osp:warning[ospNewRenderer(...)]: could not create renderer of that type." << endl;
+      std::cout << "#osp:warning[ospNewRenderer(...)]: Note: Requested renderer type was '" << type << "'" << endl;
+    }
     return(renderer);
   }
 

@@ -18,14 +18,27 @@
 
 // ospray
 #include "ospray/common/OSPCommon.h"
-// std
+// embree
+#include "common/sys/filename.h"
+// stl
 #include <stack>
 #include <vector>
+
+#ifdef _WIN32
+#  ifdef ospray_xml_EXPORTS
+#    define OSPRAY_XML_INTERFACE __declspec(dllexport)
+#  else
+#    define OSPRAY_XML_INTERFACE __declspec(dllimport)
+#  endif
+#else
+#  define OSPRAY_XML_INTERFACE
+#endif
 
 namespace ospray {
   namespace xml {
 
     struct Node;
+    using embree::FileName;
     struct XMLDoc;
 
     /*! 'prop'erties in xml nodes are the 'name="value"' inside the
@@ -38,42 +51,63 @@ namespace ospray {
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
     struct Node {
-      std::string         name;
-      std::string         content;
-      std::vector<Prop *> prop;
-      std::vector<Node *> child;
-      XMLDoc             *doc;
-      // std::vector<Ref<Prop> > prop;
-      // std::vector<Ref<Node> > child;
+      //! constructor
+      Node(XMLDoc *doc) : name(""), content(""), doc(doc) {}
       
+      //! destructor
+      virtual ~Node();
+
+      inline bool hasProp(const std::string &name) const {
+        for (int i=0;i<prop.size();i++) 
+          if (prop[i]->name == name) return true;
+        return false;
+      }
       inline std::string getProp(const std::string &name) const {
         for (int i=0;i<prop.size();i++) 
           if (prop[i]->name == name) return prop[i]->value; 
         return "";
       }
 
-      //*! find properly with given name, and return as long ('l')
-      //*! int. return undefined if prop does not exist
+      /*! find properly with given name, and return as long ('l')
+        int. return undefined if prop does not exist */
       inline size_t getPropl(const std::string &name) const
       { return atol(getProp(name).c_str()); }
       
-      Node() : name(""), content(""), doc(NULL) {}
-      virtual ~Node();
+      /*! name of the xml node (i.e., the thing that's in
+          "<name>....</name>") */
+      std::string name;
+
+      /*! the content string, i.e., the thing that's between
+          "<name>..." and "...</name>" */
+      std::string content;
+
+      /*! list of xml node properties properties */
+      std::vector<Prop *> prop;
+
+      /*! list of child nodes */
+      std::vector<Node *> child;
+
+      //! pointer to parent doc 
+      /*! \detailed this points back to the parent xml doc that
+          conatined this node. note this is intentionally NOT a ref to
+          avoid cyclical dependencies */
+      XMLDoc *doc;
     };
 
     /*! a entire xml document */
     struct XMLDoc : public Node {
-      //! \brief original file name when the document was loaded. Can be empty string.
-      /*! \detailed can be used to find related docs relative to
-          existing one */
-      std::string fileName;
+      //! constructor
+      XMLDoc() : Node(this) {}
+
+      //! the name (and path etc) of the file that this doc was read from
+      FileName fileName;
     };
     
     /*! parse an XML file with given file name, and return a pointer
       to it.  In case of any error, this function will free all
       already-allocated data, and throw a std::runtime_error
       exception */
-    XMLDoc *readXML(const std::string &fn);
+    OSPRAY_XML_INTERFACE XMLDoc *readXML(const std::string &fn);
 
       
     /*! @{ */

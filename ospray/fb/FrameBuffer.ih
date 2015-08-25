@@ -21,13 +21,6 @@
 
 struct FrameBuffer;
 
-// /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-// typedef void (*SetTileMethod)(uniform FrameBuffer  *uniform,
-//                               uniform Tile &);
-// /*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-// typedef void (*AccumTileMethod)(uniform FrameBuffer  *uniform,
-//                                 uniform Tile &);
-
 /*! app-mappable format of the color buffer. make sure that this
   matches the definition on the ISPC side */
 typedef enum { 
@@ -42,11 +35,9 @@ typedef enum {
 
 struct FrameBuffer 
 {
-  //  SetTileMethod     setTile;
-  //  AccumTileMethod   accumTile;
-
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */
+  uniform float gamma; /*! gamma correction */
   int32 accumID;
 
   FrameBuffer_ColorBufferFormat colorBufferFormat;
@@ -59,11 +50,7 @@ struct FrameBuffer
 /*! helper function to convert float-color into rgba-uint format */
 inline uint32 cvt_uint32(const float f)
 {
-#if 0
-  return (int32)(255.9f * f);
-#else
   return (int32)(255.9f * max(min(f,1.f),0.f));
-#endif
 }
 
 /*! helper function to convert float-color into rgba-uint format */

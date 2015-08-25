@@ -46,5 +46,7 @@ struct Camera
                     passed to initRay has to have properly initialized
                     'lens' value; if not, this value can remain
                     unused. */
+
+  float nearClip; /*!< \brief near clipping plane. */
 };
 

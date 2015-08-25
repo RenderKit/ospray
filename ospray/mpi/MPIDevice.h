@@ -33,49 +33,6 @@ namespace ospray {
       CommandStream cmd;
 
       typedef ospray::CommandTag CommandTag;
-      // enum {
-      //   CMD_NEW_RENDERER=0,
-      //   CMD_FRAMEBUFFER_CREATE,
-      //   CMD_RENDER_FRAME,
-      //   CMD_FRAMEBUFFER_CLEAR,
-      //   CMD_FRAMEBUFFER_MAP,
-      //   CMD_FRAMEBUFFER_UNMAP,
-      //   CMD_NEW_MODEL,
-      //   CMD_NEW_GEOMETRY,
-      //   CMD_NEW_MATERIAL,
-      //   CMD_NEW_LIGHT,
-      //   CMD_NEW_TRIANGLEMESH,
-      //   CMD_NEW_CAMERA,
-      //   CMD_NEW_VOLUME,
-      //   CMD_NEW_TRANSFERFUNCTION,
-      //   CMD_NEW_DATA,
-      //   CMD_NEW_TEXTURE2D,
-      //   CMD_ADD_GEOMETRY,
-      //   CMD_REMOVE_GEOMETRY,
-      //   CMD_ADD_VOLUME,
-      //   CMD_COMMIT,
-      //   CMD_LOAD_MODULE,
-      //   CMD_RELEASE,
-      //   CMD_GET_TYPE,
-      //   CMD_GET_VALUE,
-      //   CMD_SET_MATERIAL,
-      //   CMD_SET_REGION,
-      //   CMD_SET_OBJECT,
-      //   CMD_SET_STRING,
-      //   CMD_SET_INT,
-      //   CMD_SET_FLOAT,
-      //   CMD_SET_VEC2F,
-      //   CMD_SET_VEC3F,
-      //   CMD_SET_VEC3I,
-
-      //   CMD_SET_PIXELOP,
-      //   CMD_NEW_PIXELOP,
-
-      //   CMD_API_MODE,
-
-      //   CMD_USER
-      // } CommandTag;
-      
       /*! constructor */
       MPIDevice(// AppMode appMode, OSPMode ospMode,
                 int *_ac=NULL, const char **_av=NULL);
@@ -164,6 +121,9 @@ namespace ospray {
 
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
+
+      /*! assign (named) vec2i parameter to an object */
+      virtual void setVec2i(OSPObject object, const char *bufName, const vec2i &v);
 
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);

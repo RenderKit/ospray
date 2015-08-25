@@ -41,8 +41,8 @@ namespace ospray {
       static Handle alloc();
       void free();
 
-      inline Handle(const int64 i) : i64(i) {};
-      inline Handle(const Handle &other=NULL_HANDLE) : i64(other.i64) {};
+      inline Handle(const int64 i = 0) : i64(i) {};
+      inline Handle(const Handle &other) : i64(other.i64) {};
       inline Handle &operator=(const Handle &other) { i64=other.i64; return *this; }
 
       union {

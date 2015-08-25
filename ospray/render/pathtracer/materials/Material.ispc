@@ -16,17 +16,17 @@
 
 #include "Material.ih"
 
-void PathTraceMaterial__selectNextMedium(uniform const PathTraceMaterial *uniform _THIS,
+void PathTraceMaterial__selectNextMedium(uniform const PathTraceMaterial *uniform _self,
                                 varying Medium& currentMedium) 
-{ 
-}
+{ /* do nothing by default */ }
 
-void PathTraceMaterial__Constructor(uniform PathTraceMaterial *uniform THIS,
-                           // uniform DestructorFunc destructor,
+void PathTraceMaterial__Constructor(uniform PathTraceMaterial *uniform self,
                            uniform PathTraceMaterial__shade shade,
                            uniform PathTraceMaterial__selectNextMediumFunc selectNextMedium)
 {
-  THIS->shade = shade;
-  if (selectNextMedium) THIS->selectNextMedium = selectNextMedium; 
-  else                  THIS->selectNextMedium = PathTraceMaterial__selectNextMedium;
+  self->shade = shade;
+  if (selectNextMedium) 
+    self->selectNextMedium = selectNextMedium; 
+  else                  
+    self->selectNextMedium = PathTraceMaterial__selectNextMedium;
 }

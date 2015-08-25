@@ -21,6 +21,9 @@
 // ospray, for rendering
 #include "ospray/ospray.h"
 
+// stl
+#include <algorithm>
+
 namespace ospray {
   using std::cout;
   using std::endl;
@@ -42,6 +45,7 @@ namespace ospray {
   int accumID = -1;
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
+  int maxDepth = 2; // only set with '+'/'-'
   unsigned int maxObjectsToConsider = (uint32)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
   bool forceInstancing = false;
@@ -94,7 +98,7 @@ namespace ospray {
   {
     FILE *file = fopen(fileName, "wb");
     fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
-    unsigned char out[3*sizeX];
+    unsigned char *out = (unsigned char *)alloca(3*sizeX);
     for (int y = 0; y < sizeY; y++) {
       const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
       for (int x = 0; x < sizeX; x++) {
@@ -102,7 +106,7 @@ namespace ospray {
         out[3*x + 1] = in[4*x + 1];
         out[3*x + 2] = in[4*x +2 ];
       }
-      fwrite(&out, 3*sizeX, sizeof(char), file);
+      fwrite(out, 3*sizeX, sizeof(char), file);
     }
     fprintf(file, "\n");
     fclose(file);
@@ -138,6 +142,8 @@ namespace ospray {
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
       fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+      ospSet1f(fb, "gamma", 2.2f);
+      ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
 
       /*! for now, let's just attach the pixel op to the _main_ frame
@@ -208,8 +214,6 @@ namespace ospray {
         else 
           viewPort.up = vec3f(1,0,0);
         viewPort.modified = true;
-        accumID=0;
-        ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
       case 'Y':
@@ -218,8 +222,6 @@ namespace ospray {
         else 
           viewPort.up = vec3f(0,1,0);
         viewPort.modified = true;
-        accumID=0;
-        ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
       case 'Z':
@@ -228,8 +230,6 @@ namespace ospray {
         else 
           viewPort.up = vec3f(0,0,1);
         viewPort.modified = true;
-        accumID=0;
-        ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
       case 'f':
@@ -252,22 +252,29 @@ namespace ospray {
     {
       switch(key) {
       case GLUT_KEY_PAGE_UP:
-        g_near_clip += 10.f * motionSpeed;
-        ospSet1f(camera, "near_clip", g_near_clip);
-        ospCommit(camera);
-        ospFrameBufferClear(fb,OSP_FB_ACCUM);
-        forceRedraw();
-        break;
+        g_near_clip += 20.f * motionSpeed;
       case GLUT_KEY_PAGE_DOWN:
         g_near_clip -= 10.f * motionSpeed;
         g_near_clip = std::max(g_near_clip, 1e-6f);
         ospSet1f(camera, "near_clip", g_near_clip);
         ospCommit(camera);
+        accumID=0;
+        ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        forceRedraw();
+        break;
+      case GLUT_KEY_HOME:
+        maxDepth += 2;
+      case  GLUT_KEY_END:
+        maxDepth--;
+        ospSet1i(ospRenderer, "maxDepth", maxDepth);
+        PRINT(maxDepth);
+        ospCommit(ospRenderer);
+        accumID=0;
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
         forceRedraw();
         break;
       default:
-        Glut3DWidget::keypress(key,where);
+        Glut3DWidget::specialkey(key,where);
       }
     }
 
@@ -285,8 +292,6 @@ namespace ospray {
           viewPort.at = pick.position;
           viewPort.modified = true;
           computeFrame();
-          accumID = 0;
-          ospFrameBufferClear(fb,OSP_FB_ACCUM);
           forceRedraw();
         }
       }
@@ -847,11 +852,39 @@ namespace ospray {
     ospSetString(ospSpot, "name", "spot_test");
     ospSet3f(ospSpot, "position", 0.f, 2.f, 0.f);
     ospSet3f(ospSpot, "direction", 0.f, -1.f, 0.7f);
-    ospSet3f(ospSpot, "color", 1.f, 1.f, 1.f);
-    ospSet1f(ospSpot, "intensity", 7.f);
-    ospSet1f(ospSpot, "halfAngle", 15.f);
+    ospSet3f(ospSpot, "color", 1.f, 1.f, .5f);
+    ospSet1f(ospSpot, "intensity", 17.f);
+    ospSet1f(ospSpot, "openingAngle", 50.f);
+    ospSet1f(ospSpot, "penumbraAngle", 2.f);
     ospCommit(ospSpot);
     lights.push_back(ospSpot);
+    //point light
+    cout << "#ospModelViewer: Adding a hard coded pointlight for test." << endl;
+    OSPLight ospPoint = ospNewLight(ospRenderer, "PointLight");
+    ospSetString(ospPoint, "name", "point_test");
+    ospSet3f(ospPoint, "position", -5.f, 20.f, 10.f);
+    ospSet3f(ospPoint, "color", .5f, 1.f, 1.f);
+    ospSet1f(ospPoint, "intensity", 200.f);
+    ospCommit(ospPoint);
+    lights.push_back(ospPoint);
+    //ambient light
+    cout << "#ospModelViewer: Adding a hard coded ambientlight for test." << endl;
+    OSPLight ospAmbient = ospNewLight(ospRenderer, "AmbientLight");
+    ospSetString(ospAmbient, "name", "ambient_test");
+    ospSet1f(ospAmbient, "intensity", 0.2f);
+    ospCommit(ospAmbient);
+    lights.push_back(ospAmbient);
+    //quad light
+    cout << "#ospModelViewer: Adding a hard coded quadlight for test." << endl;
+    OSPLight ospQuad = ospNewLight(ospRenderer, "QuadLight");
+    ospSetString(ospQuad, "name", "quad_test");
+    ospSet3f(ospQuad, "position", 1.f, 3.5f, 0.f);
+    ospSet3f(ospQuad, "edge1", 0.f, 0.f, 0.3f);
+    ospSet3f(ospQuad, "edge2", 2.f, 0.f, 0.f);
+    ospSet3f(ospQuad, "color", .5f, 1.f, .5f);
+    ospSet1f(ospQuad, "intensity", 45.f);
+    ospCommit(ospQuad);
+    lights.push_back(ospQuad);
 #endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);

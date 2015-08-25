@@ -636,6 +636,18 @@ namespace ospray {
       cmd.send(v);
     }
 
+    /*! assign (named) vec2i parameter to an object */
+    void MPIDevice::setVec2i(OSPObject _object, const char *bufName, const vec2i &v)
+    {
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC2I);
+      cmd.send((const mpi::Handle &) _object);
+      cmd.send(bufName);
+      cmd.send(v);
+    }
+
     /*! assign (named) vec3i parameter to an object */
     void MPIDevice::setVec3i(OSPObject _object, const char *bufName, const vec3i &v)
     {
@@ -671,16 +683,16 @@ namespace ospray {
     /*! Get the handle of the named data array associated with an object. */
     int MPIDevice::getData(OSPObject object, const char *name, OSPData *value) {
 
-      //! Not yet implemented.
-      return(false);
+      // Not yet implemented.
+      return false;
 
     }
 
     /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
     int MPIDevice::getDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
 
-      //! Not yet implemented.
-      return(false);
+      // Not yet implemented.
+      return false;
 
     }
 
@@ -723,32 +735,32 @@ namespace ospray {
     /*! Get the material associated with a geometry object. */
     int MPIDevice::getMaterial(OSPGeometry geometry, OSPMaterial *value) {
 
-      //! Not yet implemented.
-      return(false);
+      // Not yet implemented.
+      return false;
 
     }
 
     /*! Get the named object associated with an object. */
     int MPIDevice::getObject(OSPObject object, const char *name, OSPObject *value) {
 
-      //! Not yet implemented.
-      return(false);
+      // Not yet implemented.
+      return false;
 
     }
 
     /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
     int MPIDevice::getParameters(OSPObject object, char ***value) {
 
-      //! Not yet implemented.
-      return(false);
+      // Not yet implemented.
+      return false;
 
     }
 
     /*! Retrieve the total length of the names (with terminators) of the parameters associated with an object. */
     int MPIDevice::getParametersSize(OSPObject object, int *value) {
 
-      //! Not yet implemented.
-      return(false);
+      // Not yet implemented.
+      return false;
 
     }
 
