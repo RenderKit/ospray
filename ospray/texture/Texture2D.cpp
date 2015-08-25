@@ -19,6 +19,11 @@
 
 namespace ospray {
 
+  Texture2D::~Texture2D()
+  {
+    if (!(flags & OSP_TEXTURE_SHARED_BUFFER)) free(data);
+  }
+
   Texture2D *Texture2D::createTexture(int sx, int sy, OSPDataType type, void *data, int flags) 
   {
     Texture2D *tx = new Texture2D;
@@ -57,13 +62,14 @@ namespace ospray {
     assert(data);
     
     //Do we really need to make this copy?
-    if (flags & OSP_DATA_SHARED_BUFFER) {
+    if (flags & OSP_TEXTURE_SHARED_BUFFER) {
       tx->data = data;
     } else {
       tx->data = bytes ? new unsigned char[bytes] : NULL;
       memcpy(tx->data, data, bytes);
     }
-    
+
+    tx->flags = flags;
     tx->managedObjectType = OSP_TEXTURE;
     return tx;
   }
