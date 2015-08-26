@@ -72,6 +72,13 @@ typedef int ssize_t;
 #endif
 
 
+// for MIC, disable the 'variable declared bbut never referenced'
+// warning, else the ISPC-generated code produces _far_ too many such
+// outputs
+#if defined(__INTEL_COMPILER) && defined(__MIC__)
+#pragma warning(disable:177 ) // variable declared but was never referenced
+#endif
+
 #ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
 inline void operator delete(void* ptr) throw() { embree::alignedFree(ptr); }      

@@ -34,12 +34,14 @@ namespace embree
 {
   /*! @{ all this code is to make sure that the embree tasksys *only*
       burns cycles when it is supposed to */
-#if THIS_IS_MIC
+// #if THIS_IS_MIC
+#if defined(__INTEL_COMPILER) && defined(__MIC__)
   // on KNC, embree currently spins if no more work is available; this
   // code makes sure that it does so *only* inbetwween calls to
   // 'wakeUpTaskSys' and 'putTaskSysToSleep()'
   ConditionSys allowedToRun;
-  MutexSys wakeMutex;
+  MutexSys allowMutex;
+  // MutexSys wakeMutex;
   size_t numTimesWokenUp = 0;
 
   /*! wake up (spinning) task sys threads - called right before scene::build */

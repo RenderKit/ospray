@@ -47,7 +47,7 @@ namespace ospray {
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
     renderer->renderTile(tile);
-    printf("settile... twice?\n");
+    // printf("settile... twice?\n");
     fb->setTile(tile);
   }
 
