@@ -16,12 +16,13 @@
 
 #include "Texture2D.h"
 #include "Texture2D_ispc.h"
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
 
   Texture2D::~Texture2D()
   {
-    if (!(flags & OSP_TEXTURE_SHARED_BUFFER)) free(data);
+    if (!(flags & OSP_TEXTURE_SHARED_BUFFER)) delete[] data;
   }
 
   Texture2D *Texture2D::createTexture(int sx, int sy, OSPDataType type, void *data, int flags) 

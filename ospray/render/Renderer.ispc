@@ -90,6 +90,18 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
       
         camera->initRay(camera,screenSample.ray,cameraSample);
+
+        // set ray t value for early ray termination if we have a maximum depth texture
+        if (self->maxDepthTexture) {
+
+          // don't consider pixel_du, pixel_dv for depth texture coordinates
+          vec2f depthTexCoord;
+          depthTexCoord.x = screenSample.sampleID.x * fb->rcpSize_1.x;
+          depthTexCoord.y = screenSample.sampleID.y * fb->rcpSize_1.y;
+
+          screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+        }
+
         self->renderSample(self,screenSample);
         col = col + screenSample.rgb;
       }
@@ -124,6 +136,18 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
 
       camera->initRay(camera,screenSample.ray,cameraSample);
+
+      // set ray t value for early ray termination if we have a maximum depth texture
+      if (self->maxDepthTexture) {
+
+        // don't consider pixel_du, pixel_dv for depth texture coordinates
+        vec2f depthTexCoord;
+        depthTexCoord.x = (screenSample.sampleID.x) * fb->rcpSize_1.x;
+        depthTexCoord.y = (screenSample.sampleID.y) * fb->rcpSize_1.y;
+
+        screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+      }
+
       self->renderSample(self,screenSample);
 
       // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
@@ -146,6 +170,7 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->fb     = NULL;
   self->spp    = 1;
   self->backgroundEnabled = true;
+  self->maxDepthTexture = NULL;
   self->renderSample = Renderer_default_renderSample;
   self->renderTile   = Renderer_default_renderTile;
   self->beginFrame   = Renderer_default_beginFrame;
@@ -193,7 +218,8 @@ export void Renderer_set(void *uniform _self,
                          void *uniform _camera,
                          const uniform float epsilon,
                          const uniform int32 spp,
-                         const uniform bool backgroundEnabled)
+                         const uniform bool backgroundEnabled,
+                         void *uniform _maxDepthTexture)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->model  = (uniform Model *uniform)_model;
@@ -201,6 +227,7 @@ export void Renderer_set(void *uniform _self,
   self->epsilon = epsilon;
   self->spp = spp;
   self->backgroundEnabled = backgroundEnabled;
+  self->maxDepthTexture = (uniform Texture2D *uniform)_maxDepthTexture;
 }
 
 export void Renderer_pick(void *uniform _self,

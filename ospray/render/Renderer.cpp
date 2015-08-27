@@ -37,6 +37,7 @@ namespace ospray {
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
     backgroundEnabled = getParam1i("backgroundEnabled", 1);
+    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
     model = (Model*)getParamObject("model", getParamObject("world"));
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
@@ -50,7 +51,8 @@ namespace ospray {
                          camera ?  camera->getIE() : NULL,
                          epsilon,
                          spp,
-                         backgroundEnabled);
+                         backgroundEnabled,
+                         maxDepthTexture ? maxDepthTexture->getIE() : NULL);
     }
   }
 

@@ -20,6 +20,7 @@
 
 #include "ospray/common/Model.h"
 #include "ospray/fb/FrameBuffer.h"
+#include "ospray/texture/Texture2D.h"
 
 namespace ospray {
 
@@ -80,6 +81,13 @@ namespace ospray {
 
     /*! \brief whether the background should be rendered (e.g. for compositing the background may be disabled) */
     bool backgroundEnabled;
+
+    /*! \brief maximum depth texture provided as an optional parameter to the renderer, used for early ray termination
+
+      The texture format should be OSP_FLOAT and texture filtering
+      should be set to nearest-neighbor interpolation:
+      (OSP_TEXTURE_FILTER_NEAREST). */
+    Ref<Texture2D> maxDepthTexture;
 
   };
 
