@@ -145,6 +145,7 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->camera = NULL;
   self->fb     = NULL;
   self->spp    = 1;
+  self->backgroundEnabled = true;
   self->renderSample = Renderer_default_renderSample;
   self->renderTile   = Renderer_default_renderTile;
   self->beginFrame   = Renderer_default_beginFrame;
@@ -191,13 +192,15 @@ export void Renderer_set(void *uniform _self,
                          void *uniform _model,
                          void *uniform _camera,
                          const uniform float epsilon,
-                         const uniform int32 spp)
+                         const uniform int32 spp,
+                         const uniform bool backgroundEnabled)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->model  = (uniform Model *uniform)_model;
   self->camera = (uniform Camera *uniform)_camera;
   self->epsilon = epsilon;
   self->spp = spp;
+  self->backgroundEnabled = backgroundEnabled;
 }
 
 export void Renderer_pick(void *uniform _self,

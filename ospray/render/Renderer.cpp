@@ -36,6 +36,7 @@ namespace ospray {
   {
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
+    backgroundEnabled = getParam1i("backgroundEnabled", 1);
     model = (Model*)getParamObject("model", getParamObject("world"));
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
@@ -43,11 +44,13 @@ namespace ospray {
         const float diameter = model->bounds.empty() ? 1.0f : length(model->bounds.size());
         epsilon *= diameter;
       }
+
       ispc::Renderer_set(getIE(),
                          model ?  model->getIE() : NULL,
                          camera ?  camera->getIE() : NULL,
                          epsilon,
-                         spp);
+                         spp,
+                         backgroundEnabled);
     }
   }
 

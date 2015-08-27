@@ -77,6 +77,10 @@ namespace ospray {
 
     /*! \brief number of samples to be used per pixel in a tile */
     int32        spp;
+
+    /*! \brief whether the background should be rendered (e.g. for compositing the background may be disabled) */
+    bool backgroundEnabled;
+
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under
