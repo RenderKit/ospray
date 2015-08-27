@@ -28,7 +28,7 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
     + sample.screen.x * self->dir_du
     + sample.screen.y * self->dir_dv;
 
-  setRay(ray,org,normalize(dir),self->super.nearClip,inf);
+  setRay(ray,org,normalize(dir),self->super.nearClip,infinity);
 }
 
 /*! create a new ispc-side version of a perspectivecamera - with given

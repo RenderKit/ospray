@@ -28,7 +28,7 @@ void OrthographicCamera_initRay(uniform Camera *uniform _self,
     + sample.screen.x * self->pos_du
     + sample.screen.y * self->pos_dv;
 
-  setRay(ray, org, dir, self->super.nearClip, inf);
+  setRay(ray, org, dir, self->super.nearClip, infinity);
 }
 
 /*! create a new ispc-side version of a orthographiccamera - with given

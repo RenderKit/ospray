@@ -219,7 +219,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   // Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(ray.t0, geometryRay.t)) < infinity
+  while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
          && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
     if (firstHit == ray.t0) {
