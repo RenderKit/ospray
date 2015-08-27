@@ -41,6 +41,10 @@ namespace ospray {
       tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,data,flags);
       bpp = 3;
       break;
+    case OSP_FLOAT:
+      tx->ispcEquivalent = ispc::Texture2D_1f_create(tx,sx,sy,data,flags);
+      bpp = sizeof(float);
+      break;
     case OSP_FLOAT3:
       tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,data,flags);
       bpp = 3 * sizeof(float);
