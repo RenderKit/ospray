@@ -144,14 +144,19 @@ inline vec3f getRandomDir(const int j, const int i,
 }
 
 
-inline vec3f shade_ao16(uniform SimpleAO *uniform self,
-                        int sampleOfs, int sampleCnt,
-                        const Ray &ray, 
-                        const int32 pixel_x, const int32 pixel_y,
-                        const float rot_x, const float rot_y)
+inline void shade_ao16(uniform SimpleAO *uniform self,
+                       varying vec3f &color,
+                       varying float &alpha,
+                       int sampleOfs, int sampleCnt,
+                       const Ray &ray,
+                       const int32 pixel_x, const int32 pixel_y,
+                       const float rot_x, const float rot_y)
 {
-  if (ray.geomID < 0)
-    return self->bgColor;
+  if (ray.geomID < 0) {
+    color = self->super.backgroundEnabled ? self->bgColor : make_vec3f(0.f);
+    alpha = self->super.backgroundEnabled ? 1.f : 0.f;
+    return;
+  }
 
   DifferentialGeometry dg;
   postIntersect(self->super.model,dg,ray,
@@ -195,8 +200,9 @@ inline vec3f shade_ao16(uniform SimpleAO *uniform self,
   }
   float diffuse = absf(dot(N,ray.dir));
   float frac_visible = (sampleCnt-hits) * (1.0f/sampleCnt);
-  vec3f rgb = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
-  return rgb;
+  color = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
+  alpha = 1.f;
+  return;
 }
 
 
@@ -207,7 +213,6 @@ void SimpleAO_renderSample(uniform Renderer *uniform _self,
 
   traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
-  sample.alpha = 1.f;
 
   uniform int samplesPerFrame = self->samplesPerFrame;
   uniform int framesPer16 = 16/samplesPerFrame;
@@ -215,12 +220,14 @@ void SimpleAO_renderSample(uniform Renderer *uniform _self,
   int sampleOfs = sample.sampleID.z % framesPer16;
   float rot_x = 1.f-precomputedHalton3(accumID);
   float rot_y = 1.f-precomputedHalton5(accumID);
-  sample.rgb   = shade_ao16(self,
-                            sampleOfs,samplesPerFrame,
-                            sample.ray,
-                            sample.sampleID.x,
-                            sample.sampleID.y, 
-                            rot_x,rot_y);
+  shade_ao16(self,
+             sample.rgb,
+             sample.alpha,
+             sampleOfs,samplesPerFrame,
+             sample.ray,
+             sample.sampleID.x,
+             sample.sampleID.y,
+             rot_x,rot_y);
 }
 
 

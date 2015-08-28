@@ -81,7 +81,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
   }
 }
 
-inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varying ScreenSample &sample) 
+inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varying ScreenSample &sample)
 { 
   Ray &ray = sample.ray;
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
@@ -95,9 +95,10 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     traceRay(self->super.model,ray);
 
     if (ray.geomID < 0) {
-      color = color + path_opacity * self->bgColor;
+      sample.rgb = self->super.backgroundEnabled ? color + path_opacity * self->bgColor : color;
+      sample.alpha = self->super.backgroundEnabled ? 1.f : 1.f - path_opacity;
       sample.z = 1;
-      return color;
+      return;
     }
 
     sample.z = log(ray.t) / 10;
@@ -143,7 +144,11 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     const float local_opacity = path_opacity * d;
 
     max_depth -= 1;
-    if (max_depth <= 0) return color;
+    if (max_depth <= 0) {
+      sample.rgb = color;
+      sample.alpha = 1.f - path_opacity;
+      return;
+    }
 
     if (local_opacity > 0.01f) { // worth shading?
       const vec3f R = ray.dir - (2.f * dot(ray.dir, dg.Ns))*dg.Ns;
@@ -180,7 +185,12 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     }
 
     path_opacity = path_opacity * (1.f - d);
-    if (path_opacity < 0.01f) return color; //remaining contribution too low kill path
+    if (path_opacity < 0.01f) {
+      //remaining contribution too low kill path
+      sample.rgb = color;
+      sample.alpha = 1.f - path_opacity;
+      return;
+    }
 
     ray.t0 = ray.t + self->super.epsilon;
     ray.t = infinity;
@@ -189,14 +199,16 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     ray.instID = -1;
   }
 
-  return color;
+  sample.rgb = color;
+  sample.alpha = 1.f - path_opacity;
+  return;
 }
 
 void OBJRenderer_renderSample(uniform Renderer *uniform _self,
                                varying ScreenSample &sample)
 {
   uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
-  sample.rgb = OBJRenderer_shadeRay(self, sample);
+  OBJRenderer_shadeRay(self, sample);
 }
 
 
