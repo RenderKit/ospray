@@ -23,6 +23,7 @@
 #include "LightEditor.h"
 #include "SliceEditor.h"
 #include "PreferencesDialog.h"
+#include "OpenGLAnnotationRenderer.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool showFrameRate,
@@ -36,6 +37,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     transferFunction(NULL),
     light(NULL),
     osprayWindow(NULL),
+    annotationRenderer(NULL),
     transferFunctionEditor(NULL),
     isosurfaceEditor(NULL),
     autoRotateAction(NULL),
@@ -169,6 +171,22 @@ void VolumeViewer::screenshot(std::string filename)
   bool success = image.save(filename.c_str());
 
   std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
+}
+
+void VolumeViewer::setRenderAnnotationsEnabled(bool value)
+{
+  if (value) {
+    if (!annotationRenderer)
+      annotationRenderer = new OpenGLAnnotationRenderer(this);
+
+    connect(osprayWindow, SIGNAL(renderGLComponents()), annotationRenderer, SLOT(render()), Qt::UniqueConnection);
+  }
+  else {
+    delete annotationRenderer;
+    annotationRenderer = NULL;
+  }
+
+  render();
 }
 
 void VolumeViewer::setGradientShadingEnabled(bool value)
@@ -330,7 +348,7 @@ void VolumeViewer::initObjects()
   exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
   // Create an OSPRay light source.
-  light = ospNewLight(NULL, "DirectionalLight");
+  light = ospNewLight(renderer, "DirectionalLight");
   exitOnCondition(light == NULL, "could not create OSPRay light object");
   ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);
   ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
