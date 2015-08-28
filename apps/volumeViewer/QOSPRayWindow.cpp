@@ -17,6 +17,12 @@
 #include "QOSPRayWindow.h"
 #include "modules/opengl/util.h"
 
+#ifdef __APPLE__
+  #include <OpenGL/glu.h>
+#else
+  #include <GL/glu.h>
+#endif
+
 QOSPRayWindow::QOSPRayWindow(QMainWindow *parent, 
                              OSPRenderer renderer, 
                              bool showFrameRate,
