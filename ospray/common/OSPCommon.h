@@ -20,6 +20,7 @@
   ospray file should know about */
 
 #ifdef __WIN32__
+// ----------- windows only -----------
 # define _USE_MATH_DEFINES 1
 # include <cmath>
 # include <math.h>
@@ -28,6 +29,9 @@ typedef long long ssize_t;
 # else
 typedef int ssize_t;
 # endif
+#else
+// ----------- NOT windows -----------
+# include "unistd.h"
 #endif
 
 
