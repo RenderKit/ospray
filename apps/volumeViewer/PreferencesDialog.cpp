@@ -24,6 +24,11 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boun
   QFormLayout *formLayout = new QFormLayout();
   setLayout(formLayout);
 
+  // render annotations flag
+  QCheckBox *renderAnnotationsEnabledCheckBox = new QCheckBox();
+  connect(renderAnnotationsEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setRenderAnnotationsEnabled(bool)));
+  formLayout->addRow("Render annotations", renderAnnotationsEnabledCheckBox);
+
   // subsampling during interaction flag
   QCheckBox *subsamplingInteractionEnabledCheckBox = new QCheckBox();
   connect(subsamplingInteractionEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setSubsamplingInteractionEnabled(bool)));

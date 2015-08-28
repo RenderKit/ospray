@@ -16,29 +16,24 @@
 
 #pragma once
 
-#include "Texture.h"
-#include "../include/ospray/ospray.h"
+#include <QtGui>
 
-namespace ospray {
+class VolumeViewer;
 
-  /*! \brief A Texture defined through a 2D Image. */
-  struct Texture2D : public Texture {
+class OpenGLAnnotationRenderer : public QObject
+{
+Q_OBJECT
 
-    //! \brief common function to help printf-debugging 
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::Texture2D"; }
+public:
 
-    virtual ~Texture2D();
+  OpenGLAnnotationRenderer(VolumeViewer *volumeViewer) : volumeViewer(volumeViewer) { }
 
-    /*! \brief creates a Texture2D object with the given parameter */
-    static Texture2D *createTexture(int width, int height, OSPDataType type, 
-                                    void *data, int flags);
+public slots:
 
-    int width;
-    int height;
-    OSPDataType type;
-    void *data;
-    int flags;
-  };
+  void render();
 
-} // ::ospray
+protected:
+
+  VolumeViewer *volumeViewer;
+
+};

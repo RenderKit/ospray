@@ -219,7 +219,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   // Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(ray.t0, geometryRay.t)) < infinity
+  while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
          && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
     if (firstHit == ray.t0) {
@@ -285,7 +285,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color);
 
   // Attenuate the foreground and background colors by the opacity.
-  color = color.w * color + (1.0f - color.w) * background;
+  if (renderer->inherited.backgroundEnabled)
+    color = color.w * color + (1.0f - color.w) * background;
 
   // Store the result in the sample.
   sample.rgb.x = color.x;  sample.rgb.y = color.y;  sample.rgb.z = color.z;  sample.alpha = color.w;

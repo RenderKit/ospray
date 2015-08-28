@@ -14,31 +14,55 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "OpenGLAnnotationRenderer.h"
+#include "VolumeViewer.h"
 
-#include "Texture.h"
-#include "../include/ospray/ospray.h"
+#ifdef __APPLE__
+  #include <OpenGL/gl.h>
+#else
+  #include <GL/gl.h>
+#endif
 
-namespace ospray {
+void OpenGLAnnotationRenderer::render()
+{
+  glPushAttrib(GL_ENABLE_BIT);
+  glEnable(GL_DEPTH_TEST);
 
-  /*! \brief A Texture defined through a 2D Image. */
-  struct Texture2D : public Texture {
+  // render volume bounding box
+  osp::box3f boundingBox = volumeViewer->getBoundingBox();
 
-    //! \brief common function to help printf-debugging 
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::Texture2D"; }
+  osp::vec3f size(boundingBox.upper - boundingBox.lower);
 
-    virtual ~Texture2D();
+  glPushMatrix();
+  glTranslatef(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z);
+  glScalef(size.x, size.y, size.z);
 
-    /*! \brief creates a Texture2D object with the given parameter */
-    static Texture2D *createTexture(int width, int height, OSPDataType type, 
-                                    void *data, int flags);
+  glColor4f(0.5f, 0.5f, 0.5f, 1.f);
 
-    int width;
-    int height;
-    OSPDataType type;
-    void *data;
-    int flags;
-  };
+  glBegin(GL_LINES);
 
-} // ::ospray
+  float v1[3], v2[3];
+
+  for (int dim1=0; dim1<3; dim1++) {
+    int dim2 = (dim1+1) % 3;
+    int dim3 = (dim1+2) % 3;
+
+    for (int i=0; i<=1; i++) {
+      for (int j=0; j<=1; j++) {
+        v1[dim1] = 0.f;
+        v2[dim1] = 1.f;
+        v1[dim2] = v2[dim2] = i;
+        v1[dim3] = v2[dim3] = j;
+
+        glVertex3fv(v1);
+        glVertex3fv(v2);
+      }
+    }
+  }
+
+  glEnd();
+
+  glPopMatrix();
+
+  glPopAttrib();
+}

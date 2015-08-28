@@ -35,7 +35,7 @@ void PanoramicCamera_initRay(uniform Camera *uniform _self,
   // transform into camera frame
   dir = self->frame * dir;
 
-  setRay(ray, org, dir, self->super.nearClip, inf);
+  setRay(ray, org, dir, self->super.nearClip, infinity);
 }
 
 /*! create a new ispc-side version of a panoramiccamera - with given
