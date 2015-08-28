@@ -16,7 +16,6 @@
 
 #include "Texture2D.h"
 #include "Texture2D_ispc.h"
-#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
 
@@ -29,44 +28,16 @@ namespace ospray {
   {
     Texture2D *tx = new Texture2D;
 
-    //NOTE: For now, we just copy the data and rely on the viewer to have logic for buffer sharing.
-    int bpp = 0;
-    //TODO:ISPC side memory for images isn't currently managed, this will leak!
-    void *img = NULL;
-    switch (type) {
-    case OSP_UCHAR4:
-      tx->ispcEquivalent = ispc::Texture2D_4uc_create(tx,sx,sy,data,flags);
-      bpp = 4;
-      break;
-    case OSP_UCHAR3:
-      tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,data,flags);
-      bpp = 3;
-      break;
-    case OSP_FLOAT:
-      tx->ispcEquivalent = ispc::Texture2D_1f_create(tx,sx,sy,data,flags);
-      bpp = sizeof(float);
-      break;
-    case OSP_FLOAT3:
-      tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,data,flags);
-      bpp = 3 * sizeof(float);
-      break;
-    case OSP_FLOAT3A:
-      tx->ispcEquivalent = ispc::Texture2D_4f_create(tx,sx,sy,data,flags);
-      bpp = 4 * sizeof(float);
-      break;
-    default: throw std::runtime_error("Could not determine bytes per pixel in " __FILE__);
-    }
-
-    assert(tx->ispcEquivalent && "ispcEquivalent may not be null in Texture2D");
-    
-    const int bytes = sx * sy * bpp;
     tx->width = sx;
     tx->height = sy;
     tx->type = type;
-    
+    tx->flags = flags;
+    tx->managedObjectType = OSP_TEXTURE;
+
+    const size_t bytes = size_t(sx) * sy * sizeOf(type);
+
     assert(data);
-    
-    //Do we really need to make this copy?
+
     if (flags & OSP_TEXTURE_SHARED_BUFFER) {
       tx->data = data;
     } else {
@@ -74,9 +45,26 @@ namespace ospray {
       memcpy(tx->data, data, bytes);
     }
 
-    tx->flags = flags;
-    tx->managedObjectType = OSP_TEXTURE;
+    switch (type) {
+      case OSP_UCHAR4:
+        tx->ispcEquivalent = ispc::Texture2D_4uc_create(tx,sx,sy,tx->data,flags);
+        break;
+      case OSP_UCHAR3:
+        tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,tx->data,flags);
+        break;
+      case OSP_FLOAT:
+        tx->ispcEquivalent = ispc::Texture2D_1f_create(tx,sx,sy,tx->data,flags);
+        break;
+      case OSP_FLOAT3:
+        tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,tx->data,flags);
+        break;
+      case OSP_FLOAT3A:
+        tx->ispcEquivalent = ispc::Texture2D_4f_create(tx,sx,sy,tx->data,flags);
+        break;
+      default: throw std::runtime_error("Could not determine bytes per pixel in " __FILE__);
+    }
+
     return tx;
   }
-  
+
 } // ::ospray
