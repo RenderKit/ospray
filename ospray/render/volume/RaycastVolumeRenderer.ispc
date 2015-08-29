@@ -179,7 +179,8 @@ inline Volume * RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRend
 inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform renderer,
                                             varying Ray &ray,
                                             const varying float &rayOffset,
-                                            varying vec4f &color)
+                                            varying vec4f &color,
+                                            varying float &depth)
 {
   // Original tMax for ray interval
   const float tMax = ray.t;
@@ -215,6 +216,9 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   // Initial trace through geometries.
   RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
+
+  // Depth is the first volume bounding box or geometry hit
+  depth = min(ray.t0, geometryRay.t);
 
   // Trace the ray through the volume and geometries.
   float firstHit;
@@ -282,14 +286,19 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
   // Provide the renderer to the intersector as it contains all volumes, geometries, etc.
   vec4f color = make_vec4f(0.0f);
-  RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color);
+  float depth = infinity;
+  RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color, depth);
 
   // Attenuate the foreground and background colors by the opacity.
   if (renderer->inherited.backgroundEnabled)
     color = color.w * color + (1.0f - color.w) * background;
 
   // Store the result in the sample.
-  sample.rgb.x = color.x;  sample.rgb.y = color.y;  sample.rgb.z = color.z;  sample.alpha = color.w;
+  sample.rgb.x = color.x;
+  sample.rgb.y = color.y;
+  sample.rgb.z = color.z;
+  sample.alpha = color.w;
+  sample.z = depth;
 }
 
 export void *uniform RaycastVolumeRenderer_createInstance()
