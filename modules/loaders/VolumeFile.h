@@ -77,7 +77,7 @@ protected:
   //! Get the absolute file path.
   static std::string getFullFilePath(const std::string &filename)
   {
-#ifdef __WIN32__
+#ifdef _WIN32
     //getfullpathname
     throw std::runtime_error("no realpath() under windows");
 #else

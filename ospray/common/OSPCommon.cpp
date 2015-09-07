@@ -20,7 +20,7 @@
 #include "common/sys/sysinfo.h"
 // std
 #include <time.h>
-#ifdef __WIN32__
+#ifdef _WIN32
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
@@ -82,7 +82,7 @@ namespace ospray {
   }
 
   double getSysTime() {
-#ifdef __WIN32__
+#ifdef _WIN32
     SYSTEMTIME tp; GetSystemTime(&tp);
     return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
 #else
