@@ -19,7 +19,7 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
-#ifdef __WIN32__
+#ifdef _WIN32
 // ----------- windows only -----------
 # define _USE_MATH_DEFINES 1
 # include <cmath>

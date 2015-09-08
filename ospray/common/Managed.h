@@ -25,7 +25,7 @@
 
 namespace ospray {
 
-#ifdef __WIN32__
+#ifdef _WIN32
 typedef unsigned long long id_t;
 #endif
 
