@@ -39,6 +39,10 @@ namespace ospray {
     backgroundEnabled = getParam1i("backgroundEnabled", 1);
     maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
     model = (Model*)getParamObject("model", getParamObject("world"));
+
+    if (maxDepthTexture && (maxDepthTexture->type != OSP_FLOAT || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)))
+      static WarnOnce warning("expected maxDepthTexture provided to the renderer to be type OSP_FLOAT and have the OSP_TEXTURE_FILTER_NEAREST flag");
+
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
       if (model) {
