@@ -28,9 +28,6 @@ IF (USE_STATIC_RUNTIME)
   STRING(REPLACE "/MD" "/MT" CMAKE_CXX_FLAGS_RELEASE ${CMAKE_CXX_FLAGS_RELEASE})
 ENDIF()
 
-# remove define NDEBUG and instead set define DEBUG for config RelWithDebInfo
-STRING(REPLACE "NDEBUG" "DEBUG" CMAKE_CXX_FLAGS_RELWITHDEBINFO ${CMAKE_CXX_FLAGS_RELWITHDEBINFO})
-
 # these flags apply ONLY to how embree is built; the rest of the ospray C++ code is ISA-agnostic
 # the /QxXXX flags are meant for the Intel Compiler, MSVC ignores them
 SET(OSPRAY_ARCH_SSE3  "/arch:SSE3 /QxSSE3")
