@@ -209,6 +209,7 @@ namespace ospray {
         break;
       case 'p':
         printf("-vp %f %f %f -vu %f %f %f -vi %f %f %f\n", viewPort.from.x, viewPort.from.y, viewPort.from.z, viewPort.up.x, viewPort.up.y, viewPort.up.z, viewPort.at.x, viewPort.at.y, viewPort.at.z);
+        fflush(stdout);
         break;
       default:
         Glut3DWidget::keypress(key,where);
@@ -824,6 +825,7 @@ namespace ospray {
     ospSet3f(ospPoint, "position", -5.f, 20.f, 10.f);
     ospSet3f(ospPoint, "color", .5f, 1.f, 1.f);
     ospSet1f(ospPoint, "intensity", 200.f);
+    ospSet1f(ospPoint, "radius", 4.f);
     ospCommit(ospPoint);
     lights.push_back(ospPoint);
     //ambient light
