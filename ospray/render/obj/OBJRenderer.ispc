@@ -166,7 +166,7 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
         if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
           const float cosNL = abs(dot(light.direction, dg.Ns));
           const float cosLR = max(0.f, dot(light.direction, R));
-          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance * rcp(light.pdf);
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance;
 
           if (self->shadowsEnabled) {
             const float max_contrib = reduce_max(unshaded_light_contrib);

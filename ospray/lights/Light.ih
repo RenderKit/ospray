@@ -22,7 +22,7 @@ struct Light;
 
 struct LightSample 
 {
-  vec3f radiance;  //!< radiance for this sample that arrives at the given point
+  vec3f radiance;  //!< radiance for this sample that arrives at the given point, already weighted by pdf
   vec3f direction; //!< direction towards the light source
   float distance;  //!< largest valid parameter value for a shadow ray
   float pdf;       //!< probability that this sample was taken

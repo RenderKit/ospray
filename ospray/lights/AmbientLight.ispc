@@ -39,7 +39,7 @@ varying LightSample AmbientLight_sample(const uniform Light *uniform _self,
   sample.direction = frame(dg.Ns) * localDir;
   sample.pdf = cosineSampleHemispherePDF(localDir);
   sample.distance = inf;
-  sample.radiance = self->radiance;
+  sample.radiance = self->radiance * rcp(sample.pdf);
 
   return sample;
 }

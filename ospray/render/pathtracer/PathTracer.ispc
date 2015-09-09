@@ -238,7 +238,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                self->super.epsilon);
         shadow_ray.time = lightPath.ray.time;
         
-        vec3f unshaded_light_contrib = Lw * ls.radiance * brdf * rcp(ls.pdf);
+        vec3f unshaded_light_contrib = Lw * ls.radiance * brdf;
         L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, lightPath.lastMedium, rng);
       }
     }
