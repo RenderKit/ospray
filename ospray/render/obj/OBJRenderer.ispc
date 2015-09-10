@@ -160,7 +160,7 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
       //calculate shading for all lights
       for (uniform int i = 0; self->lights && i < self->numLights; i++) {
         const uniform Light *uniform l = self->lights[i];
-        const vec2f s = make_vec2f(0.5f);
+        const vec2f s = make_vec2f(0.f);
         const LightSample light = l->sample(l, dg, s);
 
         if (reduce_max(light.radiance) > 0.f) { // any potential contribution?

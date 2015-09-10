@@ -29,6 +29,8 @@ struct LightSample
 };
 
 //! compute the weighted radiance at a point caused by a sample on the light source
+// by convention, giving (0, 0) as "random" numbers should sample the "center"
+// of the light source (used by the raytracing renderers such as the OBJ renderer)
 typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform _self,
       /*! point to generate the sample for >*/ const varying DifferentialGeometry &dg,
  /*! random numbers to generate the sample >*/ const varying vec2f &s);
