@@ -45,7 +45,7 @@ namespace ospray {
   int accumID = -1;
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
-  int maxDepth = 2; // only set with '+'/'-'
+  int maxDepth = 2; // only set with home/end
   unsigned int maxObjectsToConsider = (uint32)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
   bool forceInstancing = false;
@@ -232,7 +232,7 @@ namespace ospray {
         break;
       case GLUT_KEY_HOME:
         maxDepth += 2;
-      case  GLUT_KEY_END:
+      case GLUT_KEY_END:
         maxDepth--;
         ospSet1i(ospRenderer, "maxDepth", maxDepth);
         PRINT(maxDepth);
@@ -802,6 +802,7 @@ namespace ospray {
       ospSetString(ospLight, "name", "sun" );
       ospSet3f(ospLight, "color", 1, 1, 1);
       ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
+      ospSet1f(ospLight, "openingAngle", 0.53f);
       ospCommit(ospLight);
       lights.push_back(ospLight);
     }

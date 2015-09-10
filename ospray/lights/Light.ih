@@ -33,9 +33,9 @@ typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform _sel
       /*! point to generate the sample for >*/ const varying DifferentialGeometry &dg,
  /*! random numbers to generate the sample >*/ const varying vec2f &s);
 
-//! compute the radiance caused by the light source in the given direction from inf
+//! compute the radiance caused by the light source (pointed to by the given direction) from inf
 typedef varying vec3f (*Light_EvalEnvFct)(const uniform Light *uniform _self,
- /*! direction into which is radiated >*/ const varying vec3f &dir);
+/*! direction towards the light source >*/const varying vec3f &dir);
 
 
 struct Light {

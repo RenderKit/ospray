@@ -84,6 +84,11 @@ inline float uniformSampleConePDF(const float cosAngle)
     return rcp((2.0f*M_PI)*(1.0f - cosAngle));
 }
 
+inline uniform float uniformSampleConePDF(const uniform float cosAngle)
+{
+    return rcp((2.0f*M_PI)*(1.0f - cosAngle));
+}
+
 
 /// uniform sampling of disk
 ////////////////////////////////////////////////////////////////////////////////

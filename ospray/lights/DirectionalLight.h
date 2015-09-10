@@ -36,6 +36,7 @@ namespace ospray {
       vec3f direction;      //!< Direction of the emitted rays
       vec3f color;          //!< RGB color of the emitted light
       float intensity;      //!< Amount of light emitted
+      float openingAngle;   //!< Full opening angle of cone light, in degree (e.g. 0.53 for the sun)
   };
 
 }
