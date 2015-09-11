@@ -22,7 +22,7 @@ namespace ospray {
     : direction(0.f, 0.f, 1.f)
     , color(1.f)
     , intensity(1.f)
-    , openingAngle(0.f)
+    , angularDiameter(0.f)
   {
     ispcEquivalent = ispc::DirectionalLight_create(this);
   }
@@ -32,13 +32,13 @@ namespace ospray {
     direction = getParam3f("direction", vec3f(0.f, 0.f, 1.f));
     color     = getParam3f("color", vec3f(1.f));
     intensity = getParam1f("intensity", 1.f);
-    openingAngle = getParam1f("openingAngle", .0f);
+    angularDiameter = getParam1f("angularDiameter", .0f);
 
     const vec3f radiance = color * intensity;
     direction = normalize(direction);
 
-    openingAngle = clamp(openingAngle, 0.f, 180.f);
-    const float cosAngle = cos(deg2rad(0.5f*openingAngle));
+    angularDiameter = clamp(angularDiameter, 0.f, 180.f);
+    const float cosAngle = cos(deg2rad(0.5f*angularDiameter));
 
     ispc::DirectionalLight_set(getIE(), (ispc::vec3f&)direction, (ispc::vec3f&)radiance, cosAngle);
   }

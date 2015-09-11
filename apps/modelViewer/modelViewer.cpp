@@ -802,7 +802,7 @@ namespace ospray {
       ospSetString(ospLight, "name", "sun" );
       ospSet3f(ospLight, "color", 1, 1, 1);
       ospSet3fv(ospLight, "direction", &defaultDirLight_direction.x);
-      ospSet1f(ospLight, "openingAngle", 0.53f);
+      ospSet1f(ospLight, "angularDiameter", 0.53f);
       ospCommit(ospLight);
       lights.push_back(ospLight);
     }
