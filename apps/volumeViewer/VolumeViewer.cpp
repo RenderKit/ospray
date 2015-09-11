@@ -35,7 +35,8 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     renderer(NULL),
     rendererInitialized(false),
     transferFunction(NULL),
-    light(NULL),
+    ambientLight(NULL),
+    directionalLight(NULL),
     osprayWindow(NULL),
     annotationRenderer(NULL),
     transferFunctionEditor(NULL),
@@ -347,15 +348,21 @@ void VolumeViewer::initObjects()
   renderer = ospNewRenderer("raycast_volume_renderer");
   exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
-  // Create an OSPRay light source.
-  light = ospNewLight(renderer, "DirectionalLight");
-  exitOnCondition(light == NULL, "could not create OSPRay light object");
-  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);
-  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
-  ospCommit(light);
+  // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
+  ambientLight = ospNewLight(renderer, "AmbientLight");
+  exitOnCondition(ambientLight == NULL, "could not create ambient light");
+  ospCommit(ambientLight);
 
-  // Set the light source on the renderer.
-  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
+  directionalLight = ospNewLight(renderer, "DirectionalLight");
+  exitOnCondition(directionalLight == NULL, "could not create directional light");
+  ospCommit(directionalLight);
+
+  // Set the light sources on the renderer.
+  std::vector<OSPLight> lights;
+  lights.push_back(ambientLight);
+  lights.push_back(directionalLight);
+
+  ospSetData(renderer, "lights", ospNewData(lights.size(), OSP_OBJECT, &lights[0]));
 
   // Create an OSPRay transfer function.
   transferFunction = ospNewTransferFunction("piecewise_linear");
@@ -448,16 +455,16 @@ void VolumeViewer::initUserInterfaceWidgets()
   addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
 
   // Create the light editor dock widget, this widget modifies the light directly.
-  // Disable for now pending UI improvements...
-  /* QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
-     LightEditor *lightEditor = new LightEditor(light);
-     lightEditorDockWidget->setWidget(lightEditor);
-     connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
-     addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget); */
+  QDockWidget *lightEditorDockWidget = new QDockWidget("Lights", this);
+  LightEditor *lightEditor = new LightEditor(ambientLight, directionalLight);
+  lightEditorDockWidget->setWidget(lightEditor);
+  connect(lightEditor, SIGNAL(lightsChanged()), this, SLOT(render()));
+  addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);
 
   // Tabify dock widgets.
   tabifyDockWidget(transferFunctionEditorDockWidget, sliceEditorDockWidget);
   tabifyDockWidget(transferFunctionEditorDockWidget, isosurfaceEditorDockWidget);
+  tabifyDockWidget(transferFunctionEditorDockWidget, lightEditorDockWidget);
 
   // Tabs on top.
   setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::North);

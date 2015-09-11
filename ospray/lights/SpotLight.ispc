@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "Light.ih"
+#include "ospray/math/sampling.ih"
+#include "ospray/math/LinearSpace.ih"
 
 struct SpotLight {
   Light super;            //!< inherited light fields
@@ -24,6 +26,7 @@ struct SpotLight {
   vec3f power;            //!< RGB color and intensity of the SpotLight
   float cosAngleMax;      //!< Angular limit of the spot in an easier to use form: cosine of the half angle in radians
   float cosAngleMin;      //!< Border of the penumbra area of the spot in an easier to use form; larger than cosAngleMax
+  float radius;           //!< defines the size of the (extended) SpotLight
 };
 
 
@@ -32,7 +35,7 @@ struct SpotLight {
 
 varying LightSample SpotLight_sample(const uniform Light *uniform _self,
                                      const varying DifferentialGeometry &dg,
-                                     const varying vec2f &)
+                                     const varying vec2f &s)
 {
   const SpotLight *uniform self = (SpotLight *uniform)_self;
   LightSample sample;
@@ -45,14 +48,23 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
   sample.direction = dir / dist;
   sample.distance = dist;
 
-  // we always take this sample
-  sample.pdf = 1.f;
+  if (self->radius > 0.) {
+    // sample surface of sphere as seen by hit point -> cone of directions
+    const float sinTheta = self->radius / dist;
+    const float cosTheta = sin2cos(sinTheta);
+    sample.direction = frame(sample.direction) * uniformSampleCone(cosTheta, s);
+    sample.pdf = uniformSampleConePDF(cosTheta);
+    // TODO: shorten dist
+  } else {
+    // we always take this sample
+    sample.pdf = 1.f;
+  }
 
   // cosine of the negated light direction and light vector.
   const float cosAngle = -dot(self->direction, sample.direction);
   const float angularAttenuation = clamp((cosAngle - self->cosAngleMax) * rcp(self->cosAngleMin - self->cosAngleMax));
 
-  // convert from power to radiance by attenuting by distance^2; attentuate by angle
+  // convert from power to radiance by attenuating by distance^2; attenuate by angle
   sample.radiance = self->power * rcp(dist * dist) * angularAttenuation;
 
   return sample;
@@ -68,7 +80,8 @@ export void SpotLight_set(void *uniform _self,
                           const uniform vec3f &direction,
                           const uniform vec3f &power,
                           const uniform float cosAngleMax,
-                          const uniform float cosAngleMin)
+                          const uniform float cosAngleMin,
+                          const uniform float radius)
 {
   uniform SpotLight *uniform self = (uniform SpotLight *uniform)_self;
   self->position     = position;
@@ -76,6 +89,7 @@ export void SpotLight_set(void *uniform _self,
   self->power        = power;
   self->cosAngleMax  = cosAngleMax;
   self->cosAngleMin  = cosAngleMin;
+  self->radius       = radius;
 }
 
 //! Create an ispc-side SpotLight object
@@ -91,7 +105,8 @@ export void *uniform SpotLight_create(void *uniform cppEquivalent)
                 make_vec3f(0.f, 0.f, 1.f),
                 make_vec3f(1.f),
                 0.f,
-                0.01f);
+                0.01f,
+                0.f);
 
   return self;
 }

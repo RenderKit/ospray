@@ -39,6 +39,7 @@ namespace ospray {
       float intensity;        //!< Amount of light emitted
       float openingAngle;     //!< Full opening angle of spot light, in degree. If angle from hit to light is greater than 1/2 * this, the light does not influence shading for that point
       float penumbraAngle;    //!< Angle, in degree, of the "penumbra", the region between the rim and full intensity of the spot. Should be smaller than openingAngle.
+      float radius;           //!< Radius of ExtendedSpotLight
   };
 
 }

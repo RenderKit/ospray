@@ -37,7 +37,7 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boun
   // gradient shading flag
   QCheckBox *gradientShadingEnabledCheckBox = new QCheckBox();
   connect(gradientShadingEnabledCheckBox, SIGNAL(toggled(bool)), volumeViewer, SLOT(setGradientShadingEnabled(bool)));
-  formLayout->addRow("Volume gradient shading", gradientShadingEnabledCheckBox);
+  formLayout->addRow("Volume gradient shading (lighting)", gradientShadingEnabledCheckBox);
 
   // sampling rate selection
   QDoubleSpinBox *samplingRateSpinBox = new QDoubleSpinBox();

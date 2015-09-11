@@ -152,12 +152,12 @@ namespace ospray {
   /*! for debugging. compute a checksum for given area range... */
   OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
 
+  OSPRAY_INTERFACE void doAssertion(const char *file, int line, const char *expr, const char *expl);
 #ifdef NDEBUG
 # define Assert(expr) /* nothing */
 # define Assert2(expr,expl) /* nothing */
 # define AssertError(errMsg) /* nothing */
 #else
-  OSPRAY_INTERFACE void doAssertion(const char *file, int line, const char *expr, const char *expl);
 # define Assert(expr)                                                   \
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, NULL), 0)))
 # define Assert2(expr,expl)                                             \

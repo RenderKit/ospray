@@ -141,8 +141,11 @@ protected:
   //! OSPRay transfer function.
   OSPTransferFunction transferFunction;
 
-  //! OSPRay light.
-  OSPLight light;
+  //! OSPRay ambient light.
+  OSPLight ambientLight;
+
+  //! OSPRay directional light.
+  OSPLight directionalLight;
 
   //! The OSPRay output window.
   QOSPRayWindow *osprayWindow;

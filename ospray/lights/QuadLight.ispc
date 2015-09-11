@@ -55,7 +55,7 @@ varying LightSample QuadLight_sample(const uniform Light *uniform _self,
   sample.pdf = self->ppdf * (dist * dist) / abs(cosd);
 
   // emit only to one side
-  sample.radiance = cosd > 0.f ? self->radiance : make_vec3f(0.f);
+  sample.radiance = cosd > 0.f ? self->radiance * rcp(sample.pdf) : make_vec3f(0.f);
 
   return sample;
 }
