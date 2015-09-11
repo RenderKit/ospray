@@ -53,4 +53,5 @@ namespace ospray {
   }
 
   OSP_REGISTER_LIGHT(QuadLight, QuadLight);
+  OSP_REGISTER_LIGHT(QuadLight, quad); // actually a parallelogram
 }

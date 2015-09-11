@@ -36,4 +36,5 @@ namespace ospray {
   }
 
   OSP_REGISTER_LIGHT(AmbientLight, AmbientLight);
+  OSP_REGISTER_LIGHT(AmbientLight, ambient);
 }
