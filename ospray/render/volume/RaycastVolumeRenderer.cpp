@@ -49,25 +49,18 @@ namespace ospray {
     ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
 
     // Set the lights if any.
-    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, getLightsFromData(getParamData("lights", NULL)));
+    Data *lightsData = (Data *)getParamData("lights", NULL);
+
+    lights.clear();
+
+    if (lightsData)
+      for (size_t i=0; i<lightsData->size(); i++)
+        lights.push_back(((Light **)lightsData->data)[i]->getIE());
+
+    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, lights.empty() ? NULL : &lights[0], lights.size());
 
     // Initialize state in the parent class, must be called after the ISPC object is created.
     Renderer::commit();
-  }
-
-  void **RaycastVolumeRenderer::getLightsFromData(const Data *buffer)
-  {
-    // Lights are optional.
-    size_t lightCount = (buffer != NULL) ? buffer->numItems : 0;
-
-    // The light array is a NULL terminated list of pointers.
-    void **lights = new void *[lightCount + 1];
-
-    // Copy pointers to the ISPC Light objects.
-    for (size_t i=0 ; i < lightCount ; i++) lights[i] = ((Light **) buffer->data)[i]->getIE();
-
-    // Mark the end of the array.
-    lights[lightCount] = NULL;  return(lights);
   }
 
 } // ::ospray
