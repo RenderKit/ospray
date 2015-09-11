@@ -16,10 +16,12 @@
 
 #include "LightEditor.h"
 
-LightEditor::LightEditor(OSPLight light) : light(light)
+LightEditor::LightEditor(OSPLight ambientLight, OSPLight directionalLight) : ambientLight(ambientLight),
+                                                                             directionalLight(directionalLight)
 {
-  // Make sure we have an existing transfer light.
-  if (!light) throw std::runtime_error("LightEditor: must be constructed with an existing light");
+  // Make sure we have existing lights.
+  if (!ambientLight || !directionalLight)
+    throw std::runtime_error("LightEditor: must be constructed with an existing lights");
 
   // Setup UI elments.
   QVBoxLayout * layout = new QVBoxLayout();
@@ -31,24 +33,50 @@ LightEditor::LightEditor(OSPLight light) : light(light)
   formWidget->setLayout(formLayout);
   layout->addWidget(formWidget);
 
-  // Add sliders for spherical angles alpha and beta for light direction.
-  alphaSlider.setOrientation(Qt::Horizontal);
-  betaSlider.setOrientation(Qt::Horizontal);
-  formLayout->addRow("alpha", &alphaSlider);
-  formLayout->addRow("beta", &betaSlider);
+  // Ambient light intensity.
+  ambientLightIntensitySpinBox.setRange(0.0, 1.0);
+  ambientLightIntensitySpinBox.setSingleStep(0.01);
+  formLayout->addRow("Ambient light intensity", &ambientLightIntensitySpinBox);
+  connect(&ambientLightIntensitySpinBox, SIGNAL(valueChanged(double)), this, SLOT(ambientLightChanged()));
 
-  // Connect signals and slots for sliders.
-  connect(&alphaSlider, SIGNAL(valueChanged(int)), this, SLOT(alphaBetaSliderValueChanged()));
-  connect(&betaSlider, SIGNAL(valueChanged(int)), this, SLOT(alphaBetaSliderValueChanged()));
+  // Directional light intensity.
+  directionalLightIntensitySpinBox.setRange(0.0, 1.0);
+  directionalLightIntensitySpinBox.setSingleStep(0.01);
+  formLayout->addRow("Directional light intensity", &directionalLightIntensitySpinBox);
+  connect(&directionalLightIntensitySpinBox, SIGNAL(valueChanged(double)), this, SLOT(directionalLightChanged()));
+
+  // Directional light: azimuth and elevation angles for direction.
+  directionalLightAzimuthSlider.setOrientation(Qt::Horizontal);
+  directionalLightElevationSlider.setOrientation(Qt::Horizontal);
+  formLayout->addRow("Directional light azimuth", &directionalLightAzimuthSlider);
+  formLayout->addRow("Directional light elevation", &directionalLightElevationSlider);
+  connect(&directionalLightAzimuthSlider, SIGNAL(valueChanged(int)), this, SLOT(directionalLightChanged()));
+  connect(&directionalLightElevationSlider, SIGNAL(valueChanged(int)), this, SLOT(directionalLightChanged()));
+
+  // Set default light parameters.
+  ambientLightIntensitySpinBox.setValue(0.05);
+
+  directionalLightIntensitySpinBox.setValue(0.95);
+  directionalLightAzimuthSlider.setValue(0.125 * (directionalLightAzimuthSlider.minimum() + directionalLightAzimuthSlider.maximum())); // 45 degrees azimuth
+  directionalLightElevationSlider.setValue(0.75 * (directionalLightElevationSlider.minimum() + directionalLightElevationSlider.maximum())); // 45 degrees elevation
 }
 
-void LightEditor::alphaBetaSliderValueChanged()
+void LightEditor::ambientLightChanged()
 {
+  ospSet1f(ambientLight, "intensity", float(ambientLightIntensitySpinBox.value()));
+  ospCommit(ambientLight);
+  emit lightsChanged();
+}
+
+void LightEditor::directionalLightChanged()
+{
+  ospSet1f(directionalLight, "intensity", float(directionalLightIntensitySpinBox.value()));
+
   // Get alpha value in [-180, 180] degrees.
-  float alpha = -180.0f + float(alphaSlider.value() - alphaSlider.minimum()) / float(alphaSlider.maximum() - alphaSlider.minimum()) * 360.0f;
+  float alpha = -180.0f + float(directionalLightAzimuthSlider.value() - directionalLightAzimuthSlider.minimum()) / float(directionalLightAzimuthSlider.maximum() - directionalLightAzimuthSlider.minimum()) * 360.0f;
 
   // Get beta value in [-90, 90] degrees.
-  float beta = -90.0f + float(betaSlider.value() - betaSlider.minimum()) / float(betaSlider.maximum() - betaSlider.minimum()) * 180.0f;
+  float beta = -90.0f + float(directionalLightElevationSlider.value() - directionalLightElevationSlider.minimum()) / float(directionalLightElevationSlider.maximum() - directionalLightElevationSlider.minimum()) * 180.0f;
 
   // Compute unit vector.
   float lightX = cos(alpha * M_PI/180.0f) * cos(beta * M_PI/180.0f);
@@ -56,9 +84,9 @@ void LightEditor::alphaBetaSliderValueChanged()
   float lightZ = sin(beta * M_PI/180.0f);
 
   // Update OSPRay light direction.
-  ospSet3f(light, "direction", lightX, lightY, lightZ);
+  ospSet3f(directionalLight, "direction", lightX, lightY, lightZ);
 
   // Commit and emit signal.
-  ospCommit(light);
-  emit lightChanged();
+  ospCommit(directionalLight);
+  emit lightsChanged();
 }
