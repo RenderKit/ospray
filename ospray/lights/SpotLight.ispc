@@ -41,31 +41,29 @@ varying LightSample SpotLight_sample(const uniform Light *uniform _self,
   LightSample sample;
 
   // extant light vector from the hit point
-  const vec3f dir = self->position - dg.P;
-  const float dist = length(dir);
+  sample.direction = self->position - dg.P;
+
+  if (self->radius > 0.)
+    sample.direction = frame(self->direction) * uniformSampleDisk(self->radius, s) + sample.direction;
+
+  const float dist2 = dot(sample.direction, sample.direction);
+  const float invdist = rsqrt(dist2);
 
   // normalized light vector
-  sample.direction = dir / dist;
-  sample.distance = dist;
-
-  if (self->radius > 0.) {
-    // sample surface of sphere as seen by hit point -> cone of directions
-    const float sinTheta = self->radius / dist;
-    const float cosTheta = sin2cos(sinTheta);
-    sample.direction = frame(sample.direction) * uniformSampleCone(cosTheta, s);
-    sample.pdf = uniformSampleConePDF(cosTheta);
-    // TODO: shorten dist
-  } else {
-    // we always take this sample
-    sample.pdf = 1.f;
-  }
+  sample.direction = sample.direction * invdist;
+  sample.distance = dist2 * invdist;
 
   // cosine of the negated light direction and light vector.
   const float cosAngle = -dot(self->direction, sample.direction);
   const float angularAttenuation = clamp((cosAngle - self->cosAngleMax) * rcp(self->cosAngleMin - self->cosAngleMax));
 
+  if (self->radius > 0.)
+    sample.pdf = uniformSampleDiskPDF(self->radius) * dist2 * abs(cosAngle);
+  else
+    sample.pdf = 1.f; // we always take this sample
+
   // convert from power to radiance by attenuating by distance^2; attenuate by angle
-  sample.radiance = self->power * rcp(dist * dist) * angularAttenuation;
+  sample.radiance = self->power * (invdist * invdist * angularAttenuation);
 
   return sample;
 }
