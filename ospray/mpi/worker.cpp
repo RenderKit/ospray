@@ -376,6 +376,10 @@ namespace ospray {
 
           texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,flags);
           assert(texture2D);
+
+          if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
+            free(data);
+
           handle.assign(texture2D);
         } break;
 
