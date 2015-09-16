@@ -56,6 +56,19 @@ namespace ospray {
     return volume;
   }
 
+  void Volume::computeSamples(float **results, const osp::vec3f *worldCoordinates, const size_t &count)
+  {
+    // The ISPC volume container must exist at this point.
+    assert(ispcEquivalent != NULL);
+
+    // Allocate memory for volume samples
+    *results = (float *)malloc(count * sizeof(float));
+    exitOnCondition(*results == NULL, "error allocating memory");
+
+    // Compute the sample values.
+    ispc::Volume_computeSamples(ispcEquivalent, results, (const ispc::vec3f *)worldCoordinates, count);
+  }
+
   void Volume::finish()
   {
     // The ISPC volume container must exist at this point.

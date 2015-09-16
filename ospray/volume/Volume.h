@@ -64,6 +64,9 @@ namespace ospray {
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
 
+    //! Compute samples at the given world coordinates.
+    virtual void computeSamples(float **results, const osp::vec3f *worldCoordinates, const size_t &count);
+
   protected:
 
     //! Create the equivalent ISPC volume container.
