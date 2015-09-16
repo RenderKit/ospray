@@ -33,7 +33,8 @@ void MatteTextured__shade(const uniform Material *uniform _this,
                           const Ray&                  ray,    
                           const Medium&               currentMedium, 
                           const DifferentialGeometry& dg,            
-                          uniform CompositedBRDF&     brdfs)         
+                          uniform CompositedBRDF&     brdfs,
+                          vec3f& Ns)
 {
   const uniform MatteTextured* uniform this = (const uniform MatteTextured* uniform) _this;
   COMPOSITED_BRDF_ADD(brdfs,Lambertian,

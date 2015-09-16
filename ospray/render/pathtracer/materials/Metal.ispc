@@ -33,7 +33,8 @@ void Metal__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,       
                   const Medium&               currentMedium,
                   const DifferentialGeometry& dg,           
-                  uniform CompositedBRDF&     brdfs)        
+                  uniform CompositedBRDF&     brdfs,
+                  vec3f& Ns)
 {
   const uniform Metal* uniform this = (const uniform Metal* uniform)_this;
   if (this->roughness == 0.0f)  CompositedBRDF__add(&brdfs,&this->conductor.base);
@@ -46,8 +47,7 @@ void Metal__Constructor(uniform Metal *uniform this,
                         const uniform vec3f& k,
                         const uniform float roughness)
 {
-  PathTraceMaterial__Constructor(&this->base,// PathTraceMaterial__Destructor,
-                                 Metal__shade,NULL);
+  PathTraceMaterial__Constructor(&this->base, Metal__shade, NULL);
   this->roughness = roughness;
   Conductor__Constructor(&this->conductor,reflectance, eta, k);
   MicrofacetMetal__Constructor(&this->microfacetMetal,

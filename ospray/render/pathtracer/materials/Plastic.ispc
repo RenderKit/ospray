@@ -35,7 +35,8 @@ void Plastic__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,             
                   const Medium&               currentMedium,   
                   const DifferentialGeometry& dg,              
-                  uniform CompositedBRDF&     brdfs)           
+                  uniform CompositedBRDF&     brdfs,
+                  vec3f& Ns)
 {
   const uniform Plastic* uniform this = (const uniform Plastic* uniform)_this;
   CompositedBRDF__add(&brdfs,&this->substrate.base);
@@ -48,8 +49,7 @@ void Plastic__Constructor(uniform Plastic *uniform this,
                           const uniform float eta,
                           const uniform float roughness)
 {
-  PathTraceMaterial__Constructor(&this->base,// PathTraceMaterial__Destructor,
-                                 Plastic__shade,NULL);
+  PathTraceMaterial__Constructor(&this->base, Plastic__shade, NULL);
   this->roughness = roughness;
 
   DielectricLayerLambertian__Constructor(&this->substrate,

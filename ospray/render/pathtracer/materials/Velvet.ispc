@@ -48,7 +48,8 @@ void Velvet__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,            
                   const Medium&               currentMedium,  
                   const DifferentialGeometry& dg,             
-                  uniform CompositedBRDF&     brdfs)          
+                  uniform CompositedBRDF&     brdfs,
+                  vec3f& Ns)
 {
   const uniform Velvet* uniform this = (const uniform Velvet* uniform)_this;
   CompositedBRDF__add(&brdfs,&this->minneart.base);
@@ -61,8 +62,7 @@ void Velvet__Constructor(uniform Velvet *uniform this,
                         const uniform float horizonScatteringFallOff,
                         const uniform float backScattering)
 {
-  PathTraceMaterial__Constructor(&this->base,// Material__Destructor,
-                        Velvet__shade,NULL);
+  PathTraceMaterial__Constructor(&this->base, Velvet__shade, NULL);
   this->reflectance = reflectance;
   this->horizonScatteringColor = horizonScatteringColor;
   this->horizonScatteringFallOff = horizonScatteringFallOff;

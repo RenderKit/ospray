@@ -35,7 +35,8 @@ void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
                           const Ray&                  ray,             
                           const Medium&               currentMedium,   
                           const DifferentialGeometry& dg,              
-                          uniform CompositedBRDF&     brdfs)           
+                          uniform CompositedBRDF&     brdfs,
+                          vec3f& Ns)
 {
   uniform const MetallicPaint *uniform this = (uniform const MetallicPaint *uniform)_this;
   CompositedBRDF__add(&brdfs,&this->reflection.base);
@@ -49,8 +50,7 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
                                        const uniform float glitterSpread,
                                        const uniform float eta)
 {
-  PathTraceMaterial__Constructor(&this->base,// PathTraceMaterial__Destructor,
-                                 MetallicPaint__shade,NULL);
+  PathTraceMaterial__Constructor(&this->base, MetallicPaint__shade, NULL);
   DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
   DielectricLayerLambertian__Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambertian(shadeColor));
 
