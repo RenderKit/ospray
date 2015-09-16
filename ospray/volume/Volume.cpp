@@ -56,7 +56,7 @@ namespace ospray {
     return volume;
   }
 
-  void Volume::computeSamples(float **results, const osp::vec3f *worldCoordinates, const size_t &count)
+  void Volume::computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count)
   {
     // The ISPC volume container must exist at this point.
     assert(ispcEquivalent != NULL);

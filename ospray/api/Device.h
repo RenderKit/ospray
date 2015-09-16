@@ -212,7 +212,7 @@ namespace ospray {
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) 
       { throw std::runtime_error("pick() not implemented for this device"); };
 
-      virtual void sampleVolume(float **results, OSPVolume volume, const osp::vec3f *worldCoordinates, const size_t &count)
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)
       {
         throw std::runtime_error("sampleVolume() not implemented for this device");
       }

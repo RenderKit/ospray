@@ -52,6 +52,7 @@ namespace ospray {
         CMD_COMMIT,
         CMD_LOAD_MODULE,
         CMD_RELEASE,
+        CMD_SAMPLE_VOLUME,
         CMD_GET_TYPE,
         CMD_GET_VALUE,
         CMD_SET_MATERIAL,
@@ -241,6 +242,10 @@ namespace ospray {
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(int width, int height, 
                                         OSPDataType type, void *data, int flags);
+
+      /*! sample a volume */
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
+
     };
 
   } // ::ospray::api

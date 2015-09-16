@@ -193,7 +193,7 @@ namespace ospray {
 
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos);
 
-      virtual void sampleVolume(float **results, OSPVolume volume, const osp::vec3f *worldCoordinates, const size_t &count);
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
 
     };
 

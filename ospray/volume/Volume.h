@@ -65,7 +65,7 @@ namespace ospray {
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
 
     //! Compute samples at the given world coordinates.
-    virtual void computeSamples(float **results, const osp::vec3f *worldCoordinates, const size_t &count);
+    virtual void computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count);
 
   protected:
 

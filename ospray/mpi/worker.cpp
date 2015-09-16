@@ -448,6 +448,25 @@ namespace ospray {
           Assert(obj);
           handle.freeObject();
         } break;
+        case api::MPIDevice::CMD_SAMPLE_VOLUME: {
+          const mpi::Handle volumeHandle = cmd.get_handle();
+          Volume *volume = (Volume *)volumeHandle.lookup();
+          Assert(volume);
+          const size_t count = cmd.get_size_t();
+          vec3f *worldCoordinates = (vec3f *)malloc(count * sizeof(vec3f));
+          Assert(worldCoordinates);
+          cmd.get_data(count * sizeof(vec3f), worldCoordinates);
+
+          float *results = NULL;
+          volume->computeSamples(&results, worldCoordinates, count);
+          Assert(*results);
+
+          if (worker.rank == 0)
+            cmd.send(results, count * sizeof(float), 0, mpi::app.comm);
+
+          free(worldCoordinates);
+          free(results);
+        } break;
 
         case api::MPIDevice::CMD_GET_TYPE: {
           const mpi::Handle handle = cmd.get_handle();
