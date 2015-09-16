@@ -24,6 +24,7 @@
 
 class TransferFunctionEditor;
 class IsosurfaceEditor;
+class ProbeWidget;
 class OpenGLAnnotationRenderer;
 
 //! OSPRay model and its volumes / geometries
@@ -161,6 +162,9 @@ protected:
 
   //! The isosurface editor.
   IsosurfaceEditor *isosurfaceEditor;
+
+  //! The probe widget.
+  ProbeWidget *probeWidget;
 
   //! Auto-rotate button.
   QAction *autoRotateAction;
