@@ -39,26 +39,37 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
 
   // extant light vector from the hit point
   const vec3f dir = self->position - dg.P;
-  const float dist = length(dir);
+  const float dist2 = dot(dir, dir);
+  const float invdist = rsqrt(dist2);
 
   // normalized light vector
-  sample.direction = dir / dist;
-  sample.distance = dist;
+  sample.direction = dir * invdist;
+  sample.distance = dist2 * invdist;
+
+  sample.pdf = 1.f; // per default we always take this sample
+
+  // convert from power to radiance by attenuating by distance^2
+  sample.radiance = self->power * (invdist * invdist);
 
   if (self->radius > 0.) {
     // sample surface of sphere as seen by hit point -> cone of directions
-    const float sinTheta = self->radius / dist;
-    const float cosTheta = sin2cos(sinTheta);
-    sample.direction = frame(sample.direction) * uniformSampleCone(cosTheta, s);
-    sample.pdf = uniformSampleConePDF(cosTheta);
-    // TODO: shorten dist
-  } else {
-    // we always take this sample
-    sample.pdf = 1.f;
+    const float sinTheta = self->radius * invdist;
+    if (sinTheta < 1.f) {
+      const float cosTheta = sqrt(1.f - sinTheta * sinTheta);
+      const vec3f localDir = uniformSampleCone(cosTheta, s);
+      sample.direction = frame(sample.direction) * localDir;
+      sample.pdf = uniformSampleConePDF(cosTheta);
+      const float c = localDir.z;
+      sample.distance = c*sample.distance - sqrt(self->radius*self->radius - (1.f - c*c) * dist2);
+    } else { // inside sphere
+      const vec3f localDir = cosineSampleHemisphere(s);
+      sample.direction = frame(dg.Ns) * localDir;
+      sample.pdf = cosineSampleHemispherePDF(localDir);
+      // TODO:
+      sample.radiance = self->power * rcp(self->radius*self->radius);
+      sample.distance = self->radius;
+    }
   }
-
-  // convert from power to radiance by attenuating by distance^2
-  sample.radiance = self->power * rcp(dist * dist);
 
   return sample;
 }
