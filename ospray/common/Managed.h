@@ -18,7 +18,7 @@
 
 // ospray 
 #include "OSPCommon.h"
-#include "ospray/include/ospray/ospray.h"
+#include "ospray/ospray.h"
 // stl 
 #include <vector>
 #include <set>

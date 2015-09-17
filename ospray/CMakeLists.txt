@@ -97,7 +97,7 @@ SET(OSPRAY_SOURCES
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc
-  
+
   render/LoadBalancer.cpp
   render/Renderer.ispc
   render/Renderer.cpp
@@ -149,7 +149,7 @@ IF (OSPRAY_MPI)
   # compiler etc.
   CONFIGURE_MPI()
 
-  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}   
+  SET(OSPRAY_SOURCES ${OSPRAY_SOURCES}
     mpi/MPIDevice.cpp
     mpi/MPICommon.cpp
     mpi/MPILoadBalancer.cpp
@@ -204,20 +204,32 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
-#LINK_DIRECTORIES(${OSPRAY_BINARY_DIR})
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
-OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED 
+OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   ${OSPRAY_SOURCES}
-  )
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+)
+
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  ospray_embree${OSPRAY_LIB_SUFFIX}
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${CMAKE_DL_LIBS}
+)
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
-SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX} 
+INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
+INSTALL(DIRECTORY embree DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
+SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
+  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION lib
+)
+INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
+)
 ##############################################################
 
 
@@ -227,7 +239,7 @@ INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 ##############################################################
 IF (OSPRAY_MPI)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_LIBRARIES})
-  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick 
+  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
@@ -249,7 +261,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
       )
     # ... and add the coi worker executable
     ADD_EXECUTABLE(ospray_coi_worker.mic api/COIDeviceWorker.cpp)
-    TARGET_LINK_LIBRARIES(ospray_coi_worker.mic 
+    TARGET_LINK_LIBRARIES(ospray_coi_worker.mic
       ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
       )
@@ -260,7 +272,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs
     # ------------------------------------------------------------
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
+    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_HOST}
       )
     # note: no need to add the host-side libcoi to the install
@@ -268,3 +280,8 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   ENDIF()
 ENDIF()
 
+##############################################################
+# Configure find_package files
+##############################################################
+
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/ospray_cmake_config.cmake)
