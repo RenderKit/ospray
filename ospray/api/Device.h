@@ -210,7 +210,7 @@ namespace ospray {
       }
 
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) 
-      { throw std::runtime_error("pick() not impelemnted for this device"); };
+      { throw std::runtime_error("pick() not implemented for this device"); };
     };
   } // ::ospray::api
 } // ::ospray

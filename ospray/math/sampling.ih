@@ -93,11 +93,11 @@ inline uniform float uniformSampleConePDF(const uniform float cosAngle)
 /// uniform sampling of disk
 ////////////////////////////////////////////////////////////////////////////////
 
-inline vec2f uniformSampleDisk(const float radius, const vec2f &s)
+inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 {
   const float r = sqrtf(s.x);
   const float theta = (2.0f * M_PI) * s.y;
-  return radius * r * make_vec2f(cosf(theta), sinf(theta));
+  return radius * r * make_vec3f(cosf(theta), sinf(theta), 0.f);
 }
 
 inline float uniformSampleDiskPDF(const float radius)
