@@ -15,7 +15,7 @@
 ## ======================================================================== ##
 
 IF (OSPRAY_MPI)
-  if (OSPRAY_COMPILER STREQUAL "ICC")
+  if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
     find_program(MPI_COMPILER 
       NAMES mpiicpc
       DOC "MPI compiler.")
