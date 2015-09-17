@@ -72,9 +72,10 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
 
   /*! normal map */
   if (self->map_Bump) {
-    shadingNormal = get3f(self->map_Bump, dg.st, make_vec3f(.5f, .5f, 1.f)) * 2.f - 1.f;
-    // TODO: actually need tangents aligned with texture coordinates here
-    shadingNormal = frame(dg.Ng) * shadingNormal;
+    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ng);
+    shadingNormal = f * (get3f(self->map_Bump, dg.st, make_vec3f(.5f, .5f, 1.f)) * 2.f - 1.f);
+    // in general f is not ortho-normal, thus need to re-normalize
+    shadingNormal = normalize(shadingNormal);
   }
 }
 
