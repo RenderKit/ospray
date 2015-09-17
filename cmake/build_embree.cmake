@@ -150,7 +150,13 @@ IF (THIS_IS_MIC)
   TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
 
   SET_TARGET_PROPERTIES(ospray_embree${OSPRAY_LIB_SUFFIX} PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-  INSTALL(TARGETS ospray_embree${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+  INSTALL(TARGETS ospray_embree${OSPRAY_LIB_SUFFIX}
+    EXPORT ospray_embree${OSPRAY_LIB_SUFFIX}Export
+    DESTINATION lib
+  )
+  INSTALL(EXPORT ospray_embree${OSPRAY_LIB_SUFFIX}Export
+    DESTINATION ${CMAKE_DIR} FILE libospray_embree${OSPRAY_LIB_SUFFIX}Targets.cmake
+  )
 ELSE()
   # =======================================================
   # embree kernel components ONLY for xeon
@@ -237,35 +243,45 @@ UNSET(ISPC_DLLEXPORT)
   IF (WIN32)
     TARGET_LINK_LIBRARIES(ospray_embree${OSPRAY_LIB_SUFFIX} ws2_32 setupapi) # TODO: should not be necessary
   ENDIF()
-  
+
   # ------------------------------------------------------------------
-  # now, build and link in SSE41 support (for anything more than SSE)
-  # note: "SSE" is a shortcut for SSE42
+  # now, build and link in SSE41 and SSE42 support
+  # note: "SSE" is a shortcut for both SSE41 and SSE42
   # ------------------------------------------------------------------
   IF (OSPRAY_EMBREE_ENABLE_SSE OR OSPRAY_EMBREE_ENABLE_AVX OR OSPRAY_EMBREE_ENABLE_AVX2)
+    # SSE41
     ADD_DEFINITIONS(-D__TARGET_SSE41__)
     OSPRAY_ADD_LIBRARY(ospray_embree_sse41 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_toplevel.cpp
-      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp   
+      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector1.cpp
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_chunk.cpp
       # remove for embree 2.3.3:
       #      ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_builder_binner.cpp
       )
     SET_TARGET_PROPERTIES(ospray_embree_sse41 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE41}")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_sse41)
-  ENDIF()
+    INSTALL(TARGETS ospray_embree_sse41
+      EXPORT ospray_embree_sse41Export
+      DESTINATION lib
+    )
+    INSTALL(EXPORT ospray_embree_sse41Export
+      DESTINATION ${CMAKE_DIR} FILE libospray_embree_sse41Targets.cmake
+    )
 
-  # ------------------------------------------------------------------
-  # now, build and link in SSE42 support (for anything more than SSE42)
-  # note: "SSE" is a shortcut for SSE42
-  # ------------------------------------------------------------------
-  IF (OSPRAY_EMBREE_ENABLE_SSE OR OSPRAY_EMBREE_ENABLE_AVX OR OSPRAY_EMBREE_ENABLE_AVX2)
+    # SSE42
     ADD_DEFINITIONS(-D__TARGET_SSE42__)
     OSPRAY_ADD_LIBRARY(ospray_embree_sse42 STATIC
       ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/bvh4/bvh4_intersector4_hybrid.cpp
       )
     SET_TARGET_PROPERTIES(ospray_embree_sse42 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_SSE42}")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_sse42)
+    INSTALL(TARGETS ospray_embree_sse42
+      EXPORT ospray_embree_sse42Export
+      DESTINATION lib
+    )
+    INSTALL(EXPORT ospray_embree_sse42Export
+      DESTINATION ${CMAKE_DIR} FILE libospray_embree_sse42Targets.cmake
+    )
   ENDIF()
 
   # ------------------------------------------------------------------
@@ -323,6 +339,13 @@ UNSET(ISPC_DLLEXPORT)
       ${OSPRAY_EMBREE_AVX_SOURCES})
     SET_TARGET_PROPERTIES(ospray_embree_avx PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_AVX}")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx)
+    INSTALL(TARGETS ospray_embree_avx
+      EXPORT ospray_embree_avxExport
+      DESTINATION lib
+    )
+    INSTALL(EXPORT ospray_embree_avxExport
+      DESTINATION ${CMAKE_DIR} FILE libospray_embree_avxTargets.cmake
+    )
   ENDIF()
 
   # ------------------------------------------------------------------
@@ -357,8 +380,21 @@ UNSET(ISPC_DLLEXPORT)
       ${OSPRAY_EMBREE_AVX2_SOURCES})
     SET_TARGET_PROPERTIES(ospray_embree_avx2 PROPERTIES COMPILE_FLAGS "${OSPRAY_ARCH_AVX2}")
     TARGET_LINK_LIBRARIES(ospray_embree ospray_embree_avx2)
+    INSTALL(TARGETS ospray_embree_avx2
+      EXPORT ospray_embree_avx2Export
+      DESTINATION lib
+    )
+    INSTALL(EXPORT ospray_embree_avx2Export
+      DESTINATION ${CMAKE_DIR} FILE libospray_embree_avx2Targets.cmake
+    )
   ENDIF()
 
   SET_TARGET_PROPERTIES(ospray_embree PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-  INSTALL(TARGETS ospray_embree DESTINATION lib)
+  INSTALL(TARGETS ospray_embree
+    EXPORT ospray_embreeExport
+    DESTINATION lib
+  )
+  INSTALL(EXPORT ospray_embreeExport
+    DESTINATION ${CMAKE_DIR} FILE libospray_embreeTargets.cmake
+  )
 ENDIF()

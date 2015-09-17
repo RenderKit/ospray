@@ -204,14 +204,18 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
-#LINK_DIRECTORIES(${OSPRAY_BINARY_DIR})
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   ${OSPRAY_SOURCES}
-  )
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ospray_embree${OSPRAY_LIB_SUFFIX} ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS})
+)
+
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  ospray_embree${OSPRAY_LIB_SUFFIX}
+  ${CMAKE_THREAD_LIBS_INIT}
+  ${CMAKE_DL_LIBS}
+)
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
@@ -219,7 +223,13 @@ INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h"
 INSTALL(DIRECTORY embree DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
+  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION lib
+)
+INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
+)
 ##############################################################
 
 
@@ -270,3 +280,8 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   ENDIF()
 ENDIF()
 
+##############################################################
+# Configure find_package files
+##############################################################
+
+INCLUDE(${CMAKE_SOURCE_DIR}/cmake/ospray_cmake_config.cmake)
