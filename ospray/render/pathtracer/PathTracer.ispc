@@ -132,7 +132,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              varying RandomTEA* uniform rng,
                              uint32 &numRays)
 {
-  uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE);
+  uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE | GLOSSY);
   uniform uint32/*BRDFType*/ giBRDFTypes = (uniform uint32)(ALL);
   
   vec3f L = make_vec3f(0.f);
