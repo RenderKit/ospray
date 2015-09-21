@@ -96,7 +96,6 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
     foreach_unique(mm in m)
       if (mm != NULL)
         mm->shade(mm, shadowRay, medium, dg, brdfs, Ns);
-    dg.Ns = Ns;
 
     Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
     const vec2f s = make_vec2f(0.5f);
@@ -133,7 +132,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              varying RandomTEA* uniform rng,
                              uint32 &numRays)
 {
-  uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE);
+  uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE | GLOSSY);
   uniform uint32/*BRDFType*/ giBRDFTypes = (uniform uint32)(ALL);
   
   vec3f L = make_vec3f(0.f);
@@ -171,7 +170,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, lightPath.ray,
         DG_MATERIALID|
-        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
+        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
 
     /*! Shade surface. */
