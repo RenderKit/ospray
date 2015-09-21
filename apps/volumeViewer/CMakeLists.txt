@@ -51,6 +51,7 @@ SET(SRCS ${SRCS}
   LinearTransferFunctionWidget.cpp
   OpenGLAnnotationRenderer.cpp
   PreferencesDialog.cpp
+  ProbeWidget.cpp
   QOSPRayWindow.cpp
   SliceEditor.cpp
   SliceWidget.cpp
@@ -65,6 +66,7 @@ SET(MOC_HEADERS
   LinearTransferFunctionWidget.h
   OpenGLAnnotationRenderer.h
   PreferencesDialog.h
+  ProbeWidget.h
   QOSPRayWindow.h
   SliceEditor.h
   SliceWidget.h

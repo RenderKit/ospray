@@ -676,3 +676,18 @@ namespace ospray {
     OSPPickData res = { pick.hit,  pick.position.x,  pick.position.y,  pick.position.z };
     return res;
   }
+
+  extern "C" void ospSampleVolume(float **results, OSPVolume volume, const osp::vec3f *worldCoordinates, const size_t &count)
+  {
+    ASSERT_DEVICE();
+    Assert2(volume, "NULL volume passed to ospSampleVolume");
+
+    if (count == 0) {
+      *results = NULL;
+      return;
+    }
+
+    Assert2(worldCoordinates, "NULL worldCoordinates passed to ospSampleVolume");
+
+    ospray::api::Device::current->sampleVolume(results, volume, worldCoordinates, count);
+  }

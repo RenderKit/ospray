@@ -469,6 +469,35 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
+    void ospray_coi_sample_volume(uint32_t         numBuffers,
+                                  void**           bufferPtr,
+                                  uint64_t*        bufferSize,
+                                  void*            argsPtr,
+                                  uint16_t         argsSize,
+                                  void*            retVal,
+                                  uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+
+      Handle _volume = args.get<Handle>();
+      Volume *volume = (Volume *)_volume.lookup();
+      Assert(volume);
+
+      Handle _worldCoordinatesData = args.get<Handle>();
+      Data *worldCoordinatesData = (Data *)_worldCoordinatesData.lookup();
+      Assert(worldCoordinatesData);
+
+      float *results = NULL;
+      volume->computeSamples(&results, (const vec3f *)worldCoordinatesData->data, worldCoordinatesData->numItems);
+      Assert(results);
+
+      memcpy(retVal, results, retValSize);
+      free(results);
+
+      if (ospray::debugMode) COIProcessProxyFlush();
+    }
+
+    COINATIVELIBEXPORT
     void ospray_coi_new_light(uint32_t         numBuffers,
                               void**           bufferPtr,
                               uint64_t*        bufferSize,
