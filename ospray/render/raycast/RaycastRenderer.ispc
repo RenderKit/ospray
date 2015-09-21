@@ -93,10 +93,57 @@ void RaycastRenderer_renderSample_Ns(uniform Renderer *uniform _self,
   if (sample.ray.geomID < 0) 
     sample.rgb = make_vec3f(1.f); 
   else {
-    // sample.rgb = absf(sample.ray.Ng);
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, sample.ray, DG_MATERIALID | DG_NG | DG_NS);
+    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
     sample.rgb = absf(dg.Ns);
+  }
+}
+
+void RaycastRenderer_renderSample_dPds(uniform Renderer *uniform _self,
+                                         varying ScreenSample &sample)
+{
+  uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
+
+  traceRay(self->super.model,sample.ray);
+  sample.z     = sample.ray.t;
+  sample.alpha = 1.f;
+
+  if (sample.ray.geomID < 0) 
+    sample.rgb = make_vec3f(1.f); 
+  else {
+    DifferentialGeometry dg;
+    postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
+    sample.rgb = normalize(dg.dPds);
+    if (sample.rgb.x < 0.f)
+      sample.rgb.x = sample.rgb.x * -0.3f;
+    if (sample.rgb.y < 0.f)
+      sample.rgb.y = sample.rgb.y * -0.3f;
+    if (sample.rgb.z < 0.f)
+      sample.rgb.z = sample.rgb.z * -0.3f;
+  }
+}
+
+void RaycastRenderer_renderSample_dPdt(uniform Renderer *uniform _self,
+                                         varying ScreenSample &sample)
+{
+  uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
+
+  traceRay(self->super.model,sample.ray);
+  sample.z     = sample.ray.t;
+  sample.alpha = 1.f;
+
+  if (sample.ray.geomID < 0) 
+    sample.rgb = make_vec3f(1.f); 
+  else {
+    DifferentialGeometry dg;
+    postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
+    sample.rgb = normalize(dg.dPdt);
+    if (sample.rgb.x < 0.f)
+      sample.rgb.x = sample.rgb.x * -0.3f;
+    if (sample.rgb.y < 0.f)
+      sample.rgb.y = sample.rgb.y * -0.3f;
+    if (sample.rgb.z < 0.f)
+      sample.rgb.z = sample.rgb.z * -0.3f;
   }
 }
 
@@ -112,7 +159,6 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(uniform Renderer *uniform
   if (sample.ray.geomID < 0) 
     sample.rgb = make_vec3f(0.f); 
   else {
-    // sample.rgb = absf(sample.ray.Ng);
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
     postIntersect(self->super.model, dg, sample.ray, DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
@@ -173,6 +219,48 @@ void RaycastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _sel
   }
 }
 
+
+void RaycastRenderer_renderSample_backfacing_Ng(uniform Renderer *uniform _self,
+                                                varying ScreenSample &sample)
+{
+  uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
+
+  traceRay(self->super.model,sample.ray);
+  sample.z     = sample.ray.t;
+  sample.alpha = 1.f;
+
+  if (sample.ray.geomID < 0) 
+    sample.rgb = make_vec3f(1.f); 
+  else {
+    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir); 
+    sample.rgb = make_vec3f(.2f+.8f*abs(c));
+    if (c > 0.f)
+      sample.rgb.y = 0.f;
+  }
+}
+
+void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
+                                                varying ScreenSample &sample)
+{
+  uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
+
+  traceRay(self->super.model,sample.ray);
+  sample.z     = sample.ray.t;
+  sample.alpha = 1.f;
+
+  if (sample.ray.geomID < 0) 
+    sample.rgb = make_vec3f(1.f); 
+  else {
+    DifferentialGeometry dg;
+    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
+    const float c = dot(dg.Ns,sample.ray.dir); 
+    sample.rgb = make_vec3f(.2f+.8f*abs(c));
+    if (c > 0.f)
+      sample.rgb.y = 0.f;
+  }
+}
+
+
 #define DEFINE_RAYCAST_RENDERER(name)                                   \
   export void *uniform                                                  \
   RaycastRenderer_create_##name(void *uniform cppE)                     \
@@ -189,7 +277,11 @@ DEFINE_RAYCAST_RENDERER(testFrame);
 DEFINE_RAYCAST_RENDERER(eyeLight);
 DEFINE_RAYCAST_RENDERER(Ng);
 DEFINE_RAYCAST_RENDERER(Ns);
+DEFINE_RAYCAST_RENDERER(dPds);
+DEFINE_RAYCAST_RENDERER(dPdt);
 DEFINE_RAYCAST_RENDERER(eyeLight_primID);
 DEFINE_RAYCAST_RENDERER(eyeLight_geomID);
 DEFINE_RAYCAST_RENDERER(eyeLight_instID);
 DEFINE_RAYCAST_RENDERER(eyeLight_vertexColor);
+DEFINE_RAYCAST_RENDERER(backfacing_Ng);
+DEFINE_RAYCAST_RENDERER(backfacing_Ns);

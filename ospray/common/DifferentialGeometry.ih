@@ -34,6 +34,8 @@ typedef enum {
                               stored in "prim.materialID" array */
   DG_COLOR       = (1<<8), /*!< hack for now - need interpolated vertex color */
   DG_TEXCOORD    = (1<<9), /*!< calculate texture coords st */
+  DG_TANGENTS    = (1<<10),/*!< calculate tangents, i.e. the partial
+                             derivatives of position wrt. texture coordinates */
 } DG_PostIntersectFlags;
 
 
@@ -47,6 +49,8 @@ struct DifferentialGeometry {
   vec3f Ns; /*!< shading normal if DG_NS was set, possibly not
                normalized/facefordwarded if DG_NORMALIZE and/or
                DG_FACEFORWARD weren't specified */
+  vec3f dPds; //!< tangent, the partial derivative of the hit-point wrt. texcoord s
+  vec3f dPdt; //!< bi-tangent, the partial derivative of the hit-point wrt. texcoord t
   vec2f st; //!< texture coordinates if DG_TEXCOORD was set
   vec4f color; /*! interpolated vertex color (rgba) if DG_COLOR was set;
                  defaults to vec4f(1.f) if queried but not present in geometry

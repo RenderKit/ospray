@@ -56,6 +56,27 @@ namespace ospray {
     return volume;
   }
 
+  void Volume::computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count)
+  {
+    // The ISPC volume container must exist at this point.
+    assert(ispcEquivalent != NULL);
+
+    // Allocate memory for returned volume samples
+    *results = (float *)malloc(count * sizeof(float));
+    exitOnCondition(*results == NULL, "error allocating memory");
+
+    // Allocate memory for ISPC-computed volume samples using Embree's new to enforce alignment
+    float *ispcResults = new float[count];
+    exitOnCondition(ispcResults == NULL, "error allocating memory");
+
+    // Compute the sample values.
+    ispc::Volume_computeSamples(ispcEquivalent, &ispcResults, (const ispc::vec3f *)worldCoordinates, count);
+
+    // Copy samples and free ISPC results memory
+    memcpy(*results, ispcResults, count * sizeof(float));
+    delete[] ispcResults;
+  }
+
   void Volume::finish()
   {
     // The ISPC volume container must exist at this point.

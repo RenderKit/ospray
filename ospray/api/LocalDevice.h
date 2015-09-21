@@ -192,6 +192,9 @@ namespace ospray {
       virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat);
 
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos);
+
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
+
     };
 
   } // ::ospray::api
