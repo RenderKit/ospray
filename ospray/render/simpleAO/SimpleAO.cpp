@@ -26,14 +26,12 @@
 namespace ospray {
 
   //! Constructor
-  template<int NUM_SAMPLES_PER_FRAME>
-  SimpleAO<NUM_SAMPLES_PER_FRAME>::Material::Material()
+  SimpleAO::Material::Material()
   {
     ispcEquivalent = ispc::SimpleAOMaterial_create(this);
   }
   
-  template<int NUM_SAMPLES_PER_FRAME>
-  void SimpleAO<NUM_SAMPLES_PER_FRAME>::Material::commit() 
+  void SimpleAO::Material::commit()
   {
     Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
     map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd", NULL));
@@ -43,58 +41,38 @@ namespace ospray {
   }
   
   //! \brief Constructor
-  template<int NUM_SAMPLES_PER_FRAME>
-  SimpleAO<NUM_SAMPLES_PER_FRAME>::SimpleAO() 
+  SimpleAO::SimpleAO()
   {
     ispcEquivalent = ispc::SimpleAO_create(this,NULL,NULL);
   }
 
   /*! \brief create a material of given type */
-  template<int NUM_SAMPLES_PER_FRAME>
-  ospray::Material *SimpleAO<NUM_SAMPLES_PER_FRAME>::createMaterial(const char *type) 
+  ospray::Material *SimpleAO::createMaterial(const char *type)
   { 
-    return new typename SimpleAO<NUM_SAMPLES_PER_FRAME>::Material;
+    return new typename SimpleAO::Material;
   }
 
   /*! \brief common function to help printf-debugging */
-  template<int NUM_SAMPLES_PER_FRAME>
-  std::string SimpleAO<NUM_SAMPLES_PER_FRAME>::toString() const 
+  std::string SimpleAO::toString() const
   {
     return "ospray::render::SimpleAO"; 
   }
   
   /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
-  template<int NUM_SAMPLES_PER_FRAME>
-  void SimpleAO<NUM_SAMPLES_PER_FRAME>::commit()
+  void SimpleAO::commit()
   {
     Renderer::commit();
 
     bgColor = getParam3f("bgColor",vec3f(1.f));
+    int   numSamples = getParam1i("aoSamples", 16);
+    float rayLength  = getParam1f("aoRayLength", 1e20f);
     ispc::SimpleAO_set(getIE(),
                        (const ispc::vec3f&)bgColor,                           
-                       NUM_SAMPLES_PER_FRAME);
+                       numSamples,
+                       rayLength);
   }
 
-  /*! \brief instantiation of SimpleAO that uses 16 AO rays per sample */
-  typedef SimpleAO<16> AO16Renderer;
-  OSP_REGISTER_RENDERER(AO16Renderer,ao16);
-  OSP_REGISTER_RENDERER(AO16Renderer,ao);
-
-  /*! \brief instantiation of SimpleAO that uses 8 AO rays per sample */
-  typedef SimpleAO<8>  AO8Renderer;
-  OSP_REGISTER_RENDERER(AO8Renderer, ao8);
-
-  /*! \brief instantiation of SimpleAO that uses 4 AO rays per sample */
-  typedef SimpleAO<4>  AO4Renderer;
-  OSP_REGISTER_RENDERER(AO4Renderer, ao4);
-
-  /*! \brief instantiation of SimpleAO that uses 2 AO rays per sample */
-  typedef SimpleAO<2>  AO2Renderer;
-  OSP_REGISTER_RENDERER(AO2Renderer, ao2);
-
-  /*! \brief instantiation of SimpleAO that uses 1 AO rays per sample */
-  typedef SimpleAO<1>  AO1Renderer;
-  OSP_REGISTER_RENDERER(AO1Renderer, ao1);
+  OSP_REGISTER_RENDERER(SimpleAO,ao);
 
 } // ::ospray
 

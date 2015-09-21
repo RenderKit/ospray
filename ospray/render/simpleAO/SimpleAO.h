@@ -56,7 +56,6 @@ namespace ospray {
     samples in the first frame, the next 8 in the second, then
     rotation of the first 8 in the third, etc.
    */
-  template<int NUM_SAMPLES_PER_FRAME>
   struct SimpleAO : public Renderer {
     
     //! \brief Material used by the SimpleAO renderer 
