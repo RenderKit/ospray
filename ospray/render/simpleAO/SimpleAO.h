@@ -67,7 +67,8 @@ namespace ospray {
       //! \brief Constructor
       Material();
 
-      /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+      /*! \brief commit the object's outstanding changes
+       *         (such as changed parameters etc) */
       virtual void commit();
       
       // -------------------------------------------------------
@@ -91,10 +92,11 @@ namespace ospray {
     /*! \brief create a material of given type */
     virtual ospray::Material *createMaterial(const char *type);
 
-    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    /*! \brief commit the object's outstanding changes
+     *         (such as changed parameters etc) */
     virtual void commit();
 
-    //! the background color we are going to use if the primary ray didn't hit anything
+    //! background color we are going to use if the primary ray hit nothing
     vec3f bgColor; 
   };
 

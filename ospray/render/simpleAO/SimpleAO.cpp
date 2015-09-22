@@ -34,10 +34,11 @@ namespace ospray {
   void SimpleAO::Material::commit()
   {
     Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
-    map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd", NULL));
+    map_Kd = (Texture2D*)getParamObject("map_Kd",
+                                        getParamObject("map_kd", NULL));
     ispc::SimpleAOMaterial_set(getIE(),
-                           (const ispc::vec3f&)Kd,
-                           map_Kd.ptr!=NULL?map_Kd->getIE():NULL);
+                               (const ispc::vec3f&)Kd,
+                               map_Kd.ptr != NULL ? map_Kd->getIE() : NULL);
   }
   
   //! \brief Constructor
@@ -47,7 +48,7 @@ namespace ospray {
   }
 
   /*! \brief create a material of given type */
-  ospray::Material *SimpleAO::createMaterial(const char *type)
+  ospray::Material *SimpleAO::createMaterial(const char */*type*/)
   { 
     return new SimpleAO::Material;
   }
@@ -58,7 +59,8 @@ namespace ospray {
     return "ospray::render::SimpleAO"; 
   }
   
-  /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+  /*! \brief commit the object's outstanding changes
+   *         (such as changed parameters etc) */
   void SimpleAO::commit()
   {
     Renderer::commit();
