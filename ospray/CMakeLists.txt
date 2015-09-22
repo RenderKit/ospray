@@ -55,7 +55,6 @@ SET(OSPRAY_SOURCES
   volume/SharedStructuredVolume.cpp
   volume/StructuredVolume.ispc
   volume/StructuredVolume.cpp
-  volume/SymbolRegistry.cpp
   volume/Volume.ispc
   volume/Volume.cpp
 
@@ -63,7 +62,6 @@ SET(OSPRAY_SOURCES
   transferFunction/LinearTransferFunction.cpp
   transferFunction/TransferFunction.ispc
   transferFunction/TransferFunction.cpp
-  transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
@@ -118,7 +116,6 @@ SET(OSPRAY_SOURCES
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/RaycastVolumeRendererMaterial.ispc
-  render/volume/SymbolRegistry.cpp
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp

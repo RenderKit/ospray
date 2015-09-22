@@ -88,5 +88,8 @@ namespace ospray {
                                                              (const ispc::vec3i &)this->dimensions);
   }
 
+  // A volume type with 64-bit addressing and multi-level bricked storage order.
+  OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
+
 } // ::ospray
 

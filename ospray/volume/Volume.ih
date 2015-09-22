@@ -52,12 +52,6 @@ struct Volume {
   //! The value at the given sample location in world coordinates.
   varying float (*uniform computeSample)(void *uniform volume, 
                                          const varying vec3f &worldCoordinates);
-  
-  //! The values at the given sample locations in world coordinates.
-  void (*uniform computeSamples)(void *uniform volume, 
-                                 const varying vec3f *uniform positions, 
-                                 const uniform int numPositions, 
-                                 varying float *uniform results);
 
   //! The gradient at the given sample location in world coordinates.
   varying vec3f (*uniform computeGradient)(void *uniform volume, 
