@@ -74,7 +74,24 @@ namespace ospray {
                        rayLength);
   }
 
-  OSP_REGISTER_RENDERER(SimpleAO,ao);
+  OSP_REGISTER_RENDERER(SimpleAO, ao);
+
+  /*! \note Reintroduce aoX renderers for compatibility, they should be
+            depricated!*/
+
+#define OSP_REGISTER_AO_RENDERER(InternalClassName, external_name, nSamples)      \
+  extern "C" OSPRAY_INTERFACE Renderer *ospray_create_renderer__##external_name() \
+  {                                                                               \
+    InternalClassName *renderer = new InternalClassName;                          \
+    ospSet1i((OSPRenderer)renderer, "aoSamples", nSamples);                       \
+    return renderer;                                                              \
+  }
+
+  OSP_REGISTER_AO_RENDERER(SimpleAO, ao1,  1 );
+  OSP_REGISTER_AO_RENDERER(SimpleAO, ao2,  2 );
+  OSP_REGISTER_AO_RENDERER(SimpleAO, ao4,  4 );
+  OSP_REGISTER_AO_RENDERER(SimpleAO, ao8,  8 );
+  OSP_REGISTER_AO_RENDERER(SimpleAO, ao16, 16);
 
 } // ::ospray
 
