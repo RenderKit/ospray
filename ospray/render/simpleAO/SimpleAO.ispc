@@ -70,6 +70,7 @@ struct SimpleAO {
   uniform Renderer super;
   uniform vec3f bgColor;
   uniform int samplesPerFrame;
+  uniform float aoRayLength;
 };
 
 inline vec3f getShadingNormal(const Ray &ray)
@@ -144,13 +145,13 @@ inline vec3f getRandomDir(const int j, const int i,
 }
 
 
-inline void shade_ao16(uniform SimpleAO *uniform self,
-                       varying vec3f &color,
-                       varying float &alpha,
-                       int sampleOfs, int sampleCnt,
-                       const Ray &ray,
-                       const int32 pixel_x, const int32 pixel_y,
-                       const float rot_x, const float rot_y)
+inline void shade_ao(uniform SimpleAO *uniform self,
+                     varying vec3f &color,
+                     varying float &alpha,
+                     int sampleOfs, int sampleCnt,
+                     const Ray &ray,
+                     const int32 pixel_x, const int32 pixel_y,
+                     const float rot_x, const float rot_y)
 {
   if (ray.geomID < 0) {
     color = self->super.backgroundEnabled ? self->bgColor : make_vec3f(0.f);
@@ -185,17 +186,17 @@ inline void shade_ao16(uniform SimpleAO *uniform self,
   const int sindex_x = pixel_x & 0x3;
   const int sindex_y = pixel_y & 0x3;
   const int sindex = (sindex_x) * 4 + (sindex_y);
-  for (uniform int i=0;i<sampleCnt;i++) {
+  for (uniform int i = 0; i < sampleCnt; i++) {
     const vec3f ao_dir
       = getRandomDir(sindex,
                      (3*sindex_x+5*sindex_y+i+sampleCnt*sampleOfs)%16,
                      biNormU,biNormV,N,rot_x,rot_y,self->super.epsilon);
     
     Ray ao_ray;
-    setRay(ao_ray,dg.P+1e-3f*N,ao_dir);
+    setRay(ao_ray, dg.P + (1e-3f * N), ao_dir);
     ao_ray.t0 = self->super.epsilon;
-    ao_ray.t = 1e20f; 
-    if (dot(ao_ray.dir,N) < 0.05f || isOccluded(self->super.model,ao_ray))
+    ao_ray.t  = self->aoRayLength - self->super.epsilon;
+    if (dot(ao_ray.dir, N) < 0.05f || isOccluded(self->super.model,ao_ray))
       hits++;
   }
   float diffuse = absf(dot(N,ray.dir));
@@ -207,45 +208,47 @@ inline void shade_ao16(uniform SimpleAO *uniform self,
 
 
 void SimpleAO_renderSample(uniform Renderer *uniform _self,
-                               varying ScreenSample &sample)
+                           varying ScreenSample &sample)
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
 
-  traceRay(self->super.model,sample.ray);
-  sample.z     = sample.ray.t;
+  traceRay(self->super.model, sample.ray);
+  sample.z = sample.ray.t;
 
   uniform int samplesPerFrame = self->samplesPerFrame;
-  uniform int framesPer16 = 16/samplesPerFrame;
+  uniform int framesPer16 = 16 / samplesPerFrame;
   int accumID = sample.sampleID.z / framesPer16;
   int sampleOfs = sample.sampleID.z % framesPer16;
-  float rot_x = 1.f-precomputedHalton3(accumID);
-  float rot_y = 1.f-precomputedHalton5(accumID);
-  shade_ao16(self,
-             sample.rgb,
-             sample.alpha,
-             sampleOfs,samplesPerFrame,
-             sample.ray,
-             sample.sampleID.x,
-             sample.sampleID.y,
-             rot_x,rot_y);
+  float rot_x = 1.f - precomputedHalton3(accumID);
+  float rot_y = 1.f - precomputedHalton5(accumID);
+  shade_ao(self,
+           sample.rgb,
+           sample.alpha,
+           sampleOfs,samplesPerFrame,
+           sample.ray,
+           sample.sampleID.x,
+           sample.sampleID.y,
+           rot_x,rot_y);
 }
 
 
 export void *uniform SimpleAO_create(void *uniform cppE,
-                                         void *uniform _model,
-                                         void *uniform _camera)
+                                     void *uniform _model,
+                                     void *uniform _camera)
 {
   uniform SimpleAO *uniform self = uniform new uniform SimpleAO;
-  Renderer_Constructor(&self->super,cppE,_model,_camera,1);
+  Renderer_Constructor(&self->super, cppE, _model, _camera, 1);
   self->super.renderSample = SimpleAO_renderSample;
   return self;
 }
 
 export void SimpleAO_set(void *uniform _self,
                          const uniform vec3f &bgColor,
-                         uniform int samplesPerFrame)
+                         uniform int samplesPerFrame,
+                         uniform float aoRayLength)
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
   self->bgColor = bgColor;
   self->samplesPerFrame = samplesPerFrame;
+  self->aoRayLength = aoRayLength;
 }

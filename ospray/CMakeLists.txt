@@ -108,6 +108,11 @@ SET(OSPRAY_SOURCES
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp
   render/obj/OBJMaterial.cpp
+  render/raytracer/RaytraceRenderer.ispc
+  render/raytracer/RaytraceMaterial.ispc
+  render/raytracer/RaytraceMaterial.ih
+  render/raytracer/RaytraceRenderer.cpp
+  render/raytracer/RaytraceMaterial.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/RaycastVolumeRendererMaterial.ispc
