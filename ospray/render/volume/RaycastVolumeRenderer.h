@@ -63,8 +63,8 @@ namespace ospray {
     void exitOnCondition(bool condition, const std::string &message) const
     { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
 
-    //! Gather pointers to the ISPC equivalents from an array of Light objects.
-    void **getLightsFromData(const Data *buffer);
+    //! ISPC equivalents for lights.
+    std::vector<void *> lights;
 
   };
 

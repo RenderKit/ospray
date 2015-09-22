@@ -37,6 +37,7 @@ struct FrameBuffer
 {
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */
+  vec2f rcpSize_1; /*! one over (size - 1) (precomputed) */
   uniform float gamma; /*! gamma correction */
   int32 accumID;
 

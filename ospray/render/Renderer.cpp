@@ -36,18 +36,27 @@ namespace ospray {
   {
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
+    backgroundEnabled = getParam1i("backgroundEnabled", 1);
+    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
     model = (Model*)getParamObject("model", getParamObject("world"));
+
+    if (maxDepthTexture && (maxDepthTexture->type != OSP_FLOAT || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)))
+      static WarnOnce warning("expected maxDepthTexture provided to the renderer to be type OSP_FLOAT and have the OSP_TEXTURE_FILTER_NEAREST flag");
+
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
       if (model) {
         const float diameter = model->bounds.empty() ? 1.0f : length(model->bounds.size());
         epsilon *= diameter;
       }
+
       ispc::Renderer_set(getIE(),
                          model ?  model->getIE() : NULL,
                          camera ?  camera->getIE() : NULL,
                          epsilon,
-                         spp);
+                         spp,
+                         backgroundEnabled,
+                         maxDepthTexture ? maxDepthTexture->getIE() : NULL);
     }
   }
 

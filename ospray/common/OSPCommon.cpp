@@ -20,7 +20,7 @@
 #include "common/sys/sysinfo.h"
 // std
 #include <time.h>
-#ifdef __WIN32__
+#ifdef _WIN32
 #  ifndef WIN32_LEAN_AND_MEAN
 #    define WIN32_LEAN_AND_MEAN
 #  endif
@@ -82,7 +82,7 @@ namespace ospray {
   }
 
   double getSysTime() {
-#ifdef __WIN32__
+#ifdef _WIN32
     SYSTEMTIME tp; GetSystemTime(&tp);
     return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
 #else
@@ -94,10 +94,10 @@ namespace ospray {
   void init(int *_ac, const char ***_av)
   {
 #if !OSPRAY_TARGET_MIC
-    // if we're not on a MIC, check for SSE4.2 as minimum supported ISA.
+    // If we're not on a MIC, check for SSE4.1 as minimum supported ISA. Will be increased to SSE4.2 in future.
     int cpuFeatures = embree::getCPUFeatures();
-    if ((cpuFeatures & embree::CPU_FEATURE_SSE42) == 0)
-      throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.2.");
+    if ((cpuFeatures & embree::CPU_FEATURE_SSE41) == 0)
+      throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.1.");
 #endif
 
     int &ac = *_ac;

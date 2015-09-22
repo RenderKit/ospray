@@ -33,6 +33,7 @@ namespace ospray {
       CommandStream cmd;
 
       typedef ospray::CommandTag CommandTag;
+
       /*! constructor */
       MPIDevice(// AppMode appMode, OSPMode ospMode,
                 int *_ac=NULL, const char **_av=NULL);
@@ -219,6 +220,10 @@ namespace ospray {
       virtual void apiMode(OSPDApiMode mode);
 
       OSPDApiMode currentApiMode;
+
+      /*! sample a volume */
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
+
     };
 
     // ==================================================================

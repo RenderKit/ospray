@@ -223,7 +223,15 @@ namespace ospray {
 
       /*! switch API mode for distriubted API extensions */
       virtual void apiMode(OSPDApiMode mode)
-      { throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); }
+      { 
+        throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); 
+      }
+
+      virtual void sampleVolume(float **results, OSPVolume volume, 
+                                const vec3f *worldCoordinates, const size_t &count)
+      {
+        throw std::runtime_error("sampleVolume() not implemented for this device");
+      }
 
     };
   } // ::ospray::api

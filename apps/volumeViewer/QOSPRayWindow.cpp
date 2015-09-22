@@ -15,6 +15,13 @@
 // ======================================================================== //
 
 #include "QOSPRayWindow.h"
+#include "modules/opengl/util.h"
+
+#ifdef __APPLE__
+  #include <OpenGL/glu.h>
+#else
+  #include <GL/glu.h>
+#endif
 
 QOSPRayWindow::QOSPRayWindow(QMainWindow *parent, 
                              OSPRenderer renderer, 
@@ -30,6 +37,7 @@ QOSPRayWindow::QOSPRayWindow(QMainWindow *parent,
     frameBuffer(NULL), 
     renderer(NULL), 
     camera(NULL),
+    maxDepthTexture(NULL),
     writeFramesFilename(writeFramesFilename)
 {
   // assign renderer
@@ -124,6 +132,44 @@ void QOSPRayWindow::paintGL()
   }
 
   renderFrameTimer.start();
+
+  // we have OpenGL components if any slots are connected to the renderGLComponents() signal
+  // if so, render these first and then composite the OSPRay-rendered content on top
+  bool haveOpenGLComponents = receivers(SIGNAL(renderGLComponents())) > 0;
+
+  if (haveOpenGLComponents) {
+
+    // setup OpenGL view to match current view and render all OpenGL components
+    renderGL();
+
+    // generate max depth texture for early ray termination
+    if (maxDepthTexture)
+      ospRelease(maxDepthTexture);
+
+    maxDepthTexture = ospray::opengl::getOSPDepthTextureFromOpenGLPerspective();
+    ospSetObject(renderer, "maxDepthTexture", maxDepthTexture);
+
+    // disable OSPRay background rendering since we're compositing
+    ospSet1i(renderer, "backgroundEnabled", 0);
+
+    ospCommit(renderer);
+
+    // disable OpenGL depth testing and enable blending for compositing
+    glDisable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  }
+  else {
+
+    // unset any maximum depth texture and enable OSPRay background rendering
+    ospSetObject(renderer, "maxDepthTexture", NULL);
+    ospSet1i(renderer, "backgroundEnabled", 1);
+    ospCommit(renderer);
+
+    // disable OpenGL blending
+    glDisable(GL_BLEND);
+  }
+
   ospRenderFrame(frameBuffer, renderer, OSP_FB_COLOR | OSP_FB_ACCUM);
   double framesPerSecond = 1000.0 / renderFrameTimer.elapsed();
   char title[1024];  sprintf(title, "OSPRay Volume Viewer (%.4f fps)", framesPerSecond);
@@ -167,7 +213,7 @@ void QOSPRayWindow::resizeGL(int width, int height)
   frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   // set gamma correction
-  ospSet1f(frameBuffer, "gamma", 2.2f);
+  ospSet1f(frameBuffer, "gamma", 1.0f);
   ospCommit(frameBuffer);
 
   resetAccumulationBuffer();
@@ -281,6 +327,31 @@ void QOSPRayWindow::strafe(float du, float dv)
   viewport.modified = true;
 
   viewport.modified = true;
+}
+
+void QOSPRayWindow::renderGL()
+{
+  // setup OpenGL state to match OSPRay view
+  const osp::vec3f bgColor = osp::vec3f(1.f);
+  glClearColor(bgColor.x, bgColor.y, bgColor.z, 1.f);
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+
+  float zNear = 0.1f;
+  float zFar = 100000.f;
+  gluPerspective(viewport.fovY, viewport.aspect, zNear, zFar);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  gluLookAt(viewport.from.x, viewport.from.y, viewport.from.z,
+            viewport.at.x, viewport.at.y, viewport.at.z,
+            viewport.up.x, viewport.up.y, viewport.up.z);
+
+  // emit signal to render all OpenGL components; the slots will execute in the order they were registered
+  emit(renderGLComponents());
 }
 
 void QOSPRayWindow::writeFrameBufferToFile(const uint32 *pixelData)

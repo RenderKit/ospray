@@ -23,6 +23,8 @@
 #include "LightEditor.h"
 #include "SliceEditor.h"
 #include "PreferencesDialog.h"
+#include "ProbeWidget.h"
+#include "OpenGLAnnotationRenderer.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool showFrameRate,
@@ -34,8 +36,10 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
     renderer(NULL),
     rendererInitialized(false),
     transferFunction(NULL),
-    light(NULL),
+    ambientLight(NULL),
+    directionalLight(NULL),
     osprayWindow(NULL),
+    annotationRenderer(NULL),
     transferFunctionEditor(NULL),
     isosurfaceEditor(NULL),
     autoRotateAction(NULL),
@@ -47,15 +51,15 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   // Create and configure the OSPRay state.
   initObjects();
 
-  // Configure the user interface widgets and callbacks.
-  initUserInterfaceWidgets();
-
   // Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
   osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate, writeFramesFilename);
   setCentralWidget(osprayWindow);
 
   // Set the window bounds based on the OSPRay world bounds.
   osprayWindow->setWorldBounds(boundingBox);
+
+  // Configure the user interface widgets and callbacks.
+  initUserInterfaceWidgets();
 
   if (fullScreen)
     setWindowState(windowState() | Qt::WindowFullScreen);
@@ -80,6 +84,9 @@ void VolumeViewer::setModel(size_t index)
     transferFunctionEditor->setDataValueRange(voxelRange);
     isosurfaceEditor->setDataValueRange(voxelRange);
   }
+
+  // Update active volume on probe widget.
+  probeWidget->setVolume(modelStates[index].volumes[0]);
 
   // Update current filename information label.
   currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
@@ -169,6 +176,22 @@ void VolumeViewer::screenshot(std::string filename)
   bool success = image.save(filename.c_str());
 
   std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
+}
+
+void VolumeViewer::setRenderAnnotationsEnabled(bool value)
+{
+  if (value) {
+    if (!annotationRenderer)
+      annotationRenderer = new OpenGLAnnotationRenderer(this);
+
+    connect(osprayWindow, SIGNAL(renderGLComponents()), annotationRenderer, SLOT(render()), Qt::UniqueConnection);
+  }
+  else {
+    delete annotationRenderer;
+    annotationRenderer = NULL;
+  }
+
+  render();
 }
 
 void VolumeViewer::setGradientShadingEnabled(bool value)
@@ -329,15 +352,21 @@ void VolumeViewer::initObjects()
   renderer = ospNewRenderer("raycast_volume_renderer");
   exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
-  // Create an OSPRay light source.
-  light = ospNewLight(NULL, "DirectionalLight");
-  exitOnCondition(light == NULL, "could not create OSPRay light object");
-  ospSet3f(light, "direction", 1.0f, -2.0f, -1.0f);
-  ospSet3f(light, "color", 1.0f, 1.0f, 1.0f);
-  ospCommit(light);
+  // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.
+  ambientLight = ospNewLight(renderer, "AmbientLight");
+  exitOnCondition(ambientLight == NULL, "could not create ambient light");
+  ospCommit(ambientLight);
 
-  // Set the light source on the renderer.
-  ospSetData(renderer, "lights", ospNewData(1, OSP_OBJECT, &light));
+  directionalLight = ospNewLight(renderer, "DirectionalLight");
+  exitOnCondition(directionalLight == NULL, "could not create directional light");
+  ospCommit(directionalLight);
+
+  // Set the light sources on the renderer.
+  std::vector<OSPLight> lights;
+  lights.push_back(ambientLight);
+  lights.push_back(directionalLight);
+
+  ospSetData(renderer, "lights", ospNewData(lights.size(), OSP_OBJECT, &lights[0]));
 
   // Create an OSPRay transfer function.
   transferFunction = ospNewTransferFunction("piecewise_linear");
@@ -430,16 +459,23 @@ void VolumeViewer::initUserInterfaceWidgets()
   addDockWidget(Qt::LeftDockWidgetArea, isosurfaceEditorDockWidget);
 
   // Create the light editor dock widget, this widget modifies the light directly.
-  // Disable for now pending UI improvements...
-  /* QDockWidget *lightEditorDockWidget = new QDockWidget("Light Editor", this);
-     LightEditor *lightEditor = new LightEditor(light);
-     lightEditorDockWidget->setWidget(lightEditor);
-     connect(lightEditor, SIGNAL(lightChanged()), this, SLOT(render()));
-     addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget); */
+  QDockWidget *lightEditorDockWidget = new QDockWidget("Lights", this);
+  LightEditor *lightEditor = new LightEditor(ambientLight, directionalLight);
+  lightEditorDockWidget->setWidget(lightEditor);
+  connect(lightEditor, SIGNAL(lightsChanged()), this, SLOT(render()));
+  addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);
+
+  // Create the probe dock widget.
+  QDockWidget *probeDockWidget = new QDockWidget("Probe", this);
+  probeWidget = new ProbeWidget(this);
+  probeDockWidget->setWidget(probeWidget);
+  addDockWidget(Qt::LeftDockWidgetArea, probeDockWidget);
 
   // Tabify dock widgets.
   tabifyDockWidget(transferFunctionEditorDockWidget, sliceEditorDockWidget);
   tabifyDockWidget(transferFunctionEditorDockWidget, isosurfaceEditorDockWidget);
+  tabifyDockWidget(transferFunctionEditorDockWidget, lightEditorDockWidget);
+  tabifyDockWidget(transferFunctionEditorDockWidget, probeDockWidget);
 
   // Tabs on top.
   setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::North);

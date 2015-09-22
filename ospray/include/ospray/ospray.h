@@ -594,6 +594,19 @@ extern "C" {
   /* \warning this call has been superseded by ospPick, and will eventually get removed */
   OSP_DEPRECATED OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 
+  /*! \brief Samples the given volume at the provided world-space coordinates.
+
+    \param results will be allocated by OSPRay and contain the
+    resulting sampled values as floats. The application is
+    responsible for freeing this memory. In case of error results
+    will be NULL.
+
+    This function is meant to provide a _small_ number of samples
+    as needed for data probes, etc. in applications. It is not
+    intended for large-scale sampling of volumes.
+  */
+  OSPRAY_INTERFACE void ospSampleVolume(float **results, OSPVolume volume, const osp::vec3f *worldCoordinates, const size_t &count);
+
 } // extern "C"
 
 /*! \} */

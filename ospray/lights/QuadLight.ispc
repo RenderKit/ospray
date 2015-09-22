@@ -40,6 +40,7 @@ varying LightSample QuadLight_sample(const uniform Light *uniform _self,
   LightSample sample;
 
   // sample position on light with density ppdf = 1/area
+  // TODO: use solid angle sampling
   const vec3f pos = self->position + self->edge1 * s.x + self->edge2 * s.y;
 
   // extant light vector from the hit point
@@ -55,7 +56,7 @@ varying LightSample QuadLight_sample(const uniform Light *uniform _self,
   sample.pdf = self->ppdf * (dist * dist) / abs(cosd);
 
   // emit only to one side
-  sample.radiance = cosd > 0.f ? self->radiance : make_vec3f(0.f);
+  sample.radiance = cosd > 0.f ? self->radiance * rcp(sample.pdf) : make_vec3f(0.f);
 
   return sample;
 }

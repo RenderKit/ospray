@@ -81,7 +81,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model, const float weig
   }
 }
 
-inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varying ScreenSample &sample) 
+inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varying ScreenSample &sample)
 { 
   Ray &ray = sample.ray;
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
@@ -97,8 +97,10 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     traceRay(self->super.model,ray);
 
     if (ray.geomID < 0) {
-      color = color + path_opacity * self->bgColor;
-      return color;
+      sample.rgb = self->super.backgroundEnabled ? color + path_opacity * self->bgColor : color;
+      sample.alpha = self->super.backgroundEnabled ? 1.f : 1.f - path_opacity;
+      sample.z = 1;
+      return;
     }
 
     vec3f local_shade_color = make_vec3f(0.f);
@@ -147,7 +149,11 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     const float local_opacity = path_opacity * d;
 
     max_depth -= 1;
-    if (max_depth <= 0) return color;
+    if (max_depth <= 0) {
+      sample.rgb = color;
+      sample.alpha = 1.f - path_opacity;
+      return;
+    }
 
     if (local_opacity > 0.01f) { // worth shading?
       const vec3f R = ray.dir - (2.f * dot(ray.dir, dg.Ns))*dg.Ns;
@@ -159,13 +165,13 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
       //calculate shading for all lights
       for (uniform int i = 0; self->lights && i < self->numLights; i++) {
         const uniform Light *uniform l = self->lights[i];
-        const vec2f s = make_vec2f(0.5f);
+        const vec2f s = make_vec2f(0.f);
         const LightSample light = l->sample(l, dg, s);
 
         if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
           const float cosNL = abs(dot(light.direction, dg.Ns));
           const float cosLR = max(0.f, dot(light.direction, R));
-          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance * rcp(light.pdf);
+          const vec3f unshaded_light_contrib = local_opacity * (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance;
 
           if (self->shadowsEnabled) {
             const float max_contrib = reduce_max(unshaded_light_contrib);
@@ -184,7 +190,12 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     }
 
     path_opacity = path_opacity * (1.f - d);
-    if (path_opacity < 0.01f) return color; //remaining contribution too low kill path
+    if (path_opacity < 0.01f) {
+      //remaining contribution too low kill path
+      sample.rgb = color;
+      sample.alpha = 1.f - path_opacity;
+      return;
+    }
 
     ray.t0 = ray.t + self->super.epsilon;
     ray.t = infinity;
@@ -193,14 +204,16 @@ inline vec3f OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyi
     ray.instID = -1;
   }
 
-  return color;
+  sample.rgb = color;
+  sample.alpha = 1.f - path_opacity;
+  return;
 }
 
 void OBJRenderer_renderSample(uniform Renderer *uniform _self,
                                varying ScreenSample &sample)
 {
   uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
-  sample.rgb = OBJRenderer_shadeRay(self, sample);
+  OBJRenderer_shadeRay(self, sample);
 }
 
 

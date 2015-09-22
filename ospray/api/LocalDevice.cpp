@@ -670,6 +670,16 @@ namespace ospray {
       return renderer->pick(screenPos);
     }
 
+    void LocalDevice::sampleVolume(float **results, OSPVolume _volume, const vec3f *worldCoordinates, const size_t &count)
+    {
+      Volume *volume = (Volume *)_volume;
+
+      Assert2(volume, "invalid volume handle");
+      Assert2(worldCoordinates, "invalid worldCoordinates");
+
+      volume->computeSamples(results, worldCoordinates, count);
+    }
+
   } // ::ospray::api
 } // ::ospray
 

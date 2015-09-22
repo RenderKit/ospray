@@ -22,20 +22,22 @@ struct Light;
 
 struct LightSample 
 {
-  vec3f radiance;  //!< radiance for this sample that arrives at the given point
+  vec3f radiance;  //!< radiance for this sample that arrives at the given point, already weighted by pdf
   vec3f direction; //!< direction towards the light source
   float distance;  //!< largest valid parameter value for a shadow ray
   float pdf;       //!< probability that this sample was taken
 };
 
 //! compute the weighted radiance at a point caused by a sample on the light source
+// by convention, giving (0, 0) as "random" numbers should sample the "center"
+// of the light source (used by the raytracing renderers such as the OBJ renderer)
 typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform _self,
       /*! point to generate the sample for >*/ const varying DifferentialGeometry &dg,
  /*! random numbers to generate the sample >*/ const varying vec2f &s);
 
-//! compute the radiance caused by the light source in the given direction from inf
+//! compute the radiance caused by the light source (pointed to by the given direction) from inf
 typedef varying vec3f (*Light_EvalEnvFct)(const uniform Light *uniform _self,
- /*! direction into which is radiated >*/ const varying vec3f &dir);
+/*! direction towards the light source >*/const varying vec3f &dir);
 
 
 struct Light {

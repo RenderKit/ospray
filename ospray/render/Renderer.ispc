@@ -64,45 +64,111 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
   float lens_du = 0.f,  lens_dv = 0.f;
   uniform int32 spp = self->spp;
 
-  // precomputeZOrder();
-
-  // if (spp > 1) {
   const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
   const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
   const uniform int startSampleID = max(fb->accumID,0)*spp;
-    
-  ScreenSample screenSample;
-  screenSample.z = inf;
-  screenSample.alpha = 0.f;
-  
-  CameraSample cameraSample;
 
-  const float spp_inv = 1.f / spp;
+  if (spp >= 1) {
+    ScreenSample screenSample;
+    screenSample.z = inf;
+    screenSample.alpha = 0.f;
   
-  for (uint32 index=begin+programIndex;index<end;index+=programCount) {
-    // const uint32 index = i + programIndex;
-    screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
-    screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
-    if ((screenSample.sampleID.x >= fb->size.x) | 
-        (screenSample.sampleID.y >= fb->size.y)) 
-      continue;
+    CameraSample cameraSample;
 
-    vec3f col = make_vec3f(0.f);
-    const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-    for (uniform uint32 s = 0; s<spp; s++) {
-      pixel_du = precomputedHalton2(startSampleID+s);
-      pixel_dv = precomputedHalton3(startSampleID+s);
-      screenSample.sampleID.z = startSampleID+s;
+    const float spp_inv = 1.f / spp;
+  
+    for (uniform uint32 i=begin;i<end;i+=programCount) {
+      const uint32 index = i + programIndex;
+      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
+      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
+
+      if ((screenSample.sampleID.x >= fb->size.x) | 
+          (screenSample.sampleID.y >= fb->size.y)) 
+        continue;
+
+      vec3f col = make_vec3f(0.f);
+      const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
+      for (uniform uint32 s = 0; s<spp; s++) {
+        pixel_du = precomputedHalton2(startSampleID+s);
+        pixel_dv = precomputedHalton3(startSampleID+s);
+        screenSample.sampleID.z = startSampleID+s;
         
+        cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
+        cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+      
+        camera->initRay(camera,screenSample.ray,cameraSample);
+
+        // set ray t value for early ray termination if we have a maximum depth texture
+        if (self->maxDepthTexture) {
+
+          // don't consider pixel_du, pixel_dv for depth texture coordinates
+          vec2f depthTexCoord;
+          depthTexCoord.x = screenSample.sampleID.x * fb->rcpSize_1.x;
+          depthTexCoord.y = screenSample.sampleID.y * fb->rcpSize_1.y;
+
+          screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+        }
+
+        self->renderSample(self,screenSample);
+        col = col + screenSample.rgb;
+      }
+      col = col * (spp_inv);
+      setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
+    }
+  } else {
+#if 1
+    print("sub-sampling not yet working in large-tile mode");
+#else
+    if (fb->accumID >= 0) {
+      // compute 
+      pixel_du = precomputedHalton2(fb->accumID);
+      pixel_dv = precomputedHalton3(fb->accumID);
+    }
+    
+    ScreenSample screenSample;
+    screenSample.sampleID.z = fb->accumID;
+    screenSample.z = inf;
+    screenSample.alpha = 0.f;
+
+    CameraSample cameraSample;
+
+    const uniform int blocks = fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+
+    for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE/blocks;i+=programCount) {
+      screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[i*blocks];
+      screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[i*blocks];
+      if ((screenSample.sampleID.x >= fb->size.x) | 
+          (screenSample.sampleID.y >= fb->size.y)) {
+        continue;
+      }
+
       cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
-      
+
       camera->initRay(camera,screenSample.ray,cameraSample);
+
+      // set ray t value for early ray termination if we have a maximum depth texture
+      if (self->maxDepthTexture) {
+
+        // don't consider pixel_du, pixel_dv for depth texture coordinates
+        vec2f depthTexCoord;
+        depthTexCoord.x = screenSample.sampleID.x * fb->rcpSize_1.x;
+        depthTexCoord.y = screenSample.sampleID.y * fb->rcpSize_1.y;
+
+        screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
+      }
+
       self->renderSample(self,screenSample);
-      col = col + screenSample.rgb;
+
+      // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
+
+      for (uniform int p = 0; p < blocks; p++) {
+        const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
+        assert(pixel < TILE_SIZE*TILE_SIZE);
+        setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
+      }
     }
-    col = col * (spp_inv);
-    setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
+#endif
   }
 }
 
@@ -113,93 +179,6 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
   precomputeZOrder();
   uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
   launch[numJobs] Renderer_default_renderTileJob(self,tile);
-// #else
-//   uniform FrameBuffer *uniform fb     = self->fb;
-//   uniform Camera      *uniform camera = self->camera;
-
-//   float pixel_du = .5f, pixel_dv = .5f;
-//   float lens_du = 0.f,  lens_dv = 0.f;
-//   uniform int32 spp = self->spp;
-
-//   precomputeZOrder();
-
-//   if (spp > 1) {
-//     int startSampleID = max(fb->accumID,0)*spp;
-    
-//     ScreenSample screenSample;
-//     screenSample.z = inf;
-//     screenSample.alpha = 0.f;
-  
-//     CameraSample cameraSample;
-
-//     const float spp_inv = 1.f / spp;
-  
-//     for (uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
-//       const uint32 index = i + programIndex;
-//       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
-//       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
-
-//       if ((screenSample.sampleID.x >= fb->size.x) | 
-//           (screenSample.sampleID.y >= fb->size.y)) 
-//         continue;
-
-//       vec3f col = make_vec3f(0.f);
-//       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
-//       for (uniform uint32 s = 0; s<spp; s++) {
-//         pixel_du = precomputedHalton2(startSampleID+s);
-//         pixel_dv = precomputedHalton3(startSampleID+s);
-//         screenSample.sampleID.z = startSampleID+s;
-        
-//         cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-//         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
-      
-//         camera->initRay(camera,screenSample.ray,cameraSample);
-//         self->renderSample(self,screenSample);
-//         col = col + screenSample.rgb;
-//       }
-//       col = col * (spp_inv);
-//       setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
-//     }
-//   } else {
-//     if (fb->accumID >= 0) {
-//       // compute 
-//       pixel_du = precomputedHalton2(fb->accumID);
-//       pixel_dv = precomputedHalton3(fb->accumID);
-//     }
-    
-//     ScreenSample screenSample;
-//     screenSample.sampleID.z = fb->accumID;
-//     screenSample.z = inf;
-//     screenSample.alpha = 0.f;
-
-//     CameraSample cameraSample;
-
-//     const uniform int blocks = fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-
-//     for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE/blocks;i+=programCount) {
-//       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[i*blocks];
-//       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[i*blocks];
-//       if ((screenSample.sampleID.x >= fb->size.x) | 
-//           (screenSample.sampleID.y >= fb->size.y)) {
-//         continue;
-//       }
-
-//       cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
-//       cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
-
-//       camera->initRay(camera,screenSample.ray,cameraSample);
-//       self->renderSample(self,screenSample);
-
-//       // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
-
-//       for (uniform int p = 0; p < blocks; p++) {
-//         const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
-//         assert(pixel < TILE_SIZE*TILE_SIZE);
-//         setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
-//       }
-//     }
-//   }
-// #endif
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -210,6 +189,8 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->camera = NULL;
   self->fb     = NULL;
   self->spp    = 1;
+  self->backgroundEnabled = true;
+  self->maxDepthTexture = NULL;
   self->renderSample = Renderer_default_renderSample;
   self->renderTile   = Renderer_default_renderTile;
   self->beginFrame   = Renderer_default_beginFrame;
@@ -255,13 +236,17 @@ export void Renderer_set(void *uniform _self,
                          void *uniform _model,
                          void *uniform _camera,
                          const uniform float epsilon,
-                         const uniform int32 spp)
+                         const uniform int32 spp,
+                         const uniform bool backgroundEnabled,
+                         void *uniform _maxDepthTexture)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->model  = (uniform Model *uniform)_model;
   self->camera = (uniform Camera *uniform)_camera;
   self->epsilon = epsilon;
   self->spp = spp;
+  self->backgroundEnabled = backgroundEnabled;
+  self->maxDepthTexture = (uniform Texture2D *uniform)_maxDepthTexture;
 }
 
 export void Renderer_pick(void *uniform _self,

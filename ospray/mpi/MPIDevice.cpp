@@ -1130,6 +1130,7 @@ namespace ospray {
       };
       
     }
+
     /*! switch API mode for distriubted API extensions */
     void MPIDevice::apiMode(OSPDApiMode newMode)
     { 
@@ -1180,6 +1181,24 @@ namespace ospray {
         NOTIMPLEMENTED;
       };
       throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); 
+    }
+
+    void MPIDevice::sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)
+    {
+      Assert2(volume, "invalid volume handle");
+      Assert2(worldCoordinates, "invalid worldCoordinates");
+
+      cmd.newCommand(CMD_SAMPLE_VOLUME);
+      cmd.send((const mpi::Handle &) volume);
+      cmd.send(count);
+      cmd.send(worldCoordinates, count * sizeof(osp::vec3f));
+      cmd.flush();
+
+      *results = (float *)malloc(count * sizeof(float));
+      Assert(*results);
+
+      // for data-distributed volumes this will need to be updated...
+      cmd.get_data(count * sizeof(float), *results, 0, mpi::worker.comm);
     }
 
   } // ::ospray::mpi

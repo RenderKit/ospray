@@ -32,6 +32,7 @@ namespace ospray {
     , intensity(1.f)
     , openingAngle(180.f)
     , penumbraAngle(5.f)
+    , radius(0.f)
   {
     ispcEquivalent = ispc::SpotLight_create(this);
   }
@@ -44,6 +45,7 @@ namespace ospray {
     intensity = getParam1f("intensity", 1.f);
     openingAngle = getParam1f("openingAngle", 2.0f * getParam1f("halfAngle"/*deprecated*/, 90.f));
     penumbraAngle = getParam1f("penumbraAngle", 5.f);
+    radius    = getParam1f("radius", 0.f);
 
     // check ranges and pre-compute parameters
     const vec3f power = color * intensity;
@@ -58,8 +60,11 @@ namespace ospray {
                         (ispc::vec3f&)direction,
                         (ispc::vec3f&)power,
                         cosAngleMax,
-                        cosAngleMin);
+                        cosAngleMin,
+                        radius);
   }
 
   OSP_REGISTER_LIGHT(SpotLight, SpotLight);
+  OSP_REGISTER_LIGHT(SpotLight, ExtendedSpotLight);
+  OSP_REGISTER_LIGHT(SpotLight, spot);
 }

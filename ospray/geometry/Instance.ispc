@@ -57,6 +57,11 @@ static void Instance_postIntersect(uniform Geometry *uniform _self,
   // XXX this is wrong when the transformation contains non-uniform scaling!
   dg.Ns = xfmVector(self->xfm,dg.Ns);
   dg.Ng = xfmVector(self->xfm,dg.Ng);
+
+  if (flags & DG_TANGENTS) {
+    dg.dPds = xfmVector(self->xfm,dg.dPds);
+    dg.dPdt = xfmVector(self->xfm,dg.dPdt);
+  }
 }
 
 export void *uniform InstanceGeometry_create(void *uniform cppE)

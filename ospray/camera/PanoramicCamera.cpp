@@ -19,7 +19,7 @@
 // ispc-side stuff
 #include "PanoramicCamera_ispc.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #  define _USE_MATH_DEFINES
 #  include <math.h> // M_PI
 #endif

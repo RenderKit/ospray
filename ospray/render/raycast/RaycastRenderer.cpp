@@ -55,9 +55,17 @@ namespace ospray {
   typedef RaycastRenderer<ispc::RaycastRenderer_create_Ng> RaycastRenderer_Ng;
   OSP_REGISTER_RENDERER(RaycastRenderer_Ng,raycast_Ng);
 
-  /*! \brief Instantion of Ray Cast Renderer that shows dg.Ng (shading normal of hit) */
+  /*! \brief Instantion of Ray Cast Renderer that shows dg.Ns (shading normal of hit) */
   typedef RaycastRenderer<ispc::RaycastRenderer_create_Ns> RaycastRenderer_Ns;
   OSP_REGISTER_RENDERER(RaycastRenderer_Ns,raycast_Ns);
+
+  /*! \brief Instantion of Ray Cast Renderer that shows dg.dPds (tangent wrt. texcoord s) */
+  typedef RaycastRenderer<ispc::RaycastRenderer_create_dPds> RaycastRenderer_dPds;
+  OSP_REGISTER_RENDERER(RaycastRenderer_dPds,raycast_dPds);
+
+  /*! \brief Instantion of Ray Cast Renderer that shows dg.dPdt (tangent wrt. texcoord t) */
+  typedef RaycastRenderer<ispc::RaycastRenderer_create_dPdt> RaycastRenderer_dPdt;
+  OSP_REGISTER_RENDERER(RaycastRenderer_dPdt,raycast_dPdt);
 
   /*! \brief Instantion of Ray Cast Renderer that shows dg.primID (primitive ID of hit) */
   typedef RaycastRenderer<ispc::RaycastRenderer_create_eyeLight_primID>
@@ -84,6 +92,18 @@ namespace ospray {
   typedef RaycastRenderer<ispc::RaycastRenderer_create_eyeLight_vertexColor>
   RaycastRenderer_eyeLight_vertexColor;
   OSP_REGISTER_RENDERER(RaycastRenderer_eyeLight_vertexColor,eyeLight_vertexColor);
+
+  /*! \brief Instantion of Ray Cast Renderer that highlights backfacing
+   * surfaces (wrt. geometry normal / triangle orientation) in pink */
+  typedef RaycastRenderer<ispc::RaycastRenderer_create_backfacing_Ng>
+  RaycastRenderer_backfacing_Ng;
+  OSP_REGISTER_RENDERER(RaycastRenderer_backfacing_Ng,backfacing_Ng);
+
+  /*! \brief Instantion of Ray Cast Renderer that highlights surfaces that are
+   * "inside" (determined by the shading normal) in pink */
+  typedef RaycastRenderer<ispc::RaycastRenderer_create_backfacing_Ns>
+  RaycastRenderer_backfacing_Ns;
+  OSP_REGISTER_RENDERER(RaycastRenderer_backfacing_Ns,backfacing_Ns);
 
   /*! \brief Instantion of Ray Cast Renderer that renders a simple
       test frame, without even calling postIntersct */

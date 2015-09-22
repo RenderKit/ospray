@@ -18,14 +18,14 @@
 
 // ospray 
 #include "OSPCommon.h"
-#include "ospray/include/ospray/ospray.h"
+#include "ospray/ospray.h"
 // stl 
 #include <vector>
 #include <set>
 
 namespace ospray {
 
-#ifdef __WIN32__
+#ifdef _WIN32
 typedef unsigned long long id_t;
 #endif
 

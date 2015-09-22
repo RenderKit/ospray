@@ -26,7 +26,12 @@ IF(COMMAND cmake_policy)
 ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-SET(OSPRAY_VERSION 0.8.2)
+SET(OSPRAY_VERSION_MAJOR 0)
+SET(OSPRAY_VERSION_MINOR 8)
+SET(OSPRAY_VERSION_PATCH 2)
+SET(OSPRAY_VERSION
+  ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
+)
 SET(OSPRAY_SOVERSION 0)
 
 SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
@@ -51,11 +56,6 @@ SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
-
-MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
-MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
-MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
-MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 
 # add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
 OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
@@ -98,10 +98,19 @@ STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
+# directoriers for client CMake find_package config
+
+SET(HEADER_DIR include/ospray)
+IF(WIN32)
+  SET(CMAKE_DIR CMake)
+ELSE(WIN32)
+  SET(CMAKE_DIR share/ospray)
+ENDIF(WIN32)
 
 ##############################################################
 # cmake modules
 ##############################################################
+
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
 INCLUDE(cmake/configure_embree.cmake)
@@ -112,14 +121,13 @@ ENDIF()
 
 SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME})
 STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
-SET(CMAKE_INSTALL_PREFIX 
-  /tmp/$ENV{USER}/OSPRAY-RELEASES/${OSPRAY_INSTALL_TARGET_LC})
 
 ##############################################################
 # the ospray library
 ##############################################################
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
 IF (OSPRAY_MIC)
@@ -130,6 +138,7 @@ ENDIF()
 ##############################################################
 # ospray modules
 ##############################################################
+
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
@@ -140,6 +149,7 @@ ENDIF()
 ##############################################################
 # ospray sample apps at the end, they may need modules
 ##############################################################
+
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 IF (OSPRAY_MIC)
