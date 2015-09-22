@@ -22,12 +22,18 @@ SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
 SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
+SET(OSPRAY_TILE_SIZE 128 CACHE INT "Tile size")
+
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY_NO_ARCH)
+  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
+    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
+  ENDIF()
+
   SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
   SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 
@@ -183,6 +189,10 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
   
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
+  
+  # for auto-generated cmakeconfig etc
+  INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
+  INCLUDE_DIRECTORIES_ISPC(${PROJECT_BINARY_DIR})
 
 ENDMACRO()
 

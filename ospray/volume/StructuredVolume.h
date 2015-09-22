@@ -16,9 +16,11 @@
 
 #pragma once
 
+// ospray
+#include "ospray/volume/Volume.h"
+// stl
 #include <algorithm>
 #include <string>
-#include "ospray/volume/Volume.h"
 
 namespace ospray {
 
@@ -87,6 +89,14 @@ namespace ospray {
 
     //! Voxel type.
     std::string voxelType;
+
+#if EXP_DISTRIBUTED_VOLUME
+    // logical dimensions of FULL volume, including all distributed parts (if any)
+    vec3i logicalDimensions;
+
+    // the valid sub-domain on this particular rank
+    box3i myDomain;
+#endif
   };
 
 } // ::ospray

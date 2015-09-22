@@ -37,7 +37,8 @@
 
 namespace ospray {
 
-  using embree::TaskScheduler;
+  struct Camera;
+  struct Model;
 
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
     
@@ -68,17 +69,17 @@ namespace ospray {
       //! \brief Constructor
       Material();
 
-      /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+      //! \brief commit the object's outstanding changes (such as changed parameters etc) 
       virtual void commit();
       
       // -------------------------------------------------------
       // member variables 
       // -------------------------------------------------------
 
-      /*! diffuse material component, that's all we care for */
-      vec3f Kd;
+      //! \brief diffuse material component, that's all we care for 
+      vec3f Kd;       
 
-      /*! diffuse texture, if available */
+      //! \brief diffuse texture, if available
       Ref<Texture> map_Kd;
     };
   

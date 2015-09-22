@@ -18,9 +18,19 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
+SET(OSPRAY_EXP_COMPOSITING OFF CACHE BOOL "Experimental compositing")
+IF (OSPRAY_EXP_COMPOSITING)
+
+  SET(OSPRAY_EXP_ALPHA_BLENDING OFF CACHE BOOL "Experimental alpha-blending for compositing")
+  SET(OSPRAY_EXP_DISTRIBUTED_VOLUME OFF CACHE BOOL "Experimental support for distributed volumes")
+ENDIF()
+
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
 #INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
+
+#ADD_DEFINITIONS(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
+#ADD_DEFINITIONS_ISPC(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -29,16 +39,21 @@ SET(OSPRAY_SOURCES
 
   common/OSPCommon.ispc
   common/OSPCommon.cpp
+  common/Core.cpp
   common/Managed.cpp
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
   common/Library.cpp
+  common/TaskSys.cpp
+  common/Thread.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
   fb/LocalFB.ispc
+  fb/LocalFB.cpp
+  fb/PixelOp.cpp
 
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc
@@ -58,6 +73,7 @@ SET(OSPRAY_SOURCES
   volume/SymbolRegistry.cpp
   volume/Volume.ispc
   volume/Volume.cpp
+	volume/DataDistributedBlockedVolume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
@@ -157,14 +173,44 @@ IF (OSPRAY_MPI)
 
     mpi/async/Messaging.cpp
     mpi/async/SimpleSendRecvMessaging.cpp
+    mpi/async/MultiIsendIrecvMessaging.cpp
+    mpi/async/BatchedIsendIrecvMessaging.cpp
+    mpi/async/CommLayer.cpp
+    
+    mpi/DistributedFrameBuffer.cpp
+    mpi/DistributedFrameBuffer.ispc
+
+    fb/DisplayWall.cpp
     )
 
-#  ADD_EXECUTABLE(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
-#    mpi/testing/TestAsync
-#    )
-#  TARGET_LINK_LIBRARIES(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
-#    ospray${OSPRAY_LIB_SUFFIX}
-#    )
+  # ============================================
+  ADD_EXECUTABLE(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+    mpi/testing/createCompositeTestCubes
+    )
+  TARGET_LINK_LIBRARIES(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
+    )
+
+  # ============================================
+  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+  ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
+    mpi/testing/TestDistributedApp
+    )
+  TARGET_LINK_LIBRARIES(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
+    )
+
+ENDIF()
+
+# -------------------------------------------------------
+# DisplayCluster components
+# -------------------------------------------------------
+INCLUDE(${PROJECT_SOURCE_DIR}/cmake/displaycluster.cmake)
+
+IF (OSPRAY_DISPLAYCLUSTER)
+  CONFIGURE_DISPLAYCLUSTER()
+  ADD_DEFINITIONS(-DOSPRAY_DISPLAY_CLUSTER=1)
 ENDIF()
 
 # -------------------------------------------------------
@@ -209,13 +255,24 @@ FIND_PACKAGE(Threads REQUIRED)
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   ${OSPRAY_SOURCES}
-)
+  )
 
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
-  ospray_embree${OSPRAY_LIB_SUFFIX}
-  ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS}
-)
+IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
+  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR})
+  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR}/bin)
+  MESSAGE("LINKING EXTENRALLY TO EMBREE IN ${OSPRAY_EMBREE_SOURCE_DIR}")
+ENDIF()
+
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
+  ospray_embree${OSPRAY_LIB_SUFFIX} 
+  ${CMAKE_THREAD_LIBS_INIT} 
+  ${CMAKE_DL_LIBS})
+
+IF (OSPRAY_DISPLAYCLUSTER)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
+    ${DISPLAYCLUSTER_LIBRARIES})
+ENDIF()
+
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
@@ -238,8 +295,9 @@ INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
 # MPI DEVICE - mpi worker
 ##############################################################
 IF (OSPRAY_MPI)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_CXX_LIBRARIES})
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_LIBRARIES})
-  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick
+  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick 
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})

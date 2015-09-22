@@ -16,16 +16,19 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "MPICommon.h"
-#include "MPIDevice.h"
-#include "../common/Model.h"
-#include "../common/Data.h"
-#include "../common/Library.h"
-#include "../geometry/TriangleMesh.h"
-#include "../render/Renderer.h"
-#include "../camera/Camera.h"
-#include "../volume/Volume.h"
-#include "MPILoadBalancer.h"
+#include "ospray/mpi/MPICommon.h"
+#include "ospray/mpi/MPIDevice.h"
+#include "ospray/common/Model.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/Library.h"
+#include "ospray/geometry/TriangleMesh.h"
+#include "ospray/render/Renderer.h"
+#include "ospray/camera/Camera.h"
+#include "ospray/volume/Volume.h"
+#include "ospray/mpi/MPILoadBalancer.h"
+#include "ospray/fb/LocalFB.h"
+#include "ospray/mpi/async/CommLayer.h"
+#include "ospray/mpi/DistributedFrameBuffer.h"
 // std
 #include <unistd.h> // for fork()
 
@@ -34,10 +37,6 @@ namespace ospray {
   using std::endl;
 
   namespace mpi {
-    Group world;
-    Group app;
-    Group worker;
-
     //! this runs an ospray worker process. 
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
@@ -45,20 +44,43 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av);
 
 
-    /*! in this mode ("ospray on ranks" mode, or "ranks" mode)
-      - the user has launched mpirun explicitly, and all processes are *already* running
-      - the app is supposed to be running *only* on the root process
-      - ospray is supposed to be running on all ranks *other than* the root
-      - "ranks" means all processes with world.rank >= 1
-      
-      For this function, we assume: 
-      - all *all* MPI_COMM_WORLD processes are going into this function
+    /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
+        user has launched the app across all ranks using mpirun "<all
+        rank> <app>"; no new processes need to get launched.
+
+        Based on the 'startworkers' flag, this function can set up ospray in one of two modes:
+        
+        in "workers" mode (startworkes=true) all ranks > 0 become
+        workers, and will NOT return to the application; rank 0 is the
+        master that controls those workers but doesn't do any
+        rendeirng (we may at some point allow the master to join in
+        working as well, but currently this is not implemented). to
+        reach that mode we call this function with
+        'startworkers=true', which will make sure that, even though
+        all ranks _called_ mpiinit, only rank 0 will ever return to
+        the app, while all other ranks will automatically go to
+        running worker code, and never ever return from this function.
+
+        b) in "distribtued" mode the app itself is distributed, and
+        will use the ospray distributed api to control ospray in a
+        data-distributed mode. in this way, we'll call this function
+        with startWorkers=false, which will let all ranks return from
+        this function to do further work in the app.
+
+        For this function, we assume: 
+
+        - all *all* MPI_COMM_WORLD processes are going into this function
+
+        - this fct is called from ospInit (with startworkers=true) or
+          from ospdMpiInit (w/ startwoe3kers = false)
     */
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
+                                                      bool ranksBecomeWorkers)
     {
       MPI_Status status;
       mpi::init(ac,av);
       printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+
       MPI_Barrier(MPI_COMM_WORLD);
 
       if (world.size <= 1) {
@@ -66,6 +88,12 @@ namespace ospray {
       }
 
       if (world.rank == 0) {
+        if (debugMode)
+          ospray::Task::initTaskSystem(0);
+        else {
+          ospray::Task::initTaskSystem(-1);
+        }
+
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
         app.makeIntercomm();
@@ -91,7 +119,7 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, root proc(s) will return, initialize the MPI device, then return to the app
-        return new api::MPIDevice(ac,av);
+        return new mpi::MPIDevice(ac,av);
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
@@ -117,8 +145,13 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, all workers will enter their worker loop (ie, they will *not* return
-        mpi::runWorker(ac,av);
-        /* no return here - 'runWorker' will never return */
+        if (ranksBecomeWorkers) {
+          mpi::runWorker(ac,av);
+          /* no return here - 'runWorker' will never return */
+        } else {
+          cout << "#osp:mpi: distributed mode detected, returning device on all ranks!" << endl << std::flush;
+          return new mpi::MPIDevice(ac,av);
+        }
       }
       // nobody should ever come here ...
       return NULL;
@@ -192,7 +225,7 @@ namespace ospray {
 
       if (app.rank >= 1)
         return NULL;
-      return new api::MPIDevice(ac,av);
+      return new mpi::MPIDevice(ac,av);
     }
 
     /*! in this mode ("separate worker group" mode)
@@ -215,7 +248,8 @@ namespace ospray {
 
       Assert(launchCommand);
 
-      app.comm = world.comm; 
+      // app.comm = world.comm; 
+      MPI_Comm_dup(world.comm,&app.comm);
       app.makeIntercomm();
       
       char appPortName[MPI_MAX_PORT_NAME];
@@ -260,14 +294,28 @@ namespace ospray {
         return NULL;
       }
       MPI_Barrier(app.comm);
-      return new api::MPIDevice(ac,av);
+      return new mpi::MPIDevice(ac,av);
     }
 
-  }
+    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
+    {
+      int initialized = false;
+      MPI_CALL(Initialized(&initialized));
+      if (initialized) 
+        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized when calling ospMpiInit()");
+      
+      ospray::mpi::init(ac,(const char **)*av);
+      if (mpi::world.size < 2) {
+        throw std::runtime_error("#osp:mpi: trying to run distributed API mode with a single rank? (did you forget the 'mpirun'?)");
+      }
 
-  namespace api {
+      ospray::api::Device::current
+        = ospray::mpi::createMPI_runOnExistingRanks(ac,(const char**)*av,false);
+    }
+    
     MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
                          int *_ac, const char **_av)
+      : currentApiMode(OSPD_MODE_MASTERED)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv) 
@@ -284,7 +332,7 @@ namespace ospray {
       // mpi::init(_ac,_av);
 
       if (mpi::world.size !=1) {
-        if (mpi::world.rank != 0) {
+        if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
           PRINT(mpi::world.size);
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
@@ -304,14 +352,17 @@ namespace ospray {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
-      
-      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,hasAccumBuffer);
-      fb->refInc();
-      
+
+// #if USE_DFB      
       mpi::Handle handle = mpi::Handle::alloc();
-      mpi::Handle::assign(handle,fb);
       
+      FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                                   size,
+                                                   handle,
+                                                   colorBufferFormat,
+                                                   hasDepthBuffer,hasAccumBuffer);
+      fb->refInc();
+      mpi::Handle::assign(handle,fb);
       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
       cmd.send(handle);
       cmd.send(size);
@@ -319,6 +370,22 @@ namespace ospray {
       cmd.send((int32)channels);
       cmd.flush();
       return (OSPFrameBuffer)(int64)handle;
+// #else
+//       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
+//                                              hasDepthBuffer,hasAccumBuffer);
+//       fb->refInc();
+      
+//       mpi::Handle handle = mpi::Handle::alloc();
+//       mpi::Handle::assign(handle,fb);
+      
+//       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
+//       cmd.send(handle);
+//       cmd.send(size);
+//       cmd.send((int32)mode);
+//       cmd.send((int32)channels);
+//       cmd.flush();
+//       return (OSPFrameBuffer)(int64)handle;
+// #endif
     }
     
 
@@ -379,6 +446,8 @@ namespace ospray {
       const mpi::Handle handle = (const mpi::Handle&)_object;
       cmd.send((const mpi::Handle&)_object);
       cmd.flush();
+
+      MPI_Barrier(MPI_COMM_WORLD);
     }
     
     /*! add a new geometry to a model */
@@ -783,6 +852,32 @@ namespace ospray {
       return result.success ? *value = result.value, true : false;
     }
 
+    /*! create a new pixelOp object (out of list of registered pixelOps) */
+    OSPPixelOp MPIDevice::newPixelOp(const char *type)
+    {
+      Assert(type != NULL);
+
+      mpi::Handle handle = mpi::Handle::alloc();
+
+      cmd.newCommand(CMD_NEW_PIXELOP);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPPixelOp)(int64)handle;
+    }
+
+    /*! set a frame buffer's pixel op object */
+    void MPIDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
+    {
+      Assert(_fb != NULL);
+      Assert(_op != NULL);
+
+      cmd.newCommand(CMD_SET_PIXELOP);
+      cmd.send((const mpi::Handle&)_fb);
+      cmd.send((const mpi::Handle&)_op);
+      cmd.flush();
+    }
+      
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {
@@ -948,6 +1043,7 @@ namespace ospray {
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
+      double T0 = getSysTime();
       const mpi::Handle handle = (const mpi::Handle&)_fb;
       // const mpi::Handle handle = (const mpi::Handle&)_sc;
       // SwapChain *sc = (SwapChain *)handle.lookup();
@@ -1015,6 +1111,76 @@ namespace ospray {
       // }
       cmd.flush();
       return (OSPTexture2D)(int64)handle;
+    }
+
+    /*! return a string represenging the given API Mode */
+    const char *apiModeName(OSPDApiMode mode) 
+    {
+      switch (mode) {
+      case OSPD_MODE_INDEPENDENT:
+        return "OSPD_MODE_INDEPENDENT";
+      case OSPD_MODE_MASTERED:
+        return "OSPD_MODE_MASTERED";
+      case OSPD_MODE_COLLABORATIVE:
+        return "OSPD_MODE_COLLABORATIVE";
+      default:
+        PING;
+        PRINT(mode);
+        NOTIMPLEMENTED;
+      };
+      
+    }
+
+    /*! switch API mode for distriubted API extensions */
+    void MPIDevice::apiMode(OSPDApiMode newMode)
+    { 
+      printf("rank %i asked to go from %s mode to %s mode\n",mpi::world.rank,apiModeName(currentApiMode),apiModeName(newMode));
+      switch (currentApiMode) {
+        // ==================================================================
+        // ==================================================================
+      case OSPD_MODE_INDEPENDENT: {
+        NOTIMPLEMENTED;
+      } break;
+        // ==================================================================
+        // currently in default (mastered) mode where master tells workers what to do
+        // ==================================================================
+      case OSPD_MODE_MASTERED: {
+        // first: tell workers to switch to new mode: they're in
+        // mastered mode and thus waiting for *us* to tell them what
+        // to do, so let's do it.
+        switch (newMode) {
+        case OSPD_MODE_MASTERED: {
+          // nothing to do, actually, the workers are already in this
+          // mode, no use sending this request again
+          printf("rank %i remaining in mastered mode\n",mpi::world.rank);
+        } break;
+        case OSPD_MODE_INDEPENDENT:
+        case OSPD_MODE_COLLABORATIVE: {
+          printf("rank %i telling clients to switch to %s mode.\n",mpi::world.rank,apiModeName(newMode));
+          cmd.newCommand(CMD_API_MODE);
+          cmd.send((int32)newMode);
+          cmd.flush();
+          currentApiMode = newMode;
+          // and just to be sure, do a barrier here -- not acutally needed AFAICT.
+          MPI_Barrier(MPI_COMM_WORLD);
+        } break;
+        default:
+          NOTIMPLEMENTED;
+        };
+      } break;
+        // ==================================================================
+        // ==================================================================
+      case OSPD_MODE_COLLABORATIVE: {
+        NOTIMPLEMENTED;
+      } break;
+        
+        // ==================================================================
+        // this mode should not exit - implementation error
+        // ==================================================================
+      default:
+        NOTIMPLEMENTED;
+      };
+      throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); 
     }
 
     void MPIDevice::sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)

@@ -14,108 +14,150 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+//#define PROFILE_MPI 1
+
 #include "SimpleSendRecvMessaging.h"
 
 namespace ospray {
   namespace mpi {
     namespace async {
+
+#if PROFILE_MPI
+      int frameID = 0;
+      bool logIt = 0;
+      double T0;
+      double t_recv, t_send;
+      size_t b_recv, b_sent;
+
+      struct MsgLog {
+        int to, size;
+        double begin, end;
+      };
+      std::vector<MsgLog> sendLog, recvLog;
+
+      extern "C" void async_beginFrame() 
+      {
+        ++ frameID;
+        if (frameID > 20) logIt = true;
+
+        if (logIt) {
+          T0 = getSysTime();
+          t_send = 0;
+          t_recv = 0;
+          b_recv = 0;
+          b_sent = 0;
+          sendLog.clear();
+          recvLog.clear();
+        }
+      }
+
+      extern "C" void async_endFrame()
+      {
+        printf("rank %i t_send %fMb in %fs recv %fMb in %fs\n",
+               mpi::world.rank,
+               b_sent*1e-6f,t_send,b_recv*1e-6f,t_recv);
+        for (int i=0;i<sendLog.size();i++) {
+          MsgLog log = sendLog[i];
+          printf(" sent to to %i (%fMB) from %f to %f (%fs)\n",log.to,log.size*1e-6f,
+                 log.begin-T0,log.end-T0,log.end-log.begin);
+        }
+        for (int i=0;i<recvLog.size();i++) {
+          MsgLog log = recvLog[i];
+          printf(" recvd from %i (%fMB) from %f to %f (%fs)\n",log.to,log.size*1e-6f,
+                 log.begin-T0,log.end-T0,log.end-log.begin);
+        }
+      }
+#else
+      extern "C" void async_beginFrame() {}
+      extern "C" void async_endFrame() {}
+#endif
+
       SimpleSendRecvImpl::Group::Group(const std::string &name, MPI_Comm comm, 
                                        Consumer *consumer, int32 tag)
-        : async::Group(// name,
-                       comm,consumer,tag),
-          beginShutDown(0), sendIsShutDown(0), recvIsShutDown(0)
+        : async::Group(comm,consumer,tag),
+          sendThread(this), recvThread(this), procThread(this)
       {
-        recvThread = embree::createThread(recvThreadFunc,this);
-        sendThread = embree::createThread(sendThreadFunc,this);
+        sendThread.start();
+        recvThread.start();
+        procThread.start();
       }
 
-      void SimpleSendRecvImpl::Group::sendThreadFunc(void *arg)
+      void SimpleSendRecvImpl::SendThread::run()
       {
-        Group *g = (Group *)arg;
+        Group *g = this->group;
 
         while (1) {
-          g->mutex.lock();
-          while (g->sendQueue.empty() && !g->beginShutDown)
-            g->cond.wait(g->mutex);
-          if (g->beginShutDown) {
-            break;
+          Action *action = g->sendQueue.get();
+          double t0 = getSysTime();
+          MPI_CALL(Send(action->data,action->size,MPI_BYTE,
+                        action->addr.rank,g->tag,action->addr.group->comm));
+          double t1 = getSysTime();
+#if PROFILE_MPI
+          if (logIt) {
+            t_send += (t1-t0);
+            b_sent += action->size;
+
+            MsgLog log;
+            log.to = action->addr.rank;
+            log.size = action->size;
+            log.begin = t0;
+            log.end = t1;
+            sendLog.push_back(log);
           }
-
-          QueuedMessage *msg = g->sendQueue.front();
-          g->sendQueue.pop_front();
-          g->mutex.unlock();
-
-          MPI_CALL(Send(msg->ptr,msg->size,MPI_BYTE,
-                        msg->addr.rank,g->tag,msg->addr.group->comm));
-          free(msg->ptr);
-          delete msg;
+#endif
+          free(action->data);
+          delete action;
         }
-
-        // printf("#osp:mpi(%2i): shutting down send thread\n",g->rank);fflush(0);
-        g->sendIsShutDown = true;
-        g->cond.broadcast();
-        g->mutex.unlock();
       }
 
-      void SimpleSendRecvImpl::Group::recvThreadFunc(void *arg)
+      void SimpleSendRecvImpl::RecvThread::run()
       {
-        Group *g = (Group *)arg;
+        Group *g = (Group *)this->group;
 
         while (1) {
           MPI_Status status;
+          // PING;fflush(0);
           MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
-          // printf("#osp:mpi(%2i): incoming from %i\n",g->rank,status.MPI_SOURCE);fflush(0);
-          if (g->beginShutDown) {
-            int done;
-            MPI_CALL(Recv(&done,1,MPI_INT,status.MPI_SOURCE,status.MPI_TAG,g->comm,&status));
-            break;
-          }
-          
-          int count = -1;
-          MPI_CALL(Get_count(&status,MPI_BYTE,&count));
-          void *msg = malloc(count);
-          MPI_CALL(Recv(msg,count,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
-                        g->comm,&status));
-          g->consumer->process(Address(g,status.MPI_SOURCE),msg,count);
-        }
-        g->mutex.unlock();
+          Action *action = new Action;
+          action->addr = Address(g,status.MPI_SOURCE);
 
-        // printf("#osp:mpi(%2i): shutting down recv thread\n",g->rank);fflush(0);
-        g->mutex.lock();
-        g->recvIsShutDown = true;
-        g->cond.broadcast();
-        g->mutex.unlock();
+          MPI_CALL(Get_count(&status,MPI_BYTE,&action->size));
+
+          action->data = malloc(action->size);
+          double t0 = getSysTime();
+          MPI_CALL(Recv(action->data,action->size,MPI_BYTE,status.MPI_SOURCE,status.MPI_TAG,
+                        g->comm,MPI_STATUS_IGNORE));
+          double t1 = getSysTime();
+#if PROFILE_MPI
+          if (logIt) {
+            t_recv += (t1-t0);
+            b_recv += action->size;
+
+            MsgLog log;
+            log.to = action->addr.rank;
+            log.size = action->size;
+            log.begin = t0;
+            log.end = t1;
+            recvLog.push_back(log);
+          }
+#endif
+          g->procQueue.put(action);
+        }
+      }
+
+      void SimpleSendRecvImpl::ProcThread::run()
+      {
+        Group *g = (Group *)this->group;
+        while (1) {
+          Action *action = g->procQueue.get();
+          g->consumer->process(action->addr,action->data,action->size);
+          delete action;
+        }
       }
 
       void SimpleSendRecvImpl::Group::shutdown()
       {
-        mutex.lock();
-
-        // -------------------------------------------------------
-        // mark shuttdown flag
-        // -------------------------------------------------------
-        beginShutDown = true;
-        cond.broadcast();
-
-        // -------------------------------------------------------
-        // wait for send thread to terminate
-        // -------------------------------------------------------
-        while (!sendIsShutDown)
-          cond.wait(mutex);
-
-        // -------------------------------------------------------
-        // send recv thread a shutdown message (to make sure it wakes
-        // from its 'probe'), then wait for it to terminate
-        // -------------------------------------------------------
-        MPI_Status status;
-        char done = 1;
-        assert(sendQueue.empty());
-        MPI_CALL(Send(&done,1,MPI_BYTE,rank,tag,comm));
-
-        while (!recvIsShutDown) 
-          cond.wait(mutex);
-
-        mutex.unlock();
+        std::cout << "shutdown() not implemented for this messaging ..." << std::endl;
       }
 
       void SimpleSendRecvImpl::init()
@@ -150,16 +192,13 @@ namespace ospray {
 
       void SimpleSendRecvImpl::send(const Address &dest, void *msgPtr, int32 msgSize)
       {
-        QueuedMessage *msg = new QueuedMessage;
-        msg->addr = dest;
-        msg->ptr  = msgPtr;
-        msg->size = msgSize;
+        Action *action = new Action;
+        action->addr   = dest;
+        action->data   = msgPtr;
+        action->size   = msgSize;
 
         Group *g = (Group *)dest.group;
-        g->mutex.lock();
-        g->sendQueue.push_back(msg);
-        g->cond.broadcast();
-        g->mutex.unlock();
+        g->sendQueue.put(action);
       }
 
     } // ::ospray::mpi::async

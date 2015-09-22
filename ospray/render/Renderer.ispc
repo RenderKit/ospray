@@ -19,6 +19,13 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
+/*! number of pixels that each job in a parallel rendertile task
+    executes together. Must be a multipel of the maximum possible
+    programCount (16), and must be smaller than TILE_SIZE (in one
+    dimension) */
+#define RENDERTILE_PIXELS_PER_JOB 128
+
+// The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(uniform Renderer *uniform self,
                                    varying ScreenSample &sample)
 {
@@ -47,8 +54,8 @@ void Renderer_default_endFrame(uniform Renderer *uniform self,
   self->fb = NULL;
 }
 
-void Renderer_default_renderTile(uniform Renderer *uniform self,
-                                 uniform Tile &tile)
+task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
+                                         uniform Tile &tile)
 {
   uniform FrameBuffer *uniform fb     = self->fb;
   uniform Camera      *uniform camera = self->camera;
@@ -57,11 +64,11 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
   float lens_du = 0.f,  lens_dv = 0.f;
   uniform int32 spp = self->spp;
 
-  precomputeZOrder();
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
+  const uniform int startSampleID = max(fb->accumID,0)*spp;
 
-  if (spp > 1) {
-    int startSampleID = max(fb->accumID,0)*spp;
-    
+  if (spp >= 1) {
     ScreenSample screenSample;
     screenSample.z = inf;
     screenSample.alpha = 0.f;
@@ -70,7 +77,7 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
 
     const float spp_inv = 1.f / spp;
   
-    for (uint32 i=0;i<TILE_SIZE*TILE_SIZE;i+=programCount) {
+    for (uniform uint32 i=begin;i<end;i+=programCount) {
       const uint32 index = i + programIndex;
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[index];
@@ -109,6 +116,9 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
       setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
     }
   } else {
+#if 1
+    print("sub-sampling not yet working in large-tile mode");
+#else
     if (fb->accumID >= 0) {
       // compute 
       pixel_du = precomputedHalton2(fb->accumID);
@@ -142,8 +152,8 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
 
         // don't consider pixel_du, pixel_dv for depth texture coordinates
         vec2f depthTexCoord;
-        depthTexCoord.x = (screenSample.sampleID.x) * fb->rcpSize_1.x;
-        depthTexCoord.y = (screenSample.sampleID.y) * fb->rcpSize_1.y;
+        depthTexCoord.x = screenSample.sampleID.x * fb->rcpSize_1.x;
+        depthTexCoord.y = screenSample.sampleID.y * fb->rcpSize_1.y;
 
         screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
       }
@@ -158,7 +168,17 @@ void Renderer_default_renderTile(uniform Renderer *uniform self,
         setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
       }
     }
+#endif
   }
+}
+
+void Renderer_default_renderTile(uniform Renderer *uniform self,
+                                 uniform Tile &tile)
+{
+// #if 1
+  precomputeZOrder();
+  uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+  launch[numJobs] Renderer_default_renderTileJob(self,tile);
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -195,7 +215,6 @@ export void Renderer_renderTile(void *uniform _self,
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   self->renderTile(self,tile);
-  self->fb->setTile(self->fb,tile);
 }
 
 export void Renderer_beginFrame(void *uniform _self,

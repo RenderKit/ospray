@@ -29,6 +29,7 @@ namespace embree
   
     virtual void refInc() { atomic_add(&refCounter,1); }
     virtual void refDec() { if (atomic_add(&refCounter,-1) == 1) delete this; }
+    virtual size_t getRefCount() const { return refCounter; }
   private:
     atomic_t refCounter;
   };

@@ -16,6 +16,7 @@
 
 //ospray
 #include "ospray/common/Data.h"
+#include "ospray/common/Core.h"
 #include "ospray/common/Library.h"
 #include "ospray/volume/StructuredVolume.h"
 #include "StructuredVolume_ispc.h"
@@ -31,7 +32,6 @@ namespace ospray {
 
     // Set the grid origin, default to (0,0,0).
     this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
-    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
 
     // Get the volume dimensions.
     this->dimensions = getParam3i("dimensions", vec3i(0));
@@ -40,7 +40,16 @@ namespace ospray {
 
     // Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+
+
+#if EXP_DISTRIBUTED_VOLUME
+    this->gridOrigin += vec3f(myDomain.lower)*this->gridSpacing;
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
     ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
+#else
+    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
+    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
+#endif
 
     // Complete volume initialization (only on first commit).
     if (!finished) {
@@ -102,10 +111,13 @@ namespace ospray {
   // Compute the voxel value range for floating point voxels.
   void StructuredVolume::computeVoxelRange(const float *source, const size_t &count)
   {
+    PING; PRINT(count);
+    PRINT(source);
     for (size_t i=0 ; i < count ; i++) {
       voxelRange.x = std::min(voxelRange.x, source[i]);
       voxelRange.y = std::max(voxelRange.y, source[i]);
     }
+    PING;
   }
 
   // Compute the voxel value range for double precision floating point voxels.

@@ -16,15 +16,45 @@
 
 #pragma once
 
+// ospray
 #include "Messaging.h"
+#include "ospray/common/Thread.h"
+#include "ospray/common/ProducerConsumerQueue.h"
+// stl
 #include <deque>
+#include <vector>
 
 namespace ospray {
   namespace mpi {
     namespace async {
       struct SimpleSendRecvImpl : public AsyncMessagingImpl {
-        struct QueuedMessage {
-          void   *ptr;
+
+        struct Group;
+
+        /*! message _sender_ thread */
+        struct SendThread : public Thread {
+          SendThread(Group *group) : group(group) {};
+          virtual void run();
+          Group *group;
+        };
+        /*! message _receiver_ thread */
+        struct RecvThread : public Thread {
+          RecvThread(Group *group) : group(group) {};
+          virtual void run();
+          Group *group;
+        };
+        /*! message _processing_ thread */
+        struct ProcThread : public Thread {
+          ProcThread(Group *group) : group(group) {};
+          virtual void run();
+          Group *group;
+        };
+
+        /*! an 'action' (either a send or a receive, or a
+            processmessage) to be performed by a thread; what action
+            it is depends on the queue it is in */
+        struct Action {
+          void   *data;
           int32   size;
           Address addr;
         };
@@ -35,17 +65,18 @@ namespace ospray {
                 Consumer *consumer, int32 tag = MPI_ANY_TAG);
           void shutdown();
 
-          static void sendThreadFunc(void *arg);
-          static void recvThreadFunc(void *arg);
+          /*! the queue new send requests are put into; the send
+              thread pulls from this and sends ad infinitum */
 
-          thread_t    sendThread;
-          thread_t    recvThread;
-          Mutex       mutex;
-          Condition   cond;
-          MPI_Request currentSendRequest;
-          
-          std::deque<QueuedMessage*> sendQueue;
-          bool      beginShutDown, sendIsShutDown, recvIsShutDown;
+          ProducerConsumerQueue<Action *> sendQueue;
+          /*! the queue that newly received messages are put in; the
+              reiver thread puts new messages in here, the processing
+              thread pulls from here and processes */
+          ProducerConsumerQueue<Action *> procQueue;
+
+          SendThread sendThread;
+          RecvThread recvThread;
+          ProcThread procThread;
         };
 
         virtual void init();

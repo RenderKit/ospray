@@ -14,11 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "MPICommon.h"
+#include "ospray/mpi/MPICommon.h"
+#include "ospray/mpi/async/CommLayer.h"
 
 namespace ospray {
   namespace mpi {
     
+    Group world;
+    Group app;
+    Group worker;
+
     void init(int *ac, const char **av)
     {
       int initialized = false;
@@ -35,6 +40,14 @@ namespace ospray {
       world.comm = MPI_COMM_WORLD;
       MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
       MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
+
+// #if USE_DFB
+      mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
+      mpi::async::Group *worldGroup = mpi::async::createGroup("world",MPI_COMM_WORLD,
+                                                              mpi::async::CommLayer::WORLD,
+                                                              290374);
+      mpi::async::CommLayer::WORLD->group = worldGroup;
+// #endif
     }
 
   } // ::ospray::mpi

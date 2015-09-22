@@ -18,8 +18,6 @@
 #include "SimpleAO.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/texture/Texture2D.h"
-// embree
-#include "common/sys/sync/atomic.h"
 // ispc exports
 #include "SimpleAO_ispc.h"
 

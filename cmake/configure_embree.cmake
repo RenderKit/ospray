@@ -14,7 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_ALLOW_EXTERNAL_EMBREE OFF CACHE BOOL "Allow building ospray w/ EXTERNAL embree")
+# add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
+OPTION(OSPRAY_ALLOW_EXTERNAL_EMBREE "Use external (newer) embree. Requires c++11.")
+#SET(OSPRAY_ALLOW_EXTERNAL_EMBREE OFF CACHE BOOL "Use EXTERNAL (newer) embree. Requires c++11")
 MARK_AS_ADVANCED(OSPRAY_ALLOW_EXTERNAL_EMBREE)
 
 IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
@@ -23,7 +25,7 @@ IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   ##################################################################
   MESSAGE("You have chosen to build OSPRay with a external version of embree that may or may not have been tested to work with this version of OSPRay. Use this option at your own risk.")
   
-  SET(EXTERNAL_EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree-ospray CACHE STRING    "EXTERNAL Embree source directory")
+  SET(EXTERNAL_EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree CACHE STRING    "EXTERNAL Embree source directory")
   SET(OSPRAY_EMBREE_SOURCE_DIR ${EXTERNAL_EMBREE_DIR})
   ADD_DEFINITIONS(-D__EXTERNAL_EMBREE__=1)
 ELSE()

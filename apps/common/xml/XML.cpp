@@ -234,7 +234,8 @@ namespace ospray {
       skipWhites(s);
       while (*s != 0) {
         Node *node = parseNode(s, xml);
-        if (node)xml->child.push_back(node);
+        if (node)
+          xml->child.push_back(node);
         skipWhites(s);
       }
 

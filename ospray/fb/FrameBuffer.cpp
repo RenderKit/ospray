@@ -37,95 +37,23 @@ namespace ospray {
   void FrameBuffer::commit()
   {
     const float gamma = getParam1f("gamma", 1.0f);
-    ispc::FrameBuffer_set(ispcEquivalent, gamma);
+    ispc::FrameBuffer_set_gamma(ispcEquivalent, gamma);
   }
 
-  void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
+  /*! helper function for debugging. write out given pixels in PPM format */
+  void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels)
   {
-    if (fbChannelFlags & OSP_FB_ACCUM) {
-      ispc::LocalFrameBuffer_clearAccum(getIE());
-      accumID = 0;
+    FILE *file = fopen(fileName.c_str(),"w");
+    if (!file) {
+      std::cout << "#osp:fb: could not open file " << fileName << std::endl;
+      return;
     }
-  }
-
-  LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
-                                     ColorBufferFormat colorBufferFormat,
-                                     bool hasDepthBuffer,
-                                     bool hasAccumBuffer, 
-                                     void *colorBufferToUse)
-    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer)
-  { 
-    Assert(size.x > 0);
-    Assert(size.y > 0);
-    if (colorBufferToUse) {
-      colorBuffer = colorBufferToUse;
+    fprintf(file,"P6\n%i %i\n255\n",size.x,size.y);
+    for (int i=0;i<size.x*size.y;i++) {
+      char *ptr = (char*)&pixels[i];
+      fwrite(ptr,1,3,file);
     }
-    else {
-      switch(colorBufferFormat) {
-      case OSP_RGBA_NONE:
-        colorBuffer = NULL;
-        break;
-      case OSP_RGBA_F32:
-        colorBuffer = new vec4f[size.x*size.y];
-        break;
-      case OSP_RGBA_I8:
-        colorBuffer = new uint32[size.x*size.y];
-        break;
-      default:
-        throw std::runtime_error("color buffer format not supported");
-      }
-    }
-
-    if (hasDepthBuffer)
-      depthBuffer = new float[size.x*size.y];
-    else
-      depthBuffer = NULL;
-    
-    if (hasAccumBuffer)
-      accumBuffer = new vec4f[size.x*size.y];
-    else
-      accumBuffer = NULL;
-    ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
-                                                   colorBufferFormat,
-                                                   colorBuffer,
-                                                   depthBuffer,
-                                                   accumBuffer);
-  }
-  
-  LocalFrameBuffer::~LocalFrameBuffer() 
-  {
-    if (depthBuffer) delete[] depthBuffer;
-
-    if (colorBuffer)
-      switch(colorBufferFormat) {
-      case OSP_RGBA_F32:
-        delete[] ((vec4f*)colorBuffer);
-        break;
-      case OSP_RGBA_I8:
-        delete[] ((uint32*)colorBuffer);
-        break;
-      default:
-        throw std::runtime_error("color buffer format not supported");
-      }
-    if (accumBuffer) delete[] accumBuffer;
-  }
-
-  const void *LocalFrameBuffer::mapDepthBuffer()
-  {
-    this->refInc();
-    return (const void *)depthBuffer;
-  }
-  
-  const void *LocalFrameBuffer::mapColorBuffer()
-  {
-    this->refInc();
-    return (const void *)colorBuffer;
-  }
-  
-  void LocalFrameBuffer::unmap(const void *mappedMem)
-  {
-    Assert(mappedMem == colorBuffer || mappedMem == depthBuffer );
-    this->refDec();
+    fclose(file);
   }
 
 } // ::ospray
