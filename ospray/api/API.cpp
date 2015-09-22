@@ -22,6 +22,7 @@
 #include "ospray/transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
 #include "ospray/common/OSPCommon.h"
+#include "ospray/common/Core.h"
 
 #if 1
 # define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
@@ -102,8 +103,10 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-        --i; continue;
+        --i; 
+        continue;
       }
+
       if (std::string(_av[i]) == "--osp:coi") {
 #if OSPRAY_TARGET_MIC
         throw std::runtime_error("The COI device can only be created on the host");
@@ -114,7 +117,8 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #else
         throw std::runtime_error("OSPRay's COI support not compiled in");
 #endif
-        --i; continue;
+        --i; 
+        continue;
       }
 
       if (std::string(_av[i]) == "--osp:mpi-launch") {
@@ -128,8 +132,10 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-        --i; continue;
+        --i; 
+        continue;
       }
+
       const char *listenArgName = "--osp:mpi-listen";
       if (!strncmp(_av[i],listenArgName,strlen(listenArgName))) {
 #if OSPRAY_MPI
@@ -143,14 +149,17 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-        --i; continue;
+        --i; 
+        continue;
       }
+
     }
   }
 
   // no device created on cmd line, yet, so default to localdevice
-  if (ospray::api::Device::current == NULL)
+  if (ospray::api::Device::current == NULL) {
     ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
+  }
 }
 
 

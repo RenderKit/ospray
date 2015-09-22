@@ -73,6 +73,7 @@ SET(OSPRAY_SOURCES
   volume/SymbolRegistry.cpp
   volume/Volume.ispc
   volume/Volume.cpp
+	volume/DataDistributedBlockedVolume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
