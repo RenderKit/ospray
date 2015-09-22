@@ -48,10 +48,16 @@ namespace ospray {
 
       const bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
 
+      int   numSamples = getParam1i("aoSamples", 4);
+      float rayLength  = getParam1f("aoRayLength", 1e20f);
+
       ispc::RaytraceRenderer_set(getIE(),
-                            (ispc::vec3f&)bgColor,
-                            shadowsEnabled,
-                            lightPtr, lightArray.size());
+                                 (ispc::vec3f&)bgColor,
+                                 shadowsEnabled,
+                                 numSamples,
+                                 rayLength,
+                                 lightPtr,
+                                 lightArray.size());
     }
 
     RaytraceRenderer::RaytraceRenderer()
