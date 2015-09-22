@@ -55,7 +55,6 @@ SET(OSPRAY_SOURCES
   volume/SharedStructuredVolume.cpp
   volume/StructuredVolume.ispc
   volume/StructuredVolume.cpp
-  volume/SymbolRegistry.cpp
   volume/Volume.ispc
   volume/Volume.cpp
 
