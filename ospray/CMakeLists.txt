@@ -62,7 +62,6 @@ SET(OSPRAY_SOURCES
   transferFunction/LinearTransferFunction.cpp
   transferFunction/TransferFunction.ispc
   transferFunction/TransferFunction.cpp
-  transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
@@ -112,7 +111,6 @@ SET(OSPRAY_SOURCES
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/RaycastVolumeRendererMaterial.ispc
-  render/volume/SymbolRegistry.cpp
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
