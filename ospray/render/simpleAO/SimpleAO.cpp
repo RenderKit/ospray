@@ -49,7 +49,7 @@ namespace ospray {
   /*! \brief create a material of given type */
   ospray::Material *SimpleAO::createMaterial(const char *type)
   { 
-    return new typename SimpleAO::Material;
+    return new SimpleAO::Material;
   }
 
   /*! \brief common function to help printf-debugging */
