@@ -97,4 +97,7 @@ namespace ospray {
       ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
   }
 
+  // A volume type with XYZ storage order. The voxel data is provided by the application via a shared data buffer.
+  OSP_REGISTER_VOLUME(SharedStructuredVolume, shared_structured_volume);
+
 } // ::ospray

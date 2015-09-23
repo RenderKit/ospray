@@ -30,7 +30,6 @@ namespace ospray {
       
       //! \brief returns global time(stamp) at time of calling
       static inline TimeStamp now() { return ospray::rdtsc(); }
-      // static inline TimeStamp now() { return __rdtsc(); }
 
       //! \brief Allows ot typecast to a uint64 (so times can be compared)
       inline operator uint64 () const { return t; }

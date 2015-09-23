@@ -57,7 +57,6 @@ namespace ospray {
     samples in the first frame, the next 8 in the second, then
     rotation of the first 8 in the third, etc.
    */
-  template<int NUM_SAMPLES_PER_FRAME>
   struct SimpleAO : public Renderer {
     
     //! \brief Material used by the SimpleAO renderer 
@@ -69,7 +68,8 @@ namespace ospray {
       //! \brief Constructor
       Material();
 
-      //! \brief commit the object's outstanding changes (such as changed parameters etc) 
+      /*! \brief commit the object's outstanding changes
+       *         (such as changed parameters etc) */
       virtual void commit();
       
       // -------------------------------------------------------
@@ -93,10 +93,11 @@ namespace ospray {
     /*! \brief create a material of given type */
     virtual ospray::Material *createMaterial(const char *type);
 
-    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    /*! \brief commit the object's outstanding changes
+     *         (such as changed parameters etc) */
     virtual void commit();
 
-    //! the background color we are going to use if the primary ray didn't hit anything
+    //! background color we are going to use if the primary ray hit nothing
     vec3f bgColor; 
   };
 

@@ -191,7 +191,7 @@ namespace ospray {
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 #endif
 
-  inline size_t rdtsc() { return ::rdtsc(); }
+  inline size_t rdtsc() { return embree::rdtsc(); }
 
   /*! logging level (cmdline: --osp:loglevel \<n\>) */
   extern uint32 logLevel;
