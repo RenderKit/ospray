@@ -256,6 +256,8 @@ __forceinline int64 atomic_cmpxchg(volatile int64* m, const int64 c, const int64
 
 #else
 
+namespace embree {
+
 #if defined(__i386__) && defined(__PIC__)
 
 __forceinline void __cpuid(int out[4], int op) 
@@ -722,3 +724,5 @@ __forceinline void prefetchL2EX(const void* ptr) {
   _mm_prefetch((const char*)ptr,_MM_HINT_T1); 
 #endif
 }
+
+}// namespace embree
