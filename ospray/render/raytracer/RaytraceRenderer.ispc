@@ -183,7 +183,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
   int max_depth = 10;
   uniform int depth = 0;
 
-  vec3f Ka = make_vec3f(0.35f);
+  vec3f Ka = make_vec3f(0.25f);
   float ao = 0.0f;
 
   while (1) {
@@ -223,9 +223,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
     if (depth == 0)
     {
       const uniform int &nSamples = self->aoSamplesPerFrame;
-      //! NOTE(jda) - using hardcoded '0.5' against the AO term that comes back
       ao = nSamples > 0 ? calculateAO(self, dg, sample) : 0.5f;
-      Ka = ao * Ka;
     }
 
     uniform Material *material = dg.material;

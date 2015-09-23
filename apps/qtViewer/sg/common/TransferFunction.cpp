@@ -51,7 +51,7 @@ namespace ospray {
         lastModified = TimeStamp::now();
       }
       if (lastModified > lastCommitted) {
-        lastCommitted = __rdtsc();
+        lastCommitted = embree::__rdtsc();
         ospCommit(ospTransferFunction);
       }
     }
