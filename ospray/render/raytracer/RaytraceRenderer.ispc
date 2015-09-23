@@ -183,7 +183,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
   int max_depth = 10;
   uniform int depth = 0;
 
-  float Ka = 0.00f;
+  vec3f Ka = make_vec3f(0.35f);
+  float ao = 0.0f;
 
   while (1) {
 
@@ -223,7 +224,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
     {
       const uniform int &nSamples = self->aoSamplesPerFrame;
       //! NOTE(jda) - using hardcoded '0.5' against the AO term that comes back
-      Ka = nSamples > 0 ? 0.5f * calculateAO(self, dg, sample) : 0.05f;
+      ao = nSamples > 0 ? calculateAO(self, dg, sample) : 0.5f;
+      Ka = ao * Ka;
     }
 
     uniform Material *material = dg.material;
@@ -258,6 +260,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
 //        bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
       }
     }
+
+    Kd = ao * Kd;
 
     const float local_opacity = path_opacity * d;
 
