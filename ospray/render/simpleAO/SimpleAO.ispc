@@ -109,10 +109,12 @@ inline vec3f getRandomDir(varying RandomTEA* uniform rng,
 inline void shade_ao(uniform SimpleAO *uniform self,
                      varying vec3f &color,
                      varying float &alpha,
-                     int sampleOfs, int sampleCnt,
+                     int sampleCnt,
                      const Ray &ray,
-                     const int32 pixel_x, const int32 pixel_y,
-                     const float rot_x, const float rot_y)
+                     const int32 pixel_x,
+                     const int32 pixel_y,
+                     const float rot_x,
+                     const float rot_y)
 {
   if (ray.geomID < 0) {
     color = self->super.backgroundEnabled ? self->bgColor : make_vec3f(0.f);
@@ -150,9 +152,6 @@ inline void shade_ao(uniform SimpleAO *uniform self,
   const vec3f N = dg.Ns;
   getBinormals(biNormU,biNormV,N);
 
-  const int sindex_x = pixel_x & 0x3;
-  const int sindex_y = pixel_y & 0x3;
-  const int sindex = (sindex_x) * 4 + (sindex_y);
   for (uniform int i = 0; i < sampleCnt; i++) {
     const vec3f ao_dir = getRandomDir(rng, biNormU, biNormV, N, rot_x,
                                       rot_y,self->super.epsilon);
@@ -183,14 +182,13 @@ void SimpleAO_renderSample(uniform Renderer *uniform _self,
   uniform int samplesPerFrame = self->samplesPerFrame;
   uniform int framesPer16 = 16 / samplesPerFrame;
   int accumID = sample.sampleID.z / framesPer16;
-  int sampleOfs = sample.sampleID.z % framesPer16;
   float rot_x = 1.f - precomputedHalton3(accumID);
   float rot_y = 1.f - precomputedHalton5(accumID);
 
   shade_ao(self,
            sample.rgb,
            sample.alpha,
-           sampleOfs,samplesPerFrame,
+           samplesPerFrame,
            sample.ray,
            sample.sampleID.x,
            sample.sampleID.y,

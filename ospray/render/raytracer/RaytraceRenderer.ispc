@@ -107,9 +107,6 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
   const vec3f N = dg.Ns;
   getBinormals(biNormU, biNormV, N);
 
-  const int sindex_x = ix & 0x3;
-  const int sindex_y = iy & 0x3;
-  const int sindex = (sindex_x) * 4 + (sindex_y);
   for (uniform int i = 0; i < samplesPerFrame; i++) {
     const vec3f ao_dir = getRandomDir(rng, biNormU, biNormV, N,
                                       rot_x, rot_y, self->super.epsilon);
