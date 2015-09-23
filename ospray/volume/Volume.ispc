@@ -60,3 +60,17 @@ export void Volume_getBoundingBox(uniform box3f *uniform ret, void *uniform _sel
   uniform Volume *uniform self = (uniform Volume *uniform)_self;
   *ret = self->boundingBox;
 }
+
+export void Volume_computeSamples(void *uniform _self,
+                                  uniform float *uniform *uniform results,
+                                  const uniform vec3f *uniform worldCoordinates,
+                                  const uniform size_t &count)
+{
+  uniform Volume *uniform self = (uniform Volume *uniform)_self;
+
+  foreach (i=0 ... count) {
+    vec3f c = worldCoordinates[i];
+    float sample = self->computeSample(self, c);
+    (*results)[i] = sample;
+  }
+}

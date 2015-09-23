@@ -17,6 +17,8 @@
 // ospray
 #include "TriangleMesh.ih"
 #include "ospray/common/Model.ih"
+#include "ospray/math/LinearSpace.ih"
+
 // embree
 #include "embree2/rtcore.isph"
 #include "embree2/rtcore_geometry.isph"
@@ -35,11 +37,12 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
   const varying vec3i index = make_vec3i(self->index[indexBase+0],
                                          self->index[indexBase+1],
                                          self->index[indexBase+2]);
-  uniform float *uniform normal = self->normal;
+  const uniform float *uniform normal = self->normal;
+  const uniform int32 norSize = self->norSize;
   if ((flags & DG_NS) && normal) {
-    const uniform vec3f *const varying n0ptr = (const uniform vec3f *)&normal[index.x * self->norSize];
-    const uniform vec3f *const varying n1ptr = (const uniform vec3f *)&normal[index.y * self->norSize];
-    const uniform vec3f *const varying n2ptr = (const uniform vec3f *)&normal[index.z * self->norSize];
+    const uniform vec3f *const varying n0ptr = (const uniform vec3f *)&normal[index.x * norSize];
+    const uniform vec3f *const varying n1ptr = (const uniform vec3f *)&normal[index.y * norSize];
+    const uniform vec3f *const varying n2ptr = (const uniform vec3f *)&normal[index.z * norSize];
     dg.Ns
       = (1.f-ray.u-ray.v) * *n0ptr
       + ray.u * *n1ptr
@@ -58,13 +61,42 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
 
   if (flags & DG_TEXCOORD && self->texcoord) {
     //calculate texture coordinate using barycentric coordinates
-    const uniform vec2f  *uniform texcoord = self->texcoord;
+    const uniform vec2f *uniform texcoord = self->texcoord;
     dg.st
       = (1.f-ray.u-ray.v) * (texcoord[index.x])
       + ray.u * (texcoord[index.y])
       + ray.v * (texcoord[index.z]);
   } else {
     dg.st = make_vec2f(0.0f, 0.0f);
+  }
+
+  if (flags & DG_TANGENTS) {
+    uniform bool fallback = true;
+    if (self->texcoord) {
+      const uniform vec2f *uniform texcoord = self->texcoord;
+      const vec2f dst02 = texcoord[index.x] - texcoord[index.z];
+      const vec2f dst12 = texcoord[index.y] - texcoord[index.z];
+      const float det = dst02.x * dst12.y - dst02.y * dst12.x;
+
+      if (det != 0.f) {
+        const float invDet = rcp(det);
+        const uniform float *uniform vertex = self->vertex;
+        const uniform int32 vtxSize = self->vtxSize;
+        const vec3f *const varying v0ptr = (const uniform vec3f *)&vertex[index.x * vtxSize];
+        const vec3f *const varying v1ptr = (const uniform vec3f *)&vertex[index.y * vtxSize];
+        const vec3f *const varying v2ptr = (const uniform vec3f *)&vertex[index.z * vtxSize];
+        const vec3f dp02 = *v0ptr - *v2ptr; 
+        const vec3f dp12 = *v1ptr - *v2ptr; 
+        dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
+        dg.dPdt = (dst02.x * dp12 - dst12.x * dp02) * invDet;
+        fallback = false;
+      }
+    }
+    if (fallback) {
+      linear3f f = frame(dg.Ng);
+      dg.dPds = f.vx;
+      dg.dPdt = f.vy;
+    }
   }
 
   if (flags & DG_MATERIALID) {
@@ -84,22 +116,24 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
 
 
 //! constructor for ispc-side TriangleMesh object
-extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
-                                     void *uniform cppEquivalent,
-                                     uniform Model *uniform model,
-                                     uniform int32  geomID,
-                                     uniform int32  numTriangles,
-                                     uniform int32  idxSize,
-                                     uniform int32  norSize,
-                                     uniform int    *uniform index,
-                                     uniform float  *uniform normal,
-                                     uniform vec4f  *uniform color,
-                                     uniform vec2f  *uniform texcoord,
-                                     uniform int32   geom_materialID,
-                                     uniform Material *uniform material,
-                                     uniform Material *uniform *uniform materialList,
-                                     uniform uint32 *uniform prim_materialID
-                                     )
+void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
+                              void *uniform cppEquivalent,
+                              uniform Model *uniform model,
+                              uniform int32  geomID,
+                              uniform int32  numTriangles,
+                              uniform int32  idxSize,
+                              uniform int32  vtxSize,
+                              uniform int32  norSize,
+                              uniform int    *uniform index,
+                              uniform float  *uniform vertex,
+                              uniform float  *uniform normal,
+                              uniform vec4f  *uniform color,
+                              uniform vec2f  *uniform texcoord,
+                              uniform int32   geom_materialID,
+                              uniform Material *uniform material,
+                              uniform Material *uniform *uniform materialList,
+                              uniform uint32 *uniform prim_materialID
+                              )
 {
   Geometry_Constructor(&mesh->geometry,cppEquivalent,
                        TriangleMesh_postIntersect,
@@ -107,10 +141,12 @@ extern void TriangleMesh_Constructor(uniform TriangleMesh *uniform mesh,
                        material);
   mesh->numTriangles = numTriangles;
   mesh->index        = index;
+  mesh->vertex       = vertex;
   mesh->normal       = normal;
   mesh->color        = color;
   mesh->texcoord     = texcoord;
   mesh->idxSize      = idxSize;
+  mesh->vtxSize      = vtxSize;
   mesh->norSize      = norSize;
   mesh->prim_materialID = prim_materialID;
   mesh->materialList = materialList;
@@ -132,7 +168,7 @@ export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
   TriangleMesh_Constructor(mesh, cppEquivalent, 
-                           NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL);
+                           NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL);
   return mesh;
 }
 
@@ -141,8 +177,10 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                       uniform int32  geomID,
                                       uniform int32  numTriangles,
                                       uniform int32  idxSize,
+                                      uniform int32  vtxSize,
                                       uniform int32  norSize,
                                       uniform int    *uniform index,
+                                      uniform float  *uniform vertex,
                                       uniform float  *uniform normal,
                                       uniform vec4f  *uniform color,
                                       uniform vec2f  *uniform texcoord,
@@ -160,8 +198,9 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                            model,
                            geomID, 
                            numTriangles,
-                           idxSize,norSize,
+                           idxSize, vtxSize, norSize,
                            index,
+                           vertex,
                            normal,
                            color, 
                            texcoord,

@@ -79,6 +79,7 @@ namespace ospray {
       x(OSPCOI_UPLOAD_DATA_DONE,        "ospray_coi_upload_data_done")      \
       x(OSPCOI_UPLOAD_DATA_CHUNK,       "ospray_coi_upload_data_chunk")     \
       x(OSPCOI_PICK,                    "ospray_coi_pick")                  \
+      x(OSPCOI_SAMPLE_VOLUME,           "ospray_coi_sample_volume")         \
       x(OSPCOI_NUM_FUNCTIONS,           NULL) //This must be last
 
 #define x(a,b) a,
@@ -329,6 +330,9 @@ namespace ospray {
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type);
 
       virtual OSPPickResult pick(OSPRenderer _renderer, const vec2f &screenPos);
+
+      /*! sample a volume */
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
     };
 
 
@@ -771,6 +775,26 @@ namespace ospray {
       OSPPickResult retValue = {vec3f(0.), false};
       callFunction(OSPCOI_PICK, args, &retValue, sizeof(retValue));
       return retValue;
+    }
+
+    /*! sample a volume */
+    void COIDevice::sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)
+    {
+      Assert2(volume, "invalid volume handle");
+      Assert2(worldCoordinates, "invalid worldCoordinates");
+
+      DataStream args;
+      args.write((Handle &)volume);
+
+      OSPData data = newData(count, OSP_FLOAT3, (void*)worldCoordinates, OSP_DATA_SHARED_BUFFER);
+      args.write((Handle &)data);
+
+      *results = (float *)malloc(count * sizeof(float));
+      Assert(*results);
+
+      callFunction(OSPCOI_SAMPLE_VOLUME, args, *results, count * sizeof(float));
+
+      release(data);
     }
 
     /*! create a new texture2D */

@@ -62,7 +62,7 @@ namespace ospray {
 
       // get an OSPRay depth texture from the OpenGL depth buffer
       OSPTexture2D depthTexture = getOSPDepthTextureFromOpenGLPerspective(fovy, aspect, zNear, zFar, cameraDir, cameraUp, glDepthBuffer, width, height);
-                                                                   
+
       // free allocated depth buffer
       delete[] glDepthBuffer;
 

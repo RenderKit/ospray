@@ -23,6 +23,7 @@
 #include "LightEditor.h"
 #include "SliceEditor.h"
 #include "PreferencesDialog.h"
+#include "ProbeWidget.h"
 #include "OpenGLAnnotationRenderer.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
@@ -50,15 +51,15 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   // Create and configure the OSPRay state.
   initObjects();
 
-  // Configure the user interface widgets and callbacks.
-  initUserInterfaceWidgets();
-
   // Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
   osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate, writeFramesFilename);
   setCentralWidget(osprayWindow);
 
   // Set the window bounds based on the OSPRay world bounds.
   osprayWindow->setWorldBounds(boundingBox);
+
+  // Configure the user interface widgets and callbacks.
+  initUserInterfaceWidgets();
 
   if (fullScreen)
     setWindowState(windowState() | Qt::WindowFullScreen);
@@ -83,6 +84,9 @@ void VolumeViewer::setModel(size_t index)
     transferFunctionEditor->setDataValueRange(voxelRange);
     isosurfaceEditor->setDataValueRange(voxelRange);
   }
+
+  // Update active volume on probe widget.
+  probeWidget->setVolume(modelStates[index].volumes[0]);
 
   // Update current filename information label.
   currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
@@ -461,10 +465,17 @@ void VolumeViewer::initUserInterfaceWidgets()
   connect(lightEditor, SIGNAL(lightsChanged()), this, SLOT(render()));
   addDockWidget(Qt::LeftDockWidgetArea, lightEditorDockWidget);
 
+  // Create the probe dock widget.
+  QDockWidget *probeDockWidget = new QDockWidget("Probe", this);
+  probeWidget = new ProbeWidget(this);
+  probeDockWidget->setWidget(probeWidget);
+  addDockWidget(Qt::LeftDockWidgetArea, probeDockWidget);
+
   // Tabify dock widgets.
   tabifyDockWidget(transferFunctionEditorDockWidget, sliceEditorDockWidget);
   tabifyDockWidget(transferFunctionEditorDockWidget, isosurfaceEditorDockWidget);
   tabifyDockWidget(transferFunctionEditorDockWidget, lightEditorDockWidget);
+  tabifyDockWidget(transferFunctionEditorDockWidget, probeDockWidget);
 
   // Tabs on top.
   setTabPosition(Qt::LeftDockWidgetArea, QTabWidget::North);

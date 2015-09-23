@@ -26,16 +26,19 @@
 
 struct PathTraceMaterial;
 
-/*! Shades a location and and returns a composited BRDF */
+/*! Shades a location and and returns a composited BRDF as well as a bumped normal. */
 typedef void (*PathTraceMaterial__shade)(const uniform PathTraceMaterial *uniform this,
                                          /*! The ray arriving at the point to shade. */
-                                         const Ray&                  ray,             
+                                         const Ray&                  ray,
                                          /*! The medium this ray travels inside. */
-                                         const Medium&               currentMedium,   
+                                         const Medium&               currentMedium,
                                          /*! The point to shade on a surface. */
-                                         const DifferentialGeometry& dg,    
-                                         /*! Container for generated BRDF components. */           
-                                         uniform CompositedBRDF&     brdfs);
+                                         const DifferentialGeometry& dg,
+                                         /*! Container for generated BRDF components. */
+                                         uniform CompositedBRDF&     brdfs,
+                                         /*! In: shading normal.
+                                          *  Out: potentially modified normal (e.g. by a normal or bump texture). */
+                                         vec3f&                      Ns);
 
 typedef void (*PathTraceMaterial__selectNextMediumFunc)(const uniform PathTraceMaterial *uniform self,
                                                         varying Medium& currentMedium);

@@ -92,9 +92,10 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
     CompositedBRDF__Constructor(&brdfs);
 
     uniform PathTraceMaterial *m = (uniform PathTraceMaterial*)dg.material;
+    vec3f Ns = dg.Ns;
     foreach_unique(mm in m)
       if (mm != NULL)
-        mm->shade(mm, shadowRay, medium, dg, brdfs);
+        mm->shade(mm, shadowRay, medium, dg, brdfs, Ns);
 
     Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
     const vec2f s = make_vec2f(0.5f);
@@ -131,7 +132,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              varying RandomTEA* uniform rng,
                              uint32 &numRays)
 {
-  uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE);
+  uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE | GLOSSY);
   uniform uint32/*BRDFType*/ giBRDFTypes = (uniform uint32)(ALL);
   
   vec3f L = make_vec3f(0.f);
@@ -169,25 +170,27 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, lightPath.ray,
         DG_MATERIALID|
-        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
+        DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
 
     /*! Shade surface. */
     uniform CompositedBRDF brdfs;
     CompositedBRDF__Constructor(&brdfs);
+    vec3f Ns = dg.Ns;
 #if 1
     uniform PathTraceMaterial*m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
       if (mm != NULL)
-        mm->shade(mm, lightPath.ray, lightPath.lastMedium, dg, brdfs);
+        mm->shade(mm, lightPath.ray, lightPath.lastMedium, dg, brdfs, Ns);
 #else
     foreach_unique(geomID in lightPath.ray.geomID) {
       uniform PathTraceMaterial* uniform m
         = (uniform PathTraceMaterial*)(self->super.model->geometry[geomID]->material);
       print("shading %\n",m);
-      if (m != NULL) m->shade(m,lightPath.ray, lightPath.lastMedium, dg, brdfs);
+      if (m != NULL) m->shade(m,lightPath.ray, lightPath.lastMedium, dg, brdfs, Ns);
     }
 #endif
+    dg.Ns = Ns;
 
 #if 0
     // iw: disabled because we dont' have per-geometry lights yet
