@@ -67,7 +67,7 @@ namespace ospray {
 
     bgColor = getParam3f("bgColor",vec3f(1.f));
     int   numSamples = getParam1i("aoSamples", 16);
-    float rayLength  = getParam1f("aoRayLength", 1e20f);
+    float rayLength  = getParam1f("aoOcclusionDistance", 1e20f);
     ispc::SimpleAO_set(getIE(),
                        (const ispc::vec3f&)bgColor,                           
                        numSamples,
