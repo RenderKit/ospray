@@ -14,15 +14,19 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray 
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/render/util.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/texture/Texture2D.ih"
 #include "ospray/lights/Light.ih"
 #include "ospray/render/Renderer.ih"
-// obj renderer
+
 #include "RaytraceMaterial.ih"
+
+//! \note Using RNG from pathtracer
+#include "ospray/render/pathtracer/samplers/Random.ih"
+
+#define USE_TEA (1)
 
 #define ALPHA_THRESHOLD (.05f)
 
@@ -101,6 +105,25 @@ inline uniform float rotate(uniform float x, uniform float dx)
   return x;
 }
 
+#if USE_TEA
+inline vec3f getRandomDir(varying RandomTEA* uniform rng,
+                          const vec3f biNorm0,
+                          const vec3f biNorm1,
+                          const vec3f gNormal,
+                          const float rot_x, const float rot_y,
+                          const uniform float epsilon)
+{
+  const vec2f rn = RandomTEA__getFloats(rng);
+  const float r0 = rotate(rn.x, rot_x);
+  const float r1 = rotate(rn.y, rot_y);
+
+  const float w = sqrt(1.f-r1);
+  const float x = cos((2.f*M_PI)*r0)*w;
+  const float y = sin((2.f*M_PI)*r0)*w;
+  const float z = sqrt(r1)+epsilon;
+  return x*biNorm0+y*biNorm1+z*gNormal;
+}
+#else
 inline vec3f getRandomDir(const int j, const int i,
                           const vec3f biNorm0,
                           const vec3f biNorm1,
@@ -117,6 +140,7 @@ inline vec3f getRandomDir(const int j, const int i,
   const float z = sqrt(r1)+epsilon;
   return x*biNorm0+y*biNorm1+z*gNormal;
 }
+#endif
 
 inline float calculateAO(const uniform RaytraceRenderer *uniform self,
                          varying DifferentialGeometry &dg,
@@ -129,19 +153,34 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
   float rot_x = 1.f - precomputedHalton3(accumID);
   float rot_y = 1.f - precomputedHalton5(accumID);
 
+  const int ix = sample.sampleID.x;
+  const int iy = sample.sampleID.y;
+
+#if USE_TEA
+  // init TEA RNG //
+  uniform FrameBuffer *uniform fb = self->super.fb;
+  RandomTEA rng_state;
+  varying RandomTEA* const uniform rng = &rng_state;
+  RandomTEA__Constructor(rng, (fb->size.x * iy) + ix, fb->accumID);
+#endif
+
   int hits = 0;
-  vec3f biNormU,biNormV;
+  vec3f biNormU, biNormV;
   const vec3f N = dg.Ns;
   getBinormals(biNormU, biNormV, N);
 
-  const int sindex_x = sample.sampleID.x & 0x3;
-  const int sindex_y = sample.sampleID.y & 0x3;
+  const int sindex_x = ix & 0x3;
+  const int sindex_y = iy & 0x3;
   const int sindex = (sindex_x) * 4 + (sindex_y);
   for (uniform int i = 0; i < samplesPerFrame; i++) {
-    const vec3f ao_dir
-      = getRandomDir(sindex,
-                     (3*sindex_x+5*sindex_y+i+samplesPerFrame*sampleOfs)%16,
-                     biNormU,biNormV,N,rot_x,rot_y,self->super.epsilon);
+#if USE_TEA
+    const vec3f ao_dir = getRandomDir(rng, biNormU, biNormV, N,
+                                      rot_x, rot_y, self->super.epsilon);
+#else
+    const int i = (3*sindex_x+5*sindex_y+i+samplesPerFrame*sampleOfs)%16;
+    const vec3f ao_dir = getRandomDir(sindex, i, biNormU, biNormV, N,
+                                      rot_x, rot_y, self->super.epsilon);
+#endif
 
     Ray ao_ray;
     setRay(ao_ray, dg.P + (1e-3f * N), ao_dir);

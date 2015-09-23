@@ -136,7 +136,7 @@ inline varying float Random__getFloat (varying Random* uniform this) {
 ///////////////////////////////////////////////////////////////////////////////
 // TEA - Random numbers based on Tiny Encryption Algorithm
 
-void tea8(unsigned int& v0, unsigned int& v1)
+inline void tea8(unsigned int& v0, unsigned int& v1)
 {
   unsigned int sum = 0;
 
@@ -152,7 +152,10 @@ struct RandomTEA
   unsigned int v0, v1;
 };
 
-inline void RandomTEA__Constructor(varying RandomTEA* uniform this, const unsigned int idx, const unsigned int seed) {
+inline void RandomTEA__Constructor(varying RandomTEA* uniform this,
+                                   const unsigned int idx,
+                                   const unsigned int seed)
+{
   this->v0 = idx;
   this->v1 = seed;
 }
