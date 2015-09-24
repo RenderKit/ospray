@@ -47,8 +47,12 @@ namespace ospray {
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
       //! \brief Initialize this node's value from given XML node 
-    void StructuredVolume::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    void StructuredVolume::setFromXML(const xml::Node *const node, 
+                                      const unsigned char *binBasePtr)
     {
+      Assert2(binBasePtr,
+              "mapped binary file is NULL, in XML node that "
+              "needs mapped binary data (sg::StructuredVolume)");
       voxelType = node->getProp("voxelType");
       if (node->hasProp("ofs"))
         mappedPointer = binBasePtr + node->getPropl("ofs");
@@ -115,7 +119,8 @@ namespace ospray {
     { return box3f(vec3f(0.f),vec3f(getDimensions())); }
 
       //! \brief Initialize this node's value from given XML node 
-    void StructuredVolumeFromFile::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
+    void StructuredVolumeFromFile::setFromXML(const xml::Node *const node, 
+                                              const unsigned char *binBasePtr)
     {
       voxelType = node->getProp("voxelType");
       dimensions = parseVec3i(node->getProp("dimensions"));

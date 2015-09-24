@@ -32,6 +32,64 @@
 
 namespace embree
 {
+  /*! @{ all this code is to make sure that the embree tasksys *only*
+      burns cycles when it is supposed to */
+// #if THIS_IS_MIC
+#if defined(__INTEL_COMPILER) && defined(__MIC__)
+  // on KNC, embree currently spins if no more work is available; this
+  // code makes sure that it does so *only* inbetwween calls to
+  // 'wakeUpTaskSys' and 'putTaskSysToSleep()'
+  ConditionSys allowedToRun;
+  MutexSys allowMutex;
+  // MutexSys wakeMutex;
+  size_t numTimesWokenUp = 0;
+
+  /*! wake up (spinning) task sys threads - called right before scene::build */
+  void wakeUpTaskSys()
+  {
+    allowMutex.lock();
+    numTimesWokenUp++;
+    allowedToRun.broadcast();
+    allowMutex.unlock();
+  }
+
+  /*! trigger all task sys threads to go back to sleep - called right
+      after the scene is *done* building */
+  void putTaskSysToSleep()
+  {
+    allowMutex.lock();
+    --numTimesWokenUp;
+    allowMutex.unlock();
+  }
+
+  /*! called from within the task system, every time the thread would
+      otherwise have idle-spun. */
+  void goToSleepIfSoRequired()
+  {
+    if (numTimesWokenUp > 0) return;
+    allowMutex.lock();
+    while (numTimesWokenUp == 0)
+      allowedToRun.wait(allowMutex);
+    allowMutex.unlock();
+  }
+
+#else
+  // when not on MIC; the embree task sys automatically
+  // pthread-cond-waits for new work, so nothing to do for now. This
+  // means that we *may* run into situations where both embree *and*
+  // ospray/ispc tasksys are running at the same time - if, say, a
+  // rtcCommit() is being called from within an ISPC task, while other
+  // ISPC tasks are active - but for now this should be OK */
+  void wakeUpTaskSys()
+  {}
+
+  void putTaskSysToSleep()
+  {
+  }
+#endif
+
+  /*! @} */
+
 #define CATCH_BEGIN try {
 #define CATCH_END                                                       \
   } catch (std::bad_alloc&) {                                           \
@@ -506,11 +564,24 @@ namespace embree
     TRACE(rtcCommit);
     VERIFY_HANDLE(scene);
 
+    /*! iw - hack to disable embree's task system's
+        'always-spinlocking' on mic. here we actually wake up the
+        tasks in the embree taksystem, and they can do their
+        spin-locking all the way throgh the buidl .... but then we put
+        them back to sleep the moment we're done building */
+    wakeUpTaskSys();
+
 #if defined(__ENABLE_RAYSTREAM_LOGGER__)
     RayStreamLogger::rayStreamLogger.dumpGeometry(scene);
 #endif
 
     ((Scene*)scene)->build(0,0);
+    
+    /*! iw - hack to disable embree's task system's
+      'always-spinlocking' on mic. here we actually put the embree
+      tasks back to sleep */
+    putTaskSysToSleep();
+
     CATCH_END;
   }
 

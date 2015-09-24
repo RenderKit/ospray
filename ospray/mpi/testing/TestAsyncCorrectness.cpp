@@ -18,9 +18,9 @@
 
 #define ASYNC_TAG 123
 
-#define NUM_START_MESSAGES 30
+#define NUM_START_MESSAGES_PER_NODE 3
 // min num ints we're sending
-#define MIN_SIZE 1000
+#define MIN_SIZE 64
 // max num ints we're sending
 #define MAX_SIZE (4096000)
 // #define MAX_SIZE (4096*1024)
@@ -35,7 +35,7 @@ namespace ospray {
   bool      shutDown = false;
   size_t numBytesReceived = 0;
   size_t numMessagesReceived = 0;
-  bool checkSum = false;
+  bool checkSum = true;
 
   int computeCheckSum1toN(int *arr, int N)
   {
@@ -66,33 +66,33 @@ namespace ospray {
       }
 
       if (checkSum) {
-      // -------------------------------------------------------
-      // checksum
-      // -------------------------------------------------------
-      int *msg = (int *)message;
-      int N = size/sizeof(int);
-      int checkSum = computeCheckSum1toN(msg,N);
-      if (msg[0] != checkSum)
-        throw std::runtime_error("invalid checksum!");
-      free(message);
+        // -------------------------------------------------------
+        // checksum
+        // -------------------------------------------------------
+        int *msg = (int *)message;
+        int N = size/sizeof(int);
+        int checkSum = computeCheckSum1toN(msg,N);
+        if (msg[0] != checkSum)
+          throw std::runtime_error("invalid checksum!");
+        free(message);
 
-      mutex.lock();
-      numMessagesReceived ++;
-      numBytesReceived += size;
-      if (!shutDown) {
-        int tgt = rand() % source.group->size;
-        sendRandomMessage(mpi::Address(source.group,tgt));
-      }
-      mutex.unlock();
+        mutex.lock();
+        numMessagesReceived ++;
+        numBytesReceived += size;
+        if (!shutDown) {
+          int tgt = rand() % source.group->size;
+          sendRandomMessage(mpi::Address(source.group,tgt));
+        }
+        mutex.unlock();
       } else {
-      mutex.lock();
-      numMessagesReceived ++;
-      numBytesReceived += size;
-      if (!shutDown) {
-        int tgt = rand() % source.group->size;
-        mpi::async::send(mpi::Address(source.group,tgt),message,size);
-      }
-      mutex.unlock();
+        mutex.lock();
+        numMessagesReceived ++;
+        numBytesReceived += size;
+        if (!shutDown) {
+          int tgt = rand() % source.group->size;
+          mpi::async::send(mpi::Address(source.group,tgt),message,size);
+        }
+        mutex.unlock();
       }
     }
   };
@@ -101,10 +101,6 @@ namespace ospray {
   void mpiCommTest(int &ac, char **av)
   {
     mpi::init(&ac,(const char**)av);
-    if (ac == 2) {
-      printf("now doing checksumming...\n");
-      checkSum = true;
-    }
 
     CheckSumAndBounceNewRandomMessage consumer;
 
@@ -115,11 +111,11 @@ namespace ospray {
     mpi::world.barrier();
     char hostname[1000];
     gethostname(hostname,1000);
-    printf("#osp:mpi: async comm test %i/%i on %s\n",mpi::world.rank,mpi::world.size,hostname); fflush(0);
+    printf("#osp:mpi(%2i/%i): async comm test on %s\n",mpi::world.rank,mpi::world.size,hostname); fflush(0);
     mpi::world.barrier();
     double t0 = getSysTime();
 
-    for (int i=0;i<NUM_START_MESSAGES;i++) {
+    for (int i=0;i<mpi::world.size * NUM_START_MESSAGES_PER_NODE;i++) {
       // int tgt = (world->rank+i) % world->size;
       int tgt = rand() % world->size;
       sendRandomMessage(mpi::Address(world,tgt));
@@ -141,8 +137,8 @@ namespace ospray {
     double t1 = getSysTime();
     double MBs = numBytesReceived / (1024*1024.f);
     double secs = t1-t0;
-    printf("#osp:mpi(%2i): received %li msgs of %5.3lfMB in %2.1lfsecs, that's %5.3lfMB/sec\n",
-           mpi::world.rank,numMessagesReceived,MBs,secs,MBs/secs); fflush(0);
+    printf("#osp:mpi(%2i/%i): received %li msgs of %5.3lfMB in %2.1lfsecs, that's %5.3lfMB/sec\n",
+           mpi::world.rank,mpi::world.size,numMessagesReceived,MBs,secs,MBs/secs); fflush(0);
            
     mpi::world.barrier();
     usleep(1000);

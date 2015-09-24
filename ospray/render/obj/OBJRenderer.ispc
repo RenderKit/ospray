@@ -90,7 +90,9 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
   float path_opacity = 1.f;
   int max_depth = 10;
   uniform int depth = 0;
+  bool depthGotSet = 0;
 
+  sample.z = infinity;
   while (1) {
     traceRay(self->super.model,ray);
 
@@ -100,8 +102,6 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
       sample.z = 1;
       return;
     }
-
-    sample.z = log(ray.t) / 10;
 
     vec3f local_shade_color = make_vec3f(0.f);
 
@@ -139,6 +139,11 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
         Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
 //        bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
       }
+    }
+
+    if (d >= .5 && !depthGotSet) {
+      sample.z = ray.t;
+      depthGotSet = true;
     }
 
     const float local_opacity = path_opacity * d;

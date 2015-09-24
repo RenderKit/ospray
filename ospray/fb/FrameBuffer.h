@@ -17,17 +17,36 @@
 #pragma once
 
 // ospray
-#include "Tile.h"
-
-// ospray
-#include "../common/OSPCommon.h"
-#include "../common/Managed.h"
-// embree
-#include "common/sys/taskscheduler.h"
+#include "ospray/fb/PixelOp.h"
 
 namespace ospray {
 
-  using embree::TaskScheduler;
+  /*! helper function to convert float-color into rgba-uint format */
+  inline uint32 cvt_uint32(const float f)
+  {
+    return (int32)(255.9f * std::max(std::min(f,1.f),0.f));
+  }
+
+  /*! helper function to convert float-color into rgba-uint format */
+  inline uint32 cvt_uint32(const vec4f &v)
+  {
+    return 
+      (cvt_uint32(v.x) << 0)  |
+      (cvt_uint32(v.y) << 8)  |
+      (cvt_uint32(v.z) << 16) |
+      (cvt_uint32(v.w) << 24);
+  }
+
+  /*! helper function to convert float-color into rgba-uint format */
+  inline uint32 cvt_uint32(const vec3f &v)
+  {
+    return 
+      (cvt_uint32(v.x) << 0)  |
+      (cvt_uint32(v.y) << 8)  |
+      (cvt_uint32(v.z) << 16);
+  }
+
+
 
   /*! abstract frame buffer class */
   struct FrameBuffer : public ManagedObject {
@@ -47,6 +66,10 @@ namespace ospray {
     virtual const void *mapColorBuffer() = 0;
 
     virtual void unmap(const void *mappedMem) = 0;
+    virtual void setTile(Tile &tile) = 0;
+
+    /*! \brief clear (the specified channels of) this frame buffer */
+    virtual void clear(const uint32 fbChannelFlags) = 0;
 
     /*! indicates whether the app requested this frame buffer to have
         an accumulation buffer */
@@ -68,29 +91,11 @@ namespace ospray {
         changes that requires clearing the accumulation buffer. */
     int32 accumID;
 
-    virtual void clear(const uint32 fbChannelFlags) = 0;
+    Ref<PixelOp::Instance> pixelOp;
   };
 
+  /*! helper function for debugging. write out given pixels in PPM
+      format. Pixels are supposed to come in as RGBA, 4x8 bit */
+  void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels);
   
-  /*! local frame buffer - frame buffer that exists on local machine */
-  struct LocalFrameBuffer : public FrameBuffer {
-    void      *colorBuffer; /*!< format depends on
-                               FrameBuffer::colorBufferFormat, may be
-                               NULL */
-    float     *depthBuffer; /*!< one float per pixel, may be NULL */
-    vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
-
-    LocalFrameBuffer(const vec2i &size,
-                     ColorBufferFormat colorBufferFormat,
-                     bool hasDepthBuffer,
-                     bool hasAccumBuffer, 
-                     void *colorBufferToUse=NULL);
-    virtual ~LocalFrameBuffer();
-    
-    virtual const void *mapColorBuffer();
-    virtual const void *mapDepthBuffer();
-    virtual void unmap(const void *mappedMem);
-    virtual void clear(const uint32 fbChannelFlags);
-  };
-
 } // ::ospray

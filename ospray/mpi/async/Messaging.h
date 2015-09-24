@@ -21,8 +21,7 @@
 // #include "ospray/common/OSPCommon.h"
 // embree
 #include "common/sys/platform.h"
-#include "common/sys/sync/mutex.h"
-#include "common/sys/sync/condition.h"
+#include "common/sys/thread.h"
 
 namespace ospray {
   typedef embree::ConditionSys Condition;
@@ -99,6 +98,8 @@ namespace ospray {
         //! tag to be used for asynchronous messaging
         int32      tag;
       };
+
+      // extern Group *WORLD;
 
       //! abstraction - internally used - implement the messaging MPI
       struct AsyncMessagingImpl {

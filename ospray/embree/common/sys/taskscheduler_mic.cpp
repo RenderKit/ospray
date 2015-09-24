@@ -25,6 +25,8 @@ namespace embree
   //#define DBG(x) { mtx.lock(); x ; mtx.unlock(); }
   #define DBG(x) 
 
+  void goToSleepIfSoRequired();
+
   TaskSchedulerMIC::TaskSchedulerMIC()     
   {
     for (size_t i=0; i<NUM_TASKS; i++) tasks[i] = NULL;
@@ -122,6 +124,9 @@ namespace embree
 	/* wait for available task */
 	while(head_task_list == tail_task_list && !terminateThreads)
 	  {
+
+            goToSleepIfSoRequired();
+
 	    __pause(1023); 
 	  }
 

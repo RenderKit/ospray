@@ -27,7 +27,7 @@ typedef enum {
   OSP_OBJECT,
 
   //! Object reference subtypes.
-  OSP_CAMERA,
+  OSP_CAMERA = 10,
   OSP_DATA,
   OSP_FRAMEBUFFER,
   OSP_GEOMETRY,
@@ -38,30 +38,31 @@ typedef enum {
   OSP_TEXTURE,
   OSP_TRANSFER_FUNCTION,
   OSP_VOLUME,
+  OSP_PIXEL_OP,
 
   //! Pointer to a C-style NULL-terminated character string.
   OSP_STRING,
 
   //! Character scalar type.
-  OSP_CHAR,
+  OSP_CHAR  =100,
 
   //! Unsigned character scalar and vector types.
-  OSP_UCHAR, OSP_UCHAR2, OSP_UCHAR3, OSP_UCHAR4,
+  OSP_UCHAR =110, OSP_UCHAR2, OSP_UCHAR3, OSP_UCHAR4,
 
   //! Signed integer scalar and vector types.
-  OSP_INT, OSP_INT2, OSP_INT3, OSP_INT4,
+  OSP_INT   =120, OSP_INT2, OSP_INT3, OSP_INT4,
 
   //! Unsigned integer scalar and vector types.
-  OSP_UINT, OSP_UINT2, OSP_UINT3, OSP_UINT4,
+  OSP_UINT  =130, OSP_UINT2, OSP_UINT3, OSP_UINT4,
 
   //! Signed 64-bit integer scalar and vector types.
-  OSP_LONG, OSP_LONG2, OSP_LONG3, OSP_LONG4,
+  OSP_LONG  =140, OSP_LONG2, OSP_LONG3, OSP_LONG4,
 
   //! Unsigned 64-bit integer scalar and vector types.
-  OSP_ULONG, OSP_ULONG2, OSP_ULONG3, OSP_ULONG4,
+  OSP_ULONG =150, OSP_ULONG2, OSP_ULONG3, OSP_ULONG4,
 
   //! Single precision floating point scalar and vector types.
-  OSP_FLOAT, OSP_FLOAT2, OSP_FLOAT3, OSP_FLOAT4, OSP_FLOAT3A,
+  OSP_FLOAT =160, OSP_FLOAT2, OSP_FLOAT3, OSP_FLOAT4, OSP_FLOAT3A,
 
   //! Double precision floating point scalar type.
   OSP_DOUBLE,

@@ -18,6 +18,8 @@
 
 // viewer
 #include "ospray/common/OSPCommon.h"
+// std
+#include <vector>
 
 namespace ospray {
   namespace viewer {
