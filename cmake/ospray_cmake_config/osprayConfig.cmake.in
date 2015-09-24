@@ -95,6 +95,7 @@ endif(NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
 # osprayTargets-<release/debug>.cmake as link libraries for ospray target.
 set(OSPRAY_INCLUDE_DIRS
   ${OSPRAY_INCLUDE_DIR}
+  ${OSPRAY_INCLUDE_DIR}/ospray
   ${OSPRAY_INCLUDE_DIR}/ospray/embree
   ${OSPRAY_INCLUDE_DIR}/ospray/embree/common
 )

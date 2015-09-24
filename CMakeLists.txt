@@ -49,6 +49,7 @@ ENDIF()
 
 # create a configure file that both ospray and ispc can read the cmake config from
 CONFIGURE_FILE(ospray/common/CMakeConfig_template.h OSPRayCMakeConfig.h)
+INSTALL(FILES ${CMAKE_BINARY_DIR}/OSPRayCMakeConfig.h DESTINATION include/ospray)
 
 MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 
