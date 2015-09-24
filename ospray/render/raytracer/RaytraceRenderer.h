@@ -45,7 +45,7 @@
 namespace ospray {
 
   namespace raytracer {
-    using embree::TaskScheduler;
+    //    using embree::TaskScheduler;
 
     /*! \brief Renderer for the OBJ Wavefront Material/Lighting format
 

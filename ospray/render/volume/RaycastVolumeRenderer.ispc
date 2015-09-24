@@ -1,3 +1,4 @@
+
 // ======================================================================== //
 // Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
@@ -24,7 +25,9 @@
 void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, 
                                                 const uniform int32 accumID)
 { 
-  if (renderer->fb) renderer->fb->accumID = accumID;  renderer->fb = NULL; 
+  if (renderer->fb) 
+    renderer->fb->accumID = accumID;  
+  renderer->fb = NULL; 
 }
 
 void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer, 
@@ -95,13 +98,15 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   // Post intersect on the hit geometry.
   DifferentialGeometry dg;
-  postIntersect(renderer->inherited.model, dg, ray, DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID);
+  postIntersect(renderer->inherited.model, dg, ray, 
+                DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID);
 
   // Color of the geometry.
   vec3f geometryColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
 
   // Apply material if it exists.
-  uniform RaycastVolumeRendererMaterial *mat = (uniform RaycastVolumeRendererMaterial*)dg.material;
+  uniform RaycastVolumeRendererMaterial *mat
+    = (uniform RaycastVolumeRendererMaterial*)dg.material;
 
   if (mat) {
     foreach_unique(m in mat) {
@@ -191,18 +196,23 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   const float tMax = ray.t;
 
   // Ray epsilon based on bounding box of all volumes.
-  uniform box3f boundingBox = renderer->inherited.model->volumeCount ? renderer->inherited.model->volumes[0]->boundingBox :
-                                                                       make_box3f(make_vec3f(0.f), make_vec3f(0.f));
+  uniform box3f boundingBox = renderer->inherited.model->volumeCount
+    ? renderer->inherited.model->volumes[0]->boundingBox 
+    : make_box3f(make_vec3f(0.f), make_vec3f(0.f));
 
+  Model *uniform model = renderer->inherited.model;
   for (uniform int32 i=1; i<renderer->inherited.model->volumeCount; i++) {
-    boundingBox.lower = min(boundingBox.lower, renderer->inherited.model->volumes[i]->boundingBox.lower);
-    boundingBox.upper = max(boundingBox.upper, renderer->inherited.model->volumes[i]->boundingBox.upper);
+    boundingBox.lower = min(boundingBox.lower, model->volumes[i]->boundingBox.lower);
+    boundingBox.upper = max(boundingBox.upper, model->volumes[i]->boundingBox.upper);
   }
 
-  const uniform float epsilon = renderer->inherited.model->volumeCount ? 1e-4f * distance(boundingBox.lower, boundingBox.upper) :
-                                                                         1e-4f;
+  const uniform float epsilon
+    = renderer->inherited.model->volumeCount
+    ? 1e-4f * distance(boundingBox.lower, boundingBox.upper) 
+    : 1e-4f;
 
-  // Copy of the ray for geometry intersection. The original ray is used for volume intersection.
+  // Copy of the ray for geometry intersection. The original ray is
+  // used for volume intersection.
   Ray geometryRay = ray;
   geometryRay.primID = -1;
   geometryRay.geomID = -1;
@@ -293,6 +303,11 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   vec4f color = make_vec4f(0.0f);
   float depth = infinity;
   RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color, depth);
+
+#if EXP_ALPHA_BLENDING
+  // do NOT blend in background.... would otherwise blend that in in each tile!
+  cout << "warning: should not actually blend in background color here; need to fix this in compositing mode" << endl;
+#endif
 
   // Attenuate the foreground and background colors by the opacity.
   if (renderer->inherited.backgroundEnabled)

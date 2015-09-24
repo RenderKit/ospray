@@ -78,6 +78,17 @@ namespace ospray {
     exit(1);
   }
 
+  struct DisplayWall {
+    std::string hostname;
+    std::string streamName;
+    vec2i size;
+    OSPFrameBuffer fb;
+    OSPPixelOp     po;
+
+    DisplayWall() : hostname(""), streamName(""), size(-1), fb(NULL), po(NULL) {};
+  };
+  DisplayWall *displayWall = NULL;
+
   using ospray::glut3D::Glut3DWidget;
   
   // helper function to write the rendered image as PPM file
@@ -134,6 +145,28 @@ namespace ospray {
       ospSet1f(fb, "gamma", 2.2f);
       ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
+
+      /*! for now, let's just attach the pixel op to the _main_ frame
+          buffer - eventually we need to have a _second_ frame buffer
+          of the proper (much higher) size, but for now let's just use
+          the existing one... */
+      if (displayWall && displayWall->fb != fb) {
+        PRINT(displayWall->size);
+        displayWall->fb = ospNewFrameBuffer(displayWall->size,
+                                            OSP_RGBA_NONE,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+        ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
+        if (displayWall->po == NULL) {
+          displayWall->po = ospNewPixelOp("display_wall");
+          if (!displayWall->po)
+            throw std::runtime_error("could not load 'display_wall' component.");
+          ospSetString(displayWall->po, "hostname", displayWall->hostname.c_str());
+          ospSetString(displayWall->po, "streamName", displayWall->streamName.c_str());
+          ospCommit(displayWall->po);
+        }
+          
+        ospSetPixelOp(displayWall->fb,displayWall->po);
+      }
+
       ospSetf(camera,"aspect",viewPort.aspect);
       ospCommit(camera);
       viewPort.modified = true;
@@ -281,6 +314,7 @@ namespace ospray {
       if (frameID > 0) fps.doneRender();
       fps.startRender();
       //}
+#if 0
       static double benchStart=0;
       static double fpsSum=0;
       if (g_benchFrames > 0 && frameID == g_benchWarmup)
@@ -300,7 +334,7 @@ namespace ospray {
 
           exit(0);
         }
-      
+#endif 
       ++frameID;
       
       if (viewPort.modified) {
@@ -318,6 +352,8 @@ namespace ospray {
         viewPort.modified = false;
         accumID=0;
         ospFrameBufferClear(fb,OSP_FB_ACCUM);
+        if (displayWall)
+          ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
       }
       
       if (outFileName) {
@@ -336,19 +372,16 @@ namespace ospray {
         exit(0);
       }
       
-      ospRenderFrame(fb,renderer,OSP_FB_COLOR|(showDepthBuffer?OSP_FB_DEPTH:0)|OSP_FB_ACCUM);
+      ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
+      if (displayWall)
+        ospRenderFrame(displayWall->fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       ++accumID;
 
       // set the glut3d widget's frame buffer to the opsray frame buffer, then display
       ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
-      Glut3DWidget::display();
 
-      // if (outFileName && accumID == maxAccum) {
-      //   std::cout << "#ospModelViewer: Saved rendered image in " << outFileName << std::endl;
-      //   writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
-      //   exit(0);
-      // }
+      Glut3DWidget::display();
 
       // that pointer is no longer valid, so set it to null
       ucharFB = NULL;
@@ -544,6 +577,12 @@ namespace ospray {
         ospLoadModule(moduleName);
       } else if (arg == "--alpha") {
         g_alpha = true;
+      } else if (arg == "--display-wall") {
+        displayWall = new DisplayWall;
+        displayWall->hostname = av[++i];
+        displayWall->streamName = av[++i];
+        displayWall->size.x = atof(av[++i]);
+        displayWall->size.y = atof(av[++i]);
       } else if (arg == "-bench") {
         if (++i < ac)
           {
@@ -656,20 +695,24 @@ namespace ospray {
     std::vector<OSPModel> instanceModels;
 
     for (size_t i=0;i<msgModel->mesh.size();i++) {
-      //      printf("Mesh %i/%li\n",i,msgModel->mesh.size());
+      printf("Mesh %li/%li\n",i,msgModel->mesh.size());
       Ref<miniSG::Mesh> msgMesh = msgModel->mesh[i];
+      // DBG(PRINT(msgMesh.ptr));
 
       // create ospray mesh
       OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewTriangleMesh();
+      // PRINT(ospMesh);
 
       // check if we have to transform the vertices:
       if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {
         // cout << "Transforming vertex array ..." << endl;
+        // PRINT(msgMesh->position.size());
         for (size_t vID=0;vID<msgMesh->position.size();vID++) {
           msgMesh->position[vID] = xfmPoint(msgModel->instance[i].xfm,
                                             msgMesh->position[vID]);
         }
       }
+
       // add position array to mesh
       OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
@@ -682,7 +725,6 @@ namespace ospray {
         ospSetData(ospMesh,"prim.materialID",primMatID);
       }
 
-      // cout << "INDEX" << endl;
       // add triangle index array to mesh
       OSPData index = ospNewData(msgMesh->triangle.size(),OSP_INT3,
                                  &msgMesh->triangle[0],OSP_DATA_SHARED_BUFFER);
@@ -781,7 +823,6 @@ namespace ospray {
         ospAddGeometry(ospModel,ospMesh);
 
     }
-
     if (doesInstancing) {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],

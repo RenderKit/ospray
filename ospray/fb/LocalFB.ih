@@ -14,6 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#define TILE_SIZE 32
+#include "ospray/fb/Tile.ih"
+#include "ospray/fb/FrameBuffer.ih"
+#include "ospray/render/util.ih"
 
+/*! a Local FrameBuffer that stores all pixel values (color, depth,
+    accum) in a plain 2D array of pixels (one array per component) */
+struct LocalFB 
+{
+  FrameBuffer    super; /*!< superclass that we inherit from */
+  void          *colorBuffer;
+  uniform float *depthBuffer;
+  uniform vec4f *accumBuffer;
+};
 

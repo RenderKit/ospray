@@ -14,6 +14,15 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#if MPI_IMAGE_COMPOSITING
+#  define OSP_COMPOSITING_TEST 1
+#endif
+
+#if OSP_COMPOSITING_TEST
+# include "ospray/mpi/MPICommon.h"
+#endif
+
+
 // ospray
 #include "TriangleMesh.h"
 #include "ospray/common/Model.h"
@@ -110,10 +119,12 @@ namespace ospray {
     default:
       throw std::runtime_error("unsupported trianglemesh.index data type");
     }
+
     switch (vertexData->type) {
     case OSP_FLOAT:   numVerts = vertexData->size() / 4; numCompsInVtx = 4; break;
     case OSP_FLOAT3:  numVerts = vertexData->size(); numCompsInVtx = 3; break;
     case OSP_FLOAT3A: numVerts = vertexData->size(); numCompsInVtx = 4; break;
+    case OSP_FLOAT4 : numVerts = vertexData->size(); numCompsInVtx = 4; break;
     default:
       throw std::runtime_error("unsupported trianglemesh.vertex data type");
     }
@@ -124,6 +135,22 @@ namespace ospray {
     default:
       throw std::runtime_error("unsupported trianglemesh.vertex.normal data type");
     }
+
+#if OSP_COMPOSITING_TEST
+    int ourSize = mpi::worker.size;
+    int myRank = mpi::worker.rank;
+    if (ourSize > 1) {
+
+    long begin = (numTris * myRank) / ourSize;
+    long end   = (numTris * (myRank+1)) / ourSize;
+    numTris = end-begin;
+    this->index += numCompsInTri*begin;
+    if (prim_materialID) prim_materialID += begin;
+    printf("#osp:trianglemesh: hack to test compositing: have %li tris on rank %i/%i\n",
+           numTris,myRank,ourSize);
+    }
+#endif
+
 
     eMesh = rtcNewTriangleMesh(embreeSceneHandle,RTC_GEOMETRY_STATIC,
                                numTris,numVerts);

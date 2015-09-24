@@ -22,6 +22,7 @@
 #include "common/sys/filename.h"
 // stl
 #include <stack>
+#include <vector>
 
 #ifdef _WIN32
 #  ifdef ospray_xml_EXPORTS
@@ -36,8 +37,8 @@
 namespace ospray {
   namespace xml {
 
+    struct Node;
     using embree::FileName;
-
     struct XMLDoc;
 
     /*! 'prop'erties in xml nodes are the 'name="value"' inside the
@@ -46,6 +47,7 @@ namespace ospray {
       std::string name;
       std::string value;
     };
+
     /*! a XML node, consisting of a name, a list of properties, and a
       set of child nodes */
     struct Node {

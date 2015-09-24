@@ -17,7 +17,7 @@
 #pragma once
 
 #include "ospray/common/OSPCommon.h"
-#include "tileSize.h"
+#include "ospray/render/util.h"
 
 namespace ospray {
 

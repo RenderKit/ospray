@@ -18,7 +18,7 @@
 
 /*! \file render/util.h Defines some utility functions shaared by different shading codes */
 
-#include "common/OSPCommon.h"
+#include "ospray/common/OSPCommon.h"
 
 namespace ospray {
 

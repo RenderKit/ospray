@@ -53,16 +53,24 @@ namespace ospray {
         values, and they're not being set in sharedstructuredvolume,
         either, so should we actually set them at all!? */
     // Compute the voxel value range for unsigned byte voxels if none was previously specified.
-    if (voxelType == "uchar" && findParam("voxelRange") == NULL) 
-      computeVoxelRange((unsigned char *) source, size_t(regionSize.x) * regionSize.y * regionSize.z);
+    Assert2(source,"NULL source in BlockBrickedVolume::setRegion()");
 
-    // Compute the voxel value range for float voxels if none was previously specified.
-    if (voxelType == "float" && findParam("voxelRange") == NULL) 
-      computeVoxelRange((float *) source, size_t(regionSize.x) * regionSize.y * regionSize.z);
-
-    // Compute the voxel value range for double voxels if none was previously specified.
-    if (voxelType == "double" && findParam("voxelRange") == NULL) 
-      computeVoxelRange((double *) source, size_t(regionSize.x) * regionSize.y * regionSize.z);
+    if (findParam("voxelRange") == NULL) {
+      // Compute the voxel value range for float voxels if none was
+      // previously specified.
+      const size_t numVoxelsInRegion
+        = (size_t)regionSize.x *
+        + (size_t)regionSize.y *
+        + (size_t)regionSize.z;
+      if (voxelType == "uchar") 
+        computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
+      else if (voxelType == "float") 
+        computeVoxelRange((float *)source, numVoxelsInRegion);
+      else if (voxelType == "double") 
+        computeVoxelRange((double *) source, numVoxelsInRegion);
+      else 
+        throw std::runtime_error("invalid voxelType in BlockBrickedVolume::setRegion()");
+    }
 
     // Copy voxel data into the volume.
     ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, 

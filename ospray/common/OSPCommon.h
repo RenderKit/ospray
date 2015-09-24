@@ -19,7 +19,12 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
-#ifdef _WIN32
+// mpi, if we need it
+#ifdef OSPRAY_MPI_DISTRIBUTED
+# include <mpi.h>
+#endif
+
+#if defined(__WIN32__) || defined(_WIN32)
 // ----------- windows only -----------
 # define _USE_MATH_DEFINES 1
 # include <cmath>
@@ -34,6 +39,7 @@ typedef int ssize_t;
 # include "unistd.h"
 #endif
 
+#include "OSPRayCMakeConfig.h"
 
 // embree
 #include "common/math/vec2.h"
@@ -42,13 +48,22 @@ typedef int ssize_t;
 #include "common/math/bbox.h"
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
-#include "common/sys/taskscheduler.h"
+//#include "common/sys/taskscheduler.h"
+#ifdef __NEW_EMBREE__
+# include "common/sys/atomic.h"
+# include "common/sys/condition.h"
+# include <unistd.h>
+#else
+# include "common/sys/sync/atomic.h"
+# include "common/sys/sync/condition.h"
+#endif
 
 // ospray
 #include "ospray/common/OSPDataType.h"
 
 // std
 #include <stdint.h> // for int64_t etc
+#include <sstream>
 
 #ifdef _WIN32
 #  ifdef ospray_EXPORTS
@@ -60,6 +75,13 @@ typedef int ssize_t;
 #  define OSPRAY_INTERFACE
 #endif
 
+
+// for MIC, disable the 'variable declared bbut never referenced'
+// warning, else the ISPC-generated code produces _far_ too many such
+// outputs
+#if defined(__INTEL_COMPILER) && defined(__MIC__)
+#pragma warning(disable:177 ) // variable declared but was never referenced
+#endif
 
 #ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
@@ -121,6 +143,9 @@ namespace ospray {
   typedef embree::BBox<vec2ui>   box2ui;
   typedef embree::BBox<vec2i>    region2i;
   typedef embree::BBox<vec2ui>   region2ui;
+
+  typedef embree::BBox<vec3i>    box3i;
+  typedef embree::BBox<vec3ui>   box3ui;
   
   typedef embree::BBox3f         box3f;
   typedef embree::BBox3fa        box3fa;
@@ -165,6 +190,8 @@ namespace ospray {
 # define AssertError(errMsg)                            \
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
 #endif
+
+  inline size_t rdtsc() { return embree::rdtsc(); }
 
   /*! logging level (cmdline: --osp:loglevel \<n\>) */
   extern uint32 logLevel;

@@ -16,8 +16,8 @@
 
 #pragma once
 
-#include "MPICommon.h"
-#include "../render/LoadBalancer.h"
+#include "ospray/mpi/MPICommon.h"
+#include "ospray/render/LoadBalancer.h"
 
 namespace ospray {
   namespace mpi {
@@ -55,17 +55,15 @@ namespace ospray {
         Slave();
         
         /*! a task for rendering a frame using the global tiled load balancer */
-        struct RenderTask : public embree::RefCount {
-          Ref<Renderer>                renderer;
-          Ref<FrameBuffer>             fb;
-          size_t                       numTiles_x;
-          size_t                       numTiles_y;
-          //          vec2i                        fbSize;
-          uint32                       channelFlags;
-          embree::TaskScheduler::Task  task;
-          
-          TASK_RUN_FUNCTION(RenderTask,run);
-          TASK_COMPLETE_FUNCTION(RenderTask,finish);
+        struct RenderTask : public ospray::Task {
+          Ref<Renderer>     renderer;
+          Ref<FrameBuffer>  fb;
+          size_t            numTiles_x;
+          size_t            numTiles_y;
+          uint32            channelFlags;
+
+          virtual void run(size_t jobID);
+          virtual void finish();
           
           virtual ~RenderTask() {}
         };
