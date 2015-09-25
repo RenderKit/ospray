@@ -39,6 +39,7 @@ struct RaytraceRenderer {
 
   int   aoSamplesPerFrame;
   float aoRayLength;
+  float aoWeight;
 };
 
 inline void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
@@ -184,7 +185,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
   uniform int depth = 0;
 
   vec3f Ka = make_vec3f(0.25f);
-  float ao = 0.0f;
+  float ao = 1.0f;
 
   while (1) {
 
@@ -220,10 +221,10 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
                   DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
     // Calculate AO contribution as ambient term //
-    if (depth == 0)
+    if (depth == 0 && self->aoSamplesPerFrame > 0 && self->aoWeight > 0.f)
     {
       const uniform int &nSamples = self->aoSamplesPerFrame;
-      ao = nSamples > 0 ? calculateAO(self, dg, sample) : 0.5f;
+      ao = calculateAO(self, dg, sample);
     }
 
     uniform Material *material = dg.material;
@@ -259,7 +260,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
       }
     }
 
-    Kd = ao * Kd;
+    // Blend AO into diffuse term
+    Kd = (self->aoWeight * ao) * Kd + ((1.f - self->aoWeight) * Kd);
 
     const float local_opacity = path_opacity * d;
 
@@ -345,6 +347,7 @@ export void RaytraceRenderer_set(void *uniform _self,
                                  const uniform bool shadowsEnabled,
                                  const uniform int aoSamplesPerFrame,
                                  const uniform float aoRayLength,
+                                 const uniform float aoWeight,
                                  void **uniform lights,
                                  const uniform uint32 numLights)
 {
@@ -355,6 +358,7 @@ export void RaytraceRenderer_set(void *uniform _self,
   self->shadowsEnabled = shadowsEnabled;
   self->aoSamplesPerFrame = aoSamplesPerFrame;
   self->aoRayLength = aoRayLength;
+  self->aoWeight = aoWeight;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
 }
@@ -364,7 +368,7 @@ export void *uniform RaytraceRenderer_create(void *uniform cppE)
   uniform RaytraceRenderer *uniform self = uniform new uniform RaytraceRenderer;
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = RaytraceRenderer_renderSample;
-  RaytraceRenderer_set(self, make_vec3f(1.f), true, 4, infinity, NULL, 0);
+  RaytraceRenderer_set(self, make_vec3f(1.f), true, 4, infinity, 1.f, NULL, 0);
 
   return self;
 }
