@@ -163,7 +163,7 @@ OSPLight OSPObjectFile::importLight(const tinyxml2::XMLNode *root)
 OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
 {
   // Create the OSPRay object.
-  OSPTriangleMesh triangleMesh = ospNewTriangleMesh();
+  OSPTriangleMesh triangleMesh = (OSPTriangleMesh)ospNewGeometry("trianglemesh");
 
   // Temporary storage for the file name attribute if specified.
   const char *triangleMeshFilename = NULL;

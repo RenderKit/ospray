@@ -14,8 +14,6 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
-
 #include "ospray/volume/DataDistributedBlockedVolume.h"
 
 namespace ospray {

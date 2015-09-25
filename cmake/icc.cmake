@@ -14,9 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-
-SET(CMAKE_CXX_COMPILER "icpc")
-SET(CMAKE_C_COMPILER "icc")
 IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -no-ansi-alias -static-intel -openmp -std=c++11")
 ELSE()

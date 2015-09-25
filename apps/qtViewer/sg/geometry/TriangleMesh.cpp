@@ -84,7 +84,7 @@ namespace ospray {
       assert(ctx.world);
       assert(ctx.world->ospModel);
 
-      ospGeometry = ospNewTriangleMesh();
+      ospGeometry = ospNewGeometry("trianglemesh");
       // set vertex data
       if (vertex && vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());
@@ -122,7 +122,7 @@ namespace ospray {
       assert(ctx.world);
       assert(ctx.world->ospModel);
 
-      ospGeometry = ospNewTriangleMesh();
+      ospGeometry = ospNewGeometry("trianglemesh");
       // set vertex arrays
       if (vertex && vertex->notEmpty())
         ospSetData(ospGeometry,"vertex",vertex->getOSP());

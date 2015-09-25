@@ -128,7 +128,7 @@ void VolumeViewer::addGeometry(std::string filename)
     return;
 
   // Attempt to load the geometry through the TriangleMeshFile loader.
-  OSPTriangleMesh triangleMesh = ospNewTriangleMesh();
+  OSPTriangleMesh triangleMesh = (OSPTriangleMesh)ospNewGeometry("trianglemesh");
 
   // If successful, commit the triangle mesh and add it to all models.
   if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {
@@ -158,6 +158,10 @@ void VolumeViewer::addGeometry(std::string filename)
 
 void VolumeViewer::screenshot(std::string filename)
 {
+  // Print current camera view parameters (can be used on command line to recreate view)
+  std::cout << "screenshot view parameters (use on command line to reproduce view): " << std::endl
+            << "  " << *(osprayWindow->getViewport()) << std::endl;
+
   // Get filename if not specified.
   if(filename.empty())
     filename = QFileDialog::getSaveFileName(this, tr("Save screenshot"), ".", "PNG files (*.png)").toStdString();

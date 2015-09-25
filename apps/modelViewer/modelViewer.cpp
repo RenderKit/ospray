@@ -700,8 +700,7 @@ namespace ospray {
       // DBG(PRINT(msgMesh.ptr));
 
       // create ospray mesh
-      OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewTriangleMesh();
-      // PRINT(ospMesh);
+      OSPGeometry ospMesh = g_alpha ? ospNewGeometry("alpha_aware_triangle_mesh") : ospNewGeometry("trianglemesh");
 
       // check if we have to transform the vertices:
       if (doesInstancing == false && msgModel->instance[i] != miniSG::Instance(i)) {

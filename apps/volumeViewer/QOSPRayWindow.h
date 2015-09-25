@@ -71,6 +71,8 @@ struct Viewport
   }
 };
 
+std::ostream &operator<<(std::ostream &o, const Viewport &viewport);
+
 
 class QOSPRayWindow : public QGLWidget
 {
