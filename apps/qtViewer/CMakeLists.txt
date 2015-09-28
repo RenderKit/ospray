@@ -42,6 +42,7 @@ SET(SRCS ${SRCS}
 
   # modelviewer proper
   ModelViewer.cpp
+	FPSCounter.cpp
 
   # the (th)ing to launch them all, and in darkness bind them...
   main.cpp

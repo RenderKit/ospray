@@ -16,6 +16,7 @@
 
 #include "ModelViewer.h"
 #include "widgets/affineSpaceManipulator/HelperGeometry.h"
+#include "FPSCounter.h"
 
 #include "sg/SceneGraph.h"
 #include "sg/Renderer.h"
@@ -23,33 +24,10 @@
 namespace ospray {
   namespace viewer {
 
-    float autoRotateSpeed = 0.f;
-
     using std::cout;
     using std::endl;
 
-    struct FPSCounter {
-      double fps;
-      double smooth_nom;
-      double smooth_den;
-      double frameStartTime;
-
-      FPSCounter() 
-      {
-        smooth_nom = 0.;
-        smooth_den = 0.;
-        frameStartTime = 0.;
-      }
-      void startRender() { frameStartTime = ospray::getSysTime(); }
-      void doneRender() { 
-        double seconds = ospray::getSysTime() - frameStartTime; 
-        fps = 1./seconds;
-        smooth_nom = smooth_nom * 0.8 + seconds;
-        smooth_den = smooth_den * 0.8 + 1.;
-      }
-      double getSmoothFPS() const { return smooth_den / smooth_nom; }
-      double getFPS() const { return fps; }
-    };
+    float autoRotateSpeed = 0.f;
 
     FPSCounter fps;
 
@@ -474,5 +452,6 @@ namespace ospray {
     void ModelViewer::lightChanged()
     {
     }
-  }
-}
+    
+  } // ::ospray::viewer
+} // ::ospray
