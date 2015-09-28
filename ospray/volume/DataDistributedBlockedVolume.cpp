@@ -14,7 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// ospray
 #include "ospray/volume/DataDistributedBlockedVolume.h"
+// ispc exports:
+#include "DataDistributedBlockedVolume_ispc.h"
 
 namespace ospray {
 
@@ -24,12 +27,33 @@ namespace ospray {
   }
   
   //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-  int DataDistributedBlockedVolume::setRegion(const void *source, const vec3i &index, const vec3i &count)
+  int DataDistributedBlockedVolume::setRegion(/* points to the first voxel to be copies. The
+                                                 voxels at 'soruce' MUST have dimensions
+                                                 'regionSize', must be organized in 3D-array
+                                                 order, and must have the same voxel type as the
+                                                 volume.*/
+                                              const void *source, 
+                                              /*! coordinates of the lower,
+                                                left, front corner of the target
+                                                region.*/
+                                              const vec3i &regionCoords, 
+                                              /*! size of the region that we're writing to; MUST
+                                                be the same as the dimensions of source[][][] */
+                                              const vec3i &regionSize)
   {
+    // Create the equivalent ISPC volume container and allocate memory for voxel data.
+    if (ispcEquivalent == NULL) createEquivalentISPC();
+    
+    PING;
+
+    return 0;
   }
 
   void DataDistributedBlockedVolume::createEquivalentISPC()
   {
+    if (ispcEquivalent != NULL) return;
+
+    ispcEquivalent = ispc::DDBVolume_create(this);
   }
 
 } // ::ospray
