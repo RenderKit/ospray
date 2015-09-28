@@ -24,16 +24,16 @@
 
 namespace ospray {
 
-  //! \brief A StructuredVolume is an abstraction for Volume subtypes
-  //!  in which the voxels are implicitly ordered.
-  //!
-  //!  The actual memory layout, dimensionality, and source of samples
-  //!  are unknown to this class.  Subclasses may implement specific
-  //!  memory layouts, addressing precision, and voxel types.  A type
-  //!  string passed to Volume::createInstance() specifies a particular
-  //!  concrete implementation.  This type string must be registered
-  //!  in OSPRay proper, or in a loaded module via OSP_REGISTER_VOLUME.
-  //!
+  /*! \brief A StructuredVolume is an abstraction for Volume subtypes
+    in which the voxels are implicitly ordered. */
+  /*! \detailed The actual memory layout, dimensionality, and source
+    of samples are unknown to this class.  Subclasses may implement
+    specific memory layouts, addressing precision, and voxel types.  A
+    type string passed to Volume::createInstance() specifies a
+    particular concrete implementation.  This type string must be
+    registered in OSPRay proper, or in a loaded module via
+    OSP_REGISTER_VOLUME.
+  */
   class StructuredVolume : public Volume {
   public:
 
@@ -49,8 +49,9 @@ namespace ospray {
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit();
 
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
+    //! Copy voxels into the volume at the given index
+    /*! \returns 0 on error, any non-zero value indicates success */
+    virtual int setRegion(const void *source_pointer, const vec3i &target_index, const vec3i &source_count) = 0;
 
   protected:
 

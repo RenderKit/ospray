@@ -28,7 +28,7 @@
 struct BlockBrickedVolume {
 
   //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
-  StructuredVolume inherited;
+  StructuredVolume super;
 
   //! Volume size in blocks per dimension with padding to the nearest block.
   uniform vec3i blockCount;

@@ -249,7 +249,7 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator, uniform flo
     vec2f cellRange;  GridAccelerator_getCellRange(accelerator, cellIndex, cellRange);
 
     // Get the maximum opacity in the volumetric value range.
-    float maximumOpacity = volume->inherited.transferFunction->getMaxOpacityInRange(volume->inherited.transferFunction, cellRange);
+    float maximumOpacity = volume->super.transferFunction->getMaxOpacityInRange(volume->super.transferFunction, cellRange);
 
     // Return the hit point if the grid cell is not fully transparent.
     if (maximumOpacity > 0.0f) return;

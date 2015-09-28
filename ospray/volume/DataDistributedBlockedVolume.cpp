@@ -24,6 +24,7 @@ namespace ospray {
   //! Allocate storage and populate the volume, called through the OSPRay API.
   void DataDistributedBlockedVolume::commit()
   {
+    NOTIMPLEMENTED;
   }
   
   //! Copy voxels into the volume at the given index (non-zero return value indicates success).
@@ -53,8 +54,14 @@ namespace ospray {
   {
     if (ispcEquivalent != NULL) return;
 
-    ispcEquivalent = ispc::DDBVolume_create(this);
+    ispcEquivalent = ispc::DDBVolume_create(this,(ispc::vec3i&)dimensions);
+    if (!ispcEquivalent) 
+      throw std::runtime_error("could not create create data distributed volume");
   }
+
+  // A volume type with internal data-distribution. needs a renderer
+  // that is capable of data-parallel rendering!
+  OSP_REGISTER_VOLUME(DataDistributedBlockedVolume, data_distributed_volume);
 
 } // ::ospray
 

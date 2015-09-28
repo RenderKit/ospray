@@ -151,7 +151,7 @@ inline void BlockBrickedVolume_allocateMemory(BlockBrickedVolume *uniform volume
   if (volume->blockMem != NULL) return;
 
   // Volume size in blocks per dimension with padding to the nearest block.
-  volume->blockCount = (volume->inherited.dimensions + BLOCK_VOXEL_WIDTH - 1) / BLOCK_VOXEL_WIDTH;
+  volume->blockCount = (volume->super.dimensions + BLOCK_VOXEL_WIDTH - 1) / BLOCK_VOXEL_WIDTH;
 
   // Volume size in blocks with padding.
   const uniform size_t blockCount = volume->blockCount.x * volume->blockCount.y * volume->blockCount.z;
@@ -286,24 +286,24 @@ void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume,
                                     const uniform int voxelType, 
                                     const uniform vec3i &dimensions)
 {
-  StructuredVolume_Constructor(&volume->inherited, cppEquivalent, dimensions);
+  StructuredVolume_Constructor(&volume->super, cppEquivalent, dimensions);
 
   volume->blockMem = NULL;
   volume->voxelType = (OSPDataType) voxelType;
 
   if (volume->voxelType == OSP_UCHAR) {
     volume->voxelSize = sizeof(uniform uint8);
-    volume->inherited.getVoxel = BlockBrickedVolumeUChar_getVoxel;
+    volume->super.getVoxel = BlockBrickedVolumeUChar_getVoxel;
     volume->setRegion = &BlockBrickedVolumeUChar_setRegion;
   }
   else if (volume->voxelType == OSP_FLOAT) {
     volume->voxelSize = sizeof(uniform float);
-    volume->inherited.getVoxel = BlockBrickedVolumeFloat_getVoxel;
+    volume->super.getVoxel = BlockBrickedVolumeFloat_getVoxel;
     volume->setRegion = &BlockBrickedVolumeFloat_setRegion;
   }
   else if (volume->voxelType == OSP_DOUBLE) {
     volume->voxelSize = sizeof(uniform double);    
-    volume->inherited.getVoxel = BlockBrickedVolumeDouble_getVoxel;
+    volume->super.getVoxel = BlockBrickedVolumeDouble_getVoxel;
     volume->setRegion = &BlockBrickedVolumeDouble_setRegion;
   }
   else {

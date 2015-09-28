@@ -16,9 +16,19 @@
 
 #include "ospray/volume/DataDistributedBlockedVolume.ih"
 
+void DDBVolume_Constructor(DDBVolume *uniform self,
+                           void *uniform cppEquivalent,
+                           const uniform vec3i &dimensions)
+{
+  StructuredVolume_Constructor(&self->super,cppEquivalent,dimensions);
+  print("constructor missing\n");
+}
 
-export void *uniform DDBVolume_create(void *uniform cppEquivalent)
+export void *uniform DDBVolume_create(void *uniform cppEquivalent,
+                                      const uniform vec3i &dimensions)
 {
   print("DDBVolume_create\n");
-  return NULL;
+  DDBVolume *uniform self = uniform new uniform DDBVolume;
+  DDBVolume_Constructor(self,cppEquivalent,dimensions);
+  return self;
 }
