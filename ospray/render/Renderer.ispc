@@ -64,10 +64,6 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
   float lens_du = 0.f,  lens_dv = 0.f;
   uniform int32 spp = self->spp;
 
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
-  const uniform int startSampleID = max(fb->accumID,0)*spp;
-
   if (spp >= 1) {
     ScreenSample screenSample;
     screenSample.z = inf;
@@ -77,6 +73,10 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
 
     const float spp_inv = 1.f / spp;
   
+    const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+    const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
+    const uniform int startSampleID = max(fb->accumID,0)*spp;
+
     for (uniform uint32 i=begin;i<end;i+=programCount) {
       const uint32 index = i + programIndex;
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[index];
@@ -116,11 +116,7 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
       setRGBAZ(tile,pixel,col,screenSample.alpha,screenSample.z);
     }
   } else {
-#if 1
-    print("sub-sampling not yet working in large-tile mode");
-#else
     if (fb->accumID >= 0) {
-      // compute 
       pixel_du = precomputedHalton2(fb->accumID);
       pixel_dv = precomputedHalton3(fb->accumID);
     }
@@ -134,7 +130,10 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
 
     const uniform int blocks = fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
 
-    for (uint32 i=programIndex;i<TILE_SIZE*TILE_SIZE/blocks;i+=programCount) {
+    const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+    const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE/blocks);
+
+    for (uint32 i=begin+programIndex;i<end;i+=programCount) {
       screenSample.sampleID.x        = tile.region.lower.x + z_order.xs[i*blocks];
       screenSample.sampleID.y        = tile.region.lower.y + z_order.ys[i*blocks];
       if ((screenSample.sampleID.x >= fb->size.x) | 
@@ -168,16 +167,16 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
         setRGBAZ(tile,pixel,screenSample.rgb,screenSample.alpha,screenSample.z);
       }
     }
-#endif
   }
 }
 
 void Renderer_default_renderTile(uniform Renderer *uniform self,
                                  uniform Tile &tile)
 {
-// #if 1
   precomputeZOrder();
-  uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+  uniform int32 spp = self->spp;
+  const uniform int blocks = self->fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+  uniform const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
   launch[numJobs] Renderer_default_renderTileJob(self,tile);
 }
 

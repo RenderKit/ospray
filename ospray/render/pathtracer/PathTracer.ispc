@@ -347,35 +347,31 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
 
  
-void PathTracer_beginFrame(uniform Renderer *uniform renderer,
+void PathTracer_beginFrame(uniform Renderer *uniform _self,
                            uniform FrameBuffer *uniform fb)
 {
 //  print("pathtracer new frame %\n",fb->accumID);
-  renderer->fb = fb;
-  uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
-//  print("rays: %\n", pt->numRays);
-  pt->numRays = 0;
+  _self->fb = fb;
+  uniform PathTracer  *uniform self = (uniform PathTracer *uniform)_self;
+//  print("rays: %\n", self->numRays);
+  self->numRays = 0;
 }
 
 
-task void PathTracer_renderTileJob(uniform Renderer *uniform renderer, 
+task void PathTracer_renderTileJob(uniform PathTracer *uniform self, 
                                    uniform Tile &tile,
                                    varying uint32 *uniform numRaysPerJob)
 {
-  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
-  const uniform int end   = begin     + RENDERTILE_PIXELS_PER_JOB;
-
-  uniform PathTracer  *uniform pt     = (uniform PathTracer *uniform)renderer;
-  uniform FrameBuffer *uniform fb     = renderer->fb;
+  uniform FrameBuffer *uniform fb   = self->super.fb;
+  uniform int32 spp = self->super.spp;
   numRaysPerJob[taskIndex] = 0;
 
-  const uniform int blocks
-    =  (renderer->spp > 0) 
-    || (fb->accumID > 0 
-        ? 1 
-        : min(1 << -2 * renderer->spp, TILE_SIZE*TILE_SIZE)
-        );
-  
+  const uniform int blocks = fb->accumID > 0 || spp > 0 ?
+                               1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+
+  const uniform int begin = taskIndex * RENDERTILE_PIXELS_PER_JOB;
+  const uniform int end   = min(begin + RENDERTILE_PIXELS_PER_JOB, TILE_SIZE*TILE_SIZE/blocks);
+
   for (uint32 i=begin+programIndex;i<end;i+=programCount) {
     const uint32 ix = tile.region.lower.x + z_order.xs[i*blocks];
     const uint32 iy = tile.region.lower.y + z_order.ys[i*blocks];
@@ -383,8 +379,9 @@ task void PathTracer_renderTileJob(uniform Renderer *uniform renderer,
       continue;
 
     uint32 numRays = 0;
-    ScreenSample screenSample = PathTracer_renderPixel(pt, ix, iy, numRays);
+    ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy, numRays);
     numRaysPerJob[taskIndex] = numRaysPerJob[taskIndex] + numRays;
+
     for (uniform int p = 0; p < blocks; p++) {
       const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
       setRGBAZ(tile, pixel, screenSample.rgb, screenSample.alpha, screenSample.z);
@@ -392,19 +389,21 @@ task void PathTracer_renderTileJob(uniform Renderer *uniform renderer,
   }
 }
 
-void PathTracer_renderTile(uniform Renderer *uniform renderer, uniform Tile &tile)
+void PathTracer_renderTile(uniform Renderer *uniform _self, uniform Tile &tile)
 {
-  uniform PathTracer *uniform pt = (uniform PathTracer *uniform)renderer;
-  uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+  uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
+  uniform int32 spp = self->super.spp;
+  const uniform int blocks = self->super.fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+  uniform const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
   varying uint32 numRaysPerJob[(TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB];
   
-  launch[numJobs] PathTracer_renderTileJob(renderer,tile,&numRaysPerJob[0]);
+  launch[numJobs] PathTracer_renderTileJob(self,tile,&numRaysPerJob[0]);
   sync;
   
   uint32 numRaysInTile = 0;
   for (uniform int i=0; i<numJobs; i++)
     numRaysInTile += numRaysPerJob[i];
-  pt->numRays += reduce_add(numRaysInTile);
+  self->numRays += reduce_add(numRaysInTile);
 }
 
 
