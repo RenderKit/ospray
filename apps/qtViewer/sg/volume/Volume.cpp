@@ -25,6 +25,8 @@ namespace ospray {
     // base volume class
     // =======================================================
 
+    bool Volume::useDataDistributedVolume = false;
+
     /*! \brief returns a std::string with the c++ name of this class */
     std::string Volume::toString() const
     { return "ospray::sg::Volume"; }
@@ -76,7 +78,9 @@ namespace ospray {
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
       
-      volume = ospNewVolume("block_bricked_volume");
+      volume = ospNewVolume(useDataDistributedVolume 
+                            ? "data_distributed_volume"
+                            : "block_bricked_volume");
       if (!volume)
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
 
@@ -149,7 +153,10 @@ namespace ospray {
 
       bool useBlockBricked = 0;
 
-      volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
+      if (useDataDistributedVolume) 
+        volume = ospNewVolume("data_distributed_volume");
+      else
+        volume = ospNewVolume(useBlockBricked ? "block_bricked_volume" : "shared_structured_volume");
       if (!volume)
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
       

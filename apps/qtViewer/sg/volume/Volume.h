@@ -44,6 +44,8 @@ namespace ospray {
           transferFunction->serialize(state);
       }
 
+      static bool useDataDistributedVolume;
+
       SG_NODE_DECLARE_MEMBER(Ref<TransferFunction>,transferFunction,TransferFunction);    
     };
 
