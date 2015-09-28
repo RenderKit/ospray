@@ -42,14 +42,14 @@ namespace ospray {
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
 
 
-#if EXP_DISTRIBUTED_VOLUME
-    this->gridOrigin += vec3f(myDomain.lower)*this->gridSpacing;
+// #if EXP_DISTRIBUTED_VOLUME
+//     this->gridOrigin += vec3f(myDomain.lower)*this->gridSpacing;
+//     ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
+//     ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
+// #else
     ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
     ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
-#else
-    ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
-    ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);
-#endif
+// #endif
 
     // Complete volume initialization (only on first commit).
     if (!finished) {
@@ -111,13 +111,10 @@ namespace ospray {
   // Compute the voxel value range for floating point voxels.
   void StructuredVolume::computeVoxelRange(const float *source, const size_t &count)
   {
-    PING; PRINT(count);
-    PRINT(source);
     for (size_t i=0 ; i < count ; i++) {
       voxelRange.x = std::min(voxelRange.x, source[i]);
       voxelRange.y = std::max(voxelRange.y, source[i]);
     }
-    PING;
   }
 
   // Compute the voxel value range for double precision floating point voxels.

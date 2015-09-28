@@ -17,10 +17,10 @@
 #include "ospray/volume/BlockBrickedVolume.ih"
 
 //! The number of bits used to represent the width of a Block in voxels.
-#define BLOCK_VOXEL_WIDTH_BITCOUNT (8)
+#define BLOCK_VOXEL_WIDTH_BITCOUNT (6)
 
 //! The number of bits used to represent the width of a brick in voxels.
-#define BRICK_VOXEL_WIDTH_BITCOUNT (4)
+#define BRICK_VOXEL_WIDTH_BITCOUNT (2)
 
 //! The number of bits used to represent the width of a block in bricks.
 #define BLOCK_BRICK_WIDTH_BITCOUNT (BLOCK_VOXEL_WIDTH_BITCOUNT - BRICK_VOXEL_WIDTH_BITCOUNT)

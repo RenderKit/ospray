@@ -32,6 +32,19 @@ namespace ospray {
       the respective voxels. */
   class DataDistributedBlockedVolume : public StructuredVolume {
   public:
+    /*! a single data-distributed block */
+    struct DDBlock {
+      //! range of voxels in this block
+      box3i domain;
+      //! 3D bounding box
+      box3f bounds;
+      /*! ID of node that owns this block */
+      int owner;
+      /*! 'bool' of whether this block is owned by me, or not */
+      int mine;
+
+      void *ispcVolumeHandle;
+    };
 
     //! Constructor.
     DataDistributedBlockedVolume() {};
@@ -53,10 +66,14 @@ namespace ospray {
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC();
 
-    /*! size of each block, in voxels */
+    /*! size of each block, in voxels, WITHOUT padding (in practice the blocks WILL be padded) */
     vec3i blockSize;
-    /*! number of logical blocks in x, y, and z */
-    vec3i numBlocks;
+    /*! number of blocks, per dimension */
+    vec3i ddBlocks;
+    /*! number of blocks total */
+    size_t numDDBlocks;
+    /*! list of data distributed blocks */
+    DDBlock *ddBlock;
   };
 
 } // ::ospray

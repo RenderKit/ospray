@@ -24,11 +24,29 @@ void DDBVolume_Constructor(DDBVolume *uniform self,
   print("constructor missing\n");
 }
 
+
+/*! a dummy function, for now */
+inline void DDBVolume_getVoxel(void *uniform _self,
+                               const varying vec3i &index,
+                               varying float &value)
+{
+  print("ddbv::getvoxel\n");
+  value = 0.5f;
+}
+
 export void *uniform DDBVolume_create(void *uniform cppEquivalent,
-                                      const uniform vec3i &dimensions)
+                                      uniform int voxelType,
+                                      const uniform vec3i &dimensions,
+                                      const uniform vec3i &ddBlocks,
+                                      const uniform vec3i &blockSize,
+                                      DDBVolumeBlock *uniform ddBlock
+                                      )
 {
   print("DDBVolume_create\n");
   DDBVolume *uniform self = uniform new uniform DDBVolume;
   DDBVolume_Constructor(self,cppEquivalent,dimensions);
+
+  self->super.getVoxel = DDBVolume_getVoxel;
+
   return self;
 }

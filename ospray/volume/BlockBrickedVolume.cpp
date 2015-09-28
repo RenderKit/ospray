@@ -24,8 +24,14 @@ namespace ospray {
 
   void BlockBrickedVolume::commit()
   {
-    // The ISPC volume container should already exist.
-    exitOnCondition(ispcEquivalent == NULL, "the volume data must be set via ospSetRegion() prior to commit for this volume type");
+    // The ISPC volume container should already exist. We (currently)
+    // require 'dimensions' etc to be set first, followed by call(s)
+    // to 'setRegion', and only a final commit at the
+    // end. 'dimensions' etc may/will _not_ be committed before
+    // setregion.
+    exitOnCondition(ispcEquivalent == NULL, 
+                    "the volume data must be set via ospSetRegion() "
+                    "prior to commit for this volume type");
 
     // StructuredVolume commit actions.
     StructuredVolume::commit();

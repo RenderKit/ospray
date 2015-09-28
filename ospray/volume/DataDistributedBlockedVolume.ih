@@ -37,6 +37,23 @@
 #include "ospray/common/OSPDataType.h"
 #include "ospray/volume/StructuredVolume.ih"
 
+
+
+struct DDBVolumeBlock 
+{
+  //! range of voxels in this block
+  box3i domain;
+  //! 3D bounding box
+  box3f bounds;
+  /*! ID of node that owns this block */
+  int owner;
+  /*! 'bool' of whether this block is owned by me, or not */
+  int mine;
+
+  void *ispcVolumeHandle;
+};
+
+
 //! \brief ISPC-side code for a data-distributed block-bricked volume class
 /*! \detailed this class internally uses blocking and bricking, but
     its key distinction is that it uses a data-distributed layout.
@@ -72,4 +89,5 @@ struct DDBVolume {
                             const uniform vec3i &regionSize, 
                             const uniform vec3i &targetCoord000);
 };
+
 

@@ -24,7 +24,7 @@ namespace ospray {
   //! Allocate storage and populate the volume, called through the OSPRay API.
   void DataDistributedBlockedVolume::commit()
   {
-    NOTIMPLEMENTED;
+    StructuredVolume::commit();
   }
   
   //! Copy voxels into the volume at the given index (non-zero return value indicates success).
@@ -45,7 +45,8 @@ namespace ospray {
     // Create the equivalent ISPC volume container and allocate memory for voxel data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
     
-    PING;
+    float f = 0.5f;
+    computeVoxelRange(&f,1);
 
     return 0;
   }
@@ -54,7 +55,31 @@ namespace ospray {
   {
     if (ispcEquivalent != NULL) return;
 
-    ispcEquivalent = ispc::DDBVolume_create(this,(ispc::vec3i&)dimensions);
+    // Get the voxel type.
+    voxelType = getParamString("voxelType", "unspecified");  
+    exitOnCondition(getVoxelType() == OSP_UNKNOWN, 
+                    "unrecognized voxel type (must be set before calling ospSetRegion())");
+    
+    // Get the volume dimensions.
+    this->dimensions = getParam3i("dimensions", vec3i(0));
+    exitOnCondition(reduce_min(this->dimensions) <= 0, 
+                    "invalid volume dimensions (must be set before calling ospSetRegion())");
+
+    ddBlocks = vec3i(4,4,4);
+    blockSize = divRoundUp(dimensions,ddBlocks);
+    PRINT(ddBlocks);
+    PRINT(blockSize);
+
+    numDDBlocks = embree::reduce_mul(ddBlocks);
+    ddBlock = new DDBlock[numDDBlocks];
+
+    // Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
+    ispcEquivalent = ispc::DDBVolume_create(this,                                                             
+                                            (int)getVoxelType(), 
+                                            (const ispc::vec3i&)dimensions,
+                                            (const ispc::vec3i&)ddBlocks,
+                                            (const ispc::vec3i&)blockSize,
+                                            (ispc::DDBVolumeBlock*)ddBlock);
     if (!ispcEquivalent) 
       throw std::runtime_error("could not create create data distributed volume");
   }
