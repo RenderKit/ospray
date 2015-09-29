@@ -72,7 +72,7 @@ namespace ospray {
 
       void Slave::RenderTask::run(size_t taskIndex) 
       {
-#if EXP_IMAGE_COMPOSITING
+#ifdef OSPRAY_EXP_IMAGE_COMPOSITING
         const size_t tileID = (taskIndex + 3*worker.rank) % (numTiles_x*numTiles_y);
 #else
         const size_t tileID = taskIndex;

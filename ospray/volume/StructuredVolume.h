@@ -91,7 +91,7 @@ namespace ospray {
     //! Voxel type.
     std::string voxelType;
 
-#if EXP_DISTRIBUTED_VOLUME
+#ifdef OSPRAY_EXP_DISTRIBUTED_VOLUME
     // logical dimensions of FULL volume, including all distributed parts (if any)
     vec3i logicalDimensions;
 

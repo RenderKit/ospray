@@ -39,7 +39,7 @@ typedef int ssize_t;
 # include "unistd.h"
 #endif
 
-#include "OSPRayCMakeConfig.h"
+#include "OSPConfig.h"
 
 // embree
 #include "common/math/vec2.h"

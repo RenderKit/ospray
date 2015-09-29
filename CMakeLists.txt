@@ -47,10 +47,6 @@ ELSE()
   ENDIF()
 ENDIF()
 
-# create a configure file that both ospray and ispc can read the cmake config from
-CONFIGURE_FILE(ospray/common/CMakeConfig_template.h OSPRayCMakeConfig.h)
-INSTALL(FILES ${CMAKE_BINARY_DIR}/OSPRayCMakeConfig.h DESTINATION include/ospray)
-
 SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
@@ -141,3 +137,9 @@ IF (OSPRAY_MIC)
   SET (OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()
+
+# create a configure file that both ospray and ispc can read the cmake config from
+# needs to be at the end, after all cache variables have been set
+CONFIGURE_FILE(ospray/common/OSPConfig.h.in OSPConfig.h)
+INSTALL(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h DESTINATION include/ospray)
+

@@ -245,8 +245,8 @@ namespace ospray {
       for (size_t x=0;x<numPixels.x;x+=TILE_SIZE,tileID++) {
         size_t ownerID = tileID % (comm->group->size-1);
         if (clientRank(ownerID) == comm->group->rank) {
-#if EXP_IMAGE_COMPOSITING
-# if EXP_ALPHA_BLENDING
+#ifdef OSPRAY_EXP_IMAGE_COMPOSITING
+# ifdef OSPRAY_EXP_ALPHA_BLENDING
           TileData *td = new AlphaBlendTile_simple(this,vec2i(x,y),tileID,ownerID);
 # else
           TileData *td = new ZCompositeTile(this,vec2i(x,y),tileID,ownerID);

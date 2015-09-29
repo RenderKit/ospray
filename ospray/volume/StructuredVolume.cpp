@@ -42,7 +42,7 @@ namespace ospray {
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
 
 
-// #if EXP_DISTRIBUTED_VOLUME
+// #ifdef OSPRAY_EXP_DISTRIBUTED_VOLUME
 //     this->gridOrigin += vec3f(myDomain.lower)*this->gridSpacing;
 //     ispc::StructuredVolume_setGridOrigin(ispcEquivalent, (const ispc::vec3f &) this->gridOrigin);
 //     ispc::StructuredVolume_setGridSpacing(ispcEquivalent, (const ispc::vec3f &) this->gridSpacing);

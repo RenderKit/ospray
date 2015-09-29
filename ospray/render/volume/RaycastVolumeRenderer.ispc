@@ -304,9 +304,9 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   float depth = infinity;
   RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color, depth);
 
-#if EXP_ALPHA_BLENDING
+#ifdef OSPRAY_EXP_ALPHA_BLENDING
   // do NOT blend in background.... would otherwise blend that in in each tile!
-  cout << "warning: should not actually blend in background color here; need to fix this in compositing mode" << endl;
+  print("warning: should not actually blend in background color here; need to fix this in compositing mode");
 #endif
 
   // Attenuate the foreground and background colors by the opacity.

@@ -18,11 +18,11 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-SET(OSPRAY_EXP_COMPOSITING OFF CACHE BOOL "Experimental compositing")
-IF (OSPRAY_EXP_COMPOSITING)
+OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
+IF (OSPRAY_EXP_IMAGE_COMPOSITING)
 
-  SET(OSPRAY_EXP_ALPHA_BLENDING OFF CACHE BOOL "Experimental alpha-blending for compositing")
-  SET(OSPRAY_EXP_DISTRIBUTED_VOLUME OFF CACHE BOOL "Experimental support for distributed volumes")
+  OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
+  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
 ENDIF()
 
 # build and configure embree
