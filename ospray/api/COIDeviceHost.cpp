@@ -30,8 +30,6 @@
 // std
 #include <map>
 
-#include "ospray/fb/tileSize.h"
-
 #define MAX_ENGINES 100
 
 #define MANUAL_DATA_UPLOADS 1
@@ -1006,8 +1004,8 @@ namespace ospray {
         uint32 *src = (uint32*)devBuffer[engineID];
         uint32 *dst = (uint32*)fb->hostMem;
 
-        const size_t numTilesX = divRoundUp(sizeX,TILE_SIZE);
-        const size_t numTilesY = divRoundUp(sizeY,TILE_SIZE);
+        const size_t numTilesX = divRoundUp(sizeX,(size_t)TILE_SIZE);
+        const size_t numTilesY = divRoundUp(sizeY,(size_t)TILE_SIZE);
 // #pragma omp parallel for
         for (size_t tileY=0;tileY<numTilesY;tileY++) {
 // #pragma omp parallel for
