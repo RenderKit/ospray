@@ -48,21 +48,63 @@ namespace ospray {
       \param cameraDir,cameraUp The camera direction and up vectors
 
       \param glDepthBuffer The OpenGL depth buffer, can be read via glReadPixels() using
-      the GL_FLOAT format. The buffer will be modified with the OSPRay depth values. The
-      application is responsible for freeing this buffer.
+      the GL_FLOAT format. The application is responsible for freeing this buffer.
 
       \param glDepthBufferWidth,glDepthBufferHeight Dimensions of the provided OpenGL depth
       buffer
     */
-    extern OSPTexture2D getOSPDepthTextureFromOpenGLPerspective(double fovy,
-                                                                double aspect,
-                                                                double zNear,
-                                                                double zFar,
-                                                                osp::vec3f cameraDir,
-                                                                osp::vec3f cameraUp,
-                                                                float *glDepthBuffer,
-                                                                size_t glDepthBufferWidth,
-                                                                size_t glDepthBufferHeight);
+    extern OSPTexture2D getOSPDepthTextureFromOpenGLPerspective(const double &fovy,
+                                                                const double &aspect,
+                                                                const double &zNear,
+                                                                const double &zFar,
+                                                                const osp::vec3f &cameraDir,
+                                                                const osp::vec3f &cameraUp,
+                                                                const float *glDepthBuffer,
+                                                                const size_t &glDepthBufferWidth,
+                                                                const size_t &glDepthBufferHeight);
+
+    /*! \brief Compute and return OpenGL depth values from the depth component of the given
+        OSPRay framebuffer, using parameters of the current OpenGL context and assuming a
+        perspective projection.
+
+        This function automatically determines the parameters of the OpenGL perspective
+        projection and camera direction / up vectors. It assumes these values match those
+        provided to OSPRay (fovy, aspect, camera direction / up vectors). It then maps the
+        OSPRay depth buffer and transforms it to OpenGL depth values according to the OpenGL
+        perspective projection.
+
+        The OSPRay frame buffer object must have been constructed with the OSP_FB_DEPTH flag.
+    */
+    extern float * getOpenGLDepthFromOSPPerspective(OSPFrameBuffer frameBuffer,
+                                                    const osp::vec2i &frameBufferSize);
+
+    /*! \brief Compute and return OpenGL depth values from the provided view parameters and
+        OSPRay depth buffer, assuming a perspective projection.
+
+        \param fovy Specifies the field of view angle, in degrees, in the y direction
+
+        \param aspect Specifies the aspect ratio that determines the field of view in the x
+        direction
+
+        \param zNear,zFar Specifies the distances from the viewer to the near and far
+        clipping planes
+
+        \param cameraDir,cameraUp The camera direction and up vectors
+
+        \param ospDepthBuffer The OSPRay depth buffer, can be read via
+        ospMapFrameBuffer(frameBuffer, OSP_FB_DEPTH). The application is responsible for
+        freeing this buffer.
+
+        \param frameBufferSize Dimensions of the provided OSPRay depth uffer
+    */
+    extern float * getOpenGLDepthFromOSPPerspective(const double &fovy,
+                                                    const double &aspect,
+                                                    const double &zNear,
+                                                    const double &zFar,
+                                                    const osp::vec3f &cameraDir,
+                                                    const osp::vec3f &cameraUp,
+                                                    const float *ospDepthBuffer,
+                                                    const osp::vec2i &frameBufferSize);
 
   }
 }
