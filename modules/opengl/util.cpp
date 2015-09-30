@@ -70,22 +70,24 @@ namespace ospray {
       return depthTexture;
     }
 
-    OSPTexture2D getOSPDepthTextureFromOpenGLPerspective(double fovy,
-                                                         double aspect,
-                                                         double zNear,
-                                                         double zFar,
-                                                         osp::vec3f cameraDir,
-                                                         osp::vec3f cameraUp,
-                                                         float *glDepthBuffer,
-                                                         size_t glDepthBufferWidth,
-                                                         size_t glDepthBufferHeight)
+    OSPTexture2D getOSPDepthTextureFromOpenGLPerspective(const double &fovy,
+                                                         const double &aspect,
+                                                         const double &zNear,
+                                                         const double &zFar,
+                                                         const osp::vec3f &cameraDir,
+                                                         const osp::vec3f &cameraUp,
+                                                         const float *glDepthBuffer,
+                                                         const size_t &glDepthBufferWidth,
+                                                         const size_t &glDepthBufferHeight)
     {
       // this should later be done in ISPC...
+
+      float *ospDepth = new float[glDepthBufferWidth * glDepthBufferHeight];
 
       // transform OpenGL depth to linear depth
       for (size_t i=0; i<glDepthBufferWidth*glDepthBufferHeight; i++) {
         const double z_n = 2.0 * glDepthBuffer[i] - 1.0;
-        glDepthBuffer[i] = 2.0 * zNear * zFar / (zFar + zNear - z_n * (zFar - zNear));
+        ospDepth[i] = 2.0 * zNear * zFar / (zFar + zNear - z_n * (zFar - zNear));
       }
 
       // transform from orthogonal Z depth to ray distance t
@@ -102,17 +104,104 @@ namespace ospray {
 
       for (size_t j=0; j<glDepthBufferHeight; j++)
         for (size_t i=0; i<glDepthBufferWidth; i++) {
-          osp::vec3f dir_ij = normalize(dir_00 + float(i)/float(glDepthBufferWidth-1) * dir_du + float(j)/float(glDepthBufferHeight-1) * dir_dv);
+          const osp::vec3f dir_ij = normalize(dir_00 + float(i)/float(glDepthBufferWidth-1) * dir_du + float(j)/float(glDepthBufferHeight-1) * dir_dv);
 
-          float t = glDepthBuffer[j*glDepthBufferWidth+i] / dot(cameraDir, dir_ij);
-          glDepthBuffer[j*glDepthBufferWidth+i] = t;
+          const float t = ospDepth[j*glDepthBufferWidth+i] / dot(cameraDir, dir_ij);
+          ospDepth[j*glDepthBufferWidth+i] = t;
         }
 
       // nearest texture filtering required for depth textures -- we don't want interpolation of depth values...
-      OSPTexture2D depthTexture = ospNewTexture2D(glDepthBufferWidth, glDepthBufferHeight, OSP_FLOAT, glDepthBuffer, OSP_TEXTURE_FILTER_NEAREST);
+      OSPTexture2D depthTexture = ospNewTexture2D(glDepthBufferWidth, glDepthBufferHeight, OSP_FLOAT, ospDepth, OSP_TEXTURE_FILTER_NEAREST);
+
+      delete[] ospDepth;
 
       return depthTexture;
     }
+
+    float * getOpenGLDepthFromOSPPerspective(OSPFrameBuffer frameBuffer,
+                                             const osp::vec2i &frameBufferSize)
+    {
+      // compute fovy, aspect, zNear, zFar from OpenGL projection matrix
+      // this assumes fovy, aspect match the values set on the OSPRay perspective camera!
+      GLdouble glProjectionMatrix[16];
+      glGetDoublev(GL_PROJECTION_MATRIX, glProjectionMatrix);
+
+      const double m0  = glProjectionMatrix[0];
+      const double m5  = glProjectionMatrix[5];
+      const double m10 = glProjectionMatrix[10];
+      const double m14 = glProjectionMatrix[14];
+      const double k = (m10 - 1.0f) / (m10 + 1.0f);
+
+      const double fovy = 2. * atan(1.0f / m5) * 180./M_PI;
+      const double aspect = m5 / m0;
+      const double zNear = (m14 * (1.0f - k)) / (2.0f * k);
+      const double zFar = k * zNear;
+
+      // get camera direction and up vectors from model view matrix
+      // again, this assumes these values match those set on the OSPRay camera!
+      GLdouble glModelViewMatrix[16];
+      glGetDoublev(GL_MODELVIEW_MATRIX, glModelViewMatrix);
+
+      const osp::vec3f  cameraUp( glModelViewMatrix[1],  glModelViewMatrix[5],  glModelViewMatrix[9]);
+      const osp::vec3f cameraDir(-glModelViewMatrix[2], -glModelViewMatrix[6], -glModelViewMatrix[10]);
+
+      // map OSPRay depth buffer from provided frame buffer
+      const float *ospDepthBuffer = (const float *)ospMapFrameBuffer(frameBuffer, OSP_FB_DEPTH);
+
+      // get OpenGL depth from OSPRay depth
+      float *glDepth = getOpenGLDepthFromOSPPerspective(fovy, aspect, zNear, zFar, cameraDir, cameraUp, ospDepthBuffer, frameBufferSize);
+
+      // unmap OSPRay depth buffer
+      ospUnmapFrameBuffer(ospDepthBuffer, frameBuffer);
+
+      return glDepth;
+    }
+
+
+    float * getOpenGLDepthFromOSPPerspective(const double &fovy,
+                                             const double &aspect,
+                                             const double &zNear,
+                                             const double &zFar,
+                                             const osp::vec3f &cameraDir,
+                                             const osp::vec3f &cameraUp,
+                                             const float *ospDepthBuffer,
+                                             const osp::vec2i &frameBufferSize)
+   {
+     // this should later be done in ISPC...
+
+     const size_t ospDepthBufferWidth =  (size_t)frameBufferSize.x;
+     const size_t ospDepthBufferHeight = (size_t)frameBufferSize.y;
+
+     float *glDepth = new float[ospDepthBufferWidth * ospDepthBufferHeight];
+
+      // transform from ray distance t to orthogonal Z depth
+     osp::vec3f dir_du = normalize(cross(cameraDir, cameraUp));
+     osp::vec3f dir_dv = normalize(cross(dir_du, cameraDir));
+
+     const float imagePlaneSizeY = 2.f * tanf(fovy/2.f * M_PI/180.f);
+     const float imagePlaneSizeX = imagePlaneSizeY * aspect;
+
+     dir_du *= imagePlaneSizeX;
+     dir_dv *= imagePlaneSizeY;
+
+     const osp::vec3f dir_00 = cameraDir - .5f * dir_du - .5f * dir_dv;
+
+     for (size_t j=0; j<ospDepthBufferHeight; j++)
+       for (size_t i=0; i<ospDepthBufferWidth; i++) {
+         const osp::vec3f dir_ij = normalize(dir_00 + float(i)/float(ospDepthBufferWidth-1) * dir_du + float(j)/float(ospDepthBufferHeight-1) * dir_dv);
+
+         glDepth[j*ospDepthBufferWidth+i] = ospDepthBuffer[j*ospDepthBufferWidth+i] * dot(cameraDir, dir_ij);
+       }
+
+      // transform from linear to nonlinear OpenGL depth
+      const double A = -(zFar + zNear) / (zFar - zNear);
+      const double B = -2. * zFar*zNear / (zFar - zNear);
+
+      for (size_t i=0; i<ospDepthBufferWidth*ospDepthBufferHeight; i++)
+        glDepth[i] = 0.5*(-A*glDepth[i] + B) / glDepth[i] + 0.5;
+
+     return glDepth;
+   }
 
   }
 }
