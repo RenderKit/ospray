@@ -50,12 +50,14 @@ namespace ospray {
 
       int   numSamples = getParam1i("aoSamples", 4);
       float rayLength  = getParam1f("aoOcclusionDistance", 1e20f);
+      float aoWeight   = getParam1f("aoWeight", 1.f);
 
       ispc::RaytraceRenderer_set(getIE(),
                                  (ispc::vec3f&)bgColor,
                                  shadowsEnabled,
                                  numSamples,
                                  rayLength,
+                                 aoWeight,
                                  lightPtr,
                                  lightArray.size());
     }
