@@ -50,10 +50,11 @@ varying LightSample PointLight_sample(const uniform Light *uniform _self,
 
   // convert from power to radiance by attenuating by distance^2
   sample.radiance = self->power * (invdist * invdist);
+  const float sinTheta = self->radius * invdist;
 
-  if (self->radius > 0.) {
+  if (self->radius > 0. & sinTheta > 0.005f) {
     // sample surface of sphere as seen by hit point -> cone of directions
-    const float sinTheta = self->radius * invdist;
+    // for very small cones treat as point light, because float precision is not good enough 
     if (sinTheta < 1.f) {
       const float cosTheta = sqrt(1.f - sinTheta * sinTheta);
       const vec3f localDir = uniformSampleCone(cosTheta, s);
