@@ -165,3 +165,59 @@ inline varying vec2f RandomTEA__getFloats(varying RandomTEA* uniform this) {
   const float tofloat = 2.3283064365386962890625e-10f; // 1/2^32
   return make_vec2f(this->v0 * tofloat, this->v1 * tofloat);
 }
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Utility functions
+
+inline float CranleyPattersonRotation(float x, float dx)
+{
+  x += dx;
+  if (x >= 1.f)
+    x -= 1.f;
+
+  return x;
+}
+
+inline vec2f CranleyPattersonRotation(vec2f v, vec2f dv)
+{
+  const float x = CranleyPattersonRotation(v.x, dv.x);
+  const float y = CranleyPattersonRotation(v.y, dv.y);
+
+  return make_vec2f(x, y);
+}
+
+inline float radicalInverse(uint32 idx, const uint32 base)  
+{
+  float f = 0.f, g = 1.0f, inv = 1.0f/base;
+
+  while (idx > 0) {
+    g *= inv;
+    f += (idx % base) * g;
+    idx /= base;
+  }
+
+  return f;
+}
+
+// specialized version for base 2
+inline float radicalInverse2(uint32 idx)
+{
+  float f = 0.f, g = 1.0f;
+
+  while (idx > 0) {
+    g *= 0.5f;
+    f += idx & 1 ? g : 0.f;
+    idx >>= 1;
+  }
+
+  return f;
+}
+
+
+///////////////////////////////////////////////////////////////////////////////
+// Hammersley - low discrepancy random numbers; only two dimensions; no state
+
+inline varying vec2f RandomHammersley2__getFloats(varying unsigned int idx) {
+  return make_vec2f(rcp((float)idx), radicalInverse2(idx));
+}

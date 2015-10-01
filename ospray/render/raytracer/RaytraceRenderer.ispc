@@ -20,11 +20,9 @@
 #include "ospray/texture/Texture2D.ih"
 #include "ospray/lights/Light.ih"
 #include "ospray/render/Renderer.ih"
+#include "ospray/math/random.ih"
 
 #include "RaytraceMaterial.ih"
-
-//! \note Using RNG from pathtracer
-#include "ospray/render/pathtracer/samplers/Random.ih"
 
 #define ALPHA_THRESHOLD (.05f)
 
@@ -51,20 +49,6 @@ inline void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
   biNorm0 = normalize(cross(biNorm1,gNormal));
 }
 
-inline float rotate(float x, float dx)
-{
-  x += dx;
-  if (x >= 1.f) x -= 1.f;
-  return x;
-}
-
-inline uniform float rotate(uniform float x, uniform float dx)
-{
-  x += dx;
-  if (x >= 1.f) x -= 1.f;
-  return x;
-}
-
 inline vec3f getRandomDir(varying RandomTEA* uniform rng,
                           const vec3f biNorm0,
                           const vec3f biNorm1,
@@ -73,8 +57,8 @@ inline vec3f getRandomDir(varying RandomTEA* uniform rng,
                           const uniform float epsilon)
 {
   const vec2f rn = RandomTEA__getFloats(rng);
-  const float r0 = rotate(rn.x, rot_x);
-  const float r1 = rotate(rn.y, rot_y);
+  const float r0 = CranleyPattersonRotation(rn.x, rot_x);
+  const float r1 = CranleyPattersonRotation(rn.y, rot_y);
 
   const float w = sqrt(1.f-r1);
   const float x = cos((2.f*M_PI)*r0)*w;

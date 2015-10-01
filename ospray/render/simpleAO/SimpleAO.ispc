@@ -19,12 +19,10 @@
 #include "ospray/common/Ray.ih"
 #include "ospray/render/util.ih"
 #include "ospray/math/math.ih"
+#include "ospray/math/random.ih"
 #include "ospray/common/Model.ih"
 #include "ospray/render/Renderer.ih"
 #include "ospray/texture/Texture2D.ih"
-
-//! \note Using RNG from pathtracer
-#include "ospray/render/pathtracer/samplers/Random.ih"
 
 struct SimpleAO {
   uniform Renderer super;

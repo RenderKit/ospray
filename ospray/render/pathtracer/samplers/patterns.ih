@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "Random.ih"
+#include "math/random.ih"
 #include "Permutation.ih"
 
 /*! Create a set of n jittered 1D samples, using the provided 

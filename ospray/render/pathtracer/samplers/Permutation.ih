@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "Random.ih"
+#include "math/random.ih"
 
 /*! Random permutation. */
 struct UniformPermutation
