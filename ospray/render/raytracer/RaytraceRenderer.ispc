@@ -72,15 +72,13 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir);
-    ao_ray.t0 = self->super.epsilon;
-    ao_ray.t  = self->aoRayLength - self->super.epsilon;
+    setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir,
+           self->super.epsilon, self->aoRayLength);
     if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
       hits++;
   }
 
-  float frac_visible = (samplesPerFrame-hits) * (1.0f/samplesPerFrame);
-  return min(.01f + 1.1f * frac_visible, 1.f);
+  return 1.0f - hits/samplesPerFrame;
 }
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model,
