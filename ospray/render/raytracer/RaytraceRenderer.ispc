@@ -21,6 +21,8 @@
 #include "ospray/lights/Light.ih"
 #include "ospray/render/Renderer.ih"
 #include "ospray/math/random.ih"
+#include "ospray/math/sampling.ih"
+#include "ospray/math/LinearSpace.ih"
 
 #include "RaytraceMaterial.ih"
 
@@ -40,33 +42,6 @@ struct RaytraceRenderer {
   float aoWeight;
 };
 
-inline void getBinormals(vec3f &biNorm0, vec3f &biNorm1, const vec3f &gNormal)
-{
-  biNorm0 = make_vec3f(1.f,0.f,0.f);
-  if (abs(dot(biNorm0,gNormal)) > .95f)
-    biNorm0 = make_vec3f(0.f,1.f,0.f);
-  biNorm1 = normalize(cross(biNorm0,gNormal));
-  biNorm0 = normalize(cross(biNorm1,gNormal));
-}
-
-inline vec3f getRandomDir(varying RandomTEA* uniform rng,
-                          const vec3f biNorm0,
-                          const vec3f biNorm1,
-                          const vec3f gNormal,
-                          const float rot_x, const float rot_y,
-                          const uniform float epsilon)
-{
-  const vec2f rn = RandomTEA__getFloats(rng);
-  const float r0 = CranleyPattersonRotation(rn.x, rot_x);
-  const float r1 = CranleyPattersonRotation(rn.y, rot_y);
-
-  const float w = sqrt(1.f-r1);
-  const float x = cos((2.f*M_PI)*r0)*w;
-  const float y = sin((2.f*M_PI)*r0)*w;
-  const float z = sqrt(r1)+epsilon;
-  return x*biNorm0+y*biNorm1+z*gNormal;
-}
-
 inline float calculateAO(const uniform RaytraceRenderer *uniform self,
                          varying DifferentialGeometry &dg,
                          varying ScreenSample &sample)
@@ -75,8 +50,8 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
   uniform int framesPer16 = 16 / samplesPerFrame;
   int accumID = sample.sampleID.z / framesPer16;
   int sampleOfs = sample.sampleID.z % framesPer16;
-  float rot_x = 1.f - precomputedHalton3(accumID);
-  float rot_y = 1.f - precomputedHalton5(accumID);
+  const vec2f rot = make_vec2f(precomputedHalton3(accumID),
+                               precomputedHalton5(accumID));
 
   const int ix = sample.sampleID.x;
   const int iy = sample.sampleID.y;
@@ -88,19 +63,19 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
   RandomTEA__Constructor(rng, (fb->size.x * iy) + ix, fb->accumID);
 
   int hits = 0;
-  vec3f biNormU, biNormV;
-  const vec3f N = dg.Ns;
-  getBinormals(biNormU, biNormV, N);
+  const linear3f localToWorld = frame(dg.Ns);
 
   for (uniform int i = 0; i < samplesPerFrame; i++) {
-    const vec3f ao_dir = getRandomDir(rng, biNormU, biNormV, N,
-                                      rot_x, rot_y, self->super.epsilon);
+    const vec2f s = RandomTEA__getFloats(rng);
+    const vec2f rots = CranleyPattersonRotation(s, rot);
+    const vec3f local_ao_dir = cosineSampleHemisphere(rots);
+    const vec3f ao_dir = localToWorld * local_ao_dir;
 
     Ray ao_ray;
-    setRay(ao_ray, dg.P + (1e-3f * N), ao_dir);
+    setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir);
     ao_ray.t0 = self->super.epsilon;
     ao_ray.t  = self->aoRayLength - self->super.epsilon;
-    if (dot(ao_ray.dir, N) < 0.05f || isOccluded(self->super.model,ao_ray))
+    if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
       hits++;
   }
 

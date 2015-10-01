@@ -85,8 +85,8 @@ inline uniform LinearSpace3f frame(const uniform vec3f N)
 {
   const uniform vec3f dx0 = make_vec3f(0.0f,N.z,-N.y);
   const uniform vec3f dx1 = make_vec3f(-N.z,0.0f,N.x);
-  const uniform vec3f dx = normalize(dot(dx0,dx0) > dot(dx1,dx1) ? dx0 : dx1);
-  const uniform vec3f dy = normalize(cross(N,dx));
+  const uniform vec3f dx = normalize(abs(N.x) < abs(N.y) ? dx0 : dx1);
+  const uniform vec3f dy = cross(N,dx);
   return make_LinearSpace3f(dx,dy,N);
 }
 
@@ -94,8 +94,8 @@ inline varying LinearSpace3f frame(const varying vec3f N)
 {
   const varying vec3f dx0 = make_vec3f(0.0f,N.z,-N.y);
   const varying vec3f dx1 = make_vec3f(-N.z,0.0f,N.x);
-  const varying vec3f dx = normalize(dot(dx0,dx0) > dot(dx1,dx1) ? dx0 : dx1);
-  const varying vec3f dy = normalize(cross(N,dx));
+  const varying vec3f dx = normalize(abs(N.x) < abs(N.y) ? dx0 : dx1);
+  const varying vec3f dy = cross(N,dx);
   return make_LinearSpace3f(dx,dy,N);
 }
 
