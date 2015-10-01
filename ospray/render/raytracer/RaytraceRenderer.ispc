@@ -178,9 +178,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
                   DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
     // Calculate AO contribution as ambient term //
-    if (depth == 0 && self->aoSamplesPerFrame > 0 && self->aoWeight > 0.f)
-    {
-      const uniform int &nSamples = self->aoSamplesPerFrame;
+    if (depth == 0 && self->aoSamplesPerFrame > 0 && self->aoWeight > 0.f) {
       ao = calculateAO(self, dg, sample);
     }
 
