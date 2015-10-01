@@ -160,8 +160,11 @@ namespace ospray {
       if (!volume)
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
       
+      PING;
       ospSetString(volume,"voxelType",voxelType.c_str());
+      PING;
       ospSetVec3i(volume,"dimensions",dimensions);
+      PING;
       
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
@@ -171,7 +174,7 @@ namespace ospray {
                                  +fileNameOfCorrespondingXmlDoc.str()
                                  +"' and file name '"+fileName+"')");
 
-      if (useBlockBricked) {
+      if (useBlockBricked || useDataDistributedVolume) {
         size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
         float *slice = new float[nPerSlice];
         for (int z=0;z<dimensions.z;z++) {

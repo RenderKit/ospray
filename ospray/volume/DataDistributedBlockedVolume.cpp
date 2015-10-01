@@ -53,7 +53,9 @@ namespace ospray {
 
   void DataDistributedBlockedVolume::createEquivalentISPC()
   {
+    PING;
     if (ispcEquivalent != NULL) return;
+    PING;
 
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");  
@@ -65,6 +67,7 @@ namespace ospray {
     exitOnCondition(reduce_min(this->dimensions) <= 0, 
                     "invalid volume dimensions (must be set before calling ospSetRegion())");
 
+    PING;
     ddBlocks = vec3i(4,4,4);
     blockSize = divRoundUp(dimensions,ddBlocks);
     PRINT(ddBlocks);
@@ -72,6 +75,19 @@ namespace ospray {
 
     numDDBlocks = embree::reduce_mul(ddBlocks);
     ddBlock = new DDBlock[numDDBlocks];
+
+    int blockID = 0;
+    for (int iz=0;iz<ddBlocks.z;iz++)
+      for (int iy=0;iy<ddBlocks.y;iy++)
+        for (int ix=0;ix<ddBlocks.x;ix++, blockID++) {
+          ddBlock[blockID].owner = -1;
+          ddBlock[blockID].mine  = true;
+          ddBlock[blockID].domain.lower = vec3i(ix,iy,iz) * blockSize;
+          ddBlock[blockID].domain.upper = min(ddBlock[blockID].domain.lower+blockSize,dimensions);
+          ddBlock[blockID].bounds.lower = vec3f(ddBlock[blockID].domain.lower) / vec3f(dimensions);
+          ddBlock[blockID].bounds.upper = vec3f(ddBlock[blockID].domain.upper) / vec3f(dimensions);
+          ddBlock[blockID].ispcVolumeHandle = NULL;
+        }
 
     // Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
     ispcEquivalent = ispc::DDBVolume_create(this,                                                             

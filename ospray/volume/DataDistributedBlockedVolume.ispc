@@ -30,7 +30,6 @@ inline void DDBVolume_getVoxel(void *uniform _self,
                                const varying vec3i &index,
                                varying float &value)
 {
-  print("ddbv::getvoxel\n");
   value = 0.5f;
 }
 

@@ -156,6 +156,7 @@ namespace ospray {
     switch (type) {
     case OSP_VOID_PTR:  return sizeof(void *);
     case OSP_OBJECT:    return sizeof(void *);
+    case OSP_DATA:      return sizeof(void *);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
     case OSP_UCHAR2:    return sizeof(embree::Vec2<uint8>);
