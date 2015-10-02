@@ -37,6 +37,27 @@ namespace ospray {
     ispc::RaycastVolumeRendererMaterial_set(getIE(), (const ispc::vec3f&)Kd, volume ? volume->getIE() : NULL);
   }
 
+#if EXP_DATA_PARALLEL
+    //! \brief render-frame call back for data parallel mode
+    /*! \detailed in data parallel mode, we have to render multiple
+        'passes' (depending on many pieces there are), so we have to
+        override the default renderframe function */
+  void RaycastVolumeRenderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
+  {
+    bool isDataParallel = false;
+    uint32 numMyPieces = 0;
+    for (int i=0;model->volume.size();i++) {
+      size_t totalPieces, myPieces;
+      isDataParallel |= model->volume[i]->getDataParallelInfo(totalPieces,myPieces);
+    }
+    DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
+    if (!dfb)
+      throw std::runtime_error("OSPRay data parallel rendering error. "
+                               "this is a data-parallel scene, but we're "
+                               "not using the distributed frame buffer!?");
+  }
+#endif
+
   void RaycastVolumeRenderer::commit() 
   {
     // Create the equivalent ISPC RaycastVolumeRenderer object.
@@ -57,7 +78,9 @@ namespace ospray {
       for (size_t i=0; i<lightsData->size(); i++)
         lights.push_back(((Light **)lightsData->data)[i]->getIE());
 
-    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, lights.empty() ? NULL : &lights[0], lights.size());
+    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, 
+                                          lights.empty() ? NULL : &lights[0], 
+                                          lights.size());
 
     // Initialize state in the parent class, must be called after the ISPC object is created.
     Renderer::commit();

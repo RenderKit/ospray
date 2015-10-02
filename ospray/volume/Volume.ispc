@@ -16,18 +16,25 @@
 
 #include "ospray/volume/Volume.ih"
 
-void Volume_Constructor(Volume *uniform volume,
+void Volume_Constructor(Volume *uniform self,
                         /*! pointer to the c++-equivalent class of this entity */
                         void *uniform cppEquivalent
                         )
 {
+  self->cppEquivalent = cppEquivalent;
+
   // default sampling step; should be set to correct value by derived volume.
-  volume->samplingStep = 1.f;
+  self->samplingStep = 1.f;
 
   // default bounding box; should be set to correct value by derived volume.
-  volume->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
+  self->boundingBox = make_box3f(make_vec3f(0.f), make_vec3f(1.f));
 
-  volume->cppEquivalent = cppEquivalent;
+#ifdef EXP_DATA_PARALLEL
+  // initialize - by default - 'not data parallel'
+  self->dataParallelInfo.numPieces = 0;
+  self->dataParallelInfo.numMine   = 0;
+#endif
+
   // other defaults are set during Volume::updateEditableParameters().
 }
 

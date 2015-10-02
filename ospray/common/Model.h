@@ -46,9 +46,12 @@ namespace ospray {
     virtual void finalize();
 
     typedef std::vector<Ref<Geometry> > GeometryVector;
+    typedef std::vector<Ref<Volume> > VolumeVector;
+    
+    //! \brief vector of all geometries used in this model
     GeometryVector geometry;
-
-    std::vector<Ref<Volume> > volumes;
+    //! \brief vector of all geometries used in this model
+    VolumeVector volume;
 
     box3f bounds;
 
