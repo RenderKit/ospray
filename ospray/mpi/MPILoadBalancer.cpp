@@ -94,7 +94,7 @@ namespace ospray {
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
 
-        renderer->renderTile(tile);
+        renderer->renderTile(perFrameData,tile);
 
         fb->setTile(tile);
 #if TILE_SIZE>128
@@ -112,14 +112,15 @@ namespace ospray {
 
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
-        Ref<RenderTask> renderTask = new RenderTask;
 
+        void *perFrameData = tiledRenderer->beginFrame(fb);
+
+        Ref<RenderTask> renderTask = new RenderTask;
         renderTask->fb = fb;
         renderTask->renderer = tiledRenderer;
         renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
         renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
         renderTask->channelFlags = channelFlags;
-        tiledRenderer->beginFrame(fb);
 
         /*! iw: using a local sync event for now; "in theory" we should be
           able to attach something like a sync event to the frame
@@ -133,7 +134,7 @@ namespace ospray {
 
         // double t0wait = getSysTime();
         dfb->waitUntilFinished();
-        tiledRenderer->endFrame(channelFlags);
+        tiledRenderer->endFrame(perFrameData,channelFlags);
         // double t1wait = getSysTime();
         // printf("rank %i t_wait at end %f\n",mpi::world.rank,float(t1wait-t0wait));
 

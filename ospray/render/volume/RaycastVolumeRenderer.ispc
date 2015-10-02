@@ -22,18 +22,20 @@
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
 #include "ospray/render/volume/RaycastVolumeRendererMaterial.ih"
 
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, 
-                                                const uniform int32 accumID)
+void RaycastVolumeRenderer_endFrame(Renderer *uniform renderer, 
+                                    void *uniform perFrameData,
+                                    const uniform int32 accumID)
 { 
   if (renderer->fb) 
     renderer->fb->accumID = accumID;  
   renderer->fb = NULL; 
 }
 
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer, 
-                                               FrameBuffer *uniform framebuffer)
+void *uniform RaycastVolumeRenderer_beginFrame(Renderer *uniform renderer, 
+                                      FrameBuffer *uniform framebuffer)
 { 
   renderer->fb = framebuffer; 
+  return NULL;
 }
 
 inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform renderer,
@@ -282,6 +284,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 }
 
 void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer, 
+                                        void *uniform perFrameData,
                                         varying ScreenSample &sample) 
 {
   // Cast to the actual Renderer subtype.
@@ -333,10 +336,10 @@ export void *uniform RaycastVolumeRenderer_createInstance()
   renderer->inherited.renderSample = RaycastVolumeRenderer_renderSample;
 
   // Function to perform per-frame state initialization.
-  renderer->inherited.beginFrame = RaycastVolumeRenderer_renderFramePreamble;
+  renderer->inherited.beginFrame = RaycastVolumeRenderer_beginFrame;
 
   // Function to perform per-frame state completion.
-  renderer->inherited.endFrame = RaycastVolumeRenderer_renderFramePostamble;
+  renderer->inherited.endFrame = RaycastVolumeRenderer_endFrame;
 
   return renderer;
 }

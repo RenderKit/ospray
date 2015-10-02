@@ -288,7 +288,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
 }
 
 void RaytraceRenderer_renderSample(uniform Renderer *uniform _self,
-                               varying ScreenSample &sample)
+                                   void *uniform perFrameData,
+                                   varying ScreenSample &sample)
 {
   uniform RaytraceRenderer *uniform self =
       (uniform RaytraceRenderer *uniform)_self;

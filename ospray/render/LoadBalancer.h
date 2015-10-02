@@ -58,6 +58,7 @@ namespace ospray {
       size_t                       numTiles_x;
       size_t                       numTiles_y;
       uint32                       channelFlags;
+      void                        *perFrameData;
       // embree::TaskScheduler::Task  task;
 
       virtual void run(size_t jobID);
@@ -110,6 +111,7 @@ namespace ospray {
       size_t                       deviceID;
       size_t                       numDevices;
       uint32                       channelFlags;
+      void                        *perFrameData;
 
       virtual void run(size_t jobID);
       virtual void finish();

@@ -102,23 +102,23 @@ namespace ospray {
     return(renderer);
   }
 
-  void Renderer::renderTile(Tile &tile)
+  void Renderer::renderTile(void *perFrameData, Tile &tile)
   {
-    ispc::Renderer_renderTile(getIE(),(ispc::Tile&)tile);
+    ispc::Renderer_renderTile(getIE(),perFrameData,(ispc::Tile&)tile);
   }
 
-  void Renderer::beginFrame(FrameBuffer *fb) 
+  void *Renderer::beginFrame(FrameBuffer *fb) 
   {
     this->currentFB = fb;
-    ispc::Renderer_beginFrame(getIE(),fb->getIE());
+    return ispc::Renderer_beginFrame(getIE(),fb->getIE());
   }
 
-  void Renderer::endFrame(const int32 fbChannelFlags)
+  void Renderer::endFrame(void *perFrameData, const int32 fbChannelFlags)
   {
     FrameBuffer *fb = this->currentFB;
     if ((fbChannelFlags & OSP_FB_ACCUM))
       fb->accumID++;
-    ispc::Renderer_endFrame(getIE(),fb->accumID);
+    ispc::Renderer_endFrame(getIE(),perFrameData,fb->accumID);
   }
   
   void Renderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)

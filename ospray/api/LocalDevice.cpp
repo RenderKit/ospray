@@ -210,7 +210,7 @@ namespace ospray {
       Volume *volume = (Volume *) _volume;
       Assert2(volume, "null volume in LocalDevice::addVolume()");
 
-      model->volumes.push_back(volume);
+      model->volume.push_back(volume);
     }
 
     /*! create a new data buffer */

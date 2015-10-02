@@ -27,6 +27,7 @@
 
 // The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(uniform Renderer *uniform self,
+                                   void *uniform perFrameData,
                                    varying ScreenSample &sample)
 {
   sample.z = inf;
@@ -37,7 +38,7 @@ void Renderer_default_renderSample(uniform Renderer *uniform self,
                                  );
 }
 
-void Renderer_default_beginFrame(uniform Renderer *uniform self,
+void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
                                  uniform FrameBuffer *uniform fb)
 {
   self->fb = fb;
@@ -45,9 +46,11 @@ void Renderer_default_beginFrame(uniform Renderer *uniform self,
     print("warning: ispc-side renderer % does not have a camera\n",self);
   if (self->fb == NULL)
     print("warning: ispc-side renderer % does not have a frame buffer\n",self);
+  return NULL;
 }
 
 void Renderer_default_endFrame(uniform Renderer *uniform self, 
+                               void *uniform perFrameData,
                                const uniform int32 accumID)
 {
   if (self->fb) self->fb->accumID = accumID;
@@ -55,6 +58,7 @@ void Renderer_default_endFrame(uniform Renderer *uniform self,
 }
 
 task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
+                                         void *uniform perFrameData,
                                          uniform Tile &tile)
 {
   uniform FrameBuffer *uniform fb     = self->fb;
@@ -109,7 +113,7 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
           screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
         }
 
-        self->renderSample(self,screenSample);
+        self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
       }
       col = col * (spp_inv);
@@ -157,7 +161,7 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
         screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
       }
 
-      self->renderSample(self,screenSample);
+      self->renderSample(self,perFrameData,screenSample);
 
       // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
 
@@ -171,13 +175,14 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
 }
 
 void Renderer_default_renderTile(uniform Renderer *uniform self,
+                                 void *uniform perFrameData,
                                  uniform Tile &tile)
 {
   precomputeZOrder();
   uniform int32 spp = self->spp;
   const uniform int blocks = self->fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
   uniform const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-  launch[numJobs] Renderer_default_renderTileJob(self,tile);
+  launch[numJobs] Renderer_default_renderTileJob(self,perFrameData,tile);
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -210,25 +215,28 @@ void Renderer_Constructor(uniform Renderer *uniform self,
 }
 
 export void Renderer_renderTile(void *uniform _self,
+                                void *uniform perFrameData,
                                 uniform Tile &tile)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
-  self->renderTile(self,tile);
+  self->renderTile(self,perFrameData,tile);
 }
 
-export void Renderer_beginFrame(void *uniform _self,
+export void *uniform Renderer_beginFrame(void *uniform _self,
                                 void *uniform _fb)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   uniform FrameBuffer *uniform fb = (uniform FrameBuffer *uniform)_fb;
-  self->beginFrame(self,fb);
+  return self->beginFrame(self,fb);
 }
 
 
-export void Renderer_endFrame(void *uniform _self, const uniform int32 newAccumID)
+export void Renderer_endFrame(void *uniform _self, 
+                              void *uniform perFrameData,
+                              const uniform int32 newAccumID)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
-  self->endFrame(self,newAccumID);
+  self->endFrame(self,perFrameData,newAccumID);
 }
 
 export void Renderer_set(void *uniform _self,

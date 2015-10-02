@@ -63,7 +63,7 @@ namespace ospray {
     }
 
     for (size_t i=0; i<volume.size(); i++) 
-      ispc::Model_setVolume(getIE(), i, volumes[i]->getIE());
+      ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
     
     rtcCommit(embreeSceneHandle);
   }

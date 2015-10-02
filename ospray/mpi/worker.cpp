@@ -479,7 +479,7 @@ namespace ospray {
           Assert(model);
           Volume *volume = (Volume *) volumeHandle.lookup();
           Assert(volume);
-          model->volumes.push_back(volume);
+          model->volume.push_back(volume);
         } break;
 
         case ospray::CMD_COMMIT: {

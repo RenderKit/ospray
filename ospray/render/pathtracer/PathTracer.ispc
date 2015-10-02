@@ -347,7 +347,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
 
  
-void PathTracer_beginFrame(uniform Renderer *uniform _self,
+void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
                            uniform FrameBuffer *uniform fb)
 {
 //  print("pathtracer new frame %\n",fb->accumID);
@@ -355,6 +355,7 @@ void PathTracer_beginFrame(uniform Renderer *uniform _self,
   uniform PathTracer  *uniform self = (uniform PathTracer *uniform)_self;
 //  print("rays: %\n", self->numRays);
   self->numRays = 0;
+  return NULL;
 }
 
 
@@ -389,7 +390,9 @@ task void PathTracer_renderTileJob(uniform PathTracer *uniform self,
   }
 }
 
-void PathTracer_renderTile(uniform Renderer *uniform _self, uniform Tile &tile)
+void PathTracer_renderTile(uniform Renderer *uniform _self, 
+                           void *uniform perFrameData,
+                           uniform Tile &tile)
 {
   uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
   uniform int32 spp = self->super.spp;

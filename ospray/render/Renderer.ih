@@ -51,15 +51,18 @@ struct ScreenSample {
   the same pixel coordinates in the same call.
  */
 typedef void (*Renderer_RenderSampleFct)(uniform Renderer *uniform self,
-                                      varying ScreenSample &retValue);
+                                         void *uniform perFrameData,
+                                         varying ScreenSample &retValue);
 typedef void (*Renderer_ToneMapFct)(uniform Renderer *uniform self,
                                  varying vec3f &color,
                                  const varying vec2i &pixelID);
 typedef void (*Renderer_RenderTileFct)(uniform Renderer *uniform self,
-                                    uniform Tile &tile);
-typedef void (*Renderer_BeginFrameFct)(uniform Renderer *uniform self,
+                                       void *uniform perFrameData,
+                                       uniform Tile &tile);
+typedef void *uniform (*Renderer_BeginFrameFct)(uniform Renderer *uniform self,
                                        uniform FrameBuffer *uniform fb);
 typedef void (*Renderer_EndFrameFct)(uniform Renderer *uniform self, 
+                                     void *uniform perFrameData,
                                      const uniform int32 newAccumID);
 
 struct Renderer {
