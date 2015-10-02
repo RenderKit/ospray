@@ -37,7 +37,7 @@ struct RaytraceRenderer {
   vec3f bgColor;
   bool  shadowsEnabled;
 
-  int   aoSamplesPerFrame;
+  int   aoSamples;
   float aoRayLength;
   float aoWeight;
 };
@@ -46,29 +46,21 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
                          varying DifferentialGeometry &dg,
                          varying ScreenSample &sample)
 {
-  uniform int samplesPerFrame = self->aoSamplesPerFrame;
-  uniform int framesPer16 = 16 / samplesPerFrame;
-  int accumID = sample.sampleID.z / framesPer16;
-  int sampleOfs = sample.sampleID.z % framesPer16;
-  const vec2f rot = make_vec2f(precomputedHalton3(accumID),
-                               precomputedHalton5(accumID));
-
+  const int accumID = sample.sampleID.z;
   const int ix = sample.sampleID.x;
   const int iy = sample.sampleID.y;
 
   // init TEA RNG //
-  uniform FrameBuffer *uniform fb = self->super.fb;
   RandomTEA rng_state;
   varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, (fb->size.x * iy) + ix, fb->accumID);
+  RandomTEA__Constructor(rng, (self->super.fb->size.x * iy) + ix, accumID);
 
   int hits = 0;
   const linear3f localToWorld = frame(dg.Ns);
 
-  for (uniform int i = 0; i < samplesPerFrame; i++) {
+  for (uniform int i = 0; i < self->aoSamples; i++) {
     const vec2f s = RandomTEA__getFloats(rng);
-    const vec2f rots = CranleyPattersonRotation(s, rot);
-    const vec3f local_ao_dir = cosineSampleHemisphere(rots);
+    const vec3f local_ao_dir = cosineSampleHemisphere(s);
     const vec3f ao_dir = localToWorld * local_ao_dir;
 
     Ray ao_ray;
@@ -78,7 +70,7 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
       hits++;
   }
 
-  return 1.0f - hits/samplesPerFrame;
+  return 1.0f - (float)hits/self->aoSamples;
 }
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model,
@@ -178,7 +170,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
                   DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
     // Calculate AO contribution as ambient term //
-    if (depth == 0 && self->aoSamplesPerFrame > 0 && self->aoWeight > 0.f) {
+    if (depth == 0 && self->aoSamples > 0 && self->aoWeight > 0.f) {
       ao = calculateAO(self, dg, sample);
     }
 
@@ -300,7 +292,7 @@ void RaytraceRenderer_renderSample(uniform Renderer *uniform _self,
 export void RaytraceRenderer_set(void *uniform _self,
                                  const uniform vec3f &bgColor,
                                  const uniform bool shadowsEnabled,
-                                 const uniform int aoSamplesPerFrame,
+                                 const uniform int aoSamples,
                                  const uniform float aoRayLength,
                                  const uniform float aoWeight,
                                  void **uniform lights,
@@ -311,7 +303,7 @@ export void RaytraceRenderer_set(void *uniform _self,
 
   self->bgColor = bgColor;
   self->shadowsEnabled = shadowsEnabled;
-  self->aoSamplesPerFrame = aoSamplesPerFrame;
+  self->aoSamples = aoSamples;
   self->aoRayLength = aoRayLength;
   self->aoWeight = aoWeight;
   self->lights = (const uniform Light *uniform *uniform)lights;

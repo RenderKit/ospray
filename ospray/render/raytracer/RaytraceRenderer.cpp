@@ -48,14 +48,14 @@ namespace ospray {
 
       const bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
 
-      int   numSamples = getParam1i("aoSamples", 4);
-      float rayLength  = getParam1f("aoOcclusionDistance", 1e20f);
-      float aoWeight   = getParam1f("aoWeight", 1.f);
+      int   numAOSamples = getParam1i("aoSamples", 4); // number of AO rays per pixel sample
+      float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
+      float aoWeight     = getParam1f("aoWeight", 1.f);
 
       ispc::RaytraceRenderer_set(getIE(),
                                  (ispc::vec3f&)bgColor,
                                  shadowsEnabled,
-                                 numSamples,
+                                 numAOSamples,
                                  rayLength,
                                  aoWeight,
                                  lightPtr,
