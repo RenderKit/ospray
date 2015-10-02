@@ -162,8 +162,7 @@ inline void shade_ao(uniform SimpleAO *uniform self,
       hits++;
   }
   float diffuse = absf(dot(N,ray.dir));
-  float frac_visible = (sampleCnt-hits) * (1.0f/sampleCnt);
-  color = baseColor * make_vec3f(diffuse * min(.01f + 1.1f * frac_visible,1.f));
+  color = baseColor * make_vec3f(diffuse * (1.0f - (float)hits/sampleCnt));
   alpha = 1.f;
   return;
 }
