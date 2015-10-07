@@ -124,6 +124,7 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
   if (hit) {
     ray.primID = primID;
     ray.geomID = geometry->geometry.geomID;
+    ray.instID = -1;
     // cannot easily be moved to postIntersect
     // we need hit in object space, in postIntersect it is in world-space
     ray.Ng = ray.org + ray.t*ray.dir - center;

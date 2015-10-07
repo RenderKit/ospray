@@ -146,8 +146,17 @@ void VolumeViewer::addGeometry(std::string filename)
 
     ospCommit(triangleMesh);
 
+    // Create an instance of the geometry and add the instance to the main model(s)--this prevents the geometry
+    // from being rebuilt every time the main model is committed (e.g. when slices / isosurfaces are manipulated)
+    OSPModel modelInstance = ospNewModel();
+    ospAddGeometry(modelInstance, triangleMesh);
+    ospCommit(modelInstance);
+
+    OSPGeometry triangleMeshInstance = ospNewInstance(modelInstance, embree::one);
+    ospCommit(triangleMeshInstance);
+
     for(size_t i=0; i<modelStates.size(); i++) {
-      ospAddGeometry(modelStates[i].model, triangleMesh);
+      ospAddGeometry(modelStates[i].model, triangleMeshInstance);
       ospCommit(modelStates[i].model);
     }
 
@@ -319,7 +328,7 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   // Load OSPRay objects from a file.
   OSPObject *objects = ObjectFile::importObjects(filename.c_str());
 
-  // Iterate over the volumes contained in the object list.
+  // Iterate over the objects contained in the object list.
   for (size_t i=0 ; objects[i] ; i++) {
     OSPDataType type;
     ospGetType(objects[i], NULL, &type);
