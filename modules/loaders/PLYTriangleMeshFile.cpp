@@ -37,7 +37,7 @@ OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangle
   OSPData vertexData = ospNewData(vertices.size(), OSP_FLOAT3A, &vertices[0].x);
   ospSetData(triangleMesh, "vertex", vertexData);
 
-  OSPData vertexColorData = ospNewData(vertexColors.size(), OSP_FLOAT3A, &vertexColors[0].x);
+  OSPData vertexColorData = ospNewData(vertexColors.size(), OSP_FLOAT4, &vertexColors[0].x);
   ospSetData(triangleMesh, "vertex.color", vertexColorData);
 
   OSPData vertexNormalData = ospNewData(vertexNormals.size(), OSP_FLOAT3A, &vertexNormals[0].x);
@@ -174,9 +174,9 @@ bool PLYTriangleMeshFile::parse()
 
     // Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
     if(haveVertexColors)
-      vertexColors.push_back(1.f/255.f * osp::vec3fa(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex]));
+      vertexColors.push_back(1.f/255.f * osp::vec4f(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex], vertexProperties[aIndex]));
     else
-      vertexColors.push_back(osp::vec3fa(1.f));
+      vertexColors.push_back(osp::vec4f(1.f));
   }
 
   // Read the face data.
