@@ -38,6 +38,11 @@ namespace ospray {
 
     instancedScene = (Model *)getParamObject("model",NULL);
     assert(instancedScene);
+
+    if (!instancedScene->embreeSceneHandle) {
+      instancedScene->finalize();
+    }
+
     embreeGeomID = rtcNewInstance(model->embreeSceneHandle,
                                   instancedScene->embreeSceneHandle);
 
