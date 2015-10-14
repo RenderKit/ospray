@@ -78,10 +78,7 @@ namespace ospray {
       // -------------------------------------------------------
       // initialize our task system
       // -------------------------------------------------------
-      if (debugMode)
-        ospray::Task::initTaskSystem(0);
-      else
-        ospray::Task::initTaskSystem(-1);
+      ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
 
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }

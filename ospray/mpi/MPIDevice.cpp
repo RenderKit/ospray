@@ -88,11 +88,7 @@ namespace ospray {
       }
 
       if (world.rank == 0) {
-        if (debugMode)
-          ospray::Task::initTaskSystem(0);
-        else {
-          ospray::Task::initTaskSystem(-1);
-        }
+        ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
 
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
