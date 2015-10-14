@@ -75,6 +75,7 @@ namespace ospray {
     }
 
     OSP_REGISTER_RENDERER(RaytraceRenderer, raytracer);
+    OSP_REGISTER_RENDERER(RaytraceRenderer, rt);
     OSP_REGISTER_RENDERER(RaytraceRenderer, scivis);
 
   } // ::ospray::obj
