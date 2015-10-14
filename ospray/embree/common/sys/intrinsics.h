@@ -72,6 +72,8 @@
 
 #include <intrin.h>
 
+namespace embree {
+
 __forceinline uint64 __rdpmc(int i) {
   return __readpmc(i);
 }
@@ -249,6 +251,8 @@ __forceinline int64 atomic_cmpxchg(volatile int64* m, const int64 c, const int64
 }
 
 #endif
+
+}// namespace embree
 
 ////////////////////////////////////////////////////////////////////////////////
 /// Unix Platform
@@ -551,11 +555,15 @@ __forceinline int8 atomic_cmpxchg( int8 volatile* value, int8 comparand, const i
   return __sync_val_compare_and_swap(value, comparand, input);
 }
 
+}// namespace embree
+
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
 /// All Platforms
 ////////////////////////////////////////////////////////////////////////////////
+
+namespace embree {
 
 #if defined(__X86_64__)
   typedef atomic64_t atomic_t;
