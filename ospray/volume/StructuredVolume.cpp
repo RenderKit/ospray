@@ -58,6 +58,12 @@ namespace ospray {
     }
   }
 
+  void StructuredVolume::buildAccelerator()
+  {
+    // Build volume accelerator.
+    ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
+  }
+
   void StructuredVolume::finish()
   {
     // Make the voxel value range visible to the application.
@@ -66,8 +72,7 @@ namespace ospray {
     else
       voxelRange = getParam2f("voxelRange", voxelRange);
 
-    // Build volume accelerator.
-    ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
+    buildAccelerator();
 
     // Volume finish actions.
     Volume::finish();

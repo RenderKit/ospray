@@ -518,6 +518,13 @@ __lift_unary_fct(exp)
 
 #undef __lift_unary_fct
 
+/*! make RGBA from RGB */
+inline vec4f make_vec4f(const vec3f rgb, const float a)
+{ return make_vec4f(rgb.x,rgb.y,rgb.z,a); }
+
+/*! make RGBA from RGB */
+inline uniform vec4f make_vec4f(const uniform vec3f rgb, const uniform float a)
+{ return make_vec4f(rgb.x,rgb.y,rgb.z,a); }
 
 // // ------------------------------------------------------------------
 // // vector functions (abs,rcp,...):

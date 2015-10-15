@@ -19,17 +19,12 @@
 // ospray 
 #include "OSPCommon.h"
 #include "ospray/ospray.h"
+#include "ospray/common/ObjectHandle.h"
 // stl 
 #include <vector>
 #include <set>
 
 namespace ospray {
-
-#ifdef _WIN32
-typedef unsigned long long id_t;
-#endif
-
-
 
   /*! forward-def so param can use a pointer to data */
   struct Data;

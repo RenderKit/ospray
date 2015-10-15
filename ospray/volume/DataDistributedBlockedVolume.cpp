@@ -16,6 +16,8 @@
 
 // ospray
 #include "ospray/volume/DataDistributedBlockedVolume.h"
+#include "ospray/common/Core.h"
+#include "ospray/transferFunction/TransferFunction.h"
 // ispc exports:
 #include "DataDistributedBlockedVolume_ispc.h"
 
@@ -24,7 +26,38 @@ namespace ospray {
   //! Allocate storage and populate the volume, called through the OSPRay API.
   void DataDistributedBlockedVolume::commit()
   {
+    // IW: do NOT call parent::commit here - this would try to build
+    // the parent acceleration strucutre, which doesn't make sense on
+    // blocks that do not exist!!!!
+
+    // StructuredVolume::commit();
+
+
+    PING;
     StructuredVolume::commit();
+    for (int i=0;i<numDDBlocks;i++) {
+      DDBlock *block = ddBlock+i;
+      if (!block->isMine) continue;
+      block->cppVolume->commit();
+      // PRINT(((BlockBrickedVolume*)block->cppVolume)->voxelRange);
+      std::cout << "warning - voxelRange not properly set for this type (because the 'setregion's also include _all_ voxels, even from those outside the block!) ... " << std::endl;
+    }
+  }
+
+  void DataDistributedBlockedVolume::updateEditableParameters()
+  {
+    StructuredVolume::updateEditableParameters();
+    PING;
+
+    for (int i=0;i<numDDBlocks;i++) {
+      DDBlock *block = ddBlock+i;
+      if (!block->isMine) continue;
+
+      TransferFunction *transferFunction
+        = (TransferFunction *)getParamObject("transferFunction", NULL);
+      PRINT(transferFunction);
+      block->cppVolume->findParam("transferFunction",1)->set(transferFunction);
+    }
   }
   
   //! Copy voxels into the volume at the given index (non-zero return value indicates success).
@@ -42,20 +75,29 @@ namespace ospray {
                                                 be the same as the dimensions of source[][][] */
                                               const vec3i &regionSize)
   {
+    // PING;
+    // PRINT(regionCoords);
+    // PRINT(regionSize);
     // Create the equivalent ISPC volume container and allocate memory for voxel data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
     
-    float f = 0.5f;
-    computeVoxelRange(&f,1);
+    for (int i=0;i<numDDBlocks;i++) {
+      if (ddBlock[i].isMine) {
+        // std::cout << "setting region in block " << i << std::endl;
+        ddBlock[i].cppVolume->setRegion(source,regionCoords-ddBlock[i].domain.lower,
+                                        regionSize);
+        ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
+      }
+    }
+    // float f = 0.5f;
+    // computeVoxelRange(&f,1);
 
     return 0;
   }
 
   void DataDistributedBlockedVolume::createEquivalentISPC()
   {
-    PING;
     if (ispcEquivalent != NULL) return;
-    PING;
 
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");  
@@ -67,27 +109,75 @@ namespace ospray {
     exitOnCondition(reduce_min(this->dimensions) <= 0, 
                     "invalid volume dimensions (must be set before calling ospSetRegion())");
 
-    PING;
-    ddBlocks = vec3i(4,4,4);
+
+    // Set the grid origin, default to (0,0,0).
+    this->gridOrigin = getParam3f("gridOrigin", vec3f(0.f));
+
+    // Get the volume dimensions.
+    this->dimensions = getParam3i("dimensions", vec3i(0));
+    exitOnCondition(reduce_min(this->dimensions) <= 0, 
+                    "invalid volume dimensions");
+
+    // Set the grid spacing, default to (1,1,1).
+    this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+
+
+    // ddBlocks = vec3i(2,1,1);
+    ddBlocks = vec3i(2);
     blockSize = divRoundUp(dimensions,ddBlocks);
-    PRINT(ddBlocks);
-    PRINT(blockSize);
 
     numDDBlocks = embree::reduce_mul(ddBlocks);
     ddBlock = new DDBlock[numDDBlocks];
 
-    int blockID = 0;
-    for (int iz=0;iz<ddBlocks.z;iz++)
-      for (int iy=0;iy<ddBlocks.y;iy++)
-        for (int ix=0;ix<ddBlocks.x;ix++, blockID++) {
-          ddBlock[blockID].owner = -1;
-          ddBlock[blockID].mine  = true;
-          ddBlock[blockID].domain.lower = vec3i(ix,iy,iz) * blockSize;
-          ddBlock[blockID].domain.upper = min(ddBlock[blockID].domain.lower+blockSize,dimensions);
-          ddBlock[blockID].bounds.lower = vec3f(ddBlock[blockID].domain.lower) / vec3f(dimensions);
-          ddBlock[blockID].bounds.upper = vec3f(ddBlock[blockID].domain.upper) / vec3f(dimensions);
-          ddBlock[blockID].ispcVolumeHandle = NULL;
-        }
+    if (!ospray::core::isMpiParallel)
+      throw std::runtime_error("data parallel volume, but not in mpi parallel mode...");
+    int64 numWorkers = ospray::core::getWorkerCount();
+    PRINT(numDDBlocks);
+    PRINT(numWorkers);
+
+    voxelType = getParamString("voxelType", "unspecified");  
+
+    if (numDDBlocks >= numWorkers) {
+      // we have more workers than blocks - use one owner per block,
+      // meaning we'll end up with multiple blocks per worker
+      int blockID = 0;
+      for (int iz=0;iz<ddBlocks.z;iz++)
+        for (int iy=0;iy<ddBlocks.y;iy++)
+          for (int ix=0;ix<ddBlocks.x;ix++, blockID++) {
+            DDBlock *block = &ddBlock[blockID];
+            block->firstOwner = blockID % numWorkers;
+            block->numOwners = 1;
+            block->isMine  = block->firstOwner==ospray::core::getWorkerRank();
+            block->domain.lower = vec3i(ix,iy,iz) * blockSize;
+            block->domain.upper = min(block->domain.lower+blockSize,dimensions);
+            block->bounds.lower = gridOrigin + gridSpacing * vec3f(block->domain.lower);// / vec3f(dimensions);
+            block->bounds.upper = gridOrigin + gridSpacing * vec3f(block->domain.upper);// / vec3f(dimensions);
+
+            block->domain.upper = min(block->domain.upper+vec3i(1),dimensions);
+
+            
+            if (block->isMine) {
+              Volume *volume = new BlockBrickedVolume;
+              vec3i blockDims = block->domain.upper-block->domain.lower;
+              volume->findParam("dimensions",1)->set(blockDims);
+              volume->findParam("gridOrigin",1)->set(block->bounds.lower);
+              volume->findParam("gridSpacing",1)->set(gridSpacing);
+              volume->findParam("voxelType",1)->set(voxelType.c_str());
+
+    // // Set the grid spacing, default to (1,1,1).
+    // this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
+
+              // volume->createEquivalentISPC();
+              block->cppVolume = volume;
+              block->ispcVolume = NULL; //volume->getIE();
+            } else {
+              block->ispcVolume = NULL;
+              block->cppVolume = NULL;
+            }
+          }
+    } else {
+      FATAL("not implemented yet - more workers than blocks ...");//TODO
+    }
 
     // Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
     ispcEquivalent = ispc::DDBVolume_create(this,                                                             
@@ -95,7 +185,7 @@ namespace ospray {
                                             (const ispc::vec3i&)dimensions,
                                             (const ispc::vec3i&)ddBlocks,
                                             (const ispc::vec3i&)blockSize,
-                                            (ispc::DDBVolumeBlock*)ddBlock);
+                                            ddBlock);
     if (!ispcEquivalent) 
       throw std::runtime_error("could not create create data distributed volume");
   }

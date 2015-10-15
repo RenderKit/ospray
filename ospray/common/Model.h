@@ -50,13 +50,19 @@ namespace ospray {
     
     //! \brief vector of all geometries used in this model
     GeometryVector geometry;
-    //! \brief vector of all geometries used in this model
+    //! \brief vector of all volumes used in this model
     VolumeVector volume;
 
-    box3f bounds;
+// #if EXP_DATA_PARALLEL
+//     /*! list of all pieces of data parallel volumes, including those
+//         that we do NOT own. note that some of these pieces may be
+//         owned by multiple owners */
+//     std::vector<Ref<Volume::DataParallelPiece> > dpVolumePieces;
+// #endif
 
     //! \brief the embree scene handle for this geometry
     RTCScene embreeSceneHandle; 
+    box3f bounds;
   };
 
 } // ::ospray

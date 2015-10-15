@@ -21,7 +21,6 @@ void DDBVolume_Constructor(DDBVolume *uniform self,
                            const uniform vec3i &dimensions)
 {
   StructuredVolume_Constructor(&self->super,cppEquivalent,dimensions);
-  print("constructor missing\n");
 }
 
 
@@ -30,7 +29,8 @@ inline void DDBVolume_getVoxel(void *uniform _self,
                                const varying vec3i &index,
                                varying float &value)
 {
-  value = 0.5f;
+  print("#osp:dp: DDBVolume_getVoxel: should never actually get called - the data parallel volume is just a proxy for the data parallel blocks for now\n");
+assert(0);
 }
 
 export void *uniform DDBVolume_create(void *uniform cppEquivalent,
@@ -38,14 +38,17 @@ export void *uniform DDBVolume_create(void *uniform cppEquivalent,
                                       const uniform vec3i &dimensions,
                                       const uniform vec3i &ddBlocks,
                                       const uniform vec3i &blockSize,
-                                      DDBVolumeBlock *uniform ddBlock
+                                      void *uniform _ddBlock
                                       )
 {
   print("DDBVolume_create\n");
   DDBVolume *uniform self = uniform new uniform DDBVolume;
   DDBVolume_Constructor(self,cppEquivalent,dimensions);
 
-  self->super.getVoxel = DDBVolume_getVoxel;
+  DDBVolumeBlock *uniform ddBlock = (DDBVolumeBlock *uniform)_ddBlock;
+
+  self->super.getVoxel = NULL; //DDBVolume_getVoxel;
+  self->super.super.computeSample = NULL; //DDBVolume_getVoxel;
 
   return self;
 }

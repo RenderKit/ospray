@@ -371,7 +371,7 @@ namespace ospray {
         // writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
         exit(0);
       }
-      
+
       ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       if (displayWall)
         ospRenderFrame(displayWall->fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
@@ -502,12 +502,12 @@ namespace ospray {
       case miniSG::Material::Param::FLOAT: {
         float f = p->f[0];
         /* many mtl materials of obj models wrongly store the phong exponent
-         'Ns' in range [0..1], whereas OSPRay's material implementations
-         correctly interpret it to be in [0..inf), thus we map ranges here */
+           'Ns' in range [0..1], whereas OSPRay's material implementations
+           correctly interpret it to be in [0..inf), thus we map ranges here */
         if (isOBJMaterial && (!strcmp(name, "Ns") || !strcmp(name, "ns")) && f < 1.f)
           f = 1.f/(1.f - f) - 1.f;
         ospSet1f(ospMat,name,f);
-        } break;
+      } break;
       case miniSG::Material::Param::FLOAT_3:
         ospSet3fv(ospMat,name,p->f);
         break;
@@ -656,7 +656,6 @@ namespace ospray {
     // create ospray model
     // -------------------------------------------------------
     ospModel = ospNewModel();
-
 
     ospRenderer = ospNewRenderer(rendererType.c_str());
     if (!ospRenderer)
@@ -826,6 +825,7 @@ namespace ospray {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
                                           msgModel->instance[i].xfm);
+        msgModel->instance[i].ospGeometry = inst;
         ospAddGeometry(ospModel,inst);
       }
     }

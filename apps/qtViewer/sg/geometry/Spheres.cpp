@@ -75,5 +75,29 @@ namespace ospray {
       ospCommit(data);
     }
 
+
+    struct RandomSpheres : public Spheres {
+      //! \brief Initialize this node's value from given XML node 
+      void setFromXML(const xml::Node *const node, 
+                      const unsigned char *binBasePtr)
+      {
+        vec3i dimensions = parseVec3i(node->getProp("dimensions"));
+        int   num        = atoi(node->getProp("num").c_str());
+        
+        float max_r = atof(node->getProp("radius").c_str());//std::max(dimensions.x,std::max(dimensions.y,dimensions.z)) / powf(num,.33f);
+        float f = 0.3f; // overhang around the dimensions
+        for (int i=0;i<num;i++) {
+          vec3f pos; 
+          pos.x = (-f+(1+2*f)*drand48())*dimensions.x;
+          pos.y = (-f+(1+2*f)*drand48())*dimensions.y;
+          pos.z = (-f+(1+2*f)*drand48())*dimensions.z;
+          float r = max_r*(0.5f + 0.5f*drand48());
+          sphere.push_back(Sphere(pos,r));
+        }
+        PRINT(sphere.size());
+      }
+    };
+
+    OSP_REGISTER_SG_NODE(RandomSpheres);
   }
 }

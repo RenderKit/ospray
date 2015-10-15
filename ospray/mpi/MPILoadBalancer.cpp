@@ -43,6 +43,7 @@ namespace ospray {
       {
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+
         // double before = getSysTime();
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
@@ -72,12 +73,8 @@ namespace ospray {
 
       void Slave::RenderTask::run(size_t taskIndex) 
       {
-#ifdef OSPRAY_EXP_IMAGE_COMPOSITING
-        const size_t tileID = (taskIndex + 3*worker.rank) % (numTiles_x*numTiles_y);
-#else
         const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
-#endif
 
 #if TILE_SIZE>128
         Tile *tilePtr = new Tile;
@@ -93,6 +90,8 @@ namespace ospray {
         tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
+        tile.generation = 0;
+        tile.children = 0;
 
         renderer->renderTile(perFrameData,tile);
 
@@ -113,7 +112,9 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
 
+        PING;
         void *perFrameData = tiledRenderer->beginFrame(fb);
+        PRINT(perFrameData);
 
         Ref<RenderTask> renderTask = new RenderTask;
         renderTask->fb = fb;

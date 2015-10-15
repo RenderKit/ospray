@@ -71,6 +71,11 @@ namespace ospray {
     /*! \brief clear (the specified channels of) this frame buffer */
     virtual void clear(const uint32 fbChannelFlags) = 0;
 
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const
+    { return "ospray::FrameBuffer"; }
+
     /*! indicates whether the app requested this frame buffer to have
         an accumulation buffer */
     bool hasAccumBuffer;

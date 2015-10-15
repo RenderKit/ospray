@@ -209,6 +209,9 @@ namespace ospray {
         float sortOrder;
       };
       std::vector<BufferedTile *> bufferedTile;
+      int currentGeneration;
+      int expectedInNextGeneration;
+      int missingInCurrentGeneration;
       Mutex mutex;
     };
     
@@ -258,7 +261,10 @@ namespace ospray {
                            ColorBufferFormat colorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer);
-    
+    //! destructor
+    ~DistributedFrameBuffer()
+    { freeTiles(); }
+
     // ==================================================================
     // framebuffer / device interface
     // ==================================================================
@@ -322,6 +328,11 @@ namespace ospray {
     inline size_t getTileIDof(size_t x, size_t y) const
     { return (x/TILE_SIZE)+(y/TILE_SIZE)*numTiles.x; }
       
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const
+    { return "ospray::DistributedFrameBuffer"; }
+
 
     /*! the number of pixels in the (whole) frame buffer (independent
         of which tiles we have).
@@ -332,6 +343,15 @@ namespace ospray {
     vec2i numPixels;
     vec2i maxValidPixelID;
     vec2i numTiles;
+
+    typedef enum { 
+      WRITE_ONCE, ALPHA_BLENDING
+    } FrameMode;
+
+    FrameMode frameMode;
+    void setFrameMode(FrameMode newFrameMode) ;
+    void createTiles();
+    void freeTiles();
 
     /*! number of tiles written this frame */
     size_t numTilesCompletedThisFrame;

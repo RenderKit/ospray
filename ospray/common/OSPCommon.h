@@ -24,6 +24,10 @@
 # include <mpi.h>
 #endif
 
+#ifdef _WIN32
+  typedef unsigned long long id_t;
+#endif
+
 #if defined(__WIN32__) || defined(_WIN32)
 // ----------- windows only -----------
 # define _USE_MATH_DEFINES 1
@@ -197,11 +201,9 @@ namespace ospray {
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
-  /*! number of Embree threads to use, 0 for the default number. (cmdline: --osp:numthreads \<n\>) */
+  /*! number of Embree threads to use, 0 for the default
+      number. (cmdline: --osp:numthreads \<n\>) */
   extern uint32 numThreads;
-
-  /*! error handling callback to be used by embree */
-  //  void error_handler(const RTCError code, const char *str);
 
   /*! size of OSPDataType */
   size_t sizeOf(OSPDataType type);

@@ -45,6 +45,8 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
     renderer->renderTile(perFrameData,tile);
     // printf("settile... twice?\n");
@@ -106,6 +108,8 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
     renderer->renderTile(perFrameData,tile);
   }

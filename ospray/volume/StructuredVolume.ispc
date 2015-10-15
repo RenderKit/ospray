@@ -27,7 +27,8 @@ inline varying float StructuredVolume_computeSample(void *uniform _volume, const
   volume->transformWorldToLocal(volume, worldCoordinates, localCoordinates);
 
   // Coordinates outside the volume are clamped to the volume bounds.
-  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), volume->localCoordinatesUpperBound);
+  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), 
+                                              volume->localCoordinatesUpperBound);
 
   // Lower and upper corners of the box straddling the voxels to be interpolated.
   const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
@@ -156,7 +157,7 @@ void StructuredVolume_Constructor(StructuredVolume *uniform volume,
 
   volume->dimensions = dimensions;
   volume->accelerator = NULL;
-  volume->localCoordinatesUpperBound = nextafter(volume->dimensions - 1, make_vec3i(0));
+  volume->localCoordinatesUpperBound = nextafter(volume->dimensions - 1, make_vec3i(-1));
   volume->getVoxel = NULL;
   volume->transformLocalToWorld = StructuredVolume_transformLocalToWorld;
   volume->transformWorldToLocal = StructuredVolume_transformWorldToLocal;
