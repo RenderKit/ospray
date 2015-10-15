@@ -250,9 +250,6 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
   // If we intersected a volume, offset ray by a fraction of the nominal ray step.
   if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
 
-  if (!volume)
-    print("returning NULL volume!?\n");
-
   // Return the first intersected volume.
   return volume;
 }
@@ -402,17 +399,16 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 //     sample.ray.t  = min(sample.ray.t,clipRange.upper);
 //   }
 // #else  
-  if (passInfo) {
+  if (passInfo != NULL) {
     RaycastVolumeRenderer_intersect(renderer, sample.ray, 
                                     *passInfo, rayOffset, color, depth);
   } else {
-    uniform PassInfo passInfo;
-    passInfo.region = make_region1f(1e-6f,1e+10f);
-    passInfo.useBG = true;
-    passInfo.block = NULL;
-  print("bla\n");
+    uniform PassInfo dummyPassInfo;
+    dummyPassInfo.region = make_region1f(sample.ray.t0,sample.ray.t); //0.f,inf);
+    dummyPassInfo.useBG = true;
+    dummyPassInfo.block = NULL;
     RaycastVolumeRenderer_intersect(renderer, sample.ray, 
-                                    passInfo, rayOffset, color, depth);
+                                    dummyPassInfo, rayOffset, color, depth);
   }
 // #endif
 
