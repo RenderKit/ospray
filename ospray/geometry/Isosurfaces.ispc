@@ -90,6 +90,7 @@ void Isosurfaces_intersect(uniform Isosurfaces *uniform self,
       if (tHit <= rayCopy.t) {
         ray.geomID = self->geometry.geomID;
         ray.primID = isovalueID;
+        ray.instID = -1;
         ray.t = tHit;
         return;
       }

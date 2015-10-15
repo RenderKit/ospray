@@ -539,6 +539,7 @@ extern "C" {
     "position", "index", "normal", "texcoord", "color", etc. Data
     format for vertices and normals in vec3fa, and vec4i for index
     (fourth component is the material ID). */
+  // deprecated: use ospNewGeometry("triangles") instead
   OSP_DEPRECATED OSPTriangleMesh ospNewTriangleMesh();
 
   /*! add an already created geometry to a model */

@@ -23,7 +23,7 @@ IF (OSPRAY_MPI)
     ELSE()
       SET(CMAKE_MPI_MIC_FLAG "")
     ENDIF()
-    IF ((OSPRAY_COMPILER STREQUAL "ICC"))
+    IF (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
       #  IF (OSPRAY_FORCE_IMPI)
       SET(MPI_CXX_COMPILER "mpiicpc")
       execute_process(

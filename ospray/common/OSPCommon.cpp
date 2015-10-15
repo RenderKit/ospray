@@ -42,7 +42,7 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;
   bool debugMode = false;
-  uint32 numThreads = 0; //!< 0 for default number of Embree threads.
+  int32 numThreads = -1; //!< for default (==maximum) number of OSPRay/Embree threads
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
