@@ -74,8 +74,6 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
   // Look up the color associated with the volume sample.
   vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
 
-  print("xf %\n",volume->transferFunction);
-
   // Compute gradient shading, if enabled.
   if(volume->gradientShadingEnabled) {
 
@@ -175,6 +173,7 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
                                        const uniform PassInfo &passInfo,
                                        const varying float &rayOffset)
 {
+  print("isecvol\n");
   // The first intersected volume.
   Volume * volume = NULL;
 
@@ -183,13 +182,28 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
   volumeRay.t0 = infinity;
 
 #if EXP_DATA_PARALLEL
-  if (passInfo.block) {
+  if (passInfo.block != NULL) {
+    print("special block %\n",passInfo.block);
     // Intersect volume bounding box.
     float t0, t1;
     Volume *uniform volume_i = passInfo.block->ispcVolume;
+    print("special block volume %\n",passInfo.block->ispcVolume);
+#if 1
+     print("bb %\n % % %\n % % %\n",
+           volume_i,
+           volume_i->boundingBox.lower.x,
+           volume_i->boundingBox.lower.y,
+           volume_i->boundingBox.lower.z,
+           volume_i->boundingBox.upper.x,
+           volume_i->boundingBox.upper.y,
+           volume_i->boundingBox.upper.z);
+     if (eq(volume_i->boundingBox.lower,volume_i->boundingBox.upper))
+       print("EMPTY BBOX!!!!\n");
+#endif
     intersectBox(ray, volume_i->boundingBox, t0, t1);
     t0 = max(t0,passInfo.region.lower);
     t1 = min(t1,passInfo.region.upper);
+          
     if (t0 < t1 && t0 < volumeRay.t0) {
       volumeRay.t0 = t0;
       volumeRay.t = t1;
@@ -200,16 +214,17 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
     
     // If we intersected a volume, offset ray by a fraction of the nominal ray step.
     if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
-    print("steps %/%\n",volume->samplingStep,volume->samplingRate);
     // Return the first intersected volume.
+    print("returning block volume %\n",volume);
     return volume;
   }
 #endif
 
-  // print("num volumes %\n",renderer->inherited.model->volumeCount);
+  print("numvolumes %\n",renderer->inherited.model->volumeCount);
   // Test each volume and find the first intersection.
   for (uniform int32 i=0; i<renderer->inherited.model->volumeCount; i++) {
-
+    print("volumevec %\n",renderer->inherited.model->volumes);
+    print("volumecnt %\n",renderer->inherited.model->volumeCount);
     Volume *uniform volume_i = renderer->inherited.model->volumes[i]; 
 #if EXP_DATA_PARALLEL
     // hack for now .... if this does not have a 'getvoxel' function
@@ -223,6 +238,7 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
 
     // Intersect volume bounding box.
     float t0, t1;
+    print("isec %\n",volume_i);
     intersectBox(ray, volume_i->boundingBox, t0, t1);
 
 #if EXP_DATA_PARALLEL
@@ -253,6 +269,7 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
   // If we intersected a volume, offset ray by a fraction of the nominal ray step.
   if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
 
+  print("ret vol %\n",volume);
   // Return the first intersected volume.
   return volume;
 }
@@ -265,7 +282,6 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
                                             varying vec4f &color,
                                             varying float &depth)
 {
-  print("blubb\n");
   const region1f clipRange = passInfo.region;
   ray.t0 = max(ray.t0,clipRange.lower);
   ray.t = min(ray.t,clipRange.upper);
@@ -296,13 +312,13 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   geometryRay.geomID = -1;
   geometryRay.instID = -1;
 
+  print("INIT ISECVOLUME\n");
   // Get first intersected volume for each ray and set the ray bounds.
   Volume *volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray, 
                                                           passInfo,
                                                           rayOffset);
-
   // Provide ray offset for use with isosurface geometries (this value ignored elsewhere).
-  if (volume)
+  if (volume != NULL)
     geometryRay.time = -rayOffset * volume->samplingStep;
 
   // Separate color contributions for the volume and geometries. Initialize to provided color in case of no contribution...
@@ -321,7 +337,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   while ((firstHit = min(ray.t0, geometryRay.t)) < min(tMax,clipRange.upper)
          && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
-
+    print("firstHit %\n",firstHit);
     if (firstHit == ray.t0) {
 
       // Check to see if we've exited the current volume.
@@ -379,6 +395,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
 
   PassInfo *uniform passInfo = (PassInfo *uniform)_passInfo;
+  if (passInfo)
+    print("rendersample w/ passinfo % block %\n",passInfo,passInfo->block);
 
   // Background color.
   const uniform bool useBG = ((passInfo == NULL) || passInfo->useBG);
@@ -537,6 +555,8 @@ void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
         passInfo.useBG = false;
         // do not use any block in this pass
         passInfo.block = &block[blockID];
+        print("block %, blockid % numblocks %\n",block, blockID,numBlocks);
+        print("RENDERING BLOCK % %\n",passInfo.block,passInfo.block->ispcVolume);
         RaycastVolumeRenderer_renderSample((Renderer*uniform)self,&passInfo,fgSample);
         fgSample.ray.t0 = org_ray_t0;
         fgSample.ray.t  = org_ray_t1;
@@ -565,6 +585,7 @@ void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     // do not use background color in this pass
     passInfo.useBG = true;
     // do not use any block in this pass
+    passInfo.block = NULL;
 
     // ray does not overlap _any_ block; render entire ray segment in one sweep
     RaycastVolumeRenderer_renderSample((Renderer*uniform)self,&passInfo,fgSample);
@@ -698,6 +719,7 @@ export void DDDVRRenderer_renderTile(void *uniform _self,
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   DDBVolumeBlock *uniform block = (DDBVolumeBlock *uniform)_block;
+  print("rendertile w/ block[] %\n",block);
   precomputeZOrder();
 
   uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;

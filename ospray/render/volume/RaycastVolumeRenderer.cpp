@@ -69,7 +69,7 @@ namespace ospray {
         for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->g[i] = 0.f;
         for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->b[i] = 0.f;
         for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->a[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->z[i] = blockID*1e10f;//std::numeric_limits<float>::infinity();
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->z[i] = std::numeric_limits<float>::infinity();
       }
       mutex.unlock();
       return tile;
@@ -77,7 +77,7 @@ namespace ospray {
     
     Mutex mutex;
     size_t numBlocks;
-    Tile **blockTile;
+    Tile *volatile *blockTile;
   };
 
   /*! extern exported function so even ISPC code can access this cache */
@@ -85,10 +85,6 @@ namespace ospray {
   { return cache->getTileForBlock(blockID); }
 
   struct DPRenderTask : public ospray::Task {
-
-    struct PerFrameData {
-      int myRank;
-    };
 
     Ref<Renderer>     renderer;
     Ref<FrameBuffer>  fb;
@@ -242,10 +238,9 @@ namespace ospray {
     
     Renderer::beginFrame(fb);
 
-
     dfb->startNewFrame();
 
-    if (ddVolumeVec.size() >= 1)
+    if (ddVolumeVec.size() > 1)
       /* note: our assumption below is that all blocks together are
          contiguous, and fill a convex region (ie, any point on a
          given ray is either entirely before any block, entirely

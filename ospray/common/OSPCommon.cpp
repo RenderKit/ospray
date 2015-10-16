@@ -116,7 +116,7 @@ namespace ospray {
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
-      } else if (parm == "--osp:numthreads") {
+      } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
         numThreads = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
       } else {

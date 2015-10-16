@@ -28,7 +28,7 @@ namespace ospray {
   //! Allocate storage and populate the volume, called through the OSPRay API.
   void DataDistributedBlockedVolume::commit()
   {
-    // IW: do NOT call parent::commit here - this would try to build
+    // IW: do NOT call parent commit here - this would try to build
     // the parent acceleration strucutre, which doesn't make sense on
     // blocks that do not exist!!!!
 
@@ -55,10 +55,10 @@ namespace ospray {
       DDBlock *block = ddBlock+i;
       if (!block->isMine) continue;
 
-      TransferFunction *transferFunction
+      Ref<TransferFunction> transferFunction
         = (TransferFunction *)getParamObject("transferFunction", NULL);
-      PRINT(transferFunction);
-      block->cppVolume->findParam("transferFunction",1)->set(transferFunction);
+      PRINT(transferFunction.ptr);
+      block->cppVolume->findParam("transferFunction",1)->set(transferFunction.ptr);
     }
   }
   
@@ -131,6 +131,10 @@ namespace ospray {
     numDDBlocks = embree::reduce_mul(ddBlocks);
     ddBlock = new DDBlock[numDDBlocks];
 
+    std::cout << "=======================================================" << std::endl;
+    std::cout << "CREATED DD BLOCKS " << ddBlock << std::endl;
+    std::cout << "=======================================================" << std::endl;
+
     if (!ospray::core::isMpiParallel)
       throw std::runtime_error("data parallel volume, but not in mpi parallel mode...");
     int64 numWorkers = ospray::core::getWorkerCount();
@@ -159,7 +163,7 @@ namespace ospray {
 
             
             if (block->isMine) {
-              Volume *volume = new BlockBrickedVolume;
+              Ref<Volume> volume = new BlockBrickedVolume;
               vec3i blockDims = block->domain.upper-block->domain.lower;
               volume->findParam("dimensions",1)->set(blockDims);
               volume->findParam("gridOrigin",1)->set(block->bounds.lower);
