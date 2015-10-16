@@ -173,7 +173,6 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
                                        const uniform PassInfo &passInfo,
                                        const varying float &rayOffset)
 {
-  print("isecvol\n");
   // The first intersected volume.
   Volume * volume = NULL;
 
@@ -183,12 +182,10 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
 
 #if EXP_DATA_PARALLEL
   if (passInfo.block != NULL) {
-    print("special block %\n",passInfo.block);
     // Intersect volume bounding box.
     float t0, t1;
     Volume *uniform volume_i = passInfo.block->ispcVolume;
-    print("special block volume %\n",passInfo.block->ispcVolume);
-#if 1
+#if 0
      print("bb %\n % % %\n % % %\n",
            volume_i,
            volume_i->boundingBox.lower.x,
@@ -215,16 +212,12 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
     // If we intersected a volume, offset ray by a fraction of the nominal ray step.
     if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
     // Return the first intersected volume.
-    print("returning block volume %\n",volume);
     return volume;
   }
 #endif
 
-  print("numvolumes %\n",renderer->inherited.model->volumeCount);
   // Test each volume and find the first intersection.
   for (uniform int32 i=0; i<renderer->inherited.model->volumeCount; i++) {
-    print("volumevec %\n",renderer->inherited.model->volumes);
-    print("volumecnt %\n",renderer->inherited.model->volumeCount);
     Volume *uniform volume_i = renderer->inherited.model->volumes[i]; 
 #if EXP_DATA_PARALLEL
     // hack for now .... if this does not have a 'getvoxel' function
@@ -238,7 +231,6 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
 
     // Intersect volume bounding box.
     float t0, t1;
-    print("isec %\n",volume_i);
     intersectBox(ray, volume_i->boundingBox, t0, t1);
 
 #if EXP_DATA_PARALLEL
@@ -269,7 +261,6 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
   // If we intersected a volume, offset ray by a fraction of the nominal ray step.
   if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
 
-  print("ret vol %\n",volume);
   // Return the first intersected volume.
   return volume;
 }
@@ -312,7 +303,6 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   geometryRay.geomID = -1;
   geometryRay.instID = -1;
 
-  print("INIT ISECVOLUME\n");
   // Get first intersected volume for each ray and set the ray bounds.
   Volume *volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray, 
                                                           passInfo,
@@ -337,7 +327,6 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   while ((firstHit = min(ray.t0, geometryRay.t)) < min(tMax,clipRange.upper)
          && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
-    print("firstHit %\n",firstHit);
     if (firstHit == ray.t0) {
 
       // Check to see if we've exited the current volume.
@@ -395,8 +384,6 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
 
   PassInfo *uniform passInfo = (PassInfo *uniform)_passInfo;
-  if (passInfo)
-    print("rendersample w/ passinfo % block %\n",passInfo,passInfo->block);
 
   // Background color.
   const uniform bool useBG = ((passInfo == NULL) || passInfo->useBG);
@@ -538,13 +525,6 @@ void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
       // now, render this block if it's one of ours
       if (block[blockID].mine) {
         Tile *uniform blockTile = CacheForBlockTiles_getTileForBlock(_tileCache,blockID);
-#if 0
-        vec3f rgb = make_vec3f(1,0,0);
-        float alpha = .5f;
-        float z = t0; //10.f;
-        setRGBAZ(*blockTile,pixelID,rgb,alpha,z);
-#else
-
         // -------------------------------------------------------
         // set up pass for 'one particular block'
         // -------------------------------------------------------
@@ -555,13 +535,10 @@ void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
         passInfo.useBG = false;
         // do not use any block in this pass
         passInfo.block = &block[blockID];
-        print("block %, blockid % numblocks %\n",block, blockID,numBlocks);
-        print("RENDERING BLOCK % %\n",passInfo.block,passInfo.block->ispcVolume);
         RaycastVolumeRenderer_renderSample((Renderer*uniform)self,&passInfo,fgSample);
         fgSample.ray.t0 = org_ray_t0;
         fgSample.ray.t  = org_ray_t1;
         setRGBAZ(*blockTile,pixelID,fgSample.rgb,fgSample.alpha,t0); //fgSample.z);
-#endif
       }
     }
   }
@@ -719,7 +696,6 @@ export void DDDVRRenderer_renderTile(void *uniform _self,
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
   DDBVolumeBlock *uniform block = (DDBVolumeBlock *uniform)_block;
-  print("rendertile w/ block[] %\n",block);
   precomputeZOrder();
 
   uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
