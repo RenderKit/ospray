@@ -204,7 +204,7 @@ OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
 OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
 {
   // Create the OSPRay object.
-  OSPVolume volume = ospNewVolume("block_bricked_volume");
+  OSPVolume volume = ospNewVolume("data_distributed_volume"); // block_bricked_volume. TODO: fix this.
 
   // Temporary storage for the file name attribute if specified.
   const char *volumeFilename = NULL;
