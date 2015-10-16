@@ -62,6 +62,9 @@ namespace ospray {
       bounds.extend(geometry[i]->bounds);
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
+    if (geometry.size() > 10) {
+      PING; PRINT(geometry.size());
+    }
 
     for (size_t i=0; i<volume.size(); i++) 
       ispc::Model_setVolume(getIE(), i, volume[i]->getIE());

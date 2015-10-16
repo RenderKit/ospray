@@ -42,6 +42,7 @@ SET(OSPRAY_SOURCES
   common/OSPCommon.cpp
   common/Core.cpp
   common/Managed.cpp
+  common/ObjectHandle.cpp
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp
@@ -158,7 +159,6 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
   api/LocalDevice.cpp
-  api/Handle.cpp
   )
 
 # -------------------------------------------------------

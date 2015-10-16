@@ -48,6 +48,8 @@ namespace ospray {
     region2i region; /*!< screen region that this corresponds to */
     vec2i    fbSize; /*!< total frame buffer size, for the camera */
     vec2f    rcp_fbSize;
+    int32    generation;
+    int32    children;
   };
 
 } // ::ospray

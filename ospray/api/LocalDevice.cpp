@@ -627,7 +627,14 @@ namespace ospray {
       Assert(renderer != NULL && "invalid renderer handle");
       
       // FrameBuffer *fb = sc->getBackBuffer();
-      renderer->renderFrame(fb,fbChannelFlags);
+      try { 
+        renderer->renderFrame(fb,fbChannelFlags);
+      } catch (std::runtime_error e) {
+        std::cerr << "=======================================================" << std::endl;
+        std::cerr << "# >>> ospray fatal error <<< " << std::endl << e.what() << std::endl;
+        std::cerr << "=======================================================" << std::endl;
+        exit(1);
+      }
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
       // actually have the user call an *ex*plicit ospSwapBuffers call...

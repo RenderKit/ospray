@@ -17,11 +17,10 @@
 #pragma once
 
 #include "MPICommon.h"
-#include "ospray/api/Handle.h"
+#include "ospray/common/ObjectHandle.h"
 
 namespace ospray {
   namespace mpi {
-    using api::Handle;
 
     inline void checkMpiError(int rc)
     {
@@ -87,7 +86,7 @@ namespace ospray {
         int rc = MPI_Bcast(&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);       
         checkMpiError(rc); 
       }
-      inline void send(const Handle &h)
+      inline void send(const ObjectHandle &h)
       { 
         int rc = MPI_Bcast((void*)&h,2,MPI_INT,MPI_ROOT,mpi::worker.comm);
         checkMpiError(rc); 
@@ -134,9 +133,9 @@ namespace ospray {
         int rc = MPI_Recv(pointer,size,MPI_BYTE,rank,0,comm,&status);
         checkMpiError(rc);
       }
-      inline Handle get_handle() 
+      inline ObjectHandle get_handle() 
       { 
-        Handle v; 
+        ObjectHandle v; 
         int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm); 
         checkMpiError(rc); 
         return v; 

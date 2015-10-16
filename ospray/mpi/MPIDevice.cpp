@@ -350,7 +350,7 @@ namespace ospray {
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
 
 // #if USE_DFB      
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       
       FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                                    size,
@@ -358,7 +358,7 @@ namespace ospray {
                                                    colorBufferFormat,
                                                    hasDepthBuffer,hasAccumBuffer);
       fb->refInc();
-      mpi::Handle::assign(handle,fb);
+      ObjectHandle::assign(handle,fb);
       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
       cmd.send(handle);
       cmd.send(size);
@@ -371,8 +371,8 @@ namespace ospray {
 //                                              hasDepthBuffer,hasAccumBuffer);
 //       fb->refInc();
       
-//       mpi::Handle handle = mpi::Handle::alloc();
-//       mpi::Handle::assign(handle,fb);
+//       ObjectHandle handle = ObjectHandle::alloc();
+//       ObjectHandle::assign(handle,fb);
       
 //       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
 //       cmd.send(handle);
@@ -392,7 +392,7 @@ namespace ospray {
       int rc; 
       MPI_Status status;
 
-      mpi::Handle handle = (const mpi::Handle &)_fb;
+      ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
 
       LocalFrameBuffer *lfb = (LocalFrameBuffer*)fb;
@@ -408,7 +408,7 @@ namespace ospray {
     void MPIDevice::frameBufferUnmap(const void *mapped,
                                      OSPFrameBuffer _fb)
     {
-      mpi::Handle handle = (const mpi::Handle &)_fb;
+      ObjectHandle handle = (const ObjectHandle &)_fb;
       // SwapChain *sc = (SwapChain *)handle.lookup();
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
       // Assert(sc);
@@ -419,7 +419,7 @@ namespace ospray {
     /*! create a new model */
     OSPModel MPIDevice::newModel()
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_MODEL);
       cmd.send(handle);
       cmd.flush();
@@ -439,8 +439,8 @@ namespace ospray {
     {
       Assert(_object);
       cmd.newCommand(CMD_COMMIT);
-      const mpi::Handle handle = (const mpi::Handle&)_object;
-      cmd.send((const mpi::Handle&)_object);
+      const ObjectHandle handle = (const ObjectHandle&)_object;
+      cmd.send((const ObjectHandle&)_object);
       cmd.flush();
 
       MPI_Barrier(MPI_COMM_WORLD);
@@ -452,8 +452,8 @@ namespace ospray {
       Assert(_model);
       Assert(_geometry);
       cmd.newCommand(CMD_ADD_GEOMETRY);
-      cmd.send((const mpi::Handle &)_model);
-      cmd.send((const mpi::Handle &)_geometry);
+      cmd.send((const ObjectHandle &)_model);
+      cmd.send((const ObjectHandle &)_geometry);
       cmd.flush();
     }
 
@@ -463,15 +463,15 @@ namespace ospray {
       Assert(_model);
       Assert(_volume);
       cmd.newCommand(CMD_ADD_VOLUME);
-      cmd.send((const mpi::Handle &) _model);
-      cmd.send((const mpi::Handle &) _volume);
+      cmd.send((const ObjectHandle &) _model);
+      cmd.send((const ObjectHandle &) _volume);
       cmd.flush();
     }
 
     /*! create a new data buffer */
     OSPTriangleMesh MPIDevice::newTriangleMesh()
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_TRIANGLEMESH);
       cmd.send(handle);
       cmd.flush();
@@ -485,7 +485,7 @@ namespace ospray {
     /*! create a new data buffer */
     OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_DATA);
       cmd.send(handle);
       cmd.send((size_t)nitems);
@@ -530,8 +530,8 @@ namespace ospray {
       OSPData data = newData(size_t(count.x) * count.y * count.z, type, (void *)source, OSP_DATA_SHARED_BUFFER);
 
       cmd.newCommand(CMD_SET_REGION);
-      cmd.send((const mpi::Handle &)_volume);
-      cmd.send((const mpi::Handle &)data);
+      cmd.send((const ObjectHandle &)_volume);
+      cmd.send((const ObjectHandle &)data);
       cmd.send(index);
       cmd.send(count);
 
@@ -553,7 +553,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_STRING);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(s);
     }
@@ -591,7 +591,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_FLOAT);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(f);
     }
@@ -603,7 +603,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_INT);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(i);
     }
@@ -615,7 +615,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC2F);
-      cmd.send((const mpi::Handle &) _object);
+      cmd.send((const ObjectHandle &) _object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -627,7 +627,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC3F);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -639,7 +639,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC2I);
-      cmd.send((const mpi::Handle &) _object);
+      cmd.send((const ObjectHandle &) _object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -651,7 +651,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC3I);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(v);
       // ManagedObject *object = (ManagedObject *)_object;
@@ -666,13 +666,13 @@ namespace ospray {
     {
       Assert(_target != NULL);
       Assert(bufName != NULL);
-      const mpi::Handle tgtHandle = (const mpi::Handle&)_target;
-      const mpi::Handle valHandle = (const mpi::Handle&)_value;
+      const ObjectHandle tgtObjectHandle = (const ObjectHandle&)_target;
+      const ObjectHandle valObjectHandle = (const ObjectHandle&)_value;
 
       cmd.newCommand(CMD_SET_OBJECT);
-      cmd.send(tgtHandle);
+      cmd.send(tgtObjectHandle);
       cmd.send(bufName);
-      cmd.send(valHandle);
+      cmd.send(valObjectHandle);
       cmd.flush();
     }
 
@@ -699,7 +699,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_FLOAT);
       cmd.flush();
@@ -717,7 +717,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_INT);
       cmd.flush();
@@ -766,7 +766,7 @@ namespace ospray {
       Assert(object);
 
       cmd.newCommand(CMD_GET_TYPE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name ? name : "\0");
       cmd.flush();
 
@@ -783,7 +783,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_STRING);
       cmd.flush();
@@ -801,7 +801,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_FLOAT2);
       cmd.flush();
@@ -819,7 +819,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_FLOAT3);
       cmd.flush();
@@ -837,7 +837,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_INT3);
       cmd.flush();
@@ -853,7 +853,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_PIXELOP);
       cmd.send(handle);
@@ -869,8 +869,8 @@ namespace ospray {
       Assert(_op != NULL);
 
       cmd.newCommand(CMD_SET_PIXELOP);
-      cmd.send((const mpi::Handle&)_fb);
-      cmd.send((const mpi::Handle&)_op);
+      cmd.send((const ObjectHandle&)_fb);
+      cmd.send((const ObjectHandle&)_op);
       cmd.flush();
     }
       
@@ -879,7 +879,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_RENDERER);
       cmd.send(handle);
@@ -893,7 +893,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_CAMERA);
       cmd.send(handle);
@@ -907,7 +907,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_VOLUME);
       cmd.send(handle);
@@ -921,10 +921,10 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       
       cmd.newCommand(CMD_NEW_GEOMETRY);
-      cmd.send((const mpi::Handle&)handle);
+      cmd.send((const ObjectHandle&)handle);
       cmd.send(type);
       cmd.flush();
       return (OSPGeometry)(int64)handle;
@@ -939,11 +939,11 @@ namespace ospray {
       if (_renderer == NULL) 
         throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       
       cmd.newCommand(CMD_NEW_MATERIAL);
-      cmd.send((const mpi::Handle&)_renderer);
-      cmd.send((const mpi::Handle&)handle);
+      cmd.send((const ObjectHandle&)_renderer);
+      cmd.send((const ObjectHandle&)handle);
 
       cmd.send(type);
       cmd.flush();
@@ -966,7 +966,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_TRANSFERFUNCTION);
       cmd.send(handle);
@@ -982,11 +982,11 @@ namespace ospray {
       if (type == NULL)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       
       cmd.newCommand(CMD_NEW_LIGHT);
-      cmd.send((const mpi::Handle&)_renderer);
-      cmd.send((const mpi::Handle&)handle);
+      cmd.send((const ObjectHandle&)_renderer);
+      cmd.send((const ObjectHandle&)handle);
 
       cmd.send(type);
       cmd.flush();
@@ -1019,7 +1019,7 @@ namespace ospray {
                                      const uint32 fbChannelFlags)
     {
       cmd.newCommand(CMD_FRAMEBUFFER_CLEAR);
-      cmd.send((const mpi::Handle&)_fb);
+      cmd.send((const ObjectHandle&)_fb);
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
     }
@@ -1028,8 +1028,8 @@ namespace ospray {
     void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       cmd.newCommand(CMD_REMOVE_GEOMETRY);
-      cmd.send((const mpi::Handle&)_model);
-      cmd.send((const mpi::Handle&)_geometry);
+      cmd.send((const ObjectHandle&)_model);
+      cmd.send((const ObjectHandle&)_geometry);
       cmd.flush();
     }
 
@@ -1040,8 +1040,8 @@ namespace ospray {
                                 const uint32 fbChannelFlags)
     {
       double T0 = getSysTime();
-      const mpi::Handle handle = (const mpi::Handle&)_fb;
-      // const mpi::Handle handle = (const mpi::Handle&)_sc;
+      const ObjectHandle handle = (const ObjectHandle&)_fb;
+      // const ObjectHandle handle = (const ObjectHandle&)_sc;
       // SwapChain *sc = (SwapChain *)handle.lookup();
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
       // Assert(sc);
@@ -1049,8 +1049,8 @@ namespace ospray {
       //FrameBuffer *fb = sc->getFrontBuffer();
       // FrameBuffer *fb = sc->getBackBuffer();
       cmd.newCommand(CMD_RENDER_FRAME);
-      cmd.send((const mpi::Handle&)_fb);
-      cmd.send((const mpi::Handle&)_renderer);
+      cmd.send((const ObjectHandle&)_fb);
+      cmd.send((const ObjectHandle&)_renderer);
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
@@ -1071,7 +1071,7 @@ namespace ospray {
     {
       if (!_obj) return;
       cmd.newCommand(CMD_RELEASE);
-      cmd.send((const mpi::Handle&)_obj);
+      cmd.send((const ObjectHandle&)_obj);
       cmd.flush();
     }
 
@@ -1079,8 +1079,8 @@ namespace ospray {
     void MPIDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {
       cmd.newCommand(CMD_SET_MATERIAL);
-      cmd.send((const mpi::Handle&)_geometry);
-      cmd.send((const mpi::Handle&)_material);
+      cmd.send((const ObjectHandle&)_geometry);
+      cmd.send((const ObjectHandle&)_material);
       cmd.flush();
     }
 
@@ -1088,7 +1088,7 @@ namespace ospray {
     OSPTexture2D MPIDevice::newTexture2D(int width, int height, 
                                          OSPDataType type, void *data, int flags)
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_TEXTURE2D);
       cmd.send(handle);
       cmd.send((int32)width);
@@ -1185,7 +1185,7 @@ namespace ospray {
       Assert2(worldCoordinates, "invalid worldCoordinates");
 
       cmd.newCommand(CMD_SAMPLE_VOLUME);
-      cmd.send((const mpi::Handle &) volume);
+      cmd.send((const ObjectHandle &) volume);
       cmd.send(count);
       cmd.send(worldCoordinates, count * sizeof(osp::vec3f));
       cmd.flush();

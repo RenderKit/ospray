@@ -39,6 +39,7 @@ struct VaryingRGBA_I8 {
 export void DFB_alphaBlendBackground(VaryingTile    *uniform firstTile,
                                      const uniform vec4f &bgColor)
 {
+  /*! note: alpha=1 means "fully opaque" */
   for (uniform int i=0;i<TILE_SIZE*TILE_SIZE/programCount;i++) {
     vec4f col_over = make_vec4f(firstTile->r[i],
                                 firstTile->g[i],
@@ -157,5 +158,70 @@ export void DFB_set(void *uniform _self,
   FrameBuffer_set(&self->super,size_x,size_y,colorBufferFormat);
 }
 
+inline void swapFragments(VaryingTile *uniform t0, VaryingTile *uniform t1, uniform int fragID)
+{
+  float r = t0->r[fragID]; t0->r[fragID] = t1->r[fragID]; t1->r[fragID] = r;
+  float g = t0->g[fragID]; t0->g[fragID] = t1->g[fragID]; t1->g[fragID] = g;
+  float b = t0->b[fragID]; t0->b[fragID] = t1->b[fragID]; t1->b[fragID] = b;
+  float a = t0->a[fragID]; t0->a[fragID] = t1->a[fragID]; t1->a[fragID] = a;
+  float z = t0->z[fragID]; t0->z[fragID] = t1->z[fragID]; t1->z[fragID] = z;
+}
+
+
+
+#define PIXELS_PER_BLEND_JOB 64
+
+inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
+                                  uniform int32 numTiles,
+                                  uniform int begin_frag, uniform int end_frag)
+{
+  for (uniform int frag=begin_frag;frag<end_frag;frag++) {
+    for (uniform int i=1;i<numTiles;i++)
+      for (uniform int j=i;j>0;--j) {
+        VaryingTile *uniform ta = tileArray[j];
+        VaryingTile *uniform tb = tileArray[j-1];
+        if (ta->z[frag] < tb->z[frag])
+          break;
+        swapFragments(ta,tb,frag);
+      }
+
+    vec3f acc_col = make_vec3f(0,1,0);
+    float acc_alpha = 0.f;
+
+    for (uniform int i=0;i<numTiles;i++) {
+      VaryingTile *uniform tile = tileArray[i];
+      vec3f frag_col = make_vec3f(tile->r[frag],tile->g[frag],tile->b[frag]);
+      float frag_alpha = tile->a[frag];
+
+      acc_col = frag_alpha * frag_col + (1.f-frag_alpha) * acc_col;
+      acc_alpha = frag_alpha * frag_alpha + (1.f-frag_alpha) * acc_alpha;
+    }
+    
+    VaryingTile *uniform tile = tileArray[0];
+    tile->r[frag] = acc_col.x;
+    tile->g[frag] = acc_col.y;
+    tile->b[frag] = acc_col.z;
+    tile->a[frag] = acc_alpha;
+  }
+}
+
+task void DFB_sortAndBlendFragments_job(VaryingTile *uniform *uniform tileArray,
+                                        uniform int32 numTiles)
+{
+  uniform int begin = taskIndex * (PIXELS_PER_BLEND_JOB/programCount);
+  uniform int end = begin + (PIXELS_PER_BLEND_JOB/programCount);
+  sortAndBlendFragments(tileArray,numTiles,begin,end);
+}
+
+export void DFB_sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
+                                      uniform int32 numTiles)
+{
+#if 0
+  sortAndBlendFragments(tileArray,numTiles,0,TILE_SIZE*TILE_SIZE/programCount);
+#else
+  uniform int numJobs = (TILE_SIZE*TILE_SIZE) / PIXELS_PER_BLEND_JOB;
+  launch[numJobs] DFB_sortAndBlendFragments_job(tileArray,numTiles);
+#endif
+}
 
 

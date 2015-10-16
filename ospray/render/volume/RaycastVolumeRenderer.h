@@ -54,11 +54,13 @@ namespace ospray {
     virtual std::string toString() const { return("ospray::RaycastVolumeRenderer"); }
 
 #if EXP_DATA_PARALLEL
-    //! \brief render-frame call back for data parallel mode
-    /*! \detailed in data parallel mode, we have to render multiple
-        'passes' (depending on many pieces there are), so we have to
-        override the default renderframe function */
-    virtual void renderFrame(FrameBuffer *fb, const uint32 channelFlags);
+    // /*! per-frame data to describe the data-parallel components */
+    // // struct PerFrameData {
+    // // };
+    void renderFrame(FrameBuffer *fb, const uint32 channelFlags);
+    // void *beginFrame(FrameBuffer *fb);
+    // void renderTile(void *perFrameData, Tile &tile);
+
 #endif
 
   protected:
