@@ -27,11 +27,13 @@
 #include "OpenGLAnnotationRenderer.h"
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
+                           bool ownModelPerObject,
                            bool showFrameRate,
                            bool fullScreen,
                            std::string writeFramesFilename)
   : objectFileFilenames(objectFileFilenames),
     modelIndex(0),
+    ownModelPerObject(ownModelPerObject),
     boundingBox(osp::vec3f(0.f), osp::vec3f(1.f)),
     renderer(NULL),
     rendererInitialized(false),
@@ -89,7 +91,10 @@ void VolumeViewer::setModel(size_t index)
   probeWidget->setVolume(modelStates[index].volumes[0]);
 
   // Update current filename information label.
-  currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
+  if (ownModelPerObject)
+    currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: Data value range: [") + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
+  else
+    currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
 
   // Enable rendering on the OSPRay window.
   osprayWindow->setRenderingEnabled(true);
@@ -322,6 +327,7 @@ void VolumeViewer::setIsovalues(std::vector<float> isovalues)
 
 void VolumeViewer::importObjectsFromFile(const std::string &filename)
 {
+  if (!ownModelPerObject)
   // Create an OSPRay model and its associated model state.
   modelStates.push_back(ModelState(ospNewModel()));
 
@@ -330,6 +336,9 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
 
   // Iterate over the objects contained in the object list.
   for (size_t i=0 ; objects[i] ; i++) {
+    if (ownModelPerObject)
+      modelStates.push_back(ModelState(ospNewModel()));
+
     OSPDataType type;
     ospGetType(objects[i], NULL, &type);
 
@@ -353,8 +362,12 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
       // Add to volumes vector for the current model.
       modelStates.back().volumes.push_back((OSPVolume) objects[i]);
     }
+
+    if (ownModelPerObject)
+      ospCommit(modelStates.back().model);
   }
 
+  if (!ownModelPerObject)
   // Commit the model.
   ospCommit(modelStates.back().model);
 }

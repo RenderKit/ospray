@@ -46,7 +46,7 @@ Q_OBJECT
 public:
 
   //! Constructor.
-  VolumeViewer(const std::vector<std::string> &objectFileFilenames, bool showFrameRate, bool fullScreen, std::string writeFramesFilename);
+  VolumeViewer(const std::vector<std::string> &objectFileFilenames, bool ownModelPerObject, bool showFrameRate, bool fullScreen, std::string writeFramesFilename);
 
   //! Destructor.
   ~VolumeViewer() {};
@@ -123,6 +123,7 @@ protected:
 
   //! OSPRay object file filenames, one for each model / time step.
   std::vector<std::string> objectFileFilenames;
+  bool ownModelPerObject; // create a separate model for each object (not not only for each file)
 
   //! OSPRay models and their volumes / geometries.
   std::vector<ModelState> modelStates;
