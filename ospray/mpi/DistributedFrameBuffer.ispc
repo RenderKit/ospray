@@ -185,7 +185,7 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
         swapFragments(ta,tb,frag);
       }
 
-    vec3f acc_col = make_vec3f(0,1,0);
+    vec3f acc_col = make_vec3f(0,0,0);
     float acc_alpha = 0.f;
 
     for (uniform int i=0;i<numTiles;i++) {
@@ -193,8 +193,10 @@ inline void sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
       vec3f frag_col = make_vec3f(tile->r[frag],tile->g[frag],tile->b[frag]);
       float frag_alpha = tile->a[frag];
 
-      acc_col = frag_alpha * frag_col + (1.f-frag_alpha) * acc_col;
-      acc_alpha = frag_alpha * frag_alpha + (1.f-frag_alpha) * acc_alpha;
+      acc_col = //frag_alpha * 
+        frag_col + (1.f-frag_alpha) * acc_col;
+      acc_alpha = //frag_alpha * 
+        frag_alpha + (1.f-frag_alpha) * acc_alpha;
     }
     
     VaryingTile *uniform tile = tileArray[0];
@@ -216,7 +218,7 @@ task void DFB_sortAndBlendFragments_job(VaryingTile *uniform *uniform tileArray,
 export void DFB_sortAndBlendFragments(VaryingTile *uniform *uniform tileArray,
                                       uniform int32 numTiles)
 {
-#if 0
+#if 1
   sortAndBlendFragments(tileArray,numTiles,0,TILE_SIZE*TILE_SIZE/programCount);
 #else
   uniform int numJobs = (TILE_SIZE*TILE_SIZE) / PIXELS_PER_BLEND_JOB;

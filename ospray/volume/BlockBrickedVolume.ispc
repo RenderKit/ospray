@@ -218,6 +218,7 @@ task void BBVFloat_setRegionTask(BlockBrickedVolume *uniform self,
         coord.z >= self->super.dimensions.z
         )
       continue;
+
     BlockBrickedVolume_getVoxelAddress(self, coord, address);
     foreach_unique(blockID in address.block) {
       float *uniform blockPtr

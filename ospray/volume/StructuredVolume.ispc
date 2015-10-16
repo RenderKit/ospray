@@ -122,6 +122,7 @@ inline void StructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
 
   // Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
+
 //ray.t0 += step;
 }
 
@@ -157,7 +158,7 @@ void StructuredVolume_Constructor(StructuredVolume *uniform volume,
 
   volume->dimensions = dimensions;
   volume->accelerator = NULL;
-  volume->localCoordinatesUpperBound = nextafter(volume->dimensions - 1, make_vec3i(-1));
+  volume->localCoordinatesUpperBound = nextafter(volume->dimensions - 1, make_vec3i(0));
   volume->getVoxel = NULL;
   volume->transformLocalToWorld = StructuredVolume_transformLocalToWorld;
   volume->transformWorldToLocal = StructuredVolume_transformWorldToLocal;

@@ -26,9 +26,6 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
-bool dbg = false;
-
-
 /*! number of pixels that each job in a parallel rendertile task
     executes together. Must be a multipel of the maximum possible
     programCount (16), and must be smaller than TILE_SIZE (in one
@@ -43,8 +40,6 @@ struct PassInfo {
   // blend in background color when ray misses
   uniform bool useBG;
 };
-
-#define inline /**/
 
 void RaycastVolumeRenderer_endFrame(Renderer *uniform renderer, 
                                     void *uniform perFrameData,
@@ -214,7 +209,17 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
     
     // If we intersected a volume, offset ray by a fraction of the nominal ray step.
 
+#if 0
+    if (volume) {
+      float dt = volume->samplingStep * rcpf(volume->samplingRate);
+      float t0 = ray.t0;
+      int i0 = (int)(ray.t0 / dt);
+      ray.t0 = (i0 + rayOffset)*dt;
+      if (ray.t0 < t0) ray.t0 += dt;
+    }
+#else
     if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
+#endif
 
     // Return the first intersected volume.
     return volume;
@@ -264,7 +269,9 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
   ray = volumeRay;
 
   // If we intersected a volume, offset ray by a fraction of the nominal ray step.
+#if 1
   if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
+#endif
 
   // Return the first intersected volume.
   return volume;
@@ -282,10 +289,10 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   ray.t0 = max(ray.t0,clipRange.lower);
   ray.t = min(ray.t,clipRange.upper);
 
-  if (dbg) {
-    print("RENDER SAMPLE (block %)\n",passInfo.block);
-    print("range % %\n",ray.t0,ray.t);
-  }
+  // if (dbg) {
+  //   print("RENDER SAMPLE (block %)\n",passInfo.block);
+  //   print("range % %\n",ray.t0,ray.t);
+  // }
 
 
   // Original tMax for ray interval
@@ -319,8 +326,8 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
                                                           passInfo,
                                                           rayOffset);
 
-  if (dbg) 
-    print("volume intersect\n %\n %\n",ray.t0,ray.t);
+  // if (dbg) 
+  //   print("volume intersect\n %\n %\n",ray.t0,ray.t);
 
   // Provide ray offset for use with isosurface geometries (this value ignored elsewhere).
   if (volume != NULL)
@@ -350,8 +357,8 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
         ray.t0 = ray.t + epsilon;
         ray.t = tMax;
         volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray, passInfo, rayOffset);
-        if (dbg) 
-          print("volume intersect 2\n %\n %\n",ray.t0,ray.t);
+        // if (dbg) 
+        // print("volume intersect 2\n %\n %\n",ray.t0,ray.t);
       }
       else {
 
@@ -362,9 +369,9 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
         foreach_unique (v in volume)
           RaycastVolumeRenderer_computeVolumeSample(renderer, v, ray, volumeColor);
         
-        if (dbg) {
-          print("sample at %\n %\n %\n %\n",ray.t,volumeColor.x,volumeColor.y,volumeColor.z);
-        }
+        // if (dbg) {
+        //   print("sample at %\n %\n %\n %\n",ray.t0,volumeColor.x,volumeColor.y,volumeColor.z);
+        // }
 
         // Volume contribution.
         color = color + (1.0f - color.w) * volumeColor;
@@ -422,7 +429,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   if(rayOffset > 1.f) rayOffset -= 1.f;
 
   // Provide the renderer to the intersector as it contains all volumes, geometries, etc.
-  vec4f color = make_vec4f(0.0f);
+  vec4f color = make_vec4f(0.0f,0.f,0.f,0.f);
   float depth = infinity;
 
 // #if EXP_DATA_PARALLEL
@@ -648,7 +655,6 @@ task void DDDVRRenderer_renderTile_job(uniform Renderer *uniform self,
   const uniform int startSampleID = max(fb->accumID,0);
 
   for (uniform uint32 i=begin;i<end;i+=programCount) {
-    // dbg = (fgTile.region.lower.x == 128+256 && fgTile.region.lower.y == 256) && i==0;
     const uint32 index = i + programIndex;
     fgSample.sampleID.x        = bgTile.region.lower.x + z_order.xs[index];
     fgSample.sampleID.y        = bgTile.region.lower.y + z_order.ys[index];
@@ -657,7 +663,7 @@ task void DDDVRRenderer_renderTile_job(uniform Renderer *uniform self,
         (fgSample.sampleID.y >= fb->size.y)) 
       continue;
 
-    dbg = (fgSample.sampleID.x == 640 && fgSample.sampleID.y == 340);
+    // dbg = (fgSample.sampleID.x == 640 && fgSample.sampleID.y == 340);
 
     const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
 
@@ -687,7 +693,7 @@ task void DDDVRRenderer_renderTile_job(uniform Renderer *uniform self,
                       numBlocks,block,tileNeedsBlock,isMyTile
                       );
 
-    if (dbg) { bgSample.rgb = fgSample.rgb = make_vec3f(1,0,0);  }
+    // if (dbg) { bgSample.rgb = fgSample.rgb = make_vec3f(1,0,0);  }
 
     setRGBAZ(bgTile,pixel,bgSample.rgb,bgSample.alpha,bgSample.z);
     setRGBAZ(fgTile,pixel,fgSample.rgb,fgSample.alpha,fgSample.z);
