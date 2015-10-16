@@ -245,11 +245,7 @@ namespace ospray {
 
     dfb->startNewFrame();
 
-    PING; fflush(0);
-    sleep(1);
-    PING; fflush(0);
-
-    if (ddVolumeVec.size() > 1)
+    if (ddVolumeVec.size() >= 1)
       /* note: our assumption below is that all blocks together are
          contiguous, and fill a convex region (ie, any point on a
          given ray is either entirely before any block, entirely

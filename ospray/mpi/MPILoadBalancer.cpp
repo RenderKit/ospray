@@ -112,9 +112,7 @@ namespace ospray {
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
 
-        PING;
         void *perFrameData = tiledRenderer->beginFrame(fb);
-        PRINT(perFrameData);
 
         Ref<RenderTask> renderTask = new RenderTask;
         renderTask->fb = fb;
@@ -122,6 +120,7 @@ namespace ospray {
         renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
         renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
         renderTask->channelFlags = channelFlags;
+        renderTask->perFrameData = perFrameData;
 
         /*! iw: using a local sync event for now; "in theory" we should be
           able to attach something like a sync event to the frame

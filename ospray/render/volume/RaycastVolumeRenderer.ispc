@@ -64,7 +64,8 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
                                                       varying Ray &ray,
                                                       varying vec4f &color)
 {
-  if (!volume) return;
+  if (!volume) { print("NULL VOLUME IN VOLUMESAMPLE()\n");  }
+  if (!volume->computeSample) { print("trying to sample volume w/o sample function!!!!\n");  }
 
   // Sample the volume at the hit point in world coordinates.
   const vec3f coordinates = ray.org + ray.t0 * ray.dir;
@@ -72,6 +73,8 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
 
   // Look up the color associated with the volume sample.
   vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
+
+  print("xf %\n",volume->transferFunction);
 
   // Compute gradient shading, if enabled.
   if(volume->gradientShadingEnabled) {
@@ -262,6 +265,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
                                             varying vec4f &color,
                                             varying float &depth)
 {
+  print("blubb\n");
   const region1f clipRange = passInfo.region;
   ray.t0 = max(ray.t0,clipRange.lower);
   ray.t = min(ray.t,clipRange.upper);
@@ -328,6 +332,10 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
         volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray, passInfo, rayOffset);
       }
       else {
+
+        if (any(volume == NULL))
+          print("ACCESSING NULL VOLUME HERE!\n");
+
         // Compute the volume sample at the current position and advance the ray.
         foreach_unique (v in volume)
           RaycastVolumeRenderer_computeVolumeSample(renderer, v, ray, volumeColor);
@@ -404,7 +412,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
                                     *passInfo, rayOffset, color, depth);
   } else {
     uniform PassInfo dummyPassInfo;
-    dummyPassInfo.region = make_region1f(sample.ray.t0,sample.ray.t); //0.f,inf);
+    dummyPassInfo.region = make_region1f(0.f,inf);
     dummyPassInfo.useBG = true;
     dummyPassInfo.block = NULL;
     RaycastVolumeRenderer_intersect(renderer, sample.ray, 

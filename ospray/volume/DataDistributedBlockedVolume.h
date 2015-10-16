@@ -20,6 +20,7 @@
 
 namespace ospray {
 
+#if EXP_DATA_PARALLEL
   /*! \brief A type of structured volume that is data-distributed
     across multiple clients */
   /*! \detailed This class implements a structured volume whose data
@@ -87,6 +88,7 @@ namespace ospray {
     /*! list of data distributed blocks */
     DDBlock *ddBlock;
   };
+#endif
 
 } // ::ospray
 
