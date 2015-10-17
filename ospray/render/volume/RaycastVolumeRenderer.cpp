@@ -28,6 +28,9 @@
 # include "ospray/render/LoadBalancer.h"
 #endif
 
+#define PREALLOC_ALL_TILES 0
+#define TILE_CACHE_SAFE_MUTEX 0
+
 namespace ospray {
 
   RaycastVolumeRenderer::Material::Material()
@@ -47,32 +50,68 @@ namespace ospray {
 #if EXP_DATA_PARALLEL
 
   struct CacheForBlockTiles {
+#if PREALLOC_ALL_TILES
+    int *tileUsed;
+#endif
     CacheForBlockTiles(size_t numBlocks) 
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
-    { for (int i=0;i<numBlocks;i++) blockTile[i] = NULL; }
+    { 
+#if PREALLOC_ALL_TILES
+      for (int i=0;i<numBlocks;i++) blockTile[i] = allocTile();
+      tileUsed = new int[numBlocks];
+      for (int i=0;i<numBlocks;i++) tileUsed[i] = false;
+#else
+      for (int i=0;i<numBlocks;i++) blockTile[i] = NULL; 
+#endif
+    }
+
+    Tile *allocTile() 
+    {
+      Tile *tile = new Tile;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->r[i] = 0.f;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->g[i] = 0.f;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->b[i] = 0.f;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->a[i] = 0.f;
+      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->z[i] = std::numeric_limits<float>::infinity();
+      return tile;
+    }
 
     ~CacheForBlockTiles() 
     { 
       for (int i=0;i<numBlocks;i++)
         if (blockTile[i]) delete blockTile[i];
+#if PREALLOC_ALL_TILES
+      delete[] tileUsed;
+#endif
       delete[] blockTile;
     }
     Tile *getTileForBlock(size_t blockID) 
     {
-      Tile *tile = blockTile[blockID];
-      if (tile != NULL) return tile;
+#if PREALLOC_ALL_TILES
+      tileUsed[blockID] = true;
+#endif
+
+
+#if TILE_CACHE_SAFE_MUTEX
       mutex.lock();
-      tile = blockTile[blockID];
+      Tile *tile = blockTile[blockID];
       if (tile == NULL) {
-        blockTile[blockID] = tile = new Tile;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->r[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->g[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->b[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->a[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->z[i] = std::numeric_limits<float>::infinity();
+        blockTile[blockID] = tile = allocTile();
       }
       mutex.unlock();
       return tile;
+#else
+      Tile *tile = blockTile[blockID];
+      if (tile != NULL) return tile;
+      mutex.lock();
+
+      if (blockTile[blockID] == NULL) {
+        blockTile[blockID] = tile = allocTile();
+      } else
+        tile = blockTile[blockID];
+      mutex.unlock();
+      return tile;
+#endif
     }
     
     Mutex mutex;
@@ -154,12 +193,12 @@ namespace ospray {
 
         // set background tile
         bgTile.generation = 0;
-        bgTile.children = nextGenTiles;
+        bgTile.children = 1; //nextGenTiles;
         fb->setTile(bgTile);
 
         // set foreground tile
         fgTile.generation = 1;
-        fgTile.children = 0;
+        fgTile.children = nextGenTiles-1;
         fb->setTile(fgTile);
         // all other tiles for gen #1 will be set below, no matter whether it's mine or not
       }
@@ -172,13 +211,22 @@ namespace ospray {
       // that all clients together send exactly as many as the owner
       // told the DFB to expect)
       for (int blockID=0;blockID<numBlocks;blockID++) {
+#if PREALLOC_ALL_TILES
+        if (!blockTileCache.tileUsed[blockID])
+          continue;
+#endif
         Tile *tile = blockTileCache.blockTile[blockID];
-        if (tile == NULL) continue;
+        if (tile == NULL) 
+          continue;
         tile->region = bgTile.region;
         tile->fbSize = bgTile.fbSize;
         tile->rcp_fbSize = bgTile.rcp_fbSize;
-        tile->generation = 1;
-        tile->children = 0;
+        tile->generation = 2;
+        tile->children = 0; //nextGenTile-1;
+
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
+          tile->r[i] = float((blockID*3*7) % 11) / 11.f;
+
         fb->setTile(*tile);
       }
     }

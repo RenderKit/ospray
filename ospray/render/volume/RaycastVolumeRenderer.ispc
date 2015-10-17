@@ -561,7 +561,7 @@ void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
         RaycastVolumeRenderer_renderSample((Renderer*uniform)self,&passInfo,fgSample);
         fgSample.ray.t0 = org_ray_t0;
         fgSample.ray.t  = org_ray_t1;
-        setRGBAZ(*blockTile,pixelID,fgSample.rgb,fgSample.alpha,t0); //fgSample.z);
+        setRGBAZ(*blockTile,pixelID,fgSample.rgb,fgSample.alpha,fgSample.z);
       }
     }
   }
