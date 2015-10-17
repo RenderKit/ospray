@@ -104,11 +104,10 @@ namespace ospray {
       Tile *tile = blockTile[blockID];
       if (tile != NULL) return tile;
       mutex.lock();
-
-      if (blockTile[blockID] == NULL) {
+      tile = blockTile[blockID];
+      if (tile == NULL) {
         blockTile[blockID] = tile = allocTile();
-      } else
-        tile = blockTile[blockID];
+      }
       mutex.unlock();
       return tile;
 #endif
