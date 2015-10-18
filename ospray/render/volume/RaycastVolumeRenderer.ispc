@@ -518,16 +518,32 @@ export void RaycastVolumeRenderer_setLights(void *uniform _self,
 #if EXP_DATA_PARALLEL
 extern "C" Tile *uniform CacheForBlockTiles_getTileForBlock(void *uniform _tileCache, 
                                                             uniform uint32 blockID);
+inline uniform bool itIsIThatHasToRenderThisBlock(DDBVolumeBlock *uniform block,
+                                                  uniform int32 tileID,
+                                                  uniform int32 myRank)
+{
+  if (!block->mine) return false;
+  
+  // return true;
+  uniform bool doThisTile =  (myRank - block->firstOwner) == (tileID % block->numOwners);
 
-void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
-                       ScreenSample &fgSample,
-                       ScreenSample &bgSample,
-                       void *uniform _tileCache,
-                       uint32 pixelID,
-                       uniform int numBlocks,
-                       DDBVolumeBlock *uniform block,
-                       bool *uniform tileNeedsBlock,
-                       uniform bool isMyTile)
+  // print("client % on tile % block %:% --> %\n",
+  //       myRank,tileID,block->firstOwner,block->numOwners,doThisTile);
+  //  print
+  return doThisTile;
+}
+
+inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
+                              ScreenSample &fgSample,
+                              ScreenSample &bgSample,
+                              void *uniform _tileCache,
+                              uint32 pixelID,
+                              uniform int numBlocks,
+                              DDBVolumeBlock *uniform block,
+                              bool *uniform tileNeedsBlock,
+                              uniform int32 tileID,
+                              uniform int32 myRank,
+                              uniform bool isMyTile)
 {
   // screenSample.rgb = make_vec3f(1.f);
   // ray interval that overlaps _any_ block
@@ -544,9 +560,11 @@ void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
       tileNeedsBlock[blockID] = true;
       blockRegion.lower = min(blockRegion.lower,t0);
       blockRegion.upper = max(blockRegion.upper,t1);
-
+      
       // now, render this block if it's one of ours
-      if (block[blockID].mine) {
+      if (!block[blockID].mine) continue;
+      if (itIsIThatHasToRenderThisBlock(&block[blockID],tileID,myRank)) {
+        // if (block[blockID].mine) {
         Tile *uniform blockTile = CacheForBlockTiles_getTileForBlock(_tileCache,blockID);
         // -------------------------------------------------------
         // set up pass for 'one particular block'
@@ -566,7 +584,7 @@ void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     }
   }
 
-  if (!isMyTile) return;
+if (!isMyTile) return;
 
   if (blockRegion.lower >= blockRegion.upper) {
     // ------------------------------------------------------------------
@@ -635,6 +653,8 @@ task void DDDVRRenderer_renderTile_job(uniform Renderer *uniform self,
                                        uniform int numBlocks,
                                        DDBVolumeBlock *uniform block,
                                        bool *uniform tileNeedsBlock,
+                                       uniform int32 tileID,
+                                       uniform int32 myRank,
                                        uniform bool isMyTile)
 {
   uniform FrameBuffer *uniform fb     = self->fb;
@@ -690,8 +710,7 @@ task void DDDVRRenderer_renderTile_job(uniform Renderer *uniform self,
     bgSample = fgSample;
     DDVR_renderSample((RaycastVolumeRenderer*uniform)self,
                       fgSample,bgSample,_tileCache,pixel,
-                      numBlocks,block,tileNeedsBlock,isMyTile
-                      );
+                      numBlocks,block,tileNeedsBlock,tileID,myRank,isMyTile);
 
     // if (dbg) { bgSample.rgb = fgSample.rgb = make_vec3f(1,0,0);  }
 
@@ -714,6 +733,8 @@ export void DDDVRRenderer_renderTile(void *uniform _self,
                                      uniform int numBlocks,
                                      void *uniform _block,
                                      bool *uniform tileNeedsBlock,
+                                     uniform int32 tileID,
+                                     uniform int32 myRank,
                                      uniform bool isMyTile
                                      )
 {
@@ -724,7 +745,7 @@ export void DDDVRRenderer_renderTile(void *uniform _self,
   uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
   launch[numJobs] DDDVRRenderer_renderTile_job(self,fgTile,bgTile,_tileCache,
                                                numBlocks,block,tileNeedsBlock,
-                                               isMyTile);
+                                               tileID,myRank,isMyTile);
 }
 
 #endif

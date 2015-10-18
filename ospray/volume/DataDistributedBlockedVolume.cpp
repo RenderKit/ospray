@@ -125,7 +125,7 @@ namespace ospray {
 
 
     // ddBlocks = vec3i(2,1,1);
-    ddBlocks = vec3i(2);
+    ddBlocks = vec3i(1,1,1);
     blockSize = divRoundUp(dimensions,ddBlocks);
 
     numDDBlocks = embree::reduce_mul(ddBlocks);
@@ -143,7 +143,7 @@ namespace ospray {
 
     voxelType = getParamString("voxelType", "unspecified");  
 
-    if (numDDBlocks >= numWorkers) {
+    // if (numDDBlocks >= numWorkers) {
       // we have more workers than blocks - use one owner per block,
       // meaning we'll end up with multiple blocks per worker
       int blockID = 0;
@@ -151,9 +151,17 @@ namespace ospray {
         for (int iy=0;iy<ddBlocks.y;iy++)
           for (int ix=0;ix<ddBlocks.x;ix++, blockID++) {
             DDBlock *block = &ddBlock[blockID];
-            block->firstOwner = blockID % numWorkers;
-            block->numOwners = 1;
-            block->isMine  = block->firstOwner==ospray::core::getWorkerRank();
+            if (numDDBlocks >= numWorkers) {
+              block->firstOwner = blockID % numWorkers;
+              block->numOwners = 1;
+              // block->isMine  = block->firstOwner==ospray::core::getWorkerRank();
+            } else {
+              block->firstOwner = (blockID * numWorkers) / numDDBlocks;
+              int nextBlockFirstOwner = ((blockID+1) * numWorkers) / numDDBlocks;
+              block->numOwners = nextBlockFirstOwner - block->firstOwner;
+            }
+            block->isMine 
+              = ((ospray::core::getWorkerRank()-block->firstOwner) < block->numOwners);
             block->domain.lower = vec3i(ix,iy,iz) * blockSize;
             block->domain.upper = min(block->domain.lower+blockSize,dimensions);
             block->bounds.lower = gridOrigin + gridSpacing * vec3f(block->domain.lower);// / vec3f(dimensions);
@@ -181,9 +189,9 @@ namespace ospray {
               block->cppVolume = NULL;
             }
           }
-    } else {
-      FATAL("not implemented yet - more workers than blocks ...");//TODO
-    }
+    // } else {
+    //   FATAL("not implemented yet - more workers than blocks ...");//TODO
+    // }
 
     // Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
     ispcEquivalent = ispc::DDBVolume_create(this,                                                             

@@ -139,6 +139,7 @@ namespace ospray {
     
     virtual void run(size_t taskIndex)
     {
+      const size_t tileID = taskIndex;
       Tile bgTile, fgTile;
       const size_t tile_y = taskIndex / numTiles_x;
       const size_t tile_x = taskIndex - tile_y*numTiles_x;
@@ -164,40 +165,38 @@ namespace ospray {
       bool blockWasVisible[numBlocks];
       for (int i=0;i<numBlocks;i++)
         blockWasVisible[i] = false;
-      bool isMyTile = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
+      bool itIsIThatHasToRenderForeAndBackOnThisTile
+        = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
       ispc::DDDVRRenderer_renderTile
-        (renderer->getIE(),
-         (ispc::Tile&)fgTile,
-         (ispc::Tile&)bgTile,
-         &blockTileCache,
-         numBlocks,dpv->ddBlock,
-         blockWasVisible,isMyTile);
+        (renderer->getIE(),(ispc::Tile&)fgTile,(ispc::Tile&)bgTile,
+         &blockTileCache,numBlocks,dpv->ddBlock,blockWasVisible,tileID,
+         ospray::core::getWorkerRank(),itIsIThatHasToRenderForeAndBackOnThisTile);
 
-      if (isMyTile) {
+      if (itIsIThatHasToRenderForeAndBackOnThisTile) {
         // this is a tile owned by me - i'm responsible for writing
         // generaition #0, and telling the fb how many more tiles will
         // be coming in generation #1
         
         size_t totalBlocksInTile=0;
-        for (int blockID=0;blockID<numBlocks;blockID++) {
-          if (!blockWasVisible[blockID]) continue;
-          totalBlocksInTile++;
-        }
+        for (int blockID=0;blockID<numBlocks;blockID++) 
+          if (blockWasVisible[blockID])
+            totalBlocksInTile++;
 
         size_t nextGenTiles
           = 1 /* expect one additional tile for background tile. */
           + totalBlocksInTile /* plus how many blocks map to this
                                  tile, IN TOTAL (ie, INCLUDING blocks
                                  on other nodes)*/;
+        // printf("rank %i total tiles in tile %i is %i\n",core::getWorkerRank(),taskIndex,nextGenTiles);
 
         // set background tile
         bgTile.generation = 0;
-        bgTile.children = 1; //nextGenTiles;
+        bgTile.children = nextGenTiles;
         fb->setTile(bgTile);
 
         // set foreground tile
         fgTile.generation = 1;
-        fgTile.children = nextGenTiles-1;
+        fgTile.children = 0; //nextGenTiles-1;
         fb->setTile(fgTile);
         // all other tiles for gen #1 will be set below, no matter whether it's mine or not
       }
@@ -220,7 +219,7 @@ namespace ospray {
         tile->region = bgTile.region;
         tile->fbSize = bgTile.fbSize;
         tile->rcp_fbSize = bgTile.rcp_fbSize;
-        tile->generation = 2;
+        tile->generation = 1;
         tile->children = 0; //nextGenTile-1;
 
         for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
