@@ -41,7 +41,6 @@ export void *uniform DDBVolume_create(void *uniform cppEquivalent,
                                       void *uniform _ddBlock
                                       )
 {
-  print("DDBVolume_create\n");
   DDBVolume *uniform self = uniform new uniform DDBVolume;
   DDBVolume_Constructor(self,cppEquivalent,dimensions);
 

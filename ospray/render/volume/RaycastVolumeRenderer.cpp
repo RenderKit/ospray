@@ -28,7 +28,6 @@
 # include "ospray/render/LoadBalancer.h"
 #endif
 
-#define PREALLOC_ALL_TILES 0
 #define TILE_CACHE_SAFE_MUTEX 0
 
 namespace ospray {
@@ -50,19 +49,10 @@ namespace ospray {
 #if EXP_DATA_PARALLEL
 
   struct CacheForBlockTiles {
-#if PREALLOC_ALL_TILES
-    int *tileUsed;
-#endif
     CacheForBlockTiles(size_t numBlocks) 
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
     { 
-#if PREALLOC_ALL_TILES
-      for (int i=0;i<numBlocks;i++) blockTile[i] = allocTile();
-      tileUsed = new int[numBlocks];
-      for (int i=0;i<numBlocks;i++) tileUsed[i] = false;
-#else
       for (int i=0;i<numBlocks;i++) blockTile[i] = NULL; 
-#endif
     }
 
     Tile *allocTile() 
@@ -80,18 +70,10 @@ namespace ospray {
     { 
       for (int i=0;i<numBlocks;i++)
         if (blockTile[i]) delete blockTile[i];
-#if PREALLOC_ALL_TILES
-      delete[] tileUsed;
-#endif
       delete[] blockTile;
     }
     Tile *getTileForBlock(size_t blockID) 
     {
-#if PREALLOC_ALL_TILES
-      tileUsed[blockID] = true;
-#endif
-
-
 #if TILE_CACHE_SAFE_MUTEX
       mutex.lock();
       Tile *tile = blockTile[blockID];
@@ -209,10 +191,6 @@ namespace ospray {
       // that all clients together send exactly as many as the owner
       // told the DFB to expect)
       for (int blockID=0;blockID<numBlocks;blockID++) {
-#if PREALLOC_ALL_TILES
-        if (!blockTileCache.tileUsed[blockID])
-          continue;
-#endif
         Tile *tile = blockTileCache.blockTile[blockID];
         if (tile == NULL) 
           continue;
@@ -222,8 +200,8 @@ namespace ospray {
         tile->generation = 1;
         tile->children = 0; //nextGenTile-1;
 
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
-          tile->r[i] = float((blockID*3*7) % 11) / 11.f;
+        // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
+        //   tile->r[i] = float((blockID*3*7) % 11) / 11.f;
 
         fb->setTile(*tile);
       }
@@ -260,8 +238,12 @@ namespace ospray {
 
     // =======================================================
     // OK, we _need_ data-parallel rendering ....
-    std::cout << "#dvr: at least one dp volume"
-      " -> needs data-parallel rendering ..." << std::endl;
+    static bool printed = false;
+    if (!printed) {
+      std::cout << "#dvr: at least one dp volume"
+        " -> needs data-parallel rendering ..." << std::endl;
+      printed = true;
+    }
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)

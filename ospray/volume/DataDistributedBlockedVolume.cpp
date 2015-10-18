@@ -35,29 +35,25 @@ namespace ospray {
     // StructuredVolume::commit();
 
 
-    PING;
     StructuredVolume::commit();
     for (int i=0;i<numDDBlocks;i++) {
       DDBlock *block = ddBlock+i;
       if (!block->isMine) continue;
       block->cppVolume->commit();
       // PRINT(((BlockBrickedVolume*)block->cppVolume)->voxelRange);
-      std::cout << "warning - voxelRange not properly set for this type (because the 'setregion's also include _all_ voxels, even from those outside the block!) ... " << std::endl;
+      // std::cout << "warning - voxelRange not properly set for this type (because the 'setregion's also include _all_ voxels, even from those outside the block!) ... " << std::endl;
     }
   }
 
   void DataDistributedBlockedVolume::updateEditableParameters()
   {
     StructuredVolume::updateEditableParameters();
-    PING;
-
     for (int i=0;i<numDDBlocks;i++) {
       DDBlock *block = ddBlock+i;
       if (!block->isMine) continue;
 
       Ref<TransferFunction> transferFunction
         = (TransferFunction *)getParamObject("transferFunction", NULL);
-      PRINT(transferFunction.ptr);
       block->cppVolume->findParam("transferFunction",1)->set(transferFunction.ptr);
     }
   }
@@ -123,17 +119,30 @@ namespace ospray {
     // Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
 
-
-    // ddBlocks = vec3i(2,1,1);
+    // =======================================================
+    // by default, create 2x2x2 blocks
+    // =======================================================
     ddBlocks = vec3i(2);
+    const char *ddBlockStringFromEnv = getenv("OSPRAY_DD_NUM_BLOCKS");
+    if (ddBlockStringFromEnv) {
+      std::cout << "#osp: getting num DD blocks from env string OSPRAY_DD_NUM_BLOCKS='"
+                << ddBlockStringFromEnv << "'" << std::endl;
+      int numParsed = sscanf(ddBlockStringFromEnv,"%dx%dx%d",
+                             &ddBlocks.x,&ddBlocks.y,&ddBlocks.z);
+      if (numParsed != 3)
+        throw std::runtime_error("#osp: cannot parse volume dimensions string "
+                                 "(has to be XxYxZ)");
+    }
+
     blockSize = divRoundUp(dimensions,ddBlocks);
 
     numDDBlocks = embree::reduce_mul(ddBlocks);
     ddBlock = new DDBlock[numDDBlocks];
 
-    std::cout << "=======================================================" << std::endl;
-    std::cout << "CREATED DD BLOCKS " << ddBlock << std::endl;
-    std::cout << "=======================================================" << std::endl;
+    printf("=======================================================\n");
+    printf("created %ix%ix%i data distributed volume blocks\n",
+           ddBlocks.x,ddBlocks.y,ddBlocks.z);
+    printf("=======================================================\n");
 
     if (!ospray::core::isMpiParallel)
       throw std::runtime_error("data parallel volume, but not in mpi parallel mode...");
