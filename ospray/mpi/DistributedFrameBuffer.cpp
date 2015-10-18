@@ -550,9 +550,6 @@ namespace ospray {
 #if QUEUE_PROCESSING_JOBS
     msgTaskQueue.addJob(msgTask.ptr);
 #else
-    // DBG(cout << "adding an explicit wait here ..." << endl);
-    // // without this explicit wait it _can_ apparently happen (in debug mode, at least) that no thread is actually going to 
-    // if (numActiveThreads <= 0)
     msgTask->wait();
 #endif
 
@@ -601,17 +598,31 @@ namespace ospray {
 
   struct DFBClearTask : public ospray::Task {
     DFB *dfb;
-    DFBClearTask(DFB *dfb) : dfb(dfb) {};
+    DFBClearTask(DFB *dfb, const uint32 fbChannelFlags) 
+      : dfb(dfb), fbChannelFlags(fbChannelFlags) 
+    {};
     virtual void run(size_t jobID) 
     {
       size_t tileID = jobID;
       DFB::TileData *td = dfb->myTiles[tileID];
       assert(td);
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.r[i] = 0.f;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
-      for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
+      if (fbChannelFlags & OSP_FB_ACCUM) {
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.r[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.z[i] = inf;
+      }
+      if (fbChannelFlags & OSP_FB_DEPTH)
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.z[i] = inf;
+      if (fbChannelFlags & OSP_FB_COLOR) {
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.r[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.g[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
+        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
+      }
     }
+    const uint32 fbChannelFlags;
   };
 
   /*! \brief clear (the specified channels of) this frame buffer 
@@ -623,11 +634,12 @@ namespace ospray {
   */
   void DFB::clear(const uint32 fbChannelFlags)
   {
-    if (fbChannelFlags & OSP_FB_ACCUM && myTiles.size() != 0) {
-      Ref<DFBClearTask> clearTask = new DFBClearTask(this);
+    if (myTiles.size() != 0) {
+      Ref<DFBClearTask> clearTask = new DFBClearTask(this,fbChannelFlags);
       clearTask->schedule(myTiles.size());
       clearTask->wait();
-      accumID = 0;
+      if (fbChannelFlags & OSP_FB_ACCUM)
+        accumID = 0;
     }
   }
 
