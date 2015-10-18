@@ -383,6 +383,10 @@ namespace ospray {
 
   void DFB::waitUntilFinished() 
   {
+#if QUEUE_PROCESSING_JOBS
+    msgTaskQueue.waitAll();
+#endif
+
     // PING;fflush(0);
     mutex.lock();
     while (
@@ -542,10 +546,15 @@ namespace ospray {
     Ref<DFBProcessMessageTask> msgTask = new DFBProcessMessageTask(this,_msg);
     msgTask->schedule(1,Task::FRONT_OF_QUEUE);
     
+
+#if QUEUE_PROCESSING_JOBS
+    msgTaskQueue.addJob(msgTask.ptr);
+#else
     // DBG(cout << "adding an explicit wait here ..." << endl);
     // // without this explicit wait it _can_ apparently happen (in debug mode, at least) that no thread is actually going to 
     // if (numActiveThreads <= 0)
     msgTask->wait();
+#endif
 
     DBG(PING);
   }

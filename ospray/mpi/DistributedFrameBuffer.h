@@ -19,12 +19,16 @@
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/fb/Tile.h"
 #include "ospray/fb/LocalFB.h"
+#include "ospray/common/TaskSys.h"
+#include <queue>
 
 namespace ospray {
   using std::cout;
   using std::endl;
 
   typedef embree::ConditionSys Condition;
+
+#define QUEUE_PROCESSING_JOBS 1
 
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
@@ -252,6 +256,32 @@ namespace ospray {
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
     Ref<LocalFrameBuffer> localFBonMaster;
+#if QUEUE_PROCESSING_JOBS
+    struct MsgTaskQueue {
+      std::queue<Ref<ospray::Task> > queue;
+      Mutex mutex;
+
+      void addJob(Task *task) {
+        mutex.lock();
+        queue.push(task);
+        mutex.unlock();
+      }
+
+      void waitAll() {
+        mutex.lock();
+        while (!queue.empty()) {
+          Ref<Task> task = queue.front();
+          queue.pop();
+          mutex.unlock();
+          task->wait();
+          mutex.lock();
+        }
+        mutex.unlock();
+      }
+    };
+    MsgTaskQueue msgTaskQueue;
+#endif
+
 
     inline bool IamTheMaster() const { return comm->IamTheMaster(); }
     //! constructor
