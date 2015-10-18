@@ -125,7 +125,7 @@ namespace ospray {
 
 
     // ddBlocks = vec3i(2,1,1);
-    ddBlocks = vec3i(1,1,1);
+    ddBlocks = vec3i(2);
     blockSize = divRoundUp(dimensions,ddBlocks);
 
     numDDBlocks = embree::reduce_mul(ddBlocks);
@@ -178,10 +178,6 @@ namespace ospray {
               volume->findParam("gridSpacing",1)->set(gridSpacing);
               volume->findParam("voxelType",1)->set(voxelType.c_str());
 
-    // // Set the grid spacing, default to (1,1,1).
-    // this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
-
-              // volume->createEquivalentISPC();
               block->cppVolume = volume;
               block->ispcVolume = NULL; //volume->getIE();
             } else {

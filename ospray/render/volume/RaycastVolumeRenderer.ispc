@@ -522,15 +522,10 @@ inline uniform bool itIsIThatHasToRenderThisBlock(DDBVolumeBlock *uniform block,
                                                   uniform int32 tileID,
                                                   uniform int32 myRank)
 {
-  if (!block->mine) return false;
-  
-  // return true;
-  uniform bool doThisTile =  (myRank - block->firstOwner) == (tileID % block->numOwners);
-
-  // print("client % on tile % block %:% --> %\n",
-  //       myRank,tileID,block->firstOwner,block->numOwners,doThisTile);
-  //  print
-  return doThisTile;
+  return
+    block->mine
+    &&
+    (myRank - block->firstOwner) == (tileID % block->numOwners);
 }
 
 inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
