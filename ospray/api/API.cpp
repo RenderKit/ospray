@@ -26,7 +26,7 @@
 #include "ospray/common/Core.h"
 
 #if 1
-# define LOG(a) if (1 || ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
+# define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
 #else
 # define LOG(a) /*ignore*/
 #endif
@@ -98,30 +98,22 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #endif
   }
 
-  PING;
-  PRINT(*_ac);
   if (_ac && _av) {
     // we're only supporting local rendering for now - network device
     // etc to come.
     for (int i=1;i<*_ac;i++) {
 
-      PRINT(std::string(_av[i]));
       if (std::string(_av[i]) == "--osp:mpi") {
 #if OSPRAY_MPI
-        PING;
         removeArgs(*_ac,(char **&)_av,i,1);
-        PING;
         ospray::api::Device::current
           = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
-        PING; PRINT(ospray::api::Device::current);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
         --i; 
         continue;
       }
-
-  PING; PRINT(ospray::api::Device::current);
 
       if (std::string(_av[i]) == "--osp:coi") {
 #if OSPRAY_TARGET_MIC

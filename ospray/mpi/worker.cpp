@@ -71,7 +71,9 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av)
     {
       mpi::MPIDevice *device = (mpi::MPIDevice *)ospray::api::Device::current;
+      PING; PRINT(device);
       ospray::init(_ac,&_av);
+      PING; PRINT(device);
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
@@ -113,7 +115,7 @@ namespace ospray {
       // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Slave;
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Slave;
 
-
+      try {
       while (1) {
         const int command = cmd.get_int32();
         // PING; PRINT(command); fflush(0);
@@ -788,6 +790,12 @@ namespace ospray {
           throw std::runtime_error(err.str());
         }
       };
+      } catch (std::runtime_error e) {
+        PING;
+        PRINT(e.what());
+        throw e;
+      }
+          
     }
 
   } // ::ospray::api

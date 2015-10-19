@@ -82,7 +82,7 @@ namespace ospray {
     if (ospray::logLevel >= 2) 
       std::cout << "#ospray: trying to look up renderer type '" 
                 << type << "' for the first time" << std::endl;
-
+    
     std::string creatorName = "ospray_create_renderer__"+std::string(type);
     creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
     rendererRegistry[type] = creator;
@@ -92,13 +92,15 @@ namespace ospray {
       delete[] type;
       return NULL;
     }
-    delete[] type;
+    
     Renderer *renderer = (*creator)();  
     renderer->managedObjectType = OSP_RENDERER;
     if (renderer == NULL && ospray::logLevel >= 1) {
       std::cout << "#osp:warning[ospNewRenderer(...)]: could not create renderer of that type." << endl;
       std::cout << "#osp:warning[ospNewRenderer(...)]: Note: Requested renderer type was '" << type << "'" << endl;
     }
+    
+    delete[] type;
     return(renderer);
   }
 
