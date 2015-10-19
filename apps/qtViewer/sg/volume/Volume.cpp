@@ -151,7 +151,7 @@ namespace ospray {
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
 
-      bool useBlockBricked = 0;
+      bool useBlockBricked = 1;
 
       if (useDataDistributedVolume) 
         volume = ospNewVolume("data_distributed_volume");
@@ -160,14 +160,16 @@ namespace ospray {
       if (!volume)
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
       
-      PING;
+      PING; PRINT(voxelType);
       ospSetString(volume,"voxelType",voxelType.c_str());
-      PING;
+      PING; PRINT(dimensions);
       ospSetVec3i(volume,"dimensions",dimensions);
       PING;
       
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
+      float minValue = +std::numeric_limits<float>::infinity();
+      float maxValue = -std::numeric_limits<float>::infinity();
       if (!file) 
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
                                  +realFileName.str()+"' (expanded from xml file '"
@@ -181,8 +183,14 @@ namespace ospray {
           size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
           if (nRead != nPerSlice)
             throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+          for (int i=0;i<nPerSlice;i++) {
+            minValue = std::min(minValue,slice[i]);
+            maxValue = std::max(maxValue,slice[i]);
+          }
           ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
         }
+        PRINT(minValue);
+        PRINT(maxValue);
         delete[] slice;
       } else {
         size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;

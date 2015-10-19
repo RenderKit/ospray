@@ -71,9 +71,7 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av)
     {
       mpi::MPIDevice *device = (mpi::MPIDevice *)ospray::api::Device::current;
-      PING; PRINT(device);
       ospray::init(_ac,&_av);
-      PING; PRINT(device);
 
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called

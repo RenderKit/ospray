@@ -144,7 +144,7 @@ namespace ospray {
            ddBlocks.x,ddBlocks.y,ddBlocks.z);
     printf("=======================================================\n");
 
-    if (!ospray::core::isMpiParallel)
+    if (!ospray::core::isMpiParallel())
       throw std::runtime_error("data parallel volume, but not in mpi parallel mode...");
     int64 numWorkers = ospray::core::getWorkerCount();
     PRINT(numDDBlocks);
@@ -170,7 +170,8 @@ namespace ospray {
               block->numOwners = nextBlockFirstOwner - block->firstOwner;
             }
             block->isMine 
-              = ((ospray::core::getWorkerRank()-block->firstOwner) < block->numOwners);
+              = (ospray::core::getWorkerRank() >= block->firstOwner)
+              && (ospray::core::getWorkerRank() < (block->firstOwner + block->numOwners));
             block->domain.lower = vec3i(ix,iy,iz) * blockSize;
             block->domain.upper = min(block->domain.lower+blockSize,dimensions);
             block->bounds.lower = gridOrigin + gridSpacing * vec3f(block->domain.lower);// / vec3f(dimensions);
@@ -187,6 +188,8 @@ namespace ospray {
               volume->findParam("gridSpacing",1)->set(gridSpacing);
               volume->findParam("voxelType",1)->set(voxelType.c_str());
 
+              printf("rank %i owns block %i,%i,%i (ID %i), dims %i %i %i\n",
+                     core::getWorkerRank(),ix,iy,iz,blockID,blockDims.x,blockDims.y,blockDims.z);
               block->cppVolume = volume;
               block->ispcVolume = NULL; //volume->getIE();
             } else {
