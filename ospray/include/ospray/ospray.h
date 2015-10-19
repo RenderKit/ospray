@@ -27,7 +27,7 @@
 
 #pragma once
 
-#ifdef OSPRAY_MPI_DISTRIBUTED
+#ifdef OSPRAY_MPI
 # include <mpi.h>
 #endif
 
