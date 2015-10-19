@@ -20,7 +20,7 @@
   ospray file should know about */
 
 // mpi, if we need it
-#ifdef OSPRAY_MPI_DISTRIBUTED
+#ifdef OSPRAY_MPI
 # include <mpi.h>
 #endif
 
