@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "VolumeViewer.h"
 #include <iostream>
 #include <QtGui>
 #include <ctype.h>

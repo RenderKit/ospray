@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "ospray/common/OSPCommon.h"
 #include "QOSPRayWindow.h"
 #include "SliceWidget.h"
 #include <QtGui>

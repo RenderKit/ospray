@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/camera/Camera.h"
@@ -25,7 +26,7 @@
 #include "ospray/common/Core.h"
 
 #if 1
-# define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
+# define LOG(a) if (1 || ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
 #else
 # define LOG(a) /*ignore*/
 #endif
@@ -60,11 +61,18 @@ namespace ospray {
 
 } // ::ospray
 
+std::string getPidString() {
+  pid_t pid = getpid();
+  char s[100];
+  sprintf(s,"(pid %i)",pid);
+  return s;
+}
+
 #define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
                              "call an ospray API function before "      \
-                             "first calling ospInit())");
+                             "first calling ospInit())"+getPidString());
 
 using namespace ospray;
 
@@ -90,22 +98,30 @@ extern "C" void ospInit(int *_ac, const char **_av)
 #endif
   }
 
+  PING;
+  PRINT(*_ac);
   if (_ac && _av) {
     // we're only supporting local rendering for now - network device
     // etc to come.
     for (int i=1;i<*_ac;i++) {
 
+      PRINT(std::string(_av[i]));
       if (std::string(_av[i]) == "--osp:mpi") {
 #if OSPRAY_MPI
+        PING;
         removeArgs(*_ac,(char **&)_av,i,1);
+        PING;
         ospray::api::Device::current
           = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
+        PING; PRINT(ospray::api::Device::current);
 #else
         throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
         --i; 
         continue;
       }
+
+  PING; PRINT(ospray::api::Device::current);
 
       if (std::string(_av[i]) == "--osp:coi") {
 #if OSPRAY_TARGET_MIC
@@ -310,7 +326,13 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
   return 'NULL' if that type is not known */
 extern "C" OSPRenderer ospNewRenderer(const char *_type)
 {
+  PING;
+  PRINT(ospray::api::Device::current);
+  
   ASSERT_DEVICE();
+  PING;
+  PRINT(ospray::api::Device::current);
+
   Assert2(_type,"invalid render type identifier in ospNewRenderer");
   LOG("ospNewRenderer(" << _type << ")");
    

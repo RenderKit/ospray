@@ -142,7 +142,9 @@ namespace ospray {
 
         // now, all workers will enter their worker loop (ie, they will *not* return
         if (ranksBecomeWorkers) {
+          cout << "RUNNING WORKER W/O RETURNING!" << endl;
           mpi::runWorker(ac,av);
+          throw std::runtime_error("should never reach here!");
           /* no return here - 'runWorker' will never return */
         } else {
           cout << "#osp:mpi: distributed mode detected, returning device on all ranks!" << endl << std::flush;

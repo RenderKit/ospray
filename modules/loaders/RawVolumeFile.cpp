@@ -14,9 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "modules/loaders/RawVolumeFile.h"
 #include <stdio.h>
 #include <string.h>
-#include "modules/loaders/RawVolumeFile.h"
 
 OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
 {
