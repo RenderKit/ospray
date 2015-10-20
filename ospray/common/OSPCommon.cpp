@@ -197,6 +197,7 @@ namespace ospray {
 
     if (string == NULL)                return(OSP_UNKNOWN);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
+    if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
     if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
     if (strcmp(string, "float2") == 0) return(OSP_FLOAT2);
     if (strcmp(string, "float3") == 0) return(OSP_FLOAT2);
