@@ -214,6 +214,9 @@ int main(int argc, char *argv[])
     volumeViewer->autoRotate(true);
   }
 
+  if (dt > 0.0f)
+    volumeViewer->setSamplingRate(dt);
+
   // Load slice(s) from file.
   for(unsigned int i=0; i<sliceFilenames.size(); i++)
     volumeViewer->addSlice(sliceFilenames[i]);
