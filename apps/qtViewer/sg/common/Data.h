@@ -58,7 +58,7 @@ namespace ospray {
 
       virtual OSPData     getOSP()   { 
         if (notEmpty() && !data) {
-          data = ospNewData(getSize(),type,getBase(),OSP_DATA_SHARED_BUFFER);
+          data = ospNewData(getSize(),type,getBase());
           ospCommit(data);
         }
         return data; 

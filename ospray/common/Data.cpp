@@ -33,7 +33,7 @@ namespace ospray {
       Assert2(init != NULL, "shared buffer is NULL");
       data = init;
     } else {
-      data = new unsigned char[numBytes+16]; 
+      data = embree::alignedMalloc(numBytes+16);
       if (init)
         memcpy(data,init,numBytes);
       else if (type == OSP_OBJECT)
