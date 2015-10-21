@@ -1,4 +1,4 @@
-// ======================================================================== //
+﻿// ======================================================================== //
 // Copyright 2009-2015 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
@@ -37,7 +37,7 @@ namespace ospray {
       {}
       virtual ~DataBuffer() {}
 
-      virtual    std::string toString() const { return "DataBuffer<abstract>"; };
+      virtual std::string toString() const { return "DataBuffer<abstract>"; };
 
       virtual float  get1f(index_t idx)  const { INVALID_DATA_ERROR; }
       virtual vec2f  get2f(index_t idx)  const { INVALID_DATA_ERROR; }
@@ -48,7 +48,6 @@ namespace ospray {
       virtual int    get1i(index_t idx)  const { INVALID_DATA_ERROR; }
       virtual vec2i  get2i(index_t idx)  const { INVALID_DATA_ERROR; }
       virtual vec3i  get3i(index_t idx)  const { INVALID_DATA_ERROR; }
-      // virtual vec3ia get3ia(index_t idx) const { INVALID_DATA_ERROR; }
       virtual vec4i  get4i(index_t idx)  const { INVALID_DATA_ERROR; }
 
       virtual void       *getBase()  const = 0;
@@ -56,14 +55,14 @@ namespace ospray {
       virtual bool        notEmpty() const { return getSize() != 0; };
       virtual OSPDataType getType()  const { return type; };
 
-      virtual OSPData     getOSP()   { 
+      virtual OSPData     getOSP()   {
         if (notEmpty() && !data) {
-          data = ospNewData(getSize(),type,getBase());
+          data = ospNewData(getSize(),type,getBase(),OSP_DATA_SHARED_BUFFER);
           ospCommit(data);
         }
-        return data; 
+        return data;
       };
-      
+
       OSPData     data;
       OSPDataType type;
     };
@@ -77,17 +76,19 @@ namespace ospray {
     template<typename T, long int TID>
     struct DataArrayT : public DataBuffer {
       DataArrayT(T *base, size_t size, bool mine=true)
-        : DataBuffer((OSPDataType)TID), base(base), mine(mine), size(size) 
+        : DataBuffer((OSPDataType)TID), base(base), mine(mine), size(size)
       {}
-      virtual void       *getBase()  const { return (void*)base; }
-      virtual size_t      getSize()  const { return size; }
+      virtual void        *getBase()  const { return (void*)base; }
+      virtual size_t       getSize()  const { return size; }
       virtual ~DataArrayT() { if (mine && base) delete base; }
+
+      typedef T ElementType;
 
       size_t size;
       bool   mine;
       T     *base;
     };
-    
+
     struct DataArray2f : public DataArrayT<vec2f,OSP_FLOAT2> {
       DataArray2f(vec2f *base, size_t size, bool mine=true)
         : DataArrayT<vec2f,OSP_FLOAT2>(base,size,mine)
@@ -154,29 +155,19 @@ namespace ospray {
       virtual vec3i  get3i(index_t idx)  const { return this->v[idx]; }
     };
 
-    
-
-    // struct DataVector3f : public DataBuffer {
-    //   DataVector3f()
-    //     : DataBuffer(OSP_FLOAT3)
-    //   {}
-    //   virtual void       *getBase()  const { return (void*)&v[0]; }
-    //   virtual size_t      getSize()  const { return v.size(); }
-
-    //   std::vector<vec3f> v;
-    // };
-
-    // struct DataVector3i : public DataBuffer {
-    //   DataVector3i()
-    //     : DataBuffer(OSP_INT3)
-    //   {}
-    //   virtual void       *getBase()  const { return (void*)&v[0]; }
-    //   virtual size_t      getSize()  const { return v.size(); }
-
-    //   std::vector<vec3i> v;
-    // };
-
-
+    template<typename T>
+    T* make_aligned(void *data, size_t num)
+    {
+      typedef typename T::ElementType ElementType;
+      if ((size_t)data & 0x3) {
+        // Data *not* aligned correctly, copy into a new buffer appropriately...
+        char *m = new char[num * sizeof(ElementType)];
+        memcpy(m, data, num * sizeof(ElementType));
+        return new T((ElementType*)m, num, true);
+      } else {
+        return new T((ElementType*)data, num, false);
+      }
+    }
 
   } // ::ospray::sg
 } // ::ospray

@@ -49,7 +49,7 @@ namespace ospray {
         throw std::runtime_error("XML file is not a RIVL model !?");
       if (root->child.empty())
         throw std::runtime_error("emply RIVL model !?");
-      
+
       Ref<sg::Node> lastNode;
       for (int childID=0;childID<root->child.size();childID++) {//xmlNode *node = root->children; node; node = node->next) {
         xml::Node *node = root->child[childID];
@@ -96,13 +96,13 @@ namespace ospray {
               vec4uc *texel = new vec4uc[sz];
               memcpy(texel, (char*)binBasePtr+ofs, sz*sizeof(vec4uc));
               for (size_t p = 0; p < sz; p++)
-                texel[p].w = 255 - texel[p].w; 
+                texel[p].w = 255 - texel[p].w;
               txt.ptr->texel = texel;
             } else { // float
               vec4f *texel = new vec4f[sz];
               memcpy(texel, (char*)binBasePtr+ofs, sz*sizeof(vec4f));
               for (size_t p = 0; p < sz; p++)
-                texel[p].w = 1.0f - texel[p].w; 
+                texel[p].w = 1.0f - texel[p].w;
               txt.ptr->texel = texel;
             }
           } else
@@ -154,7 +154,7 @@ namespace ospray {
                   // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
                   childName = prop->value; //(const char*)value;
                   //xmlFree(value);
-                } else if (prop->name == "type") { 
+                } else if (prop->name == "type") {
                   // xmlChar *value = xmlNodeListGetString(node->doc, attr->children, 1);
                   childType = prop->value; //(const char*)value;
                   //xmlFree(value);
@@ -193,7 +193,7 @@ namespace ospray {
                 float w = atof(s);
                 mat->setParam(childName, vec4f(x,y,z,w));
               } else if (!childType.compare("int")) {
-                mat->setParam(childName, (int32)atol(s)); 
+                mat->setParam(childName, (int32)atol(s));
               } else if (!childType.compare("int2")) {
                 int32 x = atol(s);
                 s = NEXT_TOK;
@@ -272,10 +272,10 @@ namespace ospray {
               sg::Node *child = (sg::Node *)nodeList[childID].ptr;
               assert(child);
               xfm->node = child;
-              //xmlFree(value); 
-            }   
-          }    
-            
+              //xmlFree(value);
+            }
+          }
+
           // parse xfm matrix
           int numRead = sscanf((char*)node->content.c_str(),
                                "%f %f %f\n%f %f %f\n%f %f %f\n%f %f %f",
@@ -295,7 +295,7 @@ namespace ospray {
           if (numRead != 12)  {
             FATAL("invalid number of elements in RIVL transform node");
           }
-          
+
           // -------------------------------------------------------
         } else if (nodeName == "Mesh") {
           // -------------------------------------------------------
@@ -315,17 +315,17 @@ namespace ospray {
                 if (prop->name == "ofs") {
                   //xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
                 else if (prop->name == "num") {
                   // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
-              mesh->vertex = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
+              mesh->vertex = make_aligned<DataArray3f>((char*)binBasePtr+ofs, num);
               // mesh->numVertices = num;
               // mesh->vertex = ;
             } else if (childType == "normal") {
@@ -337,13 +337,13 @@ namespace ospray {
                 if (prop->name == "ofs"){ //!strcmp((const char*)attr->name,"ofs")) {
                   // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
                 else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
                   // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
@@ -360,14 +360,14 @@ namespace ospray {
                   // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   // ofs = atol((char*)value);
                   ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
                 else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
                   // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   // num = atol((char*)value);
                   num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
@@ -384,28 +384,28 @@ namespace ospray {
                   // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   // ofs = atol((char*)value);
                   ofs = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
                 else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
                   // xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                   // num = atol((char*)value);
                   num = atol(prop->value.c_str()); //(char*)value);
-                  //xmlFree(value); 
-                }       
+                  //xmlFree(value);
+                }
                 // if (prop->name == "ofs") {//!strcmp((const char*)attr->name,"ofs")) {
                 //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                 //   ofs = atol((char*)value);
-                //   //xmlFree(value); 
-                // }       
+                //   //xmlFree(value);
+                // }
                 // else if (prop->name == "num") {//!strcmp((const char*)attr->name,"num")) {
                 //   xmlChar* value = xmlNodeListGetString(node->doc, attr->children, 1);
                 //   num = atol((char*)value);
-                //   //xmlFree(value); 
-                // }       
+                //   //xmlFree(value);
+                // }
               }
               assert(ofs != size_t(-1));
               assert(num != size_t(-1));
-              mesh->index = new DataArray4i((vec4i*)((char*)binBasePtr+ofs),num,false);
+              mesh->index = make_aligned<DataArray4i>((char*)binBasePtr+ofs, num);
               // mesh->numTriangles = num;
               // mesh->triangle = (vec4i*)(binBasePtr+ofs);
             } else if (childType == "materiallist") {
@@ -468,14 +468,14 @@ namespace ospray {
       fseek(file,0,SEEK_END);
       size_t fileSize = ftell(file);
       fclose(file);
-      
+
       int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDWR);
       if (fd == -1)
         perror("could not open file");
       binBasePtr = (unsigned char *)mmap(NULL,fileSize,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);
 
       xml::XMLDoc *doc = xml::readXML(fileName);
-      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene") 
+      if (doc->child.size() != 1 || doc->child[0]->name != "BGFscene")
         throw std::runtime_error("could not parse RIVL file: Not in RIVL format!?");
       xml::Node *root_element = doc->child[0];
       World *world = new World;
@@ -483,7 +483,7 @@ namespace ospray {
       delete doc;
       return world;
     }
-      
+
   } // ::ospray::sg
 } // ::ospray
 
