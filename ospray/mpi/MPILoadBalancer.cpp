@@ -17,6 +17,7 @@
 #include "MPILoadBalancer.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/fb/FrameBuffer.h"
+#include <algorithm>"
 
 namespace ospray {
   namespace mpi {

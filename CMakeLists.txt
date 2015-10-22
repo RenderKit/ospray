@@ -73,11 +73,11 @@ ENDIF()
 
 IF (WIN32)
   SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL "OSPRay with KNC not supported on Windows.")
-  SET(OSPRAY_BUILD_MPI_DEVICE OFF CACHE INTERNAL "OSPRay with MPI Remote/Distributed not supported on Windows.")
 ELSE()
   OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC Support?")
-  OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 ENDIF()
+
+OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
 SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (SSE, AVX, AVX2, or ALL)")

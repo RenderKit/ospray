@@ -15,6 +15,9 @@
 ## ======================================================================== ##
 
 IF (OSPRAY_MPI)
+  IF (WIN32)
+    FIND_PROGRAM(MPI_COMPILER NAMES mpiicpc.bat DOC "MPI compiler wrapper.")
+  ENDIF()
   if (OSPRAY_COMPILER STREQUAL "ICC")
     find_program(MPI_COMPILER 
       NAMES mpiicpc
@@ -50,7 +53,8 @@ IF (OSPRAY_MPI)
   set(MPI_INCLUDE_PATH_WORK)
   foreach(IPATH ${MPI_ALL_INCLUDE_PATHS})
     string(REGEX REPLACE "^-I" "" IPATH ${IPATH})
-    string(REGEX REPLACE "//" "/" IPATH ${IPATH})
+    string(REPLACE "//" "/" IPATH ${IPATH})
+    string(REPLACE "\"" "" IPATH ${IPATH})
     list(APPEND MPI_INCLUDE_PATH_WORK ${IPATH})
   endforeach(IPATH)
 
@@ -58,6 +62,12 @@ IF (OSPRAY_MPI)
 
   MACRO(CONFIGURE_MPI)
     INCLUDE_DIRECTORIES(${MPI_INCLUDE_PATH})
+    IF (WIN32)
+      STRING(REGEX MATCHALL "/LIBPATH:([^\" ]+|\"[^\"]+\")" MPI_ALL_LIB_PATHS "${MPI_COMPILE_CMDLINE}")
+      STRING(REPLACE ";" " " MPI_ALL_LIB_PATHS "${MPI_ALL_LIB_PATHS}")
+        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_ALL_LIB_PATHS} impi.lib  impicxx.lib")
+        SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_ALL_LIB_PATHS} impi.lib  impicxx.lib")
+    ENDIF()
     SET(CMAKE_CXX_COMPILER ${MPI_COMPILER})
     SET(APP_CMAKE_CXX_FLAGS "${OSPRAY_MPI_MULTI_THREADING_FLAG}")
     SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")

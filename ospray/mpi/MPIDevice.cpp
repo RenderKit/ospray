@@ -27,7 +27,10 @@
 #include "../volume/Volume.h"
 #include "MPILoadBalancer.h"
 // std
-#include <unistd.h> // for fork()
+#ifndef _WIN32
+#  include <unistd.h> // for fork()
+#endif
+
 
 namespace ospray {
   using std::cout;
@@ -235,11 +238,15 @@ namespace ospray {
 
         char systemCommand[10000];
         sprintf(systemCommand,"%s %s",launchCommand,fixedPortName);
+#ifdef _WIN32
+        throw std::runtime_error("OSPRay MPI: no fork() yet on Windows");
+#else
         if (fork()) {
           system(systemCommand);
           cout << "OSPRay worker process has died - killing application" << endl;
           exit(0);
         }
+#endif
       }
 
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
