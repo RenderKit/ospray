@@ -314,7 +314,6 @@ namespace ospray {
       if (frameID > 0) fps.doneRender();
       fps.startRender();
       //}
-#if 0
       static double benchStart=0;
       static double fpsSum=0;
       if (g_benchFrames > 0 && frameID == g_benchWarmup)
@@ -334,7 +333,6 @@ namespace ospray {
 
           exit(0);
         }
-#endif 
       ++frameID;
       
       if (viewPort.modified) {
