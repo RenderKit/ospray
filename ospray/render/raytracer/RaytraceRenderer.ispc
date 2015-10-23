@@ -207,8 +207,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
       }
     }
 
-    // Blend AO into diffuse term
-    Kd = (self->aoWeight * ao) * Kd + ((1.f - self->aoWeight) * Kd);
+    // Blend AO w/ diffuse term
+    Kd = Kd + (self->aoWeight * ao) * Kd;
 
     const float local_opacity = path_opacity * d;
 
@@ -271,10 +271,6 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
     ray.geomID = -1;
     ray.instID = -1;
   }
-
-  sample.rgb = color;
-  sample.alpha = 1.f - path_opacity;
-  return;
 }
 
 void RaytraceRenderer_renderSample(uniform Renderer *uniform _self,
