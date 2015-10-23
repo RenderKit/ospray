@@ -131,10 +131,6 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
   vec3f color = make_vec3f(0.f);
   float path_opacity = 1.f;
   int max_depth = 10;
-  uniform int depth = 0;
-
-  vec3f Ka = make_vec3f(0.25f);
-  float ao = 1.0f;
 
   while (1) {
 
@@ -158,21 +154,13 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
 
     // Start shading //
 
-    vec3f local_shade_color = make_vec3f(0.f);
-
     // Calculate material information from DG //
-
     DifferentialGeometry dg;
     postIntersect(self->super.model,
                   dg,
                   ray,
                   DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
                   DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
-
-    // Calculate AO contribution as ambient term //
-    if (depth == 0 && self->aoSamples > 0 && self->aoWeight > 0.f) {
-      ao = calculateAO(self, dg, sample);
-    }
 
     uniform Material *material = dg.material;
     uniform RaytraceMaterial *objMaterial =
@@ -186,8 +174,6 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
     // Get each term from the material //
 
     if (!objMaterial) {
-      //color = color + path_opacity * make_vec3f(dg.color);
-      //return color;
       d = dg.color.w;
       Kd = make_vec3f(dg.color);
     } else {
@@ -207,9 +193,6 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
       }
     }
 
-    // Blend AO w/ diffuse term
-    Kd = Kd + (self->aoWeight * ao) * Kd;
-
     const float local_opacity = path_opacity * d;
 
     max_depth -= 1;
@@ -223,7 +206,14 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
       const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
       const vec3f P = dg.P + self->super.epsilon * dg.Ng;
 
-      color = color + local_opacity * Kd * Ka;
+      // Calculate AO contribution as ambient term
+      if (self->aoSamples > 0 && self->aoWeight > 0.f) {
+        float ao = self->aoWeight;
+        if (self->aoRayLength > 0.f)
+          ao *= calculateAO(self, dg, sample);
+        // Blend AO w/ diffuse term
+        color = color + local_opacity * Kd * ao;
+      }
 
       //calculate shading for all lights
       for (uniform int i = 0; self->lights && i < self->numLights; i++) {
@@ -234,11 +224,11 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
         if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
           const float cosNL = abs(dot(light.direction, dg.Ns));
           const float cosLR = max(0.f, dot(light.direction, R));
-          const vec3f unshaded_light_contrib = local_opacity *
-              (Kd * cosNL + Ks * powf(cosLR, Ns)) * light.radiance;
+          const vec3f brdf = Kd * cosNL + Ks * powf(cosLR, Ns);
+          const vec3f light_contrib = local_opacity * brdf * light.radiance;
 
           if (self->shadowsEnabled) {
-            const float max_contrib = reduce_max(unshaded_light_contrib);
+            const float max_contrib = reduce_max(light_contrib);
             if (max_contrib > .01f) {
               Ray shadowRay;
               setRay(shadowRay, P, light.direction);
@@ -246,15 +236,12 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
                                                    self->super.model,
                                                    max_contrib,
                                                    self->super.epsilon);
-              local_shade_color = local_shade_color +
-                                  (light_alpha * unshaded_light_contrib);
+              color = color + light_alpha * light_contrib;
             }
-          } else 
-            local_shade_color = local_shade_color + unshaded_light_contrib;
+          } else
+            color = color + light_contrib;
         }
       }
-
-      color = color + local_shade_color;
     }
 
     path_opacity = path_opacity * (1.f - d);

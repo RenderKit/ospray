@@ -50,7 +50,7 @@ namespace ospray {
 
       int   numAOSamples = getParam1i("aoSamples", 4); // number of AO rays per pixel sample
       float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
-      float aoWeight     = getParam1f("aoWeight", 1.f);
+      float aoWeight     = getParam1f("aoWeight", 0.25f);
 
       ispc::RaytraceRenderer_set(getIE(),
                                  (ispc::vec3f&)bgColor,
