@@ -37,6 +37,8 @@ struct RaytraceRenderer {
   vec3f bgColor;
   bool  shadowsEnabled;
 
+  int   maxDepth;
+
   int   aoSamples;
   float aoRayLength;
   float aoWeight;
@@ -75,10 +77,10 @@ inline float calculateAO(const uniform RaytraceRenderer *uniform self,
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model,
                         const float weight,
+                        int remaining_depth,
                         const uniform float epsilon)
 {
   float alpha = 1.f;
-  int max_depth = 8;
   const float org_t_max = ray.t;
 
   while (1) {
@@ -110,7 +112,7 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model,
 
     if (alpha * weight < ALPHA_THRESHOLD) return alpha;
 
-    if (--max_depth <= 0)
+    if (--remaining_depth <= 0)
       return 0.f;
 
     ray.t0 = ray.t + epsilon;
@@ -130,7 +132,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
   // print("ray.dir % % %\n",ray.dir.x,ray.dir.y,ray.dir.z);
   vec3f color = make_vec3f(0.f);
   float path_opacity = 1.f;
-  int max_depth = 10;
+  int depth = 0;
 
   while (1) {
 
@@ -143,14 +145,12 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
                    color + path_opacity * self->bgColor :
                    color;
       sample.alpha = self->super.backgroundEnabled ? 1.f : 1.f - path_opacity;
-      sample.z = 1;
       return;
     }
 
-    // Record ray depth //
-
-    //! NOTE(jda) - Why was this not simply ray.t before...??
-    sample.z = ray.t;//log(ray.t) / 10;
+    // Record depth of first hit in z buffer //
+    if (depth == 0)
+      sample.z = ray.t;
 
     // Start shading //
 
@@ -195,13 +195,6 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
 
     const float local_opacity = path_opacity * d;
 
-    max_depth -= 1;
-    if (max_depth <= 0) {
-      sample.rgb = color;
-      sample.alpha = 1.f - path_opacity;
-      return;
-    }
-
     if (local_opacity > 0.01f) { // worth shading?
       const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
       const vec3f P = dg.P + self->super.epsilon * dg.Ng;
@@ -235,6 +228,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
               const float light_alpha = lightAlpha(shadowRay,
                                                    self->super.model,
                                                    max_contrib,
+                                                   self->maxDepth - depth,
                                                    self->super.epsilon);
               color = color + light_alpha * light_contrib;
             }
@@ -244,9 +238,10 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
       }
     }
 
+    // kill path when reached max depth or if remaining contribution too low 
     path_opacity = path_opacity * (1.f - d);
-    if (path_opacity < 0.01f) {
-      //remaining contribution too low kill path
+    depth++;
+    if (depth >= self->maxDepth | path_opacity < 0.01f ) {
       sample.rgb = color;
       sample.alpha = 1.f - path_opacity;
       return;
@@ -275,6 +270,7 @@ void RaytraceRenderer_renderSample(uniform Renderer *uniform _self,
 export void RaytraceRenderer_set(void *uniform _self,
                                  const uniform vec3f &bgColor,
                                  const uniform bool shadowsEnabled,
+                                 const uniform int maxDepth,
                                  const uniform int aoSamples,
                                  const uniform float aoRayLength,
                                  const uniform float aoWeight,
@@ -286,6 +282,7 @@ export void RaytraceRenderer_set(void *uniform _self,
 
   self->bgColor = bgColor;
   self->shadowsEnabled = shadowsEnabled;
+  self->maxDepth = maxDepth;
   self->aoSamples = aoSamples;
   self->aoRayLength = aoRayLength;
   self->aoWeight = aoWeight;
@@ -298,7 +295,7 @@ export void *uniform RaytraceRenderer_create(void *uniform cppE)
   uniform RaytraceRenderer *uniform self = uniform new uniform RaytraceRenderer;
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = RaytraceRenderer_renderSample;
-  RaytraceRenderer_set(self, make_vec3f(1.f), true, 4, infinity, 1.f, NULL, 0);
+  RaytraceRenderer_set(self, make_vec3f(1.f), true, 10, 4, infinity, 1.f, NULL, 0);
 
   return self;
 }
