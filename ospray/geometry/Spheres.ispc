@@ -30,6 +30,7 @@ struct Spheres {
 
   uniform uint8 *uniform data;
   uniform Material *uniform *materialList;
+  uniform vec4f    *uniform color;  //!< mesh's vertex color array
 
   float           radius;
   int             materialID;
@@ -51,6 +52,16 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
   uniform Spheres *uniform self = (uniform Spheres *uniform)geometry;
 
   dg.Ng = dg.Ns = ray.Ng;
+
+  uniform vec4f *uniform color = self->color;
+  if ((flags & DG_COLOR) && color) {
+    if (color) {
+      if (ray.primID > 100 || ray.primID < 0)
+        dg.color = make_vec4f(0.5f);
+      else
+        dg.color = color[ray.primID];
+    }
+  }
 
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
     const uniform int32 primsPerPage = (1024*1024*64);
@@ -145,6 +156,7 @@ export void SpheresGeometry_set(void           *uniform _geom,
                                 void           *uniform _model,
                                 void           *uniform data,
                                 void           *uniform materialList,
+                                uniform vec4f  *uniform color,
                                 int             uniform numSpheres,
                                 int             uniform bytesPerSphere,
                                 float           uniform radius,
@@ -161,6 +173,7 @@ export void SpheresGeometry_set(void           *uniform _geom,
   geom->geometry.model = model;
   geom->geometry.geomID = geomID;
   geom->materialList = (Material **)materialList;
+  geom->color = color;
   geom->numSpheres = numSpheres;
   geom->radius = radius;
   geom->data = (uniform uint8 *uniform)data;
