@@ -49,27 +49,28 @@ namespace embree
     if (task->event) 
       task->event->inc();
 
-    mutex.lock();
-
-    /*! resize array if too small */
-    if (end-begin == tasks.size())
     {
-      size_t s0 = 1*tasks.size();
-      size_t s1 = 2*tasks.size();
-      tasks.resize(s1);
-      for (size_t i=begin; i!=end; i++)
-        tasks[i&(s1-1)] = tasks[i&(s0-1)];
-    }
+      embree::Lock<embree::MutexSys> lock(mutex);
 
-    /*! insert task to correct end of list */
-    switch (queue) {
-    case GLOBAL_FRONT: { size_t i = (--begin)&(tasks.size()-1); tasks[i] = task; break; }
-    case GLOBAL_BACK : { size_t i = (end++  )&(tasks.size()-1); tasks[i] = task; break; }
-    default          : THROW_RUNTIME_ERROR("invalid task queue");
+      /*! resize array if too small */
+      if (end-begin == tasks.size())
+      {
+        size_t s0 = 1*tasks.size();
+        size_t s1 = 2*tasks.size();
+        tasks.resize(s1);
+        for (size_t i=begin; i!=end; i++)
+          tasks[i&(s1-1)] = tasks[i&(s0-1)];
+      }
+
+      /*! insert task to correct end of list */
+      switch (queue) {
+      case GLOBAL_FRONT: { size_t i = (--begin)&(tasks.size()-1); tasks[i] = task; break; }
+      case GLOBAL_BACK : { size_t i = (end++  )&(tasks.size()-1); tasks[i] = task; break; }
+      default          : THROW_RUNTIME_ERROR("invalid task queue");
+      }
+
+      condition.broadcast();
     }
-    
-    condition.broadcast();
-    mutex.unlock();
   }
 
   void TaskSchedulerSys::wait(size_t threadIndex, size_t threadCount, Event* event)
@@ -87,37 +88,37 @@ namespace embree
 
   void TaskSchedulerSys::work(size_t threadIndex, size_t threadCount, bool wait)
   {
+    Task *task = NULL;
+    size_t elt = 0;
+
     /* wait for available task */
-    mutex.lock();
-    while (
-           (((end-begin) == 0) && (!terminateThreads)) 
-           || 
-           !isEnabled(threadIndex)
-           ) {
-      if (wait) {
-        // printf("waiting %li t %lf\n",threadIndex,getSysTime());
-        condition.wait(mutex);
-      } else {
-        mutex.unlock();
+    {
+      embree::Lock<embree::MutexSys> lock(mutex);
+      while (
+             (((end-begin) == 0) && (!terminateThreads))
+             ||
+             !isEnabled(threadIndex)
+             ) {
+        if (wait) {
+          // printf("waiting %li t %lf\n",threadIndex,getSysTime());
+          condition.wait(mutex);
+        } else {
+          return;
+        }
+      }
+
+      /* terminate this thread */
+      if (terminateThreads) {
         return;
       }
+
+      /* take next task from stack */
+      size_t i = (end-1)&(tasks.size()-1);
+      task = tasks[i];
+      elt = --task->started;
+      if (elt == 0) end--;
+
     }
-
-    /* terminate this thread */
-    if (terminateThreads) {
-      mutex.unlock();
-      return;
-    }
-    
-    /* take next task from stack */
-    size_t i = (end-1)&(tasks.size()-1);
-    Task* task = tasks[i]; 
-    size_t elt = --task->started;
-    if (elt == 0) end--;
-
-    //printf("thread %i has %i...%i; i=%li, elt=%li\n",threadIndex,begin,end,i,elt);
-
-    mutex.unlock();
     
     /* run the task */
     TaskScheduler::Event* event = task->event;
@@ -149,10 +150,11 @@ namespace embree
 
   void TaskSchedulerSys::terminate() 
   {
-    mutex.lock();
-    terminateThreads = true;
-    condition.broadcast(); 
-    mutex.unlock();
+    {
+      embree::Lock<embree::MutexSys> lock(mutex);
+      terminateThreads = true;
+      condition.broadcast();
+    }
   }
 }
 
