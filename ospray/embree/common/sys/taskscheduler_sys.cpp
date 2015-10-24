@@ -95,11 +95,13 @@ namespace embree
            !isEnabled(threadIndex)
            ) {
       if (wait) {
-// printf("waiting %li t %lf\n",threadIndex,getSysTime()); 
-condition.wait(mutex); }
-      else { mutex.unlock(); return; }
+        // printf("waiting %li t %lf\n",threadIndex,getSysTime());
+        condition.wait(mutex);
+      } else {
+        mutex.unlock();
+        return;
+      }
     }
-
 
     /* terminate this thread */
     if (terminateThreads) {
