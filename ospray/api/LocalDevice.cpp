@@ -83,7 +83,10 @@ namespace ospray {
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }
 
-
+    LocalDevice::~LocalDevice()
+    {
+      rtcExit();
+    }
 
     OSPFrameBuffer 
     LocalDevice::frameBufferCreate(const vec2i &size, 

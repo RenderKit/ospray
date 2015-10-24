@@ -26,6 +26,8 @@ namespace ospray {
       /*! constructor */
       LocalDevice(int *_ac=NULL, const char **_av=NULL);
 
+      ~LocalDevice();
+
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
                                                const OSPFrameBufferFormat mode,

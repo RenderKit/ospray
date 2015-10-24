@@ -15,8 +15,9 @@
 // ======================================================================== //
 
 #include "TaskSys.h"
-// stl - ugh.
-#include <deque>
+
+#include <vector>
+
 // embree
 #include "common/sys/sysinfo.h"
 #include "common/sys/thread.h"
@@ -27,6 +28,7 @@ namespace ospray {
 
   struct TaskSys {
     bool initialized;
+    bool running;
 
     void init(size_t maxNumRenderTasks);
     static TaskSys global;
@@ -42,9 +44,14 @@ namespace ospray {
 
     void threadFunction();
 
+    std::vector<embree::thread_t> threads;
+
     TaskSys()
-      : activeListFirst(NULL), activeListLast(NULL), initialized(0)
+      : activeListFirst(NULL), activeListLast(NULL),
+        initialized(false), running(false)
     {}
+
+    ~TaskSys();
   };
   
   TaskSys __aligned(64) TaskSys::global;
@@ -53,12 +60,13 @@ namespace ospray {
   void Task::oneDependencyGotCompleted(Task *which)
   {
 #if TASKSYS_DEPENDENCIES
-    mutex.lock();
-    if (--numMissingDependencies == 0) {
-      allDependenciesFulfilledCond.broadcast();
-      activate();
+    {
+      embree::Lock<embree::MutexSys> lock(mutex);
+      if (--numMissingDependencies == 0) {
+        allDependenciesFulfilledCond.broadcast();
+        activate();
+      }
     }
-    mutex.unlock();
 #endif
   }
 
@@ -67,12 +75,14 @@ namespace ospray {
     // work on dependencies, until they are done
     if (numMissingDependencies > 0) {
 #if TASKSYS_DEPENDENCIES
-      for (size_t i=0;i<dependency.size();i++)
+      for (size_t i=0;i<dependency.size();i++) {
         dependency[i]->workOnIt();
-      mutex.lock();
-      while (numMissingDependencies)
-        allDependenciesFulfilledCond.wait(mutex);
-      mutex.unlock();
+      }
+      {
+        embree::Lock<embree::MutexSys> lock(mutex);
+        while (numMissingDependencies)
+          allDependenciesFulfilledCond.wait(mutex);
+      }
 #endif
     }
     
@@ -92,12 +102,11 @@ namespace ospray {
         // Yay - I just finished the job, so I get some extra work do do ... just like in real life....
         finish();
         
-        mutex.lock();
-	// __memory_barrier();
-        status = Task::COMPLETED;
-	// __memory_barrier();
-        allJobsCompletedCond.broadcast();
-        mutex.unlock();
+        {
+          embree::Lock<embree::MutexSys> lock(mutex);
+          status = Task::COMPLETED;
+          allJobsCompletedCond.broadcast();
+        }
 #if TASKSYS_DEPENDENCIES
         for (int i=0;i<dependent.size();i++)
           dependent[i]->oneDependencyGotCompleted(this);
@@ -117,55 +126,36 @@ namespace ospray {
     }
 
     if (status != COMPLETED) {
-      mutex.lock();
-      while (1) {
-	// __memory_barrier();
-        const Status status = this->status;
-	// __memory_barrier();
-        if (status == Task::COMPLETED)
-          break;
-        allJobsCompletedCond.wait(mutex);
+      {
+        embree::Lock<embree::MutexSys> lock(mutex);
+        while (1) {
+          const Status status = this->status;
+          if (status == Task::COMPLETED)
+            break;
+          allJobsCompletedCond.wait(mutex);
+        }
       }
-      mutex.unlock();
     }
   }
-
 
   void Task::scheduleAndWait(size_t numJobs, ScheduleOrder order)
   {
     schedule(numJobs,order);
     wait();
   }
-  //   refInc();
-  //   numJobsInTask = numJobs;
-  //   status = Task::SCHEDULED;
-  //   if (numMissingDependencies == 0)
-  //     activate();
-
-  //   this->workOnIt();
-
-  //   if (status != COMPLETED) {
-  //     mutex.lock();
-  //     while (1) {
-  //       // __memory_barrier();
-  //       const Status status = this->status;
-  //       // __memory_barrier();
-  //       if (status == Task::COMPLETED)
-  //         break;
-  //       allJobsCompletedCond.wait(mutex);
-  //     }
-  //     mutex.unlock();
-  //   }
-  // }
-  
-
 
   inline Task *TaskSys::getNextActiveTask()
   {
-    mutex.lock();
+    embree::Lock<embree::MutexSys> lock(mutex);
     while (1) {
-      while (activeListFirst == NULL)
+      while (activeListFirst == NULL && running) {
         tasksAvailable.wait(mutex);
+      }
+
+      if (!running) {
+        return NULL;
+      }
+
       Task *const front = activeListFirst;
       if (front->numJobsStarted >= front->numJobsInTask) {
         if (activeListFirst == activeListLast) {
@@ -173,13 +163,10 @@ namespace ospray {
         } else {
           activeListFirst = activeListFirst->next;
         }
-        // mutex.unlock();
         front->refDec();
-        // mutex.lock();
         continue;
       }
       front->refInc(); // becasue the thread calling us now owns it
-      mutex.unlock();
       assert(front);
       return front;
     }
@@ -204,24 +191,25 @@ namespace ospray {
   {
     if (!TaskSys::global.initialized)
       throw std::runtime_error("TASK SYSTEM NOT YET INITIALIZED");
-    TaskSys::global.mutex.lock();
-    bool wasEmpty = TaskSys::global.activeListFirst == NULL;
-    if (wasEmpty) {
-      TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
-      this->next = NULL;
-      TaskSys::global.tasksAvailable.broadcast();
-    } else {
-      if (order == Task::BACK_OF_QUEUE) {
+    {
+      embree::Lock<embree::MutexSys> lock(TaskSys::global.mutex);
+      bool wasEmpty = TaskSys::global.activeListFirst == NULL;
+      if (wasEmpty) {
+        TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
         this->next = NULL;
-        TaskSys::global.activeListLast->next = this;
-        TaskSys::global.activeListLast = this;      
+        TaskSys::global.tasksAvailable.broadcast();
       } else {
-        this->next = TaskSys::global.activeListFirst;
-        TaskSys::global.activeListFirst = this;
+        if (order == Task::BACK_OF_QUEUE) {
+          this->next = NULL;
+          TaskSys::global.activeListLast->next = this;
+          TaskSys::global.activeListLast = this;
+        } else {
+          this->next = TaskSys::global.activeListFirst;
+          TaskSys::global.activeListFirst = this;
+        }
       }
+      status = Task::ACTIVE;
     }
-    status = Task::ACTIVE;
-    TaskSys::global.mutex.unlock();
   }
 
 
@@ -229,9 +217,25 @@ namespace ospray {
   {
     while (1) {
       Task *task = getNextActiveTask();
+      if (!running) {
+        if (task) {
+          task->refDec();
+        }
+        return;
+      }
       assert(task);
       task->workOnIt();
       task->refDec();
+    }
+  }
+
+  TaskSys::~TaskSys()
+  {
+    running = false;
+    __memory_barrier();
+    tasksAvailable.broadcast();
+    for (int i = 0; i < threads.size(); ++i) {
+      embree::join(threads[i]);
     }
   }
 
@@ -246,6 +250,7 @@ namespace ospray {
     if (initialized)
       throw std::runtime_error("#osp: task system initialized twice!");
     initialized = true;
+    running = true;
 
     if (numThreads != 0) {
 #if defined(__MIC__)
@@ -262,7 +267,7 @@ namespace ospray {
       // embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,(t+1)%numThreads);
 #if 1
       // embree will not assign affinity
-      embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,-1);
+      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,-1));
 #else
       // embree will assign affinity in this case:
       embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)t,4*1024*1024,t);
@@ -310,8 +315,6 @@ namespace ospray {
 
   __dllexport void ISPCLaunch(void** taskPtr, void* func, void* data, int count) 
   {
-    // ISPCTask* ispcTask = new ISPCTask((TaskScheduler::Event*)(*taskPtr),(TaskFuncType)func,data,count);
-    // TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &ispcTask->task);
     ISPCTask *task = (ISPCTask *)*taskPtr;
     task->func     = (TaskFuncType)func;
     task->data     = data;
