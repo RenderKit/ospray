@@ -15,8 +15,9 @@
 // ======================================================================== //
 
 #include "TaskSys.h"
-// stl - ugh.
-#include <deque>
+
+#include <vector>
+
 // embree
 #include "common/sys/sysinfo.h"
 #include "common/sys/thread.h"
@@ -27,6 +28,7 @@ namespace ospray {
 
   struct TaskSys {
     bool initialized;
+    bool running;
 
     void init(size_t maxNumRenderTasks);
     static TaskSys global;
@@ -42,9 +44,14 @@ namespace ospray {
 
     void threadFunction();
 
+    std::vector<embree::thread_t> threads;
+
     TaskSys()
-      : activeListFirst(NULL), activeListLast(NULL), initialized(0)
+      : activeListFirst(NULL), activeListLast(NULL),
+        initialized(false), running(false)
     {}
+
+    ~TaskSys();
   };
   
   TaskSys __aligned(64) TaskSys::global;
@@ -141,8 +148,12 @@ namespace ospray {
   {
     embree::Lock<embree::MutexSys> lock(mutex);
     while (1) {
-      while (activeListFirst == NULL) {
+      while (activeListFirst == NULL && running) {
         tasksAvailable.wait(mutex);
+      }
+
+      if (!running) {
+        return NULL;
       }
 
       Task *const front = activeListFirst;
@@ -206,9 +217,25 @@ namespace ospray {
   {
     while (1) {
       Task *task = getNextActiveTask();
+      if (!running) {
+        if (task) {
+          task->refDec();
+        }
+        return;
+      }
       assert(task);
       task->workOnIt();
       task->refDec();
+    }
+  }
+
+  TaskSys::~TaskSys()
+  {
+    running = false;
+    __memory_barrier();
+    tasksAvailable.broadcast();
+    for (int i = 0; i < threads.size(); ++i) {
+      embree::join(threads[i]);
     }
   }
 
@@ -223,6 +250,7 @@ namespace ospray {
     if (initialized)
       throw std::runtime_error("#osp: task system initialized twice!");
     initialized = true;
+    running = true;
 
     if (numThreads != 0) {
 #if defined(__MIC__)
@@ -239,7 +267,7 @@ namespace ospray {
       // embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,(t+1)%numThreads);
 #if 1
       // embree will not assign affinity
-      embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,-1);
+      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,-1));
 #else
       // embree will assign affinity in this case:
       embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)t,4*1024*1024,t);
