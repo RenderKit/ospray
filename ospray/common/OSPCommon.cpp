@@ -93,7 +93,7 @@ namespace ospray {
 
   void init(int *_ac, const char ***_av)
   {
-#if !OSPRAY_TARGET_MIC
+#ifndef OSPRAY_TARGET_MIC
     // If we're not on a MIC, check for SSE4.1 as minimum supported ISA. Will be increased to SSE4.2 in future.
     int cpuFeatures = embree::getCPUFeatures();
     if ((cpuFeatures & embree::CPU_FEATURE_SSE41) == 0)

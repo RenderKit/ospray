@@ -21,7 +21,7 @@
 #include "ospray/mpi/DistributedFrameBuffer.h"
 
 //#define BARRIER_AT_END_OF_FRAME 1
-#include <algorithm>"
+#include <algorithm>
 
 namespace ospray {
   namespace mpi {

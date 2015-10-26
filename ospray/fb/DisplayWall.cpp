@@ -18,7 +18,7 @@
 #include "DisplayWall.h"
 #include "FrameBuffer.h"
 
-#if OSPRAY_DISPLAY_CLUSTER
+#ifdef OSPRAY_DISPLAYCLUSTER
 // DisplayCluster
 # include "dcStream.h"
 #endif
@@ -28,7 +28,7 @@ namespace ospray {
   DisplayWallPO::Instance::Instance(DisplayWallPO *po, FrameBuffer *fb)
     : fb(fb), frameIndex(0), dcSocket(NULL), streamName("")
   {
-#if OSPRAY_DISPLAY_CLUSTER
+#ifdef OSPRAY_DISPLAYCLUSTER
     const char *hostname = po->getParamString("hostname", "localhost");
     streamName = po->getParamString("streamName", "ospray");
 
@@ -48,14 +48,14 @@ namespace ospray {
   {
     frameIndex++;
 
-#if OSPRAY_DISPLAY_CLUSTER
+#ifdef OSPRAY_DISPLAYCLUSTER
     dcStreamSetFrameIndex(frameIndex);
 #endif
   }
 
   void DisplayWallPO::Instance::postAccum(Tile &tile)
   {
-#if OSPRAY_DISPLAY_CLUSTER
+#ifdef OSPRAY_DISPLAYCLUSTER
     if(!dcSocket)
       return;
 

@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OPTION(OSPRAY_DISPLAYCLUSTER "Build DisplayCluster tiled display support" OFF)
+OPTION(OSPRAY_DISPLAYCLUSTER "Build DisplayCluster tiled display support")
 
 IF (OSPRAY_DISPLAYCLUSTER)
 
