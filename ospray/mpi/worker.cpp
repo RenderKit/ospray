@@ -37,7 +37,13 @@
 
 // std
 #include <algorithm>
-#include <unistd.h> // for gethostname()
+
+#ifdef _WIN32
+#  include <Winsock2.h> // for gethostname
+#  include <process.h> // for getpid
+#else
+#  include <unistd.h> // for gethostname
+#endif
 
 #define DBG(a) /**/
 
