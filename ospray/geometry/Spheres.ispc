@@ -55,12 +55,7 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
   uniform vec4f *uniform color = self->color;
   if ((flags & DG_COLOR) && color) {
-    if (color) {
-      if (ray.primID > 100 || ray.primID < 0)
-        dg.color = make_vec4f(0.5f);
-      else
-        dg.color = color[ray.primID];
-    }
+    dg.color = color[ray.primID];
   }
 
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
