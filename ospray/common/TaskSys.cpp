@@ -17,6 +17,7 @@
 #include "TaskSys.h"
 
 #include <vector>
+#include <algorithm>
 
 // embree
 #include "common/sys/sysinfo.h"
@@ -36,8 +37,8 @@ namespace ospray {
     inline Task *getNextActiveTask();
 
     //! queue of tasks that have ALREADY been acitvated, and that are ready to run
-    Task *volatile __aligned(64) activeListFirst;
-    Task *volatile __aligned(64) activeListLast;
+    __aligned(64) Task *volatile activeListFirst;
+    __aligned(64) Task *volatile activeListLast;
 
     embree::MutexSys     __aligned(64) mutex;
     embree::ConditionSys __aligned(64) tasksAvailable;

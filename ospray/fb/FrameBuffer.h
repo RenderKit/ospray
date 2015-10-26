@@ -16,6 +16,9 @@
 
 #pragma once
 
+// std
+#include <algorithm>
+
 // ospray
 #include "ospray/fb/PixelOp.h"
 

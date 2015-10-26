@@ -21,13 +21,13 @@
 namespace ospray {
 
 #define TASKSYS_DEPENDENCIES 0
-  
+
   typedef embree::AtomicCounter AtomicInt;
   typedef embree::MutexSys      Mutex;
 
   struct __aligned(64) Task : public embree::RefCount {
     // typedef enum { FRONT, BACK } ScheduleOrder;
-    
+
     // ------------------------------------------------------------------
     // callbacks used to define what the task is doing
     // ------------------------------------------------------------------
@@ -76,7 +76,7 @@ namespace ospray {
 
     //! one of our depdencies tells us that he's finished
     void oneDependencyGotCompleted(Task *which);
-    
+
     //! activate job, and insert into the task system. should never be
     //! called by the user, only by the task(system) whenever the task
     //! is a) scheduled and b) all dependencies are fulfilled
@@ -104,12 +104,12 @@ namespace ospray {
     // //! continuations: those become scheduled when we complete
     // std::vector<Task *> continuations;
 
-    Task *volatile __aligned(64) next;
+    __aligned(64) Task *volatile next;
     const char *name;
 
     /*! \brief initialize the task system with given number of worker
         tasks.
-        
+
         numThreads==-1 means 'use all that are available; numThreads=0
         means 'no worker thread, assume that whoever calls wait() will
         do the work */

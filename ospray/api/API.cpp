@@ -295,10 +295,11 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
   Assert2(_type,"invalid render type identifier in ospNewPixelOp");
   LOG("ospNewPixelOp(" << _type << ")");
   int L = strlen(_type);
-  char type[L+1];
+  char *type = (char *)alloca(L+1);
   for (int i=0;i<=L;i++) {
     char c = _type[i];
-    if (c == '-' || c == ':') c = '_';
+    if (c == '-' || c == ':')
+      c = '_';
     type[i] = c;
   }
   OSPPixelOp pixelOp = ospray::api::Device::current->newPixelOp(type);

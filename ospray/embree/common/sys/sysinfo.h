@@ -32,19 +32,19 @@ namespace embree
   };
 
   /*! get the full path to the running executable */
-  std::string getExecutableFileName();
+  OSPRAY_EMBREE_INTERFACE std::string getExecutableFileName();
 
   /*! return platform name */
-  std::string getPlatformName();
+  OSPRAY_EMBREE_INTERFACE std::string getPlatformName();
 
   /*! get the full name of the compiler */
-  std::string getCompilerName();
+  OSPRAY_EMBREE_INTERFACE std::string getCompilerName();
 
   /*! return the name of the CPU */
-  std::string getCPUVendor();
+  OSPRAY_EMBREE_INTERFACE std::string getCPUVendor();
 
   /*! get microprocessor model */
-  CPUModel getCPUModel(); 
+  OSPRAY_EMBREE_INTERFACE CPUModel getCPUModel(); 
 
   /*! CPU features */
   static const int CPU_FEATURE_SSE   = 1 << 0;
@@ -69,14 +69,14 @@ namespace embree
   OSPRAY_EMBREE_INTERFACE int getCPUFeatures();
 
   /*! convert CPU features into a string */
-  std::string stringOfCPUFeatures(int features);
+  OSPRAY_EMBREE_INTERFACE std::string stringOfCPUFeatures(int features);
 
   /*! return the number of logical threads of the system */
-  size_t getNumberOfLogicalThreads();
+  OSPRAY_EMBREE_INTERFACE size_t getNumberOfLogicalThreads();
   
   /*! return the number of cores of the system */
-  size_t getNumberOfCores();
+  OSPRAY_EMBREE_INTERFACE size_t getNumberOfCores();
   
   /*! returns the size of the terminal window in characters */
-  int getTerminalWidth();
+  OSPRAY_EMBREE_INTERFACE int getTerminalWidth();
 }

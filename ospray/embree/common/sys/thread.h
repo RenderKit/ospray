@@ -27,34 +27,34 @@ namespace embree
   typedef void (*thread_func)(void*);
 
   /*! creates a hardware thread running on specific logical thread */
-  thread_t createThread(thread_func f, void* arg, size_t stack_size = 0, ssize_t threadID = -1);
+  OSPRAY_EMBREE_INTERFACE thread_t createThread(thread_func f, void* arg, size_t stack_size = 1, ssize_t threadID = -1);
 
   /*! set affinity of the calling thread */
-  void setAffinity(ssize_t affinity);
+  OSPRAY_EMBREE_INTERFACE void setAffinity(ssize_t affinity);
 
   /*! the thread calling this function gets yielded */
-  void yield();
+  OSPRAY_EMBREE_INTERFACE void yield();
 
   /*! waits until the given thread has terminated */
-  void join(thread_t tid);
+  OSPRAY_EMBREE_INTERFACE void join(thread_t tid);
 
   /*! destroy handle of a thread */
-  void destroyThread(thread_t tid);
+  OSPRAY_EMBREE_INTERFACE void destroyThread(thread_t tid);
 
   /*! type for handle to thread local storage */
   typedef struct opaque_tls_t* tls_t;
 
   /*! creates thread local storage */
-  tls_t createTls();
+  OSPRAY_EMBREE_INTERFACE tls_t createTls();
 
   /*! set the thread local storage pointer */
-  void setTls(tls_t tls, void* const ptr);
+  OSPRAY_EMBREE_INTERFACE void setTls(tls_t tls, void* const ptr);
 
   /*! return the thread local storage pointer */
-  void* getTls(tls_t tls);
+  OSPRAY_EMBREE_INTERFACE void* getTls(tls_t tls);
 
   /*! destroys thread local storage identifier */
-  void destroyTls(tls_t tls);
+  OSPRAY_EMBREE_INTERFACE void destroyTls(tls_t tls);
 
 #if defined(__MIC__)
   void printThreadInfo();

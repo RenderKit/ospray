@@ -234,6 +234,9 @@ namespace ospray {
   }
 } // ::ospray
 
+#ifdef _WIN32
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
 
 // #define divRoundUp(X,Y) (((X)+(Y)-1)/(Y))
