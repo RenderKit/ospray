@@ -22,11 +22,7 @@
 #include "ospray/common/OSPCommon.h"
 #include "ospray/fb/FrameBuffer.h"
 #include "ospray/render/Renderer.h"
-
 #include "ospray/common/TaskSys.h"
-
-// // embree
-// #include "common/sys/taskscheduler.h"
 
 // tbb
 #include <tbb/blocked_range.h>
@@ -35,7 +31,6 @@
 
 namespace ospray {
 
-  //  using embree::TaskScheduler;
 
   struct TileRenderer;
 

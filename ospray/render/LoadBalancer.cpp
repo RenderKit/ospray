@@ -25,6 +25,20 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+  struct TileWorkerTBB
+  {
+    Tile     *tile;
+    Renderer *renderer;
+    void operator()(const tbb::blocked_range<int>& range) const
+    {
+      for (int taskIndex = range.begin();
+           taskIndex != range.end();
+           ++taskIndex) {
+        renderer->renderTile(*tile, taskIndex);
+      }
+    }
+  };
+
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
   void LocalTiledLoadBalancer::RenderTask::finish() const
@@ -34,10 +48,12 @@ namespace ospray {
     fb = NULL;
   }
 
-  void LocalTiledLoadBalancer::RenderTask::operator()(const tbb::blocked_range<int> &range) const
+  void LocalTiledLoadBalancer::RenderTask::operator()
+  (const tbb::blocked_range<int> &range) const
   {
-    for (int taskIndex = range.begin(); taskIndex != range.end(); ++taskIndex)
-    {
+    for (int taskIndex = range.begin();
+         taskIndex != range.end();
+         ++taskIndex) {
       run(taskIndex);
     }
   }
@@ -55,12 +71,15 @@ namespace ospray {
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
     const int spp = renderer->spp;
-    const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+    const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+                       std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
+                            RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
-    for (size_t i = 0; i < numJobs; ++i) {
-      renderer->renderTile(tile, i);
-    }
+    TileWorkerTBB worker;
+    worker.tile     = &tile;
+    worker.renderer = renderer.ptr;
+    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
 
     fb->setTile(tile);
   }
@@ -102,8 +121,10 @@ namespace ospray {
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
     const int spp = renderer->spp;
-    const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+    const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+                       std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
+                            RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
     for (size_t i = 0; i < numJobs; ++i) {
       renderer->renderTile(tile, i);
