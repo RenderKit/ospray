@@ -19,11 +19,30 @@ IF (OSPRAY_MPI)
 
   MACRO(CONFIGURE_MPI)
 
-    FIND_PACKAGE(MPI REQUIRED)
+    IF (WIN32) # FindMPI does not find Intel MPI on Windows, we need to help here
+      FIND_PACKAGE(MPI)
+
+      IF (NOT MPI_CXX_COMPILER)
+        SET(MPI_CXX_COMPILER mpicxx.bat)
+        SET(MPI_C_COMPILER mpicc.bat)
+        FIND_PACKAGE(MPI)
+      ENDIF()
+
+      # need to strip quotes, otherwise CMake treats it as relative path
+      STRING(REGEX REPLACE "^\"|\"$" "" MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
+
+      IF (NOT MPI_CXX_LIBRARIES) # use hardcoded libs with absolute paths
+        SET(MPI_LIB_PATH ${MPI_CXX_INCLUDE_PATH}\\..\\lib)
+        SET(MPI_CXX_LIBRARIES ${MPI_LIB_PATH}\\impi.lib ${MPI_LIB_PATH}\\impicxx.lib)
+      ENDIF()
+
+    ELSE()
+      FIND_PACKAGE(MPI REQUIRED)
+    ENDIF()
 
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
-    INCLUDE_DIRECTORIES(SYSTEM ${MPI_CXX_INCLUDE_PATH}) 
-    LINK_DIRECTORIES(${MPI_CXX_LINK_FLAGS}) 
+    INCLUDE_DIRECTORIES(SYSTEM ${MPI_CXX_INCLUDE_PATH})
+    LINK_DIRECTORIES(${MPI_CXX_LINK_FLAGS})
 
     IF (THIS_IS_MIC)
       SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mmic")
