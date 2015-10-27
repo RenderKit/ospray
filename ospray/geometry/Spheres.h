@@ -69,6 +69,7 @@ namespace ospray {
     int64 offset_center;
     int64 offset_radius;
     int64 offset_materialID;
+    int64 offset_colorID;
 
     Ref<Data> sphereData;
     Ref<Data> materialList;

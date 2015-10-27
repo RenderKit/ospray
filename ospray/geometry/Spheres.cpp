@@ -47,6 +47,7 @@ namespace ospray {
     offset_center     = getParam1i("offset_center",0);
     offset_radius     = getParam1i("offset_radius",-1);
     offset_materialID = getParam1i("offset_materialID",-1);
+    offset_colorID    = getParam1i("offset_colorID",-1);
     sphereData        = getParamData("spheres");
     materialList      = getParamData("materialList");
     colorData         = getParamData("color");
@@ -90,7 +91,8 @@ namespace ospray {
                               colorData?(ispc::vec4f*)colorData->data:NULL,
                               numSpheres,bytesPerSphere,
                               radius,materialID,
-                              offset_center,offset_radius,offset_materialID);
+                              offset_center,offset_radius,
+                              offset_materialID,offset_colorID);
   }
 
   OSP_REGISTER_GEOMETRY(Spheres,spheres);

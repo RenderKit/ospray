@@ -32,13 +32,14 @@ struct Spheres {
   uniform Material *uniform *materialList;
   uniform vec4f    *uniform color;  //!< mesh's vertex color array
 
-  float           radius;
-  int             materialID;
-  int             offset_center;
-  int             offset_radius;
-  int             offset_materialID;
-  int32           numSpheres;
-  int32           bytesPerSphere;
+  float radius;
+  int   materialID;
+  int   offset_center;
+  int   offset_radius;
+  int   offset_materialID;
+  int   offset_colorID;
+  int32 numSpheres;
+  int32 bytesPerSphere;
 };
 
 typedef uniform float uniform_float;
@@ -53,9 +54,14 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
 
   dg.Ng = dg.Ns = ray.Ng;
 
-  uniform vec4f *uniform color = self->color;
-  if ((flags & DG_COLOR) && color) {
-    dg.color = color[ray.primID];
+  if ((flags & DG_COLOR) && self->color) {
+    if (self->offset_colorID >= 0) {
+      uniform uint8 *varying spherePtr = self->data + self->bytesPerSphere*ray.primID;
+      uint32 colorID = *((uniform uint32 *varying)(spherePtr+self->offset_colorID));
+      dg.color = self->color[colorID];
+    } else {
+      dg.color = self->color[ray.primID];
+    }
   }
 
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
@@ -158,7 +164,8 @@ export void SpheresGeometry_set(void           *uniform _geom,
                                 int             uniform materialID,
                                 int             uniform offset_center,
                                 int             uniform offset_radius,
-                                int             uniform offset_materialID)
+                                int             uniform offset_materialID,
+                                int             uniform offset_colorID)
 {
   uniform Spheres *uniform geom = (uniform Spheres *uniform)_geom;
   uniform Model *uniform model = (uniform Model *uniform)_model;
@@ -178,6 +185,7 @@ export void SpheresGeometry_set(void           *uniform _geom,
   geom->offset_center     = offset_center;
   geom->offset_radius     = offset_radius;
   geom->offset_materialID = offset_materialID;
+  geom->offset_colorID    = offset_colorID;
 
   rtcSetUserData(model->embreeSceneHandle,geomID,geom);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,
