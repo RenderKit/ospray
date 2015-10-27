@@ -48,14 +48,9 @@ void Renderer_default_endFrame(uniform Renderer *uniform self,
   self->fb = NULL;
 }
 
-#if 0
-task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
-                                         uniform Tile &tile)
-#else
 void Renderer_default_renderTileJob(uniform Renderer *uniform self,
                                     uniform Tile &tile,
                                     uniform int taskIndex)
-#endif
 {
   uniform FrameBuffer *uniform fb     = self->fb;
   uniform Camera      *uniform camera = self->camera;
@@ -170,21 +165,6 @@ void Renderer_default_renderTileJob(uniform Renderer *uniform self,
   }
 }
 
-void Renderer_default_renderTile(uniform Renderer *uniform self,
-                                 uniform Tile &tile)
-{
-  uniform int32 spp = self->spp;
-  const uniform int blocks = self->fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-  uniform const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-#if 0
-  launch[numJobs] Renderer_default_renderTileJob(self,tile);
-#else
-  for (uniform int i = 0; i < numJobs; ++i) {
-    Renderer_default_renderTileJob(self, tile, i);
-  }
-#endif
-}
-
 void Renderer_Constructor(uniform Renderer *uniform self,
                           void *uniform cppE)
 {
@@ -196,7 +176,6 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->backgroundEnabled = true;
   self->maxDepthTexture = NULL;
   self->renderSample = Renderer_default_renderSample;
-  self->renderTile   = Renderer_default_renderTile;
   self->beginFrame   = Renderer_default_beginFrame;
   self->endFrame     = Renderer_default_endFrame;
   self->toneMap      = NULL;
@@ -214,21 +193,12 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->spp    = spp;
 }
 
-#if 0
-export void Renderer_renderTile(void *uniform _self,
-                                uniform Tile &tile)
-#else
 export void Renderer_renderTile(void *uniform _self,
                                 uniform Tile &tile,
                                 uniform int jobID)
-#endif
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
-#if 0
-  self->renderTile(self,tile);
-#else
   Renderer_default_renderTileJob(self, tile, jobID);
-#endif
 }
 
 export void Renderer_beginFrame(void *uniform _self,

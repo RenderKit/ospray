@@ -27,7 +27,7 @@ namespace ospray {
 
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
-  void LocalTiledLoadBalancer::RenderTask::finish()
+  void LocalTiledLoadBalancer::RenderTask::finish() const
   {
     renderer->endFrame(channelFlags);
     renderer = NULL;
@@ -42,7 +42,7 @@ namespace ospray {
     }
   }
 
-  void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex)
+  void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex) const
   {
     Tile tile;
     const size_t tile_y = taskIndex / numTiles_x;
@@ -54,16 +54,14 @@ namespace ospray {
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
-#if 0
-    renderer->renderTile(tile);
-#else
     const int spp = renderer->spp;
     const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
     const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-    for (size_t i = 0; i < numJobs; ++i)
+
+    for (size_t i = 0; i < numJobs; ++i) {
       renderer->renderTile(tile, i);
-#endif
-    // printf("settile... twice?\n");
+    }
+
     fb->setTile(tile);
   }
 
@@ -75,51 +73,6 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
-#if 0
-    Ref<RenderTask> renderTask = new RenderTask;
-    renderTask->fb = fb;
-    renderTask->renderer = tiledRenderer;
-    renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-    renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-    renderTask->channelFlags = channelFlags;
-    tiledRenderer->beginFrame(fb);
-
-    renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
-    renderTask->wait();
-#elif 0
-    RenderTask renderTask;
-    renderTask.fb = fb;
-    renderTask.renderer = tiledRenderer;
-    renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-    renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-    renderTask.channelFlags = channelFlags;
-    tiledRenderer->beginFrame(fb);
-
-    const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-#   pragma omp parallel for schedule(dynamic)
-      for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
-        {
-          Tile tile;
-          const size_t tile_y = taskIndex / renderTask.numTiles_x;
-          const size_t tile_x = taskIndex - tile_y*renderTask.numTiles_x;
-          tile.region.lower.x = tile_x * TILE_SIZE;
-          tile.region.lower.y = tile_y * TILE_SIZE;
-          tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
-          tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
-          tile.fbSize = fb->size;
-          tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
-
-          const int spp = renderTask.renderer->spp;
-          const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-          const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-#         pragma omp parallel for schedule(dynamic)
-          for (int i = 0; i < numJobs; ++i) {
-            renderTask.renderer->renderTile(tile, i);
-          }
-          fb->setTile(tile);
-        }
-      }
-#else
     RenderTask renderTask;
     renderTask.fb = fb;
     renderTask.renderer = tiledRenderer;
@@ -130,29 +83,8 @@ namespace ospray {
 
     const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
     tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
-#endif
 
     renderTask.finish();
-
-    // /*! iw: using a local sync event for now; "in theory" we should be
-    //     able to attach something like a sync event to the frame
-    //     buffer, just trigger the task here, and let somebody else sync
-    //     on the framebuffer once it is needed; alas, I'm currently
-    //     running into some issues with the embree taks system when
-    //     trying to do so, and thus am reverting to this
-    //     fully-synchronous version for now */
-
-    // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
-    // TaskScheduler::EventSync sync;
-    // renderTask->task = embree::TaskScheduler::Task
-    //   (&sync,
-    //   // (&renderTask->fb->frameIsReadyEvent,
-    //    renderTask->_run,renderTask.ptr,
-    //    renderTask->numTiles_x*renderTask->numTiles_y,
-    //    renderTask->_finish,renderTask.ptr,
-    //    "LocalTiledLoadBalancer::RenderTask");
-    // TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-    // sync.sync();
   }
 
   void InterleavedTiledLoadBalancer::RenderTask::run(size_t taskIndex)
@@ -169,7 +101,13 @@ namespace ospray {
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
-    //renderer->renderTile(tile);
+    const int spp = renderer->spp;
+    const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+
+    for (size_t i = 0; i < numJobs; ++i) {
+      renderer->renderTile(tile, i);
+    }
   }
 
 
@@ -178,7 +116,6 @@ namespace ospray {
     renderer->endFrame(channelFlags);
     renderer = NULL;
     fb = NULL;
-    // refDec();
   }
 
   /*! render a frame via the tiled load balancer */

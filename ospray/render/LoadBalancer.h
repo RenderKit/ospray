@@ -30,6 +30,7 @@
 
 // tbb
 #include <tbb/blocked_range.h>
+#include <tbb/blocked_range2d.h>
 #include <tbb/parallel_for.h>
 
 namespace ospray {
@@ -45,7 +46,6 @@ namespace ospray {
     virtual void renderFrame(Renderer *tiledRenderer,
                              FrameBuffer *fb,
                              const uint32 channelFlags) = 0;
-    // virtual void returnTile(FrameBuffer *fb, Tile &tile) = 0;
   };
 
   //! tiled load balancer for local rendering on the given machine
@@ -55,28 +55,25 @@ namespace ospray {
     application ranks each doing local rendering on their own)  */ 
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
-    struct RenderTask {//: public Task { //embree::RefCount {
-      Ref<FrameBuffer>             fb;
-      Ref<Renderer>                renderer;
+    struct RenderTask
+    {
+      mutable Ref<FrameBuffer> fb;
+      mutable Ref<Renderer>    renderer;
       
-      size_t                       numTiles_x;
-      size_t                       numTiles_y;
-      uint32                       channelFlags;
-      // embree::TaskScheduler::Task  task;
+      size_t                   numTiles_x;
+      size_t                   numTiles_y;
+      uint32                   channelFlags;
 
-      virtual void run(size_t jobID);
-      virtual void finish();
+      void run(size_t jobID) const;
+      void finish() const;
 
       void operator()(const tbb::blocked_range<int>& range) const;
-
-      // TASK_RUN_FUNCTION(RenderTask,run);
-      // TASK_COMPLETE_FUNCTION(RenderTask,finish);
     };
 
-    virtual void renderFrame(Renderer *tiledRenderer, 
-                             FrameBuffer *fb,
-                             const uint32 channelFlags);
-    virtual std::string toString() const { return "ospray::LocalTiledLoadBalancer"; };
+    void renderFrame(Renderer *tiledRenderer,
+                     FrameBuffer *fb,
+                     const uint32 channelFlags);
+    std::string toString() const { return "ospray::LocalTiledLoadBalancer"; };
   };
 
   //! tiled load balancer for local rendering on the given machine
@@ -106,28 +103,24 @@ namespace ospray {
       if derived from FrameBuffer::RenderFrameEvent to allow us for
       attaching that as a sync primitive to the frame buffer
     */
-    struct RenderTask : public Task { //embree::RefCount {
-      Ref<FrameBuffer>             fb;
-      Ref<Renderer>                renderer;
+    struct RenderTask : public Task {
+      Ref<FrameBuffer> fb;
+      Ref<Renderer>    renderer;
       
-      size_t                       numTiles_x;
-      size_t                       numTiles_y;
-      size_t                       numTiles_mine;
-      size_t                       deviceID;
-      size_t                       numDevices;
-      uint32                       channelFlags;
+      size_t           numTiles_x;
+      size_t           numTiles_y;
+      size_t           numTiles_mine;
+      size_t           deviceID;
+      size_t           numDevices;
+      uint32           channelFlags;
 
-      virtual void run(size_t jobID);
-      virtual void finish();
-      // embree::TaskScheduler::Task  task;
-
-      // TASK_RUN_FUNCTION(RenderTask,run);
-      // TASK_COMPLETE_FUNCTION(RenderTask,finish);
+      void run(size_t jobID);
+      void finish();
     };
     
-    virtual void renderFrame(Renderer *tiledRenderer, 
-                             FrameBuffer *fb,
-                             const uint32 channelFlags);
+    void renderFrame(Renderer *tiledRenderer,
+                     FrameBuffer *fb,
+                     const uint32 channelFlags);
   };
 
 } // ::ospray
