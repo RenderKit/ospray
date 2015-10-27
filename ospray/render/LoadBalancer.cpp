@@ -90,9 +90,28 @@ namespace ospray {
 #   pragma omp parallel
     {
 #     pragma omp single nowait
-      for (int i = 0; i < NTASKS; ++i) {
+      for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
 #       pragma omp task
-        renderTask.run(i);
+        {
+          Tile tile;
+          const size_t tile_y = taskIndex / renderTask.numTiles_x;
+          const size_t tile_x = taskIndex - tile_y*renderTask.numTiles_x;
+          tile.region.lower.x = tile_x * TILE_SIZE;
+          tile.region.lower.y = tile_y * TILE_SIZE;
+          tile.region.upper.x = std::min(tile.region.lower.x+TILE_SIZE,fb->size.x);
+          tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
+          tile.fbSize = fb->size;
+          tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+
+          const int spp = renderTask.renderer->spp;
+          const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+          const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+          for (int i = 0; i < numJobs; ++i) {
+#           pragma omp taskgroup
+            renderTask.renderer->renderTile(tile, i);
+          }
+          fb->setTile(tile);
+        }
       }
     }
     renderTask.finish();
