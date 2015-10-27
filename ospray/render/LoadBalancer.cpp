@@ -84,6 +84,11 @@ namespace ospray {
     fb->setTile(tile);
   }
 
+  LocalTiledLoadBalancer::LocalTiledLoadBalancer() :
+    tbb_init(numThreads)
+  {
+  }
+
   /*! render a frame via the tiled load balancer */
   void LocalTiledLoadBalancer::renderFrame(Renderer *tiledRenderer,
                                            FrameBuffer *fb,

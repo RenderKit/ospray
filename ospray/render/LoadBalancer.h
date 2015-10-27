@@ -28,6 +28,7 @@
 #include <tbb/blocked_range.h>
 #include <tbb/blocked_range2d.h>
 #include <tbb/parallel_for.h>
+#include <tbb/task_scheduler_init.h>
 
 namespace ospray {
 
@@ -50,6 +51,8 @@ namespace ospray {
     application ranks each doing local rendering on their own)  */ 
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
+    LocalTiledLoadBalancer();
+
     struct RenderTask
     {
       mutable Ref<FrameBuffer> fb;
@@ -69,6 +72,8 @@ namespace ospray {
                      FrameBuffer *fb,
                      const uint32 channelFlags);
     std::string toString() const { return "ospray::LocalTiledLoadBalancer"; };
+
+    tbb::task_scheduler_init tbb_init;
   };
 
   //! tiled load balancer for local rendering on the given machine
