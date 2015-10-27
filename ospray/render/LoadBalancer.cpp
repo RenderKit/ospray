@@ -25,6 +25,7 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+#if OSPRAY_USE_TBB
   struct TileWorkerTBB
   {
     Tile     *tile;
@@ -38,6 +39,7 @@ namespace ospray {
       }
     }
   };
+#endif
 
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
@@ -48,6 +50,7 @@ namespace ospray {
     fb = NULL;
   }
 
+#if OSPRAY_USE_TBB
   void LocalTiledLoadBalancer::RenderTask::operator()
   (const tbb::blocked_range<int> &range) const
   {
@@ -57,6 +60,7 @@ namespace ospray {
       run(taskIndex);
     }
   }
+#endif
 
   void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex) const
   {
@@ -76,16 +80,25 @@ namespace ospray {
     const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
                             RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
+#if OSPRAY_USE_TBB
     TileWorkerTBB worker;
     worker.tile     = &tile;
     worker.renderer = renderer.ptr;
     tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < numJobs; ++i) {
+      renderer->renderTile(tile, i);
+    }
+#endif
 
     fb->setTile(tile);
   }
 
-  LocalTiledLoadBalancer::LocalTiledLoadBalancer() :
-    tbb_init(numThreads)
+  LocalTiledLoadBalancer::LocalTiledLoadBalancer()
+#if OSPRAY_USE_TBB
+    : tbb_init(numThreads)
+#endif
   {
   }
 
@@ -106,7 +119,14 @@ namespace ospray {
     tiledRenderer->beginFrame(fb);
 
     const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+#if OSPRAY_USE_TBB
     tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < NTASKS; ++i) {
+      renderTask.run(i);
+    }
+#endif
 
     renderTask.finish();
   }

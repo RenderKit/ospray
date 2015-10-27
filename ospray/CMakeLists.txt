@@ -20,20 +20,42 @@ CONFIGURE_OSPRAY()
 
 OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
 IF (OSPRAY_EXP_IMAGE_COMPOSITING)
-
   OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
   OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
 ENDIF()
 
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
-#INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
 
-find_package(TBB REQUIRED)
+# -------------------------------------------------------
+# Setup tasking system build configuration
+# -------------------------------------------------------
 
-INCLUDE_DIRECTORIES(
-  ${TBB_INCLUDE_DIRS}
-)
+SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
+    "Use TBB or OpenMP as for the tasking system (only local rendering for now)")
+SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY STRINGS TBB OpenMP)
+
+IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
+  SET(USE_TBB TRUE)
+ELSE()
+  SET(USE_TBB FALSE)
+ENDIF()
+
+IF(USE_TBB)
+  FIND_PACKAGE(TBB REQUIRED)
+  ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
+  INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+ELSE(USE_TBB)
+  FIND_PACKAGE(OpenMP)#NOTE(jda) - intentionally optional (fallback w/o TBB)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  SET(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+ENDIF(USE_TBB)
+
+# -------------------------------------------------------
+# Setup ospray source files
+# -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
