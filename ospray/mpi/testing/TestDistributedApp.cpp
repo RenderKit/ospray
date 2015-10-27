@@ -21,6 +21,7 @@
 #  define OSPRAY_MPI_DISTRIBUTED
 #endif
 
+#include <mpi.h>
 #include <ospray/ospray.h>
 
 #define Assert(cond,err) if (!(cond)) throw std::runtime_error(err);
