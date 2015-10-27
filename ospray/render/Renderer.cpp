@@ -98,7 +98,7 @@ namespace ospray {
     return(renderer);
   }
 
-  void Renderer::renderTile(Tile &tile, size_t jobID)
+  void Renderer::renderTile(Tile &tile, size_t jobID) const
   {
     ispc::Renderer_renderTile(getIE(),(ispc::Tile&)tile, jobID);
   }

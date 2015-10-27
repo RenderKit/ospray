@@ -29,6 +29,12 @@ ENDIF()
 INCLUDE(../cmake/build_embree.cmake)
 #INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
 
+find_package(TBB REQUIRED)
+
+INCLUDE_DIRECTORIES(
+  ${TBB_INCLUDE_DIRS}
+)
+
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
@@ -258,6 +264,7 @@ ENDIF()
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
   ospray_embree${OSPRAY_LIB_SUFFIX} 
+  ${TBB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT} 
   ${CMAKE_DL_LIBS})
 

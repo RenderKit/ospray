@@ -34,7 +34,15 @@ namespace ospray {
     fb = NULL;
   }
 
-  void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex) 
+  void LocalTiledLoadBalancer::RenderTask::operator()(const tbb::blocked_range<int> &range) const
+  {
+    for (int taskIndex = range.begin(); taskIndex != range.end(); ++taskIndex)
+    {
+      run(taskIndex);
+    }
+  }
+
+  void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex)
   {
     Tile tile;
     const size_t tile_y = taskIndex / numTiles_x;
@@ -52,7 +60,8 @@ namespace ospray {
     const int spp = renderer->spp;
     const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
     const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-    renderer->renderTile(tile, numJobs);
+    for (size_t i = 0; i < numJobs; ++i)
+      renderer->renderTile(tile, i);
 #endif
     // printf("settile... twice?\n");
     fb->setTile(tile);
@@ -77,7 +86,7 @@ namespace ospray {
 
     renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
     renderTask->wait();
-#else
+#elif 0
     RenderTask renderTask;
     renderTask.fb = fb;
     renderTask.renderer = tiledRenderer;
@@ -87,11 +96,8 @@ namespace ospray {
     tiledRenderer->beginFrame(fb);
 
     const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-#   pragma omp parallel
-    {
-#     pragma omp single nowait
+#   pragma omp parallel for schedule(dynamic)
       for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
-#       pragma omp task
         {
           Tile tile;
           const size_t tile_y = taskIndex / renderTask.numTiles_x;
@@ -106,16 +112,27 @@ namespace ospray {
           const int spp = renderTask.renderer->spp;
           const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
           const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+#         pragma omp parallel for schedule(dynamic)
           for (int i = 0; i < numJobs; ++i) {
-#           pragma omp taskgroup
             renderTask.renderer->renderTile(tile, i);
           }
           fb->setTile(tile);
         }
       }
-    }
-    renderTask.finish();
+#else
+    RenderTask renderTask;
+    renderTask.fb = fb;
+    renderTask.renderer = tiledRenderer;
+    renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+    renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+    renderTask.channelFlags = channelFlags;
+    tiledRenderer->beginFrame(fb);
+
+    const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
 #endif
+
+    renderTask.finish();
 
     // /*! iw: using a local sync event for now; "in theory" we should be
     //     able to attach something like a sync event to the frame

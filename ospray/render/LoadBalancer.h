@@ -28,6 +28,10 @@
 // // embree
 // #include "common/sys/taskscheduler.h"
 
+// tbb
+#include <tbb/blocked_range.h>
+#include <tbb/parallel_for.h>
+
 namespace ospray {
 
   //  using embree::TaskScheduler;
@@ -51,7 +55,7 @@ namespace ospray {
     application ranks each doing local rendering on their own)  */ 
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
-    struct RenderTask : public Task { //embree::RefCount {
+    struct RenderTask {//: public Task { //embree::RefCount {
       Ref<FrameBuffer>             fb;
       Ref<Renderer>                renderer;
       
@@ -62,6 +66,8 @@ namespace ospray {
 
       virtual void run(size_t jobID);
       virtual void finish();
+
+      void operator()(const tbb::blocked_range<int>& range) const;
 
       // TASK_RUN_FUNCTION(RenderTask,run);
       // TASK_COMPLETE_FUNCTION(RenderTask,finish);
