@@ -60,7 +60,7 @@ namespace ospray {
     virtual void endFrame(const int32 fbChannelFlags);
 
     /*! \brief called by the load balancer to render one tile of "samples" */
-    virtual void renderTile(Tile &tile);
+    virtual void renderTile(Tile &tile, size_t numJobs);
     
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type) { return NULL; }

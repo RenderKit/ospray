@@ -38,7 +38,20 @@ export void LocalFrameBuffer_clearAccum(void *uniform _fb)
   if (fb->accumBuffer) {
     uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
     uniform size_t num_blocks = (num_floats + CLEAR_BLOCK_SIZE - 1) / CLEAR_BLOCK_SIZE;
+#if 0
     launch[num_blocks] LocalFrameBuffer_clearAccum_task(fb);
+#else
+    //NOTE(jda) - this needs to be threaded!
+    for(uniform int i = 0; i < num_blocks; ++i) {
+      uniform float *uniform fbPointer
+        = (uniform float *uniform)&fb->accumBuffer[0].x;
+      uniform float *uniform block = fbPointer + i * CLEAR_BLOCK_SIZE;
+      uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
+
+      foreach (x=0 ... min(CLEAR_BLOCK_SIZE,num_floats-i*CLEAR_BLOCK_SIZE))
+        block[x] = 0.f;
+    }
+#endif
   }
 }
 

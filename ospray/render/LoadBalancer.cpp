@@ -46,7 +46,14 @@ namespace ospray {
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
+#if 0
     renderer->renderTile(tile);
+#else
+    const int spp = renderer->spp;
+    const int blocks = fb->accumID > 0 || spp > 0 ? 1 : std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+    renderer->renderTile(tile, numJobs);
+#endif
     // printf("settile... twice?\n");
     fb->setTile(tile);
   }
@@ -59,6 +66,7 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
+#if 0
     Ref<RenderTask> renderTask = new RenderTask;
     renderTask->fb = fb;
     renderTask->renderer = tiledRenderer;
@@ -66,9 +74,29 @@ namespace ospray {
     renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
     renderTask->channelFlags = channelFlags;
     tiledRenderer->beginFrame(fb);
-    
+
     renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
     renderTask->wait();
+#else
+    RenderTask renderTask;
+    renderTask.fb = fb;
+    renderTask.renderer = tiledRenderer;
+    renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+    renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+    renderTask.channelFlags = channelFlags;
+    tiledRenderer->beginFrame(fb);
+
+    const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+#   pragma omp parallel
+    {
+#     pragma omp single nowait
+      for (int i = 0; i < NTASKS; ++i) {
+#       pragma omp task
+        renderTask.run(i);
+      }
+    }
+    renderTask.finish();
+#endif
 
     // /*! iw: using a local sync event for now; "in theory" we should be
     //     able to attach something like a sync event to the frame
@@ -105,7 +133,7 @@ namespace ospray {
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
 
-    renderer->renderTile(tile);
+    //renderer->renderTile(tile);
   }
 
 

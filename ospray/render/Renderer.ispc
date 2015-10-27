@@ -19,12 +19,6 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
-/*! number of pixels that each job in a parallel rendertile task
-    executes together. Must be a multipel of the maximum possible
-    programCount (16), and must be smaller than TILE_SIZE (in one
-    dimension) */
-#define RENDERTILE_PIXELS_PER_JOB 128
-
 // The layout of this struct must match that of OSPPickData in ospray.h
 void Renderer_default_renderSample(uniform Renderer *uniform self,
                                    varying ScreenSample &sample)
@@ -54,8 +48,14 @@ void Renderer_default_endFrame(uniform Renderer *uniform self,
   self->fb = NULL;
 }
 
+#if 0
 task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
                                          uniform Tile &tile)
+#else
+void Renderer_default_renderTileJob(uniform Renderer *uniform self,
+                                    uniform Tile &tile,
+                                    uniform int taskIndex)
+#endif
 {
   uniform FrameBuffer *uniform fb     = self->fb;
   uniform Camera      *uniform camera = self->camera;
@@ -173,11 +173,16 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
 void Renderer_default_renderTile(uniform Renderer *uniform self,
                                  uniform Tile &tile)
 {
-  precomputeZOrder();
   uniform int32 spp = self->spp;
   const uniform int blocks = self->fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
   uniform const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+#if 0
   launch[numJobs] Renderer_default_renderTileJob(self,tile);
+#else
+  for (uniform int i = 0; i < numJobs; ++i) {
+    Renderer_default_renderTileJob(self, tile, i);
+  }
+#endif
 }
 
 void Renderer_Constructor(uniform Renderer *uniform self,
@@ -209,11 +214,21 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->spp    = spp;
 }
 
+#if 0
 export void Renderer_renderTile(void *uniform _self,
                                 uniform Tile &tile)
+#else
+export void Renderer_renderTile(void *uniform _self,
+                                uniform Tile &tile,
+                                uniform int jobID)
+#endif
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
+#if 0
   self->renderTile(self,tile);
+#else
+  Renderer_default_renderTileJob(self, tile, jobID);
+#endif
 }
 
 export void Renderer_beginFrame(void *uniform _self,
@@ -246,6 +261,8 @@ export void Renderer_set(void *uniform _self,
   self->spp = spp;
   self->backgroundEnabled = backgroundEnabled;
   self->maxDepthTexture = (uniform Texture2D *uniform)_maxDepthTexture;
+
+  precomputeZOrder();
 }
 
 export void Renderer_pick(void *uniform _self,

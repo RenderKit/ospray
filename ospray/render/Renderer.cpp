@@ -98,9 +98,12 @@ namespace ospray {
     return(renderer);
   }
 
-  void Renderer::renderTile(Tile &tile)
+  void Renderer::renderTile(Tile &tile, size_t numJobs)
   {
-    ispc::Renderer_renderTile(getIE(),(ispc::Tile&)tile);
+#   pragma omp parallel for shared(tile) schedule(dynamic)
+    for (int i = 0; i < numJobs; ++i) {
+      ispc::Renderer_renderTile(getIE(),(ispc::Tile&)tile, i);
+    }
   }
 
   void Renderer::beginFrame(FrameBuffer *fb) 

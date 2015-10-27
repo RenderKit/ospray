@@ -21,6 +21,10 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 SET(OSPRAY_TILE_SIZE 128 CACHE INT "Tile size")
+SET(OSPRAY_PIXELS_PER_JOB 128 CACHE INT "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
+
+MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
+MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
