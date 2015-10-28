@@ -41,7 +41,7 @@ namespace ospray {
         while (1) {
           // usleep(80);
           size_t numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE);
-          MPI_Request request[numActions];
+          MPI_Request *request = (MPI_Request*)alloca(numActions * sizeof(MPI_Request));
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,

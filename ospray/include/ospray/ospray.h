@@ -27,10 +27,6 @@
 
 #pragma once
 
-#ifdef OSPRAY_MPI_DISTRIBUTED
-# include <mpi.h>
-#endif
-
 #include <vector>
 
 // -------------------------------------------------------

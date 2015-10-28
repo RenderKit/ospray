@@ -39,8 +39,12 @@
 #include <algorithm>
 
 #ifdef _WIN32
-#  include <Winsock2.h> // for gethostname
+#  include <windows.h> // for Sleep and gethostname
 #  include <process.h> // for getpid
+void sleep(unsigned int seconds)
+{
+    Sleep(seconds * 1000);
+}
 #else
 #  include <unistd.h> // for gethostname
 #endif
@@ -124,7 +128,7 @@ namespace ospray {
 
       while (1) {
         const int command = cmd.get_int32();
-        // PING; PRINT(command); fflush(0);
+        DBG(PING; PRINT(command); fflush(0));
 
         switch (command) {
         case ospray::CMD_NEW_PIXELOP: {
