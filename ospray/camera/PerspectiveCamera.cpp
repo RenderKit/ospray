@@ -37,8 +37,10 @@ namespace ospray {
     // ------------------------------------------------------------------
     // first, "parse" the additional expected parameters
     // ------------------------------------------------------------------
-    fovy   = getParamf("fovy",60.f);
-    aspect = getParamf("aspect",1.f);
+    fovy = getParamf("fovy", 60.f);
+    aspect = getParamf("aspect", 1.f);
+    apertureRadius = getParamf("apertureRadius", 0.f);
+    focusDistance = getParamf("focusDistance", 1.f);
 
     // ------------------------------------------------------------------
     // now, update the local precomputed values
@@ -54,15 +56,27 @@ namespace ospray {
     dir_dv *= imgPlane_size_y;
 
     vec3f dir_00 = dir - .5f * dir_du - .5f * dir_dv;
+  
+    float scaledAperture = 0.f;
+    // prescale to focal plane
+    if (apertureRadius > 0.f) {
+      dir_du *= focusDistance;
+      dir_dv *= focusDistance;
+      dir_00 *= focusDistance;
+      scaledAperture = apertureRadius / imgPlane_size_x;
+    }
 
     ispc::PerspectiveCamera_set(getIE(),
                                 (const ispc::vec3f&)pos,
                                 (const ispc::vec3f&)dir_00,
                                 (const ispc::vec3f&)dir_du,
                                 (const ispc::vec3f&)dir_dv,
+                                scaledAperture,
+                                aspect,
                                 nearClip);
   }
 
   OSP_REGISTER_CAMERA(PerspectiveCamera,perspective);
+  OSP_REGISTER_CAMERA(PerspectiveCamera,thinlens);
 
 } // ::ospray

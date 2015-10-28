@@ -346,6 +346,8 @@ namespace ospray {
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
         ospSetVec3f(camera,"up",viewPort.up);
         ospSetf(camera,"aspect",viewPort.aspect);
+//        ospSetf(camera,"apertureRadius", 0.01);
+//        ospSetf(camera,"focusDistance", viewPort."focusDistance");
         ospCommit(camera);
         viewPort.modified = false;
         accumID=0;

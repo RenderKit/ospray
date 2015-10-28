@@ -95,6 +95,10 @@ task void Renderer_default_renderTileJob(uniform Renderer *uniform self,
         
         cameraSample.screen.x = (screenSample.sampleID.x + pixel_du) * fb->rcpSize.x;
         cameraSample.screen.y = (screenSample.sampleID.y + pixel_dv) * fb->rcpSize.y;
+
+        // TODO: fix correlations / better RNG
+        cameraSample.lens.x = precomputedHalton3(startSampleID+s);
+        cameraSample.lens.y = precomputedHalton5(startSampleID+s);
       
         camera->initRay(camera,screenSample.ray,cameraSample);
 
