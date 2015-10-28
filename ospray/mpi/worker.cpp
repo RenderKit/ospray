@@ -51,12 +51,14 @@ void sleep(unsigned int seconds)
 
 #define DBG(a) /**/
 
+#ifndef HOST_NAME_MAX
+#  define HOST_NAME_MAX 10000
+#endif
+
 namespace ospray {
   namespace mpi {
-    using std::cout; 
+    using std::cout;
     using std::endl;
-
-    static const int HOST_NAME_MAX = 10000;
 
     struct GeometryLocator {
       bool operator()(const embree::Ref<ospray::Geometry> &g) const {
@@ -74,8 +76,8 @@ namespace ospray {
 
     /*! it's up to the proper init
       routine to decide which processes call this function and which
-      ones don't. This function will not return. 
-      
+      ones don't. This function will not return.
+
       \internal We ssume that mpi::worker and mpi::app have already been set up
     */
     void runWorker(int *_ac, const char **_av)
@@ -173,7 +175,7 @@ namespace ospray {
             if (logLevel > 2)
               cout << "creating new volume \"" << type << "\" ID " << (void*)(int64)handle << endl;
           Volume *volume = Volume::createInstance(type);
-          if (!volume) 
+          if (!volume)
             throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
           volume->refInc();
           cmd.free(type);
@@ -212,10 +214,10 @@ namespace ospray {
               material->refInc();
             }
           }
-          if (material == NULL) 
+          if (material == NULL)
             // no renderer present, or renderer didn't intercept this material.
             material = Material::createMaterial(type);
-          
+
           int myFail = (material == NULL);
           int sumFail = 0;
           rc = MPI_Allreduce(&myFail,&sumFail,1,MPI_INT,MPI_SUM,worker.comm);
@@ -226,16 +228,16 @@ namespace ospray {
             handle.assign(material);
             if (worker.rank == 0) {
               if (logLevel > 2)
-                cout << "#w: new material " << handle << " " 
+                cout << "#w: new material " << handle << " "
                      << material->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
             }
-          } else { 
+          } else {
             // at least one client could not load/create material ...
             if (material) material->refDec();
             if (worker.rank == 0) {
               if (logLevel > 2)
-                cout << "#w: could not create material " << handle << " " 
+                cout << "#w: could not create material " << handle << " "
                      << material->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
             }
@@ -258,7 +260,7 @@ namespace ospray {
               light->refInc();
             }
           }
-          if (light == NULL) 
+          if (light == NULL)
             // no renderer present, or renderer didn't intercept this light.
             light = Light::createLight(type);
 
@@ -272,16 +274,16 @@ namespace ospray {
             handle.assign(light);
             if (worker.rank == 0) {
               if (logLevel > 2)
-                cout << "#w: new light " << handle << " " 
+                cout << "#w: new light " << handle << " "
                      << light->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
             }
-          } else { 
+          } else {
             // at least one client could not load/create light ...
             if (light) light->refDec();
             if (worker.rank == 0) {
               if (logLevel > 2)
-                cout << "#w: could not create light " << handle << " " 
+                cout << "#w: could not create light " << handle << " "
                      << light->toString() << endl;
               MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
             }
@@ -296,7 +298,7 @@ namespace ospray {
             if (logLevel > 2)
               cout << "creating new geometry \"" << type << "\" ID " << (void*)(int64)handle << endl;
           Geometry *geometry = Geometry::createGeometry(type);
-          if (!geometry) 
+          if (!geometry)
             throw std::runtime_error("unknown geometry type '"+std::string(type)+"'");
           geometry->refInc();
           cmd.free(type);
@@ -318,7 +320,7 @@ namespace ospray {
           FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                                        size,handle,mode,
                                                        hasDepthBuffer,hasAccumBuffer);
-      
+
 // #else
 //           FrameBuffer *fb = new LocalFrameBuffer(size,mode,hasDepthBuffer,hasAccumBuffer);
 // #endif
@@ -433,7 +435,7 @@ namespace ospray {
           // PRINT(flags); fflush(0);
           size_t size = cmd.get_size_t();
           // PRINT(size); fflush(0);
-          
+
           void *data = malloc(size);
           // PRINT(size); fflush(0);
           cmd.get_data(size,data);
@@ -752,7 +754,7 @@ namespace ospray {
           std::string libName = "ospray_module_"+std::string(name)+"";
 #endif
           loadLibrary(libName);
-      
+
           std::string initSymName = "ospray_init_module_"+std::string(name);
           void*initSym = getSymbol(initSymName);
           if (!initSym)
@@ -790,7 +792,7 @@ namespace ospray {
         } break;
 
           // ==================================================================
-        default: 
+        default:
           // ==================================================================
           std::stringstream err;
           err << "unknown cmd tag " << command;
