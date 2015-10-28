@@ -30,7 +30,7 @@ namespace ospray {
     extern "C" void async_beginFrame();
     extern "C" void async_endFrame();
 
-    using std::cout; 
+    using std::cout;
     using std::endl;
 
     namespace staticLoadBalancer {
@@ -71,7 +71,7 @@ namespace ospray {
       }
 
 
-      void Slave::RenderTask::run(size_t taskIndex) 
+      void Slave::RenderTask::run(size_t taskIndex)
       {
 #ifdef OSPRAY_EXP_IMAGE_COMPOSITING
         const size_t tileID = (taskIndex + 3*worker.rank) % (numTiles_x*numTiles_y);
@@ -95,15 +95,25 @@ namespace ospray {
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
 
-        renderer->renderTile(tile);
+
+        const int spp = renderer->spp;
+        const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+                           std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+        const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
+                                RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+
+#       pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < numJobs; ++i) {
+          renderer->renderTile(tile, i);
+        }
 
         fb->setTile(tile);
 #if TILE_SIZE>128
         delete tilePtr;
 #endif
       }
-      
-      void Slave::renderFrame(Renderer *tiledRenderer, 
+
+      void Slave::renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,
                               const uint32 channelFlags
                               )
@@ -113,13 +123,13 @@ namespace ospray {
 
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
-        Ref<RenderTask> renderTask = new RenderTask;
+        RenderTask renderTask;
 
-        renderTask->fb = fb;
-        renderTask->renderer = tiledRenderer;
-        renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-        renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-        renderTask->channelFlags = channelFlags;
+        renderTask.fb = fb;
+        renderTask.renderer = tiledRenderer;
+        renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+        renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+        renderTask.channelFlags = channelFlags;
         tiledRenderer->beginFrame(fb);
 
         /*! iw: using a local sync event for now; "in theory" we should be
@@ -129,8 +139,8 @@ namespace ospray {
           running into some issues with the embree taks system when
           trying to do so, and thus am reverting to this
           fully-synchronous version for now */
-        renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
-        renderTask->wait();
+        renderTask.schedule(renderTask.numTiles_x*renderTask.numTiles_y);
+        renderTask.wait();
 
         // double t0wait = getSysTime();
         dfb->waitUntilFinished();
