@@ -74,8 +74,8 @@ namespace ospray {
 
         - all *all* MPI_COMM_WORLD processes are going into this function
 
-        - this fct is called from ospInit (with startworkers=true) or
-          from ospdMpiInit (w/ startwoe3kers = false)
+        - this fct is called from ospInit (with ranksBecomeWorkers=true) or
+          from ospdMpiInit (w/ ranksBecomeWorkers = false)
     */
     ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
                                                       bool ranksBecomeWorkers)
