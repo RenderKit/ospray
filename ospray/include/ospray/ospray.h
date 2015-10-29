@@ -394,7 +394,7 @@ extern "C" {
   /*! add a object-typed parameter to another object 
     
    \warning this call has been superseded by ospSetObject, and will eventually get removed */
-  OSP_DEPRECATED void ospSetParam(OSPObject _object, const char *id, OSPObject object);
+  OSP_DEPRECATED OSPRAY_INTERFACE void ospSetParam(OSPObject _object, const char *id, OSPObject object);
 
   /*! add a object-typed parameter to another object */
   OSPRAY_INTERFACE void ospSetObject(OSPObject _object, const char *id, OSPObject object);
@@ -535,8 +535,8 @@ extern "C" {
     "position", "index", "normal", "texcoord", "color", etc. Data
     format for vertices and normals in vec3fa, and vec4i for index
     (fourth component is the material ID). */
-  // deprecated: use ospNewGeometry("triangles") instead
-  OSP_DEPRECATED OSPTriangleMesh ospNewTriangleMesh();
+  //! \warning deprecated: use ospNewGeometry("triangles") instead
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPTriangleMesh ospNewTriangleMesh();
 
   /*! add an already created geometry to a model */
   OSPRAY_INTERFACE void ospAddGeometry(OSPModel model, OSPGeometry mesh);
@@ -588,8 +588,8 @@ extern "C" {
     float world_x, world_y, world_z;
   } OSPPickData;
 
-  /* \warning this call has been superseded by ospPick, and will eventually get removed */
-  OSP_DEPRECATED OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
+  /*! \warning this call has been superseded by ospPick, and will eventually get removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos);
 
   /*! \brief Samples the given volume at the provided world-space coordinates.
 
