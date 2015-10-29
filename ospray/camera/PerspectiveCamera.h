@@ -56,8 +56,10 @@ namespace ospray {
     // ------------------------------------------------------------------
     // the parameters we 'parsed' from our parameters
     // ------------------------------------------------------------------
-    float  fovy;
-    float  aspect;
+    float fovy;
+    float aspect;
+    float apertureRadius;
+    float focusDistance;
   };
 
 } // ::ospray
