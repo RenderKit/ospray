@@ -40,12 +40,14 @@ namespace ospray {
     offset_v1         = getParam1i("offset_v1",3*sizeof(float));
     offset_radius     = getParam1i("offset_radius",6*sizeof(float));
     offset_materialID = getParam1i("offset_materialID",-1);
-    data              = getParamData("cylinders",NULL);
-    materialList      = getParamData("materialList",NULL);
-    
-    if (data.ptr == NULL || bytesPerCylinder == 0) 
+    offset_colorID    = getParam1i("offset_colorID",-1);
+    cylinderData      = getParamData("cylinders");
+    materialList      = getParamData("materialList");
+    colorData         = getParamData("color");
+
+    if (cylinderData.ptr == NULL || bytesPerCylinder == 0)
       throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders' data specified");
-    numCylinders = data->numBytes / bytesPerCylinder;
+    numCylinders = cylinderData->numBytes / bytesPerCylinder;
     std::cout << "#osp: creating 'cylinders' geometry, #cylinders = " << numCylinders << std::endl;
     
     if (_materialList) {
@@ -63,10 +65,13 @@ namespace ospray {
     }
 
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
-                                data->data,_materialList,
+                                cylinderData->data,_materialList,
+                                colorData?(ispc::vec4f*)colorData->data:NULL,
                                 numCylinders,bytesPerCylinder,
                                 radius,materialID,
-                                offset_v0,offset_v1,offset_radius,offset_materialID);
+                                offset_v0,offset_v1,
+                                offset_radius,
+                                offset_materialID,offset_colorID);
   }
 
 
