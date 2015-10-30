@@ -173,7 +173,7 @@ task void BBVUChar_setRegionTask(BlockBrickedVolume *uniform self,
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint32 runOfs = regionSize.x * (region_y + regionSize.y * region_z);
+  const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
   const uint8 *uniform run = source + runOfs;
   vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
   foreach (x = 0 ... regionSize.x) {
@@ -196,7 +196,7 @@ task void BBVFloat_setRegionTask(BlockBrickedVolume *uniform self,
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint32 runOfs = regionSize.x * (region_y + regionSize.y * region_z);
+  const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
   const float *uniform run = source + runOfs;
   vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
   foreach (x = 0 ... regionSize.x) {
@@ -219,7 +219,7 @@ task void BBVDouble_setRegionTask(BlockBrickedVolume *uniform self,
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint32 runOfs = regionSize.x * (region_y + regionSize.y * region_z);
+  const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
   const double *uniform run = source + runOfs;
   vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
   foreach (x = 0 ... regionSize.x) {

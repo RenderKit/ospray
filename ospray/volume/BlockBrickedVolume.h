@@ -21,7 +21,7 @@
 namespace ospray {
 
   //! \brief A concrete implementation of the StructuredVolume class
-  //!  with 62-bit addressing in which the voxel data is laid out in
+  //!  with 64-bit addressing in which the voxel data is laid out in
   //!  memory in multiple pages each in brick order.
   //!
   class BlockBrickedVolume : public StructuredVolume {
