@@ -92,8 +92,13 @@ INCLUDE(cmake/doxygen.cmake)
 
 SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME})
 STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
-SET(CMAKE_INSTALL_PREFIX 
-  /tmp/$ENV{USER}/OSPRAY-RELEASES/${OSPRAY_INSTALL_TARGET_LC})
+
+OPTION(OSPRAY_USE_DEFAULT_INSTALL_PREFIX "Use default install prefix for OSPRay" ON)
+IF(OSPRAY_USE_DEFAULT_INSTALL_PREFIX)
+  SET(CMAKE_INSTALL_PREFIX
+    /tmp/$ENV{USER}/OSPRAY-RELEASES/${OSPRAY_INSTALL_TARGET_LC}
+    CACHE PATH "Install path prefix, prepended onto install directories." FORCE)
+ENDIF()
 
 ##############################################################
 # the ospray library
