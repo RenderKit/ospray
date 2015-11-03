@@ -34,7 +34,8 @@ namespace ospray {
 
     // StructuredVolume::commit();
 
-
+    updateEditableParameters();//
+    
     StructuredVolume::commit();
     for (int i=0;i<numDDBlocks;i++) {
       DDBlock *block = ddBlock+i;
@@ -55,6 +56,11 @@ namespace ospray {
       Ref<TransferFunction> transferFunction
         = (TransferFunction *)getParamObject("transferFunction", NULL);
       block->cppVolume->findParam("transferFunction",1)->set(transferFunction.ptr);
+
+      block->cppVolume->findParam("samplingRate",1)->set(getParam1f("samplingRate", 1.f));
+      block->cppVolume->findParam("gradientShadingEnabled",1)->set(getParam1i("gradientShadingEnabled", 0));
+
+      block->cppVolume.ptr->updateEditableParameters();
     }
   }
   

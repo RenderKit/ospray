@@ -91,6 +91,9 @@ namespace ospray {
     //! Compute samples at the given world coordinates.
     virtual void computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count);
 
+    //! Update select editable parameters (allowed after the volume has been initially committed).
+    virtual void updateEditableParameters();
+
   protected:
 
     //! Create the equivalent ISPC volume container.
@@ -99,8 +102,6 @@ namespace ospray {
     //! Complete volume initialization (only on first commit).
     virtual void finish();
 
-    //! Update select editable parameters (allowed after the volume has been initially committed).
-    virtual void updateEditableParameters();
 
     //! Print an error message.
     inline void emitMessage(const std::string &kind, const std::string &message) const
