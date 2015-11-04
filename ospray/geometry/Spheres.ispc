@@ -30,7 +30,7 @@ struct Spheres {
 
   uniform uint8 *uniform data;
   uniform Material *uniform *materialList;
-  uniform vec4f    *uniform color;  //!< mesh's vertex color array
+  uniform vec4f    *uniform color;
 
   float radius;
   int   materialID;

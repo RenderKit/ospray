@@ -71,10 +71,12 @@ namespace ospray {
     int64 offset_v1;
     int64 offset_radius;
     int64 offset_materialID;
+    int64 offset_colorID;
 
-    Ref<Data> data;
+    Ref<Data> cylinderData;
     Ref<Data> materialList;
     void     *_materialList;
+    Ref<Data> colorData; /*!< cylinder color array (vec3fa) */
 
     Cylinders();
   };
