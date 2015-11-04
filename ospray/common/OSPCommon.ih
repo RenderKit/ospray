@@ -41,6 +41,7 @@ inline void* uniform align_ptr(void* uniform ptr) {
 }
 #endif
 
+#define PRINT(x) print(#x" = %\n", x)
 
 #define inf     floatbits(0x7F800000)
 #define pos_inf floatbits(0x7F800000)
