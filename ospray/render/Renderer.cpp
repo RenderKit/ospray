@@ -62,37 +62,34 @@ namespace ospray {
 
   Renderer *Renderer::createRenderer(const char *_type)
   {
-    char* type = new char[strlen(_type)+1];
-    strcpy(type,_type);
-    char *atSign = strstr(type,"@");
-    char *libName = NULL;
-    if (atSign) {
-      *atSign = 0;
-      libName = atSign+1;
+    std::string type = _type;
+    size_t atSign = type.find_first_of('@');
+    if (atSign != std::string::npos) {
+      std::string libName = type.substr(atSign + 1);
+      type = type.substr(0, atSign);
+      loadLibrary("ospray_module_" + libName);
     }
-    if (libName)
-      loadLibrary("ospray_module_"+std::string(libName));
     
     std::map<std::string, Renderer *(*)()>::iterator it = rendererRegistry.find(type);
     if (it != rendererRegistry.end()) {
-      delete[] type;
       return it->second ? (it->second)() : NULL;
     }
     
-    if (ospray::logLevel >= 2) 
+    if (ospray::logLevel >= 2) {
       std::cout << "#ospray: trying to look up renderer type '" 
                 << type << "' for the first time" << std::endl;
-    
-    std::string creatorName = "ospray_create_renderer__"+std::string(type);
+    }
+
+    std::string creatorName = "ospray_create_renderer__" + type;
     creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
     rendererRegistry[type] = creator;
     if (creator == NULL) {
-      if (ospray::logLevel >= 1) 
+      if (ospray::logLevel >= 1) {
         std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
-      delete[] type;
+      }
       return NULL;
     }
-    
+
     Renderer *renderer = (*creator)();  
     renderer->managedObjectType = OSP_RENDERER;
     if (renderer == NULL && ospray::logLevel >= 1) {
@@ -100,8 +97,7 @@ namespace ospray {
       std::cout << "#osp:warning[ospNewRenderer(...)]: Note: Requested renderer type was '" << type << "'" << endl;
     }
     
-    delete[] type;
-    return(renderer);
+    return renderer;
   }
 
   void Renderer::renderTile(void *perFrameData, Tile &tile)

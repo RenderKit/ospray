@@ -47,7 +47,7 @@ namespace ospray {
   }
 
   /*! \brief create a material of given type */
-  ospray::Material *SimpleAO::createMaterial(const char */*type*/)
+  ospray::Material *SimpleAO::createMaterial(const char * /*type*/)
   { 
     return new SimpleAO::Material;
   }

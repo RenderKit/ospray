@@ -187,10 +187,10 @@ namespace ospray {
       inline const char *get_charPtr() 
       { 
         int len = get_int32();
-        char buf[len+1]; buf[len] = 0;
+        char* buf = (char*)malloc(len+1); buf[len] = 0;
         int rc = MPI_Bcast(buf,len,MPI_CHAR,0,mpi::app.comm); 
         checkMpiError(rc); 
-        return strdup(buf); 
+        return buf;
       }
       void flush() {};
     };

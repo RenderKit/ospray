@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "PerspectiveCamera.ih"
+#include "ospray/math/sampling.ih"
 
 void PerspectiveCamera_initRay(uniform Camera *uniform _self,
                                varying Ray &ray,
@@ -23,10 +24,18 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
   uniform PerspectiveCamera *uniform self = 
     (uniform PerspectiveCamera *uniform)_self;
 
-  const vec3f org = self->org;
-  const vec3f dir = self->dir_00
+  vec3f org = self->org;
+  vec3f dir = self->dir_00
     + sample.screen.x * self->dir_du
     + sample.screen.y * self->dir_dv;
+
+  if (self->super.doesDOF) {
+    const vec3f llp = uniformSampleDisk(self->scaledAperture, sample.lens);
+    // transform local lens point to focal plane (dir_XX are prescaled in this case)
+    const vec3f lp = llp.x * self->dir_du + (llp.y * self->aspect) * self->dir_dv;
+    org = org + lp;
+    dir = dir - lp;
+  }
 
   setRay(ray,org,normalize(dir),self->super.nearClip,infinity);
 }
@@ -37,12 +46,12 @@ void PerspectiveCamera_initRay(uniform Camera *uniform _self,
     parameters */
 export void *uniform PerspectiveCamera_create(void *uniform cppE)
 {
-  uniform PerspectiveCamera *uniform cam 
+  uniform PerspectiveCamera *uniform self
     = uniform new uniform PerspectiveCamera;
-  cam->super.cppEquivalent = cppE;
-  cam->super.initRay = PerspectiveCamera_initRay;
-  cam->super.doesDOF = false;
-  return cam;
+  self->super.cppEquivalent = cppE;
+  self->super.initRay = PerspectiveCamera_initRay;
+  self->super.doesDOF = false;
+  return self;
 }
 
 export void PerspectiveCamera_set(void *uniform _self, 
@@ -50,6 +59,8 @@ export void PerspectiveCamera_set(void *uniform _self,
                                   const uniform vec3f &dir_00,
                                   const uniform vec3f &dir_du,
                                   const uniform vec3f &dir_dv,
+                                  const uniform float scaledAperture,
+                                  const uniform float aspect,
                                   const uniform float nearClip)
 {
   uniform PerspectiveCamera *uniform self
@@ -59,4 +70,7 @@ export void PerspectiveCamera_set(void *uniform _self,
   self->dir_du = dir_du;
   self->dir_dv = dir_dv;
   self->super.nearClip = nearClip;
+  self->scaledAperture = scaledAperture;
+  self->super.doesDOF = scaledAperture > 0.f;
+  self->aspect = aspect;
 }

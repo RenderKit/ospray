@@ -214,7 +214,6 @@ INCLUDE(${PROJECT_SOURCE_DIR}/cmake/displaycluster.cmake)
 
 IF (OSPRAY_DISPLAYCLUSTER)
   CONFIGURE_DISPLAYCLUSTER()
-  ADD_DEFINITIONS(-DOSPRAY_DISPLAY_CLUSTER=1)
 ENDIF()
 
 # -------------------------------------------------------
@@ -233,21 +232,15 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     )
   MARK_AS_ADVANCED(LIBCOI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_HOST)
-  ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
+  SET(OSPRAY_MIC_COI ON)
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
   IF (THIS_IS_MIC)
-    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=1)
-    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=0)
     SET(OSPRAY_COI_COMPONENTS api/COIDeviceDev.cpp)
   ELSE()
-    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=0)
-    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=1)
     SET(OSPRAY_COI_COMPONENTS api/COIDeviceHost.cpp)
   ENDIF()
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES} ${OSPRAY_COI_COMPONENTS})
-ELSE()
-  SET(OSPRAY_COI_COMPONENTS "")
 ENDIF()
 
 ##############################################################
@@ -300,8 +293,6 @@ INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
 ##############################################################
 IF (OSPRAY_MPI)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_CXX_LIBRARIES})
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_LIBRARIES})
-  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})

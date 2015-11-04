@@ -44,6 +44,49 @@ namespace ospray {
       return bounds;
     }
 
+    //! \brief Initialize this node's value from given XML node 
+    /*!
+      \detailed This allows a plug-and-play concept where a XML
+      file can specify all kind of nodes wihout needing to know
+      their actual types: The XML parser only needs to be able to
+      create a proper C++ instance of the given node type (the
+      OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
+      tell the node to parse itself from the given XML content and
+      XML children 
+        
+      \param node The XML node specifying this node's fields
+
+      \param binBasePtr A pointer to an accompanying binary file (if
+      existant) that contains additional binary data that the xml
+      node fields may point into
+    */
+    void Spheres::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr) 
+    {
+      size_t num = node->getPropl("num");
+      size_t ofs = node->getPropl("ofs");
+      float  rad = atof(node->getProp("radius").c_str());
+      PRINT(rad);
+
+      Spheres::Sphere s(vec3f(0.f),rad,0);
+      if (ofs == (size_t)-1) {
+        cout << "#osp:qtv: 'Spheres' ofs is '-1', generating set of random spheres..." << endl;
+        for (int i=0;i<num;i++) {
+          s.position.x = drand48();
+          s.position.y = drand48();
+          s.position.z = drand48();
+          s.radius = rad;
+          sphere.push_back(s);
+        }
+      } else {
+        for (int i=0;i<num;i++) {
+          const vec3f *in = (const vec3f*)(binBasePtr+ofs);
+          memcpy(&s,&in[i],sizeof(s));
+          sphere.push_back(s);
+        }
+      }
+    }
+
+
     void Spheres::render(RenderContext &ctx)
     {
       assert(!ospGeometry);
@@ -75,7 +118,6 @@ namespace ospray {
       ospCommit(data);
     }
 
-
     struct RandomSpheres : public Spheres {
       //! \brief Initialize this node's value from given XML node 
       void setFromXML(const xml::Node *const node, 
@@ -99,5 +141,6 @@ namespace ospray {
     };
 
     OSP_REGISTER_SG_NODE(RandomSpheres);
+    OSP_REGISTER_SG_NODE(Spheres);
   }
 }

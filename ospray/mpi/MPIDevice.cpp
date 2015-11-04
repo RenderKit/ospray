@@ -30,7 +30,10 @@
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
 // std
-#include <unistd.h> // for fork()
+#ifndef _WIN32
+#  include <unistd.h> // for fork()
+#endif
+
 
 namespace ospray {
   using std::cout;
@@ -71,8 +74,8 @@ namespace ospray {
 
         - all *all* MPI_COMM_WORLD processes are going into this function
 
-        - this fct is called from ospInit (with startworkers=true) or
-          from ospdMpiInit (w/ startwoe3kers = false)
+        - this fct is called from ospInit (with ranksBecomeWorkers=true) or
+          from ospdMpiInit (w/ ranksBecomeWorkers = false)
     */
     ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
                                                       bool ranksBecomeWorkers)
@@ -266,11 +269,15 @@ namespace ospray {
 
         char systemCommand[10000];
         sprintf(systemCommand,"%s %s",launchCommand,fixedPortName);
+#ifdef _WIN32
+        throw std::runtime_error("OSPRay MPI: no fork() yet on Windows");
+#else
         if (fork()) {
           system(systemCommand);
           cout << "OSPRay worker process has died - killing application" << endl;
           exit(0);
         }
+#endif
       }
 
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);

@@ -340,8 +340,8 @@ namespace embree
  private:
   
   /*! aligned allocation */
-  void* alignedMalloc(size_t size, size_t align = 64);
-  void alignedFree(const void* ptr);
+  OSPRAY_EMBREE_INTERFACE void* alignedMalloc(size_t size, size_t align = 64);
+  OSPRAY_EMBREE_INTERFACE void alignedFree(const void* ptr);
 
   /*! allocates pages directly from OS */
   void* os_malloc (size_t bytes);

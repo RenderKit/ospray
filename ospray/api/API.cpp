@@ -38,7 +38,7 @@ namespace ospray {
   using std::endl;
   using std::cout;
 
-#if OSPRAY_MPI
+#ifdef OSPRAY_MPI
   namespace mpi {
     ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av,
                                                     const char *fileNameToStorePortIn);
@@ -53,7 +53,7 @@ namespace ospray {
   }
 #endif
 
-#if OSPRAY_MIC_COI
+#ifdef OSPRAY_MIC_COI
   namespace coi {
     ospray::api::Device *createCoiDevice(int *ac, const char **av);
   }
@@ -89,7 +89,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
   const char *OSP_MPI_LAUNCH_FROM_ENV = getenv("OSPRAY_MPI_LAUNCH");
 
   if (OSP_MPI_LAUNCH_FROM_ENV) {
-#if OSPRAY_MPI
+#ifdef OSPRAY_MPI
     std::cout << "#osp: launching ospray mpi ring - make sure that mpd is running" << std::endl;
     ospray::api::Device::current
       = mpi::createMPI_LaunchWorkerGroup(_ac,_av,OSP_MPI_LAUNCH_FROM_ENV);
@@ -104,7 +104,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
     for (int i=1;i<*_ac;i++) {
 
       if (std::string(_av[i]) == "--osp:mpi") {
-#if OSPRAY_MPI
+#ifdef OSPRAY_MPI
         removeArgs(*_ac,(char **&)_av,i,1);
         ospray::api::Device::current
           = mpi::createMPI_RanksBecomeWorkers(_ac,_av);
@@ -116,9 +116,9 @@ extern "C" void ospInit(int *_ac, const char **_av)
       }
 
       if (std::string(_av[i]) == "--osp:coi") {
-#if OSPRAY_TARGET_MIC
+#ifdef OSPRAY_TARGET_MIC
         throw std::runtime_error("The COI device can only be created on the host");
-#elif OSPRAY_MIC_COI
+#elifdef OSPRAY_MIC_COI
         removeArgs(*_ac,(char **&)_av,i,1);
         ospray::api::Device::current
           = ospray::coi::createCoiDevice(_ac,_av);
@@ -130,7 +130,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
       }
 
       if (std::string(_av[i]) == "--osp:mpi-launch") {
-#if OSPRAY_MPI
+#ifdef OSPRAY_MPI
         if (i+2 > *_ac)
           throw std::runtime_error("--osp:mpi-launch expects an argument");
         const char *launchCommand = strdup(_av[i+1]);
@@ -146,7 +146,7 @@ extern "C" void ospInit(int *_ac, const char **_av)
 
       const char *listenArgName = "--osp:mpi-listen";
       if (!strncmp(_av[i],listenArgName,strlen(listenArgName))) {
-#if OSPRAY_MPI
+#ifdef OSPRAY_MPI
         const char *fileNameToStorePortIn = NULL;
         if (strlen(_av[i]) > strlen(listenArgName)) {
           fileNameToStorePortIn = strdup(_av[i]+strlen(listenArgName)+1);
@@ -303,10 +303,11 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
   Assert2(_type,"invalid render type identifier in ospNewPixelOp");
   LOG("ospNewPixelOp(" << _type << ")");
   int L = strlen(_type);
-  char type[L+1];
+  char *type = (char *)alloca(L+1);
   for (int i=0;i<=L;i++) {
     char c = _type[i];
-    if (c == '-' || c == ':') c = '_';
+    if (c == '-' || c == ':')
+      c = '_';
     type[i] = c;
   }
   OSPPixelOp pixelOp = ospray::api::Device::current->newPixelOp(type);
@@ -731,7 +732,7 @@ extern "C" void ospdApiMode(OSPDApiMode mode)
 }
 
 
-#if OSPRAY_MPI
+#ifdef OSPRAY_MPI
 //! \brief initialize the ospray engine (for use with MPI-parallel app) 
 /*! \detailed Note the application must call this function "INSTEAD OF"
   MPI_Init(), NOT "in addition to" */

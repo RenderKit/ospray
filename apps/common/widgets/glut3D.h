@@ -175,10 +175,8 @@ namespace ospray {
         vec3f from;
         vec3f up;
         vec3f at;
-        /*! opening angle, in radians, along Y direction */
-        float openingAngle;
-        /*! aspect ration i Y:X */
-        float aspect;
+        float openingAngle; //!< in radians, along Y direction
+        float aspect; //!< aspect ratio X:Y
         // float focalDistance;
       
         /*! camera frame in which the Y axis is the depth axis, and X

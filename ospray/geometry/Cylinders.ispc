@@ -30,15 +30,17 @@ struct Cylinders {
 
   uniform uint8 *uniform data;
   uniform Material *uniform *materialList;
+  uniform vec4f    *uniform color;
 
-  float           radius;
-  int             materialID;
-  int             offset_v0;
-  int             offset_v1;
-  int             offset_radius;
-  int             offset_materialID;
-  int32           numCylinders;
-  int32           bytesPerCylinder;
+  float radius;
+  int   materialID;
+  int   offset_v0;
+  int   offset_v1;
+  int   offset_radius;
+  int   offset_materialID;
+  int   offset_colorID;
+  int32 numCylinders;
+  int32 bytesPerCylinder;
 };
 
 typedef uniform float uniform_float;
@@ -134,6 +136,16 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
   uniform Cylinders *uniform self = (uniform Cylinders *uniform)geometry;
   dg.Ng = dg.Ns = ray.Ng;
 
+  if ((flags & DG_COLOR) && self->color) {
+    if (self->offset_colorID >= 0) {
+      uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
+      uint32 colorID = *((uniform uint32 *varying)(cylinderPtr+self->offset_colorID));
+      dg.color = self->color[colorID];
+    } else {
+      dg.color = self->color[ray.primID];
+    }
+  }
+
   if ((flags & DG_MATERIALID) && (self->offset_materialID >= 0)) {
     uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
     dg.materialID = *((uniform uint32 *varying)(cylinderPtr+self->offset_materialID));
@@ -156,6 +168,7 @@ export void CylindersGeometry_set(void           *uniform _geom,
                                   void           *uniform _model,
                                   void           *uniform data,
                                   void           *uniform materialList,
+                                  uniform vec4f  *uniform color,
                                   int             uniform numCylinders,
                                   int             uniform bytesPerCylinder,
                                   float           uniform radius,
@@ -163,7 +176,8 @@ export void CylindersGeometry_set(void           *uniform _geom,
                                   int             uniform offset_v0,
                                   int             uniform offset_v1,
                                   int             uniform offset_radius,
-                                  int             uniform offset_materialID)
+                                  int             uniform offset_materialID,
+                                  int             uniform offset_colorID)
 {
   uniform Cylinders *uniform geom = (uniform Cylinders *uniform)_geom;
   uniform Model *uniform model = (uniform Model *uniform)_model;
@@ -173,6 +187,7 @@ export void CylindersGeometry_set(void           *uniform _geom,
   geom->geometry.model = model;
   geom->geometry.geomID = geomID;
   geom->materialList = (Material **)materialList;
+  geom->color = color;
   geom->numCylinders = numCylinders;
   geom->radius = radius;
   geom->data = (uniform uint8 *uniform)data;
@@ -183,6 +198,7 @@ export void CylindersGeometry_set(void           *uniform _geom,
   geom->offset_v1         = offset_v1;
   geom->offset_radius     = offset_radius;
   geom->offset_materialID = offset_materialID;
+  geom->offset_colorID    = offset_colorID;
 
   rtcSetUserData(model->embreeSceneHandle,geomID,geom);
   rtcSetBoundsFunction(model->embreeSceneHandle,geomID,

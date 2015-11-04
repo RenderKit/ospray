@@ -37,7 +37,17 @@
 
 // std
 #include <algorithm>
-#include <unistd.h> // for gethostname()
+
+#ifdef _WIN32
+#  include <windows.h> // for Sleep and gethostname
+#  include <process.h> // for getpid
+void sleep(unsigned int seconds)
+{
+    Sleep(seconds * 1000);
+}
+#else
+#  include <unistd.h> // for gethostname
+#endif
 
 #define DBG(a) /**/
 

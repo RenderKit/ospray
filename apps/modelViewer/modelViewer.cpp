@@ -314,7 +314,6 @@ namespace ospray {
       if (frameID > 0) fps.doneRender();
       fps.startRender();
       //}
-#if 0
       static double benchStart=0;
       static double fpsSum=0;
       if (g_benchFrames > 0 && frameID == g_benchWarmup)
@@ -334,7 +333,6 @@ namespace ospray {
 
           exit(0);
         }
-#endif 
       ++frameID;
       
       if (viewPort.modified) {
@@ -348,6 +346,8 @@ namespace ospray {
         ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
         ospSetVec3f(camera,"up",viewPort.up);
         ospSetf(camera,"aspect",viewPort.aspect);
+//        ospSetf(camera,"apertureRadius", 0.01);
+//        ospSetf(camera,"focusDistance", viewPort."focusDistance");
         ospCommit(camera);
         viewPort.modified = false;
         accumID=0;

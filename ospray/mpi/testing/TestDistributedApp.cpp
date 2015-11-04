@@ -17,10 +17,11 @@
 
 
 // enable the "mpi distributed" part of the ospray api
-#if !OSPRAY_MPI_DISTRIBUTED
-#  define OSPRAY_MPI_DISTRIBUTED 1
+#ifndef OSPRAY_MPI_DISTRIBUTED
+#  define OSPRAY_MPI_DISTRIBUTED
 #endif
 
+#include <mpi.h>
 #include <ospray/ospray.h>
 
 #define Assert(cond,err) if (!(cond)) throw std::runtime_error(err);

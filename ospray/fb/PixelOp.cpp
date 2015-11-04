@@ -31,7 +31,7 @@ namespace ospray {
   {
     PING; PRINT(_type);
 
-    char type[strlen(_type)+1];
+    char *type = (char*)alloca(strlen(_type)+1);
     strcpy(type,_type);
     char *atSign = strstr(type,"@");
     char *libName = NULL;
