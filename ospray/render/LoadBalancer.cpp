@@ -62,6 +62,7 @@ namespace ospray {
 #if 1
     for (int run=0;1;run++) {
       double t0 = getSysTime();
+static double global_t0 = t0;
       Ref<RenderTask> renderTask = new RenderTask;
       renderTask->fb = fb;
       renderTask->renderer = tiledRenderer;
@@ -74,7 +75,12 @@ namespace ospray {
       renderTask->wait();
       double t1 = getSysTime();
       double t = t1 - t0;
-      printf("time for run #%i : %f\n",run,t);
+      //printf("time for run #%i : %f\n",run,t);
+      if (t > .3) {
+static double last_t1 = t1;
+	printf("HICKUP in run #%i, at time %f; delta t since last hickup %f, length of hickup %f\n",run,t0-global_t0,t0-last_t1,t);
+	last_t1 = t1;
+}	
     }
 #endif
 
