@@ -16,6 +16,7 @@
 
 #include "LoadBalancer.h"
 #include "Renderer.h"
+#include <sys/sysinfo.h>
 
 // stl
 #include <algorithm>
@@ -77,10 +78,14 @@ static double global_t0 = t0;
       double t = t1 - t0;
       //printf("time for run #%i : %f\n",run,t);
       if (t > .3) {
-static double last_t1 = t1;
-	printf("HICKUP in run #%i, at time %f; delta t since last hickup %f, length of hickup %f\n",run,t0-global_t0,t0-last_t1,t);
-	last_t1 = t1;
-}	
+        static double last_t1 = t1;
+        struct sysinfo si;
+        sysinfo(&si);
+        printf("HICKUP in run #%i, at time %f / %li; delta t since last hickup %f, length of hickup %f\n",
+               run,t0-global_t0,si.uptime,
+               t0-last_t1,t);
+        last_t1 = t1;
+      }	
     }
 #endif
 
