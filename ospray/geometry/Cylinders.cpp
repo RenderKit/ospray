@@ -31,14 +31,14 @@ namespace ospray {
     _materialList = NULL;
   }
 
-  void Cylinders::finalize(Model *model) 
+  void Cylinders::finalize(Model *model)
   {
     radius            = getParam1f("radius",0.01f);
     materialID        = getParam1i("materialID",0);
-    bytesPerCylinder  = getParam1i("bytes_per_cylinder",7*sizeof(float));
+    bytesPerCylinder  = getParam1i("bytes_per_cylinder",6*sizeof(float));
     offset_v0         = getParam1i("offset_v0",0);
     offset_v1         = getParam1i("offset_v1",3*sizeof(float));
-    offset_radius     = getParam1i("offset_radius",6*sizeof(float));
+    offset_radius     = getParam1i("offset_radius",-1);
     offset_materialID = getParam1i("offset_materialID",-1);
     offset_colorID    = getParam1i("offset_colorID",-1);
     cylinderData      = getParamData("cylinders");
@@ -49,7 +49,7 @@ namespace ospray {
       throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders' data specified");
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
     std::cout << "#osp: creating 'cylinders' geometry, #cylinders = " << numCylinders << std::endl;
-    
+
     if (_materialList) {
       free(_materialList);
       _materialList = NULL;
