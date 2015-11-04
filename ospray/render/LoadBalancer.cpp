@@ -59,6 +59,25 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
+#if 1
+    for (int run=0;1;run++) {
+      double t0 = getSysTime();
+      Ref<RenderTask> renderTask = new RenderTask;
+      renderTask->fb = fb;
+      renderTask->renderer = tiledRenderer;
+      renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+      renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+      renderTask->channelFlags = channelFlags;
+      tiledRenderer->beginFrame(fb);
+      
+      renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
+      renderTask->wait();
+      double t1 = getSysTime();
+      double t = t1 - t0;
+      printf("time for run #%i : %f\n",run,t);
+    }
+#endif
+
     Ref<RenderTask> renderTask = new RenderTask;
     renderTask->fb = fb;
     renderTask->renderer = tiledRenderer;
