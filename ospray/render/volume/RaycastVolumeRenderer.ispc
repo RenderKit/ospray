@@ -100,7 +100,8 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   // Post intersect on the hit geometry.
   DifferentialGeometry dg;
   postIntersect(renderer->inherited.model, dg, ray,
-                DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID);
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR
+                |DG_MATERIALID|DG_TEXCOORD);
 
   // Color of the geometry.
   vec3f geometryColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
