@@ -16,21 +16,48 @@
 
 #pragma once
 
-#include "ospray/common/Material.ih"
-#include "ospray/math/vec.ih"
-#include "ospray/texture/Texture2D.ih"
-#include "ospray/volume/Volume.ih"
+#include "ospray/common/Material.h"
+#include "ospray/texture/Texture2D.h"
 
-struct RaycastVolumeRendererMaterial {
-  Material inherited;
-  const uniform Texture2D *map_d;
-  float d;
-  const uniform Texture2D *map_Kd;
-  vec3f Kd;
-  const uniform Texture2D *map_Ks;
-  vec3f Ks;
-  const uniform Texture2D *map_Ns;
-  float Ns;
-  const uniform Texture2D *map_Bump;
-  uniform Volume *uniform volume;
-};
+#include "ospray/volume/Volume.h"
+
+namespace ospray {
+
+    typedef vec3f Color;
+
+    //! Material used by RaycastVolumeRenderer.
+    struct RaycastVolumeMaterial : public Material {
+
+      RaycastVolumeMaterial();
+
+      void commit();
+
+      std::string toString() const;
+
+      /*! opacity: 0 (transparent), 1 (opaque) */
+      Texture2D *map_d;   float d;
+
+      /*! diffuse  reflectance: 0 (none), 1 (full) */
+      Texture2D *map_Kd;  Color Kd;
+
+      /*! specular reflectance: 0 (none), 1 (full) */
+      Texture2D *map_Ks;  Color Ks;
+
+      /*! specular exponent: 0 (diffuse), infinity (specular) */
+      Texture2D *map_Ns;  float Ns;
+
+      /*! bump map */
+      Texture2D *map_Bump;
+
+      Ref<Volume> volume; //!< If provided, color will be mapped through this
+                          //   volume's transfer function.
+    };
+
+    // Inlined member functions ///////////////////////////////////////////////
+
+    inline std::string RaycastVolumeMaterial::toString() const
+    {
+      return "ospray::raytracer::RaytraceMaterial";
+    }
+
+} // ::ospray
