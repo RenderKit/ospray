@@ -18,10 +18,23 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "modules/loaders/RawVolumeFile.h"
+#include "common/sys/filename.h"
+
 OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
 {
   // Look for the volume data file at the given path.
-  FILE *file = fopen(filename.c_str(), "rb");  exitOnCondition(!file, "unable to open file '" + filename + "'");
+  FILE *file = NULL;
+  embree::FileName fn = filename;
+  bool gzipped = fn.ext() == "gz";
+  if (gzipped) {
+    std::string cmd = "/usr/bin/gunzip -c "+filename;
+    file = popen(cmd.c_str(),"r");
+  } else {
+    file = fopen(filename.c_str(),"rb");
+  }
+  //FILE *file = fopen(filename.c_str(), "rb");
+  exitOnCondition(!file, "unable to open file '" + filename + "'");
 
   // Offset into the volume data file if any.
   int offset = 0;  ospGeti(volume, "filename offset", &offset);  fseek(file, offset, SEEK_SET);
@@ -143,6 +156,10 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
     delete [] subvolumeRowData;
   }
 
+  if (gzipped)
+    pclose(file);
+  else
+    fclose(file);
   // Return the volume.
   return(volume);
 }
