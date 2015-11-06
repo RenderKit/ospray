@@ -22,18 +22,19 @@
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
 #include "ospray/render/volume/RaycastVolumeRendererMaterial.ih"
 
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, 
+void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer,
                                                 const uniform int32 accumID)
-{ 
-  if (renderer->fb) 
-    renderer->fb->accumID = accumID;  
-  renderer->fb = NULL; 
+{
+  if (renderer->fb)
+    renderer->fb->accumID = accumID;
+
+  renderer->fb = NULL;
 }
 
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer, 
+void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer,
                                                FrameBuffer *uniform framebuffer)
-{ 
-  renderer->fb = framebuffer; 
+{
+  renderer->fb = framebuffer;
 }
 
 inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform renderer,
@@ -98,8 +99,9 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   // Post intersect on the hit geometry.
   DifferentialGeometry dg;
-  postIntersect(renderer->inherited.model, dg, ray, 
-                DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID);
+  postIntersect(renderer->inherited.model, dg, ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR
+                |DG_MATERIALID|DG_TEXCOORD);
 
   // Color of the geometry.
   vec3f geometryColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
@@ -108,9 +110,22 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
   uniform RaycastVolumeRendererMaterial *mat
     = (uniform RaycastVolumeRendererMaterial*)dg.material;
 
+  float d  = 1.f;
+  vec3f Kd = make_vec3f(0.f,1.f,0.f);
+
   if (mat) {
     foreach_unique(m in mat) {
-      geometryColor = geometryColor * m->Kd;
+      d = m->d * get1f(m->map_d, dg.st, 1.f);
+      Kd = m->Kd * make_vec3f(dg.color);
+      if (m->map_Kd) {
+        vec4f Kd_from_map = get4f(m->map_Kd,dg.st);
+        Kd = Kd * make_vec3f(Kd_from_map);
+        d *= Kd_from_map.w;
+      } else {
+        Kd = m->Kd;
+      }
+
+      geometryColor = geometryColor * Kd;
 
       if (m->volume) {
         const float sample = m->volume->computeSample(m->volume, dg.P);
@@ -197,7 +212,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   // Ray epsilon based on bounding box of all volumes.
   uniform box3f boundingBox = renderer->inherited.model->volumeCount
-    ? renderer->inherited.model->volumes[0]->boundingBox 
+    ? renderer->inherited.model->volumes[0]->boundingBox
     : make_box3f(make_vec3f(0.f), make_vec3f(0.f));
 
   Model *uniform model = renderer->inherited.model;
@@ -208,7 +223,7 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
 
   const uniform float epsilon
     = renderer->inherited.model->volumeCount
-    ? 1e-4f * distance(boundingBox.lower, boundingBox.upper) 
+    ? 1e-4f * distance(boundingBox.lower, boundingBox.upper)
     : 1e-4f;
 
   // Copy of the ray for geometry intersection. The original ray is
@@ -281,8 +296,8 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   }
 }
 
-void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer, 
-                                        varying ScreenSample &sample) 
+void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
+                                        varying ScreenSample &sample)
 {
   // Cast to the actual Renderer subtype.
   RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
