@@ -57,7 +57,7 @@ namespace ospray {
 
     inline std::string RaycastVolumeMaterial::toString() const
     {
-      return "ospray::raytracer::RaytraceMaterial";
+      return "ospray::RaycastVolumeMaterial";
     }
 
 } // ::ospray
