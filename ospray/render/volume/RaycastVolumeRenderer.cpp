@@ -18,35 +18,32 @@
 #include "ospray/lights/Light.h"
 #include "ospray/common/Data.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
+
+#include "RaycastVolumeMaterial.h"
+
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
-#include "RaycastVolumeRendererMaterial_ispc.h"
 
 namespace ospray {
 
-  RaycastVolumeRenderer::Material::Material()
+  Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
-    ispcEquivalent = ispc::RaycastVolumeRendererMaterial_create(this);
+    return new RaycastVolumeMaterial;
   }
 
-  void RaycastVolumeRenderer::Material::commit()
-  {
-    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(1.0f))));
-    volume = (Volume *)getParamObject("volume", NULL);
-
-    ispc::RaycastVolumeRendererMaterial_set(getIE(), (const ispc::vec3f&)Kd, volume ? volume->getIE() : NULL);
-  }
-
-  void RaycastVolumeRenderer::commit() 
+  void RaycastVolumeRenderer::commit()
   {
     // Create the equivalent ISPC RaycastVolumeRenderer object.
-    if (ispcEquivalent == NULL) ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
+    if (ispcEquivalent == NULL) {
+      ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
+    }
 
     // Get the background color.
     vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
 
     // Set the background color.
-    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
+    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent,
+                                                   (const ispc::vec3f&)bgColor);
 
     // Set the lights if any.
     Data *lightsData = (Data *)getParamData("lights", NULL);
@@ -57,9 +54,12 @@ namespace ospray {
       for (size_t i=0; i<lightsData->size(); i++)
         lights.push_back(((Light **)lightsData->data)[i]->getIE());
 
-    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, lights.empty() ? NULL : &lights[0], lights.size());
+    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent,
+                                          lights.empty() ? NULL : &lights[0],
+                                          lights.size());
 
-    // Initialize state in the parent class, must be called after the ISPC object is created.
+    // Initialize state in the parent class, must be called after the ISPC
+    // object is created.
     Renderer::commit();
   }
 
