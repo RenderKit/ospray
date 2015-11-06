@@ -60,7 +60,7 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
-#if 1
+#if 0
     for (int run=0;1;run++) {
       double t0 = getSysTime();
 static double global_t0 = t0;
@@ -83,9 +83,10 @@ static double global_t0 = t0;
         sysinfo(&si);
         printf("HICKUP in run #%i, at time %f / %li; delta t since last hickup %f, length of hickup %f\n",
                run,t0-global_t0,si.uptime,
-               t0-last_t1,t);
+               t0-last_t,t);
         last_t1 = t1;
       }	
+
     }
 #endif
 

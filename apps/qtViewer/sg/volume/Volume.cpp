@@ -60,7 +60,7 @@ namespace ospray {
         mappedPointer = binBasePtr + node->getPropl("ofs");
       dimensions = parseVec3i(node->getProp("dimensions"));
 
-      if (voxelType != "float") 
+      if (voxelType != "float" && voxelType != "uint8") 
         throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
           
       if (!transferFunction) 
@@ -127,13 +127,14 @@ namespace ospray {
                                               const unsigned char *binBasePtr)
     {
       voxelType = node->getProp("voxelType");
+      if (voxelType == "uint8") voxelType = "uchar";
       dimensions = parseVec3i(node->getProp("dimensions"));
       fileName = node->getProp("fileName");
       if (fileName == "") throw std::runtime_error("sg::StructuredVolumeFromFile: no 'fileName' specified");
 
       fileNameOfCorrespondingXmlDoc = node->doc->fileName;
       
-      if (voxelType != "float") 
+      if (voxelType != "float" && voxelType != "uchar") 
         throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
       
       if (!transferFunction) 
@@ -151,7 +152,7 @@ namespace ospray {
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
 
-      bool useBlockBricked = 0;
+      bool useBlockBricked = 1;
 
       if (useDataDistributedVolume) 
         volume = ospNewVolume("data_distributed_volume");
@@ -176,14 +177,25 @@ namespace ospray {
 
       if (useBlockBricked || useDataDistributedVolume) {
         size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
-        float *slice = new float[nPerSlice];
-        for (int z=0;z<dimensions.z;z++) {
-          size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
-          if (nRead != nPerSlice)
-            throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
-          ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
+        if (voxelType == "float") {
+          float *slice = new float[nPerSlice];
+          for (int z=0;z<dimensions.z;z++) {
+            size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
+            if (nRead != nPerSlice)
+              throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+            ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
+          }
+          delete[] slice;
+        } else {
+          uint8 *slice = new uint8[nPerSlice];
+          for (int z=0;z<dimensions.z;z++) {
+            size_t nRead = fread(slice,sizeof(uint8),nPerSlice,file);
+            if (nRead != nPerSlice)
+              throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+            ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
+          }
+          delete[] slice;
         }
-        delete[] slice;
       } else {
         size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
         float *voxels = new float[nVoxels];
