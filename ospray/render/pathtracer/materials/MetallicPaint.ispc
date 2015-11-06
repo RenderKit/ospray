@@ -15,15 +15,15 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/DielectricReflection.ih"
-#include "../brdfs/DielectricLayerLambertian.ih"
-#include "../brdfs/DielectricLayerMicrofacetMetal.ih"
+#include "../bsdfs/DielectricReflection.ih"
+#include "../bsdfs/DielectricLayerLambert.ih"
+#include "../bsdfs/DielectricLayerMicrofacetMetal.ih"
 
 struct MetallicPaint
 {
   PathTraceMaterial base;
   DielectricReflection              reflection;
-  DielectricLayerLambertian         paint;
+  DielectricLayerLambert         paint;
   DielectricLayerMicrofacetMetal    glitter;
   bool                              hasGlitter;
 };
@@ -35,13 +35,13 @@ void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
                           const Ray&                  ray,             
                           const Medium&               currentMedium,   
                           const DifferentialGeometry& dg,              
-                          uniform CompositedBRDF&     brdfs,
+                          uniform CompositedBSDF&     brdfs,
                           vec3f& Ns)
 {
   uniform const MetallicPaint *uniform this = (uniform const MetallicPaint *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->reflection.base);
-  CompositedBRDF__add(&brdfs,&this->paint.base);
-  if (this->hasGlitter) CompositedBRDF__add(&brdfs,&this->glitter.base);
+  CompositedBSDF_add(&brdfs,&this->reflection.base);
+  CompositedBSDF_add(&brdfs,&this->paint.base);
+  if (this->hasGlitter) CompositedBSDF_add(&brdfs,&this->glitter.base);
 }
 
 inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
@@ -52,7 +52,7 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
 {
   PathTraceMaterial__Constructor(&this->base, MetallicPaint__shade, NULL);
   DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
-  DielectricLayerLambertian__Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambertian(shadeColor));
+  DielectricLayerLambert__Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
 
   uniform vec3f etaAluminium = make_vec3f(0.62f,0.62f,0.62f);
   uniform vec3f kAluminium   = make_vec3f(4.8f,4.8f,4.8f);

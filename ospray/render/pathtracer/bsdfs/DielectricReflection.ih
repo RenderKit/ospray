@@ -16,22 +16,22 @@
 
 #pragma once
 
-#include "BRDF.ih"
+#include "BSDF.ih"
 
 struct DielectricReflection
 {
-  uniform BRDF base;
+  uniform BSDF base;
   float eta;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // uniform DielectricReflection
 
-inline vec3f uniform_DielectricReflection__eval(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
+inline vec3f uniform_DielectricReflection__eval(const uniform BSDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
   return make_vec3f(0.f);
 }
 
-inline vec3f uniform_DielectricReflection__sample(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s)
+inline vec3f uniform_DielectricReflection__sample(const uniform BSDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s)
 {
   const uniform DielectricReflection* uniform this = (const uniform DielectricReflection* uniform) _this;
   const float cosThetaO = clamp(dot(wo,dg.Ns));
@@ -43,7 +43,7 @@ inline void DielectricReflection__Constructor(uniform DielectricReflection* unif
                                               const uniform float etai,
                                               const uniform float etat)
 {
-  BRDF__Constructor(&this->base,SPECULAR_REFLECTION,
+  BSDF_Constructor(&this->base,SPECULAR_REFLECTION,
                     uniform_DielectricReflection__eval,uniform_DielectricReflection__sample);
   this->eta = etai*rcp(etat);
 }
@@ -55,11 +55,11 @@ inline uniform DielectricReflection make_DielectricReflection(const uniform floa
 ///////////////////////////////////////////////////////////////////////////////
 // varying DielectricReflection
 
-inline vec3f varying_DielectricReflection__eval(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
+inline vec3f varying_DielectricReflection__eval(const uniform BSDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
   return make_vec3f(0.f);
 }
 
-inline vec3f varying_DielectricReflection__sample(const uniform BRDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s)
+inline vec3f varying_DielectricReflection__sample(const uniform BSDF* uniform _this, const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s)
 {
   const varying DielectricReflection* uniform this = (const varying DielectricReflection* uniform) _this;
   const float cosThetaO = clamp(dot(wo,dg.Ns));
@@ -71,7 +71,7 @@ inline void DielectricReflection__Constructor(varying DielectricReflection* unif
                                               const varying float etai,
                                               const varying float etat)
 {
-  BRDF__Constructor(&this->base,SPECULAR_REFLECTION,
+  BSDF_Constructor(&this->base,SPECULAR_REFLECTION,
                     varying_DielectricReflection__eval,varying_DielectricReflection__sample);
   this->eta = etai*rcp(etat);
 }

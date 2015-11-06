@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/Conductor.ih"
-#include "../brdfs/MicrofacetMetal.ih"
+#include "../bsdfs/Conductor.ih"
+#include "../bsdfs/MicrofacetMetal.ih"
 
 struct Metal
 {
@@ -30,15 +30,15 @@ struct Metal
 // Implementation
 
 void Metal__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,       
+                  const Ray&                  ray,
                   const Medium&               currentMedium,
-                  const DifferentialGeometry& dg,           
-                  uniform CompositedBRDF&     brdfs,
+                  const DifferentialGeometry& dg,
+                  uniform CompositedBSDF&     brdfs,
                   vec3f& Ns)
 {
   const uniform Metal* uniform this = (const uniform Metal* uniform)_this;
-  if (this->roughness == 0.0f)  CompositedBRDF__add(&brdfs,&this->conductor.base);
-  else                          CompositedBRDF__add(&brdfs,&this->microfacetMetal.base);
+  if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->conductor.base);
+  else                          CompositedBSDF_add(&brdfs,&this->microfacetMetal.base);
 }
 
 void Metal__Constructor(uniform Metal *uniform this,
@@ -51,8 +51,8 @@ void Metal__Constructor(uniform Metal *uniform this,
   this->roughness = roughness;
   Conductor__Constructor(&this->conductor,reflectance, eta, k);
   MicrofacetMetal__Constructor(&this->microfacetMetal,
-                               reflectance, 
-                               make_FresnelConductor(eta,k), 
+                               reflectance,
+                               make_FresnelConductor(eta,k),
                                make_PowerCosineDistribution(rcp(roughness)));
 }
 

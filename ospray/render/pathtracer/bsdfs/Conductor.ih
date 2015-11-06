@@ -16,40 +16,38 @@
 
 #pragma once
 
-#include "BRDF.ih"
+#include "BSDF.ih"
 #include "optics.ih"
 
-struct Transmission
+struct Conductor
 {
-  uniform BRDF base;
-
-  /*! Transmission coefficient of the material. The range is [0,1]
-   *  where 0 means total absorption and 1 means total
-   *  transmission. */
-  vec3f T;
+  uniform BSDF base;
+  vec3f R;          //!< Reflectivity coefficient
+  vec3f eta;        //!< Real part of refraction index
+  vec3f k;          //!< Imaginary part of refraction index
 };
 
-inline vec3f Transmission__eval(const uniform BRDF* uniform _this,
-                                const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
-{
+vec3f Conductor__eval(const uniform BSDF* uniform _this,
+                      const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
   return make_vec3f(0.0f);
 }
 
-inline vec3f Transmission__sample(const uniform BRDF* uniform _this,
-                                const vec3f &wo, 
-                                const DifferentialGeometry &dg, 
-                                Sample3f &wi, 
-                                const vec2f &s)  
+vec3f Conductor__sample(const uniform BSDF* uniform _this,
+                        const vec3f &wo,
+                        const DifferentialGeometry &dg,
+                        Sample3f &wi,
+                        const vec2f &s)
 {
-  const varying Transmission* uniform this = (const varying Transmission* uniform) _this;
-  wi = make_Sample3f(neg(wo),1.0f);
-  return this->T;
+  const uniform Conductor* uniform this = (const uniform Conductor* uniform) _this;
+  wi = reflect(wo,dg.Ns);
+  return mul(this->R, fresnelConductor(dot(wo,dg.Ns),this->eta,this->k));
 }
 
-inline void Transmission__Constructor(varying Transmission* uniform this,
-                                      const varying vec3f T)
+inline void Conductor__Constructor(uniform Conductor* uniform this,
+                                   const uniform vec3f R, const uniform vec3f eta, const uniform vec3f k)
 {
-  BRDF__Constructor(&this->base,SPECULAR_TRANSMISSION,
-                    Transmission__eval,Transmission__sample);
-  this->T = T;
+  BSDF_Constructor(&this->base,SPECULAR_REFLECTION,Conductor__eval,Conductor__sample);
+  this->R = R;
+  this->eta = eta;
+  this->k = k;
 }

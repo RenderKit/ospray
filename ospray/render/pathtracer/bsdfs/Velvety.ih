@@ -16,11 +16,11 @@
 
 #pragma once
 
-#include "BRDF.ih"
+#include "BSDF.ih"
 
 struct Velvety
 {
-  uniform BRDF base;
+  uniform BSDF base;
 
   /*! The reflectance parameter. The vale 0 means no reflection,
    *  and 1 means full reflection. */
@@ -34,7 +34,7 @@ struct Velvety
 ///////////////////////////////////////////////////////////////////////////////
 // uniform Velvety
 
-vec3f uniform_Velvety__eval(const uniform BRDF* uniform _this,
+vec3f uniform_Velvety__eval(const uniform BSDF* uniform _this,
                             const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
 {
   const uniform Velvety* uniform this = (const uniform Velvety* uniform) _this;
@@ -45,7 +45,7 @@ vec3f uniform_Velvety__eval(const uniform BRDF* uniform _this,
   return mul(horizonScatter * cosThetaI * one_over_pi, this->R);
 }
 
-vec3f uniform_Velvety__sample(const uniform BRDF* uniform _this,
+vec3f uniform_Velvety__sample(const uniform BSDF* uniform _this,
                               const vec3f &wo, 
                               const DifferentialGeometry &dg, 
                               Sample3f &wi, 
@@ -60,7 +60,7 @@ vec3f uniform_Velvety__sample(const uniform BRDF* uniform _this,
 
 void Velvety__Constructor(uniform Velvety* uniform this, const uniform vec3f R, const uniform float f) 
 {
-  BRDF__Constructor(&this->base,DIFFUSE_REFLECTION,
+  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
                     uniform_Velvety__eval,uniform_Velvety__sample);
   this->R = R;
   this->f = f;
@@ -73,7 +73,7 @@ uniform Velvety make_Velvety(const uniform vec3f R, const uniform float f) {
 ///////////////////////////////////////////////////////////////////////////////
 // varying Velvety
 
-vec3f varying_Velvety__eval(const uniform BRDF* uniform _this,
+vec3f varying_Velvety__eval(const uniform BSDF* uniform _this,
                             const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
 {
   const varying Velvety* uniform this = (const varying Velvety* uniform) _this;
@@ -84,7 +84,7 @@ vec3f varying_Velvety__eval(const uniform BRDF* uniform _this,
   return mul(horizonScatter * cosThetaI * one_over_pi, this->R);
 }
 
-vec3f varying_Velvety__sample(const uniform BRDF* uniform _this,
+vec3f varying_Velvety__sample(const uniform BSDF* uniform _this,
                               const vec3f &wo, 
                               const DifferentialGeometry &dg, 
                               Sample3f &wi, 
@@ -99,7 +99,7 @@ vec3f varying_Velvety__sample(const uniform BRDF* uniform _this,
 
 void Velvety__Constructor(varying Velvety* uniform this, const varying vec3f R, const varying float f) 
 {
-  BRDF__Constructor(&this->base,DIFFUSE_REFLECTION,
+  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
                     varying_Velvety__eval,varying_Velvety__sample);
   this->R = R;
   this->f = f;

@@ -1,0 +1,93 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct Lambert
+{
+  uniform BSDF base;
+  vec3f R;
+};
+
+////////////////////////////////////////////////////////////////////////
+// uniform Lambert
+
+inline vec3f uniform_Lambert__eval(const uniform BSDF* uniform _this,
+                                      const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+{
+  const uniform Lambert* uniform this = (const uniform Lambert* uniform) _this;
+  return this->R/M_PI * clamp(dot(wi, dg.Ns));
+}
+
+inline vec3f uniform_Lambert__sample(const uniform BSDF* uniform _this,
+                                        const vec3f &wo,
+                                        const DifferentialGeometry &dg,
+                                        Sample3f &wi,
+                                        const vec2f &s)
+{
+  const uniform Lambert* uniform this = (const uniform Lambert* uniform) _this;
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
+  return uniform_Lambert__eval(&this->base, wo, dg, wi.v);
+}
+
+inline void Lambert__Constructor(uniform Lambert* uniform this, const uniform vec3f R)
+{
+  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
+                    uniform_Lambert__eval,uniform_Lambert__sample);
+  this->R = R;
+}
+
+inline uniform Lambert make_Lambert(const uniform vec3f R) {
+  uniform Lambert v; Lambert__Constructor(&v,R); return v;
+}
+
+////////////////////////////////////////////////////////////////////////
+// varying Lambert
+
+inline vec3f varying_Lambert__eval(const uniform BSDF* uniform _this,
+                                      const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+{
+  const varying Lambert* uniform this = (const varying Lambert* uniform) _this;
+  return this->R/M_PI * clamp(dot(wi, dg.Ns));
+}
+
+inline vec3f varying_Lambert__sample(const uniform BSDF* uniform _this,
+                                        const vec3f &wo,
+                                        const DifferentialGeometry &dg,
+                                        Sample3f &wi,
+                                        const vec2f &s)
+{
+  const varying Lambert* uniform this = (const varying Lambert* uniform) _this;
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi.v = frame(dg.Ns) * localDir;
+  wi.pdf = cosineSampleHemispherePDF(localDir);
+  return varying_Lambert__eval(&this->base, wo, dg, wi.v);
+}
+
+inline void Lambert__Constructor(varying Lambert* uniform this, const varying vec3f R)
+{
+  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
+                    varying_Lambert__eval,varying_Lambert__sample);
+  this->R = R;
+}
+
+inline varying Lambert make_Lambert(const varying vec3f R) {
+  varying Lambert v; Lambert__Constructor(&v,R); return v;
+}

@@ -16,20 +16,20 @@
 
 #pragma once
 
-#include "BRDF.ih"
+#include "BSDF.ih"
 
 ///////////////////////////////////////////////////////
 
 struct DielectricTransmission
 {
-  uniform BRDF base;
+  uniform BSDF base;
   float eta;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // uniform DielectricReflection
 
-inline vec3f uniform_DielectricTransmission__eval(const uniform BRDF* uniform _this,
+inline vec3f uniform_DielectricTransmission__eval(const uniform BSDF* uniform _this,
                                                   const vec3f &wo, 
                                                   const DifferentialGeometry &dg, 
                                                   const vec3f &wi)  
@@ -37,7 +37,7 @@ inline vec3f uniform_DielectricTransmission__eval(const uniform BRDF* uniform _t
   return make_vec3f(0.f);
 }
 
-inline vec3f uniform_DielectricTransmission__sample(const uniform BRDF* uniform _this,
+inline vec3f uniform_DielectricTransmission__sample(const uniform BSDF* uniform _this,
                                                     const vec3f &wo, 
                                                     const DifferentialGeometry &dg,
                                                     Sample3f &wi, 
@@ -52,7 +52,7 @@ inline vec3f uniform_DielectricTransmission__sample(const uniform BRDF* uniform 
 inline void DielectricTransmission__Constructor(uniform DielectricTransmission* uniform this,
                                                 const uniform float etai, const uniform float etat)
 {
-  BRDF__Constructor(&this->base,SPECULAR_TRANSMISSION,
+  BSDF_Constructor(&this->base,SPECULAR_TRANSMISSION,
                     uniform_DielectricTransmission__eval,uniform_DielectricTransmission__sample);
   this->eta = etai*rcp(etat);
 }
@@ -60,7 +60,7 @@ inline void DielectricTransmission__Constructor(uniform DielectricTransmission* 
 ///////////////////////////////////////////////////////////////////////////////
 // varying DielectricReflection
 
-inline vec3f varying_DielectricTransmission__eval(const uniform BRDF* uniform _this,
+inline vec3f varying_DielectricTransmission__eval(const uniform BSDF* uniform _this,
                                                   const vec3f &wo, 
                                                   const DifferentialGeometry &dg, 
                                                   const vec3f &wi)  
@@ -68,7 +68,7 @@ inline vec3f varying_DielectricTransmission__eval(const uniform BRDF* uniform _t
   return make_vec3f(0.f);
 }
 
-inline vec3f varying_DielectricTransmission__sample(const uniform BRDF* uniform _this,
+inline vec3f varying_DielectricTransmission__sample(const uniform BSDF* uniform _this,
                                                     const vec3f &wo, 
                                                     const DifferentialGeometry &dg,
                                                     Sample3f &wi, 
@@ -83,7 +83,7 @@ inline vec3f varying_DielectricTransmission__sample(const uniform BRDF* uniform 
 inline void DielectricTransmission__Constructor(varying DielectricTransmission* uniform this,
                                                 const varying float etai, const varying float etat)
 {
-  BRDF__Constructor(&this->base,SPECULAR_TRANSMISSION,
+  BSDF_Constructor(&this->base,SPECULAR_TRANSMISSION,
                     varying_DielectricTransmission__eval,varying_DielectricTransmission__sample);
   this->eta = etai*rcp(etat);
 }
@@ -92,7 +92,7 @@ inline void DielectricTransmission__Constructor(varying DielectricTransmission* 
 
 struct ThinDielectricTransmission
 {
-  uniform BRDF base;
+  uniform BSDF base;
 
   /*! Relative refraction index etai/etat of both media. */
   float eta;
@@ -107,7 +107,7 @@ struct ThinDielectricTransmission
 ///////////////////////////////////////////////////////////////////////////////
 // uniform ThinDielectricReflection
 
-inline vec3f uniform_ThinDielectricTransmission__eval(const uniform BRDF* uniform _this,
+inline vec3f uniform_ThinDielectricTransmission__eval(const uniform BSDF* uniform _this,
                                                       const vec3f &wo, 
                                                       const DifferentialGeometry &dg, 
                                                       const vec3f &wi)  
@@ -115,7 +115,7 @@ inline vec3f uniform_ThinDielectricTransmission__eval(const uniform BRDF* unifor
   return make_vec3f(0.f);
 }
 
-inline vec3f uniform_ThinDielectricTransmission__sample(const uniform BRDF* uniform _this,
+inline vec3f uniform_ThinDielectricTransmission__sample(const uniform BSDF* uniform _this,
                                                         const vec3f &wo, 
                                                         const DifferentialGeometry &dg,
                                                         Sample3f &wi, 
@@ -132,7 +132,7 @@ inline vec3f uniform_ThinDielectricTransmission__sample(const uniform BRDF* unif
 inline void ThinDielectricTransmission__Constructor(uniform ThinDielectricTransmission* uniform this,
                                                     const uniform float etai, const uniform float etat, const uniform vec3f T, const uniform float thickness)
 {
-  BRDF__Constructor(&this->base,SPECULAR_TRANSMISSION,uniform_ThinDielectricTransmission__eval,uniform_ThinDielectricTransmission__sample);
+  BSDF_Constructor(&this->base,SPECULAR_TRANSMISSION,uniform_ThinDielectricTransmission__eval,uniform_ThinDielectricTransmission__sample);
   this->eta = etai*rcp(etat);
   //this->logT = make_vec3f(log(T.x),log(T.y),log(T.z)); // FIXME: ISPC bug __log_uniform_float is undefined on KNC
   this->logT = make_vec3f(reduce_min(log((varying float)T.x)),
@@ -144,7 +144,7 @@ inline void ThinDielectricTransmission__Constructor(uniform ThinDielectricTransm
 ///////////////////////////////////////////////////////////////////////////////
 // varying ThinDielectricReflection
 
-inline vec3f varying_ThinDielectricTransmission__eval(const uniform BRDF* uniform _this,
+inline vec3f varying_ThinDielectricTransmission__eval(const uniform BSDF* uniform _this,
                                                       const vec3f &wo, 
                                                       const DifferentialGeometry &dg, 
                                                       const vec3f &wi)  
@@ -152,7 +152,7 @@ inline vec3f varying_ThinDielectricTransmission__eval(const uniform BRDF* unifor
   return make_vec3f(0.f);
 }
 
-inline vec3f varying_ThinDielectricTransmission__sample(const uniform BRDF* uniform _this,
+inline vec3f varying_ThinDielectricTransmission__sample(const uniform BSDF* uniform _this,
                                                         const vec3f &wo, 
                                                         const DifferentialGeometry &dg,
                                                         Sample3f &wi, 
@@ -169,7 +169,7 @@ inline vec3f varying_ThinDielectricTransmission__sample(const uniform BRDF* unif
 inline void ThinDielectricTransmission__Constructor(varying ThinDielectricTransmission* uniform this,
                                                     const varying float etai, const varying float etat, const varying vec3f T, const varying float thickness)
 {
-  BRDF__Constructor(&this->base,SPECULAR_TRANSMISSION,varying_ThinDielectricTransmission__eval,varying_ThinDielectricTransmission__sample);
+  BSDF_Constructor(&this->base,SPECULAR_TRANSMISSION,varying_ThinDielectricTransmission__eval,varying_ThinDielectricTransmission__sample);
   this->eta = etai*rcp(etat);
   this->logT = make_vec3f(log(T.x),log(T.y),log(T.z));
   this->thickness = thickness;

@@ -21,12 +21,12 @@
 #include "ospray/common/Ray.ih"
 #include "Medium.ih"
 #include "../samplers/Sample.ih"
-#include "../brdfs/BRDF.ih"
-#include "../brdfs/CompositedBRDF.ih"
+#include "../bsdfs/BSDF.ih"
+#include "../bsdfs/CompositedBSDF.ih"
 
 struct PathTraceMaterial;
 
-/*! Shades a location and and returns a composited BRDF as well as a bumped normal. */
+/*! Shades a location and and returns a composited BSDF as well as a bumped normal. */
 typedef void (*PathTraceMaterial__shade)(const uniform PathTraceMaterial *uniform this,
                                          /*! The ray arriving at the point to shade. */
                                          const Ray&                  ray,
@@ -34,8 +34,8 @@ typedef void (*PathTraceMaterial__shade)(const uniform PathTraceMaterial *unifor
                                          const Medium&               currentMedium,
                                          /*! The point to shade on a surface. */
                                          const DifferentialGeometry& dg,
-                                         /*! Container for generated BRDF components. */
-                                         uniform CompositedBRDF&     brdfs,
+                                         /*! Container for generated BSDF components. */
+                                         uniform CompositedBSDF&     brdfs,
                                          /*! In: shading normal.
                                           *  Out: potentially modified normal (e.g. by a normal or bump texture). */
                                          vec3f&                      Ns);

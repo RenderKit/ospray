@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "material.isph"
-#include "../brdfs/reflection.isph"
+#include "../bsdfs/reflection.isph"
 
 struct Mirror
 {
@@ -30,11 +30,11 @@ void Mirror__shade(const uniform Material *uniform _this,
                   const Ray&                  ray,            
                   const Medium&               currentMedium,  
                   const DifferentialGeometry& dg,             
-                  uniform CompositedBRDF&     brdfs,
+                  uniform CompositedBSDF&     brdfs,
                   vec3f& Ns)
 {
   uniform const Mirror *uniform this = (uniform const Mirror *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->reflection.base);
+  CompositedBSDF_add(&brdfs,&this->reflection.base);
 }
 
 inline void Mirror__Constructor(uniform Mirror *uniform this,

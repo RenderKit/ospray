@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/Minneart.ih"
-#include "../brdfs/Velvety.ih"
+#include "../bsdfs/Minneart.ih"
+#include "../bsdfs/Velvety.ih"
 
 struct Velvet 
 {
@@ -36,7 +36,7 @@ struct Velvet
   /*! Fall-off of horizon scattering. */
   float horizonScatteringFallOff;
   
-  // the two BRDFs
+  // the two BSDFs
   Minneart minneart;
   Velvety  velvety;
 };
@@ -48,12 +48,12 @@ void Velvet__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,            
                   const Medium&               currentMedium,  
                   const DifferentialGeometry& dg,             
-                  uniform CompositedBRDF&     brdfs,
+                  uniform CompositedBSDF&     brdfs,
                   vec3f& Ns)
 {
   const uniform Velvet* uniform this = (const uniform Velvet* uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->minneart.base);
-  CompositedBRDF__add(&brdfs,&this->velvety.base);
+  CompositedBSDF_add(&brdfs,&this->minneart.base);
+  CompositedBSDF_add(&brdfs,&this->velvety.base);
 }
 
 void Velvet__Constructor(uniform Velvet *uniform this,

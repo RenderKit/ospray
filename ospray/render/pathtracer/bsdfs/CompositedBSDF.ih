@@ -16,84 +16,84 @@
 
 #pragma once
 
-#include "BRDF.ih"
+#include "BSDF.ih"
 
 #define maxComponents 64
 #define maxBytes (16*1024)
 #define alignment 64
 
-struct CompositedBRDF
+struct CompositedBSDF
 {
   /*! Data storage. Has to be at the beginning of the class due to alignment. */
-  uniform int8 data[maxBytes];           //!< Storage for BRDF components
+  uniform int8 data[maxBytes];           //!< Storage for BSDF components
   uint32 numBytes;                         //!< Number of bytes occupied in storage
-  
-  /*! BRDF list */
-  varying bool active[maxComponents];
-  const uniform BRDF* brdfs[maxComponents];   //!< pointers to BRDF components
-  uniform uint32 numBrdfs;                //!< number of stored BRDF components
 
-  varying uint32 brdfTypes;              //!< combined BRDF type
+  /*! BSDF list */
+  varying bool active[maxComponents];
+  const uniform BSDF* brdfs[maxComponents];   //!< pointers to BSDF components
+  uniform uint32 numBrdfs;                //!< number of stored BSDF components
+
+  varying uint32 types;              //!< combined BSDF type
 };
 
-inline void CompositedBRDF__Constructor(uniform CompositedBRDF* uniform this) 
+inline void CompositedBSDF_Constructor(uniform CompositedBSDF* uniform this)
 {
   this->numBrdfs = 0;
   this->numBytes = 0;
-  this->brdfTypes = 0;
+  this->types = 0;
 }
 
-/*! Allocates aligned data for new BRDF component. */
-inline void* uniform CompositedBRDF__alloc(uniform CompositedBRDF* uniform this, uniform uint32 bytes)
+/*! Allocates aligned data for new BSDF component. */
+inline void* uniform CompositedBSDF_alloc(uniform CompositedBSDF* uniform this, uniform uint32 bytes)
 {
   void* uniform ptr = &this->data[this->numBytes];
   this->numBytes = (this->numBytes+bytes+alignment-1)&((uint32)(-alignment));
   if (this->numBytes>maxBytes) return NULL;
-    //  throw std::runtime_error("out of memory for BRDF allocation");
+    //  throw std::runtime_error("out of memory for BSDF allocation");
   return ptr;
 }
 
-/*! Adds a new BRDF to the list of BRDFs */
-inline void CompositedBRDF__add(uniform CompositedBRDF* uniform this,
-                                const uniform BRDF* uniform brdf)
+/*! Adds a new BSDF to the list of BSDFs */
+inline void CompositedBSDF_add(uniform CompositedBSDF* uniform this,
+                                const uniform BSDF* uniform brdf)
 {
   assert(this->numBrdfs < maxComponents);
   if (this->numBrdfs < maxComponents) {
-    unmasked { 
-      this->active[this->numBrdfs] = false; 
+    unmasked {
+      this->active[this->numBrdfs] = false;
     }
     this->active[this->numBrdfs] = true;
     this->brdfs[this->numBrdfs] = brdf;
-    this->brdfTypes |= brdf->brdfType;
+    this->types |= brdf->type;
     this->numBrdfs++;
   }
 }
 
-#define COMPOSITED_BRDF_ADD(brdfs,Material,...) {                       \
-  varying Material* uniform ptr = (varying Material* uniform) CompositedBRDF__alloc(&brdfs,sizeof(Material)); \
+#define COMPOSITED_BSDF_ADD(brdfs,Material,...) {                       \
+  varying Material* uniform ptr = (varying Material* uniform) CompositedBSDF_alloc(&brdfs,sizeof(Material)); \
   if (ptr) {                                                            \
     Material##__Constructor(ptr,__VA_ARGS__);                             \
-    CompositedBRDF__add(&brdfs,&ptr->base);                               \
+    CompositedBSDF_add(&brdfs,&ptr->base);                               \
   }                                              \
 }
 
-/*! Evaluates all BRDF components. */
-inline vec3f CompositedBRDF__eval(const uniform CompositedBRDF* uniform this,
-                                  const vec3f& wo, const DifferentialGeometry& dg, const vec3f& wi, const uniform BRDFType type)
+/*! Evaluates all BSDF components. */
+inline vec3f CompositedBSDF_eval(const uniform CompositedBSDF* uniform this,
+                                  const vec3f& wo, const DifferentialGeometry& dg, const vec3f& wi, const uniform BSDFType type)
 {
   vec3f c = make_vec3f(0.0f);
   for (uniform int i=0; i<this->numBrdfs; i++) {
 #if 1
     if (this->active[i])
-      if (this->brdfs[i]->brdfType & type) {
-        const uniform BRDF* uniform brdf = this->brdfs[i];
+      if (this->brdfs[i]->type & type) {
+        const uniform BSDF* uniform brdf = this->brdfs[i];
         c = add(c, brdf->eval(brdf,wo,dg,wi));
       }
 #else
     if (!this->active[i]) continue;
 
-    if (this->brdfs[i]->brdfType & type) {
-      const uniform BRDF* uniform brdf = this->brdfs[i];
+    if (this->brdfs[i]->type & type) {
+      const uniform BSDF* uniform brdf = this->brdfs[i];
       c = add(c, brdf->eval(brdf,wo,dg,wi));
     }
 #endif
@@ -102,35 +102,35 @@ inline vec3f CompositedBRDF__eval(const uniform CompositedBRDF* uniform this,
   return c;
 }
 
-/*! Sample the composited BRDF. We are evaluating all BRDF
+/*! Sample the composited BSDF. We are evaluating all BSDF
  *  components and then importance sampling one of them. */
-inline vec3f CompositedBRDF__sample(const uniform CompositedBRDF* uniform this,
+inline vec3f CompositedBSDF_sample(const uniform CompositedBSDF* uniform this,
                                     const vec3f               & wo,          /*!< Direction light is reflected into.                    */
-                                    const DifferentialGeometry& dg,          /*!< Shade location on a surface to sample the BRDF at.    */
+                                    const DifferentialGeometry& dg,          /*!< Shade location on a surface to sample the BSDF at.    */
                                     Sample3f                  & wi_o,        /*!< Returns sampled incoming light direction and PDF.     */
-                                    BRDFType                  & type_o,      /*!< Returns the type flags of samples component.          */
-                                    const vec2f               & s,           /*!< Sample locations for BRDF are provided by the caller. */
-                                    float                       ss,          /*!< Sample to select the BRDF component.                  */
-                                    const uniform BRDFType    & type)        /*!< The type of BRDF components to consider.              */
+                                    BSDFType                  & type_o,      /*!< Returns the type flags of samples component.          */
+                                    const vec2f               & s,           /*!< Sample locations for BSDF are provided by the caller. */
+                                    float                       ss,          /*!< Sample to select the BSDF component.                  */
+                                    const uniform BSDFType    & type)        /*!< The type of BSDF components to consider.              */
 {
 #if 1
   /*! special case for one component */
-  if (this->numBrdfs == 1) 
+  if (this->numBrdfs == 1)
   {
-    if (this->active[0] & (bool)(this->brdfs[0]->brdfType & type)) {
+    if (this->active[0] & (bool)(this->brdfs[0]->type & type)) {
       const vec3f c = this->brdfs[0]->sample(this->brdfs[0], wo, dg, wi_o, s);
       if (eq(c,make_vec3f(0.0f)) | wi_o.pdf <= 0.0f) return make_vec3f(0.0f);
-      type_o = this->brdfs[0]->brdfType;
+      type_o = this->brdfs[0]->type;
       return c;
     }
     return make_vec3f(0.0f);
   }
 
   /*! special case for two components */
-  else if (this->numBrdfs == 2) 
+  else if (this->numBrdfs == 2)
   {
-    const bool val0 = this->active[0] & (bool)(this->brdfs[0]->brdfType & type);
-    const bool val1 = this->active[1] & (bool)(this->brdfs[1]->brdfType & type);
+    const bool val0 = this->active[0] & (bool)(this->brdfs[0]->type & type);
+    const bool val1 = this->active[1] & (bool)(this->brdfs[1]->type & type);
     if (!val0 & !val1)
       return make_vec3f(0.0f);
 
@@ -144,35 +144,35 @@ inline vec3f CompositedBRDF__sample(const uniform CompositedBRDF* uniform this,
       const float fr = rcp(f0+f1);
       const float n0 = f0*fr;// /(f0+f1);
       const float n1 = f1*fr;// /(f0+f1);
-      if (ss < n0) { wi_o = make_Sample3f(wi0.v,wi0.pdf*n0); type_o = this->brdfs[0]->brdfType; return c0; }
-      else         { wi_o = make_Sample3f(wi1.v,wi1.pdf*n1); type_o = this->brdfs[1]->brdfType; return c1; }
+      if (ss < n0) { wi_o = make_Sample3f(wi0.v,wi0.pdf*n0); type_o = this->brdfs[0]->type; return c0; }
+      else         { wi_o = make_Sample3f(wi1.v,wi1.pdf*n1); type_o = this->brdfs[1]->type; return c1; }
     }
-    else if (valid0) { wi_o = wi0; type_o = this->brdfs[0]->brdfType; return c0; }
-    else if (valid1) { wi_o = wi1; type_o = this->brdfs[1]->brdfType; return c1; }
+    else if (valid0) { wi_o = wi0; type_o = this->brdfs[0]->type; return c0; }
+    else if (valid1) { wi_o = wi1; type_o = this->brdfs[1]->type; return c1; }
     else { return make_vec3f(0.0f); }
   }
 
   /*! fall back for more than 2 components */
-  else 
+  else
 #endif
   {
-    /*! probability distribution to sample between BRDF components */
+    /*! probability distribution to sample between BSDF components */
     float f[maxComponents];
     float sum = 0.0f;
-    
-    /*! stores sampling of each BRDF component */
+
+    /*! stores sampling of each BSDF component */
     vec3f colors[maxComponents];
     Sample3f samples[maxComponents];
-    BRDFType types[maxComponents];
+    BSDFType types[maxComponents];
     int num = 0;
 
-    
-    /*! sample each BRDF component and build probability distribution */
+
+    /*! sample each BSDF component and build probability distribution */
     for (uniform int i = 0; i<this->numBrdfs; i++) {
       if (!this->active[i]) continue;
-      if (!(this->brdfs[i]->brdfType & type)) continue;
-      const uniform BRDF* uniform brdf = this->brdfs[i];
-      Sample3f wi; 
+      if (!(this->brdfs[i]->type & type)) continue;
+      const uniform BSDF* uniform brdf = this->brdfs[i];
+      Sample3f wi;
       vec3f c = brdf->sample(brdf, wo, dg, wi, s);
       if (eq(c,make_vec3f(0.0f)) | wi.pdf <= 0.0f) continue;
 
@@ -180,18 +180,18 @@ inline vec3f CompositedBRDF__sample(const uniform CompositedBRDF* uniform this,
 
       colors[num] = c;
       samples[num] = wi;
-      types[num] = this->brdfs[i]->brdfType;
+      types[num] = this->brdfs[i]->type;
       num++;
     }
-    
+
     /*! exit if we did not find any valid component */
-    if (num == 0) 
+    if (num == 0)
       return make_vec3f(0.0f);
-    
+
     /*! normalize distribution */
     const float invSum = rcp(sum);
     for (uniform int i = 0; i<num; i++) f[i] *= invSum; ///= sum;
-    
+
     /*! compute accumulated distribution */
     float d[maxComponents];
     d[0] = f[0];
@@ -199,7 +199,7 @@ inline vec3f CompositedBRDF__sample(const uniform CompositedBRDF* uniform this,
       d[i] = d[i-1] + f[i];
     }
     d[num-1] = 1.0f;
-    
+
 #if 0
     int found = 0;
     for (uniform int i=0;i<num-1;i++)
@@ -211,7 +211,7 @@ inline vec3f CompositedBRDF__sample(const uniform CompositedBRDF* uniform this,
 #else
     /*! sample distribution */
     int i = 0; while (i<num-1 & ss > d[i]) i++;
-    
+
     /*! return */
     wi_o = make_Sample3f(samples[i].v,samples[i].pdf*f[i]);
     type_o = types[i];

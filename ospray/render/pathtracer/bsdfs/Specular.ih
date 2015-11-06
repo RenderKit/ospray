@@ -16,12 +16,12 @@
 
 #pragma once
 
-#include "BRDF.ih"
+#include "BSDF.ih"
 #include "optics.ih"
 
 struct Specular
 {
-  uniform BRDF base;
+  uniform BSDF base;
 
   /*! The reflectivity parameter. The range is [0,1] where 0 means
    *  no reflection at all, and 1 means full reflection. */
@@ -33,7 +33,7 @@ struct Specular
   float exp;
 };
 
-inline vec3f Specular__eval(const uniform BRDF* uniform _this,
+inline vec3f Specular__eval(const uniform BSDF* uniform _this,
                             const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
 {
   const varying Specular* uniform this = (const varying Specular* uniform) _this;
@@ -42,7 +42,7 @@ inline vec3f Specular__eval(const uniform BRDF* uniform _this,
   return mul(this->R, (this->exp+2) * one_over_two_pi * pow(dot(refl.v,wi),this->exp) * clamp(dot(wi,dg.Ns)));
 }
 
-inline vec3f Specular__sample(const uniform BRDF* uniform _this,
+inline vec3f Specular__sample(const uniform BSDF* uniform _this,
                                 const vec3f &wo, 
                                 const DifferentialGeometry &dg, 
                                 Sample3f &wi, 
@@ -60,7 +60,7 @@ inline void Specular__Constructor(varying Specular* uniform this,
                                   const varying vec3f R,
                                   const varying float exp_)
 {
-  BRDF__Constructor(&this->base,GLOSSY_REFLECTION,Specular__eval,Specular__sample);
+  BSDF_Constructor(&this->base,GLOSSY_REFLECTION,Specular__eval,Specular__sample);
   this->R = R;
   this->exp = exp_;
 }

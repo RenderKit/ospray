@@ -15,33 +15,33 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/Lambertian.ih"
+#include "../bsdfs/Lambert.ih"
 
 struct Matte
 {
   PathTraceMaterial base;
-  Lambertian lambertian;
+  Lambert lambertian;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
 void Matte__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,            
-                  const Medium&               currentMedium,  
-                  const DifferentialGeometry& dg,             
-                  uniform CompositedBRDF&     brdfs,
+                  const Ray&                  ray,
+                  const Medium&               currentMedium,
+                  const DifferentialGeometry& dg,
+                  uniform CompositedBSDF&     brdfs,
                   vec3f& Ns)
 {
   uniform const Matte *uniform this = (uniform const Matte *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->lambertian.base);
+  CompositedBSDF_add(&brdfs,&this->lambertian.base);
 }
 
 inline void Matte__Constructor(uniform Matte *uniform this,
                                const uniform vec3f& reflectance)
 {
   PathTraceMaterial__Constructor(&this->base, Matte__shade, NULL);
-  this->lambertian = make_Lambertian(reflectance);
+  this->lambertian = make_Lambert(reflectance);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

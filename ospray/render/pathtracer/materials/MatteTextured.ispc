@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "Material.isph"
-#include "brdfs/Lambertian.isph"
+#include "brdfs/Lambert.isph"
 #include "textures/Texture.isph"
 
 struct MatteTextured
@@ -30,14 +30,14 @@ struct MatteTextured
 // Implementation
 
 void MatteTextured__shade(const uniform Material *uniform _this,
-                          const Ray&                  ray,    
-                          const Medium&               currentMedium, 
-                          const DifferentialGeometry& dg,            
-                          uniform CompositedBRDF&     brdfs,
+                          const Ray&                  ray,
+                          const Medium&               currentMedium,
+                          const DifferentialGeometry& dg,
+                          uniform CompositedBSDF&     brdfs,
                           vec3f& Ns)
 {
   const uniform MatteTextured* uniform this = (const uniform MatteTextured* uniform) _this;
-  COMPOSITED_BRDF_ADD(brdfs,Lambertian,
+  COMPOSITED_BSDF_ADD(brdfs,Lambert,
                       this->Kd->get(this->Kd,add(mul(this->ds,dg.st),this->s0)));
 }
 

@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/DielectricReflection.ih"
-#include "../brdfs/DielectricTransmission.ih"
+#include "../bsdfs/DielectricReflection.ih"
+#include "../bsdfs/DielectricTransmission.ih"
 
 struct ThinDielectric
 {
@@ -29,15 +29,15 @@ struct ThinDielectric
 // Implementation
 
 void ThinDielectric__shade(const uniform PathTraceMaterial *uniform _this,
-                       const Ray&                  ray,            
-                       const Medium&               currentMedium,  
-                       const DifferentialGeometry& dg,             
-                       uniform CompositedBRDF&     brdfs,
+                       const Ray&                  ray,
+                       const Medium&               currentMedium,
+                       const DifferentialGeometry& dg,
+                       uniform CompositedBSDF&     brdfs,
                        vec3f& Ns)
 {
   uniform const ThinDielectric *uniform this = (uniform const ThinDielectric *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->reflection.base);
-  CompositedBRDF__add(&brdfs,&this->transmission.base);
+  CompositedBSDF_add(&brdfs,&this->reflection.base);
+  CompositedBSDF_add(&brdfs,&this->transmission.base);
 }
 
 void ThinDielectric__Constructor(uniform ThinDielectric* uniform this,
@@ -55,7 +55,7 @@ void ThinDielectric__Constructor(uniform ThinDielectric* uniform this,
 
 export void* uniform PathTracer_ThinDielectric_create(const uniform vec3f& transmission,
                                                       const uniform float eta,
-                                                      const uniform float thickness) 
+                                                      const uniform float thickness)
 {
   uniform ThinDielectric *uniform this = uniform new uniform ThinDielectric;
   ThinDielectric__Constructor(this,transmission,eta,thickness);

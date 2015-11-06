@@ -1,0 +1,53 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#define maxSize (16*1024)
+#define alignment 64
+
+struct ShadingContext
+{
+  /*! Data storage. Has to be at the beginning of the class due to alignment. */
+  uniform int8 data[maxBytes]; //!< Storage for BSDFs
+  uniform uint32 size;         //!< Number of bytes occupied in storage
+
+  varying int dummy; // FIXME: needed to force correct alignment
+};
+
+inline void ShadingContext_Constructor(uniform ShadingContext* uniform self)
+{
+  self->size = 0;
+}
+
+/*! Allocates aligned data. */
+inline void* uniform ShadingContext_alloc(uniform ShadingContext* uniform self, uniform uint32 size)
+{
+  //print("ShadingContext_alloc: %, %\n", this->size, size);
+  void* uniform ptr = &self->data[self->size];
+  self->size = (self->size + size + alignment - 1) & ((uint32)(-alignment));
+  if (self->size > size) return 0;
+    //throw std::runtime_error("out of memory for ShadingContext allocation");
+  return ptr;
+}
+
+#define ShadingContext_makeBSDF(self,ptr,Type,...) {                       \
+  varying Type* uniform _bsdf = (varying Type* uniform)ShadingContext_alloc(self,sizeof(Type)); \
+  if (_bsdf) {                                                             \
+    Type##_Constructor(_bsdf,__VA_ARGS__);                                 \
+  }                                                                        \
+  ptr = &_bsdf->base;                                                      \
+}

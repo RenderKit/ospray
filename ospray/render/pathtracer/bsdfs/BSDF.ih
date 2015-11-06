@@ -27,16 +27,16 @@
 #define SPECULAR_TRANSMISSION (1<<5)  /*!< perfect specular light transmission */
 
 /*! diffuse reflections and transmissions          */
-#define DIFFUSE      (DIFFUSE_REFLECTION   | DIFFUSE_TRANSMISSION) 
+#define DIFFUSE      (DIFFUSE_REFLECTION   | DIFFUSE_TRANSMISSION)
 
 /*! glossy reflections and transmissions           */
-#define GLOSSY       (GLOSSY_REFLECTION    | GLOSSY_TRANSMISSION) 
+#define GLOSSY       (GLOSSY_REFLECTION    | GLOSSY_TRANSMISSION)
 
 /*! perfect specular reflections and transmissions */
-#define SPECULAR     (SPECULAR_REFLECTION  | SPECULAR_TRANSMISSION) 
+#define SPECULAR     (SPECULAR_REFLECTION  | SPECULAR_TRANSMISSION)
 
 /*! all possible reflections   */
-#define REFLECTION   (DIFFUSE_REFLECTION   | GLOSSY_REFLECTION   | SPECULAR_REFLECTION) 
+#define REFLECTION   (DIFFUSE_REFLECTION   | GLOSSY_REFLECTION   | SPECULAR_REFLECTION)
 
 /*! all possible transmissions */
 #define TRANSMISSION (DIFFUSE_TRANSMISSION | GLOSSY_TRANSMISSION|SPECULAR_TRANSMISSION)
@@ -47,29 +47,29 @@
 /*! all components set */
 #define ALL          (REFLECTION | TRANSMISSION)
 
-struct BRDF;
+struct BSDF;
 
-typedef uint32 BRDFType;
+typedef uint32 BSDFType;
 
-typedef vec3f (*BRDF__EvalFunc)(const uniform BRDF* uniform this, 
+typedef vec3f (*BSDF_EvalFunc)(const uniform BSDF* uniform this,
                                 const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi);
 
-typedef vec3f (*BRDF__SampleFunc)(const uniform BRDF* uniform this,
+typedef vec3f (*BSDF_SampleFunc)(const uniform BSDF* uniform this,
                                   const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s);
 
-struct BRDF 
+struct BSDF
 {
-  uint32 brdfType;
-  BRDF__EvalFunc eval;
-  BRDF__SampleFunc sample;
+  BSDFType type;
+  BSDF_EvalFunc eval;
+  BSDF_SampleFunc sample;
 };
 
-inline void BRDF__Constructor(uniform BRDF* uniform this,
-                              const uniform uint32 brdfType,
-                              const uniform BRDF__EvalFunc eval_,
-                              const uniform BRDF__SampleFunc sample_)
+inline void BSDF_Constructor(uniform BSDF* uniform this,
+                              const uniform BSDFType type,
+                              const uniform BSDF_EvalFunc eval_,
+                              const uniform BSDF_SampleFunc sample_)
 {
-  this->brdfType = brdfType;
+  this->type = type;
   this->eval = eval_;
   this->sample = sample_;
 }

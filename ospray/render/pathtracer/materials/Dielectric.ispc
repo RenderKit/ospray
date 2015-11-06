@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/DielectricReflection.ih"
-#include "../brdfs/DielectricTransmission.ih"
+#include "../bsdfs/DielectricReflection.ih"
+#include "../bsdfs/DielectricTransmission.ih"
 
 struct Dielectric
 {
@@ -33,32 +33,32 @@ struct Dielectric
 // Implementation
 
 void Dielectric__shade(const uniform PathTraceMaterial *uniform _this,
-                       const Ray&                  ray,      
+                       const Ray&                  ray,
                        const Medium&               currentMedium,
-                       const DifferentialGeometry& dg,           
-                       uniform CompositedBRDF&     brdfs,
+                       const DifferentialGeometry& dg,
+                       uniform CompositedBSDF&     brdfs,
                        vec3f& Ns)
 {
   uniform const Dielectric *uniform this = (uniform const Dielectric *uniform)_this;
 
   /*! the ray transitions from outside to inside */
   if (eq(currentMedium,this->mediumOutside)) {
-    CompositedBRDF__add(&brdfs,&this->reflection_oi.base);
-    CompositedBRDF__add(&brdfs,&this->transmission_oi.base);
+    CompositedBSDF_add(&brdfs,&this->reflection_oi.base);
+    CompositedBSDF_add(&brdfs,&this->transmission_oi.base);
   }
-  
+
   /*! the ray transitions from inside to outside */
   else {
-    CompositedBRDF__add(&brdfs,&this->reflection_io.base);
-    CompositedBRDF__add(&brdfs,&this->transmission_io.base);
+    CompositedBSDF_add(&brdfs,&this->reflection_io.base);
+    CompositedBSDF_add(&brdfs,&this->transmission_io.base);
   }
 }
 
 void Dielectric__selectNextMedium(const uniform PathTraceMaterial *uniform _this,
-                                  varying Medium &lastMedium) 
+                                  varying Medium &lastMedium)
 {
   const uniform Dielectric *uniform this = (const uniform Dielectric *uniform)_this;
-  
+
   if (eq(lastMedium,this->mediumOutside)) lastMedium = this->mediumInside;
   else                                    lastMedium = this->mediumOutside;
 }
@@ -67,7 +67,7 @@ void Dielectric__Constructor(uniform Dielectric* uniform this,
                              const uniform float etaOutside,
                              const uniform vec3f& transmissionOutside,
                              const uniform float etaInside,
-                             const uniform vec3f& transmissionInside) 
+                             const uniform vec3f& transmissionInside)
 {
   PathTraceMaterial__Constructor(&this->base, Dielectric__shade, Dielectric__selectNextMedium);
   this->mediumOutside.eta          = etaOutside;
@@ -86,7 +86,7 @@ void Dielectric__Constructor(uniform Dielectric* uniform this,
 export void* uniform PathTracer_Dielectric_create(const uniform float etaOutside,
                                      const uniform vec3f& transmissionOutside,
                                      const uniform float etaInside,
-                                     const uniform vec3f& transmissionInside) 
+                                     const uniform vec3f& transmissionInside)
 {
   uniform Dielectric *uniform mat = uniform new uniform Dielectric;
   Dielectric__Constructor(mat,etaOutside,transmissionOutside,etaInside,transmissionInside);

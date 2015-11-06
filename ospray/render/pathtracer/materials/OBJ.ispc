@@ -16,9 +16,9 @@
 
 #include "./Material.ih"
 #include "ospray/texture/Texture2D.ih"
-#include "../brdfs/Transmission.ih"
-#include "../brdfs/Lambertian.ih"
-#include "../brdfs/Specular.ih"
+#include "../bsdfs/Transmission.ih"
+#include "../bsdfs/Lambert.ih"
+#include "../bsdfs/Specular.ih"
 
 struct OBJ
 {
@@ -41,7 +41,7 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
                 const Ray&                  ray,
                 const Medium&               currentMedium,
                 const DifferentialGeometry& dg,
-                uniform CompositedBRDF&     brdfs,
+                uniform CompositedBSDF&     brdfs,
                 vec3f& shadingNormal)
 {
   uniform const OBJ* uniform self = (uniform const OBJ* uniform)_self;
@@ -58,17 +58,17 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
     d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
-  if (ne(Kd,make_vec3f(0.0f))) 
-    COMPOSITED_BRDF_ADD(brdfs,Lambertian,Kd);
+  if (ne(Kd,make_vec3f(0.0f)))
+    COMPOSITED_BSDF_ADD(brdfs,Lambert,Kd);
 
   /*! transmission component */
-  if (d < 1.0f) 
-    COMPOSITED_BRDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
+  if (d < 1.0f)
+    COMPOSITED_BSDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
 
   /*! specular component */
   float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);
   vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg.st, make_vec3f(1.f));
-  if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BRDF_ADD(brdfs,Specular,Ks,Ns);
+  if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BSDF_ADD(brdfs,Specular,Ks,Ns);
 
   /*! normal map */
   if (self->map_Bump) {

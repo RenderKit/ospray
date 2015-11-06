@@ -15,15 +15,15 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/DielectricLayerLambertian.ih"
-#include "../brdfs/DielectricReflection.ih"
-#include "../brdfs/MicrofacetPlastic.ih"
+#include "../bsdfs/DielectricLayerLambert.ih"
+#include "../bsdfs/DielectricReflection.ih"
+#include "../bsdfs/MicrofacetPlastic.ih"
 
 struct Plastic
 {
   PathTraceMaterial base;
   float roughness;
-  DielectricLayerLambertian substrate;
+  DielectricLayerLambert substrate;
   DielectricReflection reflection;
   MicrofacetPlastic microfacet;
 };
@@ -32,16 +32,16 @@ struct Plastic
 // Implementation
 
 void Plastic__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,             
-                  const Medium&               currentMedium,   
-                  const DifferentialGeometry& dg,              
-                  uniform CompositedBRDF&     brdfs,
+                  const Ray&                  ray,
+                  const Medium&               currentMedium,
+                  const DifferentialGeometry& dg,
+                  uniform CompositedBSDF&     brdfs,
                   vec3f& Ns)
 {
   const uniform Plastic* uniform this = (const uniform Plastic* uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->substrate.base);
-  if (this->roughness == 0.0f)  CompositedBRDF__add(&brdfs,&this->reflection.base);
-  else                          CompositedBRDF__add(&brdfs,&this->microfacet.base);
+  CompositedBSDF_add(&brdfs,&this->substrate.base);
+  if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->reflection.base);
+  else                          CompositedBSDF_add(&brdfs,&this->microfacet.base);
 }
 
 void Plastic__Constructor(uniform Plastic *uniform this,
@@ -52,14 +52,14 @@ void Plastic__Constructor(uniform Plastic *uniform this,
   PathTraceMaterial__Constructor(&this->base, Plastic__shade, NULL);
   this->roughness = roughness;
 
-  DielectricLayerLambertian__Constructor(&this->substrate,
-                                         make_vec3f(1.0f), 1.0f, eta, 
-                                         make_Lambertian(pigmentColor));
+  DielectricLayerLambert__Constructor(&this->substrate,
+                                         make_vec3f(1.0f), 1.0f, eta,
+                                         make_Lambert(pigmentColor));
 
   DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
 
   MicrofacetPlastic__Constructor(&this->microfacet,make_vec3f(1.0f),
-                                 make_FresnelDielectric(1.0f,eta), 
+                                 make_FresnelDielectric(1.0f,eta),
                                  make_PowerCosineDistribution(rcp(roughness)));
 }
 
