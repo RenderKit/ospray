@@ -19,9 +19,11 @@
 #include "ospray/common/Data.h"
 #include "ospray/common/Core.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
+
+#include "RaycastVolumeMaterial.h"
+
 // ispc exports
 #include "RaycastVolumeRenderer_ispc.h"
-#include "RaycastVolumeRendererMaterial_ispc.h"
 #if EXP_DATA_PARALLEL
 # include "ospray/mpi/DistributedFrameBuffer.h"
 # include "ospray/volume/DataDistributedBlockedVolume.h"
@@ -32,30 +34,21 @@
 
 namespace ospray {
 
-  RaycastVolumeRenderer::Material::Material()
+  Material *RaycastVolumeRenderer::createMaterial(const char *type)
   {
-    ispcEquivalent = ispc::RaycastVolumeRendererMaterial_create(this);
-  }
-
-  void RaycastVolumeRenderer::Material::commit()
-  {
-    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(1.0f))));
-    volume = (Volume *)getParamObject("volume", NULL);
-
-    ispc::RaycastVolumeRendererMaterial_set(getIE(), (const ispc::vec3f&)Kd, 
-                                            volume ? volume->getIE() : NULL);
+    return new RaycastVolumeMaterial;
   }
 
 #if EXP_DATA_PARALLEL
 
   struct CacheForBlockTiles {
-    CacheForBlockTiles(size_t numBlocks) 
+    CacheForBlockTiles(size_t numBlocks)
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
-    { 
-      for (int i=0;i<numBlocks;i++) blockTile[i] = NULL; 
+    {
+      for (int i=0;i<numBlocks;i++) blockTile[i] = NULL;
     }
 
-    Tile *allocTile() 
+    Tile *allocTile()
     {
       Tile *tile = new Tile;
       for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) tile->r[i] = 0.f;
@@ -66,13 +59,13 @@ namespace ospray {
       return tile;
     }
 
-    ~CacheForBlockTiles() 
-    { 
+    ~CacheForBlockTiles()
+    {
       for (int i=0;i<numBlocks;i++)
         if (blockTile[i]) delete blockTile[i];
       delete[] blockTile;
     }
-    Tile *getTileForBlock(size_t blockID) 
+    Tile *getTileForBlock(size_t blockID)
     {
 #if TILE_CACHE_SAFE_MUTEX
       mutex.lock();
@@ -94,14 +87,14 @@ namespace ospray {
       return tile;
 #endif
     }
-    
+
     Mutex mutex;
     size_t numBlocks;
     Tile *volatile *blockTile;
   };
 
   /*! extern exported function so even ISPC code can access this cache */
-  extern "C" Tile *CacheForBlockTiles_getTileForBlock(CacheForBlockTiles *cache, uint32 blockID) 
+  extern "C" Tile *CacheForBlockTiles_getTileForBlock(CacheForBlockTiles *cache, uint32 blockID)
   { return cache->getTileForBlock(blockID); }
 
   struct DPRenderTask : public ospray::Task {
@@ -114,11 +107,11 @@ namespace ospray {
     int32             workerRank;
     const DataDistributedBlockedVolume *dpv;
 
-    DPRenderTask(int workerRank) 
-      : workerRank(workerRank) 
+    DPRenderTask(int workerRank)
+      : workerRank(workerRank)
     {
     }
-    
+
     virtual void run(size_t taskIndex)
     {
       const size_t tileID = taskIndex;
@@ -158,9 +151,9 @@ namespace ospray {
         // this is a tile owned by me - i'm responsible for writing
         // generaition #0, and telling the fb how many more tiles will
         // be coming in generation #1
-        
+
         size_t totalBlocksInTile=0;
-        for (int blockID=0;blockID<numBlocks;blockID++) 
+        for (int blockID=0;blockID<numBlocks;blockID++)
           if (blockWasVisible[blockID])
             totalBlocksInTile++;
 
@@ -192,7 +185,7 @@ namespace ospray {
       // told the DFB to expect)
       for (int blockID=0;blockID<numBlocks;blockID++) {
         Tile *tile = blockTileCache.blockTile[blockID];
-        if (tile == NULL) 
+        if (tile == NULL)
           continue;
         tile->region = bgTile.region;
         tile->fbSize = bgTile.fbSize;
@@ -206,11 +199,11 @@ namespace ospray {
         fb->setTile(*tile);
       }
     }
-    
+
     virtual ~DPRenderTask() {}
   };
 
-  
+
   /*! try if we are running in data-parallel mode, and if
     data-parallel is even required. if not (eg, if there's no
     data-parallel volumes in the scene) return NULL and render only
@@ -247,7 +240,7 @@ namespace ospray {
 
     // check if we're even in mpi parallel mode (can't do
     // data-parallel otherwise)
-    if (!ospray::core::isMpiParallel()) 
+    if (!ospray::core::isMpiParallel())
       throw std::runtime_error("#dvr: need data-parallel rendering, "
                                "but not running in mpi mode!?");
 
@@ -261,9 +254,9 @@ namespace ospray {
 
 
     // note: we can NEVER be the master, since the master doesn't even
-    // have an instance of this renderer class - 
+    // have an instance of this renderer class -
     assert(workerRank >= 0);
-    
+
     Renderer::beginFrame(fb);
 
     dfb->startNewFrame();
@@ -295,7 +288,7 @@ namespace ospray {
     size_t numTilesTotal = renderTask->numTiles_x*renderTask->numTiles_y;
     renderTask->schedule(numTilesTotal);
     renderTask->wait();
-      
+
     dfb->waitUntilFinished();
     Renderer::endFrame(NULL,channelFlags);
   }
@@ -303,18 +296,19 @@ namespace ospray {
 
 #endif
 
-
-  void RaycastVolumeRenderer::commit() 
+  void RaycastVolumeRenderer::commit()
   {
     // Create the equivalent ISPC RaycastVolumeRenderer object.
-    if (ispcEquivalent == NULL) 
+    if (ispcEquivalent == NULL) {
       ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
+    }
 
     // Get the background color.
     vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
 
     // Set the background color.
-    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent, (const ispc::vec3f&) bgColor);
+    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent,
+                                                   (const ispc::vec3f&)bgColor);
 
     // Set the lights if any.
     Data *lightsData = (Data *)getParamData("lights", NULL);
@@ -325,11 +319,12 @@ namespace ospray {
       for (size_t i=0; i<lightsData->size(); i++)
         lights.push_back(((Light **)lightsData->data)[i]->getIE());
 
-    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent, 
-                                          lights.empty() ? NULL : &lights[0], 
+    ispc::RaycastVolumeRenderer_setLights(ispcEquivalent,
+                                          lights.empty() ? NULL : &lights[0],
                                           lights.size());
 
-    // Initialize state in the parent class, must be called after the ISPC object is created.
+    // Initialize state in the parent class, must be called after the ISPC
+    // object is created.
     Renderer::commit();
   }
 

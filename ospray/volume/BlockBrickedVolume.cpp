@@ -38,7 +38,7 @@ namespace ospray {
   }
 
   int BlockBrickedVolume::setRegion(/* points to the first voxel to be copies. The
-                                       voxels at 'soruce' MUST have dimensions
+                                       voxels at 'source' MUST have dimensions
                                        'regionSize', must be organized in 3D-array
                                        order, and must have the same voxel type as the
                                        volume.*/
