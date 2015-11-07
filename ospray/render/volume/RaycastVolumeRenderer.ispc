@@ -52,7 +52,7 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
   if(volume->gradientShadingEnabled) {
 
     // Use volume gradient as the normal.
-    const vec3f gradient = normalize(volume->computeGradient(volume, coordinates));
+    const vec3f gradient = safe_normalize(volume->computeGradient(volume, coordinates));
 
     // Setup differential geometry for the volume sample point.
     DifferentialGeometry dg;
@@ -65,7 +65,7 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
       const LightSample light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
-      const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(light.direction), gradient));
+      const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(safe_normalize(light.direction), gradient));
 
       shadedColor = shadedColor + sampleColor * cosNL * light.radiance;
     }
@@ -128,7 +128,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   for (uniform uint32 i=0; i<renderer->numLights; i++) {
     const LightSample light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
-    const float cosNL = abs(dot(normalize(light.direction), dg.Ns));
+    const float cosNL = abs(dot(safe_normalize(light.direction), dg.Ns));
 
     shadedColor = shadedColor + geometryColor * cosNL * light.radiance;
   }

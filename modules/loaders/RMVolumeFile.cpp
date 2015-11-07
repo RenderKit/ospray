@@ -18,6 +18,7 @@
 #include <string.h>
 #include "modules/loaders/RMVolumeFile.h"
 #include "ospray/common/OSPCommon.h"
+#include "embree/common/sys/sysinfo.h"
 
 struct RMLoaderThreads {
   OSPVolume volume;
@@ -110,7 +111,7 @@ struct RMLoaderThreads {
 
 OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
 {
-  int numThreads = 20;
+  int numThreads = embree::getNumberOfLogicalThreads(); //20;
 
   RMLoaderThreads(volume,fileName,numThreads);
   PRINT(fileName);
