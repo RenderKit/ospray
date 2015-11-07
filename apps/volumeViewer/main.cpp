@@ -56,11 +56,11 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  // Parse the OSPRay object file filenames.
-  std::vector<std::string> objectFileFilenames;
+  // // Parse the OSPRay object file filenames.
+  // std::vector<std::string> objectFileFilenames;
 
-  for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++)
-    objectFileFilenames.push_back(std::string(argv[i]));
+  // for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++)
+  //   objectFileFilenames.push_back(std::string(argv[i]));
 
   // Default values for the optional command line arguments.
   float dt = 0.0f;
@@ -79,10 +79,12 @@ int main(int argc, char *argv[])
   bool ownModelPerObject = false;
   std::string writeFramesFilename;
 
+  std::vector<std::string> inFileName;
   // Parse the optional command line arguments.
-  for (int i=objectFileFilenames.size() + 1 ; i < argc ; i++) {
+  for (int i=// objectFileFilenames.size() + 
+         1 ; i < argc ; i++) {
 
-    std::string arg = argv[i];
+    const std::string arg = argv[i];
 
     if (arg == "-dt") {
 
@@ -200,12 +202,15 @@ int main(int argc, char *argv[])
         throw std::runtime_error("could not load module " + moduleName + ", error " + ss.str());
       }
 
-    } else throw std::runtime_error("unknown parameter " + arg);
+    } else if (arg[0] == '-')
+      throw std::runtime_error("unknown parameter " + arg);
+    else 
+      inFileName.push_back(arg);
 
   }
 
   // Create the OSPRay state and viewer window.
-  VolumeViewer *volumeViewer = new VolumeViewer(objectFileFilenames, ownModelPerObject, showFrameRate, fullScreen, writeFramesFilename);
+  VolumeViewer *volumeViewer = new VolumeViewer(inFileName, ownModelPerObject, showFrameRate, fullScreen, writeFramesFilename);
 
   // Display the first model.
   volumeViewer->setModel(0);

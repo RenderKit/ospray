@@ -14,19 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "modules/loaders/RawVolumeFile.h"
-#include "modules/loaders/RMVolumeFile.h"
-#include "modules/loaders/PLYTriangleMeshFile.h"
+#pragma once
 
-// Loader for XML object files.
-OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
+#include <string>
+#include "modules/loaders/VolumeFile.h"
 
-// Loader for RAW volume files.
-OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
+//! \brief specific importer for the LLNL "RM" (Richtmyer-Meshkov) instability files
+/*! Note this exists only for a specific demo */
+class RMVolumeFile : public VolumeFile {
+public:
 
-// Loader for PLY triangle mesh files.
-OSP_REGISTER_TRIANGLEMESH_FILE(PLYTriangleMeshFile, ply);
+  //! Constructor.
+  RMVolumeFile(const std::string &fileName) : fileName(fileName) {}
 
-// Loader for RAW volume files.
-OSP_REGISTER_VOLUME_FILE(RMVolumeFile, bob);
+  //! Destructor.
+  virtual ~RMVolumeFile() {};
+
+  //! Import the volume data.
+  virtual OSPVolume importVolume(OSPVolume volume);
+
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::RawVolumeFile"); }
+
+private:
+
+  //! Path to the file containing the volume data.
+  std::string fileName;
+};
+
