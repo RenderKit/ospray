@@ -58,8 +58,8 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
     d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
-  if (ne(Kd,make_vec3f(0.0f)))
-    COMPOSITED_BSDF_ADD(brdfs,Lambert,Kd);
+  //if (ne(Kd,make_vec3f(0.0f)))
+  //  COMPOSITED_BSDF_ADD(brdfs,Lambert,Kd);
 
   /*! transmission component */
   if (d < 1.0f)

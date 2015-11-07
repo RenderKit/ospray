@@ -52,10 +52,10 @@ struct BSDF;
 typedef uint32 BSDFType;
 
 typedef vec3f (*BSDF_EvalFunc)(const uniform BSDF* uniform this,
-                                const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi);
+                               const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf);
 
 typedef vec3f (*BSDF_SampleFunc)(const uniform BSDF* uniform this,
-                                  const vec3f &wo, const DifferentialGeometry &dg, Sample3f &wi, const vec2f &s);
+                                 const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type, const vec2f& s, float ss);
 
 struct BSDF
 {
@@ -65,11 +65,11 @@ struct BSDF
 };
 
 inline void BSDF_Constructor(uniform BSDF* uniform this,
-                              const uniform BSDFType type,
-                              const uniform BSDF_EvalFunc eval_,
-                              const uniform BSDF_SampleFunc sample_)
+                             uniform BSDFType type,
+                             uniform BSDF_EvalFunc eval,
+                             uniform BSDF_SampleFunc sample)
 {
   this->type = type;
-  this->eval = eval_;
-  this->sample = sample_;
+  this->eval = eval;
+  this->sample = sample;
 }

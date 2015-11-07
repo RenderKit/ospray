@@ -52,7 +52,7 @@ void Plastic__Constructor(uniform Plastic *uniform this,
   PathTraceMaterial__Constructor(&this->base, Plastic__shade, NULL);
   this->roughness = roughness;
 
-  DielectricLayerLambert__Constructor(&this->substrate,
+  DielectricLayerLambert_Constructor(&this->substrate,
                                          make_vec3f(1.0f), 1.0f, eta,
                                          make_Lambert(pigmentColor));
 

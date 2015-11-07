@@ -58,8 +58,8 @@ vec3f uniform_Minneart__sample(const uniform BSDF* uniform _this,
 
 void Minneart__Constructor(uniform Minneart* uniform this, const uniform vec3f R, const uniform float b)
 {
-  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
-                    uniform_Minneart__eval,uniform_Minneart__sample);
+  //BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
+  //                  uniform_Minneart__eval,uniform_Minneart__sample);
   this->R = R;
   this->b = b;
 }
@@ -95,8 +95,8 @@ vec3f varying_Minneart__sample(const uniform BSDF* uniform _this,
 
 void Minneart__Constructor(varying Minneart* uniform this, const varying vec3f R, const varying float b)
 {
-  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
-                    varying_Minneart__eval,varying_Minneart__sample);
+  //BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
+  //                  varying_Minneart__eval,varying_Minneart__sample);
   this->R = R;
   this->b = b;
 }

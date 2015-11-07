@@ -32,9 +32,9 @@ struct MetallicPaint
 // Implementation
 
 void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
-                          const Ray&                  ray,             
-                          const Medium&               currentMedium,   
-                          const DifferentialGeometry& dg,              
+                          const Ray&                  ray,
+                          const Medium&               currentMedium,
+                          const DifferentialGeometry& dg,
                           uniform CompositedBSDF&     brdfs,
                           vec3f& Ns)
 {
@@ -52,12 +52,12 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
 {
   PathTraceMaterial__Constructor(&this->base, MetallicPaint__shade, NULL);
   DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
-  DielectricLayerLambert__Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
+  DielectricLayerLambert_Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
 
   uniform vec3f etaAluminium = make_vec3f(0.62f,0.62f,0.62f);
   uniform vec3f kAluminium   = make_vec3f(4.8f,4.8f,4.8f);
   DielectricLayerMicrofacetMetal__Constructor(&this->glitter,
-                                              make_vec3f(1.f), 1.f, eta, 
+                                              make_vec3f(1.f), 1.f, eta,
                                               make_MicrofacetMetal(glitterColor,
                                                                    make_FresnelConductor(etaAluminium,kAluminium),
                                                                    make_PowerCosineDistribution(rcp(glitterSpread))));

@@ -20,11 +20,24 @@
 struct Matte
 {
   PathTraceMaterial base;
-  Lambert lambertian;
+  Lambert lambert;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
+
+const uniform BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* uniform base,
+                                          uniform ShadingContext* uniform ctx,
+                                          const DifferentialGeometry& dg,
+                                          const Ray& ray,
+                                          const Medium& currentMedium)
+{
+  uniform const Matte* uniform self = (uniform const Matte* uniform)base;
+  vec3f R = self->lambert.R;
+  uniform BSDF* uniform bsdf;
+  ShadingContext_makeBSDF(ctx, bsdf, Lambert, R);
+  return bsdf;
+}
 
 void Matte__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,
@@ -34,14 +47,15 @@ void Matte__shade(const uniform PathTraceMaterial *uniform _this,
                   vec3f& Ns)
 {
   uniform const Matte *uniform this = (uniform const Matte *uniform)_this;
-  CompositedBSDF_add(&brdfs,&this->lambertian.base);
+  CompositedBSDF_add(&brdfs,&this->lambert.base);
 }
 
-inline void Matte__Constructor(uniform Matte *uniform this,
+inline void Matte__Constructor(uniform Matte* uniform self,
                                const uniform vec3f& reflectance)
 {
-  PathTraceMaterial__Constructor(&this->base, Matte__shade, NULL);
-  this->lambertian = make_Lambert(reflectance);
+  PathTraceMaterial__Constructor(&self->base, Matte__shade, NULL);
+  self->base.getBSDF = Matte_getBSDF;
+  self->lambert.R = reflectance;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

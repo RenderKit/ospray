@@ -39,15 +39,12 @@ inline void* uniform ShadingContext_alloc(uniform ShadingContext* uniform self, 
   //print("ShadingContext_alloc: %, %\n", this->size, size);
   void* uniform ptr = &self->data[self->size];
   self->size = (self->size + size + alignment - 1) & ((uint32)(-alignment));
-  if (self->size > size) return 0;
-    //throw std::runtime_error("out of memory for ShadingContext allocation");
+  //if (self->size > size) throw std::runtime_error("out of memory for ShadingContext allocation");
   return ptr;
 }
 
 #define ShadingContext_makeBSDF(self,ptr,Type,...) {                       \
   varying Type* uniform _bsdf = (varying Type* uniform)ShadingContext_alloc(self,sizeof(Type)); \
-  if (_bsdf) {                                                             \
-    Type##_Constructor(_bsdf,__VA_ARGS__);                                 \
-  }                                                                        \
+  Type##_Constructor(_bsdf,__VA_ARGS__);                                   \
   ptr = &_bsdf->base;                                                      \
 }

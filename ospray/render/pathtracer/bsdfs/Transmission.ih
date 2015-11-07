@@ -30,16 +30,16 @@ struct Transmission
 };
 
 inline vec3f Transmission__eval(const uniform BSDF* uniform _this,
-                                const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
+                                const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
 {
   return make_vec3f(0.0f);
 }
 
 inline vec3f Transmission__sample(const uniform BSDF* uniform _this,
-                                const vec3f &wo, 
-                                const DifferentialGeometry &dg, 
-                                Sample3f &wi, 
-                                const vec2f &s)  
+                                const vec3f &wo,
+                                const DifferentialGeometry &dg,
+                                Sample3f &wi,
+                                const vec2f &s)
 {
   const varying Transmission* uniform this = (const varying Transmission* uniform) _this;
   wi = make_Sample3f(neg(wo),1.0f);
@@ -49,7 +49,7 @@ inline vec3f Transmission__sample(const uniform BSDF* uniform _this,
 inline void Transmission__Constructor(varying Transmission* uniform this,
                                       const varying vec3f T)
 {
-  BSDF_Constructor(&this->base,SPECULAR_TRANSMISSION,
-                    Transmission__eval,Transmission__sample);
+  //BSDF_Constructor(&this->base,SPECULAR_TRANSMISSION,
+  //                  Transmission__eval,Transmission__sample);
   this->T = T;
 }

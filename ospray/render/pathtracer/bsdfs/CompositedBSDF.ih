@@ -87,7 +87,7 @@ inline vec3f CompositedBSDF_eval(const uniform CompositedBSDF* uniform this,
     if (this->active[i])
       if (this->brdfs[i]->type & type) {
         const uniform BSDF* uniform brdf = this->brdfs[i];
-        c = add(c, brdf->eval(brdf,wo,dg,wi));
+        //c = add(c, brdf->eval(brdf,wo,dg,wi));
       }
 #else
     if (!this->active[i]) continue;
@@ -118,7 +118,8 @@ inline vec3f CompositedBSDF_sample(const uniform CompositedBSDF* uniform this,
   if (this->numBrdfs == 1)
   {
     if (this->active[0] & (bool)(this->brdfs[0]->type & type)) {
-      const vec3f c = this->brdfs[0]->sample(this->brdfs[0], wo, dg, wi_o, s);
+      //const vec3f c = this->brdfs[0]->sample(this->brdfs[0], wo, dg, wi_o, s);
+      vec3f c;
       if (eq(c,make_vec3f(0.0f)) | wi_o.pdf <= 0.0f) return make_vec3f(0.0f);
       type_o = this->brdfs[0]->type;
       return c;
@@ -134,8 +135,10 @@ inline vec3f CompositedBSDF_sample(const uniform CompositedBSDF* uniform this,
     if (!val0 & !val1)
       return make_vec3f(0.0f);
 
-    Sample3f wi0; const vec3f c0 = this->brdfs[0]->sample(this->brdfs[0], wo, dg, wi0, s);
-    Sample3f wi1; const vec3f c1 = this->brdfs[1]->sample(this->brdfs[1], wo, dg, wi1, s);
+    //Sample3f wi0; const vec3f c0 = this->brdfs[0]->sample(this->brdfs[0], wo, dg, wi0, s);
+    //Sample3f wi1; const vec3f c1 = this->brdfs[1]->sample(this->brdfs[1], wo, dg, wi1, s);
+    Sample3f wi0; vec3f c0;
+    Sample3f wi1; vec3f c1;
     const bool valid0 = val0 & ne(c0,make_vec3f(0.0f)) & wi0.pdf > 0.0f;
     const bool valid1 = val1 & ne(c1,make_vec3f(0.0f)) & wi1.pdf > 0.0f;
     if (valid0 & valid1) {
@@ -173,7 +176,8 @@ inline vec3f CompositedBSDF_sample(const uniform CompositedBSDF* uniform this,
       if (!(this->brdfs[i]->type & type)) continue;
       const uniform BSDF* uniform brdf = this->brdfs[i];
       Sample3f wi;
-      vec3f c = brdf->sample(brdf, wo, dg, wi, s);
+      //vec3f c = brdf->sample(brdf, wo, dg, wi, s);
+      vec3f c;
       if (eq(c,make_vec3f(0.0f)) | wi.pdf <= 0.0f) continue;
 
       sum += f[num] = (c.x + c.y + c.z) * rcp(wi.pdf);

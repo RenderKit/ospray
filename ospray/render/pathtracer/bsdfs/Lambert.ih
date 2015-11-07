@@ -24,70 +24,36 @@ struct Lambert
   vec3f R;
 };
 
-////////////////////////////////////////////////////////////////////////
-// uniform Lambert
-
-inline vec3f uniform_Lambert__eval(const uniform BSDF* uniform _this,
-                                      const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+inline vec3f Lambert_eval(const uniform BSDF* uniform base,
+                          const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
-  const uniform Lambert* uniform this = (const uniform Lambert* uniform) _this;
-  return this->R/M_PI * clamp(dot(wi, dg.Ns));
+  const varying Lambert* uniform self = (const varying Lambert* uniform)base;
+  pdf = clamp(dot(wi, dg.Ns)) * one_over_pi;
+  return self->R/M_PI * clamp(dot(wi, dg.Ns));
 }
 
-inline vec3f uniform_Lambert__sample(const uniform BSDF* uniform _this,
-                                        const vec3f &wo,
-                                        const DifferentialGeometry &dg,
-                                        Sample3f &wi,
-                                        const vec2f &s)
+inline vec3f Lambert_sample(const uniform BSDF* uniform base,
+                            const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type, const vec2f& s, float ss)
 {
-  const uniform Lambert* uniform this = (const uniform Lambert* uniform) _this;
+  const varying Lambert* uniform self = (const varying Lambert* uniform)base;
   const vec3f localDir = cosineSampleHemisphere(s);
-  wi.v = frame(dg.Ns) * localDir;
-  wi.pdf = cosineSampleHemispherePDF(localDir);
-  return uniform_Lambert__eval(&this->base, wo, dg, wi.v);
+  wi = frame(dg.Ns) * localDir;
+  pdf = cosineSampleHemispherePDF(localDir);
+  type = DIFFUSE_REFLECTION;
+  return self->R;
 }
 
-inline void Lambert__Constructor(uniform Lambert* uniform this, const uniform vec3f R)
+inline void Lambert_Constructor(varying Lambert* uniform self, const vec3f& R)
 {
-  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
-                    uniform_Lambert__eval,uniform_Lambert__sample);
-  this->R = R;
-}
-
-inline uniform Lambert make_Lambert(const uniform vec3f R) {
-  uniform Lambert v; Lambert__Constructor(&v,R); return v;
-}
-
-////////////////////////////////////////////////////////////////////////
-// varying Lambert
-
-inline vec3f varying_Lambert__eval(const uniform BSDF* uniform _this,
-                                      const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
-{
-  const varying Lambert* uniform this = (const varying Lambert* uniform) _this;
-  return this->R/M_PI * clamp(dot(wi, dg.Ns));
-}
-
-inline vec3f varying_Lambert__sample(const uniform BSDF* uniform _this,
-                                        const vec3f &wo,
-                                        const DifferentialGeometry &dg,
-                                        Sample3f &wi,
-                                        const vec2f &s)
-{
-  const varying Lambert* uniform this = (const varying Lambert* uniform) _this;
-  const vec3f localDir = cosineSampleHemisphere(s);
-  wi.v = frame(dg.Ns) * localDir;
-  wi.pdf = cosineSampleHemispherePDF(localDir);
-  return varying_Lambert__eval(&this->base, wo, dg, wi.v);
-}
-
-inline void Lambert__Constructor(varying Lambert* uniform this, const varying vec3f R)
-{
-  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
-                    varying_Lambert__eval,varying_Lambert__sample);
-  this->R = R;
+  BSDF_Constructor(&self->base, DIFFUSE_REFLECTION,
+                   Lambert_eval, Lambert_sample);
+  self->R = R;
 }
 
 inline varying Lambert make_Lambert(const varying vec3f R) {
-  varying Lambert v; Lambert__Constructor(&v,R); return v;
+  varying Lambert v; Lambert_Constructor(&v,R); return v;
+}
+
+inline uniform Lambert make_Lambert(const uniform vec3f R) {
+  uniform Lambert v; /*Lambert_Constructor(&v,R);*/ return v;
 }

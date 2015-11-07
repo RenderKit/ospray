@@ -23,8 +23,18 @@
 #include "../samplers/Sample.ih"
 #include "../bsdfs/BSDF.ih"
 #include "../bsdfs/CompositedBSDF.ih"
+#include "../bsdfs/ShadingContext.ih"
 
 struct PathTraceMaterial;
+
+typedef const uniform BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform this,
+                                                                     uniform ShadingContext* uniform ctx,
+                                                                     /*! The point to shade on a surface. */
+                                                                     const DifferentialGeometry& dg,
+                                                                     /*! The ray arriving at the point to shade. */
+                                                                     const Ray& ray,
+                                                                     /*! The medium this ray travels inside. */
+                                                                     const Medium& currentMedium);
 
 /*! Shades a location and and returns a composited BSDF as well as a bumped normal. */
 typedef void (*PathTraceMaterial__shade)(const uniform PathTraceMaterial *uniform this,
@@ -46,6 +56,7 @@ typedef void (*PathTraceMaterial__selectNextMediumFunc)(const uniform PathTraceM
 struct PathTraceMaterial
 {
   Material material;
+  PathTraceMaterial_GetBSDFFunc getBSDF;
   PathTraceMaterial__shade shade;
   PathTraceMaterial__selectNextMediumFunc selectNextMedium;
 };

@@ -43,7 +43,8 @@ inline vec3f DielectricLayerLambert__eval(const uniform BSDF* uniform _this,
   float cosThetaI1;
   const Sample3f wi1 = refract(wi,dg.Ns,this->etait,cosThetaI,cosThetaI1);
   const float Fi = 1.0f - fresnelDielectric(cosThetaI,cosThetaI1,this->etait);
-  const vec3f Fg = this->ground.base.eval(&this->ground.base,neg(wo1.v),dg,neg(wi1.v));
+  //const vec3f Fg = this->ground.base.eval(&this->ground.base,neg(wo1.v),dg,neg(wi1.v));
+  vec3f Fg;
   const float Fo = 1.0f - fresnelDielectric(cosThetaO,cosThetaO1,this->etait);
   return mul(mul(mul(Fo,this->T), mul(Fg, this->T)),Fi);
 }
@@ -64,7 +65,8 @@ inline vec3f DielectricLayerLambert__sample(const uniform BSDF* uniform _this,
 
   /*! sample ground BSDF */
   Sample3f wi1 = make_Sample3f(make_vec3f(0.f),1.f);
-  vec3f Fg = this->ground.base.sample(&this->ground.base,neg(wo1.v),dg,wi1,s);
+  //vec3f Fg = this->ground.base.sample(&this->ground.base,neg(wo1.v),dg,wi1,s);
+  vec3f Fg;
 
   /*! refract ray out of medium */
   float cosThetaI1 = dot(wi1.v,dg.Ns);
@@ -81,13 +83,13 @@ inline vec3f DielectricLayerLambert__sample(const uniform BSDF* uniform _this,
   return mul(mul(mul(Fo,this->T), mul(Fg, this->T)),Fi);
 }
 
-inline void DielectricLayerLambert__Constructor(uniform DielectricLayerLambert* uniform this,
+inline void DielectricLayerLambert_Constructor(uniform DielectricLayerLambert* uniform this,
                                                    const uniform vec3f T,
                                                    const uniform float etai,
                                                    const uniform float etat,
                                                    const uniform Lambert ground)
 {
-  BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,DielectricLayerLambert__eval,DielectricLayerLambert__sample);
+  //BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,DielectricLayerLambert__eval,DielectricLayerLambert__sample);
   this->T = T;
   this->etait = etai*rcp(etat);
   this->etati = etat*rcp(etai);
@@ -100,6 +102,6 @@ inline uniform DielectricLayerLambert make_DielectricLayerLambert(const uniform 
                                                                         const uniform Lambert ground)
 {
   uniform DielectricLayerLambert m;
-  DielectricLayerLambert__Constructor(&m,T,etai,etat,ground);
+  DielectricLayerLambert_Constructor(&m,T,etai,etat,ground);
   return m;
 }

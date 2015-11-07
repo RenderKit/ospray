@@ -38,13 +38,13 @@ inline vec3f MicrofacetMetal__eval(const uniform BSDF* uniform _this,
   const float cosTheta = dot(wi, wh); // = dot(wo, wh);
   const vec3f F = eval(this->fresnel,cosTheta);
   const float D = eval(this->distribution,cosThetaH);
-  const float G = min(1.0f, min(2.0f * cosThetaH * cosThetaO / cosTheta, 
+  const float G = min(1.0f, min(2.0f * cosThetaH * cosThetaO / cosTheta,
                                   2.0f * cosThetaH * cosThetaI / cosTheta));
   return mul(mul(this->R, F), D * G * rcp(4.0f*cosThetaO));
 }
-  
+
 inline vec3f MicrofacetMetal__sample(const uniform BSDF* uniform _this,
-                                     const vec3f &wo, 
+                                     const vec3f &wo,
                                      const DifferentialGeometry &dg,
                                      Sample3f &wi,
                                      const vec2f &s)
@@ -57,19 +57,19 @@ inline vec3f MicrofacetMetal__sample(const uniform BSDF* uniform _this,
 }
 
 inline void MicrofacetMetal__Constructor(uniform MicrofacetMetal* uniform this,
-                                         const uniform vec3f& R, 
-                                         const uniform FresnelConductor& fresnel, 
+                                         const uniform vec3f& R,
+                                         const uniform FresnelConductor& fresnel,
                                          const uniform PowerCosineDistribution& distribution)
 {
-  BSDF_Constructor(&this->base,GLOSSY_REFLECTION,
-                    MicrofacetMetal__eval,MicrofacetMetal__sample);
+  //BSDF_Constructor(&this->base,GLOSSY_REFLECTION,
+  //                  MicrofacetMetal__eval,MicrofacetMetal__sample);
   this->R = R;
   this->fresnel = fresnel;
   this->distribution = distribution;
 }
 
-inline uniform MicrofacetMetal make_MicrofacetMetal(const uniform vec3f& R, 
-                                                    const uniform FresnelConductor& fresnel, 
+inline uniform MicrofacetMetal make_MicrofacetMetal(const uniform vec3f& R,
+                                                    const uniform FresnelConductor& fresnel,
                                                     const uniform PowerCosineDistribution& distribution)
 {
   uniform MicrofacetMetal v; MicrofacetMetal__Constructor(&v,R,fresnel,distribution); return v;

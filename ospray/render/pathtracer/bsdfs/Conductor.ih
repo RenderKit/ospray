@@ -46,7 +46,7 @@ vec3f Conductor__sample(const uniform BSDF* uniform _this,
 inline void Conductor__Constructor(uniform Conductor* uniform this,
                                    const uniform vec3f R, const uniform vec3f eta, const uniform vec3f k)
 {
-  BSDF_Constructor(&this->base,SPECULAR_REFLECTION,Conductor__eval,Conductor__sample);
+  //BSDF_Constructor(&this->base,SPECULAR_REFLECTION,Conductor__eval,Conductor__sample);
   this->R = R;
   this->eta = eta;
   this->k = k;

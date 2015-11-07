@@ -43,8 +43,8 @@ inline void DielectricReflection__Constructor(uniform DielectricReflection* unif
                                               const uniform float etai,
                                               const uniform float etat)
 {
-  BSDF_Constructor(&this->base,SPECULAR_REFLECTION,
-                    uniform_DielectricReflection__eval,uniform_DielectricReflection__sample);
+  //BSDF_Constructor(&this->base,SPECULAR_REFLECTION,
+  //                  uniform_DielectricReflection__eval,uniform_DielectricReflection__sample);
   this->eta = etai*rcp(etat);
 }
 
@@ -71,8 +71,8 @@ inline void DielectricReflection__Constructor(varying DielectricReflection* unif
                                               const varying float etai,
                                               const varying float etat)
 {
-  BSDF_Constructor(&this->base,SPECULAR_REFLECTION,
-                    varying_DielectricReflection__eval,varying_DielectricReflection__sample);
+  //BSDF_Constructor(&this->base,SPECULAR_REFLECTION,
+  //                  varying_DielectricReflection__eval,varying_DielectricReflection__sample);
   this->eta = etai*rcp(etat);
 }
 

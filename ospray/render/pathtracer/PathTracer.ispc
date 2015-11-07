@@ -150,7 +150,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Terminate path if too long or contribution too low. */
     if (lightPath.depth >= self->maxDepth)
       return L;
-    if (reduce_max(lightPath.throughput) <= self->minContribution)
+    if (reduce_max(lightPath.throughput) <= self->minContribution) // FIXME: why not Lw???
       return L;
 
     /*! Traverse ray. */
@@ -181,14 +181,14 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         );
 
     /*! Shade surface. */
-    uniform CompositedBSDF brdfs;
-    CompositedBSDF_Constructor(&brdfs);
-    vec3f Ns = dg.Ns;
+    uniform ShadingContext ctx;
+    ShadingContext_Constructor(&ctx);
+    const uniform BSDF* bsdf = NULL;
 #if 1
-    uniform PathTraceMaterial*m = (uniform PathTraceMaterial*)dg.material;
+    uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)
       if (mm != NULL)
-        mm->shade(mm, lightPath.ray, lightPath.lastMedium, dg, brdfs, Ns);
+        bsdf = mm->getBSDF(mm, &ctx, dg, lightPath.ray, lightPath.lastMedium);
 #else
     foreach_unique(geomID in lightPath.ray.geomID) {
       uniform PathTraceMaterial* uniform m
@@ -197,7 +197,6 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       if (m != NULL) m->shade(m,lightPath.ray, lightPath.lastMedium, dg, brdfs, Ns);
     }
 #endif
-    dg.Ns = Ns;
 
 #if 0
     // iw: disabled because we dont' have per-geometry lights yet
@@ -213,7 +212,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 #endif
 
     /*! Check if any BSDF component uses direct lighting. */
-    bool useDirectLighting = brdfs.types & directLightingBSDFTypes;
+    bool useDirectLighting = bsdf->type & directLightingBSDFTypes;
 
     /*! Direct lighting. Shoot shadow rays to all light sources. */
     if (useDirectLighting)
@@ -231,11 +230,16 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           continue;
 
         /*! Evaluate BSDF */
-        vec3f brdf = CompositedBSDF_eval(&brdfs, wo, dg, ls.direction, directLightingBSDFTypes);
+        vec3f bsdfValue;
+        float lsDirectionPdf;
+        foreach_unique(b in bsdf)
+          if (b != NULL)
+            bsdfValue = b->eval(b, dg, wo, ls.direction, lsDirectionPdf);
+
 #ifdef USE_DGCOLOR
-        brdf = brdf * make_vec3f(dg.color);
+        bsdfValue = bsdfValue * make_vec3f(dg.color);
 #endif
-        if (reduce_max(brdf) <= 0.0f)
+        if (reduce_max(bsdfValue) <= 0.0f)
           continue;
 
         /*! Test for shadows. */
@@ -248,7 +252,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                self->super.epsilon);
         shadow_ray.time = lightPath.ray.time;
 
-        vec3f unshaded_light_contrib = Lw * ls.radiance * brdf;
+        vec3f unshaded_light_contrib = Lw * ls.radiance * bsdfValue;
         L = L + transparentShadow(self, unshaded_light_contrib, shadow_ray, lightPath.lastMedium, rng);
       }
     }
@@ -260,21 +264,25 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! sample brdf */
     Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
     vec2f s  = RandomTEA__getFloats(rng);
-    vec2f ss = RandomTEA__getFloats(rng);
-    vec3f c = CompositedBSDF_sample(&brdfs, wo, dg, wi, type, s, ss.x, giBSDFTypes);
+    vec2f ss = RandomTEA__getFloats(rng); // why vec2f???
+    vec3f bsdfWeight;
+    foreach_unique(b in bsdf)
+      if (b != NULL)
+        bsdfWeight = b->sample(b, dg, wo, wi.v, wi.pdf, type, s, ss.x);
+
 #ifdef USE_DGCOLOR
     if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component
-      c = c * make_vec3f(dg.color);
+      bsdfWeight = bsdfWeight * make_vec3f(dg.color);
 #endif
 
     /*! Continue only if we hit something valid. */
-    if (reduce_max(c) <= 0.0f | wi.pdf <= PDF_CULLING)
+    if (reduce_max(bsdfWeight) <= 0.0f | wi.pdf <= PDF_CULLING)
       return L;
 
     /*! Compute simple volumetric effect. */
     const vec3f transmission = lightPath.lastMedium.transmission;
     if (ne(transmission,make_vec3f(1.f)))
-      c = c * powf(transmission,lightPath.ray.t);
+      bsdfWeight = bsdfWeight * powf(transmission,lightPath.ray.t);
 
     /*! Tracking medium if we hit a medium interface. */
     if (type & TRANSMISSION) {
@@ -288,9 +296,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     extend_fast(lightPath,
                 dg.P,wi.v,//dg.error*
                 self->super.epsilon,inf,
-           c,(type & directLightingBSDFTypes) != NONE);
+           bsdfWeight*wi.pdf,(type & directLightingBSDFTypes) != NONE);
 
-    Lw = mul(mul(Lw,c),rcp(wi.pdf));
+    Lw = mul(Lw,bsdfWeight);
   }
   return L;
 }

@@ -38,13 +38,13 @@ inline vec3f MicrofacetPlastic__eval(const uniform BSDF* uniform _this,
   const float cosTheta = dot(wi, wh); // = dot(wo, wh);
   const vec3f F = eval(this->fresnel,cosTheta);
   const float D = eval(this->distribution,cosThetaH);
-  const float G = min(1.0f, min(2.0f * cosThetaH * cosThetaO / cosTheta, 
+  const float G = min(1.0f, min(2.0f * cosThetaH * cosThetaO / cosTheta,
                                 2.0f * cosThetaH * cosThetaI / cosTheta));
   return mul(mul(this->R, F), D * G * rcp(4.0f*cosThetaO));
 }
-  
+
 inline vec3f MicrofacetPlastic__sample(const uniform BSDF* uniform _this,
-                                     const vec3f &wo, 
+                                     const vec3f &wo,
                                      const DifferentialGeometry &dg,
                                      Sample3f &wi,
                                      const vec2f &s)
@@ -57,18 +57,18 @@ inline vec3f MicrofacetPlastic__sample(const uniform BSDF* uniform _this,
 }
 
 inline void MicrofacetPlastic__Constructor(uniform MicrofacetPlastic* uniform this,
-                                           const uniform vec3f& R, 
-                                           const uniform FresnelDielectric& fresnel, 
+                                           const uniform vec3f& R,
+                                           const uniform FresnelDielectric& fresnel,
                                            const uniform PowerCosineDistribution& distribution)
 {
-  BSDF_Constructor(&this->base,GLOSSY_REFLECTION,MicrofacetPlastic__eval,MicrofacetPlastic__sample);
+  //BSDF_Constructor(&this->base,GLOSSY_REFLECTION,MicrofacetPlastic__eval,MicrofacetPlastic__sample);
   this->R = R;
   this->fresnel = fresnel;
   this->distribution = distribution;
 }
 
-inline uniform MicrofacetPlastic make_MicrofacetPlastic(const uniform vec3f& R, 
-                                                        const uniform FresnelDielectric& fresnel, 
+inline uniform MicrofacetPlastic make_MicrofacetPlastic(const uniform vec3f& R,
+                                                        const uniform FresnelDielectric& fresnel,
                                                         const uniform PowerCosineDistribution& distribution)
 {
   uniform MicrofacetPlastic v; MicrofacetPlastic__Constructor(&v,R,fresnel,distribution); return v;
