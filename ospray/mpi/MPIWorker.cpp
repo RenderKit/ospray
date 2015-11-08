@@ -29,12 +29,12 @@ namespace ospray {
 
     void workerMain(int ac, const char **av)
     {
-      if (*ac < 2) {
+      if (ac < 2) {
         int argc = 2;
         const char *argv[] = {"ospray_mpi_worker", "--osp:mpi"};
-        ospInit(ac, av);
+        ospInit(&argc, argv);
       } else {
-        ospInit(ac, av);
+        ospInit(&ac, av);
       }
 
       int rc;
