@@ -47,7 +47,7 @@ namespace ospray {
     };
 
     //! Constructor.
-    DataDistributedBlockedVolume() { PING; };
+    DataDistributedBlockedVolume() {};
 
     //! Destructor.
     virtual ~DataDistributedBlockedVolume() {};

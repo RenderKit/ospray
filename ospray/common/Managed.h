@@ -192,6 +192,10 @@ typedef unsigned long long id_t;
     /*! \brief find a given parameter, or add it if not exists (and so specified) */
     Param *findParam(const char *name, bool addIfNotExist = false);
 
+    /*! \brief check if a given parameter is available */
+    bool hasParam(const char *name) 
+    { return findParam(name,false) != NULL; }
+
     /*! \brief set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);
 
