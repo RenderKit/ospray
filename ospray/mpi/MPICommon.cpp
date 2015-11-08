@@ -17,8 +17,6 @@
 #include "ospray/mpi/MPICommon.h"
 #include "ospray/mpi/async/CommLayer.h"
 
-#include "ospray/ospray.h"
-
 namespace ospray {
   namespace mpi {
 
@@ -28,14 +26,6 @@ namespace ospray {
 
     void init(int *ac, const char **av)
     {
-      if (*ac < 2) {
-        int argc = 2;
-        const char *argv[] = {"ospray_mpi_worker", "--osp:mpi"};
-        ospInit(ac, av);
-      } else {
-        ospInit(ac, av);
-      }
-
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
 

@@ -17,6 +17,8 @@
 #include "ospray/mpi/MPICommon.h"
 #include "ospray/mpi/MPIDevice.h"
 
+#include "ospray/ospray.h"
+
 namespace ospray {
   namespace mpi {
 
@@ -27,6 +29,14 @@ namespace ospray {
 
     void workerMain(int ac, const char **av)
     {
+      if (ac < 2) {
+        int argc = 2;
+        const char *argv[] = {"ospray_mpi_worker", "--osp:mpi"};
+        ospInit(&argc, argv);
+      } else {
+        ospInit(&ac, av);
+      }
+
       int rc;
       mpi::init(&ac,av);
       worker.comm = world.comm;
