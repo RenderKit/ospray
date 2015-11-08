@@ -19,16 +19,24 @@
 
 namespace ospray {
   namespace mpi {
-    
+
     Group world;
     Group app;
     Group worker;
 
     void init(int *ac, const char **av)
     {
+      if (*ac < 2) {
+        int argc = 2;
+        const char *argv[] = {"ospray_mpi_worker", "--osp:mpi"};
+        ospInit(ac, av);
+      } else {
+        ospInit(ac, av);
+      }
+
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
-      
+
       if (!initialized) {
         // MPI_Init(ac,(char ***)&av);
         int required = MPI_THREAD_MULTIPLE;
