@@ -42,7 +42,7 @@ struct RMLoaderThreads {
     PRINT(fileName);
     inFilesDir = fileName;
 
-    char *slash = rindex(fileName.c_str(),'/');
+    const char *slash = rindex(fileName.c_str(),'/');
     std::string base 
       = slash != NULL
       ? std::string(slash+1)
