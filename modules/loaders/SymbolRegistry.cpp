@@ -24,6 +24,7 @@ OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
 
 // Loader for RAW volume files.
 OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
+OSP_REGISTER_VOLUME_FILE(RawVolumeFile, gz);
 
 // Loader for PLY triangle mesh files.
 OSP_REGISTER_TRIANGLEMESH_FILE(PLYTriangleMeshFile, ply);
