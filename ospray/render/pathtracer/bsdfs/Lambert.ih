@@ -39,13 +39,13 @@ inline vec3f Lambert_sample(const uniform BSDF* uniform base,
   const vec3f localDir = cosineSampleHemisphere(s);
   wi = frame(dg.Ns) * localDir;
   pdf = cosineSampleHemispherePDF(localDir);
-  type = DIFFUSE_REFLECTION;
+  type = BSDF_DIFFUSE_REFLECTION;
   return self->R;
 }
 
 inline void Lambert_Constructor(varying Lambert* uniform self, const vec3f& R)
 {
-  BSDF_Constructor(&self->base, DIFFUSE_REFLECTION,
+  BSDF_Constructor(&self->base, BSDF_DIFFUSE_REFLECTION,
                    Lambert_eval, Lambert_sample);
   self->R = R;
 }

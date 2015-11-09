@@ -81,7 +81,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
 {
   int max_depth = self->maxDepth;
   const float org_t_max = shadowRay.t;
-  const uniform uint32/*BSDFType*/ specularBTDFs = (uniform uint32)(SPECULAR_TRANSMISSION);
+  const uniform uint32/*BSDFType*/ specularBTDFs = (uniform uint32)(BSDF_SPECULAR_TRANSMISSION);
 
   while (1) {
     traceRay(self->super.model, shadowRay);
@@ -139,8 +139,8 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              varying RandomTEA* uniform rng,
                              uint32 &numRays)
 {
-  uniform uint32/*BSDFType*/ directLightingBSDFTypes = (uniform uint32)(DIFFUSE | GLOSSY);
-  uniform uint32/*BSDFType*/ giBSDFTypes = (uniform uint32)(ALL);
+  uniform uint32/*BSDFType*/ directLightingBSDFTypes = (uniform uint32)(BSDF_DIFFUSE | BSDF_GLOSSY);
+  uniform uint32/*BSDFType*/ giBSDFTypes = (uniform uint32)(BSDF_ALL);
 
   vec3f L = make_vec3f(0.f);
   vec3f Lw = make_vec3f(1.f);
@@ -285,7 +285,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       bsdfWeight = bsdfWeight * powf(transmission,lightPath.ray.t);
 
     /*! Tracking medium if we hit a medium interface. */
-    if (type & TRANSMISSION) {
+    if (type & BSDF_TRANSMISSION) {
       foreach_unique(uniMat in dg.material) {
         uniform PathTraceMaterial* uniform m = (uniform PathTraceMaterial *)uniMat;
         if (m != NULL)  m->selectNextMedium(m,lightPath.lastMedium);
@@ -296,7 +296,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     extend_fast(lightPath,
                 dg.P,wi.v,//dg.error*
                 self->super.epsilon,inf,
-           bsdfWeight*wi.pdf,(type & directLightingBSDFTypes) != NONE);
+                bsdfWeight*wi.pdf,(type & directLightingBSDFTypes) != BSDF_NONE);
 
     Lw = mul(Lw,bsdfWeight);
   }

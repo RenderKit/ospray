@@ -19,41 +19,43 @@
 #include "optics.ih"
 #include "ospray/common/DifferentialGeometry.ih"
 
-#define SPECULAR_REFLECTION   (1<<0)  /*!< diffuse light reflection            */
-#define DIFFUSE_REFLECTION    (1<<1)  /*!< glossy light reflection             */
-#define GLOSSY_REFLECTION     (1<<2)  /*!< perfect specular light reflection   */
-#define DIFFUSE_TRANSMISSION  (1<<3)  /*!< diffuse light transmission          */
-#define GLOSSY_TRANSMISSION   (1<<4)  /*!< glossy light transmission           */
-#define SPECULAR_TRANSMISSION (1<<5)  /*!< perfect specular light transmission */
+#define BSDF_SPECULAR_REFLECTION   (1<<0)  /*!< diffuse light reflection            */
+#define BSDF_DIFFUSE_REFLECTION    (1<<1)  /*!< glossy light reflection             */
+#define BSDF_GLOSSY_REFLECTION     (1<<2)  /*!< perfect specular light reflection   */
+#define BSDF_DIFFUSE_TRANSMISSION  (1<<3)  /*!< diffuse light transmission          */
+#define BSDF_GLOSSY_TRANSMISSION   (1<<4)  /*!< glossy light transmission           */
+#define BSDF_SPECULAR_TRANSMISSION (1<<5)  /*!< perfect specular light transmission */
 
 /*! diffuse reflections and transmissions          */
-#define DIFFUSE      (DIFFUSE_REFLECTION   | DIFFUSE_TRANSMISSION)
+#define BSDF_DIFFUSE      (BSDF_DIFFUSE_REFLECTION   | BSDF_DIFFUSE_TRANSMISSION)
 
 /*! glossy reflections and transmissions           */
-#define GLOSSY       (GLOSSY_REFLECTION    | GLOSSY_TRANSMISSION)
+#define BSDF_GLOSSY       (BSDF_GLOSSY_REFLECTION    | BSDF_GLOSSY_TRANSMISSION)
 
 /*! perfect specular reflections and transmissions */
-#define SPECULAR     (SPECULAR_REFLECTION  | SPECULAR_TRANSMISSION)
+#define BSDF_SPECULAR     (BSDF_SPECULAR_REFLECTION  | BSDF_SPECULAR_TRANSMISSION)
 
 /*! all possible reflections   */
-#define REFLECTION   (DIFFUSE_REFLECTION   | GLOSSY_REFLECTION   | SPECULAR_REFLECTION)
+#define BSDF_REFLECTION   (BSDF_DIFFUSE_REFLECTION   | BSDF_GLOSSY_REFLECTION   | BSDF_SPECULAR_REFLECTION)
 
 /*! all possible transmissions */
-#define TRANSMISSION (DIFFUSE_TRANSMISSION | GLOSSY_TRANSMISSION|SPECULAR_TRANSMISSION)
+#define BSDF_TRANSMISSION (BSDF_DIFFUSE_TRANSMISSION | BSDF_GLOSSY_TRANSMISSION | BSDF_SPECULAR_TRANSMISSION)
 
 /*! no component set   */
-#define NONE         0
+#define BSDF_NONE         0
 
 /*! all components set */
-#define ALL          (REFLECTION | TRANSMISSION)
+#define BSDF_ALL          (BSDF_REFLECTION | BSDF_TRANSMISSION)
 
 struct BSDF;
 
 typedef uint32 BSDFType;
 
+/*! Result is multiplied by dot(wi,N). */
 typedef vec3f (*BSDF_EvalFunc)(const uniform BSDF* uniform this,
                                const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf);
 
+/*! Result is multiplied by dot(wi,N)/pdf. */
 typedef vec3f (*BSDF_SampleFunc)(const uniform BSDF* uniform this,
                                  const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type, const vec2f& s, float ss);
 
