@@ -20,7 +20,7 @@ SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
 SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
-SET(OSPRAY_TILE_SIZE 128 CACHE INT "Tile size")
+SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag

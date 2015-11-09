@@ -21,6 +21,15 @@
 #include "ospray/transferFunction/TransferFunction.ih"
 #include "ospray/math/box.ih"
 
+// #if EXP_DATA_PARALLEL
+// struct DataParallelInfo {
+//   /*! total number of pieces, across all nodes */
+//   uint32 numPieces;
+//   /*! number of pieces on _this_ node that I own */
+//   uint32 numMine;
+// };
+// #endif
+
 //! \brief Variables and methods common to all subtypes of the Volume
 //!  class, an abstraction for the concrete object which performs the
 //!  volume sampling (this struct must be the first field of a struct
@@ -48,6 +57,10 @@ struct Volume {
 
   //! Bounding box for the volume in world coordinates.
   uniform box3f boundingBox;
+
+// #if EXP_DATA_PARALLEL
+//   // uniform DataParallelInfo dataParallel;
+// #endif
 
   //! The value at the given sample location in world coordinates.
   varying float (*uniform computeSample)(void *uniform volume, 

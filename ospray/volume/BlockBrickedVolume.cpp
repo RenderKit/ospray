@@ -89,7 +89,8 @@ namespace ospray {
   {
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");  
-    exitOnCondition(getVoxelType() == OSP_UNKNOWN, "unrecognized voxel type (must be set before calling ospSetRegion())");
+    exitOnCondition(getVoxelType() == OSP_UNKNOWN, 
+                    "unrecognized voxel type (must be set before calling ospSetRegion())");
 
     // Get the volume dimensions.
     this->dimensions = getParam3i("dimensions", vec3i(0));

@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
 #include <libgen.h>
 #include <string>
 #include <string.h>
@@ -224,7 +225,6 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
     std::cout << "#osp.loader: where X, Y, and Z are the desired _number_ of data parallel blocks" << std::endl;
     volume = ospNewVolume("block_bricked_volume");
   }
-
 
 
   // Temporary storage for the file name attribute if specified.

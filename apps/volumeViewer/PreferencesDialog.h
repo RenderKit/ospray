@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include <ospray/ospray.h>
 #include <QtGui>
 #include <vector>
-#include <ospray/ospray.h>
 
 class VolumeViewer;
 

@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/camera/Camera.h"
@@ -60,11 +61,18 @@ namespace ospray {
 
 } // ::ospray
 
+std::string getPidString() {
+  pid_t pid = getpid();
+  char s[100];
+  sprintf(s,"(pid %i)",pid);
+  return s;
+}
+
 #define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
                              "call an ospray API function before "      \
-                             "first calling ospInit())");
+                             "first calling ospInit())"+getPidString());
 
 using namespace ospray;
 
@@ -311,7 +319,13 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
   return 'NULL' if that type is not known */
 extern "C" OSPRenderer ospNewRenderer(const char *_type)
 {
+  PING;
+  PRINT(ospray::api::Device::current);
+  
   ASSERT_DEVICE();
+  PING;
+  PRINT(ospray::api::Device::current);
+
   Assert2(_type,"invalid render type identifier in ospNewRenderer");
   LOG("ospNewRenderer(" << _type << ")");
    

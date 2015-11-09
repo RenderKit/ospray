@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "modules/loaders/RawVolumeFile.h"
 #include "modules/loaders/ObjectFile.h"
 #include "modules/loaders/TinyXML2.h"
 

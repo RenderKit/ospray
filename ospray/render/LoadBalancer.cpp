@@ -30,7 +30,7 @@ namespace ospray {
 
   void LocalTiledLoadBalancer::RenderTask::finish()
   {
-    renderer->endFrame(channelFlags);
+    renderer->endFrame(perFrameData,channelFlags);
     renderer = NULL;
     fb = NULL;
   }
@@ -46,8 +46,10 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
-    renderer->renderTile(tile);
+    renderer->renderTile(perFrameData,tile);
     // printf("settile... twice?\n");
     fb->setTile(tile);
   }
@@ -60,43 +62,15 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
-#if 0
-    for (int run=0;1;run++) {
-      double t0 = getSysTime();
-static double global_t0 = t0;
-      Ref<RenderTask> renderTask = new RenderTask;
-      renderTask->fb = fb;
-      renderTask->renderer = tiledRenderer;
-      renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-      renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-      renderTask->channelFlags = channelFlags;
-      tiledRenderer->beginFrame(fb);
-      
-      renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
-      renderTask->wait();
-      double t1 = getSysTime();
-      double t = t1 - t0;
-      //printf("time for run #%i : %f\n",run,t);
-      if (t > .3) {
-        static double last_t1 = t1;
-        struct sysinfo si;
-        sysinfo(&si);
-        printf("HICKUP in run #%i, at time %f / %li; delta t since last hickup %f, length of hickup %f\n",
-               run,t0-global_t0,si.uptime,
-               t0-last_t,t);
-        last_t1 = t1;
-      }	
-
-    }
-#endif
+    void *perFrameData = tiledRenderer->beginFrame(fb);
 
     Ref<RenderTask> renderTask = new RenderTask;
     renderTask->fb = fb;
+    renderTask->perFrameData = perFrameData; 
     renderTask->renderer = tiledRenderer;
     renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
     renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
     renderTask->channelFlags = channelFlags;
-    tiledRenderer->beginFrame(fb);
     
     renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
     renderTask->wait();
@@ -135,14 +109,16 @@ static double global_t0 = t0;
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
-    renderer->renderTile(tile);
+    renderer->renderTile(perFrameData,tile);
   }
 
 
   void InterleavedTiledLoadBalancer::RenderTask::finish()
   {
-    renderer->endFrame(channelFlags);
+    renderer->endFrame(perFrameData,channelFlags);
     renderer = NULL;
     fb = NULL;
     // refDec();
@@ -156,8 +132,11 @@ static double global_t0 = t0;
     Assert(tiledRenderer);
     Assert(fb);
 
+    void *perFrameData = tiledRenderer->beginFrame(fb);
+
     Ref<RenderTask> renderTask = new RenderTask;
     renderTask->fb = fb;
+    renderTask->perFrameData = perFrameData;
     renderTask->renderer = tiledRenderer;
     renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
     renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
@@ -169,7 +148,6 @@ static double global_t0 = t0;
     renderTask->channelFlags = channelFlags;
     renderTask->deviceID     = deviceID;
     renderTask->numDevices   = numDevices;
-    tiledRenderer->beginFrame(fb);
     
     renderTask->schedule(renderTask->numTiles_mine);
     renderTask->wait();

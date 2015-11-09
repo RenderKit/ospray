@@ -144,7 +144,7 @@ task void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator
       | i;
 
     // The index of the slice containing the current cell.
-    uniform uint32 z = i >> 2 * BRICK_WIDTH_BITCOUNT;  
+    uniform uint32 z = i >> (2 * BRICK_WIDTH_BITCOUNT);  
     uniform uint32 offset = i & (BRICK_WIDTH * BRICK_WIDTH - 1);
 
     // The indices of the cell within the slice.

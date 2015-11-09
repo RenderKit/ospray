@@ -18,12 +18,13 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
-IF (OSPRAY_EXP_IMAGE_COMPOSITING)
+OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
+#OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
+#IF (OSPRAY_EXP_IMAGE_COMPOSITING)
 
-  OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
-  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
-ENDIF()
+#  OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
+#  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
+#ENDIF()
 
 # build and configure embree
 INCLUDE(../cmake/build_embree.cmake)
@@ -41,6 +42,7 @@ SET(OSPRAY_SOURCES
   common/OSPCommon.cpp
   common/Core.cpp
   common/Managed.cpp
+  common/ObjectHandle.cpp
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp
@@ -159,7 +161,6 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
   api/LocalDevice.cpp
-  api/Handle.cpp
   )
 
 # -------------------------------------------------------

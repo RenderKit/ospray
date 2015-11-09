@@ -211,7 +211,11 @@ namespace ospray {
       affine3f xfm;
       int meshID;
       
-      Instance(int meshID=0, affine3f xfm=embree::one) : meshID(meshID), xfm(xfm) {};
+      OSPGeometry ospGeometry;
+
+      Instance(int meshID=0, affine3f xfm=embree::one) 
+        : meshID(meshID), xfm(xfm), ospGeometry(NULL) 
+      {};
     };
     bool operator==(const Instance &a, const Instance &b);
     bool operator!=(const Instance &a, const Instance &b);

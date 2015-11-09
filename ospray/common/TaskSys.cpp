@@ -54,7 +54,9 @@ namespace ospray {
 
     ~TaskSys();
   };
-  
+
+  size_t numActiveThreads = 0;
+
   TaskSys __aligned(64) TaskSys::global;
 
     //! one of our depdencies tells us that he's finished
@@ -260,7 +262,6 @@ namespace ospray {
       numThreads = std::min(numThreads,(size_t)embree::getNumberOfLogicalThreads());
 #endif
     }
-
     PRINT(numThreads);
 
     /* generate all threads */
@@ -275,6 +276,7 @@ namespace ospray {
       embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)t,4*1024*1024,t);
 #endif
     }
+    numActiveThreads = numThreads-1;
 
 #if defined(__MIC__)
 #else    

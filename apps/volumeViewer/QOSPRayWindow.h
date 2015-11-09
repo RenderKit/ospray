@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include <ospray/ospray.h>
 #include <QtGui>
 #include <QGLWidget>
-#include <ospray/ospray.h>
 
 struct Viewport
 {

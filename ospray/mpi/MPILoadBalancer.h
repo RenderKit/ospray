@@ -61,6 +61,7 @@ namespace ospray {
           size_t            numTiles_x;
           size_t            numTiles_y;
           uint32            channelFlags;
+          void             *perFrameData;
 
           virtual void run(size_t jobID);
           virtual void finish();

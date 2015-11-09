@@ -112,7 +112,6 @@ namespace ospray {
       // -------------------------------------------------------
       ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
 
-
       CommandStream cmd;
 
       char hostname[HOST_NAME_MAX];
@@ -121,18 +120,18 @@ namespace ospray {
              worker.rank,worker.size,getpid(),hostname);
       int rc;
 
-
       // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Slave;
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Slave;
 
-
+      try {
       while (1) {
         const int command = cmd.get_int32();
-        DBG(PING; PRINT(command); fflush(0));
+        // PING; PRINT(command); fflush(0);
+        // printf("worker: got command %i\n",command); fflush(0);
 
         switch (command) {
         case ospray::CMD_NEW_PIXELOP: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -143,7 +142,7 @@ namespace ospray {
           handle.assign(pixelOp);
         } break;
         case ospray::CMD_NEW_RENDERER: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -154,7 +153,7 @@ namespace ospray {
           handle.assign(renderer);
         } break;
         case ospray::CMD_NEW_CAMERA: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -167,7 +166,7 @@ namespace ospray {
         } break;
         case ospray::CMD_NEW_VOLUME: {
           // Assert(type != NULL && "invalid volume type identifier");
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -182,7 +181,7 @@ namespace ospray {
           //          cout << "#w: new volume " << handle << endl;
         } break;
         case ospray::CMD_NEW_TRANSFERFUNCTION: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -197,8 +196,8 @@ namespace ospray {
         } break;
         case ospray::CMD_NEW_MATERIAL: {
           // Assert(type != NULL && "invalid volume type identifier");
-          const mpi::Handle rendererHandle = cmd.get_handle();
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle rendererHandle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -243,8 +242,8 @@ namespace ospray {
         } break;
 
         case ospray::CMD_NEW_LIGHT: {
-          const mpi::Handle rendererHandle = cmd.get_handle();
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle rendererHandle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -290,7 +289,7 @@ namespace ospray {
 
         case ospray::CMD_NEW_GEOMETRY: {
           // Assert(type != NULL && "invalid volume type identifier");
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *type = cmd.get_charPtr();
           if (worker.rank == 0)
             if (logLevel > 2)
@@ -308,7 +307,7 @@ namespace ospray {
         } break;
 
         case ospray::CMD_FRAMEBUFFER_CREATE: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const vec2i  size               = cmd.get_vec2i();
           const OSPFrameBufferFormat mode = (OSPFrameBufferFormat)cmd.get_int32();
           const uint32 channelFlags       = cmd.get_int32();
@@ -325,32 +324,33 @@ namespace ospray {
           handle.assign(fb);
         } break;
         case ospray::CMD_FRAMEBUFFER_CLEAR: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const uint32 channelFlags       = cmd.get_int32();
           FrameBuffer *fb = (FrameBuffer*)handle.lookup();
           fb->clear(channelFlags);
         } break;
         case ospray::CMD_RENDER_FRAME: {
-          const mpi::Handle  fbHandle = cmd.get_handle();
-          // const mpi::Handle  swapChainHandle = cmd.get_handle();
-          const mpi::Handle  rendererHandle  = cmd.get_handle();
+          const ObjectHandle  fbHandle = cmd.get_handle();
+          // const ObjectHandle  swapChainHandle = cmd.get_handle();
+          const ObjectHandle  rendererHandle  = cmd.get_handle();
           const uint32 channelFlags          = cmd.get_int32();
           FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
           // SwapChain *sc = (SwapChain*)swapChainHandle.lookup();
           // Assert(sc);
           Renderer *renderer = (Renderer*)rendererHandle.lookup();
           Assert(renderer);
-      // double before = getSysTime();
+       // double before = getSysTime();
           renderer->renderFrame(fb,channelFlags); //sc->getBackBuffer());
-      // double after = getSysTime();
-      // float T = after - before;
-      // printf("#rank %i: pure time to render %f, theo fps %f\n",mpi::worker.rank,T,1.f/T);
+       // double after = getSysTime();
+       // float T = after - before;
+       // printf("#rank %i: pure time to render %f, theo fps %f\n",mpi::worker.rank,T,1.f/T);
+       // fflush(0);
 
           // sc->advance();
         } break;
         case ospray::CMD_FRAMEBUFFER_MAP: {
           FATAL("should never get called on worker!?");
-          // const mpi::Handle handle = cmd.get_handle();
+          // const ObjectHandle handle = cmd.get_handle();
           // FrameBuffer *fb = (FrameBuffer*)handle.lookup();
           // // SwapChain *sc = (SwapChain*)handle.lookup();
           // // Assert(sc);
@@ -364,7 +364,7 @@ namespace ospray {
           // }
         } break;
         case ospray::CMD_NEW_MODEL: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           Model *model = new Model;
           Assert(model);
           handle.assign(model);
@@ -372,14 +372,14 @@ namespace ospray {
             cout << "#w: new model " << handle << endl;
         } break;
         case ospray::CMD_NEW_TRIANGLEMESH: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           TriangleMesh *triangleMesh = new TriangleMesh;
           Assert(triangleMesh);
           handle.assign(triangleMesh);
         } break;
         case ospray::CMD_NEW_DATA: {
           DBG(PING; fflush(0));
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           Data *data = NULL;
           size_t nitems      = cmd.get_size_t();
           OSPDataType format = (OSPDataType)cmd.get_int32();
@@ -403,7 +403,7 @@ namespace ospray {
                  what the core expects are pointers; to make the core
                  happy we translate all data items back to pointers at
                  this stage */
-              mpi::Handle    *asHandle = (mpi::Handle    *)data->data;
+              ObjectHandle    *asHandle = (ObjectHandle    *)data->data;
               ManagedObject **asObjPtr = (ManagedObject **)data->data;
               for (int i=0;i<nitems;i++) {
                 if (asHandle[i] != NULL_HANDLE) {
@@ -420,7 +420,7 @@ namespace ospray {
 
         case ospray::CMD_NEW_TEXTURE2D: {
           DBG(PING; fflush(0));
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           Texture2D *texture2D = NULL;
 
           int32 width = cmd.get_int32();
@@ -452,8 +452,8 @@ namespace ospray {
         } break;
 
         case ospray::CMD_ADD_GEOMETRY: {
-          const mpi::Handle modelHandle = cmd.get_handle();
-          const mpi::Handle geomHandle = cmd.get_handle();
+          const ObjectHandle modelHandle = cmd.get_handle();
+          const ObjectHandle geomHandle = cmd.get_handle();
           Model *model = (Model*)modelHandle.lookup();
           Assert(model);
           Geometry *geom = (Geometry*)geomHandle.lookup();
@@ -462,8 +462,8 @@ namespace ospray {
         } break;
 
         case ospray::CMD_REMOVE_GEOMETRY: {
-          const mpi::Handle modelHandle = cmd.get_handle();
-          const mpi::Handle geomHandle = cmd.get_handle();
+          const ObjectHandle modelHandle = cmd.get_handle();
+          const ObjectHandle geomHandle = cmd.get_handle();
           Model *model = (Model*)modelHandle.lookup();
           Assert(model);
           Geometry *geom = (Geometry*)geomHandle.lookup();
@@ -478,17 +478,17 @@ namespace ospray {
         } break;
 
         case ospray::CMD_ADD_VOLUME: {
-          const mpi::Handle modelHandle = cmd.get_handle();
-          const mpi::Handle volumeHandle = cmd.get_handle();
+          const ObjectHandle modelHandle = cmd.get_handle();
+          const ObjectHandle volumeHandle = cmd.get_handle();
           Model *model = (Model *) modelHandle.lookup();
           Assert(model);
           Volume *volume = (Volume *) volumeHandle.lookup();
           Assert(volume);
-          model->volumes.push_back(volume);
+          model->volume.push_back(volume);
         } break;
 
         case ospray::CMD_COMMIT: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           // printf("#w%i:c%i obj %lx\n",worker.rank,(int)handle,obj);
@@ -502,24 +502,25 @@ namespace ospray {
             model->finalize();
 
           MPI_Barrier(MPI_COMM_WORLD);
+
         } break;
         case ospray::CMD_SET_OBJECT: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
-          const mpi::Handle val = cmd.get_handle();
+          const ObjectHandle val = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           obj->setParam(name,val.lookup());
           cmd.free(name);
         } break;
         case ospray::CMD_RELEASE: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           handle.freeObject();
         } break;
         case ospray::CMD_SAMPLE_VOLUME: {
-          const mpi::Handle volumeHandle = cmd.get_handle();
+          const ObjectHandle volumeHandle = cmd.get_handle();
           Volume *volume = (Volume *)volumeHandle.lookup();
           Assert(volume);
           const size_t count = cmd.get_size_t();
@@ -539,7 +540,7 @@ namespace ospray {
         } break;
 
         case ospray::CMD_GET_TYPE: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
 
           if (worker.rank == 0) {
@@ -564,7 +565,7 @@ namespace ospray {
         } break;
 
         case ospray::CMD_GET_VALUE: {
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           OSPDataType type = (OSPDataType) cmd.get_int32();
 
@@ -616,16 +617,16 @@ namespace ospray {
         } break;
 
         case ospray::CMD_SET_MATERIAL: {
-          const mpi::Handle geoHandle = cmd.get_handle();
-          const mpi::Handle matHandle = cmd.get_handle();
+          const ObjectHandle geoHandle = cmd.get_handle();
+          const ObjectHandle matHandle = cmd.get_handle();
           Geometry *geo = (Geometry*)geoHandle.lookup();
           Material *mat = (Material*)matHandle.lookup();
           geo->setMaterial(mat);
         } break;
 
         case ospray::CMD_SET_PIXELOP: {
-          const mpi::Handle fbHandle = cmd.get_handle();
-          const mpi::Handle poHandle = cmd.get_handle();
+          const ObjectHandle fbHandle = cmd.get_handle();
+          const ObjectHandle poHandle = cmd.get_handle();
           FrameBuffer *fb = (FrameBuffer*)fbHandle.lookup();
           PixelOp     *po = (PixelOp*)poHandle.lookup();
           assert(fb);
@@ -634,8 +635,8 @@ namespace ospray {
         } break;
 
         case ospray::CMD_SET_REGION: {
-          const mpi::Handle volumeHandle = cmd.get_handle();
-          const mpi::Handle dataHandle = cmd.get_handle();
+          const ObjectHandle volumeHandle = cmd.get_handle();
+          const ObjectHandle dataHandle = cmd.get_handle();
           const vec3i index = cmd.get_vec3i();
           const vec3i count = cmd.get_vec3i();
 
@@ -658,7 +659,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_STRING: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const char *val  = cmd.get_charPtr();
           ManagedObject *obj = handle.lookup();
@@ -671,7 +672,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_INT: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const int val = cmd.get_int();
           ManagedObject *obj = handle.lookup();
@@ -683,7 +684,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_FLOAT: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const float val = cmd.get_float();
           ManagedObject *obj = handle.lookup();
@@ -695,7 +696,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_VEC3F: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const vec3f val = cmd.get_vec3f();
           ManagedObject *obj = handle.lookup();
@@ -707,7 +708,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_VEC2F: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const vec2f val = cmd.get_vec2f();
           ManagedObject *obj = handle.lookup();
@@ -719,7 +720,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_VEC2I: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const vec2i val = cmd.get_vec2i();
           ManagedObject *obj = handle.lookup();
@@ -731,7 +732,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_VEC3I: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const vec3i val = cmd.get_vec3i();
           ManagedObject *obj = handle.lookup();
@@ -797,6 +798,12 @@ namespace ospray {
           throw std::runtime_error(err.str());
         }
       };
+      } catch (std::runtime_error e) {
+        PING;
+        PRINT(e.what());
+        throw e;
+      }
+          
     }
 
   } // ::ospray::api

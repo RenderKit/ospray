@@ -20,6 +20,7 @@
 
 namespace ospray {
 
+#if EXP_DATA_PARALLEL
   /*! \brief A type of structured volume that is data-distributed
     across multiple clients */
   /*! \detailed This class implements a structured volume whose data
@@ -38,19 +39,31 @@ namespace ospray {
       box3i domain;
       //! 3D bounding box
       box3f bounds;
-      /*! ID of node that owns this block */
-      int owner;
+      /*! ID of _first_ node that owns this block */
+      int firstOwner;
+      /*! number of nodes that own this block */
+      int numOwners;
       /*! 'bool' of whether this block is owned by me, or not */
-      int mine;
+      int isMine;
 
-      void *ispcVolumeHandle;
+      Ref<Volume> cppVolume;
+      void   *ispcVolume;
     };
 
     //! Constructor.
-    DataDistributedBlockedVolume() {};
+    DataDistributedBlockedVolume() : numDDBlocks(0), ddBlock(NULL) { PING; };
 
     //! Destructor.
     virtual ~DataDistributedBlockedVolume() {};
+
+    virtual void updateEditableParameters();
+
+    //! \brief Returns whether the volume is a data-distributed volume
+    virtual bool isDataDistributed() const { return true; }
+
+    //! build the accelerator - allows child class (data distributed) to avoid building..
+    virtual void buildAccelerator()
+    { std::cout << "intentionally SKIP building an accelerator for data parallel volume" << std::endl; }
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::DataDistributedBlockedVolume<" + voxelType + ">"); }
@@ -61,7 +74,7 @@ namespace ospray {
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
 
-  protected:
+  // protected:
 
     //! Create the equivalent ISPC volume container.
     virtual void createEquivalentISPC();
@@ -75,6 +88,7 @@ namespace ospray {
     /*! list of data distributed blocks */
     DDBlock *ddBlock;
   };
+#endif
 
 } // ::ospray
 

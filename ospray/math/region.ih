@@ -18,6 +18,14 @@
 
 #include "vec.ih"
 
+struct region1f {
+  float lower;
+  float upper;
+};
+
+inline region1f make_region1f(const float lower, const float upper) 
+{ region1f ret; ret.lower = lower; ret.upper = upper; return ret; }
+
 struct region2i {
   vec2i lower;
   vec2i upper;

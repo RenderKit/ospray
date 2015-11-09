@@ -161,14 +161,16 @@ namespace ospray {
       if (!volume)
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
       
-      PING;
+      PING; PRINT(voxelType);
       ospSetString(volume,"voxelType",voxelType.c_str());
-      PING;
+      PING; PRINT(dimensions);
       ospSetVec3i(volume,"dimensions",dimensions);
       PING;
       
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
+      float minValue = +std::numeric_limits<float>::infinity();
+      float maxValue = -std::numeric_limits<float>::infinity();
       if (!file) 
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
                                  +realFileName.str()+"' (expanded from xml file '"

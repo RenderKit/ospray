@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "VolumeViewer.h"
 #include <algorithm>
 #include "modules/loaders/ObjectFile.h"
 #include "modules/loaders/TriangleMeshFile.h"
-#include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
 #include "LightEditor.h"

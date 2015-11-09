@@ -19,12 +19,16 @@
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/fb/Tile.h"
 #include "ospray/fb/LocalFB.h"
+#include "ospray/common/TaskSys.h"
+#include <queue>
 
 namespace ospray {
   using std::cout;
   using std::endl;
 
   typedef embree::ConditionSys Condition;
+
+#define QUEUE_PROCESSING_JOBS 1
 
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
@@ -209,7 +213,10 @@ namespace ospray {
         float sortOrder;
       };
       std::vector<BufferedTile *> bufferedTile;
-      Mutex __align(64) mutex;
+      int currentGeneration;
+      int expectedInNextGeneration;
+      int missingInCurrentGeneration;
+      Mutex mutex;
     };
     
     /*! this function gets called whenever one of our tiles is done
@@ -249,6 +256,32 @@ namespace ospray {
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
     Ref<LocalFrameBuffer> localFBonMaster;
+#if QUEUE_PROCESSING_JOBS
+    struct MsgTaskQueue {
+      std::queue<Ref<ospray::Task> > queue;
+      Mutex mutex;
+
+      void addJob(Task *task) {
+        mutex.lock();
+        queue.push(task);
+        mutex.unlock();
+      }
+
+      void waitAll() {
+        mutex.lock();
+        while (!queue.empty()) {
+          Ref<Task> task = queue.front();
+          queue.pop();
+          mutex.unlock();
+          task->wait();
+          mutex.lock();
+        }
+        mutex.unlock();
+      }
+    };
+    MsgTaskQueue msgTaskQueue;
+#endif
+
 
     inline bool IamTheMaster() const { return comm->IamTheMaster(); }
     //! constructor
@@ -258,7 +291,10 @@ namespace ospray {
                            ColorBufferFormat colorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer);
-    
+    //! destructor
+    ~DistributedFrameBuffer()
+    { freeTiles(); }
+
     // ==================================================================
     // framebuffer / device interface
     // ==================================================================
@@ -322,6 +358,11 @@ namespace ospray {
     inline size_t getTileIDof(size_t x, size_t y) const
     { return (x/TILE_SIZE)+(y/TILE_SIZE)*numTiles.x; }
       
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const
+    { return "ospray::DistributedFrameBuffer"; }
+
 
     /*! the number of pixels in the (whole) frame buffer (independent
         of which tiles we have).
@@ -332,6 +373,15 @@ namespace ospray {
     vec2i numPixels;
     vec2i maxValidPixelID;
     vec2i numTiles;
+
+    typedef enum { 
+      WRITE_ONCE, ALPHA_BLENDING
+    } FrameMode;
+
+    FrameMode frameMode;
+    void setFrameMode(FrameMode newFrameMode) ;
+    void createTiles();
+    void freeTiles();
 
     /*! number of tiles written this frame */
     size_t numTilesCompletedThisFrame;

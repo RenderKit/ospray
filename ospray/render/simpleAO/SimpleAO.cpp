@@ -40,7 +40,8 @@ namespace ospray {
   }
   
   //! \brief Constructor
-  SimpleAO::SimpleAO()
+  SimpleAO::SimpleAO(int defaultNumSamples)
+    : defaultNumSamples(defaultNumSamples)
   {
     ispcEquivalent = ispc::SimpleAO_create(this,NULL,NULL);
   }
@@ -64,7 +65,7 @@ namespace ospray {
     Renderer::commit();
 
     bgColor = getParam3f("bgColor",vec3f(1.f));
-    int   numSamples = getParam1i("aoSamples", 16);
+    int   numSamples = getParam1i("aoSamples", defaultNumSamples);
     float rayLength  = getParam1f("aoOcclusionDistance", 1e20f);
     ispc::SimpleAO_set(getIE(),
                        (const ispc::vec3f&)bgColor,                           
@@ -72,24 +73,25 @@ namespace ospray {
                        rayLength);
   }
 
-  OSP_REGISTER_RENDERER(SimpleAO, ao);
+  // OSP_REGISTER_RENDERER(SimpleAO, ao);
 
   /*! \note Reintroduce aoX renderers for compatibility, they should be
             depricated!*/
 
-#define OSP_REGISTER_AO_RENDERER(InternalClassName, external_name, nSamples)      \
-  extern "C" OSPRAY_INTERFACE Renderer *ospray_create_renderer__##external_name() \
-  {                                                                               \
-    InternalClassName *renderer = new InternalClassName;                          \
-    ospSet1i((OSPRenderer)renderer, "aoSamples", nSamples);                       \
-    return renderer;                                                              \
+#define OSP_REGISTER_AO_RENDERER(external_name, nSamples)               \
+  extern "C" OSPRAY_INTERFACE                                           \
+  Renderer *ospray_create_renderer__##external_name()                   \
+  {                                                                     \
+    SimpleAO *renderer = new SimpleAO(nSamples);                        \
+    return renderer;                                                    \
   }
 
-  OSP_REGISTER_AO_RENDERER(SimpleAO, ao1,  1 );
-  OSP_REGISTER_AO_RENDERER(SimpleAO, ao2,  2 );
-  OSP_REGISTER_AO_RENDERER(SimpleAO, ao4,  4 );
-  OSP_REGISTER_AO_RENDERER(SimpleAO, ao8,  8 );
-  OSP_REGISTER_AO_RENDERER(SimpleAO, ao16, 16);
+  OSP_REGISTER_AO_RENDERER(ao,   4 );
+  OSP_REGISTER_AO_RENDERER(ao1,  1 );
+  OSP_REGISTER_AO_RENDERER(ao2,  2 );
+  OSP_REGISTER_AO_RENDERER(ao4,  4 );
+  OSP_REGISTER_AO_RENDERER(ao8,  8 );
+  OSP_REGISTER_AO_RENDERER(ao16, 16);
 
 } // ::ospray
 
