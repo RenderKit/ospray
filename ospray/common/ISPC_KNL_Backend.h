@@ -42,6 +42,7 @@
 #error "Only Intel(R) C++ Compiler is supported"
 #endif
 
+#define __INTEL_COMPILER_USE_INTRINSIC_PROTOTYPES 1
 #include <immintrin.h>
 #include <zmmintrin.h>
 
@@ -2635,9 +2636,10 @@ static FORCEINLINE double __rcp_uniform_double(double v)
 
 
 static FORCEINLINE __vec16_f __rsqrt_varying_float(__vec16_f v) {
-#ifdef ISPC_FAST_MATH
+#ifdef IGNORE_ISPC_FAST_MATH
   return _mm512_rsqrt23_ps(v); // Approximation with 0.775ULP accuracy
 #else 
+# warning "disabled fast math for now"
   return _mm512_invsqrt_ps(v);
 #endif
 }

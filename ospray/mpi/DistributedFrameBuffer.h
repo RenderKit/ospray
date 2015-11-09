@@ -209,7 +209,7 @@ namespace ospray {
         float sortOrder;
       };
       std::vector<BufferedTile *> bufferedTile;
-      Mutex mutex;
+      Mutex __align(64) mutex;
     };
     
     /*! this function gets called whenever one of our tiles is done
