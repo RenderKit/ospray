@@ -266,18 +266,19 @@ namespace ospray {
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {
       // embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,(t+1)%numThreads);
-#if 1
+#if 0
       // embree will not assign affinity
       threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,-1));
 #else
       // embree will assign affinity in this case:
+      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,t));
       embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)t,4*1024*1024,t);
 #endif
     }
 
 #if defined(__MIC__)
 #else    
-    embree::setAffinity(0);
+  //  embree::setAffinity(0);
 #endif
 
     cout << "#osp: task system initialized" << endl;

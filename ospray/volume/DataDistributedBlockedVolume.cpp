@@ -67,6 +67,7 @@ namespace ospray {
 
     ddBlocks    = getParam3i("num_dp_blocks",vec3i(4,4,4));
     blockSize   = divRoundUp(dimensions,ddBlocks);
+	std::cout << "#osp:dp: using data parallel volume of " << ddBlocks << " blocks, blockSize is " << blockSize << std::endl;
     
     numDDBlocks = embree::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
