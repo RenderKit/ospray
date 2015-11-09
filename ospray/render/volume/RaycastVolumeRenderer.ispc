@@ -174,7 +174,8 @@ inline Volume * RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRend
     intersectBox(ray, renderer->inherited.model->volumes[i]->boundingBox, t0, t1);
 
     // Clip against volume clipping box (if specified).
-    if(ne(renderer->inherited.model->volumes[i]->volumeClippingBox.lower, renderer->inherited.model->volumes[i]->volumeClippingBox.upper)) {
+    if(ne(renderer->inherited.model->volumes[i]->volumeClippingBox.lower, 
+          renderer->inherited.model->volumes[i]->volumeClippingBox.upper)) {
       float tClip0, tClip1;
       intersectBox(ray, renderer->inherited.model->volumes[i]->volumeClippingBox, tClip0, tClip1);
 
