@@ -23,6 +23,9 @@ namespace ospray {
     {
       mutex.lock();
       int myID = nextFreeID++;
+#ifdef __LINUX__
+      printf("ID no %i runs on core %i\n",myID,sched_getcpu());
+#endif
       mutex.unlock();
 
       barrier.wait();
