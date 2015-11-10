@@ -495,18 +495,20 @@ namespace ospray {
       getString(_volume, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
       Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
+      int typeSize = sizeOf(type);
 
-      OSPData data = newData(size_t(count.x) * count.y * count.z, type, (void *)source, OSP_DATA_SHARED_BUFFER);
+      size_t size = typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
+      if (size > 1000000000LL)
+        throw std::runtime_error("setregion does not currently work for region sizes >= 2GB");
+      // OSPData data = newData(size, type, (void *)source, OSP_DATA_SHARED_BUFFER);
 
       cmd.newCommand(CMD_SET_REGION);
       cmd.send((const ObjectHandle &)_volume);
-      cmd.send((const ObjectHandle &)data);
       cmd.send(index);
       cmd.send(count);
-
+      cmd.send(size);
+      cmd.send(source,size);
       cmd.flush();
-
-      release(data);
 
       int numFails = 0;
       MPI_Status status;

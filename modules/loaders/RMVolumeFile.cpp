@@ -19,6 +19,10 @@
 #include "modules/loaders/RMVolumeFile.h"
 #include "ospray/common/OSPCommon.h"
 #include "embree/common/sys/sysinfo.h"
+#include "embree/common/sys/thread.h"
+#ifdef __LINUX__
+# include <sched.h>
+#endif
 
 struct RMLoaderThreads {
   OSPVolume volume;
@@ -81,6 +85,12 @@ struct RMLoaderThreads {
   
   void run() 
   {
+    static int nextThreadID = 0;
+    mutex.lock();
+    int threadID = nextThreadID++;
+    embree::setAffinity(threadID);
+    mutex.unlock();
+
     Block *block = new Block;
     while(1) {
       mutex.lock();
@@ -93,7 +103,11 @@ struct RMLoaderThreads {
       int J = (blockID / 8) % 8;
       int K = (blockID / 64);
       
-      printf("[b%i:%i,%i,%i]",blockID,I,J,K); fflush(0);
+      int cpu = -1;
+#ifdef __LINUX__
+      cpu = sched_getcpu();
+#endif
+      printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,cpu); fflush(0);
       int timeStep = 035;
       loadBlock(*block,inFilesDir,blockID);
           
