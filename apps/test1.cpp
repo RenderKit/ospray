@@ -1,6 +1,7 @@
 #include "ospray/common/OSPCommon.h"
 #include "ospray/common/Thread.h"
 #include "common/sys/sync/barrier.h"
+#include <sched.h>
 
 namespace ospray {
 
@@ -62,6 +63,11 @@ namespace ospray {
 
   extern "C" int main(int ac, char **av)
   {
+#ifdef __LINUX__
+    printf("main thread runs on core %i\n",sched_getcpu());
+#endif
+    printf("address of global variables is %li\n",(long)&sum);
+
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
       if (arg == "-nt")
