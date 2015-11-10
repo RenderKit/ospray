@@ -146,8 +146,7 @@ namespace ospray {
     ddBlock = new DDBlock[numDDBlocks];
 
     printf("=======================================================\n");
-    printf("created %ix%ix%i data distributed volume blocks\n",
-           ddBlocks.x,ddBlocks.y,ddBlocks.z);
+    printf("created %ix%ix%i data distributed volume blocks\n", ddBlocks.x,ddBlocks.y,ddBlocks.z);
     printf("=======================================================\n");
 
     if (!ospray::core::isMpiParallel())
@@ -173,7 +172,7 @@ namespace ospray {
             } else {
               block->firstOwner = (blockID * numWorkers) / numDDBlocks;
               int nextBlockFirstOwner = ((blockID+1) * numWorkers) / numDDBlocks;
-              block->numOwners = nextBlockFirstOwner - block->firstOwner;
+              block->numOwners = nextBlockFirstOwner - block->firstOwner + 1;
             }
             block->isMine 
               = (ospray::core::getWorkerRank() >= block->firstOwner)
@@ -183,12 +182,12 @@ namespace ospray {
             block->bounds.lower = gridOrigin + gridSpacing * vec3f(block->domain.lower);// / vec3f(dimensions);
             block->bounds.upper = gridOrigin + gridSpacing * vec3f(block->domain.upper);// / vec3f(dimensions);
 
-            block->domain.upper = min(block->domain.upper+vec3i(1),dimensions);
+            block->domain.upper = min(block->domain.upper+vec3i(1),dimensions); // XXX?? 1 overlap?
 
             
             if (block->isMine) {
               Ref<Volume> volume = new BlockBrickedVolume;
-              vec3i blockDims = block->domain.upper-block->domain.lower;
+              vec3i blockDims = block->domain.upper - block->domain.lower;
               volume->findParam("dimensions",1)->set(blockDims);
               volume->findParam("gridOrigin",1)->set(block->bounds.lower);
               volume->findParam("gridSpacing",1)->set(gridSpacing);
