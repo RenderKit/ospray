@@ -57,11 +57,11 @@ namespace ospray {
     
   };
 
+  int numThreads = 10;
+  int firstThreadID = 1;
+
   extern "C" int main(int ac, char **av)
   {
-    int numThreads = 10;
-    int firstThreadID = 1;
-
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
       if (arg == "-nt")
@@ -80,6 +80,12 @@ namespace ospray {
       thread[i] = new MyThread(numThreads);
       thread[i]->start(firstThreadID+i);
     }
+
+    while (1) {
+      sleep(1);
+      if (done) break;
+    }
+
 
     for (int i=0;i<numThreads;i++)
       thread[i]->join();
