@@ -293,16 +293,19 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
 }
 
 /*! This function intersects the volume and geometries. */
-inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform renderer,
-                                            varying Ray &ray,
-                                            const uniform PassInfo &passInfo,
-                                            const varying float &rayOffset,
-                                            varying vec4f &color,
-                                            varying float &depth)
+void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform renderer,
+                                     varying Ray &ray,
+                                     const uniform PassInfo &passInfo,
+                                     const varying float &rayOffset,
+                                     varying vec4f &color,
+                                     varying float &depth)
 {
   const region1f clipRange = passInfo.region;
-  ray.t0 = max(ray.t0,clipRange.lower);
-  ray.t = min(ray.t,clipRange.upper);
+
+  if (clipRange.lower != 0.f) {
+    ray.t0 = max(ray.t0,clipRange.lower);
+    ray.t = min(ray.t,clipRange.upper);
+  }
 
   // if (dbg) {
   //   print("RENDER SAMPLE (block %)\n",passInfo.block);
@@ -340,9 +343,6 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   Volume *volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray,
                                                           passInfo,
                                                           rayOffset);
-
-  // if (dbg)
-  //   print("volume intersect\n %\n %\n",ray.t0,ray.t);
 
   // Provide ray offset for use with isosurface geometries (this value ignored elsewhere).
   if (volume != NULL)
@@ -419,21 +419,15 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
                                         void *uniform _passInfo,
                                         varying ScreenSample &sample)
 {
-  // DVRPerFrameData *uniform pfd = (DVRPerFrameData *uniform)_perFrameData;
-  // if (pfd)
-  //   print("we're doing data-parallel...\n");
+  RaycastVolumeRenderer *uniform renderer
+    = (RaycastVolumeRenderer *uniform) pointer;
 
-  // Cast to the actual Renderer subtype.
-  RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
-
-  PassInfo *uniform passInfo = (PassInfo *uniform)_passInfo;
+  PassInfo *uniform passInfo
+    = (PassInfo *uniform)_passInfo;
 
   // Background color.
   const uniform bool useBG = ((passInfo == NULL) || passInfo->useBG);
-  // if (passInfo && useBG) {
-  //   sample.rgb = make_vec3f(0,1,0);
-  //   return;
-  // }
+
   // Ray offset for this sample, as a fraction of the nominal step size.
   float rayOffset = precomputedHalton2(sample.sampleID.z);
   int ix = sample.sampleID.x % 4;
@@ -443,7 +437,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
   if(rayOffset > 1.f) rayOffset -= 1.f;
 
-  // Provide the renderer to the intersector as it contains all volumes, geometries, etc.
+  // Provide the renderer to the intersector as it contains all
+  // volumes, geometries, etc.
   vec4f color = make_vec4f(0.0f,0.f,0.f,0.f);
   float depth = infinity;
 
@@ -459,6 +454,9 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
                                     dummyPassInfo, rayOffset, color, depth);
   }
 
+  // color.x = 1.f;
+  // color.w = 1.f;
+
   // Attenuate the foreground and background colors by the opacity.
   if (useBG && renderer->inherited.backgroundEnabled) {
     const vec4f background = make_vec4f(renderer->bgColor, 1.f);
@@ -471,6 +469,13 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   sample.rgb.z = color.z;
   sample.alpha = color.w;
   sample.z = depth;
+
+
+  // sample.rgb.x = 1.f;
+  // sample.rgb.y = 0.f;
+  // sample.rgb.z = 0.f;
+  // sample.alpha = 0.f;
+  // sample.z = 0.001f;
 }
 
 export void *uniform RaycastVolumeRenderer_createInstance()

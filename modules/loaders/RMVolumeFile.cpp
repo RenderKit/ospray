@@ -42,8 +42,6 @@ struct RMLoaderThreads {
     : volume(volume), nextBlockID(0), thread(NULL),
       numThreads(numThreads)
   {
-    PING;
-    PRINT(fileName);
     inFilesDir = fileName;
 
     const char *slash = rindex(fileName.c_str(),'/');
@@ -52,12 +50,9 @@ struct RMLoaderThreads {
       ? std::string(slash+1)
       : fileName;
       
-    PRINT(base);
     int rc = sscanf(base.c_str(),"bob%03d.bob",&timeStep);
     if (rc != 1)
       throw std::runtime_error("could not extract time step from bob file name "+base);
-    PRINT(rc);
-    PRINT(timeStep);
 
     thread = new pthread_t[numThreads];
     for (int i=0;i<numThreads;i++)
@@ -73,15 +68,14 @@ struct RMLoaderThreads {
     sprintf(fileName,"%s/d_%04d_%04li.gz",fileNameBase.c_str(),timeStep,blockID);
 
     const std::string cmd = "/usr/bin/gunzip -c "+std::string(fileName);
-    // PRINT(cmd);
     FILE *file = popen(cmd.c_str(),"r");
     if (!file)
       throw std::runtime_error("could not open file in popen command '"+cmd+"'");
     assert(file);
     fread(block.voxel,sizeof(uint8),256*256*128,file);
+
     pclose(file);
   }
-  
   
   void run() 
   {
@@ -110,7 +104,7 @@ struct RMLoaderThreads {
       printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,cpu); fflush(0);
       int timeStep = 035;
       loadBlock(*block,inFilesDir,blockID);
-          
+
       mutex.lock();
       ospSetRegion(volume,block->voxel,osp::vec3i(I*256,J*256,K*128),osp::vec3i(256,256,128));
       mutex.unlock();
@@ -125,14 +119,14 @@ struct RMLoaderThreads {
 
 OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
 {
+  // Update the provided dimensions of the volume for the subvolume specified.
+  ospSetVec3i(volume, "dimensions", osp::vec3i(2048,2048,1920));
+  ospSetString(volume,"voxelType", "uchar");
+  
   int numThreads = embree::getNumberOfLogicalThreads(); //20;
 
   RMLoaderThreads(volume,fileName,numThreads);
-  PRINT(fileName);
 
-  // Update the provided dimensions of the volume for the subvolume specified.
-  ospSetVec3i(volume, "dimensions", osp::vec3i(2048,2048,1920));
-  
   // Return the volume.
   return(volume);
 }
