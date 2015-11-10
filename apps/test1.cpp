@@ -42,7 +42,7 @@ namespace ospray {
         if (myID == 0) {
           int numSecs = int(t1-t0);
           if (numSecs > lastPing) {
-            printf("after t=%5.f2s: num ops =%8li, that's %f ops/sec\n",
+            printf("after t=%5.fs: num ops =%8li, that's %f ops/sec\n",
                    t1-t0,sum,sum/(t1-t0));
             lastPing = numSecs;
           }
