@@ -46,7 +46,7 @@ namespace ospray {
         if (AsyncMessagingImpl::global == NULL) {
 #if 1
           AsyncMessagingImpl::global = new BatchedIsendIrecvImpl;
-#elif 0
+#elif 1
           AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
 #else
           AsyncMessagingImpl::global = new SimpleSendRecvImpl;

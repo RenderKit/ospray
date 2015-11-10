@@ -568,18 +568,20 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           OSPDataType type = (OSPDataType) cmd.get_int32();
-
           if (worker.rank == 0) {
             ManagedObject *object = handle.lookup();
             Assert(object);
 
             ManagedObject::Param *param = object->findParam(name);
             bool foundParameter = (param == NULL || param->type != type) ? false : true;
-
             switch (type) {
               case OSP_STRING: {
                 struct ReturnValue { int success; char value[2048]; } result;
-                result.success = foundParameter ? memcpy(&result.value[0], param->s, 2048), 1 : 0;
+                if (foundParameter) {
+                  result.success = 1;
+                  strncpy(result.value,param->s,2048);
+                } else
+                  result.success = 0;
                 cmd.send(&result, sizeof(ReturnValue), 0, mpi::app.comm);
               } break;
               case OSP_FLOAT: {

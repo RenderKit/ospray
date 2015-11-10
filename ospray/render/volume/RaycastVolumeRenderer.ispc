@@ -30,7 +30,7 @@
     executes together. Must be a multipel of the maximum possible
     programCount (16), and must be smaller than TILE_SIZE (in one
     dimension) */
-#define RENDERTILE_PIXELS_PER_JOB 128
+#define RENDERTILE_PIXELS_PER_JOB 32
 
 struct PassInfo {
   // region to integrate over in this pass
@@ -447,16 +447,6 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   vec4f color = make_vec4f(0.0f,0.f,0.f,0.f);
   float depth = infinity;
 
-<<<<<<< HEAD
-=======
-// #if EXP_DATA_PARALLEL
-//   region1f clipRange =
-//   if (passInfo) {
-//     clipRange = passInfo->region;
-//     sample.ray.t0 = max(sample.ray.t0,clipRange.lower);
-//     sample.ray.t  = min(sample.ray.t,clipRange.upper);
-//   }
-// #else
   if (passInfo != NULL) {
     RaycastVolumeRenderer_intersect(renderer, sample.ray,
                                     *passInfo, rayOffset, color, depth);
@@ -468,15 +458,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
     RaycastVolumeRenderer_intersect(renderer, sample.ray,
                                     dummyPassInfo, rayOffset, color, depth);
   }
-// #endif
 
-
-// #ifdef OSPRAY_EXP_ALPHA_BLENDING
-//   // do NOT blend in background.... would otherwise blend that in in each tile!
-//   print("warning: should not actually blend in background color here; need to fix this in compositing mode");
-// #endif
-
->>>>>>> exp-data-parallel
   // Attenuate the foreground and background colors by the opacity.
   if (useBG && renderer->inherited.backgroundEnabled) {
     const vec4f background = make_vec4f(renderer->bgColor, 1.f);
@@ -570,7 +552,7 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
     if (t0 >= t1) {
       // ray does not intersect this block...
     } else {
-      tileNeedsBlock[blockID] = true;
+      if (!tileNeedsBlock[blockID]) tileNeedsBlock[blockID] = true;
       blockRegion.lower = min(blockRegion.lower,t0);
       blockRegion.upper = max(blockRegion.upper,t1);
 

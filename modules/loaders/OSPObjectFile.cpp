@@ -216,7 +216,9 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
     if (rc !=3)
       throw std::runtime_error("could not parse OSPRAY_DATA_PARALLEL env-var. Must be of format <X>x<Y>x<>Z (e.g., '4x4x4'");
     volume = ospNewVolume("data_distributed_volume");
-    ospSetVec3i(volume,"num_dp_blocks",blockDims);
+    if (volume == NULL)
+      throw std::runtime_error("#loaders.ospObjectFile: could not create volume ...");
+   ospSetVec3i(volume,"num_dp_blocks",blockDims);
   } else {
     // Create the OSPRay object.
     std::cout << "#osp.loader: no OSPRAY_DATA_PARALLEL dimensions set, "
@@ -225,7 +227,8 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
     std::cout << "#osp.loader: where X, Y, and Z are the desired _number_ of data parallel blocks" << std::endl;
     volume = ospNewVolume("block_bricked_volume");
   }
-
+  if (volume == NULL)
+    throw std::runtime_error("#loaders.ospObjectFile: could not create volume ...");
 
   // Temporary storage for the file name attribute if specified.
   const char *volumeFilename = NULL;
@@ -274,10 +277,12 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
     char *duplicateFilename = strdup(filename.c_str());
 
     // The volume file path is absolute.
-    if (volumeFilename[0] == '/') return(VolumeFile::importVolume(volumeFilename, volume));
+    if (volumeFilename[0] == '/') 
+      return(VolumeFile::importVolume(volumeFilename, volume));
 
     // The volume file path is relative to the object file path.
-    if (volumeFilename[0] != '/') return(VolumeFile::importVolume((std::string(dirname(duplicateFilename)) + "/" + volumeFilename).c_str(), volume));
+    if (volumeFilename[0] != '/') 
+      return(VolumeFile::importVolume((std::string(dirname(duplicateFilename)) + "/" + volumeFilename).c_str(), volume));
 
     // Free the temporary character array.
     if (duplicateFilename != NULL) free(duplicateFilename);

@@ -18,6 +18,8 @@
 #include "DistributedFrameBuffer_ispc.h"
 
 #include "ospray/common/TaskSys.h"
+// embree
+#include "common/sys/thread.h"
 
 #define DBG(a) /* ignore */
 
@@ -109,42 +111,12 @@ namespace ospray {
     }
     int size = bufferedTile.size();
     
-    if (//size == dfb->comm->numWorkers()
-        missingInCurrentGeneration == 0
-        ) {
-      // printf("starting to composite tile %i,%i\n",tile.region.lower.x,tile.region.lower.y);
-#if 1
+    if (missingInCurrentGeneration == 0) {
       Tile *tileArray[bufferedTile.size()];
       for (int i=0;i<bufferedTile.size();i++)
         tileArray[i] = &bufferedTile[i]->tile;
       ispc::DFB_sortAndBlendFragments((ispc::VaryingTile **)tileArray,bufferedTile.size());
-#else
-      qsort(&bufferedTile[0],bufferedTile.size(),sizeof(bufferedTile[0]),
-            compareBufferedTiles);
-      // gMutex.lock();
-      // for (int i=0;i<bufferedTile.size();i++)
-      //   printf(" > %f",bufferedTile[i]->sortOrder);
-      // printf("\n");
-      // gMutex.unlock();
-      // for (int i=0;i<bufferedTile.size();i++)
-      //   PRINT(bufferedTile[i]->sortOrder);
 
-      vec4f backGround(0,0,0,1);
-      // vec4f backGround(1,1,1,1);
-      ispc::DFB_alphaBlendBackground((ispc::VaryingTile *)&bufferedTile[0]->tile,
-                                     (ispc::vec4f&)backGround);
-
-      for (int i=0;i<bufferedTile.size();i++) {
-        printf("tile [%i] depth %f\n",i,bufferedTile[i]->sortOrder);
-      }
-
-
-
-      for (int i=1;i<bufferedTile.size();i++)
-        ispc::DFB_alphaBlendTiles((ispc::VaryingTile *)&bufferedTile[0]->tile,
-                                  (ispc::VaryingTile *)&bufferedTile[i]->tile);
-// #endif
-#endif
       this->final.region = tile.region;
       this->final.fbSize = tile.fbSize;
       this->final.rcp_fbSize = tile.rcp_fbSize;
@@ -305,6 +277,20 @@ namespace ospray {
     // printf("rank %i creatED %i tiles\n",mpi::worker.rank,myTiles.size());fflush(0);
   }
 
+#if QUEUE_PROCESSING_JOBS
+  void DistributedFrameBuffer::ProcThread::run()
+  {
+    embree::setAffinity(53);
+    return;
+    while (1) {
+      while (dfb->msgTaskQueue.queue.empty())
+        usleep(100);
+      dfb->msgTaskQueue.waitAll();
+    }
+  }
+#endif
+
+
   DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
                               const vec2i &numPixels,
                               size_t myID,
@@ -318,6 +304,9 @@ namespace ospray {
       numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
       frameIsActive(false), frameIsDone(false), localFBonMaster(NULL),
+#if QUEUE_PROCESSING_JOBS
+    procThread(this),
+#endif
       frameMode(WRITE_ONCE)
   {
     assert(comm);
@@ -339,6 +328,10 @@ namespace ospray {
     }
     ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
                   colorBufferFormat);
+
+#if QUEUE_PROCESSING_JOBS
+    //    procThread.run();
+#endif
   }
 
   void DFB::setFrameMode(FrameMode newFrameMode) 

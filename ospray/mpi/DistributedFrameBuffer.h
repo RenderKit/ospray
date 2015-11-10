@@ -20,6 +20,7 @@
 #include "ospray/fb/Tile.h"
 #include "ospray/fb/LocalFB.h"
 #include "ospray/common/TaskSys.h"
+#include "ospray/common/Thread.h"
 #include <queue>
 
 namespace ospray {
@@ -34,6 +35,15 @@ namespace ospray {
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
   {
+#if QUEUE_PROCESSING_JOBS
+    struct ProcThread : public ospray::Thread {
+      DistributedFrameBuffer *dfb;
+      ProcThread(DistributedFrameBuffer *dfb) : dfb(dfb) {};
+      virtual void run();
+    };
+    ProcThread procThread;
+#endif
+
     //! get number of pixels per tile, in x and y direction
     virtual vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
 

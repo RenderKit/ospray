@@ -35,7 +35,7 @@ namespace ospray {
         /*! message _sender_ thread */
         struct SendThread : public Thread {
           SendThread(Group *group) : group(group) {
-            embree::setAffinity(58);
+            embree::setAffinity(58); // 58
           };
           virtual void run();
 
@@ -45,7 +45,7 @@ namespace ospray {
             incoming messages, and puts them into recv queue */
         struct RecvThread : public Thread {
           RecvThread(Group *group) : group(group) {
-            embree::setAffinity(55);
+            embree::setAffinity(55); // 55
           };
 
           virtual void run();
@@ -54,7 +54,7 @@ namespace ospray {
         /*! message _processing_ thread */
         struct ProcThread : public Thread {
           ProcThread(Group *group) : group(group) {
-            embree::setAffinity(56);
+            embree::setAffinity(57); // 56
           };
           virtual void run();
 

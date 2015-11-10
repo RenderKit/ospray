@@ -40,10 +40,12 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
   int offset = 0;  ospGeti(volume, "filename offset", &offset);  fseek(file, offset, SEEK_SET);
 
   // Volume dimensions.
-  osp::vec3i volumeDimensions;  exitOnCondition(!ospGetVec3i(volume, "dimensions", &volumeDimensions), "no volume dimensions specified");
+  osp::vec3i volumeDimensions;  
+  exitOnCondition(!ospGetVec3i(volume, "dimensions", &volumeDimensions), "no volume dimensions specified");
 
   // Voxel type string.
-  char *voxelType;  exitOnCondition(!ospGetString(volume, "voxelType", &voxelType), "no voxel type specified");
+  char *voxelType;  
+  exitOnCondition(!ospGetString(volume, "voxelType", &voxelType), "no voxel type specified");
 
   // Voxel size in bytes.
   size_t voxelSize;

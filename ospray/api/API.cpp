@@ -319,12 +319,7 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
   return 'NULL' if that type is not known */
 extern "C" OSPRenderer ospNewRenderer(const char *_type)
 {
-  PING;
-  PRINT(ospray::api::Device::current);
-  
   ASSERT_DEVICE();
-  PING;
-  PRINT(ospray::api::Device::current);
 
   Assert2(_type,"invalid render type identifier in ospNewRenderer");
   LOG("ospNewRenderer(" << _type << ")");

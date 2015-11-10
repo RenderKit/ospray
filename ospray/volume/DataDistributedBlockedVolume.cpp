@@ -79,9 +79,6 @@ namespace ospray {
                                                 be the same as the dimensions of source[][][] */
                                               const vec3i &regionSize)
   {
-    // PING;
-    // PRINT(regionCoords);
-    // PRINT(regionSize);
     // Create the equivalent ISPC volume container and allocate memory for voxel data.
     if (ispcEquivalent == NULL) createEquivalentISPC();
     
@@ -114,6 +111,7 @@ namespace ospray {
                     "invalid volume dimensions (must be set before calling ospSetRegion())");
 
     ddBlocks    = getParam3i("num_dp_blocks",vec3i(4,4,4));
+    PRINT(ddBlocks);
     blockSize   = divRoundUp(dimensions,ddBlocks);
 	std::cout << "#osp:dp: using data parallel volume of " << ddBlocks << " blocks, blockSize is " << blockSize << std::endl;
     
@@ -197,7 +195,7 @@ namespace ospray {
               volume->findParam("gridSpacing",1)->set(gridSpacing);
               volume->findParam("voxelType",1)->set(voxelType.c_str());
 
-              printf("rank %i owns block %i,%i,%i (ID %i), dims %i %i %i\n",
+              printf("rank %i owns block %li,%i,%i (ID %i), dims %i %i %i\n",
                      core::getWorkerRank(),ix,iy,iz,blockID,blockDims.x,blockDims.y,blockDims.z);
               block->cppVolume = volume;
               block->ispcVolume = NULL; //volume->getIE();
