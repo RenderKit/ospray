@@ -26,6 +26,7 @@ namespace ospray {
 
       barrier.wait();
       double t0 = getSysTime();
+      int lastPing = 0;
       while (1) {
         barrier.wait();
         if (done) {
@@ -38,6 +39,13 @@ namespace ospray {
 
         double t1 = getSysTime();
 
+        if (myID == 0) {
+          int numSecs = int(t1-t0);
+          if (numSecs > lastPing) {
+            printf("after t=%5.f2s: num ops =%8li, that's %f ops/sec\n",
+                   t1-t0,sum,sum/(t1-t0));
+          }
+        }
         if (myID == 0 && (t1 - t0) >= timeToRun)
           done = true;
       }
