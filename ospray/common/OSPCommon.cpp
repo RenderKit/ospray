@@ -41,7 +41,7 @@ namespace ospray {
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;
-  bool debugMode = true;
+  bool debugMode = false;
   int32 numThreads = -1; //!< for default (==maximum) number of OSPRay/Embree threads
 
   WarnOnce::WarnOnce(const std::string &s) 

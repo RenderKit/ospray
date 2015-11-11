@@ -48,7 +48,6 @@ namespace ospray {
     if (cylinderData.ptr == NULL || bytesPerCylinder == 0)
       throw std::runtime_error("#ospray:geometry/cylinders: no 'cylinders' data specified");
     numCylinders = cylinderData->numBytes / bytesPerCylinder;
-    std::cout << "#osp: cyliners data: " << cylinderData->numBytes << " " << bytesPerCylinder << " " << offset_colorID << std::endl;
     std::cout << "#osp: creating 'cylinders' geometry, #cylinders = " << numCylinders << std::endl;
 
     if (_materialList) {
@@ -65,17 +64,6 @@ namespace ospray {
       _materialList = (void*)ispcMaterials;
     }
 
-    float* cylinders = (float*) cylinderData->data;
-    float* colors = (float*)colorData->data;
-//    for (int i = 0; i < numCylinders; ++i) {
-//        int colorIndex = (int)(cylinders[i*8+7]) * 4;
-//        std::cout << "cylinder: " << cylinderData->data << std::endl
-//                  << "v0: " << cylinders[i*8] << " " << cylinders[i*8+1] << " " << cylinders[i*8+2] << std::endl
-//                  << "v1: " << cylinders[i*8+3] << " " << cylinders[i*8+4] << " " << cylinders[i*8+5] << std::endl
-//                  << "r: " << cylinders[i*8+6] << std::endl
-//                  << "color offset: " << (int)(cylinders[i*8+7]) << " @ " << &(cylinders[i*8+7]) << std::endl
-//                  << "color: " << &(colors[colorIndex]) << " - " << colors[colorIndex] << " " << colors[colorIndex+1] << " " << colors[colorIndex+2] << " " << colors[colorIndex+3] << std::endl;
-//    }
     ispc::CylindersGeometry_set(getIE(),model->getIE(),
                                 cylinderData->data,_materialList,
                                 colorData?(ispc::vec4f*)colorData->data:NULL,

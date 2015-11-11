@@ -42,7 +42,9 @@ namespace ospray {
     <dt><code>int32        offset_v1 = 3*sizeof(float)</code></dt><dd>Offset (in bytes) of each cylinder's 'vec3f v1' value (the end vertex) within each cylinder</dd>
     <dt><code>int32        offset_radius = -1</code></dt><dd>Offset (in bytes) of each cylinder's 'float radius' value within each cylinder. Setting this value to -1 means that there is no per-cylinder radius value, and that all cylinders should use the (shared) 'radius' value instead</dd>
     <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset (in bytes) of each cylinder's 'int materialID' value within each cylinder. Setting this value to -1 means that there is no per-cylinder material ID, and that all cylinders share the same per-geometry 'materialID'</dd>
+    <dt><code>int32        offset_colorID = -1</code></dt><dd>Offset into the 'color' data (in element index) for each cylinder's color. Setting this value to -1 means that there is no per-cylinder color, and that all cylinders share the same per-geometry color.</dd>
     <dt><code>Data<float>  cylinders</code></dt><dd>Array of data elements.</dd>
+    <dt><code>Data<float>  color</code></dt><dd>Array of color (RGBA) elements.</dd>
     </dl>
 
     The functionality for this geometry is implemented via the
