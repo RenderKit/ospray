@@ -25,48 +25,69 @@ namespace ospray {
   //!
   class RaycastVolumeRenderer : public Renderer {
 
-    //! Material used by RaycastVolumeRenderer.
-    struct Material : public ospray::Material {
-
-      Material();
-
-      virtual void commit();
-
-      vec3f Kd;           //!< Diffuse material component.
-      Ref<Volume> volume; //!< If provided, color will be mapped through this volume's transfer function.
-    };
-
   public:
 
     //! Constructor.
-    RaycastVolumeRenderer() {};
+    RaycastVolumeRenderer();
 
     //! Destructor.
-    ~RaycastVolumeRenderer() {};
+    ~RaycastVolumeRenderer();
 
     //! Create a material of the given type.
-    Material * createMaterial(const char *type) { return new Material; }
+    Material* createMaterial(const char *type);
 
-    //! Initialize the renderer state, and create the equivalent ISPC volume renderer object.
-    virtual void commit();
+    //! Initialize the renderer state, and create the equivalent ISPC volume
+    //! renderer object.
+    void commit();
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::RaycastVolumeRenderer"); }
+    std::string toString() const;
 
   protected:
 
     //! Print an error message.
-    void emitMessage(const std::string &kind, const std::string &message) const
-    { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+    void emitMessage(const std::string &kind, const std::string &message) const;
 
     //! Error checking.
-    void exitOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+    void exitOnCondition(bool condition, const std::string &message) const;
 
     //! ISPC equivalents for lights.
     std::vector<void *> lights;
 
   };
+
+  // Inlined function definitions /////////////////////////////////////////////
+
+  inline RaycastVolumeRenderer::RaycastVolumeRenderer()
+  {
+  }
+
+  inline RaycastVolumeRenderer::~RaycastVolumeRenderer()
+  {
+  }
+
+  inline std::string RaycastVolumeRenderer::toString() const
+  {
+    return("ospray::RaycastVolumeRenderer");
+  }
+
+  inline void RaycastVolumeRenderer::emitMessage(const std::string &kind,
+                                                 const std::string &msg) const
+  {
+    std::cerr << "  " + toString() + "  " << kind + ": " + msg + "."
+              << std::endl;
+  }
+
+  inline void
+  RaycastVolumeRenderer::exitOnCondition(bool condition,
+                                         const std::string &message) const
+  {
+    if (!condition)
+      return;
+
+    emitMessage("ERROR", message);
+    exit(1);
+  }
 
 } // ::ospray
 

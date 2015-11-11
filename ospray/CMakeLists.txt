@@ -72,8 +72,8 @@ SET(OSPRAY_SOURCES
   volume/StructuredVolume.cpp
   volume/Volume.ispc
   volume/Volume.cpp
-	volume/DataDistributedBlockedVolume.ispc
-	volume/DataDistributedBlockedVolume.cpp
+  volume/DataDistributedBlockedVolume.ispc
+  volume/DataDistributedBlockedVolume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
@@ -130,8 +130,10 @@ SET(OSPRAY_SOURCES
   render/raytracer/RaytraceMaterial.ih
   render/raytracer/RaytraceRenderer.cpp
   render/raytracer/RaytraceMaterial.cpp
+  render/volume/RaycastVolumeMaterial.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
+  render/volume/RaycastVolumeRendererMaterial.ih
   render/volume/RaycastVolumeRendererMaterial.ispc
 
   render/pathtracer/PathTracer.ispc
@@ -179,7 +181,7 @@ IF (OSPRAY_MPI)
     mpi/async/MultiIsendIrecvMessaging.cpp
     mpi/async/BatchedIsendIrecvMessaging.cpp
     mpi/async/CommLayer.cpp
-    
+
     mpi/DistributedFrameBuffer.cpp
     mpi/DistributedFrameBuffer.ispc
 
@@ -259,13 +261,13 @@ IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   MESSAGE("LINKING EXTENRALLY TO EMBREE IN ${OSPRAY_EMBREE_SOURCE_DIR}")
 ENDIF()
 
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
-  ospray_embree${OSPRAY_LIB_SUFFIX} 
-  ${CMAKE_THREAD_LIBS_INIT} 
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  ospray_embree${OSPRAY_LIB_SUFFIX}
+  ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS})
 
 IF (OSPRAY_DISPLAYCLUSTER)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
     ${DISPLAYCLUSTER_LIBRARIES})
 ENDIF()
 

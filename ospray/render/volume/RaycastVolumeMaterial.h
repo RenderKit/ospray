@@ -14,41 +14,50 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/mpi/MPICommon.h"
-#include "ospray/mpi/async/CommLayer.h"
+#pragma once
+
+#include "ospray/common/Material.h"
+#include "ospray/texture/Texture2D.h"
+
+#include "ospray/volume/Volume.h"
 
 namespace ospray {
-  namespace mpi {
 
-    Group world;
-    Group app;
-    Group worker;
+    typedef vec3f Color;
 
-    void init(int *ac, const char **av)
+    //! Material used by RaycastVolumeRenderer.
+    struct RaycastVolumeMaterial : public Material {
+
+      RaycastVolumeMaterial();
+
+      void commit();
+
+      std::string toString() const;
+
+      /*! opacity: 0 (transparent), 1 (opaque) */
+      Texture2D *map_d;   float d;
+
+      /*! diffuse  reflectance: 0 (none), 1 (full) */
+      Texture2D *map_Kd;  Color Kd;
+
+      /*! specular reflectance: 0 (none), 1 (full) */
+      Texture2D *map_Ks;  Color Ks;
+
+      /*! specular exponent: 0 (diffuse), infinity (specular) */
+      Texture2D *map_Ns;  float Ns;
+
+      /*! bump map */
+      Texture2D *map_Bump;
+
+      Ref<Volume> volume; //!< If provided, color will be mapped through this
+                          //   volume's transfer function.
+    };
+
+    // Inlined member functions ///////////////////////////////////////////////
+
+    inline std::string RaycastVolumeMaterial::toString() const
     {
-      int initialized = false;
-      MPI_CALL(Initialized(&initialized));
-
-      if (!initialized) {
-        // MPI_Init(ac,(char ***)&av);
-        int required = MPI_THREAD_MULTIPLE;
-        int provided = 0;
-        MPI_CALL(Init_thread(ac,(char ***)&av,required,&provided));
-        if (provided != required)
-          throw std::runtime_error("MPI implementation does not offer multi-threading capabilities");
-      }
-      world.comm = MPI_COMM_WORLD;
-      MPI_CALL(Comm_rank(MPI_COMM_WORLD,&world.rank));
-      MPI_CALL(Comm_size(MPI_COMM_WORLD,&world.size));
-
-// #if USE_DFB
-      mpi::async::CommLayer::WORLD = new mpi::async::CommLayer;
-      mpi::async::Group *worldGroup = mpi::async::createGroup("world",MPI_COMM_WORLD,
-                                                              mpi::async::CommLayer::WORLD,
-                                                              290374);
-      mpi::async::CommLayer::WORLD->group = worldGroup;
-// #endif
+      return "ospray::RaycastVolumeMaterial";
     }
 
-  } // ::ospray::mpi
 } // ::ospray
