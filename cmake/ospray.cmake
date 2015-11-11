@@ -93,6 +93,9 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+			IF (OSPRAY_ISPC_KNL_NATIVE)
+				SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+			ENDIF()
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
       # ------------------------------------------------------------------

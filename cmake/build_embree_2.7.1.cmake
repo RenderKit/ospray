@@ -222,7 +222,7 @@ SET(EMBREE_LIBRARY_FILES_AVX512
     ${EMBREE_PATH}geometry/grid_soa.cpp
     ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
 
-    builders/primrefgen.avx512.cpp
+    ${EMBREE_PATH}builders/primrefgen.avx512.cpp
     ${EMBREE_PATH}bvh/bvh_builder.avx512.cpp
     ${EMBREE_PATH}bvh/bvh_builder_sah.avx512.cpp
 
