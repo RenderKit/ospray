@@ -186,7 +186,7 @@ void QOSPRayWindow::paintGL()
   char title[1024];  sprintf(title, "OSPRay Volume Viewer (%.4f fps)", framesPerSecond);
   if (showFrameRate == true) parent->setWindowTitle(title);
 
-  uint32 *mappedFrameBuffer = (unsigned int *) ospMapFrameBuffer(frameBuffer);
+  uint32_t *mappedFrameBuffer = (unsigned int *) ospMapFrameBuffer(frameBuffer);
 
   glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, mappedFrameBuffer);
   if (writeFramesFilename.length()) writeFrameBufferToFile(mappedFrameBuffer);
@@ -365,9 +365,9 @@ void QOSPRayWindow::renderGL()
   emit(renderGLComponents());
 }
 
-void QOSPRayWindow::writeFrameBufferToFile(const uint32 *pixelData)
+void QOSPRayWindow::writeFrameBufferToFile(const uint32_t *pixelData)
 {
-  static uint32 frameNumber = 0;
+  static uint32_t frameNumber = 0;
   char filename[1024];
   sprintf(filename, "%s_%05u.ppm", writeFramesFilename.c_str(), frameNumber++);
   FILE *file = fopen(filename, "wb");  if (!file) { std::cerr << "unable to write to file '" << filename << "'" << std::endl;  return; }

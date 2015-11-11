@@ -195,8 +195,8 @@ namespace ospray {
               volume->findParam("gridSpacing",1)->set(gridSpacing);
               volume->findParam("voxelType",1)->set(voxelType.c_str());
 
-              printf("rank %i owns block %li,%i,%i (ID %i), dims %i %i %i\n",
-                     core::getWorkerRank(),ix,iy,iz,blockID,blockDims.x,blockDims.y,blockDims.z);
+              printf("rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
+                     (size_t)core::getWorkerRank(),ix,iy,iz,blockID,blockDims.x,blockDims.y,blockDims.z);
               block->cppVolume = volume;
               block->ispcVolume = NULL; //volume->getIE();
             } else {

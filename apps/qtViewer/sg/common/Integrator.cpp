@@ -44,7 +44,7 @@ namespace ospray {
         ospSetObject(ospRenderer,"camera",camera->ospCamera);
       }
 
-      lastCommitted = embree::__rdtsc();
+      lastCommitted = rdtsc();
       ospCommit(ospRenderer);
       assert(ospRenderer); 
    }

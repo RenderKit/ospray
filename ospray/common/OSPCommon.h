@@ -234,6 +234,17 @@ namespace ospray {
     }
     return result;
   }
+
+#if __EXTERNAL_EMBREE__
+  struct Condition : public embree::ConditionSys 
+  {
+  inline void broadcast() { notify_all(); }
+};
+#else
+  typedef embree::ConditionSys Condition;
+#endif
+
+
 } // ::ospray
 
 #ifdef _WIN32
