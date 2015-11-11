@@ -108,24 +108,26 @@ namespace ospray {
   void StructuredVolume::computeVoxelRange(const unsigned char *source, const size_t &count)
   {
 #if 1
-    embree::MutexSys mutex;
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count,blockSize);
+    vec2f blockRange[numBlocks];
 #pragma omp parallel for
     for (size_t i=0;i<numBlocks;i++) {
       size_t myBegin = i*blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
       vec2f myVoxelRange(source[myBegin]);
 
-      for (size_t i=myBegin ; i < myEnd ; i++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[i]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[i]);
+      for (size_t j=myBegin ; j < myEnd ; j++) {
+        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[j]);
+        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[j]);
       }
 
-      mutex.lock();
-      voxelRange.x = std::min(voxelRange.x,myVoxelRange.x);
-      voxelRange.y = std::max(voxelRange.y,myVoxelRange.y);
-      mutex.unlock();
+      blockRange[i] = myVoxelRange;
+    }
+    
+    for (int i=0;i<numBlocks;i++) {
+      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
+      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
     }
 
 #else

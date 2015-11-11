@@ -77,6 +77,7 @@ namespace ospray {
       else 
         throw std::runtime_error("invalid voxelType in BlockBrickedVolume::setRegion()");
     }
+
     // Copy voxel data into the volume.
     ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, 
                                        (const ispc::vec3i &) regionCoords, 

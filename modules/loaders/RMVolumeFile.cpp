@@ -29,10 +29,12 @@ struct RMLoaderThreads {
   OSPVolume volume;
   embree::MutexSys mutex;
   int nextBlockID;
+  int nextPinID;
   int numThreads;
   int timeStep;
   pthread_t *thread;
   std::string inFilesDir;
+  bool useGZip;
 
   struct Block {
     uint8_t voxel[256*256*128];
@@ -40,10 +42,12 @@ struct RMLoaderThreads {
 
 
   RMLoaderThreads(OSPVolume volume, const std::string &fileName, int numThreads=10) 
-    : volume(volume), nextBlockID(0), thread(NULL),
+    : volume(volume), nextBlockID(0), thread(NULL), nextPinID(0),
       numThreads(numThreads)
   {
     inFilesDir = fileName;
+
+    useGZip = (getenv("OSPRAY_RM_NO_GZIP") == NULL);
 
     const char *slash = rindex(fileName.c_str(),'/');
     std::string base 
@@ -66,22 +70,34 @@ struct RMLoaderThreads {
   void loadBlock(Block &block, const std::string &fileNameBase, size_t blockID)
   {
     char fileName[10000];
-    sprintf(fileName,"%s/d_%04d_%04li.gz",fileNameBase.c_str(),timeStep,blockID);
+    FILE *file;
+    if (useGZip) {
+      sprintf(fileName,"%s/d_%04d_%04li.gz",
+              fileNameBase.c_str(),timeStep,blockID);
+      const std::string cmd = "/usr/bin/gunzip -c "+std::string(fileName);
+      file = popen(cmd.c_str(),"r");
+      if (!file)
+        throw std::runtime_error("could not open file in popen command '"+cmd+"'");
+    } else {
+      sprintf(fileName,"%s/d_%04d_%04li",
+              fileNameBase.c_str(),timeStep,blockID);
+      file = fopen(fileName,"rb");
+      if (!file)
+        throw std::runtime_error("could not open '"+std::string(fileName)+"'");
+    }
 
-    const std::string cmd = "/usr/bin/gunzip -c "+std::string(fileName);
-    FILE *file = popen(cmd.c_str(),"r");
-    if (!file)
-      throw std::runtime_error("could not open file in popen command '"+cmd+"'");
     assert(file);
     fread(block.voxel,sizeof(uint8_t),256*256*128,file);
-    pclose(file);
+    if (useGZip) 
+      fclose(file);
+    else
+      pclose(file);
   }
   
   void run() 
   {
-    static int nextThreadID = 0;
     mutex.lock();
-    int threadID = nextThreadID++;
+    int threadID = nextPinID++;
     embree::setAffinity(threadID);
     mutex.unlock();
 
@@ -125,7 +141,11 @@ OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
   
   int numThreads = embree::getNumberOfLogicalThreads(); //20;
 
+  double t0 = ospray::getSysTime();
   RMLoaderThreads(volume,fileName,numThreads);
+  double t1 = ospray::getSysTime();
+  std::cout << "done loading " << fileName 
+       << ", needed " << (t1-t0) << " seconds" << std::endl;
 
   // Return the volume.
   return(volume);

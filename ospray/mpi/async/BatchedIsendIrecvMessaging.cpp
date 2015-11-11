@@ -73,7 +73,7 @@ namespace ospray {
           numRequests = 0;
           // wait for first message
           {
-            // usleep(80);
+            // usleep(280);
             MPI_CALL(Probe(MPI_ANY_SOURCE,g->tag,g->comm,&status));
             Action *action = new Action;
             action->addr = Address(g,status.MPI_SOURCE);

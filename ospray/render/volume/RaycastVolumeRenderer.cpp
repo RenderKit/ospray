@@ -223,7 +223,11 @@ namespace ospray {
     }
 
     if (ddVolumeVec.empty()) {
-      cout << "no data parallel volumes, rendering in traditional raycast_volume_render mode" << endl;
+      static bool printed = false;
+      if (!printed) {
+        cout << "no data parallel volumes, rendering in traditional raycast_volume_render mode" << endl;
+        printed = true;
+      }
 
       Renderer::renderFrame(fb,channelFlags);
       return;

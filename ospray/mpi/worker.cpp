@@ -641,13 +641,26 @@ namespace ospray {
           const vec3i index = cmd.get_vec3i();
           const vec3i count = cmd.get_vec3i();
           const size_t size = cmd.get_size_t();
-          void *mem = malloc(size);
+
+          const size_t bcBufferSize = 40*1024*1024;
+          static void *bcBuffer = malloc(bcBufferSize);
+          void *mem = size < bcBufferSize ? bcBuffer : malloc(size);
+          // double t0 = getSysTime();
           cmd.get_data(size,mem);
 
           Volume *volume = (Volume *)volumeHandle.lookup();
           Assert(volume);
 
           int success = volume->setRegion(mem, index, count);
+          // double t1 = getSysTime();
+          // static long num = 0;
+          // static long bytes = 0;
+          // bytes += size;
+          // static double sum = 0.f;
+          // sum += (t1-t0);
+          // num++;
+          // if (mpi::worker.rank == 0)
+          //   printf("time for get_data(%li bytes so far) is %fs, that's %f Mbytes/sec\n",bytes,sum,bytes/sum/1e6f);
 
           int myFail = (success == 0);
           int sumFail = 0;
@@ -655,7 +668,7 @@ namespace ospray {
 
           if (worker.rank == 0)
             MPI_Send(&sumFail,1,MPI_INT,0,0,mpi::app.comm);
-          free(mem);
+          if (size >= bcBufferSize) free(mem);
         } break;
 
           // ==================================================================
