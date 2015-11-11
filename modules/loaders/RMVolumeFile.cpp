@@ -18,11 +18,12 @@
 #include <string.h>
 #include "modules/loaders/RMVolumeFile.h"
 #include "ospray/common/OSPCommon.h"
-#include "embree/common/sys/sysinfo.h"
-#include "embree/common/sys/thread.h"
+#include "common/sys/sysinfo.h"
+#include "common/sys/thread.h"
 #ifdef __LINUX__
 # include <sched.h>
 #endif
+#include <stdint.h>
 
 struct RMLoaderThreads {
   OSPVolume volume;
@@ -34,7 +35,7 @@ struct RMLoaderThreads {
   std::string inFilesDir;
 
   struct Block {
-    uint8 voxel[256*256*128];
+    uint8_t voxel[256*256*128];
   };
 
 
@@ -72,8 +73,7 @@ struct RMLoaderThreads {
     if (!file)
       throw std::runtime_error("could not open file in popen command '"+cmd+"'");
     assert(file);
-    fread(block.voxel,sizeof(uint8),256*256*128,file);
-
+    fread(block.voxel,sizeof(uint8_t),256*256*128,file);
     pclose(file);
   }
   

@@ -27,8 +27,6 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-  typedef embree::ConditionSys Condition;
-
 #define QUEUE_PROCESSING_JOBS 1
 
   struct DistributedFrameBuffer

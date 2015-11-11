@@ -74,8 +74,6 @@ namespace ospray {
 
     buildAccelerator();
 
-    PING; PRINT(voxelRange);
-
     // Volume finish actions.
     Volume::finish();
   }

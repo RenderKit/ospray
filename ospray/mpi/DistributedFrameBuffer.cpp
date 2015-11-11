@@ -322,7 +322,6 @@ namespace ospray {
         cout << "#osp:mpi:dfb: we're the master, but framebuffer has 'NONE' format; "
           "creating distriubted frame buffer WITHOUT having a mappable copy on the master" << endl;
       } else {
-        cout << "#osp:mpi:dfb: we're the master - creating a local fb to gather results" << endl;
         localFBonMaster = new LocalFrameBuffer(numPixels,colorBufferFormat,hasDepthBuffer,0);
       }
     }

@@ -41,7 +41,7 @@ namespace ospray {
     __aligned(64) Task *volatile activeListLast;
 
     embree::MutexSys     __aligned(64) mutex;
-    embree::ConditionSys __aligned(64) tasksAvailable;
+    Condition __aligned(64) tasksAvailable;
 
     void threadFunction();
 
