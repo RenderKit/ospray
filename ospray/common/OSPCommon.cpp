@@ -41,7 +41,7 @@ namespace ospray {
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;
-  bool debugMode = false;
+  bool debugMode = true;
   int32 numThreads = -1; //!< for default (==maximum) number of OSPRay/Embree threads
 
   WarnOnce::WarnOnce(const std::string &s) 
@@ -183,6 +183,7 @@ namespace ospray {
     case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
     case OSP_FLOAT4:    return sizeof(embree::Vec4<float>);
     case OSP_FLOAT3A:   return sizeof(embree::Vec3fa);
+    case OSP_FLOAT8:    return 8 * sizeof(float);
     case OSP_DOUBLE:    return sizeof(double);
     default: break;
     };

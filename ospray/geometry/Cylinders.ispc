@@ -139,7 +139,8 @@ static void Cylinders_postIntersect(uniform Geometry *uniform geometry,
   if ((flags & DG_COLOR) && self->color) {
     if (self->offset_colorID >= 0) {
       uniform uint8 *cylinderPtr = self->data + self->bytesPerCylinder*ray.primID;
-      uint32 colorID = *((uniform uint32 *varying)(cylinderPtr+self->offset_colorID));
+      uint32 colorID = (uint32)*((uniform float *varying)(cylinderPtr+self->offset_colorID));
+//      print("colorID: %\n", colorID);
       dg.color = self->color[colorID];
     } else {
       dg.color = self->color[ray.primID];

@@ -24,6 +24,7 @@ namespace ospray {
   Data::Data(size_t numItems, OSPDataType type, void *init, int flags)
     : numItems(numItems), numBytes(numItems * sizeOf(type)), type(type), flags(flags)
   {
+      std::cout << "data numBytes: " << numBytes << std::endl;
     /* two notes here:
        a) i'm using embree's 'new' to enforce alignment
        b) i'm adding 16 bytes to size to enforce 4-float padding (which embree

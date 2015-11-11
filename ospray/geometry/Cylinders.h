@@ -37,10 +37,10 @@ namespace ospray {
     <dl>
     <dt><code>float        radius = 0.01f</code></dt><dd>Base radius common to all cylinders if 'offset_radius' is not used</dd>
     <dt><code>int32        materialID = 0</code></dt><dd>Material ID common to all cylinders if 'offset_materialID' is not used</dd>
-    <dt><code>int32        bytes_per_cylinder = 7*sizeof(float)</code></dt><dd>Size (in bytes) of each cylinder in the data array.</dd>
+    <dt><code>int32        bytes_per_cylinder = 6*sizeof(float)</code></dt><dd>Size (in bytes, default is for v0/v1 positions) of each cylinder in the data array.</dd>
     <dt><code>int32        offset_v0 = 0</code></dt><dd>Offset (in bytes) of each cylinder's 'vec3f v0' value (the start vertex) within each cylinder</dd>
     <dt><code>int32        offset_v1 = 3*sizeof(float)</code></dt><dd>Offset (in bytes) of each cylinder's 'vec3f v1' value (the end vertex) within each cylinder</dd>
-    <dt><code>int32        offset_radius = 6*sizeof(float)</code></dt><dd>Offset (in bytes) of each cylinder's 'float radius' value within each cylinder. Setting this value to -1 means that there is no per-cylinder radius value, and that all cylinders should use the (shared) 'radius' value instead</dd>
+    <dt><code>int32        offset_radius = -1</code></dt><dd>Offset (in bytes) of each cylinder's 'float radius' value within each cylinder. Setting this value to -1 means that there is no per-cylinder radius value, and that all cylinders should use the (shared) 'radius' value instead</dd>
     <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset (in bytes) of each cylinder's 'int materialID' value within each cylinder. Setting this value to -1 means that there is no per-cylinder material ID, and that all cylinders share the same per-geometry 'materialID'</dd>
     <dt><code>Data<float>  cylinders</code></dt><dd>Array of data elements.</dd>
     </dl>
