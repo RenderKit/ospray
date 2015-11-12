@@ -66,6 +66,7 @@ namespace ospray {
     // The voxel count.
     size_t voxelCount = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
 
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     // Compute the voxel value range for unsigned byte voxels if none was previously specified.
     if (voxelType == "uchar" && findParam("voxelRange") == NULL)
       computeVoxelRange((unsigned char *)voxelData->data, voxelCount);
@@ -77,6 +78,7 @@ namespace ospray {
     // Compute the voxel value range for float voxels if none was previously specified.
     if (voxelType == "double" && findParam("voxelRange") == NULL)
       computeVoxelRange((double *)voxelData->data, voxelCount);
+#endif
 
     // Create an ISPC SharedStructuredVolume object and assign type-specific function pointers.
     int voxelType = (int)getVoxelType();

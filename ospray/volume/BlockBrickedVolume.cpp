@@ -61,6 +61,7 @@ namespace ospray {
     // Compute the voxel value range for unsigned byte voxels if none was previously specified.
     Assert2(source,"NULL source in BlockBrickedVolume::setRegion()");
 
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     if (findParam("voxelRange") == NULL) {
       // Compute the voxel value range for float voxels if none was
       // previously specified.
@@ -77,7 +78,7 @@ namespace ospray {
       else 
         throw std::runtime_error("invalid voxelType in BlockBrickedVolume::setRegion()");
     }
-
+#endif
     // Copy voxel data into the volume.
     ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, 
                                        (const ispc::vec3i &) regionCoords, 

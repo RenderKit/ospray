@@ -19,6 +19,8 @@
 #include "modules/loaders/RawVolumeFile.h"
 #include "modules/loaders/ObjectFile.h"
 #include "modules/loaders/TinyXML2.h"
+// stl
+#include <map>
 
 //! \brief A concrete implementation of the ObjectFile class
 //!  for loading collections of OSPRay objects stored in XML format.
@@ -77,6 +79,6 @@ private:
 
   //! Import a volume object.
   OSPVolume importVolume(const tinyxml2::XMLNode *root);
-
+  
 };
 

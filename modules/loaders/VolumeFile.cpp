@@ -33,7 +33,8 @@ OSPVolume VolumeFile::importVolume(const std::string &filename, OSPVolume volume
   std::string type = filename.substr(filename.find_last_of(".") + 1);
 
   // Return a concrete instance of the requested subtype if the creation function is already known.
-  if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])(fullfilename, volume));
+  if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) 
+    return((*symbolRegistry[type])(fullfilename, volume));
 
   // Otherwise construct the name of the creation function to look for.
   std::string creationFunctionName = "ospray_import_volume_file_" + std::string(type);
@@ -47,3 +48,8 @@ OSPVolume VolumeFile::importVolume(const std::string &filename, OSPVolume volume
   // Return a handle for the loaded volume object.
   return(symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename, volume) : NULL);
 }
+
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+std::map<OSPVolume, ospray::vec2f> VolumeFile::voxelRangeOf;
+#endif
+

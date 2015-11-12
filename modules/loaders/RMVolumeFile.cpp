@@ -35,13 +35,13 @@ struct RMLoaderThreads {
   pthread_t *thread;
   std::string inFilesDir;
   bool useGZip;
-
+  ospray::vec2f voxelRange;
   struct Block {
     uint8_t voxel[256*256*128];
   };
 
-
-  RMLoaderThreads(OSPVolume volume, const std::string &fileName, int numThreads=10) 
+  RMLoaderThreads(
+                  OSPVolume volume, const std::string &fileName, int numThreads=10) 
     : volume(volume), nextBlockID(0), thread(NULL), nextPinID(0),
       numThreads(numThreads)
   {
@@ -59,15 +59,22 @@ struct RMLoaderThreads {
     if (rc != 1)
       throw std::runtime_error("could not extract time step from bob file name "+base);
 
+    this->voxelRange.x = +std::numeric_limits<float>::infinity();
+    this->voxelRange.y = -std::numeric_limits<float>::infinity();
+
     thread = new pthread_t[numThreads];
     for (int i=0;i<numThreads;i++)
       pthread_create(thread+i,NULL,(void*(*)(void*))threadFunc,this);
     void *result = NULL;
     for (int i=0;i<numThreads;i++)
       pthread_join(thread[i],&result);
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+    VolumeFile::voxelRangeOf[volume] = voxelRange;
+#endif
   };
 
-  void loadBlock(Block &block, const std::string &fileNameBase, size_t blockID)
+  void loadBlock(Block &block, 
+                 const std::string &fileNameBase, size_t blockID)
   {
     char fileName[10000];
     FILE *file;
@@ -87,11 +94,14 @@ struct RMLoaderThreads {
     }
 
     assert(file);
-    fread(block.voxel,sizeof(uint8_t),256*256*128,file);
+    int rc = fread(block.voxel,sizeof(uint8_t),256*256*128,file);
+    if (rc != 256*256*128)
+      throw std::runtime_error("could not read enough data from "+std::string(fileName));
+
     if (useGZip) 
-      fclose(file);
-    else
       pclose(file);
+    else
+      fclose(file);
   }
   
   void run() 
@@ -118,12 +128,25 @@ struct RMLoaderThreads {
       cpu = sched_getcpu();
 #endif
       printf("[b%i:%i,%i,%i,(%i)]",blockID,I,J,K,cpu); fflush(0);
-      int timeStep = 035;
       loadBlock(*block,inFilesDir,blockID);
-
+ 
       mutex.lock();
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+      for (int i=0;i<5;i++)
+        printf("[%i]",block->voxel[i]);
+#endif
       ospSetRegion(volume,block->voxel,osp::vec3i(I*256,J*256,K*128),osp::vec3i(256,256,128));
       mutex.unlock();
+      
+      ospray::vec2f blockRange(block->voxel[0]);
+      extendVoxelRange(blockRange,&block->voxel[0],256*256*128);
+      
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+      mutex.lock();
+      this->voxelRange.x = std::min(this->voxelRange.x,blockRange.x);
+      this->voxelRange.y = std::max(this->voxelRange.y,blockRange.y);
+      mutex.unlock();
+#endif
     }
     delete block;
   }
@@ -142,12 +165,13 @@ OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
   int numThreads = embree::getNumberOfLogicalThreads(); //20;
 
   double t0 = ospray::getSysTime();
+  
+
   RMLoaderThreads(volume,fileName,numThreads);
   double t1 = ospray::getSysTime();
   std::cout << "done loading " << fileName 
        << ", needed " << (t1-t0) << " seconds" << std::endl;
 
-  // Return the volume.
   return(volume);
 }
 

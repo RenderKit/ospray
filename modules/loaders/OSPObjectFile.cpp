@@ -124,7 +124,9 @@ OSPObject OSPObjectFile::importObject(const tinyxml2::XMLNode *node)
   if (!strcmp(node->ToElement()->Name(), "triangleMesh")) return((OSPObject) importTriangleMesh(node));
 
   // OSPRay volume object.
-  if (!strcmp(node->ToElement()->Name(), "volume")) return((OSPObject) importVolume(node));
+  if (!strcmp(node->ToElement()->Name(), "volume")) {
+    return (OSPObject) importVolume(node);
+  }
 
   // No other object types are currently supported.
   exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");  return(NULL);
@@ -177,7 +179,7 @@ OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
 
     // Scaling for vertex coordinates.
     if (!strcmp(node->ToElement()->Name(), "scale")) { importAttributeFloat3(node, triangleMesh);  continue; }
-
+    
     // Error check.
     exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
   }
@@ -291,3 +293,4 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
   // The populated volume object.
   return volume;
 }
+

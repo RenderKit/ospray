@@ -98,6 +98,7 @@ namespace ospray {
     return res;
   }
 
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
   // Compute the voxel value range for unsigned byte voxels.
   void StructuredVolume::computeVoxelRange(const unsigned char *source, const size_t &count)
   {
@@ -199,6 +200,6 @@ namespace ospray {
     }
 #endif
   }
-
+#endif
 } // ::ospray
 
