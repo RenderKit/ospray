@@ -22,6 +22,9 @@ OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
 #OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
 #IF (OSPRAY_EXP_IMAGE_COMPOSITING)
 
+OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?")
+
+
 #  OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
 #  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
 #ENDIF()

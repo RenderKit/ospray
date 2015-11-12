@@ -83,12 +83,22 @@ namespace ospray {
     if (ispcEquivalent == NULL) createEquivalentISPC();
     
     for (int i=0;i<numDDBlocks;i++) {
-      if (ddBlock[i].isMine) {
-        // std::cout << "setting region in block " << i << std::endl;
-        ddBlock[i].cppVolume->setRegion(source,regionCoords-ddBlock[i].domain.lower,
-                                        regionSize);
-        ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
-      }
+      // that block isn't mine, I shouldn't care ...
+      if (!ddBlock[i].isMine) continue;
+      
+      // first, do some culling to make sure we only do setrgion
+      // calls on blocks that actually map to this block
+      if (ddBlock[i].domain.lower.x >= regionCoords.x+regionSize.x) continue;
+      if (ddBlock[i].domain.lower.y >= regionCoords.y+regionSize.y) continue;
+      if (ddBlock[i].domain.lower.z >= regionCoords.z+regionSize.z) continue;
+      
+      if (ddBlock[i].domain.upper.x+regionSize.x < regionCoords.x) continue;
+      if (ddBlock[i].domain.upper.y+regionSize.y < regionCoords.y) continue;
+      if (ddBlock[i].domain.upper.z+regionSize.z < regionCoords.z) continue;
+      
+      ddBlock[i].cppVolume->setRegion(source,regionCoords-ddBlock[i].domain.lower,
+                                      regionSize);
+      ddBlock[i].ispcVolume = ddBlock[i].cppVolume->getIE();
     }
     // float f = 0.5f;
     // computeVoxelRange(&f,1);

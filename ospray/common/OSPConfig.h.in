@@ -31,3 +31,4 @@
 #cmakedefine OSPRAY_MPI
 #cmakedefine OSPRAY_MPI_DISTRIBUTED
 #cmakedefine OSPRAY_VOLUME_VOXELRANGE_IN_APP
+#cmakedefine OSPRAY_PIN_ASYNC
