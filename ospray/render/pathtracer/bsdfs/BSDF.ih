@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include "optics.ih"
-#include "ospray/common/DifferentialGeometry.ih"
+#include "common/DifferentialGeometry.ih"
+#include "Optics.ih"
+#include "ShadingContext.ih"
 
 #define BSDF_SPECULAR_REFLECTION   (1<<0)  /*!< diffuse light reflection            */
 #define BSDF_DIFFUSE_REFLECTION    (1<<1)  /*!< glossy light reflection             */
@@ -61,17 +62,30 @@ typedef vec3f (*BSDF_SampleFunc)(const uniform BSDF* uniform this,
 
 struct BSDF
 {
-  BSDFType type;
-  BSDF_EvalFunc eval;
-  BSDF_SampleFunc sample;
+  uniform BSDFType type;
+  uniform BSDF_EvalFunc eval;
+  uniform BSDF_SampleFunc sample;
+  const varying linear3f* uniform frame;
 };
 
 inline void BSDF_Constructor(uniform BSDF* uniform this,
                              uniform BSDFType type,
                              uniform BSDF_EvalFunc eval,
-                             uniform BSDF_SampleFunc sample)
+                             uniform BSDF_SampleFunc sample,
+                             const varying linear3f* uniform frame)
 {
   this->type = type;
   this->eval = eval;
   this->sample = sample;
+  this->frame = frame;
+}
+
+inline vec3f getN(const uniform BSDF* uniform bsdf)
+{
+  return bsdf->frame->vz;
+}
+
+inline linear3f getFrame(const uniform BSDF* uniform bsdf)
+{
+  return *bsdf->frame;
 }

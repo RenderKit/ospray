@@ -17,7 +17,6 @@
 #pragma once
 
 #include "BSDF.ih"
-#include "optics.ih"
 
 struct Transmission
 {

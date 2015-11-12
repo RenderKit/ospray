@@ -16,14 +16,16 @@
 
 #pragma once
 
-#define maxSize (16*1024)
-#define alignment 64
+#include "math/LinearSpace.ih"
+
+#define SHADINGCONTEXT_SIZE      (16*1024)
+#define SHADINGCONTEXT_ALIGNMENT 64
 
 struct ShadingContext
 {
   /*! Data storage. Has to be at the beginning of the class due to alignment. */
-  uniform int8 data[maxBytes]; //!< Storage for BSDFs
-  uniform uint32 size;         //!< Number of bytes occupied in storage
+  uniform int8 data[SHADINGCONTEXT_SIZE]; //!< Storage for BSDFs
+  uniform uint32 size;                    //!< Number of bytes occupied in storage
 
   varying int dummy; // FIXME: needed to force correct alignment
 };
@@ -38,13 +40,14 @@ inline void* uniform ShadingContext_alloc(uniform ShadingContext* uniform self, 
 {
   //print("ShadingContext_alloc: %, %\n", this->size, size);
   void* uniform ptr = &self->data[self->size];
-  self->size = (self->size + size + alignment - 1) & ((uint32)(-alignment));
-  //if (self->size > size) throw std::runtime_error("out of memory for ShadingContext allocation");
+  self->size = (self->size + size + SHADINGCONTEXT_ALIGNMENT - 1) & ((uint32)(-SHADINGCONTEXT_ALIGNMENT));
+  //if (self->size > SHADINGCONTEXT_SIZE) throw std::runtime_error("out of memory for ShadingContext allocation");
   return ptr;
 }
 
-#define ShadingContext_makeBSDF(self,ptr,Type,...) {                       \
-  varying Type* uniform _bsdf = (varying Type* uniform)ShadingContext_alloc(self,sizeof(Type)); \
-  Type##_Constructor(_bsdf,__VA_ARGS__);                                   \
-  ptr = &_bsdf->base;                                                      \
+inline varying linear3f* uniform LinearSpace3f_create(uniform ShadingContext* uniform ctx, const linear3f& l)
+{
+  varying linear3f* uniform ptr = (varying linear3f* uniform)ShadingContext_alloc(ctx, sizeof(linear3f));
+  *ptr = l;
+  return ptr;
 }

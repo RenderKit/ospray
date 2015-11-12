@@ -52,7 +52,7 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
 {
   PathTraceMaterial__Constructor(&this->base, MetallicPaint__shade, NULL);
   DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
-  DielectricLayerLambert_Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
+  //DielectricLayerLambert_Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
 
   uniform vec3f etaAluminium = make_vec3f(0.62f,0.62f,0.62f);
   uniform vec3f kAluminium   = make_vec3f(4.8f,4.8f,4.8f);

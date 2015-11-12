@@ -34,9 +34,7 @@ const uniform BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* unifo
 {
   uniform const Matte* uniform self = (uniform const Matte* uniform)base;
   vec3f R = self->lambert.R;
-  uniform BSDF* uniform bsdf;
-  ShadingContext_makeBSDF(ctx, bsdf, Lambert, R);
-  return bsdf;
+  return Lambert_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), R);
 }
 
 void Matte__shade(const uniform PathTraceMaterial *uniform _this,
@@ -47,7 +45,7 @@ void Matte__shade(const uniform PathTraceMaterial *uniform _this,
                   vec3f& Ns)
 {
   uniform const Matte *uniform this = (uniform const Matte *uniform)_this;
-  CompositedBSDF_add(&brdfs,&this->lambert.base);
+  //CompositedBSDF_add(&brdfs,&this->lambert.base);
 }
 
 inline void Matte__Constructor(uniform Matte* uniform self,
