@@ -378,24 +378,18 @@ namespace ospray {
           handle.assign(triangleMesh);
         } break;
         case ospray::CMD_NEW_DATA: {
-          DBG(PING; fflush(0));
           const ObjectHandle handle = cmd.get_handle();
           Data *data = NULL;
           size_t nitems      = cmd.get_size_t();
           OSPDataType format = (OSPDataType)cmd.get_int32();
-          DBG(PRINT(format); fflush(0));
           int flags          = cmd.get_int32();
-          DBG(PRINT(flags); fflush(0));
           data = new Data(nitems,format,NULL,flags & ~OSP_DATA_SHARED_BUFFER);
           Assert(data);
           handle.assign(data);
 
           size_t hasInitData = cmd.get_size_t();
           if (hasInitData) {
-            DBG(PING; fflush(0);
-                PRINT(nitems*sizeOf(format)); fflush(0));
             cmd.get_data(nitems*sizeOf(format),data->data);
-            DBG(PING; fflush(0));
             if (format==OSP_OBJECT) {
               /* translating handles to managedobject pointers: if a
                  data array has 'object' or 'data' entry types, then
@@ -413,42 +407,26 @@ namespace ospray {
               }
             }
           }
-          DBG(PING; fflush(0);
-              sleep(1);
-              PING; fflush(0));
         } break;
 
         case ospray::CMD_NEW_TEXTURE2D: {
-          DBG(PING; fflush(0));
           const ObjectHandle handle = cmd.get_handle();
           Texture2D *texture2D = NULL;
 
           int32 width = cmd.get_int32();
-          // PRINT(width); fflush(0);
           int32 height = cmd.get_int32();
-          // PRINT(height); fflush(0);
           int32 type = cmd.get_int32();
-          // PRINT(type); fflush(0);
           int32 flags = cmd.get_int32();
-          // PRINT(flags); fflush(0);
           size_t size = cmd.get_size_t();
-          // PRINT(size); fflush(0);
           
           void *data = malloc(size);
-          // PRINT(size); fflush(0);
           cmd.get_data(size,data);
 
-          texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,flags | OSP_DATA_SHARED_BUFFER);
-          DBG(PRINT(texture2D); fflush(0));
+          texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,
+                                               flags | OSP_DATA_SHARED_BUFFER);
           assert(texture2D);
 
-          if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
-            free(data);
-
           handle.assign(texture2D);
-          DBG(PING; fflush(0);
-              sleep(1);
-              PING; fflush(0));
         } break;
 
         case ospray::CMD_ADD_GEOMETRY: {
