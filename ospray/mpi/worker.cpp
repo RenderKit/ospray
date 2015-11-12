@@ -442,9 +442,6 @@ namespace ospray {
           DBG(PRINT(texture2D); fflush(0));
           assert(texture2D);
 
-          if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
-            free(data);
-
           handle.assign(texture2D);
           DBG(PING; fflush(0);
               sleep(1);
