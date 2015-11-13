@@ -85,9 +85,13 @@ void VolumeViewer::setModel(size_t index)
   rendererInitialized = true;
 
   // Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
-  osp::vec2f voxelRange(0.f);  //ospGetVec2f(modelStates[index].volumes[0], "voxelRange", &voxelRange);
+  osp::vec2f voxelRange(0.f); 
   OSPVolume volume = modelStates[index].volumes[0];
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
   voxelRange = VolumeFile::voxelRangeOf[volume];
+#else
+  ospGetVec2f(modelStates[index].volumes[0], "voxelRange", &voxelRange);
+#endif
 
   if(voxelRange != osp::vec2f(0.f)) {
     transferFunctionEditor->setDataValueRange(voxelRange);
