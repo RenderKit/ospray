@@ -50,7 +50,7 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
                                        const uniform float glitterSpread,
                                        const uniform float eta)
 {
-  PathTraceMaterial__Constructor(&this->base, MetallicPaint__shade, NULL);
+  //PathTraceMaterial_Constructor(&this->base, MetallicPaint__shade, NULL);
   DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
   //DielectricLayerLambert_Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
 

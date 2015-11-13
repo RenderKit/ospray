@@ -37,15 +37,28 @@ struct OBJ
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
-                const Ray&                  ray,
-                const Medium&               currentMedium,
-                const DifferentialGeometry& dg,
-                uniform CompositedBSDF&     brdfs,
-                vec3f& shadingNormal)
+const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform material,
+                                        uniform ShadingContext* uniform ctx,
+                                        const DifferentialGeometry& dg,
+                                        const Ray& ray,
+                                        const Medium& currentMedium)
 {
-  uniform const OBJ* uniform self = (uniform const OBJ* uniform)_self;
+  uniform const OBJ* uniform self = (uniform const OBJ* uniform)material;
+  uniform BSDF* uniform bsdf;
   // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
+
+  /*! normal map */
+  vec3f shadingNormal;
+  if (self->map_Bump) {
+    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ng);
+    shadingNormal = f * (get3f(self->map_Bump, dg.st, make_vec3f(.5f, .5f, 1.f)) * 2.f - 1.f);
+    // in general f is not ortho-normal, thus need to re-normalize
+    shadingNormal = normalize(shadingNormal);
+  } else {
+    shadingNormal = dg.Ns;
+  }
+
+  varying linear3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(shadingNormal));
 
   /*! transmission */
   float d = self->d * get1f(self->map_d, dg.st, 1.f);
@@ -60,33 +73,29 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
   Kd = Kd * d * make_vec3f(dg.color);
   //if (ne(Kd,make_vec3f(0.0f)))
   //  COMPOSITED_BSDF_ADD(brdfs,Lambert,Kd);
+  //bsdf = Lambert_create(ctx, shadingFrame, Kd);
 
   /*! transmission component */
-  if (d < 1.0f)
-    COMPOSITED_BSDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
+  //if (d < 1.0f)
+  //  COMPOSITED_BSDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
 
   /*! specular component */
   float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);
   vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg.st, make_vec3f(1.f));
-  if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BSDF_ADD(brdfs,Specular,Ks,Ns);
+  //if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BSDF_ADD(brdfs,Specular,Ks,Ns);
+  bsdf = Specular_create(ctx, shadingFrame, Ks, Ns);
 
-  /*! normal map */
-  if (self->map_Bump) {
-    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ng);
-    shadingNormal = f * (get3f(self->map_Bump, dg.st, make_vec3f(.5f, .5f, 1.f)) * 2.f - 1.f);
-    // in general f is not ortho-normal, thus need to re-normalize
-    shadingNormal = normalize(shadingNormal);
-  }
+  return bsdf;
 }
 
-void OBJ__Constructor(uniform OBJ* uniform self,
-                      uniform Texture2D* uniform map_d,  const uniform float d,
-                      uniform Texture2D* uniform map_Kd, const uniform vec3f Kd,
-                      uniform Texture2D* uniform map_Ks, const uniform vec3f Ks,
-                      uniform Texture2D* uniform map_Ns, const uniform float Ns,
-                      uniform Texture2D* uniform map_Bump)
+void OBJ_Constructor(uniform OBJ* uniform self,
+                     uniform Texture2D* uniform map_d,  const uniform float d,
+                     uniform Texture2D* uniform map_Kd, const uniform vec3f Kd,
+                     uniform Texture2D* uniform map_Ks, const uniform vec3f Ks,
+                     uniform Texture2D* uniform map_Ns, const uniform float Ns,
+                     uniform Texture2D* uniform map_Bump)
 {
-  PathTraceMaterial__Constructor(&self->base, OBJ__shade, NULL);
+  PathTraceMaterial_Constructor(&self->base, OBJ_getBSDF, NULL);
   self->map_d  = map_d;  self->d  = d;
   self->map_Kd = map_Kd; self->Kd = Kd;
   self->map_Ks = map_Ks; self->Ks = Ks;
@@ -105,11 +114,11 @@ PathTracer_OBJ_create(void* uniform map_d,  const uniform float& d,
                       void* uniform map_Bump)
 {
   uniform OBJ* uniform self = uniform new uniform OBJ;
-  OBJ__Constructor(self,
-                   (uniform Texture2D* uniform)map_d,   d,
-                   (uniform Texture2D* uniform)map_Kd,  Kd,
-                   (uniform Texture2D* uniform)map_Ks,  Ks,
-                   (uniform Texture2D* uniform)map_Ns,  Ns,
-                   (uniform Texture2D* uniform)map_Bump);
+  OBJ_Constructor(self,
+                  (uniform Texture2D* uniform)map_d,   d,
+                  (uniform Texture2D* uniform)map_Kd,  Kd,
+                  (uniform Texture2D* uniform)map_Ks,  Ks,
+                  (uniform Texture2D* uniform)map_Ns,  Ns,
+                  (uniform Texture2D* uniform)map_Bump);
   return self;
 }

@@ -18,24 +18,24 @@
 #include "../bsdfs/Minneart.ih"
 #include "../bsdfs/Velvety.ih"
 
-struct Velvet 
+struct Velvet
 {
   uniform PathTraceMaterial base;
 
   /*! Diffuse reflectance of the surface. The range is from 0
    *  (black) to 1 (white). */
   vec3f reflectance;
-  
+
   /*! Amount of back scattering. The range is from 0 (no back
    *  scattering) to inf (maximum back scattering). */
   float backScattering;
-  
+
   /*! Color of horizon scattering. */
   vec3f horizonScatteringColor;
-  
+
   /*! Fall-off of horizon scattering. */
   float horizonScatteringFallOff;
-  
+
   // the two BSDFs
   Minneart minneart;
   Velvety  velvety;
@@ -45,9 +45,9 @@ struct Velvet
 // Implementation
 
 void Velvet__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,            
-                  const Medium&               currentMedium,  
-                  const DifferentialGeometry& dg,             
+                  const Ray&                  ray,
+                  const Medium&               currentMedium,
+                  const DifferentialGeometry& dg,
                   uniform CompositedBSDF&     brdfs,
                   vec3f& Ns)
 {
@@ -62,7 +62,7 @@ void Velvet__Constructor(uniform Velvet *uniform this,
                         const uniform float horizonScatteringFallOff,
                         const uniform float backScattering)
 {
-  PathTraceMaterial__Constructor(&this->base, Velvet__shade, NULL);
+  //PathTraceMaterial_Constructor(&this->base, Velvet__shade, NULL);
   this->reflectance = reflectance;
   this->horizonScatteringColor = horizonScatteringColor;
   this->horizonScatteringFallOff = horizonScatteringFallOff;

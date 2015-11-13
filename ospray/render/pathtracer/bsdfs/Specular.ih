@@ -32,34 +32,44 @@ struct Specular
   float exp;
 };
 
-inline vec3f Specular__eval(const uniform BSDF* uniform _this,
-                            const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+inline vec3f Specular_eval(const uniform BSDF* uniform base,
+                           const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
-  const varying Specular* uniform this = (const varying Specular* uniform) _this;
-  const Sample3f refl = reflect(wo,dg.Ns);
-  if (dot(refl.v,wi) < 0.0f) return make_vec3f(0.0f);
-  return mul(this->R, (this->exp+2) * one_over_two_pi * pow(dot(refl.v,wi),this->exp) * clamp(dot(wi,dg.Ns)));
+  const varying Specular* uniform self = (const varying Specular* uniform)base;
+  const vec3f refl = reflect(wo, getN(base));
+  if (dot(refl,wi) < 0.0f) return make_vec3f(0.0f);
+  pdf = powerCosineSampleHemispherePDF(dot(refl,wi), self->exp);
+  return mul(self->R, (self->exp+2) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(base))));
 }
 
-inline vec3f Specular__sample(const uniform BSDF* uniform _this,
-                                const vec3f &wo,
-                                const DifferentialGeometry &dg,
-                                Sample3f &wi,
-                                const vec2f &s)
+inline vec3f Specular_sample(const uniform BSDF* uniform base,
+                             const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                             const vec2f& s, float ss)
 {
-  const varying Specular* uniform this = (const varying Specular* uniform) _this;
-  const Sample3f refl = reflect(wo, dg.Ns);
-  const vec3f localDir = powerCosineSampleHemisphere(this->exp, s);
-  wi.v = frame(refl.v) * localDir;
-  wi.pdf = powerCosineSampleHemispherePDF(localDir, this->exp);
-  return Specular__eval(&this->base, wo, dg, wi.v);
+  const varying Specular* uniform self = (const varying Specular* uniform)base;
+  const vec3f refl = reflect(wo, getN(base));
+  const vec3f localDir = powerCosineSampleHemisphere(self->exp, s);
+  wi = frame(refl) * localDir;
+  return Specular_eval(base, dg, wo, wi, pdf) * rcp(pdf); // TODO: optimize
 }
 
-inline void Specular__Constructor(varying Specular* uniform this,
-                                  const varying vec3f R,
-                                  const varying float exp_)
+inline void Specular_Constructor(varying Specular* uniform self,
+                                 const varying linear3f* uniform frame,
+                                 const varying vec3f R,
+                                 const varying float exp_)
 {
-  //BSDF_Constructor(&this->base,GLOSSY_REFLECTION,Specular__eval,Specular__sample);
-  this->R = R;
-  this->exp = exp_;
+  BSDF_Constructor(&self->base, BSDF_GLOSSY_REFLECTION,
+                   Specular_eval, Specular_sample, frame);
+  self->R = R;
+  self->exp = exp_;
+}
+
+inline uniform BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx,
+                                             const varying linear3f* uniform frame,
+                                             const varying vec3f R,
+                                             const varying float exp_)
+{
+  varying Specular* uniform self = (varying Specular* uniform)ShadingContext_alloc(ctx, sizeof(Specular));
+  Specular_Constructor(self, frame, R, exp_);
+  return &self->base;
 }

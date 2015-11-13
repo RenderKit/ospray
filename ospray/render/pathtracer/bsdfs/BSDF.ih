@@ -53,12 +53,13 @@ struct BSDF;
 typedef uint32 BSDFType;
 
 /*! Result is multiplied by dot(wi,N). */
-typedef vec3f (*BSDF_EvalFunc)(const uniform BSDF* uniform this,
+typedef vec3f (*BSDF_EvalFunc)(const uniform BSDF* uniform self,
                                const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf);
 
 /*! Result is multiplied by dot(wi,N)/pdf. */
-typedef vec3f (*BSDF_SampleFunc)(const uniform BSDF* uniform this,
-                                 const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type, const vec2f& s, float ss);
+typedef vec3f (*BSDF_SampleFunc)(const uniform BSDF* uniform self,
+                                 const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                 const vec2f& s, float ss);
 
 struct BSDF
 {
@@ -68,16 +69,16 @@ struct BSDF
   const varying linear3f* uniform frame;
 };
 
-inline void BSDF_Constructor(uniform BSDF* uniform this,
+inline void BSDF_Constructor(uniform BSDF* uniform self,
                              uniform BSDFType type,
                              uniform BSDF_EvalFunc eval,
                              uniform BSDF_SampleFunc sample,
                              const varying linear3f* uniform frame)
 {
-  this->type = type;
-  this->eval = eval;
-  this->sample = sample;
-  this->frame = frame;
+  self->type = type;
+  self->eval = eval;
+  self->sample = sample;
+  self->frame = frame;
 }
 
 inline vec3f getN(const uniform BSDF* uniform bsdf)

@@ -21,15 +21,15 @@
 #include "ospray/math/LinearSpace.ih"
 
 /*! Reflects a viewing vector V at a normal N. */
-inline Sample3f reflect(const vec3f &V, const vec3f &N) {
+inline vec3f reflect(const vec3f &V, const vec3f &N) {
   float cosi = dot(V,N);
-  return make_Sample3f((2.0f*cosi) * N - V, 1.0f);
+  return (2.0f*cosi) * N - V;
 }
 
 /*! Reflects a viewing vector V at a normal N. Cosine between V
  *  and N is given as input. */
-inline Sample3f reflect(const vec3f &V, const vec3f &N, const float cosi) {
-  return make_Sample3f((2.0f*cosi) * N - V, 1.0f);
+inline vec3f reflect(const vec3f &V, const vec3f &N, const float cosi) {
+  return (2.0f*cosi) * N - V;
 }
 
 //! \brief Refracts a viewing vector V at a normal N
@@ -40,7 +40,7 @@ inline Sample3f reflect(const vec3f &V, const vec3f &N, const float cosi) {
  *  side of the surface. The cosine between V and N is given as input
  *  and the cosine of -N and transmission ray is computed as
  *  output. */
-inline Sample3f refract(const vec3f V, const vec3f N, const float eta, 
+inline Sample3f refract(const vec3f V, const vec3f N, const float eta,
                         const float cosi, float &cost)
 {
   const float k = 1.0f-eta*eta*(1.0f-cosi*cosi);
@@ -79,10 +79,10 @@ inline vec3f fresnelConductor(const float cosi, const vec3f eta, const vec3f k)
 {
   vec3f tmp = eta*eta + k*k;
   vec3f Rpar
-    = (tmp * cosi*cosi - 2.0f*eta*cosi + make_vec3f(1.f)) 
+    = (tmp * cosi*cosi - 2.0f*eta*cosi + make_vec3f(1.f))
     * rcp(tmp * cosi*cosi + 2.0f*eta*cosi + make_vec3f(1.f));
   vec3f Rper
-    = (tmp - 2.0f*eta*cosi + make_vec3f(cosi*cosi)) 
+    = (tmp - 2.0f*eta*cosi + make_vec3f(cosi*cosi))
     * rcp(tmp + 2.0f*eta*cosi + make_vec3f(cosi*cosi));
   return 0.5f * (Rpar + Rper);
 }
@@ -93,75 +93,74 @@ struct FresnelConductor {
   vec3f k;    //!< Imaginary part of refraction index
 };
 
-inline vec3f eval(uniform const FresnelConductor &self, 
-                  const float cosTheta) 
+inline vec3f eval(uniform const FresnelConductor &self,
+                  const float cosTheta)
 {
   return fresnelConductor(cosTheta,self.eta,self.k);
 }
 
-inline uniform FresnelConductor make_FresnelConductor(const uniform vec3f eta, 
-                                                      const uniform vec3f k) 
+inline uniform FresnelConductor make_FresnelConductor(const uniform vec3f eta,
+                                                      const uniform vec3f k)
 {
   uniform FresnelConductor m; m.eta = eta; m.k = k; return m;
 }
 
 // =======================================================
-struct FresnelDielectric 
+struct FresnelDielectric
 {
   /*! refraction index of the medium the incident ray travels in */
   float etai;
-  
+
   /*! refraction index of the medium the outgoing transmission ray
    *  travels in */
   float etat;
 };
 
-inline vec3f eval(const uniform FresnelDielectric &self, 
-                  const float cosTheta) 
+inline vec3f eval(const uniform FresnelDielectric &self,
+                  const float cosTheta)
 {
   return make_vec3f(fresnelDielectric(cosTheta,self.etai/self.etat));
 }
 
-inline uniform FresnelDielectric make_FresnelDielectric(const uniform float etai, 
-                                                        const uniform float etat) 
+inline uniform FresnelDielectric make_FresnelDielectric(const uniform float etai,
+                                                        const uniform float etat)
 {
-  uniform FresnelDielectric m; 
-  m.etai = etai; 
-  m.etat = etat; 
+  uniform FresnelDielectric m;
+  m.etai = etai;
+  m.etat = etat;
   return m;
 }
 
 // =======================================================
-struct PowerCosineDistribution 
+struct PowerCosineDistribution
 {
   float exp;
 };
 
-inline float eval(const uniform PowerCosineDistribution &self, 
-                  const float cosThetaH) 
+inline float eval(const uniform PowerCosineDistribution &self,
+                  const float cosThetaH)
 {
   return (self.exp+2) * (1.0f/(2.0f*(M_PI))) * pow(abs(cosThetaH), self.exp);
   // TODO: check with powerCosineSampleHemispherePDF
 }
 
 /*! Samples the power cosine distribution. */
-inline void sample(const uniform PowerCosineDistribution &self, 
-                   const vec3f wo, 
-                   const DifferentialGeometry dg, 
-                   Sample3f &wi, 
-                   const vec2f s)  
+inline void sample(const uniform PowerCosineDistribution &self,
+                   const vec3f wo,
+                   const DifferentialGeometry dg,
+                   Sample3f &wi,
+                   const vec2f s)
 {
   const vec3f wh_local = powerCosineSampleHemisphere(self.exp, s);
   const float pdf = powerCosineSampleHemispherePDF(wh_local, self.exp);
   const vec3f wh = frame(dg.Ns) * wh_local;
-  Sample3f r = reflect(wo, wh);
-  wi = make_Sample3f(r.v, pdf/(4.0f*abs(dot(wo, wh))));
+  vec3f r = reflect(wo, wh);
+  wi = make_Sample3f(r, pdf/(4.0f*abs(dot(wo, wh))));
 }
 
-inline uniform PowerCosineDistribution make_PowerCosineDistribution(const uniform float _exp) 
-{ 
-  uniform PowerCosineDistribution m; 
-  m.exp = _exp; 
+inline uniform PowerCosineDistribution make_PowerCosineDistribution(const uniform float _exp)
+{
+  uniform PowerCosineDistribution m;
+  m.exp = _exp;
   return m;
 }
-

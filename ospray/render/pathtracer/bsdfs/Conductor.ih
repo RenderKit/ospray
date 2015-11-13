@@ -38,7 +38,7 @@ vec3f Conductor__sample(const uniform BSDF* uniform _this,
                         const vec2f &s)
 {
   const uniform Conductor* uniform this = (const uniform Conductor* uniform) _this;
-  wi = reflect(wo,dg.Ns);
+  //wi = reflect(wo,dg.Ns);
   return mul(this->R, fresnelConductor(dot(wo,dg.Ns),this->eta,this->k));
 }
 

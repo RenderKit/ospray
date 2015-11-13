@@ -27,7 +27,7 @@
 
 struct PathTraceMaterial;
 
-typedef const uniform BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform this,
+typedef const uniform BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const uniform PathTraceMaterial* uniform material,
                                                                      uniform ShadingContext* uniform ctx,
                                                                      /*! The point to shade on a surface. */
                                                                      const DifferentialGeometry& dg,
@@ -50,17 +50,16 @@ typedef void (*PathTraceMaterial__shade)(const uniform PathTraceMaterial *unifor
                                           *  Out: potentially modified normal (e.g. by a normal or bump texture). */
                                          vec3f&                      Ns);
 
-typedef void (*PathTraceMaterial__selectNextMediumFunc)(const uniform PathTraceMaterial *uniform self,
-                                                        varying Medium& currentMedium);
+typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial *uniform self,
+                                                       varying Medium& currentMedium);
 
 struct PathTraceMaterial
 {
   Material material;
   PathTraceMaterial_GetBSDFFunc getBSDF;
-  PathTraceMaterial__shade shade;
-  PathTraceMaterial__selectNextMediumFunc selectNextMedium;
+  PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
 };
 
-void PathTraceMaterial__Constructor(uniform PathTraceMaterial *uniform self,
-                                    uniform PathTraceMaterial__shade shade,
-                                    uniform PathTraceMaterial__selectNextMediumFunc selectNextMedium);
+void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
+                                   uniform PathTraceMaterial_GetBSDFFunc getBSDF,
+                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium);

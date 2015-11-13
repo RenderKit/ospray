@@ -47,7 +47,7 @@ void Metal__Constructor(uniform Metal *uniform this,
                         const uniform vec3f& k,
                         const uniform float roughness)
 {
-  PathTraceMaterial__Constructor(&this->base, Metal__shade, NULL);
+  //PathTraceMaterial_Constructor(&this->base, Metal__shade, NULL);
   this->roughness = roughness;
   Conductor__Constructor(&this->conductor,reflectance, eta, k);
   MicrofacetMetal__Constructor(&this->microfacetMetal,

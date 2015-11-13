@@ -20,40 +20,28 @@
 struct Matte
 {
   PathTraceMaterial base;
-  Lambert lambert;
+  vec3f reflectance;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const uniform BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* uniform base,
+const uniform BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* uniform material,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,
                                           const Medium& currentMedium)
 {
-  uniform const Matte* uniform self = (uniform const Matte* uniform)base;
-  vec3f R = self->lambert.R;
+  uniform const Matte* uniform self = (uniform const Matte* uniform)material;
+  vec3f R = self->reflectance;
   return Lambert_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), R);
 }
 
-void Matte__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,
-                  const Medium&               currentMedium,
-                  const DifferentialGeometry& dg,
-                  uniform CompositedBSDF&     brdfs,
-                  vec3f& Ns)
+inline void Matte_Constructor(uniform Matte* uniform self,
+                              const uniform vec3f& reflectance)
 {
-  uniform const Matte *uniform this = (uniform const Matte *uniform)_this;
-  //CompositedBSDF_add(&brdfs,&this->lambert.base);
-}
-
-inline void Matte__Constructor(uniform Matte* uniform self,
-                               const uniform vec3f& reflectance)
-{
-  PathTraceMaterial__Constructor(&self->base, Matte__shade, NULL);
-  self->base.getBSDF = Matte_getBSDF;
-  self->lambert.R = reflectance;
+  PathTraceMaterial_Constructor(&self->base, Matte_getBSDF, NULL);
+  self->reflectance = reflectance;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -61,7 +49,7 @@ inline void Matte__Constructor(uniform Matte* uniform self,
 
 export void* uniform PathTracer_Matte_create(const uniform vec3f& reflectance)
 {
-  uniform Matte *uniform this = uniform new uniform Matte;
-  Matte__Constructor(this,reflectance);
-  return this;
+  uniform Matte *uniform self = uniform new uniform Matte;
+  Matte_Constructor(self, reflectance);
+  return self;
 }

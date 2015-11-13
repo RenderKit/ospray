@@ -35,7 +35,7 @@ inline vec3f uniform_DielectricReflection__sample(const uniform BSDF* uniform _t
 {
   const uniform DielectricReflection* uniform this = (const uniform DielectricReflection* uniform) _this;
   const float cosThetaO = clamp(dot(wo,dg.Ns));
-  wi = reflect(wo,dg.Ns,cosThetaO);
+  //wi = reflect(wo,dg.Ns,cosThetaO);
   return make_vec3f(fresnelDielectric(cosThetaO,this->eta));
 }
 
@@ -63,7 +63,7 @@ inline vec3f varying_DielectricReflection__sample(const uniform BSDF* uniform _t
 {
   const varying DielectricReflection* uniform this = (const varying DielectricReflection* uniform) _this;
   const float cosThetaO = clamp(dot(wo,dg.Ns));
-  wi = reflect(wo,dg.Ns,cosThetaO);
+  //wi = reflect(wo,dg.Ns,cosThetaO);
   return make_vec3f(fresnelDielectric(cosThetaO,this->eta));
 }
 

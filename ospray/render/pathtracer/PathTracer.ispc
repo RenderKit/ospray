@@ -100,9 +100,11 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
 
     uniform PathTraceMaterial *m = (uniform PathTraceMaterial*)dg.material;
     vec3f Ns = dg.Ns;
+    /*
     foreach_unique(mm in m)
       if (mm != NULL)
         mm->shade(mm, shadowRay, medium, dg, brdfs, Ns);
+    */
 
     Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
     const vec2f s = make_vec2f(0.5f);

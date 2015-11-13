@@ -69,7 +69,7 @@ void Dielectric__Constructor(uniform Dielectric* uniform this,
                              const uniform float etaInside,
                              const uniform vec3f& transmissionInside)
 {
-  PathTraceMaterial__Constructor(&this->base, Dielectric__shade, Dielectric__selectNextMedium);
+  //PathTraceMaterial_Constructor(&this->base, Dielectric__shade, Dielectric__selectNextMedium);
   this->mediumOutside.eta          = etaOutside;
   this->mediumOutside.transmission = transmissionOutside;
   this->mediumInside.eta           = etaInside;

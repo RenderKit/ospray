@@ -49,7 +49,7 @@ void Plastic__Constructor(uniform Plastic *uniform this,
                           const uniform float eta,
                           const uniform float roughness)
 {
-  PathTraceMaterial__Constructor(&this->base, Plastic__shade, NULL);
+  //PathTraceMaterial_Constructor(&this->base, Plastic__shade, NULL);
   this->roughness = roughness;
 
   /*
