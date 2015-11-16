@@ -76,8 +76,8 @@ const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
     MultiBSDF_add(bsdf, Lambert_create(ctx, shadingFrame, Kd));
 
   /*! transmission component */
-  //if (d < 1.0f)
-  //  COMPOSITED_BSDF_ADD(brdfs,Transmission,make_vec3f(1.0f-d));
+  if (d < 1.0f)
+    MultiBSDF_add(bsdf, Transmission_create(ctx, shadingFrame, make_vec3f(1.0f-d)));
 
   /*! specular component */
   float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);

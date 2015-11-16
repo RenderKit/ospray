@@ -28,27 +28,36 @@ struct Transmission
   vec3f T;
 };
 
-inline vec3f Transmission__eval(const uniform BSDF* uniform _this,
-                                const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+inline vec3f Transmission_eval(const uniform BSDF* uniform base,
+                               const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
-inline vec3f Transmission__sample(const uniform BSDF* uniform _this,
-                                const vec3f &wo,
-                                const DifferentialGeometry &dg,
-                                Sample3f &wi,
-                                const vec2f &s)
+inline vec3f Transmission_sample(const uniform BSDF* uniform base,
+                                 const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                 const vec2f& s, float ss)
 {
-  const varying Transmission* uniform this = (const varying Transmission* uniform) _this;
-  wi = make_Sample3f(neg(wo),1.0f);
-  return this->T;
+  const varying Transmission* uniform self = (const varying Transmission* uniform)base;
+  wi = neg(wo);
+  pdf = 1.0f;
+  type = BSDF_SPECULAR_TRANSMISSION;
+  return self->T;
 }
 
-inline void Transmission__Constructor(varying Transmission* uniform this,
-                                      const varying vec3f T)
+inline void Transmission_Constructor(varying Transmission* uniform self, const varying linear3f* uniform frame,
+                                     const vec3f& T)
 {
-  //BSDF_Constructor(&this->base,SPECULAR_TRANSMISSION,
-  //                  Transmission__eval,Transmission__sample);
-  this->T = T;
+  BSDF_Constructor(&self->base, BSDF_SPECULAR_TRANSMISSION,
+                   Transmission_eval, Transmission_sample,
+                   frame);
+  self->T = T;
+}
+
+inline uniform BSDF* uniform Transmission_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                                 const vec3f& T)
+{
+  varying Transmission* uniform self = (varying Transmission* uniform)ShadingContext_alloc(ctx, sizeof(Transmission));
+  Transmission_Constructor(self, frame, T);
+  return &self->base;
 }
