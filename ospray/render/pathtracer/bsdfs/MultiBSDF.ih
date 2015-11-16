@@ -1,0 +1,130 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+#define MULTIBSDF_MAX_COMPONENTS 64
+
+struct MultiBSDF
+{
+  uniform BSDF base;
+  const uniform BSDF* uniform bsdfs[MULTIBSDF_MAX_COMPONENTS]; //!< pointers to BSDF components
+  uniform uint32 numBsdfs;                                     //!< number of stored BSDF components
+};
+
+/*! Adds a new BSDF to the list of BSDFs */
+inline void MultiBSDF_add(uniform BSDF* uniform base,
+                          const uniform BSDF* uniform bsdf)
+{
+  uniform MultiBSDF* uniform self = (uniform MultiBSDF* uniform)base;
+
+  assert(self->numBsdfs < MULTIBSDF_MAX_COMPONENTS);
+  if (self->numBsdfs < MULTIBSDF_MAX_COMPONENTS)
+  {
+    self->base.type |= bsdf->type;
+    self->bsdfs[self->numBsdfs] = bsdf;
+    self->numBsdfs++;
+  }
+}
+
+/*! Evaluates all BSDF components. */
+inline vec3f MultiBSDF_eval(const uniform BSDF* uniform base,
+                            const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+{
+  const uniform MultiBSDF* uniform self = (const uniform MultiBSDF* uniform)base;
+
+  vec3f value = make_vec3f(0.0f);
+  pdf = 0.0f;
+
+  for (uniform int i = 0; i < self->numBsdfs; i++)
+  {
+    const uniform BSDF* uniform curBsdf = self->bsdfs[i];
+    float curPdf = 0.0f;
+    value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
+    pdf += curPdf;
+  }
+
+  pdf *= rcp((float)self->numBsdfs);
+  return value;
+}
+
+/*! Sample the multi-BSDF. */
+inline vec3f MultiBSDF_sample(const uniform BSDF* uniform base,
+                              const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                              const vec2f& s, float ss)
+{
+  const uniform MultiBSDF* uniform self = (const uniform MultiBSDF* uniform)base;
+
+  if (self->numBsdfs == 1)
+  {
+    const uniform BSDF* uniform bsdf = self->bsdfs[0];
+    return bsdf->sample(bsdf, dg, wo, wi, pdf, type, s, ss);
+  }
+  else if (self->numBsdfs > 1)
+  {
+    // choose which BSDF to sample
+    int i = clamp((int)floor(ss * self->numBsdfs), 0, self->numBsdfs-1);
+
+    // remap sample
+    ss = ss * self->numBsdfs - i;
+
+    // sample chosen BSDF
+    vec3f weight;
+    foreach_unique (ii in i)
+    {
+      const uniform BSDF* uniform bsdf = self->bsdfs[ii];
+      weight = bsdf->sample(bsdf, dg, wo, wi, pdf, type, s, ss);
+    }
+
+    if (eq(weight, make_vec3f(0.0f)) | pdf == 0.0f)
+      return make_vec3f(0.0f);
+
+    // compute overall weight and pdf
+    vec3f value = make_vec3f(0.0f);
+    pdf = 0.0f;
+
+    for (uniform int i = 0; i < self->numBsdfs; i++)
+    {
+      const uniform BSDF* uniform curBsdf = self->bsdfs[i];
+      float curPdf = 0.0f;
+      value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
+      pdf += curPdf;
+    }
+
+    pdf *= rcp((float)self->numBsdfs);
+    return value * rcp(pdf);
+  }
+  else
+  {
+    return make_vec3f(0.0f);
+  }
+}
+
+inline void MultiBSDF_Constructor(uniform MultiBSDF* uniform self)
+{
+  BSDF_Constructor(&self->base, BSDF_NONE,
+                   MultiBSDF_eval, MultiBSDF_sample, NULL);
+  self->numBsdfs = 0;
+}
+
+inline uniform BSDF* uniform MultiBSDF_create(uniform ShadingContext* uniform ctx)
+{
+  uniform MultiBSDF* uniform self = (uniform MultiBSDF* uniform)ShadingContext_alloc(ctx, sizeof(MultiBSDF));
+  MultiBSDF_Constructor(self);
+  return &self->base;
+}

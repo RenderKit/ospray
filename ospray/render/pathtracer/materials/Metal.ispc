@@ -29,6 +29,7 @@ struct Metal
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void Metal__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,
                   const Medium&               currentMedium,
@@ -40,6 +41,7 @@ void Metal__shade(const uniform PathTraceMaterial *uniform _this,
   if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->conductor.base);
   else                          CompositedBSDF_add(&brdfs,&this->microfacetMetal.base);
 }
+*/
 
 void Metal__Constructor(uniform Metal *uniform this,
                         const uniform vec3f& reflectance,

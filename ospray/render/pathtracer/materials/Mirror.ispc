@@ -26,21 +26,23 @@ struct Mirror
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void Mirror__shade(const uniform Material *uniform _this,
-                  const Ray&                  ray,            
-                  const Medium&               currentMedium,  
-                  const DifferentialGeometry& dg,             
+                  const Ray&                  ray,
+                  const Medium&               currentMedium,
+                  const DifferentialGeometry& dg,
                   uniform CompositedBSDF&     brdfs,
                   vec3f& Ns)
 {
   uniform const Mirror *uniform this = (uniform const Mirror *uniform)_this;
   CompositedBSDF_add(&brdfs,&this->reflection.base);
 }
+*/
 
 inline void Mirror__Constructor(uniform Mirror *uniform this,
                                const uniform vec3f& reflectance)
 {
-  Material__Constructor(&this->base,Material__Destructor,Mirror__shade,NULL);
+  //Material__Constructor(&this->base,Material__Destructor,Mirror__shade,NULL);
   Reflection__Constructor(&this->reflection, reflectance);
 }
 

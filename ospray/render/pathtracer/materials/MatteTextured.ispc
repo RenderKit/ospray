@@ -29,6 +29,7 @@ struct MatteTextured
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void MatteTextured__shade(const uniform Material *uniform _this,
                           const Ray&                  ray,
                           const Medium&               currentMedium,
@@ -40,6 +41,7 @@ void MatteTextured__shade(const uniform Material *uniform _this,
   COMPOSITED_BSDF_ADD(brdfs,Lambert,
                       this->Kd->get(this->Kd,add(mul(this->ds,dg.st),this->s0)));
 }
+*/
 
 void MatteTextured__Destructor(uniform RefCount* uniform _this)
 {
@@ -53,7 +55,7 @@ inline void MatteTextured__Constructor(uniform MatteTextured *uniform this,
                                        const uniform vec2f& s0,
                                        const uniform vec2f& ds)
 {
-  Material__Constructor(&this->base,MatteTextured__Destructor,MatteTextured__shade,NULL);
+  //Material__Constructor(&this->base,MatteTextured__Destructor,MatteTextured__shade,NULL);
   RefCount__IncRef(&Kd->base);
   this->Kd = Kd;
   this->s0 = s0;

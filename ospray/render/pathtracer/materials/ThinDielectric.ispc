@@ -28,6 +28,7 @@ struct ThinDielectric
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void ThinDielectric__shade(const uniform PathTraceMaterial *uniform _this,
                        const Ray&                  ray,
                        const Medium&               currentMedium,
@@ -39,6 +40,7 @@ void ThinDielectric__shade(const uniform PathTraceMaterial *uniform _this,
   CompositedBSDF_add(&brdfs,&this->reflection.base);
   CompositedBSDF_add(&brdfs,&this->transmission.base);
 }
+*/
 
 void ThinDielectric__Constructor(uniform ThinDielectric* uniform this,
                                  const uniform vec3f& transmission,

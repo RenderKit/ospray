@@ -32,6 +32,7 @@ struct Dielectric
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void Dielectric__shade(const uniform PathTraceMaterial *uniform _this,
                        const Ray&                  ray,
                        const Medium&               currentMedium,
@@ -41,18 +42,19 @@ void Dielectric__shade(const uniform PathTraceMaterial *uniform _this,
 {
   uniform const Dielectric *uniform this = (uniform const Dielectric *uniform)_this;
 
-  /*! the ray transitions from outside to inside */
+  // the ray transitions from outside to inside
   if (eq(currentMedium,this->mediumOutside)) {
     CompositedBSDF_add(&brdfs,&this->reflection_oi.base);
     CompositedBSDF_add(&brdfs,&this->transmission_oi.base);
   }
 
-  /*! the ray transitions from inside to outside */
+  // the ray transitions from inside to outside
   else {
     CompositedBSDF_add(&brdfs,&this->reflection_io.base);
     CompositedBSDF_add(&brdfs,&this->transmission_io.base);
   }
 }
+*/
 
 void Dielectric__selectNextMedium(const uniform PathTraceMaterial *uniform _this,
                                   varying Medium &lastMedium)

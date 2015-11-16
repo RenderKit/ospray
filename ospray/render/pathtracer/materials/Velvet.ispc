@@ -44,6 +44,7 @@ struct Velvet
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void Velvet__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,
                   const Medium&               currentMedium,
@@ -55,6 +56,7 @@ void Velvet__shade(const uniform PathTraceMaterial *uniform _this,
   CompositedBSDF_add(&brdfs,&this->minneart.base);
   CompositedBSDF_add(&brdfs,&this->velvety.base);
 }
+*/
 
 void Velvet__Constructor(uniform Velvet *uniform this,
                         const uniform vec3f& reflectance,

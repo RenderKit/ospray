@@ -31,6 +31,7 @@ struct Plastic
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void Plastic__shade(const uniform PathTraceMaterial *uniform _this,
                   const Ray&                  ray,
                   const Medium&               currentMedium,
@@ -43,6 +44,7 @@ void Plastic__shade(const uniform PathTraceMaterial *uniform _this,
   if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->reflection.base);
   else                          CompositedBSDF_add(&brdfs,&this->microfacet.base);
 }
+*/
 
 void Plastic__Constructor(uniform Plastic *uniform this,
                           const uniform vec3f& pigmentColor,

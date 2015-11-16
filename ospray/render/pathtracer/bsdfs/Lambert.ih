@@ -29,7 +29,7 @@ inline vec3f Lambert_eval(const uniform BSDF* uniform base,
 {
   const varying Lambert* uniform self = (const varying Lambert* uniform)base;
   pdf = clamp(dot(wi, getN(base))) * one_over_pi;
-  return self->R/M_PI * clamp(dot(wi, getN(base)));
+  return self->R/pi * clamp(dot(wi, getN(base)));
 }
 
 inline vec3f Lambert_sample(const uniform BSDF* uniform base,

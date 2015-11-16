@@ -31,6 +31,7 @@ struct MetallicPaint
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
+/*
 void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
                           const Ray&                  ray,
                           const Medium&               currentMedium,
@@ -43,6 +44,7 @@ void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
   CompositedBSDF_add(&brdfs,&this->paint.base);
   if (this->hasGlitter) CompositedBSDF_add(&brdfs,&this->glitter.base);
 }
+*/
 
 inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
                                        const uniform vec3f& shadeColor,

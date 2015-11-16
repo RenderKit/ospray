@@ -95,8 +95,8 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
         );
 
-    uniform CompositedBSDF brdfs;
-    CompositedBSDF_Constructor(&brdfs);
+    //uniform CompositedBSDF brdfs;
+    //CompositedBSDF_Constructor(&brdfs);
 
     uniform PathTraceMaterial *m = (uniform PathTraceMaterial*)dg.material;
     vec3f Ns = dg.Ns;
@@ -109,7 +109,8 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
     Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
     const vec2f s = make_vec2f(0.5f);
     const vec2f ss = RandomTEA__getFloats(rng);
-    const vec3f transparency = CompositedBSDF_sample(&brdfs, shadowRay.dir, dg, wi, type, s, ss.x, specularBTDFs);
+    //const vec3f transparency = CompositedBSDF_sample(&brdfs, shadowRay.dir, dg, wi, type, s, ss.x, specularBTDFs);
+    const vec3f transparency = make_vec3f(0.0f);
     lightContrib = lightContrib * transparency;
 
     /*! Compute simple volumetric effect. */

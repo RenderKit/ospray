@@ -16,6 +16,7 @@
 
 #include "./Material.ih"
 #include "ospray/texture/Texture2D.ih"
+#include "../bsdfs/MultiBSDF.ih"
 #include "../bsdfs/Transmission.ih"
 #include "../bsdfs/Lambert.ih"
 #include "../bsdfs/Specular.ih"
@@ -44,7 +45,7 @@ const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
                                         const Medium& currentMedium)
 {
   uniform const OBJ* uniform self = (uniform const OBJ* uniform)material;
-  uniform BSDF* uniform bsdf;
+  uniform BSDF* uniform bsdf = MultiBSDF_create(ctx);
   // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
 
   /*! normal map */
@@ -71,9 +72,8 @@ const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
     d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
-  //if (ne(Kd,make_vec3f(0.0f)))
-  //  COMPOSITED_BSDF_ADD(brdfs,Lambert,Kd);
-  //bsdf = Lambert_create(ctx, shadingFrame, Kd);
+  if (ne(Kd,make_vec3f(0.0f)))
+    MultiBSDF_add(bsdf, Lambert_create(ctx, shadingFrame, Kd));
 
   /*! transmission component */
   //if (d < 1.0f)
@@ -82,8 +82,8 @@ const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   /*! specular component */
   float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);
   vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg.st, make_vec3f(1.f));
-  //if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BSDF_ADD(brdfs,Specular,Ks,Ns);
-  bsdf = Specular_create(ctx, shadingFrame, Ks, Ns);
+  if (ne(Ks,make_vec3f(0.0f)))
+    MultiBSDF_add(bsdf, Specular_create(ctx, shadingFrame, Ks, Ns));
 
   return bsdf;
 }
