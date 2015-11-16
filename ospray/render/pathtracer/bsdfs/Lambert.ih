@@ -44,14 +44,17 @@ inline vec3f Lambert_sample(const uniform BSDF* uniform base,
   return self->R;
 }
 
-inline void Lambert_Constructor(varying Lambert* uniform self, const varying linear3f* uniform frame, const vec3f& R)
+inline void Lambert_Constructor(varying Lambert* uniform self, const varying linear3f* uniform frame,
+                                const vec3f& R)
 {
   BSDF_Constructor(&self->base, BSDF_DIFFUSE_REFLECTION,
-                   Lambert_eval, Lambert_sample, frame);
+                   Lambert_eval, Lambert_sample,
+                   frame);
   self->R = R;
 }
 
-inline uniform BSDF* uniform Lambert_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame, const vec3f& R)
+inline uniform BSDF* uniform Lambert_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                            const vec3f& R)
 {
   varying Lambert* uniform self = (varying Lambert* uniform)ShadingContext_alloc(ctx, sizeof(Lambert));
   Lambert_Constructor(self, frame, R);
