@@ -103,6 +103,9 @@ namespace ospray {
       case OSP_RGBA_I8:
         ispc::LocalFrameBuffer_writeTile_RGBA_I8(getIE(),(ispc::Tile&)tile);
         break;
+      case OSP_RGBA_F32:
+        ispc::LocalFrameBuffer_writeTile_RGBA_F32(getIE(),(ispc::Tile&)tile);
+        break;
       default:
         NOTIMPLEMENTED;
       }
