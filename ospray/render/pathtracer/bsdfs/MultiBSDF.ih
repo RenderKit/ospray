@@ -18,26 +18,32 @@
 
 #include "BSDF.ih"
 
-#define MULTIBSDF_MAX_COMPONENTS 64
+#define MULTIBSDF_MAX_COMPONENTS 8
 
 struct MultiBSDF
 {
   uniform BSDF base;
+
   const uniform BSDF* uniform bsdfs[MULTIBSDF_MAX_COMPONENTS]; //!< pointers to BSDF components
-  uniform uint32 numBsdfs;                                     //!< number of stored BSDF components
+  varying float importances[MULTIBSDF_MAX_COMPONENTS];
+  varying float importanceSum;
+  uniform int numBsdfs;                                        //!< number of stored BSDF components
 };
 
 /*! Adds a new BSDF to the list of BSDFs */
 inline void MultiBSDF_add(uniform BSDF* uniform base,
-                          const uniform BSDF* uniform bsdf)
+                          const uniform BSDF* uniform bsdf, float importance = 1.0f)
 {
-  uniform MultiBSDF* uniform self = (uniform MultiBSDF* uniform)base;
+  varying MultiBSDF* uniform self = (varying MultiBSDF* uniform)base;
 
   assert(self->numBsdfs < MULTIBSDF_MAX_COMPONENTS);
   if (self->numBsdfs < MULTIBSDF_MAX_COMPONENTS)
   {
     self->base.type |= bsdf->type;
     self->bsdfs[self->numBsdfs] = bsdf;
+    unmasked { self->importances[self->numBsdfs] = 0.0f; }
+    self->importances[self->numBsdfs] = importance;
+    self->importanceSum += importance;
     self->numBsdfs++;
   }
 }
@@ -46,20 +52,23 @@ inline void MultiBSDF_add(uniform BSDF* uniform base,
 inline vec3f MultiBSDF_eval(const uniform BSDF* uniform base,
                             const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
-  const uniform MultiBSDF* uniform self = (const uniform MultiBSDF* uniform)base;
+  const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)base;
 
   vec3f value = make_vec3f(0.0f);
   pdf = 0.0f;
 
-  for (uniform int i = 0; i < self->numBsdfs; i++)
+  for (uniform int i = 0; i < self->numBsdfs; ++i)
   {
-    const uniform BSDF* uniform curBsdf = self->bsdfs[i];
-    float curPdf = 0.0f;
-    value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
-    pdf += curPdf;
+    if (self->importances[i] > 0.0f)
+    {
+      const uniform BSDF* uniform curBsdf = self->bsdfs[i];
+      float curPdf = 0.0f;
+      value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
+      pdf = pdf + curPdf * self->importances[i];
+    }
   }
 
-  pdf *= rcp((float)self->numBsdfs);
+  pdf *= rcp(self->importanceSum);
   return value;
 }
 
@@ -68,7 +77,10 @@ inline vec3f MultiBSDF_sample(const uniform BSDF* uniform base,
                               const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                               const vec2f& s, float ss)
 {
-  const uniform MultiBSDF* uniform self = (const uniform MultiBSDF* uniform)base;
+  const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)base;
+
+  if (self->importanceSum == 0.0f)
+    return make_vec3f(0.0f);
 
   if (self->numBsdfs == 1)
   {
@@ -78,35 +90,45 @@ inline vec3f MultiBSDF_sample(const uniform BSDF* uniform base,
   else if (self->numBsdfs > 1)
   {
     // choose which BSDF to sample
-    int i = clamp((int)floor(ss * self->numBsdfs), 0, self->numBsdfs-1);
+    float x = ss * self->importanceSum;
+    int choice = 0;
+    float prefixSum = self->importances[0];
+    while ((choice < self->numBsdfs-1) & (x > prefixSum))
+      prefixSum += self->importances[++choice];
 
     // remap sample
-    ss = ss * self->numBsdfs - i;
+    ss = (x + self->importances[choice] - prefixSum) * rcp(self->importances[choice]);
 
     // sample chosen BSDF
     vec3f weight;
-    foreach_unique (ii in i)
+    foreach_unique (i in choice)
     {
-      const uniform BSDF* uniform bsdf = self->bsdfs[ii];
+      const uniform BSDF* uniform bsdf = self->bsdfs[i];
       weight = bsdf->sample(bsdf, dg, wo, wi, pdf, type, s, ss);
     }
 
-    if (eq(weight, make_vec3f(0.0f)) | pdf == 0.0f)
+    if (eq(weight, make_vec3f(0.0f)) | (pdf == 0.0f))
       return make_vec3f(0.0f);
 
     // compute overall weight and pdf
-    vec3f value = make_vec3f(0.0f);
-    pdf = 0.0f;
+    vec3f value = weight * pdf;
+    pdf *= self->importances[choice];
 
-    for (uniform int i = 0; i < self->numBsdfs; i++)
+    if (!(type & BSDF_SPECULAR))
     {
-      const uniform BSDF* uniform curBsdf = self->bsdfs[i];
-      float curPdf = 0.0f;
-      value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
-      pdf += curPdf;
+      for (uniform int i = 0; i < self->numBsdfs; ++i)
+      {
+        if ((i != choice) & (self->importances[i] > 0.0f))
+        {
+          const uniform BSDF* uniform curBsdf = self->bsdfs[i];
+          float curPdf = 0.0f;
+          value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
+          pdf = pdf + curPdf * self->importances[i];
+        }
+      }
     }
 
-    pdf *= rcp((float)self->numBsdfs);
+    pdf *= rcp(self->importanceSum);
     return value * rcp(pdf);
   }
   else
@@ -115,16 +137,17 @@ inline vec3f MultiBSDF_sample(const uniform BSDF* uniform base,
   }
 }
 
-inline void MultiBSDF_Constructor(uniform MultiBSDF* uniform self)
+inline void MultiBSDF_Constructor(varying MultiBSDF* uniform self)
 {
   BSDF_Constructor(&self->base, BSDF_NONE,
                    MultiBSDF_eval, MultiBSDF_sample, NULL);
   self->numBsdfs = 0;
+  unmasked { self->importanceSum = 0.0f; }
 }
 
 inline uniform BSDF* uniform MultiBSDF_create(uniform ShadingContext* uniform ctx)
 {
-  uniform MultiBSDF* uniform self = (uniform MultiBSDF* uniform)ShadingContext_alloc(ctx, sizeof(MultiBSDF));
+  varying MultiBSDF* uniform self = (varying MultiBSDF* uniform)ShadingContext_alloc(ctx, sizeof(MultiBSDF));
   MultiBSDF_Constructor(self);
   return &self->base;
 }

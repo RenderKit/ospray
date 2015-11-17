@@ -73,17 +73,17 @@ const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   }
   Kd = Kd * d * make_vec3f(dg.color);
   if (ne(Kd,make_vec3f(0.0f)))
-    MultiBSDF_add(bsdf, Lambert_create(ctx, shadingFrame, Kd));
+    MultiBSDF_add(bsdf, Lambert_create(ctx, shadingFrame, Kd), luminance(Kd));
 
   /*! transmission component */
   if (d < 1.0f)
-    MultiBSDF_add(bsdf, Transmission_create(ctx, shadingFrame, make_vec3f(1.0f-d)));
+    MultiBSDF_add(bsdf, Transmission_create(ctx, shadingFrame, make_vec3f(1.0f-d)), 1.0f-d);
 
   /*! specular component */
   float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);
   vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg.st, make_vec3f(1.f));
   if (ne(Ks,make_vec3f(0.0f)))
-    MultiBSDF_add(bsdf, Specular_create(ctx, shadingFrame, Ks, Ns));
+    MultiBSDF_add(bsdf, Specular_create(ctx, shadingFrame, Ks, Ns), luminance(Ks));
 
   return bsdf;
 }
