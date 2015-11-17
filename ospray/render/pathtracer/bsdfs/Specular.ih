@@ -50,7 +50,8 @@ inline vec3f Specular_sample(const uniform BSDF* uniform base,
   const vec3f refl = reflect(wo, getN(base));
   const vec3f localDir = powerCosineSampleHemisphere(self->exp, s);
   wi = frame(refl) * localDir;
-  return Specular_eval(base, dg, wo, wi, pdf) * rcp(pdf); // TODO: optimize
+  pdf = powerCosineSampleHemispherePDF(localDir, self->exp);
+  return mul(self->R, (self->exp+2) * rcp(self->exp+1) * clamp(dot(wi, getN(base))));
 }
 
 inline void Specular_Constructor(varying Specular* uniform self,
