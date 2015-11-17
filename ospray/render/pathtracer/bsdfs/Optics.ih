@@ -164,3 +164,9 @@ inline uniform PowerCosineDistribution make_PowerCosineDistribution(const unifor
   m.exp = _exp;
   return m;
 }
+
+
+inline float luminance(const vec3f& c)
+{
+  return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z;
+}
