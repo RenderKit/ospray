@@ -88,6 +88,19 @@ const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   return bsdf;
 }
 
+vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform material,
+                          const DifferentialGeometry& dg,
+                          const Ray& ray,
+                          const Medium& currentMedium)
+{
+  uniform const OBJ* uniform self = (uniform const OBJ* uniform)material;
+
+  /*! transmission */
+  float d = self->d * get1f(self->map_d, dg.st, 1.f);
+
+  return make_vec3f(1.0f-d);
+}
+
 void OBJ_Constructor(uniform OBJ* uniform self,
                      uniform Texture2D* uniform map_d,  const uniform float d,
                      uniform Texture2D* uniform map_Kd, const uniform vec3f Kd,
@@ -95,7 +108,7 @@ void OBJ_Constructor(uniform OBJ* uniform self,
                      uniform Texture2D* uniform map_Ns, const uniform float Ns,
                      uniform Texture2D* uniform map_Bump)
 {
-  PathTraceMaterial_Constructor(&self->base, OBJ_getBSDF, NULL);
+  PathTraceMaterial_Constructor(&self->base, OBJ_getBSDF, OBJ_getTransparency, NULL);
   self->map_d  = map_d;  self->d  = d;
   self->map_Kd = map_Kd; self->Kd = Kd;
   self->map_Ks = map_Ks; self->Ks = Ks;

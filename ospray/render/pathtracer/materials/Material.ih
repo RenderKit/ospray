@@ -35,6 +35,14 @@ typedef const uniform BSDF* uniform (*PathTraceMaterial_GetBSDFFunc)(const unifo
                                                                      /*! The medium this ray travels inside. */
                                                                      const Medium& currentMedium);
 
+typedef vec3f (*PathTraceMaterial_GetTransparencyFunc)(const uniform PathTraceMaterial* uniform material,
+                                                       /*! The point to shade on a surface. */
+                                                       const DifferentialGeometry& dg,
+                                                       /*! The ray arriving at the point to shade. */
+                                                       const Ray& ray,
+                                                       /*! The medium this ray travels inside. */
+                                                       const Medium& currentMedium);
+
 typedef void (*PathTraceMaterial_SelectNextMediumFunc)(const uniform PathTraceMaterial *uniform self,
                                                        varying Medium& currentMedium);
 
@@ -42,9 +50,11 @@ struct PathTraceMaterial
 {
   Material material;
   PathTraceMaterial_GetBSDFFunc getBSDF;
+  PathTraceMaterial_GetTransparencyFunc getTransparency;
   PathTraceMaterial_SelectNextMediumFunc selectNextMedium;
 };
 
 void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
+                                   uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium);
