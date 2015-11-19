@@ -530,6 +530,7 @@ extern "C" void ospSetVec2i(OSPObject _object, const char *id, const osp::vec2i 
   ASSERT_DEVICE();
   ospray::api::Device::current->setVec2i(_object, id, v);
 }
+
 /*! add a vec3f parameter to another object */
 extern "C" void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v)
 {
@@ -542,6 +543,13 @@ extern "C" void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i 
 {
   ASSERT_DEVICE();
   ospray::api::Device::current->setVec3i(_object,id,v);
+}
+
+/*! add a vec4f parameter to another object */
+extern "C" void ospSetVec4f(OSPObject _object, const char *id, const osp::vec4f &v)
+{
+  ASSERT_DEVICE();
+  ospray::api::Device::current->setVec4f(_object,id,v);
 }
 
 /*! add a vec2f parameter to another object */
@@ -598,6 +606,20 @@ extern "C" void ospSet3iv(OSPObject _object, const char *id, const int *xyz)
 {
   ASSERT_DEVICE();
   ospSetVec3i(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
+}
+
+/*! add a vec4f parameter to another object */
+extern "C" void ospSet4f(OSPObject _object, const char *id, float x, float y, float z, float w)
+{
+  ASSERT_DEVICE();
+  ospSetVec4f(_object,id,vec4f(x,y,z,w));
+}
+
+/*! add a vec4f parameter to another object */
+extern "C" void ospSet4fv(OSPObject _object, const char *id, const float *xyzw)
+{
+  ASSERT_DEVICE();
+  ospSetVec4f(_object,id,vec4f(xyzw[0],xyzw[1],xyzw[2],xyzw[3]));
 }
 
 /*! add a void pointer to another object */

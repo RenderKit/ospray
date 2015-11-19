@@ -161,6 +161,13 @@ namespace ospray {
         checkMpiError(rc); 
         return v; 
       }
+      inline vec4f get_vec4f() 
+      { 
+        vec4f v; 
+        int rc = MPI_Bcast(&v,4,MPI_FLOAT,0,mpi::app.comm); 
+        checkMpiError(rc); 
+        return v; 
+      }
       inline vec3i get_vec3i() 
       { 
         vec3i v; 

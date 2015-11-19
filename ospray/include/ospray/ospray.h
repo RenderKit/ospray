@@ -435,6 +435,12 @@ extern "C" {
   /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
 
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSet4f(OSPObject _object, const char *id, float x, float y, float z, float w);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSet4fv(OSPObject _object, const char *id, const float *xyzw);
+
   /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
 
@@ -471,6 +477,9 @@ extern "C" {
 
   /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSetVec4f(OSPObject _object, const char *id, const osp::vec4f &v);
 
   /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
