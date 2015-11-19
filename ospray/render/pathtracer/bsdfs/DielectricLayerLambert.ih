@@ -39,9 +39,9 @@ inline vec3f DielectricLayerLambert__eval(const uniform BSDF* uniform _this,
   if (cosThetaI <= 0.0f | cosThetaO <= 0.0f) return make_vec3f(0.f);
 
   float cosThetaO1;
-  const Sample3f wo1 = refract(wo,dg.Ns,this->etait,cosThetaO,cosThetaO1);
+  Sample3f wo1/* = refract(wo,dg.Ns,this->etait,cosThetaO,cosThetaO1)*/;
   float cosThetaI1;
-  const Sample3f wi1 = refract(wi,dg.Ns,this->etait,cosThetaI,cosThetaI1);
+  Sample3f wi1/* = refract(wi,dg.Ns,this->etait,cosThetaI,cosThetaI1)*/;
   const float Fi = 1.0f - fresnelDielectric(cosThetaI,cosThetaI1,this->etait);
   //const vec3f Fg = this->ground.base.eval(&this->ground.base,neg(wo1.v),dg,neg(wi1.v));
   vec3f Fg;
@@ -61,7 +61,7 @@ inline vec3f DielectricLayerLambert__sample(const uniform BSDF* uniform _this,
   /*! refract ray into medium */
   float cosThetaO = dot(wo,dg.Ns);
   if (cosThetaO <= 0.0f) return make_vec3f(0.f);
-  float cosThetaO1; Sample3f wo1 = refract(wo,dg.Ns,this->etait,cosThetaO,cosThetaO1);
+  float cosThetaO1; Sample3f wo1 /*= refract(wo,dg.Ns,this->etait,cosThetaO,cosThetaO1)*/;
 
   /*! sample ground BSDF */
   Sample3f wi1 = make_Sample3f(make_vec3f(0.f),1.f);
@@ -73,7 +73,7 @@ inline vec3f DielectricLayerLambert__sample(const uniform BSDF* uniform _this,
   if (cosThetaI1 <= 0.0f) return make_vec3f(0.f);
 
   float cosThetaI;
-  Sample3f wi0 = refract(neg(wi1.v),neg(dg.Ns),this->etati,cosThetaI1,cosThetaI);
+  Sample3f wi0 /*= refract(neg(wi1.v),neg(dg.Ns),this->etati,cosThetaI1,cosThetaI)*/;
   if (wi0.pdf == 0.0f) return make_vec3f(0.f);
 
   /*! accumulate contribution of path */

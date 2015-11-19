@@ -420,7 +420,8 @@ export void PathTracer_set(void *uniform _self,
   uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
 
   self->maxDepth = maxDepth;
-  self->minContribution = minContribution;
+  //self->minContribution = minContribution;
+  self->minContribution = 0.0f;
   self->backplate = (uniform Image *uniform)backplate;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;

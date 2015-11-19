@@ -145,8 +145,8 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Metal.cpp
   render/pathtracer/materials/ThinDielectric.ispc
   render/pathtracer/materials/ThinDielectric.cpp
-  render/pathtracer/materials/Dielectric.ispc
-  render/pathtracer/materials/Dielectric.cpp
+  render/pathtracer/materials/Glass.ispc
+  render/pathtracer/materials/Glass.cpp
   render/pathtracer/materials/MetallicPaint.ispc
   render/pathtracer/materials/MetallicPaint.cpp
   render/pathtracer/materials/Plastic.ispc
@@ -179,7 +179,7 @@ IF (OSPRAY_MPI)
     mpi/async/MultiIsendIrecvMessaging.cpp
     mpi/async/BatchedIsendIrecvMessaging.cpp
     mpi/async/CommLayer.cpp
-    
+
     mpi/DistributedFrameBuffer.cpp
     mpi/DistributedFrameBuffer.ispc
 
@@ -259,13 +259,13 @@ IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   MESSAGE("LINKING EXTENRALLY TO EMBREE IN ${OSPRAY_EMBREE_SOURCE_DIR}")
 ENDIF()
 
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
-  ospray_embree${OSPRAY_LIB_SUFFIX} 
-  ${CMAKE_THREAD_LIBS_INIT} 
+TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  ospray_embree${OSPRAY_LIB_SUFFIX}
+  ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS})
 
 IF (OSPRAY_DISPLAYCLUSTER)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} 
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
     ${DISPLAYCLUSTER_LIBRARIES})
 ENDIF()
 

@@ -20,33 +20,39 @@
 #include "ospray/math/sampling.ih"
 #include "ospray/math/LinearSpace.ih"
 
-/*! Reflects a viewing vector V at a normal N. */
-inline vec3f reflect(const vec3f &V, const vec3f &N) {
-  float cosi = dot(V,N);
-  return (2.0f*cosi) * N - V;
+/*! Reflects a viewing vector I at a normal N. */
+inline vec3f reflect(const vec3f& I, const vec3f& N)
+{
+  float cosI = dot(I,N);
+  return (2.0f*cosI) * N - I;
 }
 
-/*! Reflects a viewing vector V at a normal N. Cosine between V
+/*! Reflects a viewing vector I at a normal N. Cosine between I
  *  and N is given as input. */
-inline vec3f reflect(const vec3f &V, const vec3f &N, const float cosi) {
-  return (2.0f*cosi) * N - V;
+inline vec3f reflect(const vec3f& I, const vec3f& N, float cosI)
+{
+  return (2.0f*cosI) * N - I;
 }
 
-//! \brief Refracts a viewing vector V at a normal N
-/*! \detailed Refracts a viewing vector V at a normal N using the
+//! \brief Refracts a viewing vector I at a normal N
+/*! \detailed Refracts a viewing vector I at a normal N using the
  *  relative refraction index eta. Eta is refraction index of outside
  *  medium (where N points into) divided by refraction index of the
- *  inside medium. The vectors V and N have to point towards the same
- *  side of the surface. The cosine between V and N is given as input
+ *  inside medium. The vectors I and N have to point towards the same
+ *  side of the surface. The cosine between I and N is given as input
  *  and the cosine of -N and transmission ray is computed as
  *  output. */
-inline Sample3f refract(const vec3f V, const vec3f N, const float eta,
-                        const float cosi, float &cost)
+inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float eta)
 {
-  const float k = 1.0f-eta*eta*(1.0f-cosi*cosi);
-  if (k < 0.0f) { cost = 0.0f; return make_Sample3f(make_vec3f(0.f),0.0f); }
-  cost = sqrtf(k);
-  return make_Sample3f(sub(mul(eta,sub(mul(cosi,N),V)),mul(cost,N)), sqrf(eta));
+  const float k = 1.0f-eta*eta*(1.0f-cosI*cosI);
+  if (k < 0.0f) return make_vec3f(0.f);
+  const float cosT = sqrtf(k);
+  return sub(mul(eta,sub(mul(cosI,N),I)),mul(cosT,N));
+}
+
+inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float cosT, float eta)
+{
+  return sub(mul(eta,sub(mul(cosI,N),I)),mul(cosT,N));
 }
 
 //! \brief Computes fresnel coefficient for dielectric medium
@@ -54,10 +60,10 @@ inline Sample3f refract(const vec3f V, const vec3f N, const float eta,
  *  relative refraction index eta. Eta is the outside refraction index
  *  divided by the inside refraction index. Both cosines have to be
  *  positive. */
-inline float fresnelDielectric(const float cosi, const float cost, const float eta)
+inline float fresnelDielectric(float cosI, float cosT, float eta)
 {
-  const float Rper = (eta*cosi -     cost) * rcpf(eta*cosi +     cost);
-  const float Rpar = (    cosi - eta*cost) * rcpf(    cosi + eta*cost);
+  const float Rper = (eta*cosI -     cosT) * rcpf(eta*cosI +     cosT);
+  const float Rpar = (    cosI - eta*cosT) * rcpf(    cosI + eta*cosT);
   return 0.5f*(Rpar*Rpar + Rper*Rper);
 }
 
@@ -65,25 +71,37 @@ inline float fresnelDielectric(const float cosi, const float cost, const float e
  *  refraction index eta. Eta is the outside refraction index
  *  divided by the inside refraction index. The cosine has to be
  *  positive. */
-inline float fresnelDielectric(const float cosi, const float eta)
+inline float fresnelDielectric(float cosI, float eta)
 {
-  const float k = 1.0f-eta*eta*(1.0f-cosi*cosi);
+  const float k = 1.0f-eta*eta*(1.0f-cosI*cosI);
   if (k < 0.0f) return 1.0f;
-  const float cost = sqrtf(k);
-  return fresnelDielectric(cosi, cost, eta);
+  const float cosT = sqrtf(k);
+  return fresnelDielectric(cosI, cosT, eta);
+}
+
+inline float fresnelDielectricEx(float cosI, float& cosT, float eta)
+{
+  const float k = 1.0f-eta*eta*(1.0f-cosI*cosI);
+  if (k < 0.0f)
+  {
+    cosT = 0.0f;
+    return 1.0f;
+  }
+  cosT = sqrtf(k);
+  return fresnelDielectric(cosI, cosT, eta);
 }
 
 /*! Computes fresnel coefficient for conductor medium with complex
  *  refraction index (eta,k). The cosine has to be positive. */
-inline vec3f fresnelConductor(const float cosi, const vec3f eta, const vec3f k)
+inline vec3f fresnelConductor(float cosI, vec3f eta, vec3f k)
 {
   vec3f tmp = eta*eta + k*k;
   vec3f Rpar
-    = (tmp * cosi*cosi - 2.0f*eta*cosi + make_vec3f(1.f))
-    * rcp(tmp * cosi*cosi + 2.0f*eta*cosi + make_vec3f(1.f));
+    = (tmp * cosI*cosI - 2.0f*eta*cosI + make_vec3f(1.f))
+    * rcp(tmp * cosI*cosI + 2.0f*eta*cosI + make_vec3f(1.f));
   vec3f Rper
-    = (tmp - 2.0f*eta*cosi + make_vec3f(cosi*cosi))
-    * rcp(tmp + 2.0f*eta*cosi + make_vec3f(cosi*cosi));
+    = (tmp - 2.0f*eta*cosI + make_vec3f(cosI*cosI))
+    * rcp(tmp + 2.0f*eta*cosI + make_vec3f(cosI*cosI));
   return 0.5f * (Rpar + Rper);
 }
 

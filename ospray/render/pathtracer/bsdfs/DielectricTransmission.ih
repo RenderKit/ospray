@@ -45,7 +45,7 @@ inline vec3f uniform_DielectricTransmission__sample(const uniform BSDF* uniform 
 {
   const uniform DielectricTransmission* uniform this = (const uniform DielectricTransmission* uniform) _this;
   float cosThetaO = clamp(dot(wo,dg.Ns));
-  float cosThetaI; wi = refract(wo,dg.Ns,this->eta,cosThetaO,cosThetaI);
+  float cosThetaI; //wi = refract(wo,dg.Ns,this->eta,cosThetaO,cosThetaI);
   return make_vec3f(1.0f-fresnelDielectric(cosThetaO,cosThetaI,this->eta));
 }
 
@@ -76,7 +76,7 @@ inline vec3f varying_DielectricTransmission__sample(const uniform BSDF* uniform 
 {
   const varying DielectricTransmission* uniform this = (const varying DielectricTransmission* uniform) _this;
   float cosThetaO = clamp(dot(wo,dg.Ns));
-  float cosThetaI; wi = refract(wo,dg.Ns,this->eta,cosThetaO,cosThetaI);
+  float cosThetaI; //wi = refract(wo,dg.Ns,this->eta,cosThetaO,cosThetaI);
   return make_vec3f(1.0f-fresnelDielectric(cosThetaO,cosThetaI,this->eta));
 }
 
