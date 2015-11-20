@@ -52,8 +52,6 @@ typedef int ssize_t;
 #include "common/math/bbox.h"
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
-#include "common/sys/atomic.h"
-#include "common/sys/condition.h"
 #include "common/sys/alloc.h"
 #include <unistd.h>
 
