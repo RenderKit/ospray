@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "ospray/common/OSPCommon.h"
 #include <string>
 #include "modules/loaders/TriangleMeshFile.h"
 

@@ -38,7 +38,6 @@ void FrameBuffer_set(FrameBuffer *uniform self,
   self->size.y     = size_y;
   self->rcpSize.x  = 1.f/size_x;
   self->rcpSize.y  = 1.f/size_y;
-  print("frame buffer set: % %\n",size_x,size_y);
   self->colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
 }
 

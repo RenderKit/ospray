@@ -25,14 +25,7 @@
 
 #include "ospray/common/TaskSys.h"
 
-// // embree
-// #include "common/sys/taskscheduler.h"
-
 namespace ospray {
-
-  //  using embree::TaskScheduler;
-
-  struct TileRenderer;
 
   struct TiledLoadBalancer 
   {
@@ -41,7 +34,6 @@ namespace ospray {
     virtual void renderFrame(Renderer *tiledRenderer,
                              FrameBuffer *fb,
                              const uint32 channelFlags) = 0;
-    // virtual void returnTile(FrameBuffer *fb, Tile &tile) = 0;
   };
 
   //! tiled load balancer for local rendering on the given machine
@@ -51,13 +43,14 @@ namespace ospray {
     application ranks each doing local rendering on their own)  */ 
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
-    struct RenderTask : public Task { //embree::RefCount {
+    struct RenderTask : public Task { 
       Ref<FrameBuffer>             fb;
       Ref<Renderer>                renderer;
       
       size_t                       numTiles_x;
       size_t                       numTiles_y;
       uint32                       channelFlags;
+      void                        *perFrameData;
       // embree::TaskScheduler::Task  task;
 
       virtual void run(size_t jobID);
@@ -110,6 +103,7 @@ namespace ospray {
       size_t                       deviceID;
       size_t                       numDevices;
       uint32                       channelFlags;
+      void                        *perFrameData;
 
       virtual void run(size_t jobID);
       virtual void finish();

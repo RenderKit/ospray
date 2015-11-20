@@ -51,16 +51,26 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Renderer"; }
 
     /*! \brief render one frame, and put it into given frame buffer */
-    virtual void renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags);
+    virtual void renderFrame(FrameBuffer *fb, 
+                             const uint32 fbChannelFlags);
 
-    /*! \brief called exactly once (on each node) at the beginning of each frame */
-    virtual void beginFrame(FrameBuffer *fb);
+    //! \brief called to initialize a new frame
+    /*! this function gets called exactly once (on each node) at the
+      beginning of each frame, and allows the renderer to do whatever
+      is required to initialize a new frame. In particular, this
+      function _can_ return a pointer to some "per-frame-data"; this
+      pointer (can be NULL) is then passed to 'renderFrame' and
+      'endFrame' to do with as they please 
+
+      \returns pointer to per-frame data, or NULL if this does not apply
+     */
+    virtual void *beginFrame(FrameBuffer *fb);
 
     /*! \brief called exactly once (on each node) at the end of each frame */
-    virtual void endFrame(const int32 fbChannelFlags);
+    virtual void endFrame(void *perFrameData, const int32 fbChannelFlags);
 
     /*! \brief called by the load balancer to render one tile of "samples" */
-    virtual void renderTile(Tile &tile);
+    virtual void renderTile(void *perFrameData, Tile &tile);
     
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type) { return NULL; }

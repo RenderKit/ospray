@@ -20,7 +20,7 @@ SET(OSPRAY_BINARY_DIR ${CMAKE_BINARY_DIR})
 SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
-SET(OSPRAY_TILE_SIZE 128 CACHE INT "Tile size")
+SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
@@ -93,6 +93,10 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+			IF (OSPRAY_ISPC_KNL_NATIVE)
+				SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+				SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
+			ENDIF()
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
       # ------------------------------------------------------------------
@@ -109,6 +113,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
+      SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
       # add this flag to tell embree to offer a rtcIntersect16 that actually does two rtcIntersect8's
       ADD_DEFINITIONS(-D__EMBREE_KNL_WORKAROUND__=1)
       ADD_DEFINITIONS(-DEMBREE_AVX512_WORKAROUND=1)

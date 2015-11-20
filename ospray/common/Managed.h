@@ -19,17 +19,12 @@
 // ospray 
 #include "OSPCommon.h"
 #include "ospray/ospray.h"
+#include "ospray/common/ObjectHandle.h"
 // stl 
 #include <vector>
 #include <set>
 
 namespace ospray {
-
-#ifdef _WIN32
-typedef unsigned long long id_t;
-#endif
-
-
 
   /*! forward-def so param can use a pointer to data */
   struct Data;
@@ -191,6 +186,10 @@ typedef unsigned long long id_t;
 
     /*! \brief find a given parameter, or add it if not exists (and so specified) */
     Param *findParam(const char *name, bool addIfNotExist = false);
+
+    /*! \brief check if a given parameter is available */
+    bool hasParam(const char *name) 
+    { return findParam(name,false) != NULL; }
 
     /*! \brief set given parameter to given data array */
     void   setParam(const char *name, ManagedObject *data);

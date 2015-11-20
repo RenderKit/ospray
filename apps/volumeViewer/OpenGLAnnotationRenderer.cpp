@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "OpenGLAnnotationRenderer.h"
 #include "VolumeViewer.h"
+#include "OpenGLAnnotationRenderer.h"
 
 #ifdef __APPLE__
   #include <OpenGL/gl.h>

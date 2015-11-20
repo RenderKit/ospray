@@ -179,6 +179,14 @@ task void BBVUChar_setRegionTask(BlockBrickedVolume *uniform self,
   foreach (x = 0 ... regionSize.x) {
     Address address;
     coord.x = targetCoord000.x + x;
+    if (coord.x < 0 ||
+        coord.y < 0 ||
+        coord.z < 0 ||
+        coord.x >= self->super.dimensions.x ||
+        coord.y >= self->super.dimensions.y ||
+        coord.z >= self->super.dimensions.z
+        )
+      continue;
     BlockBrickedVolume_getVoxelAddress(self, coord, address);
     foreach_unique(blockID in address.block) {
       uint8 *uniform blockPtr
@@ -202,6 +210,15 @@ task void BBVFloat_setRegionTask(BlockBrickedVolume *uniform self,
   foreach (x = 0 ... regionSize.x) {
     Address address;  
     coord.x = targetCoord000.x + x;
+    if (coord.x < 0 ||
+        coord.y < 0 ||
+        coord.z < 0 ||
+        coord.x >= self->super.dimensions.x ||
+        coord.y >= self->super.dimensions.y ||
+        coord.z >= self->super.dimensions.z
+        )
+      continue;
+
     BlockBrickedVolume_getVoxelAddress(self, coord, address);
     foreach_unique(blockID in address.block) {
       float *uniform blockPtr
@@ -225,6 +242,14 @@ task void BBVDouble_setRegionTask(BlockBrickedVolume *uniform self,
   foreach (x = 0 ... regionSize.x) {
     Address address;
     coord.x = targetCoord000.x + x;
+    if (coord.x < 0 ||
+        coord.y < 0 ||
+        coord.z < 0 ||
+        coord.x >= self->super.dimensions.x ||
+        coord.y >= self->super.dimensions.y ||
+        coord.z >= self->super.dimensions.z
+        )
+      continue;
     BlockBrickedVolume_getVoxelAddress(self, coord, address);
     foreach_unique(blockID in address.block) {
       double *uniform blockPtr

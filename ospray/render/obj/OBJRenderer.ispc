@@ -210,7 +210,8 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
 }
 
 void OBJRenderer_renderSample(uniform Renderer *uniform _self,
-                               varying ScreenSample &sample)
+                              void *uniform perFrameData,
+                              varying ScreenSample &sample)
 {
   uniform OBJRenderer *uniform self = (uniform OBJRenderer *uniform)_self;
   OBJRenderer_shadeRay(self, sample);

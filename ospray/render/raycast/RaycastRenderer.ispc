@@ -39,6 +39,7 @@ struct RaycastRenderer
 //! returns a well-defined test frame (mostly useful for debugging
 //! whether frame buffers are properly set up etcpp
 void RaycastRenderer_renderSample_testFrame(uniform Renderer *uniform _self,
+                                            void *uniform perFrameData,
                                             varying ScreenSample &sample)
 {
   sample.rgb.x = ((sample.sampleID.x)%256)/255.f;
@@ -49,6 +50,7 @@ void RaycastRenderer_renderSample_testFrame(uniform Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_eyeLight(uniform Renderer *uniform _self,
+                                           void *uniform perFrameData,
                                            varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
@@ -66,7 +68,8 @@ void RaycastRenderer_renderSample_eyeLight(uniform Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_Ng(uniform Renderer *uniform _self,
-                                           varying ScreenSample &sample)
+                                     void *uniform perFrameData,
+                                     varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
@@ -82,7 +85,8 @@ void RaycastRenderer_renderSample_Ng(uniform Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_Ns(uniform Renderer *uniform _self,
-                                           varying ScreenSample &sample)
+                                     void *uniform perFrameData,
+                                     varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
@@ -100,7 +104,8 @@ void RaycastRenderer_renderSample_Ns(uniform Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_dPds(uniform Renderer *uniform _self,
-                                         varying ScreenSample &sample)
+                                       void *uniform perFrameData,
+                                       varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
@@ -124,7 +129,8 @@ void RaycastRenderer_renderSample_dPds(uniform Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_dPdt(uniform Renderer *uniform _self,
-                                         varying ScreenSample &sample)
+                                       void *uniform perFrameData,
+                                       varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
@@ -148,6 +154,7 @@ void RaycastRenderer_renderSample_dPdt(uniform Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_eyeLight_vertexColor(uniform Renderer *uniform _self,
+                                                       void *uniform perFrameData,
                                                        varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
@@ -169,6 +176,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(uniform Renderer *uniform
 
 
 void RaycastRenderer_renderSample_eyeLight_primID(uniform Renderer *uniform _self,
+                                                  void *uniform perFrameData,
                                                   varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
@@ -186,6 +194,7 @@ void RaycastRenderer_renderSample_eyeLight_primID(uniform Renderer *uniform _sel
 }
 
 void RaycastRenderer_renderSample_eyeLight_instID(uniform Renderer *uniform _self,
+                                                  void *uniform perFrameData,
                                                   varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
@@ -203,6 +212,7 @@ void RaycastRenderer_renderSample_eyeLight_instID(uniform Renderer *uniform _sel
 }
 
 void RaycastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _self,
+                                                  void *uniform perFrameData,
                                                   varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
@@ -221,6 +231,7 @@ void RaycastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _sel
 
 
 void RaycastRenderer_renderSample_backfacing_Ng(uniform Renderer *uniform _self,
+                                                void *uniform perFrameData,
                                                 varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
@@ -240,6 +251,7 @@ void RaycastRenderer_renderSample_backfacing_Ng(uniform Renderer *uniform _self,
 }
 
 void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
+                                                void *uniform perFrameData,
                                                 varying ScreenSample &sample)
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;

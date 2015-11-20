@@ -43,7 +43,7 @@ namespace ospray {
       the master) that only coordinate rendering but don't hold data
       of their own. In localdevice mode, this will return '1'.
      */
-    size_t getWorkerCount();
+    int64 getWorkerCount();
 
     /*! \brief return rank of the worker
 

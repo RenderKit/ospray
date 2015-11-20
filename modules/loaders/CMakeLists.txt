@@ -31,6 +31,7 @@ IF (NOT THIS_IS_MIC)
       OSPObjectFile.cpp
       PLYTriangleMeshFile.cpp
       RawVolumeFile.cpp
+      RMVolumeFile.cpp
       SymbolRegistry.cpp
       TinyXML2.cpp
       TriangleMeshFile.cpp

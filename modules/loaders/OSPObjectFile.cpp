@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
 #include <libgen.h>
 #include <string>
 #include <string.h>
@@ -123,7 +124,9 @@ OSPObject OSPObjectFile::importObject(const tinyxml2::XMLNode *node)
   if (!strcmp(node->ToElement()->Name(), "triangleMesh")) return((OSPObject) importTriangleMesh(node));
 
   // OSPRay volume object.
-  if (!strcmp(node->ToElement()->Name(), "volume")) return((OSPObject) importVolume(node));
+  if (!strcmp(node->ToElement()->Name(), "volume")) {
+    return (OSPObject) importVolume(node);
+  }
 
   // No other object types are currently supported.
   exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");  return(NULL);
@@ -176,7 +179,7 @@ OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
 
     // Scaling for vertex coordinates.
     if (!strcmp(node->ToElement()->Name(), "scale")) { importAttributeFloat3(node, triangleMesh);  continue; }
-
+    
     // Error check.
     exitOnCondition(true, "unrecognized XML element type '" + std::string(node->ToElement()->Name()) + "'");
   }
@@ -203,8 +206,31 @@ OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
 
 OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
 {
-  // Create the OSPRay object.
-  OSPVolume volume = ospNewVolume("block_bricked_volume");
+  const char *dpFromEnv = getenv("OSPRAY_DATA_PARALLEL");
+
+  OSPVolume volume = NULL;
+  if (dpFromEnv) {
+    // Create the OSPRay object.
+    std::cout << "#osp.loader: found OSPRAY_DATA_PARALLEL env-var, "
+              << "#osp.loader: trying to use data _parallel_ mode..." << std::endl;
+    osp::vec3i blockDims;
+    int rc = sscanf(dpFromEnv,"%dx%dx%d",&blockDims.x,&blockDims.y,&blockDims.z);
+    if (rc !=3)
+      throw std::runtime_error("could not parse OSPRAY_DATA_PARALLEL env-var. Must be of format <X>x<Y>x<>Z (e.g., '4x4x4'");
+    volume = ospNewVolume("data_distributed_volume");
+    if (volume == NULL)
+      throw std::runtime_error("#loaders.ospObjectFile: could not create volume ...");
+   ospSetVec3i(volume,"num_dp_blocks",blockDims);
+  } else {
+    // Create the OSPRay object.
+    std::cout << "#osp.loader: no OSPRAY_DATA_PARALLEL dimensions set, "
+              << "#osp.loader: assuming data replicated mode is desired" << std::endl;
+    std::cout << "#osp.loader: to use data parallel mode, set OSPRAY_DATA_PARALLEL env-var to <X>x<Y>x<Z>" << std::endl;
+    std::cout << "#osp.loader: where X, Y, and Z are the desired _number_ of data parallel blocks" << std::endl;
+    volume = ospNewVolume("block_bricked_volume");
+  }
+  if (volume == NULL)
+    throw std::runtime_error("#loaders.ospObjectFile: could not create volume ...");
 
   // Temporary storage for the file name attribute if specified.
   const char *volumeFilename = NULL;
@@ -253,10 +279,12 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
     char *duplicateFilename = strdup(filename.c_str());
 
     // The volume file path is absolute.
-    if (volumeFilename[0] == '/') return(VolumeFile::importVolume(volumeFilename, volume));
+    if (volumeFilename[0] == '/') 
+      return(VolumeFile::importVolume(volumeFilename, volume));
 
     // The volume file path is relative to the object file path.
-    if (volumeFilename[0] != '/') return(VolumeFile::importVolume((std::string(dirname(duplicateFilename)) + "/" + volumeFilename).c_str(), volume));
+    if (volumeFilename[0] != '/') 
+      return(VolumeFile::importVolume((std::string(dirname(duplicateFilename)) + "/" + volumeFilename).c_str(), volume));
 
     // Free the temporary character array.
     if (duplicateFilename != NULL) free(duplicateFilename);
@@ -265,3 +293,4 @@ OSPVolume OSPObjectFile::importVolume(const tinyxml2::XMLNode *root)
   // The populated volume object.
   return volume;
 }
+
