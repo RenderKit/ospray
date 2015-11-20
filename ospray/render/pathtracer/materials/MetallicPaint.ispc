@@ -15,14 +15,14 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../bsdfs/DielectricReflection.ih"
+//#include "../bsdfs/DielectricReflection.ih"
 #include "../bsdfs/DielectricLayerLambert.ih"
 #include "../bsdfs/DielectricLayerMicrofacetMetal.ih"
 
 struct MetallicPaint
 {
   PathTraceMaterial base;
-  DielectricReflection              reflection;
+  //DielectricReflection              reflection;
   DielectricLayerLambert         paint;
   DielectricLayerMicrofacetMetal    glitter;
   bool                              hasGlitter;
@@ -53,7 +53,7 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
                                        const uniform float eta)
 {
   //PathTraceMaterial_Constructor(&this->base, MetallicPaint__shade, NULL);
-  DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
+  //DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
   //DielectricLayerLambert_Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
 
   uniform vec3f etaAluminium = make_vec3f(0.62f,0.62f,0.62f);
