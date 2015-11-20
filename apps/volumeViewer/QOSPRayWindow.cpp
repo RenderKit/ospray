@@ -105,7 +105,7 @@ void QOSPRayWindow::setBenchmarkParameters(int benchmarkWarmUpFrames, int benchm
   this->benchmarkFrames = benchmarkFrames;
 }
 
-void QOSPRayWindow::setWorldBounds(const osp::box3f &worldBounds)
+void QOSPRayWindow::setWorldBounds(const ospray::box3f &worldBounds)
 {
   this->worldBounds = worldBounds;
 
@@ -131,9 +131,10 @@ void QOSPRayWindow::paintGL()
 
   // update OSPRay camera if viewport has been modified
   if(viewport.modified) {
-    ospSetVec3f(camera,"pos" ,viewport.from);
-    ospSetVec3f(camera,"dir" ,viewport.at - viewport.from);
-    ospSetVec3f(camera,"up", viewport.up);
+    const ospray::vec3f dir =  viewport.at - viewport.from;
+    ospSetVec3f(camera,"pos" ,(const osp::vec3f&)viewport.from);
+    ospSetVec3f(camera,"dir" ,(const osp::vec3f&)dir);
+    ospSetVec3f(camera,"up", (const osp::vec3f&)viewport.up);
     ospSetf(camera,"aspect", viewport.aspect);
     ospSetf(camera,"fovy", viewport.fovY);
 
@@ -215,13 +216,13 @@ void QOSPRayWindow::paintGL()
 
 void QOSPRayWindow::resizeGL(int width, int height)
 {
-  windowSize = osp::vec2i(width, height);
+  windowSize = ospray::vec2i(width, height);
 
   // reallocate OSPRay framebuffer for new size
   if(frameBuffer)
     ospFreeFrameBuffer(frameBuffer);
 
-  frameBuffer = ospNewFrameBuffer(windowSize, OSP_RGBA_I8, OSP_FB_COLOR | OSP_FB_ACCUM);
+  frameBuffer = ospNewFrameBuffer((const osp::vec2i&)windowSize, OSP_RGBA_I8, OSP_FB_COLOR | OSP_FB_ACCUM);
 
   // set gamma correction
   ospSet1f(frameBuffer, "gamma", 1.0f);
@@ -312,12 +313,12 @@ void QOSPRayWindow::mouseMoveEvent(QMouseEvent * event)
 
 void QOSPRayWindow::rotateCenter(float du, float dv)
 {
-  const osp::vec3f pivot = viewport.at;
+  const ospray::vec3f pivot = viewport.at;
 
-  osp::affine3f xfm = osp::affine3f::translate(pivot)
-    * osp::affine3f::rotate(viewport.frame.l.vx, -dv)
-    * osp::affine3f::rotate(viewport.frame.l.vz, -du)
-    * osp::affine3f::translate(-pivot);
+  ospray::affine3f xfm = ospray::affine3f::translate(pivot)
+    * ospray::affine3f::rotate(viewport.frame.l.vx, -dv)
+    * ospray::affine3f::rotate(viewport.frame.l.vz, -du)
+    * ospray::affine3f::translate(-pivot);
 
   viewport.frame = xfm * viewport.frame;
   viewport.from  = xfmPoint(xfm, viewport.from);
@@ -329,8 +330,8 @@ void QOSPRayWindow::rotateCenter(float du, float dv)
 
 void QOSPRayWindow::strafe(float du, float dv)
 {
-  osp::affine3f xfm = osp::affine3f::translate(dv * viewport.frame.l.vz)
-    * osp::affine3f::translate(-du * viewport.frame.l.vx);
+  ospray::affine3f xfm = ospray::affine3f::translate(dv * viewport.frame.l.vz)
+    * ospray::affine3f::translate(-du * viewport.frame.l.vx);
 
   viewport.frame = xfm * viewport.frame;
   viewport.from = xfmPoint(xfm, viewport.from);
@@ -343,7 +344,7 @@ void QOSPRayWindow::strafe(float du, float dv)
 void QOSPRayWindow::renderGL()
 {
   // setup OpenGL state to match OSPRay view
-  const osp::vec3f bgColor = osp::vec3f(1.f);
+  const ospray::vec3f bgColor = ospray::vec3f(1.f);
   glClearColor(bgColor.x, bgColor.y, bgColor.z, 1.f);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

@@ -44,7 +44,7 @@ IsovalueWidget::IsovalueWidget(IsosurfaceEditor *isosurfaceEditor) : dataRangeSe
   connect(this, SIGNAL(isovalueChanged()), isosurfaceEditor, SLOT(apply()));
 }
 
-void IsovalueWidget::setDataValueRange(osp::vec2f dataValueRange)
+void IsovalueWidget::setDataValueRange(ospray::vec2f dataValueRange)
 {
   this->dataValueRange = dataValueRange;
 

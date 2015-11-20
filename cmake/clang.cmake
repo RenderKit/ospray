@@ -14,11 +14,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
+#IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-strict-aliasing -Wno-narrowing -std=c++11 -stdlib=libc++")
-ELSE()
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-strict-aliasing -Wno-narrowing")
-ENDIF()
+#ELSE()
+#  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC -fno-strict-aliasing -Wno-narrowing")
+#ENDIF()
 
 SET(CMAKE_CXX_FLAGS_DEBUG          "-DDEBUG  -g -O0 -Wstrict-aliasing=1")
 SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -Wstrict-aliasing=1")

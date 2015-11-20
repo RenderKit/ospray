@@ -17,6 +17,7 @@
 #pragma once
 
 #include <ospray/ospray.h>
+#include "ospray/common/OSPCommon.h"
 #include <QtGui>
 
 class IsosurfaceEditor;
@@ -32,7 +33,7 @@ public:
   bool getIsovalueEnabled() { return isovalueCheckBox.isChecked(); }
   float getIsovalue() { return isovalueSpinBox.value(); }
 
-  void setDataValueRange(osp::vec2f dataValueRange);
+  void setDataValueRange(ospray::vec2f dataValueRange);
 
 signals:
 
@@ -44,7 +45,7 @@ protected slots:
 
 protected:
 
-  osp::vec2f dataValueRange;
+  ospray::vec2f dataValueRange;
 
   //! Indicates if the data value range has been set; we don't automatically set the isovalue after the first time it's set.
   bool dataRangeSet;

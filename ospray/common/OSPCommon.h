@@ -52,14 +52,26 @@ typedef int ssize_t;
 #include "common/math/bbox.h"
 #include "common/math/affinespace.h"
 #include "common/sys/ref.h"
-//#include "common/sys/taskscheduler.h"
-#ifdef __NEW_EMBREE__
-# include "common/sys/atomic.h"
-# include "common/sys/condition.h"
-# include <unistd.h>
-#else
-# include "common/sys/sync/atomic.h"
-# include "common/sys/sync/condition.h"
+#include "common/sys/atomic.h"
+#include "common/sys/condition.h"
+#include "common/sys/alloc.h"
+#include <unistd.h>
+
+// C++11
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+
+#if 1
+// iw: remove this eventually, and replace all occurrences with actual
+// std::atomic_xyz's etc; for now this'll make it easier to try out the new c++11 types
+namespace ospray {
+  typedef std::atomic_int AtomicInt;
+  typedef std::mutex Mutex;
+  typedef std::lock_guard<std::mutex> LockGuard;
+  typedef std::condition_variable Condition;
+}
+
 #endif
 
 // ospray
@@ -171,6 +183,9 @@ namespace ospray {
   using   embree::Ref;
   using   embree::RefCount;
 
+  using embree::cross;
+  using embree::volume;
+
   /*! return system time in seconds */
   OSPRAY_INTERFACE double getSysTime();
 
@@ -235,24 +250,12 @@ namespace ospray {
     return result;
   }
 
-#if __EXTERNAL_EMBREE__
-  struct Condition : public embree::ConditionSys 
-  {
-  inline void broadcast() { notify_all(); }
-};
-#else
-  typedef embree::ConditionSys Condition;
-#endif
-
-
 } // ::ospray
 
 #ifdef _WIN32
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
-
-// #define divRoundUp(X,Y) (((X)+(Y)-1)/(Y))
 
 template <typename T>
 inline T divRoundUp(const T&a, const T&b) { return (a+(b-T(1)))/b; }

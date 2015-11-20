@@ -35,20 +35,6 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#if __EXTERNAL_EMBREE__
-# include "common/sys/alloc.h"
-# include "common/math/vec2.h"
-# include "common/math/vec3.h"
-# include "common/math/vec4.h"
-# include "common/math/bbox.h"
-# include "common/math/affinespace.h"
-#else
-# include "ospray/embree/common/math/vec2.h"
-# include "ospray/embree/common/math/vec3.h"
-# include "ospray/embree/common/math/vec4.h"
-# include "ospray/embree/common/math/bbox.h"
-# include "ospray/embree/common/math/affinespace.h"
-#endif
 #include "ospray/common/OSPDataType.h"
 
 #ifdef _WIN32
@@ -72,15 +58,25 @@
 /*! namespace for classes in the public core API */
 namespace osp {
 
-  typedef embree::Vec2f  vec2f;
-  typedef embree::Vec2i  vec2i;
-  typedef embree::Vec3f  vec3f;
-  typedef embree::Vec3i  vec3i;
-  typedef embree::Vec3fa vec3fa;
-  typedef embree::Vec4f  vec4f;
-  typedef embree::BBox<embree::Vec2i> box2i;
-  typedef embree::BBox3f box3f;
-  typedef embree::AffineSpace3f affine3f;
+  struct vec2f { float x, y; };
+  struct vec2i { int x, y; };
+  struct vec3f { float x, y, z; };
+  struct vec3fa { float x, y, z, a; };
+  struct vec3i { int x, y, z; };
+  struct vec4f { float x, y, z, w; };
+  // typedef embree::Vec2f  vec2f;
+  // typedef embree::Vec2i  vec2i;
+  // typedef embree::Vec3f  vec3f;
+  // typedef embree::Vec3i  vec3i;
+  // typedef embree::Vec3fa vec3fa;
+  // typedef embree::Vec4f  vec4f;
+  struct box2i { vec2i lower, upper; };
+  struct box3f { vec2f lower, upper; };
+  struct linear3f { vec3f vx,vy,vz; };
+  struct affine3f { linear3f l; vec3f p; };
+  // typedef embree::BBox<embree::Vec2i> box2i;
+  // typedef embree::BBox3f box3f;
+  // typedef embree::AffineSpace3f affine3f;
 
   typedef uint64_t uint64;
 
@@ -458,10 +454,10 @@ extern "C" {
                                     void *source, 
                                     /*! coordinates of the lower, left, front corner of
                                       the target region.*/
-                                    osp::vec3i regionCoords, 
+                                    const osp::vec3i &regionCoords, 
                                     /*! size of the region that we're writing to; MUST
                                       be the same as the dimensions of source[][][] */
-                                    osp::vec3i regionSize);
+                                    const osp::vec3i &regionSize);
 
   /*! add 2-float parameter to given object */
   OSPRAY_INTERFACE void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);

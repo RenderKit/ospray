@@ -22,12 +22,7 @@ namespace ospray {
 
 #define TASKSYS_DEPENDENCIES 0
 
-
-  typedef embree::AtomicCounter AtomicInt;
-  typedef embree::MutexSys      Mutex;
-
   extern size_t numActiveThreads;
-
 
   struct __aligned(64) Task : public embree::RefCount {
     // typedef enum { FRONT, BACK } ScheduleOrder;

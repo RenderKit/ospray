@@ -105,7 +105,11 @@ ENDIF(WIN32)
 
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
-INCLUDE(cmake/configure_embree.cmake)
+#INCLUDE(cmake/configure_embree.cmake)
+
+SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
+
+
 INCLUDE(cmake/mpi.cmake)
 IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)

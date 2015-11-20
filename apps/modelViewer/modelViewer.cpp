@@ -141,7 +141,7 @@ namespace ospray {
       Glut3DWidget::reshape(newSize);
       g_windowSize = newSize;
       if (fb) ospFreeFrameBuffer(fb);
-      fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
+      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
       ospSet1f(fb, "gamma", 2.2f);
       ospCommit(fb);
       ospFrameBufferClear(fb,OSP_FB_ACCUM);
@@ -152,7 +152,7 @@ namespace ospray {
           the existing one... */
       if (displayWall && displayWall->fb != fb) {
         PRINT(displayWall->size);
-        displayWall->fb = ospNewFrameBuffer(displayWall->size,
+        displayWall->fb = ospNewFrameBuffer((const osp::vec2i&)displayWall->size,
                                             OSP_RGBA_NONE,OSP_FB_COLOR|OSP_FB_DEPTH|OSP_FB_ACCUM);
         ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
         if (displayWall->po == NULL) {
@@ -285,12 +285,12 @@ namespace ospray {
       if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
         vec2f normpos = vec2f(pos.x / (float)windowSize.x, 1.0f - pos.y / (float)windowSize.y);
         OSPPickResult pick;
-        ospPick(&pick, ospRenderer, normpos);
+        ospPick(&pick, ospRenderer, (const osp::vec2f&)normpos);
         if(pick.hit) {
-          vec3f delta = pick.position - viewPort.at;
+          vec3f delta = (ospray::vec3f&)pick.position - viewPort.at;
           vec3f right = cross(normalize(viewPort.at - viewPort.from), viewPort.up);
           vec3f offset = dot(delta, right) * right - dot(delta, viewPort.up) * viewPort.up;
-          viewPort.at = pick.position;
+          viewPort.at = (ospray::vec3f&)pick.position;
           viewPort.modified = true;
           computeFrame();
           forceRedraw();
@@ -342,9 +342,10 @@ namespace ospray {
           once = false;
         }
         Assert2(camera,"ospray camera is null");
-        ospSetVec3f(camera,"pos",viewPort.from);
-        ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
-        ospSetVec3f(camera,"up",viewPort.up);
+        ospSetVec3f(camera,"pos",(osp::vec3f&)viewPort.from);
+        vec3f dir = viewPort.at-viewPort.from;
+        ospSetVec3f(camera,"dir",(osp::vec3f&)dir);
+        ospSetVec3f(camera,"up",(osp::vec3f&)viewPort.up);
         ospSetf(camera,"aspect",viewPort.aspect);
 //        ospSetf(camera,"apertureRadius", 0.01);
 //        ospSetf(camera,"focusDistance", viewPort."focusDistance");
@@ -363,7 +364,8 @@ namespace ospray {
         for (int i=0;i<numAccumsFrameInFileOutput;i++) {
           ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
           ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
-          std::cout << "#ospModelViewer: Saved rendered image (w/ " << i << " accums) in " << outFileName << std::endl;
+          std::cout << "#ospModelViewer: Saved rendered image (w/ "
+                    << i << " accums) in " << outFileName << std::endl;
           writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
           ospUnmapFrameBuffer(ucharFB,fb);
         }
@@ -824,7 +826,7 @@ namespace ospray {
     if (doesInstancing) {
       for (int i=0;i<msgModel->instance.size();i++) {
         OSPGeometry inst = ospNewInstance(instanceModels[msgModel->instance[i].meshID],
-                                          msgModel->instance[i].xfm);
+                                          (const osp::affine3f&) msgModel->instance[i].xfm);
         msgModel->instance[i].ospGeometry = inst;
         ospAddGeometry(ospModel,inst);
       }
