@@ -155,19 +155,16 @@ namespace ospray {
     std::unique_lock<std::mutex> lock(mutex);
     while (1) {
 
-      // allJobsCompletedCond.wait(lock, [](Task *task){return task->status == Task::COMPLETED; });
       tasksAvailable.wait(lock, [&]() {
-          return this->activeListFirst == NULL && this->running; 
+          return this->activeListFirst != NULL || !this->running; 
         });
-      // while (activeListFirst == NULL && running) {
-      //   tasksAvailable.wait(mutex);
-      // }
 
       if (!running) {
         return NULL;
       }
 
       Task *const front = activeListFirst;
+      PRINT(front);
       if (front->numJobsStarted >= front->numJobsInTask) {
         if (activeListFirst == activeListLast) {
           activeListFirst = activeListLast = NULL;
