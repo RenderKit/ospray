@@ -18,29 +18,31 @@
 
 #include "BSDF.ih"
 
-struct Dielectric
+struct ThinDielectric
 {
   uniform BSDF base;
-  float eta;
+
+  uniform float eta;       /*! relative refraction index etai/etat of both media */
+  vec3f transmission;      /*! volumetric transmission coefficient */
+  uniform float thickness; /*! thickness of the medium */
 };
 
-inline vec3f Dielectric_eval(const uniform BSDF* uniform base,
-                             const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+inline vec3f ThinDielectric_eval(const uniform BSDF* uniform base,
+                                 const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
-inline vec3f Dielectric_sample(const uniform BSDF* uniform base,
-                               const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
-                               const vec2f& s, float ss)
+inline vec3f ThinDielectric_sample(const uniform BSDF* uniform base,
+                                   const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                   const vec2f& s, float ss)
 {
-  const varying Dielectric* uniform self = (const varying Dielectric* uniform)base;
+  const varying ThinDielectric* uniform self = (const varying ThinDielectric* uniform)base;
 
   float cosThetaO = max(dot(wo, getN(base)), 0.0f);
 
   // Fresnel term
-  float cosThetaT; // positive
-  float F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+  float F = fresnelDielectric(cosThetaO, self->eta);
 
   // Sample the reflection or the transmission
   if (ss <= F)
@@ -54,26 +56,29 @@ inline vec3f Dielectric_sample(const uniform BSDF* uniform base,
   else
   {
     // Transmission
-    wi = refract(wo, getN(base), cosThetaO, cosThetaT, self->eta);
+    wi = neg(wo);
     type = BSDF_SPECULAR_TRANSMISSION;
     pdf = 1.0f-F;
-    return make_vec3f(sqrf(rcp(self->eta))); // solid angle compression
+    float alpha = self->thickness * rcp(cosThetaO);
+    return powf(self->transmission, alpha);
   }
 }
 
-inline void Dielectric_Constructor(varying Dielectric* uniform self, const varying linear3f* uniform frame,
-                                   float eta)
+inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self, const varying linear3f* uniform frame,
+                                       uniform float eta, vec3f transmission, uniform float thickness)
 {
   BSDF_Constructor(&self->base, BSDF_SPECULAR,
-                   Dielectric_eval, Dielectric_sample,
+                   ThinDielectric_eval, ThinDielectric_sample,
                    frame);
   self->eta = eta;
+  self->transmission = transmission;
+  self->thickness = thickness;
 }
 
-inline uniform BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                               float eta)
+inline uniform BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                                   uniform float eta, vec3f transmission, uniform float thickness)
 {
-  varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));
-  Dielectric_Constructor(self, frame, eta);
+  varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));
+  ThinDielectric_Constructor(self, frame, eta, transmission, thickness);
   return &self->base;
 }

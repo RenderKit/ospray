@@ -19,7 +19,7 @@
 
 struct Glass
 {
-  PathTraceMaterial base;
+  uniform PathTraceMaterial base;
 
   Medium mediumInside;
   Medium mediumOutside;
