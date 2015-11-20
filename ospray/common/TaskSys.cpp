@@ -21,7 +21,8 @@
 
 // embree
 #include "common/sys/sysinfo.h"
-#include "common/sys/thread.h"
+// c++11
+#include <thread>
 
 namespace ospray {
   using std::cout;
@@ -33,7 +34,6 @@ namespace ospray {
 
     void init(size_t maxNumRenderTasks);
     static TaskSys global;
-    static void *threadStub(void *);
     inline Task *getNextActiveTask();
 
     //! queue of tasks that have ALREADY been acitvated, and that are ready to run
@@ -45,7 +45,7 @@ namespace ospray {
 
     void threadFunction();
 
-    std::vector<embree::thread_t> threads;
+    std::vector<std::thread> threads;
 
     TaskSys()
       : activeListFirst(NULL), activeListLast(NULL),
@@ -246,14 +246,13 @@ namespace ospray {
     __memory_barrier();
     tasksAvailable.notify_all(); //broadcast();
     for (int i = 0; i < threads.size(); ++i) {
-      embree::join(threads[i]);
+      threads[i].join();
     }
   }
 
-  void *TaskSys::threadStub(void *)
+  void threadStub()
   {
     TaskSys::global.threadFunction();
-    return NULL;
   }
 
   void TaskSys::init(size_t numThreads)
@@ -262,6 +261,8 @@ namespace ospray {
       throw std::runtime_error("#osp: task system initialized twice!");
     initialized = true;
     running = true;
+
+    PING;
 
     if (numThreads != 0) {
 #if defined(__MIC__)
@@ -272,15 +273,17 @@ namespace ospray {
     }
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {
-#if 1
-      // embree will not assign affinity
-      int coreID = -1;
-#else
-      // embree will assign affinity in this case:
-      int coreID = t;
-#endif
-      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,
-                                             (void*)-1,4*1024*1024,coreID));
+// #if 1
+//       // embree will not assign affinity
+//       int coreID = -1;
+// #else
+//       // embree will assign affinity in this case:
+//       int coreID = t;
+// #endif
+      PING;
+      threads.push_back(std::thread(threadStub));
+                        // embree::createThread((embree::thread_func)TaskSys::threadStub,
+                        //                      (void*)-1,4*1024*1024,coreID));
     }
     numActiveThreads = numThreads-1;
 
