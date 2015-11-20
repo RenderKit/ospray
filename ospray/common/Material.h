@@ -32,6 +32,24 @@ namespace ospray {
     //! \brief commit the material's parameters
     virtual void commit() {}
 
+    /*! \brief helper function to combine multiple texture transformation parameters
+   
+       The following parameters (prefixed with "texture_name.") are combined
+       into one transformation matrix:
+
+       name         type   description
+       transform    vec4f  interpreted as 2x2 matrix (linear part), column-major
+       rotation     float  angle in degree, counterclock-wise, around center (0.5, 0.5)
+       scale        vec2f  enlarge texture, relative to center (0.5, 0.5)
+       translation  vec2f  move texture in positive direction (right/up)
+
+       The transformations are applied in the given order. Rotation, scale and
+       translation are interpreted "texture centric", i.e. their effect seen by
+       an user are relative to the texture (although the transformations are
+       applied to the texture coordinates).
+     */
+    affine2f getTextureTransform(const char* texture_name);
+
     /*! \brief creates an abstract material class of given type 
 
       The respective material type must be a registered material type

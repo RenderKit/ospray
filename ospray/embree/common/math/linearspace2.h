@@ -83,6 +83,31 @@ namespace embree
                           s,  c);
     }
 
+    /*! return closest orthogonal matrix (i.e. a general rotation including reflection) */
+    LinearSpace2 orthogonal() const {
+      LinearSpace2 m = *this;
+
+      // mirrored?
+      Scalar mirror(one);
+      if (m.det() < Scalar(zero)) {
+        m.vx = -m.vx;
+        mirror = -mirror;
+      }
+
+      // rotation
+      for (int i = 0; i < 99; i++) {
+        const LinearSpace2 m_next = 0.5 * (m + m.transposed().inverse());
+        const LinearSpace2 d = m_next - m;
+        m = m_next;
+        // norm^2 of difference small enough?
+        if (max(dot(d.vx, d.vx), dot(d.vy, d.vy)) < 1e-8)
+          break;
+      }
+
+      // rotation * mirror_x
+      return LinearSpace2(mirror*m.vx, m.vy);
+    }
+
   public:
 
     /*! the column vectors of the matrix */
