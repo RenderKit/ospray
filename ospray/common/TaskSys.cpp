@@ -164,7 +164,6 @@ namespace ospray {
       }
 
       Task *const front = activeListFirst;
-      PRINT(front);
       if (front->numJobsStarted >= front->numJobsInTask) {
         if (activeListFirst == activeListLast) {
           activeListFirst = activeListLast = NULL;
