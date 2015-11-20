@@ -270,19 +270,17 @@ namespace ospray {
       numThreads = std::min(numThreads,(size_t)embree::getNumberOfLogicalThreads());
 #endif
     }
-    PRINT(numThreads);
-
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {
-      // embree::createThread((embree::thread_func)TaskSys::threadStub,NULL,4*1024*1024,(t+1)%numThreads);
 #if 1
       // embree will not assign affinity
-      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,-1));
+      int coreID = -1;
 #else
       // embree will assign affinity in this case:
-      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)-1,4*1024*1024,t));
-      embree::createThread((embree::thread_func)TaskSys::threadStub,(void*)t,4*1024*1024,t);
+      int coreID = t;
 #endif
+      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,
+                                             (void*)-1,4*1024*1024,coreID));
     }
     numActiveThreads = numThreads-1;
 
