@@ -76,6 +76,13 @@ namespace embree
                           0  , s.y);
     }
 
+    /*! return matrix for rotation */
+    static __forceinline LinearSpace2 rotate(const Scalar& r) {
+      Scalar s = sin(r), c = cos(r);
+      return LinearSpace2(c, -s,
+                          s,  c);
+    }
+
   public:
 
     /*! the column vectors of the matrix */
