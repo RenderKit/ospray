@@ -131,16 +131,6 @@ namespace ospray {
     if (status != COMPLETED) {
       std::unique_lock<std::mutex> lock(mutex);
       allJobsCompletedCond.wait(lock, [&]{return this->status == Task::COMPLETED; });
-
-
-      // allJobsCompletedCond.wait(mutex);
-      //   while (1) {
-      //     const Status status = this->status;
-      //     if (status == Task::COMPLETED)
-      //       break;
-      //     allJobsCompletedCond.wait(mutex);
-      //   }
-      // }
     }
   }
 
