@@ -29,3 +29,11 @@ ADD_LIBRARY(lexers${EXT} STATIC
 
 TARGET_LINK_LIBRARIES(lexers${EXT} sys${EXT})
 SET_PROPERTY(TARGET lexers${EXT} PROPERTY FOLDER common)
+
+INSTALL(TARGETS lexers${EXT}
+  EXPORT lexers${EXT}Export
+  DESTINATION lib
+)
+INSTALL(EXPORT lexers${EXT}Export
+  DESTINATION ${CMAKE_DIR} FILE liblexers${EXT}Targets.cmake
+)

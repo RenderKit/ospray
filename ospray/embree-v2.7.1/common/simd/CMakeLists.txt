@@ -17,6 +17,13 @@
 IF (__XEON__)
   ADD_LIBRARY(simd STATIC sse.cpp)
   SET_PROPERTY(TARGET simd PROPERTY FOLDER common)
+  INSTALL(TARGETS simd
+    EXPORT simdExport
+    DESTINATION lib
+  )
+  INSTALL(EXPORT simdExport
+    DESTINATION ${CMAKE_DIR} FILE libsimdTargets.cmake
+  )
 ELSE ()
   INCLUDE(icc_xeonphi)
   ADD_LIBRARY(simd_xeonphi STATIC vboolf16_avx512.cpp)
