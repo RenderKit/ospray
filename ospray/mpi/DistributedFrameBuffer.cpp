@@ -21,6 +21,11 @@
 // embree
 #include "common/sys/thread.h"
 
+#ifdef _WIN32
+#  define NOMINMAX 
+#  include <windows.h> // for Sleep
+#endif
+
 #define DBG(a) /* ignore */
 
 namespace ospray {
@@ -112,7 +117,7 @@ namespace ospray {
     int size = bufferedTile.size();
     
     if (missingInCurrentGeneration == 0) {
-      Tile *tileArray[bufferedTile.size()];
+      Tile **tileArray = (Tile**)alloca(sizeof(Tile*)*bufferedTile.size());
       for (int i=0;i<bufferedTile.size();i++)
         tileArray[i] = &bufferedTile[i]->tile;
       ispc::DFB_sortAndBlendFragments((ispc::VaryingTile **)tileArray,bufferedTile.size());
@@ -284,7 +289,11 @@ namespace ospray {
     return;
     while (1) {
       while (dfb->msgTaskQueue.queue.empty())
+#ifdef _WIN32
+        Sleep(1); // 10x longer...
+#else
         usleep(100);
+#endif
       dfb->msgTaskQueue.waitAll();
     }
   }
