@@ -43,20 +43,6 @@ const uniform BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* unifo
     return MicrofacetConductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k, rcp(self->roughness));
 }
 
-/*
-void Metal__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,
-                  const Medium&               currentMedium,
-                  const DifferentialGeometry& dg,
-                  uniform CompositedBSDF&     brdfs,
-                  vec3f& Ns)
-{
-  const uniform Metal* uniform this = (const uniform Metal* uniform)_this;
-  if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->conductor.base);
-  else                          CompositedBSDF_add(&brdfs,&this->microfacetMetal.base);
-}
-*/
-
 void Metal_Constructor(uniform Metal* uniform self,
                        const uniform vec3f& reflectance,
                        const uniform vec3f& eta,
@@ -68,13 +54,6 @@ void Metal_Constructor(uniform Metal* uniform self,
   self->eta = eta;
   self->k = k;
   self->roughness = roughness;
-  /*
-  Conductor_Constructor(&this->conductor,reflectance, eta, k);
-  MicrofacetMetal__Constructor(&this->microfacetMetal,
-                               reflectance,
-                               make_FresnelConductor(eta,k),
-                               make_PowerCosineDistribution(rcp(roughness)));
-  */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
