@@ -64,9 +64,8 @@ namespace ospray {
 #endif
 
   std::string getPidString() {
-    pid_t pid = getpid();
     char s[100];
-    sprintf(s,"(pid %i)",pid);
+    sprintf(s, "(pid %i)", getpid());
     return s;
   }
 
