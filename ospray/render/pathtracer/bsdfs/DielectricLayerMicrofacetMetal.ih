@@ -17,7 +17,7 @@
 #pragma once
 
 #include "BSDF.ih"
-#include "MicrofacetMetal.ih"
+#include "MicrofacetConductor.ih"
 
 struct DielectricLayerMicrofacetMetal
 {
@@ -25,7 +25,7 @@ struct DielectricLayerMicrofacetMetal
   vec3f T;             //!< Transmission coefficient of dielectricum
   float etait;         //!< Relative refraction index etai/etat of both media
   float etati;         //!< relative refraction index etat/etai of both media
-  MicrofacetMetal ground;   //!< the BSDF of the ground layer
+  MicrofacetConductor ground;   //!< the BSDF of the ground layer
 };
 
 inline vec3f DielectricLayerMicrofacetMetal__eval(const uniform BSDF* uniform _this,
@@ -87,7 +87,7 @@ inline void DielectricLayerMicrofacetMetal__Constructor(uniform DielectricLayerM
                                                    const uniform vec3f T,
                                                    const uniform float etai,
                                                    const uniform float etat,
-                                                   const uniform MicrofacetMetal ground)
+                                                   const uniform MicrofacetConductor ground)
 {
   //BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
   //                  DielectricLayerMicrofacetMetal__eval,DielectricLayerMicrofacetMetal__sample);
@@ -100,7 +100,7 @@ inline void DielectricLayerMicrofacetMetal__Constructor(uniform DielectricLayerM
 inline uniform DielectricLayerMicrofacetMetal make_DielectricLayerMicrofacetMetal(const uniform vec3f T,
                                                                                   const uniform float etai,
                                                                                   const uniform float etat,
-                                                                                  const uniform MicrofacetMetal ground)
+                                                                                  const uniform MicrofacetConductor ground)
 {
   uniform DielectricLayerMicrofacetMetal m;
   DielectricLayerMicrofacetMetal__Constructor(&m,T,etai,etat,ground);

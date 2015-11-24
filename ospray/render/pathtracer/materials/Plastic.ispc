@@ -16,7 +16,7 @@
 
 #include "Material.ih"
 #include "../bsdfs/DielectricLayerLambert.ih"
-#include "../bsdfs/DielectricReflection.ih"
+//#include "../bsdfs/DielectricReflection.ih"
 #include "../bsdfs/MicrofacetPlastic.ih"
 
 struct Plastic
@@ -24,7 +24,7 @@ struct Plastic
   PathTraceMaterial base;
   float roughness;
   DielectricLayerLambert substrate;
-  DielectricReflection reflection;
+  //DielectricReflection reflection;
   MicrofacetPlastic microfacet;
 };
 
@@ -60,11 +60,13 @@ void Plastic__Constructor(uniform Plastic *uniform this,
                                          make_Lambert(pigmentColor));
   */
 
-  DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
+  //DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
 
+  /*
   MicrofacetPlastic__Constructor(&this->microfacet,make_vec3f(1.0f),
                                  make_FresnelDielectric(1.0f,eta),
                                  make_PowerCosineDistribution(rcp(roughness)));
+  */
 }
 
 ///////////////////////////////////////////////////////////////////////////////

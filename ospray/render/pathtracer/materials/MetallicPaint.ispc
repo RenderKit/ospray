@@ -58,11 +58,13 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
 
   uniform vec3f etaAluminium = make_vec3f(0.62f,0.62f,0.62f);
   uniform vec3f kAluminium   = make_vec3f(4.8f,4.8f,4.8f);
+  /*
   DielectricLayerMicrofacetMetal__Constructor(&this->glitter,
                                               make_vec3f(1.f), 1.f, eta,
                                               make_MicrofacetMetal(glitterColor,
                                                                    make_FresnelConductor(etaAluminium,kAluminium),
                                                                    make_PowerCosineDistribution(rcp(glitterSpread))));
+  */                                                                   
   this->hasGlitter = (glitterSpread != 0.0f & ne(glitterColor,make_vec3f(0.0f)));
 }
 

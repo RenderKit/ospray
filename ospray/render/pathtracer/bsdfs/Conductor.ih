@@ -21,32 +21,43 @@
 struct Conductor
 {
   uniform BSDF base;
-  vec3f R;          //!< Reflectivity coefficient
-  vec3f eta;        //!< Real part of refraction index
-  vec3f k;          //!< Imaginary part of refraction index
+  vec3f R;           //!< reflectivity coefficient
+  vec3f eta;         //!< real part of refraction index
+  vec3f k;           //!< imaginary part of refraction index
 };
 
-vec3f Conductor__eval(const uniform BSDF* uniform _this,
-                      const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) {
+inline vec3f Conductor_eval(const uniform BSDF* uniform base,
+                            const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+{
   return make_vec3f(0.0f);
 }
 
-vec3f Conductor__sample(const uniform BSDF* uniform _this,
-                        const vec3f &wo,
-                        const DifferentialGeometry &dg,
-                        Sample3f &wi,
-                        const vec2f &s)
+inline vec3f Conductor_sample(const uniform BSDF* uniform base,
+                              const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                              const vec2f& s, float ss)
 {
-  const uniform Conductor* uniform this = (const uniform Conductor* uniform) _this;
-  //wi = reflect(wo,dg.Ns);
-  return mul(this->R, fresnelConductor(dot(wo,dg.Ns),this->eta,this->k));
+  const uniform Conductor* uniform self = (const uniform Conductor* uniform)base;
+  wi = reflect(wo, getN(base));
+  pdf = 1.0f;
+  type = BSDF_SPECULAR_REFLECTION;
+  return mul(self->R, fresnelConductor(dot(wo, getN(base)), self->eta, self->k));
 }
 
-inline void Conductor__Constructor(uniform Conductor* uniform this,
-                                   const uniform vec3f R, const uniform vec3f eta, const uniform vec3f k)
+inline void Conductor_Constructor(uniform Conductor* uniform self, const varying linear3f* uniform frame,
+                                  uniform vec3f R, uniform vec3f eta, uniform vec3f k)
 {
-  //BSDF_Constructor(&this->base,SPECULAR_REFLECTION,Conductor__eval,Conductor__sample);
-  this->R = R;
-  this->eta = eta;
-  this->k = k;
+  BSDF_Constructor(&self->base, BSDF_SPECULAR_REFLECTION,
+                   Conductor_eval, Conductor_sample,
+                   frame);
+  self->R = R;
+  self->eta = eta;
+  self->k = k;
+}
+
+inline uniform BSDF* uniform Conductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                              uniform vec3f R, uniform vec3f eta, uniform vec3f k)
+{
+  uniform Conductor* uniform self = (uniform Conductor* uniform)ShadingContext_alloc(ctx, sizeof(Conductor));
+  Conductor_Constructor(self, frame, R, eta, k);
+  return &self->base;
 }

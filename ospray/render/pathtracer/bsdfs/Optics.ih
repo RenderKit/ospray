@@ -106,21 +106,24 @@ inline vec3f fresnelConductor(float cosI, vec3f eta, vec3f k)
 }
 
 // =======================================================
-struct FresnelConductor {
-  vec3f eta;  //!< Real part of refraction index
-  vec3f k;    //!< Imaginary part of refraction index
+struct FresnelConductor
+{
+  vec3f eta;  //!< real part of refraction index
+  vec3f k;    //!< imaginary part of refraction index
 };
 
-inline vec3f eval(uniform const FresnelConductor &self,
-                  const float cosTheta)
+inline vec3f eval(const uniform FresnelConductor& self,
+                  float cosTheta)
 {
-  return fresnelConductor(cosTheta,self.eta,self.k);
+  return fresnelConductor(cosTheta, self.eta, self.k);
 }
 
-inline uniform FresnelConductor make_FresnelConductor(const uniform vec3f eta,
-                                                      const uniform vec3f k)
+inline uniform FresnelConductor make_FresnelConductor(uniform vec3f eta, uniform vec3f k)
 {
-  uniform FresnelConductor m; m.eta = eta; m.k = k; return m;
+  uniform FresnelConductor m;
+  m.eta = eta;
+  m.k = k;
+  return m;
 }
 
 // =======================================================
@@ -155,30 +158,26 @@ struct PowerCosineDistribution
   float exp;
 };
 
-inline float eval(const uniform PowerCosineDistribution &self,
-                  const float cosThetaH)
+inline float eval(const PowerCosineDistribution& self,
+                  float cosThetaH, float& pdf)
 {
-  return (self.exp+2) * (1.0f/(2.0f*(M_PI))) * pow(abs(cosThetaH), self.exp);
+  pdf = powerCosineSampleHemispherePDF(cosThetaH, self.exp);
+  return (self.exp+2) * one_over_two_pi * pow(abs(cosThetaH), self.exp);
   // TODO: check with powerCosineSampleHemispherePDF
 }
 
 /*! Samples the power cosine distribution. */
-inline void sample(const uniform PowerCosineDistribution &self,
-                   const vec3f wo,
-                   const DifferentialGeometry dg,
-                   Sample3f &wi,
-                   const vec2f s)
+inline vec3f sample(const PowerCosineDistribution& self,
+                    float& pdf, const vec2f& s)
 {
-  const vec3f wh_local = powerCosineSampleHemisphere(self.exp, s);
-  const float pdf = powerCosineSampleHemispherePDF(wh_local, self.exp);
-  const vec3f wh = frame(dg.Ns) * wh_local;
-  vec3f r = reflect(wo, wh);
-  wi = make_Sample3f(r, pdf/(4.0f*abs(dot(wo, wh))));
+  const vec3f wh = powerCosineSampleHemisphere(self.exp, s);
+  pdf = powerCosineSampleHemispherePDF(wh, self.exp);
+  return wh;
 }
 
-inline uniform PowerCosineDistribution make_PowerCosineDistribution(const uniform float _exp)
+inline PowerCosineDistribution make_PowerCosineDistribution(float _exp)
 {
-  uniform PowerCosineDistribution m;
+  PowerCosineDistribution m;
   m.exp = _exp;
   return m;
 }

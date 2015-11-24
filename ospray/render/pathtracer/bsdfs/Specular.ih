@@ -56,8 +56,8 @@ inline vec3f Specular_sample(const uniform BSDF* uniform base,
 
 inline void Specular_Constructor(varying Specular* uniform self,
                                  const varying linear3f* uniform frame,
-                                 const varying vec3f R,
-                                 const varying float exp_)
+                                 vec3f R,
+                                 float exp_)
 {
   BSDF_Constructor(&self->base, BSDF_GLOSSY_REFLECTION,
                    Specular_eval, Specular_sample, frame);
@@ -67,8 +67,8 @@ inline void Specular_Constructor(varying Specular* uniform self,
 
 inline uniform BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx,
                                              const varying linear3f* uniform frame,
-                                             const varying vec3f R,
-                                             const varying float exp_)
+                                             vec3f R,
+                                             float exp_)
 {
   varying Specular* uniform self = (varying Specular* uniform)ShadingContext_alloc(ctx, sizeof(Specular));
   Specular_Constructor(self, frame, R, exp_);

@@ -37,7 +37,8 @@ inline vec3f MicrofacetPlastic__eval(const uniform BSDF* uniform _this,
   const float cosThetaH = dot(wh, dg.Ns);
   const float cosTheta = dot(wi, wh); // = dot(wo, wh);
   const vec3f F = eval(this->fresnel,cosTheta);
-  const float D = eval(this->distribution,cosThetaH);
+  //const float D = eval(this->distribution,cosThetaH);
+  float D;
   const float G = min(1.0f, min(2.0f * cosThetaH * cosThetaO / cosTheta,
                                 2.0f * cosThetaH * cosThetaI / cosTheta));
   return mul(mul(this->R, F), D * G * rcp(4.0f*cosThetaO));
@@ -51,7 +52,7 @@ inline vec3f MicrofacetPlastic__sample(const uniform BSDF* uniform _this,
 {
   const uniform MicrofacetPlastic* uniform this = (const uniform MicrofacetPlastic* uniform) _this;
   if (dot(wo,dg.Ns) <= 0.0f) return make_vec3f(0.f);
-  sample(this->distribution,wo,dg,wi,s);
+  //sample(this->distribution,wo,dg,wi,s);
   if (dot(wi.v,dg.Ns) <= 0.0f) return make_vec3f(0.f);
   return MicrofacetPlastic__eval(_this,wo,dg,wi.v);
 }

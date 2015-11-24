@@ -16,18 +16,32 @@
 
 #include "Material.ih"
 #include "../bsdfs/Conductor.ih"
-#include "../bsdfs/MicrofacetMetal.ih"
+#include "../bsdfs/MicrofacetConductor.ih"
 
 struct Metal
 {
   PathTraceMaterial base;
+  vec3f reflectance;
+  vec3f eta;
+  vec3f k;
   float roughness;
-  Conductor conductor;
-  MicrofacetMetal microfacetMetal;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
+
+const uniform BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* uniform material,
+                                          uniform ShadingContext* uniform ctx,
+                                          const DifferentialGeometry& dg,
+                                          const Ray& ray,
+                                          const Medium& currentMedium)
+{
+  const uniform Metal* uniform self = (const uniform Metal* uniform)material;
+  if (self->roughness == 0.0f)
+    return Conductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k);
+  else
+    return MicrofacetConductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k, rcp(self->roughness));
+}
 
 /*
 void Metal__shade(const uniform PathTraceMaterial *uniform _this,
@@ -43,19 +57,24 @@ void Metal__shade(const uniform PathTraceMaterial *uniform _this,
 }
 */
 
-void Metal__Constructor(uniform Metal *uniform this,
-                        const uniform vec3f& reflectance,
-                        const uniform vec3f& eta,
-                        const uniform vec3f& k,
-                        const uniform float roughness)
+void Metal_Constructor(uniform Metal* uniform self,
+                       const uniform vec3f& reflectance,
+                       const uniform vec3f& eta,
+                       const uniform vec3f& k,
+                       uniform float roughness)
 {
-  //PathTraceMaterial_Constructor(&this->base, Metal__shade, NULL);
-  this->roughness = roughness;
-  Conductor__Constructor(&this->conductor,reflectance, eta, k);
+  PathTraceMaterial_Constructor(&self->base, Metal_getBSDF, NULL, NULL);
+  self->reflectance = reflectance;
+  self->eta = eta;
+  self->k = k;
+  self->roughness = roughness;
+  /*
+  Conductor_Constructor(&this->conductor,reflectance, eta, k);
   MicrofacetMetal__Constructor(&this->microfacetMetal,
                                reflectance,
                                make_FresnelConductor(eta,k),
                                make_PowerCosineDistribution(rcp(roughness)));
+  */
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -64,9 +83,9 @@ void Metal__Constructor(uniform Metal *uniform this,
 export void* uniform PathTracer_Metal_create(const uniform vec3f& reflectance,
                                              const uniform vec3f& eta,
                                              const uniform vec3f& k,
-                                             const uniform float roughness)
+                                             uniform float roughness)
 {
-  uniform Metal *uniform this = uniform new uniform Metal;
-  Metal__Constructor(this,reflectance,eta,k,roughness);
-  return this;
+  uniform Metal* uniform self = uniform new uniform Metal;
+  Metal_Constructor(self, reflectance, eta, k, roughness);
+  return self;
 }

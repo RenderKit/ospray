@@ -32,7 +32,7 @@ const uniform BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* unifo
                                           const Ray& ray,
                                           const Medium& currentMedium)
 {
-  uniform const Matte* uniform self = (uniform const Matte* uniform)material;
+  const uniform Matte* uniform self = (const uniform Matte* uniform)material;
   vec3f R = self->reflectance;
   return Lambert_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), R);
 }
@@ -49,7 +49,7 @@ inline void Matte_Constructor(uniform Matte* uniform self,
 
 export void* uniform PathTracer_Matte_create(const uniform vec3f& reflectance)
 {
-  uniform Matte *uniform self = uniform new uniform Matte;
+  uniform Matte* uniform self = uniform new uniform Matte;
   Matte_Constructor(self, reflectance);
   return self;
 }
