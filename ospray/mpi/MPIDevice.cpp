@@ -610,7 +610,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC4F);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -811,7 +811,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_FLOAT4);
       cmd.flush();

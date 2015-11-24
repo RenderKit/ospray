@@ -701,7 +701,7 @@ namespace ospray {
           // ==================================================================
         case ospray::CMD_SET_VEC4F: {
           // ==================================================================
-          const mpi::Handle handle = cmd.get_handle();
+          const ObjectHandle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const vec4f val = cmd.get_vec4f();
           ManagedObject *obj = handle.lookup();
