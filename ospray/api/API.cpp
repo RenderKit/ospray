@@ -25,6 +25,10 @@
 #include "ospray/common/OSPCommon.h"
 #include "ospray/common/Core.h"
 
+#ifdef _WIN32
+#  include <process.h> // for getpid
+#endif
+
 #if 1
 # define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
 #else
@@ -62,9 +66,8 @@ namespace ospray {
 } // ::ospray
 
 std::string getPidString() {
-  pid_t pid = getpid();
   char s[100];
-  sprintf(s,"(pid %i)",pid);
+  sprintf(s, "(pid %i)", getpid());
   return s;
 }
 
