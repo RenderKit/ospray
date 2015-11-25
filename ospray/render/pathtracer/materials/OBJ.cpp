@@ -47,6 +47,10 @@ namespace ospray {
           const vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));
           const vec3f Ks = getParam3f("Ks", getParam3f("ks", vec3f(0.f)));
           const float Ns = getParam1f("Ns", getParam1f("ns", 10.f));
+          const vec3f Tf = getParam3f("Tf", getParam3f("tf", vec3f(0.0f)));
+
+          if (reduce_max(Kd + Ks + Tf) > 1.0)
+            std::cout << "#osp:PT: warning: OBJ material produces energy (Kd + Ks + Tf must be <= 1)" << std::endl;
 
           ispc::PathTracer_OBJ_set(ispcEquivalent,
              map_d ? map_d->getIE() : NULL, (const ispc::AffineSpace2f&)xform_d,
@@ -57,6 +61,7 @@ namespace ospray {
              (const ispc::vec3f&)Ks,
              map_Ns ? map_Ns->getIE() : NULL, (const ispc::AffineSpace2f&)xform_Ns,
              Ns,
+             (const ispc::vec3f&)Tf,
              map_Bump ? map_Bump->getIE() : NULL, (const ispc::AffineSpace2f&)xform_Bump,
              (const ispc::LinearSpace2f&)rot_Bump);
       }
