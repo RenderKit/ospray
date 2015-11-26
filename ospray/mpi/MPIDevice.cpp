@@ -457,9 +457,9 @@ namespace ospray {
       ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_DATA);
       cmd.send(handle);
-      cmd.send((size_t)nitems);
+      cmd.send(nitems);
       cmd.send((int32)format);
-      cmd.send(flags);
+      cmd.send((int32)flags);
       size_t size = init?ospray::sizeOf(format)*nitems:0;
       cmd.send(size);
       if (init) {
