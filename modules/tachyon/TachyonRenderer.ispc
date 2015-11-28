@@ -224,6 +224,7 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
 }
 
 void TachyonRenderer_renderSample(uniform Renderer *uniform _renderer,
+                                  void *uniform perFrameData,
                                   varying ScreenSample &sample)
 {
   uniform TachyonRenderer *uniform renderer = (uniform TachyonRenderer *uniform)_renderer;

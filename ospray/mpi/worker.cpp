@@ -699,6 +699,18 @@ namespace ospray {
         } break;
 
           // ==================================================================
+        case ospray::CMD_SET_VEC4F: {
+          // ==================================================================
+          const ObjectHandle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const vec4f val = cmd.get_vec4f();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
+
+          // ==================================================================
         case ospray::CMD_SET_VEC2F: {
           // ==================================================================
           const ObjectHandle handle = cmd.get_handle();

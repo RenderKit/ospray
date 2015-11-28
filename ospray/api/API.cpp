@@ -25,6 +25,10 @@
 #include "ospray/common/OSPCommon.h"
 #include "ospray/common/Core.h"
 
+#ifdef _WIN32
+#  include <process.h> // for getpid
+#endif
+
 #if 1
 # define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
 #else
@@ -44,7 +48,7 @@ namespace ospray {
                                                     const char *fileNameToStorePortIn);
     ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av,
                                                      const char *launchCommand);
-    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
+    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av,
                                                       bool ranksBecomeWorkers);
     ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
     { return createMPI_runOnExistingRanks(ac,av,true); }
@@ -109,7 +113,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-          --i; 
+          --i;
           continue;
         }
 
@@ -123,7 +127,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay's COI support not compiled in");
 #endif
-          --i; 
+          --i;
           continue;
         }
 
@@ -138,7 +142,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-          --i; 
+          --i;
           continue;
         }
 
@@ -155,7 +159,7 @@ namespace ospray {
 #else
           throw std::runtime_error("OSPRay MPI support not compiled in");
 #endif
-          --i; 
+          --i;
           continue;
         }
 
@@ -292,7 +296,7 @@ namespace ospray {
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
 
-  /*! \brief create a new pixelOp of given type 
+  /*! \brief create a new pixelOp of given type
 
     return 'NULL' if that type is not known */
   extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
@@ -321,10 +325,10 @@ namespace ospray {
 
     Assert2(_type,"invalid render type identifier in ospNewRenderer");
     LOG("ospNewRenderer(" << _type << ")");
-   
+
     std::string type(_type);
     for (size_t i = 0; i < type.size(); i++) {
-      if (type[i] == '-' || type[i] == ':') 
+      if (type[i] == '-' || type[i] == ':')
         type[i] = '_';
     }
     OSPRenderer renderer = ospray::api::Device::current->newRenderer(type.c_str());
@@ -510,9 +514,9 @@ namespace ospray {
   }
 
   /*! Copy data into the given volume. */
-  extern "C" int ospSetRegion(OSPVolume object, void *source, 
-                              const osp::vec3i &index, 
-                              const osp::vec3i &count) 
+  extern "C" int ospSetRegion(OSPVolume object, void *source,
+                              const osp::vec3i &index,
+                              const osp::vec3i &count)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->setRegion(object, source, (const vec3i&)index, (const vec3i&)count));
@@ -636,28 +640,28 @@ namespace ospray {
   }
 
   //! Get the named scalar floating point value associated with an object.
-  extern "C" int ospGetf(OSPObject object, const char *name, float *value) 
+  extern "C" int ospGetf(OSPObject object, const char *name, float *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getf(object, name, value));
   }
 
   //! Get the named scalar integer associated with an object.
-  extern "C" int ospGeti(OSPObject object, const char *name, int *value) 
+  extern "C" int ospGeti(OSPObject object, const char *name, int *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->geti(object, name, value));
   }
 
   //! Get the material associated with a geometry object.
-  extern "C" int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value) 
+  extern "C" int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getMaterial(geometry, value));
   }
 
   //! Get the named object associated with an object.
-  extern "C" int ospGetObject(OSPObject object, const char *name, OSPObject *value) 
+  extern "C" int ospGetObject(OSPObject object, const char *name, OSPObject *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getObject(object, name, value));
@@ -670,35 +674,35 @@ namespace ospray {
   }
 
   //! Get a pointer to a copy of the named character string associated with an object.
-  extern "C" int ospGetString(OSPObject object, const char *name, char **value) 
+  extern "C" int ospGetString(OSPObject object, const char *name, char **value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getString(object, name, value));
   }
 
   //! Get the type of the named parameter or the given object (if 'name' is NULL).
-  extern "C" int ospGetType(OSPObject object, const char *name, OSPDataType *value) 
+  extern "C" int ospGetType(OSPObject object, const char *name, OSPDataType *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getType(object, name, value));
   }
 
   //! Get the named 2-vector floating point value associated with an object.
-  extern "C" int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value) 
+  extern "C" int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getVec2f(object, name, (vec2f *)value));
   }
 
   //! Get the named 3-vector floating point value associated with an object.
-  extern "C" int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value) 
+  extern "C" int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getVec3f(object, name, (vec3f *)value));
   }
 
   //! Get the named 3-vector integer value associated with an object.
-  extern "C" int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value) 
+  extern "C" int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value)
   {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->getVec3i(object, name, (vec3i *)value));
@@ -729,16 +733,15 @@ namespace ospray {
     *result = ospray::api::Device::current->pick(renderer, (const vec2f &)screenPos);
   }
 
-  //! \brief allows for switching the MPI scope from "per rank" to "all ranks" 
+  //! \brief allows for switching the MPI scope from "per rank" to "all ranks"
   extern "C" void ospdApiMode(OSPDApiMode mode)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->apiMode(mode);
   }
 
-
 #ifdef OSPRAY_MPI
-  //! \brief initialize the ospray engine (for use with MPI-parallel app) 
+  //! \brief initialize the ospray engine (for use with MPI-parallel app)
   /*! \detailed Note the application must call this function "INSTEAD OF"
     MPI_Init(), NOT "in addition to" */
   extern "C" void ospdMpiInit(int *ac, char ***av, OSPDRenderMode mode)
@@ -748,7 +751,7 @@ namespace ospray {
     ospray::mpi::initDistributedAPI(ac,av,mode);
   }
 
-  //! the 'lid to the pot' of ospdMpiInit(). 
+  //! the 'lid to the pot' of ospdMpiInit().
   /*! does both an osp shutdown and an mpi shutdown for the mpi group
     created with ospdMpiInit */
   extern "C" void ospdMpiShutdown()
@@ -771,9 +774,9 @@ namespace ospray {
     return res;
   }
 
-  extern "C" void ospSampleVolume(float **results, 
-                                  OSPVolume volume, 
-                                  const osp::vec3f *worldCoordinates, 
+  extern "C" void ospSampleVolume(float **results,
+                                  OSPVolume volume,
+                                  const osp::vec3f *worldCoordinates,
                                   const size_t &count)
   {
     ASSERT_DEVICE();
