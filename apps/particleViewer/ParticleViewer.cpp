@@ -296,18 +296,15 @@ namespace ospray {
       if (particleModel.empty())
         error("no input file specified");
 
-#pragma omp parallel
-      {
-#pragma omp for
-        for (int i=0;i<deferredLoadingListXYZ.size();i++) {
-          embree::FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
-          embree::FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
-          particle::Model *model = deferredLoadingListXYZ[i]->model;
+#pragma omp parallel for
+      for (int i=0;i<deferredLoadingListXYZ.size();i++) {
+        embree::FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
+        embree::FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
+        particle::Model *model = deferredLoadingListXYZ[i]->model;
 
-          if (defFileName.str() != "")
-            model->readAtomTypeDefinitions(defFileName);
-          model->loadXYZ(xyzFileName);
-        }
+        if (defFileName.str() != "")
+          model->readAtomTypeDefinitions(defFileName);
+        model->loadXYZ(xyzFileName);
       }
 
 
