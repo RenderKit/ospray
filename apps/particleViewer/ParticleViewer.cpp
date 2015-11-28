@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-/*! \file apps/particleViewer/viewer.cpp 
+/*! \file apps/particleViewer/viewer.cpp
   \brief A GLUT-based viewer for simple particle data */
 
 // viewer widget
@@ -63,7 +63,7 @@ namespace ospray {
     }
 
     using ospray::glut3D::Glut3DWidget;
-    
+
     /*! mini scene graph viewer widget. \internal Note that all handling
       of camera is almost exactly similar to the code in volView;
       might make sense to move that into a common class! */
@@ -85,10 +85,11 @@ namespace ospray {
         ospCommit(renderer);
       };
 
-      virtual void reshape(const ospray::vec2i &newSize)
+      virtual void reshape(const ospray::vec2i &_newSize)
       {
-        Glut3DWidget::reshape(newSize);
+        Glut3DWidget::reshape(_newSize);
         if (fb) ospFreeFrameBuffer(fb);
+        const auto &newSize = reinterpret_cast<const osp::vec2i&>(_newSize);
         fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
         ospSet1f(fb, "gamma", 2.2f);
         ospCommit(fb);
@@ -132,9 +133,9 @@ namespace ospray {
       virtual void display()
       {
         if (!fb || !renderer) return;
-      
+
         static int frameID = 0;
-      
+
         //{
         // note that the order of 'start' and 'end' here is
         // (intentionally) reversed: due to our asynchrounous rendering
@@ -146,38 +147,41 @@ namespace ospray {
         fps.startRender();
         //}
         ++frameID;
-      
+
         if (viewPort.modified) {
           Assert2(camera,"ospray camera is null");
-          ospSetVec3f(camera,"pos",viewPort.from);
-          ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
-          ospSetVec3f(camera,"up",viewPort.up);
+          auto from = reinterpret_cast<osp::vec3f&>(viewPort.from);
+          auto dir  = viewPort.at-viewPort.from;
+          auto up   = reinterpret_cast<osp::vec3f&>(viewPort.up);
+          ospSetVec3f(camera,"pos",from);
+          ospSetVec3f(camera,"dir",reinterpret_cast<osp::vec3f&>(dir));
+          ospSetVec3f(camera,"up",up);
           ospSetf(camera,"aspect",viewPort.aspect);
           ospCommit(camera);
           ospFrameBufferClear(fb,OSP_FB_ACCUM);
           viewPort.modified = false;
           accumID = 0;
         }
-      
+
         ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
         ++accumID;
-        if (accumID < maxAccum) 
+        if (accumID < maxAccum)
           forceRedraw();
 
         ucharFB = (uint32 *) ospMapFrameBuffer(fb);
         frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
         Glut3DWidget::display();
-      
+
         ospUnmapFrameBuffer(ucharFB,fb);
-      
+
         if (showFPS) {
           char title[1000];
-          
+
           sprintf(title,"OSPRay Particle Viewer (%f fps)",fps.getFPS());
           setTitle(title);
         }
       }
-    
+
       OSPModel       model;
       OSPFrameBuffer fb;
       OSPRenderer    renderer;
@@ -225,7 +229,7 @@ namespace ospray {
                       const embree::FileName &defFileName)
         : model(model), xyzFileName(xyzFileName), defFileName(defFileName)
       {}
-                      
+
       //! the mode we still have to load
       particle::Model *model;
       //! file name of xyz file to be loaded into this model
@@ -237,7 +241,7 @@ namespace ospray {
     void ospParticleViewerMain(int &ac, const char **&av)
     {
       std::vector<Model *> particleModel;
-    
+
       cout << "ospParticleViewer: starting to process cmdline arguments" << endl;
       std::vector<DeferredLoadJob *> deferredLoadingListXYZ;
       embree::FileName defFileName = "";
@@ -292,14 +296,14 @@ namespace ospray {
       if (particleModel.empty())
         error("no input file specified");
 
-#pragma omp parallel 
+#pragma omp parallel
       {
 #pragma omp for
         for (int i=0;i<deferredLoadingListXYZ.size();i++) {
           embree::FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
           embree::FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
           particle::Model *model = deferredLoadingListXYZ[i]->model;
-          
+
           if (defFileName.str() != "")
             model->readAtomTypeDefinitions(defFileName);
           model->loadXYZ(xyzFileName);
@@ -328,7 +332,7 @@ namespace ospray {
       for (int i=0;i<particleModel.size();i++) {
         OSPModel model = ospNewModel();
         OSPData materialData = makeMaterials(ospRenderer,particleModel[i]);
-    
+
         OSPData data = ospNewData(particleModel[i]->atom.size()*5,OSP_FLOAT,
                                   &particleModel[i]->atom[0],OSP_DATA_SHARED_BUFFER);
         ospCommit(data);
