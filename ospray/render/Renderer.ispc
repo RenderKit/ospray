@@ -52,8 +52,8 @@ void Renderer_default_endFrame(uniform Renderer *uniform self,
 }
 
 void Renderer_default_renderTileJob(uniform Renderer *uniform self,
-                                    uniform Tile &tile,
                                     void *uniform perFrameData,
+                                    uniform Tile &tile,
                                     uniform int taskIndex)
 {
   uniform FrameBuffer *uniform fb     = self->fb;
@@ -202,12 +202,12 @@ void Renderer_Constructor(uniform Renderer *uniform self,
 }
 
 export void Renderer_renderTile(void *uniform _self,
-                                uniform Tile &tile,
                                 void *uniform perFrameData,
+                                uniform Tile &tile,
                                 uniform int jobID)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
-  Renderer_default_renderTileJob(self, tile, perFrameData, jobID);
+  Renderer_default_renderTileJob(self, perFrameData, tile, jobID);
 }
 
 export void *uniform Renderer_beginFrame(void *uniform _self,
