@@ -22,8 +22,12 @@ namespace ospray {
 
 #define TASKSYS_DEPENDENCIES 0
 
+
   typedef embree::AtomicCounter AtomicInt;
   typedef embree::MutexSys      Mutex;
+
+  extern size_t numActiveThreads;
+
 
   struct __aligned(64) Task : public embree::RefCount {
     // typedef enum { FRONT, BACK } ScheduleOrder;
@@ -90,8 +94,8 @@ namespace ospray {
     Mutex __aligned(64) mutex;
     Status volatile __aligned(64) status;
     AtomicInt __aligned(64) numMissingDependencies;
-    embree::ConditionSys __aligned(64) allDependenciesFulfilledCond;
-    embree::ConditionSys __aligned(64) allJobsCompletedCond;
+    Condition __aligned(64) allDependenciesFulfilledCond;
+    Condition __aligned(64) allJobsCompletedCond;
 
 #if TASKSYS_DEPENDENCIES
     //! depdencies: WE cannot become active until those are fulfilled

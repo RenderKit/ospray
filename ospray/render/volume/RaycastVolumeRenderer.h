@@ -43,6 +43,16 @@ namespace ospray {
     //! A string description of this class.
     std::string toString() const;
 
+#if EXP_DATA_PARALLEL
+    // /*! per-frame data to describe the data-parallel components */
+    // // struct PerFrameData {
+    // // };
+    void renderFrame(FrameBuffer *fb, const uint32 channelFlags);
+    // void *beginFrame(FrameBuffer *fb);
+    // void renderTile(void *perFrameData, Tile &tile);
+
+#endif
+
   protected:
 
     //! Print an error message.

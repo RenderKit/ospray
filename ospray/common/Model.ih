@@ -114,9 +114,9 @@ inline void postIntersect(uniform Model *uniform model,
 #define  DG_NS_NORMALIZE   (DG_NS | DG_NORMALIZE)
 
   if ((flags & DG_NG_NORMALIZE) == DG_NG_NORMALIZE)
-    dg.Ng = normalize(dg.Ng);
+    dg.Ng = safe_normalize(dg.Ng);
   if ((flags & DG_NS_NORMALIZE) == DG_NS_NORMALIZE)
-    dg.Ns = normalize(dg.Ns);
+    dg.Ns = safe_normalize(dg.Ns);
   
   if ((flags & DG_NG_FACEFORWARD) == DG_NG_FACEFORWARD)
     if (dot(ray.dir,dg.Ng) >= 0.f) dg.Ng = neg(dg.Ng);

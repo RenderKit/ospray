@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "PreferencesDialog.h"
 #include "VolumeViewer.h"
+#include "PreferencesDialog.h"
 
 PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boundingBox) : QDialog(volumeViewer), volumeViewer(volumeViewer)
 {

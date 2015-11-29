@@ -210,7 +210,7 @@ namespace ospray {
       Volume *volume = (Volume *) _volume;
       Assert2(volume, "null volume in LocalDevice::addVolume()");
 
-      model->volumes.push_back(volume);
+      model->volume.push_back(volume);
     }
 
     /*! create a new data buffer */
@@ -288,6 +288,16 @@ namespace ospray {
 
     /*! assign (named) vec3f parameter to an object */
     void LocalDevice::setVec3f(OSPObject _object, const char *bufName, const vec3f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(v);
+    }
+
+    /*! assign (named) vec3f parameter to an object */
+    void LocalDevice::setVec4f(OSPObject _object, const char *bufName, const vec4f &v)
     {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
@@ -435,6 +445,15 @@ namespace ospray {
       Assert(object != NULL && "invalid source object handle");
       ManagedObject::Param *param = object->findParam(name);
       return(param && param->type == OSP_FLOAT3 ? *value = ((vec3f *) param->f)[0], true : false);
+    }
+
+    /*! Get the named 4-vector floating point value associated with an object. */
+    int LocalDevice::getVec4f(OSPObject handle, const char *name, vec4f *value) 
+    {
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT4 ? *value = ((vec4f *) param->f)[0], true : false);
     }
 
     /*! Get the named 3-vector integer value associated with an object. */
@@ -630,7 +649,14 @@ namespace ospray {
       Assert(renderer != NULL && "invalid renderer handle");
       
       // FrameBuffer *fb = sc->getBackBuffer();
-      renderer->renderFrame(fb,fbChannelFlags);
+      try { 
+        renderer->renderFrame(fb,fbChannelFlags);
+      } catch (std::runtime_error e) {
+        std::cerr << "=======================================================" << std::endl;
+        std::cerr << "# >>> ospray fatal error <<< " << std::endl << e.what() << std::endl;
+        std::cerr << "=======================================================" << std::endl;
+        exit(1);
+      }
       // WARNING: I'm doing an *im*plicit swapbuffers here at the end
       // of renderframe, but to be more opengl-conform we should
       // actually have the user call an *ex*plicit ospSwapBuffers call...

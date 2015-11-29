@@ -27,7 +27,8 @@ inline varying float StructuredVolume_computeSample(void *uniform _volume, const
   volume->transformWorldToLocal(volume, worldCoordinates, localCoordinates);
 
   // Coordinates outside the volume are clamped to the volume bounds.
-  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), volume->localCoordinatesUpperBound);
+  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), 
+                                              volume->localCoordinatesUpperBound);
 
   // Lower and upper corners of the box straddling the voxels to be interpolated.
   const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
@@ -121,6 +122,7 @@ inline void StructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
 
   // Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
+
 //ray.t0 += step;
 }
 

@@ -123,8 +123,7 @@ inline vec3f uniform_ThinDielectricTransmission__sample(const uniform BRDF* unif
 {
   const uniform ThinDielectricTransmission* uniform this = (const uniform ThinDielectricTransmission* uniform) _this;
   wi = make_Sample3f(neg(wo),1.0f);
-  const float cosTheta = clamp(dot(wo,dg.Ns));
-  if (cosTheta <= 0.0f) return make_vec3f(0.0f);
+  const float cosTheta = abs(dot(wo,dg.Ns));
   const float alpha = this->thickness * rcp(cosTheta);
   return expf(this->logT * alpha) * (1.0f-fresnelDielectric(cosTheta,this->eta));
 }
@@ -160,8 +159,7 @@ inline vec3f varying_ThinDielectricTransmission__sample(const uniform BRDF* unif
 {
   const varying ThinDielectricTransmission* uniform this = (const varying ThinDielectricTransmission* uniform) _this;
   wi = make_Sample3f(neg(wo),1.0f);
-  const float cosTheta = clamp(dot(wo,dg.Ns));
-  if (cosTheta <= 0.0f) return make_vec3f(0.0f);
+  const float cosTheta = abs(dot(wo,dg.Ns));
   const float alpha = this->thickness * rcp(cosTheta);
   return mul(exp(mul(this->logT,alpha)), (1.0f-fresnelDielectric(cosTheta,this->eta)));
 }

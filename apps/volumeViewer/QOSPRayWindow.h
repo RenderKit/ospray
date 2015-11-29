@@ -16,9 +16,9 @@
 
 #pragma once
 
+#include <ospray/ospray.h>
 #include <QtGui>
 #include <QGLWidget>
-#include <ospray/ospray.h>
 
 struct Viewport
 {
@@ -160,6 +160,6 @@ protected:
   OSPTexture2D maxDepthTexture;
 
   std::string writeFramesFilename;
-  void writeFrameBufferToFile(const uint32 *pixelData);
+  void writeFrameBufferToFile(const uint32_t *pixelData);
 
 };

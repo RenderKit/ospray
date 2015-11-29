@@ -44,6 +44,7 @@ namespace ospray {
       {
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+
         // double before = getSysTime();
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
@@ -73,12 +74,8 @@ namespace ospray {
 
       void Slave::RenderTask::run(size_t taskIndex)
       {
-#ifdef OSPRAY_EXP_IMAGE_COMPOSITING
-        const size_t tileID = (taskIndex + 3*worker.rank) % (numTiles_x*numTiles_y);
-#else
         const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
-#endif
 
 #if TILE_SIZE>128
         Tile *tilePtr = new Tile;
@@ -94,7 +91,8 @@ namespace ospray {
         tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
-
+        tile.generation = 0;
+        tile.children = 0;
 
         const int spp = renderer->spp;
         const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
@@ -104,7 +102,7 @@ namespace ospray {
 
 #       pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < numJobs; ++i) {
-          renderer->renderTile(tile, i);
+          renderer->renderTile(perFrameData, tile, i);
         }
 
         fb->setTile(tile);
@@ -123,6 +121,9 @@ namespace ospray {
 
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
         dfb->startNewFrame();
+
+        void *perFrameData = tiledRenderer->beginFrame(fb);
+
         RenderTask renderTask;
 
         renderTask.fb = fb;
@@ -130,7 +131,7 @@ namespace ospray {
         renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
         renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
         renderTask.channelFlags = channelFlags;
-        tiledRenderer->beginFrame(fb);
+        renderTask.perFrameData = perFrameData;
 
         /*! iw: using a local sync event for now; "in theory" we should be
           able to attach something like a sync event to the frame
@@ -144,7 +145,7 @@ namespace ospray {
 
         // double t0wait = getSysTime();
         dfb->waitUntilFinished();
-        tiledRenderer->endFrame(channelFlags);
+        tiledRenderer->endFrame(perFrameData,channelFlags);
         // double t1wait = getSysTime();
         // printf("rank %i t_wait at end %f\n",mpi::world.rank,float(t1wait-t0wait));
 

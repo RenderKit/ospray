@@ -167,6 +167,46 @@ export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb,
 }
 
 
+//! \brief write tile into the given frame buffer's color buffer
+/*! \detailed this buffer _must_ exist when this fct is called, and it
+    _must_ have RGBA_F32 format */
+export void LocalFrameBuffer_writeTile_RGBA_F32(void *uniform _fb, 
+                                                uniform Tile &tile)
+{
+  uniform LocalFB *uniform fb    = (uniform LocalFB *uniform)_fb;
+  uniform vec4f   *uniform color = (uniform vec4f *uniform)fb->colorBuffer;
+  uniform float   *uniform depth = (uniform float *uniform)fb->depthBuffer;
+  if (!color) 
+    // actually, this should never happen ...
+    return;
+  
+  VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
+  for (uniform uint32 iy=0;iy<TILE_SIZE;iy++) {
+    uniform uint32 iiy=tile.region.lower.y+iy;
+    if (iiy >= tile.region.upper.y) continue;
+
+    uniform uint32 chunkID = iy*(TILE_SIZE/programCount);
+    
+    for (uint32 iix = tile.region.lower.x+programIndex;
+         iix<tile.region.upper.x;iix+=programCount,chunkID++) {
+
+      uint32 pixelID = iiy*fb->super.size.x+iix;
+      unmasked {
+        varying vec4f col = make_vec4f(varyTile->r[chunkID],
+                                       varyTile->g[chunkID],
+                                       varyTile->b[chunkID],
+                                       varyTile->a[chunkID]);
+        
+        col = pow(max(col,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
+      }
+      color[pixelID] = col;
+      if (depth)
+        fb->depthBuffer[pixelID] = varyTile->z[chunkID];
+    }
+  }
+}
+
+
 //! \brief accumulate tile into BOTH accum buffer AND tile.
 /*! \detailed After this call, the frame buffer will contain 'prev
     accum value + tile value', while the tile will contain '(prev

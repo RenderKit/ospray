@@ -19,7 +19,7 @@
 
 namespace ospray {
   namespace mpi {
-    
+
     Group world;
     Group app;
     Group worker;
@@ -28,7 +28,7 @@ namespace ospray {
     {
       int initialized = false;
       MPI_CALL(Initialized(&initialized));
-      
+
       if (!initialized) {
         // MPI_Init(ac,(char ***)&av);
         int required = MPI_THREAD_MULTIPLE;

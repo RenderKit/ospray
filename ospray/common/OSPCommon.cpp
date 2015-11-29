@@ -116,7 +116,7 @@ namespace ospray {
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
-      } else if (parm == "--osp:numthreads") {
+      } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
         numThreads = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
       } else {
@@ -183,6 +183,7 @@ namespace ospray {
     case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
     case OSP_FLOAT4:    return sizeof(embree::Vec4<float>);
     case OSP_FLOAT3A:   return sizeof(embree::Vec3fa);
+    case OSP_FLOAT8:    return 8 * sizeof(float);
     case OSP_DOUBLE:    return sizeof(double);
     default: break;
     };
@@ -197,6 +198,7 @@ namespace ospray {
 
     if (string == NULL)                return(OSP_UNKNOWN);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
+    if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
     if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
     if (strcmp(string, "float2") == 0) return(OSP_FLOAT2);
     if (strcmp(string, "float3") == 0) return(OSP_FLOAT2);

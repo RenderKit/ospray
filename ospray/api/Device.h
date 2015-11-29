@@ -89,6 +89,9 @@ namespace ospray {
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v) = 0;
 
+      /*! assign (named) vec4f parameter to an object */
+      virtual void setVec4f(OSPObject object, const char *bufName, const vec4f &v) = 0;
+
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f) = 0;
 
@@ -133,6 +136,9 @@ namespace ospray {
 
       /*! Get the named 3-vector floating point value associated with an object. */
       virtual int getVec3f(OSPObject object, const char *name, vec3f *value) = 0;
+
+      /*! Get the named 4-vector floating point value associated with an object. */
+      virtual int getVec4f(OSPObject object, const char *name, vec4f *value) = 0;
 
       /*! Get the named 3-vector integer value associated with an object. */
       virtual int getVec3i(OSPObject object, const char *name, vec3i *value) = 0;

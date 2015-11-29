@@ -162,9 +162,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Environment shading when nothing hit. */
     if (noHit(lightPath.ray)) {
       if ((bool)self->backplate & lightPath.unbent) {
-        const int x = clamp((int)(pixel.x * self->backplate->size.x), 0, (int)self->backplate->size.x-1);
-        const int y = clamp((int)(pixel.y * self->backplate->size.y), 0, (int)self->backplate->size.y-1);
-        L = self->backplate->get_nearest_varying(self->backplate,x,y);
+        L = L + Lw * get3f(self->backplate, pixel);
       } else if (!lightPath.ignoreVisibleLights)
           for (uniform int i = 0; i < self->numLights; i++) { // TODO: self->num_envLights
             const uniform Light *uniform l = self->lights[i];
@@ -347,7 +345,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
 
  
-void PathTracer_beginFrame(uniform Renderer *uniform _self,
+void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
                            uniform FrameBuffer *uniform fb)
 {
 //  print("pathtracer new frame %\n",fb->accumID);
@@ -355,6 +353,7 @@ void PathTracer_beginFrame(uniform Renderer *uniform _self,
   uniform PathTracer  *uniform self = (uniform PathTracer *uniform)_self;
 //  print("rays: %\n", self->numRays);
   self->numRays = 0;
+  return NULL;
 }
 
 
@@ -389,7 +388,9 @@ task void PathTracer_renderTileJob(uniform PathTracer *uniform self,
   }
 }
 
-void PathTracer_renderTile(uniform Renderer *uniform _self, uniform Tile &tile)
+void PathTracer_renderTile(uniform Renderer *uniform _self, 
+                           void *uniform perFrameData,
+                           uniform Tile &tile)
 {
   uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
   uniform int32 spp = self->super.spp;
@@ -421,7 +422,7 @@ export void PathTracer_set(void *uniform _self,
 
   self->maxDepth = maxDepth;
   self->minContribution = minContribution;
-  self->backplate = (uniform Image *uniform)backplate;
+  self->backplate = (uniform Texture2D *uniform)backplate;
   self->lights = (const uniform Light *uniform *uniform)lights;
   self->numLights = numLights;
 }

@@ -500,6 +500,8 @@ inline vec3f normalize(const vec3f v)
 inline vec3f normalize(const vec3f v, float &len) 
 { len = sqrtf(dot(v,v)); return v * rcpf(len); }
 
+inline vec3f safe_normalize(const vec3f v) 
+{ return v * (1.f/sqrt(max(1e-6f,dot(v,v)))); }
 
 
 #define __lift_unary_fct(F)                     \
@@ -518,6 +520,13 @@ __lift_unary_fct(exp)
 
 #undef __lift_unary_fct
 
+/*! make RGBA from RGB */
+inline vec4f make_vec4f(const vec3f rgb, const float a)
+{ return make_vec4f(rgb.x,rgb.y,rgb.z,a); }
+
+/*! make RGBA from RGB */
+inline uniform vec4f make_vec4f(const uniform vec3f rgb, const uniform float a)
+{ return make_vec4f(rgb.x,rgb.y,rgb.z,a); }
 
 // // ------------------------------------------------------------------
 // // vector functions (abs,rcp,...):

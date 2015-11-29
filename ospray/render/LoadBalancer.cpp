@@ -16,6 +16,7 @@
 
 #include "LoadBalancer.h"
 #include "Renderer.h"
+#include <sys/sysinfo.h>
 
 // stl
 #include <algorithm>
@@ -45,7 +46,7 @@ namespace ospray {
 
   void LocalTiledLoadBalancer::RenderTask::finish() const
   {
-    renderer->endFrame(channelFlags);
+    renderer->endFrame(perFrameData,channelFlags);
     renderer = NULL;
     fb = NULL;
   }
@@ -73,6 +74,8 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
     const int spp = renderer->spp;
     const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
@@ -88,10 +91,9 @@ namespace ospray {
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < numJobs; ++i) {
-      renderer->renderTile(tile, i);
+      renderer->renderTile(perFrameData, tile, i);
     }
 #endif
-
     fb->setTile(tile);
   }
 
@@ -110,13 +112,15 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
+    void *perFrameData = tiledRenderer->beginFrame(fb);
+
     RenderTask renderTask;
     renderTask.fb = fb;
     renderTask.renderer = tiledRenderer;
+    renderTask.perFrameData = perFrameData;
     renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
     renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
     renderTask.channelFlags = channelFlags;
-    tiledRenderer->beginFrame(fb);
 
     const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
 #if OSPRAY_USE_TBB
@@ -144,6 +148,8 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
     const int spp = renderer->spp;
     const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
@@ -152,14 +158,14 @@ namespace ospray {
                             RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
     for (size_t i = 0; i < numJobs; ++i) {
-      renderer->renderTile(tile, i);
+      renderer->renderTile(perFrameData, tile, i);
     }
   }
 
 
   void InterleavedTiledLoadBalancer::RenderTask::finish()
   {
-    renderer->endFrame(channelFlags);
+    renderer->endFrame(perFrameData,channelFlags);
     renderer = NULL;
     fb = NULL;
   }
@@ -172,21 +178,23 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
+    void *perFrameData = tiledRenderer->beginFrame(fb);
+
     Ref<RenderTask> renderTask = new RenderTask;
     renderTask->fb = fb;
+    renderTask->perFrameData = perFrameData;
     renderTask->renderer = tiledRenderer;
     renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
     renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
     size_t numTiles_total = renderTask->numTiles_x*renderTask->numTiles_y;
-    
+
     renderTask->numTiles_mine
       = (numTiles_total / numDevices)
       + (numTiles_total % numDevices > deviceID);
     renderTask->channelFlags = channelFlags;
     renderTask->deviceID     = deviceID;
     renderTask->numDevices   = numDevices;
-    tiledRenderer->beginFrame(fb);
-    
+
     renderTask->schedule(renderTask->numTiles_mine);
     renderTask->wait();
   }

@@ -32,18 +32,22 @@
 // -------------------------------------------------------
 // include common components 
 // -------------------------------------------------------
+#include <sys/types.h>
+#include <stdint.h>
+
 #if __EXTERNAL_EMBREE__
-#include "common/math/vec2.h"
-#include "common/math/vec3.h"
-#include "common/math/vec4.h"
-#include "common/math/bbox.h"
-#include "common/math/affinespace.h"
+# include "common/sys/alloc.h"
+# include "common/math/vec2.h"
+# include "common/math/vec3.h"
+# include "common/math/vec4.h"
+# include "common/math/bbox.h"
+# include "common/math/affinespace.h"
 #else
-#include "ospray/embree/common/math/vec2.h"
-#include "ospray/embree/common/math/vec3.h"
-#include "ospray/embree/common/math/vec4.h"
-#include "ospray/embree/common/math/bbox.h"
-#include "ospray/embree/common/math/affinespace.h"
+# include "ospray/embree/common/math/vec2.h"
+# include "ospray/embree/common/math/vec3.h"
+# include "ospray/embree/common/math/vec4.h"
+# include "ospray/embree/common/math/bbox.h"
+# include "ospray/embree/common/math/affinespace.h"
 #endif
 #include "ospray/common/OSPDataType.h"
 
@@ -77,6 +81,8 @@ namespace osp {
   typedef embree::BBox<embree::Vec2i> box2i;
   typedef embree::BBox3f box3f;
   typedef embree::AffineSpace3f affine3f;
+
+  typedef uint64_t uint64;
 
   struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
   struct FrameBuffer      : public ManagedObject {};
@@ -185,7 +191,7 @@ typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
 
 /*! an error type. '0' means 'no error' */
-typedef int32 error_t;
+typedef int32_t error_t;
 
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
@@ -221,7 +227,7 @@ extern "C" {
       renderer's parameters, typically in "world". */
   OSPRAY_INTERFACE void ospRenderFrame(OSPFrameBuffer fb, 
                                        OSPRenderer renderer, 
-                                       const uint32 fbChannelFlags=OSP_FB_COLOR);
+                                       const uint32_t fbChannelFlags=OSP_FB_COLOR);
 
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
@@ -291,7 +297,7 @@ extern "C" {
     if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
     if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID
   */
-  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer fb, const uint32 whichChannel);
+  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer fb, const uint32_t whichChannel);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_data Data Buffer Handling 
@@ -409,7 +415,7 @@ extern "C" {
   OSPRAY_INTERFACE void ospSet1f(OSPObject _object, const char *id, float x);
 
   /*! add 1-int parameter to given object */
-  OSPRAY_INTERFACE void ospSet1i(OSPObject _object, const char *id, int32 x);
+  OSPRAY_INTERFACE void ospSet1i(OSPObject _object, const char *id, int32_t x);
 
   /*! add a 2-float parameter to a given object */
   OSPRAY_INTERFACE void ospSet2f(OSPObject _object, const char *id, float x, float y);
@@ -428,6 +434,12 @@ extern "C" {
 
   /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSet4f(OSPObject _object, const char *id, float x, float y, float z, float w);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSet4fv(OSPObject _object, const char *id, const float *xyzw);
 
   /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
@@ -465,6 +477,9 @@ extern "C" {
 
   /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSetVec4f(OSPObject _object, const char *id, const osp::vec4f &v);
 
   /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);

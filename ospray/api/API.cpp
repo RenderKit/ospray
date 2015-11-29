@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
 #include "ospray/include/ospray/ospray.h"
 #include "ospray/render/Renderer.h"
 #include "ospray/camera/Camera.h"
@@ -23,6 +24,10 @@
 #include "LocalDevice.h"
 #include "ospray/common/OSPCommon.h"
 #include "ospray/common/Core.h"
+
+#ifdef _WIN32
+#  include <process.h> // for getpid
+#endif
 
 #if 1
 # define LOG(a) if (ospray::logLevel > 2) std::cout << "#ospray: " << a << std::endl;
@@ -60,11 +65,17 @@ namespace ospray {
 
 } // ::ospray
 
+std::string getPidString() {
+  char s[100];
+  sprintf(s, "(pid %i)", getpid());
+  return s;
+}
+
 #define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)       \
     throw std::runtime_error("OSPRay not yet initialized "              \
                              "(most likely this means you tried to "    \
                              "call an ospray API function before "      \
-                             "first calling ospInit())");
+                             "first calling ospInit())"+getPidString());
 
 using namespace ospray;
 
@@ -312,6 +323,7 @@ extern "C" OSPPixelOp ospNewPixelOp(const char *_type)
 extern "C" OSPRenderer ospNewRenderer(const char *_type)
 {
   ASSERT_DEVICE();
+
   Assert2(_type,"invalid render type identifier in ospNewRenderer");
   LOG("ospNewRenderer(" << _type << ")");
    
@@ -521,6 +533,7 @@ extern "C" void ospSetVec2i(OSPObject _object, const char *id, const osp::vec2i 
   ASSERT_DEVICE();
   ospray::api::Device::current->setVec2i(_object, id, v);
 }
+
 /*! add a vec3f parameter to another object */
 extern "C" void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v)
 {
@@ -533,6 +546,13 @@ extern "C" void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i 
 {
   ASSERT_DEVICE();
   ospray::api::Device::current->setVec3i(_object,id,v);
+}
+
+/*! add a vec4f parameter to another object */
+extern "C" void ospSetVec4f(OSPObject _object, const char *id, const osp::vec4f &v)
+{
+  ASSERT_DEVICE();
+  ospray::api::Device::current->setVec4f(_object,id,v);
 }
 
 /*! add a vec2f parameter to another object */
@@ -589,6 +609,20 @@ extern "C" void ospSet3iv(OSPObject _object, const char *id, const int *xyz)
 {
   ASSERT_DEVICE();
   ospSetVec3i(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
+}
+
+/*! add a vec4f parameter to another object */
+extern "C" void ospSet4f(OSPObject _object, const char *id, float x, float y, float z, float w)
+{
+  ASSERT_DEVICE();
+  ospSetVec4f(_object,id,vec4f(x,y,z,w));
+}
+
+/*! add a vec4f parameter to another object */
+extern "C" void ospSet4fv(OSPObject _object, const char *id, const float *xyzw)
+{
+  ASSERT_DEVICE();
+  ospSetVec4f(_object,id,vec4f(xyzw[0],xyzw[1],xyzw[2],xyzw[3]));
 }
 
 /*! add a void pointer to another object */

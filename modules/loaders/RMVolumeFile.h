@@ -14,36 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-/*! \file ospray/common/Thread.h \brief Abstraction for a Thread object */
+#pragma once
 
-#include "Thread.h"
-// embree
-# include "common/sys/thread.h"
+#include <string>
+#include "modules/loaders/VolumeFile.h"
 
-namespace ospray {
+//! \brief specific importer for the LLNL "RM" (Richtmyer-Meshkov) instability files
+/*! Note this exists only for a specific demo */
+class RMVolumeFile : public VolumeFile {
+public:
 
-  void ospray_Thread_runThread(void *arg)
-  {
-    Thread *t = (Thread *)arg;
-    if (t->desiredThreadID >= 0) {
-      printf("pinning to thread %i\n",t->desiredThreadID);
-      embree::setAffinity(t->desiredThreadID);
-    }
+  //! Constructor.
+  RMVolumeFile(const std::string &fileName) : fileName(fileName) {}
 
-    t->run();
-  }
+  //! Destructor.
+  virtual ~RMVolumeFile() {};
 
-  void Thread::join() 
-  { 
-    embree::join(tid); 
-  }
+  //! Import the volume data.
+  virtual OSPVolume importVolume(OSPVolume volume);
 
-  /*!  start thread execution */
-  void Thread::start(int threadID)
-  {
-    desiredThreadID = threadID;
-    this->tid = embree::createThread(&ospray_Thread_runThread,this);
-  }
+  //! A string description of this class.
+  virtual std::string toString() const { return("ospray_module_loaders::RawVolumeFile"); }
 
-}
+private:
+
+  //! Path to the file containing the volume data.
+  std::string fileName;
+};
 

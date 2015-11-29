@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ProbeWidget.h"
 #include "VolumeViewer.h"
+#include "ProbeWidget.h"
 #include "QOSPRayWindow.h"
 
 #ifdef __APPLE__

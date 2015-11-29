@@ -46,11 +46,35 @@ namespace ospray {
   class Volume : public ManagedObject {
   public:
 
+#if EXP_DATA_PARALLEL
+    struct DataParallelPiece : public RefCount {
+      /*! world space bounding box of this piece. it is assumed that
+          this covers all the space that rays should be integrating
+          over; so _including_ any ghost cells if those are required
+          to bridge gaps between neighboring blocks */
+      box3f worldBounds;
+      /*! pointer to the parent containing this piece. note this is
+          intentionally not a ref to avoid cycles in the ref-graph */
+      Volume     *parent;
+      /*! the actual volume that contains that piece of the data. NULL
+          if not on this node */
+      Ref<Volume> actualData;
+      /*! handle to the owning process:objectID, so we know whom to
+          ask for this block if so required. note that a volume block
+          may be stored on multiple nodes, and thus may have multiple
+          owners */
+      std::vector<ObjectHandle> owner;
+    };
+#endif
+
     //! Constructor.
     Volume() {};
 
     //! Destructor.
     virtual ~Volume() {};
+
+    //! \brief Returns whether the volume is a data-distributed volume
+    virtual bool isDataDistributed() const { return false; }
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::Volume"); }
@@ -67,6 +91,9 @@ namespace ospray {
     //! Compute samples at the given world coordinates.
     virtual void computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count);
 
+    //! Update select editable parameters (allowed after the volume has been initially committed).
+    virtual void updateEditableParameters();
+
   protected:
 
     //! Create the equivalent ISPC volume container.
@@ -75,8 +102,6 @@ namespace ospray {
     //! Complete volume initialization (only on first commit).
     virtual void finish();
 
-    //! Update select editable parameters (allowed after the volume has been initially committed).
-    virtual void updateEditableParameters();
 
     //! Print an error message.
     inline void emitMessage(const std::string &kind, const std::string &message) const

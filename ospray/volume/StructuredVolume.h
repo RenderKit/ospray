@@ -64,6 +64,7 @@ namespace ospray {
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     //! Compute the voxel value range for unsigned byte voxels.
     void computeVoxelRange(const unsigned char *source, const size_t &count);
 
@@ -72,6 +73,12 @@ namespace ospray {
 
     //! Compute the voxel value range for double precision floating point voxels.
     void computeVoxelRange(const double *source, const size_t &count);
+    
+#endif
+
+
+    //! build the accelerator - allows child class (data distributed) to avoid building..
+    virtual void buildAccelerator();
 
     //! Volume size in voxels per dimension.
     vec3i dimensions;
@@ -85,19 +92,12 @@ namespace ospray {
     //! Indicate that the volume is fully initialized.
     bool finished;
 
+  public:
     //! Voxel value range (will be computed if not provided as a parameter).
     vec2f voxelRange;
 
     //! Voxel type.
     std::string voxelType;
-
-#ifdef OSPRAY_EXP_DISTRIBUTED_VOLUME
-    // logical dimensions of FULL volume, including all distributed parts (if any)
-    vec3i logicalDimensions;
-
-    // the valid sub-domain on this particular rank
-    box3i myDomain;
-#endif
   };
 
 } // ::ospray

@@ -17,14 +17,9 @@
 #pragma once
 
 #include "ospray/mpi/MPICommon.h"
-// #include <mpi.h>
-// #include "ospray/common/OSPCommon.h"
-// embree
-#include "common/sys/platform.h"
-#include "common/sys/thread.h"
+#include "ospray/common/Thread.h"
 
 namespace ospray {
-  typedef embree::ConditionSys Condition;
   typedef embree::MutexSys     Mutex;
   using   embree::thread_t;
 

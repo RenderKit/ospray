@@ -19,6 +19,9 @@
 #include <stdlib.h>
 #include <string>
 #include "ospray/include/ospray/ospray.h"
+#include "ospray/common/OSPCommon.h"
+//stl
+#include <map>
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
@@ -31,7 +34,19 @@
 //! 
 #define OSP_REGISTER_VOLUME_FILE(InternalClass, ExternalName)           \
   extern "C" OSPVolume ospray_import_volume_file_##ExternalName(const std::string &filename, OSPVolume volume) \
-    { InternalClass file(filename);  return(file.importVolume(volume)); }
+  { InternalClass file(filename);  return(file.importVolume(volume)); }
+
+/*! helper function to help build voxel ranges during parsing */
+template<typename T>
+inline void extendVoxelRange(ospray::vec2f &voxelRange, const T *voxel, size_t num)
+{
+  for (size_t i=0;i<num;i++) {
+    voxelRange.x = std::min(voxelRange.x,(float)voxel[i]);
+    voxelRange.y = std::max(voxelRange.y,(float)voxel[i]);
+  }
+}
+
+
 
 //! \brief The VolumeFile class is an abstraction for the concrete
 //!  object which is used to load volume data from a file.
@@ -45,7 +60,7 @@
 class VolumeFile {
 public:
 
-  //! Constructor.
+//! Constructor.
   VolumeFile() {};
 
   //! Destructor.
@@ -60,19 +75,21 @@ public:
   //! A string description of this class.
   virtual std::string toString() const { return("ospray_module_loaders::VolumeFile"); }
 
-protected:
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+  static std::map<OSPVolume, ospray::vec2f> voxelRangeOf;
+#endif
 
   //! Print an error message.
   void emitMessage(const std::string &kind, const std::string &message) const
-    { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+  { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
 
   //! Error checking.
   void exitOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+  { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
 
   //! Warning condition.
   void warnOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("WARNING", message); }
+  { if (!condition) return;  emitMessage("WARNING", message); }
 
   //! Get the absolute file path.
   static std::string getFullFilePath(const std::string &filename)

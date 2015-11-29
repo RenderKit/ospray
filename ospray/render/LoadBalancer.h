@@ -36,8 +36,7 @@ namespace ospray {
 
 
   struct TileRenderer;
-
-  struct TiledLoadBalancer 
+  struct TiledLoadBalancer
   {
     static TiledLoadBalancer *instance;
     virtual std::string toString() const = 0;
@@ -50,19 +49,19 @@ namespace ospray {
   /*! a tiled load balancer that orchestrates (multi-threaded)
     rendering on a local machine, without any cross-node
     communication/load balancing at all (even if there are multiple
-    application ranks each doing local rendering on their own)  */ 
+    application ranks each doing local rendering on their own)  */
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
     LocalTiledLoadBalancer();
-
     struct RenderTask
     {
-      mutable Ref<FrameBuffer> fb;
-      mutable Ref<Renderer>    renderer;
-      
-      size_t                   numTiles_x;
-      size_t                   numTiles_y;
-      uint32                   channelFlags;
+      mutable Ref<FrameBuffer>  fb;
+      mutable Ref<Renderer>     renderer;
+
+      size_t                    numTiles_x;
+      size_t                    numTiles_y;
+      uint32                    channelFlags;
+      void                     *perFrameData;
 
       void run(size_t jobID) const;
       void finish() const;
@@ -86,7 +85,7 @@ namespace ospray {
   /*! a tiled load balancer that orchestrates (multi-threaded)
     rendering on a local machine, without any cross-node
     communication/load balancing at all (even if there are multiple
-    application ranks each doing local rendering on their own)  */ 
+    application ranks each doing local rendering on their own)  */
   struct InterleavedTiledLoadBalancer : public TiledLoadBalancer
   {
     size_t deviceID;
@@ -104,26 +103,27 @@ namespace ospray {
 
     virtual std::string toString() const { return "ospray::InterleavedTiledLoadBalancer"; };
 
-    /*! \brief a task for rendering a frame using the global tiled load balancer 
-      
+    /*! \brief a task for rendering a frame using the global tiled load balancer
+
       if derived from FrameBuffer::RenderFrameEvent to allow us for
       attaching that as a sync primitive to the frame buffer
     */
     struct RenderTask : public Task {
       Ref<FrameBuffer> fb;
       Ref<Renderer>    renderer;
-      
+
       size_t           numTiles_x;
       size_t           numTiles_y;
       size_t           numTiles_mine;
       size_t           deviceID;
       size_t           numDevices;
       uint32           channelFlags;
+      void             *perFrameData;
 
       void run(size_t jobID);
       void finish();
     };
-    
+
     void renderFrame(Renderer *tiledRenderer,
                      FrameBuffer *fb,
                      const uint32 channelFlags);
