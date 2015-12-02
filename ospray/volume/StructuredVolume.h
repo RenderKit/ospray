@@ -38,20 +38,22 @@ namespace ospray {
   public:
 
     //! Constructor.
-    StructuredVolume() : finished(false), voxelRange(FLT_MAX, -FLT_MAX) {}
+    StructuredVolume();
 
     //! Destructor.
-    virtual ~StructuredVolume() {};
+    virtual ~StructuredVolume();
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
+    virtual std::string toString() const;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit();
 
     //! Copy voxels into the volume at the given index
     /*! \returns 0 on error, any non-zero value indicates success */
-    virtual int setRegion(const void *source_pointer, const vec3i &target_index, const vec3i &source_count) = 0;
+    virtual int setRegion(const void *source_pointer,
+                          const vec3i &target_index,
+                          const vec3i &source_count) = 0;
 
   protected:
 
@@ -73,26 +75,26 @@ namespace ospray {
 
     //! Compute the voxel value range for double precision floating point voxels.
     void computeVoxelRange(const double *source, const size_t &count);
-    
+
 #endif
 
 
-    //! build the accelerator - allows child class (data distributed) to avoid building..
+    //! build the accelerator - allows child class (data distributed) to avoid
+    //! building..
     virtual void buildAccelerator();
 
     //! Volume size in voxels per dimension.
     vec3i dimensions;
-    
+
     //! Grid origin.
     vec3f gridOrigin;
-    
+
     //! Grid spacing in each dimension.
     vec3f gridSpacing;
 
     //! Indicate that the volume is fully initialized.
     bool finished;
 
-  public:
     //! Voxel value range (will be computed if not provided as a parameter).
     vec2f voxelRange;
 

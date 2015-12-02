@@ -42,8 +42,8 @@ task void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator
                                             StructuredVolume *uniform volume);
 
 //! Get the volumetric value range of a cell.
-inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator, 
-                                         const varying vec3i &index, 
+inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
+                                         const varying vec3i &index,
                                          varying vec2f &value)
 {
   const uint32 address = GridAccelerator_getCellAddress(accelerator, index);
@@ -51,8 +51,8 @@ inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
 }
 
 //! Set the volumetric value range of a cell.
-inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator, 
-                                         uniform uint32 address, 
+inline void GridAccelerator_setCellRange(GridAccelerator *uniform accelerator,
+                                         uniform uint32 address,
                                          uniform vec2f &value)
 {
   accelerator->cellRange[address] = value;
@@ -102,9 +102,9 @@ void GridAccelerator_destroy(GridAccelerator *uniform accelerator)
   delete accelerator;
 }
 
-inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator, 
-                                            StructuredVolume *uniform volume, 
-                                            const uniform vec3i &cellIndex, 
+inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator,
+                                            StructuredVolume *uniform volume,
+                                            const uniform vec3i &cellIndex,
                                             uniform vec2f &cellRange)
 {
   // Loop over voxels in the current cell.
@@ -114,12 +114,12 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accelerator
     const vec3i voxelIndex = cellIndex * CELL_WIDTH + make_vec3i(i, j, k);
 
     // The voxel value.
-    float value; 
+    float value;
     volume->getVoxel(volume, min(volume->dimensions - 1, voxelIndex), value);
 
     // Update the volumetric value range of the current cell, ignoring any NaN values.
     if(!isnan(value)) {
-      cellRange.x = min(cellRange.x, reduce_min(value));  
+      cellRange.x = min(cellRange.x, reduce_min(value));
       cellRange.y = max(cellRange.y, reduce_max(value));
     }
   }
@@ -144,11 +144,11 @@ task void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator
       | i;
 
     // The index of the slice containing the current cell.
-    uniform uint32 z = i >> (2 * BRICK_WIDTH_BITCOUNT);  
+    uniform uint32 z = i >> (2 * BRICK_WIDTH_BITCOUNT);
     uniform uint32 offset = i & (BRICK_WIDTH * BRICK_WIDTH - 1);
 
     // The indices of the cell within the slice.
-    uniform uint32 y = offset >> BRICK_WIDTH_BITCOUNT;  
+    uniform uint32 y = offset >> BRICK_WIDTH_BITCOUNT;
     uniform uint32 x = offset % BRICK_WIDTH;
 
     // The 3D index of the cell in the grid.
@@ -178,9 +178,9 @@ inline uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerato
 
   // Compute the 1D address of the cell.
   return
-    brickAddress << (3 * BRICK_WIDTH_BITCOUNT) | 
-    cellOffset.z << (2 * BRICK_WIDTH_BITCOUNT) | 
-    cellOffset.y << (BRICK_WIDTH_BITCOUNT) | 
+    brickAddress << (3 * BRICK_WIDTH_BITCOUNT) |
+    cellOffset.z << (2 * BRICK_WIDTH_BITCOUNT) |
+    cellOffset.y << (BRICK_WIDTH_BITCOUNT) |
     cellOffset.x;
 }
 
@@ -190,13 +190,13 @@ inline box3f GridAccelerator_getCellBounds(GridAccelerator *uniform accelerator,
   StructuredVolume *uniform volume = (StructuredVolume *uniform) accelerator->volume;
 
   // Coordinates of the lower corner of the cell in world coordinates.
-  vec3f lower; 
+  vec3f lower;
   volume->transformLocalToWorld(volume, float_cast(index << CELL_WIDTH_BITCOUNT), lower);
-  
+
   // Coordinates of the upper corner of the cell in world coordinates.
-  vec3f upper; 
+  vec3f upper;
   volume->transformLocalToWorld(volume, float_cast(index + 1 << CELL_WIDTH_BITCOUNT), upper);
-  
+
   // The bounding box in world coordinates.
   return(make_box3f(lower, upper));
 

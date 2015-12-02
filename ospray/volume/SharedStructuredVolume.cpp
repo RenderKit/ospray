@@ -24,10 +24,17 @@
 
 namespace ospray {
 
-  SharedStructuredVolume::~SharedStructuredVolume()
-  {
-    // No longer listen for changes to voxelData.
+SharedStructuredVolume::SharedStructuredVolume() : voxelData(NULL) {}
+
+SharedStructuredVolume::~SharedStructuredVolume()
+{
+  // No longer listen for changes to voxelData.
     if(voxelData) voxelData->unregisterListener(this);
+  }
+
+  std::string SharedStructuredVolume::toString() const
+  {
+    return("ospray::SharedStructuredVolume<" + voxelType + ">");
   }
 
   void SharedStructuredVolume::commit()
@@ -39,7 +46,7 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  int SharedStructuredVolume::setRegion(const void *source, const vec3i &index, const vec3i &count) 
+  int SharedStructuredVolume::setRegion(const void *source, const vec3i &index, const vec3i &count)
   {
     exitOnCondition(true, "setRegion() not allowed on this volume type; "
                     "volume data must be provided via the voxelData parameter");
@@ -59,7 +66,7 @@ namespace ospray {
     // Get the voxel data.
     voxelData = (Data *)getParamObject("voxelData", NULL);
     exitOnCondition(voxelData == NULL, "no voxel data provided");
-    warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER), 
+    warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER),
                     "the voxel data buffer was not created with the OSP_DATA_SHARED_BUFFER flag; "
                     "use another volume type (e.g. BlockBrickedVolume) for better performance");
 
