@@ -105,14 +105,14 @@ typedef enum {
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
-  OSP_FB_ALPHA=(1<<3)
+//  OSP_FB_ALPHA=(1<<3) // not used anywhere; use OSP_FB_COLOR with a frame buffer format containing alpha in 4th channel
 } OSPFrameBufferChannel;
 
 /*! OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
   OSP_RGBA_NONE,
   OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
-  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
+  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel XXX unsupported! */
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
 
