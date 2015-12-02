@@ -45,7 +45,7 @@ namespace ospray {
     LocalDevice::LocalDevice(int *_ac, const char **_av)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv) 
+      if (logLevelFromEnv)
         logLevel = atoi(logLevelFromEnv);
       else
         logLevel = 0;
@@ -60,7 +60,7 @@ namespace ospray {
 
       // -------------------------------------------------------
       // initialize embree
-      // ------------------------------------------------------- 
+      // -------------------------------------------------------
      std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
@@ -75,11 +75,6 @@ namespace ospray {
         assert(erc == RTC_NO_ERROR);
       }
 
-      // -------------------------------------------------------
-      // initialize our task system
-      // -------------------------------------------------------
-      //ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
-
       TiledLoadBalancer::instance = new LocalTiledLoadBalancer;
     }
 
@@ -88,29 +83,29 @@ namespace ospray {
       rtcExit();
     }
 
-    OSPFrameBuffer 
-    LocalDevice::frameBufferCreate(const vec2i &size, 
+    OSPFrameBuffer
+    LocalDevice::frameBufferCreate(const vec2i &size,
                                    const OSPFrameBufferFormat mode,
                                    const uint32 channels)
     {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
-      
+
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
                                              hasDepthBuffer,hasAccumBuffer);
       fb->refInc();
       return (OSPFrameBuffer)fb;
     }
-    
+
 
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
-        
+
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
-        '0,0,0,0'.  
+        '0,0,0,0'.
 
         if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to
-        +inf.  
+        +inf.
 
         if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0,
         and reset accumID.
@@ -151,7 +146,7 @@ namespace ospray {
       model->refInc();
       return (OSPModel)model;
     }
-    
+
     /*! finalize a newly specified model */
     void LocalDevice::commit(OSPObject _object)
     {
@@ -164,7 +159,7 @@ namespace ospray {
       if (model)
         model->finalize();
     }
-    
+
     /*! add a new geometry to a model */
     void LocalDevice::addGeometry(OSPModel _model, OSPGeometry _geometry)
     {
@@ -228,7 +223,7 @@ namespace ospray {
       data->refInc();
       return (OSPData)data;
     }
-    
+
     /*! assign (named) string parameter to an object */
     void LocalDevice::setString(OSPObject _object, const char *bufName, const char *s)
     {
@@ -262,14 +257,14 @@ namespace ospray {
       ManagedObject *object = (ManagedObject *)_object;
       Assert(object != NULL  && "invalid object handle");
       Assert(bufName != NULL && "invalid identifier for object parameter");
-      
+
       ManagedObject::Param *param = object->findParam(bufName,1);
       param->set(f);
     }
 
     /*! Copy data into the given volume. */
-    int LocalDevice::setRegion(OSPVolume handle, const void *source, 
-                               const vec3i &index, const vec3i &count) 
+    int LocalDevice::setRegion(OSPVolume handle, const void *source,
+                               const vec3i &index, const vec3i &count)
     {
       Volume *volume = (Volume *) handle;
       Assert(volume != NULL && "invalid volume object handle");
@@ -339,7 +334,7 @@ namespace ospray {
     }
 
     /*! Get the handle of the named data array associated with an object. */
-    int LocalDevice::getData(OSPObject handle, const char *name, OSPData *value) 
+    int LocalDevice::getData(OSPObject handle, const char *name, OSPData *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -357,7 +352,7 @@ namespace ospray {
     }
 
     /*! Get the named scalar floating point value associated with an object. */
-    int LocalDevice::getf(OSPObject handle, const char *name, float *value) 
+    int LocalDevice::getf(OSPObject handle, const char *name, float *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -366,7 +361,7 @@ namespace ospray {
     }
 
     /*! Get the named scalar integer associated with an object. */
-    int LocalDevice::geti(OSPObject handle, const char *name, int *value) 
+    int LocalDevice::geti(OSPObject handle, const char *name, int *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -375,7 +370,7 @@ namespace ospray {
     }
 
     /*! Get the material associated with a geometry object. */
-    int LocalDevice::getMaterial(OSPGeometry handle, OSPMaterial *value) 
+    int LocalDevice::getMaterial(OSPGeometry handle, OSPMaterial *value)
     {
       Geometry *geometry = (Geometry *) handle;
       Assert(geometry != NULL && "invalid source geometry handle");
@@ -383,7 +378,7 @@ namespace ospray {
     }
 
     /*! Get the named object associated with an object. */
-    int LocalDevice::getObject(OSPObject handle, const char *name, OSPObject *value) 
+    int LocalDevice::getObject(OSPObject handle, const char *name, OSPObject *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -392,13 +387,13 @@ namespace ospray {
     }
 
     /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
-    int LocalDevice::getParameters(OSPObject handle, char ***value) 
+    int LocalDevice::getParameters(OSPObject handle, char ***value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
       char **names = (char **) malloc((object->paramList.size() + 1) * sizeof(char *));
 
-      for (size_t i=0 ; i < object->paramList.size() ; i++) 
+      for (size_t i=0 ; i < object->paramList.size() ; i++)
         names[i] = strdup(object->paramList[i]->name);
       names[object->paramList.size()] = NULL;
       return(*value = names, true);
@@ -415,7 +410,7 @@ namespace ospray {
     }
 
     /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
-    int LocalDevice::getType(OSPObject handle, const char *name, OSPDataType *value) 
+    int LocalDevice::getType(OSPObject handle, const char *name, OSPDataType *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -424,7 +419,7 @@ namespace ospray {
       ManagedObject::Param *param = object->findParam(name);
       if (param == NULL) return(false);
       return(*value
-             = (param->type == OSP_OBJECT) 
+             = (param->type == OSP_OBJECT)
              ?  param->ptr->managedObjectType
              :  param->type, true);
     }
@@ -439,7 +434,7 @@ namespace ospray {
     }
 
     /*! Get the named 3-vector floating point value associated with an object. */
-    int LocalDevice::getVec3f(OSPObject handle, const char *name, vec3f *value) 
+    int LocalDevice::getVec3f(OSPObject handle, const char *name, vec3f *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -448,7 +443,7 @@ namespace ospray {
     }
 
     /*! Get the named 4-vector floating point value associated with an object. */
-    int LocalDevice::getVec4f(OSPObject handle, const char *name, vec4f *value) 
+    int LocalDevice::getVec4f(OSPObject handle, const char *name, vec4f *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -457,7 +452,7 @@ namespace ospray {
     }
 
     /*! Get the named 3-vector integer value associated with an object. */
-    int LocalDevice::getVec3i(OSPObject handle, const char *name, vec3i *value) 
+    int LocalDevice::getVec3i(OSPObject handle, const char *name, vec3i *value)
     {
       ManagedObject *object = (ManagedObject *) handle;
       Assert(object != NULL && "invalid source object handle");
@@ -471,7 +466,7 @@ namespace ospray {
       Assert(type != NULL && "invalid render type identifier");
       PixelOp *pixelOp = PixelOp::createPixelOp(type);
       if (!pixelOp) {
-        if (ospray::debugMode) 
+        if (ospray::debugMode)
           throw std::runtime_error("unknown pixelOp type '"+std::string(type)+"'");
         else
           return NULL;
@@ -489,14 +484,14 @@ namespace ospray {
       assert(po);
       fb->pixelOp = po->createInstance(fb,fb->pixelOp.ptr);
     }
-      
+
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer LocalDevice::newRenderer(const char *type)
     {
       Assert(type != NULL && "invalid render type identifier");
       Renderer *renderer = Renderer::createRenderer(type);
       if (!renderer) {
-        if (ospray::debugMode) 
+        if (ospray::debugMode)
           throw std::runtime_error("unknown renderer type '"+std::string(type)+"'");
         else
           return NULL;
@@ -547,7 +542,7 @@ namespace ospray {
       Assert(type != NULL && "invalid camera type identifier");
       Camera *camera = Camera::createCamera(type);
       if (!camera) {
-        if (ospray::debugMode) 
+        if (ospray::debugMode)
           throw std::runtime_error("unknown camera type '"+std::string(type)+"'");
         else
           return NULL;
@@ -562,7 +557,7 @@ namespace ospray {
       Assert(type != NULL && "invalid volume type identifier");
       Volume *volume = Volume::createInstance(type);
       if (!volume) {
-        if (ospray::debugMode) 
+        if (ospray::debugMode)
           throw std::runtime_error("unknown volume type '"+std::string(type)+"'");
         else
           return NULL;
@@ -618,13 +613,13 @@ namespace ospray {
     {
       std::string libName = "ospray_module_"+std::string(name);
       loadLibrary(libName);
-      
+
       std::string initSymName = "ospray_init_module_"+std::string(name);
       void*initSym = getSymbol(initSymName);
       if (!initSym)
         throw std::runtime_error("#osp:api: could not find module initializer "+initSymName);
       void (*initMethod)() = (void(*)())initSym;
-      if (!initMethod) 
+      if (!initMethod)
         return 2;
       try {
         initMethod();
@@ -635,8 +630,8 @@ namespace ospray {
     }
 
     /*! call a renderer to render a frame buffer */
-    void LocalDevice::renderFrame(OSPFrameBuffer _fb, 
-                                  OSPRenderer    _renderer, 
+    void LocalDevice::renderFrame(OSPFrameBuffer _fb,
+                                  OSPRenderer    _renderer,
                                   const uint32 fbChannelFlags)
     {
       FrameBuffer *fb       = (FrameBuffer *)_fb;
@@ -647,9 +642,9 @@ namespace ospray {
       Assert(fb != NULL && "invalid frame buffer handle");
       // Assert(sc != NULL && "invalid frame buffer handle");
       Assert(renderer != NULL && "invalid renderer handle");
-      
+
       // FrameBuffer *fb = sc->getBackBuffer();
-      try { 
+      try {
         renderer->renderFrame(fb,fbChannelFlags);
       } catch (std::runtime_error e) {
         std::cerr << "=======================================================" << std::endl;

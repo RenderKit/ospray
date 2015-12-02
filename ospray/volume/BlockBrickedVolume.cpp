@@ -20,6 +20,32 @@
 // std
 #include <cassert>
 
+// tbb
+#ifdef OSPRAY_USE_TBB
+# include <tbb/blocked_range.h>
+# include <tbb/parallel_for.h>
+struct SetRegionTask
+{
+  void *ispcEquivalent;
+  void *source;
+  ospray::vec3i regionCoords;
+  ospray::vec3i regionSize;
+
+  void operator()(const tbb::blocked_range<int>& range) const
+  {
+    for (int taskIndex = range.begin();
+         taskIndex != range.end();
+         ++taskIndex) {
+      ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
+                                         source,
+                                         (const ispc::vec3i &) regionCoords,
+                                         (const ispc::vec3i &) regionSize,
+                                         taskIndex);
+    }
+  }
+};
+#endif
+
 namespace ospray {
 
   void BlockBrickedVolume::commit()
@@ -29,7 +55,7 @@ namespace ospray {
     // to 'setRegion', and only a final commit at the
     // end. 'dimensions' etc may/will _not_ be committed before
     // setregion.
-    exitOnCondition(ispcEquivalent == NULL, 
+    exitOnCondition(ispcEquivalent == NULL,
                     "the volume data must be set via ospSetRegion() "
                     "prior to commit for this volume type");
 
@@ -42,11 +68,11 @@ namespace ospray {
                                        'regionSize', must be organized in 3D-array
                                        order, and must have the same voxel type as the
                                        volume.*/
-                                    const void *source, 
+                                    const void *source,
                                     /*! coordinates of the lower,
                                       left, front corner of the target
                                       region.*/
-                                    const vec3i &regionCoords, 
+                                    const vec3i &regionCoords,
                                     /*! size of the region that we're writing to; MUST
                                       be the same as the dimensions of source[][][] */
                                     const vec3i &regionSize)
@@ -69,38 +95,54 @@ namespace ospray {
         = (size_t)regionSize.x *
         + (size_t)regionSize.y *
         + (size_t)regionSize.z;
-      if (voxelType == "uchar") 
+      if (voxelType == "uchar")
         computeVoxelRange((unsigned char *)source, numVoxelsInRegion);
-      else if (voxelType == "float") 
+      else if (voxelType == "float")
         computeVoxelRange((float *)source, numVoxelsInRegion);
-      else if (voxelType == "double") 
+      else if (voxelType == "double")
         computeVoxelRange((double *) source, numVoxelsInRegion);
-      else 
+      else
         throw std::runtime_error("invalid voxelType in BlockBrickedVolume::setRegion()");
     }
 #endif
     // Copy voxel data into the volume.
-    ispc::BlockBrickedVolume_setRegion(ispcEquivalent, source, 
-                                       (const ispc::vec3i &) regionCoords, 
-                                       (const ispc::vec3i &) regionSize);
+
+    const int NTASKS = regionSize.y * regionSize.z;
+#ifdef OSPRAY_USE_TBB
+    SetRegionTask task;
+    task.ispcEquivalent = ispcEquivalent;
+    task.source         = (void*)source;
+    task.regionCoords   = regionCoords;
+    task.regionSize     = regionSize;
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), task);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int taskIndex = 0; i < NTASKS; ++taskIndex) {
+      ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
+                                         source,
+                                         (const ispc::vec3i &) regionCoords,
+                                         (const ispc::vec3i &) regionSize,
+                                         taskIndex);
+    }
+#endif
     return true;
   }
 
-  void BlockBrickedVolume::createEquivalentISPC() 
+  void BlockBrickedVolume::createEquivalentISPC()
   {
     // Get the voxel type.
-    voxelType = getParamString("voxelType", "unspecified");  
-    exitOnCondition(getVoxelType() == OSP_UNKNOWN, 
+    voxelType = getParamString("voxelType", "unspecified");
+    exitOnCondition(getVoxelType() == OSP_UNKNOWN,
                     "unrecognized voxel type (must be set before calling ospSetRegion())");
 
     // Get the volume dimensions.
     this->dimensions = getParam3i("dimensions", vec3i(0));
-    exitOnCondition(reduce_min(this->dimensions) <= 0, 
+    exitOnCondition(reduce_min(this->dimensions) <= 0,
                     "invalid volume dimensions (must be set before calling ospSetRegion())");
 
     // Create an ISPC BlockBrickedVolume object and assign type-specific function pointers.
     ispcEquivalent = ispc::BlockBrickedVolume_createInstance(this,
-                                                             (int)getVoxelType(), 
+                                                             (int)getVoxelType(),
                                                              (const ispc::vec3i &)this->dimensions);
   }
 

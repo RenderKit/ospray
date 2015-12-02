@@ -25,7 +25,7 @@
 #include "ospray/common/TaskSys.h"
 
 // tbb
-#if OSPRAY_USE_TBB
+#ifdef OSPRAY_USE_TBB
 # include <tbb/blocked_range.h>
 # include <tbb/blocked_range2d.h>
 # include <tbb/parallel_for.h>
@@ -66,7 +66,7 @@ namespace ospray {
       void run(size_t jobID) const;
       void finish() const;
 
-#if OSPRAY_USE_TBB
+#ifdef OSPRAY_USE_TBB
       void operator()(const tbb::blocked_range<int>& range) const;
 #endif
     };
@@ -76,7 +76,7 @@ namespace ospray {
                      const uint32 channelFlags);
     std::string toString() const { return "ospray::LocalTiledLoadBalancer"; };
 
-#if OSPRAY_USE_TBB
+#ifdef OSPRAY_USE_TBB
     tbb::task_scheduler_init tbb_init;
 #endif
   };
