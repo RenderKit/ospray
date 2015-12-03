@@ -15,68 +15,57 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../bsdfs/DielectricLayerLambert.ih"
-//#include "../bsdfs/DielectricReflection.ih"
-#include "../bsdfs/MicrofacetPlastic.ih"
+#include "../bsdfs/Lambert.ih"
+#include "../bsdfs/DielectricLayer.ih"
 
 struct Plastic
 {
   PathTraceMaterial super;
+  vec3f pigmentColor;
+  float eta;
   float roughness;
-  DielectricLayerLambert substrate;
-  //DielectricReflection reflection;
-  MicrofacetPlastic microfacet;
+  float thickness;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-/*
-void Plastic__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,
-                  const Medium&               currentMedium,
-                  const DifferentialGeometry& dg,
-                  uniform CompositedBSDF&     brdfs,
-                  vec3f& Ns)
+const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uniform material,
+                                            uniform ShadingContext* uniform ctx,
+                                            const DifferentialGeometry& dg,
+                                            const Ray& ray,
+                                            const Medium& currentMedium)
 {
-  const uniform Plastic* uniform this = (const uniform Plastic* uniform)_this;
-  CompositedBSDF_add(&brdfs,&this->substrate.super);
-  if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->reflection.super);
-  else                          CompositedBSDF_add(&brdfs,&this->microfacet.super);
+  const uniform Plastic* uniform self = (const uniform Plastic* uniform)material;
+
+  varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
+  varying BSDF* uniform bsdf = Lambert_create(ctx, shadingFrame, self->pigmentColor);
+  bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);
+  return bsdf;
 }
-*/
 
-void Plastic__Constructor(uniform Plastic *uniform this,
-                          const uniform vec3f& pigmentColor,
-                          const uniform float eta,
-                          const uniform float roughness)
+void Plastic_Constructor(uniform Plastic* uniform self,
+                         const uniform vec3f& pigmentColor,
+                         uniform float eta,
+                         uniform float roughness,
+                         uniform float thickness)
 {
-  //PathTraceMaterial_Constructor(&this->super, Plastic__shade, NULL);
-  this->roughness = roughness;
-
-  /*
-  DielectricLayerLambert_Constructor(&this->substrate,
-                                         make_vec3f(1.0f), 1.0f, eta,
-                                         make_Lambert(pigmentColor));
-  */
-
-  //DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
-
-  /*
-  MicrofacetPlastic__Constructor(&this->microfacet,make_vec3f(1.0f),
-                                 make_FresnelDielectric(1.0f,eta),
-                                 make_PowerCosineDistribution(rcp(roughness)));
-  */
+  PathTraceMaterial_Constructor(&self->super, Plastic_getBSDF, NULL, NULL);
+  self->pigmentColor = pigmentColor;
+  self->eta = rcp(eta);
+  self->roughness = roughness;
+  self->thickness = thickness;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
 export void* uniform PathTracer_Plastic_create(const uniform vec3f& pigmentColor,
-                                  const uniform float eta,
-                                  const uniform float roughness)
+                                               uniform float eta,
+                                               uniform float roughness,
+                                               uniform float thickness)
 {
-  uniform Plastic *uniform this = uniform new uniform Plastic;
-  Plastic__Constructor(this,pigmentColor,eta,roughness);
-  return this;
+  uniform Plastic* uniform self = uniform new uniform Plastic;
+  Plastic_Constructor(self, pigmentColor, eta, roughness, thickness);
+  return self;
 }

@@ -55,6 +55,12 @@ inline vec3f refract(const vec3f& I, const vec3f& N, float cosI, float cosT, flo
   return sub(mul(eta,sub(mul(cosI,N),I)),mul(cosT,N));
 }
 
+inline float refract(float cosI, float eta)
+{
+    float k = 1.0f - eta*eta*(1.0f-cosI*cosI);
+    return sqrt(max(k, 0.0f));
+}
+
 //! \brief Computes fresnel coefficient for dielectric medium
 /*! \detailed Computes fresnel coefficient for media interface with
  *  relative refraction index eta. Eta is the outside refraction index
