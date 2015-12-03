@@ -31,14 +31,41 @@ OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?")
 
 # build and configure embree
 IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
-	INCLUDE(../cmake/build_embree_2.7.1.cmake)
+  INCLUDE(../cmake/build_embree_2.7.1.cmake)
 ELSE()
-	INCLUDE(../cmake/build_embree.cmake)
+  INCLUDE(../cmake/build_embree.cmake)
 ENDIF()
 #INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
 
-#ADD_DEFINITIONS(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
-#ADD_DEFINITIONS_ISPC(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
+# -------------------------------------------------------
+# Setup tasking system build configuration
+# -------------------------------------------------------
+
+SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
+    "Use TBB or OpenMP as for the tasking system (only local rendering for now)")
+SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY STRINGS TBB OpenMP)
+
+IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
+  SET(USE_TBB TRUE)
+ELSE()
+  SET(USE_TBB FALSE)
+ENDIF()
+
+IF(USE_TBB)
+  FIND_PACKAGE(TBB REQUIRED)
+  ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
+  INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+ELSE(USE_TBB)
+  FIND_PACKAGE(OpenMP)#NOTE(jda) - intentionally optional (fallback w/o TBB)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  SET(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+ENDIF(USE_TBB)
+
+# -------------------------------------------------------
+# Setup ospray source files
+# -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -271,7 +298,7 @@ ENDIF()
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
   ospray_embree${OSPRAY_LIB_SUFFIX}
-	ospray_embree_sse42
+  ${TBB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS})
 
@@ -288,13 +315,13 @@ INSTALL(DIRECTORY embree DESTINATION include/ospray FILES_MATCHING PATTERN "*.h"
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 IF (NOT OSPRAY_ALLOW_EXTERNAL_EMBREE)
-	INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
-		EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-		DESTINATION lib
-		)
-	INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-		DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
-		)
+        INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
+                EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+                DESTINATION lib
+                )
+        INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+                DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
+                )
 ENDIF()
 ##############################################################
 

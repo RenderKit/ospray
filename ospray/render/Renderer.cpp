@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray 
+// ospray
 #include "Renderer.h"
 #include "../common/Library.h"
-// stl 
+// stl
 #include <map>
 // ispc exports
 #include "Renderer_ispc.h"
@@ -69,14 +69,14 @@ namespace ospray {
       type = type.substr(0, atSign);
       loadLibrary("ospray_module_" + libName);
     }
-    
+
     std::map<std::string, Renderer *(*)()>::iterator it = rendererRegistry.find(type);
     if (it != rendererRegistry.end()) {
       return it->second ? (it->second)() : NULL;
     }
-    
+
     if (ospray::logLevel >= 2) {
-      std::cout << "#ospray: trying to look up renderer type '" 
+      std::cout << "#ospray: trying to look up renderer type '"
                 << type << "' for the first time" << std::endl;
     }
 
@@ -90,22 +90,22 @@ namespace ospray {
       return NULL;
     }
 
-    Renderer *renderer = (*creator)();  
+    Renderer *renderer = (*creator)();
     renderer->managedObjectType = OSP_RENDERER;
     if (renderer == NULL && ospray::logLevel >= 1) {
       std::cout << "#osp:warning[ospNewRenderer(...)]: could not create renderer of that type." << endl;
       std::cout << "#osp:warning[ospNewRenderer(...)]: Note: Requested renderer type was '" << type << "'" << endl;
     }
-    
+
     return renderer;
   }
 
-  void Renderer::renderTile(void *perFrameData, Tile &tile)
+  void Renderer::renderTile(void *perFrameData, Tile &tile, size_t jobID) const
   {
-    ispc::Renderer_renderTile(getIE(),perFrameData,(ispc::Tile&)tile);
+    ispc::Renderer_renderTile(getIE(),perFrameData,(ispc::Tile&)tile, jobID);
   }
 
-  void *Renderer::beginFrame(FrameBuffer *fb) 
+  void *Renderer::beginFrame(FrameBuffer *fb)
   {
     this->currentFB = fb;
     return ispc::Renderer_beginFrame(getIE(),fb->getIE());
@@ -118,7 +118,7 @@ namespace ospray {
       fb->accumID++;
     ispc::Renderer_endFrame(getIE(),perFrameData,fb->accumID);
   }
-  
+
   void Renderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
   {
      // double T0 = getSysTime();

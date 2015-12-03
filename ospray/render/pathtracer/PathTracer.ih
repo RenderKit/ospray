@@ -25,7 +25,6 @@
 
 struct PathTracer {
   Renderer super;
-  int32 numRays;
 
   int32 maxDepth;
   float minContribution;
