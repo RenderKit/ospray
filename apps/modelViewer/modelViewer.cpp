@@ -111,8 +111,11 @@ namespace ospray {
     fprintf(file, "\n");
     fclose(file);
 
-    snprintf((char*)out, 3*sizeX, "%s_alpha.pgm", fileName);
-    file = fopen((char*)out, "wb");
+    std::string alphaName(fileName);
+    alphaName.resize(alphaName.length()-4); // remove ".ppm"
+    alphaName.append("_alpha.pgm");
+
+    file = fopen(alphaName.c_str(), "wb");
     fprintf(file, "P5\n%i %i\n255\n", sizeX, sizeY);
     for (int y = 0; y < sizeY; y++) {
       const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
