@@ -20,30 +20,30 @@
 
 struct Conductor
 {
-  uniform BSDF super;
+  BSDF super;
   vec3f R;           //!< reflectivity coefficient
   vec3f eta;         //!< real part of refraction index
   vec3f k;           //!< imaginary part of refraction index
 };
 
-inline vec3f Conductor_eval(const uniform BSDF* uniform super,
+inline vec3f Conductor_eval(const varying BSDF* uniform super,
                             const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
-inline vec3f Conductor_sample(const uniform BSDF* uniform super,
+inline vec3f Conductor_sample(const varying BSDF* uniform super,
                               const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                               const vec2f& s, float ss)
 {
-  const uniform Conductor* uniform self = (const uniform Conductor* uniform)super;
+  const varying Conductor* uniform self = (const varying Conductor* uniform)super;
   wi = reflect(wo, getN(super));
   pdf = 1.0f;
   type = BSDF_SPECULAR_REFLECTION;
   return mul(self->R, fresnelConductor(dot(wo, getN(super)), self->eta, self->k));
 }
 
-inline void Conductor_Constructor(uniform Conductor* uniform self, const varying linear3f* uniform frame,
+inline void Conductor_Constructor(varying Conductor* uniform self, const varying linear3f* uniform frame,
                                   uniform vec3f R, uniform vec3f eta, uniform vec3f k)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION,
@@ -54,10 +54,10 @@ inline void Conductor_Constructor(uniform Conductor* uniform self, const varying
   self->k = k;
 }
 
-inline uniform BSDF* uniform Conductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+inline varying BSDF* uniform Conductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                               uniform vec3f R, uniform vec3f eta, uniform vec3f k)
 {
-  uniform Conductor* uniform self = (uniform Conductor* uniform)ShadingContext_alloc(ctx, sizeof(Conductor));
+  varying Conductor* uniform self = (varying Conductor* uniform)ShadingContext_alloc(ctx, sizeof(Conductor));
   Conductor_Constructor(self, frame, R, eta, k);
   return &self->super;
 }

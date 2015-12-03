@@ -19,7 +19,7 @@
 
 struct ThinGlass
 {
-  uniform PathTraceMaterial super;
+  PathTraceMaterial super;
 
   float eta;
   vec3f transmission;
@@ -29,7 +29,7 @@ struct ThinGlass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const uniform BSDF* uniform ThinGlass_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform ThinGlass_getBSDF(const uniform PathTraceMaterial* uniform material,
                                               uniform ShadingContext* uniform ctx,
                                               const DifferentialGeometry& dg,
                                               const Ray& ray,

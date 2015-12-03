@@ -32,7 +32,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
 {
   uniform TriangleMesh *uniform self = (uniform TriangleMesh *uniform)_self;
   dg.Ng = dg.Ns = ray.Ng;
-  
+
   const varying int indexBase = self->idxSize * ray.primID;
   const varying vec3i index = make_vec3i(self->index[indexBase+0],
                                          self->index[indexBase+1],
@@ -85,8 +85,8 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
         const vec3f *const varying v0ptr = (const uniform vec3f *)&vertex[index.x * vtxSize];
         const vec3f *const varying v1ptr = (const uniform vec3f *)&vertex[index.y * vtxSize];
         const vec3f *const varying v2ptr = (const uniform vec3f *)&vertex[index.z * vtxSize];
-        const vec3f dp02 = *v0ptr - *v2ptr; 
-        const vec3f dp12 = *v1ptr - *v2ptr; 
+        const vec3f dp02 = *v0ptr - *v2ptr;
+        const vec3f dp12 = *v1ptr - *v2ptr;
         dg.dPds = (dst12.y * dp02 - dst02.y * dp12) * invDet;
         dg.dPdt = (dst02.x * dp12 - dst12.x * dp02) * invDet;
         fallback = false;
@@ -102,7 +102,7 @@ static void TriangleMesh_postIntersect(uniform Geometry *uniform _self,
   if (flags & DG_MATERIALID) {
     if (self->prim_materialID) {
       dg.materialID = self->prim_materialID[ray.primID];
-    } 
+    }
     // TODO: gather material ID from index array if indexSize==4
     else {
       dg.materialID = self->geom_materialID;
@@ -167,7 +167,7 @@ static void intersectionFilter(void* uniform ptr,   /*!< pointer to user data */
 export void *uniform TriangleMesh_create(void *uniform cppEquivalent)
 {
   uniform TriangleMesh *uniform mesh = uniform new uniform TriangleMesh;
-  TriangleMesh_Constructor(mesh, cppEquivalent, 
+  TriangleMesh_Constructor(mesh, cppEquivalent,
                            NULL, 0, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, -1, NULL, NULL, NULL);
   return mesh;
 }
@@ -196,13 +196,13 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
   TriangleMesh_Constructor(mesh,
                            mesh->geometry.cppEquivalent,
                            model,
-                           geomID, 
+                           geomID,
                            numTriangles,
                            idxSize, vtxSize, norSize,
                            index,
                            vertex,
                            normal,
-                           color, 
+                           color,
                            texcoord,
                            geom_materialID,
                            (Material*uniform)material,
@@ -214,4 +214,3 @@ export void *uniform TriangleMesh_set(void *uniform _mesh,
                                   (uniform RTCFilterFuncVarying)&intersectionFilter);
 #endif
 }
-

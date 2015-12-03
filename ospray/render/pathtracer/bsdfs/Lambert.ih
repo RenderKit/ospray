@@ -20,11 +20,11 @@
 
 struct Lambert
 {
-  uniform BSDF super;
+  BSDF super;
   vec3f R;
 };
 
-inline vec3f Lambert_eval(const uniform BSDF* uniform super,
+inline vec3f Lambert_eval(const varying BSDF* uniform super,
                           const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying Lambert* uniform self = (const varying Lambert* uniform)super;
@@ -32,7 +32,7 @@ inline vec3f Lambert_eval(const uniform BSDF* uniform super,
   return self->R/pi * clamp(dot(wi, getN(super)));
 }
 
-inline vec3f Lambert_sample(const uniform BSDF* uniform super,
+inline vec3f Lambert_sample(const varying BSDF* uniform super,
                             const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                             const vec2f& s, float ss)
 {
@@ -53,7 +53,7 @@ inline void Lambert_Constructor(varying Lambert* uniform self, const varying lin
   self->R = R;
 }
 
-inline uniform BSDF* uniform Lambert_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+inline varying BSDF* uniform Lambert_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                             const vec3f& R)
 {
   varying Lambert* uniform self = (varying Lambert* uniform)ShadingContext_alloc(ctx, sizeof(Lambert));

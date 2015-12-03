@@ -34,7 +34,7 @@ struct Minneart
 ///////////////////////////////////////////////////////////////////////////////
 // uniform Minneart
 
-vec3f uniform_Minneart__eval(const uniform BSDF* uniform _this,
+vec3f uniform_Minneart__eval(const varying BSDF* uniform _this,
                              const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
 {
   const uniform Minneart* uniform this = (const uniform Minneart* uniform) _this;
@@ -43,7 +43,7 @@ vec3f uniform_Minneart__eval(const uniform BSDF* uniform _this,
   return mul(backScatter * cosThetaI * one_over_pi, this->R);
 }
 
-vec3f uniform_Minneart__sample(const uniform BSDF* uniform _this,
+vec3f uniform_Minneart__sample(const varying BSDF* uniform _this,
                                const vec3f &wo,
                                const DifferentialGeometry &dg,
                                Sample3f &wi,
@@ -71,7 +71,7 @@ uniform Minneart make_Minneart(const uniform vec3f R, const uniform float f) {
 ///////////////////////////////////////////////////////////////////////////////
 // varying Minneart
 
-vec3f varying_Minneart__eval(const uniform BSDF* uniform _this,
+vec3f varying_Minneart__eval(const varying BSDF* uniform _this,
                              const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
 {
   const varying Minneart* uniform this = (const varying Minneart* uniform) _this;
@@ -80,7 +80,7 @@ vec3f varying_Minneart__eval(const uniform BSDF* uniform _this,
   return mul(backScatter * cosThetaI * one_over_pi, this->R);
 }
 
-vec3f varying_Minneart__sample(const uniform BSDF* uniform _this,
+vec3f varying_Minneart__sample(const varying BSDF* uniform _this,
                                const vec3f &wo,
                                const DifferentialGeometry &dg,
                                Sample3f &wi,

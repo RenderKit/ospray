@@ -23,7 +23,7 @@
 
 struct OBJ
 {
-  uniform PathTraceMaterial super;
+  PathTraceMaterial super;
   uniform Texture2D* map_d;
   float d;
   uniform Texture2D* map_Kd;
@@ -38,14 +38,14 @@ struct OBJ
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const uniform BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform material,
                                         uniform ShadingContext* uniform ctx,
                                         const DifferentialGeometry& dg,
                                         const Ray& ray,
                                         const Medium& currentMedium)
 {
   uniform const OBJ* uniform self = (uniform const OBJ* uniform)material;
-  uniform BSDF* uniform bsdf = MultiBSDF_create(ctx);
+  varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
   // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
 
   /*! normal map */

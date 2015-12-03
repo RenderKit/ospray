@@ -20,10 +20,10 @@
 namespace ospray {
   namespace pathtracer {
     struct Metal : public ospray::Material {
-      //! \brief common function to help printf-debugging 
+      //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
       virtual std::string toString() const { return "ospray::pathtracer::Metal"; }
-      
+
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() != NULL) return;
@@ -36,7 +36,7 @@ namespace ospray {
           = getParam3f("k",vec3f(1.f)); //3.06,2.4,1.88));
         const float roughness
           = getParamf("roughness",0.01f);
-        
+
         ispcEquivalent = ispc::PathTracer_Metal_create
           ((const ispc::vec3f&)reflectance,
            (const ispc::vec3f&)eta,

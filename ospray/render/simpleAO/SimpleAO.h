@@ -17,7 +17,7 @@
 #pragma once
 
 /*! \defgroup ospray_render_ao16 Simple 16-sample Ambient Occlusion Renderer
-  
+
   \ingroup ospray_supported_renderers
 
   \brief Implements a simple renderer that shoots 16 rays (generated
@@ -41,7 +41,7 @@ namespace ospray {
   struct Model;
 
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
-    
+
     \detailed This renderer uses a set of 16 precomputed AO directions
     to shoot shadow rays; for accumulation these 16 directions are
     (semi-)randomly rotated to give different directions every frame
@@ -58,8 +58,8 @@ namespace ospray {
     rotation of the first 8 in the third, etc.
    */
   struct SimpleAO : public Renderer {
-    
-    //! \brief Material used by the SimpleAO renderer 
+
+    //! \brief Material used by the SimpleAO renderer
     /*! \detailed Since the SimpleAO Renderer only cares about a
         diffuse material component this material only stores diffuse
         and diffuse texture */
@@ -71,18 +71,18 @@ namespace ospray {
       /*! \brief commit the object's outstanding changes
        *         (such as changed parameters etc) */
       virtual void commit();
-      
+
       // -------------------------------------------------------
-      // member variables 
+      // member variables
       // -------------------------------------------------------
 
-      //! \brief diffuse material component, that's all we care for 
-      vec3f Kd;       
+      //! \brief diffuse material component, that's all we care for
+      vec3f Kd;
 
       //! \brief diffuse texture, if available
       Ref<Texture> map_Kd;
     };
-  
+
 
     //! \brief Constructor
     SimpleAO();
@@ -98,7 +98,7 @@ namespace ospray {
     virtual void commit();
 
     //! background color we are going to use if the primary ray hit nothing
-    vec3f bgColor; 
+    vec3f bgColor;
   };
 
 } // ::ospray

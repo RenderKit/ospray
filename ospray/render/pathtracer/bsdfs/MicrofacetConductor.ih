@@ -20,13 +20,13 @@
 
 struct MicrofacetConductor
 {
-  uniform BSDF super;
+  BSDF super;
   uniform vec3f R;
   uniform FresnelConductor fresnel;
   PowerCosineDistribution distribution;
 };
 
-inline vec3f MicrofacetConductor_eval(const uniform BSDF* uniform super,
+inline vec3f MicrofacetConductor_eval(const varying BSDF* uniform super,
                                       const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
@@ -46,7 +46,7 @@ inline vec3f MicrofacetConductor_eval(const uniform BSDF* uniform super,
   return mul(mul(self->R, F), D * G * rcp(4.0f*cosThetaO));
 }
 
-inline vec3f MicrofacetConductor_sample(const uniform BSDF* uniform super,
+inline vec3f MicrofacetConductor_sample(const varying BSDF* uniform super,
                                         const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                         const vec2f& s, float ss)
 {
@@ -74,7 +74,7 @@ inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform
   self->distribution = make_PowerCosineDistribution(exp_);
 }
 
-inline uniform BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                                         uniform vec3f R, uniform vec3f eta, uniform vec3f k, float exp_)
 {
   varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));

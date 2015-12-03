@@ -19,7 +19,7 @@
 
 struct Glass
 {
-  uniform PathTraceMaterial super;
+  PathTraceMaterial super;
 
   Medium mediumInside;
   Medium mediumOutside;
@@ -28,7 +28,7 @@ struct Glass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const uniform BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* uniform material,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,

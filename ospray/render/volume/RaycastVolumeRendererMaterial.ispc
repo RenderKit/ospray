@@ -23,7 +23,7 @@ export void *uniform RaycastVolumeRendererMaterial_create(void *uniform cppE)
   return mat;
 }
 
-export void RaycastVolumeRendererMaterial_set(void *uniform _mat, 
+export void RaycastVolumeRendererMaterial_set(void *uniform _mat,
                                               const uniform vec3f &Kd,
                                               void *uniform _volume)
 {

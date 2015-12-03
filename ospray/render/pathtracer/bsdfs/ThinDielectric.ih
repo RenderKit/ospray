@@ -20,20 +20,20 @@
 
 struct ThinDielectric
 {
-  uniform BSDF super;
+  BSDF super;
 
   uniform float eta;       /*! relative refraction index etai/etat of both media */
   vec3f transmission;      /*! volumetric transmission coefficient */
   uniform float thickness; /*! thickness of the medium */
 };
 
-inline vec3f ThinDielectric_eval(const uniform BSDF* uniform super,
+inline vec3f ThinDielectric_eval(const varying BSDF* uniform super,
                                  const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
-inline vec3f ThinDielectric_sample(const uniform BSDF* uniform super,
+inline vec3f ThinDielectric_sample(const varying BSDF* uniform super,
                                    const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                    const vec2f& s, float ss)
 {
@@ -75,7 +75,7 @@ inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self, con
   self->thickness = thickness;
 }
 
-inline uniform BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                                    uniform float eta, vec3f transmission, uniform float thickness)
 {
   varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));

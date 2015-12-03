@@ -26,7 +26,7 @@ struct MicrofacetPlastic
   vec3f                    R;
 };
 
-inline vec3f MicrofacetPlastic__eval(const uniform BSDF* uniform _this,
+inline vec3f MicrofacetPlastic__eval(const varying BSDF* uniform _this,
                                    const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
 {
   const uniform MicrofacetPlastic* uniform this = (const uniform MicrofacetPlastic* uniform) _this;
@@ -44,7 +44,7 @@ inline vec3f MicrofacetPlastic__eval(const uniform BSDF* uniform _this,
   return mul(mul(this->R, F), D * G * rcp(4.0f*cosThetaO));
 }
 
-inline vec3f MicrofacetPlastic__sample(const uniform BSDF* uniform _this,
+inline vec3f MicrofacetPlastic__sample(const varying BSDF* uniform _this,
                                      const vec3f &wo,
                                      const DifferentialGeometry &dg,
                                      Sample3f &wi,

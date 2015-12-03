@@ -20,17 +20,17 @@
 
 struct Dielectric
 {
-  uniform BSDF super;
+  BSDF super;
   float eta;
 };
 
-inline vec3f Dielectric_eval(const uniform BSDF* uniform super,
+inline vec3f Dielectric_eval(const varying BSDF* uniform super,
                              const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
-inline vec3f Dielectric_sample(const uniform BSDF* uniform super,
+inline vec3f Dielectric_sample(const varying BSDF* uniform super,
                                const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                const vec2f& s, float ss)
 {
@@ -70,7 +70,7 @@ inline void Dielectric_Constructor(varying Dielectric* uniform self, const varyi
   self->eta = eta;
 }
 
-inline uniform BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                                float eta)
 {
   varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));

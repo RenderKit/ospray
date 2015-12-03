@@ -53,11 +53,11 @@ struct BSDF;
 typedef uint32 BSDFType;
 
 /*! Result is multiplied by dot(wi,N). */
-typedef vec3f (*BSDF_EvalFunc)(const uniform BSDF* uniform self,
+typedef vec3f (*BSDF_EvalFunc)(const varying BSDF* uniform super,
                                const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf);
 
 /*! Result is multiplied by dot(wi,N)/pdf. */
-typedef vec3f (*BSDF_SampleFunc)(const uniform BSDF* uniform self,
+typedef vec3f (*BSDF_SampleFunc)(const varying BSDF* uniform super,
                                  const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                  const vec2f& s, float ss);
 
@@ -69,7 +69,7 @@ struct BSDF
   const varying linear3f* uniform frame;
 };
 
-inline void BSDF_Constructor(uniform BSDF* uniform self,
+inline void BSDF_Constructor(varying BSDF* uniform self,
                              uniform BSDFType type,
                              uniform BSDF_EvalFunc eval,
                              uniform BSDF_SampleFunc sample,
@@ -81,12 +81,12 @@ inline void BSDF_Constructor(uniform BSDF* uniform self,
   self->frame = frame;
 }
 
-inline vec3f getN(const uniform BSDF* uniform bsdf)
+inline vec3f getN(const varying BSDF* uniform bsdf)
 {
   return bsdf->frame->vz;
 }
 
-inline linear3f getFrame(const uniform BSDF* uniform bsdf)
+inline linear3f getFrame(const varying BSDF* uniform bsdf)
 {
   return *bsdf->frame;
 }

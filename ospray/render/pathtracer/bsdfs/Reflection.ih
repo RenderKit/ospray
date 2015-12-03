@@ -20,17 +20,17 @@
 
 struct Reflection
 {
-  uniform BSDF super;
+  BSDF super;
   vec3f reflectance;
 };
 
-inline vec3f Reflection_eval(const uniform BSDF* uniform super,
+inline vec3f Reflection_eval(const varying BSDF* uniform super,
                              const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
-inline vec3f Reflection_sample(const uniform BSDF* uniform super,
+inline vec3f Reflection_sample(const varying BSDF* uniform super,
                                const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                const vec2f& s, float ss)
 {
@@ -51,7 +51,7 @@ inline void Reflection_Constructor(varying Reflection* uniform self, const varyi
   self->reflectance = reflectance;
 }
 
-inline uniform BSDF* uniform Reflection_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+inline varying BSDF* uniform Reflection_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
                                                vec3f reflectance)
 {
   varying Reflection* uniform self = (varying Reflection* uniform)ShadingContext_alloc(ctx, sizeof(Reflection));

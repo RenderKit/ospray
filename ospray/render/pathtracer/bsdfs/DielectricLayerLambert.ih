@@ -28,7 +28,7 @@ struct DielectricLayerLambert
   Lambert ground;   //!< the BSDF of the ground layer
 };
 
-inline vec3f DielectricLayerLambert__eval(const uniform BSDF* uniform _this,
+inline vec3f DielectricLayerLambert__eval(const varying BSDF* uniform _this,
                                              const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
 {
   const uniform DielectricLayerLambert* uniform this =
@@ -49,7 +49,7 @@ inline vec3f DielectricLayerLambert__eval(const uniform BSDF* uniform _this,
   return mul(mul(mul(Fo,this->T), mul(Fg, this->T)),Fi);
 }
 
-inline vec3f DielectricLayerLambert__sample(const uniform BSDF* uniform _this,
+inline vec3f DielectricLayerLambert__sample(const varying BSDF* uniform _this,
                                                const vec3f &wo,
                                                const DifferentialGeometry &dg,
                                                Sample3f &wi,

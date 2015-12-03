@@ -20,7 +20,7 @@
 
 struct Specular
 {
-  uniform BSDF super;
+  BSDF super;
 
   /*! The reflectivity parameter. The range is [0,1] where 0 means
    *  no reflection at all, and 1 means full reflection. */
@@ -32,7 +32,7 @@ struct Specular
   float exp;
 };
 
-inline vec3f Specular_eval(const uniform BSDF* uniform super,
+inline vec3f Specular_eval(const varying BSDF* uniform super,
                            const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying Specular* uniform self = (const varying Specular* uniform)super;
@@ -42,7 +42,7 @@ inline vec3f Specular_eval(const uniform BSDF* uniform super,
   return mul(self->R, (self->exp+2) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(super))));
 }
 
-inline vec3f Specular_sample(const uniform BSDF* uniform super,
+inline vec3f Specular_sample(const varying BSDF* uniform super,
                              const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                              const vec2f& s, float ss)
 {
@@ -65,7 +65,7 @@ inline void Specular_Constructor(varying Specular* uniform self,
   self->exp = exp_;
 }
 
-inline uniform BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx,
+inline varying BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx,
                                              const varying linear3f* uniform frame,
                                              vec3f R,
                                              float exp_)

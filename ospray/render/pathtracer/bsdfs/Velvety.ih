@@ -34,7 +34,7 @@ struct Velvety
 ///////////////////////////////////////////////////////////////////////////////
 // uniform Velvety
 
-vec3f uniform_Velvety__eval(const uniform BSDF* uniform _this,
+vec3f uniform_Velvety__eval(const varying BSDF* uniform _this,
                             const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
 {
   const uniform Velvety* uniform this = (const uniform Velvety* uniform) _this;
@@ -45,7 +45,7 @@ vec3f uniform_Velvety__eval(const uniform BSDF* uniform _this,
   return mul(horizonScatter * cosThetaI * one_over_pi, this->R);
 }
 
-vec3f uniform_Velvety__sample(const uniform BSDF* uniform _this,
+vec3f uniform_Velvety__sample(const varying BSDF* uniform _this,
                               const vec3f &wo,
                               const DifferentialGeometry &dg,
                               Sample3f &wi,
@@ -73,7 +73,7 @@ uniform Velvety make_Velvety(const uniform vec3f R, const uniform float f) {
 ///////////////////////////////////////////////////////////////////////////////
 // varying Velvety
 
-vec3f varying_Velvety__eval(const uniform BSDF* uniform _this,
+vec3f varying_Velvety__eval(const varying BSDF* uniform _this,
                             const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
 {
   const varying Velvety* uniform this = (const varying Velvety* uniform) _this;
@@ -84,7 +84,7 @@ vec3f varying_Velvety__eval(const uniform BSDF* uniform _this,
   return mul(horizonScatter * cosThetaI * one_over_pi, this->R);
 }
 
-vec3f varying_Velvety__sample(const uniform BSDF* uniform _this,
+vec3f varying_Velvety__sample(const varying BSDF* uniform _this,
                               const vec3f &wo,
                               const DifferentialGeometry &dg,
                               Sample3f &wi,

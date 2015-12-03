@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-// ospray 
+// ospray
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/camera/PerspectiveCamera.ih"
 #include "ospray/common/Model.ih"
@@ -57,10 +57,10 @@ void RaycastRenderer_renderSample_eyeLight(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(1.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(1.f);
   else {
-    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir); 
+    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.2f+.8f*abs(c));
   }
 }
@@ -74,8 +74,8 @@ void RaycastRenderer_renderSample_Ng(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(1.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(1.f);
   else {
     sample.rgb = absf(sample.ray.Ng);
   }
@@ -90,8 +90,8 @@ void RaycastRenderer_renderSample_Ns(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(1.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
@@ -108,8 +108,8 @@ void RaycastRenderer_renderSample_dPds(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(1.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
@@ -132,8 +132,8 @@ void RaycastRenderer_renderSample_dPdt(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(1.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
@@ -156,8 +156,8 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(uniform Renderer *uniform
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(0.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(0.f);
   else {
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
@@ -177,10 +177,10 @@ void RaycastRenderer_renderSample_eyeLight_primID(uniform Renderer *uniform _sel
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(0.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(0.f);
   else {
-    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir); 
+    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.3f+.8f*abs(c))*make_random_color(sample.ray.primID);
   }
 }
@@ -194,10 +194,10 @@ void RaycastRenderer_renderSample_eyeLight_instID(uniform Renderer *uniform _sel
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(0.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(0.f);
   else {
-    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir); 
+    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.3f+.8f*abs(c))*make_random_color(sample.ray.instID);
   }
 }
@@ -211,10 +211,10 @@ void RaycastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _sel
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(0.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(0.f);
   else {
-    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir); 
+    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.3f+.8f*abs(c))*make_random_color(sample.ray.geomID);
   }
 }
@@ -229,10 +229,10 @@ void RaycastRenderer_renderSample_backfacing_Ng(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(1.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(1.f);
   else {
-    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir); 
+    const float c = dot(normalize(sample.ray.Ng),sample.ray.dir);
     sample.rgb = make_vec3f(.2f+.8f*abs(c));
     if (c > 0.f)
       sample.rgb.y = 0.f;
@@ -248,12 +248,12 @@ void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
-  if (sample.ray.geomID < 0) 
-    sample.rgb = make_vec3f(1.f); 
+  if (sample.ray.geomID < 0)
+    sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
-    const float c = dot(dg.Ns,sample.ray.dir); 
+    const float c = dot(dg.Ns,sample.ray.dir);
     sample.rgb = make_vec3f(.2f+.8f*abs(c));
     if (c > 0.f)
       sample.rgb.y = 0.f;
@@ -272,7 +272,7 @@ void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
       = RaycastRenderer_renderSample_##name;                            \
     return self;                                                        \
   }                                                                     \
-  
+
 DEFINE_RAYCAST_RENDERER(testFrame);
 DEFINE_RAYCAST_RENDERER(eyeLight);
 DEFINE_RAYCAST_RENDERER(Ng);

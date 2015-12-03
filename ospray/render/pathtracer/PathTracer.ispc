@@ -175,7 +175,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Shade surface. */
     uniform ShadingContext ctx;
     ShadingContext_Constructor(&ctx);
-    const uniform BSDF* bsdf = NULL;
+    const varying BSDF* bsdf = NULL;
 #if 1
     uniform PathTraceMaterial* m = (uniform PathTraceMaterial*)dg.material;
     foreach_unique(mm in m)

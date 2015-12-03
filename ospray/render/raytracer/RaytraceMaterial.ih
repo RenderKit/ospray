@@ -28,10 +28,9 @@ struct RaytraceMaterial
   float d;
   const uniform Texture2D *map_Kd;
   vec3f Kd;
-  const uniform Texture2D *map_Ks; 
+  const uniform Texture2D *map_Ks;
   vec3f Ks;
-  const uniform Texture2D *map_Ns; 
+  const uniform Texture2D *map_Ns;
   float Ns;
   const uniform Texture2D *map_Bump;
 };
-
