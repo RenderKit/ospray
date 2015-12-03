@@ -32,25 +32,25 @@ namespace ospray {
   }
 
   /*! \brief create a material of given type */
-  Material *PathTracer::createMaterial(const char *type) 
-  { 
+  Material *PathTracer::createMaterial(const char *type)
+  {
     std::string ptType = std::string("PathTracer_")+type;
     Material *material = Material::createMaterial(ptType.c_str());
     if (!material) {
       std::map<std::string,int> numOccurrances;
       const std::string T = type;
-      if (numOccurrances[T] == 0) 
-        std::cout << "#osp:PT: does not know material type '" << type << "'" << 
+      if (numOccurrances[T] == 0)
+        std::cout << "#osp:PT: does not know material type '" << type << "'" <<
           " (replacing with OBJMaterial)" << std::endl;
       numOccurrances[T] ++;
       material = Material::createMaterial("PathTracer_OBJMaterial");
-      // throw std::runtime_error("invalid path tracer material "+std::string(type)); 
+      // throw std::runtime_error("invalid path tracer material "+std::string(type));
     }
     material->refInc();
     return material;
   }
 
-  void PathTracer::commit() 
+  void PathTracer::commit()
   {
     Renderer::commit();
 
@@ -76,7 +76,7 @@ namespace ospray {
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);
   OSP_REGISTER_RENDERER(PathTracer,pt);
 
-  extern "C" void ospray_init_module_pathtracer() 
+  extern "C" void ospray_init_module_pathtracer()
   {
     printf("Loaded plugin 'pathtracer' ...\n");
   }

@@ -184,6 +184,7 @@ void Renderer_Constructor(uniform Renderer *uniform self,
   self->backgroundEnabled = true;
   self->maxDepthTexture = NULL;
   self->renderSample = Renderer_default_renderSample;
+  self->renderTile   = Renderer_default_renderTileJob;
   self->beginFrame   = Renderer_default_beginFrame;
   self->endFrame     = Renderer_default_endFrame;
   self->toneMap      = NULL;
@@ -207,7 +208,7 @@ export void Renderer_renderTile(void *uniform _self,
                                 uniform int jobID)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
-  Renderer_default_renderTileJob(self, perFrameData, tile, jobID);
+  self->renderTile(self, perFrameData, tile, jobID);
 }
 
 export void *uniform Renderer_beginFrame(void *uniform _self,
