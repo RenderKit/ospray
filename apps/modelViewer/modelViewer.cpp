@@ -104,9 +104,24 @@ namespace ospray {
       for (int x = 0; x < sizeX; x++) {
         out[3*x + 0] = in[4*x + 0];
         out[3*x + 1] = in[4*x + 1];
-        out[3*x + 2] = in[4*x +2 ];
+        out[3*x + 2] = in[4*x + 2];
       }
       fwrite(out, 3*sizeX, sizeof(char), file);
+    }
+    fprintf(file, "\n");
+    fclose(file);
+
+    std::string alphaName(fileName);
+    alphaName.resize(alphaName.length()-4); // remove ".ppm"
+    alphaName.append("_alpha.pgm");
+
+    file = fopen(alphaName.c_str(), "wb");
+    fprintf(file, "P5\n%i %i\n255\n", sizeX, sizeY);
+    for (int y = 0; y < sizeY; y++) {
+      const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
+      for (int x = 0; x < sizeX; x++)
+        out[x] = in[4*x + 3];
+      fwrite(out, sizeX, sizeof(char), file);
     }
     fprintf(file, "\n");
     fclose(file);

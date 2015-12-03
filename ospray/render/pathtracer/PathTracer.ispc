@@ -126,7 +126,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
   }
 }
 
-vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
+ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              const vec2f &pixel, // normalized, i.e. in [0..1]
                              LightPath &lightPath,
                              varying RandomTEA* uniform rng)
@@ -134,24 +134,24 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   uniform uint32/*BRDFType*/ directLightingBRDFTypes = (uniform uint32)(DIFFUSE | GLOSSY);
   uniform uint32/*BRDFType*/ giBRDFTypes = (uniform uint32)(ALL);
 
+  ScreenSample sample;
+  sample.alpha = 1.f;
   vec3f L = make_vec3f(0.f);
   vec3f Lw = make_vec3f(1.f);
 
-  while (true)
-  {
-    /*! Terminate path if too long or contribution too low. */
-    if (lightPath.depth >= self->maxDepth)
-      return L;
-    if (reduce_max(lightPath.throughput) <= self->minContribution)
-      return L;
-
+  do {
     /*! Traverse ray. */
     traceRay(self->super.model, lightPath.ray);
+
+    if (lightPath.depth == 0)
+      sample.z = lightPath.ray.t;
 
     const vec3f wo = neg(lightPath.ray.dir);
 
     /*! Environment shading when nothing hit. */
     if (noHit(lightPath.ray)) {
+      if (lightPath.unbent)
+        sample.alpha = 1.0f - dot(Lw, make_vec3f(0.212671f, 0.715160f, 0.072169f)); // TODO luminance(Lw);
       if ((bool)self->backplate & lightPath.unbent) {
         L = L + Lw * get3f(self->backplate, pixel);
       } else if (!lightPath.ignoreVisibleLights)
@@ -160,8 +160,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
             L = L + Lw * l->evalEnv(l, wo);
           }
 
-      return L;
+      break;
     }
+
 
     DifferentialGeometry dg;
     postIntersect(self->super.model, dg, lightPath.ray,
@@ -242,8 +243,9 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     }
 
     /*! Global illumination. Pick one BRDF component and sample it. */
+
     if (lightPath.depth >= self->maxDepth)
-      return L;
+      break;
 
     /*! sample brdf */
     Sample3f wi = make_Sample3f(make_vec3f(0.0f),0.0f); uint32 type = 0;
@@ -257,7 +259,7 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
     /*! Continue only if we hit something valid. */
     if (reduce_max(c) <= 0.0f | wi.pdf <= PDF_CULLING)
-      return L;
+      break;
 
     /*! Compute simple volumetric effect. */
     const vec3f transmission = lightPath.lastMedium.transmission;
@@ -278,9 +280,11 @@ vec3f PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                 self->super.epsilon,inf,
            c,(type & directLightingBRDFTypes) != NONE);
 
-    Lw = mul(mul(Lw,c),rcp(wi.pdf));
-  }
-  return L;
+    Lw = Lw * (c * rcp(wi.pdf));
+  } while (reduce_max(lightPath.throughput) > self->minContribution);
+
+  sample.rgb = L;
+  return sample;
 }
 
 
@@ -294,9 +298,11 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 {
   uniform FrameBuffer *uniform fb = self->super.fb;
 
-  vec3f L = make_vec3f(0.f);
   uniform Camera *uniform camera = self->super.camera;
   ScreenSample screenSample;
+  screenSample.rgb = make_vec3f(0.f);
+  screenSample.alpha = 0.f;
+  screenSample.z = inf;
 
   screenSample.sampleID.x = ix;
   screenSample.sampleID.y = iy;
@@ -322,12 +328,15 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
     LightPath lightPath;
     init_LightPath(lightPath, screenSample.ray);
 
-    L = L + PathTraceIntegrator_Li(self, cameraSample.screen, lightPath, rng);
+    ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
+                                                 lightPath, rng);
+    screenSample.rgb = screenSample.rgb + sample.rgb;
+    screenSample.alpha = screenSample.alpha + sample.alpha;
+    screenSample.z = min(screenSample.z, sample.z);
   }
 
-  screenSample.alpha = 1.f;
-  screenSample.z = inf;
-  screenSample.rgb = L * rcpf(spp);
+  screenSample.rgb = screenSample.rgb * rcpf(spp);
+  screenSample.alpha = screenSample.alpha * rcpf(spp);
   return screenSample;
 }
 
@@ -335,7 +344,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
 
 void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
-                           uniform FrameBuffer *uniform fb)
+                                    uniform FrameBuffer *uniform fb)
 {
   _self->fb = fb;
   uniform PathTracer  *uniform self = (uniform PathTracer *uniform)_self;
