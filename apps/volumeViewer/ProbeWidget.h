@@ -17,6 +17,7 @@
 #pragma once
 
 #include <ospray/ospray.h>
+#include "ospray/common/OSPCommon.h"
 #include <QtGui>
 #include <vector>
 
@@ -29,7 +30,7 @@ Q_OBJECT
 
 public:
 
-  ProbeCoordinateWidget(const std::string &label, osp::vec2f range);
+  ProbeCoordinateWidget(const std::string &label, ospray::vec2f range);
 
   float getValue() { return spinBox.value(); }
 
@@ -43,7 +44,7 @@ protected slots:
 
 protected:
 
-  osp::vec2f range;
+  ospray::vec2f range;
 
   QSlider slider;
   QDoubleSpinBox spinBox;
@@ -79,7 +80,7 @@ protected:
   QOSPRayWindow *osprayWindow;
 
   //! Bounding box to consider.
-  osp::box3f boundingBox;
+  ospray::box3f boundingBox;
 
   //! Active volume to probe.
   OSPVolume volume;
@@ -88,7 +89,7 @@ protected:
   bool isEnabled;
 
   //! The probe coordinate.
-  osp::vec3f coordinate;
+  ospray::vec3f coordinate;
 
   // UI elements.
   std::vector<ProbeCoordinateWidget *> probeCoordinateWidgets;

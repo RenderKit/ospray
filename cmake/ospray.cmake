@@ -26,15 +26,23 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT "Must be multiple of largest vector width
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 
+# project-wide OpenMP flags for all compilers
+find_package(OpenMP QUIET)
+if(OPENMP_FOUND)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
+
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY_NO_ARCH)
-  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
-    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
-  ENDIF()
+#  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
+#    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
+#  ENDIF()
 
   SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
   SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})

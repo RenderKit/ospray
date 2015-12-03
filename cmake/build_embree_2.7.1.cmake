@@ -21,9 +21,8 @@ FIND_PACKAGE(Threads REQUIRED)
 
 CONFIGURE_OSPRAY()
 
-ADD_DEFINITIONS(-DTASKING_TBB_INTERNAL)
-
-ADD_SUBDIRECTORY(${OSPRAY_EMBREE_SOURCE_DIR}/common embree_common)
+ADD_DEFINITIONS(-DTASKING_TBB)
+#ADD_DEFINITIONS(-DTASKING_TBB_INTERNAL)
 
 SET(FLAGS_SSE3 ${OSPRAY_ARCH_SSE3})
 SET(FLAGS_SSSE3 ${OSPRAY_ARCH_SSSE3})
@@ -33,23 +32,23 @@ SET(FLAGS_AVX ${OSPRAY_ARCH_AVX})
 SET(FLAGS_AVX2 ${OSPRAY_ARCH_AVX2})
 SET(FLAGS_AVX512 ${OSPRAY_ARCH_AVX512})
 
-
 IF (OSPRAY_EMBREE_ENABLE_SSE)
-	ADD_DEFINITIONS(-D__TARGET_SIMD4__=1)
-	SET(TARGET_SSE42 ON)
+        ADD_DEFINITIONS(-D__TARGET_SIMD4__=1)
+        SET(TARGET_SSE42 ON)
 ENDIF()
 IF (OSPRAY_EMBREE_ENABLE_AVX)
-	ADD_DEFINITIONS(-D__TARGET_SIMD8__=1)
-	SET(TARGET_AVX ON)
+        ADD_DEFINITIONS(-D__TARGET_SIMD8__=1)
+        SET(TARGET_AVX ON)
 ENDIF()
 IF (OSPRAY_EMBREE_ENABLE_AVX2)
-	ADD_DEFINITIONS(-D__TARGET_SIMD8__=1)
-	SET(TARGET_AVX2 ON)
+        ADD_DEFINITIONS(-D__TARGET_SIMD8__=1)
+        SET(TARGET_AVX2 ON)
 ENDIF()
 IF (OSPRAY_EMBREE_ENABLE_AVX512)
-	ADD_DEFINITIONS(-D__TARGET_SIMD16__=1)
-	SET(TARGET_AVX512 ON)
+        ADD_DEFINITIONS(-D__TARGET_SIMD16__=1)
+        SET(TARGET_AVX512 ON)
 ENDIF()
+
 
 SET(EMBREE_PATH ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon/)
 
@@ -68,10 +67,10 @@ CONFIGURE_FILE(
   "${PROJECT_BINARY_DIR}/version.h"
 )
 
-
+ADD_SUBDIRECTORY(${OSPRAY_EMBREE_SOURCE_DIR}/common embree_common)
 
 SET(EMBREE_LIBRARY_FILES
- 
+
 #   embree.rc
 
   ${EMBREE_PATH}../../common/tasking/taskscheduler_tbb.cpp
@@ -111,8 +110,8 @@ SET(EMBREE_LIBRARY_FILES
   ${EMBREE_PATH}geometry/primitive.cpp
   ${EMBREE_PATH}geometry/instance_intersector1.cpp
   ${EMBREE_PATH}geometry/instance_intersector.cpp
-  ${EMBREE_PATH}geometry/grid_soa.cpp	
-  ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp	
+  ${EMBREE_PATH}geometry/grid_soa.cpp
+  ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
   ${EMBREE_PATH}builders/primrefgen.cpp
 
   ${EMBREE_PATH}bvh/bvh.cpp
@@ -158,12 +157,12 @@ IF (TARGET_SSE42 AND EMBREE_LIBRARY_FILES_SSE42)
 ENDIF()
 
 SET(EMBREE_LIBRARY_FILES_AVX
-    
+
     ${EMBREE_PATH}../common/scene_subdiv_mesh_avx.cpp
 
     ${EMBREE_PATH}geometry/primitive.cpp
     ${EMBREE_PATH}geometry/instance_intersector1.cpp
-    
+
     ${EMBREE_PATH}geometry/grid_soa.cpp
     ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
     ${EMBREE_PATH}builders/primrefgen.avx.cpp
@@ -178,7 +177,7 @@ SET(EMBREE_LIBRARY_FILES_AVX
     ${EMBREE_PATH}bvh4/bvh4_builder_instancing.avx.cpp
     ${EMBREE_PATH}bvh4/bvh4_builder_subdiv.avx.cpp
     ${EMBREE_PATH}bvh/bvh_intersector1.cpp
-    
+
     ${EMBREE_PATH}bvh/bvh.cpp
     ${EMBREE_PATH}bvh/bvh_statistics.cpp
     )
@@ -251,6 +250,13 @@ IF (TARGET_SSE42 AND EMBREE_LIBRARY_FILES_SSE42)
   SET_TARGET_PROPERTIES(ospray_embree_sse42 PROPERTIES COMPILE_FLAGS "${FLAGS_SSE42}")
   SET_PROPERTY(TARGET ospray_embree_sse42 PROPERTY FOLDER kernels)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ospray_embree_sse42)
+  INSTALL(TARGETS ospray_embree_sse42
+    EXPORT ospray_embree_sse42Export
+    DESTINATION lib
+  )
+  INSTALL(EXPORT ospray_embree_sse42Export
+    DESTINATION ${CMAKE_DIR} FILE libospray_embree_sse42Targets.cmake
+  )
 ENDIF ()
 
 IF (TARGET_AVX  AND EMBREE_LIBRARY_FILES_AVX)
@@ -258,13 +264,27 @@ IF (TARGET_AVX  AND EMBREE_LIBRARY_FILES_AVX)
   SET_TARGET_PROPERTIES(ospray_embree_avx PROPERTIES COMPILE_FLAGS "${FLAGS_AVX}")
   SET_PROPERTY(TARGET ospray_embree_avx PROPERTY FOLDER kernels)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ospray_embree_avx)
- ENDIF()
+  INSTALL(TARGETS ospray_embree_avx
+    EXPORT ospray_embree_avxExport
+    DESTINATION lib
+  )
+  INSTALL(EXPORT ospray_embree_avxExport
+    DESTINATION ${CMAKE_DIR} FILE libospray_embree_avxTargets.cmake
+  )
+ENDIF()
 
 IF (TARGET_AVX2 AND EMBREE_LIBRARY_FILES_AVX2)
   ADD_LIBRARY(ospray_embree_avx2 STATIC ${EMBREE_LIBRARY_FILES_AVX2})
   SET_TARGET_PROPERTIES(ospray_embree_avx2 PROPERTIES COMPILE_FLAGS "${FLAGS_AVX2}")
   SET_PROPERTY(TARGET ospray_embree_avx2 PROPERTY FOLDER kernels)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ospray_embree_avx2)
+  INSTALL(TARGETS ospray_embree_avx2
+    EXPORT ospray_embree_avx2Export
+    DESTINATION lib
+  )
+  INSTALL(EXPORT ospray_embree_avx2Export
+    DESTINATION ${CMAKE_DIR} FILE libospray_embree_avx2Targets.cmake
+  )
 ENDIF()
 
 IF (TARGET_AVX512 AND EMBREE_LIBRARY_FILES_AVX512)
@@ -272,13 +292,25 @@ IF (TARGET_AVX512 AND EMBREE_LIBRARY_FILES_AVX512)
   SET_TARGET_PROPERTIES(ospray_embree_avx512 PROPERTIES COMPILE_FLAGS "${FLAGS_AVX512}")
   SET_PROPERTY(TARGET ospray_embree_avx512 PROPERTY FOLDER kernels)
   SET(EMBREE_LIBRARIES ${EMBREE_LIBRARIES} ospray_embree_avx512)
+  INSTALL(TARGETS ospray_embree_avx512
+    EXPORT ospray_embree_avx512Export
+    DESTINATION lib
+  )
+  INSTALL(EXPORT ospray_embree_avx512Export
+    DESTINATION ${CMAKE_DIR} FILE libospray_embree_avx512Targets.cmake
+  )
 ENDIF()
 
 TARGET_LINK_LIBRARIES(ospray_embree ${EMBREE_LIBRARIES} sys simd lexers)
 
-#IF (ENABLE_INSTALLER)
-#  SET_TARGET_PROPERTIES(ospray_embree PROPERTIES VERSION ${EMBREE_VERSION} SOVERSION ${EMBREE_VERSION_MAJOR})
-#ELSE()
-  SET_TARGET_PROPERTIES(ospray_embree PROPERTIES VERSION ${EMBREE_VERSION_MAJOR} SOVERSION ${EMBREE_VERSION_MAJOR})
-#ENDIF()
+INSTALL(TARGETS ospray_embree${OSPRAY_LIB_SUFFIX}
+  EXPORT ospray_embree${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION lib
+)
+
+INSTALL(EXPORT ospray_embree${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION ${CMAKE_DIR} FILE libospray_embree${OSPRAY_LIB_SUFFIX}Targets.cmake
+)
+
+SET_TARGET_PROPERTIES(ospray_embree PROPERTIES VERSION ${EMBREE_VERSION_MAJOR} SOVERSION ${EMBREE_VERSION_MAJOR})
 

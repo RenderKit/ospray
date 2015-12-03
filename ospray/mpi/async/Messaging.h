@@ -20,29 +20,9 @@
 #include "ospray/common/Thread.h"
 
 namespace ospray {
-  typedef embree::MutexSys     Mutex;
   using   embree::thread_t;
 
   namespace mpi {
-    
-    // struct Group {
-    //   Group(const std::string &name, MPI_Comm comm=MPI_COMM_WORLD); 
-    //   virtual std::string toString() { return "mpi::Group("+name+")"; };
-
-    //   void barrier();
-
-    //   // MPI communicator for this group
-    //   MPI_Comm comm;
-    //   // size of that communicator
-    //   int32 size;
-    //   //! our rank within this communicator
-    //   int32 rank;
-    //   //! name, for debugging
-    //   std::string name;
-
-    // };
-    
-    // extern Group *WORLD;
     
     //! abstraction for any other peer node that we might want to communicate with
     struct Address {

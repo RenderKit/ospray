@@ -22,20 +22,15 @@ OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
 #OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
 #IF (OSPRAY_EXP_IMAGE_COMPOSITING)
 
-OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?")
-
+OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
+MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
 
 #  OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
 #  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
 #ENDIF()
 
 # build and configure embree
-IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
-  INCLUDE(../cmake/build_embree_2.7.1.cmake)
-ELSE()
-  INCLUDE(../cmake/build_embree.cmake)
-ENDIF()
-#INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
+INCLUDE(../cmake/build_embree_2.7.1.cmake)
 
 # -------------------------------------------------------
 # Setup tasking system build configuration
@@ -288,41 +283,35 @@ FIND_PACKAGE(Threads REQUIRED)
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   ${OSPRAY_SOURCES}
-  )
-
-IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
-  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR})
-  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR}/bin)
-  MESSAGE("LINKING EXTENRALLY TO EMBREE IN ${OSPRAY_EMBREE_SOURCE_DIR}")
-ENDIF()
+)
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
   ospray_embree${OSPRAY_LIB_SUFFIX}
   ${TBB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS})
+  ${CMAKE_DL_LIBS}
+)
 
 IF (OSPRAY_DISPLAYCLUSTER)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
-    ${DISPLAYCLUSTER_LIBRARIES})
+    ${DISPLAYCLUSTER_LIBRARIES}
+  )
 ENDIF()
 
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
 INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
-INSTALL(DIRECTORY embree DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
+INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-IF (NOT OSPRAY_ALLOW_EXTERNAL_EMBREE)
-        INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
-                EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-                DESTINATION lib
-                )
-        INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-                DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
-                )
-ENDIF()
+INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
+  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION lib
+)
+INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+  DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
+)
 ##############################################################
 
 

@@ -58,7 +58,9 @@ void OSPObjectFile::importAttributeFloat(const tinyxml2::XMLNode *node, OSPObjec
 void OSPObjectFile::importAttributeFloat2(const tinyxml2::XMLNode *node, OSPObject parent)
 {
   // The attribute value is encoded in a string.
-  const char *text = node->ToElement()->GetText();  osp::vec2f value(0.0f);  char guard[8];
+  const char *text = node->ToElement()->GetText();  
+  osp::vec2f value = { 0.f, 0.f };
+  char guard[8];
 
   // Get the attribute value.
   exitOnCondition(sscanf(text, "%f %f %7s", &value.x, &value.y, guard) != 2, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
@@ -70,7 +72,9 @@ void OSPObjectFile::importAttributeFloat2(const tinyxml2::XMLNode *node, OSPObje
 void OSPObjectFile::importAttributeFloat3(const tinyxml2::XMLNode *node, OSPObject parent)
 {
   // The attribute value is encoded in a string.
-  const char *text = node->ToElement()->GetText();  osp::vec3f value(0.0f);  char guard[8];
+  const char *text = node->ToElement()->GetText();  
+  osp::vec3f value = { 0.f, 0.f, 0.f };
+  char guard[8];
 
   // Get the attribute value.
   exitOnCondition(sscanf(text, "%f %f %f %7s", &value.x, &value.y, &value.z, guard) != 3, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");
@@ -94,7 +98,9 @@ void OSPObjectFile::importAttributeInteger(const tinyxml2::XMLNode *node, OSPObj
 void OSPObjectFile::importAttributeInteger3(const tinyxml2::XMLNode *node, OSPObject parent)
 {
   // The attribute value is encoded in a string.
-  const char *text = node->ToElement()->GetText();  osp::vec3i value(0);  char guard[8];
+  const char *text = node->ToElement()->GetText();  
+  osp::vec3i value = { 0,0,0 };  
+  char guard[8];
 
   // Get the attribute value.
   exitOnCondition(sscanf(text, "%d %d %d %7s", &value.x, &value.y, &value.z, guard) != 3, "malformed XML element '" + std::string(node->ToElement()->Name()) + "'");

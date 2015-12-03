@@ -73,8 +73,8 @@ int main(int argc, char *argv[])
   int benchmarkFrames = 0;
   int viewSizeWidth = 0;
   int viewSizeHeight = 0;
-  osp::vec3f viewUp(0.f);
-  osp::vec3f viewAt(0.f), viewFrom(0.f);
+  ospray::vec3f viewUp(0.f);
+  ospray::vec3f viewAt(0.f), viewFrom(0.f);
   bool showFrameRate = false;
   bool fullScreen = false;
   bool ownModelPerObject = false;
@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 
 
   // Set the view up vector if specified.
-  if(viewUp != osp::vec3f(0.f)) {
+  if(viewUp != ospray::vec3f(0.f)) {
     volumeViewer->getWindow()->getViewport()->setUp(viewUp);
     volumeViewer->getWindow()->resetAccumulationBuffer();
   }

@@ -28,7 +28,7 @@ bool startsWith(const std::string &haystack, const std::string &needle) {
 OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangleMesh)
 {
   // Get scaling parameter if provided.
-  ospGetVec3f(triangleMesh, "scale", &scale);
+  ospGetVec3f(triangleMesh, "scale", (osp::vec3f*)&scale);
 
   // Parse the PLY triangle data file and populate attributes.
   exitOnCondition(parse() != true, "error parsing the file '" + filename + "'");
@@ -167,16 +167,16 @@ bool PLYTriangleMeshFile::parse()
     }
 
     // Add to vertices vector with scaling applied.
-    vertices.push_back(scale * osp::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
+    vertices.push_back(scale * ospray::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
 
     // Vertex normals will be computed later.
-    vertexNormals.push_back(osp::vec3fa(0.f));
+    vertexNormals.push_back(ospray::vec3fa(0.f));
 
     // Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
     if(haveVertexColors)
-      vertexColors.push_back(1.f/255.f * osp::vec4f(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex], vertexProperties[aIndex]));
+      vertexColors.push_back(1.f/255.f * ospray::vec4f(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex], vertexProperties[aIndex]));
     else
-      vertexColors.push_back(osp::vec4f(1.f));
+      vertexColors.push_back(ospray::vec4f(1.f));
   }
 
   // Read the face data.
@@ -186,14 +186,14 @@ bool PLYTriangleMeshFile::parse()
     in >> count;
     exitOnCondition(count != 3, "only triangle faces are supported.");
 
-    osp::vec3i triangle;
+    ospray::vec3i triangle;
     in >> triangle.x >> triangle.y >> triangle.z;
     exitOnCondition(!in.good(), "error reading face data.");
 
     triangles.push_back(triangle);
 
     // Add vertex normal contributions.
-    osp::vec3fa triangleNormal = cross(vertices[triangle.y] - vertices[triangle.x], vertices[triangle.z] - vertices[triangle.x]);
+    ospray::vec3fa triangleNormal = cross(vertices[triangle.y] - vertices[triangle.x], vertices[triangle.z] - vertices[triangle.x]);
     vertexNormals[triangle.x] += triangleNormal;
     vertexNormals[triangle.y] += triangleNormal;
     vertexNormals[triangle.z] += triangleNormal;

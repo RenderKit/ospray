@@ -130,11 +130,10 @@ namespace ospray {
   OSPPickResult Renderer::pick(const vec2f &screenPos)
   {
     assert(getIE());
-    vec3f pos; bool hit;
 
-    ispc::Renderer_pick(getIE(), (const ispc::vec2f&)screenPos, (ispc::vec3f&)pos, hit);
+    OSPPickResult res;
+    ispc::Renderer_pick(getIE(), (const ispc::vec2f&)screenPos, (ispc::vec3f&)res.position, res.hit);
 
-    OSPPickResult res = { pos, hit };
     return res;
   }
 

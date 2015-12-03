@@ -64,7 +64,7 @@ namespace ospray {
     OSPModel specifyModel(tachyon::Model &tm)
     {
       OSPModel ospModel = ospNewModel();
-    
+
       if (tm.numSpheres()) {
         OSPData  sphereData = ospNewData(tm.numSpheres()*sizeof(Sphere)/sizeof(float),
                                          OSP_FLOAT,tm.getSpheresPtr());
@@ -180,13 +180,13 @@ namespace ospray {
 
     using ospray::glut3D::Glut3DWidget;
 
-    //! volume viewer widget. 
+    //! volume viewer widget.
     /*! \internal Note that all handling of camera is almost exactly
       similar to the code in msgView; might make sense to move that into
       a common class! */
     struct TACHViewer : public Glut3DWidget {
       /*! construct volume from file name and dimensions \see volview_notes_on_volume_interface */
-      TACHViewer(OSPModel model, const std::string &modelName) 
+      TACHViewer(OSPModel model, const std::string &modelName)
         : Glut3DWidget(Glut3DWidget::FRAMEBUFFER_NONE),
           fb(NULL), renderer(NULL), model(model), modelName(modelName)
       {
@@ -213,21 +213,21 @@ namespace ospray {
         case 'X':
           if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
             viewPort.up = - viewPort.up;
-          else 
+          else
             viewPort.up = vec3f(1,0,0);
           viewPort.modified = true;
           break;
         case 'Y':
           if (viewPort.up == vec3f(0,1,0) || viewPort.up == vec3f(0,-1.f,0))
             viewPort.up = - viewPort.up;
-          else 
+          else
             viewPort.up = vec3f(0,1,0);
           viewPort.modified = true;
           break;
         case 'Z':
           if (viewPort.up == vec3f(0,0,1) || viewPort.up == vec3f(0,0,-1.f))
             viewPort.up = - viewPort.up;
-          else 
+          else
             viewPort.up = vec3f(0,0,1);
           viewPort.modified = true;
           break;
@@ -274,27 +274,31 @@ namespace ospray {
       }
 
 
-      virtual void reshape(const ospray::vec2i &newSize) 
+      virtual void reshape(const ospray::vec2i &_newSize)
       {
-        Glut3DWidget::reshape(newSize);
+        Glut3DWidget::reshape(_newSize);
         if (fb) ospFreeFrameBuffer(fb);
+        const auto &newSize = reinterpret_cast<const osp::vec2i&>(_newSize);
         fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
       }
 
-      virtual void display() 
+      virtual void display()
       {
         if (!fb || !renderer) return;
 
         if (viewPort.modified) {
           Assert2(camera,"ospray camera is null");
-        
+
           // PRINT(viewPort);
-        
-          ospSetVec3f(camera,"pos",viewPort.from);
-          ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
-          ospSetVec3f(camera,"up",viewPort.up);
+
+          auto from = reinterpret_cast<osp::vec3f&>(viewPort.from);
+          auto dir  = viewPort.at-viewPort.from;
+          auto up   = reinterpret_cast<osp::vec3f&>(viewPort.up);
+          ospSetVec3f(camera,"pos",from);
+          ospSetVec3f(camera,"dir",reinterpret_cast<osp::vec3f&>(dir));
+          ospSetVec3f(camera,"up",up);
           ospSetf(camera,"aspect",viewPort.aspect);
           ospCommit(camera);
           viewPort.modified = false;
@@ -304,13 +308,13 @@ namespace ospray {
         fps.startRender();
         ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
         fps.doneRender();
-    
+
         ucharFB = (unsigned int *)ospMapFrameBuffer(fb);
         frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
         Glut3DWidget::display();
-    
+
         ospUnmapFrameBuffer(ucharFB,fb);
-    
+
 #if 1
         char title[10000];
         sprintf(title,"ospray Tachyon viewer (%s) [%f fps]",
@@ -335,9 +339,9 @@ namespace ospray {
 
       for (int i=1;i<ac;i++) {
         std::string arg = av[i];
-        if (arg[0] != '-') {                    
+        if (arg[0] != '-') {
           timeStep.push_back(new TimeStep(arg));
-        } else 
+        } else
           throw std::runtime_error("unknown parameter "+arg);
       }
 

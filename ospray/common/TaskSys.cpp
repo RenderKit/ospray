@@ -21,7 +21,8 @@
 
 // embree
 #include "common/sys/sysinfo.h"
-#include "common/sys/thread.h"
+// c++11
+#include <thread>
 
 namespace ospray {
   using std::cout;
@@ -33,19 +34,18 @@ namespace ospray {
 
     void init(size_t maxNumRenderTasks);
     static TaskSys global;
-    static void *threadStub(void *);
     inline Task *getNextActiveTask();
 
     //! queue of tasks that have ALREADY been acitvated, and that are ready to run
     __aligned(64) Task *volatile activeListFirst;
     __aligned(64) Task *volatile activeListLast;
 
-    embree::MutexSys     __aligned(64) mutex;
+    Mutex     __aligned(64) mutex;
     Condition __aligned(64) tasksAvailable;
 
     void threadFunction();
 
-    std::vector<embree::thread_t> threads;
+    std::vector<std::thread> threads;
 
     TaskSys()
       : activeListFirst(NULL), activeListLast(NULL),
@@ -64,7 +64,7 @@ namespace ospray {
   {
 #if TASKSYS_DEPENDENCIES
     {
-      embree::Lock<embree::MutexSys> lock(mutex);
+      LockGuard lock(mutex);
       if (--numMissingDependencies == 0) {
         allDependenciesFulfilledCond.broadcast();
         activate();
@@ -82,7 +82,7 @@ namespace ospray {
         dependency[i]->workOnIt();
       }
       {
-        embree::Lock<embree::MutexSys> lock(mutex);
+        LockGuard lock(mutex);
         while (numMissingDependencies)
           allDependenciesFulfilledCond.wait(mutex);
       }
@@ -106,9 +106,9 @@ namespace ospray {
         finish();
         
         {
-          embree::Lock<embree::MutexSys> lock(mutex);
+          LockGuard lock(mutex);
           status = Task::COMPLETED;
-          allJobsCompletedCond.broadcast();
+          allJobsCompletedCond.notify_all();
         }
 #if TASKSYS_DEPENDENCIES
         for (int i=0;i<dependent.size();i++)
@@ -129,15 +129,8 @@ namespace ospray {
     }
 
     if (status != COMPLETED) {
-      {
-        embree::Lock<embree::MutexSys> lock(mutex);
-        while (1) {
-          const Status status = this->status;
-          if (status == Task::COMPLETED)
-            break;
-          allJobsCompletedCond.wait(mutex);
-        }
-      }
+      std::unique_lock<std::mutex> lock(mutex);
+      allJobsCompletedCond.wait(lock, [&]{return this->status == Task::COMPLETED; });
     }
   }
 
@@ -149,11 +142,12 @@ namespace ospray {
 
   inline Task *TaskSys::getNextActiveTask()
   {
-    embree::Lock<embree::MutexSys> lock(mutex);
+    std::unique_lock<std::mutex> lock(mutex);
     while (1) {
-      while (activeListFirst == NULL && running) {
-        tasksAvailable.wait(mutex);
-      }
+
+      tasksAvailable.wait(lock, [&]() {
+          return this->activeListFirst != NULL || !this->running; 
+        });
 
       if (!running) {
         return NULL;
@@ -195,12 +189,12 @@ namespace ospray {
     if (!TaskSys::global.initialized)
       throw std::runtime_error("TASK SYSTEM NOT YET INITIALIZED");
     {
-      embree::Lock<embree::MutexSys> lock(TaskSys::global.mutex);
+      LockGuard lock(TaskSys::global.mutex);
       bool wasEmpty = TaskSys::global.activeListFirst == NULL;
       if (wasEmpty) {
         TaskSys::global.activeListFirst = TaskSys::global.activeListLast = this;
         this->next = NULL;
-        TaskSys::global.tasksAvailable.broadcast();
+        TaskSys::global.tasksAvailable.notify_all(); //broadcast();
       } else {
         if (order == Task::BACK_OF_QUEUE) {
           this->next = NULL;
@@ -236,16 +230,15 @@ namespace ospray {
   {
     running = false;
     __memory_barrier();
-    tasksAvailable.broadcast();
+    tasksAvailable.notify_all(); //broadcast();
     for (int i = 0; i < threads.size(); ++i) {
-      embree::join(threads[i]);
+      threads[i].join();
     }
   }
 
-  void *TaskSys::threadStub(void *)
+  void threadStub()
   {
     TaskSys::global.threadFunction();
-    return NULL;
   }
 
   void TaskSys::init(size_t numThreads)
@@ -255,6 +248,8 @@ namespace ospray {
     initialized = true;
     running = true;
 
+    PING;
+
     if (numThreads != 0) {
 #if defined(__MIC__)
       numThreads = std::min(numThreads,(size_t)embree::getNumberOfLogicalThreads()-4);
@@ -262,19 +257,19 @@ namespace ospray {
       numThreads = std::min(numThreads,(size_t)embree::getNumberOfLogicalThreads());
 #endif
     }
-    PRINT(numThreads);
-
     /* generate all threads */
     for (size_t t=1; t<numThreads; t++) {
-#if 0
-      // embree will not assign affinity
-      int coreID = -1;
-#else
-      // embree will assign affinity in this case:
-      int coreID = t;
-#endif
-      threads.push_back(embree::createThread((embree::thread_func)TaskSys::threadStub,
-                                             (void*)-1,4*1024*1024,coreID));
+// #if 1
+//       // embree will not assign affinity
+//       int coreID = -1;
+// #else
+//       // embree will assign affinity in this case:
+//       int coreID = t;
+// #endif
+      PING;
+      threads.push_back(std::thread(threadStub));
+                        // embree::createThread((embree::thread_func)TaskSys::threadStub,
+                        //                      (void*)-1,4*1024*1024,coreID));
     }
     numActiveThreads = numThreads-1;
 

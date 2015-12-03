@@ -20,11 +20,11 @@
 
 #include "Model.h"
 #include "Loc.h"
-  
+
   extern int yydebug;
-  
+
   using namespace ospray;
-  
+
 extern int yylex();
 void yyerror(const char *s);
 
@@ -43,7 +43,7 @@ extern char *yytext;
   std::vector<ospray::vec3fa>       *vec3fVector;
   std::vector<int>                  *intVector;
   ospray::tachyon::VertexArray      *vertexArray;
-	// PolyMesh           *poly;
+        // PolyMesh           *poly;
   ospray::tachyon::Texture          *texture;
   ospray::tachyon::DirLight *dirLight;
   ospray::tachyon::PointLight       *pointLight;
@@ -53,9 +53,9 @@ extern char *yytext;
 // DUMMY
 %token TOKEN_INT_CONSTANT TOKEN_IDENTIFIER TOKEN_FLOAT_CONSTANT TOKEN_OTHER_STRING
 %token TOKEN_BEGIN_SCENE TOKEN_END_SCENE TOKEN_RESOLUTION TOKEN_SHADER_MODE TOKEN_END_SHADER_MODE TOKEN_TRANS_VMD TOKEN_FOG_VMD
-%token TOKEN_Camera TOKEN_End_Camera TOKEN_Projection TOKEN_Orthographic TOKEN_Zoom TOKEN_Aspectratio TOKEN_Antialiasing TOKEN_Raydepth TOKEN_Center TOKEN_Viewdir TOKEN_Updir 
-%token TOKEN_Directional_Light TOKEN_Direction TOKEN_Color TOKEN_Background TOKEN_Density TOKEN_End TOKEN_Start TOKEN_Fog TOKEN_Exp2 
-%token TOKEN_FCylinder TOKEN_Base TOKEN_Apex TOKEN_Rad 
+%token TOKEN_Camera TOKEN_End_Camera TOKEN_Projection TOKEN_Orthographic TOKEN_Zoom TOKEN_Aspectratio TOKEN_Antialiasing TOKEN_Raydepth TOKEN_Center TOKEN_Viewdir TOKEN_Updir
+%token TOKEN_Directional_Light TOKEN_Direction TOKEN_Color TOKEN_Background TOKEN_Density TOKEN_End TOKEN_Start TOKEN_Fog TOKEN_Exp2
+%token TOKEN_FCylinder TOKEN_Base TOKEN_Apex TOKEN_Rad
 %token TOKEN_Texture TOKEN_Ambient TOKEN_Diffuse TOKEN_Specular TOKEN_Opacity TOKEN_Phong TOKEN_Plastic TOKEN_Phong_size TOKEN_TexFunc TOKEN_TransMode TOKEN_R3D
 %token TOKEN_STri TOKEN_V0 TOKEN_V1 TOKEN_V2 TOKEN_N0 TOKEN_N1 TOKEN_N2
 %token TOKEN_Sphere
@@ -83,22 +83,22 @@ extern char *yytext;
 %start world
 %%
 
-world: TOKEN_BEGIN_SCENE scene TOKEN_END_SCENE { 
+world: TOKEN_BEGIN_SCENE scene TOKEN_END_SCENE {
  }
 ;
 
 scene
 : /* eol */
-| scene resolution 
-| scene shader_mode 
-| scene camera 
-| scene directional_light 
-| scene fog 
+| scene resolution
+| scene shader_mode
+| scene camera
+| scene directional_light
+| scene fog
 | scene background
 | scene fcylinder
-| scene stri 
+| scene stri
 | scene sphere
-| scene vertexarray 
+| scene vertexarray
 | scene background_gradient
 | scene light
 | scene start_clipgroup
@@ -119,8 +119,8 @@ end_clipgroup
 : TOKEN_End_ClipGroup
 ;
 
-vertexarray: TOKEN_VertexArray TOKEN_Numverts Int vertexarray_body TOKEN_End_VertexArray 
-{ 
+vertexarray: TOKEN_VertexArray TOKEN_Numverts Int vertexarray_body TOKEN_End_VertexArray
+{
   assert($4->normal.size() == 0 || $4->normal.size() == $4->coord.size());
   assert($4->color.size() == 0 || $4->color.size() == $4->coord.size());
   ospray::tachyon::parserModel->addVertexArray($4);
@@ -135,14 +135,14 @@ light
 
 light_body
 : /* eol */ { $$ = new ospray::tachyon::PointLight; }
-| light_body TOKEN_Center vec3f 
+| light_body TOKEN_Center vec3f
 { $$ = $1; $1->center = *$3; delete $3; }
-| light_body TOKEN_Color vec3f 
+| light_body TOKEN_Color vec3f
 { $$ = $1; $1->color = *$3; delete $3; }
-| light_body TOKEN_Rad Float 
-{ $$ = $1; $1->color = $3; }
+| light_body TOKEN_Rad Float
+{ $$ = $1; $1->color = vec3f($3); }
 | light_body TOKEN_Attenuation TOKEN_constant Float TOKEN_linear Float TOKEN_quadratic Float
-{ 
+{
   $$ = $1;
   $$->atten.constant  = $4;
   $$->atten.linear    = $6;
@@ -153,48 +153,48 @@ light_body
 
 vertexarray_body
 : /* eol */ { $$ = new ospray::tachyon::VertexArray; }
-| vertexarray_body TOKEN_Coords vec3f_vector 
+| vertexarray_body TOKEN_Coords vec3f_vector
 { $$ = $1; $1->coord = *$3; delete $3; }
-| vertexarray_body TOKEN_Normals vec3f_vector 
+| vertexarray_body TOKEN_Normals vec3f_vector
 { $$ = $1; $1->normal = *$3; delete $3; }
-| vertexarray_body TOKEN_Colors vec3f_vector 
+| vertexarray_body TOKEN_Colors vec3f_vector
 { $$ = $1; $1->color = *$3; delete $3; }
-| vertexarray_body texture  
+| vertexarray_body texture
 { $$ = $1; $1->textureID = ospray::tachyon::parserModel->addTexture($2); }
 | vertexarray_body TOKEN_TriStrip Int int_vector
 {
-  $$ = $1; 
+  $$ = $1;
   for (int i=2;i<$4->size();i++) {
     vec3i tri((*$4)[i-2],(*$4)[i-1],(*$4)[i]);
-    $1->triangle.push_back(tri); 
+    $1->triangle.push_back(tri);
   }
-  delete $4; 
+  delete $4;
 }
 | vertexarray_body TOKEN_TriMesh Int int_vector
 {
-  $$ = $1; 
+  $$ = $1;
   for (int i=0;i<$4->size();i+=3) {
     vec3i tri((*$4)[i],(*$4)[i+1],(*$4)[i+2]);
-    $1->triangle.push_back(tri); 
+    $1->triangle.push_back(tri);
   }
-  delete $4; 
+  delete $4;
 }
 ;
 
 
-vec3f_vector 
+vec3f_vector
 : /* eol */ { $$ = new std::vector<ospray::vec3fa>; }
 | vec3f_vector Float Float Float { $$ = $1; $$->push_back(ospray::vec3f($2,$3,$4)); }
 ;
 
 
-int_vector 
+int_vector
 : /* eol */ { $$ = new std::vector<int>; }
 | int_vector Int { $$ = $1; $$->push_back($2); }
 ;
 
 
-stri: 
+stri:
 TOKEN_STri
 TOKEN_V0 Float Float Float
 TOKEN_V1 Float Float Float
@@ -270,7 +270,7 @@ texture
 : TOKEN_Texture texture_body { $$ = $2; }
 ;
 
-texture_body 
+texture_body
 : /* eol */ { $$ = new ospray::tachyon::Texture; }
 | texture_body TOKEN_Ambient  Float { $$ = $1; $$->ambient  = $3; }
 | texture_body TOKEN_Diffuse  Float { $$ = $1; $$->diffuse  = $3; }
@@ -278,7 +278,7 @@ texture_body
 | texture_body TOKEN_Opacity  Float { $$ = $1; $$->opacity  = $3; }
 | texture_body TOKEN_Phong TOKEN_Plastic Float TOKEN_Phong_size Float TOKEN_Color vec3f
 {
-  $$ = $1; 
+  $$ = $1;
   $$->phong.plastic = $4;
   $$->phong.size = $6;
   $$->color = *$8; delete $8;
@@ -300,7 +300,7 @@ background_gradient
 background_gradient_body
 : /* eol */
 | background_gradient_body TOKEN_UpDir Float Float Float
-| background_gradient_body TOKEN_TopVal Float 
+| background_gradient_body TOKEN_TopVal Float
 | background_gradient_body TOKEN_BottomVal Float
 | background_gradient_body TOKEN_TopColor Float Float Float
 | background_gradient_body TOKEN_BottomColor Float Float Float
@@ -313,34 +313,34 @@ fog
 
 
 camera
-: TOKEN_Camera camera_body TOKEN_End_Camera 
+: TOKEN_Camera camera_body TOKEN_End_Camera
 ;
 
 camera_body
 : /* empty */
-| camera_body TOKEN_Projection TOKEN_Orthographic 
+| camera_body TOKEN_Projection TOKEN_Orthographic
 | camera_body TOKEN_Zoom Float
 | camera_body TOKEN_Aspectratio Float
 | camera_body TOKEN_Antialiasing Int
-| camera_body TOKEN_Raydepth Int 
+| camera_body TOKEN_Raydepth Int
 | camera_body TOKEN_Center  vec3f
 { ospray::tachyon::parserModel->getCamera(true)->center  = *$3; delete $3; }
-| camera_body TOKEN_Viewdir vec3f 
+| camera_body TOKEN_Viewdir vec3f
 { ospray::tachyon::parserModel->getCamera(true)->viewDir = *$3; delete $3; }
-| camera_body TOKEN_Updir   vec3f 
+| camera_body TOKEN_Updir   vec3f
 { ospray::tachyon::parserModel->getCamera(true)->upDir   = *$3; delete $3; }
 ;
 
 directional_light
-: TOKEN_Directional_Light directional_light_body 
+: TOKEN_Directional_Light directional_light_body
 { ospray::tachyon::parserModel->addDirLight(*$2); delete $2; }
 ;
 
 directional_light_body
 : /* eol */ { $$ = new ospray::tachyon::DirLight; }
-| directional_light_body TOKEN_Direction vec3f  
+| directional_light_body TOKEN_Direction vec3f
 { $$ = $1; $$->direction = *$3; delete $3; }
-| directional_light_body TOKEN_Color vec3f  
+| directional_light_body TOKEN_Color vec3f
 { $$ = $1; $$->color = *$3; delete $3; }
 ;
 
