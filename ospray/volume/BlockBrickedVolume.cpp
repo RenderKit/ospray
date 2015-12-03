@@ -127,7 +127,7 @@ void BlockBrickedVolume::commit()
     tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), task);
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
-    for (int taskIndex = 0; i < NTASKS; ++taskIndex) {
+    for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
       ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
                                          source,
                                          (const ispc::vec3i &) regionCoords,
