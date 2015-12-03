@@ -20,7 +20,7 @@
 
 struct Transmission
 {
-  uniform BSDF base;
+  uniform BSDF super;
 
   /*! Transmission coefficient of the material. The range is [0,1]
    *  where 0 means total absorption and 1 means total
@@ -28,17 +28,17 @@ struct Transmission
   vec3f T;
 };
 
-inline vec3f Transmission_eval(const uniform BSDF* uniform base,
+inline vec3f Transmission_eval(const uniform BSDF* uniform super,
                                const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
-inline vec3f Transmission_sample(const uniform BSDF* uniform base,
+inline vec3f Transmission_sample(const uniform BSDF* uniform super,
                                  const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                  const vec2f& s, float ss)
 {
-  const varying Transmission* uniform self = (const varying Transmission* uniform)base;
+  const varying Transmission* uniform self = (const varying Transmission* uniform)super;
   wi = neg(wo);
   pdf = 1.0f;
   type = BSDF_SPECULAR_TRANSMISSION;
@@ -48,7 +48,7 @@ inline vec3f Transmission_sample(const uniform BSDF* uniform base,
 inline void Transmission_Constructor(varying Transmission* uniform self, const varying linear3f* uniform frame,
                                      const vec3f& T)
 {
-  BSDF_Constructor(&self->base, BSDF_SPECULAR_TRANSMISSION,
+  BSDF_Constructor(&self->super, BSDF_SPECULAR_TRANSMISSION,
                    Transmission_eval, Transmission_sample,
                    frame);
   self->T = T;
@@ -59,5 +59,5 @@ inline uniform BSDF* uniform Transmission_create(uniform ShadingContext* uniform
 {
   varying Transmission* uniform self = (varying Transmission* uniform)ShadingContext_alloc(ctx, sizeof(Transmission));
   Transmission_Constructor(self, frame, T);
-  return &self->base;
+  return &self->super;
 }

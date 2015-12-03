@@ -20,22 +20,22 @@
 
 struct MicrofacetConductor
 {
-  uniform BSDF base;
+  uniform BSDF super;
   uniform vec3f R;
   uniform FresnelConductor fresnel;
   PowerCosineDistribution distribution;
 };
 
-inline vec3f MicrofacetConductor_eval(const uniform BSDF* uniform base,
+inline vec3f MicrofacetConductor_eval(const uniform BSDF* uniform super,
                                       const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
-  const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)base;
+  const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
 
-  const float cosThetaO = dot(wo, getN(base));
-  const float cosThetaI = dot(wi, getN(base));
+  const float cosThetaO = dot(wo, getN(super));
+  const float cosThetaI = dot(wi, getN(super));
   if (cosThetaI <= 0.0f | cosThetaO <= 0.0f) return make_vec3f(0.f);
   const vec3f wh = normalize(wi + wo);
-  const float cosThetaH = dot(wh, getN(base));
+  const float cosThetaH = dot(wh, getN(super));
   const float cosTheta = dot(wi, wh); // = dot(wo, wh);
   const vec3f F = eval(self->fresnel, cosTheta);
   float whPdf;
@@ -46,18 +46,18 @@ inline vec3f MicrofacetConductor_eval(const uniform BSDF* uniform base,
   return mul(mul(self->R, F), D * G * rcp(4.0f*cosThetaO));
 }
 
-inline vec3f MicrofacetConductor_sample(const uniform BSDF* uniform base,
+inline vec3f MicrofacetConductor_sample(const uniform BSDF* uniform super,
                                         const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                         const vec2f& s, float ss)
 {
-  const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)base;
+  const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
 
-  if (dot(wo, getN(base)) <= 0.0f) return make_vec3f(0.f);
+  if (dot(wo, getN(super)) <= 0.0f) return make_vec3f(0.f);
   float whPdf;
-  vec3f wh = getFrame(base) * sample(self->distribution, whPdf, s);
+  vec3f wh = getFrame(super) * sample(self->distribution, whPdf, s);
   wi = reflect(wo, wh);
-  if (dot(wi, getN(base)) <= 0.0f) return make_vec3f(0.f);
-  return MicrofacetConductor_eval(base, dg, wo, wi, pdf) * rcp(pdf);
+  if (dot(wi, getN(super)) <= 0.0f) return make_vec3f(0.f);
+  return MicrofacetConductor_eval(super, dg, wo, wi, pdf) * rcp(pdf);
 }
 
 inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform self, const varying linear3f* uniform frame,
@@ -66,7 +66,7 @@ inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform
                                             const uniform vec3f& k,
                                             float exp_)
 {
-  BSDF_Constructor(&self->base, BSDF_GLOSSY_REFLECTION,
+  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
                    MicrofacetConductor_eval, MicrofacetConductor_sample,
                    frame);
   self->R = R;
@@ -79,5 +79,5 @@ inline uniform BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* 
 {
   varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
   MicrofacetConductor_Constructor(self, frame, R, eta, k, exp_);
-  return &self->base;
+  return &self->super;
 }

@@ -20,25 +20,25 @@
 
 struct Lambert
 {
-  uniform BSDF base;
+  uniform BSDF super;
   vec3f R;
 };
 
-inline vec3f Lambert_eval(const uniform BSDF* uniform base,
+inline vec3f Lambert_eval(const uniform BSDF* uniform super,
                           const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
-  const varying Lambert* uniform self = (const varying Lambert* uniform)base;
-  pdf = clamp(dot(wi, getN(base))) * one_over_pi;
-  return self->R/pi * clamp(dot(wi, getN(base)));
+  const varying Lambert* uniform self = (const varying Lambert* uniform)super;
+  pdf = clamp(dot(wi, getN(super))) * one_over_pi;
+  return self->R/pi * clamp(dot(wi, getN(super)));
 }
 
-inline vec3f Lambert_sample(const uniform BSDF* uniform base,
+inline vec3f Lambert_sample(const uniform BSDF* uniform super,
                             const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                             const vec2f& s, float ss)
 {
-  const varying Lambert* uniform self = (const varying Lambert* uniform)base;
+  const varying Lambert* uniform self = (const varying Lambert* uniform)super;
   const vec3f localDir = cosineSampleHemisphere(s);
-  wi = getFrame(base) * localDir;
+  wi = getFrame(super) * localDir;
   pdf = cosineSampleHemispherePDF(localDir);
   type = BSDF_DIFFUSE_REFLECTION;
   return self->R;
@@ -47,7 +47,7 @@ inline vec3f Lambert_sample(const uniform BSDF* uniform base,
 inline void Lambert_Constructor(varying Lambert* uniform self, const varying linear3f* uniform frame,
                                 const vec3f& R)
 {
-  BSDF_Constructor(&self->base, BSDF_DIFFUSE_REFLECTION,
+  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
                    Lambert_eval, Lambert_sample,
                    frame);
   self->R = R;
@@ -58,5 +58,5 @@ inline uniform BSDF* uniform Lambert_create(uniform ShadingContext* uniform ctx,
 {
   varying Lambert* uniform self = (varying Lambert* uniform)ShadingContext_alloc(ctx, sizeof(Lambert));
   Lambert_Constructor(self, frame, R);
-  return &self->base;
+  return &self->super;
 }

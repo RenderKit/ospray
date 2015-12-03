@@ -20,7 +20,7 @@
 
 struct Velvety
 {
-  uniform BSDF base;
+  uniform BSDF super;
 
   /*! The reflectance parameter. The vale 0 means no reflection,
    *  and 1 means full reflection. */
@@ -60,7 +60,7 @@ vec3f uniform_Velvety__sample(const uniform BSDF* uniform _this,
 
 void Velvety__Constructor(uniform Velvety* uniform this, const uniform vec3f R, const uniform float f)
 {
-  //BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
+  //BSDF_Constructor(&this->super,DIFFUSE_REFLECTION,
   //                  uniform_Velvety__eval,uniform_Velvety__sample);
   this->R = R;
   this->f = f;
@@ -99,7 +99,7 @@ vec3f varying_Velvety__sample(const uniform BSDF* uniform _this,
 
 void Velvety__Constructor(varying Velvety* uniform this, const varying vec3f R, const varying float f)
 {
-  //BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
+  //BSDF_Constructor(&this->super,DIFFUSE_REFLECTION,
   //                  varying_Velvety__eval,varying_Velvety__sample);
   this->R = R;
   this->f = f;

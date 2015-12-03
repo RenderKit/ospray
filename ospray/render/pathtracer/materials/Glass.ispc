@@ -19,7 +19,7 @@
 
 struct Glass
 {
-  uniform PathTraceMaterial base;
+  uniform PathTraceMaterial super;
 
   Medium mediumInside;
   Medium mediumOutside;
@@ -56,10 +56,10 @@ vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
   return make_vec3f(1.0f-fresnelDielectric(cosThetaO, eta));
 }
 
-void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform base,
+void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
                             varying Medium& currentMedium)
 {
-  const uniform Glass* uniform self = (const uniform Glass* uniform)base;
+  const uniform Glass* uniform self = (const uniform Glass* uniform)super;
 
   if (eq(currentMedium, self->mediumOutside))
     currentMedium = self->mediumInside;
@@ -73,7 +73,7 @@ void Glass_Constructor(uniform Glass* uniform self,
                        uniform float etaOutside,
                        const uniform vec3f& transmissionOutside)
 {
-  PathTraceMaterial_Constructor(&self->base, Glass_getBSDF, Glass_getTransparency, Glass_selectNextMedium);
+  PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, Glass_getTransparency, Glass_selectNextMedium);
   self->mediumInside.eta           = etaInside;
   self->mediumInside.transmission  = transmissionInside;
   self->mediumOutside.eta          = etaOutside;

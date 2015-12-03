@@ -21,7 +21,7 @@
 
 struct DielectricLayerMicrofacetMetal
 {
-  uniform BSDF base;
+  uniform BSDF super;
   vec3f T;             //!< Transmission coefficient of dielectricum
   float etait;         //!< Relative refraction index etai/etat of both media
   float etati;         //!< relative refraction index etat/etai of both media
@@ -42,7 +42,7 @@ inline vec3f DielectricLayerMicrofacetMetal__eval(const uniform BSDF* uniform _t
   float cosThetaI1;
   Sample3f wi1 /*= refract(wi,dg.Ns,this->etait,cosThetaI,cosThetaI1)*/;
   const float Fi = 1.0f - fresnelDielectric(cosThetaI,cosThetaI1,this->etait);
-  //const vec3f Fg = this->ground.base.eval(&this->ground.base,neg(wo1.v),dg,neg(wi1.v));
+  //const vec3f Fg = this->ground.super.eval(&this->ground.super,neg(wo1.v),dg,neg(wi1.v));
   vec3f Fg;
   const float Fo = 1.0f - fresnelDielectric(cosThetaO,cosThetaO1,this->etait);
   //return Fo * this->T * Fg * this->T * Fi;
@@ -65,7 +65,7 @@ inline vec3f DielectricLayerMicrofacetMetal__sample(const uniform BSDF* uniform 
 
   /*! sample ground BSDF */
   Sample3f wi1 = make_Sample3f(make_vec3f(0.f),1.f);
-  //vec3f Fg = this->ground.base.sample(&this->ground.base,neg(wo1.v),dg,wi1,s);
+  //vec3f Fg = this->ground.super.sample(&this->ground.super,neg(wo1.v),dg,wi1,s);
   vec3f Fg;
 
   /*! refract ray out of medium */
@@ -89,7 +89,7 @@ inline void DielectricLayerMicrofacetMetal__Constructor(uniform DielectricLayerM
                                                    const uniform float etat,
                                                    const uniform MicrofacetConductor ground)
 {
-  //BSDF_Constructor(&this->base,DIFFUSE_REFLECTION,
+  //BSDF_Constructor(&this->super,DIFFUSE_REFLECTION,
   //                  DielectricLayerMicrofacetMetal__eval,DielectricLayerMicrofacetMetal__sample);
   this->T = T;
   this->etait = etai*rcp(etat);

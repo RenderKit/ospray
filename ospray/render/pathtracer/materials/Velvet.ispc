@@ -20,7 +20,7 @@
 
 struct Velvet
 {
-  uniform PathTraceMaterial base;
+  uniform PathTraceMaterial super;
 
   /*! Diffuse reflectance of the surface. The range is from 0
    *  (black) to 1 (white). */
@@ -53,8 +53,8 @@ void Velvet__shade(const uniform PathTraceMaterial *uniform _this,
                   vec3f& Ns)
 {
   const uniform Velvet* uniform this = (const uniform Velvet* uniform)_this;
-  CompositedBSDF_add(&brdfs,&this->minneart.base);
-  CompositedBSDF_add(&brdfs,&this->velvety.base);
+  CompositedBSDF_add(&brdfs,&this->minneart.super);
+  CompositedBSDF_add(&brdfs,&this->velvety.super);
 }
 */
 
@@ -64,7 +64,7 @@ void Velvet__Constructor(uniform Velvet *uniform this,
                         const uniform float horizonScatteringFallOff,
                         const uniform float backScattering)
 {
-  //PathTraceMaterial_Constructor(&this->base, Velvet__shade, NULL);
+  //PathTraceMaterial_Constructor(&this->super, Velvet__shade, NULL);
   this->reflectance = reflectance;
   this->horizonScatteringColor = horizonScatteringColor;
   this->horizonScatteringFallOff = horizonScatteringFallOff;

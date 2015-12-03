@@ -23,7 +23,7 @@
 
 struct OBJ
 {
-  uniform PathTraceMaterial base;
+  uniform PathTraceMaterial super;
   uniform Texture2D* map_d;
   float d;
   uniform Texture2D* map_Kd;
@@ -108,7 +108,7 @@ void OBJ_Constructor(uniform OBJ* uniform self,
                      uniform Texture2D* uniform map_Ns, const uniform float Ns,
                      uniform Texture2D* uniform map_Bump)
 {
-  PathTraceMaterial_Constructor(&self->base, OBJ_getBSDF, OBJ_getTransparency, NULL);
+  PathTraceMaterial_Constructor(&self->super, OBJ_getBSDF, OBJ_getTransparency, NULL);
   self->map_d  = map_d;  self->d  = d;
   self->map_Kd = map_Kd; self->Kd = Kd;
   self->map_Ks = map_Ks; self->Ks = Ks;

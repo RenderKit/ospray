@@ -20,7 +20,7 @@
 
 struct MicrofacetPlastic
 {
-  BSDF base;
+  BSDF super;
   FresnelDielectric        fresnel;
   PowerCosineDistribution  distribution;
   vec3f                    R;
@@ -62,7 +62,7 @@ inline void MicrofacetPlastic__Constructor(uniform MicrofacetPlastic* uniform th
                                            const uniform FresnelDielectric& fresnel,
                                            const uniform PowerCosineDistribution& distribution)
 {
-  //BSDF_Constructor(&this->base,GLOSSY_REFLECTION,MicrofacetPlastic__eval,MicrofacetPlastic__sample);
+  //BSDF_Constructor(&this->super,GLOSSY_REFLECTION,MicrofacetPlastic__eval,MicrofacetPlastic__sample);
   this->R = R;
   this->fresnel = fresnel;
   this->distribution = distribution;

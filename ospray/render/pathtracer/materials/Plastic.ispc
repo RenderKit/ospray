@@ -21,7 +21,7 @@
 
 struct Plastic
 {
-  PathTraceMaterial base;
+  PathTraceMaterial super;
   float roughness;
   DielectricLayerLambert substrate;
   //DielectricReflection reflection;
@@ -40,9 +40,9 @@ void Plastic__shade(const uniform PathTraceMaterial *uniform _this,
                   vec3f& Ns)
 {
   const uniform Plastic* uniform this = (const uniform Plastic* uniform)_this;
-  CompositedBSDF_add(&brdfs,&this->substrate.base);
-  if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->reflection.base);
-  else                          CompositedBSDF_add(&brdfs,&this->microfacet.base);
+  CompositedBSDF_add(&brdfs,&this->substrate.super);
+  if (this->roughness == 0.0f)  CompositedBSDF_add(&brdfs,&this->reflection.super);
+  else                          CompositedBSDF_add(&brdfs,&this->microfacet.super);
 }
 */
 
@@ -51,7 +51,7 @@ void Plastic__Constructor(uniform Plastic *uniform this,
                           const uniform float eta,
                           const uniform float roughness)
 {
-  //PathTraceMaterial_Constructor(&this->base, Plastic__shade, NULL);
+  //PathTraceMaterial_Constructor(&this->super, Plastic__shade, NULL);
   this->roughness = roughness;
 
   /*

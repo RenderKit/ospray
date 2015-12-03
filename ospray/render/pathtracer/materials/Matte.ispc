@@ -19,7 +19,7 @@
 
 struct Matte
 {
-  PathTraceMaterial base;
+  PathTraceMaterial super;
   vec3f reflectance;
 };
 
@@ -40,7 +40,7 @@ const uniform BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* unifo
 inline void Matte_Constructor(uniform Matte* uniform self,
                               const uniform vec3f& reflectance)
 {
-  PathTraceMaterial_Constructor(&self->base, Matte_getBSDF, NULL, NULL);
+  PathTraceMaterial_Constructor(&self->super, Matte_getBSDF, NULL, NULL);
   self->reflectance = reflectance;
 }
 

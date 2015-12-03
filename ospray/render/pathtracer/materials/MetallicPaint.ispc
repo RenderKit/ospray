@@ -21,7 +21,7 @@
 
 struct MetallicPaint
 {
-  PathTraceMaterial base;
+  PathTraceMaterial super;
   //DielectricReflection              reflection;
   DielectricLayerLambert         paint;
   DielectricLayerMicrofacetMetal    glitter;
@@ -40,9 +40,9 @@ void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
                           vec3f& Ns)
 {
   uniform const MetallicPaint *uniform this = (uniform const MetallicPaint *uniform)_this;
-  CompositedBSDF_add(&brdfs,&this->reflection.base);
-  CompositedBSDF_add(&brdfs,&this->paint.base);
-  if (this->hasGlitter) CompositedBSDF_add(&brdfs,&this->glitter.base);
+  CompositedBSDF_add(&brdfs,&this->reflection.super);
+  CompositedBSDF_add(&brdfs,&this->paint.super);
+  if (this->hasGlitter) CompositedBSDF_add(&brdfs,&this->glitter.super);
 }
 */
 
@@ -52,7 +52,7 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
                                        const uniform float glitterSpread,
                                        const uniform float eta)
 {
-  //PathTraceMaterial_Constructor(&this->base, MetallicPaint__shade, NULL);
+  //PathTraceMaterial_Constructor(&this->super, MetallicPaint__shade, NULL);
   //DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
   //DielectricLayerLambert_Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambert(shadeColor));
 

@@ -20,7 +20,7 @@
 
 struct Metal
 {
-  PathTraceMaterial base;
+  PathTraceMaterial super;
   vec3f reflectance;
   vec3f eta;
   vec3f k;
@@ -49,7 +49,7 @@ void Metal_Constructor(uniform Metal* uniform self,
                        const uniform vec3f& k,
                        uniform float roughness)
 {
-  PathTraceMaterial_Constructor(&self->base, Metal_getBSDF, NULL, NULL);
+  PathTraceMaterial_Constructor(&self->super, Metal_getBSDF, NULL, NULL);
   self->reflectance = reflectance;
   self->eta = eta;
   self->k = k;
