@@ -103,7 +103,7 @@ SharedStructuredVolume::~SharedStructuredVolume()
   {
     // Rebuild volume accelerator when voxelData is committed.
     if(object == voxelData && ispcEquivalent)
-      ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
+      StructuredVolume::buildAccelerator();
   }
 
   // A volume type with XYZ storage order. The voxel data is provided by the application via a shared data buffer.

@@ -38,11 +38,6 @@
 uint32 GridAccelerator_getCellAddress(GridAccelerator *uniform accelerator,
                                       const varying vec3i &index);
 
-//! Compute the value range of voxels contained in each cell of a brick in the
-//! grid.
-task void GridAccelerator_encodeVolumeBrick(GridAccelerator  *uniform accel,
-                                            StructuredVolume *uniform volume);
-
 //! Get the volumetric value range of a cell.
 inline void GridAccelerator_getCellRange(GridAccelerator *uniform accelerator,
                                          const varying vec3i &index,
@@ -92,12 +87,6 @@ GridAccelerator *uniform GridAccelerator_createInstance(void *uniform _volume)
   // Keep a pointer to the volume.
   accelerator->volume = volume;
 
-  // Compute the volumetric value range per cell.
-  launch[accelerator->brickCount.x
-         * accelerator->brickCount.y
-         * accelerator->brickCount.z]
-      GridAccelerator_encodeVolumeBrick(accelerator, volume);
-
   // The completed acceleration structure.
   return accelerator;
 }
@@ -135,17 +124,19 @@ inline void GridAccelerator_encodeBrickCell(GridAccelerator *uniform accel,
   }
 }
 
-task void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator,
-                                            StructuredVolume *uniform volume)
+//! Compute the value range of voxels contained in each cell of a brick in the
+//! grid.
+inline void GridAccelerator_encodeVolumeBrick(GridAccelerator *uniform accelerator,
+                                              StructuredVolume *uniform volume,
+                                              const uniform int taskIndex)
 {
   // Brick index from task index.
-  const int bx = taskIndex % accelerator->brickCount.x;
-  const int by = (taskIndex / accelerator->brickCount.x) %
-                 accelerator->brickCount.y;
-  const int bz = taskIndex /
-                 (accelerator->brickCount.x*accelerator->brickCount.y));
+  const uniform int bx = taskIndex % accelerator->brickCount.x;
+  const uniform int by = (taskIndex / accelerator->brickCount.x) %
+                         accelerator->brickCount.y;
+  const uniform int bz = taskIndex /
+                         (accelerator->brickCount.x*accelerator->brickCount.y);
   const uniform vec3i brickIndex = make_vec3i(bx, by, bz);
-
 
   // The 1D address of the brick in the grid.
   uniform uint32 brickAddress = brickIndex.x +
@@ -381,4 +372,19 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
                                       isovalues,
                                       numIsovalues,
                                       ray);
+}
+
+export uniform vec3i GridAccelerator_getBrickCount(void *uniform _accel)
+{
+  GridAccelerator *uniform accelerator = (GridAccelerator *uniform)_accel;
+  return accelerator->brickCount;
+}
+
+export void GridAccelerator_buildAccelerator(void *uniform _volume,
+                                             const uniform int taskIndex)
+{
+  StructuredVolume *uniform volume = (StructuredVolume *uniform)_volume;
+
+  // Compute the volumetric value range per cell.
+  GridAccelerator_encodeVolumeBrick(volume->accelerator, volume, taskIndex);
 }
