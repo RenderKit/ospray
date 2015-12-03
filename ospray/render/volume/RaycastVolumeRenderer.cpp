@@ -208,7 +208,7 @@ namespace ospray {
     data-parallel is even required. if not (eg, if there's no
     data-parallel volumes in the scene) return NULL and render only
     in regular mode; otherwise, compute some precomputations and
-    return pointer to that (which'll swtich the main renderframe fct
+    return pointer to that (which'll switch the main renderframe fct
     to render data parallel) */
   void RaycastVolumeRenderer::renderFrame(FrameBuffer *fb, const uint32 channelFlags)
   {
