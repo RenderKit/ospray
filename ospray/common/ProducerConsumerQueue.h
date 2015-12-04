@@ -90,10 +90,13 @@ namespace ospray {
   template<typename T>
   void ProducerConsumerQueue<T>::put(T t)
   {
-    LockGuard lock(mutex);
-    (void)lock;
-    bool wasEmpty = content.empty();
-    content.push_back(t);
+    bool wasEmpty = false;
+    {
+      LockGuard lock(mutex);
+      (void)lock;
+      wasEmpty = content.empty();
+      content.push_back(t);
+    }
     if (wasEmpty)
       notEmptyCond.notify_all();
   }
@@ -102,11 +105,14 @@ namespace ospray {
   template<typename T>
   void ProducerConsumerQueue<T>::putSome(T *t, size_t numTs)
   {
-    LockGuard lock(mutex);
-    (void)lock;
-    bool wasEmpty = content.empty();
-    for (int i=0;i<numTs;i++)
-      content.push_back(t[i]);
+    bool wasEmpty = false;
+    {
+      LockGuard lock(mutex);
+      (void)lock;
+      wasEmpty = content.empty();
+      for (int i=0;i<numTs;i++)
+        content.push_back(t[i]);
+    }
     if (wasEmpty)
       notEmptyCond.notify_all();
   }

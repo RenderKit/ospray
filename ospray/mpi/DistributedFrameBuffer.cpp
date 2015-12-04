@@ -494,12 +494,14 @@ namespace ospray {
                tile->begin.x,tile->begin.y));
     if (IamTheMaster()) {
       /*! we will not do anything with the tile other than mark it's done */
-      LockGuard lock(mutex);
-      (void)lock;
-      numTilesCompletedThisFrame++;
-      DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
-                 tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
-                 numTiles.x*numTiles.y));
+      {
+        LockGuard lock(mutex);
+        (void)lock;
+        numTilesCompletedThisFrame++;
+        DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
+                   tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+                   numTiles.x*numTiles.y));
+      }
       if (numTilesCompletedThisFrame == numTiles.x*numTiles.y)
         closeCurrentFrame();
     } else {
@@ -539,10 +541,10 @@ namespace ospray {
                    mpi::world.rank,
                    tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
-
-        if (numTilesCompletedThisFrame == myTiles.size())
-          closeCurrentFrame();
       }
+
+      if (numTilesCompletedThisFrame == myTiles.size())
+        closeCurrentFrame();
     }
   }
 
