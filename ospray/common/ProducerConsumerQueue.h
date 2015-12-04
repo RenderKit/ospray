@@ -74,38 +74,42 @@ namespace ospray {
   template<typename T>
   T ProducerConsumerQueue<T>::get()
   {
-    mutex.lock();
+    std::unique_lock<std::mutex> lock(mutex);
     while (content.empty())
-      notEmptyCond.wait(mutex);
-    T t = content.front();
-    content.pop_front();
-    mutex.unlock();
-    return t;
+      notEmptyCond.wait(lock);
+
+    {
+      LockGuard l(mutex);
+      (void)l;
+      T t = content.front();
+      content.pop_front();
+      return t;
+    }
   }
-  
+
   /*! put a new element into this queue */
   template<typename T>
-  void ProducerConsumerQueue<T>::put(T t) 
+  void ProducerConsumerQueue<T>::put(T t)
   {
-    mutex.lock();
+    LockGuard lock(mutex);
+    (void)lock;
     bool wasEmpty = content.empty();
     content.push_back(t);
     if (wasEmpty)
-      notEmptyCond.broadcast();
-    mutex.unlock();
+      notEmptyCond.notify_all();
   }
 
   /*! put multiple new elements into this queue */
   template<typename T>
   void ProducerConsumerQueue<T>::putSome(T *t, size_t numTs)
   {
-    mutex.lock();
+    LockGuard lock(mutex);
+    (void)lock;
     bool wasEmpty = content.empty();
     for (int i=0;i<numTs;i++)
       content.push_back(t[i]);
     if (wasEmpty)
-      notEmptyCond.broadcast();
-    mutex.unlock();
+      notEmptyCond.notify_all();
   }
 
 
@@ -113,36 +117,42 @@ namespace ospray {
   template<typename T>
   void ProducerConsumerQueue<T>::getAll(std::vector<T> &all)
   {
-    mutex.lock();
+    std::unique_lock<std::mutex> lock(mutex);
     while (content.empty())
-      notEmptyCond.wait(mutex);
+      notEmptyCond.wait(lock);
 
-    size_t size = content.size();
-    all.resize(size);
-    int i = 0;
-    for (typename std::deque<T>::iterator it=content.begin(); it != content.end(); it++)
-      all[i++] = *it;
-    content.clear();
-    mutex.unlock();
+    {
+      LockGuard l(mutex);
+      (void)l;
+      size_t size = content.size();
+      all.resize(size);
+      int i = 0;
+      for (auto it=content.begin(); it != content.end(); it++)
+        all[i++] = *it;
+      content.clear();
+    }
   }
-  
+
   /*! get element that got written into the queue */
   template<typename T>
   size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize)
   {
-    mutex.lock();
+    std::unique_lock<std::mutex> lock(mutex);
     while (content.empty())
-      notEmptyCond.wait(mutex);
+      notEmptyCond.wait(lock);
 
-    size_t num = 0;
-    while (num < maxSize && !content.empty()) {
-      some[num++] = content.front();
-      content.pop_front();
+    {
+      LockGuard l(mutex);
+      (void)l;
+      size_t num = 0;
+      while (num < maxSize && !content.empty()) {
+        some[num++] = content.front();
+        content.pop_front();
+      }
+      return num;
     }
-    mutex.unlock();
-    return num;
   }
-  
+
 } // ::ospray
 
 

@@ -22,7 +22,7 @@
 #include "common/sys/thread.h"
 
 #ifdef _WIN32
-#  define NOMINMAX 
+#  define NOMINMAX
 #  include <windows.h> // for Sleep
 #endif
 
@@ -36,20 +36,20 @@ namespace ospray {
 
   typedef DistributedFrameBuffer DFB;
 
-  DFB::TileDesc::TileDesc(DFB *dfb, 
-                          const vec2i &begin, 
-                          size_t tileID, 
+  DFB::TileDesc::TileDesc(DFB *dfb,
+                          const vec2i &begin,
+                          size_t tileID,
                           size_t ownerID)
     : tileID(tileID), ownerID(ownerID), dfb(dfb), begin(begin)
   {}
 
-  DFB::TileData::TileData(DFB *dfb, 
-                          const vec2i &begin, 
-                          size_t tileID, 
-                          size_t ownerID) 
-    : TileDesc(dfb,begin,tileID,ownerID) 
+  DFB::TileData::TileData(DFB *dfb,
+                          const vec2i &begin,
+                          size_t tileID,
+                          size_t ownerID)
+    : TileDesc(dfb,begin,tileID,ownerID)
   {}
-  
+
 
   /*! called exactly once at the beginning of each frame */
   void DFB::AlphaBlendTile_simple::newFrame()
@@ -60,7 +60,7 @@ namespace ospray {
 
     assert(bufferedTile.empty());
   }
-  
+
   void computeSortOrder(DFB::AlphaBlendTile_simple::BufferedTile *t)
   {
     float z = std::numeric_limits<float>::infinity();
@@ -74,15 +74,15 @@ namespace ospray {
 
   inline int compareBufferedTiles(const void *_a,
                                   const void *_b)
-  { 
+  {
     const DFB::AlphaBlendTile_simple::BufferedTile *a = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_a;
     const DFB::AlphaBlendTile_simple::BufferedTile *b = *(const DFB::AlphaBlendTile_simple::BufferedTile **)_b;
     if (a->sortOrder == b->sortOrder) return 0;
-    return a->sortOrder > b->sortOrder ? -1 : +1; 
+    return a->sortOrder > b->sortOrder ? -1 : +1;
   }
-  
+
   Mutex gMutex;
-  
+
   /*! called exactly once for each ospray::Tile that needs to get
     written into / composited into this dfb tile */
   void DFB::AlphaBlendTile_simple::process(const ospray::Tile &tile)
@@ -90,61 +90,63 @@ namespace ospray {
     BufferedTile *addTile = new BufferedTile;
     memcpy(&addTile->tile,&tile,sizeof(tile));
     computeSortOrder(addTile);
-    
+
     this->final.region = tile.region;
     this->final.fbSize = tile.fbSize;
     this->final.rcp_fbSize = tile.rcp_fbSize;
-    
-    mutex.lock();
-    bufferedTile.push_back(addTile);
 
-    if (tile.generation == currentGeneration) {
-      --missingInCurrentGeneration;
-      expectedInNextGeneration += tile.children;
-      while (missingInCurrentGeneration == 0 && expectedInNextGeneration > 0) {
-        currentGeneration++;
-        missingInCurrentGeneration = expectedInNextGeneration;
-        expectedInNextGeneration = 0;
-        for (int i=0;i<bufferedTile.size();i++) {
-          BufferedTile *bt = bufferedTile[i];
-          if (bt->tile.generation == currentGeneration) {
-            --missingInCurrentGeneration;
-            expectedInNextGeneration += bt->tile.children;
+    {
+      LockGuard lock(mutex);
+      bufferedTile.push_back(addTile);
+
+      if (tile.generation == currentGeneration) {
+        --missingInCurrentGeneration;
+        expectedInNextGeneration += tile.children;
+        while (missingInCurrentGeneration == 0 &&
+               expectedInNextGeneration > 0) {
+          currentGeneration++;
+          missingInCurrentGeneration = expectedInNextGeneration;
+          expectedInNextGeneration = 0;
+          for (int i=0;i<bufferedTile.size();i++) {
+            BufferedTile *bt = bufferedTile[i];
+            if (bt->tile.generation == currentGeneration) {
+              --missingInCurrentGeneration;
+              expectedInNextGeneration += bt->tile.children;
+            }
           }
         }
       }
-    }
-    int size = bufferedTile.size();
-    
-    if (missingInCurrentGeneration == 0) {
-      Tile **tileArray = (Tile**)alloca(sizeof(Tile*)*bufferedTile.size());
-      for (int i=0;i<bufferedTile.size();i++)
-        tileArray[i] = &bufferedTile[i]->tile;
-      ispc::DFB_sortAndBlendFragments((ispc::VaryingTile **)tileArray,bufferedTile.size());
+      int size = bufferedTile.size();
 
-      this->final.region = tile.region;
-      this->final.fbSize = tile.fbSize;
-      this->final.rcp_fbSize = tile.rcp_fbSize;
-      ispc::DFB_accumulate((ispc::VaryingTile *)&bufferedTile[0]->tile,
-                           (ispc::VaryingTile *)&this->final,
-                           (ispc::VaryingTile *)&this->accum,
-                           (ispc::VaryingRGBA_I8 *)&this->color,
-                           dfb->hasAccumBuffer,dfb->accumID);
+      if (missingInCurrentGeneration == 0) {
+        Tile **tileArray = (Tile**)alloca(sizeof(Tile*)*bufferedTile.size());
+        for (int i=0;i<bufferedTile.size();i++)
+          tileArray[i] = &bufferedTile[i]->tile;
+        ispc::DFB_sortAndBlendFragments((ispc::VaryingTile **)tileArray,bufferedTile.size());
 
-      dfb->tileIsCompleted(this);
-      for (int i=0;i<bufferedTile.size();i++)
-        delete bufferedTile[i];
-      bufferedTile.clear();
+        this->final.region = tile.region;
+        this->final.fbSize = tile.fbSize;
+        this->final.rcp_fbSize = tile.rcp_fbSize;
+        ispc::DFB_accumulate((ispc::VaryingTile *)&bufferedTile[0]->tile,
+                             (ispc::VaryingTile *)&this->final,
+                             (ispc::VaryingTile *)&this->accum,
+                             (ispc::VaryingRGBA_I8 *)&this->color,
+                             dfb->hasAccumBuffer,dfb->accumID);
+
+        dfb->tileIsCompleted(this);
+        for (int i=0;i<bufferedTile.size();i++)
+          delete bufferedTile[i];
+        bufferedTile.clear();
+      }
     }
-    mutex.unlock();
   }
 
 
   /*! called exactly once at the beginning of each frame */
   void DFB::WriteOnlyOnceTile::newFrame()
-  { 
+  {
     /* nothing to do for write-once tile - we *know* it'll get written
-       only once */ 
+       only once */
   }
 
   /*! called exactly once for each ospray::Tile that needs to get
@@ -168,23 +170,27 @@ namespace ospray {
   }
 
 
-  void DFB::ZCompositeTile::newFrame() 
+  void DFB::ZCompositeTile::newFrame()
   {
     numPartsComposited = 0;
   }
 
-  void DFB::ZCompositeTile::process(const ospray::Tile &tile) 
+  void DFB::ZCompositeTile::process(const ospray::Tile &tile)
   {
-    mutex.lock();
-    if (numPartsComposited == 0) 
-      memcpy(&compositedTileData,&tile,sizeof(tile));
-    else
-      ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
-                           (ispc::VaryingTile*)&this->compositedTileData);
-    
-    const bool done = (++numPartsComposited == dfb->comm->numWorkers());
-    mutex.unlock();
-    
+    bool done = false;
+
+    {
+      LockGuard lock(mutex);
+      (void)lock;
+      if (numPartsComposited == 0)
+        memcpy(&compositedTileData,&tile,sizeof(tile));
+      else
+        ispc::DFB_zComposite((ispc::VaryingTile*)&tile,
+                             (ispc::VaryingTile*)&this->compositedTileData);
+
+      done = (++numPartsComposited == dfb->comm->numWorkers());
+    }
+
     if (done) {
       ispc::DFB_accumulate((ispc::VaryingTile*)&this->compositedTileData,
                            (ispc::VaryingTile*)&this->final,
@@ -197,44 +203,47 @@ namespace ospray {
 
 
 
-  inline void DFB::startNewFrame()
+  void DFB::startNewFrame()
   {
+    std::vector<mpi::async::CommLayer::Message *> delayedMessage;
+
     // PING; PRINT(this); fflush(0);
-    mutex.lock();
-    DBG(printf("rank %i starting new frame\n",mpi::world.rank));
-    assert(!frameIsActive);
+    {
+      LockGuard lock(mutex);
+      DBG(printf("rank %i starting new frame\n",mpi::world.rank));
+      assert(!frameIsActive);
 
-    if (pixelOp)
-      pixelOp->beginFrame();
+      if (pixelOp)
+        pixelOp->beginFrame();
 
-    // PING;fflush(0);
-    // PRINT(myTiles.size());fflush(0);
-    for (int i=0;i<myTiles.size();i++) {
-      // PRINT(myTiles[i]); fflush(0);
-      myTiles[i]->newFrame();
-    }
-    // PING;fflush(0);
+      // PING;fflush(0);
+      // PRINT(myTiles.size());fflush(0);
+      for (int i=0;i<myTiles.size();i++) {
+        // PRINT(myTiles[i]); fflush(0);
+        myTiles[i]->newFrame();
+      }
+      // PING;fflush(0);
 
-    // create a local copy of delayed tiles, so we can work on them outside the mutex
-    std::vector<mpi::async::CommLayer::Message *> 
+      // create a local copy of delayed tiles, so we can work on them outside
+      // the mutex
       delayedMessage = this->delayedMessage;
-    this->delayedMessage.clear();
-    numTilesCompletedThisFrame = 0;
-    numTilesToMasterThisFrame = 0;
+      this->delayedMessage.clear();
+      numTilesCompletedThisFrame = 0;
+      numTilesToMasterThisFrame = 0;
 
-    frameIsDone   = false;
+      frameIsDone   = false;
 
-    // set frame to active - this HAS TO BE the last thing we do
-    // before unlockign the mutex, because the 'incoming()' message
-    // will actually NOT lock the mutex when checking if
-    // 'frameIsActive' is true: as soon as the frame is tagged active,
-    // incoming WILL write into the frame buffer, composite tiles,
-    // etc!
-    frameIsActive = true;
+      // set frame to active - this HAS TO BE the last thing we do
+      // before unlockign the mutex, because the 'incoming()' message
+      // will actually NOT lock the mutex when checking if
+      // 'frameIsActive' is true: as soon as the frame is tagged active,
+      // incoming WILL write into the frame buffer, composite tiles,
+      // etc!
+      frameIsActive = true;
 
-    // PRINT(delayedMessage.size());
-    mutex.unlock();
-    
+      // PRINT(delayedMessage.size());
+    }
+
     // might actually want to move this to a thread:
     for (int i=0;i<delayedMessage.size();i++) {
       mpi::async::CommLayer::Message *msg = delayedMessage[i];
@@ -242,7 +251,7 @@ namespace ospray {
     }
   }
 
-  void DFB::freeTiles() 
+  void DFB::freeTiles()
   {
     for (int i=0;i<allTiles.size();i++)
       delete allTiles[i];
@@ -250,7 +259,7 @@ namespace ospray {
     myTiles.clear();
   }
 
-  void DFB::createTiles() 
+  void DFB::createTiles()
   {
     // cout << "=======================================================" << endl;
     // printf("rank %i creating tiles\n",mpi::worker.rank);fflush(0);
@@ -268,7 +277,7 @@ namespace ospray {
           // #else
           //           TileData *td = new WriteOnlyOnceTile(this,vec2i(x,y),tileID,ownerID);
           // #endif
-          TileData *td 
+          TileData *td
             = (frameMode == WRITE_ONCE)
             ? (TileData*)new WriteOnlyOnceTile(this,vec2i(x,y),tileID,ownerID)
             : (TileData*)new AlphaBlendTile_simple/*ZCompositeTile*/(this,vec2i(x,y),tileID,ownerID);
@@ -342,15 +351,15 @@ namespace ospray {
 #endif
   }
 
-  void DFB::setFrameMode(FrameMode newFrameMode) 
-  { 
+  void DFB::setFrameMode(FrameMode newFrameMode)
+  {
     if (frameMode == newFrameMode) return;
     freeTiles();
-    this->frameMode = newFrameMode; 
+    this->frameMode = newFrameMode;
     createTiles();
     }
 
-  const void *DFB::mapDepthBuffer() 
+  const void *DFB::mapDepthBuffer()
   {
     PING; fflush(0);
     if (!localFBonMaster)
@@ -360,7 +369,7 @@ namespace ospray {
     return localFBonMaster->mapDepthBuffer();
   }
 
-  const void *DFB::mapColorBuffer() 
+  const void *DFB::mapColorBuffer()
   {
     // PING; fflush(0);
     if (!localFBonMaster)
@@ -371,7 +380,7 @@ namespace ospray {
     return localFBonMaster->mapColorBuffer();
   }
 
-  void DFB::unmap(const void *mappedMem) 
+  void DFB::unmap(const void *mappedMem)
   {
     // PING; fflush(0);
     if (!localFBonMaster)
@@ -382,22 +391,31 @@ namespace ospray {
     // PING; fflush(0);
   }
 
-  void DFB::waitUntilFinished() 
+  void DFB::waitUntilFinished()
   {
 #if QUEUE_PROCESSING_JOBS
     msgTaskQueue.waitAll();
 #endif
 
     // PING;fflush(0);
+
+#if 0
+    //NOTE (jda) - How can we both lock a mutex and wait on a condition var???
     mutex.lock();
     while (
-           // (myTiles.size() > 0) && 
+           // (myTiles.size() > 0) &&
            !frameIsDone)  {
       // printf("waitUntilFinished rank %i waits for frame to close\n",mpi::world.rank);fflush(0);
       doneCond.wait(mutex);
     }
     mutex.unlock();
     // printf("waitUntilFinished rank %i DONE\n",mpi::world.rank);fflush(0);
+#else
+    std::unique_lock<std::mutex> lock(mutex);
+    while (!frameIsDone)  {
+      doneCond.wait(lock);
+    }
+#endif
   }
 
 
@@ -409,7 +427,7 @@ namespace ospray {
     TileData *td = (TileData*)tileDesc;
     td->process(msg->tile);
   }
-  
+
   void DFB::processMessage(MasterTileMessage_NONE *msg)
   {
     { /* nothing to do for 'none' tiles */ }
@@ -426,12 +444,12 @@ namespace ospray {
     for (int iy=0;iy<TILE_SIZE;iy++) {
       int iiy = iy+msg->coords.y;
       if (iiy >= numPixels.y) continue;
-      
+
       for (int ix=0;ix<TILE_SIZE;ix++) {
         int iix = ix+msg->coords.x;
         if (iix >= numPixels.x) continue;
-        
-        ((uint32*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x] 
+
+        ((uint32*)localFBonMaster->colorBuffer)[iix + iiy*numPixels.x]
           = msg->color[iy][ix];
       }
     }
@@ -448,18 +466,18 @@ namespace ospray {
     mpi::async::CommLayer::Message *_msg;
 
     DFBProcessMessageTask(DFB *dfb,
-                          mpi::async::CommLayer::Message *_msg) 
-      : dfb(dfb), _msg(_msg) 
+                          mpi::async::CommLayer::Message *_msg)
+      : dfb(dfb), _msg(_msg)
     {}
-    
-    virtual void run(size_t jobID) 
+
+    virtual void run(size_t jobID)
     {
       DBG(printf("processing message %i\n",jobID); fflush(0));
       switch (_msg->command) {
-      case DFB::MASTER_WRITE_TILE_NONE: 
+      case DFB::MASTER_WRITE_TILE_NONE:
         dfb->processMessage((DFB::MasterTileMessage_NONE*)_msg);
         break;
-      case DFB::MASTER_WRITE_TILE_I8: 
+      case DFB::MASTER_WRITE_TILE_I8:
         dfb->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
         break;
       case DFB::WORKER_WRITE_TILE:
@@ -478,19 +496,19 @@ namespace ospray {
                tile->begin.x,tile->begin.y));
     if (IamTheMaster()) {
       /*! we will not do anything with the tile other than mark it's done */
-      mutex.lock();
+      LockGuard lock(mutex);
+      (void)lock;
       numTilesCompletedThisFrame++;
       DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
                  tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
                  numTiles.x*numTiles.y));
       if (numTilesCompletedThisFrame == numTiles.x*numTiles.y)
-        closeCurrentFrame(true);
-      mutex.unlock();
+        closeCurrentFrame();
     } else {
       if (pixelOp) {
         pixelOp->postAccum(tile->final);
       }
-    
+
       switch(colorBufferFormat) {
       case OSP_RGBA_NONE: {
         /* if the master doesn't have a framebufer (i.e., format
@@ -514,39 +532,41 @@ namespace ospray {
       default:
         throw std::runtime_error("#osp:mpi:dfb: color buffer format not implemented for distributed frame buffer");
       };
-        
-      mutex.lock();
-      numTilesCompletedThisFrame++;
-      DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",mpi::world.rank,
-                 tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
-                 numTiles.x*numTiles.y));
 
-      if (numTilesCompletedThisFrame == myTiles.size())
-        closeCurrentFrame(true);
-      mutex.unlock();
+      {
+        LockGuard lock(mutex);
+        (void)lock;
+        numTilesCompletedThisFrame++;
+        DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
+                   mpi::world.rank,
+                   tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
+                   numTiles.x*numTiles.y));
+
+        if (numTilesCompletedThisFrame == myTiles.size())
+          closeCurrentFrame();
+      }
     }
   }
-  
+
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
   {
     DBG(printf("incoming at %i: %i\n",mpi::world.rank,_msg->command); fflush(0));
     if (!frameIsActive) {
-      mutex.lock();
+      LockGuard lock(mutex);
+      (void)lock;
       if (!frameIsActive) {
         // frame is not actually active, yet - put the tile into the
         // delayed processing buffer, and return WITHOUT deleting it.
         DBG(PING);
         delayedMessage.push_back(_msg);
-        mutex.unlock();
         return;
       }
-      mutex.unlock();
     }
 
     DBG(PING);
     Ref<DFBProcessMessageTask> msgTask = new DFBProcessMessageTask(this,_msg);
     msgTask->schedule(1,Task::FRONT_OF_QUEUE);
-    
+
 
 #if QUEUE_PROCESSING_JOBS
     msgTaskQueue.addJob(msgTask.ptr);
@@ -557,21 +577,22 @@ namespace ospray {
     DBG(PING);
   }
 
-  void DFB::closeCurrentFrame(bool locked) 
+  void DFB::closeCurrentFrame()
   {
     DBG(printf("rank %i CLOSES frame\n",mpi::world.rank));
 
-    if (!locked) mutex.lock();
+    //NOTE (jda) - Confused here, why lock if ok not to???
+    //if (!locked) mutex.lock();
     frameIsActive = false;
     frameIsDone   = true;
-    doneCond.broadcast();
+    doneCond.notify_all();
 
-    if (!locked) mutex.unlock();
+    //if (!locked) mutex.unlock();
   };
 
   //! write given tile data into the frame buffer, sending to remove owner if required
   void DFB::setTile(ospray::Tile &tile)
-  { 
+  {
     const size_t numPixels = TILE_SIZE*TILE_SIZE;
     DFB::TileDesc *tileDesc = this->getTileDescFor(tile.region.lower);
 
@@ -599,10 +620,10 @@ namespace ospray {
 
   struct DFBClearTask : public ospray::Task {
     DFB *dfb;
-    DFBClearTask(DFB *dfb, const uint32 fbChannelFlags) 
-      : dfb(dfb), fbChannelFlags(fbChannelFlags) 
+    DFBClearTask(DFB *dfb, const uint32 fbChannelFlags)
+      : dfb(dfb), fbChannelFlags(fbChannelFlags)
     {};
-    virtual void run(size_t jobID) 
+    virtual void run(size_t jobID)
     {
       size_t tileID = jobID;
       DFB::TileData *td = dfb->myTiles[tileID];
@@ -626,8 +647,8 @@ namespace ospray {
     const uint32 fbChannelFlags;
   };
 
-  /*! \brief clear (the specified channels of) this frame buffer 
-      
+  /*! \brief clear (the specified channels of) this frame buffer
+
     \details for the *distributed* frame buffer, we assume that
     *all* nodes get this command, and that each instance therefore
     can clear only its own tiles without having to tell any other
