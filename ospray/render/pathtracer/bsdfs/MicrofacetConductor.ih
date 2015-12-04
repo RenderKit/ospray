@@ -17,13 +17,15 @@
 #pragma once
 
 #include "BSDF.ih"
+#include "GGXDistribution.ih"
 
 struct MicrofacetConductor
 {
   BSDF super;
-  uniform vec3f R;
-  uniform FresnelConductor fresnel;
-  PowerCosineDistribution distribution;
+  vec3f reflectance;
+  vec3f eta;
+  vec3f k;
+  GGXDistribution distribution;
 };
 
 inline vec3f MicrofacetConductor_eval(const varying BSDF* uniform super,
@@ -31,19 +33,26 @@ inline vec3f MicrofacetConductor_eval(const varying BSDF* uniform super,
 {
   const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
 
-  const float cosThetaO = dot(wo, getN(super));
-  const float cosThetaI = dot(wi, getN(super));
-  if (cosThetaI <= 0.0f | cosThetaO <= 0.0f) return make_vec3f(0.f);
-  const vec3f wh = normalize(wi + wo);
-  const float cosThetaH = dot(wh, getN(super));
-  const float cosTheta = dot(wi, wh); // = dot(wo, wh);
-  const vec3f F = eval(self->fresnel, cosTheta);
+  float cosThetaO = dot(wo, getN(super));
+  float cosThetaI = dot(wi, getN(super));
+  if (cosThetaO <= 0.0f || cosThetaI <= 0.0f)
+  {
+      pdf = 0.0f;
+      return make_vec3f(0.0f);
+  }
+
+  vec3f wh = normalize(wi + wo);
+  float cosThetaH = dot(wh, getN(super));
+  float cosThetaOH = dot(wo, wh);
+  float cosThetaIH = dot(wi, wh);
+
+  vec3f F = fresnelConductor(cosThetaOH, self->eta, self->k);
   float whPdf;
-  const float D = eval(self->distribution, cosThetaH, whPdf);
-  const float G = min(1.0f, min(2.0f * cosThetaH * cosThetaO / cosTheta,
-                                2.0f * cosThetaH * cosThetaI / cosTheta));
-  pdf = whPdf * rcp(4.0f*abs(dot(wo, wh)));
-  return mul(mul(self->R, F), D * G * rcp(4.0f*cosThetaO));
+  float D = eval(self->distribution, cosThetaH, whPdf);
+  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+
+  pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
+  return F * (D * G * rcp(4.0f*cosThetaO));
 }
 
 inline vec3f MicrofacetConductor_sample(const varying BSDF* uniform super,
@@ -52,32 +61,44 @@ inline vec3f MicrofacetConductor_sample(const varying BSDF* uniform super,
 {
   const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
 
-  if (dot(wo, getN(super)) <= 0.0f) return make_vec3f(0.f);
+  float cosThetaO = dot(wo, getN(super));
+  if (cosThetaO <= 0.0f) return make_vec3f(0.0f);
+
   float whPdf;
   vec3f wh = getFrame(super) * sample(self->distribution, whPdf, s);
+
   wi = reflect(wo, wh);
-  if (dot(wi, getN(super)) <= 0.0f) return make_vec3f(0.f);
-  return MicrofacetConductor_eval(super, dg, wo, wi, pdf) * rcp(pdf);
+  float cosThetaI = dot(wi, getN(super));
+  if (cosThetaI <= 0.0f) return make_vec3f(0.0f);
+  float cosThetaH = dot(wh, getN(super));
+  float cosThetaOH = dot(wo, wh);
+  float cosThetaIH = dot(wi, wh);
+
+  vec3f F = fresnelConductor(cosThetaOH, self->eta, self->k);
+  float G = G2(self->distribution, cosThetaO, cosThetaI, cosThetaOH, cosThetaIH);
+
+  type = BSDF_GLOSSY_REFLECTION;
+  pdf = whPdf * rcp(4.0f*abs(cosThetaOH));
+  return F * (G * abs(cosThetaOH * rcp(cosThetaO*cosThetaH)));
 }
 
 inline void MicrofacetConductor_Constructor(varying MicrofacetConductor* uniform self, const varying linear3f* uniform frame,
-                                            const uniform vec3f& R,
-                                            const uniform vec3f& eta,
-                                            const uniform vec3f& k,
-                                            float exp_)
+                                            vec3f reflectance, vec3f eta, vec3f k, float roughness)
 {
   BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
                    MicrofacetConductor_eval, MicrofacetConductor_sample,
                    frame);
-  self->R = R;
-  self->fresnel = make_FresnelConductor(eta, k);
-  self->distribution = make_PowerCosineDistribution(exp_);
+  self->reflectance = reflectance;
+  self->eta = eta;
+  self->k = k;
+  float alpha = max(sqr(roughness), 0.001f);
+  self->distribution = make_GGXDistribution(alpha);
 }
 
 inline varying BSDF* uniform MicrofacetConductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                                        uniform vec3f R, uniform vec3f eta, uniform vec3f k, float exp_)
+                                                        vec3f reflectance, vec3f eta, vec3f k, float roughness)
 {
   varying MicrofacetConductor* uniform self = (varying MicrofacetConductor* uniform)ShadingContext_alloc(ctx, sizeof(MicrofacetConductor));
-  MicrofacetConductor_Constructor(self, frame, R, eta, k, exp_);
+  MicrofacetConductor_Constructor(self, frame, reflectance, eta, k, roughness);
   return &self->super;
 }

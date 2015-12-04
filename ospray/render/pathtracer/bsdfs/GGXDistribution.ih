@@ -1,0 +1,88 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct GGXDistribution
+{
+  float alpha;
+};
+
+inline GGXDistribution make_GGXDistribution(float alpha)
+{
+  GGXDistribution m;
+  m.alpha = alpha;
+  return m;
+}
+
+inline float eval(const GGXDistribution& self,
+                  float cosTheta, float& pdf)
+{
+  float alpha2 = sqr(self.alpha);
+  float tmp = (alpha2*cosTheta - cosTheta) * cosTheta + 1.0f;
+  return alpha2 * rcp(pi*sqr(tmp));
+}
+
+inline vec3f sample(const GGXDistribution& self,
+                    float& pdf, const vec2f& s)
+{
+  float alpha2 = sqr(self.alpha);
+  float tanTheta2 = alpha2*s.x * rcp(1.0f-s.x);
+  float cosTheta = rsqrt(1.0f + tanTheta2);
+  float sinTheta = cos2sin(cosTheta);
+
+  float phi = 2.0f*pi * s.y;
+
+  float cosTheta3 = sqr(cosTheta)*cosTheta;
+  pdf = alpha2 * rcp(pi * cosTheta3 * sqr(alpha2+tanTheta2));
+
+  float sinPhi, cosPhi;
+  sincos(phi, &sinPhi, &cosPhi);
+
+  float x = cosPhi * sinTheta;
+  float y = sinPhi * sinTheta;
+  float z = cosTheta;
+  return make_vec3f(x,y,z);
+}
+
+inline float Lambda(const GGXDistribution& self,
+                    float cosTheta)
+{
+  float alpha2 = sqr(self.alpha);
+  float cosTheta2 = sqr(cosTheta);
+  float tanTheta2 = (1.0f-cosTheta2) * rcp(cosTheta2);
+  return 0.5f * (-1.0f + sqrt(1.0f+alpha2*tanTheta2));
+}
+
+inline float G1(const GGXDistribution& self,
+                float cosThetaO, float cosThetaOH)
+{
+    if (cosThetaO * cosThetaOH <= 0.0f)
+        return 0.0f;
+
+    return rcp(1.0f + Lambda(self, cosThetaO));
+}
+
+inline float G2(const GGXDistribution& self,
+                float cosThetaO, float cosThetaI, float cosThetaOH, float cosThetaIH)
+{
+    if (cosThetaO * cosThetaOH <= 0.0f || cosThetaI * cosThetaIH <= 0.0f)
+        return 0.0f;
+
+    return rcp(1.0f + Lambda(self, cosThetaO) + Lambda(self, cosThetaI));
+}

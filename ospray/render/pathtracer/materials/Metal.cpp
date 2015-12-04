@@ -29,11 +29,11 @@ namespace ospray {
         if (getIE() != NULL) return;
 
         const vec3f& reflectance
-          = getParam3f("reflectance",getParam3f("color",vec3f(1.f))); //vec3f(0.19,0.45,1.5));
+          = getParam3f("reflectance",getParam3f("color",vec3f(1.f)));
         const vec3f& eta
-          = getParam3f("eta",vec3f(1.4f)); //vec3f(.4f,0.f,0.f));
+          = getParam3f("eta",vec3f(1.69700277f, 0.879832864f, 0.5301736f));
         const vec3f& k
-          = getParam3f("k",vec3f(1.f)); //3.06,2.4,1.88));
+          = getParam3f("k",vec3f(9.30200672f, 6.27604008f, 4.89433956f));
         const float roughness
           = getParamf("roughness",0.01f);
 

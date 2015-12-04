@@ -40,7 +40,7 @@ const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* unifo
   if (self->roughness == 0.0f)
     return Conductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k);
   else
-    return MicrofacetConductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k, rcp(self->roughness));
+    return MicrofacetConductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k, self->roughness);
 }
 
 void Metal_Constructor(uniform Metal* uniform self,

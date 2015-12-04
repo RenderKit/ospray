@@ -21,7 +21,7 @@
 struct Conductor
 {
   BSDF super;
-  vec3f R;           //!< reflectivity coefficient
+  vec3f reflectance; //!< reflectivity coefficient
   vec3f eta;         //!< real part of refraction index
   vec3f k;           //!< imaginary part of refraction index
 };
@@ -40,24 +40,24 @@ inline vec3f Conductor_sample(const varying BSDF* uniform super,
   wi = reflect(wo, getN(super));
   pdf = 1.0f;
   type = BSDF_SPECULAR_REFLECTION;
-  return mul(self->R, fresnelConductor(dot(wo, getN(super)), self->eta, self->k));
+  return self->reflectance * fresnelConductor(dot(wo, getN(super)), self->eta, self->k);
 }
 
 inline void Conductor_Constructor(varying Conductor* uniform self, const varying linear3f* uniform frame,
-                                  uniform vec3f R, uniform vec3f eta, uniform vec3f k)
+                                  vec3f reflectance, vec3f eta, vec3f k)
 {
   BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION,
                    Conductor_eval, Conductor_sample,
                    frame);
-  self->R = R;
+  self->reflectance = reflectance;
   self->eta = eta;
   self->k = k;
 }
 
 inline varying BSDF* uniform Conductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
-                                              uniform vec3f R, uniform vec3f eta, uniform vec3f k)
+                                              vec3f reflectance, vec3f eta, vec3f k)
 {
   varying Conductor* uniform self = (varying Conductor* uniform)ShadingContext_alloc(ctx, sizeof(Conductor));
-  Conductor_Constructor(self, frame, R, eta, k);
+  Conductor_Constructor(self, frame, reflectance, eta, k);
   return &self->super;
 }
