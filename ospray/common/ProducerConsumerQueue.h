@@ -75,8 +75,7 @@ namespace ospray {
   T ProducerConsumerQueue<T>::get()
   {
     std::unique_lock<std::mutex> lock(mutex);
-    while (content.empty())
-      notEmptyCond.wait(lock);
+    notEmptyCond.wait(lock, [&]{return !content.empty();});
 
     {
       LockGuard l(mutex);
@@ -118,8 +117,7 @@ namespace ospray {
   void ProducerConsumerQueue<T>::getAll(std::vector<T> &all)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    while (content.empty())
-      notEmptyCond.wait(lock);
+    notEmptyCond.wait(lock, [&]{return !content.empty();});
 
     {
       LockGuard l(mutex);
@@ -138,8 +136,7 @@ namespace ospray {
   size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize)
   {
     std::unique_lock<std::mutex> lock(mutex);
-    while (content.empty())
-      notEmptyCond.wait(lock);
+    notEmptyCond.wait(lock, [&]{return !content.empty();});
 
     {
       LockGuard l(mutex);

@@ -412,9 +412,7 @@ namespace ospray {
     // printf("waitUntilFinished rank %i DONE\n",mpi::world.rank);fflush(0);
 #else
     std::unique_lock<std::mutex> lock(mutex);
-    while (!frameIsDone)  {
-      doneCond.wait(lock);
-    }
+    doneCond.wait(lock, [&]{return frameIsDone;});
 #endif
   }
 
