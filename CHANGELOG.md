@@ -1,6 +1,27 @@
 Version History
 ---------------
 
+### Changes in v0.8.3:
+
+-   Volume rendering enhancements:
+    -   Expanded material support
+    -   Support for multiple lights
+    -   Support for double precision volumes
+    -   Added ospSampleVolume() API call to support limited probing of
+        volume values
+-   New features to support compositing externally rendered content with
+    OSPRay-rendered content
+    -   Renderers support early ray termination through a maximum depth
+        parameter
+    -   New OpenGL utility module to convert between OSPRay and OpenGL
+        depth values
+-   Enhancements and optimizations to path tracer
+-   Added panoramic and orthographic camera types
+-   Proper CMake-based installation of OSPRay and CMake find_package()
+    support for use in external projects
+-   Experimental Windows support
+-   Bug fixes and cleanups throughout the codebase
+
 ### Changes in v0.8.2:
 
 -   Initial support for AVX512 and the Intel® Xeon Phi™ processor
