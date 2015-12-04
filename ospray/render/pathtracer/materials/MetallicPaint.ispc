@@ -16,15 +16,15 @@
 
 #include "Material.ih"
 //#include "../bsdfs/DielectricReflection.ih"
-#include "../bsdfs/DielectricLayerLambert.ih"
-#include "../bsdfs/DielectricLayerMicrofacetMetal.ih"
+//#include "../bsdfs/DielectricLayerLambert.ih"
+//#include "../bsdfs/DielectricLayerMicrofacetMetal.ih"
 
 struct MetallicPaint
 {
   PathTraceMaterial super;
   //DielectricReflection              reflection;
-  DielectricLayerLambert         paint;
-  DielectricLayerMicrofacetMetal    glitter;
+  //DielectricLayerLambert         paint;
+  //DielectricLayerMicrofacetMetal    glitter;
   bool                              hasGlitter;
 };
 
@@ -64,7 +64,7 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
                                               make_MicrofacetMetal(glitterColor,
                                                                    make_FresnelConductor(etaAluminium,kAluminium),
                                                                    make_PowerCosineDistribution(rcp(glitterSpread))));
-  */                                                                   
+  */
   this->hasGlitter = (glitterSpread != 0.0f & ne(glitterColor,make_vec3f(0.0f)));
 }
 
