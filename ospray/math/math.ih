@@ -50,6 +50,8 @@ inline float rsqrtf(const float f) { return rcpf(sqrtf(f)); }
 /*! c-style reciprocal square root */
 inline uniform float rsqrtf(const uniform float f) { return rcpf(sqrtf(f)); }
 
+/*! square.  */
+inline float sqr(const float f) { return f*f; }
 /*! c-style square.  */
 inline float sqrf(const float f) { return f*f; }
 /*! c-style square */
@@ -155,7 +157,7 @@ __define_lerp(uint32)
                             varying TYPE c, varying TYPE d)     \
   {                                                             \
     return MM(a, MM(b, MM(c, d)));                              \
-  }                                                                                         
+  }
 
 #define __define_op4(MM)                        \
   __define_op4T(MM,int8)                        \
