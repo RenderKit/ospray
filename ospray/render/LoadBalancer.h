@@ -108,9 +108,10 @@ namespace ospray {
       if derived from FrameBuffer::RenderFrameEvent to allow us for
       attaching that as a sync primitive to the frame buffer
     */
-    struct RenderTask : public Task {
-      Ref<FrameBuffer> fb;
-      Ref<Renderer>    renderer;
+    struct RenderTask
+    {
+      mutable Ref<FrameBuffer> fb;
+      mutable Ref<Renderer>    renderer;
 
       size_t           numTiles_x;
       size_t           numTiles_y;
@@ -120,8 +121,12 @@ namespace ospray {
       uint32           channelFlags;
       void             *perFrameData;
 
-      void run(size_t jobID);
-      void finish();
+      void run(size_t jobID) const;
+      void finish() const;
+
+#ifdef OSPRAY_USE_TBB
+      void operator()(const tbb::blocked_range<int>& range) const;
+#endif
     };
 
     void renderFrame(Renderer *tiledRenderer,
