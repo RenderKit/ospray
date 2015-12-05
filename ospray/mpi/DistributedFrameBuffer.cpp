@@ -97,6 +97,7 @@ namespace ospray {
 
     {
       LockGuard lock(mutex);
+      fprintf(stderr, "LOCK-1\n");
       bufferedTile.push_back(addTile);
 
       if (tile.generation == currentGeneration) {
@@ -181,6 +182,7 @@ namespace ospray {
 
     {
       LockGuard lock(mutex);
+      fprintf(stderr, "LOCK-2\n");
       (void)lock;
       if (numPartsComposited == 0)
         memcpy(&compositedTileData,&tile,sizeof(tile));
@@ -210,6 +212,7 @@ namespace ospray {
     // PING; PRINT(this); fflush(0);
     {
       LockGuard lock(mutex);
+      fprintf(stderr, "LOCK-3\n");
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
       assert(!frameIsActive);
 
@@ -412,6 +415,7 @@ namespace ospray {
     // printf("waitUntilFinished rank %i DONE\n",mpi::world.rank);fflush(0);
 #else
     std::unique_lock<std::mutex> lock(mutex);
+    fprintf(stderr, "LOCK-4\n");
     doneCond.wait(lock, [&]{return frameIsDone;});
 #endif
   }
@@ -496,6 +500,7 @@ namespace ospray {
       /*! we will not do anything with the tile other than mark it's done */
       {
         LockGuard lock(mutex);
+        fprintf(stderr, "LOCK-5\n");
         (void)lock;
         numTilesCompletedThisFrame++;
         DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
@@ -535,6 +540,7 @@ namespace ospray {
 
       {
         LockGuard lock(mutex);
+        fprintf(stderr, "LOCK-6\n");
         (void)lock;
         numTilesCompletedThisFrame++;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
@@ -553,6 +559,7 @@ namespace ospray {
     DBG(printf("incoming at %i: %i\n",mpi::world.rank,_msg->command); fflush(0));
     if (!frameIsActive) {
       LockGuard lock(mutex);
+      fprintf(stderr, "LOCK-7\n");
       (void)lock;
       if (!frameIsActive) {
         // frame is not actually active, yet - put the tile into the

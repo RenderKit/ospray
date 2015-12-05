@@ -75,10 +75,12 @@ namespace ospray {
   T ProducerConsumerQueue<T>::get()
   {
     std::unique_lock<std::mutex> lock(mutex);
+    fprintf(stderr, "LOCK-8\n");
     notEmptyCond.wait(lock, [&]{return !content.empty();});
 
     {
       LockGuard l(mutex);
+      fprintf(stderr, "LOCK-9\n");
       (void)l;
       T t = content.front();
       content.pop_front();
@@ -93,6 +95,7 @@ namespace ospray {
     bool wasEmpty = false;
     {
       LockGuard lock(mutex);
+      fprintf(stderr, "LOCK-A\n");
       (void)lock;
       wasEmpty = content.empty();
       content.push_back(t);
@@ -108,6 +111,7 @@ namespace ospray {
     bool wasEmpty = false;
     {
       LockGuard lock(mutex);
+      fprintf(stderr, "LOCK-B\n");
       (void)lock;
       wasEmpty = content.empty();
       for (int i=0;i<numTs;i++)
@@ -123,10 +127,12 @@ namespace ospray {
   void ProducerConsumerQueue<T>::getAll(std::vector<T> &all)
   {
     std::unique_lock<std::mutex> lock(mutex);
+    fprintf(stderr, "LOCK-C\n");
     notEmptyCond.wait(lock, [&]{return !content.empty();});
 
     {
       LockGuard l(mutex);
+      fprintf(stderr, "LOCK-D\n");
       (void)l;
       size_t size = content.size();
       all.resize(size);
@@ -142,10 +148,12 @@ namespace ospray {
   size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize)
   {
     std::unique_lock<std::mutex> lock(mutex);
+    fprintf(stderr, "LOCK-E\n");
     notEmptyCond.wait(lock, [&]{return !content.empty();});
 
     {
       LockGuard l(mutex);
+      fprintf(stderr, "LOCK-F\n");
       (void)l;
       size_t num = 0;
       while (num < maxSize && !content.empty()) {
