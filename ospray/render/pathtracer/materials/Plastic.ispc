@@ -17,6 +17,7 @@
 #include "Material.ih"
 #include "../bsdfs/Lambert.ih"
 #include "../bsdfs/DielectricLayer.ih"
+#include "../bsdfs/MicrofacetDielectricLayer.ih"
 
 struct Plastic
 {
@@ -40,7 +41,12 @@ const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uni
 
   varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
   varying BSDF* uniform bsdf = Lambert_create(ctx, shadingFrame, self->pigmentColor);
-  bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);
+
+  if (self->roughness == 0.0f)
+    bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);
+  else
+    bsdf = MicrofacetDielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f, self->roughness);
+
   return bsdf;
 }
 

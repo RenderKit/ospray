@@ -49,7 +49,7 @@ inline vec3f DielectricLayer_eval(const varying BSDF* uniform super,
   float substratePdf;
   vec3f substrateValue = self->substrate->eval(self->substrate, dg, wo, wi, substratePdf);
 
-  // Apply the layer transmittance
+  // Apply the coating transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
   float cosThetaI1 = refract(cosThetaI, self->eta); // positive
   substrateValue = substrateValue * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
@@ -73,10 +73,10 @@ inline vec3f DielectricLayer_sample(const varying BSDF* uniform super,
   float cosThetaO1; // positive
   float F = fresnelDielectricEx(cosThetaO, cosThetaO1, self->eta);
 
-  // Sample the layer or the substrate reflection
+  // Sample the coating or the substrate reflection
   if (ss < F)
   {
-      // Sample the layer reflection
+      // Sample the coating reflection
       type = BSDF_SPECULAR_REFLECTION;
       wi = reflect(wo, getN(super), cosThetaO);
       pdf = F;
@@ -91,7 +91,7 @@ inline vec3f DielectricLayer_sample(const varying BSDF* uniform super,
       if (reduce_max(substrateWeight) <= 0.0f) return make_vec3f(0.0f);
       float cosThetaI = max(dot(wi, getN(super)), 0.0f); // should be positive
 
-      // Apply the layer transmittance
+      // Apply the coating transmittance
       float cosThetaI1 = refract(cosThetaI, self->eta); // positive
       substrateWeight = substrateWeight * pow(self->transmittance, self->thickness * (rcp(cosThetaO1) + rcp(cosThetaI1)));
 
@@ -107,6 +107,7 @@ inline void DielectricLayer_Constructor(varying DielectricLayer* uniform self, c
   BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION | substrate->type,
                    DielectricLayer_eval, DielectricLayer_sample,
                    frame);
+
   self->substrate = substrate;
   self->eta = eta;
   self->transmittance = transmittance;
