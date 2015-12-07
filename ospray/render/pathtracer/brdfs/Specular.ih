@@ -49,8 +49,10 @@ inline vec3f Specular__sample(const uniform BRDF* uniform _this,
                                 const vec2f &s)  
 {
   const varying Specular* uniform this = (const varying Specular* uniform) _this;
-  const Sample3f refl = reflect(wo,dg.Ns);
-  wi = powerCosineSampleHemisphere(s.x,s.y,refl.v,this->exp);
+  const Sample3f refl = reflect(wo, dg.Ns);
+  const vec3f localDir = powerCosineSampleHemisphere(this->exp, s);
+  wi.v = frame(refl.v) * localDir;
+  wi.pdf = powerCosineSampleHemispherePDF(localDir, this->exp);
   return Specular__eval(&this->base, wo, dg, wi.v);
 }
 

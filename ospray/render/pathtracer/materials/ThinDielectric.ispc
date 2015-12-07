@@ -32,7 +32,8 @@ void ThinDielectric__shade(const uniform PathTraceMaterial *uniform _this,
                        const Ray&                  ray,            
                        const Medium&               currentMedium,  
                        const DifferentialGeometry& dg,             
-                       uniform CompositedBRDF&     brdfs)          
+                       uniform CompositedBRDF&     brdfs,
+                       vec3f& Ns)
 {
   uniform const ThinDielectric *uniform this = (uniform const ThinDielectric *uniform)_this;
   CompositedBRDF__add(&brdfs,&this->reflection.base);
@@ -44,8 +45,7 @@ void ThinDielectric__Constructor(uniform ThinDielectric* uniform this,
                                  const uniform float eta,
                                  const uniform float thickness)
 {
-  PathTraceMaterial__Constructor(&this->base,// PathTraceMaterial__Destructor,
-                                 ThinDielectric__shade,NULL);
+  PathTraceMaterial__Constructor(&this->base, ThinDielectric__shade, NULL);
   DielectricReflection__Constructor      (&this->reflection  , 1.0f, eta);
   ThinDielectricTransmission__Constructor(&this->transmission, 1.0f, eta, transmission, thickness);
 }

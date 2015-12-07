@@ -17,7 +17,8 @@
 #pragma once
 
 #include "../samplers/Sample.ih"
-#include "../samplers/ShapeSampler.ih"
+#include "ospray/math/sampling.ih"
+#include "ospray/math/LinearSpace.ih"
 
 /*! Reflects a viewing vector V at a normal N. */
 inline Sample3f reflect(const vec3f &V, const vec3f &N) {
@@ -140,6 +141,7 @@ inline float eval(const uniform PowerCosineDistribution &self,
                   const float cosThetaH) 
 {
   return (self.exp+2) * (1.0f/(2.0f*(M_PI))) * pow(abs(cosThetaH), self.exp);
+  // TODO: check with powerCosineSampleHemispherePDF
 }
 
 /*! Samples the power cosine distribution. */
@@ -149,9 +151,11 @@ inline void sample(const uniform PowerCosineDistribution &self,
                    Sample3f &wi, 
                    const vec2f s)  
 {
-  Sample3f wh = powerCosineSampleHemisphere(s.x,s.y,dg.Ns,self.exp);
-  Sample3f r = reflect(wo,wh.v);
-  wi = make_Sample3f(r.v,wh.pdf/(4.0f*abs(dot(wo,wh.v))));
+  const vec3f wh_local = powerCosineSampleHemisphere(self.exp, s);
+  const float pdf = powerCosineSampleHemispherePDF(wh_local, self.exp);
+  const vec3f wh = frame(dg.Ns) * wh_local;
+  Sample3f r = reflect(wo, wh);
+  wi = make_Sample3f(r.v, pdf/(4.0f*abs(dot(wo, wh))));
 }
 
 inline uniform PowerCosineDistribution make_PowerCosineDistribution(const uniform float _exp) 

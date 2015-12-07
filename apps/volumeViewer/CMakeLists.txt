@@ -18,10 +18,15 @@ IF (NOT OSPRAY_MODULE_LOADERS)
   message(FATAL_ERROR "The 'loaders' module must be enabled to build the 'ospVolumeViewer' application.")
 ENDIF (NOT OSPRAY_MODULE_LOADERS)
 
+IF (NOT OSPRAY_MODULE_OPENGL_UTIL)
+  message(FATAL_ERROR "The 'OpenGL util' module must be enabled to build the 'ospVolumeViewer' application.")
+ENDIF (NOT OSPRAY_MODULE_OPENGL_UTIL)
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 # setup dependencies
 SET(LIBS ${LIBS} ospray ospray_module_loaders)
+SET(LIBS ${LIBS} ospray ospray_module_opengl_util)
 
 # link optional loaders-based modules if built
 IF (OSPRAY_MODULE_SEISMIC)
@@ -44,7 +49,9 @@ SET(SRCS ${SRCS}
   IsovalueWidget.cpp
   LightEditor.cpp
   LinearTransferFunctionWidget.cpp
+  OpenGLAnnotationRenderer.cpp
   PreferencesDialog.cpp
+  ProbeWidget.cpp
   QOSPRayWindow.cpp
   SliceEditor.cpp
   SliceWidget.cpp
@@ -57,7 +64,10 @@ SET(MOC_HEADERS
   IsovalueWidget.h
   LightEditor.h
   LinearTransferFunctionWidget.h
+  OpenGLAnnotationRenderer.h
   PreferencesDialog.h
+  ProbeWidget.h
+  QOSPRayWindow.h
   SliceEditor.h
   SliceWidget.h
   TransferFunctionEditor.h

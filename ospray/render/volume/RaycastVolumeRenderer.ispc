@@ -21,16 +21,16 @@
 #include "ospray/render/volume/RaycastVolumeRenderer.ih"
 #include "ospray/render/volume/RaycastVolumeRendererMaterial.ih"
 
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, 
+void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer,
                                                 const uniform int32 accumID)
-{ 
-  if (renderer->fb) renderer->fb->accumID = accumID;  renderer->fb = NULL; 
+{
+  if (renderer->fb) renderer->fb->accumID = accumID;  renderer->fb = NULL;
 }
 
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer, 
+void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer,
                                                FrameBuffer *uniform framebuffer)
-{ 
-  renderer->fb = framebuffer; 
+{
+  renderer->fb = framebuffer;
 }
 
 inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uniform renderer,
@@ -48,20 +48,26 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
   // Compute gradient shading, if enabled.
   if(volume->gradientShadingEnabled) {
 
-    // Compute lighting.
-    vec3f lightDirection;
-    float lightDistance;
-    vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], coordinates, lightDirection, lightDistance);
-
-    // Constant ambient lighting term.
-    const float ambient = 0.1f;
-
     // Use volume gradient as the normal.
     const vec3f gradient = normalize(volume->computeGradient(volume, coordinates));
 
-    const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(lightDirection), normalize(gradient)));
+    // Setup differential geometry for the volume sample point.
+    DifferentialGeometry dg;
+    dg.P = coordinates;
+    dg.Ns = gradient;
 
-    sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
+    // Compute lighting.
+    vec3f shadedColor = make_vec3f(0.f);
+    const vec2f s = make_vec2f(0.5f);
+
+    for (uniform uint32 i=0; i<renderer->numLights; i++) {
+      const LightSample light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
+      const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(normalize(light.direction), gradient));
+
+      shadedColor = shadedColor + sampleColor * cosNL * light.radiance;
+    }
+
+    sampleColor = shadedColor;
   }
 
   // Look up the opacity associated with the volume sample.
@@ -89,42 +95,56 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   // Post intersect on the hit geometry.
   DifferentialGeometry dg;
-  postIntersect(renderer->inherited.model, dg, ray, DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR|DG_MATERIALID);
+  postIntersect(renderer->inherited.model, dg, ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR
+                |DG_MATERIALID|DG_TEXCOORD);
 
   // Color of the geometry.
-  vec3f sampleColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
+  vec3f geometryColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
 
   // Apply material if it exists.
   uniform RaycastVolumeRendererMaterial *mat = (uniform RaycastVolumeRendererMaterial*)dg.material;
 
+  float d  = 1.f;
+  vec3f Kd = make_vec3f(0.f,1.f,0.f);
+
   if (mat) {
     foreach_unique(m in mat) {
-      sampleColor = sampleColor * m->Kd;
+      d = m->d * get1f(m->map_d, dg.st, 1.f);
+      Kd = m->Kd * make_vec3f(dg.color);
+      if (m->map_Kd) {
+        vec4f Kd_from_map = get4f(m->map_Kd,dg.st);
+        Kd = Kd * make_vec3f(Kd_from_map);
+        d *= Kd_from_map.w;
+      } else {
+        Kd = m->Kd;
+      }
+
+      geometryColor = geometryColor * Kd;
 
       if (m->volume) {
         const float sample = m->volume->computeSample(m->volume, dg.P);
-        sampleColor = sampleColor * m->volume->transferFunction->getColorForValue(m->volume->transferFunction, sample);
+        geometryColor = geometryColor * m->volume->transferFunction->getColorForValue(m->volume->transferFunction, sample);
       }
     }
   }
 
   // Opacity of the geometry.
-  float sampleOpacity = dg.color.w;
+  float geometryOpacity = dg.color.w;
 
   // Compute lighting.
-  vec3f lightDirection;
-  float lightDistance;
-  vec3f lightRadiance = renderer->lights[0]->computeRadiance(renderer->lights[0], dg.P, lightDirection, lightDistance);
+  vec3f shadedColor = make_vec3f(0.f);
+  const vec2f s = make_vec2f(0.5f);
 
-  // Constant ambient lighting term.
-  const float ambient = 0.1f;
+  for (uniform uint32 i=0; i<renderer->numLights; i++) {
+    const LightSample light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
+    const float cosNL = abs(dot(normalize(light.direction), dg.Ns));
 
-  const float cosNL = abs(dot(normalize(lightDirection), dg.Ns));
-
-  sampleColor = sampleColor * (ambient + cosNL*(1.f-ambient)) * lightRadiance;
+    shadedColor = shadedColor + geometryColor * cosNL * light.radiance;
+  }
 
   // Set the color contribution for this sample only (do not accumulate).
-  color = sampleOpacity * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.f);
+  color = geometryOpacity * make_vec4f(shadedColor.x, shadedColor.y, shadedColor.z, 1.f);
 }
 
 /*! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
@@ -179,7 +199,8 @@ inline Volume * RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRend
 inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform renderer,
                                             varying Ray &ray,
                                             const varying float &rayOffset,
-                                            varying vec4f &color)
+                                            varying vec4f &color,
+                                            varying float &depth)
 {
   // Original tMax for ray interval
   const float tMax = ray.t;
@@ -216,10 +237,13 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   // Initial trace through geometries.
   RaycastVolumeRenderer_computeGeometrySample(renderer, geometryRay, geometryColor);
 
+  // Depth is the first volume bounding box or geometry hit
+  depth = min(ray.t0, geometryRay.t);
+
   // Trace the ray through the volume and geometries.
   float firstHit;
 
-  while ((firstHit = min(ray.t0, geometryRay.t)) < infinity
+  while ((firstHit = min(ray.t0, geometryRay.t)) < tMax
          && min(min(color.x, color.y), color.z) < 1.0f && color.w < 0.99f) {
 
     if (firstHit == ray.t0) {
@@ -262,8 +286,8 @@ inline void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *unifo
   }
 }
 
-void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer, 
-                                        varying ScreenSample &sample) 
+void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
+                                        varying ScreenSample &sample)
 {
   // Cast to the actual Renderer subtype.
   RaycastVolumeRenderer *uniform renderer = (RaycastVolumeRenderer *uniform) pointer;
@@ -282,13 +306,19 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
   // Provide the renderer to the intersector as it contains all volumes, geometries, etc.
   vec4f color = make_vec4f(0.0f);
-  RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color);
+  float depth = infinity;
+  RaycastVolumeRenderer_intersect(renderer, sample.ray, rayOffset, color, depth);
 
   // Attenuate the foreground and background colors by the opacity.
-  color = color.w * color + (1.0f - color.w) * background;
+  if (renderer->inherited.backgroundEnabled)
+    color = color.w * color + (1.0f - color.w) * background;
 
   // Store the result in the sample.
-  sample.rgb.x = color.x;  sample.rgb.y = color.y;  sample.rgb.z = color.z;  sample.alpha = color.w;
+  sample.rgb.x = color.x;
+  sample.rgb.y = color.y;
+  sample.rgb.z = color.z;
+  sample.alpha = color.w;
+  sample.z = depth;
 }
 
 export void *uniform RaycastVolumeRenderer_createInstance()
@@ -322,11 +352,13 @@ export void RaycastVolumeRenderer_setBackgroundColor(void *uniform _self,
 }
 
 export void RaycastVolumeRenderer_setLights(void *uniform _self,
-                                            void **uniform lights)
+                                            void **uniform lights,
+                                            const uniform uint32 numLights)
 {
   // Cast to the actual Renderer subtype.
   uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
 
   // Set the light sources.
-  self->lights = (Light **uniform) lights;
+  self->lights = (Light **uniform)lights;
+  self->numLights = numLights;
 }

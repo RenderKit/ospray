@@ -17,11 +17,22 @@
 #include <stdio.h>
 #include <string.h>
 #include "modules/loaders/RawVolumeFile.h"
+#include "common/sys/filename.h"
 
 OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
 {
   // Look for the volume data file at the given path.
-  FILE *file = fopen(filename.c_str(), "rb");  exitOnCondition(!file, "unable to open file '" + filename + "'");
+  FILE *file = NULL;
+  embree::FileName fn = filename;
+  bool gzipped = fn.ext() == "gz";
+  if (gzipped) {
+    std::string cmd = "/usr/bin/gunzip -c "+filename;
+    file = popen(cmd.c_str(),"r");
+  } else {
+    file = fopen(filename.c_str(),"rb");
+  }
+  //FILE *file = fopen(filename.c_str(), "rb");
+  exitOnCondition(!file, "unable to open file '" + filename + "'");
 
   // Offset into the volume data file if any.
   int offset = 0;  ospGeti(volume, "filename offset", &offset);  fseek(file, offset, SEEK_SET);
@@ -32,11 +43,17 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
   // Voxel type string.
   char *voxelType;  exitOnCondition(!ospGetString(volume, "voxelType", &voxelType), "no voxel type specified");
 
-  // Supported voxel types.
-  exitOnCondition(strcmp(voxelType, "float") && strcmp(voxelType, "uchar"), "unsupported voxel type");
-
   // Voxel size in bytes.
-  size_t voxelSize = strcmp(voxelType, "float") ? sizeof(unsigned char) : sizeof(float);
+  size_t voxelSize;
+
+  if (strcmp(voxelType, "uchar") == 0)
+    voxelSize = sizeof(unsigned char);
+  else if (strcmp(voxelType, "float") == 0)
+    voxelSize = sizeof(float);
+  else if (strcmp(voxelType, "double") == 0)
+    voxelSize = sizeof(double);
+  else
+    exitOnCondition(true, "unsupported voxel type");
 
   // Check if a subvolume of the volume has been specified.
   // Subvolume parameters: subvolumeOffsets, subvolumeDimensions, subvolumeSteps.
@@ -131,6 +148,10 @@ OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
     delete [] subvolumeRowData;
   }
 
+  if (gzipped)
+    pclose(file);
+  else
+    fclose(file);
   // Return the volume.
   return(volume);
 }

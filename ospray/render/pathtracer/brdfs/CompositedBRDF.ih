@@ -129,10 +129,15 @@ inline vec3f CompositedBRDF__sample(const uniform CompositedBRDF* uniform this,
   /*! special case for two components */
   else if (this->numBrdfs == 2) 
   {
+    const bool val0 = this->active[0] & (bool)(this->brdfs[0]->brdfType & type);
+    const bool val1 = this->active[1] & (bool)(this->brdfs[1]->brdfType & type);
+    if (!val0 & !val1)
+      return make_vec3f(0.0f);
+
     Sample3f wi0; const vec3f c0 = this->brdfs[0]->sample(this->brdfs[0], wo, dg, wi0, s);
     Sample3f wi1; const vec3f c1 = this->brdfs[1]->sample(this->brdfs[1], wo, dg, wi1, s);
-    const bool valid0 = this->active[0] & ne(c0,make_vec3f(0.0f)) & wi0.pdf > 0.0f;
-    const bool valid1 = this->active[1] & ne(c1,make_vec3f(0.0f)) & wi1.pdf > 0.0f;
+    const bool valid0 = val0 & ne(c0,make_vec3f(0.0f)) & wi0.pdf > 0.0f;
+    const bool valid1 = val1 & ne(c1,make_vec3f(0.0f)) & wi1.pdf > 0.0f;
     if (valid0 & valid1) {
       const float f0 = (c0.x + c0.y + c0.z) * rcp(wi0.pdf);
       const float f1 = (c1.x + c1.y + c1.z) * rcp(wi1.pdf);

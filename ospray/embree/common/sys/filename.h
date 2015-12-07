@@ -21,18 +21,18 @@
 namespace embree
 {
   /*! Convenience class for handling file names and paths. */
-  class FileName
+  class OSPRAY_EMBREE_INTERFACE FileName
   {
   public:
 
     /*! create an empty filename */
-    FileName ();
+    FileName();
 
     /*! create a valid filename from a string */
-    FileName (const char* filename);
+    FileName(const char* filename);
 
     /*! create a valid filename from a string */
-    FileName (const std::string& filename);
+    FileName(const std::string& filename);
 
     /*! auto convert into a string */
     operator std::string() const { return filename; }
@@ -65,16 +65,16 @@ namespace embree
     FileName addExt(const std::string& ext = "") const;
 
     /*! concatenates two filenames to this/other */
-    FileName operator +( const FileName& other ) const;
+    FileName operator +(const FileName& other) const;
 
     /*! concatenates two filenames to this/other */
-    FileName operator +( const std::string& other ) const;
+    FileName operator +(const std::string& other) const;
 
     /*! removes the base from a filename (if possible) */
-    FileName operator -( const FileName& base ) const;
+    FileName operator -(const FileName& base) const;
 
     /*! output operator */
-    friend std::ostream& operator<<(std::ostream& cout, const FileName& filename);
+    OSPRAY_EMBREE_INTERFACE friend std::ostream& operator<<(std::ostream& cout, const FileName& filename);
 
   private:
     std::string filename;

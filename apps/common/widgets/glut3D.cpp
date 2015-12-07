@@ -20,8 +20,18 @@
 #else
 #include "GL/glut.h"
 #endif
-#include <sys/times.h>
-#include <unistd.h> // for usleep
+
+#ifdef _WIN32
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h> // for Sleep
+#  define _USE_MATH_DEFINES
+#  include <math.h> // M_PI
+#else
+#  include <sys/times.h>
+#  include <unistd.h> // for usleep
+#endif
 
 namespace ospray {
 
@@ -41,7 +51,7 @@ namespace ospray {
         return;
       }
       fprintf(file,"P6\n%i %i\n255\n",sizeX,sizeY);
-      unsigned char out[3*sizeX];
+      unsigned char *out = (unsigned char *)alloca(3*sizeX);
       for (int y=0;y<sizeY;y++) {
         const unsigned char *in = (const unsigned char *)&pixel[(sizeY-1-y)*sizeX];
         for (int x=0;x<sizeX;x++) {
@@ -49,7 +59,7 @@ namespace ospray {
           out[3*x+1] = in[4*x+1];
           out[3*x+2] = in[4*x+2];
         }
-        fwrite(&out,3*sizeX,sizeof(char),file);
+        fwrite(out, 3*sizeX, sizeof(char), file);
       }
       fprintf(file,"\n");
       fclose(file);
@@ -238,12 +248,19 @@ namespace ospray {
     }
 
     void Glut3DWidget::idle()
-    { usleep(1000); }
+    {
+#ifdef _WIN32
+      Sleep(1);
+#else
+      usleep(1000);
+#endif
+    }
 
     void Glut3DWidget::reshape(const vec2i &newSize)
     {
       windowSize = newSize;
       viewPort.aspect = newSize.x/float(newSize.y);
+      glViewport(0, 0, windowSize.x, windowSize.y);
 
       forceRedraw();
     }
@@ -263,6 +280,7 @@ namespace ospray {
     {
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
+#ifndef _WIN32
         if (animating && dumpScreensDuringAnimation) {
           char tmpFileName[] = "/tmp/ospray_scene_dump_file.XXXXXXXXXX";
           static const char *dumpFileRoot;
@@ -272,12 +290,12 @@ namespace ospray {
             mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
           }
-        
+
           char fileName[100000];
           sprintf(fileName,"%s_%08ld.ppm",dumpFileRoot,times(NULL));
           saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
         }
-
+#endif
       } else if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_FLOAT && floatFB) {
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, floatFB);
       } else {
@@ -314,7 +332,7 @@ namespace ospray {
       viewPort.at    = at;
       viewPort.from  = from;
       viewPort.up    = up;
-      
+
       this->worldBounds = worldBounds;
       viewPort.frame.l.vy = normalize(dir);
       viewPort.frame.l.vx = normalize(cross(viewPort.frame.l.vy,up));
@@ -724,10 +742,12 @@ namespace ospray {
           static const char *dumpFileRoot;
           if (!dumpFileRoot) 
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
+#ifndef _WIN32
           if (!dumpFileRoot) {
             mkstemp(tmpFileName);
             dumpFileRoot = tmpFileName;
           }
+#endif
           char fileName[100000];
           static int frameDumpSequenceID = 0;
           sprintf(fileName,"%s_%05d.ppm",dumpFileRoot,frameDumpSequenceID++);
@@ -736,7 +756,7 @@ namespace ospray {
           return;
         }
       } 
-      
+
       if (key == 'C') {
         PRINT(viewPort);
         return;
@@ -778,10 +798,11 @@ namespace ospray {
     void Manipulator::keypress(Glut3DWidget *widget, const int32 key)
     {
       switch(key) {
-      case 'Q': {
+      case 27 /*ESC*/:
+      case 'q':
+      case 'Q':
         _exit(0);
-      };
-      };
+      }
     };
     void Manipulator::specialkey(Glut3DWidget *widget, const int32 key)
     {

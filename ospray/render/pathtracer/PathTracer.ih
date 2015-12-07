@@ -16,18 +16,13 @@
 
 #include "ospray/math/vec.ih"
 #include "ospray/common/Model.ih"
-#include "ospray/camera/Camera.ih"
-
 #include "ospray/fb/FrameBuffer.ih"
 #include "ospray/render/util.ih"
-#include "ospray/common/Ray.ih"
+#include "ospray/lights/Light.ih"
 #include "ospray/render/Renderer.ih"
 
-// path tracer
-#include "samplers/PrecomputedSampler.ih"
-#include "Scene.ih"
-
 #define MAX_LIGHTS 1000
+
 
 // to be changed to the ospray image/texture classes, eventually
 struct Image;
@@ -40,19 +35,13 @@ struct Image
 };
 
 struct PathTracer {
-  uniform Renderer inherited;
-  uniform int32 numRays;
-  uniform int32 maxDepth;
-  uniform float minContribution;
-  uniform Image* uniform backplate;
-  uniform Scene *uniform scene; /*! iw: since ospray doesn't have the
-                                    concept of a 'scene' in the sense
-                                    of the original embree path tracer
-                                    (it's somewhat related to a
-                                    'model', but not just) i'm adding
-                                    it here for now; we'll eventually
-                                    have to change that with a better
-                                    abstraction model for scenes */
+  Renderer super;
+  int32 numRays;
+
+  int32 maxDepth;
+  float minContribution;
+  Image* uniform backplate;
+
+  const uniform Light *uniform *uniform lights;
+  uint32 numLights;
 };
-
-

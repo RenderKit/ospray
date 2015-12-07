@@ -33,7 +33,7 @@ namespace ospray {
           Texture2D *map_Kd = (Texture2D*)getParamObject("map_Kd", getParamObject("map_kd",  getParamObject("colorMap", NULL)));
           Texture2D *map_Ks = (Texture2D*)getParamObject("map_Ks", getParamObject("map_ks", NULL));
           Texture2D *map_Ns = (Texture2D*)getParamObject("map_Ns", getParamObject("map_ns", NULL));
-          Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", getParamObject("bumpMap", NULL)));
+          Texture2D *map_Bump = (Texture2D*)getParamObject("map_Bump", getParamObject("map_bump", getParamObject("normalMap", getParamObject("bumpMap", NULL))));
 
           const float d = getParam1f("d", getParam1f("alpha", 1.f));
           const vec3f Kd = getParam3f("Kd", getParam3f("kd", getParam3f("color", vec3f(0.8f))));

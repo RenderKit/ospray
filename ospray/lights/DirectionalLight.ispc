@@ -15,61 +15,79 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/vec.ih"
+#include "ospray/math/sampling.ih"
+#include "ospray/math/LinearSpace.ih"
 
 struct DirectionalLight {
-  uniform Light super;      //!< inherited light fields
+  Light super;      //!< inherited light fields
 
-  uniform vec3f direction;  //!< direction of emitted light rays
-  uniform vec3f radiance;   //!< RGB color and intensity of light
+  vec3f direction;  //!< direction of emitted light rays
+  vec3f radiance;   //!< RGB color and intensity of light
+  float cosAngle;   //!< Angular limit of the cone light in an easier to use form: cosine of the half angle in radians
+  float pdf;        //!< Probability to sample a direction to the light
 };
 
+// for very small cones treat as singular light, because float precision is not good enough 
+#define COS_ANGLE_MAX 0.99999988f
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying vec3f DirectionalLight_computeRadiance(const uniform Light *uniform _self,
-                                               const varying vec3f &coordinates, 
-                                               varying vec3f &direction, 
-                                               varying float &distance) 
+varying LightSample DirectionalLight_sample(const uniform Light *uniform _self,
+                                            const varying DifferentialGeometry &dg,
+                                            const varying vec2f &s)
 {
   const DirectionalLight *uniform self = (DirectionalLight *uniform)_self;
+  LightSample sample;
 
-  direction = neg(self->direction);
-  distance = inf;
+  sample.direction = neg(self->direction);
+  sample.distance = inf;
+  sample.pdf = self->pdf;
 
-  return self->radiance;
+  if (self->cosAngle < COS_ANGLE_MAX)
+    sample.direction = frame(sample.direction) * uniformSampleCone(self->cosAngle, s);
+
+  sample.radiance = self->radiance;
+
+  return sample;
 }
 
-void DirectionalLight_Constructor(uniform DirectionalLight *uniform self,
-                                  void *uniform cppEquivalent,
-                                  const uniform vec3f &direction,
-                                  const uniform vec3f &radiance)
+varying vec3f DirectionalLight_evalEnv(const uniform Light *uniform _self,
+                                       const varying vec3f &dir)
 {
-  Light_Constructor(&self->super, cppEquivalent);
-  self->direction = direction;
-  self->radiance = radiance;
-  self->super.computeRadiance = DirectionalLight_computeRadiance;
+  uniform DirectionalLight *uniform self = (uniform DirectionalLight *uniform)_self;
+  if (self->cosAngle < COS_ANGLE_MAX && dot(self->direction, dir) > self->cosAngle)
+    return self->radiance * self->pdf;
+  else
+    return make_vec3f(0.f);
 }
 
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Create an ispc-side DirectionalLight object
-export void *uniform DirectionalLight_create(void *uniform cppEquivalent)
-{
-  uniform DirectionalLight *uniform self = uniform new uniform DirectionalLight;
-  DirectionalLight_Constructor(self, cppEquivalent, make_vec3f(0.f, 0.f, 1.f), make_vec3f(1.f));
-  return self;
-}
-
 //! Set the parameters of an ispc-side DirectionalLight object
 export void DirectionalLight_set(void *uniform _self,
                                  const uniform vec3f &direction,
-                                 const uniform vec3f &radiance)
+                                 const uniform vec3f &radiance,
+                                 const uniform float cosAngle)
 {
   uniform DirectionalLight *uniform self = (uniform DirectionalLight *uniform)_self;
   self->direction = direction;
   self->radiance = radiance;
+  self->cosAngle = cosAngle;
+  self->pdf = cosAngle < COS_ANGLE_MAX ? uniformSampleConePDF(cosAngle) : 1.f;
+}
+
+//! Create an ispc-side DirectionalLight object
+export void *uniform DirectionalLight_create(void *uniform cppEquivalent)
+{
+  uniform DirectionalLight *uniform self = uniform new uniform DirectionalLight;
+  Light_Constructor(&self->super, cppEquivalent);
+  self->super.sample = DirectionalLight_sample;
+  // TODO: an (indirectly) visible sun disc causes too high variance, needs to be fixed with MIS
+  // self->super.evalEnv = DirectionalLight_evalEnv;
+
+  DirectionalLight_set(self, make_vec3f(0.f, 0.f, 1.f), make_vec3f(1.f), 1.f);
+  return self;
 }

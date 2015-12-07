@@ -35,10 +35,9 @@ namespace ospray {
     ospLoadModule first. */
   Material *Material::createMaterial(const char *_type)
   {
-    char type[strlen(_type)+2];
-    strcpy(type,_type);
-    for (char *s = type; *s; ++s)
-      if (*s == '-') *s = '_';
+    std::string type(_type);
+    for (size_t i = 0; i < type.size(); i++)
+      if (type[i] == '-') type[i] = '_';
 
     std::map<std::string, Material *(*)()>::iterator it = materialRegistry.find(type);
     if (it != materialRegistry.end())
@@ -48,7 +47,7 @@ namespace ospray {
       std::cout << "#ospray: trying to look up material type '" 
                 << type << "' for the first time..." << std::endl;
 
-    std::string creatorName = "ospray_create_material__"+std::string(type);
+    std::string creatorName = "ospray_create_material__"+type;
     creatorFct creator = (creatorFct)getSymbol(creatorName);
     materialRegistry[type] = creator;
     if (creator == NULL) {

@@ -31,7 +31,13 @@
 #include "ospray/transferFunction/TransferFunction.h"
 // std
 #include <algorithm>
-#include <unistd.h> // for gethostname()
+
+#ifdef _WIN32
+#  include <Winsock2.h> // for gethostname
+#  include <process.h> // for getpid
+#else
+#  include <unistd.h> // for gethostname
+#endif
 
 namespace ospray {
   namespace mpi {
@@ -376,6 +382,10 @@ namespace ospray {
 
           texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,flags);
           assert(texture2D);
+
+          if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
+            free(data);
+
           handle.assign(texture2D);
         } break;
 
@@ -443,6 +453,25 @@ namespace ospray {
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           handle.freeObject();
+        } break;
+        case api::MPIDevice::CMD_SAMPLE_VOLUME: {
+          const mpi::Handle volumeHandle = cmd.get_handle();
+          Volume *volume = (Volume *)volumeHandle.lookup();
+          Assert(volume);
+          const size_t count = cmd.get_size_t();
+          vec3f *worldCoordinates = (vec3f *)malloc(count * sizeof(vec3f));
+          Assert(worldCoordinates);
+          cmd.get_data(count * sizeof(vec3f), worldCoordinates);
+
+          float *results = NULL;
+          volume->computeSamples(&results, worldCoordinates, count);
+          Assert(*results);
+
+          if (worker.rank == 0)
+            cmd.send(results, count * sizeof(float), 0, mpi::app.comm);
+
+          free(worldCoordinates);
+          free(results);
         } break;
 
         case api::MPIDevice::CMD_GET_TYPE: {
@@ -593,6 +622,15 @@ namespace ospray {
           const mpi::Handle handle = cmd.get_handle();
           const char *name = cmd.get_charPtr();
           const vec2f val = cmd.get_vec2f();
+          ManagedObject *obj = handle.lookup();
+          Assert(obj);
+          obj->findParam(name,1)->set(val);
+          cmd.free(name);
+        } break;
+        case api::MPIDevice::CMD_SET_VEC2I: {
+          const mpi::Handle handle = cmd.get_handle();
+          const char *name = cmd.get_charPtr();
+          const vec2i val = cmd.get_vec2i();
           ManagedObject *obj = handle.lookup();
           Assert(obj);
           obj->findParam(name,1)->set(val);

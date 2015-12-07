@@ -36,24 +36,33 @@ namespace ospray {
   {
     epsilon = getParam1f("epsilon", 1e-6f);
     spp = getParam1i("spp", 1);
+    backgroundEnabled = getParam1i("backgroundEnabled", 1);
+    maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
     model = (Model*)getParamObject("model", getParamObject("world"));
+
+    if (maxDepthTexture && (maxDepthTexture->type != OSP_FLOAT || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)))
+      static WarnOnce warning("expected maxDepthTexture provided to the renderer to be type OSP_FLOAT and have the OSP_TEXTURE_FILTER_NEAREST flag");
+
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
       if (model) {
         const float diameter = model->bounds.empty() ? 1.0f : length(model->bounds.size());
         epsilon *= diameter;
       }
+
       ispc::Renderer_set(getIE(),
                          model ?  model->getIE() : NULL,
                          camera ?  camera->getIE() : NULL,
                          epsilon,
-                         spp);
+                         spp,
+                         backgroundEnabled,
+                         maxDepthTexture ? maxDepthTexture->getIE() : NULL);
     }
   }
 
   Renderer *Renderer::createRenderer(const char *_type)
   {
-    char type[strlen(_type)+1];
+    char* type = new char[strlen(_type)+1];
     strcpy(type,_type);
     char *atSign = strstr(type,"@");
     char *libName = NULL;
@@ -65,8 +74,10 @@ namespace ospray {
       loadLibrary("ospray_module_"+std::string(libName));
     
     std::map<std::string, Renderer *(*)()>::iterator it = rendererRegistry.find(type);
-    if (it != rendererRegistry.end())
+    if (it != rendererRegistry.end()) {
+      delete[] type;
       return it->second ? (it->second)() : NULL;
+    }
     
     if (ospray::logLevel >= 2) 
       std::cout << "#ospray: trying to look up renderer type '" 
@@ -78,9 +89,16 @@ namespace ospray {
     if (creator == NULL) {
       if (ospray::logLevel >= 1) 
         std::cout << "#ospray: could not find renderer type '" << type << "'" << std::endl;
+      delete[] type;
       return NULL;
     }
-    Renderer *renderer = (*creator)();  renderer->managedObjectType = OSP_RENDERER;
+    delete[] type;
+    Renderer *renderer = (*creator)();  
+    renderer->managedObjectType = OSP_RENDERER;
+    if (renderer == NULL && ospray::logLevel >= 1) {
+      std::cout << "#osp:warning[ospNewRenderer(...)]: could not create renderer of that type." << endl;
+      std::cout << "#osp:warning[ospNewRenderer(...)]: Note: Requested renderer type was '" << type << "'" << endl;
+    }
     return(renderer);
   }
 

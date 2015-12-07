@@ -27,7 +27,10 @@
 #include "../volume/Volume.h"
 #include "MPILoadBalancer.h"
 // std
-#include <unistd.h> // for fork()
+#ifndef _WIN32
+#  include <unistd.h> // for fork()
+#endif
+
 
 namespace ospray {
   using std::cout;
@@ -235,11 +238,15 @@ namespace ospray {
 
         char systemCommand[10000];
         sprintf(systemCommand,"%s %s",launchCommand,fixedPortName);
+#ifdef _WIN32
+        throw std::runtime_error("OSPRay MPI: no fork() yet on Windows");
+#else
         if (fork()) {
           system(systemCommand);
           cout << "OSPRay worker process has died - killing application" << endl;
           exit(0);
         }
+#endif
       }
 
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
@@ -563,6 +570,18 @@ namespace ospray {
 
       cmd.newCommand(CMD_SET_VEC3F);
       cmd.send((const mpi::Handle &)_object);
+      cmd.send(bufName);
+      cmd.send(v);
+    }
+
+    /*! assign (named) vec2i parameter to an object */
+    void MPIDevice::setVec2i(OSPObject _object, const char *bufName, const vec2i &v)
+    {
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC2I);
+      cmd.send((const mpi::Handle &) _object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -1004,7 +1023,25 @@ namespace ospray {
       cmd.flush();
       return (OSPTexture2D)(int64)handle;
     }
-    
+
+    void MPIDevice::sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)
+    {
+      Assert2(volume, "invalid volume handle");
+      Assert2(worldCoordinates, "invalid worldCoordinates");
+
+      cmd.newCommand(CMD_SAMPLE_VOLUME);
+      cmd.send((const mpi::Handle &) volume);
+      cmd.send(count);
+      cmd.send(worldCoordinates, count * sizeof(osp::vec3f));
+      cmd.flush();
+
+      *results = (float *)malloc(count * sizeof(float));
+      Assert(*results);
+
+      // for data-distributed volumes this will need to be updated...
+      cmd.get_data(count * sizeof(float), *results, 0, mpi::worker.comm);
+    }
+
   } // ::ospray::mpi
 } // ::ospray
 

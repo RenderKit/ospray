@@ -26,7 +26,7 @@ struct Phong {
   float size;
 };
 
-struct Texture {
+struct TachyonTexture {
   float ambient, diffuse, specular, opacity;
   Phong phong;
   vec3f color;
@@ -51,7 +51,7 @@ struct DirLight
 struct TachyonRenderer {
   Renderer inherited;
 
-  uniform Texture    *textureArray;
+  uniform TachyonTexture *textureArray;
   uniform PointLight *pointLight;
   uint32  numPointLights;
   uniform DirLight   *dirLight;
@@ -128,7 +128,7 @@ inline vec3f shade(Ray &ray, uniform TachyonRenderer *uniform tachyon)
     if (local_opacity > .01f) {
       // enough weight here to shade at all ...
 
-      Texture texture = tachyon->textureArray[dg.materialID];
+      TachyonTexture texture = tachyon->textureArray[dg.materialID];
       if (dg.color.x >= 0.f)
         texture.color = texture.color * make_vec3f(dg.color);
 
@@ -253,7 +253,7 @@ export void TachyonRenderer_set(void *uniform _renderer,
   renderer->inherited.model  = (uniform Model *uniform)_model;
   renderer->inherited.camera = (uniform Camera *uniform)_camera;
 
-  renderer->textureArray = (uniform Texture *uniform)_textureArray;
+  renderer->textureArray = (uniform TachyonTexture *uniform)_textureArray;
   renderer->numPointLights = numPointLights;
   renderer->pointLight = (uniform PointLight *uniform)_pointLight;
   renderer->numDirLights = numDirLights;

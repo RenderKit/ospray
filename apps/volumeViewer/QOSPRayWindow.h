@@ -71,9 +71,13 @@ struct Viewport
   }
 };
 
+std::ostream &operator<<(std::ostream &o, const Viewport &viewport);
+
 
 class QOSPRayWindow : public QGLWidget
 {
+Q_OBJECT
+
 public:
 
   QOSPRayWindow(QMainWindow *parent, OSPRenderer renderer, bool showFrameRate, std::string writeFramesFilename);
@@ -89,6 +93,11 @@ public:
   OSPFrameBuffer getFrameBuffer() { return frameBuffer; }
 
   void resetAccumulationBuffer() { ospFrameBufferClear(frameBuffer, OSP_FB_ACCUM); }
+
+signals:
+
+  /*! slots can be connected to this signal to enable rendering of OpenGL components of the scene */
+  void renderGLComponents();
 
 protected:
 
@@ -109,6 +118,9 @@ protected:
 
   /*! strafe the camera from / at point */
   virtual void strafe(float du, float dv);
+
+  /*! render any OpenGL components of the scene */
+  virtual void renderGL();
 
   /*! frame counter */
   long frameCount;
@@ -145,6 +157,7 @@ protected:
   OSPFrameBuffer frameBuffer;
   OSPRenderer renderer;
   OSPCamera camera;
+  OSPTexture2D maxDepthTexture;
 
   std::string writeFramesFilename;
   void writeFrameBufferToFile(const uint32 *pixelData);

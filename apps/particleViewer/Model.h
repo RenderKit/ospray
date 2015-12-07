@@ -18,6 +18,8 @@
 
 // ospray
 #include "common/OSPCommon.h"
+// embree
+#include "common/sys/filename.h"
 // stl
 #include <map>
 #include <vector>
@@ -29,22 +31,26 @@ namespace ospray {
       struct AtomType {
         const std::string name;
         vec3f             color;
+        float             radius;
 
-        AtomType(const std::string &name) : name(name), color(.7f) {};
+        AtomType(const std::string &name) : name(name), color(.7), radius(0.f) {};
       };
       struct Atom {
         vec3f position;
+        float radius;
         int type; /*! type of the model in atomType - also serves as a material ID */
       };
 
       std::vector<AtomType *>   atomType;
       std::map<std::string,int> atomTypeByName;
       std::vector<Atom> atom;
-      float radius;
 
       //! list of attribute values, if applicable.
       std::map<std::string,std::vector<float> *> attribute;
 
+      /*! read given file with atom type definitions */
+      void readAtomTypeDefinitions(const embree::FileName &fn);
+      
       int getAtomType(const std::string &name);
 
       /*! \brief load lammps xyz files */
@@ -55,7 +61,9 @@ namespace ospray {
 
       box3f getBBox() const;
 
-      Model() : radius(1.f) {}
+      static float defaultRadius;
+
+      Model() {}
 
       void addAttribute(const std::string &name, float value)
       {

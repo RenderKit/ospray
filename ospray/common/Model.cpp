@@ -34,6 +34,7 @@ namespace ospray {
   {
     managedObjectType = OSP_MODEL;
     this->ispcEquivalent = ispc::Model_create(this);
+    this->embreeSceneHandle = NULL;
   }
   void Model::finalize()
   {

@@ -16,20 +16,19 @@
 
 #undef NDEBUG
 
-// ospray
 #include "PathTracer.h"
+// ospray
+#include "ospray/common/Data.h"
+#include "ospray/lights/Light.h"
+// ispc exports
 #include "PathTracer_ispc.h"
 // std
 #include <map>
 
 namespace ospray {
-  PathTracer::PathTracer()
-    : Renderer()
+  PathTracer::PathTracer() : Renderer()
   {
-    const int32 maxDepth = 20;
-    const float minContribution = .01f;
-    void *backplate = NULL;
-    ispcEquivalent = ispc::PathTracer_create(this,maxDepth,minContribution,backplate);
+    ispcEquivalent = ispc::PathTracer_create(this);
   }
 
   /*! \brief create a material of given type */
@@ -54,7 +53,23 @@ namespace ospray {
   void PathTracer::commit() 
   {
     Renderer::commit();
-    ispc::PathTracer_setModel(getIE());
+
+    lightData = (Data*)getParamData("lights");
+
+    lightArray.clear();
+
+    if (lightData)
+      for (int i = 0; i < lightData->size(); i++)
+        lightArray.push_back(((Light**)lightData->data)[i]->getIE());
+
+    void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
+
+    const int32 maxDepth = getParam1i("maxDepth", 20);
+    const float minContribution = getParam1f("minContribution", 0.01f);
+    void *backplate = NULL;// TODO 
+
+    ispc::PathTracer_set(getIE(), maxDepth, minContribution, backplate,
+                         lightPtr, lightArray.size());
   }
 
   OSP_REGISTER_RENDERER(PathTracer,pathtracer);

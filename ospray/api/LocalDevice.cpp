@@ -280,6 +280,17 @@ namespace ospray {
 
       object->findParam(bufName,1)->set(v);
     }
+
+    /*! assign (named) vec2f parameter to an object */
+    void LocalDevice::setVec2i(OSPObject _object, const char *bufName, const vec2i &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName, 1)->set(v);
+    }
+
     /*! assign (named) vec3i parameter to an object */
     void LocalDevice::setVec3i(OSPObject _object, const char *bufName, const vec3i &v)
     {
@@ -624,6 +635,16 @@ namespace ospray {
       Renderer *renderer = (Renderer*)_renderer;
 
       return renderer->pick(screenPos);
+    }
+
+    void LocalDevice::sampleVolume(float **results, OSPVolume _volume, const vec3f *worldCoordinates, const size_t &count)
+    {
+      Volume *volume = (Volume *)_volume;
+
+      Assert2(volume, "invalid volume handle");
+      Assert2(worldCoordinates, "invalid worldCoordinates");
+
+      volume->computeSamples(results, worldCoordinates, count);
     }
 
   } // ::ospray::api

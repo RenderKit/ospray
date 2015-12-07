@@ -22,7 +22,7 @@
 namespace embree
 {
   /*! system mutex */
-  class MutexSys {
+  class OSPRAY_EMBREE_INTERFACE MutexSys {
     friend struct ConditionImplementation;
   public:
     MutexSys( void );
@@ -36,7 +36,7 @@ namespace embree
   };
 
   /*! spinning mutex */
-  class AtomicMutex
+  class OSPRAY_EMBREE_INTERFACE AtomicMutex
   {
   public:
  
@@ -89,7 +89,7 @@ namespace embree
     volatile int flag;
   };
 
-  class __aligned(64) AlignedAtomicMutex : public AtomicMutex
+  class __aligned(64) OSPRAY_EMBREE_INTERFACE AlignedAtomicMutex : public AtomicMutex
   {
   public:
     volatile unsigned int index;

@@ -28,7 +28,7 @@
 //!  module and registered with OSPRay using this macro.
 //!
 #define OSP_REGISTER_VOLUME(InternalClass, ExternalName)        \
-  extern "C" Volume *ospray_create_volume_##ExternalName()      \
+  extern "C" OSPRAY_INTERFACE Volume *ospray_create_volume_##ExternalName()      \
   { return(new InternalClass()); }
 
 namespace ospray {
@@ -63,6 +63,9 @@ namespace ospray {
 
     //! Copy voxels into the volume at the given index (non-zero return value indicates success).
     virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
+
+    //! Compute samples at the given world coordinates.
+    virtual void computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count);
 
   protected:
 

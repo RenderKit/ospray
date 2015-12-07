@@ -165,6 +165,8 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   fb->inherited.size.y     = size_y;
   fb->inherited.rcpSize.x  = 1.f/size_x;
   fb->inherited.rcpSize.y  = 1.f/size_y;
+  fb->inherited.rcpSize_1.x  = 1.f/(size_x-1.f);
+  fb->inherited.rcpSize_1.y  = 1.f/(size_y-1.f);
   fb->inherited.gamma = 1.0f;
   fb->colorBuffer = colorBuffer;
   fb->depthBuffer = (uniform float *uniform)depthBuffer;

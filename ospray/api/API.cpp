@@ -38,19 +38,21 @@ namespace ospray {
 
 #if OSPRAY_MPI
   namespace mpi {
-    ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av, 
+    ospray::api::Device *createMPI_ListenForWorkers(int *ac, const char **av,
                                                     const char *fileNameToStorePortIn);
-    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av, 
+    ospray::api::Device *createMPI_LaunchWorkerGroup(int *ac, const char **av,
                                                      const char *launchCommand);
     ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av);
   }
 #endif
+
 #if OSPRAY_MIC_COI
   namespace coi {
     ospray::api::Device *createCoiDevice(int *ac, const char **av);
   }
 #endif
 
+} // ::ospray
 
 #define ASSERT_DEVICE() if (ospray::api::Device::current == NULL)     \
     throw std::runtime_error("OSPRay not yet initialized "            \
@@ -58,10 +60,11 @@ namespace ospray {
                              "call an ospray API function before "    \
                              "first calling ospInit())");
 
-  
-  extern "C" void ospInit(int *_ac, const char **_av) 
+  using namespace ospray;
+
+  extern "C" void ospInit(int *_ac, const char **_av)
   {
-    if (ospray::api::Device::current) 
+    if (ospray::api::Device::current)
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
 
@@ -139,14 +142,14 @@ namespace ospray {
         }
       }
     }
-    
+
     // no device created on cmd line, yet, so default to localdevice
     if (ospray::api::Device::current == NULL)
       ospray::api::Device::current = new ospray::api::LocalDevice(_ac,_av);
-  } 
+  }
 
 
-  /*! destroy a given frame buffer. 
+  /*! destroy a given frame buffer.
 
     due to internal reference counting the framebuffer may or may not be deleted immediately
   */
@@ -157,7 +160,7 @@ namespace ospray {
     ospray::api::Device::current->release(fb);
   }
 
-  extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
+  extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
                                               const OSPFrameBufferFormat mode,
                                               const int channels)
   {
@@ -165,20 +168,20 @@ namespace ospray {
     return ospray::api::Device::current->frameBufferCreate(size,mode,channels);
   }
 
-  //! load module \<name\> from shard lib libospray_module_\<name\>.so, or 
+  //! load module \<name\> from shard lib libospray_module_\<name\>.so, or
   extern "C" error_t ospLoadModule(const char *moduleName)
   {
     ASSERT_DEVICE();
     return ospray::api::Device::current->loadModule(moduleName);
   }
 
-  extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
+  extern "C" const void *ospMapFrameBuffer(OSPFrameBuffer fb,
                                            OSPFrameBufferChannel channel)
   {
     ASSERT_DEVICE();
     return ospray::api::Device::current->frameBufferMap(fb,channel);
   }
-  
+
   extern "C" void ospUnmapFrameBuffer(const void *mapped,
                                       OSPFrameBuffer fb)
   {
@@ -217,7 +220,7 @@ namespace ospray {
     return ospray::api::Device::current->removeGeometry(model, geometry);
   }
 
-  /*! create a newa data buffer, with optional init data and control flags */
+  /*! create a new triangle mesh */
   extern "C" OSPTriangleMesh ospNewTriangleMesh()
   {
     ASSERT_DEVICE();
@@ -233,14 +236,14 @@ namespace ospray {
 
   /*! add a data array to another object */
   extern "C" void ospSetData(OSPObject object, const char *bufName, OSPData data)
-  { 
+  {
     // assert(!rendering);
     ASSERT_DEVICE();
     LOG("ospSetData(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(object,bufName,(OSPObject)data);
   }
 
-  /*! add a data array to another object */
+  /*! add an object parameter to another object */
   extern "C" void ospSetParam(OSPObject target, const char *bufName, OSPObject value)
   {
     ASSERT_DEVICE();
@@ -252,7 +255,7 @@ namespace ospray {
     LOG("ospSetData(...,\"" << bufName << "\",...)");
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
-  /*! add a data array to another object */
+  /*! add an object parameter to another object */
   extern "C" void ospSetObject(OSPObject target, const char *bufName, OSPObject value)
   {
     ASSERT_DEVICE();
@@ -260,7 +263,7 @@ namespace ospray {
     return ospray::api::Device::current->setObject(target,bufName,value);
   }
 
-  /*! \brief create a new renderer of given type 
+  /*! \brief create a new renderer of given type
 
     return 'NULL' if that type is not known */
   extern "C" OSPRenderer ospNewRenderer(const char *_type)
@@ -268,24 +271,23 @@ namespace ospray {
     ASSERT_DEVICE();
     Assert2(_type,"invalid render type identifier in ospNewRenderer");
     LOG("ospNewRenderer(" << _type << ")");
-    int L = strlen(_type);
-    char type[L+1];
-    for (int i=0;i<=L;i++) {
-      char c = _type[i];
-      if (c == '-' || c == ':') c = '_';
-      type[i] = c;
+   
+    std::string type(_type);
+    for (size_t i = 0; i < type.size(); i++) {
+      if (type[i] == '-' || type[i] == ':') 
+        type[i] = '_';
     }
-    OSPRenderer renderer = ospray::api::Device::current->newRenderer(type);
+    OSPRenderer renderer = ospray::api::Device::current->newRenderer(type.c_str());
     // cant typecast on MPI device!
     // if (ospray::logLevel > 0)
-    //   if (renderer) 
+    //   if (renderer)
     //     cout << "ospNewRenderer: " << ((ospray::Renderer*)renderer)->toString() << endl;
     //   else
     //     std::cerr << "#ospray: could not create renderer '" << type << "'" << std::endl;
     return renderer;
   }
-  
-  /*! \brief create a new geometry of given type 
+
+  /*! \brief create a new geometry of given type
 
     return 'NULL' if that type is not known */
   extern "C" OSPGeometry ospNewGeometry(const char *type)
@@ -295,14 +297,14 @@ namespace ospray {
     LOG("ospNewGeometry(" << type << ")");
     OSPGeometry geometry = ospray::api::Device::current->newGeometry(type);
     // if (ospray::logLevel > 0)
-    //   if (geometry) 
+    //   if (geometry)
     //     cout << "ospNewGeometry: " << ((ospray::Geometry*)geometry)->toString() << endl;
     //   else
     //     std::cerr << "#ospray: could not create geometry '" << type << "'" << std::endl;
     return geometry;
   }
 
-  /*! \brief create a new material of given type 
+  /*! \brief create a new material of given type
 
     return 'NULL' if that type is not known */
   extern "C" OSPMaterial ospNewMaterial(OSPRenderer renderer, const char *type)
@@ -323,7 +325,7 @@ namespace ospray {
     return ospray::api::Device::current->newLight(renderer, type);
   }
 
-  /*! \brief create a new camera of given type 
+  /*! \brief create a new camera of given type
 
     return 'NULL' if that type is not known */
   extern "C" OSPCamera ospNewCamera(const char *type)
@@ -338,8 +340,8 @@ namespace ospray {
   extern "C" OSPTexture2D ospNewTexture2D(int width,
                                           int height,
                                           OSPDataType type,
-                                          void *data = NULL,
-                                          int flags = 0)
+                                          void *data,
+                                          int flags)
   {
     ASSERT_DEVICE();
     Assert2(width > 0, "Width must be greater than 0 in ospNewTexture2D");
@@ -356,7 +358,7 @@ namespace ospray {
     LOG("ospNewVolume(" << type << ")");
     OSPVolume volume = ospray::api::Device::current->newVolume(type);
     if (ospray::logLevel > 0) {
-      if (volume) 
+      if (volume)
         cout << "ospNewVolume: " << ((ospray::Volume*)volume)->toString() << endl;
       else
         std::cerr << "#ospray: could not create volume '" << type << "'" << std::endl;
@@ -381,19 +383,19 @@ namespace ospray {
     return transferFunction;
   }
 
-  extern "C" void ospFrameBufferClear(OSPFrameBuffer fb, 
-                                      const uint32 fbChannelFlags)
+  extern "C" void ospFrameBufferClear(OSPFrameBuffer fb,
+                                      const ::uint32 fbChannelFlags)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->frameBufferClear(fb,fbChannelFlags);
   }
 
-  /*! \brief call a renderer to render given model into given framebuffer 
-    
+  /*! \brief call a renderer to render given model into given framebuffer
+
     model _may_ be empty (though most framebuffers will expect one!) */
-  extern "C" void ospRenderFrame(OSPFrameBuffer fb, 
-                                 OSPRenderer renderer, 
-                                 const uint32 fbChannelFlags=OSP_FB_COLOR
+  extern "C" void ospRenderFrame(OSPFrameBuffer fb,
+                                 OSPRenderer renderer,
+                                 const ::uint32 fbChannelFlags
                                  )
   {
     ASSERT_DEVICE();
@@ -428,21 +430,24 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setString(_object,id,s);
   }
+
   extern "C" void ospSetf(OSPObject _object, const char *id, float x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
   }
+
   extern "C" void ospSet1f(OSPObject _object, const char *id, float x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setFloat(_object,id,x);
   }
-  extern "C" void ospSet1i(OSPObject _object, const char *id, int32 x)
+  extern "C" void ospSet1i(OSPObject _object, const char *id, ::int32 x)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setInt(_object,id,x);
   }
+
   extern "C" void ospSeti(OSPObject _object, const char *id, int x)
   {
     ASSERT_DEVICE();
@@ -450,65 +455,101 @@ namespace ospray {
   }
 
   /*! Copy data into the given volume. */
-  extern "C" int ospSetRegion(OSPVolume object, void *source, vec3i index, vec3i count) {
+  extern "C" int ospSetRegion(OSPVolume object, void *source, osp::vec3i index, osp::vec3i count) {
     ASSERT_DEVICE();
     return(ospray::api::Device::current->setRegion(object, source, index, count));
   }
 
   /*! add a vec2f parameter to an object */
-  extern "C" void ospSetVec2f(OSPObject _object, const char *id, const vec2f &v)
+  extern "C" void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec2f(_object, id, v);
   }
-  /*! add a data array to another object */
-  extern "C" void ospSetVec3f(OSPObject _object, const char *id, const vec3f &v)
+
+  /*! add a vec2i parameter to an object */
+  extern "C" void ospSetVec2i(OSPObject _object, const char *id, const osp::vec2i &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec2i(_object, id, v);
+  }
+  /*! add a vec3f parameter to another object */
+  extern "C" void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec3f(_object,id,v);
   }
-  /*! add a data array to another object */
-  extern "C" void ospSetVec3i(OSPObject _object, const char *id, const vec3i &v)
+
+  /*! add a vec3i parameter to another object */
+  extern "C" void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec3i(_object,id,v);
   }
-  /*! add a data array to another object */
+
+  /*! add a vec2f parameter to another object */
   extern "C" void ospSet2f(OSPObject _object, const char *id, float x, float y)
   {
     ASSERT_DEVICE();
     ospSetVec2f(_object,id,vec2f(x,y));
   }
-  /*! add a data array to another object */
+
+  /*! add a vec2f parameter to another object */
   extern "C" void ospSet2fv(OSPObject _object, const char *id, const float *xy)
   {
     ASSERT_DEVICE();
     ospSetVec2f(_object,id,vec2f(xy[0],xy[1]));
   }
-  /*! add a data array to another object */
+
+  /*! add a vec2i parameter to another object */
+  extern "C" void ospSet2i(OSPObject _object, const char *id, int x, int y)
+  {
+    ASSERT_DEVICE();
+    ospSetVec2i(_object,id,vec2i(x,y));
+  }
+
+  /*! add a vec2i parameter to another object */
+  extern "C" void ospSet2iv(OSPObject _object, const char *id, const int *xy)
+  {
+    ASSERT_DEVICE();
+    ospSetVec2i(_object,id,vec2i(xy[0],xy[1]));
+  }
+
+  /*! add a vec3f parameter to another object */
   extern "C" void ospSet3f(OSPObject _object, const char *id, float x, float y, float z)
   {
     ASSERT_DEVICE();
     ospSetVec3f(_object,id,vec3f(x,y,z));
   }
-  /*! add a data array to another object */
+
+  /*! add a vec3f parameter to another object */
   extern "C" void ospSet3fv(OSPObject _object, const char *id, const float *xyz)
   {
     ASSERT_DEVICE();
     ospSetVec3f(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
   }
-  /*! add a data array to another object */
+
+  /*! add a vec3i parameter to another object */
   extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
   {
     ASSERT_DEVICE();
     ospSetVec3i(_object,id,vec3f(x,y,z));
   }
-  /*! add a data array to another object */
+
+  /*! add a vec3i parameter to another object */
+  extern "C" void ospSet3iv(OSPObject _object, const char *id, const int *xyz)
+  {
+    ASSERT_DEVICE();
+    ospSetVec3i(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
+  }
+
+  /*! add a void pointer to another object */
   extern "C" void ospSetVoidPtr(OSPObject _object, const char *id, void *v)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVoidPtr(_object,id,v);
   }
+
   extern "C" void ospRelease(OSPObject _object)
   {
     ASSERT_DEVICE();
@@ -613,7 +654,7 @@ namespace ospray {
     return geom;
   }
 
-  extern "C" void ospPick(OSPPickResult *result, OSPRenderer renderer, const vec2f &screenPos)
+  extern "C" void ospPick(OSPPickResult *result, OSPRenderer renderer, const osp::vec2f &screenPos)
   {
     ASSERT_DEVICE();
     Assert2(renderer, "NULL renderer passed to ospPick");
@@ -621,7 +662,7 @@ namespace ospray {
     *result = ospray::api::Device::current->pick(renderer, screenPos);
   }
 
-  extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const vec2f &screenPos)
+  extern "C" OSPPickData ospUnproject(OSPRenderer renderer, const osp::vec2f &screenPos)
   {
     static bool warned = false;
     if (!warned) {
@@ -636,4 +677,17 @@ namespace ospray {
     return res;
   }
 
-} // ::ospray
+  extern "C" void ospSampleVolume(float **results, OSPVolume volume, const osp::vec3f *worldCoordinates, const size_t &count)
+  {
+    ASSERT_DEVICE();
+    Assert2(volume, "NULL volume passed to ospSampleVolume");
+
+    if (count == 0) {
+      *results = NULL;
+      return;
+    }
+
+    Assert2(worldCoordinates, "NULL worldCoordinates passed to ospSampleVolume");
+
+    ospray::api::Device::current->sampleVolume(results, volume, worldCoordinates, count);
+  }

@@ -41,7 +41,8 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
                 const Ray&                  ray,
                 const Medium&               currentMedium,
                 const DifferentialGeometry& dg,
-                uniform CompositedBRDF&     brdfs)
+                uniform CompositedBRDF&     brdfs,
+                vec3f& shadingNormal)
 {
   uniform const OBJ* uniform self = (uniform const OBJ* uniform)_self;
   // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
@@ -54,7 +55,7 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
   if (self->map_Kd) {
     vec4f Kd_from_map = get4f(self->map_Kd,dg.st);
     Kd = Kd * make_vec3f(Kd_from_map);
-    d *= 1.f - Kd_from_map.w;
+    d *= Kd_from_map.w;
   }
   Kd = Kd * d * make_vec3f(dg.color);
   if (ne(Kd,make_vec3f(0.0f))) 
@@ -68,18 +69,15 @@ void OBJ__shade(const uniform PathTraceMaterial *uniform _self,
   float Ns = self->Ns * get1f(self->map_Ns, dg.st, 1.0f);
   vec3f Ks = d * self->Ks * get3f(self->map_Ks, dg.st, make_vec3f(1.f));
   if (ne(Ks,make_vec3f(0.0f))) COMPOSITED_BRDF_ADD(brdfs,Specular,Ks,Ns);
-}
 
-// void OBJ__Destructor(uniform RefCount* uniform _self)
-// {
-//   uniform OBJ* uniform self = (uniform OBJ* uniform) _self;
-//   if (self->map_d ) RefCount__DecRef(&self->map_d->base);
-//   if (self->map_Kd) RefCount__DecRef(&self->map_Kd->base);
-//   if (self->map_Ks) RefCount__DecRef(&self->map_Ks->base);
-//   if (self->map_Ns) RefCount__DecRef(&self->map_Ns->base);
-//   if (self->map_Bump) RefCount__DecRef(&self->map_Bump->base);
-//   Material__Destructor(_self);
-// }
+  /*! normal map */
+  if (self->map_Bump) {
+    linear3f f = make_LinearSpace3f(normalize(dg.dPds), normalize(dg.dPdt), dg.Ng);
+    shadingNormal = f * (get3f(self->map_Bump, dg.st, make_vec3f(.5f, .5f, 1.f)) * 2.f - 1.f);
+    // in general f is not ortho-normal, thus need to re-normalize
+    shadingNormal = normalize(shadingNormal);
+  }
+}
 
 void OBJ__Constructor(uniform OBJ* uniform self,
                       uniform Texture2D* uniform map_d,  const uniform float d,
@@ -88,13 +86,12 @@ void OBJ__Constructor(uniform OBJ* uniform self,
                       uniform Texture2D* uniform map_Ns, const uniform float Ns,
                       uniform Texture2D* uniform map_Bump)
 {
-  PathTraceMaterial__Constructor(&self->base,// OBJ__Destructor,
-                                 OBJ__shade,NULL);
-  self->map_d  = map_d;  self->d  = d;  //if (self->map_d ) RefCount__IncRef(&map_d->base);
-  self->map_Kd = map_Kd; self->Kd = Kd; //if (this->map_Kd) RefCount__IncRef(&map_Kd->base);
-  self->map_Ks = map_Ks; self->Ks = Ks; //if (self->map_Ks) RefCount__IncRef(&map_Ks->base);
-  self->map_Ns = map_Ns; self->Ns = Ns; //if (self->map_Ns) RefCount__IncRef(&map_Ns->base);
-  self->map_Bump = map_Bump; //if (self->map_Bump) RefCount__IncRef(&map_Bump->base);
+  PathTraceMaterial__Constructor(&self->base, OBJ__shade, NULL);
+  self->map_d  = map_d;  self->d  = d;
+  self->map_Kd = map_Kd; self->Kd = Kd;
+  self->map_Ks = map_Ks; self->Ks = Ks;
+  self->map_Ns = map_Ns; self->Ns = Ns;
+  self->map_Bump = map_Bump;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

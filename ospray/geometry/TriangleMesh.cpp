@@ -24,6 +24,7 @@
 #include "embree2/rtcore_geometry.h"
 // ispc exports
 #include "TriangleMesh_ispc.h"
+#include <cmath>
 
 #define RTC_INVALID_ID RTC_INVALID_GEOMETRY_ID
 
@@ -173,8 +174,10 @@ namespace ospray {
     ispc::TriangleMesh_set(getIE(),model->getIE(),eMesh,
                            numTris,
                            numCompsInTri,
+                           numCompsInVtx,
                            numCompsInNor,
                            (int*)index,
+                           (float*)vertex,
                            (float*)normal,
                            (ispc::vec4f*)color,
                            (ispc::vec2f*)texcoord,
@@ -183,5 +186,8 @@ namespace ospray {
                            ispcMaterialPtrs,
                            (uint32*)prim_materialID);
   }
+
+  OSP_REGISTER_GEOMETRY(TriangleMesh,triangles);
+  OSP_REGISTER_GEOMETRY(TriangleMesh,trianglemesh);
 
 } // ::ospray

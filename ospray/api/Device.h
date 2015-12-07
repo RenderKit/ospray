@@ -92,6 +92,9 @@ namespace ospray {
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f) = 0;
 
+      /*! assign (named) vec2i parameter to an object */
+      virtual void setVec2i(OSPObject object, const char *bufName, const vec2i &v) = 0;
+
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v) = 0;
 
@@ -207,7 +210,13 @@ namespace ospray {
       }
 
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos) 
-      { throw std::runtime_error("pick() not impelemnted for this device"); };
+      { throw std::runtime_error("pick() not implemented for this device"); };
+
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)
+      {
+        throw std::runtime_error("sampleVolume() not implemented for this device");
+      }
+
     };
   } // ::ospray::api
 } // ::ospray

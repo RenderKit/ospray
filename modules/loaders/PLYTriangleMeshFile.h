@@ -52,7 +52,7 @@ private:
   std::vector<osp::vec3fa> vertices;
 
   //! Vertex colors.
-  std::vector<osp::vec3fa> vertexColors;
+  std::vector<osp::vec4f> vertexColors;
 
   //! Vertex normals.
   std::vector<osp::vec3fa> vertexNormals;

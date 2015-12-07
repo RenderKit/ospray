@@ -52,6 +52,7 @@ namespace ospray {
         CMD_COMMIT,
         CMD_LOAD_MODULE,
         CMD_RELEASE,
+        CMD_SAMPLE_VOLUME,
         CMD_GET_TYPE,
         CMD_GET_VALUE,
         CMD_SET_MATERIAL,
@@ -62,6 +63,7 @@ namespace ospray {
         CMD_SET_FLOAT,
         CMD_SET_VEC2F,
         CMD_SET_VEC3F,
+        CMD_SET_VEC2I,
         CMD_SET_VEC3I,
         CMD_USER
       } CommandTag;
@@ -147,6 +149,9 @@ namespace ospray {
 
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
+
+      /*! assign (named) vec2i parameter to an object */
+      virtual void setVec2i(OSPObject object, const char *bufName, const vec2i &v);
 
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
@@ -237,6 +242,10 @@ namespace ospray {
       /*! create a new Texture2D object */
       virtual OSPTexture2D newTexture2D(int width, int height, 
                                         OSPDataType type, void *data, int flags);
+
+      /*! sample a volume */
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
+
     };
 
   } // ::ospray::api

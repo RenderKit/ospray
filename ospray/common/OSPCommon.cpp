@@ -20,8 +20,15 @@
 #include "common/sys/sysinfo.h"
 // std
 #include <time.h>
+#ifdef _WIN32
+#  ifndef WIN32_LEAN_AND_MEAN
+#    define WIN32_LEAN_AND_MEAN
+#  endif
+#  include <windows.h> // for GetSystemTime
+#else
 #include <sys/time.h>
 #include <sys/times.h>
+#endif
 
 namespace ospray {
 
@@ -67,25 +74,30 @@ namespace ospray {
 
   void doAssertion(const char *file, int line, const char *expr, const char *expl) {
     if (expl)
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
+      fprintf(stderr,"%s:%i: Assertion failed: \"%s\":\nAdditional Info: %s\n", 
               file, line, expr, expl);
     else
-      fprintf(stderr,"%s:%u: Assertion failed: \"%s\".\n", file, line, expr);
+      fprintf(stderr,"%s:%i: Assertion failed: \"%s\".\n", file, line, expr);
     abort();
   }
 
   double getSysTime() {
+#ifdef _WIN32
+    SYSTEMTIME tp; GetSystemTime(&tp);
+    return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
+#else
     struct timeval tp; gettimeofday(&tp,NULL); 
     return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
+#endif
   }
 
   void init(int *_ac, const char ***_av)
   {
 #if !OSPRAY_TARGET_MIC
-    // if we're not on a MIC, check for SSE4.2 as minimum supported ISA.
+    // If we're not on a MIC, check for SSE4.1 as minimum supported ISA. Will be increased to SSE4.2 in future.
     int cpuFeatures = embree::getCPUFeatures();
-    if ((cpuFeatures & embree::CPU_FEATURE_SSE42) == 0)
-      throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.2.");
+    if ((cpuFeatures & embree::CPU_FEATURE_SSE41) == 0)
+      throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.1.");
 #endif
 
     int &ac = *_ac;
@@ -157,19 +169,20 @@ namespace ospray {
     case OSP_UINT2:     return sizeof(embree::Vec2<uint32>);
     case OSP_UINT3:     return sizeof(embree::Vec3<uint32>);
     case OSP_UINT4:     return sizeof(embree::Vec4<uint32>);
-    case OSP_LONG:       return sizeof(int64);
-    case OSP_LONG2:      return sizeof(embree::Vec2<int64>);
-    case OSP_LONG3:      return sizeof(embree::Vec3<int64>);
-    case OSP_LONG4:      return sizeof(embree::Vec4<int64>);
-    case OSP_ULONG:      return sizeof(uint64);
-    case OSP_ULONG2:     return sizeof(embree::Vec2<uint64>);
-    case OSP_ULONG3:     return sizeof(embree::Vec3<uint64>);
-    case OSP_ULONG4:     return sizeof(embree::Vec4<uint64>);
+    case OSP_LONG:      return sizeof(int64);
+    case OSP_LONG2:     return sizeof(embree::Vec2<int64>);
+    case OSP_LONG3:     return sizeof(embree::Vec3<int64>);
+    case OSP_LONG4:     return sizeof(embree::Vec4<int64>);
+    case OSP_ULONG:     return sizeof(uint64);
+    case OSP_ULONG2:    return sizeof(embree::Vec2<uint64>);
+    case OSP_ULONG3:    return sizeof(embree::Vec3<uint64>);
+    case OSP_ULONG4:    return sizeof(embree::Vec4<uint64>);
     case OSP_FLOAT:     return sizeof(float);
     case OSP_FLOAT2:    return sizeof(embree::Vec2<float>);
     case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
     case OSP_FLOAT4:    return sizeof(embree::Vec4<float>);
     case OSP_FLOAT3A:   return sizeof(embree::Vec3fa);
+    case OSP_DOUBLE:    return sizeof(double);
     default: break;
     };
 

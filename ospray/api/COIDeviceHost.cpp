@@ -79,6 +79,7 @@ namespace ospray {
       x(OSPCOI_UPLOAD_DATA_DONE,        "ospray_coi_upload_data_done")      \
       x(OSPCOI_UPLOAD_DATA_CHUNK,       "ospray_coi_upload_data_chunk")     \
       x(OSPCOI_PICK,                    "ospray_coi_pick")                  \
+      x(OSPCOI_SAMPLE_VOLUME,           "ospray_coi_sample_volume")         \
       x(OSPCOI_NUM_FUNCTIONS,           NULL) //This must be last
 
 #define x(a,b) a,
@@ -231,6 +232,9 @@ namespace ospray {
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
 
+      /*! assign (named) vec2i parameter to an object */
+      virtual void setVec2i(OSPObject object, const char *bufName, const vec2i &v);
+
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
 
@@ -326,6 +330,9 @@ namespace ospray {
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type);
 
       virtual OSPPickResult pick(OSPRenderer _renderer, const vec2f &screenPos);
+
+      /*! sample a volume */
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
     };
 
 
@@ -770,6 +777,26 @@ namespace ospray {
       return retValue;
     }
 
+    /*! sample a volume */
+    void COIDevice::sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)
+    {
+      Assert2(volume, "invalid volume handle");
+      Assert2(worldCoordinates, "invalid worldCoordinates");
+
+      DataStream args;
+      args.write((Handle &)volume);
+
+      OSPData data = newData(count, OSP_FLOAT3, (void*)worldCoordinates, OSP_DATA_SHARED_BUFFER);
+      args.write((Handle &)data);
+
+      *results = (float *)malloc(count * sizeof(float));
+      Assert(*results);
+
+      callFunction(OSPCOI_SAMPLE_VOLUME, args, *results, count * sizeof(float));
+
+      release(data);
+    }
+
     /*! create a new texture2D */
     OSPTexture2D COIDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags)
     {
@@ -1089,6 +1116,7 @@ namespace ospray {
       args.write(v);
       callFunction(OSPCOI_SET_VALUE, args);
     }
+
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setVec3f(OSPObject target, const char *bufName, const vec3f &v)
     {
@@ -1101,6 +1129,20 @@ namespace ospray {
       args.write(v);
       callFunction(OSPCOI_SET_VALUE,args);
     }
+
+    /*! assign (named) data item as a parameter to an object */
+    void COIDevice::setVec2i(OSPObject target, const char *bufName, const vec2i &v)
+    {
+      Assert(bufName);
+
+      DataStream args;
+      args.write((Handle &) target);
+      args.write(bufName);
+      args.write(OSP_INT2);
+      args.write(v);
+      callFunction(OSPCOI_SET_VALUE, args);
+    }
+
     /*! assign (named) data item as a parameter to an object */
     void COIDevice::setVec3i(OSPObject target, const char *bufName, const vec3i &v)
     {

@@ -61,7 +61,10 @@ typedef enum {
   OSP_ULONG, OSP_ULONG2, OSP_ULONG3, OSP_ULONG4,
 
   //! Single precision floating point scalar and vector types.
-  OSP_FLOAT=100, OSP_FLOAT2, OSP_FLOAT3, OSP_FLOAT4, OSP_FLOAT3A,
+  OSP_FLOAT, OSP_FLOAT2, OSP_FLOAT3, OSP_FLOAT4, OSP_FLOAT3A,
+
+  //! Double precision floating point scalar type.
+  OSP_DOUBLE,
 
   //! Guard value.
   OSP_UNKNOWN,

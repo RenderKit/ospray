@@ -24,6 +24,8 @@
 
 class TransferFunctionEditor;
 class IsosurfaceEditor;
+class ProbeWidget;
+class OpenGLAnnotationRenderer;
 
 //! OSPRay model and its volumes / geometries
 struct ModelState {
@@ -48,6 +50,9 @@ public:
 
   //! Destructor.
   ~VolumeViewer() {};
+
+  //! Get the volume bounding box.
+  osp::box3f getBoundingBox() { return boundingBox; }
 
   //! Get the OSPRay output window.
   QOSPRayWindow *getWindow() { return osprayWindow; }
@@ -89,6 +94,9 @@ public slots:
 
   //! Force the OSPRay window to be redrawn.
   void render() { if (osprayWindow != NULL) { osprayWindow->resetAccumulationBuffer(); osprayWindow->updateGL(); } }
+
+  //! Enable / disable rendering of annotations.
+  void setRenderAnnotationsEnabled(bool value);
 
   //! Set subsampling during interaction mode on renderer.
   void setSubsamplingInteractionEnabled(bool value) {
@@ -134,11 +142,17 @@ protected:
   //! OSPRay transfer function.
   OSPTransferFunction transferFunction;
 
-  //! OSPRay light.
-  OSPLight light;
+  //! OSPRay ambient light.
+  OSPLight ambientLight;
+
+  //! OSPRay directional light.
+  OSPLight directionalLight;
 
   //! The OSPRay output window.
   QOSPRayWindow *osprayWindow;
+
+  //! The OpenGL annotation renderer.
+  OpenGLAnnotationRenderer *annotationRenderer;
 
   //! The transfer function editor.
   TransferFunctionEditor *transferFunctionEditor;
@@ -148,6 +162,9 @@ protected:
 
   //! The isosurface editor.
   IsosurfaceEditor *isosurfaceEditor;
+
+  //! The probe widget.
+  ProbeWidget *probeWidget;
 
   //! Auto-rotate button.
   QAction *autoRotateAction;

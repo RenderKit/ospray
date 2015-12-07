@@ -85,6 +85,9 @@ namespace ospray {
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
 
+      /*! assign (named) vec2i parameter to an object */
+      virtual void setVec2i(OSPObject object, const char *bufName, const vec2i &v);
+
       /*! assign (named) vec3i parameter to an object */
       virtual void setVec3i(OSPObject object, const char *bufName, const vec3i &v);
 
@@ -189,6 +192,9 @@ namespace ospray {
       virtual void setMaterial(OSPGeometry _geom, OSPMaterial _mat);
 
       virtual OSPPickResult pick(OSPRenderer renderer, const vec2f &screenPos);
+
+      virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
+
     };
 
   } // ::ospray::api

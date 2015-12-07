@@ -225,8 +225,11 @@ namespace ospray {
 
       if (!doc) 
         throw std::runtime_error("could not parse "+fileName);
-      if (doc->child.size() != 1 || (doc->child[0]->name != "ospray" && doc->child[0]->name != "OSPRay") )
-        throw std::runtime_error("not an ospray xml file");
+      
+      if (doc->child.size() != 1)
+        throw std::runtime_error("not an ospray xml file (empty XML document; no 'ospray' child node)'");
+      if ((doc->child[0]->name != "ospray" && doc->child[0]->name != "OSPRay") )
+        throw std::runtime_error("not an ospray xml file (document root node is '"+doc->child[0]->name+"', should be 'ospray'");
 
       xml::Node *root = doc->child[0];
       Ref<sg::World> world = new World;//parseOSPRaySection(root->child[0]); 

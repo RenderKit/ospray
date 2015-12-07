@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
       viewUp.y = atof(argv[++i]);
       viewUp.z = atof(argv[++i]);
 
-      std::cout << "got viewup = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
+      std::cout << "got viewup (-vu) = " << viewUp.x << " " << viewUp.y << " " << viewUp.z << std::endl;
 
     } else if (arg == "-vp") {
 
@@ -213,6 +213,9 @@ int main(int argc, char *argv[])
     volumeViewer->setAutoRotationRate(rotationRate);
     volumeViewer->autoRotate(true);
   }
+
+  if (dt > 0.0f)
+    volumeViewer->setSamplingRate(dt);
 
   // Load slice(s) from file.
   for(unsigned int i=0; i<sliceFilenames.size(); i++)

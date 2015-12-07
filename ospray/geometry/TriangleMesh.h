@@ -27,8 +27,8 @@ namespace ospray {
 
     \ingroup ospray_supported_geometries
 
-    A triangle mesh is created via \ref ospNewTriangleMesh, or via
-    calling \ref ospNewGeometry with type string \"trianglemesh\".
+    A triangle mesh is created via calling \ref ospNewGeometry with type
+    string "triangles".
 
     Once created, a trianglemesh recognizes the following parameters
     <pre>

@@ -101,7 +101,7 @@ namespace ospray {
         // if (va != tm.getSTriVA())
         //   continue;
         Assert(va);
-        OSPGeometry geom = ospNewTriangleMesh();
+        OSPGeometry geom = ospNewGeometry("trianglemesh");
         numTriangles += va->triangle.size();
         if (va->triangle.size()) {
           OSPData data = ospNewData(va->triangle.size(),OSP_INT3,&va->triangle[0]);

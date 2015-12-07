@@ -26,13 +26,26 @@ IF(COMMAND cmake_policy)
 ENDIF(COMMAND cmake_policy)
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
-SET(OSPRAY_VERSION 0.8.2)
+SET(OSPRAY_VERSION_MAJOR 0)
+SET(OSPRAY_VERSION_MINOR 8)
+SET(OSPRAY_VERSION_PATCH 3)
+SET(OSPRAY_VERSION
+  ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
+)
 SET(OSPRAY_SOVERSION 0)
 
-IF(NOT CMAKE_BUILD_TYPE)
-  SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
-  SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS Debug Release RelWithDebInfo MinSizeRel)
-ENDIF(NOT CMAKE_BUILD_TYPE)
+SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
+IF (WIN32)
+  IF (NOT DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)
+    SET(CMAKE_CONFIGURATION_TYPES "${CONFIGURATION_TYPES}" CACHE STRING "List of generated configurations." FORCE)
+    SET(DEFAULT_CMAKE_CONFIGURATION_TYPES_SET ON CACHE INTERNAL "Default CMake configuration types set.")
+  ENDIF()
+ELSE()
+  IF(NOT CMAKE_BUILD_TYPE)
+    SET(CMAKE_BUILD_TYPE "Release" CACHE STRING "Choose the build type." FORCE)
+    SET_PROPERTY(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${CONFIGURATION_TYPES})
+  ENDIF()
+ENDIF()
 
 MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
 
@@ -41,34 +54,36 @@ SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
 
-MARK_AS_ADVANCED(LIBRARY_OUTPUT_PATH)
-MARK_AS_ADVANCED(EXECUTABLE_OUTPUT_PATH)
-MARK_AS_ADVANCED(CMAKE_INSTALL_PREFIX)
-MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
-
 # add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
 OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
 MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
 
 # compiler selection for the non-MIC part
-IF (APPLE)
-  SET(OSPRAY_COMPILER "CLANG" CACHE STRING "compiler to use (ICC,GCC, or CLANG)")
-  SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS ICC GCC CLANG)
-ELSE(APPLE)
-  SET(OSPRAY_COMPILER "GCC" CACHE STRING "compiler to use (ICC or GCC)")
-  SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS ICC GCC)
-ENDIF(APPLE)
+IF (WIN32)
+  SET(OSPRAY_COMPILER "MSVC" CACHE INTERNAL "MSVC used on Windows.")
+ELSE()
+  IF (APPLE)
+    SET(OSPRAY_COMPILER "CLANG" CACHE STRING "compiler to use (ICC,GCC, or CLANG)")
+    SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS ICC GCC CLANG)
+  ELSE(APPLE)
+    SET(OSPRAY_COMPILER "GCC" CACHE STRING "compiler to use (ICC or GCC)")
+    SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS ICC GCC)
+  ENDIF(APPLE)
+ENDIF()
 
-# whether to build in MIC/xeon phi support
-OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC/MIC Support?")
-# whether to build in MPI support
+IF (WIN32)
+  SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL "OSPRay with KNC not supported on Windows.")
+ELSE()
+  OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC Support?")
+ENDIF()
+
 OPTION(OSPRAY_BUILD_MPI_DEVICE "Add MPI Remote/Distributed rendering support?")
 
 # the arch we're targeting for the non-MIC/non-xeon phi part of ospray
-SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (SSE,AVX,AVX2,or ALL)")
+SET(OSPRAY_BUILD_ISA "ALL" CACHE STRING "Target ISA (SSE, AVX, AVX2, or ALL)")
 IF (OSPRAY_BUILD_ENABLE_KNL)
   SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2 AVX512)
-	OPTION(OSPRAY_ISPC_KNL_NATIVE "Enable ISPC's native KNL build")
+  OPTION(OSPRAY_ISPC_KNL_NATIVE "Enable ISPC's native KNL build") # TODO: autodetect
 ELSE()
   SET_PROPERTY(CACHE OSPRAY_BUILD_ISA PROPERTY STRINGS ALL SSE AVX AVX2)
 ENDIF()
@@ -80,26 +95,36 @@ STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
+# directoriers for client CMake find_package config
+
+SET(HEADER_DIR include/ospray)
+IF(WIN32)
+  SET(CMAKE_DIR CMake)
+ELSE(WIN32)
+  SET(CMAKE_DIR share/ospray)
+ENDIF(WIN32)
 
 ##############################################################
 # cmake modules
 ##############################################################
+
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
 INCLUDE(cmake/configure_embree.cmake)
 INCLUDE(cmake/mpi.cmake)
-INCLUDE(cmake/doxygen.cmake)
+IF(NOT WIN32)
+  INCLUDE(cmake/doxygen.cmake)
+ENDIF()
 
 SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME})
 STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
-SET(CMAKE_INSTALL_PREFIX 
-  /tmp/$ENV{USER}/OSPRAY-RELEASES/${OSPRAY_INSTALL_TARGET_LC})
 
 ##############################################################
 # the ospray library
 ##############################################################
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
 IF (OSPRAY_MIC)
@@ -110,6 +135,7 @@ ENDIF()
 ##############################################################
 # ospray modules
 ##############################################################
+
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
@@ -120,6 +146,7 @@ ENDIF()
 ##############################################################
 # ospray sample apps at the end, they may need modules
 ##############################################################
+
 SET (OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 IF (OSPRAY_MIC)

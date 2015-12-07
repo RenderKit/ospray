@@ -16,21 +16,45 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
+#include "ospray/common/DifferentialGeometry.ih"
 
-/*! ispc-side equivalent of a light */
+struct Light;
+
+struct LightSample 
+{
+  vec3f radiance;  //!< radiance for this sample that arrives at the given point, already weighted by pdf
+  vec3f direction; //!< direction towards the light source
+  float distance;  //!< largest valid parameter value for a shadow ray
+  float pdf;       //!< probability that this sample was taken
+};
+
+//! compute the weighted radiance at a point caused by a sample on the light source
+// by convention, giving (0, 0) as "random" numbers should sample the "center"
+// of the light source (used by the raytracing renderers such as the OBJ renderer)
+typedef varying LightSample (*Light_SampleFct)(const uniform Light *uniform _self,
+      /*! point to generate the sample for >*/ const varying DifferentialGeometry &dg,
+ /*! random numbers to generate the sample >*/ const varying vec2f &s);
+
+//! compute the radiance caused by the light source (pointed to by the given direction) from inf
+typedef varying vec3f (*Light_EvalEnvFct)(const uniform Light *uniform _self,
+/*! direction towards the light source >*/const varying vec3f &dir);
+
 
 struct Light {
-  //! Compute the radiance at a point from a sample on the light sans occluders, return the extant light vector and distance.
-  varying vec3f (*computeRadiance)(const uniform Light *uniform self, const varying vec3f &coordinates, varying vec3f &direction, varying float &distance);
+  Light_SampleFct  sample;
+  Light_EvalEnvFct evalEnv;
 
   //! Pointer back to the C++ equivalent of this class.
   void *uniform cppEquivalent;
 };
+
+
+varying vec3f defaultEvalEnv(const uniform Light *uniform, const varying vec3f &);
 
 //! constructor for ispc-side light object
 inline void Light_Constructor(uniform Light *uniform self,
                               void *uniform cppEquivalent)
 {
   self->cppEquivalent = cppEquivalent;
+  self->evalEnv = defaultEvalEnv;
 }

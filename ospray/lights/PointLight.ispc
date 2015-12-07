@@ -15,74 +15,89 @@
 // ======================================================================== //
 
 #include "Light.ih"
-#include "ospray/math/vec.ih"
+#include "ospray/math/sampling.ih"
+#include "ospray/math/LinearSpace.ih"
 
 struct PointLight {
-  uniform Light super;    //!< inherited light fields
+  Light super;    //!< inherited light fields
 
-  uniform vec3f position; //!< light position
-  uniform vec3f power;    //!< RGB color and intensity of light
-  uniform float range;    //!< maximum range at which the light will have an effect
+  vec3f position; //!< light position
+  vec3f power;    //!< RGB color and intensity of light
+  float radius;   //!< defines the size of the SphereLight
 };
 
 
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 
-varying vec3f PointLight_computeRadiance(const uniform Light *uniform _self,
-                                         const varying vec3f &coordinates,
-                                         varying vec3f &direction,
-                                         varying float &distance)
+varying LightSample PointLight_sample(const uniform Light *uniform _self,
+                                      const varying DifferentialGeometry &dg,
+                                      const varying vec2f &s)
 {
-    const PointLight *uniform self = (PointLight *uniform)_self;
+  const PointLight *uniform self = (PointLight *uniform)_self;
+  LightSample sample;
 
-    // extant light vector from the hit point
-    const vec3f L = self->position - coordinates;
+  // extant light vector from the hit point
+  const vec3f dir = self->position - dg.P;
+  const float dist2 = dot(dir, dir);
+  const float invdist = rsqrt(dist2);
 
-    distance = length(L);
+  // normalized light vector
+  sample.direction = dir * invdist;
+  sample.distance = dist2 * invdist;
 
-    // normalize light vector
-    direction = L / distance;
+  sample.pdf = 1.f; // per default we always take this sample
 
-    // TODO: account for range?
+  // convert from power to radiance by attenuating by distance^2
+  sample.radiance = self->power * (invdist * invdist);
+  const float sinTheta = self->radius * invdist;
 
-    // convert from power to radiance by attenuting by distance^2
-    return self->power / (distance * distance);
-}
+  if (self->radius > 0. & sinTheta > 0.005f) {
+    // sample surface of sphere as seen by hit point -> cone of directions
+    // for very small cones treat as point light, because float precision is not good enough 
+    if (sinTheta < 1.f) {
+      const float cosTheta = sqrt(1.f - sinTheta * sinTheta);
+      const vec3f localDir = uniformSampleCone(cosTheta, s);
+      sample.direction = frame(sample.direction) * localDir;
+      sample.pdf = uniformSampleConePDF(cosTheta);
+      const float c = localDir.z;
+      sample.distance = c*sample.distance - sqrt(self->radius*self->radius - (1.f - c*c) * dist2);
+    } else { // inside sphere
+      const vec3f localDir = cosineSampleHemisphere(s);
+      sample.direction = frame(dg.Ns) * localDir;
+      sample.pdf = cosineSampleHemispherePDF(localDir);
+      // TODO:
+      sample.radiance = self->power * rcp(self->radius*self->radius);
+      sample.distance = self->radius;
+    }
+  }
 
-void PointLight_Constructor(uniform PointLight *uniform self,
-                            void *uniform cppEquivalent,
-                            const uniform vec3f &position,
-                            const uniform vec3f &power,
-                            const uniform float range)
-{
-  Light_Constructor(&self->super, cppEquivalent);
-  self->position = position;
-  self->power    = power;
-  self->range    = range;
-  self->super.computeRadiance = PointLight_computeRadiance;
+  return sample;
 }
 
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-//! Create an ispc-side PointLight object
-export void *uniform PointLight_create(void *uniform cppEquivalent)
-{
-  uniform PointLight *uniform self = uniform new uniform PointLight;
-  PointLight_Constructor(self, cppEquivalent, make_vec3f(0.f), make_vec3f(1.f), inf);
-  return self;
-}
-
 //! Set the parameters of an ispc-side PointLight object
 export void PointLight_set(void *uniform _self,
                            const uniform vec3f &position,
                            const uniform vec3f &power,
-                           const uniform float range)
+                           const uniform float radius)
 {
   uniform PointLight *uniform self = (uniform PointLight *uniform)_self;
   self->position = position;
   self->power = power;
-  self->range = range;
+  self->radius = radius;
+}
+
+//! Create an ispc-side PointLight object
+export void *uniform PointLight_create(void *uniform cppEquivalent)
+{
+  uniform PointLight *uniform self = uniform new uniform PointLight;
+  Light_Constructor(&self->super, cppEquivalent);
+  self->super.sample = PointLight_sample;
+
+  PointLight_set(self, make_vec3f(0.f), make_vec3f(1.f), 0.f);
+  return self;
 }
