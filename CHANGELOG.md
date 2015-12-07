@@ -3,6 +3,10 @@ Version History
 
 ### Changes in v0.8.3:
 
+-   Enhancements and optimizations to path tracer
+    -   Soft shadows (light sources: sphere, cone, extended spot, quad)
+    -   Transparent shadows
+    -   Normal mapping (OBJ material)
 -   Volume rendering enhancements:
     -   Expanded material support
     -   Support for multiple lights
@@ -15,11 +19,12 @@ Version History
         parameter
     -   New OpenGL utility module to convert between OSPRay and OpenGL
         depth values
--   Enhancements and optimizations to path tracer
 -   Added panoramic and orthographic camera types
 -   Proper CMake-based installation of OSPRay and CMake find_package()
     support for use in external projects
 -   Experimental Windows support
+-   Deprecated ospNewTriangleMesh(); use ospNewGeometry("triangles")
+    instead
 -   Bug fixes and cleanups throughout the codebase
 
 ### Changes in v0.8.2:
