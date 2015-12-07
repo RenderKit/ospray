@@ -54,12 +54,12 @@ vec3f ThinGlass_getTransparency(const uniform PathTraceMaterial* uniform materia
 }
 
 void ThinGlass_Constructor(uniform ThinGlass* uniform self,
-                           uniform float eta,
+                           uniform float ior,
                            const uniform vec3f& transmission,
                            uniform float thickness)
 {
   PathTraceMaterial_Constructor(&self->super, ThinGlass_getBSDF, ThinGlass_getTransparency, NULL);
-  self->eta = rcp(eta);
+  self->eta = rcp(ior);
   self->transmission = transmission;
   self->thickness = thickness;
 }
@@ -67,11 +67,11 @@ void ThinGlass_Constructor(uniform ThinGlass* uniform self,
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform PathTracer_ThinGlass_create(uniform float eta,
+export void* uniform PathTracer_ThinGlass_create(uniform float ior,
                                                  const uniform vec3f& transmission,
                                                  uniform float thickness)
 {
   uniform ThinGlass* uniform self = uniform new uniform ThinGlass;
-  ThinGlass_Constructor(self, eta, transmission, thickness);
+  ThinGlass_Constructor(self, ior, transmission, thickness);
   return self;
 }

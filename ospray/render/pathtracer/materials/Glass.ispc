@@ -36,8 +36,8 @@ const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* unifo
 {
   const uniform Glass* uniform self = (const uniform Glass* uniform)material;
 
-  float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.eta*rcp(self->mediumInside.eta)
-                                                     : self->mediumInside.eta*rcp(self->mediumOutside.eta);
+  float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
+                                                     : self->mediumInside.ior*rcp(self->mediumOutside.ior);
 
   return Dielectric_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), eta);
 }
@@ -49,8 +49,8 @@ vec3f Glass_getTransparency(const uniform PathTraceMaterial* uniform material,
 {
   const uniform Glass* uniform self = (const uniform Glass* uniform)material;
 
-  float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.eta*rcp(self->mediumInside.eta)
-                                                     : self->mediumInside.eta*rcp(self->mediumOutside.eta);
+  float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
+                                                     : self->mediumInside.ior*rcp(self->mediumOutside.ior);
 
   float cosThetaO = max(dot(ray.dir, dg.Ns), 0.0f);
   return make_vec3f(1.0f-fresnelDielectric(cosThetaO, eta));
@@ -68,27 +68,27 @@ void Glass_selectNextMedium(const uniform PathTraceMaterial* uniform super,
 }
 
 void Glass_Constructor(uniform Glass* uniform self,
-                       uniform float etaInside,
+                       uniform float iorInside,
                        const uniform vec3f& transmissionInside,
-                       uniform float etaOutside,
+                       uniform float iorOutside,
                        const uniform vec3f& transmissionOutside)
 {
   PathTraceMaterial_Constructor(&self->super, Glass_getBSDF, Glass_getTransparency, Glass_selectNextMedium);
-  self->mediumInside.eta           = etaInside;
+  self->mediumInside.ior           = iorInside;
   self->mediumInside.transmission  = transmissionInside;
-  self->mediumOutside.eta          = etaOutside;
+  self->mediumOutside.ior          = iorOutside;
   self->mediumOutside.transmission = transmissionOutside;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
 // External API
 
-export void* uniform PathTracer_Glass_create(uniform float etaInside,
+export void* uniform PathTracer_Glass_create(uniform float iorInside,
                                              const uniform vec3f& transmissionInside,
-                                             uniform float etaOutside,
+                                             uniform float iorOutside,
                                              const uniform vec3f& transmissionOutside)
 {
   uniform Glass* uniform self = uniform new uniform Glass;
-  Glass_Constructor(self, etaInside, transmissionInside, etaOutside, transmissionOutside);
+  Glass_Constructor(self, iorInside, transmissionInside, iorOutside, transmissionOutside);
   return self;
 }

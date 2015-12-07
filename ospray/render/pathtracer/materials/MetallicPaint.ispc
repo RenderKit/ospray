@@ -61,13 +61,13 @@ inline void MetallicPaint_Constructor(uniform MetallicPaint* uniform self,
                                       const uniform vec3f& shadeColor,
                                       const uniform vec3f& glitterColor,
                                       const uniform float glitterSpread,
-                                      const uniform float eta)
+                                      const uniform float ior)
 {
   PathTraceMaterial_Constructor(&self->super, MetallicPaint_getBSDF, NULL, NULL);
   self->shadeColor = shadeColor;
   self->glitterColor = glitterColor;
   self->glitterSpread = glitterSpread;
-  self->eta = rcp(eta);
+  self->eta = rcp(ior);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -76,9 +76,9 @@ inline void MetallicPaint_Constructor(uniform MetallicPaint* uniform self,
 export void* uniform PathTracer_MetallicPaint_create(const uniform vec3f& shadeColor,
                                                      const uniform vec3f& glitterColor,
                                                      const uniform float glitterSpread,
-                                                     const uniform float eta)
+                                                     const uniform float ior)
 {
   uniform MetallicPaint* uniform self = uniform new uniform MetallicPaint;
-  MetallicPaint_Constructor(self,shadeColor,glitterColor,glitterSpread,eta);
+  MetallicPaint_Constructor(self,shadeColor,glitterColor,glitterSpread,ior);
   return self;
 }

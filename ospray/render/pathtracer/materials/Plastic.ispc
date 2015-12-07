@@ -52,13 +52,13 @@ const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uni
 
 void Plastic_Constructor(uniform Plastic* uniform self,
                          const uniform vec3f& pigmentColor,
-                         uniform float eta,
+                         uniform float ior,
                          uniform float roughness,
                          uniform float thickness)
 {
   PathTraceMaterial_Constructor(&self->super, Plastic_getBSDF, NULL, NULL);
   self->pigmentColor = pigmentColor;
-  self->eta = rcp(eta);
+  self->eta = rcp(ior);
   self->roughness = roughness;
   self->thickness = thickness;
 }
@@ -67,11 +67,11 @@ void Plastic_Constructor(uniform Plastic* uniform self,
 // External API
 
 export void* uniform PathTracer_Plastic_create(const uniform vec3f& pigmentColor,
-                                               uniform float eta,
+                                               uniform float ior,
                                                uniform float roughness,
                                                uniform float thickness)
 {
   uniform Plastic* uniform self = uniform new uniform Plastic;
-  Plastic_Constructor(self, pigmentColor, eta, roughness, thickness);
+  Plastic_Constructor(self, pigmentColor, ior, roughness, thickness);
   return self;
 }
