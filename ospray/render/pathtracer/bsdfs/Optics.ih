@@ -158,36 +158,6 @@ inline uniform FresnelDielectric make_FresnelDielectric(const uniform float etai
   return m;
 }
 
-// =======================================================
-struct PowerCosineDistribution
-{
-  float exp;
-};
-
-inline float eval(const PowerCosineDistribution& self,
-                  float cosThetaH, float& pdf)
-{
-  pdf = powerCosineSampleHemispherePDF(cosThetaH, self.exp);
-  return (self.exp+2) * one_over_two_pi * pow(abs(cosThetaH), self.exp);
-  // TODO: check with powerCosineSampleHemispherePDF
-}
-
-/*! Samples the power cosine distribution. */
-inline vec3f sample(const PowerCosineDistribution& self,
-                    float& pdf, const vec2f& s)
-{
-  const vec3f wh = powerCosineSampleHemisphere(self.exp, s);
-  pdf = powerCosineSampleHemispherePDF(wh, self.exp);
-  return wh;
-}
-
-inline PowerCosineDistribution make_PowerCosineDistribution(float _exp)
-{
-  PowerCosineDistribution m;
-  m.exp = _exp;
-  return m;
-}
-
 
 inline float luminance(const vec3f& c)
 {

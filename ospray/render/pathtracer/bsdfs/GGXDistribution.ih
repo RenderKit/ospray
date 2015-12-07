@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "BSDF.ih"
+#include "ospray/math/math.ih"
 
 struct GGXDistribution
 {
