@@ -38,13 +38,13 @@ struct OBJ
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform super,
                                         uniform ShadingContext* uniform ctx,
                                         const DifferentialGeometry& dg,
                                         const Ray& ray,
                                         const Medium& currentMedium)
 {
-  uniform const OBJ* uniform self = (uniform const OBJ* uniform)material;
+  uniform const OBJ* uniform self = (uniform const OBJ* uniform)super;
   varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
   // textures modify (mul) values, see http://paulbourke.net/dataformats/mtl/
 
@@ -88,12 +88,12 @@ const varying BSDF* uniform OBJ_getBSDF(const uniform PathTraceMaterial* uniform
   return bsdf;
 }
 
-vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform material,
+vec3f OBJ_getTransparency(const uniform PathTraceMaterial* uniform super,
                           const DifferentialGeometry& dg,
                           const Ray& ray,
                           const Medium& currentMedium)
 {
-  uniform const OBJ* uniform self = (uniform const OBJ* uniform)material;
+  uniform const OBJ* uniform self = (uniform const OBJ* uniform)super;
 
   /*! transmission */
   float d = self->d * get1f(self->map_d, dg.st, 1.f);

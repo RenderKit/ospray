@@ -41,13 +41,13 @@ struct Velvet
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Velvet_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform Velvet_getBSDF(const uniform PathTraceMaterial* uniform super,
                                            uniform ShadingContext* uniform ctx,
                                            const DifferentialGeometry& dg,
                                            const Ray& ray,
                                            const Medium& currentMedium)
 {
-  const uniform Velvet* uniform self = (const uniform Velvet* uniform)material;
+  const uniform Velvet* uniform self = (const uniform Velvet* uniform)super;
 
   varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
   varying BSDF* uniform bsdf = MultiBSDF_create(ctx);

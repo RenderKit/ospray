@@ -30,13 +30,13 @@ struct Metal
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform Metal_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,
                                           const Medium& currentMedium)
 {
-  const uniform Metal* uniform self = (const uniform Metal* uniform)material;
+  const uniform Metal* uniform self = (const uniform Metal* uniform)super;
   if (self->roughness == 0.0f)
     return Conductor_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->reflectance, self->eta, self->k);
   else

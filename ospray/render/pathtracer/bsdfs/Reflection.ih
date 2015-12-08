@@ -21,6 +21,7 @@
 struct Reflection
 {
   BSDF super;
+  
   vec3f reflectance;
 };
 

@@ -21,6 +21,7 @@
 struct Conductor
 {
   BSDF super;
+  
   vec3f reflectance; //!< reflectivity coefficient
   vec3f eta;         //!< real part of refraction index
   vec3f k;           //!< imaginary part of refraction index

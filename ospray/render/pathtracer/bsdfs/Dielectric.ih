@@ -21,6 +21,7 @@
 struct Dielectric
 {
   BSDF super;
+  
   float eta;
 };
 

@@ -29,13 +29,13 @@ struct ThinGlass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform ThinGlass_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform ThinGlass_getBSDF(const uniform PathTraceMaterial* uniform super,
                                               uniform ShadingContext* uniform ctx,
                                               const DifferentialGeometry& dg,
                                               const Ray& ray,
                                               const Medium& currentMedium)
 {
-  const uniform ThinGlass* uniform self = (const uniform ThinGlass* uniform)material;
+  const uniform ThinGlass* uniform self = (const uniform ThinGlass* uniform)super;
 
   return ThinDielectric_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), self->eta, self->transmission, self->thickness);
 }

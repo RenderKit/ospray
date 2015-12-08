@@ -16,7 +16,7 @@
 
 #include "Material.ih"
 
-vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform material,
+vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform self,
                                         const DifferentialGeometry& dg,
                                         const Ray& ray,
                                         const Medium& currentMedium)
@@ -24,11 +24,11 @@ vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform
   return make_vec3f(0.0f);
 }
 
-void PathTraceMaterial_selectNextMedium(uniform const PathTraceMaterial *uniform _self,
+void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform self,
                                         varying Medium& currentMedium)
 { /* do nothing by default */ }
 
-void PathTraceMaterial_Constructor(uniform PathTraceMaterial *uniform self,
+void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
                                    uniform PathTraceMaterial_GetBSDFFunc getBSDF,
                                    uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
                                    uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium)

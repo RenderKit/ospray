@@ -31,13 +31,13 @@ struct Plastic
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform Plastic_getBSDF(const uniform PathTraceMaterial* uniform super,
                                             uniform ShadingContext* uniform ctx,
                                             const DifferentialGeometry& dg,
                                             const Ray& ray,
                                             const Medium& currentMedium)
 {
-  const uniform Plastic* uniform self = (const uniform Plastic* uniform)material;
+  const uniform Plastic* uniform self = (const uniform Plastic* uniform)super;
 
   varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
   varying BSDF* uniform bsdf = Lambert_create(ctx, shadingFrame, self->pigmentColor);

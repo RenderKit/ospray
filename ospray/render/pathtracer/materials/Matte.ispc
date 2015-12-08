@@ -26,13 +26,13 @@ struct Matte
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,
                                           const Medium& currentMedium)
 {
-  const uniform Matte* uniform self = (const uniform Matte* uniform)material;
+  const uniform Matte* uniform self = (const uniform Matte* uniform)super;
   vec3f R = self->reflectance;
   return Lambert_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), R);
 }

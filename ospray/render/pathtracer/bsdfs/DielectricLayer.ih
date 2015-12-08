@@ -21,6 +21,7 @@
 struct DielectricLayer
 {
   BSDF super;
+  
   varying BSDF* uniform substrate;
   float eta;
   vec3f transmittance;

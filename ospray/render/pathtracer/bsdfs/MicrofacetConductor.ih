@@ -22,6 +22,7 @@
 struct MicrofacetConductor
 {
   BSDF super;
+  
   vec3f reflectance;
   vec3f eta;
   vec3f k;

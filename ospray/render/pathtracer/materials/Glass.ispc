@@ -28,13 +28,13 @@ struct Glass
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* uniform material,
+const varying BSDF* uniform Glass_getBSDF(const uniform PathTraceMaterial* uniform super,
                                           uniform ShadingContext* uniform ctx,
                                           const DifferentialGeometry& dg,
                                           const Ray& ray,
                                           const Medium& currentMedium)
 {
-  const uniform Glass* uniform self = (const uniform Glass* uniform)material;
+  const uniform Glass* uniform self = (const uniform Glass* uniform)super;
 
   float eta = eq(currentMedium, self->mediumOutside) ? self->mediumOutside.ior*rcp(self->mediumInside.ior)
                                                      : self->mediumInside.ior*rcp(self->mediumOutside.ior);
