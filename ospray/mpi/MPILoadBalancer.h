@@ -55,7 +55,8 @@ namespace ospray {
         Slave();
         
         /*! a task for rendering a frame using the global tiled load balancer */
-        struct RenderTask : public ospray::Task {
+        struct RenderTask// : public ospray::Task {
+        {
           Ref<Renderer>     renderer;
           Ref<FrameBuffer>  fb;
           size_t            numTiles_x;

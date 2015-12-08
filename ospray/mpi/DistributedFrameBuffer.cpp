@@ -21,6 +21,9 @@
 // embree
 #include "common/sys/thread.h"
 
+#include <memory>
+#include <future>
+
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h> // for Sleep
@@ -97,7 +100,6 @@ namespace ospray {
 
     {
       LockGuard lock(mutex);
-      fprintf(stderr, "LOCK-1\n");
       bufferedTile.push_back(addTile);
 
       if (tile.generation == currentGeneration) {
@@ -182,7 +184,6 @@ namespace ospray {
 
     {
       LockGuard lock(mutex);
-      fprintf(stderr, "LOCK-2\n");
       (void)lock;
       if (numPartsComposited == 0)
         memcpy(&compositedTileData,&tile,sizeof(tile));
@@ -212,7 +213,6 @@ namespace ospray {
     // PING; PRINT(this); fflush(0);
     {
       LockGuard lock(mutex);
-      fprintf(stderr, "LOCK-3\n");
       DBG(printf("rank %i starting new frame\n",mpi::world.rank));
       assert(!frameIsActive);
 
@@ -415,7 +415,6 @@ namespace ospray {
     // printf("waitUntilFinished rank %i DONE\n",mpi::world.rank);fflush(0);
 #else
     std::unique_lock<std::mutex> lock(mutex);
-    fprintf(stderr, "LOCK-4\n");
     doneCond.wait(lock, [&]{return frameIsDone;});
 #endif
   }
@@ -463,7 +462,8 @@ namespace ospray {
   }
 
 
-  struct DFBProcessMessageTask : public ospray::Task {
+  struct DFBProcessMessageTask
+  {
     DFB *dfb;
     mpi::async::CommLayer::Message *_msg;
 
@@ -472,7 +472,7 @@ namespace ospray {
       : dfb(dfb), _msg(_msg)
     {}
 
-    virtual void run(size_t jobID)
+    void run(size_t jobID)
     {
       DBG(printf("processing message %i\n",jobID); fflush(0));
       switch (_msg->command) {
@@ -500,7 +500,6 @@ namespace ospray {
       /*! we will not do anything with the tile other than mark it's done */
       {
         LockGuard lock(mutex);
-        fprintf(stderr, "LOCK-5\n");
         (void)lock;
         numTilesCompletedThisFrame++;
         DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
@@ -540,7 +539,6 @@ namespace ospray {
 
       {
         LockGuard lock(mutex);
-        fprintf(stderr, "LOCK-6\n");
         (void)lock;
         numTilesCompletedThisFrame++;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
@@ -559,7 +557,6 @@ namespace ospray {
     DBG(printf("incoming at %i: %i\n",mpi::world.rank,_msg->command); fflush(0));
     if (!frameIsActive) {
       LockGuard lock(mutex);
-      fprintf(stderr, "LOCK-7\n");
       (void)lock;
       if (!frameIsActive) {
         // frame is not actually active, yet - put the tile into the
@@ -571,14 +568,15 @@ namespace ospray {
     }
 
     DBG(PING);
-    Ref<DFBProcessMessageTask> msgTask = new DFBProcessMessageTask(this,_msg);
-    msgTask->schedule(1,Task::FRONT_OF_QUEUE);
 
+    auto msgTask = std::make_shared<DFBProcessMessageTask>(this,_msg);
+    auto future = std::async([msgTask]{msgTask->run(0);});
 
-#if QUEUE_PROCESSING_JOBS
-    msgTaskQueue.addJob(msgTask.ptr);
+#if 0//QUEUE_PROCESSING_JOBS
+
+    //msgTaskQueue.addJob(msgTask.ptr);
 #else
-    msgTask->wait();
+    future.get();
 #endif
 
     DBG(PING);
@@ -595,7 +593,7 @@ namespace ospray {
     doneCond.notify_all();
 
     //if (!locked) mutex.unlock();
-  };
+  }
 
   //! write given tile data into the frame buffer, sending to remove owner if required
   void DFB::setTile(ospray::Tile &tile)
@@ -618,19 +616,22 @@ namespace ospray {
       assert(frameIsActive);
 
       TileData *td = (TileData*)tileDesc;
+
+      //fprintf(stderr, "CALLING td->process(tile) from DFB::setTile\n"); fflush(0);
       td->process(tile);
 
-    // printf("rank %i processes tile\n",mpi::world.rank);fflush(0);
+      //fprintf(stderr, "rank %i processes tile\n", mpi::world.rank); fflush(0);
 
     }
   }
 
-  struct DFBClearTask : public ospray::Task {
+  struct DFBClearTask
+  {
     DFB *dfb;
     DFBClearTask(DFB *dfb, const uint32 fbChannelFlags)
       : dfb(dfb), fbChannelFlags(fbChannelFlags)
     {};
-    virtual void run(size_t jobID)
+    void run(size_t jobID)
     {
       size_t tileID = jobID;
       DFB::TileData *td = dfb->myTiles[tileID];
@@ -664,9 +665,9 @@ namespace ospray {
   void DFB::clear(const uint32 fbChannelFlags)
   {
     if (myTiles.size() != 0) {
-      Ref<DFBClearTask> clearTask = new DFBClearTask(this,fbChannelFlags);
-      clearTask->schedule(myTiles.size());
-      clearTask->wait();
+      std::cerr << "CLEARING DFB" << std::endl;
+      DFBClearTask clearTask(this, fbChannelFlags);
+      clearTask.run(0);
       if (fbChannelFlags & OSP_FB_ACCUM)
         accumID = 0;
     }

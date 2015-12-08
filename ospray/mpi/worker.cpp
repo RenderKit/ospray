@@ -112,7 +112,9 @@ namespace ospray {
       // -------------------------------------------------------
       // initialize our task system
       // -------------------------------------------------------
+#if 0
       ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
+#endif
 
       CommandStream cmd;
 

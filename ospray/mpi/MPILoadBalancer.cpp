@@ -100,10 +100,14 @@ namespace ospray {
         const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
                                 RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
+#if OSPRAY_USE_TBB
+        //TODO: TBB
+#else//OpenMP
 #       pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < numJobs; ++i) {
           renderer->renderTile(perFrameData, tile, i);
         }
+#endif
 
         fb->setTile(tile);
 #if TILE_SIZE>128
@@ -133,15 +137,15 @@ namespace ospray {
         renderTask.channelFlags = channelFlags;
         renderTask.perFrameData = perFrameData;
 
-        /*! iw: using a local sync event for now; "in theory" we should be
-          able to attach something like a sync event to the frame
-          buffer, just trigger the task here, and let somebody else sync
-          on the framebuffer once it is needed; alas, I'm currently
-          running into some issues with the embree taks system when
-          trying to do so, and thus am reverting to this
-          fully-synchronous version for now */
-        renderTask.schedule(renderTask.numTiles_x*renderTask.numTiles_y);
-        renderTask.wait();
+        const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+#ifdef OSPRAY_USE_TBB
+        tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+#else//OpenMP
+#       pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < NTASKS; ++i) {
+          renderTask.run(i);
+        }
+#endif
 
         // double t0wait = getSysTime();
         dfb->waitUntilFinished();

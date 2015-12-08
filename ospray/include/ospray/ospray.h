@@ -27,6 +27,10 @@
 
 #pragma once
 
+#ifndef NULL
+# define NULL nullptr
+#endif
+
 #include <vector>
 
 // -------------------------------------------------------

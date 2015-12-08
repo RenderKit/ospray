@@ -136,8 +136,12 @@ namespace ospray {
 
   void Task::scheduleAndWait(size_t numJobs, ScheduleOrder order)
   {
+#if 1
+    throw std::runtime_error("Use of the old tasking system!");
+#else
     schedule(numJobs,order);
     wait();
+#endif
   }
 
   inline Task *TaskSys::getNextActiveTask()
@@ -176,12 +180,16 @@ namespace ospray {
 
   void Task::schedule(size_t numJobs, ScheduleOrder order)
   {
+#if 1
+    throw std::runtime_error("Use of the old tasking system!");
+#else
     refInc();
     this->order = order;
     numJobsInTask = numJobs;
     status = Task::SCHEDULED;
     if (numMissingDependencies == 0)
       activate();
+#endif
   }
 
   inline void Task::activate()

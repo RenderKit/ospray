@@ -48,7 +48,7 @@ namespace ospray {
         static CommLayer *WORLD;
 
         //! the async::consumer virtual callback that a async::message arrived
-        virtual void process(const mpi::Address &source, void *message, int32 size);
+        void process(const mpi::Address &source, void *message, int32 size) override;
         
         struct Address {
           Address(int32 rank=-1,ObjectID objectID=-1) 
