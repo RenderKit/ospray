@@ -17,7 +17,6 @@
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
 
-#include "ospray/common/TaskSys.h"
 // embree
 #include "common/sys/thread.h"
 

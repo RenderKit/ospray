@@ -22,7 +22,6 @@
 #include "ospray/common/OSPCommon.h"
 #include "ospray/fb/FrameBuffer.h"
 #include "ospray/render/Renderer.h"
-#include "ospray/common/TaskSys.h"
 
 // tbb
 #ifdef OSPRAY_USE_TBB

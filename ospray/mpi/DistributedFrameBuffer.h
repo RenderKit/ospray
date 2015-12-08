@@ -19,7 +19,6 @@
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/fb/Tile.h"
 #include "ospray/fb/LocalFB.h"
-#include "ospray/common/TaskSys.h"
 #include "ospray/common/Thread.h"
 #include <queue>
 
@@ -27,7 +26,7 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-#define QUEUE_PROCESSING_JOBS 1
+#define QUEUE_PROCESSING_JOBS 0
 
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
