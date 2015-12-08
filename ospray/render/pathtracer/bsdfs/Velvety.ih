@@ -20,7 +20,7 @@
 
 struct Velvety
 {
-  uniform BSDF super;
+  BSDF super;
 
   /*! The reflectance parameter. The vale 0 means no reflection,
    *  and 1 means full reflection. */
@@ -31,80 +31,46 @@ struct Velvety
   float f;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// uniform Velvety
-
-vec3f uniform_Velvety__eval(const varying BSDF* uniform _this,
-                            const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+inline vec3f Velvety_eval(const varying BSDF* uniform super,
+                          const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
-  const uniform Velvety* uniform this = (const uniform Velvety* uniform) _this;
-  const float cosThetaO = clamp(dot(wo,dg.Ns));
-  const float cosThetaI = clamp(dot(wi,dg.Ns));
+  const varying Velvety* uniform self = (const varying Velvety* uniform)super;
+
+  const float cosThetaO = clamp(dot(wo,getN(super)));
+  const float cosThetaI = clamp(dot(wi,getN(super)));
   const float sinThetaO = sqrt(1.0f - cosThetaO * cosThetaO);
-  const float horizonScatter = pow(sinThetaO, this->f);
-  return mul(horizonScatter * cosThetaI * one_over_pi, this->R);
+  const float horizonScatter = pow(sinThetaO, self->f);
+  pdf = cosineSampleHemispherePDF(cosThetaI);
+  return mul(horizonScatter * cosThetaI * one_over_pi, self->R);
 }
 
-vec3f uniform_Velvety__sample(const varying BSDF* uniform _this,
-                              const vec3f &wo,
-                              const DifferentialGeometry &dg,
-                              Sample3f &wi,
-                              const vec2f &s)
+inline vec3f Velvety_sample(const varying BSDF* uniform super,
+                            const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                            const vec2f& s, float ss)
 {
-  const uniform Velvety* uniform this = (const uniform Velvety* uniform) _this;
+  const varying Velvety* uniform self = (const varying Velvety* uniform)super;
+
   const vec3f localDir = cosineSampleHemisphere(s);
-  wi.v = frame(dg.Ns) * localDir;
-  wi.pdf = cosineSampleHemispherePDF(localDir);
-  return uniform_Velvety__eval(_this, wo, dg, wi.v);
+  wi = getFrame(super) * localDir;
+  type = BSDF_DIFFUSE_REFLECTION;
+  return Velvety_eval(super, dg, wo, wi, pdf) * rcp(pdf);
 }
 
-void Velvety__Constructor(uniform Velvety* uniform this, const uniform vec3f R, const uniform float f)
+inline void Velvety_Constructor(varying Velvety* uniform self, const varying linear3f* uniform frame,
+                                vec3f R, float f)
 {
-  //BSDF_Constructor(&this->super,DIFFUSE_REFLECTION,
-  //                  uniform_Velvety__eval,uniform_Velvety__sample);
-  this->R = R;
-  this->f = f;
+  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
+                   Velvety_eval, Velvety_sample,
+                   frame);
+
+  self->R = R;
+  self->f = f;
 }
 
-uniform Velvety make_Velvety(const uniform vec3f R, const uniform float f) {
-  uniform Velvety m; Velvety__Constructor(&m,R,f); return m;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// varying Velvety
-
-vec3f varying_Velvety__eval(const varying BSDF* uniform _this,
-                            const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+inline varying BSDF* uniform Velvety_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                            vec3f R, float f)
 {
-  const varying Velvety* uniform this = (const varying Velvety* uniform) _this;
-  const float cosThetaO = clamp(dot(wo,dg.Ns));
-  const float cosThetaI = clamp(dot(wi,dg.Ns));
-  const float sinThetaO = sqrt(1.0f - cosThetaO * cosThetaO);
-  const float horizonScatter = pow(sinThetaO, this->f);
-  return mul(horizonScatter * cosThetaI * one_over_pi, this->R);
-}
-
-vec3f varying_Velvety__sample(const varying BSDF* uniform _this,
-                              const vec3f &wo,
-                              const DifferentialGeometry &dg,
-                              Sample3f &wi,
-                              const vec2f &s)
-{
-  const varying Velvety* uniform this = (const varying Velvety* uniform) _this;
-  const vec3f localDir = cosineSampleHemisphere(s);
-  wi.v = frame(dg.Ns) * localDir;
-  wi.pdf = cosineSampleHemispherePDF(localDir);
-  return varying_Velvety__eval(_this, wo, dg, wi.v);
-}
-
-void Velvety__Constructor(varying Velvety* uniform this, const varying vec3f R, const varying float f)
-{
-  //BSDF_Constructor(&this->super,DIFFUSE_REFLECTION,
-  //                  varying_Velvety__eval,varying_Velvety__sample);
-  this->R = R;
-  this->f = f;
-}
-
-varying Velvety make_Velvety(const varying vec3f R, const varying float f) {
-  varying Velvety m; Velvety__Constructor(&m,R,f); return m;
+  varying Velvety* uniform self = (varying Velvety* uniform)ShadingContext_alloc(ctx, sizeof(Velvety));
+  Velvety_Constructor(self, frame, R, f);
+  return &self->super;
 }

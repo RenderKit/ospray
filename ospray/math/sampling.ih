@@ -46,6 +46,11 @@ inline float cosineSampleHemispherePDF(const vec3f &dir)
   return dir.z / M_PI;
 }
 
+inline float cosineSampleHemispherePDF(float cosTheta)
+{
+  return cosTheta / M_PI;
+}
+
 
 /// power cosine-weighted sampling of hemisphere oriented along the +z-axis
 ////////////////////////////////////////////////////////////////////////////////

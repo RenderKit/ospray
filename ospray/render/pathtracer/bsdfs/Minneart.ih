@@ -20,7 +20,7 @@
 
 struct Minneart
 {
-  uniform BSDF super;
+  BSDF super;
 
   /*! The reflectance parameter. The vale 0 means no reflection,
    *  and 1 means full reflection. */
@@ -31,76 +31,44 @@ struct Minneart
   float b;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// uniform Minneart
-
-vec3f uniform_Minneart__eval(const varying BSDF* uniform _this,
-                             const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+inline vec3f Minneart_eval(const varying BSDF* uniform super,
+                           const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
 {
-  const uniform Minneart* uniform this = (const uniform Minneart* uniform) _this;
-  const float cosThetaI = clamp(dot(wi,dg.Ns));
-  const float backScatter = pow(clamp(dot(wo,wi)), this->b);
-  return mul(backScatter * cosThetaI * one_over_pi, this->R);
+  const varying Minneart* uniform self = (const varying Minneart* uniform)super;
+
+  const float cosThetaI = clamp(dot(wi,getN(super)));
+  const float backScatter = pow(clamp(dot(wo,wi)), self->b);
+  pdf = cosineSampleHemispherePDF(cosThetaI);
+  return mul(backScatter * cosThetaI * one_over_pi, self->R);
 }
 
-vec3f uniform_Minneart__sample(const varying BSDF* uniform _this,
-                               const vec3f &wo,
-                               const DifferentialGeometry &dg,
-                               Sample3f &wi,
-                               const vec2f &s)
+inline vec3f Minneart_sample(const varying BSDF* uniform super,
+                             const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                             const vec2f& s, float ss)
 {
-  const uniform Minneart* uniform this = (const uniform Minneart* uniform) _this;
+  const varying Minneart* uniform self = (const varying Minneart* uniform)super;
+
   const vec3f localDir = cosineSampleHemisphere(s);
-  wi.v = frame(dg.Ns) * localDir;
-  wi.pdf = cosineSampleHemispherePDF(localDir);
-  return uniform_Minneart__eval(_this, wo, dg, wi.v);
+  wi = getFrame(super) * localDir;
+  type = BSDF_DIFFUSE_REFLECTION;
+  return Minneart_eval(super, dg, wo, wi, pdf) * rcp(pdf);
 }
 
-void Minneart__Constructor(uniform Minneart* uniform this, const uniform vec3f R, const uniform float b)
+inline void Minneart_Constructor(varying Minneart* uniform self, const varying linear3f* uniform frame,
+                                 vec3f R, float b)
 {
-  //BSDF_Constructor(&this->super,DIFFUSE_REFLECTION,
-  //                  uniform_Minneart__eval,uniform_Minneart__sample);
-  this->R = R;
-  this->b = b;
+  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
+                   Minneart_eval, Minneart_sample,
+                   frame);
+
+  self->R = R;
+  self->b = b;
 }
 
-uniform Minneart make_Minneart(const uniform vec3f R, const uniform float f) {
-  uniform Minneart m; Minneart__Constructor(&m,R,f); return m;
-}
-
-///////////////////////////////////////////////////////////////////////////////
-// varying Minneart
-
-vec3f varying_Minneart__eval(const varying BSDF* uniform _this,
-                             const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi)
+inline varying BSDF* uniform Minneart_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                             vec3f R, float b)
 {
-  const varying Minneart* uniform this = (const varying Minneart* uniform) _this;
-  const float cosThetaI = clamp(dot(wi,dg.Ns));
-  const float backScatter = pow(clamp(dot(wo,wi)), this->b);
-  return mul(backScatter * cosThetaI * one_over_pi, this->R);
-}
-
-vec3f varying_Minneart__sample(const varying BSDF* uniform _this,
-                               const vec3f &wo,
-                               const DifferentialGeometry &dg,
-                               Sample3f &wi,
-                               const vec2f &s)
-{
-  const varying Minneart* uniform this = (const varying Minneart* uniform) _this;
-  const vec3f localDir = cosineSampleHemisphere(s);
-  wi.v = frame(dg.Ns) * localDir;
-  wi.pdf = cosineSampleHemispherePDF(localDir);
-  return varying_Minneart__eval(_this, wo, dg, wi.v);
-}
-
-void Minneart__Constructor(varying Minneart* uniform this, const varying vec3f R, const varying float b)
-{
-  //BSDF_Constructor(&this->super,DIFFUSE_REFLECTION,
-  //                  varying_Minneart__eval,varying_Minneart__sample);
-  this->R = R;
-  this->b = b;
-}
-
-varying Minneart make_Minneart(const varying vec3f R, const varying float f) {
-  varying Minneart m; Minneart__Constructor(&m,R,f); return m;
+  varying Minneart* uniform self = (varying Minneart* uniform)ShadingContext_alloc(ctx, sizeof(Minneart));
+  Minneart_Constructor(self, frame, R, b);
+  return &self->super;
 }
