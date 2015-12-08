@@ -15,53 +15,59 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/DielectricReflection.ih"
-#include "../brdfs/DielectricLayerLambertian.ih"
-#include "../brdfs/DielectricLayerMicrofacetMetal.ih"
+#include "../bsdfs/MultiBSDF.ih"
+#include "../bsdfs/Lambert.ih"
+#include "../bsdfs/MicrofacetConductor.ih"
+#include "../bsdfs/DielectricLayer.ih"
 
 struct MetallicPaint
 {
-  PathTraceMaterial base;
-  DielectricReflection              reflection;
-  DielectricLayerLambertian         paint;
-  DielectricLayerMicrofacetMetal    glitter;
-  bool                              hasGlitter;
+  PathTraceMaterial super;
+  vec3f shadeColor;
+  vec3f glitterColor;
+  float glitterSpread;
+  float eta;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-void MetallicPaint__shade(const uniform PathTraceMaterial *uniform _this,
-                          const Ray&                  ray,             
-                          const Medium&               currentMedium,   
-                          const DifferentialGeometry& dg,              
-                          uniform CompositedBRDF&     brdfs,
-                          vec3f& Ns)
+const varying BSDF* uniform MetallicPaint_getBSDF(const uniform PathTraceMaterial* uniform super,
+                                                  uniform ShadingContext* uniform ctx,
+                                                  const DifferentialGeometry& dg,
+                                                  const Ray& ray,
+                                                  const Medium& currentMedium)
 {
-  uniform const MetallicPaint *uniform this = (uniform const MetallicPaint *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->reflection.base);
-  CompositedBRDF__add(&brdfs,&this->paint.base);
-  if (this->hasGlitter) CompositedBRDF__add(&brdfs,&this->glitter.base);
+  const uniform MetallicPaint* uniform self = (const uniform MetallicPaint* uniform)super;
+
+  varying LinearSpace3f* uniform shadingFrame = LinearSpace3f_create(ctx, frame(dg.Ns));
+  varying BSDF* uniform bsdf = MultiBSDF_create(ctx);
+
+  MultiBSDF_add(bsdf, Lambert_create(ctx, shadingFrame, self->shadeColor), luminance(self->shadeColor));
+
+  if (self->glitterSpread != 0.0f & ne(self->glitterColor, make_vec3f(0.0f)))
+  {
+    const vec3f etaAluminium = make_vec3f(1.69700277f, 0.879832864f, 0.5301736f);
+    const vec3f kAluminium   = make_vec3f(9.30200672f, 6.27604008f, 4.89433956f);
+    MultiBSDF_add(bsdf, MicrofacetConductor_create(ctx, shadingFrame, self->glitterColor, etaAluminium, kAluminium, self->glitterSpread), luminance(self->glitterColor));
+  }
+
+  bsdf = DielectricLayer_create(ctx, shadingFrame, bsdf, self->eta, make_vec3f(1.0f), 1.0f);
+
+  return bsdf;
 }
 
-inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
-                                       const uniform vec3f& shadeColor,
-                                       const uniform vec3f& glitterColor,
-                                       const uniform float glitterSpread,
-                                       const uniform float eta)
+inline void MetallicPaint_Constructor(uniform MetallicPaint* uniform self,
+                                      const uniform vec3f& shadeColor,
+                                      const uniform vec3f& glitterColor,
+                                      const uniform float glitterSpread,
+                                      const uniform float ior)
 {
-  PathTraceMaterial__Constructor(&this->base, MetallicPaint__shade, NULL);
-  DielectricReflection__Constructor(&this->reflection, 1.0f, eta);
-  DielectricLayerLambertian__Constructor(&this->paint, make_vec3f(1.0f), 1.0f, eta, make_Lambertian(shadeColor));
-
-  uniform vec3f etaAluminium = make_vec3f(0.62f,0.62f,0.62f);
-  uniform vec3f kAluminium   = make_vec3f(4.8f,4.8f,4.8f);
-  DielectricLayerMicrofacetMetal__Constructor(&this->glitter,
-                                              make_vec3f(1.f), 1.f, eta, 
-                                              make_MicrofacetMetal(glitterColor,
-                                                                   make_FresnelConductor(etaAluminium,kAluminium),
-                                                                   make_PowerCosineDistribution(rcp(glitterSpread))));
-  this->hasGlitter = (glitterSpread != 0.0f & ne(glitterColor,make_vec3f(0.0f)));
+  PathTraceMaterial_Constructor(&self->super, MetallicPaint_getBSDF, NULL, NULL);
+  self->shadeColor = shadeColor;
+  self->glitterColor = glitterColor;
+  self->glitterSpread = glitterSpread;
+  self->eta = rcp(ior);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -70,9 +76,9 @@ inline void MetallicPaint__Constructor(uniform MetallicPaint *uniform this,
 export void* uniform PathTracer_MetallicPaint_create(const uniform vec3f& shadeColor,
                                                      const uniform vec3f& glitterColor,
                                                      const uniform float glitterSpread,
-                                                     const uniform float eta)
+                                                     const uniform float ior)
 {
-  uniform MetallicPaint *uniform this = uniform new uniform MetallicPaint;
-  MetallicPaint__Constructor(this,shadeColor,glitterColor,glitterSpread,eta);
-  return this;
+  uniform MetallicPaint* uniform self = uniform new uniform MetallicPaint;
+  MetallicPaint_Constructor(self,shadeColor,glitterColor,glitterSpread,ior);
+  return self;
 }

@@ -1,0 +1,84 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct ThinDielectric
+{
+  BSDF super;
+
+  uniform float eta;       /*! relative refraction index etai/etat of both media */
+  vec3f transmission;      /*! volumetric transmission coefficient */
+  uniform float thickness; /*! thickness of the medium */
+};
+
+inline vec3f ThinDielectric_eval(const varying BSDF* uniform super,
+                                 const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+{
+  return make_vec3f(0.0f);
+}
+
+inline vec3f ThinDielectric_sample(const varying BSDF* uniform super,
+                                   const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                   const vec2f& s, float ss)
+{
+  const varying ThinDielectric* uniform self = (const varying ThinDielectric* uniform)super;
+
+  float cosThetaO = max(dot(wo, getN(super)), 0.0f);
+
+  // Fresnel term
+  float F = fresnelDielectric(cosThetaO, self->eta);
+
+  // Sample the reflection or the transmission
+  if (ss <= F)
+  {
+    // Reflection
+    wi = reflect(wo, getN(super), cosThetaO);
+    type = BSDF_SPECULAR_REFLECTION;
+    pdf = F;
+    return make_vec3f(1.0f);
+  }
+  else
+  {
+    // Transmission
+    wi = neg(wo);
+    type = BSDF_SPECULAR_TRANSMISSION;
+    pdf = 1.0f-F;
+    float alpha = self->thickness * rcp(cosThetaO);
+    return powf(self->transmission, alpha);
+  }
+}
+
+inline void ThinDielectric_Constructor(varying ThinDielectric* uniform self, const varying linear3f* uniform frame,
+                                       uniform float eta, vec3f transmission, uniform float thickness)
+{
+  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+                   ThinDielectric_eval, ThinDielectric_sample,
+                   frame);
+  self->eta = eta;
+  self->transmission = transmission;
+  self->thickness = thickness;
+}
+
+inline varying BSDF* uniform ThinDielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                                   uniform float eta, vec3f transmission, uniform float thickness)
+{
+  varying ThinDielectric* uniform self = (varying ThinDielectric* uniform)ShadingContext_alloc(ctx, sizeof(ThinDielectric));
+  ThinDielectric_Constructor(self, frame, eta, transmission, thickness);
+  return &self->super;
+}

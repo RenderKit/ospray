@@ -154,10 +154,10 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Velvet.cpp
   render/pathtracer/materials/Metal.ispc
   render/pathtracer/materials/Metal.cpp
-  render/pathtracer/materials/ThinDielectric.ispc
-  render/pathtracer/materials/ThinDielectric.cpp
-  render/pathtracer/materials/Dielectric.ispc
-  render/pathtracer/materials/Dielectric.cpp
+  render/pathtracer/materials/ThinGlass.ispc
+  render/pathtracer/materials/ThinGlass.cpp
+  render/pathtracer/materials/Glass.ispc
+  render/pathtracer/materials/Glass.cpp
   render/pathtracer/materials/MetallicPaint.ispc
   render/pathtracer/materials/MetallicPaint.cpp
   render/pathtracer/materials/Plastic.ispc

@@ -15,15 +15,15 @@
 // ======================================================================== //
 
 #include "ospray/common/Material.h"
-#include "ThinDielectric_ispc.h"
+#include "ThinGlass_ispc.h"
 
 namespace ospray {
   namespace pathtracer {
-    struct ThinDielectric : public ospray::Material {
-      //! \brief common function to help printf-debugging 
+    struct ThinGlass : public ospray::Material {
+      //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::ThinDielectric"; }
-      
+      virtual std::string toString() const { return "ospray::pathtracer::ThinGlass"; }
+
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() != NULL) return;
@@ -34,13 +34,12 @@ namespace ospray {
           = getParamf("eta",1.4f); //vec3f(.4f,0.f,0.f));
         const float thickness
           = getParamf("thickness",1.f);
-        
-        ispcEquivalent = ispc::PathTracer_ThinDielectric_create
-          ((const ispc::vec3f&)transmission,eta,thickness);
+
+        ispcEquivalent = ispc::PathTracer_ThinGlass_create
+          (eta,(const ispc::vec3f&)transmission,thickness);
       }
     };
 
-    OSP_REGISTER_MATERIAL(ThinDielectric,PathTracer_ThinDielectric);
-    OSP_REGISTER_MATERIAL(ThinDielectric,PathTracer_ThinGlass);
+    OSP_REGISTER_MATERIAL(ThinGlass,PathTracer_ThinGlass);
   }
 }

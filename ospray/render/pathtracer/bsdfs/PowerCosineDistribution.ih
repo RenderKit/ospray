@@ -14,42 +14,35 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "material.isph"
-#include "../brdfs/reflection.isph"
+#pragma once
 
-struct Mirror
+#include "ospray/math/math.ih"
+
+struct PowerCosineDistribution
 {
-  Material base;
-  Reflection reflection;
+  float exp;
 };
 
-///////////////////////////////////////////////////////////////////////////////
-// Implementation
-
-void Mirror__shade(const uniform Material *uniform _this,
-                  const Ray&                  ray,            
-                  const Medium&               currentMedium,  
-                  const DifferentialGeometry& dg,             
-                  uniform CompositedBRDF&     brdfs,
-                  vec3f& Ns)
+inline float eval(const PowerCosineDistribution& self,
+                  float cosThetaH, float& pdf)
 {
-  uniform const Mirror *uniform this = (uniform const Mirror *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->reflection.base);
+  pdf = powerCosineSampleHemispherePDF(cosThetaH, self.exp);
+  return (self.exp+2) * one_over_two_pi * pow(abs(cosThetaH), self.exp);
+  // TODO: check with powerCosineSampleHemispherePDF
 }
 
-inline void Mirror__Constructor(uniform Mirror *uniform this,
-                               const uniform vec3f& reflectance)
+/*! Samples the power cosine distribution. */
+inline vec3f sample(const PowerCosineDistribution& self,
+                    float& pdf, const vec2f& s)
 {
-  Material__Constructor(&this->base,Material__Destructor,Mirror__shade,NULL);
-  Reflection__Constructor(&this->reflection, reflectance);
+  const vec3f wh = powerCosineSampleHemisphere(self.exp, s);
+  pdf = powerCosineSampleHemispherePDF(wh, self.exp);
+  return wh;
 }
 
-///////////////////////////////////////////////////////////////////////////////
-// External API
-
-export void* uniform Mirror__new(const uniform vec3f& reflectance)
+inline PowerCosineDistribution make_PowerCosineDistribution(float _exp)
 {
-  uniform Mirror *uniform m = uniform new uniform Mirror;
-  Mirror__Constructor(m,reflectance);
+  PowerCosineDistribution m;
+  m.exp = _exp;
   return m;
 }

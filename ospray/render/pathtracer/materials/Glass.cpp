@@ -15,20 +15,20 @@
 // ======================================================================== //
 
 #include "ospray/common/Material.h"
-#include "Dielectric_ispc.h"
+#include "Glass_ispc.h"
 
 namespace ospray {
   namespace pathtracer {
-    struct Dielectric : public ospray::Material {
-      //! \brief common function to help printf-debugging 
+    struct Glass : public ospray::Material {
+      //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::Dielectric"; }
-      
+      virtual std::string toString() const { return "ospray::pathtracer::Glass"; }
+
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() != NULL) return;
 
-        const vec3f& transmission
+        const vec3f& transmissionInside
           = getParam3f("transmission",getParam3f("color",vec3f(1.f)));
         const vec3f& transmissionOutside
           = getParam3f("transmissionOutside",vec3f(1.f));
@@ -37,13 +37,13 @@ namespace ospray {
           = getParamf("etaInside",getParamf("eta",1.4f));
         const float etaOutside
           = getParamf("etaOutside",1.f);
-        
-        ispcEquivalent = ispc::PathTracer_Dielectric_create
-          (etaOutside,(const ispc::vec3f&)transmissionOutside,
-           etaInside,(const ispc::vec3f&)transmission);
+
+        ispcEquivalent = ispc::PathTracer_Glass_create
+          (etaInside, (const ispc::vec3f&)transmissionInside,
+           etaOutside, (const ispc::vec3f&)transmissionOutside);
       }
     };
 
-    OSP_REGISTER_MATERIAL(Dielectric,PathTracer_Dielectric);
+    OSP_REGISTER_MATERIAL(Glass,PathTracer_Glass);
   }
 }

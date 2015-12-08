@@ -1,0 +1,64 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct Conductor
+{
+  BSDF super;
+  
+  vec3f reflectance; //!< reflectivity coefficient
+  vec3f eta;         //!< real part of refraction index
+  vec3f k;           //!< imaginary part of refraction index
+};
+
+inline vec3f Conductor_eval(const varying BSDF* uniform super,
+                            const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+{
+  return make_vec3f(0.0f);
+}
+
+inline vec3f Conductor_sample(const varying BSDF* uniform super,
+                              const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                              const vec2f& s, float ss)
+{
+  const varying Conductor* uniform self = (const varying Conductor* uniform)super;
+  wi = reflect(wo, getN(super));
+  pdf = 1.0f;
+  type = BSDF_SPECULAR_REFLECTION;
+  return self->reflectance * fresnelConductor(dot(wo, getN(super)), self->eta, self->k);
+}
+
+inline void Conductor_Constructor(varying Conductor* uniform self, const varying linear3f* uniform frame,
+                                  vec3f reflectance, vec3f eta, vec3f k)
+{
+  BSDF_Constructor(&self->super, BSDF_SPECULAR_REFLECTION,
+                   Conductor_eval, Conductor_sample,
+                   frame);
+  self->reflectance = reflectance;
+  self->eta = eta;
+  self->k = k;
+}
+
+inline varying BSDF* uniform Conductor_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                              vec3f reflectance, vec3f eta, vec3f k)
+{
+  varying Conductor* uniform self = (varying Conductor* uniform)ShadingContext_alloc(ctx, sizeof(Conductor));
+  Conductor_Constructor(self, frame, reflectance, eta, k);
+  return &self->super;
+}

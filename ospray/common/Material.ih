@@ -22,4 +22,3 @@
 struct Material {
   void *uniform cppEquivalent; //! pointer back to the C++-equivalent of this class
 };
-
