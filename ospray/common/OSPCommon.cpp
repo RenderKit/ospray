@@ -183,7 +183,6 @@ namespace ospray {
     case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
     case OSP_FLOAT4:    return sizeof(embree::Vec4<float>);
     case OSP_FLOAT3A:   return sizeof(embree::Vec3fa);
-    case OSP_FLOAT8:    return 8 * sizeof(float);
     case OSP_DOUBLE:    return sizeof(double);
     default: break;
     };
