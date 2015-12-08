@@ -16,6 +16,12 @@
 
 SET(ISPC_VERSION_REQUIRED "1.8.2")
 
+# warn about recommended ISPC version on KNC
+IF (OSPRAY_MIC AND NOT OSPRAY_WARNED_MIC_ISPC_VERSION)
+  MESSAGE("Warning: use of ISPC v1.8.1 is recommended on KNC.")
+  SET(OSPRAY_WARNED_MIC_ISPC_VERSION ON CACHE INTERNAL "Warned about recommended ISPC version with KNC.")
+ENDIF()
+
 IF (NOT ISPC_EXECUTABLE)
   # try sibling folder as hint for path of ISPC
   IF (APPLE)
