@@ -136,10 +136,10 @@ shadows, shown after ten frames in the second image
 QT Viewer
 ---------
 
-OSPRay also includes a demo viewer application `ospQTViewer`, showcasing all features
+OSPRay also includes a demo viewer application `ospQtViewer`, showcasing all features
 of OSPRay.
 
-![Screenshot of `ospQTViewer`.][imgQTViewer]
+![Screenshot of `ospQtViewer`.][imgQTViewer]
 
 
 Volume Viewer

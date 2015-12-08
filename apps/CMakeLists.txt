@@ -34,7 +34,7 @@ IF(NOT THIS_IS_MIC)
 
  IF(NOT WIN32)
   # mini-scene graph viewer for _geometry_ (intentionally simple)
-  OPTION(OSPRAY_APPS_QTVIEWER "Build ospQTViewer (QT-based model viewer)" ON)
+  OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
   IF (OSPRAY_APPS_QTVIEWER)
     ADD_SUBDIRECTORY(qtViewer)
   ENDIF()

@@ -365,7 +365,7 @@ namespace ospray {
         sgRenderer(sgRenderer)
     {
       // resize to default window size
-      setWindowTitle(tr("OSPRay QT ModelViewer"));
+      setWindowTitle(tr("OSPRay Qt ModelViewer"));
       resize(1024,768);
 
       // create GUI elements
