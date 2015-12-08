@@ -43,16 +43,16 @@ namespace ospray {
 #endif
 
     //! get number of pixels per tile, in x and y direction
-    virtual vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
+    vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
 
     //! return number of tiles in x and y direction
-    virtual vec2i getNumTiles()  const { return numTiles; };
+    vec2i getNumTiles()  const { return numTiles; };
 
     //! get number of pixels in x and y diretion
-    virtual vec2i getNumPixels() const { return size; }
+    vec2i getNumPixels() const { return size; }
 
     //! number of tiles that "I" own
-    virtual size_t numMyTiles()  const { return myTiles.size(); };
+    size_t numMyTiles()  const { return myTiles.size(); };
 
     /*! color buffer and depth buffer on master */
 

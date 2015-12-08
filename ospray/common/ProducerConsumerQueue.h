@@ -74,20 +74,12 @@ namespace ospray {
   template<typename T>
   T ProducerConsumerQueue<T>::get()
   {
-    fprintf(stderr, "LOCK-8\n");
-      fflush(0);
-    std::unique_lock<std::mutex> lock(mutex);
+    std::unique_lock<std::mutex> lock(mutex, std::defer_lock);
     notEmptyCond.wait(lock, [&]{return !content.empty();});
 
-    {
-      fprintf(stderr, "LOCK-9\n");
-      fflush(0);
-      LockGuard l(mutex);
-      (void)l;
-      T t = content.front();
-      content.pop_front();
-      return t;
-    }
+    T t = content.front();
+    content.pop_front();
+    return t;
   }
 
   /*! put a new element into this queue */
@@ -96,15 +88,11 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      fprintf(stderr, "LOCK-A : rank-%i\n", mpi::world.rank);
-      fflush(0);
       LockGuard lock(mutex);
       (void)lock;
       wasEmpty = content.empty();
       content.push_back(t);
     }
-    fprintf(stderr, "UNLOCK-A : rank-%i\n", mpi::world.rank);
-      fflush(0);
     if (wasEmpty)
       notEmptyCond.notify_all();
   }
@@ -115,8 +103,6 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      fprintf(stderr, "LOCK-B\n");
-      fflush(0);
       LockGuard lock(mutex);
       (void)lock;
       wasEmpty = content.empty();
@@ -132,50 +118,30 @@ namespace ospray {
   template<typename T>
   void ProducerConsumerQueue<T>::getAll(std::vector<T> &all)
   {
-    fprintf(stderr, "LOCK-C\n");
-      fflush(0);
     std::unique_lock<std::mutex> lock(mutex);
     notEmptyCond.wait(lock, [&]{return !content.empty();});
 
-    {
-      fprintf(stderr, "LOCK-D\n");
-      fflush(0);
-      LockGuard l(mutex);
-      (void)l;
-      size_t size = content.size();
-      all.resize(size);
-      int i = 0;
-      for (auto it=content.begin(); it != content.end(); it++)
-        all[i++] = *it;
-      content.clear();
-    }
+    size_t size = content.size();
+    all.resize(size);
+    int i = 0;
+    for (auto it=content.begin(); it != content.end(); it++)
+      all[i++] = *it;
+    content.clear();
   }
 
   /*! get element that got written into the queue */
   template<typename T>
   size_t ProducerConsumerQueue<T>::getSome(T *some, size_t maxSize)
   {
-    fprintf(stderr, "LOCK-E\n");
-      fflush(0);
     std::unique_lock<std::mutex> lock(mutex);
     notEmptyCond.wait(lock, [&]{return !content.empty();});
-    fprintf(stderr, "UNLOCK-E\n");
-      fflush(0);
 
-    {
-#if 0
-      fprintf(stderr, "LOCK-F : maxSize == %u\n", maxSize);
-      fflush(0);
-      LockGuard l(mutex);
-      (void)l;
-#endif
-      size_t num = 0;
-      while (num < maxSize && !content.empty()) {
-        some[num++] = content.front();
-        content.pop_front();
-      }
-      return num;
+    size_t num = 0;
+    while (num < maxSize && !content.empty()) {
+      some[num++] = content.front();
+      content.pop_front();
     }
+    return num;
   }
 
 } // ::ospray
