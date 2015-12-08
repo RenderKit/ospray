@@ -21,7 +21,7 @@
 struct DielectricLayer
 {
   BSDF super;
-  
+
   varying BSDF* uniform substrate;
   float eta;
   vec3f transmittance;
@@ -29,7 +29,7 @@ struct DielectricLayer
 };
 
 inline vec3f DielectricLayer_eval(const varying BSDF* uniform super,
-                                  const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                                  const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
 
@@ -48,7 +48,7 @@ inline vec3f DielectricLayer_eval(const varying BSDF* uniform super,
   // Evaluate the substrate BRDF
   // Ignore refraction
   float substratePdf;
-  vec3f substrateValue = self->substrate->eval(self->substrate, dg, wo, wi, substratePdf);
+  vec3f substrateValue = self->substrate->eval(self->substrate, wo, wi, substratePdf);
 
   // Apply the coating transmittance
   // Computing the path length from the original angles would result in too much absorption, so instead use the refracted angles
@@ -62,7 +62,7 @@ inline vec3f DielectricLayer_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f DielectricLayer_sample(const varying BSDF* uniform super,
-                                    const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                    const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                     const vec2f& s, float ss)
 {
   const varying DielectricLayer* uniform self = (const varying DielectricLayer* uniform)super;
@@ -88,7 +88,7 @@ inline vec3f DielectricLayer_sample(const varying BSDF* uniform super,
       // Sample the substrate BRDF
       float ss1 = (ss - F) * rcp(1.0f-F); // reallocate sample
       float substratePdf;
-      vec3f substrateWeight = self->substrate->sample(self->substrate, dg, wo, wi, substratePdf, type, s, ss1);
+      vec3f substrateWeight = self->substrate->sample(self->substrate, wo, wi, substratePdf, type, s, ss1);
       if (reduce_max(substrateWeight) <= 0.0f) return make_vec3f(0.0f);
       float cosThetaI = max(dot(wi, getN(super)), 0.0f); // should be positive
 

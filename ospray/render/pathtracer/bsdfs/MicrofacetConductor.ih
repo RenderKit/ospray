@@ -22,7 +22,7 @@
 struct MicrofacetConductor
 {
   BSDF super;
-  
+
   vec3f reflectance;
   vec3f eta;
   vec3f k;
@@ -30,7 +30,7 @@ struct MicrofacetConductor
 };
 
 inline vec3f MicrofacetConductor_eval(const varying BSDF* uniform super,
-                                      const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                                      const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;
 
@@ -58,7 +58,7 @@ inline vec3f MicrofacetConductor_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f MicrofacetConductor_sample(const varying BSDF* uniform super,
-                                        const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                        const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                         const vec2f& s, float ss)
 {
   const varying MicrofacetConductor* uniform self = (const varying MicrofacetConductor* uniform)super;

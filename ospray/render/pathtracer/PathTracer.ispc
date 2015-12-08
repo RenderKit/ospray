@@ -224,7 +224,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         float lsDirectionPdf;
         foreach_unique(b in bsdf)
           if (b != NULL)
-            bsdfValue = b->eval(b, dg, wo, ls.direction, lsDirectionPdf);
+            bsdfValue = b->eval(b, wo, ls.direction, lsDirectionPdf);
 
 #ifdef USE_DGCOLOR
         bsdfValue = bsdfValue * make_vec3f(dg.color);
@@ -258,7 +258,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     vec3f bsdfWeight;
     foreach_unique(b in bsdf)
       if (b != NULL)
-        bsdfWeight = b->sample(b, dg, wo, wi.v, wi.pdf, type, s, ss.x);
+        bsdfWeight = b->sample(b, wo, wi.v, wi.pdf, type, s, ss.x);
 
 #ifdef USE_DGCOLOR
     if ((type & GLOSSY_REFLECTION) == NONE) // only colorize diffuse component

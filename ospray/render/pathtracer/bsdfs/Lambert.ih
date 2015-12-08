@@ -21,12 +21,12 @@
 struct Lambert
 {
   BSDF super;
-  
+
   vec3f R;
 };
 
 inline vec3f Lambert_eval(const varying BSDF* uniform super,
-                          const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                          const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying Lambert* uniform self = (const varying Lambert* uniform)super;
   pdf = clamp(dot(wi, getN(super))) * one_over_pi;
@@ -34,7 +34,7 @@ inline vec3f Lambert_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f Lambert_sample(const varying BSDF* uniform super,
-                            const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                            const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                             const vec2f& s, float ss)
 {
   const varying Lambert* uniform self = (const varying Lambert* uniform)super;

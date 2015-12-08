@@ -21,18 +21,18 @@
 struct Reflection
 {
   BSDF super;
-  
+
   vec3f reflectance;
 };
 
 inline vec3f Reflection_eval(const varying BSDF* uniform super,
-                             const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                             const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
 inline vec3f Reflection_sample(const varying BSDF* uniform super,
-                               const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                               const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                const vec2f& s, float ss)
 {
   const varying Reflection* uniform self = (const varying Reflection* uniform)super;

@@ -21,18 +21,18 @@
 struct Dielectric
 {
   BSDF super;
-  
+
   float eta;
 };
 
 inline vec3f Dielectric_eval(const varying BSDF* uniform super,
-                             const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                             const vec3f& wo, const vec3f& wi, float& pdf)
 {
   return make_vec3f(0.0f);
 }
 
 inline vec3f Dielectric_sample(const varying BSDF* uniform super,
-                               const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                               const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                const vec2f& s, float ss)
 {
   const varying Dielectric* uniform self = (const varying Dielectric* uniform)super;

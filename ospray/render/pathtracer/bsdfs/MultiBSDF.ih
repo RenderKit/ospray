@@ -50,7 +50,7 @@ inline void MultiBSDF_add(varying BSDF* uniform super,
 
 /*! Evaluates all BSDF components. */
 inline vec3f MultiBSDF_eval(const varying BSDF* uniform super,
-                            const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                            const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
 
@@ -63,7 +63,7 @@ inline vec3f MultiBSDF_eval(const varying BSDF* uniform super,
     {
       const varying BSDF* uniform curBsdf = self->bsdfs[i];
       float curPdf = 0.0f;
-      value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
+      value = value + curBsdf->eval(curBsdf, wo, wi, curPdf);
       pdf = pdf + curPdf * self->importances[i];
     }
   }
@@ -74,7 +74,7 @@ inline vec3f MultiBSDF_eval(const varying BSDF* uniform super,
 
 /*! Sample the multi-BSDF. */
 inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
-                              const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                              const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                               const vec2f& s, float ss)
 {
   const varying MultiBSDF* uniform self = (const varying MultiBSDF* uniform)super;
@@ -85,7 +85,7 @@ inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
   if (self->numBsdfs == 1)
   {
     const varying BSDF* uniform bsdf = self->bsdfs[0];
-    return bsdf->sample(bsdf, dg, wo, wi, pdf, type, s, ss);
+    return bsdf->sample(bsdf, wo, wi, pdf, type, s, ss);
   }
   else if (self->numBsdfs > 1)
   {
@@ -104,7 +104,7 @@ inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
     foreach_unique (i in choice)
     {
       const varying BSDF* uniform bsdf = self->bsdfs[i];
-      weight = bsdf->sample(bsdf, dg, wo, wi, pdf, type, s, ss);
+      weight = bsdf->sample(bsdf, wo, wi, pdf, type, s, ss);
     }
 
     if (eq(weight, make_vec3f(0.0f)) | (pdf == 0.0f))
@@ -122,7 +122,7 @@ inline vec3f MultiBSDF_sample(const varying BSDF* uniform super,
         {
           const varying BSDF* uniform curBsdf = self->bsdfs[i];
           float curPdf = 0.0f;
-          value = value + curBsdf->eval(curBsdf, dg, wo, wi, curPdf);
+          value = value + curBsdf->eval(curBsdf, wo, wi, curPdf);
           pdf = pdf + curPdf * self->importances[i];
         }
       }

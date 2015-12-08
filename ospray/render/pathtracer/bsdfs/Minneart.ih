@@ -32,7 +32,7 @@ struct Minneart
 };
 
 inline vec3f Minneart_eval(const varying BSDF* uniform super,
-                           const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                           const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying Minneart* uniform self = (const varying Minneart* uniform)super;
 
@@ -43,7 +43,7 @@ inline vec3f Minneart_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f Minneart_sample(const varying BSDF* uniform super,
-                             const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                             const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                              const vec2f& s, float ss)
 {
   const varying Minneart* uniform self = (const varying Minneart* uniform)super;
@@ -51,7 +51,7 @@ inline vec3f Minneart_sample(const varying BSDF* uniform super,
   const vec3f localDir = cosineSampleHemisphere(s);
   wi = getFrame(super) * localDir;
   type = BSDF_DIFFUSE_REFLECTION;
-  return Minneart_eval(super, dg, wo, wi, pdf) * rcp(pdf);
+  return Minneart_eval(super, wo, wi, pdf) * rcp(pdf);
 }
 
 inline void Minneart_Constructor(varying Minneart* uniform self, const varying linear3f* uniform frame,

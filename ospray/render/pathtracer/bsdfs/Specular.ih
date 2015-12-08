@@ -33,7 +33,7 @@ struct Specular
 };
 
 inline vec3f Specular_eval(const varying BSDF* uniform super,
-                           const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf)
+                           const vec3f& wo, const vec3f& wi, float& pdf)
 {
   const varying Specular* uniform self = (const varying Specular* uniform)super;
   const vec3f refl = reflect(wo, getN(super));
@@ -43,7 +43,7 @@ inline vec3f Specular_eval(const varying BSDF* uniform super,
 }
 
 inline vec3f Specular_sample(const varying BSDF* uniform super,
-                             const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                             const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                              const vec2f& s, float ss)
 {
   const varying Specular* uniform self = (const varying Specular* uniform)super;

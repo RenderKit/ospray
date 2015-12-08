@@ -54,11 +54,11 @@ typedef uint32 BSDFType;
 
 /*! Result is multiplied by dot(wi,N). */
 typedef vec3f (*BSDF_EvalFunc)(const varying BSDF* uniform super,
-                               const DifferentialGeometry& dg, const vec3f& wo, const vec3f& wi, float& pdf);
+                               const vec3f& wo, const vec3f& wi, float& pdf);
 
 /*! Result is multiplied by dot(wi,N)/pdf. */
 typedef vec3f (*BSDF_SampleFunc)(const varying BSDF* uniform super,
-                                 const DifferentialGeometry& dg, const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                                 const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
                                  const vec2f& s, float ss);
 
 struct BSDF
