@@ -137,6 +137,11 @@ namespace ospray {
     renderTask.finish();
   }
 
+  std::string LocalTiledLoadBalancer::toString() const
+  {
+    return "ospray::LocalTiledLoadBalancer";
+  }
+
 #ifdef OSPRAY_USE_TBB
   void InterleavedTiledLoadBalancer::RenderTask::operator()
   (const tbb::blocked_range<int> &range) const

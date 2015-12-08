@@ -35,12 +35,10 @@ namespace ospray {
       */
       struct Master : public TiledLoadBalancer
       {
-        Master();
-        
-        virtual void renderFrame(Renderer *tiledRenderer,
-                                 FrameBuffer *fb,
-                                 const uint32 channelFlags);
-        virtual std::string toString() const { return "ospray::mpi::staticLoadBalancer::Master"; };
+        void renderFrame(Renderer *tiledRenderer,
+                         FrameBuffer *fb,
+                         const uint32 channelFlags);
+        std::string toString() const;
       };
 
       /*! \brief the 'slave' in a tile-based master-slave *static*
@@ -52,22 +50,24 @@ namespace ospray {
       */
       struct Slave : public TiledLoadBalancer
       {
-        Slave();
-        
         /*! a task for rendering a frame using the global tiled load balancer */
-        struct RenderTask// : public ospray::Task {
+        //! NOTE(jda) - this looks identical to LocalTiledLoadBalancer...
+        struct RenderTask
         {
-          Ref<Renderer>     renderer;
-          Ref<FrameBuffer>  fb;
-          size_t            numTiles_x;
-          size_t            numTiles_y;
-          uint32            channelFlags;
-          void             *perFrameData;
+          mutable Ref<Renderer>     renderer;
+          mutable Ref<FrameBuffer>  fb;
 
-          virtual void run(size_t jobID);
-          virtual void finish();
-          
-          virtual ~RenderTask() {}
+          size_t                    numTiles_x;
+          size_t                    numTiles_y;
+          uint32                    channelFlags;
+          void                     *perFrameData;
+
+          void run(size_t jobID) const;
+          void finish() const;
+
+#ifdef OSPRAY_USE_TBB
+          void operator()(const tbb::blocked_range<int>& range) const;
+#endif
         };
         
         /*! number of tiles preallocated to this client; we can always
@@ -76,10 +76,10 @@ namespace ospray {
         /*! total number of worker threads across all(!) slaves */
         int32 numTotalThreads;
         
-        virtual void renderFrame(Renderer *tiledRenderer, 
-                                 FrameBuffer *fb,
-                                 const uint32 channelFlags);
-        virtual std::string toString() const { return "ospray::mpi::staticLoadBalancer::Slave"; };
+        void renderFrame(Renderer *tiledRenderer,
+                         FrameBuffer *fb,
+                         const uint32 channelFlags);
+        std::string toString() const;
       };
     }
 

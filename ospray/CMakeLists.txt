@@ -29,15 +29,12 @@ MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
 #  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
 #ENDIF()
 
-# build and configure embree
-INCLUDE(../cmake/build_embree_2.7.1.cmake)
-
 # -------------------------------------------------------
 # Setup tasking system build configuration
 # -------------------------------------------------------
 
 SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
-    "Use TBB or OpenMP as for the tasking system (only local rendering for now)")
+    "Use TBB or OpenMP as for per-node thread tasking system")
 SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY STRINGS TBB OpenMP)
 
 IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
@@ -57,6 +54,13 @@ ELSE(USE_TBB)
   SET(CMAKE_EXE_LINKER_FLAGS
       "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
 ENDIF(USE_TBB)
+
+# -------------------------------------------------------
+# Build and configure embree
+# -------------------------------------------------------
+
+#NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
+INCLUDE(../cmake/build_embree_2.7.1.cmake)
 
 # -------------------------------------------------------
 # Setup ospray source files

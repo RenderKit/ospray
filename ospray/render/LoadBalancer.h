@@ -27,7 +27,6 @@
 // tbb
 #ifdef OSPRAY_USE_TBB
 # include <tbb/blocked_range.h>
-# include <tbb/blocked_range2d.h>
 # include <tbb/parallel_for.h>
 # include <tbb/task_scheduler_init.h>
 #endif
@@ -74,7 +73,7 @@ namespace ospray {
     void renderFrame(Renderer *tiledRenderer,
                      FrameBuffer *fb,
                      const uint32 channelFlags);
-    std::string toString() const { return "ospray::LocalTiledLoadBalancer"; };
+    std::string toString() const;
 
 #ifdef OSPRAY_USE_TBB
     tbb::task_scheduler_init tbb_init;
@@ -95,9 +94,9 @@ namespace ospray {
       : deviceID(deviceID), numDevices(numDevices)
     {
       if (ospray::debugMode || ospray::logLevel) {
-        std::cout << "=======================================================" << std::endl;
+        std::cout << "=========================================" << std::endl;
         std::cout << "INTERLEAVED LOAD BALANCER" << std::endl;
-        std::cout << "=======================================================" << std::endl;
+        std::cout << "=========================================" << std::endl;
       }
     }
 
