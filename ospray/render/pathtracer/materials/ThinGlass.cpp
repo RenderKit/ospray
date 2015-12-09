@@ -15,35 +15,31 @@
 // ======================================================================== //
 
 #include "ospray/common/Material.h"
-#include "Dielectric_ispc.h"
+#include "ThinGlass_ispc.h"
 
 namespace ospray {
   namespace pathtracer {
-    struct Dielectric : public ospray::Material {
-      //! \brief common function to help printf-debugging 
+    struct ThinGlass : public ospray::Material {
+      //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::Dielectric"; }
-      
+      virtual std::string toString() const { return "ospray::pathtracer::ThinGlass"; }
+
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() != NULL) return;
 
         const vec3f& transmission
-          = getParam3f("transmission",getParam3f("color",vec3f(1.f)));
-        const vec3f& transmissionOutside
-          = getParam3f("transmissionOutside",vec3f(1.f));
+          = getParam3f("transmission",vec3f(1.f)); //vec3f(0.19,0.45,1.5));
+        const float eta
+          = getParamf("eta",1.4f); //vec3f(.4f,0.f,0.f));
+        const float thickness
+          = getParamf("thickness",1.f);
 
-        const float etaInside
-          = getParamf("etaInside",getParamf("eta",1.4f));
-        const float etaOutside
-          = getParamf("etaOutside",1.f);
-        
-        ispcEquivalent = ispc::PathTracer_Dielectric_create
-          (etaOutside,(const ispc::vec3f&)transmissionOutside,
-           etaInside,(const ispc::vec3f&)transmission);
+        ispcEquivalent = ispc::PathTracer_ThinGlass_create
+          (eta,(const ispc::vec3f&)transmission,thickness);
       }
     };
 
-    OSP_REGISTER_MATERIAL(Dielectric,PathTracer_Dielectric);
+    OSP_REGISTER_MATERIAL(ThinGlass,PathTracer_ThinGlass);
   }
 }

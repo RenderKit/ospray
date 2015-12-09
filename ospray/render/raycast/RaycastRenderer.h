@@ -17,7 +17,7 @@
 #pragma once
 
 /*! \defgroup ospray_render_raycast A Family of Simple Ray-Cast Renderers
-  
+
   \ingroup ospray_supported_renderers
 
   \brief Implements a simple renderer that uses a camera given camera
@@ -51,7 +51,7 @@
 
 namespace ospray {
 
-  /*! \brief Implements the family of simple, primary-ray-only ray cast renderers 
+  /*! \brief Implements the family of simple, primary-ray-only ray cast renderers
 
     \detailed This simple renderer shoots only a single primary ray
     and does some simple shading, mostly for debugging purposes such
@@ -63,7 +63,7 @@ namespace ospray {
     /*! \brief constructor */
     RaycastRenderer();
 
-    //! \brief common function to help printf-debugging 
+    //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const;
   };

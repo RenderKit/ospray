@@ -14,42 +14,36 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "ospray/common/Material.h"
+#include "Glass_ispc.h"
 
-#include "BRDF.ih"
-#include "optics.ih"
+namespace ospray {
+  namespace pathtracer {
+    struct Glass : public ospray::Material {
+      //! \brief common function to help printf-debugging
+      /*! Every derived class should overrride this! */
+      virtual std::string toString() const { return "ospray::pathtracer::Glass"; }
 
-struct Transmission
-{
-  uniform BRDF base;
+      //! \brief commit the material's parameters
+      virtual void commit() {
+        if (getIE() != NULL) return;
 
-  /*! Transmission coefficient of the material. The range is [0,1]
-   *  where 0 means total absorption and 1 means total
-   *  transmission. */
-  vec3f T;
-};
+        const vec3f& transmissionInside
+          = getParam3f("transmission",getParam3f("color",vec3f(1.f)));
+        const vec3f& transmissionOutside
+          = getParam3f("transmissionOutside",vec3f(1.f));
 
-inline vec3f Transmission__eval(const uniform BRDF* uniform _this,
-                                const vec3f &wo, const DifferentialGeometry &dg, const vec3f &wi) 
-{
-  return make_vec3f(0.0f);
-}
+        const float etaInside
+          = getParamf("etaInside",getParamf("eta",1.4f));
+        const float etaOutside
+          = getParamf("etaOutside",1.f);
 
-inline vec3f Transmission__sample(const uniform BRDF* uniform _this,
-                                const vec3f &wo, 
-                                const DifferentialGeometry &dg, 
-                                Sample3f &wi, 
-                                const vec2f &s)  
-{
-  const varying Transmission* uniform this = (const varying Transmission* uniform) _this;
-  wi = make_Sample3f(neg(wo),1.0f);
-  return this->T;
-}
+        ispcEquivalent = ispc::PathTracer_Glass_create
+          (etaInside, (const ispc::vec3f&)transmissionInside,
+           etaOutside, (const ispc::vec3f&)transmissionOutside);
+      }
+    };
 
-inline void Transmission__Constructor(varying Transmission* uniform this,
-                                      const varying vec3f T)
-{
-  BRDF__Constructor(&this->base,SPECULAR_TRANSMISSION,
-                    Transmission__eval,Transmission__sample);
-  this->T = T;
+    OSP_REGISTER_MATERIAL(Glass,PathTracer_Glass);
+  }
 }

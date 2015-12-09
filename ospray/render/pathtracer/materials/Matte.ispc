@@ -15,33 +15,33 @@
 // ======================================================================== //
 
 #include "Material.ih"
-#include "../brdfs/Lambertian.ih"
+#include "../bsdfs/Lambert.ih"
 
 struct Matte
 {
-  PathTraceMaterial base;
-  Lambertian lambertian;
+  PathTraceMaterial super;
+  vec3f reflectance;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
 // Implementation
 
-void Matte__shade(const uniform PathTraceMaterial *uniform _this,
-                  const Ray&                  ray,            
-                  const Medium&               currentMedium,  
-                  const DifferentialGeometry& dg,             
-                  uniform CompositedBRDF&     brdfs,
-                  vec3f& Ns)
+const varying BSDF* uniform Matte_getBSDF(const uniform PathTraceMaterial* uniform super,
+                                          uniform ShadingContext* uniform ctx,
+                                          const DifferentialGeometry& dg,
+                                          const Ray& ray,
+                                          const Medium& currentMedium)
 {
-  uniform const Matte *uniform this = (uniform const Matte *uniform)_this;
-  CompositedBRDF__add(&brdfs,&this->lambertian.base);
+  const uniform Matte* uniform self = (const uniform Matte* uniform)super;
+  vec3f R = self->reflectance;
+  return Lambert_create(ctx, LinearSpace3f_create(ctx, frame(dg.Ns)), R);
 }
 
-inline void Matte__Constructor(uniform Matte *uniform this,
-                               const uniform vec3f& reflectance)
+inline void Matte_Constructor(uniform Matte* uniform self,
+                              const uniform vec3f& reflectance)
 {
-  PathTraceMaterial__Constructor(&this->base, Matte__shade, NULL);
-  this->lambertian = make_Lambertian(reflectance);
+  PathTraceMaterial_Constructor(&self->super, Matte_getBSDF, NULL, NULL);
+  self->reflectance = reflectance;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -49,7 +49,7 @@ inline void Matte__Constructor(uniform Matte *uniform this,
 
 export void* uniform PathTracer_Matte_create(const uniform vec3f& reflectance)
 {
-  uniform Matte *uniform this = uniform new uniform Matte;
-  Matte__Constructor(this,reflectance);
-  return this;
+  uniform Matte* uniform self = uniform new uniform Matte;
+  Matte_Constructor(self, reflectance);
+  return self;
 }

@@ -45,18 +45,18 @@ struct Geometry {
   Geometry_postIntersectFct postIntersect;
 
   //! pointer back to the C++-equivalent of this class
-  void *uniform cppEquivalent; 
+  void *uniform cppEquivalent;
 
   //! material attached to this geometry
   uniform Material *uniform material;
 
   //! model that this geometry is part of
-  uniform Model    *uniform model; 
+  uniform Model    *uniform model;
 
-  //! ID that 'model' knows this geometry under  
+  //! ID that 'model' knows this geometry under
   uniform int32             geomID;
 };
- 
+
 //! constructor for ispc-side Geometry object
 extern void Geometry_Constructor(uniform Geometry *uniform geometry,
                                  void *uniform cppEquivalent,

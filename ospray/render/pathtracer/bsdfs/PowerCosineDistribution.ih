@@ -14,33 +14,35 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/common/Material.h"
-#include "ThinDielectric_ispc.h"
+#pragma once
 
-namespace ospray {
-  namespace pathtracer {
-    struct ThinDielectric : public ospray::Material {
-      //! \brief common function to help printf-debugging 
-      /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::pathtracer::ThinDielectric"; }
-      
-      //! \brief commit the material's parameters
-      virtual void commit() {
-        if (getIE() != NULL) return;
+#include "ospray/math/math.ih"
 
-        const vec3f& transmission
-          = getParam3f("transmission",vec3f(1.f)); //vec3f(0.19,0.45,1.5));
-        const float eta
-          = getParamf("eta",1.4f); //vec3f(.4f,0.f,0.f));
-        const float thickness
-          = getParamf("thickness",1.f);
-        
-        ispcEquivalent = ispc::PathTracer_ThinDielectric_create
-          ((const ispc::vec3f&)transmission,eta,thickness);
-      }
-    };
+struct PowerCosineDistribution
+{
+  float exp;
+};
 
-    OSP_REGISTER_MATERIAL(ThinDielectric,PathTracer_ThinDielectric);
-    OSP_REGISTER_MATERIAL(ThinDielectric,PathTracer_ThinGlass);
-  }
+inline float eval(const PowerCosineDistribution& self,
+                  float cosThetaH, float& pdf)
+{
+  pdf = powerCosineSampleHemispherePDF(cosThetaH, self.exp);
+  return (self.exp+2) * one_over_two_pi * pow(abs(cosThetaH), self.exp);
+  // TODO: check with powerCosineSampleHemispherePDF
+}
+
+/*! Samples the power cosine distribution. */
+inline vec3f sample(const PowerCosineDistribution& self,
+                    float& pdf, const vec2f& s)
+{
+  const vec3f wh = powerCosineSampleHemisphere(self.exp, s);
+  pdf = powerCosineSampleHemispherePDF(wh, self.exp);
+  return wh;
+}
+
+inline PowerCosineDistribution make_PowerCosineDistribution(float _exp)
+{
+  PowerCosineDistribution m;
+  m.exp = _exp;
+  return m;
 }

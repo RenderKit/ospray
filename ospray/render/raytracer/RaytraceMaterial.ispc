@@ -24,7 +24,7 @@ export void *uniform RaytraceMaterial_create(void *uniform cppE)
 }
 
 export void RaytraceMaterial_set(void *uniform _mat,
-                            const void *uniform map_d, 
+                            const void *uniform map_d,
                             const uniform float &d,
                             const void *uniform map_Kd,
                             const uniform vec3f &Kd,
