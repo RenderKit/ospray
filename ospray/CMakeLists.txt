@@ -19,26 +19,15 @@
 CONFIGURE_OSPRAY()
 
 OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
-#OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
-#IF (OSPRAY_EXP_IMAGE_COMPOSITING)
 
 OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?")
 
-
-#  OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
-#  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
-#ENDIF()
-
 # build and configure embree
 IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
-	INCLUDE(../cmake/build_embree_2.7.1.cmake)
+  INCLUDE(../cmake/build_embree_2.7.1.cmake)
 ELSE()
-	INCLUDE(../cmake/build_embree.cmake)
+  INCLUDE(../cmake/build_embree.cmake)
 ENDIF()
-#INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
-
-#ADD_DEFINITIONS(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
-#ADD_DEFINITIONS_ISPC(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
