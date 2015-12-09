@@ -50,7 +50,6 @@ namespace ospray {
     tile.children = 0;
 
     renderer->renderTile(perFrameData,tile);
-    // printf("settile... twice?\n");
     fb->setTile(tile);
   }
 

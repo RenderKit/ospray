@@ -72,8 +72,10 @@ SET(OSPRAY_SOURCES
   camera/PanoramicCamera.ispc
   camera/PanoramicCamera.cpp
 
-  volume/BlockBrickedVolume.ispc
-  volume/BlockBrickedVolume.cpp
+#  volume/BlockBrickedVolume.ispc
+#  volume/BlockBrickedVolume.cpp
+  volume/PaddedBlockBrickedVolume.ispc
+  volume/PaddedBlockBrickedVolume.cpp
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
   volume/SharedStructuredVolume.cpp
@@ -266,7 +268,6 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
 IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR})
   LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR}/bin)
-  MESSAGE("LINKING EXTENRALLY TO EMBREE IN ${OSPRAY_EMBREE_SOURCE_DIR}")
 ENDIF()
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}

@@ -25,6 +25,7 @@
 #endif
 #include <stdint.h>
 
+
 struct RMLoaderThreads {
   OSPVolume volume;
   embree::MutexSys mutex;
@@ -95,8 +96,11 @@ struct RMLoaderThreads {
 
     assert(file);
     int rc = fread(block.voxel,sizeof(uint8_t),256*256*128,file);
-    if (rc != 256*256*128)
+    if (rc != 256*256*128) {
+      PRINT(rc);
+      PRINT(256*256*128);
       throw std::runtime_error("could not read enough data from "+std::string(fileName));
+    }
 
     if (useGZip) 
       pclose(file);
@@ -123,6 +127,7 @@ struct RMLoaderThreads {
       int J = (blockID / 8) % 8;
       int K = (blockID / 64);
       
+
       int cpu = -1;
 #ifdef __LINUX__
       cpu = sched_getcpu();
@@ -162,7 +167,11 @@ OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
   ospSetVec3i(volume, "dimensions", osp::vec3i(2048,2048,1920));
   ospSetString(volume,"voxelType", "uchar");
   
+#ifdef __LINUX__
   int numThreads = embree::getNumberOfLogicalThreads(); //20;
+#else
+  int numThreads = 1;
+#endif
 
   double t0 = ospray::getSysTime();
   

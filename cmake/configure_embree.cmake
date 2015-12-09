@@ -23,7 +23,7 @@ IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   ##################################################################
   # if you are using this branch we assume you know what you are doing!
   ##################################################################
-  MESSAGE("You have chosen to build OSPRay with a external version of embree that may or may not have been tested to work with this version of OSPRay. Use this option at your own risk.")
+#  MESSAGE("You have chosen to build OSPRay with a external version of embree that may or may not have been tested to work with this version of OSPRay. Use this option at your own risk.")
   
   SET(EXTERNAL_EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree CACHE STRING    "EXTERNAL Embree source directory")
   SET(OSPRAY_EMBREE_SOURCE_DIR ${EXTERNAL_EMBREE_DIR})

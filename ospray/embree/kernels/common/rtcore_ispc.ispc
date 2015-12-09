@@ -14,7 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#if __NEW_EMBREE__
+#include "embree2/rtcore.isph" 
+#else
 #include "../../include/embree2/rtcore.isph" 
+#endif
 
 #define size_tt int // FIXME: workaround of ISPC bug
 
