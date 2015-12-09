@@ -25,6 +25,7 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
+#if 0//Cannot enable here b/c RENDERTILE_PIXELS_PER_JOB doesn't match C++ side?
 #ifdef RENDERTILE_PIXELS_PER_JOB
 #  undef RENDERTILE_PIXELS_PER_JOB
 #endif
@@ -34,6 +35,7 @@
     programCount (16), and must be smaller than TILE_SIZE (in one
     dimension) */
 #define RENDERTILE_PIXELS_PER_JOB 32
+#endif
 
 struct PassInfo {
   // region to integrate over in this pass
@@ -498,6 +500,9 @@ export void *uniform RaycastVolumeRenderer_createInstance()
   // Function to perform per-frame state completion.
   renderer->inherited.endFrame = RaycastVolumeRenderer_endFrame;
 
+  // Do this once up front (was done during rendering, makes more sense here?)
+  precomputeZOrder();
+
   return renderer;
 }
 
@@ -526,6 +531,7 @@ export void RaycastVolumeRenderer_setLights(void *uniform _self,
 #if EXP_DATA_PARALLEL
 extern "C" Tile *uniform CacheForBlockTiles_getTileForBlock(void *uniform _tileCache,
                                                             uniform uint32 blockID);
+
 inline uniform bool itIsIThatHasToRenderThisBlock(DDBVolumeBlock *uniform block,
                                                   uniform int32 tileID,
                                                   uniform int32 myRank)
@@ -649,17 +655,21 @@ if (!isMyTile) return;
   }
 }
 
-task void DDDVRRenderer_renderTile_job(uniform Renderer *uniform self,
-                                       uniform Tile &fgTile,
-                                       uniform Tile &bgTile,
-                                       void *uniform _tileCache,
-                                       uniform int numBlocks,
-                                       DDBVolumeBlock *uniform block,
-                                       bool *uniform tileNeedsBlock,
-                                       uniform int32 tileID,
-                                       uniform int32 myRank,
-                                       uniform bool isMyTile)
+export void DDDVRRenderer_renderTile(void*uniform _self,
+                                     uniform Tile &fgTile,
+                                     uniform Tile &bgTile,
+                                     void *uniform _tileCache,
+                                     uniform int numBlocks,
+                                     void *uniform _block,
+                                     uniform bool *uniform tileNeedsBlock,
+                                     uniform int32 tileID,
+                                     uniform int32 myRank,
+                                     uniform bool isMyTile,
+                                     uniform int taskIndex)
 {
+  uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
+  DDBVolumeBlock *uniform block = (DDBVolumeBlock *uniform)_block;
+
   uniform FrameBuffer *uniform fb     = self->fb;
   uniform Camera      *uniform camera = self->camera;
 
@@ -721,34 +731,6 @@ task void DDDVRRenderer_renderTile_job(uniform Renderer *uniform self,
     setRGBAZ(fgTile,pixel,fgSample.rgb,fgSample.alpha,fgSample.z);
 
   }
-}
-
-/*! perform first render pass for logical tile (in data-distribtued
-    mode).
-
-    in this first pass, we generate primary rays and intersect them
-    with all data parallel blocks on this node (for given tile).
-  */
-export void DDDVRRenderer_renderTile(void *uniform _self,
-                                     uniform Tile &fgTile,
-                                     uniform Tile &bgTile,
-                                     void *uniform _tileCache,
-                                     uniform int numBlocks,
-                                     void *uniform _block,
-                                     bool *uniform tileNeedsBlock,
-                                     uniform int32 tileID,
-                                     uniform int32 myRank,
-                                     uniform bool isMyTile
-                                     )
-{
-  uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
-  DDBVolumeBlock *uniform block = (DDBVolumeBlock *uniform)_block;
-  precomputeZOrder();
-
-  uniform const size_t numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
-  launch[numJobs] DDDVRRenderer_renderTile_job(self,fgTile,bgTile,_tileCache,
-                                               numBlocks,block,tileNeedsBlock,
-                                               tileID,myRank,isMyTile);
 }
 
 #endif

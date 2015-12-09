@@ -84,7 +84,8 @@ namespace ospray {
 
   void DataDistributedBlockedVolume::buildAccelerator()
   {
-    std::cout << "intentionally SKIP building an accelerator for data parallel volume" << std::endl;
+    std::cout << "intentionally SKIP building an accelerator for data parallel "
+              << "volume" << std::endl;
   }
 
   std::string DataDistributedBlockedVolume::toString() const
@@ -200,7 +201,7 @@ namespace ospray {
               block->numOwners = 1;
             } else {
               block->firstOwner = (blockID * numWorkers) / numDDBlocks;
-              int nextBlockFirstOwner = ((blockID+1) * numWorkers) / numDDBlocks;
+              int nextBlockFirstOwner = ((blockID+1)*numWorkers) / numDDBlocks;
               block->numOwners = nextBlockFirstOwner - block->firstOwner + 1;
             }
             block->isMine 
@@ -227,7 +228,8 @@ namespace ospray {
               volume->findParam("voxelType",1)->set(voxelType.c_str());
 
               printf("rank %li owns block %i,%i,%i (ID %i), dims %i %i %i\n",
-                     (size_t)core::getWorkerRank(),ix,iy,iz,blockID,blockDims.x,blockDims.y,blockDims.z);
+                     (size_t)core::getWorkerRank(),ix,iy,iz,
+                     blockID,blockDims.x,blockDims.y,blockDims.z);
               block->cppVolume = volume;
               block->ispcVolume = NULL; //volume->getIE();
             } else {

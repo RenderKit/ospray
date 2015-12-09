@@ -103,6 +103,41 @@ namespace ospray {
     return cache->getTileForBlock(blockID);
   }
 
+#ifdef OSPRAY_USE_TBB
+  struct VolumeWorkerTBB
+  {
+    void   *rendererIE;
+    void   *fgTile;
+    void   *bgTile;
+    void   *blockTileCache;
+    int    numBlocks;
+    void   *ddBlock;
+    bool   *blockWasVisible;
+    int    tileID;
+    int    myRank;
+    bool   isMyTile;
+
+    void operator()(const tbb::blocked_range<int>& range) const
+    {
+      for (int taskIndex = range.begin();
+           taskIndex != range.end();
+           ++taskIndex) {
+        ispc::DDDVRRenderer_renderTile(rendererIE,
+                                       *(ispc::Tile*)fgTile,
+                                       *(ispc::Tile*)bgTile,
+                                       blockTileCache,
+                                       numBlocks,
+                                       ddBlock,
+                                       blockWasVisible,
+                                       tileID,
+                                       myRank,
+                                       isMyTile,
+                                       taskIndex);
+      }
+    }
+  };
+#endif
+
   struct DPRenderTask
   {
     mutable Ref<Renderer>     renderer;
@@ -118,7 +153,7 @@ namespace ospray {
     void run(size_t taskIndex) const;
 
 #ifdef OSPRAY_USE_TBB
-  void operator()(const tbb::blocked_range<int>& range) const;
+  void operator()(const tbb::blocked_range<size_t>& range) const;
 #endif
   };
 
@@ -155,14 +190,45 @@ namespace ospray {
     bool blockWasVisible[numBlocks];
     for (int i=0;i<numBlocks;i++)
       blockWasVisible[i] = false;
-    bool itIsIThatHasToRenderForeAndBackOnThisTile
+    bool renderForeAndBackground
         = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
-    ispc::DDDVRRenderer_renderTile
-        (renderer->getIE(),(ispc::Tile&)fgTile,(ispc::Tile&)bgTile,
-         &blockTileCache,numBlocks,dpv->ddBlock,blockWasVisible,tileID,
-         ospray::core::getWorkerRank(),itIsIThatHasToRenderForeAndBackOnThisTile);
 
-    if (itIsIThatHasToRenderForeAndBackOnThisTile) {
+    const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
+
+#ifdef OSPRAY_USE_TBB
+    VolumeWorkerTBB worker;
+
+    worker.rendererIE      = renderer->getIE();
+    worker.fgTile          = &fgTile;
+    worker.bgTile          = &bgTile;
+    worker.blockTileCache  = &blockTileCache;
+    worker.numBlocks       = numBlocks;
+    worker.ddBlock         = dpv->ddBlock;
+    worker.blockWasVisible = blockWasVisible;
+    worker.tileID          = tileID;
+    worker.myRank          = ospray::core::getWorkerRank();
+    worker.isMyTile        = renderForeAndBackground;
+
+    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int taskIndex = 0; taskIndex < numJobs; ++taskIndex) {
+      ispc::DDDVRRenderer_renderTile(renderer->getIE(),
+                                     (ispc::Tile&)fgTile,
+                                     (ispc::Tile&)bgTile,
+                                     &blockTileCache,
+                                     numBlocks,
+                                     dpv->ddBlock,
+                                     blockWasVisible,
+                                     tileID,
+                                     ospray::core::getWorkerRank(),
+                                     renderForeAndBackground,
+                                     taskIndex);
+    }
+#endif
+
+
+    if (renderForeAndBackground) {
       // this is a tile owned by me - i'm responsible for writing
       // generaition #0, and telling the fb how many more tiles will
       // be coming in generation #1
@@ -216,7 +282,7 @@ namespace ospray {
   }
 
 #ifdef OSPRAY_USE_TBB
-  void DPRenderTask::operator()(const tbb::blocked_range<int>& range) const
+  void DPRenderTask::operator()(const tbb::blocked_range<size_t>& range) const
   {
     for (int taskIndex = range.begin();
          taskIndex != range.end();
@@ -309,10 +375,10 @@ namespace ospray {
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
 #ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, NTASKS), renderTask);
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
-    for (int i = 0; i < NTASKS; ++i) {
+    for (size_t i = 0; i < NTASKS; ++i) {
       renderTask.run(i);
     }
 #endif
