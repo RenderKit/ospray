@@ -55,6 +55,23 @@ namespace ospray {
         return "ospray::mpi::staticLoadBalancer::Master";
       }
 
+#ifdef OSPRAY_USE_TBB
+      struct TileWorkerTBB
+      {
+        Tile     *tile;
+        Renderer *renderer;
+        void     *perFrameData;
+        void operator()(const tbb::blocked_range<int>& range) const
+        {
+          for (int taskIndex = range.begin();
+               taskIndex != range.end();
+               ++taskIndex) {
+            renderer->renderTile(perFrameData, *tile, taskIndex);
+          }
+        }
+      };
+#endif
+
       void Slave::RenderTask::finish() const
       {
         renderer = NULL;
@@ -90,7 +107,11 @@ namespace ospray {
                                 RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
 #ifdef OSPRAY_USE_TBB
-        //TODO: TBB
+        TileWorkerTBB worker;
+        worker.tile         = &tile;
+        worker.renderer     = renderer.ptr;
+        worker.perFrameData = perFrameData;
+        tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
 #else//OpenMP
 #       pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < numJobs; ++i) {
