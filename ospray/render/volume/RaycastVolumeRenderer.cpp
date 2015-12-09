@@ -41,11 +41,19 @@ namespace ospray {
 
 #if EXP_DATA_PARALLEL
 
-  struct CacheForBlockTiles {
+  struct CacheForBlockTiles
+  {
     CacheForBlockTiles(size_t numBlocks)
       : numBlocks(numBlocks), blockTile(new Tile *[numBlocks])
     {
       for (int i=0;i<numBlocks;i++) blockTile[i] = NULL;
+    }
+
+    ~CacheForBlockTiles()
+    {
+      for (int i=0;i<numBlocks;i++)
+        if (blockTile[i]) delete blockTile[i];
+      delete[] blockTile;
     }
 
     Tile *allocTile()
@@ -59,12 +67,6 @@ namespace ospray {
       return tile;
     }
 
-    ~CacheForBlockTiles()
-    {
-      for (int i=0;i<numBlocks;i++)
-        if (blockTile[i]) delete blockTile[i];
-      delete[] blockTile;
-    }
     Tile *getTileForBlock(size_t blockID)
     {
 #if TILE_CACHE_SAFE_MUTEX
@@ -94,115 +96,135 @@ namespace ospray {
   };
 
   /*! extern exported function so even ISPC code can access this cache */
-  extern "C" Tile *CacheForBlockTiles_getTileForBlock(CacheForBlockTiles *cache, uint32 blockID)
-  { return cache->getTileForBlock(blockID); }
+  extern "C" Tile *
+  CacheForBlockTiles_getTileForBlock(CacheForBlockTiles *cache,
+                                     uint32 blockID)
+  {
+    return cache->getTileForBlock(blockID);
+  }
 
-  struct DPRenderTask : public ospray::Task {
-
-    Ref<Renderer>     renderer;
-    Ref<FrameBuffer>  fb;
-    size_t            numTiles_x;
-    size_t            numTiles_y;
-    uint32            channelFlags;
-    int32             workerRank;
+  struct DPRenderTask
+  {
+    mutable Ref<Renderer>     renderer;
+    mutable Ref<FrameBuffer>  fb;
+    size_t                    numTiles_x;
+    size_t                    numTiles_y;
+    uint32                    channelFlags;
+    int32                     workerRank;
     const DataDistributedBlockedVolume *dpv;
 
-    DPRenderTask(int workerRank)
-      : workerRank(workerRank)
-    {
-    }
+    DPRenderTask(int workerRank);
 
-    virtual void run(size_t taskIndex)
-    {
-      const size_t tileID = taskIndex;
-      Tile bgTile, fgTile;
-      const size_t tile_y = taskIndex / numTiles_x;
-      const size_t tile_x = taskIndex - tile_y*numTiles_x;
-      bgTile.region.lower.x = tile_x * TILE_SIZE;
-      bgTile.region.lower.y = tile_y * TILE_SIZE;
-      bgTile.region.upper.x = std::min(bgTile.region.lower.x+TILE_SIZE,fb->size.x);
-      bgTile.region.upper.y = std::min(bgTile.region.lower.y+TILE_SIZE,fb->size.y);
-      bgTile.fbSize = fb->size;
-      bgTile.rcp_fbSize = rcp(vec2f(bgTile.fbSize));
-      bgTile.generation = 0;
-      bgTile.children = 0;
+    void run(size_t taskIndex) const;
 
-      fgTile.region = bgTile.region;
-      fgTile.fbSize = bgTile.fbSize;
-      fgTile.rcp_fbSize = bgTile.rcp_fbSize;
-      fgTile.generation = 0;
-      fgTile.children = 0;
+#ifdef OSPRAY_USE_TBB
+  void operator()(const tbb::blocked_range<int>& range) const;
+#endif
+  };
 
-      size_t numBlocks = dpv->numDDBlocks;
-      CacheForBlockTiles blockTileCache(numBlocks);
-      // for (int i=0;i<numBlocks;i++)
-      //   PRINT(dpv->ddBlock[i].bounds);
-      bool blockWasVisible[numBlocks];
-      for (int i=0;i<numBlocks;i++)
-        blockWasVisible[i] = false;
-      bool itIsIThatHasToRenderForeAndBackOnThisTile
+  DPRenderTask::DPRenderTask(int workerRank)
+    : workerRank(workerRank)
+  {
+  }
+
+  void DPRenderTask::run(size_t taskIndex) const
+  {
+    const size_t tileID = taskIndex;
+    Tile bgTile, fgTile;
+    const size_t tile_y = taskIndex / numTiles_x;
+    const size_t tile_x = taskIndex - tile_y*numTiles_x;
+    bgTile.region.lower.x = tile_x * TILE_SIZE;
+    bgTile.region.lower.y = tile_y * TILE_SIZE;
+    bgTile.region.upper.x = std::min(bgTile.region.lower.x+TILE_SIZE,fb->size.x);
+    bgTile.region.upper.y = std::min(bgTile.region.lower.y+TILE_SIZE,fb->size.y);
+    bgTile.fbSize = fb->size;
+    bgTile.rcp_fbSize = rcp(vec2f(bgTile.fbSize));
+    bgTile.generation = 0;
+    bgTile.children = 0;
+
+    fgTile.region = bgTile.region;
+    fgTile.fbSize = bgTile.fbSize;
+    fgTile.rcp_fbSize = bgTile.rcp_fbSize;
+    fgTile.generation = 0;
+    fgTile.children = 0;
+
+    size_t numBlocks = dpv->numDDBlocks;
+    CacheForBlockTiles blockTileCache(numBlocks);
+    // for (int i=0;i<numBlocks;i++)
+    //   PRINT(dpv->ddBlock[i].bounds);
+    bool blockWasVisible[numBlocks];
+    for (int i=0;i<numBlocks;i++)
+      blockWasVisible[i] = false;
+    bool itIsIThatHasToRenderForeAndBackOnThisTile
         = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
-      ispc::DDDVRRenderer_renderTile
+    ispc::DDDVRRenderer_renderTile
         (renderer->getIE(),(ispc::Tile&)fgTile,(ispc::Tile&)bgTile,
          &blockTileCache,numBlocks,dpv->ddBlock,blockWasVisible,tileID,
          ospray::core::getWorkerRank(),itIsIThatHasToRenderForeAndBackOnThisTile);
 
-      if (itIsIThatHasToRenderForeAndBackOnThisTile) {
-        // this is a tile owned by me - i'm responsible for writing
-        // generaition #0, and telling the fb how many more tiles will
-        // be coming in generation #1
+    if (itIsIThatHasToRenderForeAndBackOnThisTile) {
+      // this is a tile owned by me - i'm responsible for writing
+      // generaition #0, and telling the fb how many more tiles will
+      // be coming in generation #1
 
-        size_t totalBlocksInTile=0;
-        for (int blockID=0;blockID<numBlocks;blockID++)
-          if (blockWasVisible[blockID])
-            totalBlocksInTile++;
+      size_t totalBlocksInTile=0;
+      for (int blockID=0;blockID<numBlocks;blockID++)
+        if (blockWasVisible[blockID])
+          totalBlocksInTile++;
 
-        size_t nextGenTiles
+      size_t nextGenTiles
           = 1 /* expect one additional tile for background tile. */
           + totalBlocksInTile /* plus how many blocks map to this
-                                 tile, IN TOTAL (ie, INCLUDING blocks
-                                 on other nodes)*/;
-        // printf("rank %i total tiles in tile %i is %i\n",core::getWorkerRank(),taskIndex,nextGenTiles);
+                                     tile, IN TOTAL (ie, INCLUDING blocks
+                                     on other nodes)*/;
+      // printf("rank %i total tiles in tile %i is %i\n",core::getWorkerRank(),taskIndex,nextGenTiles);
 
-        // set background tile
-        bgTile.generation = 0;
-        bgTile.children = nextGenTiles;
-        fb->setTile(bgTile);
+      // set background tile
+      bgTile.generation = 0;
+      bgTile.children = nextGenTiles;
+      fb->setTile(bgTile);
 
-        // set foreground tile
-        fgTile.generation = 1;
-        fgTile.children = 0; //nextGenTiles-1;
-        fb->setTile(fgTile);
-        // all other tiles for gen #1 will be set below, no matter whether it's mine or not
-      }
-
-      // now, send all block cache tiles that were generated on this
-      // node back to master, too. for this, it doesn't matter if this
-      // is our tile or not; it's the job of the owner of this tile to
-      // tell the DFB how many tiles will arrive for the final thile
-      // _across_all_clients_, but we only have to send ours (assuming
-      // that all clients together send exactly as many as the owner
-      // told the DFB to expect)
-      for (int blockID=0;blockID<numBlocks;blockID++) {
-        Tile *tile = blockTileCache.blockTile[blockID];
-        if (tile == NULL)
-          continue;
-        tile->region = bgTile.region;
-        tile->fbSize = bgTile.fbSize;
-        tile->rcp_fbSize = bgTile.rcp_fbSize;
-        tile->generation = 1;
-        tile->children = 0; //nextGenTile-1;
-
-        // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
-        //   tile->r[i] = float((blockID*3*7) % 11) / 11.f;
-
-        fb->setTile(*tile);
-      }
+      // set foreground tile
+      fgTile.generation = 1;
+      fgTile.children = 0; //nextGenTiles-1;
+      fb->setTile(fgTile);
+      // all other tiles for gen #1 will be set below, no matter whether it's mine or not
     }
 
-    virtual ~DPRenderTask() {}
-  };
+    // now, send all block cache tiles that were generated on this
+    // node back to master, too. for this, it doesn't matter if this
+    // is our tile or not; it's the job of the owner of this tile to
+    // tell the DFB how many tiles will arrive for the final thile
+    // _across_all_clients_, but we only have to send ours (assuming
+    // that all clients together send exactly as many as the owner
+    // told the DFB to expect)
+    for (int blockID=0;blockID<numBlocks;blockID++) {
+      Tile *tile = blockTileCache.blockTile[blockID];
+      if (tile == NULL)
+        continue;
+      tile->region = bgTile.region;
+      tile->fbSize = bgTile.fbSize;
+      tile->rcp_fbSize = bgTile.rcp_fbSize;
+      tile->generation = 1;
+      tile->children = 0; //nextGenTile-1;
 
+      // for (int i=0;i<TILE_SIZE*TILE_SIZE;i++)
+      //   tile->r[i] = float((blockID*3*7) % 11) / 11.f;
+
+      fb->setTile(*tile);
+    }
+  }
+
+#ifdef OSPRAY_USE_TBB
+  void DPRenderTask::operator()(const tbb::blocked_range<int>& range) const
+  {
+    for (int taskIndex = range.begin();
+         taskIndex != range.end();
+         ++taskIndex) {
+      run(taskIndex);
+    }
+  }
+#endif
 
   /*! try if we are running in data-parallel mode, and if
     data-parallel is even required. if not (eg, if there's no
@@ -217,7 +239,7 @@ namespace ospray {
     std::vector<const DataDistributedBlockedVolume *> ddVolumeVec;
     for (int volumeID=0;volumeID<model->volume.size();volumeID++) {
       const DataDistributedBlockedVolume *ddv
-        = dynamic_cast<const DataDistributedBlockedVolume*>(model->volume[volumeID].ptr);
+          = dynamic_cast<const DataDistributedBlockedVolume*>(model->volume[volumeID].ptr);
       if (!ddv) continue;
       ddVolumeVec.push_back(ddv);
     }
@@ -238,7 +260,7 @@ namespace ospray {
     static bool printed = false;
     if (!printed) {
       std::cout << "#dvr: at least one dp volume"
-        " -> needs data-parallel rendering ..." << std::endl;
+                   " -> needs data-parallel rendering ..." << std::endl;
       printed = true;
     }
 
@@ -265,38 +287,39 @@ namespace ospray {
 
     dfb->startNewFrame();
 
-    if (ddVolumeVec.size() > 1)
+    if (ddVolumeVec.size() > 1) {
       /* note: our assumption below is that all blocks together are
          contiguous, and fill a convex region (ie, any point on a
          given ray is either entirely before any block, entirely
          behind any block, or inside one of the blocks) - if we have
          multiple data distributed volumes that is no longer the case,
          so we're not currently supporting this ... */
-      throw std::runtime_error("currently supporting only ONE data parallel volume in scene");
+      throw std::runtime_error("currently supporting only ONE data parallel "
+                               "volume in scene");
+    }
 
     // create the render task
-    Ref<DPRenderTask> renderTask = new DPRenderTask(workerRank);
-    renderTask->fb = fb;
-    renderTask->renderer = this;
-    renderTask->numTiles_x = divRoundUp(dfb->size.x,TILE_SIZE);
-    renderTask->numTiles_y = divRoundUp(dfb->size.y,TILE_SIZE);
-    renderTask->channelFlags = channelFlags;
-    renderTask->dpv = ddVolumeVec[0];
-    /*! iw: using a local sync event for now; "in theory" we should be
-      able to attach something like a sync event to the frame
-      buffer, just trigger the task here, and let somebody else sync
-      on the framebuffer once it is needed; alas, I'm currently
-      running into some issues with the embree taks system when
-      trying to do so, and thus am reverting to this
-      fully-synchronous version for now */
-    size_t numTilesTotal = renderTask->numTiles_x*renderTask->numTiles_y;
-    renderTask->schedule(numTilesTotal);
-    renderTask->wait();
+    DPRenderTask renderTask(workerRank);
+    renderTask.fb = fb;
+    renderTask.renderer = this;
+    renderTask.numTiles_x = divRoundUp(dfb->size.x,TILE_SIZE);
+    renderTask.numTiles_y = divRoundUp(dfb->size.y,TILE_SIZE);
+    renderTask.channelFlags = channelFlags;
+    renderTask.dpv = ddVolumeVec[0];
+
+    size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+#ifdef OSPRAY_USE_TBB
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < NTASKS; ++i) {
+      renderTask.run(i);
+    }
+#endif
 
     dfb->waitUntilFinished();
     Renderer::endFrame(NULL,channelFlags);
   }
-
 
 #endif
 

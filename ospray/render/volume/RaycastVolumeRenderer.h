@@ -44,16 +44,11 @@ namespace ospray {
     std::string toString() const;
 
 #if EXP_DATA_PARALLEL
-    // /*! per-frame data to describe the data-parallel components */
-    // // struct PerFrameData {
-    // // };
+    /*! per-frame data to describe the data-parallel components */
     void renderFrame(FrameBuffer *fb, const uint32 channelFlags);
-    // void *beginFrame(FrameBuffer *fb);
-    // void renderTile(void *perFrameData, Tile &tile);
-
 #endif
 
-  protected:
+  private:
 
     //! Print an error message.
     void emitMessage(const std::string &kind, const std::string &message) const;
