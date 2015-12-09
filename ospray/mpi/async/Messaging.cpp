@@ -31,7 +31,7 @@ namespace ospray {
                    Consumer *consumer, int32 tag)
         :  tag(tag), consumer(consumer)
       {
-        int rc=MPI_SUCCESS;
+        int rc = MPI_SUCCESS;
         MPI_CALL(Comm_dup(comm,&this->comm));
         // this->comm = comm;
         MPI_CALL(Comm_rank(comm,&rank));
