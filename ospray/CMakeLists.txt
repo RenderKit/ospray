@@ -65,6 +65,7 @@ SET(OSPRAY_SOURCES
 #  volume/BlockBrickedVolume.cpp
   volume/PaddedBlockBrickedVolume.ispc
   volume/PaddedBlockBrickedVolume.cpp
+
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
   volume/SharedStructuredVolume.cpp
