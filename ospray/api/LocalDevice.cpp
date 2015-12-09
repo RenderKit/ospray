@@ -27,7 +27,6 @@
 #include "ospray/common/Library.h"
 #include "ospray/texture/Texture2D.h"
 #include "ospray/lights/Light.h"
-#include "ospray/common/TaskSys.h"
 #include "ospray/fb/LocalFB.h"
 
 // stl

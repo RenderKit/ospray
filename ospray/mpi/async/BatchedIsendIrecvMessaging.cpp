@@ -41,7 +41,7 @@ namespace ospray {
         while (1) {
           // usleep(80);
           size_t numActions = g->sendQueue.getSome(actions,SEND_WINDOW_SIZE);
-          MPI_Request *request = (MPI_Request*)alloca(numActions * sizeof(MPI_Request));
+          auto *request = (MPI_Request*)alloca(numActions*sizeof(MPI_Request));
           for (int i=0;i<numActions;i++) {
             Action *action = actions[i];
             MPI_CALL(Isend(action->data,action->size,MPI_BYTE,
@@ -128,13 +128,15 @@ namespace ospray {
 
       void BatchedIsendIrecvImpl::Group::shutdown()
       {
-        std::cout << "shutdown() not implemented for this messaging ..." << std::endl;
+        std::cout << "shutdown() not implemented for this messaging ..."
+                  << std::endl;
       }
 
       void BatchedIsendIrecvImpl::init()
       {
         mpi::world.barrier();
-        printf("#osp:mpi:BatchedIsendIrecvMessaging started up %i/%i\n",mpi::world.rank,mpi::world.size);
+        printf("#osp:mpi:BatchedIsendIrecvMessaging started up %i/%i\n",
+               mpi::world.rank,mpi::world.size);
         fflush(0);
         mpi::world.barrier();
       }
@@ -142,7 +144,8 @@ namespace ospray {
       void BatchedIsendIrecvImpl::shutdown()
       {
         mpi::world.barrier();
-        printf("#osp:mpi:BatchedIsendIrecvMessaging shutting down %i/%i\n",mpi::world.rank,mpi::world.size);
+        printf("#osp:mpi:BatchedIsendIrecvMessaging shutting down %i/%i\n",
+               mpi::world.rank,mpi::world.size);
         fflush(0);
         mpi::world.barrier();
         for (int i=0;i<myGroups.size();i++)
@@ -161,7 +164,9 @@ namespace ospray {
         return g;
       }
 
-      void BatchedIsendIrecvImpl::send(const Address &dest, void *msgPtr, int32 msgSize)
+      void BatchedIsendIrecvImpl::send(const Address &dest,
+                                       void *msgPtr,
+                                       int32 msgSize)
       {
         Action *action = new Action;
         action->addr   = dest;
