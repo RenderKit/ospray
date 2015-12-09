@@ -296,6 +296,16 @@ namespace ospray {
       object->findParam(bufName,1)->set(v);
     }
 
+    /*! assign (named) vec3f parameter to an object */
+    void LocalDevice::setVec4f(OSPObject _object, const char *bufName, const vec4f &v)
+    {
+      ManagedObject *object = (ManagedObject *)_object;
+      Assert(object != NULL  && "invalid object handle");
+      Assert(bufName != NULL && "invalid identifier for object parameter");
+
+      object->findParam(bufName,1)->set(v);
+    }
+
     /*! assign (named) vec2f parameter to an object */
     void LocalDevice::setVec2i(OSPObject _object, const char *bufName, const vec2i &v)
     {
@@ -435,6 +445,15 @@ namespace ospray {
       Assert(object != NULL && "invalid source object handle");
       ManagedObject::Param *param = object->findParam(name);
       return(param && param->type == OSP_FLOAT3 ? *value = ((vec3f *) param->f)[0], true : false);
+    }
+
+    /*! Get the named 4-vector floating point value associated with an object. */
+    int LocalDevice::getVec4f(OSPObject handle, const char *name, vec4f *value) 
+    {
+      ManagedObject *object = (ManagedObject *) handle;
+      Assert(object != NULL && "invalid source object handle");
+      ManagedObject::Param *param = object->findParam(name);
+      return(param && param->type == OSP_FLOAT4 ? *value = ((vec4f *) param->f)[0], true : false);
     }
 
     /*! Get the named 3-vector integer value associated with an object. */

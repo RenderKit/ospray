@@ -65,3 +65,52 @@ inline varying vec3f xfmVector(const varying AffineSpace3f a, const varying vec3
 /*! short-hand name for AffineSpace3f */
 typedef AffineSpace3f affine3f;
 
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Rudimentary 2D affine space, used for texture coordinate transformations
+////////////////////////////////////////////////////////////////////////////////
+
+/*! A 2D Affine vector space; i.e., a Linear Space with a translation */
+struct AffineSpace2f {
+  LinearSpace2f l;
+  vec2f         p;
+};
+
+/*! create a new affine space from given basis vectors v{x,y,z} and translation p */
+inline uniform AffineSpace2f make_AffineSpace2f(const uniform LinearSpace2f l,
+                                                const uniform vec2f p)
+{ 
+  uniform AffineSpace2f xfm;
+  xfm.l = l;
+  xfm.p = p;
+  return xfm;
+}
+
+inline uniform AffineSpace2f make_AffineSpace2f(const uniform vec2f vx,
+                                                const uniform vec2f vy,
+                                                const uniform vec2f p)
+{ 
+  return make_AffineSpace2f(make_LinearSpace2f(vx, vy), p);
+}
+
+inline uniform AffineSpace2f make_AffineSpace2f_identity()
+{
+  return make_AffineSpace2f(make_vec2f(1.f, 0.f),
+                            make_vec2f(0.f, 1.f),
+                            make_vec2f(0.f));
+}
+
+
+inline uniform vec2f operator*(const uniform AffineSpace2f a, const uniform vec2f v)
+{ return a.l * v + a.p; }
+
+inline varying vec2f operator*(const uniform AffineSpace2f a, const varying vec2f v) 
+{ return a.l * v + a.p; }
+
+inline varying vec2f operator*(const varying AffineSpace2f a, const varying vec2f v) 
+{ return a.l * v + a.p; }
+
+/*! short-hand name for AffineSpace3f */
+typedef AffineSpace2f affine2f;
+

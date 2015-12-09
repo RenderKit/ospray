@@ -19,6 +19,10 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
+// include cmake config first - we need to know the config even before
+// the first "#include <mpi>"
+#include "OSPConfig.h"
+
 // mpi, if we need it
 #ifdef OSPRAY_MPI
 # include <mpi.h>
@@ -43,14 +47,12 @@ typedef int ssize_t;
 # include "unistd.h"
 #endif
 
-#include "OSPConfig.h"
-
 // embree
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
 #include "common/math/vec4.h"
 #include "common/math/bbox.h"
-#include "common/math/affinespace.h"
+#include "common/math/affinespace.h" // includes "common/math/linearspace[23].h"
 #include "common/sys/ref.h"
 //#include "common/sys/taskscheduler.h"
 #ifdef __NEW_EMBREE__
@@ -102,6 +104,8 @@ namespace ospray {
   using embree::zero;
   using embree::inf;
   using embree::deg2rad;
+  using embree::rad2deg;
+  using embree::sign;
   using embree::clamp;
 
   /*! basic types */
@@ -158,11 +162,13 @@ namespace ospray {
   typedef embree::BBox3fa        box3fa;
   
   /*! affice space transformation */
+  typedef embree::AffineSpace2f  affine2f;
   typedef embree::AffineSpace3f  affine3f;
   typedef embree::AffineSpace3fa affine3fa;
   typedef embree::AffineSpace3f  AffineSpace3f;
   typedef embree::AffineSpace3fa AffineSpace3fa;
 
+  typedef embree::LinearSpace2f  linear2f;
   typedef embree::LinearSpace3f  linear3f;
   typedef embree::LinearSpace3fa linear3fa;
   typedef embree::LinearSpace3f  LinearSpace3f;

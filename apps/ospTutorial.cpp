@@ -18,7 +18,7 @@
 /* This is a small example tutorial how to use OSPRay in an application.
  *
  * On Linux build it in the build_directory with
- *   g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common  ./libospray.so -o ospTutorial
+ *   g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common ./libospray.so -Wl,-rpath,. -o ospTutorial
  * On Windows build it in the build_directory\$Configuration with
  *   cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\ospray\embree\common ospray.lib
  */
@@ -83,7 +83,7 @@ int main(int ac, const char **av) {
 
 
   // create and setup model and mesh
-  OSPGeometry mesh = ospNewTriangleMesh();
+  OSPGeometry mesh = ospNewGeometry("triangles");
   OSPData data = ospNewData(4, OSP_FLOAT3A, vertex); // OSP_FLOAT3 format is also supported for vertex positions (currently not on MIC)
   ospCommit(data);
   ospSetData(mesh, "vertex", data);

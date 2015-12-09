@@ -211,6 +211,7 @@ namespace ospray {
     Data *getParamData(const char *name, Data *valIfNotFound=NULL)
     { return (Data*)getParamObject(name,(ManagedObject*)valIfNotFound); }
 
+    vec4f  getParam4f(const char *name, const vec4f  valIfNotFound);
     vec3fa getParam3f(const char *name, const vec3fa valIfNotFound);
     vec3f  getParam3f(const char *name, const vec3f  valIfNotFound);
     vec3i  getParam3i(const char *name, const vec3i  valIfNotFound);

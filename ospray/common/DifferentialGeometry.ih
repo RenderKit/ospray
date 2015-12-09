@@ -58,8 +58,7 @@ struct DifferentialGeometry {
   int32 materialID; /*!< hack for now - the materialID as stored in
                       "prim.materialID" array (-1 if that value isn't
                       specified) */
-  
+
   uniform Geometry *geometry; /*! pointer to hit-point's geometry */
   uniform Material *material; /*! pointer to hit-point's material */
 };
-

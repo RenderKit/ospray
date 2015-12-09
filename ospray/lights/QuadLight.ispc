@@ -52,7 +52,7 @@ varying LightSample QuadLight_sample(const uniform Light *uniform _self,
   sample.distance = dist;
 
   // convert to pdf wrt. solid angle
-  const float cosd = dot(self->nnormal, sample.direction); 
+  const float cosd = dot(self->nnormal, sample.direction);
   sample.pdf = self->ppdf * (dist * dist) / abs(cosd);
 
   // emit only to one side

@@ -457,9 +457,9 @@ namespace ospray {
       ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_DATA);
       cmd.send(handle);
-      cmd.send((size_t)nitems);
+      cmd.send(nitems);
       cmd.send((int32)format);
-      cmd.send(flags);
+      cmd.send((int32)flags);
       size_t size = init?ospray::sizeOf(format)*nitems:0;
       cmd.send(size);
       if (init) {
@@ -598,6 +598,18 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC3F);
+      cmd.send((const ObjectHandle &)_object);
+      cmd.send(bufName);
+      cmd.send(v);
+    }
+
+    /*! assign (named) vec4f parameter to an object */
+    void MPIDevice::setVec4f(OSPObject _object, const char *bufName, const vec4f &v)
+    {
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC4F);
       cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(v);
@@ -787,6 +799,24 @@ namespace ospray {
       cmd.flush();
 
       struct ReturnValue { int success; vec3f value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
+    }
+
+    /*! Get the named 4-vector floating point value associated with an object. */
+    int MPIDevice::getVec4f(OSPObject object, const char *name, vec4f *value)
+    {
+      Assert(object);
+      Assert(name);
+
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const ObjectHandle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT4);
+      cmd.flush();
+
+      struct ReturnValue { int success; vec4f value; } result;
       cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
 
       return result.success ? *value = result.value, true : false;
