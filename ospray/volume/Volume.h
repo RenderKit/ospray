@@ -27,9 +27,11 @@
 //!  at build time.  Rather, the subclass can be defined in an external
 //!  module and registered with OSPRay using this macro.
 //!
-#define OSP_REGISTER_VOLUME(InternalClass, ExternalName)        \
-  extern "C" OSPRAY_INTERFACE Volume *ospray_create_volume_##ExternalName()      \
-  { return(new InternalClass()); }
+#define OSP_REGISTER_VOLUME(InternalClass, ExternalName)                    \
+  extern "C" OSPRAY_INTERFACE Volume *ospray_create_volume_##ExternalName() \
+  {                                                                         \
+    return(new InternalClass());                    												\
+  }
 
 namespace ospray {
 
@@ -67,17 +69,14 @@ namespace ospray {
     };
 #endif
 
-    //! Constructor.
-    Volume() {};
-
     //! Destructor.
-    virtual ~Volume() {};
+    virtual ~Volume();;
 
     //! \brief Returns whether the volume is a data-distributed volume
-    virtual bool isDataDistributed() const { return false; }
+    virtual bool isDataDistributed() const;
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::Volume"); }
+    virtual std::string toString() const;
 
     //! Create a volume container of the given type.
     static Volume *createInstance(std::string type);
@@ -85,13 +84,19 @@ namespace ospray {
     //! Allocate storage and populate the volume.
     virtual void commit() = 0;
 
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
+    //! Copy voxels into the volume at the given index (non-zero return value
+    //!  indicates success).
+    virtual int setRegion(const void *source,
+                          const vec3i &index,
+                          const vec3i &count) = 0;
 
     //! Compute samples at the given world coordinates.
-    virtual void computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count);
+    virtual void computeSamples(float **results,
+                                const vec3f *worldCoordinates,
+                                const size_t &count);
 
-    //! Update select editable parameters (allowed after the volume has been initially committed).
+    //! Update select editable parameters (allowed after the volume has been
+    //! initially committed).
     virtual void updateEditableParameters();
 
   protected:
@@ -102,20 +107,17 @@ namespace ospray {
     //! Complete volume initialization (only on first commit).
     virtual void finish();
 
-
     //! Print an error message.
-    inline void emitMessage(const std::string &kind, const std::string &message) const
-    { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+    void emitMessage(const std::string &kind,
+                     const std::string &message) const;
 
     //! Error checking.
-    inline void exitOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+    void exitOnCondition(bool condition,
+                         const std::string &message) const;
 
     //! Warning condition.
-    inline void warnOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("WARNING", message); }
-
+    void warnOnCondition(bool condition,
+                         const std::string &message) const;
   };
-
 } // ::ospray
 

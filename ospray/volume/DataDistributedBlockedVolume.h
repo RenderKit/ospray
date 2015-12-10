@@ -31,10 +31,12 @@ namespace ospray {
       setRegion, in which case the region data gets sent to all
       clients, but gets only stored on those clients that actually own
       the respective voxels. */
-  class DataDistributedBlockedVolume : public StructuredVolume {
+  class DataDistributedBlockedVolume : public StructuredVolume
+  {
   public:
     /*! a single data-distributed block */
-    struct DDBlock {
+    struct DDBlock
+    {
       //! range of voxels in this block
       box3i domain;
       //! 3D bounding box
@@ -51,35 +53,35 @@ namespace ospray {
     };
 
     //! Constructor.
-    DataDistributedBlockedVolume() : numDDBlocks(0), ddBlock(NULL) { PING; };
+    DataDistributedBlockedVolume();
 
-    //! Destructor.
-    virtual ~DataDistributedBlockedVolume() {};
-
-    virtual void updateEditableParameters();
+    void updateEditableParameters() override;
 
     //! \brief Returns whether the volume is a data-distributed volume
-    virtual bool isDataDistributed() const { return true; }
+    bool isDataDistributed() const override;
 
-    //! build the accelerator - allows child class (data distributed) to avoid building..
-    virtual void buildAccelerator()
-    { std::cout << "intentionally SKIP building an accelerator for data parallel volume" << std::endl; }
+    void buildAccelerator() override;
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::DataDistributedBlockedVolume<" + voxelType + ">"); }
+    std::string toString() const override;
     
     //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
+    void commit() override;
     
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
+    //! Copy voxels into the volume at the given index (non-zero return value
+    //! indicates success).
+    int setRegion(const void *source,
+                  const vec3i &index,
+                  const vec3i &count) override;
 
-  // protected:
+    //NOTE(jda) - a private section needs to be defined to make usage clearer
+  //private:
 
     //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC();
+    void createEquivalentISPC();
 
-    /*! size of each block, in voxels, WITHOUT padding (in practice the blocks WILL be padded) */
+    /*! size of each block, in voxels, WITHOUT padding (in practice the blocks
+     *  WILL be padded) */
     vec3i blockSize;
     /*! number of blocks, per dimension */
     vec3i ddBlocks;

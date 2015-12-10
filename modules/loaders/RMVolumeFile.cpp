@@ -140,7 +140,9 @@ struct RMLoaderThreads {
       for (int i=0;i<5;i++)
         printf("[%i]",block->voxel[i]);
 #endif
-      ospSetRegion(volume,block->voxel,osp::vec3i(I*256,J*256,K*128),osp::vec3i(256,256,128));
+      ospray::vec3i region_lo(I*256,J*256,K*128);
+      ospray::vec3i region_sz(256,256,128);
+      ospSetRegion(volume,block->voxel,(osp::vec3i&)region_lo,(osp::vec3i&)region_sz);
       mutex.unlock();
       
       ospray::vec2f blockRange(block->voxel[0]);
@@ -164,7 +166,8 @@ struct RMLoaderThreads {
 OSPVolume RMVolumeFile::importVolume(OSPVolume volume)
 {
   // Update the provided dimensions of the volume for the subvolume specified.
-  ospSetVec3i(volume, "dimensions", osp::vec3i(2048,2048,1920));
+  ospray::vec3i dims(2048,2048,1920);
+  ospSetVec3i(volume, "dimensions", (osp::vec3i&)dims);
   ospSetString(volume,"voxelType", "uchar");
   
 #ifdef __LINUX__

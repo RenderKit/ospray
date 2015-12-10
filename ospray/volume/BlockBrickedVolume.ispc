@@ -68,7 +68,7 @@ inline void BlockBrickedVolume_getVoxelAddress(BlockBrickedVolume *uniform volum
   // Compute the 1D address of the brick in the block.
   const uint32 brickAddress
     = brickOffset.x
-    + (brickOffset.y << BLOCK_BRICK_WIDTH_BITCOUNT) 
+    + (brickOffset.y << BLOCK_BRICK_WIDTH_BITCOUNT)
     + (brickOffset.z << 2 * BLOCK_BRICK_WIDTH_BITCOUNT);
 
   // Compute the 3D offset of the voxel in the brick.
@@ -166,11 +166,15 @@ inline void BlockBrickedVolume_allocateMemory(BlockBrickedVolume *uniform volume
   }
 }
 
-task void BBVUChar_setRegionTask(BlockBrickedVolume *uniform self,
-                                 const uint8 *uniform source,
-                                 const uniform vec3i &targetCoord000,
-                                 const uniform vec3i &regionSize)
+/*! copy given block of voxels into the volume, where source[0] will
+  be written to volume[targetCoord000] */
+void BlockBrickedVolumeUChar_setRegion(BlockBrickedVolume *uniform self,
+                                       const void *uniform _source,
+                                       const uniform vec3i &targetCoord000,
+                                       const uniform vec3i &regionSize,
+                                       const uniform int taskIndex)
 {
+  const uint8 *uniform source = (const uint8 *uniform)_source;
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
   const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
@@ -197,18 +201,22 @@ task void BBVUChar_setRegionTask(BlockBrickedVolume *uniform self,
   }
 }
 
-task void BBVFloat_setRegionTask(BlockBrickedVolume *uniform self,
-                                 const float *uniform source, 
-                                 const uniform vec3i &targetCoord000,
-                                 const uniform vec3i &regionSize)
+/*! copy given block of voxels into the volume, where source[0] will
+  be written to volume[targetCoord000] */
+void BlockBrickedVolumeFloat_setRegion(BlockBrickedVolume *uniform self,
+                                       const void *uniform _source,
+                                       const uniform vec3i &targetCoord000,
+                                       const uniform vec3i &regionSize,
+                                       const uniform int taskIndex)
 {
+  const float *uniform source = (const float *uniform)_source;
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
   const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
   const float *uniform run = source + runOfs;
   vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
   foreach (x = 0 ... regionSize.x) {
-    Address address;  
+    Address address;
     coord.x = targetCoord000.x + x;
     if (coord.x < 0 ||
         coord.y < 0 ||
@@ -222,18 +230,22 @@ task void BBVFloat_setRegionTask(BlockBrickedVolume *uniform self,
     BlockBrickedVolume_getVoxelAddress(self, coord, address);
     foreach_unique(blockID in address.block) {
       float *uniform blockPtr
-        = ((float*uniform)self->blockMem) 
+        = ((float*uniform)self->blockMem)
         + blockID * (uint64)BLOCK_VOXEL_COUNT;
       blockPtr[address.voxel] = run[x];
     }
   }
 }
 
-task void BBVDouble_setRegionTask(BlockBrickedVolume *uniform self,
-                                  const double *uniform source, 
-                                  const uniform vec3i &targetCoord000,
-                                  const uniform vec3i &regionSize)
+/*! copy given block of voxels into the volume, where source[0] will
+  be written to volume[targetCoord000] */
+void BlockBrickedVolumeDouble_setRegion(BlockBrickedVolume *uniform self,
+                                        const void *uniform _source,
+                                        const uniform vec3i &targetCoord000,
+                                        const uniform vec3i &regionSize,
+                                        const uniform int taskIndex)
 {
+  const double *uniform source = (const double *uniform)_source;
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
   const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
@@ -259,56 +271,11 @@ task void BBVDouble_setRegionTask(BlockBrickedVolume *uniform self,
     }
   }
 }
-                                
-/*! copy given block of voxels into the volume, where source[0] will
-  be written to volume[targetCoord000] */
-void BlockBrickedVolumeUChar_setRegion(void *uniform _volume, 
-                                       const void *uniform _source, 
-                                       const uniform vec3i &targetCoord000,
-                                       const uniform vec3i &regionSize)
-{
-  // a 'run' is sequence of connected voxels in x direction 
-  uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] BBVUChar_setRegionTask((BlockBrickedVolume*uniform)_volume,
-                                         (const uint8*uniform)_source,
-                                         targetCoord000,
-                                         regionSize);
-}
 
-/*! copy given block of voxels into the volume, where source[0] will
-  be written to volume[targetCoord000] */
-void BlockBrickedVolumeFloat_setRegion(void *uniform _volume, 
-                                       const void *uniform _source, 
-                                       const uniform vec3i &targetCoord000,
-                                       const uniform vec3i &regionSize)
-{
-  // a 'run' is sequence of connected voxels in x direction 
-  uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] BBVFloat_setRegionTask((BlockBrickedVolume*uniform)_volume,
-                                         (const float*uniform)_source,
-                                         targetCoord000,
-                                         regionSize);
-}
-
-/*! copy given block of voxels into the volume, where source[0] will
-  be written to volume[targetCoord000] */
-void BlockBrickedVolumeDouble_setRegion(void *uniform _volume, 
-                                        const void *uniform _source, 
-                                        const uniform vec3i &targetCoord000,
-                                        const uniform vec3i &regionSize)
-{
-  // a 'run' is sequence of connected voxels in x direction 
-  uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] BBVDouble_setRegionTask((BlockBrickedVolume*uniform)_volume,
-                                          (const double*uniform)_source,
-                                          targetCoord000,
-                                          regionSize);
-}
-
-void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume, 
+void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume,
                                     /*! pointer to the c++-equivalent class of this entity */
                                     void *uniform cppEquivalent,
-                                    const uniform int voxelType, 
+                                    const uniform int voxelType,
                                     const uniform vec3i &dimensions)
 {
   StructuredVolume_Constructor(&volume->super, cppEquivalent, dimensions);
@@ -327,7 +294,7 @@ void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume,
     volume->setRegion = &BlockBrickedVolumeFloat_setRegion;
   }
   else if (volume->voxelType == OSP_DOUBLE) {
-    volume->voxelSize = sizeof(uniform double);    
+    volume->voxelSize = sizeof(uniform double);
     volume->super.getVoxel = BlockBrickedVolumeDouble_getVoxel;
     volume->setRegion = &BlockBrickedVolumeDouble_setRegion;
   }
@@ -392,7 +359,7 @@ inline varying float BlockBrickedVolumeFloat_computeSample(void *uniform _volume
 
 
 export void *uniform BlockBrickedVolume_createInstance(void *uniform cppEquivalent,
-                                                       const uniform int voxelType, 
+                                                       const uniform int voxelType,
                                                        const uniform vec3i &dimensions)
 {
   // The volume container.
@@ -406,7 +373,7 @@ export void *uniform BlockBrickedVolume_createInstance(void *uniform cppEquivale
   return volume;
 }
 
-export void 
+export void
 BlockBrickedVolume_setRegion(void *uniform _self,
                              /* points to the first voxel to be copies. The
                                 voxels at 'soruce' MUST have dimensions
@@ -419,9 +386,10 @@ BlockBrickedVolume_setRegion(void *uniform _self,
                              const uniform vec3i &regionCoords,
                              /*! size of the region that we're writing to; MUST
                                be the same as the dimensions of source[][][] */
-                             const uniform vec3i &regionSize)
+                             const uniform vec3i &regionSize,
+                             const uniform int taskIndex)
 {
   // Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
-  self->setRegion(_self,_source,regionCoords,regionSize);
+  self->setRegion(self, _source, regionCoords, regionSize, taskIndex);
 }

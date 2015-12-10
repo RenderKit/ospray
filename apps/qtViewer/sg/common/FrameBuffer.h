@@ -52,13 +52,29 @@ namespace ospray {
       virtual    std::string toString() const { return "ospray::sg::FrameBuffer"; }
       
     private:
-      void createFB() {
-        ospFrameBuffer = ospNewFrameBuffer(size,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
-        ospSet1f(ospFrameBuffer, "gamma", 2.2f);
-        ospCommit(ospFrameBuffer);
-      }
-      void destroyFB() { ospFreeFrameBuffer(ospFrameBuffer); }
+      // create the ospray framebuffer for this class
+      void createFB();
+
+      // destroy the ospray framebuffer created via createFB()
+      void destroyFB();
     };
 
+    // -------------------------------------------------------
+    // IMPLEMENTTATION
+    // -------------------------------------------------------
+
+    inline void FrameBuffer::createFB() 
+    {
+      ospFrameBuffer = ospNewFrameBuffer((const osp::vec2i&)size,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
+      ospSet1f(ospFrameBuffer, "gamma", 2.2f);
+      ospCommit(ospFrameBuffer);
+    }
+    
+    inline void FrameBuffer::destroyFB() 
+    {
+      ospFreeFrameBuffer(ospFrameBuffer); 
+    }
+
+    
   } // ::ospray::sg
 } // ::ospray
