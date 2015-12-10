@@ -248,7 +248,7 @@ inline bool PaddedBlockBrickedVolume_getPaddedAddress(PaddedBlockBrickedVolume *
   address.voxel
     = voxelIdxInBrick.x << (0*BRICK_WIDTH_BITS)
     | voxelIdxInBrick.y << (1*BRICK_WIDTH_BITS)
-    | voxelIdxInBrick.y << (2*BRICK_WIDTH_BITS)
+    | voxelIdxInBrick.z << (2*BRICK_WIDTH_BITS)
     | brickIdxInBlock.x << (3*BRICK_WIDTH_BITS-0*BLOCK_WIDTH_BITS)
     | brickIdxInBlock.y << (2*BRICK_WIDTH_BITS+1*BLOCK_WIDTH_BITS)
     | brickIdxInBlock.z << (1*BRICK_WIDTH_BITS+2*BLOCK_WIDTH_BITS);
@@ -427,23 +427,6 @@ task void PBBVUChar_setRegionTask(PaddedBlockBrickedVolume *uniform self,
             }
           }
         }
-    // Address address;
-    // coord.x = targetCoord000.x + x;
-    // if (coord.x <f 0 ||
-    //     coord.y < 0 ||
-    //     coord.z < 0 ||
-    //     coord.x >= self->super.dimensions.x ||
-    //     coord.y >= self->super.dimensions.y ||
-    //     coord.z >= self->super.dimensions.z
-    //     )
-    //   continue;
-    // PaddedBlockBrickedVolume_getVoxelAddress(self, coord, address);
-    // foreach_unique(blockID in address.block) {
-    //   uint8 *uniform blockPtr
-    //     = ((uint8*uniform)self->blockMem)
-    //     + blockID * (uint64)BLOCK_VOXEL_COUNT;
-    //   blockPtr[address.voxel] = run[x];
-    // }
   }
 }
 
@@ -470,13 +453,14 @@ task void PBBVFloat_setRegionTask(PaddedBlockBrickedVolume *uniform self,
       continue;
 
     PaddedBlockBrickedVolume_getVoxelAddress(self, coord, address);
+    // set voxel itself
     foreach_unique(blockID in address.block) {
       float *uniform blockPtr
         = ((float*uniform)self->blockMem) 
         + blockID * (uint64)VOXELS_PER_BLOCK;
       blockPtr[address.voxel] = run[x];
     }
-#if 1
+    // copy voxel to end of lower/left/front block if it's on the boundary
     for (uniform int32 iz=0;iz<2;iz++)
       for (uniform int32 iy=0;iy<2;iy++)
         for (uniform int32 ix=0;ix<2;ix++) {
@@ -489,7 +473,6 @@ task void PBBVFloat_setRegionTask(PaddedBlockBrickedVolume *uniform self,
             }
           }
         }
-#endif
   }
 }
 
@@ -648,8 +631,9 @@ inline varying float PaddedBlockBrickedVolume_computeSample(void *uniform _volum
   float voxelValue_110; 
   float voxelValue_111; 
   
-  // TODO: this should be a specialization for 'volume < 4GB', rsulting in two separate functions
-#if 1
+  // TODO: this should be a specialization for 'volume < 4GB',
+  // rsulting in two separate functions - one for <= 2G, one for > 2G
+#if 0
   float *uniform blockPtr = (float *)blockMem;
     voxelValue_000 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[0]];
     // TODO: interleave loads with the address computations ... or at
