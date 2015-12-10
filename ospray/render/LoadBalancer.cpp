@@ -26,23 +26,6 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-#ifdef OSPRAY_USE_TBB
-  struct TileWorkerTBB
-  {
-    Tile     *tile;
-    Renderer *renderer;
-    void     *perFrameData;
-    void operator()(const tbb::blocked_range<int>& range) const
-    {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex) {
-        renderer->renderTile(perFrameData, *tile, taskIndex);
-      }
-    }
-  };
-#endif
-
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
   void LocalTiledLoadBalancer::RenderTask::finish() const
@@ -51,18 +34,6 @@ namespace ospray {
     renderer = NULL;
     fb = NULL;
   }
-
-#ifdef OSPRAY_USE_TBB
-  void LocalTiledLoadBalancer::RenderTask::operator()
-  (const tbb::blocked_range<int> &range) const
-  {
-    for (int taskIndex = range.begin();
-         taskIndex != range.end();
-         ++taskIndex) {
-      run(taskIndex);
-    }
-  }
-#endif
 
   void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex) const
   {
@@ -85,11 +56,10 @@ namespace ospray {
                             RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
 #ifdef OSPRAY_USE_TBB
-    TileWorkerTBB worker;
-    worker.tile         = &tile;
-    worker.renderer     = renderer.ptr;
-    worker.perFrameData = perFrameData;
-    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), [&](const tbb::blocked_range<int> &range){
+        for (int taskIndex = range.begin(); taskIndex != range.end(); ++taskIndex) 
+          renderer->renderTile(perFrameData, tile, taskIndex);
+      });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < numJobs; ++i) {
@@ -126,7 +96,11 @@ namespace ospray {
 
     const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
 #ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+    // tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), [&](const tbb::blocked_range<int> &range){
+        for (int taskIndex = range.begin(); taskIndex != range.end(); ++taskIndex) 
+          renderTask.run(taskIndex);
+      });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < NTASKS; ++i) {
@@ -141,18 +115,6 @@ namespace ospray {
   {
     return "ospray::LocalTiledLoadBalancer";
   }
-
-#ifdef OSPRAY_USE_TBB
-  void InterleavedTiledLoadBalancer::RenderTask::operator()
-  (const tbb::blocked_range<int> &range) const
-  {
-    for (int taskIndex = range.begin();
-         taskIndex != range.end();
-         ++taskIndex) {
-      run(taskIndex);
-    }
-  }
-#endif
 
   void InterleavedTiledLoadBalancer::RenderTask::run(size_t taskIndex) const
   {
@@ -177,11 +139,10 @@ namespace ospray {
                             RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
 #ifdef OSPRAY_USE_TBB
-    TileWorkerTBB worker;
-    worker.tile         = &tile;
-    worker.renderer     = renderer.ptr;
-    worker.perFrameData = perFrameData;
-    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), [&](const tbb::blocked_range<int> &range){
+        for (int taskIndex = range.begin(); taskIndex != range.end(); ++taskIndex) 
+          renderer->renderTile(perFrameData, tile, taskIndex);
+      });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < numJobs; ++i) {
@@ -225,7 +186,11 @@ namespace ospray {
 
     const int NTASKS = renderTask.numTiles_mine;
 #ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+    // tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), [&](const tbb::blocked_range<int> &range){
+        for (int taskIndex = range.begin(); taskIndex != range.end(); ++taskIndex) 
+          renderTask.run(taskIndex);
+      });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (int i = 0; i < NTASKS; ++i) {
