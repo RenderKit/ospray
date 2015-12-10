@@ -21,6 +21,18 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
+SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
+
+MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
+MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
+
+# project-wide OpenMP flags for all compilers
+find_package(OpenMP QUIET)
+if(OPENMP_FOUND)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+endif()
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
@@ -28,9 +40,9 @@ SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY_NO_ARCH)
-  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
-    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
-  ENDIF()
+#  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
+#    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
+#  ENDIF()
 
   SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
   SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
@@ -41,7 +53,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
   # this section could be sooo much cleaner if embree only used
   # fully-qualified include names...
   SET(EMBREE_INCLUDE_DIRECTORIES
-    ${OSPRAY_EMBREE_SOURCE_DIR}/ 
+    ${OSPRAY_EMBREE_SOURCE_DIR}/
     ${OSPRAY_EMBREE_SOURCE_DIR}/include
     ${OSPRAY_EMBREE_SOURCE_DIR}/common
     ${OSPRAY_EMBREE_SOURCE_DIR}/
@@ -93,10 +105,10 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
-			IF (OSPRAY_ISPC_KNL_NATIVE)
-				SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-				SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
-			ENDIF()
+                        IF (OSPRAY_ISPC_KNL_NATIVE)
+                                SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+                                SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
+                        ENDIF()
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
       # ------------------------------------------------------------------
@@ -105,11 +117,11 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       # does not work since embree would require a 16-wide trace
       # function which it has in neither of the three targets)
       # ------------------------------------------------------------------
-			IF (OSPRAY_ISPC_KNL_NATIVE)
-				SET(OSPRAY_ISPC_TARGET_LIST knl-avx512)
-			ELSE()
-				SET(OSPRAY_ISPC_TARGET_LIST generic-16)
-			ENDIF()
+                        IF (OSPRAY_ISPC_KNL_NATIVE)
+                                SET(OSPRAY_ISPC_TARGET_LIST knl-avx512)
+                        ELSE()
+                                SET(OSPRAY_ISPC_TARGET_LIST generic-16)
+                        ENDIF()
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
@@ -183,10 +195,10 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
-  
+
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
-  
+
   # for auto-generated cmakeconfig etc
   INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_BINARY_DIR})

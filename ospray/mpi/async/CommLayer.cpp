@@ -41,9 +41,13 @@ namespace ospray {
       {
         Message *msg = (Message*)message;
 
-        mutex.lock();
-        Object *obj = registry[msg->dest.objectID];
-        mutex.unlock();
+        Object *obj = nullptr;
+        {
+          LockGuard lock(mutex);
+          (void)lock;
+          obj = registry[msg->dest.objectID];
+        }
+
         if (!obj)
           throw std::runtime_error("#osp:mpi:CommLayer: no object with given ID");
 
@@ -53,22 +57,20 @@ namespace ospray {
 
       void CommLayer::sendTo(Address dest, Message *msg, size_t size)
       {
-        // PING;
         msg->source.rank = group->rank;
         msg->dest = dest;
         msg->size = size;
         async::send(mpi::Address(group,dest.rank),msg,size);
-        // PING;
       }
 
       void CommLayer::registerObject(Object *object, ObjectID ID)
       {
         /* WARNING: though we do protect the registry here, the
            registry lookup itself is NOT thread-safe right now */
-        mutex.lock();
+        LockGuard lock(mutex);
+        (void)lock;
         assert(registry.find(ID) == registry.end());
         registry[ID] = object;
-        mutex.unlock();
       }
 
     } // ::ospray::mpi::async

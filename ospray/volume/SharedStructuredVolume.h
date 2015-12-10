@@ -28,27 +28,28 @@ namespace ospray {
   public:
 
     //! Constructor.
-    SharedStructuredVolume() : voxelData(NULL) {};
+    SharedStructuredVolume();
 
     //! Destructor.
-    virtual ~SharedStructuredVolume();
+    ~SharedStructuredVolume();
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::SharedStructuredVolume<" + voxelType + ">"); }
+    std::string toString() const;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
+    void commit();
 
-    //! Copy voxels into the volume at the given index; not allowed on SharedStructuredVolume.
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
+    //! Copy voxels into the volume at the given index; not allowed on
+    //!  SharedStructuredVolume.
+    int setRegion(const void *source, const vec3i &index, const vec3i &count);
 
-  protected:
+  private:
 
     //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC();
+    void createEquivalentISPC();
 
     //! Called when a dependency of this object changes.
-    virtual void dependencyGotChanged(ManagedObject *object);
+    void dependencyGotChanged(ManagedObject *object);
 
     //! The voxelData object upon commit().
     Data *voxelData;

@@ -29,7 +29,7 @@ IsosurfaceEditor::IsosurfaceEditor()
   connect(addIsovalueButton, SIGNAL(clicked()), this, SLOT(addIsovalue()));
 }
 
-void IsosurfaceEditor::setDataValueRange(osp::vec2f dataValueRange)
+void IsosurfaceEditor::setDataValueRange(ospray::vec2f dataValueRange)
 {
   this->dataValueRange = dataValueRange;
 

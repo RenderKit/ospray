@@ -24,13 +24,6 @@
 #define PDF_CULLING 0.0f
 //#define USE_DGCOLOR
 
-/*! number of pixels that each job in a parallel rendertile task
-    executes together. Must be a multipel of the maximum possible
-    programCount (16), and must be smaller than TILE_SIZE (in one
-    dimension) */
-#define RENDERTILE_PIXELS_PER_JOB 64
-
-
 //////////////////////////////////////////////////////////////////
 // LightPath
 
@@ -77,7 +70,11 @@ inline void extend_fast(LightPath& lp,
 //////////////////////////////////////////////////////////////////
 // PathTracer
 
-vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContrib, Ray &shadowRay, Medium medium, varying RandomTEA* uniform rng)
+vec3f transparentShadow(const uniform PathTracer* uniform self,
+                        vec3f lightContrib,
+                        Ray &shadowRay,
+                        Medium medium,
+                        varying RandomTEA* uniform rng)
 {
   int max_depth = self->maxDepth;
   const float org_t_max = shadowRay.t;
@@ -104,7 +101,8 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
 
     /*! Compute simple volumetric effect. */
     if (ne(medium.transmission, make_vec3f(1.f)))
-      lightContrib = lightContrib * powf(medium.transmission, shadowRay.t - shadowRay.t0);
+      lightContrib = lightContrib * powf(medium.transmission,
+                                         shadowRay.t - shadowRay.t0);
 
     if (reduce_max(lightContrib) <= self->minContribution)
       return lightContrib;
@@ -128,8 +126,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self, vec3f lightContr
 ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
                              const vec2f &pixel, // normalized, i.e. in [0..1]
                              LightPath &lightPath,
-                             varying RandomTEA* uniform rng,
-                             uint32 &numRays)
+                             varying RandomTEA* uniform rng)
 {
   uniform uint32/*BRDFType*/ directLightingBSDFTypes = (uniform uint32)(BSDF_DIFFUSE | BSDF_GLOSSY);
 
@@ -141,7 +138,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   do {
     /*! Traverse ray. */
     traceRay(self->super.model, lightPath.ray);
-    numRays++;
 
     if (lightPath.depth == 0)
       sample.z = lightPath.ray.t;
@@ -233,7 +229,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
           continue;
 
         /*! Test for shadows. */
-        numRays++;
         Ray shadow_ray;
         setRay(shadow_ray, dg.P, ls.direction,
                //dg.error*
@@ -301,9 +296,8 @@ typedef uniform PTEnvironmentLight *uniform EnvLightPtr;
 typedef uniform PTLight *uniform LightPtr;
 
 inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
-                                    const uint32 ix,
-                                    const uint32 iy,
-                                    uint32 &numRays)
+                                           const uint32 ix,
+                                           const uint32 iy)
 {
   uniform FrameBuffer *uniform fb = self->super.fb;
 
@@ -337,7 +331,8 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
     LightPath lightPath;
     init_LightPath(lightPath, screenSample.ray);
 
-    ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen, lightPath, rng, numRays);
+    ScreenSample sample = PathTraceIntegrator_Li(self, cameraSample.screen,
+                                                 lightPath, rng);
     screenSample.rgb = screenSample.rgb + sample.rgb;
     screenSample.alpha = screenSample.alpha + sample.alpha;
     screenSample.z = min(screenSample.z, sample.z);
@@ -351,24 +346,21 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
 
 
-void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self, uniform FrameBuffer *uniform fb)
+void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
+                                    uniform FrameBuffer *uniform fb)
 {
-//  print("pathtracer new frame %\n",fb->accumID);
   _self->fb = fb;
   uniform PathTracer  *uniform self = (uniform PathTracer *uniform)_self;
-//  print("rays: %\n", self->numRays);
-  self->numRays = 0;
   return NULL;
 }
 
 
-task void PathTracer_renderTileJob(uniform PathTracer *uniform self,
-                                   uniform Tile &tile,
-                                   varying uint32 *uniform numRaysPerJob)
+void PathTracer_renderTileJob(uniform PathTracer *uniform self,
+                              uniform Tile &tile,
+                              uniform int taskIndex)
 {
   uniform FrameBuffer *uniform fb   = self->super.fb;
   uniform int32 spp = self->super.spp;
-  numRaysPerJob[taskIndex] = 0;
 
   const uniform int blocks = fb->accumID > 0 || spp > 0 ?
                                1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
@@ -382,9 +374,7 @@ task void PathTracer_renderTileJob(uniform PathTracer *uniform self,
     if (ix >= fb->size.x || iy >= fb->size.y)
       continue;
 
-    uint32 numRays = 0;
-    ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy, numRays);
-    numRaysPerJob[taskIndex] = numRaysPerJob[taskIndex] + numRays;
+    ScreenSample screenSample = PathTracer_renderPixel(self, ix, iy);
 
     for (uniform int p = 0; p < blocks; p++) {
       const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);
@@ -395,21 +385,12 @@ task void PathTracer_renderTileJob(uniform PathTracer *uniform self,
 
 void PathTracer_renderTile(uniform Renderer *uniform _self,
                            void *uniform perFrameData,
-                           uniform Tile &tile)
+                           uniform Tile &tile,
+                           uniform int jobID)
 {
   uniform PathTracer *uniform self = (uniform PathTracer *uniform)_self;
-  uniform int32 spp = self->super.spp;
-  const uniform int blocks = self->super.fb->accumID > 0 || spp > 0 ? 1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
-  uniform const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
-  varying uint32 numRaysPerJob[(TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB];
 
-  launch[numJobs] PathTracer_renderTileJob(self,tile,&numRaysPerJob[0]);
-  sync;
-
-  uint32 numRaysInTile = 0;
-  for (uniform int i=0; i<numJobs; i++)
-    numRaysInTile += numRaysPerJob[i];
-  self->numRays += reduce_add(numRaysInTile);
+  PathTracer_renderTileJob(self, tile, jobID);
 }
 
 
