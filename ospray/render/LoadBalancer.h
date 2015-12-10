@@ -63,10 +63,6 @@ namespace ospray {
 
       void run(size_t jobID) const;
       void finish() const;
-
-#ifdef OSPRAY_USE_TBB
-      void operator()(const tbb::blocked_range<int>& range) const;
-#endif
     };
 
     void renderFrame(Renderer *tiledRenderer,
@@ -121,10 +117,6 @@ namespace ospray {
 
       void run(size_t jobID) const;
       void finish() const;
-
-#ifdef OSPRAY_USE_TBB
-      void operator()(const tbb::blocked_range<int>& range) const;
-#endif
     };
 
     void renderFrame(Renderer *tiledRenderer,
