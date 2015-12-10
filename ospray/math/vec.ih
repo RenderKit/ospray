@@ -352,73 +352,79 @@ inline varying vec3f negate(const varying vec3f &a)
 { return(make_vec3f(-a.x, -a.y, -a.z)); }
 
 
+#define __define_binary_operator_typed(opname,op,abb,type)              \
+  /* vec2##abb */                                                       \
+  inline uniform vec2##abb opname (const uniform vec2##abb a,           \
+                                   const uniform vec2##abb b) {         \
+    return make_vec2##abb(a.x op b.x, a.y op b.y);                      \
+  }                                                                     \
+  inline vec2##abb opname (const vec2##abb a, const vec2##abb b) {      \
+    return make_vec2##abb(a.x op b.x, a.y op b.y);                      \
+  }                                                                     \
+  inline uniform vec2##abb opname (const uniform vec2##abb a,           \
+                                   const uniform type b) {              \
+    return make_vec2##abb(a.x op b, a.y op b);                          \
+  }                                                                     \
+  inline vec2##abb opname (const vec2##abb a, const type b) {           \
+    return make_vec2##abb(a.x op b, a.y op b);                          \
+  }                                                                     \
+  inline uniform vec2##abb opname (const uniform type a,                \
+                                   const uniform vec2##abb b) {         \
+    return make_vec2##abb(a op b.x, a op b.y);                          \
+  }                                                                     \
+  inline vec2##abb opname (const type a, const vec2##abb b) {           \
+    return make_vec2##abb(a op b.x, a op b.y);                          \
+  }                                                                     \
+  /* vec3##abb */                                                       \
+  inline uniform vec3##abb opname (const uniform vec3##abb a,           \
+                                   const uniform vec3##abb b) {         \
+    return make_vec3##abb(a.x op b.x, a.y op b.y, a.z op b.z);          \
+  }                                                                     \
+  inline vec3##abb opname (const vec3##abb a, const vec3##abb b) {      \
+    return make_vec3##abb(a.x op b.x, a.y op b.y, a.z op b.z);          \
+  }                                                                     \
+  inline uniform vec3##abb opname (const uniform vec3##abb a,           \
+                                   const uniform type b) {              \
+    return make_vec3##abb(a.x op b, a.y op b, a.z op b);                \
+  }                                                                     \
+  inline vec3##abb opname (const vec3##abb a, const type b) {           \
+    return make_vec3##abb(a.x op b, a.y op b, a.z op b);                \
+  }                                                                     \
+  inline uniform vec3##abb opname (const uniform type a,                \
+                                   const uniform vec3##abb b) {         \
+    return make_vec3##abb(a op b.x, a op b.y, a op b.z);                \
+  }                                                                     \
+  inline vec3##abb opname (const type a, const vec3##abb b) {           \
+    return make_vec3##abb(a op b.x, a op b.y, a op b.z);                \
+  }                                                                     \
+  /* vec4##abb */                                                       \
+  inline uniform vec4##abb opname (const uniform vec4##abb a,           \
+                                   const uniform vec4##abb b) {         \
+    return make_vec4##abb(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w); \
+  }                                                                     \
+  inline vec4##abb opname (const vec4##abb a, const vec4##abb b) {      \
+    return make_vec4##abb(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w); \
+  }                                                                     \
+  inline uniform vec4##abb opname (const uniform vec4##abb a,           \
+                                   const uniform type b) {              \
+    return make_vec4##abb(a.x op b, a.y op b, a.z op b, a.w op b);      \
+  }                                                                     \
+  inline vec4##abb opname (const vec4##abb a, const type b) {           \
+    return make_vec4##abb(a.x op b, a.y op b, a.z op b, a.w op b);      \
+  }                                                                     \
+  inline uniform vec4##abb opname (const uniform type a,                \
+                                   const uniform vec4##abb b) {         \
+    return make_vec4##abb(a op b.x, a op b.y, a op b.z, a op b.w);      \
+  }                                                                     \
+  inline vec4##abb opname (const type a, const vec4##abb b) {           \
+    return make_vec4##abb(a op b.x, a op b.y, a op b.z, a op b.w);      \
+  }                                                                     \
+
 #define __define_binary_operator(opname,op)                             \
-  /* vec2f */                                                           \
-  inline uniform vec2f opname (const uniform vec2f a,                   \
-                               const uniform vec2f b) {                 \
-    return make_vec2f(a.x op b.x, a.y op b.y);                          \
-  }                                                                     \
-  inline vec2f opname (const vec2f a, const vec2f b) {                  \
-    return make_vec2f(a.x op b.x, a.y op b.y);                          \
-  }                                                                     \
-  inline uniform vec2f opname (const uniform vec2f a,                   \
-                               const uniform float b) {                 \
-    return make_vec2f(a.x op b, a.y op b);                              \
-  }                                                                     \
-  inline vec2f opname (const vec2f a, const float b) {                  \
-    return make_vec2f(a.x op b, a.y op b);                              \
-  }                                                                     \
-  inline uniform vec2f opname (const uniform float a,                   \
-                               const uniform vec2f b) {                 \
-    return make_vec2f(a op b.x, a op b.y);                              \
-  }                                                                     \
-  inline vec2f opname (const float a, const vec2f b) {                  \
-    return make_vec2f(a op b.x, a op b.y);                              \
-  }                                                                     \
-  /* vec3f */                                                           \
-  inline uniform vec3f opname (const uniform vec3f a,                   \
-                               const uniform vec3f b) {                 \
-    return make_vec3f(a.x op b.x, a.y op b.y, a.z op b.z);              \
-  }                                                                     \
-  inline vec3f opname (const vec3f a, const vec3f b) {                  \
-    return make_vec3f(a.x op b.x, a.y op b.y, a.z op b.z);              \
-  }                                                                     \
-  inline uniform vec3f opname (const uniform vec3f a,                   \
-                               const uniform float b) {                 \
-    return make_vec3f(a.x op b, a.y op b, a.z op b);                    \
-  }                                                                     \
-  inline vec3f opname (const vec3f a, const float b) {                  \
-    return make_vec3f(a.x op b, a.y op b, a.z op b);                    \
-  }                                                                     \
-  inline uniform vec3f opname (const uniform float a,                   \
-                               const uniform vec3f b) {                 \
-    return make_vec3f(a op b.x, a op b.y, a op b.z);                    \
-  }                                                                     \
-  inline vec3f opname (const float a, const vec3f b) {                  \
-    return make_vec3f(a op b.x, a op b.y, a op b.z);                    \
-  }                                                                     \
-  /* vec4f */                                                           \
-  inline uniform vec4f opname (const uniform vec4f a,                   \
-                               const uniform vec4f b) {                 \
-    return make_vec4f(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w);  \
-  }                                                                     \
-  inline vec4f opname (const vec4f a, const vec4f b) {                  \
-    return make_vec4f(a.x op b.x, a.y op b.y, a.z op b.z, a.w op b.w);  \
-  }                                                                     \
-  inline uniform vec4f opname (const uniform vec4f a,                   \
-                               const uniform float b) {                 \
-    return make_vec4f(a.x op b, a.y op b, a.z op b, a.w op b);          \
-  }                                                                     \
-  inline vec4f opname (const vec4f a, const float b) {                  \
-    return make_vec4f(a.x op b, a.y op b, a.z op b, a.w op b);          \
-  }                                                                     \
-  inline uniform vec4f opname (const uniform float a,                   \
-                               const uniform vec4f b) {                 \
-    return make_vec4f(a op b.x, a op b.y, a op b.z, a op b.w);          \
-  }                                                                     \
-  inline vec4f opname (const float a, const vec4f b) {                  \
-    return make_vec4f(a op b.x, a op b.y, a op b.z, a op b.w);          \
-  }                                                                     \
+  __define_binary_operator_typed(opname,op,f,float) \
+  __define_binary_operator_typed(opname,op,i,int32) \
+  __define_binary_operator_typed(opname,op,ui,uint32) 
+
 
 // define 'regular' operators
 __define_binary_operator( operator+, + );

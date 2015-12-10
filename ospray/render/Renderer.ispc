@@ -32,8 +32,8 @@ void Renderer_default_renderSample(uniform Renderer *uniform self,
                                  );
 }
 
-void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
-                                 uniform FrameBuffer *uniform fb)
+static void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
+                                                 uniform FrameBuffer *uniform fb)
 {
   self->fb = fb;
   if (self->camera == NULL)
@@ -43,12 +43,14 @@ void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
   return NULL;
 }
 
-void Renderer_default_endFrame(uniform Renderer *uniform self,
-                               void *uniform perFrameData,
-                               const uniform int32 accumID)
+static void Renderer_default_endFrame(uniform Renderer *uniform self, 
+                                      void *uniform perFrameData,
+                                      const uniform int32 accumID)
 {
-  if (self->fb) self->fb->accumID = accumID;
-  self->fb = NULL;
+  if (self->fb) {
+    self->fb->accumID = accumID;
+    self->fb = NULL;
+  }
 }
 
 void Renderer_default_renderTileJob(uniform Renderer *uniform self,
@@ -161,8 +163,6 @@ void Renderer_default_renderTileJob(uniform Renderer *uniform self,
       }
 
       self->renderSample(self,perFrameData,screenSample);
-
-      // print("pixel % % %\n",screenSample.rgb.x,screenSample.rgb.y,screenSample.rgb.z);
 
       for (uniform int p = 0; p < blocks; p++) {
         const uint32 pixel = z_order.xs[i*blocks+p] + (z_order.ys[i*blocks+p] * TILE_SIZE);

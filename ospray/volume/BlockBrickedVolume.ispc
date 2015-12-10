@@ -307,6 +307,57 @@ void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume,
   BlockBrickedVolume_allocateMemory(volume);
 }
 
+inline varying float BlockBrickedVolumeFloat_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
+{
+  // Cast to the actual Volume subtype.
+  StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
+
+  // Transform the sample location into the local coordinate system.
+  vec3f localCoordinates;
+  volume->transformWorldToLocal(volume, worldCoordinates, localCoordinates);
+
+  // Coordinates outside the volume are clamped to the volume bounds.
+  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), 
+                                              volume->localCoordinatesUpperBound);
+
+  // Lower and upper corners of the box straddling the voxels to be interpolated.
+  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
+  const vec3i voxelIndex_1 = voxelIndex_0 + 1;
+
+  // Fractional coordinates within the lower corner voxel used during interpolation.
+  const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - float_cast(voxelIndex_0);
+
+  // Look up the voxel values to be interpolated.
+  float voxelValue_000; 
+  float voxelValue_001; 
+  float voxelValue_010; 
+  float voxelValue_011; 
+  float voxelValue_100; 
+  float voxelValue_101; 
+  float voxelValue_110; 
+  float voxelValue_111; 
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_000);
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_001);
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z), voxelValue_010);
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_0.z), voxelValue_011);
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_1.z), voxelValue_100);
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_1.z), voxelValue_101);
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_1.z), voxelValue_110);
+  BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_1.x, voxelIndex_1.y, voxelIndex_1.z), voxelValue_111);
+
+  // Interpolate the voxel values.
+  const float voxelValue_00 = voxelValue_000 + fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);
+  const float voxelValue_01 = voxelValue_010 + fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);
+  const float voxelValue_10 = voxelValue_100 + fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);
+  const float voxelValue_11 = voxelValue_110 + fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);
+  const float voxelValue_0  = voxelValue_00  + fractionalLocalCoordinates.y * (voxelValue_01  - voxelValue_00 );
+  const float voxelValue_1  = voxelValue_10  + fractionalLocalCoordinates.y * (voxelValue_11  - voxelValue_10 );
+  const float volumeSample  = voxelValue_0   + fractionalLocalCoordinates.z * (voxelValue_1   - voxelValue_0  );
+
+  return volumeSample;
+}
+
+
 export void *uniform BlockBrickedVolume_createInstance(void *uniform cppEquivalent,
                                                        const uniform int voxelType,
                                                        const uniform vec3i &dimensions)
@@ -315,7 +366,10 @@ export void *uniform BlockBrickedVolume_createInstance(void *uniform cppEquivale
   BlockBrickedVolume *uniform volume = uniform new uniform BlockBrickedVolume;
 
   BlockBrickedVolume_Constructor(volume, cppEquivalent, voxelType, dimensions);
-
+  // if (voxelType == OSP_FLOAT) {
+  //   print("using hand-inlined computesample fct for block-bricked\n");
+  //   volume->super.super.computeSample = BlockBrickedVolumeFloat_computeSample;
+  // }
   return volume;
 }
 
