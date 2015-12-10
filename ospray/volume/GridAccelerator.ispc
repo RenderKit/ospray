@@ -298,8 +298,8 @@ void GridAccelerator_intersect(GridAccelerator *uniform accelerator,
     vec3f farBound;
     volume->transformLocalToWorld(volume,
                                   float_cast(cellIndex +
-                                             (nextCellIndex <<
-                                             CELL_WIDTH_BITCOUNT)),
+                                             nextCellIndex <<
+                                             CELL_WIDTH_BITCOUNT),
                                   farBound);
 
     // Identify the distance along the ray to the exit points on the cell.
