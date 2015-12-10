@@ -18,11 +18,11 @@
 
 extern uniform bool g_dbg;
 
-#define BLOCK_WIDTH_BITS (7)
-#define BRICK_WIDTH_BITS (2)
+#define BLOCK_BITS (7)
+#define BRICK_BITS (2)
 
-#define BLOCK_WIDTH (1<<BLOCK_WIDTH_BITS)
-#define BRICK_WIDTH (1<<BRICK_WIDTH_BITS)
+#define BLOCK_WIDTH (1<<BLOCK_BITS)
+#define BRICK_WIDTH (1<<BRICK_BITS)
 
 #define BRICK_MASK (BRICK_WIDTH-1)
 
@@ -30,21 +30,20 @@ extern uniform bool g_dbg;
 #define VOXELS_PER_BLOCK (BLOCK_WIDTH*BLOCK_WIDTH*BLOCK_WIDTH)
 
 
-// //! The width of a brick in voxels.
-// #define BRICK_VOXEL_WIDTH (1 << BRICK_WIDTH_BITS)
+#define BRICK_BIT_START_X_LO (2)
+#define BRICK_BIT_START_Y_LO (BRICK_BIT_START_X_LO+BRICK_BITS)
+#define BRICK_BIT_START_Z_LO (BRICK_BIT_START_Y_LO+BRICK_BITS)
+#define BRICK_BIT_START_X_HI (BRICK_BIT_START_Z_LO+BRICK_BITS)
+#define BRICK_BIT_START_Y_HI (BRICK_BIT_START_X_HI+(BLOCK_BITS-BRICK_BITS))
+#define BRICK_BIT_START_Z_HI (BRICK_BIT_START_Y_HI+(BLOCK_BITS-BRICK_BITS))
 
-// //! The width of a block in bricks.
-// #define BLOCK_BRICK_WIDTH (1 << BLOCK_BRICK_WIDTH_BITCOUNT)
-
-// // //! The bits denoting the offset of a brick within a block.
-// // #define BLOCK_BRICK_BITMASK (BLOCK_BRICK_WIDTH - 1)
-
-// // //! The bits denoting the offset of a voxel within a brick.
-// // #define BRICK_VOXEL_BITMASK (BRICK_VOXEL_WIDTH - 1)
-
-// //! The number of voxels contained in a block.
-// #define BLOCK_VOXEL_COUNT (BLOCK_WIDTH * BLOCK_WIDTH * BLOCK_WIDTH)
-
+#define BRICK_BIT_SCALE_X_LO ((1<<BRICK_BIT_START_X_LO))
+#define BRICK_BIT_SCALE_Y_LO ((1<<BRICK_BIT_START_Y_LO))
+#define BRICK_BIT_SCALE_Z_LO ((1<<BRICK_BIT_START_Z_LO))
+#define BRICK_BIT_SCALE_X_HI ((1<<BRICK_BIT_START_X_HI))
+#define BRICK_BIT_SCALE_Y_HI ((1<<BRICK_BIT_START_Y_HI))
+#define BRICK_BIT_SCALE_Z_HI ((1<<BRICK_BIT_START_Z_HI))
+ 
 struct Address {
 
   //! The 1D address of the block in the volume containing the voxel.
@@ -59,8 +58,11 @@ struct Address8 {
   //! The 1D address of the block in the volume containing the voxel.
   varying uint32 block;
 
-  //! The 1D offset of the voxel in the enclosing block.
-  varying uint32 voxel[8];
+  //! The 1D offset (in bytes!) of the voxel in the enclosing block.
+  varying uint32 voxelOfs;
+  varying uint32 voxelOfs_dx;
+  varying uint32 voxelOfs_dy;
+  varying uint32 voxelOfs_dz;
 };
 
 struct AllCornerAddresses {
@@ -74,67 +76,52 @@ struct AllCornerAddresses {
 
 inline int fast_div(int x)
 {
-  // int approx = x >> 6;
-  // int test = (approx << 6) + approx;
-  // int error = test - x;
-  // if (error >= 63) approx+=1;
-  // return approx;
-
-  // return x / (BLOCK_WIDTH-1);
-
   return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f)));
-  
-   // int approx = x >> BLOCK_WIDTH_BITS;
-   // int err = x - ((approx << BLOCK_WIDTH_BITS) - approx);
-   // if (err >= ((1<<BLOCK_WIDTH_BITS)-1))
-   //   approx += 1;
-   // return approx;
-
-// approx * ((1<<BLOCK_WIDTH_BITS)-1);
-//   if (rem >= 
-//   const float y = (BLOCK_WIDTH-1.f);
-//   const float rcpy = 1.f/(BLOCK_WIDTH-1.f);
-//   return (int32)(((float)x) * rcpy);
 }
 
 inline int fast_div(float x)
 {
-  // int approx = x >> 6;
-  // int test = (approx << 6) + approx;
-  // int error = test - x;
-  // if (error >= 63) approx+=1;
-  // return approx;
-
-  // return x / (BLOCK_WIDTH-1);
-
   return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f)));
-  
-   // int approx = x >> BLOCK_WIDTH_BITS;
-   // int err = x - ((approx << BLOCK_WIDTH_BITS) - approx);
-   // if (err >= ((1<<BLOCK_WIDTH_BITS)-1))
-   //   approx += 1;
-   // return approx;
-
-// approx * ((1<<BLOCK_WIDTH_BITS)-1);
-//   if (rem >= 
-//   const float y = (BLOCK_WIDTH-1.f);
-//   const float rcpy = 1.f/(BLOCK_WIDTH-1.f);
-//   return (int32)(((float)x) * rcpy);
 }
 
 inline int brickTranslation(const vec3i &voxelIdxInBlock)
 {
-  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_WIDTH_BITS;
+  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
   const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
 
   return
-    (voxelIdxInBrick.x << (0*BRICK_WIDTH_BITS))
-    | (voxelIdxInBrick.y << (1*BRICK_WIDTH_BITS))
-    | (voxelIdxInBrick.z << (2*BRICK_WIDTH_BITS))
-    | (brickIdxInBlock.x << (3*BRICK_WIDTH_BITS+0*(BLOCK_WIDTH_BITS-BRICK_WIDTH_BITS)))
-    | (brickIdxInBlock.y << (3*BRICK_WIDTH_BITS+1*(BLOCK_WIDTH_BITS-BRICK_WIDTH_BITS)))
-    | (brickIdxInBlock.z << (3*BRICK_WIDTH_BITS+2*(BLOCK_WIDTH_BITS-BRICK_WIDTH_BITS)))
+    (voxelIdxInBrick.x << (0*BRICK_BITS))
+    | (voxelIdxInBrick.y << (1*BRICK_BITS))
+    | (voxelIdxInBrick.z << (2*BRICK_BITS))
+    | (brickIdxInBlock.x << (3*BRICK_BITS+0*(BLOCK_BITS-BRICK_BITS)))
+    | (brickIdxInBlock.y << (3*BRICK_BITS+1*(BLOCK_BITS-BRICK_BITS)))
+    | (brickIdxInBlock.z << (3*BRICK_BITS+2*(BLOCK_BITS-BRICK_BITS)))
     ;
+}
+
+inline void brickTranslation(const vec3i &voxelIdxInBlock,
+                             Address8 &addr)
+{
+  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
+  const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
+
+  addr.voxelOfs_dx = (voxelIdxInBrick.x == (BRICK_WIDTH-1)) 
+    ? +1*BRICK_BIT_SCALE_X_HI - (BRICK_WIDTH-1)*BRICK_BIT_SCALE_X_LO
+    : +1*BRICK_BIT_SCALE_X_LO;
+  addr.voxelOfs_dy = (voxelIdxInBrick.y == (BRICK_WIDTH-1)) 
+    ? +1*BRICK_BIT_SCALE_Y_HI - (BRICK_WIDTH-1)*BRICK_BIT_SCALE_Y_LO
+    : +1*BRICK_BIT_SCALE_Y_LO;
+  addr.voxelOfs_dz = (voxelIdxInBrick.z == (BRICK_WIDTH-1)) 
+    ? +1*BRICK_BIT_SCALE_Z_HI - (BRICK_WIDTH-1)*BRICK_BIT_SCALE_Z_LO
+    : +1*BRICK_BIT_SCALE_Z_LO;
+
+  addr.voxelOfs = 
+    (voxelIdxInBrick.x << BRICK_BIT_START_X_LO) |
+    (voxelIdxInBrick.y << BRICK_BIT_START_Y_LO) |
+    (voxelIdxInBrick.z << BRICK_BIT_START_Z_LO) |
+    (brickIdxInBlock.x << BRICK_BIT_START_X_HI) |
+    (brickIdxInBlock.y << BRICK_BIT_START_Y_HI) |
+    (brickIdxInBlock.z << BRICK_BIT_START_Z_HI);
 }
 
 inline void PaddedBlockBrickedVolume_getVoxelAddress8(PaddedBlockBrickedVolume *uniform volume,
@@ -143,29 +130,16 @@ inline void PaddedBlockBrickedVolume_getVoxelAddress8(PaddedBlockBrickedVolume *
                                                       varying Address8 &address)
 {
   // Compute the 3D index of the block containing the brick containing the voxel.
-#if 1
   const vec3i blockIndex = make_vec3i(fast_div(voxelIdxInVolume_f.x),
                                       fast_div(voxelIdxInVolume_f.y),
                                       fast_div(voxelIdxInVolume_f.z));
-                                      
-#else
-  const vec3i blockIndex = voxelIdxInVolume / make_vec3i(BLOCK_WIDTH-1);
-#endif
   
   // Compute the 1D address of the block in the volume.
   address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
 
   // Compute the 3D offset of the brick within the block containing the voxel.
   const vec3i voxelIdxInBlock = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);
-
-  address.voxel[0] = brickTranslation(voxelIdxInBlock+make_vec3i(0,0,0));
-  address.voxel[1] = brickTranslation(voxelIdxInBlock+make_vec3i(1,0,0));
-  address.voxel[2] = brickTranslation(voxelIdxInBlock+make_vec3i(0,1,0));
-  address.voxel[3] = brickTranslation(voxelIdxInBlock+make_vec3i(1,1,0));
-  address.voxel[4] = brickTranslation(voxelIdxInBlock+make_vec3i(0,0,1));
-  address.voxel[5] = brickTranslation(voxelIdxInBlock+make_vec3i(1,0,1));
-  address.voxel[6] = brickTranslation(voxelIdxInBlock+make_vec3i(0,1,1));
-  address.voxel[7] = brickTranslation(voxelIdxInBlock+make_vec3i(1,1,1));
+  brickTranslation(voxelIdxInBlock,address);
 }
 
 
@@ -174,14 +148,9 @@ inline void PaddedBlockBrickedVolume_getVoxelAddress(PaddedBlockBrickedVolume *u
                                                      varying Address &address)
 {
   // Compute the 3D index of the block containing the brick containing the voxel.
-#if 1
   const vec3i blockIndex = make_vec3i(fast_div(voxelIdxInVolume.x),
                                       fast_div(voxelIdxInVolume.y),
                                       fast_div(voxelIdxInVolume.z));
-                                      
-#else
-  const vec3i blockIndex = voxelIdxInVolume / make_vec3i(BLOCK_WIDTH-1);
-#endif
   
   // Compute the 1D address of the block in the volume.
   address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
@@ -189,16 +158,16 @@ inline void PaddedBlockBrickedVolume_getVoxelAddress(PaddedBlockBrickedVolume *u
   // Compute the 3D offset of the brick within the block containing the voxel.
   const vec3i voxelIdxInBlock = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);
 
-  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_WIDTH_BITS;
+  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
   const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
 
   address.voxel
-    = (voxelIdxInBrick.x << (0*BRICK_WIDTH_BITS))
-    | (voxelIdxInBrick.y << (1*BRICK_WIDTH_BITS))
-    | (voxelIdxInBrick.z << (2*BRICK_WIDTH_BITS))
-    | (brickIdxInBlock.x << (3*BRICK_WIDTH_BITS+0*(BLOCK_WIDTH_BITS-BRICK_WIDTH_BITS)))
-    | (brickIdxInBlock.y << (3*BRICK_WIDTH_BITS+1*(BLOCK_WIDTH_BITS-BRICK_WIDTH_BITS)))
-    | (brickIdxInBlock.z << (3*BRICK_WIDTH_BITS+2*(BLOCK_WIDTH_BITS-BRICK_WIDTH_BITS)))
+    = (voxelIdxInBrick.x << (0*BRICK_BITS))
+    | (voxelIdxInBrick.y << (1*BRICK_BITS))
+    | (voxelIdxInBrick.z << (2*BRICK_BITS))
+    | (brickIdxInBlock.x << (3*BRICK_BITS+0*(BLOCK_BITS-BRICK_BITS)))
+    | (brickIdxInBlock.y << (3*BRICK_BITS+1*(BLOCK_BITS-BRICK_BITS)))
+    | (brickIdxInBlock.z << (3*BRICK_BITS+2*(BLOCK_BITS-BRICK_BITS)))
     ;
 }
 
@@ -219,7 +188,7 @@ inline bool PaddedBlockBrickedVolume_getPaddedAddress(PaddedBlockBrickedVolume *
   
   // Compute the 3D offset of the brick within the block containing the voxel.
   vec3i voxelIdxInBlock = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);
-
+  
   bool valid = false;
   if (voxelIdxInBlock.x == 0 && delta.x == 1) {
     voxelIdxInBlock.x = BLOCK_WIDTH-1;
@@ -241,17 +210,17 @@ inline bool PaddedBlockBrickedVolume_getPaddedAddress(PaddedBlockBrickedVolume *
   address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
 
   
-  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_WIDTH_BITS;
+  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
   const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
   
   // Compute the 1D address of the voxel in the block.
   address.voxel
-    = voxelIdxInBrick.x << (0*BRICK_WIDTH_BITS)
-    | voxelIdxInBrick.y << (1*BRICK_WIDTH_BITS)
-    | voxelIdxInBrick.z << (2*BRICK_WIDTH_BITS)
-    | brickIdxInBlock.x << (3*BRICK_WIDTH_BITS-0*BLOCK_WIDTH_BITS)
-    | brickIdxInBlock.y << (2*BRICK_WIDTH_BITS+1*BLOCK_WIDTH_BITS)
-    | brickIdxInBlock.z << (1*BRICK_WIDTH_BITS+2*BLOCK_WIDTH_BITS);
+    = voxelIdxInBrick.x << (0*BRICK_BITS)
+    | voxelIdxInBrick.y << (1*BRICK_BITS)
+    | voxelIdxInBrick.z << (2*BRICK_BITS)
+    | brickIdxInBlock.x << (3*BRICK_BITS-0*BLOCK_BITS)
+    | brickIdxInBlock.y << (2*BRICK_BITS+1*BLOCK_BITS)
+    | brickIdxInBlock.z << (1*BRICK_BITS+2*BLOCK_BITS);
 
 
 
@@ -283,9 +252,9 @@ inline bool PaddedBlockBrickedVolume_getPaddedAddress(PaddedBlockBrickedVolume *
 
   // // Compute the 1D address of the voxel in the block.
   // address.voxel
-  //   = brickAddress  << (3 * BRICK_WIDTH_BITS)
-  //   | voxelOffset.z << (2 * BRICK_WIDTH_BITS)
-  //   | voxelOffset.y << BRICK_WIDTH_BITS
+  //   = brickAddress  << (3 * BRICK_BITS)
+  //   | voxelOffset.z << (2 * BRICK_BITS)
+  //   | voxelOffset.y << BRICK_BITS
   //   | voxelOffset.x;
 
   return valid && blockIndex.x >=0 && blockIndex.y >= 0 && blockIndex.z >= 0;
@@ -588,6 +557,12 @@ void PaddedBlockBrickedVolume_Constructor(PaddedBlockBrickedVolume *uniform volu
 }
 
 
+inline float accessArrayWithOffset(const float *uniform basePtr, varying uint32 offset)
+{
+  uint8 *uniform base = (uint8 *uniform)basePtr;
+
+  return *((float *)(base+offset));
+}
 
 inline varying float PaddedBlockBrickedVolume_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
 {
@@ -604,62 +579,80 @@ inline varying float PaddedBlockBrickedVolume_computeSample(void *uniform _volum
 
   // Lower and upper corners of the box straddling the voxels to be interpolated.
   const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
-  const vec3i voxelIndex_1 = voxelIndex_0 + 1;
 
   // Fractional coordinates within the lower corner voxel used during interpolation.
   const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - float_cast(voxelIndex_0);
-
-
-  // Cast to the actual Volume subtype.
-  // PaddedBlockBrickedVolume *uniform volume = (PaddedBlockBrickedVolume *uniform) _volume;
-
-  // Cast to the actual voxel type.
-  float *uniform blockMem = (float *uniform) volume->blockMem;
 
   // Compute the 1D address of the block in the volume and the voxel in the block.
   Address8 address8;
   PaddedBlockBrickedVolume_getVoxelAddress8(volume, clampedLocalCoordinates, voxelIndex_0, address8);
 
 
-  // Look up the voxel values to be interpolated.
-  float voxelValue_000; 
-  float voxelValue_001; 
-  float voxelValue_010; 
-  float voxelValue_011; 
-  float voxelValue_100; 
-  float voxelValue_101; 
-  float voxelValue_110; 
-  float voxelValue_111; 
   
   // TODO: this should be a specialization for 'volume < 4GB',
   // rsulting in two separate functions - one for <= 2G, one for > 2G
-#if 0
-  float *uniform blockPtr = (float *)blockMem;
-    voxelValue_000 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[0]];
-    // TODO: interleave loads with the address computations ... or at
-    // least, prefetch upon the first address being known.
-    voxelValue_001 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[1]];
-    voxelValue_010 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[2]];
-    voxelValue_011 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[3]];
-    voxelValue_100 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[4]];
-    voxelValue_101 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[5]];
-    voxelValue_110 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[6]];
-    voxelValue_111 = blockPtr[address8.block*VOXELS_PER_BLOCK+address8.voxel[7]];
+#if 1
+  const float *uniform blockPtr = (float *uniform)volume->blockMem;
+  // TODO: interleave loads with the address computations ... or at
+  // least, prefetch upon the first address being known.
+  const uint32 ofs000 = address8.voxelOfs + address8.block*(VOXELS_PER_BLOCK*sizeof(uniform float));
+  const uint32 ofs001 = ofs000+address8.voxelOfs_dx;
+  const uint32 ofs010 = ofs000+address8.voxelOfs_dy;
+  const uint32 ofs011 = ofs001+address8.voxelOfs_dy;
+  const uint32 ofs100 = ofs000+address8.voxelOfs_dz;
+  const uint32 ofs101 = ofs001+address8.voxelOfs_dz;
+  const uint32 ofs110 = ofs010+address8.voxelOfs_dz;
+  const uint32 ofs111 = ofs011+address8.voxelOfs_dz;
+  const float voxelValue_000 = accessArrayWithOffset(blockPtr,ofs000);
+  const float voxelValue_001 = accessArrayWithOffset(blockPtr,ofs001);
+  const float voxelValue_00 = voxelValue_000 + fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);
+
+  const float voxelValue_010 = accessArrayWithOffset(blockPtr,ofs010);
+  const float voxelValue_011 = accessArrayWithOffset(blockPtr,ofs011);
+  const float voxelValue_01 = voxelValue_010 + fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);
+
+  const float voxelValue_100 = accessArrayWithOffset(blockPtr,ofs100);
+  const float voxelValue_101 = accessArrayWithOffset(blockPtr,ofs101);
+  const float voxelValue_10 = voxelValue_100 + fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);
+
+  const float voxelValue_110 = accessArrayWithOffset(blockPtr,ofs110);
+  const float voxelValue_111 = accessArrayWithOffset(blockPtr,ofs111);
+  const float voxelValue_11 = voxelValue_110 + fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);
+  
+  // Interpolate the voxel values.
+  const float voxelValue_0  = voxelValue_00  + fractionalLocalCoordinates.y * (voxelValue_01  - voxelValue_00 );
+  const float voxelValue_1  = voxelValue_10  + fractionalLocalCoordinates.y * (voxelValue_11  - voxelValue_10 );
+  const float volumeSample  = voxelValue_0   + fractionalLocalCoordinates.z * (voxelValue_1   - voxelValue_0  );
+
 #else
+  // Look up the voxel values to be interpolated.
+  float voxelValue_000 = 0; 
+  float voxelValue_001 = 0; 
+  float voxelValue_010 = 0; 
+  float voxelValue_011 = 0; 
+  float voxelValue_100 = 0; 
+  float voxelValue_101 = 0; 
+  float voxelValue_110 = 0; 
+  float voxelValue_111 = 0; 
+
   // The voxel value at the 1D address.
   foreach_unique(blockID in address8.block) {
-    float *uniform blockPtr = (float *)blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);
-    voxelValue_000 = blockPtr[address8.voxel[0]];
-    voxelValue_001 = blockPtr[address8.voxel[1]];
-    voxelValue_010 = blockPtr[address8.voxel[2]];
-    voxelValue_011 = blockPtr[address8.voxel[3]];
-    voxelValue_100 = blockPtr[address8.voxel[4]];
-    voxelValue_101 = blockPtr[address8.voxel[5]];
-    voxelValue_110 = blockPtr[address8.voxel[6]];
-    voxelValue_111 = blockPtr[address8.voxel[7]];
-  }
-#endif
+    const uint32 ofs000 = address8.voxelOfs;
+    const uint32 dx = address8.voxelOfs_dx;
+    const uint32 dy = address8.voxelOfs_dy;
+    const uint32 dz = address8.voxelOfs_dz;
 
+    const float *uniform const blockPtr = (float *uniform)volume->blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);
+    voxelValue_000 = accessArrayWithOffset(blockPtr,ofs000);
+    voxelValue_001 = accessArrayWithOffset(blockPtr,ofs000+dx);
+    voxelValue_010 = accessArrayWithOffset(blockPtr,ofs000+dy);
+    voxelValue_011 = accessArrayWithOffset(blockPtr,ofs000+dx+dy);
+
+    voxelValue_100 = accessArrayWithOffset(blockPtr,ofs000+dz);
+    voxelValue_101 = accessArrayWithOffset(blockPtr,ofs000+dz+dx);
+    voxelValue_110 = accessArrayWithOffset(blockPtr,ofs000+dz+dy);
+    voxelValue_111 = accessArrayWithOffset(blockPtr,ofs000+dz+dx+dy);
+  }
   // Interpolate the voxel values.
   const float voxelValue_00 = voxelValue_000 + fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);
   const float voxelValue_01 = voxelValue_010 + fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);
@@ -668,6 +661,8 @@ inline varying float PaddedBlockBrickedVolume_computeSample(void *uniform _volum
   const float voxelValue_0  = voxelValue_00  + fractionalLocalCoordinates.y * (voxelValue_01  - voxelValue_00 );
   const float voxelValue_1  = voxelValue_10  + fractionalLocalCoordinates.y * (voxelValue_11  - voxelValue_10 );
   const float volumeSample  = voxelValue_0   + fractionalLocalCoordinates.z * (voxelValue_1   - voxelValue_0  );
+
+#endif
 
   return volumeSample;
 }
