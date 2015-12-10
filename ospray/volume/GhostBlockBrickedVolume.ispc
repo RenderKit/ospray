@@ -16,8 +16,6 @@
 
 #include "ospray/volume/GhostBlockBrickedVolume.ih"
 
-extern uniform bool g_dbg;
-
 #define BLOCK_BITS (7)
 #define BRICK_BITS (2)
 
@@ -43,7 +41,9 @@ extern uniform bool g_dbg;
 #define BRICK_BIT_SCALE_X_HI ((1<<BRICK_BIT_START_X_HI))
 #define BRICK_BIT_SCALE_Y_HI ((1<<BRICK_BIT_START_Y_HI))
 #define BRICK_BIT_SCALE_Z_HI ((1<<BRICK_BIT_START_Z_HI))
- 
+
+/*! structure that encodes a block:offset style address for a single
+    sample */ 
 struct Address {
 
   //! The 1D address of the block in the volume containing the voxel.
@@ -53,6 +53,10 @@ struct Address {
   varying uint32 voxel;
 };
 
+
+/*! struct that encodes all 8 corners in a (ghosted) block by block
+    ID, base of the lower-left, and offset's to the +1's in x,y,and
+    z. Deltas fully contain the effet of bricking */
 struct Address8 {
 
   //! The 1D address of the block in the volume containing the voxel.
@@ -65,30 +69,20 @@ struct Address8 {
   varying uint32 voxelOfs_dz;
 };
 
-struct AllCornerAddresses {
-
-  //! The 1D address of the block in the volume containing the voxel.
-  varying uint32 block;
-
-  //! The 1D offset of the voxel in the enclosing block.
-  varying uint32 voxel[2][2][2];
-};
-
+/*! fast 32-bit integer division via floats */
 inline int fast_div(int x)
-{
-  return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f)));
-}
+{ return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f))); }
 
+/*! fast 32-bit integer division via floats; for the case where we
+    already have a float-version of the original integer */
 inline int fast_div(float x)
-{
-  return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f)));
-}
+{ return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f))); }
 
+/*! compute address8 for a given voxel index, including bricking */
 inline int brickTranslation(const vec3i &voxelIdxInBlock)
 {
   const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
   const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
-
   return
     (voxelIdxInBrick.x << (0*BRICK_BITS))
     | (voxelIdxInBrick.y << (1*BRICK_BITS))
@@ -99,6 +93,7 @@ inline int brickTranslation(const vec3i &voxelIdxInBlock)
     ;
 }
 
+/*! compute address8 for a given voxel index, including bricking */
 inline void brickTranslation(const vec3i &voxelIdxInBlock,
                              Address8 &addr)
 {
@@ -222,41 +217,6 @@ inline bool GhostBlockBrickedVolume_getGhostAddress(GhostBlockBrickedVolume *uni
     | brickIdxInBlock.y << (2*BRICK_BITS+1*BLOCK_BITS)
     | brickIdxInBlock.z << (1*BRICK_BITS+2*BLOCK_BITS);
 
-
-
-
-
-  // // Compute the 3D offset of the brick within the block containing the voxel.
-  // vec3i brickOffset = index - blockIndex * make_vec3i(((1<<BLOCK_WIDTH_BITCOUNT)-1));
-  // if (g_dbg)
-  //   print("brickOffset % % %\n",brickOffset.x,brickOffset.y,brickOffset.z);
-
-  // if (g_dbg)
-  //   print("blockIndex % % %\n",blockIndex.x,blockIndex.y,blockIndex.z);
-  // if (g_dbg)
-  //   print("brickOffset % % %\n",brickOffset.x,brickOffset.y,brickOffset.z);
-
-  // // Compute the 1D address of the block in the volume.
-  // address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
-
-  // // Compute the 3D offset of the voxel in the brick.
-  // const vec3i voxelOffset = bitwise_AND(brickOffset, BRICK_VOXEL_BITMASK);
-  // if (g_dbg)
-  //   print("voxelOffset % % %\n",voxelOffset.x,voxelOffset.y,voxelOffset.z);
-
-  // // Compute the 1D address of the brick in the block.
-  // const uint32 brickAddress
-  //   = brickOffset.x
-  //   + (brickOffset.y << BLOCK_BRICK_WIDTH_BITCOUNT) 
-  //   + (brickOffset.z << 2 * BLOCK_BRICK_WIDTH_BITCOUNT);
-
-  // // Compute the 1D address of the voxel in the block.
-  // address.voxel
-  //   = brickAddress  << (3 * BRICK_BITS)
-  //   | voxelOffset.z << (2 * BRICK_BITS)
-  //   | voxelOffset.y << BRICK_BITS
-  //   | voxelOffset.x;
-
   return valid && blockIndex.x >=0 && blockIndex.y >= 0 && blockIndex.z >= 0;
 }
 
@@ -349,15 +309,6 @@ task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
                                   const uniform vec3i &targetCoord000,
                                   const uniform vec3i &regionSize)
 {
-  // uniform bool dbg
-  //   = targetCoord000.x == 0
-  //   & targetCoord000.y == 0
-  //   & targetCoord000.z == 384;
-
-  // if (g_dbg)
-  // print("target % % %\n",targetCoord000.x,targetCoord000.y,targetCoord000.z);
-
-
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
   const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
@@ -376,7 +327,6 @@ task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
       continue;
 
     GhostBlockBrickedVolume_getVoxelAddress(self, coord, address);
-    // if (g_dbg) print("setting base % %\n",address.block,address.voxel);
     foreach_unique(blockID in address.block) {
       uint8 *uniform blockPtr
         = ((uint8*uniform)self->blockMem) 
@@ -387,7 +337,6 @@ task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
       for (uniform int32 iy=0;iy<2;iy++)
         for (uniform int32 ix=0;ix<2;ix++) {
           if (GhostBlockBrickedVolume_getGhostAddress(self, coord, make_vec3i(ix,iy,iz),address)) {
-            if (g_dbg) print("setting offset % %\n",address.block,address.voxel);
             foreach_unique(blockID in address.block) {
               uint8 *uniform blockPtr
                 = ((uint8*uniform)self->blockMem) 
