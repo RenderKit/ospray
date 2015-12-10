@@ -67,10 +67,10 @@ namespace ospray {
       //! @}
     
       // transform normalized coordinates to widget coordinates
-      QPointF pointToWidgetPoint(const osp::vec2f &point);
+      QPointF pointToWidgetPoint(const ospray::vec2f &point);
       
       // transform widget coordinates to normalized coordinates
-      osp::vec2f widgetPointToPoint(const QPointF &widgetPoint);
+      ospray::vec2f widgetPointToPoint(const QPointF &widgetPoint);
 
       // get the index of the selected point based on the clicked point in widget coordinates
       // returns -1 of no selected point
@@ -81,7 +81,7 @@ namespace ospray {
       
       //! the points that define the transfer function, in normalize
       //! coordinates ([0,0], [1,1])
-      std::vector<osp::vec2f> points;
+      std::vector<ospray::vec2f> points;
       
       //! currently selected point
       int selectedPointIndex;
@@ -104,14 +104,14 @@ namespace ospray {
       {
       public:
         //! construct a new color map from given colors
-        ColorMap(const std::string &name, const std::vector<osp::vec3f> &colors);
+        ColorMap(const std::string &name, const std::vector<ospray::vec3f> &colors);
 
         //! return the name of this color map
         inline std::string getName() const { return name; };
 
         /*! quantize this color map into given 1D texture (which can
           then be used for ospray, gl, etc) */
-        void makeTexture1D(osp::vec3f texel[], int numTexels);
+        void makeTexture1D(ospray::vec3f texel[], int numTexels);
 
         /*! return a QImage that represents the color map (this image
           can be used in the transfer fct editor */
@@ -119,10 +119,10 @@ namespace ospray {
 
         //! query function that returns the current color map (to be
         //! used in a scene graph node, for example
-        std::vector<osp::vec3f> getColors() const { return colors; };  
+        std::vector<ospray::vec3f> getColors() const { return colors; };  
       protected:
         const std::string name;
-        const std::vector<osp::vec3f> colors;
+        const std::vector<ospray::vec3f> colors;
       };
 
     public:

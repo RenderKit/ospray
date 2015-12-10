@@ -17,11 +17,10 @@
 #pragma once
 
 #include "MPICommon.h"
-#include "ospray/api/Handle.h"
+#include "ospray/common/ObjectHandle.h"
 
 namespace ospray {
   namespace mpi {
-    using api::Handle;
 
     inline void checkMpiError(int rc)
     {
@@ -38,14 +37,14 @@ namespace ospray {
       apply equally to all functions */
     struct CommandStream {
       void newCommand(int tag) {
-        int rc = MPI_Bcast(&tag,1,MPI_INT,MPI_ROOT,mpi::worker.comm); 
-        checkMpiError(rc); 
+        int rc = MPI_Bcast(&tag,1,MPI_INT,MPI_ROOT,mpi::worker.comm);
+        checkMpiError(rc);
       }
       inline void send(const void *data, const size_t size)
       {
         Assert(data);
         int rc = MPI_Bcast((void*)data,size,MPI_BYTE,MPI_ROOT,mpi::worker.comm);
-        checkMpiError(rc); 
+        checkMpiError(rc);
       }
       inline void send(const void *data, const size_t size, int32 rank, const MPI_Comm &comm)
       {
@@ -53,14 +52,14 @@ namespace ospray {
         checkMpiError(rc);
       }
       inline void send(int32 i)
-      { 
+      {
         int rc = MPI_Bcast(&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);
-        checkMpiError(rc); 
+        checkMpiError(rc);
       }
       inline void send(size_t i)
-      { 
-        int rc = MPI_Bcast(&i,1,MPI_LONG,MPI_ROOT,mpi::worker.comm);
-        checkMpiError(rc); 
+      {
+        int rc = MPI_Bcast(&i,1,MPI_AINT,MPI_ROOT,mpi::worker.comm);
+        checkMpiError(rc);
       }
       inline void send(const vec2f &v)
       {
@@ -68,65 +67,70 @@ namespace ospray {
         checkMpiError(rc);
       }
       inline void send(const vec2i &v)
-      { 
+      {
         int rc = MPI_Bcast((void*)&v,2,MPI_INT,MPI_ROOT,mpi::worker.comm);
-        checkMpiError(rc); 
+        checkMpiError(rc);
       }
       inline void send(const vec3f &v)
-      { 
+      {
         int rc = MPI_Bcast((void*)&v,3,MPI_FLOAT,MPI_ROOT,mpi::worker.comm);
-        checkMpiError(rc); 
+        checkMpiError(rc);
       }
       inline void send(const vec3i &v)
-      { 
+      {
         int rc = MPI_Bcast((void*)&v,3,MPI_INT,MPI_ROOT,mpi::worker.comm);
-        checkMpiError(rc); 
+        checkMpiError(rc);
+      }
+      inline void send(const vec4f &v)
+      {
+        int rc = MPI_Bcast((void*)&v,4,MPI_FLOAT,MPI_ROOT,mpi::worker.comm);
+        checkMpiError(rc);
       }
       inline void send(uint32 i)
-      { 
-        int rc = MPI_Bcast(&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);       
-        checkMpiError(rc); 
+      {
+        int rc = MPI_Bcast(&i,1,MPI_INT,MPI_ROOT,mpi::worker.comm);
+        checkMpiError(rc);
       }
-      inline void send(const Handle &h)
-      { 
+      inline void send(const ObjectHandle &h)
+      {
         int rc = MPI_Bcast((void*)&h,2,MPI_INT,MPI_ROOT,mpi::worker.comm);
-        checkMpiError(rc); 
+        checkMpiError(rc);
       }
       inline void send(float f)
-      { 
-        int rc = MPI_Bcast(&f,1,MPI_FLOAT,MPI_ROOT,mpi::worker.comm); 
-        checkMpiError(rc); 
+      {
+        int rc = MPI_Bcast(&f,1,MPI_FLOAT,MPI_ROOT,mpi::worker.comm);
+        checkMpiError(rc);
       }
       inline void send(const char *s)
-      { 
+      {
         int len = strlen(s);
         send(len);
-        int rc = MPI_Bcast((void*)s,len,MPI_CHAR,MPI_ROOT,mpi::worker.comm); 
-        checkMpiError(rc); 
+        int rc = MPI_Bcast((void*)s,len,MPI_CHAR,MPI_ROOT,mpi::worker.comm);
+        checkMpiError(rc);
       }
 
-      inline int get_int32() 
-      { 
-        int v; 
-        int rc = MPI_Bcast(&v,1,MPI_INT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline int32 get_int32()
+      {
+        int32 v;
+        int rc = MPI_Bcast(&v,1,MPI_INT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline size_t get_size_t() 
-      { 
-        int64 v; 
-        int rc = MPI_Bcast(&v,1,MPI_LONG,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline size_t get_size_t()
+      {
+        size_t v;
+        int rc = MPI_Bcast(&v,1,MPI_AINT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline void get_data(size_t size, void *pointer) 
-      { 
-        // int64 size; 
-        // int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm); 
-        // checkMpiError(rc); 
-        int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm); 
+      inline void get_data(size_t size, void *pointer)
+      {
+        // int64 size;
+        // int rc = MPI_Bcast(&size,1,MPI_LONG,0,mpi::app.comm);
+        // checkMpiError(rc);
+        int rc = MPI_Bcast(pointer,size,MPI_BYTE,0,mpi::app.comm);
         // std::cout << "after broadcast!" << std::endl << std::flush; fflush(0);
-        checkMpiError(rc); 
+        checkMpiError(rc);
       }
       inline void get_data(size_t size, void *pointer, const int32 &rank, const MPI_Comm &comm)
       {
@@ -134,63 +138,70 @@ namespace ospray {
         int rc = MPI_Recv(pointer,size,MPI_BYTE,rank,0,comm,&status);
         checkMpiError(rc);
       }
-      inline Handle get_handle() 
-      { 
-        Handle v; 
-        int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline ObjectHandle get_handle()
+      {
+        ObjectHandle v;
+        int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline vec2i get_vec2i() 
-      { 
-        vec2i v; 
-        int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline vec2i get_vec2i()
+      {
+        vec2i v;
+        int rc = MPI_Bcast(&v,2,MPI_INT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline vec2f get_vec2f() 
-      { 
-        vec2f v; 
-        int rc = MPI_Bcast(&v,2,MPI_FLOAT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline vec2f get_vec2f()
+      {
+        vec2f v;
+        int rc = MPI_Bcast(&v,2,MPI_FLOAT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline vec3f get_vec3f() 
-      { 
-        vec3f v; 
-        int rc = MPI_Bcast(&v,3,MPI_FLOAT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline vec3f get_vec3f()
+      {
+        vec3f v;
+        int rc = MPI_Bcast(&v,3,MPI_FLOAT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline vec3i get_vec3i() 
-      { 
-        vec3i v; 
-        int rc = MPI_Bcast(&v,3,MPI_INT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline vec4f get_vec4f()
+      {
+        vec4f v;
+        int rc = MPI_Bcast(&v,4,MPI_FLOAT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline float get_float() 
-      { 
-        float v; 
-        int rc = MPI_Bcast(&v,1,MPI_FLOAT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline vec3i get_vec3i()
+      {
+        vec3i v;
+        int rc = MPI_Bcast(&v,3,MPI_INT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline int get_int() 
-      { 
-        int v; 
-        int rc = MPI_Bcast(&v,1,MPI_INT,0,mpi::app.comm); 
-        checkMpiError(rc); 
-        return v; 
+      inline float get_float()
+      {
+        float v;
+        int rc = MPI_Bcast(&v,1,MPI_FLOAT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
       }
-      inline void free(const char *s) 
+      inline int get_int()
+      {
+        int v;
+        int rc = MPI_Bcast(&v,1,MPI_INT,0,mpi::app.comm);
+        checkMpiError(rc);
+        return v;
+      }
+      inline void free(const char *s)
       { Assert(s); ::free((void*)s); }
-      inline const char *get_charPtr() 
-      { 
+      inline const char *get_charPtr()
+      {
         int len = get_int32();
         char* buf = (char*)malloc(len+1); buf[len] = 0;
-        int rc = MPI_Bcast(buf,len,MPI_CHAR,0,mpi::app.comm); 
-        checkMpiError(rc); 
+        int rc = MPI_Bcast(buf,len,MPI_CHAR,0,mpi::app.comm);
+        checkMpiError(rc);
         return buf;
       }
       void flush() {};

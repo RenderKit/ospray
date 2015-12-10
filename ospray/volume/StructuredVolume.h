@@ -38,20 +38,22 @@ namespace ospray {
   public:
 
     //! Constructor.
-    StructuredVolume() : finished(false), voxelRange(FLT_MAX, -FLT_MAX) {}
+    StructuredVolume();
 
     //! Destructor.
-    virtual ~StructuredVolume() {};
+    virtual ~StructuredVolume();
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
+    virtual std::string toString() const;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit();
 
     //! Copy voxels into the volume at the given index
     /*! \returns 0 on error, any non-zero value indicates success */
-    virtual int setRegion(const void *source_pointer, const vec3i &target_index, const vec3i &source_count) = 0;
+    virtual int setRegion(const void *source_pointer,
+                          const vec3i &target_index,
+                          const vec3i &source_count) = 0;
 
   protected:
 
@@ -64,6 +66,7 @@ namespace ospray {
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     //! Compute the voxel value range for unsigned byte voxels.
     void computeVoxelRange(const unsigned char *source, const size_t &count);
 
@@ -73,12 +76,19 @@ namespace ospray {
     //! Compute the voxel value range for double precision floating point voxels.
     void computeVoxelRange(const double *source, const size_t &count);
 
+#endif
+
+
+    //! build the accelerator - allows child class (data distributed) to avoid
+    //! building..
+    virtual void buildAccelerator();
+
     //! Volume size in voxels per dimension.
     vec3i dimensions;
-    
+
     //! Grid origin.
     vec3f gridOrigin;
-    
+
     //! Grid spacing in each dimension.
     vec3f gridSpacing;
 
@@ -90,14 +100,6 @@ namespace ospray {
 
     //! Voxel type.
     std::string voxelType;
-
-#ifdef OSPRAY_EXP_DISTRIBUTED_VOLUME
-    // logical dimensions of FULL volume, including all distributed parts (if any)
-    vec3i logicalDimensions;
-
-    // the valid sub-domain on this particular rank
-    box3i myDomain;
-#endif
   };
 
 } // ::ospray

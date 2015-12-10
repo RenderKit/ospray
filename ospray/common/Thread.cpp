@@ -25,13 +25,24 @@ namespace ospray {
   void ospray_Thread_runThread(void *arg)
   {
     Thread *t = (Thread *)arg;
+    if (t->desiredThreadID >= 0) {
+      printf("pinning to thread %i\n",t->desiredThreadID);
+      embree::setAffinity(t->desiredThreadID);
+    }
+
     t->run();
   }
 
+  void Thread::join() 
+  { 
+    embree::join(tid); 
+  }
+
   /*!  start thread execution */
-  void Thread::start()
+  void Thread::start(int threadID)
   {
-    embree::createThread(&ospray_Thread_runThread,this);
+    desiredThreadID = threadID;
+    this->tid = embree::createThread(&ospray_Thread_runThread,this);
   }
 
 }

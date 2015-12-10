@@ -31,7 +31,7 @@ namespace ospray {
                    Consumer *consumer, int32 tag)
         :  tag(tag), consumer(consumer)
       {
-        int rc=MPI_SUCCESS;
+        int rc = MPI_SUCCESS;
         MPI_CALL(Comm_dup(comm,&this->comm));
         // this->comm = comm;
         MPI_CALL(Comm_rank(comm,&rank));
@@ -46,7 +46,7 @@ namespace ospray {
         if (AsyncMessagingImpl::global == NULL) {
 #if 1
           AsyncMessagingImpl::global = new BatchedIsendIrecvImpl;
-#elif 0
+#elif 1
           AsyncMessagingImpl::global = new MultiIsendIrecvImpl;
 #else
           AsyncMessagingImpl::global = new SimpleSendRecvImpl;

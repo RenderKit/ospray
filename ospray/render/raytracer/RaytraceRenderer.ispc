@@ -144,7 +144,7 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
       sample.rgb = self->super.backgroundEnabled ?
                    color + path_opacity * self->bgColor :
                    color;
-      sample.alpha = self->super.backgroundEnabled ? 1.f : 1.f - path_opacity;
+      sample.alpha = 1.f - path_opacity;
       return;
     }
 
@@ -256,7 +256,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
 }
 
 void RaytraceRenderer_renderSample(uniform Renderer *uniform _self,
-                               varying ScreenSample &sample)
+                                   void *uniform perFrameData,
+                                   varying ScreenSample &sample)
 {
   uniform RaytraceRenderer *uniform self =
       (uniform RaytraceRenderer *uniform)_self;

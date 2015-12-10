@@ -19,9 +19,17 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
+// include cmake config first - we need to know the config even before
+// the first "#include <mpi>"
+#include "OSPConfig.h"
+
 // mpi, if we need it
-#ifdef OSPRAY_MPI_DISTRIBUTED
+#ifdef OSPRAY_MPI
 # include <mpi.h>
+#endif
+
+#ifdef _WIN32
+  typedef unsigned long long id_t;
 #endif
 
 #if defined(__WIN32__) || defined(_WIN32)
@@ -39,23 +47,31 @@ typedef int ssize_t;
 # include "unistd.h"
 #endif
 
-#include "OSPConfig.h"
-
 // embree
 #include "common/math/vec2.h"
 #include "common/math/vec3.h"
 #include "common/math/vec4.h"
 #include "common/math/bbox.h"
-#include "common/math/affinespace.h"
+#include "common/math/affinespace.h" // includes "common/math/linearspace[23].h"
 #include "common/sys/ref.h"
-//#include "common/sys/taskscheduler.h"
-#ifdef __NEW_EMBREE__
-# include "common/sys/atomic.h"
-# include "common/sys/condition.h"
-# include <unistd.h>
-#else
-# include "common/sys/sync/atomic.h"
-# include "common/sys/sync/condition.h"
+#include "common/sys/alloc.h"
+#include <unistd.h>
+
+// C++11
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+
+#if 1
+// iw: remove this eventually, and replace all occurrences with actual
+// std::atomic_xyz's etc; for now this'll make it easier to try out the new c++11 types
+namespace ospray {
+  typedef std::atomic_int AtomicInt;
+  typedef std::mutex Mutex;
+  typedef std::lock_guard<std::mutex> LockGuard;
+  typedef std::condition_variable Condition;
+}
+
 #endif
 
 // ospray
@@ -98,6 +114,8 @@ namespace ospray {
   using embree::zero;
   using embree::inf;
   using embree::deg2rad;
+  using embree::rad2deg;
+  using embree::sign;
   using embree::clamp;
 
   /*! basic types */
@@ -154,11 +172,13 @@ namespace ospray {
   typedef embree::BBox3fa        box3fa;
   
   /*! affice space transformation */
+  typedef embree::AffineSpace2f  affine2f;
   typedef embree::AffineSpace3f  affine3f;
   typedef embree::AffineSpace3fa affine3fa;
   typedef embree::AffineSpace3f  AffineSpace3f;
   typedef embree::AffineSpace3fa AffineSpace3fa;
 
+  typedef embree::LinearSpace2f  linear2f;
   typedef embree::LinearSpace3f  linear3f;
   typedef embree::LinearSpace3fa linear3fa;
   typedef embree::LinearSpace3f  LinearSpace3f;
@@ -166,6 +186,9 @@ namespace ospray {
 
   using   embree::Ref;
   using   embree::RefCount;
+
+  using embree::cross;
+  using embree::volume;
 
   /*! return system time in seconds */
   OSPRAY_INTERFACE double getSysTime();
@@ -197,11 +220,9 @@ namespace ospray {
   extern uint32 logLevel;
   /*! whether we're running in debug mode (cmdline: --osp:debug) */
   extern bool debugMode;
-  /*! number of Embree threads to use, 0 for the default number. (cmdline: --osp:numthreads \<n\>) */
+  /*! number of Embree threads to use, 0 for the default
+      number. (cmdline: --osp:numthreads \<n\>) */
   extern int32 numThreads;
-
-  /*! error handling callback to be used by embree */
-  //  void error_handler(const RTCError code, const char *str);
 
   /*! size of OSPDataType */
   size_t sizeOf(OSPDataType type);
@@ -232,14 +253,13 @@ namespace ospray {
     }
     return result;
   }
+
 } // ::ospray
 
 #ifdef _WIN32
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
-
-// #define divRoundUp(X,Y) (((X)+(Y)-1)/(Y))
 
 template <typename T>
 inline T divRoundUp(const T&a, const T&b) { return (a+(b-T(1)))/b; }

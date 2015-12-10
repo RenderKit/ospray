@@ -44,14 +44,15 @@ struct BlockBrickedVolume {
 
   /*! copy given block of voxels into the volume, where source[0] will
     be written to volume[targetCoord000] */
-  void (*uniform setRegion)(void *uniform _volume, 
+  void (*uniform setRegion)(BlockBrickedVolume *uniform _volume,
                             const void *uniform _source,
-                            const uniform vec3i &regionSize, 
-                            const uniform vec3i &targetCoord000);
+                            const uniform vec3i &regionSize,
+                            const uniform vec3i &targetCoord000,
+                            const uniform int taskIndex);
 };
 
-void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume, 
+void BlockBrickedVolume_Constructor(BlockBrickedVolume *uniform volume,
                                     /*! pointer to the c++-equivalent class of this entity */
                                     void *uniform cppEquivalent,
-                                    const uniform int voxelType, 
+                                    const uniform int voxelType,
                                     const uniform vec3i &dimensions);

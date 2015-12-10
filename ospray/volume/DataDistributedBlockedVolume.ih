@@ -45,12 +45,15 @@ struct DDBVolumeBlock
   box3i domain;
   //! 3D bounding box
   box3f bounds;
-  /*! ID of node that owns this block */
-  int owner;
+  /*! ID of _first_ node that owns this block */
+  int firstOwner;
+  /*! number of nodes that own this block */
+  int numOwners;
   /*! 'bool' of whether this block is owned by me, or not */
   int mine;
 
-  void *ispcVolumeHandle;
+  void   *uniform cppVolume;
+  Volume *uniform ispcVolume;
 };
 
 
@@ -70,17 +73,17 @@ struct DDBVolume {
   //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
   StructuredVolume super;
 
-  //! Volume size in blocks per dimension with padding to the nearest block.
-  uniform vec3i blockCount;
+  // //! Volume size in blocks per dimension with padding to the nearest block.
+  // uniform vec3i blockCount;
 
-  //! pointer to the large array of blocks.
-  void *uniform blockMem;
+  // //! pointer to the large array of blocks.
+  // void *uniform blockMem;
 
-  //! Voxel type.
-  uniform OSPDataType voxelType;
+  // //! Voxel type.
+  // uniform OSPDataType voxelType;
 
-  //! Voxel size in bytes.
-  uniform size_t voxelSize;
+  // //! Voxel size in bytes.
+  // uniform size_t voxelSize;
 
   /*! copy given block of voxels into the volume, where source[0] will
     be written to volume[targetCoord000] */

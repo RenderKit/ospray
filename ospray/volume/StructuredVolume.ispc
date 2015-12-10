@@ -27,24 +27,25 @@ inline varying float StructuredVolume_computeSample(void *uniform _volume, const
   volume->transformWorldToLocal(volume, worldCoordinates, localCoordinates);
 
   // Coordinates outside the volume are clamped to the volume bounds.
-  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), volume->localCoordinatesUpperBound);
+  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f),
+                                              volume->localCoordinatesUpperBound);
 
   // Lower and upper corners of the box straddling the voxels to be interpolated.
-  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
+  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);
   const vec3i voxelIndex_1 = voxelIndex_0 + 1;
 
   // Fractional coordinates within the lower corner voxel used during interpolation.
   const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - float_cast(voxelIndex_0);
 
   // Look up the voxel values to be interpolated.
-  float voxelValue_000; 
-  float voxelValue_001; 
-  float voxelValue_010; 
-  float voxelValue_011; 
-  float voxelValue_100; 
-  float voxelValue_101; 
-  float voxelValue_110; 
-  float voxelValue_111; 
+  float voxelValue_000;
+  float voxelValue_001;
+  float voxelValue_010;
+  float voxelValue_011;
+  float voxelValue_100;
+  float voxelValue_101;
+  float voxelValue_110;
+  float voxelValue_111;
   volume->getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_000);
   volume->getVoxel(volume, make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_001);
   volume->getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z), voxelValue_010);
@@ -121,6 +122,7 @@ inline void StructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
 
   // Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
+
 //ray.t0 += step;
 }
 
@@ -146,7 +148,7 @@ inline void StructuredVolume_transformWorldToLocal(StructuredVolume *uniform vol
   localCoordinates = rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
 }
 
-void StructuredVolume_Constructor(StructuredVolume *uniform volume, 
+void StructuredVolume_Constructor(StructuredVolume *uniform volume,
                                   /*! pointer to the c++-equivalent class of this entity */
                                   void *uniform cppEquivalent,
                                   const uniform vec3i &dimensions
@@ -189,7 +191,7 @@ export void StructuredVolume_setGridSpacing(void *uniform _self, const uniform v
   self->super.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
 }
 
-export void StructuredVolume_buildAccelerator(void *uniform _self)
+export void *uniform StructuredVolume_createAccelerator(void *uniform _self)
 {
   // Cast to the actual Volume type.
   StructuredVolume *uniform self = (StructuredVolume *uniform)_self;
@@ -199,4 +201,6 @@ export void StructuredVolume_buildAccelerator(void *uniform _self)
 
   // Set the accelerator structure field.
   self->accelerator = GridAccelerator_createInstance(&self->super);
+
+  return self->accelerator;
 }

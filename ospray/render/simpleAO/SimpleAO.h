@@ -85,7 +85,7 @@ namespace ospray {
   
 
     //! \brief Constructor
-    SimpleAO();
+    SimpleAO(int defaultNumSamples);
 
     /*! \brief common function to help printf-debugging */
     virtual std::string toString() const;
@@ -99,6 +99,7 @@ namespace ospray {
 
     //! background color we are going to use if the primary ray hit nothing
     vec3f bgColor; 
+    int defaultNumSamples;
   };
 
 } // ::ospray

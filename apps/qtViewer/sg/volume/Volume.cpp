@@ -60,7 +60,7 @@ namespace ospray {
         mappedPointer = binBasePtr + node->getPropl("ofs");
       dimensions = parseVec3i(node->getProp("dimensions"));
 
-      if (voxelType != "float") 
+      if (voxelType != "float" && voxelType != "uint8") 
         throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
           
       if (!transferFunction) 
@@ -85,13 +85,16 @@ namespace ospray {
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
 
       ospSetString(volume,"voxelType",voxelType.c_str());
-      ospSetVec3i(volume,"dimensions",dimensions);
+      ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       size_t nPerSlice = (size_t)dimensions.x*(size_t)dimensions.y;
       assert(mappedPointer != NULL);
 
       for (int z=0;z<dimensions.z;z++) {
         float *slice = (float*)(((unsigned char *)mappedPointer)+z*nPerSlice*sizeof(float));
-        ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
+        vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
+        ospSetRegion(volume,slice,
+                     (const osp::vec3i&)region_lo,
+                     (const osp::vec3i&)region_sz);
       }
 
       transferFunction->render(ctx);
@@ -127,13 +130,14 @@ namespace ospray {
                                               const unsigned char *binBasePtr)
     {
       voxelType = node->getProp("voxelType");
+      if (voxelType == "uint8") voxelType = "uchar";
       dimensions = parseVec3i(node->getProp("dimensions"));
       fileName = node->getProp("fileName");
       if (fileName == "") throw std::runtime_error("sg::StructuredVolumeFromFile: no 'fileName' specified");
 
       fileNameOfCorrespondingXmlDoc = node->doc->fileName;
       
-      if (voxelType != "float") 
+      if (voxelType != "float" && voxelType != "uchar") 
         throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
       
       if (!transferFunction) 
@@ -151,7 +155,7 @@ namespace ospray {
       if (dimensions.x <= 0 || dimensions.y <= 0 || dimensions.z <= 0)
         throw std::runtime_error("StructuredVolume::render(): invalid volume dimensions");
 
-      bool useBlockBricked = 0;
+      bool useBlockBricked = 1;
 
       if (useDataDistributedVolume) 
         volume = ospNewVolume("data_distributed_volume");
@@ -160,14 +164,16 @@ namespace ospray {
       if (!volume)
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
       
-      PING;
+      PING; PRINT(voxelType);
       ospSetString(volume,"voxelType",voxelType.c_str());
-      PING;
-      ospSetVec3i(volume,"dimensions",dimensions);
+      PING; PRINT(dimensions);
+      ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       PING;
       
       FileName realFileName = fileNameOfCorrespondingXmlDoc.path()+fileName;
       FILE *file = fopen(realFileName.c_str(),"rb");
+      float minValue = +std::numeric_limits<float>::infinity();
+      float maxValue = -std::numeric_limits<float>::infinity();
       if (!file) 
         throw std::runtime_error("StructuredVolumeFromFile::render(): could not open file '"
                                  +realFileName.str()+"' (expanded from xml file '"
@@ -176,14 +182,29 @@ namespace ospray {
 
       if (useBlockBricked || useDataDistributedVolume) {
         size_t nPerSlice = (size_t)dimensions.x * (size_t)dimensions.y;
-        float *slice = new float[nPerSlice];
-        for (int z=0;z<dimensions.z;z++) {
-          size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
-          if (nRead != nPerSlice)
-            throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
-          ospSetRegion(volume,slice,vec3i(0,0,z),vec3i(dimensions.x,dimensions.y,1));
+        if (voxelType == "float") {
+          float *slice = new float[nPerSlice];
+          for (int z=0;z<dimensions.z;z++) {
+            size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
+            if (nRead != nPerSlice)
+              throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+            const vec3i region_lo(0,0,z),region_sz(dimensions.x,dimensions.y,1);
+            ospSetRegion(volume,slice,(const osp::vec3i&)region_lo,(const osp::vec3i&)region_sz);
+          }
+          delete[] slice;
+        } else {
+          uint8 *slice = new uint8[nPerSlice];
+          for (int z=0;z<dimensions.z;z++) {
+            size_t nRead = fread(slice,sizeof(uint8),nPerSlice,file);
+            if (nRead != nPerSlice)
+              throw std::runtime_error("StructuredVolume::render(): read incomplete slice data ... partial file or wrong format!?");
+            const vec3i region_lo(0,0,z), region_sz(dimensions.x,dimensions.y,1);
+            ospSetRegion(volume,slice,
+                         (const osp::vec3i&)region_lo,
+                         (const osp::vec3i&)region_sz);
+          }
+          delete[] slice;
         }
-        delete[] slice;
       } else {
         size_t nVoxels = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
         float *voxels = new float[nVoxels];
@@ -257,7 +278,7 @@ namespace ospray {
         THROW_SG_ERROR(__PRETTY_FUNCTION__,"could not allocate volume");
 
       ospSetString(volume,"voxelType",voxelType.c_str());
-      ospSetVec3i(volume,"dimensions",dimensions);
+      ospSetVec3i(volume,"dimensions",(const osp::vec3i&)dimensions);
       size_t nPerSlice = dimensions.x*dimensions.y;
       uint8 *slice = new uint8[nPerSlice];
       for (int sliceID=0;sliceID<numSlices;sliceID++) {
@@ -271,7 +292,10 @@ namespace ospray {
         size_t nRead = fread(slice,sizeof(float),nPerSlice,file);
         if (nRead != nPerSlice)
           throw std::runtime_error("StackedRawSlices::render(): read incomplete slice data ... partial file or wrong format!?");
-        ospSetRegion(volume,slice,vec3i(0,0,sliceID),vec3i(dimensions.x,dimensions.y,1));
+        const vec3i region_lo(0,0,sliceID), region_sz(dimensions.x,dimensions.y,1);
+        ospSetRegion(volume,slice,
+                     (const osp::vec3i&)region_lo,
+                     (const osp::vec3i&)region_sz);
         fclose(file);
       }
       delete[] slice;

@@ -15,32 +15,31 @@
 ## ======================================================================== ##
 
 # add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
-OPTION(OSPRAY_ALLOW_EXTERNAL_EMBREE "Use external (newer) embree. Requires c++11.")
+#OPTION(OSPRAY_ALLOW_EXTERNAL_EMBREE "Use external (newer) embree. Requires c++11.")
 #SET(OSPRAY_ALLOW_EXTERNAL_EMBREE OFF CACHE BOOL "Use EXTERNAL (newer) embree. Requires c++11")
-MARK_AS_ADVANCED(OSPRAY_ALLOW_EXTERNAL_EMBREE)
+#MARK_AS_ADVANCED(OSPRAY_ALLOW_EXTERNAL_EMBREE)
 
-IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
+#IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
   ##################################################################
   # if you are using this branch we assume you know what you are doing!
   ##################################################################
-  MESSAGE("You have chosen to build OSPRay with a external version of embree that may or may not have been tested to work with this version of OSPRay. Use this option at your own risk.")
+#  MESSAGE("You have chosen to build OSPRay with a external version of embree that may or may not have been tested to work with this version of OSPRay. Use this option at your own risk.")
   
-  SET(EXTERNAL_EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree CACHE STRING    "EXTERNAL Embree source directory")
-  SET(OSPRAY_EMBREE_SOURCE_DIR ${EXTERNAL_EMBREE_DIR})
-  ADD_DEFINITIONS(-D__EXTERNAL_EMBREE__=1)
-ELSE()
+#  SET(EXTERNAL_EMBREE_DIR ${PROJECT_SOURCE_DIR}/../embree CACHE STRING    "EXTERNAL Embree source directory")
+#  SET(OSPRAY_EMBREE_SOURCE_DIR ${EXTERNAL_EMBREE_DIR})
+#  ADD_DEFINITIONS(-D__EXTERNAL_EMBREE__=1)
+#ELSE()
   ##################################################################
   # default branch: build ospray using local version of embree
   ##################################################################
-  SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree)
-ENDIF()
+#ENDIF()
 
 ##################################################################
 # build embree - global settings independent of target
 ##################################################################
 
-ADD_DEFINITIONS(-D__EXPORT_ALL_SYMBOLS__)
-ADD_DEFINITIONS(-D__FIX_RAYS__)
-ADD_DEFINITIONS(-D__INTERSECTION_FILTER__)
-ADD_DEFINITIONS(-D__BUFFER_STRIDE__)
-ADD_DEFINITIONS(-DEMBREE_DISABLE_HAIR=1)
+#ADD_DEFINITIONS(-D__EXPORT_ALL_SYMBOLS__)
+#ADD_DEFINITIONS(-D__FIX_RAYS__)
+#ADD_DEFINITIONS(-D__INTERSECTION_FILTER__)
+#ADD_DEFINITIONS(-D__BUFFER_STRIDE__)
+#ADD_DEFINITIONS(-DEMBREE_DISABLE_HAIR=1)

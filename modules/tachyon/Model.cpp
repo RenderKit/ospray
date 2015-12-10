@@ -124,8 +124,8 @@ namespace ospray {
     void Model::addSphere(const Sphere &sphere)
     {
       this->sphereVec.push_back(sphere);
-      bounds.extend(sphere.center - sphere.rad);
-      bounds.extend(sphere.center + sphere.rad);
+      bounds.extend(sphere.center - vec3f(sphere.rad));
+      bounds.extend(sphere.center + vec3f(sphere.rad));
     }
     void Model::addDirLight(const DirLight &dirLight)
     {
@@ -138,10 +138,10 @@ namespace ospray {
     void Model::addCylinder(const Cylinder &cylinder)
     {
       this->cylinderVec.push_back(cylinder);
-      bounds.extend(cylinder.base + cylinder.rad);
-      bounds.extend(cylinder.base - cylinder.rad);
-      bounds.extend(cylinder.apex + cylinder.rad);
-      bounds.extend(cylinder.apex - cylinder.rad);
+      bounds.extend(cylinder.base + vec3f(cylinder.rad));
+      bounds.extend(cylinder.base - vec3f(cylinder.rad));
+      bounds.extend(cylinder.apex + vec3f(cylinder.rad));
+      bounds.extend(cylinder.apex - vec3f(cylinder.rad));
     }
     int Model::addTexture(Texture *texture)
     {
@@ -171,7 +171,7 @@ namespace ospray {
 
 #if 1
       vec3f Kd = texture->color * texture->diffuse;
-      vec3f Ks = texture->specular;
+      vec3f Ks = vec3f(texture->specular);
       float Ns = texture->phong.size;
       xml << "    <material>" << endl;
       xml << "    <code>\"OBJ\"</code>" << endl;
@@ -192,7 +192,7 @@ namespace ospray {
       xml << "    </parameters>" << endl;
       xml << "    </material>" << endl;
 #endif
-      
+
       if (va->coord.size()) {
         long ofs = ftell(bin);
         for (int i=0;i<va->coord.size();i++)
@@ -200,7 +200,7 @@ namespace ospray {
         xml << "    <positions "
             << "ofs=\"" << ofs << "\" "
             << "size=\"" << va->coord.size() << "\"/>" << endl;
-      }     
+      }
 
       if (va->normal.size()) {
         long ofs = ftell(bin);
@@ -209,7 +209,7 @@ namespace ospray {
         xml << "    <normals "
             << "ofs=\"" << ofs << "\" "
             << "size=\"" << va->normal.size() << "\"/>" << endl;
-      }     
+      }
 
       if (va->triangle.size()) {
         long ofs = ftell(bin);
@@ -217,7 +217,7 @@ namespace ospray {
         xml << "    <triangles "
             << "ofs=\"" << ofs << "\" "
             << "size=\"" << va->triangle.size() << "\"/>" << endl;
-      }     
+      }
       xml << "  </TriangleMesh>" << endl;
 
       numExported += va->triangle.size();
@@ -241,7 +241,7 @@ namespace ospray {
         tessellateSphereOctant(va,sphere,duv,dvw,duw,depth-1);
       } else {
         vec3i base = vec3f(va->coord.size());
-        va->coord.push_back(sphere.center+sphere.rad*du); 
+        va->coord.push_back(sphere.center+sphere.rad*du);
         va->coord.push_back(sphere.center+sphere.rad*dv);
         va->coord.push_back(sphere.center+sphere.rad*dw);
         va->normal.push_back(du);
@@ -254,7 +254,7 @@ namespace ospray {
         va->normal.push_back(duv);
         va->normal.push_back(duw);
         va->normal.push_back(dvw);
-      
+
         va->triangle.push_back(base+vec3i(0,3,4));
         va->triangle.push_back(base+vec3i(1,3,5));
         va->triangle.push_back(base+vec3i(2,4,5));
@@ -290,7 +290,7 @@ namespace ospray {
           }
           tessellateSphere(&va,sphereVec[i]);
         }
-        
+
         exportArray(xml,bin,model,&va);
 
         sphereVec = notMatching;
@@ -350,7 +350,7 @@ namespace ospray {
           }
           tessellateCylinder(&va,cylinderVec[i]);
         }
-        
+
         exportArray(xml,bin,model,&va);
 
         cylinderVec = notMatching;

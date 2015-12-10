@@ -36,8 +36,7 @@ struct RaycastVolumeRenderer {
 
 };
 
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer, 
+void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer,
                                                 const uniform int32 accumID);
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer, 
+void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer,
                                                FrameBuffer *uniform framebuffer);
-

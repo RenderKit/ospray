@@ -20,7 +20,6 @@
 #include "ospray/fb/LocalFB.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
 
-//#define BARRIER_AT_END_OF_FRAME 1
 #include <algorithm>
 
 namespace ospray {
@@ -30,13 +29,10 @@ namespace ospray {
     extern "C" void async_beginFrame();
     extern "C" void async_endFrame();
 
-    using std::cout; 
+    using std::cout;
     using std::endl;
 
     namespace staticLoadBalancer {
-
-      Master::Master() {
-      }
 
       void Master::renderFrame(Renderer *tiledRenderer,
                                FrameBuffer *fb,
@@ -44,41 +40,48 @@ namespace ospray {
       {
         async_beginFrame();
         DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
-        // double before = getSysTime();
+
         dfb->startNewFrame();
         /* the client will do its magic here, and the distributed
            frame buffer will be writing tiles here, without us doing
            anything ourselves */
         dfb->waitUntilFinished();
-        // double after = getSysTime();
-        // float T = after - before;
-        // printf("master: render time %f, theofps %f\n",T,1.f/T);
 
         async_endFrame();
-        // #if BARRIER_AT_END_OF_FRAME
-        //         MPI_Barrier(MPI_COMM_WORLD);
-        // #endif
       }
 
-      void Slave::RenderTask::finish()
+      std::string Master::toString() const
+      {
+        return "ospray::mpi::staticLoadBalancer::Master";
+      }
+
+#ifdef OSPRAY_USE_TBB
+      struct TileWorkerTBB
+      {
+        Tile     *tile;
+        Renderer *renderer;
+        void     *perFrameData;
+        void operator()(const tbb::blocked_range<int>& range) const
+        {
+          for (int taskIndex = range.begin();
+               taskIndex != range.end();
+               ++taskIndex) {
+            renderer->renderTile(perFrameData, *tile, taskIndex);
+          }
+        }
+      };
+#endif
+
+      void Slave::RenderTask::finish() const
       {
         renderer = NULL;
         fb = NULL;
       }
 
-
-      Slave::Slave() {
-      }
-
-
-      void Slave::RenderTask::run(size_t taskIndex) 
+      void Slave::RenderTask::run(size_t taskIndex) const
       {
-#ifdef OSPRAY_EXP_IMAGE_COMPOSITING
-        const size_t tileID = (taskIndex + 3*worker.rank) % (numTiles_x*numTiles_y);
-#else
         const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
-#endif
 
 #if TILE_SIZE>128
         Tile *tilePtr = new Tile;
@@ -94,16 +97,47 @@ namespace ospray {
         tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
+        tile.generation = 0;
+        tile.children = 0;
 
-        renderer->renderTile(tile);
+        const int spp = renderer->spp;
+        const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+                           std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+        const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
+                                RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+
+#ifdef OSPRAY_USE_TBB
+        TileWorkerTBB worker;
+        worker.tile         = &tile;
+        worker.renderer     = renderer.ptr;
+        worker.perFrameData = perFrameData;
+        tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+#else//OpenMP
+#       pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < numJobs; ++i) {
+          renderer->renderTile(perFrameData, tile, i);
+        }
+#endif
 
         fb->setTile(tile);
 #if TILE_SIZE>128
         delete tilePtr;
 #endif
       }
-      
-      void Slave::renderFrame(Renderer *tiledRenderer, 
+
+#ifdef OSPRAY_USE_TBB
+      void Slave::RenderTask::operator()
+      (const tbb::blocked_range<int> &range) const
+      {
+        for (int taskIndex = range.begin();
+             taskIndex != range.end();
+             ++taskIndex) {
+          run(taskIndex);
+        }
+      }
+#endif
+
+      void Slave::renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,
                               const uint32 channelFlags
                               )
@@ -111,35 +145,41 @@ namespace ospray {
 
         async_beginFrame();
 
-        DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer *>(fb);
+        auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
         dfb->startNewFrame();
-        Ref<RenderTask> renderTask = new RenderTask;
 
-        renderTask->fb = fb;
-        renderTask->renderer = tiledRenderer;
-        renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-        renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-        renderTask->channelFlags = channelFlags;
-        tiledRenderer->beginFrame(fb);
+        void *perFrameData = tiledRenderer->beginFrame(fb);
 
-        /*! iw: using a local sync event for now; "in theory" we should be
-          able to attach something like a sync event to the frame
-          buffer, just trigger the task here, and let somebody else sync
-          on the framebuffer once it is needed; alas, I'm currently
-          running into some issues with the embree taks system when
-          trying to do so, and thus am reverting to this
-          fully-synchronous version for now */
-        renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
-        renderTask->wait();
+        RenderTask renderTask;
 
-        // double t0wait = getSysTime();
+        renderTask.fb = fb;
+        renderTask.renderer = tiledRenderer;
+        renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+        renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+        renderTask.channelFlags = channelFlags;
+        renderTask.perFrameData = perFrameData;
+
+        const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+#ifdef OSPRAY_USE_TBB
+        tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+#else//OpenMP
+#       pragma omp parallel for schedule(dynamic)
+        for (int i = 0; i < NTASKS; ++i) {
+          renderTask.run(i);
+        }
+#endif
+
         dfb->waitUntilFinished();
-        tiledRenderer->endFrame(channelFlags);
-        // double t1wait = getSysTime();
-        // printf("rank %i t_wait at end %f\n",mpi::world.rank,float(t1wait-t0wait));
+        tiledRenderer->endFrame(perFrameData,channelFlags);
 
         async_endFrame();
       }
+
+      std::string Slave::toString() const
+      {
+        return "ospray::mpi::staticLoadBalancer::Slave";
+      }
+
     }
 
   } // ::ospray::mpi

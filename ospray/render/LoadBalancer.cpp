@@ -16,6 +16,7 @@
 
 #include "LoadBalancer.h"
 #include "Renderer.h"
+#include <sys/sysinfo.h>
 
 // stl
 #include <algorithm>
@@ -25,16 +26,45 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
+#ifdef OSPRAY_USE_TBB
+  struct TileWorkerTBB
+  {
+    Tile     *tile;
+    Renderer *renderer;
+    void     *perFrameData;
+    void operator()(const tbb::blocked_range<int>& range) const
+    {
+      for (int taskIndex = range.begin();
+           taskIndex != range.end();
+           ++taskIndex) {
+        renderer->renderTile(perFrameData, *tile, taskIndex);
+      }
+    }
+  };
+#endif
+
   TiledLoadBalancer *TiledLoadBalancer::instance = NULL;
 
-  void LocalTiledLoadBalancer::RenderTask::finish()
+  void LocalTiledLoadBalancer::RenderTask::finish() const
   {
-    renderer->endFrame(channelFlags);
+    renderer->endFrame(perFrameData,channelFlags);
     renderer = NULL;
     fb = NULL;
   }
 
-  void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex) 
+#ifdef OSPRAY_USE_TBB
+  void LocalTiledLoadBalancer::RenderTask::operator()
+  (const tbb::blocked_range<int> &range) const
+  {
+    for (int taskIndex = range.begin();
+         taskIndex != range.end();
+         ++taskIndex) {
+      run(taskIndex);
+    }
+  }
+#endif
+
+  void LocalTiledLoadBalancer::RenderTask::run(size_t taskIndex) const
   {
     Tile tile;
     const size_t tile_y = taskIndex / numTiles_x;
@@ -45,10 +75,35 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
-    renderer->renderTile(tile);
-    // printf("settile... twice?\n");
+    const int spp = renderer->spp;
+    const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+                       std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
+                            RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+
+#ifdef OSPRAY_USE_TBB
+    TileWorkerTBB worker;
+    worker.tile         = &tile;
+    worker.renderer     = renderer.ptr;
+    worker.perFrameData = perFrameData;
+    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < numJobs; ++i) {
+      renderer->renderTile(perFrameData, tile, i);
+    }
+#endif
     fb->setTile(tile);
+  }
+
+  LocalTiledLoadBalancer::LocalTiledLoadBalancer()
+#ifdef OSPRAY_USE_TBB
+    : tbb_init(numThreads)
+#endif
+  {
   }
 
   /*! render a frame via the tiled load balancer */
@@ -59,39 +114,47 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
-    Ref<RenderTask> renderTask = new RenderTask;
-    renderTask->fb = fb;
-    renderTask->renderer = tiledRenderer;
-    renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-    renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-    renderTask->channelFlags = channelFlags;
-    tiledRenderer->beginFrame(fb);
-    
-    renderTask->schedule(renderTask->numTiles_x*renderTask->numTiles_y);
-    renderTask->wait();
+    void *perFrameData = tiledRenderer->beginFrame(fb);
 
-    // /*! iw: using a local sync event for now; "in theory" we should be
-    //     able to attach something like a sync event to the frame
-    //     buffer, just trigger the task here, and let somebody else sync
-    //     on the framebuffer once it is needed; alas, I'm currently
-    //     running into some issues with the embree taks system when
-    //     trying to do so, and thus am reverting to this
-    //     fully-synchronous version for now */
+    RenderTask renderTask;
+    renderTask.fb = fb;
+    renderTask.renderer = tiledRenderer;
+    renderTask.perFrameData = perFrameData;
+    renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+    renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+    renderTask.channelFlags = channelFlags;
 
-    // // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
-    // TaskScheduler::EventSync sync;
-    // renderTask->task = embree::TaskScheduler::Task
-    //   (&sync,
-    //   // (&renderTask->fb->frameIsReadyEvent,
-    //    renderTask->_run,renderTask.ptr,
-    //    renderTask->numTiles_x*renderTask->numTiles_y,
-    //    renderTask->_finish,renderTask.ptr,
-    //    "LocalTiledLoadBalancer::RenderTask");
-    // TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-    // sync.sync();
+    const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+#ifdef OSPRAY_USE_TBB
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < NTASKS; ++i) {
+      renderTask.run(i);
+    }
+#endif
+
+    renderTask.finish();
   }
 
-  void InterleavedTiledLoadBalancer::RenderTask::run(size_t taskIndex)
+  std::string LocalTiledLoadBalancer::toString() const
+  {
+    return "ospray::LocalTiledLoadBalancer";
+  }
+
+#ifdef OSPRAY_USE_TBB
+  void InterleavedTiledLoadBalancer::RenderTask::operator()
+  (const tbb::blocked_range<int> &range) const
+  {
+    for (int taskIndex = range.begin();
+         taskIndex != range.end();
+         ++taskIndex) {
+      run(taskIndex);
+    }
+  }
+#endif
+
+  void InterleavedTiledLoadBalancer::RenderTask::run(size_t taskIndex) const
   {
     int tileIndex = deviceID + numDevices * taskIndex;
 
@@ -104,17 +167,35 @@ namespace ospray {
     tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
     tile.fbSize = fb->size;
     tile.rcp_fbSize = rcp(vec2f(tile.fbSize));
+    tile.generation = 0;
+    tile.children = 0;
 
-    renderer->renderTile(tile);
+    const int spp = renderer->spp;
+    const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+                       std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+    const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
+                            RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+
+#ifdef OSPRAY_USE_TBB
+    TileWorkerTBB worker;
+    worker.tile         = &tile;
+    worker.renderer     = renderer.ptr;
+    worker.perFrameData = perFrameData;
+    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < numJobs; ++i) {
+      renderer->renderTile(perFrameData, tile, i);
+    }
+#endif
   }
 
 
-  void InterleavedTiledLoadBalancer::RenderTask::finish()
+  void InterleavedTiledLoadBalancer::RenderTask::finish() const
   {
-    renderer->endFrame(channelFlags);
+    renderer->endFrame(perFrameData,channelFlags);
     renderer = NULL;
     fb = NULL;
-    // refDec();
   }
 
   /*! render a frame via the tiled load balancer */
@@ -125,23 +206,35 @@ namespace ospray {
     Assert(tiledRenderer);
     Assert(fb);
 
-    Ref<RenderTask> renderTask = new RenderTask;
-    renderTask->fb = fb;
-    renderTask->renderer = tiledRenderer;
-    renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-    renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-    size_t numTiles_total = renderTask->numTiles_x*renderTask->numTiles_y;
-    
-    renderTask->numTiles_mine
+    void *perFrameData = tiledRenderer->beginFrame(fb);
+
+    RenderTask renderTask;
+    renderTask.fb = fb;
+    renderTask.perFrameData = perFrameData;
+    renderTask.renderer     = tiledRenderer;
+    renderTask.numTiles_x   = divRoundUp(fb->size.x,TILE_SIZE);
+    renderTask.numTiles_y   = divRoundUp(fb->size.y,TILE_SIZE);
+    size_t numTiles_total   = renderTask.numTiles_x * renderTask.numTiles_y;
+
+    renderTask.numTiles_mine
       = (numTiles_total / numDevices)
       + (numTiles_total % numDevices > deviceID);
-    renderTask->channelFlags = channelFlags;
-    renderTask->deviceID     = deviceID;
-    renderTask->numDevices   = numDevices;
-    tiledRenderer->beginFrame(fb);
-    
-    renderTask->schedule(renderTask->numTiles_mine);
-    renderTask->wait();
+    renderTask.channelFlags = channelFlags;
+    renderTask.deviceID     = deviceID;
+    renderTask.numDevices   = numDevices;
+
+    const int NTASKS = renderTask.numTiles_mine;
+#ifdef OSPRAY_USE_TBB
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+#else//OpenMP
+#   pragma omp parallel for schedule(dynamic)
+    for (int i = 0; i < NTASKS; ++i) {
+      renderTask.run(i);
+    }
+#endif
+
+    // NOTE(jda) - this line was added to match LocalTiledLoadBalancer...check!
+    //renderTask.finish();
   }
 
 } // ::ospray

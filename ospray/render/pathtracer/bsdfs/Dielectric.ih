@@ -1,0 +1,80 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct Dielectric
+{
+  BSDF super;
+
+  float eta;
+};
+
+inline vec3f Dielectric_eval(const varying BSDF* uniform super,
+                             const vec3f& wo, const vec3f& wi, float& pdf)
+{
+  return make_vec3f(0.0f);
+}
+
+inline vec3f Dielectric_sample(const varying BSDF* uniform super,
+                               const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                               const vec2f& s, float ss)
+{
+  const varying Dielectric* uniform self = (const varying Dielectric* uniform)super;
+
+  float cosThetaO = max(dot(wo, getN(super)), 0.0f);
+
+  // Fresnel term
+  float cosThetaT; // positive
+  float F = fresnelDielectricEx(cosThetaO, cosThetaT, self->eta);
+
+  // Sample the reflection or the transmission
+  if (ss <= F)
+  {
+    // Reflection
+    wi = reflect(wo, getN(super), cosThetaO);
+    type = BSDF_SPECULAR_REFLECTION;
+    pdf = F;
+    return make_vec3f(1.0f);
+  }
+  else
+  {
+    // Transmission
+    wi = refract(wo, getN(super), cosThetaO, cosThetaT, self->eta);
+    type = BSDF_SPECULAR_TRANSMISSION;
+    pdf = 1.0f-F;
+    return make_vec3f(sqrf(rcp(self->eta))); // solid angle compression
+  }
+}
+
+inline void Dielectric_Constructor(varying Dielectric* uniform self, const varying linear3f* uniform frame,
+                                   float eta)
+{
+  BSDF_Constructor(&self->super, BSDF_SPECULAR,
+                   Dielectric_eval, Dielectric_sample,
+                   frame);
+  self->eta = eta;
+}
+
+inline varying BSDF* uniform Dielectric_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                               float eta)
+{
+  varying Dielectric* uniform self = (varying Dielectric* uniform)ShadingContext_alloc(ctx, sizeof(Dielectric));
+  Dielectric_Constructor(self, frame, eta);
+  return &self->super;
+}

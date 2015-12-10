@@ -18,11 +18,26 @@
 
 #define TILE_SIZE @OSPRAY_TILE_SIZE@
 
-#cmakedefine OSPRAY_EXP_IMAGE_COMPOSITING
-#cmakedefine OSPRAY_EXP_DISTRIBUTED_VOLUME
-#cmakedefine OSPRAY_EXP_ALPHA_BLENDING
+/*! number of pixels that each job in a parallel rendertile task
+    executes together. Must be a multipel of the maximum possible
+    programCount (16), and must be smaller than TILE_SIZE (in one
+    dimension) */
+#define RENDERTILE_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@
+
+#cmakedefine OSPRAY_EXP_DATA_PARALLEL
+#ifdef OSPRAY_EXP_DATA_PARALLEL
+# define EXP_DATA_PARALLEL 1
+#endif
+
 #cmakedefine OSPRAY_MIC_COI
 #cmakedefine OSPRAY_TARGET_MIC
 #cmakedefine OSPRAY_DISPLAYCLUSTER
 #cmakedefine OSPRAY_MPI
+#ifdef OSPRAY_MPI
+#cmakedefine OSPRAY_EXP_IMAGE_COMPOSITING
+#cmakedefine OSPRAY_EXP_DISTRIBUTED_VOLUME
+#cmakedefine OSPRAY_EXP_ALPHA_BLENDING
 #cmakedefine OSPRAY_MPI_DISTRIBUTED
+#endif
+#cmakedefine OSPRAY_VOLUME_VOXELRANGE_IN_APP
+#cmakedefine OSPRAY_PIN_ASYNC

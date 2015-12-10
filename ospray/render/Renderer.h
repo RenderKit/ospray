@@ -27,7 +27,7 @@ namespace ospray {
   struct Material;
   struct Light;
 
-  /*! \brief abstract base class for all ospray renderers. 
+  /*! \brief abstract base class for all ospray renderers.
 
     \detailed Tthis base renderer abstraction only knows about
     'rendering a frame'; most actual renderers will be derived from a
@@ -37,7 +37,7 @@ namespace ospray {
   struct Renderer : public ManagedObject {
     Renderer() : spp(1) {}
 
-    /*! \brief creates an abstract renderer class of given type 
+    /*! \brief creates an abstract renderer class of given type
 
       The respective renderer type must be a registered renderer type
       in either ospray proper or any already loaded module. For
@@ -51,17 +51,27 @@ namespace ospray {
     virtual std::string toString() const { return "ospray::Renderer"; }
 
     /*! \brief render one frame, and put it into given frame buffer */
-    virtual void renderFrame(FrameBuffer *fb, const uint32 fbChannelFlags);
+    virtual void renderFrame(FrameBuffer *fb,
+                             const uint32 fbChannelFlags);
 
-    /*! \brief called exactly once (on each node) at the beginning of each frame */
-    virtual void beginFrame(FrameBuffer *fb);
+    //! \brief called to initialize a new frame
+    /*! this function gets called exactly once (on each node) at the
+      beginning of each frame, and allows the renderer to do whatever
+      is required to initialize a new frame. In particular, this
+      function _can_ return a pointer to some "per-frame-data"; this
+      pointer (can be NULL) is then passed to 'renderFrame' and
+      'endFrame' to do with as they please
+
+      \returns pointer to per-frame data, or NULL if this does not apply
+     */
+    virtual void *beginFrame(FrameBuffer *fb);
 
     /*! \brief called exactly once (on each node) at the end of each frame */
-    virtual void endFrame(const int32 fbChannelFlags);
+    virtual void endFrame(void *perFrameData, const int32 fbChannelFlags);
 
     /*! \brief called by the load balancer to render one tile of "samples" */
-    virtual void renderTile(Tile &tile);
-    
+    virtual void renderTile(void *perFrameData, Tile &tile, size_t jobID) const;
+
     /*! \brief create a material of given type */
     virtual Material *createMaterial(const char *type) { return NULL; }
 
@@ -72,7 +82,7 @@ namespace ospray {
 
     Model *model;
     FrameBuffer *currentFB;
-    
+
     /*! \brief parameter to prevent self-intersection issues, will be scaled with diameter of the scene */
     float epsilon;
 
@@ -92,8 +102,8 @@ namespace ospray {
   };
 
   /*! \brief registers a internal ospray::<ClassName> renderer under
-      the externally accessible name "external_name" 
-      
+      the externally accessible name "external_name"
+
       \internal This currently works by defining a extern "C" function
       with a given predefined name that creates a new instance of this
       renderer. By having this symbol in the shared lib ospray can
@@ -105,6 +115,6 @@ namespace ospray {
   {                                                                 \
     return new InternalClassName;                                   \
   }
-  
+
 } // ::ospray
 

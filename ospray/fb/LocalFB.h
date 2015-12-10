@@ -36,6 +36,11 @@ namespace ospray {
                      void *colorBufferToUse=NULL);
     virtual ~LocalFrameBuffer();
     
+    //! \brief common function to help printf-debugging 
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const
+    { return "ospray::LocalFrameBuffer"; }
+
     virtual void setTile(Tile &tile);
 
     virtual const void *mapColorBuffer();

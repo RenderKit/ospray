@@ -16,9 +16,10 @@
 
 #pragma once
 
+#include <ospray/ospray.h>
+#include "ospray/common/OSPCommon.h"
 #include <QtGui>
 #include <vector>
-#include <ospray/ospray.h>
 
 class VolumeViewer;
 
@@ -28,7 +29,7 @@ Q_OBJECT
 
 public:
 
-  PreferencesDialog(VolumeViewer *volumeViewer, osp::box3f boundingBox);
+  PreferencesDialog(VolumeViewer *volumeViewer, ospray::box3f boundingBox);
 
 protected slots:
 

@@ -30,8 +30,8 @@ ENDIF()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 SET(OSPRAY_VERSION_MAJOR 0)
-SET(OSPRAY_VERSION_MINOR 8)
-SET(OSPRAY_VERSION_PATCH 2)
+SET(OSPRAY_VERSION_MINOR 9)
+SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION
   ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
 )
@@ -61,6 +61,10 @@ LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
 
 # add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
 OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
+MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
+
+OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?" ON)
+
 MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
 
 IF (WIN32)
@@ -101,7 +105,11 @@ ENDIF(WIN32)
 
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
-INCLUDE(cmake/configure_embree.cmake)
+#INCLUDE(cmake/configure_embree.cmake)
+
+SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
+
+
 INCLUDE(cmake/mpi.cmake)
 IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)

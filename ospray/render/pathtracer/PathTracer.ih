@@ -23,24 +23,12 @@
 
 #define MAX_LIGHTS 1000
 
-
-// to be changed to the ospray image/texture classes, eventually
-struct Image;
-typedef vec3f (*get_nearest_varying_fct)(uniform Image *uniform image, 
-                                         const float u, const float v);
-struct Image
-{
-  vec2ui size;
-  get_nearest_varying_fct get_nearest_varying;
-};
-
 struct PathTracer {
   Renderer super;
-  int32 numRays;
 
   int32 maxDepth;
   float minContribution;
-  Image* uniform backplate;
+  Texture2D* uniform backplate;
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;

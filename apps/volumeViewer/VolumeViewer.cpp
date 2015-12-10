@@ -14,10 +14,11 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "ospray/common/OSPCommon.h"
+#include "VolumeViewer.h"
 #include <algorithm>
 #include "modules/loaders/ObjectFile.h"
 #include "modules/loaders/TriangleMeshFile.h"
-#include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
 #include "LightEditor.h"
@@ -25,6 +26,10 @@
 #include "PreferencesDialog.h"
 #include "ProbeWidget.h"
 #include "OpenGLAnnotationRenderer.h"
+
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+#include "../../modules/loaders/VolumeFile.h"
+#endif
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
                            bool ownModelPerObject,
@@ -34,7 +39,7 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   : objectFileFilenames(objectFileFilenames),
     modelIndex(0),
     ownModelPerObject(ownModelPerObject),
-    boundingBox(osp::vec3f(0.f), osp::vec3f(1.f)),
+    boundingBox(ospray::vec3f(0.f), ospray::vec3f(1.f)),
     renderer(NULL),
     rendererInitialized(false),
     transferFunction(NULL),
@@ -80,9 +85,15 @@ void VolumeViewer::setModel(size_t index)
   rendererInitialized = true;
 
   // Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
-  osp::vec2f voxelRange(0.f);  ospGetVec2f(modelStates[index].volumes[0], "voxelRange", &voxelRange);
+  ospray::vec2f voxelRange(0.f); 
+  OSPVolume volume = modelStates[index].volumes[0];
+#ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+  voxelRange = VolumeFile::voxelRangeOf[volume];
+#else
+  ospGetVec2f(modelStates[index].volumes[0], "voxelRange", &voxelRange);
+#endif
 
-  if(voxelRange != osp::vec2f(0.f)) {
+  if(voxelRange != ospray::vec2f(0.f)) {
     transferFunctionEditor->setDataValueRange(voxelRange);
     isosurfaceEditor->setDataValueRange(voxelRange);
   }
@@ -142,7 +153,7 @@ void VolumeViewer::addGeometry(std::string filename)
     if(QString(filename.c_str()).endsWith(".dds") && modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
 
       OSPMaterial material = ospNewMaterial(renderer, "default");
-      ospSetVec3f(material, "Kd", osp::vec3f(1.f));
+      ospSet3f(material, "Kd", 1,1,1);
       ospSetObject(material, "volume", modelStates[0].volumes[0]);
       ospCommit(material);
 
@@ -157,7 +168,8 @@ void VolumeViewer::addGeometry(std::string filename)
     ospAddGeometry(modelInstance, triangleMesh);
     ospCommit(modelInstance);
 
-    OSPGeometry triangleMeshInstance = ospNewInstance(modelInstance, embree::one);
+    ospray::affine3f xfm = embree::one;
+    OSPGeometry triangleMeshInstance = ospNewInstance(modelInstance, (osp::affine3f&)xfm);
     ospCommit(triangleMeshInstance);
 
     for(size_t i=0; i<modelStates.size(); i++) {
@@ -234,7 +246,7 @@ void VolumeViewer::setSamplingRate(double value)
   render();
 }
 
-void VolumeViewer::setVolumeClippingBox(osp::box3f value)
+void VolumeViewer::setVolumeClippingBox(ospray::box3f value)
 {
   for(size_t i=0; i<modelStates.size(); i++)
     for(size_t j=0; j<modelStates[i].volumes.size(); j++) {
@@ -249,10 +261,10 @@ void VolumeViewer::setVolumeClippingBox(osp::box3f value)
 void VolumeViewer::setSlices(std::vector<SliceParameters> sliceParameters)
 {
   // Provide the slices to OSPRay as the coefficients (a,b,c,d) of the plane equation ax + by + cz + d = 0.
-  std::vector<osp::vec4f> planes;
+  std::vector<ospray::vec4f> planes;
 
   for(size_t i=0; i<sliceParameters.size(); i++)
-    planes.push_back(osp::vec4f(sliceParameters[i].normal.x,
+    planes.push_back(ospray::vec4f(sliceParameters[i].normal.x,
                                 sliceParameters[i].normal.y,
                                 sliceParameters[i].normal.z,
                                 -dot(sliceParameters[i].origin, sliceParameters[i].normal)));
@@ -405,13 +417,13 @@ void VolumeViewer::initObjects()
 
   // Get the bounding box of all volumes of the first model.
   if(modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
-    ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", &boundingBox.lower);
-    ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMax", &boundingBox.upper);
+    ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", (osp::vec3f*)&boundingBox.lower);
+    ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMax", (osp::vec3f*)&boundingBox.upper);
 
     for (size_t i=1; i<modelStates[0].volumes.size(); i++) {
-      osp::box3f volumeBoundingBox;
-      ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMin", &volumeBoundingBox.lower);
-      ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMax", &volumeBoundingBox.upper);
+      ospray::box3f volumeBoundingBox;
+      ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMin", (osp::vec3f*)&volumeBoundingBox.lower);
+      ospGetVec3f(modelStates[0].volumes[i], "boundingBoxMax", (osp::vec3f*)&volumeBoundingBox.upper);
 
       boundingBox.extend(volumeBoundingBox);
     }

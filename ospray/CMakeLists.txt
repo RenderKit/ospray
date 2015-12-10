@@ -18,19 +18,46 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-OPTION(OSPRAY_EXP_IMAGE_COMPOSITING "Experimental compositing")
-IF (OSPRAY_EXP_IMAGE_COMPOSITING)
+OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
+OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
+MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
 
-  OPTION(OSPRAY_EXP_ALPHA_BLENDING "Experimental alpha-blending for compositing")
-  OPTION(OSPRAY_EXP_DISTRIBUTED_VOLUME "Experimental support for distributed volumes")
+# -------------------------------------------------------
+# Setup tasking system build configuration
+# -------------------------------------------------------
+
+SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
+    "Use TBB or OpenMP as for per-node thread tasking system")
+SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY STRINGS TBB OpenMP)
+
+IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
+  SET(USE_TBB TRUE)
+ELSE()
+  SET(USE_TBB FALSE)
 ENDIF()
 
-# build and configure embree
-INCLUDE(../cmake/build_embree.cmake)
-#INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
+IF(USE_TBB)
+  FIND_PACKAGE(TBB REQUIRED)
+  ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
+  INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+ELSE(USE_TBB)
+  FIND_PACKAGE(OpenMP)#NOTE(jda) - intentionally optional (fallback w/o TBB)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  SET(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+ENDIF(USE_TBB)
 
-#ADD_DEFINITIONS(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
-#ADD_DEFINITIONS_ISPC(-DTILE_SIZE=${OSPRAY_TILE_SIZE})
+# -------------------------------------------------------
+# Build and configure embree
+# -------------------------------------------------------
+
+#NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
+INCLUDE(../cmake/build_embree_2.7.1.cmake)
+
+# -------------------------------------------------------
+# Setup ospray source files
+# -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -41,12 +68,12 @@ SET(OSPRAY_SOURCES
   common/OSPCommon.cpp
   common/Core.cpp
   common/Managed.cpp
+  common/ObjectHandle.cpp
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
   common/Library.cpp
-  common/TaskSys.cpp
   common/Thread.cpp
 
   fb/FrameBuffer.ispc
@@ -145,10 +172,10 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Velvet.cpp
   render/pathtracer/materials/Metal.ispc
   render/pathtracer/materials/Metal.cpp
-  render/pathtracer/materials/ThinDielectric.ispc
-  render/pathtracer/materials/ThinDielectric.cpp
-  render/pathtracer/materials/Dielectric.ispc
-  render/pathtracer/materials/Dielectric.cpp
+  render/pathtracer/materials/ThinGlass.ispc
+  render/pathtracer/materials/ThinGlass.cpp
+  render/pathtracer/materials/Glass.ispc
+  render/pathtracer/materials/Glass.cpp
   render/pathtracer/materials/MetallicPaint.ispc
   render/pathtracer/materials/MetallicPaint.cpp
   render/pathtracer/materials/Plastic.ispc
@@ -159,7 +186,6 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
   api/LocalDevice.cpp
-  api/Handle.cpp
   )
 
 # -------------------------------------------------------
@@ -197,14 +223,14 @@ IF (OSPRAY_MPI)
     )
 
   # ============================================
-  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-  ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
-    mpi/testing/TestDistributedApp
-    )
-  TARGET_LINK_LIBRARIES(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
-    ospray${OSPRAY_LIB_SUFFIX}
-    )
+#  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+#  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+#  ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
+#    mpi/testing/TestDistributedApp
+#    )
+#  TARGET_LINK_LIBRARIES(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
+#    ospray${OSPRAY_LIB_SUFFIX}
+#    )
 
 ENDIF()
 
@@ -253,29 +279,26 @@ FIND_PACKAGE(Threads REQUIRED)
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
   ${OSPRAY_SOURCES}
-  )
-
-IF (OSPRAY_ALLOW_EXTERNAL_EMBREE)
-  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR})
-  LINK_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR}/bin)
-  MESSAGE("LINKING EXTENRALLY TO EMBREE IN ${OSPRAY_EMBREE_SOURCE_DIR}")
-ENDIF()
+)
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
   ospray_embree${OSPRAY_LIB_SUFFIX}
+  ${TBB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
-  ${CMAKE_DL_LIBS})
+  ${CMAKE_DL_LIBS}
+)
 
 IF (OSPRAY_DISPLAYCLUSTER)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
-    ${DISPLAYCLUSTER_LIBRARIES})
+    ${DISPLAYCLUSTER_LIBRARIES}
+  )
 ENDIF()
 
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
 INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
-INSTALL(DIRECTORY embree DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
+INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}

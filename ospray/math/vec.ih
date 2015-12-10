@@ -22,7 +22,7 @@
   struct vec2##ABB {                            \
     TYPE x; TYPE y;                             \
   };                                            \
-  
+
 #define __define_ispc_vector3(TYPE,ABB)         \
   struct vec3##ABB {                            \
     TYPE x,y,z;                                 \
@@ -30,7 +30,7 @@
   struct vec3##ABB##a {                         \
     TYPE x,y,z,a;                               \
   };                                            \
-  
+
 #define __define_ispc_vector4(TYPE,ABB)         \
   struct vec4##ABB {                            \
     TYPE x,y,z,w;                               \
@@ -75,7 +75,7 @@ __define_ispc_vector4(float,f);
     ret.y = x;                                                  \
     return ret;                                                 \
   }                                                             \
-  
+
 /*! defines all constructors "make_vec3[T]" and "make_vec3[T]a" for
   3-vector type */
 #define __define_ispc_constructors3(UV,TYPE,ABB,ITYPE,IABB)             \
@@ -155,7 +155,7 @@ __define_ispc_vector4(float,f);
     ret.z = v.z;                                                        \
     return ret;                                                         \
   }                                                                     \
-  
+
 /*! defines all constructors "make_vec4[T]" for 4-vector type */
 #define __define_ispc_constructors4(UV,TYPE,ABB,ITYPE,IABB)     \
   /*! construct vec4 from a single scalar */                    \
@@ -204,25 +204,25 @@ __define_ispc_vector4(float,f);
     ret.w = (TYPE)0;                                            \
     return ret;                                                 \
   }                                                             \
-  
+
 #define __define_ispc_constructors_uv_t(UV,OTYPE,OABB,ITYPE,IABB)       \
   __define_ispc_constructors2(UV,OTYPE,OABB,ITYPE,IABB)                 \
   __define_ispc_constructors3(UV,OTYPE,OABB,ITYPE,IABB)                 \
   __define_ispc_constructors4(UV,OTYPE,OABB,ITYPE,IABB)                 \
-  
+
 #define __define_ispc_constructors_uv(UV,TYPE,ABB)              \
   __define_ispc_constructors_uv_t(UV,TYPE,ABB,int,i)            \
   __define_ispc_constructors_uv_t(UV,TYPE,ABB,unsigned int,ui)  \
   __define_ispc_constructors_uv_t(UV,TYPE,ABB,unsigned int8,uc) \
   __define_ispc_constructors_uv_t(UV,TYPE,ABB,float,f)          \
   __define_ispc_lift_constructors4(UV,TYPE,ABB)                 \
-  
+
 #define __define_ispc_constructors(UV)                  \
   __define_ispc_constructors_uv(UV,unsigned int,ui)     \
   __define_ispc_constructors_uv(UV,unsigned int8,uc)    \
   __define_ispc_constructors_uv(UV,int,i)               \
   __define_ispc_constructors_uv(UV,float,f)             \
-  
+
 __define_ispc_constructors(uniform);
 __define_ispc_constructors(varying);
 
@@ -420,7 +420,7 @@ inline varying vec3f negate(const varying vec3f &a)
     return make_vec4f(a op b.x, a op b.y, a op b.z, a op b.w);          \
   }                                                                     \
 
-// define 'regular' operators  
+// define 'regular' operators
 __define_binary_operator( operator+, + );
 __define_binary_operator( operator-, - );
 __define_binary_operator( operator*, * );
@@ -435,6 +435,12 @@ __define_binary_operator( mul, * );
 
 inline float reduce_max(const vec3f v)
 { return max(max(v.x,v.y),v.z); }
+
+inline float reduce_add(const vec3f v)
+{ return v.x+v.y+v.z; }
+
+inline float reduce_avg(const vec3f v)
+{ return (v.x+v.y+v.z)*(1.0f/3.0f); }
 
 inline uniform bool eq(const uniform vec2f a, const uniform vec2f b)
 { return a.x==b.x && a.y==b.y; }
@@ -491,15 +497,17 @@ inline vec3f cross(const vec3f &a, const vec3f &b)
 // normalize
 // ------------------------------------------------------------------
 /*! compute and return normalized version of uniform vec3f passed to this fct */
-inline uniform vec3f normalize(const uniform vec3f &v) 
+inline uniform vec3f normalize(const uniform vec3f &v)
 { return v * (1.f/sqrt(dot(v,v))); }
 /*! compute and return normalized version of varying vec3f passed to this fct */
-inline vec3f normalize(const vec3f v) 
+inline vec3f normalize(const vec3f v)
 { return v * (1.f/sqrt(dot(v,v))); }
 /*! compute and return normalized version of varying vec3f passed to this fct */
-inline vec3f normalize(const vec3f v, float &len) 
+inline vec3f normalize(const vec3f v, float &len)
 { len = sqrtf(dot(v,v)); return v * rcpf(len); }
 
+inline vec3f safe_normalize(const vec3f v) 
+{ return v * (1.f/sqrt(max(1e-6f,dot(v,v)))); }
 
 
 #define __lift_unary_fct(F)                     \
@@ -518,21 +526,28 @@ __lift_unary_fct(exp)
 
 #undef __lift_unary_fct
 
+/*! make RGBA from RGB */
+inline vec4f make_vec4f(const vec3f rgb, const float a)
+{ return make_vec4f(rgb.x,rgb.y,rgb.z,a); }
+
+/*! make RGBA from RGB */
+inline uniform vec4f make_vec4f(const uniform vec3f rgb, const uniform float a)
+{ return make_vec4f(rgb.x,rgb.y,rgb.z,a); }
 
 // // ------------------------------------------------------------------
 // // vector functions (abs,rcp,...):
 // // ------------------------------------------------------------------
 // /*! return vector of absolute values of input vector */
-// inline uniform vec3f abs(const uniform vec3f v) 
+// inline uniform vec3f abs(const uniform vec3f v)
 // { return make_vec3f(abs(v.x),abs(v.y),abs(v.z)); }
 // /*! return vector of absolute values of input vector */
-// inline vec3f abs(const vec3f v) 
+// inline vec3f abs(const vec3f v)
 // { return make_vec3f(abs(v.x),abs(v.y),abs(v.z)); }
 // /*! return vector of reciprocals of input vector */
-// inline uniform vec3f rcp(const uniform vec3f v) 
+// inline uniform vec3f rcp(const uniform vec3f v)
 // { return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
 // /*! return vector of reciprocals of input vector */
-// inline vec3f rcp(const vec3f v) 
+// inline vec3f rcp(const vec3f v)
 // { return make_vec3f(rcp(v.x),rcp(v.y),rcp(v.z)); }
 
 #define __define_lerp2(ABB)                                             \
@@ -684,6 +699,12 @@ inline uniform float reduce_max(const uniform vec3i &a)
 inline uniform float reduce_max(const uniform vec3f &a)
 { return(max(max(a.x, a.y), a.z)); }
 
+inline uniform float reduce_add(const uniform vec3f &a)
+{ return(a.x+a.y+a.z); }
+
+inline uniform float reduce_avg(const uniform vec3f &a)
+{ return((a.x+a.y+a.z)*(1.0f/3.0f)); }
+
 inline varying vec3f pow(const varying vec3f &a, const varying float b)
 { return(make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b))); }
 
@@ -695,5 +716,3 @@ inline uniform bool isnan(uniform vec3f v)
 
 inline bool isnan(vec3f v)
 { return isnan(v.x+v.y+v.z); }
-
-

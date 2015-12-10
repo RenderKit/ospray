@@ -24,10 +24,17 @@
 
 namespace ospray {
 
-  SharedStructuredVolume::~SharedStructuredVolume()
-  {
-    // No longer listen for changes to voxelData.
+SharedStructuredVolume::SharedStructuredVolume() : voxelData(NULL) {}
+
+SharedStructuredVolume::~SharedStructuredVolume()
+{
+  // No longer listen for changes to voxelData.
     if(voxelData) voxelData->unregisterListener(this);
+  }
+
+  std::string SharedStructuredVolume::toString() const
+  {
+    return("ospray::SharedStructuredVolume<" + voxelType + ">");
   }
 
   void SharedStructuredVolume::commit()
@@ -39,7 +46,7 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  int SharedStructuredVolume::setRegion(const void *source, const vec3i &index, const vec3i &count) 
+  int SharedStructuredVolume::setRegion(const void *source, const vec3i &index, const vec3i &count)
   {
     exitOnCondition(true, "setRegion() not allowed on this volume type; "
                     "volume data must be provided via the voxelData parameter");
@@ -59,13 +66,14 @@ namespace ospray {
     // Get the voxel data.
     voxelData = (Data *)getParamObject("voxelData", NULL);
     exitOnCondition(voxelData == NULL, "no voxel data provided");
-    warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER), 
+    warnOnCondition(!(voxelData->flags & OSP_DATA_SHARED_BUFFER),
                     "the voxel data buffer was not created with the OSP_DATA_SHARED_BUFFER flag; "
                     "use another volume type (e.g. BlockBrickedVolume) for better performance");
 
     // The voxel count.
     size_t voxelCount = (size_t)dimensions.x * (size_t)dimensions.y * (size_t)dimensions.z;
 
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     // Compute the voxel value range for unsigned byte voxels if none was previously specified.
     if (voxelType == "uchar" && findParam("voxelRange") == NULL)
       computeVoxelRange((unsigned char *)voxelData->data, voxelCount);
@@ -77,6 +85,7 @@ namespace ospray {
     // Compute the voxel value range for float voxels if none was previously specified.
     if (voxelType == "double" && findParam("voxelRange") == NULL)
       computeVoxelRange((double *)voxelData->data, voxelCount);
+#endif
 
     // Create an ISPC SharedStructuredVolume object and assign type-specific function pointers.
     int voxelType = (int)getVoxelType();
@@ -94,7 +103,7 @@ namespace ospray {
   {
     // Rebuild volume accelerator when voxelData is committed.
     if(object == voxelData && ispcEquivalent)
-      ispc::StructuredVolume_buildAccelerator(ispcEquivalent);
+      StructuredVolume::buildAccelerator();
   }
 
   // A volume type with XYZ storage order. The voxel data is provided by the application via a shared data buffer.

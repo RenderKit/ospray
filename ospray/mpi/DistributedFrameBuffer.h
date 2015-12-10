@@ -19,32 +19,43 @@
 #include "ospray/mpi/async/CommLayer.h"
 #include "ospray/fb/Tile.h"
 #include "ospray/fb/LocalFB.h"
+#include "ospray/common/Thread.h"
+#include <queue>
 
 namespace ospray {
   using std::cout;
   using std::endl;
 
-  typedef embree::ConditionSys Condition;
+#define QUEUE_PROCESSING_JOBS 0
 
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
   {
+#if QUEUE_PROCESSING_JOBS
+    struct ProcThread : public ospray::Thread {
+      DistributedFrameBuffer *dfb;
+      ProcThread(DistributedFrameBuffer *dfb) : dfb(dfb) {};
+      virtual void run();
+    };
+    ProcThread procThread;
+#endif
+
     //! get number of pixels per tile, in x and y direction
-    virtual vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
+    vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
 
     //! return number of tiles in x and y direction
-    virtual vec2i getNumTiles()  const { return numTiles; };
+    vec2i getNumTiles()  const { return numTiles; };
 
     //! get number of pixels in x and y diretion
-    virtual vec2i getNumPixels() const { return size; }
+    vec2i getNumPixels() const { return size; }
 
     //! number of tiles that "I" own
-    virtual size_t numMyTiles()  const { return myTiles.size(); };
+    size_t numMyTiles()  const { return myTiles.size(); };
 
     /*! color buffer and depth buffer on master */
-    
-    enum { 
+
+    enum {
       /*! command tag that identifies a CommLayer::message as a write
         tile command. this is a command using for sending a tile of
         new samples to another instance of the framebuffer (the one
@@ -72,9 +83,9 @@ namespace ospray {
       alloc'ed in TILE_SIZE pixels */
     struct TileDesc {
       /*! constructor */
-      TileDesc(DistributedFrameBuffer *dfb, 
-                 const vec2i &begin, 
-                 size_t tileID, 
+      TileDesc(DistributedFrameBuffer *dfb,
+                 const vec2i &begin,
+                 size_t tileID,
                  size_t ownerID);
 
       /*! returns whether this tile is one of this particular
@@ -93,9 +104,9 @@ namespace ospray {
         be done by the postop and send-to-master op, and not stored in
         the DFB tile itself */
     struct TileData : public TileDesc {
-      TileData(DistributedFrameBuffer *dfb, 
-                  const vec2i &begin, 
-                  size_t tileID, 
+      TileData(DistributedFrameBuffer *dfb,
+                  const vec2i &begin,
+                  size_t tileID,
                   size_t ownerID);
 
       /*! called exactly once at the beginning of each frame */
@@ -126,11 +137,11 @@ namespace ospray {
     struct WriteOnlyOnceTile : public TileData {
 
       /*! constructor */
-      WriteOnlyOnceTile(DistributedFrameBuffer *dfb, 
-                        const vec2i &begin, 
-                        size_t tileID, 
+      WriteOnlyOnceTile(DistributedFrameBuffer *dfb,
+                        const vec2i &begin,
+                        size_t tileID,
                         size_t ownerID)
-        : TileData(dfb,begin,tileID,ownerID) 
+        : TileData(dfb,begin,tileID,ownerID)
       {}
 
       /*! called exactly once at the beginning of each frame */
@@ -138,7 +149,7 @@ namespace ospray {
 
       /*! called exactly once for each ospray::Tile that needs to get
         written into / composited into this dfb tile.
-        
+
         for a write-once tile, we expect this to be called exactly
         once per tile, so there's not a lot to do in here than
         accumulating the tile data and telling the parent that we're
@@ -153,11 +164,11 @@ namespace ospray {
     struct ZCompositeTile : public TileData {
 
       /*! constructor */
-      ZCompositeTile(DistributedFrameBuffer *dfb, 
-                     const vec2i &begin, 
-                     size_t tileID, 
+      ZCompositeTile(DistributedFrameBuffer *dfb,
+                     const vec2i &begin,
+                     size_t tileID,
                      size_t ownerID)
-        : TileData(dfb,begin,tileID,ownerID) 
+        : TileData(dfb,begin,tileID,ownerID)
       {}
 
       /*! called exactly once at the beginning of each frame */
@@ -185,11 +196,11 @@ namespace ospray {
     struct AlphaBlendTile_simple : public TileData {
 
       /*! constructor */
-      AlphaBlendTile_simple(DistributedFrameBuffer *dfb, 
-                     const vec2i &begin, 
-                     size_t tileID, 
+      AlphaBlendTile_simple(DistributedFrameBuffer *dfb,
+                     const vec2i &begin,
+                     size_t tileID,
                      size_t ownerID)
-        : TileData(dfb,begin,tileID,ownerID) 
+        : TileData(dfb,begin,tileID,ownerID)
       {}
 
       /*! called exactly once at the beginning of each frame */
@@ -209,9 +220,12 @@ namespace ospray {
         float sortOrder;
       };
       std::vector<BufferedTile *> bufferedTile;
+      int currentGeneration;
+      int expectedInNextGeneration;
+      int missingInCurrentGeneration;
       Mutex mutex;
     };
-    
+
     /*! this function gets called whenever one of our tiles is done
         writing/compositing/blending/etc; i.e., as soon as we know
         that all the ingredient tile datas for that tile have been
@@ -222,7 +236,7 @@ namespace ospray {
         to the master (if required), and properly do the bookkeeping
         that this tile is now done. */
     virtual void tileIsCompleted(TileData *tile);
-    
+
 
     /*! message sent to the master when a tile is finished. Todo:
         compress the color data */
@@ -249,31 +263,60 @@ namespace ospray {
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
     Ref<LocalFrameBuffer> localFBonMaster;
+#if QUEUE_PROCESSING_JOBS
+    struct MsgTaskQueue {
+      std::queue<Ref<ospray::Task> > queue;
+      Mutex mutex;
+
+      void addJob(Task *task) {
+        mutex.lock();
+        queue.push(task);
+        mutex.unlock();
+      }
+
+      void waitAll() {
+        mutex.lock();
+        while (!queue.empty()) {
+          Ref<Task> task = queue.front();
+          queue.pop();
+          mutex.unlock();
+          task->wait();
+          mutex.lock();
+        }
+        mutex.unlock();
+      }
+    };
+    MsgTaskQueue msgTaskQueue;
+#endif
+
 
     inline bool IamTheMaster() const { return comm->IamTheMaster(); }
     //! constructor
-    DistributedFrameBuffer(mpi::async::CommLayer *comm, 
-                           const vec2i &numPixels, 
+    DistributedFrameBuffer(mpi::async::CommLayer *comm,
+                           const vec2i &numPixels,
                            size_t myHandle,
                            ColorBufferFormat colorBufferFormat,
                            bool hasDepthBuffer,
                            bool hasAccumBuffer);
-    
+    //! destructor
+    ~DistributedFrameBuffer()
+    { freeTiles(); }
+
     // ==================================================================
     // framebuffer / device interface
     // ==================================================================
-    virtual const void *mapDepthBuffer();
-    virtual const void *mapColorBuffer();
-    virtual void unmap(const void *mappedMem);
+    const void *mapDepthBuffer();
+    const void *mapColorBuffer();
+    void unmap(const void *mappedMem);
 
-    /*! \brief clear (the specified channels of) this frame buffer 
+    /*! \brief clear (the specified channels of) this frame buffer
 
       \details for the *distributed* frame buffer, we assume that
       *all* nodes get this command, and that each instance therefore
       can clear only its own tiles without having to tell any other
       node about it
      */
-    virtual void clear(const uint32 fbChannelFlags);
+    void clear(const uint32 fbChannelFlags) override;
 
     // ==================================================================
     // framebuffer-renderer/loadbalancer interface
@@ -282,10 +325,10 @@ namespace ospray {
     /*! framebuffer-renderer/loadbalancer interface: loadbalancer
         calls this function whenever a local node has finished a tile,
         and wants the (distributed) frame buffer to process it */
-    virtual void setTile(ospray::Tile &tile);
+    void setTile(ospray::Tile &tile) override;
 
-    virtual void startNewFrame();
-    virtual void closeCurrentFrame(bool locked);
+    void startNewFrame();
+    void closeCurrentFrame();
 
     void waitUntilFinished();
 
@@ -297,7 +340,7 @@ namespace ospray {
 
     //! handle incoming message from commlayer. it's the
     //! recipient's job to properly delete the message.
-    virtual void incoming(mpi::async::CommLayer::Message *msg);
+    void incoming(mpi::async::CommLayer::Message *msg) override;
 
     //! process a (non-empty) write tile message at the master
     void processMessage(MasterTileMessage_RGBA_I8 *msg);
@@ -321,7 +364,12 @@ namespace ospray {
         may or may not belong to current instance */
     inline size_t getTileIDof(size_t x, size_t y) const
     { return (x/TILE_SIZE)+(y/TILE_SIZE)*numTiles.x; }
-      
+
+    //! \brief common function to help printf-debugging
+    /*! \detailed Every derived class should overrride this! */
+    virtual std::string toString() const
+    { return "ospray::DistributedFrameBuffer"; }
+
 
     /*! the number of pixels in the (whole) frame buffer (independent
         of which tiles we have).
@@ -332,6 +380,15 @@ namespace ospray {
     vec2i numPixels;
     vec2i maxValidPixelID;
     vec2i numTiles;
+
+    typedef enum {
+      WRITE_ONCE, ALPHA_BLENDING
+    } FrameMode;
+
+    FrameMode frameMode;
+    void setFrameMode(FrameMode newFrameMode) ;
+    void createTiles();
+    void freeTiles();
 
     /*! number of tiles written this frame */
     size_t numTilesCompletedThisFrame;
@@ -344,11 +401,11 @@ namespace ospray {
 
     /*! vector of info for *all* tiles. Each logical tile in the
       screen has an entry here */
-    std::vector<TileDesc *> allTiles;    
+    std::vector<TileDesc *> allTiles;
 
     /*! list of *our* tiles ('our' as in 'that belong to the given
         node'), with the actual data of those tiles */
-    std::vector<TileData *> myTiles; 
+    std::vector<TileData *> myTiles;
 
     /*! mutex used to protect all threading-sensitive data in this
         object */
@@ -373,7 +430,7 @@ namespace ospray {
         loadbalancer even started working on that frame. */
     std::vector<mpi::async::CommLayer::Message *> delayedMessage;
   };
-    
+
 } // ::ospray
 
 

@@ -19,29 +19,29 @@
 struct Medium
 {
   vec3f transmission; //!< Transmissivity of medium.
-  float eta;          //!< Refraction index of medium.
+  float ior;          //!< Refraction index of medium.
 };
 
-inline Medium make_Medium(const vec3f transmission, const float eta)
+inline Medium make_Medium(const vec3f transmission, const float ior)
 {
   Medium m;
   m.transmission = transmission;
-  m.eta = eta;
+  m.ior = ior;
   return m;
 }
 
-inline Medium make_Medium_Vacuum() { 
-  return make_Medium(make_vec3f(1.0f),1.0f); 
+inline Medium make_Medium_Vacuum() {
+  return make_Medium(make_vec3f(1.0f),1.0f);
 }
 
 inline bool eq(const Medium &a, const Medium &b) {
-  return (a.eta == b.eta) & eq(a.transmission, b.transmission);
+  return (a.ior == b.ior) & eq(a.transmission, b.transmission);
 }
 
 inline bool eq(const Medium &a, const uniform Medium &b) {
-  return (a.eta == b.eta) & eq(a.transmission, b.transmission);
+  return (a.ior == b.ior) & eq(a.transmission, b.transmission);
 }
 
 inline uniform bool eq(const uniform Medium &a, const uniform Medium &b) {
-  return (a.eta == b.eta) & eq(a.transmission, b.transmission);
+  return (a.ior == b.ior) & eq(a.transmission, b.transmission);
 }

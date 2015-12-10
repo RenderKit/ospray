@@ -169,6 +169,7 @@ inline void shade_ao(uniform SimpleAO *uniform self,
 
 
 void SimpleAO_renderSample(uniform Renderer *uniform _self,
+                           void *uniform perFrameData,
                            varying ScreenSample &sample)
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
