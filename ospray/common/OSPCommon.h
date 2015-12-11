@@ -23,11 +23,6 @@
 // the first "#include <mpi>"
 #include "OSPConfig.h"
 
-// mpi, if we need it
-#ifdef OSPRAY_MPI
-# include <mpi.h>
-#endif
-
 #ifdef _WIN32
   typedef unsigned long long id_t;
 #endif
