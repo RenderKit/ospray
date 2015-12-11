@@ -64,10 +64,6 @@ namespace ospray {
 
           void run(size_t jobID) const;
           void finish() const;
-
-#ifdef OSPRAY_USE_TBB
-          void operator()(const tbb::blocked_range<int>& range) const;
-#endif
         };
         
         /*! number of tiles preallocated to this client; we can always
