@@ -17,7 +17,10 @@
 IF (WIN32)
   FIND_PATH(TBB_ROOT include/tbb/task_scheduler_init.h
     DOC "Root of TBB installation"
-    PATHS ${PROJECT_SOURCE_DIR}/tbb "C:/Program Files (x86)/Intel/Composer XE/tbb"
+    PATHS
+      ${PROJECT_SOURCE_DIR}/tbb
+      "C:/Program Files (x86)/Intel/Composer XE/tbb"
+      "C:/Program Files (x86)/Intel/compilers_and_libraries/windows/tbb"
   )
 
   IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
