@@ -148,11 +148,10 @@ namespace ospray {
     CacheForBlockTiles blockTileCache(numBlocks);
     // for (int i=0;i<numBlocks;i++)
     //   PRINT(dpv->ddBlock[i].bounds);
-    bool blockWasVisible[numBlocks];
+    bool *blockWasVisible = (bool*)alloca(numBlocks*sizeof(bool));
     for (int i=0;i<numBlocks;i++)
       blockWasVisible[i] = false;
-    bool renderForeAndBackground
-        = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
+    bool renderForeAndBackground = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
