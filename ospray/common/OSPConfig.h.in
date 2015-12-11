@@ -41,3 +41,9 @@
 #endif
 #cmakedefine OSPRAY_VOLUME_VOXELRANGE_IN_APP
 #cmakedefine OSPRAY_PIN_ASYNC
+
+/*! if defined, we'll be using the novel block-bricked volume layout
+    with ghost cells. this requires some more memory than the old
+    block-bricked code - and is significantly less tested - but should
+    be faster */
+#cmakedefine EXP_NEW_BB_VOLUME_KERNELS

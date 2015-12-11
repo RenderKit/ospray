@@ -14,9 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/volume/PaddedBlockBrickedVolume.ih"
-
-extern uniform bool g_dbg;
+#include "ospray/volume/GhostBlockBrickedVolume.ih"
 
 #define BLOCK_BITS (7)
 #define BRICK_BITS (2)
@@ -43,7 +41,9 @@ extern uniform bool g_dbg;
 #define BRICK_BIT_SCALE_X_HI ((1<<BRICK_BIT_START_X_HI))
 #define BRICK_BIT_SCALE_Y_HI ((1<<BRICK_BIT_START_Y_HI))
 #define BRICK_BIT_SCALE_Z_HI ((1<<BRICK_BIT_START_Z_HI))
- 
+
+/*! structure that encodes a block:offset style address for a single
+    sample */ 
 struct Address {
 
   //! The 1D address of the block in the volume containing the voxel.
@@ -53,6 +53,10 @@ struct Address {
   varying uint32 voxel;
 };
 
+
+/*! struct that encodes all 8 corners in a (ghosted) block by block
+    ID, base of the lower-left, and offset's to the +1's in x,y,and
+    z. Deltas fully contain the effet of bricking */
 struct Address8 {
 
   //! The 1D address of the block in the volume containing the voxel.
@@ -65,30 +69,20 @@ struct Address8 {
   varying uint32 voxelOfs_dz;
 };
 
-struct AllCornerAddresses {
-
-  //! The 1D address of the block in the volume containing the voxel.
-  varying uint32 block;
-
-  //! The 1D offset of the voxel in the enclosing block.
-  varying uint32 voxel[2][2][2];
-};
-
+/*! fast 32-bit integer division via floats */
 inline int fast_div(int x)
-{
-  return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f)));
-}
+{ return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f))); }
 
+/*! fast 32-bit integer division via floats; for the case where we
+    already have a float-version of the original integer */
 inline int fast_div(float x)
-{
-  return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f)));
-}
+{ return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f))); }
 
+/*! compute address8 for a given voxel index, including bricking */
 inline int brickTranslation(const vec3i &voxelIdxInBlock)
 {
   const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
   const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
-
   return
     (voxelIdxInBrick.x << (0*BRICK_BITS))
     | (voxelIdxInBrick.y << (1*BRICK_BITS))
@@ -99,6 +93,7 @@ inline int brickTranslation(const vec3i &voxelIdxInBlock)
     ;
 }
 
+/*! compute address8 for a given voxel index, including bricking */
 inline void brickTranslation(const vec3i &voxelIdxInBlock,
                              Address8 &addr)
 {
@@ -124,7 +119,7 @@ inline void brickTranslation(const vec3i &voxelIdxInBlock,
     (brickIdxInBlock.z << BRICK_BIT_START_Z_HI);
 }
 
-inline void PaddedBlockBrickedVolume_getVoxelAddress8(PaddedBlockBrickedVolume *uniform volume,
+inline void GhostBlockBrickedVolume_getVoxelAddress8(GhostBlockBrickedVolume *uniform volume,
                                                       const varying vec3f &voxelIdxInVolume_f,
                                                       const varying vec3i &voxelIdxInVolume,
                                                       varying Address8 &address)
@@ -143,7 +138,7 @@ inline void PaddedBlockBrickedVolume_getVoxelAddress8(PaddedBlockBrickedVolume *
 }
 
 
-inline void PaddedBlockBrickedVolume_getVoxelAddress(PaddedBlockBrickedVolume *uniform volume,
+inline void GhostBlockBrickedVolume_getVoxelAddress(GhostBlockBrickedVolume *uniform volume,
                                                      const varying vec3i &voxelIdxInVolume,
                                                      varying Address &address)
 {
@@ -171,7 +166,7 @@ inline void PaddedBlockBrickedVolume_getVoxelAddress(PaddedBlockBrickedVolume *u
     ;
 }
 
-inline bool PaddedBlockBrickedVolume_getPaddedAddress(PaddedBlockBrickedVolume *uniform volume,
+inline bool GhostBlockBrickedVolume_getGhostAddress(GhostBlockBrickedVolume *uniform volume,
                                                       const varying vec3i &voxelIdxInVolume,
                                                       const uniform vec3i delta,
                                                       varying Address &address)
@@ -222,57 +217,22 @@ inline bool PaddedBlockBrickedVolume_getPaddedAddress(PaddedBlockBrickedVolume *
     | brickIdxInBlock.y << (2*BRICK_BITS+1*BLOCK_BITS)
     | brickIdxInBlock.z << (1*BRICK_BITS+2*BLOCK_BITS);
 
-
-
-
-
-  // // Compute the 3D offset of the brick within the block containing the voxel.
-  // vec3i brickOffset = index - blockIndex * make_vec3i(((1<<BLOCK_WIDTH_BITCOUNT)-1));
-  // if (g_dbg)
-  //   print("brickOffset % % %\n",brickOffset.x,brickOffset.y,brickOffset.z);
-
-  // if (g_dbg)
-  //   print("blockIndex % % %\n",blockIndex.x,blockIndex.y,blockIndex.z);
-  // if (g_dbg)
-  //   print("brickOffset % % %\n",brickOffset.x,brickOffset.y,brickOffset.z);
-
-  // // Compute the 1D address of the block in the volume.
-  // address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
-
-  // // Compute the 3D offset of the voxel in the brick.
-  // const vec3i voxelOffset = bitwise_AND(brickOffset, BRICK_VOXEL_BITMASK);
-  // if (g_dbg)
-  //   print("voxelOffset % % %\n",voxelOffset.x,voxelOffset.y,voxelOffset.z);
-
-  // // Compute the 1D address of the brick in the block.
-  // const uint32 brickAddress
-  //   = brickOffset.x
-  //   + (brickOffset.y << BLOCK_BRICK_WIDTH_BITCOUNT) 
-  //   + (brickOffset.z << 2 * BLOCK_BRICK_WIDTH_BITCOUNT);
-
-  // // Compute the 1D address of the voxel in the block.
-  // address.voxel
-  //   = brickAddress  << (3 * BRICK_BITS)
-  //   | voxelOffset.z << (2 * BRICK_BITS)
-  //   | voxelOffset.y << BRICK_BITS
-  //   | voxelOffset.x;
-
   return valid && blockIndex.x >=0 && blockIndex.y >= 0 && blockIndex.z >= 0;
 }
 
-inline void PaddedBlockBrickedVolumeUChar_getVoxel(void *uniform _volume,
+inline void GhostBlockBrickedVolumeUChar_getVoxel(void *uniform _volume,
                                                    const varying vec3i &index,
                                                    varying float &value)
 {
   // Cast to the actual Volume subtype.
-  PaddedBlockBrickedVolume *uniform volume = (PaddedBlockBrickedVolume *uniform) _volume;
+  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
 
   // Cast to the actual voxel type.
   uint8 *uniform blockMem = (uint8 *uniform) volume->blockMem;
 
   // Compute the 1D address of the block in the volume and the voxel in the block.
   Address address;
-  PaddedBlockBrickedVolume_getVoxelAddress(volume, index, address);
+  GhostBlockBrickedVolume_getVoxelAddress(volume, index, address);
 
   // The voxel value at the 1D address.
   foreach_unique(blockID in address.block) {
@@ -281,19 +241,19 @@ inline void PaddedBlockBrickedVolumeUChar_getVoxel(void *uniform _volume,
   }
 }
 
-inline void PaddedBlockBrickedVolumeFloat_getVoxel(void *uniform _volume,
+inline void GhostBlockBrickedVolumeFloat_getVoxel(void *uniform _volume,
                                                    const varying vec3i &index,
                                                    varying float &value)
 {
   // Cast to the actual Volume subtype.
-  PaddedBlockBrickedVolume *uniform volume = (PaddedBlockBrickedVolume *uniform) _volume;
+  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
 
   // Cast to the actual voxel type.
   float *uniform blockMem = (float *uniform) volume->blockMem;
 
   // Compute the 1D address of the block in the volume and the voxel in the block.
   Address address;
-  PaddedBlockBrickedVolume_getVoxelAddress(volume, index, address);
+  GhostBlockBrickedVolume_getVoxelAddress(volume, index, address);
 
   // The voxel value at the 1D address.
   foreach_unique(blockID in address.block) {
@@ -302,19 +262,19 @@ inline void PaddedBlockBrickedVolumeFloat_getVoxel(void *uniform _volume,
   }
 }
 
-inline void PaddedBlockBrickedVolumeDouble_getVoxel(void *uniform _volume,
+inline void GhostBlockBrickedVolumeDouble_getVoxel(void *uniform _volume,
                                                     const varying vec3i &index,
                                                     varying float &value)
 {
   // Cast to the actual Volume subtype.
-  PaddedBlockBrickedVolume *uniform volume = (PaddedBlockBrickedVolume *uniform) _volume;
+  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
 
   // Cast to the actual voxel type.
   double *uniform blockMem = (double *uniform) volume->blockMem;
 
   // Compute the 1D address of the block in the volume and the voxel in the block.
   Address address;
-  PaddedBlockBrickedVolume_getVoxelAddress(volume, index, address);
+  GhostBlockBrickedVolume_getVoxelAddress(volume, index, address);
 
   // The voxel value at the 1D address.
   foreach_unique(blockID in address.block) {
@@ -323,7 +283,7 @@ inline void PaddedBlockBrickedVolumeDouble_getVoxel(void *uniform _volume,
   }
 }
 
-inline void PaddedBlockBrickedVolume_allocateMemory(PaddedBlockBrickedVolume *uniform volume)
+inline void GhostBlockBrickedVolume_allocateMemory(GhostBlockBrickedVolume *uniform volume)
 {
   // Memory may already have been allocated.
   if (volume->blockMem != NULL) return;
@@ -344,20 +304,11 @@ inline void PaddedBlockBrickedVolume_allocateMemory(PaddedBlockBrickedVolume *un
   }
 }
 
-task void PBBVUChar_setRegionTask(PaddedBlockBrickedVolume *uniform self,
+task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
                                   const uint8 *uniform source,
                                   const uniform vec3i &targetCoord000,
                                   const uniform vec3i &regionSize)
 {
-  // uniform bool dbg
-  //   = targetCoord000.x == 0
-  //   & targetCoord000.y == 0
-  //   & targetCoord000.z == 384;
-
-  // if (g_dbg)
-  // print("target % % %\n",targetCoord000.x,targetCoord000.y,targetCoord000.z);
-
-
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
   const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
@@ -375,8 +326,7 @@ task void PBBVUChar_setRegionTask(PaddedBlockBrickedVolume *uniform self,
         )
       continue;
 
-    PaddedBlockBrickedVolume_getVoxelAddress(self, coord, address);
-    // if (g_dbg) print("setting base % %\n",address.block,address.voxel);
+    GhostBlockBrickedVolume_getVoxelAddress(self, coord, address);
     foreach_unique(blockID in address.block) {
       uint8 *uniform blockPtr
         = ((uint8*uniform)self->blockMem) 
@@ -386,8 +336,7 @@ task void PBBVUChar_setRegionTask(PaddedBlockBrickedVolume *uniform self,
     for (uniform int32 iz=0;iz<2;iz++)
       for (uniform int32 iy=0;iy<2;iy++)
         for (uniform int32 ix=0;ix<2;ix++) {
-          if (PaddedBlockBrickedVolume_getPaddedAddress(self, coord, make_vec3i(ix,iy,iz),address)) {
-            if (g_dbg) print("setting offset % %\n",address.block,address.voxel);
+          if (GhostBlockBrickedVolume_getGhostAddress(self, coord, make_vec3i(ix,iy,iz),address)) {
             foreach_unique(blockID in address.block) {
               uint8 *uniform blockPtr
                 = ((uint8*uniform)self->blockMem) 
@@ -399,7 +348,7 @@ task void PBBVUChar_setRegionTask(PaddedBlockBrickedVolume *uniform self,
   }
 }
 
-task void PBBVFloat_setRegionTask(PaddedBlockBrickedVolume *uniform self,
+task void PBBVFloat_setRegionTask(GhostBlockBrickedVolume *uniform self,
                                   const float *uniform source, 
                                   const uniform vec3i &targetCoord000,
                                   const uniform vec3i &regionSize)
@@ -421,7 +370,7 @@ task void PBBVFloat_setRegionTask(PaddedBlockBrickedVolume *uniform self,
         )
       continue;
 
-    PaddedBlockBrickedVolume_getVoxelAddress(self, coord, address);
+    GhostBlockBrickedVolume_getVoxelAddress(self, coord, address);
     // set voxel itself
     foreach_unique(blockID in address.block) {
       float *uniform blockPtr
@@ -433,7 +382,7 @@ task void PBBVFloat_setRegionTask(PaddedBlockBrickedVolume *uniform self,
     for (uniform int32 iz=0;iz<2;iz++)
       for (uniform int32 iy=0;iy<2;iy++)
         for (uniform int32 ix=0;ix<2;ix++) {
-          if (PaddedBlockBrickedVolume_getPaddedAddress(self, coord, make_vec3i(ix,iy,iz),address)) {
+          if (GhostBlockBrickedVolume_getGhostAddress(self, coord, make_vec3i(ix,iy,iz),address)) {
             foreach_unique(blockID in address.block) {
               float *uniform blockPtr
                 = ((float*uniform)self->blockMem) 
@@ -445,7 +394,7 @@ task void PBBVFloat_setRegionTask(PaddedBlockBrickedVolume *uniform self,
   }
 }
 
-task void PBBVDouble_setRegionTask(PaddedBlockBrickedVolume *uniform self,
+task void PBBVDouble_setRegionTask(GhostBlockBrickedVolume *uniform self,
                                    const double *uniform source, 
                                    const uniform vec3i &targetCoord000,
                                    const uniform vec3i &regionSize)
@@ -466,7 +415,7 @@ task void PBBVDouble_setRegionTask(PaddedBlockBrickedVolume *uniform self,
         coord.z >= self->super.dimensions.z
         )
       continue;
-    PaddedBlockBrickedVolume_getVoxelAddress(self, coord, address);
+    GhostBlockBrickedVolume_getVoxelAddress(self, coord, address);
     foreach_unique(blockID in address.block) {
       double *uniform blockPtr
         = ((double*uniform)self->blockMem)
@@ -478,14 +427,14 @@ task void PBBVDouble_setRegionTask(PaddedBlockBrickedVolume *uniform self,
                                 
 /*! copy given block of voxels into the volume, where source[0] will
   be written to volume[targetCoord000] */
-void PaddedBlockBrickedVolumeUChar_setRegion(void *uniform _volume, 
+void GhostBlockBrickedVolumeUChar_setRegion(void *uniform _volume, 
                                              const void *uniform _source, 
                                              const uniform vec3i &targetCoord000,
                                              const uniform vec3i &regionSize)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] PBBVUChar_setRegionTask((PaddedBlockBrickedVolume*uniform)_volume,
+  launch[numRuns] PBBVUChar_setRegionTask((GhostBlockBrickedVolume*uniform)_volume,
                                           (const uint8*uniform)_source,
                                           targetCoord000,
                                           regionSize);
@@ -493,14 +442,14 @@ void PaddedBlockBrickedVolumeUChar_setRegion(void *uniform _volume,
 
 /*! copy given block of voxels into the volume, where source[0] will
   be written to volume[targetCoord000] */
-void PaddedBlockBrickedVolumeFloat_setRegion(void *uniform _volume, 
+void GhostBlockBrickedVolumeFloat_setRegion(void *uniform _volume, 
                                              const void *uniform _source, 
                                              const uniform vec3i &targetCoord000,
                                              const uniform vec3i &regionSize)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] PBBVFloat_setRegionTask((PaddedBlockBrickedVolume*uniform)_volume,
+  launch[numRuns] PBBVFloat_setRegionTask((GhostBlockBrickedVolume*uniform)_volume,
                                           (const float*uniform)_source,
                                           targetCoord000,
                                           regionSize);
@@ -508,20 +457,20 @@ void PaddedBlockBrickedVolumeFloat_setRegion(void *uniform _volume,
 
 /*! copy given block of voxels into the volume, where source[0] will
   be written to volume[targetCoord000] */
-void PaddedBlockBrickedVolumeDouble_setRegion(void *uniform _volume, 
+void GhostBlockBrickedVolumeDouble_setRegion(void *uniform _volume, 
                                               const void *uniform _source, 
                                               const uniform vec3i &targetCoord000,
                                               const uniform vec3i &regionSize)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] PBBVDouble_setRegionTask((PaddedBlockBrickedVolume*uniform)_volume,
+  launch[numRuns] PBBVDouble_setRegionTask((GhostBlockBrickedVolume*uniform)_volume,
                                            (const double*uniform)_source,
                                            targetCoord000,
                                            regionSize);
 }
 
-void PaddedBlockBrickedVolume_Constructor(PaddedBlockBrickedVolume *uniform volume, 
+void GhostBlockBrickedVolume_Constructor(GhostBlockBrickedVolume *uniform volume, 
                                           /*! pointer to the c++-equivalent class of this entity */
                                           void *uniform cppEquivalent,
                                           const uniform int voxelType, 
@@ -534,18 +483,18 @@ void PaddedBlockBrickedVolume_Constructor(PaddedBlockBrickedVolume *uniform volu
 
   if (volume->voxelType == OSP_UCHAR) {
     volume->voxelSize = sizeof(uniform uint8);
-    volume->super.getVoxel = PaddedBlockBrickedVolumeUChar_getVoxel;
-    volume->setRegion = &PaddedBlockBrickedVolumeUChar_setRegion;
+    volume->super.getVoxel = GhostBlockBrickedVolumeUChar_getVoxel;
+    volume->setRegion = &GhostBlockBrickedVolumeUChar_setRegion;
   }
   else if (volume->voxelType == OSP_FLOAT) {
     volume->voxelSize = sizeof(uniform float);
-    volume->super.getVoxel = PaddedBlockBrickedVolumeFloat_getVoxel;
-    volume->setRegion = &PaddedBlockBrickedVolumeFloat_setRegion;
+    volume->super.getVoxel = GhostBlockBrickedVolumeFloat_getVoxel;
+    volume->setRegion = &GhostBlockBrickedVolumeFloat_setRegion;
   }
   else if (volume->voxelType == OSP_DOUBLE) {
     volume->voxelSize = sizeof(uniform double);    
-    volume->super.getVoxel = PaddedBlockBrickedVolumeDouble_getVoxel;
-    volume->setRegion = &PaddedBlockBrickedVolumeDouble_setRegion;
+    volume->super.getVoxel = GhostBlockBrickedVolumeDouble_getVoxel;
+    volume->setRegion = &GhostBlockBrickedVolumeDouble_setRegion;
   }
   else {
     print("#osp:block_bricked_volume: unknown voxel type\n");
@@ -553,7 +502,7 @@ void PaddedBlockBrickedVolume_Constructor(PaddedBlockBrickedVolume *uniform volu
   }
 
   // Allocate memory.
-  PaddedBlockBrickedVolume_allocateMemory(volume);
+  GhostBlockBrickedVolume_allocateMemory(volume);
 }
 
 
@@ -564,10 +513,10 @@ inline float accessArrayWithOffset(const float *uniform basePtr, varying uint32 
   return *((float *)(base+offset));
 }
 
-inline varying float PaddedBlockBrickedVolume_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
+inline varying float GhostBlockBrickedVolume_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
 {
   // Cast to the actual Volume subtype.
-  PaddedBlockBrickedVolume *uniform volume = (PaddedBlockBrickedVolume *uniform) _volume;
+  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
 
   // Transform the sample location into the local coordinate system.
   vec3f localCoordinates;
@@ -585,7 +534,7 @@ inline varying float PaddedBlockBrickedVolume_computeSample(void *uniform _volum
 
   // Compute the 1D address of the block in the volume and the voxel in the block.
   Address8 address8;
-  PaddedBlockBrickedVolume_getVoxelAddress8(volume, clampedLocalCoordinates, voxelIndex_0, address8);
+  GhostBlockBrickedVolume_getVoxelAddress8(volume, clampedLocalCoordinates, voxelIndex_0, address8);
 
 
   
@@ -667,24 +616,24 @@ inline varying float PaddedBlockBrickedVolume_computeSample(void *uniform _volum
   return volumeSample;
 }
 
-export void *uniform PaddedBlockBrickedVolume_createInstance(void *uniform cppEquivalent,
+export void *uniform GhostBlockBrickedVolume_createInstance(void *uniform cppEquivalent,
                                                              const uniform int voxelType, 
                                                              const uniform vec3i &dimensions)
 {
   // The volume container.
-  PaddedBlockBrickedVolume *uniform volume = uniform new uniform PaddedBlockBrickedVolume;
+  GhostBlockBrickedVolume *uniform volume = uniform new uniform GhostBlockBrickedVolume;
 
-  PaddedBlockBrickedVolume_Constructor(volume, cppEquivalent, voxelType, dimensions);
+  GhostBlockBrickedVolume_Constructor(volume, cppEquivalent, voxelType, dimensions);
   if (voxelType == OSP_FLOAT) {
     print("using hand-inlined computesample fct for padded-block-bricked\n");
     // volume->super.super.computeSample = BlockBrickedVolumeFloat_computeSample;
-    volume->super.super.computeSample = PaddedBlockBrickedVolume_computeSample;
+    volume->super.super.computeSample = GhostBlockBrickedVolume_computeSample;
   }
   return volume;
 }
 
 export void 
-PaddedBlockBrickedVolume_setRegion(void *uniform _self,
+GhostBlockBrickedVolume_setRegion(void *uniform _self,
                                    /* points to the first voxel to be copies. The
                                       voxels at 'soruce' MUST have dimensions
                                       'regionSize', must be organized in 3D-array
@@ -699,6 +648,6 @@ PaddedBlockBrickedVolume_setRegion(void *uniform _self,
                                    const uniform vec3i &regionSize)
 {
   // Cast to the actual Volume subtype.
-  PaddedBlockBrickedVolume *uniform self = (PaddedBlockBrickedVolume *uniform)_self;
+  GhostBlockBrickedVolume *uniform self = (GhostBlockBrickedVolume *uniform)_self;
   self->setRegion(_self,_source,regionCoords,regionSize);
 }

@@ -22,6 +22,8 @@ OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
 OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
 MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
 
+OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" OFF)
+
 # -------------------------------------------------------
 # Setup tasking system build configuration
 # -------------------------------------------------------
@@ -90,10 +92,10 @@ SET(OSPRAY_SOURCES
   camera/PanoramicCamera.ispc
   camera/PanoramicCamera.cpp
 
-#  volume/BlockBrickedVolume.ispc
-#  volume/BlockBrickedVolume.cpp
-  volume/PaddedBlockBrickedVolume.ispc
-  volume/PaddedBlockBrickedVolume.cpp
+  volume/BlockBrickedVolume.ispc
+  volume/BlockBrickedVolume.cpp
+  volume/GhostBlockBrickedVolume.ispc
+  volume/GhostBlockBrickedVolume.cpp
 
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
@@ -289,7 +291,7 @@ TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
   ${TBB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-)
+	)
 
 IF (OSPRAY_DISPLAYCLUSTER)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}

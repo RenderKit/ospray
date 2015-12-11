@@ -144,8 +144,12 @@ void BlockBrickedVolume::commit()
                                          (const ispc::vec3i &)this->dimensions);
   }
 
+#ifdef EXP_NEW_BB_VOLUME_KERNELS
+  /*! in new bb kernel mode we'll be using the code in
+      GhostBlockBrickedVolume.* */
+#else
   // A volume type with 64-bit addressing and multi-level bricked storage order.
   OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
-
+#endif
 } // ::ospray
 

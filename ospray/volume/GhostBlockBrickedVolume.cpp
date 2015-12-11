@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 //ospray
-#include "ospray/volume/PaddedBlockBrickedVolume.h"
-#include "PaddedBlockBrickedVolume_ispc.h"
+#include "ospray/volume/GhostBlockBrickedVolume.h"
+#include "GhostBlockBrickedVolume_ispc.h"
 // std
 #include <cassert>
 
@@ -24,7 +24,7 @@ bool g_dbg = 0;
 
 namespace ospray {
 
-  void PaddedBlockBrickedVolume::commit()
+  void GhostBlockBrickedVolume::commit()
   {
     // The ISPC volume container should already exist. We (currently)
     // require 'dimensions' etc to be set first, followed by call(s)
@@ -39,7 +39,7 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  int PaddedBlockBrickedVolume::setRegion(/* points to the first voxel to be copies. The
+  int GhostBlockBrickedVolume::setRegion(/* points to the first voxel to be copies. The
                                        voxels at 'source' MUST have dimensions
                                        'regionSize', must be organized in 3D-array
                                        order, and must have the same voxel type as the
@@ -62,7 +62,7 @@ namespace ospray {
         values, and they're not being set in sharedstructuredvolume,
         either, so should we actually set them at all!? */
     // Compute the voxel value range for unsigned byte voxels if none was previously specified.
-    Assert2(source,"NULL source in PaddedBlockBrickedVolume::setRegion()");
+    Assert2(source,"NULL source in GhostBlockBrickedVolume::setRegion()");
 
 #ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     if (findParam("voxelRange") == NULL) {
@@ -79,19 +79,19 @@ namespace ospray {
       else if (voxelType == "double") 
         computeVoxelRange((double *) source, numVoxelsInRegion);
       else 
-        throw std::runtime_error("invalid voxelType in PaddedBlockBrickedVolume::setRegion()");
+        throw std::runtime_error("invalid voxelType in GhostBlockBrickedVolume::setRegion()");
     }
 #endif
     // Copy voxel data into the volume.
     if (g_dbg) PING;
-    ispc::PaddedBlockBrickedVolume_setRegion(ispcEquivalent, source, 
+    ispc::GhostBlockBrickedVolume_setRegion(ispcEquivalent, source, 
                                        (const ispc::vec3i &) regionCoords, 
                                        (const ispc::vec3i &) regionSize);
     if (g_dbg) PING;
     return true;
   }
 
-  void PaddedBlockBrickedVolume::createEquivalentISPC() 
+  void GhostBlockBrickedVolume::createEquivalentISPC() 
   {
     // Get the voxel type.
     voxelType = getParamString("voxelType", "unspecified");  
@@ -103,14 +103,16 @@ namespace ospray {
     exitOnCondition(reduce_min(this->dimensions) <= 0, 
                     "invalid volume dimensions (must be set before calling ospSetRegion())");
 
-    // Create an ISPC PaddedBlockBrickedVolume object and assign type-specific function pointers.
-    ispcEquivalent = ispc::PaddedBlockBrickedVolume_createInstance(this,
+    // Create an ISPC GhostBlockBrickedVolume object and assign type-specific function pointers.
+    ispcEquivalent = ispc::GhostBlockBrickedVolume_createInstance(this,
                                                                    (int)getVoxelType(), 
                                                                    (const ispc::vec3i &)this->dimensions);
   }
 
+#ifdef EXP_NEW_BB_VOLUME_KERNELS
   // A volume type with 64-bit addressing and multi-level bricked storage order.
-  OSP_REGISTER_VOLUME(PaddedBlockBrickedVolume, block_bricked_volume);
+  OSP_REGISTER_VOLUME(GhostBlockBrickedVolume, block_bricked_volume);
+#endif
 
 } // ::ospray
 

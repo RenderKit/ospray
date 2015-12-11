@@ -24,17 +24,17 @@ namespace ospray {
   //!  with 64-bit addressing in which the voxel data is laid out in
   //!  memory in multiple pages each in brick order.
   //!
-  class PaddedBlockBrickedVolume : public StructuredVolume {
+  class GhostBlockBrickedVolume : public StructuredVolume {
   public:
 
     //! Constructor.
-    PaddedBlockBrickedVolume() {};
+    GhostBlockBrickedVolume() {};
 
     //! Destructor.
-    virtual ~PaddedBlockBrickedVolume() {};
+    virtual ~GhostBlockBrickedVolume() {};
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::PaddedBlockBrickedVolume<" + voxelType + ">"); }
+    virtual std::string toString() const { return("ospray::GhostBlockBrickedVolume<" + voxelType + ">"); }
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit();

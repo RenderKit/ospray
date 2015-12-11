@@ -19,13 +19,13 @@
 #include "ospray/common/OSPDataType.h"
 #include "ospray/volume/StructuredVolume.ih"
 
-//! \brief ISPC variables and functions for the PaddedBlockBrickedVolume class
-/*! \detailed ISPC variables and functions for the PaddedBlockBrickedVolume class,
+//! \brief ISPC variables and functions for the GhostBlockBrickedVolume class
+/*! \detailed ISPC variables and functions for the GhostBlockBrickedVolume class,
   a concrete implementation of the StructuredVolume class with 64-bit
   addressing in which the voxel data is laid out in memory in multiple
   pages each in brick order.
 */
-struct PaddedBlockBrickedVolume {
+struct GhostBlockBrickedVolume {
 
   //! Fields common to all StructuredVolume subtypes (must be the first entry of this struct).
   StructuredVolume super;
@@ -50,8 +50,8 @@ struct PaddedBlockBrickedVolume {
                             const uniform vec3i &targetCoord000);
 };
 
-void PaddedBlockBrickedVolume_Constructor(PaddedBlockBrickedVolume *uniform volume, 
-                                    /*! pointer to the c++-equivalent class of this entity */
-                                    void *uniform cppEquivalent,
-                                    const uniform int voxelType, 
-                                    const uniform vec3i &dimensions);
+void GhostBlockBrickedVolume_Constructor(GhostBlockBrickedVolume *uniform volume, 
+                                         /*! pointer to the c++-equivalent class of this entity */
+                                         void *uniform cppEquivalent,
+                                         const uniform int voxelType, 
+                                         const uniform vec3i &dimensions);
