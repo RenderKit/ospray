@@ -28,19 +28,6 @@
 #ifdef OSPRAY_USE_TBB
 # include <tbb/blocked_range.h>
 # include <tbb/parallel_for.h>
-
-struct GridAcceleratorWorkerTBB
-{
-  void *volumeIE;
-  void operator()(const tbb::blocked_range<int>& range) const
-  {
-    for (int taskIndex = range.begin();
-         taskIndex != range.end();
-         ++taskIndex) {
-      ispc::GridAccelerator_buildAccelerator(volumeIE, taskIndex);
-    }
-  }
-};
 #endif
 
 namespace ospray {
@@ -102,9 +89,13 @@ void StructuredVolume::commit()
     // Build volume accelerator.
     const int NTASKS = brickCount.x * brickCount.y * brickCount.z;
 #ifdef OSPRAY_USE_TBB
-    GridAcceleratorWorkerTBB task;
-    task.volumeIE = ispcEquivalent;
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), task);
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
+                      [&](const tbb::blocked_range<int> &range) {
+      for (int taskIndex = range.begin();
+           taskIndex != range.end();
+           ++taskIndex)
+        ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
+    });
 #else
 #   pragma omp parallel for
     for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {

@@ -628,6 +628,7 @@ namespace ospray {
       return 0;
     }
 
+
     /*! call a renderer to render a frame buffer */
     void LocalDevice::renderFrame(OSPFrameBuffer _fb,
                                   OSPRenderer    _renderer,

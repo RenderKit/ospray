@@ -19,6 +19,10 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
+// include cmake config first - we need to know the config even before
+// the first "#include <mpi>"
+#include "OSPConfig.h"
+
 // mpi, if we need it
 #ifdef OSPRAY_MPI
 # include <mpi.h>
@@ -42,8 +46,6 @@ typedef int ssize_t;
 // ----------- NOT windows -----------
 # include "unistd.h"
 #endif
-
-#include "OSPConfig.h"
 
 // embree
 #include "common/math/vec2.h"
