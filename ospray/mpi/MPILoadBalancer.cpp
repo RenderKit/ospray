@@ -55,23 +55,6 @@ namespace ospray {
         return "ospray::mpi::staticLoadBalancer::Master";
       }
 
-#ifdef OSPRAY_USE_TBB
-      struct TileWorkerTBB
-      {
-        Tile     *tile;
-        Renderer *renderer;
-        void     *perFrameData;
-        void operator()(const tbb::blocked_range<int>& range) const
-        {
-          for (int taskIndex = range.begin();
-               taskIndex != range.end();
-               ++taskIndex) {
-            renderer->renderTile(perFrameData, *tile, taskIndex);
-          }
-        }
-      };
-#endif
-
       void Slave::RenderTask::finish() const
       {
         renderer = NULL;
@@ -107,11 +90,13 @@ namespace ospray {
                                 RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
 #ifdef OSPRAY_USE_TBB
-        TileWorkerTBB worker;
-        worker.tile         = &tile;
-        worker.renderer     = renderer.ptr;
-        worker.perFrameData = perFrameData;
-        tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+        tbb::parallel_for(tbb::blocked_range<int>(0, numJobs),
+                          [&](const tbb::blocked_range<int> &range){
+          for (int taskIndex = range.begin();
+               taskIndex != range.end();
+               ++taskIndex)
+            renderer->renderTile(perFrameData, tile, taskIndex);
+        });
 #else//OpenMP
 #       pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < numJobs; ++i) {
@@ -124,18 +109,6 @@ namespace ospray {
         delete tilePtr;
 #endif
       }
-
-#ifdef OSPRAY_USE_TBB
-      void Slave::RenderTask::operator()
-      (const tbb::blocked_range<int> &range) const
-      {
-        for (int taskIndex = range.begin();
-             taskIndex != range.end();
-             ++taskIndex) {
-          run(taskIndex);
-        }
-      }
-#endif
 
       void Slave::renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,
@@ -161,7 +134,13 @@ namespace ospray {
 
         const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
 #ifdef OSPRAY_USE_TBB
-        tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), renderTask);
+        tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
+                        [&](const tbb::blocked_range<int> &range){
+          for (int taskIndex = range.begin();
+               taskIndex != range.end();
+               ++taskIndex)
+            renderTask.run(taskIndex);
+        });
 #else//OpenMP
 #       pragma omp parallel for schedule(dynamic)
         for (int i = 0; i < NTASKS; ++i) {

@@ -103,41 +103,6 @@ namespace ospray {
     return cache->getTileForBlock(blockID);
   }
 
-#ifdef OSPRAY_USE_TBB
-  struct VolumeWorkerTBB
-  {
-    void   *rendererIE;
-    void   *fgTile;
-    void   *bgTile;
-    void   *blockTileCache;
-    int    numBlocks;
-    void   *ddBlock;
-    bool   *blockWasVisible;
-    int    tileID;
-    int    myRank;
-    bool   isMyTile;
-
-    void operator()(const tbb::blocked_range<int>& range) const
-    {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex) {
-        ispc::DDDVRRenderer_renderTile(rendererIE,
-                                       *(ispc::Tile*)fgTile,
-                                       *(ispc::Tile*)bgTile,
-                                       blockTileCache,
-                                       numBlocks,
-                                       ddBlock,
-                                       blockWasVisible,
-                                       tileID,
-                                       myRank,
-                                       isMyTile,
-                                       taskIndex);
-      }
-    }
-  };
-#endif
-
   struct DPRenderTask
   {
     mutable Ref<Renderer>     renderer;
@@ -151,10 +116,6 @@ namespace ospray {
     DPRenderTask(int workerRank);
 
     void run(size_t taskIndex) const;
-
-#ifdef OSPRAY_USE_TBB
-  void operator()(const tbb::blocked_range<size_t>& range) const;
-#endif
   };
 
   DPRenderTask::DPRenderTask(int workerRank)
@@ -196,20 +157,24 @@ namespace ospray {
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
 #ifdef OSPRAY_USE_TBB
-    VolumeWorkerTBB worker;
-
-    worker.rendererIE      = renderer->getIE();
-    worker.fgTile          = &fgTile;
-    worker.bgTile          = &bgTile;
-    worker.blockTileCache  = &blockTileCache;
-    worker.numBlocks       = numBlocks;
-    worker.ddBlock         = dpv->ddBlock;
-    worker.blockWasVisible = blockWasVisible;
-    worker.tileID          = tileID;
-    worker.myRank          = ospray::core::getWorkerRank();
-    worker.isMyTile        = renderForeAndBackground;
-
-    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs), worker);
+    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs),
+                      [&](const tbb::blocked_range<int> &range) {
+      for (int taskIndex = range.begin();
+           taskIndex != range.end();
+           ++taskIndex) {
+        ispc::DDDVRRenderer_renderTile(renderer->getIE(),
+                                       (ispc::Tile&)fgTile,
+                                       (ispc::Tile&)bgTile,
+                                       &blockTileCache,
+                                       numBlocks,
+                                       dpv->ddBlock,
+                                       blockWasVisible,
+                                       tileID,
+                                       ospray::core::getWorkerRank(),
+                                       renderForeAndBackground,
+                                       taskIndex);
+      }
+    });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (int taskIndex = 0; taskIndex < numJobs; ++taskIndex) {
@@ -280,17 +245,6 @@ namespace ospray {
       fb->setTile(*tile);
     }
   }
-
-#ifdef OSPRAY_USE_TBB
-  void DPRenderTask::operator()(const tbb::blocked_range<size_t>& range) const
-  {
-    for (int taskIndex = range.begin();
-         taskIndex != range.end();
-         ++taskIndex) {
-      run(taskIndex);
-    }
-  }
-#endif
 
   /*! try if we are running in data-parallel mode, and if
     data-parallel is even required. if not (eg, if there's no
@@ -375,7 +329,13 @@ namespace ospray {
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
 #ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, NTASKS), renderTask);
+    tbb::parallel_for(tbb::blocked_range<size_t>(0, NTASKS),
+                      [&](const tbb::blocked_range<int> &range) {
+      for (int taskIndex = range.begin();
+           taskIndex != range.end();
+           ++taskIndex)
+        renderer->renderTile(perFrameData, tile, taskIndex);
+    });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (size_t i = 0; i < NTASKS; ++i) {

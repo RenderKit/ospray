@@ -24,26 +24,6 @@
 #ifdef OSPRAY_USE_TBB
 # include <tbb/blocked_range.h>
 # include <tbb/parallel_for.h>
-struct SetRegionTask
-{
-  void *ispcEquivalent;
-  void *source;
-  ospray::vec3i regionCoords;
-  ospray::vec3i regionSize;
-
-  void operator()(const tbb::blocked_range<int>& range) const
-  {
-    for (int taskIndex = range.begin();
-         taskIndex != range.end();
-         ++taskIndex) {
-      ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
-                                         source,
-                                         (const ispc::vec3i &) regionCoords,
-                                         (const ispc::vec3i &) regionSize,
-                                         taskIndex);
-    }
-  }
-};
 #endif
 
 namespace ospray {
@@ -119,12 +99,17 @@ void BlockBrickedVolume::commit()
 
     const int NTASKS = regionSize.y * regionSize.z;
 #ifdef OSPRAY_USE_TBB
-    SetRegionTask task;
-    task.ispcEquivalent = ispcEquivalent;
-    task.source         = (void*)source;
-    task.regionCoords   = regionCoords;
-    task.regionSize     = regionSize;
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS), task);
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
+                      [&](const tbb::blocked_range<int> &range) {
+      for (int taskIndex = range.begin();
+           taskIndex != range.end();
+           ++taskIndex)
+        ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
+                                           source,
+                                           (const ispc::vec3i &) regionCoords,
+                                           (const ispc::vec3i &) regionSize,
+                                           taskIndex);
+    });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)
     for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
