@@ -34,39 +34,22 @@ namespace ospray {
       : selectedPointIndex(-1)
     {
       // set colorMap image to widget size
-      colorMapImage = new QImage(size(), QImage::Format_ARGB32_Premultiplied);
-      
+      colorMapImage = QImage(size(), QImage::Format_ARGB32_Premultiplied);
+
       // default colorMap color
-      colorMapImage->fill(QColor::fromRgbF(1,1,1,1).rgb());
-      
+      colorMapImage.fill(QColor::fromRgbF(1,1,1,1).rgb());
+
       // default transfer function points
       // points.push_back(ospray::vec2f(0.,1.));
       points.push_back(ospray::vec2f(0.,0.));
       points.push_back(ospray::vec2f(1.,1.));
     }
 
-    void QTransferFunctionAlphaEditor::makeTexture1D(float texel[], int numTexels)
+    void QTransferFunctionAlphaEditor::setColorMapImage(const QImage &image)
     {
-      for(int i=0; i<numTexels; i++) 
-        texel[i] = getInterpolatedValue(float(i) / float(numTexels - 1));
-    }
-    
-    void QTransferFunctionAlphaEditor::setColorMapImage(QImage *image)
-    {
-      // PING;
-      assert(colorMapImage);
-      delete colorMapImage;
       colorMapImage = image;
-      
-      // trigger repaint
-      // PING;
+
       repaint();
-      // PING;
-    }
-    
-    void QTransferFunctionAlphaEditor::resizeEvent(QResizeEvent * event)
-    {
-      QWidget::resizeEvent(event);
     }
 
     void QTransferFunctionAlphaEditor::paintEvent(QPaintEvent * event)
@@ -92,7 +75,7 @@ namespace ospray {
       painter.setClipPath(clipPath);
       
       painter.setClipping(true);
-      painter.drawImage(rect(), colorMapImage->scaledToWidth(width(), Qt::SmoothTransformation));
+      painter.drawImage(rect(), colorMapImage.scaledToWidth(width(), Qt::SmoothTransformation));
       painter.setClipping(false);
       
       // draw lines between points
@@ -195,7 +178,7 @@ namespace ospray {
 
       QPointF widgetMousePoint = event->posF();
       ospray::vec2f mousePoint = widgetPointToPoint(widgetMousePoint);
-      
+
       // clamp x value
       if(selectedPointIndex == 0) {
         // the first point must have x == 0
@@ -208,13 +191,13 @@ namespace ospray {
         mousePoint.x = std::max(mousePoint.x, points[selectedPointIndex - 1].x);
         mousePoint.x = std::min(mousePoint.x, points[selectedPointIndex + 1].x);
       }
-      
+
       // clamp y value
       mousePoint.y = std::min(mousePoint.y, 1.f);
       mousePoint.y = std::max(mousePoint.y, 0.f);
-      
+
       points[selectedPointIndex] = mousePoint;
-      
+
       repaint();
 
       // emit signal
@@ -226,22 +209,21 @@ namespace ospray {
       return QPointF(point.x * float(width()), 
                      (1.f - point.y) * float(height()));
     }
-    
     ospray::vec2f QTransferFunctionAlphaEditor::widgetPointToPoint(const QPointF &widgetPoint)
     {
       return ospray::vec2f(float(widgetPoint.x()) / float(width()), 
                         1.f - float(widgetPoint.y()) / float(height()));
     }
-    
+
     int QTransferFunctionAlphaEditor::getSelectedPointIndex(const QPointF &widgetClickPoint)
     {
       for(unsigned int i=0; i<points.size(); i++) {
         QPointF delta = pointToWidgetPoint(points[i]) - widgetClickPoint;
-        
+
         if(sqrtf(delta.x()*delta.x() + delta.y()*delta.y()) <= pointPixelRadius)
           return int(i);
       }
-      
+
       return -1;
     }
 
@@ -253,7 +235,7 @@ namespace ospray {
       
       if(x >= 1.)
         return points[points.size()-1].y;
-      
+
       // we could make this more efficient...
       for(unsigned int i=0; i<points.size()-1; i++) {
         if(x <= points[i+1].x) {
@@ -397,8 +379,6 @@ namespace ospray {
 
       transferFunctionAlphaEditor->setColorMapImage(activeColorMap->getRepresentativeImage());
 
-      //      void QTransferFunctionAlphaEditor::setColorMapImage(QImage *image)
-
       updateColorMap();
       emit transferFunctionChanged();
     }
@@ -408,18 +388,18 @@ namespace ospray {
       : name(name), colors(colors)
     {}
 
-    QImage *QTransferFunctionEditor::ColorMap::getRepresentativeImage() const
+    QImage QTransferFunctionEditor::ColorMap::getRepresentativeImage() const
     {
       int numRows = 1;
-      
-      QImage *image = new QImage(int(colors.size()), numRows, 
-                                 QImage::Format_ARGB32_Premultiplied);
-      
+
+      QImage image = QImage(int(colors.size()), numRows,
+                            QImage::Format_ARGB32_Premultiplied);
+
       for(unsigned int i=0; i<colors.size(); i++)
           for(unsigned int j=0; j<numRows; j++)
-            image->setPixel(QPoint(i, j), 
-                            QColor::fromRgbF(colors[i].x, colors[i].y, colors[i].z).rgb());
-      
+            image.setPixel(QPoint(i, j), 
+                           QColor::fromRgbF(colors[i].x, colors[i].y, colors[i].z).rgb());
+
       return image;
     }
 
