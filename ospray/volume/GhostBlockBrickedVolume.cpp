@@ -83,11 +83,9 @@ namespace ospray {
     }
 #endif
     // Copy voxel data into the volume.
-    if (g_dbg) PING;
-    ispc::GhostBlockBrickedVolume_setRegion(ispcEquivalent, source, 
-                                       (const ispc::vec3i &) regionCoords, 
-                                       (const ispc::vec3i &) regionSize);
-    if (g_dbg) PING;
+    ispc::GGBV_setRegion(ispcEquivalent, source, 
+                         (const ispc::vec3i &) regionCoords, 
+                         (const ispc::vec3i &) regionSize);
     return true;
   }
 
@@ -104,9 +102,9 @@ namespace ospray {
                     "invalid volume dimensions (must be set before calling ospSetRegion())");
 
     // Create an ISPC GhostBlockBrickedVolume object and assign type-specific function pointers.
-    ispcEquivalent = ispc::GhostBlockBrickedVolume_createInstance(this,
-                                                                   (int)getVoxelType(), 
-                                                                   (const ispc::vec3i &)this->dimensions);
+    ispcEquivalent = ispc::GGBV_createInstance(this,
+                                               (int)getVoxelType(), 
+                                               (const ispc::vec3i &)this->dimensions);
   }
 
 #ifdef EXP_NEW_BB_VOLUME_KERNELS

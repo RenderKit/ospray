@@ -16,274 +16,317 @@
 
 #include "ospray/volume/GhostBlockBrickedVolume.ih"
 
-#define BLOCK_BITS (7)
+/*! total number of bits per block dimension. '6' would mean 18 bits =
+  1/4million voxels per block, which for alots would be 1MB, so should
+  all fit into a single 2M page (assuming we do 2M allocs, of course) */
+#define BLOCK_BITS (6) 
 #define BRICK_BITS (2)
 
+/*! @{ number of voxels per block per dimension */
 #define BLOCK_WIDTH (1<<BLOCK_BITS)
 #define BRICK_WIDTH (1<<BRICK_BITS)
+/*! @} */
 
+/*! bit mask for extracting the _brick_ bits from a given per-block
+  coordinate */
 #define BRICK_MASK (BRICK_WIDTH-1)
 
 /*! size of one block, in voxels */
 #define VOXELS_PER_BLOCK (BLOCK_WIDTH*BLOCK_WIDTH*BLOCK_WIDTH)
 
+/*! @{ start bit for given section of address in bricked offset field 
 
-#define BRICK_BIT_START_X_LO (2)
-#define BRICK_BIT_START_Y_LO (BRICK_BIT_START_X_LO+BRICK_BITS)
-#define BRICK_BIT_START_Z_LO (BRICK_BIT_START_Y_LO+BRICK_BITS)
-#define BRICK_BIT_START_X_HI (BRICK_BIT_START_Z_LO+BRICK_BITS)
-#define BRICK_BIT_START_Y_HI (BRICK_BIT_START_X_HI+(BLOCK_BITS-BRICK_BITS))
-#define BRICK_BIT_START_Z_HI (BRICK_BIT_START_Y_HI+(BLOCK_BITS-BRICK_BITS))
+  lo is the address part for inside a brick, hi is the remaining part
+  inside the blcok ex the brick part
+*/
+#define BRICK_BIT_X_LO (0)
+#define BRICK_BIT_Y_LO (BRICK_BIT_X_LO+BRICK_BITS)
+#define BRICK_BIT_Z_LO (BRICK_BIT_Y_LO+BRICK_BITS)
+#define BRICK_BIT_X_HI (BRICK_BIT_Z_LO+BRICK_BITS)
+#define BRICK_BIT_Y_HI (BRICK_BIT_X_HI+(BLOCK_BITS-BRICK_BITS))
+#define BRICK_BIT_Z_HI (BRICK_BIT_Y_HI+(BLOCK_BITS-BRICK_BITS))
+/* @} */
 
-#define BRICK_BIT_SCALE_X_LO ((1<<BRICK_BIT_START_X_LO))
-#define BRICK_BIT_SCALE_Y_LO ((1<<BRICK_BIT_START_Y_LO))
-#define BRICK_BIT_SCALE_Z_LO ((1<<BRICK_BIT_START_Z_LO))
-#define BRICK_BIT_SCALE_X_HI ((1<<BRICK_BIT_START_X_HI))
-#define BRICK_BIT_SCALE_Y_HI ((1<<BRICK_BIT_START_Y_HI))
-#define BRICK_BIT_SCALE_Z_HI ((1<<BRICK_BIT_START_Z_HI))
+/*! @{ how much we have to sacle a given linear coordinate inside a
+  brick to end up at the proper bit fields required by the brick
+  translation */
+#define BRICK_BIT_SCALE_X_LO ((1<<BRICK_BIT_X_LO))
+#define BRICK_BIT_SCALE_Y_LO ((1<<BRICK_BIT_Y_LO))
+#define BRICK_BIT_SCALE_Z_LO ((1<<BRICK_BIT_Z_LO))
+#define BRICK_BIT_SCALE_X_HI ((1<<BRICK_BIT_X_HI))
+#define BRICK_BIT_SCALE_Y_HI ((1<<BRICK_BIT_Y_HI))
+#define BRICK_BIT_SCALE_Z_HI ((1<<BRICK_BIT_Z_HI))
+/* @} */
+
+/*! @{ number of bits we have to SHIFT addresses for given type */
+#define shift_per_uint8 0
+#define shift_per_float 2
+#define shift_per_double 3
+/*! @} */
+
+/*! @{ number of bits we have to MULTIPLE offsets with for given
+type */
+#define scale_per_uint8 1
+#define scale_per_float 4
+#define scale_per_double 8
+/*! @} */
+
+
+/*! do a simple type rename/abbreviation, to we have shorter type names */
+typedef GhostBlockBrickedVolume GGBV;
 
 /*! structure that encodes a block:offset style address for a single
-    sample */ 
+  sample */ 
 struct Address {
-
+  
   //! The 1D address of the block in the volume containing the voxel.
   varying uint32 block;
-
+  
   //! The 1D offset of the voxel in the enclosing block.
   varying uint32 voxel;
 };
 
 
 /*! struct that encodes all 8 corners in a (ghosted) block by block
-    ID, base of the lower-left, and offset's to the +1's in x,y,and
-    z. Deltas fully contain the effet of bricking */
+  ID, base of the lower-left, and offset's to the +1's in x,y,and
+  z. Deltas fully contain the effet of bricking */
 struct Address8 {
-
+  
   //! The 1D address of the block in the volume containing the voxel.
   varying uint32 block;
-
+  
   //! The 1D offset (in bytes!) of the voxel in the enclosing block.
   varying uint32 voxelOfs;
+  /*! the offset we have to add to voxelofs to go to the next voxel in
+    x direction (only works for _one_ step in x, not multiple */
   varying uint32 voxelOfs_dx;
+  /*! the offset we have to add to voxelofs to go to the next voxel in
+    y direction (only works for _one_ step in y, not multiple */
   varying uint32 voxelOfs_dy;
+  /*! the offset we have to add to voxelofs to go to the next voxel in
+    z direction (only works for _one_ step in z, not multiple */
   varying uint32 voxelOfs_dz;
 };
 
 /*! fast 32-bit integer division via floats */
-inline int fast_div(int x)
+inline int intDiv(int x)
+// { return ((int)x) / (BLOCK_WIDTH-1.f); }
 { return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f))); }
 
 /*! fast 32-bit integer division via floats; for the case where we
-    already have a float-version of the original integer */
-inline int fast_div(float x)
+  already have a float-version of the original integer */
+inline int intDiv(float x)
+// { return ((int)x) / (BLOCK_WIDTH-1.f); }
 { return (int)((float)x * (1.f/(BLOCK_WIDTH-1.f))); }
 
-/*! compute address8 for a given voxel index, including bricking */
-inline int brickTranslation(const vec3i &voxelIdxInBlock)
-{
-  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
-  const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
-  return
-    (voxelIdxInBrick.x << (0*BRICK_BITS))
-    | (voxelIdxInBrick.y << (1*BRICK_BITS))
-    | (voxelIdxInBrick.z << (2*BRICK_BITS))
-    | (brickIdxInBlock.x << (3*BRICK_BITS+0*(BLOCK_BITS-BRICK_BITS)))
-    | (brickIdxInBlock.y << (3*BRICK_BITS+1*(BLOCK_BITS-BRICK_BITS)))
-    | (brickIdxInBlock.z << (3*BRICK_BITS+2*(BLOCK_BITS-BRICK_BITS)))
-    ;
-}
+#define template_brickTranslation(type)                                 \
+  /*! compute address8 for a given voxel index, including bricking */   \
+  inline void brickTranslation_##type(const vec3i &voxelIdxInBlock,     \
+                                      Address8 &addr)                   \
+  {                                                                     \
+    const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;        \
+    const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK); \
+                                                                        \
+    addr.voxelOfs_dx = (voxelIdxInBrick.x == (BRICK_WIDTH-1))           \
+      ?                                                                 \
+      + (BRICK_BIT_SCALE_X_HI*scale_per_##type)                         \
+      - ((BRICK_WIDTH-1)*BRICK_BIT_SCALE_X_LO*scale_per_##type)         \
+      : (BRICK_BIT_SCALE_X_LO*scale_per_##type);                        \
+                                                                        \
+    addr.voxelOfs_dy = (voxelIdxInBrick.y == (BRICK_WIDTH-1))           \
+      ?                                                                 \
+      + (BRICK_BIT_SCALE_Y_HI*scale_per_##type)                         \
+      - ((BRICK_WIDTH-1)*BRICK_BIT_SCALE_Y_LO*scale_per_##type)         \
+      : (BRICK_BIT_SCALE_Y_LO*scale_per_##type);                        \
+                                                                        \
+    addr.voxelOfs_dz = (voxelIdxInBrick.z == (BRICK_WIDTH-1))           \
+      ?                                                                 \
+      + (BRICK_BIT_SCALE_Z_HI*scale_per_##type)                         \
+      - ((BRICK_WIDTH-1)*BRICK_BIT_SCALE_Z_LO*scale_per_##type)         \
+      : (BRICK_BIT_SCALE_Z_LO*scale_per_##type);                        \
+                                                                        \
+    addr.voxelOfs =                                                     \
+      (voxelIdxInBrick.x << (BRICK_BIT_X_LO+shift_per_##type)) |        \
+      (voxelIdxInBrick.y << (BRICK_BIT_Y_LO+shift_per_##type)) |        \
+      (voxelIdxInBrick.z << (BRICK_BIT_Z_LO+shift_per_##type)) |        \
+      (brickIdxInBlock.x << (BRICK_BIT_X_HI+shift_per_##type)) |        \
+      (brickIdxInBlock.y << (BRICK_BIT_Y_HI+shift_per_##type)) |        \
+      (brickIdxInBlock.z << (BRICK_BIT_Z_HI+shift_per_##type));         \
+         }
 
-/*! compute address8 for a given voxel index, including bricking */
-inline void brickTranslation(const vec3i &voxelIdxInBlock,
-                             Address8 &addr)
-{
-  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
-  const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
+template_brickTranslation(uint8);
+template_brickTranslation(float);
+template_brickTranslation(double);
 
-  addr.voxelOfs_dx = (voxelIdxInBrick.x == (BRICK_WIDTH-1)) 
-    ? +1*BRICK_BIT_SCALE_X_HI - (BRICK_WIDTH-1)*BRICK_BIT_SCALE_X_LO
-    : +1*BRICK_BIT_SCALE_X_LO;
-  addr.voxelOfs_dy = (voxelIdxInBrick.y == (BRICK_WIDTH-1)) 
-    ? +1*BRICK_BIT_SCALE_Y_HI - (BRICK_WIDTH-1)*BRICK_BIT_SCALE_Y_LO
-    : +1*BRICK_BIT_SCALE_Y_LO;
-  addr.voxelOfs_dz = (voxelIdxInBrick.z == (BRICK_WIDTH-1)) 
-    ? +1*BRICK_BIT_SCALE_Z_HI - (BRICK_WIDTH-1)*BRICK_BIT_SCALE_Z_LO
-    : +1*BRICK_BIT_SCALE_Z_LO;
+#define template_getAddress(type)                                       \
+  /* IMPORTANT: this function computes RAW adresses that are to be */   \
+  /* directy added to "unsigned char *" pointers */                     \
+  inline void GGBV_getAddress_##type(GGBV *uniform volume,              \
+                                       const vec3f &voxelIdxInVolume_f, \
+                                       const vec3i &voxelIdxInVolume,   \
+                                     varying Address8 &address)         \
+  {                                                                     \
+    /* Compute the 3D index of the block containing the brick containing the voxel. */ \
+    const vec3i blockIndex = make_vec3i(intDiv(voxelIdxInVolume_f.x),   \
+                                        intDiv(voxelIdxInVolume_f.y),   \
+                                        intDiv(voxelIdxInVolume_f.z));  \
+                                                                        \
+    /* Compute the 1D address of the block in the volume. */            \
+    address.block                                                       \
+      = blockIndex.x                                                    \
+      + volume->blockCount.x * (blockIndex.y                            \
+                                + volume->blockCount.y * blockIndex.z); \
+                                                                        \
+    /* Compute the 3D offset of the brick within the block containing the voxel. */ \
+    const vec3i voxelIdxInBlock                                         \
+      = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);      \
+    brickTranslation_##type(voxelIdxInBlock,address);                   \
+  }                                                                     \
+                                                                        \
+  /* IMPORTANT: this function computes type-relative offsets, so  */    \
+  /* values returned from this function should only be added to */      \
+  /* "type *" pointers */                                               \
+  inline void GGBV_getIndices_##type(GGBV *uniform volume,              \
+                                     const varying vec3i &voxelIdxInVolume, \
+                                     varying Address &address)          \
+  {                                                                     \
+    /* Compute the 3D index of the block containing the brick containing the voxel. */ \
+    const vec3i blockIndex = make_vec3i(intDiv(voxelIdxInVolume.x),     \
+                                        intDiv(voxelIdxInVolume.y),     \
+                                        intDiv(voxelIdxInVolume.z));    \
+                                                                        \
+    /* Compute the 1D address of the block in the volume. */            \
+    address.block                                                       \
+      = blockIndex.x                                                    \
+      + volume->blockCount.x * (blockIndex.y                            \
+                                + volume->blockCount.y * blockIndex.z); \
+                                                                        \
+    /* Compute the 3D offset of the brick within the block containing the voxel. */ \
+    const vec3i voxelIdxInBlock                                         \
+      = voxelIdxInVolume                                                \
+      - blockIndex * make_vec3i(BLOCK_WIDTH-1);                         \
+                                                                        \
+    const vec3i brickIdxInBlock                                         \
+      = voxelIdxInBlock >> BRICK_BITS;                                  \
+    const vec3i voxelIdxInBrick                                         \
+      = bitwise_AND(voxelIdxInBlock,BRICK_MASK);                        \
+                                                                        \
+    address.voxel                                                       \
+      = (voxelIdxInBrick.x << (0*BRICK_BITS))                           \
+      | (voxelIdxInBrick.y << (1*BRICK_BITS))                           \
+      | (voxelIdxInBrick.z << (2*BRICK_BITS))                           \
+      | (brickIdxInBlock.x << (3*BRICK_BITS+0*(BLOCK_BITS-BRICK_BITS))) \
+      | (brickIdxInBlock.y << (3*BRICK_BITS+1*(BLOCK_BITS-BRICK_BITS))) \
+      | (brickIdxInBlock.z << (3*BRICK_BITS+2*(BLOCK_BITS-BRICK_BITS))) \
+      ;                                                                 \
+  }
 
-  addr.voxelOfs = 
-    (voxelIdxInBrick.x << BRICK_BIT_START_X_LO) |
-    (voxelIdxInBrick.y << BRICK_BIT_START_Y_LO) |
-    (voxelIdxInBrick.z << BRICK_BIT_START_Z_LO) |
-    (brickIdxInBlock.x << BRICK_BIT_START_X_HI) |
-    (brickIdxInBlock.y << BRICK_BIT_START_Y_HI) |
-    (brickIdxInBlock.z << BRICK_BIT_START_Z_HI);
-}
+template_getAddress(uint8);
+template_getAddress(float);
+template_getAddress(double);
 
-inline void GhostBlockBrickedVolume_getVoxelAddress8(GhostBlockBrickedVolume *uniform volume,
-                                                      const varying vec3f &voxelIdxInVolume_f,
-                                                      const varying vec3i &voxelIdxInVolume,
-                                                      varying Address8 &address)
-{
-  // Compute the 3D index of the block containing the brick containing the voxel.
-  const vec3i blockIndex = make_vec3i(fast_div(voxelIdxInVolume_f.x),
-                                      fast_div(voxelIdxInVolume_f.y),
-                                      fast_div(voxelIdxInVolume_f.z));
-  
-  // Compute the 1D address of the block in the volume.
-  address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
-
-  // Compute the 3D offset of the brick within the block containing the voxel.
-  const vec3i voxelIdxInBlock = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);
-  brickTranslation(voxelIdxInBlock,address);
-}
-
-
-inline void GhostBlockBrickedVolume_getVoxelAddress(GhostBlockBrickedVolume *uniform volume,
-                                                     const varying vec3i &voxelIdxInVolume,
-                                                     varying Address &address)
-{
-  // Compute the 3D index of the block containing the brick containing the voxel.
-  const vec3i blockIndex = make_vec3i(fast_div(voxelIdxInVolume.x),
-                                      fast_div(voxelIdxInVolume.y),
-                                      fast_div(voxelIdxInVolume.z));
-  
-  // Compute the 1D address of the block in the volume.
-  address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
-
-  // Compute the 3D offset of the brick within the block containing the voxel.
-  const vec3i voxelIdxInBlock = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);
-
-  const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
-  const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
-
-  address.voxel
-    = (voxelIdxInBrick.x << (0*BRICK_BITS))
-    | (voxelIdxInBrick.y << (1*BRICK_BITS))
-    | (voxelIdxInBrick.z << (2*BRICK_BITS))
-    | (brickIdxInBlock.x << (3*BRICK_BITS+0*(BLOCK_BITS-BRICK_BITS)))
-    | (brickIdxInBlock.y << (3*BRICK_BITS+1*(BLOCK_BITS-BRICK_BITS)))
-    | (brickIdxInBlock.z << (3*BRICK_BITS+2*(BLOCK_BITS-BRICK_BITS)))
-    ;
-}
-
-inline bool GhostBlockBrickedVolume_getGhostAddress(GhostBlockBrickedVolume *uniform volume,
-                                                      const varying vec3i &voxelIdxInVolume,
-                                                      const uniform vec3i delta,
-                                                      varying Address &address)
+inline bool GGBV_getGhostIndices(GGBV *uniform volume,
+                                 const varying vec3i &voxelIdxInVolume,
+                                 const uniform vec3i delta,
+                                 varying Address &address)
 {
   // do not set offset value for original sample
-  if (delta.x == 0 && delta.y == 0 && delta.z == 0)
+  if ((delta.x == 0) && (delta.y == 0) && (delta.z == 0))
     return false;
-
+  
   // Compute the 3D index of the block containing the brick containing the voxel.
   // vec3i blockIndex = voxelIdxInVolume / make_vec3i(BLOCK_WIDTH-1);
-  vec3i blockIndex = make_vec3i(fast_div(voxelIdxInVolume.x),
-                                fast_div(voxelIdxInVolume.y),
-                                fast_div(voxelIdxInVolume.z));
-  
+  vec3i blockIndex = make_vec3i(intDiv(voxelIdxInVolume.x),
+                                intDiv(voxelIdxInVolume.y),
+                                intDiv(voxelIdxInVolume.z));
+  vec3i oldBlockIndex = blockIndex;;
+
   // Compute the 3D offset of the brick within the block containing the voxel.
   vec3i voxelIdxInBlock = voxelIdxInVolume - blockIndex * make_vec3i(BLOCK_WIDTH-1);
-  
+  vec3i oldIdxInBlock = voxelIdxInBlock;
+
   bool valid = false;
-  if (voxelIdxInBlock.x == 0 && delta.x == 1) {
+  if ((voxelIdxInBlock.x == 0) && (delta.x == 1)) {
     voxelIdxInBlock.x = BLOCK_WIDTH-1;
     --blockIndex.x;
     valid = true;
   }
-  if (voxelIdxInBlock.y == 0 && delta.y == 1) {
+  if ((voxelIdxInBlock.y == 0) && (delta.y == 1)) {
     voxelIdxInBlock.y = BLOCK_WIDTH-1;
     --blockIndex.y;
     valid = true;
   }
-  if (voxelIdxInBlock.z == 0 && delta.z == 1) {
-    voxelIdxInBlock.y = BLOCK_WIDTH-1;
+  if ((voxelIdxInBlock.z == 0) && (delta.z == 1)) {
+    voxelIdxInBlock.z = BLOCK_WIDTH-1;
     --blockIndex.z;
     valid = true;
   }
-
+  
   // Compute the 1D address of the block in the volume.
   address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
-
   
   const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
   const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
   
   // Compute the 1D address of the voxel in the block.
-  address.voxel
-    = voxelIdxInBrick.x << (0*BRICK_BITS)
-    | voxelIdxInBrick.y << (1*BRICK_BITS)
-    | voxelIdxInBrick.z << (2*BRICK_BITS)
-    | brickIdxInBlock.x << (3*BRICK_BITS-0*BLOCK_BITS)
-    | brickIdxInBlock.y << (2*BRICK_BITS+1*BLOCK_BITS)
-    | brickIdxInBlock.z << (1*BRICK_BITS+2*BLOCK_BITS);
+  address.voxel =
+    (voxelIdxInBrick.x << (BRICK_BIT_X_LO)) |        
+    (voxelIdxInBrick.y << (BRICK_BIT_Y_LO)) |        
+    (voxelIdxInBrick.z << (BRICK_BIT_Z_LO)) |        
+    (brickIdxInBlock.x << (BRICK_BIT_X_HI)) |       
+    (brickIdxInBlock.y << (BRICK_BIT_Y_HI)) |        
+    (brickIdxInBlock.z << (BRICK_BIT_Z_HI));         
 
-  return valid && blockIndex.x >=0 && blockIndex.y >= 0 && blockIndex.z >= 0;
+  return valid && (blockIndex.x >=0) && (blockIndex.y >= 0) && (blockIndex.z >= 0);
 }
 
-inline void GhostBlockBrickedVolumeUChar_getVoxel(void *uniform _volume,
-                                                   const varying vec3i &index,
-                                                   varying float &value)
-{
-  // Cast to the actual Volume subtype.
-  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
 
-  // Cast to the actual voxel type.
-  uint8 *uniform blockMem = (uint8 *uniform) volume->blockMem;
-
-  // Compute the 1D address of the block in the volume and the voxel in the block.
-  Address address;
-  GhostBlockBrickedVolume_getVoxelAddress(volume, index, address);
-
-  // The voxel value at the 1D address.
-  foreach_unique(blockID in address.block) {
-    uint8 *uniform blockPtr = blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);
-    value = blockPtr[address.voxel];
+#define template_accessArray(type)                                \
+  inline float accessArrayWithOffset(const type *uniform basePtr, \
+                                     const varying uint32 offset) \
+  {                                                               \
+    uint8 *uniform base = (uint8 *uniform)basePtr;                \
+    return *((type *)(base+offset));                              \
+  }                                                               \
+  
+template_accessArray(uint8);
+template_accessArray(float);
+template_accessArray(double);
+#undef template_accessArray
+ 
+#define template_getVoxel(type)                                         \
+  /*! get a single voxel. careful - THIS function operates on */        \
+  /* typed offsets, not byte-offsets */                                 \
+  inline void GGBV_getVoxel_##type(void *uniform _volume,               \
+                                   const varying vec3i &index,          \
+                                   varying float &value)                \
+  {                                                                     \
+    /* Cast to the actual Volume subtype. */                            \
+    GGBV *uniform volume = (GGBV *uniform) _volume;                     \
+                                                                        \
+    /* Cast to the actual voxel type.*/                                 \
+    const type *uniform blockMem                                        \
+      = (const type *uniform) volume->blockMem;                         \
+                                                                        \
+    /* Compute the 1D address of the block in the volume and the voxel in the block. */ \
+    Address address;                                                    \
+    GGBV_getIndices_##type(volume, index, address);                      \
+                                                                        \
+    /* The voxel value at the 1D address.*/                             \
+    foreach_unique(blockID in address.block) {                          \
+      const type *uniform blockPtr                                     \
+        = blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);              \
+      value = blockPtr[address.voxel];                                  \
+      /* value = accessArrayWithOffset(blockPtr,address.voxel); */      \
+    }                                                                   \
   }
-}
 
-inline void GhostBlockBrickedVolumeFloat_getVoxel(void *uniform _volume,
-                                                   const varying vec3i &index,
-                                                   varying float &value)
-{
-  // Cast to the actual Volume subtype.
-  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
+template_getVoxel(uint8)
+template_getVoxel(float)
+template_getVoxel(double)
+#undef template_getVoxel
 
-  // Cast to the actual voxel type.
-  float *uniform blockMem = (float *uniform) volume->blockMem;
-
-  // Compute the 1D address of the block in the volume and the voxel in the block.
-  Address address;
-  GhostBlockBrickedVolume_getVoxelAddress(volume, index, address);
-
-  // The voxel value at the 1D address.
-  foreach_unique(blockID in address.block) {
-    float *uniform blockPtr = (float *)blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);
-    value = blockPtr[address.voxel];
-  }
-}
-
-inline void GhostBlockBrickedVolumeDouble_getVoxel(void *uniform _volume,
-                                                    const varying vec3i &index,
-                                                    varying float &value)
-{
-  // Cast to the actual Volume subtype.
-  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
-
-  // Cast to the actual voxel type.
-  double *uniform blockMem = (double *uniform) volume->blockMem;
-
-  // Compute the 1D address of the block in the volume and the voxel in the block.
-  Address address;
-  GhostBlockBrickedVolume_getVoxelAddress(volume, index, address);
-
-  // The voxel value at the 1D address.
-  foreach_unique(blockID in address.block) {
-    double *uniform blockPtr = blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);
-    value = blockPtr[address.voxel];
-  }
-}
-
-inline void GhostBlockBrickedVolume_allocateMemory(GhostBlockBrickedVolume *uniform volume)
+inline void GGBV_allocateMemory(GGBV *uniform volume)
 {
   // Memory may already have been allocated.
   if (volume->blockMem != NULL) return;
@@ -304,7 +347,7 @@ inline void GhostBlockBrickedVolume_allocateMemory(GhostBlockBrickedVolume *unif
   }
 }
 
-task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
+task void PBBVUChar_setRegionTask(GGBV *uniform self,
                                   const uint8 *uniform source,
                                   const uniform vec3i &targetCoord000,
                                   const uniform vec3i &regionSize)
@@ -326,7 +369,7 @@ task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
         )
       continue;
 
-    GhostBlockBrickedVolume_getVoxelAddress(self, coord, address);
+    GGBV_getIndices_uint8(self, coord, address);
     foreach_unique(blockID in address.block) {
       uint8 *uniform blockPtr
         = ((uint8*uniform)self->blockMem) 
@@ -336,11 +379,11 @@ task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
     for (uniform int32 iz=0;iz<2;iz++)
       for (uniform int32 iy=0;iy<2;iy++)
         for (uniform int32 ix=0;ix<2;ix++) {
-          if (GhostBlockBrickedVolume_getGhostAddress(self, coord, make_vec3i(ix,iy,iz),address)) {
+          if (GGBV_getGhostIndices(self, coord, make_vec3i(ix,iy,iz),address)) {
             foreach_unique(blockID in address.block) {
               uint8 *uniform blockPtr
                 = ((uint8*uniform)self->blockMem) 
-                + blockID * (uint64)VOXELS_PER_BLOCK;
+                + (uint64)blockID * (uint64)VOXELS_PER_BLOCK;
               blockPtr[address.voxel] = run[x];
             }
           }
@@ -348,7 +391,7 @@ task void PBBVUChar_setRegionTask(GhostBlockBrickedVolume *uniform self,
   }
 }
 
-task void PBBVFloat_setRegionTask(GhostBlockBrickedVolume *uniform self,
+task void PBBVFloat_setRegionTask(GGBV *uniform self,
                                   const float *uniform source, 
                                   const uniform vec3i &targetCoord000,
                                   const uniform vec3i &regionSize)
@@ -370,7 +413,7 @@ task void PBBVFloat_setRegionTask(GhostBlockBrickedVolume *uniform self,
         )
       continue;
 
-    GhostBlockBrickedVolume_getVoxelAddress(self, coord, address);
+    GGBV_getIndices_float(self, coord, address);
     // set voxel itself
     foreach_unique(blockID in address.block) {
       float *uniform blockPtr
@@ -382,7 +425,7 @@ task void PBBVFloat_setRegionTask(GhostBlockBrickedVolume *uniform self,
     for (uniform int32 iz=0;iz<2;iz++)
       for (uniform int32 iy=0;iy<2;iy++)
         for (uniform int32 ix=0;ix<2;ix++) {
-          if (GhostBlockBrickedVolume_getGhostAddress(self, coord, make_vec3i(ix,iy,iz),address)) {
+          if (GGBV_getGhostIndices(self, coord, make_vec3i(ix,iy,iz),address)) {
             foreach_unique(blockID in address.block) {
               float *uniform blockPtr
                 = ((float*uniform)self->blockMem) 
@@ -394,7 +437,7 @@ task void PBBVFloat_setRegionTask(GhostBlockBrickedVolume *uniform self,
   }
 }
 
-task void PBBVDouble_setRegionTask(GhostBlockBrickedVolume *uniform self,
+task void PBBVDouble_setRegionTask(GGBV *uniform self,
                                    const double *uniform source, 
                                    const uniform vec3i &targetCoord000,
                                    const uniform vec3i &regionSize)
@@ -415,7 +458,7 @@ task void PBBVDouble_setRegionTask(GhostBlockBrickedVolume *uniform self,
         coord.z >= self->super.dimensions.z
         )
       continue;
-    GhostBlockBrickedVolume_getVoxelAddress(self, coord, address);
+    GGBV_getIndices_double(self, coord, address);
     foreach_unique(blockID in address.block) {
       double *uniform blockPtr
         = ((double*uniform)self->blockMem)
@@ -427,14 +470,14 @@ task void PBBVDouble_setRegionTask(GhostBlockBrickedVolume *uniform self,
                                 
 /*! copy given block of voxels into the volume, where source[0] will
   be written to volume[targetCoord000] */
-void GhostBlockBrickedVolumeUChar_setRegion(void *uniform _volume, 
-                                             const void *uniform _source, 
-                                             const uniform vec3i &targetCoord000,
-                                             const uniform vec3i &regionSize)
+void GGBVUChar_setRegion(void *uniform _volume, 
+                         const void *uniform _source, 
+                         const uniform vec3i &targetCoord000,
+                         const uniform vec3i &regionSize)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] PBBVUChar_setRegionTask((GhostBlockBrickedVolume*uniform)_volume,
+  launch[numRuns] PBBVUChar_setRegionTask((GGBV*uniform)_volume,
                                           (const uint8*uniform)_source,
                                           targetCoord000,
                                           regionSize);
@@ -442,14 +485,14 @@ void GhostBlockBrickedVolumeUChar_setRegion(void *uniform _volume,
 
 /*! copy given block of voxels into the volume, where source[0] will
   be written to volume[targetCoord000] */
-void GhostBlockBrickedVolumeFloat_setRegion(void *uniform _volume, 
-                                             const void *uniform _source, 
-                                             const uniform vec3i &targetCoord000,
-                                             const uniform vec3i &regionSize)
+void GGBVFloat_setRegion(void *uniform _volume, 
+                         const void *uniform _source, 
+                         const uniform vec3i &targetCoord000,
+                         const uniform vec3i &regionSize)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] PBBVFloat_setRegionTask((GhostBlockBrickedVolume*uniform)_volume,
+  launch[numRuns] PBBVFloat_setRegionTask((GGBV*uniform)_volume,
                                           (const float*uniform)_source,
                                           targetCoord000,
                                           regionSize);
@@ -457,44 +500,130 @@ void GhostBlockBrickedVolumeFloat_setRegion(void *uniform _volume,
 
 /*! copy given block of voxels into the volume, where source[0] will
   be written to volume[targetCoord000] */
-void GhostBlockBrickedVolumeDouble_setRegion(void *uniform _volume, 
-                                              const void *uniform _source, 
-                                              const uniform vec3i &targetCoord000,
-                                              const uniform vec3i &regionSize)
+void GGBVDouble_setRegion(void *uniform _volume, 
+                          const void *uniform _source, 
+                          const uniform vec3i &targetCoord000,
+                          const uniform vec3i &regionSize)
 {
   // a 'run' is sequence of connected voxels in x direction 
   uniform uint32 numRuns = regionSize.y * regionSize.z;
-  launch[numRuns] PBBVDouble_setRegionTask((GhostBlockBrickedVolume*uniform)_volume,
+  launch[numRuns] PBBVDouble_setRegionTask((GGBV*uniform)_volume,
                                            (const double*uniform)_source,
                                            targetCoord000,
                                            regionSize);
 }
 
-void GhostBlockBrickedVolume_Constructor(GhostBlockBrickedVolume *uniform volume, 
-                                          /*! pointer to the c++-equivalent class of this entity */
-                                          void *uniform cppEquivalent,
-                                          const uniform int voxelType, 
-                                          const uniform vec3i &dimensions)
+#define template_computeSample(type)                                    \
+  inline float GGBV_computeSample_##type(void *uniform _volume,         \
+                                         const vec3f &worldCoordinates) \
+  {                                                                     \
+    /* Cast to the actual Volume subtype. */                            \
+    GGBV *uniform volume = (GGBV *uniform) _volume;                     \
+                                                                        \
+    /* Transform the sample location into the local coordinate system. */ \
+    vec3f localCoordinates;                                             \
+    volume->super.transformWorldToLocal(&volume->super,                 \
+                                        worldCoordinates,               \
+                                        localCoordinates);              \
+                                                                        \
+    /* Coordinates outside the volume are clamped to the volume bounds. */ \
+    const vec3f clampedLocalCoordinates                                 \
+      = clamp(localCoordinates, make_vec3f(0.0f),                       \
+              volume->super.localCoordinatesUpperBound);                \
+                                                                        \
+    /* Lower and upper corners of the box straddling the voxels to be interpolated. */ \
+    const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);   \
+                                                                        \
+    /* Fractional coordinates within the lower corner voxel used during interpolation. */ \
+    const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0); \
+                                                                        \
+    /* Compute the 1D address of the block in the volume and the voxel in the block. */ \
+    Address8 address8;                                                  \
+    GGBV_getAddress_##type(volume, clampedLocalCoordinates,             \
+                           voxelIndex_0, address8);                     \
+      /* split block into 24+8 bits; we'll have to do a foreach_unique */ \
+      /* over the upper 24 bits to satify 64-bit addressing, but at */  \
+      /* least the lower bits we can merge into a single loop */        \
+      const uint32 block_lo = address8.block & 255;                     \
+      const uint32 block_hi = address8.block ^ block_lo;                \
+                                                                        \
+      float retValue;                                                   \
+                                                                        \
+      foreach_unique (unique_block_hi in block_hi) {                    \
+        const uint8 *uniform blockPtrHi                                 \
+          = (uint8 *uniform)volume->blockMem                            \
+          + ((uniform uint64)unique_block_hi)                           \
+          * (VOXELS_PER_BLOCK * scale_per_##type);                      \
+        /* TODO: interleave loads with the address computations ... or at */ \
+        /* least, prefetch upon the first address being known. */       \
+        const uint32 ofs000 = address8.voxelOfs                         \
+          + block_lo*(VOXELS_PER_BLOCK*scale_per_##type);               \
+        const uint32 ofs001 = ofs000+address8.voxelOfs_dx;              \
+        const float val000  = accessArrayWithOffset(blockPtrHi,ofs000);   \
+        const float val001  = accessArrayWithOffset(blockPtrHi,ofs001);   \
+        const float val00   = val000 + frac.x * (val001 - val000);      \
+                                                                        \
+        const uint32 ofs010 = ofs000+address8.voxelOfs_dy;              \
+        const uint32 ofs011 = ofs001+address8.voxelOfs_dy;              \
+        const float val010  = accessArrayWithOffset(blockPtrHi,ofs010);   \
+        const float val011  = accessArrayWithOffset(blockPtrHi,ofs011);   \
+        const float val01   = val010 + frac.x * (val011 - val010);      \
+                                                                        \
+        const uint32 ofs100 = ofs000+address8.voxelOfs_dz;              \
+        const uint32 ofs101 = ofs001+address8.voxelOfs_dz;              \
+        const float val100  = accessArrayWithOffset(blockPtrHi,ofs100);   \
+        const float val101  = accessArrayWithOffset(blockPtrHi,ofs101);   \
+        const float val10   = val100 + frac.x * (val101 - val100);      \
+                                                                        \
+        const uint32 ofs110 = ofs010+address8.voxelOfs_dz;              \
+        const uint32 ofs111 = ofs011+address8.voxelOfs_dz;              \
+        const float val110  = accessArrayWithOffset(blockPtrHi,ofs110);   \
+        const float val111  = accessArrayWithOffset(blockPtrHi,ofs111);   \
+        const float val11   = val110 + frac.x * (val111 - val110);      \
+                                                                        \
+        /* Interpolate the voxel values. */                             \
+        const float val0    = val00  + frac.y * (val01  - val00 );      \
+        const float val1    = val10  + frac.y * (val11  - val10 );      \
+        const float volumeSample  = val0   + frac.z * (val1   - val0  ); \
+                                                                        \
+        retValue = volumeSample;                                        \
+      }                                                                 \
+      return retValue;                                                  \
+  }
+
+template_computeSample(uint8)
+template_computeSample(float)
+template_computeSample(double)
+#undef template_computeSample
+
+void GGBV_Constructor(GGBV *uniform volume, 
+                      /*! pointer to the c++-equivalent class of this entity */
+                      void *uniform cppEquivalent,
+                      const uniform int voxelType, 
+                      const uniform vec3i &dimensions)
 {
   StructuredVolume_Constructor(&volume->super, cppEquivalent, dimensions);
-
+  
   volume->blockMem = NULL;
   volume->voxelType = (OSPDataType) voxelType;
-
+  
   if (volume->voxelType == OSP_UCHAR) {
-    volume->voxelSize = sizeof(uniform uint8);
-    volume->super.getVoxel = GhostBlockBrickedVolumeUChar_getVoxel;
-    volume->setRegion = &GhostBlockBrickedVolumeUChar_setRegion;
+    volume->voxelSize      = sizeof(uniform uint8);
+    volume->super.getVoxel = GGBV_getVoxel_uint8;
+    volume->setRegion      = &GGBVUChar_setRegion;
+    volume->super.super.computeSample = GGBV_computeSample_uint8;
   }
   else if (volume->voxelType == OSP_FLOAT) {
-    volume->voxelSize = sizeof(uniform float);
-    volume->super.getVoxel = GhostBlockBrickedVolumeFloat_getVoxel;
-    volume->setRegion = &GhostBlockBrickedVolumeFloat_setRegion;
+    volume->voxelSize      = sizeof(uniform float);
+    volume->super.getVoxel = GGBV_getVoxel_float;
+    volume->setRegion      = &GGBVFloat_setRegion;
+    volume->super.super.computeSample = GGBV_computeSample_float;
   }
   else if (volume->voxelType == OSP_DOUBLE) {
-    volume->voxelSize = sizeof(uniform double);    
-    volume->super.getVoxel = GhostBlockBrickedVolumeDouble_getVoxel;
-    volume->setRegion = &GhostBlockBrickedVolumeDouble_setRegion;
+    volume->voxelSize      = sizeof(uniform double);    
+    volume->super.getVoxel = GGBV_getVoxel_double;
+    volume->setRegion      = &GGBVDouble_setRegion;
+    volume->super.super.computeSample = GGBV_computeSample_double;
   }
   else {
     print("#osp:block_bricked_volume: unknown voxel type\n");
@@ -502,152 +631,37 @@ void GhostBlockBrickedVolume_Constructor(GhostBlockBrickedVolume *uniform volume
   }
 
   // Allocate memory.
-  GhostBlockBrickedVolume_allocateMemory(volume);
+  GGBV_allocateMemory(volume);
 }
 
-
-inline float accessArrayWithOffset(const float *uniform basePtr, varying uint32 offset)
+export void *uniform GGBV_createInstance(void *uniform cppEquivalent,
+                                         const uniform int voxelType, 
+                                         const uniform vec3i &dimensions)
 {
-  uint8 *uniform base = (uint8 *uniform)basePtr;
-
-  return *((float *)(base+offset));
-}
-
-inline varying float GhostBlockBrickedVolume_computeSample(void *uniform _volume, const varying vec3f &worldCoordinates)
-{
-  // Cast to the actual Volume subtype.
-  GhostBlockBrickedVolume *uniform volume = (GhostBlockBrickedVolume *uniform) _volume;
-
-  // Transform the sample location into the local coordinate system.
-  vec3f localCoordinates;
-  volume->super.transformWorldToLocal((StructuredVolume *uniform)volume, worldCoordinates, localCoordinates);
-
-  // Coordinates outside the volume are clamped to the volume bounds.
-  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), 
-                                              volume->super.localCoordinatesUpperBound);
-
-  // Lower and upper corners of the box straddling the voxels to be interpolated.
-  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
-
-  // Fractional coordinates within the lower corner voxel used during interpolation.
-  const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - float_cast(voxelIndex_0);
-
-  // Compute the 1D address of the block in the volume and the voxel in the block.
-  Address8 address8;
-  GhostBlockBrickedVolume_getVoxelAddress8(volume, clampedLocalCoordinates, voxelIndex_0, address8);
-
-
-  
-  // TODO: this should be a specialization for 'volume < 4GB',
-  // rsulting in two separate functions - one for <= 2G, one for > 2G
-#if 1
-  const float *uniform blockPtr = (float *uniform)volume->blockMem;
-  // TODO: interleave loads with the address computations ... or at
-  // least, prefetch upon the first address being known.
-  const uint32 ofs000 = address8.voxelOfs + address8.block*(VOXELS_PER_BLOCK*sizeof(uniform float));
-  const uint32 ofs001 = ofs000+address8.voxelOfs_dx;
-  const uint32 ofs010 = ofs000+address8.voxelOfs_dy;
-  const uint32 ofs011 = ofs001+address8.voxelOfs_dy;
-  const uint32 ofs100 = ofs000+address8.voxelOfs_dz;
-  const uint32 ofs101 = ofs001+address8.voxelOfs_dz;
-  const uint32 ofs110 = ofs010+address8.voxelOfs_dz;
-  const uint32 ofs111 = ofs011+address8.voxelOfs_dz;
-  const float voxelValue_000 = accessArrayWithOffset(blockPtr,ofs000);
-  const float voxelValue_001 = accessArrayWithOffset(blockPtr,ofs001);
-  const float voxelValue_00 = voxelValue_000 + fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);
-
-  const float voxelValue_010 = accessArrayWithOffset(blockPtr,ofs010);
-  const float voxelValue_011 = accessArrayWithOffset(blockPtr,ofs011);
-  const float voxelValue_01 = voxelValue_010 + fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);
-
-  const float voxelValue_100 = accessArrayWithOffset(blockPtr,ofs100);
-  const float voxelValue_101 = accessArrayWithOffset(blockPtr,ofs101);
-  const float voxelValue_10 = voxelValue_100 + fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);
-
-  const float voxelValue_110 = accessArrayWithOffset(blockPtr,ofs110);
-  const float voxelValue_111 = accessArrayWithOffset(blockPtr,ofs111);
-  const float voxelValue_11 = voxelValue_110 + fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);
-  
-  // Interpolate the voxel values.
-  const float voxelValue_0  = voxelValue_00  + fractionalLocalCoordinates.y * (voxelValue_01  - voxelValue_00 );
-  const float voxelValue_1  = voxelValue_10  + fractionalLocalCoordinates.y * (voxelValue_11  - voxelValue_10 );
-  const float volumeSample  = voxelValue_0   + fractionalLocalCoordinates.z * (voxelValue_1   - voxelValue_0  );
-
-#else
-  // Look up the voxel values to be interpolated.
-  float voxelValue_000 = 0; 
-  float voxelValue_001 = 0; 
-  float voxelValue_010 = 0; 
-  float voxelValue_011 = 0; 
-  float voxelValue_100 = 0; 
-  float voxelValue_101 = 0; 
-  float voxelValue_110 = 0; 
-  float voxelValue_111 = 0; 
-
-  // The voxel value at the 1D address.
-  foreach_unique(blockID in address8.block) {
-    const uint32 ofs000 = address8.voxelOfs;
-    const uint32 dx = address8.voxelOfs_dx;
-    const uint32 dy = address8.voxelOfs_dy;
-    const uint32 dz = address8.voxelOfs_dz;
-
-    const float *uniform const blockPtr = (float *uniform)volume->blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);
-    voxelValue_000 = accessArrayWithOffset(blockPtr,ofs000);
-    voxelValue_001 = accessArrayWithOffset(blockPtr,ofs000+dx);
-    voxelValue_010 = accessArrayWithOffset(blockPtr,ofs000+dy);
-    voxelValue_011 = accessArrayWithOffset(blockPtr,ofs000+dx+dy);
-
-    voxelValue_100 = accessArrayWithOffset(blockPtr,ofs000+dz);
-    voxelValue_101 = accessArrayWithOffset(blockPtr,ofs000+dz+dx);
-    voxelValue_110 = accessArrayWithOffset(blockPtr,ofs000+dz+dy);
-    voxelValue_111 = accessArrayWithOffset(blockPtr,ofs000+dz+dx+dy);
-  }
-  // Interpolate the voxel values.
-  const float voxelValue_00 = voxelValue_000 + fractionalLocalCoordinates.x * (voxelValue_001 - voxelValue_000);
-  const float voxelValue_01 = voxelValue_010 + fractionalLocalCoordinates.x * (voxelValue_011 - voxelValue_010);
-  const float voxelValue_10 = voxelValue_100 + fractionalLocalCoordinates.x * (voxelValue_101 - voxelValue_100);
-  const float voxelValue_11 = voxelValue_110 + fractionalLocalCoordinates.x * (voxelValue_111 - voxelValue_110);
-  const float voxelValue_0  = voxelValue_00  + fractionalLocalCoordinates.y * (voxelValue_01  - voxelValue_00 );
-  const float voxelValue_1  = voxelValue_10  + fractionalLocalCoordinates.y * (voxelValue_11  - voxelValue_10 );
-  const float volumeSample  = voxelValue_0   + fractionalLocalCoordinates.z * (voxelValue_1   - voxelValue_0  );
-
-#endif
-
-  return volumeSample;
-}
-
-export void *uniform GhostBlockBrickedVolume_createInstance(void *uniform cppEquivalent,
-                                                             const uniform int voxelType, 
-                                                             const uniform vec3i &dimensions)
-{
-  // The volume container.
-  GhostBlockBrickedVolume *uniform volume = uniform new uniform GhostBlockBrickedVolume;
-
-  GhostBlockBrickedVolume_Constructor(volume, cppEquivalent, voxelType, dimensions);
-  if (voxelType == OSP_FLOAT) {
-    print("using hand-inlined computesample fct for padded-block-bricked\n");
-    // volume->super.super.computeSample = BlockBrickedVolumeFloat_computeSample;
-    volume->super.super.computeSample = GhostBlockBrickedVolume_computeSample;
-  }
+  // create instance of actual volume type ...
+  GGBV *uniform volume = uniform new uniform GGBV;
+  // ... call constructor to initialize it ...
+  GGBV_Constructor(volume, cppEquivalent, voxelType, dimensions);
+  // ... and return object to caller
   return volume;
 }
-
-export void 
-GhostBlockBrickedVolume_setRegion(void *uniform _self,
-                                   /* points to the first voxel to be copies. The
-                                      voxels at 'soruce' MUST have dimensions
-                                      'regionSize', must be organized in 3D-array
-                                      order, and must have the same voxel type as the
-                                      volume.*/
-                                   const void *uniform _source,
-                                   /*! coordinates of the lower, left, front corner of
-                                     the target region.*/
-                                   const uniform vec3i &regionCoords,
-                                   /*! size of the region that we're writing to; MUST
-                                     be the same as the dimensions of source[][][] */
-                                   const uniform vec3i &regionSize)
+ 
+export void GGBV_setRegion(void *uniform _self,
+                           /* points to the first voxel to be copies. The
+                              voxels at 'soruce' MUST have dimensions
+                              'regionSize', must be organized in 3D-array
+                              order, and must have the same voxel type as the
+                              volume.*/
+                           const void *uniform _source,
+                           /*! coordinates of the lower, left, front corner of
+                             the target region.*/
+                           const uniform vec3i &regionCoords,
+                           /*! size of the region that we're writing to; MUST
+                             be the same as the dimensions of source[][][] */
+                           const uniform vec3i &regionSize)
 {
   // Cast to the actual Volume subtype.
-  GhostBlockBrickedVolume *uniform self = (GhostBlockBrickedVolume *uniform)_self;
+  GGBV *uniform self = (GGBV *uniform)_self;
   self->setRegion(_self,_source,regionCoords,regionSize);
 }
+ 
