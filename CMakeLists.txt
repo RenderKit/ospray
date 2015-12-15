@@ -65,8 +65,6 @@ MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
 
 OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?" ON)
 
-MARK_AS_ADVANCED(OSPRAY_BUILD_ENABLE_KNL)
-
 IF (WIN32)
   SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL "OSPRay with KNC not supported on Windows.")
 ELSE()
@@ -105,7 +103,6 @@ ENDIF(WIN32)
 
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
-#INCLUDE(cmake/configure_embree.cmake)
 
 SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
 

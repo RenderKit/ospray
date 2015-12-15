@@ -148,11 +148,10 @@ namespace ospray {
     CacheForBlockTiles blockTileCache(numBlocks);
     // for (int i=0;i<numBlocks;i++)
     //   PRINT(dpv->ddBlock[i].bounds);
-    bool blockWasVisible[numBlocks];
+    bool *blockWasVisible = (bool*)alloca(numBlocks*sizeof(bool));
     for (int i=0;i<numBlocks;i++)
       blockWasVisible[i] = false;
-    bool renderForeAndBackground
-        = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
+    bool renderForeAndBackground = (taskIndex % core::getWorkerCount()) == core::getWorkerRank();
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
@@ -329,12 +328,12 @@ namespace ospray {
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
 #ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<size_t>(0, NTASKS),
+    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
                       [&](const tbb::blocked_range<int> &range) {
       for (int taskIndex = range.begin();
            taskIndex != range.end();
            ++taskIndex)
-        renderer->renderTile(perFrameData, tile, taskIndex);
+        renderTask.run(taskIndex);
     });
 #else//OpenMP
 #   pragma omp parallel for schedule(dynamic)

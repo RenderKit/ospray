@@ -19,14 +19,8 @@
 /*! \file OSPCommon.h Defines common types and classes that _every_
   ospray file should know about */
 
-// include cmake config first - we need to know the config even before
-// the first "#include <mpi>"
+// include cmake config first
 #include "OSPConfig.h"
-
-// mpi, if we need it
-#ifdef OSPRAY_MPI
-# include <mpi.h>
-#endif
 
 #ifdef _WIN32
   typedef unsigned long long id_t;
@@ -55,7 +49,6 @@ typedef int ssize_t;
 #include "common/math/affinespace.h" // includes "common/math/linearspace[23].h"
 #include "common/sys/ref.h"
 #include "common/sys/alloc.h"
-#include <unistd.h>
 
 // C++11
 #include <atomic>

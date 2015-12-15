@@ -22,7 +22,6 @@
 #include "ospray/volume/Volume.h"
 #include "ospray/transferFunction/TransferFunction.h"
 #include "LocalDevice.h"
-#include "ospray/common/OSPCommon.h"
 #include "ospray/common/Core.h"
 
 #ifdef _WIN32
@@ -63,10 +62,11 @@ namespace ospray {
   }
 #endif
 
+} // ::ospray
+
   std::string getPidString() {
-    pid_t pid = getpid();
     char s[100];
-    sprintf(s,"(pid %i)",pid);
+    sprintf(s, "(pid %i)", getpid());
     return s;
   }
 
@@ -535,11 +535,19 @@ namespace ospray {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec2i(_object, id, (const vec2i &)v);
   }
+
   /*! add a vec3f parameter to another object */
   extern "C" void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v)
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec3f(_object,id,(const vec3f &)v);
+  }
+
+  /*! add a vec4f parameter to another object */
+  extern "C" void ospSetVec4f(OSPObject _object, const char *id, const osp::vec4f &v)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec4f(_object,id,(const vec4f &)v);
   }
 
   /*! add a vec3i parameter to another object */
@@ -603,6 +611,20 @@ namespace ospray {
   {
     ASSERT_DEVICE();
     ospray::api::Device::current->setVec3i(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
+  }
+
+  /*! add a vec4f parameter to another object */
+  extern "C" void ospSet4f(OSPObject _object, const char *id, float x, float y, float z, float w)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec4f(_object,id,vec4f(x,y,z,w));
+  }
+
+  /*! add a vec4f parameter to another object */
+  extern "C" void ospSet4fv(OSPObject _object, const char *id, const float *xyzw)
+  {
+    ASSERT_DEVICE();
+    ospray::api::Device::current->setVec4f(_object,id,vec4f(xyzw[0],xyzw[1],xyzw[2],xyzw[3]));
   }
 
   /*! add a void pointer to another object */
@@ -791,6 +813,4 @@ namespace ospray {
 
     ospray::api::Device::current->sampleVolume(results, volume, (const vec3f *)worldCoordinates, count);
   }
-
-} // ::ospray
 
