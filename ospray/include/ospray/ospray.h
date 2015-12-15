@@ -499,40 +499,52 @@ extern "C" {
   /*! functions return '0'.                                                 */
 
   /*! \brief Get the handle of the named data array associated with an object. */
-  OSPRAY_INTERFACE int ospGetData(OSPObject object, const char *name, OSPData *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetData(OSPObject object, const char *name, OSPData *value);
 
   /*! \brief Get a copy of the data in an array (the application is responsible for freeing this pointer). */
-  OSPRAY_INTERFACE int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
 
   /*! \brief Get the named scalar floating point value associated with an object. */
-  OSPRAY_INTERFACE int ospGetf(OSPObject object, const char *name, float *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetf(OSPObject object, const char *name, float *value);
 
   /*! \brief Get the named scalar integer associated with an object. */
-  OSPRAY_INTERFACE int ospGeti(OSPObject object, const char *name, int *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGeti(OSPObject object, const char *name, int *value);
 
   /*! \brief Get the material associated with a geometry object. */
-  OSPRAY_INTERFACE int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value);
 
   /*! \brief Get the named object associated with an object. */
-  OSPRAY_INTERFACE int ospGetObject(OSPObject object, const char *name, OSPObject *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetObject(OSPObject object, const char *name, OSPObject *value);
 
   /*! \brief Retrieve a NULL-terminated list of the parameter names associated with an object. */
-  OSPRAY_INTERFACE int ospGetParameters(OSPObject object, char ***value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetParameters(OSPObject object, char ***value);
 
   /*! \brief Get a pointer to a copy of the named character string associated with an object. */
-  OSPRAY_INTERFACE int ospGetString(OSPObject object, const char *name, char **value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetString(OSPObject object, const char *name, char **value);
 
   /*! \brief Get the type of the named parameter or the given object (if 'name' is NULL). */
-  OSPRAY_INTERFACE int ospGetType(OSPObject object, const char *name, OSPDataType *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetType(OSPObject object, const char *name, OSPDataType *value);
 
   /*! \brief Get the named 2-vector floating point value associated with an object. */
-  OSPRAY_INTERFACE int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value);
 
   /*! \brief Get the named 3-vector floating point value associated with an object. */
-  OSPRAY_INTERFACE int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value);
 
   /*! \brief Get the named 3-vector integer value associated with an object. */
-  OSPRAY_INTERFACE int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value);
 
   /*! @} end of ospray_params */
 
