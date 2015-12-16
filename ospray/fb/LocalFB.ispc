@@ -73,7 +73,10 @@ export void LocalFrameBuffer_writeTile_RGBA_I8(void *uniform _fb,
                                        varyTile->b[chunkID],
                                        varyTile->a[chunkID]);
 
-        col = pow(max(col,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
+        // XXX hardcoded gamma, should use pixelops!
+        col = max(col,make_vec4f(0.f));
+        // alpha is never gamma-corrected
+        col = make_vec4f(pow(make_vec3f(col), 1.f/2.2f), col.w);
 
         const uint32 asRGBA = cvt_uint32(col);
 
@@ -185,7 +188,8 @@ export void LocalFrameBuffer_writeTile_RGBA_F32(void *uniform _fb,
                                        varyTile->b[chunkID],
                                        varyTile->a[chunkID]);
 
-        col = pow(max(col,make_vec4f(0.f)), 1.f/2.2f); // XXX hardcoded gamma, should use pixelops!
+        // XXX not even hardcoded gamma for float buffer, should use pixelops anyway
+        col = max(col, make_vec4f(0.f)); 
       }
       color[pixelID] = col;
       if (depth)
