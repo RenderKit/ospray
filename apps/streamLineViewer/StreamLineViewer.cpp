@@ -515,7 +515,7 @@ namespace ospray {
       }
 
       if (tris && !tris->index.empty()) {
-        OSPGeometry geom = ospNewTriangleMesh();
+        OSPGeometry geom = ospNewGeometry("triangles");
         Assert(geom);
         OSPData vertex = ospNewData(tris->vertex.size(),OSP_FLOAT3A,&tris->vertex[0]);
         OSPData index  = ospNewData(tris->index.size(),OSP_INT3,&tris->index[0]);
@@ -584,7 +584,7 @@ namespace ospray {
     {
       Glut3DWidget::reshape(newSize);
       if (fb) ospFreeFrameBuffer(fb);
-      fb = ospNewFrameBuffer(newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
+      fb = ospNewFrameBuffer((const osp::vec2i&)newSize,OSP_RGBA_I8,OSP_FB_COLOR|OSP_FB_ACCUM);
       ospSet1f(fb, "gamma", 2.2f);
       ospCommit(fb);
       ospSetf(camera,"aspect",viewPort.aspect);
@@ -612,9 +612,10 @@ namespace ospray {
       if (viewPort.modified) {
         Assert2(camera,"ospray camera is null");
         
-        ospSetVec3f(camera,"pos",viewPort.from);
-        ospSetVec3f(camera,"dir",viewPort.at-viewPort.from);
-        ospSetVec3f(camera,"up",viewPort.up);
+        ospSetVec3f(camera,"pos",(const osp::vec3f&)viewPort.from);
+        const vec3f dir = viewPort.at - viewPort.from;
+        ospSetVec3f(camera,"dir",(const osp::vec3f&)dir);
+        ospSetVec3f(camera,"up",(const osp::vec3f&)viewPort.up);
         ospSetf(camera,"aspect",viewPort.aspect);
         ospCommit(camera);
         viewPort.modified = false;

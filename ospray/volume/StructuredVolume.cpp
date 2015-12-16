@@ -121,7 +121,7 @@ void StructuredVolume::commit()
   OSPDataType StructuredVolume::getVoxelType() const
   {
     // Separate out the base type and vector width.
-    char* kind = new char[voxelType.size()];
+    char* kind = (char*)alloca(voxelType.size());
     unsigned int width = 1;
     sscanf(voxelType.c_str(), "%[^0-9]%u", kind, &width);
 
@@ -139,8 +139,6 @@ void StructuredVolume::commit()
     if (!strcmp(kind, "double") && width == 1)
       res = OSP_DOUBLE;
 
-    delete[] kind;
-
     return res;
   }
 
@@ -152,9 +150,9 @@ void StructuredVolume::commit()
 #if 1
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count,blockSize);
-    vec2f blockRange[numBlocks];
+    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
 #pragma omp parallel for
-    for (size_t i=0;i<numBlocks;i++) {
+    for (int i=0;i<numBlocks;i++) {
       size_t myBegin = i*blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
       vec2f myVoxelRange(source[myBegin]);
@@ -187,9 +185,9 @@ void StructuredVolume::commit()
 #if 1
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count,blockSize);
-    vec2f blockRange[numBlocks];
+    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
 #pragma omp parallel for
-    for (size_t i=0;i<numBlocks;i++) {
+    for (int i=0;i<numBlocks;i++) {
       size_t myBegin = i*blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
       vec2f myVoxelRange(source[myBegin]);
@@ -222,9 +220,9 @@ void StructuredVolume::commit()
 #if 1
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count,blockSize);
-    vec2f blockRange[numBlocks];
+    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
 #pragma omp parallel for
-    for (size_t i=0;i<numBlocks;i++) {
+    for (int i=0;i<numBlocks;i++) {
       size_t myBegin = i*blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
       vec2f myVoxelRange(source[myBegin]);
