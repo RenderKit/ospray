@@ -97,11 +97,13 @@ namespace ospray {
 
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
-        app.makeIntercomm();
+        app.makeIntraComm();
+        // app.makeIntercomm();
         printf("#w: app process %i/%i (global %i/%i)\n",app.rank,app.size,world.rank,world.size);
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm); 
-        worker.makeIntracomm();
+        // worker.makeIntracomm();
+        worker.makeInterComm();
 
         printf("#m: ping-ponging a test message to every worker...\n");
         for (int i=0;i<worker.size;i++) {
@@ -124,11 +126,13 @@ namespace ospray {
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
-        worker.makeIntercomm();
+        worker.makeIntraComm();
+        // worker.makeIntercomm();
         printf("#w: worker process %i/%i (global %i/%i)\n",worker.rank,worker.size,world.rank,world.size);
 
         MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm); 
-        app.makeIntracomm();
+        app.makeInterComm();
+        // app.makeIntracomm();
         // worker.containsMe = true;
         // app.containsMe = false;
 
@@ -184,7 +188,8 @@ namespace ospray {
       MPI_Status status;
 
       app.comm = world.comm; 
-      app.makeIntercomm();
+      app.makeIntraComm();
+      // app.makeIntercomm();
       
       char appPortName[MPI_MAX_PORT_NAME];
       if (world.rank == 0) {
@@ -210,7 +215,8 @@ namespace ospray {
       }
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
       Assert(rc == MPI_SUCCESS);
-      worker.makeIntracomm();
+      worker.makeInterComm();
+      // worker.makeIntracomm();
       
       if (app.rank == 0) {
         cout << "=======================================================" << endl;
@@ -252,7 +258,8 @@ namespace ospray {
       Assert(launchCommand);
 
       MPI_Comm_dup(world.comm,&app.comm);
-      app.makeIntercomm();
+      app.makeIntraComm();
+      // app.makeIntercomm();
       
       char appPortName[MPI_MAX_PORT_NAME];
       if (app.rank == 0 || app.size == -1) {
@@ -284,7 +291,8 @@ namespace ospray {
 
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
       Assert(rc == MPI_SUCCESS);
-      worker.makeIntracomm();
+      worker.makeInterComm();
+      // worker.makeIntracomm();
       if (app.rank == 0 || app.size == -1) {
         cout << "OSPRay MPI Worker ring successfully connected." << endl;
         cout << "found " << worker.size << " workers." << endl;
