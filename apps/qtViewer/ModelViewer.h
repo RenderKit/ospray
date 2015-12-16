@@ -36,7 +36,7 @@ namespace ospray {
         stackedWidget = new QStackedWidget;
         QVBoxLayout *layout = new QVBoxLayout;
         layout->addWidget(pageComboBox);
-        layout->addWidget(stackedWidget);        
+        layout->addWidget(stackedWidget);
         setLayout(layout);
       }
       void addPage(const std::string &name, QWidget *widget)
@@ -45,7 +45,7 @@ namespace ospray {
         currentPages[name] = widget;
         stackedWidget->addWidget(widget);
         pageComboBox->addItem(tr(name.c_str()));
-        connect(pageComboBox,SIGNAL(activated(int)),stackedWidget,SLOT(setCurrentIndex(int)));        
+        connect(pageComboBox,SIGNAL(activated(int)),stackedWidget,SLOT(setCurrentIndex(int)));
       }
 
     protected:
@@ -80,24 +80,12 @@ namespace ospray {
       // internal state
       // -------------------------------------------------------
 
-      // //! the ospray frame buffer we're using
-      // OSPFrameBuffer ospFrameBuffer;
-
-      // //! the renderer we're using
-      // OSPRenderer    ospRenderer;
-      
-      // //! the world model that we're using to render
-      // OSPModel       ospModel; 
-
-      // //! ospray camera we're using to render with
-      // OSPCamera      ospCamera;
-
       //! update the ospray camera (ospCamera) from the widget camera (this->camera)
       void updateOSPRayCamera();
 
       //! signals that the current ospray state is dirty (i.e., that
       //! we can not accumulate)
-      bool isDirty; 
+      bool isDirty;
 
       sg::Serialization serialization;
       //! the world we're displaying
@@ -113,12 +101,12 @@ namespace ospray {
     /*! \brief main QT window of the model viewer */
     struct ModelViewer : public QMainWindow {
       Q_OBJECT
-      
+
     public:
       ModelViewer(Ref<sg::Renderer> sgRenderer, bool fullscreen);
 
       void toggleUpAxis(int axis);
- 
+
       public slots:
         //! signals that the render widget changed one of the inputs
         //! (most likely, that the camera position got changed)
@@ -135,10 +123,9 @@ namespace ospray {
 
         /*! enable/disable display of frame rate */
         void showFrameRate(bool showFPS) { this->renderWidget->showFPS = showFPS; }
-        
+
         //! Catches that the light manipulator has changed our default light
         void lightChanged();
-        
 
     protected:
         //! create the lower-side time step slider (for models that have
@@ -154,7 +141,7 @@ namespace ospray {
         virtual void keyPressEvent(QKeyEvent *event);
 
         // -------------------------------------------------------
-        // qt gui components 
+        // qt gui components
         // -------------------------------------------------------
         EditorWidgetStack        *editorWidgetStack;
         QDockWidget              *editorWidgetDock;

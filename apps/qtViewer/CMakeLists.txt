@@ -42,7 +42,7 @@ SET(SRCS ${SRCS}
 
   # modelviewer proper
   ModelViewer.cpp
-	FPSCounter.cpp
+  FPSCounter.cpp
 
   # the (th)ing to launch them all, and in darkness bind them...
   main.cpp
@@ -57,11 +57,11 @@ SET(MOC_HEADERS
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
-ADD_EXECUTABLE(ospQTViewer ${SRCS} ${MOC_OUTFILES})
-TARGET_LINK_LIBRARIES(ospQTViewer ${LIBS} 
+ADD_EXECUTABLE(ospQtViewer ${SRCS} ${MOC_OUTFILES})
+TARGET_LINK_LIBRARIES(ospQtViewer ${LIBS} 
   ospray_sg${OSPRAY_LIB_SUFFIX}
   )
 # ------------------------------------------------------------
-INSTALL(TARGETS ospQTViewer DESTINATION bin)
+INSTALL(TARGETS ospQtViewer DESTINATION bin)
 # ------------------------------------------------------------
 

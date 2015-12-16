@@ -61,8 +61,8 @@ namespace ospray {
       dimensions = parseVec3i(node->getProp("dimensions"));
 
       if (voxelType != "float" && voxelType != "uint8") 
-        throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
-          
+        throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float' and 'uint8')");
+
       if (!transferFunction) 
         setTransferFunction(new TransferFunction);
 
@@ -138,7 +138,7 @@ namespace ospray {
       fileNameOfCorrespondingXmlDoc = node->doc->fileName;
       
       if (voxelType != "float" && voxelType != "uchar") 
-        throw std::runtime_error("unkonwn StructuredVolume.voxelType (currently only supporting 'float')");
+        throw std::runtime_error("unknown StructuredVolume.voxelType (currently only supporting 'float')");
       
       if (!transferFunction) 
         setTransferFunction(new TransferFunction);
@@ -255,7 +255,7 @@ namespace ospray {
       firstSliceID = node->getPropl("firstSliceID");
       numSlices = node->getPropl("numSlices");
       if (voxelType != "uint8") 
-        throw std::runtime_error("unkonwn StackedRawSlices.voxelType (currently only supporting 'uint8')");
+        throw std::runtime_error("unknown StackedRawSlices.voxelType (currently only supporting 'uint8')");
           
       if (!transferFunction) 
         setTransferFunction(new TransferFunction);
@@ -299,9 +299,9 @@ namespace ospray {
         fclose(file);
       }
       delete[] slice;
-      
+
       transferFunction->render(ctx);
-      
+
       ospSetObject(volume,"transferFunction",transferFunction->getOSPHandle());
       ospCommit(volume);
       ospAddVolume(ctx.world->ospModel,volume);
@@ -311,4 +311,3 @@ namespace ospray {
 
   } // ::ospray::sg
 } // ::ospray
-

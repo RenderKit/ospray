@@ -90,7 +90,7 @@ void VolumeViewer::setModel(size_t index)
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
   voxelRange = VolumeFile::voxelRangeOf[volume];
 #else
-  ospGetVec2f(modelStates[index].volumes[0], "voxelRange", &voxelRange);
+  ospGetVec2f(modelStates[index].volumes[0], "voxelRange", (osp::vec2f*)&voxelRange);
 #endif
 
   if(voxelRange != ospray::vec2f(0.f)) {

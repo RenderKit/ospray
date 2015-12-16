@@ -52,18 +52,18 @@ namespace ospray {
         frame->orientation.vx = normalize(cross(frame->orientation.vy,frame->orientation.vz));
       }
     }
-    
+
     void OSPRayRenderWidget::setWorld(Ref<sg::World> world)
     {
       assert(sgRenderer);
       sgRenderer->setWorld(world);
-      cout << "#ospQTV: world set, found " 
+      cout << "#ospQTV: world set, found "
            << sgRenderer->allNodes.size() << " nodes" << endl;
     }
 
     //! the QT callback that tells us that we have to redraw
     void OSPRayRenderWidget::redraw()
-    { 
+    {
       if (!sgRenderer) return;
       if (!sgRenderer->frameBuffer) return;
       if (!sgRenderer->camera) return;
@@ -83,7 +83,7 @@ namespace ospray {
 
       vec2i size = sgRenderer->frameBuffer->getSize();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
-      glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);      
+      glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);
       sgRenderer->frameBuffer->unmap(fbMem);
 
       if (autoRotateSpeed != 0.f) {
@@ -91,16 +91,16 @@ namespace ospray {
         // sgRenderer->resetAccumulation();
         updateOSPRayCamera();
         update();
-      } 
+      }
       // accumulate, but only up to 32 frames
       if (sgRenderer->accumID < 32) {
         update();
       }
     }
-    
+
     //! the QT callback that tells us that the image got resize
     void OSPRayRenderWidget::resize(int width, int height)
-    { 
+    {
       sgRenderer->frameBuffer = new sg::FrameBuffer(vec2i(width,height));
       sgRenderer->resetAccumulation();
 
@@ -157,7 +157,7 @@ namespace ospray {
           (sgRenderer->uniqueNodes.object[i]->node.ptr);
         if (xf) xferFuncs.push_back(xf);
       }
-      std::cout << "#osp:qtv: found " << xferFuncs.size() 
+      std::cout << "#osp:qtv: found " << xferFuncs.size()
                 << " transfer function nodes" << std::endl;
 
       if (xferFuncs.empty()) {
@@ -171,14 +171,13 @@ namespace ospray {
         QVBoxLayout    *layout = new QVBoxLayout;
         xfEditorsPage->setLayout(layout);
 
-
         QStackedWidget *stackedWidget = new QStackedWidget;
         QComboBox *pageComboBox = new QComboBox;
-        QObject::connect(pageComboBox, SIGNAL(activated(int)), 
+        QObject::connect(pageComboBox, SIGNAL(activated(int)),
                          stackedWidget, SLOT(setCurrentIndex(int)));
 
         layout->addWidget(pageComboBox);
-        layout->addWidget(stackedWidget);        
+        layout->addWidget(stackedWidget);
 
         // now, create widgets for all of them
         for (int i=0;i<xferFuncs.size();i++) {
@@ -193,16 +192,16 @@ namespace ospray {
           pageComboBox->addItem(tr(name.c_str()));
 
           // create a transfer function editor for this transfer function node
-          QOSPTransferFunctionEditor *xfEd 
+          QOSPTransferFunctionEditor *xfEd
             = new QOSPTransferFunctionEditor(xferFuncs[i]);
           stackedWidget->addWidget(xfEd);
-          connect(xfEd, SIGNAL(transferFunctionChanged()), 
+          connect(xfEd, SIGNAL(transferFunctionChanged()),
                   this, SLOT(render()));
         }
       }
       editorWidgetStack->addPage("Transfer Functions",xfEditorsPage);
     }
-    
+
     void ModelViewer::createLightManipulator()
     {
       QWidget *lmEditorsPage = new QWidget;
@@ -211,14 +210,14 @@ namespace ospray {
 
       QStackedWidget *stackedWidget = new QStackedWidget;
       layout->addWidget(stackedWidget);
-      
+
       Ref<sg::PerspectiveCamera> camera = renderWidget->sgRenderer->camera.cast<sg::PerspectiveCamera>();
       QLightManipulator *lManipulator = new QLightManipulator(sgRenderer, camera->getUp());
       //stackedWidget->addWidget(lManipulator);
       layout->addWidget(lManipulator);
-      
+
       editorWidgetStack->addPage("Light Editor", lManipulator);
-      
+
       connect(lManipulator, SIGNAL(lightsChanged()), this, SLOT(render()));
     }
 
@@ -265,8 +264,8 @@ namespace ospray {
       } break;
       case Qt::Key_C: {
         // ------------------------------------------------------------------
-        // 'C': 
-        // - Shift-C print current camera 
+        // 'C':
+        // - Shift-C print current camera
         // ------------------------------------------------------------------
         if (event->modifiers() & Qt::ShiftModifier) {
           // shift-f: switch to fly mode
@@ -276,7 +275,7 @@ namespace ospray {
       } break;
       case Qt::Key_F: {
         // ------------------------------------------------------------------
-        // 'F': 
+        // 'F':
         // - Shift-F enters fly mode
         // - Ctrl-F toggles full-screen
         // ------------------------------------------------------------------
@@ -299,14 +298,14 @@ namespace ospray {
       } break;
       case Qt::Key_I: {
         // ------------------------------------------------------------------
-        // 'I': 
+        // 'I':
         // - Ctrl-I switches to inspect mode
         // ------------------------------------------------------------------
         if (event->modifiers() & Qt::ShiftModifier) {
           // shift-f: switch to fly mode
           std::cout << "Shift-I: Entering 'Inspect' mode" << std::endl;
           renderWidget->setInteractionMode(QAffineSpaceManipulator::INSPECT);
-        } 
+        }
       } break;
       case Qt::Key_Q: {
         QApplication::quit();
@@ -316,21 +315,21 @@ namespace ospray {
           // shift-f: switch to fly mode
           std::cout << "Shift-R: Entering Free-'Rotation' mode (no up-vector)" << std::endl;
           renderWidget->setInteractionMode(QAffineSpaceManipulator::FREE_ROTATION);
-        } 
+        }
       } break;
       case Qt::Key_X: {
         // ------------------------------------------------------------------
-        // 'X': 
+        // 'X':
         // - Ctrl-X switches to X-up/down for upvector
         // ------------------------------------------------------------------
         if (event->modifiers() & Qt::ShiftModifier) {
           // shift-x: switch to X-up
           std::cout << "Shift-X: switching to X-up/down upvector " << std::endl;
           renderWidget->toggleUp(0);
-        } 
+        }
       } break;
         // ------------------------------------------------------------------
-        // 'Y': 
+        // 'Y':
         // - Ctrl-Y switches to Y-up/down for upvector
         // ------------------------------------------------------------------
       case Qt::Key_Y: {
@@ -338,18 +337,18 @@ namespace ospray {
           // shift-x: switch to X-up
           std::cout << "Shift-Y: switching to Y-up/down upvector " << std::endl;
           renderWidget->toggleUp(1);
-        } 
+        }
       } break;
       case Qt::Key_Z: {
         // ------------------------------------------------------------------
-        // 'Z': 
+        // 'Z':
         // - Ctrl-Z switches to Z-up/down for upvector
         // ------------------------------------------------------------------
         if (event->modifiers() & Qt::ShiftModifier) {
           // shift-x: switch to X-up
           std::cout << "Shift-Z: switching to Z-up/down upvector " << std::endl;
           renderWidget->toggleUp(2);
-        } 
+        }
       } break;
 
       default:
@@ -365,7 +364,7 @@ namespace ospray {
         sgRenderer(sgRenderer)
     {
       // resize to default window size
-      setWindowTitle(tr("OSPRay QT ModelViewer"));
+      setWindowTitle(tr("OSPRay Qt ModelViewer"));
       resize(1024,768);
 
       // create GUI elements
@@ -380,18 +379,13 @@ namespace ospray {
       toolBar->addAction(screenShotAction);
 
       renderWidget = new OSPRayRenderWidget(sgRenderer);
-      ///renderWidget = new CheckeredSphereRotationEditor();
-      //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FLY);
-      //      renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::INSPECT);
-      // renderWidget = new QCoordAxisFrameEditor(QAffineSpaceManipulator::FREE_ROTATION);
-      //      renderWidget->setMoveSpeed(1.f);
       connect(renderWidget,SIGNAL(affineSpaceChanged(QAffineSpaceManipulator *)),
               this,SLOT(cameraChanged()));
 
       setCentralWidget(renderWidget);
 
       setFocusPolicy(Qt::StrongFocus);
-      
+
       createTimeSlider();
       createEditorWidgetStack();
       createLightManipulator();
@@ -404,19 +398,19 @@ namespace ospray {
       }
     }
 
-    void ModelViewer::setWorld(Ref<sg::World> world) 
+    void ModelViewer::setWorld(Ref<sg::World> world)
     {
-      renderWidget->setWorld(world); 
+      renderWidget->setWorld(world);
     }
 
     void ModelViewer::render()
     {
       sgRenderer->resetAccumulation();
-      if (renderWidget) renderWidget->updateGL(); 
+      if (renderWidget) renderWidget->updateGL();
     }
 
     // this is a incoming signal that the render widget changed the camera
-    void ModelViewer::cameraChanged() 
+    void ModelViewer::cameraChanged()
     {
       renderWidget->updateOSPRayCamera();
     }
@@ -440,18 +434,18 @@ namespace ospray {
     {
       vec2i size = sgRenderer->frameBuffer->getSize();
       unsigned char *fbMem = sgRenderer->frameBuffer->map();
-      glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);      
+      glDrawPixels(size.x, size.y, GL_RGBA, GL_UNSIGNED_BYTE, fbMem);
       sgRenderer->frameBuffer->unmap(fbMem);
-      
+
       QImage fb = QImage(fbMem,size.x,size.y,QImage::Format_RGB32).rgbSwapped().mirrored();
       const std::string fileName = "/tmp/ospQTV.screenshot.png";
       fb.save(fileName.c_str());
       std::cout << "screen shot saved in " << fileName << std::endl;
     }
-    
+
     void ModelViewer::lightChanged()
     {
     }
-    
+
   } // ::ospray::viewer
 } // ::ospray
