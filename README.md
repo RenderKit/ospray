@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v0.8.3 of OSPRay. For changes and new
+This is release v0.9.0 of OSPRay. For changes and new
 features see the [changelog](CHANGELOG.md). Also visit
 http://www.ospray.org for more information.
 
@@ -133,7 +133,7 @@ shadows, shown after ten frames in the second image
 ![After accumulating ten frames.][imgTutorial2]
 
 
-QT Viewer
+Qt Viewer
 ---------
 
 OSPRay also includes a demo viewer application `ospQtViewer`, showcasing all features
