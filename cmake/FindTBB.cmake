@@ -21,6 +21,7 @@ IF (WIN32)
       ${PROJECT_SOURCE_DIR}/tbb
       "C:/Program Files (x86)/Intel/Composer XE/tbb"
       "C:/Program Files (x86)/Intel/compilers_and_libraries/windows/tbb"
+      $ENV{TBB_ROOT}
   )
 
   IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -53,18 +54,13 @@ ELSE ()
       /opt/intel/composerxe/tbb
       /opt/intel/compilers_and_libraries/tbb
       $ENV{TBBROOT}
+      $ENV{TBB_ROOT}
   )
 
   IF (APPLE)
-    IF (ENABLE_INSTALLER)
-      FIND_PATH(TBB_INCLUDE_DIR tbb/task_scheduler_init.h)
-      FIND_LIBRARY(TBB_LIBRARY tbb)
-      FIND_LIBRARY(TBB_LIBRARY_MALLOC tbbmalloc)
-    ELSE()
-      FIND_PATH(TBB_INCLUDE_DIR tbb/task_scheduler_init.h PATHS ${TBB_ROOT}/include NO_DEFAULT_PATH)
-      FIND_LIBRARY(TBB_LIBRARY tbb PATHS ${TBB_ROOT}/lib NO_DEFAULT_PATH)
-      FIND_LIBRARY(TBB_LIBRARY_MALLOC tbbmalloc PATHS ${TBB_ROOT}/lib NO_DEFAULT_PATH)
-    ENDIF()
+    FIND_PATH(TBB_INCLUDE_DIR tbb/task_scheduler_init.h PATHS ${TBB_ROOT}/include NO_DEFAULT_PATH)
+    FIND_LIBRARY(TBB_LIBRARY tbb PATHS ${TBB_ROOT}/lib NO_DEFAULT_PATH)
+    FIND_LIBRARY(TBB_LIBRARY_MALLOC tbbmalloc PATHS ${TBB_ROOT}/lib NO_DEFAULT_PATH)
   ELSE()
     FIND_PATH(TBB_INCLUDE_DIR tbb/task_scheduler_init.h PATHS ${TBB_ROOT}/include NO_DEFAULT_PATH)
     FIND_LIBRARY(TBB_LIBRARY tbb PATHS ${TBB_ROOT}/lib/intel64/gcc4.4)
@@ -97,19 +93,3 @@ ENDIF()
 MARK_AS_ADVANCED(TBB_INCLUDE_DIR)
 MARK_AS_ADVANCED(TBB_LIBRARY)
 MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC)
-
-##############################################################
-# Install TBB
-##############################################################
-
-IF (WIN32)
-  INSTALL(PROGRAMS ${TBB_BINDIR}/tbb.dll ${TBB_BINDIR}/tbbmalloc.dll DESTINATION bin COMPONENT examples)
-  INSTALL(PROGRAMS ${TBB_BINDIR}/tbb.dll ${TBB_BINDIR}/tbbmalloc.dll DESTINATION lib COMPONENT lib)
-#ELSEIF (APPLE)
-  # install TBB with libc++ linkage for MacOSX
-#  IF (NOT ENABLE_INSTALLER)
-#    INSTALL(PROGRAMS ${TBB_ROOT}/lib/libc++/libtbb.dylib ${TBB_ROOT}/lib/libc++/libtbbmalloc.dylib DESTINATION bin COMPONENT examples)
-#    INSTALL(PROGRAMS ${TBB_ROOT}/lib/libc++/libtbb.dylib ${TBB_ROOT}/lib/libc++/libtbbmalloc.dylib DESTINATION lib COMPONENT lib)
-#  ENDIF()
-  
-ENDIF()
