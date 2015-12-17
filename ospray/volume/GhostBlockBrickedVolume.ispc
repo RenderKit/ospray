@@ -19,7 +19,7 @@
 /*! total number of bits per block dimension. '6' would mean 18 bits =
   1/4million voxels per block, which for alots would be 1MB, so should
   all fit into a single 2M page (assuming we do 2M allocs, of course) */
-#define BLOCK_BITS (7) 
+#define BLOCK_BITS (6) 
 #define BRICK_BITS (2)
 
 /*! @{ number of voxels per block per dimension */
@@ -225,6 +225,23 @@ template_getAddress(uint8);
 template_getAddress(float);
 template_getAddress(double);
 
+/*! since we do ghosting some cells have to be written twice. the way
+    we do that is that every time we write a given cell x/y/z we check
+    if this is anywhere on the front/bottom/left of a block, and if
+    so, tell the setRegion call that there'll be another cell in some
+    other abuttin gblock that should get this same value. what _this_
+    function does is that, given a cell ID x/y/z and a 'direction' we
+    have to check for ghosting (ie, on the left, on the bottom, on the
+    front, or any combination thereof), determine if this cell does
+    have a ghost _in that direction_, and if so, return true and
+    compute the porper address for that ghost cell (in only that
+    direction, mind!). if there is not ghost cell (in this direction)
+    the function returns false. Thus, all the setRegion has to do is
+    call 'getGhostIndices()' for all 7 possible directions that a cell
+    might have ghost cells. Yes, there's faster ways to do that -
+    because certain values will get recomputed for each of the 7
+    direction (plus the original cell itself) but this is the easiest
+    (I could find). */
 inline bool GGBV_getGhostIndices(GGBV *uniform volume,
                                  const varying vec3i &voxelIdxInVolume,
                                  const uniform vec3i delta,
@@ -263,7 +280,10 @@ inline bool GGBV_getGhostIndices(GGBV *uniform volume,
   }
   
   // Compute the 1D address of the block in the volume.
-  address.block = blockIndex.x + volume->blockCount.x * (blockIndex.y + volume->blockCount.y * blockIndex.z);
+  address.block
+    = blockIndex.x
+    + volume->blockCount.x * (blockIndex.y
+                              + volume->blockCount.y * blockIndex.z);
   
   const vec3i brickIdxInBlock = voxelIdxInBlock >> BRICK_BITS;
   const vec3i voxelIdxInBrick = bitwise_AND(voxelIdxInBlock,BRICK_MASK);
@@ -315,11 +335,11 @@ template_accessArray(double);
                                                                         \
     /* Compute the 1D address of the block in the volume and the voxel in the block. */ \
     Address address;                                                    \
-    GGBV_getIndices_##type(volume, index, address);                      \
+    GGBV_getIndices_##type(volume, index, address);                     \
                                                                         \
     /* The voxel value at the 1D address.*/                             \
     foreach_unique(blockID in address.block) {                          \
-      const type *uniform blockPtr                                     \
+      const type *uniform blockPtr                                      \
         = blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);              \
       value = blockPtr[address.voxel];                                  \
       /* value = accessArrayWithOffset(blockPtr,address.voxel); */      \
@@ -359,7 +379,8 @@ task void PBBVUChar_setRegionTask(GGBV *uniform self,
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
+  const uniform uint64 runOfs
+    = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
   const uint8 *uniform run = source + runOfs;
   vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
   foreach (x = 0 ... regionSize.x) {
@@ -403,7 +424,8 @@ task void PBBVFloat_setRegionTask(GGBV *uniform self,
 {
   const uniform uint32 region_y = taskIndex % regionSize.y;
   const uniform uint32 region_z = taskIndex / regionSize.y;
-  const uniform uint64 runOfs = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
+  const uniform uint64 runOfs
+    = (uint64)regionSize.x * (region_y + (uint64)regionSize.y * region_z);
   const float *uniform run = source + runOfs;
   vec3i coord = targetCoord000 + make_vec3i(0,region_y,region_z);
   foreach (x = 0 ... regionSize.x) {
@@ -518,81 +540,13 @@ void GGBVDouble_setRegion(void *uniform _volume,
                                            regionSize);
 }
 
-// #define template_computeSample(type)                                    \
-//   inline float GGBV_computeSample_##type(void *uniform _volume,         \
-//                                          const vec3f &worldCoordinates) \
-//   {                                                                     \
-//     /* Cast to the actual Volume subtype. */                            \
-//     GGBV *uniform volume = (GGBV *uniform) _volume;                     \
-//                                                                         \
-//     /* Transform the sample location into the local coordinate system. */ \
-//     vec3f localCoordinates;                                             \
-//     volume->super.transformWorldToLocal(&volume->super,                 \
-//                                         worldCoordinates,               \
-//                                         localCoordinates);              \
-//                                                                         \
-//     /* Coordinates outside the volume are clamped to the volume bounds. */ \
-//     const vec3f clampedLocalCoordinates                                 \
-//       = clamp(localCoordinates, make_vec3f(0.0f),                       \
-//               volume->super.localCoordinatesUpperBound);                \
-//                                                                         \
-//     /* Lower and upper corners of the box straddling the voxels to be interpolated. */ \
-//     const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);   \
-//                                                                         \
-//     /* Fractional coordinates within the lower corner voxel used during interpolation. */ \
-//     const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0); \
-//                                                                         \
-//     /* Compute the 1D address of the block in the volume and the voxel in the block. */ \
-//     Address8 address8;                                                  \
-//     GGBV_getAddress_##type(volume, clampedLocalCoordinates,             \
-//                            voxelIndex_0, address8);                     \
-//       /* split block into 24+8 bits; we'll have to do a foreach_unique */ \
-//       /* over the upper 24 bits to satify 64-bit addressing, but at */  \
-//       /* least the lower bits we can merge into a single loop */        \
-//       float retValue;                                                   \
-//                                                                         \
-//       foreach_unique (unique_block in address8.block) {                 \
-//         const type *uniform blockPtr                                    \
-//           = ((type *uniform)volume->blockMem)                           \
-//           + ((uniform uint64)unique_block)                              \
-//           * (VOXELS_PER_BLOCK);                                         \
-//         /* TODO: interleave loads with the address computations ... or at */ \
-//         /* least, prefetch upon the first address being known. */       \
-//         const uint32 ofs000 = address8.voxelOfs;                        \
-//         const uint32 ofs001 = ofs000+address8.voxelOfs_dx;              \
-//         const float val000  = accessArrayWithOffset(blockPtr,ofs000);   \
-//         const float val001  = accessArrayWithOffset(blockPtr,ofs001);   \
-//         const float val00   = val000 + frac.x * (val001 - val000);      \
-//                                                                         \
-//         const uint32 ofs010 = ofs000+address8.voxelOfs_dy;              \
-//         const uint32 ofs011 = ofs001+address8.voxelOfs_dy;              \
-//         const float val010  = accessArrayWithOffset(blockPtr,ofs010);   \
-//         const float val011  = accessArrayWithOffset(blockPtr,ofs011);   \
-//         const float val01   = val010 + frac.x * (val011 - val010);      \
-//                                                                         \
-//         const uint32 ofs100 = ofs000+address8.voxelOfs_dz;              \
-//         const uint32 ofs101 = ofs001+address8.voxelOfs_dz;              \
-//         const float val100  = accessArrayWithOffset(blockPtr,ofs100);   \
-//         const float val101  = accessArrayWithOffset(blockPtr,ofs101);   \
-//         const float val10   = val100 + frac.x * (val101 - val100);      \
-//                                                                         \
-//         const uint32 ofs110 = ofs010+address8.voxelOfs_dz;              \
-//         const uint32 ofs111 = ofs011+address8.voxelOfs_dz;              \
-//         const float val110  = accessArrayWithOffset(blockPtr,ofs110);   \
-//         const float val111  = accessArrayWithOffset(blockPtr,ofs111);   \
-//         const float val11   = val110 + frac.x * (val111 - val110);      \
-//                                                                         \
-//         /* Interpolate the voxel values. */                             \
-//         const float val0    = val00  + frac.y * (val01  - val00 );      \
-//         const float val1    = val10  + frac.y * (val11  - val10 );      \
-//         const float volumeSample  = val0   + frac.z * (val1   - val0  ); \
-//                                                                         \
-//         retValue = volumeSample;                                        \
-//       }                                                                 \
-//       return retValue;                                                  \
-//   }
-
-#define template_computeSample(type)                                   \
+/*! perform trilinear interpolation for given sample. unlike old way
+  of doing this (a single computesample on the StructuredVolume level
+  that calls the virtual 'getSample()' of the volume layout) this
+  function will directly do all the addressing for the getSample
+  (inlined), and thus be about 50% faster (wall-time, meaning even
+  much faster in pure sample speed) */
+#define template_computeSample(type)                                    \
   inline float GGBV_computeSample_##type(void *uniform _volume,         \
                                          const vec3f &worldCoordinates) \
   {                                                                     \
@@ -638,34 +592,34 @@ void GGBVDouble_setRegion(void *uniform _volume,
         const uint32 ofs000 = address8.voxelOfs                         \
           + block_lo*(VOXELS_PER_BLOCK*scale_per_##type);               \
         const uint32 ofs001 = ofs000+address8.voxelOfs_dx;              \
-        const float val000  = accessArrayWithOffset(blockPtrHi,ofs000);   \
-        const float val001  = accessArrayWithOffset(blockPtrHi,ofs001);   \
+        const float val000  = accessArrayWithOffset(blockPtrHi,ofs000); \
+        const float val001  = accessArrayWithOffset(blockPtrHi,ofs001); \
         const float val00   = val000 + frac.x * (val001 - val000);      \
                                                                         \
         const uint32 ofs010 = ofs000+address8.voxelOfs_dy;              \
         const uint32 ofs011 = ofs001+address8.voxelOfs_dy;              \
-        const float val010  = accessArrayWithOffset(blockPtrHi,ofs010);   \
-        const float val011  = accessArrayWithOffset(blockPtrHi,ofs011);   \
+        const float val010  = accessArrayWithOffset(blockPtrHi,ofs010); \
+        const float val011  = accessArrayWithOffset(blockPtrHi,ofs011); \
         const float val01   = val010 + frac.x * (val011 - val010);      \
                                                                         \
         const uint32 ofs100 = ofs000+address8.voxelOfs_dz;              \
         const uint32 ofs101 = ofs001+address8.voxelOfs_dz;              \
-        const float val100  = accessArrayWithOffset(blockPtrHi,ofs100);   \
-        const float val101  = accessArrayWithOffset(blockPtrHi,ofs101);   \
+        const float val100  = accessArrayWithOffset(blockPtrHi,ofs100); \
+        const float val101  = accessArrayWithOffset(blockPtrHi,ofs101); \
         const float val10   = val100 + frac.x * (val101 - val100);      \
                                                                         \
         const uint32 ofs110 = ofs010+address8.voxelOfs_dz;              \
         const uint32 ofs111 = ofs011+address8.voxelOfs_dz;              \
-        const float val110  = accessArrayWithOffset(blockPtrHi,ofs110);   \
-        const float val111  = accessArrayWithOffset(blockPtrHi,ofs111);   \
+        const float val110  = accessArrayWithOffset(blockPtrHi,ofs110); \
+        const float val111  = accessArrayWithOffset(blockPtrHi,ofs111); \
         const float val11   = val110 + frac.x * (val111 - val110);      \
                                                                         \
         /* Interpolate the voxel values. */                             \
         const float val0    = val00  + frac.y * (val01  - val00 );      \
         const float val1    = val10  + frac.y * (val11  - val10 );      \
-        const float volumeSample  = val0   + frac.z * (val1   - val0  ); \
+        const float val     = val0   + frac.z * (val1   - val0  );      \
                                                                         \
-        retValue = volumeSample;                                        \
+        retValue = val;                                                 \
       }                                                                 \
       return retValue;                                                  \
   }

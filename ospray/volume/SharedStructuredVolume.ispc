@@ -197,14 +197,182 @@ inline void SharedStructuredVolumeDouble_getVoxel_64(void *uniform _volume,
   }
 }
 
+/*! read a _typed_ value from an address that's given by an
+    *BYTE*-offset relative to a base array. note that even though we
+    assume that the offset is already in bytes (ie, WITHOUT scaling by
+    the width of the array data type), the the base pointer must
+    *STILL* be of the proper type for this macro to figure out the
+    type of data it's reading from this address */
+#define template_accessArray(type)                                      \
+  inline float accessArrayWithOffset(const type *uniform basePtr,       \
+                                     const varying uint32 offset)       \
+  {                                                                     \
+    uniform uint8 *uniform base = (uniform uint8 *uniform)basePtr;      \
+    return *((uniform type *)(base+offset));                            \
+  }                                                                     \
+  inline float accessArrayWithOffset(const type *uniform basePtr,       \
+                                     const uniform uint64 baseOfs,      \
+                                     const varying uint32 offset)       \
+  {                                                                     \
+    uniform uint8 *uniform base                                         \
+      = (uniform uint8 *uniform)(basePtr);                      \
+    return *((uniform type *)((base+baseOfs)+offset));                  \
+  }                                                                     \
+  
+template_accessArray(uint8);
+template_accessArray(float);
+template_accessArray(double);
+#undef template_accessArray
+ 
 
-void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
+/*! perform trilinear interpolation for given sample. unlike old way
+  of doing this (a single computesample on the StructuredVolume level
+  that calls the virtual 'getSample()' of the volume layout) this
+  function will directly do all the addressing for the getSample
+  (inlined), and thus be about 50% faster (wall-time, meaning even
+  much faster in pure sample speed) */
+#define template_computeSample(type)                                    \
+  inline float SSV_computeSample_##type##_32(void *uniform _self,     \
+                                             const vec3f &worldCoordinates) \
+  {                                                                     \
+    /* Cast to the actual Volume subtype. */                            \
+    SharedStructuredVolume *uniform self                              \
+      = (SharedStructuredVolume *uniform) _self;                      \
+                                                                        \
+    /* Transform the sample location into the local coordinate system. */ \
+    vec3f localCoordinates;                                             \
+    self->super.transformWorldToLocal(&self->super,                 \
+                                        worldCoordinates,               \
+                                        localCoordinates);              \
+                                                                        \
+    /* Coordinates outside the volume are clamped to the volume bounds. */ \
+    const vec3f clampedLocalCoordinates                                 \
+      = clamp(localCoordinates, make_vec3f(0.0f),                       \
+              self->super.localCoordinatesUpperBound);                \
+                                                                        \
+    /* Lower and upper corners of the box straddling the voxels to be interpolated. */ \
+    const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);   \
+                                                                        \
+    /* Fractional coordinates within the lower corner voxel used during interpolation. */ \
+    const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0); \
+                                                                        \
+    const uint32 voxelOfs                                               \
+      = voxelIndex_0.x * self->voxelOfs_dx                                    \
+      + voxelIndex_0.y * self->voxelOfs_dy                                    \
+      + voxelIndex_0.z * self->voxelOfs_dz;                                   \
+    const type *uniform voxelData                                       \
+      = (const type *uniform)self->voxelData;                         \
+    const uniform uint64 ofs000 = 0;                                  \
+    const uniform uint64 ofs001 = self->bytesPerVoxel;                \
+    const float val000  = accessArrayWithOffset(voxelData,ofs000,voxelOfs); \
+    const float val001  = accessArrayWithOffset(voxelData,ofs001,voxelOfs); \
+    const float val00   = val000 + frac.x * (val001 - val000);          \
+                                                                        \
+    const uniform uint64 ofs010 = self->bytesPerLine;                   \
+    const uniform uint64 ofs011 = self->bytesPerLine+self->bytesPerVoxel; \
+    const float val010  = accessArrayWithOffset(voxelData,ofs010,voxelOfs); \
+    const float val011  = accessArrayWithOffset(voxelData,ofs011,voxelOfs); \
+    const float val01   = val010 + frac.x * (val011 - val010);          \
+                                                                        \
+    const uniform uint64 ofs100 = self->bytesPerSlice;                  \
+    const uniform uint64 ofs101 = ofs100 + ofs001;                      \
+    const float val100  = accessArrayWithOffset(voxelData,ofs100,voxelOfs); \
+    const float val101  = accessArrayWithOffset(voxelData,ofs101,voxelOfs); \
+    const float val10   = val100 + frac.x * (val101 - val100);          \
+                                                                        \
+    const uniform uint64 ofs110 = ofs100 + ofs010;                      \
+    const uniform uint64 ofs111 = ofs100 + ofs011;                      \
+    const float val110  = accessArrayWithOffset(voxelData,ofs101,voxelOfs); \
+    const float val111  = accessArrayWithOffset(voxelData,ofs111,voxelOfs); \
+    const float val11   = val110 + frac.x * (val111 - val110);          \
+                                                                        \
+    /* Interpolate the voxel values. */                                 \
+    const float val0    = val00  + frac.y * (val01  - val00 );          \
+    const float val1    = val10  + frac.y * (val11  - val10 );          \
+    const float val     = val0   + frac.z * (val1   - val0  );          \
+                                                                        \
+    return val;                                                         \
+  }                                                                     \
+                                                                        \
+  inline float SSV_computeSample_##type##_64_32(void *uniform _self,    \
+                                                const vec3f &worldCoordinates) \
+  {                                                                     \
+    /* Cast to the actual Volume subtype. */                            \
+    SharedStructuredVolume *uniform self                                \
+      = (SharedStructuredVolume *uniform) _self;                        \
+                                                                        \
+    /* Transform the sample location into the local coordinate system. */ \
+    vec3f localCoordinates;                                             \
+    self->super.transformWorldToLocal(&self->super,                 \
+                                        worldCoordinates,               \
+                                        localCoordinates);              \
+                                                                        \
+    /* Coordinates outside the volume are clamped to the volume bounds. */ \
+    const vec3f clampedLocalCoordinates                                 \
+      = clamp(localCoordinates, make_vec3f(0.0f),                       \
+              self->super.localCoordinatesUpperBound);                \
+                                                                        \
+    /* Lower and upper corners of the box straddling the voxels to be interpolated. */ \
+    const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);   \
+                                                                        \
+    /* Fractional coordinates within the lower corner voxel used during interpolation. */ \
+    const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0); \
+                                                                        \
+    varying float ret = 0.f;                                            \
+    foreach_unique (sliceID in voxelIndex_0.z)  {                       \
+      const uint32 voxelOfs                                             \
+        = voxelIndex_0.x * self->voxelOfs_dx                            \
+        + voxelIndex_0.y * self->voxelOfs_dy;                           \
+      const type *uniform voxelData                                     \
+        = (const type *uniform)((uniform uint8*uniform)self->voxelData  \
+                                +sliceID*self->bytesPerSlice);          \
+      const uniform uint64 ofs000 = 0;                                  \
+      const uniform uint64 ofs001 = self->bytesPerVoxel;                \
+      const float val000  = accessArrayWithOffset(voxelData,ofs000,voxelOfs); \
+      const float val001  = accessArrayWithOffset(voxelData,ofs001,voxelOfs); \
+      const float val00   = val000 + frac.x * (val001 - val000);        \
+                                                                        \
+      const uniform uint64 ofs010 = self->bytesPerLine;                 \
+      const uniform uint64 ofs011 = self->bytesPerLine+self->bytesPerVoxel; \
+      const float val010  = accessArrayWithOffset(voxelData,ofs010,voxelOfs); \
+      const float val011  = accessArrayWithOffset(voxelData,ofs011,voxelOfs); \
+      const float val01   = val010 + frac.x * (val011 - val010);        \
+                                                                        \
+      const uniform uint64 ofs100 = self->bytesPerSlice;                \
+      const uniform uint64 ofs101 = ofs100 + ofs001;                    \
+      const float val100  = accessArrayWithOffset(voxelData,ofs100,voxelOfs); \
+      const float val101  = accessArrayWithOffset(voxelData,ofs101,voxelOfs); \
+      const float val10   = val100 + frac.x * (val101 - val100);        \
+                                                                        \
+      const uniform uint64 ofs110 = ofs100 + ofs010;                    \
+      const uniform uint64 ofs111 = ofs100 + ofs011;                    \
+      const float val110  = accessArrayWithOffset(voxelData,ofs101,voxelOfs); \
+      const float val111  = accessArrayWithOffset(voxelData,ofs111,voxelOfs); \
+      const float val11   = val110 + frac.x * (val111 - val110);        \
+                                                                        \
+      /* Interpolate the voxel values. */                               \
+      const float val0    = val00  + frac.y * (val01  - val00 );        \
+      const float val1    = val10  + frac.y * (val11  - val10 );        \
+      const float val     = val0   + frac.z * (val1   - val0  );        \
+      ret = val;                                                        \
+    }                                                                   \
+    return ret;                                                         \
+  }
+
+
+template_computeSample(uint8)
+template_computeSample(float)
+template_computeSample(double)
+#undef template_computeSample
+
+
+void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
                                         void *uniform cppEquivalent,
                                         const uniform int voxelType,
                                         const uniform vec3i &dimensions,
                                         const void *uniform voxelData)
 {
-  StructuredVolume_Constructor(&volume->super, cppEquivalent, dimensions);
+  StructuredVolume_Constructor(&self->super, cppEquivalent, dimensions);
 
   uniform uint64 bytesPerVoxel;
 
@@ -219,47 +387,60 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform volume,
     return;
   }
 
+  self->voxelOfs_dx = bytesPerVoxel;
+  self->voxelOfs_dy = self->voxelOfs_dx * dimensions.y;
+  self->voxelOfs_dz = self->voxelOfs_dy * dimensions.z;
+
   const uniform uint64 bytesPerSlice = bytesPerVoxel * (uint64)dimensions.x * (uint64)dimensions.y;
   const uniform uint64 bytesPerVolume = bytesPerSlice * dimensions.z;
 
-  volume->voxelType     = (OSPDataType) voxelType;
-  volume->voxelData     = voxelData;
-  volume->bytesPerSlice = bytesPerSlice;
+  self->voxelType     = (OSPDataType) voxelType;
+  self->voxelData     = voxelData;
+  self->bytesPerVoxel = bytesPerVoxel;
+  self->bytesPerLine  = bytesPerVoxel * dimensions.x;
+  self->bytesPerSlice = bytesPerSlice;
 
   if (bytesPerVolume <= (1ULL<<30)) {
     //print("#osp:shared_structured_volume: using 32-bit mode\n");
     // in this case, we know ALL addressing can be 32-bit.
 
-    if (voxelType == OSP_UCHAR)
-      volume->super.getVoxel = SharedStructuredVolumeUChar_getVoxel_32;
-    else if (voxelType == OSP_FLOAT)
-      volume->super.getVoxel = SharedStructuredVolumeFloat_getVoxel_32;
-    else if (voxelType == OSP_DOUBLE)
-      volume->super.getVoxel = SharedStructuredVolumeDouble_getVoxel_32;
+    if (voxelType == OSP_UCHAR) {
+      self->super.getVoxel = SharedStructuredVolumeUChar_getVoxel_32;
+      self->super.super.computeSample = SSV_computeSample_uint8_32;
+    } else if (voxelType == OSP_FLOAT) {
+      self->super.getVoxel = SharedStructuredVolumeFloat_getVoxel_32;
+      self->super.super.computeSample = SSV_computeSample_float_32;
+    } else if (voxelType == OSP_DOUBLE) {
+      self->super.getVoxel = SharedStructuredVolumeDouble_getVoxel_32;
+      self->super.super.computeSample = SSV_computeSample_double_32;
+    }
 
   } else if (bytesPerSlice <= (1ULL << 30)) {
     //print("#osp:shared_structured_volume: using 64/32-bit mode\n");
     // in this case, we know we can do 32-bit addressing within a
     // slice, but need 64-bit arithmetic to get slice begins
 
-    if (voxelType == OSP_UCHAR)
-      volume->super.getVoxel = SharedStructuredVolumeUChar_getVoxel_64_32;
-    else if (voxelType == OSP_FLOAT)
-      volume->super.getVoxel = SharedStructuredVolumeFloat_getVoxel_64_32;
-    else if (voxelType == OSP_DOUBLE)
-      volume->super.getVoxel = SharedStructuredVolumeDouble_getVoxel_64_32;
-
+    if (voxelType == OSP_UCHAR) {
+      self->super.getVoxel = SharedStructuredVolumeUChar_getVoxel_64_32;
+      self->super.super.computeSample = SSV_computeSample_uint8_64_32;
+    } else if (voxelType == OSP_FLOAT) {
+      self->super.getVoxel = SharedStructuredVolumeFloat_getVoxel_64_32;
+      self->super.super.computeSample = SSV_computeSample_float_64_32;
+    } else if (voxelType == OSP_DOUBLE) {
+      self->super.getVoxel = SharedStructuredVolumeDouble_getVoxel_64_32;
+      self->super.super.computeSample = SSV_computeSample_double_64_32;
+    }
   } else {
     //print("#osp:shared_structured_volume: using 64-bit mode\n");
     // in this case, even a single slice is too big to do 32-bit
     // addressing, and we have to do 64-bit throughout
 
     if (voxelType == OSP_UCHAR)
-      volume->super.getVoxel = SharedStructuredVolumeUChar_getVoxel_64;
+      self->super.getVoxel = SharedStructuredVolumeUChar_getVoxel_64;
     else if (voxelType == OSP_FLOAT)
-      volume->super.getVoxel = SharedStructuredVolumeFloat_getVoxel_64;
+      self->super.getVoxel = SharedStructuredVolumeFloat_getVoxel_64;
     else if (voxelType == OSP_DOUBLE)
-      volume->super.getVoxel = SharedStructuredVolumeDouble_getVoxel_64;
+      self->super.getVoxel = SharedStructuredVolumeDouble_getVoxel_64;
 
   }
 }
@@ -276,3 +457,36 @@ export void *uniform SharedStructuredVolume_createInstance(void *uniform cppEqui
 
   return volume;
 }
+
+/*! this is a very simple implementation that does not yet use iether
+  vectors OR threads ... should be fixed */
+#define template_setRegion(type)                                        \
+  export void SharedStructuredVolume_setRegion_##type                   \
+  (void *uniform _self,                                                 \
+   const void *uniform source,                                          \
+   const uniform vec3i &index,                                          \
+   const uniform vec3i &count)                                          \
+  {                                                                     \
+    SharedStructuredVolume *uniform self                                \
+      = (SharedStructuredVolume *uniform)_self;                         \
+    uniform type *uniform ptr_out = (uniform type *)self->voxelData;    \
+    const uniform type *uniform ptr_in = (const uniform type *)source;  \
+    for (uniform int iz=0;iz<count.z;iz++)  {                           \
+      uniform int64 iiz = iz + index.z;                                 \
+      for (uniform int iy=0;iy<count.y;iy++)                            \
+        for (uniform int ix=0;ix<count.x;ix++) {                        \
+          uniform int64 iix = ix + index.x;                             \
+          uniform int64 iiy = iy + index.y;                             \
+          uniform int64 ofs_in                                          \
+            = ix + count.x*(iy+count.y*(uniform int64)iz);              \
+          uniform int64 ofs_out                                         \
+            = iix + self->super.dimensions.x                            \
+            * (iiy+self->super.dimensions.y*iiz);                       \
+          *(ptr_out+ofs_out) = ptr_in[ofs_in];                          \
+        }                                                               \
+    }                                                                   \
+  }
+
+template_setRegion(uint8);
+template_setRegion(float);
+template_setRegion(double);
