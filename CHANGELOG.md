@@ -1,6 +1,26 @@
 Version History
 ---------------
 
+### Changes in v0.9.0:
+
+The OSPRay v0.9.0 release adds significant new features as well as API
+changes.
+
+-   Experimental support for data-distributed MPI-parallel volume rendering
+-   New SciVis-focused renderer ("raytracer" or "scivis") combining
+    functionality of "obj" and "ao" renderers
+-   Updated Embree version to v2.7.1 with native support for AVX512 for
+    triangle mesh surface rendering on the Intel® Xeon Phi™ processor
+    (codename Knights Landing)
+-   OSPRay now uses C++11 features, requiring up to date compiler and
+    standard library versions (GCC v4.8.0)
+-   Optimization of volume sampling resulting in volume rendering speedups
+    of up to 1.5x
+-   Updated materials and improved performance of pathtracer
+-   Tasking system has been updated to use TBB
+-   The ospGet*() API calls have been deprecated and will be removed in a
+    subsequent release
+
 ### Changes in v0.8.3:
 
 -   Enhancements and optimizations to path tracer
