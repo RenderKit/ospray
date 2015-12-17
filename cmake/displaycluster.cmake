@@ -15,6 +15,7 @@
 ## ======================================================================== ##
 
 OPTION(OSPRAY_DISPLAYCLUSTER "Build DisplayCluster tiled display support")
+MARK_AS_ADVANCED(OSPRAY_DISPLAYCLUSTER)
 
 IF (OSPRAY_DISPLAYCLUSTER)
 
