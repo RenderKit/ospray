@@ -54,6 +54,8 @@ namespace ospray {
     //! The voxelData object upon commit().
     Data *voxelData;
 
+    //! the pointer to allocated data if the user did _not_ specify a shared buffer
+    void *allocatedVoxelData;
   };
 
 } // ::ospray
