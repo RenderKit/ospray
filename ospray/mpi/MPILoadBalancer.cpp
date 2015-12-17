@@ -19,6 +19,7 @@
 #include "ospray/render/Renderer.h"
 #include "ospray/fb/LocalFB.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
+#include "ospray/common/parallel_for.h"
 
 #include <algorithm>
 
@@ -89,20 +90,9 @@ namespace ospray {
         const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
                                 RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
 
-#ifdef OSPRAY_USE_TBB
-        tbb::parallel_for(tbb::blocked_range<int>(0, numJobs),
-                          [&](const tbb::blocked_range<int> &range){
-          for (int taskIndex = range.begin();
-               taskIndex != range.end();
-               ++taskIndex)
-            renderer->renderTile(perFrameData, tile, taskIndex);
+        parallel_for(numJobs, [&](int taskIndex){
+          renderer->renderTile(perFrameData, tile, taskIndex);
         });
-#else//OpenMP
-#       pragma omp parallel for schedule(dynamic)
-        for (int i = 0; i < numJobs; ++i) {
-          renderer->renderTile(perFrameData, tile, i);
-        }
-#endif
 
         fb->setTile(tile);
 #if TILE_SIZE>128
@@ -133,20 +123,7 @@ namespace ospray {
         renderTask.perFrameData = perFrameData;
 
         const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-#ifdef OSPRAY_USE_TBB
-        tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
-                        [&](const tbb::blocked_range<int> &range){
-          for (int taskIndex = range.begin();
-               taskIndex != range.end();
-               ++taskIndex)
-            renderTask.run(taskIndex);
-        });
-#else//OpenMP
-#       pragma omp parallel for schedule(dynamic)
-        for (int i = 0; i < NTASKS; ++i) {
-          renderTask.run(i);
-        }
-#endif
+        parallel_for(NTASKS, [&](int taskIndex){renderTask.run(taskIndex);});
 
         dfb->waitUntilFinished();
         tiledRenderer->endFrame(perFrameData,channelFlags);
