@@ -19,7 +19,7 @@
 /*! total number of bits per block dimension. '6' would mean 18 bits =
   1/4million voxels per block, which for alots would be 1MB, so should
   all fit into a single 2M page (assuming we do 2M allocs, of course) */
-#define BLOCK_BITS (7) 
+#define BLOCK_BITS (6) 
 #define BRICK_BITS (2)
 
 /*! @{ number of voxels per block per dimension */
@@ -225,6 +225,23 @@ template_getAddress(uint8);
 template_getAddress(float);
 template_getAddress(double);
 
+/*! since we do ghosting some cells have to be written twice. the way
+    we do that is that every time we write a given cell x/y/z we check
+    if this is anywhere on the front/bottom/left of a block, and if
+    so, tell the setRegion call that there'll be another cell in some
+    other abuttin gblock that should get this same value. what _this_
+    function does is that, given a cell ID x/y/z and a 'direction' we
+    have to check for ghosting (ie, on the left, on the bottom, on the
+    front, or any combination thereof), determine if this cell does
+    have a ghost _in that direction_, and if so, return true and
+    compute the porper address for that ghost cell (in only that
+    direction, mind!). if there is not ghost cell (in this direction)
+    the function returns false. Thus, all the setRegion has to do is
+    call 'getGhostIndices()' for all 7 possible directions that a cell
+    might have ghost cells. Yes, there's faster ways to do that -
+    because certain values will get recomputed for each of the 7
+    direction (plus the original cell itself) but this is the easiest
+    (I could find). */
 inline bool GGBV_getGhostIndices(GGBV *uniform volume,
                                  const varying vec3i &voxelIdxInVolume,
                                  const uniform vec3i delta,
@@ -315,11 +332,11 @@ template_accessArray(double);
                                                                         \
     /* Compute the 1D address of the block in the volume and the voxel in the block. */ \
     Address address;                                                    \
-    GGBV_getIndices_##type(volume, index, address);                      \
+    GGBV_getIndices_##type(volume, index, address);                     \
                                                                         \
     /* The voxel value at the 1D address.*/                             \
     foreach_unique(blockID in address.block) {                          \
-      const type *uniform blockPtr                                     \
+      const type *uniform blockPtr                                      \
         = blockMem + (VOXELS_PER_BLOCK * (uint64)blockID);              \
       value = blockPtr[address.voxel];                                  \
       /* value = accessArrayWithOffset(blockPtr,address.voxel); */      \
