@@ -19,7 +19,7 @@
 /*! total number of bits per block dimension. '6' would mean 18 bits =
   1/4million voxels per block, which for alots would be 1MB, so should
   all fit into a single 2M page (assuming we do 2M allocs, of course) */
-#define BLOCK_BITS (6) 
+#define BLOCK_BITS (7) 
 #define BRICK_BITS (2)
 
 /*! @{ number of voxels per block per dimension */
@@ -64,7 +64,7 @@
 #define shift_per_double 3
 /*! @} */
 
-/*! @{ number of bits we have to MULTIPLE offsets with for given
+/*! @{ number of bits we have to MULTIPLY offsets with for given
 type */
 #define scale_per_uint8 1
 #define scale_per_float 4
@@ -162,8 +162,8 @@ template_brickTranslation(double);
   /* IMPORTANT: this function computes RAW adresses that are to be */   \
   /* directy added to "unsigned char *" pointers */                     \
   inline void GGBV_getAddress_##type(GGBV *uniform volume,              \
-                                       const vec3f &voxelIdxInVolume_f, \
-                                       const vec3i &voxelIdxInVolume,   \
+                                     const vec3f &voxelIdxInVolume_f,   \
+                                     const vec3i &voxelIdxInVolume,     \
                                      varying Address8 &address)         \
   {                                                                     \
     /* Compute the 3D index of the block containing the brick containing the voxel. */ \
@@ -280,14 +280,19 @@ inline bool GGBV_getGhostIndices(GGBV *uniform volume,
   return valid && (blockIndex.x >=0) && (blockIndex.y >= 0) && (blockIndex.z >= 0);
 }
 
-
-#define template_accessArray(type)                                \
-  inline float accessArrayWithOffset(const type *uniform basePtr, \
-                                     const varying uint32 offset) \
-  {                                                               \
-    uint8 *uniform base = (uint8 *uniform)basePtr;                \
-    return *((type *)(base+offset));                              \
-  }                                                               \
+/*! read a _typed_ value from an address that's given by an
+    *BYTE*-offset relative to a base array. note that even though we
+    assume that the offset is already in bytes (ie, WITHOUT scaling by
+    the width of the array data type), the the base pointer must
+    *STILL* be of the proper type for this macro to figure out the
+    type of data it's reading from this address */
+#define template_accessArray(type)                                      \
+  inline float accessArrayWithOffset(const type *uniform basePtr,       \
+                                     const varying uint32 offset)       \
+  {                                                                     \
+    uniform uint8 *uniform base = (uniform uint8 *uniform)basePtr;      \
+    return *((uniform type *)(base+offset));                            \
+  }                                                                     \
   
 template_accessArray(uint8);
 template_accessArray(float);
@@ -513,7 +518,81 @@ void GGBVDouble_setRegion(void *uniform _volume,
                                            regionSize);
 }
 
-#define template_computeSample(type)                                    \
+// #define template_computeSample(type)                                    \
+//   inline float GGBV_computeSample_##type(void *uniform _volume,         \
+//                                          const vec3f &worldCoordinates) \
+//   {                                                                     \
+//     /* Cast to the actual Volume subtype. */                            \
+//     GGBV *uniform volume = (GGBV *uniform) _volume;                     \
+//                                                                         \
+//     /* Transform the sample location into the local coordinate system. */ \
+//     vec3f localCoordinates;                                             \
+//     volume->super.transformWorldToLocal(&volume->super,                 \
+//                                         worldCoordinates,               \
+//                                         localCoordinates);              \
+//                                                                         \
+//     /* Coordinates outside the volume are clamped to the volume bounds. */ \
+//     const vec3f clampedLocalCoordinates                                 \
+//       = clamp(localCoordinates, make_vec3f(0.0f),                       \
+//               volume->super.localCoordinatesUpperBound);                \
+//                                                                         \
+//     /* Lower and upper corners of the box straddling the voxels to be interpolated. */ \
+//     const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);   \
+//                                                                         \
+//     /* Fractional coordinates within the lower corner voxel used during interpolation. */ \
+//     const vec3f frac = clampedLocalCoordinates - float_cast(voxelIndex_0); \
+//                                                                         \
+//     /* Compute the 1D address of the block in the volume and the voxel in the block. */ \
+//     Address8 address8;                                                  \
+//     GGBV_getAddress_##type(volume, clampedLocalCoordinates,             \
+//                            voxelIndex_0, address8);                     \
+//       /* split block into 24+8 bits; we'll have to do a foreach_unique */ \
+//       /* over the upper 24 bits to satify 64-bit addressing, but at */  \
+//       /* least the lower bits we can merge into a single loop */        \
+//       float retValue;                                                   \
+//                                                                         \
+//       foreach_unique (unique_block in address8.block) {                 \
+//         const type *uniform blockPtr                                    \
+//           = ((type *uniform)volume->blockMem)                           \
+//           + ((uniform uint64)unique_block)                              \
+//           * (VOXELS_PER_BLOCK);                                         \
+//         /* TODO: interleave loads with the address computations ... or at */ \
+//         /* least, prefetch upon the first address being known. */       \
+//         const uint32 ofs000 = address8.voxelOfs;                        \
+//         const uint32 ofs001 = ofs000+address8.voxelOfs_dx;              \
+//         const float val000  = accessArrayWithOffset(blockPtr,ofs000);   \
+//         const float val001  = accessArrayWithOffset(blockPtr,ofs001);   \
+//         const float val00   = val000 + frac.x * (val001 - val000);      \
+//                                                                         \
+//         const uint32 ofs010 = ofs000+address8.voxelOfs_dy;              \
+//         const uint32 ofs011 = ofs001+address8.voxelOfs_dy;              \
+//         const float val010  = accessArrayWithOffset(blockPtr,ofs010);   \
+//         const float val011  = accessArrayWithOffset(blockPtr,ofs011);   \
+//         const float val01   = val010 + frac.x * (val011 - val010);      \
+//                                                                         \
+//         const uint32 ofs100 = ofs000+address8.voxelOfs_dz;              \
+//         const uint32 ofs101 = ofs001+address8.voxelOfs_dz;              \
+//         const float val100  = accessArrayWithOffset(blockPtr,ofs100);   \
+//         const float val101  = accessArrayWithOffset(blockPtr,ofs101);   \
+//         const float val10   = val100 + frac.x * (val101 - val100);      \
+//                                                                         \
+//         const uint32 ofs110 = ofs010+address8.voxelOfs_dz;              \
+//         const uint32 ofs111 = ofs011+address8.voxelOfs_dz;              \
+//         const float val110  = accessArrayWithOffset(blockPtr,ofs110);   \
+//         const float val111  = accessArrayWithOffset(blockPtr,ofs111);   \
+//         const float val11   = val110 + frac.x * (val111 - val110);      \
+//                                                                         \
+//         /* Interpolate the voxel values. */                             \
+//         const float val0    = val00  + frac.y * (val01  - val00 );      \
+//         const float val1    = val10  + frac.y * (val11  - val10 );      \
+//         const float volumeSample  = val0   + frac.z * (val1   - val0  ); \
+//                                                                         \
+//         retValue = volumeSample;                                        \
+//       }                                                                 \
+//       return retValue;                                                  \
+//   }
+
+#define template_computeSample(type)                                   \
   inline float GGBV_computeSample_##type(void *uniform _volume,         \
                                          const vec3f &worldCoordinates) \
   {                                                                     \
@@ -550,10 +629,10 @@ void GGBVDouble_setRegion(void *uniform _volume,
       float retValue;                                                   \
                                                                         \
       foreach_unique (unique_block_hi in block_hi) {                    \
-        const uint8 *uniform blockPtrHi                                 \
-          = (uint8 *uniform)volume->blockMem                            \
+        const type *uniform blockPtrHi                                  \
+          = (const type *uniform)volume->blockMem                       \
           + ((uniform uint64)unique_block_hi)                           \
-          * (VOXELS_PER_BLOCK * scale_per_##type);                      \
+          * (VOXELS_PER_BLOCK);                                         \
         /* TODO: interleave loads with the address computations ... or at */ \
         /* least, prefetch upon the first address being known. */       \
         const uint32 ofs000 = address8.voxelOfs                         \
