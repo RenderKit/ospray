@@ -16,12 +16,12 @@
 
 #pragma once
 
-//namespace ospray {
-
 #ifdef OSPRAY_USE_TBB
 # include <tbb/blocked_range.h>
 # include <tbb/parallel_for.h>
 #endif
+
+namespace ospray {
 
 template<typename T>
 inline void parallel_for(int nTasks, const T& fcn)
@@ -42,4 +42,4 @@ inline void parallel_for(int nTasks, const T& fcn)
 #endif
 }
 
-//}//namespace ospray
+}//namespace ospray
