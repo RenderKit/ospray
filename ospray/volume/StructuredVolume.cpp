@@ -77,10 +77,9 @@ void StructuredVolume::commit()
     void *accel = ispc::StructuredVolume_createAccelerator(ispcEquivalent);
 
     vec3i brickCount;
-    ispc::vec3i _brickCount = ispc::GridAccelerator_getBrickCount(accel);
-    brickCount.x = _brickCount.x;
-    brickCount.y = _brickCount.y;
-    brickCount.z = _brickCount.z;
+    brickCount.x = ispc::GridAccelerator_getBrickCount_x(accel);
+    brickCount.y = ispc::GridAccelerator_getBrickCount_y(accel);
+    brickCount.z = ispc::GridAccelerator_getBrickCount_z(accel);
 
     // Build volume accelerator.
     const int NTASKS = brickCount.x * brickCount.y * brickCount.z;

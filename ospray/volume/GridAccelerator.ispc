@@ -374,10 +374,22 @@ void GridAccelerator_intersectIsosurface(GridAccelerator *uniform accelerator,
                                       ray);
 }
 
-export uniform vec3i GridAccelerator_getBrickCount(void *uniform _accel)
+export uniform int GridAccelerator_getBrickCount_x(void *uniform _accel)
 {
   GridAccelerator *uniform accelerator = (GridAccelerator *uniform)_accel;
-  return accelerator->brickCount;
+  return accelerator->brickCount.x;
+}
+
+export uniform int GridAccelerator_getBrickCount_y(void *uniform _accel)
+{
+  GridAccelerator *uniform accelerator = (GridAccelerator *uniform)_accel;
+  return accelerator->brickCount.y;
+}
+
+export uniform int GridAccelerator_getBrickCount_z(void *uniform _accel)
+{
+  GridAccelerator *uniform accelerator = (GridAccelerator *uniform)_accel;
+  return accelerator->brickCount.z;
 }
 
 export void GridAccelerator_buildAccelerator(void *uniform _volume,
