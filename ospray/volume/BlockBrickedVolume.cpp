@@ -16,15 +16,10 @@
 
 //ospray
 #include "ospray/volume/BlockBrickedVolume.h"
+#include "ospray/common/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
 // std
 #include <cassert>
-
-// tbb
-#ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
-# include <tbb/parallel_for.h>
-#endif
 
 namespace ospray {
 
@@ -95,31 +90,17 @@ void BlockBrickedVolume::commit()
       }
     }
 #endif
-    // Copy voxel data into the volume.
 
+    // Copy voxel data into the volume.
     const int NTASKS = regionSize.y * regionSize.z;
-#ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
-                      [&](const tbb::blocked_range<int> &range) {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex)
-        ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
-                                           source,
-                                           (const ispc::vec3i &) regionCoords,
-                                           (const ispc::vec3i &) regionSize,
-                                           taskIndex);
-    });
-#else//OpenMP
-#   pragma omp parallel for schedule(dynamic)
-    for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
+    parallel_for(NTASKS, [&](int taskIndex){
       ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
                                          source,
                                          (const ispc::vec3i &) regionCoords,
                                          (const ispc::vec3i &) regionSize,
                                          taskIndex);
-    }
-#endif
+    });
+
     return true;
   }
 

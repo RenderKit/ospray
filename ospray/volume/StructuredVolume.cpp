@@ -18,17 +18,13 @@
 #include "ospray/common/Data.h"
 #include "ospray/common/Core.h"
 #include "ospray/common/Library.h"
+#include "ospray/common/parallel_for.h"
 #include "ospray/volume/StructuredVolume.h"
 #include "GridAccelerator_ispc.h"
 #include "StructuredVolume_ispc.h"
 
 // stl
 #include <map>
-
-#ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
-# include <tbb/parallel_for.h>
-#endif
 
 namespace ospray {
 
@@ -88,20 +84,9 @@ void StructuredVolume::commit()
 
     // Build volume accelerator.
     const int NTASKS = brickCount.x * brickCount.y * brickCount.z;
-#ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
-                      [&](const tbb::blocked_range<int> &range) {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex)
-        ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
-    });
-#else
-#   pragma omp parallel for
-    for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
+    parallel_for(NTASKS, [&](int taskIndex){
       ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
-    }
-#endif
+    });
   }
 
   void StructuredVolume::finish()
