@@ -1,0 +1,76 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct Specular
+{
+  BSDF super;
+
+  /*! The reflectivity parameter. The range is [0,1] where 0 means
+   *  no reflection at all, and 1 means full reflection. */
+  vec3f R;
+
+  /*! The exponent that determines the glossiness. The range is
+   *  [0,infinity[ where 0 means a diffuse surface, and the
+   *  specularity increases towards infinity. */
+  float exp;
+};
+
+inline vec3f Specular_eval(const varying BSDF* uniform super,
+                           const vec3f& wo, const vec3f& wi, float& pdf)
+{
+  const varying Specular* uniform self = (const varying Specular* uniform)super;
+  const vec3f refl = reflect(wo, getN(super));
+  if (dot(refl,wi) < 0.0f) return make_vec3f(0.0f);
+  pdf = powerCosineSampleHemispherePDF(dot(refl,wi), self->exp);
+  return mul(self->R, (self->exp+2) * one_over_two_pi * pow(dot(refl,wi),self->exp) * clamp(dot(wi, getN(super))));
+}
+
+inline vec3f Specular_sample(const varying BSDF* uniform super,
+                             const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                             const vec2f& s, float ss)
+{
+  const varying Specular* uniform self = (const varying Specular* uniform)super;
+  const vec3f refl = reflect(wo, getN(super));
+  const vec3f localDir = powerCosineSampleHemisphere(self->exp, s);
+  wi = frame(refl) * localDir;
+  pdf = powerCosineSampleHemispherePDF(localDir, self->exp);
+  return mul(self->R, (self->exp+2) * rcp(self->exp+1) * clamp(dot(wi, getN(super))));
+}
+
+inline void Specular_Constructor(varying Specular* uniform self,
+                                 const varying linear3f* uniform frame,
+                                 vec3f R,
+                                 float exp_)
+{
+  BSDF_Constructor(&self->super, BSDF_GLOSSY_REFLECTION,
+                   Specular_eval, Specular_sample, frame);
+  self->R = R;
+  self->exp = exp_;
+}
+
+inline varying BSDF* uniform Specular_create(uniform ShadingContext* uniform ctx,
+                                             const varying linear3f* uniform frame,
+                                             vec3f R,
+                                             float exp_)
+{
+  varying Specular* uniform self = (varying Specular* uniform)ShadingContext_alloc(ctx, sizeof(Specular));
+  Specular_Constructor(self, frame, R, exp_);
+  return &self->super;
+}

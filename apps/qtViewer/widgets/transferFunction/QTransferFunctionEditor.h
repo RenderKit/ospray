@@ -28,7 +28,7 @@
 
 namespace ospray {
   namespace viewer {
-    
+
     /*! the editor widget to edit a transfer function's alpha
         values. This will show the current color map as a background
         image, and allow to edit a set of points defining the alpha
@@ -38,54 +38,50 @@ namespace ospray {
       Q_OBJECT;
 
     public:
-      
+
       QTransferFunctionAlphaEditor();
-      
-      /*! quantize this color map into given 1D texture (which can
-        then be used for ospray, gl, etc) */
-      void makeTexture1D(float texel[], int numTexels);
-      
+
       /*! set background image for a given color map */
-      void setColorMapImage(QImage *image);
-      
+      void setColorMapImage(const QImage &image);
+
     signals:
-      
+
       void transferFunctionChanged();
 
     public:
-      // get y value based on linear interpolation of the points_ values for x in [0, 1]
+
+      // get y value based on linear interpolation of the points values for x in [0, 1]
       float getInterpolatedValue(float x);
-      
-      
+
     protected:
+
       //! @{ callbacks to intercept qt events
-      virtual void resizeEvent(QResizeEvent * event);
       virtual void paintEvent(QPaintEvent * event);
       virtual void mousePressEvent(QMouseEvent * event);
       virtual void mouseReleaseEvent(QMouseEvent * event);
       virtual void mouseMoveEvent(QMouseEvent * event);
       //! @}
-    
+
       // transform normalized coordinates to widget coordinates
-      QPointF pointToWidgetPoint(const osp::vec2f &point);
-      
+      QPointF pointToWidgetPoint(const ospray::vec2f &point);
+
       // transform widget coordinates to normalized coordinates
-      osp::vec2f widgetPointToPoint(const QPointF &widgetPoint);
+      ospray::vec2f widgetPointToPoint(const QPointF &widgetPoint);
 
       // get the index of the selected point based on the clicked point in widget coordinates
-      // returns -1 of no selected point
+      // returns -1 if no selected point
       int getSelectedPointIndex(const QPointF &widgetClickPoint);
-      
-      // this image shows the color map
-      QImage *colorMapImage;
-      
+
+      // color map image used as the widget background
+      QImage colorMapImage;
+
       //! the points that define the transfer function, in normalize
       //! coordinates ([0,0], [1,1])
-      std::vector<osp::vec2f> points;
-      
+      std::vector<ospray::vec2f> points;
+
       //! currently selected point
       int selectedPointIndex;
-      
+
       //! \{ drawing properties
       static float pointPixelRadius;
       static float linePixelWidth;
@@ -93,7 +89,7 @@ namespace ospray {
 
     };
 
-    
+
     /*! \brief simple editor widget that allows for editing a tranfer fcuntion's color map and alpha mapping */
     class QTransferFunctionEditor : public QWidget
     {
@@ -103,35 +99,34 @@ namespace ospray {
       class ColorMap
       {
       public:
+
         //! construct a new color map from given colors
-        ColorMap(const std::string &name, const std::vector<osp::vec3f> &colors);
+        ColorMap(const std::string &name, const std::vector<ospray::vec3f> &colors);
 
         //! return the name of this color map
         inline std::string getName() const { return name; };
 
-        /*! quantize this color map into given 1D texture (which can
-          then be used for ospray, gl, etc) */
-        void makeTexture1D(osp::vec3f texel[], int numTexels);
-
         /*! return a QImage that represents the color map (this image
-          can be used in the transfer fct editor */
-        QImage *getRepresentativeImage() const;
+          can be used in the transfer function editor */
+        QImage getRepresentativeImage() const;
 
         //! query function that returns the current color map (to be
         //! used in a scene graph node, for example
-        std::vector<osp::vec3f> getColors() const { return colors; };  
+        std::vector<ospray::vec3f> getColors() const { return colors; };
+
       protected:
+
         const std::string name;
-        const std::vector<osp::vec3f> colors;
+        const std::vector<ospray::vec3f> colors;
       };
 
     public:
       // constructor
       QTransferFunctionEditor();
-      
+
       // add a new color map to the list of selectable color maps
       void addColorMap(const ColorMap *colorMap);
-  
+
     signals:
       void transferFunctionChanged();
     public slots:
@@ -139,8 +134,6 @@ namespace ospray {
     protected slots:
 
       void selectColorMap(int index);
-      // void setDataValueMin(double value);
-      // void setDataValueMax(double value);
 
     protected:
 
@@ -165,14 +158,14 @@ namespace ospray {
     struct QOSPTransferFunctionEditor : public QTransferFunctionEditor
     {
       QOSPTransferFunctionEditor(Ref<sg::TransferFunction> sgNode)
-        : sgNode(sgNode) 
+        : sgNode(sgNode)
       {
         // sgNode->render();
       }
 
       virtual void updateColorMap();
       virtual void updateAlphaMap();
-      
+
       //! the node we are editing
       Ref<sg::TransferFunction> sgNode;
     };

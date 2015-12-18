@@ -16,17 +16,24 @@
 
 #include "Material.ih"
 
-void PathTraceMaterial__selectNextMedium(uniform const PathTraceMaterial *uniform _self,
-                                varying Medium& currentMedium) 
+vec3f PathTraceMaterial_getTransparency(const uniform PathTraceMaterial* uniform self,
+                                        const DifferentialGeometry& dg,
+                                        const Ray& ray,
+                                        const Medium& currentMedium)
+{
+  return make_vec3f(0.0f);
+}
+
+void PathTraceMaterial_selectNextMedium(const uniform PathTraceMaterial* uniform self,
+                                        varying Medium& currentMedium)
 { /* do nothing by default */ }
 
-void PathTraceMaterial__Constructor(uniform PathTraceMaterial *uniform self,
-                           uniform PathTraceMaterial__shade shade,
-                           uniform PathTraceMaterial__selectNextMediumFunc selectNextMedium)
+void PathTraceMaterial_Constructor(uniform PathTraceMaterial* uniform self,
+                                   uniform PathTraceMaterial_GetBSDFFunc getBSDF,
+                                   uniform PathTraceMaterial_GetTransparencyFunc getTransparency,
+                                   uniform PathTraceMaterial_SelectNextMediumFunc selectNextMedium)
 {
-  self->shade = shade;
-  if (selectNextMedium) 
-    self->selectNextMedium = selectNextMedium; 
-  else                  
-    self->selectNextMedium = PathTraceMaterial__selectNextMedium;
+  self->getBSDF = getBSDF;
+  self->getTransparency = getTransparency ? getTransparency : PathTraceMaterial_getTransparency;
+  self->selectNextMedium = selectNextMedium ? selectNextMedium : PathTraceMaterial_selectNextMedium;
 }

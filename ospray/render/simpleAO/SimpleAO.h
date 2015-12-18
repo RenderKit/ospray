@@ -37,7 +37,8 @@
 
 namespace ospray {
 
-  using embree::TaskScheduler;
+  struct Camera;
+  struct Model;
 
   /*! \brief Simple 16-sample Ambient Occlusion Renderer
     
@@ -56,7 +57,6 @@ namespace ospray {
     samples in the first frame, the next 8 in the second, then
     rotation of the first 8 in the third, etc.
    */
-  template<int NUM_SAMPLES_PER_FRAME>
   struct SimpleAO : public Renderer {
     
     //! \brief Material used by the SimpleAO renderer 
@@ -68,23 +68,24 @@ namespace ospray {
       //! \brief Constructor
       Material();
 
-      /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+      /*! \brief commit the object's outstanding changes
+       *         (such as changed parameters etc) */
       virtual void commit();
       
       // -------------------------------------------------------
       // member variables 
       // -------------------------------------------------------
 
-      /*! diffuse material component, that's all we care for */
-      vec3f Kd;
+      //! \brief diffuse material component, that's all we care for 
+      vec3f Kd;       
 
-      /*! diffuse texture, if available */
+      //! \brief diffuse texture, if available
       Ref<Texture> map_Kd;
     };
   
 
     //! \brief Constructor
-    SimpleAO();
+    SimpleAO(int defaultNumSamples);
 
     /*! \brief common function to help printf-debugging */
     virtual std::string toString() const;
@@ -92,11 +93,13 @@ namespace ospray {
     /*! \brief create a material of given type */
     virtual ospray::Material *createMaterial(const char *type);
 
-    /*! \brief commit the object's outstanding changes (such as changed parameters etc) */
+    /*! \brief commit the object's outstanding changes
+     *         (such as changed parameters etc) */
     virtual void commit();
 
-    //! the background color we are going to use if the primary ray didn't hit anything
+    //! background color we are going to use if the primary ray hit nothing
     vec3f bgColor; 
+    int defaultNumSamples;
   };
 
 } // ::ospray

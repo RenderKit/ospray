@@ -16,8 +16,9 @@
 
 #pragma once
 
-#include <QtGui>
 #include <ospray/ospray.h>
+#include <QtGui>
+#include <stdexcept>
 
 class LightEditor : public QWidget {
 

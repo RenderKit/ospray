@@ -54,8 +54,8 @@ namespace ospray {
     // ==================================================================
     struct LightInfo {
       OSPLight ospLight;
-      osp::vec3f color;
-      osp::vec3f direction;
+      ospray::vec3f color;
+      ospray::vec3f direction;
       float intensity;
     };
 
@@ -102,7 +102,7 @@ namespace ospray {
       QPushButton *applyButton;
 
     private:
-      osp::vec3f upVector;
+      ospray::vec3f upVector;
     };
   }
 }

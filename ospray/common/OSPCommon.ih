@@ -18,6 +18,8 @@
 
 #include "embree2/rtcore.isph"
 
+#include "OSPConfig.h"
+
 typedef unsigned int64 uint64;
 typedef unsigned int32 uint32;
 typedef unsigned int16 uint16;
@@ -39,6 +41,7 @@ inline void* uniform align_ptr(void* uniform ptr) {
 }
 #endif
 
+#define PRINT(x) print(#x" = %\n", x)
 
 #define inf     floatbits(0x7F800000)
 #define pos_inf floatbits(0x7F800000)

@@ -16,39 +16,44 @@
 
 #pragma once
 
+// ospray
+#include "ospray/volume/Volume.h"
+// stl
 #include <algorithm>
 #include <string>
-#include "ospray/volume/Volume.h"
 
 namespace ospray {
 
-  //! \brief A StructuredVolume is an abstraction for Volume subtypes
-  //!  in which the voxels are implicitly ordered.
-  //!
-  //!  The actual memory layout, dimensionality, and source of samples
-  //!  are unknown to this class.  Subclasses may implement specific
-  //!  memory layouts, addressing precision, and voxel types.  A type
-  //!  string passed to Volume::createInstance() specifies a particular
-  //!  concrete implementation.  This type string must be registered
-  //!  in OSPRay proper, or in a loaded module via OSP_REGISTER_VOLUME.
-  //!
+  /*! \brief A StructuredVolume is an abstraction for Volume subtypes
+    in which the voxels are implicitly ordered. */
+  /*! \detailed The actual memory layout, dimensionality, and source
+    of samples are unknown to this class.  Subclasses may implement
+    specific memory layouts, addressing precision, and voxel types.  A
+    type string passed to Volume::createInstance() specifies a
+    particular concrete implementation.  This type string must be
+    registered in OSPRay proper, or in a loaded module via
+    OSP_REGISTER_VOLUME.
+  */
   class StructuredVolume : public Volume {
   public:
 
     //! Constructor.
-    StructuredVolume() : finished(false), voxelRange(FLT_MAX, -FLT_MAX) {}
+    StructuredVolume();
 
     //! Destructor.
-    virtual ~StructuredVolume() {};
+    virtual ~StructuredVolume();
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::StructuredVolume<" + voxelType + ">"); }
+    virtual std::string toString() const;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
     virtual void commit();
 
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
+    //! Copy voxels into the volume at the given index
+    /*! \returns 0 on error, any non-zero value indicates success */
+    virtual int setRegion(const void *source_pointer,
+                          const vec3i &target_index,
+                          const vec3i &source_count) = 0;
 
   protected:
 
@@ -61,6 +66,7 @@ namespace ospray {
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
     //! Compute the voxel value range for unsigned byte voxels.
     void computeVoxelRange(const unsigned char *source, const size_t &count);
 
@@ -70,12 +76,19 @@ namespace ospray {
     //! Compute the voxel value range for double precision floating point voxels.
     void computeVoxelRange(const double *source, const size_t &count);
 
+#endif
+
+
+    //! build the accelerator - allows child class (data distributed) to avoid
+    //! building..
+    virtual void buildAccelerator();
+
     //! Volume size in voxels per dimension.
     vec3i dimensions;
-    
+
     //! Grid origin.
     vec3f gridOrigin;
-    
+
     //! Grid spacing in each dimension.
     vec3f gridSpacing;
 

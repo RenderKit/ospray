@@ -27,24 +27,25 @@ inline varying float StructuredVolume_computeSample(void *uniform _volume, const
   volume->transformWorldToLocal(volume, worldCoordinates, localCoordinates);
 
   // Coordinates outside the volume are clamped to the volume bounds.
-  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), volume->localCoordinatesUpperBound);
+  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f),
+                                              volume->localCoordinatesUpperBound);
 
   // Lower and upper corners of the box straddling the voxels to be interpolated.
-  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
+  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);
   const vec3i voxelIndex_1 = voxelIndex_0 + 1;
 
   // Fractional coordinates within the lower corner voxel used during interpolation.
   const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - float_cast(voxelIndex_0);
 
   // Look up the voxel values to be interpolated.
-  float voxelValue_000; 
-  float voxelValue_001; 
-  float voxelValue_010; 
-  float voxelValue_011; 
-  float voxelValue_100; 
-  float voxelValue_101; 
-  float voxelValue_110; 
-  float voxelValue_111; 
+  float voxelValue_000;
+  float voxelValue_001;
+  float voxelValue_010;
+  float voxelValue_011;
+  float voxelValue_100;
+  float voxelValue_101;
+  float voxelValue_110;
+  float voxelValue_111;
   volume->getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_000);
   volume->getVoxel(volume, make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_001);
   volume->getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z), voxelValue_010);
@@ -81,13 +82,13 @@ inline varying vec3f StructuredVolume_computeGradient(void *uniform _volume, con
   // Central differences.
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->inherited.computeSample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - volume->inherited.computeSample(volume, location + make_vec3f(-gradientStep.x, 0.0f, 0.0f));
+  gradient.x = volume->super.computeSample(volume, location + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - volume->super.computeSample(volume, location + make_vec3f(-gradientStep.x, 0.0f, 0.0f));
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - volume->inherited.computeSample(volume, location + make_vec3f(0.0f, -gradientStep.y, 0.0f));
+  gradient.y = volume->super.computeSample(volume, location + make_vec3f(0.0f, gradientStep.y, 0.0f)) - volume->super.computeSample(volume, location + make_vec3f(0.0f, -gradientStep.y, 0.0f));
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - volume->inherited.computeSample(volume, location + make_vec3f(0.0f, 0.0f, -gradientStep.z));
+  gradient.z = volume->super.computeSample(volume, location + make_vec3f(0.0f, 0.0f, gradientStep.z)) - volume->super.computeSample(volume, location + make_vec3f(0.0f, 0.0f, -gradientStep.z));
 
   // This approximation may yield image artifacts.
   return(0.5f * gradient / gradientStep);
@@ -95,16 +96,16 @@ inline varying vec3f StructuredVolume_computeGradient(void *uniform _volume, con
   // Forward differences.
 
   // Sample at gradient location.
-  float sample = volume->inherited.computeSample(volume, worldCoordinates);
+  float sample = volume->super.computeSample(volume, worldCoordinates);
 
   // Gradient magnitude in the X direction.
-  gradient.x = volume->inherited.computeSample(volume, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
+  gradient.x = volume->super.computeSample(volume, worldCoordinates + make_vec3f(gradientStep.x, 0.0f, 0.0f)) - sample;
 
   // Gradient magnitude in the Y direction.
-  gradient.y = volume->inherited.computeSample(volume, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
+  gradient.y = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, gradientStep.y, 0.0f)) - sample;
 
   // Gradient magnitude in the Z direction.
-  gradient.z = volume->inherited.computeSample(volume, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
+  gradient.z = volume->super.computeSample(volume, worldCoordinates + make_vec3f(0.0f, 0.0f, gradientStep.z)) - sample;
 
   // This approximation may yield image artifacts.
   return(gradient / gradientStep);
@@ -117,10 +118,11 @@ inline void StructuredVolume_intersect(void *uniform _volume, varying Ray &ray)
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   // The recommended step size for ray casting based volume renderers.
-  const uniform float step = volume->inherited.samplingStep / volume->inherited.samplingRate;
+  const uniform float step = volume->super.samplingStep / volume->super.samplingRate;
 
   // Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersect(volume->accelerator, step, ray);
+
 //ray.t0 += step;
 }
 
@@ -130,7 +132,7 @@ inline void StructuredVolume_intersectIsosurface(void *uniform _volume, uniform 
   StructuredVolume *uniform volume = (StructuredVolume *uniform) _volume;
 
   // The nominal step size for ray casting based volume renderers, not considering the sampling rate.
-  const uniform float step = volume->inherited.samplingStep;
+  const uniform float step = volume->super.samplingStep;
 
   // Compute the next hit point using a spatial acceleration structure.
   GridAccelerator_intersectIsosurface(volume->accelerator, step, isovalues, numIsovalues, ray);
@@ -146,13 +148,13 @@ inline void StructuredVolume_transformWorldToLocal(StructuredVolume *uniform vol
   localCoordinates = rcp(volume->gridSpacing) * (worldCoordinates - volume->gridOrigin);
 }
 
-void StructuredVolume_Constructor(StructuredVolume *uniform volume, 
+void StructuredVolume_Constructor(StructuredVolume *uniform volume,
                                   /*! pointer to the c++-equivalent class of this entity */
                                   void *uniform cppEquivalent,
                                   const uniform vec3i &dimensions
                                   )
 {
-  Volume_Constructor(&volume->inherited,cppEquivalent);
+  Volume_Constructor(&volume->super,cppEquivalent);
 
   volume->dimensions = dimensions;
   volume->accelerator = NULL;
@@ -161,11 +163,11 @@ void StructuredVolume_Constructor(StructuredVolume *uniform volume,
   volume->transformLocalToWorld = StructuredVolume_transformLocalToWorld;
   volume->transformWorldToLocal = StructuredVolume_transformWorldToLocal;
 
-  volume->inherited.boundingBox = make_box3f(volume->gridOrigin, volume->gridOrigin + make_vec3f(volume->dimensions - 1) * volume->gridSpacing);
-  volume->inherited.computeSample = StructuredVolume_computeSample;
-  volume->inherited.computeGradient = StructuredVolume_computeGradient;
-  volume->inherited.intersect = StructuredVolume_intersect;
-  volume->inherited.intersectIsosurface = StructuredVolume_intersectIsosurface;
+  volume->super.boundingBox = make_box3f(volume->gridOrigin, volume->gridOrigin + make_vec3f(volume->dimensions - 1) * volume->gridSpacing);
+  volume->super.computeSample = StructuredVolume_computeSample;
+  volume->super.computeGradient = StructuredVolume_computeGradient;
+  volume->super.intersect = StructuredVolume_intersect;
+  volume->super.intersectIsosurface = StructuredVolume_intersectIsosurface;
 }
 
 export void StructuredVolume_setGridOrigin(void *uniform _self, const uniform vec3f &value)
@@ -174,7 +176,7 @@ export void StructuredVolume_setGridOrigin(void *uniform _self, const uniform ve
   self->gridOrigin = value;
 
   // Update bounding box for new grid definition.
-  self->inherited.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
+  self->super.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
 }
 
 export void StructuredVolume_setGridSpacing(void *uniform _self, const uniform vec3f &value)
@@ -183,13 +185,13 @@ export void StructuredVolume_setGridSpacing(void *uniform _self, const uniform v
   self->gridSpacing = value;
 
   // Update nominal sampling step size for new grid definition.
-  self->inherited.samplingStep = reduce_min(self->gridSpacing);
+  self->super.samplingStep = reduce_min(self->gridSpacing);
 
   // Update bounding box for new grid definition.
-  self->inherited.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
+  self->super.boundingBox = make_box3f(self->gridOrigin, self->gridOrigin + make_vec3f(self->dimensions - 1) * self->gridSpacing);
 }
 
-export void StructuredVolume_buildAccelerator(void *uniform _self)
+export void *uniform StructuredVolume_createAccelerator(void *uniform _self)
 {
   // Cast to the actual Volume type.
   StructuredVolume *uniform self = (StructuredVolume *uniform)_self;
@@ -198,5 +200,7 @@ export void StructuredVolume_buildAccelerator(void *uniform _self)
   if(self->accelerator) GridAccelerator_destroy(self->accelerator);
 
   // Set the accelerator structure field.
-  self->accelerator = GridAccelerator_createInstance(&self->inherited);
+  self->accelerator = GridAccelerator_createInstance(&self->super);
+
+  return self->accelerator;
 }

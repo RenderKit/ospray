@@ -43,7 +43,12 @@ namespace ospray {
     //! A string description of this class.
     std::string toString() const;
 
-  protected:
+#if EXP_DATA_PARALLEL
+    /*! per-frame data to describe the data-parallel components */
+    void renderFrame(FrameBuffer *fb, const uint32 channelFlags);
+#endif
+
+  private:
 
     //! Print an error message.
     void emitMessage(const std::string &kind, const std::string &message) const;
@@ -90,4 +95,3 @@ namespace ospray {
   }
 
 } // ::ospray
-

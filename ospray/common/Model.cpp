@@ -41,10 +41,10 @@ namespace ospray {
     if (logLevel >= 2) {
       std::cout << "=======================================================" << std::endl;
       std::cout << "Finalizing model, has " 
-           << geometry.size() << " geometries and " << volumes.size() << " volumes" << std::endl << std::flush;
+           << geometry.size() << " geometries and " << volume.size() << " volumes" << std::endl << std::flush;
     }
 
-    ispc::Model_init(getIE(), geometry.size(), volumes.size());
+    ispc::Model_init(getIE(), geometry.size(), volume.size());
     embreeSceneHandle = (RTCScene)ispc::Model_getEmbreeSceneHandle(getIE());
 
     bounds = embree::empty;
@@ -62,8 +62,12 @@ namespace ospray {
       bounds.extend(geometry[i]->bounds);
       ispc::Model_setGeometry(getIE(), i, geometry[i]->getIE());
     }
+    if (geometry.size() > 10) {
+      PING; PRINT(geometry.size());
+    }
 
-    for (size_t i=0 ; i < volumes.size() ; i++) ispc::Model_setVolume(getIE(), i, volumes[i]->getIE());
+    for (size_t i=0; i<volume.size(); i++) 
+      ispc::Model_setVolume(getIE(), i, volume[i]->getIE());
     
     rtcCommit(embreeSceneHandle);
   }

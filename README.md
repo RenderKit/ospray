@@ -1,7 +1,7 @@
 OSPRay
 ======
 
-This is release v0.8.3 of OSPRay. For changes and new
+This is release v0.9.0 of OSPRay. For changes and new
 features see the [changelog](CHANGELOG.md). Also visit
 http://www.ospray.org for more information.
 
@@ -95,13 +95,28 @@ CMake is easy:
 
     (We do recommend having separate build directories for different
     configurations such as release, debug, etc).
+
+-   The compiler CMake will use will default to whatever the `CC` and
+    `CXX` environment variables point to. Should you want to specify a
+    different compiler, run cmake manually while specifying the desired
+    compiler. The default compiler on most linux machines is 'gcc', but
+    it can be pointed to 'clang' instead by executing the following:
+
+        user@mymachine[~/Projects/ospray/release]: cmake 
+            -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_COMPILER=clang ..
+
+    CMake will now use clang instead of gcc. If you are ok with using
+    the default compiler on your system, then simply skip this step.
+    Note that the compiler variables cannot be changed after the first
+    `cmake` or `ccmake` run. 
+
 -   Open the CMake configuration dialog
 
         user@mymachine[~/Projects/ospray/release]: ccmake ..
 
--   Make sure to properly set build mode, desired compiler, enable the
-    components you need, etc; then type 'c'onfigure and 'g'enerate. When
-    back on the command prompt, build it using
+-   Make sure to properly set build mode and enable the components you
+    need, etc; then type 'c'onfigure and 'g'enerate. When back on the 
+    command prompt, build it using
 
         user@mymachine[~/Projects/ospray/release]: make
 
@@ -116,16 +131,20 @@ Tutorial
 --------
 
 A minimal working example demonstrating how to use OSPRay can be found
-at `apps/ospTutorial.cpp`. Build it in the build_directory with
+at `apps/ospTutorial.cpp`. On Linux build it in the build_directory with
 
-    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common  ./libospray.so -o ospTutorial
+    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common -Wl,-rpath,. ./libospray.so -o ospTutorial
+
+On Windows build it in the build_directory\\$Configuration with
+
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\ospray\embree\common ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
-with the Ambient Occlusion renderer. The first image `firstFrame.ppm` shows the
-result after one call to `ospRenderFrame` -- jagged edges and noise in the
-shadow can be seen. Calling `ospRenderFrame` multiple times enables
-progressive refinement, resulting in antialiased edges and converged
-shadows, shown after ten frames in the second image
+with the Ambient Occlusion renderer. The first image `firstFrame.ppm`
+shows the result after one call to `ospRenderFrame` -- jagged edges and
+noise in the shadow can be seen. Calling `ospRenderFrame` multiple times
+enables progressive refinement, resulting in antialiased edges and
+converged shadows, shown after ten frames in the second image
 `accumulatedFrames.png`.
 
 ![First frame.][imgTutorial1]
@@ -133,13 +152,13 @@ shadows, shown after ten frames in the second image
 ![After accumulating ten frames.][imgTutorial2]
 
 
-QT Viewer
+Qt Viewer
 ---------
 
-OSPRay also includes a demo viewer application `ospQTViewer`, showcasing all features
+OSPRay also includes a demo viewer application `ospQtViewer`, showcasing all features
 of OSPRay.
 
-![Screenshot of `ospQTViewer`.][imgQTViewer]
+![Screenshot of `ospQtViewer`.][imgQtViewer]
 
 
 Volume Viewer
@@ -160,7 +179,9 @@ at the [OSPRay Demos and Examples] page.
 [news/updates]: https://ospray.github.io/news.html
 [getting OSPRay]: https://ospray.github.io/getting_ospray.html
 [OSPRay Demos and Examples]: https://ospray.github.io/demos.html
-[imgTutorial1]:  https://ospray.github.io/images/tutorial_firstframe.png
-[imgTutorial2]:  https://ospray.github.io/images/tutorial_accumulatedframe.png
-[imgQTViewer]:  https://ospray.github.io/images/QTViewer.jpg
-[imgVolumeViewer]:  https://ospray.github.io/images/VolumeViewer.png
+[imgTutorial1]: https://ospray.github.io/images/tutorial_firstframe.png
+[imgTutorial2]: https://ospray.github.io/images/tutorial_accumulatedframe.png
+[imgQtViewer]: https://ospray.github.io/images/QtViewer.jpg
+[imgVolumeViewer]: https://ospray.github.io/images/VolumeViewer.png
+[imgSpotLight]: https://ospray.github.io/images/spot_light.png
+[imgQuadLight]: https://ospray.github.io/images/quad_light.png

@@ -36,6 +36,7 @@
 #include "ospray/render/LoadBalancer.h"
 #include "ospray/texture/Texture2D.h"
 #include "ospray/lights/Light.h"
+#include "ospray/fb/LocalFB.h"
 // stl
 #include <algorithm>
 

@@ -17,38 +17,12 @@
 #pragma once
 
 #include "ospray/mpi/MPICommon.h"
-// #include <mpi.h>
-// #include "ospray/common/OSPCommon.h"
-// embree
-#include "common/sys/platform.h"
-#include "common/sys/sync/mutex.h"
-#include "common/sys/sync/condition.h"
+#include "ospray/common/Thread.h"
 
 namespace ospray {
-  typedef embree::ConditionSys Condition;
-  typedef embree::MutexSys     Mutex;
   using   embree::thread_t;
 
   namespace mpi {
-    
-    // struct Group {
-    //   Group(const std::string &name, MPI_Comm comm=MPI_COMM_WORLD); 
-    //   virtual std::string toString() { return "mpi::Group("+name+")"; };
-
-    //   void barrier();
-
-    //   // MPI communicator for this group
-    //   MPI_Comm comm;
-    //   // size of that communicator
-    //   int32 size;
-    //   //! our rank within this communicator
-    //   int32 rank;
-    //   //! name, for debugging
-    //   std::string name;
-
-    // };
-    
-    // extern Group *WORLD;
     
     //! abstraction for any other peer node that we might want to communicate with
     struct Address {
@@ -99,6 +73,8 @@ namespace ospray {
         //! tag to be used for asynchronous messaging
         int32      tag;
       };
+
+      // extern Group *WORLD;
 
       //! abstraction - internally used - implement the messaging MPI
       struct AsyncMessagingImpl {

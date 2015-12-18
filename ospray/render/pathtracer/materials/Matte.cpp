@@ -20,10 +20,10 @@
 namespace ospray {
   namespace pathtracer {
     struct Matte : public ospray::Material {
-      //! \brief common function to help printf-debugging 
+      //! \brief common function to help printf-debugging
       /*! Every derived class should overrride this! */
       virtual std::string toString() const { return "ospray::pathtracer::Matte"; }
-      
+
       //! \brief commit the material's parameters
       virtual void commit() {
         if (getIE() != NULL) return;

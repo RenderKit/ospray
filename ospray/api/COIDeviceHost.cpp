@@ -30,8 +30,6 @@
 // std
 #include <map>
 
-#include "ospray/fb/tileSize.h"
-
 #define MAX_ENGINES 100
 
 #define MANUAL_DATA_UPLOADS 1
@@ -214,6 +212,12 @@ namespace ospray {
       virtual int setRegion(OSPVolume object, const void *source, 
                             const vec3i &index, const vec3i &count);
 
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPPixelOp newPixelOp(const char *type) { NOTIMPLEMENTED; };
+
+      /*! set a frame buffer's pixel op object */
+      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op) { NOTIMPLEMENTED; };
+      
       /*! assign (named) string parameter to an object */
       virtual void setString(OSPObject object, const char *bufName, const char *s);
 
@@ -1000,8 +1004,8 @@ namespace ospray {
         uint32 *src = (uint32*)devBuffer[engineID];
         uint32 *dst = (uint32*)fb->hostMem;
 
-        const size_t numTilesX = divRoundUp(sizeX,TILE_SIZE);
-        const size_t numTilesY = divRoundUp(sizeY,TILE_SIZE);
+        const size_t numTilesX = divRoundUp(sizeX,(size_t)TILE_SIZE);
+        const size_t numTilesY = divRoundUp(sizeY,(size_t)TILE_SIZE);
 // #pragma omp parallel for
         for (size_t tileY=0;tileY<numTilesY;tileY++) {
 // #pragma omp parallel for

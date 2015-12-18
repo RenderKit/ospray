@@ -21,7 +21,7 @@ namespace ospray {
 
   Texture2D::~Texture2D()
   {
-    if (!(flags & OSP_TEXTURE_SHARED_BUFFER)) delete[] data;
+    if (!(flags & OSP_TEXTURE_SHARED_BUFFER)) delete[] (unsigned char *)data;
   }
 
   Texture2D *Texture2D::createTexture(int sx, int sy, OSPDataType type, void *data, int flags) 

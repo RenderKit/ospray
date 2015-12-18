@@ -15,36 +15,23 @@
 // ======================================================================== //
 
 #include "ospray/render/util.ih"
+#include "ospray/math/random.ih"
 
 uniform float precomputedHalton[3][NUM_PRECOMPUTED_HALTON_VALUES];
 uniform bool  precomputedHalton_initialized = false;
 uniform z_order_t z_order;
 
-inline float radicalInverse(const uint32 _v, const uint32 prime)  
-{
-  uint32 v = _v;
-  float nom = 0.f;
-  float den = 1.f;
-  while(v != 0) {
-    uint32 r = v % prime;    
-    v = v / prime;
-    
-    nom = nom * prime + r;
-    den = den * prime;
-  }
-  float ret = nom / den;
-  return ret;
-}
-
 static void precomputedHalton_create() {
   if (precomputedHalton_initialized) 
     return;
+  // make race conditions less likely by setting flag immediatley here at beginning
+  precomputedHalton_initialized = true;
+
   foreach (i=0 ... NUM_PRECOMPUTED_HALTON_VALUES) {
-    precomputedHalton[0][i] = radicalInverse(i,2);
+    precomputedHalton[0][i] = radicalInverse2(i);
     precomputedHalton[1][i] = radicalInverse(i,3);
     precomputedHalton[2][i] = radicalInverse(i,5);
   }
-  precomputedHalton_initialized = true;
 };
 
 uniform bool z_order_initialized = false;

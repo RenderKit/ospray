@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// \file ospray/ospray.h Defines the external OSPRay API */
+
 /*! \defgroup ospray_api OSPRay Core API
 
   \ingroup ospray
@@ -25,24 +27,18 @@
 
 #pragma once
 
+#ifndef NULL
+# define NULL nullptr
+#endif
+
 #include <vector>
 
 // -------------------------------------------------------
 // include common components 
 // -------------------------------------------------------
-#if __EXTERNAL_EMBREE__
-#include "common/math/vec2.h"
-#include "common/math/vec3.h"
-#include "common/math/vec4.h"
-#include "common/math/bbox.h"
-#include "common/math/affinespace.h"
-#else
-#include "ospray/embree/common/math/vec2.h"
-#include "ospray/embree/common/math/vec3.h"
-#include "ospray/embree/common/math/vec4.h"
-#include "ospray/embree/common/math/bbox.h"
-#include "ospray/embree/common/math/affinespace.h"
-#endif
+#include <sys/types.h>
+#include <stdint.h>
+
 #include "ospray/common/OSPDataType.h"
 
 #ifdef _WIN32
@@ -66,15 +62,27 @@
 /*! namespace for classes in the public core API */
 namespace osp {
 
-  typedef embree::Vec2f  vec2f;
-  typedef embree::Vec2i  vec2i;
-  typedef embree::Vec3f  vec3f;
-  typedef embree::Vec3i  vec3i;
-  typedef embree::Vec3fa vec3fa;
-  typedef embree::Vec4f  vec4f;
-  typedef embree::BBox<embree::Vec2i> box2i;
-  typedef embree::BBox3f box3f;
-  typedef embree::AffineSpace3f affine3f;
+  struct vec2f { float x, y; };
+  struct vec2i { int x, y; };
+  struct vec3f { float x, y, z; };
+  struct vec3fa { float x, y, z, a; };
+  struct vec3i { int x, y, z; };
+  struct vec4f { float x, y, z, w; };
+  // typedef embree::Vec2f  vec2f;
+  // typedef embree::Vec2i  vec2i;
+  // typedef embree::Vec3f  vec3f;
+  // typedef embree::Vec3i  vec3i;
+  // typedef embree::Vec3fa vec3fa;
+  // typedef embree::Vec4f  vec4f;
+  struct box2i { vec2i lower, upper; };
+  struct box3f { vec2f lower, upper; };
+  struct linear3f { vec3f vx,vy,vz; };
+  struct affine3f { linear3f l; vec3f p; };
+  // typedef embree::BBox<embree::Vec2i> box2i;
+  // typedef embree::BBox3f box3f;
+  // typedef embree::AffineSpace3f affine3f;
+
+  typedef uint64_t uint64;
 
   struct ManagedObject    { uint64 ID; virtual ~ManagedObject() {} };
   struct FrameBuffer      : public ManagedObject {};
@@ -88,6 +96,7 @@ namespace osp {
   struct TransferFunction : public ManagedObject {};
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
+  struct PixelOp          : public ManagedObject {};
   struct TriangleMesh     : public Geometry {};
 
 } // ::osp
@@ -96,16 +105,51 @@ typedef enum {
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
   OSP_FB_ACCUM=(1<<2),
-  OSP_FB_ALPHA=(1<<3)
+//  OSP_FB_ALPHA=(1<<3) // not used anywhere; use OSP_FB_COLOR with a frame buffer format containing alpha in 4th channel
 } OSPFrameBufferChannel;
 
 /*! OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
   OSP_RGBA_NONE,
   OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
-  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel */ 
+  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel XXX unsupported! */
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
 } OSPFrameBufferFormat;
+
+//! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
+/*! \see ospdApiMode */
+typedef enum {
+
+  //! \brief all ospNew(), ospSet(), etc calls affect only the current rank 
+  /*! \detailed in this mode, all ospXyz() calls made on a given rank
+    will ONLY affect state ont hat rank. This allows for configuring a
+    (globally known) object differnetly on each different rank (also
+    see OSP_MPI_SCOPE_GLOBAL) */
+  OSPD_MODE_INDEPENDENT,
+  OSPD_RANK=OSPD_MODE_INDEPENDENT /*!< alias for OSP_MODE_INDEPENDENT, reads better in code */,
+
+  //! \brief all ospNew(), ospSet() calls affect all ranks 
+  /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
+      functions, but all objects defined through those functions---and
+      all parameters set through those---will apply equally to all
+      ranks. E.g., a OSPVolume vol = ospNewVolume(...) would create a
+      volume object handle that exists on (and therefore, is valid on)
+      all ranks. The (distributed) app may then switch to 'current
+      rank only' mode, and may assign different data or parameters on
+      each rank (typically, in order to have different parts of the
+      volume on different nodes), but the object itself is globally
+      known */
+  OSPD_MODE_MASTERED,
+  OSPD_MASTER=OSPD_MODE_MASTERED /*!< alias for OSP_MODE_MASTERED, reads better in code */,
+
+  //! \brief all ospNew(), ospSet() are called collaboratively by all ranks 
+  /*! \detailed In this mode, ALL ranks must call (the same!) api
+      function, the result is collaborative across all nodes in the
+      sense that any object being created gets created across all
+      nodes, and ALL ranks get a valid handle returned */
+  OSPD_MODE_COLLABORATIVE,
+  OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
+} OSPDApiMode;
 
 // /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
 // typedef enum {
@@ -144,15 +188,35 @@ typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture2D         *OSPTexture2D;
 typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
+typedef osp::PixelOp           *OSPPixelOp;
 
 /*! an error type. '0' means 'no error' */
-typedef int32 error_t;
+typedef int32_t error_t;
 
 extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   OSPRAY_INTERFACE void ospInit(int *ac, const char **av);
-  // //! initialize the ospray engine (for use with MPI-parallel app) 
-  // void ospInitMPI(int *ac, const char **av);
+
+  typedef enum { 
+    OSPD_Z_COMPOSITE
+  } OSPDRenderMode;
+
+#ifdef OSPRAY_MPI_DISTRIBUTED
+  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
+  OSPRAY_INTERFACE 
+  void ospdApiMode(OSPDApiMode mode);
+
+  //! the 'lid to the pot' of ospdMpiInit(). 
+  /*! does both an osp shutdown and an mpi shutdown for the mpi group
+      created with ospdMpiInit */
+  OSPRAY_INTERFACE 
+  void ospdMpiInit(int *ac, char ***av, OSPDRenderMode renderMode=OSPD_Z_COMPOSITE);
+
+  /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
+      *and* the MPI layer created with ospdMpiInit */
+  OSPRAY_INTERFACE 
+  void ospdMpiShutdown();
+#endif
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */
@@ -163,11 +227,18 @@ extern "C" {
       renderer's parameters, typically in "world". */
   OSPRAY_INTERFACE void ospRenderFrame(OSPFrameBuffer fb, 
                                        OSPRenderer renderer, 
-                                       const uint32 fbChannelFlags=OSP_FB_COLOR);
+                                       const uint32_t fbChannelFlags=OSP_FB_COLOR);
 
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
   OSPRAY_INTERFACE OSPRenderer ospNewRenderer(const char *type);
+  
+  //! create a new pixel op of given type 
+  /*! return 'NULL' if that type is not known */
+  OSPRAY_INTERFACE OSPPixelOp ospNewPixelOp(const char *type);
+  
+  //! set a frame buffer's pixel op */
+  OSPRAY_INTERFACE void ospSetPixelOp(OSPFrameBuffer fb, OSPPixelOp op);
 
   //! create a new geometry of given type 
   /*! return 'NULL' if that type is not known */
@@ -226,7 +297,7 @@ extern "C" {
     if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
     if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID
   */
-  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer fb, const uint32 whichChannel);
+  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer fb, const uint32_t whichChannel);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_data Data Buffer Handling 
@@ -344,7 +415,7 @@ extern "C" {
   OSPRAY_INTERFACE void ospSet1f(OSPObject _object, const char *id, float x);
 
   /*! add 1-int parameter to given object */
-  OSPRAY_INTERFACE void ospSet1i(OSPObject _object, const char *id, int32 x);
+  OSPRAY_INTERFACE void ospSet1i(OSPObject _object, const char *id, int32_t x);
 
   /*! add a 2-float parameter to a given object */
   OSPRAY_INTERFACE void ospSet2f(OSPObject _object, const char *id, float x, float y);
@@ -363,6 +434,12 @@ extern "C" {
 
   /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSet3fv(OSPObject _object, const char *id, const float *xyz);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSet4f(OSPObject _object, const char *id, float x, float y, float z, float w);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSet4fv(OSPObject _object, const char *id, const float *xyzw);
 
   /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSet3i(OSPObject _object, const char *id, int x, int y, int z);
@@ -387,10 +464,10 @@ extern "C" {
                                     void *source, 
                                     /*! coordinates of the lower, left, front corner of
                                       the target region.*/
-                                    osp::vec3i regionCoords, 
+                                    const osp::vec3i &regionCoords, 
                                     /*! size of the region that we're writing to; MUST
                                       be the same as the dimensions of source[][][] */
-                                    osp::vec3i regionSize);
+                                    const osp::vec3i &regionSize);
 
   /*! add 2-float parameter to given object */
   OSPRAY_INTERFACE void ospSetVec2f(OSPObject _object, const char *id, const osp::vec2f &v);
@@ -400,6 +477,9 @@ extern "C" {
 
   /*! add 3-float parameter to given object */
   OSPRAY_INTERFACE void ospSetVec3f(OSPObject _object, const char *id, const osp::vec3f &v);
+
+  /*! add 4-float parameter to given object */
+  OSPRAY_INTERFACE void ospSetVec4f(OSPObject _object, const char *id, const osp::vec4f &v);
 
   /*! add 3-int parameter to given object */
   OSPRAY_INTERFACE void ospSetVec3i(OSPObject _object, const char *id, const osp::vec3i &v);
@@ -419,40 +499,52 @@ extern "C" {
   /*! functions return '0'.                                                 */
 
   /*! \brief Get the handle of the named data array associated with an object. */
-  OSPRAY_INTERFACE int ospGetData(OSPObject object, const char *name, OSPData *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetData(OSPObject object, const char *name, OSPData *value);
 
   /*! \brief Get a copy of the data in an array (the application is responsible for freeing this pointer). */
-  OSPRAY_INTERFACE int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type);
 
   /*! \brief Get the named scalar floating point value associated with an object. */
-  OSPRAY_INTERFACE int ospGetf(OSPObject object, const char *name, float *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetf(OSPObject object, const char *name, float *value);
 
   /*! \brief Get the named scalar integer associated with an object. */
-  OSPRAY_INTERFACE int ospGeti(OSPObject object, const char *name, int *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGeti(OSPObject object, const char *name, int *value);
 
   /*! \brief Get the material associated with a geometry object. */
-  OSPRAY_INTERFACE int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetMaterial(OSPGeometry geometry, OSPMaterial *value);
 
   /*! \brief Get the named object associated with an object. */
-  OSPRAY_INTERFACE int ospGetObject(OSPObject object, const char *name, OSPObject *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetObject(OSPObject object, const char *name, OSPObject *value);
 
   /*! \brief Retrieve a NULL-terminated list of the parameter names associated with an object. */
-  OSPRAY_INTERFACE int ospGetParameters(OSPObject object, char ***value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetParameters(OSPObject object, char ***value);
 
   /*! \brief Get a pointer to a copy of the named character string associated with an object. */
-  OSPRAY_INTERFACE int ospGetString(OSPObject object, const char *name, char **value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetString(OSPObject object, const char *name, char **value);
 
   /*! \brief Get the type of the named parameter or the given object (if 'name' is NULL). */
-  OSPRAY_INTERFACE int ospGetType(OSPObject object, const char *name, OSPDataType *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetType(OSPObject object, const char *name, OSPDataType *value);
 
   /*! \brief Get the named 2-vector floating point value associated with an object. */
-  OSPRAY_INTERFACE int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetVec2f(OSPObject object, const char *name, osp::vec2f *value);
 
   /*! \brief Get the named 3-vector floating point value associated with an object. */
-  OSPRAY_INTERFACE int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetVec3f(OSPObject object, const char *name, osp::vec3f *value);
 
   /*! \brief Get the named 3-vector integer value associated with an object. */
-  OSPRAY_INTERFACE int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value);
+  /*! \warning this call has been deprecated and will eventually be removed */
+  OSP_DEPRECATED OSPRAY_INTERFACE int ospGetVec3i(OSPObject object, const char *name, osp::vec3i *value);
 
   /*! @} end of ospray_params */
 

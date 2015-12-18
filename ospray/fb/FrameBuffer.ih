@@ -21,13 +21,6 @@
 
 struct FrameBuffer;
 
-/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-typedef void (*SetTileMethod)(uniform FrameBuffer  *uniform,
-                              uniform Tile &);
-/*! \brief Fct pointer type for 'virtual' method that sets a pixel */
-typedef void (*AccumTileMethod)(uniform FrameBuffer  *uniform,
-                                uniform Tile &);
-
 /*! app-mappable format of the color buffer. make sure that this
   matches the definition on the ISPC side */
 typedef enum { 
@@ -42,9 +35,6 @@ typedef enum {
 
 struct FrameBuffer 
 {
-  SetTileMethod     setTile;
-  AccumTileMethod   accumTile;
-
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */
   vec2f rcpSize_1; /*! one over (size - 1) (precomputed) */
@@ -56,3 +46,38 @@ struct FrameBuffer
   void *cClassPtr; /*!< pointer back to c++-side of this class */
 };
 
+
+
+/*! helper function to convert float-color into rgba-uint format */
+inline uint32 cvt_uint32(const float f)
+{
+  return (int32)(255.9f * max(min(f,1.f),0.f));
+}
+
+/*! helper function to convert float-color into rgba-uint format */
+inline uint32 cvt_uint32(const vec4f &v)
+{
+  return 
+    (cvt_uint32(v.x) << 0)  |
+    (cvt_uint32(v.y) << 8)  |
+    (cvt_uint32(v.z) << 16) |
+    (cvt_uint32(v.w) << 24);
+}
+
+/*! helper function to convert float-color into rgba-uint format */
+inline uint32 cvt_uint32(const vec3f &v)
+{
+  return 
+    (cvt_uint32(v.x) << 0)  |
+    (cvt_uint32(v.y) << 8)  |
+    (cvt_uint32(v.z) << 16);
+}
+
+
+void FrameBuffer_Constructor(FrameBuffer *uniform self,
+                             void *uniform cClassPtr);
+
+void FrameBuffer_set(FrameBuffer *uniform self,
+                     const uniform uint32 size_x,
+                     const uniform uint32 size_y,
+                     int32 uniform colorBufferFormat);

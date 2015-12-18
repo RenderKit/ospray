@@ -16,9 +16,10 @@
 
 #pragma once
 
+#include <ospray/ospray.h>
+#include "ospray/common/OSPCommon.h"
 #include <QtGui>
 #include <QGLWidget>
-#include <ospray/ospray.h>
 
 struct Viewport
 {
@@ -29,12 +30,12 @@ struct Viewport
                fovY(60.f),
                modified(true)
   {
-    frame = osp::affine3f::translate(from) * osp::affine3f(embree::one);
+    frame = ospray::affine3f::translate(from) * ospray::affine3f(embree::one);
   }
 
-  osp::vec3f from;
-  osp::vec3f at;
-  osp::vec3f up;
+  ospray::vec3f from;
+  ospray::vec3f at;
+  ospray::vec3f up;
 
   /*! aspect ratio (width / height) */
   float aspect;
@@ -48,10 +49,10 @@ struct Viewport
   /*! camera frame in which the Y axis is the depth axis, and X
     and Z axes are parallel to the screen X and Y axis. The frame
     itself remains normalized. */
-  osp::affine3f frame;
+  ospray::affine3f frame;
 
   /*! set up vector */
-  void setUp(const osp::vec3f &vec)
+  void setUp(const ospray::vec3f &vec)
   {
     up = vec;
     snapUp();
@@ -86,7 +87,7 @@ public:
   void setRenderingEnabled(bool renderingEnabled);
   void setRotationRate(float rotationRate);
   void setBenchmarkParameters(int benchmarkWarmUpFrames, int benchmarkFrames);
-  virtual void setWorldBounds(const osp::box3f &worldBounds);
+  virtual void setWorldBounds(const ospray::box3f &worldBounds);
 
   Viewport * getViewport() { return &viewport; }
 
@@ -149,9 +150,9 @@ protected:
   /*! Timer to measure elapsed time over a single frame. */
   QTime renderFrameTimer;
 
-  osp::vec2i windowSize;
+  ospray::vec2i windowSize;
   Viewport viewport;
-  osp::box3f worldBounds;
+  ospray::box3f worldBounds;
   QPoint lastMousePosition;
 
   OSPFrameBuffer frameBuffer;
@@ -160,6 +161,6 @@ protected:
   OSPTexture2D maxDepthTexture;
 
   std::string writeFramesFilename;
-  void writeFrameBufferToFile(const uint32 *pixelData);
+  void writeFrameBufferToFile(const uint32_t *pixelData);
 
 };

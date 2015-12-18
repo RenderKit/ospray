@@ -136,6 +136,7 @@ namespace ospray {
   define_getparam(vec3i,  3i, OSP_INT3,   i);
   define_getparam(vec3f,  3f, OSP_FLOAT3, f);
   define_getparam(vec3fa, 3f, OSP_FLOAT3, f);
+  define_getparam(vec4f,  4f, OSP_FLOAT4, f);
   define_getparam(vec2f,  2f, OSP_FLOAT2, f);
   define_getparam(float,  1f, OSP_FLOAT,  f);
   define_getparam(float,  f,  OSP_FLOAT,  f);

@@ -14,14 +14,11 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-
-SET(CMAKE_CXX_COMPILER "icpc")
-SET(CMAKE_C_COMPILER "icc")
-SET(CMAKE_CXX_FLAGS "-Wall -fPIC -no-ansi-alias -static-intel -openmp")
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -no-ansi-alias -static-intel -std=c++11")
 SET(CMAKE_CXX_FLAGS_DEBUG          "-DDEBUG  -g")
-SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -no-ansi-alias -restrict -fp-model fast -fimf-precision=low -no-prec-div -no-prec-sqrt -fma -no-inline-max-total-size -inline-factor=200 ")
+SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG -O3")
+#SET(CMAKE_CXX_FLAGS_RELEASE        "-DNDEBUG    -O3 -no-ansi-alias -restrict -fp-model fast -fimf-precision=low -no-prec-div -no-prec-sqrt -fma -no-inline-max-total-size -inline-factor=200 ")
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-DNDEBUG -g -O3 -no-ansi-alias -restrict -fp-model fast -fimf-precision=low -no-prec-div -no-prec-sqrt  -fma  -no-inline-max-total-size -inline-factor=200")
-SET(CMAKE_EXE_LINKER_FLAGS "") 
 
 IF (APPLE)
   SET (CMAKE_SHARED_LINKER_FLAGS ${CMAKE_SHARED_LINKER_FLAGS_INIT} -dynamiclib)
@@ -37,6 +34,24 @@ SET(OSPRAY_ARCH_SSE     "-xsse4.2")
 SET(OSPRAY_ARCH_AVX     "-xAVX")
 SET(OSPRAY_ARCH_AVX2    "-xCORE-AVX2")
 SET(OSPRAY_ARCH_AVX512  "-xMIC-AVX512")
+
+# check whether GCC (and therefore standard library) version is new enough for
+# C++11 on Linux systems
+IF (${CMAKE_SYSTEM_NAME} STREQUAL "Linux")
+	SET(GCC_VERSION_REQUIRED "4.8.0")
+
+	IF(NOT GCC_VERSION)
+	  EXECUTE_PROCESS(COMMAND gcc -dumpversion OUTPUT_VARIABLE GCC_OUTPUT OUTPUT_STRIP_TRAILING_WHITESPACE)
+	  SET(GCC_VERSION ${GCC_OUTPUT} CACHE STRING "GCC Version")
+	  MARK_AS_ADVANCED(GCC_VERSION)
+	ENDIF()
+
+	IF (GCC_VERSION VERSION_LESS GCC_VERSION_REQUIRED AND NOT OSPRAY_WARNED_GCC_VERSION)
+		# only warn as another libstdc++ could be in the library path...
+	  MESSAGE(WARNING "GCC version 4.8.0 or greater is required for a sufficient version of libstdc++.")
+	  SET(OSPRAY_WARNED_GCC_VERSION ON CACHE INTERNAL "Warned about required GCC version.")
+	ENDIF()
+ENDIF()
 
 SET(OSPRAY_COMPILER_SUPPORTS_AVX  TRUE)
 SET(OSPRAY_COMPILER_SUPPORTS_AVX2 TRUE)

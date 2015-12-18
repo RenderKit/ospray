@@ -25,6 +25,7 @@
 #include "SceneGraph.h"
 #include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
+#include <cmath>
 
 namespace ospray {
   namespace sg {

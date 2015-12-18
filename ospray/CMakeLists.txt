@@ -18,9 +18,52 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-# build and configure embree
-INCLUDE(../cmake/build_embree.cmake)
-#INCLUDE_DIRECTORIES_ISPC(${CMAKE_CURRENT_SOURCE_DIR}/render/pathtracer)
+IF(OSPRAY_BUILD_MPI_DEVICE)
+  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
+  OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
+  MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
+ENDIF()
+
+OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
+MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
+
+# -------------------------------------------------------
+# Setup tasking system build configuration
+# -------------------------------------------------------
+
+SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
+    "Use TBB or OpenMP as for per-node thread tasking system")
+SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY STRINGS TBB OpenMP)
+MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
+
+IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
+  SET(USE_TBB TRUE)
+ELSE()
+  SET(USE_TBB FALSE)
+ENDIF()
+
+IF(USE_TBB)
+  FIND_PACKAGE(TBB REQUIRED)
+  ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
+  INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+ELSE(USE_TBB)
+  FIND_PACKAGE(OpenMP)#NOTE(jda) - intentionally optional (fallback w/o TBB)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  SET(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+ENDIF(USE_TBB)
+
+# -------------------------------------------------------
+# Build and configure embree
+# -------------------------------------------------------
+
+#NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
+INCLUDE(../cmake/build_embree_2.7.1.cmake)
+
+# -------------------------------------------------------
+# Setup ospray source files
+# -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
   device/nwlayer.cpp
@@ -29,16 +72,22 @@ SET(OSPRAY_SOURCES
 
   common/OSPCommon.ispc
   common/OSPCommon.cpp
+  common/Core.cpp
   common/Managed.cpp
+  common/ObjectHandle.cpp
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
   common/Library.cpp
+  common/Thread.cpp
+  common/parallel_for.h
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
   fb/LocalFB.ispc
+  fb/LocalFB.cpp
+  fb/PixelOp.cpp
 
   camera/Camera.cpp
   camera/PerspectiveCamera.ispc
@@ -50,20 +99,23 @@ SET(OSPRAY_SOURCES
 
   volume/BlockBrickedVolume.ispc
   volume/BlockBrickedVolume.cpp
+  volume/GhostBlockBrickedVolume.ispc
+  volume/GhostBlockBrickedVolume.cpp
+
   volume/GridAccelerator.ispc
   volume/SharedStructuredVolume.ispc
   volume/SharedStructuredVolume.cpp
   volume/StructuredVolume.ispc
   volume/StructuredVolume.cpp
-  volume/SymbolRegistry.cpp
   volume/Volume.ispc
   volume/Volume.cpp
+  volume/DataDistributedBlockedVolume.ispc
+  volume/DataDistributedBlockedVolume.cpp
 
   transferFunction/LinearTransferFunction.ispc
   transferFunction/LinearTransferFunction.cpp
   transferFunction/TransferFunction.ispc
   transferFunction/TransferFunction.cpp
-  transferFunction/SymbolRegistry.cpp
 
   geometry/Geometry.ispc
   geometry/Geometry.cpp
@@ -110,12 +162,16 @@ SET(OSPRAY_SOURCES
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp
   render/obj/OBJMaterial.cpp
+  render/raytracer/RaytraceRenderer.ispc
+  render/raytracer/RaytraceMaterial.ispc
+  render/raytracer/RaytraceMaterial.ih
+  render/raytracer/RaytraceRenderer.cpp
+  render/raytracer/RaytraceMaterial.cpp
   render/volume/RaycastVolumeMaterial.cpp
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
   render/volume/RaycastVolumeRendererMaterial.ih
   render/volume/RaycastVolumeRendererMaterial.ispc
-  render/volume/SymbolRegistry.cpp
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
@@ -126,10 +182,10 @@ SET(OSPRAY_SOURCES
   render/pathtracer/materials/Velvet.cpp
   render/pathtracer/materials/Metal.ispc
   render/pathtracer/materials/Metal.cpp
-  render/pathtracer/materials/ThinDielectric.ispc
-  render/pathtracer/materials/ThinDielectric.cpp
-  render/pathtracer/materials/Dielectric.ispc
-  render/pathtracer/materials/Dielectric.cpp
+  render/pathtracer/materials/ThinGlass.ispc
+  render/pathtracer/materials/ThinGlass.cpp
+  render/pathtracer/materials/Glass.ispc
+  render/pathtracer/materials/Glass.cpp
   render/pathtracer/materials/MetallicPaint.ispc
   render/pathtracer/materials/MetallicPaint.cpp
   render/pathtracer/materials/Plastic.ispc
@@ -140,7 +196,6 @@ SET(OSPRAY_SOURCES
   api/API.cpp
   api/Device.cpp
   api/LocalDevice.cpp
-  api/Handle.cpp
   )
 
 # -------------------------------------------------------
@@ -159,14 +214,43 @@ IF (OSPRAY_MPI)
 
     mpi/async/Messaging.cpp
     mpi/async/SimpleSendRecvMessaging.cpp
+    mpi/async/MultiIsendIrecvMessaging.cpp
+    mpi/async/BatchedIsendIrecvMessaging.cpp
+    mpi/async/CommLayer.cpp
+
+    mpi/DistributedFrameBuffer.cpp
+    mpi/DistributedFrameBuffer.ispc
+
+    fb/DisplayWall.cpp
     )
 
-#  ADD_EXECUTABLE(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
-#    mpi/testing/TestAsync
+  # ============================================
+  ADD_EXECUTABLE(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+    mpi/testing/createCompositeTestCubes
+    )
+  TARGET_LINK_LIBRARIES(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+    ospray${OSPRAY_LIB_SUFFIX}
+    )
+
+  # ============================================
+#  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+#  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+#  ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
+#    mpi/testing/TestDistributedApp
 #    )
-#  TARGET_LINK_LIBRARIES(ospTestMPIAsyncMessaging${OSPRAY_EXE_SUFFIX}
+#  TARGET_LINK_LIBRARIES(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
 #    ospray${OSPRAY_LIB_SUFFIX}
 #    )
+
+ENDIF()
+
+# -------------------------------------------------------
+# DisplayCluster components
+# -------------------------------------------------------
+INCLUDE(${PROJECT_SOURCE_DIR}/cmake/displaycluster.cmake)
+
+IF (OSPRAY_DISPLAYCLUSTER)
+  CONFIGURE_DISPLAYCLUSTER()
 ENDIF()
 
 # -------------------------------------------------------
@@ -185,21 +269,15 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     )
   MARK_AS_ADVANCED(LIBCOI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_HOST)
-  ADD_DEFINITIONS(-DOSPRAY_MIC_COI=1)
+  SET(OSPRAY_MIC_COI ON)
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
   IF (THIS_IS_MIC)
-    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=1)
-    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=0)
     SET(OSPRAY_COI_COMPONENTS api/COIDeviceDev.cpp)
   ELSE()
-    ADD_DEFINITIONS(-DOSPRAY_COI_DEV=0)
-    ADD_DEFINITIONS(-DOSPRAY_COI_HOST=1)
     SET(OSPRAY_COI_COMPONENTS api/COIDeviceHost.cpp)
   ENDIF()
   SET(OSPRAY_SOURCES ${OSPRAY_SOURCES} ${OSPRAY_COI_COMPONENTS})
-ELSE()
-  SET(OSPRAY_COI_COMPONENTS "")
 ENDIF()
 
 ##############################################################
@@ -209,20 +287,28 @@ ENDIF()
 SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
-OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED
-  ${OSPRAY_SOURCES}
-)
+OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
   ospray_embree${OSPRAY_LIB_SUFFIX}
+  ${TBB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-)
+	)
+
+IF (OSPRAY_DISPLAYCLUSTER)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${DISPLAYCLUSTER_LIBRARIES})
+ENDIF()
+
+IF (WIN32)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ws2_32)
+ENDIF()
+
 
 # ------------------------------------------------------------
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
 INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
-INSTALL(DIRECTORY embree DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
+INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
@@ -240,8 +326,7 @@ INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
 # MPI DEVICE - mpi worker
 ##############################################################
 IF (OSPRAY_MPI)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_LIBRARIES})
-  # iw - we don't actually need this for intel mpi - "-mt_mpi" does the trick
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_CXX_LIBRARIES})
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})

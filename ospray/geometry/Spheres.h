@@ -69,12 +69,15 @@ namespace ospray {
     int64 offset_center;
     int64 offset_radius;
     int64 offset_materialID;
+    int64 offset_colorID;
 
-    Ref<Data> data;
+    Ref<Data> sphereData;
     Ref<Data> materialList;
     void     *_materialList;
+    Ref<Data> colorData; /*!< sphere color array (vec3fa) */
 
     Spheres();
+    ~Spheres();
   };
   /*! @} */
 

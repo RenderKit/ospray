@@ -17,6 +17,8 @@
 #include "ospray/mpi/MPICommon.h"
 #include "ospray/mpi/MPIDevice.h"
 
+#include "ospray/ospray.h"
+
 namespace ospray {
   namespace mpi {
 
@@ -27,10 +29,19 @@ namespace ospray {
 
     void workerMain(int ac, const char **av)
     {
+      if (ac < 2) {
+        int argc = 2;
+        const char *argv[] = {"ospray_mpi_worker", "--osp:mpi"};
+        ospInit(&argc, argv);
+      } else {
+        ospInit(&ac, av);
+      }
+
       int rc;
       mpi::init(&ac,av);
       worker.comm = world.comm;
-      worker.makeIntercomm();
+      worker.makeIntraComm();
+      // worker.makeIntercomm();
 
       if (ac == 3 && !strcmp(av[1],"--osp:connect")) {
         // if (worker.rank == 0) {
@@ -44,7 +55,8 @@ namespace ospray {
         cout << "#w: ospray started with " << worker.size << " workers, "
              << "#w: and connected to app at  " << appPortName << endl;
         // }
-        app.makeIntracomm();
+        app.makeInterComm();
+        // app.makeIntracomm();
       } else {
         char servicePortName[MPI_MAX_PORT_NAME];
         if (world.rank == 0) {
@@ -60,7 +72,8 @@ namespace ospray {
         cout << "#osp:ospray_mpi_worker trying to accept from '" << servicePortName << "'" << endl;
         rc = MPI_Comm_accept(servicePortName,MPI_INFO_NULL,0,MPI_COMM_WORLD,&app.comm);
         Assert(rc == MPI_SUCCESS);
-        app.makeIntracomm();
+        app.makeInterComm();
+        // app.makeIntracomm();
       }
       MPI_Barrier(world.comm);
       runWorker(&ac,av); // this fct will not return

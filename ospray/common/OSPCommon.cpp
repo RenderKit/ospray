@@ -42,7 +42,7 @@ namespace ospray {
       numbers mean increasing verbosity of log messages */
   uint32 logLevel = 0;
   bool debugMode = false;
-  uint32 numThreads = 0; //!< 0 for default number of Embree threads.
+  int32 numThreads = -1; //!< for default (==maximum) number of OSPRay/Embree threads
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -93,7 +93,7 @@ namespace ospray {
 
   void init(int *_ac, const char ***_av)
   {
-#if !OSPRAY_TARGET_MIC
+#ifndef OSPRAY_TARGET_MIC
     // If we're not on a MIC, check for SSE4.1 as minimum supported ISA. Will be increased to SSE4.2 in future.
     int cpuFeatures = embree::getCPUFeatures();
     if ((cpuFeatures & embree::CPU_FEATURE_SSE41) == 0)
@@ -116,7 +116,7 @@ namespace ospray {
       } else if (parm == "--osp:loglevel") {
         logLevel = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
-      } else if (parm == "--osp:numthreads") {
+      } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
         numThreads = atoi(av[i+1]);
         removeArgs(ac,av,i,2);
       } else {
@@ -156,6 +156,7 @@ namespace ospray {
     switch (type) {
     case OSP_VOID_PTR:  return sizeof(void *);
     case OSP_OBJECT:    return sizeof(void *);
+    case OSP_DATA:      return sizeof(void *);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
     case OSP_UCHAR2:    return sizeof(embree::Vec2<uint8>);
@@ -196,6 +197,7 @@ namespace ospray {
 
     if (string == NULL)                return(OSP_UNKNOWN);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
+    if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
     if (strcmp(string, "float" ) == 0) return(OSP_FLOAT);
     if (strcmp(string, "float2") == 0) return(OSP_FLOAT2);
     if (strcmp(string, "float3") == 0) return(OSP_FLOAT2);

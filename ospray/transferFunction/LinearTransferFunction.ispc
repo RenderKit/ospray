@@ -30,15 +30,15 @@ LinearTransferFunction_getColorForValue(const void *uniform pointer,
   if (transferFunction->colorValueCount == 0) return(make_vec3f(1.0f));
 
   // Clamp the value to the lower bound of the value range.
-  if (value <= transferFunction->inherited.valueRange.x) return(transferFunction->colorValues[0]);
+  if (value <= transferFunction->super.valueRange.x) return(transferFunction->colorValues[0]);
 
   // Clamp the value to the upper bound of the value range.
-  if (value >= transferFunction->inherited.valueRange.y) return(transferFunction->colorValues[transferFunction->colorValueCount - 1]);
+  if (value >= transferFunction->super.valueRange.y) return(transferFunction->colorValues[transferFunction->colorValueCount - 1]);
 
   // Map the value into the range [0.0, 1.0].
   value
-    = (value - transferFunction->inherited.valueRange.x) 
-    / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) 
+    = (value - transferFunction->super.valueRange.x) 
+    / (transferFunction->super.valueRange.y - transferFunction->super.valueRange.x) 
     * (transferFunction->colorValueCount - 1.0f);
 
   // Compute the color index and fractional offset.
@@ -57,9 +57,9 @@ LinearTransferFunction_getMinMaxOpacityInRange(void *uniform pointer,
 {
   uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
   const uniform int   maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
-  const uniform float denom  = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
-  const uniform int   i      = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  const uniform int   j      = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform float denom  = transferFunction->super.valueRange.y - transferFunction->super.valueRange.x;
+  const uniform int   i      = floor(clamp((range.x - transferFunction->super.valueRange.x) / denom) * maxDim);
+  const uniform int   j      = ceil(clamp((range.y - transferFunction->super.valueRange.x) / denom) * maxDim);
   return(transferFunction->minMaxOpacityInRange[min(i,maxDim)][min(j,maxDim)]);
 }
 
@@ -69,9 +69,9 @@ LinearTransferFunction_getMaxOpacityInRange(void *uniform pointer,
 {
   uniform LinearTransferFunction *uniform transferFunction = (uniform LinearTransferFunction *uniform) pointer;
   const uniform int maxDim = PRECOMPUTED_OPACITY_SUBRANGE_COUNT - 1;
-  const uniform float denom = transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x;
-  const varying int i = floor(clamp((range.x - transferFunction->inherited.valueRange.x) / denom) * maxDim);
-  const varying int j = ceil(clamp((range.y - transferFunction->inherited.valueRange.x) / denom) * maxDim);
+  const uniform float denom = transferFunction->super.valueRange.y - transferFunction->super.valueRange.x;
+  const varying int i = floor(clamp((range.x - transferFunction->super.valueRange.x) / denom) * maxDim);
+  const varying int j = ceil(clamp((range.y - transferFunction->super.valueRange.x) / denom) * maxDim);
   return(transferFunction->minMaxOpacityInRange[min(i,maxDim)][min(j,maxDim)].y);
 
 }
@@ -90,13 +90,13 @@ LinearTransferFunction_getOpacityForValue(const void *uniform pointer,
   if (transferFunction->opacityValueCount == 0) return(1.0f);
 
   // Clamp the value to the lower bound of the value range.
-  if (value <= transferFunction->inherited.valueRange.x) return(transferFunction->opacityValues[0]);
+  if (value <= transferFunction->super.valueRange.x) return(transferFunction->opacityValues[0]);
 
   // Clamp the value to the upper bound of the value range.
-  if (value >= transferFunction->inherited.valueRange.y) return(transferFunction->opacityValues[transferFunction->opacityValueCount - 1]);
+  if (value >= transferFunction->super.valueRange.y) return(transferFunction->opacityValues[transferFunction->opacityValueCount - 1]);
 
   // Map the value into the range [0.0, 1.0].
-  value = (value - transferFunction->inherited.valueRange.x) / (transferFunction->inherited.valueRange.y - transferFunction->inherited.valueRange.x) * (transferFunction->opacityValueCount - 1.0f);
+  value = (value - transferFunction->super.valueRange.x) / (transferFunction->super.valueRange.y - transferFunction->super.valueRange.x) * (transferFunction->opacityValueCount - 1.0f);
 
   // Compute the opacity index and fractional offset.
   int index = floor(value);  float remainder = value - index;
@@ -151,16 +151,16 @@ export void *uniform LinearTransferFunction_createInstance()
   LinearTransferFunction *uniform transferFunction = uniform new uniform LinearTransferFunction;
 
   // Function to get the interpolated color for a given value.
-  transferFunction->inherited.getColorForValue = LinearTransferFunction_getColorForValue;
+  transferFunction->super.getColorForValue = LinearTransferFunction_getColorForValue;
 
   // Function to get the interpolated opacity for a given value.
-  transferFunction->inherited.getOpacityForValue = LinearTransferFunction_getOpacityForValue;
+  transferFunction->super.getOpacityForValue = LinearTransferFunction_getOpacityForValue;
 
   // Virtual function to look up the maximum opacity based on an input range.
-  transferFunction->inherited.getMaxOpacityInRange = LinearTransferFunction_getMaxOpacityInRange;
+  transferFunction->super.getMaxOpacityInRange = LinearTransferFunction_getMaxOpacityInRange;
 
   // Virtual function to look up the min/max opacity based on an input range.
-  transferFunction->inherited.getMinMaxOpacityInRange = LinearTransferFunction_getMinMaxOpacityInRange;
+  transferFunction->super.getMinMaxOpacityInRange = LinearTransferFunction_getMinMaxOpacityInRange;
 
   // Transfer function colors and count.
   transferFunction->colorValues = NULL;  transferFunction->colorValueCount = 0;
@@ -169,7 +169,7 @@ export void *uniform LinearTransferFunction_createInstance()
   transferFunction->opacityValues = NULL;  transferFunction->opacityValueCount = 0;
 
   // The default transfer function value range.
-  transferFunction->inherited.valueRange = make_vec2f(0.0f, 1.0f);
+  transferFunction->super.valueRange = make_vec2f(0.0f, 1.0f);
 
   // Freshly baked transfer function.
   return(transferFunction);

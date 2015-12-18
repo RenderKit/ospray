@@ -52,6 +52,14 @@
 #warning "Your compiler version is outdated which can reduce performance in some cases. Please, update your compiler!"
 #endif
 
+// for MIC, disable the 'variable declared bbut never referenced'
+// warning, else the ISPC-generated code produces _far_ too many such
+// outputs
+#if defined(__INTEL_COMPILER) && defined(__MIC__)
+#pragma warning(disable:177 ) // variable declared but was never referenced
+#endif
+
+
 
 #if 0
   #define STRING(x) #x
@@ -220,7 +228,7 @@ typedef struct PRE_ALIGN(64) __vec16_i64 {
   __m512i v_lo;
 } POST_ALIGN(64) __vec16_i64;
 
-static __vec16_i64 zmm2hilo(const __m512i v1, const __m512i v2){
+FORCEINLINE __vec16_i64 zmm2hilo(const __m512i v1, const __m512i v2){
   __vec16_i64 v;
   v.v_hi = _mm512_mask_permutevar_epi32(_mm512_undefined_epi32(), 0xFF00,
                   _mm512_set_16to16_pi(15,13,11,9,7,5,3,1,14,12,10,8,6,4,2,0),
@@ -237,7 +245,7 @@ static __vec16_i64 zmm2hilo(const __m512i v1, const __m512i v2){
   return v;
 }
 
-static void hilo2zmm(const __vec16_i64 &v, __m512i &_v1, __m512i &_v2) {
+FORCEINLINE void hilo2zmm(const __vec16_i64 &v, __m512i &_v1, __m512i &_v2) {
   _v2 = _mm512_mask_permutevar_epi32(_mm512_undefined_epi32(), 0xAAAA,
                _mm512_set_16to16_pi(15,15,14,14,13,13,12,12,11,11,10,10,9,9,8,8),
                v.v_hi);
@@ -251,6 +259,13 @@ static void hilo2zmm(const __vec16_i64 &v, __m512i &_v1, __m512i &_v2) {
                _mm512_set_16to16_pi(7,7,6,6,5,5,4,4,3,3,2,2,1,1,0,0),
                v.v_lo);
 }
+
+FORCEINLINE __vec16_i64 hilo2zmm(const __vec16_i64 &v) {
+  __vec16_i64 ret;
+  hilo2zmm(v, ret.v_hi, ret.v_lo);
+  return ret;
+}
+
 
 template <typename T>
 struct vec16 {
@@ -1379,6 +1394,10 @@ static FORCEINLINE __vec16_i1 __greater_equal_float_and_mask(__vec16_f a, __vec1
 
 static FORCEINLINE __vec16_i1 __ordered_float(__vec16_f a, __vec16_f b) {
   return _mm512_cmpord_ps_mask(a, b);
+}
+
+static FORCEINLINE __vec16_i1 __ordered_float_and_mask(__vec16_f a, __vec16_f b, __vec16_i1 mask) {
+  return _mm512_mask_cmpord_ps_mask(mask, a, b);
 }
 
 static FORCEINLINE __vec16_i1 __unordered_float(__vec16_f a, __vec16_f b) {
@@ -2664,6 +2683,27 @@ static FORCEINLINE __vec16_f __ceil_varying_float(__vec16_f v) {
   return _mm512_ceil_ps(v);
 }
 
+static FORCEINLINE __vec16_d __round_varying_double(__vec16_d v) {
+  double tmp [16];
+  for (int i = 0; i < 16; i++)
+    tmp [i] = round(v [i]);
+  return __vec16_d (tmp [8],  tmp [9],  tmp [10], tmp [11],
+                    tmp [12], tmp [13], tmp [14], tmp [15],
+                    tmp [0],  tmp [1],  tmp [2],  tmp [3],
+                    tmp [4],  tmp [5],  tmp [6],  tmp [7]);
+}
+
+static FORCEINLINE __vec16_d __floor_varying_double(__vec16_d v) {
+  __m512d tmp1 = _mm512_floor_pd(v.v1);
+  __m512d tmp2 = _mm512_floor_pd(v.v2);
+  return __vec16_d (tmp1, tmp2);
+}
+
+static FORCEINLINE __vec16_d __ceil_varying_double(__vec16_d v) {
+  __m512d tmp1 = _mm512_ceil_pd(v.v1);
+  __m512d tmp2 = _mm512_ceil_pd(v.v2);
+  return __vec16_d (tmp1, tmp2);
+}
 // min/max
 
 static FORCEINLINE float __min_uniform_float(float a, float b) { return (a<b) ? a : b; }
@@ -3301,8 +3341,13 @@ __gather64_double(__vec16_i64 addr, __vec16_i1 mask)
   __vec16_i32 addr_lo, addr_hi;
   hilo2zmm(addr, addr_lo.v, addr_hi.v);
 
+#if __INTEL_COMPILER < 1500
+  ret.v1 = (__m512d)_mm512_i64extgather_pd ((__m512)addr_lo.v, 0, _MM_UPCONV_PD_NONE, 1, _MM_HINT_NONE);
+  ret.v2 = (__m512d)_mm512_i64extgather_pd ((__m512)addr_hi.v, 0, _MM_UPCONV_PD_NONE, 1, _MM_HINT_NONE);
+#else
   ret.v1 = _mm512_i64extgather_pd (addr_lo, 0, _MM_UPCONV_PD_NONE, 1, _MM_HINT_NONE);
   ret.v2 = _mm512_i64extgather_pd (addr_hi, 0, _MM_UPCONV_PD_NONE, 1, _MM_HINT_NONE);
+#endif
   return ret;
 }
 
@@ -3535,19 +3580,29 @@ static FORCEINLINE void __scatter_base_offsets32_double(void *base, uint32_t sca
 }
 
 static FORCEINLINE void __scatter64_float(__vec16_i64 ptrs, __vec16_f val, __vec16_i1 mask){
+#if __INTEL_COMPILER < 1500
+  #warning "__scatter64_float is slow due to outdated compiler"
+  __scatter_base_offsets64_float(0, 1, ptrs, val, mask);
+#else
   __vec16_i32 first8ptrs, second8ptrs;
   hilo2zmm(ptrs, first8ptrs.v, second8ptrs.v);
   _mm512_mask_i64scatter_pslo (0, mask, first8ptrs, val, 1);
   const __mmask8 mask_hi = 0x00FF & (mask >> 8);
   _mm512_mask_i64scatter_pslo (0, mask_hi, second8ptrs, _mm512_permute4f128_ps(val.v, _MM_PERM_DCDC), 1);
+#endif
 }
 
 static FORCEINLINE void __scatter64_i32(__vec16_i64 ptrs, __vec16_i32 val, __vec16_i1 mask) {
+#if __INTEL_COMPILER < 1500
+  #warning "__scatter64_i32 is slow due to outdated compiler"
+  __scatter_base_offsets64_i32(0, 1, ptrs, val, mask);
+#else
   __vec16_i32 first8ptrs, second8ptrs;
   hilo2zmm(ptrs, first8ptrs.v, second8ptrs.v);
   _mm512_mask_i64scatter_epi32lo (0, mask, first8ptrs, val, 1);
   const __mmask8 mask_hi = 0x00FF & (mask >> 8);
   _mm512_mask_i64scatter_epi32lo (0, mask_hi, second8ptrs, _mm512_permute4f128_epi32(val.v, _MM_PERM_DCDC), 1);
+#endif
 }
 
 static FORCEINLINE void __scatter64_i64(__vec16_i64 ptrs, __vec16_i64 val, __vec16_i1 mask) {

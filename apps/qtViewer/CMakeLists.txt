@@ -16,6 +16,9 @@
 
 CONFIGURE_OSPRAY()
 
+#MESSAGE("EXTERNAL_EMBREE_DIR ${EXTERNAL_EMBREE_DIR}")
+#MESSAGE("OSPRAY_EMBREE_SOURCE_DIR ${OSPRAY_EMBREE_SOURCE_DIR}")
+
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
@@ -39,6 +42,7 @@ SET(SRCS ${SRCS}
 
   # modelviewer proper
   ModelViewer.cpp
+  FPSCounter.cpp
 
   # the (th)ing to launch them all, and in darkness bind them...
   main.cpp
@@ -53,11 +57,11 @@ SET(MOC_HEADERS
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
-ADD_EXECUTABLE(ospQTViewer ${SRCS} ${MOC_OUTFILES})
-TARGET_LINK_LIBRARIES(ospQTViewer ${LIBS} 
+ADD_EXECUTABLE(ospQtViewer ${SRCS} ${MOC_OUTFILES})
+TARGET_LINK_LIBRARIES(ospQtViewer ${LIBS} 
   ospray_sg${OSPRAY_LIB_SUFFIX}
   )
 # ------------------------------------------------------------
-INSTALL(TARGETS ospQTViewer DESTINATION bin)
+INSTALL(TARGETS ospQtViewer DESTINATION bin)
 # ------------------------------------------------------------
 

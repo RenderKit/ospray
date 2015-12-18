@@ -27,9 +27,11 @@
 //!  at build time.  Rather, the subclass can be defined in an external
 //!  module and registered with OSPRay using this macro.
 //!
-#define OSP_REGISTER_VOLUME(InternalClass, ExternalName)        \
-  extern "C" OSPRAY_INTERFACE Volume *ospray_create_volume_##ExternalName()      \
-  { return(new InternalClass()); }
+#define OSP_REGISTER_VOLUME(InternalClass, ExternalName)                    \
+  extern "C" OSPRAY_INTERFACE Volume *ospray_create_volume_##ExternalName() \
+  {                                                                         \
+    return(new InternalClass());                    												\
+  }
 
 namespace ospray {
 
@@ -46,14 +48,35 @@ namespace ospray {
   class Volume : public ManagedObject {
   public:
 
-    //! Constructor.
-    Volume() {};
+#if EXP_DATA_PARALLEL
+    struct DataParallelPiece : public RefCount {
+      /*! world space bounding box of this piece. it is assumed that
+          this covers all the space that rays should be integrating
+          over; so _including_ any ghost cells if those are required
+          to bridge gaps between neighboring blocks */
+      box3f worldBounds;
+      /*! pointer to the parent containing this piece. note this is
+          intentionally not a ref to avoid cycles in the ref-graph */
+      Volume     *parent;
+      /*! the actual volume that contains that piece of the data. NULL
+          if not on this node */
+      Ref<Volume> actualData;
+      /*! handle to the owning process:objectID, so we know whom to
+          ask for this block if so required. note that a volume block
+          may be stored on multiple nodes, and thus may have multiple
+          owners */
+      std::vector<ObjectHandle> owner;
+    };
+#endif
 
     //! Destructor.
-    virtual ~Volume() {};
+    virtual ~Volume();;
+
+    //! \brief Returns whether the volume is a data-distributed volume
+    virtual bool isDataDistributed() const;
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::Volume"); }
+    virtual std::string toString() const;
 
     //! Create a volume container of the given type.
     static Volume *createInstance(std::string type);
@@ -61,11 +84,20 @@ namespace ospray {
     //! Allocate storage and populate the volume.
     virtual void commit() = 0;
 
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count) = 0;
+    //! Copy voxels into the volume at the given index (non-zero return value
+    //!  indicates success).
+    virtual int setRegion(const void *source,
+                          const vec3i &index,
+                          const vec3i &count) = 0;
 
     //! Compute samples at the given world coordinates.
-    virtual void computeSamples(float **results, const vec3f *worldCoordinates, const size_t &count);
+    virtual void computeSamples(float **results,
+                                const vec3f *worldCoordinates,
+                                const size_t &count);
+
+    //! Update select editable parameters (allowed after the volume has been
+    //! initially committed).
+    virtual void updateEditableParameters();
 
   protected:
 
@@ -75,22 +107,17 @@ namespace ospray {
     //! Complete volume initialization (only on first commit).
     virtual void finish();
 
-    //! Update select editable parameters (allowed after the volume has been initially committed).
-    virtual void updateEditableParameters();
-
     //! Print an error message.
-    inline void emitMessage(const std::string &kind, const std::string &message) const
-    { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+    void emitMessage(const std::string &kind,
+                     const std::string &message) const;
 
     //! Error checking.
-    inline void exitOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+    void exitOnCondition(bool condition,
+                         const std::string &message) const;
 
     //! Warning condition.
-    inline void warnOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("WARNING", message); }
-
+    void warnOnCondition(bool condition,
+                         const std::string &message) const;
   };
-
 } // ::ospray
 

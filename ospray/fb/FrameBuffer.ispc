@@ -16,22 +16,33 @@
 
 #include "ospray/fb/FrameBuffer.ih"
 
-export void setTile(void *uniform _fb, void *uniform _tile)
+void FrameBuffer_Constructor(FrameBuffer *uniform self,
+                             void *uniform cClassPtr)
 {
-  uniform Tile *uniform        tile = (uniform Tile *uniform)_tile;
-  uniform FrameBuffer *uniform fb   = (uniform FrameBuffer *uniform)_fb;
-  fb->setTile(fb,*tile);
+  self->cClassPtr  = cClassPtr;
+  self->accumID    = -1;
+  self->size.x     = 0;
+  self->size.y     = 0;
+  self->rcpSize.x  = 0.f;
+  self->rcpSize.y  = 0.f;
+  self->colorBufferFormat = ColorBufferFormat_NONE;
 }
 
-export void accumTile(void *uniform _fb, void *uniform _tile)
+void FrameBuffer_set(FrameBuffer *uniform self,
+                     const uniform uint32 size_x,
+                     const uniform uint32 size_y,
+                     uniform int32 colorBufferFormat)
 {
-  uniform Tile *uniform        tile = (uniform Tile *uniform)_tile;
-  uniform FrameBuffer *uniform fb   = (uniform FrameBuffer *uniform)_fb;
-  fb->accumTile(fb,*tile);
+  self->accumID    = -1;
+  self->size.x     = size_x;
+  self->size.y     = size_y;
+  self->rcpSize.x  = 1.f/size_x;
+  self->rcpSize.y  = 1.f/size_y;
+  self->colorBufferFormat = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
 }
 
-export void FrameBuffer_set(void *uniform _self,
-                            const uniform float gamma)
+export void FrameBuffer_set_gamma(void *uniform _self,
+                                  const uniform float gamma)
 {
   uniform FrameBuffer *uniform self = (uniform FrameBuffer *uniform)_self;
   self->gamma = gamma;

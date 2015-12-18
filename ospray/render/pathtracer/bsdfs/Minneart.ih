@@ -1,0 +1,74 @@
+// ======================================================================== //
+// Copyright 2009-2015 Intel Corporation                                    //
+//                                                                          //
+// Licensed under the Apache License, Version 2.0 (the "License");          //
+// you may not use this file except in compliance with the License.         //
+// You may obtain a copy of the License at                                  //
+//                                                                          //
+//     http://www.apache.org/licenses/LICENSE-2.0                           //
+//                                                                          //
+// Unless required by applicable law or agreed to in writing, software      //
+// distributed under the License is distributed on an "AS IS" BASIS,        //
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. //
+// See the License for the specific language governing permissions and      //
+// limitations under the License.                                           //
+// ======================================================================== //
+
+#pragma once
+
+#include "BSDF.ih"
+
+struct Minneart
+{
+  BSDF super;
+
+  /*! The reflectance parameter. The vale 0 means no reflection,
+   *  and 1 means full reflection. */
+  vec3f R;
+
+  /*! The amount of backscattering. A value of 0 means lambertian
+   *  diffuse, and inf means maximum backscattering. */
+  float b;
+};
+
+inline vec3f Minneart_eval(const varying BSDF* uniform super,
+                           const vec3f& wo, const vec3f& wi, float& pdf)
+{
+  const varying Minneart* uniform self = (const varying Minneart* uniform)super;
+
+  const float cosThetaI = clamp(dot(wi,getN(super)));
+  const float backScatter = pow(clamp(dot(wo,wi)), self->b);
+  pdf = cosineSampleHemispherePDF(cosThetaI);
+  return mul(backScatter * cosThetaI * one_over_pi, self->R);
+}
+
+inline vec3f Minneart_sample(const varying BSDF* uniform super,
+                             const vec3f& wo, vec3f& wi, float& pdf, BSDFType& type,
+                             const vec2f& s, float ss)
+{
+  const varying Minneart* uniform self = (const varying Minneart* uniform)super;
+
+  const vec3f localDir = cosineSampleHemisphere(s);
+  wi = getFrame(super) * localDir;
+  type = BSDF_DIFFUSE_REFLECTION;
+  return Minneart_eval(super, wo, wi, pdf) * rcp(pdf);
+}
+
+inline void Minneart_Constructor(varying Minneart* uniform self, const varying linear3f* uniform frame,
+                                 vec3f R, float b)
+{
+  BSDF_Constructor(&self->super, BSDF_DIFFUSE_REFLECTION,
+                   Minneart_eval, Minneart_sample,
+                   frame);
+
+  self->R = R;
+  self->b = b;
+}
+
+inline varying BSDF* uniform Minneart_create(uniform ShadingContext* uniform ctx, const varying linear3f* uniform frame,
+                                             vec3f R, float b)
+{
+  varying Minneart* uniform self = (varying Minneart* uniform)ShadingContext_alloc(ctx, sizeof(Minneart));
+  Minneart_Constructor(self, frame, R, b);
+  return &self->super;
+}

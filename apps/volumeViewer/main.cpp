@@ -14,6 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "VolumeViewer.h"
 #include <iostream>
 #include <QtGui>
 #include <ctype.h>
@@ -45,6 +46,7 @@ int main(int argc, char *argv[])
     std::cerr << "    -rotate <rate>                       : automatically rotate view according to 'rate'" << std::endl;
     std::cerr << "    -showframerate                       : show the frame rate in the window title bar"   << std::endl;
     std::cerr << "    -fullscreen                          : enter fullscreen mode"                         << std::endl;
+    std::cerr << "    -ownmodelperobject                   : create a separate model for each object"       << std::endl;
     std::cerr << "    -slice <filename>                    : load volume slice from 'filename'"             << std::endl;
     std::cerr << "    -transferfunction <filename>         : load transfer function from 'filename'"        << std::endl;
     std::cerr << "    -viewsize <width>x<height>           : force OSPRay view size to 'width'x'height'"    << std::endl;
@@ -55,11 +57,11 @@ int main(int argc, char *argv[])
     return 1;
   }
 
-  // Parse the OSPRay object file filenames.
-  std::vector<std::string> objectFileFilenames;
+  // // Parse the OSPRay object file filenames.
+  // std::vector<std::string> objectFileFilenames;
 
-  for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++)
-    objectFileFilenames.push_back(std::string(argv[i]));
+  // for (size_t i=1 ; (i < argc) && (argv[i][0] != '-') ; i++)
+  //   objectFileFilenames.push_back(std::string(argv[i]));
 
   // Default values for the optional command line arguments.
   float dt = 0.0f;
@@ -71,16 +73,19 @@ int main(int argc, char *argv[])
   int benchmarkFrames = 0;
   int viewSizeWidth = 0;
   int viewSizeHeight = 0;
-  osp::vec3f viewUp(0.f);
-  osp::vec3f viewAt(0.f), viewFrom(0.f);
+  ospray::vec3f viewUp(0.f);
+  ospray::vec3f viewAt(0.f), viewFrom(0.f);
   bool showFrameRate = false;
   bool fullScreen = false;
+  bool ownModelPerObject = false;
   std::string writeFramesFilename;
 
+  std::vector<std::string> inFileName;
   // Parse the optional command line arguments.
-  for (int i=objectFileFilenames.size() + 1 ; i < argc ; i++) {
+  for (int i=// objectFileFilenames.size() + 
+         1 ; i < argc ; i++) {
 
-    std::string arg = argv[i];
+    const std::string arg = argv[i];
 
     if (arg == "-dt") {
 
@@ -116,6 +121,10 @@ int main(int argc, char *argv[])
 
       fullScreen = true;
       std::cout << "go full screen" << std::endl;
+
+    } else if (arg == "-ownmodelperobject") {
+
+      ownModelPerObject = true;
 
     } else if (arg == "-transferfunction") {
 
@@ -194,12 +203,15 @@ int main(int argc, char *argv[])
         throw std::runtime_error("could not load module " + moduleName + ", error " + ss.str());
       }
 
-    } else throw std::runtime_error("unknown parameter " + arg);
+    } else if (arg[0] == '-')
+      throw std::runtime_error("unknown parameter " + arg);
+    else 
+      inFileName.push_back(arg);
 
   }
 
   // Create the OSPRay state and viewer window.
-  VolumeViewer *volumeViewer = new VolumeViewer(objectFileFilenames, showFrameRate, fullScreen, writeFramesFilename);
+  VolumeViewer *volumeViewer = new VolumeViewer(inFileName, ownModelPerObject, showFrameRate, fullScreen, writeFramesFilename);
 
   // Display the first model.
   volumeViewer->setModel(0);
@@ -238,7 +250,7 @@ int main(int argc, char *argv[])
 
 
   // Set the view up vector if specified.
-  if(viewUp != osp::vec3f(0.f)) {
+  if(viewUp != ospray::vec3f(0.f)) {
     volumeViewer->getWindow()->getViewport()->setUp(viewUp);
     volumeViewer->getWindow()->resetAccumulationBuffer();
   }

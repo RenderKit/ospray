@@ -14,86 +14,65 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "MPILoadBalancer.h"
+// ospray
+#include "ospray/mpi/MPILoadBalancer.h"
 #include "ospray/render/Renderer.h"
-#include "ospray/fb/FrameBuffer.h"
-#include <algorithm>"
+#include "ospray/fb/LocalFB.h"
+#include "ospray/mpi/DistributedFrameBuffer.h"
+#include "ospray/common/parallel_for.h"
+
+#include <algorithm>
 
 namespace ospray {
   namespace mpi {
 
-    using std::cout; 
+    // for profiling
+    extern "C" void async_beginFrame();
+    extern "C" void async_endFrame();
+
+    using std::cout;
     using std::endl;
 
     namespace staticLoadBalancer {
-
-      Master::Master() {
-      }
 
       void Master::renderFrame(Renderer *tiledRenderer,
                                FrameBuffer *fb,
                                const uint32 channelFlags)
       {
-        int rc; 
-        MPI_Status status;
+        async_beginFrame();
+        DistributedFrameBuffer *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
 
-        // mpidevice already sent the 'cmd_render_frame' event; we
-        // only have to wait for tiles...
-        const size_t numTiles
-          = divRoundUp(fb->size.x,TILE_SIZE)
-          * divRoundUp(fb->size.y,TILE_SIZE);
-        
-        assert(fb->colorBufferFormat == OSP_RGBA_I8);
-        uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
-        for (int i=0;i<numTiles;i++) {
-          box2ui region;
-          // printf("#m: receiving tile %i\n",i);
-          rc = MPI_Recv(&region,4,MPI_INT,MPI_ANY_SOURCE,MPI_ANY_TAG,
-                        mpi::worker.comm,&status); 
-          Assert(rc == MPI_SUCCESS); 
-          // printf("#m: received tile %i (%i,%i) from %i\n",i,
-          //        tile.region.lower.x,tile.region.lower.y,status.MPI_SOURCE);
-          rc = MPI_Recv(&rgba_i8[0],TILE_SIZE*TILE_SIZE,MPI_INT,
-                        status.MPI_SOURCE,status.MPI_TAG,mpi::worker.comm,&status);
-          Assert(rc == MPI_SUCCESS);
+        dfb->startNewFrame();
+        /* the client will do its magic here, and the distributed
+           frame buffer will be writing tiles here, without us doing
+           anything ourselves */
+        dfb->waitUntilFinished();
 
-          ospray::LocalFrameBuffer *lfb = (ospray::LocalFrameBuffer *)fb;
-          for (int iy=region.lower.y;iy<region.upper.y;iy++)
-            for (int ix=region.lower.x;ix<region.upper.x;ix++) {
-              ((uint32*)lfb->colorBuffer)[ix+iy*lfb->size.x] 
-                = rgba_i8[iy-region.lower.y][ix-region.lower.x];
-            }
-        }
-        //        printf("#m: master done fb %lx\n",fb);
+        async_endFrame();
       }
 
-      void Slave::RenderTask::finish(size_t threadIndex, 
-                                     size_t threadCount, 
-                                     TaskScheduler::Event* event) 
+      std::string Master::toString() const
       {
-        renderer->endFrame(channelFlags);
+        return "ospray::mpi::staticLoadBalancer::Master";
+      }
+
+      void Slave::RenderTask::finish() const
+      {
         renderer = NULL;
         fb = NULL;
-        // refDec();
       }
 
-
-      Slave::Slave() {
-      }
-
-
-      void Slave::RenderTask::run(size_t threadIndex, 
-                                  size_t threadCount, 
-                                  size_t taskIndex, 
-                                  size_t taskCount, 
-                                  TaskScheduler::Event* event) 
+      void Slave::RenderTask::run(size_t taskIndex) const
       {
-        // PING;
         const size_t tileID = taskIndex;
         if ((tileID % worker.size) != worker.rank) return;
 
-        // PING;
+#if TILE_SIZE>128
+        Tile *tilePtr = new Tile;
+        Tile &tile = *tilePtr;
+#else
         Tile __aligned(64) tile;
+#endif
         const size_t tile_y = tileID / numTiles_x;
         const size_t tile_x = tileID - tile_y*numTiles_x;
         tile.region.lower.x = tile_x * TILE_SIZE;
@@ -102,54 +81,61 @@ namespace ospray {
         tile.region.upper.y = std::min(tile.region.lower.y+TILE_SIZE,fb->size.y);
         tile.fbSize = fb->size;
         tile.rcp_fbSize = rcp(vec2f(fb->size));
-        renderer->renderTile(tile);
-        ospray::LocalFrameBuffer *localFB = (ospray::LocalFrameBuffer *)fb.ptr;
-        uint32 rgba_i8[TILE_SIZE][TILE_SIZE];
-        for (int iy=tile.region.lower.y;iy<tile.region.upper.y;iy++)
-          for (int ix=tile.region.lower.x;ix<tile.region.upper.x;ix++) {
-            rgba_i8[iy-tile.region.lower.y][ix-tile.region.lower.x] 
-              = ((uint32*)localFB->colorBuffer)[ix+iy*localFB->size.x];
-          }
-        
-        MPI_Send(&tile.region,4,MPI_INT,0,tileID,app.comm);
-        int count = (TILE_SIZE)*(TILE_SIZE);
-        MPI_Send(&rgba_i8,count,MPI_INT,0,tileID,app.comm);
+        tile.generation = 0;
+        tile.children = 0;
+
+        const int spp = renderer->spp;
+        const int blocks = (fb->accumID > 0 || spp > 0) ? 1 :
+                           std::min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
+        const size_t numJobs = ((TILE_SIZE*TILE_SIZE)/
+                                RENDERTILE_PIXELS_PER_JOB + blocks-1)/blocks;
+
+        parallel_for(numJobs, [&](int taskIndex){
+          renderer->renderTile(perFrameData, tile, taskIndex);
+        });
+
+        fb->setTile(tile);
+#if TILE_SIZE>128
+        delete tilePtr;
+#endif
       }
-      
-      void Slave::renderFrame(Renderer *tiledRenderer, 
+
+      void Slave::renderFrame(Renderer *tiledRenderer,
                               FrameBuffer *fb,
                               const uint32 channelFlags
                               )
       {
-        Ref<RenderTask> renderTask
-          = new RenderTask;//(fb,tiledRenderer->createRenderJob(fb));
-        renderTask->fb = fb;
-        renderTask->renderer = tiledRenderer;
-        renderTask->numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
-        renderTask->numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
-        renderTask->channelFlags = channelFlags;
-        tiledRenderer->beginFrame(fb);
 
-        /*! iw: using a local sync event for now; "in theory" we should be
-          able to attach something like a sync event to the frame
-          buffer, just trigger the task here, and let somebody else sync
-          on the framebuffer once it is needed; alas, I'm currently
-          running into some issues with the embree taks system when
-          trying to do so, and thus am reverting to this
-          fully-synchronous version for now */
-        
-        // renderTask->fb->frameIsReadyEvent = TaskScheduler::EventSync();
-        TaskScheduler::EventSync sync;
-        renderTask->task = embree::TaskScheduler::Task
-          (&sync,
-           // (&renderTask->fb->frameIsReadyEvent,
-           renderTask->_run,renderTask.ptr,
-           renderTask->numTiles_x*renderTask->numTiles_y,
-           renderTask->_finish,renderTask.ptr,
-           "LocalTiledLoadBalancer::RenderTask");
-        TaskScheduler::addTask(-1, TaskScheduler::GLOBAL_BACK, &renderTask->task); 
-        sync.sync();
+        async_beginFrame();
+
+        auto *dfb = dynamic_cast<DistributedFrameBuffer*>(fb);
+        dfb->startNewFrame();
+
+        void *perFrameData = tiledRenderer->beginFrame(fb);
+
+        RenderTask renderTask;
+
+        renderTask.fb = fb;
+        renderTask.renderer = tiledRenderer;
+        renderTask.numTiles_x = divRoundUp(fb->size.x,TILE_SIZE);
+        renderTask.numTiles_y = divRoundUp(fb->size.y,TILE_SIZE);
+        renderTask.channelFlags = channelFlags;
+        renderTask.perFrameData = perFrameData;
+
+        const int NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
+        parallel_for(NTASKS, [&](int taskIndex){renderTask.run(taskIndex);});
+
+        dfb->waitUntilFinished();
+        tiledRenderer->endFrame(perFrameData,channelFlags);
+
+        async_endFrame();
       }
+
+      std::string Slave::toString() const
+      {
+        return "ospray::mpi::staticLoadBalancer::Slave";
+      }
+
     }
 
   } // ::ospray::mpi

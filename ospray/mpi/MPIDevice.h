@@ -14,59 +14,25 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
+
 #include "MPICommon.h"
 #include "ospray/api/Device.h"
+#include "ospray/device/command.h"
 #include "CommandStream.h"
 #include "ospray/common/Managed.h"
 
 /*! \file mpidevice.h Implements the "mpi" device for mpi rendering */
 
 namespace ospray {
-  namespace api {
+  namespace mpi {
 
-    struct MPIDevice : public Device {
+    struct MPIDevice : public api::Device {
       typedef ospray::mpi::CommandStream CommandStream;
 
       CommandStream cmd;
 
-      enum {
-        CMD_NEW_RENDERER=0,
-        CMD_FRAMEBUFFER_CREATE,
-        CMD_RENDER_FRAME,
-        CMD_FRAMEBUFFER_CLEAR,
-        CMD_FRAMEBUFFER_MAP,
-        CMD_FRAMEBUFFER_UNMAP,
-        CMD_NEW_MODEL,
-        CMD_NEW_GEOMETRY,
-        CMD_NEW_MATERIAL,
-        CMD_NEW_LIGHT,
-        CMD_NEW_TRIANGLEMESH,
-        CMD_NEW_CAMERA,
-        CMD_NEW_VOLUME,
-        CMD_NEW_TRANSFERFUNCTION,
-        CMD_NEW_DATA,
-        CMD_NEW_TEXTURE2D,
-        CMD_ADD_GEOMETRY,
-        CMD_REMOVE_GEOMETRY,
-        CMD_ADD_VOLUME,
-        CMD_COMMIT,
-        CMD_LOAD_MODULE,
-        CMD_RELEASE,
-        CMD_SAMPLE_VOLUME,
-        CMD_GET_TYPE,
-        CMD_GET_VALUE,
-        CMD_SET_MATERIAL,
-        CMD_SET_REGION,
-        CMD_SET_OBJECT,
-        CMD_SET_STRING,
-        CMD_SET_INT,
-        CMD_SET_FLOAT,
-        CMD_SET_VEC2F,
-        CMD_SET_VEC3F,
-        CMD_SET_VEC2I,
-        CMD_SET_VEC3I,
-        CMD_USER
-      } CommandTag;
+      typedef ospray::CommandTag CommandTag;
 
       /*! constructor */
       MPIDevice(// AppMode appMode, OSPMode ospMode,
@@ -96,6 +62,13 @@ namespace ospray {
       virtual void frameBufferUnmap(const void *mapped,
                                     OSPFrameBuffer fb);
 
+
+      /*! set a frame buffer's pixel op object */
+      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op);
+      
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPPixelOp newPixelOp(const char *type);
+        
       /*! clear the specified channel(s) of the frame buffer specified in 'whichChannels'
         
         if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to
@@ -147,6 +120,9 @@ namespace ospray {
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);
 
+      /*! assign (named) vec4f parameter to an object */
+      virtual void setVec4f(OSPObject object, const char *bufName, const vec4f &v);
+
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
 
@@ -194,6 +170,9 @@ namespace ospray {
 
       /*! Get the named 3-vector floating point value associated with an object. */
       virtual int getVec3f(OSPObject object, const char *name, vec3f *value);
+
+      /*! Get the named 4-vector floating point value associated with an object. */
+      virtual int getVec4f(OSPObject object, const char *name, vec4f *value);
 
       /*! Get the named 3-vector integer value associated with an object. */
       virtual int getVec3i(OSPObject object, const char *name, vec3i *value);
@@ -243,12 +222,24 @@ namespace ospray {
       virtual OSPTexture2D newTexture2D(int width, int height, 
                                         OSPDataType type, void *data, int flags);
 
+      /*! switch API mode for distriubted API extensions */
+      virtual void apiMode(OSPDApiMode mode);
+
+      OSPDApiMode currentApiMode;
+
       /*! sample a volume */
       virtual void sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count);
 
     };
 
-  } // ::ospray::api
+    // ==================================================================
+    // Helper functions
+    // ==================================================================
+
+    /*! return a string represenging the given API Mode */
+    const char *apiModeName(OSPDApiMode mode);
+
+  } // ::ospray::mpi
 } // ::ospray
 
 

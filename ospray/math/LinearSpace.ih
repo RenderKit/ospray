@@ -40,7 +40,7 @@ make_LinearSpace3f(const varying vec3f x, const varying vec3f y, const varying v
   varying LinearSpace3f l; l.vx = x; l.vy = y; l.vz = z; return l; 
 }
 
-inline LinearSpace3f make_LinearSpace3f_identity()
+inline uniform LinearSpace3f make_LinearSpace3f_identity()
 {
   return make_LinearSpace3f(make_vec3f(1.f,0.f,0.f),
                             make_vec3f(0.f,1.f,0.f),
@@ -85,8 +85,8 @@ inline uniform LinearSpace3f frame(const uniform vec3f N)
 {
   const uniform vec3f dx0 = make_vec3f(0.0f,N.z,-N.y);
   const uniform vec3f dx1 = make_vec3f(-N.z,0.0f,N.x);
-  const uniform vec3f dx = normalize(dot(dx0,dx0) > dot(dx1,dx1) ? dx0 : dx1);
-  const uniform vec3f dy = normalize(cross(N,dx));
+  const uniform vec3f dx = normalize(abs(N.x) < abs(N.y) ? dx0 : dx1);
+  const uniform vec3f dy = cross(N,dx);
   return make_LinearSpace3f(dx,dy,N);
 }
 
@@ -94,8 +94,8 @@ inline varying LinearSpace3f frame(const varying vec3f N)
 {
   const varying vec3f dx0 = make_vec3f(0.0f,N.z,-N.y);
   const varying vec3f dx1 = make_vec3f(-N.z,0.0f,N.x);
-  const varying vec3f dx = normalize(dot(dx0,dx0) > dot(dx1,dx1) ? dx0 : dx1);
-  const varying vec3f dy = normalize(cross(N,dx));
+  const varying vec3f dx = normalize(abs(N.x) < abs(N.y) ? dx0 : dx1);
+  const varying vec3f dy = cross(N,dx);
   return make_LinearSpace3f(dx,dy,N);
 }
 
@@ -184,3 +184,52 @@ inline varying LinearSpace3f rcp(const varying LinearSpace3f l)
 
 /*! short-hand name for LinearSpace3f */
 typedef LinearSpace3f linear3f;
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Rudimentary 2D linear space, used for texture coordinate transformations
+////////////////////////////////////////////////////////////////////////////////
+
+struct LinearSpace2f 
+{
+  vec2f vx;
+  vec2f vy;
+};
+
+inline uniform LinearSpace2f make_LinearSpace2f(const uniform vec2f x, const uniform vec2f y) { 
+  uniform LinearSpace2f l;
+  l.vx = x;
+  l.vy = y;
+  return l; 
+}
+
+inline varying LinearSpace2f make_LinearSpace2f(const varying vec2f x, const varying vec2f y) { 
+  varying LinearSpace2f l;
+  l.vx = x;
+  l.vy = y;
+  return l; 
+}
+
+inline uniform LinearSpace2f make_LinearSpace2f_identity()
+{
+  return make_LinearSpace2f(make_vec2f(1.f, 0.f),
+                            make_vec2f(0.f, 1.f));
+}
+
+
+inline uniform vec2f operator*(const uniform LinearSpace2f l, const uniform vec2f v) {
+  return v.x * l.vx + v.y * l.vy;
+}
+
+inline varying vec2f operator*(const uniform LinearSpace2f l, const varying vec2f v) {
+  return v.x * l.vx + v.y * l.vy;
+}
+
+inline varying vec2f operator*(const varying LinearSpace2f l, const varying vec2f v) {
+  return v.x * l.vx + v.y * l.vy;
+}
+
+
+/*! short-hand name for LinearSpace2f */
+typedef LinearSpace2f linear2f;

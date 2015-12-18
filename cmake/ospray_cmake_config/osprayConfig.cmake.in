@@ -95,8 +95,9 @@ endif(NOT EXISTS ${OSPRAY_INCLUDE_DIR}/ospray/version.h)
 # osprayTargets-<release/debug>.cmake as link libraries for ospray target.
 set(OSPRAY_INCLUDE_DIRS
   ${OSPRAY_INCLUDE_DIR}
-  ${OSPRAY_INCLUDE_DIR}/ospray/embree
-  ${OSPRAY_INCLUDE_DIR}/ospray/embree/common
+  ${OSPRAY_INCLUDE_DIR}/ospray
+  ${OSPRAY_INCLUDE_DIR}/ospray/embree-v2.7.1
+  ${OSPRAY_INCLUDE_DIR}/ospray/embree-v2.7.1/common
 )
 
 
@@ -112,6 +113,20 @@ set(OSPRAY_CURRENT_ROOT_INSTALL_DIR   ${CURRENT_ROOT_INSTALL_DIR})
 #             any ospray dependencies. A list of libs should be constructed
 #             and added to the OSPRAY_LIBRARIES variable below.
 
+if (@USE_TBB@)
+  # Find tbb
+  find_package(TBB)
+  if(":${TBB_LIBRARY}" STREQUAL ":")
+    message(FATAL_ERROR "Missing required optional ospray dependency "
+      "tbb, please set TBB_ROOT to the root of your tbb install.")
+  else()
+    message(STATUS "Found required ospray dependency:  tbb in ${TBB_INCLUDE_DIRS}")
+  endif()
+
+  add_definitions(-DOSPRAY_USE_TBB)
+  list(APPEND OSPRAY_DEPENDENCIES ${TBB_LIBRARIES})
+endif()
+
 # Restore state
 set(CMAKE_CURRENT_LIST_DIR     ${OSPRAY_CMAKE_CURRENT_LIST_DIR})
 set(CURRENT_CONFIG_INSTALL_DIR ${OSPRAY_CURRENT_CONFIG_INSTALL_DIR})
@@ -123,9 +138,9 @@ set(CURRENT_ROOT_INSTALL_DIR   ${OSPRAY_CURRENT_ROOT_INSTALL_DIR})
 
 # Import exported ospray targets
 IF(NOT TARGET ospray AND NOT OSPRAY_BINARY_DIR)
-  IF (@OSPRAY_EMBREE_ENABLE_SSE@ OR @OSPRAY_EMBREE_ENABLE_AVX@ OR @OSPRAY_EMBREE_ENABLE_AVX2@)
-    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_sse41Targets.cmake)
-  ENDIF()
+  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libsysTargets.cmake)
+  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/liblexersTargets.cmake)
+  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libsimdTargets.cmake)
   IF (@OSPRAY_EMBREE_ENABLE_SSE@ OR @OSPRAY_EMBREE_ENABLE_AVX@ OR @OSPRAY_EMBREE_ENABLE_AVX2@)
     INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_sse42Targets.cmake)
   ENDIF()
@@ -134,6 +149,9 @@ IF(NOT TARGET ospray AND NOT OSPRAY_BINARY_DIR)
   ENDIF()
   IF (@OSPRAY_EMBREE_ENABLE_AVX2@)
     INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avx2Targets.cmake)
+  ENDIF()
+  IF (@OSPRAY_EMBREE_ENABLE_AVX512@)
+    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avx512Targets.cmake)
   ENDIF()
   INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embreeTargets.cmake)
   INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libosprayTargets.cmake)

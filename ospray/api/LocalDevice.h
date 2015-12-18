@@ -26,6 +26,8 @@ namespace ospray {
       /*! constructor */
       LocalDevice(int *_ac=NULL, const char **_av=NULL);
 
+      ~LocalDevice();
+
       /*! create a new frame buffer */
       virtual OSPFrameBuffer frameBufferCreate(const vec2i &size, 
                                                const OSPFrameBufferFormat mode,
@@ -39,6 +41,12 @@ namespace ospray {
       virtual void frameBufferUnmap(const void *mapped,
                                     OSPFrameBuffer fb);
 
+      /*! create a new pixelOp object (out of list of registered pixelOps) */
+      virtual OSPPixelOp newPixelOp(const char *type);
+
+      /*! set a frame buffer's pixel op object */
+      virtual void setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op);
+      
       /*! create a new model */
       virtual OSPModel newModel();
 
@@ -81,6 +89,9 @@ namespace ospray {
 
       /*! assign (named) vec3f parameter to an object */
       virtual void setVec3f(OSPObject object, const char *bufName, const vec3f &v);
+
+      /*! assign (named) vec4f parameter to an object */
+      virtual void setVec4f(OSPObject object, const char *bufName, const vec4f &v);
 
       /*! assign (named) int parameter to an object */
       virtual void setInt(OSPObject object, const char *bufName, const int f);
@@ -126,6 +137,9 @@ namespace ospray {
 
       /*! Get the named 3-vector floating point value associated with an object. */
       virtual int getVec3f(OSPObject object, const char *name, vec3f *value);
+
+      /*! Get the named 4-vector floating point value associated with an object. */
+      virtual int getVec4f(OSPObject object, const char *name, vec4f *value);
 
       /*! Get the named 3-vector integer value associated with an object. */
       virtual int getVec3i(OSPObject object, const char *name, vec3i *value);

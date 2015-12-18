@@ -37,12 +37,14 @@ namespace ospray {
     <dl>
     <dt><code>float        radius = 0.01f</code></dt><dd>Base radius common to all cylinders if 'offset_radius' is not used</dd>
     <dt><code>int32        materialID = 0</code></dt><dd>Material ID common to all cylinders if 'offset_materialID' is not used</dd>
-    <dt><code>int32        bytes_per_cylinder = 7*sizeof(float)</code></dt><dd>Size (in bytes) of each cylinder in the data array.</dd>
+    <dt><code>int32        bytes_per_cylinder = 6*sizeof(float)</code></dt><dd>Size (in bytes, default is for v0/v1 positions) of each cylinder in the data array.</dd>
     <dt><code>int32        offset_v0 = 0</code></dt><dd>Offset (in bytes) of each cylinder's 'vec3f v0' value (the start vertex) within each cylinder</dd>
     <dt><code>int32        offset_v1 = 3*sizeof(float)</code></dt><dd>Offset (in bytes) of each cylinder's 'vec3f v1' value (the end vertex) within each cylinder</dd>
-    <dt><code>int32        offset_radius = 6*sizeof(float)</code></dt><dd>Offset (in bytes) of each cylinder's 'float radius' value within each cylinder. Setting this value to -1 means that there is no per-cylinder radius value, and that all cylinders should use the (shared) 'radius' value instead</dd>
+    <dt><code>int32        offset_radius = -1</code></dt><dd>Offset (in bytes) of each cylinder's 'float radius' value within each cylinder. Setting this value to -1 means that there is no per-cylinder radius value, and that all cylinders should use the (shared) 'radius' value instead</dd>
     <dt><code>int32        offset_materialID = -1</code></dt><dd>Offset (in bytes) of each cylinder's 'int materialID' value within each cylinder. Setting this value to -1 means that there is no per-cylinder material ID, and that all cylinders share the same per-geometry 'materialID'</dd>
+    <dt><code>int32        offset_colorID = -1</code></dt><dd>Byte offset for each cylinder's color index (for the 'color' data). Setting this value to -1 means that there is no per-cylinder color, and that all cylinders share the same per-geometry color.</dd>
     <dt><code>Data<float>  cylinders</code></dt><dd>Array of data elements.</dd>
+    <dt><code>Data<float>  color</code></dt><dd>Array of color (RGBA) elements accessed by indexes (per element) in 'cylinders' colorID data.</dd>
     </dl>
 
     The functionality for this geometry is implemented via the
@@ -71,10 +73,12 @@ namespace ospray {
     int64 offset_v1;
     int64 offset_radius;
     int64 offset_materialID;
+    int64 offset_colorID;
 
-    Ref<Data> data;
+    Ref<Data> cylinderData;
     Ref<Data> materialList;
     void     *_materialList;
+    Ref<Data> colorData; /*!< cylinder color array (vec3fa) */
 
     Cylinders();
   };

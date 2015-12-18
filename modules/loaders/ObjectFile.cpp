@@ -31,9 +31,10 @@ OSPObject *ObjectFile::importObjects(const std::string &filename)
 
   // The subtype string is the file extension.
   std::string type = filename.substr(filename.find_last_of(".") + 1);
-
+  
   // Return a concrete instance of the requested subtype if the creation function is already known.
-  if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])(fullfilename));
+  if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) 
+    return((*symbolRegistry[type])(fullfilename));
 
   // Otherwise construct the name of the creation function to look for.
   std::string creationFunctionName = "ospray_import_object_file_" + std::string(type);

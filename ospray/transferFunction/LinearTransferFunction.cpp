@@ -54,5 +54,8 @@ namespace ospray {
     exitOnCondition(ispcEquivalent == NULL, "unable to create ISPC transfer function");
   }
 
+  // A piecewise linear transfer function.
+  OSP_REGISTER_TRANSFER_FUNCTION(LinearTransferFunction, piecewise_linear);
+
 } // ::ospray
 

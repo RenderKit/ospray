@@ -27,7 +27,7 @@
 namespace ospray {
 
   namespace sg {
-    
+
     /*! forward decl of entity that nodes can write to when writing XML files */
     struct XMLWriter;
 
@@ -44,17 +44,17 @@ namespace ospray {
   };                                                    \
   protected:                                            \
   type name;                                            \
-  
+
     /*! \brief a parameter to a node (is not in itself a node).
-      
+
       \note This is only the abstract base class, actual instantiations are
       the in the 'ParamT' template. */
-    struct Param : public embree::RefCount { 
+    struct Param : public embree::RefCount {
       /*! constructor. the passed name alwasys remains constant */
       Param(const std::string &name) : name(name) {};
       /*! return name of this parameter. the value is in the derived class */
       inline const std::string &getName() const { return name; }
-      virtual void write(XMLWriter &) { NOTIMPLEMENTED; }; 
+      virtual void write(XMLWriter &) { NOTIMPLEMENTED; };
       /*! returns the ospray data type that this node corresponds to */
       virtual OSPDataType getOSPDataType() const = 0;
     protected:
@@ -67,7 +67,7 @@ namespace ospray {
     struct ParamT : public sg::Param {
       ParamT(const std::string &name, const T &t) : Param(name), value(t) {};
       virtual OSPDataType getOSPDataType() const;
-      virtual void write(XMLWriter &) { NOTIMPLEMENTED; }; 
+      virtual void write(XMLWriter &) { NOTIMPLEMENTED; };
       T value;
     };
 
@@ -83,20 +83,20 @@ namespace ospray {
 
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm)
-        : world(other.world), integrator(other.integrator), xfm(newXfm) 
+        : world(other.world), integrator(other.integrator), xfm(newXfm)
       {}
     };
 
     /*! \brief base node of all scene graph nodes */
-    struct Node : public embree::RefCount 
+    struct Node : public embree::RefCount
     {
       Node() : lastModified(1), lastCommitted(0) {};
-      
+
       virtual    std::string toString() const = 0;
       sg::Param *getParam(const std::string &name) const;
       void       addParam(sg::Param *p);
 
-      //! \brief Initialize this node's value from given XML node 
+      //! \brief Initialize this node's value from given XML node
       /*!
         \detailed This allows a plug-and-play concept where a XML
         file can specify all kind of nodes wihout needing to know
@@ -104,20 +104,20 @@ namespace ospray {
         create a proper C++ instance of the given node type (the
         OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
         tell the node to parse itself from the given XML content and
-        XML children 
-        
+        XML children
+
         \param node The XML node specifying this node's fields
 
         \param binBasePtr A pointer to an accompanying binary file (if
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr) 
+      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
       { throw std::runtime_error("setFromXML() not implemented for node type "+node->name); };
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>
-      inline void setParam(const std::string &name, const T &t) 
+      inline void setParam(const std::string &name, const T &t)
       { param[name] = new ParamT<T>(name,t); }
 
       /*! serialize the scene graph - add object to the serialization,
@@ -165,8 +165,8 @@ namespace ospray {
 
 
     /*! \brief registers a internal ospray::<ClassName> renderer under
-      the externally accessible name "external_name" 
-      
+      the externally accessible name "external_name"
+
       \internal This currently works by defining a extern "C" function
       with a given predefined name that creates a new instance of this
       renderer. By having this symbol in the shared lib ospray can
@@ -177,7 +177,7 @@ namespace ospray {
     extern "C" ospray::sg::Node *ospray_create_sg_node__##InternalClassName() \
     {                                                                   \
       return new ospray::sg::InternalClassName;                        \
-    }                                                                 
+    }
 
   } // ::ospray::sg
 } // ::ospray

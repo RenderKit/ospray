@@ -39,6 +39,43 @@ namespace ospray {
       return bounds;
     }
 
+    //! \brief Initialize this node's value from given XML node 
+    /*!
+      \detailed This allows a plug-and-play concept where a XML
+      file can specify all kind of nodes wihout needing to know
+      their actual types: The XML parser only needs to be able to
+      create a proper C++ instance of the given node type (the
+      OSP_REGISTER_SG_NODE() macro will allow it to do so), and can
+      tell the node to parse itself from the given XML content and
+      XML children 
+        
+      \param node The XML node specifying this node's fields
+
+      \param binBasePtr A pointer to an accompanying binary file (if
+      existant) that contains additional binary data that the xml
+      node fields may point into
+    */
+    void TriangleMesh::setFromXML(const xml::Node *const node, const unsigned char *binBasePtr) 
+    {
+      for (size_t childID=0;childID<node->child.size();childID++) {
+        xml::Node *child = node->child[childID];
+
+        if (child->name == "vertex") {
+          size_t num = child->getPropl("num");
+          size_t ofs = child->getPropl("ofs");
+          vertex = new DataArray3f((vec3f*)((char*)binBasePtr+ofs),num,false);
+          continue;
+        } 
+
+        if (child->name == "index") {
+          size_t num = child->getPropl("num");
+          size_t ofs = child->getPropl("ofs");
+          index = new DataArray3i((vec3i*)((char*)binBasePtr+ofs),num,false);
+          continue;
+        } 
+      }      
+    }
+
     /*! 'render' the nodes */
     void TriangleMesh::render(RenderContext &ctx)
     {
@@ -63,8 +100,8 @@ namespace ospray {
       // want to do a 'real' material
       OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
       if (mat) {
-        vec3f kd = .7f;
-        vec3f ks = .3f;
+        vec3f kd(.7f);
+        vec3f ks(.3f);
         ospSet3fv(mat,"kd",&kd.x);
         ospSet3fv(mat,"ks",&ks.x);
         ospSet1f(mat,"Ns",99.f);
@@ -108,8 +145,8 @@ namespace ospray {
       // want to do a 'real' material
       OSPMaterial mat = ospNewMaterial(ctx.integrator?ctx.integrator->getOSPHandle():NULL,"default");
       if (mat) {
-        vec3f kd = .7f;
-        vec3f ks = .3f;
+        vec3f kd(.7f);
+        vec3f ks(.3f);
         ospSet3fv(mat,"kd",&kd.x);
         ospSet3fv(mat,"ks",&ks.x);
         ospSet1f(mat,"Ns",99.f);
@@ -133,6 +170,8 @@ namespace ospray {
       ospAddGeometry(ctx.world->ospModel,ospGeometry);
       //std::cout << "#qtViewer 'rendered' mesh\n";
     }
+
+    OSP_REGISTER_SG_NODE(TriangleMesh);
 
   } // ::ospray::sg
 } // ::ospray

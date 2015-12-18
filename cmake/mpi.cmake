@@ -15,68 +15,46 @@
 ## ======================================================================== ##
 
 IF (OSPRAY_MPI)
-  IF (WIN32)
-    FIND_PROGRAM(MPI_COMPILER NAMES mpiicpc.bat DOC "MPI compiler wrapper.")
-  ENDIF()
-  if (OSPRAY_COMPILER STREQUAL "ICC")
-    find_program(MPI_COMPILER 
-      NAMES mpiicpc
-      DOC "MPI compiler.")
-    SET(OSPRAY_MPI_MULTI_THREADING_FLAG "-mt_mpi")
-  else()
-    find_package(MPI)
-    if (${MPI_COMPILER} STREQUAL "MPI_COMPILER-NOTFOUND")
-      find_program(MPI_COMPILER
-        NAMES mpicxx
-        PATHS /usr/lib64/openmpi/bin
-        DOC "MPI compiler.")
-      find_library(MPI_LIBRARY
-        NAMES mpi
-        PATHS /usr/lib64/openmpi/lib
-        DOC "MPI library.")
-      SET(MPI_LIBRARIES ${MPI_LIBRARY})
-    endif()
-    SET(OSPRAY_MPI_MULTI_THREADING_FLAG "") #???
-  endif()
-  if (${MPI_COMPILER} STREQUAL "MPI_COMPILER-NOTFOUND")
-    message("could not find mpi compiler")
-  endif()
-  mark_as_advanced(MPI_COMPILER)
-
-  exec_program(${MPI_COMPILER} 
-    ARGS -show
-    OUTPUT_VARIABLE MPI_COMPILE_CMDLINE
-    RETURN_VALUE MPI_COMPILER_RETURN)
-
-  # Extract include paths from compile command line
-  string(REGEX MATCHALL "-I([^\" ]+|\"[^\"]+\")" MPI_ALL_INCLUDE_PATHS "${MPI_COMPILE_CMDLINE}")
-  set(MPI_INCLUDE_PATH_WORK)
-  foreach(IPATH ${MPI_ALL_INCLUDE_PATHS})
-    string(REGEX REPLACE "^-I" "" IPATH ${IPATH})
-    string(REPLACE "//" "/" IPATH ${IPATH})
-    string(REPLACE "\"" "" IPATH ${IPATH})
-    list(APPEND MPI_INCLUDE_PATH_WORK ${IPATH})
-  endforeach(IPATH)
-
-  set(MPI_INCLUDE_PATH ${MPI_INCLUDE_PATH_WORK} )
+  SET(OSPRAY_MPI_DISTRIBUTED ON) # sets this define in OSPConfig.h
 
   MACRO(CONFIGURE_MPI)
-    INCLUDE_DIRECTORIES(${MPI_INCLUDE_PATH})
-    IF (WIN32)
-      STRING(REGEX MATCHALL "/LIBPATH:([^\" ]+|\"[^\"]+\")" MPI_ALL_LIB_PATHS "${MPI_COMPILE_CMDLINE}")
-      STRING(REPLACE ";" " " MPI_ALL_LIB_PATHS "${MPI_ALL_LIB_PATHS}")
-        SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_ALL_LIB_PATHS} impi.lib  impicxx.lib")
-        SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_ALL_LIB_PATHS} impi.lib  impicxx.lib")
+
+    IF (WIN32) # FindMPI does not find Intel MPI on Windows, we need to help here
+      FIND_PACKAGE(MPI)
+
+      # need to strip quotes, otherwise CMake treats it as relative path
+      STRING(REGEX REPLACE "^\"|\"$" "" MPI_CXX_INCLUDE_PATH ${MPI_CXX_INCLUDE_PATH})
+
+      IF (NOT MPI_CXX_FOUND)
+        # try again, hinting the compiler wrappers
+        SET(MPI_CXX_COMPILER mpicxx.bat)
+        SET(MPI_C_COMPILER mpicc.bat)
+        FIND_PACKAGE(MPI)
+
+        IF (NOT MPI_CXX_LIBRARIES)
+          SET(MPI_LIB_PATH ${MPI_CXX_INCLUDE_PATH}\\..\\lib)
+
+          SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+          FIND_LIBRARY(MPI_LIB NAMES impi HINTS ${MPI_LIB_PATH})
+          SET(MPI_C_LIB ${MPI_LIB})
+          SET(MPI_C_LIBRARIES ${MPI_LIB} CACHE STRING "MPI C libraries to link against" FORCE)
+
+          SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
+          FIND_LIBRARY(MPI_LIB NAMES impicxx HINTS ${MPI_LIB_PATH})
+          SET(MPI_CXX_LIBRARIES ${MPI_C_LIB} ${MPI_LIB} CACHE STRING "MPI CXX libraries to link against" FORCE)
+          SET(MPI_LIB "MPI_LIB-NOTFOUND" CACHE INTERNAL "Scratch variable for MPI lib detection" FORCE)
+        ENDIF()
+      ENDIF()
+    ELSE()
+      FIND_PACKAGE(MPI REQUIRED)
     ENDIF()
-    SET(CMAKE_CXX_COMPILER ${MPI_COMPILER})
-    SET(APP_CMAKE_CXX_FLAGS "${OSPRAY_MPI_MULTI_THREADING_FLAG}")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-    SET(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG}")
-    SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} ${OSPRAY_MPI_MULTI_THREADING_FLAG}")
-    SET(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} ${OSPRAY_MPI_MULTI_THREADING_FLAG}")
+
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${MPI_CXX_COMPILE_FLAGS}")
+    SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${MPI_CXX_LINK_FLAGS}")
+    INCLUDE_DIRECTORIES(SYSTEM ${MPI_CXX_INCLUDE_PATH})
 
     IF (THIS_IS_MIC)
-      SET( CMAKE_EXE_LINKER_FLAGS  "${CMAKE_EXE_LINKER_FLAGS} -mmic" )
+      SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -mmic")
     ENDIF()
 
   ENDMACRO()

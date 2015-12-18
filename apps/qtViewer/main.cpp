@@ -23,7 +23,7 @@
 // viewer
 #include "ModelViewer.h"
 // embree
-#include "ospray/embree/common/sys/filename.h"
+#include "common/sys/filename.h"
 // scene graph
 #include "sg/module/Module.h"
 #include "sg/importer/Importer.h"
@@ -84,6 +84,8 @@ namespace ospray {
             frameResolution.y = atoi(argv[++argID]);
           } else if (arg == "-spp" || arg == "--spp" || arg == "--samples-per-pixel") {
             spp = atoi(argv[++argID]);
+          } else if (arg == "--data-distributed" || arg == "--data-parallel") {
+            sg::Volume::useDataDistributedVolume = true;
           } else if (arg == "--1k" || arg == "-1k") {
             frameResolution.x = 1024;
             frameResolution.y = 1024;

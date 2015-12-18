@@ -23,7 +23,7 @@
 struct LinearTransferFunction {
 
   //! Pointers to functions common to all TransferFunction subtypes (must be the first field of the struct).
-  TransferFunction inherited;
+  TransferFunction super;
 
   //! Transfer function opacity values and count.
   float *uniform opacityValues;  uniform int opacityValueCount;  
@@ -40,11 +40,11 @@ inline uniform float getMaxOpacityForRange(LinearTransferFunction *uniform tf,
                                            uniform float range_lo, uniform float range_hi)
 {
   uniform float rel_lo
-    = (range_lo - tf->inherited.valueRange.x) 
-    * rcp(tf->inherited.valueRange.y-tf->inherited.valueRange.x+1e-6f);
+    = (range_lo - tf->super.valueRange.x) 
+    * rcp(tf->super.valueRange.y-tf->super.valueRange.x+1e-6f);
   uniform float rel_hi
-    = (range_hi - tf->inherited.valueRange.x) 
-    * rcp(tf->inherited.valueRange.y-tf->inherited.valueRange.x+1e-6f);
+    = (range_hi - tf->super.valueRange.x) 
+    * rcp(tf->super.valueRange.y-tf->super.valueRange.x+1e-6f);
   uniform int bin_lo = (int)(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_lo);
   uniform int bin_hi = (int)(ceil(PRECOMPUTED_OPACITY_SUBRANGE_COUNT*rel_hi));
   bin_lo = min(bin_lo,PRECOMPUTED_OPACITY_SUBRANGE_COUNT-1);

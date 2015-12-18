@@ -279,6 +279,7 @@ namespace ospray {
     void Glut3DWidget::display()
     {
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
+        //double before = getSysTime();
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
 #ifndef _WIN32
         if (animating && dumpScreensDuringAnimation) {
@@ -314,12 +315,14 @@ namespace ospray {
 
     void Glut3DWidget::drawPixels(const uint32 *framebuffer)
     {
+      throw std::runtime_error("should not be used right now");
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
       glutSwapBuffers();
     }
 
     void Glut3DWidget::drawPixels(const vec3fa *framebuffer)
     {
+      throw std::runtime_error("should not be used right now");
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_FLOAT, framebuffer);
       glutSwapBuffers();
     }
@@ -405,6 +408,11 @@ namespace ospray {
     void initGLUT(int32 *ac, const char **av)
     {
       glutInit(ac, (char **) av);
+
+
+      // glutInitDisplayMode (GLUT_RGBA | GLUT_SINGLE);
+      glutInitDisplayMode (GLUT_RGBA | GLUT_DOUBLE);
+
       for(int i = 1; i < *ac;i++)
         {
           std::string arg(av[i]);
@@ -426,6 +434,12 @@ namespace ospray {
           if (arg == "--1k" || arg == "-1k") {
             Glut3DWidget::defaultInitSize.x = Glut3DWidget::defaultInitSize.y = 1024;
             removeArgs(*ac,(char **&)av,i,1); --i;
+            continue;
+          }
+          if (arg == "--size") {
+            Glut3DWidget::defaultInitSize.x = atoi(av[i+1]);
+            Glut3DWidget::defaultInitSize.y = atoi(av[i+2]);
+            removeArgs(*ac,(char **&)av,i,3); --i;
             continue;
           }
           if (arg == "-vu") {

@@ -16,16 +16,19 @@
 
 #undef NDEBUG // do all assertions in this file
 
-#include "MPICommon.h"
-#include "MPIDevice.h"
-#include "../common/Model.h"
-#include "../common/Data.h"
-#include "../common/Library.h"
-#include "../geometry/TriangleMesh.h"
-#include "../render/Renderer.h"
-#include "../camera/Camera.h"
-#include "../volume/Volume.h"
-#include "MPILoadBalancer.h"
+#include "ospray/mpi/MPICommon.h"
+#include "ospray/mpi/MPIDevice.h"
+#include "ospray/common/Model.h"
+#include "ospray/common/Data.h"
+#include "ospray/common/Library.h"
+#include "ospray/geometry/TriangleMesh.h"
+#include "ospray/render/Renderer.h"
+#include "ospray/camera/Camera.h"
+#include "ospray/volume/Volume.h"
+#include "ospray/mpi/MPILoadBalancer.h"
+#include "ospray/fb/LocalFB.h"
+#include "ospray/mpi/async/CommLayer.h"
+#include "ospray/mpi/DistributedFrameBuffer.h"
 // std
 #ifndef _WIN32
 #  include <unistd.h> // for fork()
@@ -37,10 +40,6 @@ namespace ospray {
   using std::endl;
 
   namespace mpi {
-    Group world;
-    Group app;
-    Group worker;
-
     //! this runs an ospray worker process. 
     /*! it's up to the proper init routine to decide which processes
       call this function and which ones don't. This function will not
@@ -48,20 +47,43 @@ namespace ospray {
     void runWorker(int *_ac, const char **_av);
 
 
-    /*! in this mode ("ospray on ranks" mode, or "ranks" mode)
-      - the user has launched mpirun explicitly, and all processes are *already* running
-      - the app is supposed to be running *only* on the root process
-      - ospray is supposed to be running on all ranks *other than* the root
-      - "ranks" means all processes with world.rank >= 1
-      
-      For this function, we assume: 
-      - all *all* MPI_COMM_WORLD processes are going into this function
+    /*! in this mode ("ospray on ranks" mode, or "ranks" mode), the
+        user has launched the app across all ranks using mpirun "<all
+        rank> <app>"; no new processes need to get launched.
+
+        Based on the 'startworkers' flag, this function can set up ospray in one of two modes:
+        
+        in "workers" mode (startworkes=true) all ranks > 0 become
+        workers, and will NOT return to the application; rank 0 is the
+        master that controls those workers but doesn't do any
+        rendeirng (we may at some point allow the master to join in
+        working as well, but currently this is not implemented). to
+        reach that mode we call this function with
+        'startworkers=true', which will make sure that, even though
+        all ranks _called_ mpiinit, only rank 0 will ever return to
+        the app, while all other ranks will automatically go to
+        running worker code, and never ever return from this function.
+
+        b) in "distribtued" mode the app itself is distributed, and
+        will use the ospray distributed api to control ospray in a
+        data-distributed mode. in this way, we'll call this function
+        with startWorkers=false, which will let all ranks return from
+        this function to do further work in the app.
+
+        For this function, we assume: 
+
+        - all *all* MPI_COMM_WORLD processes are going into this function
+
+        - this fct is called from ospInit (with ranksBecomeWorkers=true) or
+          from ospdMpiInit (w/ ranksBecomeWorkers = false)
     */
-    ospray::api::Device *createMPI_RanksBecomeWorkers(int *ac, const char **av)
+    ospray::api::Device *createMPI_runOnExistingRanks(int *ac, const char **av, 
+                                                      bool ranksBecomeWorkers)
     {
       MPI_Status status;
       mpi::init(ac,av);
       printf("#o: initMPI::OSPonRanks: %i/%i\n",world.rank,world.size);
+
       MPI_Barrier(MPI_COMM_WORLD);
 
       if (world.size <= 1) {
@@ -69,13 +91,19 @@ namespace ospray {
       }
 
       if (world.rank == 0) {
+#if 0
+        ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
+#endif
+
         // we're the root
         MPI_Comm_split(mpi::world.comm,1,mpi::world.rank,&app.comm);
-        app.makeIntercomm();
+        app.makeIntraComm();
+        // app.makeIntercomm();
         printf("#w: app process %i/%i (global %i/%i)\n",app.rank,app.size,world.rank,world.size);
 
         MPI_Intercomm_create(app.comm, 0, world.comm, 1, 1, &worker.comm); 
-        worker.makeIntracomm();
+        // worker.makeIntracomm();
+        worker.makeInterComm();
 
         printf("#m: ping-ponging a test message to every worker...\n");
         for (int i=0;i<worker.size;i++) {
@@ -94,15 +122,17 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, root proc(s) will return, initialize the MPI device, then return to the app
-        return new api::MPIDevice(ac,av);
+        return new mpi::MPIDevice(ac,av);
       } else {
         // we're the workers
         MPI_Comm_split(mpi::world.comm,0,mpi::world.rank,&worker.comm);
-        worker.makeIntercomm();
+        worker.makeIntraComm();
+        // worker.makeIntercomm();
         printf("#w: worker process %i/%i (global %i/%i)\n",worker.rank,worker.size,world.rank,world.size);
 
         MPI_Intercomm_create(worker.comm, 0, world.comm, 0, 1, &app.comm); 
-        app.makeIntracomm();
+        app.makeInterComm();
+        // app.makeIntracomm();
         // worker.containsMe = true;
         // app.containsMe = false;
 
@@ -120,8 +150,15 @@ namespace ospray {
         // - all processes (incl app) have barrier'ed, and thus now in sync.
 
         // now, all workers will enter their worker loop (ie, they will *not* return
-        mpi::runWorker(ac,av);
-        /* no return here - 'runWorker' will never return */
+        if (ranksBecomeWorkers) {
+          cout << "RUNNING WORKER W/O RETURNING!" << endl;
+          mpi::runWorker(ac,av);
+          throw std::runtime_error("should never reach here!");
+          /* no return here - 'runWorker' will never return */
+        } else {
+          cout << "#osp:mpi: distributed mode detected, returning device on all ranks!" << endl << std::flush;
+          return new mpi::MPIDevice(ac,av);
+        }
       }
       // nobody should ever come here ...
       return NULL;
@@ -151,7 +188,8 @@ namespace ospray {
       MPI_Status status;
 
       app.comm = world.comm; 
-      app.makeIntercomm();
+      app.makeIntraComm();
+      // app.makeIntercomm();
       
       char appPortName[MPI_MAX_PORT_NAME];
       if (world.rank == 0) {
@@ -177,7 +215,8 @@ namespace ospray {
       }
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
       Assert(rc == MPI_SUCCESS);
-      worker.makeIntracomm();
+      worker.makeInterComm();
+      // worker.makeIntracomm();
       
       if (app.rank == 0) {
         cout << "=======================================================" << endl;
@@ -195,7 +234,7 @@ namespace ospray {
 
       if (app.rank >= 1)
         return NULL;
-      return new api::MPIDevice(ac,av);
+      return new mpi::MPIDevice(ac,av);
     }
 
     /*! in this mode ("separate worker group" mode)
@@ -218,8 +257,9 @@ namespace ospray {
 
       Assert(launchCommand);
 
-      app.comm = world.comm; 
-      app.makeIntercomm();
+      MPI_Comm_dup(world.comm,&app.comm);
+      app.makeIntraComm();
+      // app.makeIntercomm();
       
       char appPortName[MPI_MAX_PORT_NAME];
       if (app.rank == 0 || app.size == -1) {
@@ -251,7 +291,8 @@ namespace ospray {
 
       rc = MPI_Comm_accept(appPortName,MPI_INFO_NULL,0,app.comm,&worker.comm);
       Assert(rc == MPI_SUCCESS);
-      worker.makeIntracomm();
+      worker.makeInterComm();
+      // worker.makeIntracomm();
       if (app.rank == 0 || app.size == -1) {
         cout << "OSPRay MPI Worker ring successfully connected." << endl;
         cout << "found " << worker.size << " workers." << endl;
@@ -267,14 +308,28 @@ namespace ospray {
         return NULL;
       }
       MPI_Barrier(app.comm);
-      return new api::MPIDevice(ac,av);
+      return new mpi::MPIDevice(ac,av);
     }
 
-  }
+    void initDistributedAPI(int *ac, char ***av, OSPDRenderMode mpiMode)
+    {
+      int initialized = false;
+      MPI_CALL(Initialized(&initialized));
+      if (initialized) 
+        throw std::runtime_error("OSPRay MPI Error: MPI already Initialized when calling ospMpiInit()");
+      
+      ospray::mpi::init(ac,(const char **)*av);
+      if (mpi::world.size < 2) {
+        throw std::runtime_error("#osp:mpi: trying to run distributed API mode with a single rank? (did you forget the 'mpirun'?)");
+      }
 
-  namespace api {
+      ospray::api::Device::current
+        = ospray::mpi::createMPI_runOnExistingRanks(ac,(const char**)*av,false);
+    }
+    
     MPIDevice::MPIDevice(// AppMode appMode, OSPMode ospMode,
                          int *_ac, const char **_av)
+      : currentApiMode(OSPD_MODE_MASTERED)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
       if (logLevelFromEnv) 
@@ -282,16 +337,10 @@ namespace ospray {
       else
         logLevel = 0;
 
-      // Assert2(_ac,"no params");
-      // Assert2(*_ac > 1, "no service handle specified after '--mpi'");
-      // const char *serviceSocket = strdup(_av[1]);
-      // removeArgs(*_ac,(char**&)_av,1,1);
-
       ospray::init(_ac,&_av);
-      // mpi::init(_ac,_av);
 
       if (mpi::world.size !=1) {
-        if (mpi::world.rank != 0) {
+        if (mpi::world.rank < 0) {
           PRINT(mpi::world.rank);
           PRINT(mpi::world.size);
           throw std::runtime_error("OSPRay MPI startup error. Use \"mpirun -n 1 <command>\" when calling an application that tries to spawnto start the application you were trying to start.");
@@ -299,7 +348,6 @@ namespace ospray {
       }
 
       TiledLoadBalancer::instance = new mpi::staticLoadBalancer::Master;
-      // TiledLoadBalancer::instance = new mpi::DynamicLoadBalancer_Master;
     }
 
 
@@ -311,14 +359,16 @@ namespace ospray {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+
+      ObjectHandle handle = ObjectHandle::alloc();
       
-      FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,hasAccumBuffer);
+      FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
+                                                   size,
+                                                   handle,
+                                                   colorBufferFormat,
+                                                   hasDepthBuffer,hasAccumBuffer);
       fb->refInc();
-      
-      mpi::Handle handle = mpi::Handle::alloc();
-      mpi::Handle::assign(handle,fb);
-      
+      ObjectHandle::assign(handle,fb);
       cmd.newCommand(CMD_FRAMEBUFFER_CREATE);
       cmd.send(handle);
       cmd.send(size);
@@ -336,7 +386,7 @@ namespace ospray {
       int rc; 
       MPI_Status status;
 
-      mpi::Handle handle = (const mpi::Handle &)_fb;
+      ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
 
       LocalFrameBuffer *lfb = (LocalFrameBuffer*)fb;
@@ -352,40 +402,31 @@ namespace ospray {
     void MPIDevice::frameBufferUnmap(const void *mapped,
                                      OSPFrameBuffer _fb)
     {
-      mpi::Handle handle = (const mpi::Handle &)_fb;
-      // SwapChain *sc = (SwapChain *)handle.lookup();
+      ObjectHandle handle = (const ObjectHandle &)_fb;
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
-      // Assert(sc);
       fb->unmap(mapped);
-      // sc->unmap(mapped);
     }
 
     /*! create a new model */
     OSPModel MPIDevice::newModel()
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_MODEL);
       cmd.send(handle);
       cmd.flush();
       return (OSPModel)(int64)handle;
     }
     
-    // /*! finalize a newly specified model */
-    // void MPIDevice::finalizeModel(OSPModel _model)
-    // {
-    //   Model *model = (Model *)_model;
-    //   Assert2(model,"null model in MPIDevice::finalizeModel()");
-    //   model->finalize();
-    // }
-
     /*! finalize a newly specified model */
     void MPIDevice::commit(OSPObject _object)
     {
       Assert(_object);
       cmd.newCommand(CMD_COMMIT);
-      const mpi::Handle handle = (const mpi::Handle&)_object;
-      cmd.send((const mpi::Handle&)_object);
+      const ObjectHandle handle = (const ObjectHandle&)_object;
+      cmd.send((const ObjectHandle&)_object);
       cmd.flush();
+
+      MPI_Barrier(MPI_COMM_WORLD);
     }
     
     /*! add a new geometry to a model */
@@ -394,8 +435,8 @@ namespace ospray {
       Assert(_model);
       Assert(_geometry);
       cmd.newCommand(CMD_ADD_GEOMETRY);
-      cmd.send((const mpi::Handle &)_model);
-      cmd.send((const mpi::Handle &)_geometry);
+      cmd.send((const ObjectHandle &)_model);
+      cmd.send((const ObjectHandle &)_geometry);
       cmd.flush();
     }
 
@@ -405,34 +446,30 @@ namespace ospray {
       Assert(_model);
       Assert(_volume);
       cmd.newCommand(CMD_ADD_VOLUME);
-      cmd.send((const mpi::Handle &) _model);
-      cmd.send((const mpi::Handle &) _volume);
+      cmd.send((const ObjectHandle &) _model);
+      cmd.send((const ObjectHandle &) _volume);
       cmd.flush();
     }
 
     /*! create a new data buffer */
     OSPTriangleMesh MPIDevice::newTriangleMesh()
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_TRIANGLEMESH);
       cmd.send(handle);
       cmd.flush();
       return (OSPTriangleMesh)(int64)handle;
-      // NOTIMPLEMENTED;
-      // TriangleMesh *triangleMesh = new TriangleMesh;
-      // triangleMesh->refInc();
-      // return (OSPTriangleMesh)triangleMesh;
     }
 
     /*! create a new data buffer */
     OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_DATA);
       cmd.send(handle);
-      cmd.send((size_t)nitems);
+      cmd.send(nitems);
       cmd.send((int32)format);
-      cmd.send(flags);
+      cmd.send((int32)flags);
       size_t size = init?ospray::sizeOf(format)*nitems:0;
       cmd.send(size);
       if (init) {
@@ -468,18 +505,20 @@ namespace ospray {
       getString(_volume, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
       Assert(type != OSP_UNKNOWN && "unknown volume voxel type");
+      int typeSize = sizeOf(type);
 
-      OSPData data = newData(size_t(count.x) * count.y * count.z, type, (void *)source, OSP_DATA_SHARED_BUFFER);
+      size_t size = typeSize * size_t(count.x) * size_t(count.y) * size_t(count.z);
+      if (size > 1000000000LL)
+        throw std::runtime_error("setregion does not currently work for region sizes >= 2GB");
+      // OSPData data = newData(size, type, (void *)source, OSP_DATA_SHARED_BUFFER);
 
       cmd.newCommand(CMD_SET_REGION);
-      cmd.send((const mpi::Handle &)_volume);
-      cmd.send((const mpi::Handle &)data);
+      cmd.send((const ObjectHandle &)_volume);
       cmd.send(index);
       cmd.send(count);
-
+      cmd.send(size);
+      cmd.send(source,size);
       cmd.flush();
-
-      release(data);
 
       int numFails = 0;
       MPI_Status status;
@@ -495,7 +534,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_STRING);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(s);
     }
@@ -533,7 +572,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_FLOAT);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(f);
     }
@@ -545,7 +584,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_INT);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(i);
     }
@@ -557,7 +596,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC2F);
-      cmd.send((const mpi::Handle &) _object);
+      cmd.send((const ObjectHandle &) _object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -569,7 +608,19 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC3F);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
+      cmd.send(bufName);
+      cmd.send(v);
+    }
+
+    /*! assign (named) vec4f parameter to an object */
+    void MPIDevice::setVec4f(OSPObject _object, const char *bufName, const vec4f &v)
+    {
+      Assert(_object);
+      Assert(bufName);
+
+      cmd.newCommand(CMD_SET_VEC4F);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -581,7 +632,7 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC2I);
-      cmd.send((const mpi::Handle &) _object);
+      cmd.send((const ObjectHandle &) _object);
       cmd.send(bufName);
       cmd.send(v);
     }
@@ -593,14 +644,9 @@ namespace ospray {
       Assert(bufName);
 
       cmd.newCommand(CMD_SET_VEC3I);
-      cmd.send((const mpi::Handle &)_object);
+      cmd.send((const ObjectHandle &)_object);
       cmd.send(bufName);
       cmd.send(v);
-      // ManagedObject *object = (ManagedObject *)_object;
-      // Assert(object != NULL  && "invalid object handle");
-      // Assert(bufName != NULL && "invalid identifier for object parameter");
-
-      // object->findParam(bufName,1)->set(v);
     }
 
     /*! assign (named) data item as a parameter to an object */
@@ -608,30 +654,30 @@ namespace ospray {
     {
       Assert(_target != NULL);
       Assert(bufName != NULL);
-      const mpi::Handle tgtHandle = (const mpi::Handle&)_target;
-      const mpi::Handle valHandle = (const mpi::Handle&)_value;
+      const ObjectHandle tgtObjectHandle = (const ObjectHandle&)_target;
+      const ObjectHandle valObjectHandle = (const ObjectHandle&)_value;
 
       cmd.newCommand(CMD_SET_OBJECT);
-      cmd.send(tgtHandle);
+      cmd.send(tgtObjectHandle);
       cmd.send(bufName);
-      cmd.send(valHandle);
+      cmd.send(valObjectHandle);
       cmd.flush();
     }
 
     /*! Get the handle of the named data array associated with an object. */
-    int MPIDevice::getData(OSPObject object, const char *name, OSPData *value) {
-
+    int MPIDevice::getData(OSPObject object, const char *name, OSPData *value) 
+    {
       // Not yet implemented.
       return false;
-
     }
-
-    /*! Get a copy of the data in an array (the application is responsible for freeing this pointer). */
-    int MPIDevice::getDataValues(OSPData object, void **pointer, size_t *count, OSPDataType *type) {
-
+    
+    /*! Get a copy of the data in an array (the application is
+        responsible for freeing this pointer). */
+    int MPIDevice::getDataValues(OSPData object, void **pointer, 
+                                 size_t *count, OSPDataType *type) 
+    {
       // Not yet implemented.
       return false;
-
     }
 
     /*! Get the named scalar floating point value associated with an object. */
@@ -641,7 +687,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_FLOAT);
       cmd.flush();
@@ -659,7 +705,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_INT);
       cmd.flush();
@@ -671,35 +717,31 @@ namespace ospray {
     }
 
     /*! Get the material associated with a geometry object. */
-    int MPIDevice::getMaterial(OSPGeometry geometry, OSPMaterial *value) {
-
+    int MPIDevice::getMaterial(OSPGeometry geometry, OSPMaterial *value) 
+    {
       // Not yet implemented.
       return false;
-
     }
 
     /*! Get the named object associated with an object. */
-    int MPIDevice::getObject(OSPObject object, const char *name, OSPObject *value) {
-
+    int MPIDevice::getObject(OSPObject object, const char *name, OSPObject *value) 
+    {
       // Not yet implemented.
       return false;
-
     }
 
     /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
-    int MPIDevice::getParameters(OSPObject object, char ***value) {
-
+    int MPIDevice::getParameters(OSPObject object, char ***value) 
+    {
       // Not yet implemented.
       return false;
-
     }
 
     /*! Retrieve the total length of the names (with terminators) of the parameters associated with an object. */
-    int MPIDevice::getParametersSize(OSPObject object, int *value) {
-
+    int MPIDevice::getParametersSize(OSPObject object, int *value) 
+    {
       // Not yet implemented.
       return false;
-
     }
 
     /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
@@ -708,7 +750,7 @@ namespace ospray {
       Assert(object);
 
       cmd.newCommand(CMD_GET_TYPE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name ? name : "\0");
       cmd.flush();
 
@@ -725,7 +767,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_STRING);
       cmd.flush();
@@ -743,7 +785,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_FLOAT2);
       cmd.flush();
@@ -761,12 +803,30 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_FLOAT3);
       cmd.flush();
 
       struct ReturnValue { int success; vec3f value; } result;
+      cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
+
+      return result.success ? *value = result.value, true : false;
+    }
+
+    /*! Get the named 4-vector floating point value associated with an object. */
+    int MPIDevice::getVec4f(OSPObject object, const char *name, vec4f *value)
+    {
+      Assert(object);
+      Assert(name);
+
+      cmd.newCommand(CMD_GET_VALUE);
+      cmd.send((const ObjectHandle &) object);
+      cmd.send(name);
+      cmd.send(OSP_FLOAT4);
+      cmd.flush();
+
+      struct ReturnValue { int success; vec4f value; } result;
       cmd.get_data(sizeof(ReturnValue), &result, 0, mpi::worker.comm);
 
       return result.success ? *value = result.value, true : false;
@@ -779,7 +839,7 @@ namespace ospray {
       Assert(name);
 
       cmd.newCommand(CMD_GET_VALUE);
-      cmd.send((const mpi::Handle &) object);
+      cmd.send((const ObjectHandle &) object);
       cmd.send(name);
       cmd.send(OSP_INT3);
       cmd.flush();
@@ -790,12 +850,38 @@ namespace ospray {
       return result.success ? *value = result.value, true : false;
     }
 
+    /*! create a new pixelOp object (out of list of registered pixelOps) */
+    OSPPixelOp MPIDevice::newPixelOp(const char *type)
+    {
+      Assert(type != NULL);
+
+      ObjectHandle handle = ObjectHandle::alloc();
+
+      cmd.newCommand(CMD_NEW_PIXELOP);
+      cmd.send(handle);
+      cmd.send(type);
+      cmd.flush();
+      return (OSPPixelOp)(int64)handle;
+    }
+
+    /*! set a frame buffer's pixel op object */
+    void MPIDevice::setPixelOp(OSPFrameBuffer _fb, OSPPixelOp _op)
+    {
+      Assert(_fb != NULL);
+      Assert(_op != NULL);
+
+      cmd.newCommand(CMD_SET_PIXELOP);
+      cmd.send((const ObjectHandle&)_fb);
+      cmd.send((const ObjectHandle&)_op);
+      cmd.flush();
+    }
+      
     /*! create a new renderer object (out of list of registered renderers) */
     OSPRenderer MPIDevice::newRenderer(const char *type)
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_RENDERER);
       cmd.send(handle);
@@ -809,7 +895,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_CAMERA);
       cmd.send(handle);
@@ -823,7 +909,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_VOLUME);
       cmd.send(handle);
@@ -837,10 +923,10 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       
       cmd.newCommand(CMD_NEW_GEOMETRY);
-      cmd.send((const mpi::Handle&)handle);
+      cmd.send((const ObjectHandle&)handle);
       cmd.send(type);
       cmd.flush();
       return (OSPGeometry)(int64)handle;
@@ -855,16 +941,15 @@ namespace ospray {
       if (_renderer == NULL) 
         throw std::runtime_error("#osp:mpi:newMaterial: NULL renderer handle");
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       
       cmd.newCommand(CMD_NEW_MATERIAL);
-      cmd.send((const mpi::Handle&)_renderer);
-      cmd.send((const mpi::Handle&)handle);
+      cmd.send((const ObjectHandle&)_renderer);
+      cmd.send((const ObjectHandle&)handle);
 
       cmd.send(type);
       cmd.flush();
 
-      // int MPI_Allreduce(void* , void*, int, MPI_Datatype, MPI_Op, MPI_Comm);
       int numFails = 0;
       MPI_Status status;
       int rc = MPI_Recv(&numFails,1,MPI_INT,0,MPI_ANY_TAG,mpi::worker.comm,&status);
@@ -882,7 +967,7 @@ namespace ospray {
     {
       Assert(type != NULL);
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
 
       cmd.newCommand(CMD_NEW_TRANSFERFUNCTION);
       cmd.send(handle);
@@ -898,11 +983,11 @@ namespace ospray {
       if (type == NULL)
         throw std::runtime_error("#osp:mpi:newLight: NULL light type");
 
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       
       cmd.newCommand(CMD_NEW_LIGHT);
-      cmd.send((const mpi::Handle&)_renderer);
-      cmd.send((const mpi::Handle&)handle);
+      cmd.send((const ObjectHandle&)_renderer);
+      cmd.send((const ObjectHandle&)handle);
 
       cmd.send(type);
       cmd.flush();
@@ -935,7 +1020,7 @@ namespace ospray {
                                      const uint32 fbChannelFlags)
     {
       cmd.newCommand(CMD_FRAMEBUFFER_CLEAR);
-      cmd.send((const mpi::Handle&)_fb);
+      cmd.send((const ObjectHandle&)_fb);
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
     }
@@ -944,8 +1029,8 @@ namespace ospray {
     void MPIDevice::removeGeometry(OSPModel _model, OSPGeometry _geometry)
     {
       cmd.newCommand(CMD_REMOVE_GEOMETRY);
-      cmd.send((const mpi::Handle&)_model);
-      cmd.send((const mpi::Handle&)_geometry);
+      cmd.send((const ObjectHandle&)_model);
+      cmd.send((const ObjectHandle&)_geometry);
       cmd.flush();
     }
 
@@ -955,8 +1040,9 @@ namespace ospray {
                                 OSPRenderer _renderer, 
                                 const uint32 fbChannelFlags)
     {
-      const mpi::Handle handle = (const mpi::Handle&)_fb;
-      // const mpi::Handle handle = (const mpi::Handle&)_sc;
+      double T0 = getSysTime();
+      const ObjectHandle handle = (const ObjectHandle&)_fb;
+      // const ObjectHandle handle = (const ObjectHandle&)_sc;
       // SwapChain *sc = (SwapChain *)handle.lookup();
       FrameBuffer *fb = (FrameBuffer *)handle.lookup();
       // Assert(sc);
@@ -964,8 +1050,8 @@ namespace ospray {
       //FrameBuffer *fb = sc->getFrontBuffer();
       // FrameBuffer *fb = sc->getBackBuffer();
       cmd.newCommand(CMD_RENDER_FRAME);
-      cmd.send((const mpi::Handle&)_fb);
-      cmd.send((const mpi::Handle&)_renderer);
+      cmd.send((const ObjectHandle&)_fb);
+      cmd.send((const ObjectHandle&)_renderer);
       cmd.send((int32)fbChannelFlags);
       cmd.flush();
 
@@ -986,7 +1072,7 @@ namespace ospray {
     {
       if (!_obj) return;
       cmd.newCommand(CMD_RELEASE);
-      cmd.send((const mpi::Handle&)_obj);
+      cmd.send((const ObjectHandle&)_obj);
       cmd.flush();
     }
 
@@ -994,8 +1080,8 @@ namespace ospray {
     void MPIDevice::setMaterial(OSPGeometry _geometry, OSPMaterial _material)
     {
       cmd.newCommand(CMD_SET_MATERIAL);
-      cmd.send((const mpi::Handle&)_geometry);
-      cmd.send((const mpi::Handle&)_material);
+      cmd.send((const ObjectHandle&)_geometry);
+      cmd.send((const ObjectHandle&)_material);
       cmd.flush();
     }
 
@@ -1003,7 +1089,7 @@ namespace ospray {
     OSPTexture2D MPIDevice::newTexture2D(int width, int height, 
                                          OSPDataType type, void *data, int flags)
     {
-      mpi::Handle handle = mpi::Handle::alloc();
+      ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_TEXTURE2D);
       cmd.send(handle);
       cmd.send((int32)width);
@@ -1015,22 +1101,88 @@ namespace ospray {
       cmd.send(size);
 
       cmd.send(data,size);
-      // switch (type) {
-      //   cmd.
-      // default: 
-      //   PRINT(type); throw std::runtime_error("texture2d type not implemented");
-      // }
       cmd.flush();
       return (OSPTexture2D)(int64)handle;
     }
 
-    void MPIDevice::sampleVolume(float **results, OSPVolume volume, const vec3f *worldCoordinates, const size_t &count)
+    /*! return a string represenging the given API Mode */
+    const char *apiModeName(OSPDApiMode mode) 
+    {
+      switch (mode) {
+      case OSPD_MODE_INDEPENDENT:
+        return "OSPD_MODE_INDEPENDENT";
+      case OSPD_MODE_MASTERED:
+        return "OSPD_MODE_MASTERED";
+      case OSPD_MODE_COLLABORATIVE:
+        return "OSPD_MODE_COLLABORATIVE";
+      default:
+        PRINT(mode);
+        NOTIMPLEMENTED;
+      };
+      
+    }
+
+    /*! switch API mode for distriubted API extensions */
+    void MPIDevice::apiMode(OSPDApiMode newMode)
+    { 
+      printf("rank %i asked to go from %s mode to %s mode\n",
+             mpi::world.rank,apiModeName(currentApiMode),apiModeName(newMode));
+      switch (currentApiMode) {
+        // ==================================================================
+        // ==================================================================
+      case OSPD_MODE_INDEPENDENT: {
+        NOTIMPLEMENTED;
+      } break;
+        // ==================================================================
+        // currently in default (mastered) mode where master tells workers what to do
+        // ==================================================================
+      case OSPD_MODE_MASTERED: {
+        // first: tell workers to switch to new mode: they're in
+        // mastered mode and thus waiting for *us* to tell them what
+        // to do, so let's do it.
+        switch (newMode) {
+        case OSPD_MODE_MASTERED: {
+          // nothing to do, actually, the workers are already in this
+          // mode, no use sending this request again
+          printf("rank %i remaining in mastered mode\n",mpi::world.rank);
+        } break;
+        case OSPD_MODE_INDEPENDENT:
+        case OSPD_MODE_COLLABORATIVE: {
+          printf("rank %i telling clients to switch to %s mode.\n",mpi::world.rank,apiModeName(newMode));
+          cmd.newCommand(CMD_API_MODE);
+          cmd.send((int32)newMode);
+          cmd.flush();
+          currentApiMode = newMode;
+          // and just to be sure, do a barrier here -- not acutally needed AFAICT.
+          MPI_Barrier(MPI_COMM_WORLD);
+        } break;
+        default:
+          NOTIMPLEMENTED;
+        };
+      } break;
+        // ==================================================================
+        // ==================================================================
+      case OSPD_MODE_COLLABORATIVE: {
+        NOTIMPLEMENTED;
+      } break;
+        
+        // ==================================================================
+        // this mode should not exit - implementation error
+        // ==================================================================
+      default:
+        NOTIMPLEMENTED;
+      };
+      throw std::runtime_error("Distributed API not available on this device (when calling ospApiMode())"); 
+    }
+
+    void MPIDevice::sampleVolume(float **results, OSPVolume volume, 
+                                 const vec3f *worldCoordinates, const size_t &count)
     {
       Assert2(volume, "invalid volume handle");
       Assert2(worldCoordinates, "invalid worldCoordinates");
 
       cmd.newCommand(CMD_SAMPLE_VOLUME);
-      cmd.send((const mpi::Handle &) volume);
+      cmd.send((const ObjectHandle &) volume);
       cmd.send(count);
       cmd.send(worldCoordinates, count * sizeof(osp::vec3f));
       cmd.flush();

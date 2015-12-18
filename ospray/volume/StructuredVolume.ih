@@ -28,7 +28,7 @@ struct GridAccelerator;
 struct StructuredVolume {
 
   //! Fields common to all Volume subtypes (must be the first entry of this struct).
-  Volume inherited;
+  Volume super;
 
   //! Volume size in voxels per dimension.
   uniform vec3i dimensions;

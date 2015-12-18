@@ -50,10 +50,7 @@ namespace ospray {
 
     public:
       OSPRenderer ospRenderer;
-      
-      //! number of samples per pixel
       size_t spp;
-
       // Ref<sg::World> world;
       // Ref<sg::Camera> camera;
     };

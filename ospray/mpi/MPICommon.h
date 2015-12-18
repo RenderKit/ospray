@@ -21,12 +21,13 @@
 
 /*! helper macro that checks the return value of all MPI_xxx(...)
     calls via MPI_CALL(xxx(...)).  */
-#define MPI_CALL(a) { int rc = MPI_##a; assert(rc == MPI_SUCCESS); }
+#define MPI_CALL(a) { int rc = MPI_##a; if (rc != MPI_SUCCESS) throw std::runtime_error("MPI call returned error"); }
 
 namespace ospray {
 
   /*! Helper class for MPI Programming */
   namespace mpi {
+
     //! abstraction for an MPI group. 
     /*! it's the responsiblity of the respective mpi setup routines to
       fill in the proper values */
@@ -45,10 +46,24 @@ namespace ospray {
       int size; 
 
       Group() : size(-1), rank(-1), comm(MPI_COMM_NULL), containsMe(false) {};
+#if 1
+      // this is the RIGHT naming convention - old code has them all inside out.
+      void makeIntraComm() 
+      { MPI_Comm_rank(comm,&rank); MPI_Comm_size(comm,&size); containsMe = true; }
+      void makeIntraComm(MPI_Comm comm)
+      { this->comm = comm; makeIntraComm(); }
+      void makeInterComm(MPI_Comm comm)
+      { this->comm = comm; makeInterComm(); }
+      void makeInterComm()
+      { containsMe = false; rank = MPI_ROOT; MPI_Comm_remote_size(comm,&size); }
+#else
       void makeIntercomm() 
       { MPI_Comm_rank(comm,&rank); MPI_Comm_size(comm,&size); containsMe = true; }
+      void makeIntracomm(MPI_Comm comm)
+      { this->comm = comm; makeIntracomm(); }
       void makeIntracomm()
       { containsMe = false; rank = MPI_ROOT; MPI_Comm_remote_size(comm,&size); }
+#endif
 
       /*! perform a MPI_barrier on this communicator */
       void barrier() { MPI_CALL(Barrier(comm)); }
