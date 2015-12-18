@@ -95,7 +95,8 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
 
     for (uniform uint32 i=0; i<renderer->numLights; i++) {
       const LightSample light = renderer->lights[i]->sample(renderer->lights[i], dg, s);
-      const float cosNL = isnan(gradient.x+gradient.y+gradient.z) ? 1.f : abs(dot(safe_normalize(light.direction), gradient));
+      const float cosNL = (gradient.x == 0.f && gradient.y == 0.f && gradient.z == 0.f) ?
+                          1.f : abs(dot(safe_normalize(light.direction), gradient));
 
       shadedColor = shadedColor + sampleColor * cosNL * light.radiance;
     }
