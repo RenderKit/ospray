@@ -6,20 +6,29 @@ Version History
 The OSPRay v0.9.0 release adds significant new features as well as API
 changes.
 
--   Experimental support for data-distributed MPI-parallel volume rendering
+-   Experimental support for data-distributed MPI-parallel volume
+    rendering
 -   New SciVis-focused renderer ("raytracer" or "scivis") combining
     functionality of "obj" and "ao" renderers
+    -   Ambient occlusion is quite flexible: dynamic number of samples,
+        maximum ray distance, and weight
 -   Updated Embree version to v2.7.1 with native support for AVX512 for
     triangle mesh surface rendering on the Intel® Xeon Phi™ processor
     (codename Knights Landing)
 -   OSPRay now uses C++11 features, requiring up to date compiler and
     standard library versions (GCC v4.8.0)
--   Optimization of volume sampling resulting in volume rendering speedups
-    of up to 1.5x
--   Updated materials and improved performance of pathtracer
--   Tasking system has been updated to use TBB
--   The ospGet*() API calls have been deprecated and will be removed in a
-    subsequent release
+-   Optimization of volume sampling resulting in volume rendering
+    speedups of up to 1.5x
+-   Updates to pathtracer
+    -   Reworked material system
+    -   Added texture transformations and colored transparency in OBJ
+        material
+    -   Support for alpha and depth components of framebuffer 
+-   Added thinlens camera, i.e. support for depth of field
+-   Tasking system has been updated to use Intel® Threading Building
+    Blocks (TBB)
+-   The `ospGet*()` API calls have been deprecated and will be removed
+    in a subsequent release
 
 ### Changes in v0.8.3:
 
@@ -31,7 +40,7 @@ changes.
     -   Expanded material support
     -   Support for multiple lights
     -   Support for double precision volumes
-    -   Added ospSampleVolume() API call to support limited probing of
+    -   Added `ospSampleVolume()` API call to support limited probing of
         volume values
 -   New features to support compositing externally rendered content with
     OSPRay-rendered content
@@ -40,10 +49,10 @@ changes.
     -   New OpenGL utility module to convert between OSPRay and OpenGL
         depth values
 -   Added panoramic and orthographic camera types
--   Proper CMake-based installation of OSPRay and CMake find_package()
+-   Proper CMake-based installation of OSPRay and CMake `find_package()`
     support for use in external projects
 -   Experimental Windows support
--   Deprecated ospNewTriangleMesh(); use ospNewGeometry("triangles")
+-   Deprecated `ospNewTriangleMesh()`; use `ospNewGeometry("triangles")`
     instead
 -   Bug fixes and cleanups throughout the codebase
 

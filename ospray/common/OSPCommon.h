@@ -218,10 +218,10 @@ namespace ospray {
   extern int32 numThreads;
 
   /*! size of OSPDataType */
-  size_t sizeOf(OSPDataType type);
+  OSPRAY_INTERFACE size_t sizeOf(OSPDataType type);
 
   /*! Convert a type string to an OSPDataType. */
-  OSPDataType typeForString(const char *string);
+  OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
 
   struct WarnOnce {
     WarnOnce(const std::string &s);
