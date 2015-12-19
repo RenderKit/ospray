@@ -5,3 +5,4 @@ bin
 build
 *.sw?
 tags
+.ycm_extra_conf.pyc
