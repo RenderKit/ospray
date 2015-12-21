@@ -111,9 +111,11 @@ typedef enum {
 /*! OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
   OSP_RGBA_NONE,
-  OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
+  OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each one byte */
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel XXX unsupported! */
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
+//  OSP_SRGBA_I8,  /*!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte */
+//  OSP_SRGB_I8,   /*!< three 8-bit unsigned chars (in sRGB space) per pixel */
 } OSPFrameBufferFormat;
 
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
@@ -290,7 +292,7 @@ extern "C" {
   /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
   OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
 
-  //! \brief lears the specified channel(s) of the frame buffer
+  //! \brief clears the specified channel(s) of the frame buffer
   /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
     if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
