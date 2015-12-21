@@ -76,7 +76,7 @@ namespace ospray {
 
 
     struct Glut3DWidget;
-    
+
     struct Manipulator {
       // this is the fct that gets called when the mouse moved in the
       // associated window
