@@ -46,7 +46,7 @@ namespace ospray {
     {
       FILE *file = fopen(fileName,"wb");
       if (!file) {
-        std::cerr << "#osp:glut3D: Warning - could not create screen shot file '" 
+        std::cerr << "#osp:glut3D: Warning - could not create screen shot file '"
                   << fileName << "'" << std::endl;
         return;
       }
@@ -66,7 +66,7 @@ namespace ospray {
       std::cout << "#osp:glut3D: saved framebuffer to file " << fileName << std::endl;
     }
 
-#define INVERT_RMB 
+#define INVERT_RMB
     /*! currently active window */
     Glut3DWidget *Glut3DWidget::activeWindow = NULL;
     vec2i Glut3DWidget::defaultInitSize(1024,768);
@@ -327,7 +327,7 @@ namespace ospray {
       glutSwapBuffers();
     }
 
-    void Glut3DWidget::setViewPort(const vec3f from, 
+    void Glut3DWidget::setViewPort(const vec3f from,
                                    const vec3f at,
                                    const vec3f up)
     {
@@ -381,7 +381,7 @@ namespace ospray {
       glutSetWindowTitle(title);
     }
 
-    void Glut3DWidget::create(const char *title, 
+    void Glut3DWidget::create(const char *title,
                               const vec2i &size,
                               bool fullScreen)
     {
@@ -446,7 +446,7 @@ namespace ospray {
             upVectorFromCmdLine.x = atof(av[i+1]);
             upVectorFromCmdLine.y = atof(av[i+2]);
             upVectorFromCmdLine.z = atof(av[i+3]);
-            if (viewPortFromCmdLine) 
+            if (viewPortFromCmdLine)
               viewPortFromCmdLine->up = upVectorFromCmdLine;
             assert(i+3 < *ac);
             removeArgs(*ac,(char **&)av,i,4); --i;
@@ -480,21 +480,21 @@ namespace ospray {
     {
       if ((widget->currButtonState == (1<<GLUT_RIGHT_BUTTON))
           ||
-          ((widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) 
-           && 
+          ((widget->currButtonState == (1<<GLUT_LEFT_BUTTON))
+           &&
            (widget->currModifiers & GLUT_ACTIVE_ALT))
           ) {
         dragRight(widget,widget->currMousePos,widget->lastMousePos);
-      } else if ((widget->currButtonState == (1<<GLUT_MIDDLE_BUTTON)) 
+      } else if ((widget->currButtonState == (1<<GLUT_MIDDLE_BUTTON))
                  ||
-                 ((widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) 
-                  && 
+                 ((widget->currButtonState == (1<<GLUT_LEFT_BUTTON))
+                  &&
                   (widget->currModifiers & GLUT_ACTIVE_CTRL))
                  ) {
         dragMiddle(widget,widget->currMousePos,widget->lastMousePos);
       } else if (widget->currButtonState == (1<<GLUT_LEFT_BUTTON)) {
         dragLeft(widget,widget->currMousePos,widget->lastMousePos);
-      } 
+      }
     }
 
     // ------------------------------------------------------------------
@@ -528,6 +528,33 @@ namespace ospray {
 
     void InspectCenter::button(Glut3DWidget *widget, const vec2i &pos)
     {
+      enum { scroll_up = 8, scroll_down = 16, };
+
+      float direction;
+      switch (widget->currButtonState) {
+      case scroll_up:
+        direction = 1;
+        break;
+      case scroll_down:
+        direction = -1;
+        break;
+      default:
+        return;
+      }
+
+      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      const float fwd =
+#ifndef INVERT_RMB
+        -
+#endif
+        direction * 4 * widget->motionSpeed;
+      const float oldDist = length(cam.at - cam.from);
+      const float newDist = oldDist - fwd;
+      if (newDist < 1e-3f)
+        return;
+      cam.from = cam.at - newDist * cam.frame.l.vy;
+      cam.frame.p = cam.from;
+      cam.modified = true;
     }
 
     void InspectCenter::rotate(float du, float dv)
@@ -566,16 +593,15 @@ namespace ospray {
       Manipulator::specialkey(widget,key);
     }
 
-    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort positoin
+    /*! INSPECT_CENTER::RightButton: move lookfrom/viewPort position
       forward/backward on right mouse button */
     void InspectCenter::dragRight(Glut3DWidget *widget,
                                   const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = 
-#ifdef INVERT_RMB
-#else
-        - 
+      float fwd =
+#ifndef INVERT_RMB
+        -
 #endif
         (to.y - from.y) * 4 * widget->motionSpeed;
       // * length(widget->worldBounds.size());
@@ -689,10 +715,9 @@ namespace ospray {
                              const vec2i &to, const vec2i &from)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd = 
-#ifdef INVERT_RMB
-#else
-        - 
+      float fwd =
+#ifndef INVERT_RMB
+        -
 #endif
         (to.y - from.y) * 4 * widget->motionSpeed;
       cam.from = cam.from + fwd * cam.frame.l.vy;
@@ -754,7 +779,7 @@ namespace ospray {
         } else {
           char tmpFileName[] = "/tmp/ospray_screen_dump_file.XXXXXXXX";
           static const char *dumpFileRoot;
-          if (!dumpFileRoot) 
+          if (!dumpFileRoot)
             dumpFileRoot = getenv("OSPRAY_SCREEN_DUMP_ROOT");
 #ifndef _WIN32
           if (!dumpFileRoot) {
@@ -769,7 +794,7 @@ namespace ospray {
             saveFrameBufferToFile(fileName,ucharFB,windowSize.x,windowSize.y);
           return;
         }
-      } 
+      }
 
       if (key == 'C') {
         PRINT(viewPort);
@@ -793,12 +818,12 @@ namespace ospray {
         animating = !animating;
         return;
       }
-      if (key == '+') { 
-        motionSpeed *= 1.5f; 
+      if (key == '+') {
+        motionSpeed *= 1.5f;
         std::cout << "glut3d: new motion speed " << motionSpeed << std:: endl;
-        return; 
+        return;
       }
-      if (key == '-') { 
+      if (key == '-') {
         motionSpeed /= 1.5f; 
         std::cout << "glut3d: new motion speed " << motionSpeed << std:: endl;
         return; 
