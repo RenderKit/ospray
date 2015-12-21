@@ -39,6 +39,8 @@ namespace ospray {
 
     bool dumpScreensDuringAnimation = false;
 
+    void zoom(Glut3DWidget::ViewPort &cam, const float fwd);
+
     /*! write given frame buffer to file, in PPM P6 format. */
     void saveFrameBufferToFile(const char *fileName,
                                const uint32 *pixel,
@@ -530,31 +532,18 @@ namespace ospray {
     {
       enum { scroll_up = 8, scroll_down = 16, };
 
-      float direction;
-      switch (widget->currButtonState) {
-      case scroll_up:
-        direction = 1;
-        break;
-      case scroll_down:
-        direction = -1;
-        break;
-      default:
-        return;
-      }
+      if (widget->currButtonState != scroll_up &&
+          widget->currButtonState != scroll_down)
+          return;
 
-      Glut3DWidget::ViewPort &cam = widget->viewPort;
+      float const direction = (widget->currButtonState == scroll_up) ? 1 : -1;
+
       const float fwd =
 #ifndef INVERT_RMB
         -
 #endif
         direction * 4 * widget->motionSpeed;
-      const float oldDist = length(cam.at - cam.from);
-      const float newDist = oldDist - fwd;
-      if (newDist < 1e-3f)
-        return;
-      cam.from = cam.at - newDist * cam.frame.l.vy;
-      cam.frame.p = cam.from;
-      cam.modified = true;
+      zoom(widget->viewPort, fwd);
     }
 
     void InspectCenter::rotate(float du, float dv)
@@ -598,20 +587,12 @@ namespace ospray {
     void InspectCenter::dragRight(Glut3DWidget *widget,
                                   const vec2i &to, const vec2i &from)
     {
-      Glut3DWidget::ViewPort &cam = widget->viewPort;
-      float fwd =
+      const float fwd =
 #ifndef INVERT_RMB
         -
 #endif
         (to.y - from.y) * 4 * widget->motionSpeed;
-      // * length(widget->worldBounds.size());
-      float oldDist = length(cam.at - cam.from);
-      float newDist = oldDist - fwd;
-      if (newDist < 1e-3f)
-        return;
-      cam.from = cam.at - newDist * cam.frame.l.vy;
-      cam.frame.p = cam.from;
-      cam.modified = true;
+      zoom(widget->viewPort, fwd);
     }
 
     /*! INSPECT_CENTER::MiddleButton: move lookat/center of interest
@@ -655,6 +636,17 @@ namespace ospray {
       cam.from  = xfmPoint(xfm,cam.from);
       cam.at    = xfmPoint(xfm,cam.at);
       cam.snapUp();
+      cam.modified = true;
+    }
+
+    void zoom(Glut3DWidget::ViewPort &cam, const float fwd)
+    {
+      const float oldDist = length(cam.at - cam.from);
+      const float newDist = oldDist - fwd;
+      if (newDist < 1e-3f)
+        return;
+      cam.from = cam.at - newDist * cam.frame.l.vy;
+      cam.frame.p = cam.from;
       cam.modified = true;
     }
 
@@ -824,9 +816,9 @@ namespace ospray {
         return;
       }
       if (key == '-') {
-        motionSpeed /= 1.5f; 
+        motionSpeed /= 1.5f;
         std::cout << "glut3d: new motion speed " << motionSpeed << std:: endl;
-        return; 
+        return;
       }
       if (manipulator) manipulator->keypress(this,key);
     }
@@ -869,4 +861,3 @@ namespace ospray {
     }
   }
 }
-
