@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "ospray/common/OSPCommon.h"
 #include <cdds.h>
 #include <string>
 #include "modules/loaders/VolumeFile.h"
@@ -49,20 +50,20 @@ private:
   //! Seismic data attributes
   BIN_TAG inputBinTag;
   int traceHeaderSize;
-  osp::vec3i dimensions;           //<! Dimensions of the volume.
-  osp::vec3f deltas;               //!< Voxel spacing along each dimension.
+  ospray::vec3i dimensions;           //<! Dimensions of the volume.
+  ospray::vec3f deltas;               //!< Voxel spacing along each dimension.
 
   //! Use a subvolume of the full volume.
   bool useSubvolume;
-  osp::vec3i subvolumeOffsets;     //!< Subvolume offset from full volume origin.
-  osp::vec3i subvolumeDimensions;  //!< Dimensions of subvolume, not considering any subsampling.
-  osp::vec3i subvolumeSteps;       //!< Step size for generation of subvolume in each dimension; values > 1 allow for subsampling.
+  ospray::vec3i subvolumeOffsets;     //!< Subvolume offset from full volume origin.
+  ospray::vec3i subvolumeDimensions;  //!< Dimensions of subvolume, not considering any subsampling.
+  ospray::vec3i subvolumeSteps;       //!< Step size for generation of subvolume in each dimension; values > 1 allow for subsampling.
 
   //! The dimensions of the volume to be imported, considering any subvolume parameters.
-  osp::vec3i volumeDimensions;
+  ospray::vec3i volumeDimensions;
 
   //! The grid spacing of the volume to be imported.
-  osp::vec3f gridSpacing;
+  ospray::vec3f gridSpacing;
 
   //! Open the seismic data file and populate attributes.
   bool openSeismicDataFile(OSPVolume volume);
