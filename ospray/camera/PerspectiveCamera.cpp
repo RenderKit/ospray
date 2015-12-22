@@ -42,6 +42,14 @@ namespace ospray {
     apertureRadius = getParamf("apertureRadius", 0.f);
     focusDistance = getParamf("focusDistance", 1.f);
 
+    vec2f imageStart = getParam2f("imageStart", vec2f(0.f));
+    vec2f imageEnd   = getParam2f("imageEnd", vec2f(1.f));
+
+    assert(imageStart.x >= 0.f imageStart.x <= 1.f);
+    assert(imageStart.y >= 0.f imageStart.y <= 1.f);
+    assert(imageEnd.x >= 0.f imageEnd.x <= 1.f);
+    assert(imageEnd.y >= 0.f imageEnd.y <= 1.f);
+
     // ------------------------------------------------------------------
     // now, update the local precomputed values
     // ------------------------------------------------------------------
@@ -56,7 +64,7 @@ namespace ospray {
     dir_dv *= imgPlane_size_y;
 
     vec3f dir_00 = dir - .5f * dir_du - .5f * dir_dv;
-  
+
     float scaledAperture = 0.f;
     // prescale to focal plane
     if (apertureRadius > 0.f) {
@@ -71,6 +79,8 @@ namespace ospray {
                                 (const ispc::vec3f&)dir_00,
                                 (const ispc::vec3f&)dir_du,
                                 (const ispc::vec3f&)dir_dv,
+                                (const ispc::vec2f&)imageStart,
+                                (const ispc::vec2f&)imageEnd,
                                 scaledAperture,
                                 aspect,
                                 nearClip);
