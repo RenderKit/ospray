@@ -71,16 +71,16 @@ bool SeismicVolumeFile::openSeismicDataFile(OSPVolume volume) {
   // Check if a subvolume of the volume has been specified.
   // Subvolume parameters: subvolumeOffsets, subvolumeDimensions, subvolumeSteps.
   // The subvolume defaults to full dimensions (allowing for just subsampling, for example.)
-  subvolumeOffsets = osp::vec3i(0);
-  ospGetVec3i(volume, "subvolumeOffsets", &subvolumeOffsets);
+  subvolumeOffsets = ospray::vec3i(0);
+  ospGetVec3i(volume, "subvolumeOffsets", (osp::vec3i *)&subvolumeOffsets);
   exitOnCondition(reduce_min(subvolumeOffsets) < 0 || reduce_max(subvolumeOffsets - dimensions) >= 0, "invalid subvolume offsets");
 
   subvolumeDimensions = dimensions - subvolumeOffsets;
-  ospGetVec3i(volume, "subvolumeDimensions", &subvolumeDimensions);
+  ospGetVec3i(volume, "subvolumeDimensions", (osp::vec3i *)&subvolumeDimensions);
   exitOnCondition(reduce_min(subvolumeDimensions) < 1 || reduce_max(subvolumeDimensions - (dimensions - subvolumeOffsets)) > 0, "invalid subvolume dimension(s) specified");
 
-  subvolumeSteps = osp::vec3i(1);
-  ospGetVec3i(volume, "subvolumeSteps", &subvolumeSteps);
+  subvolumeSteps = ospray::vec3i(1);
+  ospGetVec3i(volume, "subvolumeSteps", (osp::vec3i *)&subvolumeSteps);
   exitOnCondition(reduce_min(subvolumeSteps) < 1 || reduce_max(subvolumeSteps - (dimensions - subvolumeOffsets)) >= 0, "invalid subvolume steps");
 
   if(reduce_max(subvolumeOffsets) > 0 || subvolumeDimensions != dimensions || reduce_max(subvolumeSteps) > 1)
@@ -89,7 +89,7 @@ bool SeismicVolumeFile::openSeismicDataFile(OSPVolume volume) {
     useSubvolume = false;
 
   // The dimensions of the volume to be imported.
-  volumeDimensions = osp::vec3i(subvolumeDimensions.x / subvolumeSteps.x + (subvolumeDimensions.x % subvolumeSteps.x != 0),
+  volumeDimensions = ospray::vec3i(subvolumeDimensions.x / subvolumeSteps.x + (subvolumeDimensions.x % subvolumeSteps.x != 0),
                                 subvolumeDimensions.y / subvolumeSteps.y + (subvolumeDimensions.y % subvolumeSteps.y != 0),
                                 subvolumeDimensions.z / subvolumeSteps.z + (subvolumeDimensions.z % subvolumeSteps.z != 0));
 
@@ -99,7 +99,7 @@ bool SeismicVolumeFile::openSeismicDataFile(OSPVolume volume) {
   if(verbose) std::cout << toString() << " subvolume dimensions = " << volumeDimensions.x << " " << volumeDimensions.y << " " << volumeDimensions.z << std::endl;
 
   // Set dimensions of the volume.
-  ospSetVec3i(volume, "dimensions", volumeDimensions);
+  ospSetVec3i(volume, "dimensions", (const osp::vec3i &)volumeDimensions);
 
   // The grid spacing of the volume to be imported.
   gridSpacing = deltas;
@@ -111,8 +111,8 @@ bool SeismicVolumeFile::openSeismicDataFile(OSPVolume volume) {
   }
 
   // Set voxel spacing of the volume if not already provided.
-  if(!ospGetVec3f(volume, "gridSpacing", &gridSpacing))
-    ospSetVec3f(volume, "gridSpacing", gridSpacing);
+  if(!ospGetVec3f(volume, "gridSpacing", (osp::vec3f *)&gridSpacing))
+    ospSetVec3f(volume, "gridSpacing", (const osp::vec3f &)gridSpacing);
 
   return true;
 }
@@ -264,7 +264,11 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
       exitOnCondition(coordinate2-origin2 < 0 || coordinate2-origin2 >= dimensions.y || coordinate3-origin3 < 0 || coordinate3-origin3 >= dimensions.z, "invalid trace coordinates found");
 
       // Copy trace into the volume.
-      ospSetRegion(volume, &traceBuffer[traceHeaderSize], osp::vec3i(0, coordinate2-origin2, coordinate3-origin3), osp::vec3i(volumeDimensions.x, 1, 1));
+      ospray::vec3i regionCoords(0, coordinate2-origin2, coordinate3-origin3);
+      ospray::vec3i regionSize(volumeDimensions.x, 1, 1);
+      ospSetRegion(volume, &traceBuffer[traceHeaderSize],
+                   (const osp::vec3i &)regionCoords,
+                   (const osp::vec3i &)regionSize);
 
       traceCount++;
     }
@@ -328,7 +332,11 @@ bool SeismicVolumeFile::importVoxelData(OSPVolume volume) {
       }
 
       // Copy plane of traces into the volume.
-      ospSetRegion(volume, planeBuffer, osp::vec3i(0, 0, (i3 - subvolumeOffsets.z) / subvolumeSteps.z), osp::vec3i(volumeDimensions.x, volumeDimensions.y, 1));
+      ospray::vec3i regionCoords(0, 0, (i3 - subvolumeOffsets.z) / subvolumeSteps.z);
+      ospray::vec3i regionSize(volumeDimensions.x, volumeDimensions.y, 1);
+      ospSetRegion(volume, planeBuffer,
+                   (const osp::vec3i &)regionCoords,
+                   (const osp::vec3i &)regionSize);
     }
 
     // Clean up.

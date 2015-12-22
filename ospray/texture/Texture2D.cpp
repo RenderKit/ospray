@@ -47,19 +47,19 @@ namespace ospray {
 
     switch (type) {
       case OSP_UCHAR4:
-        tx->ispcEquivalent = ispc::Texture2D_4uc_create(tx,sx,sy,tx->data,flags);
+        tx->ispcEquivalent = ispc::Texture2D_4uc_create(sx,sy,tx->data,flags);
         break;
       case OSP_UCHAR3:
-        tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,tx->data,flags);
+        tx->ispcEquivalent = ispc::Texture2D_3uc_create(sx,sy,tx->data,flags);
         break;
       case OSP_FLOAT:
-        tx->ispcEquivalent = ispc::Texture2D_1f_create(tx,sx,sy,tx->data,flags);
+        tx->ispcEquivalent = ispc::Texture2D_1f_create(sx,sy,tx->data,flags);
         break;
       case OSP_FLOAT3:
-        tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,tx->data,flags);
+        tx->ispcEquivalent = ispc::Texture2D_3f_create(sx,sy,tx->data,flags);
         break;
       case OSP_FLOAT3A:
-        tx->ispcEquivalent = ispc::Texture2D_4f_create(tx,sx,sy,tx->data,flags);
+        tx->ispcEquivalent = ispc::Texture2D_4f_create(sx,sy,tx->data,flags);
         break;
       default: throw std::runtime_error("Could not determine bytes per pixel in " __FILE__);
     }

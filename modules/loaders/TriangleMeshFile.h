@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <string>
+#include <iostream>
 #include "ospray/include/ospray/ospray.h"
 
 //! \brief Define a function to create an instance of the InternalClass

@@ -22,7 +22,7 @@
 OSPTriangleMesh SeismicHorizonFile::importTriangleMesh(OSPTriangleMesh triangleMesh)
 {
   // Get scaling parameter if provided.
-  ospGetVec3f(triangleMesh, "scale", &scale);
+  ospGetVec3f(triangleMesh, "scale", (osp::vec3f *)&scale);
 
   // Open seismic data file and populate attributes.
   exitOnCondition(openSeismicDataFile(triangleMesh) != true, "unable to open file '" + filename + "'");
@@ -95,9 +95,9 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
   }
 
   // Generate triangle mesh for each horizon.
-  std::vector<osp::vec3fa> vertices;
-  std::vector<osp::vec3fa> vertexNormals;
-  std::vector<osp::vec3i>  triangles;
+  std::vector<ospray::vec3fa> vertices;
+  std::vector<ospray::vec3fa> vertexNormals;
+  std::vector<ospray::vec3i>  triangles;
 
   for(long h=0; h<dimensions.z; h++) {
 
@@ -106,13 +106,13 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
       for(long i1=0; i1<dimensions.x; i1++) {
 
         long index = h*dimensions.y*dimensions.x + i2*dimensions.x + i1;
-        osp::vec3fa vertex(volumeBuffer[index] * deltas.z, i1 * deltas.x, i2 * deltas.y);
+        ospray::vec3fa vertex(volumeBuffer[index] * deltas.z, i1 * deltas.x, i2 * deltas.y);
 
         // Apply scaling.
         vertex *= scale;
 
         vertices.push_back(vertex);
-        vertexNormals.push_back(osp::vec3fa(0.f));
+        vertexNormals.push_back(ospray::vec3fa(0.f));
       }
     }
 
@@ -127,18 +127,18 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
 
         // Assume horizon height coordinate must be > 0 to be valid.
         if (std::min(std::min(vertices[vertex0].x, vertices[vertex1].x), vertices[vertex2].x) > 0.f) {
-          triangles.push_back(osp::vec3i(vertex0, vertex1, vertex2));
+          triangles.push_back(ospray::vec3i(vertex0, vertex1, vertex2));
 
-          osp::vec3fa triangleNormal = cross(vertices[vertex1] - vertices[vertex0], vertices[vertex2] - vertices[vertex0]);
+          ospray::vec3fa triangleNormal = cross(vertices[vertex1] - vertices[vertex0], vertices[vertex2] - vertices[vertex0]);
           vertexNormals[vertex0] += triangleNormal;
           vertexNormals[vertex1] += triangleNormal;
           vertexNormals[vertex2] += triangleNormal;
         }
 
         if (std::min(std::min(vertices[vertex2].x, vertices[vertex3].x), vertices[vertex0].x) > 0.f) {
-          triangles.push_back(osp::vec3i(vertex2, vertex3, vertex0));
+          triangles.push_back(ospray::vec3i(vertex2, vertex3, vertex0));
 
-          osp::vec3fa triangleNormal = cross(vertices[vertex3] - vertices[vertex2], vertices[vertex0] - vertices[vertex2]);
+          ospray::vec3fa triangleNormal = cross(vertices[vertex3] - vertices[vertex2], vertices[vertex0] - vertices[vertex2]);
           vertexNormals[vertex2] += triangleNormal;
           vertexNormals[vertex3] += triangleNormal;
           vertexNormals[vertex0] += triangleNormal;

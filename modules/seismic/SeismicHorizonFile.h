@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "ospray/common/OSPCommon.h"
 #include <cdds.h>
 #include <string>
 #include "modules/loaders/TriangleMeshFile.h"
@@ -27,7 +28,7 @@ class SeismicHorizonFile : public TriangleMeshFile {
 public:
 
   //! Constructor.
-  SeismicHorizonFile(const std::string &filename) : filename(filename), scale(osp::vec3f(1.f)), verbose(true) {}
+  SeismicHorizonFile(const std::string &filename) : filename(filename), scale(ospray::vec3f(1.f)), verbose(true) {}
 
   //! Destructor.
   virtual ~SeismicHorizonFile() {};
@@ -44,7 +45,7 @@ private:
   std::string filename;
 
   //! Scaling for vertex coordinates.
-  osp::vec3f scale;
+  ospray::vec3f scale;
 
   //! Verbose logging.
   bool verbose;
@@ -52,8 +53,8 @@ private:
   //! Seismic data attributes
   BIN_TAG inputBinTag;
   int traceHeaderSize;
-  osp::vec3i dimensions;           //<! Dimensions of the horizon volume.
-  osp::vec3f deltas;               //!< Voxel spacing along each dimension.
+  ospray::vec3i dimensions;           //<! Dimensions of the horizon volume.
+  ospray::vec3f deltas;               //!< Voxel spacing along each dimension.
 
   //! Open the seismic data file and populate attributes.
   bool openSeismicDataFile(OSPTriangleMesh triangleMesh);
