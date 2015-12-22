@@ -110,6 +110,7 @@ namespace ospray {
   using embree::rad2deg;
   using embree::sign;
   using embree::clamp;
+  using embree::frac;
 
   /*! basic types */
   typedef ::int64_t int64;

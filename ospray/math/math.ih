@@ -108,14 +108,17 @@ inline varying float clamp (const varying float v, const varying float lower, co
 inline uniform int clamp (const uniform int v, const uniform int lower, const uniform int upper) { return max(lower,min(v,upper)); }
 inline varying int clamp (const varying int v, const varying int lower, const varying int upper) { return max(lower,min(v,upper)); }
 
+inline uniform float frac(const uniform float x)  { return x - floor(x); }
+inline varying float frac(const varying float x)  { return x - floor(x); }
+
 inline uniform float deg2rad (const uniform float x)  { return x * 1.74532925199432957692e-2f; }
 inline varying float deg2rad (const varying float x)  { return x * 1.74532925199432957692e-2f; }
 
 inline uniform float rad2deg (const uniform float x)  { return x * 5.72957795130823208768e1f; }
 inline varying float rad2deg (const varying float x)  { return x * 5.72957795130823208768e1f; }
 
-inline uniform float nextafter(const uniform float a, const uniform float b) {
-
+inline uniform float nextafter(const uniform float a, const uniform float b)
+{
   //! Match the behavior of the C99 math.h function.
   if (a == b) return(b);
 
@@ -127,7 +130,6 @@ inline uniform float nextafter(const uniform float a, const uniform float b) {
 
   //! Return the smallest number greater than 'a' or the largest number smaller than 'a'.
   return(a + delta);
-
 }
 
 #define __define_lerp(TYPE)                                             \
