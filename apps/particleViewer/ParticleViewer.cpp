@@ -24,6 +24,7 @@
 // particle viewer
 #include "Model.h"
 #include "uintah.h"
+#include "scivis16.hpp"
 // embree
 #include "sys/filename.h"
 
@@ -290,6 +291,9 @@ namespace ospray {
             particleModel.push_back(m);
           } else if (fn.ext() == "xml") {
             particle::Model *m = parse__Uintah_timestep_xml(fn);
+            particleModel.push_back(m);
+          } else if (fn.ext() == "vtu") {
+            particle::Model *m = parse_scivis16(fn.c_str());
             particleModel.push_back(m);
           } else
             error("unknown file format "+fn.str());
