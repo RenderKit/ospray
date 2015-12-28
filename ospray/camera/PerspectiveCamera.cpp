@@ -45,10 +45,10 @@ namespace ospray {
     vec2f imageStart = getParam2f("imageStart", vec2f(0.f));
     vec2f imageEnd   = getParam2f("imageEnd", vec2f(1.f));
 
-    assert(imageStart.x >= 0.f imageStart.x <= 1.f);
-    assert(imageStart.y >= 0.f imageStart.y <= 1.f);
-    assert(imageEnd.x >= 0.f imageEnd.x <= 1.f);
-    assert(imageEnd.y >= 0.f imageEnd.y <= 1.f);
+    assert(imageStart.x >= 0.f && imageStart.x <= 1.f);
+    assert(imageStart.y >= 0.f && imageStart.y <= 1.f);
+    assert(imageEnd.x >= 0.f && imageEnd.x <= 1.f);
+    assert(imageEnd.y >= 0.f && imageEnd.y <= 1.f);
 
     // ------------------------------------------------------------------
     // now, update the local precomputed values
