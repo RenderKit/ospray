@@ -185,8 +185,7 @@ namespace ospray {
     bool done = false;
 
     {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       if (numPartsComposited == 0)
         memcpy(&compositedTileData,&tile,sizeof(tile));
       else
@@ -478,8 +477,7 @@ namespace ospray {
     if (IamTheMaster()) {
       /*! we will not do anything with the tile other than mark it's done */
       {
-        LockGuard lock(mutex);
-        (void)lock;
+        SCOPED_LOCK(mutex);
         numTilesCompletedThisFrame++;
         DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
                    tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
@@ -517,8 +515,7 @@ namespace ospray {
       };
 
       {
-        LockGuard lock(mutex);
-        (void)lock;
+        SCOPED_LOCK(mutex);
         numTilesCompletedThisFrame++;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
                    mpi::world.rank,
@@ -534,8 +531,7 @@ namespace ospray {
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
   {
     if (!frameIsActive) {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       if (!frameIsActive) {
         // frame is not actually active, yet - put the tile into the
         // delayed processing buffer, and return WITHOUT deleting it.

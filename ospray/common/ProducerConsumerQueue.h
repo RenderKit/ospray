@@ -88,8 +88,7 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       wasEmpty = content.empty();
       content.push_back(t);
     }
@@ -103,8 +102,7 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       wasEmpty = content.empty();
       for (int i=0;i<numTs;i++)
         content.push_back(t[i]);

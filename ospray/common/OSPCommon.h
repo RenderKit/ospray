@@ -63,8 +63,12 @@ namespace ospray {
   typedef std::mutex Mutex;
   typedef std::lock_guard<std::mutex> LockGuard;
   typedef std::condition_variable Condition;
+
 }
 
+#define SCOPED_LOCK(x) \
+  ospray::LockGuard lock(x); \
+  (void)lock;
 #endif
 
 // ospray
