@@ -43,8 +43,7 @@ namespace ospray {
 
         Object *obj = nullptr;
         {
-          LockGuard lock(mutex);
-          (void)lock;
+          SCOPED_LOCK(mutex);
           obj = registry[msg->dest.objectID];
         }
 
@@ -67,8 +66,7 @@ namespace ospray {
       {
         /* WARNING: though we do protect the registry here, the
            registry lookup itself is NOT thread-safe right now */
-        LockGuard lock(mutex);
-        (void)lock;
+        SCOPED_LOCK(mutex);
         assert(registry.find(ID) == registry.end());
         registry[ID] = object;
       }
