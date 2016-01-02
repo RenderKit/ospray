@@ -28,6 +28,10 @@
 #  include <windows.h> // for Sleep
 #endif
 
+#ifdef OSPRAY_USE_TBB
+#  include <tbb/task.h>
+#endif
+
 #define DBG(a) /* ignore */
 
 namespace ospray {
@@ -441,6 +445,9 @@ namespace ospray {
 
 
   struct DFBProcessMessageTask
+#ifdef OSPRAY_USE_TBB
+      : public tbb::task
+#endif
   {
     DFB *dfb;
     mpi::async::CommLayer::Message *_msg;
@@ -450,9 +457,12 @@ namespace ospray {
       : dfb(dfb), _msg(_msg)
     {}
 
-    void run(size_t jobID)
+#ifdef OSPRAY_USE_TBB
+    tbb::task* execute() override
+#else
+    void execute()
+#endif
     {
-      DBG(printf("processing message %i\n",jobID); fflush(0));
       switch (_msg->command) {
       case DFB::MASTER_WRITE_TILE_NONE:
         dfb->processMessage((DFB::MasterTileMessage_NONE*)_msg);
@@ -467,6 +477,9 @@ namespace ospray {
         assert(0);
       };
       delete _msg;
+#ifdef OSPRAY_USE_TBB
+      return nullptr;
+#endif
     }
   };
 
@@ -543,14 +556,12 @@ namespace ospray {
 
     DBG(PING);
 
-#if 0//NOTE(jda) - does this *need* to be asynchronous?
-    auto msgTask = std::make_shared<DFBProcessMessageTask>(this,_msg);
-    auto future = std::async([msgTask]{msgTask->run(0);});
-
-    future.get();
+#ifdef OSPRAY_USE_TBB
+    auto &t = *new(tbb::task::allocate_root())DFBProcessMessageTask(this, _msg);
+    tbb::task::enqueue(t, tbb::priority_high);
 #else
     DFBProcessMessageTask t(this, _msg);
-    t.run(0);
+    t.execute();
 #endif
 
     DBG(PING);
