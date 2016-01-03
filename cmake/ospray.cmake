@@ -26,6 +26,9 @@ SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT "Must be multiple of largest vector width
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 
+# unhide compiler to make it easier for users to see what they are using
+MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
+
 # project-wide OpenMP flags for all compilers
 find_package(OpenMP QUIET)
 if(OPENMP_FOUND)
