@@ -137,6 +137,8 @@ set(CURRENT_ROOT_INSTALL_DIR   ${OSPRAY_CURRENT_ROOT_INSTALL_DIR})
 # Finish ospray
 
 # Import exported ospray targets
+# NOTE(jda) - Order matters below: targets which depend on other targets need to
+#             be after the INCLUDE() of the targets they depend upon.
 IF(NOT TARGET ospray AND NOT OSPRAY_BINARY_DIR)
   INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libsysTargets.cmake)
   INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/liblexersTargets.cmake)
