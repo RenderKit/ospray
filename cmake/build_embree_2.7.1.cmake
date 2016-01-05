@@ -60,7 +60,6 @@ SET(RTCORE_RAY_PACKETS ON)
 
 SET(ENABLE_STATIC_LIB OFF)
 
-
 CONFIGURE_FILE(
   "${OSPRAY_EMBREE_SOURCE_DIR}/kernels/config.h.in"
   "${PROJECT_BINARY_DIR}/config.h"
@@ -132,114 +131,98 @@ SET(EMBREE_LIBRARY_FILES
   ${EMBREE_PATH}bvh4/bvh4_builder_instancing.cpp
   ${EMBREE_PATH}bvh4/bvh4_builder_subdiv.cpp
 
-  ${EMBREE_PATH}bvh/bvh_intersector1.cpp)
+  ${EMBREE_PATH}bvh/bvh_intersector1.cpp
 
-IF (RTCORE_RAY_PACKETS)
-  SET(EMBREE_LIBRARY_FILES ${EMBREE_LIBRARY_FILES}
-
+  # NOTE(jda) - Ray packet source files
   ${EMBREE_PATH}../common/rtcore_ispc.cpp
   ${EMBREE_PATH}../common/rtcore_ispc.ispc
-
   ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
-  ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp)
-ENDIF()
+  ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp
+)
 
 SET(EMBREE_LIBRARY_FILES_SSE42
-    ${EMBREE_PATH}geometry/grid_soa.cpp
-    ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
-    ${EMBREE_PATH}bvh/bvh_intersector1.cpp)
+  ${EMBREE_PATH}geometry/grid_soa.cpp
+  ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector1.cpp
 
-IF (RTCORE_RAY_PACKETS)
-    SET(EMBREE_LIBRARY_FILES_SSE42 ${EMBREE_LIBRARY_FILES_SSE42}
-    ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
-    ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp)
-ENDIF()
+  # NOTE(jda) - Ray packet source files
+  ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp
+)
 
 IF (TARGET_SSE42 AND EMBREE_LIBRARY_FILES_SSE42)
  ADD_DEFINITIONS(-D__TARGET_SSE42__)
 ENDIF()
 
 SET(EMBREE_LIBRARY_FILES_AVX
+  ${EMBREE_PATH}../common/scene_subdiv_mesh_avx.cpp
 
-    ${EMBREE_PATH}../common/scene_subdiv_mesh_avx.cpp
+  ${EMBREE_PATH}geometry/primitive.cpp
+  ${EMBREE_PATH}geometry/instance_intersector1.cpp
 
-    ${EMBREE_PATH}geometry/primitive.cpp
-    ${EMBREE_PATH}geometry/instance_intersector1.cpp
+  ${EMBREE_PATH}geometry/grid_soa.cpp
+  ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
+  ${EMBREE_PATH}builders/primrefgen.avx.cpp
 
-    ${EMBREE_PATH}geometry/grid_soa.cpp
-    ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
-    ${EMBREE_PATH}builders/primrefgen.avx.cpp
+  ${EMBREE_PATH}bvh4/bvh4_rotate.cpp
+  ${EMBREE_PATH}bvh4/bvh4_refit.avx.cpp
+  ${EMBREE_PATH}bvh/bvh_builder.avx.cpp
+  ${EMBREE_PATH}bvh4/bvh4_builder_hair.avx.cpp
+  ${EMBREE_PATH}bvh4/bvh4_builder_morton.avx.cpp
+  ${EMBREE_PATH}bvh/bvh_builder_sah.avx.cpp
+  ${EMBREE_PATH}bvh4/bvh4_builder_twolevel.avx.cpp
+  ${EMBREE_PATH}bvh4/bvh4_builder_instancing.avx.cpp
+  ${EMBREE_PATH}bvh4/bvh4_builder_subdiv.avx.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector1.cpp
 
-    ${EMBREE_PATH}bvh4/bvh4_rotate.cpp
-    ${EMBREE_PATH}bvh4/bvh4_refit.avx.cpp
-    ${EMBREE_PATH}bvh/bvh_builder.avx.cpp
-    ${EMBREE_PATH}bvh4/bvh4_builder_hair.avx.cpp
-    ${EMBREE_PATH}bvh4/bvh4_builder_morton.avx.cpp
-    ${EMBREE_PATH}bvh/bvh_builder_sah.avx.cpp
-    ${EMBREE_PATH}bvh4/bvh4_builder_twolevel.avx.cpp
-    ${EMBREE_PATH}bvh4/bvh4_builder_instancing.avx.cpp
-    ${EMBREE_PATH}bvh4/bvh4_builder_subdiv.avx.cpp
-    ${EMBREE_PATH}bvh/bvh_intersector1.cpp
+  ${EMBREE_PATH}bvh/bvh.cpp
+  ${EMBREE_PATH}bvh/bvh_statistics.cpp
 
-    ${EMBREE_PATH}bvh/bvh.cpp
-    ${EMBREE_PATH}bvh/bvh_statistics.cpp
-    )
-
-IF (RTCORE_RAY_PACKETS)
-  SET(EMBREE_LIBRARY_FILES_AVX ${EMBREE_LIBRARY_FILES_AVX}
-
-    ${EMBREE_PATH}geometry/instance_intersector.cpp
-
-    ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
-    ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp)
-ENDIF()
+  # NOTE(jda) - Ray packet source files
+  ${EMBREE_PATH}geometry/instance_intersector.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp
+)
 
 IF (TARGET_AVX AND EMBREE_LIBRARY_FILES_AVX)
  ADD_DEFINITIONS(-D__TARGET_AVX__)
 ENDIF()
 
 SET(EMBREE_LIBRARY_FILES_AVX2
+  ${EMBREE_PATH}geometry/instance_intersector1.cpp
+  ${EMBREE_PATH}geometry/grid_soa.cpp
+  ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
 
-    ${EMBREE_PATH}geometry/instance_intersector1.cpp
-    ${EMBREE_PATH}geometry/grid_soa.cpp
-    ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector1.cpp
 
-    ${EMBREE_PATH}bvh/bvh_intersector1.cpp)
-
-IF (RTCORE_RAY_PACKETS)
-  SET(EMBREE_LIBRARY_FILES_AVX2 ${EMBREE_LIBRARY_FILES_AVX2}
-    ${EMBREE_PATH}geometry/instance_intersector.cpp
-
-    ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
-    ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp)
-ENDIF()
+  # NOTE(jda) - Ray packet source files
+  ${EMBREE_PATH}geometry/instance_intersector.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp
+)
 
 IF (TARGET_AVX2 AND EMBREE_LIBRARY_FILES_AVX2)
  ADD_DEFINITIONS(-D__TARGET_AVX2__)
 ENDIF()
 
 SET(EMBREE_LIBRARY_FILES_AVX512
+  ${EMBREE_PATH}geometry/instance_intersector1.cpp
+  ${EMBREE_PATH}geometry/grid_soa.cpp
+  ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
 
-    ${EMBREE_PATH}geometry/instance_intersector1.cpp
-    ${EMBREE_PATH}geometry/grid_soa.cpp
-    ${EMBREE_PATH}../common/subdiv/subdivpatch1base_eval.cpp
+  ${EMBREE_PATH}builders/primrefgen.avx512.cpp
+  ${EMBREE_PATH}bvh/bvh_builder.avx512.cpp
+  ${EMBREE_PATH}bvh/bvh_builder_sah.avx512.cpp
 
-    ${EMBREE_PATH}builders/primrefgen.avx512.cpp
-    ${EMBREE_PATH}bvh/bvh_builder.avx512.cpp
-    ${EMBREE_PATH}bvh/bvh_builder_sah.avx512.cpp
+  ${EMBREE_PATH}bvh4/bvh4_refit.cpp
+  ${EMBREE_PATH}bvh4/bvh4_builder_subdiv.avx512.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector1.cpp
 
-    ${EMBREE_PATH}bvh4/bvh4_refit.cpp
-    ${EMBREE_PATH}bvh4/bvh4_builder_subdiv.avx512.cpp
-    ${EMBREE_PATH}bvh/bvh_intersector1.cpp)
-
-IF (RTCORE_RAY_PACKETS)
-  SET(EMBREE_LIBRARY_FILES_AVX512 ${EMBREE_LIBRARY_FILES_AVX512}
-
-    ${EMBREE_PATH}geometry/instance_intersector.cpp
-
-    ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
-    ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp)
-ENDIF()
+  # NOTE(jda) - Ray packet source files
+  ${EMBREE_PATH}geometry/instance_intersector.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector_single.cpp
+  ${EMBREE_PATH}bvh/bvh_intersector_hybrid.cpp
+)
 
 IF (TARGET_AVX512 AND EMBREE_LIBRARY_FILES_AVX512)
  ADD_DEFINITIONS(-D__TARGET_AVX512__)
