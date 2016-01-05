@@ -14,11 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(__XEON__ 1)
-ADD_SUBDIRECTORY(sys)
-ADD_SUBDIRECTORY(simd)
-ADD_SUBDIRECTORY(lexers)
-ADD_SUBDIRECTORY(tasking)
 
 IF (ENABLE_XEON_PHI_SUPPORT)
   SET(__XEON__ 0)
@@ -26,4 +21,10 @@ IF (ENABLE_XEON_PHI_SUPPORT)
   ADD_SUBDIRECTORY(simd simd_xeonphi)
   ADD_SUBDIRECTORY(lexers lexers_xeonphi)
   ADD_SUBDIRECTORY(tasking tasking_xeonphi)
+ELSE()
+  SET(__XEON__ 1)
+  ADD_SUBDIRECTORY(sys)
+  ADD_SUBDIRECTORY(simd)
+  ADD_SUBDIRECTORY(lexers)
+  ADD_SUBDIRECTORY(tasking)
 ENDIF ()
