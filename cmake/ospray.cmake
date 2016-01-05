@@ -47,11 +47,6 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 #    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
 #  ENDIF()
 
-  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-
-  LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
-
   # Embree common include directories; others may be added depending on build target.
   # this section could be sooo much cleaner if embree only used
   # fully-qualified include names...
@@ -75,7 +70,6 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     # additional Embree include directory
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi)
 
-    #		SET(LIBRARY_OUTPUT_PATH "${OSPRAY_BINARY_DIR}/lib/mic")
     SET(OSPRAY_TARGET_MIC ON)
   ELSE()
     SET(OSPRAY_EXE_SUFFIX "")
