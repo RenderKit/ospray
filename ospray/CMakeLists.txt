@@ -27,6 +27,10 @@ ENDIF()
 OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
 MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
 
+# NOTE(jda) - PThread hint used by both Embree and OSPRay
+SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+FIND_PACKAGE(Threads REQUIRED)
+
 # -------------------------------------------------------
 # Setup tasking system build configuration
 # -------------------------------------------------------
@@ -284,8 +288,6 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-FIND_PACKAGE(Threads REQUIRED)
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
 
