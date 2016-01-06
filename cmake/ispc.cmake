@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(ISPC_VERSION_REQUIRED "1.8.2")
+SET(ISPC_VERSION_REQUIRED "1.8.1")
 
 # warn about recommended ISPC version on KNC
 IF (OSPRAY_MIC AND NOT OSPRAY_WARNED_MIC_ISPC_VERSION)
