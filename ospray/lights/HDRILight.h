@@ -16,40 +16,32 @@
 
 #pragma once
 
-#include "embree2/rtcore.isph"
+#include "Light.h"
+#include "ospray/texture/Texture2D.h"
 
-#include "OSPConfig.h"
+namespace ospray {
 
-typedef unsigned int64 uint64;
-typedef unsigned int32 uint32;
-typedef unsigned int16 uint16;
-typedef unsigned int8  uint8;
+  /*! a SpotLight is a singular light emitting from a point uniformly into a
+   *  cone of directions bounded by halfAngle */
+  class HDRILight : public Light {
+    public:
+      HDRILight();
+      ~HDRILight();
 
-#define LOG(x)
+      //! toString is used to aid in printf debugging
+      virtual std::string toString() const { return "ospray::HDRILight"; }
 
-#if defined(__MIC__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 63) & (-64));
+      //! Copy understood parameters into class members
+      virtual void commit();
+
+    private:
+//      vec3f position;           //!< world-space position of the LocalHDRILight
+      vec3f up;                 //!< up direction of the light in world-space
+      vec3f right;              //!< direction of the x-axis (where the texture-seam is), perpendicular to 'up'
+//      float radius;             //!< radius of LocalHDRILight
+      Texture2D *map;           //!< environment map in latitude / longitude format
+      float intensity;          //!< Amount of light emitted
+  };
+
 }
-#elif defined(__AVX__)
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 31) & (-32));
-}
-#else
-inline void* uniform align_ptr(void* uniform ptr) {
-  return (void* uniform) ((((uniform int64)ptr) + 15) & (-16));
-}
-#endif
 
-#define PRINT(x) print(#x" = %\n", x)
-
-/*! ispc copy of embree error handling callback */
-void error_handler(const RTCError code, const int8* str);
-
-
-/*! a C++-callable 'delete' of ISPC-side allocated memory of uniform objects */
-export void delete_uniform(void *uniform uptr);
-
-/*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
-extern "C" void *uniform malloc64(uniform uint64 size);
-extern "C" void free64(void *uniform ptr);

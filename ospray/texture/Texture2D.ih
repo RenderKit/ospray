@@ -33,7 +33,7 @@ struct Texture2D {
   void         *data;
 };
 
-// XXX won't work with MIPmapping: clean implemenation with clamping on integer coords needed then 
+// XXX won't work with MIPmapping: clean implementation with clamping on integer coords needed then 
 inline vec2f clamp2edge(const uniform Texture2D *uniform self, const vec2f p)
 {
   return clamp(p, self->halfTexel, 1.0f - self->halfTexel);

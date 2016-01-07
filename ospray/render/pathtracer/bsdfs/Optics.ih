@@ -157,14 +157,3 @@ inline uniform FresnelDielectric make_FresnelDielectric(const uniform float etai
   m.etat = etat;
   return m;
 }
-
-
-inline float luminance(const vec3f& c)
-{
-  return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z;
-}
-
-inline uniform float luminance(const uniform vec3f& c)
-{
-  return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z;
-}

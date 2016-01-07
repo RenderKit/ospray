@@ -73,6 +73,7 @@ SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
   math/box.ispc
+  math/Distribution2D.ispc
 
   common/OSPCommon.ispc
   common/OSPCommon.cpp
@@ -154,6 +155,8 @@ SET(OSPRAY_SOURCES
   lights/SpotLight.ispc
   lights/QuadLight.cpp
   lights/QuadLight.ispc
+  lights/HDRILight.cpp
+  lights/HDRILight.ispc
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc

@@ -30,6 +30,7 @@ struct DirectionalLight {
 // for very small cones treat as singular light, because float precision is not good enough 
 #define COS_ANGLE_MAX 0.99999988f
 
+
 // Implementation
 //////////////////////////////////////////////////////////////////////////////
 

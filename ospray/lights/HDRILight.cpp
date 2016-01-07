@@ -14,26 +14,43 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "HDRILight.h"
+#include "HDRILight_ispc.h"
 
-#include "api/parms.h"
-#include "PTHDRILight_ispc.h"
+namespace ospray {
 
-namespace embree
-{
-  struct HDRILight
+  HDRILight::HDRILight()
+    : up(0.f, 0.f, 1.f)
+    , right(1.f, 0.f, 0.f)
+    , map(NULL)
+    , intensity(1.f)
   {
-    static void* create(const Parms& parms)
-    {
-      const AffineSpace3f local2world = parms.getTransform("local2world",one);
-      const Color L = parms.getColor("L",one);
-      ISPCRef pixels = parms.getImage("image");
-      return ispc::HDRILight__new((ispc::vec3f&)local2world.l.vx,
-                                  (ispc::vec3f&)local2world.l.vy,
-                                  (ispc::vec3f&)local2world.l.vz,
-                                  (ispc::vec3f&)local2world.p,
-                                  (ispc::vec3f&)L,
-                                  pixels.ptr);
-    }
-  };
+    ispcEquivalent = ispc::HDRILight_create(this);
+  }
+
+  HDRILight::~HDRILight()
+  {
+    ispc::HDRILight_destroy(getIE());
+    ispcEquivalent = NULL;
+  }
+
+  //!< Copy understood parameters into class members
+  void HDRILight::commit()
+  {
+    up = getParam3f("up", vec3f(0.f, 0.f, 1.f));
+    right = getParam3f("right", vec3f(1.f, 0.f, 0.f));
+    intensity = getParam1f("intensity", 1.f);
+    map  = (Texture2D*)getParamObject("map", NULL);
+
+    linear3f light2world(right, cross(up, right), up);
+
+    ispc::HDRILight_set(
+        getIE(),
+        (const ispc::LinearSpace3f&)light2world,
+        map ? map->getIE() : NULL,
+        intensity);
+  }
+
+  OSP_REGISTER_LIGHT(HDRILight, hdri);
+//  OSP_REGISTER_LIGHT(HDRILight, HDRILight);
 }
