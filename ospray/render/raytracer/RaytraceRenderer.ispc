@@ -138,6 +138,11 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
 
     traceRay(self->super.model, ray);
 
+    // Record depth of first hit in z buffer //
+    if (depth == 0) {
+      sample.z = ray.t;
+    }
+
     // Check if we missed, if so we are done //
 
     if (ray.geomID < 0) {
@@ -147,10 +152,6 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
       sample.alpha = 1.f - path_opacity;
       return;
     }
-
-    // Record depth of first hit in z buffer //
-    if (depth == 0)
-      sample.z = ray.t;
 
     // Start shading //
 
