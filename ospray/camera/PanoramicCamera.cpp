@@ -38,8 +38,8 @@ namespace ospray {
     // update the local precomputed values: the camera coordinate frame
     // ------------------------------------------------------------------
     linear3f frame;
-    frame.vy = normalize(dir);
-    frame.vx = normalize(cross(frame.vy, up));
+    frame.vx = normalize(dir);
+    frame.vy = normalize(cross(frame.vx, up));
     frame.vz = cross(frame.vx, frame.vy);
 
     ispc::PanoramicCamera_set(getIE(),
