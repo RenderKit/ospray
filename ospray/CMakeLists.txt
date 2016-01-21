@@ -63,7 +63,7 @@ ENDIF(USE_TBB)
 # -------------------------------------------------------
 
 #NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
-INCLUDE(../cmake/build_embree_2.7.1.cmake)
+INCLUDE(../cmake/build_embree.cmake)
 
 # -------------------------------------------------------
 # Setup ospray source files
