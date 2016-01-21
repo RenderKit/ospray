@@ -25,8 +25,6 @@ namespace ospray {
     using std::endl;
     using std::flush;
 
-    using ObjectHandle;
-
     struct DataStream {
       char *buf;
       size_t size;

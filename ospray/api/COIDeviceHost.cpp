@@ -782,7 +782,7 @@ namespace ospray {
       args.write(_renderer);
       args.write(screenPos);
 
-      OSPPickResult retValue = {vec3f(0.), false};
+      OSPPickResult retValue = {0.f, false};
       callFunction(OSPCOI_PICK, args, &retValue, sizeof(retValue));
       return retValue;
     }
