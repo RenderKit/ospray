@@ -15,7 +15,7 @@
 // ======================================================================== //
 
 #include "ospray/common/OSPCommon.h"
-#include "ospray/api/Handle.h"
+#include "ospray/common/ObjectHandle.h"
 
 namespace ospray {
   namespace coi {
@@ -25,7 +25,7 @@ namespace ospray {
     using std::endl;
     using std::flush;
 
-    using ospray::api::Handle;
+    using ObjectHandle;
 
     struct DataStream {
       char *buf;
