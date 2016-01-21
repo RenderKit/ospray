@@ -14,14 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-
 CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
-
-  # common utility classes for 3D viewer widget
-  ADD_SUBDIRECTORY(common/widgets)
 
   # common xml utility classes
   ADD_SUBDIRECTORY(common/xml)
@@ -59,8 +54,16 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
  ENDIF(NOT WIN32)
 
-  CONFIGURE_OSPRAY()
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+  IF(OSPRAY_APPS_MODELVIEWER      OR
+     OSPRAY_APPS_STREAMLINEVIEWER OR
+     OSPRAY_APPS_PARTICLEVIEWER)
+    # common utility classes for GLUT-based 3D viewer widget
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+    ADD_SUBDIRECTORY(common/widgets)
+  ENDIF()
+
+  #CONFIGURE_OSPRAY()
+  #INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 #	ADD_EXECUTABLE(test1 test1.cpp)
 #	TARGET_LINK_LIBRARIES(test1 ospray)
