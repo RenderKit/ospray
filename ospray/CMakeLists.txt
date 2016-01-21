@@ -62,8 +62,12 @@ ENDIF(USE_TBB)
 # Build and configure embree
 # -------------------------------------------------------
 
-#NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
-INCLUDE(../cmake/build_embree.cmake)
+# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
+# NOTE(jda) - Only do the embree include once (Xeon), it will build both
+#             Xeon and MIC code if both are enabled.
+IF (NOT THIS_IS_MIC)
+  INCLUDE(../cmake/build_embree.cmake)
+ENDIF()
 
 # -------------------------------------------------------
 # Setup ospray source files
