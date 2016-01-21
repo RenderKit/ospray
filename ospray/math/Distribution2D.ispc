@@ -18,26 +18,33 @@
 
 // input: importance in cdf
 // output: cdf of importance in cdf
-void Distribution1D_create(const uniform int size, uniform float* uniform cdf)
+//         return sum
+uniform float Distribution1D_create(const uniform int size, uniform float* uniform cdf)
 {
-  // TODO: maybe use SIMD (varying float) and float exclusive_scan_add(float v)
   // accumulate the function
+  // using varying float and exclusive_scan_add(float v) is much slower
   uniform float sum = cdf[0];
   for (uniform int i = 1; i < size; i++)
     cdf[i] = sum += cdf[i];
-  
+
   // compute reciprocal sum
-  uniform float rcpSum = sum == 0.0f ? 0.0f : 1.0f/sum;
+  const uniform float rcpSum = 1.0f/sum;
+  // next representatble number in float greater than 1.0f
+  const uniform float nextAfter1 =  0x1.000002p+0f;
 
   // normalize
-  foreach(i = 0 ... size-1)
-    cdf[i] *= rcpSum;
+  foreach(i = 0 ... size-1) {
+    float f = cdf[i] * rcpSum;
+    // handle cornercases (sum=0 -> rcpSum=inf; correct termination of sampling with s=1.0f)
+    if (f >= 1.0f)
+      f = nextAfter1;
+    cdf[i] = f;
+  }
 
-  cdf[size-1] = 1.0f;
+  cdf[size-1] = nextAfter1;
+
+  return sum;
 }
-
-// what if sum = 0?
-//         s = 1.0f
 
 struct Sample1D {
   int idx;
@@ -45,11 +52,12 @@ struct Sample1D {
   float pdf;
 };
 
-inline Sample1D Distribution1D_sample(const uniform int size,
-                                      const uniform float* uniform cdf,
-// we may sample different rows within one gang: use a varying offset 'start' instead of a varying pointer 'cdf'
-                                      const int start,
-                                      const float s)
+inline Sample1D Distribution1D_sample(
+  const uniform int size,
+  const uniform float* uniform cdf,
+  // we may sample different rows within one gang: use a varying offset 'start' instead of a varying pointer 'cdf'
+  const int start,
+  const float s)
 {
   // find minimum index where cdf[i-1] <= s < cdf[i]
   int first = start;
@@ -65,11 +73,10 @@ inline Sample1D Distribution1D_sample(const uniform int size,
       len -= half + 1;
     }
   }
-  
+
   // sample
-//  const int index = clamp(first-1, 0, size-2);
   const float bef = first == 0 ? 0.0f : cdf[first-1];
-  float pdf = cdf[first] - bef; // actually / size
+  float pdf = cdf[first] - bef;
   const float fraction = (s - bef) * rcp(pdf);
 
   Sample1D ret;
@@ -80,25 +87,31 @@ inline Sample1D Distribution1D_sample(const uniform int size,
   return ret;
 }
 
-vec2f Distribution2D_sample(const uniform Distribution2D* uniform self, const vec2f &s) 
+Sample2D Distribution2D_sample(const uniform Distribution2D* uniform self, const vec2f &s) 
 {
   // use u.y to sample a row
   const Sample1D sy = Distribution1D_sample(self->size.y, self->cdf_y, 0, s.y);
-  
+
   // use u.x to sample inside the row
   const int x0 = sy.idx * self->size.x;
   const Sample1D sx = Distribution1D_sample(self->size.x, self->cdf_x, x0, s.x);
 
-  return make_vec2f((sx.idx + sx.frac)/self->size.x, (sy.idx + sy.frac)/self->size.y);
+  Sample2D ret;
+  ret.uv = make_vec2f((sx.idx + sx.frac)/self->size.x, (sy.idx + sy.frac)/self->size.y);
+  ret.pdf = sx.pdf * sy.pdf;
+
+  return ret;
 }
 
 float Distribution2D_pdf(const uniform Distribution2D* uniform self, const vec2f &uv)
 {
   const int idy = uv.y * self->size.y;
-  const float pdf_y = self->cdf_y[idy+1] - self->cdf_y[idy];
+  const float befy = idy == 0 ? 0.0f : self->cdf_y[idy-1];
+  const float pdf_y = self->cdf_y[idy] - befy;
 
-  const int idx = idy * self->size.x + uv.x * self->size.x;
-  const float pdf_x = self->cdf_x[idx+1] - self->cdf_x[idx];
+  const int idx = uv.x * self->size.x;
+  const float befx = idx == 0 ? 0.0f : self->cdf_x[idy * self->size.x + idx-1];
+  const float pdf_x = self->cdf_x[idx] - befx;
 
   return pdf_x * pdf_y;
 }
@@ -116,16 +129,15 @@ uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, 
 
   // create cdf for sampling rows
   uniform float* uniform cdf_y = uniform new uniform float[size.y];
-  
+
   // compute y distribution and initialize row distributions
   uniform int i = 0;
   for (uniform int y = 0; y < size.y; y++)
   {
     // initialize distribution for current row
-    Distribution1D_create(size.x, f + y*size.x);
-    cdf_y[y] = f[size.x + y*size.x - 1];
+    cdf_y[y] = Distribution1D_create(size.x, f + y*size.x);
   }
-  
+
   // initializes the y distribution
   Distribution1D_create(size.y, cdf_y);
 

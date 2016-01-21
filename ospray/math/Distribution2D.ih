@@ -29,5 +29,12 @@ struct Distribution2D
 uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, uniform float* uniform importance);
 void Distribution2D_destroy(uniform Distribution2D* uniform);
 
-vec2f Distribution2D_sample(const uniform Distribution2D* uniform, const vec2f &s);
+struct Sample2D
+{
+  vec2f uv;
+  float pdf;
+};
+
+// inline?
+Sample2D Distribution2D_sample(const uniform Distribution2D* uniform, const vec2f &s);
 float  Distribution2D_pdf(const uniform Distribution2D* uniform, const vec2f &uv);
