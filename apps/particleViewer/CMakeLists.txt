@@ -30,6 +30,12 @@ IF (NOT THIS_IS_MIC)
     Model.cpp
     uintah.cpp
     )
-  TARGET_LINK_LIBRARIES(ospParticleViewer ospray ospray_glut3d ospray_xml)
+  TARGET_LINK_LIBRARIES(ospParticleViewer
+    ospray
+    ospray_glut3d
+    ospray_xml
+    ${TBB_LIBRARY_MALLOC}
+    ${TBB_LIBRARY}
+  )
 ENDIF()
 

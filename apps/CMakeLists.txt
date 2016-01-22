@@ -18,6 +18,12 @@ CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
 
+  IF(USE_TBB)
+    # NOTE(jda) - This is done automatically by the find_package config for apps
+    #             outside the build environment of OSPRay.
+    FIND_PACKAGE(TBB QUIET)
+  ENDIF()
+
   # common xml utility classes
   ADD_SUBDIRECTORY(common/xml)
 

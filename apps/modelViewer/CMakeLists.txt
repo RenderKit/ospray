@@ -33,6 +33,8 @@ TARGET_LINK_LIBRARIES(ospModelViewer
   ospray_glut3d
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
+  ${TBB_LIBRARY_MALLOC}
+  ${TBB_LIBRARY}
   )
 # ------------------------------------------------------------
 INSTALL(TARGETS ospModelViewer DESTINATION bin)
