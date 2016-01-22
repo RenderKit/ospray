@@ -21,7 +21,7 @@
 struct DirectionalLight {
   Light super;      //!< inherited light fields
 
-  vec3f direction;  //!< direction of emitted light rays
+  vec3f direction;  //!< direction *towards* the light source
   vec3f radiance;   //!< RGB color and intensity of light
   float cosAngle;   //!< Angular limit of the cone light in an easier to use form: cosine of the half angle in radians
   float pdf;        //!< Probability to sample a direction to the light
@@ -41,7 +41,7 @@ varying LightSample DirectionalLight_sample(const uniform Light *uniform _self,
   const DirectionalLight *uniform self = (DirectionalLight *uniform)_self;
   LightSample sample;
 
-  sample.direction = neg(self->direction);
+  sample.direction = self->direction;
   sample.distance = inf;
   sample.pdf = self->pdf;
 
