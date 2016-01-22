@@ -135,19 +135,19 @@ void StructuredVolume::commit()
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count,blockSize);
     vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-#pragma omp parallel for
-    for (int i=0;i<numBlocks;i++) {
-      size_t myBegin = i*blockSize;
+
+    parallel_for(numBlocks, [&](int taskIndex){
+      size_t myBegin = taskIndex *blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
       vec2f myVoxelRange(source[myBegin]);
 
-      for (size_t j=myBegin ; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[j]);
+      for (size_t j = myBegin; j < myEnd ; j++) {
+        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[j]);
+        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[j]);
       }
 
-      blockRange[i] = myVoxelRange;
-    }
+      blockRange[taskIndex] = myVoxelRange;
+    });
 
     for (int i=0;i<numBlocks;i++) {
       voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
@@ -170,19 +170,19 @@ void StructuredVolume::commit()
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count,blockSize);
     vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-#pragma omp parallel for
-    for (int i=0;i<numBlocks;i++) {
-      size_t myBegin = i*blockSize;
+
+    parallel_for(numBlocks, [&](int taskIndex){
+      size_t myBegin = taskIndex *blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
       vec2f myVoxelRange(source[myBegin]);
 
-      for (size_t j=myBegin ; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[j]);
+      for (size_t j = myBegin; j < myEnd ; j++) {
+        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[j]);
+        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[j]);
       }
 
-      blockRange[i] = myVoxelRange;
-    }
+      blockRange[taskIndex] = myVoxelRange;
+    });
 
     for (int i=0;i<numBlocks;i++) {
       voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
@@ -205,19 +205,19 @@ void StructuredVolume::commit()
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count,blockSize);
     vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-#pragma omp parallel for
-    for (int i=0;i<numBlocks;i++) {
-      size_t myBegin = i*blockSize;
+
+    parallel_for(numBlocks, [&](int taskIndex){
+      size_t myBegin = taskIndex *blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
       vec2f myVoxelRange(source[myBegin]);
 
-      for (size_t j=myBegin ; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[j]);
+      for (size_t j = myBegin; j < myEnd ; j++) {
+        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[j]);
+        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[j]);
       }
 
-      blockRange[i] = myVoxelRange;
-    }
+      blockRange[taskIndex] = myVoxelRange;
+    });
 
     for (int i=0;i<numBlocks;i++) {
       voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
