@@ -81,14 +81,18 @@ SET(OSPRAY_SOURCES
   common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Core.cpp
+  common/ISPC_KNC_Backend.h
+  common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
+  common/OSPDataType.h
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
   common/Library.cpp
   common/Thread.cpp
+  common/Texture.h
   common/parallel_for.h
 
   fb/FrameBuffer.ispc
