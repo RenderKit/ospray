@@ -18,7 +18,6 @@
 #include "ospray/common/Data.h"
 #include "ospray/common/Core.h"
 #include "ospray/common/Library.h"
-#include "ospray/common/parallel_for.h"
 #include "ospray/volume/StructuredVolume.h"
 #include "GridAccelerator_ispc.h"
 #include "StructuredVolume_ispc.h"
@@ -126,111 +125,5 @@ void StructuredVolume::commit()
     return res;
   }
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-  // Compute the voxel value range for unsigned byte voxels.
-  void StructuredVolume::computeVoxelRange(const unsigned char *source,
-                                           const size_t &count)
-  {
-#if 1
-    const size_t blockSize = 1000000;
-    int numBlocks = divRoundUp(count,blockSize);
-    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-
-    parallel_for(numBlocks, [&](int taskIndex){
-      size_t myBegin = taskIndex *blockSize;
-      size_t myEnd   = std::min(myBegin+blockSize,count);
-      vec2f myVoxelRange(source[myBegin]);
-
-      for (size_t j = myBegin; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[j]);
-      }
-
-      blockRange[taskIndex] = myVoxelRange;
-    });
-
-    for (int i=0;i<numBlocks;i++) {
-      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
-    }
-
-#else
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
-      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
-    }
-#endif
-  }
-
-  // Compute the voxel value range for floating point voxels.
-  void StructuredVolume::computeVoxelRange(const float *source,
-                                           const size_t &count)
-  {
-#if 1
-    const size_t blockSize = 1000000;
-    int numBlocks = divRoundUp(count,blockSize);
-    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-
-    parallel_for(numBlocks, [&](int taskIndex){
-      size_t myBegin = taskIndex *blockSize;
-      size_t myEnd   = std::min(myBegin+blockSize,count);
-      vec2f myVoxelRange(source[myBegin]);
-
-      for (size_t j = myBegin; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[j]);
-      }
-
-      blockRange[taskIndex] = myVoxelRange;
-    });
-
-    for (int i=0;i<numBlocks;i++) {
-      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
-    }
-
-#else
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, source[i]);
-      voxelRange.y = std::max(voxelRange.y, source[i]);
-    }
-#endif
-  }
-
-  // Compute the voxel value range for double precision floating point voxels.
-  void StructuredVolume::computeVoxelRange(const double *source,
-                                           const size_t &count)
-  {
-#if 1
-    const size_t blockSize = 1000000;
-    int numBlocks = divRoundUp(count,blockSize);
-    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-
-    parallel_for(numBlocks, [&](int taskIndex){
-      size_t myBegin = taskIndex *blockSize;
-      size_t myEnd   = std::min(myBegin+blockSize,count);
-      vec2f myVoxelRange(source[myBegin]);
-
-      for (size_t j = myBegin; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[j]);
-      }
-
-      blockRange[taskIndex] = myVoxelRange;
-    });
-
-    for (int i=0;i<numBlocks;i++) {
-      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
-    }
-
-#else
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
-      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
-    }
-#endif
-  }
-#endif
 } // ::ospray
 
