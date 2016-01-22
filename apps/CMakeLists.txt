@@ -22,6 +22,9 @@ IF(NOT THIS_IS_MIC)
     # NOTE(jda) - This is done automatically by the find_package config for apps
     #             outside the build environment of OSPRay.
     FIND_PACKAGE(TBB QUIET)
+    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib")
+    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib64")
+    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib/intel64/gcc4.4")
   ENDIF()
 
   # common xml utility classes
