@@ -103,6 +103,15 @@ ELSE(WIN32)
   SET(CMAKE_DIR share/ospray)
 ENDIF(WIN32)
 
+# Make OpenMP available to all apps/libraries/modules
+FIND_PACKAGE(OpenMP QUIET)
+IF (OPENMP_FOUND)
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+  SET(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+ENDIF()
+
 ##############################################################
 # cmake modules
 ##############################################################

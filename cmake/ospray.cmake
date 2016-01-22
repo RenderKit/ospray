@@ -29,14 +29,6 @@ MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 # unhide compiler to make it easier for users to see what they are using
 MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
-# project-wide OpenMP flags for all compilers
-find_package(OpenMP QUIET)
-if(OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
-
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
