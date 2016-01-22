@@ -362,8 +362,9 @@ namespace ospray {
       result = COIEngineGetInfo(coiEngine,sizeof(coiInfo),&coiInfo);
       Assert(result == COI_SUCCESS);
       
-      cout << coiInfo.NumCores << " cores @ " << coiInfo.CoreMaxFrequency << "MHz, "
-           << (coiInfo.PhysicalMemory/1000000000) << "GB memory" << endl;
+      cout << coiInfo.NumCores << " cores @ " << coiInfo.CoreMaxFrequency
+           << "MHz, " << (coiInfo.PhysicalMemory/1000000000) << "GB memory"
+           << endl;
     }
 
     /*! load ospray worker onto device, and initialize basic ospray
@@ -373,15 +374,28 @@ namespace ospray {
       COIRESULT result;
       const char *coiWorker = getenv("OSPRAY_COI_WORKER");
       if (coiWorker == NULL) {
-        std::cerr << "Error: OSPRAY_COI_WORKER not defined." << std::endl;
-        std::cerr << "Note: In order to run the OSPRay COI device on the Xeon Phi(s) it needs to know the full path of the 'ospray_coi_worker.mic' executable that contains the respective ospray xeon phi worker binary. Please define an environment variable named 'OSPRAY_COI_WORKER' to contain the filename - with full directory path - of this executable." << std::endl;
+        cerr << "Error: OSPRAY_COI_WORKER not defined." << endl;
+        cerr << "Note: In order to run the OSPRay COI device on the Xeon"
+             << " Phi(s) it needs to know the full path of the"
+             << " 'ospray_coi_worker.mic' executable that contains the"
+             << " respective ospray xeon phi worker binary. Please define"
+             << " an environment variable named 'OSPRAY_COI_WORKER' to"
+             << " contain the filename - with full directory path - of"
+             << " this executable." << endl;
         exit(1);
       }
       const char *sinkLDPath = getenv("SINK_LD_LIBRARY_PATH");
-      if (coiWorker == NULL) {
-        std::cerr << "SINK_LD_LIBRARY_PATH not defined." << std::endl;
-        std::cerr << "Note: In order for the COI version of OSPRay to find all the shared libraries (ospray, plus whatever modules the application way want to load) you have to specify the search path where COI is supposed to find those libraries on the HOST filesystem (it will then load them onto the device as required)." << std::endl;
-        std::cerr << "Please define an environment variable named SINK_LD_LIBRARY_PATH that points to the directory containing the respective ospray mic libraries." << std::endl;
+      if (sinkLDPath == NULL) {
+        cerr << "SINK_LD_LIBRARY_PATH not defined." << endl;
+        cerr << "Note: In order for the COI version of OSPRay to find all"
+                  << " the shared libraries (ospray, plus whatever modules the"
+                  << " application way want to load) you have to specify the"
+                  << " search path where COI is supposed to find those"
+                  << " libraries on the HOST filesystem (it will then load"
+                  << " them onto the device as required)." << endl;
+        cerr << "Please define an environment variable named"
+                  << " SINK_LD_LIBRARY_PATH that points to the directory"
+                  << " containing the respective ospray mic libraries." << endl;
         exit(1);
       }
 
@@ -402,13 +416,15 @@ namespace ospray {
                                         NULL,0,NULL,
                                         &coiProcess);
 
-      if (result != COI_SUCCESS)
+      if (result != COI_SUCCESS) {
         coiError(result,"could not load worker binary");
+      }
       Assert(result == COI_SUCCESS);
       
-      result = COIPipelineCreate(coiProcess,NULL,0,&coiPipe);
-      if (result != COI_SUCCESS)
+      result = COIPipelineCreate(coiProcess, NULL, 0, &coiPipe);
+      if (result != COI_SUCCESS) {
         coiError(result,"could not create command pipe");
+      }
       Assert(result == COI_SUCCESS);
       
 
@@ -512,12 +528,14 @@ namespace ospray {
       }
 
 
-      for (int i=0;i<numEngines;i++)
+      for (int i=0;i<numEngines;i++) {
         engine.push_back(new COIEngine(this,i));
+      }
 
       cout << "#osp:coi: loading ospray onto COI devices..." << endl;
-      for (int i=0;i<numEngines;i++)
+      for (int i = 0; i < numEngines; i++) {
         engine[i]->loadOSPRay();
+      }
 
       cout << "#osp:coi: all engines initialized and ready to run." << endl;
     }
