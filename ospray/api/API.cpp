@@ -118,9 +118,9 @@ namespace ospray {
         }
 
         if (std::string(_av[i]) == "--osp:coi") {
-#ifdef OSPRAY_TARGET_MIC
+#ifdef __MIC__
           throw std::runtime_error("The COI device can only be created on the host");
-#elifdef OSPRAY_MIC_COI
+#elif defined(OSPRAY_MIC_COI)
           removeArgs(*_ac,(char **&)_av,i,1);
           ospray::api::Device::current
             = ospray::coi::createCoiDevice(_ac,_av);
