@@ -102,11 +102,11 @@ namespace ospray {
   inline void StructuredVolume::computeVoxelRange(const T* source,
                                                   const size_t &count)
   {
-#if 1
     const size_t blockSize = 1000000;
     int numBlocks = divRoundUp(count, blockSize);
     vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
 
+    //NOTE(jda) - shouldn't this be a simple reduction (TBB/OMP)?
     parallel_for(numBlocks, [&](int taskIndex){
       size_t myBegin = taskIndex *blockSize;
       size_t myEnd   = std::min(myBegin+blockSize,count);
@@ -121,16 +121,9 @@ namespace ospray {
     });
 
     for (int i = 0; i < numBlocks; i++) {
-      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
+      voxelRange.x = std::min(voxelRange.x, blockRange[i].x);
+      voxelRange.y = std::max(voxelRange.y, blockRange[i].y);
     }
-
-#else
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
-      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
-    }
-#endif
   }
 #endif
 
