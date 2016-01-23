@@ -345,7 +345,15 @@ INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
 # MPI DEVICE - mpi worker
 ##############################################################
 IF (OSPRAY_MPI)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_CXX_LIBRARIES})
+  IF (THIS_IS_MIC)
+    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+      ${MPI_LIBRARY_MIC}
+    )
+  ELSE()
+    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+      ${MPI_CXX_LIBRARIES}
+    )
+  ENDIF()
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
@@ -364,13 +372,13 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
-      )
+    )
     # ... and add the coi worker executable
     ADD_EXECUTABLE(ospray_coi_worker.mic api/COIDeviceWorker.cpp)
     TARGET_LINK_LIBRARIES(ospray_coi_worker.mic
       ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
-      )
+    )
     # ------------------------------------------------------------
     INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
     INSTALL(TARGETS ospray_coi_worker.mic DESTINATION bin)
@@ -380,7 +388,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_HOST}
-      )
+    )
     # note: no need to add the host-side libcoi to the install
     # targets; it's already done above
   ENDIF()
