@@ -148,9 +148,9 @@ namespace ospray {
       ospCommit(camera);
       ospCommit(renderer);
 
-    };
+    }
 
-    virtual void reshape(const ospray::vec2i &newSize)
+    void reshape(const ospray::vec2i &newSize) override
     {
       Glut3DWidget::reshape(newSize);
       g_windowSize = newSize;
@@ -187,7 +187,7 @@ namespace ospray {
       forceRedraw();
     }
 
-    virtual void keypress(char key, const vec2f where)
+    void keypress(char key, const vec2f where) override
     {
       switch (key) {
       case 'R':
@@ -263,7 +263,7 @@ namespace ospray {
       }
     }
 
-    virtual void specialkey(int32 key, const vec2f where)
+    void specialkey(int32 key, const vec2f where) override
     {
       switch(key) {
       case GLUT_KEY_PAGE_UP:
@@ -293,7 +293,7 @@ namespace ospray {
       }
     }
 
-    virtual void mouseButton(int32 whichButton, bool released, const vec2i &pos)
+    void mouseButton(int32 whichButton, bool released, const vec2i &pos) override
     {
       Glut3DWidget::mouseButton(whichButton, released, pos);
       if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
@@ -312,7 +312,7 @@ namespace ospray {
       }
     }
 
-    virtual void display()
+    void display() override
     {
       if (!fb || !renderer) return;
 
