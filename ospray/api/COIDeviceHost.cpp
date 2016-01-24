@@ -45,7 +45,6 @@ namespace ospray {
 #define OSPCOI_FUNCTION_MAPPING                                             \
       x(OSPCOI_NEW_MODEL=0,             "ospray_coi_new_model")             \
       x(OSPCOI_NEW_DATA,                "ospray_coi_new_data")              \
-      x(OSPCOI_NEW_TRIANGLEMESH,        "ospray_coi_new_trianglemesh")      \
       x(OSPCOI_COMMIT,                  "ospray_coi_commit")                \
       x(OSPCOI_SET_VALUE,               "ospray_coi_set_value")             \
       x(OSPCOI_GET_DATA_PROPERTIES,     "ospray_coi_get_data_properties")   \
@@ -78,7 +77,7 @@ namespace ospray {
       x(OSPCOI_UPLOAD_DATA_CHUNK,       "ospray_coi_upload_data_chunk")     \
       x(OSPCOI_PICK,                    "ospray_coi_pick")                  \
       x(OSPCOI_SAMPLE_VOLUME,           "ospray_coi_sample_volume")         \
-      x(OSPCOI_NUM_FUNCTIONS,           NULL) //This must be last
+      x(OSPCOI_NUM_FUNCTIONS,           nullptr) //This must be last
 
 #define x(a,b) a,
     typedef enum {
@@ -121,7 +120,7 @@ namespace ospray {
       COIDevice();
 
       void callFunction(RemoteFctID ID, const DataStream &data, 
-                        void *returnValue=NULL, 
+                        void *returnValue=nullptr,
                         int returnValueSize=0,
                         bool sync=true)
       { 
@@ -138,8 +137,8 @@ namespace ospray {
           }
           COIRESULT result = COIPipelineRunFunction(engine[i]->coiPipe,
                                                     engine[i]->coiFctHandle[ID],
-                                                    0,NULL,NULL,//buffers
-                                                    0,NULL,//dependencies
+                                                    0,nullptr,nullptr,//buffers
+                                                    0,nullptr,//dependencies
                                                     data.buf,data.ofs,//data
                                                     returnValue,
                                                     returnValue?returnValueSize:0,
@@ -151,7 +150,7 @@ namespace ospray {
         numEventsOutstanding++;
         if (sync || returnValue) {
           for (int i=0;i<engine.size();i++) {
-            COIEventWait(1,&event[i],-1,1/*wait for all*/,NULL,NULL);
+            COIEventWait(1,&event[i],-1,1/*wait for all*/,nullptr,nullptr);
           }
           numEventsOutstanding = 0;
         }
@@ -300,7 +299,7 @@ namespace ospray {
                     const char *name,
                     OSPObject *value) override;
 
-      /*! Retrieve a NULL-terminated list of the parameter names associated
+      /*! Retrieve a nullptr-terminated list of the parameter names associated
        *  with an object. */
       int getParameters(OSPObject object, char ***value) override;
 
@@ -315,7 +314,7 @@ namespace ospray {
                     char **value) override;
 
       /*! Get the type of the named parameter or the given object (if 'name'
-       *  is NULL). */
+       *  is nullptr). */
       int getType(OSPObject object,
                   const char *name,
                   OSPDataType *value) override;
@@ -334,9 +333,6 @@ namespace ospray {
 
       /*! Get the named 3-vector integer value associated with an object. */
       int getVec3i(OSPObject object, const char *name, vec3i *value) override;
-
-      /*! create a new triangle mesh geometry */
-      OSPTriangleMesh newTriangleMesh() override;
 
       /*! create a new renderer object (out of list of registered renderers) */
       OSPRenderer newRenderer(const char *type) override;
@@ -423,7 +419,7 @@ namespace ospray {
     {
       COIRESULT result;
       const char *coiWorker = getenv("OSPRAY_COI_WORKER");
-      if (coiWorker == NULL) {
+      if (coiWorker == nullptr) {
         cerr << "Error: OSPRAY_COI_WORKER not defined." << endl;
         cerr << "Note: In order to run the OSPRay COI device on the Xeon"
              << " Phi(s) it needs to know the full path of the"
@@ -435,7 +431,7 @@ namespace ospray {
         exit(1);
       }
       const char *sinkLDPath = getenv("SINK_LD_LIBRARY_PATH");
-      if (sinkLDPath == NULL) {
+      if (sinkLDPath == nullptr) {
         cerr << "SINK_LD_LIBRARY_PATH not defined." << endl;
         cerr << "Note: In order for the COI version of OSPRay to find all"
                   << " the shared libraries (ospray, plus whatever modules the"
@@ -460,10 +456,11 @@ namespace ospray {
 
       result = COIProcessCreateFromFile(coiEngine,
                                         coiWorker,
-                                        workerArgs.size(),
-                                        &workerArgs[0],
-                                        0,NULL,1/*proxy!*/,
-                                        NULL,0,NULL,
+                                        workerArgs.size(), workerArgs.data(),
+                                        false, nullptr,
+                                        true,nullptr,/*proxy!*/
+                                        0,
+                                        nullptr,
                                         &coiProcess);
 
       if (result != COI_SUCCESS) {
@@ -471,7 +468,7 @@ namespace ospray {
       }
       Assert(result == COI_SUCCESS);
       
-      result = COIPipelineCreate(coiProcess, NULL, 0, &coiPipe);
+      result = COIPipelineCreate(coiProcess, nullptr, 0, &coiPipe);
       if (result != COI_SUCCESS) {
         coiError(result,"could not create command pipe");
       }
@@ -493,11 +490,11 @@ namespace ospray {
         coiError(result,std::string("could not find function '")+fctName+"'");
 
       result = COIPipelineRunFunction(coiPipe,fctHandle,
-                                      0,NULL,NULL,//buffers
-                                      0,NULL,//dependencies
+                                      0,nullptr,nullptr,//buffers
+                                      0,nullptr,//dependencies
                                       &deviceInfo,sizeof(deviceInfo),//data
-                                      NULL,0,
-                                      NULL);
+                                      nullptr,0,
+                                      nullptr);
       Assert(result == COI_SUCCESS);
 
 
@@ -524,11 +521,11 @@ namespace ospray {
         result = COIPipelineRunFunction(coiPipe,
                                         coiFctHandle[OSPCOI_PIN_UPLOAD_BUFFER],
                                         1,&uploadBuffer,&coiBufferFlags,//buffers
-                                        0,NULL,//dependencies
+                                        0,nullptr,//dependencies
                                         args.buf,args.ofs,//data
-                                        NULL,0,
+                                        nullptr,0,
                                         &event);
-        COIEventWait(1,&event,-1,1,NULL,NULL);
+        COIEventWait(1,&event,-1,1,nullptr,nullptr);
         if (result != COI_SUCCESS) {
           cout << "error in pinning coi upload buffer : " << COIResultGetName(result) << endl;
           FATAL("error in allocating coi buffer");
@@ -605,7 +602,7 @@ namespace ospray {
         COILIBRARY coiLibrary;
         result = COIProcessLoadLibraryFromFile(engine[i]->coiProcess,
                                                libName.c_str(),
-                                               NULL,NULL,
+                                               nullptr,nullptr,
                                                // 0,
                                                &coiLibrary);
         if (result != COI_SUCCESS)
@@ -614,19 +611,6 @@ namespace ospray {
       }
       return 0; 
     }
-
-    /*! create a new triangle mesh geometry */
-    OSPTriangleMesh COIDevice::newTriangleMesh()
-    {
-      ObjectHandle ID = ObjectHandle::alloc();
-      DataStream args;
-      args.write(ID);
-
-      callFunction(OSPCOI_NEW_TRIANGLEMESH,args);
-
-      return (OSPTriangleMesh)(int64)ID;
-    }
-
 
     OSPModel COIDevice::newModel()
     {
@@ -666,10 +650,10 @@ namespace ospray {
           result = COIBufferWrite(engine[i]->uploadBuffer,
                                   0,beginPtr,blockSize,
                                   COI_COPY_USE_DMA,
-                                  0,NULL,&event);
+                                  0,nullptr,&event);
           if (result != COI_SUCCESS)
             cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
-          COIEventWait(1,&event,-1,1,NULL,NULL);
+          COIEventWait(1,&event,-1,1,nullptr,nullptr);
         }
         
         DataStream args;
@@ -685,10 +669,10 @@ namespace ospray {
           result = COIPipelineRunFunction(engine[i]->coiPipe,
                                           engine[i]->coiFctHandle[OSPCOI_UPLOAD_DATA_CHUNK],
                                           1,&engine[i]->uploadBuffer,&coiBufferFlags,//buffers
-                                          0,NULL,//dependencies
+                                          0,nullptr,//dependencies
                                           args.buf,args.ofs,//data
-                                          NULL,0,
-                                          NULL); //&event);
+                                          nullptr,0,
+                                          nullptr); //&event);
           if (result != COI_SUCCESS)
             cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
         }        
@@ -716,11 +700,11 @@ namespace ospray {
           result = COIPipelineRunFunction(engine[i]->coiPipe,
                                           engine[i]->coiFctHandle[OSPCOI_PRINT_CHECKSUMS],
                                           1,&coiBuffer[i],&coiBufferFlags,//buffers
-                                          0,NULL,//dependencies
+                                          0,nullptr,//dependencies
                                           args.buf,args.ofs,//data
-                                          NULL,0,
+                                          nullptr,0,
                                           &event[i]);
-          COIEventWait(1,&event[i],-1,1,NULL,NULL);
+          COIEventWait(1,&event[i],-1,1,nullptr,nullptr);
         }
 
         Assert(result == COI_SUCCESS);
@@ -734,15 +718,15 @@ namespace ospray {
         result = COIPipelineRunFunction(engine[i]->coiPipe,
                                         engine[i]->coiFctHandle[OSPCOI_NEW_DATA],
                                         1,&coiBuffer[i],&coiBufferFlags,//buffers
-                                        0,NULL,//dependencies
+                                        0,nullptr,//dependencies
                                         args.buf,args.ofs,//data
-                                        NULL,0,
+                                        nullptr,0,
                                         &event[i]);
         
         Assert(result == COI_SUCCESS);
       }
       for (int i=0;i<engine.size();i++) {
-        COIEventWait(1,&event[i],-1,1,NULL,NULL);
+        COIEventWait(1,&event[i],-1,1,nullptr,nullptr);
       }
 #endif
       return (OSPData)(int64)ID;
@@ -757,8 +741,8 @@ namespace ospray {
       args.write((ObjectHandle&)_sc);
       args.write((ObjectHandle&)_renderer);
       args.write((uint32&)fbChannelFlags);
-      callFunction(OSPCOI_RENDER_FRAME,args,NULL,false);
-      callFunction(OSPCOI_RENDER_FRAME_SYNC,args,NULL,true);
+      callFunction(OSPCOI_RENDER_FRAME,args,nullptr,false);
+      callFunction(OSPCOI_RENDER_FRAME_SYNC,args,nullptr,true);
     }
 
 
@@ -776,7 +760,7 @@ namespace ospray {
       cout << "#osp:coi: warning, release() not implemented." << endl;
       return;
 
-      if (object == NULL) return;
+      if (object == nullptr) return;
       ObjectHandle handle = (ObjectHandle &) object;
       DataStream stream;
       stream.write(handle);
@@ -839,14 +823,14 @@ namespace ospray {
       else {
         // could NOT create materail 
         handle.free();
-        return (OSPMaterial)NULL;
+        return (OSPMaterial)nullptr;
       }
     }
 
     /*! have given renderer "pick", i.e. returning the position of the geometry seen at screenspace point */
     OSPPickResult COIDevice::pick(OSPRenderer _renderer, const vec2f &screenPos)
     {
-      Assert2(_renderer, "NULL renderer in COIDevice::pick");
+      Assert2(_renderer, "nullptr renderer in COIDevice::pick");
       DataStream args;
       args.write(_renderer);
       args.write(screenPos);
@@ -905,12 +889,12 @@ namespace ospray {
         result = COIPipelineRunFunction(engine[i]->coiPipe,
                                         engine[i]->coiFctHandle[OSPCOI_NEW_TEXTURE2D],
                                         1,&coiBuffer,&coiBufferFlags,//buffers
-                                        0,NULL,//dependencies
+                                        0,nullptr,//dependencies
                                         args.buf,args.ofs,//data
-                                        NULL,0,
+                                        nullptr,0,
                                         &event);
         Assert(result == COI_SUCCESS);
-        COIEventWait(1,&event,-1,1,NULL,NULL);
+        COIEventWait(1,&event,-1,1,nullptr,nullptr);
       }
       return (OSPTexture2D)(int64)ID;
     }
@@ -1019,7 +1003,7 @@ namespace ospray {
       for (int i=0;i<engine.size();i++) {
         result = COIBufferCreate(size.x*size.y*sizeof(int32),
                                  COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_WRITE,
-                                 NULL,1,&engine[i]->coiProcess,&fb->coiBuffer[i]);
+                                 nullptr,1,&engine[i]->coiProcess,&fb->coiBuffer[i]);
         Assert(result == COI_SUCCESS);
         
         COIEVENT event; bzero(&event,sizeof(event));
@@ -1030,12 +1014,12 @@ namespace ospray {
                                         engine[i]->coiFctHandle[OSPCOI_NEW_FRAMEBUFFER],
                                         1,&fb->coiBuffer[i],
                                         &coiBufferFlags,//buffers
-                                        0,NULL,//dependencies
+                                        0,nullptr,//dependencies
                                         args.buf,args.ofs,//data
-                                        NULL,0,
+                                        nullptr,0,
                                         &event);
         Assert(result == COI_SUCCESS);
-        COIEventWait(1,&event,-1,1,NULL,NULL);
+        COIEventWait(1,&event,-1,1,nullptr,nullptr);
       }
       return (OSPFrameBuffer)(int64)handle;
     }
@@ -1061,7 +1045,7 @@ namespace ospray {
         devBuffer[i] = new int32[fb->size.x*fb->size.y];
         result = COIBufferRead(fb->coiBuffer[i],0,devBuffer[i],
                                fb->size.x*fb->size.y*sizeof(int32),
-                               COI_COPY_USE_DMA,0,NULL,&doneCopy[i]);
+                               COI_COPY_USE_DMA,0,nullptr,&doneCopy[i]);
         Assert(result == COI_SUCCESS);
       }
       // -------------------------------------------------------
@@ -1070,7 +1054,7 @@ namespace ospray {
       for (int engineID=0;engineID<numEngines;engineID++) {
         const size_t sizeX = fb->size.x;
         const size_t sizeY = fb->size.y;
-        COIEventWait(1,&doneCopy[engineID],-1,1,NULL,NULL);
+        COIEventWait(1,&doneCopy[engineID],-1,1,nullptr,nullptr);
         uint32 *src = (uint32*)devBuffer[engineID];
         uint32 *dst = (uint32*)fb->hostMem;
 
@@ -1160,8 +1144,8 @@ namespace ospray {
     int COIDevice::setRegion(OSPVolume object, const void *source, 
                              const vec3i &index, const vec3i &count) 
     {
-      Assert(object != NULL && "invalid volume object handle");
-      char *typeString = NULL;
+      Assert(object != nullptr && "invalid volume object handle");
+      char *typeString = nullptr;
       getString(object, "voxelType", &typeString);
       OSPDataType type = typeForString(typeString);
       Assert(type != OSP_UNKNOWN && "unknown volume element type");
@@ -1247,7 +1231,7 @@ namespace ospray {
     int COIDevice::getData(OSPObject object, const char *name, OSPData *value) {
 
       struct ReturnValue { int success;  ObjectHandle value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1261,7 +1245,7 @@ namespace ospray {
     int COIDevice::getDataProperties(OSPData object, size_t *count, OSPDataType *type) {
 
       struct ReturnValue { int success;  size_t count;  OSPDataType type; } result;
-      Assert(object != NULL && "invalid data object handle");
+      Assert(object != nullptr && "invalid data object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       callFunction(OSPCOI_GET_DATA_PROPERTIES, stream, &result, sizeof(ReturnValue));
@@ -1274,14 +1258,14 @@ namespace ospray {
 
       if (getDataProperties(object, count, type) == false) return(false);
       size_t size = *count * sizeOf(*type);
-      COIBUFFER coiBuffer = NULL;
+      COIBUFFER coiBuffer = nullptr;
       COIRESULT coiResult;
 
       coiResult = COIBufferCreate(
           size,
           COI_BUFFER_NORMAL,
           size > 1024 * 1024 * 128 ? COI_OPTIMIZE_HUGE_PAGE_SIZE : 0,
-          NULL,
+          nullptr,
           1, &engine[0]->coiProcess,
           &coiBuffer
       );
@@ -1296,15 +1280,15 @@ namespace ospray {
           engine[0]->coiPipe,
           engine[0]->coiFctHandle[OSPCOI_GET_DATA_VALUES],
           1, &coiBuffer, &coiBufferFlags,
-          0, NULL,
+          0, nullptr,
           stream.buf, stream.ofs,
           &result, sizeof(int),
-          NULL
+          nullptr
       );
 
       if (coiResult != COI_SUCCESS) coiError(coiResult, "error during COIDevice::getDataValues run function");
       if (result == false) { COIBufferDestroy(coiBuffer);  return(false); }
-      void *coiBufferPointer = NULL;
+      void *coiBufferPointer = nullptr;
      *pointer = malloc(size);
       COIMAPINSTANCE coiMapInstance;
 
@@ -1312,15 +1296,15 @@ namespace ospray {
           coiBuffer,
           0, 0,
           COI_MAP_READ_ONLY,
-          0, NULL,
-          NULL,
+          0, nullptr,
+          nullptr,
           &coiMapInstance,
           &coiBufferPointer
       );
 
       if (coiResult != COI_SUCCESS) coiError(coiResult, "unable to map COI buffer in COIDevice::getDataValues");
       memcpy(*pointer, coiBufferPointer, size);
-      COIBufferUnmap(coiMapInstance, 0, NULL, NULL);
+      COIBufferUnmap(coiMapInstance, 0, nullptr, nullptr);
       COIBufferDestroy(coiBuffer);  return(true);
 
     }
@@ -1329,7 +1313,7 @@ namespace ospray {
     int COIDevice::getf(OSPObject object, const char *name, float *value) {
 
       struct ReturnValue { int success;  float value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1343,7 +1327,7 @@ namespace ospray {
     int COIDevice::geti(OSPObject object, const char *name, int *value) {
 
       struct ReturnValue { int success;  int value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1357,7 +1341,7 @@ namespace ospray {
     int COIDevice::getMaterial(OSPGeometry object, OSPMaterial *value) {
 
       struct ReturnValue { int success;  ObjectHandle value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write("\0");
@@ -1371,7 +1355,7 @@ namespace ospray {
     int COIDevice::getObject(OSPObject object, const char *name, OSPObject *value) {
 
       struct ReturnValue { int success;  ObjectHandle value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1381,12 +1365,12 @@ namespace ospray {
 
     }
 
-    /*! Retrieve a NULL-terminated list of the parameter names associated with an object. */
+    /*! Retrieve a nullptr-terminated list of the parameter names associated with an object. */
     int COIDevice::getParameters(OSPObject object, char ***value) {
 
       int size = 0;  getParametersSize(object, &size);
       struct ReturnValue { int success;  int value; };  ReturnValue *result = (ReturnValue *) malloc(size + sizeof(int));
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       callFunction(OSPCOI_GET_PARAMETERS, stream, result, size + sizeof(int));
@@ -1407,7 +1391,7 @@ namespace ospray {
 
       }
 
-      names[count] = NULL;
+      names[count] = nullptr;
       return(*value = names, free(result), true);
 
     }
@@ -1416,7 +1400,7 @@ namespace ospray {
     int COIDevice::getParametersSize(OSPObject object, int *value) {
 
       struct ReturnValue { int success;  int value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       callFunction(OSPCOI_GET_PARAMETERS_SIZE, stream, &result, sizeof(ReturnValue));
@@ -1428,7 +1412,7 @@ namespace ospray {
     int COIDevice::getString(OSPObject object, const char *name, char **value) {
 
       struct ReturnValue { int success;  char value[2048]; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1438,11 +1422,11 @@ namespace ospray {
 
     }
 
-    /*! Get the type of the named parameter or the given object (if 'name' is NULL). */
+    /*! Get the type of the named parameter or the given object (if 'name' is nullptr). */
     int COIDevice::getType(OSPObject object, const char *name, OSPDataType *value) {
 
       struct ReturnValue { int success;  OSPDataType type; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name ? name : "\0");
@@ -1455,7 +1439,7 @@ namespace ospray {
     int COIDevice::getVec2f(OSPObject object, const char *name, vec2f *value) {
 
       struct ReturnValue { int success;  vec2f value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1469,7 +1453,7 @@ namespace ospray {
     int COIDevice::getVec3f(OSPObject object, const char *name, vec3f *value) {
 
       struct ReturnValue { int success;  vec3f value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1483,7 +1467,7 @@ namespace ospray {
     int COIDevice::getVec4f(OSPObject object, const char *name, vec4f *value) {
 
       struct ReturnValue { int success;  vec4f value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);
@@ -1497,7 +1481,7 @@ namespace ospray {
     int COIDevice::getVec3i(OSPObject object, const char *name, vec3i *value) {
 
       struct ReturnValue { int success;  vec3i value; } result;
-      Assert(object != NULL && "invalid source object handle");
+      Assert(object != nullptr && "invalid source object handle");
       DataStream stream;
       stream.write((ObjectHandle &) object);
       stream.write(name);

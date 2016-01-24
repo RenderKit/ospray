@@ -244,13 +244,6 @@ namespace ospray {
     return ospray::api::Device::current->removeGeometry(model, geometry);
   }
 
-  /*! create a new triangle mesh */
-  extern "C" OSPTriangleMesh ospNewTriangleMesh()
-  {
-    ASSERT_DEVICE();
-    return ospray::api::Device::current->newTriangleMesh();
-  }
-
   /*! create a new data buffer, with optional init data and control flags */
   extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, int flags)
   {

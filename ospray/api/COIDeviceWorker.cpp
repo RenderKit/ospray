@@ -100,23 +100,6 @@ namespace ospray {
     }
 
     COINATIVELIBEXPORT
-    void ospray_coi_new_trianglemesh(uint32_t         numBuffers,
-                                     void**           bufferPtr,
-                                     uint64_t*        bufferSize,
-                                     void*            argsPtr,
-                                     uint16_t         argsSize,
-                                     void*            retVal,
-                                     uint16_t         retValSize)
-    {
-      DataStream args(argsPtr);
-      ObjectHandle handle = args.get<ObjectHandle>();
-      TriangleMesh *mesh = new TriangleMesh;
-      handle.assign(mesh);
-      if (ospray::debugMode) COIProcessProxyFlush();
-    }
-
-
-    COINATIVELIBEXPORT
     void ospray_coi_new_data(uint32_t         numBuffers,
                              void**           bufferPtr,
                              uint64_t*        bufferSize,
@@ -942,6 +925,12 @@ namespace ospray {
           if (param == NULL || param->type != OSP_FLOAT3) return;
           vec3f value = ((vec3f *) param->f)[0];
           result[0] = true;  memcpy(&result[1], &value, sizeof(vec3f));  break;
+
+        } case OSP_FLOAT4: {
+
+          if (param == NULL || param->type != OSP_FLOAT4) return;
+          vec4f value = ((vec4f *) param->f)[0];
+          result[0] = true;  memcpy(&result[1], &value, sizeof(vec4f));  break;
 
         } case OSP_INT: {
 

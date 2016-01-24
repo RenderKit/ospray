@@ -144,7 +144,7 @@ void VolumeViewer::addGeometry(std::string filename)
     return;
 
   // Attempt to load the geometry through the TriangleMeshFile loader.
-  OSPTriangleMesh triangleMesh = (OSPTriangleMesh)ospNewGeometry("trianglemesh");
+  OSPGeometry triangleMesh = ospNewGeometry("trianglemesh");
 
   // If successful, commit the triangle mesh and add it to all models.
   if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {

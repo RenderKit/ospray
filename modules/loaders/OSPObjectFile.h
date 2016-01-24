@@ -75,7 +75,7 @@ private:
   OSPLight importLight(const tinyxml2::XMLNode *root);
 
   //! Import a triangle mesh object.
-  OSPTriangleMesh importTriangleMesh(const tinyxml2::XMLNode *root);
+  OSPGeometry importTriangleMesh(const tinyxml2::XMLNode *root);
 
   //! Import a volume object.
   OSPVolume importVolume(const tinyxml2::XMLNode *root);
