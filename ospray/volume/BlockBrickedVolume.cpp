@@ -23,19 +23,26 @@
 
 namespace ospray {
 
-std::string BlockBrickedVolume::toString() const
-{
-  return("ospray::BlockBrickedVolume<" + voxelType + ">");
-}
+  BlockBrickedVolume::~BlockBrickedVolume()
+  {
+    if (ispcEquivalent) {
+      ispc::BlockBrickedVolume_freeVolume(ispcEquivalent);
+    }
+  }
 
-void BlockBrickedVolume::commit()
-{
-  // The ISPC volume container should already exist. We (currently)
-  // require 'dimensions' etc to be set first, followed by call(s)
+  std::string BlockBrickedVolume::toString() const
+  {
+    return("ospray::BlockBrickedVolume<" + voxelType + ">");
+  }
+
+  void BlockBrickedVolume::commit()
+  {
+    // The ISPC volume container should already exist. We (currently)
+    // require 'dimensions' etc to be set first, followed by call(s)
     // to 'setRegion', and only a final commit at the
     // end. 'dimensions' etc may/will _not_ be committed before
     // setregion.
-    exitOnCondition(ispcEquivalent == NULL,
+    exitOnCondition(ispcEquivalent == nullptr,
                     "the volume data must be set via ospSetRegion() "
                     "prior to commit for this volume type");
 
@@ -60,7 +67,7 @@ void BlockBrickedVolume::commit()
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
-    if (ispcEquivalent == NULL) createEquivalentISPC();
+    if (ispcEquivalent == nullptr) createEquivalentISPC();
 
     /*! \todo check if we still need this 'computevoxelrange' - in
         theory we need this only if the app is allowed to query these
@@ -68,10 +75,10 @@ void BlockBrickedVolume::commit()
         either, so should we actually set them at all!? */
     // Compute the voxel value range for unsigned byte voxels if none was
     // previously specified.
-    Assert2(source,"NULL source in BlockBrickedVolume::setRegion()");
+    Assert2(source,"nullptr source in BlockBrickedVolume::setRegion()");
 
 #ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    if (findParam("voxelRange") == NULL) {
+    if (findParam("voxelRange") == nullptr) {
       // Compute the voxel value range for float voxels if none was
       // previously specified.
       const size_t numVoxelsInRegion

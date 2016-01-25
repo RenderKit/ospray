@@ -24,6 +24,18 @@ bool g_dbg = 0;
 
 namespace ospray {
 
+  GhostBlockBrickedVolume::~GhostBlockBrickedVolume()
+  {
+    if (ispcEquivalent) {
+      ispc::GGBV_freeVolume(ispcEquivalent);
+    }
+  }
+
+  std::string GhostBlockBrickedVolume::toString() const
+  {
+    return("ospray::GhostBlockBrickedVolume<" + voxelType + ">");
+  }
+
   void GhostBlockBrickedVolume::commit()
   {
     // The ISPC volume container should already exist. We (currently)
@@ -31,7 +43,7 @@ namespace ospray {
     // to 'setRegion', and only a final commit at the
     // end. 'dimensions' etc may/will _not_ be committed before
     // setregion.
-    exitOnCondition(ispcEquivalent == NULL, 
+    exitOnCondition(ispcEquivalent == NULL,
                     "the volume data must be set via ospSetRegion() "
                     "prior to commit for this volume type");
 

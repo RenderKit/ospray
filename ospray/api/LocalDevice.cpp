@@ -208,14 +208,6 @@ namespace ospray {
     }
 
     /*! create a new data buffer */
-    OSPTriangleMesh LocalDevice::newTriangleMesh()
-    {
-      TriangleMesh *triangleMesh = new TriangleMesh;
-      triangleMesh->refInc();
-      return (OSPTriangleMesh)triangleMesh;
-    }
-
-    /*! create a new data buffer */
     OSPData LocalDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
       Data *data = new Data(nitems,format,init,flags);

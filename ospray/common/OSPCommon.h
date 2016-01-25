@@ -96,7 +96,8 @@ namespace ospray {
 #pragma warning(disable:177 ) // variable declared but was never referenced
 #endif
 
-#ifdef OSPRAY_TARGET_MIC
+#if 0//NOTE: this causes crashes in standard library containers on MIC...
+//#ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
 inline void operator delete(void* ptr) throw() { embree::alignedFree(ptr); }      
 inline void* operator new[](size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }  

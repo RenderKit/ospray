@@ -125,6 +125,8 @@ namespace ospray {
     parallel_for(numJobs, [&](int taskIndex){
       renderer->renderTile(perFrameData, tile, taskIndex);
     });
+
+    fb->setTile(tile);
   }
 
 
@@ -163,8 +165,7 @@ namespace ospray {
     const int NTASKS = renderTask.numTiles_mine;
     parallel_for(NTASKS, [&](int taskIndex){renderTask.run(taskIndex);});
 
-    // NOTE(jda) - this line was added to match LocalTiledLoadBalancer...check!
-    //renderTask.finish();
+    renderTask.finish();
   }
 
 } // ::ospray

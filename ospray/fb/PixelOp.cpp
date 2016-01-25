@@ -26,6 +26,11 @@ namespace ospray {
 
   std::map<std::string, creatorFct> pixelOpRegistry;
 
+  PixelOp::Instance *PixelOp::createInstance(FrameBuffer *fb,
+                                             PixelOp::Instance *prev)
+  {
+    return nullptr;
+  }
 
   PixelOp *PixelOp::createPixelOp(const char *_type)
   {
@@ -34,7 +39,7 @@ namespace ospray {
     char *type = (char*)alloca(strlen(_type)+1);
     strcpy(type,_type);
     char *atSign = strstr(type,"@");
-    char *libName = NULL;
+    char *libName = nullptr;
     if (atSign) {
       *atSign = 0;
       libName = atSign+1;
@@ -42,22 +47,25 @@ namespace ospray {
     if (libName)
       loadLibrary("ospray_module_"+std::string(libName));
     
-    std::map<std::string, PixelOp *(*)()>::iterator it = pixelOpRegistry.find(type);
+    auto it = pixelOpRegistry.find(type);
     if (it != pixelOpRegistry.end())
-      return it->second ? (it->second)() : NULL;
+      return it->second ? (it->second)() : nullptr;
     
     if (ospray::logLevel >= 2) 
       std::cout << "#ospray: trying to look up pixelOp type '" 
                 << type << "' for the first time" << std::endl;
 
     std::string creatorName = "ospray_create_pixel_op__"+std::string(type);
-    creatorFct creator = (creatorFct)getSymbol(creatorName); //dlsym(RTLD_DEFAULT,creatorName.c_str());
+    creatorFct creator = (creatorFct)getSymbol(creatorName);
+    //dlsym(RTLD_DEFAULT,creatorName.c_str());
     pixelOpRegistry[type] = creator;
-    if (creator == NULL) {
+    if (creator == nullptr) {
       PING;
-      if (ospray::logLevel >= 1) 
-        std::cout << "#ospray: could not find pixelOp type '" << type << "'" << std::endl;
-      return NULL;
+      if (ospray::logLevel >= 1) {
+        std::cout << "#ospray: could not find pixelOp type '" << type
+                  << "'" << std::endl;
+      }
+      return nullptr;
     }
     PixelOp *pixelOp = (*creator)();  
     PING;
@@ -67,5 +75,8 @@ namespace ospray {
     return(pixelOp);
   }
 
-
+  std::string PixelOp::Instance::toString() const
+  {
+    return "ospray::PixelOp(base class)";
+  }
 }

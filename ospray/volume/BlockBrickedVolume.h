@@ -27,6 +27,8 @@ namespace ospray {
   class BlockBrickedVolume : public StructuredVolume {
   public:
 
+    ~BlockBrickedVolume();
+
     //! A string description of this class.
     std::string toString() const;
 

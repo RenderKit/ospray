@@ -28,16 +28,16 @@ class SeismicHorizonFile : public TriangleMeshFile {
 public:
 
   //! Constructor.
-  SeismicHorizonFile(const std::string &filename) : filename(filename), scale(ospray::vec3f(1.f)), verbose(true) {}
+  SeismicHorizonFile(const std::string &filename);
 
   //! Destructor.
-  virtual ~SeismicHorizonFile() {};
+  virtual ~SeismicHorizonFile() {}
 
   //! Import the horizon data.
-  virtual OSPTriangleMesh importTriangleMesh(OSPTriangleMesh triangleMesh);
+  virtual OSPGeometry importTriangleMesh(OSPGeometry triangleMesh);
 
   //! A string description of this class.
-  virtual std::string toString() const { return("ospray_module_seismic::SeismicHorizonFile"); }
+  virtual std::string toString() const;
 
 private:
 
@@ -57,9 +57,9 @@ private:
   ospray::vec3f deltas;               //!< Voxel spacing along each dimension.
 
   //! Open the seismic data file and populate attributes.
-  bool openSeismicDataFile(OSPTriangleMesh triangleMesh);
+  bool openSeismicDataFile(OSPGeometry triangleMesh);
 
   //! Import the horizon data from the file.
-  bool importHorizonData(OSPTriangleMesh triangleMesh);
+  bool importHorizonData(OSPGeometry triangleMesh);
 
 };

@@ -698,3 +698,10 @@ export void GGBV_setRegion(void *uniform _self,
   self->setRegion(_self,_source,regionCoords,regionSize);
 }
  
+export void GGBV_freeVolume(void *uniform _self)
+{
+  GGBV *uniform self = (GGBV *uniform)_self;
+  if (self->blockMem) {
+    free64(self->blockMem);
+  }
+}

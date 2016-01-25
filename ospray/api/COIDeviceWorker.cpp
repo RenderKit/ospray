@@ -16,15 +16,13 @@
 
 // coi
 #include "COIDeviceCommon.h"
-#include <stdio.h>
 #include <sink/COIPipeline_sink.h>
 #include <sink/COIProcess_sink.h>
 #include <sink/COIBuffer_sink.h>
 #include <common/COIMacros_common.h>
 #include <common/COISysInfo_common.h>
 #include <common/COIEvent_common.h>
-#include <iostream>
-#include "Handle.h"
+#include "ospray/common/ObjectHandle.h"
 // ospray
 #include "ospray/common/Model.h"
 #include "ospray/common/Data.h"
@@ -37,8 +35,6 @@
 #include "ospray/texture/Texture2D.h"
 #include "ospray/lights/Light.h"
 #include "ospray/fb/LocalFB.h"
-// stl
-#include <algorithm>
 
 using namespace std;
 
@@ -76,7 +72,9 @@ namespace ospray {
                   << " (" << (deviceID+1) << "/" << numDevices << ")" << std::endl;
         COIProcessProxyFlush();
       }
-      ospray::TiledLoadBalancer::instance = new ospray::InterleavedTiledLoadBalancer(deviceID,numDevices);
+
+      TiledLoadBalancer::instance =
+          new InterleavedTiledLoadBalancer(deviceID,numDevices);
     }
 
     COINATIVELIBEXPORT
@@ -93,28 +91,11 @@ namespace ospray {
         COIProcessProxyFlush();
       }
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       Model *model = new Model;
       handle.assign(model);
       if (ospray::debugMode) COIProcessProxyFlush();
     }
-
-    COINATIVELIBEXPORT
-    void ospray_coi_new_trianglemesh(uint32_t         numBuffers,
-                                     void**           bufferPtr,
-                                     uint64_t*        bufferSize,
-                                     void*            argsPtr,
-                                     uint16_t         argsSize,
-                                     void*            retVal,
-                                     uint16_t         retValSize)
-    {
-      DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
-      TriangleMesh *mesh = new TriangleMesh;
-      handle.assign(mesh);
-      if (ospray::debugMode) COIProcessProxyFlush();
-    }
-
 
     COINATIVELIBEXPORT
     void ospray_coi_new_data(uint32_t         numBuffers,
@@ -127,12 +108,10 @@ namespace ospray {
     {
 
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       int    nitems = args.get<int32>(); 
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
-
-      void *init = bufferPtr[0];
 
       COIRESULT res = COIBufferAddRef(bufferPtr[0]);
       if (res != COI_SUCCESS) 
@@ -143,7 +122,7 @@ namespace ospray {
         throw std::runtime_error("data arrays of strings not currently supported on coi device ...");
 
       if (format == OSP_OBJECT) {
-        Handle *in = (Handle *)bufferPtr[0];
+        ObjectHandle *in = (ObjectHandle *)bufferPtr[0];
         ManagedObject **out = (ManagedObject **)bufferPtr[0];
         for (int i=0;i<nitems;i++) {
           if (in[i]) {
@@ -174,7 +153,7 @@ namespace ospray {
                                      uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       int    nitems = args.get<int32>(); 
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
@@ -193,7 +172,7 @@ namespace ospray {
 
       if (format == OSP_OBJECT) {
         if (ospray::debugMode) COIProcessProxyFlush();
-        Handle *in = (Handle *)data->data;
+        ObjectHandle *in = (ObjectHandle *)data->data;
         ManagedObject **out = (ManagedObject **)data->data;
         for (int i=0;i<nitems;i++) {
           if (in[i]) {
@@ -210,15 +189,15 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_upload_data_chunk(uint32_t         numBuffers,
-                                void**           bufferPtr,
-                                uint64_t*        bufferSize,
-                                void*            argsPtr,
-                                uint16_t         argsSize,
-                                void*            retVal,
-                                uint16_t         retValSize)
+                                      void**           bufferPtr,
+                                      uint64_t*        bufferSize,
+                                      void*            argsPtr,
+                                      uint16_t         argsSize,
+                                      void*            retVal,
+                                      uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       int64  begin = args.get<int64>(); 
       int64  size = args.get<int64>(); 
 
@@ -230,15 +209,15 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_create_new_empty_data(uint32_t         numBuffers,
-                                   void**           bufferPtr,
-                                   uint64_t*        bufferSize,
-                                   void*            argsPtr,
-                                   uint16_t         argsSize,
-                                   void*            retVal,
-                                   uint16_t         retValSize)
+                                          void**           bufferPtr,
+                                          uint64_t*        bufferSize,
+                                          void*            argsPtr,
+                                          uint16_t         argsSize,
+                                          void*            retVal,
+                                          uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       int    nitems = args.get<int32>(); 
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
@@ -270,7 +249,7 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       const char *type = args.getString();
 
       Geometry *geom = Geometry::createGeometry(type);
@@ -289,7 +268,7 @@ namespace ospray {
                                     uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       vec2i size = args.get<vec2i>();
       uint32 mode = args.get<uint32>();
       uint32 channels = args.get<uint32>();
@@ -319,7 +298,7 @@ namespace ospray {
                                       uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle _fb = args.get<Handle>();
+      ObjectHandle _fb = args.get<ObjectHandle>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       const uint32 channel = args.get<uint32>();
       fb->clear(channel);
@@ -327,15 +306,15 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_new_camera(uint32_t         numBuffers,
-                                 void**           bufferPtr,
-                                 uint64_t*        bufferSize,
-                                 void*            argsPtr,
-                                 uint16_t         argsSize,
-                                 void*            retVal,
-                                 uint16_t         retValSize)
+                               void**           bufferPtr,
+                               uint64_t*        bufferSize,
+                               void*            argsPtr,
+                               uint16_t         argsSize,
+                               void*            retVal,
+                               uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       const char *type = args.getString();
 
       Camera *geom = Camera::createCamera(type);
@@ -346,15 +325,15 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_new_volume(uint32_t         numBuffers,
-                                 void**           bufferPtr,
-                                 uint64_t*        bufferSize,
-                                 void*            argsPtr,
-                                 uint16_t         argsSize,
-                                 void*            retVal,
-                                 uint16_t         retValSize)
+                               void**           bufferPtr,
+                               uint64_t*        bufferSize,
+                               void*            argsPtr,
+                               uint16_t         argsSize,
+                               void*            retVal,
+                               uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       const char *type = args.getString();
       if (ospray::logLevel > 0)
         cout << "!osp:coi: new volume " << handle.ID() << " " << type << endl;
@@ -367,15 +346,15 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_new_transfer_function(uint32_t         numBuffers,
-                                 void**           bufferPtr,
-                                 uint64_t*        bufferSize,
-                                 void*            argsPtr,
-                                 uint16_t         argsSize,
-                                 void*            retVal,
-                                 uint16_t         retValSize)
+                                          void**           bufferPtr,
+                                          uint64_t*        bufferSize,
+                                          void*            argsPtr,
+                                          uint16_t         argsSize,
+                                          void*            retVal,
+                                          uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       const char *type = args.getString();
       cout << "!osp:coi: new transfer function " << handle.ID() << " " << type << endl;
 
@@ -395,7 +374,7 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       const char *type = args.getString();
 
       Renderer *geom = Renderer::createRenderer(type);
@@ -406,12 +385,12 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_pin_upload_buffer(uint32_t         numBuffers,
-                                  void**           bufferPtr,
-                                  uint64_t*        bufferSize,
-                                  void*            argsPtr,
-                                  uint16_t         argsSize,
-                                  void*            retVal,
-                                  uint16_t         retValSize)
+                                      void**           bufferPtr,
+                                      uint64_t*        bufferSize,
+                                      void*            argsPtr,
+                                      uint16_t         argsSize,
+                                      void*            retVal,
+                                      uint16_t         retValSize)
     {
       void *buffer = bufferPtr[0];
       uploadBuffer = buffer;
@@ -428,8 +407,8 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
-      Handle _renderer = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
+      ObjectHandle _renderer = args.get<ObjectHandle>();
       const char *type = args.getString();
 
       Renderer *renderer = (Renderer*)_renderer.lookup();
@@ -459,7 +438,7 @@ namespace ospray {
                          uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle _renderer = args.get<Handle>();
+      ObjectHandle _renderer = args.get<ObjectHandle>();
       vec2f screenPos = args.get<vec2f>();
 
       Renderer *renderer = (Renderer *)_renderer.lookup();
@@ -480,11 +459,11 @@ namespace ospray {
     {
       DataStream args(argsPtr);
 
-      Handle _volume = args.get<Handle>();
+      ObjectHandle _volume = args.get<ObjectHandle>();
       Volume *volume = (Volume *)_volume.lookup();
       Assert(volume);
 
-      Handle _worldCoordinatesData = args.get<Handle>();
+      ObjectHandle _worldCoordinatesData = args.get<ObjectHandle>();
       Data *worldCoordinatesData = (Data *)_worldCoordinatesData.lookup();
       Assert(worldCoordinatesData);
 
@@ -512,8 +491,8 @@ namespace ospray {
         COIProcessProxyFlush();
       }
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
-      Handle _renderer = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
+      ObjectHandle _renderer = args.get<ObjectHandle>();
       const char *type = args.getString();
       Renderer *renderer = (Renderer *)_renderer.lookup();
 
@@ -540,7 +519,7 @@ namespace ospray {
                                   uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
       int    width  = args.get<int32>(); 
       int    height = args.get<int32>(); 
       int    type   = args.get<int32>(); 
@@ -564,8 +543,8 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle model = args.get<Handle>();
-      Handle geom  = args.get<Handle>();
+      ObjectHandle model = args.get<ObjectHandle>();
+      ObjectHandle geom  = args.get<ObjectHandle>();
 
       Model *m = (Model*)model.lookup();
       m->geometry.push_back((Geometry*)geom.lookup());
@@ -582,11 +561,11 @@ namespace ospray {
                                uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle model = args.get<Handle>();
-      Handle volume = args.get<Handle>();
+      ObjectHandle model = args.get<ObjectHandle>();
+      ObjectHandle volume = args.get<ObjectHandle>();
 
       Model *m = (Model *) model.lookup();
-      m->volumes.push_back((Volume *) volume.lookup());
+      m->volume.push_back((Volume *) volume.lookup());
       if (ospray::debugMode) COIProcessProxyFlush();
     }
 
@@ -600,8 +579,8 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle geom = args.get<Handle>();
-      Handle mat  = args.get<Handle>();
+      ObjectHandle geom = args.get<ObjectHandle>();
+      ObjectHandle mat  = args.get<ObjectHandle>();
 
       Geometry *g = (Geometry*)geom.lookup();
       g->setMaterial((Material*)mat.lookup());
@@ -622,7 +601,7 @@ namespace ospray {
         COIProcessProxyFlush();
       }
       DataStream args(argsPtr);
-      Handle handle = args.get<Handle>();
+      ObjectHandle handle = args.get<ObjectHandle>();
 
       ManagedObject *obj = handle.lookup();
       Assert(obj);
@@ -653,7 +632,7 @@ namespace ospray {
     {
 
       DataStream stream(argsPtr);
-      Handle handle = stream.get<Handle>();
+      ObjectHandle handle = stream.get<ObjectHandle>();
       ManagedObject *object = handle.lookup();
       object->refDec();
       handle.freeObject();
@@ -679,8 +658,8 @@ namespace ospray {
                                     uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle _model = args.get<Handle>();
-      Handle _geometry = args.get<Handle>();
+      ObjectHandle _model = args.get<ObjectHandle>();
+      ObjectHandle _geometry = args.get<ObjectHandle>();
 
       Model *model = (Model*)_model.lookup();
       Geometry *geometry = (Geometry*)_geometry.lookup();
@@ -705,8 +684,8 @@ namespace ospray {
                                  uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle _fb       = args.get<Handle>();
-      Handle renderer = args.get<Handle>();
+      ObjectHandle _fb       = args.get<ObjectHandle>();
+      ObjectHandle renderer = args.get<ObjectHandle>();
       uint32 channelFlags = args.get<uint32>();
       FrameBuffer *fb = (FrameBuffer*)_fb.lookup();
       Renderer *r = (Renderer*)renderer.lookup();
@@ -736,8 +715,8 @@ namespace ospray {
     {
 
       DataStream stream(argsPtr);
-      Volume *volume = (Volume *) stream.get<Handle>().lookup();
-      Data *data  = (Data *) stream.get<Handle>().lookup();
+      Volume *volume = (Volume *) stream.get<ObjectHandle>().lookup();
+      Data *data  = (Data *) stream.get<ObjectHandle>().lookup();
       vec3i index = stream.get<vec3i>();
       vec3i count = stream.get<vec3i>();
       int *result = (int *) retVal;
@@ -755,7 +734,7 @@ namespace ospray {
                               uint16_t         retValSize)
     {
       DataStream args(argsPtr);
-      Handle target = args.get<Handle>();
+      ObjectHandle target = args.get<ObjectHandle>();
       const char *name = args.getString();
       ManagedObject *obj = target.lookup();
       if (!obj) return;
@@ -781,7 +760,7 @@ namespace ospray {
       case OSP_FLOAT4: obj->set(name,args.get<vec4f>()); break;
         
       case OSP_STRING: obj->set(name,args.getString()); break;
-      case OSP_OBJECT: obj->set(name,args.get<Handle>().lookup()); break;
+      case OSP_OBJECT: obj->set(name,args.get<ObjectHandle>().lookup()); break;
 
       default:
         throw "ospray_coi_set_value no timplemented for given data type";
@@ -799,7 +778,7 @@ namespace ospray {
     {
 
       DataStream stream(argsPtr);
-      Data *data = (Data *) stream.get<Handle>().lookup();
+      Data *data = (Data *) stream.get<ObjectHandle>().lookup();
       int *result = (int *) retVal;  result[0] = false;
       if (bufferSize[0] != data->numBytes) return;
       memcpy(bufferPtr[0], data->data, data->numBytes);  result[0] = true;
@@ -817,7 +796,7 @@ namespace ospray {
     {
 
       DataStream stream(argsPtr);
-      Data *data = (Data *) stream.get<Handle>().lookup();
+      Data *data = (Data *) stream.get<ObjectHandle>().lookup();
       int *result = (int *) retVal;  result[0] = true;
       memcpy(&result[1], &data->numItems, sizeof(size_t));
       memcpy((char *)(&result[1]) + sizeof(size_t), &data->type, sizeof(OSPDataType));
@@ -836,7 +815,7 @@ namespace ospray {
 
       //! The size of ReturnValue is larger than that indicated by the following definition.
       DataStream stream(argsPtr);
-      ManagedObject *object = stream.get<Handle>().lookup();
+      ManagedObject *object = stream.get<ObjectHandle>().lookup();
       int *result = (int *) retVal;  result[0] = true;
 
       for (size_t i=0, offset=0 ; i < object->paramList.size() ; i++) {
@@ -860,7 +839,7 @@ namespace ospray {
     {
 
       DataStream stream(argsPtr);
-      ManagedObject *object = stream.get<Handle>().lookup();
+      ManagedObject *object = stream.get<ObjectHandle>().lookup();
       int *result = (int *) retVal;  result[0] = true;
 
       int size = 0;
@@ -880,7 +859,7 @@ namespace ospray {
     {
 
       DataStream stream(argsPtr);
-      ManagedObject *object = stream.get<Handle>().lookup();
+      ManagedObject *object = stream.get<ObjectHandle>().lookup();
       const char *name = stream.getString();
       int *result = (int *) retVal;  result[0] = false;
 
@@ -912,7 +891,7 @@ namespace ospray {
     {
 
       DataStream stream(argsPtr);
-      ManagedObject *object = stream.get<Handle>().lookup();
+      ManagedObject *object = stream.get<ObjectHandle>().lookup();
       const char *name = stream.getString();
       OSPDataType type = stream.get<OSPDataType>();
       ManagedObject::Param *param = object->findParam(name);
@@ -922,8 +901,8 @@ namespace ospray {
         case OSP_DATA: {
 
           if (param == NULL || param->type != OSP_OBJECT || param->ptr->managedObjectType != OSP_DATA) return;
-          Handle handle = Handle::lookup(param->ptr);
-          result[0] = true;  memcpy(&result[1], &handle, sizeof(Handle));  break;
+          ObjectHandle handle = ObjectHandle::lookup(param->ptr);
+          result[0] = true;  memcpy(&result[1], &handle, sizeof(ObjectHandle));  break;
 
         } case OSP_FLOAT: {
 
@@ -943,6 +922,12 @@ namespace ospray {
           vec3f value = ((vec3f *) param->f)[0];
           result[0] = true;  memcpy(&result[1], &value, sizeof(vec3f));  break;
 
+        } case OSP_FLOAT4: {
+
+          if (param == NULL || param->type != OSP_FLOAT4) return;
+          vec4f value = ((vec4f *) param->f)[0];
+          result[0] = true;  memcpy(&result[1], &value, sizeof(vec4f));  break;
+
         } case OSP_INT: {
 
           if (param == NULL || param->type != OSP_INT) return;
@@ -958,14 +943,14 @@ namespace ospray {
         } case OSP_MATERIAL: {
 
           if (object->managedObjectType != OSP_GEOMETRY || ((Geometry *) object)->getMaterial() == NULL) return;
-          Handle handle = Handle::lookup(((Geometry *) object)->getMaterial());
-          result[0] = true;  memcpy(&result[1], &handle, sizeof(Handle));  break;
+          ObjectHandle handle = ObjectHandle::lookup(((Geometry *) object)->getMaterial());
+          result[0] = true;  memcpy(&result[1], &handle, sizeof(ObjectHandle));  break;
 
         } case OSP_OBJECT: {
 
           if (param == NULL || param->type != OSP_OBJECT) return;
-          Handle handle = Handle::lookup(param->ptr);
-          result[0] = true;  memcpy(&result[1], &handle, sizeof(Handle));  break;
+          ObjectHandle handle = ObjectHandle::lookup(param->ptr);
+          result[0] = true;  memcpy(&result[1], &handle, sizeof(ObjectHandle));  break;
 
         } case OSP_STRING: {
 
