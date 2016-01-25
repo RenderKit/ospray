@@ -70,7 +70,7 @@ namespace ospray {
 #endif
 
     //! Destructor.
-    virtual ~Volume();;
+    virtual ~Volume();
 
     //! \brief Returns whether the volume is a data-distributed volume
     virtual bool isDataDistributed() const;
