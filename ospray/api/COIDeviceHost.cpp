@@ -113,7 +113,7 @@ namespace ospray {
     };
 
     struct COIDevice : public ospray::api::Device {
-      std::vector<COIEngine *> engine;
+      std::vector<COIEngine *> engines;
       ObjectHandle handle;
 
       COIDevice();
@@ -125,8 +125,8 @@ namespace ospray {
       { 
         static COIEVENT event[MAX_ENGINES]; //at most 100 engines...
         static long numEventsOutstanding = 0;
-        assert(engine.size() < MAX_ENGINES);
-        for (int i=0;i<engine.size();i++) {
+        assert(engines.size() < MAX_ENGINES);
+        for (int i=0;i<engines.size();i++) {
           if (numEventsOutstanding == 0) {
             bzero(&event[i],sizeof(event[i]));
           }
@@ -134,8 +134,9 @@ namespace ospray {
             std::cout << "#osp:coi: calling coi fct "
                       << coiFctName[ID] << std::endl;
           }
-          COIRESULT result = COIPipelineRunFunction(engine[i]->coiPipe,
-                                                    engine[i]->coiFctHandle[ID],
+          auto &engine = engines[i];
+          COIRESULT result = COIPipelineRunFunction(engine->coiPipe,
+                                                    engine->coiFctHandle[ID],
                                                     0,nullptr,nullptr,//buffers
                                                     0,nullptr,//dependencies
                                                     data.buf,data.ofs,//data
@@ -148,7 +149,7 @@ namespace ospray {
         }
         numEventsOutstanding++;
         if (sync || returnValue) {
-          for (int i=0;i<engine.size();i++) {
+          for (int i=0;i<engines.size();i++) {
             COIEventWait(1,&event[i],-1,1/*wait for all*/,nullptr,nullptr);
           }
           numEventsOutstanding = 0;
@@ -478,7 +479,7 @@ namespace ospray {
         int32 ID, count, debugMode, logLevel;
       } deviceInfo;
       deviceInfo.ID = engineID;
-      deviceInfo.count = osprayDevice->engine.size();
+      deviceInfo.count = osprayDevice->engines.size();
       deviceInfo.debugMode = ospray::debugMode;
       deviceInfo.logLevel = ospray::logLevel;
       const char *fctName = "ospray_coi_initialize";
@@ -577,12 +578,12 @@ namespace ospray {
 
 
       for (int i=0;i<numEngines;i++) {
-        engine.push_back(new COIEngine(this,i));
+        engines.push_back(new COIEngine(this,i));
       }
 
       cout << "#osp:coi: loading ospray onto COI devices..." << endl;
       for (int i = 0; i < numEngines; i++) {
-        engine[i]->loadOSPRay();
+        engines[i]->loadOSPRay();
       }
 
       cout << "#osp:coi: all engines initialized and ready to run." << endl;
@@ -598,9 +599,9 @@ namespace ospray {
       std::string libName = "libospray_module_"+std::string(name)+"_mic.so";
 
       COIRESULT result;
-      for (int i=0;i<engine.size();i++) {
+      for (int i=0;i<engines.size();i++) {
         COILIBRARY coiLibrary;
-        result = COIProcessLoadLibraryFromFile(engine[i]->coiProcess,
+        result = COIProcessLoadLibraryFromFile(engines[i]->coiProcess,
                                                libName.c_str(),
                                                nullptr,nullptr,
                                                // 0,
@@ -646,9 +647,9 @@ namespace ospray {
         size_t blockSize = std::min((ulong)UPLOAD_BUFFER_SIZE,
                                     (ulong)(size-begin));
         char *beginPtr = ((char*)init)+begin;
-        for (int i=0;i<engine.size();i++) {
+        for (int i=0;i<engines.size();i++) {
           COIEVENT event;
-          result = COIBufferWrite(engine[i]->uploadBuffer,
+          result = COIBufferWrite(engines[i]->uploadBuffer,
                                   0,beginPtr,blockSize,
                                   COI_COPY_USE_DMA,
                                   0,nullptr,&event);
@@ -665,19 +666,21 @@ namespace ospray {
         args.write((int64)blockSize);
 
 
-        for (int i=0;i<engine.size();i++) {
+        //for (int i=0;i<engine.size();i++) {
+        for (auto &engine : engines) {
           COIEVENT event;
           bzero(&event,sizeof(event));
           COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
-          result = COIPipelineRunFunction(engine[i]->coiPipe,
-                                          engine[i]->coiFctHandle[OSPCOI_UPLOAD_DATA_CHUNK],
-                                          1,&engine[i]->uploadBuffer,&coiBufferFlags,//buffers
+          result = COIPipelineRunFunction(engine->coiPipe,
+                                          engine->coiFctHandle[OSPCOI_UPLOAD_DATA_CHUNK],
+                                          1,&engine->uploadBuffer,&coiBufferFlags,//buffers
                                           0,nullptr,//dependencies
                                           args.buf,args.ofs,//data
                                           nullptr,0,
                                           nullptr); //&event);
           if (result != COI_SUCCESS)
-            cout << "error in allocating coi buffer : " << COIResultGetName(result) << endl;
+            cout << "error in allocating coi buffer : "
+                 << COIResultGetName(result) << endl;
         }        
         Assert(result == COI_SUCCESS);
       }
@@ -891,18 +894,18 @@ namespace ospray {
       args.write((int32)type);
       args.write((int32)flags);
       int64 numBytes = sizeOf(type)*width*height;
-      for (int i=0;i<engine.size();i++) {
+      for (auto &engine : engines) {
         COIBUFFER coiBuffer;
         // PRINT(nitems);
         result = COIBufferCreate(numBytes,COI_BUFFER_NORMAL,
                                  COI_OPTIMIZE_HUGE_PAGE_SIZE,//COI_MAP_READ_ONLY,
-                                 data,1,&engine[i]->coiProcess,&coiBuffer);
+                                 data,1,&engine->coiProcess,&coiBuffer);
         Assert(result == COI_SUCCESS);
         COIEVENT event;
         bzero(&event,sizeof(event));
         COI_ACCESS_FLAGS coiBufferFlags = COI_SINK_READ;
-        result = COIPipelineRunFunction(engine[i]->coiPipe,
-                                        engine[i]->coiFctHandle[OSPCOI_NEW_TEXTURE2D],
+        result = COIPipelineRunFunction(engine->coiPipe,
+                                        engine->coiFctHandle[OSPCOI_NEW_TEXTURE2D],
                                         1,&coiBuffer,&coiBufferFlags,//buffers
                                         0,nullptr,//dependencies
                                         args.buf,args.ofs,//data
@@ -1014,13 +1017,13 @@ namespace ospray {
       COIFrameBuffer *fb = new COIFrameBuffer;
       fbList[handle] = fb;
       fb->hostMem = new int32[size.x*size.y];
-      fb->coiBuffer = new COIBUFFER[engine.size()];
+      fb->coiBuffer = new COIBUFFER[engines.size()];
       fb->size = size;
-      for (int i=0;i<engine.size();i++) {
+      for (int i = 0; i < engines.size(); i++) {
         result = COIBufferCreate(size.x*size.y*sizeof(int32),
                                  COI_BUFFER_NORMAL,COI_OPTIMIZE_HUGE_PAGE_SIZE,
                                  //COI_MAP_READ_WRITE,
-                                 nullptr,1,&engine[i]->coiProcess,
+                                 nullptr,1,&engines[i]->coiProcess,
                                  &fb->coiBuffer[i]);
         Assert(result == COI_SUCCESS);
         
@@ -1028,8 +1031,8 @@ namespace ospray {
         COI_ACCESS_FLAGS coiBufferFlags = 
           (COI_ACCESS_FLAGS)((int)COI_SINK_READ 
                              | (int)COI_SINK_WRITE);
-        result = COIPipelineRunFunction(engine[i]->coiPipe,
-                                        engine[i]->coiFctHandle[OSPCOI_NEW_FRAMEBUFFER],
+        result = COIPipelineRunFunction(engines[i]->coiPipe,
+                                        engines[i]->coiFctHandle[OSPCOI_NEW_FRAMEBUFFER],
                                         1,&fb->coiBuffer[i],
                                         &coiBufferFlags,//buffers
                                         0,nullptr,//dependencies
@@ -1052,13 +1055,13 @@ namespace ospray {
       ObjectHandle handle = (ObjectHandle &)_fb;
       COIFrameBuffer *fb = fbList[handle];//(COIFrameBuffer *)_fb;
       
-      const int numEngines = engine.size();
+      const int numEngines = engines.size();
       int32 *devBuffer[numEngines];
       COIEVENT doneCopy[numEngines];
       // -------------------------------------------------------
       // trigger N copies...
       // -------------------------------------------------------
-      for (int i=0;i<numEngines;i++) {
+      for (int i = 0; i < numEngines; i++) {
         bzero(&doneCopy[i],sizeof(COIEVENT));
         devBuffer[i] = new int32[fb->size.x*fb->size.y];
         result = COIBufferRead(fb->coiBuffer[i],0,devBuffer[i],
@@ -1069,7 +1072,7 @@ namespace ospray {
       // -------------------------------------------------------
       // do 50 assemblies...
       // -------------------------------------------------------
-      for (int engineID=0;engineID<numEngines;engineID++) {
+      for (int engineID = 0; engineID < numEngines; engineID++) {
         const size_t sizeX = fb->size.x;
         const size_t sizeY = fb->size.y;
         COIEventWait(1,&doneCopy[engineID],-1,1,nullptr,nullptr);
@@ -1078,9 +1081,8 @@ namespace ospray {
 
         const size_t numTilesX = divRoundUp(sizeX,(size_t)TILE_SIZE);
         const size_t numTilesY = divRoundUp(sizeY,(size_t)TILE_SIZE);
-// #pragma omp parallel for
+        //NOTE(jda) - can this be parallelized?
         for (size_t tileY=0;tileY<numTilesY;tileY++) {
-// #pragma omp parallel for
           for (size_t tileX=0;tileX<numTilesX;tileX++) {
             const size_t tileID = tileX+numTilesX*tileY;
             if (engineID != (tileID % numEngines)) 
@@ -1322,7 +1324,7 @@ namespace ospray {
           COI_BUFFER_NORMAL,
           size > 1024 * 1024 * 128 ? COI_OPTIMIZE_HUGE_PAGE_SIZE : 0,
           nullptr,
-          1, &engine[0]->coiProcess,
+          1, &engines[0]->coiProcess,
           &coiBuffer
       );
 
@@ -1336,8 +1338,8 @@ namespace ospray {
       stream.write((ObjectHandle &) object);
 
       coiResult = COIPipelineRunFunction(
-          engine[0]->coiPipe,
-          engine[0]->coiFctHandle[OSPCOI_GET_DATA_VALUES],
+          engines[0]->coiPipe,
+          engines[0]->coiFctHandle[OSPCOI_GET_DATA_VALUES],
           1, &coiBuffer, &coiBufferFlags,
           0, nullptr,
           stream.buf, stream.ofs,
@@ -1374,7 +1376,6 @@ namespace ospray {
       memcpy(*pointer, coiBufferPointer, size);
       COIBufferUnmap(coiMapInstance, 0, nullptr, nullptr);
       COIBufferDestroy(coiBuffer);  return(true);
-
     }
 
     /*! Get the named scalar floating point value associated with an object. */

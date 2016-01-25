@@ -16,14 +16,12 @@
 
 // coi
 #include "COIDeviceCommon.h"
-#include <stdio.h>
 #include <sink/COIPipeline_sink.h>
 #include <sink/COIProcess_sink.h>
 #include <sink/COIBuffer_sink.h>
 #include <common/COIMacros_common.h>
 #include <common/COISysInfo_common.h>
 #include <common/COIEvent_common.h>
-#include <iostream>
 #include "ospray/common/ObjectHandle.h"
 // ospray
 #include "ospray/common/Model.h"
@@ -37,8 +35,6 @@
 #include "ospray/texture/Texture2D.h"
 #include "ospray/lights/Light.h"
 #include "ospray/fb/LocalFB.h"
-// stl
-#include <algorithm>
 
 using namespace std;
 
@@ -114,8 +110,6 @@ namespace ospray {
       int    nitems = args.get<int32>(); 
       int    format = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
-
-      void *init = bufferPtr[0];
 
       COIRESULT res = COIBufferAddRef(bufferPtr[0]);
       if (res != COI_SUCCESS) 
