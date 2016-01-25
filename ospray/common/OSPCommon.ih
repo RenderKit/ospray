@@ -65,3 +65,4 @@ export void delete_uniform(void *uniform uptr);
 
 /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
 extern "C" void *uniform malloc64(uniform uint64 size);
+extern "C" void free64(void *uniform ptr);

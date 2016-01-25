@@ -45,10 +45,10 @@ namespace ospray {
     virtual ~StructuredVolume();
 
     //! A string description of this class.
-    virtual std::string toString() const;
+    virtual std::string toString() const override;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
+    virtual void commit() override;
 
     //! Copy voxels into the volume at the given index
     /*! \returns 0 on error, any non-zero value indicates success */
@@ -62,7 +62,7 @@ namespace ospray {
     virtual void createEquivalentISPC() = 0;
 
     //! Complete volume initialization (only on first commit).
-    virtual void finish();
+    virtual void finish() override;
 
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;

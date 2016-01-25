@@ -23,6 +23,13 @@
 
 namespace ospray {
 
+BlockBrickedVolume::~BlockBrickedVolume()
+{
+  if (ispcEquivalent) {
+    ispc::BlockBrickedVolume_freeVolume(ispcEquivalent);
+  }
+}
+
 std::string BlockBrickedVolume::toString() const
 {
   return("ospray::BlockBrickedVolume<" + voxelType + ">");
