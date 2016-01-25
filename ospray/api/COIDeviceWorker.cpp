@@ -187,12 +187,12 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_upload_data_chunk(uint32_t         numBuffers,
-                                void**           bufferPtr,
-                                uint64_t*        bufferSize,
-                                void*            argsPtr,
-                                uint16_t         argsSize,
-                                void*            retVal,
-                                uint16_t         retValSize)
+                                      void**           bufferPtr,
+                                      uint64_t*        bufferSize,
+                                      void*            argsPtr,
+                                      uint16_t         argsSize,
+                                      void*            retVal,
+                                      uint16_t         retValSize)
     {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
@@ -207,12 +207,12 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_create_new_empty_data(uint32_t         numBuffers,
-                                   void**           bufferPtr,
-                                   uint64_t*        bufferSize,
-                                   void*            argsPtr,
-                                   uint16_t         argsSize,
-                                   void*            retVal,
-                                   uint16_t         retValSize)
+                                          void**           bufferPtr,
+                                          uint64_t*        bufferSize,
+                                          void*            argsPtr,
+                                          uint16_t         argsSize,
+                                          void*            retVal,
+                                          uint16_t         retValSize)
     {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
@@ -304,12 +304,12 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_new_camera(uint32_t         numBuffers,
-                                 void**           bufferPtr,
-                                 uint64_t*        bufferSize,
-                                 void*            argsPtr,
-                                 uint16_t         argsSize,
-                                 void*            retVal,
-                                 uint16_t         retValSize)
+                               void**           bufferPtr,
+                               uint64_t*        bufferSize,
+                               void*            argsPtr,
+                               uint16_t         argsSize,
+                               void*            retVal,
+                               uint16_t         retValSize)
     {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
@@ -323,12 +323,12 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_new_volume(uint32_t         numBuffers,
-                                 void**           bufferPtr,
-                                 uint64_t*        bufferSize,
-                                 void*            argsPtr,
-                                 uint16_t         argsSize,
-                                 void*            retVal,
-                                 uint16_t         retValSize)
+                               void**           bufferPtr,
+                               uint64_t*        bufferSize,
+                               void*            argsPtr,
+                               uint16_t         argsSize,
+                               void*            retVal,
+                               uint16_t         retValSize)
     {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
@@ -344,12 +344,12 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_new_transfer_function(uint32_t         numBuffers,
-                                 void**           bufferPtr,
-                                 uint64_t*        bufferSize,
-                                 void*            argsPtr,
-                                 uint16_t         argsSize,
-                                 void*            retVal,
-                                 uint16_t         retValSize)
+                                          void**           bufferPtr,
+                                          uint64_t*        bufferSize,
+                                          void*            argsPtr,
+                                          uint16_t         argsSize,
+                                          void*            retVal,
+                                          uint16_t         retValSize)
     {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
@@ -383,12 +383,12 @@ namespace ospray {
 
     COINATIVELIBEXPORT
     void ospray_coi_pin_upload_buffer(uint32_t         numBuffers,
-                                  void**           bufferPtr,
-                                  uint64_t*        bufferSize,
-                                  void*            argsPtr,
-                                  uint16_t         argsSize,
-                                  void*            retVal,
-                                  uint16_t         retValSize)
+                                      void**           bufferPtr,
+                                      uint64_t*        bufferSize,
+                                      void*            argsPtr,
+                                      uint16_t         argsSize,
+                                      void*            retVal,
+                                      uint16_t         retValSize)
     {
       void *buffer = bufferPtr[0];
       uploadBuffer = buffer;
