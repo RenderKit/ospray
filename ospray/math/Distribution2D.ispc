@@ -97,7 +97,7 @@ Sample2D Distribution2D_sample(const uniform Distribution2D* uniform self, const
   const Sample1D sx = Distribution1D_sample(self->size.x, self->cdf_x, x0, s.x);
 
   Sample2D ret;
-  ret.uv = make_vec2f((sx.idx + sx.frac)/self->size.x, (sy.idx + sy.frac)/self->size.y);
+  ret.uv = make_vec2f((sx.idx-x0 + sx.frac)/self->size.x, (sy.idx + sy.frac)/self->size.y);
   ret.pdf = sx.pdf * sy.pdf;
 
   return ret;

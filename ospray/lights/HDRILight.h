@@ -35,10 +35,11 @@ namespace ospray {
       virtual void commit();
 
     private:
-//      vec3f position;           //!< world-space position of the LocalHDRILight
       vec3f up;                 //!< up direction of the light in world-space
-      vec3f right;              //!< direction of the x-axis (where the texture-seam is), perpendicular to 'up'
-//      float radius;             //!< radius of LocalHDRILight
+      vec3f dir;                //!< direction to which the center of the envmap
+                                //   will be mapped to (analog to panoramic camera)
+//      vec3f position;           //!< TODO world-space position of the LocalHDRILight
+//      float radius;             //!< TODO radius of LocalHDRILight
       Texture2D *map;           //!< environment map in latitude / longitude format
       float intensity;          //!< Amount of light emitted
   };

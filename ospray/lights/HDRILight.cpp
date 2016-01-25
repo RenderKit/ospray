@@ -20,8 +20,8 @@
 namespace ospray {
 
   HDRILight::HDRILight()
-    : up(0.f, 0.f, 1.f)
-    , right(1.f, 0.f, 0.f)
+    : up(0.f, 1.f, 0.f)
+    , dir(0.f, 0.f, 1.f)
     , map(NULL)
     , intensity(1.f)
   {
@@ -37,16 +37,19 @@ namespace ospray {
   //!< Copy understood parameters into class members
   void HDRILight::commit()
   {
-    up = getParam3f("up", vec3f(0.f, 0.f, 1.f));
-    right = getParam3f("right", vec3f(1.f, 0.f, 0.f));
+    up = getParam3f("up", vec3f(0.f, 1.f, 0.f));
+    dir = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
     intensity = getParam1f("intensity", 1.f);
     map  = (Texture2D*)getParamObject("map", NULL);
 
-    linear3f light2world(right, cross(up, right), up);
+    linear3f frame;
+    frame.vx = normalize(-dir);
+    frame.vy = normalize(cross(frame.vx, up));
+    frame.vz = cross(frame.vx, frame.vy);
 
     ispc::HDRILight_set(
         getIE(),
-        (const ispc::LinearSpace3f&)light2world,
+        (const ispc::LinearSpace3f&)frame,
         map ? map->getIE() : NULL,
         intensity);
   }

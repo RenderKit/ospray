@@ -54,8 +54,9 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
 
   Sample2D sample2d = Distribution2D_sample(self->distribution, s);
 
-  const float phi = two_pi * sample2d.uv.x; // XXX 1-?
+  const float phi = two_pi * sample2d.uv.x;
   const float theta = M_PI * sample2d.uv.y;
+
   float sinTheta, cosTheta;
   sincos(theta, &sinTheta, &cosTheta);
   const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
@@ -65,7 +66,7 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
   sample.pdf = sample2d.pdf * rcp(two_pi * M_PI * sinTheta);
 
   sample.distance = inf;
-  sample.radiance = get3f(self->map, sample2d.uv) * self->intensity;
+  sample.radiance = get3f(self->map, sample2d.uv) * self->intensity / sample.pdf; //XXX
 
   return sample;
 }
@@ -75,13 +76,10 @@ varying vec3f HDRILight_evalEnv(const uniform Light *uniform _self,
 {
   uniform HDRILight *uniform self = (uniform HDRILight *uniform)_self;
 
-  const vec3f localDir =  self->world2light * dir;
-  const float theta = acos(localDir.z);
-  float phi = atan2(localDir.y, localDir.x);
-  if (phi < 0.f)
-    phi += two_pi;
-  const float u = 1.0f - phi * one_over_two_pi;
-  const float v = theta * one_over_pi;
+  const vec3f localDir = self->world2light * dir;
+
+  const float u = atan2(localDir.y, localDir.x) * one_over_two_pi;
+  const float v = acos(localDir.z) * one_over_pi;
 
   return get3f(self->map, make_vec2f(u, v)) * self->intensity;
 }
@@ -106,6 +104,7 @@ export void HDRILight_set(void *uniform _self,
   if (map) {
     self->light2world = light2world;
     self->world2light = rcp(light2world); 
+
     self->map = (uniform Texture2D *uniform)map;
     self->intensity = intensity;
 
