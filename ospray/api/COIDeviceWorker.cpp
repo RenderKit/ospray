@@ -72,7 +72,9 @@ namespace ospray {
                   << " (" << (deviceID+1) << "/" << numDevices << ")" << std::endl;
         COIProcessProxyFlush();
       }
-      ospray::TiledLoadBalancer::instance = new ospray::InterleavedTiledLoadBalancer(deviceID,numDevices);
+
+      TiledLoadBalancer::instance =
+          new InterleavedTiledLoadBalancer(deviceID,numDevices);
     }
 
     COINATIVELIBEXPORT
