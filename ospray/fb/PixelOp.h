@@ -39,15 +39,17 @@ namespace ospray {
       state every time it gets "attached" to a frame buffer, and this
       state then gets passed every time a frame buffer gets started, 
   */
-  struct PixelOp : public ManagedObject {
-    struct Instance : public embree::RefCount {
+  struct PixelOp : public ManagedObject
+  {
+    struct Instance : public embree::RefCount
+    {
       FrameBuffer *fb;
       /*! gets called every time the frame buffer got 'commit'ted */
-      virtual void  commitNotify() {};
+      virtual void  commitNotify() {}
       /*! gets called once at the beginning of the frame */
-      virtual void beginFrame() {};
+      virtual void beginFrame() {}
       /*! gets called once at the end of the frame */
-      virtual void endFrame() {};
+      virtual void endFrame() {}
       
       /*! called whenever a new tile comes in from a renderer, but
           _before_ the tile gets written/accumulated into the frame
@@ -57,24 +59,22 @@ namespace ospray {
           etcpp. In distriubuted mode, it is undefined if this op gets
           executed on the node that _produces_ the tile, or on the
           node that _owns_ the tile (and its accum buffer data)  */
-      virtual void preAccum(Tile &tile) {};
+      virtual void preAccum(Tile &tile) {}
 
       /*! called right after the tile got accumulated; i.e., the
           tile's RGBA values already contain the accu-buffer blended
           values (assuming an accubuffer exists), and this function
           defines how these pixels are being processed before written
           into the color buffer */
-      virtual void postAccum(Tile &tile) 
-      {};
+      virtual void postAccum(Tile &tile) {}
 
       //! \brief common function to help printf-debugging 
       /*! Every derived class should overrride this! */
-      virtual std::string toString() const { return "ospray::PixelOp(base class)"; }
+      virtual std::string toString() const;
     };
 
     //! \brief create an instance of this pixel op
-    virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev)
-    { return NULL; };
+    virtual Instance *createInstance(FrameBuffer *fb, PixelOp::Instance *prev);
 
     /*! \brief creates an abstract renderer class of given type 
 
