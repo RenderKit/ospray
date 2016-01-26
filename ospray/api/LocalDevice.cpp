@@ -51,21 +51,19 @@ namespace ospray {
 
       ospray::init(_ac,&_av);
 
+      // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
-
-      rtcSetErrorFunction(embreeErrorFunc);
-
       // -------------------------------------------------------
-      // initialize embree
-      // -------------------------------------------------------
-     std::stringstream embreeConfig;
+      std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
+
+      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
 
       RTCError erc = rtcGetError();
       if (erc != RTC_NO_ERROR) {

@@ -29,7 +29,7 @@ namespace ospray {
     Device *Device::current = NULL;
 
     Device::Device() {
-      rtcSetErrorFunction(error_handler);
+//      rtcSetErrorFunction(error_handler); need to call rtcInit first
     }
 
   } // ::ospray::api
