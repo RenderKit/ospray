@@ -53,6 +53,9 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
   LightSample sample;
 
   Sample2D sample2d = Distribution2D_sample(self->distribution, s);
+  // Distribution2D samples wihtin bin i as (i, i+1), whereas we provided
+  // average importance for (i-0.5, i+0.5), thus shift by 0.5
+  sample2d.uv = sample2d.uv - self->map->halfTexel;
 
   const float phi = two_pi * sample2d.uv.x;
   const float theta = M_PI * sample2d.uv.y;
@@ -113,13 +116,19 @@ export void HDRILight_set(void *uniform _self,
     const uniform int height = self->map->size.y;
 
     // calculate importance
+    // bin i represents the average contribution of (i-0.5, i+0.5) when we sample the texture bilinearly at i
+    // for i==0 we have a wrap-around, which is wanted for x (phi), but actually not for y (theta),
+    // because then light (importance) from the south-pole is leaking to the north-pole
+    // however, sin(theta) is zero then, thus we will never sample there
     uniform float* uniform importance = uniform new uniform float[width*height];  
     for (uniform int y = 0; y < height; y++) {
-      uniform float sinTheta = sin(M_PI * (y+0.5f) * self->rcpSize.y);
+      uniform float fy = y*self->rcpSize.y;
+      uniform float sinTheta = sin(fy * M_PI);
       for (uniform int x = 0; x < width; x++) {
-        const uniform vec2f coord = make_vec2f(x, y)*self->rcpSize;
+        const uniform vec2f coord = make_vec2f(x*self->rcpSize.x, fy);
         const vec3f col = get3f(self->map, coord); // using bilinear filtering is indeed what we want
         const uniform vec3f colu = make_vec3f(extract(col.x, 0), extract(col.y, 0), extract(col.z, 0));
+
         importance[y*width+x] = sinTheta * luminance(colu);
       }
     }
