@@ -30,24 +30,21 @@ uniform float Distribution1D_create(const uniform int size, uniform float* unifo
   // compute reciprocal sum
   const uniform float rcpSum = 1.0f/sum;
   // next representatble number in float greater than 1.0f
-  const uniform float nextAfter1 =  0x1.000002p+0f;
+  const uniform float nextAfter1 = 0x1.000002p+0f;
 
   // normalize
-  foreach(i = 0 ... size-1) {
-    float f = cdf[i] * rcpSum;
+  foreach(i = 0 ... size) {
+    const float c = cdf[i];
     // handle cornercases (sum=0 -> rcpSum=inf; correct termination of sampling with s=1.0f)
-    if (f >= 1.0f)
-      f = nextAfter1;
-    cdf[i] = f;
+    const float q = c >= sum ? nextAfter1 : c * rcpSum;
+    cdf[i] = q;
   }
-
-  cdf[size-1] = nextAfter1;
 
   return sum;
 }
 
 struct Sample1D {
-  int idx;
+  int idx; // relative to start
   float frac;
   float pdf;
 };
@@ -74,15 +71,12 @@ inline Sample1D Distribution1D_sample(
     }
   }
 
-  // sample
-  const float bef = first == 0 ? 0.0f : cdf[first-1];
-  float pdf = cdf[first] - bef;
-  const float fraction = (s - bef) * rcp(pdf);
-
   Sample1D ret;
-  ret.idx = first;
-  ret.frac = fraction;
-  ret.pdf = pdf;
+  ret.idx = first - start;
+  const float bef = first == start ? 0.0f : cdf[first-1];
+  const float dcdf = cdf[first] - bef;
+  ret.pdf = dcdf * size;
+  ret.frac = (s - bef) * rcp(dcdf); // rescale
 
   return ret;
 }
@@ -97,7 +91,7 @@ Sample2D Distribution2D_sample(const uniform Distribution2D* uniform self, const
   const Sample1D sx = Distribution1D_sample(self->size.x, self->cdf_x, x0, s.x);
 
   Sample2D ret;
-  ret.uv = make_vec2f((sx.idx-x0 + sx.frac)/self->size.x, (sy.idx + sy.frac)/self->size.y);
+  ret.uv = make_vec2f((sx.idx + sx.frac)*self->rcpSize.x, (sy.idx + sy.frac)*self->rcpSize.y);
   ret.pdf = sx.pdf * sy.pdf;
 
   return ret;
@@ -107,11 +101,12 @@ float Distribution2D_pdf(const uniform Distribution2D* uniform self, const vec2f
 {
   const int idy = uv.y * self->size.y;
   const float befy = idy == 0 ? 0.0f : self->cdf_y[idy-1];
-  const float pdf_y = self->cdf_y[idy] - befy;
+  const float pdf_y = (self->cdf_y[idy] - befy) * self->size.y;
 
   const int idx = uv.x * self->size.x;
-  const float befx = idx == 0 ? 0.0f : self->cdf_x[idy * self->size.x + idx-1];
-  const float pdf_x = self->cdf_x[idx] - befx;
+  const int x0 = idy * self->size.x;
+  const float befx = idx == 0 ? 0.0f : self->cdf_x[x0 + idx-1];
+  const float pdf_x = (self->cdf_x[x0 + idx] - befx) * self->size.x;
 
   return pdf_x * pdf_y;
 }
@@ -127,6 +122,9 @@ uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, 
 {
   uniform Distribution2D* uniform self = uniform new uniform Distribution2D;
 
+  self->size = size;
+  self->rcpSize = make_vec2f(1.0f/size.x, 1.0f/size.y);
+
   // create cdf for sampling rows
   uniform float* uniform cdf_y = uniform new uniform float[size.y];
 
@@ -141,7 +139,6 @@ uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, 
   // initializes the y distribution
   Distribution1D_create(size.y, cdf_y);
 
-  self->size  = size;
   self->cdf_x = f;
   self->cdf_y = cdf_y;
 

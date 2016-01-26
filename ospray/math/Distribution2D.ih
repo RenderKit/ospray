@@ -21,6 +21,7 @@
 struct Distribution2D 
 {
   vec2i size;
+  vec2f rcpSize;        // 1/size
   uniform float* cdf_x; // size.x*size.y elements
   uniform float* cdf_y; // size.y elements
 };

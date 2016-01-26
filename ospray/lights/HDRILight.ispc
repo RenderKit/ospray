@@ -66,7 +66,7 @@ varying LightSample HDRILight_sample(const uniform Light *uniform _self,
   sample.pdf = sample2d.pdf * rcp(two_pi * M_PI * sinTheta);
 
   sample.distance = inf;
-  sample.radiance = get3f(self->map, sample2d.uv) * self->intensity / sample.pdf; //XXX
+  sample.radiance = get3f(self->map, sample2d.uv) * self->intensity / sample.pdf;
 
   return sample;
 }

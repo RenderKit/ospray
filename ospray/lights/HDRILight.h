@@ -40,6 +40,7 @@ namespace ospray {
                                 //   will be mapped to (analog to panoramic camera)
 //      vec3f position;           //!< TODO world-space position of the LocalHDRILight
 //      float radius;             //!< TODO radius of LocalHDRILight
+//      bool  mirror;             //!< TODO whether to mirror the map
       Texture2D *map;           //!< environment map in latitude / longitude format
       float intensity;          //!< Amount of light emitted
   };
