@@ -97,7 +97,6 @@ namespace osp {
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
-  struct TriangleMesh     : public Geometry {};
 
 } // ::osp
 
@@ -188,7 +187,6 @@ typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture2D         *OSPTexture2D;
-typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
 
@@ -556,16 +554,6 @@ extern "C" {
     
     \{ 
   */
-
-  /*! \brief create a new triangle mesh. 
-
-    the mesh doesn't do anything 'til it is added to a model. to set
-    the model's vertices etc, set the respective data arrays for
-    "position", "index", "normal", "texcoord", "color", etc. Data
-    format for vertices and normals in vec3fa, and vec4i for index
-    (fourth component is the material ID). */
-  //! \warning deprecated: use ospNewGeometry("triangles") instead
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPTriangleMesh ospNewTriangleMesh();
 
   /*! add an already created geometry to a model */
   OSPRAY_INTERFACE void ospAddGeometry(OSPModel model, OSPGeometry mesh);

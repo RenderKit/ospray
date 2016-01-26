@@ -29,14 +29,6 @@ MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 # unhide compiler to make it easier for users to see what they are using
 MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
-# project-wide OpenMP flags for all compilers
-find_package(OpenMP QUIET)
-if(OPENMP_FOUND)
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-endif()
-
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
@@ -46,11 +38,6 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 #  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
 #    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
 #  ENDIF()
-
-  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-
-  LINK_DIRECTORIES(${LIBRARY_OUTPUT_PATH})
 
   # Embree common include directories; others may be added depending on build target.
   # this section could be sooo much cleaner if embree only used
@@ -75,8 +62,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     # additional Embree include directory
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi)
 
-    #		SET(LIBRARY_OUTPUT_PATH "${OSPRAY_BINARY_DIR}/lib/mic")
-    SET(OSPRAY_TARGET_MIC ON)
+    SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
   ELSE()
     SET(OSPRAY_EXE_SUFFIX "")
     SET(OSPRAY_LIB_SUFFIX "")

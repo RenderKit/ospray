@@ -393,3 +393,11 @@ BlockBrickedVolume_setRegion(void *uniform _self,
   BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
   self->setRegion(self, _source, regionCoords, regionSize, taskIndex);
 }
+
+export void BlockBrickedVolume_freeVolume(void *uniform _self)
+{
+  BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
+  if (self->blockMem) {
+    free64(self->blockMem);
+  }
+}

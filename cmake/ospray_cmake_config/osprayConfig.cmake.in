@@ -139,25 +139,28 @@ set(CURRENT_ROOT_INSTALL_DIR   ${OSPRAY_CURRENT_ROOT_INSTALL_DIR})
 # Import exported ospray targets
 # NOTE(jda) - Order matters below: targets which depend on other targets need to
 #             be after the INCLUDE() of the targets they depend upon.
-IF(NOT TARGET ospray AND NOT OSPRAY_BINARY_DIR)
-  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libsysTargets.cmake)
-  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/liblexersTargets.cmake)
-  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libsimdTargets.cmake)
-  IF (@OSPRAY_EMBREE_ENABLE_SSE@ OR @OSPRAY_EMBREE_ENABLE_AVX@ OR @OSPRAY_EMBREE_ENABLE_AVX2@)
-    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_sse42Targets.cmake)
-  ENDIF()
-  IF (@OSPRAY_EMBREE_ENABLE_AVX@ OR @OSPRAY_EMBREE_ENABLE_AVX2@)
-    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avxTargets.cmake)
-  ENDIF()
-  IF (@OSPRAY_EMBREE_ENABLE_AVX2@)
-    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avx2Targets.cmake)
-  ENDIF()
-  IF (@OSPRAY_EMBREE_ENABLE_AVX512@)
-    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avx512Targets.cmake)
-  ENDIF()
-  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embreeTargets.cmake)
-  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libosprayTargets.cmake)
-endif(NOT TARGET ospray AND NOT OSPRAY_BINARY_DIR)
+# NOTE(jda) - Targets have been disabled now that we use Embree's root CMake
+#             list to configure and build Embree. When Embree exports targets,
+#             using them here should be re-enabled.
+#IF(NOT TARGET ospray AND NOT OSPRAY_BINARY_DIR)
+#  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libsysTargets.cmake)
+#  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/liblexersTargets.cmake)
+#  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libsimdTargets.cmake)
+#  IF (@OSPRAY_EMBREE_ENABLE_SSE@ OR @OSPRAY_EMBREE_ENABLE_AVX@ OR @OSPRAY_EMBREE_ENABLE_AVX2@)
+#    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_sse42Targets.cmake)
+#  ENDIF()
+#  IF (@OSPRAY_EMBREE_ENABLE_AVX@ OR @OSPRAY_EMBREE_ENABLE_AVX2@)
+#    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avxTargets.cmake)
+#  ENDIF()
+#  IF (@OSPRAY_EMBREE_ENABLE_AVX2@)
+#    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avx2Targets.cmake)
+#  ENDIF()
+#  IF (@OSPRAY_EMBREE_ENABLE_AVX512@)
+#    INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embree_avx512Targets.cmake)
+#  ENDIF()
+#  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libospray_embreeTargets.cmake)
+#  INCLUDE(${CURRENT_CONFIG_INSTALL_DIR}/libosprayTargets.cmake)
+#endif(NOT TARGET ospray AND NOT OSPRAY_BINARY_DIR)
 
 # Remove duplicate entries from OSPRAY_INCLUDE_DIRS
 list(REMOVE_DUPLICATES OSPRAY_INCLUDE_DIRS)
@@ -165,8 +168,10 @@ list(REMOVE_DUPLICATES OSPRAY_INCLUDE_DIRS)
 # Set expected OSPRAY_LIBRARIES variable for FindPackage().
 set(OSPRAY_LIBRARIES
   ${OSPRAY_DEPENDENCIES}
-  ospray
-  ospray_embree
+  #ospray# NOTE(jda) - target disabled (see above)
+  #ospray_embree# NOTE(jda) - target disabled (see above)
+  ${CMAKE_CURRENT_LIST_DIR}/../../lib/${CMAKE_SHARED_LIBRARY_PREFIX}embree${CMAKE_SHARED_LIBRARY_SUFFIX}
+  ${CMAKE_CURRENT_LIST_DIR}/../../lib/${CMAKE_SHARED_LIBRARY_PREFIX}ospray${CMAKE_SHARED_LIBRARY_SUFFIX}
 )
 
 # Reset CMake module path to its state when this script was called.

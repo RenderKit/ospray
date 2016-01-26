@@ -56,7 +56,7 @@ SET(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/common/cmake ${CMAKE_MODULE_PA
 ##############################################################
 # Create Binary Packages
 ##############################################################
-include(package)
+#include(package)
 
 ##############################################################
 # Embree configuration
@@ -301,4 +301,4 @@ add_custom_target(uninstall
 ##############################################################
 # Has to be last
 ##############################################################
-INCLUDE(CPack)
+#INCLUDE(CPack)

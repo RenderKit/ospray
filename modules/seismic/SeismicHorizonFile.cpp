@@ -19,51 +19,83 @@
 #include <cstring>
 #include "SeismicHorizonFile.h"
 
-OSPTriangleMesh SeismicHorizonFile::importTriangleMesh(OSPTriangleMesh triangleMesh)
+SeismicHorizonFile::SeismicHorizonFile(const std::string &filename) :
+  filename(filename),
+  scale(ospray::vec3f(1.f)),
+  verbose(true)
+{
+}
+
+OSPGeometry SeismicHorizonFile::importTriangleMesh(OSPGeometry triangleMesh)
 {
   // Get scaling parameter if provided.
   ospGetVec3f(triangleMesh, "scale", (osp::vec3f *)&scale);
 
   // Open seismic data file and populate attributes.
-  exitOnCondition(openSeismicDataFile(triangleMesh) != true, "unable to open file '" + filename + "'");
+  exitOnCondition(openSeismicDataFile(triangleMesh) != true,
+                  "unable to open file '" + filename + "'");
 
   // Import the horizon data from the file into the triangle mesh.
-  exitOnCondition(importHorizonData(triangleMesh) != true, "error importing horizon data.");
+  exitOnCondition(importHorizonData(triangleMesh) != true,
+                  "error importing horizon data.");
 
   // Return the triangle mesh.
   return triangleMesh;
 }
 
-bool SeismicHorizonFile::openSeismicDataFile(OSPTriangleMesh triangleMesh)
+std::string SeismicHorizonFile::toString() const
 {
-  // Open seismic data file, keeping trace header information.
+  return("ospray_module_seismic::SeismicHorizonFile");
+}
+
+bool SeismicHorizonFile::openSeismicDataFile(OSPGeometry /*triangleMesh*/)
+{
+  // Open seismic data file, keeping trace header information. //
   // Sample types int, short, long, float, and double will be converted to float.
   inputBinTag = cddx_in2("in", filename.c_str(), "seismic");
   exitOnCondition(inputBinTag < 0, "could not open data file " + filename);
 
   // Get horizon volume dimensions.
-  exitOnCondition(cdds_scanf("size.axis(1)", "%d", &dimensions.x) != 1, "could not find size of dimension 1");
-  exitOnCondition(cdds_scanf("size.axis(2)", "%d", &dimensions.y) != 1, "could not find size of dimension 2");
-  exitOnCondition(cdds_scanf("size.axis(3)", "%d", &dimensions.z) != 1, "could not find size of dimension 3");
+  exitOnCondition(cdds_scanf("size.axis(1)", "%d", &dimensions.x) != 1,
+                  "could not find size of dimension 1");
+  exitOnCondition(cdds_scanf("size.axis(2)", "%d", &dimensions.y) != 1,
+                  "could not find size of dimension 2");
+  exitOnCondition(cdds_scanf("size.axis(3)", "%d", &dimensions.z) != 1,
+                  "could not find size of dimension 3");
 
-  if(verbose) std::cout << toString() << " " << dimensions.z << " horizons, dimensions = " << dimensions.x << " " << dimensions.y << std::endl;
+  if(verbose) {
+    std::cout << toString() << " " << dimensions.z
+              << " horizons, dimensions = " << dimensions.x
+              << " " << dimensions.y << std::endl;
+  }
 
   // Get voxel spacing (deltas).
-  exitOnCondition(cdds_scanf("delta.axis(1)", "%f", &deltas.x) != 1, "could not find delta of dimension 1");
-  exitOnCondition(cdds_scanf("delta.axis(2)", "%f", &deltas.y) != 1, "could not find delta of dimension 2");
-  exitOnCondition(cdds_scanf("delta.axis(3)", "%f", &deltas.z) != 1, "could not find delta of dimension 3");
+  exitOnCondition(cdds_scanf("delta.axis(1)", "%f", &deltas.x) != 1,
+                  "could not find delta of dimension 1");
+  exitOnCondition(cdds_scanf("delta.axis(2)", "%f", &deltas.y) != 1,
+                  "could not find delta of dimension 2");
+  exitOnCondition(cdds_scanf("delta.axis(3)", "%f", &deltas.z) != 1,
+                  "could not find delta of dimension 3");
 
-  if(verbose) std::cout << toString() << " volume deltas = " << deltas.x << " " << deltas.y << " " << deltas.z << std::endl;
+  if(verbose) {
+    std::cout << toString() << " volume deltas = "
+              << deltas.x << " " << deltas.y << " " << deltas.z << std::endl;
+  }
 
   // Get trace header information.
   FIELD_TAG traceSamplesTag = cdds_member(inputBinTag, 0, "Samples");
   traceHeaderSize = cdds_index(inputBinTag, traceSamplesTag, DDS_FLOAT);
-  exitOnCondition(traceSamplesTag == -1 || traceHeaderSize == -1, "could not get trace header information");
+  exitOnCondition(traceSamplesTag == -1 || traceHeaderSize == -1,
+                  "could not get trace header information");
 
-  if(verbose) std::cout << toString() << " trace header size = " << traceHeaderSize << std::endl;
+  if(verbose) {
+    std::cout << toString() << " trace header size = " << traceHeaderSize
+              << std::endl;
+  }
 
   // Check that horizon dimensions are valid.
-  exitOnCondition(dimensions.x <= 1 || dimensions.y <= 1, "improper horizon dimensions found");
+  exitOnCondition(dimensions.x <= 1 || dimensions.y <= 1,
+                  "improper horizon dimensions found");
 
   // Need at least one horizon.
   exitOnCondition(dimensions.x < 1, "no horizons found");
@@ -71,15 +103,18 @@ bool SeismicHorizonFile::openSeismicDataFile(OSPTriangleMesh triangleMesh)
   return true;
 }
 
-bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
+bool SeismicHorizonFile::importHorizonData(OSPGeometry triangleMesh)
 {
   // Allocate memory for all traces.
-  float * volumeBuffer = (float *)malloc(dimensions.x*dimensions.y*dimensions.z * sizeof(float));
+  size_t memSize = dimensions.x*dimensions.y*dimensions.z * sizeof(float);
+  float *volumeBuffer = (float *)malloc(memSize);
   exitOnCondition(volumeBuffer == NULL, "failed to allocate volume buffer");
 
-  // Allocate trace array; the trace length is given by the trace header size and the first dimension.
-  // Note that FreeDDS converts all trace data to floats.
-  float * traceBuffer = (float *)malloc((traceHeaderSize + dimensions.x) * sizeof(float));
+  // Allocate trace array; the trace length is given by the trace header size
+  // and the first dimension. Note that FreeDDS converts all trace data to
+  // floats.
+  memSize = (traceHeaderSize + dimensions.x) * sizeof(float);
+  float *traceBuffer = (float *)malloc(memSize);
   exitOnCondition(traceBuffer == NULL, "failed to allocate trace buffer");
 
   // Read all traces and copy them into the volume buffer.
@@ -87,10 +122,13 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
     for(long i2=0; i2<dimensions.y; i2++) {
 
       // Read trace.
-      exitOnCondition(cddx_read(inputBinTag, traceBuffer, 1) != 1, "unable to read trace");
+      exitOnCondition(cddx_read(inputBinTag, traceBuffer, 1) != 1,
+                      "unable to read trace");
 
       // Copy trace into the volume buffer.
-      memcpy((void *) &volumeBuffer[i3*dimensions.y*dimensions.x + i2*dimensions.x], (const void *) &traceBuffer[traceHeaderSize], dimensions.x * sizeof(float));
+      memcpy((void *)&volumeBuffer[i3*dimensions.y*dimensions.x+i2*dimensions.x],
+             (const void *) &traceBuffer[traceHeaderSize],
+             dimensions.x * sizeof(float));
     }
   }
 
@@ -106,7 +144,8 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
       for(long i1=0; i1<dimensions.x; i1++) {
 
         long index = h*dimensions.y*dimensions.x + i2*dimensions.x + i1;
-        ospray::vec3fa vertex(volumeBuffer[index] * deltas.z, i1 * deltas.x, i2 * deltas.y);
+        ospray::vec3fa vertex(volumeBuffer[index] * deltas.z, i1 * deltas.x,
+                              i2 * deltas.y);
 
         // Apply scaling.
         vertex *= scale;
@@ -120,28 +159,34 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
     for(long i2=0; i2<dimensions.y-1; i2++) {
       for(long i1=0; i1<dimensions.x-1; i1++) {
 
-        long vertex0 = h*dimensions.x*dimensions.y + i2    *dimensions.x + i1    ;
-        long vertex1 = h*dimensions.x*dimensions.y + i2    *dimensions.x + (i1+1);
-        long vertex2 = h*dimensions.x*dimensions.y + (i2+1)*dimensions.x + (i1+1);
-        long vertex3 = h*dimensions.x*dimensions.y + (i2+1)*dimensions.x + i1    ;
+        long v0 = h*dimensions.x*dimensions.y + i2    *dimensions.x + i1    ;
+        long v1 = h*dimensions.x*dimensions.y + i2    *dimensions.x + (i1+1);
+        long v2 = h*dimensions.x*dimensions.y + (i2+1)*dimensions.x + (i1+1);
+        long v3 = h*dimensions.x*dimensions.y + (i2+1)*dimensions.x + i1    ;
 
         // Assume horizon height coordinate must be > 0 to be valid.
-        if (std::min(std::min(vertices[vertex0].x, vertices[vertex1].x), vertices[vertex2].x) > 0.f) {
-          triangles.push_back(ospray::vec3i(vertex0, vertex1, vertex2));
+        if (std::min(std::min(vertices[v0].x,
+                              vertices[v1].x),
+                     vertices[v2].x) > 0.f) {
+          triangles.push_back(ospray::vec3i(v0, v1, v2));
 
-          ospray::vec3fa triangleNormal = cross(vertices[vertex1] - vertices[vertex0], vertices[vertex2] - vertices[vertex0]);
-          vertexNormals[vertex0] += triangleNormal;
-          vertexNormals[vertex1] += triangleNormal;
-          vertexNormals[vertex2] += triangleNormal;
+          ospray::vec3fa triangleNormal = cross(vertices[v1] - vertices[v0],
+                                                vertices[v2] - vertices[v0]);
+          vNormals[v0] += triangleNormal;
+          vNormals[v1] += triangleNormal;
+          vNormals[v2] += triangleNormal;
         }
 
-        if (std::min(std::min(vertices[vertex2].x, vertices[vertex3].x), vertices[vertex0].x) > 0.f) {
-          triangles.push_back(ospray::vec3i(vertex2, vertex3, vertex0));
+        if (std::min(std::min(vertices[v2].x,
+                              vertices[v3].x),
+                     vertices[v0].x) > 0.f) {
+          triangles.push_back(ospray::vec3i(v2, v3, v0));
 
-          ospray::vec3fa triangleNormal = cross(vertices[vertex3] - vertices[vertex2], vertices[vertex0] - vertices[vertex2]);
-          vertexNormals[vertex2] += triangleNormal;
-          vertexNormals[vertex3] += triangleNormal;
-          vertexNormals[vertex0] += triangleNormal;
+          ospray::vec3fa triangleNormal = cross(vertices[v3] - vertices[v2],
+                                                vertices[v0] - vertices[v2]);
+          vNormals[v2] += triangleNormal;
+          vNormals[v3] += triangleNormal;
+          vNormals[v0] += triangleNormal;
         }
       }
     }
@@ -155,7 +200,9 @@ bool SeismicHorizonFile::importHorizonData(OSPTriangleMesh triangleMesh)
   OSPData vertexData = ospNewData(vertices.size(), OSP_FLOAT3A, &vertices[0].x);
   ospSetData(triangleMesh, "vertex", vertexData);
 
-  OSPData vertexNormalData = ospNewData(vertexNormals.size(), OSP_FLOAT3A, &vertexNormals[0].x);
+  OSPData vertexNormalData = ospNewData(vertexNormals.size(),
+                                        OSP_FLOAT3A,
+                                        &vertexNormals[0].x);
   ospSetData(triangleMesh, "vertex.normal", vertexNormalData);
 
   OSPData indexData = ospNewData(triangles.size(), OSP_INT3, &triangles[0].x);

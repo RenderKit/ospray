@@ -17,6 +17,9 @@
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
 
+using embree::alignedFree;
+using embree::alignedMalloc;
+
 namespace ospray {
 
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
@@ -36,10 +39,10 @@ namespace ospray {
         colorBuffer = NULL;
         break;
       case OSP_RGBA_F32:
-        colorBuffer = new vec4f[size.x*size.y];
+        colorBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
         break;
       case OSP_RGBA_I8:
-        colorBuffer = new uint32[size.x*size.y];
+        colorBuffer = (uint32*)alignedMalloc(sizeof(uint32)*size.x*size.y);
         break;
       default:
         throw std::runtime_error("color buffer format not supported");
@@ -47,12 +50,12 @@ namespace ospray {
     }
 
     if (hasDepthBuffer)
-      depthBuffer = new float[size.x*size.y];
+      depthBuffer = (float*)alignedMalloc(sizeof(float)*size.x*size.y);
     else
       depthBuffer = NULL;
     
     if (hasAccumBuffer)
-      accumBuffer = new vec4f[size.x*size.y];
+      accumBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
     else
       accumBuffer = NULL;
     ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
@@ -64,20 +67,20 @@ namespace ospray {
   
   LocalFrameBuffer::~LocalFrameBuffer() 
   {
-    if (depthBuffer) delete[] depthBuffer;
+    if (depthBuffer) alignedFree(depthBuffer);
 
     if (colorBuffer)
       switch(colorBufferFormat) {
       case OSP_RGBA_F32:
-        delete[] ((vec4f*)colorBuffer);
+        alignedFree(colorBuffer);
         break;
       case OSP_RGBA_I8:
-        delete[] ((uint32*)colorBuffer);
+        alignedFree(colorBuffer);
         break;
       default:
         throw std::runtime_error("color buffer format not supported");
       }
-    if (accumBuffer) delete[] accumBuffer;
+    if (accumBuffer) alignedFree(accumBuffer);
   }
 
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
@@ -97,7 +100,6 @@ namespace ospray {
       ispc::LocalFrameBuffer_accumulateTile(getIE(),(ispc::Tile&)tile);
     if (pixelOp)
       pixelOp->postAccum(tile);
-    // // if (accumBuffer)
     if (colorBuffer) {
       switch(colorBufferFormat) {
       case OSP_RGBA_I8:

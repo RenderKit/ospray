@@ -60,6 +60,8 @@ QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 ADD_EXECUTABLE(ospQtViewer ${SRCS} ${MOC_OUTFILES})
 TARGET_LINK_LIBRARIES(ospQtViewer ${LIBS} 
   ospray_sg${OSPRAY_LIB_SUFFIX}
+  ${TBB_LIBRARY_MALLOC}
+  ${TBB_LIBRARY}
   )
 # ------------------------------------------------------------
 INSTALL(TARGETS ospQtViewer DESTINATION bin)

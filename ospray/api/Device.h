@@ -143,9 +143,6 @@ namespace ospray {
       /*! Get the named 3-vector integer value associated with an object. */
       virtual int getVec3i(OSPObject object, const char *name, vec3i *value) = 0;
 
-      /*! create a new triangle mesh geometry */
-      virtual OSPTriangleMesh newTriangleMesh() = 0;
-
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type) = 0;
 

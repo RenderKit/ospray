@@ -452,16 +452,6 @@ namespace ospray {
     }
 
     /*! create a new data buffer */
-    OSPTriangleMesh MPIDevice::newTriangleMesh()
-    {
-      ObjectHandle handle = ObjectHandle::alloc();
-      cmd.newCommand(CMD_NEW_TRIANGLEMESH);
-      cmd.send(handle);
-      cmd.flush();
-      return (OSPTriangleMesh)(int64)handle;
-    }
-
-    /*! create a new data buffer */
     OSPData MPIDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {
       ObjectHandle handle = ObjectHandle::alloc();
