@@ -21,6 +21,9 @@
 //#define MAGICKCORE_HDRI_ENABLE 1
 # include <Magick++.h>
 using namespace Magick;
+#  ifndef MaxRGB
+#    define MaxRGB QuantumRange
+#  endif
 #endif
 
 namespace ospray {
