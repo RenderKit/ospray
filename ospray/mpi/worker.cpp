@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -88,20 +88,14 @@ namespace ospray {
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
-      // std::stringstream embreeConfig;
-      // if (debugMode)
-      //   embreeConfig << " threads=1";
-      // rtcInit(embreeConfig.str().c_str());
-
-      //      assert(rtcGetError() == RTC_NO_ERROR);
-      rtcSetErrorFunction(embreeErrorFunc);
-
       std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
+
+      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
 
       if (rtcGetError() != RTC_NO_ERROR) {
         // why did the error function not get called !?

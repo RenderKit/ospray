@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,25 +15,25 @@
 // ======================================================================== //
 
 #include "PanoramicCamera.ih"
+#include "ospray/math/sampling.ih"
 
 void PanoramicCamera_initRay(uniform Camera *uniform _self,
                              varying Ray &ray,
                              const varying CameraSample &sample)
 {
-  uniform PanoramicCamera *uniform self = 
-    (uniform PanoramicCamera *uniform)_self;
+  uniform PanoramicCamera *uniform self = (uniform PanoramicCamera *uniform)_self;
 
   const vec3f org = self->pos;
 
-  const float phi = 2.f * M_PI * sample.screen.x;
+  const float phi = two_pi * sample.screen.x;
   const float theta = -M_PI * sample.screen.y;
 
-  vec3f dir = make_vec3f(sin(theta) * sin(phi),
-                         sin(theta) * cos(phi),
-                         -cos(theta));
+  float sinTheta, cosTheta;
+  sincos(theta, &sinTheta, &cosTheta);
+  const vec3f localDir = cartesian(phi, sinTheta, cosTheta);
 
   // transform into camera frame
-  dir = self->frame * dir;
+  const vec3f dir = self->frame * localDir;
 
   setRay(ray, org, dir, self->super.nearClip, infinity);
 }
@@ -44,8 +44,7 @@ void PanoramicCamera_initRay(uniform Camera *uniform _self,
     parameters */
 export void *uniform PanoramicCamera_create(void *uniform cppE)
 {
-  uniform PanoramicCamera *uniform cam 
-    = uniform new uniform PanoramicCamera;
+  uniform PanoramicCamera *uniform cam = uniform new uniform PanoramicCamera;
   cam->super.cppEquivalent = cppE;
   cam->super.initRay = PanoramicCamera_initRay;
   cam->super.doesDOF = false;
@@ -57,8 +56,7 @@ export void PanoramicCamera_set(void *uniform _self,
                                 const uniform linear3f &frame,
                                 const uniform float nearClip)
 {
-  uniform PanoramicCamera *uniform self
-    = (uniform PanoramicCamera *uniform)_self;
+  uniform PanoramicCamera *uniform self = (uniform PanoramicCamera *uniform)_self;
   self->pos = pos;
   self->frame = frame;
   self->super.nearClip = nearClip;

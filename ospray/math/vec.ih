@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -448,6 +448,9 @@ inline float reduce_add(const vec3f v)
 inline float reduce_avg(const vec3f v)
 { return (v.x+v.y+v.z)*(1.0f/3.0f); }
 
+inline float luminance(const vec3f& c)
+{ return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
+
 inline uniform bool eq(const uniform vec2f a, const uniform vec2f b)
 { return a.x==b.x && a.y==b.y; }
 inline bool eq(const vec2f a, const vec2f b)
@@ -739,6 +742,9 @@ inline uniform float reduce_add(const uniform vec3f &a)
 
 inline uniform float reduce_avg(const uniform vec3f &a)
 { return((a.x+a.y+a.z)*(1.0f/3.0f)); }
+
+inline uniform float luminance(const uniform vec3f& c)
+{ return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
 
 inline varying vec3f pow(const varying vec3f &a, const varying float b)
 { return(make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b))); }

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -105,5 +105,8 @@ namespace ospray {
   /*! helper function for debugging. write out given pixels in PPM
       format. Pixels are supposed to come in as RGBA, 4x8 bit */
   void writePPM(const std::string &fileName, const vec2i &size, uint32 *pixels);
+
+  //! helper function to write a (float) image as (flipped) PFM file
+  void writePFM(const std::string &fileName, const vec2i &size, const int channel, const float *pixels);
   
 } // ::ospray

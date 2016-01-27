@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -43,9 +43,9 @@ ENDMACRO()
 
 SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
 IF (WIN32)
-  IF (NOT DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)
+  IF (NOT OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET)
     SET(CMAKE_CONFIGURATION_TYPES "${CONFIGURATION_TYPES}" CACHE STRING "List of generated configurations." FORCE)
-    SET(DEFAULT_CMAKE_CONFIGURATION_TYPES_SET ON CACHE INTERNAL "Default CMake configuration types set.")
+    SET(OSPRAY_DEFAULT_CMAKE_CONFIGURATION_TYPES_SET ON CACHE INTERNAL "Default CMake configuration types set.")
   ENDIF()
 ELSE()
   IF(NOT CMAKE_BUILD_TYPE)

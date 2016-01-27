@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -16,7 +16,7 @@
 
 # Options for building embree
 #
-# NOTE(jda) - All of these variables are pubic to the embree project, we hide
+# NOTE(jda) - All of these variables are public to the embree project, we hide
 #             them intentionally from OSPRay's CMake configuration and force
 #             values into the CMake cache so the underlying cached variables
 #             in the embree CMakeLists.txt are picked up based on OSPRay's

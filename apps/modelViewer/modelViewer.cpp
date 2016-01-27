@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,6 +28,7 @@ namespace ospray {
   using std::cout;
   using std::endl;
   bool doShadows = 1;
+  OSPTexture2D g_tex; // holds last loaded texture, for debugging
 
   const char *outFileName = NULL;
   size_t numAccumsFrameInFileOutput = 1;
@@ -139,6 +140,7 @@ namespace ospray {
       Assert(camera != NULL && "could not create camera");
       ospSet3f(camera,"pos",-1,1,-1);
       ospSet3f(camera,"dir",+1,-1,+1);
+//      ospSet1f(camera,"fovy",120);
       ospCommit(camera);
 
       ospSetObject(renderer,"world",model);
@@ -481,6 +483,8 @@ namespace ospray {
     alreadyCreatedTextures[msgTex] = ospTex;
 
     ospCommit(ospTex);
+    g_tex = ospTex; // remember last texture for debugging
+
     return ospTex;
   }
 
@@ -903,6 +907,16 @@ namespace ospray {
     ospSet1f(ospQuad, "intensity", 45.f);
     ospCommit(ospQuad);
     lights.push_back(ospQuad);
+    //HDRI light
+    cout << "#ospModelViewer: Adding a hard coded hdrilight for test." << endl;
+    OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
+    ospSetString(ospHdri, "name", "hdri_test");
+    ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
+    ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
+    ospSet1f(ospHdri, "intensity", 10.f);
+    ospSetObject(ospHdri, "map", g_tex);
+    ospCommit(ospHdri);
+    lights.push_back(ospHdri);
 #endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);

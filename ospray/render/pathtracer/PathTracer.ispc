@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -153,7 +153,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
       } else if (!lightPath.ignoreVisibleLights)
           for (uniform int i = 0; i < self->numLights; i++) { // TODO: self->num_envLights
             const uniform Light *uniform l = self->lights[i];
-            L = L + Lw * l->evalEnv(l, wo);
+            L = L + Lw * l->evalEnv(l, lightPath.ray.dir);
           }
 
       break;

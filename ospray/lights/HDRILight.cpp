@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,21 +14,46 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "HDRILight.h"
+#include "HDRILight_ispc.h"
 
-#include "Sample.ih"
+namespace ospray {
 
-struct Distribution2D 
-{
-  RefCount base;
+  HDRILight::HDRILight()
+    : up(0.f, 1.f, 0.f)
+    , dir(0.f, 0.f, 1.f)
+    , map(NULL)
+    , intensity(1.f)
+  {
+    ispcEquivalent = ispc::HDRILight_create(this);
+  }
 
-  vec2ui size;
-  uniform float* cdf_x;
-  uniform float* cdf_y;
-  uniform float* pdf_x;
-  uniform float* pdf_y;
-};
+  HDRILight::~HDRILight()
+  {
+    ispc::HDRILight_destroy(getIE());
+    ispcEquivalent = NULL;
+  }
 
-uniform Distribution2D* uniform Distribution2D__new(const uniform float* uniform f, const uniform vec2ui size);
+  //!< Copy understood parameters into class members
+  void HDRILight::commit()
+  {
+    up = getParam3f("up", vec3f(0.f, 1.f, 0.f));
+    dir = getParam3f("dir", vec3f(0.f, 0.f, 1.f));
+    intensity = getParam1f("intensity", 1.f);
+    map  = (Texture2D*)getParamObject("map", NULL);
 
-Sample2f Distribution2D__sample(const uniform Distribution2D* uniform this, const vec2f &u);
+    linear3f frame;
+    frame.vx = normalize(-dir);
+    frame.vy = normalize(cross(frame.vx, up));
+    frame.vz = cross(frame.vx, frame.vy);
+
+    ispc::HDRILight_set(
+        getIE(),
+        (const ispc::LinearSpace3f&)frame,
+        map ? map->getIE() : NULL,
+        intensity);
+  }
+
+  OSP_REGISTER_LIGHT(HDRILight, hdri);
+//  OSP_REGISTER_LIGHT(HDRILight, HDRILight);
+}

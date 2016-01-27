@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -48,7 +48,7 @@ inline vec3f cartesian(const float phi, const float cosTheta)
 
 inline vec3f cosineSampleHemisphere(const vec2f s)
 {
-  const float phi = (2.0f * M_PI) * s.x;
+  const float phi = two_pi * s.x;
   const float cosTheta = sqrt(s.y);
   const float sinTheta = sqrt(1.0f - s.y);
   return cartesian(phi, sinTheta, cosTheta);
@@ -70,7 +70,7 @@ inline float cosineSampleHemispherePDF(float cosTheta)
 
 inline vec3f powerCosineSampleHemisphere(const float n, const vec2f &s)
 {
-  const float phi = (2.0f * M_PI) * s.x;
+  const float phi = two_pi * s.x;
   const float cosTheta = pow(s.y, 1.0f / (n + 1.0f));
   return cartesian(phi, cosTheta);
 }
@@ -90,19 +90,19 @@ inline float powerCosineSampleHemispherePDF(const vec3f dir, const float n) // T
 
 inline vec3f uniformSampleCone(const float cosAngle, const vec2f &s)
 {
-  const float phi = (2.0f * M_PI) * s.x;
+  const float phi = two_pi * s.x;
   const float cosTheta = 1.0f - s.y * (1.0f - cosAngle);
   return cartesian(phi, cosTheta);
 }
 
 inline float uniformSampleConePDF(const float cosAngle)
 {
-    return rcp((2.0f*M_PI)*(1.0f - cosAngle));
+    return rcp(two_pi*(1.0f - cosAngle));
 }
 
 inline uniform float uniformSampleConePDF(const uniform float cosAngle)
 {
-    return rcp((2.0f*M_PI)*(1.0f - cosAngle));
+    return rcp(two_pi*(1.0f - cosAngle));
 }
 
 
@@ -112,7 +112,7 @@ inline uniform float uniformSampleConePDF(const uniform float cosAngle)
 inline vec3f uniformSampleDisk(const float radius, const vec2f &s)
 {
   const float r = sqrtf(s.x) * radius;
-  const float phi = (2.0f * M_PI) * s.y;
+  const float phi = two_pi * s.y;
   float sinPhi, cosPhi;
   sincos(phi, &sinPhi, &cosPhi);
   return make_vec3f(r * cosPhi, r * sinPhi, 0.f);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,24 +16,26 @@
 
 #pragma once
 
-#include "api/parms.h"
-#include "PTHDRILight_ispc.h"
+#include "ospray/math/vec.ih"
 
-namespace embree
+struct Distribution2D 
 {
-  struct HDRILight
-  {
-    static void* create(const Parms& parms)
-    {
-      const AffineSpace3f local2world = parms.getTransform("local2world",one);
-      const Color L = parms.getColor("L",one);
-      ISPCRef pixels = parms.getImage("image");
-      return ispc::HDRILight__new((ispc::vec3f&)local2world.l.vx,
-                                  (ispc::vec3f&)local2world.l.vy,
-                                  (ispc::vec3f&)local2world.l.vz,
-                                  (ispc::vec3f&)local2world.p,
-                                  (ispc::vec3f&)L,
-                                  pixels.ptr);
-    }
-  };
-}
+  vec2i size;
+  vec2f rcpSize;        // 1/size
+  uniform float* cdf_x; // size.x*size.y elements
+  uniform float* cdf_y; // size.y elements
+};
+
+// consumes array 'importance' of size size.x*size.y, ownership is transferred to Distribution2D
+uniform Distribution2D* uniform Distribution2D_create(const uniform vec2i size, uniform float* uniform importance);
+void Distribution2D_destroy(uniform Distribution2D* uniform);
+
+struct Sample2D
+{
+  vec2f uv;
+  float pdf;
+};
+
+// inline?
+Sample2D Distribution2D_sample(const uniform Distribution2D* uniform, const vec2f &s);
+float  Distribution2D_pdf(const uniform Distribution2D* uniform, const vec2f &uv);

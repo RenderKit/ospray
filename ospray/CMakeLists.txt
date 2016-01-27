@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -73,6 +73,7 @@ SET(OSPRAY_SOURCES
   device/nwlayer.cpp
 
   math/box.ispc
+  math/Distribution2D.ispc
 
   common/OSPCommon.ispc
   common/OSPCommon.cpp
@@ -154,6 +155,8 @@ SET(OSPRAY_SOURCES
   lights/SpotLight.ispc
   lights/QuadLight.cpp
   lights/QuadLight.ispc
+  lights/HDRILight.cpp
+  lights/HDRILight.ispc
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc
