@@ -27,23 +27,23 @@
 
 namespace ospray {
 
-StructuredVolume::StructuredVolume() :
-  finished(false),
-  voxelRange(FLT_MAX, -FLT_MAX)
-{
-}
+  StructuredVolume::StructuredVolume() :
+    finished(false),
+    voxelRange(FLT_MAX, -FLT_MAX)
+  {
+  }
 
-StructuredVolume::~StructuredVolume() {}
+  StructuredVolume::~StructuredVolume() {}
 
-std::string StructuredVolume::toString() const
-{
-  return("ospray::StructuredVolume<" + voxelType + ">");
-}
+  std::string StructuredVolume::toString() const
+  {
+    return("ospray::StructuredVolume<" + voxelType + ">");
+  }
 
-void StructuredVolume::commit()
-{
-  // Some parameters can be changed after the volume has been allocated and
-  // filled.
+  void StructuredVolume::commit()
+  {
+    // Some parameters can be changed after the volume has been allocated and
+    // filled.
     updateEditableParameters();
 
     // Set the grid origin, default to (0,0,0).
