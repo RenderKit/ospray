@@ -16,7 +16,7 @@
 
 # Options for building embree
 #
-# NOTE(jda) - All of these variables are pubic to the embree project, we hide
+# NOTE(jda) - All of these variables are public to the embree project, we hide
 #             them intentionally from OSPRay's CMake configuration and force
 #             values into the CMake cache so the underlying cached variables
 #             in the embree CMakeLists.txt are picked up based on OSPRay's
