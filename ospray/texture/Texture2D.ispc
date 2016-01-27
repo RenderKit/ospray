@@ -72,6 +72,7 @@ inline vec2i nearest_coords(const uniform Texture2D *uniform self, const vec2f p
 {
   // repeat: get remainder within [0..1] parameter space
   vec2f tc = frac(p);
+  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
 
   // scale by texture size
   tc = tc * self->sizef;
@@ -93,6 +94,7 @@ inline BilinCoords bilinear_coords(const uniform Texture2D *uniform self, const 
   // repeat: get remainder within [0..1] parameter space
   // lower sample shifted by half a texel
   vec2f tc = frac(p - self->halfTexel);
+  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
 
   // scale by texture size
   tc = tc * self->sizef;
