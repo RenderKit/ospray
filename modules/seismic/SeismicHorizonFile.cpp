@@ -172,9 +172,9 @@ bool SeismicHorizonFile::importHorizonData(OSPGeometry triangleMesh)
 
           ospray::vec3fa triangleNormal = cross(vertices[v1] - vertices[v0],
                                                 vertices[v2] - vertices[v0]);
-          vNormals[v0] += triangleNormal;
-          vNormals[v1] += triangleNormal;
-          vNormals[v2] += triangleNormal;
+          vertexNormals[v0] += triangleNormal;
+          vertexNormals[v1] += triangleNormal;
+          vertexNormals[v2] += triangleNormal;
         }
 
         if (std::min(std::min(vertices[v2].x,
@@ -184,9 +184,9 @@ bool SeismicHorizonFile::importHorizonData(OSPGeometry triangleMesh)
 
           ospray::vec3fa triangleNormal = cross(vertices[v3] - vertices[v2],
                                                 vertices[v0] - vertices[v2]);
-          vNormals[v2] += triangleNormal;
-          vNormals[v3] += triangleNormal;
-          vNormals[v0] += triangleNormal;
+          vertexNormals[v2] += triangleNormal;
+          vertexNormals[v3] += triangleNormal;
+          vertexNormals[v0] += triangleNormal;
         }
       }
     }
