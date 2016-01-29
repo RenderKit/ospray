@@ -65,22 +65,13 @@ namespace osp {
   struct vec2f { float x, y; };
   struct vec2i { int x, y; };
   struct vec3f { float x, y, z; };
-  struct vec3fa { float x, y, z, a; };
+  struct vec3fa { float x, y, z; union { int a; unsigned u; float w; }; };
   struct vec3i { int x, y, z; };
   struct vec4f { float x, y, z, w; };
-  // typedef embree::Vec2f  vec2f;
-  // typedef embree::Vec2i  vec2i;
-  // typedef embree::Vec3f  vec3f;
-  // typedef embree::Vec3i  vec3i;
-  // typedef embree::Vec3fa vec3fa;
-  // typedef embree::Vec4f  vec4f;
   struct box2i { vec2i lower, upper; };
-  struct box3f { vec2f lower, upper; };
-  struct linear3f { vec3f vx,vy,vz; };
+  struct box3f { vec3f lower, upper; };
+  struct linear3f { vec3f vx, vy, vz; };
   struct affine3f { linear3f l; vec3f p; };
-  // typedef embree::BBox<embree::Vec2i> box2i;
-  // typedef embree::BBox3f box3f;
-  // typedef embree::AffineSpace3f affine3f;
 
   typedef uint64_t uint64;
 
