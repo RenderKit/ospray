@@ -53,6 +53,7 @@ namespace ospray {
     CMD_COMMIT,
     CMD_LOAD_MODULE,
     CMD_RELEASE,
+    CMD_REMOVE_VOLUME,
 
     CMD_GET_TYPE=300,
     CMD_GET_VALUE,

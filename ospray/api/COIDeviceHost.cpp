@@ -70,6 +70,7 @@ namespace ospray {
       x(OSPCOI_NEW_LIGHT,               "ospray_coi_new_light")             \
       x(OSPCOI_RELEASE,                 "ospray_coi_release")               \
       x(OSPCOI_REMOVE_GEOMETRY,         "ospray_coi_remove_geometry")       \
+      x(OSPCOI_REMOVE_VOLUME,           "ospray_coi_remove_volume")         \
       x(OSPCOI_FRAMEBUFFER_CLEAR,       "ospray_coi_framebuffer_clear")     \
       x(OSPCOI_PIN_UPLOAD_BUFFER,       "ospray_coi_pin_upload_buffer")     \
       x(OSPCOI_CREATE_NEW_EMPTY_DATA,   "ospray_coi_create_new_empty_data") \
@@ -194,14 +195,17 @@ namespace ospray {
       /*! commit the given object's outstanding changes */
       void commit(OSPObject object) override;
 
-      /*! remove an existing geometry from a model */
-      void removeGeometry(OSPModel _model, OSPGeometry _geometry) override;
-
       /*! add a new geometry to a model */
       void addGeometry(OSPModel _model, OSPGeometry _geometry) override;
 
+      /*! remove an existing geometry from a model */
+      void removeGeometry(OSPModel _model, OSPGeometry _geometry) override;
+
       /*! add a new volume to a model */
       void addVolume(OSPModel _model, OSPVolume _volume) override;
+
+      /*! remove an existing volume from a model */
+      void removeVolume(OSPModel _model, OSPVolume _volume) override;
 
       /*! create a new data buffer */
       OSPData newData(size_t nitems, OSPDataType format,
@@ -780,6 +784,14 @@ namespace ospray {
       args.write((ObjectHandle&)_model);
       args.write((ObjectHandle&)_geometry);
       callFunction(OSPCOI_REMOVE_GEOMETRY,args);
+    }
+
+    void COIDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    {
+      DataStream args;
+      args.write((ObjectHandle&)_model);
+      args.write((ObjectHandle&)_volume);
+      callFunction(OSPCOI_REMOVE_VOLUME,args);
     }
 
 

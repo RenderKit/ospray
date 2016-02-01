@@ -67,6 +67,9 @@ namespace ospray {
       /*! add a new volume to a model */
       virtual void addVolume(OSPModel _model, OSPVolume _volume) = 0;
 
+      /*! remove an existing volume from a model */
+      virtual void removeVolume(OSPModel _model, OSPVolume _volume) = 0;
+
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags) = 0;
 

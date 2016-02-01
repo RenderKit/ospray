@@ -205,6 +205,30 @@ namespace ospray {
       model->volume.push_back(volume);
     }
 
+    /*! remove an existing volume from a model */
+    struct VolumeLocator {
+      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+        return ptr == &*g;
+      }
+      Volume *ptr;
+    };
+
+    void LocalDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    {
+      Model *model = (Model *)_model;
+      Assert2(model, "null model in LocalDevice::removeVolume");
+
+      Volume *volume = (Volume *)_volume;
+      Assert2(volume, "null volume in LocalDevice::removeVolume");
+
+      VolumeLocator locator;
+      locator.ptr = volume;
+      Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+      if(it != model->volume.end()) {
+        model->volume.erase(it);
+      }
+    }
+
     /*! create a new data buffer */
     OSPData LocalDevice::newData(size_t nitems, OSPDataType format, void *init, int flags)
     {

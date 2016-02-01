@@ -48,9 +48,6 @@ namespace ospray {
         registered transfer function types) */
       OSPTransferFunction newTransferFunction(const char *type) override;
 
-      /*! remove an existing geometry from a model */
-      void removeGeometry(OSPModel _model, OSPGeometry _geometry) override;
-
       /*! have given renderer create a new Light */
       OSPLight newLight(OSPRenderer _renderer, const char *type) override;
 
@@ -94,8 +91,14 @@ namespace ospray {
       /*! add a new geometry to a model */
       void addGeometry(OSPModel _model, OSPGeometry _geometry) override;
 
+      /*! remove an existing geometry from a model */
+      void removeGeometry(OSPModel _model, OSPGeometry _geometry) override;
+
       /*! add a new volume to a model */
       void addVolume(OSPModel _model, OSPVolume _volume) override;
+
+      /*! remove an existing volume from a model */
+      void removeVolume(OSPModel _model, OSPVolume _volume) override;
 
       /*! create a new data buffer */
       OSPData newData(size_t nitems, OSPDataType format,

@@ -674,6 +674,40 @@ namespace ospray {
       if (ospray::debugMode) COIProcessProxyFlush();
     }
 
+    /*! remove an existing volume from a model */
+    struct VolumeLocator {
+      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+        return ptr == &*g;
+      }
+      Volume *ptr;
+    };
+
+    COINATIVELIBEXPORT
+    void ospray_coi_remove_volume(uint32_t         numBuffers,
+                                  void**           bufferPtr,
+                                  uint64_t*        bufferSize,
+                                  void*            argsPtr,
+                                  uint16_t         argsSize,
+                                  void*            retVal,
+                                  uint16_t         retValSize)
+    {
+      DataStream args(argsPtr);
+      ObjectHandle _model = args.get<ObjectHandle>();
+      ObjectHandle _volume = args.get<ObjectHandle>();
+
+      Model *model = (Model*)_model.lookup();
+      Volume *volume = (Volume*)_volume.lookup();
+
+      VolumeLocator locator;
+      locator.ptr = volume;
+      Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+      if(it != model->volume.end()) {
+        model->volume.erase(it);
+      }
+
+      if (ospray::debugMode) COIProcessProxyFlush();
+    }
+
     COINATIVELIBEXPORT
     void ospray_coi_render_frame(uint32_t         numBuffers,
                                  void**           bufferPtr,

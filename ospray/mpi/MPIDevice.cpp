@@ -1024,6 +1024,15 @@ namespace ospray {
       cmd.flush();
     }
 
+    /*! remove an existing volume from a model */
+    void MPIDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    {
+      cmd.newCommand(CMD_REMOVE_VOLUME);
+      cmd.send((const ObjectHandle&)_model);
+      cmd.send((const ObjectHandle&)_volume);
+      cmd.flush();
+    }
+
 
     /*! call a renderer to render a frame buffer */
     void MPIDevice::renderFrame(OSPFrameBuffer _fb, 
