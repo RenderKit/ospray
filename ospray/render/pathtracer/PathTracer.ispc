@@ -19,7 +19,7 @@
 
 #include "materials/Medium.ih"
 #include "materials/Material.ih"
-#include "samplers/PrecomputedSampler.ih"
+#include "math/random.ih"
 
 #define PDF_CULLING 0.0f
 //#define USE_DGCOLOR

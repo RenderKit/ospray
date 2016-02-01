@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
+
 #include "Device.h"
 
 /*! \file localdevice.h Implements the "local" device for local rendering */

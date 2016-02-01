@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#pragma once
+
 #include "ospray/common/OSPCommon.h"
 #include "ospray/common/ObjectHandle.h"
 
