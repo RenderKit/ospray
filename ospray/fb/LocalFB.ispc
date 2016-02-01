@@ -265,36 +265,4 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   self->depthBuffer = (uniform float *uniform)depthBuffer;
   self->accumBuffer = (uniform vec4f *uniform)accumBuffer;
   return self;
-  // uniform LocalFB *uniform fb = uniform new uniform LocalFB;
-  // fb->super.setTile    = LocalFrameBuffer_setTile;
-  // fb->super.accumTile  = LocalFrameBuffer_accumTile;
-  // fb->super.accumID    = -1;
-  // fb->super.size.x     = size_x;
-  // fb->super.size.y     = size_y;
-  // fb->super.rcpSize.x  = 1.f/size_x;
-  // fb->super.rcpSize.y  = 1.f/size_y;
-  // fb->super.gamma = 1.0f;
-  // fb->colorBuffer = colorBuffer;
-  // fb->depthBuffer = (uniform float *uniform)depthBuffer;
-  // fb->accumBuffer = (uniform vec4f *uniform)accumBuffer;
-  // fb->super.colorBufferFormat
-  //   = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
-  // return fb;
-  // uniform LocalFB *uniform fb = uniform new uniform LocalFB;
-  // fb->inherited.setTile    = LocalFrameBuffer_setTile;
-  // fb->inherited.accumTile  = LocalFrameBuffer_accumTile;
-  // fb->inherited.accumID    = -1;
-  // fb->inherited.size.x     = size_x;
-  // fb->inherited.size.y     = size_y;
-  // fb->inherited.rcpSize.x  = 1.f/size_x;
-  // fb->inherited.rcpSize.y  = 1.f/size_y;
-  // fb->inherited.rcpSize_1.x  = 1.f/(size_x-1.f);
-  // fb->inherited.rcpSize_1.y  = 1.f/(size_y-1.f);
-  // fb->inherited.gamma = 1.0f;
-  // fb->colorBuffer = colorBuffer;
-  // fb->depthBuffer = (uniform float *uniform)depthBuffer;
-  // fb->accumBuffer = (uniform vec4f *uniform)accumBuffer;
-  // fb->inherited.colorBufferFormat
-  //   = (uniform FrameBuffer_ColorBufferFormat)colorBufferFormat;
-  // return fb;
 }

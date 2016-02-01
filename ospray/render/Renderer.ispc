@@ -87,6 +87,16 @@ void Renderer_default_renderTileJob(uniform Renderer *uniform self,
           (screenSample.sampleID.y >= fb->size.y))
         continue;
 
+      float tMax = infinity;
+      // set ray t value for early ray termination if we have a maximum depth texture
+      if (self->maxDepthTexture) {
+        // always sample center of pixel
+        vec2f depthTexCoord;
+        depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
+        depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
+
+        tMax = get1f(self->maxDepthTexture, depthTexCoord);
+      }
       vec3f col = make_vec3f(0.f);
       const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
       for (uniform uint32 s = 0; s<spp; s++) {
@@ -102,17 +112,7 @@ void Renderer_default_renderTileJob(uniform Renderer *uniform self,
         cameraSample.lens.y = precomputedHalton5(startSampleID+s);
 
         camera->initRay(camera,screenSample.ray,cameraSample);
-
-        // set ray t value for early ray termination if we have a maximum depth texture
-        if (self->maxDepthTexture) {
-
-          // don't consider pixel_du, pixel_dv for depth texture coordinates
-          vec2f depthTexCoord;
-          depthTexCoord.x = screenSample.sampleID.x * fb->rcpSize_1.x;
-          depthTexCoord.y = screenSample.sampleID.y * fb->rcpSize_1.y;
-
-          screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
-        }
+        screenSample.ray.t = tMax;
 
         self->renderSample(self,perFrameData,screenSample);
         col = col + screenSample.rgb;
@@ -153,11 +153,10 @@ void Renderer_default_renderTileJob(uniform Renderer *uniform self,
 
       // set ray t value for early ray termination if we have a maximum depth texture
       if (self->maxDepthTexture) {
-
-        // don't consider pixel_du, pixel_dv for depth texture coordinates
+        // always sample center of pixel
         vec2f depthTexCoord;
-        depthTexCoord.x = screenSample.sampleID.x * fb->rcpSize_1.x;
-        depthTexCoord.y = screenSample.sampleID.y * fb->rcpSize_1.y;
+        depthTexCoord.x = (screenSample.sampleID.x + 0.5f) * fb->rcpSize.x;
+        depthTexCoord.y = (screenSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
         screenSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
       }

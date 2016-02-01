@@ -313,12 +313,6 @@ void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform rend
     ray.t = min(ray.t,clipRange.upper);
   }
 
-  // if (dbg) {
-  //   print("RENDER SAMPLE (block %)\n",passInfo.block);
-  //   print("range % %\n",ray.t0,ray.t);
-  // }
-
-
   // Original tMax for ray interval
   const float tMax = ray.t;
 
@@ -378,8 +372,6 @@ void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform rend
         ray.t0 = ray.t + epsilon;
         ray.t = tMax;
         volume = RaycastVolumeRenderer_intersectVolumes(renderer, ray, passInfo, rayOffset);
-        // if (dbg)
-        // print("volume intersect 2\n %\n %\n",ray.t0,ray.t);
       }
       else {
 
@@ -389,10 +381,6 @@ void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform rend
         // Compute the volume sample at the current position and advance the ray.
         foreach_unique (v in volume)
           RaycastVolumeRenderer_computeVolumeSample(renderer, v, ray, volumeColor);
-
-        // if (dbg) {
-        //   print("sample at %\n %\n %\n %\n",ray.t0,volumeColor.x,volumeColor.y,volumeColor.z);
-        // }
 
         // Volume contribution.
         color = color + (1.0f - color.w) * volumeColor;
@@ -460,9 +448,6 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
                                     dummyPassInfo, rayOffset, color, depth);
   }
 
-  // color.x = 1.f;
-  // color.w = 1.f;
-
   // Attenuate the foreground and background colors by the opacity.
   if (useBG && renderer->inherited.backgroundEnabled) {
     const vec4f background = make_vec4f(renderer->bgColor, 1.f);
@@ -475,13 +460,6 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   sample.rgb.z = color.z;
   sample.alpha = color.w;
   sample.z = depth;
-
-
-  // sample.rgb.x = 1.f;
-  // sample.rgb.y = 0.f;
-  // sample.rgb.z = 0.f;
-  // sample.alpha = 0.f;
-  // sample.z = 0.001f;
 }
 
 export void *uniform RaycastVolumeRenderer_createInstance()
@@ -555,7 +533,6 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
                               uniform int32 myRank,
                               uniform bool isMyTile)
 {
-  // screenSample.rgb = make_vec3f(1.f);
   // ray interval that overlaps _any_ block
   region1f blockRegion = make_region1f(+inf,-inf);
   float org_ray_t0 = fgSample.ray.t0;
@@ -574,7 +551,6 @@ inline void DDVR_renderSample(RaycastVolumeRenderer *uniform self,
       // now, render this block if it's one of ours
       if (!block[blockID].mine) continue;
       if (itIsIThatHasToRenderThisBlock(&block[blockID],tileID,myRank)) {
-        // if (block[blockID].mine) {
         Tile *uniform blockTile = CacheForBlockTiles_getTileForBlock(_tileCache,blockID);
         // -------------------------------------------------------
         // set up pass for 'one particular block'
@@ -617,14 +593,10 @@ if (!isMyTile) return;
 
     // ray does not overlap _any_ block; render entire ray segment in one sweep
     RaycastVolumeRenderer_renderSample((Renderer*uniform)self,&passInfo,fgSample);
-    // bgSample.rgb = make_vec3f(1.f,0.f,0.f);
 
     bgSample.rgb = make_vec3f(0.f,0.f,0.f);
     bgSample.z = inf;
-    // bgSample.z = 1e10f; //inf;
     bgSample.alpha = 0.f;
-
-    // fgSample.z = 0.f;
   } else {
     // ray overlaps the data parallel volume. render both the region
     // BEFORE, and AFTER the dp volume, but not yet anything inside.
@@ -640,8 +612,6 @@ if (!isMyTile) return;
     // do not use any block in this pass
     passInfo.block = NULL;
     RaycastVolumeRenderer_renderSample((Renderer*uniform)self,&passInfo,fgSample);
-    // fgSample.z = blockRegion.lower;
-    // fgSample.alpha = 0.f;
 
     // -------------------------------------------------------
     // set up pass for 'after any blocks'
@@ -676,7 +646,6 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
 
   float pixel_du = .5f, pixel_dv = .5f;
   float lens_du = 0.f,  lens_dv = 0.f;
-  uniform int32 spp = self->spp;
 
   ScreenSample fgSample, bgSample;
   fgSample.z = inf;
@@ -697,8 +666,6 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
         (fgSample.sampleID.y >= fb->size.y))
       continue;
 
-    // dbg = (fgSample.sampleID.x == 640 && fgSample.sampleID.y == 340);
-
     const uint32 pixel = z_order.xs[index] + (z_order.ys[index] * TILE_SIZE);
 
     pixel_du = precomputedHalton2(startSampleID);
@@ -712,11 +679,10 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
 
     // set ray t value for early ray termination if we have a maximum depth texture
     if (self->maxDepthTexture) {
-
-      // don't consider pixel_du, pixel_dv for depth texture coordinates
+      // always sample center of pixel
       vec2f depthTexCoord;
-      depthTexCoord.x = fgSample.sampleID.x * fb->rcpSize_1.x;
-      depthTexCoord.y = fgSample.sampleID.y * fb->rcpSize_1.y;
+      depthTexCoord.x = (fgSample.sampleID.x + 0.5f) * fb->rcpSize.x;
+      depthTexCoord.y = (fgSample.sampleID.y + 0.5f) * fb->rcpSize.y;
 
       fgSample.ray.t = get1f(self->maxDepthTexture, depthTexCoord);
     }
@@ -726,11 +692,8 @@ export void DDDVRRenderer_renderTile(void*uniform _self,
                       fgSample,bgSample,_tileCache,pixel,
                       numBlocks,block,tileNeedsBlock,tileID,myRank,isMyTile);
 
-    // if (dbg) { bgSample.rgb = fgSample.rgb = make_vec3f(1,0,0);  }
-
     setRGBAZ(bgTile,pixel,bgSample.rgb,bgSample.alpha,bgSample.z);
     setRGBAZ(fgTile,pixel,fgSample.rgb,fgSample.alpha,fgSample.z);
-
   }
 }
 
