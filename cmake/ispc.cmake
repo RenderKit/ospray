@@ -14,13 +14,12 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(ISPC_VERSION_REQUIRED "1.8.1")
-
-# warn about recommended ISPC version on KNC
-IF (OSPRAY_MIC AND NOT OSPRAY_WARNED_MIC_ISPC_VERSION)
-  MESSAGE("Warning: use of ISPC v1.8.1 is recommended on KNC.")
-  SET(OSPRAY_WARNED_MIC_ISPC_VERSION ON CACHE INTERNAL "Warned about recommended ISPC version with KNC.")
+IF(WIN32)
+  SET(ISPC_VERSION_REQUIRED "1.8.2")
+ELSE()
+  SET(ISPC_VERSION_REQUIRED "1.8.1")
 ENDIF()
+SET(ISPC_VERSION_RECOMMENDED_KNC "1.8.1")
 
 IF (NOT ISPC_EXECUTABLE)
   # try sibling folder as hint for path of ISPC
@@ -60,6 +59,13 @@ IF(NOT ISPC_VERSION)
   SET(ISPC_VERSION ${ISPC_VERSION} CACHE STRING "ISPC Version")
   MARK_AS_ADVANCED(ISPC_VERSION)
   MARK_AS_ADVANCED(ISPC_EXECUTABLE)
+ENDIF()
+
+# warn about recommended ISPC version on KNC
+IF (OSPRAY_MIC AND NOT ISPC_VERSION VERSION_EQUAL ISPC_VERSION_RECOMMENDED_KNC
+    AND NOT OSPRAY_WARNED_KNC_ISPC_VERSION)
+  MESSAGE("Warning: use of ISPC v${ISPC_VERSION_RECOMMENDED_KNC} is recommended on KNC.")
+  SET(OSPRAY_WARNED_KNC_ISPC_VERSION ON CACHE INTERNAL "Warned about recommended ISPC version with KNC.")
 ENDIF()
 
 GET_FILENAME_COMPONENT(ISPC_DIR ${ISPC_EXECUTABLE} PATH)
@@ -118,11 +124,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(ISPC_OPT_FLAGS -O2 -g)
   ENDIF()
 
-  IF (WIN32)
-   IF(ISPC_DLLEXPORT) # workaround for bug #1085 in ISPC 1.8.2: ospray_embree should export, but export in ospray cause link errors
-    SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --dllexport)
-   ENDIF()
-  ELSE()
+  IF (NOT WIN32)
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
   ENDIF()
 
