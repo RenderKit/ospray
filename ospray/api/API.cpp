@@ -186,7 +186,7 @@ namespace ospray {
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
                                               const OSPFrameBufferFormat mode,
-                                              const int channels)
+                                              const uint32_t channels)
   {
     ASSERT_DEVICE();
     return ospray::api::Device::current->frameBufferCreate((const vec2i&)size,mode,channels);
@@ -245,7 +245,7 @@ namespace ospray {
   }
 
   /*! create a new data buffer, with optional init data and control flags */
-  extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, int flags)
+  extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, const uint32_t flags)
   {
     ASSERT_DEVICE();
     return ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
@@ -385,17 +385,16 @@ namespace ospray {
     return camera;
   }
 
-  extern "C" OSPTexture2D ospNewTexture2D(int width,
-                                          int height,
-                                          OSPDataType type,
+  extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
+                                          const OSPTextureFormat type,
                                           void *data,
-                                          int flags)
+                                          const uint32_t flags)
   {
     ASSERT_DEVICE();
-    Assert2(width > 0, "Width must be greater than 0 in ospNewTexture2D");
-    Assert2(height > 0, "Height must be greater than 0 in ospNewTexture2D");
-    LOG("ospNewTexture2D( " << width << ", " << height << ", " << type << ", " << data << ", " << flags << ")");
-    return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
+    Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
+    Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
+    LOG("ospNewTexture2D( (" << size.x << ", " << size.y << "), " << type << ", " << data << ", " << flags << ")");
+    return ospray::api::Device::current->newTexture2D((const vec2i&)size, type, data, flags);
   }
 
   /*! \brief create a new volume of given type, return 'NULL' if that type is not known */

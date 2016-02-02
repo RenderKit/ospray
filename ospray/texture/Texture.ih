@@ -16,33 +16,30 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
-
-struct Texture;
+/*! OSPRay format constants for Texture creation */
+/*! \note Make sure these match the application-side definitions in ospray.h. */
+typedef enum {
+  OSP_TEXTURE_RGBA8,
+  OSP_TEXTURE_SRGBA,
+  OSP_TEXTURE_RGBA32F,
+  OSP_TEXTURE_RGB8,
+  OSP_TEXTURE_SRGB,
+  OSP_TEXTURE_RGB32F,
+  OSP_TEXTURE_R8,
+  OSP_TEXTURE_R32F,
+/* TODO
+  OSP_LogLuv,
+  OSP_RGBA16F
+  OSP_RGB16F
+  OSP_RGBE, // radiance hdr
+  compressed (RGTC, BPTC, ETC, ...)
+*/
+} OSPTextureFormat;
 
 //! \brief Texture creation flags provided by the application
 /*! \note Make sure these match the application-side definitions in ospray.h. */
 typedef enum {
   OSP_TEXTURE_SHARED_BUFFER = (1<<0),
   OSP_TEXTURE_FILTER_NEAREST = (1<<1)
-} Texture_CreationFlags;
+} OSPTextureCreationFlags;
 
-//!\brief virtual function type for sampling a Texture (of any type)
-/*! \note Accessing y, z, or a from the returned value is undefined if the
-  texture has less than 4 channels */
-typedef varying vec4f (*Texture__get)(const uniform Texture *uniform this, 
-                                      const varying vec2f& p);
-
-//! \brief Abstract base class for any type of (2D) texture
-struct Texture 
-{
-  //! virtual function for sampling this texture
-  Texture__get get;
-};
-
-//! constructor for 2D texture base class
-inline void Texture__Constructor(uniform Texture* uniform self,
-                                 uniform Texture__get get)
-{
-  self->get = get;
-}

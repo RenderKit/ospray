@@ -313,11 +313,11 @@ namespace ospray {
 
         case ospray::CMD_FRAMEBUFFER_CREATE: {
           const ObjectHandle handle = cmd.get_handle();
-          const vec2i  size               = cmd.get_vec2i();
+          const vec2i size                = cmd.get_vec2i();
           const OSPFrameBufferFormat mode = (OSPFrameBufferFormat)cmd.get_int32();
           const uint32 channelFlags       = cmd.get_int32();
-          bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
-          bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
+          const bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
+          const bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
 // #if USE_DFB
           FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                                        size,handle,mode,
@@ -418,15 +418,14 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           Texture2D *texture2D = NULL;
 
-          int32 width = cmd.get_int32();
-          int32 height = cmd.get_int32();
-          int32 type = cmd.get_int32();
-          int32 flags = cmd.get_int32();
-          size_t size = cmd.get_size_t();
+          const vec2i sz = cmd.get_vec2i();
+          const int32 type = cmd.get_int32();
+          const int32 flags = cmd.get_int32();
+          const size_t size = cmd.get_size_t();
           void *data = malloc(size);
           cmd.get_data(size,data);
 
-          texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,
+          texture2D = Texture2D::createTexture(sz, (OSPTextureFormat)type, data,
                                                flags | OSP_DATA_SHARED_BUFFER);
           assert(texture2D);
 

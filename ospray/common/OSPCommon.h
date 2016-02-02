@@ -73,6 +73,7 @@ namespace ospray {
 #endif
 
 // ospray
+#include "ospray/ospray.h"
 #include "ospray/common/OSPDataType.h"
 
 // std
@@ -225,10 +226,13 @@ namespace ospray {
   extern int32 numThreads;
 
   /*! size of OSPDataType */
-  OSPRAY_INTERFACE size_t sizeOf(OSPDataType type);
+  OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! Convert a type string to an OSPDataType. */
   OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
+
+  /*! size of OSPTextureFormat */
+  OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
   struct WarnOnce {
     WarnOnce(const std::string &s);
@@ -263,6 +267,4 @@ namespace ospray {
 
 template <typename T>
 inline T divRoundUp(const T&a, const T&b) { return (a+(b-T(1)))/b; }
-
-  
 

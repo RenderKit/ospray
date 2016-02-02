@@ -83,10 +83,15 @@ namespace ospray {
           assert(channels != size_t(-1) && "Channel count not properly parsed for Texture2D nodes");
           assert(depth != size_t(-1) && "Depth not properly parsed for Texture2D nodes");
 
-          if (channels == 4 && depth == 1) txt.ptr->texelType = OSP_UCHAR4;
-          else if (channels == 3 && depth == 1) txt.ptr->texelType = OSP_UCHAR3;
-          else if (channels == 4) txt.ptr->texelType = OSP_FLOAT3A;
-          else if (channels == 3) txt.ptr->texelType = OSP_FLOAT3;
+          txt.ptr->texelType = OSP_TEXTURE_R8;
+          if (channels == 4 && depth == 1)
+            txt.ptr->texelType = OSP_TEXTURE_RGBA8;
+          else if (channels == 3 && depth == 1)
+            txt.ptr->texelType = OSP_TEXTURE_RGB8;
+          else if (channels == 4)
+            txt.ptr->texelType = OSP_TEXTURE_RGBA32F;
+          else if (channels == 3)
+            txt.ptr->texelType = OSP_TEXTURE_RGB32F;
 
           txt.ptr->size = vec2i(width, height);
 

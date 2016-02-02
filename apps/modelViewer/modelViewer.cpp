@@ -464,18 +464,20 @@ namespace ospray {
       return alreadyCreatedTextures[msgTex];
 
     //TODO: We need to come up with a better way to handle different possible pixel layouts
-    OSPDataType type = OSP_VOID_PTR;
+    OSPTextureFormat type = OSP_TEXTURE_R8;
 
     if (msgTex->depth == 1) {
-      if( msgTex->channels == 3 ) type = OSP_UCHAR3;
-      if( msgTex->channels == 4 ) type = OSP_UCHAR4;
+      if( msgTex->channels == 1 ) type = OSP_TEXTURE_R8;
+      if( msgTex->channels == 3 ) type = OSP_TEXTURE_RGB8;
+      if( msgTex->channels == 4 ) type = OSP_TEXTURE_RGBA8;
     } else if (msgTex->depth == 4) {
-      if( msgTex->channels == 3 ) type = OSP_FLOAT3;
-      if( msgTex->channels == 4 ) type = OSP_FLOAT3A;
+      if( msgTex->channels == 1 ) type = OSP_TEXTURE_R32F;
+      if( msgTex->channels == 3 ) type = OSP_TEXTURE_RGB32F;
+      if( msgTex->channels == 4 ) type = OSP_TEXTURE_RGBA32F;
     }
 
-    OSPTexture2D ospTex = ospNewTexture2D( msgTex->width,
-                                           msgTex->height,
+    vec2i texSize(msgTex->width, msgTex->height);
+    OSPTexture2D ospTex = ospNewTexture2D( (osp::vec2i&)texSize,
                                            type,
                                            msgTex->data,
                                            0);

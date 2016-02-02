@@ -157,8 +157,7 @@ namespace ospray {
     abort();
   }
 
-  size_t sizeOf(OSPDataType type) {
-
+  size_t sizeOf(const OSPDataType type) {
     switch (type) {
     case OSP_VOID_PTR:  return sizeof(void *);
     case OSP_OBJECT:    return sizeof(void *);
@@ -196,11 +195,9 @@ namespace ospray {
     std::stringstream error;
     error << __FILE__ << ":" << __LINE__ << ": unknown OSPDataType " << (int)type;
     throw std::runtime_error(error.str());
-
   }
 
   OSPDataType typeForString(const char *string) {
-
     if (string == NULL)                return(OSP_UNKNOWN);
     if (strcmp(string, "char"  ) == 0) return(OSP_CHAR);
     if (strcmp(string, "double") == 0) return(OSP_DOUBLE);
@@ -221,7 +218,23 @@ namespace ospray {
     if (strcmp(string, "uint3" ) == 0) return(OSP_UINT3);
     if (strcmp(string, "uint4" ) == 0) return(OSP_UINT4);
     return(OSP_UNKNOWN);
+  }
 
+  size_t sizeOf(const OSPTextureFormat type) {
+    switch (type) {
+      case OSP_TEXTURE_RGBA8:
+      case OSP_TEXTURE_SRGBA:   return sizeof(uint32);
+      case OSP_TEXTURE_RGBA32F: return sizeof(vec4f);
+      case OSP_TEXTURE_RGB8:
+      case OSP_TEXTURE_SRGB:    return sizeof(vec3uc);
+      case OSP_TEXTURE_RGB32F:  return sizeof(vec3f);
+      case OSP_TEXTURE_R8:      return sizeof(uint8);
+      case OSP_TEXTURE_R32F:    return sizeof(float);
+    }
+
+    std::stringstream error;
+    error << __FILE__ << ":" << __LINE__ << ": unknown OSPTextureFormat " << (int)type;
+    throw std::runtime_error(error.str());
   }
 
 } // ::ospray

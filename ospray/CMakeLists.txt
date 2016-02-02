@@ -89,7 +89,6 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Library.cpp
   common/Thread.cpp
-  common/Texture.h
   common/parallel_for.h
 
   fb/FrameBuffer.ispc

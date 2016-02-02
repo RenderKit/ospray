@@ -33,7 +33,7 @@
 
 // ospray
 #include "ospray/render/Renderer.h"
-#include "ospray/texture/Texture.h"
+#include "ospray/texture/Texture2D.h"
 
 namespace ospray {
 
@@ -80,7 +80,7 @@ namespace ospray {
       vec3f Kd;       
 
       //! \brief diffuse texture, if available
-      Ref<Texture> map_Kd;
+      Ref<Texture2D> map_Kd;
     };
   
 

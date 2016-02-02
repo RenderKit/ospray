@@ -1085,18 +1085,17 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D MPIDevice::newTexture2D(int width, int height, 
-                                         OSPDataType type, void *data, int flags)
+    OSPTexture2D MPIDevice::newTexture2D(const vec2i &sz,
+        const OSPTextureFormat type, void *data, const uint32 flags)
     {
       ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_TEXTURE2D);
       cmd.send(handle);
-      cmd.send((int32)width);
-      cmd.send((int32)height);
+      cmd.send(sz);
       cmd.send((int32)type);
       cmd.send((int32)flags);
       assert(data);
-      size_t size = ospray::sizeOf(type)*width*height;
+      size_t size = ospray::sizeOf(type) * sz.x * sz.y;
       cmd.send(size);
 
       cmd.send(data,size);

@@ -42,7 +42,7 @@ namespace ospray {
       //! pixel data, in whatever format specified in 'texelType'
       void       *texel;
       //! format of each texel
-      OSPDataType texelType;
+      OSPTextureFormat texelType;
       
       OSPTexture2D ospTexture;
     };

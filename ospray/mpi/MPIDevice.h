@@ -242,8 +242,8 @@ namespace ospray {
       void setMaterial(OSPGeometry _geom, OSPMaterial _mat) override;
 
       /*! create a new Texture2D object */
-      OSPTexture2D newTexture2D(int width, int height, OSPDataType type,
-                                void *data, int flags) override;
+      OSPTexture2D newTexture2D(const vec2i &size, const OSPTextureFormat,
+                                void *data, const uint32 flags) override;
 
       /*! switch API mode for distriubted API extensions */
       void apiMode(OSPDApiMode mode) override;

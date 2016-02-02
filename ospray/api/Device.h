@@ -43,7 +43,7 @@ namespace ospray {
       
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb, 
-                                         OSPFrameBufferChannel) = 0;
+                                         const OSPFrameBufferChannel) = 0;
 
       /*! unmap previously mapped frame buffer */
       virtual void frameBufferUnmap(const void *mapped,
@@ -171,7 +171,8 @@ namespace ospray {
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
 
       /*! create a new Texture2D object */
-      virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags) = 0;
+      virtual OSPTexture2D newTexture2D(const vec2i &size,
+          const OSPTextureFormat, void *data, const uint32 flags) = 0;
 
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;

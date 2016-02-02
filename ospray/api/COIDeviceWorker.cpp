@@ -520,14 +520,13 @@ namespace ospray {
     {
       DataStream args(argsPtr);
       ObjectHandle handle = args.get<ObjectHandle>();
-      int    width  = args.get<int32>(); 
-      int    height = args.get<int32>(); 
+      vec2i  size   = args.get<vec2i>();
       int    type   = args.get<int32>(); 
       int    flags  = args.get<int32>(); 
 
       COIBufferAddRef(bufferPtr[0]);
 
-      Texture2D *tx = Texture2D::createTexture(width, height, (OSPDataType)type, bufferPtr[0], flags);
+      Texture2D *tx = Texture2D::createTexture(size, (OSPTextureFormat)type, bufferPtr[0], flags);
 
       handle.assign(tx);
       if (ospray::debugMode) COIProcessProxyFlush();

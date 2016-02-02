@@ -85,7 +85,7 @@ namespace ospray {
         
           tex = new Texture2D;
           tex->size      = vec2i(width,height);
-          tex->texelType = OSP_UCHAR3;
+          tex->texelType = OSP_TEXTURE_RGB8;
           tex->texel     = new unsigned char[width*height*3];
           fread(tex->texel,width*height*3,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
@@ -105,8 +105,7 @@ namespace ospray {
     {
       if (ospTexture) return;
       
-      ospTexture = ospNewTexture2D(size.x,
-                                   size.y,
+      ospTexture = ospNewTexture2D((osp::vec2i&)size,
                                    texelType,
                                    texel,
                                    0);

@@ -613,10 +613,12 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D LocalDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags) {
-      Assert(width > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
-      Assert(height > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
-      Texture2D *tx = Texture2D::createTexture(width, height, type, data, flags);
+    OSPTexture2D LocalDevice::newTexture2D(const vec2i &size,
+        const OSPTextureFormat type, void *data, const uint32 flags)
+    {
+      Assert(size.x > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
+      Assert(size.y > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
+      Texture2D *tx = Texture2D::createTexture(size, type, data, flags);
       if(tx) tx->refInc();
       return (OSPTexture2D)tx;
     }

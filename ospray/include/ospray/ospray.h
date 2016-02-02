@@ -89,6 +89,7 @@ namespace osp {
 
 } // ::osp
 
+/*! OSPRay channel constants for Frame Buffer (can be OR'ed together) */
 typedef enum {
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
@@ -96,20 +97,27 @@ typedef enum {
 //  OSP_FB_ALPHA=(1<<3) // not used anywhere; use OSP_FB_COLOR with a frame buffer format containing alpha in 4th channel
 } OSPFrameBufferChannel;
 
-/*! OSPRay constants for Frame Buffer creation ('and' ed together) */
+/*! OSPRay format constants for Frame Buffer creation */
 typedef enum {
-  OSP_RGBA_NONE,
-  OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each one byte */
-  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel XXX unsupported! */
-  OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
-//  OSP_SRGBA_I8,  /*!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte */
-//  OSP_SRGB_I8,   /*!< three 8-bit unsigned chars (in sRGB space) per pixel */
+  OSP_FB_NONE,    //!< framebuffer will not be mapped by application
+  OSP_FB_RGBA8,   //!< one dword per pixel: rgb+alpha, each one byte
+  OSP_FB_RGBA32F, //!< one float4 per pixel: rgb+alpha, each one float
+/* TODO
+  OSP_FB_RGB8,    //!< three 8-bit unsigned chars per pixel
+  OSP_FB_RGB32F,  ?
+  OSP_FB_SRGBA,   //!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
+  OSP_FB_SRGB,    //!< three 8-bit unsigned chars (in sRGB space) per pixel
+*/
+// deprecated names
+  OSP_RGBA_NONE = OSP_FB_NONE,
+  OSP_RGBA_I8 = OSP_FB_RGBA8,
+  OSP_RGBA_F32 = OSP_FB_RGBA32F,
+  OSP_RGB_I8/* = OSP_FB_RGB8 XXX unsupported! */
 } OSPFrameBufferFormat;
 
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
 /*! \see ospdApiMode */
 typedef enum {
-
   //! \brief all ospNew(), ospSet(), etc calls affect only the current rank 
   /*! \detailed in this mode, all ospXyz() calls made on a given rank
     will ONLY affect state ont hat rank. This allows for configuring a
@@ -153,6 +161,25 @@ typedef enum {
 typedef enum {
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
+
+/*! OSPRay format constants for Texture creation */
+typedef enum {
+  OSP_TEXTURE_RGBA8,
+  OSP_TEXTURE_SRGBA,
+  OSP_TEXTURE_RGBA32F,
+  OSP_TEXTURE_RGB8,
+  OSP_TEXTURE_SRGB,
+  OSP_TEXTURE_RGB32F,
+  OSP_TEXTURE_R8,
+  OSP_TEXTURE_R32F,
+/* TODO
+  OSP_LogLuv,
+  OSP_RGBA16F
+  OSP_RGB16F
+  OSP_RGBE, // radiance hdr
+  compressed (RGTC, BPTC, ETC, ...)
+*/
+} OSPTextureFormat;
 
 /*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
 typedef enum {
@@ -216,7 +243,7 @@ extern "C" {
       renderer's parameters, typically in "world". */
   OSPRAY_INTERFACE void ospRenderFrame(OSPFrameBuffer fb, 
                                        OSPRenderer renderer, 
-                                       const uint32_t fbChannelFlags=OSP_FB_COLOR);
+                                       const uint32_t whichChannels=OSP_FB_COLOR);
 
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
@@ -277,16 +304,17 @@ extern "C" {
   
   //! \brief create a new Texture2D with the given parameters
   /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
-  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
+  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
+      const OSPTextureFormat, void *data = NULL, const uint32_t flags = 0);
 
   //! \brief clears the specified channel(s) of the frame buffer
   /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
-    if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
-    if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
-    if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID
+    if whichChannels & OSP_FB_COLOR != 0, clear the color buffer to '0,0,0,0'
+    if whichChannels & OSP_FB_DEPTH != 0, clear the depth buffer to +inf
+    if whichChannels & OSP_FB_ACCUM != 0, clear the accum buffer to 0,0,0,0, and reset accumID
   */
-  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer fb, const uint32_t whichChannel);
+  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer, const uint32_t whichChannels);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_data Data Buffer Handling 
@@ -297,12 +325,13 @@ extern "C" {
   */
   /*! create a new data buffer, with optional init data and control flags 
 
-    Valid flags that can be or'ed together into the flags value:
+    Valid flags that can be OR'ed together into the flags value:
     - OSP_DATA_SHARED_BUFFER: indicates that the buffer can be shared with the app.
       In this case the calling program guarantees that the 'init' pointer will remain
       valid for the duration that this data array is being used.
    */
-  OSPRAY_INTERFACE OSPData ospNewData(size_t numItems, OSPDataType format, const void *init=NULL, int flags=0);
+  OSPRAY_INTERFACE OSPData ospNewData(size_t numItems, OSPDataType format,
+      const void *init=NULL, const uint32_t dataCreationFlags=0);
 
   /*! \} */
 
@@ -329,7 +358,7 @@ extern "C" {
     corner (as in OpenGL).
 
     \param channelFlags specifies which channels the frame buffer has,
-    and is or'ed together from the values OSP_FB_COLOR,
+    and is OR'ed together from the values OSP_FB_COLOR,
     OSP_FB_DEPTH, and/or OSP_FB_ACCUM. If a certain buffer
     value is _not_ specified, the given buffer will not be present
     (see notes below).
@@ -357,8 +386,8 @@ extern "C" {
     never ever be transferred to the application.
    */
   OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                    const OSPFrameBufferFormat externalFormat=OSP_RGBA_I8,
-                                    const int channelFlags=OSP_FB_COLOR);
+                                    const OSPFrameBufferFormat=OSP_RGBA_I8,
+                                    const uint32_t whichChannels=OSP_FB_COLOR);
 
   /*! \brief free a framebuffer 
 
@@ -368,7 +397,7 @@ extern "C" {
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
-                                                 OSPFrameBufferChannel=OSP_FB_COLOR);
+                                                 const OSPFrameBufferChannel=OSP_FB_COLOR);
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer fb);
@@ -446,7 +475,7 @@ extern "C" {
   OSPRAY_INTERFACE int ospSetRegion(/*! the object we're writing this block of pixels into */
                                     OSPVolume object, 
                                     /* points to the first voxel to be copies. The
-                                       voxels at 'soruce' MUST have dimensions
+                                       voxels at 'source' MUST have dimensions
                                        'regionSize', must be organized in 3D-array
                                        order, and must have the same voxel type as the
                                        volume.*/
