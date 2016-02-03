@@ -51,6 +51,7 @@ typedef int ssize_t;
 #include "common/sys/alloc.h"
 
 // C++11
+#include <vector>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
