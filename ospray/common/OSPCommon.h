@@ -73,7 +73,7 @@ namespace ospray {
 #endif
 
 // ospray
-#include "ospray/common/OSPDataType.h"
+#include "ospray/OSPDataType.h"
 #include "ospray/OSPTexture.h"
 
 // std

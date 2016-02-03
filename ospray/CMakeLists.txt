@@ -71,6 +71,7 @@ ENDIF()
 
 SET(OSPRAY_SOURCES
   include/ospray/ospray.h
+  include/ospray/OSPDataType.h
   include/ospray/OSPTexture.h
 
   device/nwlayer.cpp
@@ -85,7 +86,6 @@ SET(OSPRAY_SOURCES
   common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
-  common/OSPDataType.h
   common/Data.cpp
   common/Model.ispc
   common/Model.cpp

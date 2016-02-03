@@ -37,7 +37,7 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include "ospray/common/OSPDataType.h"
+#include "ospray/OSPDataType.h"
 #include "ospray/OSPTexture.h"
 
 #ifdef _WIN32
