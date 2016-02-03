@@ -70,6 +70,9 @@ ENDIF()
 # -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
+  include/ospray/ospray.h
+  include/ospray/OSPTexture.h
+
   device/nwlayer.cpp
 
   math/box.ispc

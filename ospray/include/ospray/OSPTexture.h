@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+/*! This header is shared with ISPC. */
 #pragma once
 
 /*! OSPRay format constants for Texture creation */
-/*! \note Make sure these match the application-side definitions in ospray.h. */
 typedef enum {
   OSP_TEXTURE_RGBA8,
   OSP_TEXTURE_SRGBA,
@@ -36,10 +36,9 @@ typedef enum {
 */
 } OSPTextureFormat;
 
-//! \brief Texture creation flags provided by the application
-/*! \note Make sure these match the application-side definitions in ospray.h. */
+/*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
 typedef enum {
   OSP_TEXTURE_SHARED_BUFFER = (1<<0),
-  OSP_TEXTURE_FILTER_NEAREST = (1<<1)
+  OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
 } OSPTextureCreationFlags;
 

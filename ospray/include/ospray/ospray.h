@@ -38,6 +38,7 @@
 #include <stdint.h>
 
 #include "ospray/common/OSPDataType.h"
+#include "ospray/OSPTexture.h"
 
 #ifdef _WIN32
 #  ifdef ospray_EXPORTS
@@ -161,31 +162,6 @@ typedef enum {
 typedef enum {
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
-
-/*! OSPRay format constants for Texture creation */
-typedef enum {
-  OSP_TEXTURE_RGBA8,
-  OSP_TEXTURE_SRGBA,
-  OSP_TEXTURE_RGBA32F,
-  OSP_TEXTURE_RGB8,
-  OSP_TEXTURE_SRGB,
-  OSP_TEXTURE_RGB32F,
-  OSP_TEXTURE_R8,
-  OSP_TEXTURE_R32F,
-/* TODO
-  OSP_LogLuv,
-  OSP_RGBA16F
-  OSP_RGB16F
-  OSP_RGBE, // radiance hdr
-  compressed (RGTC, BPTC, ETC, ...)
-*/
-} OSPTextureFormat;
-
-/*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
-typedef enum {
-  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
-  OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
-} OSPTextureCreationFlags;
 
 typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
