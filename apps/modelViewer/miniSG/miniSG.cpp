@@ -44,7 +44,7 @@ namespace ospray {
       // setParam( "Ka", vec3f(0.f) );
     }
 
-    Texture2D *loadTexture(const std::string &path, const std::string &fileNameBase)
+    Texture2D *loadTexture(const std::string &path, const std::string &fileNameBase, const bool prefereLinear)
     {
       const embree::FileName fileName = path+"/"+fileNameBase;
 
@@ -111,6 +111,7 @@ namespace ospray {
           tex->height   = height;
           tex->channels = 3;
           tex->depth    = 1;
+          tex->prefereLinear = prefereLinear;
           tex->data     = new unsigned char[width*height*3];
           fread(tex->data,width*height*3,1,file);
           // flip in y, because OSPRay's textures have the origin at the lower left corner
@@ -129,6 +130,7 @@ namespace ospray {
         tex->height   = image.rows();
         tex->channels = image.matte() ? 4 : 3;
         tex->depth    = 4;
+        tex->prefereLinear = prefereLinear;
         float rcpMaxRGB = 1.0f/float(MaxRGB);
         const Magick::PixelPacket* pixels = image.getConstPixels(0,0,tex->width,tex->height);
         if (!pixels) {

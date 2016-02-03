@@ -34,7 +34,7 @@ namespace ospray {
       /*! \detailed if file does not exist, or cannot be loaded for
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
-      static Ref<Texture2D> load(const FileName &fileName);
+      static Ref<Texture2D> load(const FileName &fileName, const bool prefereLinear = false);
       virtual void render(RenderContext &ctx);
 
       //! texture size, in pixels

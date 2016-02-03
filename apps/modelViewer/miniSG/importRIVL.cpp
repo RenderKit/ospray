@@ -234,6 +234,7 @@ namespace ospray {
 
           txt.ptr->texData->channels = channels;
           txt.ptr->texData->depth = depth;
+          txt.ptr->texData->prefereLinear = true;
           txt.ptr->texData->width = width;
           txt.ptr->texData->height = height;
           if (channels == 4) { // RIVL bin stores alpha channel inverted, fix here

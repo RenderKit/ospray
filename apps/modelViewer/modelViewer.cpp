@@ -468,8 +468,10 @@ namespace ospray {
 
     if (msgTex->depth == 1) {
       if( msgTex->channels == 1 ) type = OSP_TEXTURE_R8;
-      if( msgTex->channels == 3 ) type = OSP_TEXTURE_RGB8;
-      if( msgTex->channels == 4 ) type = OSP_TEXTURE_RGBA8;
+      if( msgTex->channels == 3 )
+        type = msgTex->prefereLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+      if( msgTex->channels == 4 )
+        type = msgTex->prefereLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
     } else if (msgTex->depth == 4) {
       if( msgTex->channels == 1 ) type = OSP_TEXTURE_R32F;
       if( msgTex->channels == 3 ) type = OSP_TEXTURE_RGB32F;
