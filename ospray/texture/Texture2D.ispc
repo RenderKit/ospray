@@ -205,7 +205,12 @@ export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
 {
   uniform Texture2D *uniform self = uniform new uniform Texture2D;
   self->size      = size;
-  self->sizef     = make_vec2f(size.x, size.y) - 1e-12f;
+
+  // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
+  // negative x), although is should be strictly smaller than 1.0f. We handle
+  // this case by having sizef slightly smaller than size, such that
+  // frac(x)*sizef is always < size.
+  self->sizef     = make_vec2f(nextafter(size.x, -1.0f), nextafter(size.y, -1.0f));
   self->halfTexel = make_vec2f(0.5f/size.x, 0.5f/size.y);
   self->data      = data;
 
