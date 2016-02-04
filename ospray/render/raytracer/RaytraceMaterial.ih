@@ -20,8 +20,8 @@
 #include "ospray/common/Material.ih"
 #include "ospray/texture/Texture2D.ih"
 
-//! ispc-equivalent of ospray::raytracer::RaytraceMaterial
-struct RaytraceMaterial
+//! ispc-equivalent of ospray::raytracer::SciVisMaterial
+struct SciVisMaterial
 {
   uniform Material base; //!< inherited material properties
   const uniform Texture2D *map_d;

@@ -20,12 +20,13 @@
 #include "ospray/texture/Texture2D.h"
 
 namespace ospray {
-  namespace raytracer {
+  namespace scivis {
 
     typedef vec3f Color;
     
-    /*! implements the Material used by the \ref ospray_render_raytracer */
-    struct RaytraceMaterial : public Material {
+    /*! implements the Material used by the \ref ospray_render_scivis */
+    struct SciVisMaterial : public Material
+    {
       /*! opacity: 0 (transparent), 1 (opaque) */
       Texture2D *map_d;   float d;
 
@@ -51,9 +52,9 @@ namespace ospray {
 
     // Inlined member functions ///////////////////////////////////////////////
 
-    inline std::string RaytraceMaterial::toString() const
+    inline std::string SciVisMaterial::toString() const
     {
-      return "ospray::raytracer::RaytraceMaterial";
+      return "ospray::scivis::SciVisMaterial";
     }
 
   } // ::ospray::obj

@@ -16,26 +16,26 @@
 
 #include "RaytraceMaterial.ih"
 
-export void *uniform RaytraceMaterial_create(void *uniform cppE)
+export void *uniform SciVisMaterial_create(void *uniform cppE)
 {
-  uniform RaytraceMaterial *uniform mat = uniform new uniform RaytraceMaterial;
+  uniform SciVisMaterial *uniform mat = uniform new uniform SciVisMaterial;
   mat->base.cppEquivalent = cppE;
   return mat;
 }
 
-export void RaytraceMaterial_set(void *uniform _mat,
-                            const void *uniform map_d,
-                            const uniform float &d,
-                            const void *uniform map_Kd,
-                            const uniform vec3f &Kd,
-                            const void *uniform map_Ks,
-                            const uniform vec3f &Ks,
-                            const void *uniform map_Ns,
-                            const uniform float &Ns,
-                            const void *uniform map_Bump)
+export void SciVisMaterial_set(void *uniform _mat,
+                               const void *uniform map_d,
+                               const uniform float &d,
+                               const void *uniform map_Kd,
+                               const uniform vec3f &Kd,
+                               const void *uniform map_Ks,
+                               const uniform vec3f &Ks,
+                               const void *uniform map_Ns,
+                               const uniform float &Ns,
+                               const void *uniform map_Bump)
 {
-  uniform RaytraceMaterial *uniform self =
-      (uniform RaytraceMaterial *uniform)_mat;
+  uniform SciVisMaterial *uniform self =
+      (uniform SciVisMaterial *uniform)_mat;
   self->map_d = (uniform Texture2D *uniform)map_d;
   self->d = d;
   self->map_Kd = (uniform Texture2D *uniform)map_Kd;
