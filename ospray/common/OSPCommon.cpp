@@ -106,6 +106,9 @@ namespace ospray {
       throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.1.");
 #endif
 
+    if (!_ac || !_av)
+      return;
+
     int &ac = *_ac;
     char ** &av = *(char ***)_av;
     for (int i=1;i<ac;) {
