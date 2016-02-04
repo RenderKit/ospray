@@ -28,7 +28,7 @@
 struct RaycastVolumeRenderer
 {
   //! Variables and functions common to all Renderer subtypes (must be the first field of the struct).
-  Renderer inherited;
+  Renderer base;
 
   Light **uniform lights;
   uint32 numLights;

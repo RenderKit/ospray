@@ -26,7 +26,7 @@
 #define MAX_LIGHTS 1000
 
 struct PathTracer {
-  Renderer super;
+  Renderer base;
 
   int32 maxDepth;
   float minContribution;

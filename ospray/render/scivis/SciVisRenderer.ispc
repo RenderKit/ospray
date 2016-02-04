@@ -33,7 +33,7 @@
 
 struct SciVisRenderer
 {
-  Renderer super;
+  Renderer base;
 
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
@@ -107,7 +107,7 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
   // init TEA RNG //
   RandomTEA rng_state;
   varying RandomTEA* const uniform rng = &rng_state;
-  RandomTEA__Constructor(rng, (self->super.fb->size.x * iy) + ix, accumID);
+  RandomTEA__Constructor(rng, (self->base.fb->size.x * iy) + ix, accumID);
 
   int hits = 0;
   const linear3f localToWorld = frame(dg.Ns);
@@ -119,8 +119,8 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
 
     Ray ao_ray;
     setRay(ao_ray, dg.P + (1e-3f * dg.Ns), ao_dir,
-           self->super.epsilon, self->aoRayLength);
-    if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->super.model,ao_ray))
+           self->base.epsilon, self->aoRayLength);
+    if (dot(ao_ray.dir, dg.Ns) < 0.05f || isOccluded(self->base.model,ao_ray))
       hits++;
   }
 
@@ -199,7 +199,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
                         varying vec3f &color)
 {
   const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
-  const vec3f P = dg.P + self->super.epsilon * dg.Ng;
+  const vec3f P = dg.P + self->base.epsilon * dg.Ng;
 
   //calculate shading for all lights
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
@@ -220,10 +220,10 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
           Ray shadowRay;
           setRay(shadowRay, P, light.direction);
           const float light_alpha = lightAlpha(shadowRay,
-                                               self->super.model,
+                                               self->base.model,
                                                max_contrib,
                                                self->maxDepth - depth,
-                                               self->super.epsilon);
+                                               self->base.epsilon);
           color = color + light_alpha * light_contrib;
         }
       } else
@@ -245,7 +245,7 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
 
   while (1) {
 
-    traceRay(self->super.model, ray);
+    traceRay(self->base.model, ray);
 
     // Record depth of first hit in z buffer //
     if (depth == 0) {
@@ -255,8 +255,8 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
     // Check if we missed, if so we are done //
 
     if (ray.geomID < 0) {
-      sample.rgb = self->super.backgroundEnabled ?
-                   color + path_opacity * self->super.bgColor :
+      sample.rgb = self->base.backgroundEnabled ?
+                   color + path_opacity * self->base.bgColor :
                    color;
       sample.alpha = 1.f - path_opacity;
       return;
@@ -266,7 +266,7 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
 
     // Calculate material information from DG //
     DifferentialGeometry dg;
-    postIntersect(self->super.model,
+    postIntersect(self->base.model,
                   dg,
                   ray,
                   DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
@@ -293,7 +293,7 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
       return;
     }
 
-    ray.t0 = ray.t + self->super.epsilon;
+    ray.t0 = ray.t + self->base.epsilon;
     ray.t = infinity;
     ray.primID = -1;
     ray.geomID = -1;
@@ -338,8 +338,8 @@ export void SciVisRenderer_set(void *uniform _self,
 export void *uniform SciVisRenderer_create(void *uniform cppE)
 {
   uniform SciVisRenderer *uniform self = uniform new uniform SciVisRenderer;
-  Renderer_Constructor(&self->super,cppE);
-  self->super.renderSample = SciVisRenderer_renderSample;
+  Renderer_Constructor(&self->base,cppE);
+  self->base.renderSample = SciVisRenderer_renderSample;
   SciVisRenderer_set(self, true, 10, 4, infinity, 1.f, NULL, 0);
 
   return self;

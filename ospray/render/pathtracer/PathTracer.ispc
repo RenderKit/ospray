@@ -80,13 +80,13 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
   const float org_t_max = shadowRay.t;
 
   while (1) {
-    traceRay(self->super.model, shadowRay);
+    traceRay(self->base.model, shadowRay);
 
     if (noHit(shadowRay))
       return lightContrib;
 
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, shadowRay,
+    postIntersect(self->base.model, dg, shadowRay,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR
         );
@@ -115,7 +115,7 @@ vec3f transparentShadow(const uniform PathTracer* uniform self,
       if (mm != NULL)
         mm->selectNextMedium(mm, medium);
 
-    shadowRay.t0 = shadowRay.t + self->super.epsilon;
+    shadowRay.t0 = shadowRay.t + self->base.epsilon;
     shadowRay.t = org_t_max;
     shadowRay.primID = -1;
     shadowRay.geomID = -1;
@@ -137,7 +137,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
   do {
     /*! Traverse ray. */
-    traceRay(self->super.model, lightPath.ray);
+    traceRay(self->base.model, lightPath.ray);
 
     if (lightPath.depth == 0)
       sample.z = lightPath.ray.t;
@@ -161,7 +161,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 
 
     DifferentialGeometry dg;
-    postIntersect(self->super.model, dg, lightPath.ray,
+    postIntersect(self->base.model, dg, lightPath.ray,
         DG_MATERIALID|
         DG_NS|DG_NG|DG_FACEFORWARD|DG_NORMALIZE|DG_TEXCOORD|DG_COLOR|DG_TANGENTS
         );
@@ -178,7 +178,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
 #else
     foreach_unique(geomID in lightPath.ray.geomID) {
       uniform PathTraceMaterial* uniform m
-        = (uniform PathTraceMaterial*)(self->super.model->geometry[geomID]->material);
+        = (uniform PathTraceMaterial*)(self->base.model->geometry[geomID]->material);
       print("shading %\n",m);
       if (m != NULL) m->shade(m,lightPath.ray, lightPath.lastMedium, dg, brdfs, Ns);
     }
@@ -189,7 +189,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Add light emitted by hit area light source. */
     if (!lightPath.ignoreVisibleLights) {
       foreach_unique(geomID in lightPath.ray.geomID) {
-        const uniform AreaLight* uniform l = self->super.model->geometry[geomID]->light;
+        const uniform AreaLight* uniform l = self->base.model->geometry[geomID]->light;
         if (l != NULL)
           // L = add(L, mul(Lw, l->Le(l,dg,wo)));
           L = L + Lw * l->Le(l,dg,wo);
@@ -232,9 +232,9 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
         Ray shadow_ray;
         setRay(shadow_ray, dg.P, ls.direction,
                //dg.error*
-               self->super.epsilon, ls.distance-
+               self->base.epsilon, ls.distance-
                //dg.error*
-               self->super.epsilon);
+               self->base.epsilon);
         shadow_ray.time = lightPath.ray.time;
 
         vec3f unshaded_light_contrib = Lw * ls.radiance * bsdfValue;
@@ -280,7 +280,7 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Continue the path. */
     extend_fast(lightPath,
                 dg.P,wi.v,//dg.error*
-                self->super.epsilon,inf,
+                self->base.epsilon,inf,
                 bsdfWeight*wi.pdf,(type & directLightingBSDFTypes) != BSDF_NONE);
 
     Lw = Lw * bsdfWeight;
@@ -295,9 +295,9 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
                                            const uint32 ix,
                                            const uint32 iy)
 {
-  uniform FrameBuffer *uniform fb = self->super.fb;
+  uniform FrameBuffer *uniform fb = self->base.fb;
 
-  uniform Camera *uniform camera = self->super.camera;
+  uniform Camera *uniform camera = self->base.camera;
   ScreenSample screenSample;
   screenSample.rgb = make_vec3f(0.f);
   screenSample.alpha = 0.f;
@@ -309,7 +309,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
   // init RNG
   RandomTEA rng_state; varying RandomTEA* const uniform rng = &rng_state;
   RandomTEA__Constructor(rng, fb->size.x*iy+ix, fb->accumID);
-  const int spp = max(1, self->super.spp);
+  const int spp = max(1, self->base.spp);
 
   for (uniform int s=0; s < spp; s++) {
     screenSample.sampleID.z = fb->accumID*spp + s;
@@ -355,8 +355,8 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
                               uniform Tile &tile,
                               uniform int taskIndex)
 {
-  uniform FrameBuffer *uniform fb   = self->super.fb;
-  uniform int32 spp = self->super.spp;
+  uniform FrameBuffer *uniform fb   = self->base.fb;
+  uniform int32 spp = self->base.spp;
 
   const uniform int blocks = fb->accumID > 0 || spp > 0 ?
                                1 : min(1 << -2 * spp, TILE_SIZE*TILE_SIZE);
@@ -412,9 +412,9 @@ export void PathTracer_set(void *uniform _self,
 export void* uniform PathTracer_create(void *uniform cppE)
 {
   uniform PathTracer *uniform self = uniform new uniform PathTracer;
-  Renderer_Constructor(&self->super,cppE);
-  self->super.renderTile   = PathTracer_renderTile;
-  self->super.beginFrame   = PathTracer_beginFrame;
+  Renderer_Constructor(&self->base,cppE);
+  self->base.renderTile   = PathTracer_renderTile;
+  self->base.beginFrame   = PathTracer_beginFrame;
 
   PathTracer_set(self, 20, 0.01f, NULL, NULL, 0);
 

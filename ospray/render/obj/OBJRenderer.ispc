@@ -27,7 +27,7 @@
 #define ALPHA_THRESHOLD (.05f)
 
 struct OBJRenderer {
-  Renderer super;
+  Renderer base;
 
   const uniform Light *uniform *uniform lights;
   uint32        numLights;
@@ -94,11 +94,11 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
 
   sample.z = infinity;
   while (1) {
-    traceRay(self->super.model,ray);
+    traceRay(self->base.model,ray);
 
     if (ray.geomID < 0) {
-      sample.rgb = self->super.backgroundEnabled ? color + path_opacity * self->bgColor : color;
-      sample.alpha = self->super.backgroundEnabled ? 1.f : 1.f - path_opacity;
+      sample.rgb = self->base.backgroundEnabled ? color + path_opacity * self->bgColor : color;
+      sample.alpha = self->base.backgroundEnabled ? 1.f : 1.f - path_opacity;
       sample.z = 1;
       return;
     }
@@ -106,7 +106,7 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
     vec3f local_shade_color = make_vec3f(0.f);
 
     DifferentialGeometry dg;
-    postIntersect(self->super.model,
+    postIntersect(self->base.model,
         dg,
         ray,
         DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
@@ -157,7 +157,7 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
 
     if (local_opacity > 0.01f) { // worth shading?
       const vec3f R = ray.dir - (2.f * dot(ray.dir, dg.Ns))*dg.Ns;
-      const vec3f P = dg.P + self->super.epsilon * dg.Ng;
+      const vec3f P = dg.P + self->base.epsilon * dg.Ng;
 
       //Some fake hard coded ambient light
       color = color + local_opacity * Kd * .05;
@@ -178,7 +178,7 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
             if (max_contrib > .01f) {
               Ray shadowRay;
               setRay(shadowRay, P, light.direction);
-              const float light_alpha = lightAlpha(shadowRay, self->super.model, max_contrib, self->super.epsilon);
+              const float light_alpha = lightAlpha(shadowRay, self->base.model, max_contrib, self->base.epsilon);
               local_shade_color = local_shade_color + light_alpha * unshaded_light_contrib;
             }
           } else 
@@ -197,7 +197,7 @@ inline void OBJRenderer_shadeRay(const uniform OBJRenderer *uniform self, varyin
       return;
     }
 
-    ray.t0 = ray.t + self->super.epsilon;
+    ray.t0 = ray.t + self->base.epsilon;
     ray.t = infinity;
     ray.primID = -1;
     ray.geomID = -1;
@@ -238,8 +238,8 @@ export void OBJRenderer_set(void *uniform _self,
 export void *uniform OBJRenderer_create(void *uniform cppE)
 {
   uniform OBJRenderer *uniform self = uniform new uniform OBJRenderer;
-  Renderer_Constructor(&self->super,cppE);
-  self->super.renderSample = OBJRenderer_renderSample;
+  Renderer_Constructor(&self->base,cppE);
+  self->base.renderSample = OBJRenderer_renderSample;
   OBJRenderer_set(self, make_vec3f(1.f), true, NULL, 0);
 
   return self;
