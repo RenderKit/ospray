@@ -450,7 +450,7 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
 
   // Attenuate the foreground and background colors by the opacity.
   if (useBG && renderer->inherited.backgroundEnabled) {
-    const vec4f background = make_vec4f(renderer->bgColor, 1.f);
+    const vec4f background = make_vec4f(renderer->inherited.bgColor, 1.f);
     color = color.w * color + (1.0f - color.w) * background;
   }
 
@@ -483,16 +483,6 @@ export void *uniform RaycastVolumeRenderer_createInstance()
   precomputeZOrder();
 
   return renderer;
-}
-
-export void RaycastVolumeRenderer_setBackgroundColor(void *uniform _self,
-                                                     const uniform vec3f &bgColor)
-{
-  // Cast to the actual Renderer subtype.
-  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
-
-  // Set the background color.
-  self->bgColor = bgColor;
 }
 
 export void RaycastVolumeRenderer_setLights(void *uniform _self,

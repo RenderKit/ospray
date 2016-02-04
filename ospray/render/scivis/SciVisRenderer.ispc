@@ -38,7 +38,6 @@ struct SciVisRenderer
   const uniform Light *uniform *uniform lights;
   uint32 numLights;
 
-  vec3f bgColor;
   bool  shadowsEnabled;
 
   int   maxDepth;
@@ -257,7 +256,7 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
 
     if (ray.geomID < 0) {
       sample.rgb = self->super.backgroundEnabled ?
-                   color + path_opacity * self->bgColor :
+                   color + path_opacity * self->super.bgColor :
                    color;
       sample.alpha = 1.f - path_opacity;
       return;
@@ -316,7 +315,6 @@ void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
 //////////////////////////////////////////////////////////////////////////////
 
 export void SciVisRenderer_set(void *uniform _self,
-                               const uniform vec3f &bgColor,
                                const uniform bool shadowsEnabled,
                                const uniform int maxDepth,
                                const uniform int aoSamples,
@@ -328,7 +326,6 @@ export void SciVisRenderer_set(void *uniform _self,
   uniform SciVisRenderer *uniform self =
       (uniform SciVisRenderer *uniform)_self;
 
-  self->bgColor = bgColor;
   self->shadowsEnabled = shadowsEnabled;
   self->maxDepth = maxDepth;
   self->aoSamples = aoSamples;
@@ -343,8 +340,7 @@ export void *uniform SciVisRenderer_create(void *uniform cppE)
   uniform SciVisRenderer *uniform self = uniform new uniform SciVisRenderer;
   Renderer_Constructor(&self->super,cppE);
   self->super.renderSample = SciVisRenderer_renderSample;
-  SciVisRenderer_set(self, make_vec3f(1.f), true, 10, 4,
-                     infinity, 1.f, NULL, 0);
+  SciVisRenderer_set(self, true, 10, 4, infinity, 1.f, NULL, 0);
 
   return self;
 }

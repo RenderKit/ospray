@@ -43,9 +43,6 @@ namespace ospray {
 
       void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
-      vec3f bgColor;
-      bgColor = getParam3f("bgColor", vec3f(1.f));
-
       const bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
 
       const int32 maxDepth = getParam1i("maxDepth", 10);
@@ -55,7 +52,6 @@ namespace ospray {
       float aoWeight     = getParam1f("aoWeight", 0.25f);
 
       ispc::SciVisRenderer_set(getIE(),
-                               (ispc::vec3f&)bgColor,
                                shadowsEnabled,
                                maxDepth,
                                numAOSamples,

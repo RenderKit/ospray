@@ -233,6 +233,7 @@ export void Renderer_set(void *uniform _self,
                          const uniform float epsilon,
                          const uniform int32 spp,
                          const uniform bool backgroundEnabled,
+                         const uniform vec3f &bgColor,
                          void *uniform _maxDepthTexture)
 {
   uniform Renderer *uniform self = (uniform Renderer *uniform)_self;
@@ -241,6 +242,7 @@ export void Renderer_set(void *uniform _self,
   self->epsilon = epsilon;
   self->spp = spp;
   self->backgroundEnabled = backgroundEnabled;
+  self->bgColor = bgColor;
   self->maxDepthTexture = (uniform Texture2D *uniform)_maxDepthTexture;
 
   precomputeZOrder();

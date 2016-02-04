@@ -97,8 +97,6 @@ namespace ospray {
      *         (such as changed parameters etc) */
     virtual void commit();
 
-    //! background color we are going to use if the primary ray hit nothing
-    vec3f bgColor; 
     int defaultNumSamples;
   };
 

@@ -26,7 +26,6 @@
 
 struct SimpleAO {
   uniform Renderer super;
-  uniform vec3f bgColor;
   uniform int samplesPerFrame;
   uniform float aoRayLength;
 };
@@ -115,7 +114,8 @@ inline void shade_ao(uniform SimpleAO *uniform self,
                      const float rot_y)
 {
   if (ray.geomID < 0) {
-    color = self->super.backgroundEnabled ? self->bgColor : make_vec3f(0.f);
+    color = self->super.backgroundEnabled ? self->super.bgColor :
+                                            make_vec3f(0.f);
     alpha = self->super.backgroundEnabled ? 1.f : 0.f;
     return;
   }
@@ -205,12 +205,10 @@ export void *uniform SimpleAO_create(void *uniform cppE,
 }
 
 export void SimpleAO_set(void *uniform _self,
-                         const uniform vec3f &bgColor,
                          uniform int samplesPerFrame,
                          uniform float aoRayLength)
 {
   uniform SimpleAO *uniform self = (uniform SimpleAO *uniform)_self;
-  self->bgColor = bgColor;
   self->samplesPerFrame = samplesPerFrame;
   self->aoRayLength = aoRayLength;
 }
