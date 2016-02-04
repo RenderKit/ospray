@@ -15,20 +15,20 @@
 // ======================================================================== //
 
 // obj
-#include "RaytraceRenderer.h"
-#include "RaytraceMaterial.h"
+#include "SciVisRenderer.h"
+#include "SciVisMaterial.h"
 // ospray
 #include "ospray/common/Data.h"
 #include "ospray/lights/Light.h"
 //sys
 #include <vector>
 // ispc exports
-#include "RaytraceRenderer_ispc.h"
+#include "SciVisRenderer_ispc.h"
 
 namespace ospray {
-  namespace raytracer {
+  namespace scivis {
 
-    void RaytraceRenderer::commit()
+    void SciVisRenderer::commit()
     {
       Renderer::commit();
 
@@ -50,36 +50,37 @@ namespace ospray {
 
       const int32 maxDepth = getParam1i("maxDepth", 10);
 
-      int   numAOSamples = getParam1i("aoSamples", 4); // number of AO rays per pixel sample
+      int   numAOSamples = getParam1i("aoSamples", 4);
       float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
       float aoWeight     = getParam1f("aoWeight", 0.25f);
 
-      ispc::RaytraceRenderer_set(getIE(),
-                                 (ispc::vec3f&)bgColor,
-                                 shadowsEnabled,
-                                 maxDepth,
-                                 numAOSamples,
-                                 rayLength,
-                                 aoWeight,
-                                 lightPtr,
-                                 lightArray.size());
+      ispc::SciVisRenderer_set(getIE(),
+                               (ispc::vec3f&)bgColor,
+                               shadowsEnabled,
+                               maxDepth,
+                               numAOSamples,
+                               rayLength,
+                               aoWeight,
+                               lightPtr,
+                               lightArray.size());
     }
 
-    RaytraceRenderer::RaytraceRenderer()
+    SciVisRenderer::SciVisRenderer()
     {
-      ispcEquivalent = ispc::RaytraceRenderer_create(this);
+      ispcEquivalent = ispc::SciVisRenderer_create(this);
     }
 
     /*! \brief create a material of given type */
-    Material *RaytraceRenderer::createMaterial(const char *type)
+    Material *SciVisRenderer::createMaterial(const char *type)
     {
-      Material *mat = new RaytraceMaterial;
+      Material *mat = new SciVisMaterial;
       return mat;
     }
 
-    OSP_REGISTER_RENDERER(RaytraceRenderer, raytracer);
-    OSP_REGISTER_RENDERER(RaytraceRenderer, rt);
-    OSP_REGISTER_RENDERER(RaytraceRenderer, scivis);
+    OSP_REGISTER_RENDERER(SciVisRenderer, raytracer);
+    OSP_REGISTER_RENDERER(SciVisRenderer, rt);
+    OSP_REGISTER_RENDERER(SciVisRenderer, scivis);
+    OSP_REGISTER_RENDERER(SciVisRenderer, sv);
 
-  } // ::ospray::obj
+  } // ::ospray::scivis
 } // ::ospray

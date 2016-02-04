@@ -16,21 +16,46 @@
 
 #pragma once
 
-#include "ospray/math/vec.ih"
-#include "ospray/common/Material.ih"
-#include "ospray/texture/Texture2D.ih"
+#include "ospray/common/Material.h"
+#include "ospray/texture/Texture2D.h"
 
-//! ispc-equivalent of ospray::raytracer::RaytraceMaterial
-struct RaytraceMaterial
-{
-  uniform Material base; //!< inherited material properties
-  const uniform Texture2D *map_d;
-  float d;
-  const uniform Texture2D *map_Kd;
-  vec3f Kd;
-  const uniform Texture2D *map_Ks;
-  vec3f Ks;
-  const uniform Texture2D *map_Ns;
-  float Ns;
-  const uniform Texture2D *map_Bump;
-};
+namespace ospray {
+  namespace scivis {
+
+    typedef vec3f Color;
+    
+    /*! implements the Material used by the \ref ospray_render_scivis */
+    struct SciVisMaterial : public Material
+    {
+      /*! opacity: 0 (transparent), 1 (opaque) */
+      Texture2D *map_d;   float d;
+
+      /*! diffuse  reflectance: 0 (none), 1 (full) */
+      Texture2D *map_Kd;  Color Kd;
+
+      /*! specular reflectance: 0 (none), 1 (full) */
+      Texture2D *map_Ks;  Color Ks;
+
+      /*! specular exponent: 0 (diffuse), infinity (specular) */
+      Texture2D *map_Ns;  float Ns;
+
+      /*! bump map */
+      Texture2D *map_Bump;
+
+      //! \brief common function to help printf-debugging 
+      /*! Every derived class should overrride this! */
+      std::string toString() const;
+
+      //! \brief commit the material's parameters
+      void commit();
+    };
+
+    // Inlined member functions ///////////////////////////////////////////////
+
+    inline std::string SciVisMaterial::toString() const
+    {
+      return "ospray::scivis::SciVisMaterial";
+    }
+
+  } // ::ospray::obj
+} // ::ospray

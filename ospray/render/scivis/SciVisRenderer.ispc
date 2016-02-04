@@ -24,11 +24,11 @@
 #include "ospray/math/sampling.ih"
 #include "ospray/math/LinearSpace.ih"
 
-#include "RaytraceMaterial.ih"
+#include "SciVisMaterial.ih"
 
 #define ALPHA_THRESHOLD (.05f)
 
-struct RaytraceRenderer {
+struct SciVisRenderer {
   Renderer super;
 
   const uniform Light *uniform *uniform lights;
@@ -44,7 +44,7 @@ struct RaytraceRenderer {
   float aoWeight;
 };
 
-inline float calculateAO(const uniform RaytraceRenderer *uniform self,
+inline float calculateAO(const uniform SciVisRenderer *uniform self,
                          varying DifferentialGeometry &dg,
                          varying ScreenSample &sample)
 {
@@ -91,8 +91,8 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model,
     DifferentialGeometry dg;
     postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
 
-    uniform RaytraceMaterial *objMaterial =
-        (uniform RaytraceMaterial *)dg.material;
+    uniform SciVisMaterial *objMaterial =
+        (uniform SciVisMaterial *)dg.material;
 
     float material_opacity = 1.f;
 
@@ -124,8 +124,8 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model,
 }
 
 inline
-void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
-                               varying ScreenSample &sample)
+void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
+                             varying ScreenSample &sample)
 { 
   Ray &ray = sample.ray;
   // ISPC issue #703. Switch to 'nice' code once ISPC #703 is fixed.
@@ -164,8 +164,8 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
                   DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
     uniform Material *material = dg.material;
-    uniform RaytraceMaterial *objMaterial =
-        (uniform RaytraceMaterial *)material;
+    uniform SciVisMaterial *objMaterial =
+        (uniform SciVisMaterial *)material;
 
     float d  = 1.f;
     float Ns = 0.f;
@@ -256,31 +256,31 @@ void RaytraceRenderer_shadeRay(const uniform RaytraceRenderer *uniform self,
   }
 }
 
-void RaytraceRenderer_renderSample(uniform Renderer *uniform _self,
+void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
                                    void *uniform perFrameData,
                                    varying ScreenSample &sample)
 {
-  uniform RaytraceRenderer *uniform self =
-      (uniform RaytraceRenderer *uniform)_self;
-  RaytraceRenderer_shadeRay(self, sample);
+  uniform SciVisRenderer *uniform self =
+      (uniform SciVisRenderer *uniform)_self;
+  SciVisRenderer_shadeRay(self, sample);
 }
 
 
 // Exports (called from C++)
 //////////////////////////////////////////////////////////////////////////////
 
-export void RaytraceRenderer_set(void *uniform _self,
-                                 const uniform vec3f &bgColor,
-                                 const uniform bool shadowsEnabled,
-                                 const uniform int maxDepth,
-                                 const uniform int aoSamples,
-                                 const uniform float aoRayLength,
-                                 const uniform float aoWeight,
-                                 void **uniform lights,
-                                 const uniform uint32 numLights)
+export void SciVisRenderer_set(void *uniform _self,
+                               const uniform vec3f &bgColor,
+                               const uniform bool shadowsEnabled,
+                               const uniform int maxDepth,
+                               const uniform int aoSamples,
+                               const uniform float aoRayLength,
+                               const uniform float aoWeight,
+                               void **uniform lights,
+                               const uniform uint32 numLights)
 {
-  uniform RaytraceRenderer *uniform self =
-      (uniform RaytraceRenderer *uniform)_self;
+  uniform SciVisRenderer *uniform self =
+      (uniform SciVisRenderer *uniform)_self;
 
   self->bgColor = bgColor;
   self->shadowsEnabled = shadowsEnabled;
@@ -292,12 +292,13 @@ export void RaytraceRenderer_set(void *uniform _self,
   self->numLights = numLights;
 }
 
-export void *uniform RaytraceRenderer_create(void *uniform cppE)
+export void *uniform SciVisRenderer_create(void *uniform cppE)
 {
-  uniform RaytraceRenderer *uniform self = uniform new uniform RaytraceRenderer;
+  uniform SciVisRenderer *uniform self = uniform new uniform SciVisRenderer;
   Renderer_Constructor(&self->super,cppE);
-  self->super.renderSample = RaytraceRenderer_renderSample;
-  RaytraceRenderer_set(self, make_vec3f(1.f), true, 10, 4, infinity, 1.f, NULL, 0);
+  self->super.renderSample = SciVisRenderer_renderSample;
+  SciVisRenderer_set(self, make_vec3f(1.f), true, 10, 4,
+                     infinity, 1.f, NULL, 0);
 
   return self;
 }
