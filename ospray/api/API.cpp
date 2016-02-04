@@ -80,9 +80,15 @@ namespace ospray {
 
   extern "C" void ospInit(int *_ac, const char **_av)
   {
-    if (ospray::api::Device::current)
+    if (ospray::api::Device::current) {
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
+    }
+
+    auto *nThreads = getenv("OSPRAY_THREADS");
+    if (nThreads) {
+      numThreads = atoi(nThreads);
+    }
 
     /* call ospray::init to properly parse common args like
        --osp:verbose, --osp:debug etc */
