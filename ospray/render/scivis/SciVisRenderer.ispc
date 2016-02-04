@@ -24,7 +24,7 @@
 #include "ospray/math/sampling.ih"
 #include "ospray/math/LinearSpace.ih"
 
-#include "RaytraceMaterial.ih"
+#include "SciVisMaterial.ih"
 
 #define ALPHA_THRESHOLD (.05f)
 

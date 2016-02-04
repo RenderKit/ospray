@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "RaytraceMaterial.ih"
+#include "SciVisMaterial.ih"
 
 export void *uniform SciVisMaterial_create(void *uniform cppE)
 {

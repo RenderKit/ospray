@@ -14,8 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "RaytraceMaterial.h"
-#include "RaytraceMaterial_ispc.h"
+#include "SciVisMaterial.h"
+#include "SciVisMaterial_ispc.h"
 #include "ospray/common/Data.h"
 
 namespace ospray {

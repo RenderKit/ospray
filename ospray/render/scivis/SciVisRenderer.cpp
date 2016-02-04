@@ -15,15 +15,15 @@
 // ======================================================================== //
 
 // obj
-#include "RaytraceRenderer.h"
-#include "RaytraceMaterial.h"
+#include "SciVisRenderer.h"
+#include "SciVisMaterial.h"
 // ospray
 #include "ospray/common/Data.h"
 #include "ospray/lights/Light.h"
 //sys
 #include <vector>
 // ispc exports
-#include "RaytraceRenderer_ispc.h"
+#include "SciVisRenderer_ispc.h"
 
 namespace ospray {
   namespace scivis {
