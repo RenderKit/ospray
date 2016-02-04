@@ -28,7 +28,11 @@
 
 #define ALPHA_THRESHOLD (.05f)
 
-struct SciVisRenderer {
+// Data types
+//////////////////////////////////////////////////////////////////////////////
+
+struct SciVisRenderer
+{
   Renderer super;
 
   const uniform Light *uniform *uniform lights;
@@ -44,13 +48,62 @@ struct SciVisRenderer {
   float aoWeight;
 };
 
-inline float calculateAO(const uniform SciVisRenderer *uniform self,
-                         varying DifferentialGeometry &dg,
-                         varying ScreenSample &sample)
+struct SciVisShadingInfo
 {
-  const int accumID = sample.sampleID.z;
-  const int ix = sample.sampleID.x;
-  const int iy = sample.sampleID.y;
+  float d ;
+  float Ns;
+  vec3f Kd;
+  vec3f Ks;
+  float local_opacity;
+  float path_opacity;
+};
+
+// Function definitions
+///////////////////////////////////////////////////////////////////////////////
+
+inline void initShadingInfo(varying SciVisShadingInfo &info)
+{
+  info.d  = 1.f;
+  info.Ns = 0.f;
+  info.Kd = make_vec3f(0.f);
+  info.Ks = make_vec3f(0.f);
+  info.local_opacity = 0.f;
+}
+
+inline void shadeMaterials(const varying DifferentialGeometry &dg,
+                           varying SciVisShadingInfo &info)
+{
+  uniform SciVisMaterial *scivisMaterial =
+      (uniform SciVisMaterial *)dg.material;
+
+  // Get each term from the material //
+  if (!scivisMaterial) {
+    info.d = dg.color.w;
+    info.Kd = make_vec3f(dg.color);
+  } else {
+    foreach_unique (mat in scivisMaterial) {
+      // textures modify (mul) values, see
+      //   http://paulbourke.net/dataformats/mtl/
+      info.d = mat->d * get1f(mat->map_d, dg.st, 1.f);
+      info.Kd = mat->Kd * make_vec3f(dg.color);
+      if (mat->map_Kd) {
+        vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
+        info.Kd = info.Kd * make_vec3f(Kd_from_map);
+        info.d *= Kd_from_map.w;
+      }
+      info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
+      info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
+    }
+  }
+}
+
+inline float calculateAO(const uniform SciVisRenderer *uniform self,
+                         const varying vec3i &sampleID,
+                         const varying DifferentialGeometry &dg)
+{
+  const int accumID = sampleID.z;
+  const int ix = sampleID.x;
+  const int iy = sampleID.y;
 
   // init TEA RNG //
   RandomTEA rng_state;
@@ -73,6 +126,22 @@ inline float calculateAO(const uniform SciVisRenderer *uniform self,
   }
 
   return 1.0f - (float)hits/self->aoSamples;
+}
+
+inline void shadeAO(const uniform SciVisRenderer *uniform self,
+                    const varying vec3i &sampleID,
+                    const varying DifferentialGeometry &dg,
+                    const varying SciVisShadingInfo &info,
+                    varying vec3f &color)
+{
+  // Calculate AO contribution as ambient term
+  if (self->aoSamples > 0 && self->aoWeight > 0.f) {
+    float ao = self->aoWeight;
+    if (self->aoRayLength > 0.f)
+      ao *= calculateAO(self, sampleID, dg);
+    // Blend AO w/ diffuse term
+    color = color + info.local_opacity * info.Kd * ao;
+  }
 }
 
 inline float lightAlpha(Ray &ray, uniform Model *uniform model,
@@ -123,6 +192,47 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model,
   }
 }
 
+inline void shadeLights(const uniform SciVisRenderer *uniform self,
+                        const varying Ray &ray,
+                        const varying DifferentialGeometry &dg,
+                        const varying SciVisShadingInfo &info,
+                        const varying float depth,
+                        varying vec3f &color)
+{
+  const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
+  const vec3f P = dg.P + self->super.epsilon * dg.Ng;
+
+  //calculate shading for all lights
+  for (uniform int i = 0; self->lights && i < self->numLights; i++) {
+    const uniform Light *uniform l = self->lights[i];
+    const vec2f s = make_vec2f(0.f);
+    const LightSample light = l->sample(l, dg, s);
+
+    if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
+      const float cosNL = abs(dot(light.direction, dg.Ns));
+      const float cosLR = max(0.f, dot(light.direction, R));
+      const vec3f brdf = info.Kd * cosNL + info.Ks * powf(cosLR, info.Ns);
+      const vec3f light_contrib = info.local_opacity
+                                  * brdf * light.radiance;
+
+      if (self->shadowsEnabled) {
+        const float max_contrib = reduce_max(light_contrib);
+        if (max_contrib > .01f) {
+          Ray shadowRay;
+          setRay(shadowRay, P, light.direction);
+          const float light_alpha = lightAlpha(shadowRay,
+                                               self->super.model,
+                                               max_contrib,
+                                               self->maxDepth - depth,
+                                               self->super.epsilon);
+          color = color + light_alpha * light_contrib;
+        }
+      } else
+        color = color + light_contrib;
+    }
+  }
+}
+
 inline
 void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
                              varying ScreenSample &sample)
@@ -163,84 +273,20 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
                   DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
                   DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
-    uniform Material *material = dg.material;
-    uniform SciVisMaterial *objMaterial =
-        (uniform SciVisMaterial *)material;
+    SciVisShadingInfo info;
+    initShadingInfo(info);
 
-    float d  = 1.f;
-    float Ns = 0.f;
-    vec3f Kd = make_vec3f(0.f, 1.f, 0.f);
-    vec3f Ks = make_vec3f(0.f);
+    shadeMaterials(dg, info);
 
-    // Get each term from the material //
+    info.local_opacity = path_opacity * info.d;
 
-    if (!objMaterial) {
-      d = dg.color.w;
-      Kd = make_vec3f(dg.color);
-    } else {
-      foreach_unique (mat in objMaterial) {
-        // textures modify (mul) values, see
-        //   http://paulbourke.net/dataformats/mtl/
-        d = mat->d * get1f(mat->map_d, dg.st, 1.f);
-        Kd = mat->Kd * make_vec3f(dg.color);
-        if (mat->map_Kd) {
-          vec4f Kd_from_map = get4f(mat->map_Kd, dg.st);
-          Kd = Kd * make_vec3f(Kd_from_map);
-          d *= Kd_from_map.w;
-        }
-        Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
-        Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
-//        bump = get3f(mat->map_Bump, dg.st, make_vec3f(0.f));
-      }
-    }
-
-    const float local_opacity = path_opacity * d;
-
-    if (local_opacity > 0.01f) { // worth shading?
-      const vec3f R = ray.dir - ((2.f * dot(ray.dir, dg.Ns)) * dg.Ns);
-      const vec3f P = dg.P + self->super.epsilon * dg.Ng;
-
-      // Calculate AO contribution as ambient term
-      if (self->aoSamples > 0 && self->aoWeight > 0.f) {
-        float ao = self->aoWeight;
-        if (self->aoRayLength > 0.f)
-          ao *= calculateAO(self, dg, sample);
-        // Blend AO w/ diffuse term
-        color = color + local_opacity * Kd * ao;
-      }
-
-      //calculate shading for all lights
-      for (uniform int i = 0; self->lights && i < self->numLights; i++) {
-        const uniform Light *uniform l = self->lights[i];
-        const vec2f s = make_vec2f(0.f);
-        const LightSample light = l->sample(l, dg, s);
-
-        if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
-          const float cosNL = abs(dot(light.direction, dg.Ns));
-          const float cosLR = max(0.f, dot(light.direction, R));
-          const vec3f brdf = Kd * cosNL + Ks * powf(cosLR, Ns);
-          const vec3f light_contrib = local_opacity * brdf * light.radiance;
-
-          if (self->shadowsEnabled) {
-            const float max_contrib = reduce_max(light_contrib);
-            if (max_contrib > .01f) {
-              Ray shadowRay;
-              setRay(shadowRay, P, light.direction);
-              const float light_alpha = lightAlpha(shadowRay,
-                                                   self->super.model,
-                                                   max_contrib,
-                                                   self->maxDepth - depth,
-                                                   self->super.epsilon);
-              color = color + light_alpha * light_contrib;
-            }
-          } else
-            color = color + light_contrib;
-        }
-      }
+    if (info.local_opacity > 0.01f) { // worth shading?
+      shadeAO(self, sample.sampleID, dg, info, color);
+      shadeLights(self, ray, dg, info, depth, color);
     }
 
     // kill path when reached max depth or if remaining contribution too low 
-    path_opacity = path_opacity * (1.f - d);
+    path_opacity = path_opacity * (1.f - info.d);
     depth++;
     if (depth >= self->maxDepth | path_opacity < 0.01f ) {
       sample.rgb = color;
