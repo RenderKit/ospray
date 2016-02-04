@@ -479,9 +479,6 @@ export void *uniform RaycastVolumeRenderer_createInstance()
   // Function to perform per-frame state completion.
   renderer->base.endFrame = RaycastVolumeRenderer_endFrame;
 
-  // Do this once up front (was done during rendering, makes more sense here?)
-  precomputeZOrder();
-
   return renderer;
 }
 
