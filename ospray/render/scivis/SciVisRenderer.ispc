@@ -309,14 +309,16 @@ inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
 }
 
 inline
-void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform renderer,
+void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
+                                          const varying vec3i &sampleID,
                                           varying Ray &ray,
-                                          const region1f &clipRange,
-                                          varying vec4f &color)
+                                          varying vec4f &out_color)
 {
+  //NOTE(jda) - no geometry opacity handled here...
+
   // We compute intersections on the model and provide the contribution for the
   // closest hit.
-  traceRay(renderer->base.model, ray);
+  traceRay(self->base.model, ray);
 
   // No hit found.
   if(ray.geomID < 0) {
@@ -324,61 +326,24 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform renderer,
     return;
   }
 
-  // Post intersect on the hit geometry.
+  // Calculate material information from DG //
   DifferentialGeometry dg;
-  postIntersect(renderer->base.model, dg, ray,
-                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR
-                |DG_MATERIALID|DG_TEXCOORD);
+  postIntersect(self->base.model, dg, ray,
+                DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|
+                DG_MATERIALID|DG_COLOR|DG_TEXCOORD);
 
-  // Color of the geometry.
-  vec3f geometryColor = make_vec3f(dg.color.x, dg.color.y, dg.color.z);
+  SciVisShadingInfo info;
+  initShadingInfo(info);
 
-  // Apply material if it exists.
-  uniform SciVisMaterial *mat
-    = (uniform SciVisMaterial*)dg.material;
+  shadeMaterials(dg, info);
 
-  float d  = 1.f;
-  vec3f Kd = make_vec3f(0.f,1.f,0.f);
+  info.local_opacity = info.d;
 
-  if (mat) {
-    foreach_unique(m in mat) {
-      d = m->d * get1f(m->map_d, dg.st, 1.f);
-      Kd = m->Kd * make_vec3f(dg.color);
-      if (m->map_Kd) {
-        vec4f Kd_from_map = get4f(m->map_Kd,dg.st);
-        Kd = Kd * make_vec3f(Kd_from_map);
-        d *= Kd_from_map.w;
-      } else {
-        Kd = m->Kd;
-      }
+  vec3f color = make_vec3f(0.f);
+  shadeAO(self, sampleID, dg, info, color);
+  shadeLights(self, ray, dg, info, 0/*depth*/, color);
 
-      geometryColor = geometryColor * Kd;
-
-      if (m->volume) {
-        const float sample = m->volume->computeSample(m->volume, dg.P);
-        geometryColor = geometryColor * m->volume->transferFunction->getColorForValue(m->volume->transferFunction, sample);
-      }
-    }
-  }
-
-  // Opacity of the geometry.
-  float geometryOpacity = dg.color.w;
-
-  // Compute lighting.
-  vec3f shadedColor = make_vec3f(0.f);
-  const vec2f s = make_vec2f(0.5f);
-
-  for (uniform uint32 i = 0; i < renderer->numLights; i++) {
-    const LightSample light = renderer->lights[i]->sample(renderer->lights[i],
-                                                          dg, s);
-    const float cosNL = abs(dot(safe_normalize(light.direction), dg.Ns));
-
-    shadedColor = shadedColor + geometryColor * cosNL * light.radiance;
-  }
-
-  // Set the color contribution for this sample only (do not accumulate).
-  color = geometryOpacity * make_vec4f(shadedColor.x, shadedColor.y,
-                                       shadedColor.z, 1.f);
+  out_color = make_vec4f(color.x, color.y, color.z, 1.f);
 }
 
 /*! Returns the first hit volume for the provided ray and sets the ray bounds t0 and t,
@@ -439,6 +404,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
                               varying Ray &ray,
                               const uniform PassInfo &passInfo,
                               const varying float &rayOffset,
+                              const varying vec3i &sampleID,
                               varying vec4f &color,
                               varying float &depth)
 {
@@ -492,8 +458,8 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   vec4f geometryColor = color;
 
   // Initial trace through geometries.
-  SciVisRenderer_computeGeometrySample(renderer, geometryRay,
-                                       clipRange, geometryColor);
+  SciVisRenderer_computeGeometrySample(renderer, sampleID,
+                                       geometryRay, geometryColor);
 
   // Depth is the first volume bounding box or geometry hit
   depth = min(ray.t0, geometryRay.t);
@@ -531,20 +497,22 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
       // Geometry contribution.
       color = color + (1.0f - color.w) * geometryColor;
 
-      // Reset geometry ray.
-      geometryRay.t0 = geometryRay.t + epsilon;
-      geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
-      geometryRay.primID = -1;
-      geometryRay.geomID = -1;
-      geometryRay.instID = -1;
+      if (color.w < 0.99f) {
+        // Reset geometry ray.
+        geometryRay.t0 = geometryRay.t + epsilon;
+        geometryRay.t = tMax; //!< end of valid ray interval for traceRay()
+        geometryRay.primID = -1;
+        geometryRay.geomID = -1;
+        geometryRay.instID = -1;
 
-      // Update ray offset for use with isosurface geometries based on current
-      // volume (this value ignored elsewhere).
-      geometryRay.time = volume ? -rayOffset * volume->samplingStep : 0.f;
+        // Update ray offset for use with isosurface geometries based on current
+        // volume (this value ignored elsewhere).
+        geometryRay.time = volume ? -rayOffset * volume->samplingStep : 0.f;
 
-      // Trace next geometry ray.
-      SciVisRenderer_computeGeometrySample(renderer, geometryRay,
-                                           clipRange, geometryColor);
+        // Trace next geometry ray.
+        SciVisRenderer_computeGeometrySample(renderer, sampleID,
+                                             geometryRay, geometryColor);
+      }
 
     }
   }
@@ -621,12 +589,64 @@ void SciVisRenderer_shadeRay(const uniform SciVisRenderer *uniform self,
 }
 
 void SciVisRenderer_renderSample(uniform Renderer *uniform _self,
-                                 void *uniform /*perFrameData*/,
+                                 void *uniform perFrameData,
                                  varying ScreenSample &sample)
 {
+  //NOTE(jda) - Eliminate #if'd out code path when satisfied with surface only
+  //            scene performance and features
+#if 0
   uniform SciVisRenderer *uniform self =
       (uniform SciVisRenderer *uniform)_self;
   SciVisRenderer_shadeRay(self, sample);
+#else
+  SciVisRenderer *uniform renderer
+    = (SciVisRenderer *uniform) _self;
+
+  PassInfo *uniform passInfo
+    = (PassInfo *uniform)perFrameData;
+
+  // Background color.
+  const uniform bool useBG = ((passInfo == NULL) || passInfo->useBG);
+
+  // Ray offset for this sample, as a fraction of the nominal step size.
+  float rayOffset = precomputedHalton2(sample.sampleID.z);
+  int ix = sample.sampleID.x % 4;
+  int iy = sample.sampleID.y % 4;
+  int patternID = ix + 4 * iy;
+  rayOffset += precomputedHalton3(patternID);
+
+  if(rayOffset > 1.f) rayOffset -= 1.f;
+
+  // Provide the renderer to the intersector as it contains all
+  // volumes, geometries, etc.
+  vec4f color = make_vec4f(0.0f,0.f,0.f,0.f);
+  float depth = infinity;
+
+  if (passInfo != NULL) {
+    SciVisRenderer_intersect(renderer, sample.ray, *passInfo,
+                             rayOffset, sample.sampleID, color, depth);
+  } else {
+    uniform PassInfo dummyPassInfo;
+    dummyPassInfo.region = make_region1f(0.f,inf);
+    dummyPassInfo.useBG = true;
+    dummyPassInfo.block = NULL;
+    SciVisRenderer_intersect(renderer, sample.ray, dummyPassInfo,
+                             rayOffset, sample.sampleID, color, depth);
+  }
+
+  // Attenuate the foreground and background colors by the opacity.
+  if (useBG && renderer->base.backgroundEnabled) {
+    const vec4f background = make_vec4f(renderer->base.bgColor, 1.f);
+    color = color.w * color + (1.0f - color.w) * background;
+  }
+
+  // Store the result in the sample.
+  sample.rgb.x = color.x;
+  sample.rgb.y = color.y;
+  sample.rgb.z = color.z;
+  sample.alpha = color.w;
+  sample.z = depth;
+#endif
 }
 
 // Exports (called from C++)
