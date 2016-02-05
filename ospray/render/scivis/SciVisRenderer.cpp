@@ -69,8 +69,7 @@ namespace ospray {
     /*! \brief create a material of given type */
     Material *SciVisRenderer::createMaterial(const char *type)
     {
-      Material *mat = new SciVisMaterial;
-      return mat;
+      return new SciVisMaterial;
     }
 
     OSP_REGISTER_RENDERER(SciVisRenderer, raytracer);

@@ -57,6 +57,8 @@ struct SciVisShadingInfo
   vec3f Ks;
   float local_opacity;
   float path_opacity;
+
+  vec3f geometryColor;
 };
 
 struct PassInfo {
@@ -78,6 +80,8 @@ inline void initShadingInfo(varying SciVisShadingInfo &info)
   info.Kd = make_vec3f(0.f);
   info.Ks = make_vec3f(0.f);
   info.local_opacity = 0.f;
+
+  info.geometryColor = make_vec3f(0.f);
 }
 
 // Material functions //
@@ -87,6 +91,8 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
 {
   uniform SciVisMaterial *scivisMaterial =
       (uniform SciVisMaterial *)dg.material;
+
+  info.geometryColor = make_vec3f(dg.color);
 
   // Get each term from the material //
   if (!scivisMaterial) {
@@ -105,6 +111,13 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
       }
       info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
       info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
+
+      info.geometryColor = info.geometryColor * mat->Kd;
+
+      if (mat->volume) {
+        const float sample = mat->volume->computeSample(mat->volume, dg.P);
+        info.geometryColor = info.geometryColor * mat->volume->transferFunction->getColorForValue(mat->volume->transferFunction, sample);
+      }
     }
   }
 }
@@ -249,6 +262,27 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
   }
 }
 
+inline void shadeIsoSurface(SciVisRenderer *uniform renderer,
+                            const varying DifferentialGeometry &dg,
+                            const varying SciVisShadingInfo &info,
+                            varying vec3f &color)
+{
+  // Compute lighting.
+  vec3f shadedColor = make_vec3f(0.f);
+  const vec2f s = make_vec2f(0.5f);
+
+  for (uniform uint32 i=0; i<renderer->numLights; i++) {
+    const LightSample light = renderer->lights[i]->sample(renderer->lights[i],
+                                                          dg, s);
+    const float cosNL = abs(dot(safe_normalize(light.direction), dg.Ns));
+
+    shadedColor = shadedColor + info.geometryColor * cosNL * light.radiance;
+  }
+
+  // Set the color contribution for this sample only (do not accumulate).
+  color = dg.color.w * shadedColor;
+}
+
 // Volume shading //
 
 inline void SciVisRenderer_computeVolumeSample(SciVisRenderer *uniform renderer,
@@ -340,8 +374,13 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
   info.local_opacity = info.d;
 
   vec3f color = make_vec3f(0.f);
-  shadeAO(self, sampleID, dg, info, color);
-  shadeLights(self, ray, dg, info, 0/*depth*/, color);
+
+  //if (info.hitIsosurface) {
+  //  shadeIsoSurface(self, dg, info, color);
+  //} else {
+    shadeAO(self, sampleID, dg, info, color);
+    shadeLights(self, ray, dg, info, 0/*depth*/, color);
+  //}
 
   out_color = make_vec4f(color.x, color.y, color.z, 1.f);
 }
