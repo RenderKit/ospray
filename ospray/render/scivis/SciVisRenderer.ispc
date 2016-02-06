@@ -112,8 +112,6 @@ inline void shadeMaterials(const varying DifferentialGeometry &dg,
       info.Ks = mat->Ks * get3f(mat->map_Ks, dg.st, make_vec3f(1.f));
       info.Ns = mat->Ns * get1f(mat->map_Ns, dg.st, 1.f);
 
-      info.geometryColor = info.geometryColor * mat->Kd;
-
       if (mat->volume) {
         const float sample = mat->volume->computeSample(mat->volume, dg.P);
         info.geometryColor = info.geometryColor * mat->volume->transferFunction->getColorForValue(mat->volume->transferFunction, sample);
@@ -189,15 +187,15 @@ inline float lightAlpha(Ray &ray, uniform Model *uniform model,
     DifferentialGeometry dg;
     postIntersect(model, dg, ray, DG_MATERIALID | DG_TEXCOORD | DG_COLOR);
 
-    uniform SciVisMaterial *objMaterial =
+    uniform SciVisMaterial *scivisMaterial =
         (uniform SciVisMaterial *)dg.material;
 
     float material_opacity = 1.f;
 
-    if(objMaterial == NULL) {
+    if(scivisMaterial == NULL) {
       material_opacity = dg.color.w;
     } else {
-      foreach_unique( mat in objMaterial ) {
+      foreach_unique( mat in scivisMaterial ) {
         material_opacity = mat->d * get1f(mat->map_d, dg.st, 1.f);
         if (mat->map_Kd) {
           vec4f Kd_from_map = get4f(mat->map_Kd,dg.st);
@@ -255,9 +253,14 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
                                                self->maxDepth - depth,
                                                self->base.epsilon);
           color = color + light_alpha * light_contrib;
+          //NOTE(jda) - clamp?
+          if (color.x > 1.f) color.x = 1.f;
+          if (color.y > 1.f) color.y = 1.f;
+          if (color.z > 1.f) color.z = 1.f;
         }
-      } else
+      } else {
         color = color + light_contrib;
+      }
     }
   }
 }
