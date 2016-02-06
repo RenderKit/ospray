@@ -44,7 +44,7 @@
 
 namespace ospray {
 
-  namespace scivis {
+  namespace SciVis {
 
     /*! \brief Renderer for the OBJ Wavefront Material/Lighting format
 

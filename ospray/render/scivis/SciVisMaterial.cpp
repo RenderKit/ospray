@@ -19,7 +19,7 @@
 #include "ospray/common/Data.h"
 
 namespace ospray {
-  namespace scivis {
+  namespace SciVis {
 
     SciVisMaterial::SciVisMaterial()
     {

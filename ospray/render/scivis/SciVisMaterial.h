@@ -22,7 +22,7 @@
 #include "ospray/volume/Volume.h"
 
 namespace ospray {
-  namespace scivis {
+  namespace SciVis {
 
     typedef vec3f Color;
     
