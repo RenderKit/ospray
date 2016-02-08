@@ -232,7 +232,7 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
   //calculate shading for all lights
   for (uniform int i = 0; self->lights && i < self->numLights; i++) {
     const uniform Light *uniform l = self->lights[i];
-    const vec2f s = make_vec2f(0.f);
+    const vec2f s = make_vec2f(0.5f);
     const LightSample light = l->sample(l, dg, s);
 
     if (reduce_max(light.radiance) > 0.f) { // any potential contribution?
@@ -253,37 +253,12 @@ inline void shadeLights(const uniform SciVisRenderer *uniform self,
                                                self->maxDepth - depth,
                                                self->base.epsilon);
           color = color + light_alpha * light_contrib;
-          //NOTE(jda) - clamp?
-          if (color.x > 1.f) color.x = 1.f;
-          if (color.y > 1.f) color.y = 1.f;
-          if (color.z > 1.f) color.z = 1.f;
         }
       } else {
         color = color + light_contrib;
       }
     }
   }
-}
-
-inline void shadeIsoSurface(SciVisRenderer *uniform renderer,
-                            const varying DifferentialGeometry &dg,
-                            const varying SciVisShadingInfo &info,
-                            varying vec3f &color)
-{
-  // Compute lighting.
-  vec3f shadedColor = make_vec3f(0.f);
-  const vec2f s = make_vec2f(0.5f);
-
-  for (uniform uint32 i=0; i<renderer->numLights; i++) {
-    const LightSample light = renderer->lights[i]->sample(renderer->lights[i],
-                                                          dg, s);
-    const float cosNL = abs(dot(safe_normalize(light.direction), dg.Ns));
-
-    shadedColor = shadedColor + info.geometryColor * cosNL * light.radiance;
-  }
-
-  // Set the color contribution for this sample only (do not accumulate).
-  color = dg.color.w * shadedColor;
 }
 
 // Volume shading //
@@ -378,12 +353,8 @@ void SciVisRenderer_computeGeometrySample(SciVisRenderer *uniform self,
 
   vec3f color = make_vec3f(0.f);
 
-  //if (info.hitIsosurface) {
-  //  shadeIsoSurface(self, dg, info, color);
-  //} else {
-    shadeAO(self, sampleID, dg, info, color);
-    shadeLights(self, ray, dg, info, 0/*depth*/, color);
-  //}
+  shadeAO(self, sampleID, dg, info, color);
+  shadeLights(self, ray, dg, info, 0/*depth*/, color);
 
   out_color = make_vec4f(color.x, color.y, color.z, 1.f);
 }
