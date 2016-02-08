@@ -289,10 +289,10 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
   // Update the provided ray.
   ray = volumeRay;
 
-  // If we intersected a volume, offset ray by a fraction of the nominal ray step.
-#if 1
-  if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
-#endif
+  // If we intersected a volume, offset ray by a fraction of the nominal ray
+  // step.
+  if (volume)
+    ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
 
   // Return the first intersected volume.
   return volume;

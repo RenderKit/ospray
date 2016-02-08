@@ -19,6 +19,7 @@
 #include "ospray/math/vec.ih"
 #include "ospray/common/Material.ih"
 #include "ospray/texture/Texture2D.ih"
+#include "ospray/volume/Volume.ih"
 
 //! ispc-equivalent of ospray::raytracer::SciVisMaterial
 struct SciVisMaterial
@@ -33,4 +34,5 @@ struct SciVisMaterial
   const uniform Texture2D *map_Ns;
   float Ns;
   const uniform Texture2D *map_Bump;
+  uniform Volume *uniform volume;
 };
