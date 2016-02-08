@@ -19,14 +19,25 @@
 #include "ospray/common/Material.h"
 #include "ospray/texture/Texture2D.h"
 
+#include "ospray/volume/Volume.h"
+
 namespace ospray {
-  namespace scivis {
+  namespace SciVis {
 
     typedef vec3f Color;
     
     /*! implements the Material used by the \ref ospray_render_scivis */
     struct SciVisMaterial : public Material
     {
+      SciVisMaterial();
+
+      //! \brief common function to help printf-debugging
+      /*! Every derived class should overrride this! */
+      std::string toString() const override;
+
+      //! \brief commit the material's parameters
+      void commit() override;
+
       /*! opacity: 0 (transparent), 1 (opaque) */
       Texture2D *map_d;   float d;
 
@@ -42,12 +53,8 @@ namespace ospray {
       /*! bump map */
       Texture2D *map_Bump;
 
-      //! \brief common function to help printf-debugging 
-      /*! Every derived class should overrride this! */
-      std::string toString() const;
-
-      //! \brief commit the material's parameters
-      void commit();
+      Ref<Volume> volume; //!< If provided, color will be mapped through this
+                          //   volume's transfer function.
     };
 
     // Inlined member functions ///////////////////////////////////////////////

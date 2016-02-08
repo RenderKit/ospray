@@ -120,7 +120,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
                                                         varying vec4f &color)
 {
   // We compute intersections on the model and provide the contribution for the closest hit.
-  traceRay(renderer->inherited.model, ray);
+  traceRay(renderer->base.model, ray);
 
   // No hit found.
   if(ray.geomID < 0) {
@@ -130,7 +130,7 @@ inline void RaycastVolumeRenderer_computeGeometrySample(RaycastVolumeRenderer *u
 
   // Post intersect on the hit geometry.
   DifferentialGeometry dg;
-  postIntersect(renderer->inherited.model, dg, ray,
+  postIntersect(renderer->base.model, dg, ray,
                 DG_NG|DG_NS|DG_NORMALIZE|DG_FACEFORWARD|DG_COLOR
                 |DG_MATERIALID|DG_TEXCOORD);
 
@@ -248,8 +248,8 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
 #endif
 
   // Test each volume and find the first intersection.
-  for (uniform int32 i=0; i<renderer->inherited.model->volumeCount; i++) {
-    Volume *uniform volume_i = renderer->inherited.model->volumes[i];
+  for (uniform int32 i=0; i<renderer->base.model->volumeCount; i++) {
+    Volume *uniform volume_i = renderer->base.model->volumes[i];
 #if EXP_DATA_PARALLEL
     // hack for now .... if this does not have a 'getvoxel' function
     // it must be a data parallel volume...
@@ -289,10 +289,10 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform re
   // Update the provided ray.
   ray = volumeRay;
 
-  // If we intersected a volume, offset ray by a fraction of the nominal ray step.
-#if 1
-  if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
-#endif
+  // If we intersected a volume, offset ray by a fraction of the nominal ray
+  // step.
+  if (volume)
+    ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
 
   // Return the first intersected volume.
   return volume;
@@ -317,18 +317,18 @@ void RaycastVolumeRenderer_intersect(uniform RaycastVolumeRenderer *uniform rend
   const float tMax = ray.t;
 
   // Ray epsilon based on bounding box of all volumes.
-  uniform box3f boundingBox = renderer->inherited.model->volumeCount
-    ? renderer->inherited.model->volumes[0]->boundingBox
+  uniform box3f boundingBox = renderer->base.model->volumeCount
+    ? renderer->base.model->volumes[0]->boundingBox
     : make_box3f(make_vec3f(0.f), make_vec3f(0.f));
 
-  Model *uniform model = renderer->inherited.model;
-  for (uniform int32 i=1; i<renderer->inherited.model->volumeCount; i++) {
+  Model *uniform model = renderer->base.model;
+  for (uniform int32 i=1; i<renderer->base.model->volumeCount; i++) {
     boundingBox.lower = min(boundingBox.lower, model->volumes[i]->boundingBox.lower);
     boundingBox.upper = max(boundingBox.upper, model->volumes[i]->boundingBox.upper);
   }
 
   const uniform float epsilon
-    = renderer->inherited.model->volumeCount
+    = renderer->base.model->volumeCount
     ? 1e-4f * distance(boundingBox.lower, boundingBox.upper)
     : 1e-4f;
 
@@ -449,8 +449,8 @@ void RaycastVolumeRenderer_renderSample(Renderer *uniform pointer,
   }
 
   // Attenuate the foreground and background colors by the opacity.
-  if (useBG && renderer->inherited.backgroundEnabled) {
-    const vec4f background = make_vec4f(renderer->bgColor, 1.f);
+  if (useBG && renderer->base.backgroundEnabled) {
+    const vec4f background = make_vec4f(renderer->base.bgColor, 1.f);
     color = color.w * color + (1.0f - color.w) * background;
   }
 
@@ -468,31 +468,18 @@ export void *uniform RaycastVolumeRenderer_createInstance()
   RaycastVolumeRenderer *uniform renderer = uniform new uniform RaycastVolumeRenderer;
 
   // Constructor of the parent class.
-  Renderer_Constructor(&renderer->inherited, NULL);
+  Renderer_Constructor(&renderer->base, NULL);
 
   // Function to compute the color and opacity for a screen space sample.
-  renderer->inherited.renderSample = RaycastVolumeRenderer_renderSample;
+  renderer->base.renderSample = RaycastVolumeRenderer_renderSample;
 
   // Function to perform per-frame state initialization.
-  renderer->inherited.beginFrame = RaycastVolumeRenderer_beginFrame;
+  renderer->base.beginFrame = RaycastVolumeRenderer_beginFrame;
 
   // Function to perform per-frame state completion.
-  renderer->inherited.endFrame = RaycastVolumeRenderer_endFrame;
-
-  // Do this once up front (was done during rendering, makes more sense here?)
-  precomputeZOrder();
+  renderer->base.endFrame = RaycastVolumeRenderer_endFrame;
 
   return renderer;
-}
-
-export void RaycastVolumeRenderer_setBackgroundColor(void *uniform _self,
-                                                     const uniform vec3f &bgColor)
-{
-  // Cast to the actual Renderer subtype.
-  uniform RaycastVolumeRenderer *uniform self = (uniform RaycastVolumeRenderer *uniform)_self;
-
-  // Set the background color.
-  self->bgColor = bgColor;
 }
 
 export void RaycastVolumeRenderer_setLights(void *uniform _self,

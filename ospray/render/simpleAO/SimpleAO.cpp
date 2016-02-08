@@ -64,13 +64,9 @@ namespace ospray {
   {
     Renderer::commit();
 
-    bgColor = getParam3f("bgColor",vec3f(1.f));
     int   numSamples = getParam1i("aoSamples", defaultNumSamples);
     float rayLength  = getParam1f("aoOcclusionDistance", 1e20f);
-    ispc::SimpleAO_set(getIE(),
-                       (const ispc::vec3f&)bgColor,                           
-                       numSamples,
-                       rayLength);
+    ispc::SimpleAO_set(getIE(), numSamples, rayLength);
   }
 
   // OSP_REGISTER_RENDERER(SimpleAO, ao);
