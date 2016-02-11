@@ -43,7 +43,7 @@ namespace ospray {
       vec3f Kd;
 
       //! \brief diffuse texture, if available
-      Ref<Texture> map_Kd;
+      Ref<Texture2D> map_Kd;
     };
   }//namespace ospray::simpleao
 }//namespace ospray
