@@ -20,8 +20,7 @@
 #include "constants.h"
 #include <cmath>
 
-#include <emmintrin.h>
-#include <xmmintrin.h>
+#include <x86intrin.h>
 
 #if defined(__WIN32__)
 #if (__MSV_VER <= 1700)
