@@ -20,9 +20,8 @@
 #include "constants.h"
 #include <cmath>
 
-#include <x86intrin.h>
-
 #if defined(__WIN32__)
+#include <intrin.h>
 #if (__MSV_VER <= 1700)
 namespace std
 {
@@ -31,6 +30,8 @@ namespace std
   __forceinline bool isfinite (const float x) { return _finite(x); }
 }
 #endif
+#else
+#include <x86intrin.h>
 #endif
 
 namespace embree
