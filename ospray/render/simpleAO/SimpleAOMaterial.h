@@ -16,25 +16,34 @@
 
 #pragma once
 
-#include "ospray/common/Ray.ih"
-#include "ospray/lights/Light.ih"
-#include "ospray/math/box.ih"
-#include "ospray/render/Renderer.ih"
+#include "ospray/common/Material.h"
+#include "ospray/texture/Texture2D.h"
 
-//! \brief ISPC variables and functions for the RaycastVolumeRenderer
-//!  class, a concrete subtype of the Renderer class for rendering
-//!  volumes with embedded surfaces via ray casting.
-//!
-struct RaycastVolumeRenderer
-{
-  //! Variables and functions common to all Renderer subtypes (must be the first field of the struct).
-  Renderer super;
+namespace ospray {
+  namespace simpleao {
 
-  Light **uniform lights;
-  uint32 numLights;
-};
+    //! \brief Material used by the SimpleAO renderer
+    /*! \detailed Since the SimpleAO Renderer only cares about a
+        diffuse material component this material only stores diffuse
+        and diffuse texture */
+    struct Material : public ospray::Material {
 
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer,
-                                                const uniform int32 accumID);
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer,
-                                               FrameBuffer *uniform framebuffer);
+      //! \brief Constructor
+      Material();
+
+      /*! \brief commit the object's outstanding changes
+       *         (such as changed parameters etc) */
+      virtual void commit();
+
+      // -------------------------------------------------------
+      // member variables
+      // -------------------------------------------------------
+
+      //! \brief diffuse material component, that's all we care for
+      vec3f Kd;
+
+      //! \brief diffuse texture, if available
+      Ref<Texture> map_Kd;
+    };
+  }//namespace ospray::simpleao
+}//namespace ospray

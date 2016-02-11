@@ -15,14 +15,14 @@
 // ======================================================================== //
 
 #include "RaycastVolumeMaterial.h"
-#include "RaycastVolumeRendererMaterial_ispc.h"
+#include "RaycastVolumeMaterial_ispc.h"
 #include "ospray/common/Data.h"
 
 namespace ospray {
 
   RaycastVolumeMaterial::RaycastVolumeMaterial()
   {
-    ispcEquivalent = ispc::RaycastVolumeRendererMaterial_create(this);
+    ispcEquivalent = ispc::RaycastVolumeMaterial_create(this);
   }
 
   void RaycastVolumeMaterial::commit()
@@ -43,7 +43,7 @@ namespace ospray {
     Ns = getParam1f("ns", getParam1f("Ns", 10.f));
     volume = (Volume *)getParamObject("volume", nullptr);
 
-    ispc::RaycastVolumeRendererMaterial_set(getIE(),
+    ispc::RaycastVolumeMaterial_set(getIE(),
                                map_d ? map_d->getIE() : nullptr,
                                d,
                                map_Kd ? map_Kd->getIE() : nullptr,

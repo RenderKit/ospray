@@ -14,23 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "SimpleAOMaterial.h"
+#include "SimpleAOMaterial_ispc.h"
 
-#include "ospray/common/Material.ih"
-#include "ospray/math/vec.ih"
-#include "ospray/texture/Texture2D.ih"
-#include "ospray/volume/Volume.ih"
+namespace ospray {
+  namespace simpleao {
 
-struct RaycastVolumeRendererMaterial {
-  Material inherited;
-  const uniform Texture2D *map_d;
-  float d;
-  const uniform Texture2D *map_Kd;
-  vec3f Kd;
-  const uniform Texture2D *map_Ks;
-  vec3f Ks;
-  const uniform Texture2D *map_Ns;
-  float Ns;
-  const uniform Texture2D *map_Bump;
-  uniform Volume *uniform volume;
-};
+    //! Constructor
+    Material::Material()
+    {
+      ispcEquivalent = ispc::SimpleAOMaterial_create(this);
+    }
+
+    void Material::commit()
+    {
+      Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
+      map_Kd = (Texture2D*)getParamObject("map_Kd",
+                                          getParamObject("map_kd", NULL));
+      ispc::SimpleAOMaterial_set(getIE(),
+                                 (const ispc::vec3f&)Kd,
+                                 map_Kd.ptr != NULL ? map_Kd->getIE() : NULL);
+    }
+
+  }//namespace ospray::simpleao
+}//namespace ospray
