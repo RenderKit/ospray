@@ -28,8 +28,8 @@
   primitive ID, geometry ID, shading normals, eyelight shading, etc */
 struct RaycastRenderer
 {
-  /*! the base "Renderer" we are derived from */
-  uniform Renderer base;
+  /*! the super "Renderer" we are derived from */
+  uniform Renderer super;
   /*! the specific "shading" mode (primID, geomID, Ng, etc) we should
       use for shading the ray */
 //  int shadeMode; unused
@@ -55,7 +55,7 @@ void RaycastRenderer_renderSample_eyeLight(uniform Renderer *uniform _self,
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -73,7 +73,7 @@ void RaycastRenderer_renderSample_Ng(uniform Renderer *uniform _self,
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -90,7 +90,7 @@ void RaycastRenderer_renderSample_Ns(uniform Renderer *uniform _self,
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -98,7 +98,7 @@ void RaycastRenderer_renderSample_Ns(uniform Renderer *uniform _self,
     sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->base.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
+    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
     sample.rgb = absf(dg.Ns);
   }
 }
@@ -109,7 +109,7 @@ void RaycastRenderer_renderSample_dPds(uniform Renderer *uniform _self,
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -117,7 +117,7 @@ void RaycastRenderer_renderSample_dPds(uniform Renderer *uniform _self,
     sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->base.model, dg, sample.ray, DG_TANGENTS);
+    postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
     sample.rgb = normalize(dg.dPds);
     if (sample.rgb.x < 0.f)
       sample.rgb.x = sample.rgb.x * -0.3f;
@@ -134,7 +134,7 @@ void RaycastRenderer_renderSample_dPdt(uniform Renderer *uniform _self,
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -142,7 +142,7 @@ void RaycastRenderer_renderSample_dPdt(uniform Renderer *uniform _self,
     sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->base.model, dg, sample.ray, DG_TANGENTS);
+    postIntersect(self->super.model, dg, sample.ray, DG_TANGENTS);
     sample.rgb = normalize(dg.dPdt);
     if (sample.rgb.x < 0.f)
       sample.rgb.x = sample.rgb.x * -0.3f;
@@ -159,7 +159,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(uniform Renderer *uniform
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -168,7 +168,7 @@ void RaycastRenderer_renderSample_eyeLight_vertexColor(uniform Renderer *uniform
   else {
     DifferentialGeometry dg;
     dg.color = make_vec4f(0.f);
-    postIntersect(self->base.model, dg, sample.ray, DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
+    postIntersect(self->super.model, dg, sample.ray, DG_COLOR | DG_MATERIALID | DG_NG | DG_NS);
     sample.rgb = make_vec3f(dg.color) * abs(dot(normalize(sample.ray.dir),normalize(dg.Ns)));
   }
 }
@@ -181,7 +181,7 @@ void RaycastRenderer_renderSample_eyeLight_primID(uniform Renderer *uniform _sel
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -199,7 +199,7 @@ void RaycastRenderer_renderSample_eyeLight_instID(uniform Renderer *uniform _sel
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -217,7 +217,7 @@ void RaycastRenderer_renderSample_eyeLight_geomID(uniform Renderer *uniform _sel
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -236,7 +236,7 @@ void RaycastRenderer_renderSample_backfacing_Ng(uniform Renderer *uniform _self,
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -256,7 +256,7 @@ void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
 {
   uniform RaycastRenderer *uniform self = (uniform RaycastRenderer *uniform)_self;
 
-  traceRay(self->base.model,sample.ray);
+  traceRay(self->super.model,sample.ray);
   sample.z     = sample.ray.t;
   sample.alpha = 1.f;
 
@@ -264,7 +264,7 @@ void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
     sample.rgb = make_vec3f(1.f);
   else {
     DifferentialGeometry dg;
-    postIntersect(self->base.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
+    postIntersect(self->super.model, dg, sample.ray, DG_NORMALIZE | DG_NS);
     const float c = dot(dg.Ns,sample.ray.dir);
     sample.rgb = make_vec3f(.2f+.8f*abs(c));
     if (c > 0.f)
@@ -279,8 +279,8 @@ void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
   {                                                                     \
     uniform RaycastRenderer *uniform self                               \
       = uniform new uniform RaycastRenderer;                            \
-    Renderer_Constructor(&self->base,cppE);                             \
-    self->base.renderSample                                             \
+    Renderer_Constructor(&self->super,cppE);                            \
+    self->super.renderSample                                            \
       = RaycastRenderer_renderSample_##name;                            \
     return self;                                                        \
   }                                                                     \

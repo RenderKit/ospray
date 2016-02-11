@@ -16,6 +16,7 @@
 
 // ospray
 #include "SimpleAO.h"
+#include "SimpleAOMaterial.h"
 #include "ospray/camera/Camera.h"
 #include "ospray/texture/Texture2D.h"
 // ispc exports
@@ -23,22 +24,6 @@
 
 namespace ospray {
 
-  //! Constructor
-  SimpleAO::Material::Material()
-  {
-    ispcEquivalent = ispc::SimpleAOMaterial_create(this);
-  }
-  
-  void SimpleAO::Material::commit()
-  {
-    Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
-    map_Kd = (Texture2D*)getParamObject("map_Kd",
-                                        getParamObject("map_kd", NULL));
-    ispc::SimpleAOMaterial_set(getIE(),
-                               (const ispc::vec3f&)Kd,
-                               map_Kd.ptr != NULL ? map_Kd->getIE() : NULL);
-  }
-  
   //! \brief Constructor
   SimpleAO::SimpleAO(int defaultNumSamples)
     : defaultNumSamples(defaultNumSamples)
@@ -49,7 +34,7 @@ namespace ospray {
   /*! \brief create a material of given type */
   ospray::Material *SimpleAO::createMaterial(const char * /*type*/)
   { 
-    return new SimpleAO::Material;
+    return new simpleao::Material;
   }
 
   /*! \brief common function to help printf-debugging */

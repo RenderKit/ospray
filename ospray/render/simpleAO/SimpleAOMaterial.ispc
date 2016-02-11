@@ -14,27 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "SimpleAOMaterial.ih"
 
-#include "ospray/common/Ray.ih"
-#include "ospray/lights/Light.ih"
-#include "ospray/math/box.ih"
-#include "ospray/render/Renderer.ih"
-
-//! \brief ISPC variables and functions for the RaycastVolumeRenderer
-//!  class, a concrete subtype of the Renderer class for rendering
-//!  volumes with embedded surfaces via ray casting.
-//!
-struct RaycastVolumeRenderer
+export void *uniform SimpleAOMaterial_create(void *uniform cppE)
 {
-  //! Variables and functions common to all Renderer subtypes (must be the first field of the struct).
-  Renderer super;
+  uniform SimpleAOMaterial *uniform mat = uniform new uniform SimpleAOMaterial;
+  mat->base.cppEquivalent = cppE;
+  return mat;
+}
 
-  Light **uniform lights;
-  uint32 numLights;
-};
-
-void RaycastVolumeRenderer_renderFramePostamble(Renderer *uniform renderer,
-                                                const uniform int32 accumID);
-void RaycastVolumeRenderer_renderFramePreamble(Renderer *uniform renderer,
-                                               FrameBuffer *uniform framebuffer);
+export void SimpleAOMaterial_set(void *uniform _mat,
+                                 const uniform vec3f &Kd,
+                                 void *uniform _map_Kd)
+{
+  uniform SimpleAOMaterial *uniform mat =
+      (uniform SimpleAOMaterial *uniform)_mat;
+  mat->Kd = Kd;
+  mat->map_Kd = (uniform Texture2D *uniform)_map_Kd;
+}

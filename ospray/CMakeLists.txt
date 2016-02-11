@@ -176,6 +176,9 @@ SET(OSPRAY_SOURCES
   render/raycast/RaycastRenderer.ispc
   render/simpleAO/SimpleAO.cpp
   render/simpleAO/SimpleAO.ispc
+  render/simpleAO/SimpleAOMaterial.cpp
+  render/simpleAO/SimpleAOMaterial.ih
+  render/simpleAO/SimpleAOMaterial.ispc
   render/obj/OBJRenderer.ispc
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp
@@ -186,10 +189,10 @@ SET(OSPRAY_SOURCES
   render/scivis/SciVisRenderer.cpp
   render/scivis/SciVisMaterial.cpp
   render/volume/RaycastVolumeMaterial.cpp
+  render/volume/RaycastVolumeMaterial.ih
+  render/volume/RaycastVolumeMaterial.ispc
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
-  render/volume/RaycastVolumeRendererMaterial.ih
-  render/volume/RaycastVolumeRendererMaterial.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp

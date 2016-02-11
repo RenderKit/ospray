@@ -26,7 +26,7 @@
 #include "SciVisRenderer_ispc.h"
 
 namespace ospray {
-  namespace SciVis {
+  namespace scivis {
 
     void SciVisRenderer::commit()
     {

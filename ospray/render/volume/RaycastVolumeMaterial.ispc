@@ -14,16 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/render/volume/RaycastVolumeRendererMaterial.ih"
+#include "ospray/render/volume/RaycastVolumeMaterial.ih"
 
-export void *uniform RaycastVolumeRendererMaterial_create(void *uniform cppE)
+export void *uniform RaycastVolumeMaterial_create(void *uniform cppE)
 {
   uniform RaycastVolumeRendererMaterial *uniform mat = uniform new uniform RaycastVolumeRendererMaterial;
-  mat->inherited.cppEquivalent = cppE;
+  mat->super.cppEquivalent = cppE;
   return mat;
 }
 
-export void RaycastVolumeRendererMaterial_set(void *uniform _mat,
+export void RaycastVolumeMaterial_set(void *uniform _mat,
                                               const void *uniform map_d,
                                               const uniform float &d,
                                               const void *uniform map_Kd,
