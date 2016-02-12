@@ -27,12 +27,8 @@ template<typename T>
 inline void parallel_for(int nTasks, const T& fcn)
 {
 #ifdef OSPRAY_USE_TBB
-  tbb::parallel_for(tbb::blocked_range<int>(0, nTasks),
-                    [&fcn](const tbb::blocked_range<int> &range){
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex)
-          fcn(taskIndex);
+  tbb::parallel_for(0, nTasks, 1, [&fcn](int taskIndex){
+      fcn(taskIndex);
     });
 #else
 # pragma omp parallel for schedule(dynamic)
