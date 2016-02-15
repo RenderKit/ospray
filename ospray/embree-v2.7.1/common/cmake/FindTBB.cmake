@@ -14,10 +14,30 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+IF (NOT TBB_ROOT)
+  SET(TBB_ROOT $ENV{TBB_ROOT})
+ENDIF()
+IF (NOT TBB_ROOT)
+  SET(TBB_ROOT $ENV{TBBROOT})
+ENDIF()
+
 IF (WIN32)
+  # workaround for parentheses in variable name / CMP0053
+  SET(PROGRAMFILESx86 "PROGRAMFILES(x86)")
+  SET(PROGRAMFILES32 "$ENV{${PROGRAMFILESx86}}")
+  IF (NOT PROGRAMFILES32)
+    SET(PROGRAMFILES32 "$ENV{PROGRAMFILES}")
+  ENDIF()
+  IF (NOT PROGRAMFILES32)
+    SET(PROGRAMFILES32 "C:/Program Files (x86)")
+  ENDIF()
   FIND_PATH(TBB_ROOT include/tbb/task_scheduler_init.h
     DOC "Root of TBB installation"
-    PATHS ${PROJECT_SOURCE_DIR}/tbb "C:/Program Files (x86)/Intel/Composer XE/tbb"
+    HINTS ${TBB_ROOT}
+    PATHS
+      ${PROJECT_SOURCE_DIR}/tbb
+      "${PROGRAMFILES32}/Intel/Composer XE/tbb"
+      "${PROGRAMFILES32}/Intel/compilers_and_libraries/windows/tbb"
   )
 
   IF (CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -54,7 +74,11 @@ ELSE ()
 
   FIND_PATH(TBB_ROOT include/tbb/task_scheduler_init.h
     DOC "Root of TBB installation"
-    PATHS ${PROJECT_SOURCE_DIR}/tbb /opt/intel/composerxe/tbb
+    HINTS ${TBB_ROOT}
+    PATHS
+      ${PROJECT_SOURCE_DIR}/tbb
+      /opt/intel/composerxe/tbb
+      /opt/intel/compilers_and_libraries/tbb
   )
   
   IF (TBB_ROOT STREQUAL "")
@@ -79,7 +103,12 @@ ELSE ()
 ENDIF()
 
 INCLUDE(FindPackageHandleStandardArgs)
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(TBB DEFAULT_MSG TBB_INCLUDE_DIR TBB_LIBRARY TBB_LIBRARY_MALLOC)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(TBB
+  "Threading Building Blocks (TBB) not found.
+Embree uses TBB as default tasking system. Please make sure you have the TBB headers installed as well (the package is typically named 'libtbb-dev' or 'tbb-devel') and/or hint the location of TBB in TBB_ROOT.
+Alternatively, you can try to set RTCORE_TASKING_SYSTEM=Internal"
+  TBB_INCLUDE_DIR TBB_LIBRARY TBB_LIBRARY_MALLOC
+)
 
 IF (TBB_FOUND)
   SET(TBB_INCLUDE_DIRS ${TBB_INCLUDE_DIR})
