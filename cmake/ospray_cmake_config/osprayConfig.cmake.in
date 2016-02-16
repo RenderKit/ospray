@@ -117,10 +117,10 @@ if (@USE_TBB@)
   # Find tbb
   find_package(TBB)
   if(":${TBB_LIBRARY}" STREQUAL ":")
-    message(FATAL_ERROR "Missing required optional ospray dependency "
-      "tbb, please set TBB_ROOT to the root of your tbb install.")
+    message(FATAL_ERROR "Missing required optional OSPRay dependency "
+      "TBB, please set TBB_ROOT to the root of your TBB install.")
   else()
-    message(STATUS "Found required ospray dependency:  tbb in ${TBB_INCLUDE_DIRS}")
+    message(STATUS "Found required OSPRay dependency: TBB in ${TBB_INCLUDE_DIRS}")
   endif()
 
   add_definitions(-DOSPRAY_USE_TBB)
