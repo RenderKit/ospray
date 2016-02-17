@@ -84,6 +84,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     # additional Embree include directory
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
 
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
     IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
       # ------------------------------------------------------------------
       # in 'all' mode, we have a list of multiple targets for ispc,
@@ -94,8 +95,10 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
+      IF (OSPRAY_BUILD_ENABLE_KNL)
+        SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+        SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
+      ENDIF()
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
       # ------------------------------------------------------------------
