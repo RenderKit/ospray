@@ -94,10 +94,8 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
-                        IF (OSPRAY_ISPC_KNL_NATIVE)
-                                SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-                                SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
-                        ENDIF()
+      SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
       # ------------------------------------------------------------------
@@ -106,18 +104,11 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       # does not work since embree would require a 16-wide trace
       # function which it has in neither of the three targets)
       # ------------------------------------------------------------------
-                        IF (OSPRAY_ISPC_KNL_NATIVE)
-                                SET(OSPRAY_ISPC_TARGET_LIST knl-avx512)
-                        ELSE()
-                                SET(OSPRAY_ISPC_TARGET_LIST generic-16)
-                        ENDIF()
+      SET(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
       SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-      # add this flag to tell embree to offer a rtcIntersect16 that actually does two rtcIntersect8's
-      ADD_DEFINITIONS(-D__EMBREE_KNL_WORKAROUND__=1)
-      ADD_DEFINITIONS(-DEMBREE_AVX512_WORKAROUND=1)
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
       # ------------------------------------------------------------------

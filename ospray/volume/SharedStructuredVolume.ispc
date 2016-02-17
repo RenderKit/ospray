@@ -282,7 +282,7 @@ template_accessArray(double);
                                                                         \
     const uniform uint64 ofs110 = ofs100 + ofs010;                      \
     const uniform uint64 ofs111 = ofs100 + ofs011;                      \
-    const float val110  = accessArrayWithOffset(voxelData,ofs101,voxelOfs); \
+    const float val110  = accessArrayWithOffset(voxelData,ofs110,voxelOfs); \
     const float val111  = accessArrayWithOffset(voxelData,ofs111,voxelOfs); \
     const float val11   = val110 + frac.x * (val111 - val110);          \
                                                                         \
@@ -346,7 +346,7 @@ template_accessArray(double);
                                                                         \
       const uniform uint64 ofs110 = ofs100 + ofs010;                    \
       const uniform uint64 ofs111 = ofs100 + ofs011;                    \
-      const float val110  = accessArrayWithOffset(voxelData,ofs101,voxelOfs); \
+      const float val110  = accessArrayWithOffset(voxelData,ofs110,voxelOfs); \
       const float val111  = accessArrayWithOffset(voxelData,ofs111,voxelOfs); \
       const float val11   = val110 + frac.x * (val111 - val110);        \
                                                                         \
@@ -387,18 +387,18 @@ void SharedStructuredVolume_Constructor(SharedStructuredVolume *uniform self,
     return;
   }
 
-  self->voxelOfs_dx = bytesPerVoxel;
-  self->voxelOfs_dy = self->voxelOfs_dx * dimensions.y;
-  self->voxelOfs_dz = self->voxelOfs_dy * dimensions.z;
-
-  const uniform uint64 bytesPerSlice = bytesPerVoxel * (uint64)dimensions.x * (uint64)dimensions.y;
+  const uniform uint64 bytesPerLine = bytesPerVoxel * dimensions.x;
+  const uniform uint64 bytesPerSlice = bytesPerLine * dimensions.y;
   const uniform uint64 bytesPerVolume = bytesPerSlice * dimensions.z;
 
   self->voxelType     = (OSPDataType) voxelType;
   self->voxelData     = voxelData;
   self->bytesPerVoxel = bytesPerVoxel;
-  self->bytesPerLine  = bytesPerVoxel * dimensions.x;
+  self->bytesPerLine  = bytesPerLine;
   self->bytesPerSlice = bytesPerSlice;
+  self->voxelOfs_dx   = bytesPerVoxel;
+  self->voxelOfs_dy   = bytesPerLine;
+  self->voxelOfs_dz   = bytesPerSlice;
 
   if (bytesPerVolume <= (1ULL<<30)) {
     //print("#osp:shared_structured_volume: using 32-bit mode\n");
@@ -458,7 +458,7 @@ export void *uniform SharedStructuredVolume_createInstance(void *uniform cppEqui
   return volume;
 }
 
-/*! this is a very simple implementation that does not yet use iether
+/*! this is a very simple implementation that does not yet use either
   vectors OR threads ... should be fixed */
 #define template_setRegion(type)                                        \
   export void SharedStructuredVolume_setRegion_##type                   \

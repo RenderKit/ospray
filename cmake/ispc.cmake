@@ -89,16 +89,6 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(ISPC_TARGET_EXT .cpp)
     SET(ISPC_TARGET_ARGS generic-16)
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=force-aligned-memory --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h )
-  ELSEIF (${OSPRAY_BUILD_ISA} STREQUAL "AVX512")
-    IF (OSPRAY_ISPC_KNL_NATIVE) # TODO: should be detected automatically
-      SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
-      SET(ISPC_TARGET_ARGS avx512knl-i32x16)
-    ELSE()
-      SET(ISPC_TARGET_EXT .cpp)
-      SET(ISPC_TARGET_ARGS generic-16)
-      SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNL_Backend.h -DEMBREE_AVX512_WORKAROUND=1)
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512") # TODO: set only for affected files SET_SOURCE_FILES_PROPERTIES( ${src} PROPERTIES COMPILE_FLAGS -xMIC-AVX512 )
-    ENDIF()
   ELSE()
     SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
     STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
@@ -160,13 +150,22 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
 
     # if we have multiple targets add additional object files
-    IF (NOT THIS_IS_MIC AND NOT (${OSPRAY_BUILD_ISA} STREQUAL "AVX512"))
+    IF (NOT THIS_IS_MIC)
       LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
-      IF (NUM_TARGETS GREATER 1)
-        FOREACH(target ${ISPC_TARGETS})
-          SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
-        ENDFOREACH()
+      IF (NUM_TARGETS EQUAL 1)
+        # workaround link issues to Embree ISPC exports:
+        # we add a 2nd target to force ISPC to add the ISA suffix during name
+        # mangling
+        SET(ISPC_TARGET_ARGS "${ISPC_TARGETS},sse2") 
+        LIST(APPEND ISPC_TARGETS sse2)
       ENDIF()
+      FOREACH(target ${ISPC_TARGETS})
+        # in v1.9.0 ISPC changed the ISA suffix of avx512knl-i32x16 to just 'avx512knl'
+        IF (${target} STREQUAL "avx512knl-i32x16" AND NOT ISPC_VERSION VERSION_LESS "1.9.0")
+          SET(target "avx512knl")
+        ENDIF()
+        SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
+      ENDFOREACH()
     ENDIF()
 
     ADD_CUSTOM_COMMAND(
