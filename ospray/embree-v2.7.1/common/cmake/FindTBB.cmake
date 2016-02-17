@@ -120,10 +120,17 @@ Alternatively, you can try to set RTCORE_TASKING_SYSTEM=Internal"
 
 IF (TBB_FOUND)
   SET(TBB_INCLUDE_DIRS ${TBB_INCLUDE_DIR})
-  SET(TBB_LIBRARIES
-      optimized ${TBB_LIBRARY} optimized ${TBB_LIBRARY_MALLOC}
-      debug ${TBB_LIBRARY_DEBUG} debug ${TBB_LIBRARY_MALLOC_DEBUG}
-  )
+  # NOTE(jda) - TBB found in CentOS 6/7 package manager does not have debug
+  #             versions of the library...silently fall-back to using only the
+  #             libraries which we actually found.
+  IF (${TBB_LIBRARY_DEBUG} STREQUAL "TBB_LIBRARY_DEBUG-NOTFOUND")
+    SET(TBB_LIBRARIES ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC})
+  ELSE ()
+    SET(TBB_LIBRARIES
+        optimized ${TBB_LIBRARY} optimized ${TBB_LIBRARY_MALLOC}
+        debug ${TBB_LIBRARY_DEBUG} debug ${TBB_LIBRARY_MALLOC_DEBUG}
+    )
+  ENDIF()
 ENDIF()
 
 MARK_AS_ADVANCED(TBB_INCLUDE_DIR)
