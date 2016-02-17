@@ -162,11 +162,16 @@ MACRO (OSPRAY_ISPC_COMPILE)
     # if we have multiple targets add additional object files
     IF (NOT THIS_IS_MIC AND NOT (${OSPRAY_BUILD_ISA} STREQUAL "AVX512"))
       LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
-      IF (NUM_TARGETS GREATER 1)
-        FOREACH(target ${ISPC_TARGETS})
-          SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
-        ENDFOREACH()
+      IF (NUM_TARGETS EQUAL 1)
+        # workaround link issues to Embree ISPC exports:
+        # we add a 2nd target to force ISPC to add the ISA suffix during name
+        # mangling
+        SET(ISPC_TARGET_ARGS "${ISPC_TARGETS},sse2") 
+        LIST(APPEND ISPC_TARGETS sse2)
       ENDIF()
+      FOREACH(target ${ISPC_TARGETS})
+        SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
+      ENDFOREACH()
     ENDIF()
 
     ADD_CUSTOM_COMMAND(
