@@ -84,6 +84,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     # additional Embree include directory
     LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
 
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
     IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
       # ------------------------------------------------------------------
       # in 'all' mode, we have a list of multiple targets for ispc,
@@ -94,8 +95,10 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_SSE  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
-      SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-      SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
+      IF (OSPRAY_BUILD_ENABLE_KNL)
+        SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
+        SET(OSPRAY_ISPC_TARGET_LIST sse4 avx avx2 avx512knl-i32x16)
+      ENDIF()
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX512")
       # ------------------------------------------------------------------
@@ -164,6 +167,14 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
     ENDIF()
     SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
+  ENDIF()
+
+  IF (OSPRAY_EMBREE_ENABLE_AVX512 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX512)
+    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX512} of gcc for AVX512. Disabling AVX512.\nTo compile for AVX512, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(OSPRAY_WARNED_MISSING_AVX512 ON CACHE INTERNAL "Warned about missing AVX512 support.")
+    ENDIF()
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
   ENDIF()
 
   IF (THIS_IS_MIC)
