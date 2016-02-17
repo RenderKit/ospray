@@ -169,6 +169,14 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
     SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
   ENDIF()
 
+  IF (OSPRAY_EMBREE_ENABLE_AVX512 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX512)
+    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
+      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX512} of gcc for AVX512. Disabling AVX512.\nTo compile for AVX512, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+      SET(OSPRAY_WARNED_MISSING_AVX512 ON CACHE INTERNAL "Warned about missing AVX512 support.")
+    ENDIF()
+    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
+  ENDIF()
+
   IF (THIS_IS_MIC)
     # whether to build in MIC/xeon phi support
     SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL "Build COI Device for OSPRay's MIC support?")
