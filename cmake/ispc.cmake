@@ -160,7 +160,7 @@ MACRO (OSPRAY_ISPC_COMPILE)
     SET(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
 
     # if we have multiple targets add additional object files
-    IF (NOT THIS_IS_MIC AND NOT (${OSPRAY_BUILD_ISA} STREQUAL "AVX512"))
+    IF (NOT THIS_IS_MIC)
       LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
       IF (NUM_TARGETS EQUAL 1)
         # workaround link issues to Embree ISPC exports:

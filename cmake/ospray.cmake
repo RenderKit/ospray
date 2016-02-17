@@ -107,7 +107,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       # function which it has in neither of the three targets)
       # ------------------------------------------------------------------
       IF (OSPRAY_ISPC_KNL_NATIVE)
-        SET(OSPRAY_ISPC_TARGET_LIST knl-avx512)
+        SET(OSPRAY_ISPC_TARGET_LIST avx512knl-i32x16)
       ELSE()
         SET(OSPRAY_ISPC_TARGET_LIST generic-16)
       ENDIF()
@@ -115,9 +115,6 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
       SET(OSPRAY_EMBREE_ENABLE_AVX  true)
       SET(OSPRAY_EMBREE_ENABLE_AVX2 true)
       SET(OSPRAY_EMBREE_ENABLE_AVX512 true)
-      # add this flag to tell embree to offer a rtcIntersect16 that actually does two rtcIntersect8's
-      ADD_DEFINITIONS(-D__EMBREE_KNL_WORKAROUND__=1)
-      ADD_DEFINITIONS(-DEMBREE_AVX512_WORKAROUND=1)
 
     ELSEIF (OSPRAY_BUILD_ISA STREQUAL "AVX2")
       # ------------------------------------------------------------------
