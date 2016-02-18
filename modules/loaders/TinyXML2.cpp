@@ -1711,7 +1711,12 @@ XMLError XMLDocument::LoadFile( FILE* fp )
     }
 
     fseek( fp, 0, SEEK_END );
-    const long filelength = ftell( fp );
+    const ssize_t filelength = 
+#ifdef _WIN32
+      _ftelli64( fp );
+#else
+      ftell( fp );
+#endif
     fseek( fp, 0, SEEK_SET );
     if ( filelength == -1L ) {
         SetError( XML_ERROR_FILE_READ_ERROR, 0, 0 );
