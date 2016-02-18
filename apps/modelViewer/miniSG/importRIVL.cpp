@@ -614,7 +614,12 @@ namespace ospray {
       if (!file)
         perror("could not open binary file");
       fseek(file,0,SEEK_END);
-      size_t fileSize = ftell(file);
+      ssize_t fileSize =
+#ifdef _WIN32
+        _ftelli64(file);
+#else
+        ftell(file);
+#endif
       fclose(file);
       
 #ifdef _WIN32

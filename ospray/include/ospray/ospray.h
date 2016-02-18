@@ -28,7 +28,11 @@
 #pragma once
 
 #ifndef NULL
-# define NULL nullptr
+# if __cplusplus >= 201103L
+#  define NULL nullptr
+# else
+#  define NULL 0
+# endif
 #endif
 
 // -------------------------------------------------------
