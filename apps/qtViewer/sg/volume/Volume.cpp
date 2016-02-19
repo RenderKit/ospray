@@ -30,6 +30,13 @@ namespace ospray {
     /*! \brief returns a std::string with the c++ name of this class */
     std::string Volume::toString() const
     { return "ospray::sg::Volume"; }
+
+    void Volume::serialize(sg::Serialization::State &state)
+    {
+      Node::serialize(state);
+      if (transferFunction) 
+        transferFunction->serialize(state);
+    }
     
     // =======================================================
     // structured volume class

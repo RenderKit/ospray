@@ -37,12 +37,7 @@ namespace ospray {
       virtual box3f getBounds() = 0;
 
       //! serialize into given serialization state 
-      virtual void serialize(sg::Serialization::State &state)
-      {
-        Node::serialize(state);
-        if (transferFunction) 
-          transferFunction->serialize(state);
-      }
+      virtual void serialize(sg::Serialization::State &state);
 
       static bool useDataDistributedVolume;
 

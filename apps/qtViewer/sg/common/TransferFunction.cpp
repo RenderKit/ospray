@@ -21,6 +21,15 @@
 namespace ospray {
   namespace sg {
 
+    //! constructor
+    TransferFunction::TransferFunction() 
+      : ospTransferFunction(NULL), 
+        ospColorData(NULL), 
+        ospAlphaData(NULL)
+    { 
+      setDefaultValues(); 
+    }
+
     //! \brief Sets a new 'texture map' to be used for the color mapping
     void TransferFunction::setColorMap(const std::vector<vec3f> &colorArray)
     {
