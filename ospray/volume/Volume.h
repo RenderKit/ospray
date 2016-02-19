@@ -101,9 +101,6 @@ namespace ospray {
 
   protected:
 
-    //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC() = 0;
-
     //! Complete volume initialization (only on first commit).
     virtual void finish();
 
