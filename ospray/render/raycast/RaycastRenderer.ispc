@@ -28,7 +28,7 @@
   primitive ID, geometry ID, shading normals, eyelight shading, etc */
 struct RaycastRenderer
 {
-  /*! the super "Renderer" we are derived from */
+  /*! the base "Renderer" we are derived from */
   uniform Renderer super;
   /*! the specific "shading" mode (primID, geomID, Ng, etc) we should
       use for shading the ray */

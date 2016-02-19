@@ -431,7 +431,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
   // Original tMax for ray interval
   const float tMax = ray.t;
 
-  // Ray epsilon superd on bounding box of all volumes.
+  // Ray epsilon based on bounding box of all volumes.
   uniform box3f boundingBox = renderer->super.model->volumeCount
     ? renderer->super.model->volumes[0]->boundingBox
     : make_box3f(make_vec3f(0.f), make_vec3f(0.f));
@@ -518,7 +518,7 @@ void SciVisRenderer_intersect(uniform SciVisRenderer *uniform renderer,
         geometryRay.geomID = -1;
         geometryRay.instID = -1;
 
-        // Update ray offset for use with isosurface geometries superd on current
+        // Update ray offset for use with isosurface geometries based on current
         // volume (this value ignored elsewhere).
         geometryRay.time = volume ? -rayOffset * volume->samplingStep : 0.f;
 
