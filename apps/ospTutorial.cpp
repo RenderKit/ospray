@@ -25,7 +25,11 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <alloca.h>
+#ifdef _WIN32
+#  include <malloc.h>
+#else
+#  include <alloca.h>
+#endif
 #include "ospray/ospray.h"
 
 // helper function to write the rendered image as PPM file
