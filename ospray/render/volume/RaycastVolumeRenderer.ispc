@@ -68,15 +68,14 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
                                                       varying Ray &ray,
                                                       varying vec4f &color)
 {
-  // if (!volume) { print("NULL VOLUME IN VOLUMESAMPLE()\n");  }
-  // if (!volume->computeSample) { print("trying to sample volume w/o sample function!!!!\n");  }
-
   // Sample the volume at the hit point in world coordinates.
   const vec3f coordinates = ray.org + ray.t0 * ray.dir;
   const float sample = volume->computeSample(volume, coordinates);
 
+  TransferFunction *uniform xf = volume->transferFunction;
+
   // Look up the color associated with the volume sample.
-  vec3f sampleColor = volume->transferFunction->getColorForValue(volume->transferFunction, sample);
+  vec3f sampleColor = xf->getColorForValue(xf, sample);
 
   // Compute gradient shading, if enabled.
   if(volume->gradientShadingEnabled) {
@@ -105,10 +104,12 @@ inline void RaycastVolumeRenderer_computeVolumeSample(RaycastVolumeRenderer *uni
   }
 
   // Look up the opacity associated with the volume sample.
-  const float sampleOpacity = volume->transferFunction->getOpacityForValue(volume->transferFunction, sample);
+  const float sampleOpacity = xf->getOpacityForValue(xf, sample);
 
   // Set the color contribution for this sample only (do not accumulate).
-  color = clamp(sampleOpacity / volume->samplingRate) * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
+  color
+    = clamp(sampleOpacity / volume->samplingRate) 
+    * make_vec4f(sampleColor.x, sampleColor.y, sampleColor.z, 1.0f);
 
   // Advance the ray for the next sample.
   volume->intersect(volume, ray);
