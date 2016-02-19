@@ -19,7 +19,7 @@
 export void *uniform SciVisMaterial_create(void *uniform cppE)
 {
   uniform SciVisMaterial *uniform mat = uniform new uniform SciVisMaterial;
-  mat->base.cppEquivalent = cppE;
+  mat->super.cppEquivalent = cppE;
   return mat;
 }
 

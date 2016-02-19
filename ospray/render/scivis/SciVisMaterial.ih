@@ -24,7 +24,7 @@
 //! ispc-equivalent of ospray::raytracer::SciVisMaterial
 struct SciVisMaterial
 {
-  uniform Material base; //!< inherited material properties
+  uniform Material super; //!< inherited material properties
   const uniform Texture2D *map_d;
   float d;
   const uniform Texture2D *map_Kd;
