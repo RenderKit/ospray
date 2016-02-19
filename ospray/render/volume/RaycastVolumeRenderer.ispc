@@ -25,18 +25,6 @@
 #include "ospray/camera/Camera.ih"
 #include "ospray/common/Model.ih"
 
-#if 0//Cannot enable here b/c RENDERTILE_PIXELS_PER_JOB doesn't match C++ side?
-#ifdef RENDERTILE_PIXELS_PER_JOB
-#  undef RENDERTILE_PIXELS_PER_JOB
-#endif
-
-/*! number of pixels that each job in a parallel rendertile task
-    executes together. Must be a multipel of the maximum possible
-    programCount (16), and must be smaller than TILE_SIZE (in one
-    dimension) */
-#define RENDERTILE_PIXELS_PER_JOB 32
-#endif
-
 struct PassInfo {
   // region to integrate over in this pass
   varying region1f region;
@@ -205,18 +193,6 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
     // Intersect volume bounding box.
     float t0, t1;
     Volume *uniform volume_i = passInfo.block->ispcVolume;
-#if 0
-     print("bb %\n % % %\n % % %\n",
-           volume_i,
-           volume_i->boundingBox.lower.x,
-           volume_i->boundingBox.lower.y,
-           volume_i->boundingBox.lower.z,
-           volume_i->boundingBox.upper.x,
-           volume_i->boundingBox.upper.y,
-           volume_i->boundingBox.upper.z);
-     if (eq(volume_i->boundingBox.lower,volume_i->boundingBox.upper))
-       print("EMPTY BBOX!!!!\n");
-#endif
     intersectBox(ray, volume_i->boundingBox, t0, t1);
     t0 = max(t0,passInfo.region.lower);
     t1 = min(t1,passInfo.region.upper);
@@ -231,17 +207,7 @@ RaycastVolumeRenderer_intersectVolumes(uniform RaycastVolumeRenderer *uniform se
 
     // If we intersected a volume, offset ray by a fraction of the nominal ray step.
 
-#if 0
-    if (volume) {
-      float dt = volume->samplingStep * rcpf(volume->samplingRate);
-      float t0 = ray.t0;
-      int i0 = (int)(ray.t0 / dt);
-      ray.t0 = (i0 + rayOffset)*dt;
-      if (ray.t0 < t0) ray.t0 += dt;
-    }
-#else
     if (volume) ray.t0 += rayOffset * volume->samplingStep * rcpf(volume->samplingRate);
-#endif
 
     // Return the first intersected volume.
     return volume;
