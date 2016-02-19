@@ -55,15 +55,12 @@ namespace ospray {
     virtual void commit() = 0;
 
     //! Create a transfer function of the given type.
-    static TransferFunction *createInstance(std::string type);
+    static TransferFunction *createInstance(const std::string &type);
 
     //! A string description of this class.
     virtual std::string toString() const { return("ospray::TransferFunction"); }
 
   protected:
-
-    //! Create the equivalent ISPC transfer function.
-    virtual void createEquivalentISPC() = 0;
 
     //! Print an error message.
     void emitMessage(const std::string &kind, const std::string &message) const
