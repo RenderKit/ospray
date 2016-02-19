@@ -50,24 +50,21 @@ namespace ospray {
     StructuredVolume::commit();
   }
 
-  int BlockBrickedVolume::setRegion(// points to the first voxel to be copies.
-                                    // The voxels at 'source' MUST have
-                                    // dimensions 'regionSize', must be
-                                    // organized in 3D-array order, and must
-                                    // have the same voxel type as the volume.
-                                    const void *source,
-                                    // coordinates of the lower,
-                                    // left, front corner of the target
-                                    // region.
-                                    const vec3i &regionCoords,
-                                    // size of the region that we're writing to
-                                    // MUST be the same as the dimensions of
-                                    // source[][][]
-                                    const vec3i &regionSize)
+  int BlockBrickedVolume::setRegion(
+      // points to the first voxel to be copied. The voxels at 'source' MUST
+      // have dimensions 'regionSize', must be organized in 3D-array order, and
+      // must have the same voxel type as the volume.
+      const void *source,
+      // coordinates of the lower, left, front corner of the target region
+      const vec3i &regionCoords,
+      // size of the region that we're writing to, MUST be the same as the
+      // dimensions of source[][][]
+      const vec3i &regionSize)
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
-    if (ispcEquivalent == nullptr) createEquivalentISPC();
+    if (ispcEquivalent == nullptr)
+      createEquivalentISPC();
 
     /*! \todo check if we still need this 'computevoxelrange' - in
         theory we need this only if the app is allowed to query these
@@ -101,11 +98,11 @@ namespace ospray {
     // Copy voxel data into the volume.
     const int NTASKS = regionSize.y * regionSize.z;
     parallel_for(NTASKS, [&](int taskIndex){
-      ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
-                                         source,
-                                         (const ispc::vec3i &) regionCoords,
-                                         (const ispc::vec3i &) regionSize,
-                                         taskIndex);
+        ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
+            source,
+            (const ispc::vec3i &) regionCoords,
+            (const ispc::vec3i &) regionSize,
+            taskIndex);
     });
 
     return true;
@@ -139,5 +136,6 @@ namespace ospray {
   // A volume type with 64-bit addressing and multi-level bricked storage order.
   OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
 #endif
+
 } // ::ospray
 

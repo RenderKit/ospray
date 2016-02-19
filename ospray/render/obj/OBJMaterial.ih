@@ -23,7 +23,7 @@
 //! ispc-equivalent of ospray::obj::OBJMaterial
 struct OBJMaterial 
 {
-  uniform Material base; //!< inherited material properties
+  uniform Material super; //!< inherited material properties
   const uniform Texture2D *map_d;
   float d;
   const uniform Texture2D *map_Kd;

@@ -290,7 +290,12 @@ namespace ospray {
       }
 
       fseek(file,0,SEEK_END);
-      long numBytes = ftell(file);
+      ssize_t numBytes =
+#ifdef _WIN32
+        _ftelli64(file);
+#else
+        ftell(file);
+#endif
       fseek(file,0,SEEK_SET);
       char *mem = new char[numBytes+1];
       mem[numBytes] = 0;

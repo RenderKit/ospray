@@ -21,7 +21,7 @@
 #include "ospray/texture/Texture2D.ih"
 
 struct SimpleAOMaterial {
-  Material base;
+  Material super;
   vec3f Kd;
   uniform Texture2D *uniform map_Kd;
 };

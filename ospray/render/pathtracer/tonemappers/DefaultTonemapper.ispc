@@ -18,7 +18,7 @@
 
 struct DefaultToneMapper
 {
-  ToneMapper base;
+  ToneMapper super;
   float gamma;
   float rcpGamma;
   bool vignetting;
@@ -44,7 +44,7 @@ varying vec3f DefaultToneMapper__ToneMap(const uniform ToneMapper *uniform _this
 
 void DefaultToneMapper__Constructor(uniform DefaultToneMapper* uniform this, uniform float gamma, uniform bool vignetting)
 {
-  ToneMapper__Constructor(&this->base,ToneMapper__Destructor,DefaultToneMapper__ToneMap);
+  ToneMapper__Constructor(&this->super,ToneMapper__Destructor,DefaultToneMapper__ToneMap);
   this->rcpGamma = rcp(gamma);
   this->vignetting = vignetting;
 }

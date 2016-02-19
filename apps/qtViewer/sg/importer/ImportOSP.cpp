@@ -212,7 +212,12 @@ namespace ospray {
         std::cout << "#osp:sg:loadOSP: Warning - binary file '"+binFileName+"' could not be found" << std::endl;
       } else {
         fseek(file,0,SEEK_END);
-        size_t fileSize = ftell(file);
+        ssize_t fileSize =
+#ifdef _WIN32
+          _ftelli64(file);
+#else
+          ftell(file);
+#endif
         fclose(file);
 
         int fd = ::open(binFileName.c_str(),O_LARGEFILE|O_RDWR);

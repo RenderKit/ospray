@@ -19,7 +19,7 @@
 export void *uniform OBJMaterial_create(void *uniform cppE)
 {
   uniform OBJMaterial *uniform mat = uniform new uniform OBJMaterial;
-  mat->base.cppEquivalent = cppE;
+  mat->super.cppEquivalent = cppE;
   return mat;
 }
 

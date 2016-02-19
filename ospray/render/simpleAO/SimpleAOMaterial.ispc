@@ -19,7 +19,7 @@
 export void *uniform SimpleAOMaterial_create(void *uniform cppE)
 {
   uniform SimpleAOMaterial *uniform mat = uniform new uniform SimpleAOMaterial;
-  mat->base.cppEquivalent = cppE;
+  mat->super.cppEquivalent = cppE;
   return mat;
 }
 
