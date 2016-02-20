@@ -18,6 +18,10 @@
 
 #include "platform.h"
 
+#if WARN_INCLUDE_EMBREE_FILENAME 
+# error "warning: includign embree/filename"
+#endif
+
 namespace embree
 {
   /*! Convenience class for handling file names and paths. */

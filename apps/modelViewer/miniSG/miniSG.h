@@ -16,17 +16,25 @@
 
 #pragma once
 
-// ospray 
-#include "ospray/common/OSPCommon.h"
-#include "ospray/common/Managed.h"
-// embree 
-#include "common/sys/filename.h"
+// ospray PUBLIC api
+#include "ospray/ospray.h"
+// ospcommon
+#include "common/common.h"
+#include "common/RefCount.h"
+#include "common/box.h"
+#include "common/AffineSpace.h"
+#include "common/FileName.h"
+
+// // embree 
+// #include "common/sys/filename.h"
 // stl 
 #include <vector>
 #include <map>
 
 namespace ospray {
   namespace miniSG {
+    using namespace ospcommon;
+    typedef ospcommon::AffineSpace3f affine3f;
 
     struct Camera : public RefCount {
       vec3f from, at, up;
@@ -97,12 +105,12 @@ namespace ospray {
         void set(vec3f v) { clear(); type = FLOAT_3; f[0] = v.x; f[1] = v.y; f[2] = v.z; }
         void set(vec4f v) { clear(); type = FLOAT_3; f[0] = v.x; f[1] = v.y; f[2] = v.z; f[3] = v.w; }
 
-        void set(int32 v) { clear(); type = INT; i[0] = v; }
+        void set(int32_t v) { clear(); type = INT; i[0] = v; }
         void set(vec2i v) { clear(); type = INT_2; i[0] = v.x; i[1] = v.y; }
         void set(vec3i v) { clear(); type = INT_3; i[0] = v.x; i[1] = v.y; i[2] = v.z; }
         void set(vec4i v) { clear(); type = INT_3; i[0] = v.x; i[1] = v.y; i[2] = v.z; i[3] = v.w; }
 
-        void set(uint32 v) { clear(); type = UINT; i[0] = v; }
+        void set(uint32_t v) { clear(); type = UINT; i[0] = v; }
         void set(vec2ui v) { clear(); type = UINT_2; i[0] = v.x; i[1] = v.y; }
         void set(vec3ui v) { clear(); type = UINT_3; i[0] = v.x; i[1] = v.y; i[2] = v.z; }
         void set(vec4ui v) { clear(); type = UINT_3; i[0] = v.x; i[1] = v.y; i[2] = v.z; i[3] = v.w; }
@@ -113,8 +121,8 @@ namespace ospray {
         }
         union {
           float      f[4];
-          int32      i[4];
-          uint32     ui[4];
+          int32_t      i[4];
+          uint32_t     ui[4];
           const char *s;
           void       *ptr;
         };
@@ -131,12 +139,12 @@ namespace ospray {
       vec3f getParam(const char *name, vec3f defaultVal);
       vec4f getParam(const char *name, vec4f devaultVal);
 
-      int32 getParam(const char *name, int32 defaultVal);
+      int32_t getParam(const char *name, int32_t defaultVal);
       vec2i getParam(const char *name, vec2i defaultVal);
       vec3i getParam(const char *name, vec3i defaultVal);
       vec4i getParam(const char *name, vec4i defaultVal);
 
-      uint32 getParam(const char *name, uint32 defaultVal);
+      uint32_t getParam(const char *name, uint32_t defaultVal);
       vec2ui getParam(const char *name, vec2ui defaultVal);
       vec3ui getParam(const char *name, vec3ui defaultVal);
       vec4ui getParam(const char *name, vec4ui defaultVal);
@@ -172,7 +180,7 @@ namespace ospray {
     };
 
     struct Triangle {
-      uint32 v0, v1, v2;
+      uint32_t v0, v1, v2;
     };
 
     /*! default triangle mesh layout */
@@ -197,7 +205,7 @@ namespace ospray {
           'materialList'. Will eventually get merged into the foruth
           component of the triangle, but right now ospray/embree do
           not yet allow this ... */
-      std::vector<uint32> triangleMaterialId;
+      std::vector<uint32_t> triangleMaterialId;
       
       
       box3f bounds; /*!< bounding box of all vertices */
@@ -205,19 +213,24 @@ namespace ospray {
       int size() const { return triangle.size(); }
       Ref<Material> material;
       box3f getBBox();
-      Mesh() : bounds(embree::empty) {};
+      Mesh() : bounds(ospcommon::empty) {};
     };
 
     struct Instance : public RefCount {
+      Instance() : meshID(0), xfm(ospcommon::one), ospGeometry(NULL) {}
+      Instance(int meshID, affine3f xfm=ospcommon::one) 
+        : meshID(meshID), xfm(xfm), ospGeometry(NULL) 
+      {};
+      Instance(const Instance &o)
+        : meshID(o.meshID), xfm(o.xfm), ospGeometry(o.ospGeometry)
+      {}
+
       affine3f xfm;
       int meshID;
       
       OSPGeometry ospGeometry;
-
-      Instance(int meshID=0, affine3f xfm=embree::one) 
-        : meshID(meshID), xfm(xfm), ospGeometry(NULL) 
-      {};
     };
+
     bool operator==(const Instance &a, const Instance &b);
     bool operator!=(const Instance &a, const Instance &b);
 
@@ -238,28 +251,28 @@ namespace ospray {
     };
 
     /*! import a wavefront OBJ file, and add it to the specified model */
-    void importOBJ(Model &model, const embree::FileName &fileName);
+    void importOBJ(Model &model, const FileName &fileName);
 
     /*! import a HBP file, and add it to the specified model */
-    void importHBP(Model &model, const embree::FileName &fileName);
+    void importHBP(Model &model, const FileName &fileName);
 
     /*! import a TRI file (format:vec3fa[3][numTris]), and add it to the specified model */
-    void importTRI(Model &model, const embree::FileName &fileName);
+    void importTRI(Model &model, const FileName &fileName);
 
     /*! import a wavefront OBJ file, and add it to the specified model */
-    void importRIVL(Model &model, const embree::FileName &fileName);
+    void importRIVL(Model &model, const FileName &fileName);
 
     /*! import a STL file, and add it to the specified model */
-    void importSTL(Model &model, const embree::FileName &fileName);
+    void importSTL(Model &model, const FileName &fileName);
 
     /*! import a list of STL files */
-    void importSTL(std::vector<Model *> &animation, const embree::FileName &fileName);
+    void importSTL(std::vector<Model *> &animation, const FileName &fileName);
 
     /*! import a list of X3D files */
-    void importX3D(Model &model, const embree::FileName &fileName);
+    void importX3D(Model &model, const FileName &fileName);
 
     /*! import a MiniSG MSG file, and add it to the specified model */
-    void importMSG(Model &model, const embree::FileName &fileName);
+    void importMSG(Model &model, const FileName &fileName);
 
     void error(const std::string &err);
 

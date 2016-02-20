@@ -21,7 +21,7 @@ namespace ospray {
 
     box3f World::getBounds() 
     {
-      box3f bounds = embree::empty;
+      box3f bounds = empty;
       for (int i=0;i<node.size();i++)
         bounds.extend(node[i]->getBounds());
       return bounds;
@@ -46,7 +46,7 @@ namespace ospray {
       if (ospModel)
         throw std::runtime_error("World::ospModel alrady exists!?");
       ospModel = ospNewModel();
-      affine3f xfm = embree::one;
+      affine3f xfm = one;
       for (size_t i=0;i<node.size();i++) {
         node[i]->render(ctx);
       }

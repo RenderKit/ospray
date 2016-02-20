@@ -32,6 +32,7 @@
 #  include <sys/times.h>
 #  include <unistd.h> // for usleep
 #endif
+#include <sstream>
 
 namespace ospray {
 
@@ -39,10 +40,28 @@ namespace ospray {
 
     bool dumpScreensDuringAnimation = false;
 
+    FPSCounter::FPSCounter()
+    {
+      smooth_nom = 0.;
+      smooth_den = 0.;
+      frameStartTime = 0.;
+    }
+    
+    void FPSCounter::startRender() 
+    { 
+      frameStartTime = ospcommon::getSysTime(); 
+    }
+    
+    void FPSCounter::doneRender() {
+      double seconds = ospcommon::getSysTime() - frameStartTime; 
+      smooth_nom = smooth_nom * 0.8f + seconds;
+      smooth_den = smooth_den * 0.8f + 1.f;
+    }
+
     /*! write given frame buffer to file, in PPM P6 format. */
     void saveFrameBufferToFile(const char *fileName,
-                               const uint32 *pixel,
-                               const uint32 sizeX, const uint32 sizeY)
+                               const uint32_t *pixel,
+                               const uint32_t sizeX, const uint32_t sizeY)
     {
       FILE *file = fopen(fileName,"wb");
       if (!file) {
@@ -82,7 +101,7 @@ namespace ospray {
     // glut event handlers
     // ------------------------------------------------------------------
 
-    void glut3dReshape(int32 x, int32 y)
+    void glut3dReshape(int32_t x, int32_t y)
     {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->reshape(vec2i(x,y));
@@ -98,12 +117,12 @@ namespace ospray {
         Glut3DWidget::activeWindow->display();
     }
 
-    void glut3dKeyboard(unsigned char key, int32 x, int32 y)
+    void glut3dKeyboard(unsigned char key, int32_t x, int32_t y)
     {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->keypress(key,vec2i(x,y));
     }
-    void glut3dSpecial(int32 key, int32 x, int32 y)
+    void glut3dSpecial(int32_t key, int32_t x, int32_t y)
     {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->specialkey(key,vec2i(x,y));
@@ -114,13 +133,13 @@ namespace ospray {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->idle();
     }
-    void glut3dMotionFunc(int32 x, int32 y)
+    void glut3dMotionFunc(int32_t x, int32_t y)
     {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->motion(vec2i(x,y));
     }
 
-    void glut3dMouseFunc(int32 whichButton, int32 released, int32 x, int32 y)
+    void glut3dMouseFunc(int32_t whichButton, int32_t released, int32_t x, int32_t y)
     {
       if (Glut3DWidget::activeWindow)
         Glut3DWidget::activeWindow->mouseButton(whichButton,released,vec2i(x,y));
@@ -138,7 +157,7 @@ namespace ospray {
         openingAngle(60.f*M_PI/360.f),
         modified(true)
     {
-      frame = AffineSpace3fa::translate(from) * AffineSpace3fa(embree::one);
+      frame = AffineSpace3fa::translate(from) * AffineSpace3fa(ospcommon::one);
     }
 
     void Glut3DWidget::ViewPort::snapUp()
@@ -153,7 +172,7 @@ namespace ospray {
     // ------------------------------------------------------------------
     // implementation of glut3d widget
     // ------------------------------------------------------------------
-    void Glut3DWidget::mouseButton(int32 whichButton, bool released, const vec2i &pos)
+    void Glut3DWidget::mouseButton(int32_t whichButton, bool released, const vec2i &pos)
     {
 
       if (pos != currMousePos)
@@ -279,7 +298,6 @@ namespace ospray {
     void Glut3DWidget::display()
     {
       if (frameBufferMode == Glut3DWidget::FRAMEBUFFER_UCHAR && ucharFB) {
-        //double before = getSysTime();
         glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, ucharFB);
 #ifndef _WIN32
         if (animating && dumpScreensDuringAnimation) {
@@ -313,7 +331,7 @@ namespace ospray {
       glutSwapBuffers();
     }
 
-    void Glut3DWidget::drawPixels(const uint32 *framebuffer)
+    void Glut3DWidget::drawPixels(const uint32_t *framebuffer)
     {
       throw std::runtime_error("should not be used right now");
       glDrawPixels(windowSize.x, windowSize.y, GL_RGBA, GL_UNSIGNED_BYTE, framebuffer);
@@ -347,10 +365,10 @@ namespace ospray {
 
     void Glut3DWidget::setWorldBounds(const box3f &worldBounds)
     {
-      vec3f center = embree::center(worldBounds);
+      vec3f center = ospcommon::center(worldBounds);
       vec3f diag   = worldBounds.size();
       diag         = max(diag,vec3f(0.3f*length(diag)));
-      vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2*diag.y,.8*diag.z);
+      vec3f from   = center - .75f*vec3f(-.6*diag.x,-1.2f*diag.y,.8f*diag.z);
       vec3f dir    = center - from;
       vec3f up     = viewPort.up;
 
@@ -405,7 +423,7 @@ namespace ospray {
       glutMainLoop();
     }
 
-    void initGLUT(int32 *ac, const char **av)
+    void initGLUT(int32_t *ac, const char **av)
     {
       glutInit(ac, (char **) av);
 
@@ -502,11 +520,11 @@ namespace ospray {
     // ------------------------------------------------------------------
     InspectCenter::InspectCenter(Glut3DWidget *widget)
       : Manipulator(widget)
-      , pivot(center(widget->worldBounds))
+      , pivot(ospcommon::center(widget->worldBounds))
     {}
 
     void InspectCenter::keypress(Glut3DWidget *widget,
-                                 int32 key)
+                                 int32_t key)
     {
       switch(key) {
       case 'a': {
@@ -547,7 +565,7 @@ namespace ospray {
     }
 
     void InspectCenter::specialkey(Glut3DWidget *widget,
-                                   int32 key)
+                                   int32_t key)
     {
       switch(key) {
       case GLUT_KEY_LEFT: {
@@ -600,7 +618,7 @@ namespace ospray {
       vec2i delta_mouse = (to - from);
 
       AffineSpace3fa xfm = AffineSpace3fa::translate( widget->motionSpeed * dv * cam.frame.l.vz )
-        * AffineSpace3fa::translate( -1.0 * widget->motionSpeed * du * cam.frame.l.vx );
+        * AffineSpace3fa::translate( -1.0f * widget->motionSpeed * du * cam.frame.l.vx );
 
       cam.frame = xfm * cam.frame;
       cam.from = xfmPoint(xfm, cam.from);
@@ -649,7 +667,7 @@ namespace ospray {
 
     */
     void MoveMode::keypress(Glut3DWidget *widget,
-                            int32 key)
+                            int32_t key)
     {
       Glut3DWidget::ViewPort &cam = widget->viewPort;
       switch(key) {
@@ -712,7 +730,7 @@ namespace ospray {
       vec2i delta_mouse = (to - from);
 
       AffineSpace3fa xfm = AffineSpace3fa::translate( widget->motionSpeed * dv * cam.frame.l.vz )
-        * AffineSpace3fa::translate( -1.0 * widget->motionSpeed * du * cam.frame.l.vx );
+        * AffineSpace3fa::translate( -1.0f * widget->motionSpeed * du * cam.frame.l.vx );
 
       cam.frame = xfm * cam.frame;
       cam.from = xfmPoint(xfm, cam.from);
@@ -742,11 +760,11 @@ namespace ospray {
       cam.modified = true;
     }
 
-    void Glut3DWidget::specialkey(int32 key, const vec2f where)
+    void Glut3DWidget::specialkey(int32_t key, const vec2i &where)
     {
       if (manipulator) manipulator->specialkey(this,key);
     }
-    void Glut3DWidget::keypress(char key, const vec2f where)
+    void Glut3DWidget::keypress(char key, const vec2i &where)
     {
       if (key == '!') {
         if (animating) {
@@ -809,7 +827,7 @@ namespace ospray {
 
 
 
-    void Manipulator::keypress(Glut3DWidget *widget, const int32 key)
+    void Manipulator::keypress(Glut3DWidget *widget, const int32_t key)
     {
       switch(key) {
       case 27 /*ESC*/:
@@ -818,7 +836,7 @@ namespace ospray {
         _exit(0);
       }
     };
-    void Manipulator::specialkey(Glut3DWidget *widget, const int32 key)
+    void Manipulator::specialkey(Glut3DWidget *widget, const int32_t key)
     {
     };
 

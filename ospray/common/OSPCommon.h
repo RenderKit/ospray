@@ -191,17 +191,13 @@ namespace ospray {
   using embree::cross;
   using embree::volume;
 
-  /*! return system time in seconds */
-  OSPRAY_INTERFACE double getSysTime();
-
   void init(int *ac, const char ***av);
 
-  /*! remove specified num arguments from an ac/av arglist */
-  OSPRAY_INTERFACE void removeArgs(int &ac, char **&av, int where, int howMany);
   /*! for debugging. compute a checksum for given area range... */
   OSPRAY_INTERFACE void *computeCheckSum(const void *ptr, size_t numBytes);
 
   OSPRAY_INTERFACE void doAssertion(const char *file, int line, const char *expr, const char *expl);
+#ifndef Assert
 #ifdef NDEBUG
 # define Assert(expr) /* nothing */
 # define Assert2(expr,expl) /* nothing */
@@ -213,6 +209,7 @@ namespace ospray {
   ((void)((expr) ? 0 : ((void)ospray::doAssertion(__FILE__, __LINE__, #expr, expl), 0)))
 # define AssertError(errMsg)                            \
   doAssertion(__FILE__,__LINE__, (errMsg), NULL)
+#endif
 #endif
 
   inline size_t rdtsc() { return embree::rdtsc(); }
@@ -267,4 +264,8 @@ namespace ospray {
 
 template <typename T>
 inline T divRoundUp(const T&a, const T&b) { return (a+(b-T(1)))/b; }
+
+#if WARN_ON_INCLUDING_OSPCOMMON 
+#  error "should not include OSPCOMMON.h from outside of ospray/* files!"
+#endif
 

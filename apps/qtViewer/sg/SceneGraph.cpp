@@ -41,7 +41,7 @@ namespace ospray {
     template<> OSPDataType ParamT<vec4f>::getOSPDataType() const
     { return OSP_FLOAT4; } 
 
-    template<> OSPDataType ParamT<int32>::getOSPDataType() const
+    template<> OSPDataType ParamT<int32_t>::getOSPDataType() const
     { return OSP_INT; }
     template<> OSPDataType ParamT<vec2i>::getOSPDataType() const
     { return OSP_INT2; }

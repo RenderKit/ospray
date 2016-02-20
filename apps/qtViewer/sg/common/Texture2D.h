@@ -18,12 +18,12 @@
 
 // sg
 #include "sg/common/Node.h"
-// embree
-#include "common/sys/filename.h"
+// ospcommon
+#include "common/FileName.h"
 
 namespace ospray {
   namespace sg {
-    using embree::FileName;
+    using ospcommon::FileName;
 
     /*! \brief C++ wrapper for a 2D Texture */
     struct Texture2D : public Node {

@@ -20,7 +20,7 @@
 
 namespace ospray {
   namespace sg {
-    struct Renderer : public embree::RefCount {
+    struct Renderer : public RefCount {
       Renderer();
 
       /*! re-start accumulation (for progressive rendering). make sure

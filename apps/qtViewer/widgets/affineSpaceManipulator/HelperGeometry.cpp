@@ -41,7 +41,7 @@ namespace ospray {
     void CoordFrameGeometry::makeArrow(Mesh &mesh,const vec3f &axis) 
     {
       mesh.color = axis;
-      affine3f xfm = embree::frame(axis);
+      affine3f xfm = frame(axis);
       std::swap(xfm.l.vx,xfm.l.vz);
       Quad quad; 
       for (int i=0;i<numSegments;i++) {

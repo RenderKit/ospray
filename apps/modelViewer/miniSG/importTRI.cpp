@@ -23,12 +23,12 @@ namespace ospray {
     using std::endl;
 
     void importTRI(Model &model,
-                   const embree::FileName &fileName)
+                   const ospcommon::FileName &fileName)
     {
       FILE *file = fopen(fileName.c_str(),"rb");
       if (!file) error("could not open input file");
 
-      int32 numVertices;
+      int32_t numVertices;
       fread(&numVertices,1,sizeof(numVertices),file);
 
       Mesh *mesh = new Mesh;

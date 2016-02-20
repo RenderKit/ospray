@@ -24,12 +24,12 @@ namespace ospray {
   namespace sg {
 
     /*! simple spheres, with all of the key info - position, radius,
-        and a int32 type specifier baked into each sphere  */
+        and a int32_t type specifier baked into each sphere  */
     struct Spheres : public sg::Geometry {
       struct Sphere { 
         vec3f position;
         float radius;
-        uint32 typeID;
+        uint32_t typeID;
         
         // constructor
         Sphere(vec3f position, float radius, uint typeID=0);

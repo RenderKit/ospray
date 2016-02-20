@@ -21,6 +21,8 @@
 #define  O_LARGEFILE  0
 #endif
 
+#define WARN_ON_INCLUDING_OSPCOMMON 1
+
 #include "SceneGraph.h"
 #include "sg/common/Texture2D.h"
 #include "sg/geometry/TriangleMesh.h"
@@ -198,28 +200,28 @@ namespace ospray {
                 float w = atof(s);
                 mat->setParam(childName, vec4f(x,y,z,w));
               } else if (!childType.compare("int")) {
-                mat->setParam(childName, (int32)atol(s));
+                mat->setParam(childName, (int32_t)atol(s));
               } else if (!childType.compare("int2")) {
-                int32 x = atol(s);
+                int32_t x = atol(s);
                 s = NEXT_TOK;
-                int32 y = atol(s);
+                int32_t y = atol(s);
                 // mat->setParam(childName.c_str(), vec2i(x,y));
                 mat->setParam(childName, vec2i(x,y));
               } else if (!childType.compare("int3")) {
-                int32 x = atol(s);
+                int32_t x = atol(s);
                 s = NEXT_TOK;
-                int32 y = atol(s);
+                int32_t y = atol(s);
                 s = NEXT_TOK;
-                int32 z = atol(s);
+                int32_t z = atol(s);
                 mat->setParam(childName, vec3i(x,y,z));
               } else if (!childType.compare("int4")) {
-                int32 x = atol(s);
+                int32_t x = atol(s);
                 s = NEXT_TOK;
-                int32 y = atol(s);
+                int32_t y = atol(s);
                 s = NEXT_TOK;
-                int32 z = atol(s);
+                int32_t z = atol(s);
                 s = NEXT_TOK;
-                int32 w = atol(s);
+                int32_t w = atol(s);
                 mat->setParam(childName, vec4i(x,y,z,w));
               } else {
                 //error!

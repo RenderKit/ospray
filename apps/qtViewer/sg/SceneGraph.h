@@ -18,7 +18,6 @@
 
 #ifndef OSP_SG_INCLUDED
 #define OSP_SG_INCLUDED 1
-
 // std
 #include <map>
 
@@ -32,12 +31,12 @@
 #include "sg/common/Data.h"
 #include "sg/common/FrameBuffer.h"
 
-// embree
-#include "common/sys/filename.h"
+// ospcommon
+#include "common/FileName.h"
 
 namespace ospray {
   namespace sg {
-    using embree::FileName;
+    using ospcommon::FileName;
     
     /*! \brief allows for adding semantical info to a model/scene
      graph.  \note will not do anything by itself. */

@@ -18,17 +18,6 @@
 // embree
 #include "embree2/rtcore.h"
 #include "common/sys/sysinfo.h"
-// std
-#include <time.h>
-#ifdef _WIN32
-#  ifndef WIN32_LEAN_AND_MEAN
-#    define WIN32_LEAN_AND_MEAN
-#  endif
-#  include <windows.h> // for GetSystemTime
-#else
-#include <sys/time.h>
-#include <sys/times.h>
-#endif
 
 namespace ospray {
 
@@ -87,14 +76,11 @@ namespace ospray {
     abort();
   }
 
-  double getSysTime() {
-#ifdef _WIN32
-    SYSTEMTIME tp; GetSystemTime(&tp);
-    return double(tp.wSecond) + double(tp.wMilliseconds) / 1E3;
-#else
-    struct timeval tp; gettimeofday(&tp,NULL); 
-    return double(tp.tv_sec) + double(tp.tv_usec)/1E6; 
-#endif
+  void removeArgs(int &ac, char **&av, int where, int howMany)
+  {
+    for (int i=where+howMany;i<ac;i++)
+      av[i-howMany] = av[i];
+    ac -= howMany;
   }
 
   void init(int *_ac, const char ***_av)
@@ -132,13 +118,6 @@ namespace ospray {
         ++i;
       }
     }
-  }
-
-  void removeArgs(int &ac, char **&av, int where, int howMany)
-  {
-    for (int i=where+howMany;i<ac;i++)
-      av[i-howMany] = av[i];
-    ac -= howMany;
   }
 
   void error_handler(const RTCError code, const char *str)

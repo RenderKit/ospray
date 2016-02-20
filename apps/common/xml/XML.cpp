@@ -15,6 +15,7 @@
 // ======================================================================== //
 
 #include "XML.h"
+#include <sstream>
 
 namespace ospray {
   namespace xml {
@@ -22,7 +23,7 @@ namespace ospray {
     std::string toString(const float f)
     { std::stringstream ss; ss << f; return ss.str(); }
 
-    std::string toString(const vec3f &v)
+    std::string toString(const ospcommon::vec3f &v)
     { std::stringstream ss; ss << v.x << " " << v.y << " " << v.z; return ss.str(); }
 
     Node::~Node()

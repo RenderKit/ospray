@@ -130,6 +130,19 @@ SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME})
 STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
 
 ##############################################################
+# the ospray common library that's shared across all projects
+##############################################################
+
+#INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
+#INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+SET (OSPRAY_TARGET "intel64")
+ADD_SUBDIRECTORY(common builddir/ospcommon/intel64)
+IF (OSPRAY_MIC)
+  SET (OSPRAY_TARGET "mic")
+  ADD_SUBDIRECTORY(common builddir/ospcommon/mic)
+ENDIF()
+
+##############################################################
 # the ospray library
 ##############################################################
 

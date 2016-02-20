@@ -16,7 +16,9 @@
 
 // viewer
 #include "QLightManipulator.h"
+// std
 #include <string>
+#include <sstream>
 
 namespace ospray {
   namespace viewer {

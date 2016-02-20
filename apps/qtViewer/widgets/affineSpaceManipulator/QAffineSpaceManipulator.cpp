@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#define WARN_ON_INCLUDING_OSPCOMMON 1
+
 // viewer
 #include "QAffineSpaceManipulator.h"
 #include "HelperGeometry.h"
@@ -54,7 +56,7 @@ namespace ospray {
       : sourcePoint(0,-4,0),
         targetPoint(0,0,0),
         upVector(0,1,0),
-        orientation(embree::one)
+        orientation(ospcommon::one)
     {}
         
     void QAffineSpaceManipulator::ReferenceFrame::snapUp()
@@ -344,7 +346,7 @@ namespace ospray {
 
         glBegin(GL_TRIANGLES);
         for (int i=0;i<mesh.index.size();i++) {
-          vec3f idx = mesh.index[i];
+          vec3i idx = mesh.index[i];
           glNormal3fv(&mesh.normal[idx.x].x);
           glVertex3fv(&mesh.vertex[idx.x].x);
           glNormal3fv(&mesh.normal[idx.y].x);
