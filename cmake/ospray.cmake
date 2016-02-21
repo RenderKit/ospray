@@ -42,13 +42,13 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
   # Embree common include directories; others may be added depending on build target.
   # this section could be sooo much cleaner if embree only used
   # fully-qualified include names...
-#  SET(EMBREE_INCLUDE_DIRECTORIES
+  SET(EMBREE_INCLUDE_DIRECTORIES
 #    ${OSPRAY_EMBREE_SOURCE_DIR}/
-#    ${OSPRAY_EMBREE_SOURCE_DIR}/include
+    ${OSPRAY_EMBREE_SOURCE_DIR}/include
 #    ${OSPRAY_EMBREE_SOURCE_DIR}/common
 #    ${OSPRAY_EMBREE_SOURCE_DIR}/
 #    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
-#    )
+    )
 
   IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
