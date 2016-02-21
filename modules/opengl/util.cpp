@@ -15,7 +15,8 @@
 // ======================================================================== //
 
 #include "util.h"
-#include <ospray/common/OSPCommon.h>
+#include "common/vec.h"
+// #include <ospray/common/OSPCommon.h>
 
 #ifdef __APPLE__
 #include <OpenGL/gl.h>
@@ -25,9 +26,10 @@
 #include <math.h>
 
 namespace ospray {
-  namespace opengl {
+  typedef ospcommon::vec2i vec2i;
+  typedef ospcommon::vec3f vec3f;
 
-    using embree::cross;
+  namespace opengl {
 
     OSPTexture2D getOSPDepthTextureFromOpenGLPerspective()
     {
