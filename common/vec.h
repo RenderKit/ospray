@@ -94,7 +94,7 @@ namespace ospcommon {
     /*! return result of reduce_mul() across all components */
     inline scalar_t product() const { return x*y*z; }
 
-    inline operator vec_t<T,3>() const { return vec_t<T,3>(x,y,a); }
+    inline operator vec_t<T,3>() const { return vec_t<T,3>(x,y,z); }
 
     T x, y, z;
     union { float w; unsigned u; int a; };

@@ -35,9 +35,9 @@ struct RaycastRenderer
 //  int shadeMode; unused
 };
 
-//! a simple test-frame renderer that doesn't even trace a ray, just
-//! returns a well-defined test frame (mostly useful for debugging
-//! whether frame buffers are properly set up etcpp
+/*! a simple test-frame renderer that doesn't even trace a ray, just
+  returns a well-defined test frame (mostly useful for debugging
+  whether frame buffers are properly set up etcpp */
 void RaycastRenderer_renderSample_testFrame(uniform Renderer *uniform _self,
                                             void *uniform perFrameData,
                                             varying ScreenSample &sample)
@@ -45,6 +45,17 @@ void RaycastRenderer_renderSample_testFrame(uniform Renderer *uniform _self,
   sample.rgb.x = ((sample.sampleID.x)%256)/255.f;
   sample.rgb.y = ((sample.sampleID.y)%256)/255.f;
   sample.rgb.z = ((sample.sampleID.x+sample.sampleID.y+sample.sampleID.z)%256)/255.f;
+  sample.alpha = 1.f;
+  sample.z = 1.f;
+}
+
+/*! a simple test-frame renderer that doesn't even trace a ray, just
+  returns the absolute of the ray direction */
+void RaycastRenderer_renderSample_rayDir(uniform Renderer *uniform _self,
+                                            void *uniform perFrameData,
+                                            varying ScreenSample &sample)
+{
+  sample.rgb = absf(sample.ray.dir);
   sample.alpha = 1.f;
   sample.z = 1.f;
 }
@@ -286,6 +297,7 @@ void RaycastRenderer_renderSample_backfacing_Ns(uniform Renderer *uniform _self,
   }                                                                     \
 
 DEFINE_RAYCAST_RENDERER(testFrame);
+DEFINE_RAYCAST_RENDERER(rayDir);
 DEFINE_RAYCAST_RENDERER(eyeLight);
 DEFINE_RAYCAST_RENDERER(Ng);
 DEFINE_RAYCAST_RENDERER(Ns);

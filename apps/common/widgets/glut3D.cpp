@@ -635,7 +635,6 @@ namespace ospray {
       float dv = (to.y - from.y) * widget->rotateSpeed;
 
       vec2i delta_mouse = to - from;
-      // PRINT(delta_mouse);
 
       const vec3f pivot = cam.at; //center(widget->worldBounds);
       AffineSpace3fa xfm
