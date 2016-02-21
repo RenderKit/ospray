@@ -15,6 +15,8 @@
 // ======================================================================== //
 
 #include "Model.h"
+// stl
+#include <sstream>
 
 extern int  yyparse();
 extern void yyerror(const char* msg);
@@ -31,14 +33,14 @@ namespace ospray {
       const int mx = 13*17*43;
       const int my = 11*29;
       const int mz = 7*23*63;
-      const uint32 g = (i * (3*5*127)+12312314);
+      const uint32_t g = (i * (3*5*127)+12312314);
       return vec3f((g % mx)*(1.f/(mx-1)),
                    (g % my)*(1.f/(my-1)),
                    (g % mz)*(1.f/(mz-1)));
     }
 
     /*! read given file with atom type definitions */
-    void Model::readAtomTypeDefinitions(const embree::FileName &fn)
+    void Model::readAtomTypeDefinitions(const FileName &fn)
     {
       FILE *file = fopen(fn.str().c_str(),"r");
       if (!file) {
@@ -192,7 +194,7 @@ namespace ospray {
   
     box3f Model::getBBox() const 
     {
-      box3f bbox = embree::empty;
+      box3f bbox = empty;
       for (int i=0;i<atom.size();i++)
         bbox.extend(atom[i].position);
       return bbox;
