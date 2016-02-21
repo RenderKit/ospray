@@ -38,7 +38,10 @@ IF (NOT THIS_IS_MIC)
       VolumeFile.cpp
     )
 
-    TARGET_LINK_LIBRARIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+    TARGET_LINK_LIBRARIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX} 
+      ospray${OSPRAY_LIB_SUFFIX}
+      ospray_ospcommon${OSPRAY_LIB_SUFFIX}
+      )
 
     SET_TARGET_PROPERTIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX}
       PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})

@@ -261,3 +261,7 @@ namespace ospray {
 #define __PRETTY_FUNCTION__ __FUNCSIG__
 #endif
 #define NOTIMPLEMENTED    throw std::runtime_error(std::string(__PRETTY_FUNCTION__)+": not implemented...");
+
+#ifndef DONT_WARN_INCLUDE_OSPCOMMON_H
+#  error "warning: including OSPCommon.h from outside of ospray/ directory!"
+#endif

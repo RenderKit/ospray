@@ -16,12 +16,17 @@
 
 #pragma once
 
+// ospcommon
+#include "common/common.h"
+#include "common/vec.h"
+// ospray public
+#include "ospray/include/ospray/ospray.h"
+// std
 #include <stdlib.h>
 #include <string>
-#include "ospray/include/ospray/ospray.h"
-#include "ospray/common/OSPCommon.h"
 //stl
 #include <map>
+#include <vector>
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
@@ -38,7 +43,7 @@
 
 /*! helper function to help build voxel ranges during parsing */
 template<typename T>
-inline void extendVoxelRange(ospray::vec2f &voxelRange, const T *voxel, size_t num)
+inline void extendVoxelRange(ospcommon::vec2f &voxelRange, const T *voxel, size_t num)
 {
   for (size_t i=0;i<num;i++) {
     voxelRange.x = std::min(voxelRange.x,(float)voxel[i]);
@@ -76,7 +81,7 @@ public:
   virtual std::string toString() const { return("ospray_module_loaders::VolumeFile"); }
 
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-  static std::map<OSPVolume, ospray::vec2f> voxelRangeOf;
+  static std::map<OSPVolume, ospcommon::vec2f> voxelRangeOf;
 #endif
 
   //! Print an error message.

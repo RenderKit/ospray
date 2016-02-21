@@ -17,7 +17,8 @@
 #include "SliceEditor.h"
 #include <algorithm>
 
-SliceEditor::SliceEditor(ospray::box3f boundingBox) : boundingBox(boundingBox)
+SliceEditor::SliceEditor(ospcommon::box3f boundingBox) 
+  : boundingBox(boundingBox)
 {
   // Setup UI elements.
   layout.setSizeConstraint(QLayout::SetMinimumSize);

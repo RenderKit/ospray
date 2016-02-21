@@ -156,6 +156,7 @@ namespace ospcommon {
   { return vec_t<T,4>(op(v.x),op(v.y),op(v.z),op(v.w)); }\
 
   unary_functor(rcp);
+  unary_functor(abs);
   unary_functor(sin);
   unary_functor(cos);
 #undef unary_functor

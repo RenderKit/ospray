@@ -18,6 +18,7 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
+
 IF(OSPRAY_BUILD_MPI_DEVICE)
   OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
@@ -311,6 +312,7 @@ ENDIF()
 ##############################################################
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
+SET_TARGET_PROPERTIES(ospray PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
   ${CMAKE_THREAD_LIBS_INIT}

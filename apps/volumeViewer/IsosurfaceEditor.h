@@ -17,7 +17,7 @@
 #pragma once
 
 #include <ospray/ospray.h>
-#include "ospray/common/OSPCommon.h"
+#include "common/vec.h"
 #include <QtGui>
 #include <vector>
 
@@ -37,7 +37,7 @@ signals:
 
 public slots:
 
-  void setDataValueRange(ospray::vec2f dataValueRange);
+  void setDataValueRange(ospcommon::vec2f dataValueRange);
 
   void apply();
 
@@ -47,7 +47,7 @@ protected slots:
 
 protected:
 
-  ospray::vec2f dataValueRange;
+  ospcommon::vec2f dataValueRange;
 
   QVBoxLayout layout;
 

@@ -15,8 +15,8 @@
 // ======================================================================== //
 
 #include <map>
-#include "ospray/common/Library.h"
-#include "modules/loaders/ObjectFile.h"
+#include "common/common.h"
+#include "ObjectFile.h"
 
 OSPObject *ObjectFile::importObjects(const std::string &filename)
 {
@@ -40,7 +40,7 @@ OSPObject *ObjectFile::importObjects(const std::string &filename)
   std::string creationFunctionName = "ospray_import_object_file_" + std::string(type);
 
   // Look for the named function.
-  symbolRegistry[type] = (creationFunctionPointer) ospray::getSymbol(creationFunctionName);
+  symbolRegistry[type] = (creationFunctionPointer) ospcommon::getSymbol(creationFunctionName);
 
   // The named function may not be found if the requested subtype is not known.
   if (!symbolRegistry[type]) std::cerr << "  ospray_module_loaders::ObjectFile  WARNING: unrecognized file type '" + type + "'." << std::endl;

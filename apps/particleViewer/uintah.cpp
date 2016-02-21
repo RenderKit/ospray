@@ -16,11 +16,12 @@
 
 #undef NDEBUG
 
-#include "ospray/common/OSPCommon.h"
 #include "apps/common/xml/XML.h"
 #include "Model.h"
 // embree
-#include "common/sys/filename.h"
+#include "common/FileName.h"
+// std
+#include <sstream>
 
 namespace ospray {
   namespace particle {

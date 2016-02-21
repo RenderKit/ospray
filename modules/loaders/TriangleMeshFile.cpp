@@ -14,9 +14,9 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "TriangleMeshFile.h"
 #include <map>
-#include "ospray/common/Library.h"
-#include "modules/loaders/TriangleMeshFile.h"
+#include "common/common.h"
 
 OSPGeometry TriangleMeshFile::importTriangleMesh(const std::string &filename,
                                                  OSPGeometry triangleMesh)
@@ -41,7 +41,7 @@ OSPGeometry TriangleMeshFile::importTriangleMesh(const std::string &filename,
   std::string creationFunctionName = "ospray_import_trianglemesh_file_" + std::string(type);
 
   // Look for the named function.
-  symbolRegistry[type] = (creationFunctionPointer) ospray::getSymbol(creationFunctionName);
+  symbolRegistry[type] = (creationFunctionPointer) ospcommon::getSymbol(creationFunctionName);
 
   // The named function may not be found if the requested subtype is not known.
   if (!symbolRegistry[type]) std::cerr << "  ospray_module_loaders::TriangleMeshFile  WARNING: unrecognized file type '" + type + "'." << std::endl;

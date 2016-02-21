@@ -16,7 +16,7 @@
 
 #include "ColorMap.h"
 
-ColorMap::ColorMap(std::string name, std::vector<ospray::vec3f> colors)
+ColorMap::ColorMap(std::string name, std::vector<ospcommon::vec3f> colors)
 {
   this->name = name;
   this->colors = colors;
@@ -27,7 +27,7 @@ std::string ColorMap::getName()
   return name;
 }
 
-std::vector<ospray::vec3f> ColorMap::getColors()
+std::vector<ospcommon::vec3f> ColorMap::getColors()
 {
   return colors;
 }

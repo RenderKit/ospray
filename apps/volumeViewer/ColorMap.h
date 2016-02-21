@@ -16,8 +16,11 @@
 
 #pragma once
 
+// ospray public
 #include <ospray/ospray.h>
-#include "ospray/common/OSPCommon.h"
+// ospcommon
+#include "common/vec.h"
+// std
 #include <string>
 #include <vector>
 #include <QtGui>
@@ -26,15 +29,15 @@ class ColorMap
 {
 public:
 
-  ColorMap(std::string name, std::vector<ospray::vec3f> colors);
+  ColorMap(std::string name, std::vector<ospcommon::vec3f> colors);
 
   std::string getName();
-  std::vector<ospray::vec3f> getColors();
+  std::vector<ospcommon::vec3f> getColors();
 
   QImage getImage();
 
 protected:
 
   std::string name;
-  std::vector<ospray::vec3f> colors;
+  std::vector<ospcommon::vec3f> colors;
 };

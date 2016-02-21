@@ -17,7 +17,7 @@
 #pragma once
 
 #include <string>
-#include "modules/loaders/VolumeFile.h"
+#include "VolumeFile.h"
 
 //! \brief specific importer for the LLNL "RM" (Richtmyer-Meshkov) instability files
 /*! Note this exists only for a specific demo */

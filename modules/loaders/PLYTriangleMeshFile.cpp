@@ -29,7 +29,7 @@ bool startsWith(const std::string &haystack, const std::string &needle)
 
 PLYTriangleMeshFile::PLYTriangleMeshFile(const std::string &filename) :
   filename(filename),
-  scale(ospray::vec3f(1.f)),
+  scale(ospcommon::vec3f(1.f)),
   verbose(true)
 {
 }
@@ -181,16 +181,16 @@ bool PLYTriangleMeshFile::parse()
     }
 
     // Add to vertices vector with scaling applied.
-    vertices.push_back(scale * ospray::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
+    vertices.push_back(scale * ospcommon::vec3fa(vertexProperties[xIndex], vertexProperties[yIndex], vertexProperties[zIndex]));
 
     // Vertex normals will be computed later.
-    vertexNormals.push_back(ospray::vec3fa(0.f));
+    vertexNormals.push_back(ospcommon::vec3fa(0.f));
 
     // Use vertex colors if we have them; otherwise default to white (note that the volume renderer currently requires a color for every vertex).
     if(haveVertexColors)
-      vertexColors.push_back(1.f/255.f * ospray::vec4f(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex], vertexProperties[aIndex]));
+      vertexColors.push_back(1.f/255.f * ospcommon::vec4f(vertexProperties[rIndex], vertexProperties[gIndex], vertexProperties[bIndex], vertexProperties[aIndex]));
     else
-      vertexColors.push_back(ospray::vec4f(1.f));
+      vertexColors.push_back(ospcommon::vec4f(1.f));
   }
 
   // Read the face data.
@@ -200,14 +200,14 @@ bool PLYTriangleMeshFile::parse()
     in >> count;
     exitOnCondition(count != 3, "only triangle faces are supported.");
 
-    ospray::vec3i triangle;
+    ospcommon::vec3i triangle;
     in >> triangle.x >> triangle.y >> triangle.z;
     exitOnCondition(!in.good(), "error reading face data.");
 
     triangles.push_back(triangle);
 
     // Add vertex normal contributions.
-    ospray::vec3fa triangleNormal = cross(vertices[triangle.y] - vertices[triangle.x], vertices[triangle.z] - vertices[triangle.x]);
+    ospcommon::vec3fa triangleNormal = cross(vertices[triangle.y] - vertices[triangle.x], vertices[triangle.z] - vertices[triangle.x]);
     vertexNormals[triangle.x] += triangleNormal;
     vertexNormals[triangle.y] += triangleNormal;
     vertexNormals[triangle.z] += triangleNormal;

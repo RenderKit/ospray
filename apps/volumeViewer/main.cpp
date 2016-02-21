@@ -14,14 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "VolumeViewer.h"
-#include <iostream>
-#include <QtGui>
-#include <ctype.h>
-#include <sstream>
+// own
 #include "VolumeViewer.h"
 #include "TransferFunctionEditor.h"
-#include "ospray/include/ospray/ospray.h"
+// ospray public
+#include "ospray/ospray.h"
+// std
+#include <iostream>
+#include <ctype.h>
+#include <sstream>
+// qt
+#include <QtGui>
 
 int main(int argc, char *argv[])
 {
@@ -73,8 +76,8 @@ int main(int argc, char *argv[])
   int benchmarkFrames = 0;
   int viewSizeWidth = 0;
   int viewSizeHeight = 0;
-  ospray::vec3f viewUp(0.f);
-  ospray::vec3f viewAt(0.f), viewFrom(0.f);
+  ospcommon::vec3f viewUp(0.f);
+  ospcommon::vec3f viewAt(0.f), viewFrom(0.f);
   bool showFrameRate = false;
   bool fullScreen = false;
   bool ownModelPerObject = false;
@@ -260,7 +263,7 @@ int main(int argc, char *argv[])
 
 
   // Set the view up vector if specified.
-  if(viewUp != ospray::vec3f(0.f)) {
+  if(viewUp != ospcommon::vec3f(0.f)) {
     volumeViewer->getWindow()->getViewport()->setUp(viewUp);
     volumeViewer->getWindow()->resetAccumulationBuffer();
   }

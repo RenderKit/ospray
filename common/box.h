@@ -45,6 +45,11 @@ namespace ospcommon {
   template<typename scalar_t>
   inline scalar_t area(const box_t<scalar_t,2> &b) { return b.size().product(); }
 
+  /*! return the volume of the 3D box - undefined for empty boxes */
+  template<typename scalar_t, int A>
+  inline scalar_t volume(const box_t<scalar_t,3,A> &b) { return b.size().product(); }
+
+
   /*! compute the intersection of two boxes */
   template<typename T, int N, int A>
   inline box_t<T,N,A> intersectionOf(const box_t<T,N,A> &a, const box_t<T,N,A> &b)
