@@ -16,6 +16,8 @@
 
 // ospray
 #include "Library.h"
+// ospcommmon
+#include "common/library.h"
 // std
 
 #ifdef _WIN32
@@ -44,7 +46,7 @@ namespace ospray {
 
     Library *lib = new Library;
     lib->name = name;
-    lib->lib = embree::openLibrary(name);
+    lib->lib = ospcommon::openLibrary(name);
     if (lib->lib == NULL)
       throw std::runtime_error("could not open module lib "+name);
     
@@ -53,7 +55,7 @@ namespace ospray {
   void *getSymbol(const std::string &name)
   {
     for (int i=0;i<loadedLibs.size();i++) {
-      void *sym = embree::getSymbol(loadedLibs[i]->lib, name);
+      void *sym = ospcommon::getSymbol(loadedLibs[i]->lib, name);
       if (sym) return sym;
     }
 

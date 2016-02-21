@@ -20,13 +20,13 @@
 #include "Managed.h"
 
 //embree stuff
-#include "common/sys/library.h"
+#include "common/library.h"
 
 namespace ospray {
   struct Library 
   {
     std::string   name;
-    embree::lib_t lib;
+    ospcommon::lib_t lib;
   };
 
   void  loadLibrary(const std::string &name);

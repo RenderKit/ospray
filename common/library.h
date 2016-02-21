@@ -14,36 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-/*! \file ospray/common/Thread.h \brief Abstraction for a Thread object */
+#include "common.h"
 
-#include "Thread.h"
-// embree
-# include "common/thread.h"
+namespace ospcommon {
 
-namespace ospray {
+  /*! type for shared library */
+  typedef struct opaque_lib_t* lib_t;
+	  
+  /*! loads a shared library */
+  lib_t openLibrary(const std::string& file);
 
-  void ospray_Thread_runThread(void *arg)
-  {
-    Thread *t = (Thread *)arg;
-    if (t->desiredThreadID >= 0) {
-      printf("pinning to thread %i\n",t->desiredThreadID);
-      ospcommon::setAffinity(t->desiredThreadID);
-    }
+  /*! returns address of a symbol from the library */
+  void* getSymbol(lib_t lib, const std::string& sym);
 
-    t->run();
-  }
-
-  void Thread::join() 
-  { 
-    ospcommon::join(tid); 
-  }
-
-  /*!  start thread execution */
-  void Thread::start(int threadID)
-  {
-    desiredThreadID = threadID;
-    this->tid = ospcommon::createThread(&ospray_Thread_runThread,this);
-  }
+  /*! unloads a shared library */
+  void closeLibrary(lib_t lib);
 
 }
 

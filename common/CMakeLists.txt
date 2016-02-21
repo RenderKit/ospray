@@ -4,6 +4,7 @@ ADD_LIBRARY(ospray_ospcommon SHARED
    FileName.cpp
    sysinfo.cpp
    malloc.cpp
+   library.cpp
    )
 
 		     

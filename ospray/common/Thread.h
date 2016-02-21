@@ -20,8 +20,8 @@
 
 // ospray
 #include "OSPCommon.h"
-// embree
-#include "common/sys/thread.h"
+// ospcommon
+#include "common/thread.h"
 
 namespace ospray {
   
@@ -43,7 +43,7 @@ namespace ospray {
         thread got started will not have any effect */
     int desiredThreadID;
     //! the thread ID reported by embree's createThread
-    embree::thread_t tid;
+    ospcommon::thread_t tid;
   };
 
 }
