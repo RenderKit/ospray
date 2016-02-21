@@ -14,18 +14,20 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/RawVolumeFile.h"
+#include "RawVolumeFile.h"
+
 #include <stdio.h>
 #include <string.h>
 
-#include "modules/loaders/RawVolumeFile.h"
-#include "common/sys/filename.h"
+#include "common/FileName.h"
+
+using ospcommon::FileName;
 
 OSPVolume RawVolumeFile::importVolume(OSPVolume volume)
 {
   // Look for the volume data file at the given path.
   FILE *file = NULL;
-  embree::FileName fn = filename;
+  FileName fn = filename;
   bool gzipped = fn.ext() == "gz";
   if (gzipped) {
     std::string cmd = "/usr/bin/gunzip -c "+filename;

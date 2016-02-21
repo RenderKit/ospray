@@ -14,10 +14,10 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "modules/loaders/RawVolumeFile.h"
-#include "modules/loaders/RMVolumeFile.h"
-#include "modules/loaders/PLYTriangleMeshFile.h"
+#include "OSPObjectFile.h"
+#include "RawVolumeFile.h"
+#include "RMVolumeFile.h"
+#include "PLYTriangleMeshFile.h"
 
 // Loader for XML object files.
 OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);

@@ -76,6 +76,7 @@ SET(MOC_HEADERS
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
+ADD_SUBDIRECTORY(loaders)
 ADD_EXECUTABLE(ospVolumeViewer ${SRCS} ${MOC_OUTFILES})
 TARGET_LINK_LIBRARIES(ospVolumeViewer ${LIBS})
 # ------------------------------------------------------------

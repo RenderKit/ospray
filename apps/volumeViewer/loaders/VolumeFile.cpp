@@ -14,7 +14,7 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/VolumeFile.h"
+#include "VolumeFile.h"
 #include <map>
 
 OSPVolume VolumeFile::importVolume(const std::string &filename, OSPVolume volume)

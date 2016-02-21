@@ -17,8 +17,8 @@
 #include <algorithm>
 // own
 #include "VolumeViewer.h"
-#include "modules/loaders/ObjectFile.h"
-#include "modules/loaders/TriangleMeshFile.h"
+#include "loaders/ObjectFile.h"
+#include "loaders/TriangleMeshFile.h"
 #include "TransferFunctionEditor.h"
 #include "IsosurfaceEditor.h"
 #include "LightEditor.h"

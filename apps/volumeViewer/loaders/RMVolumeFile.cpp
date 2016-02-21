@@ -14,17 +14,17 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "RMVolumeFile.h"
+// ospcommon
+#include "common/sysinfo.h"
+// std::
 #include <stdio.h>
 #include <string.h>
-#include "modules/loaders/RMVolumeFile.h"
 #ifdef __LINUX__
 # include <sched.h>
 #endif
-// std::
 #include <stdint.h>
 #include <mutex>
-// ospcommon
-#include "common/sysinfo.h"
 
 struct RMLoaderThreads {
   OSPVolume volume;
