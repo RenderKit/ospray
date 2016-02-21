@@ -250,24 +250,6 @@ IF (OSPRAY_MPI)
     fb/DisplayWall.cpp
     )
 
-  # ============================================
-  ADD_EXECUTABLE(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
-    mpi/testing/createCompositeTestCubes
-    )
-  TARGET_LINK_LIBRARIES(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
-    ospray${OSPRAY_LIB_SUFFIX}
-    )
-
-  # ============================================
-#  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-#  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-#  ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
-#    mpi/testing/TestDistributedApp
-#    )
-#  TARGET_LINK_LIBRARIES(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
-#    ospray${OSPRAY_LIB_SUFFIX}
-#    )
-
 ENDIF()
 
 # -------------------------------------------------------
@@ -315,6 +297,7 @@ OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
 SET_TARGET_PROPERTIES(ospray PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+	ospray_ospcommon${OSPRAY_LIB_SUFFIX}
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
 )

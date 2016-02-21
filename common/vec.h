@@ -298,7 +298,7 @@ namespace ospcommon {
   template<typename T> 
   inline bool operator<(const vec_t<T,2> &a, const vec_t<T,2> &b)
   { 
-    return (a.x<b.x) || (a.x==b.x && a.y<b.y); 
+    return (a.x<b.x) || ((a.x==b.x) && (a.y<b.y)); 
   }
 
   template<typename T, int A, int B> 
@@ -306,8 +306,8 @@ namespace ospcommon {
   { 
     return
       (a.x< b.x) || 
-      (a.x==b.x && ((a.y< b.y) ||
-                    (a.y==b.y) && (a.z<b.z))); 
+      ((a.x==b.x) && ((a.y< b.y) ||
+                      ((a.y==b.y) && (a.z<b.z)))); 
   }
 
   template<typename T> 
@@ -315,9 +315,9 @@ namespace ospcommon {
   { 
     return
       (a.x< b.x) || 
-      (a.x==b.x && ((a.y< b.y) ||
-                    (a.y==b.y) && ((a.z< b.z) ||
-                                   (a.z==b.z) && (a.w < b.w)))); 
+      ((a.x==b.x) && ((a.y< b.y) ||
+                      ((a.y==b.y) && ((a.z< b.z) ||
+                                      ((a.z==b.z) && (a.w < b.w)))))); 
   }
 
   // 'anyLessThan' - return true if any component is less than the other vec's
