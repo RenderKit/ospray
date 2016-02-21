@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,23 +16,24 @@
 
 #pragma once
 
-#include "api/parms.h"
-#include "PTDistantLight_ispc.h"
+#ifdef OSPRAY_USE_TBB
+# include <tbb/blocked_range.h>
+# include <tbb/parallel_for.h>
+#endif
 
 namespace ospray {
-  namespace pt {
-    
-    struct DistantLight
-    {
-      static void* create(const Parms& parms)
-      {
-        const Vector3f D = parms.getVector3f("D");
-        const Color L = parms.getColor("L");
-        const float halfAngle = parms.getFloat("halfAngle");
-        return ispc::DistantLight__new((ispc::vec3f&)D,(ispc::vec3f&)L,halfAngle);
-      }
-    };
 
-  } // ::ospray::pt
-} // ::ospray
+template<typename T>
+inline void parallel_for(int nTasks, const T& fcn)
+{
+#ifdef OSPRAY_USE_TBB
+  tbb::parallel_for(0, nTasks, 1, fcn);
+#else
+# pragma omp parallel for schedule(dynamic)
+  for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+    fcn(taskIndex);
+  }
+#endif
+}
 
+}//namespace ospray

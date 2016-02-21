@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,11 +21,20 @@
 #include <cstdio>
 
 //! String comparison helper.
-bool startsWith(const std::string &haystack, const std::string &needle) {
-  return needle.length() <= haystack.length() && equal(needle.begin(), needle.end(), haystack.begin());
+bool startsWith(const std::string &haystack, const std::string &needle)
+{
+  return needle.length() <= haystack.length() &&
+         equal(needle.begin(), needle.end(), haystack.begin());
 }
 
-OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangleMesh)
+PLYTriangleMeshFile::PLYTriangleMeshFile(const std::string &filename) :
+  filename(filename),
+  scale(ospray::vec3f(1.f)),
+  verbose(true)
+{
+}
+
+OSPGeometry PLYTriangleMeshFile::importTriangleMesh(OSPGeometry triangleMesh)
 {
   // Get scaling parameter if provided.
   ospGetVec3f(triangleMesh, "scale", (osp::vec3f*)&scale);
@@ -48,6 +57,11 @@ OSPTriangleMesh PLYTriangleMeshFile::importTriangleMesh(OSPTriangleMesh triangle
 
   // Return the triangle mesh.
   return triangleMesh;
+}
+
+std::string PLYTriangleMeshFile::toString() const
+{
+  return("ospray_module_loaders::PLYTriangleMeshFile");
 }
 
 bool PLYTriangleMeshFile::parse()

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,30 +25,25 @@
 // stl
 #include <map>
 
-#ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
-# include <tbb/parallel_for.h>
-#endif
-
 namespace ospray {
 
-StructuredVolume::StructuredVolume() :
-  finished(false),
-  voxelRange(FLT_MAX, -FLT_MAX)
-{
-}
+  StructuredVolume::StructuredVolume() :
+    finished(false),
+    voxelRange(FLT_MAX, -FLT_MAX)
+  {
+  }
 
-StructuredVolume::~StructuredVolume() {}
+  StructuredVolume::~StructuredVolume() {}
 
-std::string StructuredVolume::toString() const
-{
-  return("ospray::StructuredVolume<" + voxelType + ">");
-}
+  std::string StructuredVolume::toString() const
+  {
+    return("ospray::StructuredVolume<" + voxelType + ">");
+  }
 
-void StructuredVolume::commit()
-{
-  // Some parameters can be changed after the volume has been allocated and
-  // filled.
+  void StructuredVolume::commit()
+  {
+    // Some parameters can be changed after the volume has been allocated and
+    // filled.
     updateEditableParameters();
 
     // Set the grid origin, default to (0,0,0).
@@ -81,27 +76,15 @@ void StructuredVolume::commit()
     void *accel = ispc::StructuredVolume_createAccelerator(ispcEquivalent);
 
     vec3i brickCount;
-    ispc::vec3i _brickCount = ispc::GridAccelerator_getBrickCount(accel);
-    brickCount.x = _brickCount.x;
-    brickCount.y = _brickCount.y;
-    brickCount.z = _brickCount.z;
+    brickCount.x = ispc::GridAccelerator_getBrickCount_x(accel);
+    brickCount.y = ispc::GridAccelerator_getBrickCount_y(accel);
+    brickCount.z = ispc::GridAccelerator_getBrickCount_z(accel);
 
     // Build volume accelerator.
     const int NTASKS = brickCount.x * brickCount.y * brickCount.z;
-#ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
-                      [&](const tbb::blocked_range<int> &range) {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex)
-        ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
-    });
-#else
-#   pragma omp parallel for
-    for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
+    parallel_for(NTASKS, [&](int taskIndex){
       ispc::GridAccelerator_buildAccelerator(ispcEquivalent, taskIndex);
-    }
-#endif
+    });
   }
 
   void StructuredVolume::finish()
@@ -142,111 +125,5 @@ void StructuredVolume::commit()
     return res;
   }
 
-#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-  // Compute the voxel value range for unsigned byte voxels.
-  void StructuredVolume::computeVoxelRange(const unsigned char *source,
-                                           const size_t &count)
-  {
-#if 1
-    const size_t blockSize = 1000000;
-    int numBlocks = divRoundUp(count,blockSize);
-    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-#pragma omp parallel for
-    for (int i=0;i<numBlocks;i++) {
-      size_t myBegin = i*blockSize;
-      size_t myEnd   = std::min(myBegin+blockSize,count);
-      vec2f myVoxelRange(source[myBegin]);
-
-      for (size_t j=myBegin ; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[j]);
-      }
-
-      blockRange[i] = myVoxelRange;
-    }
-
-    for (int i=0;i<numBlocks;i++) {
-      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
-    }
-
-#else
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
-      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
-    }
-#endif
-  }
-
-  // Compute the voxel value range for floating point voxels.
-  void StructuredVolume::computeVoxelRange(const float *source,
-                                           const size_t &count)
-  {
-#if 1
-    const size_t blockSize = 1000000;
-    int numBlocks = divRoundUp(count,blockSize);
-    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-#pragma omp parallel for
-    for (int i=0;i<numBlocks;i++) {
-      size_t myBegin = i*blockSize;
-      size_t myEnd   = std::min(myBegin+blockSize,count);
-      vec2f myVoxelRange(source[myBegin]);
-
-      for (size_t j=myBegin ; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[j]);
-      }
-
-      blockRange[i] = myVoxelRange;
-    }
-
-    for (int i=0;i<numBlocks;i++) {
-      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
-    }
-
-#else
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, source[i]);
-      voxelRange.y = std::max(voxelRange.y, source[i]);
-    }
-#endif
-  }
-
-  // Compute the voxel value range for double precision floating point voxels.
-  void StructuredVolume::computeVoxelRange(const double *source,
-                                           const size_t &count)
-  {
-#if 1
-    const size_t blockSize = 1000000;
-    int numBlocks = divRoundUp(count,blockSize);
-    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
-#pragma omp parallel for
-    for (int i=0;i<numBlocks;i++) {
-      size_t myBegin = i*blockSize;
-      size_t myEnd   = std::min(myBegin+blockSize,count);
-      vec2f myVoxelRange(source[myBegin]);
-
-      for (size_t j=myBegin ; j < myEnd ; j++) {
-        myVoxelRange.x = std::min(myVoxelRange.x, (float) source[j]);
-        myVoxelRange.y = std::max(myVoxelRange.y, (float) source[j]);
-      }
-
-      blockRange[i] = myVoxelRange;
-    }
-
-    for (int i=0;i<numBlocks;i++) {
-      voxelRange.x = std::min(voxelRange.x,blockRange[i].x);
-      voxelRange.y = std::max(voxelRange.y,blockRange[i].y);
-    }
-
-#else
-    for (size_t i=0 ; i < count ; i++) {
-      voxelRange.x = std::min(voxelRange.x, (float) source[i]);
-      voxelRange.y = std::max(voxelRange.y, (float) source[i]);
-    }
-#endif
-  }
-#endif
 } // ::ospray
 

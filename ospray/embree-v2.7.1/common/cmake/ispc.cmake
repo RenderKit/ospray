@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -132,6 +132,10 @@ MACRO (ISPC_COMPILE)
       LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
       IF (NUM_TARGETS GREATER 1)
         FOREACH(target ${ISPC_TARGETS})
+          # in v1.9.0 ISPC changed the ISA suffix of avx512knl-i32x16 to just 'avx512knl'
+          IF (${target} STREQUAL "avx512knl-i32x16" AND NOT ISPC_VERSION VERSION_LESS "1.9.0")
+            SET(target "avx512knl")
+          ENDIF()
           SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
         ENDFOREACH()
       ENDIF()

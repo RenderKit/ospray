@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -39,7 +39,7 @@ namespace ospray {
     return("ospray::Volume");
   }
 
-  Volume *Volume::createInstance(std::string type)
+  Volume *Volume::createInstance(const std::string &type)
   {
     // Function pointer type for creating a concrete instance of a subtype of
     // this class.
@@ -114,31 +114,6 @@ namespace ospray {
         vec3f(boundingBox.lower.x, boundingBox.lower.y, boundingBox.lower.z));
     set("boundingBoxMax",
         vec3f(boundingBox.upper.x, boundingBox.upper.y, boundingBox.upper.z));
-  }
-
-  void Volume::emitMessage(const std::string &kind,
-                           const std::string &message) const
-  {
-    std::cerr << "  " + toString()
-              << "  " + kind + ": " + message + "." << std::endl;
-  }
-
-  void Volume::exitOnCondition(bool condition,
-                               const std::string &message) const
-  {
-    if (!condition)
-      return;
-    emitMessage("ERROR", message);
-    exit(1);
-  }
-
-  void Volume::warnOnCondition(bool condition,
-                               const std::string &message) const
-  {
-    if (!condition)
-      return;
-
-    emitMessage("WARNING", message);
   }
 
   void Volume::updateEditableParameters()

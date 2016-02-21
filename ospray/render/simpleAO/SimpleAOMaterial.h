@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,19 +16,34 @@
 
 #pragma once
 
-#include "Sample.ih"
+#include "ospray/common/Material.h"
+#include "ospray/texture/Texture2D.h"
 
-struct Distribution2D 
-{
-  RefCount base;
+namespace ospray {
+  namespace simpleao {
 
-  vec2ui size;
-  uniform float* cdf_x;
-  uniform float* cdf_y;
-  uniform float* pdf_x;
-  uniform float* pdf_y;
-};
+    //! \brief Material used by the SimpleAO renderer
+    /*! \detailed Since the SimpleAO Renderer only cares about a
+        diffuse material component this material only stores diffuse
+        and diffuse texture */
+    struct Material : public ospray::Material {
 
-uniform Distribution2D* uniform Distribution2D__new(const uniform float* uniform f, const uniform vec2ui size);
+      //! \brief Constructor
+      Material();
 
-Sample2f Distribution2D__sample(const uniform Distribution2D* uniform this, const vec2f &u);
+      /*! \brief commit the object's outstanding changes
+       *         (such as changed parameters etc) */
+      virtual void commit();
+
+      // -------------------------------------------------------
+      // member variables
+      // -------------------------------------------------------
+
+      //! \brief diffuse material component, that's all we care for
+      vec3f Kd;
+
+      //! \brief diffuse texture, if available
+      Ref<Texture2D> map_Kd;
+    };
+  }//namespace ospray::simpleao
+}//namespace ospray

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -247,6 +247,17 @@ namespace ospray {
     //! \brief un-register a listener
     /*! \detailed this object will no longer get update notifications from us  */
     void unregisterListener(ManagedObject *noLongerListening);
+
+
+    //! Print an error message.
+    void emitMessage(const std::string &kind, const std::string &message) const;
+
+    //! Error checking.
+    void exitOnCondition(bool condition, const std::string &message) const;
+
+    //! Warning condition.
+    void warnOnCondition(bool condition, const std::string &message) const;
+
 
     // -------------------------------------------------------
     // member variables 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -448,6 +448,9 @@ inline float reduce_add(const vec3f v)
 inline float reduce_avg(const vec3f v)
 { return (v.x+v.y+v.z)*(1.0f/3.0f); }
 
+inline float luminance(const vec3f& c)
+{ return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
+
 inline uniform bool eq(const uniform vec2f a, const uniform vec2f b)
 { return a.x==b.x && a.y==b.y; }
 inline bool eq(const vec2f a, const vec2f b)
@@ -516,11 +519,23 @@ inline vec3f safe_normalize(const vec3f v)
 { return v * (1.f/sqrt(max(1e-6f,dot(v,v)))); }
 
 
-#define __lift_unary_fct(F)                     \
-  inline uniform vec3f F(const uniform vec3f v) \
-  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }  \
-  inline vec3f F(const vec3f v)                 \
-  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }
+#define __lift_unary_fct(F)                           \
+  inline uniform vec2f F(const uniform vec2f v)       \
+  { return make_vec2f(F(v.x),F(v.y)); }               \
+  inline vec2f F(const vec2f v)                       \
+  { return make_vec2f(F(v.x),F(v.y)); }               \
+  inline uniform vec3f F(const uniform vec3f v)       \
+  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }        \
+  inline vec3f F(const vec3f v)                       \
+  { return make_vec3f(F(v.x),F(v.y),F(v.z)); }        \
+  inline uniform vec3fa F(const uniform vec3fa v)     \
+  { return make_vec3fa(F(v.x),F(v.y),F(v.z)); }       \
+  inline vec3fa F(const vec3fa v)                     \
+  { return make_vec3fa(F(v.x),F(v.y),F(v.z)); }       \
+  inline uniform vec4f F(const uniform vec4f v)       \
+  { return make_vec4f(F(v.x),F(v.y),F(v.z),F(v.w)); } \
+  inline vec4f F(const vec4f v)                       \
+  { return make_vec4f(F(v.x),F(v.y),F(v.z),F(v.w)); }
 
 __lift_unary_fct(absf)
 __lift_unary_fct(rcpf)
@@ -529,6 +544,7 @@ __lift_unary_fct(logf)
 
 __lift_unary_fct(rcp)
 __lift_unary_fct(exp)
+__lift_unary_fct(frac)
 
 #undef __lift_unary_fct
 
@@ -616,6 +632,16 @@ __define_lerp4(uc)
 #undef __define_lerp3
 #undef __define_lerp4
 
+inline vec2i make_vec2i(const vec2f &a)
+{ return make_vec2i((int)a.x, (int)a.y); }
+
+inline vec2i integer_cast(const vec2f &a)
+{ return make_vec2i(a); }
+
+inline vec2f clamp(const vec2f &a, const uniform vec2f &b, const uniform vec2f &c)
+{ return(make_vec2f(clamp(a.x, b.x, c.x), clamp(a.y, b.y, c.y))); }
+
+
 inline uniform vec3i operator*(const uniform vec3i &a, const uniform int b)
 { return(make_vec3i(a.x * b, a.y * b, a.z * b)); }
 
@@ -656,11 +682,17 @@ inline vec3i max(const varying vec3i &a, const varying int32 b)
 // inline vec3i min(const uniform vec3i &a, const varying vec3i &b)
 // { return(make_vec3i(min(a.x, b.x), min(a.y, b.y), min(a.z, b.z))); }
 
+inline vec3f make_vec3f(const vec3i &a)
+{ return make_vec3f(a.x, a.y, a.z); }
+
 inline vec3f float_cast(const vec3i &a)
-{ return(make_vec3f(a.x, a.y, a.z)); }
+{ return make_vec3f(a); }
+
+inline vec3i make_vec3i(const vec3f &a)
+{ return make_vec3i((int)a.x, (int)a.y, (int)a.z); }
 
 inline vec3i integer_cast(const vec3f &a)
-{ return(make_vec3i((int) a.x, (int) a.y, (int) a.z)); }
+{ return make_vec3i(a); }
 
 inline vec3i operator>>(const vec3i &a, const int b)
 { return(make_vec3i(a.x >> b, a.y >> b, a.z >> b)); }
@@ -710,6 +742,9 @@ inline uniform float reduce_add(const uniform vec3f &a)
 
 inline uniform float reduce_avg(const uniform vec3f &a)
 { return((a.x+a.y+a.z)*(1.0f/3.0f)); }
+
+inline uniform float luminance(const uniform vec3f& c)
+{ return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z; }
 
 inline varying vec3f pow(const varying vec3f &a, const varying float b)
 { return(make_vec3f(pow(a.x, b), pow(a.y, b), pow(a.z, b))); }

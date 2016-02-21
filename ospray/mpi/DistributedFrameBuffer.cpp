@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -26,6 +26,10 @@
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h> // for Sleep
+#endif
+
+#ifdef OSPRAY_USE_TBB
+#  include <tbb/task.h>
 #endif
 
 #define DBG(a) /* ignore */
@@ -185,8 +189,7 @@ namespace ospray {
     bool done = false;
 
     {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       if (numPartsComposited == 0)
         memcpy(&compositedTileData,&tile,sizeof(tile));
       else
@@ -442,6 +445,9 @@ namespace ospray {
 
 
   struct DFBProcessMessageTask
+#ifdef OSPRAY_USE_TBB
+      : public tbb::task
+#endif
   {
     DFB *dfb;
     mpi::async::CommLayer::Message *_msg;
@@ -451,9 +457,12 @@ namespace ospray {
       : dfb(dfb), _msg(_msg)
     {}
 
-    void run(size_t jobID)
+#ifdef OSPRAY_USE_TBB
+    tbb::task* execute() override
+#else
+    void execute()
+#endif
     {
-      DBG(printf("processing message %i\n",jobID); fflush(0));
       switch (_msg->command) {
       case DFB::MASTER_WRITE_TILE_NONE:
         dfb->processMessage((DFB::MasterTileMessage_NONE*)_msg);
@@ -468,6 +477,9 @@ namespace ospray {
         assert(0);
       };
       delete _msg;
+#ifdef OSPRAY_USE_TBB
+      return nullptr;
+#endif
     }
   };
 
@@ -478,8 +490,7 @@ namespace ospray {
     if (IamTheMaster()) {
       /*! we will not do anything with the tile other than mark it's done */
       {
-        LockGuard lock(mutex);
-        (void)lock;
+        SCOPED_LOCK(mutex);
         numTilesCompletedThisFrame++;
         DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
                    tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
@@ -517,8 +528,7 @@ namespace ospray {
       };
 
       {
-        LockGuard lock(mutex);
-        (void)lock;
+        SCOPED_LOCK(mutex);
         numTilesCompletedThisFrame++;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
                    mpi::world.rank,
@@ -534,8 +544,7 @@ namespace ospray {
   void DFB::incoming(mpi::async::CommLayer::Message *_msg)
   {
     if (!frameIsActive) {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       if (!frameIsActive) {
         // frame is not actually active, yet - put the tile into the
         // delayed processing buffer, and return WITHOUT deleting it.
@@ -547,14 +556,12 @@ namespace ospray {
 
     DBG(PING);
 
-#if 0//NOTE(jda) - does this *need* to be asynchronous?
-    auto msgTask = std::make_shared<DFBProcessMessageTask>(this,_msg);
-    auto future = std::async([msgTask]{msgTask->run(0);});
-
-    future.get();
+#ifdef OSPRAY_USE_TBB
+    auto &t = *new(tbb::task::allocate_root())DFBProcessMessageTask(this, _msg);
+    tbb::task::enqueue(t, tbb::priority_high);
 #else
     DFBProcessMessageTask t(this, _msg);
-    t.run(0);
+    t.execute();
 #endif
 
     DBG(PING);

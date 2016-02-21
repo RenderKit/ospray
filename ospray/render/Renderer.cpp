@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -43,6 +43,9 @@ namespace ospray {
     if (maxDepthTexture && (maxDepthTexture->type != OSP_FLOAT || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)))
       static WarnOnce warning("expected maxDepthTexture provided to the renderer to be type OSP_FLOAT and have the OSP_TEXTURE_FILTER_NEAREST flag");
 
+    vec3f bgColor;
+    bgColor = getParam3f("bgColor", vec3f(1.f));
+
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
       if (model) {
@@ -56,6 +59,7 @@ namespace ospray {
                          epsilon,
                          spp,
                          backgroundEnabled,
+                         (ispc::vec3f&)bgColor,
                          maxDepthTexture ? maxDepthTexture->getIE() : NULL);
     }
   }

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -20,10 +20,8 @@
 #include "constants.h"
 #include <cmath>
 
-#include <emmintrin.h>
-#include <xmmintrin.h>
-
 #if defined(__WIN32__)
+#include <intrin.h>
 #if (__MSV_VER <= 1700)
 namespace std
 {
@@ -32,6 +30,8 @@ namespace std
   __forceinline bool isfinite (const float x) { return _finite(x); }
 }
 #endif
+#else
+#include <x86intrin.h>
 #endif
 
 namespace embree

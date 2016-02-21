@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -120,7 +120,8 @@ namespace ospray {
         }
 
       // nearest texture filtering required for depth textures -- we don't want interpolation of depth values...
-      OSPTexture2D depthTexture = ospNewTexture2D(glDepthBufferWidth, glDepthBufferHeight, OSP_FLOAT, ospDepth, OSP_TEXTURE_FILTER_NEAREST);
+      vec2i texSize(glDepthBufferWidth, glDepthBufferHeight);
+      OSPTexture2D depthTexture = ospNewTexture2D((osp::vec2i&)texSize, OSP_TEXTURE_R32F, ospDepth, OSP_TEXTURE_FILTER_NEAREST);
 
       delete[] ospDepth;
 

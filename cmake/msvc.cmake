@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -44,3 +44,4 @@ IF (MSVC_VERSION LESS 1700) # need at least MSVC 11.0 2012 for AVX2
 ELSE()
   SET(OSPRAY_COMPILER_SUPPORTS_AVX2 TRUE)
 ENDIF()
+SET(OSPRAY_COMPILER_SUPPORTS_AVX512 FALSE)

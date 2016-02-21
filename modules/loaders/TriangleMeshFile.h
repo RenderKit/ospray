@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,6 +18,7 @@
 
 #include <stdlib.h>
 #include <string>
+#include <iostream>
 #include "ospray/include/ospray/ospray.h"
 
 //! \brief Define a function to create an instance of the InternalClass
@@ -30,7 +31,7 @@
 //!  module and registered with OSPRay using this macro.
 //! 
 #define OSP_REGISTER_TRIANGLEMESH_FILE(InternalClass, ExternalName)           \
-  extern "C" OSPTriangleMesh ospray_import_trianglemesh_file_##ExternalName(const std::string &filename, OSPTriangleMesh triangleMesh) \
+  extern "C" OSPGeometry ospray_import_trianglemesh_file_##ExternalName(const std::string &filename, OSPGeometry triangleMesh) \
     { InternalClass file(filename);  return(file.importTriangleMesh(triangleMesh)); }
 
 //! \brief The TriangleMeshFile class is an abstraction for the concrete
@@ -45,37 +46,31 @@
 class TriangleMeshFile {
 public:
 
-  //! Constructor.
-  TriangleMeshFile() {};
-
   //! Destructor.
-  virtual ~TriangleMeshFile() {};
+  virtual ~TriangleMeshFile() {}
 
-  //! Create a TriangleMeshFile object of the subtype given by the file extension and import the triangle mesh.
-  static OSPTriangleMesh importTriangleMesh(const std::string &filename, OSPTriangleMesh triangleMesh);
+  //! Create a TriangleMeshFile object of the subtype given by the file
+  //! extension and import the triangle mesh.
+  static OSPGeometry importTriangleMesh(const std::string &filename,
+                                        OSPGeometry triangleMesh);
 
   //! Import the triangle mesh specification and data.
-  virtual OSPTriangleMesh importTriangleMesh(OSPTriangleMesh triangleMesh) = 0;
+  virtual OSPGeometry importTriangleMesh(OSPGeometry triangleMesh) = 0;
 
   //! A string description of this class.
-  virtual std::string toString() const { return("ospray_module_loaders::TriangleMeshFile"); }
+  virtual std::string toString() const;
 
 protected:
 
   //! Print an error message.
-  void emitMessage(const std::string &kind, const std::string &message) const
-    { std::cerr << "  " + toString() + "  " + kind + ": " + message + "." << std::endl; }
+  void emitMessage(const std::string &kind, const std::string &message) const;
 
   //! Error checking.
-  void exitOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("ERROR", message);  exit(1); }
+  void exitOnCondition(bool condition, const std::string &message) const;
 
   //! Warning condition.
-  void warnOnCondition(bool condition, const std::string &message) const
-    { if (!condition) return;  emitMessage("WARNING", message); }
+  void warnOnCondition(bool condition, const std::string &message) const;
 
   //! Get the absolute file path.
-  static std::string getFullFilePath(const std::string &filename)
-    { char *fullpath = realpath(filename.c_str(), NULL);  return(fullpath != NULL ? fullpath : filename); }
-
+  static std::string getFullFilePath(const std::string &filename);
 };

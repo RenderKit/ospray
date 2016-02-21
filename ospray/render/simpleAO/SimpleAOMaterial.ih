@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,18 +16,12 @@
 
 #pragma once
 
-#include "api/parms.h"
-#include "PTAmbientLight_ispc.h"
+#include "ospray/math/vec.ih"
+#include "ospray/common/Material.ih"
+#include "ospray/texture/Texture2D.ih"
 
-namespace embree
-{
-  struct AmbientLight
-  {
-    static void* create(const Parms& parms)
-    {
-      const Color L = parms.getColor("L");
-      return ispc::AmbientLight__new((ispc::vec3f&)L);
-    }
-  };
-}
-
+struct SimpleAOMaterial {
+  Material super;
+  vec3f Kd;
+  uniform Texture2D *uniform map_Kd;
+};

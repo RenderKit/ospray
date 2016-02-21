@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,8 +25,6 @@
 
 // tbb
 #ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
-# include <tbb/parallel_for.h>
 # include <tbb/task_scheduler_init.h>
 #endif
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "ospray/common/OSPDataType.h"
+#include "ospray/OSPDataType.h"
 #include "ospray/volume/StructuredVolume.ih"
 
 //! \brief ISPC variables and functions for the BlockBrickedVolume class
@@ -44,8 +44,8 @@ struct BlockBrickedVolume {
 
   /*! copy given block of voxels into the volume, where source[0] will
     be written to volume[targetCoord000] */
-  void (*uniform setRegion)(BlockBrickedVolume *uniform _volume,
-                            const void *uniform _source,
+  void (*uniform setRegion)(BlockBrickedVolume *uniform self,
+                            const void *uniform source,
                             const uniform vec3i &regionSize,
                             const uniform vec3i &targetCoord000,
                             const uniform int taskIndex);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,31 +16,33 @@
 
 //ospray
 #include "ospray/volume/BlockBrickedVolume.h"
+#include "ospray/common/parallel_for.h"
 #include "BlockBrickedVolume_ispc.h"
 // std
 #include <cassert>
 
-// tbb
-#ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
-# include <tbb/parallel_for.h>
-#endif
-
 namespace ospray {
 
-std::string BlockBrickedVolume::toString() const
-{
-  return("ospray::BlockBrickedVolume<" + voxelType + ">");
-}
+  BlockBrickedVolume::~BlockBrickedVolume()
+  {
+    if (ispcEquivalent) {
+      ispc::BlockBrickedVolume_freeVolume(ispcEquivalent);
+    }
+  }
 
-void BlockBrickedVolume::commit()
-{
-  // The ISPC volume container should already exist. We (currently)
-  // require 'dimensions' etc to be set first, followed by call(s)
+  std::string BlockBrickedVolume::toString() const
+  {
+    return("ospray::BlockBrickedVolume<" + voxelType + ">");
+  }
+
+  void BlockBrickedVolume::commit()
+  {
+    // The ISPC volume container should already exist. We (currently)
+    // require 'dimensions' etc to be set first, followed by call(s)
     // to 'setRegion', and only a final commit at the
     // end. 'dimensions' etc may/will _not_ be committed before
     // setregion.
-    exitOnCondition(ispcEquivalent == NULL,
+    exitOnCondition(ispcEquivalent == nullptr,
                     "the volume data must be set via ospSetRegion() "
                     "prior to commit for this volume type");
 
@@ -48,24 +50,21 @@ void BlockBrickedVolume::commit()
     StructuredVolume::commit();
   }
 
-  int BlockBrickedVolume::setRegion(// points to the first voxel to be copies.
-                                    // The voxels at 'source' MUST have
-                                    // dimensions 'regionSize', must be
-                                    // organized in 3D-array order, and must
-                                    // have the same voxel type as the volume.
-                                    const void *source,
-                                    // coordinates of the lower,
-                                    // left, front corner of the target
-                                    // region.
-                                    const vec3i &regionCoords,
-                                    // size of the region that we're writing to
-                                    // MUST be the same as the dimensions of
-                                    // source[][][]
-                                    const vec3i &regionSize)
+  int BlockBrickedVolume::setRegion(
+      // points to the first voxel to be copied. The voxels at 'source' MUST
+      // have dimensions 'regionSize', must be organized in 3D-array order, and
+      // must have the same voxel type as the volume.
+      const void *source,
+      // coordinates of the lower, left, front corner of the target region
+      const vec3i &regionCoords,
+      // size of the region that we're writing to, MUST be the same as the
+      // dimensions of source[][][]
+      const vec3i &regionSize)
   {
     // Create the equivalent ISPC volume container and allocate memory for voxel
     // data.
-    if (ispcEquivalent == NULL) createEquivalentISPC();
+    if (ispcEquivalent == nullptr)
+      createEquivalentISPC();
 
     /*! \todo check if we still need this 'computevoxelrange' - in
         theory we need this only if the app is allowed to query these
@@ -73,10 +72,10 @@ void BlockBrickedVolume::commit()
         either, so should we actually set them at all!? */
     // Compute the voxel value range for unsigned byte voxels if none was
     // previously specified.
-    Assert2(source,"NULL source in BlockBrickedVolume::setRegion()");
+    Assert2(source,"nullptr source in BlockBrickedVolume::setRegion()");
 
 #ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    if (findParam("voxelRange") == NULL) {
+    if (findParam("voxelRange") == nullptr) {
       // Compute the voxel value range for float voxels if none was
       // previously specified.
       const size_t numVoxelsInRegion
@@ -95,31 +94,17 @@ void BlockBrickedVolume::commit()
       }
     }
 #endif
-    // Copy voxel data into the volume.
 
+    // Copy voxel data into the volume.
     const int NTASKS = regionSize.y * regionSize.z;
-#ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
-                      [&](const tbb::blocked_range<int> &range) {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex)
+    parallel_for(NTASKS, [&](int taskIndex){
         ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
-                                           source,
-                                           (const ispc::vec3i &) regionCoords,
-                                           (const ispc::vec3i &) regionSize,
-                                           taskIndex);
+            source,
+            (const ispc::vec3i &) regionCoords,
+            (const ispc::vec3i &) regionSize,
+            taskIndex);
     });
-#else//OpenMP
-#   pragma omp parallel for schedule(dynamic)
-    for (int taskIndex = 0; taskIndex < NTASKS; ++taskIndex) {
-      ispc::BlockBrickedVolume_setRegion(ispcEquivalent,
-                                         source,
-                                         (const ispc::vec3i &) regionCoords,
-                                         (const ispc::vec3i &) regionSize,
-                                         taskIndex);
-    }
-#endif
+
     return true;
   }
 
@@ -151,5 +136,6 @@ void BlockBrickedVolume::commit()
   // A volume type with 64-bit addressing and multi-level bricked storage order.
   OSP_REGISTER_VOLUME(BlockBrickedVolume, block_bricked_volume);
 #endif
+
 } // ::ospray
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,7 +18,7 @@
 
 struct DefaultToneMapper
 {
-  ToneMapper base;
+  ToneMapper super;
   float gamma;
   float rcpGamma;
   bool vignetting;
@@ -44,7 +44,7 @@ varying vec3f DefaultToneMapper__ToneMap(const uniform ToneMapper *uniform _this
 
 void DefaultToneMapper__Constructor(uniform DefaultToneMapper* uniform this, uniform float gamma, uniform bool vignetting)
 {
-  ToneMapper__Constructor(&this->base,ToneMapper__Destructor,DefaultToneMapper__ToneMap);
+  ToneMapper__Constructor(&this->super,ToneMapper__Destructor,DefaultToneMapper__ToneMap);
   this->rcpGamma = rcp(gamma);
   this->vignetting = vignetting;
 }

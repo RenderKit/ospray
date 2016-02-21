@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,13 +16,13 @@
 
 #pragma once
 
-#include "Texture.h"
-#include "../include/ospray/ospray.h"
+#include "ospray/common/Managed.h"
+#include "ospray/OSPTexture.h"
 
 namespace ospray {
 
   /*! \brief A Texture defined through a 2D Image. */
-  struct Texture2D : public Texture {
+  struct Texture2D : public ManagedObject {
 
     //! \brief common function to help printf-debugging 
     /*! Every derived class should overrride this! */
@@ -31,12 +31,11 @@ namespace ospray {
     virtual ~Texture2D();
 
     /*! \brief creates a Texture2D object with the given parameter */
-    static Texture2D *createTexture(int width, int height, OSPDataType type, 
-                                    void *data, int flags);
+    static Texture2D *createTexture(const vec2i &size, const OSPTextureFormat, 
+                                    void *data, const int flags);
 
-    int width;
-    int height;
-    OSPDataType type;
+    vec2i size;
+    OSPTextureFormat type;
     void *data;
     int flags;
   };

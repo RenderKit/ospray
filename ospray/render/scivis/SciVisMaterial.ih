@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,24 +16,23 @@
 
 #pragma once
 
-#include "api/parms.h"
-#include "PTTriangleLight_ispc.h"
+#include "ospray/math/vec.ih"
+#include "ospray/common/Material.ih"
+#include "ospray/texture/Texture2D.ih"
+#include "ospray/volume/Volume.ih"
 
-namespace ospray {
-  namespace pt {
-    
-    struct TriangleLight
-    {
-      static void* create(const Parms& parms)
-      {
-        const Vector3f v0 = parms.getVector3f("v0");
-        const Vector3f v1 = parms.getVector3f("v1");
-        const Vector3f v2 = parms.getVector3f("v2");
-        const Color L = parms.getColor("L");
-        return ispc::TriangleLight__new((ispc::vec3f&)v0,(ispc::vec3f&)v1,(ispc::vec3f&)v2,(ispc::vec3f&)L);
-      }
-    };
-
-  } // ::ospray::pt
-} // ::ospray
-
+//! ispc-equivalent of ospray::raytracer::SciVisMaterial
+struct SciVisMaterial
+{
+  uniform Material super; //!< inherited material properties
+  const uniform Texture2D *map_d;
+  float d;
+  const uniform Texture2D *map_Kd;
+  vec3f Kd;
+  const uniform Texture2D *map_Ks;
+  vec3f Ks;
+  const uniform Texture2D *map_Ns;
+  float Ns;
+  const uniform Texture2D *map_Bump;
+  uniform Volume *uniform volume;
+};

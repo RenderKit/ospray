@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -33,8 +33,8 @@ namespace ospray {
     using std::cout;
     using std::endl;
 
-    Ref<Texture2D> loadTexture(const std::string &path, const std::string &fileName)
-    { return Texture2D::load(path+"/"+fileName); }
+    Ref<Texture2D> loadTexture(const std::string &path, const std::string &fileName, const bool prefereLinear = false)
+    { return Texture2D::load(path+"/"+fileName, prefereLinear); }
 
     /*! Three-index vertex, indexing start at 0, -1 means invalid vertex. */
     struct Vertex {
@@ -291,16 +291,16 @@ namespace ospray {
           if (!strncmp(token, "Ks", 2)) { parseSep(token += 2);  cur->setParam("Ks", getVec3f(token)); continue; }
           if (!strncmp(token, "Tf", 2)) { parseSep(token += 2);  cur->setParam("Tf", getVec3f(token)); continue; }
           
-          if (!strncmp(token, "map_d" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_d", loadTexture(path, std::string(token)));  continue; }
-          if (!strncmp(token, "map_Ns" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ns", loadTexture(path, std::string(token)));  continue; }
+          if (!strncmp(token, "map_d" , 5)) { parseSepOpt(token += 5);  cur->setParam("map_d", loadTexture(path, std::string(token), true));  continue; }
+          if (!strncmp(token, "map_Ns" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ns", loadTexture(path, std::string(token), true));  continue; }
           if (!strncmp(token, "map_Ka" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ka", loadTexture(path, std::string(token)));  continue; }
           if (!strncmp(token, "map_Kd" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Kd", loadTexture(path, std::string(token)));  continue; }
           if (!strncmp(token, "map_Ks" , 6)) { parseSepOpt(token += 6); cur->setParam("map_Ks", loadTexture(path, std::string(token)));  continue; }
           /*! the following are extensions to the standard */
           if (!strncmp(token, "map_Refl" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Refl", loadTexture(path, std::string(token)));  continue; }
-          if (!strncmp(token, "map_Bump" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token)));  continue; }
+          if (!strncmp(token, "map_Bump" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true));  continue; }
 
-          if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token)));  continue; }
+          if (!strncmp(token, "bumpMap" , 7)) { parseSepOpt(token += 7);  cur->setParam("map_Bump", loadTexture(path, std::string(token), true));  continue; }
           if (!strncmp(token, "colorMap" , 8)) { parseSepOpt(token += 8);  cur->setParam("map_Kd", loadTexture(path, std::string(token)));  continue; }
 
           if (!strncmp(token, "color", 5)) { parseSep(token += 5);  cur->setParam("color", getVec3f(token)); continue; }

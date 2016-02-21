@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -31,9 +31,9 @@ TARGET_LINK_LIBRARIES(lexers${EXT} sys${EXT})
 SET_PROPERTY(TARGET lexers${EXT} PROPERTY FOLDER common)
 
 INSTALL(TARGETS lexers${EXT}
-  EXPORT lexers${EXT}Export
+#  EXPORT lexers${EXT}Export
   DESTINATION lib
 )
-INSTALL(EXPORT lexers${EXT}Export
-  DESTINATION ${CMAKE_DIR} FILE liblexers${EXT}Targets.cmake
-)
+#INSTALL(EXPORT lexers${EXT}Export
+#  DESTINATION ${CMAKE_DIR} FILE liblexers${EXT}Targets.cmake
+#)

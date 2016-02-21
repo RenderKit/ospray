@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -23,13 +23,13 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/)
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
 SET(LIBS ${LIBS} ${GLUT_LIBRARIES} ${OPENGL_LIBRARIES})
 
 FIND_PACKAGE(Qt4 REQUIRED) 
 SET(QT_USE_QTOPENGL TRUE)
+FIND_PACKAGE(OpenGL REQUIRED)
 INCLUDE(${QT_USE_FILE})
-SET(LIBS ${LIBS} ${QT_LIBRARIES})
+SET(LIBS ${LIBS} ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
 
 ADD_SUBDIRECTORY(sg)
 
@@ -60,6 +60,8 @@ QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 ADD_EXECUTABLE(ospQtViewer ${SRCS} ${MOC_OUTFILES})
 TARGET_LINK_LIBRARIES(ospQtViewer ${LIBS} 
   ospray_sg${OSPRAY_LIB_SUFFIX}
+  ${TBB_LIBRARY_MALLOC}
+  ${TBB_LIBRARY}
   )
 # ------------------------------------------------------------
 INSTALL(TARGETS ospQtViewer DESTINATION bin)

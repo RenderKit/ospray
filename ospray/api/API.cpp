@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -80,9 +80,15 @@ namespace ospray {
 
   extern "C" void ospInit(int *_ac, const char **_av)
   {
-    if (ospray::api::Device::current)
+    if (ospray::api::Device::current) {
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
+    }
+
+    auto *nThreads = getenv("OSPRAY_THREADS");
+    if (nThreads) {
+      numThreads = atoi(nThreads);
+    }
 
     /* call ospray::init to properly parse common args like
        --osp:verbose, --osp:debug etc */
@@ -118,9 +124,9 @@ namespace ospray {
         }
 
         if (std::string(_av[i]) == "--osp:coi") {
-#ifdef OSPRAY_TARGET_MIC
+#ifdef __MIC__
           throw std::runtime_error("The COI device can only be created on the host");
-#elifdef OSPRAY_MIC_COI
+#elif defined(OSPRAY_MIC_COI)
           removeArgs(*_ac,(char **&)_av,i,1);
           ospray::api::Device::current
             = ospray::coi::createCoiDevice(_ac,_av);
@@ -186,7 +192,7 @@ namespace ospray {
 
   extern "C" OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size,
                                               const OSPFrameBufferFormat mode,
-                                              const int channels)
+                                              const uint32_t channels)
   {
     ASSERT_DEVICE();
     return ospray::api::Device::current->frameBufferCreate((const vec2i&)size,mode,channels);
@@ -244,15 +250,8 @@ namespace ospray {
     return ospray::api::Device::current->removeGeometry(model, geometry);
   }
 
-  /*! create a new triangle mesh */
-  extern "C" OSPTriangleMesh ospNewTriangleMesh()
-  {
-    ASSERT_DEVICE();
-    return ospray::api::Device::current->newTriangleMesh();
-  }
-
   /*! create a new data buffer, with optional init data and control flags */
-  extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, int flags)
+  extern "C" OSPData ospNewData(size_t nitems, OSPDataType format, const void *init, const uint32_t flags)
   {
     ASSERT_DEVICE();
     return ospray::api::Device::current->newData(nitems,format,(void*)init,flags);
@@ -392,17 +391,16 @@ namespace ospray {
     return camera;
   }
 
-  extern "C" OSPTexture2D ospNewTexture2D(int width,
-                                          int height,
-                                          OSPDataType type,
+  extern "C" OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
+                                          const OSPTextureFormat type,
                                           void *data,
-                                          int flags)
+                                          const uint32_t flags)
   {
     ASSERT_DEVICE();
-    Assert2(width > 0, "Width must be greater than 0 in ospNewTexture2D");
-    Assert2(height > 0, "Height must be greater than 0 in ospNewTexture2D");
-    LOG("ospNewTexture2D( " << width << ", " << height << ", " << type << ", " << data << ", " << flags << ")");
-    return ospray::api::Device::current->newTexture2D(width, height, type, data, flags);
+    Assert2(size.x > 0, "Width must be greater than 0 in ospNewTexture2D");
+    Assert2(size.y > 0, "Height must be greater than 0 in ospNewTexture2D");
+    LOG("ospNewTexture2D( (" << size.x << ", " << size.y << "), " << type << ", " << data << ", " << flags << ")");
+    return ospray::api::Device::current->newTexture2D((const vec2i&)size, type, data, flags);
   }
 
   /*! \brief create a new volume of given type, return 'NULL' if that type is not known */

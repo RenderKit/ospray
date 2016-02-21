@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -169,10 +169,10 @@ OSPLight OSPObjectFile::importLight(const tinyxml2::XMLNode *root)
   return light;
 }
 
-OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
+OSPGeometry OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
 {
   // Create the OSPRay object.
-  OSPTriangleMesh triangleMesh = (OSPTriangleMesh)ospNewGeometry("trianglemesh");
+  OSPGeometry triangleMesh = ospNewGeometry("trianglemesh");
 
   // Temporary storage for the file name attribute if specified.
   const char *triangleMeshFilename = NULL;
@@ -197,10 +197,15 @@ OSPTriangleMesh OSPObjectFile::importTriangleMesh(const tinyxml2::XMLNode *root)
     char *duplicateFilename = strdup(filename.c_str());
 
     // The triangle mesh file path is absolute.
-    if (triangleMeshFilename[0] == '/') return(TriangleMeshFile::importTriangleMesh(triangleMeshFilename, triangleMesh));
+    if (triangleMeshFilename[0] == '/') {
+      return(TriangleMeshFile::importTriangleMesh(triangleMeshFilename,
+                                                  triangleMesh));
+    }
 
     // The triangle mesh file path is relative to the object file path.
-    if (triangleMeshFilename[0] != '/') return(TriangleMeshFile::importTriangleMesh((std::string(dirname(duplicateFilename)) + "/" + triangleMeshFilename).c_str(), triangleMesh));
+    if (triangleMeshFilename[0] != '/') {
+      return(TriangleMeshFile::importTriangleMesh((std::string(dirname(duplicateFilename)) + "/" + triangleMeshFilename).c_str(), triangleMesh));
+    }
 
     // Free the temporary character array.
     if (duplicateFilename != NULL) free(duplicateFilename);

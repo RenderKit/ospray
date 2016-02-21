@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -34,7 +34,7 @@ namespace ospray {
       /*! \detailed if file does not exist, or cannot be loaded for
           some reason, return NULL. Multiple loads from the same file
           will return the *same* texture object */
-      static Ref<Texture2D> load(const FileName &fileName);
+      static Ref<Texture2D> load(const FileName &fileName, const bool prefereLinear = false);
       virtual void render(RenderContext &ctx);
 
       //! texture size, in pixels
@@ -42,7 +42,7 @@ namespace ospray {
       //! pixel data, in whatever format specified in 'texelType'
       void       *texel;
       //! format of each texel
-      OSPDataType texelType;
+      OSPTextureFormat texelType;
       
       OSPTexture2D ospTexture;
     };

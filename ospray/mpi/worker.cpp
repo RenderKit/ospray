@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -67,6 +67,13 @@ namespace ospray {
       Geometry *ptr;
     };
 
+    struct VolumeLocator {
+      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+        return ptr == &*g;
+      }
+      Volume *ptr;
+    };
+
     void embreeErrorFunc(const RTCError code, const char* str)
     {
       std::cerr << "#osp: embree internal error " << code << " : " << str << std::endl;
@@ -88,20 +95,14 @@ namespace ospray {
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
-      // std::stringstream embreeConfig;
-      // if (debugMode)
-      //   embreeConfig << " threads=1";
-      // rtcInit(embreeConfig.str().c_str());
-
-      //      assert(rtcGetError() == RTC_NO_ERROR);
-      rtcSetErrorFunction(embreeErrorFunc);
-
       std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
+
+      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
 
       if (rtcGetError() != RTC_NO_ERROR) {
         // why did the error function not get called !?
@@ -312,11 +313,11 @@ namespace ospray {
 
         case ospray::CMD_FRAMEBUFFER_CREATE: {
           const ObjectHandle handle = cmd.get_handle();
-          const vec2i  size               = cmd.get_vec2i();
+          const vec2i size                = cmd.get_vec2i();
           const OSPFrameBufferFormat mode = (OSPFrameBufferFormat)cmd.get_int32();
           const uint32 channelFlags       = cmd.get_int32();
-          bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
-          bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
+          const bool hasDepthBuffer = (channelFlags & OSP_FB_DEPTH);
+          const bool hasAccumBuffer = (channelFlags & OSP_FB_ACCUM);
 // #if USE_DFB
           FrameBuffer *fb = new DistributedFrameBuffer(ospray::mpi::async::CommLayer::WORLD,
                                                        size,handle,mode,
@@ -417,15 +418,14 @@ namespace ospray {
           const ObjectHandle handle = cmd.get_handle();
           Texture2D *texture2D = NULL;
 
-          int32 width = cmd.get_int32();
-          int32 height = cmd.get_int32();
-          int32 type = cmd.get_int32();
-          int32 flags = cmd.get_int32();
-          size_t size = cmd.get_size_t();
+          const vec2i sz = cmd.get_vec2i();
+          const int32 type = cmd.get_int32();
+          const int32 flags = cmd.get_int32();
+          const size_t size = cmd.get_size_t();
           void *data = malloc(size);
           cmd.get_data(size,data);
 
-          texture2D = Texture2D::createTexture(width,height,(OSPDataType)type,data,
+          texture2D = Texture2D::createTexture(sz, (OSPTextureFormat)type, data,
                                                flags | OSP_DATA_SHARED_BUFFER);
           assert(texture2D);
 
@@ -455,6 +455,22 @@ namespace ospray {
           Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
           if(it != model->geometry.end()) {
             model->geometry.erase(it);
+          }
+        } break;
+
+        case ospray::CMD_REMOVE_VOLUME: {
+          const ObjectHandle modelHandle = cmd.get_handle();
+          const ObjectHandle geomHandle = cmd.get_handle();
+          Model *model = (Model*)modelHandle.lookup();
+          Assert(model);
+          Volume *geom = (Volume*)geomHandle.lookup();
+          Assert(geom);
+
+          VolumeLocator locator;
+          locator.ptr = geom;
+          Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+          if(it != model->volume.end()) {
+            model->volume.erase(it);
           }
         } break;
 

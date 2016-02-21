@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,17 +25,18 @@
 
 namespace ospray {
 
-  //! \brief A concrete implementation of the TransferFunction class for
-  //!  piecewise linear transfer functions.
-  //!
-  class LinearTransferFunction : public TransferFunction {
+  /*! \brief A concrete implementation of the TransferFunction class for
+    piecewise linear transfer functions.
+  */
+  class LinearTransferFunction : public TransferFunction 
+  {
   public:
 
     //! Constructor.
     LinearTransferFunction() {}
 
     //! Destructor.
-    virtual ~LinearTransferFunction() { if (ispcEquivalent != NULL) ispc::LinearTransferFunction_destroy(ispcEquivalent); }
+    virtual ~LinearTransferFunction();
 
     //! Allocate storage and populate the transfer function.
     virtual void commit();

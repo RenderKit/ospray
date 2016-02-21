@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -22,16 +22,19 @@
 
 namespace ospray {
 
-  TransferFunction *TransferFunction::createInstance(std::string type) {
-
-    // Function pointer type for creating a concrete instance of a subtype of this class.
+  TransferFunction *TransferFunction::createInstance(const std::string &type) 
+  {
+    // Function pointer type for creating a concrete instance of a
+    // subtype of this class.
     typedef TransferFunction *(*creationFunctionPointer)();
 
     // Function pointers corresponding to each subtype.
-    std::map<std::string, creationFunctionPointer> symbolRegistry;
+    static std::map<std::string, creationFunctionPointer> symbolRegistry;
 
-    // Return a concrete instance of the requested subtype if the creation function is already known.
-    if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) return((*symbolRegistry[type])());
+    // Return a concrete instance of the requested subtype if the
+    // creation function is already known.
+    if (symbolRegistry.count(type) > 0 && symbolRegistry[type] != NULL) 
+      return((*symbolRegistry[type])());
 
     // Otherwise construct the name of the creation function to look for.
     std::string creationFunctionName = "ospray_create_transfer_function_" + type;
@@ -40,17 +43,20 @@ namespace ospray {
     symbolRegistry[type] = (creationFunctionPointer) getSymbol(creationFunctionName);
 
     // The named function may not be found if the requested subtype is not known.
-    if (!symbolRegistry[type] && ospray::logLevel >= 1) std::cerr << "  ospray::TransferFunction  WARNING: unrecognized subtype '" + type + "'." << std::endl;
+    if (!symbolRegistry[type] && ospray::logLevel >= 1) 
+      std::cerr << "  ospray::TransferFunction  WARNING: unrecognized subtype '" 
+                << type << "'." << std::endl;
 
     // Create a concrete instance of the requested subtype.
-    TransferFunction *transferFunction = (symbolRegistry[type]) ? (*symbolRegistry[type])() : NULL;
+    TransferFunction *transferFunction
+      = (symbolRegistry[type]) ? (*symbolRegistry[type])() : NULL;
 
     // Denote the subclass type in the ManagedObject base class.
-    if (transferFunction) transferFunction->managedObjectType = OSP_TRANSFER_FUNCTION;  
+    if (transferFunction) 
+      transferFunction->managedObjectType = OSP_TRANSFER_FUNCTION;  
    
     // The initialized transfer function.
-    return(transferFunction);
-
+    return transferFunction;
   }
 
 } // ::ospray

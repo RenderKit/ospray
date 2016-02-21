@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,21 +14,31 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+/*! This header is shared with ISPC. */
 #pragma once
 
-#include "api/parms.h"
-#include "PTDirectionalLight_ispc.h"
+/*! OSPRay format constants for Texture creation */
+typedef enum {
+  OSP_TEXTURE_RGBA8,
+  OSP_TEXTURE_SRGBA,
+  OSP_TEXTURE_RGBA32F,
+  OSP_TEXTURE_RGB8,
+  OSP_TEXTURE_SRGB,
+  OSP_TEXTURE_RGB32F,
+  OSP_TEXTURE_R8,
+  OSP_TEXTURE_R32F,
+/* TODO
+  OSP_LogLuv,
+  OSP_RGBA16F
+  OSP_RGB16F
+  OSP_RGBE, // radiance hdr
+  compressed (RGTC, BPTC, ETC, ...)
+*/
+} OSPTextureFormat;
 
-namespace embree
-{
-  struct DirectionalLight
-  {
-    static void* create(const Parms& parms)
-    {
-      const Vector3f D = parms.getVector3f("D");
-      const Color E = parms.getColor("E");
-      return ispc::DirectionalLight__new((ispc::vec3f&)D,(ispc::vec3f&)E);
-    }
-  };
-}
+/*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
+typedef enum {
+  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
+  OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
+} OSPTextureCreationFlags;
 

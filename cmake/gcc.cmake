@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -49,3 +49,11 @@ ENDIF()
 # GCC 4.8.0 supports AVX and AVX2...
 SET(OSPRAY_COMPILER_SUPPORTS_AVX TRUE)
 SET(OSPRAY_COMPILER_SUPPORTS_AVX2 TRUE)
+
+SET(GCC_VERSION_REQUIRED_AVX512 "4.9.0")
+
+IF (GCC_VERSION VERSION_LESS GCC_VERSION_REQUIRED_AVX512)
+  SET(OSPRAY_COMPILER_SUPPORTS_AVX512 FALSE)
+ELSE()
+  SET(OSPRAY_COMPILER_SUPPORTS_AVX512 TRUE)
+ENDIF()

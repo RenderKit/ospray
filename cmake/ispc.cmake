@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,13 +14,12 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(ISPC_VERSION_REQUIRED "1.8.2")
-
-# warn about recommended ISPC version on KNC
-IF (OSPRAY_MIC AND NOT OSPRAY_WARNED_MIC_ISPC_VERSION)
-  MESSAGE("Warning: use of ISPC v1.8.1 is recommended on KNC.")
-  SET(OSPRAY_WARNED_MIC_ISPC_VERSION ON CACHE INTERNAL "Warned about recommended ISPC version with KNC.")
+IF(WIN32)
+  SET(ISPC_VERSION_REQUIRED "1.8.2")
+ELSE()
+  SET(ISPC_VERSION_REQUIRED "1.8.1")
 ENDIF()
+SET(ISPC_VERSION_RECOMMENDED_KNC "1.8.1")
 
 IF (NOT ISPC_EXECUTABLE)
   # try sibling folder as hint for path of ISPC
@@ -62,6 +61,13 @@ IF(NOT ISPC_VERSION)
   MARK_AS_ADVANCED(ISPC_EXECUTABLE)
 ENDIF()
 
+# warn about recommended ISPC version on KNC
+IF (OSPRAY_MIC AND NOT ISPC_VERSION VERSION_EQUAL ISPC_VERSION_RECOMMENDED_KNC
+    AND NOT OSPRAY_WARNED_KNC_ISPC_VERSION)
+  MESSAGE("Warning: use of ISPC v${ISPC_VERSION_RECOMMENDED_KNC} is recommended on KNC.")
+  SET(OSPRAY_WARNED_KNC_ISPC_VERSION ON CACHE INTERNAL "Warned about recommended ISPC version with KNC.")
+ENDIF()
+
 GET_FILENAME_COMPONENT(ISPC_DIR ${ISPC_EXECUTABLE} PATH)
 
 
@@ -75,7 +81,7 @@ MACRO (INCLUDE_DIRECTORIES_ISPC)
   SET(ISPC_INCLUDE_DIR ${ISPC_INCLUDE_DIR} ${ARGN})
 ENDMACRO ()
 
-MACRO (ISPC_COMPILE)
+MACRO (OSPRAY_ISPC_COMPILE)
   SET(ISPC_ADDITIONAL_ARGS "")
   SET(ISPC_TARGETS ${OSPRAY_ISPC_TARGET_LIST})
 
@@ -83,16 +89,6 @@ MACRO (ISPC_COMPILE)
     SET(ISPC_TARGET_EXT .cpp)
     SET(ISPC_TARGET_ARGS generic-16)
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --opt=force-aligned-memory --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNC_Backend.h )
-  ELSEIF (${OSPRAY_BUILD_ISA} STREQUAL "AVX512")
-    IF (OSPRAY_ISPC_KNL_NATIVE) # TODO: should be detected automatically
-      SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
-      SET(ISPC_TARGET_ARGS avx512knl-i32x16)
-    ELSE()
-      SET(ISPC_TARGET_EXT .cpp)
-      SET(ISPC_TARGET_ARGS generic-16)
-      SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --emit-c++ --c++-include-file=${PROJECT_SOURCE_DIR}/ospray/common/ISPC_KNL_Backend.h -DEMBREE_AVX512_WORKAROUND=1)
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -xMIC-AVX512") # TODO: set only for affected files SET_SOURCE_FILES_PROPERTIES( ${src} PROPERTIES COMPILE_FLAGS -xMIC-AVX512 )
-    ENDIF()
   ELSE()
     SET(ISPC_TARGET_EXT ${CMAKE_CXX_OUTPUT_EXTENSION})
     STRING(REPLACE ";" "," ISPC_TARGET_ARGS "${ISPC_TARGETS}")
@@ -118,11 +114,7 @@ MACRO (ISPC_COMPILE)
     SET(ISPC_OPT_FLAGS -O2 -g)
   ENDIF()
 
-  IF (WIN32)
-   IF(ISPC_DLLEXPORT) # workaround for bug #1085 in ISPC 1.8.2: ospray_embree should export, but export in ospray cause link errors
-    SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --dllexport)
-   ENDIF()
-  ELSE()
+  IF (NOT WIN32)
     SET(ISPC_ADDITIONAL_ARGS ${ISPC_ADDITIONAL_ARGS} --pic)
   ENDIF()
 
@@ -158,13 +150,22 @@ MACRO (ISPC_COMPILE)
     SET(results "${outdir}/${fname}.dev${ISPC_TARGET_EXT}")
 
     # if we have multiple targets add additional object files
-    IF (NOT THIS_IS_MIC AND NOT (${OSPRAY_BUILD_ISA} STREQUAL "AVX512"))
+    IF (NOT THIS_IS_MIC)
       LIST(LENGTH ISPC_TARGETS NUM_TARGETS)
-      IF (NUM_TARGETS GREATER 1)
-        FOREACH(target ${ISPC_TARGETS})
-          SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
-        ENDFOREACH()
+      IF (NUM_TARGETS EQUAL 1)
+        # workaround link issues to Embree ISPC exports:
+        # we add a 2nd target to force ISPC to add the ISA suffix during name
+        # mangling
+        SET(ISPC_TARGET_ARGS "${ISPC_TARGETS},sse2") 
+        LIST(APPEND ISPC_TARGETS sse2)
       ENDIF()
+      FOREACH(target ${ISPC_TARGETS})
+        # in v1.9.0 ISPC changed the ISA suffix of avx512knl-i32x16 to just 'avx512knl'
+        IF (${target} STREQUAL "avx512knl-i32x16" AND NOT ISPC_VERSION VERSION_LESS "1.9.0")
+          SET(target "avx512knl")
+        ENDIF()
+        SET(results ${results} "${outdir}/${fname}.dev_${target}${ISPC_TARGET_EXT}")
+      ENDFOREACH()
     ENDIF()
 
     ADD_CUSTOM_COMMAND(
@@ -203,7 +204,7 @@ MACRO (ADD_ISPC_EXECUTABLE name)
       SET(OTHER_SOURCES ${OTHER_SOURCES} ${src})
     ENDIF ()
   ENDFOREACH()
-  ISPC_COMPILE(${ISPC_SOURCES})
+  OSPRAY_ISPC_COMPILE(${ISPC_SOURCES})
   ADD_EXECUTABLE(${name} ${ISPC_OBJECTS} ${OTHER_SOURCES})
 ENDMACRO()
 
@@ -218,6 +219,12 @@ MACRO (OSPRAY_ADD_LIBRARY name type)
       SET(OTHER_SOURCES ${OTHER_SOURCES} ${src})
     ENDIF ()
   ENDFOREACH()
-  ISPC_COMPILE(${ISPC_SOURCES})
+  OSPRAY_ISPC_COMPILE(${ISPC_SOURCES})
   ADD_LIBRARY(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+
+  IF (THIS_IS_MIC)
+    FOREACH(src ${ISPC_OBJECTS})
+      SET_SOURCE_FILES_PROPERTIES( ${src} PROPERTIES COMPILE_FLAGS -std=gnu++98 )
+    ENDFOREACH()
+  ENDIF()
 ENDMACRO()

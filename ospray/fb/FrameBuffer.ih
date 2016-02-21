@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,7 +37,6 @@ struct FrameBuffer
 {
   vec2i size; /*!< size (width x height) of frame buffer, in pixels */
   vec2f rcpSize; /*! one over size (precomputed) */
-  vec2f rcpSize_1; /*! one over (size - 1) (precomputed) */
   uniform float gamma; /*! gamma correction */
   int32 accumID;
 

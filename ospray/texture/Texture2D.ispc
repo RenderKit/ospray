@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,380 +16,208 @@
 
 #include "Texture2D.ih"
 
-inline vec4f getTexel4uc(const uniform Texture2D *uniform self,
-                         const uint32 ix, const uint32 iy)
+
+// Low-level texel accessors
+//////////////////////////////////////////////////////////////////////////////
+
+// TODO blocking
+
+inline vec4f getTexel_rgba8(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
-  const uint32 c = ((uniform uint32 *uniform)self->data)[ix+self->size.x*iy];
-  const float one_over_255 = (1.f/255.f);
+  const uint32 c = ((const uniform uint32 *uniform)self->data)[i.y*self->size.x + i.x];
   const uint32 r = c         & 255;
   const uint32 g = (c >>  8) & 255;
   const uint32 b = (c >> 16) & 255;
-  const uint32 a = (c >> 24) & 255;
-  return make_vec4f(r*one_over_255, g*one_over_255, b*one_over_255, a*one_over_255);
+  const uint32 a = c >> 24;
+  return make_vec4f(r, g, b, a)*(1.f/255.f);
 }
 
-inline vec4f getTexel4f(const uniform Texture2D *uniform self,
-                        const uint32 ix, const uint32 iy)
+inline vec4f getTexel_rgb8(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
-  const vec4f c = ((uniform vec4f *uniform)self->data)[ix+self->size.x*iy];
-  return c;
+  const uniform uint8 *uniform texel = (const uniform uint8 *uniform)self->data;
+  const uint32 texelOfs = 3*(i.y*self->size.x + i.x);
+  const uint32 r = texel[texelOfs];
+  const uint32 g = texel[texelOfs+1];
+  const uint32 b = texel[texelOfs+2];
+  return make_vec4f(make_vec3f(r, g, b)*(1.f/255.f), 1.f);
 }
 
-inline vec4f getTexel3f(const uniform Texture2D *uniform self,
-                         const uint32 ix, const uint32 iy)
+inline vec4f getTexel_r8(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
-  vec3f v = ((uniform vec3f*uniform )self->data)[ix+self->size.x*iy];
-  return make_vec4f(v.x,v.y,v.z,1.f);
+  const uint8 c = ((const uniform uint8 *uniform)self->data)[i.y*self->size.x + i.x];
+  return make_vec4f(c*(1.f/255.f), 0.0f, 0.0f, 1.f);
 }
 
-inline vec4f getTexel1f(const uniform Texture2D *uniform self,
-                        const uint32 ix, const uint32 iy)
+inline float srgb(const float c)
+{
+//  return c <= 0.04045f ? c/12.92f : pow((c + 0.055f)/1.055f, 2.4f); // exact
+  return pow(c, 2.2f); // approximate
+}
+
+inline vec4f srgba(const vec4f c)
+{
+  return make_vec4f(srgb(c.x), srgb(c.y), srgb(c.z), c.w);
+}
+
+inline vec4f getTexel_srgba(const uniform Texture2D *uniform self, const vec2i i)
+{
+  return srgba(getTexel_rgba8(self, i));
+}
+
+inline vec4f getTexel_srgb(const uniform Texture2D *uniform self, const vec2i i)
+{
+  return srgba(getTexel_rgb8(self, i));
+}
+
+inline vec4f getTexel_rgba32f(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
-  float v = ((uniform float*uniform)self->data)[ix+self->size.x*iy];
-  return make_vec4f(v,0.f,0.f,1.f);
+  return ((const uniform vec4f *uniform)self->data)[i.y*self->size.x + i.x];
 }
 
-inline vec4f getTexel3uc(const uniform Texture2D *uniform self,
-                         const uint32 ix, const uint32 iy)
+inline vec4f getTexel_rgb32f(const uniform Texture2D *uniform self, const vec2i i)
 {
   assert(self);
-  const uniform uint8 *uniform pixel = (const uniform uint8 *uniform)self->data;
-  const float one_over_255 = (1.f/255.f);
-  const uint32 pixelOfs = 3*(ix+self->size.x*iy);
-  const uint32 r = pixel[pixelOfs+0];
-  const uint32 g = pixel[pixelOfs+1];
-  const uint32 b = pixel[pixelOfs+2];
-  return make_vec4f(r*one_over_255, g*one_over_255, b*one_over_255, 1.f);
+  vec3f v = ((const uniform vec3f*uniform )self->data)[i.y*self->size.x + i.x];
+  return make_vec4f(v, 1.f);
 }
 
-static void Texture2D_4uc_bilinear(const uniform Texture2D *uniform _this,
-                                   varying vec4f &ret,
-                                   const varying vec2f &p)
+inline vec4f getTexel_r32f(const uniform Texture2D *uniform self, const vec2i i)
 {
-  assert(_this);
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
-
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
-
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
-
-  const int x0 = (int)(fx);
-  const int y0 = (int)(fy);
-  const int x1 = (int)(min(fx+1.f,this->f_size_1.x));
-  const int y1 = (int)(min(fy+1.f,this->f_size_1.y));
-  fx = fx - floor(fx);
-  fy = fy - floor(fy);
-  
-  const vec4f c00 = getTexel4uc(this,x0,y0);
-  const vec4f c01 = getTexel4uc(this,x1,y0);
-  const vec4f c10 = getTexel4uc(this,x0,y1);
-  const vec4f c11 = getTexel4uc(this,x1,y1);
-  ret = lerp(fy,
-             lerp(fx,c00,c01),
-             lerp(fx,c10,c11));
+  assert(self);
+  float v = ((const uniform float*uniform)self->data)[i.y*self->size.x + i.x];
+  return make_vec4f(v, 0.f, 0.f, 1.f);
 }
 
-static void Texture2D_4uc_nearest(const uniform Texture2D *uniform _this,
-                                  varying vec4f &ret,
-                                  const varying vec2f &p)
-{
-  assert(_this);
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
 
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
+// Texture coordinate utilities
+//////////////////////////////////////////////////////////////////////////////
+
+inline vec2i nearest_coords(const uniform Texture2D *uniform self, const vec2f p)
+{
+  // repeat: get remainder within [0..1] parameter space
+  vec2f tc = frac(p);
+  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
 
   // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
+  tc = tc * self->sizef;
 
   // nearest
-  const int x = (int)(min(round(fx),this->f_size_1.x));
-  const int y = (int)(min(round(fy),this->f_size_1.y));
-
-  ret = getTexel4uc(this,x,y);
+  return make_vec2i(tc);
 }
 
-static void Texture2D_3uc_bilinear(const uniform Texture2D *uniform _this,
-                                   varying vec4f &ret,
-                                   const varying vec2f &p)
-{
-  assert(_this);
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
+struct BilinCoords {
+  vec2i st0;
+  vec2i st1;
+  vec2f frac;
+};
 
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
+inline BilinCoords bilinear_coords(const uniform Texture2D *uniform self, const vec2f p)
+{
+  BilinCoords coords;
+
+  // repeat: get remainder within [0..1] parameter space
+  // lower sample shifted by half a texel
+  vec2f tc = frac(p - self->halfTexel);
+  tc = max(tc, make_vec2f(0.0f)); // filter out inf/NaN
 
   // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
+  tc = tc * self->sizef;
+  coords.frac = frac(tc);
 
-  const int x0 = (int)(fx);
-  const int y0 = (int)(fy);
-  const int x1 = (int)(min(fx+1.f,this->f_size_1.x));
-  const int y1 = (int)(min(fy+1.f,this->f_size_1.y));
-  fx = fx - floor(fx);
-  fy = fy - floor(fy);
-  
-  const vec4f c00 = getTexel3uc(this,x0,y0);
-  const vec4f c01 = getTexel3uc(this,x1,y0);
-  const vec4f c10 = getTexel3uc(this,x0,y1);
-  const vec4f c11 = getTexel3uc(this,x1,y1);
-  ret = lerp(fy,
-             lerp(fx,c00,c01),
-             lerp(fx,c10,c11));
+  coords.st0 = make_vec2i(tc);
+  coords.st1 = coords.st0 + 1;
+  // handle border cases
+  if (coords.st1.x >= self->size.x)
+    coords.st1.x = 0;
+  if (coords.st1.y >= self->size.y)
+    coords.st1.y = 0;
+
+  return coords;
 }
 
-static void Texture2D_3uc_nearest(const uniform Texture2D *uniform _this,
-                                  varying vec4f &ret,
-                                  const varying vec2f &p)
+inline vec4f bilerp(const vec2f frac, const vec4f c00, const vec4f c01, const vec4f c10, const vec4f c11)
 {
-  assert(_this);
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
-
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
-
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
-
-  // nearest
-  const int x = (int)(min(round(fx),this->f_size_1.x));
-  const int y = (int)(min(round(fy),this->f_size_1.y));
-
-  ret = getTexel3uc(this,x,y);
+  return lerp(frac.y,
+              lerp(frac.x, c00, c01),
+              lerp(frac.x, c10, c11));
 }
 
-static void Texture2D_4f_bilinear(const uniform Texture2D *uniform texture,
-                                  varying vec4f &ret,
-                                  const varying vec2f &p)
-{
-  assert(texture);
 
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)texture;
+// Implementations of Texture2D_get for different formats and filter modi
+//////////////////////////////////////////////////////////////////////////////
 
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
-
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
-
-  const int x0 = (int)(fx);
-  const int y0 = (int)(fy);
-  const int x1 = (int)(min(fx+1.f,this->f_size_1.x));
-  const int y1 = (int)(min(fy+1.f,this->f_size_1.y));
-  fx = fx - floor(fx);
-  fy = fy - floor(fy);
-  
-  const vec4f c00 = getTexel4f(this,x0,y0);
-  const vec4f c01 = getTexel4f(this,x1,y0);
-  const vec4f c10 = getTexel4f(this,x0,y1);
-  const vec4f c11 = getTexel4f(this,x1,y1);
-  ret = lerp(fy,
-             lerp(fx,c00,c01),
-             lerp(fx,c10,c11));
+#define __define_tex_get(FMT)                                                \
+                                                                             \
+static vec4f Texture2D_nearest_##FMT(const uniform Texture2D *uniform self,  \
+    const vec2f &p)                                                          \
+{                                                                            \
+  return getTexel_##FMT(self, nearest_coords(self, p));                      \
+}                                                                            \
+                                                                             \
+static vec4f Texture2D_bilinear_##FMT(const uniform Texture2D *uniform self, \
+    const vec2f &p)                                                          \
+{                                                                            \
+  BilinCoords cs = bilinear_coords(self, p);                                 \
+                                                                             \
+  const vec4f c00 = getTexel_##FMT(self, make_vec2i(cs.st0.x, cs.st0.y));    \
+  const vec4f c01 = getTexel_##FMT(self, make_vec2i(cs.st1.x, cs.st0.y));    \
+  const vec4f c10 = getTexel_##FMT(self, make_vec2i(cs.st0.x, cs.st1.y));    \
+  const vec4f c11 = getTexel_##FMT(self, make_vec2i(cs.st1.x, cs.st1.y));    \
+                                                                             \
+  return bilerp(cs.frac, c00, c01, c10, c11);                                \
 }
 
-static void Texture2D_4f_nearest(const uniform Texture2D *uniform _this,
-                                  varying vec4f &ret,
-                                  const varying vec2f &p)
+#define __define_tex_get_addr(FMT) \
+  &Texture2D_bilinear_##FMT,       \
+  &Texture2D_nearest_##FMT,
+
+// same order as in OSPTextureFormat!
+#define __foreach_fetcher(FCT) \
+  FCT(rgba8)                   \
+  FCT(srgba)                   \
+  FCT(rgba32f)                 \
+  FCT(rgb8)                    \
+  FCT(srgb)                    \
+  FCT(rgb32f)                  \
+  FCT(r8)                      \
+  FCT(r32f)
+
+__foreach_fetcher(__define_tex_get)
+
+static uniform Texture2D_get Texture2D_get_addr[] = {
+  __foreach_fetcher(__define_tex_get_addr)
+};
+
+#undef __define_tex_get
+#undef __define_tex_get_addr
+#undef __foreach_fetcher
+
+
+// Exports (called from C++)
+//////////////////////////////////////////////////////////////////////////////
+
+export void *uniform Texture2D_create(uniform vec2i &size, void *uniform data,
+    uniform uint32 type, uniform uint32 flags)
 {
-  assert(_this);
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
+  uniform Texture2D *uniform self = uniform new uniform Texture2D;
+  self->size      = size;
 
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
+  // Due to float rounding frac(x) can be exactly 1.0f (e.g. for very small
+  // negative x), although is should be strictly smaller than 1.0f. We handle
+  // this case by having sizef slightly smaller than size, such that
+  // frac(x)*sizef is always < size.
+  self->sizef     = make_vec2f(nextafter(size.x, -1.0f), nextafter(size.y, -1.0f));
+  self->halfTexel = make_vec2f(0.5f/size.x, 0.5f/size.y);
+  self->data      = data;
 
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
+  // select texture fetch function depending on format and filter
+  uniform int filter = flags & OSP_TEXTURE_FILTER_NEAREST ? 1 : 0;
+  uniform int fct_nr = type * 2 + filter;
+  self->get = Texture2D_get_addr[fct_nr];
 
-  // nearest
-  const int x = (int)(min(round(fx),this->f_size_1.x));
-  const int y = (int)(min(round(fy),this->f_size_1.y));
-
-  ret = getTexel4f(this,x,y);
-}
-
-static void Texture2D_3f_bilinear(const uniform Texture2D *uniform texture,
-                              varying vec4f &ret,
-                              const varying vec2f &p)
-{
-  assert(texture);
-
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)texture;
-
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
-
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
-
-  const int x0 = (int)(fx);
-  const int y0 = (int)(fy);
-  const int x1 = (int)(min(fx+1.f,this->f_size_1.x));
-  const int y1 = (int)(min(fy+1.f,this->f_size_1.y));
-  fx = fx - floor(fx);
-  fy = fy - floor(fy);
-  
-  const vec4f c00 = getTexel3f(this,x0,y0);
-  const vec4f c01 = getTexel3f(this,x1,y0);
-  const vec4f c10 = getTexel3f(this,x0,y1);
-  const vec4f c11 = getTexel3f(this,x1,y1);
-  ret = lerp(fy,
-             lerp(fx,c00,c01),
-             lerp(fx,c10,c11));
-}
-
-static void Texture2D_3f_nearest(const uniform Texture2D *uniform _this,
-                                  varying vec4f &ret,
-                                  const varying vec2f &p)
-{
-  assert(_this);
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
-
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
-
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
-
-  // nearest
-  const int x = (int)(min(round(fx),this->f_size_1.x));
-  const int y = (int)(min(round(fy),this->f_size_1.y));
-
-  ret = getTexel3f(this,x,y);
-}
-
-static void Texture2D_1f_bilinear(const uniform Texture2D *uniform texture,
-                                  varying vec4f &ret,
-                                  const varying vec2f &p)
-{
-  assert(texture);
-
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)texture;
-
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
-
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
-
-  const int x0 = (int)(fx);
-  const int y0 = (int)(fy);
-  const int x1 = (int)(min(fx+1.f,this->f_size_1.x));
-  const int y1 = (int)(min(fy+1.f,this->f_size_1.y));
-  fx = fx - floor(fx);
-  fy = fy - floor(fy);
-
-  const vec4f c00 = getTexel1f(this,x0,y0);
-  const vec4f c01 = getTexel1f(this,x1,y0);
-  const vec4f c10 = getTexel1f(this,x0,y1);
-  const vec4f c11 = getTexel1f(this,x1,y1);
-  ret = lerp(fy,
-             lerp(fx,c00,c01),
-             lerp(fx,c10,c11));
-}
-
-static void Texture2D_1f_nearest(const uniform Texture2D *uniform _this,
-                                 varying vec4f &ret,
-                                 const varying vec2f &p)
-{
-  assert(_this);
-  const uniform Texture2D *uniform this = (const uniform Texture2D *uniform)_this;
-
-  // repeat: get remainder within [0.1] parameter space
-  float fx = p.x-floor(p.x);
-  float fy = p.y-floor(p.y);
-
-  // scale by texture size
-  fx *= this->f_size_1.x;
-  fy *= this->f_size_1.y;
-
-  // nearest
-  const int x = (int)(min(round(fx),this->f_size_1.x));
-  const int y = (int)(min(round(fy),this->f_size_1.y));
-
-  ret = getTexel1f(this,x,y);
-}
-
-uniform Texture2D *uniform Texture2D_create(void *uniform cppE,
-                                            uniform uint32 sizeX,
-                                            uniform uint32 sizeY,
-                                            void *uniform data,
-                                            uniform Texture2D_get get)
-{
-  uniform Texture2D *uniform tex = uniform new uniform Texture2D;
-  tex->size     = make_vec2ui(sizeX,    sizeY);
-  tex->f_size   = make_vec2f (sizeX,    sizeY);
-  tex->f_size_1 = make_vec2f (sizeX-1.f,sizeY-1.f);
-  tex->data   = data;
-  tex->get    = get;
-  return tex;
-}
-
-export void *uniform Texture2D_4uc_create(void *uniform cppE, 
-                                          uniform uint32 sizeX,
-                                          uniform uint32 sizeY,
-                                          void *uniform data,
-                                          uniform int flags)
-{
-  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_4uc_nearest : &Texture2D_4uc_bilinear);
-}
-
-export void *uniform Texture2D_4f_create(void *uniform cppE,
-                                         uniform uint32 sizeX,
-                                         uniform uint32 sizeY,
-                                         void *uniform data,
-                                         uniform int flags)
-{
-  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_4f_nearest : &Texture2D_4f_bilinear);
-}
-
-export void *uniform Texture2D_3f_create(void *uniform cppE,
-                                         uniform uint32 sizeX,
-                                         uniform uint32 sizeY,
-                                         void *uniform data,
-                                         uniform int flags)
-{
-  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_3f_nearest : &Texture2D_3f_bilinear);
-}
-
-export void *uniform Texture2D_1f_create(void *uniform cppE,
-                                         uniform uint32 sizeX,
-                                         uniform uint32 sizeY,
-                                         void *uniform data,
-                                         uniform int flags)
-{
-  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_1f_nearest : &Texture2D_1f_bilinear);
-}
-
-export void *uniform Texture2D_3uc_create(void *uniform cppE, 
-                                          uniform uint32 sizeX,
-                                          uniform uint32 sizeY,
-                                          void *uniform data,
-                                          uniform int flags)
-{
-  return Texture2D_create(cppE,sizeX,sizeY,data,flags & OSP_TEXTURE_FILTER_NEAREST ? &Texture2D_3uc_nearest : &Texture2D_3uc_bilinear);
+  return self;
 }

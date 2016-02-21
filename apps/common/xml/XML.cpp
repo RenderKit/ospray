@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -290,7 +290,12 @@ namespace ospray {
       }
 
       fseek(file,0,SEEK_END);
-      long numBytes = ftell(file);
+      ssize_t numBytes =
+#ifdef _WIN32
+        _ftelli64(file);
+#else
+        ftell(file);
+#endif
       fseek(file,0,SEEK_SET);
       char *mem = new char[numBytes+1];
       mem[numBytes] = 0;

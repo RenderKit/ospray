@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -44,18 +44,18 @@
 
 namespace ospray {
 
-  namespace raytracer {
-    //    using embree::TaskScheduler;
+  namespace scivis {
 
     /*! \brief Renderer for the OBJ Wavefront Material/Lighting format
 
       See \ref ospray_render_raytracer
     */
-    struct RaytraceRenderer : public Renderer {
-      RaytraceRenderer();
-      virtual std::string toString() const;
-      virtual void commit();
-      virtual Material *createMaterial(const char *type);
+    struct SciVisRenderer : public Renderer
+    {
+      SciVisRenderer();
+      std::string toString() const override;
+      void commit() override;
+      Material *createMaterial(const char *type) override;
 
       std::vector<void*> lightArray; // the 'IE's of the XXXLights
       Data *lightData;
@@ -63,11 +63,11 @@ namespace ospray {
 
     // Inlined member functions ///////////////////////////////////////////////
 
-    inline std::string RaytraceRenderer::toString() const
+    inline std::string SciVisRenderer::toString() const
     {
-      return "ospray::RaytraceRenderer";
+      return "ospray::SciVisRenderer";
     }
 
-  } // ::ospray::api
+  } // ::ospray::scivis
 } // ::ospray
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,35 +14,27 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once
+#include "SimpleAOMaterial.h"
+#include "SimpleAOMaterial_ispc.h"
 
-#include "ospray/math/vec.ih"
+namespace ospray {
+  namespace simpleao {
 
-struct Texture;
+    //! Constructor
+    Material::Material()
+    {
+      ispcEquivalent = ispc::SimpleAOMaterial_create(this);
+    }
 
-//! \brief Texture creation flags provided by the application
-/*! \note Make sure these match the application-side definitions in ospray.h. */
-typedef enum {
-  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
-  OSP_TEXTURE_FILTER_NEAREST = (1<<1)
-} Texture_CreationFlags;
+    void Material::commit()
+    {
+      Kd = getParam3f("color", getParam3f("kd", getParam3f("Kd", vec3f(.8f))));
+      map_Kd = (Texture2D*)getParamObject("map_Kd",
+                                          getParamObject("map_kd", NULL));
+      ispc::SimpleAOMaterial_set(getIE(),
+                                 (const ispc::vec3f&)Kd,
+                                 map_Kd.ptr != NULL ? map_Kd->getIE() : NULL);
+    }
 
-//!\brief virtual function type for sampling a Texture (of any type)
-/*! \note Accessing y, z, or a from the returned value is undefined if the
-  texture has less than 4 channels */
-typedef varying vec4f (*Texture__get)(const uniform Texture *uniform this, 
-                                      const varying vec2f& p);
-
-//! \brief Abstract base class for any type of (2D) texture
-struct Texture 
-{
-  //! virtual function for sampling this texture
-  Texture__get get;
-};
-
-//! constructor for 2D texture base class
-inline void Texture__Constructor(uniform Texture* uniform self,
-                                 uniform Texture__get get)
-{
-  self->get = get;
-}
+  }//namespace ospray::simpleao
+}//namespace ospray

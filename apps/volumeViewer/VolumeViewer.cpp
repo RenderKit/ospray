@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -32,6 +32,7 @@
 #endif
 
 VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
+                           std::string renderer_type,
                            bool ownModelPerObject,
                            bool showFrameRate,
                            bool fullScreen,
@@ -56,10 +57,11 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
   resize(1024, 768);
 
   // Create and configure the OSPRay state.
-  initObjects();
+  initObjects(renderer_type);
 
   // Create an OSPRay window and set it as the central widget, but don't let it start rendering until we're done with setup.
-  osprayWindow = new QOSPRayWindow(this, renderer, showFrameRate, writeFramesFilename);
+  osprayWindow = new QOSPRayWindow(this, this->renderer,
+                                   showFrameRate, writeFramesFilename);
   setCentralWidget(osprayWindow);
 
   // Set the window bounds based on the OSPRay world bounds.
@@ -73,6 +75,21 @@ VolumeViewer::VolumeViewer(const std::vector<std::string> &objectFileFilenames,
 
   // Show the window.
   show();
+}
+
+ospray::box3f VolumeViewer::getBoundingBox()
+{
+  return boundingBox;
+}
+
+QOSPRayWindow *VolumeViewer::getWindow()
+{
+  return osprayWindow;
+}
+
+TransferFunctionEditor *VolumeViewer::getTransferFunctionEditor()
+{
+  return transferFunctionEditor;
 }
 
 void VolumeViewer::setModel(size_t index)
@@ -111,6 +128,11 @@ void VolumeViewer::setModel(size_t index)
   osprayWindow->setRenderingEnabled(true);
 }
 
+std::string VolumeViewer::toString() const
+{
+  return("VolumeViewer");
+}
+
 void VolumeViewer::autoRotate(bool set)
 {
   if(osprayWindow == NULL)
@@ -125,6 +147,26 @@ void VolumeViewer::autoRotate(bool set)
   }
   else
     osprayWindow->setRotationRate(0.);
+}
+
+void VolumeViewer::setAutoRotationRate(float rate)
+{
+  autoRotationRate = rate;
+}
+
+void VolumeViewer::nextTimeStep()
+{
+  modelIndex = (modelIndex + 1) % modelStates.size();
+  setModel(modelIndex);
+  render();
+}
+
+void VolumeViewer::playTimeSteps(bool animate)
+{
+  if (animate == true)
+    playTimeStepsTimer.start(500);
+  else
+    playTimeStepsTimer.stop();
 }
 
 void VolumeViewer::addSlice(std::string filename)
@@ -144,7 +186,7 @@ void VolumeViewer::addGeometry(std::string filename)
     return;
 
   // Attempt to load the geometry through the TriangleMeshFile loader.
-  OSPTriangleMesh triangleMesh = (OSPTriangleMesh)ospNewGeometry("trianglemesh");
+  OSPGeometry triangleMesh = ospNewGeometry("trianglemesh");
 
   // If successful, commit the triangle mesh and add it to all models.
   if(TriangleMeshFile::importTriangleMesh(filename, triangleMesh) != NULL) {
@@ -208,6 +250,21 @@ void VolumeViewer::screenshot(std::string filename)
   std::cout << (success ? "saved screenshot to " : "failed saving screenshot ") << filename << std::endl;
 }
 
+void VolumeViewer::commitVolumes()
+{
+  for(size_t i=0; i<modelStates.size(); i++)
+    for(size_t j=0; j<modelStates[i].volumes.size(); j++)
+      ospCommit(modelStates[i].volumes[j]);
+}
+
+void VolumeViewer::render()
+{
+  if (osprayWindow != NULL) {
+    osprayWindow->resetAccumulationBuffer();
+    osprayWindow->updateGL();
+  }
+}
+
 void VolumeViewer::setRenderAnnotationsEnabled(bool value)
 {
   if (value) {
@@ -222,6 +279,13 @@ void VolumeViewer::setRenderAnnotationsEnabled(bool value)
   }
 
   render();
+}
+
+void VolumeViewer::setSubsamplingInteractionEnabled(bool value)
+{
+  ospSet1i(renderer, "spp", value ? -1 : 1);
+  if(rendererInitialized)
+    ospCommit(renderer);
 }
 
 void VolumeViewer::setGradientShadingEnabled(bool value)
@@ -384,10 +448,10 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   ospCommit(modelStates.back().model);
 }
 
-void VolumeViewer::initObjects()
+void VolumeViewer::initObjects(const std::string &renderer_type)
 {
   // Create an OSPRay renderer.
-  renderer = ospNewRenderer("raycast_volume_renderer");
+  renderer = ospNewRenderer(renderer_type.c_str());
   exitOnCondition(renderer == NULL, "could not create OSPRay renderer object");
 
   // Create OSPRay ambient and directional lights. GUI elements will modify their parameters.

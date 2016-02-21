@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -25,9 +25,10 @@ namespace ospray {
         uniformly spaced color and alpha values between which the
         value will be linearly interpolated (similar to a 1D texture
         for each) */
-    struct TransferFunction : public sg::Node {
-
-      TransferFunction() : ospTransferFunction(NULL), ospColorData(NULL), ospAlphaData(NULL) { setDefaultValues(); }
+    struct TransferFunction : public sg::Node 
+    {
+      //! constructor
+      TransferFunction();
 
       //! \brief initialize color and alpha arrays to 'some' useful values
       void setDefaultValues();
@@ -58,8 +59,7 @@ namespace ospray {
 
       std::vector<vec3f> colorArray;
       std::vector<float> alphaArray;
-    };
-    
+    };    
     
   } // ::ospray::sg
 } // ::ospray

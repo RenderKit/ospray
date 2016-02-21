@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,20 +21,21 @@ namespace ospray {
 
   Texture2D::~Texture2D()
   {
-    if (!(flags & OSP_TEXTURE_SHARED_BUFFER)) delete[] (unsigned char *)data;
+    if (!(flags & OSP_TEXTURE_SHARED_BUFFER))
+      delete[] (unsigned char *)data;
   }
 
-  Texture2D *Texture2D::createTexture(int sx, int sy, OSPDataType type, void *data, int flags) 
+  Texture2D *Texture2D::createTexture(const vec2i &size,
+      const OSPTextureFormat type, void *data, const int flags) 
   {
     Texture2D *tx = new Texture2D;
 
-    tx->width = sx;
-    tx->height = sy;
+    tx->size = size;
     tx->type = type;
     tx->flags = flags;
     tx->managedObjectType = OSP_TEXTURE;
 
-    const size_t bytes = size_t(sx) * sy * sizeOf(type);
+    const size_t bytes = sizeOf(type) * size.x * size.y;
 
     assert(data);
 
@@ -45,24 +46,7 @@ namespace ospray {
       memcpy(tx->data, data, bytes);
     }
 
-    switch (type) {
-      case OSP_UCHAR4:
-        tx->ispcEquivalent = ispc::Texture2D_4uc_create(tx,sx,sy,tx->data,flags);
-        break;
-      case OSP_UCHAR3:
-        tx->ispcEquivalent = ispc::Texture2D_3uc_create(tx,sx,sy,tx->data,flags);
-        break;
-      case OSP_FLOAT:
-        tx->ispcEquivalent = ispc::Texture2D_1f_create(tx,sx,sy,tx->data,flags);
-        break;
-      case OSP_FLOAT3:
-        tx->ispcEquivalent = ispc::Texture2D_3f_create(tx,sx,sy,tx->data,flags);
-        break;
-      case OSP_FLOAT3A:
-        tx->ispcEquivalent = ispc::Texture2D_4f_create(tx,sx,sy,tx->data,flags);
-        break;
-      default: throw std::runtime_error("Could not determine bytes per pixel in " __FILE__);
-    }
+    tx->ispcEquivalent = ispc::Texture2D_create((ispc::vec2i&)size, tx->data, type, flags);
 
     return tx;
   }

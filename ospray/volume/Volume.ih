@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -58,23 +58,19 @@ struct Volume {
   //! Bounding box for the volume in world coordinates.
   uniform box3f boundingBox;
 
-// #if EXP_DATA_PARALLEL
-//   // uniform DataParallelInfo dataParallel;
-// #endif
-
   //! The value at the given sample location in world coordinates.
-  varying float (*uniform computeSample)(void *uniform volume, 
+  varying float (*uniform computeSample)(void *uniform _self, 
                                          const varying vec3f &worldCoordinates);
 
   //! The gradient at the given sample location in world coordinates.
-  varying vec3f (*uniform computeGradient)(void *uniform volume, 
+  varying vec3f (*uniform computeGradient)(void *uniform _self, 
                                            const varying vec3f &worldCoordinates);
 
   //! Find the next hit point in the volume for ray casting based renderers.
-  void (*uniform intersect)(void *uniform volume, varying Ray &ray);
+  void (*uniform intersect)(void *uniform _self, varying Ray &ray);
 
   //! Find the next isosurface hit point in the volume for ray casting based renderers.
-  void (*uniform intersectIsosurface)(void *uniform volume, 
+  void (*uniform intersectIsosurface)(void *uniform _self, 
                                       uniform float *uniform isovalues, 
                                       uniform int numIsovalues, 
                                       varying Ray &ray);

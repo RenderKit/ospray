@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -88,8 +88,7 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       wasEmpty = content.empty();
       content.push_back(t);
     }
@@ -103,8 +102,7 @@ namespace ospray {
   {
     bool wasEmpty = false;
     {
-      LockGuard lock(mutex);
-      (void)lock;
+      SCOPED_LOCK(mutex);
       wasEmpty = content.empty();
       for (int i=0;i<numTs;i++)
         content.push_back(t[i]);

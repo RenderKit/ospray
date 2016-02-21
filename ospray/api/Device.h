@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -43,7 +43,7 @@ namespace ospray {
       
       /*! map frame buffer */
       virtual const void *frameBufferMap(OSPFrameBuffer fb, 
-                                         OSPFrameBufferChannel) = 0;
+                                         const OSPFrameBufferChannel) = 0;
 
       /*! unmap previously mapped frame buffer */
       virtual void frameBufferUnmap(const void *mapped,
@@ -66,6 +66,9 @@ namespace ospray {
 
       /*! add a new volume to a model */
       virtual void addVolume(OSPModel _model, OSPVolume _volume) = 0;
+
+      /*! remove an existing volume from a model */
+      virtual void removeVolume(OSPModel _model, OSPVolume _volume) = 0;
 
       /*! create a new data buffer */
       virtual OSPData newData(size_t nitems, OSPDataType format, void *init, int flags) = 0;
@@ -143,9 +146,6 @@ namespace ospray {
       /*! Get the named 3-vector integer value associated with an object. */
       virtual int getVec3i(OSPObject object, const char *name, vec3i *value) = 0;
 
-      /*! create a new triangle mesh geometry */
-      virtual OSPTriangleMesh newTriangleMesh() = 0;
-
       /*! create a new renderer object (out of list of registered renderers) */
       virtual OSPRenderer newRenderer(const char *type) = 0;
 
@@ -171,7 +171,8 @@ namespace ospray {
       virtual OSPMaterial newMaterial(OSPRenderer _renderer, const char *type) = 0;
 
       /*! create a new Texture2D object */
-      virtual OSPTexture2D newTexture2D(int width, int height, OSPDataType type, void *data, int flags) = 0;
+      virtual OSPTexture2D newTexture2D(const vec2i &size,
+          const OSPTextureFormat, void *data, const uint32 flags) = 0;
 
       /*! have given renderer create a new Light */
       virtual OSPLight newLight(OSPRenderer _renderer, const char *type) = 0;

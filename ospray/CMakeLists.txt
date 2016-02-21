@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -18,12 +18,18 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
-OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
-OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
-MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
+IF(OSPRAY_BUILD_MPI_DEVICE)
+  OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
+  OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
+  MARK_AS_ADVANCED(OSPRAY_PIN_ASYNC)
+ENDIF()
 
 OPTION(EXP_NEW_BB_VOLUME_KERNELS "Experimental new block/bricked volume layout" ON)
 MARK_AS_ADVANCED(EXP_NEW_BB_VOLUME_KERNELS)
+
+# NOTE(jda) - PThread hint used by both Embree and OSPRay
+SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+FIND_PACKAGE(Threads REQUIRED)
 
 # -------------------------------------------------------
 # Setup tasking system build configuration
@@ -36,8 +42,10 @@ MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
 
 IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
   SET(USE_TBB TRUE)
+  SET(USE_TBB TRUE PARENT_SCOPE)
 ELSE()
   SET(USE_TBB FALSE)
+  SET(USE_TBB FALSE PARENT_SCOPE)
 ENDIF()
 
 IF(USE_TBB)
@@ -45,32 +53,46 @@ IF(USE_TBB)
   ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
   INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
 ELSE(USE_TBB)
-  FIND_PACKAGE(OpenMP)#NOTE(jda) - intentionally optional (fallback w/o TBB)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  SET(CMAKE_EXE_LINKER_FLAGS
-      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+  UNSET(TBB_INCLUDE_DIR        CACHE)
+  UNSET(TBB_LIBRARY            CACHE)
+  UNSET(TBB_LIBRARY_DEBUG      CACHE)
+  UNSET(TBB_LIBRARY_MALLOC     CACHE)
+  UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
+  UNSET(TBB_INCLUDE_DIR_MIC    CACHE)
+  UNSET(TBB_LIBRARY_MIC        CACHE)
+  UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
 ENDIF(USE_TBB)
 
 # -------------------------------------------------------
 # Build and configure embree
 # -------------------------------------------------------
 
-#NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
-INCLUDE(../cmake/build_embree_2.7.1.cmake)
+# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
+# NOTE(jda) - Only do the embree include once (Xeon), it will build both
+#             Xeon and MIC code if both are enabled.
+IF (NOT THIS_IS_MIC)
+  INCLUDE(../cmake/build_embree.cmake)
+ENDIF()
 
 # -------------------------------------------------------
 # Setup ospray source files
 # -------------------------------------------------------
 
 SET(OSPRAY_SOURCES
+  include/ospray/ospray.h
+  include/ospray/OSPDataType.h
+  include/ospray/OSPTexture.h
+
   device/nwlayer.cpp
 
   math/box.ispc
+  math/Distribution2D.ispc
 
   common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Core.cpp
+  common/ISPC_KNC_Backend.h
+  common/ISPC_KNL_Backend.h
   common/Managed.cpp
   common/ObjectHandle.cpp
   common/Data.cpp
@@ -79,6 +101,7 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Library.cpp
   common/Thread.cpp
+  common/parallel_for.h
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -143,6 +166,8 @@ SET(OSPRAY_SOURCES
   lights/SpotLight.ispc
   lights/QuadLight.cpp
   lights/QuadLight.ispc
+  lights/HDRILight.cpp
+  lights/HDRILight.ispc
 
   texture/Texture2D.cpp
   texture/Texture2D.ispc
@@ -155,20 +180,23 @@ SET(OSPRAY_SOURCES
   render/raycast/RaycastRenderer.ispc
   render/simpleAO/SimpleAO.cpp
   render/simpleAO/SimpleAO.ispc
+  render/simpleAO/SimpleAOMaterial.cpp
+  render/simpleAO/SimpleAOMaterial.ih
+  render/simpleAO/SimpleAOMaterial.ispc
   render/obj/OBJRenderer.ispc
   render/obj/OBJMaterial.ispc
   render/obj/OBJRenderer.cpp
   render/obj/OBJMaterial.cpp
-  render/raytracer/RaytraceRenderer.ispc
-  render/raytracer/RaytraceMaterial.ispc
-  render/raytracer/RaytraceMaterial.ih
-  render/raytracer/RaytraceRenderer.cpp
-  render/raytracer/RaytraceMaterial.cpp
+  render/scivis/SciVisRenderer.ispc
+  render/scivis/SciVisMaterial.ispc
+  render/scivis/SciVisMaterial.ih
+  render/scivis/SciVisRenderer.cpp
+  render/scivis/SciVisMaterial.cpp
   render/volume/RaycastVolumeMaterial.cpp
+  render/volume/RaycastVolumeMaterial.ih
+  render/volume/RaycastVolumeMaterial.ispc
   render/volume/RaycastVolumeRenderer.cpp
   render/volume/RaycastVolumeRenderer.ispc
-  render/volume/RaycastVolumeRendererMaterial.ih
-  render/volume/RaycastVolumeRendererMaterial.ispc
 
   render/pathtracer/PathTracer.ispc
   render/pathtracer/PathTracer.cpp
@@ -266,7 +294,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     )
   MARK_AS_ADVANCED(LIBCOI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_HOST)
-  SET(OSPRAY_MIC_COI ON)
+  SET(OSPRAY_MIC_COI ON PARENT_SCOPE)
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
   IF (THIS_IS_MIC)
@@ -281,17 +309,25 @@ ENDIF()
 # build the ospray library (using flags and compilers as configured by
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
-SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
-FIND_PACKAGE(Threads REQUIRED)
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
-  ospray_embree${OSPRAY_LIB_SUFFIX}
-  ${TBB_LIBRARIES}
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
-	)
+)
+
+IF (THIS_IS_MIC)
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    embree_xeonphi
+    ${TBB_LIBRARIES_MIC}
+  )
+ELSE()
+  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    embree
+    ${TBB_LIBRARIES}
+  )
+ENDIF()
 
 IF (OSPRAY_DISPLAYCLUSTER)
   TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${DISPLAYCLUSTER_LIBRARIES})
@@ -309,12 +345,12 @@ INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTER
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
-  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+#  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
   DESTINATION lib
 )
-INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-  DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
-)
+#INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
+#  DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
+#)
 ##############################################################
 
 
@@ -323,7 +359,15 @@ INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
 # MPI DEVICE - mpi worker
 ##############################################################
 IF (OSPRAY_MPI)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${MPI_CXX_LIBRARIES})
+  IF (THIS_IS_MIC)
+    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+      ${MPI_LIBRARY_MIC}
+    )
+  ELSE()
+    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+      ${MPI_CXX_LIBRARIES}
+    )
+  ENDIF()
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
@@ -342,13 +386,13 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
-      )
+    )
     # ... and add the coi worker executable
     ADD_EXECUTABLE(ospray_coi_worker.mic api/COIDeviceWorker.cpp)
     TARGET_LINK_LIBRARIES(ospray_coi_worker.mic
       ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_DEVICE}
-      )
+    )
     # ------------------------------------------------------------
     INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
     INSTALL(TARGETS ospray_coi_worker.mic DESTINATION bin)
@@ -358,7 +402,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
       ${LIBCOI_HOST}
-      )
+    )
     # note: no need to add the host-side libcoi to the install
     # targets; it's already done above
   ENDIF()

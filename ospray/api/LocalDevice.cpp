@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -51,21 +51,19 @@ namespace ospray {
 
       ospray::init(_ac,&_av);
 
+      // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
-
-      rtcSetErrorFunction(embreeErrorFunc);
-
       // -------------------------------------------------------
-      // initialize embree
-      // -------------------------------------------------------
-     std::stringstream embreeConfig;
+      std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
+
+      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
 
       RTCError erc = rtcGetError();
       if (erc != RTC_NO_ERROR) {
@@ -207,12 +205,28 @@ namespace ospray {
       model->volume.push_back(volume);
     }
 
-    /*! create a new data buffer */
-    OSPTriangleMesh LocalDevice::newTriangleMesh()
+    /*! remove an existing volume from a model */
+    struct VolumeLocator {
+      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+        return ptr == &*g;
+      }
+      Volume *ptr;
+    };
+
+    void LocalDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
-      TriangleMesh *triangleMesh = new TriangleMesh;
-      triangleMesh->refInc();
-      return (OSPTriangleMesh)triangleMesh;
+      Model *model = (Model *)_model;
+      Assert2(model, "null model in LocalDevice::removeVolume");
+
+      Volume *volume = (Volume *)_volume;
+      Assert2(volume, "null volume in LocalDevice::removeVolume");
+
+      VolumeLocator locator;
+      locator.ptr = volume;
+      Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+      if(it != model->volume.end()) {
+        model->volume.erase(it);
+      }
     }
 
     /*! create a new data buffer */
@@ -599,10 +613,12 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D LocalDevice::newTexture2D(int width, int height, OSPDataType type, void *data, int flags) {
-      Assert(width > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
-      Assert(height > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
-      Texture2D *tx = Texture2D::createTexture(width, height, type, data, flags);
+    OSPTexture2D LocalDevice::newTexture2D(const vec2i &size,
+        const OSPTextureFormat type, void *data, const uint32 flags)
+    {
+      Assert(size.x > 0 && "Width must be greater than 0 in LocalDevice::newTexture2D");
+      Assert(size.y > 0 && "Height must be greater than 0 in LocalDevice::newTexture2D");
+      Texture2D *tx = Texture2D::createTexture(size, type, data, flags);
       if(tx) tx->refInc();
       return (OSPTexture2D)tx;
     }

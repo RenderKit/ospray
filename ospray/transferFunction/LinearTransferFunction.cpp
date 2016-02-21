@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -21,22 +21,37 @@
 
 namespace ospray {
 
+    //! Destructor.
+  LinearTransferFunction::~LinearTransferFunction() 
+  {
+    if (ispcEquivalent != NULL) 
+      ispc::LinearTransferFunction_destroy(ispcEquivalent); 
+  }
+
   void LinearTransferFunction::commit()
   {
     // Create the equivalent ISPC transfer function.
     if (ispcEquivalent == NULL) createEquivalentISPC();
 
     // Retrieve the color and opacity values.
-    colorValues = getParamData("colors", NULL);  opacityValues = getParamData("opacities", NULL);
+    colorValues   = getParamData("colors", NULL);  
+    opacityValues = getParamData("opacities", NULL);
 
     // Set the color values.
-    if (colorValues) ispc::LinearTransferFunction_setColorValues(ispcEquivalent, colorValues->numItems, (ispc::vec3f *) colorValues->data);
+    if (colorValues) 
+      ispc::LinearTransferFunction_setColorValues(ispcEquivalent, 
+                                                  colorValues->numItems, 
+                                                  (ispc::vec3f *) colorValues->data);
 
     // Set the opacity values.
-    if (opacityValues) ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent, opacityValues->numItems, (float *) opacityValues->data);
+    if (opacityValues) 
+      ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent, 
+                                                    opacityValues->numItems, 
+                                                    (float *)opacityValues->data);
 
     // Set the value range that the transfer function covers.
-    vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));  ispc::TransferFunction_setValueRange(ispcEquivalent, (const ispc::vec2f &) valueRange);
+    vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));  
+    ispc::TransferFunction_setValueRange(ispcEquivalent, (const ispc::vec2f &) valueRange);
 
     // Notify listeners that the transfer function has changed.
     notifyListenersThatObjectGotChanged();

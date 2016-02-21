@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -30,6 +30,12 @@ IF (NOT THIS_IS_MIC)
     Model.cpp
     uintah.cpp
     )
-  TARGET_LINK_LIBRARIES(ospParticleViewer ospray ospray_glut3d ospray_xml)
+  TARGET_LINK_LIBRARIES(ospParticleViewer
+    ospray
+    ospray_glut3d
+    ospray_xml
+    ${TBB_LIBRARY_MALLOC}
+    ${TBB_LIBRARY}
+  )
 ENDIF()
 

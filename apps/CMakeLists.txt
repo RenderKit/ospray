@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,26 +14,42 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-
 CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
 
-  # common utility classes for 3D viewer widget
-  ADD_SUBDIRECTORY(common/widgets)
+  IF(USE_TBB)
+    # NOTE(jda) - This is done automatically by the find_package config for apps
+    #             outside the build environment of OSPRay.
+    FIND_PACKAGE(TBB QUIET)
+    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib")
+    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib64")
+    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib/intel64/gcc4.4")
+  ENDIF()
 
   # common xml utility classes
   ADD_SUBDIRECTORY(common/xml)
 
   # mini-scene graph viewer for _geometry_ (intentionally simple)
   OPTION(OSPRAY_APPS_MODELVIEWER "Build ospModelViewer application." ON)
+
+  # include glut and widgets only when needed
+  # needs to be before the first application, such that the GLUT include path is known
+  # XXX if the defaults change, include could be missing on the first run of CMake
+  IF(OSPRAY_APPS_MODELVIEWER      OR
+     OSPRAY_APPS_STREAMLINEVIEWER OR
+     OSPRAY_APPS_PARTICLEVIEWER)
+    # common utility classes for GLUT-based 3D viewer widget
+    INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+    ADD_SUBDIRECTORY(common/widgets)
+  ENDIF()
+
   IF (OSPRAY_APPS_MODELVIEWER)
     ADD_SUBDIRECTORY(modelViewer)
   ENDIF()
 
  IF(NOT WIN32)
-  # mini-scene graph viewer for _geometry_ (intentionally simple)
+  # qt-based viewer for geometry (and soon volumes)
   OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
   IF (OSPRAY_APPS_QTVIEWER)
     ADD_SUBDIRECTORY(qtViewer)
@@ -59,10 +75,8 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
  ENDIF(NOT WIN32)
 
-  CONFIGURE_OSPRAY()
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-#	ADD_EXECUTABLE(test1 test1.cpp) 
+#	ADD_EXECUTABLE(test1 test1.cpp)
 #	TARGET_LINK_LIBRARIES(test1 ospray)
 
 ENDIF()

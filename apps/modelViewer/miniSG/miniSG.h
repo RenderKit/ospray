@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -37,12 +37,13 @@ namespace ospray {
 
       int channels; //Number of color channels per pixel
       int depth;    //Bytes per color channel
+      bool prefereLinear; //A linear texel format is preferred over sRGB
       int width;    //Pixels per row
       int height;   //Pixels per column
       void *data;   //Pointer to binary texture data
     };
     
-    Texture2D *loadTexture(const std::string &path, const std::string &fileName);
+    Texture2D *loadTexture(const std::string &path, const std::string &fileName, const bool prefereLinear = false);
 
     struct Material : public RefCount {
       struct Param : public RefCount {

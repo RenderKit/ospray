@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,8 +18,8 @@
 #include "ospray/lights/Light.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Core.h"
+#include "ospray/common/parallel_for.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
-
 #include "RaycastVolumeMaterial.h"
 
 // ispc exports
@@ -155,28 +155,7 @@ namespace ospray {
 
     const int numJobs = (TILE_SIZE*TILE_SIZE)/RENDERTILE_PIXELS_PER_JOB;
 
-#ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, numJobs),
-                      [&](const tbb::blocked_range<int> &range) {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex) {
-        ispc::DDDVRRenderer_renderTile(renderer->getIE(),
-                                       (ispc::Tile&)fgTile,
-                                       (ispc::Tile&)bgTile,
-                                       &blockTileCache,
-                                       numBlocks,
-                                       dpv->ddBlock,
-                                       blockWasVisible,
-                                       tileID,
-                                       ospray::core::getWorkerRank(),
-                                       renderForeAndBackground,
-                                       taskIndex);
-      }
-    });
-#else//OpenMP
-#   pragma omp parallel for schedule(dynamic)
-    for (int taskIndex = 0; taskIndex < numJobs; ++taskIndex) {
+    parallel_for(numJobs, [&](int taskIndex){
       ispc::DDDVRRenderer_renderTile(renderer->getIE(),
                                      (ispc::Tile&)fgTile,
                                      (ispc::Tile&)bgTile,
@@ -188,8 +167,7 @@ namespace ospray {
                                      ospray::core::getWorkerRank(),
                                      renderForeAndBackground,
                                      taskIndex);
-    }
-#endif
+    });
 
 
     if (renderForeAndBackground) {
@@ -327,20 +305,7 @@ namespace ospray {
     renderTask.dpv = ddVolumeVec[0];
 
     size_t NTASKS = renderTask.numTiles_x * renderTask.numTiles_y;
-#ifdef OSPRAY_USE_TBB
-    tbb::parallel_for(tbb::blocked_range<int>(0, NTASKS),
-                      [&](const tbb::blocked_range<int> &range) {
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex)
-        renderTask.run(taskIndex);
-    });
-#else//OpenMP
-#   pragma omp parallel for schedule(dynamic)
-    for (size_t i = 0; i < NTASKS; ++i) {
-      renderTask.run(i);
-    }
-#endif
+    parallel_for(NTASKS, [&](int taskIndex){renderTask.run(taskIndex);});
 
     dfb->waitUntilFinished();
     Renderer::endFrame(NULL,channelFlags);
@@ -354,13 +319,6 @@ namespace ospray {
     if (ispcEquivalent == NULL) {
       ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
     }
-
-    // Get the background color.
-    vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
-
-    // Set the background color.
-    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent,
-                                                   (const ispc::vec3f&)bgColor);
 
     // Set the lights if any.
     Data *lightsData = (Data *)getParamData("lights", NULL);

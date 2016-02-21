@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,10 +19,16 @@
 // stl
 #include <sstream>
 
+using embree::alignedFree;
+using embree::alignedMalloc;
+
 namespace ospray {
 
-  Data::Data(size_t numItems, OSPDataType type, void *init, int flags)
-    : numItems(numItems), numBytes(numItems * sizeOf(type)), type(type), flags(flags)
+  Data::Data(size_t numItems, OSPDataType type, void *init, int flags) :
+    numItems(numItems),
+    numBytes(numItems * sizeOf(type)),
+    type(type),
+    flags(flags)
   {
     /* two notes here:
        a) i'm using embree's 'new' to enforce alignment
@@ -33,7 +39,7 @@ namespace ospray {
       Assert2(init != NULL, "shared buffer is NULL");
       data = init;
     } else {
-      data = embree::alignedMalloc(numBytes+16);
+      data = alignedMalloc(numBytes+16);
       if (init)
         memcpy(data,init,numBytes);
       else if (type == OSP_OBJECT)
@@ -51,10 +57,9 @@ namespace ospray {
   {
     if (type == OSP_OBJECT) {
       Data **child = (Data **)data;
-      for (int i=0;i<numItems;i++)
-        if (child[i]) child[i]->refDec();
+      for (int i=0;i<numItems;i++) if (child[i]) child[i]->refDec();
     }
-    if (!(flags & OSP_DATA_SHARED_BUFFER)) embree::alignedFree(data);
+    if (!(flags & OSP_DATA_SHARED_BUFFER)) alignedFree(data);
   }
 
 } // ::ospray

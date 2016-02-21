@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -19,7 +19,7 @@
 
 #include "materials/Medium.ih"
 #include "materials/Material.ih"
-#include "samplers/PrecomputedSampler.ih"
+#include "math/random.ih"
 
 #define PDF_CULLING 0.0f
 //#define USE_DGCOLOR
@@ -147,13 +147,13 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
     /*! Environment shading when nothing hit. */
     if (noHit(lightPath.ray)) {
       if (lightPath.unbent)
-        sample.alpha = 1.0f - dot(Lw, make_vec3f(0.212671f, 0.715160f, 0.072169f)); // TODO luminance(Lw);
+        sample.alpha = 1.0f - luminance(Lw);
       if ((bool)self->backplate & lightPath.unbent) {
-        L = L + Lw * get3f(self->backplate, pixel);
+        L = L + Lw * get3f(self->backplate, clamp2edge(self->backplate, pixel));
       } else if (!lightPath.ignoreVisibleLights)
           for (uniform int i = 0; i < self->numLights; i++) { // TODO: self->num_envLights
             const uniform Light *uniform l = self->lights[i];
-            L = L + Lw * l->evalEnv(l, wo);
+            L = L + Lw * l->evalEnv(l, lightPath.ray.dir);
           }
 
       break;
@@ -290,10 +290,6 @@ ScreenSample PathTraceIntegrator_Li(const uniform PathTracer* uniform self,
   return sample;
 }
 
-
-uniform PTEnvironmentLight* uniform PTAmbientLight__New(const uniform vec3f& L);
-typedef uniform PTEnvironmentLight *uniform EnvLightPtr;
-typedef uniform PTLight *uniform LightPtr;
 
 inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
                                            const uint32 ix,

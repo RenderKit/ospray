@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -15,20 +15,20 @@
 // ======================================================================== //
 
 // obj
-#include "RaytraceRenderer.h"
-#include "RaytraceMaterial.h"
+#include "SciVisRenderer.h"
+#include "SciVisMaterial.h"
 // ospray
 #include "ospray/common/Data.h"
 #include "ospray/lights/Light.h"
 //sys
 #include <vector>
 // ispc exports
-#include "RaytraceRenderer_ispc.h"
+#include "SciVisRenderer_ispc.h"
 
 namespace ospray {
-  namespace raytracer {
+  namespace scivis {
 
-    void RaytraceRenderer::commit()
+    void SciVisRenderer::commit()
     {
       Renderer::commit();
 
@@ -43,43 +43,39 @@ namespace ospray {
 
       void **lightPtr = lightArray.empty() ? NULL : &lightArray[0];
 
-      vec3f bgColor;
-      bgColor = getParam3f("bgColor", vec3f(1.f));
-
       const bool shadowsEnabled = bool(getParam1i("shadowsEnabled", 1));
 
       const int32 maxDepth = getParam1i("maxDepth", 10);
 
-      int   numAOSamples = getParam1i("aoSamples", 4); // number of AO rays per pixel sample
+      int   numAOSamples = getParam1i("aoSamples", 4);
       float rayLength    = getParam1f("aoOcclusionDistance", 1e20f);
       float aoWeight     = getParam1f("aoWeight", 0.25f);
 
-      ispc::RaytraceRenderer_set(getIE(),
-                                 (ispc::vec3f&)bgColor,
-                                 shadowsEnabled,
-                                 maxDepth,
-                                 numAOSamples,
-                                 rayLength,
-                                 aoWeight,
-                                 lightPtr,
-                                 lightArray.size());
+      ispc::SciVisRenderer_set(getIE(),
+                               shadowsEnabled,
+                               maxDepth,
+                               numAOSamples,
+                               rayLength,
+                               aoWeight,
+                               lightPtr,
+                               lightArray.size());
     }
 
-    RaytraceRenderer::RaytraceRenderer()
+    SciVisRenderer::SciVisRenderer()
     {
-      ispcEquivalent = ispc::RaytraceRenderer_create(this);
+      ispcEquivalent = ispc::SciVisRenderer_create(this);
     }
 
     /*! \brief create a material of given type */
-    Material *RaytraceRenderer::createMaterial(const char *type)
+    Material *SciVisRenderer::createMaterial(const char *type)
     {
-      Material *mat = new RaytraceMaterial;
-      return mat;
+      return new SciVisMaterial;
     }
 
-    OSP_REGISTER_RENDERER(RaytraceRenderer, raytracer);
-    OSP_REGISTER_RENDERER(RaytraceRenderer, rt);
-    OSP_REGISTER_RENDERER(RaytraceRenderer, scivis);
+    OSP_REGISTER_RENDERER(SciVisRenderer, raytracer);
+    OSP_REGISTER_RENDERER(SciVisRenderer, rt);
+    OSP_REGISTER_RENDERER(SciVisRenderer, scivis);
+    OSP_REGISTER_RENDERER(SciVisRenderer, sv);
 
-  } // ::ospray::obj
+  } // ::ospray::scivis
 } // ::ospray

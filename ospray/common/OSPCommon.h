@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -51,6 +51,7 @@ typedef int ssize_t;
 #include "common/sys/alloc.h"
 
 // C++11
+#include <vector>
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
@@ -63,12 +64,17 @@ namespace ospray {
   typedef std::mutex Mutex;
   typedef std::lock_guard<std::mutex> LockGuard;
   typedef std::condition_variable Condition;
+
 }
 
+#define SCOPED_LOCK(x) \
+  ospray::LockGuard lock(x); \
+  (void)lock;
 #endif
 
 // ospray
-#include "ospray/common/OSPDataType.h"
+#include "ospray/OSPDataType.h"
+#include "ospray/OSPTexture.h"
 
 // std
 #include <stdint.h> // for int64_t etc
@@ -92,7 +98,8 @@ namespace ospray {
 #pragma warning(disable:177 ) // variable declared but was never referenced
 #endif
 
-#ifdef OSPRAY_TARGET_MIC
+#if 0//NOTE: this causes crashes in standard library containers on MIC...
+//#ifdef OSPRAY_TARGET_MIC
 inline void* operator new(size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }       
 inline void operator delete(void* ptr) throw() { embree::alignedFree(ptr); }      
 inline void* operator new[](size_t size) throw(std::bad_alloc) { return embree::alignedMalloc(size); }  
@@ -110,6 +117,7 @@ namespace ospray {
   using embree::rad2deg;
   using embree::sign;
   using embree::clamp;
+  using embree::frac;
 
   /*! basic types */
   typedef ::int64_t int64;
@@ -218,10 +226,13 @@ namespace ospray {
   extern int32 numThreads;
 
   /*! size of OSPDataType */
-  size_t sizeOf(OSPDataType type);
+  OSPRAY_INTERFACE size_t sizeOf(const OSPDataType);
 
   /*! Convert a type string to an OSPDataType. */
-  OSPDataType typeForString(const char *string);
+  OSPRAY_INTERFACE OSPDataType typeForString(const char *string);
+
+  /*! size of OSPTextureFormat */
+  OSPRAY_INTERFACE size_t sizeOf(const OSPTextureFormat);
 
   struct WarnOnce {
     WarnOnce(const std::string &s);
@@ -256,6 +267,4 @@ namespace ospray {
 
 template <typename T>
 inline T divRoundUp(const T&a, const T&b) { return (a+(b-T(1)))/b; }
-
-  
 

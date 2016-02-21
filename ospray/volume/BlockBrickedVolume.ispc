@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -317,25 +317,25 @@ inline varying float BlockBrickedVolumeFloat_computeSample(void *uniform _volume
   volume->transformWorldToLocal(volume, worldCoordinates, localCoordinates);
 
   // Coordinates outside the volume are clamped to the volume bounds.
-  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f), 
+  const vec3f clampedLocalCoordinates = clamp(localCoordinates, make_vec3f(0.0f),
                                               volume->localCoordinatesUpperBound);
 
   // Lower and upper corners of the box straddling the voxels to be interpolated.
-  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);  
+  const vec3i voxelIndex_0 = integer_cast(clampedLocalCoordinates);
   const vec3i voxelIndex_1 = voxelIndex_0 + 1;
 
   // Fractional coordinates within the lower corner voxel used during interpolation.
   const vec3f fractionalLocalCoordinates = clampedLocalCoordinates - float_cast(voxelIndex_0);
 
   // Look up the voxel values to be interpolated.
-  float voxelValue_000; 
-  float voxelValue_001; 
-  float voxelValue_010; 
-  float voxelValue_011; 
-  float voxelValue_100; 
-  float voxelValue_101; 
-  float voxelValue_110; 
-  float voxelValue_111; 
+  float voxelValue_000;
+  float voxelValue_001;
+  float voxelValue_010;
+  float voxelValue_011;
+  float voxelValue_100;
+  float voxelValue_101;
+  float voxelValue_110;
+  float voxelValue_111;
   BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_000);
   BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_1.x, voxelIndex_0.y, voxelIndex_0.z), voxelValue_001);
   BlockBrickedVolumeFloat_getVoxel(volume, make_vec3i(voxelIndex_0.x, voxelIndex_1.y, voxelIndex_0.z), voxelValue_010);
@@ -373,23 +373,27 @@ export void *uniform BlockBrickedVolume_createInstance(void *uniform cppEquivale
   return volume;
 }
 
-export void
-BlockBrickedVolume_setRegion(void *uniform _self,
-                             /* points to the first voxel to be copies. The
-                                voxels at 'soruce' MUST have dimensions
-                                'regionSize', must be organized in 3D-array
-                                order, and must have the same voxel type as the
-                                volume.*/
-                             const void *uniform _source,
-                             /*! coordinates of the lower, left, front corner of
-                               the target region.*/
-                             const uniform vec3i &regionCoords,
-                             /*! size of the region that we're writing to; MUST
-                               be the same as the dimensions of source[][][] */
-                             const uniform vec3i &regionSize,
-                             const uniform int taskIndex)
+export void BlockBrickedVolume_setRegion(void *uniform _self,
+    // points to the first voxel to be copied. The voxels at 'source' MUST have
+    // dimensions 'regionSize', must be organized in 3D-array order, and must
+    // have the same voxel type as the volume.
+    const void *uniform _source,
+    // coordinates of the lower, left, front corner of the target region
+    const uniform vec3i &regionCoords,
+    // size of the region that we're writing to, MUST be the same as the
+    // dimensions of source[][][]
+    const uniform vec3i &regionSize,
+    const uniform int taskIndex)
 {
   // Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
   self->setRegion(self, _source, regionCoords, regionSize, taskIndex);
+}
+
+export void BlockBrickedVolume_freeVolume(void *uniform _self)
+{
+  BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
+  if (self->blockMem) {
+    free64(self->blockMem);
+  }
 }

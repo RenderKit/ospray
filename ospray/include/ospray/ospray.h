@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,10 +28,12 @@
 #pragma once
 
 #ifndef NULL
-# define NULL nullptr
+# if __cplusplus >= 201103L
+#  define NULL nullptr
+# else
+#  define NULL 0
+# endif
 #endif
-
-#include <vector>
 
 // -------------------------------------------------------
 // include common components 
@@ -39,7 +41,8 @@
 #include <sys/types.h>
 #include <stdint.h>
 
-#include "ospray/common/OSPDataType.h"
+#include "ospray/OSPDataType.h"
+#include "ospray/OSPTexture.h"
 
 #ifdef _WIN32
 #  ifdef ospray_EXPORTS
@@ -65,22 +68,13 @@ namespace osp {
   struct vec2f { float x, y; };
   struct vec2i { int x, y; };
   struct vec3f { float x, y, z; };
-  struct vec3fa { float x, y, z, a; };
+  struct vec3fa { float x, y, z; union { int a; unsigned u; float w; }; };
   struct vec3i { int x, y, z; };
   struct vec4f { float x, y, z, w; };
-  // typedef embree::Vec2f  vec2f;
-  // typedef embree::Vec2i  vec2i;
-  // typedef embree::Vec3f  vec3f;
-  // typedef embree::Vec3i  vec3i;
-  // typedef embree::Vec3fa vec3fa;
-  // typedef embree::Vec4f  vec4f;
   struct box2i { vec2i lower, upper; };
-  struct box3f { vec2f lower, upper; };
-  struct linear3f { vec3f vx,vy,vz; };
+  struct box3f { vec3f lower, upper; };
+  struct linear3f { vec3f vx, vy, vz; };
   struct affine3f { linear3f l; vec3f p; };
-  // typedef embree::BBox<embree::Vec2i> box2i;
-  // typedef embree::BBox3f box3f;
-  // typedef embree::AffineSpace3f affine3f;
 
   typedef uint64_t uint64;
 
@@ -97,10 +91,10 @@ namespace osp {
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
-  struct TriangleMesh     : public Geometry {};
 
 } // ::osp
 
+/*! OSPRay channel constants for Frame Buffer (can be OR'ed together) */
 typedef enum {
   OSP_FB_COLOR=(1<<0),
   OSP_FB_DEPTH=(1<<1),
@@ -108,18 +102,27 @@ typedef enum {
 //  OSP_FB_ALPHA=(1<<3) // not used anywhere; use OSP_FB_COLOR with a frame buffer format containing alpha in 4th channel
 } OSPFrameBufferChannel;
 
-/*! OSPRay constants for Frame Buffer creation ('and' ed together) */
+/*! OSPRay format constants for Frame Buffer creation */
 typedef enum {
-  OSP_RGBA_NONE,
-  OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
-  OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel XXX unsupported! */
-  OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
+  OSP_FB_NONE,    //!< framebuffer will not be mapped by application
+  OSP_FB_RGBA8,   //!< one dword per pixel: rgb+alpha, each one byte
+  OSP_FB_RGBA32F, //!< one float4 per pixel: rgb+alpha, each one float
+/* TODO
+  OSP_FB_RGB8,    //!< three 8-bit unsigned chars per pixel
+  OSP_FB_RGB32F,  ?
+  OSP_FB_SRGBA,   //!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte
+  OSP_FB_SRGB,    //!< three 8-bit unsigned chars (in sRGB space) per pixel
+*/
+// deprecated names
+  OSP_RGBA_NONE = OSP_FB_NONE,
+  OSP_RGBA_I8 = OSP_FB_RGBA8,
+  OSP_RGBA_F32 = OSP_FB_RGBA32F,
+  OSP_RGB_I8/* = OSP_FB_RGB8 XXX unsupported! */
 } OSPFrameBufferFormat;
 
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
 /*! \see ospdApiMode */
 typedef enum {
-
   //! \brief all ospNew(), ospSet(), etc calls affect only the current rank 
   /*! \detailed in this mode, all ospXyz() calls made on a given rank
     will ONLY affect state ont hat rank. This allows for configuring a
@@ -164,12 +167,6 @@ typedef enum {
   OSP_DATA_SHARED_BUFFER = (1<<0),
 } OSPDataCreationFlags;
 
-/*! flags that can be passed to ospNewTexture2D(); can be OR'ed together */
-typedef enum {
-  OSP_TEXTURE_SHARED_BUFFER = (1<<0),
-  OSP_TEXTURE_FILTER_NEAREST = (1<<1) /*!< use nearest-neighbor interpolation rather than the default bilinear interpolation */
-} OSPTextureCreationFlags;
-
 typedef enum {
   OSP_OK=0, /*! no error; any value other than zero means 'some kind of error' */
   OSP_GENERAL_ERROR /*! unspecified error */
@@ -186,7 +183,6 @@ typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture2D         *OSPTexture2D;
-typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
 
@@ -227,7 +223,7 @@ extern "C" {
       renderer's parameters, typically in "world". */
   OSPRAY_INTERFACE void ospRenderFrame(OSPFrameBuffer fb, 
                                        OSPRenderer renderer, 
-                                       const uint32_t fbChannelFlags=OSP_FB_COLOR);
+                                       const uint32_t whichChannels=OSP_FB_COLOR);
 
   //! create a new renderer of given type 
   /*! return 'NULL' if that type is not known */
@@ -288,16 +284,17 @@ extern "C" {
   
   //! \brief create a new Texture2D with the given parameters
   /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
-  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
+  OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(const osp::vec2i &size,
+      const OSPTextureFormat, void *data = NULL, const uint32_t flags = 0);
 
-  //! \brief lears the specified channel(s) of the frame buffer
+  //! \brief clears the specified channel(s) of the frame buffer
   /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
-    if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
-    if whichChannel&OSP_FB_DEPTH!=0, clear the depth buffer to +inf
-    if whichChannel&OSP_FB_ACCUM!=0, clear the accum buffer to 0,0,0,0, and reset accumID
+    if whichChannels & OSP_FB_COLOR != 0, clear the color buffer to '0,0,0,0'
+    if whichChannels & OSP_FB_DEPTH != 0, clear the depth buffer to +inf
+    if whichChannels & OSP_FB_ACCUM != 0, clear the accum buffer to 0,0,0,0, and reset accumID
   */
-  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer fb, const uint32_t whichChannel);
+  OSPRAY_INTERFACE void ospFrameBufferClear(OSPFrameBuffer, const uint32_t whichChannels);
 
   // -------------------------------------------------------
   /*! \defgroup ospray_data Data Buffer Handling 
@@ -308,12 +305,13 @@ extern "C" {
   */
   /*! create a new data buffer, with optional init data and control flags 
 
-    Valid flags that can be or'ed together into the flags value:
+    Valid flags that can be OR'ed together into the flags value:
     - OSP_DATA_SHARED_BUFFER: indicates that the buffer can be shared with the app.
       In this case the calling program guarantees that the 'init' pointer will remain
       valid for the duration that this data array is being used.
    */
-  OSPRAY_INTERFACE OSPData ospNewData(size_t numItems, OSPDataType format, const void *init=NULL, int flags=0);
+  OSPRAY_INTERFACE OSPData ospNewData(size_t numItems, OSPDataType format,
+      const void *init=NULL, const uint32_t dataCreationFlags=0);
 
   /*! \} */
 
@@ -340,7 +338,7 @@ extern "C" {
     corner (as in OpenGL).
 
     \param channelFlags specifies which channels the frame buffer has,
-    and is or'ed together from the values OSP_FB_COLOR,
+    and is OR'ed together from the values OSP_FB_COLOR,
     OSP_FB_DEPTH, and/or OSP_FB_ACCUM. If a certain buffer
     value is _not_ specified, the given buffer will not be present
     (see notes below).
@@ -368,8 +366,8 @@ extern "C" {
     never ever be transferred to the application.
    */
   OSPRAY_INTERFACE OSPFrameBuffer ospNewFrameBuffer(const osp::vec2i &size, 
-                                    const OSPFrameBufferFormat externalFormat=OSP_RGBA_I8,
-                                    const int channelFlags=OSP_FB_COLOR);
+                                    const OSPFrameBufferFormat=OSP_RGBA_I8,
+                                    const uint32_t whichChannels=OSP_FB_COLOR);
 
   /*! \brief free a framebuffer 
 
@@ -379,7 +377,7 @@ extern "C" {
 
   /*! \brief map app-side content of a framebuffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE const void *ospMapFrameBuffer(OSPFrameBuffer fb, 
-                                                 OSPFrameBufferChannel=OSP_FB_COLOR);
+                                                 const OSPFrameBufferChannel=OSP_FB_COLOR);
 
   /*! \brief unmap a previously mapped frame buffer (see \ref frame_buffer_handling) */
   OSPRAY_INTERFACE void ospUnmapFrameBuffer(const void *mapped, OSPFrameBuffer fb);
@@ -457,7 +455,7 @@ extern "C" {
   OSPRAY_INTERFACE int ospSetRegion(/*! the object we're writing this block of pixels into */
                                     OSPVolume object, 
                                     /* points to the first voxel to be copies. The
-                                       voxels at 'soruce' MUST have dimensions
+                                       voxels at 'source' MUST have dimensions
                                        'regionSize', must be organized in 3D-array
                                        order, and must have the same voxel type as the
                                        volume.*/
@@ -554,16 +552,6 @@ extern "C" {
     
     \{ 
   */
-
-  /*! \brief create a new triangle mesh. 
-
-    the mesh doesn't do anything 'til it is added to a model. to set
-    the model's vertices etc, set the respective data arrays for
-    "position", "index", "normal", "texcoord", "color", etc. Data
-    format for vertices and normals in vec3fa, and vec4i for index
-    (fourth component is the material ID). */
-  //! \warning deprecated: use ospNewGeometry("triangles") instead
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPTriangleMesh ospNewTriangleMesh();
 
   /*! add an already created geometry to a model */
   OSPRAY_INTERFACE void ospAddGeometry(OSPModel model, OSPGeometry mesh);

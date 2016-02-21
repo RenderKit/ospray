@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -109,4 +109,4 @@ ELSE()
   SET_TARGET_PROPERTIES(embree_xeonphi PROPERTIES VERSION ${EMBREE_VERSION_MAJOR} SOVERSION ${EMBREE_VERSION_MAJOR})
 ENDIF()
 
-INSTALL(TARGETS embree_xeonphi LIBRARY DESTINATION lib COMPONENT lib_xeonphi NAMELINK_SKIP)
+INSTALL(TARGETS embree_xeonphi LIBRARY DESTINATION lib COMPONENT lib_xeonphi)

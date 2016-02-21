@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -54,12 +54,12 @@ TARGET_LINK_LIBRARIES(sys ${CMAKE_THREAD_LIBS_INIT} ${CMAKE_DL_LIBS} ${ADDITIONA
 SET_PROPERTY(TARGET sys PROPERTY FOLDER common)
 
 INSTALL(TARGETS sys
-  EXPORT sysExport
+#  EXPORT sysExport
   DESTINATION lib
 )
-INSTALL(EXPORT sysExport
-  DESTINATION ${CMAKE_DIR} FILE libsysTargets.cmake
-)
+#INSTALL(EXPORT sysExport
+#  DESTINATION ${CMAKE_DIR} FILE libsysTargets.cmake
+#)
 
 ELSE ()
 

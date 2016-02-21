@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -14,18 +14,21 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#pragma once 
+#include "SimpleAOMaterial.ih"
 
-#include "ospray/common/Managed.h"
+export void *uniform SimpleAOMaterial_create(void *uniform cppE)
+{
+  uniform SimpleAOMaterial *uniform mat = uniform new uniform SimpleAOMaterial;
+  mat->super.cppEquivalent = cppE;
+  return mat;
+}
 
-namespace ospray {
-
-  /*! \brief implements the basic abstraction for anything that is a 'texture' */
-  struct Texture : public ManagedObject 
-  {
-    //! \brief common function to help printf-debugging 
-    /*! Every derived class should overrride this! */
-    virtual std::string toString() const { return "ospray::Texture"; }
-  };
-
-} // ::ospray
+export void SimpleAOMaterial_set(void *uniform _mat,
+                                 const uniform vec3f &Kd,
+                                 void *uniform _map_Kd)
+{
+  uniform SimpleAOMaterial *uniform mat =
+      (uniform SimpleAOMaterial *uniform)_mat;
+  mat->Kd = Kd;
+  mat->map_Kd = (uniform Texture2D *uniform)_map_Kd;
+}

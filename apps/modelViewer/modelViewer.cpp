@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,6 +28,7 @@ namespace ospray {
   using std::cout;
   using std::endl;
   bool doShadows = 1;
+  OSPTexture2D g_tex; // holds last loaded texture, for debugging
 
   const char *outFileName = NULL;
   size_t numAccumsFrameInFileOutput = 1;
@@ -54,7 +55,6 @@ namespace ospray {
   glut3D::Glut3DWidget::FrameBufferMode g_frameBufferMode = glut3D::Glut3DWidget::FRAMEBUFFER_UCHAR;
 
   /*! when using the OBJ renderer, we create a automatic dirlight with this direction; use ''--sun-dir x y z' to change */
-  //  vec3f defaultDirLight_direction(-.3, -1, .4);
   vec3f defaultDirLight_direction(.3, -1, -.2);
 
   Ref<miniSG::Model> msgModel = NULL;
@@ -63,8 +63,7 @@ namespace ospray {
   bool alwaysRedraw = false;
 
   //! the renderer we're about to use
-  std::string rendererType = "obj";
-  // std::string rendererType = "raycast_eyelight";
+  std::string rendererType = "ao1";
 
   std::vector<miniSG::Model *> msgAnimation;
 
@@ -85,12 +84,13 @@ namespace ospray {
     OSPFrameBuffer fb;
     OSPPixelOp     po;
 
-    DisplayWall() : hostname(""), streamName(""), size(-1), fb(NULL), po(NULL) {};
+    DisplayWall() : hostname(""), streamName(""), size(-1), fb(NULL), po(NULL)
+    {}
   };
   DisplayWall *displayWall = NULL;
 
   using ospray::glut3D::Glut3DWidget;
-  
+
   // helper function to write the rendered image as PPM file
   void writePPM(const char *fileName,
       const int sizeX, const int sizeY,
@@ -140,6 +140,7 @@ namespace ospray {
       Assert(camera != NULL && "could not create camera");
       ospSet3f(camera,"pos",-1,1,-1);
       ospSet3f(camera,"dir",+1,-1,+1);
+//      ospSet1f(camera,"fovy",120);
       ospCommit(camera);
 
       ospSetObject(renderer,"world",model);
@@ -148,10 +149,10 @@ namespace ospray {
       ospSet1i(renderer,"spp",spp);
       ospCommit(camera);
       ospCommit(renderer);
-      
-    };
 
-    virtual void reshape(const ospray::vec2i &newSize)
+    }
+
+    void reshape(const ospray::vec2i &newSize) override
     {
       Glut3DWidget::reshape(newSize);
       g_windowSize = newSize;
@@ -178,7 +179,7 @@ namespace ospray {
           ospSetString(displayWall->po, "streamName", displayWall->streamName.c_str());
           ospCommit(displayWall->po);
         }
-          
+
         ospSetPixelOp(displayWall->fb,displayWall->po);
       }
 
@@ -187,12 +188,12 @@ namespace ospray {
       viewPort.modified = true;
       forceRedraw();
     }
-    
-    virtual void keypress(char key, const vec2f where)
+
+    void keypress(char key, const vec2f where) override
     {
       switch (key) {
       case 'R':
-        alwaysRedraw = !alwaysRedraw; 
+        alwaysRedraw = !alwaysRedraw;
         forceRedraw();
         break;
       case 'S':
@@ -226,7 +227,7 @@ namespace ospray {
       case 'X':
         if (viewPort.up == vec3f(1,0,0) || viewPort.up == vec3f(-1.f,0,0))
           viewPort.up = - viewPort.up;
-        else 
+        else
           viewPort.up = vec3f(1,0,0);
         viewPort.modified = true;
         forceRedraw();
@@ -234,7 +235,7 @@ namespace ospray {
       case 'Y':
         if (viewPort.up == vec3f(0,1,0) || viewPort.up == vec3f(0,-1.f,0))
           viewPort.up = - viewPort.up;
-        else 
+        else
           viewPort.up = vec3f(0,1,0);
         viewPort.modified = true;
         forceRedraw();
@@ -242,7 +243,7 @@ namespace ospray {
       case 'Z':
         if (viewPort.up == vec3f(0,0,1) || viewPort.up == vec3f(0,0,-1.f))
           viewPort.up = - viewPort.up;
-        else 
+        else
           viewPort.up = vec3f(0,0,1);
         viewPort.modified = true;
         forceRedraw();
@@ -264,7 +265,7 @@ namespace ospray {
       }
     }
 
-    virtual void specialkey(int32 key, const vec2f where)
+    void specialkey(int32 key, const vec2f where) override
     {
       switch(key) {
       case GLUT_KEY_PAGE_UP:
@@ -294,7 +295,7 @@ namespace ospray {
       }
     }
 
-    virtual void mouseButton(int32 whichButton, bool released, const vec2i &pos)
+    void mouseButton(int32 whichButton, bool released, const vec2i &pos) override
     {
       Glut3DWidget::mouseButton(whichButton, released, pos);
       if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
@@ -313,12 +314,12 @@ namespace ospray {
       }
     }
 
-    virtual void display()
+    void display() override
     {
       if (!fb || !renderer) return;
-      
+
       static int frameID = 0;
-      
+
       //{
       // note that the order of 'start' and 'end' here is
       // (intentionally) reversed: due to our asynchrounous rendering
@@ -349,7 +350,7 @@ namespace ospray {
           exit(0);
         }
       ++frameID;
-      
+
       if (viewPort.modified) {
         static bool once = true;
         if(once) {
@@ -371,7 +372,7 @@ namespace ospray {
         if (displayWall)
           ospFrameBufferClear(displayWall->fb,OSP_FB_ACCUM);
       }
-      
+
       if (outFileName) {
         ospSet1i(renderer,"spp",numSPPinFileOutput);
         ospCommit(renderer);
@@ -417,7 +418,7 @@ namespace ospray {
         // setTitle(title);
       }
     }
-    
+
     OSPModel       model;
     OSPFrameBuffer fb;
     OSPRenderer    renderer;
@@ -438,7 +439,7 @@ namespace ospray {
     if(!g_createDefaultMaterial) return NULL;
     static OSPMaterial ospMat = NULL;
     if (ospMat) return ospMat;
-    
+
     ospMat = ospNewMaterial(renderer,"OBJMaterial");
     if (!ospMat)  {
       throw std::runtime_error("could not create default material 'OBJMaterial'");
@@ -463,25 +464,31 @@ namespace ospray {
       return alreadyCreatedTextures[msgTex];
 
     //TODO: We need to come up with a better way to handle different possible pixel layouts
-    OSPDataType type = OSP_VOID_PTR;
+    OSPTextureFormat type = OSP_TEXTURE_R8;
 
     if (msgTex->depth == 1) {
-      if( msgTex->channels == 3 ) type = OSP_UCHAR3;
-      if( msgTex->channels == 4 ) type = OSP_UCHAR4;
+      if( msgTex->channels == 1 ) type = OSP_TEXTURE_R8;
+      if( msgTex->channels == 3 )
+        type = msgTex->prefereLinear ? OSP_TEXTURE_RGB8 : OSP_TEXTURE_SRGB;
+      if( msgTex->channels == 4 )
+        type = msgTex->prefereLinear ? OSP_TEXTURE_RGBA8 : OSP_TEXTURE_SRGBA;
     } else if (msgTex->depth == 4) {
-      if( msgTex->channels == 3 ) type = OSP_FLOAT3;
-      if( msgTex->channels == 4 ) type = OSP_FLOAT3A;
+      if( msgTex->channels == 1 ) type = OSP_TEXTURE_R32F;
+      if( msgTex->channels == 3 ) type = OSP_TEXTURE_RGB32F;
+      if( msgTex->channels == 4 ) type = OSP_TEXTURE_RGBA32F;
     }
 
-    OSPTexture2D ospTex = ospNewTexture2D( msgTex->width,
-                                           msgTex->height,
+    vec2i texSize(msgTex->width, msgTex->height);
+    OSPTexture2D ospTex = ospNewTexture2D( (osp::vec2i&)texSize,
                                            type,
                                            msgTex->data,
                                            0);
-    
+
     alreadyCreatedTextures[msgTex] = ospTex;
 
     ospCommit(ospTex);
+    g_tex = ospTex; // remember last texture for debugging
+
     return ospTex;
   }
 
@@ -542,7 +549,7 @@ namespace ospray {
           }
           break;
         }
-      default: 
+      default:
         throw std::runtime_error("unknown material parameter type");
       };
     }
@@ -554,7 +561,7 @@ namespace ospray {
   void ospModelViewerMain(int &ac, const char **&av)
   {
     msgModel = new miniSG::Model;
-    
+
     cout << "#ospModelViewer: starting to process cmdline arguments" << endl;
     for (int i=1;i<ac;i++) {
       const std::string arg = av[i];
@@ -631,7 +638,7 @@ namespace ospray {
         } else if (fn.ext() == "hbp") {
           miniSG::importHBP(*msgModel,fn);
         } else if (fn.ext() == "x3d") {
-          miniSG::importX3D(*msgModel,fn); 
+          miniSG::importX3D(*msgModel,fn);
         } else if (fn.ext() == "astl") {
           miniSG::importSTL(msgAnimation,fn);
         }
@@ -679,7 +686,7 @@ namespace ospray {
       throw std::runtime_error("could not create ospRenderer '"+rendererType+"'");
     Assert(ospRenderer != NULL && "could not create ospRenderer");
     ospCommit(ospRenderer);
-    
+
     // code does not yet do instancing ... check that the model doesn't contain instances
     bool doesInstancing = 0;
 
@@ -732,7 +739,7 @@ namespace ospray {
       OSPData position = ospNewData(msgMesh->position.size(),OSP_FLOAT3A,
                                     &msgMesh->position[0],OSP_DATA_SHARED_BUFFER);
       ospSetData(ospMesh,"position",position);
-      
+
       // add triangle index array to mesh
       if (!msgMesh->triangleMaterialId.empty()) {
         OSPData primMatID = ospNewData(msgMesh->triangleMaterialId.size(),OSP_INT,
@@ -904,6 +911,16 @@ namespace ospray {
     ospSet1f(ospQuad, "intensity", 45.f);
     ospCommit(ospQuad);
     lights.push_back(ospQuad);
+    //HDRI light
+    cout << "#ospModelViewer: Adding a hard coded hdrilight for test." << endl;
+    OSPLight ospHdri = ospNewLight(ospRenderer, "hdri");
+    ospSetString(ospHdri, "name", "hdri_test");
+    ospSet3f(ospHdri, "up", 0.f, 0.f, 1.f);
+    ospSet3f(ospHdri, "dir", 0.f, 1.f, 0.0f);
+    ospSet1f(ospHdri, "intensity", 10.f);
+    ospSetObject(ospHdri, "map", g_tex);
+    ospCommit(ospHdri);
+    lights.push_back(ospHdri);
 #endif
     OSPData lightArray = ospNewData(lights.size(), OSP_OBJECT, &lights[0], 0);
     ospSetData(ospRenderer, "lights", lightArray);

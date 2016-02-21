@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -449,16 +449,6 @@ namespace ospray {
       cmd.send((const ObjectHandle &) _model);
       cmd.send((const ObjectHandle &) _volume);
       cmd.flush();
-    }
-
-    /*! create a new data buffer */
-    OSPTriangleMesh MPIDevice::newTriangleMesh()
-    {
-      ObjectHandle handle = ObjectHandle::alloc();
-      cmd.newCommand(CMD_NEW_TRIANGLEMESH);
-      cmd.send(handle);
-      cmd.flush();
-      return (OSPTriangleMesh)(int64)handle;
     }
 
     /*! create a new data buffer */
@@ -1034,6 +1024,15 @@ namespace ospray {
       cmd.flush();
     }
 
+    /*! remove an existing volume from a model */
+    void MPIDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    {
+      cmd.newCommand(CMD_REMOVE_VOLUME);
+      cmd.send((const ObjectHandle&)_model);
+      cmd.send((const ObjectHandle&)_volume);
+      cmd.flush();
+    }
+
 
     /*! call a renderer to render a frame buffer */
     void MPIDevice::renderFrame(OSPFrameBuffer _fb, 
@@ -1086,18 +1085,17 @@ namespace ospray {
     }
 
     /*! create a new Texture2D object */
-    OSPTexture2D MPIDevice::newTexture2D(int width, int height, 
-                                         OSPDataType type, void *data, int flags)
+    OSPTexture2D MPIDevice::newTexture2D(const vec2i &sz,
+        const OSPTextureFormat type, void *data, const uint32 flags)
     {
       ObjectHandle handle = ObjectHandle::alloc();
       cmd.newCommand(CMD_NEW_TEXTURE2D);
       cmd.send(handle);
-      cmd.send((int32)width);
-      cmd.send((int32)height);
+      cmd.send(sz);
       cmd.send((int32)type);
       cmd.send((int32)flags);
       assert(data);
-      size_t size = ospray::sizeOf(type)*width*height;
+      size_t size = ospray::sizeOf(type) * sz.x * sz.y;
       cmd.send(size);
 
       cmd.send(data,size);

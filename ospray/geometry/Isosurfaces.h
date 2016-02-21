@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -47,7 +47,11 @@ namespace ospray {
     Implements the \ref geometry_isosurfaces geometry
 
   */
-  struct Isosurfaces : public Geometry {
+  struct Isosurfaces : public Geometry 
+  {
+    //! constructor
+    Isosurfaces();
+
     //! \brief common function to help printf-debugging 
     virtual std::string toString() const { return "ospray::Isosurfaces"; }
 
@@ -60,8 +64,6 @@ namespace ospray {
 
     size_t numIsovalues;
     float *isovalues;
-
-    Isosurfaces();
   };
   /*! @} */
 
