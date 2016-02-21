@@ -37,6 +37,9 @@ namespace ospcommon {
     inline vec_t(scalar_t s) : x(s), y(s) {};
     inline vec_t(scalar_t x, scalar_t y) : x(x), y(y) {};
     inline vec_t(const vec_t<T,2> &o) : x(o.x), y(o.y) {}
+
+    template<typename OT>
+    explicit inline vec_t(const vec_t<OT,2> &o) : x(o.x), y(o.y) {}
     
     /*! return result of reduce_add() across all components */
     inline scalar_t sum() const { return x+y; }
@@ -57,9 +60,7 @@ namespace ospcommon {
     inline vec_t(const vec_t<T,3> &o) : x(o.x), y(o.y), z(o.z) {}
 
     template<typename OT, int OA>
-    explicit inline vec_t(const vec_t<OT,3,OA> &o)
-      : x(x), y(y), z(z) 
-    {}
+    explicit inline vec_t(const vec_t<OT,3,OA> &o) : x(o.x), y(o.y), z(o.z) {}
 
     inline const T& operator []( const size_t axis ) const { assert(axis < 3); return (&x)[axis]; }
     inline       T& operator []( const size_t axis )       { assert(axis < 3); return (&x)[axis]; }
@@ -108,6 +109,9 @@ namespace ospcommon {
     inline vec_t(scalar_t s) : x(s), y(s), z(s), w(s) {};
     inline vec_t(scalar_t x, scalar_t y, scalar_t z, scalar_t w) : x(x), y(y), z(z), w(w) {};
     inline vec_t(const vec_t<T,4> &o) : x(o.x), y(o.y), z(o.z), w(o.w) {}
+    template<typename OT>
+    explicit inline vec_t(const vec_t<OT,4> &o) : x(x), y(y), z(o.z), w(o.w) {}
+    
 
     /*! return result of reduce_add() across all components */
     inline scalar_t sum() const { return x+y+z+w; }
@@ -138,6 +142,24 @@ namespace ospcommon {
   template<typename T> inline vec_t<T,4> operator+(const vec_t<T,4> &v)
   { return vec_t<T,4>(+v.x,+v.y,+v.z,+v.w); }
 
+  // -------------------------------------------------------
+  // unary functors
+  // -------------------------------------------------------
+#define unary_functor(op) \
+  template<typename T> inline vec_t<T,2> op(const vec_t<T,2> &v)\
+  { return vec_t<T,2>(op(v.x),op(v.y)); }\
+  template<typename T> inline vec_t<T,3> op(const vec_t<T,3> &v)\
+  { return vec_t<T,3>(op(v.x),op(v.y),op(v.z)); }\
+  template<typename T> inline vec_t<T,3,1> op(const vec_t<T,3,1> &v)\
+  { return vec_t<T,3,1>(op(v.x),op(v.y),op(v.z)); }\
+  template<typename T> inline vec_t<T,4> op(const vec_t<T,4> &v)\
+  { return vec_t<T,4>(op(v.x),op(v.y),op(v.z),op(v.w)); }\
+
+  unary_functor(rcp);
+  unary_functor(sin);
+  unary_functor(cos);
+#undef unary_functor
+  
   // -------------------------------------------------------
   // binary operators, same type
   // -------------------------------------------------------
@@ -216,6 +238,21 @@ namespace ospcommon {
                           const vec_t<T,4> &b)                          \
   { a.x op b.x; a.y op b.y; a.z op b.z; a.w op b.w; return a; }         \
                                                                         \
+  /* "vec op scalar" */                                                 \
+  template<typename T>                                                  \
+  inline vec_t<T,2> &name(vec_t<T,2> &a,                                \
+                          const T &b)                                   \
+  { a.x op b; a.y op b; return a; }                                     \
+                                                                        \
+  template<typename T, int A>                                           \
+  inline vec_t<T,3,A> &name(vec_t<T,3,A> &a,                            \
+                            const T &b)                                 \
+  { a.x op b; a.y op b; a.z op b; return a; }                           \
+                                                                        \
+  template<typename T>                                                  \
+  inline vec_t<T,4> &name(vec_t<T,4> &a,                                \
+                          const T &b)                                   \
+  { a.x op b; a.y op b; a.z op b; a.w op b; return a; }                 \
   
   binary_operator(operator+=,+=);
   binary_operator(operator-=,-=);
@@ -347,12 +384,6 @@ namespace ospcommon {
   inline std::ostream &operator<<(std::ostream &o, const vec_t<T,4> &v)
   { o << "(" << v.x << "," << v.y << "," << v.z << "," << v.w << ")"; return o; }
 
-  // -------------------------------------------------------
-  // scalar functors we eventually define for vec's, too
-  // -------------------------------------------------------
-  template<typename T>
-  inline T divRoundUp(T a, T b) { return (a+b-1)/b; }
-
   // "inherit" std::min/max/etc for basic types
   using std::min;
   using std::max;
@@ -391,6 +422,26 @@ namespace ospcommon {
   inline T reduce_add(const vec_t<T,4,A> &v)
   { return v.x+v.y+v.z+v.w; }
 
+  template<typename T, int A>
+  inline T reduce_min(const vec_t<T,2,A> &v)
+  { return min(v.x,v.y); }
+  template<typename T, int A>
+  inline T reduce_min(const vec_t<T,3,A> &v)
+  { return min(min(v.x,v.y),v.z); }
+  template<typename T, int A>
+  inline T reduce_min(const vec_t<T,4,A> &v)
+  { return min(min(v.x,v.y),min(v.z,v.w)); }
+
+  template<typename T, int A>
+  inline T reduce_max(const vec_t<T,2,A> &v)
+  { return max(v.x,v.y); }
+  template<typename T, int A>
+  inline T reduce_max(const vec_t<T,3,A> &v)
+  { return max(max(v.x,v.y),v.z); }
+  template<typename T, int A>
+  inline T reduce_max(const vec_t<T,4,A> &v)
+  { return max(max(v.x,v.y),max(v.z,v.w)); }
+
   // -------------------------------------------------------
   // select
   // -------------------------------------------------------
@@ -401,26 +452,39 @@ namespace ospcommon {
   // -------------------------------------------------------
   // all vec2 variants
   // -------------------------------------------------------
+  typedef vec_t<uint8_t,2>  vec2uc;
+  typedef vec_t<int8_t,2>   vec2c;
   typedef vec_t<uint32_t,2> vec2ui;
   typedef vec_t<int32_t,2>  vec2i;
+  typedef vec_t<uint64_t,2> vec2ul;
+  typedef vec_t<int64_t,2>  vec2l;
   typedef vec_t<float,2>    vec2f;
   typedef vec_t<double,2>   vec2d;
 
   // -------------------------------------------------------
   // all vec3 variants
   // -------------------------------------------------------
+  typedef vec_t<uint8_t,3>  vec3uc;
+  typedef vec_t<int8_t,3>   vec3c;
   typedef vec_t<uint32_t,3> vec3ui;
   typedef vec_t<int32_t,3>  vec3i;
+  typedef vec_t<uint64_t,3> vec3ul;
+  typedef vec_t<int64_t,3>  vec3l;
   typedef vec_t<float,3>    vec3f;
-  typedef vec_t<float,3,1>  vec3fa;
   typedef vec_t<double,3>   vec3d;
+
+  typedef vec_t<float,3,1>  vec3fa;
+  typedef vec_t<int,3,1>    vec3ia;
 
   // -------------------------------------------------------
   // all vec4 variants
   // -------------------------------------------------------
   typedef vec_t<uint8_t,4>  vec4uc;
+  typedef vec_t<int8_t,4>   vec4c;
   typedef vec_t<uint32_t,4> vec4ui;
   typedef vec_t<int32_t,4>  vec4i;
+  typedef vec_t<uint64_t,4> vec4ul;
+  typedef vec_t<int64_t,4>  vec4l;
   typedef vec_t<float,4>    vec4f;
   typedef vec_t<double,4>   vec4d;
 

@@ -308,8 +308,10 @@ namespace ospcommon {
   }
 
   /*! Shortcuts for common linear spaces. */
-  typedef LinearSpace2<vec2f> LinearSpace2f;
-  typedef LinearSpace3<vec3f> LinearSpace3f;
+  typedef LinearSpace2<vec2f>  LinearSpace2f;
+  typedef LinearSpace3<vec3f>  LinearSpace3f;
   typedef LinearSpace3<vec3fa> LinearSpace3fa;
 
+  typedef LinearSpace2f linear2f;
+  typedef LinearSpace3f linear3f;
 } // ::ospcommon

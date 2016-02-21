@@ -19,9 +19,6 @@
 // stl
 #include <sstream>
 
-using embree::alignedFree;
-using embree::alignedMalloc;
-
 namespace ospray {
 
   Data::Data(size_t numItems, OSPDataType type, void *init, int flags) :

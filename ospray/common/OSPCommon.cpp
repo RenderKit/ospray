@@ -24,20 +24,20 @@ namespace ospray {
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
   extern "C" void *malloc64(size_t size)
   {
-    return embree::alignedMalloc(size);
+    return ospcommon::alignedMalloc(size);
   }
 
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
   extern "C" void free64(void *ptr)
   {
-    return embree::alignedFree(ptr);
+    return ospcommon::alignedFree(ptr);
   }
 
   /*! logging level - '0' means 'no logging at all', increasing
       numbers mean increasing verbosity of log messages */
-  uint32 logLevel = 0;
+  uint32_t logLevel = 0;
   bool debugMode = false;
-  int32 numThreads = -1; //!< for default (==maximum) number of OSPRay/Embree threads
+  int32_t numThreads = -1; //!< for default (==maximum) number of OSPRay/Embree threads
 
   WarnOnce::WarnOnce(const std::string &s) 
     : s(s) 
@@ -146,30 +146,30 @@ namespace ospray {
     case OSP_DATA:      return sizeof(void *);
     case OSP_CHAR:      return sizeof(int8);
     case OSP_UCHAR:     return sizeof(uint8);
-    case OSP_UCHAR2:    return sizeof(embree::Vec2<uint8>);
-    case OSP_UCHAR3:    return sizeof(embree::Vec3<uint8>);
-    case OSP_UCHAR4:    return sizeof(uint32);
+    case OSP_UCHAR2:    return sizeof(vec2uc);
+    case OSP_UCHAR3:    return sizeof(vec3uc);
+    case OSP_UCHAR4:    return sizeof(vec4uc);
     case OSP_INT:       return sizeof(int32);
-    case OSP_INT2:      return sizeof(embree::Vec2<int32>);
-    case OSP_INT3:      return sizeof(embree::Vec3<int32>);
-    case OSP_INT4:      return sizeof(embree::Vec4<int32>);
+    case OSP_INT2:      return sizeof(vec2i);
+    case OSP_INT3:      return sizeof(vec3i);
+    case OSP_INT4:      return sizeof(vec4i);
     case OSP_UINT:      return sizeof(uint32);
-    case OSP_UINT2:     return sizeof(embree::Vec2<uint32>);
-    case OSP_UINT3:     return sizeof(embree::Vec3<uint32>);
-    case OSP_UINT4:     return sizeof(embree::Vec4<uint32>);
+    case OSP_UINT2:     return sizeof(vec2ui);
+    case OSP_UINT3:     return sizeof(vec3ui);
+    case OSP_UINT4:     return sizeof(vec4ui);
     case OSP_LONG:      return sizeof(int64);
-    case OSP_LONG2:     return sizeof(embree::Vec2<int64>);
-    case OSP_LONG3:     return sizeof(embree::Vec3<int64>);
-    case OSP_LONG4:     return sizeof(embree::Vec4<int64>);
+    case OSP_LONG2:     return sizeof(vec2l);
+    case OSP_LONG3:     return sizeof(vec3l);
+    case OSP_LONG4:     return sizeof(vec4l);
     case OSP_ULONG:     return sizeof(uint64);
-    case OSP_ULONG2:    return sizeof(embree::Vec2<uint64>);
-    case OSP_ULONG3:    return sizeof(embree::Vec3<uint64>);
-    case OSP_ULONG4:    return sizeof(embree::Vec4<uint64>);
+    case OSP_ULONG2:    return sizeof(vec2ul);
+    case OSP_ULONG3:    return sizeof(vec3ul);
+    case OSP_ULONG4:    return sizeof(vec4ul);
     case OSP_FLOAT:     return sizeof(float);
-    case OSP_FLOAT2:    return sizeof(embree::Vec2<float>);
-    case OSP_FLOAT3:    return sizeof(embree::Vec3<float>);
-    case OSP_FLOAT4:    return sizeof(embree::Vec4<float>);
-    case OSP_FLOAT3A:   return sizeof(embree::Vec3fa);
+    case OSP_FLOAT2:    return sizeof(vec2f);
+    case OSP_FLOAT3:    return sizeof(vec3f);
+    case OSP_FLOAT4:    return sizeof(vec4f);
+    case OSP_FLOAT3A:   return sizeof(vec3fa);
     case OSP_DOUBLE:    return sizeof(double);
     default: break;
     };

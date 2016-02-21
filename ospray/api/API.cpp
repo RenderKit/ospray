@@ -601,14 +601,14 @@ namespace ospray {
   extern "C" void ospSet3i(OSPObject _object, const char *id, int x, int y, int z)
   {
     ASSERT_DEVICE();
-    ospray::api::Device::current->setVec3i(_object,id,vec3f(x,y,z));
+    ospray::api::Device::current->setVec3i(_object,id,vec3i(x,y,z));
   }
 
   /*! add a vec3i parameter to another object */
   extern "C" void ospSet3iv(OSPObject _object, const char *id, const int *xyz)
   {
     ASSERT_DEVICE();
-    ospray::api::Device::current->setVec3i(_object,id,vec3f(xyz[0],xyz[1],xyz[2]));
+    ospray::api::Device::current->setVec3i(_object,id,vec3i(xyz[0],xyz[1],xyz[2]));
   }
 
   /*! add a vec4f parameter to another object */

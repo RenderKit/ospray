@@ -233,6 +233,12 @@ namespace ospcommon
     return (1.0f-u)*(1.0f-v)*x0 + u*(1.0f-v)*x1 + (1.0f-u)*v*x2 + u*v*x3; 
   }
 
+  // -------------------------------------------------------
+  // scalar functors we eventually define for vec's, too
+  // -------------------------------------------------------
+  template<typename T>
+  inline T divRoundUp(T a, T b) { return (a+b-1)/b; }
+
   /*! exchange */
   template<typename T> __forceinline void xchg ( T& a, T& b ) { const T tmp = a; a = b; b = tmp; }
 

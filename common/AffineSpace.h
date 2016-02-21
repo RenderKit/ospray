@@ -147,6 +147,9 @@ namespace ospcommon {
   typedef AffineSpaceT<LinearSpace3fa> AffineSpace3fa;
   typedef AffineSpaceT<Quaternion3f > OrthonormalSpace3f;
 
+  typedef AffineSpace2f affine2f;
+  typedef AffineSpace3f affine3f;
+
   ////////////////////////////////////////////////////////////////////////////////
   /*! Template Specialization for 2D: return matrix for rotation around point (rotation around arbitrarty vector is not meaningful in 2D) */
   template<> inline AffineSpace2f AffineSpace2f::rotate(const vec2f& p, const float& r) { return translate(+p) * AffineSpace2f(LinearSpace2f::rotate(r)) * translate(-p); }

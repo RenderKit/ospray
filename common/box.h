@@ -50,6 +50,11 @@ namespace ospcommon {
   inline box_t<T,N,A> intersectionOf(const box_t<T,N,A> &a, const box_t<T,N,A> &b)
   { return box_t<T,N,A>(max(a.lower,b.lower), min(a.upper,b.upper)); }
 
+  template<typename T, int N>
+  inline bool disjoint(const box_t<T,N> &a, const box_t<T,N> &b)
+  { return anyLessThen(a.upper,b.lower) || anyLessThan(b.lower,a.upper); }
+
+
   /*! returns the center of the box (not valid for empty boxes) */
   template<typename T, int N, int A>
   inline vec_t<T,N,A> center(const box_t<T,N,A> &b)
