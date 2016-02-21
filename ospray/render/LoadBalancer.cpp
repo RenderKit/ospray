@@ -14,14 +14,14 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+// own
 #include "LoadBalancer.h"
 #include "Renderer.h"
-#include <sys/sysinfo.h>
-
+#include "ospray/common/parallel_for.h"
+// ospc
+#include "common/sysinfo.h"
 // stl
 #include <algorithm>
-
-#include "ospray/common/parallel_for.h"
 
 namespace ospray {
 

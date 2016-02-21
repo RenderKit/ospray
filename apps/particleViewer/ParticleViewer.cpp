@@ -24,8 +24,8 @@
 // particle viewer
 #include "Model.h"
 #include "uintah.h"
-// embree
-#include "sys/filename.h"
+// ospcommon
+#include "common/FileName.h"
 
 namespace ospray {
   namespace particle {
