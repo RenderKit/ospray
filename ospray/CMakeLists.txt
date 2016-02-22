@@ -360,6 +360,7 @@ IF (OSPRAY_MPI)
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+  SET_TARGET_PROPERTIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
   # ------------------------------------------------------------
   INSTALL(TARGETS ospray_mpi_worker${OSPRAY_EXE_SUFFIX} DESTINATION bin)
 ENDIF()

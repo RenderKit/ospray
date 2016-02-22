@@ -17,8 +17,7 @@
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
 
-// embree
-#include "common/sys/thread.h"
+#include <thread>
 
 #include "ospray/common/parallel_for.h"
 
