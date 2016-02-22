@@ -624,21 +624,28 @@ namespace ospray {
     /*! load module */
     int LocalDevice::loadModule(const char *name)
     {
-      std::string libName = "ospray_module_"+std::string(name);
+      std::string libName = "ospray_module_" + std::string(name);
       loadLibrary(libName);
 
-      std::string initSymName = "ospray_init_module_"+std::string(name);
+      std::string initSymName = "ospray_init_module_" + std::string(name);
       void*initSym = getSymbol(initSymName);
-      if (!initSym)
-        throw std::runtime_error("#osp:api: could not find module initializer "+initSymName);
+      if (!initSym) {
+        throw std::runtime_error("#osp:api: could not find module initializer "
+                                 +initSymName);
+      }
+
       void (*initMethod)() = (void(*)())initSym;
+
+      //NOTE(jda) - don't use magic numbers!
       if (!initMethod)
         return 2;
+
       try {
         initMethod();
       } catch (...) {
         return 3;
       }
+
       return 0;
     }
 
