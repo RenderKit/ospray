@@ -354,6 +354,10 @@ INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
 ##############################################################
 
 
+# build ospTutorial, for testing
+ADD_EXECUTABLE(ospTutorial${OSPRAY_EXE_SUFFIX} ../apps/ospTutorial)
+TARGET_LINK_LIBRARIES(ospTutorial${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+
 
 ##############################################################
 # MPI DEVICE - mpi worker
