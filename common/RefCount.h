@@ -23,7 +23,7 @@
     homebrewed one */
 namespace ospcommon
 {
-#if defined(__X86_64__)
+#if defined(__X86_64__) || defined(__MIC__)
   typedef std::atomic_llong atomic_t;
 #else
   typedef std::atomic_int atomic_t;
@@ -35,8 +35,19 @@ namespace ospcommon
   class RefCount
   {
   public:
-    RefCount(int val = 0) : refCounter(val) {}
+    inline RefCount(int val = 0) : refCounter(val) {}
     virtual ~RefCount() {};
+
+    /*! dummy copy-constructor and assignment operator because if they
+        do not exist icc throws some error about "delted function"
+        when auto-constructing those. they should NEVER get called,
+        though */
+    inline RefCount(const RefCount &other) { throw std::runtime_error("should not copy-construc refence-counted objects!"); }
+    /*! dummy copy-constructor and assignment operator because if they
+        do not exist icc throws some error about "delted function"
+        when auto-constructing those. they should NEVER get called,
+        though */
+    inline RefCount &operator=(const RefCount &other) { throw std::runtime_error("should not copy-construc refence-counted objects!"); return *this; }
   
     virtual void refInc() { refCounter++; }
     virtual void refDec() { if ((--refCounter) == 0) delete this; }
