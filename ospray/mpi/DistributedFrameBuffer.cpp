@@ -20,6 +20,8 @@
 // embree
 #include "common/sys/thread.h"
 
+#include "ospray/common/parallel_for.h"
+
 #include <memory>
 //#include <future> //NOTE(jda) - set note about std::async below...
 
@@ -623,9 +625,11 @@ namespace ospray {
   */
   void DFB::clear(const uint32 fbChannelFlags)
   {
-    if (myTiles.size() != 0) {
+    if (!myTiles.empty()) {
       DFBClearTask clearTask(this, fbChannelFlags);
-      clearTask.run(0);
+      parallel_for(myTiles.size(), [&](int taskIndex){
+        clearTask.run(taskIndex);
+      });
       if (fbChannelFlags & OSP_FB_ACCUM)
         accumID = 0;
     }
