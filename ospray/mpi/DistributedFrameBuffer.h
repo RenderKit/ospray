@@ -26,21 +26,10 @@ namespace ospray {
   using std::cout;
   using std::endl;
 
-#define QUEUE_PROCESSING_JOBS 0
-
   struct DistributedFrameBuffer
     : public mpi::async::CommLayer::Object,
       public virtual FrameBuffer
   {
-#if QUEUE_PROCESSING_JOBS
-    struct ProcThread : public ospray::Thread {
-      DistributedFrameBuffer *dfb;
-      ProcThread(DistributedFrameBuffer *dfb) : dfb(dfb) {};
-      virtual void run();
-    };
-    ProcThread procThread;
-#endif
-
     //! get number of pixels per tile, in x and y direction
     vec2i getTileSize()  const { return vec2i(TILE_SIZE); };
 
@@ -263,32 +252,6 @@ namespace ospray {
         tiles. will be null on all workers, and _may_ be null on the
         master if the master does not have a color buffer */
     Ref<LocalFrameBuffer> localFBonMaster;
-#if QUEUE_PROCESSING_JOBS
-    struct MsgTaskQueue {
-      std::queue<Ref<ospray::Task> > queue;
-      Mutex mutex;
-
-      void addJob(Task *task) {
-        mutex.lock();
-        queue.push(task);
-        mutex.unlock();
-      }
-
-      void waitAll() {
-        mutex.lock();
-        while (!queue.empty()) {
-          Ref<Task> task = queue.front();
-          queue.pop();
-          mutex.unlock();
-          task->wait();
-          mutex.lock();
-        }
-        mutex.unlock();
-      }
-    };
-    MsgTaskQueue msgTaskQueue;
-#endif
-
 
     inline bool IamTheMaster() const { return comm->IamTheMaster(); }
     //! constructor
