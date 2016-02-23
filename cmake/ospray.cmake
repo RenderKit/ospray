@@ -21,7 +21,8 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
-SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
+SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
+    "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
@@ -35,10 +36,6 @@ MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY_NO_ARCH)
-#  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
-#    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
-#  ENDIF()
-
   # Embree common include directories; others may be added depending on build target.
   # this section could be sooo much cleaner if embree only used
   # fully-qualified include names...
@@ -198,9 +195,6 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 
 ENDMACRO()
 
-
 MACRO(CONFIGURE_OSPRAY)
-
   CONFIGURE_OSPRAY_NO_ARCH()
-
 ENDMACRO()

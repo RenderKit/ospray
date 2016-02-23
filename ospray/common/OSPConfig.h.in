@@ -30,7 +30,6 @@
 #endif
 
 #cmakedefine OSPRAY_MIC_COI
-#cmakedefine OSPRAY_TARGET_MIC
 #cmakedefine OSPRAY_DISPLAYCLUSTER
 #cmakedefine OSPRAY_MPI
 #ifdef OSPRAY_MPI

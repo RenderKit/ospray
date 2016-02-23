@@ -18,15 +18,14 @@ OPTION(OSPRAY_MODULE_LOADERS "Build loaders for common file types." ON)
 
 CONFIGURE_OSPRAY()
 
-IF (NOT THIS_IS_MIC)
-  IF (OSPRAY_MODULE_LOADERS)
+IF (NOT THIS_IS_MIC AND OSPRAY_MODULE_LOADERS)
 
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
     LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/loaders)
 
-    ADD_LIBRARY(ospray_module_loaders${OSPRAY_LIB_SUFFIX} SHARED
+    OSPRAY_ADD_LIBRARY(ospray_module_loaders SHARED
       ObjectFile.cpp
       OSPObjectFile.cpp
       PLYTriangleMeshFile.cpp
@@ -38,12 +37,12 @@ IF (NOT THIS_IS_MIC)
       VolumeFile.cpp
     )
 
-    TARGET_LINK_LIBRARIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_loaders ospray)
 
-    SET_TARGET_PROPERTIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX}
+    SET_TARGET_PROPERTIES(ospray_module_loaders
       PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-    INSTALL(TARGETS ospray_module_loaders${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 
-  ENDIF (OSPRAY_MODULE_LOADERS)
-ENDIF (NOT THIS_IS_MIC)
+    INSTALL(TARGETS ospray_module_loaders DESTINATION lib)
+
+ENDIF ()
 
