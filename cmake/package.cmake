@@ -30,7 +30,11 @@ SET(CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR})
 # install headers
 ##############################################################
 
-INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/ospray/include/ospray DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT devel)
+INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/ospray/include/ospray
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  COMPONENT devel
+  FILES_MATCHING PATTERN "*.h"
+)
 # OSPDataType.h is included by ospray.h, should eventually move to include/ospray as well
 INSTALL(FILES ${PROJECT_SOURCE_DIR}/ospray/common/OSPDataType.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray COMPONENT devel)
 
