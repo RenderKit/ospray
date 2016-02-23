@@ -27,7 +27,7 @@ TARGET_LINK_LIBRARIES(ospray_glut3d ospray
 
 # ------------------------------------------------------------
 
-SET_TARGET_PROPERTIES(ospray_glut3d${OSPRAY_LIB_SUFFIX} 
+SET_TARGET_PROPERTIES(ospray_glut3d
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-INSTALL(TARGETS ospray_glut3d${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+INSTALL(TARGETS ospray_glut3d DESTINATION lib)
 

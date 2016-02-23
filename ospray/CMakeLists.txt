@@ -347,7 +347,7 @@ INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTER
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 
-INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
+OSPRAY_INSTALL_LIBRARY(ospray
 #  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
   DESTINATION lib
 )
@@ -375,7 +375,7 @@ IF (OSPRAY_MPI)
   OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
   OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray)
   # ------------------------------------------------------------
-  INSTALL(TARGETS ospray_mpi_worker${OSPRAY_EXE_SUFFIX} DESTINATION bin)
+  OSPRAY_INSTALL_EXE(ospray_mpi_worker DESTINATION bin)
 ENDIF()
 
 
@@ -397,8 +397,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
       ${LIBCOI_DEVICE}
     )
     # ------------------------------------------------------------
-    INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
-    INSTALL(TARGETS ospray_coi_worker.mic DESTINATION bin)
+    OSPRAY_INSTALL_EXE(ospray_coi_worker DESTINATION bin)
   ELSE()
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs

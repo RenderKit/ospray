@@ -19,7 +19,7 @@ CONFIGURE_OSPRAY()
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${OSPRAY_SOURCE_DIR})
 
-OSPRAY_ADD_LIBRARY(ospray_sg SHARED
+ADD_LIBRARY(ospray_sg SHARED
   # scene graph nodes
   SceneGraph.cpp
   Renderer.cpp
@@ -51,7 +51,7 @@ OSPRAY_ADD_LIBRARY(ospray_sg SHARED
   #    ImportX3D.cpp
 )
 
-OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_sg
+TARGET_LINK_LIBRARIES(ospray_sg
   ospray_xml
   ospray
 )
