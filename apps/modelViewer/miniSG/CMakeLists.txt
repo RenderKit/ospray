@@ -41,7 +41,7 @@ IF (NOT THIS_IS_MIC)
   
   INCLUDE_DIRECTORIES(${OSPRAY_DIR})
 
-  ADD_LIBRARY(ospray_minisg 
+  ADD_LIBRARY(ospray_minisg SHARED
     miniSG.cpp
     importer.cpp
     importOBJ.cpp
