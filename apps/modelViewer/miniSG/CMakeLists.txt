@@ -51,13 +51,17 @@ IF (NOT THIS_IS_MIC)
     importTRI.cpp
     importX3D.cpp
     importRIVL.cpp
-    )
-  TARGET_LINK_LIBRARIES(ospray_minisg ospray_xml
-    ${MAGICK_LIBRARIES})
+  )
+
+  TARGET_LINK_LIBRARIES(ospray_minisg
+    ospray_xml
+    ${MAGICK_LIBRARIES}
+  )
   # ------------------------------------------------------------
-  SET_TARGET_PROPERTIES(ospray_minisg${OSPRAY_LIB_SUFFIX} 
+  SET_TARGET_PROPERTIES(ospray_minisg
     PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})
-  INSTALL(TARGETS ospray_minisg${OSPRAY_LIB_SUFFIX} DESTINATION lib)
+
+  INSTALL(TARGETS ospray_minisg DESTINATION lib)
   # ------------------------------------------------------------
 
 ENDIF(NOT THIS_IS_MIC)

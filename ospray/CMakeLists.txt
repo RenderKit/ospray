@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# configure this dir for the proper "OSPRAY_LIB_SUFFIX" etc (depending
-# on which target we build for )
 CONFIGURE_OSPRAY()
 
 IF(OSPRAY_BUILD_MPI_DEVICE)
@@ -248,11 +246,11 @@ IF (OSPRAY_MPI)
     )
 
   # ============================================
-  ADD_EXECUTABLE(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
+  OSPRAY_ADD_EXECUTABLE(ospCreateCompositeTestCubes
     mpi/testing/createCompositeTestCubes
     )
-  TARGET_LINK_LIBRARIES(ospCreateCompositeTestCubes${OSPRAY_EXE_SUFFIX}
-    ospray${OSPRAY_LIB_SUFFIX}
+  OSPRAY_EXE_LINK_LIBRARIES(ospCreateCompositeTestCubes
+    ospray
     )
 
   # ============================================
@@ -312,31 +310,31 @@ IF (THIS_IS_MIC)
   ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC)
 ENDIF()
 
-OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
+OSPRAY_ADD_LIBRARY(ospray SHARED ${OSPRAY_SOURCES})
 
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
 )
 
 IF (THIS_IS_MIC)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
     embree_xeonphi
     ${TBB_LIBRARIES_MIC}
   )
 ELSE()
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
     embree
     ${TBB_LIBRARIES}
   )
 ENDIF()
 
 IF (OSPRAY_DISPLAYCLUSTER)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${DISPLAYCLUSTER_LIBRARIES})
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${DISPLAYCLUSTER_LIBRARIES})
 ENDIF()
 
 IF (WIN32)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ws2_32)
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ws2_32)
 ENDIF()
 
 
@@ -344,8 +342,11 @@ ENDIF()
 INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
 INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
 INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
+
+# NOTE(jda) - should this also be made an ospray_* macro?
 SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
   PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
 INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
 #  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
   DESTINATION lib
@@ -362,17 +363,17 @@ INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
 ##############################################################
 IF (OSPRAY_MPI)
   IF (THIS_IS_MIC)
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${MPI_LIBRARY_MIC}
     )
   ELSE()
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${MPI_CXX_LIBRARIES}
     )
   ENDIF()
 
-  ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
-  TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+  OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
+  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray)
   # ------------------------------------------------------------
   INSTALL(TARGETS ospray_mpi_worker${OSPRAY_EXE_SUFFIX} DESTINATION bin)
 ENDIF()
@@ -386,13 +387,13 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     # dev-side of COI device: lib dev-side libospray to coi dev libs,...
     # ------------------------------------------------------------
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${LIBCOI_DEVICE}
     )
     # ... and add the coi worker executable
-    ADD_EXECUTABLE(ospray_coi_worker.mic api/COIDeviceWorker.cpp)
-    TARGET_LINK_LIBRARIES(ospray_coi_worker.mic
-      ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_ADD_EXECUTABLE(ospray_coi_worker api/COIDeviceWorker.cpp)
+    OSPRAY_EXE_LINK_LIBRARIES(ospray_coi_worker
+      ospray
       ${LIBCOI_DEVICE}
     )
     # ------------------------------------------------------------
@@ -402,7 +403,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs
     # ------------------------------------------------------------
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${LIBCOI_HOST}
     )
     # note: no need to add the host-side libcoi to the install

@@ -26,7 +26,7 @@ IF (NOT THIS_IS_MIC)
 
     LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/loaders)
 
-    ADD_LIBRARY(ospray_module_loaders${OSPRAY_LIB_SUFFIX} SHARED
+    OSPRAY_ADD_LIBRARY(ospray_module_loaders SHARED
       ObjectFile.cpp
       OSPObjectFile.cpp
       PLYTriangleMeshFile.cpp
@@ -38,10 +38,11 @@ IF (NOT THIS_IS_MIC)
       VolumeFile.cpp
     )
 
-    TARGET_LINK_LIBRARIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_loaders ospray)
 
     SET_TARGET_PROPERTIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX}
       PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+
     INSTALL(TARGETS ospray_module_loaders${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 
   ENDIF (OSPRAY_MODULE_LOADERS)
