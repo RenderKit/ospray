@@ -22,10 +22,5 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 ADD_LIBRARY(ospray_xml SHARED XML.cpp)
 
 TARGET_LINK_LIBRARIES(ospray_xml ospray)
-
-# ------------------------------------------------------------
-
-SET_TARGET_PROPERTIES(ospray_xml${OSPRAY_LIB_SUFFIX} 
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-
+OSPRAY_SET_LIBRARY_VERSION(ospray_xml)
 INSTALL(TARGETS ospray_xml DESTINATION lib)

@@ -29,9 +29,6 @@ IF (NOT THIS_IS_MIC AND OSPRAY_MODULE_OPENGL_UTIL)
   ADD_LIBRARY(ospray_module_opengl_util SHARED util.cpp)
 
   TARGET_LINK_LIBRARIES(ospray_module_opengl_util ospray ${OPENGL_LIBRARIES})
-
-  SET_TARGET_PROPERTIES(ospray_module_opengl_util
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+  OSPRAY_SET_LIBRARY_VERSION(ospray_module_opengl_util)
   INSTALL(TARGETS ospray_module_opengl_util DESTINATION lib)
 ENDIF ()
-
