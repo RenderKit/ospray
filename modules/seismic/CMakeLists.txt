@@ -19,7 +19,6 @@ SET(OSPRAY_MODULE_SEISMIC OFF CACHE BOOL "Build seismic volume file support modu
 CONFIGURE_OSPRAY()
 
 IF (NOT THIS_IS_MIC AND OSPRAY_MODULE_SEISMIC)
-
   IF (NOT OSPRAY_MODULE_LOADERS)
     message(FATAL_ERROR
         "The 'loaders' module must be enabled to build the 'seismic' module.")
@@ -39,9 +38,6 @@ IF (NOT THIS_IS_MIC AND OSPRAY_MODULE_SEISMIC)
   )
 
   TARGET_LINK_LIBRARIES(ospray_module_seismic ${FreeDDS_LIBRARIES})
-
-  SET_TARGET_PROPERTIES(ospray_module_seismic
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+  OSPRAY_SET_LIBRARY_VERSION(ospray_module_seismic)
   INSTALL(TARGETS ospray_module_seismic DESTINATION lib)
-
 ENDIF ()

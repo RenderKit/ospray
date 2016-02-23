@@ -57,11 +57,6 @@ IF (NOT THIS_IS_MIC)
     ospray_xml
     ${MAGICK_LIBRARIES}
   )
-  # ------------------------------------------------------------
-  SET_TARGET_PROPERTIES(ospray_minisg
-    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION  ${OSPRAY_SOVERSION})
-
+  OSPRAY_SET_LIBRARY_VERSION(ospray_minisg)
   INSTALL(TARGETS ospray_minisg DESTINATION lib)
-  # ------------------------------------------------------------
-
 ENDIF(NOT THIS_IS_MIC)

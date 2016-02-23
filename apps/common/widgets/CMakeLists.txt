@@ -20,14 +20,10 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 ADD_LIBRARY(ospray_glut3d SHARED glut3D.cpp)
+
 TARGET_LINK_LIBRARIES(ospray_glut3d ospray
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
 )
-
-# ------------------------------------------------------------
-
-SET_TARGET_PROPERTIES(ospray_glut3d
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+OSPRAY_SET_LIBRARY_VERSION(ospray_glut3d)
 INSTALL(TARGETS ospray_glut3d DESTINATION lib)
-
