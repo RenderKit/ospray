@@ -257,16 +257,31 @@ MACRO(OSPRAY_EXE_LINK_LIBRARIES _name)
   OSPRAY_TARGET_LINK_LIBRARIES(${name} ${ARGN})
 ENDMACRO()
 
-## Target install macros ##
+## Target install macros for OSPRay libraries ##
+# use vanilla INSTALL for apps and modules -- these don't have MIC parts and
+# should also not go into COMPONENT lib
 
 MACRO(OSPRAY_INSTALL_LIBRARY _name)
   SET(name ${_name}${OSPRAY_LIB_SUFFIX})
-  INSTALL(TARGETS ${name} ${ARGN})
+  INSTALL(TARGETS ${name} ${ARGN}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT lib${OSPRAY_LIB_SUFFIX}
+  )
+  IF(WIN32) # on Windows put the ospray.dll also into the apps package
+    INSTALL(TARGETS ${name} ${ARGN}
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT apps
+    )
+  ENDIF()
 ENDMACRO()
 
 MACRO(OSPRAY_INSTALL_EXE _name)
   SET(name ${_name}${OSPRAY_EXE_SUFFIX})
-  INSTALL(TARGETS ${name} ${ARGN})
+  # use OSPRAY_LIB_SUFFIX for COMPONENT to get lib_mic and not lib.mic
+  INSTALL(TARGETS ${name} ${ARGN} 
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT lib${OSPRAY_LIB_SUFFIX}
+  )
 ENDMACRO()
 
 ## Target versioning macro ##
