@@ -258,8 +258,8 @@ MACRO(OSPRAY_EXE_LINK_LIBRARIES _name)
 ENDMACRO()
 
 ## Target install macros for OSPRay libraries ##
-# use vanilla INSTALL for apps and modules -- these don't have MIC parts and
-# should also not go into COMPONENT lib
+# use vanilla INSTALL for apps -- these don't have MIC parts and should also not
+# go into COMPONENT lib
 
 MACRO(OSPRAY_INSTALL_LIBRARY _name)
   SET(name ${_name}${OSPRAY_LIB_SUFFIX})

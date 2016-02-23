@@ -56,5 +56,7 @@ TARGET_LINK_LIBRARIES(ospray_sg
   ospray
 )
 
-
-
+INSTALL(TARGETS ospray_sg
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

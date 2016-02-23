@@ -30,7 +30,4 @@ IF (NOT THIS_IS_MIC)
     ${TBB_LIBRARY_MALLOC}
     ${TBB_LIBRARY}
   )
-  # ------------------------------------------------------------
-  INSTALL(TARGETS ospStreamLineViewer DESTINATION bin)
-  # ------------------------------------------------------------
 ENDIF()
