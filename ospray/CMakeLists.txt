@@ -82,6 +82,7 @@ SET(OSPRAY_SOURCES
   math/box.ispc
   math/Distribution2D.ispc
 
+  common/ospray.rc
   common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Core.cpp
