@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
       if (i + 1 >= argc) throw std::runtime_error("missing <moduleName> argument");
       std::string moduleName = argv[++i];
       std::cout << "loading module '" << moduleName << "'." << std::endl;
-      error_t error = ospLoadModule(moduleName.c_str());
+      int error = ospLoadModule(moduleName.c_str());
 
       if(error != 0) {
         std::ostringstream ss;

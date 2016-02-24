@@ -228,6 +228,7 @@ namespace ospray {
         throw std::runtime_error("pick() not impelemnted for this device"); 
       };
 
+      typedef int OSPDApiMode;
       /*! switch API mode for distriubted API extensions */
       virtual void apiMode(OSPDApiMode mode)
       { 

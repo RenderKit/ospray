@@ -19,7 +19,7 @@
 
 /*! OSPRay format constants for Texture creation */
 typedef enum {
-  OSP_TEXTURE_RGBA8,
+  OSP_TEXTURE_RGBA8=100,
   OSP_TEXTURE_SRGBA,
   OSP_TEXTURE_RGBA32F,
   OSP_TEXTURE_RGB8,

@@ -137,7 +137,7 @@ void ProbeWidget::updateProbe()
   if (volume) {
 
     float *results = NULL;
-    ospSampleVolume(&results, volume, (osp::vec3f*)&coordinate, 1);
+    ospSampleVolume(results, volume, (osp::vec3f*)&coordinate, 1);
 
     if (!results)
       std::cout << "error calling ospSampleVolume()" << std::endl;
