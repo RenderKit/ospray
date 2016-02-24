@@ -14,10 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-IF (NOT OSPRAY_MODULE_LOADERS)
-  message(FATAL_ERROR "The 'loaders' module must be enabled to build the 'ospVolumeViewer' application.")
-ENDIF (NOT OSPRAY_MODULE_LOADERS)
-
 IF (NOT OSPRAY_MODULE_OPENGL_UTIL)
   message(FATAL_ERROR "The 'OpenGL util' module must be enabled to build the 'ospVolumeViewer' application.")
 ENDIF (NOT OSPRAY_MODULE_OPENGL_UTIL)

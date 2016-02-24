@@ -14,12 +14,9 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-OPTION(OSPRAY_MODULE_LOADERS "Build loaders for common file types." ON)
-
 CONFIGURE_OSPRAY()
 
 IF (NOT THIS_IS_MIC)
-  IF (OSPRAY_MODULE_LOADERS)
 
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
     INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
@@ -47,6 +44,5 @@ IF (NOT THIS_IS_MIC)
       PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
     INSTALL(TARGETS ospray_module_loaders${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 
-  ENDIF (OSPRAY_MODULE_LOADERS)
 ENDIF (NOT THIS_IS_MIC)
 
