@@ -14,7 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_MODULE_TACHYON OFF CACHE BOOL "Build 'TACH' (tachyon model viewer)")
+OPTION(OSPRAY_MODULE_TACHYON "Build 'TACH' (tachyon model viewer)")
 
 IF (OSPRAY_MODULE_TACHYON)
 
@@ -71,7 +71,7 @@ IF (OSPRAY_MODULE_TACHYON)
     TachyonRenderer.ispc
   )
 
-  OSPRAY_LIBRAY_LINK_LIBRARIES(ospray_module_tachyon ospray)
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_tachyon ospray)
 
   IF (NOT THIS_IS_MIC)
     ADD_EXECUTABLE(ospTachyon 
