@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2015-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,44 +14,40 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+#!/bin/bash
 
-INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
-INCLUDE_DIRECTORIES(${OSPRAY_SOURCE_DIR})
+# to make sure we do not include nor link against wrong TBB
+export CPATH=
+export LIBRARY_PATH=
+export LD_LIBRARY_PATH=
+#TBB_PATH_LOCAL=$PWD/tbb
 
-ADD_LIBRARY(ospray_sg STATIC
-  # scene graph nodes
-  SceneGraph.cpp
-  Renderer.cpp
-  common/TransferFunction.cpp
-  geometry/Spheres.cpp
-  geometry/TriangleMesh.cpp
+mkdir -p build_release
+cd build_release
+rm -f CMakeCache.txt
+rm -f ospray/version.h
 
-  common/Common.cpp
-  common/Node.cpp
-  common/Integrator.cpp
-  common/World.cpp
-  common/Texture2D.cpp
-  camera/PerspectiveCamera.cpp
-  common/Material.cpp
+# set release settings
+cmake -L \
+-G "Visual Studio 12 2013 Win64" \
+-T "Intel C++ Compiler 16.0" \
+-D OSPRAY_ZIP_MODE=OFF \
+-D OSPRAY_BUILD_ISA=ALL \
+-D OSPRAY_BUILD_MIC_SUPPORT=OFF \
+-D USE_IMAGE_MAGICK=OFF \
+-D CMAKE_INSTALL_INCLUDEDIR=include \
+-D CMAKE_INSTALL_LIBDIR=lib \
+-D CMAKE_INSTALL_DATAROOTDIR= \
+-D CMAKE_INSTALL_DOCDIR=doc \
+-D CMAKE_INSTALL_BINDIR=bin \
+..
+# -D TBB_ROOT=%TBB_PATH_LOCAL% \
 
-  volume/Volume.cpp
+# compile and create installers
+cmake --clean-first --build . --config Release --target PACKAGE -- -m -nologo
 
-  module/Module.cpp
+# create ZIP files
+cmake -D OSPRAY_ZIP_MODE=ON ..
+cmake --build . --config Release --target PACKAGE -- -m -nologo
 
-  3rdParty/ply.cpp
-
-  # scene graph importers
-  importer/Importer.cpp
-  importer/ImportSpheres.cpp
-  importer/ImportOSP.cpp
-  importer/ImportOBJ.cpp
-  importer/ImportPLY.cpp
-  importer/ImportRIVL.cpp
-  #    ImportX3D.cpp
-)
-
-TARGET_LINK_LIBRARIES(ospray_sg
-  ospray_xml
-  ospray
-)
+cd ..

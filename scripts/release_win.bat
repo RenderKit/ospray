@@ -27,6 +27,7 @@ rem set release settings
 cmake -L ^
 -G "Visual Studio 12 2013 Win64" ^
 -T "Intel C++ Compiler 16.0" ^
+-D OSPRAY_ZIP_MODE=OFF ^
 -D OSPRAY_BUILD_ISA=ALL ^
 -D OSPRAY_BUILD_MIC_SUPPORT=OFF ^
 -D USE_IMAGE_MAGICK=OFF ^
@@ -42,9 +43,7 @@ rem compile and create installers
 cmake --clean-first --build . --config Release --target PACKAGE -- /m /nologo
 
 rem create ZIP files
-cmake ^
--D OSPRAY_ZIP_MODE=ON ^
-..
+cmake -D OSPRAY_ZIP_MODE=ON ..
 cmake --build . --config Release --target PACKAGE -- /m /nologo
 
 cd ..

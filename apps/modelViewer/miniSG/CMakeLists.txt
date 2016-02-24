@@ -41,7 +41,7 @@ IF (NOT THIS_IS_MIC)
   
   INCLUDE_DIRECTORIES(${OSPRAY_DIR})
 
-  ADD_LIBRARY(ospray_minisg SHARED
+  ADD_LIBRARY(ospray_minisg STATIC
     miniSG.cpp
     importer.cpp
     importOBJ.cpp
@@ -56,10 +56,5 @@ IF (NOT THIS_IS_MIC)
   TARGET_LINK_LIBRARIES(ospray_minisg
     ospray_xml
     ${MAGICK_LIBRARIES}
-  )
-  OSPRAY_SET_LIBRARY_VERSION(ospray_minisg)
-  INSTALL(TARGETS ospray_minisg
-    DESTINATION ${CMAKE_INSTALL_BINDIR}
-    COMPONENT apps
   )
 ENDIF(NOT THIS_IS_MIC)
