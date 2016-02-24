@@ -535,13 +535,9 @@ namespace ospray {
 
     DBG(PING);
 
-#if 0//NOTE(jda) - Using TBB here is causing a mysterious "freeze"...the process message task
-     //            should be handled asynchronously without the need to hold on to any
-     //            future to the task. Code currently disabled until it can be fixed, but
-     / /           this will suffice as a "workaround" for now.
-//#ifdef OSPRAY_USE_TBB
+#ifdef OSPRAY_USE_TBB
     auto &t = *new(tbb::task::allocate_root())DFBProcessMessageTask(this, _msg);
-    tbb::task::enqueue(t, tbb::priority_high);
+    tbb::task::enqueue(t);
 #else
     DFBProcessMessageTask t(this, _msg);
     t.execute();
