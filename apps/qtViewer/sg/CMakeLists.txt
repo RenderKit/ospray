@@ -19,7 +19,7 @@ CONFIGURE_OSPRAY()
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${OSPRAY_SOURCE_DIR})
 
-ADD_LIBRARY(ospray_sg SHARED
+ADD_LIBRARY(ospray_sg STATIC
   # scene graph nodes
   SceneGraph.cpp
   Renderer.cpp
@@ -54,9 +54,4 @@ ADD_LIBRARY(ospray_sg SHARED
 TARGET_LINK_LIBRARIES(ospray_sg
   ospray_xml
   ospray
-)
-
-INSTALL(TARGETS ospray_sg
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
 )
