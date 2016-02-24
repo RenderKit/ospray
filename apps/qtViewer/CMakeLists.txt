@@ -63,7 +63,7 @@ TARGET_LINK_LIBRARIES(ospQtViewer ${LIBS}
   ${TBB_LIBRARY_MALLOC}
   ${TBB_LIBRARY}
   )
-# ------------------------------------------------------------
-INSTALL(TARGETS ospQtViewer DESTINATION bin)
-# ------------------------------------------------------------
-
+INSTALL(TARGETS ospQtViewer
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

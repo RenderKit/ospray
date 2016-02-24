@@ -339,23 +339,8 @@ IF (WIN32)
   OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ws2_32)
 ENDIF()
 
-
-# ------------------------------------------------------------
-INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
-INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
-INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
-
 OSPRAY_SET_LIBRARY_VERSION(ospray)
-
-OSPRAY_INSTALL_LIBRARY(ospray
-#  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-  DESTINATION lib
-)
-#INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-#  DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
-#)
-##############################################################
-
+OSPRAY_INSTALL_LIBRARY(ospray)
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial${OSPRAY_EXE_SUFFIX} ../apps/ospTutorial)
@@ -378,8 +363,7 @@ IF (OSPRAY_MPI)
 
   OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
   OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray)
-  # ------------------------------------------------------------
-  OSPRAY_INSTALL_EXE(ospray_mpi_worker DESTINATION bin)
+  OSPRAY_INSTALL_EXE(ospray_mpi_worker)
 ENDIF()
 
 
@@ -401,7 +385,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
       ${LIBCOI_DEVICE}
     )
     # ------------------------------------------------------------
-    OSPRAY_INSTALL_EXE(ospray_coi_worker DESTINATION bin)
+    OSPRAY_INSTALL_EXE(ospray_coi_worker)
   ELSE()
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs
