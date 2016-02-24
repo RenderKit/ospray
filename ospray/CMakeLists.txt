@@ -18,6 +18,19 @@
 # on which target we build for )
 CONFIGURE_OSPRAY()
 
+IF(THIS_IS_MIC)
+#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR}/mic)
+#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+  SET(FORCED_OSPCOMMON_LIB_NAME "ospray_ospcommon_mic")
+  ADD_SUBDIRECTORY(../common ospcommon_mic)
+ELSE()
+#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
+#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+  SET(FORCED_OSPCOMMON_LIB_NAME "ospray_ospcommon")
+  ADD_SUBDIRECTORY(../common ospcommon)
+ENDIF()
 
 IF(OSPRAY_BUILD_MPI_DEVICE)
   OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
@@ -294,10 +307,10 @@ ENDIF()
 ##############################################################
 
 OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
-SET_TARGET_PROPERTIES(ospray PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
+SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX} PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
 
 TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
-	ospray_ospcommon${OSPRAY_LIB_SUFFIX}
+	${FORCED_OSPCOMMON_LIB_NAME}
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
 )
@@ -339,6 +352,10 @@ INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
 ##############################################################
 
 
+# build ospTutorial, for testing
+ADD_EXECUTABLE(ospTutorial${OSPRAY_EXE_SUFFIX} ../apps/ospTutorial)
+TARGET_LINK_LIBRARIES(ospTutorial${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+
 
 ##############################################################
 # MPI DEVICE - mpi worker
@@ -356,6 +373,7 @@ IF (OSPRAY_MPI)
 
   ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
   TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+  SET_TARGET_PROPERTIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
   # ------------------------------------------------------------
   INSTALL(TARGETS ospray_mpi_worker${OSPRAY_EXE_SUFFIX} DESTINATION bin)
 ENDIF()

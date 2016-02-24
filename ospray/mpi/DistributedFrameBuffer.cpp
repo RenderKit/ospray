@@ -17,8 +17,9 @@
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
 
-// embree
-#include "common/sys/thread.h"
+#include <thread>
+
+#include "ospray/common/parallel_for.h"
 
 #include <memory>
 //#include <future> //NOTE(jda) - set note about std::async below...
@@ -122,7 +123,6 @@ namespace ospray {
           }
         }
       }
-      int size = bufferedTile.size();
 
       if (missingInCurrentGeneration == 0) {
         Tile **tileArray = (Tile**)alloca(sizeof(Tile*)*bufferedTile.size());
@@ -291,24 +291,6 @@ namespace ospray {
       }
   }
 
-#if QUEUE_PROCESSING_JOBS
-  void DistributedFrameBuffer::ProcThread::run()
-  {
-    embree::setAffinity(53);
-    return;
-    while (1) {
-      while (dfb->msgTaskQueue.queue.empty())
-#ifdef _WIN32
-        Sleep(1); // 10x longer...
-#else
-        usleep(100);
-#endif
-      dfb->msgTaskQueue.waitAll();
-    }
-  }
-#endif
-
-
   DFB::DistributedFrameBuffer(mpi::async::CommLayer *comm,
                               const vec2i &numPixels,
                               size_t myID,
@@ -322,9 +304,6 @@ namespace ospray {
       numTiles((numPixels.x+TILE_SIZE-1)/TILE_SIZE,
                (numPixels.y+TILE_SIZE-1)/TILE_SIZE),
       frameIsActive(false), frameIsDone(false), localFBonMaster(NULL),
-#if QUEUE_PROCESSING_JOBS
-    procThread(this),
-#endif
       frameMode(WRITE_ONCE)
   {
     assert(comm);
@@ -350,9 +329,6 @@ namespace ospray {
     ispc::DFB_set(getIE(),numPixels.x,numPixels.y,
                   colorBufferFormat);
 
-#if QUEUE_PROCESSING_JOBS
-    //    procThread.run();
-#endif
   }
 
   void DFB::setFrameMode(FrameMode newFrameMode)
@@ -488,15 +464,16 @@ namespace ospray {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
                tile->begin.x,tile->begin.y));
     if (IamTheMaster()) {
+      size_t numTilesCompletedByMyTile = 0;
       /*! we will not do anything with the tile other than mark it's done */
       {
         SCOPED_LOCK(mutex);
-        numTilesCompletedThisFrame++;
+        numTilesCompletedByMyTile = ++numTilesCompletedThisFrame;
         DBG(printf("MASTER: MARKING AS COMPLETED %i,%i -> %li %i\n",
                    tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
       }
-      if (numTilesCompletedThisFrame == numTiles.x*numTiles.y)
+      if (numTilesCompletedByMyTile == numTiles.x*numTiles.y)
         closeCurrentFrame();
     } else {
       if (pixelOp) {
@@ -527,16 +504,17 @@ namespace ospray {
                                  "implemented for distributed frame buffer");
       };
 
+      size_t numTilesCompletedByMe = 0;
       {
         SCOPED_LOCK(mutex);
-        numTilesCompletedThisFrame++;
+        numTilesCompletedByMe = ++numTilesCompletedThisFrame;
         DBG(printf("rank %i: MARKING AS COMPLETED %i,%i -> %i %i\n",
                    mpi::world.rank,
                    tile->begin.x,tile->begin.y,numTilesCompletedThisFrame,
                    numTiles.x*numTiles.y));
       }
 
-      if (numTilesCompletedThisFrame == myTiles.size())
+      if (numTilesCompletedByMe == myTiles.size())
         closeCurrentFrame();
     }
   }
@@ -646,9 +624,11 @@ namespace ospray {
   */
   void DFB::clear(const uint32 fbChannelFlags)
   {
-    if (myTiles.size() != 0) {
+    if (!myTiles.empty()) {
       DFBClearTask clearTask(this, fbChannelFlags);
-      clearTask.run(0);
+      parallel_for(myTiles.size(), [&](int taskIndex){
+        clearTask.run(taskIndex);
+      });
       if (fbChannelFlags & OSP_FB_ACCUM)
         accumID = 0;
     }

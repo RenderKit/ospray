@@ -133,14 +133,28 @@ STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
 # the ospray common library that's shared across all projects
 ##############################################################
 
+SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
+SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+
 #INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 #INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-SET (OSPRAY_TARGET "intel64")
-ADD_SUBDIRECTORY(common builddir/ospcommon/intel64)
-IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "mic")
-  ADD_SUBDIRECTORY(common builddir/ospcommon/mic)
-ENDIF()
+#IF (OSPRAY_MIC)
+#  SET (OSPRAY_TARGET "mic")
+#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR}/mic)
+#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR}/mic)
+#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR}/mic)
+
+#  ADD_SUBDIRECTORY(common builddir/ospcommon/mic)
+#ELSE()
+#  SET (OSPRAY_TARGET "intel64")
+#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR}/intel64)
+#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR}/intel64)
+#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
+#  ADD_SUBDIRECTORY(common builddir/ospcommon/intel64)
+#ENDIF()
+
+#ADD_SUBDIRECTORY(common builddir/ospcommon/intel64)
 
 ##############################################################
 # the ospray library
