@@ -20,7 +20,7 @@
 export CPATH=
 export LIBRARY_PATH=
 export DYLD_LIBRARY_PATH=
-#TBB_PATH_LOCAL=$PWD/tbb
+TBB_PATH_LOCAL=$PWD/tbb
 
 mkdir -p build_release
 cd build_release
@@ -28,7 +28,7 @@ cd build_release
 rm -f CMakeCache.txt
 rm -f ospray/version.h
 
-# set release settings
+# set release and installer settings
 cmake \
 -D CMAKE_C_COMPILER:FILEPATH=icc \
 -D CMAKE_CXX_COMPILER:FILEPATH=icpc \
@@ -37,12 +37,7 @@ cmake \
 -D OSPRAY_BUILD_COI_DEVICE=ON \
 -D OSPRAY_BUILD_MPI_DEVICE=ON \
 -D USE_IMAGE_MAGICK=OFF \
-..
-
-# create installers
-cmake \
 -D OSPRAY_ZIP_MODE=OFF \
--D CMAKE_SKIP_INSTALL_RPATH=OFF \
 -D CMAKE_INSTALL_PREFIX=/opt/local \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
@@ -50,18 +45,21 @@ cmake \
 -D CMAKE_INSTALL_BINDIR=../../Applications/OSPRay/bin \
 ..
 #-D TBB_ROOT=/opt/local \
+
+# create installers
 make -j 4 package
 
-# create ZIP files
+# change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
--D CMAKE_SKIP_INSTALL_RPATH=ON \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=doc \
 -D CMAKE_INSTALL_BINDIR=bin \
 ..
 #-D TBB_ROOT=$TBB_PATH_LOCAL \
+
+# create ZIP files
 make -j 4 package
 
 cd ..

@@ -23,8 +23,21 @@ ENDIF()
 
 SET(CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR})
 
-#SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME})
-#STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
+IF (OSPRAY_ZIP_MODE)
+  # in tgz / zip let's have relative RPath
+  SET(CMAKE_SKIP_INSTALL_RPATH OFF)
+  IF (APPLE)
+    SET(CMAKE_INSTALL_RPATH "@executable_path:@executable_path/../lib")
+  ELSE()
+    SET(CMAKE_INSTALL_RPATH "\$ORIGIN:\$ORIGIN/../lib")
+  ENDIF()
+ELSE()
+  # we do not want any RPath for installed binaries
+  SET(CMAKE_SKIP_INSTALL_RPATH ON)
+ENDIF()
+
+#SET_TARGET_PROPERTIES(apps INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib")
+#SET_TARGET_PROPERTIES(libs INSTALL_RPATH "$ORIGIN")
 
 ##############################################################
 # install headers
