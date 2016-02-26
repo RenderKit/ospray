@@ -23,6 +23,18 @@ IF (NOT TBB_ROOT)
   SET(TBB_ROOT $ENV{TBBROOT})
 ENDIF()
 
+# detect changed TBB_ROOT
+IF (NOT TBB_ROOT STREQUAL TBB_ROOT_LAST)
+  UNSET(TBB_INCLUDE_DIR CACHE)
+  UNSET(TBB_LIBRARY CACHE)
+  UNSET(TBB_LIBRARY_DEBUG CACHE)
+  UNSET(TBB_LIBRARY_MALLOC CACHE)
+  UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
+  UNSET(TBB_INCLUDE_DIR_MIC CACHE)
+  UNSET(TBB_LIBRARY_MIC CACHE)
+  UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
+ENDIF()
+
 IF (WIN32)
   # workaround for parentheses in variable name / CMP0053
   SET(PROGRAMFILESx86 "PROGRAMFILES(x86)")
@@ -99,6 +111,8 @@ ELSE ()
   MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC_MIC)
 ENDIF()
 
+SET(TBB_ROOT_LAST ${TBB_ROOT} CACHE INTERNAL "Last value of TBB_ROOT to detect changes")
+
 SET(TBB_ERROR_MESSAGE
   "Threading Building Blocks (TBB) with minimum version ${TBB_VERSION_REQUIRED} not found.
 OSPRay uses TBB as default tasking system. Please make sure you have the TBB headers installed as well (the package is typically named 'libtbb-dev' or 'tbb-devel') and/or hint the location of TBB in TBB_ROOT.
@@ -133,7 +147,7 @@ IF (TBB_FOUND)
   # NOTE(jda) - TBB found in CentOS 6/7 package manager does not have debug
   #             versions of the library...silently fall-back to using only the
   #             libraries which we actually found.
-  IF (${TBB_LIBRARY_DEBUG} STREQUAL "TBB_LIBRARY_DEBUG-NOTFOUND")
+  IF (NOT TBB_LIBRARY_DEBUG)
     SET(TBB_LIBRARIES ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC})
   ELSE ()
     SET(TBB_LIBRARIES
