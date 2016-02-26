@@ -6,23 +6,25 @@ Version History
 -   Volume rendering now integrated into the "scivis" renderer
     -   Volumes are rendered in the same way the "dvr" volume renderer
         renders them
-    -   Ambient occusion works with implicit isosurfaces, with a known
+    -   Ambient occlusion works with implicit isosurfaces, with a known
         visual quality/performance trade-off
--   Intel® Xeon Phi™ (Knights Corner) COI device and build infrastructure
-    restored (volume rendering is known to still be broken)
+-   Intel® Xeon Phi™ (codename Knights Corner) COI device and build
+    infrastructure restored (volume rendering is known to still be
+    broken)
 -   New support for CPack built OSPRay binary redistributable packages
--   New HDR lighting support
+-   Add support for HDRI lighting in path tracer
+-   Add `ospRemoveVolume()` API call
 -   Add ability to render a subsection of the full view into the entire
     framebuffer in the perspective camera
 -   Many miscellaneous cleanups, bugfixes, and improvements:
     -   The depthbuffer is now correctly populated by in the "scivis"
         renderer
-    -   Updates to CMake with better error messages when TBB is missing
     -   Updated default renderer to be "ao1" in ospModelViewer
     -   Trianglemesh postIntersect shading is now 64-bit safe
     -   Texture2D has been reworked, with many improvements and bug fixes
     -   Fixed bug where MPI device would freeze while rendering frames
         with TBB
+    -   Updates to CMake with better error messages when TBB is missing
 
 ### Changes in v0.9.0:
 
@@ -36,7 +38,7 @@ changes.
     -   Ambient occlusion is quite flexible: dynamic number of samples,
         maximum ray distance, and weight
 -   Updated Embree version to v2.7.1 with native support for AVX512 for
-    triangle mesh surface rendering on the Intel® Xeon Phi™ processor
+    triangle mesh surface rendering on the Intel Xeon Phi processor
     (codename Knights Landing)
 -   OSPRay now uses C++11 features, requiring up to date compiler and
     standard library versions (GCC v4.8.0)
