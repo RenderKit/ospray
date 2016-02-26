@@ -11,9 +11,9 @@ Version History
 -   Intel® Xeon Phi™ (Knights Corner) COI device and build infrastructure
     restored (volume rendering is known to still be broken)
 -   New support for CPack built OSPRay binary redistributable packages
+-   New HDR lighting support
 -   Add ability to render a subsection of the full view into the entire
     framebuffer in the perspective camera
--   New HDR lighting support
 -   Many miscellaneous cleanups, bugfixes, and improvements:
     -   The depthbuffer is now correctly populated by in the "scivis"
         renderer
@@ -24,7 +24,7 @@ Version History
     -   Fixed bug where MPI device would freeze while rendering frames
         with TBB
 
-## Changes in v0.9.0:
+### Changes in v0.9.0:
 
 The OSPRay v0.9.0 release adds significant new features as well as API
 changes.
