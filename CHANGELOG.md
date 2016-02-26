@@ -1,7 +1,30 @@
 Version History
 ---------------
 
-### Changes in v0.9.0:
+### Changes in v0.9.1:
+
+-   Volume rendering now integrated into the "scivis" renderer
+    -   Volumes are rendered in the same way the "dvr" volume renderer
+        renders them
+    -   Ambient occusion works with implicit isosurfaces, with a known
+        visual quality/performance trade-off
+-   Intel® Xeon Phi™ (Knights Corner) COI device and build infrastructure
+    restored (volume rendering is known to still be broken)
+-   New support for CPack built OSPRay binary redistributable packages
+-   Add ability to render a subsection of the full view into the entire
+    framebuffer in the perspective camera
+-   New HDR lighting support
+-   Many miscellaneous cleanups, bugfixes, and improvements:
+    -   The depthbuffer is now correctly populated by in the "scivis"
+        renderer
+    -   Updates to CMake with better error messages when TBB is missing
+    -   Updated default renderer to be "ao1" in ospModelViewer
+    -   Trianglemesh postIntersect shading is now 64-bit safe
+    -   Texture2D has been reworked, with many improvements and bug fixes
+    -   Fixed bug where MPI device would freeze while rendering frames
+        with TBB
+
+## Changes in v0.9.0:
 
 The OSPRay v0.9.0 release adds significant new features as well as API
 changes.
