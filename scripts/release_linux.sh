@@ -20,7 +20,7 @@
 export CPATH=
 export LIBRARY_PATH=
 export LD_LIBRARY_PATH=
-#TBB_PATH_LOCAL=$PWD/tbb
+TBB_PATH_LOCAL=$PWD/tbb
 
 # check version of symbols
 function check_symbols
@@ -49,7 +49,7 @@ cd build_release
 rm -f CMakeCache.txt
 rm -f ospray/version.h
 
-# set release settings
+# set release and RPM settings
 cmake \
 -D CMAKE_C_COMPILER:FILEPATH=icc \
 -D CMAKE_CXX_COMPILER:FILEPATH=icpc \
@@ -58,24 +58,21 @@ cmake \
 -D OSPRAY_BUILD_COI_DEVICE=ON \
 -D OSPRAY_BUILD_MPI_DEVICE=ON \
 -D USE_IMAGE_MAGICK=OFF \
+-D OSPRAY_ZIP_MODE=OFF \
+-D CMAKE_INSTALL_PREFIX=/usr \
+-D TBB_ROOT=$TBB_PATH_LOCAL \
 ..
-
-# read OSPRay version
-OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
 
 # create RPM files
-cmake \
--D OSPRAY_ZIP_MODE=OFF \
--D CMAKE_SKIP_INSTALL_RPATH=OFF \
--D CMAKE_INSTALL_PREFIX=/usr \
-..
-#-D TBB_ROOT=/usr \
-make -j 16 preinstall
+make -j 48 preinstall
 
 check_symbols libospray.so GLIBC 2 4
 check_symbols libospray.so GLIBCXX 3 4
 check_symbols libospray.so CXXABI 1 3
 make package
+
+# read OSPRay version
+OSPRAY_VERSION=`sed -n 's/#define OSPRAY_VERSION "\(.*\)"/\1/p' ospray/version.h`
 
 # rename RPMs to have component name before version
 for i in ospray-${OSPRAY_VERSION}-1.*.rpm ; do 
@@ -85,21 +82,16 @@ done
 
 tar czf ospray-${OSPRAY_VERSION}.x86_64.rpm.tar.gz ospray-*-${OSPRAY_VERSION}-1.x86_64.rpm
 
-# create tar.gz files
+# change settings for zip mode
 cmake \
 -D OSPRAY_ZIP_MODE=ON \
--D CMAKE_SKIP_INSTALL_RPATH=ON \
 -D CMAKE_INSTALL_INCLUDEDIR=include \
 -D CMAKE_INSTALL_LIBDIR=lib \
 -D CMAKE_INSTALL_DOCDIR=doc \
 -D CMAKE_INSTALL_BINDIR=bin \
 ..
-#-D TBB_ROOT=$TBB_PATH_LOCAL \
-make -j 16 preinstall
 
-check_symbols libospray.so GLIBC 2 4
-check_symbols libospray.so GLIBCXX 3 4
-check_symbols libospray.so CXXABI 1 3
-make package
+# create tar.gz files
+make -j 48 package
 
 cd ..
