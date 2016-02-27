@@ -64,7 +64,7 @@ cmake \
 ..
 
 # create RPM files
-make -j 48 preinstall
+make -j `nproc` preinstall
 
 check_symbols libospray.so GLIBC 2 4
 check_symbols libospray.so GLIBCXX 3 4
@@ -92,6 +92,6 @@ cmake \
 ..
 
 # create tar.gz files
-make -j 48 package
+make -j `nproc` package
 
 cd ..
