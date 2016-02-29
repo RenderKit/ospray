@@ -39,9 +39,5 @@ INSTALL(TARGETS ospray_glut3d
 ##############################################################
 
 IF (WIN32)
-  ADD_CUSTOM_COMMAND(TARGET ospray_glut3d POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GLUT_DLL} $<TARGET_FILE_DIR:ospray_glut3d>
-    COMMENT "Copy FreeGlut DLL" VERBATIM
-  )
-  INSTALL(PROGRAMS ${GLUT_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps)
+  INSTALL(PROGRAMS ${GLUT_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
 ENDIF()
