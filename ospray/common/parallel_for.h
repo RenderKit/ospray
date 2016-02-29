@@ -18,6 +18,8 @@
 
 #ifdef OSPRAY_USE_TBB
 # include <tbb/parallel_for.h>
+#elif defined(OSPRAY_USE_CILK)
+# include <cilk/cilk.h>
 #endif
 
 namespace ospray {
@@ -27,6 +29,10 @@ inline void parallel_for(int nTasks, const T& fcn)
 {
 #ifdef OSPRAY_USE_TBB
   tbb::parallel_for(0, nTasks, 1, fcn);
+#elif defined(OSPRAY_USE_CILK)
+  cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+    fcn(taskIndex);
+  }
 #else
 # pragma omp parallel for schedule(dynamic)
   for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
