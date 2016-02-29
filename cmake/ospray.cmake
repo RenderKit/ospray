@@ -261,9 +261,12 @@ MACRO(OSPRAY_INSTALL_LIBRARY name)
   INSTALL(TARGETS ${name}${OSPRAY_LIB_SUFFIX} ${ARGN}
     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
       COMPONENT lib${OSPRAY_LIB_SUFFIX}
-    # on Windows put the ospray*.dll also into the apps package
+    # on Windows put the dlls into bin
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-      COMPONENT apps
+      COMPONENT lib
+    # ... and the import lib into the devel package
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT devel
   )
 ENDMACRO()
 

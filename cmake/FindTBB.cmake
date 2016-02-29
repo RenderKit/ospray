@@ -177,7 +177,6 @@ MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC_DEBUG)
 ##############################################################
 
 IF (WIN32)
-  INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib)
   SET(TBB_DLL_HINTS
     ${TBB_ROOT}/../redist/${TBB_ARCH}_win/tbb/${TBB_VCVER}
     ${TBB_ROOT}/../redist/${TBB_ARCH}/tbb/${TBB_VCVER}
