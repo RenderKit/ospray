@@ -32,3 +32,16 @@ INSTALL(TARGETS ospray_glut3d
   LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
   COMPONENT lib
 )
+
+
+##############################################################
+# redistribute freeglut
+##############################################################
+
+IF (WIN32)
+  ADD_CUSTOM_COMMAND(TARGET ospray_glut3d POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different ${GLUT_DLL} $<TARGET_FILE_DIR:ospray_glut3d>
+    COMMENT "Copy FreeGlut DLL" VERBATIM
+  )
+  INSTALL(PROGRAMS ${GLUT_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps)
+ENDIF()

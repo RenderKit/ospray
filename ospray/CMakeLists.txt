@@ -254,16 +254,6 @@ IF (OSPRAY_MPI)
     ospray
     )
 
-  # ============================================
-#  INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-#  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-#  ADD_EXECUTABLE(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
-#    mpi/testing/TestDistributedApp
-#    )
-#  TARGET_LINK_LIBRARIES(ospTestDistributedApp${OSPRAY_EXE_SUFFIX}
-#    ospray${OSPRAY_LIB_SUFFIX}
-#    )
-
 ENDIF()
 
 # -------------------------------------------------------
