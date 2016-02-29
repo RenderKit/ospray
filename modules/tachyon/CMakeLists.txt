@@ -14,23 +14,19 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET(OSPRAY_MODULE_TACHYON OFF CACHE BOOL "Build 'TACH' (tachyon model viewer)")
+OPTION(OSPRAY_MODULE_TACHYON "Build 'TACH' (tachyon model viewer)")
 
 IF (OSPRAY_MODULE_TACHYON)
 
   CONFIGURE_OSPRAY()
 
   # -------------------------------------------------------
-  find_program(LEX_EXE
-    flex
-    )
+  find_program(LEX_EXE flex)
   if(LEX_EXE STREQUAL "LEX_EXE-NOTFOUND")
     message(FATAL_ERROR "dear user, plase install flex!")
   endif(LEX_EXE STREQUAL "LEX_EXE-NOTFOUND")
 
-  find_program(YACC_EXE
-    bison
-    )
+  find_program(YACC_EXE bison)
   if(YACC_EXE STREQUAL "YACC_EXE-NOTFOUND")
     message(FATAL_ERROR "dear user, plase install bison!")
   endif(YACC_EXE STREQUAL "YACC_EXE-NOTFOUND")
@@ -70,11 +66,12 @@ IF (OSPRAY_MODULE_TACHYON)
   YACC_FILE(parser.yy)
   LEX_FILE(lexer.ll)
 
-  OSPRAY_ADD_LIBRARY(ospray_module_tachyon${OSPRAY_LIB_SUFFIX} SHARED
+  OSPRAY_ADD_LIBRARY(ospray_module_tachyon SHARED
     TachyonRenderer.cpp
     TachyonRenderer.ispc
-    )
-  TARGET_LINK_LIBRARIES(ospray_module_tachyon${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+  )
+
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_tachyon ospray)
 
   IF (NOT THIS_IS_MIC)
     ADD_EXECUTABLE(ospTachyon 
@@ -83,7 +80,7 @@ IF (OSPRAY_MODULE_TACHYON)
       lexer_l.cpp
       parser_y.cpp
       Loc.cpp
-      )
+    )
     TARGET_LINK_LIBRARIES(ospTachyon ospray ospray_glut3d)
   ENDIF()
 ENDIF()

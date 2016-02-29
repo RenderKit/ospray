@@ -17,7 +17,6 @@
 #pragma once
 
 #ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
 # include <tbb/parallel_for.h>
 #endif
 

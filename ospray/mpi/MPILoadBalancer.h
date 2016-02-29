@@ -21,7 +21,7 @@
 
 namespace ospray {
   namespace mpi {
-    
+
     // =======================================================
     // =======================================================
     // =======================================================
@@ -50,34 +50,17 @@ namespace ospray {
       */
       struct Slave : public TiledLoadBalancer
       {
-        /*! a task for rendering a frame using the global tiled load balancer */
-        //! NOTE(jda) - this looks identical to LocalTiledLoadBalancer...
-        struct RenderTask
-        {
-          mutable Ref<Renderer>     renderer;
-          mutable Ref<FrameBuffer>  fb;
-
-          size_t                    numTiles_x;
-          size_t                    numTiles_y;
-          uint32                    channelFlags;
-          void                     *perFrameData;
-
-          void run(size_t jobID) const;
-          void finish() const;
-        };
-        
         /*! number of tiles preallocated to this client; we can always
           render those even without asking for them. */
-        uint32 numPreAllocated; 
+        uint32 numPreAllocated;
         /*! total number of worker threads across all(!) slaves */
         int32 numTotalThreads;
-        
+
         void renderFrame(Renderer *tiledRenderer,
                          FrameBuffer *fb,
                          const uint32 channelFlags);
         std::string toString() const;
       };
-    }
-
+    }// ::ospray::mpi::staticLoadBalancer
   } // ::ospray::mpi
 } // ::ospray

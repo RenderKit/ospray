@@ -14,11 +14,25 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+SET(TBB_VERSION_REQUIRED "3.0")
+
 IF (NOT TBB_ROOT)
   SET(TBB_ROOT $ENV{TBB_ROOT})
 ENDIF()
 IF (NOT TBB_ROOT)
   SET(TBB_ROOT $ENV{TBBROOT})
+ENDIF()
+
+# detect changed TBB_ROOT
+IF (NOT TBB_ROOT STREQUAL TBB_ROOT_LAST)
+  UNSET(TBB_INCLUDE_DIR CACHE)
+  UNSET(TBB_LIBRARY CACHE)
+  UNSET(TBB_LIBRARY_DEBUG CACHE)
+  UNSET(TBB_LIBRARY_MALLOC CACHE)
+  UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
+  UNSET(TBB_INCLUDE_DIR_MIC CACHE)
+  UNSET(TBB_LIBRARY_MIC CACHE)
+  UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
 ENDIF()
 
 IF (WIN32)
@@ -97,20 +111,43 @@ ELSE ()
   MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC_MIC)
 ENDIF()
 
+SET(TBB_ROOT_LAST ${TBB_ROOT} CACHE INTERNAL "Last value of TBB_ROOT to detect changes")
+
+SET(TBB_ERROR_MESSAGE
+  "Threading Building Blocks (TBB) with minimum version ${TBB_VERSION_REQUIRED} not found.
+OSPRay uses TBB as default tasking system. Please make sure you have the TBB headers installed as well (the package is typically named 'libtbb-dev' or 'tbb-devel') and/or hint the location of TBB in TBB_ROOT.
+Alternatively, you can try to use OpenMP as tasking system by setting OSPRAY_TASKING_SYSTEM=OpenMP")
+
 INCLUDE(FindPackageHandleStandardArgs)
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TBB
-  "Threading Building Blocks (TBB) not found.
-OSPRay uses TBB as default tasking system. Please make sure you have the TBB headers installed as well (the package is typically named 'libtbb-dev' or 'tbb-devel') and/or hint the location of TBB in TBB_ROOT.
-Alternatively, you can try to use OpenMP as tasking system by setting OSPRAY_TASKING_SYSTEM=OpenMP"
+  ${TBB_ERROR_MESSAGE}
   TBB_INCLUDE_DIR TBB_LIBRARY TBB_LIBRARY_MALLOC
 )
+
+# check version
+IF (TBB_INCLUDE_DIR)
+  FILE(READ ${TBB_INCLUDE_DIR}/tbb/tbb_stddef.h TBB_STDDEF_H)
+
+  STRING(REGEX MATCH "#define TBB_VERSION_MAJOR ([0-9])" DUMMY "${TBB_STDDEF_H}")
+  SET(TBB_VERSION_MAJOR ${CMAKE_MATCH_1})
+
+  STRING(REGEX MATCH "#define TBB_VERSION_MINOR ([0-9])" DUMMY "${TBB_STDDEF_H}")
+  SET(TBB_VERSION "${TBB_VERSION_MAJOR}.${CMAKE_MATCH_1}")
+
+  IF (TBB_VERSION VERSION_LESS TBB_VERSION_REQUIRED)
+    MESSAGE(FATAL_ERROR ${TBB_ERROR_MESSAGE})
+  ENDIF()
+
+  SET(TBB_VERSION ${TBB_VERSION} CACHE STRING "TBB Version")
+  MARK_AS_ADVANCED(TBB_VERSION)
+ENDIF()
 
 IF (TBB_FOUND)
   SET(TBB_INCLUDE_DIRS ${TBB_INCLUDE_DIR})
   # NOTE(jda) - TBB found in CentOS 6/7 package manager does not have debug
   #             versions of the library...silently fall-back to using only the
   #             libraries which we actually found.
-  IF (${TBB_LIBRARY_DEBUG} STREQUAL "TBB_LIBRARY_DEBUG-NOTFOUND")
+  IF (NOT TBB_LIBRARY_DEBUG)
     SET(TBB_LIBRARIES ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC})
   ELSE ()
     SET(TBB_LIBRARIES
@@ -131,3 +168,16 @@ MARK_AS_ADVANCED(TBB_LIBRARY)
 MARK_AS_ADVANCED(TBB_LIBRARY_DEBUG)
 MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC)
 MARK_AS_ADVANCED(TBB_LIBRARY_MALLOC_DEBUG)
+
+
+##############################################################
+# redistribute TBB
+##############################################################
+
+IF (WIN32)
+  INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps)
+  INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib)
+ELSEIF (OSPRAY_ZIP_MODE)
+  INSTALL(PROGRAMS ${TBB_LIBRARY} ${TBB_LIBRARY_MALLOC} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib)
+  INSTALL(PROGRAMS ${TBB_LIBRARIES_MIC} DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib_mic)
+ENDIF()

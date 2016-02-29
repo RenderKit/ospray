@@ -21,7 +21,8 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
-SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
+SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
+    "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
@@ -34,11 +35,7 @@ MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 # mic-executables with ".mic". *libraries* cannot use the
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
-MACRO(CONFIGURE_OSPRAY_NO_ARCH)
-#  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
-#    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
-#  ENDIF()
-
+MACRO(CONFIGURE_OSPRAY)
   # Embree common include directories; others may be added depending on build target.
   # this section could be sooo much cleaner if embree only used
   # fully-qualified include names...
@@ -199,8 +196,100 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 ENDMACRO()
 
 
-MACRO(CONFIGURE_OSPRAY)
+## Target creation macros ##
 
-  CONFIGURE_OSPRAY_NO_ARCH()
+MACRO(OSPRAY_ADD_EXECUTABLE _name)
+  SET(name ${_name}${OSPRAY_EXE_SUFFIX})
+  ADD_EXECUTABLE(${name} ${ARGN})
+ENDMACRO()
 
+MACRO(OSPRAY_ADD_LIBRARY _name type)
+  SET(name ${_name}${OSPRAY_LIB_SUFFIX})
+  SET(ISPC_SOURCES "")
+  SET(OTHER_SOURCES "")
+  FOREACH(src ${ARGN})
+    GET_FILENAME_COMPONENT(ext ${src} EXT)
+    IF (ext STREQUAL ".ispc")
+      SET(ISPC_SOURCES ${ISPC_SOURCES} ${src})
+    ELSE ()
+      SET(OTHER_SOURCES ${OTHER_SOURCES} ${src})
+    ENDIF ()
+  ENDFOREACH()
+  OSPRAY_ISPC_COMPILE(${ISPC_SOURCES})
+  ADD_LIBRARY(${name} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+
+  IF (THIS_IS_MIC)
+    FOREACH(src ${ISPC_OBJECTS})
+      SET_SOURCE_FILES_PROPERTIES( ${src} PROPERTIES COMPILE_FLAGS -std=gnu++98 )
+    ENDFOREACH()
+  ENDIF()
+ENDMACRO()
+
+## Target linking macros ##
+
+MACRO(OSPRAY_TARGET_LINK_LIBRARIES name)
+  SET(LINK_LIBS "")
+
+  IF(THIS_IS_MIC)
+    FOREACH(lib ${ARGN})
+      STRING(LENGTH ${lib} lib_length)
+      IF (${lib_length} GREATER 5)
+        STRING(SUBSTRING ${lib} 0 6 lib_begin)
+      ENDIF ()
+      IF (${lib_length} GREATER 5 AND ":${lib_begin}" STREQUAL ":ospray")
+        LIST(APPEND LINK_LIBS ${lib}${OSPRAY_LIB_SUFFIX})
+      ELSE ()
+        LIST(APPEND LINK_LIBS ${lib})
+      ENDIF ()
+    ENDFOREACH()
+  ELSE()
+    SET(LINK_LIBS ${ARGN})
+  ENDIF()
+
+  TARGET_LINK_LIBRARIES(${name} ${LINK_LIBS})
+ENDMACRO()
+
+MACRO(OSPRAY_LIBRARY_LINK_LIBRARIES _name)
+  SET(name ${_name}${OSPRAY_LIB_SUFFIX})
+  OSPRAY_TARGET_LINK_LIBRARIES(${name} ${ARGN})
+ENDMACRO()
+
+MACRO(OSPRAY_EXE_LINK_LIBRARIES _name)
+  SET(name ${_name}${OSPRAY_EXE_SUFFIX})
+  OSPRAY_TARGET_LINK_LIBRARIES(${name} ${ARGN})
+ENDMACRO()
+
+## Target install macros for OSPRay libraries ##
+# use vanilla INSTALL for apps -- these don't have MIC parts and should also not
+# go into COMPONENT lib
+
+MACRO(OSPRAY_INSTALL_LIBRARY _name)
+  SET(name ${_name}${OSPRAY_LIB_SUFFIX})
+  INSTALL(TARGETS ${name} ${ARGN}
+    DESTINATION ${CMAKE_INSTALL_LIBDIR}
+    COMPONENT lib${OSPRAY_LIB_SUFFIX}
+  )
+  IF(WIN32) # on Windows put the ospray.dll also into the apps package
+    INSTALL(TARGETS ${name} ${ARGN}
+      DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT apps
+    )
+  ENDIF()
+ENDMACRO()
+
+MACRO(OSPRAY_INSTALL_EXE _name)
+  SET(name ${_name}${OSPRAY_EXE_SUFFIX})
+  # use OSPRAY_LIB_SUFFIX for COMPONENT to get lib_mic and not lib.mic
+  INSTALL(TARGETS ${name} ${ARGN} 
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT lib${OSPRAY_LIB_SUFFIX}
+  )
+ENDMACRO()
+
+## Target versioning macro ##
+
+MACRO(OSPRAY_SET_LIBRARY_VERSION _name)
+  SET(name ${_name}${OSPRAY_LIB_SUFFIX})
+  SET_TARGET_PROPERTIES(${name}
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
 ENDMACRO()

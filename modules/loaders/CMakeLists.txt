@@ -18,32 +18,25 @@ OPTION(OSPRAY_MODULE_LOADERS "Build loaders for common file types." ON)
 
 CONFIGURE_OSPRAY()
 
-IF (NOT THIS_IS_MIC)
-  IF (OSPRAY_MODULE_LOADERS)
+IF(NOT THIS_IS_MIC AND OSPRAY_MODULE_LOADERS)
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-    INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-    INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+  LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/loaders)
 
-    LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/loaders)
+  OSPRAY_ADD_LIBRARY(ospray_module_loaders SHARED
+    ObjectFile.cpp
+    OSPObjectFile.cpp
+    PLYTriangleMeshFile.cpp
+    RawVolumeFile.cpp
+    RMVolumeFile.cpp
+    SymbolRegistry.cpp
+    TinyXML2.cpp
+    TriangleMeshFile.cpp
+    VolumeFile.cpp
+  )
 
-    ADD_LIBRARY(ospray_module_loaders${OSPRAY_LIB_SUFFIX} SHARED
-      ObjectFile.cpp
-      OSPObjectFile.cpp
-      PLYTriangleMeshFile.cpp
-      RawVolumeFile.cpp
-      RMVolumeFile.cpp
-      SymbolRegistry.cpp
-      TinyXML2.cpp
-      TriangleMeshFile.cpp
-      VolumeFile.cpp
-    )
-
-    TARGET_LINK_LIBRARIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
-
-    SET_TARGET_PROPERTIES(ospray_module_loaders${OSPRAY_LIB_SUFFIX}
-      PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-    INSTALL(TARGETS ospray_module_loaders${OSPRAY_LIB_SUFFIX} DESTINATION lib)
-
-  ENDIF (OSPRAY_MODULE_LOADERS)
-ENDIF (NOT THIS_IS_MIC)
-
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_loaders ospray)
+  OSPRAY_SET_LIBRARY_VERSION(ospray_module_loaders)
+  OSPRAY_INSTALL_LIBRARY(ospray_module_loaders)
+ENDIF()

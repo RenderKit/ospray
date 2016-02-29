@@ -49,24 +49,12 @@ namespace ospray {
   struct LocalTiledLoadBalancer : public TiledLoadBalancer
   {
     LocalTiledLoadBalancer();
-    struct RenderTask
-    {
-      mutable Ref<FrameBuffer>  fb;
-      mutable Ref<Renderer>     renderer;
 
-      size_t                    numTiles_x;
-      size_t                    numTiles_y;
-      uint32                    channelFlags;
-      void                     *perFrameData;
-
-      void run(size_t jobID) const;
-      void finish() const;
-    };
-
-    void renderFrame(Renderer *tiledRenderer,
+    void renderFrame(Renderer *renderer,
                      FrameBuffer *fb,
-                     const uint32 channelFlags);
-    std::string toString() const;
+                     const uint32 channelFlags) override;
+
+    std::string toString() const override;
 
 #ifdef OSPRAY_USE_TBB
     tbb::task_scheduler_init tbb_init;
@@ -93,33 +81,11 @@ namespace ospray {
       }
     }
 
-    virtual std::string toString() const { return "ospray::InterleavedTiledLoadBalancer"; };
-
-    /*! \brief a task for rendering a frame using the global tiled load balancer
-
-      if derived from FrameBuffer::RenderFrameEvent to allow us for
-      attaching that as a sync primitive to the frame buffer
-    */
-    struct RenderTask
-    {
-      mutable Ref<FrameBuffer> fb;
-      mutable Ref<Renderer>    renderer;
-
-      size_t           numTiles_x;
-      size_t           numTiles_y;
-      size_t           numTiles_mine;
-      size_t           deviceID;
-      size_t           numDevices;
-      uint32           channelFlags;
-      void             *perFrameData;
-
-      void run(size_t jobID) const;
-      void finish() const;
-    };
+    std::string toString() const override;
 
     void renderFrame(Renderer *tiledRenderer,
                      FrameBuffer *fb,
-                     const uint32 channelFlags);
+                     const uint32 channelFlags) override;
   };
 
 } // ::ospray
