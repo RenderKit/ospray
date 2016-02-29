@@ -30,14 +30,14 @@ IF (OSPRAY_ZIP_MODE)
     SET(CMAKE_INSTALL_RPATH "@executable_path:@executable_path/../lib")
   ELSE()
     SET(CMAKE_INSTALL_RPATH "\$ORIGIN:\$ORIGIN/../lib")
+    # on per target basis:
+    #SET_TARGET_PROPERTIES(apps INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib")
+    #SET_TARGET_PROPERTIES(libs INSTALL_RPATH "$ORIGIN")
   ENDIF()
 ELSE()
   # we do not want any RPath for installed binaries
   SET(CMAKE_SKIP_INSTALL_RPATH ON)
 ENDIF()
-
-#SET_TARGET_PROPERTIES(apps INSTALL_RPATH "$ORIGIN:$ORIGIN/../lib")
-#SET_TARGET_PROPERTIES(libs INSTALL_RPATH "$ORIGIN")
 
 ##############################################################
 # install headers
