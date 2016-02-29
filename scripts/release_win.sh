@@ -22,6 +22,7 @@ export LIBRARY_PATH=
 export LD_LIBRARY_PATH=
 #TBB_PATH_LOCAL=$PWD/tbb
 
+#rm -rf build_release
 mkdir -p build_release
 cd build_release
 rm -f CMakeCache.txt
@@ -44,7 +45,8 @@ cmake -L \
 # -D TBB_ROOT=%TBB_PATH_LOCAL% \
 
 # compile and create installers
-cmake --clean-first --build . --config Release --target PACKAGE -- -m -nologo
+# option --clean-first' somehow conflicts with options after '--' for msbuild
+cmake --build . --config Release --target PACKAGE -- -m -nologo
 
 # create ZIP files
 cmake -D OSPRAY_ZIP_MODE=ON ..

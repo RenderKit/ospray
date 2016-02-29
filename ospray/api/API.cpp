@@ -234,6 +234,14 @@ namespace ospray {
     return ospray::api::Device::current->addGeometry(model,geometry);
   }
 
+  extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
+  {
+    ASSERT_DEVICE();
+    Assert(model != NULL && "invalid model in ospRemoveGeometry");
+    Assert(geometry != NULL && "invalid geometry in ospRemoveGeometry");
+    return ospray::api::Device::current->removeGeometry(model, geometry);
+  }
+
   extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
   {
     ASSERT_DEVICE();
@@ -242,12 +250,12 @@ namespace ospray {
     return ospray::api::Device::current->addVolume(model, volume);
   }
 
-  extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
+  extern "C" void ospRemoveVolume(OSPModel model, OSPVolume volume)
   {
     ASSERT_DEVICE();
-    Assert(model != NULL && "invalid model in ospRemoveGeometry");
-    Assert(geometry != NULL && "invalid geometry in ospRemoveGeometry");
-    return ospray::api::Device::current->removeGeometry(model, geometry);
+    Assert(model != NULL && "invalid model in ospRemoveVolume");
+    Assert(volume != NULL && "invalid volume in ospRemoveVolume");
+    return ospray::api::Device::current->removeVolume(model, volume);
   }
 
   /*! create a new data buffer, with optional init data and control flags */

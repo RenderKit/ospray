@@ -276,7 +276,10 @@ extern "C" {
   OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
   //! add a volume to an existing model
-  OSPRAY_INTERFACE void ospAddVolume(OSPModel model, OSPVolume volume);
+  OSPRAY_INTERFACE void ospAddVolume(OSPModel, OSPVolume);
+
+  /*! \brief remove an existing volume from a model */
+  OSPRAY_INTERFACE void ospRemoveVolume(OSPModel, OSPVolume);
 
   //! \brief create a new transfer function of given type
   /*! \detailed return 'NULL' if that type is not known */

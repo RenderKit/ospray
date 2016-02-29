@@ -27,6 +27,16 @@ TARGET_LINK_LIBRARIES(ospray_glut3d ospray
 )
 OSPRAY_SET_LIBRARY_VERSION(ospray_glut3d)
 INSTALL(TARGETS ospray_glut3d
-  DESTINATION ${CMAKE_INSTALL_BINDIR}
-  COMPONENT apps
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
 )
+
+
+##############################################################
+# redistribute freeglut
+##############################################################
+
+IF (WIN32)
+  INSTALL(PROGRAMS ${GLUT_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
+ENDIF()

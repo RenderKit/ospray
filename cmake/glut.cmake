@@ -39,12 +39,17 @@ ELSEIF (WIN32)
   ENDIF()
   FIND_LIBRARY(GLUT_glut_LIBRARY
     NAMES freeglut glut glut32
-    PATHS ${GLUT_INCLUDE_DIR}/../lib/${ARCH} ${FREEGLUT_ROOT_PATH}/lib/${ARCH} ${DEPRECIATED_WIN32_RELEASE}
+    HINTS ${GLUT_INCLUDE_DIR}/../lib/${ARCH} ${FREEGLUT_ROOT_PATH}/lib/${ARCH} ${DEPRECIATED_WIN32_RELEASE}
+  )
+  FIND_FILE(GLUT_DLL
+    NAMES freeglut.dll
+    HINTS ${GLUT_INCLUDE_DIR}/../bin/${ARCH} ${FREEGLUT_ROOT_PATH}/bin/${ARCH}
   )
   SET(GLUT_LIBRARIES ${GLUT_glut_LIBRARY})
   MARK_AS_ADVANCED(
     GLUT_INCLUDE_DIR
     GLUT_glut_LIBRARY
+    GLUT_DLL
   )
   IF (NOT GLUT_INCLUDE_DIR OR NOT GLUT_glut_LIBRARY)
     MESSAGE(FATAL_ERROR "Could not find GLUT library. You could fetch freeglut from http://www.transmissionzero.co.uk/software/freeglut-devel/ and set the FREEGLUT_ROOT_PATH variable in cmake.")
