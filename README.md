@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v0.9.1 of OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Also visit
-http://www.ospray.org for more information.
+This is release v0.9.1 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -56,7 +56,7 @@ branch should always point to the latest tested bugfix release.
 Prerequisites
 -------------
 
-OSPRay currently supports both Linux and Mac OS X (and experimentally
+OSPRay currently supports both Linux and Mac OS X (and experimentally
 Windows). In addition, before you can build OSPRay you need the
 following prerequisites:
 
@@ -106,7 +106,7 @@ Type the following to install the dependencies using `apt-get`:
     sudo apt-get install freeglut3-dev
     sudo apt-get install libqt4-dev
 
-Under Mac OS\ X these dependencies can be installed using
+Under Mac OS X these dependencies can be installed using
 [MacPorts](http://www.macports.org/):
 
     sudo port install cmake tbb freeglut qt4
