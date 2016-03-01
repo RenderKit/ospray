@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -449,16 +449,6 @@ namespace ospray {
       cmd.send((const ObjectHandle &) _model);
       cmd.send((const ObjectHandle &) _volume);
       cmd.flush();
-    }
-
-    /*! create a new data buffer */
-    OSPTriangleMesh MPIDevice::newTriangleMesh()
-    {
-      ObjectHandle handle = ObjectHandle::alloc();
-      cmd.newCommand(CMD_NEW_TRIANGLEMESH);
-      cmd.send(handle);
-      cmd.flush();
-      return (OSPTriangleMesh)(int64)handle;
     }
 
     /*! create a new data buffer */
@@ -1031,6 +1021,15 @@ namespace ospray {
       cmd.newCommand(CMD_REMOVE_GEOMETRY);
       cmd.send((const ObjectHandle&)_model);
       cmd.send((const ObjectHandle&)_geometry);
+      cmd.flush();
+    }
+
+    /*! remove an existing volume from a model */
+    void MPIDevice::removeVolume(OSPModel _model, OSPVolume _volume)
+    {
+      cmd.newCommand(CMD_REMOVE_VOLUME);
+      cmd.send((const ObjectHandle&)_model);
+      cmd.send((const ObjectHandle&)_volume);
       cmd.flush();
     }
 

@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -18,26 +18,17 @@ OPTION(OSPRAY_MODULE_OPENGL_UTIL "Build OpenGL utility functionality" ON)
 
 CONFIGURE_OSPRAY()
 
-IF (NOT THIS_IS_MIC)
-  IF (OSPRAY_MODULE_OPENGL_UTIL)
+IF(NOT THIS_IS_MIC AND OSPRAY_MODULE_OPENGL_UTIL)
+  FIND_PACKAGE(OpenGL REQUIRED)
 
-    FIND_PACKAGE(OpenGL REQUIRED)
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
+  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-    INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-    INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+  LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/opengl)
 
-    LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/opengl)
+  ADD_LIBRARY(ospray_module_opengl_util SHARED util.cpp)
 
-    ADD_LIBRARY(ospray_module_opengl_util${OSPRAY_LIB_SUFFIX} SHARED
-      util.cpp
-    )
-
-    TARGET_LINK_LIBRARIES(ospray_module_opengl_util${OSPRAY_LIB_SUFFIX} ospray${OSPRAY_LIB_SUFFIX} ${OPENGL_LIBRARIES})
-
-    SET_TARGET_PROPERTIES(ospray_module_opengl_util${OSPRAY_LIB_SUFFIX}
-      PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-    INSTALL(TARGETS ospray_module_opengl_util${OSPRAY_LIB_SUFFIX} DESTINATION lib)
-
-  ENDIF (OSPRAY_MODULE_OPENGL_UTIL)
-ENDIF (NOT THIS_IS_MIC)
-
+  TARGET_LINK_LIBRARIES(ospray_module_opengl_util ospray ${OPENGL_LIBRARIES})
+  OSPRAY_SET_LIBRARY_VERSION(ospray_module_opengl_util)
+  OSPRAY_INSTALL_LIBRARY(ospray_module_opengl_util)
+ENDIF()

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -28,10 +28,12 @@
 #pragma once
 
 #ifndef NULL
-# define NULL nullptr
+# if __cplusplus >= 201103L
+#  define NULL nullptr
+# else
+#  define NULL 0
+# endif
 #endif
-
-#include <vector>
 
 // -------------------------------------------------------
 // include common components 
@@ -65,22 +67,13 @@ namespace osp {
   struct vec2f { float x, y; };
   struct vec2i { int x, y; };
   struct vec3f { float x, y, z; };
-  struct vec3fa { float x, y, z, a; };
+  struct vec3fa { float x, y, z; union { int a; unsigned u; float w; }; };
   struct vec3i { int x, y, z; };
   struct vec4f { float x, y, z, w; };
-  // typedef embree::Vec2f  vec2f;
-  // typedef embree::Vec2i  vec2i;
-  // typedef embree::Vec3f  vec3f;
-  // typedef embree::Vec3i  vec3i;
-  // typedef embree::Vec3fa vec3fa;
-  // typedef embree::Vec4f  vec4f;
   struct box2i { vec2i lower, upper; };
-  struct box3f { vec2f lower, upper; };
-  struct linear3f { vec3f vx,vy,vz; };
+  struct box3f { vec3f lower, upper; };
+  struct linear3f { vec3f vx, vy, vz; };
   struct affine3f { linear3f l; vec3f p; };
-  // typedef embree::BBox<embree::Vec2i> box2i;
-  // typedef embree::BBox3f box3f;
-  // typedef embree::AffineSpace3f affine3f;
 
   typedef uint64_t uint64;
 
@@ -97,7 +90,6 @@ namespace osp {
   struct Texture2D        : public ManagedObject {};
   struct Light            : public ManagedObject {};
   struct PixelOp          : public ManagedObject {};
-  struct TriangleMesh     : public Geometry {};
 
 } // ::osp
 
@@ -111,9 +103,11 @@ typedef enum {
 /*! OSPRay constants for Frame Buffer creation ('and' ed together) */
 typedef enum {
   OSP_RGBA_NONE,
-  OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each on byte */
+  OSP_RGBA_I8,  /*!< one dword per pixel: rgb+alpha, each one byte */
   OSP_RGB_I8,   /*!< three 8-bit unsigned chars per pixel XXX unsupported! */
   OSP_RGBA_F32, /*!< one float4 per pixel: rgb+alpha, each one float */
+//  OSP_SRGBA_I8,  /*!< one dword per pixel: rgb (in sRGB space) + alpha, each one byte */
+//  OSP_SRGB_I8,   /*!< three 8-bit unsigned chars (in sRGB space) per pixel */
 } OSPFrameBufferFormat;
 
 //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
@@ -186,7 +180,6 @@ typedef osp::Light             *OSPLight;
 typedef osp::Volume            *OSPVolume;
 typedef osp::TransferFunction  *OSPTransferFunction;
 typedef osp::Texture2D         *OSPTexture2D;
-typedef osp::TriangleMesh      *OSPTriangleMesh;
 typedef osp::ManagedObject     *OSPObject;
 typedef osp::PixelOp           *OSPPixelOp;
 
@@ -280,7 +273,10 @@ extern "C" {
   OSPRAY_INTERFACE OSPVolume ospNewVolume(const char *type);
 
   //! add a volume to an existing model
-  OSPRAY_INTERFACE void ospAddVolume(OSPModel model, OSPVolume volume);
+  OSPRAY_INTERFACE void ospAddVolume(OSPModel, OSPVolume);
+
+  /*! \brief remove an existing volume from a model */
+  OSPRAY_INTERFACE void ospRemoveVolume(OSPModel, OSPVolume);
 
   //! \brief create a new transfer function of given type
   /*! \detailed return 'NULL' if that type is not known */
@@ -290,7 +286,7 @@ extern "C" {
   /*! \detailed return 'NULL' if the texture could not be created with the given parameters */
   OSPRAY_INTERFACE OSPTexture2D ospNewTexture2D(int width, int height, OSPDataType type, void *data = NULL, int flags = 0);
 
-  //! \brief lears the specified channel(s) of the frame buffer
+  //! \brief clears the specified channel(s) of the frame buffer
   /*! \detailed clear the specified channel(s) of the frame buffer specified in 'whichChannels'
 
     if whichChannel&OSP_FB_COLOR!=0, clear the color buffer to '0,0,0,0'
@@ -554,16 +550,6 @@ extern "C" {
     
     \{ 
   */
-
-  /*! \brief create a new triangle mesh. 
-
-    the mesh doesn't do anything 'til it is added to a model. to set
-    the model's vertices etc, set the respective data arrays for
-    "position", "index", "normal", "texcoord", "color", etc. Data
-    format for vertices and normals in vec3fa, and vec4i for index
-    (fourth component is the material ID). */
-  //! \warning deprecated: use ospNewGeometry("triangles") instead
-  OSP_DEPRECATED OSPRAY_INTERFACE OSPTriangleMesh ospNewTriangleMesh();
 
   /*! add an already created geometry to a model */
   OSPRAY_INTERFACE void ospAddGeometry(OSPModel model, OSPGeometry mesh);

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -53,6 +53,7 @@ namespace ospray {
     CMD_COMMIT,
     CMD_LOAD_MODULE,
     CMD_RELEASE,
+    CMD_REMOVE_VOLUME,
 
     CMD_GET_TYPE=300,
     CMD_GET_VALUE,

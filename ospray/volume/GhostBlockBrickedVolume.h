@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,25 +27,25 @@ namespace ospray {
   class GhostBlockBrickedVolume : public StructuredVolume {
   public:
 
-    //! Constructor.
-    GhostBlockBrickedVolume() {};
-
     //! Destructor.
-    virtual ~GhostBlockBrickedVolume() {};
+    ~GhostBlockBrickedVolume();
 
     //! A string description of this class.
-    virtual std::string toString() const { return("ospray::GhostBlockBrickedVolume<" + voxelType + ">"); }
+    std::string toString() const override;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
+    void commit() override;
 
-    //! Copy voxels into the volume at the given index (non-zero return value indicates success).
-    virtual int setRegion(const void *source, const vec3i &index, const vec3i &count);
+    //! Copy voxels into the volume at the given index (non-zero return value
+    //! indicates success).
+    int setRegion(const void *source,
+                  const vec3i &index,
+                  const vec3i &count) override;
 
-  protected:
+  private:
 
     //! Create the equivalent ISPC volume container.
-    virtual void createEquivalentISPC();
+    void createEquivalentISPC() override;
 
   };
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,6 +17,7 @@
 #pragma once
 
 // ospray
+#include "ospray/common/parallel_for.h"
 #include "ospray/volume/Volume.h"
 // stl
 #include <algorithm>
@@ -44,10 +45,10 @@ namespace ospray {
     virtual ~StructuredVolume();
 
     //! A string description of this class.
-    virtual std::string toString() const;
+    virtual std::string toString() const override;
 
     //! Allocate storage and populate the volume, called through the OSPRay API.
-    virtual void commit();
+    virtual void commit() override;
 
     //! Copy voxels into the volume at the given index
     /*! \returns 0 on error, any non-zero value indicates success */
@@ -61,23 +62,15 @@ namespace ospray {
     virtual void createEquivalentISPC() = 0;
 
     //! Complete volume initialization (only on first commit).
-    virtual void finish();
+    virtual void finish() override;
 
     //! Get the OSPDataType enum corresponding to the voxel type string.
     OSPDataType getVoxelType() const;
 
 #ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-    //! Compute the voxel value range for unsigned byte voxels.
-    void computeVoxelRange(const unsigned char *source, const size_t &count);
-
-    //! Compute the voxel value range for floating point voxels.
-    void computeVoxelRange(const float *source, const size_t &count);
-
-    //! Compute the voxel value range for double precision floating point voxels.
-    void computeVoxelRange(const double *source, const size_t &count);
-
+    template<typename T>
+    void computeVoxelRange(const T* source, const size_t &count);
 #endif
-
 
     //! build the accelerator - allows child class (data distributed) to avoid
     //! building..
@@ -101,6 +94,38 @@ namespace ospray {
     //! Voxel type.
     std::string voxelType;
   };
+
+// Inlined member functions ///////////////////////////////////////////////////
+
+#ifndef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+  template<typename T>
+  inline void StructuredVolume::computeVoxelRange(const T* source,
+                                                  const size_t &count)
+  {
+    const size_t blockSize = 1000000;
+    int numBlocks = divRoundUp(count, blockSize);
+    vec2f* blockRange = (vec2f*)alloca(numBlocks*sizeof(vec2f));
+
+    //NOTE(jda) - shouldn't this be a simple reduction (TBB/OMP)?
+    parallel_for(numBlocks, [&](int taskIndex){
+      size_t myBegin = taskIndex *blockSize;
+      size_t myEnd   = std::min(myBegin+blockSize,count);
+      vec2f myVoxelRange(source[myBegin]);
+
+      for (size_t i = myBegin; i < myEnd ; i++) {
+        myVoxelRange.x = std::min(myVoxelRange.x, (float)source[i]);
+        myVoxelRange.y = std::max(myVoxelRange.y, (float)source[i]);
+      }
+
+      blockRange[taskIndex] = myVoxelRange;
+    });
+
+    for (int i = 0; i < numBlocks; i++) {
+      voxelRange.x = std::min(voxelRange.x, blockRange[i].x);
+      voxelRange.y = std::max(voxelRange.y, blockRange[i].y);
+    }
+  }
+#endif
 
 } // ::ospray
 

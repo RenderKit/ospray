@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -27,16 +27,16 @@ class PLYTriangleMeshFile : public TriangleMeshFile {
 public:
 
   //! Constructor.
-  PLYTriangleMeshFile(const std::string &filename) : filename(filename), scale(ospray::vec3f(1.f)), verbose(true) {}
+  PLYTriangleMeshFile(const std::string &filename);
 
   //! Destructor.
-  virtual ~PLYTriangleMeshFile() {};
+  virtual ~PLYTriangleMeshFile() {}
 
   //! Import the triangle data.
-  virtual OSPTriangleMesh importTriangleMesh(OSPTriangleMesh triangleMesh);
+  virtual OSPGeometry importTriangleMesh(OSPGeometry triangleMesh);
 
   //! A string description of this class.
-  virtual std::string toString() const { return("ospray_module_loaders::PLYTriangleMeshFile"); }
+  virtual std::string toString() const;
 
 private:
 

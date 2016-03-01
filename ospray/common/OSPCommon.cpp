@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -35,7 +35,13 @@ namespace ospray {
   /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
   extern "C" void *malloc64(size_t size)
   {
-    return malloc(size);
+    return embree::alignedMalloc(size);
+  }
+
+  /*! 64-bit malloc. allows for alloc'ing memory larger than 64 bits */
+  extern "C" void free64(void *ptr)
+  {
+    return embree::alignedFree(ptr);
   }
 
   /*! logging level - '0' means 'no logging at all', increasing

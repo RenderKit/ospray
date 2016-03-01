@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
   bool showFrameRate = false;
   bool fullScreen = false;
   bool ownModelPerObject = false;
+  std::string renderer = "dvr";
   std::string writeFramesFilename;
 
   std::vector<std::string> inFileName;
@@ -138,6 +139,10 @@ int main(int argc, char *argv[])
       benchmarkWarmUpFrames = atoi(argv[++i]);
       benchmarkFrames = atoi(argv[++i]);
       std::cout << "got benchmarkWarmUpFrames = " << benchmarkWarmUpFrames << ", benchmarkFrames = " << benchmarkFrames << std::endl;
+
+    }  else if (arg == "-r" || arg == "-renderer") {
+
+      renderer = argv[++i];
 
     } else if (arg == "-viewsize") {
 
@@ -211,7 +216,12 @@ int main(int argc, char *argv[])
   }
 
   // Create the OSPRay state and viewer window.
-  VolumeViewer *volumeViewer = new VolumeViewer(inFileName, ownModelPerObject, showFrameRate, fullScreen, writeFramesFilename);
+  VolumeViewer *volumeViewer = new VolumeViewer(inFileName,
+                                                renderer,
+                                                ownModelPerObject,
+                                                showFrameRate,
+                                                fullScreen,
+                                                writeFramesFilename);
 
   // Display the first model.
   volumeViewer->setModel(0);

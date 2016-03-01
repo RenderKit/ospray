@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -38,8 +38,8 @@ namespace ospray {
     // update the local precomputed values: the camera coordinate frame
     // ------------------------------------------------------------------
     linear3f frame;
-    frame.vy = normalize(dir);
-    frame.vx = normalize(cross(frame.vy, up));
+    frame.vx = normalize(dir);
+    frame.vy = normalize(cross(frame.vx, up));
     frame.vz = cross(frame.vx, frame.vy);
 
     ispc::PanoramicCamera_set(getIE(),

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -17,7 +17,6 @@
 #pragma once
 
 #ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
 # include <tbb/parallel_for.h>
 #endif
 
@@ -27,13 +26,7 @@ template<typename T>
 inline void parallel_for(int nTasks, const T& fcn)
 {
 #ifdef OSPRAY_USE_TBB
-  tbb::parallel_for(tbb::blocked_range<int>(0, nTasks),
-                    [&fcn](const tbb::blocked_range<int> &range){
-      for (int taskIndex = range.begin();
-           taskIndex != range.end();
-           ++taskIndex)
-          fcn(taskIndex);
-    });
+  tbb::parallel_for(0, nTasks, 1, fcn);
 #else
 # pragma omp parallel for schedule(dynamic)
   for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {

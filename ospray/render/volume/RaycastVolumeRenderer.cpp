@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -319,13 +319,6 @@ namespace ospray {
     if (ispcEquivalent == NULL) {
       ispcEquivalent = ispc::RaycastVolumeRenderer_createInstance();
     }
-
-    // Get the background color.
-    vec3f bgColor = getParam3f("bgColor", vec3f(1.f));
-
-    // Set the background color.
-    ispc::RaycastVolumeRenderer_setBackgroundColor(ispcEquivalent,
-                                                   (const ispc::vec3f&)bgColor);
 
     // Set the lights if any.
     Data *lightsData = (Data *)getParamData("lights", NULL);

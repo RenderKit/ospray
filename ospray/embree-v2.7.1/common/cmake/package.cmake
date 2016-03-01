@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -51,16 +51,12 @@ ENDIF()
 ##############################################################
 # Install Headers
 ##############################################################
-INSTALL(DIRECTORY include/embree2 DESTINATION include COMPONENT devel)
+INSTALL(DIRECTORY include/embree2 DESTINATION ${CMAKE_INSTALL_INCLUDEDIR} COMPONENT devel)
 CONFIGURE_FILE(include/embree2/rtcore.h rtcore.h @ONLY)
 CONFIGURE_FILE(include/embree2/rtcore.isph rtcore.isph @ONLY)
-INSTALL(FILES ${PROJECT_BINARY_DIR}/rtcore.h DESTINATION include/embree2 COMPONENT devel)
-INSTALL(FILES ${PROJECT_BINARY_DIR}/rtcore.isph DESTINATION include/embree2 COMPONENT devel)
+INSTALL(FILES ${PROJECT_BINARY_DIR}/rtcore.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/embree2 COMPONENT devel)
+INSTALL(FILES ${PROJECT_BINARY_DIR}/rtcore.isph DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/embree2 COMPONENT devel)
 
-##############################################################
-# Install Models
-##############################################################
-INSTALL(DIRECTORY tutorials/models DESTINATION "${TUTORIALS_INSTALL_DIR}" COMPONENT examples)
 
 ##############################################################
 # Install Documentation

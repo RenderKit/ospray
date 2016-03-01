@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,8 +14,7 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-SET (CMAKE_CXX_COMPILER icpc)
-SET (CMAKE_CXX_FLAGS "-mmic -restrict -Wall -fasm-blocks -fPIC")
+SET (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mmic -restrict -Wall -fasm-blocks -fPIC -std=c++11")
 SET (CMAKE_CXX_FLAGS_NOOPT "-g -O0 -DDEBUG")
 SET (CMAKE_CXX_FLAGS_DEBUG "-g -w1 -O2 -DDEBUG ")
 

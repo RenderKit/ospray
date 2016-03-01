@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -40,7 +40,7 @@ SET(LIBS ${LIBS} ${QT_LIBRARIES})
 
 FIND_PACKAGE(OpenGL REQUIRED)
 INCLUDE_DIRECTORIES(${OPENGL_INCLUDE_DIRS})
-SET(LIBS ${LIBS} ${OPENGL_LIBRARIES})
+SET(LIBS ${LIBS} ${OPENGL_LIBRARIES} ${TBB_LIBRARY_MALLOC} ${TBB_LIBRARY})
 
 SET(SRCS ${SRCS}
   main.cpp
@@ -78,7 +78,7 @@ QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
 ADD_EXECUTABLE(ospVolumeViewer ${SRCS} ${MOC_OUTFILES})
 TARGET_LINK_LIBRARIES(ospVolumeViewer ${LIBS})
-# ------------------------------------------------------------
-INSTALL(TARGETS ospVolumeViewer DESTINATION bin)
-# ------------------------------------------------------------
-
+INSTALL(TARGETS ospVolumeViewer
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

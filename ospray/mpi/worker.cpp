@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -67,6 +67,13 @@ namespace ospray {
       Geometry *ptr;
     };
 
+    struct VolumeLocator {
+      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+        return ptr == &*g;
+      }
+      Volume *ptr;
+    };
+
     void embreeErrorFunc(const RTCError code, const char* str)
     {
       std::cerr << "#osp: embree internal error " << code << " : " << str << std::endl;
@@ -88,20 +95,14 @@ namespace ospray {
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
-      // std::stringstream embreeConfig;
-      // if (debugMode)
-      //   embreeConfig << " threads=1";
-      // rtcInit(embreeConfig.str().c_str());
-
-      //      assert(rtcGetError() == RTC_NO_ERROR);
-      rtcSetErrorFunction(embreeErrorFunc);
-
       std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
+
+      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
 
       if (rtcGetError() != RTC_NO_ERROR) {
         // why did the error function not get called !?
@@ -455,6 +456,22 @@ namespace ospray {
           Model::GeometryVector::iterator it = std::find_if(model->geometry.begin(), model->geometry.end(), locator);
           if(it != model->geometry.end()) {
             model->geometry.erase(it);
+          }
+        } break;
+
+        case ospray::CMD_REMOVE_VOLUME: {
+          const ObjectHandle modelHandle = cmd.get_handle();
+          const ObjectHandle geomHandle = cmd.get_handle();
+          Model *model = (Model*)modelHandle.lookup();
+          Assert(model);
+          Volume *geom = (Volume*)geomHandle.lookup();
+          Assert(geom);
+
+          VolumeLocator locator;
+          locator.ptr = geom;
+          Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+          if(it != model->volume.end()) {
+            model->volume.erase(it);
           }
         } break;
 

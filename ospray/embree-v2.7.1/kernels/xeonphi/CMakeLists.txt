@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -103,10 +103,10 @@ ADD_ISPC_LIBRARY(embree_xeonphi ${EMBREE_LIB_TYPE}
 
 TARGET_LINK_LIBRARIES(embree_xeonphi sys_xeonphi simd_xeonphi lexers_xeonphi ${ADDITIONAL_LIBRARIES})
 
-IF (ENABLE_INSTALLER)
-  SET_TARGET_PROPERTIES(embree_xeonphi PROPERTIES VERSION ${EMBREE_VERSION} SOVERSION ${EMBREE_VERSION_MAJOR})
-ELSE()
+IF(OSPRAY_ZIP_MODE)
   SET_TARGET_PROPERTIES(embree_xeonphi PROPERTIES VERSION ${EMBREE_VERSION_MAJOR} SOVERSION ${EMBREE_VERSION_MAJOR})
+ELSE()
+  SET_TARGET_PROPERTIES(embree_xeonphi PROPERTIES VERSION ${EMBREE_VERSION} SOVERSION ${EMBREE_VERSION_MAJOR})
 ENDIF()
 
-INSTALL(TARGETS embree_xeonphi LIBRARY DESTINATION lib COMPONENT lib_xeonphi NAMELINK_SKIP)
+INSTALL(TARGETS embree_xeonphi LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib_mic NAMELINK_SKIP)

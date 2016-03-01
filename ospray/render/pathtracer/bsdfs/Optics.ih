@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -156,15 +156,4 @@ inline uniform FresnelDielectric make_FresnelDielectric(const uniform float etai
   m.etai = etai;
   m.etat = etat;
   return m;
-}
-
-
-inline float luminance(const vec3f& c)
-{
-  return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z;
-}
-
-inline uniform float luminance(const uniform vec3f& c)
-{
-  return 0.212671f*c.x + 0.715160f*c.y + 0.072169f*c.z;
 }

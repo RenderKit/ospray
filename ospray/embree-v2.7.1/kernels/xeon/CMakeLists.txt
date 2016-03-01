@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -238,18 +238,17 @@ ENDIF()
 
 TARGET_LINK_LIBRARIES(embree ${EMBREE_LIBRARIES} sys simd lexers)
 
-IF (ENABLE_INSTALLER)
-  SET_TARGET_PROPERTIES(embree PROPERTIES VERSION ${EMBREE_VERSION} SOVERSION ${EMBREE_VERSION_MAJOR})
-ELSE()
+IF (OSPRAY_ZIP_MODE)
   SET_TARGET_PROPERTIES(embree PROPERTIES VERSION ${EMBREE_VERSION_MAJOR} SOVERSION ${EMBREE_VERSION_MAJOR})
-ENDIF()
-
-IF (WIN32)
-  INSTALL(TARGETS embree DESTINATION lib COMPONENT lib)
 ELSE()
-  INSTALL(TARGETS embree DESTINATION lib LIBRARY DESTINATION lib COMPONENT lib NAMELINK_SKIP)
+  SET_TARGET_PROPERTIES(embree PROPERTIES VERSION ${EMBREE_VERSION} SOVERSION ${EMBREE_VERSION_MAJOR})
 ENDIF()
 
 IF (WIN32)
-    INSTALL(TARGETS embree DESTINATION bin COMPONENT examples)
+  INSTALL(TARGETS embree
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
+  )
+ELSE()
+  INSTALL(TARGETS embree LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib NAMELINK_SKIP)
 ENDIF()

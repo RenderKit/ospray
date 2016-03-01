@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -80,9 +80,15 @@ namespace ospray {
 
   extern "C" void ospInit(int *_ac, const char **_av)
   {
-    if (ospray::api::Device::current)
+    if (ospray::api::Device::current) {
       throw std::runtime_error("OSPRay error: device already exists "
                                "(did you call ospInit twice?)");
+    }
+
+    auto *nThreads = getenv("OSPRAY_THREADS");
+    if (nThreads) {
+      numThreads = atoi(nThreads);
+    }
 
     /* call ospray::init to properly parse common args like
        --osp:verbose, --osp:debug etc */
@@ -118,9 +124,9 @@ namespace ospray {
         }
 
         if (std::string(_av[i]) == "--osp:coi") {
-#ifdef OSPRAY_TARGET_MIC
+#ifdef __MIC__
           throw std::runtime_error("The COI device can only be created on the host");
-#elifdef OSPRAY_MIC_COI
+#elif defined(OSPRAY_MIC_COI)
           removeArgs(*_ac,(char **&)_av,i,1);
           ospray::api::Device::current
             = ospray::coi::createCoiDevice(_ac,_av);
@@ -228,14 +234,6 @@ namespace ospray {
     return ospray::api::Device::current->addGeometry(model,geometry);
   }
 
-  extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
-  {
-    ASSERT_DEVICE();
-    Assert(model != NULL && "invalid model in ospAddVolume");
-    Assert(volume != NULL && "invalid volume in ospAddVolume");
-    return ospray::api::Device::current->addVolume(model, volume);
-  }
-
   extern "C" void ospRemoveGeometry(OSPModel model, OSPGeometry geometry)
   {
     ASSERT_DEVICE();
@@ -244,11 +242,20 @@ namespace ospray {
     return ospray::api::Device::current->removeGeometry(model, geometry);
   }
 
-  /*! create a new triangle mesh */
-  extern "C" OSPTriangleMesh ospNewTriangleMesh()
+  extern "C" void ospAddVolume(OSPModel model, OSPVolume volume)
   {
     ASSERT_DEVICE();
-    return ospray::api::Device::current->newTriangleMesh();
+    Assert(model != NULL && "invalid model in ospAddVolume");
+    Assert(volume != NULL && "invalid volume in ospAddVolume");
+    return ospray::api::Device::current->addVolume(model, volume);
+  }
+
+  extern "C" void ospRemoveVolume(OSPModel model, OSPVolume volume)
+  {
+    ASSERT_DEVICE();
+    Assert(model != NULL && "invalid model in ospRemoveVolume");
+    Assert(volume != NULL && "invalid volume in ospRemoveVolume");
+    return ospray::api::Device::current->removeVolume(model, volume);
   }
 
   /*! create a new data buffer, with optional init data and control flags */

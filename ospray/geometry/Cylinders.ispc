@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -122,7 +122,7 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
     // we need hit in object space, in postIntersect it is in world-space
     const vec3f P = ray.t*ray.dir - A;
     const vec3f V = cross(P,AB);
-    ray.Ng = cross(AB,V);
+    ray.Ng = normalize(cross(AB,V));
   }
 }
 

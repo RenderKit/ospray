@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -51,21 +51,19 @@ namespace ospray {
 
       ospray::init(_ac,&_av);
 
+      // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called
       // in the host-stubs, where it shouldn't.
-
-      rtcSetErrorFunction(embreeErrorFunc);
-
       // -------------------------------------------------------
-      // initialize embree
-      // -------------------------------------------------------
-     std::stringstream embreeConfig;
+      std::stringstream embreeConfig;
       if (debugMode)
         embreeConfig << " threads=1,verbose=2";
       else if(numThreads > 0)
         embreeConfig << " threads=" << numThreads;
       rtcInit(embreeConfig.str().c_str());
+
+      rtcSetErrorFunction(embreeErrorFunc); // needs to come after rtcInit
 
       RTCError erc = rtcGetError();
       if (erc != RTC_NO_ERROR) {
@@ -207,12 +205,28 @@ namespace ospray {
       model->volume.push_back(volume);
     }
 
-    /*! create a new data buffer */
-    OSPTriangleMesh LocalDevice::newTriangleMesh()
+    /*! remove an existing volume from a model */
+    struct VolumeLocator {
+      bool operator()(const embree::Ref<ospray::Volume> &g) const {
+        return ptr == &*g;
+      }
+      Volume *ptr;
+    };
+
+    void LocalDevice::removeVolume(OSPModel _model, OSPVolume _volume)
     {
-      TriangleMesh *triangleMesh = new TriangleMesh;
-      triangleMesh->refInc();
-      return (OSPTriangleMesh)triangleMesh;
+      Model *model = (Model *)_model;
+      Assert2(model, "null model in LocalDevice::removeVolume");
+
+      Volume *volume = (Volume *)_volume;
+      Assert2(volume, "null volume in LocalDevice::removeVolume");
+
+      VolumeLocator locator;
+      locator.ptr = volume;
+      Model::VolumeVector::iterator it = std::find_if(model->volume.begin(), model->volume.end(), locator);
+      if(it != model->volume.end()) {
+        model->volume.erase(it);
+      }
     }
 
     /*! create a new data buffer */
@@ -610,21 +624,28 @@ namespace ospray {
     /*! load module */
     int LocalDevice::loadModule(const char *name)
     {
-      std::string libName = "ospray_module_"+std::string(name);
+      std::string libName = "ospray_module_" + std::string(name);
       loadLibrary(libName);
 
-      std::string initSymName = "ospray_init_module_"+std::string(name);
+      std::string initSymName = "ospray_init_module_" + std::string(name);
       void*initSym = getSymbol(initSymName);
-      if (!initSym)
-        throw std::runtime_error("#osp:api: could not find module initializer "+initSymName);
+      if (!initSym) {
+        throw std::runtime_error("#osp:api: could not find module initializer "
+                                 +initSymName);
+      }
+
       void (*initMethod)() = (void(*)())initSym;
+
+      //NOTE(jda) - don't use magic numbers!
       if (!initMethod)
         return 2;
+
       try {
         initMethod();
       } catch (...) {
         return 3;
       }
+
       return 0;
     }
 

@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -139,7 +139,7 @@ void Spheres_intersect(uniform Spheres *uniform geometry,
     ray.instID = -1;
     // cannot easily be moved to postIntersect
     // we need hit in object space, in postIntersect it is in world-space
-    ray.Ng = ray.org + ray.t*ray.dir - center;
+    ray.Ng = normalize(ray.org + ray.t*ray.dir - center);
   }
 }
 

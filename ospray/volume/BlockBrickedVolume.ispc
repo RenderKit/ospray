@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -392,4 +392,12 @@ BlockBrickedVolume_setRegion(void *uniform _self,
   // Cast to the actual Volume subtype.
   BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
   self->setRegion(self, _source, regionCoords, regionSize, taskIndex);
+}
+
+export void BlockBrickedVolume_freeVolume(void *uniform _self)
+{
+  BlockBrickedVolume *uniform self = (BlockBrickedVolume *uniform)_self;
+  if (self->blockMem) {
+    free64(self->blockMem);
+  }
 }

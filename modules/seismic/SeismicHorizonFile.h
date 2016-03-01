@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -16,6 +16,7 @@
 
 #pragma once
 
+#include "ospray/common/OSPCommon.h"
 #include <cdds.h>
 #include <string>
 #include "modules/loaders/TriangleMeshFile.h"
@@ -27,16 +28,16 @@ class SeismicHorizonFile : public TriangleMeshFile {
 public:
 
   //! Constructor.
-  SeismicHorizonFile(const std::string &filename) : filename(filename), scale(osp::vec3f(1.f)), verbose(true) {}
+  SeismicHorizonFile(const std::string &filename);
 
   //! Destructor.
-  virtual ~SeismicHorizonFile() {};
+  virtual ~SeismicHorizonFile() {}
 
   //! Import the horizon data.
-  virtual OSPTriangleMesh importTriangleMesh(OSPTriangleMesh triangleMesh);
+  virtual OSPGeometry importTriangleMesh(OSPGeometry triangleMesh);
 
   //! A string description of this class.
-  virtual std::string toString() const { return("ospray_module_seismic::SeismicHorizonFile"); }
+  virtual std::string toString() const;
 
 private:
 
@@ -44,7 +45,7 @@ private:
   std::string filename;
 
   //! Scaling for vertex coordinates.
-  osp::vec3f scale;
+  ospray::vec3f scale;
 
   //! Verbose logging.
   bool verbose;
@@ -52,13 +53,13 @@ private:
   //! Seismic data attributes
   BIN_TAG inputBinTag;
   int traceHeaderSize;
-  osp::vec3i dimensions;           //<! Dimensions of the horizon volume.
-  osp::vec3f deltas;               //!< Voxel spacing along each dimension.
+  ospray::vec3i dimensions;           //<! Dimensions of the horizon volume.
+  ospray::vec3f deltas;               //!< Voxel spacing along each dimension.
 
   //! Open the seismic data file and populate attributes.
-  bool openSeismicDataFile(OSPTriangleMesh triangleMesh);
+  bool openSeismicDataFile(OSPGeometry triangleMesh);
 
   //! Import the horizon data from the file.
-  bool importHorizonData(OSPTriangleMesh triangleMesh);
+  bool importHorizonData(OSPGeometry triangleMesh);
 
 };

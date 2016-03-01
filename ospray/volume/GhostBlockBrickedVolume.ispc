@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -698,3 +698,10 @@ export void GGBV_setRegion(void *uniform _self,
   self->setRegion(_self,_source,regionCoords,regionSize);
 }
  
+export void GGBV_freeVolume(void *uniform _self)
+{
+  GGBV *uniform self = (GGBV *uniform)_self;
+  if (self->blockMem) {
+    free64(self->blockMem);
+  }
+}

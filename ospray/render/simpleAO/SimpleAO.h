@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -59,31 +59,6 @@ namespace ospray {
    */
   struct SimpleAO : public Renderer {
     
-    //! \brief Material used by the SimpleAO renderer 
-    /*! \detailed Since the SimpleAO Renderer only cares about a
-        diffuse material component this material only stores diffuse
-        and diffuse texture */
-    struct Material : public ospray::Material {
-
-      //! \brief Constructor
-      Material();
-
-      /*! \brief commit the object's outstanding changes
-       *         (such as changed parameters etc) */
-      virtual void commit();
-      
-      // -------------------------------------------------------
-      // member variables 
-      // -------------------------------------------------------
-
-      //! \brief diffuse material component, that's all we care for 
-      vec3f Kd;       
-
-      //! \brief diffuse texture, if available
-      Ref<Texture> map_Kd;
-    };
-  
-
     //! \brief Constructor
     SimpleAO(int defaultNumSamples);
 
@@ -97,8 +72,6 @@ namespace ospray {
      *         (such as changed parameters etc) */
     virtual void commit();
 
-    //! background color we are going to use if the primary ray hit nothing
-    vec3f bgColor; 
     int defaultNumSamples;
   };
 

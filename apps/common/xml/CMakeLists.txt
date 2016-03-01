@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -19,13 +19,12 @@ CONFIGURE_OSPRAY()
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
-ADD_LIBRARY(ospray_xml${OSPRAY_LIB_SUFFIX} SHARED
-  XML.cpp
+ADD_LIBRARY(ospray_xml SHARED XML.cpp)
+
+TARGET_LINK_LIBRARIES(ospray_xml ospray)
+OSPRAY_SET_LIBRARY_VERSION(ospray_xml)
+INSTALL(TARGETS ospray_xml
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
 )
-
-TARGET_LINK_LIBRARIES(ospray_xml${OSPRAY_LIB_SUFFIX} ospray)
-# ------------------------------------------------------------
-SET_TARGET_PROPERTIES(ospray_xml${OSPRAY_LIB_SUFFIX} 
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-INSTALL(TARGETS ospray_xml${OSPRAY_LIB_SUFFIX} DESTINATION lib)
-

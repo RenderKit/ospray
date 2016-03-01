@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2015 Intel Corporation                                    ##
+## Copyright 2009-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -21,9 +21,6 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/apps/common)
 
 ADD_SUBDIRECTORY(miniSG)
 
-# --------------------------------------------
-# main executable
-# --------------------------------------------
 ADD_EXECUTABLE(ospModelViewer
   # CPP sources
   modelViewer.cpp
@@ -33,6 +30,10 @@ TARGET_LINK_LIBRARIES(ospModelViewer
   ospray_glut3d
   ${OPENGL_LIBRARIES}
   ${GLUT_LIBRARIES}
+  ${TBB_LIBRARY_MALLOC}
+  ${TBB_LIBRARY}
   )
-# ------------------------------------------------------------
-INSTALL(TARGETS ospModelViewer DESTINATION bin)
+INSTALL(TARGETS ospModelViewer
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

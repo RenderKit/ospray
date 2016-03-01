@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -18,13 +18,15 @@
 #include "ospray/common/Library.h"
 #include "modules/loaders/TriangleMeshFile.h"
 
-OSPTriangleMesh TriangleMeshFile::importTriangleMesh(const std::string &filename, OSPTriangleMesh triangleMesh)
+OSPGeometry TriangleMeshFile::importTriangleMesh(const std::string &filename,
+                                                 OSPGeometry triangleMesh)
 {
   // Attempt to get the absolute file path.
   std::string fullfilename = getFullFilePath(filename);
 
   // Function pointer type for creating a concrete instance of a subtype of this class.
-  typedef OSPTriangleMesh (*creationFunctionPointer)(const std::string &filename, OSPTriangleMesh triangleMesh);
+  typedef OSPGeometry (*creationFunctionPointer)(const std::string &filename,
+                                                 OSPGeometry triangleMesh);
 
   // Function pointers corresponding to each subtype.
   static std::map<std::string, creationFunctionPointer> symbolRegistry;
@@ -46,4 +48,37 @@ OSPTriangleMesh TriangleMeshFile::importTriangleMesh(const std::string &filename
 
   // Return a handle for the loaded triangle mesh object.
   return(symbolRegistry[type] ? (*symbolRegistry[type])(fullfilename, triangleMesh) : NULL);
+}
+
+std::string TriangleMeshFile::toString() const
+{
+  return("ospray_module_loaders::TriangleMeshFile");
+}
+
+void TriangleMeshFile::emitMessage(const std::string &kind,
+                                   const std::string &message) const
+{
+  std::cerr << "  " + toString() + "  " + kind + ": " + message + "."
+            << std::endl;
+}
+
+void TriangleMeshFile::exitOnCondition(bool condition,
+                                       const std::string &message) const
+{
+  if (!condition) return;
+  emitMessage("ERROR", message);
+  exit(1);
+}
+
+void TriangleMeshFile::warnOnCondition(bool condition,
+                                       const std::string &message) const
+{
+  if (!condition) return;
+  emitMessage("WARNING", message);
+}
+
+std::string TriangleMeshFile::getFullFilePath(const std::string &filename)
+{
+  char *fullpath = realpath(filename.c_str(), NULL);
+  return fullpath != NULL ? fullpath : filename;
 }

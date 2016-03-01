@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2015 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -613,7 +613,12 @@ namespace ospray {
       if (!file)
         perror("could not open binary file");
       fseek(file,0,SEEK_END);
-      size_t fileSize = ftell(file);
+      ssize_t fileSize =
+#ifdef _WIN32
+        _ftelli64(file);
+#else
+        ftell(file);
+#endif
       fclose(file);
       
 #ifdef _WIN32
