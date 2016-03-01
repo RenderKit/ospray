@@ -122,7 +122,7 @@ void Cylinders_intersect(uniform Cylinders *uniform geometry,
     // we need hit in object space, in postIntersect it is in world-space
     const vec3f P = ray.t*ray.dir - A;
     const vec3f V = cross(P,AB);
-    ray.Ng = normalize(cross(AB,V));
+    ray.Ng = cross(AB,V);
   }
 }
 
