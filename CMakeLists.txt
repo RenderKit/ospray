@@ -14,6 +14,29 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+# Optional compiler selection - must be first!
+
+# enable ability for users to force a compiler using the pre-0.8.3 method
+SET(OSPRAY_COMPILER "" CACHE STRING "Force compiler: GCC, ICC, CLANG")
+SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS GCC ICC CLANG)
+MARK_AS_ADVANCED(OSPRAY_COMPILER)
+
+IF(NOT ":${OSPRAY_COMPILER}" STREQUAL ":")
+  STRING(TOUPPER ${OSPRAY_COMPILER} OSPRAY_COMPILER)
+  IF(${OSPRAY_COMPILER} STREQUAL "GCC")
+    SET(CMAKE_C_COMPILER "gcc")
+    SET(CMAKE_CXX_COMPILER "g++")
+  ELSEIF(${OSPRAY_COMPILER} STREQUAL "ICC")
+    SET(CMAKE_C_COMPILER "icc")
+    SET(CMAKE_CXX_COMPILER "icpc")
+  ELSEIF(${OSPRAY_COMPILER} STREQUAL "CLANG")
+    SET(CMAKE_C_COMPILER "clang")
+    SET(CMAKE_CXX_COMPILER "clang++")
+  ENDIF()
+ENDIF()
+
+# Configure all of OSPRay #####################################################
+
 PROJECT(OSPRay)
 
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
