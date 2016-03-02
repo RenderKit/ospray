@@ -48,8 +48,6 @@ INSTALL(DIRECTORY ${PROJECT_SOURCE_DIR}/ospray/include/ospray
   COMPONENT devel
   FILES_MATCHING PATTERN "*.h"
 )
-# OSPDataType.h is included by ospray.h, should eventually move to include/ospray as well
-INSTALL(FILES ${PROJECT_SOURCE_DIR}/ospray/common/OSPDataType.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray COMPONENT devel)
 
 ##############################################################
 # install documentation
