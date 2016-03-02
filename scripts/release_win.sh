@@ -45,7 +45,7 @@ cmake -L \
 # -D TBB_ROOT=%TBB_PATH_LOCAL% \
 
 # compile and create installers
-# option --clean-first' somehow conflicts with options after '--' for msbuild
+# option '--clean-first' somehow conflicts with options after '--' for msbuild
 cmake --build . --config Release --target PACKAGE -- -m -nologo
 
 # create ZIP files

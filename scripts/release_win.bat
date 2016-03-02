@@ -40,7 +40,8 @@ cmake -L ^
 rem -D TBB_ROOT=%TBB_PATH_LOCAL% ^
 
 rem compile and create installers
-cmake --clean-first --build . --config Release --target PACKAGE -- /m /nologo
+# option '--clean-first' somehow conflicts with options after '--' for msbuild
+cmake --build . --config Release --target PACKAGE -- /m /nologo
 
 rem create ZIP files
 cmake -D OSPRAY_ZIP_MODE=ON ..
