@@ -538,6 +538,13 @@ namespace ospray {
 #ifdef OSPRAY_USE_TBB
     auto &t = *new(tbb::task::allocate_root())DFBProcessMessageTask(this, _msg);
     tbb::task::enqueue(t);
+#elif defined(OSPRAY_USE_CILK)
+    auto fcn = [&](){
+      DFBProcessMessageTask t(this, _msg);
+      t.execute();
+    };
+
+    cilk_spawn fcn();
 #else
     DFBProcessMessageTask t(this, _msg);
     t.execute();
