@@ -21,7 +21,7 @@
 // stl
 #include <algorithm>
 
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/parallel_for.h"
 
 namespace ospray {
 

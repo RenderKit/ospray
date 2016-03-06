@@ -7,3 +7,6 @@ build
 tags
 .ycm_extra_conf.pyc
 *.autosave
+*.gz
+*.rpm
+*.zip

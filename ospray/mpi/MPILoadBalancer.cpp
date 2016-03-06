@@ -19,7 +19,7 @@
 #include "ospray/render/Renderer.h"
 #include "ospray/fb/LocalFB.h"
 #include "ospray/mpi/DistributedFrameBuffer.h"
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/parallel_for.h"
 
 #include <algorithm>
 

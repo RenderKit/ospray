@@ -17,27 +17,34 @@
 #pragma once
 
 #ifdef OSPRAY_USE_TBB
-# include <tbb/parallel_for.h>
+#  include <tbb/task.h>
 #elif defined(OSPRAY_USE_CILK)
-# include <cilk/cilk.h>
+#  include <cilk/cilk.h>
 #endif
 
 namespace ospray {
 
-template<typename T>
-inline void parallel_for(int nTasks, const T& fcn)
+template<typename Task>
+inline void async(const Task& fcn)
 {
 #ifdef OSPRAY_USE_TBB
-  tbb::parallel_for(0, nTasks, 1, fcn);
+  struct LocalTBBTask : public tbb::task
+  {
+    Task func;
+    tbb::task* execute() override
+    {
+      func();
+      return nullptr;
+    }
+
+    LocalTBBTask( const Task& f ) : func(f) {}
+  };
+
+  tbb::task::enqueue(*new(tbb::task::allocate_root())LocalTBBTask(fcn));
 #elif defined(OSPRAY_USE_CILK)
-  cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
-    fcn(taskIndex);
-  }
-#else
-# pragma omp parallel for schedule(dynamic)
-  for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
-    fcn(taskIndex);
-  }
+  cilk_spawn fcn();
+#else// OpenMP --> synchronous!
+  fcn();
 #endif
 }
 

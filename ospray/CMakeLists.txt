@@ -132,7 +132,9 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Library.cpp
   common/Thread.cpp
-  common/parallel_for.h
+
+  common/tasking/parallel_for.h
+  common/tasking/async.h
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp

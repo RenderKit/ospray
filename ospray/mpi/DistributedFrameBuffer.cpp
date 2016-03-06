@@ -20,18 +20,14 @@
 // embree
 #include "common/sys/thread.h"
 
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/async.h"
+#include "ospray/common/tasking/parallel_for.h"
 
 #include <memory>
-//#include <future> //NOTE(jda) - set note about std::async below...
 
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h> // for Sleep
-#endif
-
-#ifdef OSPRAY_USE_TBB
-#  include <tbb/task.h>
 #endif
 
 #define DBG(a) /* ignore */
@@ -420,46 +416,6 @@ namespace ospray {
     this->tileIsCompleted(td);
   }
 
-
-  struct DFBProcessMessageTask
-#ifdef OSPRAY_USE_TBB
-      : public tbb::task
-#endif
-  {
-    DFB *dfb;
-    mpi::async::CommLayer::Message *_msg;
-
-    DFBProcessMessageTask(DFB *dfb,
-                          mpi::async::CommLayer::Message *_msg)
-      : dfb(dfb), _msg(_msg)
-    {}
-
-#ifdef OSPRAY_USE_TBB
-    tbb::task* execute() override
-#else
-    void execute()
-#endif
-    {
-      switch (_msg->command) {
-      case DFB::MASTER_WRITE_TILE_NONE:
-        dfb->processMessage((DFB::MasterTileMessage_NONE*)_msg);
-        break;
-      case DFB::MASTER_WRITE_TILE_I8:
-        dfb->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
-        break;
-      case DFB::WORKER_WRITE_TILE:
-        dfb->processMessage((DFB::WriteTileMessage*)_msg);
-        break;
-      default:
-        assert(0);
-      };
-      delete _msg;
-#ifdef OSPRAY_USE_TBB
-      return nullptr;
-#endif
-    }
-  };
-
   void DFB::tileIsCompleted(TileData *tile)
   {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
@@ -535,20 +491,22 @@ namespace ospray {
 
     DBG(PING);
 
-#ifdef OSPRAY_USE_TBB
-    auto &t = *new(tbb::task::allocate_root())DFBProcessMessageTask(this, _msg);
-    tbb::task::enqueue(t);
-#elif defined(OSPRAY_USE_CILK)
-    auto fcn = [&](){
-      DFBProcessMessageTask t(this, _msg);
-      t.execute();
-    };
-
-    cilk_spawn fcn();
-#else
-    DFBProcessMessageTask t(this, _msg);
-    t.execute();
-#endif
+    async([&]() {
+      switch (_msg->command) {
+      case DFB::MASTER_WRITE_TILE_NONE:
+        this->processMessage((DFB::MasterTileMessage_NONE*)_msg);
+        break;
+      case DFB::MASTER_WRITE_TILE_I8:
+        this->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
+        break;
+      case DFB::WORKER_WRITE_TILE:
+        this->processMessage((DFB::WriteTileMessage*)_msg);
+        break;
+      default:
+        assert(0);
+      };
+      delete _msg;
+    });
 
     DBG(PING);
   }
