@@ -29,6 +29,7 @@ IF (NOT THIS_IS_MIC)
     ParticleViewer.cpp
     Model.cpp
     uintah.cpp
+    scivis16.cpp
     )
   TARGET_LINK_LIBRARIES(ospParticleViewer
     ospray
