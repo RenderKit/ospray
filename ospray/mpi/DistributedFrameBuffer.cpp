@@ -551,36 +551,6 @@ namespace ospray {
     }
   }
 
-  struct DFBClearTask
-  {
-    DFB *dfb;
-    DFBClearTask(DFB *dfb, const uint32 fbChannelFlags)
-      : dfb(dfb), fbChannelFlags(fbChannelFlags)
-    {};
-    void run(size_t jobID)
-    {
-      size_t tileID = jobID;
-      DFB::TileData *td = dfb->myTiles[tileID];
-      assert(td);
-      if (fbChannelFlags & OSP_FB_ACCUM) {
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.r[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.z[i] = inf;
-      }
-      if (fbChannelFlags & OSP_FB_DEPTH)
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.z[i] = inf;
-      if (fbChannelFlags & OSP_FB_COLOR) {
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.r[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.g[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
-      }
-    }
-    const uint32 fbChannelFlags;
-  };
-
   /*! \brief clear (the specified channels of) this frame buffer
 
     \details for the *distributed* frame buffer, we assume that
@@ -591,10 +561,26 @@ namespace ospray {
   void DFB::clear(const uint32 fbChannelFlags)
   {
     if (!myTiles.empty()) {
-      DFBClearTask clearTask(this, fbChannelFlags);
       parallel_for(myTiles.size(), [&](int taskIndex){
-        clearTask.run(taskIndex);
+        DFB::TileData *td = this->myTiles[taskIndex];
+        assert(td);
+        if (fbChannelFlags & OSP_FB_ACCUM) {
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.r[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.z[i] = inf;
+        }
+        if (fbChannelFlags & OSP_FB_DEPTH)
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.z[i] = inf;
+        if (fbChannelFlags & OSP_FB_COLOR) {
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.r[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.g[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
+        }
       });
+
       if (fbChannelFlags & OSP_FB_ACCUM)
         accumID = 0;
     }
