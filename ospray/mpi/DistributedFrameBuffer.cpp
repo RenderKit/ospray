@@ -491,7 +491,7 @@ namespace ospray {
 
     DBG(PING);
 
-    async([&]() {
+    async([=]() {
       switch (_msg->command) {
       case DFB::MASTER_WRITE_TILE_NONE:
         this->processMessage((DFB::MasterTileMessage_NONE*)_msg);

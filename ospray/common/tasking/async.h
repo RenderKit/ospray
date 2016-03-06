@@ -24,20 +24,20 @@
 
 namespace ospray {
 
-template<typename Task>
-inline void async(const Task& fcn)
+template<typename TASK>
+inline void async(const TASK& fcn)
 {
 #ifdef OSPRAY_USE_TBB
   struct LocalTBBTask : public tbb::task
   {
-    Task func;
+    TASK func;
     tbb::task* execute() override
     {
       func();
       return nullptr;
     }
 
-    LocalTBBTask( const Task& f ) : func(f) {}
+    LocalTBBTask( const TASK& f ) : func(f) {}
   };
 
   tbb::task::enqueue(*new(tbb::task::allocate_root())LocalTBBTask(fcn));
