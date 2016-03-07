@@ -24,6 +24,8 @@
 
 namespace ospray {
 
+// NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
+//             synchronizsation after all of the tasks have run.
 template<typename Task>
 inline void parallel_for(int nTasks, const Task& fcn)
 {

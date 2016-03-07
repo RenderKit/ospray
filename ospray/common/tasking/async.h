@@ -24,6 +24,13 @@
 
 namespace ospray {
 
+// NOTE(jda) - This abstraction takes a lambda which should take captured
+//             variables by *value* to ensure no captured references race
+//             with the task itself.
+
+// NOTE(jda) - No priority is associated with this call, but could be added
+//             later with a hint enum, using a default value for the priority
+//             to not require specifying it.
 template<typename TASK>
 inline void async(const TASK& fcn)
 {

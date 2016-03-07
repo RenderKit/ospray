@@ -335,11 +335,13 @@ MACRO(CONFIGURE_TASKING_SYSTEM)
     SET(CILK_STRING "Cilk")
   ENDIF()
 
-  IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-    SET(TASKING_DEFAULT ${CILK_STRING})
-  ELSE()
+  # NOTE(jda) - Always default to TBB, at least until Cilk is *exactly* the same
+  #             as TBB...
+  #IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  #  SET(TASKING_DEFAULT ${CILK_STRING})
+  #ELSE()
     SET(TASKING_DEFAULT TBB)
-  ENDIF()
+  #ENDIF()
 
   SET(OSPRAY_TASKING_SYSTEM ${TASKING_DEFAULT} CACHE STRING
       "Use TBB or OpenMP as for per-node thread tasking system")
