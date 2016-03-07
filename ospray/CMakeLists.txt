@@ -30,74 +30,11 @@ SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
 # -------------------------------------------------------
-# Setup tasking system build configuration
-# -------------------------------------------------------
-
-IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-  SET(CILK_STRING "Cilk")
-ENDIF()
-
-IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
-  SET(TASKING_DEFAULT ${CILK_STRING})
-ELSE()
-  SET(TASKING_DEFAULT TBB)
-ENDIF()
-
-SET(OSPRAY_TASKING_SYSTEM ${TASKING_DEFAULT} CACHE STRING
-    "Use TBB or OpenMP as for per-node thread tasking system")
-
-SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY
-             STRINGS TBB ${CILK_STRING} OpenMP)
-MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
-
-IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
-  SET(USE_TBB TRUE)
-  SET(USE_TBB TRUE PARENT_SCOPE)
-  SET(USE_CILK FALSE)
-  SET(USE_CILK FALSE PARENT_SCOPE)
-ELSEIF(${OSPRAY_TASKING_SYSTEM} STREQUAL "Cilk")
-  SET(USE_TBB FALSE)
-  SET(USE_TBB FALSE PARENT_SCOPE)
-  SET(USE_CILK TRUE)
-  SET(USE_CILK TRUE PARENT_SCOPE)
-ELSE()
-  SET(USE_TBB FALSE)
-  SET(USE_TBB FALSE PARENT_SCOPE)
-  SET(USE_CILK FALSE)
-  SET(USE_CILK FALSE PARENT_SCOPE)
-ENDIF()
-
-IF(USE_TBB)
-  FIND_PACKAGE(TBB REQUIRED)
-  ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
-  INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
-ELSE(USE_TBB)
-  UNSET(TBB_INCLUDE_DIR        CACHE)
-  UNSET(TBB_LIBRARY            CACHE)
-  UNSET(TBB_LIBRARY_DEBUG      CACHE)
-  UNSET(TBB_LIBRARY_MALLOC     CACHE)
-  UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
-  UNSET(TBB_INCLUDE_DIR_MIC    CACHE)
-  UNSET(TBB_LIBRARY_MIC        CACHE)
-  UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
-  IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "OpenMP")
-    FIND_PACKAGE(OpenMP)
-    IF (OPENMP_FOUND)
-      SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-      SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-      SET(CMAKE_EXE_LINKER_FLAGS
-          "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-    ENDIF()
-  ELSE()#Cilk
-    ADD_DEFINITIONS(-DOSPRAY_USE_CILK)
-  ENDIF()
-ENDIF(USE_TBB)
-
-# -------------------------------------------------------
 # Build and configure embree
 # -------------------------------------------------------
 
-# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
+# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly in
+#             CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
 # NOTE(jda) - Only do the embree include once (Xeon), it will build both
 #             Xeon and MIC code if both are enabled.
 IF (NOT THIS_IS_MIC)
