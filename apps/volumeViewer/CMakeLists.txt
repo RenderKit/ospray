@@ -21,8 +21,10 @@ ENDIF (NOT OSPRAY_MODULE_OPENGL_UTIL)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 # setup dependencies
-SET(LIBS ${LIBS} ospray ospray_module_loaders)
-SET(LIBS ${LIBS} ospray ospray_module_opengl_util)
+SET(LIBS ${LIBS} ospray)
+SET(LIBS ${LIBS} ospray_common)
+SET(LIBS ${LIBS} ospray_module_loaders)
+SET(LIBS ${LIBS} ospray_module_opengl_util)
 
 # link optional loaders-based modules if built
 IF (OSPRAY_MODULE_SEISMIC)

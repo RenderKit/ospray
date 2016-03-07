@@ -16,20 +16,6 @@
 
 CONFIGURE_OSPRAY()
 
-IF(THIS_IS_MIC)
-#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR}/mic)
-#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-  SET(FORCED_OSPCOMMON_LIB_NAME "ospray_ospcommon_mic")
-  ADD_SUBDIRECTORY(../common ospcommon_mic)
-ELSE()
-#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
-#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-  SET(FORCED_OSPCOMMON_LIB_NAME "ospray_ospcommon")
-  ADD_SUBDIRECTORY(../common ospcommon)
-ENDIF()
-
 IF(OSPRAY_BUILD_MPI_DEVICE)
   OPTION(OSPRAY_EXP_DATA_PARALLEL "Experimental data-parallel compositing mode")
   OPTION(OSPRAY_PIN_ASYNC "Pin async mpi comm threads?" OFF)
@@ -207,6 +193,9 @@ SET(OSPRAY_SOURCES
   api/LocalDevice.cpp
   )
 
+# NOTE(jda) - To be removed when OSPCOMMON is merged for next release
+ADD_DEFINITIONS(-DDONT_WARN_INCLUDE_OSPCOMMON_H)
+
 # -------------------------------------------------------
 # MPI components
 # -------------------------------------------------------
@@ -283,9 +272,6 @@ ENDIF()
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
 
-# NOTE(jda) - To be removed when OSPCOMMON is merged for next release
-ADD_DEFINITIONS(-DDONT_WANT_INCLUDE_OSPCOMMON_H=1)
-
 IF (THIS_IS_MIC)
   ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC)
 ENDIF()
@@ -321,8 +307,8 @@ OSPRAY_SET_LIBRARY_VERSION(ospray)
 OSPRAY_INSTALL_LIBRARY(ospray)
 
 # build ospTutorial, for testing
-ADD_EXECUTABLE(ospTutorial${OSPRAY_EXE_SUFFIX} ../apps/ospTutorial)
-TARGET_LINK_LIBRARIES(ospTutorial${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
+OSPRAY_ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial)
+OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
 
 
 ##############################################################
