@@ -112,8 +112,8 @@ namespace ospray {
         existant) that contains additional binary data that the xml
         node fields may point into
       */
-      virtual void setFromXML(const xml::Node *const node, const unsigned char *binBasePtr)
-      { throw std::runtime_error("setFromXML() not implemented for node type "+node->name); };
+      virtual void setFromXML(const xml::Node *const node, 
+                              const unsigned char *binBasePtr);
 
       //! just for convenience; add a typed 'setParam' function
       template<typename T>

@@ -757,3 +757,11 @@ inline uniform bool isnan(uniform vec3f v)
 
 inline bool isnan(vec3f v)
 { return isnan(v.x+v.y+v.z); }
+
+inline uniform bool isnan(uniform vec3fa v)
+{ return isnan(v.x+v.y+v.z); }
+
+inline bool isnan(vec3fa v)
+{ return isnan(v.x+v.y+v.z); }
+
+inline void out(uniform vec3f v) { print("(%,%,%)",v.x,v.y,v.z); }

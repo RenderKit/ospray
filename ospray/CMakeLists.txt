@@ -219,14 +219,6 @@ IF (OSPRAY_MPI)
     fb/DisplayWall.cpp
     )
 
-  # ============================================
-  OSPRAY_ADD_EXECUTABLE(ospCreateCompositeTestCubes
-    mpi/testing/createCompositeTestCubes
-    )
-  OSPRAY_EXE_LINK_LIBRARIES(ospCreateCompositeTestCubes
-    ospray
-    )
-
 ENDIF()
 
 # -------------------------------------------------------
