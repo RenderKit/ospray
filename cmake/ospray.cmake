@@ -21,7 +21,8 @@ SET(OSPRAY_DIR ${PROJECT_SOURCE_DIR})
 # arch-specific cmd-line flags for various arch and compiler configs
 
 SET(OSPRAY_TILE_SIZE 64 CACHE INT "Tile size")
-SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
+SET(OSPRAY_PIXELS_PER_JOB 64 CACHE INT
+    "Must be multiple of largest vector width *and* <= OSPRAY_TILE_SIZE")
 
 MARK_AS_ADVANCED(OSPRAY_TILE_SIZE)
 MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
@@ -34,11 +35,8 @@ MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 # mic-executables with ".mic". *libraries* cannot use the
 # ".mic"-suffix trick, so we'll put libraries into separate
 # directories (names 'intel64' and 'mic', respectively)
-MACRO(CONFIGURE_OSPRAY_NO_ARCH)
-#  IF(OSPRAY_ALLOW_EXTERNAL_EMBREE)
-#    ADD_DEFINITIONS(-D__NEW_EMBREE__=1)
-#  ENDIF()
-
+MACRO(CONFIGURE_OSPRAY)
+  CONFIGURE_TASKING_SYSTEM()
   # Embree common include directories; others may be added depending on build target.
   # this section could be sooo much cleaner if embree only used
   # fully-qualified include names...
@@ -48,7 +46,7 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 #    ${OSPRAY_EMBREE_SOURCE_DIR}/common
 #    ${OSPRAY_EMBREE_SOURCE_DIR}/
 #    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
-    )
+  )
 
   IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
@@ -199,8 +197,199 @@ MACRO(CONFIGURE_OSPRAY_NO_ARCH)
 ENDMACRO()
 
 
-MACRO(CONFIGURE_OSPRAY)
+## Target creation macros ##
 
-  CONFIGURE_OSPRAY_NO_ARCH()
+MACRO(OSPRAY_ADD_EXECUTABLE name)
+  ADD_EXECUTABLE(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
+ENDMACRO()
 
+MACRO(OSPRAY_ADD_LIBRARY name type)
+  SET(ISPC_SOURCES "")
+  SET(OTHER_SOURCES "")
+  FOREACH(src ${ARGN})
+    GET_FILENAME_COMPONENT(ext ${src} EXT)
+    IF (ext STREQUAL ".ispc")
+      SET(ISPC_SOURCES ${ISPC_SOURCES} ${src})
+    ELSE ()
+      SET(OTHER_SOURCES ${OTHER_SOURCES} ${src})
+    ENDIF ()
+  ENDFOREACH()
+  OSPRAY_ISPC_COMPILE(${ISPC_SOURCES})
+  ADD_LIBRARY(${name}${OSPRAY_LIB_SUFFIX} ${type} ${ISPC_OBJECTS} ${OTHER_SOURCES} ${ISPC_SOURCES})
+
+  IF (THIS_IS_MIC)
+    FOREACH(src ${ISPC_OBJECTS})
+      SET_SOURCE_FILES_PROPERTIES( ${src} PROPERTIES COMPILE_FLAGS -std=gnu++98 )
+    ENDFOREACH()
+  ENDIF()
+ENDMACRO()
+
+## Target linking macros ##
+
+MACRO(OSPRAY_TARGET_LINK_LIBRARIES name)
+  SET(LINK_LIBS "")
+
+  IF(THIS_IS_MIC)
+    FOREACH(lib ${ARGN})
+      STRING(LENGTH ${lib} lib_length)
+      IF (${lib_length} GREATER 5)
+        STRING(SUBSTRING ${lib} 0 6 lib_begin)
+      ENDIF ()
+      IF (${lib_length} GREATER 5 AND ":${lib_begin}" STREQUAL ":ospray")
+        LIST(APPEND LINK_LIBS ${lib}${OSPRAY_LIB_SUFFIX})
+      ELSE ()
+        LIST(APPEND LINK_LIBS ${lib})
+      ENDIF ()
+    ENDFOREACH()
+  ELSE()
+    SET(LINK_LIBS ${ARGN})
+  ENDIF()
+
+  TARGET_LINK_LIBRARIES(${name} ${LINK_LIBS})
+ENDMACRO()
+
+MACRO(OSPRAY_LIBRARY_LINK_LIBRARIES name)
+  OSPRAY_TARGET_LINK_LIBRARIES(${name}${OSPRAY_LIB_SUFFIX} ${ARGN})
+ENDMACRO()
+
+MACRO(OSPRAY_EXE_LINK_LIBRARIES name)
+  OSPRAY_TARGET_LINK_LIBRARIES(${name}${OSPRAY_EXE_SUFFIX} ${ARGN})
+ENDMACRO()
+
+## Target install macros for OSPRay libraries ##
+# use vanilla INSTALL for apps -- these don't have MIC parts and should also not
+# go into COMPONENT lib
+
+MACRO(OSPRAY_INSTALL_LIBRARY name)
+  INSTALL(TARGETS ${name}${OSPRAY_LIB_SUFFIX} ${ARGN}
+    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT lib${OSPRAY_LIB_SUFFIX}
+    # on Windows put the dlls into bin
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+      COMPONENT lib
+    # ... and the import lib into the devel package
+    ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+      COMPONENT devel
+  )
+ENDMACRO()
+
+MACRO(OSPRAY_INSTALL_EXE _name)
+  SET(name ${_name}${OSPRAY_EXE_SUFFIX})
+  # use OSPRAY_LIB_SUFFIX for COMPONENT to get lib_mic and not lib.mic
+  INSTALL(TARGETS ${name} ${ARGN} 
+    DESTINATION ${CMAKE_INSTALL_BINDIR}
+    COMPONENT lib${OSPRAY_LIB_SUFFIX}
+  )
+ENDMACRO()
+
+## Target versioning macro ##
+
+MACRO(OSPRAY_SET_LIBRARY_VERSION _name)
+  SET(name ${_name}${OSPRAY_LIB_SUFFIX})
+  SET_TARGET_PROPERTIES(${name}
+    PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
+ENDMACRO()
+
+## Compiler configuration macro ##
+
+MACRO(OSPRAY_CONFIGURE_COMPILER)
+  # enable ability for users to force a compiler using the pre-0.8.3 method
+  SET(OSPRAY_COMPILER "" CACHE STRING "Force compiler: GCC, ICC, CLANG")
+  SET_PROPERTY(CACHE OSPRAY_COMPILER PROPERTY STRINGS GCC ICC CLANG)
+  MARK_AS_ADVANCED(OSPRAY_COMPILER)
+
+  IF(NOT ":${OSPRAY_COMPILER}" STREQUAL ":")
+    STRING(TOUPPER ${OSPRAY_COMPILER} OSPRAY_COMPILER)
+    IF(${OSPRAY_COMPILER} STREQUAL "GCC")
+      FIND_PROGRAM(GCC_EXECUTABLE gcc DOC "Path to the gcc executable.")
+      FIND_PROGRAM(G++_EXECUTABLE g++ DOC "Path to the g++ executable.")
+      SET(CMAKE_C_COMPILER ${GCC_EXECUTABLE} CACHE STRING "C Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER ${G++_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_C_COMPILER "gcc")
+      SET(CMAKE_CXX_COMPILER "g++")
+      SET(CMAKE_CXX_COMPILER_ID "GNU")
+    ELSEIF(${OSPRAY_COMPILER} STREQUAL "ICC")
+      FIND_PROGRAM(ICC_EXECUTABLE icc DOC "Path to the icc executable.")
+      FIND_PROGRAM(ICPC_EXECUTABLE icpc DOC "Path to the icpc executable.")
+      SET(CMAKE_C_COMPILER ${ICC_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER ${ICPC_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER_ID "Intel")
+    ELSEIF(${OSPRAY_COMPILER} STREQUAL "CLANG")
+      FIND_PROGRAM(CLANG_EXECUTABLE clang DOC "Path to the clang executable.")
+      FIND_PROGRAM(CLANG_EXECUTABLE clang++ DOC "Path to the clang++ executable.")
+      SET(CMAKE_C_COMPILER ${CLANG_EXECUTABLE} CACHE STRING "C Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER ${CLANG_EXECUTABLE} CACHE STRING "CXX Compiler" FORCE)
+      SET(CMAKE_CXX_COMPILER_ID "Clang")
+    ENDIF()
+  ENDIF()
+ENDMACRO()
+
+## Tasking system configuration macro ##
+
+MACRO(CONFIGURE_TASKING_SYSTEM)
+  # -------------------------------------------------------
+  # Setup tasking system build configuration
+  # -------------------------------------------------------
+
+  IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+    SET(CILK_STRING "Cilk")
+  ENDIF()
+
+  # NOTE(jda) - Always default to TBB, at least until Cilk is *exactly* the same
+  #             as TBB...
+  #IF(${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  #  SET(TASKING_DEFAULT ${CILK_STRING})
+  #ELSE()
+    SET(TASKING_DEFAULT TBB)
+  #ENDIF()
+
+  SET(OSPRAY_TASKING_SYSTEM ${TASKING_DEFAULT} CACHE STRING
+      "Use TBB or OpenMP as for per-node thread tasking system")
+
+  SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY
+               STRINGS TBB ${CILK_STRING} OpenMP)
+  MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
+
+  IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
+    SET(USE_TBB TRUE)
+    SET(USE_TBB TRUE PARENT_SCOPE)
+    SET(USE_CILK FALSE)
+    SET(USE_CILK FALSE PARENT_SCOPE)
+  ELSEIF(${OSPRAY_TASKING_SYSTEM} STREQUAL "Cilk")
+    SET(USE_TBB FALSE)
+    SET(USE_TBB FALSE PARENT_SCOPE)
+    SET(USE_CILK TRUE)
+    SET(USE_CILK TRUE PARENT_SCOPE)
+  ELSE()
+    SET(USE_TBB FALSE)
+    SET(USE_TBB FALSE PARENT_SCOPE)
+    SET(USE_CILK FALSE)
+    SET(USE_CILK FALSE PARENT_SCOPE)
+  ENDIF()
+
+  IF(USE_TBB)
+    FIND_PACKAGE(TBB REQUIRED)
+    ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
+    INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
+  ELSE(USE_TBB)
+    UNSET(TBB_INCLUDE_DIR        CACHE)
+    UNSET(TBB_LIBRARY            CACHE)
+    UNSET(TBB_LIBRARY_DEBUG      CACHE)
+    UNSET(TBB_LIBRARY_MALLOC     CACHE)
+    UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
+    UNSET(TBB_INCLUDE_DIR_MIC    CACHE)
+    UNSET(TBB_LIBRARY_MIC        CACHE)
+    UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
+    IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "OpenMP")
+      FIND_PACKAGE(OpenMP)
+      IF (OPENMP_FOUND)
+        SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
+        SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+        SET(CMAKE_EXE_LINKER_FLAGS
+            "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
+      ENDIF()
+    ELSE()#Cilk
+      ADD_DEFINITIONS(-DOSPRAY_USE_CILK)
+    ENDIF()
+  ENDIF(USE_TBB)
 ENDMACRO()

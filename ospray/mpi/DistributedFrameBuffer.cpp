@@ -19,18 +19,14 @@
 
 #include <thread>
 
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/async.h"
+#include "ospray/common/tasking/parallel_for.h"
 
 #include <memory>
-//#include <future> //NOTE(jda) - set note about std::async below...
 
 #ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h> // for Sleep
-#endif
-
-#ifdef OSPRAY_USE_TBB
-#  include <tbb/task.h>
 #endif
 
 #define DBG(a) /* ignore */
@@ -419,46 +415,6 @@ namespace ospray {
     this->tileIsCompleted(td);
   }
 
-
-  struct DFBProcessMessageTask
-#ifdef OSPRAY_USE_TBB
-      : public tbb::task
-#endif
-  {
-    DFB *dfb;
-    mpi::async::CommLayer::Message *_msg;
-
-    DFBProcessMessageTask(DFB *dfb,
-                          mpi::async::CommLayer::Message *_msg)
-      : dfb(dfb), _msg(_msg)
-    {}
-
-#ifdef OSPRAY_USE_TBB
-    tbb::task* execute() override
-#else
-    void execute()
-#endif
-    {
-      switch (_msg->command) {
-      case DFB::MASTER_WRITE_TILE_NONE:
-        dfb->processMessage((DFB::MasterTileMessage_NONE*)_msg);
-        break;
-      case DFB::MASTER_WRITE_TILE_I8:
-        dfb->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
-        break;
-      case DFB::WORKER_WRITE_TILE:
-        dfb->processMessage((DFB::WriteTileMessage*)_msg);
-        break;
-      default:
-        assert(0);
-      };
-      delete _msg;
-#ifdef OSPRAY_USE_TBB
-      return nullptr;
-#endif
-    }
-  };
-
   void DFB::tileIsCompleted(TileData *tile)
   {
     DBG(printf("rank %i: tilecompleted %i,%i\n",mpi::world.rank,
@@ -534,13 +490,22 @@ namespace ospray {
 
     DBG(PING);
 
-#ifdef OSPRAY_USE_TBB
-    auto &t = *new(tbb::task::allocate_root())DFBProcessMessageTask(this, _msg);
-    tbb::task::enqueue(t, tbb::priority_high);
-#else
-    DFBProcessMessageTask t(this, _msg);
-    t.execute();
-#endif
+    async([=]() {
+      switch (_msg->command) {
+      case DFB::MASTER_WRITE_TILE_NONE:
+        this->processMessage((DFB::MasterTileMessage_NONE*)_msg);
+        break;
+      case DFB::MASTER_WRITE_TILE_I8:
+        this->processMessage((DFB::MasterTileMessage_RGBA_I8*)_msg);
+        break;
+      case DFB::WORKER_WRITE_TILE:
+        this->processMessage((DFB::WriteTileMessage*)_msg);
+        break;
+      default:
+        assert(0);
+      };
+      delete _msg;
+    });
 
     DBG(PING);
   }
@@ -585,36 +550,6 @@ namespace ospray {
     }
   }
 
-  struct DFBClearTask
-  {
-    DFB *dfb;
-    DFBClearTask(DFB *dfb, const uint32 fbChannelFlags)
-      : dfb(dfb), fbChannelFlags(fbChannelFlags)
-    {};
-    void run(size_t jobID)
-    {
-      size_t tileID = jobID;
-      DFB::TileData *td = dfb->myTiles[tileID];
-      assert(td);
-      if (fbChannelFlags & OSP_FB_ACCUM) {
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.r[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.z[i] = inf;
-      }
-      if (fbChannelFlags & OSP_FB_DEPTH)
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.z[i] = inf;
-      if (fbChannelFlags & OSP_FB_COLOR) {
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.r[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.g[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
-        for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
-      }
-    }
-    const uint32 fbChannelFlags;
-  };
-
   /*! \brief clear (the specified channels of) this frame buffer
 
     \details for the *distributed* frame buffer, we assume that
@@ -625,10 +560,26 @@ namespace ospray {
   void DFB::clear(const uint32 fbChannelFlags)
   {
     if (!myTiles.empty()) {
-      DFBClearTask clearTask(this, fbChannelFlags);
       parallel_for(myTiles.size(), [&](int taskIndex){
-        clearTask.run(taskIndex);
+        DFB::TileData *td = this->myTiles[taskIndex];
+        assert(td);
+        if (fbChannelFlags & OSP_FB_ACCUM) {
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.r[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.g[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.b[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.a[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->accum.z[i] = inf;
+        }
+        if (fbChannelFlags & OSP_FB_DEPTH)
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.z[i] = inf;
+        if (fbChannelFlags & OSP_FB_COLOR) {
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.r[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.g[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.b[i] = 0.f;
+          for (int i=0;i<TILE_SIZE*TILE_SIZE;i++) td->final.a[i] = 0.f;
+        }
       });
+
       if (fbChannelFlags & OSP_FB_ACCUM)
         accumID = 0;
     }

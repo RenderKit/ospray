@@ -21,6 +21,7 @@
 #include "apps/common/widgets/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
+#include "common/tasking/parallel_for.h"
 // particle viewer
 #include "Model.h"
 #include "uintah.h"
@@ -293,11 +294,11 @@ namespace ospray {
             error("unknown file format "+fn.str());
         }
       }
+
       if (particleModel.empty())
         error("no input file specified");
 
-#pragma omp parallel for
-      for (int i=0;i<deferredLoadingListXYZ.size();i++) {
+      parallel_for(deferredLoadingListXYZ.size(), [&](int i){
         FileName defFileName = deferredLoadingListXYZ[i]->defFileName;
         FileName xyzFileName = deferredLoadingListXYZ[i]->xyzFileName;
         particle::Model *model = deferredLoadingListXYZ[i]->model;
@@ -305,7 +306,7 @@ namespace ospray {
         if (defFileName.str() != "")
           model->readAtomTypeDefinitions(defFileName);
         model->loadXYZ(xyzFileName);
-      }
+      });
 
 
       // -------------------------------------------------------

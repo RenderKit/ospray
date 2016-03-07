@@ -18,15 +18,6 @@ CONFIGURE_OSPRAY()
 
 IF(NOT THIS_IS_MIC)
 
-  IF(USE_TBB)
-    # NOTE(jda) - This is done automatically by the find_package config for apps
-    #             outside the build environment of OSPRay.
-    FIND_PACKAGE(TBB QUIET)
-    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib")
-    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib64")
-    SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}:${TBB_ROOT}/lib/intel64/gcc4.4")
-  ENDIF()
-
   # common xml utility classes
   ADD_SUBDIRECTORY(common/xml)
 
@@ -39,8 +30,9 @@ IF(NOT THIS_IS_MIC)
   IF(OSPRAY_APPS_MODELVIEWER      OR
      OSPRAY_APPS_STREAMLINEVIEWER OR
      OSPRAY_APPS_PARTICLEVIEWER)
-    # common utility classes for GLUT-based 3D viewer widget
+    # GLUT is used by apps as well
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
+    # common utility classes for GLUT-based 3D viewer widget
     ADD_SUBDIRECTORY(common/widgets)
   ENDIF()
 

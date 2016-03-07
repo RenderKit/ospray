@@ -168,7 +168,6 @@ extern "C" void ospInit(int *_ac, const char **_av)
         --i;
         continue;
       }
-
     }
   }
 

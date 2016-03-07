@@ -17,17 +17,24 @@
 #pragma once
 
 #ifdef OSPRAY_USE_TBB
-# include <tbb/blocked_range.h>
-# include <tbb/parallel_for.h>
+#  include <tbb/parallel_for.h>
+#elif defined(OSPRAY_USE_CILK)
+#  include <cilk/cilk.h>
 #endif
 
 namespace ospray {
 
-template<typename T>
-inline void parallel_for(int nTasks, const T& fcn)
+// NOTE(jda) - This abstraction wraps "fork-join" parallelism, with an implied
+//             synchronizsation after all of the tasks have run.
+template<typename Task>
+inline void parallel_for(int nTasks, const Task& fcn)
 {
 #ifdef OSPRAY_USE_TBB
   tbb::parallel_for(0, nTasks, 1, fcn);
+#elif defined(OSPRAY_USE_CILK)
+  cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+    fcn(taskIndex);
+  }
 #else
 # pragma omp parallel for schedule(dynamic)
   for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {

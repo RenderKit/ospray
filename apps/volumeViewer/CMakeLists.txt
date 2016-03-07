@@ -75,7 +75,7 @@ QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 ADD_SUBDIRECTORY(loaders)
 ADD_EXECUTABLE(ospVolumeViewer ${SRCS} ${MOC_OUTFILES})
 TARGET_LINK_LIBRARIES(ospVolumeViewer ${LIBS})
-# ------------------------------------------------------------
-INSTALL(TARGETS ospVolumeViewer DESTINATION bin)
-# ------------------------------------------------------------
-
+INSTALL(TARGETS ospVolumeViewer
+  DESTINATION ${CMAKE_INSTALL_BINDIR}
+  COMPONENT apps
+)

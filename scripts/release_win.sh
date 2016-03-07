@@ -1,5 +1,5 @@
 ## ======================================================================== ##
-## Copyright 2009-2016 Intel Corporation                                    ##
+## Copyright 2015-2016 Intel Corporation                                    ##
 ##                                                                          ##
 ## Licensed under the Apache License, Version 2.0 (the "License");          ##
 ## you may not use this file except in compliance with the License.         ##
@@ -14,27 +14,42 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-CONFIGURE_OSPRAY()
+#!/bin/bash
 
-IF(NOT THIS_IS_MIC)
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
-  INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+# to make sure we do not include nor link against wrong TBB
+export CPATH=
+export LIBRARY_PATH=
+export LD_LIBRARY_PATH=
+#TBB_PATH_LOCAL=$PWD/tbb
 
-  LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/modules/loaders)
+#rm -rf build_release
+mkdir -p build_release
+cd build_release
+rm -f CMakeCache.txt
+rm -f ospray/version.h
 
-  OSPRAY_ADD_LIBRARY(ospray_module_loaders SHARED
-    ObjectFile.cpp
-    OSPObjectFile.cpp
-    PLYTriangleMeshFile.cpp
-    RawVolumeFile.cpp
-    RMVolumeFile.cpp
-    SymbolRegistry.cpp
-    TinyXML2.cpp
-    TriangleMeshFile.cpp
-    VolumeFile.cpp
-  )
+# set release settings
+cmake -L \
+-G "Visual Studio 12 2013 Win64" \
+-T "Intel C++ Compiler 16.0" \
+-D OSPRAY_ZIP_MODE=OFF \
+-D OSPRAY_BUILD_ISA=ALL \
+-D OSPRAY_BUILD_MIC_SUPPORT=OFF \
+-D USE_IMAGE_MAGICK=OFF \
+-D CMAKE_INSTALL_INCLUDEDIR=include \
+-D CMAKE_INSTALL_LIBDIR=lib \
+-D CMAKE_INSTALL_DATAROOTDIR= \
+-D CMAKE_INSTALL_DOCDIR=doc \
+-D CMAKE_INSTALL_BINDIR=bin \
+..
+# -D TBB_ROOT=%TBB_PATH_LOCAL% \
 
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_loaders ospray)
-  OSPRAY_SET_LIBRARY_VERSION(ospray_module_loaders)
-  OSPRAY_INSTALL_LIBRARY(ospray_module_loaders)
-ENDIF()
+# compile and create installers
+# option '--clean-first' somehow conflicts with options after '--' for msbuild
+cmake --build . --config Release --target PACKAGE -- -m -nologo
+
+# create ZIP files
+cmake -D OSPRAY_ZIP_MODE=ON ..
+cmake --build . --config Release --target PACKAGE -- -m -nologo
+
+cd ..

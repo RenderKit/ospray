@@ -20,14 +20,23 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 ADD_LIBRARY(ospray_glut3d SHARED glut3D.cpp)
-TARGET_LINK_LIBRARIES(ospray_glut3d
-  ospray 
-  ospray_ospcommon
-  ${OPENGL_LIBRARIES} 
-  ${GLUT_LIBRARIES}
-  )
-# ------------------------------------------------------------
-SET_TARGET_PROPERTIES(ospray_glut3d${OSPRAY_LIB_SUFFIX} 
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-INSTALL(TARGETS ospray_glut3d${OSPRAY_LIB_SUFFIX} DESTINATION lib)
 
+TARGET_LINK_LIBRARIES(ospray_glut3d ospray
+  ${OPENGL_LIBRARIES}
+  ${GLUT_LIBRARIES}
+)
+OSPRAY_SET_LIBRARY_VERSION(ospray_glut3d)
+INSTALL(TARGETS ospray_glut3d
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT lib
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT lib
+  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT devel
+)
+
+
+##############################################################
+# redistribute freeglut
+##############################################################
+
+IF (WIN32)
+  INSTALL(PROGRAMS ${GLUT_DLL} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT apps) # 3rd party?
+ENDIF()

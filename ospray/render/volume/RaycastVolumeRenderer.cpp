@@ -18,7 +18,7 @@
 #include "ospray/lights/Light.h"
 #include "ospray/common/Data.h"
 #include "ospray/common/Core.h"
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/parallel_for.h"
 #include "ospray/render/volume/RaycastVolumeRenderer.h"
 #include "RaycastVolumeMaterial.h"
 

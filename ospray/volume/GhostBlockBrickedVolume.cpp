@@ -16,7 +16,7 @@
 
 //ospray
 #include "ospray/volume/GhostBlockBrickedVolume.h"
-#include "ospray/common/parallel_for.h"
+#include "ospray/common/tasking/parallel_for.h"
 #include "GhostBlockBrickedVolume_ispc.h"
 // std
 #include <cassert>

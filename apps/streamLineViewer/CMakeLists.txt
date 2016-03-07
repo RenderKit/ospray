@@ -16,9 +16,6 @@
 
 CONFIGURE_OSPRAY()
 
-INCLUDE(${PROJECT_SOURCE_DIR}/cmake/glut.cmake)
-
-INCLUDE_DIRECTORIES(${GLUT_INCLUDE_DIR})
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 
 IF (NOT THIS_IS_MIC)
@@ -30,7 +27,4 @@ IF (NOT THIS_IS_MIC)
     ${TBB_LIBRARY_MALLOC}
     ${TBB_LIBRARY}
   )
-  # ------------------------------------------------------------
-  INSTALL(TARGETS ospStreamLineViewer DESTINATION bin)
-  # ------------------------------------------------------------
 ENDIF()

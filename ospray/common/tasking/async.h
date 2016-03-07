@@ -16,33 +16,43 @@
 
 #pragma once
 
-#define TILE_SIZE @OSPRAY_TILE_SIZE@
-
-/*! number of pixels that each job in a parallel rendertile task
-    executes together. Must be a multipel of the maximum possible
-    programCount (16), and must be smaller than TILE_SIZE (in one
-    dimension) */
-#define RENDERTILE_PIXELS_PER_JOB @OSPRAY_PIXELS_PER_JOB@
-
-#cmakedefine OSPRAY_EXP_DATA_PARALLEL
-#ifdef OSPRAY_EXP_DATA_PARALLEL
-# define EXP_DATA_PARALLEL 1
+#ifdef OSPRAY_USE_TBB
+#  include <tbb/task.h>
+#elif defined(OSPRAY_USE_CILK)
+#  include <cilk/cilk.h>
 #endif
 
-#cmakedefine OSPRAY_MIC_COI
-#cmakedefine OSPRAY_DISPLAYCLUSTER
-#cmakedefine OSPRAY_MPI
-#ifdef OSPRAY_MPI
-#cmakedefine OSPRAY_EXP_IMAGE_COMPOSITING
-#cmakedefine OSPRAY_EXP_DISTRIBUTED_VOLUME
-#cmakedefine OSPRAY_EXP_ALPHA_BLENDING
-#cmakedefine OSPRAY_MPI_DISTRIBUTED
-#endif
-#cmakedefine OSPRAY_VOLUME_VOXELRANGE_IN_APP
-#cmakedefine OSPRAY_PIN_ASYNC
+namespace ospray {
 
-/*! if defined, we'll be using the novel block-bricked volume layout
-    with ghost cells. this requires some more memory than the old
-    block-bricked code - and is significantly less tested - but should
-    be faster */
-#cmakedefine EXP_NEW_BB_VOLUME_KERNELS
+// NOTE(jda) - This abstraction takes a lambda which should take captured
+//             variables by *value* to ensure no captured references race
+//             with the task itself.
+
+// NOTE(jda) - No priority is associated with this call, but could be added
+//             later with a hint enum, using a default value for the priority
+//             to not require specifying it.
+template<typename TASK>
+inline void async(const TASK& fcn)
+{
+#ifdef OSPRAY_USE_TBB
+  struct LocalTBBTask : public tbb::task
+  {
+    TASK func;
+    tbb::task* execute() override
+    {
+      func();
+      return nullptr;
+    }
+
+    LocalTBBTask( const TASK& f ) : func(f) {}
+  };
+
+  tbb::task::enqueue(*new(tbb::task::allocate_root())LocalTBBTask(fcn));
+#elif defined(OSPRAY_USE_CILK)
+  cilk_spawn fcn();
+#else// OpenMP --> synchronous!
+  fcn();
+#endif
+}
+
+}//namespace ospray

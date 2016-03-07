@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-# configure this dir for the proper "OSPRAY_LIB_SUFFIX" etc (depending
-# on which target we build for )
 CONFIGURE_OSPRAY()
 
 IF(THIS_IS_MIC)
@@ -46,42 +44,11 @@ SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
 # -------------------------------------------------------
-# Setup tasking system build configuration
-# -------------------------------------------------------
-
-SET(OSPRAY_TASKING_SYSTEM TBB CACHE STRING
-    "Use TBB or OpenMP as for per-node thread tasking system")
-SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY STRINGS TBB OpenMP)
-MARK_AS_ADVANCED(OSPRAY_TASKING_SYSTEM)
-
-IF(${OSPRAY_TASKING_SYSTEM} STREQUAL "TBB")
-  SET(USE_TBB TRUE)
-  SET(USE_TBB TRUE PARENT_SCOPE)
-ELSE()
-  SET(USE_TBB FALSE)
-  SET(USE_TBB FALSE PARENT_SCOPE)
-ENDIF()
-
-IF(USE_TBB)
-  FIND_PACKAGE(TBB REQUIRED)
-  ADD_DEFINITIONS(-DOSPRAY_USE_TBB)
-  INCLUDE_DIRECTORIES(${TBB_INCLUDE_DIRS})
-ELSE(USE_TBB)
-  UNSET(TBB_INCLUDE_DIR        CACHE)
-  UNSET(TBB_LIBRARY            CACHE)
-  UNSET(TBB_LIBRARY_DEBUG      CACHE)
-  UNSET(TBB_LIBRARY_MALLOC     CACHE)
-  UNSET(TBB_LIBRARY_MALLOC_DEBUG CACHE)
-  UNSET(TBB_INCLUDE_DIR_MIC    CACHE)
-  UNSET(TBB_LIBRARY_MIC        CACHE)
-  UNSET(TBB_LIBRARY_MALLOC_MIC CACHE)
-ENDIF(USE_TBB)
-
-# -------------------------------------------------------
 # Build and configure embree
 # -------------------------------------------------------
 
-# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly (above)...
+# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly in
+#             CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
 # NOTE(jda) - Only do the embree include once (Xeon), it will build both
 #             Xeon and MIC code if both are enabled.
 IF (NOT THIS_IS_MIC)
@@ -102,6 +69,7 @@ SET(OSPRAY_SOURCES
   math/box.ispc
   math/Distribution2D.ispc
 
+  common/ospray.rc
   common/OSPCommon.ispc
   common/OSPCommon.cpp
   common/Core.cpp
@@ -115,7 +83,9 @@ SET(OSPRAY_SOURCES
   common/Material.cpp
   common/Library.cpp
   common/Thread.cpp
-  common/parallel_for.h
+
+  common/tasking/parallel_for.h
+  common/tasking/async.h
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
@@ -263,6 +233,13 @@ IF (OSPRAY_MPI)
     fb/DisplayWall.cpp
     )
 
+  # ============================================
+  OSPRAY_ADD_EXECUTABLE(ospCreateCompositeTestCubes
+    mpi/testing/createCompositeTestCubes
+    )
+  OSPRAY_EXE_LINK_LIBRARIES(ospCreateCompositeTestCubes
+    ospray
+    )
 ENDIF()
 
 # -------------------------------------------------------
@@ -306,51 +283,42 @@ ENDIF()
 # CONFIGURE_OSPRAY() and/or CONFIGURE_MPI()
 ##############################################################
 
-OSPRAY_ADD_LIBRARY(ospray${OSPRAY_LIB_SUFFIX} SHARED ${OSPRAY_SOURCES})
-SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX} PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
+# NOTE(jda) - To be removed when OSPCOMMON is merged for next release
+ADD_DEFINITIONS(-DDONT_WANT_INCLUDE_OSPCOMMON_H=1)
 
-TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
-	${FORCED_OSPCOMMON_LIB_NAME}
+IF (THIS_IS_MIC)
+  ADD_DEFINITIONS(-DOSPRAY_TARGET_MIC)
+ENDIF()
+
+OSPRAY_ADD_LIBRARY(ospray SHARED ${OSPRAY_SOURCES})
+
+OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
   ${CMAKE_THREAD_LIBS_INIT}
   ${CMAKE_DL_LIBS}
 )
 
 IF (THIS_IS_MIC)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
     embree_xeonphi
     ${TBB_LIBRARIES_MIC}
   )
 ELSE()
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
     embree
     ${TBB_LIBRARIES}
   )
 ENDIF()
 
 IF (OSPRAY_DISPLAYCLUSTER)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ${DISPLAYCLUSTER_LIBRARIES})
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ${DISPLAYCLUSTER_LIBRARIES})
 ENDIF()
 
 IF (WIN32)
-  TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX} ws2_32)
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray ws2_32)
 ENDIF()
 
-
-# ------------------------------------------------------------
-INSTALL(DIRECTORY include/ospray DESTINATION include FILES_MATCHING PATTERN "*.h")
-INSTALL(DIRECTORY common DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
-INSTALL(DIRECTORY embree-v2.7.1 DESTINATION include/ospray FILES_MATCHING PATTERN "*.h")
-SET_TARGET_PROPERTIES(ospray${OSPRAY_LIB_SUFFIX}
-  PROPERTIES VERSION ${OSPRAY_VERSION} SOVERSION ${OSPRAY_SOVERSION})
-INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX}
-#  EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-  DESTINATION lib
-)
-#INSTALL(EXPORT ospray${OSPRAY_LIB_SUFFIX}Export
-#  DESTINATION ${CMAKE_DIR} FILE libospray${OSPRAY_LIB_SUFFIX}Targets.cmake
-#)
-##############################################################
-
+OSPRAY_SET_LIBRARY_VERSION(ospray)
+OSPRAY_INSTALL_LIBRARY(ospray)
 
 # build ospTutorial, for testing
 ADD_EXECUTABLE(ospTutorial${OSPRAY_EXE_SUFFIX} ../apps/ospTutorial)
@@ -362,20 +330,18 @@ TARGET_LINK_LIBRARIES(ospTutorial${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX}
 ##############################################################
 IF (OSPRAY_MPI)
   IF (THIS_IS_MIC)
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${MPI_LIBRARY_MIC}
     )
   ELSE()
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${MPI_CXX_LIBRARIES}
     )
   ENDIF()
 
-  ADD_EXECUTABLE(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} mpi/MPIWorker.cpp)
-  TARGET_LINK_LIBRARIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} ospray${OSPRAY_LIB_SUFFIX})
-  SET_TARGET_PROPERTIES(ospray_mpi_worker${OSPRAY_EXE_SUFFIX} PROPERTIES COMPILE_FLAGS "-DDONT_WARN_INCLUDE_OSPCOMMON_H=1")
-  # ------------------------------------------------------------
-  INSTALL(TARGETS ospray_mpi_worker${OSPRAY_EXE_SUFFIX} DESTINATION bin)
+  OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
+  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray)
+  OSPRAY_INSTALL_EXE(ospray_mpi_worker)
 ENDIF()
 
 
@@ -387,23 +353,22 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     # ------------------------------------------------------------
     # dev-side of COI device: lib dev-side libospray to coi dev libs,...
     # ------------------------------------------------------------
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${LIBCOI_DEVICE}
     )
     # ... and add the coi worker executable
-    ADD_EXECUTABLE(ospray_coi_worker.mic api/COIDeviceWorker.cpp)
-    TARGET_LINK_LIBRARIES(ospray_coi_worker.mic
-      ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_ADD_EXECUTABLE(ospray_coi_worker api/COIDeviceWorker.cpp)
+    OSPRAY_EXE_LINK_LIBRARIES(ospray_coi_worker
+      ospray
       ${LIBCOI_DEVICE}
     )
     # ------------------------------------------------------------
-    INSTALL(TARGETS ospray${OSPRAY_LIB_SUFFIX} DESTINATION lib)
-    INSTALL(TARGETS ospray_coi_worker.mic DESTINATION bin)
+    OSPRAY_INSTALL_EXE(ospray_coi_worker)
   ELSE()
     # ------------------------------------------------------------
     # host-side of COI device: just link libospray to coi host libs
     # ------------------------------------------------------------
-    TARGET_LINK_LIBRARIES(ospray${OSPRAY_LIB_SUFFIX}
+    OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
       ${LIBCOI_HOST}
     )
     # note: no need to add the host-side libcoi to the install

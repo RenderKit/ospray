@@ -1,9 +1,9 @@
 OSPRay
 ======
 
-This is release v0.9.0 of OSPRay. For changes and new
-features see the [changelog](CHANGELOG.md). Also visit
-http://www.ospray.org for more information.
+This is release v0.9.1 of OSPRay. For changes and new features see the
+[changelog](CHANGELOG.md). Also visit http://www.ospray.org for more
+information.
 
 OSPRay Overview
 ===============
@@ -29,7 +29,7 @@ or Intel® Xeon Phi™ to achieve high rendering performance.
 OSPRay Support and Contact
 --------------------------
 
-OSPRay is still in "pre 1.0" alpha stage, and though we do our best to
+OSPRay is still in beta stage, and though we do our best to
 guarantee stable release versions a certain number of bugs,
 as-yet-missing features, inconsistencies, or any other issues are
 unavoidable at this stage. Should you find any such issues please report
@@ -50,37 +50,67 @@ Building OSPRay from Source
 ===========================
 
 The latest OSPRay sources are always available at the [OSPRay GitHub
-repository](http://github.com/ospray/ospray). The default "master"
+repository](http://github.com/ospray/ospray). The default `master`
 branch should always point to the latest tested bugfix release.
 
 Prerequisites
 -------------
 
-OSPRay currently supports both Linux and Mac OS X (a Windows version
-will soon follow). In addition, before you can build OSPRay you need the
+OSPRay currently supports both Linux and Mac OS X (and experimentally
+Windows). In addition, before you can build OSPRay you need the
 following prerequisites:
 
 -   You can clone the latest OSPRay sources via:
 
         git clone https://github.com/ospray/ospray.git
 
--   To build OSPRay you require a copy of the [Intel® SPMD Program
-    Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
-    latest binary release of ISPC (currently 1.8.2) from the [ISPC
-    downloads page](https://ispc.github.io/downloads.html), and place it
-    right "next to" the checked-out OSPRay sources in your directory
-    tree (e.g., if OSPRay is in `~/Projects/ospray`, ISPC should be in
-    `~/Projects/ispc-v1.8.2-linux`).
--   Additional packages you need are [CMake](http://www.cmake.org), any
+-   To build OSPRay you need [CMake](http://www.cmake.org), any
     form of C++ compiler (we recommend using the [Intel® C++ compiler
     (icc)](https://software.intel.com/en-us/c-compilers), but also
     support GCC and clang-cc), and standard Linux development tools.
     To build the demo viewers, you should also have some version of
     OpenGL and the GL Utility Toolkit (GLUT or freeglut), as well as
     Qt 4.6 or higher.
+-   Additionally you require a copy of the [Intel® SPMD Program
+    Compiler (ISPC)](http://ispc.github.io). Please obtain a copy of the
+    latest binary release of ISPC (currently 1.9.0) from the [ISPC
+    downloads page](https://ispc.github.io/downloads.html). The build
+    system looks for ISPC in the `PATH` and in the directory right
+    "next to" the checked-out OSPRay sources.^[For example, if OSPRay is
+    in `~/Projects/ospray`, ISPC will also be searched in
+    `~/Projects/ispc-v1.9.0-linux`] Alternatively set the CMake
+    variable `ISPC_EXECUTABLE` to the location of the ISPC compiler.
+-   Per default OSPRay uses the Intel® Threading Building Blocks (TBB)
+    as tasking system, which we recommend for performance and
+    flexibility reasons. Alternatively you can set CMake variable
+    `OSPRAY_TASKING_SYSTEM` to `OpenMP`.
 -   OSPRay also heavily uses [Embree](http://embree.github.io); however,
     OSPRay directly includes its own copy of Embree, so a special
     installation of Embree is *not* required.
+
+Depending on your Linux distribution you can install these dependencies
+using `yum` or `apt-get`. Some of these packages might already be
+installed or might have slightly different names.
+
+Type the following to install the dependencies using `yum`:
+
+    sudo yum install cmake.x86_64
+    sudo yum install tbb.x86_64 tbb-devel.x86_64
+    sudo yum install freeglut.x86_64 freeglut-devel.x86_64
+    sudo yum install qt-devel.x86_64
+
+Type the following to install the dependencies using `apt-get`:
+
+    sudo apt-get install cmake-curses-gui
+    sudo apt-get install libtbb-dev
+    sudo apt-get install freeglut3-dev
+    sudo apt-get install libqt4-dev
+
+Under Mac OS X these dependencies can be installed using
+[MacPorts](http://www.macports.org/):
+
+    sudo port install cmake tbb freeglut qt4
+
 
 Compiling OSPRay
 ----------------
@@ -133,19 +163,21 @@ Tutorial
 A minimal working example demonstrating how to use OSPRay can be found
 at `apps/ospTutorial.cpp`. On Linux build it in the build_directory with
 
-    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common -Wl,-rpath,. ./libospray.so -o ospTutorial
+    g++ ../apps/ospTutorial.cpp -I ../ospray/include -I .. -I ../ospray/embree/common \
+      ./libospray.so -Wl,-rpath,. -o ospTutorial
 
 On Windows build it in the build_directory\\$Configuration with
 
-    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\.. -I ..\..\ospray\embree\common ospray.lib
+    cl ..\..\apps\ospTutorial.cpp /EHsc -I ..\..\ospray\include -I ..\..  ^
+      -I ..\..\ospray\embree\common ospray.lib
 
 Running `ospTutorial` will create two images of two triangles, rendered
-with the Ambient Occlusion renderer. The first image `firstFrame.ppm`
-shows the result after one call to `ospRenderFrame` -- jagged edges and
-noise in the shadow can be seen. Calling `ospRenderFrame` multiple times
-enables progressive refinement, resulting in antialiased edges and
-converged shadows, shown after ten frames in the second image
-`accumulatedFrames.png`.
+with the Scientific Visualization renderer with full Ambient Occlusion.
+The first image `firstFrame.ppm` shows the result after one call to
+`ospRenderFrame` -- jagged edges and noise in the shadow can be seen.
+Calling `ospRenderFrame` multiple times enables progressive refinement,
+resulting in antialiased edges and converged shadows, shown after ten
+frames in the second image `accumulatedFrames.png`.
 
 ![First frame.][imgTutorial1]
 
@@ -183,5 +215,3 @@ at the [OSPRay Demos and Examples] page.
 [imgTutorial2]: https://ospray.github.io/images/tutorial_accumulatedframe.png
 [imgQtViewer]: https://ospray.github.io/images/QtViewer.jpg
 [imgVolumeViewer]: https://ospray.github.io/images/VolumeViewer.png
-[imgSpotLight]: https://ospray.github.io/images/spot_light.png
-[imgQuadLight]: https://ospray.github.io/images/quad_light.png

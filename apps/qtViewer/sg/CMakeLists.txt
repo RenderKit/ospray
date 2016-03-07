@@ -19,7 +19,7 @@ CONFIGURE_OSPRAY()
 INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${OSPRAY_SOURCE_DIR})
 
-ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
+ADD_LIBRARY(ospray_sg STATIC
   # scene graph nodes
   SceneGraph.cpp
   Renderer.cpp
@@ -51,11 +51,8 @@ ADD_LIBRARY(ospray_sg${OSPRAY_LIB_SUFFIX} SHARED
   #    ImportX3D.cpp
 )
 
-TARGET_LINK_LIBRARIES(ospray_sg${OSPRAY_LIB_SUFFIX} 
-  ospray_xml${OSPRAY_LIB_SUFFIX}
-  ospray${OSPRAY_LIB_SUFFIX}
+TARGET_LINK_LIBRARIES(ospray_sg
+  ospray
   ospray_ospcommon
+  ospray_xml
 )
-
-
-

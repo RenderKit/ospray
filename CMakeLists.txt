@@ -14,8 +14,6 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
-PROJECT(OSPRay)
-
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 CMAKE_POLICY(SET CMP0003 NEW) # since 2.6
 IF(POLICY CMP0015)
@@ -31,7 +29,7 @@ ENDIF()
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 SET(OSPRAY_VERSION_MAJOR 0)
 SET(OSPRAY_VERSION_MINOR 9)
-SET(OSPRAY_VERSION_PATCH 1)
+SET(OSPRAY_VERSION_PATCH 2)
 SET(OSPRAY_VERSION
   ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
 )
@@ -57,12 +55,6 @@ ENDIF()
 SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
 SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
 SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-
-# RPath settings
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
-SET(CMAKE_INSTALL_RPATH "${CMAKE_BINARY_DIR}:${CMAKE_INSTALL_PREFIX}/lib")
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 # add experimental KNL/AVX512 build option - not fully supported, yet, so keep it hidden
 OPTION(OSPRAY_BUILD_ENABLE_KNL "Enable experimental 'Knights Landing' build?")
@@ -93,26 +85,14 @@ STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
-# directoriers for client CMake find_package config
+##############################################################
+# create binary packages; before any INSTALL() invocation/definition 
+##############################################################
 
-SET(HEADER_DIR include/ospray)
-IF(WIN32)
-  SET(CMAKE_DIR CMake)
-ELSE(WIN32)
-  SET(CMAKE_DIR share/ospray)
-ENDIF(WIN32)
-
-# Make OpenMP available to all apps/libraries/modules
-FIND_PACKAGE(OpenMP QUIET)
-IF (OPENMP_FOUND)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
-  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-  SET(CMAKE_EXE_LINKER_FLAGS
-      "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_EXE_LINKER_FLAGS}")
-ENDIF()
+INCLUDE(package)
 
 ##############################################################
-# cmake modules
+# CMake modules
 ##############################################################
 
 INCLUDE(cmake/ospray.cmake)
@@ -122,77 +102,55 @@ SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
 
 
 INCLUDE(cmake/mpi.cmake)
+
 IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
 ENDIF()
 
-SET(OSPRAY_INSTALL_TARGET ospray-${OSPRAY_VERSION}-${CMAKE_SYSTEM_NAME})
-STRING(TOLOWER "${OSPRAY_INSTALL_TARGET}" OSPRAY_INSTALL_TARGET_LC)
-
 ##############################################################
-# the ospray common library that's shared across all projects
+# the OSPRay library
 ##############################################################
 
-SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR})
-SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-
-#INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
-#INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-#IF (OSPRAY_MIC)
-#  SET (OSPRAY_TARGET "mic")
-#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR}/mic)
-#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR}/mic)
-#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR}/mic)
-
-#  ADD_SUBDIRECTORY(common builddir/ospcommon/mic)
-#ELSE()
-#  SET (OSPRAY_TARGET "intel64")
-#  SET(LIBRARY_OUTPUT_PATH ${OSPRAY_BINARY_DIR}/intel64)
-#  SET(OSPRAY_BINARY_DIR ${PROJECT_BINARY_DIR}/intel64)
-#  SET(EXECUTABLE_OUTPUT_PATH ${OSPRAY_BINARY_DIR})
-#  ADD_SUBDIRECTORY(common builddir/ospcommon/intel64)
-#ENDIF()
-
-#ADD_SUBDIRECTORY(common builddir/ospcommon/intel64)
-
-##############################################################
-# the ospray library
-##############################################################
+OSPRAY_CONFIGURE_COMPILER()
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-SET (OSPRAY_TARGET "intel64")
+SET(OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
 IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "mic")
+  SET(OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(ospray builddir/ospray/mic)
 ENDIF()
 
 ##############################################################
-# ospray modules
+# OSPRay modules
 ##############################################################
 
-SET (OSPRAY_TARGET "intel64")
+SET(OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(modules builddir/modules/intel64)
 IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "mic")
+  SET(OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(modules builddir/modules/mic)
 ENDIF()
 
 ##############################################################
-# ospray sample apps at the end, they may need modules
+# OSPRay sample apps; at the end: they may need modules
 ##############################################################
 
-SET (OSPRAY_TARGET "intel64")
+SET(OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(apps builddir/apps/intel64)
 IF (OSPRAY_MIC)
-  SET (OSPRAY_TARGET "mic")
+  SET(OSPRAY_TARGET "mic")
   ADD_SUBDIRECTORY(apps builddir/apps/mic)
 ENDIF()
 
 # create a configure file that both ospray and ispc can read the cmake config from
 # needs to be at the end, after all cache variables have been set
 CONFIGURE_FILE(ospray/common/OSPConfig.h.in OSPConfig.h)
-INSTALL(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h DESTINATION include/ospray)
+INSTALL(FILES ${CMAKE_BINARY_DIR}/OSPConfig.h
+  DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/ospray
+  COMPONENT devel
+)
 
+# has to be last
+INCLUDE(CPack)
