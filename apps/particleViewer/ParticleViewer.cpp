@@ -21,7 +21,7 @@
 #include "apps/common/widgets/glut3D.h"
 // ospray, for rendering
 #include "ospray/ospray.h"
-#include "common/parallel_for.h"
+#include "common/tasking/parallel_for.h"
 // particle viewer
 #include "Model.h"
 #include "uintah.h"
