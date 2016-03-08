@@ -54,15 +54,19 @@ namespace ospray {
     else
       depthBuffer = NULL;
     
-    if (hasAccumBuffer)
+    if (hasAccumBuffer) {
       accumBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-    else
+      accumHalfBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
+      tileErrorBuffer = new float[divRoundUp(size.x,TILE_SIZE)*divRoundUp(size.y,TILE_SIZE)];
+    } else
       accumBuffer = NULL;
     ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
                                                    colorBufferFormat,
                                                    colorBuffer,
                                                    depthBuffer,
-                                                   accumBuffer);
+                                                   accumBuffer,
+                                                   accumHalfBuffer,
+                                                   tileErrorBuffer);
   }
   
   LocalFrameBuffer::~LocalFrameBuffer() 
@@ -80,7 +84,11 @@ namespace ospray {
       default:
         throw std::runtime_error("color buffer format not supported");
       }
-    if (accumBuffer) alignedFree(accumBuffer);
+    if (accumBuffer) {
+      alignedFree(accumBuffer);
+      alignedFree(accumHalfBuffer);
+      delete[] tileErrorBuffer;
+    }
   }
 
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)

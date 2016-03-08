@@ -28,5 +28,8 @@ struct LocalFB
   void          *colorBuffer;
   uniform float *depthBuffer;
   uniform vec4f *accumBuffer;
+  uniform vec4f *accumHalfBuffer; // accumulates every other sample, for variance estimation / stopping
+  vec2i          numTiles;
+  uniform float *tileErrorBuffer;
 };
 

@@ -394,6 +394,8 @@ namespace ospray {
       if (displayWall)
         ospRenderFrame(displayWall->fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
       ++accumID;
+      if (accumID%10 == 0)
+        PRINT(accumID);
 
       // set the glut3d widget's frame buffer to the opsray frame buffer, then display
       ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);

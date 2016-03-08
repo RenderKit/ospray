@@ -418,7 +418,7 @@ inline varying vec3f negate(const varying vec3f &a)
   }                                                                     \
   inline vec4##abb opname (const type a, const vec4##abb b) {           \
     return make_vec4##abb(a op b.x, a op b.y, a op b.z, a op b.w);      \
-  }                                                                     \
+  }
 
 #define __define_binary_operator(opname,op)                             \
   __define_binary_operator_typed(opname,op,f,float) \
