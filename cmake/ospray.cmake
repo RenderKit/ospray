@@ -30,6 +30,12 @@ MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 # unhide compiler to make it easier for users to see what they are using
 MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
+## Macro for printing CMake variables ##
+
+MACRO(PRINT var)
+  MESSAGE("${var} = ${${var}}")
+ENDMACRO()
+
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
 # mic-executables with ".mic". *libraries* cannot use the
@@ -196,6 +202,15 @@ MACRO(CONFIGURE_OSPRAY)
 
 ENDMACRO()
 
+## Macro to make a warning message that only appears once ##
+
+MACRO(OSPRAY_WARN_ONCE message identifier)
+  SET(INTERNAL_WARNING "${identifier}_WARN_ONCE")
+  IF(NOT ${INTERNAL_WARNING})
+    MESSAGE(WARNING ${message})
+    SET(${INTERNAL_WARNING} ON CACHE INTERNAL "" FORCE)
+  ENDIF()
+ENDMACRO()
 
 ## Target creation macros ##
 
