@@ -86,13 +86,7 @@ SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
 ##############################################################
-# create binary packages; before any INSTALL() invocation/definition 
-##############################################################
-
-INCLUDE(package)
-
-##############################################################
-# CMake modules
+# CMake modules and macro files
 ##############################################################
 
 INCLUDE(cmake/ospray.cmake)
@@ -100,12 +94,17 @@ INCLUDE(cmake/ispc.cmake)
 
 SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
 
-
 INCLUDE(cmake/mpi.cmake)
 
 IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
 ENDIF()
+
+##############################################################
+# create binary packages; before any INSTALL() invocation/definition
+##############################################################
+
+INCLUDE(package)
 
 ##############################################################
 # the OSPRay library
