@@ -17,8 +17,6 @@
 #include "DistributedFrameBuffer.h"
 #include "DistributedFrameBuffer_ispc.h"
 
-#include <thread>
-
 #include "ospray/common/tasking/async.h"
 #include "ospray/common/tasking/parallel_for.h"
 

@@ -80,47 +80,47 @@ typedef enum {
   OSP_RGB_I8/* = OSP_FB_RGB8 XXX unsupported! */
 } OSPFrameBufferFormat;
 
-// //! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
-// /*! \see ospdApiMode */
-// typedef enum {
-//   //! \brief all ospNew(), ospSet(), etc calls affect only the current rank 
-//   /*! \detailed in this mode, all ospXyz() calls made on a given rank
-//     will ONLY affect state ont hat rank. This allows for configuring a
-//     (globally known) object differnetly on each different rank (also
-//     see OSP_MPI_SCOPE_GLOBAL) */
-//   OSPD_MODE_INDEPENDENT,
-//   OSPD_RANK=OSPD_MODE_INDEPENDENT /*!< alias for OSP_MODE_INDEPENDENT, reads better in code */,
+//! constants for switching the OSPRay MPI Scope between 'per rank' and 'all ranks'
+/*! \see ospdApiMode */
+typedef enum {
+  //! \brief all ospNew(), ospSet(), etc calls affect only the current rank
+  /*! \detailed in this mode, all ospXyz() calls made on a given rank
+    will ONLY affect state ont hat rank. This allows for configuring a
+    (globally known) object differnetly on each different rank (also
+    see OSP_MPI_SCOPE_GLOBAL) */
+  OSPD_MODE_INDEPENDENT,
+  OSPD_RANK=OSPD_MODE_INDEPENDENT /*!< alias for OSP_MODE_INDEPENDENT, reads better in code */,
 
-//   //! \brief all ospNew(), ospSet() calls affect all ranks 
-//   /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
-//       functions, but all objects defined through those functions---and
-//       all parameters set through those---will apply equally to all
-//       ranks. E.g., a OSPVolume vol = ospNewVolume(...) would create a
-//       volume object handle that exists on (and therefore, is valid on)
-//       all ranks. The (distributed) app may then switch to 'current
-//       rank only' mode, and may assign different data or parameters on
-//       each rank (typically, in order to have different parts of the
-//       volume on different nodes), but the object itself is globally
-//       known */
-//   OSPD_MODE_MASTERED,
-//   OSPD_MASTER=OSPD_MODE_MASTERED /*!< alias for OSP_MODE_MASTERED, reads better in code */,
+  //! \brief all ospNew(), ospSet() calls affect all ranks
+  /*! \detailed In this mode, ONLY rank 0 should call ospXyz()
+      functions, but all objects defined through those functions---and
+      all parameters set through those---will apply equally to all
+      ranks. E.g., a OSPVolume vol = ospNewVolume(...) would create a
+      volume object handle that exists on (and therefore, is valid on)
+      all ranks. The (distributed) app may then switch to 'current
+      rank only' mode, and may assign different data or parameters on
+      each rank (typically, in order to have different parts of the
+      volume on different nodes), but the object itself is globally
+      known */
+  OSPD_MODE_MASTERED,
+  OSPD_MASTER=OSPD_MODE_MASTERED /*!< alias for OSP_MODE_MASTERED, reads better in code */,
 
-//   //! \brief all ospNew(), ospSet() are called collaboratively by all ranks 
-//   /*! \detailed In this mode, ALL ranks must call (the same!) api
-//       function, the result is collaborative across all nodes in the
-//       sense that any object being created gets created across all
-//       nodes, and ALL ranks get a valid handle returned */
-//   OSPD_MODE_COLLABORATIVE,
-//   OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
-// } OSPDApiMode;
+  //! \brief all ospNew(), ospSet() are called collaboratively by all ranks
+  /*! \detailed In this mode, ALL ranks must call (the same!) api
+      function, the result is collaborative across all nodes in the
+      sense that any object being created gets created across all
+      nodes, and ALL ranks get a valid handle returned */
+  OSPD_MODE_COLLABORATIVE,
+  OSPD_ALL=OSPD_MODE_COLLABORATIVE /*!< alias for OSP_MODE_COLLABORATIVE, reads better in code */
+} OSPDApiMode;
 
-// /*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
-// typedef enum {
-//   /*! experimental: currently used to specify that the app ranks -
-//       together - hold a logical piece of geometry, with the back-end
-//       ospray workers then fetching that on demand..... */
-//   OSP_DISTRIBUTED_GEOMETRY = (1<<0),
-// } OSPGeometryCreationFlags;
+/*! flags that can be passed to OSPNewGeometry; can be OR'ed together */
+typedef enum {
+  /*! experimental: currently used to specify that the app ranks -
+      together - hold a logical piece of geometry, with the back-end
+      ospray workers then fetching that on demand..... */
+  OSP_DISTRIBUTED_GEOMETRY = (1<<0),
+} OSPGeometryCreationFlags;
 
 /*! flags that can be passed to OSPNewData; can be OR'ed together */
 typedef enum {
@@ -252,22 +252,20 @@ extern "C" {
   //! initialize the ospray engine (for single-node user application) 
   OSPRAY_INTERFACE void ospInit(int *ac, const char **av);
   
-  // #ifdef OSPRAY_MPI_DISTRIBUTED
-  //   //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
-  //   OSPRAY_INTERFACE 
-  //   void ospdApiMode(OSPDApiMode mode);
+  //! \brief allows for switching the MPI mode btween collaborative, mastered, and independent
+  OSPRAY_INTERFACE
+  void ospdApiMode(OSPDApiMode mode);
 
-  //   //! the 'lid to the pot' of ospdMpiInit(). 
-  //   /*! does both an osp shutdown and an mpi shutdown for the mpi group
-  //       created with ospdMpiInit */
-  //   OSPRAY_INTERFACE 
-  //   void ospdMpiInit(int *ac, char ***av, OSPDRenderMode renderMode=OSPD_Z_COMPOSITE);
+  //! the 'lid to the pot' of ospdMpiInit().
+  /*! does both an osp shutdown and an mpi shutdown for the mpi group
+      created with ospdMpiInit */
+  OSPRAY_INTERFACE
+  void ospdMpiInit(int *ac, char ***av, OSPDRenderMode renderMode=OSPD_Z_COMPOSITE);
 
-  //   /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
-  //       *and* the MPI layer created with ospdMpiInit */
-  //   OSPRAY_INTERFACE 
-  //   void ospdMpiShutdown();
-  // #endif
+  /*! the 'lid to the pot' of ospdMpiInit(). shuts down both ospray
+      *and* the MPI layer created with ospdMpiInit */
+  OSPRAY_INTERFACE
+  void ospdMpiShutdown();
 
   //! load plugin 'name' from shard lib libospray_module_<name>.so
   /*! returns 0 if the module could be loaded, else it returns an error code > 0 */

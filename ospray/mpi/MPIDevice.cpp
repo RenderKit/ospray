@@ -1104,7 +1104,7 @@ namespace ospray {
     }
 
     /*! return a string represenging the given API Mode */
-    const char *apiModeName(OSPDApiMode mode) 
+    const char *apiModeName(int mode)
     {
       switch (mode) {
       case OSPD_MODE_INDEPENDENT:
@@ -1117,7 +1117,6 @@ namespace ospray {
         PRINT(mode);
         NOTIMPLEMENTED;
       };
-      
     }
 
     /*! switch API mode for distriubted API extensions */

@@ -318,7 +318,7 @@ IF (OSPRAY_MPI)
   ENDIF()
 
   OSPRAY_ADD_EXECUTABLE(ospray_mpi_worker mpi/MPIWorker.cpp)
-  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray)
+  OSPRAY_EXE_LINK_LIBRARIES(ospray_mpi_worker ospray ospray_common)
   OSPRAY_INSTALL_EXE(ospray_mpi_worker)
 ENDIF()
 
@@ -338,6 +338,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
     OSPRAY_ADD_EXECUTABLE(ospray_coi_worker api/COIDeviceWorker.cpp)
     OSPRAY_EXE_LINK_LIBRARIES(ospray_coi_worker
       ospray
+      ospray_common
       ${LIBCOI_DEVICE}
     )
     # ------------------------------------------------------------
