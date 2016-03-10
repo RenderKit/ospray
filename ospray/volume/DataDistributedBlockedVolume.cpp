@@ -202,7 +202,8 @@ namespace ospray {
             } else {
               block->firstOwner = (blockID * numWorkers) / numDDBlocks;
               int nextBlockFirstOwner = ((blockID+1)*numWorkers) / numDDBlocks;
-              block->numOwners = nextBlockFirstOwner - block->firstOwner + 1;
+              block->numOwners = nextBlockFirstOwner - block->firstOwner; // + 1;
+              // std::cout << "block " << vec3i(ix,iy,iz) << " first=" << block->firstOwner << ", num = " << block->numOwners << std::endl;
             }
             block->isMine 
               = (ospray::core::getWorkerRank() >= block->firstOwner)

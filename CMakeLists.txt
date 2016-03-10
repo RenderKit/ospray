@@ -28,16 +28,12 @@ ENDIF()
 
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/cmake)
 SET(OSPRAY_VERSION_MAJOR 0)
-SET(OSPRAY_VERSION_MINOR 9)
-SET(OSPRAY_VERSION_PATCH 2)
+SET(OSPRAY_VERSION_MINOR 10)
+SET(OSPRAY_VERSION_PATCH 0)
 SET(OSPRAY_VERSION
   ${OSPRAY_VERSION_MAJOR}.${OSPRAY_VERSION_MINOR}.${OSPRAY_VERSION_PATCH}
 )
 SET(OSPRAY_SOVERSION 0)
-
-MACRO(PRINT var)
-  MESSAGE("${var} = ${${var}}")
-ENDMACRO()
 
 SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
 IF (WIN32)
@@ -86,20 +82,13 @@ SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
 
 ##############################################################
-# create binary packages; before any INSTALL() invocation/definition 
-##############################################################
-
-INCLUDE(package)
-
-##############################################################
-# CMake modules
+# CMake modules and macro files
 ##############################################################
 
 INCLUDE(cmake/ospray.cmake)
 INCLUDE(cmake/ispc.cmake)
 
 SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
-
 
 INCLUDE(cmake/mpi.cmake)
 
@@ -108,6 +97,12 @@ IF(NOT WIN32)
 ENDIF()
 
 OSPRAY_CONFIGURE_COMPILER()
+
+##############################################################
+# create binary packages; before any INSTALL() invocation/definition
+##############################################################
+
+INCLUDE(package)
 
 ##############################################################
 # the OSPRay 'common' library

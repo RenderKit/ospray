@@ -184,9 +184,9 @@ ospcommon::vec2f voxelRange(+std::numeric_limits<float>::infinity(),
                    (osp::vec3i&)region_lo,
                    (osp::vec3i&)region_sz);
 
-      std::cerr << "volume load: "
-                << float(z) / float(volumeDimensions.z) * 100. << " %"
-                << std::endl;
+      // std::cerr << "volume load: "
+      //           << float(z) / float(volumeDimensions.z) * 100. << " %"
+      //           << std::endl;
     }
 
     // Clean up.
