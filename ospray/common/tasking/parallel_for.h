@@ -35,8 +35,12 @@ inline void parallel_for(int nTasks, const Task& fcn)
   cilk_for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }
-#else
+#elif defined(OSPRAY_USE_OMP)
 # pragma omp parallel for schedule(dynamic)
+  for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
+    fcn(taskIndex);
+  }
+#else // Debug (no tasking system)
   for (int taskIndex = 0; taskIndex < nTasks; ++taskIndex) {
     fcn(taskIndex);
   }

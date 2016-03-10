@@ -50,7 +50,7 @@ inline void async(const TASK& fcn)
   tbb::task::enqueue(*new(tbb::task::allocate_root())LocalTBBTask(fcn));
 #elif defined(OSPRAY_USE_CILK)
   cilk_spawn fcn();
-#else// OpenMP --> synchronous!
+#else// OpenMP or Debug --> synchronous!
   fcn();
 #endif
 }
