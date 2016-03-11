@@ -109,16 +109,6 @@ namespace ospray {
 //! main namespace for all things ospray (for internal code)
 namespace ospray {
 
-  // using embree::one;
-  // using embree::empty;
-  // using embree::zero;
-  // using embree::inf;
-  // using embree::deg2rad;
-  // using embree::rad2deg;
-  // using embree::sign;
-  // using embree::clamp;
-  // using embree::frac;
-
   /*! basic types */
   typedef ::int64_t int64;
   typedef ::uint64_t uint64;
@@ -133,63 +123,6 @@ namespace ospray {
   typedef ::uint8_t uint8;
 
   typedef ::int64_t index_t;
-
-  // /*! OSPRay's two-int vector class */
-  // typedef embree::Vec2i    vec2i;
-  // /*! OSPRay's three-unsigned char vector class */
-  // typedef embree::Vec3<uint8> vec3uc;
-  // /*! OSPRay's 4x unsigned char vector class */
-  // typedef embree::Vec4<uint8> vec4uc;
-  // /*! OSPRay's 2x uint32 vector class */
-  // typedef embree::Vec2<uint32> vec2ui;
-  // /*! OSPRay's 3x uint32 vector class */
-  // typedef embree::Vec3<uint32> vec3ui;
-  // /*! OSPRay's 4x uint32 vector class */
-  // typedef embree::Vec4<uint32> vec4ui;
-  // /*! OSPRay's 3x int32 vector class */
-  // typedef embree::Vec3<int32>  vec3i;
-  // /*! OSPRay's four-int vector class */
-  // typedef embree::Vec4i    vec4i;
-  // /*! OSPRay's two-float vector class */
-  // typedef embree::Vec2f    vec2f;
-  // /*! OSPRay's three-float vector class */
-  // typedef embree::Vec3f    vec3f;
-  // /*! OSPRay's three-float vector class (aligned to 16b-boundaries) */
-  // typedef embree::Vec3fa   vec3fa;
-  // /*! OSPRay's four-float vector class */
-  // typedef embree::Vec4f    vec4f;
-
-  // typedef embree::BBox<vec2ui>   box2ui;
-  // typedef embree::BBox<vec2i>    region2i;
-  // typedef embree::BBox<vec2ui>   region2ui;
-
-  // typedef embree::BBox<vec3i>    box3i;
-  // typedef embree::BBox<vec3ui>   box3ui;
-  
-  // typedef embree::BBox3f         box3f;
-  // typedef embree::BBox3fa        box3fa;
-  // typedef embree::BBox<vec3uc>   box3uc;
-  // typedef embree::BBox<vec4f>    box4f;
-  // typedef embree::BBox3fa        box3fa;
-  
-  // /*! affice space transformation */
-  // typedef embree::AffineSpace2f  affine2f;
-  // typedef embree::AffineSpace3f  affine3f;
-  // typedef embree::AffineSpace3fa affine3fa;
-  // typedef embree::AffineSpace3f  AffineSpace3f;
-  // typedef embree::AffineSpace3fa AffineSpace3fa;
-
-  // typedef embree::LinearSpace2f  linear2f;
-  // typedef embree::LinearSpace3f  linear3f;
-  // typedef embree::LinearSpace3fa linear3fa;
-  // typedef embree::LinearSpace3f  LinearSpace3f;
-  // typedef embree::LinearSpace3fa LinearSpace3fa;
-
-  // using   embree::Ref;
-  // using   embree::RefCount;
-
-  // using embree::cross;
-  // using embree::volume;
 
   void init(int *ac, const char ***av);
 
