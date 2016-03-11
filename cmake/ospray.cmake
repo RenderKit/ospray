@@ -346,7 +346,7 @@ MACRO(CONFIGURE_TASKING_SYSTEM)
   #ENDIF()
 
   SET(OSPRAY_TASKING_SYSTEM ${TASKING_DEFAULT} CACHE STRING
-      "Use TBB or OpenMP as for per-node thread tasking system")
+      "Per-node thread tasking system [TBB,OpenMP,Cilk,Debug]")
 
   SET_PROPERTY(CACHE OSPRAY_TASKING_SYSTEM PROPERTY
                STRINGS TBB ${CILK_STRING} OpenMP Debug)
