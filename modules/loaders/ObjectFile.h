@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <iostream>
 #include <string>
 #include "ospray/include/ospray/ospray.h"
 

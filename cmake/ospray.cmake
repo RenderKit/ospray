@@ -31,10 +31,27 @@ MARK_AS_ADVANCED(OSPRAY_PIXELS_PER_JOB)
 MARK_AS_ADVANCED(CLEAR CMAKE_CXX_COMPILER)
 
 ## Macro for printing CMake variables ##
-
 MACRO(PRINT var)
   MESSAGE("${var} = ${${var}}")
 ENDMACRO()
+
+## Macro to print a warning message that only appears once ##
+MACRO(OSPRAY_WARN_ONCE identifier message)
+  SET(INTERNAL_WARNING "OSPRAY_WARNED_${identifier}")
+  IF(NOT ${INTERNAL_WARNING})
+    MESSAGE(WARNING ${message})
+    SET(${INTERNAL_WARNING} ON CACHE INTERNAL "Warned about '${message}'")
+  ENDIF()
+ENDMACRO()
+
+## Macro check for compiler support of ISA ##
+MACRO(OSPRAY_CHECK_COMPILER_SUPPORT ISA)
+  IF (OSPRAY_EMBREE_ENABLE_${ISA} AND NOT OSPRAY_COMPILER_SUPPORTS_${ISA})
+    OSPRAY_WARN_ONCE(MISSING_${ISA} "Need at least version ${GCC_VERSION_REQUIRED_${ISA}} of gcc for ${ISA}. Disabling ${ISA}.\nTo compile for ${ISA}, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
+    SET(OSPRAY_EMBREE_ENABLE_${ISA} false)
+  ENDIF()
+ENDMACRO()
+
 
 # Configure the output directories. To allow IMPI to do its magic we
 # will put *executables* into the (same) build directory, but tag
@@ -157,29 +174,9 @@ MACRO(CONFIGURE_OSPRAY)
 
   ENDIF()
 
-  IF (OSPRAY_EMBREE_ENABLE_AVX AND NOT OSPRAY_COMPILER_SUPPORTS_AVX)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX} of gcc for AVX. Disabling AVX.\nTo compile for AVX, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX ON CACHE INTERNAL "Warned about missing AVX support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX false)
-  ENDIF()
-
-  IF (OSPRAY_EMBREE_ENABLE_AVX2 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX2)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX2} of gcc for AVX2. Disabling AVX2.\nTo compile for AVX2, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX2 ON CACHE INTERNAL "Warned about missing AVX2 support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX2 false)
-  ENDIF()
-
-  IF (OSPRAY_EMBREE_ENABLE_AVX512 AND NOT OSPRAY_COMPILER_SUPPORTS_AVX512)
-    IF (NOT OSPRAY_WARNED_MISSING_AVX2)
-      MESSAGE("Warning: Need at least version ${GCC_VERSION_REQUIRED_AVX512} of gcc for AVX512. Disabling AVX512.\nTo compile for AVX512, please switch to either 'ICC'-compiler, or upgrade your gcc version.")
-      SET(OSPRAY_WARNED_MISSING_AVX512 ON CACHE INTERNAL "Warned about missing AVX512 support.")
-    ENDIF()
-    SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
-  ENDIF()
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX2)
+  OSPRAY_CHECK_COMPILER_SUPPORT(AVX512)
 
   IF (THIS_IS_MIC)
     # whether to build in MIC/xeon phi support
@@ -200,16 +197,6 @@ MACRO(CONFIGURE_OSPRAY)
   INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_BINARY_DIR})
 
-ENDMACRO()
-
-## Macro to make a warning message that only appears once ##
-
-MACRO(OSPRAY_WARN_ONCE message identifier)
-  SET(INTERNAL_WARNING "${identifier}_WARN_ONCE")
-  IF(NOT ${INTERNAL_WARNING})
-    MESSAGE(WARNING ${message})
-    SET(${INTERNAL_WARNING} ON CACHE INTERNAL "" FORCE)
-  ENDIF()
 ENDMACRO()
 
 ## Target creation macros ##
