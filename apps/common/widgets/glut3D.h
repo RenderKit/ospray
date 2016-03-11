@@ -78,23 +78,30 @@ namespace ospray {
       OSPRAY_GLUT3D_INTERFACE virtual void motion(Glut3DWidget *widget);
       // this is the fct that gets called when any mouse button got
       // pressed or released in the associated window
-      OSPRAY_GLUT3D_INTERFACE virtual void button(Glut3DWidget *widget, const vec2i &pos) {};
+      OSPRAY_GLUT3D_INTERFACE virtual void button(Glut3DWidget *widget,
+                                                  const vec2i &pos) {}
       /*! key press handler - override this fct to catch keyboard. */
-      OSPRAY_GLUT3D_INTERFACE virtual void keypress(Glut3DWidget *widget, const int32_t key);
-      OSPRAY_GLUT3D_INTERFACE virtual void specialkey(Glut3DWidget *widget, const int32_t key);
-      OSPRAY_GLUT3D_INTERFACE Manipulator(Glut3DWidget *widget) : widget(widget) {};
+      OSPRAY_GLUT3D_INTERFACE virtual void keypress(Glut3DWidget *widget,
+                                                    const int32_t key);
+      OSPRAY_GLUT3D_INTERFACE virtual void specialkey(Glut3DWidget *widget,
+                                                      const int32_t key);
+      OSPRAY_GLUT3D_INTERFACE Manipulator(Glut3DWidget *widget)
+        : widget(widget) {}
     protected:
 
       // helper functions called from the default 'motion' fct
       OSPRAY_GLUT3D_INTERFACE virtual void dragLeft(Glut3DWidget *widget, 
-                                                    const vec2i &to, const vec2i &from) 
-      {};
+                                                    const vec2i &to,
+                                                    const vec2i &from)
+      {}
       OSPRAY_GLUT3D_INTERFACE virtual void dragRight(Glut3DWidget *widget, 
-                                                     const vec2i &to, const vec2i &from) 
-      {};
+                                                     const vec2i &to,
+                                                     const vec2i &from)
+      {}
       OSPRAY_GLUT3D_INTERFACE virtual void dragMiddle(Glut3DWidget *widget, 
-                                                      const vec2i &to, const vec2i &from)
-      {};
+                                                      const vec2i &to,
+                                                      const vec2i &from)
+      {}
       Glut3DWidget *widget;
     };
 
@@ -205,13 +212,17 @@ namespace ospray {
       /*! set window title */
       OSPRAY_GLUT3D_INTERFACE void setTitle(const std::string &title) { setTitle(title.c_str()); }
       /*! set viewport to given values */
-      OSPRAY_GLUT3D_INTERFACE void setViewPort(const vec3f from, const vec3f at, const vec3f up);
+      OSPRAY_GLUT3D_INTERFACE void setViewPort(const vec3f from,
+                                               const vec3f at,
+                                               const vec3f up);
 
       // ------------------------------------------------------------------
       // event handling - override this to change this widgets behavior
       // to input events
       // ------------------------------------------------------------------
-      OSPRAY_GLUT3D_INTERFACE virtual void mouseButton(int32_t which, bool released, const vec2i &pos);
+      OSPRAY_GLUT3D_INTERFACE virtual void mouseButton(int32_t which,
+                                                       bool released,
+                                                       const vec2i &pos);
       OSPRAY_GLUT3D_INTERFACE virtual void motion(const vec2i &pos);
       // /*! mouse moved to this location, with given left/right/middle buttons pressed */
       // virtual void mouseMotion(const vec2i &from, 
@@ -242,10 +253,12 @@ namespace ospray {
       /*! clear the frame buffer color and depth bits */
       OSPRAY_GLUT3D_INTERFACE void clearPixels();
 
-      /*! draw uint32_t pixels into the GLUT window (assumes window and buffer dimensions are equal) */
+      /*! draw uint32_t pixels into the GLUT window (assumes window and buffer
+       *  dimensions are equal) */
       OSPRAY_GLUT3D_INTERFACE void drawPixels(const uint32_t *framebuffer);
 
-      /*! draw float4 pixels into the GLUT window (assumes window and buffer dimensions are equal) */
+      /*! draw float4 pixels into the GLUT window (assumes window and buffer
+       *  dimensions are equal) */
       OSPRAY_GLUT3D_INTERFACE void drawPixels(const vec3fa *framebuffer);
 
       // ------------------------------------------------------------------
@@ -300,8 +313,10 @@ namespace ospray {
       friend void glut3dMouseFunc(int32_t whichButton, int32_t released, 
                                   int32_t x, int32_t y);
 
-      OSPRAY_GLUT3D_INTERFACE virtual void keypress(char key, const vec2i &where);
-      OSPRAY_GLUT3D_INTERFACE virtual void specialkey(int32_t key, const vec2i &where);
+      OSPRAY_GLUT3D_INTERFACE virtual void keypress(char key,
+                                                    const vec2i &where);
+      OSPRAY_GLUT3D_INTERFACE virtual void specialkey(int32_t key,
+                                                      const vec2i &where);
     };
 
     std::ostream &operator<<(std::ostream &o, const Glut3DWidget::ViewPort &cam);

@@ -57,6 +57,10 @@ ENDIF()
 INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS})
 INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS})
 
+SET(EMBREE_INCLUDE_DIRS    ${EMBREE_INCLUDE_DIRS}    PARENT_SCOPE)
+SET(EMBREE_LIBRARY         ${EMBREE_LIBRARY}         PARENT_SCOPE)
+SET(EMBREE_LIBRARY_XEONPHI ${EMBREE_LIBRARY_XEONHPI} PARENT_SCOPE)
+
 # -------------------------------------------------------
 # Setup ospray source files
 # -------------------------------------------------------

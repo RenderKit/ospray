@@ -20,6 +20,9 @@ IF (OSPRAY_MODULE_TACHYON)
 
   CONFIGURE_OSPRAY()
 
+  # NOTE(jda) - To be removed when OSPCOMMON is merged for next release (?)
+  ADD_DEFINITIONS(-DDONT_WARN_INCLUDE_OSPCOMMON_H)
+
   # -------------------------------------------------------
   find_program(LEX_EXE flex)
   if(LEX_EXE STREQUAL "LEX_EXE-NOTFOUND")
@@ -59,9 +62,10 @@ IF (OSPRAY_MODULE_TACHYON)
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray)
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
   INCLUDE_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/)
+  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray)
-  INCLUDE_DIRECTORIES_ISPC(${EMBREE_DIR}/include)
+  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS})
 
   YACC_FILE(parser.yy)
   LEX_FILE(lexer.ll)
@@ -71,7 +75,7 @@ IF (OSPRAY_MODULE_TACHYON)
     TachyonRenderer.ispc
   )
 
-  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_tachyon ospray)
+  OSPRAY_LIBRARY_LINK_LIBRARIES(ospray_module_tachyon ospray ospray_common)
 
   IF (NOT THIS_IS_MIC)
     ADD_EXECUTABLE(ospTachyon 
@@ -81,6 +85,6 @@ IF (OSPRAY_MODULE_TACHYON)
       parser_y.cpp
       Loc.cpp
     )
-    TARGET_LINK_LIBRARIES(ospTachyon ospray ospray_glut3d)
+    TARGET_LINK_LIBRARIES(ospTachyon ospray ospray_common ospray_glut3d)
   ENDIF()
 ENDIF()
