@@ -14,6 +14,8 @@
 ## limitations under the License.                                           ##
 ## ======================================================================== ##
 
+CONFIGURE_OSPRAY()
+
 OSPRAY_ADD_LIBRARY(ospray_common SHARED
 # STATIC
   common.cpp
