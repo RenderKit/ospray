@@ -30,16 +30,32 @@ SET(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 FIND_PACKAGE(Threads REQUIRED)
 
 # -------------------------------------------------------
-# Build and configure embree
+# Find or build Embree
 # -------------------------------------------------------
 
-# NOTE(jda) - Embree assumes that USE_TBB will be defined correctly in
-#             CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
-# NOTE(jda) - Only do the embree include once (Xeon), it will build both
-#             Xeon and MIC code if both are enabled.
-IF (NOT THIS_IS_MIC)
-  INCLUDE(../cmake/build_embree.cmake)
+OPTION(OSPRAY_USE_EXTERNAL_EMBREE
+       "Use a pre-built Embree instead of the internally built version" OFF)
+
+IF(OSPRAY_USE_EXTERNAL_EMBREE)
+  # Find existing Embree on the machine
+  FIND_PACKAGE(embree 2.7.1 REQUIRED)
+ELSE()
+  # Build Embree included in the OSPRay tree
+
+  # NOTE(jda) - Embree assumes that USE_TBB will be defined correctly in
+  #             CONFIGURE_OSPRAY().CONFIGURE_TASKING_SYSTEM()
+  # NOTE(jda) - Only do the Embree include once (Xeon), it will build both
+  #             Xeon and MIC code if both are enabled.
+  IF (NOT THIS_IS_MIC)
+    INCLUDE(../cmake/build_embree.cmake)
+  ENDIF()
+  SET(EMBREE_INCLUDE_DIRS ${OSPRAY_EMBREE_SOURCE_DIR}/include)
+  SET(EMBREE_LIBRARY embree)
+  SET(EMBREE_LIBRARY_XEONPHI embree_xeonphi)
 ENDIF()
+
+INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRS})
+INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRS})
 
 # -------------------------------------------------------
 # Setup ospray source files
@@ -193,7 +209,7 @@ SET(OSPRAY_SOURCES
   api/LocalDevice.cpp
   )
 
-# NOTE(jda) - To be removed when OSPCOMMON is merged for next release
+# NOTE(jda) - To be removed when OSPCOMMON is merged for next release (?)
 ADD_DEFINITIONS(-DDONT_WARN_INCLUDE_OSPCOMMON_H)
 
 # -------------------------------------------------------
@@ -249,6 +265,7 @@ IF (OSPRAY_BUILD_COI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_DEVICE)
   MARK_AS_ADVANCED(LIBCOI_HOST)
   SET(OSPRAY_MIC_COI ON PARENT_SCOPE)
+  # NOTE(jda) - hardcoded paths (!)...use a find_package() here?
   INCLUDE_DIRECTORIES(/opt/intel/mic/coi/include)
   INCLUDE_DIRECTORIES(/usr/include/intel-coi)
   IF (THIS_IS_MIC)
@@ -277,12 +294,12 @@ OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
 
 IF (THIS_IS_MIC)
   OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-    embree_xeonphi
+    ${EMBREE_LIBRARY_XEONPHI}
     ${TBB_LIBRARIES_MIC}
   )
 ELSE()
   OSPRAY_LIBRARY_LINK_LIBRARIES(ospray
-    embree
+    ${EMBREE_LIBRARY}
     ${TBB_LIBRARIES}
   )
 ENDIF()
@@ -298,9 +315,11 @@ ENDIF()
 OSPRAY_SET_LIBRARY_VERSION(ospray)
 OSPRAY_INSTALL_LIBRARY(ospray)
 
-# build ospTutorial, for testing
-OSPRAY_ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial)
-OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+IF(NOT THIS_IS_MIC)
+  # build ospTutorial, for testing
+  ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial)
+  TARGET_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+ENDIF()
 
 
 ##############################################################
