@@ -24,6 +24,18 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   malloc.cpp
   library.cpp
   thread.cpp
+
+  AffineSpace.h
+  box.h
+  constants.h
+  intrinsics.h
+  LinearSpace.h
+  math.h
+  mpi.h
+  platform.h
+  Quaternion.h
+  RefCount.h
+  vec.h
 )
 
 		     
