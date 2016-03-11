@@ -20,9 +20,6 @@ IF (OSPRAY_MODULE_TACHYON)
 
   CONFIGURE_OSPRAY()
 
-  # NOTE(jda) - To be removed when OSPCOMMON is merged for next release (?)
-  ADD_DEFINITIONS(-DDONT_WARN_INCLUDE_OSPCOMMON_H)
-
   # -------------------------------------------------------
   find_program(LEX_EXE flex)
   if(LEX_EXE STREQUAL "LEX_EXE-NOTFOUND")
