@@ -40,8 +40,19 @@ namespace ospray {
     maxDepthTexture = (Texture2D*)getParamObject("maxDepthTexture", NULL);
     model = (Model*)getParamObject("model", getParamObject("world"));
 
-    if (maxDepthTexture && (maxDepthTexture->type != OSP_FLOAT || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)))
-      static WarnOnce warning("expected maxDepthTexture provided to the renderer to be type OSP_FLOAT and have the OSP_TEXTURE_FILTER_NEAREST flag");
+    if (maxDepthTexture) {
+      auto type = maxDepthTexture->type;
+      // NOTE(jda) - are these the right types?
+      bool isFloat = (type == OSP_TEXTURE_RGBA32F ||
+                      type == OSP_TEXTURE_RGB32F ||
+                      type == OSP_TEXTURE_R32F);
+
+      if (isFloat || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
+        static WarnOnce warning("expected maxDepthTexture provided to the "
+                                "renderer to be type OSP_FLOAT and have the "
+                                "OSP_TEXTURE_FILTER_NEAREST flag");
+      }
+    }
 
     vec3f bgColor;
     bgColor = getParam3f("bgColor", vec3f(1.f));
@@ -49,7 +60,8 @@ namespace ospray {
     if (getIE()) {
       ManagedObject* camera = getParamObject("camera");
       if (model) {
-        const float diameter = model->bounds.empty() ? 1.0f : length(model->bounds.size());
+        const float diameter = model->bounds.empty() ?
+                               1.0f : length(model->bounds.size());
         epsilon *= diameter;
       }
 

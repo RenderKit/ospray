@@ -60,16 +60,6 @@ ENDMACRO()
 # directories (names 'intel64' and 'mic', respectively)
 MACRO(CONFIGURE_OSPRAY)
   CONFIGURE_TASKING_SYSTEM()
-  # Embree common include directories; others may be added depending on build target.
-  # this section could be sooo much cleaner if embree only used
-  # fully-qualified include names...
-  SET(EMBREE_INCLUDE_DIRECTORIES
-#    ${OSPRAY_EMBREE_SOURCE_DIR}/
-    ${OSPRAY_EMBREE_SOURCE_DIR}/include
-#    ${OSPRAY_EMBREE_SOURCE_DIR}/common
-#    ${OSPRAY_EMBREE_SOURCE_DIR}/
-#    ${OSPRAY_EMBREE_SOURCE_DIR}/kernels
-  )
 
   IF (OSPRAY_TARGET STREQUAL "mic")
     SET(OSPRAY_EXE_SUFFIX ".mic")
@@ -79,9 +69,6 @@ MACRO(CONFIGURE_OSPRAY)
     SET(THIS_IS_MIC ON)
     SET(__XEON__ OFF)
     INCLUDE(${PROJECT_SOURCE_DIR}/cmake/icc_xeonphi.cmake)
-
-    # additional Embree include directory
-    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeonphi)
 
     SET(OSPRAY_TARGET_MIC ON PARENT_SCOPE)
   ELSE()
@@ -101,9 +88,6 @@ MACRO(CONFIGURE_OSPRAY)
     ELSE()
       MESSAGE(FATAL_ERROR "Unsupported compiler specified: '${CMAKE_CXX_COMPILER_ID}'")
     ENDIF()
-
-    # additional Embree include directory
-    LIST(APPEND EMBREE_INCLUDE_DIRECTORIES ${OSPRAY_EMBREE_SOURCE_DIR}/kernels/xeon)
 
     SET(OSPRAY_EMBREE_ENABLE_AVX512 false)
     IF (OSPRAY_BUILD_ISA STREQUAL "ALL")
@@ -187,11 +171,11 @@ MACRO(CONFIGURE_OSPRAY)
 
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
-  INCLUDE_DIRECTORIES(${EMBREE_INCLUDE_DIRECTORIES})
+  INCLUDE_DIRECTORIES(${OSPRAY_EMBREE_SOURCE_DIR}/include)
 
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR})
   INCLUDE_DIRECTORIES_ISPC(${PROJECT_SOURCE_DIR}/ospray/include)
-  INCLUDE_DIRECTORIES_ISPC(${EMBREE_INCLUDE_DIRECTORIES})
+  INCLUDE_DIRECTORIES_ISPC(${OSPRAY_EMBREE_SOURCE_DIR}/include)
 
   # for auto-generated cmakeconfig etc
   INCLUDE_DIRECTORIES(${PROJECT_BINARY_DIR})
