@@ -56,13 +56,13 @@ typedef void (*Renderer_RenderSampleFct)(uniform Renderer *uniform self,
 typedef void (*Renderer_ToneMapFct)(uniform Renderer *uniform self,
                                  varying vec3f &color,
                                  const varying vec2i &pixelID);
-typedef void (*Renderer_RenderTileFct)(uniform Renderer *uniform self,
+typedef unmasked void (*Renderer_RenderTileFct)(uniform Renderer *uniform self,
                                        void *uniform perFrameData,
                                        uniform Tile &tile,
                                        uniform int taskIndex);
-typedef void *uniform (*Renderer_BeginFrameFct)(uniform Renderer *uniform self,
+typedef unmasked void *uniform (*Renderer_BeginFrameFct)(uniform Renderer *uniform self,
                                        uniform FrameBuffer *uniform fb);
-typedef void (*Renderer_EndFrameFct)(uniform Renderer *uniform self,
+typedef unmasked void (*Renderer_EndFrameFct)(uniform Renderer *uniform self,
                                      void *uniform perFrameData,
                                      const uniform int32 newAccumID);
 

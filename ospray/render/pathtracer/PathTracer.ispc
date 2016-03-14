@@ -342,7 +342,7 @@ inline ScreenSample PathTracer_renderPixel(uniform PathTracer *uniform self,
 
 
 
-void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
+unmasked void *uniform PathTracer_beginFrame(uniform Renderer *uniform _self,
                                     uniform FrameBuffer *uniform fb)
 {
   _self->fb = fb;
@@ -379,7 +379,7 @@ void PathTracer_renderTileJob(uniform PathTracer *uniform self,
   }
 }
 
-void PathTracer_renderTile(uniform Renderer *uniform _self,
+unmasked void PathTracer_renderTile(uniform Renderer *uniform _self,
                            void *uniform perFrameData,
                            uniform Tile &tile,
                            uniform int jobID)

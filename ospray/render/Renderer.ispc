@@ -32,7 +32,7 @@ void Renderer_default_renderSample(uniform Renderer *uniform self,
                                  );
 }
 
-static void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
+static unmasked void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
                                                  uniform FrameBuffer *uniform fb)
 {
   self->fb = fb;
@@ -43,7 +43,7 @@ static void *uniform Renderer_default_beginFrame(uniform Renderer *uniform self,
   return NULL;
 }
 
-static void Renderer_default_endFrame(uniform Renderer *uniform self, 
+static unmasked void Renderer_default_endFrame(uniform Renderer *uniform self, 
                                       void *uniform perFrameData,
                                       const uniform int32 accumID)
 {
@@ -53,7 +53,7 @@ static void Renderer_default_endFrame(uniform Renderer *uniform self,
   }
 }
 
-void Renderer_default_renderTileJob(uniform Renderer *uniform self,
+unmasked void Renderer_default_renderTileJob(uniform Renderer *uniform self,
                                     void *uniform perFrameData,
                                     uniform Tile &tile,
                                     uniform int taskIndex)
