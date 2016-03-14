@@ -23,6 +23,7 @@
 #include "apps/common/xml/XML.h"
 // std
 #include <fstream>
+#include <set>
 
 namespace ospray {
   namespace miniSG {
@@ -201,7 +202,7 @@ namespace ospray {
           continue;
         }
         if (node->name == "Transform") {
-          affine3f xfm = embree::one;
+          affine3f xfm = ospcommon::one;
           parseTransform(model,xfm,node);
           /* ignore */
           continue;
@@ -212,7 +213,7 @@ namespace ospray {
 
     /*! import a list of X3D files */
     void importX3D(Model &model, 
-                   const embree::FileName &fileName)
+                   const ospcommon::FileName &fileName)
     {
       xml::XMLDoc *doc = xml::readXML(fileName);
       assert(doc);

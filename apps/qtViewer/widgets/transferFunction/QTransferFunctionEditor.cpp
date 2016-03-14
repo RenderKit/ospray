@@ -25,7 +25,7 @@ namespace ospray {
     float QTransferFunctionAlphaEditor::pointPixelRadius = 8.;
     float QTransferFunctionAlphaEditor::linePixelWidth   = 2.;
 
-    bool comparePointsByX(const ospray::vec2f &i, const ospray::vec2f &j)
+    bool comparePointsByX(const ospcommon::vec2f &i, const ospcommon::vec2f &j)
     {
       return (i.x < j.x);
     }
@@ -40,9 +40,9 @@ namespace ospray {
       colorMapImage.fill(QColor::fromRgbF(1,1,1,1).rgb());
 
       // default transfer function points
-      // points.push_back(ospray::vec2f(0.,1.));
-      points.push_back(ospray::vec2f(0.,0.));
-      points.push_back(ospray::vec2f(1.,1.));
+      // points.push_back(ospcommon::vec2f(0.,1.));
+      points.push_back(ospcommon::vec2f(0.,0.));
+      points.push_back(ospcommon::vec2f(1.,1.));
     }
 
     void QTransferFunctionAlphaEditor::setColorMapImage(const QImage &image)
@@ -109,7 +109,7 @@ namespace ospray {
       
         if(selectedPointIndex == -1) {
           // no point selected, create a new one
-          ospray::vec2f newPoint = widgetPointToPoint(widgetClickPoint);
+          ospcommon::vec2f newPoint = widgetPointToPoint(widgetClickPoint);
         
           // insert into points vector and sort ascending by x
           points.push_back(newPoint);
@@ -177,7 +177,7 @@ namespace ospray {
         return;
 
       QPointF widgetMousePoint = event->posF();
-      ospray::vec2f mousePoint = widgetPointToPoint(widgetMousePoint);
+      ospcommon::vec2f mousePoint = widgetPointToPoint(widgetMousePoint);
 
       // clamp x value
       if(selectedPointIndex == 0) {
@@ -204,14 +204,14 @@ namespace ospray {
       emit transferFunctionChanged();
     }
 
-    QPointF QTransferFunctionAlphaEditor::pointToWidgetPoint(const ospray::vec2f &point)
+    QPointF QTransferFunctionAlphaEditor::pointToWidgetPoint(const ospcommon::vec2f &point)
     {
       return QPointF(point.x * float(width()), 
                      (1.f - point.y) * float(height()));
     }
-    ospray::vec2f QTransferFunctionAlphaEditor::widgetPointToPoint(const QPointF &widgetPoint)
+    ospcommon::vec2f QTransferFunctionAlphaEditor::widgetPointToPoint(const QPointF &widgetPoint)
     {
-      return ospray::vec2f(float(widgetPoint.x()) / float(width()), 
+      return ospcommon::vec2f(float(widgetPoint.x()) / float(width()), 
                         1.f - float(widgetPoint.y()) / float(height()));
     }
 
@@ -301,57 +301,57 @@ namespace ospray {
     void QTransferFunctionEditor::setDefaultColorMaps() 
     {
       // color maps based on ParaView default color maps
-      std::vector<ospray::vec3f> colors;
+      std::vector<ospcommon::vec3f> colors;
 
       // jet
       colors.clear();
-      colors.push_back(ospray::vec3f(0         , 0           , 0.562493   ));
-      colors.push_back(ospray::vec3f(0         , 0           , 1          ));
-      colors.push_back(ospray::vec3f(0         , 1           , 1          ));
-      colors.push_back(ospray::vec3f(0.500008  , 1           , 0.500008   ));
-      colors.push_back(ospray::vec3f(1         , 1           , 0          ));
-      colors.push_back(ospray::vec3f(1         , 0           , 0          ));
-      colors.push_back(ospray::vec3f(0.500008  , 0           , 0          ));
+      colors.push_back(ospcommon::vec3f(0         , 0           , 0.562493   ));
+      colors.push_back(ospcommon::vec3f(0         , 0           , 1          ));
+      colors.push_back(ospcommon::vec3f(0         , 1           , 1          ));
+      colors.push_back(ospcommon::vec3f(0.500008  , 1           , 0.500008   ));
+      colors.push_back(ospcommon::vec3f(1         , 1           , 0          ));
+      colors.push_back(ospcommon::vec3f(1         , 0           , 0          ));
+      colors.push_back(ospcommon::vec3f(0.500008  , 0           , 0          ));
       addColorMap(new ColorMap("Jet", colors));
 
       // ice / fire
       colors.clear();
-      colors.push_back(ospray::vec3f(0         , 0           , 0           ));
-      colors.push_back(ospray::vec3f(0         , 0.120394    , 0.302678    ));
-      colors.push_back(ospray::vec3f(0         , 0.216587    , 0.524575    ));
-      colors.push_back(ospray::vec3f(0.0552529 , 0.345022    , 0.659495    ));
-      colors.push_back(ospray::vec3f(0.128054  , 0.492592    , 0.720287    ));
-      colors.push_back(ospray::vec3f(0.188952  , 0.641306    , 0.792096    ));
-      colors.push_back(ospray::vec3f(0.327672  , 0.784939    , 0.873426    ));
-      colors.push_back(ospray::vec3f(0.60824   , 0.892164    , 0.935546    ));
-      colors.push_back(ospray::vec3f(0.881376  , 0.912184    , 0.818097    ));
-      colors.push_back(ospray::vec3f(0.9514    , 0.835615    , 0.449271    ));
-      colors.push_back(ospray::vec3f(0.904479  , 0.690486    , 0           ));
-      colors.push_back(ospray::vec3f(0.854063  , 0.510857    , 0           ));
-      colors.push_back(ospray::vec3f(0.777096  , 0.330175    , 0.000885023 ));
-      colors.push_back(ospray::vec3f(0.672862  , 0.139086    , 0.00270085  ));
-      colors.push_back(ospray::vec3f(0.508812  , 0           , 0           ));
-      colors.push_back(ospray::vec3f(0.299413  , 0.000366217 , 0.000549325 ));
-      colors.push_back(ospray::vec3f(0.0157473 , 0.00332647  , 0           ));
+      colors.push_back(ospcommon::vec3f(0         , 0           , 0           ));
+      colors.push_back(ospcommon::vec3f(0         , 0.120394    , 0.302678    ));
+      colors.push_back(ospcommon::vec3f(0         , 0.216587    , 0.524575    ));
+      colors.push_back(ospcommon::vec3f(0.0552529 , 0.345022    , 0.659495    ));
+      colors.push_back(ospcommon::vec3f(0.128054  , 0.492592    , 0.720287    ));
+      colors.push_back(ospcommon::vec3f(0.188952  , 0.641306    , 0.792096    ));
+      colors.push_back(ospcommon::vec3f(0.327672  , 0.784939    , 0.873426    ));
+      colors.push_back(ospcommon::vec3f(0.60824   , 0.892164    , 0.935546    ));
+      colors.push_back(ospcommon::vec3f(0.881376  , 0.912184    , 0.818097    ));
+      colors.push_back(ospcommon::vec3f(0.9514    , 0.835615    , 0.449271    ));
+      colors.push_back(ospcommon::vec3f(0.904479  , 0.690486    , 0           ));
+      colors.push_back(ospcommon::vec3f(0.854063  , 0.510857    , 0           ));
+      colors.push_back(ospcommon::vec3f(0.777096  , 0.330175    , 0.000885023 ));
+      colors.push_back(ospcommon::vec3f(0.672862  , 0.139086    , 0.00270085  ));
+      colors.push_back(ospcommon::vec3f(0.508812  , 0           , 0           ));
+      colors.push_back(ospcommon::vec3f(0.299413  , 0.000366217 , 0.000549325 ));
+      colors.push_back(ospcommon::vec3f(0.0157473 , 0.00332647  , 0           ));
       addColorMap(new ColorMap("Ice / Fire", colors));
 
       // cool to warm
       colors.clear();
-      colors.push_back(ospray::vec3f(0.231373  , 0.298039    , 0.752941    ));
-      colors.push_back(ospray::vec3f(0.865003  , 0.865003    , 0.865003    ));
-      colors.push_back(ospray::vec3f(0.705882  , 0.0156863   , 0.14902     ));
+      colors.push_back(ospcommon::vec3f(0.231373  , 0.298039    , 0.752941    ));
+      colors.push_back(ospcommon::vec3f(0.865003  , 0.865003    , 0.865003    ));
+      colors.push_back(ospcommon::vec3f(0.705882  , 0.0156863   , 0.14902     ));
       addColorMap(new ColorMap("Cool to Warm", colors));
 
       // blue to red rainbow
       colors.clear();
-      colors.push_back(ospray::vec3f(0         , 0           , 1           ));
-      colors.push_back(ospray::vec3f(1         , 0           , 0           ));
+      colors.push_back(ospcommon::vec3f(0         , 0           , 1           ));
+      colors.push_back(ospcommon::vec3f(1         , 0           , 0           ));
       addColorMap(new ColorMap("Blue to Red Rainbow", colors));
 
       // grayscale
       colors.clear();
-      colors.push_back(ospray::vec3f(0.));
-      colors.push_back(ospray::vec3f(1.));
+      colors.push_back(ospcommon::vec3f(0.));
+      colors.push_back(ospcommon::vec3f(1.));
       addColorMap(new ColorMap("Grayscale", colors));
     }
 
@@ -384,7 +384,7 @@ namespace ospray {
     }
 
     QTransferFunctionEditor::ColorMap::ColorMap(const std::string &name, 
-                                                const std::vector<ospray::vec3f> &colors)
+                                                const std::vector<ospcommon::vec3f> &colors)
       : name(name), colors(colors)
     {}
 

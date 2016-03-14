@@ -17,10 +17,16 @@
 #pragma once
 
 #include "sg/common/Common.h"
+// ospcommon
+#include "common/RefCount.h"
+#include "common/AffineSpace.h"
+// std
+#include <vector>
 
 namespace ospray {
   namespace sg {
-    
+    typedef ospcommon::AffineSpace3f affine3f;
+
     /*! class one can use to serialize all nodes in the scene graph */
     struct Serialization {
       typedef enum { 
@@ -34,14 +40,14 @@ namespace ospray {
             instantiation vector */
         DONT_FOLLOW_INSTANCES
       } Mode;
-      struct Instantiation : public embree::RefCount {
+      struct Instantiation : public RefCount {
         Ref<Instantiation> parentWorld;
         affine3f           xfm;
 
-        Instantiation() : parentWorld(NULL), xfm(embree::one) {}
+        Instantiation() : parentWorld(NULL), xfm(one) {}
       };
       /*! describes one object that we encountered */
-      struct Object : public embree::RefCount {
+      struct Object : public RefCount {
         /*! the node itself */
         Ref<sg::Node>      node;  
 

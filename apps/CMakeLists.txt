@@ -68,7 +68,4 @@ IF(NOT THIS_IS_MIC)
  ENDIF(NOT WIN32)
 
 
-#	ADD_EXECUTABLE(test1 test1.cpp)
-#	TARGET_LINK_LIBRARIES(test1 ospray)
-
 ENDIF()

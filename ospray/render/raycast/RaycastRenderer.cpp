@@ -111,5 +111,11 @@ namespace ospray {
   RaycastRenderer_testFrame;
   OSP_REGISTER_RENDERER(RaycastRenderer_testFrame,testFrame);
 
+  /*! \brief Instantion of Ray Cast Renderer that renders a simple
+      test frame, without even calling postIntersct */
+  typedef RaycastRenderer<ispc::RaycastRenderer_create_rayDir>
+  RaycastRenderer_rayDir;
+  OSP_REGISTER_RENDERER(RaycastRenderer_rayDir,rayDir);
+
 } // ::ospray
 

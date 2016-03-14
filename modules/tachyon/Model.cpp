@@ -88,7 +88,7 @@ namespace ospray {
     }
 
     Model::Model()
-      : bounds(embree::empty),
+      : bounds(ospcommon::empty),
         camera(NULL),
         smoothTrisVA(NULL),
         backgroundColor(.1f),
@@ -240,7 +240,7 @@ namespace ospray {
         tessellateSphereOctant(va,sphere,dw,dvw,duw,depth-1);
         tessellateSphereOctant(va,sphere,duv,dvw,duw,depth-1);
       } else {
-        vec3i base = vec3f(va->coord.size());
+        vec3i base = vec3i(va->coord.size());
         va->coord.push_back(sphere.center+sphere.rad*du);
         va->coord.push_back(sphere.center+sphere.rad*dv);
         va->coord.push_back(sphere.center+sphere.rad*dw);
@@ -304,10 +304,10 @@ namespace ospray {
     void tessellateCylinder(VertexArray *va,Cylinder &cylinder)
     {
       vec3f dw = cylinder.apex - cylinder.base;
-      float l = embree::length(dw);
+      float l = length(dw);
 
-      embree::AffineSpace3f space;
-      space.l = embree::frame(normalize(dw));
+      AffineSpace3f space;
+      space.l = frame(normalize(dw));
       space.p = cylinder.base;
 
       vec3i base(va->coord.size());

@@ -17,12 +17,12 @@
 #include "SliceWidget.h"
 #include "SliceEditor.h"
 
-SliceWidget::SliceWidget(SliceEditor *sliceEditor, ospray::box3f boundingBox)
+SliceWidget::SliceWidget(SliceEditor *sliceEditor, ospcommon::box3f boundingBox)
   : boundingBox(boundingBox),
     originSliderAnimationDirection(1) 
 {  
   // Check parameters.
-  if(ospray::volume(boundingBox) <= 0.f)
+  if(ospcommon::volume(boundingBox) <= 0.f)
     throw std::runtime_error("invalid volume bounds");
 
   // Setup UI elements.
@@ -164,8 +164,8 @@ SliceParameters SliceWidget::getSliceParameters()
   SliceParameters sliceParameters;
 
   // Get the origin and normal values.
-  sliceParameters.origin = ospray::vec3f(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
-  sliceParameters.normal = ospray::vec3f(float(normalXSpinBox.value()), float(normalYSpinBox.value()), float(normalZSpinBox.value()));
+  sliceParameters.origin = ospcommon::vec3f(float(originXSpinBox.value()), float(originYSpinBox.value()), float(originZSpinBox.value()));
+  sliceParameters.normal = ospcommon::vec3f(float(normalXSpinBox.value()), float(normalYSpinBox.value()), float(normalZSpinBox.value()));
 
   return sliceParameters;
 }
@@ -258,15 +258,15 @@ void SliceWidget::originSliderValueChanged(int value) {
   float sliderPosition = float(value) / float(originSlider.maximum() - originSlider.minimum());
 
   // Get origin and (normalized) normal vectors.
-  ospray::vec3f origin(originXSpinBox.value(), originYSpinBox.value(), originZSpinBox.value());
-  ospray::vec3f normal = normalize(ospray::vec3f(normalXSpinBox.value(), normalYSpinBox.value(), normalZSpinBox.value()));
+  ospcommon::vec3f origin(originXSpinBox.value(), originYSpinBox.value(), originZSpinBox.value());
+  ospcommon::vec3f normal = normalize(ospcommon::vec3f(normalXSpinBox.value(), normalYSpinBox.value(), normalZSpinBox.value()));
 
   // Compute allowed range along normal for the volume bounds.
-  ospray::vec3f upper(normal.x >= 0.f ? boundingBox.upper.x : boundingBox.lower.x,
+  ospcommon::vec3f upper(normal.x >= 0.f ? boundingBox.upper.x : boundingBox.lower.x,
                    normal.y >= 0.f ? boundingBox.upper.y : boundingBox.lower.y,
                    normal.z >= 0.f ? boundingBox.upper.z : boundingBox.lower.z);
 
-  ospray::vec3f lower(normal.x >= 0.f ? boundingBox.lower.x : boundingBox.upper.x,
+  ospcommon::vec3f lower(normal.x >= 0.f ? boundingBox.lower.x : boundingBox.upper.x,
                    normal.y >= 0.f ? boundingBox.lower.y : boundingBox.upper.y,
                    normal.z >= 0.f ? boundingBox.lower.z : boundingBox.upper.z);
 
@@ -281,7 +281,7 @@ void SliceWidget::originSliderValueChanged(int value) {
   t = std::max(std::min(t, tMax-epsilon), tMin+epsilon);
 
   // Compute updated origin, clamped within the volume bounds.
-  ospray::vec3f updatedOrigin = clamp(origin + t*normal, boundingBox.lower, boundingBox.upper);
+  ospcommon::vec3f updatedOrigin = clamp(origin + t*normal, boundingBox.lower, boundingBox.upper);
 
   // Finally, set the new origin value.
   originXSpinBox.setValue(updatedOrigin.x);

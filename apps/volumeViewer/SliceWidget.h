@@ -17,13 +17,13 @@
 #pragma once
 
 #include <ospray/ospray.h>
-#include "ospray/common/OSPCommon.h"
+#include "common/box.h"
 #include <QtGui>
 
 struct SliceParameters
 {
-  ospray::vec3f origin;
-  ospray::vec3f normal;
+  ospcommon::vec3f origin;
+  ospcommon::vec3f normal;
 };
 
 class SliceEditor;
@@ -35,7 +35,7 @@ Q_OBJECT
 
 public:
 
-  SliceWidget(SliceEditor *sliceEditor, ospray::box3f boundingBox);
+  SliceWidget(SliceEditor *sliceEditor, ospcommon::box3f boundingBox);
   ~SliceWidget();
 
   SliceParameters getSliceParameters();
@@ -60,7 +60,7 @@ protected slots:
 protected:
 
   //! Bounding box of the volume.
-  ospray::box3f boundingBox;
+  ospcommon::box3f boundingBox;
 
   //! UI elements.
   QDoubleSpinBox originXSpinBox;

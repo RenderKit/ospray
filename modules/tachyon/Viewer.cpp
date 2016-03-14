@@ -205,9 +205,9 @@ namespace ospray {
         ospSet1i(renderer,"do_shadows",doShadows);
         ospCommit(renderer);
 
-      };
+      }
 
-      virtual void keypress(char key, const vec2f where)
+      void keypress(char key, const vec2i &where) override
       {
         switch (key) {
         case 'X':

@@ -16,9 +16,10 @@
 
 #pragma once
 
-#include "ospray/common/OSPCommon.h"
+// own
+#include "VolumeFile.h"
+// std
 #include <string>
-#include "modules/loaders/VolumeFile.h"
 
 //! \brief A concrete implementation of the VolumeFile class for reading
 //!  voxel data stored in a file on disk as a single monolithic brick,

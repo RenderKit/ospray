@@ -96,6 +96,8 @@ IF(NOT WIN32)
   INCLUDE(cmake/doxygen.cmake)
 ENDIF()
 
+OSPRAY_CONFIGURE_COMPILER()
+
 ##############################################################
 # create binary packages; before any INSTALL() invocation/definition
 ##############################################################
@@ -103,13 +105,22 @@ ENDIF()
 INCLUDE(package)
 
 ##############################################################
-# the OSPRay library
+# the OSPRay 'common' library
 ##############################################################
-
-OSPRAY_CONFIGURE_COMPILER()
 
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR})
 INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
+SET(OSPRAY_TARGET "intel64")
+ADD_SUBDIRECTORY(common builddir/ospray_common/intel64)
+IF (OSPRAY_MIC)
+  SET(OSPRAY_TARGET "mic")
+  ADD_SUBDIRECTORY(common builddir/ospray_common/mic)
+ENDIF()
+
+##############################################################
+# the OSPRay library
+##############################################################
+
 SET(OSPRAY_TARGET "intel64")
 ADD_SUBDIRECTORY(ospray builddir/ospray/intel64)
 IF (OSPRAY_MIC)

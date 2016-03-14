@@ -18,7 +18,9 @@
 #include "Module.h"
 #include "../common/RuntimeError.h"
 // ospray
-#include "ospray/common/Library.h"
+#include "common/common.h"
+// std
+#include <set>
 
 /*! \file sg/module/Module.cpp Defines the interface for writing
     ospray::sg modules */
@@ -38,8 +40,8 @@ namespace ospray {
       const std::string libName = "ospray_sg_"+moduleName;
       const std::string symName = "ospray_sg_"+moduleName+"_init";
       
-      ospray::loadLibrary(libName);
-      void *sym = ospray::getSymbol(symName);
+      ospcommon::loadLibrary(libName);
+      void *sym = ospcommon::getSymbol(symName);
       if (!sym)
         throw sg::RuntimeError("could not load module '"+moduleName+"' (symbol '"+symName+"' not found)");
 

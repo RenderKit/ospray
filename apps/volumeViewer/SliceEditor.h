@@ -29,7 +29,7 @@ Q_OBJECT
 
 public:
 
-  SliceEditor(ospray::box3f boundingBox);
+  SliceEditor(ospcommon::box3f boundingBox);
 
 signals:
 
@@ -44,7 +44,7 @@ public slots:
 protected:
 
   //! Bounding box of the volume.
-  ospray::box3f boundingBox;
+  ospcommon::box3f boundingBox;
 
   //! UI elements.
   QVBoxLayout layout;

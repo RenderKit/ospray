@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <string>
-#include "ospray/include/ospray/ospray.h"
+#include "ospray/ospray.h"
 
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.

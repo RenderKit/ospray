@@ -17,9 +17,11 @@
 #include "ModelViewer.h"
 #include "widgets/affineSpaceManipulator/HelperGeometry.h"
 #include "FPSCounter.h"
-
+// sg
 #include "sg/SceneGraph.h"
 #include "sg/Renderer.h"
+// std
+#include <sstream>
 
 namespace ospray {
   namespace viewer {

@@ -18,7 +18,7 @@
 
 #include "Thread.h"
 // embree
-# include "common/sys/thread.h"
+# include "common/thread.h"
 
 namespace ospray {
 
@@ -27,7 +27,7 @@ namespace ospray {
     Thread *t = (Thread *)arg;
     if (t->desiredThreadID >= 0) {
       printf("pinning to thread %i\n",t->desiredThreadID);
-      embree::setAffinity(t->desiredThreadID);
+      ospcommon::setAffinity(t->desiredThreadID);
     }
 
     t->run();
@@ -35,14 +35,14 @@ namespace ospray {
 
   void Thread::join() 
   { 
-    embree::join(tid); 
+    ospcommon::join(tid); 
   }
 
   /*!  start thread execution */
   void Thread::start(int threadID)
   {
     desiredThreadID = threadID;
-    this->tid = embree::createThread(&ospray_Thread_runThread,this);
+    this->tid = ospcommon::createThread(&ospray_Thread_runThread,this);
   }
 
 }

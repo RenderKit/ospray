@@ -23,7 +23,7 @@ namespace ospray {
       : model(&model) 
     {
       mesh = new Mesh;
-      mesh->bounds = embree::empty;
+      mesh->bounds = ospcommon::empty;
     }
 
     void ImportHelper::finalize()
@@ -39,7 +39,7 @@ namespace ospray {
     }
 
     /*! find given vertex and return its ID, or add if it doesn't yet exist */
-    uint32 ImportHelper::addVertex(const vec3f &position)
+    uint32_t ImportHelper::addVertex(const vec3f &position)
     {
       Assert(mesh);
       if (known_positions.find(position) == known_positions.end()) {

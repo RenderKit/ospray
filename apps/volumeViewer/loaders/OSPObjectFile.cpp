@@ -14,13 +14,16 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "ospray/common/OSPCommon.h"
+// our own
+#include "OSPObjectFile.h"
+#include "TriangleMeshFile.h"
+#include "VolumeFile.h"
+// ospcommon
+#include "common/common.h"
+// std
 #include <libgen.h>
 #include <string>
 #include <string.h>
-#include "modules/loaders/OSPObjectFile.h"
-#include "modules/loaders/TriangleMeshFile.h"
-#include "modules/loaders/VolumeFile.h"
 
 OSPObject *OSPObjectFile::importObjects()
 {

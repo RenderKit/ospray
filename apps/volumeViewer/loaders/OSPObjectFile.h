@@ -16,9 +16,9 @@
 
 #pragma once
 
-#include "modules/loaders/RawVolumeFile.h"
-#include "modules/loaders/ObjectFile.h"
-#include "modules/loaders/TinyXML2.h"
+#include "RawVolumeFile.h"
+#include "ObjectFile.h"
+#include "TinyXML2.h"
 // stl
 #include <map>
 

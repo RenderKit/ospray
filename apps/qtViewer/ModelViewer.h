@@ -16,6 +16,8 @@
 
 #pragma once
 
+#define WARN_ON_INCLUDING_OSPCOMMON 1
+
 // widgets
 #include "widgets/affineSpaceManipulator/QAffineSpaceManipulator.h"
 #include "widgets/transferFunction/QTransferFunctionEditor.h"

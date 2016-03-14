@@ -103,7 +103,7 @@ namespace ospray {
     </dl>
 
    */
-  struct ManagedObject : public embree::RefCount
+  struct ManagedObject : public RefCount
   {
     /*! \brief constructor */
     ManagedObject();

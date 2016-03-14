@@ -17,7 +17,7 @@
 #include "VolumeViewer.h"
 #include "PreferencesDialog.h"
 
-PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospray::box3f boundingBox) : QDialog(volumeViewer), volumeViewer(volumeViewer)
+PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospcommon::box3f boundingBox) : QDialog(volumeViewer), volumeViewer(volumeViewer)
 {
   setWindowTitle("Preferences");
 
@@ -91,12 +91,12 @@ PreferencesDialog::PreferencesDialog(VolumeViewer *volumeViewer, ospray::box3f b
 
 void PreferencesDialog::updateVolumeClippingBox()
 {
-  ospray::vec3f lower(volumeClippingBoxSpinBoxes[0]->value(), 
+  ospcommon::vec3f lower(volumeClippingBoxSpinBoxes[0]->value(), 
                       volumeClippingBoxSpinBoxes[1]->value(), 
                       volumeClippingBoxSpinBoxes[2]->value());
-  ospray::vec3f upper(volumeClippingBoxSpinBoxes[3]->value(), 
+  ospcommon::vec3f upper(volumeClippingBoxSpinBoxes[3]->value(), 
                       volumeClippingBoxSpinBoxes[4]->value(), 
                       volumeClippingBoxSpinBoxes[5]->value());
 
-  volumeViewer->setVolumeClippingBox(ospray::box3f(lower, upper));
+  volumeViewer->setVolumeClippingBox(ospcommon::box3f(lower, upper));
 }

@@ -38,7 +38,7 @@ namespace ospray {
 
     box3f Spheres::getBounds() 
     {
-      box3f bounds = embree::empty;
+      box3f bounds = empty;
       for (size_t i=0;i<sphere.size();i++)
         bounds.extend(sphere[i].getBounds());
       return bounds;

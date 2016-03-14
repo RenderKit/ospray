@@ -17,9 +17,6 @@
 #include "LocalFB.h"
 #include "LocalFB_ispc.h"
 
-using embree::alignedFree;
-using embree::alignedMalloc;
-
 namespace ospray {
 
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,

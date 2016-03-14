@@ -22,7 +22,6 @@
 # include "ospray/mpi/MPICommon.h"
 #endif
 
-
 // ospray
 #include "TriangleMesh.h"
 #include "ospray/common/Model.h"
@@ -186,7 +185,7 @@ namespace ospray {
                  (void*)this->index,0,
                  sizeOf(indexData->type));
 
-    bounds = embree::empty;
+    bounds = empty;
     
     for (int i=0;i<numVerts*numCompsInVtx;i+=numCompsInVtx) 
       bounds.extend(*(vec3f*)(vertex + i));

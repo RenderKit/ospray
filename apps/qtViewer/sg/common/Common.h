@@ -16,14 +16,23 @@
 
 #pragma once
 
+#define WARN_ON_INCLUDING_OSPCOMMON 1
+
 // ospray API
 #include "ospray/ospray.h"
-// ospray 
-#include "ospray/common/OSPCommon.h"
+// ospcommon 
+#include "common/common.h"
+#include "common/vec.h"
+#include "common/box.h"
+#include "common/AffineSpace.h"
 // STL
 
 namespace ospray {
   namespace sg {
+    using namespace ospcommon;
+
+    typedef AffineSpace3f affine3f;
+    typedef LinearSpace3f linear3f;
 
 #define THROW_SG_ERROR(where,err) \
     throw std::runtime_error("in "+std::string(__PRETTY_FUNCTION__)+":"+std::string(err));

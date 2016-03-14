@@ -14,9 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#include "VolumeFile.h"
 #include <map>
-#include "ospray/common/Library.h"
-#include "modules/loaders/VolumeFile.h"
 
 OSPVolume VolumeFile::importVolume(const std::string &filename, OSPVolume volume)
 {
@@ -40,7 +39,7 @@ OSPVolume VolumeFile::importVolume(const std::string &filename, OSPVolume volume
   std::string creationFunctionName = "ospray_import_volume_file_" + std::string(type);
 
   // Look for the named function.
-  symbolRegistry[type] = (creationFunctionPointer) ospray::getSymbol(creationFunctionName);
+  symbolRegistry[type] = (creationFunctionPointer) ospcommon::getSymbol(creationFunctionName);
 
   // The named function may not be found of the requested subtype is not known.
   if (!symbolRegistry[type]) std::cerr << "  ospray_module_loaders::VolumeFile  WARNING: unrecognized file type '" + type + "'." << std::endl;
@@ -50,6 +49,6 @@ OSPVolume VolumeFile::importVolume(const std::string &filename, OSPVolume volume
 }
 
 #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-std::map<OSPVolume, ospray::vec2f> VolumeFile::voxelRangeOf;
+std::map<OSPVolume, ospcommon::vec2f> VolumeFile::voxelRangeOf;
 #endif
 

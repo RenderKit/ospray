@@ -49,7 +49,7 @@ namespace ospray {
 
       \note This is only the abstract base class, actual instantiations are
       the in the 'ParamT' template. */
-    struct Param : public embree::RefCount {
+    struct Param : public RefCount {
       /*! constructor. the passed name alwasys remains constant */
       Param(const std::string &name) : name(name) {};
       /*! return name of this parameter. the value is in the derived class */
@@ -79,7 +79,7 @@ namespace ospray {
       const affine3f xfm;        //!< affine geometry transform matrix
 
       //! create a new context
-      RenderContext() : world(NULL), integrator(NULL), xfm(embree::one) {};
+      RenderContext() : world(NULL), integrator(NULL), xfm(one) {};
 
       //! create a new context with new transformation matrix
       RenderContext(const RenderContext &other, const affine3f &newXfm)
@@ -88,7 +88,7 @@ namespace ospray {
     };
 
     /*! \brief base node of all scene graph nodes */
-    struct Node : public embree::RefCount
+    struct Node : public RefCount
     {
       Node() : lastModified(1), lastCommitted(0) {};
 
@@ -135,8 +135,8 @@ namespace ospray {
         This function can be used by the viewer(s) for calibrating
         camera motion, setting default camera position, etc. Nodes
         for which that does not apply can simpy return
-        box3f(embree::empty) */
-      virtual box3f getBounds() { return box3f(embree::empty); };
+        box3f(empty) */
+      virtual box3f getBounds() { return box3f(empty); };
 
       //! return when this node was last modified
       inline TimeStamp getLastModified()  const { return lastModified; };

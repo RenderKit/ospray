@@ -21,12 +21,13 @@
 #define  O_LARGEFILE  0
 #endif
 
+#define WARN_ON_INCLUDING_OSPCOMMON 1
+
 // header
-#include "ospray/common/Managed.h"
-#include "ospray/common/Data.h"
 #include "miniSG.h"
 // stl
 #include <map>
+#include <sstream>
 // // libxml
 #include "apps/common/xml/XML.h"
 // stdlib, for mmap
@@ -52,7 +53,7 @@ namespace ospray {
     unsigned char *binBasePtr = NULL;
 
     /*! Base class for all scene graph node types */
-    struct Node : public embree::RefCount
+    struct Node : public ospcommon::RefCount
     {
       virtual string toString() const { return "ospray::miniSG::Node"; } 
 
@@ -338,31 +339,31 @@ namespace ospray {
               } else if (!childType.compare("int")) {
                 //This *could* be a texture, handle it!
                 if(childName.find("map_") == std::string::npos) {
-                  mat->setParam(childName.c_str(), (int32)atol(s));
+                  mat->setParam(childName.c_str(), (int32_t)atol(s));
                 } else {
-                  Texture2D* tex = mat->textures[(int32)atol(s)].ptr;
+                  Texture2D* tex = mat->textures[(int32_t)atol(s)].ptr;
                   mat->setParam(childName.c_str(), (void*)tex, Material::Param::TEXTURE);
                 }
               } else if (!childType.compare("int2")) {
-                int32 x = atol(s);
+                int32_t x = atol(s);
                 s = NEXT_TOK;
-                int32 y = atol(s);
+                int32_t y = atol(s);
                 mat->setParam(childName.c_str(), vec2i(x,y));
               } else if (!childType.compare("int3")) {
-                int32 x = atol(s);
+                int32_t x = atol(s);
                 s = NEXT_TOK;
-                int32 y = atol(s);
+                int32_t y = atol(s);
                 s = NEXT_TOK;
-                int32 z = atol(s);
+                int32_t z = atol(s);
                 mat->setParam(childName.c_str(), vec3i(x,y,z));
               } else if (!childType.compare("int4")) {
-                int32 x = atol(s);
+                int32_t x = atol(s);
                 s = NEXT_TOK;
-                int32 y = atol(s);
+                int32_t y = atol(s);
                 s = NEXT_TOK;
-                int32 z = atol(s);
+                int32_t z = atol(s);
                 s = NEXT_TOK;
-                int32 w = atol(s);
+                int32_t w = atol(s);
                 mat->setParam(childName.c_str(), vec4i(x,y,z,w));
               } else {
                 //error!
@@ -651,7 +652,7 @@ namespace ospray {
       return node;
     }
 
-    void traverseSG(Model &model, Ref<miniSG::Node> &node, const affine3f &xfm=embree::one)
+    void traverseSG(Model &model, Ref<miniSG::Node> &node, const affine3f &xfm=ospcommon::one)
     {
       Group *g = dynamic_cast<Group *>(node.ptr);
       if (g) {
@@ -760,7 +761,7 @@ namespace ospray {
     }
 
     /*! import a wavefront OBJ file, and add it to the specified model */
-    void importRIVL(Model &model, const embree::FileName &fileName)
+    void importRIVL(Model &model, const ospcommon::FileName &fileName)
     {
       nodeList.clear();
       Ref<miniSG::Node> sg = importRIVL(fileName);

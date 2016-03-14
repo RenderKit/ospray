@@ -14,20 +14,49 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
-#include "modules/loaders/OSPObjectFile.h"
-#include "modules/loaders/RawVolumeFile.h"
-#include "modules/loaders/RMVolumeFile.h"
-#include "modules/loaders/PLYTriangleMeshFile.h"
+#include <mpi.h>
+#include <stdexcept>
 
-// Loader for XML object files.
-OSP_REGISTER_OBJECT_FILE(OSPObjectFile, osp);
+#define MPI_CALL(cmd) { int rc = MPI_##cmd; if (rc != MPI_SUCCESS) throw std::runtime_error("mpi error"); }
 
-// Loader for RAW volume files.
-OSP_REGISTER_VOLUME_FILE(RawVolumeFile, raw);
-OSP_REGISTER_VOLUME_FILE(RawVolumeFile, gz);
+#define error(msg) throw std::runtime_error(msg)
+    
 
-// Loader for PLY triangle mesh files.
-OSP_REGISTER_TRIANGLEMESH_FILE(PLYTriangleMeshFile, ply);
+namespace ospcommon {
 
-// Loader for RAW volume files.
-OSP_REGISTER_VOLUME_FILE(RMVolumeFile, bob);
+  struct MPIComm {
+    MPI_Comm comm;
+    int size, rank, isInterComm;
+
+    void setTo(MPI_Comm comm);
+    void dupFrom(MPI_Comm comm);
+    void setSizeAndRank();
+  };
+
+  inline void MPIComm::setSizeAndRank() 
+  {
+    MPI_CALL(Comm_test_inter(comm,&isInterComm));
+    if (isInterComm) {
+      MPI_CALL(Comm_remote_size(comm,&size));
+      rank = -1;
+    } else {
+      MPI_CALL(Comm_size(comm,&size));
+      MPI_CALL(Comm_rank(comm,&rank));
+    }
+  }
+
+  inline void MPIComm::setTo(MPI_Comm comm)
+  { 
+    this->comm = comm;
+    setSizeAndRank();
+  }
+
+  inline void MPIComm::dupFrom(MPI_Comm comm)
+  { 
+    MPI_CALL(Comm_dup(comm,&this->comm));
+    setSizeAndRank();
+  }
+
+} // ::ospcommon
+
+

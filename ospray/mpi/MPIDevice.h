@@ -263,7 +263,7 @@ namespace ospray {
     // ==================================================================
 
     /*! return a string represenging the given API Mode */
-    const char *apiModeName(OSPDApiMode mode);
+    const char *apiModeName(int mode);
 
   } // ::ospray::mpi
 } // ::ospray

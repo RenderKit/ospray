@@ -14,6 +14,8 @@
 // limitations under the License.                                           //
 // ======================================================================== //
 
+#define WARN_ON_INCLUDING_OSPCOMMON 1
+
 // viewer widget
 #include "apps/common/widgets/glut3D.h"
 // mini scene graph for loading the model
@@ -23,8 +25,11 @@
 
 // stl
 #include <algorithm>
+#include <sstream>
 
 namespace ospray {
+  using namespace ospcommon;
+
   using std::cout;
   using std::endl;
   bool doShadows = 1;
@@ -47,7 +52,7 @@ namespace ospray {
   int maxAccum = 64;
   int spp = 1; /*! number of samples per pixel */
   int maxDepth = 2; // only set with home/end
-  unsigned int maxObjectsToConsider = (uint32)-1;
+  unsigned int maxObjectsToConsider = (uint32_t)-1;
   // if turned on, we'll put each triangle mesh into its own instance, no matter what
   bool forceInstancing = false;
   /*! if turned on we're showing the depth buffer rather than the (accum'ed) color buffer */
@@ -94,7 +99,7 @@ namespace ospray {
   // helper function to write the rendered image as PPM file
   void writePPM(const char *fileName,
       const int sizeX, const int sizeY,
-      const uint32 *pixel)
+      const uint32_t *pixel)
   {
     FILE *file = fopen(fileName, "wb");
     fprintf(file, "P6\n%i %i\n255\n", sizeX, sizeY);
@@ -189,7 +194,7 @@ namespace ospray {
       forceRedraw();
     }
 
-    void keypress(char key, const vec2f where) override
+    void keypress(char key, const vec2i &where) override
     {
       switch (key) {
       case 'R':
@@ -219,7 +224,7 @@ namespace ospray {
         forceRedraw();
         break;
       case '!': {
-        const uint32 * p = (uint32*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+        const uint32_t * p = (uint32_t*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
         writePPM("ospmodelviewer.ppm", g_windowSize.x, g_windowSize.y, p);
         // ospUnmapFrameBuffer(fb,p);
         printf("#ospModelViewer: saved current frame to 'ospmodelviewer.ppm'\n");
@@ -265,7 +270,7 @@ namespace ospray {
       }
     }
 
-    void specialkey(int32 key, const vec2f where) override
+    void specialkey(int32_t key, const vec2i &where) override
     {
       switch(key) {
       case GLUT_KEY_PAGE_UP:
@@ -295,7 +300,7 @@ namespace ospray {
       }
     }
 
-    void mouseButton(int32 whichButton, bool released, const vec2i &pos) override
+    void mouseButton(int32_t whichButton, bool released, const vec2i &pos) override
     {
       Glut3DWidget::mouseButton(whichButton, released, pos);
       if(currButtonState ==  (1<<GLUT_LEFT_BUTTON) && (glutGetModifiers() & GLUT_ACTIVE_SHIFT) && manipulator == inspectCenterManipulator) {
@@ -344,7 +349,7 @@ namespace ospray {
           double avgFps = fpsSum/double(frameID-g_benchWarmup);
           printf("Benchmark: time: %f avg fps: %f avg frame time: %f\n", time, avgFps, time/double(frameID-g_benchWarmup));
 
-          const uint32 * p = (uint32*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          const uint32_t * p = (uint32_t*)ospMapFrameBuffer(fb, OSP_FB_COLOR);
           writePPM("benchmark.ppm", g_windowSize.x, g_windowSize.y, p);
 
           exit(0);
@@ -379,7 +384,7 @@ namespace ospray {
         std::cout << "#ospModelViewer: Renderering offline image with " << numSPPinFileOutput << " samples per pixel per frame, and accumulation of " << numAccumsFrameInFileOutput << " such frames" << endl;
         for (int i=0;i<numAccumsFrameInFileOutput;i++) {
           ospRenderFrame(fb,renderer,OSP_FB_COLOR|OSP_FB_ACCUM);
-          ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+          ucharFB = (uint32_t *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
           std::cout << "#ospModelViewer: Saved rendered image (w/ "
                     << i << " accums) in " << outFileName << std::endl;
           writePPM(outFileName, g_windowSize.x, g_windowSize.y, ucharFB);
@@ -396,7 +401,7 @@ namespace ospray {
       ++accumID;
 
       // set the glut3d widget's frame buffer to the opsray frame buffer, then display
-      ucharFB = (uint32 *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
+      ucharFB = (uint32_t *) ospMapFrameBuffer(fb, OSP_FB_COLOR);
       frameBufferMode = Glut3DWidget::FRAMEBUFFER_UCHAR;
 
       Glut3DWidget::display();
@@ -624,7 +629,7 @@ namespace ospray {
       } else if (av[i][0] == '-') {
         error("unknown commandline argument '"+arg+"'");
       } else {
-        embree::FileName fn = arg;
+        FileName fn = arg;
         if (fn.ext() == "stl") {
           miniSG::importSTL(*msgModel,fn);
         } else if (fn.ext() == "msg") {
