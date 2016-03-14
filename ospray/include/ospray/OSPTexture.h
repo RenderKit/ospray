@@ -19,8 +19,7 @@
 
 /*! OSPRay format constants for Texture creation */
 typedef enum {
-  OSP_TEXTURE_RGBA8 = 0,// NOTE(jda) - ispc::Texture2D_create relies on the int
-                        //             values of this enum to work correctly!
+  OSP_TEXTURE_RGBA8,
   OSP_TEXTURE_SRGBA,
   OSP_TEXTURE_RGBA32F,
   OSP_TEXTURE_RGB8,
