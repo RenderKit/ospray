@@ -33,12 +33,14 @@ FIND_PACKAGE(Threads REQUIRED)
 # Find or build Embree
 # -------------------------------------------------------
 
+SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
+
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
        "Use a pre-built Embree instead of the internally built version" OFF)
 
 IF(OSPRAY_USE_EXTERNAL_EMBREE)
   # Find existing Embree on the machine
-  FIND_PACKAGE(embree 2.7.1 REQUIRED)
+  FIND_PACKAGE(embree ${REQUIRED_MINIMUM_EMBREE} REQUIRED)
 ELSE()
   # Build Embree included in the OSPRay tree
 
