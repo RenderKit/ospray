@@ -41,13 +41,8 @@ namespace ospray {
     model = (Model*)getParamObject("model", getParamObject("world"));
 
     if (maxDepthTexture) {
-      auto type = maxDepthTexture->type;
-      // NOTE(jda) - are these the right types?
-      bool isFloat = (type == OSP_TEXTURE_RGBA32F ||
-                      type == OSP_TEXTURE_RGB32F ||
-                      type == OSP_TEXTURE_R32F);
-
-      if (isFloat || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
+      if (maxDepthTexture->type != OSP_TEXTURE_R32F
+          || !(maxDepthTexture->flags & OSP_TEXTURE_FILTER_NEAREST)) {
         static WarnOnce warning("expected maxDepthTexture provided to the "
                                 "renderer to be type OSP_FLOAT and have the "
                                 "OSP_TEXTURE_FILTER_NEAREST flag");
