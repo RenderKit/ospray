@@ -87,9 +87,9 @@ static void Spheres_postIntersect(uniform Geometry *uniform geometry,
   }
 }
 
-void Spheres_bounds(uniform Spheres *uniform geometry,
-                    uniform size_t primID,
-                    uniform box3fa &bbox)
+unmasked void Spheres_bounds(uniform Spheres *uniform geometry,
+    uniform size_t primID,
+    uniform box3fa &bbox)
 {
   uniform uint8 *uniform spherePtr = geometry->data + geometry->bytesPerSphere*((uniform int64)primID);
   uniform bool offr = geometry->offset_radius >= 0;

@@ -45,9 +45,9 @@ struct Cylinders {
 
 typedef uniform float uniform_float;
 
-void Cylinders_bounds(uniform Cylinders *uniform geometry,
-                      uniform size_t primID,
-                      uniform box3fa &bbox)
+unmasked void Cylinders_bounds(uniform Cylinders *uniform geometry,
+    uniform size_t primID,
+    uniform box3fa &bbox)
 {
   uniform uint8 *uniform cylinderPtr = geometry->data + geometry->bytesPerCylinder*primID;
   uniform bool offr = geometry->offset_radius >= 0;
