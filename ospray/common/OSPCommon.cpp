@@ -123,7 +123,11 @@ namespace ospray {
     }
 
 #ifdef OSPRAY_USE_INTERNAL_TASKING
-    ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
+    try {
+      ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
+    } catch (const std::runtime_error &e) {
+      std::cerr << "WARNING: " << e.what() << std::endl;
+    }
 #endif
   }
 
