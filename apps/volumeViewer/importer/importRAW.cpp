@@ -254,6 +254,10 @@ namespace ospray {
         //   delete [] rowData;
         //   delete [] subvolumeRowData;
       }
+
+      volume->bounds = ospcommon::empty;
+      volume->bounds.extend(volume->gridOrigin);
+      volume->bounds.extend(volume->gridOrigin+ vec3f(volume->dimensions) * volume->gridSpacing);
       
       if (gzipped)
         pclose(file);

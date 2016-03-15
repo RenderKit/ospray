@@ -36,6 +36,10 @@ namespace ospray {
         importVolumeRAW(fileName,volume);
       else
         throw std::runtime_error("unknown volume format '"+ext+"'");
+
+      // post-checks
+      assert(volume->handle != NULL);
+      assert(!volume->bounds.empty());
     }
 
     vec2i parseInt2(const tinyxml2::XMLNode *node)
@@ -213,12 +217,21 @@ namespace ospray {
       exitOnCondition(xml.LoadFile(fileName.str().c_str()) != tinyxml2::XML_SUCCESS, 
                       "unable to read object file '" + fileName.str() + "'");
       
-      Group *group = new Group;
+      Group *group = existingGroupToAddTo ? existingGroupToAddTo : new Group;
 
       // Iterate over the object entries, skip the XML declaration and comments.
       for (const tinyxml2::XMLNode *node = xml.FirstChild() ; node ; node = node->NextSibling()) 
         if (node->ToElement()) 
           importObject(fileName,group,node); 
+
+      PRINT(group->volume.size());
+      PRINT(group->geometry.size());
+
+      // post-checks:
+      for (int i=0;i<group->volume.size();i++) {
+        assert(group->volume[i]->handle != NULL);
+        assert(!group->volume[i]->bounds.empty());
+      }
     }
   }
 }

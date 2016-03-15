@@ -103,29 +103,31 @@ void VolumeViewer::setModel(size_t index)
   ospCommit(renderer);
   rendererInitialized = true;
 
-  // Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
-  OSPVolume volume = modelStates[index].volumes[0]->handle;
-  ospcommon::vec2f voxelRange = modelStates[index].volumes[0]->voxelRange;
-// #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
-//   voxelRange = VolumeFile::voxelRangeOf[volume];
-// #else
-//   ospGetVec2f(modelStates[index].volumes[0], "voxelRange", (osp::vec2f*)&voxelRange);
-// #endif
-
-  if(voxelRange != ospcommon::vec2f(0.f)) {
-    transferFunctionEditor->setDataValueRange(voxelRange);
-    isosurfaceEditor->setDataValueRange(voxelRange);
+  PRINT(modelStates[index].volumes.size());
+  if (!modelStates[index].volumes.empty()) {
+    // Update transfer function and isosurface editor data value range with the voxel range of the current model's first volume.
+    OSPVolume volume = modelStates[index].volumes[0]->handle;
+    ospcommon::vec2f voxelRange = modelStates[index].volumes[0]->voxelRange;
+    // #ifdef OSPRAY_VOLUME_VOXELRANGE_IN_APP
+    //   voxelRange = VolumeFile::voxelRangeOf[volume];
+    // #else
+    //   ospGetVec2f(modelStates[index].volumes[0], "voxelRange", (osp::vec2f*)&voxelRange);
+    // #endif
+    
+    if(voxelRange != ospcommon::vec2f(0.f)) {
+      transferFunctionEditor->setDataValueRange(voxelRange);
+      isosurfaceEditor->setDataValueRange(voxelRange);
+    }
+    
+    // Update active volume on probe widget.
+    probeWidget->setVolume(modelStates[index].volumes[0]->handle);
+    
+    // Update current filename information label.
+    if (ownModelPerObject)
+      currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: Data value range: [") + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
+    else
+      currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
   }
-
-  // Update active volume on probe widget.
-  probeWidget->setVolume(modelStates[index].volumes[0]->handle);
-
-  // Update current filename information label.
-  if (ownModelPerObject)
-    currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: Data value range: [") + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
-  else
-    currentFilenameInfoLabel.setText("<b>Timestep " + QString::number(index) + QString("</b>: ") + QString(objectFileFilenames[index].c_str()).split('/').back() + ". Data value range: [" + QString::number(voxelRange.x) + ", " + QString::number(voxelRange.y) + "]");
-
   // Enable rendering on the OSPRay window.
   osprayWindow->setRenderingEnabled(true);
 }
@@ -415,10 +417,14 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
   // Load OSPRay objects from a file.
   //  OSPObject *objects = ObjectFile::importObjects(filename.c_str());
   ospray::vv_importer::Group *imported = ospray::vv_importer::import(filename);
-  
+  assert(imported);
+
 #if 1
+  PING;
   // Iterate over the GEOMETREIS contained in the object list.
-  for (size_t i=0 ; imported->geometry.size() ; i++) {
+  PRINT(imported->geometry.size());
+
+  for (size_t i=0 ; i < imported->geometry.size() ; i++) {
     if (ownModelPerObject)
       modelStates.push_back(ModelState(ospNewModel()));
     
@@ -432,21 +438,24 @@ void VolumeViewer::importObjectsFromFile(const std::string &filename)
       ospCommit(modelStates.back().model);
   }
   // Iterate over the objects contained in the object list.
-  for (size_t i=0 ; imported->volume.size() ; i++) {
+  for (size_t i=0 ; i < imported->volume.size() ; i++) {
     if (ownModelPerObject)
       modelStates.push_back(ModelState(ospNewModel()));
     
+    ospray::vv_importer::Volume *vol = imported->volume[i];
+    assert(vol);
     // For now we set the same transfer function on all volumes.
-    ospSetObject(imported->volume[i]->handle, "transferFunction", transferFunction);
-    ospCommit(imported->volume[i]->handle);
+    ospSetObject(vol->handle, "transferFunction", transferFunction);
+    ospCommit(vol->handle);
     
     // Add the loaded volume(s) to the model.
-    ospAddVolume(modelStates.back().model, imported->volume[i]->handle);
+    ospAddVolume(modelStates.back().model, vol->handle);
     
+    assert(!vol->bounds.empty());
     // Add to volumes vector for the current model.
-    modelStates.back().volumes.push_back(new ModelState::Volume(imported->volume[i]->handle,
-                                                                imported->volume[i]->bounds,
-                                                                imported->volume[i]->voxelRange
+    modelStates.back().volumes.push_back(new ModelState::Volume(vol->handle,
+                                                                vol->bounds,
+                                                                vol->voxelRange
                                                                 ));
 
     if (ownModelPerObject)
@@ -528,6 +537,7 @@ void VolumeViewer::initObjects(const std::string &renderer_type)
     for (size_t i=0; i<modelStates[0].volumes.size(); i++) 
       boundingBox.extend(modelStates[0].volumes[i]->boundingBox);
   }
+  PRINT(boundingBox);
   // // Get the bounding box of all volumes of the first model.
   // if(modelStates.size() > 0 && modelStates[0].volumes.size() > 0) {
   //   ospGetVec3f(modelStates[0].volumes[0], "boundingBoxMin", (osp::vec3f*)&boundingBox.lower);

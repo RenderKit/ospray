@@ -38,7 +38,9 @@ struct ModelState {
       : handle(handle), 
         boundingBox(boundingBox), 
         voxelRange(voxelRange)
-    {}
+    {
+      assert(!boundingBox.empty());
+    }
 
     OSPVolume handle;
     ospcommon::vec2f voxelRange;
