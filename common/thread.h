@@ -17,7 +17,6 @@
 #pragma once
 
 #include "platform.h"
-//#include "mutex.h"
 
 namespace ospcommon
 {
@@ -28,7 +27,8 @@ namespace ospcommon
   typedef void (*thread_func)(void*);
 
   /*! creates a hardware thread running on specific logical thread */
-  thread_t createThread(thread_func f, void* arg, size_t stack_size = 0, ssize_t threadID = -1);
+  thread_t createThread(thread_func f, void* arg,
+                        size_t stack_size = 0, ssize_t threadID = -1);
 
   /*! set affinity of the calling thread */
   void setAffinity(ssize_t affinity);

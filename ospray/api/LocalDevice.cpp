@@ -49,8 +49,6 @@ namespace ospray {
       else
         logLevel = 0;
 
-      ospray::init(_ac,&_av);
-
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
       // ospray::init() because in mpi-mode the latter is also called

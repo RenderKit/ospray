@@ -15,6 +15,9 @@
 // ======================================================================== //
 
 #include "OSPCommon.h"
+#ifdef OSPRAY_USE_INTERNAL_TASKING
+#  include "ospray/common/tasking/TaskSys.h"
+#endif
 // embree
 #include "embree2/rtcore.h"
 #include "common/sysinfo.h"
@@ -92,32 +95,36 @@ namespace ospray {
       throw std::runtime_error("Error. OSPRay only runs on CPUs that support at least SSE4.1.");
 #endif
 
-    if (!_ac || !_av)
-      return;
-
-    int &ac = *_ac;
-    char ** &av = *(char ***)_av;
-    for (int i=1;i<ac;) {
-      std::string parm = av[i];
-      if (parm == "--osp:debug") {
-        debugMode = true;
-        removeArgs(ac,av,i,1);
-      } else if (parm == "--osp:verbose") {
-        logLevel = 1;
-        removeArgs(ac,av,i,1);
-      } else if (parm == "--osp:vv") {
-        logLevel = 2;
-        removeArgs(ac,av,i,1);
-      } else if (parm == "--osp:loglevel") {
-        logLevel = atoi(av[i+1]);
-        removeArgs(ac,av,i,2);
-      } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
-        numThreads = atoi(av[i+1]);
-        removeArgs(ac,av,i,2);
-      } else {
-        ++i;
+    if (_ac && _av) {
+      int &ac = *_ac;
+      char ** &av = *(char ***)_av;
+      for (int i=1;i<ac;) {
+        std::string parm = av[i];
+        if (parm == "--osp:debug") {
+          debugMode = true;
+          numThreads = 1;
+          removeArgs(ac,av,i,1);
+        } else if (parm == "--osp:verbose") {
+          logLevel = 1;
+          removeArgs(ac,av,i,1);
+        } else if (parm == "--osp:vv") {
+          logLevel = 2;
+          removeArgs(ac,av,i,1);
+        } else if (parm == "--osp:loglevel") {
+          logLevel = atoi(av[i+1]);
+          removeArgs(ac,av,i,2);
+        } else if (parm == "--osp:numthreads" || parm == "--osp:num-threads") {
+          numThreads = atoi(av[i+1]);
+          removeArgs(ac,av,i,2);
+        } else {
+          ++i;
+        }
       }
     }
+
+#ifdef OSPRAY_USE_INTERNAL_TASKING
+    ospray::Task::initTaskSystem(debugMode ? 0 : numThreads);
+#endif
   }
 
   void error_handler(const RTCError code, const char *str)
