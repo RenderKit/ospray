@@ -20,8 +20,6 @@
 
 namespace ospray {
 
-#define TASKSYS_DEPENDENCIES 0
-
   struct __aligned(64) Task : public RefCount {
     // typedef enum { FRONT, BACK } ScheduleOrder;
 
@@ -30,19 +28,15 @@ namespace ospray {
     // ------------------------------------------------------------------
     Task(const char *name = "no name");
     virtual void run(size_t jobID) = 0;
-    virtual void finish() {}
-    virtual ~Task() {}
+    virtual void finish();
+    virtual ~Task();
     // ------------------------------------------------------------------
     // interface for scheduling a new task into the task system
     // ------------------------------------------------------------------
 
-    //! add a new dependecy: task cannot become active until this depdency has completed
+    //! add a new dependecy: task cannot become active until this depdency has
+    //! completed
     void addDependency(Task *dependency);
-    // //! add a new continuation: continuation automatically becomes
-    // //! active when current task completes. this means the
-    // //! continuation depends on the current task, BUT it might get
-    // //! active way before other tasks in the task queue
-    // void addContinuation(Task *continuation);
 
     typedef enum {
       /*! schedule job to the END of the job queue, meaning it'll get
@@ -54,7 +48,8 @@ namespace ospray {
       FRONT_OF_QUEUE
     } ScheduleOrder;
 
-    /*! the order in the queue that this job will get scheduled when activated */
+    /*! the order in the queue that this job will get scheduled when
+     *  activated */
     ScheduleOrder order;
 
     //! schedule the given task with the given number of
@@ -70,9 +65,6 @@ namespace ospray {
 
     //*! work on task until no more useful job available on this task
     void workOnIt();
-
-    //! one of our depdencies tells us that he's finished
-    void oneDependencyGotCompleted(Task *which);
 
     //! activate job, and insert into the task system. should never be
     //! called by the user, only by the task(system) whenever the task
@@ -90,17 +82,6 @@ namespace ospray {
     Condition __aligned(64) allDependenciesFulfilledCond;
     Condition __aligned(64) allJobsCompletedCond;
 
-#if TASKSYS_DEPENDENCIES
-    //! depdencies: WE cannot become active until those are fulfilled
-    std::vector<Task *> dependency;
-
-    //! dependents: none of those can ven get active before we complete
-    std::vector<Task *> dependent;
-#endif
-
-    // //! continuations: those become scheduled when we complete
-    // std::vector<Task *> continuations;
-
     __aligned(64) Task *volatile next;
     const char *name;
 
@@ -113,6 +94,8 @@ namespace ospray {
     static void initTaskSystem(const size_t numThreads);
   };
 
+// Inlined function definitions ///////////////////////////////////////////////
+
   __forceinline Task::Task(const char *name)
     : status(Task::INITIALIZING),
       name(name),
@@ -120,6 +103,14 @@ namespace ospray {
       numJobsCompleted(0),
       numJobsInTask(0),
       numMissingDependencies(0)
-  {}
+  {
+  }
 
-}
+  __forceinline Task::~Task()
+  {
+  }
+
+  __forceinline void Task::finish()
+  {
+  }
+}//namespace ospray

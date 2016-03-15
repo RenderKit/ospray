@@ -56,36 +56,8 @@ namespace ospray {
   
   TaskSys __aligned(64) TaskSys::global;
 
-    //! one of our depdencies tells us that he's finished
-  void Task::oneDependencyGotCompleted(Task *which)
-  {
-#if TASKSYS_DEPENDENCIES
-    {
-      embree::Lock<embree::MutexSys> lock(mutex);
-      if (--numMissingDependencies == 0) {
-        allDependenciesFulfilledCond.broadcast();
-        activate();
-      }
-    }
-#endif
-  }
-
   inline void Task::workOnIt() 
   {
-    // work on dependencies, until they are done
-    if (numMissingDependencies > 0) {
-#if TASKSYS_DEPENDENCIES
-      for (size_t i=0;i<dependency.size();i++) {
-        dependency[i]->workOnIt();
-      }
-      {
-        embree::Lock<embree::MutexSys> lock(mutex);
-        while (numMissingDependencies)
-          allDependenciesFulfilledCond.wait(mutex);
-      }
-#endif
-    }
-    
     size_t myCompleted = 0;
     while (1) {
       const size_t thisJobID = numJobsStarted++;
@@ -107,10 +79,6 @@ namespace ospray {
           status = Task::COMPLETED;
           allJobsCompletedCond.notify_all();
         }
-#if TASKSYS_DEPENDENCIES
-        for (int i=0;i<dependent.size();i++)
-          dependent[i]->oneDependencyGotCompleted(this);
-#endif
       }
     }
   }
@@ -262,4 +230,5 @@ namespace ospray {
     setAffinity(0);
 #endif
   }
+
 }
