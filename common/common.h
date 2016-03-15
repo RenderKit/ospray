@@ -23,11 +23,8 @@
 #include <stdexcept>
 
 #ifdef _WIN32
-  typedef unsigned long long id_t;
-#endif
-
-#if defined(__WIN32__) || defined(_WIN32)
 // ----------- windows only -----------
+typedef unsigned long long id_t;
 # define _USE_MATH_DEFINES 1
 # include <cmath>
 # include <math.h>
@@ -78,7 +75,7 @@ namespace ospcommon {
   OSPCOMMON_INTERFACE void doAssertion(const char *file, int line, const char *expr, const char *expl);
   /*! remove specified num arguments from an ac/av arglist */
   OSPCOMMON_INTERFACE void removeArgs(int &ac, char **&av, int where, int howMany);
-  OSPCOMMON_INTERFACE void  loadLibrary(const std::string &_name);
+  OSPCOMMON_INTERFACE void loadLibrary(const std::string &name);
   OSPCOMMON_INTERFACE void *getSymbol(const std::string &name);
 
 } // ::ospcommon

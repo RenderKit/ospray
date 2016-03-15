@@ -15,20 +15,42 @@
 // ======================================================================== //
 
 #include "common.h"
+// std
+#include <map>
+#include <string>
 
 namespace ospcommon {
 
-  /*! type for shared library */
-  typedef struct opaque_lib_t* lib_t;
-	  
-  /*! loads a shared library */
-  lib_t openLibrary(const std::string& file);
+  class Library
+  {
+    public:
+      /* opens a shared library */
+      Library(const std::string& name);
 
-  /*! returns address of a symbol from the library */
-  void* getSymbol(lib_t lib, const std::string& sym);
+      /* returns address of a symbol from the library */
+      void* getSymbol(const std::string& sym) const;
 
-  /*! unloads a shared library */
-  void closeLibrary(lib_t lib);
+    private:
+      Library(void* const lib);
+      void *lib;
+      friend class LibraryRepository;
+  };
 
+  class LibraryRepository
+  {
+    public:
+      static LibraryRepository* getInstance();
+
+      /* add a library to the repo */
+      void add(const std::string& name);
+
+      /* returns address of a symbol from any library in the repo */
+      void* getSymbol(const std::string& sym) const;
+
+    private:
+      static LibraryRepository* instance;
+      LibraryRepository();
+      std::map<std::string, Library*> repo;
+  };
 }
 
