@@ -407,6 +407,7 @@ namespace ospray {
 
     void ModelViewer::render()
     {
+      PING;
       sgRenderer->resetAccumulation();
       if (renderWidget) renderWidget->updateGL();
     }
