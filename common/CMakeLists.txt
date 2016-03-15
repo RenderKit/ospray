@@ -24,6 +24,7 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   malloc.cpp
   library.cpp
   thread.cpp
+  vec.cpp
 
   AffineSpace.h
   box.h

@@ -158,6 +158,7 @@ namespace ospray {
         sg::TransferFunction *xf = dynamic_cast<sg::TransferFunction *>
           (sgRenderer->uniqueNodes.object[i]->node.ptr);
         if (xf) xferFuncs.push_back(xf);
+        cout << "FOUND xf : " << xf << endl;
       }
       std::cout << "#osp:qtv: found " << xferFuncs.size()
                 << " transfer function nodes" << std::endl;
@@ -193,9 +194,18 @@ namespace ospray {
           // add combo box and stacked widget entries
           pageComboBox->addItem(tr(name.c_str()));
 
+          TransferFunction *xf = xferFuncs[i].ptr;
+          assert(xf);
           // create a transfer function editor for this transfer function node
           QOSPTransferFunctionEditor *xfEd
-            = new QOSPTransferFunctionEditor(xferFuncs[i]);
+            = new QOSPTransferFunctionEditor(xf);
+          const std::vector<std::pair<float,float> > &alpha = xf->getAlphaArray();
+          if (!alpha.empty()) {
+            std::vector<ospcommon::vec2f> points;
+            for (int i=0;i<alpha.size();i++)
+              points.push_back(vec2f(alpha[i].first,alpha[i].second));
+            xfEd->setOpacityPoints(points);
+          }
           stackedWidget->addWidget(xfEd);
           connect(xfEd, SIGNAL(transferFunctionChanged()),
                   this, SLOT(render()));
@@ -407,7 +417,6 @@ namespace ospray {
 
     void ModelViewer::render()
     {
-      PING;
       sgRenderer->resetAccumulation();
       if (renderWidget) renderWidget->updateGL();
     }

@@ -44,10 +44,11 @@ namespace ospray {
                                                   (ispc::vec3f *) colorValues->data);
 
     // Set the opacity values.
-    if (opacityValues) 
+    if (opacityValues) {
       ispc::LinearTransferFunction_setOpacityValues(ispcEquivalent, 
                                                     opacityValues->numItems, 
                                                     (float *)opacityValues->data);
+    }
 
     // Set the value range that the transfer function covers.
     vec2f valueRange = getParam2f("valueRange", vec2f(0.0f, 1.0f));  

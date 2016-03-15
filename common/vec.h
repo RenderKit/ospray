@@ -499,5 +499,15 @@ namespace ospcommon {
   typedef vec_t<float,4>    vec4f;
   typedef vec_t<double,4>   vec4d;
 
+  // -------------------------------------------------------
+  // parsing from strings
+  // -------------------------------------------------------
+  vec2f toVec2f(const char *ptr); 
+  vec3f toVec3f(const char *ptr);
+  vec4f toVec4f(const char *ptr);
+  vec2i toVec2i(const char *ptr); 
+  vec3i toVec3i(const char *ptr);
+  vec4i toVec4i(const char *ptr);
+
 
 } // ::ospcommon

@@ -40,25 +40,38 @@ namespace ospray {
       virtual void render(RenderContext &ctx);
 
       //! \brief Initialize this node's value from given corresponding XML node 
-      virtual void setFromXML(const xml::Node *const node) {}
+      virtual void setFromXML(const xml::Node *const node, 
+                              const unsigned char *binBasePtr);
       virtual void commit();
       
-      /*! set a new color map array */
+      // /*! set a new color map array (using array of uniformly samples colors) */
       void setColorMap(const std::vector<vec3f> &colorArray);
-      /*! set a new alpha map array */
-      void setAlphaMap(const std::vector<float> &alphaArray);
+      /*! set a new alpha map array - x coordinate is point pos, y is point alpha value */
+      void setAlphaMap(const std::vector<vec2f> &alphaArray);
+
+      const std::vector<std::pair<float,float> > &getAlphaArray() const
+      { return alphaArray; }
+
+      float getInterpolatedAlphaValue(float x);
 
       /*! return the ospray handle for this xfer fct, so we can assign
-          it to ospray obejcts that need a reference to the ospray
-          version of this xf */
+        it to ospray obejcts that need a reference to the ospray
+        version of this xf */
       OSPTransferFunction getOSPHandle() const { return ospTransferFunction; };
     protected:
       OSPTransferFunction ospTransferFunction;
       OSPData ospColorData;
       OSPData ospAlphaData;
+      // number of samples we'll use in the colordata and alphadata arrays
+      int numSamples;
 
-      std::vector<vec3f> colorArray;
-      std::vector<float> alphaArray;
+      // array of (x,color(x)) color samples; the first and last x
+      // determine the range of x'es, all values will be resampled
+      // uniformly into this range. samples must be sorted by x
+      // coordinate, and must span a non-empty range of x coordinates
+      std::vector<std::pair<float,vec3f> > colorArray;
+      // array of (x,alpha(x)) opacity samples; otherwise same as colorArray
+      std::vector<std::pair<float,float> > alphaArray;
     };    
     
   } // ::ospray::sg

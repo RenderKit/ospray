@@ -227,27 +227,27 @@ namespace ospray {
       return -1;
     }
 
-    float QTransferFunctionAlphaEditor::getInterpolatedValue(float x)
-    {
-      // boundary cases
-      if(x <= 0.)
-        return points[0].y;
+    // float QTransferFunctionAlphaEditor::getInterpolatedValue(float x)
+    // {
+    //   // boundary cases
+    //   if(x <= 0.)
+    //     return points[0].y;
       
-      if(x >= 1.)
-        return points[points.size()-1].y;
+    //   if(x >= 1.)
+    //     return points[points.size()-1].y;
 
-      // we could make this more efficient...
-      for(unsigned int i=0; i<points.size()-1; i++) {
-        if(x <= points[i+1].x) {
-          const float f = (x - points[i].x) / (points[i+1].x - points[i].x);
-          return (1.f-f)*points[i].y + f*points[i+1].y;
-        }
-      }
+    //   // we could make this more efficient...
+    //   for(unsigned int i=0; i<points.size()-1; i++) {
+    //     if(x <= points[i+1].x) {
+    //       const float f = (x - points[i].x) / (points[i+1].x - points[i].x);
+    //       return (1.f-f)*points[i].y + f*points[i+1].y;
+    //     }
+    //   }
 
-      // we shouldn't ever get to this point...
-      assert(false);
-      return 0.f;
-    }
+    //   // we shouldn't ever get to this point...
+    //   assert(false);
+    //   return 0.f;
+    // }
 
 
 
@@ -414,14 +414,15 @@ namespace ospray {
     
     void QOSPTransferFunctionEditor::updateAlphaMap()
     {
+      sgNode->setAlphaMap(transferFunctionAlphaEditor->getPoints());
       // PING;
-      const int numAlphas = 256;
-      std::vector<float> alphas;
-      for (int i=0;i<numAlphas;i++)
-        alphas.push_back(transferFunctionAlphaEditor->getInterpolatedValue(i/float(numAlphas-1)));
+      // const int numAlphas = 256;
+      // std::vector<float> alphas;
+      // for (int i=0;i<numAlphas;i++)
+      //   alphas.push_back(transferFunctionAlphaEditor->getInterpolatedValue(i/float(numAlphas-1)));
 
-      // PING;
-      sgNode->setAlphaMap(alphas);
+      // // PING;
+      // sgNode->setAlphaMap(alphas);
       // PING;
       sgNode->commit();
     //   PING;
