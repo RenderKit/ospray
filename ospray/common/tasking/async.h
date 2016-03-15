@@ -20,6 +20,8 @@
 #  include <tbb/task.h>
 #elif defined(OSPRAY_USE_CILK)
 #  include <cilk/cilk.h>
+#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+#  include "ospray/common/tasking/TaskSys.h"
 #endif
 
 namespace ospray {
@@ -31,25 +33,34 @@ namespace ospray {
 // NOTE(jda) - No priority is associated with this call, but could be added
 //             later with a hint enum, using a default value for the priority
 //             to not require specifying it.
-template<typename TASK>
-inline void async(const TASK& fcn)
+template<typename TASK_T>
+inline void async(const TASK_T& fcn)
 {
 #ifdef OSPRAY_USE_TBB
   struct LocalTBBTask : public tbb::task
   {
-    TASK func;
+    TASK_T func;
     tbb::task* execute() override
     {
       func();
       return nullptr;
     }
 
-    LocalTBBTask( const TASK& f ) : func(f) {}
+    LocalTBBTask( const TASK_T& f ) : func(f) {}
   };
 
   tbb::task::enqueue(*new(tbb::task::allocate_root())LocalTBBTask(fcn));
 #elif defined(OSPRAY_USE_CILK)
   cilk_spawn fcn();
+#elif defined(OSPRAY_USE_INTERNAL_TASKING)
+  struct LocalTask : public Task {
+    const TASK_T &t;
+    LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
+    void run(size_t) override { t(); }
+  };
+
+  Ref<LocalTask> task = new LocalTask(fcn);
+  task->schedule(1, Task::FRONT_OF_QUEUE);
 #else// OpenMP or Debug --> synchronous!
   fcn();
 #endif
