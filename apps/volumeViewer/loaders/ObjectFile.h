@@ -21,6 +21,10 @@
 #include <string>
 #include "ospray/ospray.h"
 
+struct LoadersObjects {
+  
+};
+
 //! \brief Define a function to create an instance of the InternalClass
 //!  associated with ExternalName.
 //!
@@ -31,8 +35,8 @@
 //!  module and registered with OSPRay using this macro.
 //! 
 #define OSP_REGISTER_OBJECT_FILE(InternalClass, ExternalName)           \
-  extern "C" OSPObject *ospray_import_object_file_##ExternalName(const std::string &filename) \
-    { InternalClass file(filename);  return(file.importObjects()); }
+  extern "C" LoadersObjects *ospray_import_object_file_##ExternalName(const std::string &filename) \
+  { InternalClass file(filename);  return(file.importObjects()); }
 
 //! \brief An ObjectFile is an abstraction for the concrete objects
 //!  used to load files containing one or more OSPRay objects.

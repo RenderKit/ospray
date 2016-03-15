@@ -23,7 +23,7 @@ INCLUDE_DIRECTORIES(${PROJECT_SOURCE_DIR}/ospray/include)
 # setup dependencies
 SET(LIBS ${LIBS} ospray)
 SET(LIBS ${LIBS} ospray_common)
-SET(LIBS ${LIBS} ospray_module_loaders)
+#SET(LIBS ${LIBS} ospray_module_loaders)
 SET(LIBS ${LIBS} ospray_module_opengl_util)
 
 # link optional loaders-based modules if built
@@ -55,6 +55,11 @@ SET(SRCS ${SRCS}
   SliceWidget.cpp
   TransferFunctionEditor.cpp
   VolumeViewer.cpp
+
+	importer/Importer.cpp
+	importer/importOSP.cpp
+	importer/importRAW.cpp
+	importer/TinyXML2.cpp
   )
 
 SET(MOC_HEADERS
@@ -74,7 +79,7 @@ SET(MOC_HEADERS
 
 QT4_WRAP_CPP(MOC_OUTFILES ${MOC_HEADERS})
 
-ADD_SUBDIRECTORY(loaders)
+#ADD_SUBDIRECTORY(loaders)
 ADD_EXECUTABLE(ospVolumeViewer ${SRCS} ${MOC_OUTFILES})
 TARGET_LINK_LIBRARIES(ospVolumeViewer ${LIBS})
 INSTALL(TARGETS ospVolumeViewer
