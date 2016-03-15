@@ -43,8 +43,8 @@ IF(NOT THIS_IS_MIC)
  IF(NOT WIN32)
   # NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
   #             unresolved issues
-  SET(OSX_AND_ICC (APPLE AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel"))
-
+  SET(OSX_AND_ICC OFF) 
+# iw: this doesn't work - it disables even on linux! (APPLE AND (${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")))
   # qt-based viewer for geometry (and soon volumes)
   IF(NOT OSX_AND_ICC)
     OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
