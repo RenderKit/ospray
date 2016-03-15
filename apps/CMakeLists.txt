@@ -41,10 +41,16 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
 
  IF(NOT WIN32)
+  # NOTE(jda) - Disable Qt based viewers when on OS X using ICC due to
+  #             unresolved issues
+  SET(OSX_AND_ICC (APPLE AND ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel"))
+
   # qt-based viewer for geometry (and soon volumes)
-  OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
-  IF (OSPRAY_APPS_QTVIEWER)
-    ADD_SUBDIRECTORY(qtViewer)
+  IF(NOT OSX_AND_ICC)
+    OPTION(OSPRAY_APPS_QTVIEWER "Build ospQtViewer (Qt-based model viewer)" ON)
+    IF (OSPRAY_APPS_QTVIEWER)
+      ADD_SUBDIRECTORY(qtViewer)
+    ENDIF()
   ENDIF()
 
   # stream line viewer for NASA Stream Line Demo
@@ -61,11 +67,11 @@ IF(NOT THIS_IS_MIC)
   ENDIF()
 
   # volume viewer application
-  OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
-  IF(OSPRAY_APPS_VOLUMEVIEWER)
-    ADD_SUBDIRECTORY(volumeViewer)
+  IF(NOT OSX_AND_ICC)
+    OPTION(OSPRAY_APPS_VOLUMEVIEWER "Build ospVolumeViewer application." ON)
+    IF(OSPRAY_APPS_VOLUMEVIEWER)
+      ADD_SUBDIRECTORY(volumeViewer)
+    ENDIF()
   ENDIF()
  ENDIF(NOT WIN32)
-
-
 ENDIF()
