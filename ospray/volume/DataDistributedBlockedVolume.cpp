@@ -169,7 +169,7 @@ namespace ospray {
     // Set the grid spacing, default to (1,1,1).
     this->gridSpacing = getParam3f("gridSpacing", vec3f(1.f));
 
-    numDDBlocks = embree::reduce_mul(ddBlocks);
+    numDDBlocks = ospcommon::reduce_mul(ddBlocks);
     ddBlock     = new DDBlock[numDDBlocks];
 
     printf("=======================================================\n");

@@ -424,6 +424,16 @@ namespace ospcommon {
   { return v.x+v.y+v.z+v.w; }
 
   template<typename T, int A>
+  inline T reduce_mul(const vec_t<T,2,A> &v)
+  { return v.x*v.y; }
+  template<typename T, int A>
+  inline T reduce_mul(const vec_t<T,3,A> &v)
+  { return v.x*v.y*v.z; }
+  template<typename T, int A>
+  inline T reduce_mul(const vec_t<T,4,A> &v)
+  { return v.x*v.y*v.z*v.w; }
+
+  template<typename T, int A>
   inline T reduce_min(const vec_t<T,2,A> &v)
   { return min(v.x,v.y); }
   template<typename T, int A>

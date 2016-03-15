@@ -35,9 +35,6 @@ FIND_PACKAGE(Threads REQUIRED)
 
 SET(REQUIRED_MINIMUM_EMBREE 2.7.1)
 
-OPTION(OSPRAY_USE_EXTERNAL_EMBREE
-       "Use a pre-built Embree instead of the internally built version" OFF)
-
 IF(OSPRAY_USE_EXTERNAL_EMBREE)
   # Clear out embree directories if they were previously populated by an
   # internal build
