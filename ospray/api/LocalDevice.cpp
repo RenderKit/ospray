@@ -44,10 +44,8 @@ namespace ospray {
     LocalDevice::LocalDevice(int *_ac, const char **_av)
     {
       char *logLevelFromEnv = getenv("OSPRAY_LOG_LEVEL");
-      if (logLevelFromEnv)
+      if (logLevelFromEnv && logLevel == 0)
         logLevel = atoi(logLevelFromEnv);
-      else
-        logLevel = 0;
 
       // -------------------------------------------------------
       // initialize embree. (we need to do this here rather than in
