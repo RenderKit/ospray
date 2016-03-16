@@ -16,13 +16,12 @@
 
 INCLUDE(GNUInstallDirs)
 
-SET(CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR})
-
 IF (OSPRAY_ZIP_MODE)
   # in tgz / zip let's have relative RPath
   SET(CMAKE_SKIP_INSTALL_RPATH OFF)
   IF (APPLE)
-    SET(CMAKE_INSTALL_RPATH "@executable_path/:@executable_path/../lib")
+    SET(CMAKE_MACOSX_RPATH ON)
+    SET(CMAKE_INSTALL_RPATH "@executable_path/" "@executable_path/../lib")
   ELSE()
     SET(CMAKE_INSTALL_RPATH "\$ORIGIN:\$ORIGIN/../lib")
     # on per target basis:
@@ -30,6 +29,7 @@ IF (OSPRAY_ZIP_MODE)
     #SET_TARGET_PROPERTIES(libs INSTALL_RPATH "$ORIGIN")
   ENDIF()
 ELSE()
+  SET(CMAKE_INSTALL_NAME_DIR ${CMAKE_INSTALL_FULL_LIBDIR})
   IF (APPLE)
     # use RPath on OSX
     SET(CMAKE_SKIP_INSTALL_RPATH OFF)
