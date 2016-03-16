@@ -37,3 +37,6 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   RefCount.h
   vec.h
 )
+
+OSPRAY_SET_LIBRARY_VERSION(ospray_common)
+OSPRAY_INSTALL_LIBRARY(ospray_common)
