@@ -103,18 +103,25 @@ namespace ospcommon {
   {
     // already populate the repo with "virtual" libs, representing the default OSPRay core lib
 #ifdef _WIN32
-    // look in exe (i.e. when linked statically)
+    // look in exe (i.e. when OSPRay is linked statically into the application)
     repo["exedefault"] = new Library(GetModuleHandle(0));
 
-    // get handle to current dll via a known function
+    // look in ospray.dll (i.e. when linked dynamically)
+#if 0
+    // we cannot get a function from ospray.dll, because this would create a
+    // cyclic dependency between ospray.dll and ospray_common.dll
+
+    // only works when ospray_common is liked statically into ospray
     const void * functionInOSPRayDLL = ospcommon::getSymbol;
+    // get handle to current dll via a known function
     MEMORY_BASIC_INFORMATION mbi;
     VirtualQuery(functionInOSPRayDLL, &mbi, sizeof(mbi));
-
-    // look in ospray.dll (i.e. when linked dynamically)
     repo["dlldefault"] = new Library(mbi.AllocationBase);
 #else
-    repo["default"] = new Library(RTLD_DEFAULT);
+    repo["ospray"] = new Library(std::string("ospray"));
+#endif
+#else
+    repo["ospray"] = new Library(RTLD_DEFAULT);
 #endif
   }
 }

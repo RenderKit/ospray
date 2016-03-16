@@ -17,7 +17,6 @@
 CONFIGURE_OSPRAY()
 
 OSPRAY_ADD_LIBRARY(ospray_common SHARED
-# STATIC
   common.cpp
   FileName.cpp
   sysinfo.cpp
@@ -38,7 +37,3 @@ OSPRAY_ADD_LIBRARY(ospray_common SHARED
   RefCount.h
   vec.h
 )
-
-		     
-
-		      
