@@ -1,5 +1,5 @@
 // ======================================================================== //
-// Copyright 2009-2014 Intel Corporation                                    //
+// Copyright 2009-2016 Intel Corporation                                    //
 //                                                                          //
 // Licensed under the Apache License, Version 2.0 (the "License");          //
 // you may not use this file except in compliance with the License.         //
@@ -99,10 +99,7 @@ namespace ospray {
   __forceinline Task::Task(const char *name)
     : status(Task::INITIALIZING),
       name(name),
-      numJobsStarted(0),
-      numJobsCompleted(0),
-      numJobsInTask(0),
-      numMissingDependencies(0)
+      numJobsInTask(0)
   {
   }
 
