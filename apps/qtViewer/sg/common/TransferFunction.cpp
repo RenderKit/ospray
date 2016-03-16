@@ -95,7 +95,7 @@ namespace ospray {
     {
       if (ospColorData == NULL) {
         // for now, no resampling - just use the colors ...
-        vec3f colors[colorArray.size()];
+        vec3f *colors = (vec3f*)alloca(sizeof(vec3f)*colorArray.size());
         for (int i=0;i<colorArray.size();i++)
           colors[i] = colorArray[i].second;
         ospColorData = ospNewData(colorArray.size(),OSP_FLOAT3,colors); 
