@@ -107,6 +107,7 @@ SET(OSPRAY_SOURCES
 
   common/tasking/parallel_for.h
   common/tasking/async.h
+  common/tasking/TaskSys.cpp
 
   fb/FrameBuffer.ispc
   fb/FrameBuffer.cpp
