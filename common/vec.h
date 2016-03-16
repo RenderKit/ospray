@@ -218,6 +218,7 @@ namespace ospcommon {
   binary_operator(operator-,-);
   binary_operator(operator*,*);
   binary_operator(operator/,/);
+  binary_operator(operator%,%);
 #undef binary_operator
 
   // -------------------------------------------------------
