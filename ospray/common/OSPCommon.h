@@ -23,12 +23,11 @@
 #include "OSPConfig.h"
 
 #ifdef _WIN32
-  typedef unsigned long long id_t;
-#endif
-
-#if defined(__WIN32__) || defined(_WIN32)
 // ----------- windows only -----------
-# define _USE_MATH_DEFINES 1
+typedef unsigned long long id_t;
+# ifndef _USE_MATH_DEFINES
+#   define _USE_MATH_DEFINES
+# endif
 # include <cmath>
 # include <math.h>
 # ifdef _M_X64

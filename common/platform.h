@@ -170,14 +170,6 @@
 ////////////////////////////////////////////////////////////////////////////////
 
 #ifdef __WIN32__
-#define __dllexport __declspec(dllexport)
-#define __dllimport __declspec(dllimport)
-#else
-#define __dllexport __attribute__ ((visibility ("default")))
-#define __dllimport 
-#endif
-
-#ifdef __WIN32__
 #undef __noinline
 #define __noinline             __declspec(noinline)
 //#define __forceinline        __forceinline

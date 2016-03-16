@@ -19,7 +19,7 @@
 
 namespace ospcommon
 {
-#ifdef __WIN32__
+#ifdef _WIN32
   const char path_sep = '\\';
 #else
   const char path_sep = '/';
@@ -51,7 +51,7 @@ namespace ospcommon
   /*! returns path to home folder */
   FileName FileName::homeFolder() 
   {
-#ifdef __WIN32__
+#ifdef _WIN32
     const char* home = getenv("UserProfile");
 #else
     const char* home = getenv("HOME");

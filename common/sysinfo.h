@@ -25,7 +25,7 @@
 #define MAX_THREADS 512
 #define MAX_MIC_CORES (MAX_THREADS/4)
 
-#include "platform.h"
+#include "common.h"
 
 /* define isa namespace and ISA bitvector */
 #if defined(__MIC__)
@@ -100,22 +100,22 @@ namespace ospcommon
   };
 
   /*! get the full path to the running executable */
-  std::string getExecutableFileName();
+  OSPCOMMON_INTERFACE std::string getExecutableFileName();
 
   /*! return platform name */
-  std::string getPlatformName();
+  OSPCOMMON_INTERFACE std::string getPlatformName();
 
   /*! get the full name of the compiler */
-  std::string getCompilerName();
+  OSPCOMMON_INTERFACE std::string getCompilerName();
 
   /*! return the name of the CPU */
-  std::string getCPUVendor();
+  OSPCOMMON_INTERFACE std::string getCPUVendor();
 
   /*! get microprocessor model */
-  CPUModel getCPUModel(); 
+  OSPCOMMON_INTERFACE CPUModel getCPUModel();
 
   /*! converts CPU model into string */
-  std::string stringOfCPUModel(CPUModel model);
+  OSPCOMMON_INTERFACE std::string stringOfCPUModel(CPUModel model);
 
   /*! CPU features */
   static const int CPU_FEATURE_SSE    = 1 << 0;
@@ -145,10 +145,10 @@ namespace ospcommon
   static const int CPU_FEATURE_AVX512VBMI = 1 << 24;
  
   /*! get CPU features */
-  int getCPUFeatures();
+  OSPCOMMON_INTERFACE int getCPUFeatures();
 
   /*! convert CPU features into a string */
-  std::string stringOfCPUFeatures(int features);
+  OSPCOMMON_INTERFACE std::string stringOfCPUFeatures(int features);
 
   /*! ISAs */
   static const int SSE    = CPU_FEATURE_SSE; 
@@ -165,14 +165,14 @@ namespace ospcommon
   static const int AVX512KNL = AVX512F | CPU_FEATURE_AVX512PF | CPU_FEATURE_AVX512ER | CPU_FEATURE_AVX512CD;
 
   /*! converts ISA bitvector into a string */
-  std::string stringOfISA(int features);
+  OSPCOMMON_INTERFACE std::string stringOfISA(int features);
 
   /*! return the number of logical threads of the system */
-  size_t getNumberOfLogicalThreads();
+  OSPCOMMON_INTERFACE size_t getNumberOfLogicalThreads();
   
   /*! returns the size of the terminal window in characters */
-  int getTerminalWidth();
+  OSPCOMMON_INTERFACE int getTerminalWidth();
 
   /*! returns performance counter in seconds */
-  double getSeconds();
+  OSPCOMMON_INTERFACE double getSeconds();
 }

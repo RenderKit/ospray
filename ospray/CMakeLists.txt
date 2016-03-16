@@ -102,7 +102,6 @@ SET(OSPRAY_SOURCES
   common/Model.ispc
   common/Model.cpp
   common/Material.cpp
-  common/Library.cpp
   common/Thread.cpp
 
   common/tasking/parallel_for.h
@@ -339,7 +338,7 @@ OSPRAY_INSTALL_LIBRARY(ospray)
 IF(NOT THIS_IS_MIC)
   # build ospTutorial, for testing
   ADD_EXECUTABLE(ospTutorial ../apps/ospTutorial)
-  TARGET_LINK_LIBRARIES(ospTutorial ospray ospray_common)
+  OSPRAY_EXE_LINK_LIBRARIES(ospTutorial ospray ospray_common)
 ENDIF()
 
 

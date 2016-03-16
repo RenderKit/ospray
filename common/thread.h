@@ -16,7 +16,7 @@
 
 #pragma once
 
-#include "platform.h"
+#include "common.h"
 
 namespace ospcommon
 {
@@ -27,20 +27,20 @@ namespace ospcommon
   typedef void (*thread_func)(void*);
 
   /*! creates a hardware thread running on specific logical thread */
-  thread_t createThread(thread_func f, void* arg,
-                        size_t stack_size = 0, ssize_t threadID = -1);
+  OSPCOMMON_INTERFACE thread_t createThread(thread_func f, void* arg, size_t
+      stack_size = 0, ssize_t threadID = -1);
 
   /*! set affinity of the calling thread */
-  void setAffinity(ssize_t affinity);
+  OSPCOMMON_INTERFACE void setAffinity(ssize_t affinity);
 
   /*! the thread calling this function gets yielded */
-  void yield();
+  OSPCOMMON_INTERFACE void yield();
 
   /*! waits until the given thread has terminated */
-  void join(thread_t tid);
+  OSPCOMMON_INTERFACE void join(thread_t tid);
 
   /*! destroy handle of a thread */
-  void destroyThread(thread_t tid);
+  OSPCOMMON_INTERFACE void destroyThread(thread_t tid);
 
   // /*! type for handle to thread local storage */
   // typedef struct opaque_tls_t* tls_t;

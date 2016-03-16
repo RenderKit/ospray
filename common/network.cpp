@@ -22,7 +22,7 @@
 /// Platforms supporting Socket interface
 ////////////////////////////////////////////////////////////////////////////////
 
-#if defined(__WIN32__)
+#ifdef _WIN32
 #define _WINSOCK_DEPRECATED_NO_WARNINGS
 //#include <winsock2.h>
 //#include <io.h>
@@ -53,7 +53,7 @@ namespace ospcommon
   namespace network 
   {
     __forceinline void initialize() {
-#ifdef __WIN32__
+#ifdef _WIN32
       static bool initialized = false;
       static MutexSys initMutex;
       Lock<MutexSys> lock(initMutex);

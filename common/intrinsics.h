@@ -18,7 +18,7 @@
 
 #include "platform.h"
 
-#if defined(__WIN32__)
+#ifdef _WIN32
 #include <intrin.h>
 #endif
 
@@ -72,7 +72,7 @@
 #  include <immintrin.h>
 #endif
 
-#if defined(__WIN32__)
+#ifdef _WIN32
 #  define NOMINMAX
 #  include <windows.h>
 #endif
@@ -92,7 +92,7 @@ namespace ospcommon
 /// Windows Platform
 ////////////////////////////////////////////////////////////////////////////////
   
-#if defined(__WIN32__)
+#ifdef _WIN32
   
   __forceinline size_t read_tsc()  
   {
