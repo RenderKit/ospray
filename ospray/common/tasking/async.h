@@ -54,8 +54,8 @@ inline void async(const TASK_T& fcn)
   cilk_spawn fcn();
 #elif defined(OSPRAY_USE_INTERNAL_TASKING)
   struct LocalTask : public Task {
-    const TASK_T &t;
-    LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(fcn) {}
+    TASK_T t;
+    LocalTask(const TASK_T& fcn) : Task("LocalTask"), t(std::move(fcn)) {}
     void run(size_t) override { t(); }
   };
 
