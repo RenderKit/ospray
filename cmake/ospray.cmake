@@ -164,8 +164,8 @@ MACRO(CONFIGURE_OSPRAY)
 
   IF (THIS_IS_MIC)
     # whether to build in MIC/xeon phi support
-    SET(OSPRAY_BUILD_COI_DEVICE OFF CACHE BOOL
-        "Build COI Device for OSPRay's MIC support?")
+    OPTION(OSPRAY_BUILD_COI_DEVICE
+           "Build COI Device for OSPRay's MIC support?" OFF)
   ENDIF()
 
   INCLUDE(${PROJECT_SOURCE_DIR}/cmake/ispc.cmake)

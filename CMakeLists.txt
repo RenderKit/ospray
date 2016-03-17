@@ -35,10 +35,27 @@ SET(OSPRAY_VERSION
 )
 SET(OSPRAY_SOVERSION 0)
 
+##############################################################
+# CMake modules and macro files
+##############################################################
+
+INCLUDE(cmake/ospray.cmake)
+INCLUDE(cmake/ispc.cmake)
+
+SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
+
+INCLUDE(cmake/mpi.cmake)
+
+IF(NOT WIN32)
+  INCLUDE(cmake/doxygen.cmake)
+ENDIF()
+
+##############################################################
+# Global OSPRay build options
+##############################################################
 
 OPTION(OSPRAY_USE_EXTERNAL_EMBREE
        "Use a pre-built Embree instead of the internally built version" OFF)
-
 
 SET(CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo")
 IF (WIN32)
@@ -65,7 +82,9 @@ OPTION(OSPRAY_VOLUME_VOXELRANGE_IN_APP "Move 'voxelrange' computations to app?" 
 MARK_AS_ADVANCED(OSPRAY_VOLUME_VOXELRANGE_IN_APP)
 
 IF (WIN32)
-  SET(OSPRAY_BUILD_MIC_SUPPORT OFF CACHE INTERNAL "OSPRay with KNC not supported on Windows.")
+  OSPRAY_WARN_ONCE(KNC_SUPPORT "KNC options disabled: KNC not supported on Windows")
+ELSEIF(NOT ${CMAKE_CXX_COMPILER_ID} STREQUAL "Intel")
+  OSPRAY_WARN_ONCE(KNC_SUPPORT "KNC options disabled: KNC requires the Intel Compiler")
 ELSE()
   OPTION(OSPRAY_BUILD_MIC_SUPPORT "Build OSPRay with KNC Support?")
 ENDIF()
@@ -85,21 +104,6 @@ STRING(TOUPPER ${OSPRAY_BUILD_ISA} OSPRAY_BUILD_ISA)
 
 SET(OSPRAY_MIC ${OSPRAY_BUILD_MIC_SUPPORT})
 SET(OSPRAY_MPI ${OSPRAY_BUILD_MPI_DEVICE})
-
-##############################################################
-# CMake modules and macro files
-##############################################################
-
-INCLUDE(cmake/ospray.cmake)
-INCLUDE(cmake/ispc.cmake)
-
-SET(OSPRAY_EMBREE_SOURCE_DIR ${PROJECT_SOURCE_DIR}/ospray/embree-v2.7.1)
-
-INCLUDE(cmake/mpi.cmake)
-
-IF(NOT WIN32)
-  INCLUDE(cmake/doxygen.cmake)
-ENDIF()
 
 OSPRAY_CONFIGURE_COMPILER()
 
