@@ -99,6 +99,8 @@ namespace ospray {
   __forceinline Task::Task(const char *name)
     : status(Task::INITIALIZING),
       name(name),
+      numJobsCompleted(0),
+      numJobsStarted(0),
       numJobsInTask(0)
   {
   }
