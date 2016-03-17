@@ -61,7 +61,8 @@ namespace ospray {
     FrameBuffer(const vec2i &size,
                 ColorBufferFormat colorBufferFormat,
                 bool hasDepthBuffer,
-                bool hasAccumBuffer);
+                bool hasAccumBuffer,
+                bool hasVarianceBuffer = false);
 
     virtual void commit();
 
@@ -80,11 +81,12 @@ namespace ospray {
     { return "ospray::FrameBuffer"; }
 
     /*! indicates whether the app requested this frame buffer to have
-        an accumulation buffer */
-    bool hasAccumBuffer;
-    /*! indicates whether the app requested this frame buffer to have
         an (application-mappable) depth buffer */
     bool hasDepthBuffer;
+    /*! indicates whether the app requested this frame buffer to have
+        an accumulation buffer */
+    bool hasAccumBuffer;
+    bool hasVarianceBuffer;
 
     /*! buffer format of the color buffer */
     ColorBufferFormat colorBufferFormat;

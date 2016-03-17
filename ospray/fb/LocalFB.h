@@ -28,17 +28,18 @@ namespace ospray {
                                NULL */
     float     *depthBuffer; /*!< one float per pixel, may be NULL */
     vec4f     *accumBuffer; /*!< one RGBA per pixel, may be NULL */
-    vec4f     *accumHalfBuffer; /*!< one RGBA per pixel, may be NULL, accumulates every other sample, for variance estimation / stopping */
+    vec4f     *varianceBuffer; /*!< one RGBA per pixel, may be NULL, accumulates every other sample, for variance estimation / stopping */
     float     *tileErrorBuffer; /*!< holds error per tile, for variance estimation / stopping */
 
     LocalFrameBuffer(const vec2i &size,
                      ColorBufferFormat colorBufferFormat,
                      bool hasDepthBuffer,
-                     bool hasAccumBuffer, 
+                     bool hasAccumBuffer,
+                     bool hasVarianceBuffer,
                      void *colorBufferToUse=NULL);
     virtual ~LocalFrameBuffer();
-    
-    //! \brief common function to help printf-debugging 
+
+    //! \brief common function to help printf-debugging
     /*! \detailed Every derived class should overrride this! */
     virtual std::string toString() const
     { return "ospray::LocalFrameBuffer"; }

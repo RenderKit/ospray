@@ -21,7 +21,6 @@
 
 export void LocalFrameBuffer_clearAccum(void *uniform _fb)
 {
-  print("LocalFrameBuffer_clearAccum\n");
   uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
   fb->super.accumID = 0;
 
@@ -33,22 +32,42 @@ export void LocalFrameBuffer_clearAccum(void *uniform _fb)
     for(uniform int taskIndex = 0; taskIndex < num_blocks; ++taskIndex) {
       uniform float *uniform fbPointer
         = (uniform float *uniform)&fb->accumBuffer[0].x;
-      uniform float *uniform fbHalfPointer
-        = (uniform float *uniform)&fb->accumHalfBuffer[0].x;
       uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
-      uniform float *uniform blockHalf = fbHalfPointer + taskIndex * CLEAR_BLOCK_SIZE;
       uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
 
       uniform int end = min(CLEAR_BLOCK_SIZE,
                             num_floats - taskIndex * CLEAR_BLOCK_SIZE);
-      foreach (x=0 ... end) {
+      foreach (x=0 ... end)
         block[x] = 0.f;
-        blockHalf[x] = 0.f;
-      }
     }
+  }
+}
+
+export void LocalFrameBuffer_clearVariance(void *uniform _fb)
+{
+  print("LocalFrameBuffer_clearVariance");
+  uniform LocalFB *uniform fb = (uniform LocalFB *uniform)_fb;
+
+  if (fb->varianceBuffer) {
+    uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
+    uniform size_t num_blocks = (num_floats + CLEAR_BLOCK_SIZE - 1) / CLEAR_BLOCK_SIZE;
+
+    for(uniform int taskIndex = 0; taskIndex < num_blocks; ++taskIndex) {
+      uniform float *uniform fbPointer
+        = (uniform float *uniform)&fb->varianceBuffer[0].x;
+      uniform float *uniform block = fbPointer + taskIndex * CLEAR_BLOCK_SIZE;
+      uniform size_t num_floats = 4*fb->super.size.x*fb->super.size.y;
+
+      uniform int end = min(CLEAR_BLOCK_SIZE,
+                            num_floats - taskIndex * CLEAR_BLOCK_SIZE);
+      foreach (x=0 ... end)
+        block[x] = 0.f;
+    }
+  }
+
+  if (fb->tileErrorBuffer)
     foreach (x=0 ... fb->numTiles.x*fb->numTiles.y)
       fb->tileErrorBuffer[x] = inf;
-  }
 }
 
 //! \brief write tile into the given frame buffer's color buffer
@@ -197,7 +216,7 @@ export void LocalFrameBuffer_writeTile_RGBA_F32(void *uniform _fb,
                                        varyTile->a[chunkID]);
 
         // XXX not even hardcoded gamma for float buffer, should use pixelops anyway
-        col = max(col, make_vec4f(0.f)); 
+        col = max(col, make_vec4f(0.f));
       }
       color[pixelID] = col;
       if (depth)
@@ -218,8 +237,8 @@ export void LocalFrameBuffer_accumulateTile(void *uniform _fb,
   uniform vec4f *uniform accum = (uniform vec4f *uniform)fb->accumBuffer;
   if (!accum) return;
 
-  uniform vec4f *uniform accumHalf = (uniform vec4f *uniform)fb->accumHalfBuffer;
-  
+  uniform vec4f *uniform accumHalf = (uniform vec4f *uniform)fb->varianceBuffer;
+
   VaryingTile *uniform varyTile = (VaryingTile *uniform)&tile;
   uniform vec2i tileIdx = tile.region.lower/TILE_SIZE;
   uniform float * uniform tileError = &fb->tileErrorBuffer[tileIdx.y*fb->numTiles.x+tileIdx.x];
@@ -341,7 +360,7 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
                                              void *uniform colorBuffer,
                                              void *uniform depthBuffer,
                                              void *uniform accumBuffer,
-                                             void *uniform accumHalfBuffer,
+                                             void *uniform varianceBuffer,
                                              void *uniform tileErrorBuffer)
 {
   uniform LocalFB *uniform self = uniform new uniform LocalFB;
@@ -351,7 +370,7 @@ export void *uniform LocalFrameBuffer_create(void *uniform cClassPtr,
   self->colorBuffer = colorBuffer;
   self->depthBuffer = (uniform float *uniform)depthBuffer;
   self->accumBuffer = (uniform vec4f *uniform)accumBuffer;
-  self->accumHalfBuffer = (uniform vec4f *uniform)accumHalfBuffer;
+  self->varianceBuffer = (uniform vec4f *uniform)varianceBuffer;
   self->numTiles = (self->super.size+(TILE_SIZE-1))/TILE_SIZE;
   self->tileErrorBuffer = (uniform float *uniform)tileErrorBuffer;
   return self;

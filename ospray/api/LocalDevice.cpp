@@ -84,9 +84,11 @@ namespace ospray {
       FrameBuffer::ColorBufferFormat colorBufferFormat = mode; //FrameBuffer::RGBA_UINT8;//FLOAT32;
       bool hasDepthBuffer = (channels & OSP_FB_DEPTH)!=0;
       bool hasAccumBuffer = (channels & OSP_FB_ACCUM)!=0;
+      bool hasVarianceBuffer = (channels & OSP_FB_VARIANCE)!=0;
 
       FrameBuffer *fb = new LocalFrameBuffer(size,colorBufferFormat,
-                                             hasDepthBuffer,hasAccumBuffer);
+                                             hasDepthBuffer,hasAccumBuffer,
+                                             hasVarianceBuffer);
       fb->refInc();
       return (OSPFrameBuffer)fb;
     }

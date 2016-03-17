@@ -22,10 +22,11 @@ namespace ospray {
   LocalFrameBuffer::LocalFrameBuffer(const vec2i &size,
                                      ColorBufferFormat colorBufferFormat,
                                      bool hasDepthBuffer,
-                                     bool hasAccumBuffer, 
+                                     bool hasAccumBuffer,
+                                     bool hasVarianceBuffer,
                                      void *colorBufferToUse)
-    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer)
-  { 
+    : FrameBuffer(size, colorBufferFormat, hasDepthBuffer, hasAccumBuffer, hasVarianceBuffer)
+  {
     Assert(size.x > 0);
     Assert(size.y > 0);
     if (colorBufferToUse)
@@ -50,48 +51,45 @@ namespace ospray {
       depthBuffer = (float*)alignedMalloc(sizeof(float)*size.x*size.y);
     else
       depthBuffer = NULL;
-    
-    if (hasAccumBuffer) {
+
+    if (hasAccumBuffer)
       accumBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-      accumHalfBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
-      tileErrorBuffer = new float[divRoundUp(size.x,TILE_SIZE)*divRoundUp(size.y,TILE_SIZE)];
-    } else
+    else
       accumBuffer = NULL;
+
+    if (hasVarianceBuffer) {
+      varianceBuffer = (vec4f*)alignedMalloc(sizeof(vec4f)*size.x*size.y);
+      tileErrorBuffer = new float[divRoundUp(size.x,TILE_SIZE)*divRoundUp(size.y,TILE_SIZE)];
+    } else {
+      varianceBuffer = NULL;
+      tileErrorBuffer = NULL;
+    }
+
     ispcEquivalent = ispc::LocalFrameBuffer_create(this,size.x,size.y,
                                                    colorBufferFormat,
                                                    colorBuffer,
                                                    depthBuffer,
                                                    accumBuffer,
-                                                   accumHalfBuffer,
+                                                   varianceBuffer,
                                                    tileErrorBuffer);
   }
-  
-  LocalFrameBuffer::~LocalFrameBuffer() 
-  {
-    if (depthBuffer) alignedFree(depthBuffer);
 
-    if (colorBuffer)
-      switch(colorBufferFormat) {
-      case OSP_RGBA_F32:
-        alignedFree(colorBuffer);
-        break;
-      case OSP_RGBA_I8:
-        alignedFree(colorBuffer);
-        break;
-      default:
-        throw std::runtime_error("color buffer format not supported");
-      }
-    if (accumBuffer) {
-      alignedFree(accumBuffer);
-      alignedFree(accumHalfBuffer);
-      delete[] tileErrorBuffer;
-    }
+  LocalFrameBuffer::~LocalFrameBuffer()
+  {
+    alignedFree(depthBuffer);
+    alignedFree(colorBuffer);
+    alignedFree(accumBuffer);
+    alignedFree(varianceBuffer);
+    delete[] tileErrorBuffer;
   }
 
   void LocalFrameBuffer::clear(const uint32 fbChannelFlags)
   {
     if (fbChannelFlags & OSP_FB_ACCUM) {
       ispc::LocalFrameBuffer_clearAccum(getIE());
+      // always also clear variance buffer -- only clearing accumulation buffer
+      // is meaningless
+      ispc::LocalFrameBuffer_clearVariance(getIE());
       accumID = 0;
     }
   }
@@ -128,14 +126,14 @@ namespace ospray {
     this->refInc();
     return (const void *)depthBuffer;
   }
-  
+
   const void *LocalFrameBuffer::mapColorBuffer()
   {
     // waitForRenderTaskToBeReady();
     this->refInc();
     return (const void *)colorBuffer;
   }
-  
+
   void LocalFrameBuffer::unmap(const void *mappedMem)
   {
     Assert(mappedMem == colorBuffer || mappedMem == depthBuffer );
