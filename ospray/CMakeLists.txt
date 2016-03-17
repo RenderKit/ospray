@@ -228,9 +228,6 @@ SET(OSPRAY_SOURCES
   api/LocalDevice.cpp
   )
 
-# NOTE(jda) - To be removed when OSPCOMMON is merged for next release (?)
-ADD_DEFINITIONS(-DDONT_WARN_INCLUDE_OSPCOMMON_H)
-
 # -------------------------------------------------------
 # MPI components
 # -------------------------------------------------------
